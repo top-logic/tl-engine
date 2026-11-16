@@ -241,7 +241,7 @@ The `dependencies` of a migration must contain every module the `dependencies` o
 	</dropped-dependencies>
 ```
 
-A migration runs only if the database stores a version of its module. The database setup stores the maximal version of every module with a migration folder, and every startup stores it for each module that has no stored version yet. A module without stored version is considered new to the application, e.g. a framework module just added as dependency, and its migrations are skipped (logged as "Skipping migrations of module ..."). This is wrong for an application whose database was created before it had its folder `WEB-INF/kbase/migration/<module>/`: its first migration must come with `minimum-modules="<module>"` in the configuration of the `MigrationService`, see [the upgrade guide](doc:upgrade-7.11-to-8.0#83-own-migrations).
+A migration runs only if the database stores a version of its module. The database setup stores the maximal version of every module with a migration folder, and every startup stores it for each module that has no stored version yet. A module without stored version is considered new to the application, e.g. a framework module just added as dependency, and its migrations are skipped (logged as "Skipping migrations of module ..."). This is wrong for an application whose database was created before it had its folder `WEB-INF/kbase/migration/<module>/`: its first migration must come with `minimum-modules="<module>"` in the configuration of the `MigrationService`, see [the upgrade guide](doc:upgrade-7.11-to-8.0#83-own-migrations). Why a module with persistent types is a migration module from its first release on, and how persistent types move to another module or leave an application with their module, is described in [migrations and modules with persistent types](doc:persistency/migrations).
 
 Processors are written with their tag name, or as `<processor class="…"/>` for a processor without one. The demo application added a column to its table `DemoTypes` like this (dependencies trimmed); the same `<mo_attribute>` was added to `DemoTypesMeta.xml`:
 
@@ -273,7 +273,7 @@ Processors are written with their tag name, or as `<processor class="…"/>` for
 |---|---|
 | New table in a `*Meta.xml` | Automatic. |
 | New low-level table in `schemas` | Migration: `create-tables` with the `<schema>` entries. |
-| Table removed from the declarations | Kept automatically and recovered into `WEB-INF/autoconf`. To drop it: migration with `<processor class="com.top_logic.knowledge.service.migration.processors.RemoveApplicationTypesProcessor">` listing it in `application-tables`. |
+| Table removed from the declarations | Kept automatically and recovered into `WEB-INF/autoconf`. To drop it: migration with `<processor class="com.top_logic.knowledge.service.migration.processors.RemoveApplicationTypesProcessor">` listing it in `application-tables`, or `<delete-table>`; for the tables of a module removed from the application see [removing a module with persistent types](doc:persistency/migrations#removing-a-module-with-persistent-types). |
 | New column | Declaration plus migration: `add-mo-attribute` (a primitive column) or `add-mo-reference` (a reference column). |
 | Changed column size or type | Declaration plus migration: `alter-column` (`table`, `column`, the new `db_size`, …). |
 | Removed column | Declaration plus migration: `drop-column`. |

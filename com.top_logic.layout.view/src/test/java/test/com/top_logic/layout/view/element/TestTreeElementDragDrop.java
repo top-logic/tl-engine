@@ -72,11 +72,14 @@ public class TestTreeElementDragDrop extends BasicTestCase {
 	/** The object the test tree is built from, displayed as no node. */
 	private static final String ROOT = "root";
 
-	/** The first top-level object, with the children {@link #A1} and a second one. */
+	/** The first top-level object, with the children {@link #A1} and {@link #A2}. */
 	private static final String A = "a";
 
 	/** The first child of {@link #A}. */
 	private static final String A1 = "a1";
+
+	/** The second child of {@link #A}. */
+	private static final String A2 = "a2";
 
 	/** The second top-level object, a leaf the node rules refuse to drag. */
 	private static final String B = "b";
@@ -188,13 +191,14 @@ public class TestTreeElementDragDrop extends BasicTestCase {
 	}
 
 	/**
-	 * The client-side id of the node of the given top-level object; the top-level objects are
-	 * displayed in the order {@link #A}, {@link #B}.
+	 * The client-side id of the node of the given top-level object; the top-level node {@link #A}
+	 * is open, so the nodes are displayed in the order {@link #A}, {@link #A1}, {@link #A2},
+	 * {@link #B}.
 	 */
 	private static String nodeId(ReactTreeControl control, String topLevel) {
 		List<?> nodes = (List<?>) state(control).get(ReactTreeControl.NODES);
-		int index = List.of(A, B).indexOf(topLevel);
-		assertTrue("Not a top-level object: " + topLevel, index >= 0);
+		int index = List.of(A, A1, A2, B).indexOf(topLevel);
+		assertTrue("Not a top-level object: " + topLevel, List.of(A, B).contains(topLevel));
 		return (String) ((Map<?, ?>) nodes.get(index)).get(ReactTreeControl.NODE_ID);
 	}
 

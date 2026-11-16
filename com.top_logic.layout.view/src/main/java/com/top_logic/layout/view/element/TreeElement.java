@@ -61,6 +61,7 @@ import com.top_logic.layout.view.model.ObservableTreeModel;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.TreeSelectionBinding;
 import com.top_logic.layout.view.model.TreeSelectionDisplay;
+import com.top_logic.layout.view.model.TreeNodes;
 import com.top_logic.mig.html.DefaultMultiSelectionModel;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
@@ -82,9 +83,11 @@ import com.top_logic.table.SelectionMode;
  *
  * <p>
  * The tree follows the model it displays: a deleted object loses its node, an object that appeared
- * in a child list gets one, and the subtrees the user opened stay open through it. An input naming
- * another object to build the tree from builds it anew, opening the subtrees that were open again
- * wherever the new tree holds their objects. See {@link ObservableTreeModel}.
+ * in a child list gets one, and the subtrees the user opened stay open through it. The top levels
+ * are open when the tree is displayed, see {@link TreeStructureConfig#getInitialExpansionDepth()}.
+ * An input naming another object to build the tree from builds it anew and opens it as it does when
+ * it is displayed; an input change keeping that object builds it anew, opening the subtrees that
+ * were open again wherever the new tree holds their objects. See {@link ObservableTreeModel}.
  * </p>
  *
  * <p>
@@ -439,9 +442,12 @@ public class TreeElement implements UIElement {
 		// 1. Resolve input channels.
 		List<ViewChannel> inputChannels = ChannelInputs.resolve(context, _config.getInputs());
 
-		// 2. Build the tree model from the root object the input names.
+		// 2. Build the tree model from the root object the input names, open down to the initial
+		//    expansion depth.
 		TreeBuilder<DefaultTreeUINode> builder = _functions.builder(inputChannels);
 		DefaultTreeUINodeModel treeModel = _functions.treeModel(builder, inputChannels);
+		int initialExpansionDepth = _config.getInitialExpansionDepth();
+		TreeNodes.openToDepth(treeModel.getRoot(), initialExpansionDepth, Set.of());
 
 		// 4. Create the selection model for the configured selection mode.
 		SelectionMode selectionMode = _config.getSelectionMode();
@@ -468,7 +474,7 @@ public class TreeElement implements UIElement {
 			parentFunction,
 			observedTypes,
 			inputChannels
-		);
+		).withInitialExpansionDepth(initialExpansionDepth);
 
 		// 7. Wire the selection channel, which the tree reads as well as writes. The node of an
 		//    object read from it is looked for in the tree displayed now, which is another one after

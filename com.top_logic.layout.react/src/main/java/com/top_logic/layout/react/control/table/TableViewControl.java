@@ -473,6 +473,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String COLUMN_CSS_CLASS = "cssClass";
 
 	/**
+	 * Per-column state key holding the {@link ColumnView#headerClass() CSS class} the client puts on
+	 * the heading of that column only. Absent for a column whose heading has none.
+	 */
+	private static final String COLUMN_HEADER_CLASS = "headerClass";
+
+	/**
+	 * Per-column state key holding the {@link ValueColor#getExternalName() name} of the
+	 * {@link ColumnView#headerRole() color role} the client tints the heading of that column in.
+	 * Absent for a column whose heading has none.
+	 */
+	private static final String COLUMN_HEADER_ROLE = "headerRole";
+
+	/**
 	 * Per-column state key holding the description of the column's {@link ColumnView#label() label},
 	 * which the client offers on the heading. Absent for a column whose label has none.
 	 */
@@ -1124,6 +1137,28 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	private void refreshColumns() {
+		putState(COLUMNS, columnsState());
+		putState(FROZEN_COLUMN_COUNT, Integer.valueOf(_view.frozenColumnCount()));
+	}
+
+	/**
+	 * Sends the state of the columns again, for a change of what their headings show - such as
+	 * their {@link ColumnView#headerClass() class} or {@link ColumnView#headerRole() color role} -
+	 * that leaves the columns and the rows as they are.
+	 *
+	 * <p>
+	 * Neither a row nor a cell control is built again. Nothing is sent when the columns state the
+	 * client holds is unchanged.
+	 * </p>
+	 */
+	public void refreshColumnHeaders() {
+		putChangedState(COLUMNS, columnsState());
+	}
+
+	/**
+	 * The state of the displayed columns, one map per column, in display order.
+	 */
+	private List<Map<String, Object>> columnsState() {
 		Resources resources = Resources.getInstance();
 		// Grouping buckets rows by a column's value, which is meaningful for the columns the user
 		// may choose at all - an action column carries the row itself, and would yield one group
@@ -1153,14 +1188,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			if (column.cssClass() != null) {
 				columnState.put(COLUMN_CSS_CLASS, column.cssClass());
 			}
+			if (column.headerClass() != null) {
+				columnState.put(COLUMN_HEADER_CLASS, column.headerClass());
+			}
+			if (column.headerRole() != null) {
+				columnState.put(COLUMN_HEADER_ROLE, column.headerRole().getExternalName());
+			}
 			String tooltip = LabelDescription.description(resources, column.label());
 			if (!StringServices.isEmpty(tooltip)) {
 				columnState.put(COLUMN_TOOLTIP, tooltip);
 			}
 			columns.add(columnState);
 		}
-		putState(COLUMNS, columns);
-		putState(FROZEN_COLUMN_COUNT, Integer.valueOf(_view.frozenColumnCount()));
+		return columns;
 	}
 
 	private boolean isFilterActive(String column) {

@@ -124,6 +124,10 @@ import com.top_logic.util.Resources;
  *        attribute. A row without a cell shows nothing in the column - neither a value, nor an
  *        input, nor a tooltip, a class or a color role -, and the built column announces the test as its
  *        {@link Column#existence()}.
+ * @param header
+ *        The color role and the CSS class of the heading of the column, {@link ColumnHeader#NONE}
+ *        for a heading without either. They are put on the heading only, not on the data cells, see
+ *        {@link Column#headerRole()} and {@link Column#headerClass()}. Never {@code null}.
  */
 public record ColumnSetup(
 		String name,
@@ -144,7 +148,25 @@ public record ColumnSetup(
 		ReactControlProvider display,
 		boolean sortable,
 		ChannelCondition exists,
-		CellExistence<Object> cellExists) {
+		CellExistence<Object> cellExists,
+		ColumnHeader header) {
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column whose heading has neither a color role nor a CSS
+	 * class of its own.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip,
+			BiFunction<Object, Object, String> cellClass, BiFunction<Object, Object, ValueColor> cellRole,
+			ReactControlProvider display, boolean sortable, ChannelCondition exists,
+			CellExistence<Object> cellExists) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, cellClass, cellRole, display, sortable, exists, cellExists, ColumnHeader.NONE);
+	}
 
 	/**
 	 * Creates a {@link ColumnSetup} of a column that always exists, has a cell for every row, and
@@ -264,7 +286,8 @@ public record ColumnSetup(
 			return this;
 		}
 		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
-			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, exists.and(condition), cellExists);
+			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, exists.and(condition), cellExists,
+			header);
 	}
 
 	/**
@@ -275,7 +298,8 @@ public record ColumnSetup(
 	 * displaying its values through the {@link #display()} when it declares one, with the
 	 * {@link #tooltip()} on its cells and on the header rows of the groups it forms when it
 	 * computes one, with the {@link #cellClass()} and the {@link #cellRole()} on its cells when it
-	 * computes them, and left out of exports when its {@link #export()} says so.
+	 * computes them, with the {@link #header()} on its heading, and left out of exports when its
+	 * {@link #export()} says so.
 	 */
 	public Column<Object, ?> buildColumn() {
 		return decorate(binding().createColumn(this));
@@ -409,7 +433,7 @@ public record ColumnSetup(
 		if (cellExists != null) {
 			result = withCellExistence(result, cellExists);
 		}
-		return result;
+		return header.decorate(result);
 	}
 
 	/**

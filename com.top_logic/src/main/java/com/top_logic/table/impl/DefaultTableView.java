@@ -383,6 +383,8 @@ public class DefaultTableView<R> implements TableView<R> {
 				frozen,
 				column.pinnedEnd(),
 				column.cssClass(),
+				column.headerClass(),
+				column.headerRole(),
 				sortDirection(sort, name),
 				sortPriority(sort, name)));
 			index++;

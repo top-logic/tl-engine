@@ -38,8 +38,10 @@ public interface RowRoleConfig extends ConfigurationItem {
 	 * The result is the name of a role: <code>error</code>, <code>warning</code>,
 	 * <code>success</code> and <code>info</code> mark a state, <code>brand</code> sets a row
 	 * apart, <code>neutral</code> names the role without a tint, and <code>category-1</code> to
-	 * <code>category-8</code> tell rows apart whose meaning the application defines. Nothing or an empty text leaves the
-	 * row without a role, a text naming no role is an error. The design system decides how a role
+	 * <code>category-8</code> tell rows apart whose meaning the application defines. A classifier
+	 * of an enumeration names the role its <code>&lt;color role="..."/&gt;</code> annotation names.
+	 * Nothing, an empty text and a classifier without a role leave the row without a role, a text
+	 * naming no role is an error. The design system decides how a role
 	 * looks in each theme. The highlight of a selected row wins over its role; a cell with a
 	 * {@link AbstractColumnDeclaration.Config#getCellRole() role of its own} is drawn in that role.
 	 * </p>

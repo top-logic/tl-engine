@@ -186,4 +186,17 @@ public interface DynamicColumnSet {
 		return null;
 	}
 
+	/**
+	 * The color role and the CSS class of the heading of the given column,
+	 * {@link ColumnHeader#NONE} for a heading without either.
+	 *
+	 * @param column
+	 *        One of the objects standing for a column.
+	 *
+	 * @see ColumnSetup#header()
+	 */
+	default ColumnHeader header(Object column) {
+		return ColumnHeader.NONE;
+	}
+
 }

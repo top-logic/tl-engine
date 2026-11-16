@@ -134,6 +134,16 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 	}
 
 	@Override
+	public String headerClass() {
+		return _inner.headerClass();
+	}
+
+	@Override
+	public ValueColor headerRole() {
+		return _inner.headerRole();
+	}
+
+	@Override
 	public String cssClass(R row) {
 		return _inner.cssClass(row);
 	}

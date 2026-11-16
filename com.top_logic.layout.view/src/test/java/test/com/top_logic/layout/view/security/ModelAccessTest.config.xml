@@ -133,6 +133,14 @@
 							operation="Read"
 							roles="TestViewModelAccess.Reader"
 						/>
+						<!--
+							The viewer of a project discovers its category without reading it: a
+							discover-only object for the tests of labels computed unsecured.
+						-->
+						<grant
+							operation="Discover"
+							roles="TestViewModelAccess.Viewer"
+						/>
 					</class>
 					<part name="TestViewModelAccess:Category#name">
 						<!--
@@ -282,6 +290,19 @@
 								/>
 							</path>
 						</inheritance-rule>
+						<!-- The viewer of a project is viewer of its category, see the Discover grant of a category. -->
+						<rule id="TestViewModelAccess_Category_Viewer"
+							meta-element="TestViewModelAccess:Category"
+							role="TestViewModelAccess.Viewer"
+						>
+							<path>
+								<step
+									attribute="TestViewModelAccess:Project#category"
+									inverse="true"
+								/>
+								<step attribute="TestViewModelAccess:Project#viewer"/>
+							</path>
+						</rule>
 						<rule id="TestViewModelAccess_Category_Reader"
 							meta-element="TestViewModelAccess:Category"
 							role="TestViewModelAccess.Reader"

@@ -117,6 +117,10 @@
 							<label>
 								<en>Normalized input (view value)</en>
 								<de>Normalisierte Eingabe (Wert der View)</de>
+								<tooltip>
+									<en>Leading and trailing blanks are removed before the value reaches the channel.</en>
+									<de>Führende und abschließende Leerzeichen werden entfernt, bevor der Wert den Kanal erreicht.</de>
+								</tooltip>
 							</label>
 							<annotations>
 								<value-normalizer>

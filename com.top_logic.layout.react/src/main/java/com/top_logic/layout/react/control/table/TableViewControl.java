@@ -31,6 +31,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.LabelDescription;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -1127,7 +1128,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			if (column.cssClass() != null) {
 				columnState.put(COLUMN_CSS_CLASS, column.cssClass());
 			}
-			String tooltip = description(resources, column.label());
+			String tooltip = LabelDescription.description(resources, column.label());
 			if (!StringServices.isEmpty(tooltip)) {
 				columnState.put(COLUMN_TOOLTIP, tooltip);
 			}
@@ -1200,18 +1201,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	private static String label(Resources resources, ResKey key) {
 		return key == null ? "" : resources.getString(key);
-	}
-
-	/**
-	 * The description belonging to the given label, {@code null} when the label has none.
-	 *
-	 * <p>
-	 * What a label says about itself over and above its own text, resolved from
-	 * {@link ResKey#tooltipOptional()} - the same description a form field offers on its label.
-	 * </p>
-	 */
-	private static String description(Resources resources, ResKey key) {
-		return key == null ? null : resources.getString(key.tooltipOptional());
 	}
 
 	/**

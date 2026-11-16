@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -179,13 +180,13 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	private TableId _tableId;
 
-	/** @see #setNamedFilters(Function, NamedFilterStore, String) */
-	private Function<List<? extends Column<?, ?>>, List<NamedFilter>> _declaredFilters;
+	/** @see #setNamedFilters(BiFunction, NamedFilterStore, String) */
+	private BiFunction<List<? extends Column<?, ?>>, Set<String>, List<NamedFilter>> _declaredFilters;
 
-	/** @see #setNamedFilters(Function, NamedFilterStore, String) */
+	/** @see #setNamedFilters(BiFunction, NamedFilterStore, String) */
 	private NamedFilterStore _filterStore;
 
-	/** @see #setNamedFilters(Function, NamedFilterStore, String) */
+	/** @see #setNamedFilters(BiFunction, NamedFilterStore, String) */
 	private String _initialFilter;
 
 	/** @see #setFilterBar(boolean) */
@@ -482,9 +483,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * given function, plus the ones the user saves themselves.
 	 *
 	 * @param declaredFilters
-	 *        Materializes the declared filters over the table's columns, called whenever the columns
-	 *        are rebuilt and whenever the rows are refreshed - the criteria a table declares can
-	 *        depend on the inputs it is refreshed for.
+	 *        Materializes the declared filters over the table's columns, given the names of the
+	 *        columns that do not exist because the current user may not see them (see
+	 *        {@link ColumnExistence#withheldColumns()}), called whenever the columns are rebuilt
+	 *        and whenever the rows are refreshed - the criteria a table declares can depend on the
+	 *        inputs it is refreshed for.
 	 * @param filterStore
 	 *        Where the filters the user saves under a name are persisted, or {@code null} to offer
 	 *        only the declared ones.
@@ -492,7 +495,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 *        The {@link NamedFilter#id() identifier} of the filter the table is filtered by until a
 	 *        personalization of its own exists, or {@code null} to start out unfiltered.
 	 */
-	public void setNamedFilters(Function<List<? extends Column<?, ?>>, List<NamedFilter>> declaredFilters,
+	public void setNamedFilters(BiFunction<List<? extends Column<?, ?>>, Set<String>, List<NamedFilter>> declaredFilters,
 			NamedFilterStore filterStore, String initialFilter) {
 		_declaredFilters = declaredFilters;
 		_filterStore = filterStore;
@@ -969,13 +972,13 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			}
 			initialState.setFrozenCount(Math.min(_fixedColumns + leadingActions, columns.size()));
 		}
+		ColumnExistence existence = ColumnExistence.of(setups);
 		List<NamedFilter> declaredFilters =
-			_declaredFilters == null ? List.of() : _declaredFilters.apply(columns);
+			_declaredFilters == null ? List.of() : _declaredFilters.apply(columns, existence.withheldColumns());
 		DefaultTableView<TLObject> view = new DefaultTableView<>(columns, _rowSource, initialState, _store,
 			_tableId, _hiddenByDefault, declaredFilters, _filterStore, _initialFilter);
 		view.setRowCssClass(_rowCssClass);
 		// The columns that do not exist must not be displayed from the first state on.
-		ColumnExistence existence = ColumnExistence.of(setups);
 		view.setAbsentColumns(existence.absentColumns());
 
 		disposeExistence();
@@ -993,6 +996,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				shown.setAbsentColumns(absent);
 			}
 		});
+		_tableControl.setAbsentColumnsOnRefresh(existence.onRefresh());
 		_tableControl.setFilterBar(_filterBar);
 		_tableControl.setRowCount(_rowCount);
 		_tableControl.setActivationHandler(_activationHandler);
@@ -1026,7 +1030,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				() -> {
 					// The criteria a table declares can depend on the inputs it is refreshed for, so
 					// they are resolved again for their new values.
-					refreshDeclaredFilters(view, columns);
+					refreshDeclaredFilters(view, columns, existence);
 					_cellDependencies.clear();
 					table.refreshData();
 					if (_selectionBinding != null) {
@@ -1038,7 +1042,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 					.onInputsChanged(_cellIndependentInputs, () -> {
 						// The rows and their cells stay; what is computed from the inputs apart
 						// from the rows is computed again.
-						if (refreshDeclaredFilters(view, columns)) {
+						if (refreshDeclaredFilters(view, columns, existence)) {
 							// Pushes the rows again as well, for their row class.
 							table.refreshFilters();
 						} else if (_rowCssClass != null) {
@@ -1061,11 +1065,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 *
 	 * @return Whether the table declares filters, so that they were replaced on the given view.
 	 */
-	private boolean refreshDeclaredFilters(DefaultTableView<TLObject> view, List<Column<TLObject, ?>> columns) {
+	private boolean refreshDeclaredFilters(DefaultTableView<TLObject> view, List<Column<TLObject, ?>> columns,
+			ColumnExistence existence) {
 		if (_declaredFilters == null) {
 			return false;
 		}
-		view.setDeclaredFilters(_declaredFilters.apply(columns));
+		view.setDeclaredFilters(_declaredFilters.apply(columns, existence.withheldColumns()));
 		return true;
 	}
 

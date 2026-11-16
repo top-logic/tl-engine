@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.channel.ChannelCondition;
@@ -25,7 +26,9 @@ import com.top_logic.table.TableView;
  * {@link TableView#setAbsentColumns(Set) absent} - neither displayed nor offered in the column
  * selection - while the user's arrangement of it is kept. The conditions are followed for as long
  * as the table is displayed, so that a column appears and disappears with the values of the
- * channels its condition reads, without the table being built again.
+ * channels its condition reads, without the table being built again. A condition depending on the
+ * model rather than on a channel - whether the user may read an attribute on some row - is asked
+ * again after the rows of the table were refreshed, see {@link #onRefresh()}.
  * </p>
  */
 public final class ColumnExistence {
@@ -70,6 +73,30 @@ public final class ColumnExistence {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * The names of the columns that do not exist because the current user may not see them, see
+	 * {@link ChannelCondition#withholds()}.
+	 */
+	public Set<String> withheldColumns() {
+		Set<String> result = new LinkedHashSet<>();
+		for (Map.Entry<String, ChannelCondition> entry : _conditions.entrySet()) {
+			if (entry.getValue().withholds()) {
+				result.add(entry.getKey());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The {@link #absentColumns() absent columns} for a table to decide anew after its rows were
+	 * refreshed, {@code null} if every column always exists.
+	 *
+	 * @see com.top_logic.layout.react.control.table.TableViewControl#setAbsentColumnsOnRefresh(Supplier)
+	 */
+	public Supplier<Set<String>> onRefresh() {
+		return isEmpty() ? null : this::absentColumns;
 	}
 
 	/**

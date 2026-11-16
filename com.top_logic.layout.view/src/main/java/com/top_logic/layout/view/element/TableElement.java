@@ -452,7 +452,8 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		control.setFramed(false);
 		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId);
 		control.setNamedFilters(
-			columns -> declaredFilters(tableId, columns, declaredNames, ChannelInputs.arguments(inputChannels)),
+			(columns, withheld) -> declaredFilters(tableId, columns, declaredNames, withheld,
+				ChannelInputs.arguments(inputChannels)),
 			filterStore(), initialFilter());
 		control.setFilterChannels(channel(context, _config.getActivePreset()),
 			channel(context, _config.getSearchTerm()));

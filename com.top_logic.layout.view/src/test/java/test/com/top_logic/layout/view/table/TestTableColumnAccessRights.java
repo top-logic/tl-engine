@@ -37,6 +37,7 @@ import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.layout.view.table.AttributeCellEditing;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
+import com.top_logic.layout.view.table.ColumnExistence;
 import com.top_logic.layout.view.table.ColumnProvider;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnResolution;
@@ -468,7 +469,7 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 	 */
 	public void testColumnReadByNoRoleNotOffered() throws ConfigurationException {
 		becomeUser(_responsible);
-		List<String> names = names(columns());
+		List<String> names = offered(columns());
 
 		assertFalse(names.contains(CLASSIFIED));
 		assertTrue(names.contains(BUDGET));
@@ -480,9 +481,11 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 	 */
 	public void testWithheldColumns() throws ConfigurationException {
 		becomeUser(_responsible);
-		List<Column<?, ?>> built = columns().stream().<Column<?, ?>> map(ColumnSetup::buildColumn).toList();
+		List<ColumnSetup> setups = columns();
+		List<Column<?, ?>> built = setups.stream().<Column<?, ?>> map(ColumnSetup::buildColumn).toList();
 
-		assertEquals(Set.of(CLASSIFIED),
+		assertEquals(Set.of(CLASSIFIED), ColumnExistence.of(setups).withheldColumns());
+		assertEquals("Every declared column is built.", Set.of(),
 			ColumnDeclarations.withheld(List.of(NAME, BUDGET, CLASSIFIED, COMPUTED_BUDGET), built));
 	}
 
@@ -491,7 +494,7 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 	 */
 	public void testDerivedColumnsFollowReadRight() {
 		becomeUser(_responsible);
-		List<String> names = names(ColumnDeclarations.resolve(ColumnDeclarations.mainColumns(type(PROJECT)),
+		List<String> names = offered(ColumnDeclarations.resolve(ColumnDeclarations.mainColumns(type(PROJECT)),
 			new ColumnResolution(type(PROJECT), null)));
 
 		assertFalse(names.contains(CLASSIFIED));
@@ -630,6 +633,11 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 
 	private static List<String> names(List<ColumnSetup> columns) {
 		return columns.stream().map(ColumnSetup::name).toList();
+	}
+
+	/** The names of the given columns that exist for the current user. */
+	private static List<String> offered(List<ColumnSetup> columns) {
+		return columns.stream().filter(column -> column.exists().holds()).map(ColumnSetup::name).toList();
 	}
 
 	/**

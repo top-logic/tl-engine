@@ -48,12 +48,16 @@ public final class ReadOnlyObjectTable {
 			List<?> rows) {
 		ViewContext viewContext = context instanceof ViewContext view ? view : new DefaultViewContext(context);
 		ColumnResolution scope = new ColumnResolution(rowType, viewContext);
+		List<ColumnSetup> setups = ColumnDeclarations.resolve(ColumnDeclarations.mainColumns(rowType), scope);
 		List<Column<Object, ?>> columns = new ArrayList<>();
-		for (ColumnSetup setup : ColumnDeclarations.resolve(ColumnDeclarations.mainColumns(rowType), scope)) {
+		for (ColumnSetup setup : setups) {
 			columns.add(setup.buildColumn());
 		}
 		ListRowSource<Object> source = new ListRowSource<>(new ArrayList<>(rows), columns);
-		return new TableViewControl<>(viewContext, DefaultTableView.create(columns, source), false);
+		DefaultTableView<Object> view = DefaultTableView.create(columns, source);
+		// A column of an attribute the user may read on no row does not exist.
+		view.setAbsentColumns(ColumnExistence.of(setups).absentColumns());
+		return new TableViewControl<>(viewContext, view, false);
 	}
 
 }

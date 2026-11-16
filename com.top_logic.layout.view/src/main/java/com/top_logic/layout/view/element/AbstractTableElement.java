@@ -1015,22 +1015,24 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		columns.addAll(this.<Object> rowCommandColumns(activation, activate));
 		S source = sourceFactory.apply(columns);
 		Set<String> hiddenByDefault = ColumnDeclarations.hiddenByDefault(setups);
+		ColumnExistence existence = ColumnExistence.of(setups);
 		TableViewState initialState = DefaultTableView.initialState(columns, defaultSort(), hiddenByDefault);
 		initialState.setFrozenCount(_config.getFixedColumns());
 		initialState.setGrouping(grouping);
 		initialState.setSelection(Selection.none(_config.getSelectionMode()));
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState,
 			PersonalConfigViewStateStore.INSTANCE, tableId, hiddenByDefault,
-			declaredFilters(tableId, columns, declaredNames, inputValues), filterStore(), _initialFilter);
+			declaredFilters(tableId, columns, declaredNames, existence.withheldColumns(), inputValues), filterStore(),
+			_initialFilter);
 		if (rowCssClass != null) {
 			view.setRowCssClass(rowCssClass);
 		}
 		// The columns that do not exist must not be displayed from the first state on.
-		ColumnExistence existence = ColumnExistence.of(setups);
 		view.setAbsentColumns(existence.absentColumns());
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, treeMode);
 		control.addCleanupAction(existence.observe(control::setAbsentColumns)::dispose);
+		control.setAbsentColumnsOnRefresh(existence.onRefresh());
 		activate.bind(control);
 		control.setCssClass(_config.getCssClass());
 		control.setFilterBar(filterBar());
@@ -1085,8 +1087,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		if (_presets.isEmpty()) {
 			return false;
 		}
-		table.view().setDeclaredFilters(
-			declaredFilters(table.tableId(), table.columns(), table.declaredNames(), inputValues));
+		table.view().setDeclaredFilters(declaredFilters(table.tableId(), table.columns(), table.declaredNames(),
+			ColumnExistence.of(table.setups()).withheldColumns(), inputValues));
 		return true;
 	}
 
@@ -1257,13 +1259,16 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The names of the columns the table declares; one of them missing from the given
 	 *        columns is withheld from the current user, see
 	 *        {@link ColumnDeclarations#withheld(Collection, List)}.
+	 * @param withheld
+	 *        The names of the given columns that do not exist because the current user may not see
+	 *        them, see {@link ColumnExistence#withheldColumns()}.
 	 * @param arguments
 	 *        The values of the {@link Config#getInputs() input channels}, in declaration order -
 	 *        the arguments of every criterion expression, as they are the arguments of the
 	 *        functions computing the rows.
 	 */
 	protected final List<NamedFilter> declaredFilters(TableId tableId, List<? extends Column<?, ?>> columns,
-			Collection<String> declaredNames, Object[] arguments) {
+			Collection<String> declaredNames, Set<String> withheld, Object[] arguments) {
 		if (_presets.isEmpty()) {
 			return List.of();
 		}
@@ -1276,8 +1281,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			declarations.add(new DeclaredFilters.Declaration(preset.id(), preset.label(), criteria,
 				preset.cssClass(), preset.counted()));
 		}
-		return DeclaredFilters.resolve(_log, tableId.value(), declarations, columns,
-			ColumnDeclarations.withheld(declaredNames, columns));
+		Set<String> withheldColumns = ColumnDeclarations.withheld(declaredNames, columns);
+		withheldColumns.addAll(withheld);
+		return DeclaredFilters.resolve(_log, tableId.value(), declarations, columns, withheldColumns);
 	}
 
 	/**

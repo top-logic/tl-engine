@@ -26,6 +26,12 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * follows it {@link #observe(Collection, Runnable) observes} its {@link #channels()} and asks it
  * again when one of them takes a new value.
  * </p>
+ *
+ * <p>
+ * A condition may also depend on the state of the model, e.g. on the access rights of the user.
+ * Such a condition is asked again where its follower learns that the model changed - a table asks
+ * the conditions of its columns again after its rows were refreshed.
+ * </p>
  */
 public interface ChannelCondition {
 
@@ -60,8 +66,22 @@ public interface ChannelCondition {
 	boolean holds();
 
 	/**
-	 * The channels whose values the condition depends on: whether it {@link #holds()} can change
-	 * only when one of them takes a new value.
+	 * Whether the condition currently does not hold because the current user may not see what it
+	 * guards, rather than because of the values of its channels.
+	 *
+	 * <p>
+	 * What such a condition guards is withheld from the user: nothing may be derived from it that
+	 * the user could not derive without it, e.g. a declared filter on a column withheld this way is
+	 * not offered.
+	 * </p>
+	 */
+	default boolean withholds() {
+		return false;
+	}
+
+	/**
+	 * The channels whose values the condition depends on: apart from a change of the model,
+	 * whether it {@link #holds()} can change only when one of them takes a new value.
 	 */
 	List<ViewChannel> channels();
 
@@ -79,6 +99,11 @@ public interface ChannelCondition {
 			@Override
 			public boolean holds() {
 				return self.holds() && other.holds();
+			}
+
+			@Override
+			public boolean withholds() {
+				return self.withholds() || other.withholds();
 			}
 
 			@Override

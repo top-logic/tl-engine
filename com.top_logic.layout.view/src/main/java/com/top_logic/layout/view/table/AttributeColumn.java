@@ -15,6 +15,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.view.channel.ChannelCondition;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
@@ -34,9 +36,16 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * <p>
  * The column follows the model access rights of the user: a cell whose value the user may not read
  * on its row is empty, and a column whose attribute the user may read on no row at all is not
- * offered. Where the rows are edited, a cell is edited as a form field for its attribute on that row
- * is: only where the model lets the attribute be edited and the user may write it.
+ * offered. Since the rows the user may read an attribute on change with the data - the user's first
+ * object of a type grants the role reading it - such a column exists as soon as the user may read
+ * the attribute on some row, from the next refresh of the rows of the table on. Where the rows are
+ * edited, a cell is edited as a form field for its attribute on that row is: only where the model
+ * lets the attribute be edited and the user may write it.
  * </p>
+ *
+ * @implNote A column of an attribute the user may read on no row is
+ *           {@link ChannelCondition#withholds() withheld} until the table asks its existence again
+ *           after a refresh, see {@link ColumnExistence#onRefresh()}.
  */
 @InApp
 public class AttributeColumn extends AbstractColumnDeclaration {
@@ -118,13 +127,14 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 	public List<ColumnSetup> resolve(ColumnResolution scope) {
 		String attribute = _attribute;
 		TLStructuredTypePart part = scope.part(attribute);
-		if (part != null && !mayRead(scope, attribute)) {
-			// The user may read the attribute on no row at all - the column is not offered.
-			return List.of();
-		}
-		return List.of(setup(attribute, derivedLabel(part), ColumnType.of(part),
+		ColumnSetup setup = setup(attribute, derivedLabel(part), ColumnType.of(part),
 			row -> ColumnProviderService.attributeValue(row, attribute), new AttributeCellEditing(attribute),
-			scope));
+			scope);
+		if (part != null && !mayRead(scope, attribute)) {
+			// The user may read the attribute on no row now - the column exists once that changes.
+			return List.of(setup.existingIf(new ReadableAttribute(scope, attribute)));
+		}
+		return List.of(setup);
 	}
 
 	/**
@@ -145,6 +155,48 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * The condition that the current user may read an attribute on some row of a table.
+	 *
+	 * <p>
+	 * Whether the user may read the attribute on any row depends on the roles the user holds on the
+	 * objects of the application, not on a channel: it is asked again whenever the rows of the table
+	 * were refreshed. Once it holds, it holds for the rest of the table's life, so that a column
+	 * shown is not checked again on every refresh.
+	 * </p>
+	 */
+	private static final class ReadableAttribute implements ChannelCondition {
+
+		private final ColumnResolution _scope;
+
+		private final String _attribute;
+
+		private boolean _readable;
+
+		ReadableAttribute(ColumnResolution scope, String attribute) {
+			_scope = scope;
+			_attribute = attribute;
+		}
+
+		@Override
+		public boolean holds() {
+			if (!_readable) {
+				_readable = mayRead(_scope, _attribute);
+			}
+			return _readable;
+		}
+
+		@Override
+		public boolean withholds() {
+			return !holds();
+		}
+
+		@Override
+		public List<ViewChannel> channels() {
+			return List.of();
+		}
 	}
 
 	/**

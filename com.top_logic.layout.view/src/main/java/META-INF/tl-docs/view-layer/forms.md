@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, fields of attributes with a <fallback-storage> showing the inherited value, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form, resetting or recomputing dependent fields when a field changes with <value-listeners> and <script>, also in the rows of a <composition-table>), the fields of the object a reference of the form's object points to, edited and saved with it (<object-fields attribute="...">), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, images with a preview in an image field (<binary-display presentation="image-upload">, an image gallery of tl.imagegallery:GalleryImage), normalizing an entered value with <value-normalizer>, fields of derived attributes, fields of attributes with a <fallback-storage> showing the inherited value, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form, resetting or recomputing dependent fields when a field changes with <value-listeners> and <script>, also in the rows of a <composition-table>), the fields of the object a reference of the form's object points to, edited and saved with it (<object-fields attribute="...">), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -434,8 +434,8 @@ chips by default (`FieldControlRegistry.FILE_CHIPS`, `ReactFileChipsControl`, cl
 one chip per file, a button and a drop area adding several files at once. The model annotation
 `<binary-display presentation="list"/>` (`BinaryDisplay.BinaryPresentation.LIST`) shows them as a
 list with one file field per file instead (`ReactValueListControl` over `FieldControlRegistry.BINARY`),
-whose add button uploads several files at once, one value per file. `data-item` (the default) and
-`image-upload` both give the chips. The annotation `<accepted-types value="image/*, *.pdf"/>`
+whose add button uploads several files at once, one value per file. `data-item` (the default)
+gives the chips; `image-upload` gives the image field described below. The annotation `<accepted-types value="image/*, *.pdf"/>`
 (`TLAcceptedTypes`, MIME types or file patterns) limits the files the file picker offers, for a
 single and a multi-valued value alike. The annotation `<max-upload-size value="5m"/>`
 (`TLMaxUploadSize`) limits the size of each file uploaded to the attribute; the application-wide
@@ -461,6 +461,61 @@ multi-valued `tl.core:Binary` property.
 	</annotations>
 </property>
 ```
+
+**Images** — `<binary-display presentation="image-upload"/>`
+(`BinaryDisplay.BinaryPresentation.IMAGE_UPLOAD`) shows a binary value as images
+(`FieldControlRegistry.IMAGE`, `ReactImageFieldControl`, client `TLImageField`), a single and a
+multi-valued value alike. Each image is a tile showing its preview, all tiles of one size. While the
+field is edited, a tile carries a button replacing its image by a picked file - a file dropped on the
+tile replaces it as well - and a button "✕" removing it; the images of an ordered attribute are moved
+by the handle of their tile, by dragging or with Alt + arrow key. Without an image - for a single
+value also right after "✕" - the field is a dashed area of the size of a tile, "Upload image", that
+takes a dropped file or opens the file picker on click; a multi-valued field keeps this area after
+its last tile and adds every file dropped or picked there. A field that is only displayed shows the
+previews alone. The previews are fetched from the data endpoint of the control, the images never
+enter the client state. The image field is chosen by the annotation only: `<accepted-types
+value="image/*"/>` alone keeps the chips. `<accepted-types>` and `<max-upload-size>` act as for every
+binary value, and the annotations act on a `<value-input>` of type `tl.core:Binary` as well. In a
+table cell the names of the images stand for the field, with a button opening it in a dialog.
+
+```xml
+<property name="pictures"
+	multiple="true"
+	ordered="true"
+	type="tl.core:Binary"
+>
+	<annotations>
+		<accepted-types value="image/*"/>
+		<binary-display presentation="image-upload"/>
+	</annotations>
+</property>
+```
+
+**Image galleries** — a gallery is a multi-valued, ordered reference to `tl.imagegallery:GalleryImage`;
+each image is an object of its own, stored and deleted by the storage of the gallery
+(`ImageGalleryStorage`, chosen automatically for such a reference). It is edited in the same image
+field without any annotation: `FieldControlService` maps the type `tl.imagegallery:GalleryImage` to
+`GalleryFieldControlProvider`, which shows the image of each gallery image and turns an uploaded file
+into a new gallery image (`TransientGalleryImage`) that the storage makes persistent on save - in an
+edited object and in a new one alike. The file picker offers images (`image/*`). Only a gallery is
+edited this way (`GalleryImage.isGallery(multiple, ordered)`): a single reference to a gallery image,
+or a set of them without order, is a plain reference, chosen from the existing gallery images. A
+`<value-input>` of the gallery type that is `multiple="true" ordered="true"` gets the image field as
+well.
+
+```xml
+<reference name="gallery"
+	bag="true"
+	kind="forwards"
+	multiple="true"
+	ordered="true"
+	type="tl.imagegallery:GalleryImage"
+/>
+```
+
+A provider configured for a type may apply to some fields of that type only: where its
+`ReactFieldControlProvider.appliesTo(FieldSpec)` refuses a field - by its multiplicity or its order -,
+the field is resolved as if no provider were configured for the type.
 
 
 The display is how the field looks, not what it says: it is a rendering-only state key, kept out of

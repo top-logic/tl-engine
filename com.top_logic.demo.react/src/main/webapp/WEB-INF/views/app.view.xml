@@ -278,6 +278,15 @@
 							<de>Tiles Mehr-Tab-Demo</de>
 						</label>
 					</nav-item>
+					<nav-item id="tiles-typed-demo"
+						icon="css:bi bi-funnel"
+					>
+						<view-ref view="demo/tiles-typed-demo.view.xml"/>
+						<label>
+							<en>Tiles Typed Demo</en>
+							<de>Tiles-Demo nach Typ</de>
+						</label>
+					</nav-item>
 					<nav-item id="responsive-md-demo"
 						icon="css:bi bi-layout-sidebar-inset"
 					>

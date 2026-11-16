@@ -14,7 +14,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -23,8 +23,11 @@ import com.top_logic.layout.react.routing.RouteMatch;
 import com.top_logic.layout.react.routing.RoutePattern;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.model.TLStructuredType;
@@ -37,9 +40,9 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  *
  * <p>
  * Translates in both directions between a {@link TileFrame} and the piece of URL describing it:
- * {@link #segment(Map)} produces the segments for the parameters a frame holds,
- * {@link #resolveParams(RouteMatch, List)} turns the parameters a URL carries back into the values a
- * frame is mounted with. Either direction yields nothing where a value has no counterpart on the
+ * {@link #segment(Map, Map)} produces the segments for the parameters a frame holds,
+ * {@link #resolveParams(RouteMatch, List, Map)} turns the parameters a URL carries back into the
+ * values a frame is mounted with. Either direction yields nothing where a value has no counterpart on the
  * other side, which is how a frame that cannot be addressed stays out of the URL and a URL that names
  * nothing displayable restores no frame. A declaration without a route has no address at all.
  * </p>
@@ -48,6 +51,13 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * A frame may also hold {@link #pathParams() path parameters}, which the URL does not carry: their
  * values follow from the frames below on the path and are taken from there when the frame is
  * restored.
+ * </p>
+ *
+ * <p>
+ * The conversion of a parameter may read {@link FrameParamConfig#getInputs() inputs}, channels of
+ * the view declaring the stack. The declaration names them only: a stack displaying it
+ * {@link #resolveInputs(ViewContext) resolves} them in the context of its view and hands the
+ * channels to each conversion, so that one declaration serves every display of the stack.
  * </p>
  *
  * <p>
@@ -64,9 +74,11 @@ public final class FrameRoute {
 
 	private final RoutePattern _pattern;
 
-	private final Map<String, Function<Object, String>> _toUrl;
+	private final Map<String, BiFunction<List<ViewChannel>, Object, String>> _toUrl;
 
-	private final Map<String, Function<String, Object>> _fromUrl;
+	private final Map<String, BiFunction<List<ViewChannel>, String, Object>> _fromUrl;
+
+	private final Map<String, List<InputRef>> _inputs;
 
 	private final List<String> _pathParams;
 
@@ -87,17 +99,20 @@ public final class FrameRoute {
 	 *        Pattern of the URL segments a frame of that view occupies, e.g.
 	 *        {@code "person/:person"}, or {@code null} for a frame without an address.
 	 * @param toUrl
-	 *        Conversions of parameter values to URL texts, by parameter name. A parameter without an
-	 *        entry is converted by its own text representation.
+	 *        Conversions of parameter values to URL texts, by parameter name, each applied to the
+	 *        resolved inputs of its parameter and the value. A parameter without an entry is
+	 *        converted by its own text representation.
 	 * @param fromUrl
-	 *        Conversions of URL texts to parameter values, by parameter name. A parameter without an
-	 *        entry is taken as the text it is.
+	 *        Conversions of URL texts to parameter values, by parameter name, each applied to the
+	 *        resolved inputs of its parameter and the text. A parameter without an entry is taken
+	 *        as the text it is.
 	 * @param label
 	 *        Provider naming a frame of this view, or {@code null} for frames named by whoever
 	 *        pushes them.
 	 */
-	public FrameRoute(String id, String viewRef, String route, Map<String, Function<Object, String>> toUrl,
-			Map<String, Function<String, Object>> fromUrl, TileLabelProvider label) {
+	public FrameRoute(String id, String viewRef, String route,
+			Map<String, BiFunction<List<ViewChannel>, Object, String>> toUrl,
+			Map<String, BiFunction<List<ViewChannel>, String, Object>> fromUrl, TileLabelProvider label) {
 		this(id, viewRef, route, toUrl, fromUrl, List.of(), label, false);
 	}
 
@@ -113,11 +128,13 @@ public final class FrameRoute {
 	 *        Pattern of the URL segments a frame of that view occupies, e.g.
 	 *        {@code "person/:person"}, or {@code null} for a frame without an address.
 	 * @param toUrl
-	 *        Conversions of parameter values to URL texts, by parameter name. A parameter without an
-	 *        entry is converted by its own text representation.
+	 *        Conversions of parameter values to URL texts, by parameter name, each applied to the
+	 *        resolved inputs of its parameter and the value. A parameter without an entry is
+	 *        converted by its own text representation.
 	 * @param fromUrl
-	 *        Conversions of URL texts to parameter values, by parameter name. A parameter without an
-	 *        entry is taken as the text it is.
+	 *        Conversions of URL texts to parameter values, by parameter name, each applied to the
+	 *        resolved inputs of its parameter and the text. A parameter without an entry is taken
+	 *        as the text it is.
 	 * @param pathParams
 	 *        Names of the parameters the frame takes from the frames below it on the path, see
 	 *        {@link #pathParams()}. None of them is a placeholder of the route.
@@ -128,14 +145,55 @@ public final class FrameRoute {
 	 *        Whether the label of a frame of this view is the final title of the page, see
 	 *        {@link #isFinalTitle()}.
 	 */
-	public FrameRoute(String id, String viewRef, String route, Map<String, Function<Object, String>> toUrl,
-			Map<String, Function<String, Object>> fromUrl, List<String> pathParams, TileLabelProvider label,
-			boolean finalTitle) {
+	public FrameRoute(String id, String viewRef, String route,
+			Map<String, BiFunction<List<ViewChannel>, Object, String>> toUrl,
+			Map<String, BiFunction<List<ViewChannel>, String, Object>> fromUrl, List<String> pathParams,
+			TileLabelProvider label, boolean finalTitle) {
+		this(id, viewRef, route, toUrl, fromUrl, Map.of(), pathParams, label, finalTitle);
+	}
+
+	/**
+	 * Creates a {@link FrameRoute}.
+	 *
+	 * @param id
+	 *        The {@link #id() id} of the declaration, {@code null} only for the
+	 *        {@link #initial(String, List) declaration of the initial view}.
+	 * @param viewRef
+	 *        Path of the frame view this route describes, relative to {@code /WEB-INF/views/}.
+	 * @param route
+	 *        Pattern of the URL segments a frame of that view occupies, e.g.
+	 *        {@code "person/:person"}, or {@code null} for a frame without an address.
+	 * @param toUrl
+	 *        Conversions of parameter values to URL texts, by parameter name, each applied to the
+	 *        resolved inputs of its parameter and the value. A parameter without an entry is
+	 *        converted by its own text representation.
+	 * @param fromUrl
+	 *        Conversions of URL texts to parameter values, by parameter name, each applied to the
+	 *        resolved inputs of its parameter and the text. A parameter without an entry is taken
+	 *        as the text it is.
+	 * @param inputs
+	 *        The channels the conversions of a parameter read, by parameter name, see
+	 *        {@link #resolveInputs(ViewContext)}. A parameter without an entry reads none.
+	 * @param pathParams
+	 *        Names of the parameters the frame takes from the frames below it on the path, see
+	 *        {@link #pathParams()}. None of them is a placeholder of the route.
+	 * @param label
+	 *        Provider naming a frame of this view, or {@code null} for frames named by whoever
+	 *        pushes them.
+	 * @param finalTitle
+	 *        Whether the label of a frame of this view is the final title of the page, see
+	 *        {@link #isFinalTitle()}.
+	 */
+	public FrameRoute(String id, String viewRef, String route,
+			Map<String, BiFunction<List<ViewChannel>, Object, String>> toUrl,
+			Map<String, BiFunction<List<ViewChannel>, String, Object>> fromUrl, Map<String, List<InputRef>> inputs,
+			List<String> pathParams, TileLabelProvider label, boolean finalTitle) {
 		_id = id;
 		_viewRef = viewRef;
 		_pattern = route == null ? null : RoutePattern.compile(route, viewRef);
 		_toUrl = Map.copyOf(toUrl);
 		_fromUrl = Map.copyOf(fromUrl);
+		_inputs = Map.copyOf(inputs);
 		_pathParams = List.copyOf(pathParams);
 		for (String name : _pathParams) {
 			if (placeholders().contains(name)) {
@@ -254,10 +312,17 @@ public final class FrameRoute {
 		String route = config.getRoute();
 		List<String> placeholders =
 			route == null ? List.of() : RoutePattern.compile(route, config.getView().getPath()).paramNames();
-		Map<String, Function<Object, String>> toUrl = new HashMap<>();
-		Map<String, Function<String, Object>> fromUrl = new HashMap<>();
+		Map<String, BiFunction<List<ViewChannel>, Object, String>> toUrl = new HashMap<>();
+		Map<String, BiFunction<List<ViewChannel>, String, Object>> fromUrl = new HashMap<>();
+		Map<String, List<InputRef>> inputs = new HashMap<>();
 		List<String> pathParams = new ArrayList<>();
 		for (FrameParamConfig param : config.getParams()) {
+			if (!param.getInputs().isEmpty() && param.getExpr() == null && param.getReverse() == null) {
+				context.error("The parameter '" + param.getName() + "' of the frame '" + config.getId() + "' at "
+					+ param.location() + " declares '" + Inputs.INPUTS + "' but neither an '" + FrameParamConfig.EXPR
+					+ "' nor a '" + FrameParamConfig.REVERSE + "' conversion that could read them.");
+				continue;
+			}
 			if (!placeholders.contains(param.getName())) {
 				if (param.getExpr() != null || param.getReverse() != null) {
 					context.error("The parameter '" + param.getName() + "' of the frame '" + config.getId()
@@ -272,17 +337,22 @@ public final class FrameRoute {
 			}
 			QueryExecutor expr = InputScript.compile(param, FrameParamConfig.EXPR);
 			if (expr != null) {
-				toUrl.put(param.getName(), value -> asText(expr.execute(value)));
+				toUrl.put(param.getName(),
+					(channels, value) -> asText(expr.execute(ChannelInputs.arguments(channels, value))));
 			}
 			QueryExecutor reverse = InputScript.compile(param, FrameParamConfig.REVERSE);
 			if (reverse != null) {
-				fromUrl.put(param.getName(), text -> reverse.execute(text));
+				fromUrl.put(param.getName(),
+					(channels, text) -> reverse.execute(ChannelInputs.arguments(channels, text)));
+			}
+			if (!param.getInputs().isEmpty()) {
+				inputs.put(param.getName(), param.getInputs());
 			}
 		}
 		PolymorphicConfiguration<? extends TileLabelProvider> labelConfig = config.getLabel();
 		TileLabelProvider label = labelConfig != null ? context.getInstance(labelConfig) : null;
-		return new FrameRoute(config.getId(), config.getView().getPath(), route, toUrl, fromUrl, pathParams, label,
-			config.getFinalTitle());
+		return new FrameRoute(config.getId(), config.getView().getPath(), route, toUrl, fromUrl, inputs, pathParams,
+			label, config.getFinalTitle());
 	}
 
 	/**
@@ -379,22 +449,73 @@ public final class FrameRoute {
 	}
 
 	/**
+	 * The channels the conversions of the parameters of this declaration read, resolved in the
+	 * context of a view displaying the stack.
+	 *
+	 * <p>
+	 * A stack resolves them once, when it is displayed, and hands them to
+	 * {@link #segment(Map, Map)} and {@link #resolveParams(RouteMatch, List, Map)}; the declaration
+	 * itself keeps no channels.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context of the view declaring the stack, {@code null} for a stack displayed without
+	 *        one, whose declarations then must not read inputs.
+	 * @return The channels of the {@link FrameParamConfig#getInputs() inputs} of each parameter
+	 *         having any, by parameter name, in declaration order.
+	 * @throws IllegalArgumentException
+	 *         If an input names a channel the context does not know.
+	 */
+	public Map<String, List<ViewChannel>> resolveInputs(ViewContext context) {
+		if (_inputs.isEmpty()) {
+			return Map.of();
+		}
+		if (context == null) {
+			throw new IllegalStateException("The parameters " + _inputs.keySet() + " of " + describe()
+				+ " read inputs, which a stack without the context of its view cannot resolve.");
+		}
+		Map<String, List<ViewChannel>> result = new HashMap<>();
+		for (Map.Entry<String, List<InputRef>> entry : _inputs.entrySet()) {
+			result.put(entry.getKey(), ChannelInputs.resolve(context, entry.getValue()));
+		}
+		return result;
+	}
+
+	/**
+	 * The channels of the inputs of the given parameter among the given resolved ones.
+	 */
+	private List<ViewChannel> inputsOf(Map<String, List<ViewChannel>> inputs, String name) {
+		if (!_inputs.containsKey(name)) {
+			return List.of();
+		}
+		List<ViewChannel> result = inputs.get(name);
+		if (result == null) {
+			throw new IllegalStateException(
+				"The inputs of the parameter '" + name + "' of " + describe() + " are not resolved.");
+		}
+		return result;
+	}
+
+	/**
 	 * The URL segments describing a frame with the given parameters.
 	 *
 	 * @param params
 	 *        The parameters of the frame, as {@link TileFrame#getParams()} holds them.
+	 * @param inputs
+	 *        The channels the conversions read, as {@link #resolveInputs(ViewContext)} resolves them
+	 *        for the stack displaying the frame.
 	 * @return The segments, or {@code null} if the declaration has no route or a parameter of the
 	 *         route has no value that a URL can carry - a frame that cannot be addressed.
 	 */
-	public String segment(Map<String, Object> params) {
+	public String segment(Map<String, Object> params, Map<String, List<ViewChannel>> inputs) {
 		if (_pattern == null) {
 			return null;
 		}
 		Map<String, String> texts = new HashMap<>();
 		for (String name : _pattern.paramNames()) {
-			Function<Object, String> conversion = _toUrl.get(name);
+			BiFunction<List<ViewChannel>, Object, String> conversion = _toUrl.get(name);
 			Object value = params.get(name);
-			String text = conversion != null ? conversion.apply(value) : asText(value);
+			String text = conversion != null ? conversion.apply(inputsOf(inputs, name), value) : asText(value);
 			if (text == null || text.isEmpty()) {
 				return null;
 			}
@@ -411,19 +532,23 @@ public final class FrameRoute {
 	 * @param below
 	 *        The frames of the path below the frame to restore, lowest first. The
 	 *        {@link #pathParams() path parameters} are taken from them.
+	 * @param inputs
+	 *        The channels the conversions read, as {@link #resolveInputs(ViewContext)} resolves them
+	 *        for the stack restoring the frame.
 	 * @return The parameter values, or {@code null} if the URL names something the display cannot
 	 *         show, or no frame below holds the value of a path parameter - a frame that must not be
 	 *         restored.
 	 */
-	public Map<String, Object> resolveParams(RouteMatch match, List<TileFrame> below) {
+	public Map<String, Object> resolveParams(RouteMatch match, List<TileFrame> below,
+			Map<String, List<ViewChannel>> inputs) {
 		Map<String, Object> params = new LinkedHashMap<>();
 		for (String name : placeholders()) {
 			String text = match.params().get(name);
 			if (text == null) {
 				return null;
 			}
-			Function<String, Object> conversion = _fromUrl.get(name);
-			Object value = conversion != null ? conversion.apply(text) : text;
+			BiFunction<List<ViewChannel>, String, Object> conversion = _fromUrl.get(name);
+			Object value = conversion != null ? conversion.apply(inputsOf(inputs, name), text) : text;
 			if (value == null) {
 				return null;
 			}

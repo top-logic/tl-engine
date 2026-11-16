@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
+<!--
+	Model of TestAgentTokenMigration: the module tl.agent as the application defined it before its
+	access tokens became tl.accounts:AccessToken, and a module whose objects are stored in the same
+	generic table and must survive the deletion of tl.agent.
+-->
 <model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
 	<module name="tl.agent">
 		<!--
@@ -115,6 +120,21 @@
 				/>
 				<property name="invitation"
 					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+	</module>
+	<module name="test.agentmigration">
+		<class name="Other">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<reference name="owner"
+					type="tl.accounts:Person"
 				/>
 			</attributes>
 		</class>

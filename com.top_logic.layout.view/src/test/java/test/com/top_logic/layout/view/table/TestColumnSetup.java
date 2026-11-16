@@ -20,6 +20,7 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.base.locking.handler.NoTokenHandling;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.react.DefaultReactContext;
@@ -147,7 +148,7 @@ public class TestColumnSetup extends TestCase {
 			false);
 		Column<Object, ?> column = setup.buildInPlaceColumn(row -> {
 			// Nothing to refresh.
-		});
+		}, NoTokenHandling.INSTANCE);
 
 		assertTrue("An editable cell shows its control.",
 			column.renderCell(Map.of(ATTRIBUTE, fixed, editable, "yes")) instanceof CellContent.Raw);

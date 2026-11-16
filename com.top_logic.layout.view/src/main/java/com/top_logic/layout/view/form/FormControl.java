@@ -40,7 +40,7 @@ import com.top_logic.model.listen.ModelScope;
 import com.top_logic.layout.form.component.I18NConstants;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.util.error.TopLogicException;
-import com.top_logic.basic.exception.ErrorSeverity;
+import com.top_logic.layout.view.ViewMessages;
 
 /**
  * Session-scoped form control managing the editing lifecycle (view/edit mode, locking, KB
@@ -770,7 +770,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 					throw ex;
 				}
 				ChannelNotificationScope.current().afterNotification(this::updateEditModeChannel);
-				reportShownReadOnly(ex);
+				ViewMessages.lockConflict(getReactContext(),
+					com.top_logic.layout.view.I18NConstants.FORM_SHOWN_READ_ONLY, ex);
 				return false;
 			}
 		}
@@ -798,20 +799,6 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		setupEditSession();
 		return true;
-	}
-
-	/**
-	 * Tells the user in passing that the displayed object is shown read-only, because its lock
-	 * could not be acquired.
-	 *
-	 * @param conflict
-	 *        The failure of acquiring the lock, whose details say who holds it.
-	 */
-	private void reportShownReadOnly(TopLogicException conflict) {
-		TopLogicException info = new TopLogicException(com.top_logic.layout.view.I18NConstants.FORM_SHOWN_READ_ONLY);
-		info.initDetails(conflict.getDetails());
-		info.initSeverity(ErrorSeverity.INFO);
-		CommandErrors.show(getReactContext().getErrorSink(), info);
 	}
 
 	/**

@@ -5,7 +5,6 @@
  */
 package test.com.top_logic.layout.view.form;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -20,18 +19,15 @@ import com.top_logic.base.locking.LockService;
 import com.top_logic.base.locking.handler.DefaultLockHandler;
 import com.top_logic.base.locking.handler.NoTokenHandling;
 import com.top_logic.base.locking.token.Token;
-import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
-import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.react.DefaultReactContext;
-import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -220,7 +216,7 @@ public class TestFormLocking extends AbstractModelAccessTest {
 
 		assertFalse(second.isEditMode());
 		assertEquals(Boolean.FALSE, window._editMode.get());
-		assertEquals(List.of(shownReadOnly(_project)), window._shown);
+		assertEquals(List.of(shownReadOnly(_project)), window._messages.shown());
 		assertTrue("The lock of the first form is kept.", first.isEditMode());
 		assertLocked(_project);
 	}
@@ -235,7 +231,7 @@ public class TestFormLocking extends AbstractModelAccessTest {
 
 		assertTrue(form.isEditMode());
 		assertEquals(Boolean.TRUE, window._editMode.get());
-		assertEquals(List.of(), window._shown);
+		assertEquals(List.of(), window._messages.shown());
 		assertLocked(_project);
 	}
 
@@ -257,7 +253,7 @@ public class TestFormLocking extends AbstractModelAccessTest {
 		window._input.set(_project);
 
 		assertFalse(second.isEditMode());
-		assertEquals(List.of(shownReadOnly(_project)), window._shown);
+		assertEquals(List.of(shownReadOnly(_project)), window._messages.shown());
 		assertNotLocked(_otherProject);
 		assertTrue(first.isEditMode());
 	}
@@ -282,23 +278,31 @@ public class TestFormLocking extends AbstractModelAccessTest {
 		assertFalse(second.isEditMode());
 		assertEquals(Boolean.FALSE, window._editMode.get());
 		assertEquals("A refused command is reported by the command dispatch, not by the form.",
-			List.of(), window._shown);
+			List.of(), window._messages.shown());
 	}
 
 	/**
 	 * The text the user reads when a form shows the given object read-only because someone else
 	 * has locked it.
 	 */
-	private static String shownReadOnly(TLObject object) {
+	public static String shownReadOnly(TLObject object) {
+		return lockConflictInfo(com.top_logic.layout.view.I18NConstants.FORM_SHOWN_READ_ONLY, object);
+	}
+
+	/**
+	 * The text of the info with the given title about an edit of the given object refused
+	 * because someone else has locked it.
+	 */
+	public static String lockConflictInfo(ResKey title, TLObject object) {
 		// Rendered like the shown message, in the language of the display.
-		return "info: " + text(Fragments.message(com.top_logic.layout.view.I18NConstants.FORM_SHOWN_READ_ONLY))
-			+ " " + text(Fragments.message(lockConflict(object).getDetails()));
+		return "info: " + RecordingErrorSink.text(Fragments.message(title))
+			+ " " + RecordingErrorSink.text(Fragments.message(lockConflict(object).getDetails()));
 	}
 
 	/**
 	 * The failure of acquiring the lock of the given object, which someone else holds.
 	 */
-	private static TopLogicException lockConflict(TLObject object) {
+	public static TopLogicException lockConflict(TLObject object) {
 		Lock probe = LockService.getInstance().createLock(Token.DEFAULT_OPERATION, object);
 		try {
 			probe.lock();
@@ -327,29 +331,14 @@ public class TestFormLocking extends AbstractModelAccessTest {
 
 		final DefaultViewChannel _editMode = new DefaultViewChannel(EDIT_MODE);
 
-		final List<String> _shown = new ArrayList<>();
+		final RecordingErrorSink _messages = new RecordingErrorSink();
 
 		private final ViewContext _context;
 
 		Window(TLObject object, boolean editMode) {
 			_context = new DefaultViewContext(
 				new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")))
-					.withErrorSink(new ErrorSink() {
-						@Override
-						public void showError(HTMLFragment content) {
-							_shown.add("error: " + text(content));
-						}
-
-						@Override
-						public void showWarning(HTMLFragment content) {
-							_shown.add("warning: " + text(content));
-						}
-
-						@Override
-						public void showInfo(HTMLFragment content) {
-							_shown.add("info: " + text(content));
-						}
-					});
+					.withErrorSink(_messages);
 			_input.set(object);
 			_editMode.set(Boolean.valueOf(editMode));
 			_context.registerChannel(INPUT, _input);
@@ -364,22 +353,11 @@ public class TestFormLocking extends AbstractModelAccessTest {
 		}
 	}
 
-	/** The text a message shown to the user reads, with the markup around it stripped. */
-	private static String text(HTMLFragment shown) {
-		TagWriter out = new TagWriter();
-		try {
-			shown.write(new DummyDisplayContext(), out);
-		} catch (IOException ex) {
-			throw new AssertionError(ex);
-		}
-		return out.toString().replaceAll("<[^>]*>", " ").replaceAll("\\s+", " ").trim();
-	}
-
-	private static void assertLocked(TLObject object) {
+	public static void assertLocked(TLObject object) {
 		assertTrue("Expected the object to be locked: " + object, isLocked(object));
 	}
 
-	private static void assertNotLocked(TLObject object) {
+	public static void assertNotLocked(TLObject object) {
 		assertFalse("Expected the object not to be locked: " + object, isLocked(object));
 	}
 

@@ -9,6 +9,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
@@ -18,7 +19,11 @@ import com.top_logic.layout.view.form.BoundFieldModel;
 import com.top_logic.layout.view.form.EditLevel;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
+import com.top_logic.layout.view.I18NConstants;
+import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.view.form.FunctionFieldModel;
+import com.top_logic.model.TLObject;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link CellEditing} of a cell whose value is read from the row and written back to it by
@@ -113,18 +118,48 @@ public class ValueCellEditing implements CellEditing {
 	 * when the user enters it. A failing write is rolled back and leaves the field as it was.
 	 * </p>
 	 *
+	 * <p>
+	 * A persistent row object is locked while the value is written, and the lock is released right
+	 * after. When someone else holds the lock - e.g. a form editing the object -, nothing is
+	 * written: the cell shows the stored value again, and the user is told that the value was not
+	 * saved and who holds the lock (see {@link ViewMessages#lockConflict}).
+	 * </p>
+	 *
+	 * @param context
+	 *        The context the cell is displayed in, which a refused write is reported to.
 	 * @param row
 	 *        The row whose cell is edited, for which {@link #canEdit(Object)} holds.
+	 * @param lockHandler
+	 *        Locks the row object while a value is written. It holds no lock between two writes,
+	 *        so the cells of one table share it.
 	 * @param written
 	 *        Called after a value was written, when the field shows it, e.g. to build the other
 	 *        cells of the row again.
 	 */
-	public BoundFieldModel createInPlaceModel(Object row, Runnable written) {
+	public BoundFieldModel createInPlaceModel(ReactContext context, Object row, LockHandler lockHandler,
+			Runnable written) {
 		BiConsumer<Object, Object> update = _update;
 		return new FunctionFieldModel(row, _value, (object, value) -> inTransaction(() -> update.accept(object, value))) {
 			@Override
 			public void setValue(Object value) {
-				super.setValue(value);
+				boolean lock = row instanceof TLObject object && !object.tTransient();
+				if (lock) {
+					try {
+						lockHandler.acquireLock(row);
+					} catch (TopLogicException ex) {
+						ViewMessages.lockConflict(context, I18NConstants.CELL_VALUE_NOT_SAVED, ex);
+						// The input shows the value the user entered, which was not written.
+						fireIfRewritten(value, getValue());
+						return;
+					}
+				}
+				try {
+					super.setValue(value);
+				} finally {
+					if (lock) {
+						lockHandler.releaseLock();
+					}
+				}
 				written.run();
 			}
 		};

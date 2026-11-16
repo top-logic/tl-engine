@@ -62,6 +62,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 		/** Type literal for {@link com.top_logic.react.flow.data.Padding}. */
 		PADDING,
 
+		/** Type literal for {@link com.top_logic.react.flow.data.Sticky}. */
+		STICKY,
+
 		/** Type literal for {@link com.top_logic.react.flow.data.Sized}. */
 		SIZED,
 
@@ -230,6 +233,7 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 			case Border.BORDER__TYPE: result = com.top_logic.react.flow.data.Border.create(); break;
 			case Fill.FILL__TYPE: result = com.top_logic.react.flow.data.Fill.create(); break;
 			case Padding.PADDING__TYPE: result = com.top_logic.react.flow.data.Padding.create(); break;
+			case Sticky.STICKY__TYPE: result = com.top_logic.react.flow.data.Sticky.create(); break;
 			case Sized.SIZED__TYPE: result = com.top_logic.react.flow.data.Sized.create(); break;
 			case ClipBox.CLIP_BOX__TYPE: result = com.top_logic.react.flow.data.ClipBox.create(); break;
 			case CompassLayout.COMPASS_LAYOUT__TYPE: result = com.top_logic.react.flow.data.CompassLayout.create(); break;

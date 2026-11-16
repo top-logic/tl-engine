@@ -216,12 +216,40 @@
 
 /* Werkzeuge nur bei Bedarf (UI-Durchgang 1): der Trichter trägt tl-reveal-on-hover (layout.css) und steht damit beim Zeigen
    auf die Kopfzelle (sein direkter Elternteil), bei Tastaturfokus und ohne Zeigen (Touch). Eine Spalte mit aktivem
-   Filter zeigt ihn immer: was in Kraft ist, steht im Bild. Zwei Klassen und ein Attribut schlagen .tl-reveal-on-hover.
+   Filter zeigt ihn immer: was in Kraft ist, steht im Bild. Zwei Klassen und ein Attribut schlagen .tl-reveal-on-hover. Die
+   Sichtbarkeit kommt aus layout.css, die Breite regelt die Regel darunter.
    Sortierpfeil und Gruppenmarke (.tl-table__mark) bleiben immer, sie stehen nur dort, wo sie gelten; der Titel bekommt
    die Breite zurück (U29). */
 .tl-table__header-cell[data-tl-state~="filtered"] .tl-table__filter {
   color: var(--tl-text-link);
   opacity: 1;
+}
+
+/* Der verborgene Trichter hält keine Breite (Review !2206): sonst stünde er, unsichtbar, zwischen Titel und Zellenende,
+   und der Titel einer Zahlenspalte endete 28 px vor den Ziffern. Die Folge Titel → Trichter bleibt in jeder Spalte
+   gleich — gespiegelt ist verworfen (U53). Beim Zeigen, bei Tastaturfokus in der Kopfzelle und bei aktivem Filter
+   fährt der Platz auf; dann gilt wieder, was der Knopf selbst sagt (button.css oder der MUI-Knopf). Ohne Zeigen
+   (Touch) steht er immer, dort bleibt er breit. Der negative Rand nimmt den gap der Kopfzelle zurück, border-width 0
+   den transparenten Rand des Knopfs. Die Übergangsliste ersetzt die von tl-reveal-on-hover (Spezifität) vollständig. */
+.tl-table__header-cell > .tl-table__filter {
+  transition:
+    opacity var(--tl-duration-fast) var(--tl-easing-standard),
+    width var(--tl-duration-fast) var(--tl-easing-standard),
+    margin-inline-start var(--tl-duration-fast) var(--tl-easing-standard),
+    border-width var(--tl-duration-fast) var(--tl-easing-standard),
+    background-color var(--tl-duration-fast) var(--tl-easing-standard),
+    border-color var(--tl-duration-fast) var(--tl-easing-standard),
+    color var(--tl-duration-fast) var(--tl-easing-standard);
+}
+@media (hover: hover) {
+  .tl-table__header-cell:not(:hover, :has(:focus-visible), [data-tl-state~="filtered"]) > .tl-table__filter {
+    width: 0;
+    min-width: 0;
+    padding-inline: 0;
+    border-width: 0;
+    margin-inline-start: calc(-1 * var(--tl-space-2xs));
+    overflow: hidden;
+  }
 }
 
 /* Die Spaltenwahl (Zahnrad) ist ein tl-button--icon --ghost über der rechten Kante des Kopfes, so hoch
@@ -453,7 +481,8 @@
    Die Aussage kommt vom Typ der Spalte (Server: ColumnKind.NUMBER), das TSX setzt data-tl-align="end" an Kopf- und
    Datenzelle; Datum und Text bleiben am Anfang. Der Lesewert in der Zelle erbt text-align. Im Kopf bleibt die Folge
    wie bei jeder Spalte (Titel, Sortiermarke, Gruppenmarke, Trichter), nur der Inhalt rückt ans Ende der Zelle: kein
-   row-reverse, sonst springt der Fokus gegen die Leserichtung. */
+   row-reverse, sonst springt der Fokus gegen die Leserichtung. Der Titel endet bündig mit den Ziffern, weil der
+   verborgene Trichter keine Breite hält (oben). */
 .tl-table__cell[data-tl-align="end"],
 .tl-table__header-cell[data-tl-align="end"] {
   justify-content: flex-end;
@@ -465,6 +494,12 @@
    über die ganze Zelle, der text-align nicht weitergibt. Er legt seinen Inhalt deshalb selbst ans Ende (U43). */
 .tl-table__cell[data-tl-align="end"] > .tl-select__values {
   justify-content: flex-end;
+}
+
+/* Ein Eingabefeld erbt text-align nicht: die Zahl, die man in der Zeile bearbeitet, stünde sonst am Anfang, während
+   die Werte darüber und darunter am Ende stehen. */
+.tl-table__cell[data-tl-align="end"] .tl-field {
+  text-align: end;
 }
 
 /* Die Auswahlspalte: input.tl-checkbox, mittig. */
@@ -504,16 +539,20 @@
   border-left: var(--tl-border-width-sm) solid var(--tl-border-emphasis);
 }
 
-/* --- Hervorgehobene Zeilen und Zellen (#29815) ------------------------------------------------ */
+/* --- Getönte Zeilen und Zellen (#29815, #30256) ----------------------------------------------- */
 
-/* Eine Zeile oder Zelle, der die Anwendung eine der Klassen tl-status-error, -warning, -success oder
-   -info gibt (TableView#rowCssClass, #cellCssClass), trägt die Rolle als data-tl-role — TLTableView
-   übersetzt die Klasse, die Rolle bleibt ein Attribut. Die Auswahl gewinnt: an einer ausgewählten Zeile
-   und ihren Zellen setzt das TSX keine Rolle. Zeigen ändert eine getönte Zeile nicht (die Fläche der
+/* Eine Zeile oder Zelle mit einer Farbrolle (TableView#rowColor, #cellColor; im State colorRole bzw.
+   cellRoles) trägt sie als data-tl-role: brand, die Status- und die Kategorierollen. Die CSS-Klassen der
+   Anwendung an Zeile und Zelle sind ihre eigenen, das Design-System liest sie nicht. Die Auswahl gewinnt:
+   an einer ausgewählten Zeile und ihren Zellen setzt das TSX keine Rolle. Zeigen ändert eine getönte Zeile nicht (die Fläche der
    Zeile steht in :where); fixierte und angeheftete Zellen erben die Tönung ihrer Zeile, eine getönte Zelle
    setzt ihre eigene. Nach den Regeln der Lage, die an haftenden Zellen inherit setzen. */
+/* @tl-roles: brand :where(.tl-table__row) */
 /* @tl-roles: status :where(.tl-table__row) */
+/* @tl-roles: category :where(.tl-table__row) */
+/* @tl-roles: brand .tl-table__cell */
 /* @tl-roles: status .tl-table__cell */
+/* @tl-roles: category .tl-table__cell */
 
 /* --- Zellinhalt ------------------------------------------------------------------ */
 
@@ -696,6 +735,24 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Bearbeitete Baumspalte: die Zelle behält ihren Abstand vorn, so steht der Toggle wie im Lesen (die
+   randlose Feldzelle oben nimmt ihn sonst weg). Das Feld nach dem Toggle ist die übrige Zelle: so hoch
+   wie die Zeile und bis zum Rand, wie die Felder der anderen Spalten. */
+.tl-table__cell:has(> .tl-table__tree) {
+  padding-inline-start: var(--tl-space-control-x);
+}
+
+.tl-table__value:has(.tl-field) {
+  display: flex;
+  flex: 1 1 auto;
+  align-self: stretch;
+}
+
+.tl-table__value:has(.tl-field) > * {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 /* Die Anzahl der Gruppenzeile ist eine kleine Kapsel (U31), so hoch wie ein Badge. Text in text-primary: text-secondary

@@ -126,6 +126,17 @@ public class ModelCreation {
 		REORDER_PROPERTIES,
 
 		/**
+		 * Checking annotations that decide by their settings whether they fit the part they are
+		 * placed on.
+		 * 
+		 * <p>
+		 * All parts have been created and annotated in the preceding phases, so that a check can
+		 * inspect the complete part, e.g. its storage.
+		 * </p>
+		 */
+		CHECK_ANNOTATIONS,
+
+		/**
 		 * When this resolver runs in the context of a model patch apply, this is the phase, where
 		 * old model elements are deleted.
 		 */
@@ -246,6 +257,13 @@ public class ModelCreation {
 	 */
 	public void reorderProperties(Runnable step) {
 		add(Phase.REORDER_PROPERTIES, step);
+	}
+
+	/**
+	 * Schedules the check of an annotation.
+	 */
+	public void checkAnnotation(Runnable step) {
+		add(Phase.CHECK_ANNOTATIONS, step);
 	}
 
 	/**

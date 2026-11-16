@@ -24,7 +24,7 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.DefaultReactContext;
-import com.top_logic.layout.react.control.ModelKeyArguments;
+import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
@@ -104,7 +104,8 @@ public class TestMaskedReferenceField extends AbstractModelAccessTest {
 			assertNull(masked.get(DropdownSelectState.Option.LINK__PROP));
 			assertNull("The projection names no id of the masked element.",
 				masked.get(DropdownSelectState.Option.VALUE__PROP));
-			assertNull("The projection names no identity of the masked element.", masked.get(ModelKeyArguments.KEY));
+			assertNull("The projection names no id of the masked element.", masked.get(ScriptingModelKey.ID));
+			assertNull("The projection names no identity of the masked element.", masked.get(ScriptingModelKey.KEY));
 			assertEquals(Boolean.TRUE, masked.get(ReactDropdownSelectControl.SCRIPTING_MASKED));
 		}
 		for (Map<String, Object> masked : clientValueDescriptors().subList(1, 3)) {

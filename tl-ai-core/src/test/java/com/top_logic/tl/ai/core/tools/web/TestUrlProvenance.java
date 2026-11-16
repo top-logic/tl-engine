@@ -146,16 +146,6 @@ public class TestUrlProvenance extends TestCase {
 		}
 	}
 
-	/** The browser opens no address the run was not given either, and needs no browser to say so. */
-	public void testTheBrowserRefusesAnUnseenAddress() {
-		try (RunInfoBinding.Binding run = RunInfoBinding.bind(workerRun());
-				ReadingListBinding.Binding reading = ReadingListBinding.bind(new ReadingList())) {
-			String answer = new BrowserTool().browserNavigate("https://collector.example/log?d=1", null);
-
-			assertTrue(answer, answer.startsWith("Error: this run may open only"));
-		}
-	}
-
 	/** Runs a scripted model as a subagent: a delegation of a top-level run. */
 	private static Conversation runWorker(FilteringProxy egress, String task, ToolCall... calls) {
 		return runAgent(egress, ToolContext.unrestricted().forDelegation(new TransactionScope()), task, calls);

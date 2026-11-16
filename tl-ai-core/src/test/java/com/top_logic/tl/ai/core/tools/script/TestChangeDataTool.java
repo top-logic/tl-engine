@@ -184,8 +184,8 @@ public class TestChangeDataTool extends BasicTestCase {
 
 	/**
 	 * A translated attribute, whose translations the engine keeps in rows of a table of their own, is
-	 * reported on the object holding it, with both values: the report reads the transaction as the
-	 * pre-commit guard does (Gitea #638).
+	 * reported on the object holding it, with both values: the report reads the engine's bookkeeping
+	 * of the transaction (Gitea #638).
 	 */
 	public void testAChangedTranslationIsReportedWithItsValues() {
 		TLObject cover = cover("one");

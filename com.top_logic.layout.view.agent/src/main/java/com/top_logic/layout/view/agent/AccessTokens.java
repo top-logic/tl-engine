@@ -14,7 +14,6 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.element.meta.MetaElementUtil;
@@ -49,7 +48,7 @@ public class AccessTokens {
 	/** Name of the token's owner reference. */
 	public static final String OWNER = "owner";
 
-	/** Name of the token's label attribute. */
+	/** Name of the label attribute of a token, of a token request and of an issued token. */
 	public static final String LABEL = "label";
 
 	/** Name of the attribute holding the hash of the token's secret. */
@@ -102,6 +101,16 @@ public class AccessTokens {
 
 	private static final int ID_BYTES = 8;
 
+	/**
+	 * Length of a token id: {@link #ID_BYTES} random bytes in unpadded Base64url.
+	 *
+	 * <p>
+	 * The Base64url alphabet contains the {@link #SECRET_SEPARATOR}, so an id is told from the
+	 * secret by its length, not by the first separator.
+	 * </p>
+	 */
+	private static final int ID_LENGTH = (ID_BYTES * 4 + 2) / 3;
+
 	private static final SecureRandom RANDOM = new SecureRandom();
 
 	/**
@@ -147,19 +156,11 @@ public class AccessTokens {
 	 *         <em>not</em> checked here, see {@link #isValid(TLObject)}.
 	 */
 	public static TLObject resolve(String credential) {
-		if (!credential.startsWith(SECRET_PREFIX)) {
+		String id = tokenId(credential);
+		if (id == null) {
 			return null;
 		}
-		String rest = credential.substring(SECRET_PREFIX.length());
-		int separator = rest.indexOf(SECRET_SEPARATOR);
-		if (separator < 0) {
-			return null;
-		}
-		String id = rest.substring(0, separator);
-		String secret = rest.substring(separator + 1);
-		if (StringServices.isEmpty(id) || StringServices.isEmpty(secret)) {
-			return null;
-		}
+		String secret = credential.substring(SECRET_PREFIX.length() + ID_LENGTH + SECRET_SEPARATOR.length());
 
 		TLObject token = byId(id);
 		if (token == null) {
@@ -171,6 +172,26 @@ public class AccessTokens {
 			return null;
 		}
 		return token;
+	}
+
+	/**
+	 * The id of the token a plain secret names.
+	 *
+	 * @param credential
+	 *        The secret as presented.
+	 * @return The id, or <code>null</code> if the credential does not have the form of an access
+	 *         token of this application: {@link #SECRET_PREFIX}, an id of {@link #ID_LENGTH}
+	 *         characters, {@link #SECRET_SEPARATOR}, and a non-empty secret.
+	 */
+	public static String tokenId(String credential) {
+		int idStart = SECRET_PREFIX.length();
+		int idEnd = idStart + ID_LENGTH;
+		if (!credential.startsWith(SECRET_PREFIX)
+			|| credential.length() <= idEnd + SECRET_SEPARATOR.length()
+			|| !credential.startsWith(SECRET_SEPARATOR, idEnd)) {
+			return null;
+		}
+		return credential.substring(idStart, idEnd);
 	}
 
 	/**

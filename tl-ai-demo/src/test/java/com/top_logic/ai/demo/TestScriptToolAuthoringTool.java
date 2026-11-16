@@ -39,7 +39,7 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 
 		store.create("greet", "Greet", "Greets a person by name.",
 			List.of(new ParamSpec("name", "tl.core:String", "Who to greet", true, false, null)),
-			"\"Hello \" + $name", "READ", true);
+			"\"Hello \" + $name", "READ", true, null);
 
 		ScriptToolConfig created = store.get("greet");
 		assertNotNull("tool must exist after create", created);
@@ -53,9 +53,9 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 
 	public void testDuplicateNameRejected() {
 		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
-		store.create("dup", "Dup", "d", List.of(), "1", "READ", true);
+		store.create("dup", "Dup", "d", List.of(), "1", "READ", true, null);
 		try {
-			store.create("dup", "Dup", "d", List.of(), "1", "READ", true);
+			store.create("dup", "Dup", "d", List.of(), "1", "READ", true, null);
 			fail("expected duplicate-name rejection");
 		} catch (IllegalArgumentException ex) {
 			assertTrue(ex.getMessage(), ex.getMessage().contains("already exists"));
@@ -67,7 +67,7 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 		try {
 			store.create("bad", "Bad", "d",
 				List.of(new ParamSpec("x", "no.such:Type", "", true, false, null)),
-				"$x", "READ", true);
+				"$x", "READ", true, null);
 			fail("expected unresolvable-type rejection");
 		} catch (IllegalArgumentException ex) {
 			assertTrue(ex.getMessage(), ex.getMessage().contains("no.such:Type"));
@@ -77,18 +77,33 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 	public void testUnparseableScriptRejected() {
 		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
 		try {
-			store.create("broken", "Broken", "d", List.of(), "this is ( not valid", "READ", true);
+			store.create("broken", "Broken", "d", List.of(), "this is ( not valid", "READ", true, null);
 			fail("expected script-parse rejection");
 		} catch (IllegalArgumentException ex) {
 			assertTrue(ex.getMessage(), ex.getMessage().toLowerCase().contains("script"));
 		}
 	}
 
+	/** The commit message expression is authored, kept by an update that omits it, and removed by an empty one. */
+	public void testCommitMessageIsAuthored() {
+		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
+		store.create("greet", "Greet", "d",
+			List.of(new ParamSpec("name", "tl.core:String", "Who to greet", true, false, null)),
+			"\"Hello \" + $name", "DATA_WRITE", true, "\"Greeted \" + $name");
+		assertEquals("\"Greeted \" + $name", ScriptToolStore.commitMessageOf(store.get("greet")));
+
+		store.update("greet", null, "new description", null, null, null, null, null);
+		assertEquals("kept", "\"Greeted \" + $name", ScriptToolStore.commitMessageOf(store.get("greet")));
+
+		store.update("greet", null, null, null, null, null, null, "");
+		assertNull("removed", store.get("greet").getCommitMessage());
+	}
+
 	public void testUpdateReplacesFields() {
 		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
-		store.create("calc", "Calc", "old", List.of(), "1", "READ", true);
+		store.create("calc", "Calc", "old", List.of(), "1", "READ", true, null);
 
-		store.update("calc", null, "new description", null, "2", null, null);
+		store.update("calc", null, "new description", null, "2", null, null, null);
 
 		ScriptToolConfig updated = store.get("calc");
 		assertNotNull(updated);
@@ -103,7 +118,7 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 	public void testUpdateMissingRejected() {
 		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
 		try {
-			store.update("ghost", null, "x", null, null, null, null);
+			store.update("ghost", null, "x", null, null, null, null, null);
 			fail("expected missing-tool rejection");
 		} catch (IllegalArgumentException ex) {
 			assertTrue(ex.getMessage(), ex.getMessage().contains("ghost"));
@@ -112,7 +127,7 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 
 	public void testDelete() {
 		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
-		store.create("temp", "Temp", "d", List.of(), "1", "READ", true);
+		store.create("temp", "Temp", "d", List.of(), "1", "READ", true, null);
 		store.delete("temp");
 		assertNull("tool must be gone after delete", store.get("temp"));
 	}
@@ -135,7 +150,7 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 
 		String create = tool.createScriptTool("greet", "Greet", "Greets by name.",
 			List.of(new ScriptToolStore.ParamSpec("name", "tl.core:String", "who", true, false, null)),
-			"\"Hello \" + $name", "READ", Boolean.TRUE, null);
+			"\"Hello \" + $name", "READ", Boolean.TRUE, null, null);
 		assertTrue("create should succeed: " + create, create.contains("\"success\":true"));
 		assertTrue("create should mention activation: " + create, create.toLowerCase().contains("activated"));
 
@@ -153,9 +168,9 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 
 	public void testUpdateMissingListsExistingNames() {
 		ScriptToolStore store = new ScriptToolStore(newRegistryConfig());
-		store.create("summarize_event_budgets", "X", "d", java.util.List.of(), "1", "READ", true);
+		store.create("summarize_event_budgets", "X", "d", java.util.List.of(), "1", "READ", true, null);
 		try {
-			store.update("wrong-name", null, "x", null, null, null, null);
+			store.update("wrong-name", null, "x", null, null, null, null, null);
 			fail("expected missing-tool rejection");
 		} catch (IllegalArgumentException ex) {
 			assertTrue("message should list existing names: " + ex.getMessage(),
@@ -168,7 +183,7 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 		store.create("greetCustom", "Greet", "d",
 			java.util.List.of(new ScriptToolStore.ParamSpec(
 				"currency", "tl.core:String", "currency symbol", false, false, "\"\\u20ac\"")),
-			"$currency", "READ", true);
+			"$currency", "READ", true, null);
 
 		ScriptToolConfig cfg = store.get("greetCustom");
 		assertNotNull(cfg);
@@ -186,7 +201,7 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 			store.create("bad", "B", "d",
 				java.util.List.of(new ScriptToolStore.ParamSpec(
 					"x", "tl.core:String", "", false, false, "this is ( not valid")),
-				"$x", "READ", true);
+				"$x", "READ", true, null);
 			fail("expected invalid-default rejection");
 		} catch (IllegalArgumentException ex) {
 			assertTrue(ex.getMessage(), ex.getMessage().toLowerCase().contains("default"));
@@ -203,9 +218,9 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 			tool.listScriptToolFactories().contains("events"));
 
 		tool.createScriptTool("greet", "Greet", "Greets by name.",
-			List.of(), "\"hi\"", "READ", Boolean.TRUE, "custom");
+			List.of(), "\"hi\"", "READ", Boolean.TRUE, "custom", null);
 		tool.createScriptTool("findOverdueInvoices", "Find", "Finds overdue invoices.",
-			List.of(), "1", "READ", Boolean.TRUE, "events");
+			List.of(), "1", "READ", Boolean.TRUE, "events", null);
 
 		String list = tool.listScriptToolFactories();
 		assertTrue("custom factory must be listed: " + list, list.contains("custom"));
@@ -218,7 +233,7 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 			() -> holder[0],
 			cfg -> holder[0] = cfg);
 
-		tool.createScriptTool("temp", "Temp", "d", List.of(), "1", "READ", Boolean.TRUE, "reporting");
+		tool.createScriptTool("temp", "Temp", "d", List.of(), "1", "READ", Boolean.TRUE, "reporting", null);
 		tool.deleteScriptTool("temp", "reporting");
 
 		assertFalse("a factory with no remaining tools must not be listed: " + tool.listScriptToolFactories(),

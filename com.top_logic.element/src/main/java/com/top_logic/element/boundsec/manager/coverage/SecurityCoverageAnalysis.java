@@ -71,6 +71,15 @@ import com.top_logic.util.model.ModelService;
  * </p>
  *
  * <p>
+ * A grant of {@link SimpleBoundCommandGroup#CREATE} is checked where the engine checks it, see
+ * {@link ModelAccessRights#isAllowedCreate(com.top_logic.knowledge.wrap.person.Person, TLClass, TLObject)}:
+ * an object is created in its container, so the role must be deliverable on a type holding the
+ * created type in a composition. A type no composition holds is created without a container, so the
+ * role must be deliverable on the security root. Every other operation is checked on the type
+ * itself and its role parents.
+ * </p>
+ *
+ * <p>
  * Beyond the read access, the analysis checks the operations: an operation declared for a type
  * that no role holds there, and an operation a place of the application - a view, a command, a
  * form, a privileged script, see {@link OperationUse} - checks on a type it does not apply to, or
@@ -100,6 +109,11 @@ public class SecurityCoverageAnalysis {
 	private final List<BoundCommandGroup> _operations;
 
 	private final List<TLReference> _compositeReferences;
+
+	/**
+	 * The types an object of a type is created in, by the type, see {@link #containerTypes(TLModel)}.
+	 */
+	private final Map<TLClass, Set<TLClass>> _containerTypes;
 
 	private final Map<TLClass, Set<BoundedRole>> _directlyAssignedRoles;
 
@@ -161,6 +175,7 @@ public class SecurityCoverageAnalysis {
 		_operations.sort(Comparator.comparing(BoundCommandGroup::getID));
 
 		_compositeReferences = compositeReferences(model);
+		_containerTypes = containerTypes(model);
 
 		_directlyAssignedRoles = directlyAssignedRoles();
 
@@ -231,6 +246,55 @@ public class SecurityCoverageAnalysis {
 	 */
 	public boolean canHold(TLClass type, BoundedRole role) {
 		return canDeliver(type, role, new HashSet<>());
+	}
+
+	/**
+	 * Whether a grant of the given operation to the given role on the given type can take effect.
+	 *
+	 * <p>
+	 * A grant of {@link SimpleBoundCommandGroup#CREATE} takes effect when a user can hold the role
+	 * where the object is created: on a container of the type, or on the security root for a type
+	 * no composition holds. A grant of any other operation takes effect when a user can
+	 * {@link #canHold(TLClass, BoundedRole) hold} the role on an object of the type.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type carrying the grant.
+	 * @param operation
+	 *        The granted operation.
+	 * @param role
+	 *        The role the operation is granted to.
+	 * @return Whether the grant can take effect.
+	 */
+	public boolean isLiveGrant(TLClass type, BoundCommandGroup operation, BoundedRole role) {
+		if (SimpleBoundCommandGroup.CREATE.equals(operation)) {
+			return canDeliverCreate(type, role);
+		}
+		return canHold(type, role);
+	}
+
+	/**
+	 * Whether a user can hold the given role where an object of the given type is created.
+	 *
+	 * @return Also <code>true</code> for a type created without a container when the application
+	 *         has no security root whose type is known, so that an undecidable creation never
+	 *         produces a finding.
+	 */
+	private boolean canDeliverCreate(TLClass type, BoundedRole role) {
+		Set<TLClass> containers = _containerTypes.getOrDefault(type, Collections.emptySet());
+		if (containers.isEmpty()) {
+			TLObject root = securityRoot();
+			if (!(root != null && root.tType() instanceof TLClass rootType)) {
+				return true;
+			}
+			return canDeliver(rootType, role, new HashSet<>());
+		}
+		for (TLClass container : containers) {
+			if (canDeliver(container, role, new HashSet<>())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -394,7 +458,8 @@ public class SecurityCoverageAnalysis {
 	}
 
 	/**
-	 * Reports every operation whose grant names a role that cannot be delivered on the given type.
+	 * Reports every operation whose grant names a role that cannot be delivered where the operation
+	 * is checked, see {@link #isLiveGrant(TLClass, BoundCommandGroup, BoundedRole)}.
 	 */
 	private void addDeadGrantFindings(TLClass type, List<CoverageFinding> findings) {
 		for (BoundCommandGroup operation : _operations) {
@@ -408,14 +473,30 @@ public class SecurityCoverageAnalysis {
 			}
 			Set<BoundedRole> dead = new LinkedHashSet<>();
 			for (BoundedRole role : granted) {
-				if (!canDeliver(type, role, new HashSet<>())) {
+				if (!isLiveGrant(type, operation, role)) {
 					dead.add(role);
 				}
 			}
-			if (!dead.isEmpty()) {
+			if (dead.isEmpty()) {
+				continue;
+			}
+			if (SimpleBoundCommandGroup.CREATE.equals(operation)) {
+				findings.add(CoverageFinding.deadCreateGrant(type, dead, containerTypes(type)));
+			} else {
 				findings.add(CoverageFinding.deadGrant(type, operation, dead));
 			}
 		}
+	}
+
+	/**
+	 * The types an object of the given type is created in, ordered by their names.
+	 *
+	 * @see #containerTypes(TLModel)
+	 */
+	private List<TLClass> containerTypes(TLClass type) {
+		List<TLClass> result = new ArrayList<>(_containerTypes.getOrDefault(type, Collections.emptySet()));
+		result.sort(Comparator.comparing(TLModelUtil::qualifiedName));
+		return result;
 	}
 
 	/**
@@ -783,6 +864,43 @@ public class SecurityCoverageAnalysis {
 	private TLObject singleton(SingletonPathElement.Config config) {
 		TLModule module = _model.getModule(config.getModule());
 		return module == null ? null : module.getSingleton(config.getSingletonName());
+	}
+
+	/**
+	 * The types an object is created in, by the type of the object.
+	 *
+	 * <p>
+	 * The containers are the concrete classes whose compositions, as they are in effect on the
+	 * class, hold the type: a composition holds objects of its target type and of all its
+	 * specializations. A specialization overriding a composition with a narrower target type holds
+	 * only that type, so the compositions are taken from the parts of each concrete class, not from
+	 * the class declaring them.
+	 * </p>
+	 *
+	 * <p>
+	 * A derived composition is left out, as for {@link #compositeReferences(TLModel)}: no object is
+	 * created in it.
+	 * </p>
+	 */
+	private static Map<TLClass, Set<TLClass>> containerTypes(TLModel model) {
+		Map<TLClass, Set<TLClass>> result = new HashMap<>();
+		for (TLClass container : TLModelUtil.getAllGlobalClasses(model)) {
+			if (container.isAbstract()) {
+				continue;
+			}
+			for (TLStructuredTypePart part : container.getAllParts()) {
+				if (!(part instanceof TLReference reference) || !reference.isComposite() || reference.isDerived()) {
+					continue;
+				}
+				if (!(reference.getType() instanceof TLClass contentType)) {
+					continue;
+				}
+				for (TLClass content : TLModelUtil.getReflexiveTransitiveSpecializations(contentType)) {
+					result.computeIfAbsent(content, unused -> new LinkedHashSet<>()).add(container);
+				}
+			}
+		}
+		return result;
 	}
 
 	/**

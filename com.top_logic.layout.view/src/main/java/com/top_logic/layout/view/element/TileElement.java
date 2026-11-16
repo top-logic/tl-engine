@@ -69,7 +69,7 @@ public class TileElement implements UIElement {
 	 */
 	@TagName(Config.TAG_NAME)
 	@TypeIcon("css:bi bi-postcard")
-	public interface Config extends UIElement.Config, WithAccessControl {
+	public interface Config extends UIElement.Config, WithAccessControl, WithVisibility {
 
 		/** Configuration tag of a {@link TileElement}. */
 		String TAG_NAME = "tile";
@@ -188,6 +188,8 @@ public class TileElement implements UIElement {
 
 	private final UnitAccess _access;
 
+	private final UnitVisibility _visibility;
+
 	private final UIElement _content;
 
 	private final String _cssClass;
@@ -210,6 +212,7 @@ public class TileElement implements UIElement {
 		_width = config.getWidth();
 		_rowSpan = Math.max(1, config.getRowSpan());
 		_access = UnitAccess.create(context, config.getAccessControl());
+		_visibility = UnitVisibility.create(config.getVisibility());
 		_content = context.getInstance(config.getContent());
 		_cssClass = config.getCssClass();
 		PolymorphicConfiguration<? extends ViewCommand> actionConfig = config.getAction();
@@ -232,15 +235,16 @@ public class TileElement implements UIElement {
 	}
 
 	/**
-	 * Whether this tile is currently withheld from the dashboard, see
-	 * {@link AccessChecks#hiding(UnitAccess, ViewContext)}.
+	 * Whether this tile is currently withheld from the dashboard, by its visibility condition or
+	 * its access check, see
+	 * {@link AccessChecks#hiding(UnitAccess, com.top_logic.layout.view.channel.ChannelCondition, ViewContext)}.
 	 *
 	 * @param context
 	 *        The context the dashboard is displayed in.
 	 * @return {@code null} when this tile is never withheld this way.
 	 */
 	public UnitHiding hiding(ViewContext context) {
-		return AccessChecks.hiding(_access, context);
+		return AccessChecks.hiding(_access, UnitVisibility.bind(_visibility, context), context);
 	}
 
 	/** The stable tile id. */
@@ -294,7 +298,8 @@ public class TileElement implements UIElement {
 	public ReactControl createContentControl(ViewContext context) {
 		ViewContext contentContext = AccessChecks.contentContext(_access, context);
 		ReactControl inner =
-			AccessChecks.guard(_access, contentContext, ctx -> (ReactControl) _content.createControl(ctx));
+			AccessChecks.guard(_access, UnitVisibility.bind(_visibility, contentContext), contentContext,
+				ctx -> (ReactControl) _content.createControl(ctx));
 		if (_cssClass != null) {
 			// A tile displays itself through its content, so the class of the tile goes on the control
 			// of that content. It is written only when the tile declares one, so that the content
@@ -327,15 +332,12 @@ public class TileElement implements UIElement {
 	}
 
 	/**
-	 * The name the tile's action is offered under: the command's own label, or - where the command
-	 * carries none - the name of the tile, so that the tile is announced by what it shows.
+	 * The name the tile's action is offered under where the command has no label of its own: the
+	 * name of the tile, so that the tile is announced by what it shows.
 	 */
 	private String actionName() {
-		ResKey label = _actionConfig.getLabel();
-		if (label == null) {
-			ResKey title = name();
-			label = title == null ? I18NConstants.TABLE_ACTIVATE_ROW : I18NConstants.TILE_ACTIVATE__TITLE.fill(title);
-		}
+		ResKey title = name();
+		ResKey label = title == null ? I18NConstants.TABLE_ACTIVATE_ROW : I18NConstants.TILE_ACTIVATE__TITLE.fill(title);
 		return Resources.getInstance().getString(label);
 	}
 

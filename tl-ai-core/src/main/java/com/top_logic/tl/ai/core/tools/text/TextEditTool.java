@@ -9,16 +9,19 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.security.ToolSecurityException;
 import com.top_logic.tl.ai.core.text.TextEdits;
+import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.core.tools.model.TidResolver;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
@@ -57,8 +60,8 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * <b>Security.</b> The object is resolved through {@link TidResolver}, so an object the run's
  * principal may not read is refused exactly like one that does not exist; the attribute is checked
  * for Read before it is disclosed and for Write before it is changed. The change enrols in the turn's
- * own transaction and is committed by the agent loop, which is where the pre-commit guard sees it a
- * second time and where a constraint that vetoes the commit is reported back to the model.
+ * own transaction and is committed by the agent loop, which is where a constraint that vetoes the
+ * commit is reported back to the model.
  * </p>
  *
  * @see #readText(String, String, Integer, Integer, ToolExecutionContext)
@@ -235,7 +238,7 @@ public class TextEditTool {
 		+ " text, anchor on a passage you keep and put it back together with the new text in"
 		+ " 'newText'. Never send the whole value.",
 		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE,
-		marking = AnswerMarking.TOOL)
+		marking = AnswerMarking.TOOL, commitMessage = "editMessage")
 	public String editText(
 			@P("Identifier of the object, as a tool answer printed it: 'TypeName:id'") String objectId,
 			@P("Name of the Text or String attribute to change") String attribute,
@@ -259,6 +262,24 @@ public class TextEditTool {
 		}
 	}
 
+	/**
+	 * The commit message of {@link #editText(String, String, String, String, Boolean, ToolContext)}:
+	 * the attribute and the object, by their labels where they resolve.
+	 */
+	@CalledByReflection
+	ResKey editMessage(String objectId, String attribute, String oldText, String newText, Boolean replaceAll,
+			ToolContext context) {
+		Object attributeLabel = String.valueOf(attribute);
+		try {
+			TLObject target = TidResolver.resolve(objectId, context.modelSecurity());
+			attributeLabel = TLModelI18N.getI18NKey(editableText(target, attribute));
+		} catch (RuntimeException ex) {
+			// The attribute by the name the call gave.
+		}
+		return I18NConstants.TEXT_EDITED__ATTRIBUTE_OBJECT.fill(attributeLabel,
+			TidResolver.labelOrId(objectId, context.modelSecurity()));
+	}
+
 	private String doEditText(String objectId, String attribute, String oldText, String newText,
 			Boolean replaceAll, ModelSecurity security, ToolContext context) {
 		// An omitted argument and an empty one mean opposite things here - "you forgot" against
@@ -277,10 +298,8 @@ public class TextEditTool {
 		TLStructuredTypePart part = editableText(target, attribute);
 
 		// Both, and in this order: the object, then the attribute. Model access is attribute-granular,
-		// so a principal may hold the object and lack this one property of it. Asked here rather than
-		// only at commit time because a refusal the model reads now costs one tool call, while the
-		// same refusal in the pre-commit guard rolls the whole turn back - and because a tool that
-		// writes without asking is a tool relying on a backstop it cannot see.
+		// so a principal may hold the object and lack this one property of it. This check is the
+		// security of the write: the turn commits what its tools wrote.
 		security.requireWrite(target);
 		if (!security.canWrite(target, part)) {
 			throw new ToolSecurityException(SimpleBoundCommandGroup.WRITE, typeName(target));

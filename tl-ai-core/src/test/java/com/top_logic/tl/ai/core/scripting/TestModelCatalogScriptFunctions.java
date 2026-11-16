@@ -27,13 +27,13 @@ import com.top_logic.tl.ai.core.provider.catalog.ResolvedModel;
 public class TestModelCatalogScriptFunctions extends TestCase {
 
 	/** A model the bundled catalog lists and no override describes. */
-	private static final String BUNDLED_MODEL = "claude-opus-4-20250514";
+	private static final String BUNDLED_MODEL = "claude-opus-5-5";
 
 	/** The maximum output the bundled catalog gives {@link #BUNDLED_MODEL}. */
-	private static final long BUNDLED_MAX_OUTPUT = 32000;
+	private static final long BUNDLED_MAX_OUTPUT = 128000;
 
 	/** The input price the bundled catalog gives {@link #BUNDLED_MODEL}. */
-	private static final double BUNDLED_INPUT_PRICE = 15.0;
+	private static final double BUNDLED_INPUT_PRICE = 4.0;
 
 	/** The name of the provider {@link TestModelCatalogLoad#start} configures. */
 	private static final String PROVIDER = "anthropic";

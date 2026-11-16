@@ -14,6 +14,7 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
@@ -119,6 +120,24 @@ public final class TidResolver {
 			throw new IllegalArgumentException(diagnosis(identifier, kb));
 		}
 		return result;
+	}
+
+	/**
+	 * The label of the object the given identifier names, for a text that only describes a call -
+	 * a commit message - and must not fail it.
+	 *
+	 * @param tid
+	 *        The identifier, as the model wrote it.
+	 * @param security
+	 *        The rights of the run's principal; an object it may not read is not labelled.
+	 * @return The object's label, or the identifier itself when it does not resolve.
+	 */
+	public static String labelOrId(String tid, ModelSecurity security) {
+		try {
+			return MetaLabelProvider.INSTANCE.getLabel(resolve(tid, security));
+		} catch (RuntimeException ex) {
+			return tid == null ? "" : objectId(tid);
+		}
 	}
 
 	/**

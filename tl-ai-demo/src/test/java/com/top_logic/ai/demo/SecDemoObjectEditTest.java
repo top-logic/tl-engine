@@ -51,8 +51,8 @@ import com.top_logic.util.TLContext;
  *
  * <p>
  * Every test runs a real {@link AgentLoop} turn whose one tool call is the tool under test, with the
- * persona's own security context - so the invocation gate, the tool's checks, the turn's transaction,
- * the pre-commit guard and the commit are the ones a chat run goes through. What the fixture grants
+ * persona's own security context - so the invocation gate, the tool's checks, the turn's transaction
+ * and the commit are the ones a chat run goes through. What the fixture grants
  * (see {@code secdemo.config.xml}): {@code projectPartner} may read, write and create projects and
  * tickets - per object, on the projects the account partners on - and delete nothing, and nobody but
  * an administrator writes {@code pm:Project#partners}. Anna partners on Alpha, Ben only reads tickets.

@@ -270,6 +270,11 @@ public class TestElementCommitMessages extends AbstractModelAccessTest {
 		public void checkCancelled() {
 			// Never cancelled.
 		}
+
+		@Override
+		public void uncancelable() {
+			// Never cancelled.
+		}
 	}
 
 	private static ExpressionCalendarModel calendar(QueryExecutor onMove, QueryExecutor onResize,

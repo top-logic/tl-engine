@@ -1887,7 +1887,8 @@ export class ChatStore {
       })
       on('provider_error', (e) => {
         const data = frameData<{ errorMessage?: string; kind?: string }>(e.data, {})
-        const text = providerErrorText(data.kind, this.state.language)
+        const detail = data.errorMessage ?? ''
+        const text = providerErrorText(data.kind, this.state.language, detail)
         // Also into the transcript, not only into the composer's notice strip: a run that ended
         // without an answer has to say so where the answer would have been, and the strip is
         // cleared by the next send (#429). A turn that failed before any text would otherwise
@@ -1896,8 +1897,8 @@ export class ChatStore {
         // Recorded exactly as a re-opened session records it - the provider's own words as the
         // message, its kind as the code - so the card reads the same live as after a reload. The
         // sentence the user reads is the renderer's, from the kind.
-        this.dispatch({ type: 'ADD_ERROR', message: data.errorMessage ?? '', code: data.kind })
-        finish(text, data.errorMessage ?? '')
+        this.dispatch({ type: 'ADD_ERROR', message: detail, code: data.kind })
+        finish(text, detail.trim() === text ? '' : detail)
       })
 
       on('tx_rollback', (e) => {

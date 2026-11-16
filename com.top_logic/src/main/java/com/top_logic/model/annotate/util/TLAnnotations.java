@@ -5,11 +5,11 @@
  */
 package com.top_logic.model.annotate.util;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 import com.top_logic.basic.ArrayUtil;
 import com.top_logic.basic.StringServices;
@@ -26,8 +26,11 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotationLookup;
+import com.top_logic.model.annotate.AnnotationInheritance;
 import com.top_logic.model.annotate.ExportColumns;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.annotate.TLLifecycleHandler;
+import com.top_logic.model.annotate.TLLifecycleHandlers;
 import com.top_logic.model.annotate.TLObjectInitializers;
 import com.top_logic.model.annotate.TLPersistentCache;
 import com.top_logic.model.annotate.ui.BinaryDisplay;
@@ -269,22 +272,7 @@ public class TLAnnotations {
 	 * @see #getLocalInitializers(TLStructuredType)
 	 */
 	public static List<TLObjectInitializer> getInitializers(TLStructuredType type) {
-		if (type instanceof TLClass clazz) {
-			Set<TLClass> allGeneralizations = TLModelUtil.getReflexiveTransitiveGeneralizations(clazz);
-
-			/* The "first" generalization is the type itself and the "last" is the most general
-			 * type. It is best to first apply the initialisers of the most general type before
-			 * applying the initialisers of the specialisations. */
-			TLClass[] tmp = allGeneralizations.toArray(TLClass[]::new);
-			ArrayUtil.reverse(tmp);
-
-			return Arrays.stream(tmp)
-				.map(TLAnnotations::getLocalInitializers)
-				.flatMap(List::stream)
-				.collect(Collectors.toList());
-		} else {
-			return getLocalInitializers(type);
-		}
+		return collectGeneralFirst(type, TLAnnotations::getLocalInitializers);
 	}
 
 	/**
@@ -298,6 +286,69 @@ public class TLAnnotations {
 			return Collections.emptyList();
 		}
 		return TypedConfigUtil.createInstanceList(localInitializers.getInitializers());
+	}
+
+	/**
+	 * The {@link TLLifecycleHandler}s that are annotated at the given {@link TLStructuredType} or
+	 * any super type.
+	 * 
+	 * <p>
+	 * The handlers of the super classes occur before the handlers of sub classes.
+	 * </p>
+	 * 
+	 * @see #getLocalLifecycleHandlers(TLStructuredType)
+	 */
+	public static List<TLLifecycleHandler> getLifecycleHandlers(TLStructuredType type) {
+		return collectGeneralFirst(type, TLAnnotations::getLocalLifecycleHandlers);
+	}
+
+	/**
+	 * The {@link TLLifecycleHandler}s that are annotated at the given {@link TLStructuredType}.
+	 * 
+	 * @see #getLifecycleHandlers(TLStructuredType)
+	 */
+	public static List<TLLifecycleHandler> getLocalLifecycleHandlers(TLStructuredType type) {
+		TLLifecycleHandlers annotation = getAnnotation(type, TLLifecycleHandlers.class);
+		if (annotation == null) {
+			return Collections.emptyList();
+		}
+		return TypedConfigUtil.createInstanceList(annotation.getHandlers());
+	}
+
+	/**
+	 * Concatenates the values that the given function computes for the given type and all its
+	 * generalizations.
+	 * 
+	 * <p>
+	 * The values of the most general type come first, the values of the given type last. This
+	 * collects the values of a {@link TLAnnotation} with {@link AnnotationInheritance.Policy#REDEFINE}
+	 * whose values of all generalizations apply to the given type.
+	 * </p>
+	 * 
+	 * @param type
+	 *        The type to collect values for.
+	 * @param localValues
+	 *        The values of a single type, not considering its generalizations.
+	 * @return A new list with the values of the given type and all its generalizations.
+	 */
+	public static <T> List<T> collectGeneralFirst(TLStructuredType type,
+			Function<? super TLStructuredType, ? extends List<? extends T>> localValues) {
+		if (type instanceof TLClass clazz) {
+			Set<TLClass> allGeneralizations = TLModelUtil.getReflexiveTransitiveGeneralizations(clazz);
+
+			/* The "first" generalization is the type itself and the "last" is the most general
+			 * type. */
+			TLClass[] tmp = allGeneralizations.toArray(TLClass[]::new);
+			ArrayUtil.reverse(tmp);
+
+			List<T> result = new ArrayList<>();
+			for (TLClass generalization : tmp) {
+				result.addAll(localValues.apply(generalization));
+			}
+			return result;
+		} else {
+			return new ArrayList<>(localValues.apply(type));
+		}
 	}
 
 	/**

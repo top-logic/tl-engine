@@ -27,7 +27,6 @@ import com.top_logic.base.office.excel.streaming.ExcelWriter;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnView;
@@ -251,33 +250,12 @@ public class TableViewExcelExport {
 	 * number of its rows.
 	 *
 	 * <p>
-	 * The value is rendered here rather than taken from the table's first cell of the row: the
-	 * first displayed column may be one that is not exported.
+	 * The value is {@link TableView#groupText(Group) written by the table} rather than taken from
+	 * its first cell of the row: the first displayed column may be one that is not exported.
 	 * </p>
 	 */
 	private static <R> String groupLabel(TableView<R> view, Group<R> group) {
-		List<Object> values = group.key().values();
-		List<String> grouping = view.state().getGrouping().columns();
-		int level = values.size() - 1;
-		String value = "";
-		if (level >= 0 && level < grouping.size()) {
-			Column<R, ?> groupColumn = view.column(grouping.get(level));
-			if (groupColumn != null) {
-				Object groupValue = values.get(level);
-				value = text(render(groupColumn, groupValue));
-				if (value.isEmpty() && groupValue != null) {
-					// The column displays its values by a control rather than a text.
-					value = MetaLabelProvider.INSTANCE.getLabel(groupValue);
-				}
-			}
-		}
-		return value + " (" + group.size() + ")";
-	}
-
-	@SuppressWarnings("unchecked")
-	private static <R, V> CellContent render(Column<R, V> column, Object value) {
-		// The value is a group key value taken from this very column.
-		return column.renderer().render((V) value);
+		return view.groupText(group) + " (" + group.size() + ")";
 	}
 
 	private static String text(CellContent content) {

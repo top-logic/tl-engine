@@ -9,6 +9,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -47,6 +49,7 @@ import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.basic.credential.SecretStore;
 import com.top_logic.basic.credential.SecretStoreService;
+import com.top_logic.basic.credential.WritableSecretStore;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
@@ -117,7 +120,7 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 		global.getOverrides().clear();
 		global.getOverrides().putAll(_savedOverrides);
 		restartService();
-		for (String name : new String[] { SECRET, OTHER, PREFIX + SECRET }) {
+		for (String name : new String[] { SECRET, OTHER, PREFIX + SECRET, PREFIX + OTHER }) {
 			System.clearProperty(name);
 		}
 		try (Stream<Path> files = Files.walk(_dir)) {
@@ -473,6 +476,309 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 			ModuleUtil.INSTANCE.startUp(SecretStoreService.Module.INSTANCE);
 		}
 		assertEquals("from-env", source.getSecret());
+	}
+
+	/**
+	 * A secret written to a writable {@link DirectorySecretStore} is read back under its name,
+	 * replaced by a second write and gone after removing it.
+	 */
+	public void testDirectoryStoreWrite() throws Exception {
+		install(directoryStore(_dir));
+		SecretStoreService service = service();
+		assertNotNull("Writable directory has no writable store.", service.getWritableStore());
+		assertTrue(service.canStore(SECRET));
+
+		service.store(SECRET, "written");
+		assertEquals("written", named(SECRET).getSecret());
+
+		service.store(SECRET, "replaced");
+		assertEquals("Replaced file must be read again.", "replaced", named(SECRET).getSecret());
+		service.store(SECRET, "again");
+		assertEquals("again", named(SECRET).getSecret());
+		assertEquals("Temporary files left behind.", List.of(SECRET), fileNames(_dir));
+
+		assertTrue(service.remove(SECRET));
+		assertNull(named(SECRET).lookup());
+		assertFalse("Removed twice.", service.remove(SECRET));
+	}
+
+	public void testDirectoryStoreWriteRejectsEmpty() throws Exception {
+		install(directoryStore(_dir));
+
+		assertEquals(I18NConstants.ERROR_SECRET_EMPTY__NAME.fill(SECRET),
+			storeFailure(SECRET, " \n").getErrorKey());
+		assertEquals(I18NConstants.ERROR_SECRET_EMPTY__NAME.fill(SECRET),
+			storeFailure(SECRET, null).getErrorKey());
+		assertFalse(Files.exists(_dir.resolve(SECRET)));
+	}
+
+	public void testDirectoryStoreWriteInvalidName() throws Exception {
+		Path sub = Files.createDirectory(_dir.resolve("sub"));
+		install(directoryStore(sub));
+		String name = "../" + SECRET;
+
+		assertFalse(service().canStore(name));
+		assertFalse(service().canStore(""));
+		I18NRuntimeException ex = storeFailure(name, "TopSecretValue");
+		assertEquals(I18NConstants.ERROR_SECRET_NOT_STORABLE__NAME.fill(name), ex.getErrorKey());
+		assertNoSecret(ex, "TopSecretValue");
+		assertFalse(Files.exists(_dir.resolve(SECRET)));
+	}
+
+	public void testDirectoryStoreWriteOwnerOnly() throws Exception {
+		if (!_dir.getFileSystem().supportedFileAttributeViews().contains("posix")) {
+			return;
+		}
+		install(directoryStore(_dir));
+
+		service().store(SECRET, "written");
+		assertEquals(Set.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE),
+			Files.getPosixFilePermissions(_dir.resolve(SECRET)));
+	}
+
+	public void testDirectoryStoreReadOnlyDirectory() throws Exception {
+		if (!makeReadOnly(_dir)) {
+			return;
+		}
+		try {
+			install(directoryStore(_dir));
+			SecretStoreService service = service();
+
+			assertNull("Read-only directory has a writable store.", service.getWritableStore());
+			assertFalse(service.canStore(SECRET));
+			assertEquals(I18NConstants.ERROR_NO_WRITABLE_SECRET_STORE__NAME.fill(SECRET),
+				storeFailure(SECRET, "written").getErrorKey());
+
+			makeWritable(_dir);
+			assertNotNull("Writability is decided on each call.", service.getWritableStore());
+			assertTrue(service.canStore(SECRET));
+		} finally {
+			makeWritable(_dir);
+		}
+	}
+
+	public void testDirectoryStoreMissingDirectory() throws Exception {
+		install(directoryStore(_dir.resolve("missing")));
+
+		assertNull(service().getWritableStore());
+		assertFalse(service().canStore(SECRET));
+	}
+
+	public void testDirectoryStoreReadOnlyFile() throws Exception {
+		Path file = _dir.resolve(SECRET);
+		write(file, "read-only");
+		if (!makeReadOnly(file)) {
+			return;
+		}
+		install(directoryStore(_dir));
+		SecretStoreService service = service();
+
+		assertNotNull(service.getWritableStore());
+		assertFalse("Read-only file can be stored.", service.canStore(SECRET));
+		assertTrue(service.canStore(OTHER));
+		assertEquals(I18NConstants.ERROR_SECRET_NOT_STORABLE__NAME.fill(SECRET),
+			storeFailure(SECRET, "written").getErrorKey());
+		assertEquals(I18NConstants.ERROR_SECRET_FILE_NOT_WRITABLE__PATH.fill(file.toString()),
+			failure(() -> service.getWritableStore().store(SECRET, "written")).getErrorKey());
+		assertEquals("read-only", named(SECRET).getSecret());
+	}
+
+	public void testDirectoryStoreWritePrefix() throws Exception {
+		install("<store class='" + DirectorySecretStore.class.getName() + "' directory='" + _dir
+			+ "' prefix='" + PREFIX + "'/>");
+
+		service().store(SECRET, "prefixed");
+		assertEquals("prefixed", new String(Files.readAllBytes(_dir.resolve(PREFIX + SECRET)), StandardCharsets.UTF_8));
+		assertEquals("prefixed", named(SECRET).getSecret());
+	}
+
+	/**
+	 * A {@link ChainSecretStore} cannot store a name a store in front of its writable store holds:
+	 * the written secret would not be delivered.
+	 */
+	public void testChainWriteShadowed() throws Exception {
+		install("<store class='" + ChainSecretStore.class.getName() + "'><stores>"
+			+ "<" + LiteralSecretStore.Config.TAG_NAME + "><secrets>"
+			+ "<secret name='" + SECRET + "' value='unencrypted:from-literal'/>"
+			+ "</secrets></" + LiteralSecretStore.Config.TAG_NAME + ">"
+			+ "<" + EnvironmentSecretStore.Config.TAG_NAME + "/>"
+			+ "<" + DirectorySecretStore.Config.TAG_NAME + " directory='" + _dir + "'/>"
+			+ "</stores></store>");
+		SecretStoreService service = service();
+
+		assertFalse("Name of a preceding store can be stored.", service.canStore(SECRET));
+		assertEquals(I18NConstants.ERROR_SECRET_NOT_STORABLE__NAME.fill(SECRET),
+			storeFailure(SECRET, "written").getErrorKey());
+		assertFalse(Files.exists(_dir.resolve(SECRET)));
+
+		assertTrue(service.canStore(OTHER));
+		service.store(OTHER, "written");
+		assertEquals("written", named(OTHER).getSecret());
+
+		System.setProperty(OTHER, "from-env");
+		assertFalse("Variable set later shadows the written secret.", service.canStore(OTHER));
+		assertTrue("A shadowed secret can still be removed from its store.",
+			service.getWritableStore().remove(OTHER));
+	}
+
+	/**
+	 * A secret delivered by a store behind the writable store can be written but not removed;
+	 * after writing, the writable store holds it and it can be removed.
+	 */
+	public void testChainCanRemove() throws Exception {
+		install("<store class='" + ChainSecretStore.class.getName() + "'><stores>"
+			+ "<" + DirectorySecretStore.Config.TAG_NAME + " directory='" + _dir + "'/>"
+			+ "<" + LiteralSecretStore.Config.TAG_NAME + "><secrets>"
+			+ "<secret name='" + SECRET + "' value='unencrypted:from-literal'/>"
+			+ "</secrets></" + LiteralSecretStore.Config.TAG_NAME + ">"
+			+ "</stores></store>");
+		SecretStoreService service = service();
+
+		assertTrue(service.canStore(SECRET));
+		assertFalse("Secret of a store behind the writable store can be removed.", service.canRemove(SECRET));
+		assertFalse("Missing secret can be removed.", service.canRemove(OTHER));
+
+		service.store(SECRET, "written");
+		assertEquals("written", named(SECRET).getSecret());
+		assertTrue(service.canRemove(SECRET));
+
+		assertTrue(service.remove(SECRET));
+		assertFalse(service.canRemove(SECRET));
+		assertEquals("from-literal", named(SECRET).getSecret());
+	}
+
+	/**
+	 * A store in front of the writable store that holds a name but cannot deliver it still takes
+	 * precedence.
+	 */
+	public void testChainWriteShadowedByBrokenStore() throws Exception {
+		Path first = Files.createDirectory(_dir.resolve("first"));
+		Path second = Files.createDirectory(_dir.resolve("second"));
+		write(first.resolve(SECRET), "\n");
+		if (!makeReadOnly(first)) {
+			return;
+		}
+		try {
+			install("<store class='" + ChainSecretStore.class.getName() + "'><stores>"
+				+ "<" + DirectorySecretStore.Config.TAG_NAME + " directory='" + first + "'/>"
+				+ "<" + DirectorySecretStore.Config.TAG_NAME + " directory='" + second + "'/>"
+				+ "</stores></store>");
+
+			assertFalse(service().canStore(SECRET));
+			assertTrue(service().canStore(OTHER));
+			service().store(OTHER, "written");
+			assertTrue(Files.exists(second.resolve(OTHER)));
+		} finally {
+			makeWritable(first);
+		}
+	}
+
+	public void testChainWritePrefix() throws Exception {
+		install("<store class='" + ChainSecretStore.class.getName() + "' prefix='" + PREFIX + "'><stores>"
+			+ "<" + EnvironmentSecretStore.Config.TAG_NAME + "/>"
+			+ "<" + DirectorySecretStore.Config.TAG_NAME + " directory='" + _dir + "'/>"
+			+ "</stores></store>");
+		SecretStoreService service = service();
+
+		service.store(SECRET, "prefixed");
+		assertTrue(Files.exists(_dir.resolve(PREFIX + SECRET)));
+		assertFalse(Files.exists(_dir.resolve(SECRET)));
+		assertEquals("prefixed", named(SECRET).getSecret());
+
+		System.setProperty(PREFIX + OTHER, "from-env");
+		assertFalse("Prefixed variable shadows.", service.canStore(OTHER));
+		System.setProperty(OTHER, "from-env");
+		System.clearProperty(PREFIX + OTHER);
+		assertTrue("Unprefixed variable does not shadow.", service.canStore(OTHER));
+	}
+
+	public void testCanStoreOverride() throws Exception {
+		install(directoryStore(_dir)
+			+ "<overrides><override name='" + SECRET + "' source='unencrypted:from-override'/></overrides>");
+		SecretStoreService service = service();
+
+		assertFalse("Overridden name can be stored.", service.canStore(SECRET));
+		assertEquals(I18NConstants.ERROR_SECRET_OVERRIDDEN__NAME.fill(SECRET),
+			storeFailure(SECRET, "written").getErrorKey());
+		assertEquals(I18NConstants.ERROR_SECRET_OVERRIDDEN__NAME.fill(SECRET),
+			failure(() -> service.remove(SECRET)).getErrorKey());
+		assertTrue(service.canStore(OTHER));
+	}
+
+	public void testCanStoreWithoutWritableStore() throws Exception {
+		assertNull(service().getWritableStore());
+		assertFalse(SecretStoreService.canStoreSecret(SECRET));
+		assertEquals(I18NConstants.ERROR_NO_WRITABLE_SECRET_STORE__NAME.fill(SECRET),
+			failure(() -> SecretStoreService.storeSecret(SECRET, "written")).getErrorKey());
+	}
+
+	public void testWritableStoreDefaultCanStore() throws Exception {
+		WritableSecretStore store = new WritableSecretStore() {
+			@Override
+			public String lookup(String name) {
+				return null;
+			}
+
+			@Override
+			public void store(String name, String secret) {
+				// Nothing to store.
+			}
+
+			@Override
+			public boolean remove(String name) {
+				return false;
+			}
+		};
+		assertTrue(store.canStore(SECRET));
+		assertSame(store, store.getWritableStore());
+	}
+
+	private static String directoryStore(Path directory) {
+		return "<store class='" + DirectorySecretStore.class.getName() + "' directory='" + directory + "'/>";
+	}
+
+	private static SecretStoreService service() {
+		return SecretStoreService.Module.INSTANCE.getImplementationInstance();
+	}
+
+	private static List<String> fileNames(Path directory) throws IOException {
+		try (Stream<Path> files = Files.list(directory)) {
+			return files.map(file -> file.getFileName().toString()).sorted().toList();
+		}
+	}
+
+	/**
+	 * Removes the write permission of the given file.
+	 *
+	 * @return Whether the file is read-only afterwards. It is not when the file system has no
+	 *         POSIX permissions or the test runs with privileges ignoring them.
+	 */
+	private static boolean makeReadOnly(Path file) throws IOException {
+		if (!file.getFileSystem().supportedFileAttributeViews().contains("posix")) {
+			return false;
+		}
+		Files.setPosixFilePermissions(file,
+			PosixFilePermissions.fromString(Files.isDirectory(file) ? "r-x------" : "r--------"));
+		return !Files.isWritable(file);
+	}
+
+	private static void makeWritable(Path file) throws IOException {
+		Files.setPosixFilePermissions(file,
+			PosixFilePermissions.fromString(Files.isDirectory(file) ? "rwx------" : "rw-------"));
+	}
+
+	private static I18NRuntimeException storeFailure(String name, String secret) {
+		return failure(() -> service().store(name, secret));
+	}
+
+	private static I18NRuntimeException failure(Runnable operation) {
+		try {
+			operation.run();
+			fail("Failure not reported.");
+			return null;
+		} catch (I18NRuntimeException ex) {
+			return ex;
+		}
 	}
 
 	/**

@@ -980,7 +980,7 @@ message TransactionRolledBackEvent {
 
 /** SSE event for provider error. */
 message ProviderErrorEvent {
-	/** Machine-readable error kind: RATE_LIMITED, OVERLOADED, CONTEXT_WINDOW_EXCEEDED, AUTHENTICATION, INVALID_REQUEST, UNKNOWN. */
+	/** Machine-readable error kind: RATE_LIMITED, BILLING, OVERLOADED, CONTEXT_WINDOW_EXCEEDED, AUTHENTICATION, NO_CREDENTIALS, INVALID_REQUEST, UNKNOWN, or APPLICATION_ERROR for a failure of this application rather than of the provider. */
 	string kind;
 
 	/** Human-readable error message. */

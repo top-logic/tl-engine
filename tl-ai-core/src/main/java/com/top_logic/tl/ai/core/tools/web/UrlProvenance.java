@@ -58,13 +58,13 @@ public final class UrlProvenance {
 	 * repeated it would give the model a way to make it "seen".
 	 * </p>
 	 */
-	static final String NAVIGATION_REFUSED = "The page tried to open a web address that this run was not"
+	public static final String NAVIGATION_REFUSED = "The page tried to open a web address that this run was not"
 		+ " given: its task or the user did not give it, no web search returned it, and no page read in"
 		+ " this run links to it. So it was not opened. A link or form you use must lead to such an"
 		+ " address; to open one, call browserNavigate with it exactly as it was given.";
 
 	/** The answer for a form the browser refused to send after the run typed into a page. */
-	static final String FORM_REFUSED = "The page tried to send form data, after this run typed into a"
+	public static final String FORM_REFUSED = "The page tried to send form data, after this run typed into a"
 		+ " page. This run may not send what it typed to a web site, so nothing was sent. Read the pages"
 		+ " you need instead of submitting forms.";
 
@@ -152,7 +152,7 @@ public final class UrlProvenance {
 	 * answer for the duration of the one operation it performs for that call.
 	 * </p>
 	 */
-	static SeenUrls boundLedger() {
+	public static SeenUrls boundLedger() {
 		SeenUrls seen = ledger();
 		if (seen == null || !appliesTo(RunInfoBinding.current())) {
 			return null;

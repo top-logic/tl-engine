@@ -219,7 +219,8 @@ public class TileStackElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel pathChannel = context.resolveChannel(_pathRef);
-		TileStackScope scope = new TileStackScope(pathChannel, _frameRoot, RevealPath.of(context), this);
+		TileStackScope scope = new TileStackScope(pathChannel, _frameRoot, RevealPath.of(context), this,
+			context::getModelScope);
 		Map<String, ViewChannel> sharedChannels = new LinkedHashMap<>();
 		if (_bindPathTo != null) {
 			sharedChannels.put(_bindPathTo, pathChannel);

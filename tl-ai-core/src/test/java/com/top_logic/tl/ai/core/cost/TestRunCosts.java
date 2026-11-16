@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.cost;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.OptionalDouble;
 
@@ -28,7 +29,7 @@ public class TestRunCosts extends TestCase {
 		return ModuleTestSetup.setupModule(new TestSuite(TestRunCosts.class));
 	}
 
-	private static final ModelCost ONE_DOLLAR_PER_MILLION = new ModelCost(1, 1, null, null, null, null, null, null);
+	private static final ModelCost ONE_DOLLAR_PER_MILLION = new ModelCost(1, 1, null, null, null, null, null, List.of());
 
 	/** A request costs what the prices say, in US dollars - the currency of the prices. */
 	public void testTheCostIsInUsd() {

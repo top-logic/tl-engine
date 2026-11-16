@@ -16,34 +16,18 @@
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<channels>
 		<!--
-			The dock's wiring, declared here because the dock lives in the shell's footer.
-			
-			Its conversation is "chat" - the SAME one the Chat page shows. The dock is a second
-			PLACE for that conversation, not a second conversation, and it hides itself (launcher
-			included) while the Chat page has it on screen: two views of one conversation would give
-			its draft channel two composers and its remembered layout two rails. A dock on a chat
-			id of its own would be a second conversation and would work - since #502 every chat command
-			goes to a control of its own conversation, and the server holds an active session,
-			a run and a stream for each.
-			
-			The channels are the dock's own, because the page declares its own in
-			tl-ai-demo/chat-grouped.view.xml and the two are never on screen together.
-		-->
-		<channel name="dockSession"/>
-		<channel name="dockPaneObject"/>
-		<!--
 			What the page BEHIND the dock has open (Issue #494, #928). Declared in the shell, because
 			the dock floats over every page. The pages do not <bind> it: <chat-channels> in the footer
 			makes it reachable from the whole window, and a <page-selection> in a page writes into it
-			while that page is on screen - also from a tile-stack frame, which no <bind> reaches.
+			while that page is on screen - also from a tile-stack frame, which no <bind> reaches. The
+			dock binds it over the chat page's own "pageSelection", which states it to the agent while
+			the rail's pane shows nothing.
 			
 			Only <page-selection> writes it, and no table uses it as its selection: a page states what
 			it has open, it does not select rows on another page. When the page leaves the screen, the
 			value goes, so on "My settings" the dock states "none".
 		-->
 		<channel name="pageSelection"/>
-		<channel name="dockProgressBadge"/>
-		<channel name="dockSourcesBadge"/>
 		<!--
 			The chat composer's unsent text, declared at the top so that two *different* pages can
 			reach it (Issue #440). Every <view-ref> gets its own channel namespace, so a page sees a
@@ -87,10 +71,11 @@
 						goes into the application section of the engine's shell, ahead of its
 						Administration.
 						
-						It is built from view elements; the one-element form that used to exist is gone -
-						a <data-list> of this user's chats, a <chat-conversation>, and a <chat-rail>
-						whose sections are configured (Issue #415). See
-						tl-ai-demo/chat-grouped.view.xml.
+						It is the chat page tl-chat ships, tl-chat/albert.view.xml: a <data-list> of this
+						user's chats, a <chat-conversation>, and a <chat-rail> whose sections are
+						configured. The demo's own parts - its facts, first questions, mentions, the
+						"createInvoice" command and the "Veranstaltungen" section - are a same-path
+						overlay, tl-chat/albert.view.xml of this module.
 					-->
 					<nav-item id="chat"
 						icon="css:bi bi-chat-dots"
@@ -104,7 +89,7 @@
 							this binding hands it *this* view's channel instead, which is the one the
 							Events and Invoices pages below write.
 						-->
-						<view-ref view="tl-ai-demo/chat-grouped.view.xml">
+						<view-ref view="tl-chat/albert.view.xml">
 							<bind
 								channel="chatDraft"
 								to="chatDraft"
@@ -183,17 +168,21 @@
 			The <footer> is a mounting point and nothing more - the dock is fixed-position, so it
 			takes no room in the shell's layout and every page keeps its full height.
 			
-			Two things about this are worth reading twice.
+			Three things about this are worth reading twice.
 			
-			The dock CONTAINS the <chat>, so - unlike every other chat element - it cannot inherit
-			the id: a chat scope reaches descendants only. The id is therefore written twice, here
-			and on the <chat> inside, and the two must agree. ChatJoinLog warns about an element that
-			joined nobody, which is the shape a typo here produces.
+			The dock CONTAINS the chat page, so - unlike every other chat element - it cannot inherit
+			a chat id: a chat scope reaches descendants only. Neither the dock nor the page names one,
+			so both join the default conversation. A dock on another chat id writes it on the dock and
+			on the <chat> inside, and the two must agree.
 			
-			And the id is "chat", the Chat page's own: this is the SAME conversation, reachable from
-			every other page without leaving it. On the Chat page itself there
-			is nothing for the dock to open, so it hides - and showing it there would put two
-			composers on one draft channel and two rails on one remembered layout.
+			The default conversation is the Chat page's own: this is the SAME conversation,
+			reachable from every other page without leaving it. On the Chat page itself there is
+			nothing for the dock to open, so it hides, and an open dock closes - showing it there would
+			put two composers on one draft channel and two rails on one remembered layout.
+			
+			A conversation in a closed dock offers the agent nothing - no channel to present on, no
+			page command, no facts - although the closed panel keeps it, hidden. What the agent
+			presents goes to the pane of the place the user sees.
 		-->
 		<footer>
 			<!--
@@ -201,237 +190,27 @@
 				<page-selection> elements of the pages (Issue #928). It draws nothing.
 			-->
 			<chat-channels channels="pageSelection"/>
-			<chat-dock
-				chat-id="chat"
-				icon="css:bi bi-stars"
-			>
+			<chat-dock icon="css:bi bi-stars">
 				<label>
 					<en>Albert</en>
 					<de>Albert</de>
 				</label>
 				<!--
-					One element inside the dock, and it is the <chat> itself: the engine's fill rule
-					on a stack holding a fill panel looks one level deep, so the stack has to be the
-					panel's direct child or the conversation grows with its transcript instead of
-					scrolling inside the panel.
+					The chat page tl-chat ships, with this demo's overlay, as on the Chat item. Its
+					"chatDraft" is the shell's own, so "Dazu fragen" on the page behind the dock puts
+					its question here (#440); its "pageSelection" is the shell's, so the conversation
+					states what that page has open.
 				-->
-				<chat
-					chat-id="chat"
-					direction="row"
-				>
-					<!--
-						Collapsed on arrival, like the rail: opening the dock should show the
-						conversation, not three columns of chrome. Both are first-load states, so
-						the strip and the collapse arrow are how the user brings the other two back.
-					-->
-					<data-list
-						collapsed="true"
-						collapsible="true"
-						observed-types="tl.ai.execution:AgentSession, tl.ai.execution:AgentExecution, tl.ai.execution:InteractionRequest"
-						search="true"
-						selection="dockSession"
-					>
-						<commands>
-							<generic-command image="css:bi bi-plus-lg">
-								<label>
-									<en>New chat</en>
-									<de>Neuer Chat</de>
-								</label>
-								<write-channel name="dockSession"/>
-							</generic-command>
-						</commands>
-						<empty-text>
-							<en>No chats yet</en>
-							<de>Noch keine Chats</de>
-						</empty-text>
-						<lines>
-							<line attribute="title"/>
-							<!--
-								What goes on in the chat while the user looks elsewhere (#744): something waits for
-								them, a subagent finished since they last had the chat open, or an agent works there.
-								The list observes executions and interaction requests so that the line follows.
-							-->
-							<line emphasis="secondary">
-								<value><![CDATA[s -> {
-									activity = chatActivity($s);
-									switch {
-										$activity == "waiting": #("Waiting for you"@en, "Wartet auf dich"@de);
-										$activity == "news": #("New result"@en, "Neues Ergebnis"@de);
-										$activity == "running": #("Working …"@en, "Arbeitet …"@de);
-										default: null;
-									}
-								}]]></value>
-							</line>
-						</lines>
-						<row-css-class><![CDATA[s -> {
-							activity = chatActivity($s);
-							switch {
-								$activity == "waiting": "is-waiting";
-								$activity == "news": "has-news";
-								$activity == "running": "is-working";
-								default: null;
-							}
-						}]]></row-css-class>
-						<rows><![CDATA[all(`tl.ai.execution:AgentSession`)
-							.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
-							.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#CHAT`)
-							.sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc())]]></rows>
-						<title>
-							<en>Chats</en>
-							<de>Chats</de>
-						</title>
-					</data-list>
-					<panel fill="true">
-						<!--
-							"draft" is the shell's own channel, named with no <bind> at all - this
-							element sits in app.view.xml, and <app-shell> does not isolate channels.
-							That is the dock half of issue #440: "Dazu fragen" on the page
-							behind it writes the draft, and the question is standing here when the
-							user opens the dock. The Chat page's conversation follows the same
-							channel, and the two are never mounted at once (a dock steps aside for a
-							page showing its conversation), so the draft simply follows the user
-							from the one place to the other.
-						-->
-						<chat-conversation
-							citations="true"
-							draft="chatDraft"
-							input="dockSession"
-							prompt-improver-agent="TL_PromptImprover"
-							trace="summary"
-						>
-							<!--
-								What the dock states about the situation (Issue #494). It is the SAME
-								conversation the Chat page shows, so "Application" is stated here too
-								and with the same words: a stable fact goes into the environment block
-								of the system prompt, and a block that gained or lost a line between
-								two turns of one chat would miss the provider's prompt cache on every
-								turn after it.
-								
-								"Open event" is this dock's own rail pane, the way it is the page's
-								rail pane over there.
-							-->
-							<context>
-								<inputs>
-									<input channel="dockPaneObject"/>
-								</inputs>
-								<fact name="Application"
-									stable="true"
-								>
-									<value><![CDATA[open -> "Event management demo (tl-ai-demo)"]]></value>
-								</fact>
-								<fact name="Open event"
-									stable="false"
-								>
-									<value><![CDATA[open -> ifElse(isEmpty($open) || !$open.instanceOf(`demo.events:Event`), "none",
-										$open.get(`demo.events:Named#name`)
-											+ ": " + $open.get(`demo.events:Event#registrationCount`) + " active registrations, balance "
-											+ $open.get(`demo.events:Event#balance`))]]></value>
-								</fact>
-							</context>
-							<!--
-								And what the user is actually looking at: what the page the dock is
-								floating over has open, written by that page's <page-selection>. One
-								line, and the agent is told the label, the type and the identifier it
-								needs to act on the object. "none" on a page that has nothing open.
-							-->
-							<selection name="Selected object"
-								channel="pageSelection"
-							/>
-						</chat-conversation>
-					</panel>
-					<!--
-						The rail, with its pane - which is what "the pane is visible as well if
-						wanted" means here: picking an event in the "Veranstaltungen" section replaces
-						the section column with its form, inside the dock's panel, exactly as it does
-						on the page. The pane is the rail's own and renders any type (#616).
-					-->
-					<chat-rail
-						input="dockPaneObject"
-						open="false"
-						strip="true"
-					>
-						<section name="progress"
-							badge="dockProgressBadge"
-							icon="css:bi bi-list-check"
-							open="true"
-						>
-							<label>
-								<en>Progress</en>
-								<de>Fortschritt</de>
-							</label>
-							<data-list
-								collapsible="false"
-								count="dockProgressBadge"
-								observed-types="tl.ai.execution:AgentTask"
-								search="false"
-							>
-								<row-css-class><![CDATA[t -> switch {
-									$t.get(`tl.ai.execution:AgentTask#status`) == "completed": "is-done";
-									$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": "is-running";
-									default: "is-pending";
-								}]]></row-css-class>
-								<empty-text>
-									<en>Nothing planned yet</en>
-									<de>Noch nichts geplant</de>
-								</empty-text>
-								<inputs>
-									<input channel="dockSession"/>
-								</inputs>
-								<lines>
-									<line attribute="subject"/>
-									<line emphasis="secondary">
-										<value><![CDATA[t -> switch {
-											$t.get(`tl.ai.execution:AgentTask#status`) == "completed": #("Done"@en, "Erledigt"@de);
-											$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": #("In progress"@en, "Läuft"@de);
-											default: #("Pending"@en, "Offen"@de);
-										}]]></value>
-									</line>
-								</lines>
-								<rows><![CDATA[session -> ifElse(isEmpty($session), list(),
-									$session.referers(`tl.ai.execution:AgentTask#session`)
-										.sort((t -> $t.get(`tl.ai.execution:AgentTask#ordinal`)).comparator()))]]></rows>
-							</data-list>
-						</section>
-						<section name="sources"
-							badge="dockSourcesBadge"
-							icon="css:bi bi-quote"
-						>
-							<label>
-								<en>Sources</en>
-								<de>Quellen</de>
-							</label>
-							<chat-sources badge="dockSourcesBadge"/>
-						</section>
-						<section name="events"
-							icon="css:bi bi-calendar-event"
-						>
-							<label>
-								<en>Events</en>
-								<de>Veranstaltungen</de>
-							</label>
-							<data-list
-								collapsible="false"
-								observed-types="demo.events:Event"
-								search="false"
-								selection="dockPaneObject"
-							>
-								<empty-text>
-									<en>No events yet</en>
-									<de>Noch keine Veranstaltungen</de>
-								</empty-text>
-								<lines>
-									<line attribute="name"/>
-									<line
-										attribute="startDate"
-										emphasis="secondary"
-									/>
-								</lines>
-								<rows><![CDATA[all(`demo.events:Event`)
-									.sort((e -> $e.get(`demo.events:Event#startDate`)).comparator().desc())]]></rows>
-							</data-list>
-						</section>
-					</chat-rail>
-				</chat>
+				<view-ref view="tl-chat/albert.view.xml">
+					<bind
+						channel="chatDraft"
+						to="chatDraft"
+					/>
+					<bind
+						channel="pageSelection"
+						to="pageSelection"
+					/>
+				</view-ref>
 			</chat-dock>
 		</footer>
 	</app-shell>

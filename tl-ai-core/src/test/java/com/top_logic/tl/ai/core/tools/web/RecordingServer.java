@@ -37,28 +37,28 @@ import java.util.function.Function;
  * counting and the ability to answer a redirect with a byte-exact response.
  * </p>
  */
-final class RecordingServer implements AutoCloseable {
+public final class RecordingServer implements AutoCloseable {
 
 	/** A response: the status line phrase, extra headers and the body. */
-	record Reply(int status, String phrase, List<String> headers, byte[] content) {
+	public record Reply(int status, String phrase, List<String> headers, byte[] content) {
 
 		/** A response with a text body, sent as UTF-8. */
-		Reply(int status, String phrase, List<String> headers, String body) {
+		public Reply(int status, String phrase, List<String> headers, String body) {
 			this(status, phrase, headers, body.getBytes(StandardCharsets.UTF_8));
 		}
 
 		/** A {@code 200} reply with a binary body of the given type. */
-		static Reply binary(String contentType, byte[] content) {
+		public static Reply binary(String contentType, byte[] content) {
 			return new Reply(200, "OK", List.of("Content-Type: " + contentType), content);
 		}
 
 		/** A {@code 200} HTML reply. */
-		static Reply html(String body) {
+		public static Reply html(String body) {
 			return new Reply(200, "OK", List.of("Content-Type: text/html; charset=utf-8"), body);
 		}
 
 		/** A {@code 302} redirect to {@code location}. */
-		static Reply redirect(String location) {
+		public static Reply redirect(String location) {
 			return new Reply(302, "Found", List.of("Location: " + location), "redirecting");
 		}
 	}
@@ -89,7 +89,7 @@ final class RecordingServer implements AutoCloseable {
 	 *        Maps the request target (the path, or the absolute URL if one is sent) to the reply.
 	 * @return The started server.
 	 */
-	static RecordingServer start(Function<String, Reply> replies) {
+	public static RecordingServer start(Function<String, Reply> replies) {
 		ServerSocket listener;
 		try {
 			listener = new ServerSocket(0, 16, InetAddress.getByName("127.0.0.1"));
@@ -104,17 +104,17 @@ final class RecordingServer implements AutoCloseable {
 	}
 
 	/** A server that always answers with the same HTML body. */
-	static RecordingServer serving(String html) {
+	public static RecordingServer serving(String html) {
 		return start(target -> Reply.html(html));
 	}
 
 	/** The ephemeral loopback port. */
-	int port() {
+	public int port() {
 		return _listener.getLocalPort();
 	}
 
 	/** {@code http://127.0.0.1:<port>} - the origin a test navigates to (or must never reach). */
-	String origin() {
+	public String origin() {
 		return "http://127.0.0.1:" + port();
 	}
 
@@ -122,19 +122,19 @@ final class RecordingServer implements AutoCloseable {
 	 * How many TCP connections reached this server. {@code 0} is the assertion an SSRF test needs: the
 	 * forbidden origin was never contacted.
 	 */
-	int contactCount() {
+	public int contactCount() {
 		return _contacts.get();
 	}
 
 	/** The request lines received so far. */
-	List<String> requestLines() {
+	public List<String> requestLines() {
 		synchronized (_requestLines) {
 			return new ArrayList<>(_requestLines);
 		}
 	}
 
 	/** The complete request heads received so far (request line and headers, newline separated). */
-	List<String> heads() {
+	public List<String> heads() {
 		synchronized (_heads) {
 			return new ArrayList<>(_heads);
 		}
@@ -149,7 +149,7 @@ final class RecordingServer implements AutoCloseable {
 	 * would deadlock against it rather than quietly work.
 	 * </p>
 	 */
-	List<String> bodies() {
+	public List<String> bodies() {
 		synchronized (_bodies) {
 			return new ArrayList<>(_bodies);
 		}

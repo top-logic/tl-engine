@@ -330,24 +330,6 @@ public class TestBranchActions extends TestCase {
 	}
 
 	/**
-	 * Tests that a branch applies the form state as soon as one of its actions does.
-	 */
-	public void testAppliesFormState() {
-		ViewAction applying = new FormApplying();
-
-		assertFalse(new IfAction(TRUE, List.of(record("then")), List.of(record("else"))).appliesFormState());
-		assertTrue(new IfAction(TRUE, List.of(applying), List.of()).appliesFormState());
-		assertTrue("The branch that is not taken decides the button's state as well.",
-			new IfAction(TRUE, List.of(), List.of(applying)).appliesFormState());
-
-		assertFalse(new SwitchAction(VALUE, List.of(new SwitchCase(is("open"), List.of(record("open")))),
-			List.of(record("default"))).appliesFormState());
-		assertTrue(new SwitchAction(VALUE, List.of(new SwitchCase(is("open"), List.of(applying))), List.of())
-			.appliesFormState());
-		assertTrue(new SwitchAction(VALUE, List.of(), List.of(applying)).appliesFormState());
-	}
-
-	/**
 	 * Tests that a command chain with {@code <if>} and {@code <switch>} branches parses and
 	 * instantiates.
 	 */
@@ -454,20 +436,6 @@ public class TestBranchActions extends TestCase {
 
 		void resume(Object value) {
 			_continuation.resume(value);
-		}
-	}
-
-	/** An action that applies the values entered into the enclosing form. */
-	private static class FormApplying implements ViewAction {
-
-		@Override
-		public Object execute(ReactContext context, Object input) {
-			return input;
-		}
-
-		@Override
-		public boolean appliesFormState() {
-			return true;
 		}
 	}
 

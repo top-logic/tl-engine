@@ -21,7 +21,7 @@
 <div>Wird der <code>eval</code>-Block erfolgreich ausgeführt, wird dessen Ergebnis zurückgegeben. Tritt ein Fehler auf, wird der <code>catch</code>-Block ausgeführt. Dieser erhält immer zwei Argumente: die Fehlermeldung <code>message</code> und den Wert <code>value</code>.</div>
 
 <ul>
-	<li><strong>message</strong>: Bei einer <code>I18NException</code> der <code>ResKey</code>, sonst die Fehlermeldung als Text.</li>
+	<li><strong>message</strong>: Die Fehlermeldung als <code>ResKey</code>, sodass sie in der Sprache des Benutzers angezeigt wird. Das gilt für den von <code>throw()</code> ausgelösten Fehler (auch wenn <code>throw()</code> ein einfacher Text übergeben wurde) ebenso wie für Fehler von Funktionen, die immer mit einem Meldungsschlüssel gemeldet werden. Um die Meldung als Zeichenkette weiterzuverarbeiten, wird sie mit <code>localize()</code> umgewandelt, z.B. <code>$message.localize()</code>.</li>
 	<li><strong>value</strong>: Der über das dritte Argument von <code>throw()</code> übergebene Wert. <code>null</code>, wenn der Fehler nicht aus einem <code>throw()</code> stammt oder <code>throw()</code> ohne Wert aufgerufen wurde.</li>
 </ul>
 </div>

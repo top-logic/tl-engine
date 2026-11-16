@@ -36,6 +36,10 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
+import com.top_logic.layout.react.scripting.ScriptingNodeView;
+import com.top_logic.layout.react.scripting.ScriptingSession;
+import com.top_logic.layout.react.scripting.ScriptingTreeProjector;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -150,6 +154,26 @@ public class TestTileFrameDisposal extends BasicTestCase {
 		_path.set(List.of());
 
 		assertGone(frameControls);
+	}
+
+	/**
+	 * Tests that the headless projection shows the active frame alone: the frame it covers is
+	 * rendered, but the user does not see it.
+	 */
+	public void testCoveredFrameIsNotObserved() {
+		_path.set(List.of(detail("first")));
+		ReactTileStackControl stack = stack();
+		assertEquals("The stack renders the covered frame and the active one.", 2, stack.displayedChildren().size());
+
+		ScriptingSession session = ScriptingSession.forRoot(_root);
+		String stackAddress = session.addressOf(stack);
+		ScriptingNodeView node = ScriptingTreeProjector.project(stack, stackAddress, ProjectionMode.AGENT);
+		assertEquals(1, node.children().size());
+		assertEquals(ScriptingTreeProjector.join(stackAddress, "frame[1]"), node.children().get(0).address());
+
+		ReactControl covered = stack.displayedChildren().stream()
+			.filter(frame -> frame != activeFrame()).findFirst().get();
+		assertNull("A control of the covered frame has no address.", session.addressOf(covered));
 	}
 
 	/**

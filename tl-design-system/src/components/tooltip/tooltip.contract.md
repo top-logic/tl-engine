@@ -16,6 +16,7 @@ Aussehen; wer ins Bild passen will, liest die Tokens.
 
 | Schlüssel | Typ | Bedeutung |
 |---|---|---|
+| `fullText` | string, optional | der volle Text des abgeschnittenen Elements, an dem der Tooltip steht, als erste Zeile über Überschrift und Text; `tooltip-host.ts` setzt ihn, wenn das Element einen eigenen Tooltip hat und sein Text gerade abgeschnitten ist, und lässt ihn weg, wenn der Tooltip den Text schon nennt |
 | `caption` | string, optional | Überschrift; fehlt sie, gibt es keine Überschriftzeile |
 | `text` / `html` | string | der Text, oder erlaubtes HTML vom Server; das HTML erbt Farbe und Schrift des Tooltips |
 | `interactive` | boolean | der Zeiger darf in den Tooltip (Link, Text zum Kopieren); sonst geht er durch ihn hindurch |
@@ -34,6 +35,7 @@ Aussehen; wer ins Bild passen will, liest die Tokens.
 |---|---|
 | Fläche | `--tl-surface-inverse` |
 | Text | `--tl-text-inverse` (das Paar steht in der Paarliste, 4,5:1 in beiden Modi; `derive` rechnet beide) |
+| Trennlinie unter dem vollen Text | `--tl-border-width-sm` in `--tl-border-inverse` |
 | Pfeil | Füllung `--tl-surface-inverse`, ohne Schatten |
 | Schatten | `--tl-shadow-popover` als `box-shadow` am Tooltip (nicht `drop-shadow()`: die zweischichtige Liste geht dort nicht) |
 | Ebene | `--tl-layer-tooltip` — über dem Popover, in dem das erklärte Element liegen kann, und über dem Toast |
@@ -42,7 +44,8 @@ Aussehen; wer ins Bild passen will, liest die Tokens.
 | Abstände | `--tl-space-2xs` oben und unten, `--tl-space-sm` seitlich; Einzug einer Liste im Text `--tl-space-sm` |
 | Einblenden | `--tl-duration-fast` mit `--tl-easing-entrance` |
 
-Die Schrift steht nicht im Stylesheet: die Überschrift trägt `tl-type-label-strong`, der Text `tl-type-label`.
+Die Schrift steht nicht im Stylesheet: der volle Text und die Überschrift tragen `tl-type-label-strong`, der Text
+`tl-type-label`.
 
 ## Attribute
 
@@ -50,6 +53,7 @@ Die Schrift steht nicht im Stylesheet: die Überschrift trägt `tl-type-label-st
 |---|---|
 | `tl-tooltip` | immer; an der schwebenden Fläche mit `role="tooltip"` |
 | `role="tooltip"` | an der Fläche |
+| `tl-tooltip__full-text` | am vollen Text eines abgeschnittenen Elements, mit `tl-type-label-strong`; erste Zeile, unten durch eine Linie abgesetzt |
 | `tl-tooltip__caption` | an der Überschrift, mit `tl-type-label-strong` |
 | `tl-tooltip__body` | am Text, mit `tl-type-label`; Elemente darin erben Farbe und Schrift, der erste und letzte Block schließen bündig an |
 | `tl-tooltip__body--text` | zusätzlich am Text, wenn er reiner Text ist (`text`, nicht `html`): er behält seine Zeilenumbrüche (`white-space: pre-line`), ein `\n` ist ein Umbruch, eine Leerzeile trennt Absätze. HTML bricht nach seinem Markup um |

@@ -34,16 +34,26 @@ import com.top_logic.layout.react.control.form.ReactTextInputControl;
 public class HtmlTextConfigProvider implements ConfigAnnotationControlProvider<Html> {
 
 	@Override
+	public boolean accepts(ConfigFieldModel model, Html annotation) {
+		return ConfigControlService.holdsText(model);
+	}
+
+	@Override
 	public ReactControl createControl(ReactContext context, ConfigFieldModel model, Html annotation) {
-		if (!ConfigControlService.holdsText(model)) {
-			return null;
-		}
 		int rows = MultiLineTextConfigProvider.rows(model.getProperty());
 		return new ReactRenderedTextControl(context, model, () -> {
 			ReactTextInputControl input = ConfigControlService.createTextInput(context, model);
 			input.setMultiline(rows);
 			return input;
 		}, Function.identity());
+	}
+
+	/**
+	 * The text area spans several lines and takes the whole row.
+	 */
+	@Override
+	public boolean rendersWholeLine(ConfigFieldModel model, Html annotation) {
+		return true;
 	}
 
 }

@@ -9,6 +9,7 @@ import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.util.Collection;
 import java.util.List;
 
@@ -82,12 +83,21 @@ public class Ticket23376UpdateReferenceIdColumns implements MigrationProcessor {
 		SQLQuery<?> setColumnMandatory = createQueryToSetColumnMandatory(tableName, columnName);
 
 		try {
-			log.info("Migrating column '" + columnName + "' of table '" + tableName + "'.");
-			executeSQLQuery(log, connection, helper, replaceNullValues);
-			executeSQLQuery(log, connection, helper, setColumnMandatory);
+			// A failure is tolerated, it must not abort the whole transaction.
+			Savepoint savePoint = helper.setSavepoint(connection);
+			try {
+				log.info("Migrating column '" + columnName + "' of table '" + tableName + "'.");
+				executeSQLQuery(log, connection, helper, replaceNullValues);
+				executeSQLQuery(log, connection, helper, setColumnMandatory);
+			} catch (SQLException ex) {
+				helper.rollback(connection, savePoint);
+				log.info("Column '" + columnName + "' could not be migrated." + " Please check." + ex.getMessage(),
+					Protocol.WARN);
+			} finally {
+				helper.releaseSavepoint(connection, savePoint);
+			}
 		} catch (SQLException ex) {
-			log.info("Column '" + columnName + "' could not be migrated." + " Please check." + ex.getMessage(),
-				Protocol.WARN);
+			log.error("Failed to migrate column '" + columnName + "' of table '" + tableName + "'.", ex);
 		}
 	}
 

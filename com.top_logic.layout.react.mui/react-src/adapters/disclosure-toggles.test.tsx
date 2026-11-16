@@ -173,7 +173,7 @@ describe('the toggle of a tree table row as MUI icon button', () => {
     await userEvent.click(toggle);
     await settle();
 
-    expect(sent).toHaveBeenCalledWith(CMD_EXPAND, { rowIndex: 0, expanded: true });
+    expect(sent).toHaveBeenCalledWith(CMD_EXPAND, { rowId: 'r0', expanded: true });
   });
 
   it('collapses an expanded row', async () => {
@@ -185,7 +185,7 @@ describe('the toggle of a tree table row as MUI icon button', () => {
     await userEvent.click(toggle);
     await settle();
 
-    expect(sent).toHaveBeenCalledWith(CMD_EXPAND, { rowIndex: 0, expanded: false });
+    expect(sent).toHaveBeenCalledWith(CMD_EXPAND, { rowId: 'r0', expanded: false });
   });
 });
 

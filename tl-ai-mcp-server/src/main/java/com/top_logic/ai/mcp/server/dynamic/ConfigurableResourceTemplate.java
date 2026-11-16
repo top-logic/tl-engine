@@ -93,13 +93,12 @@ public class ConfigurableResourceTemplate extends AbstractConfiguredInstance<Res
 
 	@Override
 	public McpServerFeatures.SyncResourceTemplateSpecification createSpecification() {
-		McpSchema.ResourceTemplate.Builder builder = McpSchema.ResourceTemplate.builder()
-			.uriTemplate(getConfig().getUriTemplate())
-			.name(getConfig().getName());
+		McpSchema.ResourceTemplate.Builder builder = McpSchema.ResourceTemplate.builder(getConfig().getUriTemplate(),
+			getConfig().getName());
 
 		// Add optional metadata
 		if (getConfig().getTitle() != null) {
-			builder.name(getConfig().getTitle());
+			builder.title(getConfig().getTitle());
 		}
 
 		if (getConfig().getDescription() != null) {
@@ -178,7 +177,7 @@ public class ConfigurableResourceTemplate extends AbstractConfiguredInstance<Res
 		// Handle different result types
 		List<McpSchema.ResourceContents> contentsList = createResourceContentsList(uri, result);
 
-		return new McpSchema.ReadResourceResult(contentsList);
+		return McpSchema.ReadResourceResult.builder(contentsList).build();
 	}
 
 	/**
@@ -223,7 +222,7 @@ public class ConfigurableResourceTemplate extends AbstractConfiguredInstance<Res
 		// Handle null result
 		if (result == null) {
 			String mimeType = getConfiguredMimeType("text/plain");
-			return new McpSchema.TextResourceContents(uri, mimeType, "");
+			return McpSchema.TextResourceContents.builder(uri, "").mimeType(mimeType).build();
 		}
 
 		// Handle BinaryDataSource - check if text-based or binary
@@ -239,11 +238,15 @@ public class ConfigurableResourceTemplate extends AbstractConfiguredInstance<Res
 				if (isTextContentType(contentType)) {
 					// Read as text for text-based content types
 					String content = new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
-					return new McpSchema.TextResourceContents(uri, mimeType, content);
+					return McpSchema.TextResourceContents.builder(uri, content)
+						.mimeType(mimeType)
+						.build();
 				} else {
 					// Encode as base64 for blob transport
 					String base64Content = java.util.Base64.getEncoder().encodeToString(bytes);
-					return new McpSchema.BlobResourceContents(uri, mimeType, base64Content);
+					return McpSchema.BlobResourceContents.builder(uri, base64Content)
+						.mimeType(mimeType)
+						.build();
 				}
 			} catch (Exception ex) {
 				throw new RuntimeException("Failed to read binary content: " + ex.getMessage(), ex);
@@ -254,20 +257,20 @@ public class ConfigurableResourceTemplate extends AbstractConfiguredInstance<Res
 		if (result instanceof Map) {
 			String content = serializeMapAsJson((Map<?, ?>) result);
 			String mimeType = getConfiguredMimeType("application/json");
-			return new McpSchema.TextResourceContents(uri, mimeType, content);
+			return McpSchema.TextResourceContents.builder(uri, content).mimeType(mimeType).build();
 		}
 
 		// Handle HTMLFragment - render to HTML string
 		if (result instanceof HTMLFragment htmlFragment) {
 			String content = renderHtmlFragment(htmlFragment);
 			String mimeType = getConfiguredMimeType("text/html");
-			return new McpSchema.TextResourceContents(uri, mimeType, content);
+			return McpSchema.TextResourceContents.builder(uri, content).mimeType(mimeType).build();
 		}
 
 		// Default: convert to string using toString()
 		String content = result.toString();
 		String mimeType = getConfiguredMimeType("text/plain");
-		return new McpSchema.TextResourceContents(uri, mimeType, content);
+		return McpSchema.TextResourceContents.builder(uri, content).mimeType(mimeType).build();
 	}
 
 	/**

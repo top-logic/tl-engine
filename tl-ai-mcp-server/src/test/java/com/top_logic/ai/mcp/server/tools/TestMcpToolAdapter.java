@@ -20,8 +20,8 @@ public class TestMcpToolAdapter extends TestCase {
 	 * A tool that reports a failure is published with {@code isError: true}.
 	 *
 	 * <p>
-	 * The four framework refusals - no authenticated caller, a denied tool, a pre-commit violation,
-	 * a thrown exception - were flagged all along. A failure the tool itself returned was not, so it
+	 * The three framework refusals - no authenticated caller, a denied tool, a thrown exception - were
+	 * flagged all along. A failure the tool itself returned was not, so it
 	 * left this server as a successful call whose text happened to read like an error, and a client
 	 * had nothing but the English to go on (Gitea #387).
 	 * </p>

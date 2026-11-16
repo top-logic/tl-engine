@@ -1,11 +1,11 @@
 ---
-description: Read before verifying agent security by hand or adding a case to the security test bed of tl-ai-demo (secdemo.config.xml, the pm model, SecDemoSetup) - enabling and resetting the fixture, the personas anna, ben, cara and dora, the four harness scripts (probe, fire, collect, reset) for the script console, the scenario tables per layer (tool access T1-T10, read filtering D1-D11, capability notices C1-C8, background allowlist A1-A5, pre-commit guard, object tools, closed doors P1-P2) and the SecDemo*Test classes asserting each.
+description: Read before verifying agent security by hand or adding a case to the security test bed of tl-ai-demo (secdemo.config.xml, the pm model, SecDemoSetup) - enabling and resetting the fixture, the personas anna, ben, cara and dora, the four harness scripts (probe, fire, collect, reset) for the script console, the scenario tables per layer (tool access T1-T10, read filtering D1-D11, capability notices C1-C8, background allowlist A1-A5, object tools, closed doors P1-P2) and the SecDemo*Test classes asserting each.
 order: 6
 ---
 
 # The security test bed
 
-`tl-ai-demo` carries a small projects-and-tickets application in which agent security is fully configured: the [worked example](doc:ai/security/role-model-worked-example), built. Find the behaviour in the [scenario tables](#the-scenarios), log in as the persona of that row, do the one thing the row says and compare with the last column. Every scenario is about the agent layers - which tools an account may invoke, what a permitted tool discloses, what the agent is told about what it cannot do, what an unattended run may do, what the pre-commit guard catches. The engine's model security is the substrate; the worked example explains it persona by persona.
+`tl-ai-demo` carries a small projects-and-tickets application in which agent security is fully configured: the [worked example](doc:ai/security/role-model-worked-example), built. Find the behaviour in the [scenario tables](#the-scenarios), log in as the persona of that row, do the one thing the row says and compare with the last column. Every scenario is about the agent layers - which tools an account may invoke, what a permitted tool discloses, what the agent is told about what it cannot do, what an unattended run may do, what a write tool checks. The engine's model security is the substrate; the worked example explains it persona by persona.
 
 ## The fixture
 
@@ -25,14 +25,13 @@ Everything is in `tl-ai-demo/src/main/webapp/WEB-INF/conf/secdemo.config.xml`; `
 
 ### Which layer you are looking at
 
-A confusing observation is almost always the wrong layer. The first three must allow before anything happens; the fourth is asked again at the end of the turn.
+A confusing observation is almost always the wrong layer. All three must allow before anything happens.
 
 | Layer | Configured by | Decides | Symptom when it denies |
 |---|---|---|---|
 | component access | `<component-access>` of `SecDemoSetup` | whether a tab opens | "No tabs to choose from." |
 | tool access (L1) | `<tool-access>` | whether this account may invoke this tool | `Permission denied: tool '...' requires the '...' capability` |
 | model access (L2) | `<security-config>` plus the role rules | whether this account may read or write this object | an empty result, `totalCount` 0, `Object with TID '...' not found` for an object that exists, an absent attribute, `CREATE_PERMISSION_DENIED` |
-| pre-commit guard (L4) | the same `<security-config>`, read at the end of the turn | whether the turn's changes may be persisted | the changes are gone; `The data changes of this turn were rolled back` |
 
 L1 cannot see objects, so Anna and Dora are indistinguishable at L1 and opposite at L2 - one partners on a project, the other on nothing. Role resolution walks the touched object and its security ancestors, never its children: with `use-default-security-parent="true"` a role on the root would be held on everything (`SecDemoRoleRuleTest.testTheTierDoesNotBecomeAScope` fails then), and a role held on the root grants no model access at all, so "a ticket reader may read all tickets" needs a rule putting the role on every ticket.
 
@@ -165,11 +164,9 @@ A run with nobody to answer an approval prompt auto-approves every call, so it i
 | A4 | what the allowlist admits works | `ben` | 3.3, 3.4, 3.5 | the listings, with the model rights applied |
 | A5 | an enforcing policy must declare an allowlist | - | delete `<background-allowlist>` from `secdemo.config.xml` and restart | the application refuses to start ([capping unattended runs](doc:ai/security/tool-access-recipes)) |
 
-### The pre-commit guard and the object tools
+### The object tools
 
-L4 reads the turn's changes from the engine's transaction and asks the same `<security-config>` whether the acting account may persist them - the one layer that catches a tool that never checked ([pre-commit guard](doc:ai/security/pre-commit-guard)). The fixture's own tools check, and a demo must not ship an unchecked write tool, so there is no console row: `SecDemoPreCommitGuardTest` registers one unchecked tool in a real agent run and asserts as `anna` that a permitted write commits, that a creation inside Beta and an update of a Beta ticket are rolled back with a notice naming the operation and the type but never the value, that `Delete` is a right of its own, and that a turn mixing a permitted with a forbidden change loses both; as `dora` the same write is refused. Changing the `partners` of Alpha is rolled back although Anna may write Alpha, because a `<part>` grant withholds that attribute - the guard reads every attribute kept outside the holder's row, references and translated texts included.
-
-`updateObject`, `createObject` and `deleteObject` ask the model rights themselves, per object and attribute, before they write ([object tools](doc:ai/security/object-tools)); `SecDemoObjectEditTest`:
+A write is checked by the tool that makes it, and the turn commits what its tools wrote ([the layers](doc:ai/security#the-layers)). The TL-Script tool `secdemo-editing.addTicket` writes through the engine's own checks of the acting account's rights. `updateObject`, `createObject` and `deleteObject` ask the model rights themselves, per object and attribute, before they write ([object tools](doc:ai/security/object-tools)); `SecDemoObjectEditTest`:
 
 | Persona | Call | Expected |
 |---|---|---|
@@ -200,13 +197,13 @@ mvn -B test -DskipTests=false -pl tl-ai-demo -Dtest='com.top_logic.ai.demo.SecDe
 | `SecDemoToolAccessTest` | T1-T10 | `SecDemoSchemaFilterTest` | C3-C5 |
 | `SecDemoScriptToolClassificationTest` | T8 | `SecDemoDelegateFilterTest` | C7 |
 | `SecDemoReadFilterTest` | D1-D8 | `SecDemoBackgroundAccessTest` | A1-A5, P2 |
-| `SecDemoModelDigestTest` | D9-D11 | `SecDemoPreCommitGuardTest` | the pre-commit guard |
-| `SecDemoCapabilityNoticeTest` | C1, C2 | `SecDemoObjectEditTest` | the object tools |
-| `SecDemoSkillAbsenceTest` | C1, C4-C6 | `SecDemoRoleRuleTest` | the boot check |
-| `SecDemoListToolsTest` | C3, C4, C8 | `SecDemoMcpEndpointTest` | P1 |
-| `SecDemoVectorIndexTest` | the vector index | `SecDemoModelSecurityTest` | the worked example, persona by persona |
+| `SecDemoModelDigestTest` | D9-D11 | `SecDemoObjectEditTest` | the object tools |
+| `SecDemoCapabilityNoticeTest` | C1, C2 | `SecDemoRoleRuleTest` | the boot check |
+| `SecDemoSkillAbsenceTest` | C1, C4-C6 | `SecDemoMcpEndpointTest` | P1 |
+| `SecDemoListToolsTest` | C3, C4, C8 | `SecDemoModelSecurityTest` | the worked example, persona by persona |
+| `SecDemoVectorIndexTest` | the vector index | | |
 
-`SecDemoSpawnFilterTest` (a spawn is decided per child context), `SecDemoDeclaredTypesTest` (a tool declaring `pm:Project` refuses a persona without read access before it runs), `SecDemoInfrastructureAgentTest` (an agent the application runs for a user, such as the prompt improver, cannot be run as a chat persona, whatever `<agent-access>` says), `SecDemoHarnessScriptsTest` (the harness compiles) and the tests of the [policy editor](doc:ai/security/tool-access-editor) (`SecDemoEffectiveAccessTest`, `SecDemoPolicyEditorTest`, `SecDemoApplyPolicyGuardTest`, `SecDemoToolDescriptionTest`, `SecDemoGermanTerminologyTest`) run in the same suite because they need the booted fixture. The unit-level counterparts in `tl-ai-core` use hand-built policies: `TestRoleToolAccess`, `TestToolAuthorization`, `TestAiToolAccessService`, `TestAgentCapabilities`, `TestDelegateFilter`, `TestSpawnFilter`, `TestDetachedSubagentCeiling`, `TestSkillTool`, `TestSkillAbsenceReason`, `TestTopLogicSecurityContext`, `TestPreCommitGuard`, `TestReadFilter`.
+`SecDemoSpawnFilterTest` (a spawn is decided per child context), `SecDemoDeclaredTypesTest` (a tool declaring `pm:Project` refuses a persona without read access before it runs), `SecDemoInfrastructureAgentTest` (an agent the application runs for a user, such as the prompt improver, cannot be run as a chat persona, whatever `<agent-access>` says), `SecDemoHarnessScriptsTest` (the harness compiles) and the tests of the [policy editor](doc:ai/security/tool-access-editor) (`SecDemoEffectiveAccessTest`, `SecDemoPolicyEditorTest`, `SecDemoApplyPolicyGuardTest`, `SecDemoToolDescriptionTest`, `SecDemoGermanTerminologyTest`) run in the same suite because they need the booted fixture. The unit-level counterparts in `tl-ai-core` use hand-built policies: `TestRoleToolAccess`, `TestToolAuthorization`, `TestAiToolAccessService`, `TestAgentCapabilities`, `TestDelegateFilter`, `TestSpawnFilter`, `TestDetachedSubagentCeiling`, `TestSkillTool`, `TestSkillAbsenceReason`, `TestTopLogicSecurityContext`, `TestReadFilter`.
 
 ## Pitfalls
 

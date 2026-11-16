@@ -7,6 +7,7 @@ package com.top_logic.knowledge.service.db2;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -1218,8 +1219,7 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 			}
 
 			Object oldValue = oldValues == null ? null : getOldValue(kb, attribute, oldValues);
-			Object newValue =
-				newValues == null ? null : attribute.getStorage().getCacheValue(attribute, this, newValues);
+			Object newValue = newValues == null ? null : getNewValue(attribute, newValues);
 			String attributeName = attribute.getName();
 			if (keyAttributes.contains(attributeName) || !Utils.equals(oldValue, newValue)) {
 				event.setValue(attributeName, getEventValue(oldValue), getEventValue(newValue), false);
@@ -1233,6 +1233,91 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 		}
 
 		return event;
+	}
+
+	/**
+	 * The names of the attributes whose value in the current transaction differs from the committed
+	 * value.
+	 * 
+	 * <p>
+	 * The attributes considered are those reported in the {@link #getChange() change} of an
+	 * update, with the difference that a key attribute is only reported if its value changed.
+	 * </p>
+	 * 
+	 * <p>
+	 * Must only be called for an item that is persistent and modified but not deleted in the
+	 * transaction of the current thread.
+	 * </p>
+	 * 
+	 * @return A modifiable set of attribute names.
+	 */
+	Set<String> getChangedAttributeNames() {
+		DBContext modificationContext = getCurrentDBContext();
+		checkUpdated(modificationContext);
+		Set<String> result = new HashSet<>();
+		Object[] newValues = modificationContext.getLocalValues(this);
+		if (newValues == null) {
+			// Only flexible attributes are modified.
+			return result;
+		}
+		Object[] oldValues = getGlobalValues();
+		DBKnowledgeBase kb = getKnowledgeBase();
+		Set<String> keyAttributes = kb.getKeyAttributes(tTable());
+		for (MOAttribute attribute : tTable().getAttributes()) {
+			if (!contributesToChange(attribute, keyAttributes, false)) {
+				continue;
+			}
+			Object oldValue = getOldValue(kb, attribute, oldValues);
+			Object newValue = getNewValue(attribute, newValues);
+			if (!Utils.equals(oldValue, newValue)) {
+				result.add(attribute.getName());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Checks that this item is persistent and modified, but not deleted in the given context.
+	 */
+	final void checkUpdated(DBContext modificationContext) {
+		if (!isPersistent() || modificationContext == null || !isAlive(modificationContext)) {
+			throw new IllegalStateException("Not an updated item: " + this);
+		}
+	}
+
+	/**
+	 * The value of the given attribute before the current transaction.
+	 * 
+	 * <p>
+	 * Must only be called for an item that is persistent, i.e. not created in the current
+	 * transaction. The item may be deleted in the current transaction.
+	 * </p>
+	 * 
+	 * @param attributeName
+	 *        Name of an attribute of {@link #tTable()} or of a flexible attribute.
+	 * @return The committed value in the form {@link #getAttributeValue(String)} returns it.
+	 * 
+	 * @throws NoSuchAttributeException
+	 *         If this item does not have an attribute with the given name.
+	 */
+	Object getCommittedValue(String attributeName) throws NoSuchAttributeException {
+		if (!isPersistent()) {
+			throw new IllegalStateException("Item has no committed values: " + this);
+		}
+		MOAttribute attribute = tTable().getAttributeOrNull(attributeName);
+		if (attribute == null) {
+			return getCommittedFlexValue(attributeName);
+		}
+		return getOldValue(getKnowledgeBase(), attribute, getGlobalValues());
+	}
+
+	/**
+	 * The committed value of the given attribute that is not an attribute of {@link #tTable()}.
+	 * 
+	 * @see #getCommittedValue(String)
+	 */
+	Object getCommittedFlexValue(String attributeName) throws NoSuchAttributeException {
+		throw new NoSuchAttributeException("No attribute '" + attributeName + "' in " + tTable().getName() + ".");
 	}
 
 	/**
@@ -1290,6 +1375,18 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 		} finally {
 			kb.installContext(before);
 		}
+	}
+
+	/**
+	 * The value of the given attribute in the given transaction-local values.
+	 * 
+	 * @param attribute
+	 *        The attribute of {@link #tTable()} to get the value for.
+	 * @param newValues
+	 *        The local values of this item in the current transaction.
+	 */
+	private Object getNewValue(MOAttribute attribute, Object[] newValues) {
+		return attribute.getStorage().getCacheValue(attribute, this, newValues);
 	}
 
 	/**

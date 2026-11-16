@@ -26,6 +26,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.db2.UpdateChainLink;
@@ -422,6 +423,28 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 			return context.getPerson();
 	    }
 		return null;
+	}
+
+	/**
+	 * Whether the given person has administrative rights in the current context.
+	 *
+	 * <p>
+	 * An {@link Person#isAdmin(Person) administrator} has administrative rights in every context.
+	 * {@link ThreadContext#isSecurityBypassed() Bypassed security checks} of the current context
+	 * give administrative rights only to the {@link #currentUser() person of the current context}
+	 * (which is <code>null</code> in a {@link ThreadContext#isSystemContext() system context}), not
+	 * to another person whose rights are checked in that context.
+	 * </p>
+	 *
+	 * @param person
+	 *        The person whose rights are checked, may be <code>null</code>.
+	 * @see ThreadContext#isAdmin()
+	 */
+	public static boolean hasAdministrativeRights(Person person) {
+		if (Person.isAdmin(person)) {
+			return true;
+		}
+		return ThreadContext.isSecurityBypassed() && Utils.equals(person, currentUser());
 	}
 
 	/**

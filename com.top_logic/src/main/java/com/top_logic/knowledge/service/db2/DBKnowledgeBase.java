@@ -200,6 +200,7 @@ import com.top_logic.knowledge.service.event.CommitChecker;
 import com.top_logic.knowledge.service.event.CommitVetoException;
 import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.knowledge.service.event.ModificationListener;
+import com.top_logic.knowledge.service.event.PendingChanges;
 import com.top_logic.knowledge.service.merge.MergeConflictException;
 import com.top_logic.knowledge.wrap.ImplementationFactory;
 import com.top_logic.knowledge.wrap.WrapperLifecycle;
@@ -3097,16 +3098,13 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 		}
 	}
 
-	List<Modification> fireKBChangeEvent(DBContext modifiedContext,
-			Map<ObjectKey, ? extends KnowledgeItem> createdObjects,
-			Map<ObjectKey, ? extends KnowledgeItem> updatedObjects,
-			Map<ObjectKey, ? extends KnowledgeItem> removedObjects) {
+	List<Modification> fireKBChangeEvent(DBContext modifiedContext, PendingChanges changes) {
 		modifiedContext.lock();
 		try {
 			List<Modification> modifications = Collections.emptyList();
 			for (int i = 0, size = modificationListeners.size(); i < size; i++) {
 				ModificationListener listener = modificationListeners.get(i);
-				Modification modification = listener.createModification(this, modifiedContext, createdObjects, updatedObjects, removedObjects);
+				Modification modification = listener.createModification(this, modifiedContext, changes);
 				if (modification != Modification.NONE) {
 					if (modifications.isEmpty()) {
 						modifications = new ArrayList<>(size - i);

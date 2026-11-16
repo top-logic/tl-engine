@@ -190,5 +190,5 @@ The engine release cycle is slow; iterate in the app module and upstream once pr
 The chat session rail as a generic element lives in `tl-chat`:
 `com.top_logic.ai.chat.view.list.DataListElement` / `DataListControl` +
 `tl-chat/ui/src/data-list.tsx`, composed in
-`tl-ai-demo/.../views/tl-ai-demo/chat-grouped.view.xml`. Read those alongside this playbook to see
+`tl-chat/src/main/webapp/WEB-INF/views/tl-chat/albert.view.xml`. Read those alongside this playbook to see
 each section applied. `references/mechanics.md` has the copy-paste Java↔React skeleton.

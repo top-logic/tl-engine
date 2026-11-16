@@ -57,7 +57,7 @@ Every script of the view layer sees the values of its inputs (the `inputs` or `i
 | column `<tooltip>` | `row`, `value` (the cell value; in a group header row only the group's `value`) | `row-as`, `value-as` on the column |
 | column `cell-class` | `row`, `value` (the cell value) | `row-as`, `value-as` on the column |
 | `label`, `icon`, `css-class`, `tooltip` of a `ResourceDisplayByExpression` (a column `<display>`, a `<tree>` `<nodeContent>`) | `value` (the displayed object) - and no inputs: a display gets no channels | `value-as` on the column |
-| `<dynamic-columns>` `<column-name>`, `<column-label>`, `<column-type>`, `<column-visible>`; `<value>`, `<update>`, `<can-update>`, `<aggregate>`, `<tooltip>`, `cell-class` | `column`; with `row` / `value` / `members` as for the other columns | `column-as` on the dynamic columns |
+| `<dynamic-columns>` `<column-name>`, `<column-label>`, `<column-type>`, `<column-visible>`, `width`; `<value>`, `<update>`, `<can-update>`, `<aggregate>`, `<tooltip>`, `cell-class` | `column`; with `row` / `value` / `members` as for the other columns | `column-as` on the dynamic columns |
 | column `<aggregate>` / `<comparator>` | `members` / `left`, `right` | — |
 | `<match>` of a scripted filter | `params`, `value`, `row` | `value-as`, `row-as` |
 | `<tree>` / `<tree-table>` `children`, `parents` | `node` | `node-as` on the tree |
@@ -70,7 +70,7 @@ Every script of the view layer sees the values of its inputs (the `inputs` or `i
 | chart `<tooltips>` `expr` | `element` (the data point) | `as` on the tooltip |
 | `<flow-diagram>` `createChart` | one variable per entry of `handlers`, named by its key | — |
 | display target `<bind expr>`, `label-expr` | `object` (the shown object) | — |
-| scripts of an action chain (`<execute-script>`, `<if>`, `<switch>`, `<confirm>`, `<notify>`, `<download>`, `<show-view>` binds, …) and the `refuse-if` of a `<drop>` | the arguments of the chain: the command's inputs or the value its trigger supplies (`row`, `node`, `value`, `link`, `element`, `file`, `objects` with `target` / `parent` / `before`), and inside follow-up actions `result` | see [named arguments](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments); `as` on the `<with-result>` of the action with the result |
+| scripts of an action chain (`<execute-script>`, `<if>`, `<switch>`, `<confirm>`, `<notify>`, `<download>`, `<show-view>` binds, …) and the `refuse-if` of a `<drop>` | the arguments of the chain: the command's inputs or the value its trigger supplies (`row`, `node`, `value`, `link`, `element`, `file`, `objects` with `target` / `parent` / `before`), and inside follow-up actions `result` | see [named arguments](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments); `as` on the `<with-result>` of the action with the result, or on the `<on-cancel>` of a `<start-job>` |
 | `<case>` `match` / `test` of a `<switch>` action | `value` (the switch value) | `as` on the switch |
 | `<start-job>` `function`; `ChunkedScriptJobBody` `init` / `elements`, `finish` / `<step>` | `job` beside the arguments / `job`, `state` / `job`, `state`, `chunk` | — |
 | executability rules (`<visible-if>`, `<disabled-if>`) of a command | the arguments of the command, as the chain sees them | as for the chain |

@@ -20,32 +20,31 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.layout.react.control.CommandFailures;
 import test.com.top_logic.layout.react.control.InteractionWithoutSession;
 
-import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ModelKeyArguments;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactCommands;
-import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.ScriptingModelKey;
-import com.top_logic.layout.react.control.selection.SelectByKeysArguments;
-import com.top_logic.layout.react.control.table.ActivateByKeyArguments;
+import com.top_logic.layout.react.control.identity.ObjectIdTranslation;
 import com.top_logic.layout.react.control.table.ActivateRowArguments;
 import com.top_logic.layout.react.control.table.ExpandArguments;
-import com.top_logic.layout.react.control.table.ExpandByKeyArguments;
+import com.top_logic.layout.react.control.table.GroupArguments;
 import com.top_logic.layout.react.control.table.MoveSelectionArguments;
 import com.top_logic.layout.react.control.table.SelectAllArguments;
-import com.top_logic.layout.react.control.table.SelectByKeyArguments;
 import com.top_logic.layout.react.control.table.SelectRowArguments;
 import com.top_logic.layout.react.control.table.TableViewControl;
+import com.top_logic.layout.react.scripting.ScriptRecorder;
+import com.top_logic.layout.react.scripting.ScriptingSession;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.table.Column;
+import com.top_logic.table.Row;
+import com.top_logic.table.RowKind;
 import com.top_logic.table.Selection;
 import com.top_logic.table.SelectionMode;
 import com.top_logic.table.SortSpec;
@@ -55,11 +54,12 @@ import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.table.impl.TreeRowSource;
+import com.top_logic.util.error.TopLogicException;
 
 /**
- * Tests that a {@link TableViewControl} records the gestures on its rows by the business identity
- * of the rows, so that a recording replays in a table showing the rows in another order - as a
- * fresh session may.
+ * Tests that a {@link TableViewControl} records the gestures on its rows with the business key of
+ * the row's object in place of the row id, so that a recording replays in a table whose rows have
+ * other ids and stand in another order - as in a fresh session.
  *
  * <p>
  * A recording is taken from a table showing {@link #ROWS} in their order and replayed into a table
@@ -97,156 +97,204 @@ public class TestTableRecording extends TestCase {
 		_replay = flatTable(reversed);
 	}
 
-	/** A plain click is recorded as a selection of the row by its key. */
-	public void testPlainClickIsRecordedByKey() {
-		RecordedCommand recorded = recordAndApply(_recording, TableViewControl.CMD_SELECT, click(1, false, false));
-		assertTrue(recorded.command() instanceof SelectByKeyArguments);
-		assertEquals(TableViewControl.CMD_SELECT_BY_KEY, recorded.command().getName());
+	/**
+	 * A plain click is recorded with the key of the row's object and replays in a table whose rows
+	 * have other ids and stand in another order.
+	 */
+	public void testPlainClickIsRecordedWithKey() {
+		ReactCommand step = gesture(_recording, TableViewControl.CMD_SELECT, click(_recording, "b", false, false));
+		assertEquals(TableViewControl.CMD_SELECT, step.getName());
+		assertKey("b", ((SelectRowArguments) step).getRowId());
+		assertFalse("The row ids differ between the tables.",
+			idOf(_recording, "b").equals(idOf(_replay, "b")));
 
-		assertReplayed(recorded);
+		assertReplayed(_replay, step);
 		assertEquals(Set.of("b"), _replay.getSelectedKeys());
 	}
 
 	/**
-	 * A click with {@code Ctrl} is recorded as the selection it results in, which replays in a
-	 * table whose rows stand in another order.
+	 * A click with {@code Ctrl} or {@code Shift} is recorded with its modifiers, click by click;
+	 * replaying the clicks in order reproduces the selection in a table whose rows stand in
+	 * another order.
 	 */
-	public void testCtrlClickIsRecordedAsResultingSelection() {
-		replay(recordAndApply(_recording, TableViewControl.CMD_SELECT, click(1, false, false)));
+	public void testMultiSelectionReplaysClickByClick() {
+		assertReplayed(_replay, gesture(_recording, TableViewControl.CMD_SELECT, click(_recording, "b", false, false)));
 
-		RecordedCommand recorded = recordAndApply(_recording, TableViewControl.CMD_SELECT, click(3, true, false));
-		assertEquals(TableViewControl.CMD_SELECT_BY_KEYS, recorded.command().getName());
-		assertTrue("Consecutive multi-selections coalesce into one step.", recorded.coalescing());
-		assertEquals(Set.of("b", "d"), _recording.getSelectedKeys());
-		assertKeys(List.of("b", "d"), recorded);
+		ReactCommand toggle = gesture(_recording, TableViewControl.CMD_SELECT, click(_recording, "e", true, false));
+		assertTrue(((SelectRowArguments) toggle).isCtrlKey());
+		assertKey("e", ((SelectRowArguments) toggle).getRowId());
+		assertReplayed(_replay, toggle);
+		assertEquals(Set.of("b", "e"), _replay.getSelectedKeys());
 
-		assertReplayed(recorded);
-		assertEquals(Set.of("b", "d"), _replay.getSelectedKeys());
+		ReactCommand range = gesture(_recording, TableViewControl.CMD_SELECT, click(_recording, "c", false, true));
+		assertTrue(((SelectRowArguments) range).isShiftKey());
+		assertEquals(Set.of("b", "c", "d", "e"), _recording.getSelectedKeys());
+		assertReplayed(_replay, range);
+		assertEquals("The range from the anchor 'e' to 'c' holds the same rows in reverse order.",
+			Set.of("b", "c", "d", "e"), _replay.getSelectedKeys());
 	}
 
 	/**
-	 * A click with {@code Shift} is recorded as the range it selects, which replays independent of
-	 * the anchor and the order of the rows.
+	 * Select-all and keyboard navigation address no row and are recorded as they are; they replay
+	 * on the rows, the cursor and the anchor the steps before them leave.
 	 */
-	public void testShiftClickIsRecordedAsResultingSelection() {
-		recordAndApply(_recording, TableViewControl.CMD_SELECT, click(1, false, false));
+	public void testGesturesWithoutRowAreRecordedAsTheyAre() {
+		TableViewControl<String> fresh = flatTable(ROWS);
 
-		RecordedCommand recorded = recordAndApply(_recording, TableViewControl.CMD_SELECT, click(3, false, true));
-		assertEquals(Set.of("b", "c", "d"), _recording.getSelectedKeys());
-		assertKeys(List.of("b", "c", "d"), recorded);
+		assertReplayed(fresh, gesture(_recording, TableViewControl.CMD_SELECT, click(_recording, "b", false, false)));
 
-		// Without any anchor in the replaying table.
-		assertReplayed(recorded);
-		assertEquals(Set.of("b", "c", "d"), _replay.getSelectedKeys());
+		ReactCommand down = gesture(_recording, TableViewControl.CMD_MOVE_SELECTION, move("down", false));
+		assertEquals(TableViewControl.CMD_MOVE_SELECTION, down.getName());
+		assertTrue(down instanceof MoveSelectionArguments);
+		assertReplayed(fresh, down);
+		assertEquals(Set.of("c"), fresh.getSelectedKeys());
+
+		ReactCommand all = gesture(_recording, TableViewControl.CMD_SELECT_ALL, selectAll(true));
+		assertEquals(TableViewControl.CMD_SELECT_ALL, all.getName());
+		assertReplayed(fresh, all);
+		assertEquals(Set.copyOf(ROWS), fresh.getSelectedKeys());
 	}
 
-	/** Select-all and deselect-all are recorded as the selection they result in. */
-	public void testSelectAllIsRecordedAsResultingSelection() {
-		RecordedCommand all = recordAndApply(_recording, TableViewControl.CMD_SELECT_ALL, selectAll(true));
-		assertEquals(TableViewControl.CMD_SELECT_BY_KEYS, all.command().getName());
-		assertKeys(ROWS, all);
-		assertReplayed(all);
-		assertEquals(Set.copyOf(ROWS), _replay.getSelectedKeys());
-
-		RecordedCommand none = recordAndApply(_recording, TableViewControl.CMD_SELECT_ALL, selectAll(false));
-		assertKeys(List.of(), none);
-		assertReplayed(none);
-		assertEquals(Set.of(), _replay.getSelectedKeys());
-	}
-
-	/**
-	 * Keyboard navigation is recorded as the selection it results in, which replays without the
-	 * cursor of the recording table.
-	 */
-	public void testKeyboardNavigationIsRecordedAsResultingSelection() {
-		recordAndApply(_recording, TableViewControl.CMD_SELECT, click(1, false, false));
-
-		RecordedCommand down = recordAndApply(_recording, TableViewControl.CMD_MOVE_SELECTION, move("down", false));
-		assertEquals(TableViewControl.CMD_SELECT_BY_KEYS, down.command().getName());
-		assertTrue("Consecutive multi-selections coalesce into one step.", down.coalescing());
-		assertKeys(List.of("c"), down);
-		assertReplayed(down);
-		assertEquals(Set.of("c"), _replay.getSelectedKeys());
-
-		RecordedCommand extend = recordAndApply(_recording, TableViewControl.CMD_MOVE_SELECTION, move("down", true));
-		assertEquals(Set.of("c", "d"), _recording.getSelectedKeys());
-		assertKeys(List.of("c", "d"), extend);
-		assertReplayed(extend);
-		assertEquals(Set.of("c", "d"), _replay.getSelectedKeys());
-	}
-
-	/** An activation is recorded by the key of the activated row. */
-	public void testActivationIsRecordedByKey() {
+	/** An activation is recorded with the key of the activated row. */
+	public void testActivationIsRecordedWithKey() {
 		List<String> activated = new ArrayList<>();
-		_replay.setActivationHandler(row -> {
-			activated.add(row);
-		});
-		RecordedCommand recorded = _recording.recordCommand(TableViewControl.CMD_ACTIVATE,
-			Map.of(ActivateRowArguments.ROW_INDEX, Integer.valueOf(2)));
-		assertTrue(recorded.command() instanceof ActivateByKeyArguments);
-		assertReplayed(recorded);
+		_replay.setActivationHandler(activated::add);
+
+		ReactCommand step = gesture(_recording, TableViewControl.CMD_ACTIVATE,
+			Map.of(ActivateRowArguments.ROW_ID, idOf(_recording, "c")));
+		assertKey("c", ((ActivateRowArguments) step).getRowId());
+
+		assertReplayed(_replay, step);
 		assertEquals(List.of("c"), activated);
+		assertEquals(Set.of("c"), _replay.getSelectedKeys());
 	}
 
 	/**
-	 * A recorded selection naming a row the replaying table does not have fails with its message
-	 * instead of selecting something else.
+	 * A recorded key of an object the replaying table has no row for fails with the message that
+	 * the object is not displayed, instead of selecting something else.
 	 */
-	public void testUnresolvedKeysFail() {
-		SelectByKeysArguments keys = TypedConfiguration.newConfigItem(SelectByKeysArguments.class);
-		keys.setName(TableViewControl.CMD_SELECT_BY_KEYS);
-		keys.getKeys().addAll(names("b", "x"));
-		assertNotNull(CommandFailures.outcome(() -> replay(keys)));
-		assertEquals("A failed replay changes nothing.", Set.of(), _replay.getSelectedKeys());
+	public void testUnresolvedKeyFails() {
+		ReactCommand step = gesture(_recording, TableViewControl.CMD_SELECT, click(_recording, "b", false, false));
+		TableViewControl<String> other = flatTable(List.of("a", "c"));
 
-		SelectByKeyArguments key = TypedConfiguration.newConfigItem(SelectByKeyArguments.class);
-		key.setName(TableViewControl.CMD_SELECT_BY_KEY);
-		key.setKey(name("x"));
-		assertNotNull(CommandFailures.outcome(() -> replay(key)));
+		assertNotDisplayed(replay(other, step));
+		assertEquals("A failed replay changes nothing.", Set.of(), other.getSelectedKeys());
 	}
 
-	/** Expanding a tree row is recorded by the key of the row. */
-	public void testExpansionIsRecordedByKey() {
+	/** Expanding a tree row is recorded with the key of the row's object. */
+	public void testExpansionIsRecordedWithKey() {
 		TableViewControl<String> recording = treeTable();
 		TableViewControl<String> replay = treeTable();
 		assertEquals(3, replay.getView().rowCount());
 
-		RecordedCommand recorded = recording.recordCommand(TableViewControl.CMD_EXPAND,
-			Map.of(ExpandArguments.ROW_INDEX, Integer.valueOf(1), ExpandArguments.EXPANDED, Boolean.TRUE));
-		assertTrue(recorded.command() instanceof ExpandByKeyArguments);
-		assertEquals(ScriptingModelKey.toJson(name("b")),
-			ScriptingModelKey.toJson(((ModelKeyArguments) recorded.command()).getKey()));
-		assertTrue(((ExpandByKeyArguments) recorded.command()).isExpanded());
+		ReactCommand step = gesture(recording, TableViewControl.CMD_EXPAND,
+			Map.of(ExpandArguments.ROW_ID, idOf(recording, "b"), ExpandArguments.EXPANDED, Boolean.TRUE));
+		assertKey("b", ((ExpandArguments) step).getRowId());
+		assertTrue(((ExpandArguments) step).isExpanded());
 
-		new InteractionWithoutSession().runWithContext(
-			() -> replay.executeClientCommand(recorded.command().getName(), ReactCommands.arguments(recorded.command())));
+		assertReplayed(replay, step);
 		assertEquals("The children of 'b' are displayed.", 4, replay.getView().rowCount());
 	}
 
-	/** Records the given client command on the given table and applies it there. */
-	private RecordedCommand recordAndApply(TableViewControl<String> table, String command, Map<String, Object> args) {
-		RecordedCommand recorded = table.recordCommand(command, args);
-		assertNotNull(recorded);
-		table.executeClientCommand(command, args);
-		return recorded;
+	/**
+	 * A recorded key of a row below a collapsed tree row fails with the message that the object
+	 * is not displayed; the replay expands nothing and selects nothing.
+	 */
+	public void testKeyOfRowBelowCollapsedTreeRowFails() {
+		TableViewControl<String> recording = treeTable();
+		TableViewControl<String> replay = treeTable();
+		gesture(recording, TableViewControl.CMD_EXPAND,
+			Map.of(ExpandArguments.ROW_ID, idOf(recording, "b"), ExpandArguments.EXPANDED, Boolean.TRUE));
+		ReactCommand select = gesture(recording, TableViewControl.CMD_SELECT, click(recording, "b1", false, false));
+		assertKey("b1", ((SelectRowArguments) select).getRowId());
+
+		assertNotDisplayed(replay(replay, select));
+		assertEquals("The replay expands nothing.", 3, replay.getView().rowCount());
+		assertEquals(Set.of(), replay.getSelectedKeys());
 	}
 
-	private void assertReplayed(RecordedCommand recorded) {
-		replay(recorded);
+	/**
+	 * A recorded key of a row inside a collapsed group fails with the message that the object is
+	 * not displayed; the replay expands no group.
+	 */
+	public void testKeyOfRowInCollapsedGroupFails() {
+		ReactCommand select = gesture(_recording, TableViewControl.CMD_SELECT, click(_recording, "b", false, false));
+
+		_replay.executeClientCommand(TableViewControl.CMD_GROUP, Map.of(GroupArguments.COLUMN, NAME));
+		int headerOfB = indexOf(_replay, "b") - 1;
+		assertEquals(RowKind.GROUP_HEADER, row(_replay, headerOfB).kind());
+		_replay.executeClientCommand(TableViewControl.CMD_EXPAND,
+			Map.of(ExpandArguments.ROW_ID, _replay.rowIdAt(headerOfB), ExpandArguments.EXPANDED, Boolean.FALSE));
+		assertEquals("The row of 'b' is hidden in its collapsed group.", -1, indexOf(_replay, "b"));
+		int rowCount = _replay.getView().rowCount();
+
+		assertNotDisplayed(replay(_replay, select));
+		assertEquals("The replay expands no group.", rowCount, _replay.getView().rowCount());
+		assertEquals(Set.of(), _replay.getSelectedKeys());
 	}
 
-	private void replay(RecordedCommand recorded) {
-		replay(recorded.command());
+	/**
+	 * Records the given gesture on the given table as the browser sends it, applies it, and
+	 * returns the recorded step.
+	 */
+	private static ReactCommand gesture(TableViewControl<String> table, String command, Map<String, Object> arguments) {
+		ScriptRecorder recorder = new ScriptRecorder();
+		recorder.start();
+		recorder.capture(table, table, command, arguments);
+		table.executeClientCommand(command, arguments);
+		recorder.stop();
+
+		List<ReactCommand> steps = recorder.steps();
+		assertEquals(1, steps.size());
+		return steps.get(0);
 	}
 
-	private void replay(ReactCommand command) {
-		new InteractionWithoutSession().runWithContext(
-			() -> _replay.executeClientCommand(command.getName(), ReactCommands.arguments(command)));
+	private static void assertReplayed(TableViewControl<String> table, ReactCommand step) {
+		TopLogicException failure = replay(table, step);
+		assertNull("Replay failed: " + failure, failure);
 	}
 
-	private static Map<String, Object> click(int rowIndex, boolean ctrl, boolean shift) {
+	/** Replays the given step in the given table, and answers with its failure, if any. */
+	private static TopLogicException replay(TableViewControl<String> table, ReactCommand step) {
+		return CommandFailures.outcome(() -> ScriptingSession.forRoot(table).replay(step));
+	}
+
+	private static void assertNotDisplayed(TopLogicException failure) {
+		assertNotNull("The object is not displayed.", failure);
+		assertEquals(I18NConstants.ERROR_OBJECT_NOT_DISPLAYED__KEY.getKey(), failure.getErrorKey().plain().getKey());
+	}
+
+	private static void assertKey(String expected, String recorded) {
+		assertNotNull("A key in place of the row id: " + recorded, ObjectIdTranslation.parseKey(recorded));
+		assertEquals(ScriptingModelKey.toJson(ScriptingModelKey.name(null, expected)), recorded);
+	}
+
+	/** The id of the row of the given object in the given table. */
+	private static String idOf(TableViewControl<String> table, String object) {
+		String id = table.objectIdentities().idOf(object);
+		assertNotNull("The table displays '" + object + "'.", id);
+		return id;
+	}
+
+	/** The index of the data row of the given object, {@code -1} if the table displays none. */
+	private static int indexOf(TableViewControl<String> table, String object) {
+		List<Row<String>> rows = table.getView().rows(0, table.getView().rowCount());
+		for (int n = 0; n < rows.size(); n++) {
+			if (rows.get(n).kind() == RowKind.DATA && object.equals(rows.get(n).data())) {
+				return n;
+			}
+		}
+		return -1;
+	}
+
+	private static Row<String> row(TableViewControl<String> table, int index) {
+		return table.getView().rows(index, index + 1).get(0);
+	}
+
+	private static Map<String, Object> click(TableViewControl<String> table, String object, boolean ctrl,
+			boolean shift) {
 		Map<String, Object> result = new LinkedHashMap<>();
-		result.put(SelectRowArguments.ROW_INDEX, Integer.valueOf(rowIndex));
+		result.put(SelectRowArguments.ROW_ID, idOf(table, object));
 		result.put(SelectRowArguments.CTRL_KEY, Boolean.valueOf(ctrl));
 		result.put(SelectRowArguments.SHIFT_KEY, Boolean.valueOf(shift));
 		return result;
@@ -259,31 +307,6 @@ public class TestTableRecording extends TestCase {
 
 	private static Map<String, Object> selectAll(boolean selected) {
 		return Map.of(SelectAllArguments.SELECTED, Boolean.valueOf(selected));
-	}
-
-	/** Asserts that the given recorded selection names exactly the given rows, in this order. */
-	private static void assertKeys(List<String> expected, RecordedCommand recorded) {
-		List<String> actual = new ArrayList<>();
-		for (ModelName key : ((SelectByKeysArguments) recorded.command()).getKeys()) {
-			actual.add(ScriptingModelKey.toJson(key));
-		}
-		List<String> expectedJson = new ArrayList<>();
-		for (ModelName key : names(expected.toArray(new String[0]))) {
-			expectedJson.add(ScriptingModelKey.toJson(key));
-		}
-		assertEquals(expectedJson, actual);
-	}
-
-	private static List<ModelName> names(String... objects) {
-		List<ModelName> result = new ArrayList<>();
-		for (String object : objects) {
-			result.add(name(object));
-		}
-		return result;
-	}
-
-	private static ModelName name(String object) {
-		return ScriptingModelKey.name(null, object);
 	}
 
 	private static TableViewControl<String> flatTable(List<String> elements) {
@@ -334,12 +357,13 @@ public class TestTableRecording extends TestCase {
 	}
 
 	/**
-	 * The test suite, started with the resource bundles the table's column labels need, and the
+	 * The test suite, started with the resource bundles the table's column labels and a failure
+	 * message need, the type index the recorder binds the commands with, and the
 	 * {@link ModelResolver} the recorded commands name the rows with.
 	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestTableRecording.class,
+			ServiceTestSetup.createSetup(TestTableRecording.class, TypeIndex.Module.INSTANCE,
 				ThreadContextManager.Module.INSTANCE, ResourcesModule.Module.INSTANCE,
 				ModelResolver.Module.INSTANCE));
 	}

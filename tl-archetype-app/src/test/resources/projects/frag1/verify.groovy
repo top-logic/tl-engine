@@ -19,7 +19,8 @@ def expected = [
 	"bin/launch/Start My Fragment.launch": false,
 	"bin/launch/Setup My Fragment.launch": false,
 	"bin/launch/Test My Fragment.launch": true,
-	"bin/launch/Generate my.fragment.launch": true
+	"bin/launch/Generate my.fragment.launch": true,
+	"src/main/webapp/WEB-INF/autoconf/com.top_logic.tl.ai.core.security.AiToolAccessService.config.xml": false
 ];
 expected.each { path, present ->
 	def file = new File(project, path);

@@ -24,6 +24,11 @@
 	link without the parameters says nothing about the filtering and leaves the list as it
 	establishes itself.
 	
+	"Tickets in a dialog" in the toolbar of the ticket list opens the tickets as a list with a
+	detail in a dialog without a height, which grows with its content but does not shrink while it
+	is open; "Tickets in a dialog of fixed height" opens the same content in a dialog of 75 % of the
+	height of the browser window.
+	
 	The <label> of the binding names the browser tab after the selected ticket ("Login broken -
 	TopLogic React Demo"). It reads the ticketName channel, which observes the ticket, so the tab
 	title follows a rename of the displayed ticket as well.
@@ -434,6 +439,26 @@
 									</default>
 								</switch>
 							</generic-command>
+							<generic-command
+								image="css:bi bi-window-stack"
+								placement="TOOLBAR"
+							>
+								<label>
+									<en>Tickets in a dialog</en>
+									<de>Tickets im Dialog</de>
+								</label>
+								<open-dialog dialog-view="tickets/ticket-browser-dialog.view.xml"/>
+							</generic-command>
+							<generic-command
+								image="css:bi bi-window-fullscreen"
+								placement="TOOLBAR"
+							>
+								<label>
+									<en>Tickets in a dialog of fixed height</en>
+									<de>Tickets im Dialog fester Höhe</de>
+								</label>
+								<open-dialog dialog-view="tickets/ticket-browser-dialog-fixed.view.xml"/>
+							</generic-command>
 						</commands>
 						<inset>
 							<text input="ticket"/>
@@ -602,8 +627,8 @@
 									</computed-column>
 								</columns>
 								<rows>{ tickets = all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) != `demo.tickets:TicketStatus#closed`); if($status == null, $tickets, $tickets.filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == $status)); }</rows>
-								<!-- Tints the tickets in progress; the class follows the status of each ticket. -->
-								<row-class>$row.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#inProgress` ? 'tl-status-info' : null</row-class>
+								<!-- Tints the tickets in progress; the role follows the status of each ticket. -->
+								<row-role>$row.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#inProgress` ? 'info' : null</row-role>
 							</table>
 						</panel>
 						<panel fill="false">

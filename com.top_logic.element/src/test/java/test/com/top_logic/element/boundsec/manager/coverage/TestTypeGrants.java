@@ -87,6 +87,18 @@ public class TestTypeGrants extends BasicTestCase {
 	/** Type with a read grant to {@link #ROLE_GHOST}. */
 	private static final String DEAD_GRANT = MODULE + ":DeadGrant";
 
+	/** Type in no composition, granting Create to {@link #ROLE_ROOT_CREATOR}. */
+	private static final String CREATED_AT_ROOT = MODULE + ":CreatedAtRoot";
+
+	/** Type in no composition, granting Create to {@link #ROLE_SELF_CREATOR}. */
+	private static final String CREATED_BY_SELF = MODULE + ":CreatedBySelf";
+
+	/** Role delivered on the security root only. */
+	private static final String ROLE_ROOT_CREATOR = MODULE + ".RootCreator";
+
+	/** Role delivered on objects of {@link #CREATED_BY_SELF} only. */
+	private static final String ROLE_SELF_CREATOR = MODULE + ".SelfCreator";
+
 	private static final BoundCommandGroup READ = SimpleBoundCommandGroup.READ;
 
 	private static final BoundCommandGroup WRITE = SimpleBoundCommandGroup.WRITE;
@@ -368,6 +380,34 @@ public class TestTypeGrants extends BasicTestCase {
 		TypeGrants exempt = grants(UNSECURED);
 		assertTrue(exempt.isExempt());
 		assertEquals(List.of(), exempt.getRows());
+	}
+
+	/**
+	 * A role holding only a grant of Create gets an effective row when it is delivered where the
+	 * objects are created, although it cannot be held on the objects.
+	 */
+	public void testCreateRoleDeliveredOnRootIsEffective() throws Exception {
+		TypeGrants grants = grants(CREATED_AT_ROOT);
+		BoundedRole rootCreator = BoundedRole.getRoleByName(ROLE_ROOT_CREATOR);
+		assertEquals(List.of(reader(), rootCreator), grants.getRoles());
+		assertEquals(List.of(), grants.getIneffectiveRoles());
+		assertFalse(grants.isIneffective(new Row(null, rootCreator)));
+		assertTrue(grants.getCell(new Row(null, rootCreator), SimpleBoundCommandGroup.CREATE).granted());
+	}
+
+	/**
+	 * A role holding only a grant of Create is ineffective when it is delivered on the objects
+	 * alone, not where they are created.
+	 */
+	public void testCreateRoleDeliveredOnTypeIsIneffective() throws Exception {
+		TypeGrants grants = grants(CREATED_BY_SELF);
+		BoundedRole selfCreator = BoundedRole.getRoleByName(ROLE_SELF_CREATOR);
+		assertEquals(List.of(reader()), grants.getRoles());
+		assertEquals(List.of(selfCreator), grants.getIneffectiveRoles());
+		Row row = new Row(null, selfCreator);
+		assertTrue(grants.isIneffective(row));
+		assertTrue(grants.getRows().contains(row));
+		assertEquals("The role is listed once.", 1, grants.getRows().stream().filter(row::equals).count());
 	}
 
 	private TypeGrants grants(String typeName) {

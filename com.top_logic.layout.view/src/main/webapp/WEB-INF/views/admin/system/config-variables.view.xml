@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Configuration variables (aliases such as %STORAGE_PATH%) of the installation: where the value of
+	each variable comes from, and values set in the application (ConfigVariableFunctions over the
+	AliasDefinitions of the AliasManager).
+	- The variables channel holds the snapshot the table displays: the list of descriptions, each
+	with the stored value found when the list was read (configVariableDefinitions). While the channel
+	is empty, the table reads a snapshot of its own; Refresh writes a new one.
+	- Per row: the name, the environment names setting the variable (an implicit name marked as
+	such), the source of the running value (with the environment name that delivered it), the value
+	of the running configuration, the default of the definition and the value stored in the
+	application. The value of a protected variable (protected-alias patterns of the system
+	environment) is displayed as blocked text in every value column. A variable whose stored value
+	was changed after startup, so that its value changes on the next restart, is tinted as warning.
+	The filter bar searches the displayed columns.
+	- The text above the table states that a stored value takes effect after a restart and is stored
+	on this node only, and names the file it is stored in (configVariableStoredValuesFile).
+	- "Set value" and "Remove stored value" act on the row selected in the table (selection channel).
+	They are disabled with the reason configVariableStoreProblem / configVariableRemoveProblem
+	reports: a protected variable, a variable set by its environment (setting only; a stored value
+	that is shadowed by the environment can still be removed), no stored value (removing only), or a
+	file that cannot be written. "Set value" opens the dialog set-config-variable.view.xml with the
+	variable and the variables and selection channels bound into it. "Remove stored value" asks for
+	confirmation, removes the value (configVariableRemove) and writes a new snapshot to the variables
+	channel. A snapshot consists of new descriptions, which the table does not take for the selected
+	one; so after writing it, both commands select the description of the new snapshot with the name
+	of the selected one.
+	- A titled <panel> is used (not the chrome-less <full-page>) because the view carries toolbar
+	commands.
+-->
+<view>
+	<channels>
+		<channel name="variables"/>
+		<channel name="selection"/>
+		<derived-channel name="hint">
+			<expr><![CDATA[if(configVariableStoredValuesFile() == null,
+	#("Values of configuration variables cannot be stored in this application. A variable is set by its environment names (JNDI value, system property, environment variable)."@en, "In dieser Anwendung können keine Werte von Konfigurationsvariablen gespeichert werden. Eine Variable wird über ihre Umgebungsnamen gesetzt (JNDI-Wert, Systemeigenschaft, Umgebungsvariable)."@de),
+	#("A value set here takes effect after a restart of the application, unless the variable is set by one of its environment names. It is stored on this node only, in the file {0}."@en, "Ein hier gesetzter Wert wird nach einem Neustart der Anwendung wirksam, sofern die Variable nicht über einen ihrer Umgebungsnamen gesetzt ist. Er wird nur auf diesem Knoten gespeichert, in der Datei {0}."@de).fill(configVariableStoredValuesFile()))]]></expr>
+		</derived-channel>
+	</channels>
+	<panel id="panel"
+		fill="true"
+	>
+		<title>
+			<en>Configuration variables</en>
+			<de>Konfigurationsvariablen</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-arrow-clockwise"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</label>
+				<tooltip>
+					<en>Reads the configuration variables and their stored values again.</en>
+					<de>Liest die Konfigurationsvariablen und ihre gespeicherten Werte erneut.</de>
+				</tooltip>
+				<execute-script function="configVariableDefinitions()">
+					<with-result>
+						<write-channel name="variables"/>
+					</with-result>
+				</execute-script>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-pencil"
+				inputs="selection as variable"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Set value</en>
+					<de>Wert setzen</de>
+				</label>
+				<tooltip>
+					<en>Stores a value for the selected variable in the application. It takes effect after a restart of the application.</en>
+					<de>Speichert einen Wert für die ausgewählte Variable in der Anwendung. Er wird nach einem Neustart der Anwendung wirksam.</de>
+				</tooltip>
+				<executability>
+					<null-input-disabled/>
+					<disabled-if expr="configVariableStoreProblem($variable)"/>
+				</executability>
+				<open-dialog
+					bind-input-to="variable"
+					dialog-view="admin/system/set-config-variable.view.xml"
+				>
+					<bind
+						channel="variables"
+						to="variables"
+					/>
+					<bind
+						channel="selection"
+						to="selection"
+					/>
+				</open-dialog>
+			</generic-command>
+			<generic-command
+				clique="delete"
+				image="css:bi bi-trash"
+				inputs="selection as variable"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Remove stored value</en>
+					<de>Gespeicherten Wert entfernen</de>
+				</label>
+				<tooltip>
+					<en>Removes the value stored in the application for the selected variable. After a restart of the application, the variable takes the value of its environment or its definition again.</en>
+					<de>Entfernt den in der Anwendung gespeicherten Wert der ausgewählten Variablen. Nach einem Neustart der Anwendung erhält die Variable wieder den Wert ihrer Umgebung oder ihrer Definition.</de>
+				</tooltip>
+				<executability>
+					<null-input-disabled/>
+					<disabled-if expr="configVariableRemoveProblem($variable)"/>
+				</executability>
+				<confirm expr="#('Remove the stored value of {0}? It takes effect after a restart of the application.'@en, 'Den gespeicherten Wert von {0} entfernen? Dies wird nach einem Neustart der Anwendung wirksam.'@de).fill(configVariableName($variable))"/>
+				<execute-script function="configVariableRemove($variable)"/>
+				<execute-script function="configVariableDefinitions()">
+					<with-result as="snapshot">
+						<write-channel name="variables"/>
+						<execute-script function="$snapshot.filter(v -> configVariableName($v) == configVariableName($variable)).firstElement()">
+							<with-result>
+								<write-channel name="selection"/>
+							</with-result>
+						</execute-script>
+					</with-result>
+				</execute-script>
+			</generic-command>
+		</commands>
+		<stack direction="column">
+			<inset>
+				<text
+					input="hint"
+					tone="secondary"
+				/>
+			</inset>
+			<table id="table"
+				filter-bar="true"
+				inputs="variables"
+				personalization-key="admin-config-variables"
+				selection="selection"
+			>
+				<columns>
+					<computed-column name="name"
+						type="tl.core:String"
+						width="200"
+					>
+						<label>
+							<en>Variable</en>
+							<de>Variable</de>
+						</label>
+						<value>configVariableName($row)</value>
+					</computed-column>
+					<computed-column name="environmentNames"
+						type="tl.core:String"
+						width="200"
+					>
+						<label>
+							<en>Environment names</en>
+							<de>Umgebungsnamen</de>
+						</label>
+						<value>configVariableEnvironmentNames($row)</value>
+					</computed-column>
+					<computed-column name="source"
+						type="tl.core:String"
+					>
+						<label>
+							<en>Source</en>
+							<de>Quelle</de>
+						</label>
+						<value>configVariableSource($row)</value>
+					</computed-column>
+					<computed-column name="value"
+						type="tl.core:String"
+						width="280"
+					>
+						<label>
+							<en>Value</en>
+							<de>Wert</de>
+						</label>
+						<value>configVariableValue($row)</value>
+					</computed-column>
+					<computed-column name="defaultValue"
+						type="tl.core:String"
+						width="200"
+					>
+						<label>
+							<en>Default value</en>
+							<de>Standardwert</de>
+						</label>
+						<value>configVariableDefaultValue($row)</value>
+					</computed-column>
+					<computed-column name="storedValue"
+						type="tl.core:String"
+						width="160"
+					>
+						<label>
+							<en>Stored value</en>
+							<de>Gespeicherter Wert</de>
+						</label>
+						<value>configVariableStoredValue($row)</value>
+					</computed-column>
+					<computed-column name="changePending"
+						type="tl.core:Boolean"
+					>
+						<label>
+							<en>Restart required</en>
+							<de>Neustart erforderlich</de>
+						</label>
+						<value>configVariableChangePending($row)</value>
+					</computed-column>
+				</columns>
+				<rows>$variables == null ? configVariableDefinitions() : $variables</rows>
+				<row-class>configVariableChangePending($row) ? 'tl-status-warning' : null</row-class>
+			</table>
+		</stack>
+	</panel>
+</view>

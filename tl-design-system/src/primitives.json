@@ -40,11 +40,15 @@
     "height-1": "1.5rem", "height-2": "1.75rem", "height-3": "2rem", "height-4": "2.25rem", "height-5": "2.5rem",
     "line-1": "1px", "line-2": "2px", "line-3": "4px",
     "corner-1": "0.25rem", "corner-2": "0.5rem", "corner-3": "999px", "corner-4": "50%",
+    "print-1": "8pt", "print-2": "10pt", "print-3": "12pt", "print-4": "18pt",
     "depth-0": "0", "depth-1": "10", "depth-2": "100", "depth-3": "1000", "depth-4": "1100", "depth-5": "1200", "depth-6": "1300", "depth-7": "1400"
   },
   "font": {
     "font-1": "'Inter', ui-sans-serif, system-ui, 'Segoe UI', Roboto, sans-serif",
-    "font-2": "'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace"
+    "font-2": "'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace",
+    "weight-1": "400", "weight-2": "600",
+    "leading-1": "1.25", "leading-2": "1.3333", "leading-3": "1.35", "leading-4": "1.4", "leading-5": "1.4286", "leading-6": "1.5",
+    "tracking-1": "-0.01em", "tracking-2": "-0.005em", "tracking-3": "0", "tracking-4": "0.01em", "tracking-5": "0.04em"
   },
   "motion": {
     "dur-1": "100ms", "dur-2": "150ms", "dur-3": "250ms", "dur-4": "1200ms",

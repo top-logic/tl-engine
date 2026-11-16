@@ -1,5 +1,5 @@
 ---
-description: Read before deciding where the named secrets of an installation live (<api-key name="..."/> = NamedSecretSource) or checking which of them are missing (System > Secrets in the React admin, SecretReferences) - the service SecretStoreService (editable in the Service Editor) with its store (EnvironmentSecretStore default, DirectorySecretStore, LiteralSecretStore, ChainSecretStore, KeyVaultSecretStore of tl-credential-azure, the writable DatabaseSecretStore of com.top_logic with its key secret tl_secret_store_key), writing secrets from the application (WritableSecretStore, SecretStoreService#getWritableStore()), prefix and per-secret overrides, development secrets (devel-secrets.xml / devel-secrets.config.xml of com.top_logic.basic: ChainSecretStore of env-store, directory-store on ~/.top-logic/secrets and literal-store with h2_passwd), putting its configuration into an installation-specific overlay (tl_config, autoconf), the @ServiceDependencies a service reading a named secret declares, and writing an own SecretStore.
+description: Read before deciding where the named secrets of an installation live (<api-key name="..."/> = NamedSecretSource) or checking which of them are missing (System > Secrets in the React admin, SecretReferences) - the service SecretStoreService (editable in the Service Editor) with its store (EnvironmentSecretStore default, DirectorySecretStore, LiteralSecretStore, ChainSecretStore, KeyVaultSecretStore of tl-credential-azure, the writable DatabaseSecretStore of com.top_logic with its key secret tl_secret_store_key), writing secrets from the application (WritableSecretStore, canStore, SecretStoreService#getWritableStore() / canStore / canRemove / store / remove, the writable DirectorySecretStore on a directory the application may write, shadowing by the stores in front of the writable store of a ChainSecretStore), prefix and per-secret overrides, development secrets (devel-secrets.xml / devel-secrets.config.xml of com.top_logic.basic: ChainSecretStore of env-store, directory-store on ~/.top-logic/secrets and literal-store with h2_passwd), putting its configuration into an installation-specific overlay (tl_config, autoconf), the @ServiceDependencies a service reading a named secret declares, and writing an own SecretStore.
 order: 15
 ---
 
@@ -70,6 +70,13 @@ Reads each secret from the file named like the secret in one directory, e.g. a K
 
 The secret `db_password` is the content of `/run/secrets/db_password`. The file is read like the file of a `FileSecretSource` (see [secret sources](doc:credentials/secret-sources#filesecretsource)): UTF-8, without surrounding white space, cached and read again when the file has been replaced. A missing file means that the store does not hold the secret; an empty or unreadable file is an error. A name that would leave the directory (`../x`) is rejected. A directory starting with `~/` lies in the home directory of the user running the application.
 
+The store is writable (see [secrets written by the application](#secrets-written-by-the-application)) while the application may write the directory - the folder `~/.top-logic/secrets` of a developer, a directory of a Tomcat or Debian installation. A secret volume mounted read-only into a container (`/run/secrets` of Kubernetes or Docker) is not writable, so no secret can be written there. The decision follows the file system permissions at the moment of each call; there is no configuration option for it.
+
+- `store` writes the secret as UTF-8 to a temporary file in the directory, created readable and writable for the owner only (`rw-------`, where the file system has POSIX permissions), and moves it over the file of the secret atomically, so a reader never sees a partial file.
+- `remove` deletes the file.
+- `canStore(name)` is `true` for a valid file name whose file is writable, or, if the file does not exist yet, whose directory is writable. A read-only file in a writable directory cannot be stored.
+- The prefix of the store is part of the file name.
+
 With Kubernetes, the keys of the secret object are the secret names:
 
 ```yaml
@@ -128,10 +135,20 @@ A secret that the application itself receives - an access token a user enters in
 
 - `store(name, secret)` stores the secret under the name, replacing a secret of that name.
 - `remove(name)` removes it and answers whether the store held it.
+- `canStore(name)` answers whether a secret of this name can be written and is then delivered under the name, e.g. `false` for a read-only file of a `DirectorySecretStore`. The answer reflects the current state; the default is `true`.
 
 A written secret is read like every other named secret, through a `NamedSecretSource` or `SecretStoreService#getSecret(name)`; a consumer cannot tell where it lives. The plain secret is never cached, logged or put into an exception message.
 
 The writable store of the installation is `SecretStoreService.writableSecretStore()` (instance method `getWritableStore()`): the configured store if it is writable, the first writable store of a `ChainSecretStore` otherwise, with the prefix of the chain applied to the names. It is `null` if the installation has no writable store; a feature writing secrets reports that as a configuration error. An override of the service for a name takes precedence over a written secret of that name.
+
+The writable store of a `ChainSecretStore` is looked for on each call, so a `DirectorySecretStore` that becomes writable is used from then on. A store in front of it in the chain takes precedence for the names it holds: a secret written under such a name would never be delivered, so `canStore(name)` of the chain's writable store answers `false` for it. A store in front that fails to look the name up (an empty file, a vault denying access) counts as holding it.
+
+A feature writing secrets goes through the service, which applies all of these rules:
+
+- `SecretStoreService#canStore(name)` is `false` if an override is configured for the name, if there is no writable store, or if the writable store cannot store the name. A UI offers to set a secret only for such a name.
+- `SecretStoreService#canRemove(name)` additionally requires the writable store to hold the secret. A secret delivered by a store behind the writable store (e.g. a value in the configuration behind a writable directory) can be overwritten but not removed. A UI offers to remove a secret only for such a name.
+- `SecretStoreService#store(name, secret)` and `remove(name)` refuse a name `canStore` rejects with an error naming the reason (override, no writable store, not storable), and otherwise write to the writable store.
+- The static accessors `SecretStoreService.canStoreSecret(name)`, `canRemoveSecret(name)`, `storeSecret(name, secret)` and `removeSecret(name)` do the same on the started service.
 
 ### DatabaseSecretStore
 
@@ -266,4 +283,4 @@ An element with `class` attribute selects a secret source for this one property,
 
 ## An own store
 
-A store implements `SecretStore`: `lookup(name)` returns the secret, or `null` if the store does not hold it, and throws an `I18NRuntimeException` if it holds the secret but cannot deliver it; `getSecret(name)` turns `null` into an error. Deriving from `AbstractSecretStore` adds the `prefix`: the subclass implements `lookupKey(key)` and `missing(key)` (the error for a secret it does not hold). A store asking a remote service caches the secrets itself, like `KeyVaultSecretStore` does with `KeyVaultClient`. A store the application writes to implements `WritableSecretStore`; a store composed of other stores overrides `SecretStore#getWritableStore()` to expose a writable one of them, like `ChainSecretStore` does.
+A store implements `SecretStore`: `lookup(name)` returns the secret, or `null` if the store does not hold it, and throws an `I18NRuntimeException` if it holds the secret but cannot deliver it; `getSecret(name)` turns `null` into an error. Deriving from `AbstractSecretStore` adds the `prefix`: the subclass implements `lookupKey(key)` and `missing(key)` (the error for a secret it does not hold). A store asking a remote service caches the secrets itself, like `KeyVaultSecretStore` does with `KeyVaultClient`. A store the application writes to implements `WritableSecretStore` and overrides `canStore(name)` if writing can fail for some names or at some times; a store that is writable only under some condition returns a writable view from `SecretStore#getWritableStore()`, or `null`, like `DirectorySecretStore` does. A store composed of other stores overrides `SecretStore#getWritableStore()` to expose a writable one of them, like `ChainSecretStore` does.

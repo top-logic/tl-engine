@@ -1,5 +1,5 @@
 ---
-description: Read before restricting who sees a part of a .view.xml or who runs a command - <access-control> on <nav-item>, sidebar <group> and <section>, <tab>, accordion <section> and <tile> (operation, inputs, object, type, denied), the hidden / empty / "no access" decision, hiding a denied unit (UnitHiding) or showing a placeholder, the Administration operation on the security root, the SecuredObject a unit publishes to its content, the <access> of a command with <operation name object type> and <create type in reference> (CommandAccess, OperationAccess, CreateAccess, hidden / disabled), the checks actions bring (<link-access> / <remove-access> of an <object-list>), the edit-operation of a <form>, and how fields, columns, form saves and option lists follow the Read / Write rights of an attribute (ModelAccessPolicy.onAttribute, BufferSave, isAllowedInitial for drafts).
+description: Read before restricting who sees a part of a .view.xml or who runs a command - <access-control> on <nav-item>, sidebar <group> and <section>, <tab>, accordion <section> and <tile> (operation, inputs, object, type, denied), the hidden / empty / "no access" decision, hiding a denied unit (UnitHiding) or showing a placeholder, showing a unit only for some objects or types with <visibility inputs expr> instead of a type mismatch, the Administration operation on the security root, the SecuredObject a unit publishes to its content, the <access> of a command with <operation name object type> and <create type in reference> (CommandAccess, OperationAccess, CreateAccess, hidden / disabled), the checks actions bring (<link-access> / <remove-access> of an <object-list>), the edit-operation of a <form>, and how fields, columns, form saves and option lists follow the Read / Write rights of an attribute (ModelAccessPolicy.onAttribute, BufferSave, isAllowedInitial for drafts).
 order: 75
 ---
 
@@ -84,6 +84,37 @@ dashboard in their state maps (`ReactTabBarControl.setTabHidden`, `ReactAccordio
 
 A unit checked on the security root is decided once when it is built, and a unit whose expression
 yields no object is displayed empty with either setting.
+
+## Showing a unit only for some objects: `<visibility>`
+
+A unit that belongs to its container only for some objects - a tab offered only while the selected
+element is a project, a tile only for open tickets - declares a `<visibility>` condition. It is no access
+check and does not replace one: it decides whether the unit is meant for the object at all, the
+`<access-control>` decides whether the user may see it.
+
+```xml
+<tab id="maturity">
+  <visibility inputs="element" expr="$element.instanceOf(`prime:Project`)"/>
+  <access-control operation="Read" inputs="element" object="$element" type="prime:Project"/>
+  ...
+</tab>
+```
+
+- **Units.** `<nav-item>`, sidebar `<group>` and `<section>`, `<tab>`, accordion `<section>` and `<tile>`
+  (the configurations extending `WithVisibility`).
+- **Truth.** The `expr` sees the `inputs` as variables, like the `object` of an `<access-control>`. The unit
+  is shown while it yields a value TL-Script takes as true (`SearchExpression.isTrue`): `null`, `false`, an
+  empty collection and an empty string leave the unit out.
+- **Reaction.** The condition is decided again when an input takes a new value and when an object an input
+  holds is changed, through the same `UnitHiding` as a [denied unit](#hiding-a-denied-unit): the unit is left
+  out of its container the same way, and drawn again when the condition holds again.
+- **No check meanwhile.** While the condition does not hold, the `<access-control>` of the unit is not
+  consulted, and its content shows nothing. The condition of a sidebar `<group>` or `<section>` applies to
+  every item in it.
+
+Do not rely on the `type` of an `<access-control>` to leave a unit out for objects of other types: such an
+object is denied, but every decision on it logs a warning, because the check is meant for objects of its
+type. The condition says what the unit is meant for, and saves the check for those objects.
 
 ## Checks when the view is loaded
 
@@ -296,7 +327,10 @@ type under *Administration → Access control → Grants* (`admin/access-control
   `com.top_logic.element`, presented by the TL-Script functions `securityGrants…` of
   `SecurityGrantFunctions`): a row per role a user can hold on objects of the type - delivered by a
   role rule or a role parent rule, or assigned to such an object directly
-  (`SecurityCoverageAnalysis.getHoldableRoles`) - and a row per such role on each attribute; a
+  (`SecurityCoverageAnalysis.getHoldableRoles`) - or holding a grant that takes effect
+  (`SecurityCoverageAnalysis.isLiveGrant`: a `Create` grant counts where an object is created, on
+  its container or, for a type no composition holds, on the security root) - and a row per such
+  role on each attribute; a
   column per operation applying to the type, the built-in ones first. An attribute row offers
   `Read` and `Write` only. Roles that cannot be held on the type and operations that do not apply
   to it are not offered, since a grant of them has no effect.
@@ -306,13 +340,13 @@ type under *Administration → Access control → Grants* (`admin/access-control
 - A click on a cell stores the grant, or its revocation, at once: a single `<grant>` or `<revoke>`
   of the role in the entry of the type (or of the attribute) in the autoconf file of the
   `SecurityConfigurationService`, applying to the type alone, not to its specializations. A cell
-  whose stored state is not in effect yet is marked (`tl-status-warning`) until "Apply
+  whose stored state is not in effect yet is tinted in the role `warning` (`cell-role`) until "Apply
   configuration". A grant held through an implying operation (`implied-by`, and every operation
-  implying `Discover`) is shown checked and cannot be changed in that column. An attribute without
-  a grant of the operation is not restricted; granting it to a role restricts the attribute to the
+  implying `Discover`) is shown checked and cannot be changed in that column. An attribute without a
+  grant of the operation is not restricted; granting it to a role restricts the attribute to the
   roles granted, and revoking it from the last of them lifts the restriction again.
-- A role that is granted an operation on the type (in effect or by a stored rule) but cannot be
-  held there gets a row as well, marked ineffective (`tl-status-warning`, with a tooltip on the
+- A role that is granted an operation on the type (in effect or by a stored rule) none of whose
+  grants takes effect gets a row as well, marked ineffective (role `warning` by `row-role`, with a tooltip on the
   role), so that the grant the coverage check reports as dead can be revoked here.
 - A grant held through an implying operation shows a read-only check box.
 - A type delegating to an access parent, and a type exempt from access control, has no grants:

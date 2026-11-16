@@ -14,6 +14,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactAlertControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl.Variant;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.layout.view.element.ContentControls;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.security.UnitAccess.Display;
@@ -32,6 +33,13 @@ import com.top_logic.util.Resources;
  * it is detached at once and disposed after the channel notification in progress, since it may
  * itself listen to the channel that caused the change. While the decision stays the same, the
  * displayed content stays as it is.
+ * </p>
+ *
+ * <p>
+ * While the visibility condition of the unit does not hold, nothing is displayed and the access
+ * check is not consulted: the unit is left out of its container then (see {@link UnitHiding}), and
+ * the objects it is not meant for are not checked. The condition is followed like the inputs of the
+ * check.
  * </p>
  *
  * <p>
@@ -56,6 +64,8 @@ public class AccessGuardControl extends ReactControl {
 
 	private final SecuredObject _secured;
 
+	private final ChannelCondition _visible;
+
 	private final Supplier<ReactControl> _content;
 
 	private final ChannelObjectObserver _observer;
@@ -75,20 +85,25 @@ public class AccessGuardControl extends ReactControl {
 	 *        The access check of the unit.
 	 * @param secured
 	 *        The object of the unit, bound to the channels of the session.
+	 * @param visible
+	 *        The visibility condition of the unit, bound to the channels of the session;
+	 *        {@code null} for a unit without one.
 	 * @param content
 	 *        Creates the content of the unit, called each time the content becomes accessible
 	 *        again.
 	 */
 	public AccessGuardControl(ViewContext context, UnitAccess access, SecuredObject secured,
-			Supplier<ReactControl> content) {
+			ChannelCondition visible, Supplier<ReactControl> content) {
 		super(context, null, REACT_MODULE);
 		_context = context;
 		_access = access;
 		_secured = secured;
+		_visible = visible;
 		_content = content;
 
-		_observer = new ChannelObjectObserver(secured.getInputs(), Collections.emptySet(), this::update);
-		Registration registration = secured.observe(this::update);
+		_observer =
+			new ChannelObjectObserver(UnitHiding.channels(visible, secured), Collections.emptySet(), this::update);
+		Registration registration = UnitHiding.observe(visible, secured, this::update);
 		addCleanupAction(registration::dispose);
 		addAttachListener(() -> _observer.attach(_context.getModelScope()));
 		addDetachListener(_observer::detach);
@@ -114,7 +129,7 @@ public class AccessGuardControl extends ReactControl {
 		if (_disposed) {
 			return;
 		}
-		Display display = _access.decide(_secured);
+		Display display = _visible != null && !_visible.holds() ? Display.EMPTY : _access.decide(_secured);
 		if (display == _display && _current != null) {
 			return;
 		}

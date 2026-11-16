@@ -233,6 +233,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey DESIGNER_NOTHING_TO_SAVE;
 
+	/**
+	 * @en "{0}" is no color role. A script computing a color role yields one of the names {1}, or
+	 *     nothing for no role.
+	 */
+	public static ResKey2 ERROR_UNKNOWN_COLOR_ROLE__VALUE_ROLES;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

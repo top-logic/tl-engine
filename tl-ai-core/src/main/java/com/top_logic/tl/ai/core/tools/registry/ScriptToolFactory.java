@@ -23,7 +23,9 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.model.search.configured.ConfiguredScript;
 import com.top_logic.model.search.configured.ScriptConfiguration;
+import com.top_logic.model.search.configured.ScriptParameter;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -84,6 +86,7 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		ScriptToolConfig.TRUNCATION_HINT,
 		ScriptConfiguration.IMPLEMENTATION,
 		ScriptToolConfig.SUMMARY,
+		ScriptToolConfig.COMMIT_MESSAGE,
 	})
 	public interface ScriptToolConfig extends ScriptConfiguration {
 
@@ -114,6 +117,13 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		 * @see #getSummary()
 		 */
 		String SUMMARY = "summary";
+
+		/**
+		 * Configuration property name for the commit message expression.
+		 *
+		 * @see #getCommitMessage()
+		 */
+		String COMMIT_MESSAGE = "commit-message";
 
 		/**
 		 * What kind of state change this tool makes. Defaults to {@link ToolMode#DATA_WRITE}.
@@ -167,6 +177,26 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		@Nullable
 		Expr getSummary();
 
+		/**
+		 * What a call of this tool changes, in the words the revision log records it with, computed
+		 * from the call's arguments.
+		 *
+		 * <p>
+		 * The tool's {@link #getParameters() parameters} are bound as in the
+		 * {@link #getImplementation() implementation}; for example
+		 * <code>"Contact " + $name + " created"</code>, or an internationalized text such as
+		 * <code>#("Contact {0} created"@en, "Kontakt {0} angelegt"@de).fill($name)</code>.
+		 * It is evaluated right before the call runs, so it must not change anything. Unset, or
+		 * answering nothing, records the call with the tool's {@link #getLabel() label}, or with a
+		 * generic message naming the tool.
+		 * </p>
+		 *
+		 * @see Tool#commitMessage(Map, com.top_logic.tl.ai.tool.api.ToolExecutionContext)
+		 */
+		@Name(COMMIT_MESSAGE)
+		@Nullable
+		Expr getCommitMessage();
+
 	}
 
 	private final Config _config;
@@ -190,6 +220,7 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 			String llmDescription = ToolDescriptions.englishPlainText(toolConfig.getDescription());
 			ToolMode mode = toolConfig.getMode();
 			Expr summary = toolConfig.getSummary();
+			Expr commitMessage = toolConfig.getCommitMessage();
 
 			_tools.add(new ScriptToolExecutor(
 				toolConfig.getName(),
@@ -200,7 +231,9 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 				mode,
 				toolConfig.isConcurrencySafe(),
 				summary == null ? null : QueryExecutor.compile(summary),
-				toolConfig.getTruncationHint()));
+				toolConfig.getTruncationHint(),
+				commitMessage == null ? null : QueryExecutor.compile(withParameters(toolConfig, commitMessage)),
+				toolConfig.getLabel()));
 		}
 	}
 
@@ -223,6 +256,13 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		copy.setImplementation(source.getImplementation());
 		copy.getParameters().addAll(source.getParameters());
 		return copy;
+	}
+
+	/**
+	 * The given expression as a function of the tool's parameters, bound as for its implementation.
+	 */
+	private static Expr withParameters(ScriptToolConfig toolConfig, Expr body) {
+		return Define.withVariables(toolConfig.getParameters().stream().map(ScriptParameter::getName).toList(), body);
 	}
 
 	@Override

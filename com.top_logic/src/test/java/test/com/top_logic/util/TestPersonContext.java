@@ -197,6 +197,58 @@ public class TestPersonContext extends BasicTestCase {
 		});
 	}
 
+	/**
+	 * Tests that the access of a person other than the one of the current context is decided for
+	 * that person, not by the bypassed security checks or administrative rights of the current
+	 * context.
+	 */
+	public void testCheckForOtherPerson() {
+		Person root = PersonManager.getManager().getRoot();
+		Person other = TestPerson.createPerson("personContextOther");
+		try {
+			ThreadContext.inSystemContext(TestPersonContext.class, () -> {
+				assertSystemContext();
+				assertDecidedByRoles(_person);
+				assertTrue("No person in a system context has administrative rights.",
+					TLContext.hasAdministrativeRights(null));
+				assertEquals(Boolean.TRUE, BoundChecker.isAllowedBypass(null, SimpleBoundCommandGroup.READ));
+			});
+
+			TLContextManager.inPersonContext(other, () -> {
+				ThreadContext.withoutSecurityChecks(() -> {
+					assertTrue(ThreadContext.isSecurityBypassed());
+					assertDecidedByRoles(_person);
+					assertTrue("The person of the context has administrative rights.",
+						TLContext.hasAdministrativeRights(other));
+					assertEquals(Boolean.TRUE, BoundChecker.isAllowedBypass(other, SimpleBoundCommandGroup.READ));
+					assertFalse("A missing person is not the person of the context.",
+						TLContext.hasAdministrativeRights(null));
+					assertEquals(Boolean.FALSE, BoundChecker.isAllowedBypass(null, SimpleBoundCommandGroup.READ));
+				});
+			});
+
+			TLContextManager.inPersonContext(root, () -> {
+				assertTrue(ThreadContext.isAdmin());
+				assertDecidedByRoles(_person);
+			});
+
+			TLContextManager.inPersonContext(_person, () -> {
+				assertFalse(ThreadContext.isAdmin());
+				assertTrue("An administrator has administrative rights in every context.",
+					TLContext.hasAdministrativeRights(root));
+				assertEquals(Boolean.TRUE, BoundChecker.isAllowedBypass(root, SimpleBoundCommandGroup.READ));
+			});
+		} finally {
+			TestPerson.deletePersonAndUser(other);
+		}
+	}
+
+	private static void assertDecidedByRoles(Person person) {
+		assertFalse("The person has no administrative rights.", TLContext.hasAdministrativeRights(person));
+		assertNull("The access of the person is decided by its roles.",
+			BoundChecker.isAllowedBypass(person, SimpleBoundCommandGroup.READ));
+	}
+
 	private void assertDenied() {
 		assertSame(_person, TLContext.currentUser());
 		assertFalse(ThreadContext.isSecurityBypassed());

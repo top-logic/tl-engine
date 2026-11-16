@@ -239,6 +239,24 @@ public class TestProviderCredentials extends TestCase {
 		assertEquals(2, credentials._invalidations);
 	}
 
+	/** Credentials that cannot be obtained send no request and are not reported as rejected. */
+	public void testUnobtainableCredentialsSendNothing() throws Exception {
+		CredentialProvider unobtainable = request -> {
+			throw new IllegalStateException("secret not set");
+		};
+
+		try {
+			new OpenAIProviderStub(unobtainable).stream(request(), event -> {
+				// Not observed.
+			});
+			fail("A request without credentials must fail.");
+		} catch (ProviderException ex) {
+			assertEquals(ProviderException.Kind.NO_CREDENTIALS, ex.kind());
+		}
+
+		assertEquals(List.of(), _requests);
+	}
+
 	/** Model discovery repeats a rejected request once with fresh credentials. */
 	public void testDiscoveryRetriesWithFreshCredentials() {
 		RotatingCredentials credentials = new RotatingCredentials();

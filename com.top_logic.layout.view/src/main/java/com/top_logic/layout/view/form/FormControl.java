@@ -88,6 +88,18 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	/** State key for the no-model placeholder message. */
 	private static final String NO_MODEL_MESSAGE = "noModelMessage";
 
+	/** Command entering edit mode, see {@link #handleEdit()}. */
+	public static final String CMD_EDIT = "formEdit";
+
+	/** Command applying the changes of the edit session, see {@link #handleApply()}. */
+	public static final String CMD_APPLY = "formApply";
+
+	/** Command saving the changes and leaving edit mode, see {@link #handleSave()}. */
+	public static final String CMD_SAVE = "formSave";
+
+	/** Command discarding the changes and leaving edit mode, see {@link #handleCancel()}. */
+	public static final String CMD_CANCEL = "formCancel";
+
 	private TLObject _currentObject;
 
 	private TLObjectOverlay _overlay;
@@ -967,8 +979,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 *
 	 * @throws TopLogicException
 	 *         If any participant reports a validation error. The exception lists the
-	 *         {@link #visibleErrorDetails() errors} below its message, see
-	 *         {@link ValidationErrors#refusal(ResKey, List)}.
+	 *         {@link #visibleErrorDetails() errors} below its message and names this form as the
+	 *         place of the errors, see {@link ValidationErrors#refusal(ResKey, List, ReactControl)}.
 	 */
 	public void validateOrThrow() {
 		if (_validationModel != null) {
@@ -983,8 +995,11 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			}
 		}
 		if (!valid) {
+			// The command storing the form comes from a button outside of it (a toolbar, the footer
+			// of a dialog), so the refusal names the form as the place of the errors.
 			throw ValidationErrors.refusal(
-				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS, visibleErrorDetails());
+				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS, visibleErrorDetails(),
+				this);
 		}
 	}
 
@@ -1326,7 +1341,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * executability.
 	 * </p>
 	 */
-	@ReactCommandHandler("formEdit")
+	@ReactCommandHandler(CMD_EDIT)
 	void handleEdit() {
 		if (_currentObject == null) {
 			throw CommandErrors.notExecutable(ExecutableState.NO_EXEC_NO_MODEL);
@@ -1350,7 +1365,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * Refused outside an edit session, see {@link #handleEdit()}.
 	 * </p>
 	 */
-	@ReactCommandHandler("formApply")
+	@ReactCommandHandler(CMD_APPLY)
 	void handleApply() {
 		if (!_editMode) {
 			throw notExecutable();
@@ -1365,7 +1380,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * Refused outside an edit session, see {@link #handleEdit()}.
 	 * </p>
 	 */
-	@ReactCommandHandler("formSave")
+	@ReactCommandHandler(CMD_SAVE)
 	void handleSave() {
 		if (!_editMode) {
 			throw notExecutable();
@@ -1380,12 +1395,48 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * Refused outside an edit session, see {@link #handleEdit()}.
 	 * </p>
 	 */
-	@ReactCommandHandler("formCancel")
+	@ReactCommandHandler(CMD_CANCEL)
 	void handleCancel() {
 		if (!_editMode) {
 			throw notExecutable();
 		}
 		executeCancel();
+	}
+
+	/**
+	 * The content of the form while it displays an object: without one, the form shows its
+	 * {@link #NO_MODEL_MESSAGE} in place of its fields.
+	 */
+	@Override
+	public List<ReactControl> visibleChildren() {
+		if (_currentObject == null && _noModelMessage != null) {
+			return List.of();
+		}
+		return super.visibleChildren();
+	}
+
+	/**
+	 * The lifecycle commands are executable in the states their handlers accept: {@link #CMD_EDIT}
+	 * outside an edit session on an object the user may edit, the others within an edit session.
+	 */
+	@Override
+	public ExecutableState scriptingCommandState(String command) {
+		switch (command) {
+			case CMD_EDIT:
+				if (_currentObject == null) {
+					return ExecutableState.NO_EXEC_NO_MODEL;
+				}
+				if (_editMode) {
+					return ExecutableState.NOT_EXEC_HIDDEN;
+				}
+				return editPermission();
+			case CMD_APPLY:
+			case CMD_SAVE:
+			case CMD_CANCEL:
+				return _editMode ? super.scriptingCommandState(command) : ExecutableState.NOT_EXEC_HIDDEN;
+			default:
+				return super.scriptingCommandState(command);
+		}
 	}
 
 	/**

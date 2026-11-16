@@ -175,6 +175,15 @@ public class FlowDiagramControl extends ReactControl {
 	}
 
 	/**
+	 * A diagram is addressed by its role alone: its {@link #getModel() model} is the whole displayed
+	 * content, which neither names the diagram nor stays the same while it is displayed.
+	 */
+	@Override
+	public String scriptingName() {
+		return "";
+	}
+
+	/**
 	 * Displays the given {@link Diagram} instead of the one displayed so far.
 	 *
 	 * <p>

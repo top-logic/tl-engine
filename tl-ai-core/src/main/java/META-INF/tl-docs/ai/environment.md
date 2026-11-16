@@ -165,7 +165,7 @@ Open invoice: RE-2026-0042
 ```
 
 - **Two blocks, not one string**: every provider renders a message's content parts as separate blocks, so the user's text stays byte-exact. The tags delimit the block; a value containing a tag has its `<` escaped to `&lt;` (as `UntrustedEnvelope` does), and a value keeps no line breaks, because the block is read line by line.
-- **The selection** is the fact worth naming first: `<chat-conversation><selection channel="..."/>` states the selected object in one line - label, qualified type and the `label [id:TID]` every tool reads back.
+- **The selection** is the fact worth naming first: `<chat-conversation><selection channel="..."/>` states the selected object in one line - as the JSON identity `{"_tid", "_type", "_display"}` every tool result writes, whose `_tid` the tools take.
 - **Turn number and time of day** are added by the framework to a block that has facts; a host that states nothing per turn gets no block. The turn number is what `ChatProcessor` counted (`RunFactsBinding.bind(facts, turnNumber)`); a headless run counts none and omits the line.
 - **The model is told what the block means**: the `{{turn_context}}` section of the environment block (resource `tl.ai.environment.turn-context`, fallback `TurnContext.NOTE`) says that the newest block is the current state and earlier ones are past. It is present exactly when a block is (`RunEnvironment.turnContextSection`). Because it is part of the system prompt, a page that states per-turn facts and a dock over the same conversation that does not would flip it between turns: state them from every place the conversation is reachable from.
 

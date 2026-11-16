@@ -192,7 +192,7 @@ public class ChatCommandTool {
 			+ "chat, and instead of describing where to click. Pass the values of the command's parameters "
 			+ "as the JSON object '" + ARG_ARGUMENTS + "', following the schema " + LIST_TOOL + " lists for "
 			+ "it - e.g. the tab to open, the id of the project whose view to show; an object is passed by "
-			+ "its id, as tool results wrote it ([id:...]). Pass no '" + ARG_ARGUMENTS + "' for a command "
+			+ "its id, the " + ReadFilter.TID + " tool results wrote for it. Pass no '" + ARG_ARGUMENTS + "' for a command "
 			+ "that takes none. After it, tell the user in one or two sentences what they now see and what "
 			+ "to do there. "
 			+ ApplicationRefusals.DESCRIPTION,

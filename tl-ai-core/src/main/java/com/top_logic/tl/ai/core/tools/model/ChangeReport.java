@@ -18,11 +18,9 @@ import java.util.Set;
 
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.security.ToolChangeSet;
@@ -176,8 +174,7 @@ public final class ChangeReport {
 			created++;
 			if (createdLines.size() < MAX_LISTED) {
 				// An object the transaction created is readable by everybody until it is committed.
-				createdLines.add("created " + ReadFilter.withId(MetaLabelProvider.INSTANCE.getLabel(object)
-					+ " [type:" + TLModelUtil.qualifiedName(object.tType()) + "]", ReadFilter.idOf(object)));
+				createdLines.add("created " + ReadFilter.identityJson(object));
 			}
 			violations.addAll(violations(object, security));
 		}
@@ -191,7 +188,7 @@ public final class ChangeReport {
 			if (deletedLines.size() < MAX_LISTED) {
 				// Deleted in this transaction, so it is only readable as it was before.
 				deletedLines.add("deleted " + kb.withoutModifications(
-					() -> security.canRead(object) ? ReadFilter.labelled(object) : "an object your account may not read"));
+					() -> security.canRead(object) ? ReadFilter.identityJson(object) : "an object your account may not read"));
 			}
 		}
 
@@ -320,7 +317,7 @@ public final class ChangeReport {
 				}
 				values.add(part.getName() + " " + before + " -> " + after);
 			}
-			return ReadFilter.labelled(object) + ": " + String.join("; ", values);
+			return ReadFilter.identityJson(object) + ": " + String.join("; ", values);
 		} catch (RuntimeException ex) {
 			return "changed " + ReadFilter.idOf(object);
 		}
@@ -329,15 +326,15 @@ public final class ChangeReport {
 	private static List<Reason> violations(TLObject object, ModelSecurity security) {
 		List<Reason> problems = ObjectConstraints.violations(object);
 		if (!problems.isEmpty() && security.canRead(object)) {
-			String name = ReadFilter.labelled(object);
+			Object identity = ReadFilter.forSecurity(security).disclose(object);
 			for (Reason problem : problems) {
-				problem.setObject(name);
+				problem.setObject(identity);
 			}
 		}
 		return problems;
 	}
 
-	/** A value as the model reads it in one line: texts quoted and cut, objects by label and id. */
+	/** A value as the model reads it in one line: texts quoted and cut, objects as their identity. */
 	private static String text(Object value) {
 		if (value == null) {
 			return "(empty)";
@@ -353,9 +350,8 @@ public final class ChangeReport {
 			}
 			return String.valueOf(number);
 		}
-		if (value instanceof Map<?, ?> identity && identity.containsKey("label")) {
-			return ReadFilter.withId(String.valueOf(identity.get("label")),
-				identity.get("id") == null ? null : String.valueOf(identity.get("id")));
+		if (value instanceof Map<?, ?> identity) {
+			return ReadFilter.json(identity);
 		}
 		if (value instanceof Collection<?> many) {
 			List<String> items = new ArrayList<>(many.size());

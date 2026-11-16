@@ -214,6 +214,12 @@ public class ViewServlet extends TopLogicServlet {
 		// command does - on a reload, while the report of the page just unloaded detaches the same
 		// tree. The trees are therefore only touched within an interaction.
 		try (Interaction interaction = windowRegistry.beginInteraction()) {
+			// The page sees the current state of the knowledge base, including the commits other
+			// threads made since the window's last request: the session revision of a window that
+			// exists already only advances when its model events are synthesized, and a reloaded page
+			// renders the control tree the window keeps.
+			windowRegistry.synthesizeModelEvents(windowName);
+
 			displayWindow(request, response, subSession, windowRegistry, windowName, address);
 
 			// The client of the rendered page connects within seconds. One that never does - the tab

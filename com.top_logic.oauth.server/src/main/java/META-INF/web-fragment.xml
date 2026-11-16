@@ -10,9 +10,10 @@
 >
 	<name>tl-oauth-server</name>
 
-	<!-- The public endpoints of the OAuth authorization server: metadata, token endpoint and dynamic
-	     client registration. They need no login; the token endpoint authenticates by the code or
-	     refresh token it is given. -->
+	<!-- The public endpoints of the OAuth authorization server: metadata, authorization endpoint,
+	     token endpoint and dynamic client registration. They need no login; the authorization
+	     endpoint hands the request to the consent page, where the person logs in, and the token
+	     endpoint authenticates by the code or refresh token it is given. -->
 	<servlet>
 		<servlet-name>OAuthServerServlet</servlet-name>
 		<servlet-class>com.top_logic.oauth.server.OAuthServerServlet</servlet-class>
@@ -23,6 +24,7 @@
 		<url-pattern>/.well-known/oauth-authorization-server</url-pattern>
 		<url-pattern>/.well-known/openid-configuration</url-pattern>
 		<url-pattern>/oauth/token</url-pattern>
+		<url-pattern>/oauth/authorize</url-pattern>
 		<url-pattern>/oauth/register</url-pattern>
 	</servlet-mapping>
 

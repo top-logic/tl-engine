@@ -263,6 +263,57 @@
 				</attributes>
 			</class>
 
+			<!--
+				An authorization request the server accepted and that waits for the decision of a
+				person on the consent page, which names it by an identifier of its own. It belongs to
+				nobody until a person allows or denies it; either deletes it, so that it is answered
+				once.
+			-->
+			<class name="OAuthPendingAuthorization">
+				<annotations>
+					<table name="OAuthPendingAuthorization"/>
+				</annotations>
+				<attributes>
+					<!-- Lower-case hex SHA-256 of the identifier the consent page is called with. -->
+					<property name="idHash"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="clientId"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="clientName"
+						type="tl.core:String"
+					/>
+					<!-- The validated redirect URI of the request. -->
+					<property name="redirectUri"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<!-- The PKCE code challenge (method S256). -->
+					<property name="codeChallenge"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="resource"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="scope"
+						type="tl.core:String"
+					/>
+					<!-- The state of the client, returned unchanged with the answer. -->
+					<property name="state"
+						type="tl.core:Text"
+					/>
+					<property name="expiresAt"
+						mandatory="true"
+						type="tl.core:DateTime"
+					/>
+				</attributes>
+			</class>
+
 		</types>
 	</module>
 </model>

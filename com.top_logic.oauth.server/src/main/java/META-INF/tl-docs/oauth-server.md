@@ -1,5 +1,5 @@
 ---
-description: Read before letting MCP, A2A or REST clients sign in to an application through OAuth instead of a personal access token, or when changing the authorization server of tl-oauth-server - the OAuthAuthorizationServer service and its settings (token lifetimes, dynamic client registration, client ID metadata documents and their fetcher), the endpoints /.well-known/oauth-authorization-server, /oauth/token and /oauth/register, the authentication scheme oauth-access-token-authentication with its resource, and the stored model tl.oauth.server (OAuthGrant, OAuthToken, OAuthAuthorizationCode, OAuthClient).
+description: Read before letting MCP, A2A or REST clients sign in to an application through OAuth instead of a personal access token, or when changing the authorization server of tl-oauth-server - the OAuthAuthorizationServer service and its settings (token lifetimes, consent page, dynamic client registration, client ID metadata documents and their fetcher), the endpoints /.well-known/oauth-authorization-server, /oauth/authorize, /oauth/token and /oauth/register, the consent page oauth-consent.view.xml of tl-oauth-server-view with the TL-Script functions oauthRefusal, oauthRequest, oauthApprove and oauthDeny, the authentication scheme oauth-access-token-authentication with its resource, and the stored model tl.oauth.server (OAuthPendingAuthorization, OAuthGrant, OAuthToken, OAuthAuthorizationCode, OAuthClient).
 ---
 
 # OAuth authorization server
@@ -27,7 +27,7 @@ absolute application URL including the context path, built like every URL of the
 | `/.well-known/openid-configuration` | GET | The same document, for clients that append this path to the issuer. |
 | `/oauth/token` | POST | Token endpoint: grants `authorization_code` and `refresh_token`. |
 | `/oauth/register` | POST | Dynamic client registration (RFC 7591); `404` when switched off. |
-| `/oauth/authorize` | GET | Authorization endpoint, named in the metadata. |
+| `/oauth/authorize` | GET | Authorization endpoint: checks the request and sends the browser to the [consent page](#consent-page). |
 
 The metadata announces `code_challenge_methods_supported: ["S256"]`,
 `token_endpoint_auth_methods_supported: ["none"]` (public clients only) and
@@ -53,6 +53,48 @@ A redirect URI is an `https` URI or an `http` URI of the loopback interface (`lo
 `127.0.0.1`, `[::1]`), without fragment. A request matches a registered redirect URI only as the
 same string, except that the port of a loopback URI is ignored (RFC 8252, section 7.3), because a
 native client listens on an ephemeral port.
+
+## Consent page
+
+The authorization endpoint checks the request with `validateAuthorizationRequest` (see
+[below](#api-for-an-authorization-endpoint)):
+
+- An unknown client or a redirect URI the client did not register is shown to the person as a page
+  with status `400`; the browser is never sent to an address nobody vouched for.
+- Any other refusal - wrong response type, missing PKCE challenge or method other than `S256`, no
+  or a foreign resource - goes back to the redirect URI with `error` and the `state` of the client.
+- An accepted request is stored as *pending authorization* (`OAuthPendingAuthorization`) under a
+  random identifier (`tlopa_...`, only its hash is stored) and the browser is sent to the
+  `consent-page` with the identifier in the query parameter `pending`. The pending authorization
+  belongs to nobody yet; it lives `pending-authorization-lifetime`.
+
+Without a configured `consent-page`, the authorization endpoint answers `404`. The module
+`tl-oauth-server-view` contributes the consent page of the React UI, `oauth-consent.view.xml`, as
+an entry point (not anonymous) and sets `consent-page="/view/oauth-consent.view.xml"`. The page
+
+- names why the request cannot be decided: unknown, answered already, or expired;
+- offers a visitor who is not logged in the login form; the login keeps the URL, so the page shows
+  the request afterwards. In an application with a login view, the login view stands in for the
+  page and returns to it the same way, also through an external login (SSO);
+- shows a logged-in person the client (and for a client ID metadata document the host publishing
+  it), the host the answer goes to, the endpoint (resource) and the account, with the buttons
+  *Allow* and *Deny*.
+
+Both buttons are commands of the page, so another site cannot trigger them. *Allow* issues the
+code for the logged-in account and sends the browser to the redirect URI with `code` and `state`;
+*Deny* sends `error=access_denied` and `state`. Either answers the pending authorization, so it
+cannot be decided twice.
+
+The page uses these TL-Script functions (`com.top_logic.oauth.server.OAuthFunctions`), each
+taking the identifier of the pending authorization; an application builds its own consent page
+from them:
+
+| Function | Result |
+|----------|--------|
+| `oauthRefusal($pending)` | Why the request cannot be decided (a message), `null` for an open request. |
+| `oauthRequest($pending)` | Dictionary with `client`, `clientId`, `clientHost`, `redirectUri`, `redirectHost`, `resource`, `scope`; `null` if it cannot be decided. |
+| `oauthApprove($pending)` | Issues the code for the current user, returns the address to send the browser to (e.g. with `<open-url new-window="false"/>`). |
+| `oauthDeny($pending)` | Refuses, returns the address with `access_denied`. |
 
 ## Tokens
 
@@ -106,6 +148,8 @@ Configured on the service `com.top_logic.oauth.server.OAuthAuthorizationServer`:
 | `access-token-lifetime` | `1h` | How long an access token is accepted. |
 | `refresh-token-lifetime` | `30d` | How long a refresh token can be exchanged; each exchange starts it anew. |
 | `authorization-code-lifetime` | `1min` | How long an authorization code can be exchanged. |
+| `consent-page` | none | Context-relative path of the page on which a person decides about a request; contributed by `tl-oauth-server-view`. |
+| `pending-authorization-lifetime` | `10min` | How long a person has to decide about a request, logging in included. |
 | `dynamic-client-registration` | `true` | Whether `/oauth/register` accepts registrations. |
 | `client-id-metadata-documents` | `true` | Whether an `https` URL is accepted as client ID. |
 | `client-metadata-fetcher` | `HttpClientMetadataFetcher` | How a metadata document is fetched. |
@@ -142,7 +186,7 @@ The scheduler task `com.top_logic.oauth.server.OAuthCleanUpTask` (*Clean up OAut
 authorizations*, contributed by the configuration of the module, hourly, once per cluster) calls
 `OAuthAuthorizationServer.cleanUp(Instant)`, which removes:
 
-- authorization codes whose lifetime ended,
+- pending authorizations and authorization codes whose lifetime ended,
 - access and refresh tokens whose lifetime ended; an exchanged refresh token is kept until then,
   so that presenting it again still revokes its grant,
 - grants without a valid token: neither the client nor anybody else can use them any more,
@@ -161,6 +205,9 @@ The model `tl.oauth.server` holds:
   (`OAuthAuthorizationServer.revoke`) revokes all its tokens; deleting the person deletes it.
 - `OAuthToken` - an access or refresh token of a grant: hash, expiry, whether it is an exchanged
   refresh token, and the hash of the refresh token it replaced.
+- `OAuthPendingAuthorization` - an accepted authorization request waiting for the decision on the
+  consent page: hash of its identifier, client, redirect URI, PKCE challenge, resource, scope,
+  state, expiry.
 - `OAuthAuthorizationCode` - an issued, not yet exchanged code: hash, person, client, redirect URI,
   PKCE challenge, resource, expiry.
 
@@ -172,4 +219,8 @@ The authorization endpoint and its consent dialog use the service:
   URI, response type, PKCE challenge and resource, and returns a `ValidatedAuthorization`. A
   refusal is an `OAuthException`; `isRedirectable()` tells whether it may be sent to the redirect
   URI or must be shown to the person.
+- `createPendingAuthorization(ValidatedAuthorization)` stores the accepted request and returns the
+  identifier for the consent page; `pendingAuthorization(String)` reads it back.
+- `approve(String, Person)` issues the code for the logged-in person and `deny(String)` refuses;
+  both end the pending authorization and return the URI to send the browser to.
 - `issueCode(ValidatedAuthorization, Person)` issues the code once the person agreed.

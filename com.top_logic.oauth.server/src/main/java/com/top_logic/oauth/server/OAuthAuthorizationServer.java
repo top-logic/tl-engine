@@ -21,9 +21,12 @@ import java.util.Set;
 import net.minidev.json.JSONObject;
 
 import com.nimbusds.oauth2.sdk.AccessTokenResponse;
+import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
+import com.nimbusds.oauth2.sdk.AuthorizationErrorResponse;
 import com.nimbusds.oauth2.sdk.AuthorizationGrant;
 import com.nimbusds.oauth2.sdk.AuthorizationRequest;
+import com.nimbusds.oauth2.sdk.AuthorizationSuccessResponse;
 import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.oauth2.sdk.GrantType;
 import com.nimbusds.oauth2.sdk.OAuth2Error;
@@ -46,6 +49,7 @@ import com.nimbusds.oauth2.sdk.client.RegistrationError;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import com.nimbusds.oauth2.sdk.id.Issuer;
+import com.nimbusds.oauth2.sdk.id.State;
 import com.nimbusds.oauth2.sdk.pkce.CodeChallenge;
 import com.nimbusds.oauth2.sdk.pkce.CodeChallengeMethod;
 import com.nimbusds.oauth2.sdk.pkce.CodeVerifier;
@@ -63,6 +67,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
@@ -82,9 +87,11 @@ import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.oauth.server.model.OAuthAuthorizationCode;
 import com.top_logic.oauth.server.model.OAuthClient;
 import com.top_logic.oauth.server.model.OAuthGrant;
+import com.top_logic.oauth.server.model.OAuthPendingAuthorization;
 import com.top_logic.oauth.server.model.OAuthToken;
 import com.top_logic.oauth.server.model.TlOauthServerFactory;
 import com.top_logic.util.model.ModelService;
@@ -160,6 +167,15 @@ public class OAuthAuthorizationServer extends ConfiguredManagedClass<OAuthAuthor
 
 	/** Prefix of an authorization code. */
 	public static final String AUTHORIZATION_CODE_PREFIX = "tloac_";
+
+	/** Prefix of the identifier of a pending authorization, see {@link #createPendingAuthorization(ValidatedAuthorization)}. */
+	public static final String PENDING_AUTHORIZATION_PREFIX = "tlopa_";
+
+	/**
+	 * The query parameter of the {@link Config#getConsentPage() consent page} carrying the
+	 * identifier of the pending authorization.
+	 */
+	public static final String PENDING_PARAMETER = "pending";
 
 	/**
 	 * Prefix of the random value whose hash stands in {@link OAuthToken#getPredecessorHash()} of a
@@ -243,6 +259,16 @@ public class OAuthAuthorizationServer extends ConfiguredManagedClass<OAuthAuthor
 		 * Configuration name of {@link #getAbandonedClientLifetime()}.
 		 */
 		String ABANDONED_CLIENT_LIFETIME = "abandoned-client-lifetime";
+
+		/**
+		 * Configuration name of {@link #getConsentPage()}.
+		 */
+		String CONSENT_PAGE = "consent-page";
+
+		/**
+		 * Configuration name of {@link #getPendingAuthorizationLifetime()}.
+		 */
+		String PENDING_AUTHORIZATION_LIFETIME = "pending-authorization-lifetime";
 
 		/**
 		 * How long an access token is accepted after it was issued.
@@ -359,6 +385,30 @@ public class OAuthAuthorizationServer extends ConfiguredManagedClass<OAuthAuthor
 		@Format(MillisFormat.class)
 		@LongDefault(90 * DateUtil.DAY_MILLIS)
 		long getAbandonedClientLifetime();
+
+		/**
+		 * The page on which a person decides about an authorization request, as path relative to
+		 * the context path of the application, e.g. <code>/view/oauth-consent.view.xml</code>.
+		 *
+		 * <p>
+		 * The {@link OAuthAuthorizationServer#AUTHORIZATION_PATH authorization endpoint} sends the browser there with the
+		 * identifier of the {@link OAuthAuthorizationServer#createPendingAuthorization(ValidatedAuthorization)
+		 * pending authorization} in the query parameter {@link OAuthAuthorizationServer#PENDING_PARAMETER}. The page is
+		 * contributed by the module of the user interface (<code>tl-oauth-server-view</code> for
+		 * the React UI); without one, the authorization endpoint answers <code>404</code>.
+		 * </p>
+		 */
+		@Name(CONSENT_PAGE)
+		@Nullable
+		String getConsentPage();
+
+		/**
+		 * How long a person has to decide about an authorization request, logging in included.
+		 */
+		@Name(PENDING_AUTHORIZATION_LIFETIME)
+		@Format(MillisFormat.class)
+		@LongDefault(10 * DateUtil.MINUTE_MILLIS)
+		long getPendingAuthorizationLifetime();
 
 	}
 
@@ -763,6 +813,148 @@ public class OAuthAuthorizationServer extends ConfiguredManagedClass<OAuthAuthor
 		return code;
 	}
 
+	/**
+	 * Keeps an accepted authorization request until a person decides about it on the
+	 * {@link Config#getConsentPage() consent page}.
+	 *
+	 * <p>
+	 * The request belongs to nobody yet: whoever opens the consent page with the identifier and is
+	 * logged in decides about it, once, within {@link Config#getPendingAuthorizationLifetime()}.
+	 * Commits in a transaction of its own, or as part of the caller's if one is open.
+	 * </p>
+	 *
+	 * @return The identifier of the pending authorization, a random string with the prefix
+	 *         {@link #PENDING_AUTHORIZATION_PREFIX}. It exists only here; what is stored is its
+	 *         hash.
+	 */
+	public String createPendingAuthorization(ValidatedAuthorization authorization) {
+		String id = SecretTokens.newToken(PENDING_AUTHORIZATION_PREFIX);
+		Instant now = Instant.now();
+		try (Transaction tx = kb().beginTransaction(I18NConstants.TX_PENDING_AUTHORIZATION)) {
+			OAuthPendingAuthorization pending = TlOauthServerFactory.getInstance().createOAuthPendingAuthorization();
+			pending.setIdHash(SecretTokens.hash(id));
+			pending.setClientId(authorization.client().clientId());
+			pending.setClientName(authorization.client().clientName());
+			pending.setRedirectUri(authorization.redirectUri().toString());
+			pending.setCodeChallenge(authorization.codeChallenge().getValue());
+			pending.setResource(authorization.resource().toString());
+			pending.setScope(scopeValue(authorization.scope()));
+			State state = authorization.state();
+			pending.setState(state == null ? null : state.getValue());
+			pending.setExpiresAt(Date.from(now.plusMillis(getConfig().getPendingAuthorizationLifetime())));
+			tx.commit();
+		}
+		return id;
+	}
+
+	/**
+	 * The authorization request a person is asked to decide about.
+	 *
+	 * @param pendingId
+	 *        The identifier from {@link #createPendingAuthorization(ValidatedAuthorization)}.
+	 * @return The request; its {@link ValidatedAuthorization#client() client} lists only the
+	 *         redirect URI of the request.
+	 * @throws OAuthException
+	 *         If there is no such pending authorization - it never existed or was answered already -
+	 *         or it expired. Never redirectable: the person stays on the consent page.
+	 */
+	public ValidatedAuthorization pendingAuthorization(String pendingId) throws OAuthException {
+		return toAuthorization(livePending(pendingId));
+	}
+
+	/**
+	 * The person agrees to the pending authorization: issues the authorization code and ends the
+	 * pending authorization.
+	 *
+	 * @param pendingId
+	 *        The identifier from {@link #createPendingAuthorization(ValidatedAuthorization)}.
+	 * @param owner
+	 *        The logged-in person who agreed, on whose behalf the client acts.
+	 * @return The URI to send the browser to: the redirect URI of the request with the code and the
+	 *         state of the client.
+	 * @throws OAuthException
+	 *         If the person is not logged in, or the pending authorization does not exist (any more)
+	 *         or expired.
+	 */
+	public URI approve(String pendingId, Person owner) throws OAuthException {
+		if (owner == null || PersonManager.getManager().isAnonymous(owner)) {
+			throw new OAuthException(OAuth2Error.ACCESS_DENIED, I18NConstants.ERROR_CONSENT_WITHOUT_LOGIN);
+		}
+		try (Transaction tx = kb().beginTransaction(I18NConstants.TX_ISSUE_CODE)) {
+			OAuthPendingAuthorization pending = livePending(pendingId);
+			ValidatedAuthorization authorization = toAuthorization(pending);
+			pending.tDelete();
+			String code = issueCode(authorization, owner);
+			tx.commit();
+			Logger.info("Account '" + owner.getName() + "' authorized OAuth client '"
+				+ authorization.client().clientId() + "' for '" + authorization.resource() + "'.",
+				OAuthAuthorizationServer.class);
+			return new AuthorizationSuccessResponse(authorization.redirectUri(), new AuthorizationCode(code), null,
+				authorization.state(), null).toURI();
+		} catch (KnowledgeBaseRuntimeException ex) {
+			throw concurrentlyAnswered(ex);
+		}
+	}
+
+	/**
+	 * The person refuses the pending authorization: ends it without a code.
+	 *
+	 * @param pendingId
+	 *        The identifier from {@link #createPendingAuthorization(ValidatedAuthorization)}.
+	 * @return The URI to send the browser to: the redirect URI of the request with the error
+	 *         <code>access_denied</code> and the state of the client.
+	 * @throws OAuthException
+	 *         If the pending authorization does not exist (any more) or expired.
+	 */
+	public URI deny(String pendingId) throws OAuthException {
+		try (Transaction tx = kb().beginTransaction(I18NConstants.TX_DENY)) {
+			OAuthPendingAuthorization pending = livePending(pendingId);
+			ValidatedAuthorization authorization = toAuthorization(pending);
+			pending.tDelete();
+			tx.commit();
+			return new AuthorizationErrorResponse(authorization.redirectUri(), OAuth2Error.ACCESS_DENIED,
+				authorization.state(), null).toURI();
+		} catch (KnowledgeBaseRuntimeException ex) {
+			throw concurrentlyAnswered(ex);
+		}
+	}
+
+	private static OAuthException concurrentlyAnswered(KnowledgeBaseRuntimeException ex) {
+		// Another decision about the same pending authorization committed first.
+		Logger.info("Refused a decision about a pending authorization answered concurrently: " + ex.getMessage(),
+			OAuthAuthorizationServer.class);
+		return new OAuthException(OAuth2Error.INVALID_REQUEST, I18NConstants.ERROR_UNKNOWN_PENDING_AUTHORIZATION, ex);
+	}
+
+	private static OAuthPendingAuthorization livePending(String pendingId) throws OAuthException {
+		OAuthPendingAuthorization pending = pendingId == null || pendingId.isBlank() ? null
+			: findPending(SecretTokens.hash(pendingId.strip()));
+		if (pending == null) {
+			throw new OAuthException(OAuth2Error.INVALID_REQUEST, I18NConstants.ERROR_UNKNOWN_PENDING_AUTHORIZATION);
+		}
+		if (isExpired(pending.getExpiresAt(), Instant.now())) {
+			throw new OAuthException(OAuth2Error.INVALID_REQUEST, I18NConstants.ERROR_PENDING_AUTHORIZATION_EXPIRED);
+		}
+		return pending;
+	}
+
+	private static ValidatedAuthorization toAuthorization(OAuthPendingAuthorization pending) {
+		URI redirectUri = URI.create(pending.getRedirectUri());
+		OAuthClientInfo client = new OAuthClientInfo(pending.getClientId(), pending.getClientName(), Set.of(redirectUri));
+		String state = pending.getState();
+		return new ValidatedAuthorization(client, redirectUri, codeChallenge(pending.getCodeChallenge()),
+			URI.create(pending.getResource()), scope(pending.getScope()), state == null ? null : new State(state));
+	}
+
+	private static CodeChallenge codeChallenge(String value) {
+		try {
+			return CodeChallenge.parse(value);
+		} catch (ParseException ex) {
+			// Stored from a parsed challenge, so it parses again.
+			throw new IllegalStateException("Stored code challenge cannot be parsed.", ex);
+		}
+	}
+
 	// ---------------------------------------------------------------------------------------------
 	// Token endpoint
 	// ---------------------------------------------------------------------------------------------
@@ -1069,6 +1261,8 @@ public class OAuthAuthorizationServer extends ConfiguredManagedClass<OAuthAuthor
 	/**
 	 * What one {@link OAuthAuthorizationServer#cleanUp(Instant) clean-up} removed.
 	 *
+	 * @param pendingAuthorizations
+	 *        Expired pending authorizations nobody decided about.
 	 * @param codes
 	 *        Expired authorization codes.
 	 * @param tokens
@@ -1079,7 +1273,7 @@ public class OAuthAuthorizationServer extends ConfiguredManagedClass<OAuthAuthor
 	 *        Dynamically registered clients without a grant, see
 	 *        {@link Config#getUnusedClientLifetime()} and {@link Config#getAbandonedClientLifetime()}.
 	 */
-	public record CleanUpResult(int codes, int tokens, int grants, int clients) {
+	public record CleanUpResult(int pendingAuthorizations, int codes, int tokens, int grants, int clients) {
 		// Pure value.
 	}
 
@@ -1087,7 +1281,7 @@ public class OAuthAuthorizationServer extends ConfiguredManagedClass<OAuthAuthor
 	 * Removes what can no longer be used at {@code now}.
 	 *
 	 * <ul>
-	 * <li>Authorization codes whose lifetime ended.</li>
+	 * <li>Pending authorizations and authorization codes whose lifetime ended.</li>
 	 * <li>Access and refresh tokens whose lifetime ended. An exchanged refresh token is kept until
 	 * then, so that presenting it again is recognized and revokes its grant.</li>
 	 * <li>Grants without a token that is still valid: neither the client nor anybody else can use
@@ -1103,6 +1297,7 @@ public class OAuthAuthorizationServer extends ConfiguredManagedClass<OAuthAuthor
 	 * </p>
 	 */
 	public CleanUpResult cleanUp(Instant now) {
+		int pendingAuthorizations = 0;
 		int codes = 0;
 		int tokens = 0;
 		try (Transaction tx = kb().beginTransaction(I18NConstants.TX_CLEAN_UP)) {
@@ -1111,6 +1306,13 @@ public class OAuthAuthorizationServer extends ConfiguredManagedClass<OAuthAuthor
 				if (isExpired(code.getExpiresAt(), now)) {
 					code.tDelete();
 					codes++;
+				}
+			}
+			for (OAuthPendingAuthorization pending : this.<OAuthPendingAuthorization> all(
+				TlOauthServerFactory.KO_NAME_O_AUTH_PENDING_AUTHORIZATION)) {
+				if (isExpired(pending.getExpiresAt(), now)) {
+					pending.tDelete();
+					pendingAuthorizations++;
 				}
 			}
 			for (OAuthToken token : this.<OAuthToken> all(TlOauthServerFactory.KO_NAME_O_AUTH_TOKEN)) {
@@ -1158,7 +1360,7 @@ public class OAuthAuthorizationServer extends ConfiguredManagedClass<OAuthAuthor
 			}
 			tx.commit();
 		}
-		return new CleanUpResult(codes, tokens, grants, clients);
+		return new CleanUpResult(pendingAuthorizations, codes, tokens, grants, clients);
 	}
 
 	private <T> List<T> all(String table) {
@@ -1182,6 +1384,12 @@ public class OAuthAuthorizationServer extends ConfiguredManagedClass<OAuthAuthor
 	private static OAuthGrant findGrantByCode(String codeHash) {
 		Iterator<KnowledgeItem> hits = kb().getObjectsByAttribute(TlOauthServerFactory.KO_NAME_O_AUTH_GRANT,
 			OAuthGrant.CODE_HASH_ATTR, codeHash);
+		return hits.hasNext() ? hits.next().getWrapper() : null;
+	}
+
+	private static OAuthPendingAuthorization findPending(String hash) {
+		Iterator<KnowledgeItem> hits = kb().getObjectsByAttribute(
+			TlOauthServerFactory.KO_NAME_O_AUTH_PENDING_AUTHORIZATION, OAuthPendingAuthorization.ID_HASH_ATTR, hash);
 		return hits.hasNext() ? hits.next().getWrapper() : null;
 	}
 

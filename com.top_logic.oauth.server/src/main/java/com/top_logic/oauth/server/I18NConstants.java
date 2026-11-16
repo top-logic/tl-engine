@@ -9,7 +9,7 @@ import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
-import com.top_logic.basic.util.ResKey4;
+import com.top_logic.basic.util.ResKey5;
 
 /**
  * Internationalization constants for this package.
@@ -401,10 +401,51 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey TX_CLEAN_UP;
 
 	/**
-	 * @en Removed {0} authorization codes, {1} tokens, {2} authorizations and {3} clients.
-	 * @de {0} Autorisierungscodes, {1} Tokens, {2} Autorisierungen und {3} Clients entfernt.
+	 * @en Removed {0} pending authorizations, {1} authorization codes, {2} tokens, {3} authorizations
+	 *     and {4} clients.
+	 * @de {0} ausstehende Autorisierungen, {1} Autorisierungscodes, {2} Tokens, {3} Autorisierungen
+	 *     und {4} Clients entfernt.
 	 */
-	public static ResKey4 CLEAN_UP_RESULT__CODES_TOKENS_GRANTS_CLIENTS;
+	public static ResKey5 CLEAN_UP_RESULT__PENDING_CODES_TOKENS_GRANTS_CLIENTS;
+
+	/**
+	 * @en Store OAuth authorization request
+	 * @de OAuth-Autorisierungsanfrage speichern
+	 */
+	public static ResKey TX_PENDING_AUTHORIZATION;
+
+	/**
+	 * @en Deny OAuth authorization request
+	 * @de OAuth-Autorisierungsanfrage ablehnen
+	 */
+	public static ResKey TX_DENY;
+
+	/**
+	 * @en There is no such authorization request, or it has been answered already. Start the sign-in
+	 *     from the application again.
+	 * @de Diese Autorisierungsanfrage gibt es nicht oder sie wurde bereits beantwortet. Starten Sie die
+	 *     Anmeldung erneut aus der Anwendung.
+	 */
+	public static ResKey ERROR_UNKNOWN_PENDING_AUTHORIZATION;
+
+	/**
+	 * @en The authorization request has expired. Start the sign-in from the application again.
+	 * @de Die Autorisierungsanfrage ist abgelaufen. Starten Sie die Anmeldung erneut aus der
+	 *     Anwendung.
+	 */
+	public static ResKey ERROR_PENDING_AUTHORIZATION_EXPIRED;
+
+	/**
+	 * @en Only a logged-in account can authorize a client.
+	 * @de Nur ein angemeldetes Konto kann einen Client autorisieren.
+	 */
+	public static ResKey ERROR_CONSENT_WITHOUT_LOGIN;
+
+	/**
+	 * @en The authorization request was refused
+	 * @de Die Autorisierungsanfrage wurde abgelehnt
+	 */
+	public static ResKey AUTHORIZATION_REFUSED_TITLE;
 
 	static {
 		initConstants(I18NConstants.class);

@@ -94,4 +94,23 @@
 		</index>
 	</metaobject>
 
+	<metaobject
+		object_name="OAuthPendingAuthorization"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="idHash"
+			att_type="String"
+			db_size="64"
+			mandatory="true"
+		/>
+		<index>
+			<mo_index name="idHash" unique="true">
+				<index-parts>
+					<index_part name="idHash"/>
+				</index-parts>
+			</mo_index>
+		</index>
+	</metaobject>
+
 </objectlist>

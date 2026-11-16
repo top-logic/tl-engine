@@ -74,6 +74,7 @@ import com.top_logic.oauth.server.OAuthServerServlet;
 import com.top_logic.oauth.server.ValidatedAuthorization;
 import com.top_logic.oauth.server.model.OAuthAuthorizationCode;
 import com.top_logic.oauth.server.model.OAuthGrant;
+import com.top_logic.oauth.server.model.OAuthPendingAuthorization;
 import com.top_logic.oauth.server.model.OAuthToken;
 import com.top_logic.oauth.server.model.TlOauthServerFactory;
 import com.top_logic.util.model.ModelService;
@@ -143,8 +144,8 @@ public abstract class AbstractOAuthServerTest extends BasicTestCase {
 		super.setUp();
 		ServletRunner runner = new ServletRunner();
 		for (String path : new String[] { OAuthAuthorizationServer.METADATA_PATH,
-			OAuthAuthorizationServer.OPENID_CONFIGURATION_PATH, OAuthAuthorizationServer.TOKEN_PATH,
-			OAuthAuthorizationServer.REGISTRATION_PATH }) {
+			OAuthAuthorizationServer.OPENID_CONFIGURATION_PATH, OAuthAuthorizationServer.AUTHORIZATION_PATH,
+			OAuthAuthorizationServer.TOKEN_PATH, OAuthAuthorizationServer.REGISTRATION_PATH }) {
 			runner.registerServlet(path, OAuthServerServlet.class.getName());
 		}
 		_client = runner.newClient();
@@ -277,6 +278,18 @@ public abstract class AbstractOAuthServerTest extends BasicTestCase {
 			OAuthAuthorizationCode.CODE_HASH_ATTR, plain);
 		try (Transaction tx = kb().beginTransaction()) {
 			code.setExpiresAt(past());
+			tx.commit();
+		}
+	}
+
+	/**
+	 * Moves the expiry of the stored pending authorization into the past.
+	 */
+	protected static void expirePending(String plain) {
+		OAuthPendingAuthorization pending = find(TlOauthServerFactory.KO_NAME_O_AUTH_PENDING_AUTHORIZATION,
+			OAuthPendingAuthorization.ID_HASH_ATTR, plain);
+		try (Transaction tx = kb().beginTransaction()) {
+			pending.setExpiresAt(past());
 			tx.commit();
 		}
 	}

@@ -261,6 +261,76 @@ public class TlOauthServerFactory extends com.top_logic.element.meta.kbbased.Abs
 	}
 
 	/**
+	 * Lookup {@link OAuthPendingAuthorization} type.
+	 */
+	public static com.top_logic.model.TLClass getOAuthPendingAuthorizationType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_OAUTH_SERVER_MODULE).getType(OAuthPendingAuthorization.O_AUTH_PENDING_AUTHORIZATION_TYPE);
+	}
+
+	/**
+	 * Lookup {@link OAuthPendingAuthorization#CLIENT_ID_ATTR} of {@link OAuthPendingAuthorization}.
+	 */
+	public static com.top_logic.model.TLProperty getClientIdOAuthPendingAuthorizationAttr() {
+		return (com.top_logic.model.TLProperty) getOAuthPendingAuthorizationType().getPart(OAuthPendingAuthorization.CLIENT_ID_ATTR);
+	}
+
+	/**
+	 * Lookup {@link OAuthPendingAuthorization#CLIENT_NAME_ATTR} of {@link OAuthPendingAuthorization}.
+	 */
+	public static com.top_logic.model.TLProperty getClientNameOAuthPendingAuthorizationAttr() {
+		return (com.top_logic.model.TLProperty) getOAuthPendingAuthorizationType().getPart(OAuthPendingAuthorization.CLIENT_NAME_ATTR);
+	}
+
+	/**
+	 * Lookup {@link OAuthPendingAuthorization#CODE_CHALLENGE_ATTR} of {@link OAuthPendingAuthorization}.
+	 */
+	public static com.top_logic.model.TLProperty getCodeChallengeOAuthPendingAuthorizationAttr() {
+		return (com.top_logic.model.TLProperty) getOAuthPendingAuthorizationType().getPart(OAuthPendingAuthorization.CODE_CHALLENGE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link OAuthPendingAuthorization#EXPIRES_AT_ATTR} of {@link OAuthPendingAuthorization}.
+	 */
+	public static com.top_logic.model.TLProperty getExpiresAtOAuthPendingAuthorizationAttr() {
+		return (com.top_logic.model.TLProperty) getOAuthPendingAuthorizationType().getPart(OAuthPendingAuthorization.EXPIRES_AT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link OAuthPendingAuthorization#ID_HASH_ATTR} of {@link OAuthPendingAuthorization}.
+	 */
+	public static com.top_logic.model.TLProperty getIdHashOAuthPendingAuthorizationAttr() {
+		return (com.top_logic.model.TLProperty) getOAuthPendingAuthorizationType().getPart(OAuthPendingAuthorization.ID_HASH_ATTR);
+	}
+
+	/**
+	 * Lookup {@link OAuthPendingAuthorization#REDIRECT_URI_ATTR} of {@link OAuthPendingAuthorization}.
+	 */
+	public static com.top_logic.model.TLProperty getRedirectUriOAuthPendingAuthorizationAttr() {
+		return (com.top_logic.model.TLProperty) getOAuthPendingAuthorizationType().getPart(OAuthPendingAuthorization.REDIRECT_URI_ATTR);
+	}
+
+	/**
+	 * Lookup {@link OAuthPendingAuthorization#RESOURCE_ATTR} of {@link OAuthPendingAuthorization}.
+	 */
+	public static com.top_logic.model.TLProperty getResourceOAuthPendingAuthorizationAttr() {
+		return (com.top_logic.model.TLProperty) getOAuthPendingAuthorizationType().getPart(OAuthPendingAuthorization.RESOURCE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link OAuthPendingAuthorization#SCOPE_ATTR} of {@link OAuthPendingAuthorization}.
+	 */
+	public static com.top_logic.model.TLProperty getScopeOAuthPendingAuthorizationAttr() {
+		return (com.top_logic.model.TLProperty) getOAuthPendingAuthorizationType().getPart(OAuthPendingAuthorization.SCOPE_ATTR);
+	}
+
+	/**
+	 * Lookup {@link OAuthPendingAuthorization#STATE_ATTR} of {@link OAuthPendingAuthorization}.
+	 */
+	public static com.top_logic.model.TLProperty getStateOAuthPendingAuthorizationAttr() {
+		return (com.top_logic.model.TLProperty) getOAuthPendingAuthorizationType().getPart(OAuthPendingAuthorization.STATE_ATTR);
+	}
+
+	/**
 	 * Name of type <code>OAuthClient</code> in module {@link #TL_OAUTH_SERVER_MODULE}.
 	 * 
 	 * @deprecated Use {@link OAuthClient#O_AUTH_CLIENT_TYPE}.
@@ -324,6 +394,22 @@ public class TlOauthServerFactory extends com.top_logic.element.meta.kbbased.Abs
 	@Deprecated
 	public static final String KO_NAME_O_AUTH_AUTHORIZATION_CODE = com.top_logic.oauth.server.model.impl.OAuthAuthorizationCodeBase.TABLE_NAME;
 
+	/**
+	 * Name of type <code>OAuthPendingAuthorization</code> in module {@link #TL_OAUTH_SERVER_MODULE}.
+	 * 
+	 * @deprecated Use {@link OAuthPendingAuthorization#O_AUTH_PENDING_AUTHORIZATION_TYPE}.
+	 */
+	@Deprecated
+	public static final String O_AUTH_PENDING_AUTHORIZATION_NODE = OAuthPendingAuthorization.O_AUTH_PENDING_AUTHORIZATION_TYPE;
+
+	/**
+	 * Storage table name of {@link #O_AUTH_PENDING_AUTHORIZATION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.oauth.server.model.impl.OAuthPendingAuthorizationBase#TABLE_NAME}.
+	 */
+	@Deprecated
+	public static final String KO_NAME_O_AUTH_PENDING_AUTHORIZATION = com.top_logic.oauth.server.model.impl.OAuthPendingAuthorizationBase.TABLE_NAME;
+
 
 	/**
 	 * Create an instance of {@link OAuthClient} type.
@@ -379,6 +465,20 @@ public class TlOauthServerFactory extends com.top_logic.element.meta.kbbased.Abs
 	 */
 	public final OAuthAuthorizationCode createOAuthAuthorizationCode() {
 		return createOAuthAuthorizationCode(null);
+	}
+
+	/**
+	 * Create an instance of {@link OAuthPendingAuthorization} type.
+	 */
+	public final OAuthPendingAuthorization createOAuthPendingAuthorization(com.top_logic.model.TLObject context) {
+		return (OAuthPendingAuthorization) createObject(getOAuthPendingAuthorizationType(), context);
+	}
+
+	/**
+	 * Create an instance of {@link OAuthPendingAuthorization} type.
+	 */
+	public final OAuthPendingAuthorization createOAuthPendingAuthorization() {
+		return createOAuthPendingAuthorization(null);
 	}
 
 	/**

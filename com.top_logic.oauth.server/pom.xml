@@ -23,6 +23,11 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-service-openapi-server</artifactId>
     </dependency>
+    <!-- The TL-Script functions of the consent page. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-model-search</artifactId>
+    </dependency>
     <dependency>
       <groupId>com.nimbusds</groupId>
       <artifactId>oauth2-oidc-sdk</artifactId>

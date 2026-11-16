@@ -53,9 +53,10 @@ public class OAuthCleanUpTask extends TaskImpl<TaskImpl.Config<?>> {
 			return;
 		}
 		OAuthAuthorizationServer.CleanUpResult result = server.cleanUp(Instant.now());
-		getLog().taskEnded(ResultType.SUCCESS, I18NConstants.CLEAN_UP_RESULT__CODES_TOKENS_GRANTS_CLIENTS.fill(
-			Integer.valueOf(result.codes()), Integer.valueOf(result.tokens()), Integer.valueOf(result.grants()),
-			Integer.valueOf(result.clients())));
+		getLog().taskEnded(ResultType.SUCCESS,
+			I18NConstants.CLEAN_UP_RESULT__PENDING_CODES_TOKENS_GRANTS_CLIENTS.fill(
+				Integer.valueOf(result.pendingAuthorizations()), Integer.valueOf(result.codes()),
+				Integer.valueOf(result.tokens()), Integer.valueOf(result.grants()), Integer.valueOf(result.clients())));
 	}
 
 }

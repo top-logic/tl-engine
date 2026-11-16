@@ -49,6 +49,7 @@
 		<channel name="status"/>
 		<channel name="choice"/>
 		<channel name="chosen"/>
+		<channel name="arranged"/>
 		<channel name="radioVertical"/>
 		<channel name="radioHorizontal"
 			init="`demo.react:Priority#medium`"
@@ -685,8 +686,8 @@
 
 		<text>
 			<label>
-				<en>A value that belongs to the view and to no object names its control the same way: the input-control of a value-input overrides the control the type of the value leads to. A radio group lists every option at once, stacked or side by side as its orientation says; an optional single value gets a first radio button for no value, and a multi-valued selection shows checkboxes instead. A dropdown without a filter input jumps to the option whose label starts with the letters typed while it has the focus. The options of an expression are offered in the order it computes them, and the order by-label of the input-control sorts them by their labels instead. The range and the unit of the second slider follow the chosen kind through channels; without a kind, the slider is disabled. The text beside each input reads the channel it writes.</en>
-				<de>Ein Wert, der zur Ansicht und zu keinem Objekt gehört, benennt sein Steuerelement auf dieselbe Weise: Das input-control eines value-input überschreibt das Steuerelement, auf das der Typ des Werts hinweist. Eine Radio-Gruppe zeigt alle Optionen auf einmal, untereinander oder nebeneinander, wie ihre Ausrichtung sagt; ein optionaler Einzelwert bekommt einen ersten Radiobutton für keinen Wert, und eine mehrwertige Auswahl zeigt stattdessen Checkboxen. Ein Dropdown ohne Filtereingabe springt zu der Option, deren Beschriftung mit den Buchstaben beginnt, die getippt werden, während es den Fokus hat. Die Optionen eines Ausdrucks erscheinen in der Reihenfolge, in der er sie berechnet; die Reihenfolge by-label des input-control sortiert sie stattdessen nach ihren Beschriftungen. Bereich und Einheit des zweiten Reglers folgen über Kanäle der gewählten Art; ohne Art ist der Regler deaktiviert. Der Text neben jeder Eingabe liest den Kanal, den sie schreibt.</de>
+				<en>A value that belongs to the view and to no object names its control the same way: the input-control of a value-input overrides the control the type of the value leads to. A radio group lists every option at once, stacked or side by side as its orientation says; an optional single value gets a first radio button for no value, and a multi-valued selection shows checkboxes instead. A dropdown without a filter input jumps to the option whose label starts with the letters typed while it has the focus. An ordered multi-valued selection lets the user arrange the chosen values by dragging their chips or with Alt+arrow, and its channel holds them as a list in that order. The options of an expression are offered in the order it computes them, and the order by-label of the input-control sorts them by their labels instead. The range and the unit of the second slider follow the chosen kind through channels; without a kind, the slider is disabled. The text beside each input reads the channel it writes.</en>
+				<de>Ein Wert, der zur Ansicht und zu keinem Objekt gehört, benennt sein Steuerelement auf dieselbe Weise: Das input-control eines value-input überschreibt das Steuerelement, auf das der Typ des Werts hinweist. Eine Radio-Gruppe zeigt alle Optionen auf einmal, untereinander oder nebeneinander, wie ihre Ausrichtung sagt; ein optionaler Einzelwert bekommt einen ersten Radiobutton für keinen Wert, und eine mehrwertige Auswahl zeigt stattdessen Checkboxen. Ein Dropdown ohne Filtereingabe springt zu der Option, deren Beschriftung mit den Buchstaben beginnt, die getippt werden, während es den Fokus hat. Eine geordnete mehrwertige Auswahl lässt die gewählten Werte durch Ziehen ihrer Chips oder mit Alt+Pfeil umsortieren, und ihr Kanal enthält sie als Liste in dieser Reihenfolge. Die Optionen eines Ausdrucks erscheinen in der Reihenfolge, in der er sie berechnet; die Reihenfolge by-label des input-control sortiert sie stattdessen nach ihren Beschriftungen. Bereich und Einheit des zweiten Reglers folgen über Kanäle der gewählten Art; ohne Art ist der Regler deaktiviert. Der Text neben jeder Eingabe liest den Kanal, den sie schreibt.</de>
 			</label>
 		</text>
 		<fields>
@@ -714,6 +715,17 @@
 				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
 					display="chips"
 				/>
+			</value-input>
+			<value-input
+				multiple="true"
+				ordered="true"
+				type="demo.react:Priority"
+				value="arranged"
+			>
+				<label>
+					<en>Priorities (ordered)</en>
+					<de>Prioritäten (geordnet)</de>
+				</label>
 			</value-input>
 			<value-input
 				type="demo.react:Priority"
@@ -866,6 +878,10 @@
 			/>
 			<text
 				input="chosen"
+				tone="helper"
+			/>
+			<text
+				input="arranged"
 				tone="helper"
 			/>
 			<text

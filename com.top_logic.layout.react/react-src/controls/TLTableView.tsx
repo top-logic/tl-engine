@@ -186,6 +186,11 @@ interface ColumnState {
    * Absent for a label that describes itself.
    */
   tooltip?: string;
+  /**
+   * How the column's cells sit in it, their heading included: `end` for numbers, which the column
+   * then aligns at the end so that their digits line up. Absent for the start, the default.
+   */
+  align?: 'end';
 }
 
 /** One of the filter criteria the table offers under a name, displayed as a chip in the filter bar. */
@@ -330,6 +335,11 @@ const measureColumnContentWidth = (root: HTMLElement, columnName: string): numbe
       // the copy is in the document.
       copy.querySelectorAll('.tl-table__resize').forEach((handle) => handle.remove());
       copy.querySelectorAll('[id]').forEach((element) => element.removeAttribute('id'));
+      // Measured as revealed: a hidden funnel takes no width (table.css), but it opens up under the
+      // pointer, and a fitted heading would then lose its end to the ellipsis.
+      if (copy.classList.contains('tl-table__header-cell')) {
+        copy.dataset.tlState = ((copy.dataset.tlState ?? '') + ' filtered').trim();
+      }
       copy.style.position = 'static';
       copy.style.flex = 'none';
       copy.style.width = 'max-content';
@@ -1916,6 +1926,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 className={'tl-table__header-cell' + (col.cssClass ? ' ' + col.cssClass : '')}
                 data-col={col.name}
                 data-col-idx={colIdx}
+                data-tl-align={col.align}
                 data-tl-state={stateAttr(...words, col.filterActive && 'filtered',
                   reorderState(columnReorder.itemState(colIdx)))}
                 style={{
@@ -2111,6 +2122,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                       + (rowCellClass ? ' ' + rowCellClass : '')}
                     data-row={row.id}
                     data-col={col.name}
+                    data-tl-align={col.align}
                     data-tl-state={stateAttr(...words)}
                     data-tl-role={isSelected(row) ? undefined : row.cellRoles?.[col.name]}
                     {...(isTreeColumn ? {} : cellTooltipProps)}

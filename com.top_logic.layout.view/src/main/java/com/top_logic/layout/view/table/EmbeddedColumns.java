@@ -421,6 +421,7 @@ public class EmbeddedColumns implements ColumnDeclaration {
 			embeddedCellFunction(setup.cellRole(), navigation),
 			setup.display(),
 			setup.sortable(),
+			setup.align(),
 			setup.exists(),
 			null);
 	}

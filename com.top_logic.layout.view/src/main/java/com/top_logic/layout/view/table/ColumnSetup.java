@@ -36,6 +36,7 @@ import com.top_logic.table.CellContent;
 import com.top_logic.table.CellExistence;
 import com.top_logic.table.CellRenderer;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnAlignment;
 import com.top_logic.table.Sort;
 import com.top_logic.table.impl.DelegatingColumn;
 import com.top_logic.tool.export.ExcelCellRenderer;
@@ -113,6 +114,9 @@ import com.top_logic.util.Resources;
  *        ignores its {@link #comparator()}; a table grouped by it keeps its groups in the order of
  *        the rows it is given, whatever it is sorted by, and a sort orders the rows within each
  *        group.
+ * @param align
+ *        The side of its cells the column puts its content on, or {@code null} for the one its
+ *        values call for: the end for numbers, the start for everything else.
  * @param exists
  *        Whether the column currently exists for the table, {@link ChannelCondition#ALWAYS} for a
  *        column that always does. While the condition does not hold, the table neither displays
@@ -143,12 +147,13 @@ public record ColumnSetup(
 		BiFunction<Object, Object, ValueColor> cellRole,
 		ReactControlProvider display,
 		boolean sortable,
+		ColumnAlignment align,
 		ChannelCondition exists,
 		CellExistence<Object> cellExists) {
 
 	/**
-	 * Creates a {@link ColumnSetup} of a column that always exists, has a cell for every row, and
-	 * whose cells have no color role of their own.
+	 * Creates a {@link ColumnSetup} of a column that always exists, has a cell for every row, whose
+	 * cells have no color role of their own and whose content is aligned as its values call for.
 	 *
 	 * @see ColumnSetup The full descriptor.
 	 */
@@ -158,7 +163,7 @@ public record ColumnSetup(
 			ColumnExport export, BiFunction<Object, Object, String> tooltip,
 			BiFunction<Object, Object, String> cellClass, ReactControlProvider display, boolean sortable) {
 		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
-			export, tooltip, cellClass, null, display, sortable, ChannelCondition.ALWAYS, null);
+			export, tooltip, cellClass, null, display, sortable, null, ChannelCondition.ALWAYS, null);
 	}
 
 	/**
@@ -264,7 +269,8 @@ public record ColumnSetup(
 			return this;
 		}
 		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
-			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, exists.and(condition), cellExists);
+			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, align,
+			exists.and(condition), cellExists);
 	}
 
 	/**
@@ -275,10 +281,22 @@ public record ColumnSetup(
 	 * displaying its values through the {@link #display()} when it declares one, with the
 	 * {@link #tooltip()} on its cells and on the header rows of the groups it forms when it
 	 * computes one, with the {@link #cellClass()} and the {@link #cellRole()} on its cells when it
-	 * computes them, and left out of exports when its {@link #export()} says so.
+	 * computes them, and left out of exports when its {@link #export()} says so. It puts its
+	 * content on the side its {@link #alignment() alignment} names.
 	 */
 	public Column<Object, ?> buildColumn() {
 		return decorate(binding().createColumn(this));
+	}
+
+	/**
+	 * The side of its cells the column puts its content on: the one {@link #align() declared}, and
+	 * where there is none, the end for a column of numbers and the start for every other.
+	 */
+	public ColumnAlignment alignment() {
+		if (align != null) {
+			return align;
+		}
+		return ColumnProviderService.isNumeric(type) ? ColumnAlignment.END : ColumnAlignment.START;
 	}
 
 	/**
@@ -366,6 +384,12 @@ public record ColumnSetup(
 	 */
 	private <V> Column<Object, V> decorate(Column<Object, V> column) {
 		Column<Object, V> result = column;
+		ColumnAlignment alignment = alignment();
+		if (alignment != result.alignment() && (align != null || alignment == ColumnAlignment.END)) {
+			// A binding building a column of its own may align it itself; only a declaration or a
+			// column of numbers overrules it.
+			result = DelegatingColumn.withAlignment(result, alignment);
+		}
 		if (width > 0) {
 			result = DelegatingColumn.withDefaultWidth(result, width);
 		}

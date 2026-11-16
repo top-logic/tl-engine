@@ -502,14 +502,14 @@ public class FormElement extends ContainerElement {
 		// 11. Auto-enter edit mode if configured (after children are set so listeners receive
 		// the formStateChanged event). If an editMode channel is wired and already holds true,
 		// honour that; otherwise fall back to the initial-edit-mode config flag. The form enters edit
-		// mode only if its edit permission allows; otherwise it stays in view mode and resets the
-		// edit-mode channel to false.
+		// mode only if its edit permission allows and nobody else holds the lock of its object;
+		// otherwise it stays in view mode and resets the edit-mode channel to false.
 		ViewChannel editModeChannel = editModeRef != null ? context.resolveChannel(editModeRef) : null;
 		boolean initialEditMode = editModeChannel != null
 			? Boolean.TRUE.equals(editModeChannel.get())
 			: _config.getInitialEditMode();
 		if (initialEditMode) {
-			formControl.enterEditMode();
+			formControl.enterEditModeByItself();
 		}
 		if (editModeChannel == null && _config.getInitialEditMode()) {
 			// Without an edit-mode channel governing the mode, initial-edit-mode means "editable

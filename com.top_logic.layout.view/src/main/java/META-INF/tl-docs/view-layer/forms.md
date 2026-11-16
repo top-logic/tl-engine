@@ -474,6 +474,8 @@ Every form displayed creates a handler of its own from this configuration, so fo
 
 Only a persistent object is locked: a transient draft, such as the object of a create dialog, is visible to no other session and is edited without a lock. A form starting in edit mode (`initial-edit-mode="true"`, or an `editMode` channel holding `true`) locks a persistent object just as the Edit button does.
 
+A form entering edit mode by itself - when it is displayed with `initial-edit-mode="true"` or an `editMode` channel holding `true`, and when a form with `initial-edit-mode="true"` switches to another object - does not fail on an object someone else has locked: it shows the object read-only, sets its `editMode` channel to `false`, and tells the user in passing that the object is shown read-only, with the details of the conflict. Whether these name the holder of the lock is decided by `report-lock-owner-details` of the application's `TokenService`. The Edit button and `<enter-edit-mode/>` still fail with the message of the lock held there.
+
 A form that deliberately works without a lock disables locking explicitly:
 
 ```xml

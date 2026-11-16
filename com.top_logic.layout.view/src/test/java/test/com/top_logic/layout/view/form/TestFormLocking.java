@@ -5,9 +5,11 @@
  */
 package test.com.top_logic.layout.view.form;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.Test;
 
@@ -18,13 +20,18 @@ import com.top_logic.base.locking.LockService;
 import com.top_logic.base.locking.handler.DefaultLockHandler;
 import com.top_logic.base.locking.handler.NoTokenHandling;
 import com.top_logic.base.locking.token.Token;
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.basic.DummyDisplayContext;
+import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -39,7 +46,8 @@ import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests that a {@link FormElement} locks the persistent object its form edits, with a lock handler
- * of its own for every displayed form.
+ * of its own for every displayed form, and how a form deals with an object someone else has
+ * locked.
  */
 @SuppressWarnings("javadoc")
 public class TestFormLocking extends AbstractModelAccessTest {
@@ -47,6 +55,10 @@ public class TestFormLocking extends AbstractModelAccessTest {
 	private static final String FORM = "form";
 
 	private static final String INPUT = "item";
+
+	private static final String EDIT_MODE = "editMode";
+
+	private static final String EDIT_MODE_FORM = "<form input='" + INPUT + "' editMode='" + EDIT_MODE + "'/>";
 
 	/** The forms created by the test, disposed after it. */
 	private List<FormControl> _forms;
@@ -195,19 +207,172 @@ public class TestFormLocking extends AbstractModelAccessTest {
 	}
 
 	/**
+	 * A form displayed with its edit-mode channel set, whose object someone else has locked,
+	 * opens read-only and tells the user why, instead of failing.
+	 */
+	public void testStartInEditModeOnLockedObjectOpensReadOnly() throws Exception {
+		FormElement element = formElement("<form input='" + INPUT + "'/>");
+		FormControl first = display(element, _project);
+		assertTrue(first.enterEditMode());
+
+		Window window = new Window(_project, true);
+		FormControl second = window.display(formElement(EDIT_MODE_FORM));
+
+		assertFalse(second.isEditMode());
+		assertEquals(Boolean.FALSE, window._editMode.get());
+		assertEquals(List.of(shownReadOnly(_project)), window._shown);
+		assertTrue("The lock of the first form is kept.", first.isEditMode());
+		assertLocked(_project);
+	}
+
+	/**
+	 * A form displayed with its edit-mode channel set on an object nobody has locked starts in
+	 * edit mode and locks the object.
+	 */
+	public void testStartInEditModeOnFreeObjectLocks() throws Exception {
+		Window window = new Window(_project, true);
+		FormControl form = window.display(formElement(EDIT_MODE_FORM));
+
+		assertTrue(form.isEditMode());
+		assertEquals(Boolean.TRUE, window._editMode.get());
+		assertEquals(List.of(), window._shown);
+		assertLocked(_project);
+	}
+
+	/**
+	 * A form editable whenever an object is available, switching to an object someone else has
+	 * locked, shows it read-only and tells the user why.
+	 */
+	public void testSwitchToLockedObjectOpensReadOnly() throws Exception {
+		FormElement element = formElement("<form input='" + INPUT + "'/>");
+		FormControl first = display(element, _project);
+		assertTrue(first.enterEditMode());
+
+		Window window = new Window(_otherProject, false);
+		FormControl second =
+			window.display(formElement("<form input='" + INPUT + "' initial-edit-mode='true'/>"));
+		assertTrue(second.isEditMode());
+		assertLocked(_otherProject);
+
+		window._input.set(_project);
+
+		assertFalse(second.isEditMode());
+		assertEquals(List.of(shownReadOnly(_project)), window._shown);
+		assertNotLocked(_otherProject);
+		assertTrue(first.isEditMode());
+	}
+
+	/**
+	 * The Edit command on an object someone else has locked fails with the lock conflict, and
+	 * the form stays read-only.
+	 */
+	public void testEditCommandOnLockedObjectFails() throws Exception {
+		FormElement element = formElement("<form input='" + INPUT + "'/>");
+		FormControl first = display(element, _project);
+		assertTrue(first.enterEditMode());
+
+		Window window = new Window(_project, false);
+		FormControl second = window.display(formElement(EDIT_MODE_FORM));
+		try {
+			second.executeCommand(FormControl.CMD_EDIT, Map.of());
+			fail("The object is locked by the first form.");
+		} catch (TopLogicException ex) {
+			assertEquals(lockConflict(_project).getDetails().getKey(), ex.getDetails().getKey());
+		}
+		assertFalse(second.isEditMode());
+		assertEquals(Boolean.FALSE, window._editMode.get());
+		assertEquals("A refused command is reported by the command dispatch, not by the form.",
+			List.of(), window._shown);
+	}
+
+	/**
+	 * The text the user reads when a form shows the given object read-only because someone else
+	 * has locked it.
+	 */
+	private static String shownReadOnly(TLObject object) {
+		// Rendered like the shown message, in the language of the display.
+		return "info: " + text(Fragments.message(com.top_logic.layout.view.I18NConstants.FORM_SHOWN_READ_ONLY))
+			+ " " + text(Fragments.message(lockConflict(object).getDetails()));
+	}
+
+	/**
+	 * The failure of acquiring the lock of the given object, which someone else holds.
+	 */
+	private static TopLogicException lockConflict(TLObject object) {
+		Lock probe = LockService.getInstance().createLock(Token.DEFAULT_OPERATION, object);
+		try {
+			probe.lock();
+		} catch (TopLogicException ex) {
+			return ex;
+		}
+		probe.unlock();
+		throw new AssertionError("Expected the object to be locked: " + object);
+	}
+
+	/**
 	 * Displays the given object with the given element in a view context of its own, as a window
 	 * of its own displays the view.
 	 */
 	private FormControl display(FormElement element, TLObject object) {
-		ViewContext context = new DefaultViewContext(
-			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")));
-		DefaultViewChannel input = new DefaultViewChannel(INPUT);
-		input.set(object);
-		context.registerChannel(INPUT, input);
-		FormControl result = (FormControl) element.createControl(context);
-		_forms.add(result);
-		((ReactControl) result).attach();
-		return result;
+		return new Window(object, false).display(element);
+	}
+
+	/**
+	 * A window displaying a form, with the channels the form is bound to and the messages shown in
+	 * it.
+	 */
+	private class Window {
+
+		final DefaultViewChannel _input = new DefaultViewChannel(INPUT);
+
+		final DefaultViewChannel _editMode = new DefaultViewChannel(EDIT_MODE);
+
+		final List<String> _shown = new ArrayList<>();
+
+		private final ViewContext _context;
+
+		Window(TLObject object, boolean editMode) {
+			_context = new DefaultViewContext(
+				new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")))
+					.withErrorSink(new ErrorSink() {
+						@Override
+						public void showError(HTMLFragment content) {
+							_shown.add("error: " + text(content));
+						}
+
+						@Override
+						public void showWarning(HTMLFragment content) {
+							_shown.add("warning: " + text(content));
+						}
+
+						@Override
+						public void showInfo(HTMLFragment content) {
+							_shown.add("info: " + text(content));
+						}
+					});
+			_input.set(object);
+			_editMode.set(Boolean.valueOf(editMode));
+			_context.registerChannel(INPUT, _input);
+			_context.registerChannel(EDIT_MODE, _editMode);
+		}
+
+		FormControl display(FormElement element) {
+			FormControl result = (FormControl) element.createControl(_context);
+			_forms.add(result);
+			((ReactControl) result).attach();
+			return result;
+		}
+	}
+
+	/** The text a message shown to the user reads, with the markup around it stripped. */
+	private static String text(HTMLFragment shown) {
+		TagWriter out = new TagWriter();
+		try {
+			shown.write(new DummyDisplayContext(), out);
+		} catch (IOException ex) {
+			throw new AssertionError(ex);
+		}
+		return out.toString().replaceAll("<[^>]*>", " ").replaceAll("\\s+", " ").trim();
 	}
 
 	private static void assertLocked(TLObject object) {

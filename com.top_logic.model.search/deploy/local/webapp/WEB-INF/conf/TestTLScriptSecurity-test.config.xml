@@ -526,16 +526,6 @@
 						</inheritance-rule>
 					</rules>
 				</role-rules>
-				<!-- Units and currencies inherit the roles held on the security root. -->
-				<security-parents>
-					<rule
-						id="TestTLScriptSecurity.UnitRoot"
-						inherit="true"
-						meta-element="tl.units:AbstractUnit"
-					>
-						<singleton module="SecurityStructure"/>
-					</rule>
-				</security-parents>
 			</instance>
 		</config>
 	</services>

@@ -30,6 +30,7 @@ import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.UpdateListener;
@@ -1412,6 +1413,21 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 				tx.commit();
 			}
 		}
+	}
+
+	/**
+	 * A revision cannot hold roles, but it is commit metadata without security: a user without any
+	 * role reads it and its attributes.
+	 */
+	public void testRevisionReadableWithoutRole() throws Exception {
+		becomeUser(_user);
+		Revision revision = (Revision) execute(search("p -> $p.createRevision()"), _p1);
+		assertNotNull(revision);
+		assertFalse(revision instanceof BoundObject);
+
+		becomeUser(_other);
+		assertTrue((Boolean) execute(search("r -> canRead($r)"), revision));
+		assertNotNull(execute(search("r -> $r.get(`tl.core:Revision#date`)"), revision));
 	}
 
 	/**

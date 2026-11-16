@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The currencies of the application with a form of the selected currency.
+	
+	The view has no access rules of its own: the model access rights decide. Currencies inherit the
+	roles held on the security root (role parent rule of the module tl.units). This demo grants Read
+	on tl.units to every member of the "user" group: such a user sees the currencies, but the form
+	offers no editing and the commands "New Currency" and "Delete" are not offered. An administrator
+	creates, edits and deletes currencies.
+-->
+<view>
+	<channels>
+		<channel name="currency"/>
+	</channels>
+
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="220"
+				size="50"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Currencies</en>
+						<de>Währungen</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New Currency</en>
+								<de>Neue Währung</de>
+							</label>
+							<create-transient type="tl.units:Currency">
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="currencies-create.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="currency"
+										/>
+									</open-dialog>
+								</with-result>
+							</create-transient>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-trash"
+							inputs="currency"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<confirm expr="#('Delete currency &quot;{0}&quot;?'@en, 'Währung „{0}“ löschen?'@de).fill($currency.get(`tl.units:AbstractUnit#name`))"/>
+							<delete-object/>
+							<write-channel name="currency"
+								clear="true"
+							/>
+						</generic-command>
+					</commands>
+					<!-- Sorted by the sort order of the currencies, currencies of equal sort order by name. -->
+					<table
+						observed-types="tl.units:Currency"
+						selection="currency"
+						types="tl.units:Currency"
+					>
+						<columns>
+							<column
+								attribute="sortOrder"
+								sort="ASC"
+							/>
+							<column
+								attribute="name"
+								sort="ASC"
+							/>
+							<column attribute="factor"/>
+							<column attribute="baseUnit"/>
+							<column attribute="format"/>
+						</columns>
+						<rows>all(`tl.units:Currency`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				size="50"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Details</en>
+						<de>Details</de>
+					</title>
+					<form
+						input="currency"
+						with-inset="true"
+					>
+						<field attribute="name"/>
+						<field attribute="factor"/>
+						<field attribute="baseUnit"/>
+						<field attribute="format"/>
+						<field attribute="sortOrder"/>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

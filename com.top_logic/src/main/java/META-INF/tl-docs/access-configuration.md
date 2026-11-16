@@ -224,6 +224,11 @@ the one mark when the other is set, and the access rights dialog refuses to save
   since no role is granted), but the coverage check does not report the missing definition.
   Specializations inherit the mark; on a module it covers every class of the module.
 
+The engine sets these marks for its own types in `com.top_logic.element/…/ElementConf.config.xml`:
+the modules `tl.changelog` and `tl.imagegallery` are `internal` (maintained by the engine's own
+code), the class `tl.core:Revision` is `without-security` (commit metadata readable by everyone; a
+revision cannot hold roles).
+
 ### Access parent: delegating the whole decision
 
 A `<class>` entry with an `<access-parent>` element other than `<self/>` makes the type
@@ -403,6 +408,11 @@ module, independent of the object: `module` names the module, `singleton-name` t
 	</rules>
 </security-parents>
 ```
+
+The engine ships such rules for the account types `tl.accounts:Group` and `tl.accounts:Address`
+(`tl.accounts.config.xml`) and for the units and currencies, `tl.units:AbstractUnit` with
+`inherit="true"` (`tl.units.config.xml`). The grants are the application's: for its users to read
+the currencies, it grants `Read` on the module `tl.units` to a role they hold on the security root.
 
 ## Where the files are
 

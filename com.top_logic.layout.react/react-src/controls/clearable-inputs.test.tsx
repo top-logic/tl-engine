@@ -13,7 +13,7 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 }));
 
 // The bridge first, as the page loads it, so that the modules it imports see the mocked SSE client.
-import { mount, unmount } from '../bridge/tl-react-bridge';
+import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
 import { CMD_VALUE_CHANGED, register, registerPart } from 'tl-react-bridge';
 import TLTextInput from './TLTextInput';
 import TLNumberInput from './TLNumberInput';
@@ -67,7 +67,7 @@ beforeAll(() => {
 
 afterEach(async () => {
   act(() => unmount(CONTROL_ID));
-  document.getElementById(CONTROL_ID)?.remove();
+  findMountPoint(CONTROL_ID)?.remove();
   await settle();
   vi.unstubAllGlobals();
 });
@@ -88,7 +88,7 @@ function mountField(component: string, state: Record<string, unknown>): HTMLInpu
     return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
   }));
   const element = document.createElement('div');
-  element.id = CONTROL_ID;
+  element.setAttribute(MOUNT_ATTRIBUTE, CONTROL_ID);
   document.body.appendChild(element);
   act(() => mount(CONTROL_ID, component, { editable: true, ...state }, 'w', '/ctx'));
   return element.querySelector<HTMLInputElement | HTMLTextAreaElement>('input, textarea')!;

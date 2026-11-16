@@ -10,7 +10,7 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 
 // The bridge first, as the page loads it: the bridge entry reaches it through modules that the SSE client imports
 // as well, and these must see the mocked SSE client.
-import { mount, unmount } from '../bridge/tl-react-bridge';
+import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
 import { React, register, registerPart, useFieldLabelProps, useTLState, TLChild, FormLayoutContext, TOOLTIP_ATTR,
   EXPLANATION_ICON } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
@@ -83,7 +83,7 @@ beforeAll(() => {
 
 afterEach(async () => {
   act(() => unmount(FIELD_ID));
-  document.getElementById(FIELD_ID)?.remove();
+  findMountPoint(FIELD_ID)?.remove();
   await settle();
 });
 
@@ -106,7 +106,7 @@ async function settle(): Promise<void> {
 /** Mounts a field labelled "E-Mail" around the test input, with the given state. */
 async function mountField(state: Record<string, unknown>): Promise<void> {
   const element = document.createElement('div');
-  element.id = FIELD_ID;
+  element.setAttribute(MOUNT_ATTRIBUTE, FIELD_ID);
   document.body.appendChild(element);
   act(() => mount(FIELD_ID, 'TLFormField', {
     label: 'E-Mail',
@@ -119,7 +119,7 @@ async function mountField(state: Record<string, unknown>): Promise<void> {
 /** Mounts a field labelled "E-Mail" around the test input in a form showing values only. */
 async function mountReadOnlyField(state: Record<string, unknown>): Promise<void> {
   const element = document.createElement('div');
-  element.id = FIELD_ID;
+  element.setAttribute(MOUNT_ATTRIBUTE, FIELD_ID);
   document.body.appendChild(element);
   act(() => mount(FIELD_ID, READ_ONLY_FORM, {
     field: {

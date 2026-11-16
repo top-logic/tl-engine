@@ -12,7 +12,10 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.tl.ai.core.tools.parameters.DeclaredParameters;
+import com.top_logic.tl.ai.core.tools.parameters.DeclaredParameters.InvalidArguments;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolMode;
@@ -23,15 +26,17 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * A {@link Tool} that executes a TL-Script body compiled with named-parameter bindings.
  *
  * <p>
- * Named arguments arriving from the LLM are translated to the positional {@link Args} array
- * matching the body's {@code Define}-lambda nesting order by {@link ScriptParamCoercion}.
+ * Named arguments arriving from the LLM are bound and checked against the tool's
+ * {@link DeclaredParameters} and passed as the positional {@link Args} array matching the body's
+ * {@code Define}-lambda nesting order, which is the order of {@link DeclaredParameters#names()}.
  * </p>
  *
  * <p>
  * A configured script body may return anything, model objects included, so the result goes through the
  * run's {@link ReadFilter} rather than straight into
  * {@link SearchExpression#asString(Object)} - which labels a model object, and a label is business
- * data. Object-typed arguments are checked the same way, where their TID is resolved.
+ * data. Object arguments are read with the same rights, when
+ * {@link DeclaredParameters#bind(Map, ModelSecurity)} resolves their id.
  * </p>
  *
  * <p>
@@ -69,7 +74,7 @@ public class ScriptToolExecutor implements Tool {
 
 	private final QueryExecutor _executor;
 
-	private final ScriptParamCoercion _coercion;
+	private final DeclaredParameters _parameters;
 
 	private final ToolMode _mode;
 
@@ -86,6 +91,12 @@ public class ScriptToolExecutor implements Tool {
 	/**
 	 * Creates a new {@link ScriptToolExecutor}.
 	 *
+	 * @param parameters
+	 *        The parameters of the tool; the schema the model receives and the declaration the
+	 *        arguments of a call are bound with.
+	 * @param executor
+	 *        The body, a function of the parameters in the order of
+	 *        {@link DeclaredParameters#names()}.
 	 * @param summary
 	 *        Computes what compaction keeps in place of the result, from the result; may be
 	 *        <code>null</code>, which keeps the beginning of the result instead.
@@ -98,15 +109,15 @@ public class ScriptToolExecutor implements Tool {
 	 *        The tool's label, the commit message of a call that has no other; may be
 	 *        <code>null</code>.
 	 */
-	public ScriptToolExecutor(String name, String description, String inputSchemaJson,
-			QueryExecutor executor, ScriptParamCoercion coercion, ToolMode mode,
+	public ScriptToolExecutor(String name, String description, DeclaredParameters parameters,
+			QueryExecutor executor, ToolMode mode,
 			boolean concurrencySafe, QueryExecutor summary, int truncationHint,
 			QueryExecutor commitMessage, ResKey label) {
 		_name = name;
 		_description = description;
-		_schema = new ToolSchema(name, description, inputSchemaJson);
+		_schema = new ToolSchema(name, description, parameters.schemaJson());
 		_executor = executor;
-		_coercion = coercion;
+		_parameters = parameters;
 		_mode = mode;
 		_concurrencySafe = concurrencySafe;
 		_summary = summary;
@@ -146,13 +157,19 @@ public class ScriptToolExecutor implements Tool {
 	 *
 	 * <p>
 	 * An internationalized text the expression answers is recorded as it is, so that the log shows
-	 * it in the reader's language; any other value as its text.
+	 * it in the reader's language; any other value as its text. Arguments that do not fit the
+	 * declaration are logged with the label, the call itself refuses them.
 	 * </p>
 	 */
 	@Override
 	public ResKey commitMessage(Map<String, Object> arguments, ToolExecutionContext context) {
 		if (_commitMessage != null) {
-			Object[] positional = _coercion.coerce(arguments, ReadFilter.of(context).security());
+			Object[] positional;
+			try {
+				positional = positional(arguments, ReadFilter.of(context).security());
+			} catch (InvalidArguments ex) {
+				return _label != null ? _label : Tool.super.commitMessage(arguments, context);
+			}
 			Object value = _commitMessage.executeWith(Args.some(positional));
 			if (value instanceof ResKey key) {
 				return key;
@@ -170,12 +187,17 @@ public class ScriptToolExecutor implements Tool {
 		// Resolved before the script runs, and outside the catch: a call that cannot name its principal
 		// is a programming error, not a failed tool call.
 		ReadFilter readFilter = ReadFilter.of(context);
+		Object[] positional;
+		try {
+			positional = positional(args, readFilter.security());
+		} catch (InvalidArguments ex) {
+			return ToolResult.failure("Nothing was run: the arguments do not fit. " + ex.getMessage());
+		}
 		try {
 			// Both directions are filtered. An object argument the principal may not read is refused
-			// where the TID is resolved, and the result is disclosed through the same filter -
+			// where its id is bound above, and the result is disclosed through the same filter -
 			// SearchExpression.asString labels a model object, and a label is business data. Being
 			// business data is also what the rendering is marked as, for the model's benefit.
-			Object[] positional = _coercion.coerce(args, readFilter.security());
 			Object result = _executor.executeWith(Args.some(positional));
 			// The summary is disclosed through the same filter as the result: it is computed from the
 			// raw value, so a summary naming an object would otherwise reach the model past the check
@@ -193,6 +215,15 @@ public class ScriptToolExecutor implements Tool {
 			// rather than rethrowing.
 			return ToolResult.failure("Error executing tool: " + ex.getMessage());
 		}
+	}
+
+	/**
+	 * The values of the parameters for the given arguments, in the order of
+	 * {@link DeclaredParameters#names()}.
+	 */
+	private Object[] positional(Map<String, Object> arguments, ModelSecurity security) throws InvalidArguments {
+		Map<String, Object> values = _parameters.bind(arguments, security);
+		return _parameters.names().stream().map(values::get).toArray();
 	}
 
 }

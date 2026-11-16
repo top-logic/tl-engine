@@ -30,6 +30,8 @@ import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.ReactImages;
+import com.top_logic.layout.react.TooltipContent;
+import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactValueColor;
@@ -86,8 +88,14 @@ import com.top_logic.util.error.TopLogicException;
  * application displays it at, so a reference read in a form or a table cell leads to what it refers
  * to.
  * </p>
+ *
+ * <p>
+ * Every option explains itself in a tooltip the client fetches on demand, under the key
+ * {@link #OPTION_TOOLTIP_PREFIX} followed by the option's id, see
+ * {@link #getTooltipContent(String)}.
+ * </p>
  */
-public class ReactDropdownSelectControl extends ReactFormFieldControl {
+public class ReactDropdownSelectControl extends ReactFormFieldControl implements TooltipProvider {
 
 	/** The React component drawing a list that opens on demand. */
 	private static final String MODULE_DROPDOWN = "TLDropdownSelect";
@@ -114,6 +122,13 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 	/** Command sent when the user follows the link of a displayed option. */
 	private static final String CMD_GOTO = "goto";
+
+	/**
+	 * Prefix of the {@link #getTooltipContent(String) tooltip key} of an option, followed by the
+	 * {@link com.top_logic.layout.react.state.DropdownSelectState.Option#VALUE__PROP id} of the
+	 * option.
+	 */
+	public static final String OPTION_TOOLTIP_PREFIX = "option:";
 
 	/**
 	 * Argument of {@link #CMD_GOTO}: the
@@ -979,6 +994,36 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		ReactValueColor.putRole(descriptor, option);
 
 		return descriptor;
+	}
+
+	/**
+	 * The explanation of an option, for a key made of {@link #OPTION_TOOLTIP_PREFIX} and the id of
+	 * the option: the tooltip the label provider of the options answers for it, e.g. the
+	 * description of a classifier of an enumeration.
+	 *
+	 * <p>
+	 * There is none for an unknown key or id, for a {@link #isMasked(Object) masked} option, and
+	 * where the label provider is no {@link ResourceProvider} or answers no tooltip.
+	 * </p>
+	 */
+	@Override
+	public TooltipContent getTooltipContent(String key) {
+		if (key == null || !key.startsWith(OPTION_TOOLTIP_PREFIX)) {
+			return null;
+		}
+		Object option = _optionIds.objectOf(key.substring(OPTION_TOOLTIP_PREFIX.length()));
+		if (option == null || isMasked(option)) {
+			return null;
+		}
+		ResourceProvider resourceProvider = toResourceProvider(_labelProvider);
+		if (resourceProvider == null) {
+			return null;
+		}
+		String tooltip = resourceProvider.getTooltip(option);
+		if (tooltip == null || tooltip.isEmpty()) {
+			return null;
+		}
+		return new TooltipContent(tooltip, null);
 	}
 
 	private ObjectNavigator navigator() {

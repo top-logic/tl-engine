@@ -26,7 +26,9 @@ import { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from './tooltip-host'
 /**
  * Attributes a part passes on to the element it draws as they are: the `aria-*` attributes naming
  * or describing the element where the props of the part do not, and `data-*` attributes another
- * component finds the element by.
+ * component finds the element by. They are set after the attributes the part derives from its
+ * props, so a tooltip declaration ({@link TOOLTIP_ATTR}) given here replaces the tooltip the part
+ * would show, e.g. with rich content the server holds.
  */
 export interface PartAttributes {
   [attribute: `aria-${string}`]: string | number | boolean | undefined;

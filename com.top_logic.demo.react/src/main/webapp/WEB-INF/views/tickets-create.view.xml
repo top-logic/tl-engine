@@ -17,6 +17,7 @@
 			with-inset="true"
 		>
 			<field attribute="name"/>
+			<field attribute="key"/>
 			<commands>
 				<generic-command
 					inputs="model"
@@ -26,6 +27,9 @@
 						<en>Create closed</en>
 						<de>Geschlossen anlegen</de>
 					</label>
+					<executability>
+						<form-valid/>
+					</executability>
 					<store-form-state/>
 					<with-transaction>
 						<commitMessage>
@@ -51,6 +55,9 @@
 						<en>Create</en>
 						<de>Anlegen</de>
 					</label>
+					<executability>
+						<form-valid/>
+					</executability>
 					<store-form-state/>
 					<persist-transient>
 						<with-result>

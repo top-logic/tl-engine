@@ -35,6 +35,7 @@ import com.top_logic.react.flow.data.Padding;
 import com.top_logic.react.flow.data.Sticky;
 import com.top_logic.react.flow.data.Text;
 import com.top_logic.react.flow.data.VerticalLayout;
+import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.operations.StickyOperations;
 import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.operations.layout.GanttLayoutOperations;
@@ -798,7 +799,7 @@ public class TestGanttLayout extends TestCase {
 		assertEquals("headerHeight", headerHeight, layout.getHeaderHeight(), 0.01);
 		assertEquals("label at the top of the data rows", layout.getY() + headerHeight + 10, label.getY(), 0.01);
 		assertTrue("label in the decoration label layer",
-			section(svg, "\"" + layout.getClientId() + GanttLayoutOperations.SCROLL_DECORATION_LABELS_ID_SUFFIX + "\"",
+			section(svg, "-" + GanttLayoutOperations.SCROLL_DECORATION_LABELS_PURPOSE + "\"",
 				"tl-gantt-scrollbar").contains(">Today<"));
 		assertFalse("label not in the content group", contentSection(svg).contains(">Today<"));
 	}
@@ -842,7 +843,7 @@ public class TestGanttLayout extends TestCase {
 		String svg = renderViewport(layout);
 
 		String labels = section(svg,
-			"\"" + layout.getClientId() + GanttLayoutOperations.SCROLL_DECORATION_LABELS_ID_SUFFIX + "\"",
+			"-" + GanttLayoutOperations.SCROLL_DECORATION_LABELS_PURPOSE + "\"",
 			"tl-gantt-scrollbar");
 		int rectPos = labels.indexOf(GanttLayoutOperations.PINNED_LABEL_BACKGROUND_CSS_CLASS);
 		assertTrue("backdrop present", rectPos >= 0);
@@ -1086,8 +1087,8 @@ public class TestGanttLayout extends TestCase {
 		assertEquals("width", 1210.0, layout.getWidth(), 0.01);
 
 		String svg = renderToSvg(d);
-		assertTrue("vertical scrollbar", svg.contains(GanttLayoutOperations.VERTICAL_THUMB_ID_SUFFIX));
-		assertFalse("no horizontal scrollbar", svg.contains(GanttLayoutOperations.HORIZONTAL_THUMB_ID_SUFFIX));
+		assertTrue("vertical scrollbar", svg.contains(GanttLayoutOperations.VERTICAL_THUMB_PURPOSE));
+		assertFalse("no horizontal scrollbar", svg.contains(GanttLayoutOperations.HORIZONTAL_THUMB_PURPOSE));
 	}
 
 	/**
@@ -1100,15 +1101,15 @@ public class TestGanttLayout extends TestCase {
 		String tallSvg = renderToSvg(tallDiagram);
 		assertTrue("track", tallSvg.contains(GanttLayoutOperations.SCROLLBAR_TRACK_CSS_CLASS));
 		assertTrue("thumb", tallSvg.contains(GanttLayoutOperations.SCROLLBAR_THUMB_CSS_CLASS));
-		assertTrue("vertical", tallSvg.contains(GanttLayoutOperations.VERTICAL_THUMB_ID_SUFFIX));
-		assertFalse("not horizontal", tallSvg.contains(GanttLayoutOperations.HORIZONTAL_THUMB_ID_SUFFIX));
+		assertTrue("vertical", tallSvg.contains(GanttLayoutOperations.VERTICAL_THUMB_PURPOSE));
+		assertFalse("not horizontal", tallSvg.contains(GanttLayoutOperations.HORIZONTAL_THUMB_PURPOSE));
 
 		GanttLayout wide = wideChart();
 		Diagram wideDiagram = Diagram.create().setRoot(wide);
 		wideDiagram.layout(new TestingRenderContext(), 300, 1000);
 		String wideSvg = renderToSvg(wideDiagram);
-		assertTrue("horizontal", wideSvg.contains(GanttLayoutOperations.HORIZONTAL_THUMB_ID_SUFFIX));
-		assertFalse("not vertical", wideSvg.contains(GanttLayoutOperations.VERTICAL_THUMB_ID_SUFFIX));
+		assertTrue("horizontal", wideSvg.contains(GanttLayoutOperations.HORIZONTAL_THUMB_PURPOSE));
+		assertFalse("not vertical", wideSvg.contains(GanttLayoutOperations.VERTICAL_THUMB_PURPOSE));
 
 		Diagram exported = Diagram.create().setRoot(manyRows(0));
 		exported.layout(new TestingRenderContext());
@@ -1120,8 +1121,8 @@ public class TestGanttLayout extends TestCase {
 		Diagram bothDiagram = Diagram.create().setRoot(both);
 		bothDiagram.layout(new TestingRenderContext(), 300, 60);
 		String bothSvg = renderToSvg(bothDiagram);
-		assertTrue("horizontal", bothSvg.contains(GanttLayoutOperations.HORIZONTAL_THUMB_ID_SUFFIX));
-		assertTrue("vertical", bothSvg.contains(GanttLayoutOperations.VERTICAL_THUMB_ID_SUFFIX));
+		assertTrue("horizontal", bothSvg.contains(GanttLayoutOperations.HORIZONTAL_THUMB_PURPOSE));
+		assertTrue("vertical", bothSvg.contains(GanttLayoutOperations.VERTICAL_THUMB_PURPOSE));
 	}
 
 	/**
@@ -1137,20 +1138,20 @@ public class TestGanttLayout extends TestCase {
 		double thumbLength = Math.max(GanttLayoutOperations.MIN_THUMB_LENGTH, 500 * 500 / MANY_ROWS_HEIGHT);
 		double travel = 500 - thumbLength;
 
-		assertEquals("thumb at start", 0.0, thumbTranslation(layout, GanttLayoutOperations.VERTICAL_THUMB_ID_SUFFIX)[1], 1e-9);
+		assertEquals("thumb at start", 0.0, thumbTranslation(layout, GanttLayoutOperations.VERTICAL_THUMB_PURPOSE)[1], 1e-9);
 		assertTrue("press on thumb pans", controller.canPan(trackX, top + 1));
 		assertTrue("press at thumb end pans", controller.canPan(trackX, top + thumbLength - 1));
 		assertFalse("press on track below thumb clicks", controller.canPan(trackX, top + thumbLength + 1));
 
 		layout.setScrollY(maxScrollY / 2);
 		assertEquals("thumb in the middle", travel / 2,
-			thumbTranslation(layout, GanttLayoutOperations.VERTICAL_THUMB_ID_SUFFIX)[1], 1e-9);
+			thumbTranslation(layout, GanttLayoutOperations.VERTICAL_THUMB_PURPOSE)[1], 1e-9);
 		assertFalse("press on track above thumb clicks", controller.canPan(trackX, top + travel / 2 - 1));
 		assertTrue("press on moved thumb pans", controller.canPan(trackX, top + travel / 2 + 1));
 
 		layout.setScrollY(maxScrollY);
 		assertEquals("thumb at end", travel,
-			thumbTranslation(layout, GanttLayoutOperations.VERTICAL_THUMB_ID_SUFFIX)[1], 1e-9);
+			thumbTranslation(layout, GanttLayoutOperations.VERTICAL_THUMB_PURPOSE)[1], 1e-9);
 	}
 
 	/**
@@ -1170,7 +1171,7 @@ public class TestGanttLayout extends TestCase {
 		controller.panTo(trackX, top + 5 + 100);
 		assertEquals("scrolled down proportionally", 100 * maxScrollY / travel, layout.getScrollY(), 1e-6);
 		assertEquals("thumb follows the pointer", 100.0,
-			thumbTranslation(layout, GanttLayoutOperations.VERTICAL_THUMB_ID_SUFFIX)[1], 1e-6);
+			thumbTranslation(layout, GanttLayoutOperations.VERTICAL_THUMB_PURPOSE)[1], 1e-6);
 		assertEquals("no horizontal scroll", 0.0, layout.getScrollX(), 1e-9);
 
 		controller.panTo(trackX, 1_000_000);
@@ -1205,7 +1206,7 @@ public class TestGanttLayout extends TestCase {
 		controller.panTo(left + 30, trackY);
 		assertEquals("scrolled right proportionally", 20.0, layout.getScrollX(), 1e-6);
 		assertEquals("thumb follows the pointer", 20.0,
-			thumbTranslation(layout, GanttLayoutOperations.HORIZONTAL_THUMB_ID_SUFFIX)[0], 1e-6);
+			thumbTranslation(layout, GanttLayoutOperations.HORIZONTAL_THUMB_PURPOSE)[0], 1e-6);
 		controller.panTo(left + 1_000, trackY);
 		assertEquals("clamped", 50.0, layout.getScrollX(), 1e-6);
 		assertEquals("no vertical scroll", 0.0, layout.getScrollY(), 1e-9);
@@ -1217,7 +1218,6 @@ public class TestGanttLayout extends TestCase {
 	 */
 	public void testTrackClickPagesVertically() throws Exception {
 		GanttLayout layout = manyRows(0);
-		layout.setClientId("gantt");
 		Diagram d = Diagram.create().setRoot(layout);
 		d.layout(new TestingRenderContext(), 2000, 500);
 		ClickRecorder recorder = new ClickRecorder();
@@ -1231,8 +1231,7 @@ public class TestGanttLayout extends TestCase {
 		track.onClick(below);
 		assertEquals("paged down", 500.0, layout.getScrollY(), 1e-6);
 		assertTrue("click consumed", below._stopped);
-		assertTrue("thumb moved", below._translations.containsKey(
-			layout.getClientId() + GanttLayoutOperations.VERTICAL_THUMB_ID_SUFFIX));
+		assertTrue("thumb moved", below._translations.containsKey(GanttLayoutOperations.VERTICAL_THUMB_PURPOSE));
 
 		track.onClick(new ClickEvent(trackX, bottom - 1));
 		assertEquals("paged down again", 1000.0, layout.getScrollY(), 1e-6);
@@ -1256,7 +1255,6 @@ public class TestGanttLayout extends TestCase {
 	/** A chart with {@link #MANY_ROWS} rows laid out in a viewport of height 500. */
 	private static GanttLayout tallChart() {
 		GanttLayout layout = manyRows(0);
-		layout.setClientId("gantt");
 		Diagram.create().setRoot(layout).layout(new TestingRenderContext(), 2000, 500);
 		return layout;
 	}
@@ -1265,17 +1263,28 @@ public class TestGanttLayout extends TestCase {
 	private GanttLayout wideChart() {
 		GanttLayout layout = buildLayoutWithSpan(span("s1", "r1", 10.0, 30.0, "Task"), "r1", "r2");
 		layout.setInitialZoom(2.0).setZoom(2.0);
-		layout.setClientId("gantt");
 		return layout;
 	}
 
-	/** The translation the chart gives the thumb group with the given ID suffix. */
-	private static double[] thumbTranslation(GanttLayout layout, String idSuffix) {
-		java.util.Map<String, double[]> translations = new java.util.HashMap<>();
-		((DragController) layout).renderPan((id, tx, ty) -> translations.put(id, new double[] { tx, ty }));
-		double[] result = translations.get(layout.getClientId() + idSuffix);
-		assertNotNull("thumb " + idSuffix + " translated", result);
+	/** The translation the chart gives the thumb group with the given purpose. */
+	private static double[] thumbTranslation(GanttLayout layout, String purpose) {
+		double[] result = translations(layout, layout).get(purpose);
+		assertNotNull("thumb " + purpose + " translated", result);
 		return result;
+	}
+
+	/**
+	 * The translations the chart gives the groups of the given owner on a scroll, by their
+	 * purpose.
+	 */
+	private static java.util.Map<String, double[]> translations(GanttLayout layout, Widget owner) {
+		java.util.Map<String, double[]> translations = new java.util.HashMap<>();
+		((DragController) layout).renderPan((translated, purpose, tx, ty) -> {
+			if (translated == owner) {
+				translations.put(purpose, new double[] { tx, ty });
+			}
+		});
+		return translations;
 	}
 
 	private static void draw(Diagram d, SvgTagWriter writer) throws Exception {
@@ -1323,6 +1332,7 @@ public class TestGanttLayout extends TestCase {
 
 		boolean _stopped;
 
+		/** The translations by the purpose of the translated group. */
 		final java.util.Map<String, double[]> _translations = new java.util.HashMap<>();
 
 		ClickEvent(double x, double y) {
@@ -1346,8 +1356,8 @@ public class TestGanttLayout extends TestCase {
 		}
 
 		@Override
-		public void updateTransform(String elementId, double translateX, double translateY) {
-			_translations.put(elementId, new double[] { translateX, translateY });
+		public void updateTransform(Widget owner, String purpose, double translateX, double translateY) {
+			_translations.put(purpose, new double[] { translateX, translateY });
 		}
 
 		@Override
@@ -1527,7 +1537,7 @@ public class TestGanttLayout extends TestCase {
 
 		String svg = renderToSvg(layout.getDiagram());
 		assertTrue("drawn with the current shift: " + svg,
-			svg.contains("id=\"y1" + StickyOperations.CONTENT_ID_SUFFIX + "\" transform=\"translate("
+			svg.contains("-" + StickyOperations.CONTENT_PURPOSE + "\" transform=\"translate("
 				+ translation + ",0.0)\""));
 	}
 
@@ -1581,7 +1591,7 @@ public class TestGanttLayout extends TestCase {
 		Diagram d = plainLayout.getDiagram();
 		String svg = renderToSvg(d);
 		assertEquals("content stays at the span start", plainBorder.getX() + 1, plain.getX(), 1e-9);
-		assertFalse("no sticky group", svg.contains(StickyOperations.CONTENT_ID_SUFFIX));
+		assertFalse("no sticky group", svg.contains("-" + StickyOperations.CONTENT_PURPOSE + "\""));
 	}
 
 	/**
@@ -1630,7 +1640,6 @@ public class TestGanttLayout extends TestCase {
 	 * border, showing 90 days of its time range 0..730.
 	 */
 	private static GanttLayout stickyChart(Sticky sticky) {
-		sticky.setClientId("y1");
 		return stickyChartWithBox(Border.create().setContent(sticky));
 	}
 
@@ -1646,7 +1655,6 @@ public class TestGanttLayout extends TestCase {
 		addRowsWithLabels(layout, Arrays.asList(row("axis", "Jahr"), row("data", "Daten")));
 		layout.addContent(year.getBox());
 		layout.addContent(next.getBox());
-		layout.setClientId("gantt");
 		Diagram.create().setRoot(layout).layout(new TestingRenderContext(),
 			STICKY_COLUMN_WIDTH + STICKY_VIEW_WIDTH, 400);
 		assertEquals("label column", STICKY_COLUMN_WIDTH, layout.getColumnWidth(), 1e-9);
@@ -1655,9 +1663,7 @@ public class TestGanttLayout extends TestCase {
 
 	/** The translation the chart gives the content of the given sticky box on a scroll. */
 	private static double stickyTranslation(GanttLayout layout, Sticky sticky) {
-		java.util.Map<String, double[]> translations = new java.util.HashMap<>();
-		((DragController) layout).renderPan((id, tx, ty) -> translations.put(id, new double[] { tx, ty }));
-		double[] result = translations.get(StickyOperations.contentId(sticky));
+		double[] result = translations(layout, sticky).get(StickyOperations.CONTENT_PURPOSE);
 		assertNotNull("sticky content translated", result);
 		assertEquals("only horizontal", 0.0, result[1], 1e-9);
 		return result[0];

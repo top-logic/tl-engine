@@ -133,6 +133,23 @@ public interface DynamicColumnSet {
 	}
 
 	/**
+	 * The options an edited cell value of the column the given object stands for is chosen from,
+	 * or {@code null} where a value of the column's type is entered rather than chosen.
+	 *
+	 * <p>
+	 * By default, a value of a class or an enumeration is chosen from the options of its type.
+	 * </p>
+	 *
+	 * @param column
+	 *        One of the objects standing for a column.
+	 * @param type
+	 *        What the values of that column are, see {@link #type(Object)}.
+	 */
+	default ValueCellEditing.Options options(Object column, ColumnType type) {
+		return ValueCellEditing.options(type, null, row -> new Object[0]);
+	}
+
+	/**
 	 * What the column the given object stands for shows for a group of rows, computed from the
 	 * group's member rows, or {@code null} for a column that leaves its group cell empty.
 	 *
@@ -184,6 +201,19 @@ public interface DynamicColumnSet {
 	 */
 	default BiFunction<Object, Object, ValueColor> cellRole(Object column) {
 		return null;
+	}
+
+	/**
+	 * The color role and the CSS class of the heading of the given column,
+	 * {@link ColumnHeader#NONE} for a heading without either.
+	 *
+	 * @param column
+	 *        One of the objects standing for a column.
+	 *
+	 * @see ColumnSetup#header()
+	 */
+	default ColumnHeader header(Object column) {
+		return ColumnHeader.NONE;
 	}
 
 }

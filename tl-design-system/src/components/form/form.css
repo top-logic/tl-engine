@@ -102,17 +102,31 @@
 }
 
 /* Ein Feld, dessen eingegebener Wert einen geerbten verdeckt, bietet neben der Eingabe den Knopf an,
-   der den eingegebenen Wert entfernt (tl-form-field__reset). Die Eingabe nimmt den Platz, der Knopf
-   steht am Ende. */
-.tl-form-field__input--resettable {
+   der den eingegebenen Wert entfernt (tl-form-field__reset); ein Feld ohne sichtbare Beschriftung, das
+   eine Erklärung hat, zeigt neben der Eingabe das Info-Icon (tl-form-field__info). Die Eingabe nimmt
+   den Platz, Knopf und Icon stehen am Ende. */
+.tl-form-field__input--resettable,
+.tl-form-field__input--explained {
   display: flex;
   align-items: center;
   gap: var(--tl-space-2xs);
 }
 
-.tl-form-field__input--resettable > :not(.tl-form-field__reset) {
+.tl-form-field__input--resettable > :not(.tl-form-field__reset, .tl-form-field__info),
+.tl-form-field__input--explained > :not(.tl-form-field__reset, .tl-form-field__info) {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+/* Das Info-Icon steht für die versteckte Beschriftung: ein Hilfeknopf (tl-form-field__help) im
+   Bearbeiten-Modus, sonst nur die Glyphe, in derselben Trefferfläche size-control-sm. */
+.tl-form-field__info {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--tl-size-control-sm);
+  min-height: var(--tl-size-control-sm);
 }
 
 .tl-form-field__reset {

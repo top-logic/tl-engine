@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Frame of the project drill-down editing one ticket, pushed by the Edit command of the ticket
+	list. The editMode channel starts with true, so the form is in edit mode from its first display
+	on: the toolbar offers Save and Cancel instead of Edit. Saving or cancelling returns the form to
+	view mode, and Edit opens it again.
+-->
+<view>
+	<channels>
+		<channel name="ticket"/>
+		<channel name="editMode"
+			init="true"
+		/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Edit ticket</en>
+			<de>Ticket bearbeiten</de>
+		</title>
+		<form
+			editMode="editMode"
+			input="ticket"
+			with-inset="true"
+		>
+			<field attribute="number"/>
+			<field attribute="title"/>
+			<field attribute="description"/>
+			<field attribute="milestone"/>
+			<field attribute="assignee"/>
+			<field attribute="watchers"/>
+		</form>
+	</panel>
+</view>

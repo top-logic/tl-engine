@@ -136,6 +136,9 @@ public class DynamicColumns implements ColumnDeclaration {
 		/** Configuration name for {@link #getCanUpdate()}. */
 		String CAN_UPDATE = "can-update";
 
+		/** Configuration name for {@link #getOptions()}. */
+		String OPTIONS = "options";
+
 		/** Configuration name for {@link #getAggregate()}. */
 		String AGGREGATE = "aggregate";
 
@@ -150,6 +153,12 @@ public class DynamicColumns implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getCellRole()}. */
 		String CELL_ROLE = AbstractColumnDeclaration.Config.CELL_ROLE;
+
+		/** Configuration name for {@link #getHeaderRole()}. */
+		String HEADER_ROLE = AbstractColumnDeclaration.Config.HEADER_ROLE;
+
+		/** Configuration name for {@link #getHeaderClass()}. */
+		String HEADER_CLASS = AbstractColumnDeclaration.Config.HEADER_CLASS;
 
 		/** Configuration name for {@link #getDisplay()}. */
 		String DISPLAY = AbstractColumnDeclaration.Config.DISPLAY;
@@ -412,6 +421,30 @@ public class DynamicColumns implements ColumnDeclaration {
 		Expr getCanUpdate();
 
 		/**
+		 * The values an edited cell value of a row is chosen from.
+		 *
+		 * <p>
+		 * The expression sees the variables of the {@link #getValue() value} - the row and the
+		 * object the column stands for - and computes the options for the cell that is edited,
+		 * when the edit begins. The options are offered in the order the expression computes them;
+		 * deleted objects are not offered.
+		 * </p>
+		 *
+		 * <p>
+		 * Unset, a value of a class is chosen from the instances of the class, a value of an
+		 * enumeration from its classifiers. Options are declared only for columns with an
+		 * {@link #getUpdate() update}; they apply to the columns whose type is a class or an
+		 * enumeration.
+		 * </p>
+		 */
+		@Name(OPTIONS)
+		@Nullable
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getOptions();
+
+		/**
 		 * What a column shows for a group of rows: an expression whose result is displayed in the
 		 * group's header row.
 		 *
@@ -504,7 +537,8 @@ public class DynamicColumns implements ColumnDeclaration {
 		 * {@link AbstractColumnDeclaration.Config#getCellRole() cell role} does: a role name such as
 		 * <code>error</code>, <code>warning</code>, <code>success</code>, <code>info</code>,
 		 * <code>neutral</code>, <code>brand</code> or <code>category-1</code> to
-		 * <code>category-8</code>, nothing for no role; a text naming no role is an error, and
+		 * <code>category-8</code> or a classifier with a <code>&lt;color role="..."/&gt;</code>
+		 * annotation, nothing for no role; a text naming no role is an error, and
 		 * <code>neutral</code> names the role without a tint. A cell the user may not read and the
 		 * header row of a group get no role.
 		 * </p>
@@ -515,6 +549,47 @@ public class DynamicColumns implements ColumnDeclaration {
 		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getCellRole();
+
+		/**
+		 * The color role of the heading of every column: an expression computing the role the
+		 * heading is tinted in from the object the column stands for.
+		 *
+		 * <p>
+		 * The expression sees the variables of the {@link #getColumnType() column type} - the
+		 * object the column stands for and the values of the {@link #getInputs() inputs}. Its
+		 * result names the role as the one of a single column's
+		 * {@link AbstractColumnDeclaration.Config#getHeaderRole() header role} does: a role name, a
+		 * classifier with a <code>&lt;color role="..."/&gt;</code> annotation, nothing for no role;
+		 * a text naming no role is an error. So each column's heading can be drawn in the role of
+		 * the object it stands for, e.g. <code>$column.get(`my:Phase#status`)</code>.
+		 * </p>
+		 *
+		 * <p>
+		 * The role is put on the heading only, the data cells do not carry it. It follows the
+		 * inputs without the table being built again. Unset, the headings have no role.
+		 * </p>
+		 */
+		@Name(HEADER_ROLE)
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getHeaderRole();
+
+		/**
+		 * The CSS class of the heading of every column: an expression computing the class from the
+		 * object the column stands for.
+		 *
+		 * <p>
+		 * The expression sees the variables of the {@link #getHeaderRole() header role}. Its result
+		 * is put on the heading as the one of a single column's
+		 * {@link AbstractColumnDeclaration.Config#getHeaderClass() header class}: nothing or an empty
+		 * string gives the heading no class, a list all of its members, any other value its text.
+		 * The data cells do not carry it. Unset, the headings have no class of their own.
+		 * </p>
+		 */
+		@Name(HEADER_CLASS)
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getHeaderClass();
 
 		/**
 		 * How a cell of every column displays its value, in place of the display the type of the
@@ -728,6 +803,8 @@ public class DynamicColumns implements ColumnDeclaration {
 			context.error("Edited columns must declare the type of their values, so that it is known"
 				+ " which control enters them: columns '" + config.getName() + "'.");
 		}
+		ColumnFunctions.checkOptions(context, config, Config.UPDATE, Config.OPTIONS, config.getType(),
+			"columns '" + config.getName() + "'");
 		if (!config.getSortable() && config.getComparator() != null) {
 			context.error("Columns that are not '" + Config.SORTABLE + "' have no '" + Config.COMPARATOR
 				+ "': columns '" + config.getName() + "'.");
@@ -777,12 +854,13 @@ public class DynamicColumns implements ColumnDeclaration {
 			ColumnType type = set.type(column);
 			Function<Object, Object> value = set.value(column);
 			CellEditing editing = _readonly ? null
-				: ValueCellEditing.forUpdate(type, value, set.update(column), set.canUpdate(column));
+				: ValueCellEditing.forUpdate(type, value, set.update(column), set.canUpdate(column),
+					set.options(column, type));
 
 			result.add(new ColumnSetup(_name + NAME_SEPARATOR + set.name(column), set.label(column), type, value,
 				scope.context(), _binding, set.width(column), editing, set.aggregate(column),
 				set.comparator(column), !set.visible(column), _export, set.tooltip(column), set.cellClass(column),
-				set.cellRole(column), _display, _sortable, null, set.exists(column), null));
+				set.cellRole(column), _display, _sortable, null, set.exists(column), null, set.header(column)));
 		}
 		return result;
 	}
@@ -816,6 +894,10 @@ public class DynamicColumns implements ColumnDeclaration {
 
 		private final QueryExecutor _cellRole;
 
+		private final QueryExecutor _headerRole;
+
+		private final QueryExecutor _headerClass;
+
 		private final ColumnFunctions _functions;
 
 		private final TLModelPartRef _typeRef;
@@ -840,7 +922,10 @@ public class DynamicColumns implements ColumnDeclaration {
 			_tooltip = InputScript.compile(config, Config.TOOLTIP);
 			_cellClass = InputScript.compile(config, Config.CELL_CLASS);
 			_cellRole = InputScript.compile(config, Config.CELL_ROLE);
-			_functions = ColumnFunctions.compile(config, Config.VALUE, Config.UPDATE, Config.CAN_UPDATE);
+			_headerRole = InputScript.compile(config, Config.HEADER_ROLE);
+			_headerClass = InputScript.compile(config, Config.HEADER_CLASS);
+			_functions = ColumnFunctions.compile(config, Config.VALUE, Config.UPDATE, Config.CAN_UPDATE,
+				Config.OPTIONS);
 			_typeRef = config.getType();
 			_multiple = config.getMultiple();
 			_name = config.getName();
@@ -957,6 +1042,11 @@ public class DynamicColumns implements ColumnDeclaration {
 			}
 
 			@Override
+			public ValueCellEditing.Options options(Object column, ColumnType type) {
+				return _cells.options(type, column);
+			}
+
+			@Override
 			public Function<List<Object>, Object> aggregate(Object column) {
 				if (_aggregate == null) {
 					return null;
@@ -1003,6 +1093,11 @@ public class DynamicColumns implements ColumnDeclaration {
 				QueryExecutor cellRole = _cellRole;
 				return (row, value) -> AbstractColumnDeclaration
 					.valueColor(cellRole.execute(_cells.inputs(row, column, value)));
+			}
+
+			@Override
+			public ColumnHeader header(Object column) {
+				return ColumnHeader.of(_headerRole, _headerClass, _cells.channels(), column);
 			}
 
 		}

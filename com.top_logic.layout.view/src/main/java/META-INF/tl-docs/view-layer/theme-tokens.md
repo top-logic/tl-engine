@@ -105,6 +105,17 @@ two tokens of the role, its tinted surface and its line (`--tl-status-warning-su
 Which tokens a role reads, and why the text on it is `text-primary`, is decided in `docs/skalen.md` of
 the design-system repository, section "Pill: Rolle statt Farbe".
 
+The heading of a table column takes a role the same way: a column's `header-role` (see
+[header roles and classes](doc:view-layer/tables#column-declarations)) reaches the client as
+`columns[].headerRole` and is put on the header cell as `data-tl-role`,
+`<div class="tl-table__header-cell" data-tl-role="warning">`. The table stylesheet of the design system
+(`tl-design-system/src/components/table/table.css`) draws it from the same two tokens as the pill: the tinted
+surface fills the header cell, a stripe of `border-width-accent` at its bottom takes the line of the role,
+and the heading's label turns from the muted `text-secondary` to `text-primary`, so it stays legible on the
+tint in both modes. Only the header cell is tinted, the data cells of the column are not. A
+`header-class` is put on the header cell beside it, as the application's own hook; the design system reads
+no application class.
+
 Because the roles are a Java enum, a misspelled role is a configuration error where it is written; no
 vocabulary has to be asked at run time, and the tokens of `tl-react-theme.config.xml` are not the place a
 model configuration names a color from.

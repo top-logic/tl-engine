@@ -28,16 +28,23 @@ import com.top_logic.knowledge.wrap.person.Person;
  * not come back to the command that asked for it: the browser leaves for the provider and returns on
  * a request of its own, possibly in another window and certainly on another thread. This registry is
  * the meeting point between the two. The asking side
- * {@link #register(Person, Runnable) registers} what it expects and gets a token to send along; the
- * returning request {@link #complete(String, Person) completes} the entry under that token, which
- * runs the continuation in the session that has been waiting.
+ * {@link #register(Person, IdentityVerificationHandler) registers} what it expects and gets a token
+ * to send along; the returning request {@link #complete(String, VerifiedIdentity) completes} the
+ * entry under that token, which hands the confirmed identity to the handler of the entry in the
+ * session that has been waiting.
+ * </p>
+ *
+ * <p>
+ * The handler decides what the confirmation means. A fresh authentication of the session's user
+ * ({@link #register(Person, Runnable)}) accepts only the session's own account and then runs a
+ * continuation; another handler may attach the confirmed identity to the session's account.
  * </p>
  *
  * <p>
  * A token is valid once and for {@link #DEFAULT_VALIDITY a limited time}. It is drawn from
  * {@link SecureRandomService}, so knowing one says nothing about the next, and it is the only thing
- * the round trip carries - the account to expect stays here and is never taken from the returning
- * request.
+ * the round trip carries - the account of the session stays here and is never taken from the
+ * returning request.
  * </p>
  *
  * @see ExternalAuthenticationServlet#VERIFICATION_PARAM
@@ -45,12 +52,14 @@ import com.top_logic.knowledge.wrap.person.Person;
 public class IdentityVerifications {
 
 	/**
-	 * What became of a {@link IdentityVerifications#complete(String, Person) completion}.
+	 * What became of a {@link IdentityVerifications#complete(String, VerifiedIdentity) completion}.
+	 *
+	 * @see VerificationResult#getOutcome()
 	 */
 	public enum Outcome {
 
 		/**
-		 * The expected account authenticated again; the continuation of the entry has run.
+		 * The handler of the entry has accepted the confirmed identity.
 		 */
 		VERIFIED,
 
@@ -64,7 +73,14 @@ public class IdentityVerifications {
 		 * An account authenticated that is not the one the entry waits for. The entry is discarded
 		 * without running its continuation.
 		 */
-		MISMATCH;
+		MISMATCH,
+
+		/**
+		 * The handler of the entry has refused the confirmed identity for a reason of its own,
+		 * which the {@link VerificationResult#getMessage() message} of the result names. The entry is
+		 * discarded.
+		 */
+		REFUSED;
 	}
 
 	/**
@@ -125,14 +141,33 @@ public class IdentityVerifications {
 	 * @param onVerified
 	 *        Run once the expected account has authenticated, on the thread of the returning
 	 *        request.
+	 * @return The token addressing the entry, see
+	 *         {@link #register(Person, IdentityVerificationHandler)}.
+	 *
+	 * @see IdentityVerificationHandler#reauthentication(Runnable)
+	 */
+	public String register(Person expected, Runnable onVerified) {
+		return register(expected, IdentityVerificationHandler.reauthentication(onVerified));
+	}
+
+	/**
+	 * Announces that the user of the session is about to authenticate at an external identity
+	 * provider, whose answer the given handler takes.
+	 *
+	 * @param expected
+	 *        The account of the session that asks. Taken from that session, never from the request
+	 *        that returns.
+	 * @param handler
+	 *        Decides what the confirmed identity means for the expected account. Run once, on the
+	 *        thread of the returning request.
 	 * @return The token addressing the entry, to be carried to the identity provider and back in
 	 *         {@link ExternalAuthenticationServlet#VERIFICATION_PARAM}. Usable in a URL without
 	 *         escaping.
 	 */
-	public String register(Person expected, Runnable onVerified) {
+	public String register(Person expected, IdentityVerificationHandler handler) {
 		Instant now = _clock.instant();
 		PendingIdentityVerification entry =
-			new PendingIdentityVerification(expected, onVerified, now.plus(_validity));
+			new PendingIdentityVerification(expected, handler, now.plus(_validity));
 		synchronized (this) {
 			dropExpired(now);
 			String token;
@@ -145,39 +180,35 @@ public class IdentityVerifications {
 	}
 
 	/**
-	 * Reports that the given account has authenticated afresh and carried the given token back.
+	 * Reports that an external authentication has confirmed the given identity and carried the
+	 * given token back.
 	 *
 	 * <p>
-	 * The entry is consumed whatever the outcome: a token works once, and an authentication by the
-	 * wrong account discards the request rather than leaving it open for a second attempt.
+	 * The entry is consumed whatever the outcome: a token works once, and an identity the handler
+	 * does not accept discards the request rather than leaving it open for a second attempt.
 	 * </p>
 	 *
 	 * @param token
-	 *        The token from {@link #register(Person, Runnable)}, as the returning request carried
-	 *        it. May be <code>null</code>, which is {@link Outcome#UNKNOWN}.
-	 * @param verified
-	 *        The account that authenticated. May be <code>null</code>, which is
-	 *        {@link Outcome#MISMATCH} for an entry that is held.
-	 * @return What became of the entry. The continuation has run when, and only when, the result is
-	 *         {@link Outcome#VERIFIED}.
+	 *        The token from {@link #register(Person, IdentityVerificationHandler)}, as the returning
+	 *        request carried it. May be <code>null</code>, which is {@link Outcome#UNKNOWN}.
+	 * @param identity
+	 *        What the external authentication confirmed.
+	 * @return What became of the entry, as the handler of the entry answered it. The handler has
+	 *         not been called when the result is {@link Outcome#UNKNOWN}.
 	 */
-	public Outcome complete(String token, Person verified) {
+	public VerificationResult complete(String token, VerifiedIdentity identity) {
 		PendingIdentityVerification entry;
 		synchronized (this) {
 			Instant now = _clock.instant();
 			dropExpired(now);
 			entry = token == null ? null : _pending.remove(token);
 			if (entry == null) {
-				return Outcome.UNKNOWN;
-			}
-			if (!entry.matches(verified)) {
-				return Outcome.MISMATCH;
+				return VerificationResult.unknown();
 			}
 		}
-		// Outside the lock: the continuation resumes the waiting command and must not be run while
-		// the registry of its own session is held.
-		entry.getOnVerified().run();
-		return Outcome.VERIFIED;
+		// Outside the lock: the handler resumes the waiting command and must not be run while the
+		// registry of its own session is held.
+		return entry.handle(identity);
 	}
 
 	/**
@@ -189,7 +220,7 @@ public class IdentityVerifications {
 	 * </p>
 	 *
 	 * @param token
-	 *        The token from {@link #register(Person, Runnable)}. A token that addresses nothing is
+	 *        The token from {@link #register(Person, IdentityVerificationHandler)}. A token that addresses nothing is
 	 *        ignored.
 	 */
 	public synchronized void cancel(String token) {

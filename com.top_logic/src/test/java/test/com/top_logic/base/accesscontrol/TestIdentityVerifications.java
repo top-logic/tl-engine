@@ -13,6 +13,7 @@ import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 import junit.framework.Test;
@@ -23,8 +24,11 @@ import test.com.top_logic.TestPersonSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.base.accesscontrol.I18NConstants;
 import com.top_logic.base.accesscontrol.IdentityVerifications;
 import com.top_logic.base.accesscontrol.IdentityVerifications.Outcome;
+import com.top_logic.base.accesscontrol.VerificationResult;
+import com.top_logic.base.accesscontrol.VerifiedIdentity;
 import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -111,6 +115,13 @@ public class TestIdentityVerifications extends BasicTestCase {
 		return PersonManager.getManager().getRoot();
 	}
 
+	/**
+	 * Completes the entry under the given token with the identity of the given account.
+	 */
+	private Outcome complete(String token, Person account) {
+		return _verifications.complete(token, VerifiedIdentity.ofAccount(account)).getOutcome();
+	}
+
 	private Runnable onVerified() {
 		return () -> _verifiedCount.incrementAndGet();
 	}
@@ -121,7 +132,7 @@ public class TestIdentityVerifications extends BasicTestCase {
 	public void testCompleteRunsContinuation() {
 		String token = _verifications.register(expectedAccount(), onVerified());
 
-		assertEquals(Outcome.VERIFIED, _verifications.complete(token, expectedAccount()));
+		assertEquals(Outcome.VERIFIED, complete(token, expectedAccount()));
 		assertEquals("The continuation must run exactly once.", 1, _verifiedCount.get());
 		assertEquals("The entry must be consumed.", 0, _verifications.size());
 	}
@@ -131,9 +142,9 @@ public class TestIdentityVerifications extends BasicTestCase {
 	 */
 	public void testTokenIsSingleUse() {
 		String token = _verifications.register(expectedAccount(), onVerified());
-		_verifications.complete(token, expectedAccount());
+		complete(token, expectedAccount());
 
-		assertEquals(Outcome.UNKNOWN, _verifications.complete(token, expectedAccount()));
+		assertEquals(Outcome.UNKNOWN, complete(token, expectedAccount()));
 		assertEquals("The continuation must not run again.", 1, _verifiedCount.get());
 	}
 
@@ -143,11 +154,11 @@ public class TestIdentityVerifications extends BasicTestCase {
 	public void testMismatchDiscardsEntry() {
 		String token = _verifications.register(expectedAccount(), onVerified());
 
-		assertEquals(Outcome.MISMATCH, _verifications.complete(token, otherAccount()));
+		assertEquals(Outcome.MISMATCH, complete(token, otherAccount()));
 		assertEquals("The continuation must not run for another account.", 0, _verifiedCount.get());
 		assertEquals("The entry must not stay open for a second attempt.", 0, _verifications.size());
 		assertEquals("The discarded entry must not be completable.", Outcome.UNKNOWN,
-			_verifications.complete(token, expectedAccount()));
+			complete(token, expectedAccount()));
 		assertEquals(0, _verifiedCount.get());
 	}
 
@@ -157,7 +168,7 @@ public class TestIdentityVerifications extends BasicTestCase {
 	public void testMissingAccountIsMismatch() {
 		String token = _verifications.register(expectedAccount(), onVerified());
 
-		assertEquals(Outcome.MISMATCH, _verifications.complete(token, null));
+		assertEquals(Outcome.MISMATCH, complete(token, null));
 		assertEquals(0, _verifiedCount.get());
 	}
 
@@ -167,9 +178,73 @@ public class TestIdentityVerifications extends BasicTestCase {
 	public void testUnknownToken() {
 		_verifications.register(expectedAccount(), onVerified());
 
-		assertEquals(Outcome.UNKNOWN, _verifications.complete("not-a-token", expectedAccount()));
-		assertEquals(Outcome.UNKNOWN, _verifications.complete(null, expectedAccount()));
+		assertEquals(Outcome.UNKNOWN, complete("not-a-token", expectedAccount()));
+		assertEquals(Outcome.UNKNOWN, complete(null, expectedAccount()));
 		assertEquals(0, _verifiedCount.get());
+	}
+
+	/**
+	 * A handler receives the account the entry was registered for and the confirmed identity, and
+	 * decides the outcome; the account of the identity is not resolved unless the handler asks.
+	 */
+	public void testHandlerReceivesRegisteredAccount() {
+		AtomicReference<Person> seenAccount = new AtomicReference<>();
+		AtomicReference<VerifiedIdentity> seenIdentity = new AtomicReference<>();
+		String token = _verifications.register(expectedAccount(), (expected, identity) -> {
+			seenAccount.set(expected);
+			seenIdentity.set(identity);
+			return VerificationResult.verified(I18NConstants.IDENTITY_VERIFIED);
+		});
+
+		AtomicInteger resolved = new AtomicInteger();
+		VerifiedIdentity identity = new VerifiedIdentity("client", "subject", () -> {
+			resolved.incrementAndGet();
+			return otherAccount();
+		});
+		VerificationResult result = _verifications.complete(token, identity);
+
+		assertEquals(Outcome.VERIFIED, result.getOutcome());
+		assertSame(expectedAccount(), seenAccount.get());
+		assertSame(identity, seenIdentity.get());
+		assertEquals("The account must not be resolved when the handler does not ask for it.", 0, resolved.get());
+		assertEquals(Outcome.UNKNOWN, _verifications.complete(token, identity).getOutcome());
+	}
+
+	/**
+	 * A handler refusing the identity discards the entry and its reason reaches the result.
+	 */
+	public void testRefusedDiscardsEntry() {
+		AtomicInteger calls = new AtomicInteger();
+		String token = _verifications.register(expectedAccount(), (expected, identity) -> {
+			calls.incrementAndGet();
+			return VerificationResult.refused(I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED);
+		});
+
+		VerificationResult result = _verifications.complete(token, VerifiedIdentity.ofAccount(expectedAccount()));
+		assertEquals(Outcome.REFUSED, result.getOutcome());
+		assertFalse(result.isVerified());
+		assertEquals(I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED, result.getMessage());
+		assertEquals(0, _verifications.size());
+		assertEquals(Outcome.UNKNOWN, complete(token, expectedAccount()));
+		assertEquals("The handler must run once.", 1, calls.get());
+	}
+
+	/**
+	 * The account of a {@link VerifiedIdentity} is resolved once, on first access.
+	 */
+	public void testAccountResolvedOnce() {
+		AtomicInteger resolved = new AtomicInteger();
+		VerifiedIdentity identity = new VerifiedIdentity("client", "subject", () -> {
+			resolved.incrementAndGet();
+			return expectedAccount();
+		});
+		assertTrue(identity.hasClientIdentity());
+		assertEquals(0, resolved.get());
+		assertSame(expectedAccount(), identity.getAccount());
+		assertSame(expectedAccount(), identity.getAccount());
+		assertEquals(1, resolved.get());
+
+		assertFalse(VerifiedIdentity.ofAccount(expectedAccount()).hasClientIdentity());
 	}
 
 	/**
@@ -182,7 +257,7 @@ public class TestIdentityVerifications extends BasicTestCase {
 		assertEquals("Within the validity the entry is still offered.", 1, _verifications.size());
 
 		_clock.advance(Duration.ofSeconds(1));
-		assertEquals(Outcome.UNKNOWN, _verifications.complete(token, expectedAccount()));
+		assertEquals(Outcome.UNKNOWN, complete(token, expectedAccount()));
 		assertEquals("An expired entry must not run its continuation.", 0, _verifiedCount.get());
 		assertEquals("An expired entry must not be kept.", 0, _verifications.size());
 	}
@@ -206,7 +281,7 @@ public class TestIdentityVerifications extends BasicTestCase {
 		_verifications.cancel(token);
 
 		assertEquals(0, _verifications.size());
-		assertEquals(Outcome.UNKNOWN, _verifications.complete(token, expectedAccount()));
+		assertEquals(Outcome.UNKNOWN, complete(token, expectedAccount()));
 		assertEquals(0, _verifiedCount.get());
 
 		// Cancelling something that is not held is ignored.

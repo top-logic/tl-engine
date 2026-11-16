@@ -15,12 +15,13 @@ import com.top_logic.knowledge.wrap.person.Person;
  * waiting for that proof to arrive.
  *
  * <p>
- * Created by {@link IdentityVerifications#register(Person, Runnable)} and kept in that registry
- * until the expected account has authenticated afresh, until the request is
+ * Created by {@link IdentityVerifications#register(Person, IdentityVerificationHandler)} and kept in
+ * that registry until the external authentication has come back, until the request is
  * {@link IdentityVerifications#cancel(String) cancelled}, or until it {@link #getExpiry() expires}.
  * The authentication itself happens outside the command that is waiting - in another browser window
- * and on another request thread - so what is held here is the account that must come back and the
- * continuation to run when it does.
+ * and on another request thread - so what is held here is the account of the session that asked and
+ * the {@link IdentityVerificationHandler handler} that decides what the confirmed identity means for
+ * it.
  * </p>
  *
  * @see IdentityVerifications
@@ -29,7 +30,7 @@ public final class PendingIdentityVerification {
 
 	private final Person _expectedAccount;
 
-	private final Runnable _onVerified;
+	private final IdentityVerificationHandler _handler;
 
 	private final Instant _expiry;
 
@@ -38,23 +39,23 @@ public final class PendingIdentityVerification {
 	 *
 	 * @param expectedAccount
 	 *        See {@link #getExpectedAccount()}.
-	 * @param onVerified
-	 *        See {@link #getOnVerified()}.
+	 * @param handler
+	 *        See {@link #getHandler()}.
 	 * @param expiry
 	 *        See {@link #getExpiry()}.
 	 */
-	PendingIdentityVerification(Person expectedAccount, Runnable onVerified, Instant expiry) {
+	PendingIdentityVerification(Person expectedAccount, IdentityVerificationHandler handler, Instant expiry) {
 		_expectedAccount = Objects.requireNonNull(expectedAccount, "No account to verify.");
-		_onVerified = Objects.requireNonNull(onVerified, "No continuation to run.");
+		_handler = Objects.requireNonNull(handler, "No handler.");
 		_expiry = Objects.requireNonNull(expiry, "No expiry.");
 	}
 
 	/**
-	 * The account that has to authenticate again for this verification to succeed.
+	 * The account of the session that registered this verification.
 	 *
 	 * <p>
-	 * An authentication that produces any other account is a mismatch: the proof then belongs to
-	 * someone else and says nothing about the session's own user.
+	 * Handed to the {@link #getHandler() handler} together with the confirmed identity: the account
+	 * that has to authenticate again, or the account a confirmed identity is attached to.
 	 * </p>
 	 */
 	public Person getExpectedAccount() {
@@ -62,10 +63,17 @@ public final class PendingIdentityVerification {
 	}
 
 	/**
-	 * What to run once {@link #getExpectedAccount()} has authenticated again.
+	 * What to do with the identity the external authentication confirms.
 	 */
-	public Runnable getOnVerified() {
-		return _onVerified;
+	public IdentityVerificationHandler getHandler() {
+		return _handler;
+	}
+
+	/**
+	 * Hands the confirmed identity to the {@link #getHandler() handler}.
+	 */
+	VerificationResult handle(VerifiedIdentity identity) {
+		return _handler.handle(_expectedAccount, identity);
 	}
 
 	/**
@@ -80,13 +88,6 @@ public final class PendingIdentityVerification {
 	 */
 	public boolean isExpired(Instant now) {
 		return !now.isBefore(_expiry);
-	}
-
-	/**
-	 * Whether the given account is the one this verification waits for.
-	 */
-	public boolean matches(Person account) {
-		return _expectedAccount.equals(account);
 	}
 
 }

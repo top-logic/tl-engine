@@ -7,6 +7,7 @@ package com.top_logic.react.flow.svg;
 
 import com.top_logic.react.flow.data.ImageAlign;
 import com.top_logic.react.flow.data.ImageScale;
+import com.top_logic.react.flow.data.Widget;
 
 /**
  * Adapter to an {@link SvgWriter}.
@@ -212,6 +213,16 @@ public class SvgWriterAdapter implements SvgWriter {
 	@Override
 	public void writeId(String id) {
 		_impl.writeId(id);
+	}
+
+	@Override
+	public String uniqueId(Widget owner, String purpose) {
+		return _impl.uniqueId(owner, purpose);
+	}
+
+	@Override
+	public void writeClipPathRef(String clipPathId) {
+		_impl.writeClipPathRef(clipPathId);
 	}
 
 	@Override

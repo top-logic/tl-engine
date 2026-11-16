@@ -28,6 +28,7 @@ import com.top_logic.react.flow.data.GanttRangeDecoration;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
 import com.top_logic.react.flow.data.Sticky;
+import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.operations.BoxOperations;
 import com.top_logic.react.flow.operations.ConnectorSymbolRenderer;
 import com.top_logic.react.flow.operations.Interactivity;
@@ -136,32 +137,47 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	double PINNED_LABEL_RADIUS = 3.0;
 
 	/**
-	 * Suffix of the ID (appended to the chart's client ID) of the group moving with both scroll
+	 * Purpose (see {@link SvgWriter#uniqueId(Widget, String)}) of the group moving with both scroll
 	 * offsets: the data rows.
 	 */
-	String SCROLL_CONTENT_ID_SUFFIX = "-scroll-content";
+	String SCROLL_CONTENT_PURPOSE = "scroll-content";
 
-	/** Suffix of the ID of the group moving with the horizontal scroll offset: the decorations. */
-	String SCROLL_DECORATIONS_ID_SUFFIX = "-scroll-deco";
+	/** Purpose of the group moving with the horizontal scroll offset: the decorations. */
+	String SCROLL_DECORATIONS_PURPOSE = "scroll-deco";
 
 	/**
-	 * Suffix of the ID of the group moving with the horizontal scroll offset: the labels of
-	 * decorations that start in the frozen rows or span all rows, drawn above the frozen rows at the
-	 * top of the data rows.
+	 * Purpose of the group moving with the horizontal scroll offset: the labels of decorations
+	 * that start in the frozen rows or span all rows, drawn above the frozen rows at the top of
+	 * the data rows.
 	 */
-	String SCROLL_DECORATION_LABELS_ID_SUFFIX = "-scroll-deco-labels";
+	String SCROLL_DECORATION_LABELS_PURPOSE = "scroll-deco-labels";
 
-	/** Suffix of the ID of the group moving with the vertical scroll offset: the row labels. */
-	String SCROLL_SIDEBAR_ID_SUFFIX = "-scroll-sidebar";
+	/** Purpose of the group moving with the vertical scroll offset: the row labels. */
+	String SCROLL_SIDEBAR_PURPOSE = "scroll-sidebar";
 
-	/** Suffix of the ID of the group moving with the horizontal scroll offset: the frozen rows. */
-	String SCROLL_HEADER_ID_SUFFIX = "-scroll-header";
+	/** Purpose of the group moving with the horizontal scroll offset: the frozen rows. */
+	String SCROLL_HEADER_PURPOSE = "scroll-header";
 
-	/** Suffix of the ID of the group moving the thumb of the vertical scrollbar. */
-	String VERTICAL_THUMB_ID_SUFFIX = "-scrollbar-v-thumb";
+	/** Purpose of the group moving the thumb of the vertical scrollbar. */
+	String VERTICAL_THUMB_PURPOSE = "scrollbar-v-thumb";
 
-	/** Suffix of the ID of the group moving the thumb of the horizontal scrollbar. */
-	String HORIZONTAL_THUMB_ID_SUFFIX = "-scrollbar-h-thumb";
+	/** Purpose of the group moving the thumb of the horizontal scrollbar. */
+	String HORIZONTAL_THUMB_PURPOSE = "scrollbar-h-thumb";
+
+	/** Purpose of the clip path of the corner above the row labels. */
+	String CLIP_CORNER_PURPOSE = "clip-corner";
+
+	/** Purpose of the clip path of the frozen rows. */
+	String CLIP_HEADER_PURPOSE = "clip-header";
+
+	/** Purpose of the clip path of the row labels. */
+	String CLIP_SIDEBAR_PURPOSE = "clip-sidebar";
+
+	/** Purpose of the clip path of the data rows. */
+	String CLIP_CONTENT_PURPOSE = "clip-content";
+
+	/** Purpose of the clip path of the decorations, spanning frozen and data rows. */
+	String CLIP_DECORATIONS_PURPOSE = "clip-deco";
 
 	/**
 	 * Geometry of a single row: its Y start (inclusive), Y end (exclusive), and total height.
@@ -573,12 +589,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		}
 
 		// --- Define clip regions ---
-		String ganttId = self.getClientId();
-		String clipCorner = ganttId + "-clip-corner";
-		String clipHeader = ganttId + "-clip-header";
-		String clipSidebar = ganttId + "-clip-sidebar";
-		String clipContent = ganttId + "-clip-content";
-		String clipDecorations = ganttId + "-clip-deco";
+		String clipCorner = out.uniqueId(self, CLIP_CORNER_PURPOSE);
+		String clipHeader = out.uniqueId(self, CLIP_HEADER_PURPOSE);
+		String clipSidebar = out.uniqueId(self, CLIP_SIDEBAR_PURPOSE);
+		String clipContent = out.uniqueId(self, CLIP_CONTENT_PURPOSE);
+		String clipDecorations = out.uniqueId(self, CLIP_DECORATIONS_PURPOSE);
 
 		double viewW = geometry.viewWidth();
 		double viewH = geometry.viewHeight();
@@ -590,10 +605,10 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 		// --- 1. Decorations group (scroll X only, spans full height) ---
 		out.beginGroup();
-		out.writeAttribute("clip-path", "url(#" + clipDecorations + ")");
+		out.writeClipPathRef(clipDecorations);
 		out.writeCssClass("tl-gantt-vp-decorations");
 		out.beginGroup();
-		out.writeId(ganttId + SCROLL_DECORATIONS_ID_SUFFIX);
+		out.writeId(out.uniqueId(self, SCROLL_DECORATIONS_PURPOSE));
 		out.translate(-scrollXPx, 0);
 		drawDecorations(self, out);
 		out.endGroup();
@@ -601,10 +616,10 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 		// --- 2. Content group (scroll X+Y) ---
 		out.beginGroup();
-		out.writeAttribute("clip-path", "url(#" + clipContent + ")");
+		out.writeClipPathRef(clipContent);
 		out.writeCssClass("tl-gantt-vp-content");
 		out.beginGroup();
-		out.writeId(ganttId + SCROLL_CONTENT_ID_SUFFIX);
+		out.writeId(out.uniqueId(self, SCROLL_CONTENT_PURPOSE));
 		out.translate(-scrollXPx, -scrollY);
 		drawRowLanes(self, out, frozenRowIds, false, true);
 		drawItemBoxes(self, out, frozenRowIds, false);
@@ -615,14 +630,14 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 		// --- 3. Sidebar group (scroll Y only) ---
 		out.beginGroup();
-		out.writeAttribute("clip-path", "url(#" + clipSidebar + ")");
+		out.writeClipPathRef(clipSidebar);
 		out.writeCssClass("tl-gantt-vp-sidebar");
 		out.beginRect(x0, y0 + headerH, colW, viewH);
 		out.setFill("#ffffff");
 		out.setStroke("none");
 		out.endRect();
 		out.beginGroup();
-		out.writeId(ganttId + SCROLL_SIDEBAR_ID_SUFFIX);
+		out.writeId(out.uniqueId(self, SCROLL_SIDEBAR_PURPOSE));
 		out.translate(0, -scrollY);
 		drawRowLabels(self, out, frozenRowIds, false);
 		out.endGroup();
@@ -630,14 +645,14 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 		// --- 4. Header group (scroll X only) ---
 		out.beginGroup();
-		out.writeAttribute("clip-path", "url(#" + clipHeader + ")");
+		out.writeClipPathRef(clipHeader);
 		out.writeCssClass("tl-gantt-vp-header");
 		out.beginRect(x0 + colW, y0, viewW, headerH);
 		out.setFill("#ffffff");
 		out.setStroke("none");
 		out.endRect();
 		out.beginGroup();
-		out.writeId(ganttId + SCROLL_HEADER_ID_SUFFIX);
+		out.writeId(out.uniqueId(self, SCROLL_HEADER_PURPOSE));
 		out.translate(-scrollXPx, 0);
 		drawRowLanes(self, out, frozenRowIds, true, false);
 		drawItemBoxes(self, out, frozenRowIds, true);
@@ -646,7 +661,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 		// --- 5. Corner group (no scroll) ---
 		out.beginGroup();
-		out.writeAttribute("clip-path", "url(#" + clipCorner + ")");
+		out.writeClipPathRef(clipCorner);
 		out.writeCssClass("tl-gantt-vp-corner");
 		out.beginRect(x0, y0, colW, headerH);
 		out.setFill("#ffffff");
@@ -659,11 +674,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		// --- 6. Labels of decorations above the frozen rows (scroll X only) ---
 		// No background, and the pointer passes through the layer except at interactive labels.
 		out.beginGroup();
-		out.writeAttribute("clip-path", "url(#" + clipDecorations + ")");
+		out.writeClipPathRef(clipDecorations);
 		out.writeCssClass("tl-gantt-vp-decoration-labels");
 		Interactivity.writePassThrough(out);
 		out.beginGroup();
-		out.writeId(ganttId + SCROLL_DECORATION_LABELS_ID_SUFFIX);
+		out.writeId(out.uniqueId(self, SCROLL_DECORATION_LABELS_PURPOSE));
 		out.translate(-scrollXPx, 0);
 		drawDecorationLabels(self, out, frozenRowIds, rowIds, true);
 		out.endGroup();
@@ -685,7 +700,6 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	 * </p>
 	 */
 	private static void drawScrollbars(GanttLayout self, GanttScrollGeometry geometry, SvgWriter out) {
-		String ganttId = self.getClientId();
 		double inset = SCROLLBAR_THUMB_INSET;
 		double thickness = Math.max(0, SCROLLBAR_SIZE - 2 * inset);
 		if (geometry.vertical()) {
@@ -698,7 +712,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			out.attachOnClick(event -> pageScroll(self, event, true), self);
 			out.endRect();
 			out.beginGroup();
-			out.writeId(ganttId + VERTICAL_THUMB_ID_SUFFIX);
+			out.writeId(out.uniqueId(self, VERTICAL_THUMB_PURPOSE));
 			out.translate(0, geometry.verticalThumbOffset());
 			out.beginRect(trackX + inset, trackY, thickness, geometry.verticalThumbLength());
 			out.writeCssClass(SCROLLBAR_THUMB_CSS_CLASS);
@@ -717,7 +731,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			out.attachOnClick(event -> pageScroll(self, event, false), self);
 			out.endRect();
 			out.beginGroup();
-			out.writeId(ganttId + HORIZONTAL_THUMB_ID_SUFFIX);
+			out.writeId(out.uniqueId(self, HORIZONTAL_THUMB_PURPOSE));
 			out.translate(geometry.horizontalThumbOffset(), 0);
 			out.beginRect(trackX, trackY + inset, geometry.horizontalThumbLength(), thickness);
 			out.writeCssClass(SCROLLBAR_THUMB_CSS_CLASS);
@@ -865,7 +879,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 	private static void emitClipPath(SvgWriter out, String id, double x, double y, double w, double h) {
 		out.beginClipPath();
-		out.writeAttribute("id", id);
+		out.writeId(id);
 		out.beginRect(x, y, w, h);
 		out.endRect();
 		out.endClipPath();
@@ -1875,34 +1889,26 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	 * of the viewport to the current scroll offsets, without drawing the chart again.
 	 */
 	private static void applyScroll(GanttLayout self, PanRenderer renderer) {
-		String ganttId = self.getClientId();
-		if (ganttId == null) {
-			return;
-		}
-
 		double scrollXPx = self.getScrollX() * self.getZoom();
 		double scrollY = self.getScrollY();
 
-		renderer.setTranslate(ganttId + SCROLL_DECORATIONS_ID_SUFFIX, -scrollXPx, 0);
-		renderer.setTranslate(ganttId + SCROLL_DECORATION_LABELS_ID_SUFFIX, -scrollXPx, 0);
-		renderer.setTranslate(ganttId + SCROLL_CONTENT_ID_SUFFIX, -scrollXPx, -scrollY);
-		renderer.setTranslate(ganttId + SCROLL_SIDEBAR_ID_SUFFIX, 0, -scrollY);
-		renderer.setTranslate(ganttId + SCROLL_HEADER_ID_SUFFIX, -scrollXPx, 0);
+		renderer.setTranslate(self, SCROLL_DECORATIONS_PURPOSE, -scrollXPx, 0);
+		renderer.setTranslate(self, SCROLL_DECORATION_LABELS_PURPOSE, -scrollXPx, 0);
+		renderer.setTranslate(self, SCROLL_CONTENT_PURPOSE, -scrollXPx, -scrollY);
+		renderer.setTranslate(self, SCROLL_SIDEBAR_PURPOSE, 0, -scrollY);
+		renderer.setTranslate(self, SCROLL_HEADER_PURPOSE, -scrollXPx, 0);
 		double visibleLeft = visibleLeft(self);
 		forEachSticky(self, sticky -> {
 			double shift = sticky.stickTo(visibleLeft);
-			String contentId = StickyOperations.contentId(sticky);
-			if (contentId != null) {
-				renderer.setTranslate(contentId, shift, 0);
-			}
+			renderer.setTranslate(sticky, StickyOperations.CONTENT_PURPOSE, shift, 0);
 		});
 
 		GanttScrollGeometry geometry = GanttScrollGeometry.of(self);
 		if (geometry.vertical()) {
-			renderer.setTranslate(ganttId + VERTICAL_THUMB_ID_SUFFIX, 0, geometry.verticalThumbOffset());
+			renderer.setTranslate(self, VERTICAL_THUMB_PURPOSE, 0, geometry.verticalThumbOffset());
 		}
 		if (geometry.horizontal()) {
-			renderer.setTranslate(ganttId + HORIZONTAL_THUMB_ID_SUFFIX, geometry.horizontalThumbOffset(), 0);
+			renderer.setTranslate(self, HORIZONTAL_THUMB_PURPOSE, geometry.horizontalThumbOffset(), 0);
 		}
 	}
 

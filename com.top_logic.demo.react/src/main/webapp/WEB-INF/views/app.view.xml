@@ -197,6 +197,15 @@
 							<de>Graph-Demo</de>
 						</label>
 					</nav-item>
+					<nav-item id="flow-clip-demo"
+						icon="css:bi bi-crop"
+					>
+						<view-ref view="demo/flow-clip-demo.view.xml"/>
+						<label>
+							<en>Clipped diagrams</en>
+							<de>Beschnittene Diagramme</de>
+						</label>
+					</nav-item>
 					<nav-item id="pdf"
 						icon="css:bi bi-file-earmark-pdf"
 					>

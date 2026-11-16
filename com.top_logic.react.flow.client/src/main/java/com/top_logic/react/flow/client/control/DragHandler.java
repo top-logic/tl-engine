@@ -292,7 +292,8 @@ class DragHandler {
 		if (_panning) {
 			double[] svgCoords = clientToSvg(clientX, clientY);
 			_controller.panTo(svgCoords[0], svgCoords[1]);
-			_controller.renderPan(DragHandler.this::nativeSetTranslate);
+			_controller.renderPan((owner, purpose, tx, ty) -> SVGBuilder.setTranslate(_control._nextId, owner,
+				purpose, tx, ty));
 			return;
 		}
 		if (!_active) {
@@ -630,11 +631,6 @@ class DragHandler {
 		_pendingPan = true;
 		return true;
 	}
-
-	private native void nativeSetTranslate(String id, double tx, double ty) /*-{
-		var el = $doc.getElementById(id);
-		if (el) el.setAttribute('transform', 'translate(' + tx + ',' + ty + ')');
-	}-*/;
 
 	private double[] clientToSvg(double clientX, double clientY) {
 		OMSVGPoint point = _svg.createSVGPoint();

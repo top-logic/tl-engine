@@ -138,6 +138,39 @@
 				<!-- Neither a role source nor a container. -->
 				<class name="Orphan"/>
 
+				<!--
+					Attribute rights per type: Named restricts writing name, Foo (and Sub) grant reading
+					it, Bar inherits the rights of Named.
+				-->
+				<class name="Named">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<class name="Foo">
+					<generalizations>
+						<generalization type="Named"/>
+					</generalizations>
+				</class>
+
+				<class name="Sub">
+					<generalizations>
+						<generalization type="Foo"/>
+					</generalizations>
+				</class>
+
+				<class name="Bar">
+					<generalizations>
+						<generalization type="Named"/>
+					</generalizations>
+				</class>
+
 				<!-- Role rule and read grant, declares an operation no role is granted. -->
 				<class name="WithOperations">
 					<attributes>

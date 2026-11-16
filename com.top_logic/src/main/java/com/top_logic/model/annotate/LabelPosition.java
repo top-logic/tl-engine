@@ -137,6 +137,17 @@ public enum LabelPosition implements ExternallyNamed {
 	}
 
 	/**
+	 * Whether the label is not displayed beside the value: {@link #HIDE_LABEL} and
+	 * {@link #PLACEHOLDER}.
+	 */
+	public boolean isLabelHidden() {
+		return switch (this) {
+			case HIDE_LABEL, PLACEHOLDER -> true;
+			default -> false;
+		};
+	}
+
+	/**
 	 * Whether the label is rendered above its value.
 	 */
 	public boolean isAbove() {

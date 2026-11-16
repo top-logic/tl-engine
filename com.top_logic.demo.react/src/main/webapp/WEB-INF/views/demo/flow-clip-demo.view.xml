@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Several flow diagrams on one page that clip parts of their content.
+
+	The Clip boxes tile shows two rows of clip boxes (reactFlowClipbox) of increasing width, each
+	cutting the same long text at its own right edge, which the border around the box shows. The
+	boxes of the first row have no CSS class, the boxes of the second row all have the same CSS
+	class.
+
+	The two Gantt tiles each show a Gantt chart with more rows and a longer time axis than fit into
+	the tile, so each chart clips its rows, its row labels and its header row and scrolls them
+	internally: the wheel scrolls the rows, dragging empty space or a scrollbar thumb scrolls in
+	both directions, a click on a scrollbar track scrolls by a page. The labels of the header row
+	stay at the left edge of the visible time range (reactFlowSticky).
+-->
+<view>
+	<dashboard id="flow-clip">
+		<tile id="clip-boxes"
+			width="full"
+		>
+			<panel fill="true">
+				<title>
+					<en>Clip boxes</en>
+					<de>Clip-Boxen</de>
+				</title>
+				<flow-diagram>
+					<inputs/>
+					<createChart><![CDATA[{
+text = "The quick brown fox jumps over the lazy dog";
+cell = css -> width -> reactFlowBorder(stroke: "#9aa7b4",
+  content: reactFlowPosition(width: $width,
+    content: reactFlowClipbox(cssClass: $css, content: reactFlowPadding(all: 4, content: reactFlowText($text)))));
+clipRow = title -> css -> reactFlowVertical(gap: 4, contents: list(
+  reactFlowText($title, fontWeight: "bold"),
+  reactFlowHorizontal(gap: 12, contents: list(40, 80, 120, 160, 200).map(w -> $cell($css, $w)))));
+reactFlowChart(
+  fixedView: true,
+  root: reactFlowPadding(all: 16, content: reactFlowVertical(gap: 16, contents: list(
+    $clipRow("Without CSS class", null),
+    $clipRow("All with the CSS class \"demo-clip-cell\"", "demo-clip-cell")))))
+}]]></createChart>
+				</flow-diagram>
+			</panel>
+		</tile>
+		<tile id="gantt-a"
+			row-span="2"
+			width="half"
+		>
+			<panel fill="true">
+				<title>
+					<en>Gantt A</en>
+					<de>Gantt A</de>
+				</title>
+				<flow-diagram>
+					<inputs/>
+					<createChart><![CDATA[{
+name = "A";
+fill = "#73B1DD";
+n = 60;
+years = count(0, 2).map(y -> reactFlowGanttSpan(model: list("y", $y), rowModel: "year", start: $y * 360, end: $y * 360 + 360, canMove: false, canResize: false, canBeEdge: false,
+  box: reactFlowBorder(top: false, bottom: false, right: false, stroke: "#9aa7b4",
+    content: reactFlowSticky(reactFlowPadding(left: 4, content: reactFlowText($name + ": year " + ($y + 1), fontWeight: "bold"))))));
+rows = count(0, $n).map(i -> reactFlowGanttRow(model: $i, label: reactFlowText($name + ": work package " + $i), borderColor: "#e4e8ec", rowPadding: 3, minContentHeight: 18));
+bars = count(0, $n).map(i -> reactFlowGanttSpan(model: list("b", $i), rowModel: $i, start: ($i * 11) % 600, end: ($i * 11) % 600 + 90, canBeEdge: false,
+  box: reactFlowFill(fill: $fill, content: reactFlowPadding(left: 4, content: reactFlowText($name + $i, fontSize: 10)))));
+reactFlowChart(
+  fixedView: true,
+  root: reactFlowGantt(
+    rootRows: concat(list(reactFlowGanttRow(model: "year", label: reactFlowText("Year", fontWeight: "bold"), acceptsDrop: false, backgroundColor: "#d3dde8", minContentHeight: 16)), $rows),
+    items: concat($years, $bars),
+    rangeMin: 0, rangeMax: 720, initialZoom: 3, frozenRows: 1))
+}]]></createChart>
+				</flow-diagram>
+			</panel>
+		</tile>
+		<tile id="gantt-b"
+			row-span="2"
+			width="half"
+		>
+			<panel fill="true">
+				<title>
+					<en>Gantt B</en>
+					<de>Gantt B</de>
+				</title>
+				<flow-diagram>
+					<inputs/>
+					<createChart><![CDATA[{
+name = "B";
+fill = "#F2A65A";
+n = 80;
+years = count(0, 2).map(y -> reactFlowGanttSpan(model: list("y", $y), rowModel: "year", start: $y * 360, end: $y * 360 + 360, canMove: false, canResize: false, canBeEdge: false,
+  box: reactFlowBorder(top: false, bottom: false, right: false, stroke: "#9aa7b4",
+    content: reactFlowSticky(reactFlowPadding(left: 4, content: reactFlowText($name + ": year " + ($y + 1), fontWeight: "bold"))))));
+rows = count(0, $n).map(i -> reactFlowGanttRow(model: $i, label: reactFlowText($name + ": work package " + $i), borderColor: "#e4e8ec", rowPadding: 3, minContentHeight: 18));
+bars = count(0, $n).map(i -> reactFlowGanttSpan(model: list("b", $i), rowModel: $i, start: ($i * 7) % 600, end: ($i * 7) % 600 + 120, canBeEdge: false,
+  box: reactFlowFill(fill: $fill, content: reactFlowPadding(left: 4, content: reactFlowText($name + $i, fontSize: 10)))));
+reactFlowChart(
+  fixedView: true,
+  root: reactFlowGantt(
+    rootRows: concat(list(reactFlowGanttRow(model: "year", label: reactFlowText("Year", fontWeight: "bold"), acceptsDrop: false, backgroundColor: "#d3dde8", minContentHeight: 16)), $rows),
+    items: concat($years, $bars),
+    rangeMin: 0, rangeMax: 720, initialZoom: 3, frozenRows: 1))
+}]]></createChart>
+				</flow-diagram>
+			</panel>
+		</tile>
+	</dashboard>
+</view>

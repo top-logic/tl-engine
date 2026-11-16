@@ -107,9 +107,16 @@ public class QueryExecutorMethod extends GenericMethodWithSecurity {
 		return getName();
 	}
 
+	/**
+	 * Whether the called configured function is free of side effects, read from its body and the
+	 * bodies of the configured functions it calls.
+	 *
+	 * @see ConfiguredTLScriptFunctions#isSideEffectFree(String)
+	 */
 	@Override
 	public boolean isSideEffectFree() {
-		return false;
+		ConfiguredTLScriptFunctions.Module module = ConfiguredTLScriptFunctions.Module.INSTANCE;
+		return module.isActive() && module.getImplementationInstance().isSideEffectFree(getName());
 	}
 
 	/**

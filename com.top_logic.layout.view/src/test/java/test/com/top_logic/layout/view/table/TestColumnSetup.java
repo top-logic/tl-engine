@@ -40,6 +40,7 @@ import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnAlignment;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
@@ -444,6 +445,34 @@ public class TestColumnSetup extends TestCase {
 		assertNull(column.renderCell(Map.of(ATTRIBUTE, "x")).tooltip());
 	}
 
+	/** A column over values nothing is known about starts at the start of its cells. */
+	public void testAlignmentDefaultsToTheStart() {
+		ColumnSetup setup = aligned(null);
+
+		assertEquals(ColumnAlignment.START, setup.alignment());
+		assertEquals(ColumnAlignment.START, setup.buildColumn().alignment());
+	}
+
+	/**
+	 * A column whose declaration sets an alignment keeps it, a computed column yielding numbers
+	 * ending at the end of its cells, for instance.
+	 */
+	public void testDeclaredAlignmentIsKept() {
+		ColumnSetup setup = aligned(ColumnAlignment.END);
+
+		assertEquals(ColumnAlignment.END, setup.alignment());
+		assertEquals(ColumnAlignment.END, setup.buildColumn().alignment());
+		assertEquals("Everything else is the binding's column.", ATTRIBUTE, setup.buildColumn().name());
+	}
+
+	/** A descriptor of a computed column with the given declared alignment. */
+	private static ColumnSetup aligned(ColumnAlignment align) {
+		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
+			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, null, null, false,
+			ColumnExport.DEFAULT, null, null, null, null, true, align,
+			ChannelCondition.ALWAYS, null);
+	}
+
 	private static ColumnSetup withTooltip() {
 		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
 			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, null, null, false,
@@ -550,7 +579,7 @@ public class TestColumnSetup extends TestCase {
 				assertNotSame(ColumnProviderService.UNREADABLE, value);
 				assertNotNull(row);
 				return NO_CLASS.equals(value) ? null : ValueColor.WARNING;
-			}, null, true, ChannelCondition.ALWAYS, null);
+			}, null, true, null, ChannelCondition.ALWAYS, null);
 	}
 
 	/** The value for which {@link #withCellClass(ColumnBinding)} computes no class. */

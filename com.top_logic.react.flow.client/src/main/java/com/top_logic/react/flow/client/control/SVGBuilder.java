@@ -7,6 +7,9 @@ package com.top_logic.react.flow.client.control;
 
 import static com.top_logic.react.flow.svg.SvgConstants.*;
 
+import java.util.IdentityHashMap;
+import java.util.Map;
+
 import org.vectomatic.dom.svg.OMSVGClipPathElement;
 import org.vectomatic.dom.svg.OMSVGDocument;
 import org.vectomatic.dom.svg.OMSVGElement;
@@ -50,9 +53,15 @@ import com.top_logic.react.flow.svg.event.SVGWheelEvent;
 import com.top_logic.react.flow.svg.event.SVGWheelHandler;
 import com.top_logic.react.flow.data.ImageAlign;
 import com.top_logic.react.flow.data.ImageScale;
+import com.top_logic.react.flow.data.Widget;
 
 /**
  * {@link SvgWriter} directly creating a SVG DOM tree.
+ *
+ * <p>
+ * The {@link #uniqueId(Widget, String) IDs} of the drawn elements come from the
+ * {@link SubIdGenerator} of the diagram control, see {@link SubIdGenerator#ownedId(Widget, String)}.
+ * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -68,6 +77,14 @@ public class SVGBuilder implements SvgWriter {
 
 	private Runnable _relayoutCallback = () -> {};
 
+	private final SubIdGenerator _ids;
+
+	/**
+	 * IDs from {@link SubIdGenerator#createId()} for owners without a node ID, see
+	 * {@link #uniqueId(Widget, String)}.
+	 */
+	private final Map<Widget, String> _ownerIds = new IdentityHashMap<>();
+
 	/**
 	 * Creates a {@link SVGBuilder}.
 	 *
@@ -75,9 +92,11 @@ public class SVGBuilder implements SvgWriter {
 	 *        The {@link OMSVGDocument} to write to.
 	 * @param root
 	 *        The root {@link OMSVGSVGElement} to append to.
+	 * @param ids
+	 *        The ID source of the diagram control.
 	 */
-	public SVGBuilder(OMSVGDocument doc, OMSVGSVGElement root) {
-		this(doc, root, root);
+	public SVGBuilder(OMSVGDocument doc, OMSVGSVGElement root, SubIdGenerator ids) {
+		this(doc, root, root, ids);
 	}
 
 	/**
@@ -89,12 +108,15 @@ public class SVGBuilder implements SvgWriter {
 	 *        The root {@link OMSVGSVGElement} to write to.
 	 * @param parent
 	 *        The parent {@link OMSVGElement} to append to.
+	 * @param ids
+	 *        The ID source of the diagram control.
 	 */
-	public SVGBuilder(OMSVGDocument doc, OMSVGSVGElement root, OMSVGElement parent) {
+	public SVGBuilder(OMSVGDocument doc, OMSVGSVGElement root, OMSVGElement parent, SubIdGenerator ids) {
 		_doc = doc;
 		_root = root;
 		_parent = parent;
 		_current = parent;
+		_ids = ids;
 	}
 
 	/**
@@ -399,6 +421,29 @@ public class SVGBuilder implements SvgWriter {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * For an owner with a node ID, the ID is {@link SubIdGenerator#ownedId(Widget, String)}, so
+	 * that it stays the same over partial redraws. An owner without a node ID gets an ID from
+	 * {@link SubIdGenerator#createId()} once per writer.
+	 * </p>
+	 */
+	@Override
+	public String uniqueId(Widget owner, String purpose) {
+		String id = _ids.ownedId(owner, purpose);
+		if (id != null) {
+			return id;
+		}
+		String ownerId = _ownerIds.get(owner);
+		if (ownerId == null) {
+			ownerId = _ids.createId();
+			_ownerIds.put(owner, ownerId);
+		}
+		return ownerId + "-" + purpose;
+	}
+
 	@Override
 	public void beginText(double x, double y, String text) {
 		appendChild(_doc.createSVGTextElement((float) x, (float) y, OMSVGLength.SVG_LENGTHTYPE_PX, text));
@@ -473,7 +518,7 @@ public class SVGBuilder implements SvgWriter {
 		return () -> registration.removeHandler();
 	}
 
-	private static SVGClickEvent createClickEvent(OMSVGSVGElement svgRoot, MouseEvent<?> event, Object sender) {
+	private SVGClickEvent createClickEvent(OMSVGSVGElement svgRoot, MouseEvent<?> event, Object sender) {
 		return new SVGClickEvent() {
 			@Override
 			public Object getSender() {
@@ -525,8 +570,8 @@ public class SVGBuilder implements SvgWriter {
 			}
 
 			@Override
-			public void updateTransform(String elementId, double translateX, double translateY) {
-				nativeSetTranslate(elementId, translateX, translateY);
+			public void updateTransform(Widget owner, String purpose, double translateX, double translateY) {
+				setTranslate(_ids, owner, purpose, translateX, translateY);
 			}
 
 			@Override
@@ -691,8 +736,8 @@ public class SVGBuilder implements SvgWriter {
 			public double getY() { return y; }
 
 			@Override
-			public void updateTransform(String elementId, double translateX, double translateY) {
-				nativeSetTranslate(elementId, translateX, translateY);
+			public void updateTransform(Widget owner, String purpose, double translateX, double translateY) {
+				setTranslate(_ids, owner, purpose, translateX, translateY);
 			}
 
 			@Override
@@ -772,8 +817,8 @@ public class SVGBuilder implements SvgWriter {
 				}
 
 				@Override
-				public void updateTransform(String elementId, double translateX, double translateY) {
-					nativeSetTranslate(elementId, translateX, translateY);
+				public void updateTransform(Widget owner, String purpose, double translateX, double translateY) {
+					setTranslate(_ids, owner, purpose, translateX, translateY);
 				}
 
 				@Override
@@ -808,6 +853,20 @@ public class SVGBuilder implements SvgWriter {
 			return clientX * inverse.getB() + clientY * inverse.getD() + inverse.getF();
 		}
 		return clientY;
+	}
+
+	/**
+	 * Sets the translation of the element the given owner has drawn for the given purpose.
+	 *
+	 * @param ids
+	 *        The ID source of the diagram control that has drawn the element.
+	 * @see SubIdGenerator#ownedId(Widget, String)
+	 */
+	static void setTranslate(SubIdGenerator ids, Widget owner, String purpose, double tx, double ty) {
+		String id = ids.ownedId(owner, purpose);
+		if (id != null) {
+			nativeSetTranslate(id, tx, ty);
+		}
 	}
 
 	private static native void nativeSetTranslate(String id, double tx, double ty) /*-{

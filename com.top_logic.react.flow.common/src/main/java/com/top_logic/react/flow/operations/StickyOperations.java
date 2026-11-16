@@ -17,17 +17,17 @@ import com.top_logic.react.flow.svg.SvgWriter;
  * The box takes the whole width it is given and gives its content its natural width, but at most
  * the width of the box, so that a {@link com.top_logic.react.flow.data.Text#isEllipsis() text cut
  * to its width} ends with an ellipsis instead of extending beyond the box. The content is drawn in a group of its own, translated by {@link Sticky#getShift()}. A scrolling container
- * moves the content by updating the translation of that group, identified by
- * {@link #contentId(Sticky)}, without drawing the box again.
+ * moves the content by updating the translation of that group, identified by the purpose
+ * {@link #CONTENT_PURPOSE}, without drawing the box again.
  * </p>
  */
 public interface StickyOperations extends DecorationOperations {
 
 	/**
-	 * Suffix of the ID (appended to the client ID of the {@link Sticky}) of the group moving its
-	 * content.
+	 * Purpose of the group moving the content of a {@link Sticky}, see
+	 * {@link SvgWriter#uniqueId(com.top_logic.react.flow.data.Widget, String)}.
 	 */
-	String CONTENT_ID_SUFFIX = "-sticky";
+	String CONTENT_PURPOSE = "sticky";
 
 	@Override
 	Sticky self();
@@ -75,15 +75,6 @@ public interface StickyOperations extends DecorationOperations {
 		return shift;
 	}
 
-	/**
-	 * The ID of the group moving the content of the given box, or <code>null</code> if the box
-	 * has not been drawn on a client.
-	 */
-	static String contentId(Sticky sticky) {
-		String clientId = sticky.getClientId();
-		return clientId == null ? null : clientId + CONTENT_ID_SUFFIX;
-	}
-
 	@Override
 	default void draw(SvgWriter out) {
 		Sticky self = self();
@@ -91,10 +82,7 @@ public interface StickyOperations extends DecorationOperations {
 		out.attachModel(self);
 
 		out.beginGroup();
-		String contentId = contentId(self);
-		if (contentId != null) {
-			out.writeId(contentId);
-		}
+		out.writeId(out.uniqueId(self, CONTENT_PURPOSE));
 		out.translate(self.getShift(), 0);
 		drawContent(out);
 		out.endGroup();

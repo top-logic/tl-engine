@@ -10,7 +10,7 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 
 // The bridge first, as the page loads it: the bridge entry reaches it through modules that the SSE client imports
 // as well, and these must see the mocked SSE client.
-import { mount, unmount } from '../bridge/tl-react-bridge';
+import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
 import { OPTION_TOOLTIP_PREFIX, TOOLTIP_ATTR, register, registerPart } from 'tl-react-bridge';
 import TLChoiceGroup from './TLChoiceGroup';
 import TLOptionChips from './TLOptionChips';
@@ -49,7 +49,7 @@ beforeAll(() => {
 
 afterEach(async () => {
   act(() => unmount(GROUP_ID));
-  document.getElementById(GROUP_ID)?.remove();
+  findMountPoint(GROUP_ID)?.remove();
   vi.unstubAllGlobals();
   await settle();
 });
@@ -64,7 +64,7 @@ function mountField(module: string, state: Record<string, unknown>): void {
   vi.stubGlobal('fetch', vi.fn(async () =>
     new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } })));
   const element = document.createElement('div');
-  element.id = GROUP_ID;
+  element.setAttribute(MOUNT_ATTRIBUTE, GROUP_ID);
   document.body.appendChild(element);
   act(() => mount(GROUP_ID, module,
     { value: [], options: OPTIONS, emptyOptionLabel: NONE, ...state }, 'w', '/ctx'));
@@ -119,7 +119,7 @@ describe('the explanation of an option chip', () => {
   it('is declared as tooltip of the chip of every option', () => {
     mountField('TLOptionChips', { display: 'chips', value: [ALPHA] });
 
-    const chips = [...document.getElementById(GROUP_ID)!.querySelectorAll('[aria-pressed]')];
+    const chips = [...findMountPoint(GROUP_ID)!.querySelectorAll('[aria-pressed]')];
     expect(chips.map(chip => chip.textContent)).toEqual(['Alpha', 'Beta']);
     expect(chips.map(chip => chip.getAttribute(TOOLTIP_ATTR))).toEqual([optionTooltip('a'), optionTooltip('b')]);
   });

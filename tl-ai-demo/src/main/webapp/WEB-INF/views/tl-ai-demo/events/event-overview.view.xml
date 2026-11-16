@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The overview of an event: the figures the model computes, then the master data, one below the
+	other in a <stack>.
+	
+	The content of the tab "overview" of event-detail.view.xml, in a file of its own so that a command
+	can open the tab with <show-view>. Its fields belong to the form around the tab bar there,
+	which the <view-ref> hands on, so the event is still edited and saved as one.
+-->
+<view>
+	<stack>
+		<!--
+			The figures the model computes (storage-algorithm "query"), first and side by
+			side, because they are what a reader of an event wants to know. Never editable.
+		-->
+		<grid min-column-width="9rem">
+			<field attribute="registrationCount"/>
+			<field attribute="remainingCapacity"/>
+			<field attribute="revenue"/>
+			<field attribute="totalExpenses"/>
+			<field attribute="balance"/>
+		</grid>
+		<field attribute="name"/>
+		<field attribute="status"/>
+		<field attribute="startDate"/>
+		<field attribute="endDate"/>
+		<field attribute="venue"/>
+		<field attribute="maxParticipants"/>
+		<field attribute="ticketPrice"/>
+		<field attribute="currency"/>
+		<field attribute="organizer"/>
+		<field attribute="manager"/>
+		<field attribute="themeColor"/>
+		<field attribute="description"/>
+	</stack>
+</view>

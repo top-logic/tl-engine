@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,9 +28,42 @@ import com.top_logic.basic.shared.collection.CollectionUtilShared;
 /**
  * {@link DataSourceProxy} for H2 database.
  * 
+ * <p>
+ * The statement cache of the H2 session is switched off (see {@link #QUERY_CACHE_SIZE_SETTING}),
+ * unless the database URL sets its size explicitly. A statement reused from that cache may answer a
+ * query with a result that does not reflect a change another connection has committed in between.
+ * </p>
+ * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class H2DataSourceProxy extends ReadOnlySupportDataSource {
+
+	/**
+	 * Name of the H2 database setting for the number of statements a session keeps in its
+	 * statement cache.
+	 * 
+	 * <p>
+	 * H2 reads the setting only when the database is opened, so it is given in the database URL.
+	 * </p>
+	 */
+	public static final String QUERY_CACHE_SIZE_SETTING = "QUERY_CACHE_SIZE";
+
+	/**
+	 * Name of the configuration option holding the database URL.
+	 */
+	public static final String URL_OPTION = "url";
+
+	private static final String USER_OPTION = "user";
+
+	private static final String PASSWORD_OPTION = "password";
+
+	private static final String URL_PREFIX = "jdbc:h2:";
+
+	private static final String FILE_PREFIX = "file:";
+
+	private static final char SETTING_SEPARATOR = ';';
+
+	private static final String NO_QUERY_CACHE = QUERY_CACHE_SIZE_SETTING + "=0";
 
 	private static final String DEFAULT_DRIVER_NAME = "org.h2.jdbcx.JdbcDataSource";
 
@@ -43,9 +77,28 @@ public class H2DataSourceProxy extends ReadOnlySupportDataSource {
 	 * Creates a new {@link H2DataSourceProxy}.
 	 */
 	public H2DataSourceProxy(Properties config) throws SQLException, ConfigurationException {
-		super(DEFAULT_DRIVER_NAME, config);
+		super(DEFAULT_DRIVER_NAME, withoutQueryCache(config));
 
 		_config = config;
+	}
+
+	/**
+	 * A copy of the given configuration whose database URL switches off the statement cache, if
+	 * the URL does not set {@link #QUERY_CACHE_SIZE_SETTING} itself.
+	 */
+	private static Properties withoutQueryCache(Properties config) {
+		String url = config.getProperty(URL_OPTION);
+		if (url == null || setsQueryCacheSize(url)) {
+			return config;
+		}
+		Properties result = new Properties();
+		result.putAll(config);
+		result.setProperty(URL_OPTION, url + SETTING_SEPARATOR + NO_QUERY_CACHE);
+		return result;
+	}
+
+	private static boolean setsQueryCacheSize(String url) {
+		return url.toUpperCase(Locale.ROOT).contains(QUERY_CACHE_SIZE_SETTING);
 	}
 
 	@Override
@@ -102,19 +155,22 @@ public class H2DataSourceProxy extends ReadOnlySupportDataSource {
 		}
 	}
 
-	private Path getDatabasePath() {
-		return Paths.get(getDatabaseUrl() + DATABASE_FILENAME_EXTENSION).toAbsolutePath().normalize();
+	/**
+	 * The file of the database the configured URL opens.
+	 */
+	public Path getDatabasePath() {
+		return Paths.get(getDatabaseName() + DATABASE_FILENAME_EXTENSION).toAbsolutePath().normalize();
 	}
 
-	private String getDatabaseUrl() {
-		String url = _config.getProperty("url");
-		int separatorIndex = url.lastIndexOf(";");
-
-		if (separatorIndex > -1) {
-			return url.substring("jdbc:h2:".length(), separatorIndex);
-		} else {
-			return url.substring("jdbc:h2:".length());
+	private String getDatabaseName() {
+		String url = _config.getProperty(URL_OPTION);
+		int separatorIndex = url.indexOf(SETTING_SEPARATOR);
+		String name = separatorIndex > -1 ? url.substring(URL_PREFIX.length(), separatorIndex)
+			: url.substring(URL_PREFIX.length());
+		if (name.startsWith(FILE_PREFIX)) {
+			return name.substring(FILE_PREFIX.length());
 		}
+		return name;
 	}
 
 	private String getNewDatabaseVersion() {
@@ -134,11 +190,11 @@ public class H2DataSourceProxy extends ReadOnlySupportDataSource {
 	}
 
 	private String getUser() {
-		return _config.getProperty("user");
+		return _config.getProperty(USER_OPTION);
 	}
 
 	private String getPassword() {
-		return _config.getProperty("password");
+		return _config.getProperty(PASSWORD_OPTION);
 	}
 
 	private static boolean isDatabase(Path database) {

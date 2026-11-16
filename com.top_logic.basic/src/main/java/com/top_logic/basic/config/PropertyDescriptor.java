@@ -8,12 +8,14 @@ package com.top_logic.basic.config;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.Mapping;
+import com.top_logic.basic.config.annotation.AllowedValues;
 import com.top_logic.basic.config.annotation.Container;
 import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Derived;
@@ -147,6 +149,19 @@ public interface PropertyDescriptor {
 	 * <code>null</code>.
 	 */
 	ConfigurationValueBinding getValueBinding();
+
+	/**
+	 * The values this property accepts, or <code>null</code>, if the property is not restricted
+	 * to a fixed list of values.
+	 *
+	 * <p>
+	 * For a property with multiple values (a list or an array), the allowed values restrict each
+	 * element.
+	 * </p>
+	 *
+	 * @see AllowedValues
+	 */
+	List<?> getAllowedValues();
 
 	/**
 	 * The {@link ConfigurationDescriptor} defining this property.

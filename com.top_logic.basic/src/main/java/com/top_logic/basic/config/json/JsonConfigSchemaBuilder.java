@@ -9,8 +9,10 @@ import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
 
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.Logger;
@@ -21,6 +23,7 @@ import com.top_logic.basic.config.ConfigurationDescriptorConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationValueBinding;
+import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.DefaultConfigConstructorScheme;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
@@ -1240,7 +1243,15 @@ public class JsonConfigSchemaBuilder {
 		// A list in a format of separated elements is read from a JSON array as well, see
 		// JsonConfigurationReader.
 		if (!asMapKey && property.getValueProvider() instanceof CommaSeparatedListValueProvider<?> listFormat) {
-			return ArraySchema.create().setItems(elementSchema(property, listFormat));
+			Schema elementSchema = property.getAllowedValues() != null
+				? allowedValuesSchema(property.getAllowedValues(), elementSpecification(listFormat), false)
+				: elementSchema(property, listFormat);
+			return ArraySchema.create().setItems(elementSchema);
+		}
+
+		if (property.getAllowedValues() != null && !property.getType().isArray()) {
+			return allowedValuesSchema(property.getAllowedValues(), specification(property.getValueProvider()),
+				asMapKey);
 		}
 
 		// Numeric types
@@ -1307,6 +1318,42 @@ public class JsonConfigSchemaBuilder {
 			return formatSchema.buildSchema(property);
 		}
 		return StringSchema.create();
+	}
+
+	/**
+	 * The {@link EnumSchema} of the {@link PropertyDescriptor#getAllowedValues() allowed values} of
+	 * a property.
+	 *
+	 * @param allowedValues
+	 *        The allowed values (of a single element for a list property).
+	 * @param specification
+	 *        The text format of a single value.
+	 * @param asMapKey
+	 *        Whether the schema describes a map key, which is a string in JSON.
+	 * @return An {@link EnumSchema} listing numbers and truth values as JSON numbers and truth
+	 *         values, and all other values in their text format.
+	 */
+	private static Schema allowedValuesSchema(List<?> allowedValues, Function<Object, String> specification,
+			boolean asMapKey) {
+		EnumSchema schema = EnumSchema.create();
+		for (Object value : allowedValues) {
+			if (!asMapKey && (value instanceof Number || value instanceof Boolean)) {
+				schema.addEnumLiteral(JSON.toString(value));
+			} else {
+				schema.addEnumLiteral(JSON.toString(specification.apply(value)));
+			}
+		}
+		return schema;
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private static Function<Object, String> specification(ConfigurationValueProvider format) {
+		return value -> format.getSpecification(value);
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private static Function<Object, String> elementSpecification(CommaSeparatedListValueProvider listFormat) {
+		return value -> listFormat.getElementSpecification(value);
 	}
 
 	/**

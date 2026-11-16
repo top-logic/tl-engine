@@ -112,6 +112,12 @@ public class FlowDiagramClientControl implements DiagramContext {
 	/** {@link FontFaceSet#getStatus()} when no font is being loaded. */
 	private static final String FONTS_STATUS_LOADED = "loaded";
 
+	/** CSS class of the element showing the zoom level while the user zooms. */
+	private static final String ZOOM_DISPLAY_CSS_CLASS = "zoomDisplay";
+
+	/** CSS class hiding the {@link #ZOOM_DISPLAY_CSS_CLASS zoom display}. */
+	private static final String INVISIBLE_CSS_CLASS = "invisible";
+
 	private class Scope extends DefaultScope {
 
 		private double _changeTimeout;
@@ -294,13 +300,13 @@ public class FlowDiagramClientControl implements DiagramContext {
 		((Element) _control).setAttribute("draggable", "true");
 
 		_zoomDisplay = (HTMLDivElement) DomGlobal.document.createElement("div");
-		_zoomDisplay.classList.add("zoomDisplay");
+		_zoomDisplay.classList.add(ZOOM_DISPLAY_CSS_CLASS, INVISIBLE_CSS_CLASS);
 		_control.appendChild(_zoomDisplay);
 
 		_hideZoomDisplay = new Timer() {
 			@Override
 			public void run() {
-				_zoomDisplay.classList.add("invisible");
+				_zoomDisplay.classList.add(INVISIBLE_CSS_CLASS);
 			}
 		};
 
@@ -377,7 +383,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 				_diagram = diagram;
 
 				_viewbox = _svg.getViewBox().getBaseVal();
-				calcZoomLevel();
+				calcZoomLevel(false);
 
 				Element selectedPart = _control.querySelector(".tlSelected");
 				if (selectedPart != null && !diagram.isFixedView()) {
@@ -611,7 +617,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 					if (zL < 100) {
 						factor = factor * 2;
 					}
-					zoomSVG(factor, event.offsetX, event.offsetY);
+					zoomSVG(factor, event.offsetX, event.offsetY, true);
 				} else if (event.shiftKey) {
 					double scrollFactor = getWheelScrollFactor(evt);
 					double deltaX = event.deltaY * scrollFactor;
@@ -633,7 +639,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 			public void handleEvent(Event evt) {
 				KeyboardEvent event = (KeyboardEvent) evt;
 				if (event.key == "0" && event.ctrlKey) {
-					zoomSVG(1, 0, 0);
+					zoomSVG(1, 0, 0, true);
 				}
 			}
 		};
@@ -956,7 +962,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 				calcZoomLevel(false);
 			} else {
 				// Adapts the view box to the new size first, the layout then uses that size.
-				zoomSVG(0, 0, 0);
+				zoomSVG(0, 0, 0, false);
 				relayout();
 			}
 		} finally {
@@ -1051,10 +1057,6 @@ public class FlowDiagramClientControl implements DiagramContext {
 		panSVG(deltaX, deltaY, true);
 	}
 
-	private void calcZoomLevel() {
-		calcZoomLevel(true);
-	}
-
 	/**
 	 * Computes the {@link #_zoomLevel} from the current view box.
 	 *
@@ -1084,7 +1086,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 		}
 
 		_zoomDisplay.textContent = "Zoom: " + _zoomLevel + "%";
-		_zoomDisplay.classList.remove("invisible");
+		_zoomDisplay.classList.remove(INVISIBLE_CSS_CLASS);
 
 		_hideZoomDisplay.cancel();
 		_hideZoomDisplay.schedule(5 * 1000);
@@ -1143,7 +1145,18 @@ public class FlowDiagramClientControl implements DiagramContext {
 		updateServerViewbox();
 	}
 
-	void zoomSVG(double zoomFactor, double mouseX, double mouseY) {
+	/**
+	 * Changes the size of the view box by the given zoom factor around the given mouse position.
+	 *
+	 * @param zoomFactor
+	 *        The fraction of the control size by which the view box shrinks (grows, if negative);
+	 *        0 adapts the view box to a changed control size only, 1 or more resets it to the
+	 *        control size.
+	 * @param showZoomLevel
+	 *        Whether to show the resulting zoom level to the user for a moment: for a zoom gesture
+	 *        of the user, not for an adaption to a changed control size.
+	 */
+	void zoomSVG(double zoomFactor, double mouseX, double mouseY, boolean showZoomLevel) {
 		if (_viewbox == null || isFixedView()) {
 			return;
 		}
@@ -1151,7 +1164,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 		if (zoomFactor >= 1) {
 			_viewbox.setWidth(_controlW);
 			_viewbox.setHeight(_controlH);
-			calcZoomLevel();
+			calcZoomLevel(showZoomLevel);
 			panSVG(-_viewbox.getX(), -_viewbox.getY(), true);
 		} else {
 			float factor = (float) getFactor();
@@ -1194,7 +1207,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 			_viewbox.setWidth(newVBW);
 			_viewbox.setHeight(newVBH);
 
-			calcZoomLevel();
+			calcZoomLevel(showZoomLevel);
 
 			double deltaX = mouseX * zoomFactor;
 			double deltaY = mouseY * zoomFactor;

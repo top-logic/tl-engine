@@ -30,6 +30,8 @@ import com.nimbusds.oauth2.sdk.pkce.CodeVerifier;
 import com.nimbusds.oauth2.sdk.util.URLUtils;
 
 import com.top_logic.basic.AliasManager;
+import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.oauth.server.AuthorizationRefusal;
 import com.top_logic.oauth.server.I18NConstants;
 import com.top_logic.oauth.server.OAuthAuthorizationServer;
 import com.top_logic.oauth.server.OAuthException;
@@ -55,6 +57,9 @@ public class TestOAuthAuthorizationEndpoint extends AbstractOAuthServerTest {
 
 	/** The consent page configured for the test. */
 	private static final String CONSENT_PAGE = "/view/oauth-consent.view.xml";
+
+	/** The refusal page configured for the test. */
+	private static final String REFUSAL_PAGE = "/view/oauth-refused.view.xml";
 
 	/** The parameter of an authorization request naming the response type. */
 	private static final String RESPONSE_TYPE_PARAMETER = "response_type";
@@ -98,9 +103,10 @@ public class TestOAuthAuthorizationEndpoint extends AbstractOAuthServerTest {
 		assertEquals(state, authorization.state());
 	}
 
-		/**
+	/**
 	 * An authorization request reaching the application over plain HTTP on a host other than the
-	 * loopback interface is refused with a page, since no conforming client could redeem the code.
+	 * loopback interface is refused on the refusal page, since no conforming client could redeem
+	 * the code.
 	 */
 	public void testPlainHttpOnNetworkHostShowsPage() throws Exception {
 		String clientId = register(REDIRECT_URI);
@@ -111,11 +117,8 @@ public class TestOAuthAuthorizationEndpoint extends AbstractOAuthServerTest {
 		System.setProperty(HOST_VARIABLE, NETWORK_HOST);
 		AliasManager.getInstance().reload();
 		try {
-			WebResponse response = get(path);
-
-			assertEquals(400, response.getResponseCode());
-			assertNull(response.getHeaderField(LOCATION_HEADER));
-			assertTrue(response.getText(), response.getText().contains(NETWORK_HOST));
+			String detail = assertRefusalPage(get(path), AuthorizationRefusal.INSECURE_CONNECTION);
+			assertTrue(detail, detail.startsWith(NETWORK_HOST));
 		} finally {
 			if (previous == null) {
 				System.clearProperty(HOST_VARIABLE);
@@ -126,14 +129,53 @@ public class TestOAuthAuthorizationEndpoint extends AbstractOAuthServerTest {
 		}
 	}
 
-/**
+	/**
 	 * An unknown client is told the person, never the redirect URI.
 	 */
 	public void testUnknownClientShowsPage() throws Exception {
-		WebResponse response = get(authorizePath(request(OAuthAuthorizationServer.CLIENT_ID_PREFIX + "unknown",
-			REDIRECT_URI, new CodeVerifier(), resource(RESOURCE_PATH), new State(), CodeChallengeMethod.S256)));
+		String clientId = OAuthAuthorizationServer.CLIENT_ID_PREFIX + "unknown";
+		WebResponse response = get(authorizePath(request(clientId, REDIRECT_URI, new CodeVerifier(),
+			resource(RESOURCE_PATH), new State(), CodeChallengeMethod.S256)));
 
-		assertRefusalPage(response);
+		assertEquals(clientId, assertRefusalPage(response, AuthorizationRefusal.UNKNOWN_CLIENT));
+	}
+
+	/**
+	 * Without a refusal page, a refusal is told on a plain page of the endpoint.
+	 */
+	public void testRefusalWithoutRefusalPage() throws Exception {
+		OAuthAuthorizationServer.Config config = server().getConfig();
+		PropertyDescriptor property = config.descriptor().getProperty(OAuthAuthorizationServer.Config.REFUSAL_PAGE);
+		Object refusalPage = config.value(property);
+		config.update(property, null);
+		try {
+			String clientId = OAuthAuthorizationServer.CLIENT_ID_PREFIX + "unknown";
+			WebResponse response = get(authorizePath(request(clientId, REDIRECT_URI, new CodeVerifier(),
+				resource(RESOURCE_PATH), new State(), CodeChallengeMethod.S256)));
+
+			assertEquals(response.getText(), 400, response.getResponseCode());
+			assertNull(response.getHeaderField(LOCATION_HEADER));
+			assertTrue(response.getContentType(),
+				response.getContentType().startsWith(OAuthServerServlet.HTML_MEDIA_TYPE));
+			assertTrue(response.getText(), response.getText().contains(clientId));
+		} finally {
+			config.update(property, refusalPage);
+		}
+	}
+
+	/**
+	 * A request that cannot be parsed and names no known client is told the person.
+	 */
+	public void testMalformedRequestOfUnknownClientShowsPage() throws Exception {
+		Map<String, List<String>> parameters = new HashMap<>(URLUtils.parseParameters(request(
+			OAuthAuthorizationServer.CLIENT_ID_PREFIX + "unknown", REDIRECT_URI, new CodeVerifier(),
+			resource(RESOURCE_PATH), new State(), CodeChallengeMethod.S256).toQueryString()));
+		parameters.remove(RESPONSE_TYPE_PARAMETER);
+
+		WebResponse response =
+			get(OAuthAuthorizationServer.AUTHORIZATION_PATH + '?' + URLUtils.serializeParameters(parameters));
+
+		assertNull(assertRefusalPage(response, AuthorizationRefusal.MALFORMED_REQUEST));
 	}
 
 	/**
@@ -146,7 +188,7 @@ public class TestOAuthAuthorizationEndpoint extends AbstractOAuthServerTest {
 		WebResponse response = get(authorizePath(request(clientId, other, new CodeVerifier(),
 			resource(RESOURCE_PATH), new State(), CodeChallengeMethod.S256)));
 
-		assertRefusalPage(response);
+		assertEquals(other.toString(), assertRefusalPage(response, AuthorizationRefusal.UNREGISTERED_REDIRECT_URI));
 	}
 
 	/**
@@ -318,6 +360,35 @@ public class TestOAuthAuthorizationEndpoint extends AbstractOAuthServerTest {
 		assertNull(OAuthFunctions.request(pending));
 	}
 
+	/**
+	 * The TL-Script functions of the refusal page name the reason with the given detail, and fall
+	 * back to a general text for a reason that is not known.
+	 */
+	public void testRefusalPageFunctions() {
+		assertEquals(I18NConstants.ERROR_AUTHORIZATION_WITHOUT_TLS__URL.fill(NETWORK_HOST),
+			OAuthFunctions.refusalMessage(AuthorizationRefusal.INSECURE_CONNECTION.name(), NETWORK_HOST));
+		assertEquals(I18NConstants.REFUSAL_HINT_INSECURE_CONNECTION__LOCAL_URL.fill("http://localhost:8080/app"),
+			OAuthFunctions.refusalHint(AuthorizationRefusal.INSECURE_CONNECTION.name(), "http://ai:8080/app"));
+		assertEquals(I18NConstants.REFUSAL_HINT_INSECURE_CONNECTION,
+			OAuthFunctions.refusalHint(AuthorizationRefusal.INSECURE_CONNECTION.name(), null));
+		assertEquals(I18NConstants.REFUSAL_UNKNOWN_CLIENT__CLIENT.fill("client"),
+			OAuthFunctions.refusalMessage(AuthorizationRefusal.UNKNOWN_CLIENT.name(), "client"));
+		assertEquals(I18NConstants.REFUSAL_UNREGISTERED_REDIRECT_URI__URI.fill(REDIRECT_URI.toString()),
+			OAuthFunctions.refusalMessage(AuthorizationRefusal.UNREGISTERED_REDIRECT_URI.name(),
+				REDIRECT_URI.toString()));
+		assertEquals(I18NConstants.REFUSAL_MALFORMED_REQUEST,
+			OAuthFunctions.refusalMessage(AuthorizationRefusal.MALFORMED_REQUEST.name(), null));
+		assertEquals(I18NConstants.REFUSAL_HINT_RETRY,
+			OAuthFunctions.refusalHint(AuthorizationRefusal.UNKNOWN_CLIENT.name(), "client"));
+
+		// Missing detail, unknown or missing reason.
+		assertEquals(I18NConstants.REFUSAL_UNKNOWN_REASON,
+			OAuthFunctions.refusalMessage(AuthorizationRefusal.UNKNOWN_CLIENT.name(), null));
+		assertEquals(I18NConstants.REFUSAL_UNKNOWN_REASON, OAuthFunctions.refusalMessage("garbled", "x"));
+		assertEquals(I18NConstants.REFUSAL_UNKNOWN_REASON, OAuthFunctions.refusalMessage(null, null));
+		assertEquals(I18NConstants.REFUSAL_HINT_RETRY, OAuthFunctions.refusalHint("garbled", null));
+	}
+
 	private AuthorizationRequest request(String clientId, URI redirectUri, CodeVerifier verifier, URI resource,
 			State state, CodeChallengeMethod method) {
 		return new AuthorizationRequest.Builder(ResponseType.CODE, new ClientID(clientId))
@@ -359,10 +430,25 @@ public class TestOAuthAuthorizationEndpoint extends AbstractOAuthServerTest {
 		return parsed.toErrorResponse();
 	}
 
-	private static void assertRefusalPage(WebResponse response) throws Exception {
-		assertEquals(response.getText(), 400, response.getResponseCode());
-		assertNull(response.getHeaderField(LOCATION_HEADER));
-		assertTrue(response.getContentType(), response.getContentType().startsWith(OAuthServerServlet.HTML_MEDIA_TYPE));
+	/**
+	 * Checks that the given answer redirects to the refusal page with the given reason.
+	 *
+	 * @return The detail of the refusal, <code>null</code> if there is none.
+	 */
+	private static String assertRefusalPage(WebResponse response, AuthorizationRefusal expectedReason)
+			throws Exception {
+		assertEquals(response.getText(), 302, response.getResponseCode());
+		String location = response.getHeaderField(LOCATION_HEADER);
+		URI target = URI.create(location);
+		assertTrue(location, target.getPath().endsWith(REFUSAL_PAGE));
+		Map<String, List<String>> parameters = URLUtils.parseParameters(target.getRawQuery());
+		assertEquals(location, List.of(expectedReason.name()), parameters.get(OAuthAuthorizationServer.REASON_PARAMETER));
+		List<String> detail = parameters.get(OAuthAuthorizationServer.DETAIL_PARAMETER);
+		if (detail == null) {
+			return null;
+		}
+		assertEquals(location, 1, detail.size());
+		return detail.get(0);
 	}
 
 	private interface Refusable {

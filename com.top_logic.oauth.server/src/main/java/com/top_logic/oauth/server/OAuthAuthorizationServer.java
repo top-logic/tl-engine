@@ -178,6 +178,18 @@ public class OAuthAuthorizationServer extends ConfiguredManagedClass<OAuthAuthor
 	public static final String PENDING_PARAMETER = "pending";
 
 	/**
+	 * The query parameter of the {@link Config#getRefusalPage() refusal page} carrying the
+	 * {@link AuthorizationRefusal#name() reason} of the refusal.
+	 */
+	public static final String REASON_PARAMETER = "reason";
+
+	/**
+	 * The query parameter of the {@link Config#getRefusalPage() refusal page} carrying the value
+	 * the message of the refusal names, see {@link AuthorizationRefusal#message(String)}.
+	 */
+	public static final String DETAIL_PARAMETER = "detail";
+
+	/**
 	 * Prefix of the random value whose hash stands in {@link OAuthToken#getPredecessorHash()} of a
 	 * token that replaced no other.
 	 */
@@ -264,6 +276,11 @@ public class OAuthAuthorizationServer extends ConfiguredManagedClass<OAuthAuthor
 		 * Configuration name of {@link #getConsentPage()}.
 		 */
 		String CONSENT_PAGE = "consent-page";
+
+		/**
+		 * Configuration name of {@link #getRefusalPage()}.
+		 */
+		String REFUSAL_PAGE = "refusal-page";
 
 		/**
 		 * Configuration name of {@link #getPendingAuthorizationLifetime()}.
@@ -401,6 +418,24 @@ public class OAuthAuthorizationServer extends ConfiguredManagedClass<OAuthAuthor
 		@Name(CONSENT_PAGE)
 		@Nullable
 		String getConsentPage();
+
+		/**
+		 * The page telling the person why an authorization request is refused, as path relative to
+		 * the context path of the application, e.g. <code>/view/oauth-refused.view.xml</code>.
+		 *
+		 * <p>
+		 * The {@link OAuthAuthorizationServer#AUTHORIZATION_PATH authorization endpoint} sends the
+		 * browser there when it cannot send the refusal back to the client, with the
+		 * {@link AuthorizationRefusal reason} in the query parameter
+		 * {@link OAuthAuthorizationServer#REASON_PARAMETER} and the value its message names in
+		 * {@link OAuthAuthorizationServer#DETAIL_PARAMETER}. The page is contributed by the module
+		 * of the user interface (<code>tl-oauth-server-view</code> for the React UI); without one,
+		 * the authorization endpoint answers with a plain page of its own.
+		 * </p>
+		 */
+		@Name(REFUSAL_PAGE)
+		@Nullable
+		String getRefusalPage();
 
 		/**
 		 * How long a person has to decide about an authorization request, logging in included.

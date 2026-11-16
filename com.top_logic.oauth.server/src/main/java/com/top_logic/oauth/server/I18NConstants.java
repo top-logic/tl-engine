@@ -24,12 +24,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NO_REDIRECT_URI;
 
 	/**
-	 * @en The application is reached at "{0}" over plain HTTP. An OAuth client sends the
-	 *     authorization code and its tokens only over HTTPS (or to localhost), so a sign-in here
-	 *     could never complete. Reach the application over HTTPS.
-	 * @de Die Anwendung wird unter "{0}" über unverschlüsseltes HTTP erreicht. Ein OAuth-Client
-	 *     sendet den Autorisierungscode und seine Tokens nur über HTTPS (oder an localhost), daher
-	 *     könnte eine Anmeldung hier nie abgeschlossen werden. Rufen Sie die Anwendung über HTTPS auf.
+	 * Message of the refusal {@link AuthorizationRefusal#INSECURE_CONNECTION}.
+	 *
+	 * @en The requesting application reaches this application at "{0}" over an unencrypted
+	 *     connection. A sign-in is only possible over an encrypted connection.
+	 * @de Die anfragende Anwendung erreicht diese Anwendung unter "{0}" über eine unverschlüsselte
+	 *     Verbindung. Eine Anmeldung ist nur über eine verschlüsselte Verbindung möglich.
 	 */
 	public static ResKey1 ERROR_AUTHORIZATION_WITHOUT_TLS__URL;
 
@@ -452,10 +452,81 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_CONSENT_WITHOUT_LOGIN;
 
 	/**
-	 * @en The authorization request was refused
-	 * @de Die Autorisierungsanfrage wurde abgelehnt
+	 * @en Sign-in not possible
+	 * @de Anmeldung nicht möglich
 	 */
 	public static ResKey AUTHORIZATION_REFUSED_TITLE;
+
+	/**
+	 * Message of the refusal {@link AuthorizationRefusal#UNKNOWN_CLIENT}.
+	 *
+	 * @en The application "{0}" asking for access to your account is not known here or could not
+	 *     be verified.
+	 * @de Die Anwendung "{0}", die um Zugriff auf Ihr Konto bittet, ist hier nicht bekannt oder
+	 *     konnte nicht überprüft werden.
+	 */
+	public static ResKey1 REFUSAL_UNKNOWN_CLIENT__CLIENT;
+
+	/**
+	 * Message of the refusal {@link AuthorizationRefusal#UNREGISTERED_REDIRECT_URI}.
+	 *
+	 * @en After the sign-in, your browser would be sent to "{0}", an address the requesting
+	 *     application has not registered.
+	 * @de Nach der Anmeldung würde Ihr Browser zu "{0}" geschickt, einer Adresse, die die anfragende
+	 *     Anwendung nicht registriert hat.
+	 */
+	public static ResKey1 REFUSAL_UNREGISTERED_REDIRECT_URI__URI;
+
+	/**
+	 * Message of the refusal {@link AuthorizationRefusal#MALFORMED_REQUEST}.
+	 *
+	 * @en The sign-in request of the requesting application is incomplete or invalid.
+	 * @de Die Anmeldeanfrage der anfragenden Anwendung ist unvollständig oder ungültig.
+	 */
+	public static ResKey REFUSAL_MALFORMED_REQUEST;
+
+	/**
+	 * Message of a refused authorization request whose reason is not known.
+	 *
+	 * @en The sign-in request was refused.
+	 * @de Die Anmeldeanfrage wurde abgelehnt.
+	 */
+	public static ResKey REFUSAL_UNKNOWN_REASON;
+
+	/**
+	 * What to do about the refusal {@link AuthorizationRefusal#INSECURE_CONNECTION}, with the
+	 * address of the application on the loopback interface as example.
+	 *
+	 * @en Enter the address of this application with "https://" in the requesting application. If
+	 *     this application runs on your own computer, an address with "localhost" works as well,
+	 *     e.g. "{0}".
+	 * @de Tragen Sie in der anfragenden Anwendung die Adresse dieser Anwendung mit "https://" ein.
+	 *     Läuft diese Anwendung auf Ihrem eigenen Rechner, funktioniert auch eine Adresse mit
+	 *     "localhost", z. B. "{0}".
+	 */
+	public static ResKey1 REFUSAL_HINT_INSECURE_CONNECTION__LOCAL_URL;
+
+	/**
+	 * What to do about the refusal {@link AuthorizationRefusal#INSECURE_CONNECTION}.
+	 *
+	 * @en Enter the address of this application with "https://" in the requesting application. If
+	 *     this application runs on your own computer, an address with "localhost" works as well.
+	 * @de Tragen Sie in der anfragenden Anwendung die Adresse dieser Anwendung mit "https://" ein.
+	 *     Läuft diese Anwendung auf Ihrem eigenen Rechner, funktioniert auch eine Adresse mit
+	 *     "localhost".
+	 */
+	public static ResKey REFUSAL_HINT_INSECURE_CONNECTION;
+
+	/**
+	 * What to do about a refused authorization request that the requesting application has to
+	 * repeat.
+	 *
+	 * @en Start the sign-in again from the requesting application. If the problem persists, contact
+	 *     the administrator of this application.
+	 * @de Starten Sie die Anmeldung erneut aus der anfragenden Anwendung. Besteht das Problem
+	 *     weiter, wenden Sie sich an die Administration dieser Anwendung.
+	 */
+	public static ResKey REFUSAL_HINT_RETRY;
 
 	/**
 	 * {@link com.top_logic.service.openapi.server.authentication.conf.EndpointCredential#credential()

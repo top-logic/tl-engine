@@ -23,8 +23,9 @@ import com.top_logic.util.error.TopLogicException;
 
 /**
  * TL-Script functions of the consent page of the {@link OAuthAuthorizationServer}, on which a
- * person decides about the authorization request of a client, and of the list of the authorizations
- * a person gave ({@link #revoke(Object)}).
+ * person decides about the authorization request of a client, of the refusal page
+ * ({@link #refusalMessage(String, String)}), and of the list of the authorizations a person gave
+ * ({@link #revoke(Object)}).
  *
  * <p>
  * Every function of the consent page takes the identifier of the pending authorization, which the
@@ -86,6 +87,45 @@ public class OAuthFunctions extends TLScriptFunctions {
 		} catch (OAuthException ex) {
 			return ex.getErrorKey();
 		}
+	}
+
+	/**
+	 * The message of the refusal page telling the person why an authorization request is refused.
+	 *
+	 * @param reason
+	 *        The {@link AuthorizationRefusal#name() reason}, from the query parameter
+	 *        {@link OAuthAuthorizationServer#REASON_PARAMETER} of the refusal page.
+	 * @param detail
+	 *        The value the message names, from the query parameter
+	 *        {@link OAuthAuthorizationServer#DETAIL_PARAMETER}.
+	 * @return The message naming the reason; a general message if the reason is unknown.
+	 *
+	 * @see AuthorizationRefusal#message(String)
+	 */
+	@Label("Message of a refused OAuth authorization request")
+	@SideEffectFree
+	public static ResKey refusalMessage(String reason, String detail) {
+		AuthorizationRefusal refusal = AuthorizationRefusal.fromName(reason);
+		return refusal == null ? I18NConstants.REFUSAL_UNKNOWN_REASON : refusal.message(detail);
+	}
+
+	/**
+	 * The hint of the refusal page telling the person what to do about a refused authorization
+	 * request.
+	 *
+	 * @param reason
+	 *        See {@link #refusalMessage(String, String)}.
+	 * @param detail
+	 *        See {@link #refusalMessage(String, String)}.
+	 * @return The hint what to do; the hint to start the sign-in again if the reason is unknown.
+	 *
+	 * @see AuthorizationRefusal#hint(String)
+	 */
+	@Label("Hint for a refused OAuth authorization request")
+	@SideEffectFree
+	public static ResKey refusalHint(String reason, String detail) {
+		AuthorizationRefusal refusal = AuthorizationRefusal.fromName(reason);
+		return refusal == null ? I18NConstants.REFUSAL_HINT_RETRY : refusal.hint(detail);
 	}
 
 	/**

@@ -7,6 +7,7 @@
 		<config service-class="com.top_logic.oauth.server.OAuthAuthorizationServer">
 			<instance class="com.top_logic.oauth.server.OAuthAuthorizationServer"
 				consent-page="/view/oauth-consent.view.xml"
+				refusal-page="/view/oauth-refused.view.xml"
 			>
 				<!-- Answers from a map instead of the network. -->
 				<client-metadata-fetcher class="test.com.top_logic.oauth.server.AbstractOAuthServerTest$StaticFetcher"/>

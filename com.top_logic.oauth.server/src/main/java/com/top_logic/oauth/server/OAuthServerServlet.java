@@ -97,7 +97,10 @@ public class OAuthServerServlet extends HttpServlet {
 	/** The media type of the metadata and of every answer of the endpoints. */
 	public static final String JSON_MEDIA_TYPE = "application/json";
 
-	/** The media type of the page showing a refused authorization request. */
+	/**
+	 * The media type of the plain page showing a refused authorization request, when there is no
+	 * {@link OAuthAuthorizationServer.Config#getRefusalPage() refusal page}.
+	 */
 	public static final String HTML_MEDIA_TYPE = "text/html";
 
 	/** Value of {@link #CACHE_CONTROL_HEADER} for the answers of the authorization endpoint. */
@@ -189,10 +192,12 @@ public class OAuthServerServlet extends HttpServlet {
 	 * The authorization endpoint: checks the request and sends the browser to the consent page.
 	 *
 	 * <p>
-	 * A request whose client or redirect URI is not known to be valid is answered with a page
-	 * naming the problem ({@link HttpServletResponse#SC_BAD_REQUEST}), never with a redirect. Any other refusal goes
-	 * back to the redirect URI of the client with the error and the state. An accepted request is
-	 * kept as pending authorization, and the browser is sent to the
+	 * A request reaching the application over an insecure connection, or whose client or redirect
+	 * URI is not known to be valid, is never sent back to the client: the browser goes to the
+	 * {@link OAuthAuthorizationServer.Config#getRefusalPage() refusal page}, see
+	 * {@link #refuse(OAuthAuthorizationServer, HttpServletRequest, HttpServletResponse, AuthorizationRefusal, String)}.
+	 * Any other refusal goes back to the redirect URI of the client with the error and the state.
+	 * An accepted request is kept as pending authorization, and the browser is sent to the
 	 * {@link OAuthAuthorizationServer.Config#getConsentPage() consent page} with its identifier in
 	 * the parameter {@link OAuthAuthorizationServer#PENDING_PARAMETER}.
 	 * </p>
@@ -212,8 +217,7 @@ public class OAuthServerServlet extends HttpServlet {
 		if (!OAuthAuthorizationServer.isSecure(context)) {
 			Logger.info("Refused an authorization request reaching the application over plain HTTP at '"
 				+ context.applicationUrl() + "'.", OAuthServerServlet.class);
-			writeRefusal(resp, Resources.getLogInstance()
-				.getString(I18NConstants.ERROR_AUTHORIZATION_WITHOUT_TLS__URL.fill(context.applicationUrl())));
+			refuse(server, req, resp, AuthorizationRefusal.INSECURE_CONNECTION, context.applicationUrl());
 			return;
 		}
 
@@ -222,7 +226,7 @@ public class OAuthServerServlet extends HttpServlet {
 			request = AuthorizationRequest.parse(parameters(req));
 		} catch (ParseException ex) {
 			Logger.info("Refused a malformed authorization request: " + ex.getMessage(), OAuthServerServlet.class);
-			refuseMalformed(server, ex, resp);
+			refuseMalformed(server, ex, req, resp);
 			return;
 		}
 
@@ -236,7 +240,7 @@ public class OAuthServerServlet extends HttpServlet {
 				resp.sendRedirect(new AuthorizationErrorResponse(request.getRedirectionURI(), ex.toErrorObject(),
 					request.getState(), request.getResponseMode()).toURI().toString());
 			} else {
-				writeRefusal(resp, ex.description());
+				refuseUnredirectable(server, request, ex, req, resp);
 			}
 			return;
 		}
@@ -261,15 +265,78 @@ public class OAuthServerServlet extends HttpServlet {
 	}
 
 	/**
+	 * The URL of the refusal page for the given refusal.
+	 *
+	 * @param contextPath
+	 *        The context path of the application.
+	 * @param refusalPage
+	 *        The {@link OAuthAuthorizationServer.Config#getRefusalPage() refusal page}, relative to
+	 *        the context path.
+	 * @param reason
+	 *        Why the request is refused.
+	 * @param detail
+	 *        The value the message of the refusal names, <code>null</code> for none.
+	 */
+	public static String refusalUrl(String contextPath, String refusalPage, AuthorizationRefusal reason,
+			String detail) {
+		StringBuilder result = new StringBuilder(contextPath).append(refusalPage);
+		result.append(refusalPage.indexOf('?') < 0 ? '?' : '&');
+		result.append(OAuthAuthorizationServer.REASON_PARAMETER).append('=').append(reason.name());
+		if (detail != null) {
+			result.append('&').append(OAuthAuthorizationServer.DETAIL_PARAMETER).append('=')
+				.append(URLEncoder.encode(detail, StandardCharsets.UTF_8));
+		}
+		return result.toString();
+	}
+
+	/**
+	 * Answers an authorization request that is refused without a redirect to the client: sends
+	 * the browser to the {@link OAuthAuthorizationServer.Config#getRefusalPage() refusal page}, or,
+	 * if there is none, writes a plain page with status {@link HttpServletResponse#SC_BAD_REQUEST}.
+	 *
+	 * @param reason
+	 *        Why the request is refused.
+	 * @param detail
+	 *        The value the message of the refusal names, see {@link AuthorizationRefusal}.
+	 */
+	private static void refuse(OAuthAuthorizationServer server, HttpServletRequest req, HttpServletResponse resp,
+			AuthorizationRefusal reason, String detail) throws IOException {
+		String refusalPage = server.getConfig().getRefusalPage();
+		if (refusalPage != null) {
+			resp.sendRedirect(refusalUrl(req.getContextPath(), refusalPage, reason, detail));
+		} else {
+			writeRefusal(resp, reason, detail);
+		}
+	}
+
+	/**
+	 * Answers a parsed authorization request whose client or redirect URI is not known to be valid.
+	 */
+	private static void refuseUnredirectable(OAuthAuthorizationServer server, AuthorizationRequest request,
+			OAuthException ex, HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		ClientID clientId = request.getClientID();
+		URI redirectUri = request.getRedirectionURI();
+		if (clientId == null) {
+			refuse(server, req, resp, AuthorizationRefusal.MALFORMED_REQUEST, null);
+		} else if (OAuth2Error.INVALID_CLIENT.getCode().equals(ex.getError().getCode())) {
+			refuse(server, req, resp, AuthorizationRefusal.UNKNOWN_CLIENT, clientId.getValue());
+		} else if (redirectUri == null) {
+			refuse(server, req, resp, AuthorizationRefusal.MALFORMED_REQUEST, null);
+		} else {
+			refuse(server, req, resp, AuthorizationRefusal.UNREGISTERED_REDIRECT_URI, redirectUri.toString());
+		}
+	}
+
+	/**
 	 * Answers an authorization request that cannot be parsed.
 	 *
 	 * <p>
 	 * The error goes back to the client only if the request names a known client and one of its
-	 * redirect URIs; otherwise the page shows it.
+	 * redirect URIs; otherwise the refusal page shows it.
 	 * </p>
 	 */
 	private static void refuseMalformed(OAuthAuthorizationServer server, ParseException ex,
-			HttpServletResponse resp) throws IOException {
+			HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		URI redirectUri = ex.getRedirectionURI();
 		ClientID clientId = ex.getClientID();
 		if (redirectUri != null && clientId != null && isRegisteredRedirect(server, clientId, redirectUri)) {
@@ -277,7 +344,7 @@ public class OAuthServerServlet extends HttpServlet {
 				ex.getResponseMode()).toURI().toString());
 			return;
 		}
-		writeRefusal(resp, OAuthException.wireDescription(String.valueOf(ex.getMessage())));
+		refuse(server, req, resp, AuthorizationRefusal.MALFORMED_REQUEST, null);
 	}
 
 	private static boolean isRegisteredRedirect(OAuthAuthorizationServer server, ClientID clientId, URI redirectUri) {
@@ -291,11 +358,13 @@ public class OAuthServerServlet extends HttpServlet {
 	}
 
 	/**
-	 * Writes the page telling the person that an authorization request is refused, with status
-	 * {@link HttpServletResponse#SC_BAD_REQUEST}.
+	 * Writes the plain page telling the person that an authorization request is refused, in the
+	 * log locale, with status {@link HttpServletResponse#SC_BAD_REQUEST}.
 	 */
-	private static void writeRefusal(HttpServletResponse resp, String reason) throws IOException {
-		String title = Resources.getLogInstance().getString(I18NConstants.AUTHORIZATION_REFUSED_TITLE);
+	private static void writeRefusal(HttpServletResponse resp, AuthorizationRefusal reason, String detail)
+			throws IOException {
+		Resources resources = Resources.getLogInstance();
+		String title = resources.getString(I18NConstants.AUTHORIZATION_REFUSED_TITLE);
 		resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 		resp.setContentType(HTML_MEDIA_TYPE);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -312,7 +381,10 @@ public class OAuthServerServlet extends HttpServlet {
 		out.writeText(title);
 		out.endTag(HTMLConstants.H1);
 		out.beginTag(HTMLConstants.PARAGRAPH);
-		out.writeText(reason);
+		out.writeText(resources.getString(reason.message(detail)));
+		out.endTag(HTMLConstants.PARAGRAPH);
+		out.beginTag(HTMLConstants.PARAGRAPH);
+		out.writeText(resources.getString(reason.hint(detail)));
 		out.endTag(HTMLConstants.PARAGRAPH);
 		out.endTag(HTMLConstants.BODY);
 		out.endTag(HTMLConstants.HTML);

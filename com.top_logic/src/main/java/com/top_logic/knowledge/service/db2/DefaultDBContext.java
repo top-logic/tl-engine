@@ -918,6 +918,7 @@ public class DefaultDBContext extends DBContext {
 
 		try {
 			kb.updateCaches(link.getUpdateEvent());
+			kb.commitPublished();
 		} catch (Throwable ex) {
 			logPublicationFailure(commitNumber, "updating the association caches", ex);
 		}
@@ -1188,7 +1189,6 @@ public class DefaultDBContext extends DBContext {
 		try {
 			publishKBCaches();
 			publishAssociationCaches();
-			kb.commitPublished();
 		} finally {
 			HistoryUtils.updateSessionAndInteractionRevision(kb, currentContext, currentRev);
 		}

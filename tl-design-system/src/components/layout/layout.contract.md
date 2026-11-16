@@ -32,7 +32,8 @@ Teil des Pakets.
 
 Ein Element, das erst beim Zeigen erscheint — Griff und Knöpfe der umsortierbaren Liste (`reorder-list.contract.md`),
 der Öffner des Compact field —, trägt `tl-reveal-on-hover`. Es gibt diese eine Regel; kein Block verbirgt oder zeigt
-eine Aktion selbst.
+eine Aktion selbst. Einzige Ergänzung: der Trichter im Tabellenkopf nimmt verborgen keine Breite
+(`table.contract.md`); ob er zu sehen ist, sagt weiter `tl-reveal-on-hover`.
 
 | Wann | Bild |
 |---|---|

@@ -162,7 +162,8 @@ const alleDeklarationen = (css, selector) => rulesOf(css)
 const ohneKommentar = (t) => t.replace(/\/\*[\s\S]*?\*\//g, '');
 
 test('Tiefe: der Trichter ist ein tl-reveal-on-hover (layout.css), nur eine gefilterte Spalte zeigt ihn immer; Sortierpfeil und Gruppenmarke bleiben', () => {
-  // Keine eigene Reveal-Regel in table.css: opacity, :focus-within und @media (hover: none) kommen aus layout.css.
+  // Keine eigene Reveal-Regel in table.css: opacity, :focus-within und @media (hover: none) kommen aus layout.css;
+  // table.css regelt nur die Breite des verborgenen Trichters (unten).
   assert.doesNotMatch(alleDeklarationen(css, '.tl-table__filter'), /opacity|transition/);
   assert.doesNotMatch(ohneKommentar(css), /focus-within|hover: none/);
   const gefiltert = alleDeklarationen(css, '.tl-table__header-cell[data-tl-state~="filtered"] .tl-table__filter');
@@ -178,6 +179,11 @@ test('Tiefe: der Trichter ist ein tl-reveal-on-hover (layout.css), nur eine gefi
   assert.ok(trichter.length >= 4);
   for (const t of trichter) assert.match(t, /\btl-reveal-on-hover\b/);
   assert.match(html, /<\/button>\s*<button[^>]*tl-table__filter/, 'der Trichter steht neben dem Sortierknopf in der Kopfzelle');
+  // Review !2206: verborgen hält der Trichter keine Breite, sonst endet der Titel einer Zahlenspalte vor den Ziffern.
+  // Nur mit Zeiger (Touch zeigt ihn immer), und nicht beim Zeigen, bei Fokus in der Zelle oder mit aktivem Filter.
+  const verborgen = '.tl-table__header-cell:not(:hover, :has(:focus-visible), [data-tl-state~="filtered"]) > .tl-table__filter';
+  assert.match(rulesOf(css).find(([sels]) => sels === verborgen)?.[1] ?? '', /(?<![-\w])width:\s*0/);
+  assert.match(ohneKommentar(css), /@media \(hover: hover\) \{\s*\.tl-table__header-cell:not\(:hover, :has\(:focus-visible\), \[data-tl-state~="filtered"\]\) > \.tl-table__filter/);
   // Was in Kraft ist, bleibt zu sehen: Sortierpfeil (im Sortierknopf) und Gruppenmarke haben keine Verbergen-Regel.
   for (const [sels, body] of rulesOf(css))
     if (/\.tl-table__mark/.test(sels)) assert.doesNotMatch(body, /opacity\s*:\s*0|visibility/, sels);

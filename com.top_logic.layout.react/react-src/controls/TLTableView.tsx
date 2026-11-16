@@ -320,6 +320,11 @@ const measureColumnContentWidth = (root: HTMLElement, columnName: string): numbe
       // the copy is in the document.
       copy.querySelectorAll('.tl-table__resize').forEach((handle) => handle.remove());
       copy.querySelectorAll('[id]').forEach((element) => element.removeAttribute('id'));
+      // Measured as revealed: a hidden funnel takes no width (table.css), but it opens up under the
+      // pointer, and a fitted heading would then lose its end to the ellipsis.
+      if (copy.classList.contains('tl-table__header-cell')) {
+        copy.dataset.tlState = ((copy.dataset.tlState ?? '') + ' filtered').trim();
+      }
       copy.style.position = 'static';
       copy.style.flex = 'none';
       copy.style.width = 'max-content';

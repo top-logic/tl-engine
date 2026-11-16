@@ -334,6 +334,12 @@ public interface ModelAccessRights {
 	 * Without a grant for the command group, the result is empty and the decision on the object
 	 * applies to the attribute.
 	 * </p>
+	 *
+	 * <p>
+	 * Attribute rights are configured for a type and an attribute name and apply to that type and
+	 * its specializations. The result is the one for objects of the
+	 * {@link TLStructuredTypePart#getOwner() owner} of the given attribute.
+	 * </p>
 	 */
 	Set<BoundedRole> getAllowedRoles(TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
 
@@ -349,9 +355,15 @@ public interface ModelAccessRights {
 	 * one bypassing the model security, independent of the object the attribute is accessed on.
 	 * </p>
 	 *
+	 * <p>
+	 * Attribute rights are configured for a type and an attribute name and apply to that type and
+	 * its specializations. The answer is conservative: it is <code>true</code> as soon as the
+	 * {@link TLStructuredTypePart#getOwner() owner} of the given attribute or any of its
+	 * specializations has an attribute-level grant for the attribute's name.
+	 * </p>
+	 *
 	 * @param attribute
-	 *        The attribute to check, any override of it decides like its
-	 *        {@link TLStructuredTypePart#getDefinition() definition}.
+	 *        The attribute to check.
 	 * @param commandGroup
 	 *        The operation on the attribute.
 	 */
@@ -506,6 +518,12 @@ public interface ModelAccessRights {
 	 *
 	 * <p>
 	 * No attribute of a deleted object is accessible to anybody.
+	 * </p>
+	 *
+	 * <p>
+	 * The attribute rights applying are those of the type of the given instance for the name of
+	 * the given attribute: the most specific attribute rights configured on the way from that type
+	 * to its generalizations.
 	 * </p>
 	 */
 	boolean isAllowed(Person person, TLObject instance, TLStructuredTypePart attribute, BoundCommandGroup commandGroup);

@@ -171,6 +171,7 @@ export { lockMode, THEME_CLIENT_API, LOCK_MODE_FUNCTION } from './bridge/theme-m
 export type { ThemeMode } from './bridge/theme-mode';
 export { rootClassName, stateAttr } from './bridge/css';
 export { tokenPx, tokenMs, useTokenPx, useTokenSwitch } from './bridge/token-px';
+export { useElementWidth } from './bridge/element-size';
 export { isEditorTarget } from './bridge/editor-target';
 export { filterOptions, labelMatches } from './bridge/filter-options';
 export { useFocusAfterRemove } from './bridge/focus-after-remove';

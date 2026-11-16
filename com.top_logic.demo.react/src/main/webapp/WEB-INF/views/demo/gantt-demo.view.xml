@@ -186,6 +186,16 @@ launch_item = reactFlowGanttSpan(model: "task:launch", rowModel: "phase:launch",
 maint_item = reactFlowGanttSpan(model: "task:maint", rowModel: "phase:maint",
     box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Support"), all: 3)), fill: "#f0f4c3"), start: 20590, end: 20620);
 
+/* A selectable milestone below the arrowhead of an edge: the edge ends at an invisible anchor on
+   the day of the milestone, so that its arrowhead covers the left half of the milestone. A click
+   there selects the milestone, since a non-interactive edge lets clicks pass through. */
+docs_approved = reactFlowGanttPoint(model: "milestone:docs-approved", rowModel: "phase:docs",
+	box: $selectable("milestone:docs-approved", reactFlowAlign(
+		reactFlowPolygon(points: list(reactFlowPoint(7, 0), reactFlowPoint(14, 7), reactFlowPoint(7, 14), reactFlowPoint(0, 7)), fillStyle: "#4caf50", stroke: "#1b5e20", thickness: 1),
+		vAlign: "middle")), at: 20585);
+docs_anchor = reactFlowGanttPoint(model: "anchor:docs-approved", rowModel: "phase:docs",
+	box: reactFlowEmpty(), at: 20585, canMove: false, canBeEdge: false);
+
 /* === Edges === */
 
 e1 = reactFlowGanttEdge(model: "dep:spec->build", sourceModel: "task:spec",  sourceEndpoint: "END", targetModel: "task:build",     targetEndpoint: "START", enforce: "STRICT",
@@ -193,6 +203,8 @@ e1 = reactFlowGanttEdge(model: "dep:spec->build", sourceModel: "task:spec",  sou
 e2 = reactFlowGanttEdge(model: "dep:build->beta", sourceModel: "task:build", sourceEndpoint: "END", targetModel: "milestone:beta", targetEndpoint: "START",
 	strokeColor: "#808080",
 	violatedStrokeColor: "#d01030", violatedStrokeWidth: 2.0, targetSymbol: "filledArrow");
+e3 = reactFlowGanttEdge(model: "dep:docs->approved", sourceModel: "task:docs", sourceEndpoint: "END", targetModel: "anchor:docs-approved", targetEndpoint: "START",
+	strokeColor: "#808080", strokeWidth: 2.0, targetSymbol: "filledArrow");
 
 /* === Decorations === */
 
@@ -202,14 +214,18 @@ gl_mar = reactFlowGanttLineDeco(model: "grid:mar", at: 20513, color: "rgba(128,1
 gl_apr = reactFlowGanttLineDeco(model: "grid:apr", at: 20544, color: "rgba(128,128,128,0.6)", strokeWidth: 0.5);
 gl_may = reactFlowGanttLineDeco(model: "grid:may", at: 20574, color: "rgba(128,128,128,0.6)", strokeWidth: 0.5);
 
+/* Line with a label at the top of the data rows: the label lies over the selectable "Spec" item
+   right of the line. A click on the label selects the item below it. */
+today = reactFlowGanttLineDeco(model: "today", at: 20462, color: "#c02020", label: reactFlowText("Today: Jan 9, 2026"));
+
 /* Freeze range (colored strip - no label here, label is in Markers row) */
 freeze = reactFlowGanttRangeDeco(model: "freeze", from: 20513, to: 20520, color: "rgba(255,100,100,0.3)");
 
 reactFlowGantt(
 	rootRows:    list($r_axis1, $r_axis2, $r_markers, $r_design, $r_impl, $r_test, $r_deploy, $r_docs, $r_review, $r_launch, $r_maint),
-	items:       concat($yearSpans, $monthYearSpans, $monthSpans, $daySpans, list($freezeLabel, $spec, $build, $beta, $qa, $fixed_row, $no_resize, $deploy_item, $docs_item, $review_item, $launch_item, $maint_item)),
-	edges:       list($e1, $e2),
-	decorations: list($gl_feb, $gl_mar, $gl_apr, $gl_may, $freeze),
+	items:       concat($yearSpans, $monthYearSpans, $monthSpans, $daySpans, list($freezeLabel, $spec, $build, $beta, $qa, $fixed_row, $no_resize, $deploy_item, $docs_item, $review_item, $launch_item, $maint_item, $docs_approved, $docs_anchor)),
+	edges:       list($e1, $e2, $e3),
+	decorations: list($gl_feb, $gl_mar, $gl_apr, $gl_may, $freeze, $today),
 	rangeMin:    $rangeMin,
 	rangeMax:    $rangeMax,
 	initialZoom: 8,

@@ -87,7 +87,7 @@
 		<mcp.sdk.version>2.1.0</mcp.sdk.version>
 		<langchain4j.version>1.23.0</langchain4j.version>
 		<langchain4j.beta.version>1.22.0-beta32</langchain4j.beta.version>
-		<bouncycastle.version>1.86</bouncycastle.version>
+		<bouncycastle.version>1.87</bouncycastle.version>
 		<!-- WebAuthn relying party library (passkeys), see tl-security-passkey. -->
 		<yubico-webauthn.version>2.10.1</yubico-webauthn.version>
 		<!-- Proof-of-work captcha library (ALTCHA, MIT), see tl-security-captcha. -->

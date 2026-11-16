@@ -122,6 +122,8 @@ describe('TLFormField as MUI FormControl', () => {
 
   it('toggles the help text with its button', async () => {
     mountField({ helpText: 'Der volle Name.' });
+    // The name of the button is translated once the field shows it.
+    await settle();
 
     const help = document.getElementById(CONTROL_ID + '-help')!;
     expect(help.parentElement!.hidden).toBe(true);
@@ -136,6 +138,43 @@ describe('TLFormField as MUI FormControl', () => {
     expect(help.parentElement!.hidden).toBe(false);
     expect(button.getAttribute('aria-expanded')).toBe('true');
     expect(screen.getByRole('textbox').getAttribute('aria-describedby')).toBe(help.id);
+  });
+
+  it('offers the explanation, not its name, as tooltip of the help button', () => {
+    mountField({ helpText: 'Der volle Name.', tooltipText: 'Der volle Name.' });
+
+    const button = screen.getByRole('button', { name: LABEL_HELP });
+    expect(button.getAttribute(TOOLTIP_ATTR)).toBe('text:Der volle Name.');
+  });
+
+  it('shows the explanation of a hidden label through an info icon beside the input', async () => {
+    mountField({ labelPosition: 'hidden', helpText: 'Der volle Name.', tooltipText: 'Der volle Name.' });
+
+    const button = screen.getByRole('button', { name: LABEL_HELP });
+    expect(button.parentElement!.classList).toContain('tl-form-field__info');
+    expect(button.parentElement!.parentElement!.classList).toContain('tl-form-field__input--explained');
+    expect(button.getAttribute(TOOLTIP_ATTR)).toBe('text:Der volle Name.');
+    const help = document.getElementById(CONTROL_ID + '-help')!;
+    expect(button.getAttribute('aria-controls')).toBe(help.id);
+
+    await userEvent.click(button);
+
+    expect(help.parentElement!.hidden).toBe(false);
+  });
+
+  it('shows the info icon of a hidden label in a read-only form as image', () => {
+    mountField({ labelPosition: 'hidden', helpText: 'Der volle Name.', tooltipText: 'Der volle Name.' },
+      READ_ONLY_FORM);
+
+    const icon = screen.getByRole('img', { name: LABEL_HELP });
+    expect(icon.getAttribute(TOOLTIP_ATTR)).toBe('text:Der volle Name.');
+    expect(screen.queryByRole('button', { name: LABEL_HELP })).toBeNull();
+  });
+
+  it('shows no info icon for a hidden label without explanation', () => {
+    mountField({ labelPosition: 'hidden' });
+
+    expect(root().querySelector('.tl-form-field__info')).toBeNull();
   });
 
   it('offers the description as tooltip of the label, a rich tooltip first', () => {

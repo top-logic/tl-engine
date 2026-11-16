@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.core.access;
+package com.top_logic.element.accesstoken;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;

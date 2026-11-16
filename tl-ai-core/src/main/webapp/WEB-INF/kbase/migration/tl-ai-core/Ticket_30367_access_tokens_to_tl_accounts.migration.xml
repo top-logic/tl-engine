@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The personal access tokens of the agent endpoints become the access tokens of the application
+	(Ticket #30367): the types of the module tl.ai.access move to tl.accounts, which tl-element
+	defines, and the module tl.ai.access is deleted.
+
+	Data preserving: the table PersonalAccessToken keeps its name and its rows, so every token keeps
+	its hash and stays valid. A token now names the permissions it grants; the tokens that exist
+	were made for the agent endpoints and get the permission "agent-endpoints". The session key is
+	set only for a token whose permission binds to a session, which none of them has.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30367_access_tokens_to_tl_accounts"
+		module="tl-ai-core"
+	/>
+	<dependencies>
+		<dependency name="Ticket_30054_delete_screenshots_without_session"
+			module="tl-ai-core"
+		/>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30183_account_lock"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_29741_hide_anonymous_in_options"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_30183_account_lock"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_29410_filename_binary"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-doc"
+		/>
+		<dependency name="Ticket_29037_Update_diagram_attribute"
+			module="tl-bpe"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+	</dependencies>
+	<processors>
+		<!-- Moves the synthetic association of the reference "owner" along. -->
+		<update-class name="tl.ai.access:AccessToken"
+			new-name="tl.accounts:AccessToken"
+		/>
+		<update-class name="tl.ai.access:AccessTokenRequest"
+			new-name="tl.accounts:AccessTokenRequest"
+		/>
+
+		<!--
+			Fails rather than deleting silently: anything left in the module at this point is a
+			type this migration failed to move.
+		-->
+		<delete-module name="tl.ai.access"
+			fail-on-existing-types="true"
+		/>
+
+		<add-mo-attribute table="PersonalAccessToken">
+			<mo_attribute
+				att_name="permissions"
+				att_type="String"
+				db_size="1024"
+				mandatory="true"
+			/>
+		</add-mo-attribute>
+		<add-mo-attribute table="PersonalAccessToken">
+			<mo_attribute
+				att_name="sessionKey"
+				att_type="String"
+				db_size="64"
+				mandatory="false"
+			/>
+		</add-mo-attribute>
+		<update-object
+			table="PersonalAccessToken"
+			type="tl.accounts:AccessToken"
+		>
+			<values>
+				<value
+					column="PERMISSIONS"
+					column-type="String"
+					value="agent-endpoints"
+				/>
+			</values>
+		</update-object>
+
+		<create-property name="tl.accounts:AccessToken#permissions"
+			mandatory="true"
+			type="tl.core:String"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-property>
+		<create-property name="tl.accounts:AccessToken#sessionKey"
+			type="tl.core:String"
+		>
+			<annotations>
+				<visibility value="hidden"/>
+			</annotations>
+		</create-property>
+	</processors>
+</migration>

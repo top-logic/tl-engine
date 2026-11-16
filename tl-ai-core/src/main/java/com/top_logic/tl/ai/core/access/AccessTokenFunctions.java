@@ -6,11 +6,13 @@
 package com.top_logic.tl.ai.core.access;
 
 import java.util.Collection;
+import java.util.List;
 
+import com.top_logic.element.accesstoken.AccessToken;
+import com.top_logic.element.accesstoken.AccessTokens;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
-import com.top_logic.tl.ai.core.access.model.AccessToken;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
@@ -50,7 +52,9 @@ public class AccessTokenFunctions extends TLScriptFunctions {
 		if (owner == null) {
 			throw new TopLogicException(I18NConstants.ERROR_NO_ACCOUNT);
 		}
-		return AccessTokens.create(owner, name, validForDays).plain();
+		return AccessTokens
+			.create(owner, name, validForDays, List.of(AccessTokenAuthenticator.AGENT_ENDPOINTS_PERMISSION), null)
+			.plain();
 	}
 
 	/**
@@ -61,7 +65,7 @@ public class AccessTokenFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * @param token
-	 *        The <code>tl.ai.access:AccessToken</code> to revoke.
+	 *        The <code>tl.accounts:AccessToken</code> to revoke.
 	 * @return Always <code>true</code>; a refusal is an error, not a <code>false</code>.
 	 */
 	public static boolean accessTokenRevoke(Object token) {

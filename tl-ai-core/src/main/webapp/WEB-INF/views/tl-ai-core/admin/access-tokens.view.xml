@@ -27,7 +27,7 @@
 				<executability>
 					<null-input-disabled/>
 				</executability>
-				<confirm expr="#('Revoke the token {0} of {1}? A client that uses it is refused from now on.'@en, 'Das Token {0} von {1} widerrufen? Ein Client, der es verwendet, wird ab sofort abgewiesen.'@de).fill($token.get(`tl.ai.access:AccessToken#name`), $token.get(`tl.ai.access:AccessToken#owner`))"/>
+				<confirm expr="#('Revoke the token {0} of {1}? A client that uses it is refused from now on.'@en, 'Das Token {0} von {1} widerrufen? Ein Client, der es verwendet, wird ab sofort abgewiesen.'@de).fill($token.get(`tl.accounts:AccessToken#name`), $token.get(`tl.accounts:AccessToken#owner`))"/>
 				<with-transaction>
 					<execute-script function="aiAccessTokenRevoke($token)"/>
 					<with-result>
@@ -40,9 +40,9 @@
 			</generic-command>
 		</commands>
 		<table
-			observed-types="tl.ai.access:AccessToken"
+			observed-types="tl.accounts:AccessToken"
 			selection="selectedToken"
-			types="tl.ai.access:AccessToken"
+			types="tl.accounts:AccessToken"
 		>
 			<columns>
 				<column attribute="owner" width="160"/>
@@ -52,8 +52,8 @@
 				<column attribute="expiresAt" width="150"/>
 				<column attribute="lastUsed" width="150"/>
 			</columns>
-			<rows><![CDATA[all(`tl.ai.access:AccessToken`)
-				.sort((t -> $t.get(`tl.ai.access:AccessToken#createdAt`)).comparator().desc())]]></rows>
+			<rows><![CDATA[all(`tl.accounts:AccessToken`)
+				.sort((t -> $t.get(`tl.accounts:AccessToken#createdAt`)).comparator().desc())]]></rows>
 		</table>
 	</panel>
 </view>

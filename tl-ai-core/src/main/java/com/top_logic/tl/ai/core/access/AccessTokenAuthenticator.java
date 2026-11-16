@@ -13,10 +13,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import com.top_logic.base.accesscontrol.AuthorizationUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.accesstoken.AccessToken;
+import com.top_logic.element.accesstoken.AccessTokens;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
-import com.top_logic.tl.ai.core.access.model.AccessToken;
 
 /**
  * Resolves {@code Authorization: Bearer <token>} to the person who created the token.
@@ -35,6 +36,12 @@ import com.top_logic.tl.ai.core.access.model.AccessToken;
  * </p>
  */
 public class AccessTokenAuthenticator implements Authenticator {
+
+	/**
+	 * Name of the {@link com.top_logic.element.accesstoken.AccessTokenPermissions access token
+	 * permission} for the agent endpoints, MCP and A2A, which this module contributes.
+	 */
+	public static final String AGENT_ENDPOINTS_PERMISSION = "agent-endpoints";
 
 	private static final String BEARER = "Bearer ";
 

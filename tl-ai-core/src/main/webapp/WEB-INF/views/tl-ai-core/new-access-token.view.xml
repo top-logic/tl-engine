@@ -2,7 +2,7 @@
 
 <!--
 	Creating a personal access token (Issue #671). The model is a transient
-	tl.ai.access:AccessTokenRequest; Create stores the token's hash, writes the token itself onto
+	tl.accounts:AccessTokenRequest; Create stores the token's hash, writes the token itself onto
 	that transient object only, and replaces this dialog by the one that shows it - once.
 -->
 <view>
@@ -45,10 +45,10 @@
 					<store-form-state/>
 					<with-transaction>
 						<execute-script>
-							<function><![CDATA[$request..set(`tl.ai.access:AccessTokenRequest#token`,
+							<function><![CDATA[$request..set(`tl.accounts:AccessTokenRequest#token`,
 								aiAccessTokenCreate(
-									$request.get(`tl.ai.access:AccessTokenRequest#name`),
-									$request.get(`tl.ai.access:AccessTokenRequest#validForDays`)))]]></function>
+									$request.get(`tl.accounts:AccessTokenRequest#name`),
+									$request.get(`tl.accounts:AccessTokenRequest#validForDays`)))]]></function>
 						</execute-script>
 						<with-result>
 							<close-dialog/>

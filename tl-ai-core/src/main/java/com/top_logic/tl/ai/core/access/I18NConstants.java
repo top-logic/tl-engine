@@ -17,24 +17,6 @@ import com.top_logic.basic.util.ResKey2;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * A token was to be created without a name.
-	 *
-	 * @en Give the token a name, for example the client you are going to use it in.
-	 * @de Geben Sie dem Token einen Namen, zum Beispiel den des Clients, in dem Sie es verwenden.
-	 */
-	public static ResKey ERROR_TOKEN_NAME_MISSING;
-
-	/**
-	 * A token was to be created with a validity of zero or fewer days.
-	 *
-	 * @en A token is valid for at least one day. Leave the field empty for a token that does not
-	 *     expire.
-	 * @de Ein Token ist mindestens einen Tag gültig. Lassen Sie das Feld leer für ein Token, das
-	 *     nicht abläuft.
-	 */
-	public static ResKey ERROR_TOKEN_VALIDITY_NOT_POSITIVE;
-
-	/**
 	 * Something that is not an access token was to be revoked.
 	 *
 	 * @en This is not an access token.
@@ -113,6 +95,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     authentifiziert daher niemanden. Prüfen Sie deren Konfiguration und deren Secret.
 	 */
 	public static ResKey2 ERROR_AUTHENTICATION_UNAVAILABLE__DOMAIN_ENDPOINT;
+
+	/**
+	 * Label of the access token permission {@link AccessTokenAuthenticator#AGENT_ENDPOINTS_PERMISSION}.
+	 *
+	 * @en Agent interfaces (MCP/A2A)
+	 * @de Agenten-Schnittstellen (MCP/A2A)
+	 */
+	public static ResKey PERMISSION_AGENT_ENDPOINTS;
 
 	static {
 		initConstants(I18NConstants.class);

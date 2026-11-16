@@ -34,6 +34,9 @@ import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.element.accesstoken.AccessToken;
+import com.top_logic.element.accesstoken.AccessTokenPermissions;
+import com.top_logic.element.accesstoken.AccessTokens;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -44,8 +47,6 @@ import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.tl.ai.core.access.AccessTokenAuthenticator;
 import com.top_logic.tl.ai.core.access.EndpointAuthentication;
 import com.top_logic.tl.ai.core.access.AccessTokenFunctions;
-import com.top_logic.tl.ai.core.access.AccessTokens;
-import com.top_logic.tl.ai.core.access.model.AccessToken;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.ToolPermissionFilter;
 import com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity;
@@ -90,6 +91,9 @@ import io.modelcontextprotocol.spec.McpSchema;
  * </p>
  */
 public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
+
+	/** The permissions of a token for the agent endpoints. */
+	private static final List<String> AGENT_ENDPOINTS = List.of(AccessTokenAuthenticator.AGENT_ENDPOINTS_PERMISSION);
 
 	/** The header the demo's API key would be sent in. */
 	private static final String API_KEY_HEADER = "X-Api-Key";
@@ -520,8 +524,10 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testAnAccessTokenActsAsItsOwner() {
-		String annasToken = AccessTokens.create(account(ANNA), "Anna's client", null).plain();
-		String bensToken = AccessTokens.create(account(BEN), "Ben's client", null).plain();
+		String annasToken =
+			AccessTokens.create(account(ANNA), "Anna's client", null, AGENT_ENDPOINTS, null).plain();
+		String bensToken =
+			AccessTokens.create(account(BEN), "Ben's client", null, AGENT_ENDPOINTS, null).plain();
 
 		assertHas("Anna partners on exactly one of the two seeded projects.", "\"totalCount\":1",
 			listProjectsWith(annasToken));
@@ -538,7 +544,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testTheTokenItselfIsNotStored() {
-		AccessTokens.Created created = AccessTokens.create(account(ANNA), "stored", null);
+		AccessTokens.Created created = AccessTokens.create(account(ANNA), "stored", null, AGENT_ENDPOINTS, null);
 		AccessToken token = created.token();
 
 		assertTrue("A token is recognisable by its prefix.", created.plain().startsWith(AccessTokens.PREFIX));
@@ -557,7 +563,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * A revoked token is answered with 401 and a bearer challenge, and never reaches the protocol.
 	 */
 	public void testARevokedTokenIsRefused() {
-		AccessTokens.Created created = AccessTokens.create(account(ANNA), "revoked", null);
+		AccessTokens.Created created = AccessTokens.create(account(ANNA), "revoked", null, AGENT_ENDPOINTS, null);
 		assertTrue("Precondition: the token works before it is revoked.",
 			requestWith(created.plain()).chainInvoked);
 
@@ -575,7 +581,8 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * A token past its expiry is answered with 401.
 	 */
 	public void testAnExpiredTokenIsRefused() {
-		AccessTokens.Created created = AccessTokens.create(account(ANNA), "expiring", Integer.valueOf(1));
+		AccessTokens.Created created = AccessTokens.create(account(ANNA), "expiring", Integer.valueOf(1),
+			AGENT_ENDPOINTS, null);
 		assertTrue("Precondition: a token valid for a day works today.",
 			requestWith(created.plain()).chainInvoked);
 
@@ -593,7 +600,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * A request with a token records when the token was last used.
 	 */
 	public void testUsingATokenRecordsIt() {
-		AccessTokens.Created created = AccessTokens.create(account(ANNA), "used", null);
+		AccessTokens.Created created = AccessTokens.create(account(ANNA), "used", null, AGENT_ENDPOINTS, null);
 		assertNull("Precondition: a new token has never been used.", created.token().getLastUsed());
 
 		assertTrue(requestWith(created.plain()).chainInvoked);
@@ -612,7 +619,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testOnlyTheOwnerReadsAToken() {
-		AccessToken annas = AccessTokens.create(account(ANNA), "Anna's", null).token();
+		AccessToken annas = AccessTokens.create(account(ANNA), "Anna's", null, AGENT_ENDPOINTS, null).token();
 
 		assertTrue("Anna reads her own token.", new ModelAccessRightsSecurity(account(ANNA)).canRead(annas));
 		assertFalse("Ben does not read Anna's token.",
@@ -628,7 +635,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testOnlyTheOwnerOrAnAdministratorRevokes() {
-		AccessToken annas = AccessTokens.create(account(ANNA), "Anna's", null).token();
+		AccessToken annas = AccessTokens.create(account(ANNA), "Anna's", null, AGENT_ENDPOINTS, null).token();
 
 		actAs(BEN);
 		try {
@@ -957,6 +964,6 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * Creates the test suite.
 	 */
 	public static Test suite() {
-		return suite(SecDemoMcpEndpointTest.class);
+		return suite(SecDemoMcpEndpointTest.class, AccessTokenPermissions.Module.INSTANCE);
 	}
 }

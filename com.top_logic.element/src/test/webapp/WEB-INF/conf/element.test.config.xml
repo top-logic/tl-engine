@@ -15,6 +15,32 @@
 			</instance>
 		</config>
 
+		<!-- Permissions for test.com.top_logic.element.accesstoken.TestAccessTokens. -->
+		<config service-class="com.top_logic.element.accesstoken.AccessTokenPermissions">
+			<instance>
+				<permissions>
+					<permission name="test-a"
+						label="test.accesstoken.permission.a"
+					/>
+					<permission name="test-b"
+						label="test.accesstoken.permission.b"
+					/>
+					<permission name="test-c"
+						label="test.accesstoken.permission.c"
+					/>
+					<permission name="test-observe"
+						binds-session="true"
+						label="test.accesstoken.permission.observe"
+					/>
+					<permission name="test-act"
+						binds-session="true"
+						implies="test-observe"
+						label="test.accesstoken.permission.act"
+					/>
+				</permissions>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocatorFactory">
 			<instance class="com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocatorFactory">
 				<locators>

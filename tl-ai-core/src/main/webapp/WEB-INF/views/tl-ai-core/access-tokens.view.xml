@@ -28,7 +28,7 @@
 					<en>New token</en>
 					<de>Neues Token</de>
 				</label>
-				<execute-script function="new(`tl.ai.access:AccessTokenRequest`, transient: true)">
+				<execute-script function="new(`tl.accounts:AccessTokenRequest`, transient: true)">
 					<with-result>
 						<open-dialog
 							bind-input-to="model"
@@ -49,7 +49,7 @@
 				<executability>
 					<null-input-disabled/>
 				</executability>
-				<confirm expr="#('Revoke the token {0}? A client that uses it is refused from now on.'@en, 'Das Token {0} widerrufen? Ein Client, der es verwendet, wird ab sofort abgewiesen.'@de).fill($token.get(`tl.ai.access:AccessToken#name`))"/>
+				<confirm expr="#('Revoke the token {0}? A client that uses it is refused from now on.'@en, 'Das Token {0} widerrufen? Ein Client, der es verwendet, wird ab sofort abgewiesen.'@de).fill($token.get(`tl.accounts:AccessToken#name`))"/>
 				<with-transaction>
 					<execute-script function="aiAccessTokenRevoke($token)"/>
 					<with-result>
@@ -62,9 +62,9 @@
 			</generic-command>
 		</commands>
 		<table
-			observed-types="tl.ai.access:AccessToken"
+			observed-types="tl.accounts:AccessToken"
 			selection="selectedToken"
-			types="tl.ai.access:AccessToken"
+			types="tl.accounts:AccessToken"
 		>
 			<!-- Sized to fit the 560px settings dialog; the creation date is one click away in the column selection. -->
 			<columns>
@@ -73,9 +73,9 @@
 				<column attribute="expiresAt" width="150"/>
 				<column attribute="lastUsed" width="150"/>
 			</columns>
-			<rows><![CDATA[all(`tl.ai.access:AccessToken`)
-				.filter(t -> $t.get(`tl.ai.access:AccessToken#owner`) == currentUser())
-				.sort((t -> $t.get(`tl.ai.access:AccessToken#createdAt`)).comparator().desc())]]></rows>
+			<rows><![CDATA[all(`tl.accounts:AccessToken`)
+				.filter(t -> $t.get(`tl.accounts:AccessToken#owner`) == currentUser())
+				.sort((t -> $t.get(`tl.accounts:AccessToken#createdAt`)).comparator().desc())]]></rows>
 		</table>
 	</panel>
 </view>

@@ -3,13 +3,19 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.core.access;
+package com.top_logic.element.accesstoken;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -17,12 +23,14 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tl.ai.core.access.model.AccessToken;
-import com.top_logic.tl.ai.core.access.model.TlAiAccessFactory;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
+import com.top_logic.util.model.ModelService;
 
 /**
- * Personal access tokens of the agent endpoints (MCP, A2A): how one is made, stored, found and refused.
+ * {@link AccessToken Access tokens}: how one is made, stored, found and refused, and what it
+ * permits.
  *
  * <h2>The format</h2>
  *
@@ -31,8 +39,8 @@ import com.top_logic.util.error.TopLogicException;
  * {@code [0-9A-Za-z]} by a secure random generator - {@code 43 * log2(62)}, about 256 bits of
  * randomness, see {@link SecretTokens}. The prefix makes a token recognisable: a secret scanner (the secret scanning of a
  * code host, a pre-commit hook) can match a leaked one by pattern, a person can tell it from a
- * password at a glance, and the {@link AccessTokenAuthenticator authenticator} can tell it from
- * another bearer token without a database lookup. Base 62 rather than base 64, so that a double
+ * password at a glance, and an endpoint can tell it from another bearer token without a database
+ * lookup, see {@link #hasFormat(String)}. Base 62 rather than base 64, so that a double
  * click selects the whole token.
  * </p>
  *
@@ -48,8 +56,19 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <p>
- * The plain token exists once: it is returned from {@link #create(Person, String, Integer)} to be
- * shown to its owner, and nothing here writes it anywhere, a log included.
+ * The plain token exists once: it is returned from
+ * {@link #create(Person, String, Integer, Collection, String)} to be shown to its owner, and
+ * nothing here writes it anywhere, a log included.
+ * </p>
+ *
+ * <h2>What a token permits</h2>
+ *
+ * <p>
+ * A token carries the names of its permissions, which the modules offering an endpoint contribute
+ * to the {@link AccessTokenPermissions}. An endpoint accepts a token only if it
+ * {@link #hasPermission(AccessToken, String) has} the endpoint's permission. A permission that
+ * {@link AccessTokenPermissions.PermissionConfig#isBindingSession() binds to the session} acts only
+ * in the session the token was created in, whose key the token stores.
  * </p>
  */
 public final class AccessTokens {
@@ -59,6 +78,9 @@ public final class AccessTokens {
 
 	/** Number of random characters after the {@link #PREFIX}. */
 	static final int SECRET_LENGTH = SecretTokens.SECRET_LENGTH;
+
+	/** What separates the permission names in {@link AccessToken#getPermissions()}. */
+	public static final String PERMISSION_SEPARATOR = " ";
 
 	/** Number of secret characters the {@link #hint(String) hint} keeps. */
 	static final int HINT_LENGTH = 4;
@@ -71,7 +93,7 @@ public final class AccessTokens {
 	 * token still in use" needs the day, not the second.
 	 * </p>
 	 */
-	static final Duration LAST_USED_GRANULARITY = Duration.ofMinutes(1);
+	public static final Duration LAST_USED_GRANULARITY = Duration.ofMinutes(1);
 
 	private AccessTokens() {
 		// Static utility.
@@ -107,24 +129,42 @@ public final class AccessTokens {
 	 * @param validForDays
 	 *        The number of calendar days the token is accepted, counted from now;
 	 *        <code>null</code> for a token that does not expire.
+	 * @param permissions
+	 *        Names of the {@link AccessTokenPermissions permissions} the token grants.
+	 * @param sessionKey
+	 *        The key of the session the token is issued from. Stored only if one of the
+	 *        permissions {@link AccessTokenPermissions#isBindingSession(Collection) binds to the
+	 *        session}, and required then.
 	 * @throws TopLogicException
-	 *         If the name is empty or the validity is not positive.
+	 *         If the name is empty, the validity is not positive, no permission is given or a
+	 *         permission is not offered by the application.
 	 */
-	public static Created create(Person owner, String name, Integer validForDays) {
+	public static Created create(Person owner, String name, Integer validForDays, Collection<String> permissions,
+			String sessionKey) {
 		if (name == null || name.isBlank()) {
 			throw new TopLogicException(I18NConstants.ERROR_TOKEN_NAME_MISSING);
 		}
 		if (validForDays != null && validForDays.intValue() < 1) {
 			throw new TopLogicException(I18NConstants.ERROR_TOKEN_VALIDITY_NOT_POSITIVE);
 		}
+		Set<String> granted = checkPermissions(permissions);
+		boolean bindsSession = AccessTokenPermissions.getInstance().isBindingSession(granted);
+		if (bindsSession && (sessionKey == null || sessionKey.isEmpty())) {
+			throw new IllegalArgumentException("A token with a permission that binds to the session needs a session.");
+		}
+
 		String plain = newToken();
 		Instant now = Instant.now();
 		try (Transaction tx = kb().beginTransaction(ResKey.text("Create personal access token"))) {
-			AccessToken token = TlAiAccessFactory.getInstance().createAccessToken();
+			AccessToken token = (AccessToken) ModelService.getInstance().getFactory().createObject(accessTokenType());
 			token.setOwner(owner);
 			token.setName(name.strip());
 			token.setHint(hint(plain));
 			token.setSecretHash(hash(plain));
+			token.setPermissions(String.join(PERMISSION_SEPARATOR, granted));
+			if (bindsSession) {
+				token.setSessionKey(sessionKey);
+			}
 			token.setCreatedAt(Date.from(now));
 			if (validForDays != null) {
 				// Calendar days in the server's zone, so that "30 days" ends at the time of day it was
@@ -135,6 +175,44 @@ public final class AccessTokens {
 			tx.commit();
 			return new Created(token, plain);
 		}
+	}
+
+	private static Set<String> checkPermissions(Collection<String> permissions) {
+		Set<String> result = new LinkedHashSet<>();
+		if (permissions != null) {
+			AccessTokenPermissions offered = AccessTokenPermissions.getInstance();
+			for (String permission : permissions) {
+				if (offered.getPermission(permission) == null) {
+					throw new TopLogicException(I18NConstants.ERROR_UNKNOWN_PERMISSION__NAME.fill(permission));
+				}
+				result.add(permission);
+			}
+		}
+		if (result.isEmpty()) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_PERMISSION);
+		}
+		return result;
+	}
+
+	/**
+	 * The names of the permissions {@code token} was created with.
+	 *
+	 * @see #hasPermission(AccessToken, String)
+	 */
+	public static List<String> permissions(AccessToken token) {
+		String permissions = token.getPermissions();
+		if (permissions == null || permissions.isBlank()) {
+			return List.of();
+		}
+		return new ArrayList<>(Arrays.asList(permissions.strip().split(PERMISSION_SEPARATOR + "+")));
+	}
+
+	/**
+	 * Whether {@code token} grants the permission {@code name}, either directly or because one of
+	 * its permissions {@link AccessTokenPermissions.PermissionConfig#getImplies() implies} it.
+	 */
+	public static boolean hasPermission(AccessToken token, String name) {
+		return AccessTokenPermissions.getInstance().withImplied(permissions(token)).contains(name);
 	}
 
 	/**
@@ -155,8 +233,8 @@ public final class AccessTokens {
 	 * @return The token, or <code>null</code> if none has this hash - never created, or revoked.
 	 */
 	public static AccessToken find(String presented) {
-		Iterator<KnowledgeItem> hits = kb().getObjectsByAttribute(TlAiAccessFactory.KO_NAME_ACCESS_TOKEN,
-			AccessToken.SECRET_HASH_ATTR, hash(presented));
+		Iterator<KnowledgeItem> hits =
+			kb().getObjectsByAttribute(AccessToken.TABLE, AccessToken.SECRET_HASH_ATTR, hash(presented));
 		return hits.hasNext() ? hits.next().getWrapper() : null;
 	}
 
@@ -194,14 +272,14 @@ public final class AccessTokens {
 	/**
 	 * A new random token.
 	 */
-	static String newToken() {
+	public static String newToken() {
 		return SecretTokens.newToken(PREFIX);
 	}
 
 	/**
 	 * What is stored to find {@code token} again: the lower-case hex SHA-256 of its UTF-8 bytes.
 	 */
-	static String hash(String token) {
+	public static String hash(String token) {
 		return SecretTokens.hash(token);
 	}
 
@@ -209,8 +287,15 @@ public final class AccessTokens {
 	 * What is shown of {@code token} once it is stored: the prefix, the first
 	 * {@value #HINT_LENGTH} secret characters and an ellipsis.
 	 */
-	static String hint(String token) {
+	public static String hint(String token) {
 		return token.substring(0, PREFIX.length() + HINT_LENGTH) + "…";
+	}
+
+	/**
+	 * The type <code>tl.accounts:AccessToken</code>.
+	 */
+	public static TLClass accessTokenType() {
+		return (TLClass) TLModelUtil.findType(AccessToken.MODULE, AccessToken.ACCESS_TOKEN_TYPE);
 	}
 
 	private static KnowledgeBase kb() {

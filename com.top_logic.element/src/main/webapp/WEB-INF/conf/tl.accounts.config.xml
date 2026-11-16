@@ -4,6 +4,22 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<services>
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance>
+				<modules>
+					<module key="com.top_logic.element.accesstoken.AccessTokenPermissions$Module"
+						value="true"
+					/>
+				</modules>
+			</instance>
+		</config>
+		<!--
+			The permissions an access token can grant. Modules that offer an endpoint for access tokens
+			contribute theirs here.
+		-->
+		<config service-class="com.top_logic.element.accesstoken.AccessTokenPermissions">
+			<instance class="com.top_logic.element.accesstoken.AccessTokenPermissions"/>
+		</config>
 		<config service-class="com.top_logic.basic.util.ResourcesModule">
 			<instance>
 				<bundles>
@@ -77,6 +93,7 @@
 					<declarations>
 						<declaration resource="webinf://kbase/PersonMeta_inc.xml"/>
 						<declaration resource="webinf://kbase/BoundSecMeta_inc.xml"/>
+						<declaration resource="webinf://kbase/AccessTokenMeta_inc.xml"/>
 					</declarations>
 				</type-system>
 			</type-systems>

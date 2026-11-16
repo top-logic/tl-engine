@@ -15,6 +15,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.cost.RunCosts;
@@ -35,7 +36,6 @@ import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo.ModelCost;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * A run that spends the last of its principal's budget stops between turns.

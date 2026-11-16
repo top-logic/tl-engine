@@ -8,13 +8,13 @@ package com.top_logic.tl.ai.core.agent.subagent;
 import java.time.Instant;
 import java.util.List;
 
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.core.agent.approval.InteractionAsker;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.limits.BudgetAllowance;
 import com.top_logic.tl.ai.core.session.ConversationLog;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * Mutable per-job state for one asynchronous subagent run. Holds a live

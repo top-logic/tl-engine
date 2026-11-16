@@ -20,6 +20,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
+import com.top_logic.ai.tool.api.ReadSource;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
@@ -28,7 +29,6 @@ import com.top_logic.tl.ai.core.citation.ReadingListBinding;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.index.AiIndex;
 import com.top_logic.tl.ai.index.lucene.IndexFixture;
-import com.top_logic.tl.ai.tool.api.ReadSource;
 import com.top_logic.util.model.ModelService;
 
 /**

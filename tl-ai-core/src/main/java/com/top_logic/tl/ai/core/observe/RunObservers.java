@@ -7,11 +7,11 @@ package com.top_logic.tl.ai.core.observe;
 
 import java.util.List;
 
+import com.top_logic.ai.tool.api.RunInfo;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
-import com.top_logic.tl.ai.tool.api.RunInfo;
 
 /**
  * The {@link RunObserver}s of this application, installed by {@code AgentRuntimeService} from its

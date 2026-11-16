@@ -14,13 +14,13 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.ai.tool.api.ToolMethod;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.screenshots.ScreenshotFixtures;
 import com.top_logic.tl.ai.core.screenshots.ScreenshotService;
 import com.top_logic.tl.ai.core.screenshots.model.Screenshot;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.util.model.ModelService;
 
 /**

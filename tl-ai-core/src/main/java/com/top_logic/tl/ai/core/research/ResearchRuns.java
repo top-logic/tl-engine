@@ -21,6 +21,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.top_logic.ai.tool.api.AICategory;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -45,7 +46,6 @@ import com.top_logic.tl.ai.core.execution.model.ResearchRun;
 import com.top_logic.tl.ai.core.execution.model.ResearchSource;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.security.ReadFilter;
-import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.util.model.ModelService;
 
 /**

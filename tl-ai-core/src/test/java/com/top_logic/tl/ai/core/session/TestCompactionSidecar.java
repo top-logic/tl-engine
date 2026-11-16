@@ -12,6 +12,7 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.cost.Money;
@@ -31,7 +32,6 @@ import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tests that a compacted session survives storage: {@link CompactionSidecar},

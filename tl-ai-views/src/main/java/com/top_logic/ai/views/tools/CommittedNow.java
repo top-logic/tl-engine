@@ -9,11 +9,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.function.Supplier;
 
+import com.top_logic.ai.tool.api.ToolExecutionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.service.KBUtils;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.util.TLContextManager;
 
 /**

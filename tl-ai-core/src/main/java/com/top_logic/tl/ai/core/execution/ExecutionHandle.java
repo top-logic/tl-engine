@@ -5,11 +5,11 @@
  */
 package com.top_logic.tl.ai.core.execution;
 
+import com.top_logic.ai.tool.api.RunInfo;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
-import com.top_logic.tl.ai.tool.api.RunInfo;
 
 /**
  * What the framework publishes about the currently running agent loop, for its tools to read.

@@ -20,6 +20,9 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.AnnotatedTools;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.skills.Skill;
@@ -40,9 +43,6 @@ import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
-import com.top_logic.tl.ai.tool.api.AnnotatedTools;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * What a provider request carries before and after a skill is loaded mid-conversation.

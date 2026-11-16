@@ -19,6 +19,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
@@ -38,7 +39,6 @@ import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 
 /**
  * A child run compacts its conversation instead of overflowing its model's window (issue #698).

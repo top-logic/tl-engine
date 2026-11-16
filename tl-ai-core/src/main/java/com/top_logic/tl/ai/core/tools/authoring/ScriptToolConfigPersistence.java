@@ -10,6 +10,8 @@ import java.io.IOError;
 import java.io.StringWriter;
 import java.util.Map;
 
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService.ToolFactoryConfig;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.XMLProperties;
@@ -25,8 +27,6 @@ import com.top_logic.basic.xml.XMLPrettyPrinter;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.tl.ai.core.tools.interaction.ToolRegistryReloadFlag;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService.ToolFactoryConfig;
 
 /**
  * Persists an additive overlay containing only {@link ScriptToolFactory} entries, then reloads

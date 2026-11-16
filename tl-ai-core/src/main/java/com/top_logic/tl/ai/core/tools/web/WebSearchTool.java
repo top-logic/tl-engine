@@ -14,14 +14,14 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.regex.Pattern;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.basic.Logger;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * Tool that searches the web via the configured {@link WebSearchEngine}.

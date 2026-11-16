@@ -10,6 +10,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.concurrent.TimeoutException;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
@@ -21,13 +28,6 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.ExecutionHandle;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
 import com.top_logic.tl.ai.core.tools.memory.MemoryConsentBinding;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tool for the Orchestrator to interact with the user.

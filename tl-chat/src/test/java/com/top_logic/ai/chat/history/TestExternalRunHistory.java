@@ -16,6 +16,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
@@ -33,7 +34,6 @@ import com.top_logic.tl.ai.core.session.ConversationLogReplay;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.model.ModelService;
 
 /**

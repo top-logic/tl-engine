@@ -9,6 +9,9 @@ import java.util.List;
 
 import junit.framework.Test;
 
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.ToolContext;
@@ -16,9 +19,6 @@ import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
  * The ceiling on a run that has nobody to answer an approval prompt, and the two other things that

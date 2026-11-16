@@ -28,15 +28,15 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 import com.top_logic.tl.ai.core.scripting.Converters;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * Tool that fetches a single web page or PDF and returns its main textual content.

@@ -16,6 +16,10 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 import java.util.concurrent.CancellationException;
 
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -32,10 +36,6 @@ import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 import com.top_logic.tl.ai.core.tools.integration.messages.CreateIssueRequest;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tool for creating issues in a Gitea repository via REST API.
@@ -52,11 +52,11 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * authenticated by the configured {@link Config#getCredentials() credentials}; without them, with
  * the access token in the secret {@link #TOKEN_SECRET}, sent with the scheme
  * {@link #TOKEN_SCHEME}. Credentials from another source are configured with the
- * {@link com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory}:
+ * {@link com.top_logic.ai.tool.api.registry.ReflectiveToolFactory}:
  * </p>
  *
  * <pre>
- * &lt;implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"&gt;
+ * &lt;implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"&gt;
  *   &lt;tool class="com.top_logic.tl.ai.core.tools.integration.GiteaIssueTool"&gt;
  *     &lt;credentials class="com.top_logic.basic.credential.HeaderCredentials" scheme="token"&gt;
  *       &lt;secret class="com.top_logic.basic.credential.FileSecretSource" path="/run/secrets/gitea-token"/&gt;

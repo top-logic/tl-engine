@@ -18,10 +18,10 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * A subagent's end is told to whoever listens to its registry when it ends, not to whoever listened

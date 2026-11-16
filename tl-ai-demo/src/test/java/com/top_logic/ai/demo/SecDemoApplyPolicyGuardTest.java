@@ -16,6 +16,7 @@ import junit.framework.Test;
 
 import test.com.top_logic.basic.AssertProtocol;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
@@ -28,7 +29,6 @@ import com.top_logic.tl.ai.core.security.layout.PolicyEditSession;
 import com.top_logic.tl.ai.core.security.layout.PolicyMatrix;
 import com.top_logic.tl.ai.core.security.layout.PolicyStore;
 import com.top_logic.tl.ai.core.security.layout.ToolAccessPolicyComponent;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**

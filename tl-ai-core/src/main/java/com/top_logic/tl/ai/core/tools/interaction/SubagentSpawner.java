@@ -13,6 +13,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.BindingSnapshot;
@@ -50,8 +52,6 @@ import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
 import com.top_logic.tl.ai.core.session.Part;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 
 /**
  * Shared async-spawn logic extracted from {@link DelegationTool}.

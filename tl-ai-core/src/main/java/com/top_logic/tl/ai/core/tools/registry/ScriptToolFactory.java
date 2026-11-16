@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.registry.ToolFactory;
 import com.top_logic.basic.config.ConfigurationDescriptorConfig;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
@@ -35,9 +38,6 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tl.ai.core.tools.parameters.DeclaredParameters;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.registry.ToolFactory;
 
 /**
  * A {@link ToolFactory} that creates tools from TL-Script implementations.
@@ -306,7 +306,7 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		 * generic message naming the tool.
 		 * </p>
 		 *
-		 * @see Tool#commitMessage(Map, com.top_logic.tl.ai.tool.api.ToolExecutionContext)
+		 * @see Tool#commitMessage(Map, com.top_logic.ai.tool.api.ToolExecutionContext)
 		 */
 		@Name(COMMIT_MESSAGE)
 		@Nullable

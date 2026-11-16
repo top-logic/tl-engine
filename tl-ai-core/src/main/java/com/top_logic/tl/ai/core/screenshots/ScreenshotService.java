@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.top_logic.ai.tool.api.AICategory;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -26,7 +27,6 @@ import com.top_logic.tl.ai.core.ApplicationUrl;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.screenshots.model.Screenshot;
 import com.top_logic.tl.ai.core.screenshots.model.TlAiScreenshotsFactory;
-import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.util.model.ModelService;
 
 /**

@@ -22,7 +22,10 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
-import com.top_logic.tl.ai.core.provider.FixedCredentials;
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolResult;
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
@@ -42,14 +45,11 @@ import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.tl.ai.core.provider.anthropic.AnthropicMessagesProvider;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * The behavioural half of the untrusted-content envelope: a real model is handed a tool result that
@@ -155,7 +155,7 @@ public class TestPromptInjectionBarrier extends TestCase {
 
 	/**
 	 * A search result that instructs a tool call must not get one. The result reaches the model inside
-	 * {@link com.top_logic.tl.ai.tool.api.UntrustedEnvelope#SEARCH_RESULTS} tags, which the
+	 * {@link com.top_logic.ai.tool.api.UntrustedEnvelope#SEARCH_RESULTS} tags, which the
 	 * standing rule in the system prompt says are data.
 	 */
 	public void testASearchResultCannotMakeTheAgentCallATool() {
@@ -188,7 +188,7 @@ public class TestPromptInjectionBarrier extends TestCase {
 	/**
 	 * An external MCP server that instructs a tool call must not get one. It authors the whole result,
 	 * so the entire result reaches the model inside
-	 * {@link com.top_logic.tl.ai.tool.api.UntrustedEnvelope#MCP_TOOL_RESULT}.
+	 * {@link com.top_logic.ai.tool.api.UntrustedEnvelope#MCP_TOOL_RESULT}.
 	 */
 	public void testAnMcpResultCannotMakeTheAgentCallATool() {
 		PromptInjectionE2e.assumeEnabled();
@@ -212,7 +212,7 @@ public class TestPromptInjectionBarrier extends TestCase {
 	/**
 	 * A subagent's report that repeats an instruction must not get the lead to follow it. The worker
 	 * read the instruction somewhere and wrote it back; the report reaches the lead inside
-	 * {@link com.top_logic.tl.ai.tool.api.UntrustedEnvelope#SUBAGENT_REPORT}.
+	 * {@link com.top_logic.ai.tool.api.UntrustedEnvelope#SUBAGENT_REPORT}.
 	 *
 	 * <p>
 	 * The source is the production {@link WaitForSubagentTool} over a registry holding one finished

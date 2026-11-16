@@ -11,18 +11,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.ToolResult;
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentProgress;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * Non-blocking status probe for asynchronous subagents.
@@ -187,7 +187,7 @@ public class SubagentStatusTool implements Tool {
 
 	/**
 	 * The child's own part of the status - its current step, its recent calls and its last text - in
-	 * one {@link com.top_logic.tl.ai.tool.api.UntrustedEnvelope#SUBAGENT_REPORT} block: call
+	 * one {@link com.top_logic.ai.tool.api.UntrustedEnvelope#SUBAGENT_REPORT} block: call
 	 * arguments and text are what the child wrote, and may repeat what it read.
 	 */
 	private static void appendProgress(StringBuilder sb, SubagentJob job, boolean steps, boolean current) {

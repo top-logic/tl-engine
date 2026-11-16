@@ -10,6 +10,9 @@ import java.util.Map;
 
 import junit.framework.Test;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.ToolPermissionFilter;
@@ -17,9 +20,6 @@ import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolExecutions;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * What {@link ToolMethod#types()} does to a persona of the security test bed (issue #258).

@@ -9,6 +9,7 @@ import java.util.Set;
 
 import com.top_logic.ai.chat.view.ChatViewBinding;
 import com.top_logic.ai.chat.view.ChatWindowService;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -19,7 +20,6 @@ import com.top_logic.tl.ai.core.security.RunPrincipal;
 import com.top_logic.tl.ai.core.tools.present.PresentAs;
 import com.top_logic.tl.ai.core.tools.present.PresentTool;
 import com.top_logic.tl.ai.core.tools.present.Presentation;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.util.TLContextManager;
 
 /**

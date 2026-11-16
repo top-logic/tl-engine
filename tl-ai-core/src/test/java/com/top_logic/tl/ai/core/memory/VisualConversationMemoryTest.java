@@ -18,6 +18,9 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolResult;
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.AgentResult;
@@ -42,9 +45,6 @@ import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ScriptedModel;
 import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * Visual harness for the conversation memory system - prints the full lifecycle to stdout for a
@@ -322,10 +322,10 @@ public class VisualConversationMemoryTest extends TestCase {
 
 		// Tool registry with a read_file tool that returns sizable file contents
 		ToolCatalog registry = new ToolCatalog();
-		registry.register(new com.top_logic.tl.ai.tool.api.Tool() {
+		registry.register(new com.top_logic.ai.tool.api.Tool() {
 			@Override public String name() { return "read_file"; }
 			@Override public String description() { return "Read a file's contents"; }
-			@Override public com.top_logic.tl.ai.tool.api.ToolSchema schema() { return readTool; }
+			@Override public com.top_logic.ai.tool.api.ToolSchema schema() { return readTool; }
 			@Override public ToolResult execute(java.util.Map<String, Object> args, ToolExecutionContext context) {
 				sleep(50);
 				String path = String.valueOf(args.getOrDefault("path", ""));
@@ -337,8 +337,8 @@ public class VisualConversationMemoryTest extends TestCase {
 					return ToolResult.of("CREATE TABLE users (\n" + "  id SERIAL PRIMARY KEY,\n".repeat(10) + ");");
 				}
 			}
-			@Override public com.top_logic.tl.ai.tool.api.ToolMode mode() {
-				return com.top_logic.tl.ai.tool.api.ToolMode.READ;
+			@Override public com.top_logic.ai.tool.api.ToolMode mode() {
+				return com.top_logic.ai.tool.api.ToolMode.READ;
 			}
 		});
 		registry.freeze();

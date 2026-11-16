@@ -23,6 +23,7 @@ import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -34,7 +35,6 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.provider.I18NConstants;
 import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.Resources;
 
 /**

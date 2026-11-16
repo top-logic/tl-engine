@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.memory.CompactionStrategy;
@@ -18,7 +19,6 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 
 /**
  * Tests for {@link DelegationTool}.

@@ -13,10 +13,18 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.base.operation.OperationMode;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.AgentApplicationService;
 import com.top_logic.tl.ai.core.agent.SystemPromptContributor;
@@ -24,15 +32,7 @@ import com.top_logic.tl.ai.core.agent.TextPromptContributor;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.environment.PromptPlaceholders;
 import com.top_logic.tl.ai.core.tools.I18NConstants;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.util.TLContext;
-import com.top_logic.basic.util.ResourcesModule;
 
 /**
  * Reads and saves the application context: the {@link TextPromptContributor} named

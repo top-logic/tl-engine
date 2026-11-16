@@ -16,6 +16,8 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
@@ -38,8 +40,6 @@ import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -233,7 +233,7 @@ public class TestAsyncDelegationIntegration extends BasicTestCase {
 		try (SubagentRegistryBinding.Binding b = SubagentRegistryBinding.bind(registry)) {
 			// Use a pre-completed job so we don't need to wait for the background thread.
 			SubagentJob job = registry.register("injector", "compute x",
-				new com.top_logic.tl.ai.tool.api.CancellationToken());
+				new com.top_logic.ai.tool.api.CancellationToken());
 			job.markTerminal(SubagentJobStatus.DONE,
 				new SubagentResult("injected child text", TokenUsage.EMPTY, 1L, 0, StopReason.COMPLETE));
 

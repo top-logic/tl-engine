@@ -12,11 +12,11 @@ import java.util.function.Predicate;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * Tests for {@link DynamicToolCatalog}.

@@ -13,6 +13,9 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities.AgentGraph;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities.Unusable;
 import com.top_logic.tl.ai.core.security.DeclaredTypeAccess;
@@ -20,9 +23,6 @@ import com.top_logic.tl.ai.core.security.DeclaredTypeAccess.Verdict;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.SubagentSpawner;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
 
 /**
  * Tests that {@link AgentCapabilities} applies the declared-type rule of

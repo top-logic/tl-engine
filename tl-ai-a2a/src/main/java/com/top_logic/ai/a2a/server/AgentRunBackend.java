@@ -27,6 +27,7 @@ import com.top_logic.ai.a2a.protocol.A2AJson;
 import com.top_logic.ai.a2a.protocol.ArtifactRef;
 import com.top_logic.ai.a2a.protocol.Json;
 import com.top_logic.ai.a2a.protocol.TaskState;
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.HistoryUtils;
@@ -65,7 +66,6 @@ import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.interaction.ToolRegistryReloadFlag;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.util.TLContextManager;
 
 /**

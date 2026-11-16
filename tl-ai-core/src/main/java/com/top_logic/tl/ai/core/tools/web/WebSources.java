@@ -7,13 +7,13 @@ package com.top_logic.tl.ai.core.tools.web;
 
 import java.time.Instant;
 
+import com.top_logic.ai.tool.api.ReadSource;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.citation.CitationKinds;
 import com.top_logic.tl.ai.core.citation.PageArchive;
 import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.core.citation.ReadingListBinding;
-import com.top_logic.tl.ai.tool.api.ReadSource;
 import com.top_logic.util.TLContext;
 
 /**

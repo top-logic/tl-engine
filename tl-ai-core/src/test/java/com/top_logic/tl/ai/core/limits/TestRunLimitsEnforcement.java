@@ -18,6 +18,8 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.ExecutionMode;
@@ -37,8 +39,6 @@ import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.limits.BudgetConfig.RoleBudget;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.util.model.ModelService;
 
 /**

@@ -12,8 +12,8 @@ import com.top_logic.basic.util.ResKey1;
 /**
  * The commit messages the view tools record their calls with.
  *
- * @see com.top_logic.tl.ai.tool.api.Tool#commitMessage(java.util.Map,
- *      com.top_logic.tl.ai.tool.api.ToolExecutionContext)
+ * @see com.top_logic.ai.tool.api.Tool#commitMessage(java.util.Map,
+ *      com.top_logic.ai.tool.api.ToolExecutionContext)
  */
 public class I18NConstants extends I18NConstantsBase {
 

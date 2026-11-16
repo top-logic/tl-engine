@@ -16,16 +16,16 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.basic.Logger;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
-import com.top_logic.tl.ai.core.tools.ToolRegistry;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.core.tools.task.TaskStore;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.WindowScope;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.tools.ToolRegistry;
+import com.top_logic.tl.ai.core.tools.task.TaskStore;
 
 /**
  * Session-scoped storage for chat state and processing management.

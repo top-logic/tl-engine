@@ -32,13 +32,14 @@ import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonWriter;
 
+import com.top_logic.ai.tool.api.AICategory;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.module.ServiceCategory;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.module.ConfiguredManagedClass;
+import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.KBUtils;
@@ -66,7 +67,6 @@ import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.session.persist.InterruptedTranscript;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
-import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -1097,7 +1097,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * works from any node - the node that receives the cancel need not be the node running the job.
 	 * The node actually running the job observes the committed marker at HEAD (see
 	 * {@link #isCancelRequested(AgentExecution)}) and cancels its in-memory
-	 * {@link com.top_logic.tl.ai.tool.api.CancellationToken}, which the agent loop already honors.
+	 * {@link com.top_logic.ai.tool.api.CancellationToken}, which the agent loop already honors.
 	 * </p>
 	 *
 	 * <p>

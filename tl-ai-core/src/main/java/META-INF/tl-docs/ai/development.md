@@ -11,7 +11,7 @@ The modules follow the engine's layout. Package roots:
 
 | Module | Base package |
 |---|---|
-| `tl-ai-tool-api` | `com.top_logic.tl.ai.tool.api` (+ `.registry`) |
+| `tl-ai-tool-api` | `com.top_logic.ai.tool.api` (+ `.registry`) |
 | `tl-ai-core` | `com.top_logic.tl.ai.core.*` (`agent`, `provider`, `tools`, `message`, `memory`, `mcp`, `session`, `scripting`, `security`, `citation`, `limits`, `cost`, `observe`, `access`, ...) |
 | `tl-chat` | `com.top_logic.ai.chat.*` (`api`, `layout`, `history`, `sched`) |
 | `tl-chat-classic` | `com.top_logic.ai.chat.classic` |

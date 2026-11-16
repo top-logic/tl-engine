@@ -11,6 +11,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
@@ -22,12 +28,6 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore.MemoryKind;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.UserMemory;
 import com.top_logic.tl.ai.core.tools.I18NConstants;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.TLContext;
 
 /**

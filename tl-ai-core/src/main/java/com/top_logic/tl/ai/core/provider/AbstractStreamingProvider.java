@@ -18,10 +18,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.RequestAuthentication;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;

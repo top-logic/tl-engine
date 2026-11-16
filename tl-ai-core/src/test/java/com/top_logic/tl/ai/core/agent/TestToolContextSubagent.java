@@ -7,7 +7,7 @@ package com.top_logic.tl.ai.core.agent;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.CancellationToken;
 
 /**
  * Test for {@link ToolContext#forDetachedSubagent}.

@@ -20,7 +20,9 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
-import com.top_logic.tl.ai.core.provider.FixedCredentials;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolResult;
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.AgentResult;
@@ -37,14 +39,12 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.tl.ai.core.provider.openai.OpenAIResponsesProvider;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.core.tools.web.FilteringProxy.Target;
 import com.top_logic.tl.ai.core.tools.web.RecordingServer.Reply;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * A research worker with a real model in front of a page and a search result that ask it to send

@@ -8,8 +8,8 @@ package com.top_logic.tl.ai.core.tools;
 import java.util.List;
 import java.util.function.Predicate;
 
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolSchema;
 
 /**
  * Read-side contract for tool lookup, schema production, and execution.

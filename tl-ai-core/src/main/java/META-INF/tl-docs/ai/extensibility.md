@@ -23,7 +23,7 @@ The class is registered as a factory of `ToolRegistryService`, which names its t
 
 ```xml
 <factory name="drafts">
-	<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+	<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 		tool-class="com.acme.ai.DraftTool"
 	/>
 </factory>

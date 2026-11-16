@@ -15,6 +15,8 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.listener.Listener;
 import com.top_logic.basic.logging.Level;
@@ -23,8 +25,6 @@ import com.top_logic.tl.ai.core.agent.AgentCapabilities.Unusable;
 import com.top_logic.tl.ai.core.agent.AgentFactory.DelegateOffer;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
  * Tests the delegate filter: which sub-agents an agent is offered, and what its prompt says about the

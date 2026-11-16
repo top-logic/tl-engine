@@ -15,6 +15,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.ReadSource;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
@@ -22,7 +23,6 @@ import com.top_logic.tl.ai.core.session.Citation;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
-import com.top_logic.tl.ai.tool.api.ReadSource;
 
 /**
  * What an answer's links become: a footnote for every source the run read, plain text for every

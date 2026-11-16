@@ -15,6 +15,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -37,12 +43,6 @@ import com.top_logic.tl.ai.core.tools.model.messages.InstanceMetadata;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.InstanceTypeInfo;
 import com.top_logic.tl.ai.core.tools.model.messages.InstancesResponse;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.Resources;
 
 import de.haumacher.msgbuf.io.StringW;

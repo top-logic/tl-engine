@@ -15,7 +15,7 @@ import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
  * <p>
  * What the entry points built by hand before the seam existed, so an installation that configures no
  * factory behaves exactly as before. Approval follows the tool's
- * {@link com.top_logic.tl.ai.tool.api.ToolMode} alone - a read is allowed, everything that changes
+ * {@link com.top_logic.ai.tool.api.ToolMode} alone - a read is allowed, everything that changes
  * something is asked about.
  * </p>
  */

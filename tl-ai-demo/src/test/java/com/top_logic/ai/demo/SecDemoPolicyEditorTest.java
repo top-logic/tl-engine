@@ -12,6 +12,7 @@ import java.util.function.Predicate;
 
 import junit.framework.Test;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.equal.ConfigEquality;
 import com.top_logic.basic.util.ResKey;
@@ -32,7 +33,6 @@ import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BaselineChoice;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.CellState;
 import com.top_logic.tl.ai.core.security.layout.PolicyMatrix;
 import com.top_logic.tl.ai.core.security.layout.PolicyMatrix.RowState;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**

@@ -17,6 +17,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.StopReason;
@@ -29,7 +30,6 @@ import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
 import com.top_logic.tl.ai.core.session.Part;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * What a registry says waits for a lead turn, and the delivery a lead turn started for it opens

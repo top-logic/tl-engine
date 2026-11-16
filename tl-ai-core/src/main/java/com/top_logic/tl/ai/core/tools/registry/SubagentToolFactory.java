@@ -7,6 +7,8 @@ package com.top_logic.tl.ai.core.tools.registry;
 
 import java.util.List;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.registry.ToolFactory;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
@@ -20,8 +22,6 @@ import com.top_logic.tl.ai.core.tools.interaction.SendToSubagentTool;
 import com.top_logic.tl.ai.core.tools.interaction.SpawnSubagentTool;
 import com.top_logic.tl.ai.core.tools.interaction.SubagentStatusTool;
 import com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.registry.ToolFactory;
 
 /**
  * A {@link ToolFactory} that provides the generic asynchronous-subagent orchestration tools:

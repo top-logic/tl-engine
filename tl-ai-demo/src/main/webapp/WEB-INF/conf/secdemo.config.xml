@@ -304,7 +304,7 @@
 			in countVisibleTickets, the filterSecurity inside the script, which also drops a ticket the
 			account may discover but not read. Neither tool lies about which one it is.
 		-->
-		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+		<config service-class="com.top_logic.ai.tool.api.registry.ToolRegistryService">
 			<instance>
 				<tool-factories>
 					<factory name="secdemo-reporting">
@@ -386,7 +386,7 @@
 						a model as "this application has no projects".
 					-->
 					<factory name="secdemo-projects">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.ai.demo.secdemo.SecDemoProjectReportTool"
 						/>
 					</factory>

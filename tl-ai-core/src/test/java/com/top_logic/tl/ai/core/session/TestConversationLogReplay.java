@@ -11,15 +11,15 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
+import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
-import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tests for {@link ConversationLogReplay}.

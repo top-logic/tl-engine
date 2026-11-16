@@ -9,6 +9,7 @@ import java.util.function.Consumer;
 
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.tool.api.AICategory;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -24,7 +25,6 @@ import com.top_logic.layout.react.scripting.WindowAccess;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tl.ai.core.agent.RunWindow;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.tool.api.AICategory;
 
 /**
  * Connects agent runs to the browser windows the chat is displayed in.

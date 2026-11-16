@@ -94,7 +94,7 @@ import com.top_logic.util.Resources;
  * disclosing less, and the instance surfaces are filtered per object anyway.</li>
  * </ul>
  *
- * @see ModelBrowserTool#outlineModel(Boolean, com.top_logic.tl.ai.tool.api.ToolExecutionContext)
+ * @see ModelBrowserTool#outlineModel(Boolean, com.top_logic.ai.tool.api.ToolExecutionContext)
  * @see ModelSecurity#accessibleTypes(com.top_logic.tool.boundsec.BoundCommandGroup)
  */
 public class ModelDigestGenerator {

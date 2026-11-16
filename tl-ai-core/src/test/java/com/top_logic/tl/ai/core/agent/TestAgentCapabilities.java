@@ -15,9 +15,9 @@ import java.util.function.Function;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
  * Tests {@link AgentCapabilities}: which skills an agent offers a given principal, and what its

@@ -20,6 +20,10 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.ToolResult;
+import com.top_logic.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
@@ -41,10 +45,6 @@ import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.core.tools.interaction.AskUserTool;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.SubagentStatusTool;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.util.model.ModelService;
 
 /**

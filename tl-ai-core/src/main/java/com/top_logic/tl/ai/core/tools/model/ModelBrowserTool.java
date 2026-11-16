@@ -10,6 +10,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -42,11 +47,6 @@ import com.top_logic.tl.ai.core.tools.model.messages.TypeInfo;
 import com.top_logic.tl.ai.core.tools.model.messages.TypeListResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.TypePartInfo;
 import com.top_logic.tl.ai.core.tools.model.messages.TypePartListResponse;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 

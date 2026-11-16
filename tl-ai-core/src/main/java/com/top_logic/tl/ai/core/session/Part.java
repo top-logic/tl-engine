@@ -10,9 +10,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * A content unit within a {@link Turn}. Each variant represents a different type

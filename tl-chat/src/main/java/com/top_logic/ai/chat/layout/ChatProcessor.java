@@ -29,6 +29,7 @@ import com.top_logic.ai.chat.backend.BackendTurn;
 import com.top_logic.ai.chat.backend.ConversationBackend;
 import com.top_logic.ai.chat.backend.ConversationBackendService;
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
@@ -83,7 +84,6 @@ import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.interaction.ToolRegistryReloadFlag;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 

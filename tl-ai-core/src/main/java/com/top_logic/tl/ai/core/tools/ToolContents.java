@@ -8,11 +8,11 @@ package com.top_logic.tl.ai.core.tools;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.ai.tool.api.ToolContent;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.tool.api.ToolContent;
 
 /**
  * Translates the tool contract's {@link ToolContent} into the conversation's {@link ContentPart}.

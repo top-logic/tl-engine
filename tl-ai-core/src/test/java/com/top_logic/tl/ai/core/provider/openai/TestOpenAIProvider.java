@@ -15,16 +15,16 @@ import java.nio.charset.StandardCharsets;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.core.provider.FixedCredentials;
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
+import com.top_logic.tl.ai.core.provider.FixedCredentials;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.StreamHandler;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
+import com.top_logic.tl.ai.core.provider.StreamHandler;
 
 /**
  * Integration tests for {@link OpenAIResponsesProvider}.

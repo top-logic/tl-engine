@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import com.top_logic.ai.tool.api.AICategory;
 import com.top_logic.base.services.CurrencySystem;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -23,7 +24,6 @@ import com.top_logic.tl.ai.core.cost.CostConversion;
 import com.top_logic.tl.ai.core.limits.BudgetConfig;
 import com.top_logic.tl.ai.core.limits.BudgetConfig.RoleBudget;
 import com.top_logic.tl.ai.core.limits.RunLimitSettings;
-import com.top_logic.tl.ai.tool.api.AICategory;
 
 /**
  * What an agent run may cost and what an agent may keep about a person: the token and money budget

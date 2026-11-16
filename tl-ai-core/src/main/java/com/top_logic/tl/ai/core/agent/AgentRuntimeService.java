@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.tool.api.AICategory;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.InstantiationContext;
@@ -51,7 +52,6 @@ import com.top_logic.tl.ai.core.provider.ProviderFieldMode;
 import com.top_logic.tl.ai.core.provider.health.ModelTarget;
 import com.top_logic.tl.ai.core.security.DefaultSecurityContextFactory;
 import com.top_logic.tl.ai.core.security.SecurityContextFactory;
-import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.util.error.TopLogicException;
 
 /**

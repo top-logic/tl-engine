@@ -5,7 +5,7 @@
  */
 package com.top_logic.tl.ai.core.security;
 
-import com.top_logic.tl.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolGroups;
 
 /*
  * Deliberately free of resources: the sentence an administrator reads is assembled in the view

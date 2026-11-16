@@ -16,6 +16,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.security.RoleToolAccess.Decision;
 import com.top_logic.tl.ai.core.security.RoleToolAccess.DeclaredGroups;
@@ -24,7 +25,6 @@ import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.GroupMembership;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
  * Tests for {@link RoleToolAccess}.

@@ -5,9 +5,9 @@
  */
 package com.top_logic.ai.chat.backend;
 
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * What produces the answers of a conversation in place of the framework's own agent loop - a

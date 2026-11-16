@@ -32,6 +32,7 @@ import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.chat.layout.WelcomeName;
 import com.top_logic.ai.chat.view.ChatCommandDriver.Conversation;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.knowledge.service.HistoryUtils;
@@ -44,7 +45,6 @@ import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 

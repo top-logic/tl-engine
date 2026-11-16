@@ -11,12 +11,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolMethod;
 import com.top_logic.basic.Logger;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**

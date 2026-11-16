@@ -12,6 +12,9 @@ import java.util.stream.Collectors;
 
 import junit.framework.Test;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.SkillDefinition;
@@ -20,9 +23,6 @@ import com.top_logic.tl.ai.core.agent.skills.Skill;
 import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * What a denial does to the agent's prompt and to {@code loadSkill}: skills that can do nothing are

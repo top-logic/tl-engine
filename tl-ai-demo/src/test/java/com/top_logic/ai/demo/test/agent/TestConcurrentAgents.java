@@ -25,18 +25,20 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.tl.ai.core.agent.AgentApplicationService;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentPolicyService;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -45,9 +47,7 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.model.Agent;
 import com.top_logic.tl.ai.core.model.TlAiCoreFactory;
 import com.top_logic.tl.ai.core.model.impl.AgentBase;
-import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.util.model.ModelService;
 
 /**

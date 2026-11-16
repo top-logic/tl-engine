@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
@@ -19,7 +20,6 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.tools.interaction.AskUserTool;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * Regression tests for the subagent cancellation lifecycle.

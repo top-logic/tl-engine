@@ -10,11 +10,11 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.core.security.DeclaredTypeAccess.Verdict;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * The rule {@link DeclaredTypeAccess} applies to {@link ToolMethod#types()} (issue #258).

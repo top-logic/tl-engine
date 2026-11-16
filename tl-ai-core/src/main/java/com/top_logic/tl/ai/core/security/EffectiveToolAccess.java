@@ -12,10 +12,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /*
  * PR #306, the query half of the "Agent-Sicherheit" administration view. No issue tracks it; the

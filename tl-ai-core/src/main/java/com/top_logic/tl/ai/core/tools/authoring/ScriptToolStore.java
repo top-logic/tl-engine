@@ -11,6 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.registry.ToolFactory;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.config.ConfigurationDescriptorConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -23,13 +26,10 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
 import com.top_logic.tl.ai.core.tools.registry.ToolDescriptions;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.registry.ToolFactory;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * Read/mutate access to TL-Script tools held by a named {@link ScriptToolFactory}
- * inside a {@link com.top_logic.tl.ai.tool.api.registry.ToolRegistryService.Config}.
+ * inside a {@link com.top_logic.ai.tool.api.registry.ToolRegistryService.Config}.
  *
  * <p>
  * Pure in-memory operations with no I/O: callers persist the wrapped config separately. All

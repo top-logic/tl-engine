@@ -5,23 +5,23 @@
  */
 package com.top_logic.tl.ai.core.tools.config;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.json.JsonEscape;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.DefaultConfigConstructorScheme;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.config.json.JsonConfigSchemaBuilder.SchemaResolver;
 import com.top_logic.basic.config.json.JsonConfigSchemaBuilder;
+import com.top_logic.basic.config.json.JsonConfigSchemaBuilder.SchemaResolver;
 import com.top_logic.basic.json.schema.JsonSchemaWriter;
 import com.top_logic.basic.json.schema.model.Schema;
 import com.top_logic.layout.editor.DynamicComponentDefinition;
 import com.top_logic.layout.editor.DynamicComponentService;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.json.JsonEscape;
 
 /**
  * Tool for retrieving JSON Schema definitions for TopLogic configuration types.

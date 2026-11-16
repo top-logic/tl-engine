@@ -139,11 +139,11 @@
 		</config>
 
 		<!-- The tools: web-browser.* drives the session's Chromium. -->
-		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+		<config service-class="com.top_logic.ai.tool.api.registry.ToolRegistryService">
 			<instance>
 				<tool-factories>
 					<factory name="web-browser">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.browser.BrowserTool"
 						/>
 					</factory>

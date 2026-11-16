@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import junit.framework.Test;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
@@ -21,7 +22,6 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.tools.interaction.ListAgentsTool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
 	 * Which sub-agents a persona's agent may hand work to, on the framework agents the deployment really

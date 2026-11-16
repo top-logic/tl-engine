@@ -5,9 +5,9 @@
  */
 package com.top_logic.tl.ai.core.citation;
 
+import com.top_logic.ai.tool.api.ReadSource;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
 import com.top_logic.basic.thread.ThreadLocalBinding;
-import com.top_logic.tl.ai.tool.api.ReadSource;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 
 /**
  * Thread-local binding of the reading list of the run a tool call belongs to.

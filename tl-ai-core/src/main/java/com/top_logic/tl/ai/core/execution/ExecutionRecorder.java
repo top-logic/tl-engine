@@ -9,6 +9,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+import com.top_logic.ai.tool.api.RunInfo;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.tl.ai.core.agent.AgentResult;
@@ -21,7 +22,6 @@ import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
-import com.top_logic.tl.ai.tool.api.RunInfo;
 
 /**
  * {@link AgentEventListener} decorator that records an agent run as an {@link AgentExecution}.

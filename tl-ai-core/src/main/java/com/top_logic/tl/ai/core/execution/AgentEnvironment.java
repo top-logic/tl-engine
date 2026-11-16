@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
@@ -18,7 +19,6 @@ import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
 import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
 import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * Scope establishing the thread-local environment an agent run expects.

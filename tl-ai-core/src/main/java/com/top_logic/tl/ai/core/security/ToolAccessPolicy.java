@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.security;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ExternallyNamed;
@@ -22,7 +23,6 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /*
  * Every JavaDoc comment in this file - the class comments included - is exported to

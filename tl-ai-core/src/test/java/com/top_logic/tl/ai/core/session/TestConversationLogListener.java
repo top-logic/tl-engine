@@ -16,6 +16,7 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
@@ -29,7 +30,6 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.I18NConstants;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.Resources;
 
 /**

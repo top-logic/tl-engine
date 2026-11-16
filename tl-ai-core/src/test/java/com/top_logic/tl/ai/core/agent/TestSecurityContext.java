@@ -8,11 +8,11 @@ package com.top_logic.tl.ai.core.agent;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * Tests for {@link SecurityContext}.

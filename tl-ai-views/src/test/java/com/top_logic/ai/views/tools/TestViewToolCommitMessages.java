@@ -9,9 +9,9 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.AnnotatedTools;
+import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.tool.api.AnnotatedTools;
-import com.top_logic.tl.ai.tool.api.Tool;
 
 /**
  * The view tools that change views log their calls with the view they change.

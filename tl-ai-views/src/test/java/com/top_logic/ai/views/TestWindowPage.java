@@ -17,6 +17,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.ai.views.tools.ViewTools;
 import com.top_logic.ai.views.tools.ViewTools.Edit;
 import com.top_logic.ai.views.tools.ViewTools.Op;
@@ -37,7 +38,6 @@ import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.tl.ai.core.agent.RunWindow;
 import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.util.model.ModelService;
 
 /**

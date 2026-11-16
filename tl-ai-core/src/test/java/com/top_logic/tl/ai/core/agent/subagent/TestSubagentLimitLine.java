@@ -7,9 +7,9 @@ package com.top_logic.tl.ai.core.agent.subagent;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * The lead reads that a subagent's report may be incomplete for every stop at a limit (#824).

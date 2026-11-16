@@ -15,6 +15,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy;
@@ -27,7 +28,6 @@ import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BackgroundChoice;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BaselineChoice;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.CellState;
 import com.top_logic.tl.ai.core.security.layout.PolicyMatrix.RowState;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
  * How a policy matrix reads and writes the draft (#404).

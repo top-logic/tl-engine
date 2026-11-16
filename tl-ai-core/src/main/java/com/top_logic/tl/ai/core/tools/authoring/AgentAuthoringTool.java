@@ -12,6 +12,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -37,13 +44,6 @@ import com.top_logic.tl.ai.core.tools.authoring.messages.SkillSummary;
 import com.top_logic.tl.ai.core.tools.authoring.messages.ToolListResult;
 import com.top_logic.tl.ai.core.tools.authoring.messages.ToolSummary;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * Tool for creating, inspecting, updating, and deleting application Agents and Skills.

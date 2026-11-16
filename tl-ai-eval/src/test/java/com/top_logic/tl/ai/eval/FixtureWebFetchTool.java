@@ -7,17 +7,17 @@ package com.top_logic.tl.ai.eval;
 
 import java.time.Instant;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ReadSource;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.tl.ai.core.citation.CitationKinds;
 import com.top_logic.tl.ai.core.citation.ReadingListBinding;
 import com.top_logic.tl.ai.core.tools.web.UrlProvenance;
 import com.top_logic.tl.ai.core.tools.web.WebFetchTool;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ReadSource;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * {@code webFetch} as the eval has it: a page of {@link FixtureWeb} is read from there, every other

@@ -27,6 +27,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 
+import com.top_logic.ai.tool.api.AICategory;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -38,7 +39,6 @@ import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.tl.ai.core.agent.environment.AgentFact;
 import com.top_logic.tl.ai.core.agent.environment.PromptPlaceholders;
-import com.top_logic.tl.ai.tool.api.AICategory;
 
 /**
  * TopLogic-provided agent and skill definitions.

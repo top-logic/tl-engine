@@ -7,13 +7,13 @@ package com.top_logic.tl.ai.core.agent;
 
 import java.util.Set;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.RunAuthorization;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Security context for tool execution.
@@ -220,7 +220,7 @@ public interface SecurityContext {
 	 *
 	 * <p>
 	 * For a run that becomes unattended after its context was built. The one caller is
-	 * {@link ToolContext#forDetachedSubagent(TransactionScope, com.top_logic.tl.ai.tool.api.CancellationToken)}:
+	 * {@link ToolContext#forDetachedSubagent(TransactionScope, com.top_logic.ai.tool.api.CancellationToken)}:
 	 * a fire-and-forget subagent keeps running on a pool thread after the parent turn ended, so from
 	 * that moment there is no human to answer an approval prompt - which is precisely the condition
 	 * the allowlist exists for.

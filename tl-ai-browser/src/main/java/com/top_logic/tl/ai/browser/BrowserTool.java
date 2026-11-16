@@ -15,6 +15,13 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
@@ -39,13 +46,6 @@ import com.top_logic.tl.ai.core.tools.web.UrlSafety;
 import com.top_logic.tl.ai.core.tools.web.WebFetchTool;
 import com.top_logic.tl.ai.core.tools.web.WebSources;
 import com.top_logic.tl.ai.core.tools.web.WebToolsService;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.util.TLContext;
 
 /**

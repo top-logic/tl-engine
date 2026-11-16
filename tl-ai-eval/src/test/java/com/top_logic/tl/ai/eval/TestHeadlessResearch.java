@@ -19,6 +19,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.element.meta.MetaElementUtil;
@@ -56,7 +57,6 @@ import com.top_logic.tl.ai.core.scripting.AIScriptFunctions;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.tools.web.WebSearchHit;
 import com.top_logic.tl.ai.core.tools.web.WebToolsService;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.util.model.ModelService;
 
 /**

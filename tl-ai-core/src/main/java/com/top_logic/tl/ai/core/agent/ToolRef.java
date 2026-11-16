@@ -9,9 +9,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.layout.form.values.edit.annotation.Options;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * {@link NameRef} subtype providing available tool names as options.

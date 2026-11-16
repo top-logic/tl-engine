@@ -11,16 +11,16 @@
 		</config>
 
 		<!-- The tools: views.* reads and changes view files; view-window.whereAmI reads the user's open page. -->
-		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+		<config service-class="com.top_logic.ai.tool.api.registry.ToolRegistryService">
 			<instance>
 				<tool-factories>
 					<factory name="views">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.ai.views.tools.ViewTools"
 						/>
 					</factory>
 					<factory name="view-window">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.ai.views.tools.WindowTools"
 						/>
 					</factory>

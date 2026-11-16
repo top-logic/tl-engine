@@ -19,6 +19,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.RunInfo;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -38,7 +39,6 @@ import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.provider.health.FailoverConfig;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
-import com.top_logic.tl.ai.tool.api.RunInfo;
 
 /**
  * Tests that a run which loses its model continues on the next healthy one of its chain, and that a

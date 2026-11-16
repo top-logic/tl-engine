@@ -10,9 +10,9 @@ import java.util.concurrent.CancellationException;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * Test for {@link SubagentJobRegistry} background spawn + blocking await.

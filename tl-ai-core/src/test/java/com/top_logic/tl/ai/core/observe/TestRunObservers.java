@@ -19,6 +19,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
@@ -36,7 +37,6 @@ import com.top_logic.tl.ai.core.security.RunEntryPoint;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
 import com.top_logic.tl.ai.core.security.SecurityContextProxy;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * Test case for {@link RunObservers}: an installed {@link RunObserver} learns of real runs, a child

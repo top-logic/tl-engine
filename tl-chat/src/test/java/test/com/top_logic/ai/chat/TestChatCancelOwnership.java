@@ -26,6 +26,7 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.chat.view.ChatCommandDriver;
 import com.top_logic.ai.chat.view.ChatControl;
 import com.top_logic.ai.chat.view.ChatConversationControl;
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -33,7 +34,6 @@ import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.util.model.ModelService;
 
 /**

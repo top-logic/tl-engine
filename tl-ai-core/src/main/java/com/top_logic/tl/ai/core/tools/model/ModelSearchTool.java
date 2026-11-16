@@ -12,6 +12,10 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -32,10 +36,6 @@ import com.top_logic.model.visit.LabelVisitor;
 import com.top_logic.tl.ai.core.tools.model.messages.SearchResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.SearchResult;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 

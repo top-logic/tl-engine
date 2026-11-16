@@ -11,7 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.top_logic.tl.ai.tool.api.json.JsonTree;
+import com.top_logic.ai.tool.api.json.JsonTree;
 
 /**
  * What a citation's popover shows: the source in the reader's words, never in the tool's.
@@ -59,7 +59,7 @@ public final class CitationExcerpt {
 	 * past it never finds the JSON a tool actually returned.
 	 * </p>
 	 *
-	 * @see com.top_logic.tl.ai.tool.api.UntrustedEnvelope
+	 * @see com.top_logic.ai.tool.api.UntrustedEnvelope
 	 */
 	private static final String ENVELOPE = "</?untrusted_[A-Za-z_]*[^>]*>";
 

@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
+import com.top_logic.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.CompactionMarker;
@@ -28,7 +29,6 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * Compaction strategy that calls an LLM to summarize older messages.

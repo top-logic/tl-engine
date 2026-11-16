@@ -10,6 +10,10 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
@@ -31,10 +35,6 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.core.tools.model.messages.AnnotationEditorResponse;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.util.model.ModelService;
 
 import de.haumacher.msgbuf.io.StringW;

@@ -15,8 +15,8 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
  * The warnings {@link PolicyChecks} shows an administrator about a policy.

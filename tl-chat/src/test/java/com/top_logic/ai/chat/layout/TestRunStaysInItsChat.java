@@ -21,6 +21,7 @@ import com.top_logic.ai.chat.api.ChatEventHandlerRegistry;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -40,7 +41,6 @@ import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 

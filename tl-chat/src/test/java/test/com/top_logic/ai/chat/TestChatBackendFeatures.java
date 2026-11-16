@@ -36,6 +36,7 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.chat.view.ChatCommandDriver;
 import com.top_logic.ai.chat.view.ChatControl;
 import com.top_logic.ai.chat.view.ChatConversationControl;
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.basic.util.ResKey;
@@ -56,7 +57,6 @@ import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 

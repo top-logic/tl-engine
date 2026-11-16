@@ -22,6 +22,11 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.ProgressReporter;
+import com.top_logic.ai.tool.api.ReadSource;
+import com.top_logic.ai.tool.api.RunInfo;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.element.meta.MetaElementUtil;
@@ -52,15 +57,10 @@ import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.model.TidResolver;
 import com.top_logic.tl.ai.core.tools.research.FindingTools;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.ProgressReporter;
-import com.top_logic.tl.ai.tool.api.ReadSource;
-import com.top_logic.tl.ai.tool.api.RunInfo;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.Resources;
-import com.top_logic.util.model.ModelService;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.util.model.ModelService;
 
 /**
  * A research run is kept with references to what it rests on - the archived pages, the objects of

@@ -16,6 +16,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Supplier;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
@@ -51,8 +53,6 @@ import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
 import com.top_logic.tl.ai.core.security.RunAuthorization;
 import com.top_logic.tl.ai.core.security.ToolAccessExplanation;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.util.Resources;
 
 /*

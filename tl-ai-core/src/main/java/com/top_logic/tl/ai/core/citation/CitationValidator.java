@@ -14,13 +14,13 @@ import java.util.function.IntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.top_logic.ai.tool.api.ReadSource;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.citation.CitationMarkerSyntax.Marker;
 import com.top_logic.tl.ai.core.session.Citation;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
-import com.top_logic.tl.ai.tool.api.ReadSource;
 
 /**
  * Turns the links an answer points at its sources with into footnotes, and drops the links that

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import com.top_logic.ai.tool.api.AICategory;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.encryption.EncryptionService;
 import com.top_logic.basic.encryption.SymmetricEncryption;
@@ -28,7 +29,6 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.browser.cookiepool.model.CookiePool;
 import com.top_logic.tl.ai.browser.cookiepool.model.TlAiCookiepoolFactory;
-import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -93,7 +93,7 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * Mirrors {@code ScreenshotService} in shape: it does <b>not</b> open its own {@code Transaction}.
  * The pool-upsert call happens from the {@code browserSaveCookies} verb, a
- * {@link com.top_logic.tl.ai.tool.api.ToolMode#DATA_WRITE DATA_WRITE} tool whose transaction is
+ * {@link com.top_logic.ai.tool.api.ToolMode#DATA_WRITE DATA_WRITE} tool whose transaction is
  * opened and committed by the agent loop's {@code TransactionScope}, so the pool is committed with
  * the turn. Programmatic callers (and tests) supply their own transaction.
  * </p>

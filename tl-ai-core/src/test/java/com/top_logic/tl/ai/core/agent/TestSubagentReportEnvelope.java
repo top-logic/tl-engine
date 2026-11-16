@@ -12,6 +12,8 @@ import java.util.UUID;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
@@ -30,8 +32,6 @@ import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.SubagentStatusTool;
 import com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * A subagent's report reaches the agent that started it as data, on every path it can take: the

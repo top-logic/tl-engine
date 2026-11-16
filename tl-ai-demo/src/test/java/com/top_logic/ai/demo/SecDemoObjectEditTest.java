@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
 
+import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
@@ -42,7 +43,6 @@ import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
-import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.util.TLContext;
 
 /**

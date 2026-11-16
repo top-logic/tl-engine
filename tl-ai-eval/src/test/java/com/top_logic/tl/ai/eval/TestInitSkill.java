@@ -26,6 +26,9 @@ import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.ToolSchema;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.XMLProperties;
 import com.top_logic.basic.config.ApplicationConfig;
@@ -81,9 +84,6 @@ import com.top_logic.tl.ai.core.security.SecurityContextProxy;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.tools.context.DevelopmentWorkspace;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 

@@ -16,14 +16,14 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.tl.ai.core.mcp.McpServerRegistry;
 import com.top_logic.tl.ai.core.security.DeclaredTypeAccess;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.tl.ai.core.security.RunAuthorization;
 import com.top_logic.tl.ai.core.security.ToolGroupResources;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * What one agent can actually do for the principal of one run.
@@ -39,7 +39,7 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  *
  * <p>
  * <b>Capabilities, not tools.</b> A missing capability is named by its
- * {@link com.top_logic.tl.ai.tool.api.ToolGroups group}, because that is the unit an administrator
+ * {@link com.top_logic.ai.tool.api.ToolGroups group}, because that is the unit an administrator
  * grants: {@code data.write} is one line a user can take to their administrator, where the tools
  * behind it are not. The set is computed from the tools <em>this agent</em> can reach - its own
  * {@code <tools>} plus the tools of its skills - rather than from every group in the deployment: a
@@ -378,7 +378,7 @@ public class AgentCapabilities {
 	 * </p>
 	 *
 	 * <p>
-	 * Three remedies, not two: a tool whose {@link com.top_logic.tl.ai.tool.api.ToolMethod#types()
+	 * Three remedies, not two: a tool whose {@link com.top_logic.ai.tool.api.ToolMethod#types()
 	 * declared types} this user may not read names the types instead of a capability (#258). The
 	 * capability it costs is one the user holds, so naming it would be true of the tool and false of
 	 * the refusal.

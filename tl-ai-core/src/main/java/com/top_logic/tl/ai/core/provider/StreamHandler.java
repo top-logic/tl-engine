@@ -5,7 +5,7 @@
  */
 package com.top_logic.tl.ai.core.provider;
 
-import com.top_logic.tl.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.CancellationToken;
 
 /**
  * Receives events from an LLM streaming response.

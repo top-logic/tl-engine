@@ -7,8 +7,8 @@
 /**
  * Tool system: dispatch, annotation-based discovery, and execution.
  *
- * @see com.top_logic.tl.ai.tool.api.Tool
+ * @see com.top_logic.ai.tool.api.Tool
  * @see com.top_logic.tl.ai.core.tools.ToolCatalog
- * @see com.top_logic.tl.ai.tool.api.AnnotatedTools
+ * @see com.top_logic.ai.tool.api.AnnotatedTools
  */
 package com.top_logic.tl.ai.core.tools;

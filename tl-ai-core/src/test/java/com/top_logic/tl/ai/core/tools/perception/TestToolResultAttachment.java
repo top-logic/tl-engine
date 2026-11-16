@@ -18,6 +18,7 @@ import javax.imageio.ImageIO;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.ImageContent;
@@ -37,7 +38,6 @@ import com.top_logic.tl.ai.core.provider.catalog.ModelInfo.ModelModalities;
 import com.top_logic.tl.ai.core.provider.chatcompletions.ChatCompletionsRequestBuilder;
 import com.top_logic.tl.ai.core.provider.openai.OpenAIResponsesRequestBuilder;
 import com.top_logic.tl.ai.core.tools.ToolContents;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 
 /**
  * End-to-end test of the {@code viewDocument} delivery path: stored bytes become a downscaled image

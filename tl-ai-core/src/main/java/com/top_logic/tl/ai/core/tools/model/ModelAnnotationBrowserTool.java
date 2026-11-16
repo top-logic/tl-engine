@@ -13,6 +13,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -32,10 +36,6 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.tools.config.ConfigSchemaTool;
 import com.top_logic.tl.ai.core.tools.model.messages.AnnotationListResponse;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.model.ModelService;
 
 import de.haumacher.msgbuf.io.StringW;
@@ -75,7 +75,7 @@ import de.haumacher.msgbuf.io.StringW;
  * <h3>Integration:</h3>
  *
  * <p>
- * Register this tool via {@link com.top_logic.tl.ai.tool.api.AnnotatedTools} and assign it to an
+ * Register this tool via {@link com.top_logic.ai.tool.api.AnnotatedTools} and assign it to an
  * agent through the {@link com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions} configuration.
  * </p>
  */

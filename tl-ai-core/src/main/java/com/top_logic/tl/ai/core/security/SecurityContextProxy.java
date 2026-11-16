@@ -8,11 +8,11 @@ package com.top_logic.tl.ai.core.security;
 import java.util.Objects;
 import java.util.Set;
 
+import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.tl.ai.core.agent.ExecutionMode;
 import com.top_logic.tl.ai.core.agent.PermissionDecision;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.message.ToolCall;
-import com.top_logic.tl.ai.tool.api.Tool;
 
 /**
  * A {@link SecurityContext} that answers everything the way another one does.

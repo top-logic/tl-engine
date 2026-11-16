@@ -15,6 +15,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
@@ -22,7 +23,6 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.GroupMembership;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
  * How the choices of the policy editor present themselves: tool groups, roles and tools.
@@ -41,7 +41,7 @@ public class TestToolGroupPresentation extends TestCase {
 	public void testEveryFrameworkGroupIsDescribed() {
 		for (String group : ToolGroups.ALL) {
 			assertNotNull("The tool group '" + group + "' has no resource. Add one to"
-				+ " com.top_logic.tl.ai.tool.api.I18NConstants and register it in ToolGroups.",
+				+ " com.top_logic.ai.tool.api.I18NConstants and register it in ToolGroups.",
 				ToolGroups.labelKey(group));
 		}
 	}

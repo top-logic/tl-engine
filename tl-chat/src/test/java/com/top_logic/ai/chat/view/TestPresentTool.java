@@ -22,6 +22,8 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.tools.ChatPresentTool;
+import com.top_logic.ai.tool.api.AnnotatedTools;
+import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -51,8 +53,6 @@ import com.top_logic.tl.ai.core.tools.present.ChartKind;
 import com.top_logic.tl.ai.core.tools.present.ChartSpec;
 import com.top_logic.tl.ai.core.tools.present.PresentAs;
 import com.top_logic.tl.ai.core.tools.present.Presentation;
-import com.top_logic.tl.ai.tool.api.AnnotatedTools;
-import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;

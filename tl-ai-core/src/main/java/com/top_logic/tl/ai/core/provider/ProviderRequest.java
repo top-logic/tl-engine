@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.core.message.Message;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * A request to send to an {@link LLMProvider}.

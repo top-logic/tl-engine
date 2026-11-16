@@ -23,6 +23,8 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
+import com.top_logic.ai.tool.api.AnnotatedTools;
+import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
@@ -50,8 +52,6 @@ import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.index.AiIndex;
 import com.top_logic.tl.ai.index.lucene.IndexFixture;
 import com.top_logic.tl.ai.index.query.SearchFixture;
-import com.top_logic.tl.ai.tool.api.AnnotatedTools;
-import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.util.model.ModelService;
 
 /**

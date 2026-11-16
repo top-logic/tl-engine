@@ -9,6 +9,15 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ReadSource;
+import com.top_logic.ai.tool.api.RunInfo;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.citation.CitationKinds;
 import com.top_logic.tl.ai.core.citation.Finding;
@@ -19,15 +28,6 @@ import com.top_logic.tl.ai.core.research.ResearchReport;
 import com.top_logic.tl.ai.core.research.ResearchRuns;
 import com.top_logic.tl.ai.core.tools.web.BrowsingPolicies;
 import com.top_logic.tl.ai.core.tools.web.WebFetchTool;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ReadSource;
-import com.top_logic.tl.ai.tool.api.RunInfo;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * The research tools that work on what a run tree read: record a finding, list the findings, read a

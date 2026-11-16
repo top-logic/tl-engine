@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.knowledge.service.KBUtils;
@@ -41,7 +42,6 @@ import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;

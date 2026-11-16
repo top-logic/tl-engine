@@ -195,7 +195,7 @@ public class UserInteractionStore {
 	 *
 	 * <p>
 	 * What a caller asks when it needs more about a pending approval than its id: the
-	 * {@link ApprovalRequest} carries the tool's {@link com.top_logic.tl.ai.tool.api.ToolMode},
+	 * {@link ApprovalRequest} carries the tool's {@link com.top_logic.ai.tool.api.ToolMode},
 	 * which is what a surface phrases the question from, and which no persisted record of the
 	 * request holds.
 	 * </p>

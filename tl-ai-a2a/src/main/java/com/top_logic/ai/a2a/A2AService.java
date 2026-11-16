@@ -18,6 +18,8 @@ import com.top_logic.ai.a2a.protocol.Json;
 import com.top_logic.ai.a2a.protocol.Sections;
 import com.top_logic.ai.a2a.server.A2ARequestHandler;
 import com.top_logic.ai.a2a.server.AgentRunBackend;
+import com.top_logic.ai.tool.api.AICategory;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -46,8 +48,6 @@ import com.top_logic.tl.ai.core.access.EndpointAuthentication;
 import com.top_logic.tl.ai.core.access.EndpointSecret;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.observe.ObserverQueue;
-import com.top_logic.tl.ai.tool.api.AICategory;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * Connects this application's agents to other agents over the A2A protocol v1.0: exposes configured

@@ -20,6 +20,8 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
@@ -48,8 +50,6 @@ import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.core.tools.interaction.CancelSubagentTool;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.SendToSubagentTool;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -260,7 +260,7 @@ public class TestSubagentSteering extends BasicTestCase {
 			.startsWith("ERROR: No such subagent: sa-99"));
 	}
 
-	private String lead(com.top_logic.tl.ai.tool.api.Tool tool, Map<String, Object> args) {
+	private String lead(com.top_logic.ai.tool.api.Tool tool, Map<String, Object> args) {
 		try (SubagentRegistryBinding.Binding bound = SubagentRegistryBinding.bind(_registry)) {
 			return tool.execute(args, ToolContext.EMPTY).text();
 		}

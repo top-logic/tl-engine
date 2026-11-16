@@ -7,13 +7,13 @@ package com.top_logic.tl.ai.core.agent.approval;
 
 import java.time.Duration;
 
+import com.top_logic.ai.tool.api.AICategory;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.tl.ai.tool.api.AICategory;
 
 /**
  * The deadlines a human gets to answer an agent: how long a tool approval and how long a question

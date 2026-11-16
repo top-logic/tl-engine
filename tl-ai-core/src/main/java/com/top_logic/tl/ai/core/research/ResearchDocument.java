@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import com.top_logic.ai.tool.api.ReadSource;
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.binary.BinaryData;
@@ -46,7 +47,6 @@ import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.session.Citation;
-import com.top_logic.tl.ai.tool.api.ReadSource;
 import com.top_logic.util.Resources;
 
 /**

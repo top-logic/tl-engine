@@ -27,6 +27,12 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.ProgressReporter;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.ToolSchema;
+import com.top_logic.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.SubSessionContext;
@@ -103,12 +109,6 @@ import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.memory.MemoryConsent;
 import com.top_logic.tl.ai.core.tools.memory.MemoryConsentBinding;
 import com.top_logic.tl.ai.core.tools.refusal.ApplicationRefusals;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.ProgressReporter;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
-import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * Core agent loop: calls the LLM, executes tool calls, feeds results back, repeats.
@@ -1449,7 +1449,7 @@ public class AgentLoop {
 	 * one state. A commit made after that point that changed an object the turn writes is a real
 	 * conflict, and the turn's commit fails on it as before. What a tool's own helpers commit while it
 	 * waits for them is the tool's to catch up with - see
-	 * {@link com.top_logic.tl.ai.tool.api.ToolExecutionContext#catchUpWithCommits()}.
+	 * {@link com.top_logic.ai.tool.api.ToolExecutionContext#catchUpWithCommits()}.
 	 * </p>
 	 *
 	 * <p>
@@ -2099,7 +2099,7 @@ public class AgentLoop {
 	 * check is not one to put in front of the user for approval.
 	 * </p>
 	 *
-	 * @see Tool#refusal(Map, com.top_logic.tl.ai.tool.api.ToolExecutionContext)
+	 * @see Tool#refusal(Map, com.top_logic.ai.tool.api.ToolExecutionContext)
 	 */
 	private static String refusalOf(Tool tool, ToolCall toolCall, ToolContext context) {
 		Map<String, Object> arguments;
@@ -2126,7 +2126,7 @@ public class AgentLoop {
 	 * of the run, so both are cut to the budget and both report it with the same
 	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.ToolCallResultTruncated} event. What a
 	 * failure does <em>not</em> have is a per-tool budget of its own:
-	 * {@link com.top_logic.tl.ai.tool.api.ToolResult#failure(String)} carries no
+	 * {@link com.top_logic.ai.tool.api.ToolResult#failure(String)} carries no
 	 * {@code truncationHint}, and the failures that matter most here - a thrown exception, a remote
 	 * MCP error body, an exception out of a TL-Script body - never pass a {@code ToolResult} at
 	 * all. The installation default is therefore the only budget for a failure, deliberately: a

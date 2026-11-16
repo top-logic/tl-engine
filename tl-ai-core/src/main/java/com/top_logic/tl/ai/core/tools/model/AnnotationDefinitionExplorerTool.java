@@ -10,6 +10,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -23,11 +28,6 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.tl.ai.core.tools.ToolResults;
 import com.top_logic.tl.ai.core.tools.model.messages.AnnotationDefinitionResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.PropertyDefinition;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tool for exploring annotation definition schemas.
@@ -51,7 +51,7 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * <h3>Integration:</h3>
  *
  * <p>
- * Register this tool via {@link com.top_logic.tl.ai.tool.api.AnnotatedTools} and assign it to an
+ * Register this tool via {@link com.top_logic.ai.tool.api.AnnotatedTools} and assign it to an
  * agent through the {@link com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions} configuration.
  * </p>
  */

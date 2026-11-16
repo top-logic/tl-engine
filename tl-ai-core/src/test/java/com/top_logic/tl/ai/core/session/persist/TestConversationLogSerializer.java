@@ -11,6 +11,7 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.ImageContent;
@@ -30,7 +31,6 @@ import com.top_logic.tl.ai.core.session.CompactionSidecar;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tests for {@link ConversationLogSerializer}.

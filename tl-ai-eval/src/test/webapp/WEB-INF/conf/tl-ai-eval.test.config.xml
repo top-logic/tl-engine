@@ -34,11 +34,11 @@
 			model shows after the same checks a chat page's tool makes, and the <presented> grader
 			reads the call (#616).
 		-->
-		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+		<config service-class="com.top_logic.ai.tool.api.registry.ToolRegistryService">
 			<instance>
 				<tool-factories>
 					<factory name="present">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.eval.EvalPresentTool"
 						/>
 					</factory>
@@ -48,7 +48,7 @@
 						without a network (#723).
 					-->
 					<factory name="web-fetch">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.eval.FixtureWebFetchTool"
 						/>
 					</factory>

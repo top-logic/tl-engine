@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.ToolMode;
 
 /**
  * Tests for {@link UserInteractionStore}, in particular that a pending approval is discoverable

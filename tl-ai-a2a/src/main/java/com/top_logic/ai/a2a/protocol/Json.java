@@ -11,8 +11,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.tool.api.json.JsonTree;
 import com.top_logic.basic.json.JSON;
-import com.top_logic.tl.ai.tool.api.json.JsonTree;
 
 /**
  * The A2A wire format as plain JSON trees ({@link Map}, {@link List}, {@link String}, {@link Number},

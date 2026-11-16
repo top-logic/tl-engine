@@ -10,6 +10,9 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.AnnotatedTools;
+import com.top_logic.ai.tool.api.I18NConstants;
+import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.tools.authoring.AgentAuthoringTool;
@@ -24,16 +27,13 @@ import com.top_logic.tl.ai.core.tools.model.ObjectEditTool;
 import com.top_logic.tl.ai.core.tools.script.ChangeDataTool;
 import com.top_logic.tl.ai.core.tools.text.TextEditTool;
 import com.top_logic.tl.ai.core.tools.util.PublishHtmlPageTool;
-import com.top_logic.tl.ai.tool.api.AnnotatedTools;
-import com.top_logic.tl.ai.tool.api.I18NConstants;
-import com.top_logic.tl.ai.tool.api.Tool;
 
 /**
  * Every tool of this module that writes the application's state describes its calls for the
  * revision log, and describing a call fails for no arguments - an identifier that names nothing is
  * logged as it is.
  *
- * @see Tool#commitMessage(Map, com.top_logic.tl.ai.tool.api.ToolExecutionContext)
+ * @see Tool#commitMessage(Map, com.top_logic.ai.tool.api.ToolExecutionContext)
  */
 public class TestToolCommitMessages extends TestCase {
 

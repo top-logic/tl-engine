@@ -9,24 +9,24 @@ import java.util.List;
 
 import junit.framework.Test;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.base.operation.OperationModeService;
-import com.top_logic.tl.ai.core.agent.ExecutionMode;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.tl.ai.core.agent.ExecutionMode;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
-import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.ToolPermissionFilter;
+import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * What the model is <em>told</em> about: the per-turn schema filter, and the message a name the

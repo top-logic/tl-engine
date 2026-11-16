@@ -26,6 +26,8 @@ import com.top_logic.ai.chat.history.ChatHistoryService.RecordedRun;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ScriptedBackend;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -44,8 +46,6 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 

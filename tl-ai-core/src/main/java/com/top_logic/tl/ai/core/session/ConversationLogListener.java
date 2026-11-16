@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.StringServices;
 import com.top_logic.tl.ai.core.agent.AgentResult;
 import com.top_logic.tl.ai.core.agent.StopReason;
@@ -28,7 +29,6 @@ import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Converts {@link AgentEvent}s into {@link Part}s and appends them to a

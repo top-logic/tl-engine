@@ -9,8 +9,8 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.RunInfo;
 import com.top_logic.tl.ai.core.execution.RunInfoBinding;
-import com.top_logic.tl.ai.tool.api.RunInfo;
 
 /**
  * Tests for {@code aiRunInfo()}, which is how a configured script tool learns which run it is

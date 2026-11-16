@@ -16,19 +16,19 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.model.annotate.security.AccessGrant;
 import com.top_logic.model.annotate.security.AccessRevoke;
 import com.top_logic.model.annotate.security.AccessRule;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.security.SecurityConfigurationService;
-import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
+import com.top_logic.tool.boundsec.CommandGroupReference;
 
 /**
  * Tests what {@link AiToolAccessService} refuses to accept in a policy.

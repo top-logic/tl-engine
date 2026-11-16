@@ -7,12 +7,12 @@ package com.top_logic.tl.ai.core.agent;
 
 import java.util.function.Predicate;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.security.DeclaredTypeAccess;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Determines whether a tool is available to the current user in the current execution mode.

@@ -17,6 +17,7 @@ import java.util.Set;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
+import com.top_logic.ai.tool.api.ReadSource;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -43,7 +44,6 @@ import com.top_logic.tl.ai.index.lucene.StoredChunk;
 import com.top_logic.tl.ai.index.lucene.Vectors;
 import com.top_logic.tl.ai.index.sync.IndexStatus;
 import com.top_logic.tl.ai.index.sync.IndexSync;
-import com.top_logic.tl.ai.tool.api.ReadSource;
 import com.top_logic.util.TLContext;
 
 /**

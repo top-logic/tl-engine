@@ -5,6 +5,12 @@
  */
 package com.top_logic.tl.ai.core.tools.text;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -23,12 +29,6 @@ import com.top_logic.tl.ai.core.security.ToolSecurityException;
 import com.top_logic.tl.ai.core.text.TextEdits;
 import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.core.tools.model.TidResolver;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**

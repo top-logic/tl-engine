@@ -9,7 +9,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
 
-import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.ToolMode;
 
 /**
  * Data sent to the user when a tool call needs approval.

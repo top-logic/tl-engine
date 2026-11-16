@@ -14,6 +14,15 @@ import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.function.Predicate;
 
+import com.top_logic.ai.tool.api.AnnotatedTools;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolArgumentCoercionException;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.ToolResult;
+import com.top_logic.ai.tool.api.ToolSchema;
+import com.top_logic.ai.tool.api.json.JsonTree;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.agent.ToolContext;
@@ -21,15 +30,6 @@ import com.top_logic.tl.ai.core.agent.ToolPermissionFilter;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
-import com.top_logic.tl.ai.tool.api.AnnotatedTools;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolArgumentCoercionException;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
-import com.top_logic.tl.ai.tool.api.json.JsonTree;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * Central catalog of {@link Tool}s.
@@ -370,8 +370,8 @@ public class ToolCatalog implements ToolRegistry {
 
 	/**
 	 * The commit message of the given call: the tool's
-	 * {@link Tool#commitMessage(Map, com.top_logic.tl.ai.tool.api.ToolExecutionContext)}, or the
-	 * generic {@link com.top_logic.tl.ai.tool.api.I18NConstants#TOOL_CALL__TOOL message} naming the
+	 * {@link Tool#commitMessage(Map, com.top_logic.ai.tool.api.ToolExecutionContext)}, or the
+	 * generic {@link com.top_logic.ai.tool.api.I18NConstants#TOOL_CALL__TOOL message} naming the
 	 * tool when its arguments do not parse.
 	 *
 	 * @see #commitMessage(Tool, Map, ToolContext)
@@ -408,6 +408,6 @@ public class ToolCatalog implements ToolRegistry {
 	}
 
 	private static ResKey genericCommitMessage(Tool tool) {
-		return com.top_logic.tl.ai.tool.api.I18NConstants.TOOL_CALL__TOOL.fill(tool.name());
+		return com.top_logic.ai.tool.api.I18NConstants.TOOL_CALL__TOOL.fill(tool.name());
 	}
 }

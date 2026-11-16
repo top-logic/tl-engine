@@ -10,12 +10,12 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.AnnotatedTools;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.tools.interaction.TaskTool;
 import com.top_logic.tl.ai.core.tools.model.ModelEditorTool;
-import com.top_logic.tl.ai.tool.api.AnnotatedTools;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tests for object-level locking rework.

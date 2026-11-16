@@ -25,6 +25,7 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.chat.view.ChatCommandDriver;
 import com.top_logic.ai.chat.view.ChatControl;
 import com.top_logic.ai.chat.view.ChatConversationControl;
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.basic.sched.SchedulerService;
@@ -35,16 +36,15 @@ import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
-import com.top_logic.tl.ai.core.cost.CostConversion;
-import com.top_logic.tl.ai.core.cost.Money;
-import com.top_logic.tl.ai.core.limits.BudgetAllowance;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
+import com.top_logic.tl.ai.core.cost.CostConversion;
+import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.limits.BudgetAllowance;
 import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.util.model.ModelService;
 
 /**

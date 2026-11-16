@@ -11,12 +11,12 @@ import java.util.Set;
 
 import junit.framework.Test;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RoleToolAccess;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
  * The invocation gate of the tool layer (L1), one persona at a time.

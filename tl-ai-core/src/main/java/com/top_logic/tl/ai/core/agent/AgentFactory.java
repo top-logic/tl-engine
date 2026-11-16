@@ -15,14 +15,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import com.top_logic.ai.tool.api.AnnotatedTools;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.environment.AgentFact;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.tl.ai.core.agent.environment.RunEnvironment;
 import com.top_logic.tl.ai.core.agent.environment.RunFactsBinding;
-import com.top_logic.tl.ai.core.agent.environment.UserMemorySettings;
-import com.top_logic.tl.ai.core.tools.memory.UserMemoryTool;
 import com.top_logic.tl.ai.core.agent.environment.TurnContext;
+import com.top_logic.tl.ai.core.agent.environment.UserMemorySettings;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.skills.Skill;
 import com.top_logic.tl.ai.core.limits.RunLimits;
@@ -35,10 +37,10 @@ import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
+import com.top_logic.tl.ai.core.provider.EffortLevels;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
-import com.top_logic.tl.ai.core.provider.EffortLevels;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.tl.ai.core.security.RunAuthorization;
@@ -52,10 +54,8 @@ import com.top_logic.tl.ai.core.tools.interaction.LoadedSkillsBinding;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
 import com.top_logic.tl.ai.core.tools.interaction.WaitForSubagentTool;
 import com.top_logic.tl.ai.core.tools.introspection.ListToolsTool;
+import com.top_logic.tl.ai.core.tools.memory.UserMemoryTool;
 import com.top_logic.tl.ai.core.tools.script.QueryLanguage;
-import com.top_logic.tl.ai.tool.api.AnnotatedTools;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * Builds {@link AgentLoop} instances from agent definitions stored in the knowledge base.

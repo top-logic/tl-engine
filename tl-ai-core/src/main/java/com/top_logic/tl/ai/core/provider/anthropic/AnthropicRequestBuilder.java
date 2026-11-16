@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.ContentPart;
@@ -34,7 +35,6 @@ import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.ResponseFormat;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.core.provider.anthropic.messages.AnthropicRequest;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;

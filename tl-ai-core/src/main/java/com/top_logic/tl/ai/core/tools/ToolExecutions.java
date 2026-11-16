@@ -7,6 +7,10 @@ package com.top_logic.tl.ai.core.tools;
 
 import java.util.Map;
 
+import com.top_logic.ai.tool.api.RunInfo;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
@@ -14,10 +18,6 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.core.citation.ReadingListBinding;
 import com.top_logic.tl.ai.core.execution.RunInfoBinding;
-import com.top_logic.tl.ai.tool.api.RunInfo;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 
 /**
  * Runs {@link Tool}s with a guaranteed TopLogic interaction context.

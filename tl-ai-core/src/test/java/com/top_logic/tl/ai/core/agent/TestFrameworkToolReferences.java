@@ -28,8 +28,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import com.top_logic.tl.ai.tool.api.AnnotatedTools;
-import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.AnnotatedTools;
+import com.top_logic.ai.tool.api.Tool;
 
 /**
  * Guards that every tool the shipped agents and skills refer to actually exists.
@@ -59,7 +59,7 @@ public class TestFrameworkToolReferences extends TestCase {
 
 	/** The factory that builds its tools by scanning a class for {@code @ToolMethod} methods. */
 	private static final String REFLECTIVE =
-		"com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory";
+		"com.top_logic.ai.tool.api.registry.ReflectiveToolFactory";
 
 	/** Every tool an agent or a skill names is declared by a factory of this configuration. */
 	public void testEveryReferencedToolExists() throws Exception {

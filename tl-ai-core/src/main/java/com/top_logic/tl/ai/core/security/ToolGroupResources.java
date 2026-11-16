@@ -5,12 +5,12 @@
  */
 package com.top_logic.tl.ai.core.security;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.tl.ai.core.tools.registry.ToolDescriptions;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.util.Resources;
 
 /**

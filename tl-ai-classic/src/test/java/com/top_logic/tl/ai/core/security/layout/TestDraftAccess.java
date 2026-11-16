@@ -16,6 +16,7 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Cause;
@@ -26,7 +27,6 @@ import com.top_logic.tl.ai.core.security.layout.DraftAccess.Mark;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BackgroundChoice;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.CellState;
 import com.top_logic.tl.ai.core.security.layout.PolicyMatrix.RowState;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
  * The overlay and the cell tooltips of the policy matrix: what one role on its own may use under the

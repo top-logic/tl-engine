@@ -9,10 +9,10 @@ import java.time.Instant;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.session.ConversationLog;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * Test for {@link SubagentJob} lifecycle and the {@link SubagentResult} envelope.

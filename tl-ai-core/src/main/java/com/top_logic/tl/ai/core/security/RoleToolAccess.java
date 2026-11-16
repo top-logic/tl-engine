@@ -13,12 +13,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.GroupMembership;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
  * Decides whether the roles a user holds grant them a given tool.

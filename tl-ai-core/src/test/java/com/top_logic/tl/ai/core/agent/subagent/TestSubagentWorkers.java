@@ -20,6 +20,8 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.listener.Listener;
 import com.top_logic.basic.logging.Level;
@@ -32,8 +34,6 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.core.tools.interaction.SpawnSubagentTool;
 import com.top_logic.tl.ai.core.tools.interaction.SubagentSpawner;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 
 /**
  * Test for {@link SubagentWorkers}: stopping the service ends the subagents before the services they

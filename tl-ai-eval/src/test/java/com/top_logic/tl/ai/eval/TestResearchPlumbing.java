@@ -16,6 +16,7 @@ import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -36,7 +37,6 @@ import com.top_logic.tl.ai.core.provider.ScriptedProvider;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.tools.web.WebSearchHit;
 import com.top_logic.tl.ai.core.tools.web.WebToolsService;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 

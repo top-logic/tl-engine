@@ -15,8 +15,8 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.top_logic.ai.tool.api.ReadSource;
 import com.top_logic.basic.Logger;
-import com.top_logic.tl.ai.tool.api.ReadSource;
 
 /**
  * What one agent run read: the sources its answer may point at.

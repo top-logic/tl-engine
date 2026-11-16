@@ -5,11 +5,11 @@
  */
 package com.top_logic.tl.ai.core.security;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.layout.AbstractResourceProvider;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * How a tool presents itself where an administrator has to pick one for a {@link ToolAccessPolicy}.

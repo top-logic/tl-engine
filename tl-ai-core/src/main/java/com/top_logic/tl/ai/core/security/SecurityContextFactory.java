@@ -12,7 +12,7 @@ import com.top_logic.tl.ai.core.agent.SecurityContext;
  *
  * <p>
  * The seam an application substitutes when its answer to "does this call need a human?" depends on
- * more than the tool's {@link com.top_logic.tl.ai.tool.api.ToolMode}. Three writes of the same
+ * more than the tool's {@link com.top_logic.ai.tool.api.ToolMode}. Three writes of the same
  * {@code DATA_WRITE} tool can deserve three different answers - overwrite an empty section, overwrite
  * what a person wrote, release a document to a customer - and the only thing that tells them apart is
  * the call's arguments, which {@link SecurityContext#checkApproval} receives. An application

@@ -11,6 +11,7 @@ import java.util.Set;
 
 import junit.framework.Test;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
@@ -25,7 +26,6 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
  * What a persona is told when {@code loadSkill} cannot hand over the skill it asked for.

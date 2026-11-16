@@ -14,6 +14,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KBUtils;
@@ -28,7 +29,6 @@ import com.top_logic.tl.ai.core.execution.CancelSignalObserver;
 import com.top_logic.tl.ai.core.execution.ExecutionHandle;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;

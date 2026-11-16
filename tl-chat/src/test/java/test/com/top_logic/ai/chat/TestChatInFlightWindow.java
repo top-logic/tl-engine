@@ -20,8 +20,8 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.ai.chat.api.ChatEventHandler;
 import com.top_logic.ai.chat.api.ChatEventHandlerRegistry;
-import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.api.ChatTranscripts;
+import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.api.RunStateFrame;
 import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
@@ -33,6 +33,7 @@ import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
@@ -48,7 +49,6 @@ import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 

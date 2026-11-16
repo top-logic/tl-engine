@@ -18,6 +18,9 @@ import java.util.Objects;
 import java.util.RandomAccess;
 import java.util.Set;
 
+import com.top_logic.ai.tool.api.ReadSource;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
@@ -28,9 +31,6 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.citation.CitationKinds;
 import com.top_logic.tl.ai.core.citation.ReadingListBinding;
-import com.top_logic.tl.ai.tool.api.ReadSource;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * The one place a {@link TLObject} becomes something a language model gets to see.

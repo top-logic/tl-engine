@@ -25,6 +25,9 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolResult;
+import com.top_logic.ai.tool.api.registry.ReflectiveToolFactory;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -32,9 +35,6 @@ import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.HeaderCredentials;
 import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.io.character.CharacterContents;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory;
 
 /**
  * Tests how {@link GiteaIssueTool} authenticates its requests: with the access token in the secret

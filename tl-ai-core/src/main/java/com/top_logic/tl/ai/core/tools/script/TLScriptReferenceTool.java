@@ -12,6 +12,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -24,11 +29,6 @@ import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.tl.ai.core.tools.script.messages.FunctionDocResult;
 import com.top_logic.tl.ai.core.tools.script.messages.FunctionListResult;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tool for listing TLScript functions and retrieving documentation.

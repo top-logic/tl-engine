@@ -27,6 +27,10 @@ import java.util.regex.Pattern;
 
 import org.junit.runner.RunWith;
 
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.browser.BrowserToolsService.BlockSignal;
@@ -42,10 +46,6 @@ import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
 import com.top_logic.tl.ai.core.tools.web.FilteringProxy;
 import com.top_logic.tl.ai.core.tools.web.UrlSafety;
 import com.top_logic.tl.ai.core.tools.web.WebFetchTool;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 import junit.framework.TestCase;
 
@@ -648,7 +648,7 @@ public class TestBrowserTool extends TestCase {
 			}
 		}
 		assertNotNull("browserScreenshot is a @ToolMethod", annotation);
-		assertEquals("browserScreenshot keeps the user's capture", com.top_logic.tl.ai.tool.api.ToolMode.USER_SCOPED,
+		assertEquals("browserScreenshot keeps the user's capture", com.top_logic.ai.tool.api.ToolMode.USER_SCOPED,
 			annotation.mode());
 	}
 

@@ -12,12 +12,12 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.anthropic.AnthropicRequestBuilder;
 import com.top_logic.tl.ai.core.provider.bedrock.BedrockConverseRequestBuilder;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 import de.haumacher.msgbuf.json.JsonUtil;
 

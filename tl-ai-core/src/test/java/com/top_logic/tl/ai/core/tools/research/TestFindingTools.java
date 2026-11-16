@@ -14,16 +14,16 @@ import java.util.regex.Pattern;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.AnnotatedTools;
+import com.top_logic.ai.tool.api.ReadSource;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResultDelivery;
 import com.top_logic.tl.ai.core.citation.CitationKinds;
 import com.top_logic.tl.ai.core.citation.Finding;
 import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.core.citation.ReadingListBinding;
-import com.top_logic.tl.ai.tool.api.AnnotatedTools;
-import com.top_logic.tl.ai.tool.api.ReadSource;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * A research run records findings whose quotes its sources really contain; the findings travel to

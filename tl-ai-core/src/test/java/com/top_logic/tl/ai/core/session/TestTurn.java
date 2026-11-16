@@ -11,8 +11,8 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tests for {@link Turn}.

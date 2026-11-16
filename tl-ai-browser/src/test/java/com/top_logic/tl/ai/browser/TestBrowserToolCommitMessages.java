@@ -9,16 +9,16 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.AnnotatedTools;
+import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
-import com.top_logic.tl.ai.tool.api.AnnotatedTools;
-import com.top_logic.tl.ai.tool.api.Tool;
 
 /**
  * The writing tools of {@link BrowserTool} describe their calls for the revision log.
  *
- * @see Tool#commitMessage(Map, com.top_logic.tl.ai.tool.api.ToolExecutionContext)
+ * @see Tool#commitMessage(Map, com.top_logic.ai.tool.api.ToolExecutionContext)
  */
 public class TestBrowserToolCommitMessages extends TestCase {
 
@@ -32,7 +32,7 @@ public class TestBrowserToolCommitMessages extends TestCase {
 
 	/** A screenshot without a name is named when it is saved, so its call is logged generically. */
 	public void testUnnamedScreenshotHasTheGenericMessage() {
-		assertEquals(com.top_logic.tl.ai.tool.api.I18NConstants.TOOL_CALL__TOOL.fill("browserScreenshot"),
+		assertEquals(com.top_logic.ai.tool.api.I18NConstants.TOOL_CALL__TOOL.fill("browserScreenshot"),
 			message("browserScreenshot", Map.of()));
 	}
 

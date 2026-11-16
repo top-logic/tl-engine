@@ -5,6 +5,7 @@
  */
 package com.top_logic.ai.mcp.server.tools;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -16,7 +17,6 @@ import com.top_logic.tl.ai.core.security.AllToolGroups;
 import com.top_logic.tl.ai.core.security.AllToolNames;
 import com.top_logic.tl.ai.core.security.ToolGroupResources;
 import com.top_logic.tl.ai.core.security.ToolNameResources;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
  * One entry of the tools the MCP server publishes: a single tool, or every tool of a tool group.

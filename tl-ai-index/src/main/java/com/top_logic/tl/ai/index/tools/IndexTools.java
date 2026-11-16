@@ -13,6 +13,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
@@ -24,11 +29,6 @@ import com.top_logic.tl.ai.index.query.Hits;
 import com.top_logic.tl.ai.index.query.SearchMode;
 import com.top_logic.tl.ai.index.query.SearchRefusedException;
 import com.top_logic.tl.ai.index.query.SearchRequest;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * The agent tools of the index: {@code index.search} and {@code index.similar}.

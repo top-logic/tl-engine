@@ -12,6 +12,7 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
@@ -21,7 +22,6 @@ import com.top_logic.tl.ai.core.session.ConversationLogReplay;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;

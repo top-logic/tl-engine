@@ -7,6 +7,7 @@ package com.top_logic.tl.ai.core.security.layout;
 
 import java.util.Collection;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
@@ -14,7 +15,6 @@ import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
 import com.top_logic.tl.ai.core.security.RoleToolAccess;
 import com.top_logic.tl.ai.core.security.ToolAccessExplanation;
 import com.top_logic.tl.ai.core.security.ToolAccessRule;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.util.Resources;
 
 /**

@@ -21,7 +21,7 @@ import junit.framework.TestCase;
 
 import com.sun.net.httpserver.HttpServer;
 
-import com.top_logic.tl.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.CancellationToken;
 
 /**
  * Verifies that a streaming provider aborts an in-flight request promptly when the run's

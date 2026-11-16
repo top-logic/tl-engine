@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import com.top_logic.ai.tool.api.AICategory;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
@@ -51,7 +52,6 @@ import com.top_logic.tl.ai.core.provider.catalog.ResolvedModel;
 import com.top_logic.tl.ai.core.provider.health.FailoverConfig;
 import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
 import com.top_logic.tl.ai.core.provider.health.ModelTarget;
-import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.util.error.TopLogicException;
 
 /**

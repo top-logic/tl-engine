@@ -18,6 +18,8 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.ExecutionMode;
@@ -37,8 +39,6 @@ import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
 import com.top_logic.tl.ai.core.tools.task.TaskStore.AgentTask;
 import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * An agent keeps its plan as tasks without asking the user for every step, while a write to the

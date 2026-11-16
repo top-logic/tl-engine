@@ -11,7 +11,7 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.tool.api.json.JsonTree;
+import com.top_logic.ai.tool.api.json.JsonTree;
 
 /**
  * Tests for {@link JsonTree} and {@link ToolCatalog#parseJson(String)} which delegates to it.

@@ -8,12 +8,12 @@ package com.top_logic.tl.ai.core.execution;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * {@link AgentEventListener} that turns a persisted cancel request into a local

@@ -18,6 +18,9 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolResult;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.SimpleInstantiationContext;
@@ -35,9 +38,6 @@ import com.top_logic.tl.ai.core.tools.authoring.ScriptToolStore;
 import com.top_logic.tl.ai.core.tools.authoring.ScriptToolStore.ParamSpec;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 

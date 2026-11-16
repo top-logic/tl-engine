@@ -17,13 +17,13 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.ProgressReporter;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.ProgressReporter;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 
 /**

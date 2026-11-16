@@ -13,6 +13,7 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.function.Function;
 
+import com.top_logic.ai.tool.api.ReadSource;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.model.TLObject;
@@ -22,7 +23,6 @@ import com.top_logic.tl.ai.core.citation.Finding;
 import com.top_logic.tl.ai.core.citation.PageArchive;
 import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.core.session.Citation;
-import com.top_logic.tl.ai.tool.api.ReadSource;
 
 /**
  * What is kept of a research run: the report, the sources the run tree read and its findings.

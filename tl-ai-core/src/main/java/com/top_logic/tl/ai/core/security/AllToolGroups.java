@@ -10,10 +10,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.func.Function0;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * The tool groups an administrator can pick from when writing a {@link ToolAccessPolicy}.

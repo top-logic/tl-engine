@@ -9,9 +9,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 import junit.framework.TestCase;
 

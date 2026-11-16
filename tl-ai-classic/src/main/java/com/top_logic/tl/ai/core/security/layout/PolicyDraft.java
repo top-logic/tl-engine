@@ -11,29 +11,29 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.equal.ConfigEquality;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
 import com.top_logic.tl.ai.core.security.RoleToolAccess;
 import com.top_logic.tl.ai.core.security.ToolAccessExplanation;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.AgentDefault;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.AgentGrant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.AgentRoleAccess;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
+import com.top_logic.tl.ai.core.security.ToolAccessPolicy.GroupMembership;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.McpDefault;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.McpGrant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.McpRoleAccess;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.ModelDefault;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.ModelGrant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.ModelRoleAccess;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy.GroupMembership;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
 import com.top_logic.tl.ai.core.security.ToolAccessRule;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
  * The policy an administrator is editing, and the states the editor shows instead of raw entries.

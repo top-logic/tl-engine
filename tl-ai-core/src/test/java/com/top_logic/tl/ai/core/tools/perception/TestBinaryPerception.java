@@ -12,11 +12,11 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.ToolContent;
 import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo.ModelCapabilities;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo.ModelModalities;
-import com.top_logic.tl.ai.tool.api.ToolContent;
 
 /**
  * Tests the content-type dispatch and capability gate of {@link BinaryPerception}.
@@ -30,7 +30,7 @@ public class TestBinaryPerception extends TestCase {
 
 	/**
 	 * An image is downscaled and attached as base64
-	 * {@link com.top_logic.tl.ai.tool.api.ToolContent.Image}.
+	 * {@link com.top_logic.ai.tool.api.ToolContent.Image}.
 	 */
 	public void testImageBecomesImageContent() throws IOException {
 		byte[] png = TestImageDownscaler.png(2000, 1000);
@@ -47,7 +47,7 @@ public class TestBinaryPerception extends TestCase {
 		assertTrue("The result must report the sent resolution.", plan.message().contains("1568x784"));
 	}
 
-	/** A PDF is attached as base64 {@link com.top_logic.tl.ai.tool.api.ToolContent.Document}. */
+	/** A PDF is attached as base64 {@link com.top_logic.ai.tool.api.ToolContent.Document}. */
 	public void testPdfBecomesPdfContent() {
 		BinaryPerception.Plan plan =
 			BinaryPerception.plan("invoice.pdf", PDF_BYTES, "application/pdf", vision());

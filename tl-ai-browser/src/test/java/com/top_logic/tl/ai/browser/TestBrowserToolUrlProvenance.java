@@ -12,11 +12,11 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.RunInfo;
 import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.core.citation.ReadingListBinding;
 import com.top_logic.tl.ai.core.execution.RunInfoBinding;
 import com.top_logic.tl.ai.core.tools.web.UrlProvenance;
-import com.top_logic.tl.ai.tool.api.RunInfo;
 
 /**
  * Tests that {@link BrowserTool} follows the {@link UrlProvenance} rule before it starts a browser:

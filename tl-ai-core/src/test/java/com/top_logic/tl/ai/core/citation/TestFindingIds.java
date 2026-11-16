@@ -11,7 +11,7 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.tool.api.ReadSource;
+import com.top_logic.ai.tool.api.ReadSource;
 
 /**
  * The findings of different runs never share an id, so a lead that receives the findings of many

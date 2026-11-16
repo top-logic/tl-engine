@@ -13,14 +13,14 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities.AgentGraph;
 import com.top_logic.tl.ai.core.agent.skills.Skill;
 import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.core.tools.interaction.SkillTool;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
  * What {@code loadSkill} answers when it cannot hand over the skill that was asked for.

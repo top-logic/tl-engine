@@ -9,11 +9,11 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.security.RoleToolAccess.Decision;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
  * The tool-authorization decision of one agent run, bound to that run's principal.

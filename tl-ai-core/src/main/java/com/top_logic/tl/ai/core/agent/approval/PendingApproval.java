@@ -22,7 +22,7 @@ import java.util.concurrent.CompletableFuture;
  * <p>
  * An approval is kept in its own shape rather than as a {@link UserInteractionRequest} because an
  * approval UI needs what only {@link ApprovalRequest} carries: the tool name, its arguments and its
- * {@link com.top_logic.tl.ai.tool.api.ToolMode}.
+ * {@link com.top_logic.ai.tool.api.ToolMode}.
  * </p>
  *
  * @param request   The approval the agent loop is waiting on.

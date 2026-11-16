@@ -7,6 +7,11 @@ package com.top_logic.tl.ai.core.tools.util;
 
 import java.nio.charset.StandardCharsets;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.util.ResKey;
@@ -15,11 +20,6 @@ import com.top_logic.tl.ai.core.ApplicationUrl;
 import com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageService;
 import com.top_logic.tl.ai.core.htmlpages.model.GeneratedHtmlPage;
 import com.top_logic.tl.ai.core.tools.I18NConstants;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.TLContext;
 
 /**

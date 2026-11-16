@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
+import com.top_logic.ai.tool.api.RunInfo;
 import com.top_logic.ai.views.WindowPage;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
@@ -26,7 +27,6 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tl.ai.core.agent.RunWindow;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
-import com.top_logic.tl.ai.tool.api.RunInfo;
 import com.top_logic.util.TLContextManager;
 
 /**

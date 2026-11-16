@@ -29,6 +29,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.top_logic.ai.tool.api.AICategory;
+import com.top_logic.ai.tool.api.ReadSource;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
@@ -55,8 +57,6 @@ import com.top_logic.tl.ai.core.ApplicationUrl;
 import com.top_logic.tl.ai.core.execution.WriterShutdown;
 import com.top_logic.tl.ai.core.execution.model.ArchivedPage;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
-import com.top_logic.tl.ai.tool.api.AICategory;
-import com.top_logic.tl.ai.tool.api.ReadSource;
 import com.top_logic.util.model.ModelService;
 
 /**

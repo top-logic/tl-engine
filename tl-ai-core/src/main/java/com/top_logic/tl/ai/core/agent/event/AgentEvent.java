@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
@@ -16,7 +17,6 @@ import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Sealed hierarchy of lifecycle events emitted by an agent run.

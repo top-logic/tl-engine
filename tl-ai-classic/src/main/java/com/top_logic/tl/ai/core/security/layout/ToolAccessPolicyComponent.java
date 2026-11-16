@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationException;
@@ -76,7 +77,6 @@ import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BackgroundChoice;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BaselineChoice;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.CellState;
 import com.top_logic.tl.ai.core.security.layout.PolicyMatrix.RowState;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;

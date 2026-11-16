@@ -8,13 +8,13 @@ package com.top_logic.tl.ai.core.agent;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.agent.environment.UserMemoryConfig;
 import com.top_logic.tl.ai.core.agent.environment.UserMemorySettings;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * Tests for {@link AgentFactory} utility methods and constants.

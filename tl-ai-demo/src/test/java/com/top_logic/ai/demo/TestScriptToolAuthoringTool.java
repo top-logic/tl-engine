@@ -14,6 +14,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.layout.provider.LabelProviderService;
@@ -22,7 +23,6 @@ import com.top_logic.tl.ai.core.tools.authoring.ScriptToolAuthoringTool;
 import com.top_logic.tl.ai.core.tools.authoring.ScriptToolStore;
 import com.top_logic.tl.ai.core.tools.authoring.ScriptToolStore.ParamSpec;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.util.model.ModelService;
 
 /**

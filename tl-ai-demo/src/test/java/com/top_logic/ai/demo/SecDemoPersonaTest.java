@@ -22,6 +22,8 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.ai.demo.secdemo.SecDemoSetup;
 import com.top_logic.ai.demo.secdemo.SecDemoSetup.PersonaConfig;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.base.services.InitialRolesManager;
@@ -47,8 +49,6 @@ import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.tools.ToolExecutions;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;

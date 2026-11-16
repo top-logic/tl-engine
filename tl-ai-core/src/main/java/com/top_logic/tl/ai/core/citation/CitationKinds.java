@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.tool.api.AICategory;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
@@ -27,7 +28,6 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.util.Resources;
 
 /**

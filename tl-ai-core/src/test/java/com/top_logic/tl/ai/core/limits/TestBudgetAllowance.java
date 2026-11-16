@@ -150,7 +150,7 @@ public class TestBudgetAllowance extends TestCase {
 		BudgetAllowance allowance = BudgetAllowance.of(100);
 		ToolContext parent = ToolContext.unrestricted().withBudgetAllowance(allowance);
 		ToolContext child = parent.forDetachedSubagent(TransactionScope.NOOP,
-			new com.top_logic.tl.ai.tool.api.CancellationToken());
+			new com.top_logic.ai.tool.api.CancellationToken());
 		assertSame(allowance, child.budgetAllowance());
 	}
 
@@ -161,6 +161,6 @@ public class TestBudgetAllowance extends TestCase {
 		assertSame(allowance, context.withModel("some-model").budgetAllowance());
 		assertSame(allowance, context.withToolCallId("call-1").budgetAllowance());
 		assertSame(allowance,
-			context.withProgressReporter(com.top_logic.tl.ai.tool.api.ProgressReporter.NOOP).budgetAllowance());
+			context.withProgressReporter(com.top_logic.ai.tool.api.ProgressReporter.NOOP).budgetAllowance());
 	}
 }

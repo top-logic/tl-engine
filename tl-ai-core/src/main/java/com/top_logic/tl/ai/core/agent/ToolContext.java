@@ -8,6 +8,11 @@ package com.top_logic.tl.ai.core.agent;
 import java.util.Objects;
 import java.util.Set;
 
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.ProgressReporter;
+import com.top_logic.ai.tool.api.ReadSource;
+import com.top_logic.ai.tool.api.RunInfo;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
@@ -18,14 +23,9 @@ import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
 import com.top_logic.tl.ai.core.security.RunSecurity;
+import com.top_logic.tl.ai.core.tools.ToolExecutor;
 import com.top_logic.tl.ai.core.tools.model.TidResolver;
 import com.top_logic.util.TLContext;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.ProgressReporter;
-import com.top_logic.tl.ai.tool.api.ReadSource;
-import com.top_logic.tl.ai.tool.api.RunInfo;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.core.tools.ToolExecutor;
 
 /**
  * Execution context passed to tools.

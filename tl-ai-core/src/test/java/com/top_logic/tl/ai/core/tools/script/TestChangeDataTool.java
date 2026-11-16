@@ -19,6 +19,11 @@ import test.com.top_logic.PersonManagerSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.AnnotatedTools;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -40,11 +45,6 @@ import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.security.ToolChangeSet;
 import com.top_logic.tl.ai.core.tools.refusal.messages.ApplicationRefusal;
 import com.top_logic.tl.ai.core.tools.refusal.messages.Reason;
-import com.top_logic.tl.ai.tool.api.AnnotatedTools;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 

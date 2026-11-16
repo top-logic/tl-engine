@@ -15,6 +15,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.base.locking.Lock;
 import com.top_logic.base.locking.LockService;
 import com.top_logic.basic.StringServices;
@@ -29,7 +30,6 @@ import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.tools.model.LockHolderLookup;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.util.Resources;
 
 /**

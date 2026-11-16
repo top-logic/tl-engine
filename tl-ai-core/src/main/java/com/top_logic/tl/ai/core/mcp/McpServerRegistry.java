@@ -16,6 +16,9 @@ import java.util.Set;
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
 
+import com.top_logic.ai.tool.api.AICategory;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
@@ -29,9 +32,6 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.tl.ai.tool.api.AICategory;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 import io.modelcontextprotocol.spec.McpSchema;
 

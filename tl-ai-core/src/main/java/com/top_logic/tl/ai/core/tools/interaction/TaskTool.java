@@ -9,6 +9,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -17,15 +22,10 @@ import com.top_logic.tl.ai.core.tools.ToolResults;
 import com.top_logic.tl.ai.core.tools.interaction.messages.TaskListResponse;
 import com.top_logic.tl.ai.core.tools.interaction.messages.TaskResponse;
 import com.top_logic.tl.ai.core.tools.interaction.messages.TaskSummary;
-import com.top_logic.tl.ai.core.tools.task.TaskStore.AgentTask;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
+import com.top_logic.tl.ai.core.tools.task.TaskStore.AgentTask;
 import com.top_logic.tl.ai.core.tools.task.TaskStoreBinding;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tool for managing agent tasks within a processing session.

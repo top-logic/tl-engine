@@ -7,6 +7,11 @@ package com.top_logic.tl.ai.core.tools.registry;
 
 import java.util.Map;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.ToolResult;
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -16,11 +21,6 @@ import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.parameters.DeclaredParameters;
 import com.top_logic.tl.ai.core.tools.parameters.DeclaredParameters.InvalidArguments;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * A {@link Tool} that executes a TL-Script body compiled with named-parameter bindings.
@@ -41,7 +41,7 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  *
  * <p>
  * The marking that comes with that filtering is no longer this path's alone: a Java tool's answer is
- * marked by {@link com.top_logic.tl.ai.tool.api.AnnotatedTools} in the same way, so a tool rewritten
+ * marked by {@link com.top_logic.ai.tool.api.AnnotatedTools} in the same way, so a tool rewritten
  * from TL-Script in Java keeps saying what its payload is (issue #478).
  * </p>
  *
@@ -58,7 +58,7 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  *
  * <p>
  * The one thing a script body still cannot do is return
- * {@link com.top_logic.tl.ai.tool.api.ToolContent} - an image or a PDF for the model to perceive -
+ * {@link com.top_logic.ai.tool.api.ToolContent} - an image or a PDF for the model to perceive -
  * because TL-Script has no value that says "this is a picture". Which run the call belongs to is not
  * missing: {@code aiRunInfo()} answers it inside a script body, from the same record a Java tool reads
  * through {@link ToolExecutionContext#runInfo()}.

@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.agent;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.top_logic.ai.tool.api.AICategory;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -22,7 +23,6 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentConfig;
 import com.top_logic.tl.ai.core.tools.model.ObjectIdConfig;
-import com.top_logic.tl.ai.tool.api.AICategory;
 
 /**
  * What an agent knows about this application: what it is called, how the environment block is

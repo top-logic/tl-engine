@@ -20,11 +20,11 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.limits.RunLimitSettings;
 import com.top_logic.tl.ai.core.limits.RunLimitsConfig;
 import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * A registry runs no more subagents at once than its cap, and the installation no more than

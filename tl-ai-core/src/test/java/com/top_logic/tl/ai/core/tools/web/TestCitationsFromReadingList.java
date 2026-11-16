@@ -31,6 +31,7 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.servletunit.InvocationContext;
 import com.meterware.servletunit.ServletRunner;
+import com.top_logic.ai.tool.api.ReadSource;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.basic.thread.ThreadContext;
@@ -65,7 +66,6 @@ import com.top_logic.tl.ai.core.tools.model.InstanceBrowserTool;
 import com.top_logic.tl.ai.core.tools.script.QueryTool;
 import com.top_logic.tl.ai.core.tools.web.FilteringProxy.Target;
 import com.top_logic.tl.ai.core.tools.web.RecordingServer.Reply;
-import com.top_logic.tl.ai.tool.api.ReadSource;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
 

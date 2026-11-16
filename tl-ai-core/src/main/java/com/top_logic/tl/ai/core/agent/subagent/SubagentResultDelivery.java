@@ -7,10 +7,10 @@ package com.top_logic.tl.ai.core.agent.subagent;
 
 import java.util.List;
 
+import com.top_logic.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.citation.Finding;
 import com.top_logic.tl.ai.core.citation.ReadingList;
-import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 
 /**
  * How a background subagent's outcome is worded for the parent model.

@@ -11,14 +11,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.func.Function0;
 import com.top_logic.tl.ai.core.mcp.McpServerRegistry;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.GroupMembership;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * The tools an administrator can pick from when writing a {@link ToolAccessPolicy}.

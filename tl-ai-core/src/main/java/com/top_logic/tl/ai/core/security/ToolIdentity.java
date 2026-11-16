@@ -8,8 +8,8 @@ package com.top_logic.tl.ai.core.security;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * How a tool is named and classified when the access policy is asked about it.

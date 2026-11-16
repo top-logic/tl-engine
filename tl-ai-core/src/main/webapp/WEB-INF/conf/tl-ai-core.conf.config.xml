@@ -2835,12 +2835,12 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
-			<instance class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+		<config service-class="com.top_logic.ai.tool.api.registry.ToolRegistryService">
+			<instance class="com.top_logic.ai.tool.api.registry.ToolRegistryService">
 				<tool-factories>
 					<!-- TLScript Reference Tool - provides function listing and documentation -->
 					<factory name="script-doc">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.script.TLScriptReferenceTool"
 						/>
 					</factory>
@@ -2850,7 +2850,7 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 						and asks for approval.
 					-->
 					<factory name="model-query">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.script.QueryTool"
 						/>
 					</factory>
@@ -2859,17 +2859,17 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 						reads, and its dry run runs the change without saving it and needs no approval.
 					-->
 					<factory name="script-exec">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.script.ChangeDataTool"
 						/>
 					</factory>
 					<factory name="model-annotation-definitions">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.model.AnnotationDefinitionExplorerTool"
 						/>
 					</factory>
 					<factory name="model-instances">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.model.InstanceBrowserTool"
 						/>
 					</factory>
@@ -2880,12 +2880,12 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 						by a condition stays a script, run by changeData.
 					-->
 					<factory name="object-edit">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.model.ObjectEditTool"
 						/>
 					</factory>
 					<factory name="view-document">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.model.ViewDocumentTool"
 						/>
 					</factory>
@@ -2896,72 +2896,72 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 						without the verbatim read it anchors on is a guess.
 					-->
 					<factory name="text-edit">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.text.TextEditTool"
 						/>
 					</factory>
 					<factory name="model-annotation-browser">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.model.ModelAnnotationBrowserTool"
 						/>
 					</factory>
 					<factory name="model-annotation-editor">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.model.ModelAnnotationEditorTool"
 						/>
 					</factory>
 					<factory name="annotation-search">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.model.SearchAnnotationTool"
 						/>
 					</factory>
 					<factory name="model-browser">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.model.ModelBrowserTool"
 						/>
 					</factory>
 					<factory name="model-search">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.model.ModelSearchTool"
 						/>
 					</factory>
 					<factory name="model-analysis">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.model.TypeAnalysisTool"
 						/>
 					</factory>
 					<factory name="config-schema">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.config.ConfigSchemaTool"
 						/>
 					</factory>
 					<factory name="layout-templates">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.config.LayoutTemplateTool"
 						/>
 					</factory>
 					<factory name="lock">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.model.LockTool"
 						/>
 					</factory>
 					<factory name="model-modification">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.model.ModelEditorTool"
 						/>
 					</factory>
 					<factory name="agent-authoring">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.authoring.AgentAuthoringTool"
 						/>
 					</factory>
 					<factory name="script-tool-authoring">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.authoring.ScriptToolAuthoringTool"
 						/>
 					</factory>
 					<factory name="framework-wiring">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.authoring.FrameworkWiringTool"
 						/>
 					</factory>
@@ -2971,7 +2971,7 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 						</implementation>
 					</factory>
 					<factory name="task">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.interaction.TaskTool"
 						/>
 					</factory>
@@ -2980,7 +2980,7 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 						<implementation class="com.top_logic.tl.ai.core.tools.registry.SubagentToolFactory"/>
 					</factory>
 					<factory name="user-interaction">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.interaction.AskUserTool"
 						/>
 					</factory>
@@ -2990,7 +2990,7 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 						out of every agent's catalog.
 					-->
 					<factory name="user-memory">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.memory.UserMemoryTool"
 						/>
 					</factory>
@@ -3001,27 +3001,27 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 						only offered in the development environment.
 					-->
 					<factory name="application-context">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.context.ApplicationContextTool"
 						/>
 					</factory>
 					<factory name="gitea">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory">
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory">
 							<tool class="com.top_logic.tl.ai.core.tools.integration.GiteaIssueTool"/>
 						</implementation>
 					</factory>
 					<factory name="html-pages">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.util.PublishHtmlPageTool"
 						/>
 					</factory>
 					<factory name="web-search">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.web.WebSearchTool"
 						/>
 					</factory>
 					<factory name="web-fetch">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.web.WebFetchTool"
 						/>
 					</factory>
@@ -3032,7 +3032,7 @@ Note what the last example does NOT do: it does not say the pattern is wrong, an
 						research.listFindings, research.readSource and research.saveReport.
 					-->
 					<factory name="research">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.tl.ai.core.tools.research.FindingTools"
 						/>
 					</factory>

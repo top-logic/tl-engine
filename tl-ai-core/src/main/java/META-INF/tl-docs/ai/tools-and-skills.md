@@ -7,7 +7,7 @@ order: 61
 
 ## The tool contract
 
-`tl-ai-tool-api` (package `com.top_logic.tl.ai.tool.api`) holds the contract, so a tool is defined without depending on `tl-ai-core`:
+`tl-ai-tool-api` (package `com.top_logic.ai.tool.api`) holds the contract, so a tool is defined without depending on `tl-ai-core`:
 
 - `Tool` - `execute(Map<String, Object> args, ToolExecutionContext context) → ToolResult`.
 - `ToolMode` - `READ` (parallel-safe, no approval); `USER_SCOPED`, `DATA_WRITE`, `STRUCTURAL` (serial, need approval, enrol in the turn's transaction); `EXTERNAL` (serial, needs approval, no transaction - the change lands in another system).

@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.agent;
 import java.util.Objects;
 import java.util.Set;
 
+import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.base.administration.MaintenanceWindowManager;
 import com.top_logic.base.operation.OperationMode;
 import com.top_logic.base.operation.OperationModeService;
@@ -20,7 +21,6 @@ import com.top_logic.tl.ai.core.security.RoleToolAccess;
 import com.top_logic.tl.ai.core.security.RunAuthorization;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
 import com.top_logic.tl.ai.core.security.ToolAuthorization;
-import com.top_logic.tl.ai.tool.api.Tool;
 
 /**
  * {@link SecurityContext} implementation backed by TopLogic's runtime.

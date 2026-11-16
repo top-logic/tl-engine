@@ -11,6 +11,11 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
@@ -31,11 +36,6 @@ import com.top_logic.tl.ai.core.tools.config.messages.LayoutCreateResponse;
 import com.top_logic.tl.ai.core.tools.config.messages.LayoutTemplateInfo;
 import com.top_logic.tl.ai.core.tools.config.messages.LayoutTemplateListResponse;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.Resources;
 
 import de.haumacher.msgbuf.io.StringW;

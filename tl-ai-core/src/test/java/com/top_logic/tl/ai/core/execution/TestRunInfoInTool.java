@@ -17,6 +17,12 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.RunInfo;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolResult;
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
@@ -36,12 +42,6 @@ import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.RunInfo;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * What a tool is told about the run it executes in, driven through a real {@link AgentLoop}
@@ -180,8 +180,8 @@ public class TestRunInfoInTool extends TestCase {
 	public void testOutsideARunEverythingIsReadableAndEmpty() {
 		ToolExecutionContext outside = new ToolExecutionContext() {
 			@Override
-			public com.top_logic.tl.ai.tool.api.ProgressReporter progressReporter() {
-				return com.top_logic.tl.ai.tool.api.ProgressReporter.NOOP;
+			public com.top_logic.ai.tool.api.ProgressReporter progressReporter() {
+				return com.top_logic.ai.tool.api.ProgressReporter.NOOP;
 			}
 
 			@Override

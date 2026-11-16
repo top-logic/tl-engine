@@ -10,6 +10,13 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.registry.ToolFactory;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ApplicationConfig;
@@ -26,17 +33,10 @@ import com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolFactoryListRe
 import com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolListResult;
 import com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolParamInfo;
 import com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolSummary;
-import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory;
+import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
 import com.top_logic.tl.ai.core.tools.registry.ToolDescriptions;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.registry.ToolFactory;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 
 /**
  * Tool for creating, inspecting, updating, and deleting TL-Script tools in the {@code custom}

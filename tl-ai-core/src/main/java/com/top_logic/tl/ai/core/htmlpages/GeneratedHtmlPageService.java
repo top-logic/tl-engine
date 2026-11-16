@@ -10,6 +10,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
+import com.top_logic.ai.tool.api.AICategory;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.module.ConfiguredManagedClass;
@@ -25,7 +26,6 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.htmlpages.model.GeneratedHtmlPage;
 import com.top_logic.tl.ai.core.htmlpages.model.TlAiHtmlpagesFactory;
-import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.util.model.ModelService;
 
 /**

@@ -14,6 +14,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.InApp;
@@ -45,11 +50,6 @@ import com.top_logic.tl.ai.core.tools.model.messages.AnnotationSearchResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.AnnotationSearchResult;
 import com.top_logic.tl.ai.core.tools.model.messages.ImplementationOption;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 

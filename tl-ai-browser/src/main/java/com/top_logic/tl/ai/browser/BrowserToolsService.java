@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
+import com.top_logic.ai.tool.api.AICategory;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationDescriptor;
@@ -30,7 +31,6 @@ import com.top_logic.tl.ai.core.tools.web.FilteringProxy;
 import com.top_logic.tl.ai.core.tools.web.UrlSafety;
 import com.top_logic.tl.ai.core.tools.web.WebSearchTool;
 import com.top_logic.tl.ai.core.tools.web.WebToolsService;
-import com.top_logic.tl.ai.tool.api.AICategory;
 
 /**
  * Service owning the pool of isolated, per-session headless Chromium browsers used by

@@ -10,11 +10,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.basic.thread.BindingSnapshot;
 import com.top_logic.basic.thread.CancelScope;
 import com.top_logic.basic.thread.CancelScope.BlockingCall;
 import com.top_logic.basic.thread.ThreadLocalBinding;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * Thread-local binding of the {@link CancellationToken} of the agent run executing on the current

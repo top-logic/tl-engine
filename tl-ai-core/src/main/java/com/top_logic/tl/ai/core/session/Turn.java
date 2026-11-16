@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import com.top_logic.ai.tool.api.ReadSource;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.tool.api.ReadSource;
 
 /**
  * One user-assistant cycle in a conversation.

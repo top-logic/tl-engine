@@ -5,12 +5,12 @@
  */
 package com.top_logic.tl.ai.core.tools.web;
 
+import com.top_logic.ai.tool.api.RunInfo;
 import com.top_logic.tl.ai.core.citation.Finding;
 import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.core.citation.ReadingListBinding;
 import com.top_logic.tl.ai.core.citation.SeenUrls;
 import com.top_logic.tl.ai.core.execution.RunInfoBinding;
-import com.top_logic.tl.ai.tool.api.RunInfo;
 
 /**
  * The URL provenance rule: a run it applies to opens only the web addresses it was given.

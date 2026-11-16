@@ -8,6 +8,11 @@ package com.top_logic.tl.ai.core.tools.authoring;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -25,11 +30,6 @@ import com.top_logic.tl.ai.core.tools.authoring.messages.SkillDetail;
 import com.top_logic.tl.ai.core.tools.authoring.messages.SkillListResult;
 import com.top_logic.tl.ai.core.tools.authoring.messages.SkillSummary;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Tool for adding and removing tools, skills, and delegations on framework (TopLogic-provided)

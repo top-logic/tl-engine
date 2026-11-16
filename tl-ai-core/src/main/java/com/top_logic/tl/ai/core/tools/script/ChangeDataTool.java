@@ -17,6 +17,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.config.InstantiationContext;
@@ -34,12 +40,6 @@ import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.core.tools.model.ChangeReport;
 import com.top_logic.tl.ai.core.tools.refusal.ApplicationRefusals;
 import com.top_logic.tl.ai.core.tools.script.TLScriptExecutor.Change;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.util.TLContext;
 
 /**

@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.CancellationToken;
 
 /**
  * Tests for {@link CancellationToken}.

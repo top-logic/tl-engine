@@ -11,6 +11,9 @@ import java.util.Map;
 
 import junit.framework.Test;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.core.agent.AgentCapabilities;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
@@ -28,9 +31,6 @@ import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.security.RoleToolAccess;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.introspection.ListToolsTool;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * What {@code listTools} tells a persona about the agent it is talking to.

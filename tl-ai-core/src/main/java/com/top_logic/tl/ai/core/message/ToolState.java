@@ -97,7 +97,7 @@ public sealed interface ToolState
 	 *                  back, so that it must not by itself trigger an end-of-turn rollback. Two
 	 *                  kinds of failure qualify: one whose tool body never ran (unresolvable
 	 *                  arguments, unknown tool, a denied call), and one a tool
-	 *                  {@link com.top_logic.tl.ai.tool.api.ToolResult#failure(String) reported}
+	 *                  {@link com.top_logic.ai.tool.api.ToolResult#failure(String) reported}
 	 *                  instead of throwing, which is how a tool says the call failed without
 	 *                  claiming that the turn's other writes are now wrong
 	 */

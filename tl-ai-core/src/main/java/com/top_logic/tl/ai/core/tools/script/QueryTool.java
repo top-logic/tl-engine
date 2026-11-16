@@ -10,6 +10,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -17,11 +22,6 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.security.ReadFilter;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
 
 /**
  * Answers a question about the data with one TL-Script expression, evaluated on the server.

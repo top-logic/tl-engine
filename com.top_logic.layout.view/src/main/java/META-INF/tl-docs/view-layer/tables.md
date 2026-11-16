@@ -290,6 +290,14 @@ A row-editing `<table row-edit="…">` in a `<form>` offers row creation in edit
   ```
 - **The Java seam**: `RowSetBinding#getCreateTypes()` are the concrete types of the binding (`AttributeRowSetBinding` from the reference, `QueryRowSetBinding` from `create-type` or `create-type-expr`), `RowSetEditSession#createTypes()` those the user may create, sorted by label, and `RowSetEditSession#addRow(TLClass, Consumer)` adds a row of a chosen one. The add command asks the `RowCreation` of the `RowSetTableControl` (`RowSetTableControl#setRowCreation`) which types it offers for the selected rows and adds the row: `RowCreation.BINDING` offers the create types of the binding whatever is selected, a tree table's `ChildRowCreation` the type computed for the selected parent.
 
+## Editing the selected row: a row with errors is not left
+
+A row-editing `<table row-edit="SELECTED">` edits the selected row only; the other rows show their values. A cell shows its error only while its row is edited, so a row with errors cannot be left:
+
+- **Leaving the row checks it.** Selecting another row - by a click, by a key, or by adding a row, which selects the new row - checks the edited row first (`RowSetEditSession#checkRowErrors(TLObject)`): the checks of its attributes run again and its cells show their errors, also those the user has not seen yet, such as an untouched mandatory cell of a new row.
+- **A row with errors stays selected.** The change is refused with the errors of the row, each named by its column (`ValidationErrors#refusal`), the table keeps its selection and its cursor (`TableViewControl` restores them whenever a selection listener refuses a change), and the focus goes to the first cell showing an error (the answer of a refused command carries `ReactCommandAnswer#ERROR_CODE_INVALID_INPUT`, see `CommandErrors#invalidInput`).
+- **Only the user's changes are checked.** Removing the row and cancelling the edit are always possible, and a selection the server sets (`TableViewControl#selectRows`, e.g. from the selection channel) is not checked (`TableViewControl#isUserSelectionChange()`).
+
 ## Removing rows: per row and the selected rows at once
 
 A row-editing `<table row-edit="…">` with `on-remove="DELETE"` (or a `<composition-table>`, whose rows are removed from its reference) offers the removal of rows in edit mode; so does a row-editing `<tree-table>` with `on-remove="DELETE"`, see [adding and removing rows of a tree table](doc:view-layer/tree-tables#adding-and-removing-rows):

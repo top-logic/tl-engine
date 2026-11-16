@@ -34,6 +34,12 @@ import com.top_logic.service.openapi.server.authentication.Authenticator;
  * database lookup, which is also what lets an OAuth bearer authentication configured next to this
  * one take a request this one does not recognise.
  * </p>
+ *
+ * <p>
+ * Only a token with the permission {@value #AGENT_ENDPOINTS_PERMISSION} is accepted. A token
+ * created for other endpoints only - to drive the user interface, say - is refused exactly like
+ * an unknown one, so a client learns nothing about tokens it may not use here.
+ * </p>
  */
 public class AccessTokenAuthenticator implements Authenticator {
 
@@ -57,7 +63,7 @@ public class AccessTokenAuthenticator implements Authenticator {
 		}
 
 		AccessToken token = AccessTokens.find(presented);
-		if (token == null) {
+		if (token == null || !AccessTokens.hasPermission(token, AGENT_ENDPOINTS_PERMISSION)) {
 			throw failure(I18NConstants.ERROR_ACCESS_TOKEN_UNKNOWN, "invalid_token");
 		}
 		Instant now = Instant.now();

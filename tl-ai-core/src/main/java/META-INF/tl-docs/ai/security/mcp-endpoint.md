@@ -88,6 +88,8 @@ A misconfigured authentication - a scheme with no matching secret, say - authent
 
 A personal access token lets a person connect an MCP client - Claude Code, Cursor, any client that can send a static header - as themselves, without an administrator configuring anything per person and without putting their password into a client configuration file.
 
+**What a token must permit.** The endpoints accept only a token with the permission *Agent interfaces (MCP/A2A)* (`agent-endpoints`, contributed by `tl-ai-core` to the `AccessTokenPermissions`). A token without it - one created only for driving the user interface, say - is refused exactly like an unknown token: `401` with `WWW-Authenticate: Bearer error="invalid_token"`.
+
 **Switching it on** is one line beside the module switch; the scheme needs no secret, because the tokens are not configured:
 
 ```xml

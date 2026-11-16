@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,12 +29,15 @@ import com.top_logic.ai.mcp.server.resources.TypeInstancesResource;
 import com.top_logic.ai.mcp.server.tools.ExposedTool;
 import com.top_logic.ai.mcp.server.tools.McpExposure;
 import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
+import com.top_logic.basic.Logger.LogEntry;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.logging.Level;
+import com.top_logic.basic.tools.CollectingLogListener;
 import com.top_logic.element.accesstoken.AccessToken;
 import com.top_logic.element.accesstoken.AccessTokenPermissions;
 import com.top_logic.element.accesstoken.AccessTokens;
@@ -94,6 +98,15 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 
 	/** The permissions of a token for the agent endpoints. */
 	private static final List<String> AGENT_ENDPOINTS = List.of(AccessTokenAuthenticator.AGENT_ENDPOINTS_PERMISSION);
+
+	/**
+	 * A permission of another endpoint, contributed by the test configuration
+	 * <code>tl-ai-demo.test.config.xml</code>.
+	 */
+	private static final String OTHER_ENDPOINT_PERMISSION = "test-ui";
+
+	/** The session a token with {@link #OTHER_ENDPOINT_PERMISSION} is bound to. */
+	private static final String SESSION_KEY = "test-session";
 
 	/** The header the demo's API key would be sent in. */
 	private static final String API_KEY_HEADER = "X-Api-Key";
@@ -594,6 +607,53 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 		Recording recording = requestWith(created.plain());
 		assertFalse("An expired token must not reach the protocol.", recording.chainInvoked);
 		assertEquals(401, recording.status);
+	}
+
+	/**
+	 * A token without the permission for the agent endpoints is refused exactly like an unknown
+	 * one: 401 with a bearer challenge, no use recorded, and the token neither in the answer nor in
+	 * the log.
+	 */
+	public void testATokenWithoutTheAgentPermissionIsRefused() {
+		AccessTokens.Created created = AccessTokens.create(account(ANNA), "other endpoint", null,
+			List.of(OTHER_ENDPOINT_PERMISSION), SESSION_KEY);
+		String unknown = AccessTokens.newToken();
+
+		CollectingLogListener log = new CollectingLogListener(EnumSet.allOf(Level.class), true);
+		Recording recording;
+		Recording unknownRecording;
+		try {
+			recording = requestWith(created.plain());
+			unknownRecording = requestWith(unknown);
+		} finally {
+			log.deactivate();
+		}
+
+		assertFalse("A token without the permission must not reach the protocol.", recording.chainInvoked);
+		assertEquals(401, recording.status);
+		assertEquals("Refused like an unknown token.", unknownRecording.status, recording.status);
+		assertEquals("Refused like an unknown token.", unknownRecording.message, recording.message);
+		assertEquals("Refused like an unknown token.", unknownRecording.responseHeaders.get("WWW-Authenticate"),
+			recording.responseHeaders.get("WWW-Authenticate"));
+		assertHas("The client is told the token is not valid.", "error=\"invalid_token\"",
+			recording.responseHeaders.get("WWW-Authenticate"));
+		assertHasNot("The answer must not echo the token.", created.plain(), recording.message);
+		for (LogEntry entry : log.getLogEntries()) {
+			assertHasNot("The log must not contain the token.", created.plain(), entry.getMessage());
+		}
+		HistoryUtils.updateSessionRevision();
+		assertNull("A refused token is not recorded as used.", created.token().getLastUsed());
+	}
+
+	/**
+	 * A token with the permission for the agent endpoints is accepted, also if it has a permission
+	 * bound to a session besides.
+	 */
+	public void testATokenWithFurtherPermissionsIsAccepted() {
+		AccessTokens.Created created = AccessTokens.create(account(ANNA), "both", null,
+			List.of(AccessTokenAuthenticator.AGENT_ENDPOINTS_PERMISSION, OTHER_ENDPOINT_PERMISSION), SESSION_KEY);
+
+		assertTrue(requestWith(created.plain()).chainInvoked);
 	}
 
 	/**

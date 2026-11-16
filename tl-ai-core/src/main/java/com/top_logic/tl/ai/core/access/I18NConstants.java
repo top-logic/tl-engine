@@ -57,7 +57,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NOT_AN_ACCESS_TOKEN;
 
 	/**
-	 * The personal access token is not known: it was never created, or it was revoked.
+	 * The personal access token is not known: it was never created, it was revoked, or it lacks the
+	 * permission for the agent endpoints.
 	 *
 	 * @en The personal access token is not valid. It may have been revoked; create a new one in the
 	 *     application.

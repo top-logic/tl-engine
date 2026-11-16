@@ -248,7 +248,7 @@ Whether a script is evaluated secured is decided by its kind, not by the script 
 |---|---|
 | derived attributes (`AttributeByExpression`, `AttributeValueLocatorByExpression`) | option lists (`OptionsByExpression`, `TreeOptionsByExpression`, `DefaultSelectionProviderByExpression`, `CreateTypeOptionsByExpression`) |
 | constraints, including uniqueness checks (`ConstraintCheckByExpression`, `DeleteConstraintByExpression`), change and lifecycle handlers (`ChangeHandlerByExpression`, `LifecycleHandlerByExpression`) | default values (`DefaultByExpression`) |
-| **labels** (`LabelProviderByExpression`, the label script of `LabelByExpression`) | executability (`ExecutabilityByExpression`) |
+| **labels** (`LabelProviderByExpression`, the label script of `LabelByExpression`), the header labels of dynamic table columns (`column-label` of `<dynamic-columns>`, `columnLabel` of `DynamicColumnProviderByExpression`, `dynamicColumnLabel` of `ComputedColumnProviderByExpression`) | executability (`ExecutabilityByExpression`) |
 | role rules and access parents (`PathByExpression`, `ScriptAccessParent`, `SecurityObjectByExpression`) | process initialisation (`ProcessInitializerByExpression`) |
 | lock strategies (`LockStrategyByExpression`) | scripts in layouts and views, commands, the script console |
 | BPE execution, scheduled tasks (`ScriptTask`), migration scripts, message consumers | tooltips and titles (`TooltipProviderByExpression`, `TitleByExpression`, the tooltip script of `LabelByExpression`) |
@@ -262,7 +262,12 @@ Rules for the individual kinds:
 
 - **Labels are computed unsecured.** By R1 the label belongs to `Discover`; a secured label script
   reading `A#name` would deliver an empty label for a user holding only `Discover` on `A`.
-  *Before this change, label scripts were evaluated secured.*
+
+  The header label of a dynamic table column is a label as well and is computed unsecured like a
+  `LabelProviderByExpression`: the `column-label` of `<dynamic-columns>`, the `columnLabel` of
+  `DynamicColumnProviderByExpression` and the `dynamicColumnLabel` of
+  `ComputedColumnProviderByExpression`. Which columns exist, their cell values and their tooltips
+  are still computed secured, so a column exists only for an object the user may discover.
 - **Tooltips and titles are computed secured.** Only the label belongs to `Discover` (R1). A tooltip
   or title script typically shows attribute values (a budget, a description) and would disclose them
   to a user holding only `Discover`.

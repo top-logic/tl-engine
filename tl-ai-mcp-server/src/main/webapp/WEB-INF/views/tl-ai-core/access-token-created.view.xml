@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay of the dialog of tl-ai-core that shows a new personal access token once: while the MCP
+	server runs and accepts personal access tokens, the form "token-form" also shows the address of the
+	MCP endpoint and the command that connects Claude Code with the token, each ready to copy.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<channels>
+		<derived-channel name="mcpEndpoint"
+			expr="mcpEndpointUrl()"
+		/>
+		<derived-channel name="mcpCommand"
+			expr="mcpClaudeCommand($model.get(`tl.ai.access:AccessTokenRequest#token`))"
+			inputs="model"
+		/>
+	</channels>
+	<form config:ref="token-form">
+		<switch input="model">
+			<case test="mcpAcceptsAccessTokens()">
+				<value-input
+					readonly="true"
+					value="mcpEndpoint"
+				>
+					<label>
+						<en>MCP endpoint</en>
+						<de>MCP-Endpunkt</de>
+					</label>
+					<annotations>
+						<multi-line
+							preformatted="true"
+							rows="1"
+						/>
+					</annotations>
+				</value-input>
+				<value-input
+					readonly="true"
+					value="mcpCommand"
+				>
+					<label>
+						<en>Connect Claude Code</en>
+						<de>Claude Code verbinden</de>
+					</label>
+					<annotations>
+						<multi-line
+							preformatted="true"
+							rows="1"
+						/>
+					</annotations>
+				</value-input>
+			</case>
+		</switch>
+	</form>
+</view>

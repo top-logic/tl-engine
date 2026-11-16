@@ -75,11 +75,9 @@ public final class McpConnectionGuide {
 			out.append('\n');
 			out.append(resources.getString(I18NConstants.LLMS_CONNECT_CLAUDE)).append("\n\n");
 			out.append("```bash\n");
-			out.append(CLAUDE_MCP_ADD).append(' ')
-				.append(McpServerCard.localName(McpServerCard.name(config, context))).append(' ')
-				.append(endpoint).append(" \\\n    ")
-				.append(HEADER_OPTION).append(" \"").append(header.header()).append(": ")
-				.append(resources.getString(header.headerValue())).append("\"\n");
+			out.append(claudeMcpAdd(config, context, header.header(), resources.getString(header.headerValue()),
+				" \\\n    "));
+			out.append('\n');
 			out.append("```\n\n");
 			out.append(resources.getString(I18NConstants.LLMS_CREDENTIAL_STORAGE__VARIABLE.fill(TOKEN_VARIABLE)));
 			out.append('\n');
@@ -92,6 +90,30 @@ public final class McpConnectionGuide {
 			out.append(instructions.strip()).append('\n');
 		}
 		return new LlmsTxtSection(resources.getString(I18NConstants.LLMS_TITLE), out.toString());
+	}
+
+	/**
+	 * The command of {@link #CLAUDE_MCP_ADD} that adds the MCP endpoint of this application to
+	 * Claude Code, as a server named after the {@link McpServerCard#name(MCPServerService.Config,
+	 * DiscoveryContext) server card}.
+	 *
+	 * @param config
+	 *        The configuration of the server.
+	 * @param context
+	 *        The URLs of the application.
+	 * @param header
+	 *        The request header carrying the credential.
+	 * @param headerValue
+	 *        The value of the header.
+	 * @param separator
+	 *        What separates the header option from the rest of the command: a space for a command on
+	 *        one line, a line continuation for a command over several lines.
+	 */
+	public static String claudeMcpAdd(MCPServerService.Config<?> config, DiscoveryContext context, String header,
+			String headerValue, String separator) {
+		return CLAUDE_MCP_ADD + ' ' + McpServerCard.localName(McpServerCard.name(config, context)) + ' '
+			+ context.url(MCPServerService.MCP_ENDPOINT) + separator
+			+ HEADER_OPTION + " \"" + header + ": " + headerValue + '"';
 	}
 
 	/**

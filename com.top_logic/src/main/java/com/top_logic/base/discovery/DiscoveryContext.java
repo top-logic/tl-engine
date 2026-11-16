@@ -11,9 +11,11 @@ import java.net.URI;
 import jakarta.servlet.http.HttpServletRequest;
 
 import com.top_logic.basic.AliasManager;
+import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.base.discovery.catalog.CatalogEntry;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.mig.html.layout.LayoutUtils;
 
 /**
@@ -67,6 +69,29 @@ public class DiscoveryContext {
 		}
 		url.append(request.getContextPath());
 		return new DiscoveryContext(url.toString());
+	}
+
+	/**
+	 * Creates a {@link DiscoveryContext} for the application as the request of the current
+	 * interaction reaches it.
+	 *
+	 * <p>
+	 * Without a request - in a scheduled task, say - the application URL is built from the aliases
+	 * {@link AliasManager#HOST} and {@link AliasManager#APP_CONTEXT}; without a configured host it
+	 * is only the context path.
+	 * </p>
+	 *
+	 * @see #fromRequest(HttpServletRequest)
+	 */
+	public static DiscoveryContext current() {
+		InteractionContext interaction = ThreadContextManager.getInteraction();
+		HttpServletRequest request = interaction == null ? null : interaction.asRequest();
+		if (request != null) {
+			return fromRequest(request);
+		}
+		AliasManager aliases = AliasManager.getInstance();
+		return new DiscoveryContext(StringServices.nonNull(aliases.getAlias(AliasManager.HOST))
+			+ StringServices.nonNull(aliases.getAlias(AliasManager.APP_CONTEXT)));
 	}
 
 	private static String stripTrailingSlash(String url) {

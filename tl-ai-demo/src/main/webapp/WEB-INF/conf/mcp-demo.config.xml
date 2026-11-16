@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Switches the MCP endpoint /mcp on for a local demo, authenticating callers with HTTP basic
-	against the application's own accounts. Enable it in metaConf.txt.
+	Switches the MCP endpoint /mcp on for a local demo, authenticating callers with a personal access
+	token (My settings - Access tokens - New token, which also shows the command connecting Claude
+	Code) or with HTTP basic against the application's own accounts. Enable it in metaConf.txt.
 
 	FOR A LOCAL DEMO ONLY. HTTP basic puts a person's password into the client configuration; a real
 	installation uses an API key or a bearer token instead. What the endpoint publishes
 	is configured in autoconf/com.top_logic.ai.mcp.server.MCPServerService.config.xml; see
 	the developer article ai/security/mcp-endpoint.
 
-	Connect Claude Code to a running demo with:
+	Connect Claude Code to a running demo with HTTP basic:
 
 	    claude mcp add -t http -H "Authorization: Basic $(printf root:<password> | base64)" tl-ai-demo http://localhost:8080/tl-ai-demo/mcp
 -->
@@ -26,6 +27,7 @@
 		<config service-class="com.top_logic.ai.mcp.server.MCPServerService">
 			<instance>
 				<authentications>
+					<personal-access-token-authentication domain="tokens"/>
 					<basic-authentication domain="mcp-demo" in-user-context="true"/>
 				</authentications>
 			</instance>

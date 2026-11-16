@@ -249,6 +249,21 @@ public class TestMcpServerCard extends TestCase {
 		assertFalse("No link to itself.", text.contains(AgentDiscoveryServlet.LLMS_TXT_PATH));
 	}
 
+	/** The command connecting Claude Code with a given token, on one line, ready to paste. */
+	public void testClaudeMcpAddWithToken() {
+		String command = McpConnectionGuide.claudeMcpAdd(config(), CONTEXT, EndpointCredential.AUTHORIZATION_HEADER,
+			AccessTokenAuthentication.headerValue("tlpat_secret"), " ");
+
+		assertEquals("claude mcp add --transport http --scope user ehome " + APP
+			+ "/mcp --header \"Authorization: Bearer tlpat_secret\"", command);
+	}
+
+	/** Only an endpoint with a personal access token authentication accepts the tokens. */
+	public void testAccessTokensAccepted() {
+		assertTrue(AccessTokenAuthentication.isAccepted(List.of(basic().getValue(), personalAccessTokens().getValue())));
+		assertFalse(AccessTokenAuthentication.isAccepted(List.of(basic().getValue())));
+	}
+
 	/** Without a credential sent in a header, there is no command to show. */
 	public void testLlmsTxtSectionWithoutHeaderCredential() {
 		LlmsTxtSection section = McpConnectionGuide.llmsTxtSection(config(),

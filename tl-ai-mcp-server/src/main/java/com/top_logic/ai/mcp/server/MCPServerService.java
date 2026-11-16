@@ -59,6 +59,7 @@ import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentications;
 import com.top_logic.tl.ai.core.access.EndpointAuthentication;
+import com.top_logic.tl.ai.core.access.AccessTokenAuthentication;
 import com.top_logic.tl.ai.core.access.EndpointCredential;
 import com.top_logic.tl.ai.core.access.EndpointSecret;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
@@ -482,6 +483,14 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 	 */
 	public List<EndpointCredential> getCredentials() {
 		return _credentials;
+	}
+
+	/**
+	 * Whether the configured {@link Config#getAuthentications() authentications} accept a personal
+	 * access token.
+	 */
+	public boolean acceptsAccessTokens() {
+		return AccessTokenAuthentication.isAccepted(getConfig().getAuthentications().values());
 	}
 
 	/**

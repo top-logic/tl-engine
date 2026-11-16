@@ -36,7 +36,7 @@ import com.top_logic.tl.ai.core.access.model.AccessToken;
  */
 public class AccessTokenAuthenticator implements Authenticator {
 
-	private static final String BEARER = "Bearer ";
+	private static final String BEARER = AccessTokenAuthentication.BEARER_SCHEME + ' ';
 
 	@Override
 	public Person authenticate(HttpServletRequest req, HttpServletResponse resp) throws AuthenticationFailure {

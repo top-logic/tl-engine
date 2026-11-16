@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.access;
 
+import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
@@ -37,6 +38,12 @@ public class AccessTokenAuthentication extends AbstractConfiguredInstance<Access
 		implements ServerAuthentication<AccessTokenAuthentication.Config<?>>, EndpointCredential.Provider {
 
 	/**
+	 * The HTTP authentication scheme a personal access token is sent with in the header
+	 * {@link EndpointCredential#AUTHORIZATION_HEADER}.
+	 */
+	public static final String BEARER_SCHEME = "Bearer";
+
+	/**
 	 * Configuration options for {@link AccessTokenAuthentication}.
 	 */
 	@TagName("personal-access-token-authentication")
@@ -62,7 +69,7 @@ public class AccessTokenAuthentication extends AbstractConfiguredInstance<Access
 	@Override
 	public SecuritySchemeObject createSchemaObject(String schemaName) {
 		SecuritySchemeObject securityScheme = OpenAPIConfigs.newHTTPAuthentication(schemaName);
-		securityScheme.setScheme("Bearer");
+		securityScheme.setScheme(BEARER_SCHEME);
 		securityScheme.setUserContext(true, null);
 		return securityScheme;
 	}
@@ -72,6 +79,26 @@ public class AccessTokenAuthentication extends AbstractConfiguredInstance<Access
 		return new EndpointCredential(I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN,
 			EndpointCredential.AUTHORIZATION_HEADER, I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_VALUE,
 			context -> I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_OBTAIN__URL.fill(context.url(ViewServlet.ROOT_PATH)));
+	}
+
+	/**
+	 * The value of the header {@link EndpointCredential#AUTHORIZATION_HEADER} presenting the given
+	 * token.
+	 */
+	public static String headerValue(String token) {
+		return BEARER_SCHEME + ' ' + token;
+	}
+
+	/**
+	 * Whether the given authentications of an endpoint accept personal access tokens.
+	 */
+	public static boolean isAccepted(Collection<? extends ServerAuthentication.Config<?>> authentications) {
+		for (ServerAuthentication.Config<?> authentication : authentications) {
+			if (authentication instanceof AccessTokenAuthentication.Config<?>) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override

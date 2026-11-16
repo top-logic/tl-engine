@@ -101,11 +101,16 @@
 					<property name="validForDays"
 						type="tl.core:Integer"
 					/>
+					<!-- Preformatted, so that its read-only display offers to copy it. -->
 					<property name="token"
 						type="tl.core:String"
 					>
 						<annotations>
 							<visibility value="read-only"/>
+							<multi-line
+								preformatted="true"
+								rows="1"
+							/>
 						</annotations>
 					</property>
 				</attributes>

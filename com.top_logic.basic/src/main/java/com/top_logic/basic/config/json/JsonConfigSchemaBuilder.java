@@ -14,6 +14,7 @@ import java.util.Map;
 
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.CommaSeparatedListValueProvider;
 import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationDescriptorConfig;
@@ -1235,6 +1236,12 @@ public class JsonConfigSchemaBuilder {
 	private Schema buildPlainPropertySchema(PropertyDescriptor property, boolean asMapKey) {
 		Class<?> type = property.getType();
 
+		// A list in a format of separated elements is read from a JSON array as well, see
+		// JsonConfigurationReader.
+		if (!asMapKey && property.getValueProvider() instanceof CommaSeparatedListValueProvider<?> listFormat) {
+			return ArraySchema.create().setItems(elementSchema(property, listFormat));
+		}
+
 		// Numeric types
 		if (type == int.class || type == Integer.class || type == long.class || type == Long.class) {
 			if (asMapKey) {
@@ -1297,6 +1304,17 @@ public class JsonConfigSchemaBuilder {
 		// Concrete format is defined by the ConfigurationValueProvider.
 		if (property.getValueProvider() instanceof JsonSchemaProvider formatSchema) {
 			return formatSchema.buildSchema(property);
+		}
+		return StringSchema.create();
+	}
+
+	/**
+	 * The schema of a single element of a list in the given format: as the element format describes
+	 * its values, a plain string otherwise.
+	 */
+	private static Schema elementSchema(PropertyDescriptor property, CommaSeparatedListValueProvider<?> listFormat) {
+		if (listFormat.getElementFormat() instanceof JsonSchemaProvider elementSchema) {
+			return elementSchema.buildSchema(property);
 		}
 		return StringSchema.create();
 	}

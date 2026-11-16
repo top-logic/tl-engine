@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -27,7 +28,10 @@ import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.DevelopmentOnly;
 import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * A {@link ViewCommand} that opens the View Designer in a new browser window on the application's
@@ -44,6 +48,13 @@ import com.top_logic.layout.view.command.ViewCommand;
  * The designer view finds the session in the channel {@value #SESSION_CHANNEL}, and the path of
  * the views from the root view to the view shown, as list of {@link DesignSource}s, in the channel
  * {@value #PATH_CHANNEL}.
+ * </p>
+ *
+ * <p>
+ * The designer changes the definition of the application, so the command is available in
+ * development and test installs only, wherever it is placed: its
+ * {@link #getIntrinsicRule() own rule} is {@link DevelopmentOnly}, which hides it in a production
+ * install for every user, and its execution refuses to open the designer there.
  * </p>
  *
  * @see #openDesigner(ReactContext, DesignSource, String)
@@ -94,7 +105,16 @@ public class OpenDesignerCommand implements ViewCommand {
 	}
 
 	@Override
+	public ViewExecutabilityRule getIntrinsicRule() {
+		return DevelopmentOnly.INSTANCE;
+	}
+
+	@Override
 	public void execute(ReactContext context, Object input) {
+		ExecutableState state = DevelopmentOnly.INSTANCE.isExecutable(input);
+		if (!state.isExecutable()) {
+			throw CommandErrors.notExecutable(state);
+		}
 		String rootViewPath =
 			ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView().fullPath();
 		openDesigner(context, new FileDesignSource(rootViewPath), DESIGNER_TITLE);

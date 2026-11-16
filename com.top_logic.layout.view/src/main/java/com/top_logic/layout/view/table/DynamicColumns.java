@@ -136,6 +136,9 @@ public class DynamicColumns implements ColumnDeclaration {
 		/** Configuration name for {@link #getCanUpdate()}. */
 		String CAN_UPDATE = "can-update";
 
+		/** Configuration name for {@link #getOptions()}. */
+		String OPTIONS = "options";
+
 		/** Configuration name for {@link #getAggregate()}. */
 		String AGGREGATE = "aggregate";
 
@@ -410,6 +413,30 @@ public class DynamicColumns implements ColumnDeclaration {
 		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getCanUpdate();
+
+		/**
+		 * The values an edited cell value of a row is chosen from.
+		 *
+		 * <p>
+		 * The expression sees the variables of the {@link #getValue() value} - the row and the
+		 * object the column stands for - and computes the options for the cell that is edited,
+		 * when the edit begins. The options are offered in the order the expression computes them;
+		 * deleted objects are not offered.
+		 * </p>
+		 *
+		 * <p>
+		 * Unset, a value of a class is chosen from the instances of the class, a value of an
+		 * enumeration from its classifiers. Options are declared only for columns with an
+		 * {@link #getUpdate() update}; they apply to the columns whose type is a class or an
+		 * enumeration.
+		 * </p>
+		 */
+		@Name(OPTIONS)
+		@Nullable
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getOptions();
 
 		/**
 		 * What a column shows for a group of rows: an expression whose result is displayed in the
@@ -728,6 +755,8 @@ public class DynamicColumns implements ColumnDeclaration {
 			context.error("Edited columns must declare the type of their values, so that it is known"
 				+ " which control enters them: columns '" + config.getName() + "'.");
 		}
+		ColumnFunctions.checkOptions(context, config, Config.UPDATE, Config.OPTIONS, config.getType(),
+			"columns '" + config.getName() + "'");
 		if (!config.getSortable() && config.getComparator() != null) {
 			context.error("Columns that are not '" + Config.SORTABLE + "' have no '" + Config.COMPARATOR
 				+ "': columns '" + config.getName() + "'.");
@@ -777,12 +806,13 @@ public class DynamicColumns implements ColumnDeclaration {
 			ColumnType type = set.type(column);
 			Function<Object, Object> value = set.value(column);
 			CellEditing editing = _readonly ? null
-				: ValueCellEditing.forUpdate(type, value, set.update(column), set.canUpdate(column));
+				: ValueCellEditing.forUpdate(type, value, set.update(column), set.canUpdate(column),
+					set.options(column, type));
 
 			result.add(new ColumnSetup(_name + NAME_SEPARATOR + set.name(column), set.label(column), type, value,
 				scope.context(), _binding, set.width(column), editing, set.aggregate(column),
 				set.comparator(column), !set.visible(column), _export, set.tooltip(column), set.cellClass(column),
-				set.cellRole(column), _display, _sortable, set.exists(column), null));
+				set.cellRole(column), _display, _sortable, null, set.exists(column), null));
 		}
 		return result;
 	}
@@ -840,7 +870,8 @@ public class DynamicColumns implements ColumnDeclaration {
 			_tooltip = InputScript.compile(config, Config.TOOLTIP);
 			_cellClass = InputScript.compile(config, Config.CELL_CLASS);
 			_cellRole = InputScript.compile(config, Config.CELL_ROLE);
-			_functions = ColumnFunctions.compile(config, Config.VALUE, Config.UPDATE, Config.CAN_UPDATE);
+			_functions = ColumnFunctions.compile(config, Config.VALUE, Config.UPDATE, Config.CAN_UPDATE,
+				Config.OPTIONS);
 			_typeRef = config.getType();
 			_multiple = config.getMultiple();
 			_name = config.getName();
@@ -954,6 +985,11 @@ public class DynamicColumns implements ColumnDeclaration {
 			@Override
 			public Predicate<Object> canUpdate(Object column) {
 				return _cells.canUpdate(column);
+			}
+
+			@Override
+			public ValueCellEditing.Options options(Object column, ColumnType type) {
+				return _cells.options(type, column);
 			}
 
 			@Override

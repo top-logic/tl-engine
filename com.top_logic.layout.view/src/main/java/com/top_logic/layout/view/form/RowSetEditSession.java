@@ -1441,8 +1441,9 @@ public class RowSetEditSession implements FormParticipant {
 	 * Adds a new row of the given type to the row set, optionally initialized by the given function.
 	 *
 	 * <p>
-	 * Creates a transient object of the given type within the owner and appends it to the current
-	 * list. Publishes the membership change and notifies the listeners.
+	 * Creates a transient object of the given type and appends it to the current list. Publishes the
+	 * membership change and notifies the listeners. The object of a row bound to an attribute of the
+	 * owner is created within the owner; the object of a row of a query has no container.
 	 * </p>
 	 *
 	 * @param type
@@ -1459,9 +1460,11 @@ public class RowSetEditSession implements FormParticipant {
 			return null;
 		}
 
-		// Create the transient object within the owner, so that it navigates to its owner (e.g. in
-		// an options expression) before it is stored.
-		return createRow(type, isNested() ? _owner.object() : _owner.base(), initializer);
+		// A row of an attribute of the owner is created within the owner, so that it navigates to its
+		// owner (e.g. in an options expression) before it is stored. A row of a query belongs to no
+		// object of the form and is created without a container, as it is stored.
+		TLObject container = _binding.getBoundPart() == null ? null : isNested() ? _owner.object() : _owner.base();
+		return createRow(type, container, initializer);
 	}
 
 	/**

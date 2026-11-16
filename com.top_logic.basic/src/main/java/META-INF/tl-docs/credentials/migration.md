@@ -1,5 +1,5 @@
 ---
-description: Read when upgrading an application to the engine version with secret sources, secret stores and credential providers - the short form <api-key name="..."/> as NamedSecretSource resolved through the SecretStoreService (environment by default, @ServiceDependencies of an own service reading a named secret, explicit EnvironmentSecretSource where a variable is meant regardless of the store), the key variables tl_*_api_key and translation_api_key holding the plain key, the %..._API_KEY% / %TRANSLATION_API_KEY% aliases, the shipped configurations referencing the database, LDAP, mail, pac4j and blob storage secrets by name (h2_passwd, mysql_passwd, ..., ldap_credential, smtp_pass, imap_pass, tl_pac_secret, blob_connect) with the removed aliases %..._PASSWD%, %LDAP_CREDENTIAL%, %SMTP_PASS%, %IMAP_PASS%, %PAC_SECRET%, %BLOB_CONNECT%, development secrets of a local deployment (devel-secrets.xml in deploy/local/metaConf.txt: variables, files in ~/.top-logic/secrets, h2_passwd default), variables in plain form with the unencrypted: prefix still accepted, removed bearer-token-env-var (HttpMcpTransport) and token-env (A2A remote agent), vector index and search engine keys, and the Java API changes (getters returning PolymorphicConfiguration<? extends SecretSource>, DataSourceConfig#getDriverOptions, ServiceProviderInfo#createFromConfig, mcp-json-jackson3).
+description: Read when upgrading an application to the engine version with secret sources, secret stores and credential providers - the short form <api-key name="..."/> as NamedSecretSource resolved through the SecretStoreService (environment by default, @ServiceDependencies of an own service reading a named secret, explicit EnvironmentSecretSource where a variable is meant regardless of the store), the key variables tl_*_api_key and translation_api_key holding the plain key, the removed aliases %OPENAI_API_KEY%, %ANTHROPIC_API_KEY%, %MISTRAL_API_KEY%, %XAI_API_KEY%, %TRANSLATION_API_KEY%, the shipped configurations referencing the database, LDAP, mail, pac4j and blob storage secrets by name (h2_passwd, mysql_passwd, ..., ldap_credential, smtp_pass, imap_pass, tl_pac_secret, blob_connect) with the removed aliases %..._PASSWD%, %LDAP_CREDENTIAL%, %SMTP_PASS%, %IMAP_PASS%, %PAC_SECRET%, %BLOB_CONNECT%, development secrets of a local deployment (devel-secrets.xml in deploy/local/metaConf.txt: variables, files in ~/.top-logic/secrets, h2_passwd default), variables in plain form with the unencrypted: prefix still accepted, removed bearer-token-env-var (HttpMcpTransport) and token-env (A2A remote agent), vector index and search engine keys, and the Java API changes (getters returning PolymorphicConfiguration<? extends SecretSource>, DataSourceConfig#getDriverOptions, ServiceProviderInfo#createFromConfig, mcp-json-jackson3).
 order: 50
 ---
 
@@ -20,7 +20,7 @@ What changes:
 
 ## Key variables hold the plain key
 
-The engine configuration references the keys by secret name (`<api-key name="..."/>`); with the default store, the variable of that name holds the **plain key**. The form with the prefix `unencrypted:` that a variable read through an alias needed is still accepted - the prefix is stripped - so that existing environments keep working; an encrypted value is not supported in a variable:
+The engine configuration references the keys by secret name (`<api-key name="..."/>`); with the default store, the variable of that name holds the **plain key**. The form with the prefix `unencrypted:` that a variable read through one of the former aliases needed is still accepted - the prefix is stripped - so that existing environments keep working; an encrypted value is not supported in a variable:
 
 | Variable | Read by |
 |---|---|
@@ -37,30 +37,32 @@ The Eclipse launch `Start TL AI Demo.launch` passes the Eclipse variables `tl_*_
 
 ## Aliases referencing a key
 
-The aliases `%ANTHROPIC_API_KEY%`, `%OPENAI_API_KEY%`, `%MISTRAL_API_KEY%`, `%XAI_API_KEY%` (in `tl-ai-core.conf.xml`) and `%TRANSLATION_API_KEY%` (in `tl_basic.xml`) still stand for the variables above - which now hold the plain key, while an attribute is read as encrypted value. A configuration using such an alias in an attribute either adds the prefix or, better, references the secret by name:
+The engine no longer defines the aliases `%OPENAI_API_KEY%`, `%ANTHROPIC_API_KEY%`, `%MISTRAL_API_KEY%`, `%XAI_API_KEY%` (formerly in `tl-ai-core.conf.xml`) and `%TRANSLATION_API_KEY%` (formerly in `tl_basic.xml`). A configuration using one of them (e.g. `api-key="unencrypted:%ANTHROPIC_API_KEY%"` or `api-key="%TRANSLATION_API_KEY%"`) names the secret instead, so that the key never becomes part of the configuration (see [why](doc:credentials#why-secrets-are-not-referenced-by-aliases)):
+
+| Removed alias | Secret |
+|---|---|
+| `%OPENAI_API_KEY%` | `tl_openai_api_key` |
+| `%ANTHROPIC_API_KEY%` | `tl_anthropic_api_key` |
+| `%MISTRAL_API_KEY%` | `tl_mistral_api_key` |
+| `%XAI_API_KEY%` | `tl_xai_api_key` |
+| `%TRANSLATION_API_KEY%` | `translation_api_key` |
+
+The variables of these names are unchanged; they hold the plain key.
 
 Before:
 
 ```xml
 <provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig" name="anthropic"
-	api-key="%ANTHROPIC_API_KEY%"
+	api-key="unencrypted:%ANTHROPIC_API_KEY%"
 />
 ```
 
-After (recommended - the key never becomes part of the configuration, see [why](doc:credentials#why-secrets-are-not-referenced-by-aliases)):
+After:
 
 ```xml
 <provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig" name="anthropic">
 	<api-key name="tl_anthropic_api_key"/>
 </provider>
-```
-
-or, keeping the alias:
-
-```xml
-<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig" name="anthropic"
-	api-key="unencrypted:%ANTHROPIC_API_KEY%"
-/>
 ```
 
 The same holds for DeepL:
@@ -129,7 +131,7 @@ The MCP client of `tl-ai-core` needs the JSON mapper `io.modelcontextprotocol.sd
 
 ## Vector index
 
-The vector index reads its key from the secret `tl_mistral_api_key`; `aiVectorIndexingConf.xml` no longer defines `%MISTRAL_API_KEY%`:
+The vector index reads its key from the secret `tl_mistral_api_key`; neither `aiVectorIndexingConf.xml` nor `tl-ai-core.conf.xml` defines `%MISTRAL_API_KEY%` any more:
 
 ```xml
 <!-- Before -->

@@ -37,6 +37,7 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.TableElement;
 import com.top_logic.layout.view.form.BoundFieldModel;
+import com.top_logic.layout.view.form.TLObjectOverlay;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
@@ -45,6 +46,7 @@ import com.top_logic.layout.view.table.DynamicColumns;
 import com.top_logic.layout.view.table.ValueCellEditing;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
@@ -142,6 +144,31 @@ public class TestColumnOptions extends AbstractModelAccessTest {
 		assertEquals("Another row has other options.",
 			List.of(_otherCategory, _category, _hiddenCategory),
 			assertSelect(model(setup, _otherProject)).getOptions());
+	}
+
+	/**
+	 * A row added in an edit session, not stored yet, offers the options computed for it.
+	 */
+	public void testNewRowOffersItsOptions() throws Exception {
+		ColumnSetup setup = computed(
+			"<computed-column name='c' type='" + qualified(CATEGORY) + "'"
+				+ " value='$row.get(`" + PROJECT_CATEGORY + "`)'"
+				+ " update='$row.set(`" + PROJECT_CATEGORY + "`, $value)'>"
+				+ "<inputs><input channel='" + CANDIDATES + "'/></inputs>"
+				+ "<options>$row.container() == null ? $" + CANDIDATES + " : list()</options>"
+				+ "</computed-column>");
+		TLObjectOverlay newRow =
+			new TLObjectOverlay(TransientObjectFactory.INSTANCE.createObject(type(PROJECT), null));
+
+		assertEquals(List.of(_otherCategory, _category, _hiddenCategory),
+			assertSelect(model(setup, newRow)).getOptions());
+		assertEquals("Without options, a new row offers the instances of the class.",
+			Set.of(_category, _hiddenCategory, _otherCategory),
+			new HashSet<>(assertSelect(model(computed(
+				"<computed-column name='c' type='" + qualified(CATEGORY) + "'"
+					+ " value='$row.get(`" + PROJECT_CATEGORY + "`)'"
+					+ " update='$row.set(`" + PROJECT_CATEGORY + "`, $value)'/>"),
+				newRow)).getOptions()));
 	}
 
 	/**

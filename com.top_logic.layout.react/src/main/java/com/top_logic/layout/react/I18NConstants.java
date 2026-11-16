@@ -312,6 +312,24 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_FILE_CHIPS_REMOVE;
 
 	/**
+	 * @en Upload image
+	 */
+	@CustomKey("js.imageField.upload")
+	public static ResKey JS_IMAGE_FIELD_UPLOAD;
+
+	/**
+	 * @en Replace {0}
+	 */
+	@CustomKey("js.imageField.replace")
+	public static ResKey JS_IMAGE_FIELD_REPLACE;
+
+	/**
+	 * @en Remove {0}
+	 */
+	@CustomKey("js.imageField.remove")
+	public static ResKey JS_IMAGE_FIELD_REMOVE;
+
+	/**
 	 * @en Open camera
 	 */
 	@CustomKey("js.photoCapture.open")

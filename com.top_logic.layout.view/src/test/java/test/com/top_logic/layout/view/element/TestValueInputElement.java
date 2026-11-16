@@ -58,7 +58,9 @@ import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.NumberDisplay;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
+import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.form.ReactImageFieldControl;
 import com.top_logic.layout.react.control.form.ReactSliderControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.identity.ProjectionMode;
@@ -106,6 +108,8 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.annotate.ui.BinaryDisplay;
+import com.top_logic.model.annotate.ui.BinaryDisplay.BinaryPresentation;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
@@ -301,6 +305,9 @@ public class TestValueInputElement extends TestCase {
 
 	/** The enumeration the choice inputs of the test view choose from, part of the application model. */
 	private static final String CHANGE_TYPE = "tl.changelog:ChangeType";
+
+	/** The datatype of a file, part of the application model. */
+	private static final String BINARY_TYPE = "tl.core:Binary";
 
 	/** The channel the choice inputs of the test view write to. */
 	private static final String CHANGE = "change";
@@ -1206,6 +1213,37 @@ public class TestValueInputElement extends TestCase {
 			SelectDisplay.RADIO,
 			select(service.createFieldControl(_context, status, declared, spec, field,
 				selectDisplay(SelectDisplay.RADIO))).getDisplay());
+	}
+
+	/**
+	 * A binary value whose input asks for an image drop field is edited in an image field, holding
+	 * one image or several as the input states; without that annotation it is a file field.
+	 */
+	public void testAnImageDropFieldOfTheInputEditsImages() {
+		TLType binary = TLModelUtil.findType(BINARY_TYPE);
+		FieldControlService service = controlService();
+
+		ValueInputElement.Config plain = TypedConfiguration.newConfigItem(ValueInputElement.Config.class);
+		AbstractFieldModel file = new AbstractFieldModel(null);
+		assertEquals("Without an annotation, a single file is edited in a file field.",
+			ReactBinaryFieldControl.class,
+			service.createFieldControl(_context, binary, plain,
+				FieldControlService.fieldSpec(binary, plain, LABEL, false, file), file, null).getClass());
+
+		ValueInputElement.Config declared = TypedConfiguration.newConfigItem(ValueInputElement.Config.class);
+		declared.getAnnotations().add(BinaryDisplay.display(BinaryPresentation.IMAGE_UPLOAD));
+
+		AbstractFieldModel single = new AbstractFieldModel(null);
+		ReactControl image = service.createFieldControl(_context, binary, declared,
+			FieldControlService.fieldSpec(binary, declared, LABEL, false, single), single, null);
+		assertEquals(ReactImageFieldControl.class, image.getClass());
+		assertFalse(((ReactImageFieldControl) image).isMultiple());
+
+		AbstractFieldModel several = new AbstractFieldModel(List.of());
+		ReactControl images = service.createFieldControl(_context, binary, declared,
+			FieldControlService.fieldSpec(binary, declared, LABEL, true, several), several, null);
+		assertEquals(ReactImageFieldControl.class, images.getClass());
+		assertTrue(((ReactImageFieldControl) images).isMultiple());
 	}
 
 	/**

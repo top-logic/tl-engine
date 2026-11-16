@@ -490,11 +490,25 @@
 						type="tl.core:Binary"
 					>
 						<annotations>
+							<accepted-types value="image/*"/>
+							<binary-display presentation="image-upload"/>
 							<dynamic-visibility>
 								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
 									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
 								/>
 							</dynamic-visibility>
+						</annotations>
+					</property>
+					<!-- Several images shown with a preview each, arranged by the user. -->
+					<property name="pictures"
+						multiple="true"
+						ordered="true"
+						type="tl.core:Binary"
+					>
+						<annotations>
+							<accepted-types value="image/*"/>
+							<binary-display presentation="image-upload"/>
+							<max-upload-size value="5m"/>
 						</annotations>
 					</property>
 					<property name="attachments"

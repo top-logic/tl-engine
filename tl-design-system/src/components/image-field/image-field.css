@@ -1,0 +1,86 @@
+/* Bildfeld — Vertrag image-field.contract.md. Leser ist TLImageField.
+   Ein Feld für ein Bild oder mehrere, nach dem Bild-Upload-Feld der klassischen Oberfläche: mit Bild die Vorschau
+   (tl-image-field__tile) und darüber die Knöpfe (Part Button), ohne Bild die gestrichelte Fläche
+   (tl-image-field__drop), die eine Datei aufnimmt oder per Klick die Dateiauswahl öffnet. Ein Bild ist eine Kachel,
+   mehrere stehen als Reihe gleich großer Kacheln; die Fläche hat die Größe einer Kachel und steht als letzte. Dragover an Kachel und Fläche
+   zeichnet upload.css, Gezogen und Einfügemarke drag.css (die Wurzel trägt data-tl-axis="horizontal"), den Ring der
+   Fläche base.css. */
+
+.tl-image-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: var(--tl-space-sm);
+  min-width: 0;
+}
+.tl-image-field[hidden] { display: none; }
+
+/* Jedes Bild ist eine gleich große Kachel, einzeln wie in der Reihe; das Bild liegt eingepasst auf der Fläche des
+   Felds. */
+.tl-image-field__tile {
+  display: block;
+  position: relative;
+  inline-size: var(--tl-size-11);
+  block-size: var(--tl-size-11);
+  border-radius: var(--tl-radius-sm);
+  background: var(--tl-surface-field);
+}
+.tl-image-field__tile[hidden] { display: none; }
+
+.tl-image-field__image {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+  border-radius: var(--tl-radius-sm);
+}
+
+/* Die Knöpfe der Kachel liegen in ihrer oberen Ecke am Zeilenende über dem Bild. */
+.tl-image-field__actions {
+  display: flex;
+  position: absolute;
+  inset-block-start: var(--tl-space-2xs);
+  inset-inline-end: var(--tl-space-2xs);
+  gap: var(--tl-space-2xs);
+}
+.tl-image-field__actions[hidden] { display: none; }
+
+/* Die Fläche, die ein Bild aufnimmt: gestrichelt, Icon und Beschriftung in der Mitte. */
+.tl-image-field__drop {
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tl-space-xs);
+  inline-size: var(--tl-size-11);
+  block-size: var(--tl-size-11);
+  padding: var(--tl-space-sm);
+  border: var(--tl-border-width-md) dashed var(--tl-border-control);
+  border-radius: var(--tl-radius-sm);
+  background: var(--tl-surface-field);
+  color: var(--tl-text-secondary);
+  cursor: pointer;
+}
+.tl-image-field__drop[hidden] { display: none; }
+
+.tl-image-field__drop:hover:not([aria-disabled="true"]) {
+  border-color: var(--tl-border-emphasis);
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-image-field__drop[aria-disabled="true"] {
+  border-color: var(--tl-border-disabled);
+  color: var(--tl-text-disabled);
+  cursor: default;
+}
+
+.tl-image-field__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Der Fehler des letzten Hochladens bricht unter Bild und Fläche. */
+.tl-image-field > .tl-file-upload__status {
+  flex-basis: 100%;
+}

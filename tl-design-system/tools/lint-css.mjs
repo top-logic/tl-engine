@@ -159,6 +159,7 @@ const MODIFIERS = {
   'tl-media': new Set(['cover', 'contain', 'document', 'preview']), // Einpassung, Papier, Vorschau; gespiegelt: data-tl-state.
   'tl-prose': new Set([]),
   'tl-file': new Set([]), // Leer: data-tl-state.
+  'tl-image-field': new Set([]), // Ein Bild wie mehrere: gleich große Kacheln; Ziehen, Ablegen: data-tl-state.
   'tl-steps': new Set(['vertical']), // Erledigt: data-tl-state; aktuell: aria-current.
   'tl-job-status': new Set([]),
   'tl-calendar': new Set([]), // Heute, arbeitsfrei, anderer Monat, Termintag, Vorschau, gewählt: Attribute; Kategorie: data-tl-role.

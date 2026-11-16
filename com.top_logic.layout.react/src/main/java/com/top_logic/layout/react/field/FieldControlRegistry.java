@@ -24,6 +24,7 @@ import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactFileChipsControl;
+import com.top_logic.layout.react.control.form.ReactImageFieldControl;
 import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
@@ -170,6 +171,58 @@ public class FieldControlRegistry {
 
 		@Override
 		public boolean editsCollections() {
+			return true;
+		}
+
+		@Override
+		public String previewText(FieldSpec field, Object value) {
+			return fileNames(value);
+		}
+	};
+
+	/**
+	 * Edits binary values that are images as a {@link ReactImageFieldControl}: a preview of each image,
+	 * replaced by dropping or picking a file, removed by a button, and an area taking further images
+	 * while there is room for them.
+	 *
+	 * <p>
+	 * The control holds a single image and the images of a {@link FieldSpec#isMultiple() multi-valued}
+	 * field alike, so this provider {@link ReactFieldControlProvider#editsCollections() edits
+	 * collections}; the images of an {@link FieldSpec#isOrdered() ordered} field are arranged by the
+	 * user. A preview needs room, so the control is
+	 * {@link ReactFieldControlProvider#isLarge(FieldSpec) large}: where the field is
+	 * {@link FieldSpec#isCompact() compact}, a table cell for instance, the names of its images stand
+	 * for it. The files the file picker offers are the {@link FieldSpec#getAcceptedTypes() accepted
+	 * types} of the field, each up to the {@link FieldSpec#getMaxUploadSize() upload limit} of the
+	 * field.
+	 * </p>
+	 *
+	 * <p>
+	 * It is no provider of a value type: a binary value is edited as an image where its display asks
+	 * for it.
+	 * </p>
+	 */
+	public static final ReactFieldControlProvider IMAGE = new ReactFieldControlProvider() {
+		@Override
+		public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
+			ReactImageFieldControl control =
+				new ReactImageFieldControl(context, model, field.isMultiple(), field.isOrdered());
+			if (field.getAcceptedTypes() != null) {
+				control.setAcceptedTypes(field.getAcceptedTypes());
+			}
+			if (field.getMaxUploadSize() > 0) {
+				control.setMaxUploadSize(field.getMaxUploadSize());
+			}
+			return control;
+		}
+
+		@Override
+		public boolean editsCollections() {
+			return true;
+		}
+
+		@Override
+		public boolean isLarge(FieldSpec field) {
 			return true;
 		}
 

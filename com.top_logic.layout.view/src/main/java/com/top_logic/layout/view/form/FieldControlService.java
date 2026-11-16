@@ -108,8 +108,9 @@ import com.top_logic.util.model.ModelService;
  * attribute holds - or on its type (via
  * {@link com.top_logic.model.annotate.DefaultStrategy.Strategy#VALUE_TYPE}).</li>
  * <li>Global type-to-provider map configured in this service.</li>
- * <li>A multi-valued binary value whose {@link BinaryDisplay} asks for a list is edited as a list
- * with one file field per value.</li>
+ * <li>A binary value whose {@link BinaryDisplay} asks for an image drop field is edited as images
+ * with a preview each, single- and multi-valued alike; a multi-valued binary value whose
+ * {@link BinaryDisplay} asks for a list is edited as a list with one file field per value.</li>
  * <li>Built-in fallback based on {@link com.top_logic.model.TLPrimitive.Kind}: e.g. the files of a
  * multi-valued binary value as file chips.</li>
  * </ol>
@@ -133,8 +134,10 @@ import com.top_logic.util.model.ModelService;
  *           {@link FieldControlRegistry#createControl(ReactContext, FieldSpec, FieldModel, ReactFieldControlProvider)},
  *           never in {@link ReactFieldControlProvider#createControl(ReactContext, FieldSpec, FieldModel)}
  *           itself, which is what keeps type and multiplicity decided in one place.
- *           A binary value asking for a list is edited by {@link FieldControlRegistry#BINARY}, the
- *           built-in fallback of a binary value is {@link FieldControlRegistry#FILE_CHIPS}.
+ *           A binary value asking for an image drop field is edited by
+ *           {@link FieldControlRegistry#IMAGE}, a binary value asking for a list by
+ *           {@link FieldControlRegistry#BINARY}, the built-in fallback of a binary value is
+ *           {@link FieldControlRegistry#FILE_CHIPS}.
  */
 @Label("Form field controls")
 @ServiceDependencies({
@@ -546,10 +549,16 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			return createControl(context, field, model, mapped);
 		}
 
-		// 4. Files displayed as a list of one file field per value.
-		if (field.isMultiple() && isBinary(type)
-			&& binaryPresentation(annotations, type) == BinaryPresentation.LIST) {
-			return createControl(context, field, model, FieldControlRegistry.BINARY);
+		// 4. Files displayed as the binary display asks: images as previews, a list of one file field
+		// per value.
+		if (isBinary(type)) {
+			BinaryPresentation presentation = binaryPresentation(annotations, type);
+			if (presentation == BinaryPresentation.IMAGE_UPLOAD) {
+				return createControl(context, field, model, FieldControlRegistry.IMAGE);
+			}
+			if (field.isMultiple() && presentation == BinaryPresentation.LIST) {
+				return createControl(context, field, model, FieldControlRegistry.BINARY);
+			}
 		}
 
 		// 5. The control registered for the kind of value the type holds. The same registry

@@ -531,7 +531,11 @@
 										<field attribute="name"/>
 										<field attribute="locked"/>
 										<field attribute="string"/>
-										<field attribute="multiLine"/>
+										<!-- Without its label, the field explains itself through the info icon beside the input. -->
+										<field
+											attribute="multiLine"
+											label-position="hide-label"
+										/>
 										<field attribute="html"/>
 										<field attribute="i18n"/>
 										<field attribute="i18nMultiline"/>

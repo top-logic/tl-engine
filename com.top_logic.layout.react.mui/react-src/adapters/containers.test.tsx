@@ -292,7 +292,11 @@ describe('a split handle is a separator', () => {
 
   it('keeps the percent scale on the handle after a key', async () => {
     const width = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth');
-    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, get: () => 200 });
+    // Each pane 200 px wide; the split panel itself wide enough for the panes side by side.
+    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+      configurable: true,
+      get(this: HTMLElement) { return this.classList.contains('tl-split') ? 1000 : 200; },
+    });
     try {
       // A minimum size would have moved the bounds to 25 and 75 if they were written in pixel shares.
       mountAdapter(TLSplitPanel, {

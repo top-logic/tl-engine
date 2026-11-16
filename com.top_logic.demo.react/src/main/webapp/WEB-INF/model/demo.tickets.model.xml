@@ -39,12 +39,50 @@
 						type="tl.core:String"
 					/>
 					<!--
+						The key of a ticket is mandatory, but the user rarely enters it: without an explicit
+						key, the key suggested from the name applies. In a form, the field of the key shows the
+						suggestion as placeholder and is valid as soon as the name is entered.
+					-->
+					<property name="key"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<fallback-storage
+									fallback-attribute="suggestedKey"
+									storage-attribute="customKey"
+								/>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<property name="customKey"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</property>
+					<property name="suggestedKey"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[t -> regex('[^A-Za-z0-9]+').regexReplace($t.get(`demo.tickets:Ticket#name`), '-').toUpperCase()]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
+					<!--
 						A resolution belongs to a closed ticket: closing a ticket without one proposes
 						"Fixed", reopening it discards the resolution of the previous closing. The value
 						listener does this in a form while the user edits the status. The change handlers
 						react to every stored change of the status, also one made without a form (e.g.
 						dropping a ticket into another column of the board): the first records the change
 						as a comment of the ticket, the second discards the resolution of a reopened ticket.
+						A change of the status in a form also drops a public status entered for the previous
+						status: the public status falls back to the status again.
 					-->
 					<reference name="status"
 						kind="forwards"
@@ -78,6 +116,9 @@
 	if($newValue == `demo.tickets:TicketStatus#closed`,
 		if($t.get(`demo.tickets:Ticket#resolution`) == null, $t.set(`demo.tickets:Ticket#resolution`, 'Fixed')),
 		$t.set(`demo.tickets:Ticket#resolution`, null))]]></operation>
+								</script>
+								<script>
+									<operation><![CDATA[t -> newValue -> oldValue -> $t.set(`demo.tickets:Ticket#publicStatus`, null)]]></operation>
 								</script>
 							</value-listeners>
 						</annotations>

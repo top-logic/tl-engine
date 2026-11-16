@@ -19,8 +19,14 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * Generic method resolving an alias using the {@link AliasManager}.
- * 
+ * TL-Script function <code>resolveAlias(text)</code> replacing all configuration variables
+ * (aliases) occurring in a text by their values, see {@link AliasManager#replace(String)}.
+ *
+ * <p>
+ * To read the value of a single configuration variable (alias) by its name, use the TL-Script
+ * function <code>configVariable(name)</code> ({@link ConfigFunctions#variable(String)}).
+ * </p>
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class AliasResolver extends GenericMethod {

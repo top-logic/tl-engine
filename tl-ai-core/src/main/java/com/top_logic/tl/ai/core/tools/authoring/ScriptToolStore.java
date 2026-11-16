@@ -11,17 +11,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.top_logic.basic.config.ConfigurationDescriptorConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.html.i18n.DefaultHtmlResKey;
-import com.top_logic.html.i18n.HtmlResKey;
-import com.top_logic.model.search.configured.ScriptParameter;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
 import com.top_logic.tl.ai.core.tools.registry.ToolDescriptions;
@@ -35,7 +33,7 @@ import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
  *
  * <p>
  * Pure in-memory operations with no I/O: callers persist the wrapped config separately. All
- * mutations validate the TL-Script body and parameter types before applying.
+ * mutations validate the TL-Script body and the parameter declaration before applying.
  * </p>
  */
 public class ScriptToolStore {
@@ -48,23 +46,76 @@ public class ScriptToolStore {
 	/**
 	 * Declaration of one TL-Script tool parameter as supplied by the caller.
 	 *
+	 * <p>
+	 * Describes one property of the tool's {@link ScriptToolConfig#getParameters() parameter
+	 * declaration}: a value parameter has a Java {@link #type()}, an object parameter a model
+	 * {@link #objectType()}.
+	 * </p>
+	 *
 	 * @param name
 	 *        Parameter name, bound as {@code $name} in the script body.
 	 * @param type
-	 *        Qualified TL type, e.g. {@code tl.core:String}.
+	 *        Java type of a value parameter: {@code String}, {@code int}, {@code long},
+	 *        {@code double}, {@code boolean}, or the qualified name of a Java enum class. Empty for
+	 *        {@code String}; ignored for an object parameter.
+	 * @param objectType
+	 *        Qualified model type of an object parameter, e.g. {@code my.module:MyType}; the agent
+	 *        passes the id of an object of this type or of a specialization. Empty for a value
+	 *        parameter.
 	 * @param description
-	 *        Human-readable description of the parameter.
+	 *        What the parameter means, told to the model.
 	 * @param mandatory
 	 *        Whether the parameter must be supplied.
 	 * @param multiple
-	 *        Whether the parameter accepts a list of values.
+	 *        Whether the parameter holds a list of values: of texts, or of objects.
 	 * @param defaultValue
-	 *        Optional TL-Script default expression used when an optional parameter is omitted;
-	 *        empty/null for none.
+	 *        The value used when an optional parameter is omitted, in its text form; empty/null for
+	 *        none.
+	 * @param options
+	 *        Qualified name of an existing function class computing the allowed values (as
+	 *        {@code <options fun="..."/>}); empty/null for none.
 	 */
-	public record ParamSpec(String name, String type, String description, boolean mandatory,
-			boolean multiple, String defaultValue) {
-		// data carrier for tool input
+	public record ParamSpec(String name, String type, String objectType, String description, boolean mandatory,
+			boolean multiple, String defaultValue, String options) {
+
+		/** JSON field of {@link #name()}. */
+		public static final String NAME = "name";
+
+		/** JSON field of {@link #type()}. */
+		public static final String TYPE = "type";
+
+		/** JSON field of {@link #objectType()}. */
+		public static final String OBJECT_TYPE = "objectType";
+
+		/** JSON field of {@link #description()}. */
+		public static final String DESCRIPTION = "description";
+
+		/** JSON field of {@link #mandatory()}. */
+		public static final String MANDATORY = "mandatory";
+
+		/** JSON field of {@link #multiple()}. */
+		public static final String MULTIPLE = "multiple";
+
+		/** JSON field of {@link #defaultValue()}. */
+		public static final String DEFAULT_VALUE = "defaultValue";
+
+		/** JSON field of {@link #options()}. */
+		public static final String OPTIONS = "options";
+
+		/**
+		 * How the model is told what a parameter declaration consists of.
+		 */
+		public static final String SCHEMA_DESCRIPTION = "Declared parameters, bound as $name in the body. "
+			+ "Each object has: " + NAME + " (string), " + DESCRIPTION + " (string, tells the caller what to "
+			+ "pass), " + MANDATORY + " (boolean). For a value: " + TYPE + " - String (default), int, long, "
+			+ "double, boolean, or the qualified class name of a Java enum, whose constants are the allowed "
+			+ "values. For a model object: " + OBJECT_TYPE + " - the qualified model type, e.g. "
+			+ "my.module:MyType; the caller passes the id of an object as tools report it, and the body gets "
+			+ "the object. Optional: " + MULTIPLE + " (boolean, a list of texts or of objects, passed as "
+			+ "JSON array), " + DEFAULT_VALUE + " (a fixed value in text form, used when an optional "
+			+ "parameter is omitted - not an expression), " + OPTIONS + " (the qualified class name of an "
+			+ "existing options function computing the allowed values, as in <options fun=\"...\"/>; only "
+			+ "an existing class can be named).";
 	}
 
 	private final ToolRegistryService.Config<?> _config;
@@ -100,8 +151,8 @@ public class ScriptToolStore {
 		if (tools.containsKey(name)) {
 			throw new IllegalArgumentException("A script tool named '" + name + "' already exists.");
 		}
-		tools.put(name, buildConfig(name, label, description, parameters, implementation, mode, concurrencySafe,
-			commitMessage, null));
+		tools.put(name, buildConfig(name, label, description, ScriptToolParameters.declaration(parameters),
+			implementation, mode, concurrencySafe, commitMessage, null));
 	}
 
 	/**
@@ -121,6 +172,8 @@ public class ScriptToolStore {
 	/**
 	 * A tool configuration from the given values.
 	 *
+	 * @param parameters
+	 *        The declaration of the parameters; {@code null} for none.
 	 * @param commitMessage
 	 *        The source of the {@link ScriptToolConfig#getCommitMessage() commit message} expression;
 	 *        <code>null</code> or blank for none.
@@ -129,7 +182,7 @@ public class ScriptToolStore {
 	 *        kept; <code>null</code> for a new tool.
 	 */
 	private ScriptToolConfig buildConfig(String name, String label, String description,
-			List<ParamSpec> parameters, String implementation, String mode, boolean concurrencySafe,
+			ConfigurationDescriptorConfig parameters, String implementation, String mode, boolean concurrencySafe,
 			String commitMessage, ScriptToolConfig existing) {
 		ScriptToolConfig cfg = TypedConfiguration.newConfigItem(ScriptToolConfig.class);
 		cfg.setName(name);
@@ -140,11 +193,7 @@ public class ScriptToolStore {
 			cfg.setDescription(new DefaultHtmlResKey(ResKey.text(description)));
 		}
 		cfg.setImplementation(parseScript(implementation));
-		if (parameters != null) {
-			for (ParamSpec spec : parameters) {
-				cfg.getParameters().add(buildParam(spec));
-			}
-		}
+		cfg.setParameters(parameters);
 		cfg.update(cfg.descriptor().getProperty(ScriptToolConfig.MODE), parseMode(mode));
 		cfg.update(cfg.descriptor().getProperty(ScriptToolConfig.CONCURRENCY_SAFE),
 			Boolean.valueOf(concurrencySafe));
@@ -159,37 +208,6 @@ public class ScriptToolStore {
 		}
 		compileCheck(cfg);
 		return cfg;
-	}
-
-	private static ScriptParameter buildParam(ParamSpec spec) {
-		if (spec.name() == null || spec.name().isBlank()) {
-			throw new IllegalArgumentException("Each parameter needs a non-empty name.");
-		}
-		TLModelPartRef typeRef = TLModelPartRef.ref(spec.type());
-		try {
-			typeRef.resolveType();
-		} catch (RuntimeException ex) {
-			throw new IllegalArgumentException(
-				"Parameter '" + spec.name() + "' has an unknown type '" + spec.type()
-					+ "'. Use a qualified TL type such as tl.core:String.", ex);
-		}
-		ScriptParameter p = TypedConfiguration.newConfigItem(ScriptParameter.class);
-		p.setName(spec.name());
-		p.setType(typeRef);
-		p.setMandatory(spec.mandatory());
-		p.setMultiple(spec.multiple());
-		if (spec.description() != null && !spec.description().isBlank()) {
-			p.setDescription(new DefaultHtmlResKey(ResKey.text(spec.description())));
-		}
-		if (spec.defaultValue() != null && !spec.defaultValue().isBlank()) {
-			try {
-				p.setDefaultValue(ExprFormat.INSTANCE.getValue("defaultValue", spec.defaultValue()));
-			} catch (ConfigurationException ex) {
-				throw new IllegalArgumentException("Parameter '" + spec.name()
-					+ "' has an invalid default expression: " + ex.getMessage(), ex);
-			}
-		}
-		return p;
 	}
 
 	private static Expr parseScript(String body) {
@@ -249,7 +267,7 @@ public class ScriptToolStore {
 			name,
 			label != null ? label : labelOf(existing),
 			description != null ? description : descriptionOf(existing),
-			parameters != null ? parameters : specsOf(existing),
+			parameters != null ? ScriptToolParameters.declaration(parameters) : copyOf(existing.getParameters()),
 			implementation != null ? implementation
 				: ExprFormat.INSTANCE.getSpecification(existing.getImplementation()),
 			mode != null ? mode : existing.getMode().name(),
@@ -274,15 +292,12 @@ public class ScriptToolStore {
 		}
 	}
 
-	private static List<ParamSpec> specsOf(ScriptToolConfig cfg) {
-		List<ParamSpec> specs = new ArrayList<>();
-		for (ScriptParameter p : cfg.getParameters()) {
-			String def = p.getDefaultValue() == null ? null
-				: ExprFormat.INSTANCE.getSpecification(p.getDefaultValue());
-			specs.add(new ParamSpec(p.getName(), p.getType().qualifiedName(),
-				descriptionText(p.getDescription()), p.isMandatory(), p.isMultiple(), def));
-		}
-		return specs;
+	/**
+	 * A copy of the given parameter declaration, kept as it is by an update that does not replace
+	 * it.
+	 */
+	private static ConfigurationDescriptorConfig copyOf(ConfigurationDescriptorConfig parameters) {
+		return parameters == null ? null : TypedConfiguration.copy(parameters);
 	}
 
 	/**
@@ -302,11 +317,6 @@ public class ScriptToolStore {
 	private static String descriptionOf(ScriptToolConfig cfg) {
 		return cfg.getDescription() == null ? null
 			: ToolDescriptions.englishPlainText(cfg.getDescription());
-	}
-
-	private static String descriptionText(HtmlResKey key) {
-		return key == null ? null
-			: ToolDescriptions.englishPlainText(key);
 	}
 
 	/**

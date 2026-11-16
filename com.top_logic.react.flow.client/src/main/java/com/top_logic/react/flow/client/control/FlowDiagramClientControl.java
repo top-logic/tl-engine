@@ -687,8 +687,6 @@ public class FlowDiagramClientControl implements DiagramContext {
 					return;
 				}
 				Element target = (Element) pe.target;
-				DomGlobal.console.log("[DragDebug] pointerdown on: " + target.tagName
-					+ " id=" + target.id);
 				if (_dragHandler.isPending()) {
 					// The release of the previous press went elsewhere.
 					cancelGesture();
@@ -1308,7 +1306,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 	}
 
 	private void applyScopeChanges(Collection<? extends SharedGraphNode> dirtyNodes) {
-		SvgWriter updateWriter = new SVGBuilder(_svgDoc, _svg) {
+		SvgWriter updateWriter = new SVGBuilder(_svgDoc, _svg, _nextId) {
 
 			@Override
 			protected void linkModel(OMSVGElement svgElement, Object model) {
@@ -1456,7 +1454,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 	}
 
 	private SVGBuilder svgBuilder() {
-		SVGBuilder builder = new SVGBuilder(_svgDoc, _svg) {
+		SVGBuilder builder = new SVGBuilder(_svgDoc, _svg, _nextId) {
 			@Override
 			protected void linkModel(OMSVGElement svgElement, Object model) {
 				link(svgElement, model);

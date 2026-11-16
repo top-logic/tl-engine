@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Detail frame of the typed drill-down: the transaction the frame was pushed or restored with. -->
+<view>
+	<channels>
+		<channel name="transaction"/>
+		<channel name="navPath"/>
+		<derived-channel name="depth"
+			expr="$navPath.size()"
+			inputs="navPath"
+		/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Transaction</en>
+			<de>Transaktion</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-arrow-left"
+				inputs="depth"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Back</en>
+					<de>Zurück</de>
+				</label>
+				<executability>
+					<visible-if expr="$depth > 0"/>
+				</executability>
+				<navigate-pop/>
+			</generic-command>
+		</commands>
+		<form
+			input="transaction"
+			with-inset="true"
+		>
+			<field attribute="beschreibung"/>
+			<field attribute="datum"/>
+			<field attribute="wert"/>
+			<field attribute="kategorie"/>
+		</form>
+	</panel>
+</view>

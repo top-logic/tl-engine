@@ -11,6 +11,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
 import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.ui.ScriptContextVariables;
@@ -38,6 +39,19 @@ import com.top_logic.model.search.ui.ScriptContextVariables;
  * </p>
  *
  * <p>
+ * The conversions may depend on the display of the stack: with {@link #getInputs() inputs}, both
+ * expressions see the current values of channels of the view declaring the stack - also of those it
+ * receives as parameters of a <code>&lt;view-ref&gt;</code> - in front of the value and the text. A
+ * view embedded several times with a different <code>type</code> channel each restricts its
+ * addresses to the objects of its embedding with
+ * <code>&lt;param name="item" inputs="type" expr="objectId($item)"
+ * reverse="$value.objectResolve(`my:Topic`).with(o -&gt; $o.instanceOf($type) ? $o : null)"/&gt;</code>: a
+ * URL naming an object of another type restores no frame. Inputs serve only these expressions: a
+ * parameter with inputs but neither {@link #getExpr() expr} nor {@link #getReverse() reverse} is a
+ * configuration error.
+ * </p>
+ *
+ * <p>
  * A parameter of the route without an entry of its own is carried as text: the value names itself in
  * the URL and the text of the URL is the value, which is what a parameter holding a string needs.
  * </p>
@@ -52,7 +66,7 @@ import com.top_logic.model.search.ui.ScriptContextVariables;
  */
 @TagName(FrameParamConfig.TAG_NAME)
 @TitleProperty(name = FrameParamConfig.NAME)
-public interface FrameParamConfig extends FrameContentConfig {
+public interface FrameParamConfig extends FrameContentConfig, Inputs {
 
 	/** Configuration tag of a {@link FrameParamConfig}. */
 	String TAG_NAME = "param";
@@ -94,8 +108,9 @@ public interface FrameParamConfig extends FrameContentConfig {
 	 * Expression mapping the value of the parameter onto the text the URL carries.
 	 *
 	 * <p>
-	 * The expression sees the value the frame holds as the variable named like the parameter, the
-	 * value of the parameter <code>person</code> as <code>$person</code>, and returns the text
+	 * The expression sees the values of the {@link #getInputs() inputs}, followed by the value the
+	 * frame holds as the variable named like the parameter, the value of the parameter
+	 * <code>person</code> as <code>$person</code>, and returns the text
 	 * naming it: <code>objectId($person)</code>. An expression yielding nothing means the value has
 	 * no name in a URL - a transient object, for instance - and the frame then contributes no
 	 * segment: an address that cannot be opened again is better left unwritten.
@@ -115,11 +130,11 @@ public interface FrameParamConfig extends FrameContentConfig {
 	 * Expression mapping the text the URL carries back onto the value of the parameter.
 	 *
 	 * <p>
-	 * The expression sees the text of the URL as the variable {@value #VALUE} and returns the value
-	 * the frame is mounted with: <code>$value.objectResolve(`tl.accounts:Person`)</code>. An
-	 * expression yielding nothing means the URL names something the display cannot show - an
-	 * object that is deleted, an identifier that was mistyped - and the frame is then not restored
-	 * at all.
+	 * The expression sees the values of the {@link #getInputs() inputs}, followed by the text of the
+	 * URL as the variable {@value #VALUE}, and returns the value the frame is mounted with:
+	 * <code>$value.objectResolve(`tl.accounts:Person`)</code>. An expression yielding nothing means
+	 * the URL names something the display cannot show - an object that is deleted, an identifier
+	 * that was mistyped, an object the inputs exclude - and the frame is then not restored at all.
 	 * </p>
 	 *
 	 * <p>

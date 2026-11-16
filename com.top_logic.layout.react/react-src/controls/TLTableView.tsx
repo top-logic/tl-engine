@@ -182,10 +182,25 @@ interface ColumnState {
    */
   cssClass?: string;
   /**
+   * CSS class put on the heading of the column only, not on its data cells: the application's own
+   * styling hook for the heading. Absent for none.
+   */
+  headerClass?: string;
+  /**
+   * Color role the heading of the column is tinted in, put on the heading as `data-tl-role`; the design
+   * system draws it. Absent for none. Independent of {@link headerClass}.
+   */
+  headerRole?: string;
+  /**
    * What the column's label says about itself over and above its text, offered on the heading.
    * Absent for a label that describes itself.
    */
   tooltip?: string;
+  /**
+   * How the column's cells sit in it, their heading included: `end` for numbers, which the column
+   * then aligns at the end so that their digits line up. Absent for the start, the default.
+   */
+  align?: 'end';
 }
 
 /** One of the filter criteria the table offers under a name, displayed as a chip in the filter bar. */
@@ -263,6 +278,21 @@ const CMD_DROP_PROBE = 'dropProbe';
 /** Command applying a drop (DropSupport.CMD_DROP). */
 const CMD_DROP = 'drop';
 
+/** Command selecting a row (TableViewControl.CMD_SELECT), naming it by {@link ARG_ROW_ID}. */
+const CMD_SELECT = 'select';
+
+/** Argument of a {@link CMD_SELECT} telling whether the row is toggled into the selection. */
+const ARG_CTRL_KEY = 'ctrlKey';
+
+/** Argument of a {@link CMD_SELECT} telling whether the selection is extended up to the row. */
+const ARG_SHIFT_KEY = 'shiftKey';
+
+/**
+ * State key (TableViewControl.SELECT_ON_EDITOR_FOCUS) telling whether the focus of a control in a
+ * cell selects the row the control stands in.
+ */
+const SELECT_ON_EDITOR_FOCUS = 'selectOnEditorFocus';
+
 /** State word (drag.css) of each marker drawn at a row. */
 const ROW_MARKER_STATE: Record<Exclude<TLDropMarker, 'control'>, string> = {
   before: 'drop-before',
@@ -315,6 +345,11 @@ const measureColumnContentWidth = (root: HTMLElement, columnName: string): numbe
       // the copy is in the document.
       copy.querySelectorAll('.tl-table__resize').forEach((handle) => handle.remove());
       copy.querySelectorAll('[id]').forEach((element) => element.removeAttribute('id'));
+      // Measured as revealed: a hidden funnel takes no width (table.css), but it opens up under the
+      // pointer, and a fitted heading would then lose its end to the ellipsis.
+      if (copy.classList.contains('tl-table__header-cell')) {
+        copy.dataset.tlState = ((copy.dataset.tlState ?? '') + ' filtered').trim();
+      }
       copy.style.position = 'static';
       copy.style.flex = 'none';
       copy.style.width = 'max-content';
@@ -449,6 +484,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const rowCount = (state.rowCount as string) ?? '';
   /** How many rows are selected; empty while nothing is or the table selects a single row only. */
   const rowCountSelected = (state.rowCountSelected as string) ?? '';
+  const selectOnEditorFocus = (state[SELECT_ON_EDITOR_FOCUS] as boolean) ?? false;
 
   const sortedColumnCount = React.useMemo(
     () => columns.filter((c) => c.sortPriority && c.sortPriority > 0).length,
@@ -1093,7 +1129,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     // overwrite the value the control is sending at the same moment, and the edit would be lost.
     // A control that cannot be operated - the read-only checkbox of a row not yet editable - does
     // nothing with the click, which then selects the row as a click on its text would.
-    if (isOperableTarget(event.target) && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+    // Where the focus of a control selects its row (see handleRowFocus), that focus has already
+    // decided what a click on the control selects, also with a modifier key held.
+    if (isOperableTarget(event.target) && (selectOnEditorFocus || (!event.ctrlKey && !event.metaKey && !event.shiftKey))) {
       return;
     }
     sendCommand('select', {
@@ -1101,7 +1139,22 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       ctrlKey: event.ctrlKey || event.metaKey,
       shiftKey: event.shiftKey,
     });
-  }, [sendCommand]);
+  }, [sendCommand, selectOnEditorFocus]);
+
+  // Where every row is edited at once, the row the user works in is the row the row commands act on:
+  // a control of a cell taking the focus - by a click or by Tab - selects its row. The selection
+  // touches neither the focus nor the control, whose pending value the command channel sends ahead of
+  // the selection. Only the cells count; the box of the selection cell toggles the row on its own.
+  const handleRowFocus = React.useCallback((row: RowState, event: React.FocusEvent) => {
+    if (!selectOnEditorFocus || selectedIndexes.has(row.index)) {
+      return;
+    }
+    const target = event.target;
+    if (!isOperableTarget(target) || !(target instanceof Element) || !target.closest('[data-col]')) {
+      return;
+    }
+    sendCommand(CMD_SELECT, { [ARG_ROW_ID]: row.id, [ARG_CTRL_KEY]: false, [ARG_SHIFT_KEY]: false });
+  }, [selectOnEditorFocus, selectedIndexes, sendCommand]);
 
   // A double-click opens the row: the server selects it and runs what the view configured for an
   // activation. A double-click inside an interactive cell element belongs to that element
@@ -1880,9 +1933,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 key={col.name}
                 role="columnheader"
                 aria-sort={ariaSort(col)}
-                className={'tl-table__header-cell' + (col.cssClass ? ' ' + col.cssClass : '')}
+                className={'tl-table__header-cell' + (col.cssClass ? ' ' + col.cssClass : '')
+                  + (col.headerClass ? ' ' + col.headerClass : '')}
                 data-col={col.name}
+                data-tl-role={col.headerRole}
                 data-col-idx={colIdx}
+                data-tl-align={col.align}
                 data-tl-state={stateAttr(...words, col.filterActive && 'filtered',
                   reorderState(columnReorder.itemState(colIdx)))}
                 style={{
@@ -2035,6 +2091,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 }
               }}
               onClick={(e) => handleRowClick(row, e)}
+              onFocus={(e) => handleRowFocus(row, e)}
               onDragStart={dragEnabled && row.draggable !== false ? (e) => handleRowDragStart(row, isSelected(row), e) : undefined}
               onDragEnd={dragEnabled && row.draggable !== false ? () => { setDropState(null); setDraggedRow(null); } : undefined}
               onDoubleClick={(e) => handleRowActivate(row, e)}
@@ -2077,6 +2134,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                       + (rowCellClass ? ' ' + rowCellClass : '')}
                     data-row={row.id}
                     data-col={col.name}
+                    data-tl-align={col.align}
                     data-tl-state={stateAttr(...words)}
                     data-tl-role={isSelected(row) ? undefined : row.cellRoles?.[col.name]}
                     {...(isTreeColumn ? {} : cellTooltipProps)}

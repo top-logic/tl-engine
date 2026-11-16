@@ -7,7 +7,7 @@
 -->
 <!--
 	Type of a stored schema that the schema of the application no longer declares.
-	Used by TestDeleteUndeclaredTablesProcessor.
+	Used by TestIfTablesUndeclaredProcessor.
 -->
 <objectlist
 	xmlns="http://www.top-logic.com/ns/meta/5.8"

@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	tl-ai-core has handed the table type CookiePool over to the optional module tl-ai-browser
-	(Ticket #30253). An application without tl-ai-browser no longer declares the type; its table is
-	deleted, so that it is not kept alive as a recovered in-app schema. In an application with
-	tl-ai-browser, the type is declared and the cookie pools are kept.
+	tl-ai-core has handed the table type CookiePool and its model module tl.ai.cookiepool over to
+	the optional module tl-ai-browser (Ticket #30253). They are kept only in an application with
+	tl-ai-browser, whose schema declares CookiePool. In an application without tl-ai-browser, table,
+	class and module are deleted in one step, so that the table is not kept alive as a recovered
+	in-app schema and the incremental model upgrade finds no class without a table.
+
+	Only tl-ai-core can do this: its migrations reach the databases of applications without
+	tl-ai-browser.
 -->
 <migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
@@ -48,8 +52,31 @@
 		/>
 	</dependencies>
 	<processors>
-		<delete-undeclared-tables>
-			<table object_name="CookiePool"/>
-		</delete-undeclared-tables>
+		<if-tables-undeclared>
+			<tables>
+				<table object_name="CookiePool"/>
+			</tables>
+			<processors>
+				<!--
+					Deletes the cookie pools with their flex attributes (among them the encrypted
+					login state) and their links. This needs the table, so it runs before the table
+					is dropped.
+				-->
+				<delete-class name="tl.ai.cookiepool:CookiePool"
+					type-table="CookiePool"
+				/>
+				<delete-table>
+					<table object_name="CookiePool"/>
+				</delete-table>
+
+				<!--
+					Fails rather than deleting silently: anything left in the module at this point is
+					a type this migration failed to remove.
+				-->
+				<delete-module name="tl.ai.cookiepool"
+					fail-on-existing-types="true"
+				/>
+			</processors>
+		</if-tables-undeclared>
 	</processors>
 </migration>

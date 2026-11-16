@@ -50,10 +50,10 @@ import com.top_logic.knowledge.service.db2.DBKnowledgeTypeFactory;
 import com.top_logic.knowledge.service.db2.KBSchemaUtil;
 import com.top_logic.knowledge.service.migration.DeleteTableProcessor;
 import com.top_logic.knowledge.service.migration.MigrationContext;
-import com.top_logic.knowledge.service.migration.processors.DeleteUndeclaredTablesProcessor;
+import com.top_logic.knowledge.service.migration.processors.IfTablesUndeclaredProcessor;
 
 /**
- * Test of {@link DeleteUndeclaredTablesProcessor}.
+ * Test of {@link IfTablesUndeclaredProcessor}.
  *
  * <p>
  * The stored schema contains the type {@link #LEFTOVER_TYPE} of {@link #LEFTOVER_META} in addition
@@ -66,10 +66,10 @@ import com.top_logic.knowledge.service.migration.processors.DeleteUndeclaredTabl
  * {@link DatabaseTestSetup#MIGRATION_POOL_NAME}.
  * </p>
  */
-public class TestDeleteUndeclaredTablesProcessor extends AbstractDBKnowledgeBaseTest {
+public class TestIfTablesUndeclaredProcessor extends AbstractDBKnowledgeBaseTest {
 
 	/** Declaration of {@link #LEFTOVER_TYPE}. */
-	private static final String LEFTOVER_META = "webinf://kbase/TestDeleteUndeclaredTablesMeta.xml";
+	private static final String LEFTOVER_META = "webinf://kbase/TestIfTablesUndeclaredMeta.xml";
 
 	/** Type of the stored schema the application schema does not declare. */
 	private static final String LEFTOVER_TYPE = "UndeclaredLeftover";
@@ -95,6 +95,8 @@ public class TestDeleteUndeclaredTablesProcessor extends AbstractDBKnowledgeBase
 
 	private DBSchema _leftoverSchema;
 
+	private MOClass _leftoverType;
+
 	private DBTable _leftoverTable;
 
 	@Override
@@ -108,7 +110,7 @@ public class TestDeleteUndeclaredTablesProcessor extends AbstractDBKnowledgeBase
 
 		try (Transaction tx = _kb.beginTransaction()) {
 			KnowledgeObject group = _kb.createKnowledgeObject(GROUP_TYPE);
-			group.setAttributeValue(GROUP_NAME, "delete-undeclared-group");
+			group.setAttributeValue(GROUP_NAME, "if-tables-undeclared-group");
 			tx.commit();
 		}
 
@@ -116,7 +118,8 @@ public class TestDeleteUndeclaredTablesProcessor extends AbstractDBKnowledgeBase
 
 		SchemaConfiguration storedSchema = resolve(withLeftover(applicationSchemaConfig()));
 		_leftoverSchema = DBSchemaFactory.createDBSchema();
-		_leftoverTable = createTable(storedSchema, LEFTOVER_TYPE);
+		_leftoverType = type(storedSchema, LEFTOVER_TYPE);
+		_leftoverTable = SchemaSetup.createTable(_leftoverType);
 		_leftoverSchema.getTables().add(_leftoverTable);
 		PooledConnection connection = _pool.borrowWriteConnection();
 		try {
@@ -142,16 +145,18 @@ public class TestDeleteUndeclaredTablesProcessor extends AbstractDBKnowledgeBase
 		_kbConfig = null;
 		_applicationSchema = null;
 		_leftoverTable = null;
+		_leftoverType = null;
 		_leftoverSchema = null;
 		super.tearDown();
 	}
 
 	/**
-	 * A type of the stored schema that the application does not declare is deleted together with
-	 * its table, so that the automatic schema migration has nothing to recover.
+	 * The application declares none of the tables: the processors run, the nested
+	 * {@link DeleteTableProcessor} deletes the type together with its table, so that the automatic
+	 * schema migration has nothing to recover.
 	 */
-	public void testDeleteUndeclaredType() throws Exception {
-		BufferingProtocol log = migrate(_applicationSchema, LEFTOVER_TYPE);
+	public void testUndeclaredRunsProcessors() throws Exception {
+		BufferingProtocol log = migrate(_applicationSchema, List.of(LEFTOVER_TYPE), LEFTOVER_TYPE);
 
 		assertFalse("Table not dropped.", leftoverTableExists());
 		Set<String> stored = storedTypes();
@@ -162,56 +167,70 @@ public class TestDeleteUndeclaredTablesProcessor extends AbstractDBKnowledgeBase
 	}
 
 	/**
-	 * A type the application declares is kept together with its table and contents.
+	 * The application declares the table: no processor runs, table and contents are kept.
 	 */
-	public void testKeepDeclaredType() throws Exception {
+	public void testDeclaredSkipsProcessors() throws Exception {
 		SchemaConfiguration withLeftover = resolve(withLeftover(applicationSchemaConfig()));
 		String storedBefore = storedSchemaRaw();
 
-		BufferingProtocol log = migrate(withLeftover, LEFTOVER_TYPE, GROUP_TYPE);
+		BufferingProtocol log = migrate(withLeftover, List.of(LEFTOVER_TYPE), LEFTOVER_TYPE);
 
 		assertTrue("Declared table dropped.", leftoverTableExists());
 		assertEquals("Stored schema changed.", storedBefore, storedSchemaRaw());
-		assertEquals(1, rowCount(dbTableName(GROUP_TYPE)));
 		assertContains(log.getInfos(), "Table '" + LEFTOVER_TYPE + "' is declared by the application");
+	}
+
+	/**
+	 * A name the stored schema does not know counts as undeclared: the processors run without
+	 * error.
+	 */
+	public void testUnknownNameCountsAsUndeclared() throws Exception {
+		migrate(_applicationSchema, List.of(UNKNOWN_TYPE), LEFTOVER_TYPE);
+
+		assertFalse("Table not dropped.", leftoverTableExists());
+		assertFalse(storedTypes().contains(LEFTOVER_TYPE));
+		assertFalse(storedTypes().contains(UNKNOWN_TYPE));
+	}
+
+	/**
+	 * Several tables, one of them declared by the application: no processor runs.
+	 */
+	public void testOneDeclaredSkipsProcessors() throws Exception {
+		String storedBefore = storedSchemaRaw();
+
+		BufferingProtocol log =
+			migrate(_applicationSchema, List.of(LEFTOVER_TYPE, GROUP_TYPE), LEFTOVER_TYPE, GROUP_TYPE);
+
+		assertTrue("Table dropped.", leftoverTableExists());
+		assertEquals("Stored schema changed.", storedBefore, storedSchemaRaw());
+		assertEquals(1, rowCount(dbTableName(GROUP_TYPE)));
 		assertContains(log.getInfos(), "Table '" + GROUP_TYPE + "' is declared by the application");
 	}
 
 	/**
-	 * A name the stored schema does not contain is skipped without error, the other names are
-	 * processed.
+	 * Executes an {@link IfTablesUndeclaredProcessor} with the condition tables
+	 * <code>conditionTables</code> and a nested {@link DeleteTableProcessor} deleting
+	 * <code>deleteTables</code>.
+	 * 
+	 * <p>
+	 * The {@link MigrationContext#revalidateXRef(com.top_logic.basic.Log, PooledConnection) revision
+	 * cross reference} of {@link #LEFTOVER_TYPE} is invalidated before, and rebuilt after the
+	 * processor, so that a dropped table must not be part of the rebuild.
+	 * </p>
 	 */
-	public void testUnknownName() throws Exception {
-		BufferingProtocol log = migrate(_applicationSchema, UNKNOWN_TYPE, LEFTOVER_TYPE);
-
-		assertFalse("Table not dropped.", leftoverTableExists());
-		assertFalse(storedTypes().contains(UNKNOWN_TYPE));
-		assertContains(log.getInfos(), "Table '" + UNKNOWN_TYPE + "' did not exist in persistent schema");
-	}
-
-	/**
-	 * Only an unknown name: nothing is changed.
-	 */
-	public void testOnlyUnknownName() throws Exception {
-		Set<String> storedBefore = storedTypes();
-
-		migrate(_applicationSchema, UNKNOWN_TYPE);
-
-		assertTrue(leftoverTableExists());
-		assertEquals(storedBefore, storedTypes());
-	}
-
-	private BufferingProtocol migrate(SchemaConfiguration applicationSchema, String... tables)
-			throws SQLException {
-		DeleteUndeclaredTablesProcessor.Config config =
-			TypedConfiguration.newConfigItem(DeleteUndeclaredTablesProcessor.Config.class);
-		for (String table : tables) {
-			DeleteTableProcessor.Config.TableRef ref =
-				TypedConfiguration.newConfigItem(DeleteTableProcessor.Config.TableRef.class);
-			ref.update(ref.descriptor().getProperty(MetaObjectName.OBJECT_NAME_ATTRIBUTE), table);
-			config.getTables().add(ref);
+	private BufferingProtocol migrate(SchemaConfiguration applicationSchema, List<String> conditionTables,
+			String... deleteTables) throws SQLException {
+		IfTablesUndeclaredProcessor.Config config =
+			TypedConfiguration.newConfigItem(IfTablesUndeclaredProcessor.Config.class);
+		for (String table : conditionTables) {
+			config.getTables().add(tableRef(table));
 		}
-		DeleteUndeclaredTablesProcessor processor = TypedConfigUtil.createInstance(config);
+		DeleteTableProcessor.Config deleteTable = TypedConfiguration.newConfigItem(DeleteTableProcessor.Config.class);
+		for (String table : deleteTables) {
+			deleteTable.getTables().add(tableRef(table));
+		}
+		config.getProcessors().add(deleteTable);
+		IfTablesUndeclaredProcessor processor = TypedConfigUtil.createInstance(config);
 
 		BufferingProtocol log = new BufferingProtocol();
 		PooledConnection connection = _pool.borrowWriteConnection();
@@ -222,7 +241,10 @@ public class TestDeleteUndeclaredTablesProcessor extends AbstractDBKnowledgeBase
 					return applicationSchema;
 				}
 			};
+			// As a processor deleting the objects of the table does before the table is dropped.
+			context.invalidateXRef(_leftoverType);
 			processor.doMigration(context, log, connection);
+			context.revalidateXRef(log, connection);
 			if (log.hasErrors()) {
 				connection.rollback();
 			} else {
@@ -233,6 +255,13 @@ public class TestDeleteUndeclaredTablesProcessor extends AbstractDBKnowledgeBase
 		}
 		assertEquals("Errors: " + log.getErrors(), 0, log.getErrors().size());
 		return log;
+	}
+
+	private static DeleteTableProcessor.Config.TableRef tableRef(String table) {
+		DeleteTableProcessor.Config.TableRef ref =
+			TypedConfiguration.newConfigItem(DeleteTableProcessor.Config.TableRef.class);
+		ref.update(ref.descriptor().getProperty(MetaObjectName.OBJECT_NAME_ATTRIBUTE), table);
+		return ref;
 	}
 
 	private SchemaConfiguration applicationSchemaConfig() {
@@ -255,10 +284,10 @@ public class TestDeleteUndeclaredTablesProcessor extends AbstractDBKnowledgeBase
 		return SchemaSetup.withExplicitLayout(resolved, _pool.getSQLDialect());
 	}
 
-	private DBTable createTable(SchemaConfiguration schema, String typeName) throws Exception {
+	private MOClass type(SchemaConfiguration schema, String typeName) throws Exception {
 		SchemaSetup setup = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(schema);
 		MORepository types = setup.createMORepository(_pool.getSQLDialect(), new DBKnowledgeTypeFactory());
-		return SchemaSetup.createTable((MOClass) types.getTypeOrNull(typeName));
+		return (MOClass) types.getTypeOrNull(typeName);
 	}
 
 	private boolean leftoverTableExists() throws SQLException {
@@ -320,10 +349,10 @@ public class TestDeleteUndeclaredTablesProcessor extends AbstractDBKnowledgeBase
 	}
 
 	/**
-	 * Suite of {@link TestDeleteUndeclaredTablesProcessor}.
+	 * Suite of {@link TestIfTablesUndeclaredProcessor}.
 	 */
 	public static Test suite() {
-		return suiteDefaultDB(TestDeleteUndeclaredTablesProcessor.class);
+		return suiteDefaultDB(TestIfTablesUndeclaredProcessor.class);
 	}
 
 }

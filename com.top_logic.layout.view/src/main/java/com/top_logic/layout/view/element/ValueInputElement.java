@@ -78,7 +78,9 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.LabelPosition;
+import com.top_logic.model.annotate.TLValueCount;
 import com.top_logic.model.annotate.TLValueNormalizer;
+import com.top_logic.model.annotate.util.ValueCountConstraintCheck;
 import com.top_logic.model.annotate.util.ValueNormalizer;
 import com.top_logic.model.config.AttributeConfigBase;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -133,6 +135,12 @@ import com.top_logic.util.error.TopLogicException;
  * {@code <multi-line>}, a {@code <format>}, an {@code <input-control>} - which act on the input as
  * they act on a field of such an attribute. An annotation the input does not state is taken from
  * the type.
+ * </p>
+ *
+ * <p>
+ * A {@link TLValueCount} among the annotations of a {@link Config#getMultiple() multi-valued} input
+ * limits the number of its values: an input holding more is invalid, and the control adding values
+ * offers no further one at the maximum.
  * </p>
  *
  * <p>
@@ -616,6 +624,12 @@ public class ValueInputElement implements UIElement {
 
 	private final boolean _mandatory;
 
+	/**
+	 * The check of the {@link TLValueCount maximum number of values} of a
+	 * {@link Config#getMultiple() multi-valued} input, {@code null} where the number is not limited.
+	 */
+	private final ValueCountConstraintCheck _valueCount;
+
 	private final AnnotationLookup _annotations;
 
 	private final ValueNormalizer _normalizer;
@@ -666,6 +680,8 @@ public class ValueInputElement implements UIElement {
 				+ Config.MULTIPLE + "': " + config.location());
 		}
 		_mandatory = config.getMandatory();
+		_valueCount =
+			_multiple ? ValueCountConstraintCheck.forAnnotation(config.getAnnotation(TLValueCount.class)) : null;
 		_annotations = config;
 		_normalizer = ValueNormalizer.annotated(config);
 		_label = config.getLabel();
@@ -709,7 +725,7 @@ public class ValueInputElement implements UIElement {
 		// Set after binding: the value the channel holds is shown as it is, only an entered value is
 		// normalized.
 		field.setNormalizer(_normalizer);
-		FieldModelListener mandatoryCheck = _mandatory ? checkMandatory(field) : null;
+		FieldModelListener valueCheck = _mandatory || _valueCount != null ? checkValue(field) : null;
 
 		Resources resources = Resources.getInstance();
 		String label = _label == null ? null : resources.getString(_label);
@@ -728,8 +744,8 @@ public class ValueInputElement implements UIElement {
 		ReactControl input = FieldControlService.getInstance().createFieldControl(context, type, _annotations,
 			spec, field, _inputControl);
 		input.addCleanupAction(binding::dispose);
-		if (mandatoryCheck != null) {
-			input.addCleanupAction(() -> field.removeListener(mandatoryCheck));
+		if (valueCheck != null) {
+			input.addCleanupAction(() -> field.removeListener(valueCheck));
 		}
 
 		if (options != null) {
@@ -835,9 +851,9 @@ public class ValueInputElement implements UIElement {
 	 * </p>
 	 *
 	 * <p>
-	 * A {@link Config#getMandatory() mandatory} value that is empty is not handed to the command:
-	 * the field shows the missing value, and the finished edit or the submit succeeds without
-	 * running anything.
+	 * A {@link Config#getMandatory() mandatory} value that is empty, and a value holding more values
+	 * than its {@link TLValueCount} allows, is not handed to the command: the field shows the
+	 * problem, and the finished edit or the submit succeeds without running anything.
 	 * </p>
 	 */
 	private void followSubmit(ViewContext context, ReactControl input, AbstractFieldModel field,
@@ -846,8 +862,8 @@ public class ValueInputElement implements UIElement {
 			ViewCommandModel.forCommand(context, _submitCommand, _submitCommandConfig, _submitAs);
 		if (input instanceof ReactFormFieldControl fieldControl && fieldControl.commitsEdits()) {
 			Consumer<Object> submit = value -> {
-				if (missingValue(value) != null) {
-					// The field reports the missing value; the submit itself has nothing to add.
+				if (invalidValue(value) != null) {
+					// The field reports the problem; the submit itself has nothing to add.
 					field.setRevealed(true);
 					return;
 				}
@@ -865,8 +881,8 @@ public class ValueInputElement implements UIElement {
 			}
 		} else {
 			binding.setCommitListener(value -> {
-				if (missingValue(value) != null) {
-					// The value change reveals the missing value at the field.
+				if (invalidValue(value) != null) {
+					// The value change reveals the problem at the field.
 					return;
 				}
 				try {
@@ -880,8 +896,9 @@ public class ValueInputElement implements UIElement {
 	}
 
 	/**
-	 * Checks the value of a {@link Config#getMandatory() mandatory} field for emptiness, now and on
-	 * every change.
+	 * Checks the value of a {@link Config#getMandatory() mandatory} field for emptiness and the value
+	 * of a {@link Config#getMultiple() multi-valued} field for its {@link TLValueCount maximum
+	 * number of values}, now and on every change.
 	 *
 	 * <p>
 	 * The check reports at the field only once the field is revealed, which a change of its value
@@ -890,12 +907,12 @@ public class ValueInputElement implements UIElement {
 	 *
 	 * @return The registered listener, to be removed when the input goes away.
 	 */
-	private FieldModelListener checkMandatory(AbstractFieldModel field) {
-		field.setModelValidationError(missingValue(field.getValue()));
+	private FieldModelListener checkValue(AbstractFieldModel field) {
+		field.setModelValidationError(invalidValue(field.getValue()));
 		FieldModelListener listener = new FieldModelListener() {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
-				field.setModelValidationError(missingValue(newValue));
+				field.setModelValidationError(invalidValue(newValue));
 				field.setRevealed(true);
 			}
 
@@ -914,11 +931,17 @@ public class ValueInputElement implements UIElement {
 	}
 
 	/**
-	 * The error reporting that the given value is missing, or {@code null} if the value is given or
-	 * may be empty.
+	 * The error reporting that the given value is missing or holds more values than allowed, or
+	 * {@code null} if the value is valid.
 	 */
-	private ResKey missingValue(Object value) {
-		return _mandatory ? MandatoryConstraintCheck.INSTANCE.checkValue(value) : null;
+	private ResKey invalidValue(Object value) {
+		if (_mandatory) {
+			ResKey missing = MandatoryConstraintCheck.INSTANCE.checkValue(value);
+			if (missing != null) {
+				return missing;
+			}
+		}
+		return _valueCount == null ? null : _valueCount.checkValue(value);
 	}
 
 	/**

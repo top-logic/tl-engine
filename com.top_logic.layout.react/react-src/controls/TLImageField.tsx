@@ -1,6 +1,7 @@
 import { React, useTLState, useTLCommand, useUpload, useTLDataUrl, useI18N, useListReorder, reorderState, rootClassName, stateAttr, useFieldLabelProps, usePart, ThemeIcon, ICON_UPLOAD, ICON_CLOSE, ICON_HANDLE } from 'tl-react-bridge';
 import type { TLCellProps, UploadPart } from 'tl-react-bridge';
 import { showsValueOnly } from './form/fieldState';
+import { isFull } from './form/valueCount';
 
 /** Command removing an image, see ReactImageFieldControl.CMD_REMOVE_IMAGE. */
 const CMD_REMOVE_IMAGE = 'removeImage';
@@ -62,6 +63,8 @@ interface ImageTile {
  * - ordered: boolean, whether the user arranges the order of several images
  * - accept: string, the file types the file picker offers (HTML accept attribute); absent: all
  * - maxUploadSize: number, the size limit of each single file in bytes (0: none)
+ * - maxCount: number, the maximum number of several images (0: none); at the maximum, the area
+ *   adding images is left out, the images can still be replaced
  * - error: string, the message of the last failed upload; absent after a successful one
  */
 const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
@@ -186,8 +189,9 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
     replaceInputRef.current?.click();
   };
 
-  // A single image is replaced by dropping a file on it; several images get an area adding further ones.
-  const showsDropArea = multiple || images.length === 0;
+  // A single image is replaced by dropping a file on it; several images get an area adding further
+  // ones, up to their maximum.
+  const showsDropArea = multiple ? !isFull(images.length, state.maxCount) : images.length === 0;
 
   return (
     <div id={controlId} {...labelProps} role="group"

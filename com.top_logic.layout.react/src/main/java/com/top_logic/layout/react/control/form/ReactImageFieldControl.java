@@ -18,6 +18,7 @@ import jakarta.servlet.http.Part;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DataProvider;
@@ -60,8 +61,10 @@ import de.haumacher.msgbuf.data.DataObject;
  * The state carries the {@link #IMAGES}, whether the field holds {@link #MULTIPLE several} images,
  * whether they are {@link #ORDERED arranged} by the user, the file types the file picker offers
  * under {@link UploadSupport#ACCEPT}, the {@link #maxUploadSize() upload limit} under
- * {@link UploadSupport#MAX_UPLOAD_SIZE}, and the message of a failed upload under
- * {@link UploadSupport#ERROR}, cleared by the next successful upload.
+ * {@link UploadSupport#MAX_UPLOAD_SIZE}, the {@link #setMaxCount(int) maximum number of images}
+ * under {@link ValueCountLimit#MAX_COUNT}, at which the client offers no further image, and the
+ * message of a failed upload under {@link UploadSupport#ERROR}, cleared by the next successful
+ * upload.
  * </p>
  *
  * @see ReactBinaryFieldControl
@@ -124,6 +127,9 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 	/** The size limit of one uploaded file, see {@link #maxUploadSize()}. */
 	private long _maxUploadSize;
 
+	/** The maximum number of images, see {@link #setMaxCount(int)}. */
+	private ValueCountLimit _maxCount = ValueCountLimit.NONE;
+
 	/**
 	 * Creates a {@link ReactImageFieldControl}.
 	 *
@@ -150,7 +156,25 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 		putState(MULTIPLE, Boolean.valueOf(_multiple));
 		putState(ORDERED, Boolean.valueOf(_ordered));
 		setMaxUploadSize(0);
+		setMaxCount(0);
 		updateImages();
+	}
+
+	/**
+	 * Limits the number of images of a field holding {@link #isMultiple() several} of them.
+	 *
+	 * <p>
+	 * The client offers no further image once the field holds that many; an upload of more images
+	 * than there is room for is refused as a whole, see {@link ValueCountLimit}. Replacing an image
+	 * does not change the number.
+	 * </p>
+	 *
+	 * @param maxCount
+	 *        The maximum number of images, <code>0</code> for no limit.
+	 */
+	public void setMaxCount(int maxCount) {
+		_maxCount = ValueCountLimit.of(maxCount);
+		putState(ValueCountLimit.MAX_COUNT, Integer.valueOf(_maxCount.getMax()));
 	}
 
 	/**
@@ -274,7 +298,9 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 	 *
 	 * <p>
 	 * A failed upload leaves the value unchanged and reports {@link I18NConstants#FILE_UPLOAD_FAILED}
-	 * under {@link UploadSupport#ERROR}; a successful upload clears it.
+	 * under {@link UploadSupport#ERROR}, as does an upload adding more images than the
+	 * {@link #setMaxCount(int) maximum} leaves room for, with the problem of
+	 * {@link ValueCountLimit#checkAdd(int, int)}; a successful upload clears it.
 	 * </p>
 	 */
 	@Override
@@ -292,16 +318,25 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 			putState(UploadSupport.ERROR, Resources.getInstance().getString(I18NConstants.FILE_UPLOAD_FAILED));
 			return null;
 		}
-		putState(UploadSupport.ERROR, null);
 		if (files.isEmpty()) {
+			putState(UploadSupport.ERROR, null);
 			return null;
 		}
 		if (!_multiple) {
+			putState(UploadSupport.ERROR, null);
 			getFieldModel().setValue(_imageValues.valueOf(files.get(0)));
 			return null;
 		}
 		List<Object> values = new ArrayList<>(_values);
 		int replaced = replacedKey == null ? -1 : _keys.indexOf(replacedKey);
+		if (replaced < 0) {
+			ResKey tooMany = _maxCount.checkAdd(values.size(), files.size());
+			if (tooMany != null) {
+				putState(UploadSupport.ERROR, Resources.getInstance().getString(tooMany));
+				return null;
+			}
+		}
+		putState(UploadSupport.ERROR, null);
 		if (replaced >= 0) {
 			values.set(replaced, _imageValues.valueOf(files.get(0)));
 		} else {

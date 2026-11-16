@@ -72,6 +72,7 @@ import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.TLMaxUploadSize;
+import com.top_logic.model.annotate.TLValueCount;
 import com.top_logic.model.annotate.ui.BinaryDisplay;
 import com.top_logic.model.annotate.ui.BinaryDisplay.BinaryPresentation;
 import com.top_logic.model.annotate.ui.BooleanDisplay;
@@ -82,6 +83,7 @@ import com.top_logic.model.annotate.ui.ReferenceDisplay;
 import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.ui.MultiLine;
 import com.top_logic.model.annotate.ui.TLAcceptedTypes;
+import com.top_logic.model.annotate.util.ValueCountConstraintCheck;
 import com.top_logic.model.annotate.util.ValueNormalizer;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.TracingScope;
@@ -641,6 +643,23 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	}
 
 	/**
+	 * The maximum number of values of a multi-valued field, in the form of
+	 * {@link FieldSpec#getMaxCount()}, from its {@link TLValueCount} annotation.
+	 *
+	 * <p>
+	 * The annotation belongs to the attribute holding the values, it is never taken from the type
+	 * of a value.
+	 * </p>
+	 */
+	private static int maxCount(AnnotationLookup annotations) {
+		if (annotations == null) {
+			return 0;
+		}
+		Integer max = ValueCountConstraintCheck.maxCount(annotations.getAnnotation(TLValueCount.class));
+		return max == null ? 0 : max.intValue();
+	}
+
+	/**
 	 * Creates the control the given provider builds for the given field.
 	 *
 	 * <p>
@@ -788,6 +807,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			.setUnit(unit(annotations, type, ownerOf(model)))
 			.setAcceptedTypes(acceptedTypes(annotations, type))
 			.setMaxUploadSize(maxUploadSize(annotations, type))
+			.setMaxCount(multiple ? maxCount(annotations) : 0)
 			.setSendValueOnBlur(ValueNormalizer.isAnnotated(annotations));
 	}
 

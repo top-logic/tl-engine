@@ -45,6 +45,18 @@ public interface StorageWithFallback extends StorageDetail {
 	void setExplicitValue(TLObject object, TLStructuredTypePart attribute, Object value);
 
 	/**
+	 * The attribute holding the explicit value.
+	 *
+	 * <p>
+	 * {@link #setExplicitValue(TLObject, TLStructuredTypePart, Object)} writes the explicit value
+	 * to this attribute of the object, {@link #getExplicitValue(TLObject, TLStructuredTypePart)}
+	 * reads it from there. A change of this attribute is therefore a change of the attribute with
+	 * fallback.
+	 * </p>
+	 */
+	TLStructuredTypePart getStorageAttr();
+
+	/**
 	 * CSS class to set on values that have an explicit value assigned, or <code>null</code> if
 	 * explicit values should not be visually highlighted.
 	 */

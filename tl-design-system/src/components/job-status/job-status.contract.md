@@ -39,7 +39,7 @@ TopLogic garantiert, dass nur Text, der etwas sagt, angesagt wird — nicht das 
 
 | Teil | Token |
 |---|---|
-| Abstände | `--tl-space-xs` zwischen den Zeilen, `--tl-space-sm` im Kopf, `--tl-space-2xs` über und zwischen den Einzelproblemen |
+| Abstände | `--tl-space-xs` zwischen den Zeilen, `--tl-space-sm` im Kopf, `--tl-space-2xs` über und zwischen den Einzelproblemen, `--tl-space-lg` Einzug der Einzelprobleme |
 | Laufzeit, Meldung | `--tl-text-secondary` |
 | Fehler | `--tl-status-error-text` |
 

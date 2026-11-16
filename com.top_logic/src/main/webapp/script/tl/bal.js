@@ -38,19 +38,6 @@ BAL = {
 		return this.isGecko();
 	},
 		
-	unloadSequential: function() {
-		if (this.isGecko() || this.isIE()) {
-			this.unloadSequential = function() {
-				return true;
-			};
-		} else {
-			this.unloadSequential = function() {
-				return false;
-			};
-		}
-		return this.unloadSequential();		
-	},
-	
 	startsWith: function(str, pattern) {
 		if (String.prototype.startsWith === undefined) {
 			this.startsWith = function(str, pattern) {

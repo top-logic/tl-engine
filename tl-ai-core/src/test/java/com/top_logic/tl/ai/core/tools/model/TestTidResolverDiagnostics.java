@@ -60,7 +60,7 @@ public class TestTidResolverDiagnostics extends BasicTestCase {
 	private static String _typeName;
 
 	/** Refuses every read, and grants nothing else either. */
-	private static class NoRead implements ModelSecurity {
+	static class NoRead implements ModelSecurity {
 
 		@Override
 		public boolean canRead(TLObject obj) {

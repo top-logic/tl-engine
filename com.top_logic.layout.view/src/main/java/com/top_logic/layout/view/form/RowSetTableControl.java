@@ -91,6 +91,7 @@ import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.tool.export.ExcelCellRenderer;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Table presentation of a row set edited within a form.
@@ -937,6 +938,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		if (!createTypes().contains(type)) {
 			return null;
 		}
+		// The new row is selected, which leaves the edited row: the row must not be added if it
+		// cannot be selected.
+		checkLeaving(_selectedKeys);
 		return selected(_creation.addRow(session(), type, selectedRows()));
 	}
 
@@ -1199,6 +1203,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	private void handleSelectionChanged(Set<Object> selectedKeys) {
+		if (_tableControl != null && _tableControl.isUserSelectionChange()) {
+			Set<Object> left = new java.util.LinkedHashSet<>(_selectedKeys);
+			left.removeAll(selectedKeys);
+			checkLeaving(left);
+		}
+
 		// Rows whose selection state flips change their editability under the SELECTED policy, so
 		// their cells must re-render.
 		Set<Object> flipped = new java.util.LinkedHashSet<>(_selectedKeys);
@@ -1216,6 +1226,41 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		if (_policy == RowEditPolicy.SELECTED && isEditing() && _tableControl != null
 			&& !flipped.isEmpty()) {
 			_tableControl.invalidateRowCells(flipped);
+		}
+	}
+
+	/**
+	 * Refuses to leave edited rows that have errors.
+	 *
+	 * <p>
+	 * Under the {@link RowEditPolicy#SELECTED} policy, only the selected row is editable. A row
+	 * whose cells show errors would no longer show them once another row is selected, so the user
+	 * cannot leave it: the rows are {@link RowSetEditSession#checkRowErrors(TLObject) checked},
+	 * which also reveals errors the user has not seen yet, and the first row with errors refuses
+	 * with its errors. Rows that are gone from the session, e.g. because they were removed, are not
+	 * checked.
+	 * </p>
+	 *
+	 * @param leftKeys
+	 *        The keys of the rows that are no longer selected after the change.
+	 * @throws TopLogicException
+	 *         If a row has errors.
+	 */
+	private void checkLeaving(Collection<Object> leftKeys) {
+		if (_policy != RowEditPolicy.SELECTED || !isEditing()) {
+			return;
+		}
+		RowSetEditSession session = session();
+		for (Object key : leftKeys) {
+			TLObject row = _arrangement.row(key);
+			if (row == null) {
+				continue;
+			}
+			List<ResKey> errors = session.checkRowErrors(row);
+			if (!errors.isEmpty()) {
+				throw ValidationErrors.refusal(
+					com.top_logic.layout.view.command.I18NConstants.ERROR_ROW_HAS_VALIDATION_ERRORS, errors);
+			}
 		}
 	}
 

@@ -171,6 +171,13 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 COVERAGE_PROBLEM_DEAD_GRANT__OPERATION_ROLES;
 
 	/**
+	 * @en Dead grant: the operation "{0}" is granted to the roles {1}, but no rule delivers any of
+	 *     them where an object of the type is created - on its container, or on the security root
+	 *     for a type no composition holds - so the grant never takes effect.
+	 */
+	public static ResKey2 COVERAGE_PROBLEM_DEAD_CREATE_GRANT__OPERATION_ROLES;
+
+	/**
 	 * @en Make the target of a to-one reference of the type its access parent, so that the objects
 	 *     delegate every access decision to the object the reference points to ("Access
 	 *     rights…").
@@ -407,9 +414,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey GRANTS_PENDING;
 
 	/**
-	 * @en No rule assigns this role on objects of the type, and it is assigned to none of them
-	 *     directly, so its grants never take effect. Revoke them, or define a rule assigning the
-	 *     role ("Coverage" tab).
+	 * @en No rule assigns this role where its grants are checked, and it is assigned to no such
+	 *     object directly, so its grants never take effect. An operation is checked on the objects
+	 *     of the type, the operation "Create" on their container, or on the security root for a
+	 *     type no composition holds. Revoke the grants, or define a rule assigning the role there
+	 *     ("Coverage" tab).
 	 */
 	public static ResKey GRANTS_INEFFECTIVE;
 

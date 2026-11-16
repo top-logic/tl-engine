@@ -41,6 +41,7 @@ import com.top_logic.layout.view.table.TableDropConfig;
 import com.top_logic.layout.view.table.DynamicColumns;
 import com.top_logic.layout.view.table.EmbeddedColumns;
 import com.top_logic.layout.view.table.FilterStateConfig;
+import com.top_logic.model.search.expr.config.ExprPrinter;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.GroupSpec;
@@ -390,8 +391,8 @@ public class TestTableElement extends TestCase {
 			milestones.getMultiple());
 		assertNull("The columns share the named type, so none of them computes one.",
 			milestones.getColumnType());
-		assertEquals("The configured width of every computed column, in pixels.", 90,
-			milestones.getWidth());
+		assertEquals("The configured width of every computed column, in pixels.", "90",
+			ExprPrinter.toString(milestones.getWidth()));
 		assertTrue("The columns stay read-only while the rows are edited.", milestones.getReadonly());
 		assertNotNull("The objects standing for the columns are computed.", milestones.getColumns());
 		assertNotNull("The columns are named after their objects.", milestones.getColumnName());
@@ -411,7 +412,7 @@ public class TestTableElement extends TestCase {
 		assertNull("Without a visibility function, every column is shown from the start.",
 			plain.getColumnVisible());
 		assertNull("The columns keep the order their type derives.", plain.getComparator());
-		assertEquals("The columns keep the width their type derives.", 0, plain.getWidth());
+		assertNull("The columns keep the width their type derives.", plain.getWidth());
 		assertFalse("The columns are edited like any other unless they say otherwise.",
 			plain.getReadonly());
 	}

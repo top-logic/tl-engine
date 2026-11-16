@@ -11,6 +11,8 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.io.binary.BinaryDataURI;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.basic.ThemeImage;
@@ -70,6 +72,20 @@ public class TestReactImages extends TestCase {
 		assertEquals("css:bi bi-pencil", ReactImages.encode(_context, ThemeImage.cssIcon("bi bi-pencil")));
 		assertEquals("colored:bi bi-star",
 			ReactImages.encode(_context, ThemeImage.coloredCssIcon("bi bi-star")));
+	}
+
+	/**
+	 * Image data reaches the client as its <code>data</code> URI, without the context path in
+	 * front.
+	 */
+	public void testImageData() {
+		ThemeImage image =
+			ThemeImage.data(BinaryDataFactory.createBinaryData(new byte[] { 1, 2, 3 }, "image/png", "icon.png"));
+		String uri = BinaryDataURI.PREFIX + "image/png" + BinaryDataURI.BASE64_SEPARATOR + "AQID";
+
+		assertEquals(uri, image.toEncodedForm());
+		assertEquals(uri, ReactImages.encode(_context, image));
+		assertEquals(uri, ReactImages.encode(_context, ThemeImage.internalDecode(uri)));
 	}
 
 	/**

@@ -11,6 +11,16 @@ TopLogic garantiert Maß, Rahmen und Zustände, nicht die Datenfarbe — die set
 | `tl-swatch--color` | der Swatch zeigt eine Farbe; nur er malt bei „leer“ das Schachbrett |
 | `tl-swatch--wide` | füllt die Breite |
 
+## Tokens
+
+| Teil | Token |
+|---|---|
+| Rahmen, Ecke | `--tl-border-width-sm` in `--tl-border-control`, `--tl-radius-sm` |
+| Fläche, Schrift | `--tl-surface-field`, `--tl-text-primary` |
+| Schachbrett | `--tl-surface-field` und `--tl-border-separator`, Kachel 2 × `--tl-space-xs` |
+| Zeigen (Knopf) | Hof `--tl-space-2xs` in `--tl-surface-state-hover`; Palettenzelle (`role="option"`) in `--tl-surface-state-hover-strong` |
+| deaktiviert | Fläche `--tl-surface-disabled`, Rahmen `--tl-border-disabled`, Schrift `--tl-text-disabled` |
+
 ## Zustand
 
 | Attribut | Wirkung |

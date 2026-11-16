@@ -1,7 +1,7 @@
 // Die Tabelle — 3b §3–§6: Zeile size-row, Kopf size-bar, Lage und Cursor als Attribute.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readComponent, readGenerated, declarationsOf, rulesOf, missingInContract } from './lib/component.mjs';
+import { readComponent, readGenerated, declarationsOf, rulesOf, missingInContract, declarationsOfAll } from './lib/component.mjs';
 
 const css = readGenerated('table', 'table.css');
 
@@ -71,7 +71,7 @@ test('der Körper isoliert seinen Stapel, Spaltenwahl und Fixiergrenze sind so h
   // Der Kopf steht außerhalb des Rollbehälters: der Körper schneidet Ring (::after) und Marke (::before) seiner
   // Zeilen ab, die unter den Kopf rollen. Darum braucht der Kopf keine eigene Ebene (table.contract.md „Stapel“).
   assert.match(declarationsOf(css, '.tl-table__body') ?? '', /overflow:\s*auto/);
-  assert.doesNotMatch(declarationsOf(css, '.tl-table__header') ?? '', /z-index|position/);
+  assert.doesNotMatch(declarationsOfAll(css, '.tl-table__header'), /z-index|position/);
   assert.match(declarationsOf(css, '.tl-table__columns') ?? '', /height:\s*var\(--tl-size-bar\)/);
   assert.match(declarationsOf(css, '.tl-table__freeze') ?? '', /height:\s*var\(--tl-size-bar\)/);
   assert.match(declarationsOf(readGenerated('drag', 'drag.css'), '.tl-popover.tl-drop-hint') ?? '', /status-error-border/);
@@ -140,8 +140,8 @@ test('Tiefe: die Tabelle steht auf einer abgesetzten Fläche mit Rundung, Rand u
   assert.match(d, /border:\s*var\(--tl-border-width-sm\) solid var\(--tl-border-separator\)/);
   assert.match(d, /box-shadow:\s*var\(--tl-shadow-1\)/);
   // Die füllende Tabelle schwebt nicht: kein Schatten (ihre Tiefe kommt vom abgesetzten Kopf).
-  assert.doesNotMatch(declarationsOf(css, '.tl-table.tl-fill') ?? '', /shadow/);
-  assert.doesNotMatch(declarationsOf(css, '.tl-table') ?? '', /shadow/);
+  assert.doesNotMatch(declarationsOfAll(css, '.tl-table.tl-fill'), /shadow/);
+  assert.doesNotMatch(declarationsOfAll(css, '.tl-table'), /shadow/);
 });
 
 test('Tiefe: leiser Kopf — surface-layer-muted, Titel text-secondary in Großbuchstaben, auch unter der Spaltenwahl', () => {
@@ -184,8 +184,8 @@ test('Tiefe: der Trichter ist ein tl-reveal-on-hover (layout.css), nur eine gefi
 });
 
 test('Tiefe: Zellen tragen keine Spaltenlinien, die Kante der letzten fixierten Spalte bleibt', () => {
-  assert.doesNotMatch(declarationsOf(css, '.tl-table__cell') ?? '', /border-right/);
-  assert.doesNotMatch(declarationsOf(css, '.tl-table__header-cell') ?? '', /border-right/);
+  assert.doesNotMatch(declarationsOfAll(css, '.tl-table__cell'), /border-right/);
+  assert.doesNotMatch(declarationsOfAll(css, '.tl-table__header-cell'), /border-right/);
   // frozen-last behält border-emphasis, die letzte Zelle bleibt ohne Linie.
   assert.match(declarationsOf(css, '.tl-table__cell:last-child') ?? '', /border-right:\s*0/);
   assert.match(declarationsOf(css, '.tl-table__cell[data-tl-state~="frozen-last"]') ?? '', /border-emphasis/);

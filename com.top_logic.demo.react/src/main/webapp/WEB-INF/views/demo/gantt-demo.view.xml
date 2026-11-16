@@ -44,17 +44,18 @@ r_markers = reactFlowGanttRow(model: "axis:markers", label: reactFlowAlign(react
    cells of the inactive granularity would still paint a background and
    compete visually with the active granularity.
 
-   The inner LOD then drops the label when the cell becomes too narrow for
-   the text (e.g. early day cells just after the breakpoint), keeping the
-   stripes visible without overflowing text. */
+   The inner LOD then shows the first of the given labels (longest first) that
+   fits into the cell, and drops the label when the cell becomes too narrow
+   even for the last one (e.g. early day cells just after the breakpoint),
+   keeping the stripes visible without overflowing text. */
 
 axisFills = list("rgba(128,128,128,0.06)", "rgba(128,128,128,0.14)");
 
-axisCell = modelId -> rowModel -> start -> end -> label -> index -> showWhenZoomedIn -> {
+axisCell = modelId -> rowModel -> start -> end -> labels -> index -> showWhenZoomedIn -> {
 	cellBox = reactFlowFill(
-		reactFlowLod(variants: list(
-			reactFlowAlign(reactFlowText($label), hAlign: "middle", vAlign: "middle"),
-			reactFlowEmpty()
+		reactFlowLod(variants: concat(
+			$labels.foreach(label -> reactFlowAlign(reactFlowText($label), hAlign: "middle", vAlign: "middle")),
+			list(reactFlowEmpty())
 		)),
 		fill: $axisFills[$index % 2]
 	);
@@ -83,7 +84,7 @@ axisCell = modelId -> rowModel -> start -> end -> label -> index -> showWhenZoom
    the JVM default time zone differs from the configured system time zone. */
 tz = $startCal.timeZone();
 yearFmt      = dateFormat("yyyy",     $tz);
-monthYearFmt = dateFormat("MMM yyyy", $tz);
+monthYearFmt = dateFormat("MMMM yyyy", $tz);
 monthFmt     = dateFormat("MMM",      $tz);
 monthIdFmt   = dateFormat("yyyy-MM",  $tz);
 dayFmt       = dateFormat("dd",       $tz);
@@ -99,10 +100,10 @@ yearSpans = count(2).foreach(i -> {
 	$axisCell("axis:year:" + $label, "axis:1",
 		$clip($dayNum($yStart), $rangeMin, $rangeMax),
 		$clip($dayNum($yEnd),   $rangeMin, $rangeMax),
-		$label, $i, false)
+		list($label), $i, false)
 });
 
-/* === Axis 1 zoomed-in: month cell labelled "MMM yyyy" === */
+/* === Axis 1 zoomed-in: month cell labelled "MMMM yyyy", "MMM" if that does not fit === */
 firstOfStartMonth = $startCal.withDay(1);
 monthYearSpans = count(6).foreach(i -> {
 	mStart = $firstOfStartMonth.withMonthAdded($i);
@@ -111,7 +112,7 @@ monthYearSpans = count(6).foreach(i -> {
 	$axisCell("axis:monthyear:" + $monthIdFmt.format($mDate), "axis:1",
 		$clip($dayNum($mStart), $rangeMin, $rangeMax),
 		$clip($dayNum($mEnd),   $rangeMin, $rangeMax),
-		$monthYearFmt.format($mDate), $i, true)
+		list($monthYearFmt.format($mDate), $monthFmt.format($mDate)), $i, true)
 });
 
 /* === Axis 2 zoomed-out: month cell labelled "MMM" === */
@@ -122,7 +123,7 @@ monthSpans = count(6).foreach(i -> {
 	$axisCell("axis:month:" + $monthIdFmt.format($mDate), "axis:2",
 		$clip($dayNum($mStart), $rangeMin, $rangeMax),
 		$clip($dayNum($mEnd),   $rangeMin, $rangeMax),
-		$monthFmt.format($mDate), $i, false)
+		list($monthFmt.format($mDate)), $i, false)
 });
 
 /* === Axis 2 zoomed-in: one cell per day in the range. "dd" pads to 2 digits so
@@ -130,7 +131,7 @@ monthSpans = count(6).foreach(i -> {
 daySpans = count($rangeMax - $rangeMin).foreach(i -> {
 	dn = $rangeMin + $i;
 	$axisCell("axis:day:" + $dn, "axis:2", $dn, $dn + 1,
-		$dayFmt.format($startCal.withDayAdded($i).toDate()), $i, true)
+		list($dayFmt.format($startCal.withDayAdded($i).toDate())), $i, true)
 });
 
 /* Freeze label in Markers row */

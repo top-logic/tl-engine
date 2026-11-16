@@ -42,6 +42,31 @@ public class TestAccountFunctions extends AbstractSearchExpressionTest {
 			eval("account -> accountPasswordChangeAllowed($account)", account(new Device(true))));
 	}
 
+	public void testHasPassword() throws Exception {
+		assertEquals(Boolean.TRUE,
+			eval("account -> $account.accountHasPassword()", account(new PasswordDevice(true))));
+		assertEquals(Boolean.TRUE,
+			eval("account -> accountHasPassword($account)", account(new PasswordDevice(true))));
+	}
+
+	public void testHasNoPassword() throws Exception {
+		assertEquals("The device holds no password for the account.", Boolean.FALSE,
+			eval("account -> $account.accountHasPassword()", account(new PasswordDevice(false))));
+	}
+
+	public void testHasPasswordDefault() throws Exception {
+		Device device = new Device(true);
+		Person account = account(device);
+		assertFalse("A device without password storage of its own has no password.", device.hasPassword(account));
+		assertEquals("A device without password storage of its own has no password.", Boolean.FALSE,
+			eval("account -> $account.accountHasPassword()", account));
+	}
+
+	public void testHasPasswordWithoutDevice() throws Exception {
+		assertEquals("An account without a device has no password.", Boolean.FALSE,
+			eval("account -> $account.accountHasPassword()", account(null)));
+	}
+
 	/** An account authenticated by the given device, or by none. */
 	private static Person account(AuthenticationDevice device) {
 		return new Account(device);
@@ -132,6 +157,30 @@ public class TestAccountFunctions extends AbstractSearchExpressionTest {
 		@Override
 		public String toString() {
 			return "device(allowPwdChange: " + _allowPwdChange + ")";
+		}
+	}
+
+	/**
+	 * A device that stores passwords of its own and states whether it holds one for the account
+	 * asked about.
+	 */
+	private static class PasswordDevice extends Device {
+
+		private final boolean _hasPassword;
+
+		PasswordDevice(boolean hasPassword) {
+			super(true);
+			_hasPassword = hasPassword;
+		}
+
+		@Override
+		public boolean hasPassword(Person account) {
+			return _hasPassword;
+		}
+
+		@Override
+		public String toString() {
+			return "device(hasPassword: " + _hasPassword + ")";
 		}
 	}
 

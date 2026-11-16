@@ -25,12 +25,17 @@ import com.top_logic.react.flow.data.GanttEndpoint;
 import com.top_logic.react.flow.data.GanttEnforce;
 import com.top_logic.react.flow.data.GanttLayout;
 import com.top_logic.react.flow.data.GanttLineDecoration;
+import com.top_logic.react.flow.data.GanttPoint;
 import com.top_logic.react.flow.data.GanttRangeDecoration;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
+import com.top_logic.react.flow.data.LOD;
+import com.top_logic.react.flow.data.LODVariant;
 import com.top_logic.react.flow.data.Padding;
+import com.top_logic.react.flow.data.Sticky;
 import com.top_logic.react.flow.data.Text;
 import com.top_logic.react.flow.data.VerticalLayout;
+import com.top_logic.react.flow.operations.StickyOperations;
 import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.operations.layout.GanttLayoutOperations;
 import com.top_logic.react.flow.server.svg.SvgTagWriter;
@@ -487,6 +492,145 @@ public class TestGanttLayout extends TestCase {
 	}
 
 	// -----------------------------------------------------------------------
+	// Level of detail in row labels
+	// -----------------------------------------------------------------------
+
+	/** Zoom from which the detailed variant of {@link #lodLabel()} is chosen. */
+	private static final double LOD_DETAIL_ZOOM = 16.0;
+
+	/** Index of the detailed variant of {@link #lodLabel()}. */
+	private static final int LOD_DETAIL_INDEX = 0;
+
+	/** Index of the fallback variant of {@link #lodLabel()}. */
+	private static final int LOD_FALLBACK_INDEX = 1;
+
+	/** Width of the widest variant of {@link #lodLabel()} in the {@link TestingRenderContext}. */
+	private static final double LOD_WIDEST_WIDTH = "Monat".length() * 12.0;
+
+	/**
+	 * A level-of-detail box showing "Tag" from {@link #LOD_DETAIL_ZOOM} on and the wider "Monat"
+	 * below.
+	 */
+	private static LOD lodLabel() {
+		return LOD.create()
+			.addVariant(LODVariant.create().setContent(Text.create().setValue("Tag")).setMinZoom(LOD_DETAIL_ZOOM))
+			.addVariant(LODVariant.create().setContent(Text.create().setValue("Monat")));
+	}
+
+	/**
+	 * A chart with an axis row labeled by the given label and a data row labeled "Daten", time
+	 * range 0..100, without minimum label column width.
+	 */
+	private static GanttLayout lodLabelLayout(Box axisLabel) {
+		GanttLayout layout = GanttLayout.create()
+			.setRowLabelMinWidth(0)
+			.setRowLabelPadding(ROW_LABEL_PADDING)
+			.setRangeMin(0).setRangeMax(100);
+		layout.setRootRows(Arrays.asList(
+			GanttRow.create().setId("axis").setLabel(axisLabel),
+			GanttRow.create().setId("data").setLabel(Text.create().setValue("Daten"))));
+		layout.addContent(axisLabel);
+		layout.addContent(layout.getRootRows().get(1).getLabel());
+		return layout;
+	}
+
+	/**
+	 * A row label chooses its level-of-detail variant by the zoom of the time axis, while the label
+	 * column keeps the width of the widest variant.
+	 */
+	public void testRowLabelChoosesVariantByZoom() {
+		LOD label = lodLabel();
+		GanttLayout layout = lodLabelLayout(label);
+		Diagram d = Diagram.create().setRoot(layout);
+		RenderContext context = new TestingRenderContext();
+		double expectedColumnWidth = LOD_WIDEST_WIDTH + 2 * ROW_LABEL_PADDING;
+
+		layout.setZoom(20.0);
+		d.layout(context);
+		assertEquals("detailed variant at zoom 20", LOD_DETAIL_INDEX, label.getChosenIndex());
+		assertEquals("column width at zoom 20", expectedColumnWidth, layout.getColumnWidth(), 1e-9);
+		assertEquals("label x", ROW_LABEL_PADDING, label.getX(), 1e-9);
+		assertEquals("label fills the column", LOD_WIDEST_WIDTH, label.getWidth(), 1e-9);
+
+		layout.setZoom(2.0);
+		d.layout(context);
+		assertEquals("fallback variant at zoom 2", LOD_FALLBACK_INDEX, label.getChosenIndex());
+		assertEquals("column width at zoom 2", expectedColumnWidth, layout.getColumnWidth(), 1e-9);
+		assertEquals("label x", ROW_LABEL_PADDING, label.getX(), 1e-9);
+		assertEquals("label fills the column", LOD_WIDEST_WIDTH, label.getWidth(), 1e-9);
+	}
+
+	/**
+	 * A row label without level of detail determines the label column by its own width and is
+	 * placed at the column padding, independent of the zoom.
+	 */
+	public void testPlainRowLabelIndependentOfZoom() {
+		Text label = Text.create().setValue("Kalenderwoche");
+		GanttLayout layout = lodLabelLayout(label);
+		Diagram d = Diagram.create().setRoot(layout);
+		RenderContext context = new TestingRenderContext();
+		double labelWidth = "Kalenderwoche".length() * 12.0;
+
+		for (double zoom : new double[] { 2.0, 20.0 }) {
+			layout.setZoom(zoom);
+			d.layout(context);
+			assertEquals("column width at zoom " + zoom, labelWidth + 2 * ROW_LABEL_PADDING,
+				layout.getColumnWidth(), 1e-9);
+			assertEquals("label x at zoom " + zoom, ROW_LABEL_PADDING, label.getX(), 1e-9);
+			assertEquals("label width at zoom " + zoom, labelWidth, label.getWidth(), 1e-9);
+			assertEquals("total width at zoom " + zoom, labelWidth + 2 * ROW_LABEL_PADDING + 100 * zoom,
+				layout.getWidth(), 1e-9);
+		}
+	}
+
+	/**
+	 * The zoom of a fitted time axis does not depend on the variant a row label chooses, because the
+	 * label column reserves the widest variant.
+	 */
+	public void testFitWidthZoomIndependentOfLabelVariant() {
+		LOD label = lodLabel();
+		GanttLayout layout = lodLabelLayout(label);
+		layout.setFitWidth(true);
+		Diagram d = Diagram.create().setRoot(layout);
+		RenderContext context = new TestingRenderContext();
+		double columnWidth = LOD_WIDEST_WIDTH + 2 * ROW_LABEL_PADDING;
+
+		d.layout(context, columnWidth + 100 * 10.0, 1000);
+		assertEquals("fallback variant", LOD_FALLBACK_INDEX, label.getChosenIndex());
+		assertEquals("fitted zoom", 10.0, layout.getZoom(), 1e-9);
+		assertEquals("column width", columnWidth, layout.getColumnWidth(), 1e-9);
+
+		d.layout(context, columnWidth + 100 * 20.0, 1000);
+		assertEquals("detailed variant", LOD_DETAIL_INDEX, label.getChosenIndex());
+		assertEquals("fitted zoom", 20.0, layout.getZoom(), 1e-9);
+		assertEquals("column width", columnWidth, layout.getColumnWidth(), 1e-9);
+	}
+
+	/**
+	 * A level-of-detail box on the time axis chooses its variant by the zoom and takes the size of
+	 * the chosen variant, not of the widest one.
+	 */
+	public void testItemLodTakesChosenVariant() {
+		LOD itemBox = lodLabel();
+		GanttPoint point = GanttPoint.create().setId("p").setRowId("data").setAt(50).setBox(itemBox);
+		GanttLayout layout = lodLabelLayout(Text.create().setValue("Achse"));
+		layout.setItems(Arrays.asList(point));
+		layout.addContent(itemBox);
+		Diagram d = Diagram.create().setRoot(layout);
+		RenderContext context = new TestingRenderContext();
+
+		layout.setZoom(20.0);
+		d.layout(context);
+		assertEquals("detailed variant at zoom 20", LOD_DETAIL_INDEX, itemBox.getChosenIndex());
+		assertEquals("width of the detailed variant", "Tag".length() * 12.0, itemBox.getWidth(), 1e-9);
+
+		layout.setZoom(2.0);
+		d.layout(context);
+		assertEquals("fallback variant at zoom 2", LOD_FALLBACK_INDEX, itemBox.getChosenIndex());
+		assertEquals("width of the fallback variant", LOD_WIDEST_WIDTH, itemBox.getWidth(), 1e-9);
+	}
+
+	// -----------------------------------------------------------------------
 	// DragController tests
 	// -----------------------------------------------------------------------
 
@@ -684,6 +828,62 @@ public class TestGanttLayout extends TestCase {
 		renderViewport(layout);
 
 		assertEquals("label at the top of the chart", layout.getY() + 10, label.getY(), 0.01);
+	}
+
+	/**
+	 * The label of a decoration drawn above the frozen rows stands on a backdrop of the size of the
+	 * label plus padding, drawn before the label.
+	 */
+	public void testPinnedDecorationLabelHasBackground() throws Exception {
+		GanttLayout layout = manyRows(2);
+		Text label = Text.create().setValue("Today");
+		layout.setDecorations(Arrays.asList(lineDeco(label)));
+
+		String svg = renderViewport(layout);
+
+		String labels = section(svg,
+			"\"" + layout.getClientId() + GanttLayoutOperations.SCROLL_DECORATION_LABELS_ID_SUFFIX + "\"",
+			"tl-gantt-scrollbar");
+		int rectPos = labels.indexOf(GanttLayoutOperations.PINNED_LABEL_BACKGROUND_CSS_CLASS);
+		assertTrue("backdrop present", rectPos >= 0);
+		assertTrue("backdrop drawn before the label", rectPos < labels.indexOf(">Today<"));
+
+		String rect = startTag(labels, labels.lastIndexOf("<rect", rectPos));
+		double padding = GanttLayoutOperations.PINNED_LABEL_PADDING;
+		assertEquals("x", label.getX() - padding, numberAttribute(rect, "x"), 0.01);
+		assertEquals("y", label.getY() - padding, numberAttribute(rect, "y"), 0.01);
+		assertEquals("width", label.getWidth() + 2 * padding, numberAttribute(rect, "width"), 0.01);
+		assertEquals("height", label.getHeight() + 2 * padding, numberAttribute(rect, "height"), 0.01);
+		assertEquals("rx", GanttLayoutOperations.PINNED_LABEL_RADIUS, numberAttribute(rect, "rx"), 0.01);
+	}
+
+	/**
+	 * The label of a decoration moving with its data row is drawn without a backdrop.
+	 */
+	public void testRowDecorationLabelHasNoBackground() throws Exception {
+		GanttLayout layout = manyRows(2);
+		Text label = Text.create().setValue("Review");
+		layout.setDecorations(Arrays.asList(lineDeco(label).setRelevantFor(Arrays.asList("r5"))));
+
+		String svg = renderViewport(layout);
+
+		assertTrue("label drawn", svg.contains(">Review<"));
+		assertFalse("no backdrop", svg.contains(GanttLayoutOperations.PINNED_LABEL_BACKGROUND_CSS_CLASS));
+	}
+
+	/** The start tag of the element starting at the given position. */
+	private static String startTag(String svg, int pos) {
+		assertTrue("element present", pos >= 0);
+		return svg.substring(pos, svg.indexOf(">", pos) + 1);
+	}
+
+	/** The numeric value of the given attribute of a start tag. */
+	private static double numberAttribute(String startTag, String name) {
+		String marker = " " + name + "=\"";
+		int start = startTag.indexOf(marker);
+		assertTrue("attribute present: " + name, start >= 0);
+		start += marker.length();
+		return Double.parseDouble(startTag.substring(start, startTag.indexOf('"', start)));
 	}
 
 	private static GanttLineDecoration lineDeco(Box label) {
@@ -1277,6 +1477,190 @@ public class TestGanttLayout extends TestCase {
 		public void requestRelayout() {
 			_relayout = true;
 		}
+	}
+
+	// -----------------------------------------------------------------------
+	// Sticky content
+	// -----------------------------------------------------------------------
+
+	/** Zoom of the sticky charts: 2 pixels per day. */
+	private static final double STICKY_ZOOM = 2.0;
+
+	/** Width of the label column of the sticky charts. */
+	private static final double STICKY_COLUMN_WIDTH = 200.0;
+
+	/** Width of the visible time range of the sticky charts: 90 days. */
+	private static final double STICKY_VIEW_WIDTH = 90 * STICKY_ZOOM;
+
+	/** Width of the text {@code "Jahr 1"} in the {@link TestingRenderContext}. */
+	private static final double STICKY_TEXT_WIDTH = 6 * 12.0;
+
+	/**
+	 * Without scrolling, the content of a sticky box stays at the start of its span.
+	 */
+	public void testStickyWithoutScroll() throws Exception {
+		Sticky sticky = Sticky.create().setContent(Text.create().setValue("Jahr 1"));
+		GanttLayout layout = stickyChart(sticky);
+
+		assertEquals("sticky takes the span width", 365 * STICKY_ZOOM - 2, sticky.getWidth(), 1e-6);
+		assertEquals("content keeps its natural width", STICKY_TEXT_WIDTH, sticky.getContent().getWidth(), 1e-6);
+		assertEquals("no shift", 0.0, sticky.getShift(), 1e-9);
+		assertEquals("no translation", 0.0, stickyTranslation(layout, sticky), 1e-9);
+	}
+
+	/**
+	 * Scrolled into the middle of a span, the content of a sticky box starts at the left edge of
+	 * the visible time range, and the border around it stays in place.
+	 */
+	public void testStickyFollowsLeftEdge() throws Exception {
+		Sticky sticky = Sticky.create().setContent(Text.create().setValue("Jahr 1"));
+		GanttLayout layout = stickyChart(sticky);
+		Box border = (Box) sticky.getParent();
+		double borderX = border.getX();
+
+		layout.setScrollX(180);
+		double visibleLeft = layout.getX() + STICKY_COLUMN_WIDTH + 180 * STICKY_ZOOM;
+		double translation = stickyTranslation(layout, sticky);
+		assertEquals("content at the left edge", visibleLeft, sticky.getContent().getX() + translation, 1e-6);
+		assertEquals("shift stored", translation, sticky.getShift(), 1e-9);
+		assertEquals("border stays in place", borderX, border.getX(), 1e-9);
+
+		String svg = renderToSvg(layout.getDiagram());
+		assertTrue("drawn with the current shift: " + svg,
+			svg.contains("id=\"y1" + StickyOperations.CONTENT_ID_SUFFIX + "\" transform=\"translate("
+				+ translation + ",0.0)\""));
+	}
+
+	/**
+	 * Scrolled so far that the end of the span is just right of the left edge of the visible
+	 * range, the content of a sticky box ends at the end of the span.
+	 */
+	public void testStickyStopsAtSpanEnd() throws Exception {
+		Sticky sticky = Sticky.create().setContent(Text.create().setValue("Jahr 1"));
+		GanttLayout layout = stickyChart(sticky);
+
+		layout.setScrollX(360);
+		double translation = stickyTranslation(layout, sticky);
+		assertEquals("content ends at the end of the sticky box", sticky.getX() + sticky.getWidth(),
+			sticky.getContent().getX() + translation + STICKY_TEXT_WIDTH, 1e-6);
+	}
+
+	/**
+	 * A span scrolled completely out of the visible range to the left keeps the content of its
+	 * sticky box at its end.
+	 */
+	public void testStickyOfSpanLeftOfView() throws Exception {
+		Sticky sticky = Sticky.create().setContent(Text.create().setValue("Jahr 1"));
+		GanttLayout layout = stickyChart(sticky);
+
+		layout.setScrollX(500);
+		double translation = stickyTranslation(layout, sticky);
+		assertEquals("maximal shift", sticky.getWidth() - STICKY_TEXT_WIDTH, translation, 1e-6);
+	}
+
+	/**
+	 * A span without a sticky box is laid out as before: its box fills the span, its content
+	 * starts at the start of the span.
+	 */
+	public void testWithoutStickyUnchanged() throws Exception {
+		Text plain = Text.create().setValue("Jahr 1");
+		Box plainBorder = Border.create().setContent(plain);
+		GanttLayout plainLayout = stickyChartWithBox(plainBorder);
+
+		Sticky sticky = Sticky.create().setContent(Text.create().setValue("Jahr 1"));
+		GanttLayout stickyLayout = stickyChart(sticky);
+		Box stickyBorder = (Box) sticky.getParent();
+
+		assertEquals("same x", stickyBorder.getX(), plainBorder.getX(), 1e-9);
+		assertEquals("same y", stickyBorder.getY(), plainBorder.getY(), 1e-9);
+		assertEquals("same width", stickyBorder.getWidth(), plainBorder.getWidth(), 1e-9);
+		assertEquals("same height", stickyBorder.getHeight(), plainBorder.getHeight(), 1e-9);
+		assertEquals("same row height", stickyLayout.getHeaderHeight(), plainLayout.getHeaderHeight(), 1e-9);
+
+		plainLayout.setScrollX(180);
+		Diagram d = plainLayout.getDiagram();
+		String svg = renderToSvg(d);
+		assertEquals("content stays at the span start", plainBorder.getX() + 1, plain.getX(), 1e-9);
+		assertFalse("no sticky group", svg.contains(StickyOperations.CONTENT_ID_SUFFIX));
+	}
+
+	/**
+	 * Content of a sticky box wider than the span gets the width of the span, so that a text cut
+	 * to its width ends with an ellipsis at the end of the span and does not move.
+	 */
+	public void testStickyCutsTextToSpanWidth() throws Exception {
+		StringBuilder longValue = new StringBuilder();
+		for (int n = 0; n < 70; n++) {
+			longValue.append('x');
+		}
+		Text text = Text.create().setValue(longValue.toString()).setEllipsis(true);
+		Sticky sticky = Sticky.create().setContent(text);
+		GanttLayout layout = stickyChart(sticky);
+
+		assertEquals("content limited to the sticky box", sticky.getWidth(), text.getWidth(), 1e-6);
+		assertNotNull("text cut", text.getShownValue());
+		assertTrue("cut text fits", (text.getShownValue().length()) * 12.0 <= sticky.getWidth());
+
+		layout.setScrollX(180);
+		assertEquals("no room to move", 0.0, stickyTranslation(layout, sticky), 1e-9);
+	}
+
+	/**
+	 * A level-of-detail box in the content of a sticky box chooses its variant by the width of
+	 * the whole span, not by its visible part.
+	 */
+	public void testStickyLodChoosesBySpanWidth() throws Exception {
+		LOD lod = LOD.create().setVariants(Arrays.asList(
+			LODVariant.create().setMinWidth(500).setContent(Text.create().setValue("Jahr 1 (lang)")),
+			LODVariant.create().setContent(Text.create().setValue("J1"))));
+		Sticky sticky = Sticky.create().setContent(lod);
+		GanttLayout layout = stickyChart(sticky);
+		assertEquals("rich variant for the whole span", 0, lod.getChosenIndex());
+
+		layout.setScrollX(200);
+		layout.getDiagram().layout(new TestingRenderContext(), STICKY_COLUMN_WIDTH + STICKY_VIEW_WIDTH, 400);
+		assertEquals("rich variant while only a part of the span is visible", 0, lod.getChosenIndex());
+		assertEquals("content of the chosen variant at the left edge",
+			layout.getX() + STICKY_COLUMN_WIDTH + 200 * STICKY_ZOOM, lod.getX() + stickyTranslation(layout, sticky),
+			1e-6);
+	}
+
+	/**
+	 * A chart with a frozen header row holding a year span 0..365 with the given sticky box in a
+	 * border, showing 90 days of its time range 0..730.
+	 */
+	private static GanttLayout stickyChart(Sticky sticky) {
+		sticky.setClientId("y1");
+		return stickyChartWithBox(Border.create().setContent(sticky));
+	}
+
+	private static GanttLayout stickyChartWithBox(Box box) {
+		GanttSpan year = GanttSpan.create().setId("y1").setRowId("axis").setStart(0).setEnd(365).setBox(box);
+		GanttSpan next = span("y2", "axis", 365, 730, "Jahr 2");
+		GanttLayout layout = GanttLayout.create()
+			.setRowLabelMinWidth(STICKY_COLUMN_WIDTH)
+			.setRangeMin(0).setRangeMax(730)
+			.setInitialZoom(STICKY_ZOOM).setZoom(STICKY_ZOOM)
+			.setFrozenRows(1)
+			.setItems(Arrays.asList(year, next));
+		addRowsWithLabels(layout, Arrays.asList(row("axis", "Jahr"), row("data", "Daten")));
+		layout.addContent(year.getBox());
+		layout.addContent(next.getBox());
+		layout.setClientId("gantt");
+		Diagram.create().setRoot(layout).layout(new TestingRenderContext(),
+			STICKY_COLUMN_WIDTH + STICKY_VIEW_WIDTH, 400);
+		assertEquals("label column", STICKY_COLUMN_WIDTH, layout.getColumnWidth(), 1e-9);
+		return layout;
+	}
+
+	/** The translation the chart gives the content of the given sticky box on a scroll. */
+	private static double stickyTranslation(GanttLayout layout, Sticky sticky) {
+		java.util.Map<String, double[]> translations = new java.util.HashMap<>();
+		((DragController) layout).renderPan((id, tx, ty) -> translations.put(id, new double[] { tx, ty }));
+		double[] result = translations.get(StickyOperations.contentId(sticky));
+		assertNotNull("sticky content translated", result);
+		assertEquals("only horizontal", 0.0, result[1], 1e-9);
+		return result[0];
 	}
 
 	// -----------------------------------------------------------------------

@@ -172,13 +172,14 @@ public class TreeRowArrangement implements RowArrangement {
 	 *
 	 * <p>
 	 * The rows are the nodes of the tree, the given rows are not used. The source is expanded where
-	 * the source created before was.
+	 * the source created before was; the first one where the tree was
+	 * {@link RowTree#initiallyExpanded() opened when it was built}.
 	 * </p>
 	 */
 	@Override
 	public RowSource<TLObject> createSource(List<? extends TLObject> rows, RowSetEditSession session,
 			List<Column<TLObject, ?>> columns) {
-		Collection<?> expandedBefore = _source == null ? List.of() : _source.expandedKeys();
+		Collection<?> expandedBefore = _source == null ? _tree.initiallyExpanded() : _source.expandedKeys();
 		_session = session;
 		_editDisplay = null;
 		follow(session != null && session.isRunning() ? session : null);
@@ -400,7 +401,8 @@ public class TreeRowArrangement implements RowArrangement {
 			}
 
 			@Override
-			public void treeReplaced(DefaultTreeUINodeModel treeModel) {
+			public void treeReplaced(DefaultTreeUINodeModel treeModel, List<DefaultTreeUINode> opened,
+					boolean rootChanged) {
 				rowsChanged();
 			}
 

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.Widget;
 
@@ -44,6 +45,29 @@ public class WidgetTraversal {
 	 *        changes to the widgets the traversal has not reached yet decide what it reaches.
 	 */
 	public static void visitAll(Widget root, Consumer<? super Widget> visitor) {
+		visit(root, visitor, false);
+	}
+
+	/**
+	 * Calls the given visitor for the given widget and for every widget it contains, each one
+	 * once.
+	 *
+	 * <p>
+	 * In contrast to {@link #visitAll(Widget, Consumer)}, the traversal does not leave the given
+	 * widget: it does not follow the {@link Box#getParent() parent} of a box, and it does not
+	 * follow a box whose parent is another widget than the one referring to it.
+	 * </p>
+	 *
+	 * @param root
+	 *        The widget to start at, or <code>null</code> to visit nothing.
+	 * @param visitor
+	 *        What to do with each visited widget.
+	 */
+	public static void visitContents(Widget root, Consumer<? super Widget> visitor) {
+		visit(root, visitor, true);
+	}
+
+	private static void visit(Widget root, Consumer<? super Widget> visitor, boolean containedOnly) {
 		if (root == null) {
 			return;
 		}
@@ -66,9 +90,27 @@ public class WidgetTraversal {
 			// Taken from the end of the pending list, so the widgets of a property are visited in
 			// the order the property holds them.
 			for (int n = referenced.size() - 1; n >= 0; n--) {
-				pending.add(referenced.get(n));
+				Widget next = referenced.get(n);
+				if (containedOnly && !contains(widget, next)) {
+					continue;
+				}
+				pending.add(next);
 			}
 		}
+	}
+
+	/**
+	 * Whether the given widget referred to by the given owner is part of the owner, not its
+	 * container or a box contained elsewhere.
+	 */
+	private static boolean contains(Widget owner, Widget widget) {
+		if (owner instanceof Box box && box.getParent() == widget) {
+			return false;
+		}
+		if (widget instanceof Box box) {
+			return box.getParent() == owner;
+		}
+		return true;
 	}
 
 	/**

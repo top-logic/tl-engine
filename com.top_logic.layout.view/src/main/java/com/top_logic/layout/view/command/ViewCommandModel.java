@@ -7,6 +7,8 @@ package com.top_logic.layout.view.command;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.CommandErrors;
@@ -22,9 +24,12 @@ import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.DirtyChannel;
 import com.top_logic.layout.react.dirty.StateHandler;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.DeletedObjects;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.ObservedTypes;
+import com.top_logic.layout.view.table.AbstractColumnDeclaration;
+import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
@@ -65,6 +70,16 @@ import com.top_logic.util.error.TopLogicException;
  * reports for as long as it is attached.
  * </p>
  *
+ * <p>
+ * Label, tooltip and icon of the command are the fixed values of its configuration, unless it
+ * computes them from its arguments ({@link ViewCommand.Config#getLabelExpr()},
+ * {@link ViewCommand.Config#getTooltipExpr()}, {@link ViewCommand.Config#getImageExpr()}). Computed
+ * values are evaluated together with the executability, so they follow the same changes; a
+ * computation yielding nothing falls back to the fixed value. A UI supplying the main argument
+ * itself - a button on every row of a table - asks {@link #label(Object)}, {@link #tooltip(Object)}
+ * and {@link #image(Object)} for that argument.
+ * </p>
+ *
  * @see LiveExecutability
  */
 public class ViewCommandModel implements CommandModel {
@@ -86,7 +101,37 @@ public class ViewCommandModel implements CommandModel {
 	 */
 	private final DirtyChannel _scopeDirty;
 
+	/**
+	 * The {@link ViewCommand.Config#getLabelExpr() label expression}, {@code null} for none.
+	 */
+	private final ActionScript _labelScript;
+
+	/**
+	 * The {@link ViewCommand.Config#getTooltipExpr() tooltip expression}, {@code null} for none.
+	 */
+	private final ActionScript _tooltipScript;
+
+	/**
+	 * The {@link ViewCommand.Config#getImageExpr() image expression}, {@code null} for none.
+	 */
+	private final ActionScript _imageScript;
+
 	private ExecutableState _executableState;
+
+	/**
+	 * The label for the current arguments, {@code null} for none.
+	 */
+	private String _label;
+
+	/**
+	 * The command's own tooltip for the current arguments, {@code null} for none.
+	 */
+	private String _tooltip;
+
+	/**
+	 * The icon for the current arguments, {@code null} for none.
+	 */
+	private ThemeImage _image;
 
 	private final List<Runnable> _stateChangeListeners = new ArrayList<>();
 
@@ -160,8 +205,24 @@ public class ViewCommandModel implements CommandModel {
 		_config = config;
 		_scopeDirty = scopeDirty;
 		_executableState = ExecutableState.EXECUTABLE;
-		_executability = new LiveExecutability(rule, new CommandArguments(config.getInputs(), trigger),
+		CommandArguments arguments = new CommandArguments(config.getInputs(), trigger, config.parameterNames());
+		_executability = new LiveExecutability(rule, arguments,
 			inputChannels, ObservedTypes.resolve(config.getObservedTypes()), this::updateExecutableState);
+		ActionScope scope = arguments.scope();
+		_labelScript = compile(config.getLabelExpr(), scope);
+		_tooltipScript = compile(config.getTooltipExpr(), scope);
+		_imageScript = compile(config.getImageExpr(), scope);
+		Object input = resolveInput();
+		_label = label(input);
+		_tooltip = tooltip(input);
+		_image = image(input);
+	}
+
+	/**
+	 * Compiles an expression over the arguments of the command, {@code null} for none.
+	 */
+	private static ActionScript compile(Expr expr, ActionScope scope) {
+		return expr == null ? null : ActionScript.compile(expr, scope, List.of());
 	}
 
 	/**
@@ -264,25 +325,96 @@ public class ViewCommandModel implements CommandModel {
 		return _executability.arguments(main);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The {@link #label(Object) label} for the current {@link #resolveInput() input}, as last
+	 * evaluated together with the {@link #getExecutableState() state}; empty for none.
+	 * </p>
+	 */
 	@Override
 	public String getLabel() {
-		ResKey key = _config.getLabel();
-		if (key == null) {
-			return "";
-		}
-		return Resources.getInstance().getString(key);
+		return _label == null ? "" : _label;
 	}
 
 	/**
-	 * The command's label key.
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The {@link #image(Object) icon} for the current {@link #resolveInput() input}, as last
+	 * evaluated together with the {@link #getExecutableState() state}.
+	 * </p>
 	 */
-	public ResKey getLabelKey() {
-		return _config.getLabel();
-	}
-
 	@Override
 	public ThemeImage getImage() {
-		return _config.getImage();
+		return _image;
+	}
+
+	/**
+	 * The label of the command for a main argument the caller supplies instead of the
+	 * {@link #resolveInput() channel value} - a single row of a table, say.
+	 *
+	 * @param input
+	 *        The command's main argument, see {@link #executability(Object)}.
+	 * @return The text the {@link ViewCommand.Config#getLabelExpr() label expression} computes for
+	 *         the arguments of a run with that main argument; where it yields nothing, the
+	 *         configured {@link ViewCommand.Config#getLabel() label}. {@code null} for neither.
+	 */
+	public String label(Object input) {
+		String computed = text(evaluate(_labelScript, input));
+		return computed != null ? computed : resolve(_config.getLabel());
+	}
+
+	/**
+	 * The tooltip of the command for a main argument the caller supplies, see
+	 * {@link #label(Object)}.
+	 *
+	 * <p>
+	 * This is the command's own tooltip, regardless of whether the command is executable for the
+	 * given argument; {@link #getTooltip()} explains the reason of a disabled command instead.
+	 * </p>
+	 *
+	 * @return The text the {@link ViewCommand.Config#getTooltipExpr() tooltip expression} computes;
+	 *         where it yields nothing, the configured {@link ViewCommand.Config#getTooltip()
+	 *         tooltip}. {@code null} for neither.
+	 */
+	public String tooltip(Object input) {
+		String computed = text(evaluate(_tooltipScript, input));
+		return computed != null ? computed : resolve(_config.getTooltip());
+	}
+
+	/**
+	 * The icon of the command for a main argument the caller supplies, see {@link #label(Object)}.
+	 *
+	 * @return The icon the {@link ViewCommand.Config#getImageExpr() image expression} computes;
+	 *         where it yields no icon, the configured {@link ViewCommand.Config#getImage() image}.
+	 *         {@code null} for neither.
+	 */
+	public ThemeImage image(Object input) {
+		ThemeImage computed = ThemeImage.fromValue(evaluate(_imageScript, input));
+		return computed != null ? computed : _config.getImage();
+	}
+
+	/**
+	 * Evaluates the given script over the arguments of a run with the given main argument,
+	 * {@code null} for no script.
+	 */
+	private Object evaluate(ActionScript script, Object input) {
+		if (script == null) {
+			return null;
+		}
+		return script.execute(_context, arguments(DeletedObjects.withoutDeleted(input)));
+	}
+
+	/**
+	 * The text a script computed, {@code null} for nothing to show.
+	 *
+	 * @see AbstractColumnDeclaration#tooltipText(Object)
+	 */
+	private static String text(Object result) {
+		String text = AbstractColumnDeclaration.tooltipText(result);
+		return text == null || text.isEmpty() ? null : text;
 	}
 
 	/**
@@ -291,8 +423,9 @@ public class ViewCommandModel implements CommandModel {
 	 * <p>
 	 * While the command is visible but not executable, this is the reason its rules gave for
 	 * disabling it ({@link ExecutableState#getI18NReasonKey()}) - the button then says why it cannot
-	 * be used. Otherwise, and whenever the state carries no reason to show, it is the configured
-	 * {@link ViewCommand.Config#getTooltip() tooltip}.
+	 * be used. Otherwise, and whenever the state carries no reason to show, it is the command's own
+	 * {@link #tooltip(Object) tooltip} for the current {@link #resolveInput() input}, as last
+	 * evaluated together with the state.
 	 * </p>
 	 */
 	@Override
@@ -303,7 +436,7 @@ public class ViewCommandModel implements CommandModel {
 				return reason;
 			}
 		}
-		return resolve(_config.getTooltip());
+		return _tooltip;
 	}
 
 	/**
@@ -436,6 +569,21 @@ public class ViewCommandModel implements CommandModel {
 	}
 
 	/**
+	 * The command's executability for a main argument and values of its
+	 * {@link ViewCommand.Config#parameterNames() parameters} the caller supplies, see
+	 * {@link #executability(Object)}.
+	 *
+	 * @param input
+	 *        The command's main argument.
+	 * @param parameterValues
+	 *        The values of the parameters by name.
+	 * @return The state the command's rules assign to the arguments of a run with them.
+	 */
+	public ExecutableState executability(Object input, Map<String, ?> parameterValues) {
+		return _executability.getState(input, parameterValues);
+	}
+
+	/**
 	 * Executes the command with a main argument the caller supplies instead of the
 	 * {@link #resolveInput() channel value} - the row a table activation opens, say. The command
 	 * receives it together with the values of its inputs, see {@link CommandArguments}, and runs in
@@ -461,20 +609,41 @@ public class ViewCommandModel implements CommandModel {
 	 *         state when they reject the input, or the failure of the command.
 	 */
 	public void execute(Object input) {
-		ExecutableState state = executability(input);
+		execute(input, Map.of());
+	}
+
+	/**
+	 * Executes the command with a main argument and values of its
+	 * {@link ViewCommand.Config#parameterNames() parameters} the caller supplies, see
+	 * {@link #execute(Object)}.
+	 *
+	 * <p>
+	 * The parameters are arguments of the command under their names: the executability rules
+	 * decide over them, and the actions see them.
+	 * </p>
+	 *
+	 * @param input
+	 *        The command's input value.
+	 * @param parameterValues
+	 *        The values of the parameters by name; a parameter without a value is {@code null}.
+	 * @throws TopLogicException
+	 *         See {@link #execute(Object)}.
+	 */
+	public void execute(Object input, Map<String, ?> parameterValues) {
+		ExecutableState state = executability(input, parameterValues);
 		if (!state.isExecutable()) {
 			throw CommandErrors.notExecutable(state);
 		}
 
 		List<StateHandler> unsaved = unsavedChanges();
 		if (!unsaved.isEmpty()) {
-			throw new ChannelVetoException(unsaved, () -> execute(input));
+			throw new ChannelVetoException(unsaved, () -> execute(input, parameterValues));
 		}
 
 		// Confirmation is a chain concern: place a <confirm> guard in the command's action chain
 		// (see ConfirmAction), which can suspend/resume the chain and inspect already-stored form
 		// state - rather than gating the whole command here.
-		_command.execute(_context, arguments(input));
+		_command.execute(_context, _executability.arguments(input, parameterValues));
 	}
 
 	/**
@@ -534,12 +703,25 @@ public class ViewCommandModel implements CommandModel {
 		_stateChangeListeners.remove(listener);
 	}
 
+	/**
+	 * Re-evaluates the state together with label, tooltip and icon, and reports a change of any of
+	 * them.
+	 */
 	private void updateExecutableState() {
 		ExecutableState newState = _executability.getState();
-		if (!newState.equals(_executableState)) {
-			_executableState = newState;
-			fireStateChanged();
+		Object input = resolveInput();
+		String newLabel = label(input);
+		String newTooltip = tooltip(input);
+		ThemeImage newImage = image(input);
+		if (newState.equals(_executableState) && Objects.equals(newLabel, _label)
+			&& Objects.equals(newTooltip, _tooltip) && Objects.equals(newImage, _image)) {
+			return;
 		}
+		_executableState = newState;
+		_label = newLabel;
+		_tooltip = newTooltip;
+		_image = newImage;
+		fireStateChanged();
 	}
 
 	private void fireStateChanged() {

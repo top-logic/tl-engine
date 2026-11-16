@@ -389,7 +389,7 @@ public class ChatConversationControl extends ChatControl {
 				continue;
 			}
 			PageCommand offered = new PageCommand(config.getName(), config.getDescription(),
-				config.getInputDescription(), ViewCommandModel.forCommand(context, command, config), context);
+				config.getDeclaredParameters(), ViewCommandModel.forCommand(context, command, config), context);
 			offerToAgent(() -> binding().offerCommand(offered), () -> binding().withdrawCommand(offered));
 		}
 	}

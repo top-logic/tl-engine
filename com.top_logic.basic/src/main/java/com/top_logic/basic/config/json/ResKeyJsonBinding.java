@@ -11,6 +11,7 @@ import java.util.Locale;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.json.schema.model.AnyOfSchema;
 import com.top_logic.basic.json.schema.model.EnumSchema;
 import com.top_logic.basic.json.schema.model.ObjectSchema;
@@ -96,7 +97,7 @@ public class ResKeyJsonBinding implements JsonValueBinding<ResKey> {
 		// Constrain property names to the supported locales of the application.
 		EnumSchema localeEnum = EnumSchema.create();
 		for (Locale locale : ResourcesModule.getInstance().getSupportedLocales()) {
-			localeEnum.addEnumLiteral(locale.toLanguageTag());
+			localeEnum.addEnumLiteral(JSON.toString(locale.toLanguageTag()));
 		}
 		objectSchema.setPropertyNames(localeEnum);
 

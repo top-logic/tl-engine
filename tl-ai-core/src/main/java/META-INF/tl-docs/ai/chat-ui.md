@@ -36,7 +36,7 @@ A page can let its agent run some of its commands - open the form in which the u
 
 #### Parameters of a command
 
-A command can take values from the agent - the tab to open, the article to show, the status to filter by, the project whose view to open. It declares them as `<parameters>`, in the same form as the `<properties>` of a layout template (a `ConfigurationDescriptorConfig`): per parameter its name and type, a label whose tooltip describes the parameter to the model, `<mandatory/>`, a `default`, the allowed values (`<options fun="…"/>` or an enumeration type) and constraints.
+A command can take values from the agent - the tab to open, the article to show, the status to filter by, the project whose view to open. It declares them as `<parameters>`, in the same form as the `<properties>` of a layout template (a `ConfigurationDescriptorConfig`): per parameter its name and type, a label whose tooltip describes the parameter to the model, `<mandatory/>`, a `default`, the allowed values (a fixed list `<allowed-values value="…"/>`, values computed by `<options fun="…"/>`, or an enumeration type) and constraints.
 
 ```xml
 <agent-command name="openProjectTab"
@@ -48,7 +48,7 @@ A command can take values from the agent - the tab to open, the article to show,
                 <tooltip><en>The tab to open: "overview" or "members".</en></tooltip>
             </label>
             <mandatory/>
-            <options fun="my.module.ProjectTabs"/>
+            <allowed-values value="overview, members"/>
         </property>
     </parameters>
     <switch value="$tab">
@@ -62,10 +62,10 @@ A command can take values from the agent - the tab to open, the article to show,
 </agent-command>
 ```
 
-The options function `my.module.ProjectTabs` returns the allowed values, here `"overview"` and `"members"`. Each tab of the project page has its content in a view file of its own (`<tab id="members"><view-ref view="app/project-members.view.xml"/></tab>`), because `<show-view>` opens the tab containing the view it names. A `<view-ref>` inside a `<form>` hands the form on, so the fields of such a file still belong to the form around the tab bar.
+`<allowed-values>` (the annotation `@AllowedValues`) lists the values in the text format of the parameter, comma-separated; a value outside the list is refused, and without a `default` the first allowed value is the default of a parameter that is not `<nullable/>`. Values that depend on the situation come from an options function instead (`<options fun="…"/>`, a Java class). Each tab of the project page has its content in a view file of its own (`<tab id="members"><view-ref view="app/project-members.view.xml"/></tab>`), because `<show-view>` opens the tab containing the view it names. A `<view-ref>` inside a `<form>` hands the form on, so the fields of such a file still belong to the form around the tab bar.
 
-- **The model gets a JSON schema.** `pageCommands` lists for each command the schema of its parameters (`DeclaredParameters.schema()` in `tl-ai-core`, built by `JsonConfigSchemaBuilder`): the label is the title, its tooltip the description, mandatory parameters are `required`, the values of `<options>` and of an enumeration are an `enum`. The descriptions are read by the model, so they are English.
-- **The values are checked before anything runs.** The agent passes the values as the JSON object `arguments`; `DeclaredParameters.bind` reads it into the declared type (`JsonConfigurationReader`) and checks it: an unknown or missing mandatory parameter, a value of the wrong type, a value not among the options and a violated constraint are refused with a sentence saying which, and the command does not run. A command without parameters refuses any argument.
+- **The model gets a JSON schema.** `pageCommands` lists for each command the schema of its parameters (`DeclaredParameters.schema()` in `tl-ai-core`, built by `JsonConfigSchemaBuilder`): the label is the title, its tooltip the description, mandatory parameters are `required`, the values of `<allowed-values>`, of `<options>` and of an enumeration are an `enum` (numbers as JSON numbers). The descriptions are read by the model, so they are English.
+- **The values are checked before anything runs.** The agent passes the values as the JSON object `arguments`; `DeclaredParameters.bind` reads it into the declared type (`JsonConfigurationReader`) and checks it: an unknown or missing mandatory parameter, a value of the wrong type, a value not among the allowed values or options and a violated constraint are refused with a sentence saying which, and the command does not run. A command without parameters refuses any argument.
 - **Arguments of the chain.** The chain of the command, its `<executability>` and `<access>`, and its `label-expr`, `tooltip-expr` and `image-expr` see each parameter as an argument of its name (`$tab`), next to its inputs (`ViewCommand.Config#parameterNames`). The values are seen by this run only; nothing is written to a channel unless the chain does it. A button of the same command passes no values; there, the parameters are `null`.
 
 An object is a parameter like any other: its type is `com.top_logic.model.TLObject`, its format `com.top_logic.tl.ai.core.tools.model.AgentObjectFormat`, and `<object-type>` restricts it to a model type and its specializations:

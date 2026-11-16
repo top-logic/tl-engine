@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+	
+	SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+-->
+<!--
+	Type of a stored schema that the schema of the application no longer declares.
+	Used by TestDeleteUndeclaredTablesProcessor.
+-->
+<objectlist
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<metaobjects>
+		<metaobject object_name="UndeclaredLeftover"
+			object_type="MOKnowledgeObject"
+			super_class="KnowledgeObject"
+		>
+			<attributes>
+				<mo_attribute att_name="name"
+					att_type="String"
+					db_size="255"
+				/>
+			</attributes>
+		</metaobject>
+	</metaobjects>
+</objectlist>

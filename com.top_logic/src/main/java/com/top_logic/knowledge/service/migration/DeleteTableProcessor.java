@@ -122,6 +122,30 @@ public class DeleteTableProcessor extends AbstractConfiguredInstance<DeleteTable
 
 	@Override
 	public void doMigration(MigrationContext context, Log log, PooledConnection connection) {
+		deleteTables(log, connection, getConfig().getTables(), getConfig().getProviders());
+	}
+
+	/**
+	 * Deletes the given table types and type providers.
+	 * 
+	 * <p>
+	 * The types are removed from the stored schema, and their tables are dropped, see
+	 * {@link Config#getTables()}. A type the stored schema does not contain is reported as warning
+	 * and skipped.
+	 * </p>
+	 * 
+	 * @param log
+	 *        The {@link Log} to report to.
+	 * @param connection
+	 *        The connection to the database to migrate.
+	 * @param tableRefs
+	 *        References to the table types to delete.
+	 * @param providerNames
+	 *        Names of the type providers to remove from the stored DB configuration, see
+	 *        {@link Config#getProviders()}.
+	 */
+	public static void deleteTables(Log log, PooledConnection connection, List<? extends TableRef> tableRefs,
+			List<String> providerNames) {
 		try {
 			SQLQuery<SQLDelete> delete = query(
 				parameters(parameterDef(DBType.STRING, "typeName")),
@@ -140,8 +164,8 @@ public class DeleteTableProcessor extends AbstractConfiguredInstance<DeleteTable
 
 			Map<String, String> found = new HashMap<>();
 			Set<String> withoutTable = new HashSet<>();
-			if (!getConfig().getTables().isEmpty()) {
-				String filter = getConfig().getTables().stream()
+			if (!tableRefs.isEmpty()) {
+				String filter = tableRefs.stream()
 					.map(config -> "@object_name='" + config.getObjectName() + "'").collect(Collectors.joining(" or "));
 
 				XPath xPath = XPathFactory.newInstance().newXPath();
@@ -163,8 +187,8 @@ public class DeleteTableProcessor extends AbstractConfiguredInstance<DeleteTable
 				RemovedTypeAlternatives.cleanup(schema, found.keySet(), log);
 			}
 
-			if (!getConfig().getProviders().isEmpty()) {
-				String filter = getConfig().getProviders().stream()
+			if (!providerNames.isEmpty()) {
+				String filter = providerNames.stream()
 					.map(name -> "@name='" + name + "'").collect(Collectors.joining(" or "));
 
 				XPath xPath = XPathFactory.newInstance().newXPath();
@@ -179,7 +203,7 @@ public class DeleteTableProcessor extends AbstractConfiguredInstance<DeleteTable
 			}
 
 			try (Statement nativeStatement = connection.createStatement()) {
-				for (TableRef tableRef : getConfig().getTables()) {
+				for (TableRef tableRef : tableRefs) {
 					String typeName = tableRef.getObjectName();
 					if (!found.containsKey(typeName)) {
 						log.info("Table '" + typeName + "' did not exist in persistent schema, was not removed.",

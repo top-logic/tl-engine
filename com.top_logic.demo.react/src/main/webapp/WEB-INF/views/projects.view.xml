@@ -9,13 +9,15 @@
 	The <frame> declarations are nested the way the user drills down: the cockpit of a project
 	(project) is pushed from the overview, the milestone list (milestones), the notes (notes) and the
 	deliverables (deliverables) from the cockpit, the tickets of a milestone (milestone) from the milestone list, and one ticket
-	(ticket) from the tickets of its milestone. A push naming a frame that does not follow the one
-	it is displayed in is an error when that frame is built.
+	(ticket) from the tickets of its milestone, as is the ticket opened for editing (ticket-edit). A
+	push naming a frame that does not follow the one it is displayed in is an error when that frame
+	is built.
 	
 	The declarations put the drill-down path into the address bar, one route per frame:
 	project/<id> for the cockpit, milestones, notes and deliverables for the lists the cockpit tiles
 	open,
-	milestone/<id> for the tickets of a milestone and ticket/<id> for one ticket, each id the
+	milestone/<id> for the tickets of a milestone, ticket/<id> for one ticket and ticket-edit/<id> for
+	a ticket opened for editing, each id the
 	objectId of the object. The lists take their project from the cockpit frame below them (a
 	<param> naming no placeholder of the route), so the address names the project once. A ticket
 	reached through the milestone list is
@@ -86,6 +88,20 @@
 							final-title="true"
 							route="ticket/:ticket"
 							view="projects/ticket-detail.view.xml"
+						>
+							<param name="ticket"
+								expr="objectId($ticket)"
+								reverse="$value.objectResolve(`tl.demo.projectManagement:Ticket`)"
+							/>
+							<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+								expr="$ticket.get(`tl.demo.projectManagement:Ticket#title`)"
+								inputs="ticket"
+							/>
+						</frame>
+						<frame id="ticket-edit"
+							final-title="true"
+							route="ticket-edit/:ticket"
+							view="projects/ticket-edit.view.xml"
 						>
 							<param name="ticket"
 								expr="objectId($ticket)"

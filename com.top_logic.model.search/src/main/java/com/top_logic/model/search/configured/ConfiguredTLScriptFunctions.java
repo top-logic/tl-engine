@@ -128,16 +128,6 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	private volatile ConfiguredFunctionSideEffects _sideEffects;
 
 	/**
-	 * Whether {@link #initScripts()} is compiling the scripts.
-	 *
-	 * <p>
-	 * While the scripts are compiled, the {@link #_executors} do not match the published
-	 * {@link #_builders}, see {@link #isSideEffectFree(String)}.
-	 * </p>
-	 */
-	private volatile boolean _compiling;
-
-	/**
 	 * The application model the {@link #_builders scripts} and {@link #_executors executors} were
 	 * compiled against, <code>null</code> before the first call.
 	 *
@@ -169,23 +159,18 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	private void initScripts() {
 		Map<String, ConfiguredScript> builders = TypedConfigUtil.createInstanceMap(getConfig().getScripts());
 
-		_compiling = true;
-		try {
-			// The builders must be published before the scripts are compiled: a script may call
-			// configured functions, itself included (recursion), which are resolved through them.
-			_executorsNoSecurity.clear();
-			_builders = builders;
-			_factories = createFactories(builders);
+		// The builders must be published before the scripts are compiled: a script may call
+		// configured functions, itself included (recursion), which are resolved through them.
+		_executorsNoSecurity.clear();
+		_builders = builders;
+		_factories = createFactories(builders);
 
-			Map<String, QueryExecutor> executors = new HashMap<>();
-			for (Entry<String, ConfiguredScript> builder : builders.entrySet()) {
-				executors.put(builder.getKey(), createExecutor(builder.getKey(), builder.getValue()));
-			}
-			_executors = executors;
-			_sideEffects = null;
-		} finally {
-			_compiling = false;
+		Map<String, QueryExecutor> executors = new HashMap<>();
+		for (Entry<String, ConfiguredScript> builder : builders.entrySet()) {
+			executors.put(builder.getKey(), createExecutor(builder.getKey(), builder.getValue()));
 		}
+		_executors = executors;
+		_sideEffects = null;
 	}
 
 	/**
@@ -325,18 +310,14 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	 * </p>
 	 *
 	 * <p>
-	 * While the scripts are being compiled (a body may call configured functions, and the compiler
-	 * asks whether they are free of side effects), the answer is <code>false</code>: the analysis
-	 * needs the compiled bodies of all functions.
+	 * A compiled call of a configured function does not use this answer, see
+	 * {@link QueryExecutorMethod#isSideEffectFree()}.
 	 * </p>
 	 *
 	 * @return <code>false</code> for a name that is no configured function, and for a function
 	 *         whose body could not be compiled.
 	 */
 	public boolean isSideEffectFree(String functionName) {
-		if (_compiling) {
-			return false;
-		}
 		Map<String, QueryExecutor> executors = _executors;
 		ConfiguredFunctionSideEffects analysis = _sideEffects;
 		if (analysis == null || !analysis.isBasedOn(executors)) {

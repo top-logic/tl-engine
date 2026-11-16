@@ -21,6 +21,7 @@ import com.top_logic.model.search.configured.ConfiguredTLScriptFunctions;
 import com.top_logic.model.search.configured.ScriptParameter;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.compile.transform.HasSideEffects;
 import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 
@@ -135,15 +136,24 @@ public class TestConfiguredFunctionSideEffects extends AbstractSearchExpressionT
 		assertFalse(functions().isSideEffectFree("testSEFUndefined"));
 	}
 
-	private static void assertFree(String function, boolean expected) throws Exception {
+	/**
+	 * The compiler treats the call of a reading configured function as having a side effect.
+	 */
+	public void testCompilerTreatsCallOfReadingFunctionAsEffect() throws Exception {
+		assertTrue(functions().isSideEffectFree(READING));
+
+		SearchExpression call = search(READING + "(null)");
+		assertTrue(call instanceof GenericMethod);
+		assertFalse(((GenericMethod) call).isSideEffectFree());
+		assertTrue(call.visit(HasSideEffects.INSTANCE, null).booleanValue());
+
+		SearchExpression expr = search("list(" + READING + "(null)).size()");
+		assertTrue(expr.visit(HasSideEffects.INSTANCE, null).booleanValue());
+	}
+
+	private static void assertFree(String function, boolean expected) {
 		assertEquals("Side effect freedom of '" + function + "'.", expected,
 			functions().isSideEffectFree(function));
-
-		// The call of the function in a script.
-		SearchExpression call = search(function + "(null)");
-		assertTrue(call instanceof GenericMethod);
-		assertEquals("Side effect freedom of a call of '" + function + "'.", expected,
-			((GenericMethod) call).isSideEffectFree());
 	}
 
 	private static ConfiguredTLScriptFunctions<?> functions() {

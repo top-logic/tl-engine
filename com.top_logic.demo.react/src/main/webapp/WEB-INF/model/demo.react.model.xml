@@ -511,6 +511,14 @@
 							<max-upload-size value="5m"/>
 						</annotations>
 					</property>
+					<!-- An image gallery: its images are stored as objects of their own by the gallery storage. -->
+					<reference name="gallery"
+						bag="true"
+						kind="forwards"
+						multiple="true"
+						ordered="true"
+						type="tl.imagegallery:GalleryImage"
+					/>
 					<property name="attachments"
 						multiple="true"
 						ordered="true"

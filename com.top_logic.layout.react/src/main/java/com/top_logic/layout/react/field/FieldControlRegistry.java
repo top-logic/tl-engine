@@ -15,6 +15,7 @@ import com.top_logic.basic.format.configured.Formatter;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.image.gallery.GalleryImage;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -24,7 +25,7 @@ import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactFileChipsControl;
-import com.top_logic.layout.react.control.form.ReactImageFieldControl;
+import com.top_logic.layout.react.control.form.ImageValues;
 import com.top_logic.layout.react.control.form.ReactI18NStringInputControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
@@ -181,56 +182,23 @@ public class FieldControlRegistry {
 	};
 
 	/**
-	 * Edits binary values that are images as a {@link ReactImageFieldControl}: a preview of each image,
-	 * replaced by dropping or picking a file, removed by a button, and an area taking further images
-	 * while there is room for them.
-	 *
-	 * <p>
-	 * The control holds a single image and the images of a {@link FieldSpec#isMultiple() multi-valued}
-	 * field alike, so this provider {@link ReactFieldControlProvider#editsCollections() edits
-	 * collections}; the images of an {@link FieldSpec#isOrdered() ordered} field are arranged by the
-	 * user. A preview needs room, so the control is
-	 * {@link ReactFieldControlProvider#isLarge(FieldSpec) large}: where the field is
-	 * {@link FieldSpec#isCompact() compact}, a table cell for instance, the names of its images stand
-	 * for it. The files the file picker offers are the {@link FieldSpec#getAcceptedTypes() accepted
-	 * types} of the field, each up to the {@link FieldSpec#getMaxUploadSize() upload limit} of the
-	 * field.
-	 * </p>
+	 * Edits binary values that are images in an image field, see
+	 * {@link ImageFieldControlProvider}: a preview of each image file.
 	 *
 	 * <p>
 	 * It is no provider of a value type: a binary value is edited as an image where its display asks
 	 * for it.
 	 * </p>
 	 */
-	public static final ReactFieldControlProvider IMAGE = new ReactFieldControlProvider() {
-		@Override
-		public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
-			ReactImageFieldControl control =
-				new ReactImageFieldControl(context, model, field.isMultiple(), field.isOrdered());
-			if (field.getAcceptedTypes() != null) {
-				control.setAcceptedTypes(field.getAcceptedTypes());
-			}
-			if (field.getMaxUploadSize() > 0) {
-				control.setMaxUploadSize(field.getMaxUploadSize());
-			}
-			return control;
-		}
+	public static final ReactFieldControlProvider IMAGE = new ImageFieldControlProvider(ImageValues.FILES, null);
 
-		@Override
-		public boolean editsCollections() {
-			return true;
-		}
-
-		@Override
-		public boolean isLarge(FieldSpec field) {
-			return true;
-		}
-
-		@Override
-		public String previewText(FieldSpec field, Object value) {
-			return fileNames(value);
-		}
-	};
+	/**
+	 * Edits the images of a gallery in an image field, see {@link GalleryFieldControlProvider}.
+	 *
+	 * @implNote Declared before {@link #getInstance() the shared registry}, which registers it while
+	 *           being created.
+	 */
+	public static final ReactFieldControlProvider GALLERY = new GalleryFieldControlProvider();
 
 	/** Separates the previews of the values of a multi-valued field. */
 	private static final String PREVIEW_SEPARATOR = ", ";
@@ -254,6 +222,7 @@ public class FieldControlRegistry {
 		// The application type of the platform's binary datatype; a BinaryData value is covered
 		// through the supertype lookup.
 		register(BinaryDataSource.class, FILE_CHIPS);
+		register(GalleryImage.class, GALLERY);
 		// An internationalized text is edited in the current language, with the other languages
 		// reachable through the editor's dialog.
 		register(ResKey.class, new ReactFieldControlProvider() {
@@ -317,12 +286,14 @@ public class FieldControlRegistry {
 	 *
 	 * <p>
 	 * Falls back to editing the value as {@link #TEXT text} when no provider is registered for its
-	 * type, so an unforeseen type is still displayed.
+	 * type, or the one registered does not {@link ReactFieldControlProvider#appliesTo(FieldSpec)
+	 * apply} to the field, so an unforeseen type is still displayed.
 	 * </p>
 	 */
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
 		ReactFieldControlProvider provider = lookup(field.getValueType());
-		return createControl(context, field, model, provider == null ? TEXT : provider);
+		boolean applies = provider != null && provider.appliesTo(field);
+		return createControl(context, field, model, applies ? provider : TEXT);
 	}
 
 	/**

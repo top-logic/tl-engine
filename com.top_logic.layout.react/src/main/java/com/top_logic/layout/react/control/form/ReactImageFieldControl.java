@@ -18,7 +18,6 @@ import jakarta.servlet.http.Part;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DataProvider;
@@ -47,8 +46,10 @@ import de.haumacher.msgbuf.data.DataObject;
  * </p>
  *
  * <p>
- * The field model holds a {@link BinaryDataSource} for a single image, the collection of them for
- * several; <code>null</code> and the empty collection both mean no image. The images never enter
+ * The field model holds a single value for a single image, the collection of them for several;
+ * <code>null</code> and the empty collection both mean no image. What a value is - the image file
+ * itself, an image of a gallery - its {@link ImageValues} say: the image a value shows, and the value
+ * an uploaded file becomes. The images never enter
  * the client state: the control serves the data endpoint as a {@link DataProvider}, delivering the
  * image of the tile whose key is requested, and the upload endpoint as an {@link UploadHandler},
  * taking every {@link UploadSupport#FILE_PART file part} of the request. An upload carrying a
@@ -106,6 +107,8 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 	/** Tile property for the name of the image file. */
 	public static final String IMAGE_NAME = "name";
 
+	private final ImageValues _imageValues;
+
 	private final boolean _multiple;
 
 	private final boolean _ordered;
@@ -127,15 +130,19 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
 	 * @param model
-	 *        Holds a single {@link BinaryDataSource}, or the collection of them if the field holds
-	 *        several images.
+	 *        Holds a single value, or the collection of them if the field holds several images.
+	 * @param imageValues
+	 *        What the values of the field are: the image each of them shows, the value an uploaded
+	 *        file becomes.
 	 * @param multiple
 	 *        Whether the field holds several images rather than one.
 	 * @param ordered
 	 *        Whether the user arranges the order of several images; ignored for a single image.
 	 */
-	public ReactImageFieldControl(ReactContext context, FieldModel model, boolean multiple, boolean ordered) {
+	public ReactImageFieldControl(ReactContext context, FieldModel model, ImageValues imageValues, boolean multiple,
+			boolean ordered) {
 		super(context, model, REACT_MODULE);
+		_imageValues = imageValues;
 		_multiple = multiple;
 		_ordered = multiple && ordered;
 		// The images are displayed as previews; the value itself is nothing the client draws.
@@ -232,18 +239,18 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 	}
 
 	/**
-	 * The images the given field value holds, in their order.
+	 * The values of the given field value that show an image, in their order.
 	 */
-	private static List<Object> images(Object value) {
+	private List<Object> images(Object value) {
 		List<Object> result = ListElementFieldModel.elementsOfValue(value);
-		result.removeIf(element -> !(element instanceof BinaryDataSource));
+		result.removeIf(element -> _imageValues.imageOf(element) == null);
 		return result;
 	}
 
-	private static Map<String, Object> tile(String key, Object value) {
+	private Map<String, Object> tile(String key, Object value) {
 		Map<String, Object> tile = new LinkedHashMap<>();
 		tile.put(IMAGE_KEY, key);
-		tile.put(IMAGE_NAME, ((BinaryDataSource) value).getName());
+		tile.put(IMAGE_NAME, _imageValues.imageOf(value).getName());
 		return tile;
 	}
 
@@ -253,11 +260,11 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 		if (index < 0) {
 			return null;
 		}
-		return BinaryData.cast(_values.get(index));
+		return BinaryData.cast(_imageValues.imageOf(_values.get(index)));
 	}
 
 	/**
-	 * Takes the uploaded files into the value.
+	 * Takes the uploaded files into the value, each as the value its {@link ImageValues} make of it.
 	 *
 	 * <p>
 	 * A file uploaded for the tile a {@link #REPLACE_PART} names replaces the image of that tile. A
@@ -290,15 +297,17 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 			return null;
 		}
 		if (!_multiple) {
-			getFieldModel().setValue(files.get(0));
+			getFieldModel().setValue(_imageValues.valueOf(files.get(0)));
 			return null;
 		}
 		List<Object> values = new ArrayList<>(_values);
 		int replaced = replacedKey == null ? -1 : _keys.indexOf(replacedKey);
 		if (replaced >= 0) {
-			values.set(replaced, files.get(0));
+			values.set(replaced, _imageValues.valueOf(files.get(0)));
 		} else {
-			values.addAll(files);
+			for (BinaryData file : files) {
+				values.add(_imageValues.valueOf(file));
+			}
 		}
 		getFieldModel().setValue(values);
 		return null;

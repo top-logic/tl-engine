@@ -297,10 +297,28 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	}
 
 	/**
-	 * The configured {@link ReactFieldControlProvider} for the given type, or {@code null}.
+	 * The {@link ReactFieldControlProvider} configured for the given type, or {@code null} if none is
+	 * configured or the configured one does not {@link ReactFieldControlProvider#appliesTo(FieldSpec)
+	 * apply} to the given field.
+	 *
+	 * @param field
+	 *        The field holding values of the given type; its multiplicity and order decide whether
+	 *        the configured provider applies.
 	 */
-	private ReactFieldControlProvider byType(TLType type) {
-		return _providerByQualifiedType.get(TLModelUtil.qualifiedName(type));
+	private ReactFieldControlProvider byType(TLType type, FieldSpec field) {
+		ReactFieldControlProvider provider = _providerByQualifiedType.get(TLModelUtil.qualifiedName(type));
+		return provider != null && provider.appliesTo(field) ? provider : null;
+	}
+
+	/**
+	 * The shape of the values of the given attribute - their type, their multiplicity and their
+	 * order -, enough to tell whether a provider {@link ReactFieldControlProvider#appliesTo(FieldSpec)
+	 * applies} to a field of the attribute.
+	 */
+	private static FieldSpec shapeOf(TLStructuredTypePart part) {
+		return FieldSpec.of(valueType(part.getType()), null)
+			.setMultiple(part.isMultiple())
+			.setOrdered(part.isOrdered());
 	}
 
 	/**
@@ -544,7 +562,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		}
 
 		// 3. Configured control by type.
-		ReactFieldControlProvider mapped = byType(type);
+		ReactFieldControlProvider mapped = byType(type, field);
 		if (mapped != null) {
 			return createControl(context, field, model, mapped);
 		}
@@ -1351,7 +1369,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        Whether the field holds a collection of values rather than a single one.
 	 */
 	private AbstractFieldModel displayModel(TLType type, boolean multiple, Object value) {
-		return displayModel(isSelectType(type), multiple, value);
+		return displayModel(isSelectType(type, FieldSpec.of(valueType(type), null).setMultiple(multiple)), multiple,
+			value);
 	}
 
 	/**
@@ -1381,15 +1400,19 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	private boolean displaysPartsAsSelection(TLStructuredTypePart part) {
 		return AttributeOptions.isComposition(part)
 			&& part.getAnnotation(TLInputControl.class) == null
-			&& isSelectType(part.getType());
+			&& isSelectType(part.getType(), shapeOf(part));
 	}
 
 	/**
 	 * Whether values of the given type are chosen from options: the control configured for the type
 	 * is a select, or, where none is configured, the type's structure says so.
+	 *
+	 * @param field
+	 *        The field holding values of the given type, see
+	 *        {@link #byType(TLType, FieldSpec)}.
 	 */
-	private boolean isSelectType(TLType type) {
-		ReactFieldControlProvider mapped = byType(type);
+	private boolean isSelectType(TLType type, FieldSpec field) {
+		ReactFieldControlProvider mapped = byType(type, field);
 		return mapped != null ? mapped instanceof SelectControlProvider : AttributeOptions.isStructuralSelect(type);
 	}
 
@@ -1610,7 +1633,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		if (hasFreeEntry(part)) {
 			return _selectProvider;
 		}
-		return byType(part.getType());
+		return byType(part.getType(), shapeOf(part));
 	}
 
 	/**

@@ -23,7 +23,7 @@ import com.top_logic.common.json.gstream.JsonWriter;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public interface JsonValueBinding<T> extends ConfigurationValueCheck<T> {
+public interface JsonValueBinding<T> extends ConfigurationValueCheck<T>, JsonSchemaProvider {
 
 	/**
 	 * Reads a configuration item from the given reader.
@@ -68,6 +68,7 @@ public interface JsonValueBinding<T> extends ConfigurationValueCheck<T> {
 	 *        The {@link PropertyDescriptor} to build the schema for.
 	 * @return The JSON Schema describing the value format of this binding.
 	 */
+	@Override
 	default Schema buildSchema(PropertyDescriptor property) {
 		return TrueSchema.create();
 	}

@@ -624,7 +624,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 * This single capability check is the only place filter kinds are distinguished.
 	 * </p>
 	 */
-	private static ColumnBinding binding(InstantiationContext context,
+	static ColumnBinding binding(InstantiationContext context,
 			PolymorphicConfiguration<? extends ColumnFilter<?>> filterConfig) {
 		if (filterConfig == null) {
 			return ColumnBinding.TYPE_DERIVED;

@@ -17,6 +17,7 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -36,6 +37,7 @@ import com.top_logic.table.TableViewState;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests that a {@link TableViewControl} pushes a change of the selection as the selection state
@@ -109,6 +111,12 @@ public class TestTableSelectionState extends TestCase {
 	/** Whether the selection listener refuses the next change. */
 	private boolean _veto;
 
+	/** What the selection listener refuses the next change with, {@code null} for nothing. */
+	private RuntimeException _refusal;
+
+	/** For each change the listener was told about, whether the user made it. */
+	private List<Boolean> _byUser;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -123,7 +131,12 @@ public class TestTableSelectionState extends TestCase {
 		TableViewState state = DefaultTableView.initialState(columns(), SortSpec.NONE, List.of());
 		state.setSelection(Selection.none(SelectionMode.MULTI));
 		_table = new TestTable(context, new DefaultTableView<>(columns(), rows, state));
+		_byUser = new ArrayList<>();
 		_table.addSelectionListener(selectedKeys -> {
+			_byUser.add(Boolean.valueOf(_table.isUserSelectionChange()));
+			if (_refusal != null) {
+				throw _refusal;
+			}
 			if (_veto) {
 				throw new ChannelVetoException(List.<StateHandler> of(), () -> {
 					// Nothing to retry.
@@ -254,6 +267,50 @@ public class TestTableSelectionState extends TestCase {
 		assertNoRows();
 		assertSelectedRows(3);
 		assertEquals(Integer.valueOf(3), _table.clientState(CURSOR_INDEX));
+	}
+
+	/**
+	 * Tests that a selection change refused with a {@link TopLogicException} - a reason why the
+	 * selection must stay, which nobody retries - leaves the selection, the cursor and the client
+	 * state as they were.
+	 */
+	public void testRefusalKeepsTheSelectionState() {
+		click(3, false, false);
+		_table.clearPushed();
+		TopLogicException refusal = new TopLogicException(ResKey.text("refused"));
+		_refusal = refusal;
+
+		try {
+			click(5, false, false);
+			fail("Expected the refusal.");
+		} catch (TopLogicException ex) {
+			assertSame(refusal, ex);
+		}
+
+		assertEquals(Set.of(name(3)), _table.getSelectedKeys());
+		assertNoRows();
+		assertSelectedRows(3);
+		assertEquals(Integer.valueOf(3), _table.clientState(CURSOR_INDEX));
+
+		// The refused change is not restored by a later accepted one.
+		_refusal = null;
+		click(6, false, false);
+		assertSelectedRows(6);
+		assertEquals(Integer.valueOf(6), _table.clientState(CURSOR_INDEX));
+	}
+
+	/**
+	 * Tests that the listeners learn whether the user made a change: a click is the user's, a
+	 * selection the server sets is not.
+	 */
+	public void testUserSelectionChange() {
+		assertFalse("Outside a notification.", _table.isUserSelectionChange());
+
+		click(3, false, false);
+		_table.selectRows(List.of(name(7)));
+
+		assertEquals(List.of(Boolean.TRUE, Boolean.FALSE), _byUser);
+		assertFalse("Outside a notification.", _table.isUserSelectionChange());
 	}
 
 	private void click(int rowIndex, boolean ctrl, boolean shift) {

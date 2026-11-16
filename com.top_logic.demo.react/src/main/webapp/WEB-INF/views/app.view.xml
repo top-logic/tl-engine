@@ -377,6 +377,15 @@
 							<de>Bilder</de>
 						</label>
 					</nav-item>
+					<nav-item id="symbols"
+						icon="css:bi bi-bookmark-star"
+					>
+						<view-ref view="demo/symbols-demo.view.xml"/>
+						<label>
+							<en>Icons from pictures</en>
+							<de>Icons aus Bildern</de>
+						</label>
+					</nav-item>
 					<nav-item id="long-job"
 						icon="css:bi bi-hourglass-split"
 					>

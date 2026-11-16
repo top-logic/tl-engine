@@ -35,7 +35,6 @@ import com.top_logic.react.flow.data.DropRegion;
 import com.top_logic.react.flow.data.MouseButton;
 import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.model.Drawable;
-import com.top_logic.react.flow.svg.RenderContext;
 import com.top_logic.react.flow.svg.SvgWriter;
 import com.top_logic.react.flow.svg.event.SVGDropEvent;
 
@@ -53,6 +52,7 @@ import elemental2.dom.DragEvent;
 import elemental2.dom.Element;
 import elemental2.dom.Event;
 import elemental2.dom.EventListener;
+import elemental2.dom.FontFaceSet;
 import elemental2.dom.HTMLDivElement;
 import elemental2.dom.Image;
 import elemental2.dom.KeyboardEvent;
@@ -103,6 +103,21 @@ public class FlowDiagramClientControl implements DiagramContext {
 	/** State key the server sends a patch of its changes to the displayed diagram with. */
 	private static final String DIAGRAM_PATCH_STATE = "diagramPatch";
 
+	/**
+	 * Event the browser fires on {@link elemental2.dom.Document#fonts} when the fonts requested so
+	 * far have been loaded.
+	 */
+	private static final String FONTS_LOADING_DONE_EVENT = "loadingdone";
+
+	/** {@link FontFaceSet#getStatus()} when no font is being loaded. */
+	private static final String FONTS_STATUS_LOADED = "loaded";
+
+	/** CSS class of the element showing the zoom level while the user zooms. */
+	private static final String ZOOM_DISPLAY_CSS_CLASS = "zoomDisplay";
+
+	/** CSS class hiding the {@link #ZOOM_DISPLAY_CSS_CLASS zoom display}. */
+	private static final String INVISIBLE_CSS_CLASS = "invisible";
+
 	private class Scope extends DefaultScope {
 
 		private double _changeTimeout;
@@ -139,7 +154,23 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	private OMSVGSVGElement _svg;
 
-	private RenderContext _renderContext = new JSRenderContext();
+	private JSRenderContext _renderContext;
+
+	/**
+	 * Lays the diagram out again after web fonts have been loaded.
+	 *
+	 * @see #setupFontLoadListener()
+	 */
+	private EventListener _fontsLoaded;
+
+	/** Whether a layout for loaded fonts is scheduled to run after the current event. */
+	private boolean _fontRelayoutScheduled;
+
+	/**
+	 * Whether fonts were loaded while a gesture of the {@link DragHandler} was active, so that the
+	 * diagram still has to be measured and laid out again.
+	 */
+	private boolean _fontRelayoutPending;
 
 	private Scope _scope;
 
@@ -251,6 +282,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	private void init(HTMLDivElement container, String diagramJson) {
 		_control = container;
+		_renderContext = new JSRenderContext(container);
 
 		_svgDoc = OMSVGParser.currentDocument();
 
@@ -268,13 +300,13 @@ public class FlowDiagramClientControl implements DiagramContext {
 		((Element) _control).setAttribute("draggable", "true");
 
 		_zoomDisplay = (HTMLDivElement) DomGlobal.document.createElement("div");
-		_zoomDisplay.classList.add("zoomDisplay");
+		_zoomDisplay.classList.add(ZOOM_DISPLAY_CSS_CLASS, INVISIBLE_CSS_CLASS);
 		_control.appendChild(_zoomDisplay);
 
 		_hideZoomDisplay = new Timer() {
 			@Override
 			public void run() {
-				_zoomDisplay.classList.add("invisible");
+				_zoomDisplay.classList.add(INVISIBLE_CSS_CLASS);
 			}
 		};
 
@@ -284,6 +316,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 		setupEventListeners();
 		setupResizeObserver();
+		setupFontLoadListener();
 		subscribeToServerUpdates();
 	}
 
@@ -341,7 +374,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 				diagram.setViewBoxHeight(viewBox[3]);
 
 				_scope = scope;
-				diagram.draw(svgBuilder());
+				diagram.draw(svgBuilder(), _renderContext, null);
 
 				// Drop layout-induced scope changes so they don't trigger an update command.
 				_scope.dropChanges();
@@ -350,7 +383,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 				_diagram = diagram;
 
 				_viewbox = _svg.getViewBox().getBaseVal();
-				calcZoomLevel();
+				calcZoomLevel(false);
 
 				Element selectedPart = _control.querySelector(".tlSelected");
 				if (selectedPart != null && !diagram.isFixedView()) {
@@ -372,6 +405,8 @@ public class FlowDiagramClientControl implements DiagramContext {
 	 * </p>
 	 */
 	private void layoutDiagram(Diagram diagram) {
+		_fontRelayoutPending = false;
+		_renderContext.updateDefaultFont();
 		diagram.layout(_renderContext, availableSpace(_controlW), availableSpace(_controlH));
 	}
 
@@ -582,7 +617,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 					if (zL < 100) {
 						factor = factor * 2;
 					}
-					zoomSVG(factor, event.offsetX, event.offsetY);
+					zoomSVG(factor, event.offsetX, event.offsetY, true);
 				} else if (event.shiftKey) {
 					double scrollFactor = getWheelScrollFactor(evt);
 					double deltaX = event.deltaY * scrollFactor;
@@ -604,7 +639,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 			public void handleEvent(Event evt) {
 				KeyboardEvent event = (KeyboardEvent) evt;
 				if (event.key == "0" && event.ctrlKey) {
-					zoomSVG(1, 0, 0);
+					zoomSVG(1, 0, 0, true);
 				}
 			}
 		};
@@ -768,6 +803,62 @@ public class FlowDiagramClientControl implements DiagramContext {
 		_svg.insertBefore(style, _svg.getFirstChild());
 	}
 
+	/**
+	 * Lays the diagram out again whenever web fonts finish loading.
+	 *
+	 * <p>
+	 * Text is measured in the font it is drawn with. While a web font is still loading, the browser
+	 * measures in a fallback font, so a layout made before the font was available reserves the
+	 * wrong space for its text. When fonts are still loading at the first layout, the diagram is
+	 * laid out again as soon as they are ready; fonts requested later (e.g. by text drawn in a font
+	 * not used so far) cause a new layout when they have been loaded.
+	 * </p>
+	 */
+	private void setupFontLoadListener() {
+		FontFaceSet fonts = DomGlobal.document.fonts;
+		if (fonts == null) {
+			return;
+		}
+
+		_fontsLoaded = evt -> scheduleFontRelayout();
+		fonts.addEventListener(FONTS_LOADING_DONE_EVENT, _fontsLoaded);
+
+		if (!FONTS_STATUS_LOADED.equals(fonts.getStatus())) {
+			fonts.getReady().then(ready -> {
+				scheduleFontRelayout();
+				return null;
+			});
+		}
+	}
+
+	/**
+	 * Schedules a single new layout for fonts that have been loaded.
+	 *
+	 * <p>
+	 * The end of a font load is reported both by the {@link #FONTS_LOADING_DONE_EVENT} and by the
+	 * fulfilled {@link FontFaceSet#getReady()} promise, both are answered by one layout.
+	 * </p>
+	 */
+	private void scheduleFontRelayout() {
+		if (_fontRelayoutScheduled) {
+			return;
+		}
+		_fontRelayoutScheduled = true;
+		DomGlobal.setTimeout(args -> {
+			_fontRelayoutScheduled = false;
+			if (!DomGlobal.document.contains(_control)) {
+				return;
+			}
+			if (_dragHandler != null && _dragHandler.isActive()) {
+				// The drag works on the current drawing, it is laid out again when the gesture
+				// ends.
+				_fontRelayoutPending = true;
+				return;
+			}
+			relayout();
+		}, 0);
+	}
+
 	private void setupResizeObserver() {
 		ResizeObserverCallback resize = new ResizeObserverCallback() {
 			@Override
@@ -807,12 +898,14 @@ public class FlowDiagramClientControl implements DiagramContext {
 	}
 
 	/**
-	 * Lays the diagram out for a size change of the control that happened while a gesture of the
-	 * {@link DragHandler} was in progress.
+	 * Lays the diagram out for a size change of the control or for fonts loaded while a gesture of
+	 * the {@link DragHandler} was in progress.
 	 */
 	private void applyPendingResize() {
 		if (_resizePending) {
 			onResize();
+		} else if (_fontRelayoutPending) {
+			relayout();
 		}
 	}
 
@@ -869,7 +962,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 				calcZoomLevel(false);
 			} else {
 				// Adapts the view box to the new size first, the layout then uses that size.
-				zoomSVG(0, 0, 0);
+				zoomSVG(0, 0, 0, false);
 				relayout();
 			}
 		} finally {
@@ -964,10 +1057,6 @@ public class FlowDiagramClientControl implements DiagramContext {
 		panSVG(deltaX, deltaY, true);
 	}
 
-	private void calcZoomLevel() {
-		calcZoomLevel(true);
-	}
-
 	/**
 	 * Computes the {@link #_zoomLevel} from the current view box.
 	 *
@@ -997,7 +1086,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 		}
 
 		_zoomDisplay.textContent = "Zoom: " + _zoomLevel + "%";
-		_zoomDisplay.classList.remove("invisible");
+		_zoomDisplay.classList.remove(INVISIBLE_CSS_CLASS);
 
 		_hideZoomDisplay.cancel();
 		_hideZoomDisplay.schedule(5 * 1000);
@@ -1056,7 +1145,18 @@ public class FlowDiagramClientControl implements DiagramContext {
 		updateServerViewbox();
 	}
 
-	void zoomSVG(double zoomFactor, double mouseX, double mouseY) {
+	/**
+	 * Changes the size of the view box by the given zoom factor around the given mouse position.
+	 *
+	 * @param zoomFactor
+	 *        The fraction of the control size by which the view box shrinks (grows, if negative);
+	 *        0 adapts the view box to a changed control size only, 1 or more resets it to the
+	 *        control size.
+	 * @param showZoomLevel
+	 *        Whether to show the resulting zoom level to the user for a moment: for a zoom gesture
+	 *        of the user, not for an adaption to a changed control size.
+	 */
+	void zoomSVG(double zoomFactor, double mouseX, double mouseY, boolean showZoomLevel) {
 		if (_viewbox == null || isFixedView()) {
 			return;
 		}
@@ -1064,7 +1164,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 		if (zoomFactor >= 1) {
 			_viewbox.setWidth(_controlW);
 			_viewbox.setHeight(_controlH);
-			calcZoomLevel();
+			calcZoomLevel(showZoomLevel);
 			panSVG(-_viewbox.getX(), -_viewbox.getY(), true);
 		} else {
 			float factor = (float) getFactor();
@@ -1107,7 +1207,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 			_viewbox.setWidth(newVBW);
 			_viewbox.setHeight(newVBH);
 
-			calcZoomLevel();
+			calcZoomLevel(showZoomLevel);
 
 			double deltaX = mouseX * zoomFactor;
 			double deltaY = mouseY * zoomFactor;
@@ -1154,7 +1254,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 		// Clear all SVG children and re-draw.
 		clearSvg();
 
-		_diagram.draw(svgBuilder());
+		_diagram.draw(svgBuilder(), _renderContext, null);
 
 		// Drawing writes the view box stored in the model.
 		_viewbox.setX(vbX);
@@ -1209,6 +1309,13 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	private void applyScopeChanges(Collection<? extends SharedGraphNode> dirtyNodes) {
 		SvgWriter updateWriter = new SVGBuilder(_svgDoc, _svg) {
+
+			@Override
+			protected void linkModel(OMSVGElement svgElement, Object model) {
+				// A sub-widget not found in the DOM is drawn anew and needs an ID and its widget,
+				// like in a full draw.
+				link(svgElement, model);
+			}
 
 			/** Cache of OMSVGElement wrappers detached during update. */
 			private Map<String, OMSVGElement> _idCache = null;
@@ -1352,10 +1459,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 		SVGBuilder builder = new SVGBuilder(_svgDoc, _svg) {
 			@Override
 			protected void linkModel(OMSVGElement svgElement, Object model) {
-				String id = _nextId.createId();
-				svgElement.setId(id);
-				((Widget) model).setClientId(id);
-				attachWidget(svgElement.getElement(), model);
+				link(svgElement, model);
 			}
 
 		};
@@ -1364,6 +1468,17 @@ public class FlowDiagramClientControl implements DiagramContext {
 			onChange();
 		});
 		return builder;
+	}
+
+	/**
+	 * Gives a drawn element of a model widget a new ID, stores it as client ID of the widget, and
+	 * attaches the widget to the element, so that events on the element find the widget.
+	 */
+	private void link(OMSVGElement svgElement, Object model) {
+		String id = _nextId.createId();
+		svgElement.setId(id);
+		((Widget) model).setClientId(id);
+		attachWidget(svgElement.getElement(), model);
 	}
 
 	/**
@@ -1449,6 +1564,10 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 		if (_observer != null) {
 			_observer.disconnect();
+		}
+
+		if (_fontsLoaded != null && DomGlobal.document.fonts != null) {
+			DomGlobal.document.fonts.removeEventListener(FONTS_LOADING_DONE_EVENT, _fontsLoaded);
 		}
 
 		if (_hideZoomDisplay != null) {

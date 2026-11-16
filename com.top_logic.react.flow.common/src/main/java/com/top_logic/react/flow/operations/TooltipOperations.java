@@ -5,7 +5,6 @@
  */
 package com.top_logic.react.flow.operations;
 
-import com.top_logic.basic.shared.html.TagUtilShared;
 import com.top_logic.react.flow.svg.RenderContext;
 import com.top_logic.react.flow.svg.SvgWriter;
 import com.top_logic.react.flow.data.Tooltip;
@@ -15,8 +14,30 @@ import com.top_logic.react.flow.data.Tooltip;
  */
 public interface TooltipOperations extends DecorationOperations {
 
+	/**
+	 * Attribute declaring the tooltip of a drawn element, interpreted by the tooltip host of the
+	 * React UI.
+	 */
+	String TOOLTIP_ATTR = "data-tooltip";
+
+	/**
+	 * Prefix of a {@link #TOOLTIP_ATTR} value whose rest is the plain text to show.
+	 */
+	String TEXT_TOOLTIP_PREFIX = "text:";
+
 	@Override
 	Tooltip self();
+
+	/**
+	 * Declares the given plain text as tooltip of the element currently written.
+	 *
+	 * <p>
+	 * Must be called after opening an element and before writing its content.
+	 * </p>
+	 */
+	static void writeTextTooltip(SvgWriter out, String text) {
+		out.writeAttribute(TOOLTIP_ATTR, TEXT_TOOLTIP_PREFIX + text);
+	}
 
 	@Override
 	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
@@ -34,14 +55,7 @@ public interface TooltipOperations extends DecorationOperations {
 		out.attachModel(self());
 		out.writeCssClass(self().getCssClass());
 
-		// Tooltip template for the poor. This is rendered on the client where TL tools are not
-		// available.
-		StringBuilder buffer = new StringBuilder();
-		buffer.append("<div class=\"tooltipContent\">");
-		TagUtilShared.writeAttributeText(buffer, self().getText());
-		buffer.append("</div>");
-
-		out.writeAttribute(/* HTMLConstants.TL_TOOLTIP_ATTR */ "data-tooltip", buffer.toString());
+		writeTextTooltip(out, self().getText());
 		{
 			DecorationOperations.super.draw(out);
 		}

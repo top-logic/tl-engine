@@ -18,6 +18,7 @@ import com.top_logic.layout.react.routing.RouteSegment;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.tiles.TileLabelProvider;
 
 /**
@@ -39,9 +40,10 @@ import com.top_logic.layout.view.tiles.TileLabelProvider;
  *
  * <p>
  * A binding with a {@link ParamBindingConfig#getLabel() label} names the page by it while it
- * contributes its segment. The label follows the channels it is computed from for as long as the
- * participant has route change listeners - while it is registered with the route manager of a
- * display, that is - so that the page title changes with them.
+ * contributes its segment. The label follows the channels it is computed from, the objects these
+ * channels hold and the objects of its {@link TileLabelProvider#observedTypes() observed types} for
+ * as long as the participant has route change listeners - while it is registered with the route
+ * manager of a display, that is - so that the page title changes with them.
  * </p>
  */
 public class ParamBindingParticipant implements RoutingParticipant {
@@ -65,6 +67,12 @@ public class ParamBindingParticipant implements RoutingParticipant {
 	 * listeners.
 	 */
 	private final List<Registration> _labelRegistrations = new ArrayList<>();
+
+	/**
+	 * The observation of the objects the label is computed from, attached while the participant has
+	 * listeners; {@code null} before the first listener, and for a binding without label.
+	 */
+	private ChannelObjectObserver _labelObserver;
 
 	/**
 	 * Creates a new {@link ParamBindingParticipant} whose route is the value segment alone.
@@ -273,13 +281,23 @@ public class ParamBindingParticipant implements RoutingParticipant {
 		}
 	}
 
+	/**
+	 * Follows the channels the label is computed from - a new value on one of them - and the
+	 * objects it reads - a change of one of the objects these channels hold, or of an object of an
+	 * observed type.
+	 */
 	private void observeLabel() {
 		if (_label == null) {
 			return;
 		}
-		for (ViewChannel input : _label.observedChannels(_labelContext)) {
+		List<ViewChannel> inputs = _label.observedChannels(_labelContext);
+		for (ViewChannel input : inputs) {
 			_labelRegistrations.add(input.addListener((sender, oldValue, newValue) -> onLabelInputChange()));
 		}
+		if (_labelObserver == null) {
+			_labelObserver = new ChannelObjectObserver(inputs, _label.observedTypes(), this::onLabelInputChange);
+		}
+		_labelObserver.attach(_labelContext.getModelScope());
 	}
 
 	private void unobserveLabel() {
@@ -287,6 +305,9 @@ public class ParamBindingParticipant implements RoutingParticipant {
 			registration.dispose();
 		}
 		_labelRegistrations.clear();
+		if (_labelObserver != null) {
+			_labelObserver.detach();
+		}
 	}
 
 	/**

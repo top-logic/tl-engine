@@ -186,6 +186,18 @@
 							<group-with-name name="demoTypeAdministrators"/>
 						</singleton-rule>
 
+						<!--
+							A demo administrator creates the plain demo objects, which no composition holds:
+							their creation is decided on the security root.
+						-->
+						<singleton-rule
+							id="AdministratorOnSecurityRoot"
+							role="DemoTypes.Administrator"
+							target="SecurityStructure#ROOT"
+						>
+							<group-with-name name="demoTypeAdministrators"/>
+						</singleton-rule>
+
 						<singleton-rule
 							id="BAdministrator"
 							role="DemoTypes.BAdministrator"

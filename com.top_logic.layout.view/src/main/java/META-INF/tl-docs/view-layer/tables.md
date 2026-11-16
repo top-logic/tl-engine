@@ -86,6 +86,20 @@ This is no choice of the user, unlike `visible="false"` / `column-visible`, whic
 
 The condition travels as `ColumnSetup#exists()` (a `ChannelCondition`); the table element evaluates the conditions of all columns before the first state is sent (`ColumnExistence`), and follows their channels until the control is disposed, handing the absent columns to `TableViewControl#setAbsentColumns`.
 
+## Column alignment
+
+Numeric model attributes align to the end of the cell automatically, so digits line up. Dates stay at the start, and so do attributes with multiple values. A column declaration overrides this with `align="start"` or `align="end"` (`align` of the column configuration):
+
+```xml
+<table>
+  <columns>
+    <column attribute="name"/>
+    <column attribute="amount" align="end"/>
+    <column attribute="zipCode" align="start"/>
+  </columns>
+</table>
+```
+
 ## Selecting rows and nodes
 
 A `<table>` and a `<tree>` write what the user selects to the channel named by `selection`, and `selection-mode` says how much may be selected at a time — `single` (the default) or `multi`:

@@ -28,6 +28,8 @@ import com.top_logic.model.annotate.ui.ValueColor;
  * @param pinnedEnd
  *        Whether this column {@link Column#pinnedEnd() keeps its place} at the end of the
  *        table.
+ * @param alignment
+ *        The side of its cells this column {@link Column#alignment() puts its content on}.
  * @param cssClass
  *        The {@link Column#cssClass() CSS class} every cell of this column carries, or
  *        {@code null} for none.
@@ -52,6 +54,7 @@ public record ColumnView(
 		boolean filterable,
 		boolean frozen,
 		boolean pinnedEnd,
+		ColumnAlignment alignment,
 		String cssClass,
 		String headerClass,
 		ValueColor headerRole,

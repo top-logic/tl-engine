@@ -36,6 +36,45 @@ public abstract class CommaSeparatedListValueProvider<T> extends ListConfigValue
 	}
 
 	/**
+	 * Parses a single element of the list, given on its own, e.g. as element of a JSON array.
+	 *
+	 * @param propertyName
+	 *        The name of the property.
+	 * @param elementValue
+	 *        The serialized form of one element.
+	 * @return The element.
+	 * @throws ConfigurationException
+	 *         When parsing fails.
+	 */
+	public final T getElementValue(String propertyName, CharSequence elementValue) throws ConfigurationException {
+		return parseSingleValue(propertyName, elementValue, elementValue.toString());
+	}
+
+	/**
+	 * The serialized form of a single element of the list.
+	 *
+	 * @param element
+	 *        An element of a value of this format.
+	 * @return The form {@link #getElementValue(String, CharSequence)} reads back.
+	 */
+	public final String getElementSpecification(T element) {
+		return formatSingleValue(element);
+	}
+
+	/**
+	 * The format of a single element, if the elements are parsed by a format of their own.
+	 *
+	 * <p>
+	 * A JSON schema of the list describes its elements as this format describes its values.
+	 * </p>
+	 *
+	 * @return The element format, {@code null} if the elements have no format of their own.
+	 */
+	public ConfigurationValueProvider<T> getElementFormat() {
+		return null;
+	}
+
+	/**
 	 * Parses a single value of the serialized set.
 	 * 
 	 * @param propertyName

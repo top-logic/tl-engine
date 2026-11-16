@@ -37,6 +37,13 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    <!-- The schema setups of the knowledge base tests. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-basic-db-schema</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-core</artifactId>

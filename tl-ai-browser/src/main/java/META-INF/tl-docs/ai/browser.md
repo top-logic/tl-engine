@@ -26,6 +26,7 @@ That is all the configuration it needs. The module's `tl-ai-browser.conf.config.
 | the tool factory `web-browser` with the tools `browserNavigate`, `browserSnapshot`, `browserClick`, `browserType`, `browserBack`, `browserScreenshot`, `browserSaveCookies`, `browserUseCookies` | `ToolRegistryService` |
 | the skill `TL_webBrowser`, which carries the browser tools and `view-document.viewDocument`, and gives it to the shipped chat agent `TL_SingleAgent` beside `TL_webAccess` | `TopLogicAgentDefinitions` |
 | the model `tl.ai.cookiepool` and its table `CookiePool` | `ModelService`, `ApplicationTypes` |
+| the migration module `tl-ai-browser` (`WEB-INF/kbase/migration/tl-ai-browser/`) | `MigrationService` |
 
 An application's own agent gets the browser with `<skill name="TL_webBrowser"/>` in its `<skills>`, the same way it names `TL_webAccess` for `webFetch` and `webSearch`.
 
@@ -49,7 +50,7 @@ The installation's domain lists compose with the per-role browsing policy of `We
 
 ## Cookie pools
 
-`browserSaveCookies(pool)` stores the browser's login state under a name, `browserUseCookies(pool)` starts a later session from it. A pool is a `tl.ai.cookiepool:CookiePool`, private to the account that saved it unless it was saved as shared. The state is encrypted at rest through the platform `EncryptionService`; without an installed encryption key, saving is refused rather than stored in plain text.
+`browserSaveCookies(pool)` stores the browser's login state under a name, `browserUseCookies(pool)` starts a later session from it. A pool is a `tl.ai.cookiepool:CookiePool`, private to the account that saved it unless it was saved as shared. The state is encrypted at rest through the platform `EncryptionService`; without an installed encryption key, saving is refused rather than stored in plain text. The table `CookiePool` is unversioned: a pool has no history, and the regular cleanup of unversioned types removes the rows of a former state, so no outdated login state stays in the database.
 
 Reading the stored state through `viewDocument` follows the read policy of `tl-ai-browser.binarySecurity.config.xml`: the owner and administrators, see [administration](doc:ai/security/administration). Selecting a shared pool to drive a browser with is not reading it, and is open to every account.
 

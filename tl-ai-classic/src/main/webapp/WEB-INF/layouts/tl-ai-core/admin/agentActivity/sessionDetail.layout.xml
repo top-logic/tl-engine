@@ -5,8 +5,8 @@
 	hidden rather than merely guarded by a command group - the attributes here are written by
 	AgentExecutionStore and a hand-edited lastUpdated would be a lie about what the agent did.
 	
-	memory and metadata hold JSON and are collapsed for that reason: in the daily case they are
-	noise, and whoever needs them opens the group.
+	metadata holds JSON and is collapsed for that reason: in the daily case it is noise, and
+	whoever needs it opens the group.
 	
 	Neither "title" nor "status" is a field here. The title is what displayName already shows when
 	there is one, so the two would read as the same value twice; status is a free string that
@@ -62,11 +62,6 @@
 						wholeLine="true"
 					>
 						<label key="admin.ai.agentActivity.sessions.group.state"/>
-						<field
-							attribute="memory"
-							fullQualifiedName="tl.ai.execution:AgentSession#memory"
-							type="tl.core:Text"
-						/>
 						<field
 							attribute="metadata"
 							fullQualifiedName="tl.ai.execution:AgentSession#metadata"

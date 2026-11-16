@@ -1,5 +1,5 @@
 ---
-description: Read before arranging content in a .view.xml with <stack>, <grid>, <columns>, <object-list> (with <link-access> / <remove-access>), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>), sizing a dialog with <window width height>, or displaying content of a view in an enclosing region with <slot> / <slot-content> (SlotRegistry routing by tree distance, the <empty> fallback of a slot, the app bar slots appbar-content and appbar-leading).
+description: Read before arranging content in a .view.xml with <stack>, <grid>, <columns>, <split-panel> (pane sizes, stacking when too narrow), <object-list> (with <link-access> / <remove-access>), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>), sizing a dialog with <window width height>, or displaying content of a view in an enclosing region with <slot> / <slot-content> (SlotRegistry routing by tree distance, the <empty> fallback of a slot, the app bar slots appbar-content and appbar-leading).
 order: 20
 ---
 
@@ -95,7 +95,7 @@ Which of the arrangement elements fits:
 | `<grid>` | Many elements built alike, placed in as many equal columns as fit (`min-column-width`, `max-columns`). |
 | `<group>` | A section of the fields of a `<form>` or `<fields>`, under a heading and optionally folded away; it keeps the columns of that grid. |
 | `<stack direction="row">` | A row of elements that neither grow to a share of the width nor wrap. |
-| `<split-panel>` | Panes with splitters the user drags; fills its box, scrolls per pane, and never folds. |
+| `<split-panel>` | Panes with splitters the user drags; fills its box and scrolls per pane. Side by side, it stacks its panes when its width does not hold their minimum sizes. |
 | `<dashboard>` | Tiles of definite row height whose order the user personalizes. |
 
 ```xml
@@ -131,6 +131,14 @@ Which of the arrangement elements fits:
 ```
 
 The client classes an application styles against are `.tl-columns`, `.tl-columns--gap-<gap>` and `.tl-columns__column` (design system, `columns.css`). The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/columns-demo.view.xml`.
+
+## Panes the user resizes: `<split-panel>`
+
+`<split-panel orientation="horizontal" resizable="true">` (`SplitPanelElement`) places its `<pane>`s side by side (`horizontal`) or below each other (`vertical`), with a handle between two open panes the user drags. A pane gives its `size` in `unit` `%` (the panes in percent share the room left, their sizes acting as weights) or `px`, and its `min-size` in pixels. The split panel fills its box, each pane scrolls what does not fit into it, and the sizes the user drags are remembered per user.
+
+**Too narrow for the panes side by side, a horizontal split panel stacks them.** When its own width is less than the `min-size`s of its open panes plus the handles between them, the panes stand below each other: each spans the full width and is as high as its content, the split panel scrolls vertically, and there are no handles. A collapsed pane stays collapsed. Once the width suffices again, the panes are side by side with the sizes they had. As with `<columns>`, it is the width of the element itself that counts, not that of the browser window, so a split panel in a narrow dialog or a sidebar stacks just as it does on a phone. Nothing is configured for it; a vertical split panel keeps its arrangement.
+
+The client classes are `.tl-split`, `.tl-split--horizontal` / `.tl-split--vertical`, `.tl-split__pane` and `.tl-split__handle` (design system, `split.css`); the stacked arrangement is `data-tl-state~="stacked"` on `.tl-split`.
 
 ## Repeating a template over a computed list: `<object-list>`
 

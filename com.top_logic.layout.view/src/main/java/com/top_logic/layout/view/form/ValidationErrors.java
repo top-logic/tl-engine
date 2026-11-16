@@ -10,6 +10,7 @@ import java.util.List;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.CommandErrors;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.command.I18NConstants;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
@@ -49,22 +50,35 @@ public final class ValidationErrors {
 	}
 
 	/**
+	 * The refusal reporting the given errors in fields inside the control the refused command was
+	 * sent to.
+	 *
+	 * @see #refusal(ResKey, List, ReactControl)
+	 */
+	public static TopLogicException refusal(ResKey title, List<ResKey> errors) {
+		return refusal(title, errors, null);
+	}
+
+	/**
 	 * The refusal reporting the given errors: the given title, the {@link #listed(List) listed}
-	 * errors below it, see {@link CommandErrors#invalidInput(ResKey, List)}.
+	 * errors below it, see {@link CommandErrors#invalidInput(ResKey, List, ReactControl)}.
 	 *
 	 * <p>
 	 * After the refusal, the client moves the focus to the first field showing an error in the
-	 * control the refused command was sent to.
+	 * given scope.
 	 * </p>
 	 *
 	 * @param title
 	 *        What the user has to do, e.g. fix the errors before saving.
 	 * @param errors
 	 *        The errors, each naming where it is.
+	 * @param scope
+	 *        The control whose fields show the errors, e.g. the form a save command stores;
+	 *        {@code null} for the control the refused command was sent to.
 	 * @return The exception to throw.
 	 */
-	public static TopLogicException refusal(ResKey title, List<ResKey> errors) {
-		return CommandErrors.invalidInput(title, listed(errors));
+	public static TopLogicException refusal(ResKey title, List<ResKey> errors, ReactControl scope) {
+		return CommandErrors.invalidInput(title, listed(errors), scope);
 	}
 
 	/**

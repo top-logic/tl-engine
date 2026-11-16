@@ -98,24 +98,38 @@ public final class CommandErrors {
 	}
 
 	/**
+	 * The refusal of a command because of input the user has to correct first, in fields inside
+	 * the control the command was sent to.
+	 *
+	 * @see #invalidInput(ResKey, List, ReactControl)
+	 */
+	public static TopLogicException invalidInput(ResKey title, List<ResKey> details) {
+		return invalidInput(title, details, null);
+	}
+
+	/**
 	 * The refusal of a command because of input the user has to correct first, presented as
 	 * {@link #error(ResKey, List)}.
 	 *
 	 * <p>
 	 * After the refusal, the client moves the focus to the first field showing an error in the
-	 * control the command was sent to, see {@link InvalidInputException}.
+	 * given scope, see {@link InvalidInputException}.
 	 * </p>
 	 *
 	 * @param title
 	 *        What the user has to do, e.g. fix the errors before saving.
 	 * @param details
 	 *        The errors, each naming where it is.
+	 * @param scope
+	 *        The control whose fields hold the input to correct, e.g. the form a save command
+	 *        stores; {@code null} for the control the command was sent to.
 	 * @return The exception to throw.
 	 */
-	public static TopLogicException invalidInput(ResKey title, List<ResKey> details) {
+	public static TopLogicException invalidInput(ResKey title, List<ResKey> details, ReactControl scope) {
 		TopLogicException cause = detailChain(details);
-		TopLogicException result =
-			cause == null ? new InvalidInputException(title) : new InvalidInputException(title, cause);
+		String scopeId = scope == null ? null : scope.getID();
+		TopLogicException result = cause == null ? new InvalidInputException(title, scopeId)
+			: new InvalidInputException(title, cause, scopeId);
 		result.initSeverity(ErrorSeverity.ERROR);
 		return result;
 	}
@@ -134,15 +148,31 @@ public final class CommandErrors {
 
 	/**
 	 * The machine-readable code the answer to a command failing with the given exception carries,
-	 * see {@link ReactCommandAnswer#failure(String, String)}.
+	 * see {@link ReactCommandAnswer#failure(String, String, String)}.
 	 *
 	 * @return {@link ReactCommandAnswer#ERROR_CODE_INVALID_INPUT} for an
 	 *         {@link InvalidInputException} in the cause chain, {@code null} otherwise.
 	 */
 	public static String errorCode(Throwable ex) {
+		return invalidInputCause(ex) != null ? ReactCommandAnswer.ERROR_CODE_INVALID_INPUT : null;
+	}
+
+	/**
+	 * The ID of the control whose fields hold the input a command failing with the given exception
+	 * was refused for, see {@link InvalidInputException#getScope()}.
+	 *
+	 * @return {@code null} if there is no {@link InvalidInputException} in the cause chain, or if
+	 *         it names no scope of its own.
+	 */
+	public static String invalidInputScope(Throwable ex) {
+		InvalidInputException invalid = invalidInputCause(ex);
+		return invalid != null ? invalid.getScope() : null;
+	}
+
+	private static InvalidInputException invalidInputCause(Throwable ex) {
 		for (Throwable current = ex; current != null; current = current.getCause()) {
-			if (current instanceof InvalidInputException) {
-				return ReactCommandAnswer.ERROR_CODE_INVALID_INPUT;
+			if (current instanceof InvalidInputException invalid) {
+				return invalid;
 			}
 		}
 		return null;

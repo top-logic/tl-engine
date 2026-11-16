@@ -1,12 +1,18 @@
 /**
  * Where the focus goes after a command was refused because of input the user has to correct: to
- * the first field showing an error in the control the command was sent to.
+ * the first field showing an error in the control the refusal names - the form a Save command
+ * stores - or else in the control the command was sent to.
  *
  * <p>The refusal is decided on the server, and the fields learn that they show an error from the
  * events the command wrote - e.g. a mandatory field nobody had touched yet, revealed by the check
  * that refused the command. So the focus waits until the stream has brought these events and the
  * page has rendered them.</p>
+ *
+ * <p>A field behind a modal surface - a form behind the dialog asking whether to save its changes
+ * - cannot take the focus while the surface is open, so it gets the focus once the surface has
+ * closed.</p>
  */
+import { isBehindTrap, onTrapReleased } from './focus-trap';
 import { lastEventSeq } from './sse-client';
 
 /**
@@ -73,9 +79,11 @@ export function focusFirstInvalidField(controlId: string, lastEvent?: number): v
     const delivered = lastEvent === undefined || lastEventSeq() >= lastEvent;
     const field = delivered ? firstInvalidField(controlId) : null;
     if (field) {
-      field.focus({ preventScroll: true });
-      // Not every environment lays out the page (e.g. a test DOM).
-      field.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+      if (isBehindTrap(field)) {
+        focusAfterModal(controlId);
+      } else {
+        focusField(field);
+      }
       return;
     }
     if (Date.now() < deadline) {
@@ -83,4 +91,40 @@ export function focusFirstInvalidField(controlId: string, lastEvent?: number): v
     }
   };
   nextFrame(attempt);
+}
+
+/** Moves the focus to the given field and scrolls it into view. */
+function focusField(field: HTMLElement): void {
+  field.focus({ preventScroll: true });
+  // Not every environment lays out the page (e.g. a test DOM).
+  field.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+}
+
+/**
+ * Moves the focus to the first field showing an error within the given control once no modal
+ * surface covers it any more.
+ *
+ * <p>A closing surface gives the focus back to where it was before it opened right after releasing
+ * its trap, so the field takes the focus with the next frame. Gives up when the control leaves the
+ * page or no longer shows an error - the user discarded the input, say.</p>
+ */
+function focusAfterModal(controlId: string): void {
+  let done = false;
+  const stop = onTrapReleased(() => {
+    nextFrame(() => {
+      if (done) {
+        return;
+      }
+      const field = document.getElementById(controlId) ? firstInvalidField(controlId) : null;
+      if (field && isBehindTrap(field)) {
+        // Another surface still covers the field.
+        return;
+      }
+      done = true;
+      stop();
+      if (field) {
+        focusField(field);
+      }
+    });
+  });
 }

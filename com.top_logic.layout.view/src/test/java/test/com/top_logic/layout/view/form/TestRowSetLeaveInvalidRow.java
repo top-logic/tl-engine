@@ -113,6 +113,8 @@ public class TestRowSetLeaveInvalidRow extends AbstractModelAccessTest {
 		TopLogicException refusal = refusedClick(table, second);
 		assertEquals("The refusal moves the focus to the field with the error.",
 			ReactCommandAnswer.ERROR_CODE_INVALID_INPUT, CommandErrors.errorCode(refusal));
+		assertNull("The focus goes to a field of the table the click was sent to.",
+			CommandErrors.invalidInputScope(refusal));
 		String messages = messages(refusal);
 		assertTrue("The refusal names the column: " + messages, messages.contains(columnLabel(table)));
 

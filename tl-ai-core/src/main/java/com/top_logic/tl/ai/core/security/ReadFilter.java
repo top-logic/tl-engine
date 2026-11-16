@@ -5,9 +5,16 @@
  */
 package com.top_logic.tl.ai.core.security;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -18,6 +25,8 @@ import java.util.Objects;
 import java.util.RandomAccess;
 import java.util.Set;
 
+import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.time.TimeZones;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
@@ -31,6 +40,10 @@ import com.top_logic.tl.ai.core.citation.ReadingListBinding;
 import com.top_logic.tl.ai.tool.api.ReadSource;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
+
+import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonUtil;
+import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
  * The one place a {@link TLObject} becomes something a language model gets to see.
@@ -93,6 +106,15 @@ public final class ReadFilter {
 
 	/** The key an object's display label is disclosed under. */
 	public static final String DISPLAY = "_display";
+
+	/** The key the shown entries of a cut list are disclosed under, see {@link #disclose(Object, int)}. */
+	public static final String ITEMS = "items";
+
+	/** The key the size of a cut list is disclosed under, see {@link #disclose(Object, int)}. */
+	public static final String TOTAL = "total";
+
+	/** How a point in time is written that is not a day: with seconds and the zone's offset. */
+	private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ssXXX");
 
 	private final ModelSecurity _security;
 
@@ -269,10 +291,18 @@ public final class ReadFilter {
 	 * The given value as JSON-compatible data, with everything the principal may not read removed.
 	 *
 	 * <p>
-	 * Primitives stay themselves, collections and arrays become {@link List}s, maps become
-	 * {@link Map}s keyed by strings, and a readable {@link TLObject} becomes its
-	 * identity - {@link #TID}, {@link #TYPE} and {@link #DISPLAY}. Anything else becomes its
+	 * Strings and booleans stay themselves, a number with a fractional part stays itself and a whole
+	 * one becomes a whole number (TL-Script computes in {@link Double}, and {@code 2.0} is not what the
+	 * model should read for a count). A {@link Date} or {@link Calendar} becomes an ISO 8601 text, see
+	 * {@link #isoDate(Date)}. Collections and arrays become {@link List}s, maps become {@link Map}s
+	 * keyed by strings, and a readable {@link TLObject} - a classifier of an enumeration included -
+	 * becomes its identity: {@link #TID}, {@link #TYPE} and {@link #DISPLAY}. Anything else becomes its
 	 * {@code toString()}.
+	 * </p>
+	 *
+	 * <p>
+	 * Every object disclosed this way is put on the run's reading list, see
+	 * {@link #shown(TLObject, String...)}.
 	 * </p>
 	 *
 	 * @param value
@@ -285,12 +315,161 @@ public final class ReadFilter {
 		return asJsonData(visible(value));
 	}
 
+	/**
+	 * {@link #disclose(Object)} for a result that may be a long list, of which only the first entries
+	 * are written out.
+	 *
+	 * <p>
+	 * A list with more than <code>limit</code> readable entries becomes an object with the shown
+	 * entries under {@link #ITEMS} and the number of all readable entries under {@link #TOTAL}, so
+	 * that the model knows that it reads a part only. Anything else is disclosed as by
+	 * {@link #disclose(Object)}. The total is taken after filtering - a count over the unfiltered list
+	 * would disclose a cardinality the principal may not see - and only the shown entries are put on
+	 * the reading list.
+	 * </p>
+	 *
+	 * @param value
+	 *        Any value, including <code>null</code>.
+	 * @param limit
+	 *        How many entries of a list are written out at most.
+	 * @return JSON-compatible data; <code>null</code> for an object the principal may not read.
+	 */
+	public Object disclose(Object value, int limit) {
+		Object visible = visible(value);
+		if (visible instanceof Collection<?> many && many.size() > limit) {
+			List<Object> items = new ArrayList<>(limit);
+			for (Object element : many) {
+				if (items.size() == limit) {
+					break;
+				}
+				items.add(asJsonData(element));
+			}
+			Map<String, Object> result = new LinkedHashMap<>();
+			result.put(ITEMS, items);
+			result.put(TOTAL, many.size());
+			return result;
+		}
+		return asJsonData(visible);
+	}
+
+	/**
+	 * The given value {@link #disclose(Object) disclosed} as JSON text,
+	 * {@link #marked(String, String) marked} as business data.
+	 *
+	 * <p>
+	 * The output path of every tool result that reports model data: one value is a JSON value, a list
+	 * an array, a dictionary an object, and every model object in it its identity.
+	 * </p>
+	 *
+	 * @param source
+	 *        What produced the value, for the envelope's {@code source} attribute. Never business
+	 *        data - see {@link #marked(String, String)}.
+	 * @param value
+	 *        Any value, including <code>null</code>.
+	 * @return The marked JSON; never {@code null}.
+	 */
+	public String markedJson(String source, Object value) {
+		return marked(source, json(disclose(value)));
+	}
+
+	/**
+	 * {@link #markedJson(String, Object)} for a result that may be a long list, cut as by
+	 * {@link #disclose(Object, int)}.
+	 *
+	 * @param source
+	 *        What produced the value, for the envelope's {@code source} attribute.
+	 * @param value
+	 *        Any value, including <code>null</code>.
+	 * @param limit
+	 *        How many entries of a list are written out at most.
+	 * @return The marked JSON; never {@code null}.
+	 */
+	public String markedJson(String source, Object value, int limit) {
+		return marked(source, json(disclose(value, limit)));
+	}
+
+	/**
+	 * The identity of the given object as JSON text, for a text that names an object - a selection in
+	 * a prompt, a refusal, the subject of a conversation.
+	 *
+	 * <p>
+	 * The same {@link #TID}, {@link #TYPE} and {@link #DISPLAY} every JSON result discloses, so the
+	 * model reads one form for an object wherever it meets one, and the object is put on the run's
+	 * reading list like every other disclosed object.
+	 * </p>
+	 *
+	 * <p>
+	 * <b>Disclosure.</b> The identity is business data, so this is only ever called on an object that
+	 * has already passed {@link #canRead(TLObject)}.
+	 * </p>
+	 *
+	 * @param obj
+	 *        The object to name; must be one the principal may read.
+	 * @return The JSON text, {@code null} for no object.
+	 */
+	public static String identityJson(TLObject obj) {
+		return json(obj == null ? null : identity(obj));
+	}
+
+	/**
+	 * The given JSON-compatible data - as {@link #disclose(Object)} produces it - as JSON text.
+	 *
+	 * @param data
+	 *        {@link Map}s keyed by strings, {@link List}s, strings, numbers, booleans and
+	 *        <code>null</code>.
+	 * @return The JSON text.
+	 */
+	public static String json(Object data) {
+		StringW buffer = new StringW();
+		try (JsonWriter json = new JsonWriter(buffer)) {
+			JsonUtil.writeJsonValue(json, data);
+		} catch (IOException ex) {
+			throw new UncheckedIOException("Writing to a string buffer failed.", ex);
+		}
+		return buffer.toString();
+	}
+
+	/**
+	 * A point in time as ISO 8601 text.
+	 *
+	 * <p>
+	 * A day - a value exactly at midnight in the {@link TimeZones#systemTimeZone() system time zone},
+	 * where the application keeps date values - is written as that day: {@code 2026-11-14}. Every
+	 * other value is written in the user's time zone with seconds and offset:
+	 * {@code 2026-11-14T13:05:00+01:00}.
+	 * </p>
+	 *
+	 * @param date
+	 *        The point in time to write.
+	 * @return The ISO 8601 text.
+	 */
+	public static String isoDate(Date date) {
+		ZonedDateTime system = date.toInstant().atZone(TimeZones.systemTimeZone().toZoneId());
+		if (system.toLocalTime().equals(LocalTime.MIDNIGHT)) {
+			return system.toLocalDate().toString();
+		}
+		return DATE_TIME.format(date.toInstant().atZone(ThreadContext.getTimeZone().toZoneId()));
+	}
+
 	private static Object asJsonData(Object value) {
 		if (value == null) {
 			return null;
 		}
+		if (value instanceof Double || value instanceof Float) {
+			double number = ((Number) value).doubleValue();
+			if (number == Math.rint(number) && Math.abs(number) <= Long.MAX_VALUE) {
+				return (long) number;
+			}
+			return value;
+		}
 		if (value instanceof String || value instanceof Number || value instanceof Boolean) {
 			return value;
+		}
+		if (value instanceof Date date) {
+			return isoDate(date);
+		}
+		if (value instanceof Calendar calendar) {
+			return isoDate(calendar.getTime());
 		}
 		if (value instanceof TLObject obj) {
 			return identity(obj);
@@ -342,7 +521,8 @@ public final class ReadFilter {
 	 *
 	 * <p>
 	 * Here, because this is where an object becomes something the model sees: every rendering that
-	 * discloses an identifier goes through {@link #identity(TLObject)} or {@link #labelled(TLObject)},
+	 * discloses an identifier goes through {@link #identity(TLObject)} - also behind
+	 * {@link #identityJson(TLObject)} - or {@link #labelled(TLObject)},
 	 * so every read tool registers what it showed without a line of its own, and the answer may point
 	 * at it with {@code [label](tl:id)}. Outside a tool call nothing is bound and nothing is recorded.
 	 * </p>

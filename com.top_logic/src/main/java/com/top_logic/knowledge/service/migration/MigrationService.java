@@ -454,8 +454,9 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			for (var typeName : oldTypeNames) {
 				inappSchema.getTypes().put(typeName, persistentTypes.get(typeName));
 			}
-			File schemaFile = null;
-			File configFile = null;
+			FileManager fileManager = FileManager.getInstance();
+			String schemaResource = null;
+			String configResource = null;
 			try {
 				int id = 1;
 				String resourceName;
@@ -464,11 +465,11 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 				do {
 					baseName = "inapp-schema-" + id;
 					resourceName = ModuleLayoutConstants.AUTOCONF_FOLDER_RESOURCE + baseName + ".meta.xml";
-					newFile = FileManager.getInstance().getIDEFile(resourceName);
+					newFile = fileManager.getIDEFile(resourceName);
 					id++;
 				} while (newFile.exists());
-				schemaFile = newFile;
-				storeResource(inappSchema, schemaFile);
+				schemaResource = resourceName;
+				File schemaFile = storeResource(fileManager, inappSchema, schemaResource);
 
 				// Create a configuration fragment that loads the synthesized schema definition.
 				ApplicationConfig.Config configFragment =
@@ -491,10 +492,8 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 					}
 					configFragment.getConfigs().put(ApplicationTypes.class, typesConfig);
 				}
-				configFile = FileManager.getInstance().getIDEFile(
-					ModuleLayoutConstants.AUTOCONF_FOLDER_RESOURCE + baseName + ".config.xml");
-				storeResource(configFragment,
-					configFile);
+				configResource = ModuleLayoutConstants.AUTOCONF_FOLDER_RESOURCE + baseName + ".config.xml";
+				storeResource(fileManager, configFragment, configResource);
 
 				log.info("Created schema configuration with recovered types: " + schemaFile.getAbsolutePath());
 
@@ -504,21 +503,21 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 				log.info("Cannot create schema add-on configuration: " + ex.getMessage(), Log.WARN);
 
 				// Clean up to avoid an inconsistent state.
-				if (schemaFile != null) {
-					schemaFile.delete();
-				}
-				if (configFile != null) {
-					configFile.delete();
-				}
+				deleteResource(fileManager, schemaResource);
+				deleteResource(fileManager, configResource);
 			}
 		}
 	}
 
 	/**
-	 * Creates a new configuration file.
+	 * Creates a new configuration file for the given resource and makes it visible to the given
+	 * {@link FileManager}.
+	 *
+	 * @return The created file.
 	 */
-	private void storeResource(ConfigurationItem conf, File file)
+	private File storeResource(FileManager fileManager, ConfigurationItem conf, String resourceName)
 			throws XMLStreamException, IOException, FileNotFoundException, SAXException {
+		File file = fileManager.getIDEFile(resourceName);
 		file.getParentFile().mkdirs();
 		try (var out = new FileOutputStream(file)) {
 			try (OutputStreamWriter writer = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
@@ -528,6 +527,20 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			}
 		}
 		XMLPrettyPrinter.normalizeFile(file);
+		fileManager.refresh(resourceName);
+		return file;
+	}
+
+	/**
+	 * Deletes the file of the given resource, if any, and makes the deletion visible to the given
+	 * {@link FileManager}.
+	 */
+	private void deleteResource(FileManager fileManager, String resourceName) {
+		if (resourceName == null) {
+			return;
+		}
+		fileManager.getIDEFile(resourceName).delete();
+		fileManager.refresh(resourceName);
 	}
 
 	private void execute(MigrationContext context, Protocol log, PooledConnection connection,

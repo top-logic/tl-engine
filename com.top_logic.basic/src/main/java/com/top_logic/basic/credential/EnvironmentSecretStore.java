@@ -5,12 +5,19 @@
  */
 package com.top_logic.basic.credential;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import com.top_logic.basic.ConfigurationEncryption;
+import com.top_logic.basic.InvalidEncryptedValueException;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.EncodingConfigurationValueProvider;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.core.workspace.Environment;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.util.ResKey;
 
 /**
@@ -26,8 +33,11 @@ import com.top_logic.basic.util.ResKey;
  * <p>
  * The variable holds the plain secret. A value with the prefix
  * {@link EncodingConfigurationValueProvider#UNENCRYPTED_PREFIX}, as written for an alias read into
- * an encrypted configuration property, is accepted as well; the prefix is stripped. An encrypted
- * value is not decrypted.
+ * an encrypted configuration property, is accepted as well; the prefix is stripped. A value in the
+ * authenticated encrypted format with the prefix {@link ConfigurationEncryption#AUTHENTICATED_PREFIX}
+ * is decrypted, with a warning in the log, since the encryption only obscures the secret. A value
+ * in the old unauthenticated encrypted format cannot be told apart from a plain value and is read
+ * as plain secret.
  * </p>
  *
  * <p>
@@ -55,6 +65,11 @@ public class EnvironmentSecretStore extends AbstractSecretStore<EnvironmentSecre
 	}
 
 	/**
+	 * Names of the variables with an encrypted value already reported in the log.
+	 */
+	private static final Set<String> ENCRYPTED_VARIABLES_REPORTED = ConcurrentHashMap.newKeySet();
+
+	/**
 	 * Creates a {@link EnvironmentSecretStore} from configuration.
 	 *
 	 * @param context
@@ -77,17 +92,49 @@ public class EnvironmentSecretStore extends AbstractSecretStore<EnvironmentSecre
 	}
 
 	/**
-	 * The value of the system property or environment variable with the given name, without the
-	 * prefix {@link EncodingConfigurationValueProvider#UNENCRYPTED_PREFIX}.
+	 * The secret held by the system property or environment variable with the given name.
 	 *
-	 * @return The value, or <code>null</code> if the variable is undefined or empty.
+	 * <p>
+	 * The prefix {@link EncodingConfigurationValueProvider#UNENCRYPTED_PREFIX} is stripped. A value
+	 * in the authenticated encrypted format (see {@link ConfigurationEncryption#isAuthenticated(String)})
+	 * is decrypted, with a warning in the log once per variable. Any other value is the plain
+	 * secret, also a value in the unauthenticated encrypted format without prefix, which cannot be
+	 * told apart from a plain value.
+	 * </p>
+	 *
+	 * @return The secret, or <code>null</code> if the variable is undefined or empty.
+	 * @throws I18NRuntimeException
+	 *         If the variable holds an encrypted value that cannot be decrypted. The message names
+	 *         the variable, not its value.
 	 */
 	static String variable(String name) {
 		String value = Environment.getSystemPropertyOrEnvironmentVariable(name, null);
-		if (value != null && value.startsWith(EncodingConfigurationValueProvider.UNENCRYPTED_PREFIX)) {
+		if (value == null) {
+			return null;
+		}
+		if (value.startsWith(EncodingConfigurationValueProvider.UNENCRYPTED_PREFIX)) {
 			value = value.substring(EncodingConfigurationValueProvider.UNENCRYPTED_PREFIX.length());
+		} else if (ConfigurationEncryption.isAuthenticated(value)) {
+			value = decrypt(name, value);
 		}
 		return StringServices.isEmpty(value) ? null : value;
+	}
+
+	private static String decrypt(String name, String encryptedValue) {
+		String value;
+		try {
+			value = ConfigurationEncryption.decrypt(encryptedValue);
+		} catch (InvalidEncryptedValueException ex) {
+			// The exception does not reveal the value.
+			throw new I18NRuntimeException(I18NConstants.ERROR_SECRET_VARIABLE_NOT_DECRYPTABLE__NAME.fill(name), ex);
+		}
+		if (ENCRYPTED_VARIABLES_REPORTED.add(name)) {
+			Logger.warn("The secret variable '" + name + "' holds an encrypted value. The encryption with the "
+				+ "configuration key only obscures the secret, since the key is part of the application. Set the "
+				+ "plain value instead, or keep the secret in a secret store such as a directory or a key vault.",
+				EnvironmentSecretStore.class);
+		}
+		return value;
 	}
 
 	/**

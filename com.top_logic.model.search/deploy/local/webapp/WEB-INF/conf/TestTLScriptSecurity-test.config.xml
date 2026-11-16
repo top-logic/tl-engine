@@ -297,6 +297,13 @@
 							roles="TestTLScriptSecurity.PathViewer"
 						/>
 					</part>
+					<!-- The path role reads the notes of a B, which are parts of the B's composition. -->
+					<part name="TestTLScriptSecurity:PathB#notes">
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.PathViewer"
+						/>
+					</part>
 					<!-- The path writer may read and set the enumeration attributes of a B. -->
 					<part name="TestTLScriptSecurity:PathB#priority">
 						<grant

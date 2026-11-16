@@ -34,23 +34,36 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.config.operations.ObjectFunctions;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Compares ways to compute the composition descendants of an object: TL-Script recipes and a Java
- * walk over the same tree of about ten thousand persistent parts.
+ * Compares ways to compute the composition descendants of an object: TL-Script recipes, the
+ * function {@link ObjectFunctions#descendants(TLObject, boolean, boolean)} and a Java walk over the
+ * same tree of persistent parts.
  *
  * <p>
- * The test asserts that all ways deliver the same objects. The run times (median of several runs
- * after a warm-up) are only written to the log, so that the ways can be compared on one machine.
+ * The test asserts that all ways deliver the same objects. By default, the tree is small (some
+ * hundred parts, every kind of reference of the test model is used). With the system property
+ * {@value #LARGE_TREE_PROPERTY} set to <code>true</code>, the tree has about ten thousand parts and
+ * the run times (median of several runs after a warm-up) are written to the log, so that the ways
+ * can be compared on one machine. No run time is asserted.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @SuppressWarnings("javadoc")
 public class TestCompositionWalkTiming extends AbstractSearchExpressionTest {
+
+	/**
+	 * Name of the system property that switches to a tree of about ten thousand parts and to
+	 * logging the run times.
+	 */
+	public static final String LARGE_TREE_PROPERTY = "test.compositionWalk.large";
 
 	private static final String MODULE = "TestCompositionWalkTiming";
 
@@ -77,16 +90,19 @@ public class TestCompositionWalkTiming extends AbstractSearchExpressionTest {
 
 	private static final int REFERENCES_PER_LEVEL = 8;
 
-	private static final int GROUPS_PER_REFERENCE = 2;
+	/** Number of groups in each composite reference of the root, in the large tree. */
+	private static final int LARGE_GROUPS_PER_REFERENCE = 2;
 
-	private static final int ELEMENTS_PER_REFERENCE = 3;
+	/** Number of elements in each composite multi-reference of a group, in the large tree. */
+	private static final int LARGE_ELEMENTS_PER_REFERENCE = 3;
 
-	private static final int LEAVES_PER_REFERENCE = 5;
+	/** Number of leaves in each composite multi-reference of an element, in the large tree. */
+	private static final int LARGE_LEAVES_PER_REFERENCE = 5;
 
 	/** Every n-th leaf gets a note. */
 	private static final int LEAF_NOTE_INTERVAL = 8;
 
-	private static final int RUNS = 5;
+	private static final int RUNS = 15;
 
 	/**
 	 * The composite references are computed from the model for the type of every single part.
@@ -118,14 +134,44 @@ public class TestCompositionWalkTiming extends AbstractSearchExpressionTest {
 		}
 		""";
 
+	/**
+	 * The composite references are walked by the TL-Script function.
+	 */
+	static final String FUNCTION = "root -> $root.objectDescendants()";
+
+	/**
+	 * The composite references are walked by the TL-Script function, the result includes the root.
+	 */
+	static final String FUNCTION_INCLUDING_ROOT = "root -> $root.objectDescendants(includeRoot: true)";
+
 	private final List<TLObject> _outside = new ArrayList<>();
 
 	private int _partCount;
+
+	private int _groupsPerReference;
+
+	private int _elementsPerReference;
+
+	private int _leavesPerReference;
+
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		boolean large = isLargeTree();
+		_groupsPerReference = large ? LARGE_GROUPS_PER_REFERENCE : 1;
+		_elementsPerReference = large ? LARGE_ELEMENTS_PER_REFERENCE : 1;
+		_leavesPerReference = large ? LARGE_LEAVES_PER_REFERENCE : 1;
+	}
+
+	private static boolean isLargeTree() {
+		return Boolean.getBoolean(LARGE_TREE_PROPERTY);
+	}
 
 	public void testSameDescendants() throws Exception {
 		TLObject root = createTree();
 		try {
 			Set<TLObject> expected = javaWalk(root);
+			assertEquals(expected, javaWalk(root, true));
 			assertEquals(_partCount, expected.size());
 			assertFalse(expected.contains(root));
 			for (TLObject outside : _outside) {
@@ -134,17 +180,33 @@ public class TestCompositionWalkTiming extends AbstractSearchExpressionTest {
 
 			QueryExecutor perPart = QueryExecutor.compile(search(RECIPE_PER_PART));
 			QueryExecutor precomputed = QueryExecutor.compile(search(RECIPE_PRECOMPUTED));
+			QueryExecutor function = QueryExecutor.compile(search(FUNCTION));
+			QueryExecutor functionIncludingRoot = QueryExecutor.compile(search(FUNCTION_INCLUDING_ROOT));
 
 			assertEquals(expected, asSet(perPart.execute(root)));
 			assertEquals(expected, asSet(precomputed.execute(root)));
+			assertEquals(expected, asSet(function.execute(root)));
 
-			long java = median(() -> javaWalk(root));
-			long a = median(() -> perPart.execute(root));
-			long b = median(() -> precomputed.execute(root));
+			Set<TLObject> expectedIncludingRoot = new HashSet<>(expected);
+			expectedIncludingRoot.add(root);
+			Collection<?> includingRoot = (Collection<?>) functionIncludingRoot.execute(root);
+			assertEquals(expectedIncludingRoot, asSet(includingRoot));
+			assertSame(root, includingRoot.iterator().next());
+			assertContainerFirst(includingRoot);
 
-			Logger.info("Composition walk over " + expected.size() + " parts (median of " + RUNS
-				+ " runs): (a) recipe, references per part: " + a + " ms, (b) recipe, references precomputed: "
-				+ b + " ms, (c) Java walk: " + java + " ms.", TestCompositionWalkTiming.class);
+			if (isLargeTree()) {
+				long java = median(() -> javaWalk(root));
+				long javaSecured = median(() -> javaWalk(root, true));
+				long a = median(() -> perPart.execute(root));
+				long b = median(() -> precomputed.execute(root));
+				long d = median(() -> function.execute(root));
+
+				Logger.info("Composition walk over " + expected.size() + " parts (median of " + RUNS
+					+ " runs): (a) recipe, references per part: " + a
+					+ " ms, (b) recipe, references precomputed: " + b + " ms, (c) Java walk: " + java
+					+ " ms, (c') Java walk with access checks: " + javaSecured
+					+ " ms, (d) function objectDescendants(): " + d + " ms.", TestCompositionWalkTiming.class);
+			}
 		} finally {
 			try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 				root.tDelete();
@@ -153,6 +215,21 @@ public class TestCompositionWalkTiming extends AbstractSearchExpressionTest {
 				}
 				tx.commit();
 			}
+		}
+	}
+
+	/**
+	 * Asserts that each object of the given sequence follows its container.
+	 */
+	private static void assertContainerFirst(Collection<?> sequence) {
+		Set<TLObject> seen = new HashSet<>();
+		for (Object element : sequence) {
+			TLObject object = (TLObject) element;
+			TLObject container = object.tContainer();
+			if (container != null) {
+				assertTrue("Part before its container: " + object, seen.contains(container));
+			}
+			seen.add(object);
 		}
 	}
 
@@ -177,6 +254,21 @@ public class TestCompositionWalkTiming extends AbstractSearchExpressionTest {
 	 * type.
 	 */
 	static Set<TLObject> javaWalk(TLObject root) {
+		return javaWalk(root, false);
+	}
+
+	/**
+	 * Depth-first walk over the composite references, with the composite references cached per
+	 * type, optionally with access checks.
+	 *
+	 * @param withSecurity
+	 *        Whether the walk checks access like
+	 *        {@link ObjectFunctions#descendants(TLObject, boolean, boolean)} evaluated with security:
+	 *        a composite reference is only followed where the current user may read it, only
+	 *        discoverable objects are delivered, and the result is filtered once more like the
+	 *        return value of a TL-Script function.
+	 */
+	static Set<TLObject> javaWalk(TLObject root, boolean withSecurity) {
 		Map<TLClass, List<TLReference>> refsByType = new HashMap<>();
 		Function<TLClass, List<TLReference>> compositeRefs = type -> {
 			List<TLReference> result = new ArrayList<>();
@@ -194,7 +286,15 @@ public class TestCompositionWalkTiming extends AbstractSearchExpressionTest {
 		while (!stack.isEmpty()) {
 			TLObject current = stack.pop();
 			for (TLReference ref : refsByType.computeIfAbsent((TLClass) current.tType(), compositeRefs)) {
-				Object value = current.tValue(ref);
+				Object value;
+				if (withSecurity) {
+					if (!ModelAccessRights.getInstance().isReadAllowed(current, ref)) {
+						continue;
+					}
+					value = SearchExpression.filterSecurity(current.tValue(ref));
+				} else {
+					value = current.tValue(ref);
+				}
 				if (value instanceof Collection<?> values) {
 					for (Object part : values) {
 						if (result.add((TLObject) part)) {
@@ -207,6 +307,11 @@ public class TestCompositionWalkTiming extends AbstractSearchExpressionTest {
 					}
 				}
 			}
+		}
+		if (withSecurity) {
+			@SuppressWarnings("unchecked")
+			Set<TLObject> filtered = (Set<TLObject>) SearchExpression.filterSecurity(result);
+			return filtered;
 		}
 		return result;
 	}
@@ -221,7 +326,7 @@ public class TestCompositionWalkTiming extends AbstractSearchExpressionTest {
 			TLObject root = create("Root", "root");
 			for (int g = 1; g <= REFERENCES_PER_LEVEL_ROOT; g++) {
 				List<TLObject> groups = new ArrayList<>();
-				for (int n = 0; n < GROUPS_PER_REFERENCE; n++) {
+				for (int n = 0; n < _groupsPerReference; n++) {
 					groups.add(createGroup());
 				}
 				root.tUpdateByName(GROUPS + g, groups);
@@ -237,7 +342,7 @@ public class TestCompositionWalkTiming extends AbstractSearchExpressionTest {
 		group.tUpdateByName(HEAD, createElement());
 		for (int e = 1; e <= REFERENCES_PER_LEVEL; e++) {
 			List<TLObject> elements = new ArrayList<>();
-			for (int n = 0; n < ELEMENTS_PER_REFERENCE; n++) {
+			for (int n = 0; n < _elementsPerReference; n++) {
 				elements.add(createElement());
 			}
 			group.tUpdateByName(ELEMENTS + e, elements);
@@ -252,7 +357,7 @@ public class TestCompositionWalkTiming extends AbstractSearchExpressionTest {
 		element.tUpdateByName(MAIN, createLeaf());
 		for (int l = 1; l <= REFERENCES_PER_LEVEL; l++) {
 			List<TLObject> leaves = new ArrayList<>();
-			for (int n = 0; n < LEAVES_PER_REFERENCE; n++) {
+			for (int n = 0; n < _leavesPerReference; n++) {
 				leaves.add(createLeaf());
 			}
 			element.tUpdateByName(LEAVES + l, leaves);

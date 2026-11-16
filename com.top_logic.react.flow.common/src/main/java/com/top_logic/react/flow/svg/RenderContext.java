@@ -158,47 +158,44 @@ public interface RenderContext {
 	}
 
 	/**
+	 * Whether boxes measure the widest of their alternative contents instead of choosing one.
+	 *
+	 * <p>
+	 * In this measuring mode a level-of-detail box reports as intrinsic size the maximum width and
+	 * the maximum height over all of its content variants, independent of {@link #getZoom()} and of
+	 * the offered space. A layout uses it to reserve space that does not change when a different
+	 * variant is chosen later, e.g. the label column of a Gantt chart whose labels choose their
+	 * variant by the zoom of the time axis.
+	 * </p>
+	 *
+	 * @see #withWidestVariants()
+	 */
+	default boolean isWidestVariants() {
+		return false;
+	}
+
+	/**
 	 * Returns a context that delegates all text measurement to this context but reports the given
 	 * zoom factor from {@link #getZoom()}.
+	 *
+	 * <p>
+	 * The {@link #isWidestVariants() measuring mode} of this context is kept.
+	 * </p>
 	 */
 	default RenderContext withZoom(double zoom) {
-		RenderContext self = this;
-		return new RenderContext() {
-			@Override
-			public String getDefaultFontFamily() {
-				return self.getDefaultFontFamily();
-			}
+		return new DelegatingRenderContext(this, zoom, isWidestVariants());
+	}
 
-			@Override
-			public String getDefaultFontDeclaration() {
-				return self.getDefaultFontDeclaration();
-			}
-
-			@Override
-			public double getDefaultFontSizePx() {
-				return self.getDefaultFontSizePx();
-			}
-
-			@Override
-			public TextMetrics measure(String text) {
-				return self.measure(text);
-			}
-
-			@Override
-			public TextMetrics measure(String text, String fontFamily, double fontSize) {
-				return self.measure(text, fontFamily, fontSize);
-			}
-
-			@Override
-			public TextMetrics measure(String text, String fontFamily, double fontSize, String fontWeight) {
-				return self.measure(text, fontFamily, fontSize, fontWeight);
-			}
-
-			@Override
-			public double getZoom() {
-				return zoom;
-			}
-		};
+	/**
+	 * Returns a context that delegates all text measurement to this context but measures
+	 * {@link #isWidestVariants() the widest variants}.
+	 *
+	 * <p>
+	 * The {@link #getZoom() zoom} of this context is kept.
+	 * </p>
+	 */
+	default RenderContext withWidestVariants() {
+		return new DelegatingRenderContext(this, getZoom(), true);
 	}
 
 }

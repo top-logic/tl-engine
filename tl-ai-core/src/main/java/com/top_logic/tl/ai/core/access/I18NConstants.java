@@ -9,6 +9,8 @@ import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
+import com.top_logic.util.Resources;
 
 /**
  * Messages about personal access tokens: to the person creating or revoking one, and to a client
@@ -221,6 +223,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @de {@literal <API-Schlüssel>}
 	 */
 	public static ResKey CREDENTIAL_API_KEY_VALUE;
+
+	/**
+	 * A credential sent in a request header, see {@link EndpointCredential#describe(Resources)}.
+	 *
+	 * @en {0}, sent as header "{1}: {2}"
+	 * @de {0}, gesendet als Header "{1}: {2}"
+	 */
+	public static ResKey3 CREDENTIAL_IN_HEADER__CREDENTIAL_HEADER_VALUE;
 
 	static {
 		initConstants(I18NConstants.class);

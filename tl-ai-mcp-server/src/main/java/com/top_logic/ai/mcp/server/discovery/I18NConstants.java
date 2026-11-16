@@ -9,7 +9,6 @@ import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
-import com.top_logic.basic.util.ResKey3;
 
 /**
  * Texts that tell a client how to find and connect to the MCP endpoint.
@@ -26,14 +25,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @de MCP-Server von {0}
 	 */
 	public static ResKey1 CARD_DESCRIPTION__SERVER;
-
-	/**
-	 * A credential sent in a request header.
-	 *
-	 * @en {0}, sent as header "{1}: {2}"
-	 * @de {0}, gesendet als Header "{1}: {2}"
-	 */
-	public static ResKey3 CREDENTIAL_IN_HEADER__CREDENTIAL_HEADER_VALUE;
 
 	/**
 	 * Title of the section of the MCP endpoint in <code>llms.txt</code>.

@@ -13,6 +13,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyPosition;
 import com.top_logic.service.openapi.common.document.SecuritySchemeObject;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
+import com.top_logic.util.Resources;
 
 /**
  * How a client presents the credential of one authentication an agent endpoint accepts, told to
@@ -127,6 +128,39 @@ public record EndpointCredential(ResKey credential, String header, ResKey header
 	 */
 	public boolean isHeader() {
 		return header != null;
+	}
+
+	/**
+	 * What a client sends for this credential, in one line.
+	 *
+	 * @param resources
+	 *        The language of the description.
+	 */
+	public String describe(Resources resources) {
+		String text = resources.getString(credential);
+		if (!isHeader()) {
+			return text;
+		}
+		return resources.getString(I18NConstants.CREDENTIAL_IN_HEADER__CREDENTIAL_HEADER_VALUE.fill(text, header,
+			resources.getString(headerValue)));
+	}
+
+	/**
+	 * {@link #describe(Resources)} followed by where a person gets the credential, if the
+	 * credential says so ({@link #obtain()}).
+	 *
+	 * @param context
+	 *        The URLs of the application.
+	 * @param resources
+	 *        The language of the description.
+	 */
+	public String describeWithOrigin(DiscoveryContext context, Resources resources) {
+		String text = describe(resources);
+		if (obtain == null) {
+			return text;
+		}
+		ResKey origin = obtain.apply(context);
+		return origin == null ? text : text + ". " + resources.getString(origin);
 	}
 
 }

@@ -77,12 +77,6 @@ public final class McpServerCard {
 	 */
 	static final String ROOT_CONTEXT_NAME = "mcp";
 
-	/**
-	 * The namespace of the {@link ServerCard#getName() card name} of an application whose URL has
-	 * no host.
-	 */
-	static final String NO_HOST_NAMESPACE = "local";
-
 	private static final Pattern NAMESPACE_INVALID = Pattern.compile("[^a-zA-Z0-9.-]");
 
 	private static final Pattern NAME_INVALID = Pattern.compile("[^a-zA-Z0-9._-]");
@@ -125,13 +119,12 @@ public final class McpServerCard {
 	 */
 	public static String name(MCPServerService.Config<?> config, DiscoveryContext context) {
 		String configured = StringServices.nonEmpty(config.getCardName());
-		String applicationUrl = context.applicationUrl();
 		if (configured == null) {
-			return name(defaultNamespace(applicationUrl), defaultLocalName(applicationUrl));
+			return name(defaultNamespace(context), defaultLocalName(context.applicationUrl()));
 		}
 		int slash = configured.indexOf('/');
 		if (slash < 0) {
-			return name(defaultNamespace(applicationUrl), configured);
+			return name(defaultNamespace(context), configured);
 		}
 		return name(configured.substring(0, slash), configured.substring(slash + 1));
 	}
@@ -144,21 +137,13 @@ public final class McpServerCard {
 	}
 
 	/**
-	 * The host name of the given URL, or {@link #NO_HOST_NAMESPACE} if it has none.
-	 */
-	public static String host(String url) {
-		String host = parse(url).getHost();
-		return StringServices.isEmpty(host) ? NO_HOST_NAMESPACE : host;
-	}
-
-	/**
 	 * A valid card name from the given parts: invalid characters replaced by a hyphen, empty parts
 	 * defaulted, and at most {@link #MAX_NAME_LENGTH} characters.
 	 */
 	static String name(String namespace, String localName) {
 		String validNamespace = NAMESPACE_INVALID.matcher(namespace).replaceAll("-");
 		if (validNamespace.isEmpty()) {
-			validNamespace = NO_HOST_NAMESPACE;
+			validNamespace = DiscoveryContext.NO_HOST;
 		}
 		String validName = NAME_INVALID.matcher(localName).replaceAll("-");
 		if (validName.isEmpty()) {
@@ -171,10 +156,10 @@ public final class McpServerCard {
 	}
 
 	/**
-	 * The host name of the given application URL, its labels reversed.
+	 * The {@link DiscoveryContext#host() host name} of the application, its labels reversed.
 	 */
-	static String defaultNamespace(String applicationUrl) {
-		String host = host(applicationUrl);
+	static String defaultNamespace(DiscoveryContext context) {
+		String host = context.host();
 		String[] labels = host.split("\\.");
 		StringBuilder result = new StringBuilder();
 		for (int n = labels.length - 1; n >= 0; n--) {
@@ -234,7 +219,7 @@ public final class McpServerCard {
 				continue;
 			}
 			descriptionsByHeader.computeIfAbsent(credential.header(), x -> new ArrayList<>())
-				.add(McpConnectionGuide.describe(credential, resources));
+				.add(credential.describe(resources));
 		}
 		allInOneHeader &= descriptionsByHeader.size() == 1;
 

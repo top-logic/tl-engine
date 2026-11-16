@@ -12,7 +12,6 @@ import com.top_logic.base.discovery.AgentDiscoveryServlet;
 import com.top_logic.base.discovery.DiscoveryContext;
 import com.top_logic.base.discovery.LlmsTxtSection;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.access.EndpointCredential;
 import com.top_logic.util.Resources;
 
@@ -45,31 +44,6 @@ public final class McpConnectionGuide {
 
 	private McpConnectionGuide() {
 		// Static utility.
-	}
-
-	/**
-	 * What a client sends for the given credential, in one line.
-	 */
-	public static String describe(EndpointCredential credential, Resources resources) {
-		String text = resources.getString(credential.credential());
-		if (!credential.isHeader()) {
-			return text;
-		}
-		return resources.getString(I18NConstants.CREDENTIAL_IN_HEADER__CREDENTIAL_HEADER_VALUE.fill(text,
-			credential.header(), resources.getString(credential.headerValue())));
-	}
-
-	/**
-	 * {@link #describe(EndpointCredential, Resources)} followed by where a person gets the
-	 * credential, if the credential says so.
-	 */
-	static String describeWithOrigin(EndpointCredential credential, DiscoveryContext context, Resources resources) {
-		String text = describe(credential, resources);
-		if (credential.obtain() == null) {
-			return text;
-		}
-		ResKey obtain = credential.obtain().apply(context);
-		return obtain == null ? text : text + ". " + resources.getString(obtain);
 	}
 
 	/**
@@ -149,7 +123,7 @@ public final class McpConnectionGuide {
 		}
 		out.append(resources.getString(I18NConstants.CREDENTIALS_INTRO)).append('\n');
 		for (EndpointCredential credential : credentials) {
-			out.append("- ").append(describeWithOrigin(credential, context, resources)).append('\n');
+			out.append("- ").append(credential.describeWithOrigin(context, resources)).append('\n');
 		}
 	}
 

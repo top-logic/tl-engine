@@ -89,8 +89,8 @@ public class TestAgentDiscoveryService extends BasicTestCase {
 	/** Media type of the catalog entries of {@link TestContribution}. */
 	static final String TEST_ENTRY_TYPE = "application/test-card+json";
 
-	/** Identifier prefix of the catalog entries of {@link TestContribution}. */
-	static final String TEST_IDENTIFIER_PREFIX = "urn:air:test:endpoints:";
+	/** Identifier namespace of the catalog entries of {@link TestContribution}. */
+	static final String TEST_IDENTIFIER_NAMESPACE = "endpoints";
 
 	public void testLlmsTxt() throws Exception {
 		WebResponse response = get(AgentDiscoveryServlet.LLMS_TXT_PATH);
@@ -127,7 +127,7 @@ public class TestAgentDiscoveryService extends BasicTestCase {
 		List<CatalogEntry> entries = catalog.getEntries();
 		assertEquals(1, entries.size());
 		CatalogEntry entry = entries.get(0);
-		assertEquals(TEST_IDENTIFIER_PREFIX + "test-endpoint", entry.getIdentifier());
+		assertEquals("urn:air:" + HOST + ":endpoints:test-endpoint", entry.getIdentifier());
 		assertEquals(TEST_ENTRY_TYPE, entry.getType());
 		assertEquals(APPLICATION_URL + "/test-endpoint", entry.getUrl());
 		assertEquals("Test Endpoint", entry.getDisplayName());
@@ -138,6 +138,20 @@ public class TestAgentDiscoveryService extends BasicTestCase {
 		assertEquals("https://host:8443/app", url("https", "host", 8443, "/app"));
 		assertEquals("http://host:8080", url("http", "host", 8080, ""));
 		assertEquals("http://host:8080/x", new DiscoveryContext("http://host:8080/").url("x"));
+	}
+
+	/**
+	 * The host of the application URL publishes the catalog identifiers; a URL without a host is
+	 * published as {@link DiscoveryContext#NO_HOST}.
+	 */
+	public void testCatalogIdentifier() {
+		DiscoveryContext context = new DiscoveryContext("https://apps.example.com:8443/app");
+		assertEquals("apps.example.com", context.host());
+		assertEquals("urn:air:apps.example.com:mcp:app", context.catalogIdentifier("mcp", "app"));
+
+		assertEquals(DiscoveryContext.NO_HOST, new DiscoveryContext("not a url").host());
+		assertEquals(DiscoveryContext.NO_HOST, new DiscoveryContext("/app").host());
+		assertEquals("urn:air:local:a2a:orders", new DiscoveryContext("/app").catalogIdentifier("a2a", "orders"));
 	}
 
 	/**
@@ -290,7 +304,7 @@ public class TestAgentDiscoveryService extends BasicTestCase {
 		@Override
 		public List<CatalogEntry> catalogEntries(DiscoveryContext context) {
 			return List.of(CatalogEntry.create()
-				.setIdentifier(TEST_IDENTIFIER_PREFIX + _config.getPath().substring(1))
+				.setIdentifier(context.catalogIdentifier(TEST_IDENTIFIER_NAMESPACE, _config.getPath().substring(1)))
 				.setType(TEST_ENTRY_TYPE)
 				.setUrl(context.url(_config.getPath()))
 				.setDisplayName(_config.getTitle()));

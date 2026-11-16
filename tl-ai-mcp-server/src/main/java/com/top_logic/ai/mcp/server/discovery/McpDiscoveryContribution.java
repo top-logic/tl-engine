@@ -22,18 +22,13 @@ import com.top_logic.util.Resources;
  *
  * <ul>
  * <li>The AI Catalog lists the {@link McpServerCard server card}, identified as
- * <code>urn:air:&lt;host&gt;:mcp:&lt;name&gt;</code> ({@link #identifier(String, String)}).</li>
+ * <code>urn:air:&lt;host&gt;:mcp:&lt;name&gt;</code> ({@link DiscoveryContext#catalogIdentifier(String, String)}).</li>
  * <li><code>llms.txt</code> gets a section with the endpoint, the server card, the accepted
  * credentials and a command that connects Claude Code, see
  * {@link McpConnectionGuide#llmsTxtSection}.</li>
  * </ul>
  */
 public class McpDiscoveryContribution implements AgentDiscoveryContribution {
-
-	/**
-	 * The scheme and publisher prefix of a catalog {@link CatalogEntry#getIdentifier() identifier}.
-	 */
-	public static final String IDENTIFIER_PREFIX = "urn:air:";
 
 	/**
 	 * The namespace of the catalog {@link CatalogEntry#getIdentifier() identifier} of the server
@@ -78,19 +73,12 @@ public class McpDiscoveryContribution implements AgentDiscoveryContribution {
 	 */
 	static CatalogEntry catalogEntry(ServerCard card, DiscoveryContext context) {
 		return CatalogEntry.create()
-			.setIdentifier(identifier(McpServerCard.host(context.applicationUrl()), card.getName()))
+			.setIdentifier(context.catalogIdentifier(IDENTIFIER_NAMESPACE, McpServerCard.localName(card.getName())))
 			.setType(McpServerCard.MEDIA_TYPE)
 			.setUrl(context.url(McpServerCard.PATH))
 			.setDisplayName(card.getTitle())
 			.setDescription(card.getDescription())
 			.setVersion(card.getVersion());
-	}
-
-	/**
-	 * The catalog identifier of the server card with the given name, published by the given host.
-	 */
-	static String identifier(String host, String cardName) {
-		return IDENTIFIER_PREFIX + host + ':' + IDENTIFIER_NAMESPACE + ':' + McpServerCard.localName(cardName);
 	}
 
 }

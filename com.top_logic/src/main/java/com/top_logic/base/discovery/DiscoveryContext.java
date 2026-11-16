@@ -6,11 +6,14 @@
 package com.top_logic.base.discovery;
 
 import java.io.IOException;
+import java.net.URI;
 
 import jakarta.servlet.http.HttpServletRequest;
 
 import com.top_logic.basic.AliasManager;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
+import com.top_logic.base.discovery.catalog.CatalogEntry;
 import com.top_logic.mig.html.layout.LayoutUtils;
 
 /**
@@ -25,6 +28,17 @@ import com.top_logic.mig.html.layout.LayoutUtils;
  * </p>
  */
 public class DiscoveryContext {
+
+	/**
+	 * The scheme of a catalog {@link CatalogEntry#getIdentifier() identifier}, see
+	 * {@link #catalogIdentifier(String, String)}.
+	 */
+	public static final String CATALOG_IDENTIFIER_PREFIX = "urn:air:";
+
+	/**
+	 * The {@link #host()} of an application whose URL names no host.
+	 */
+	public static final String NO_HOST = "local";
 
 	private final String _applicationUrl;
 
@@ -65,6 +79,35 @@ public class DiscoveryContext {
 	 */
 	public String applicationUrl() {
 		return _applicationUrl;
+	}
+
+	/**
+	 * The host name of the {@link #applicationUrl() application URL}, or {@link #NO_HOST} if it
+	 * names none.
+	 */
+	public String host() {
+		String host;
+		try {
+			host = URI.create(_applicationUrl).getHost();
+		} catch (IllegalArgumentException ex) {
+			host = null;
+		}
+		return StringServices.isEmpty(host) ? NO_HOST : host;
+	}
+
+	/**
+	 * The {@link CatalogEntry#getIdentifier() identifier} of an artifact this application publishes
+	 * in its AI Catalog:
+	 * <code>{@value #CATALOG_IDENTIFIER_PREFIX}&lt;host&gt;:&lt;namespace&gt;:&lt;name&gt;</code>,
+	 * with the {@link #host()} as publisher.
+	 *
+	 * @param namespace
+	 *        The kind of the artifact, e.g. <code>mcp</code>.
+	 * @param name
+	 *        The name of the artifact within the namespace.
+	 */
+	public String catalogIdentifier(String namespace, String name) {
+		return CATALOG_IDENTIFIER_PREFIX + host() + ':' + namespace + ':' + name;
 	}
 
 	/**

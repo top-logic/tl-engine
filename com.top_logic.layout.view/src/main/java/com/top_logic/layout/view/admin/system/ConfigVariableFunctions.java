@@ -15,6 +15,7 @@ import com.top_logic.basic.AliasSource;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
+import com.top_logic.model.search.expr.config.operations.ConfigFunctions;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
@@ -31,6 +32,11 @@ import com.top_logic.util.monitor.SystemEnvironmentBuilder;
  * {@link #definitions()} reads the descriptions of all configured variables, the other functions
  * describe one of these {@link AliasDefinition}s, e.g. the row of a table. Every function
  * describing a variable accepts no variable at all and answers with nothing.
+ * </p>
+ *
+ * <p>
+ * To read the value of a configuration variable (alias) by its name, use the TL-Script function
+ * <code>configVariable(name)</code> ({@link ConfigFunctions#variable(String)}).
  * </p>
  *
  * <p>

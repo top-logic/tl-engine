@@ -1445,7 +1445,6 @@ public class FlowFactory extends TLScriptFunctions {
 		return ClipBox.create()
 			.setContent(content)
 			.setUserObject(userObject)
-			.setClientId(cssClass)
 			.setCssClass(cssClass);
 	}
 

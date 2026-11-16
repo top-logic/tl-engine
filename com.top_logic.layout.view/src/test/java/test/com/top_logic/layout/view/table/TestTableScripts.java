@@ -346,7 +346,8 @@ public class TestTableScripts extends BasicTestCase {
 
 		ColumnFunctions.Resolved functions =
 			ColumnFunctions.compile(column, ComputedColumn.Config.VALUE, ComputedColumn.Config.UPDATE,
-				ComputedColumn.Config.CAN_UPDATE).resolve(new ColumnResolution(List.of(), _context));
+				ComputedColumn.Config.CAN_UPDATE, ComputedColumn.Config.OPTIONS)
+				.resolve(new ColumnResolution(List.of(), _context));
 		assertEquals("rowf", functions.value().apply("row"));
 		assertTrue(functions.canUpdate().test("yes"));
 		assertFalse(functions.canUpdate().test("no"));

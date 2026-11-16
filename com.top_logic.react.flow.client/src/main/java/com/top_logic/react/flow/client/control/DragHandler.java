@@ -571,8 +571,6 @@ class DragHandler {
 		int depth = 0;
 		while (current != null) {
 			Object widget = FlowDiagramClientControl.getAttachedWidget(current);
-			DomGlobal.console.log("[DragDebug] walk[" + depth + "]: <" + current.tagName
-				+ "> id=" + current.id + " widget=" + (widget != null ? widget.getClass().getName() : "null"));
 			if (widget instanceof Box) {
 				return (Box) widget;
 			}

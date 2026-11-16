@@ -687,8 +687,6 @@ public class FlowDiagramClientControl implements DiagramContext {
 					return;
 				}
 				Element target = (Element) pe.target;
-				DomGlobal.console.log("[DragDebug] pointerdown on: " + target.tagName
-					+ " id=" + target.id);
 				if (_dragHandler.isPending()) {
 					// The release of the previous press went elsewhere.
 					cancelGesture();

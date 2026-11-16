@@ -66,6 +66,21 @@ public interface DynamicColumnSet {
 	ColumnType type(Object column);
 
 	/**
+	 * The default display width of the column the given object stands for, in pixels, see
+	 * {@link ColumnSetup#width()}.
+	 *
+	 * <p>
+	 * {@code 0} - the default - keeps the width the type of the values of the column derives.
+	 * </p>
+	 *
+	 * @param column
+	 *        One of the objects standing for a column.
+	 */
+	default int width(Object column) {
+		return 0;
+	}
+
+	/**
 	 * Whether the column the given object stands for is shown from the start, rather than only
 	 * offered in the column selection.
 	 *

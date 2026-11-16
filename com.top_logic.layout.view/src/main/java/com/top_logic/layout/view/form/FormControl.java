@@ -173,7 +173,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * @param noModelMessage
 	 *        The message to display when no object is available.
 	 * @param lockHandler
-	 *        The {@link LockHandler} for acquiring/releasing locks during editing.
+	 *        The {@link LockHandler} for acquiring/releasing locks during editing, owned by this
+	 *        control alone (a handler holds the lock it acquired).
 	 */
 	public FormControl(ReactContext context, TLObject initialObject, String noModelMessage, LockHandler lockHandler) {
 		super(context, initialObject, "TLFormLayout");
@@ -702,7 +703,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
-	 * Enters edit mode by acquiring a lock, creating an overlay, and notifying listeners.
+	 * Enters edit mode by acquiring a lock on a persistent object, creating an overlay, and
+	 * notifying listeners.
 	 *
 	 * <p>
 	 * Every transition into edit mode goes through this method, so it is the single place that checks
@@ -730,8 +732,11 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			return false;
 		}
 
-		// Acquire lock first -- if this fails, no overlay is created.
-		_lockHandler.acquireLock(_currentObject);
+		// Acquire lock first -- if this fails, no overlay is created. A transient object (e.g. the
+		// draft of a create dialog) is invisible to other sessions and needs no lock.
+		if (!_currentObject.tTransient()) {
+			_lockHandler.acquireLock(_currentObject);
+		}
 
 		_editMode = true;
 		showEditMode(true);

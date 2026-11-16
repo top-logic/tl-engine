@@ -5,9 +5,13 @@
  */
 package com.top_logic.model.fallback;
 
+import com.top_logic.basic.col.Sink;
 import com.top_logic.model.StorageDetail;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.form.OverlayLookup;
+import com.top_logic.model.form.TracingScope;
+import com.top_logic.model.util.Pointer;
 
 /**
  * {@link StorageDetail} that differntiates between explicitly set values and those computed from a
@@ -20,6 +24,33 @@ public interface StorageWithFallback extends StorageDetail {
 	 * {@link #getExplicitValue(TLObject, TLStructuredTypePart) explicitly set}.
 	 */
 	Object getFallbackValue(TLObject object, TLStructuredTypePart attribute);
+
+	/**
+	 * Computes the {@link #getFallbackValue(TLObject, TLStructuredTypePart) fallback value} over
+	 * the edits of a form and reports the attributes the computation reads.
+	 *
+	 * <p>
+	 * The computation runs in a {@link TracingScope}: each read of an attribute value is reported to
+	 * the given trace, and an object with an overlay in the given lookup is read through its
+	 * overlay.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object whose fallback value is computed, typically an overlay of a form.
+	 * @param attribute
+	 *        The attribute with this storage.
+	 * @param trace
+	 *        Receives the attributes read by the computation.
+	 * @param overlays
+	 *        The overlays of the form, <code>null</code> outside of a form.
+	 * @return The fallback value.
+	 */
+	default Object traceFallbackValue(TLObject object, TLStructuredTypePart attribute, Sink<Pointer> trace,
+			OverlayLookup overlays) {
+		try (TracingScope scope = TracingScope.open(trace, overlays)) {
+			return getFallbackValue(object, attribute);
+		}
+	}
 
 	/**
 	 * The value that has been explicitly set for the given attribute on the given object.

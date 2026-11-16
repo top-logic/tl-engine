@@ -123,8 +123,9 @@ public class Bootstrap {
 	 * (protocol, host and port, e.g. {@code http://localhost:8080}).
 	 *
 	 * <p>
-	 * When not set, it is set to the local URL of the started server, because the application
-	 * configuration refers to it.
+	 * When not set, the application has no configured address and derives its address from each
+	 * request, so that it answers with the name and port under which a client reached it (e.g.
+	 * <code>localhost</code> on the developer machine, the machine name from another one).
 	 * </p>
 	 */
 	static final String HOST_VARIABLE = "tl_host";
@@ -189,9 +190,8 @@ public class Bootstrap {
 	private void start() throws Exception {
 		String externalIntf = Environment.getSystemPropertyOrEnvironmentVariable(HOST_VARIABLE, null);
 		if (externalIntf == null) {
-			// Set property normally configured to the external interface of the application.
+			// Only the browser opened below uses the local address.
 			externalIntf = "http://" + HOSTNAME + ":" + _port;
-			System.setProperty(HOST_VARIABLE, externalIntf);
 		}
 
 		URL stopUrl = stopUrl(_port);

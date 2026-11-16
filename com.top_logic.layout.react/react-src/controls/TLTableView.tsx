@@ -182,6 +182,16 @@ interface ColumnState {
    */
   cssClass?: string;
   /**
+   * CSS class put on the heading of the column only, not on its data cells: the application's own
+   * styling hook for the heading. Absent for none.
+   */
+  headerClass?: string;
+  /**
+   * Color role the heading of the column is tinted in, put on the heading as `data-tl-role`; the design
+   * system draws it. Absent for none. Independent of {@link headerClass}.
+   */
+  headerRole?: string;
+  /**
    * What the column's label says about itself over and above its text, offered on the heading.
    * Absent for a label that describes itself.
    */
@@ -1880,8 +1890,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 key={col.name}
                 role="columnheader"
                 aria-sort={ariaSort(col)}
-                className={'tl-table__header-cell' + (col.cssClass ? ' ' + col.cssClass : '')}
+                className={'tl-table__header-cell' + (col.cssClass ? ' ' + col.cssClass : '')
+                  + (col.headerClass ? ' ' + col.headerClass : '')}
                 data-col={col.name}
+                data-tl-role={col.headerRole}
                 data-col-idx={colIdx}
                 data-tl-state={stateAttr(...words, col.filterActive && 'filtered',
                   reorderState(columnReorder.itemState(colIdx)))}

@@ -486,6 +486,34 @@
 /* @tl-roles: status .tl-table__cell */
 /* @tl-roles: category .tl-table__cell */
 
+/* Eine Kopfzelle mit einer Farbrolle (Column#headerRole; im State columns[].headerRole) trägt sie als
+   data-tl-role: die Fläche der Rolle tönt den Kopf der Spalte, ein Streifen unten in der Linie der Rolle
+   setzt ihn gegen die Kopfzeile ab, und die Überschrift steht in text-primary statt leise — wie die Pill auf
+   ihrer Fläche (theme-tokens „Coloring a value“). Nur die Kopfzelle, nicht die Datenzellen der Spalte. Nach
+   den Regeln der Lage: eine fixierte oder angeheftete Kopfzelle setzt ihre eigene Fläche statt der geerbten. */
+/* @tl-roles: brand .tl-table__header-cell */
+/* @tl-roles: status .tl-table__header-cell */
+/* @tl-roles: category .tl-table__header-cell */
+
+/* Der Streifen liest die Linie, die die Rollenregel als border-color setzt; die Kanten der Lage (frozen-last,
+   pinned-first) behalten border-emphasis. */
+.tl-table__header-cell[data-tl-role] {
+  border-bottom-style: solid;
+  border-bottom-width: var(--tl-border-width-accent);
+}
+
+.tl-table__header-cell[data-tl-role][data-tl-state~="frozen-last"] {
+  border-right-color: var(--tl-border-emphasis);
+}
+
+.tl-table__header-cell[data-tl-role][data-tl-state~="pinned-first"] {
+  border-left-color: var(--tl-border-emphasis);
+}
+
+.tl-table__header-cell[data-tl-role] .tl-table__label {
+  color: var(--tl-text-primary);
+}
+
 /* --- Zellinhalt ------------------------------------------------------------------ */
 
 /* Der Wurzelknoten eines Lesewerts ohne eigene Form (span ohne Klasse, tl-text) füllt die Zelle: ein

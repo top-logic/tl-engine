@@ -25,6 +25,8 @@ rechnet sie aus `--tl-size-row` (`useTokenPx`).
 | `columns[].groupable` | boolean | Nach der Spalte darf gruppiert werden. |
 | `columns[].pinnedEnd` | boolean | Angeheftet am rechten Ende: `data-tl-state~="pinned"`, die erste davon `"pinned-first"`. |
 | `columns[].cssClass` | string | Klasse an jeder Zelle der Spalte, Kopf eingeschlossen. |
+| `columns[].headerClass` | string | Klasse nur an der Kopfzelle (`Column#headerClass`), nicht an den Datenzellen; gehört der Anwendung. |
+| `columns[].headerRole` | string | Farbrolle des Kopfs (`Column#headerRole`): `data-tl-role` an `tl-table__header-cell`; fehlt: keine Tönung. |
 | `columns[].tooltip` | string | Was die Überschrift über ihren Text hinaus sagt. |
 | `totalRowCount` | number | Zeilen insgesamt; Grundlage von `aria-rowcount`. |
 | `rows` | Liste | Die Zeilen im sichtbaren Fenster, je Zeile: |
@@ -263,6 +265,9 @@ einzelne Zellen. Gezeichnet über `@tl-roles: brand`, `status` und `category` (F
 `--tl-status-<s>-border`, `--tl-category-<n>-border`); `neutral` zeichnet nichts. Eine Zelle mit eigener Rolle
 trägt ihre, die übrigen die der Zeile. An einer ausgewählten Zeile und ihren Zellen steht keine Rolle: die Auswahl
 gewinnt. Zeigen ändert die Tönung nicht, haftende Zellen erben die Tönung ihrer Zeile.
+`columns[].headerRole` setzt `data-tl-role` an die Kopfzelle, über dieselben drei `@tl-roles`-Arten gezeichnet:
+die Fläche der Rolle, dazu ein Streifen unten (`--tl-border-width-accent`) in der Linie der Rolle, die Überschrift
+in `--tl-text-primary`. `columns[].headerClass` steht nur an der Kopfzelle, die Datenzellen tragen sie nicht.
 
 ## Zellinhalt
 

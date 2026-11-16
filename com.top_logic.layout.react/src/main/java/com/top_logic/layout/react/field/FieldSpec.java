@@ -208,8 +208,9 @@ public final class FieldSpec {
 	 * </p>
 	 *
 	 * <p>
-	 * Only a single-line text input offers it; a text area, a number and a password input ignore
-	 * it.
+	 * The button is asked for by an input the user empties by deleting what is typed: a text in a
+	 * single line or in a text area, a password and a number. A field whose value cannot be deleted that way - a date, a time of day, a
+	 * selection - offers the button on its own whenever it is not mandatory.
 	 * </p>
 	 */
 	public boolean isClearable() {

@@ -157,6 +157,19 @@ public class DBAuthenticationAccessDevice extends AbstractConfiguredInstance<Sec
 		return _kb.getObjectByAttribute(PASSWORD_TABLE, ACCOUNT_REF, account.tHandle());
 	}
 
+	/**
+	 * Whether a non-empty password hash is stored for the given account.
+	 */
+	@Override
+	public boolean hasPassword(Person account) {
+		DataObject row = getPasswordData(account);
+		if (row == null) {
+			return false;
+		}
+		String hash = (String) row.getAttributeValue(PASSWORD_ATTR);
+		return hash != null && !hash.isBlank();
+	}
+
 	@Override
 	public boolean allowPwdChange() {
 		return true;

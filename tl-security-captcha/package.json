@@ -6,6 +6,6 @@
     "build": "node copy-altcha.mjs"
   },
   "dependencies": {
-    "altcha": "3.5.0"
+    "altcha": "3.6.0"
   }
 }

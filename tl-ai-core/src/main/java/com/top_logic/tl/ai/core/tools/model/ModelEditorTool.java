@@ -45,6 +45,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.core.tools.model.messages.DeleteResponse;
 import com.top_logic.tl.ai.core.tools.model.messages.DeletionBlocker;
 import com.top_logic.tl.ai.core.tools.model.messages.ModelPartResponse;
@@ -108,6 +109,15 @@ public class ModelEditorTool {
 	// ===== Module Operations =====
 
 	/**
+	 * The commit message of {@link #createModule(String, String, String, String, String)}.
+	 */
+	@CalledByReflection
+	ResKey createModuleMessage(String moduleName, String labelEn, String labelDe, String descEn,
+			String descDe) {
+		return I18NConstants.MODULE_CREATED__MODULE.fill(moduleName);
+	}
+
+	/**
 	 * Creates a new TopLogic module or returns an existing one by name.
 	 *
 	 * @param moduleName
@@ -122,7 +132,7 @@ public class ModelEditorTool {
 	 *        German description for the module (optional).
 	 * @return JSON with module details.
 	 */
-	@ToolMethod(description = "Create a new TopLogic module or get an existing one by name", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Create a new TopLogic module or get an existing one by name", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE, commitMessage = "createModuleMessage")
 	public String createModule(
 			@P("Name of the module to create") String moduleName,
 			@P("English label for the module") String labelEn,
@@ -177,6 +187,15 @@ public class ModelEditorTool {
 	}
 
 	/**
+	 * The commit message of {@link #updateModule(String, String, String, String, String, ToolContext)}.
+	 */
+	@CalledByReflection
+	ResKey updateModuleMessage(String moduleName, String labelEn, String labelDe, String descEn,
+			String descDe, ToolContext context) {
+		return I18NConstants.MODULE_UPDATED__MODULE.fill(moduleName);
+	}
+
+	/**
 	 * Updates internationalized labels and descriptions for an existing TopLogic module.
 	 *
 	 * @param moduleName
@@ -191,7 +210,7 @@ public class ModelEditorTool {
 	 *        German description for the module (optional).
 	 * @return JSON with updated module details.
 	 */
-	@ToolMethod(description = "Update internationalized labels and descriptions for an existing TopLogic module", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Update internationalized labels and descriptions for an existing TopLogic module", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE, commitMessage = "updateModuleMessage")
 	public String updateModule(
 			@P("Name of the module to update") String moduleName,
 			@P("English label for the module") String labelEn,
@@ -248,6 +267,17 @@ public class ModelEditorTool {
 	// ===== Class Operations =====
 
 	/**
+	 * The commit message of
+	 * {@link #createClass(String, String, String, String, String, String, Boolean, Boolean, String)}.
+	 */
+	@CalledByReflection
+	ResKey createClassMessage(String moduleName, String className, String labelEn, String labelDe,
+			String descEn, String descDe, Boolean isAbstract, Boolean isFinal, String generalizations) {
+		return I18NConstants.CLASS_CREATED__CLASS.fill(
+			moduleName + TLModelUtil.QUALIFIED_NAME_SEPARATOR + className);
+	}
+
+	/**
 	 * Creates a new TopLogic class in an existing module or returns an existing one by name.
 	 *
 	 * @param moduleName
@@ -270,7 +300,7 @@ public class ModelEditorTool {
 	 *        Comma-separated names of parent classes (optional).
 	 * @return JSON with class details.
 	 */
-	@ToolMethod(description = "Create a new TopLogic class in an existing module or get an existing one by name", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Create a new TopLogic class in an existing module or get an existing one by name", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE, commitMessage = "createClassMessage")
 	public String createClass(
 			@P("Name of the module where the class will be created") String moduleName,
 			@P("Name of the class to create. Must start with an uppercase letter.") String className,
@@ -349,6 +379,18 @@ public class ModelEditorTool {
 	}
 
 	/**
+	 * The commit message of
+	 * {@link #updateClass(String, String, String, String, String, String, Boolean, Boolean, String, ToolContext)}.
+	 */
+	@CalledByReflection
+	ResKey updateClassMessage(String moduleName, String className, String labelEn, String labelDe,
+			String descEn, String descDe, Boolean isAbstract, Boolean isFinal, String generalizations,
+			ToolContext context) {
+		return I18NConstants.CLASS_UPDATED__CLASS.fill(
+			moduleName + TLModelUtil.QUALIFIED_NAME_SEPARATOR + className);
+	}
+
+	/**
 	 * Updates properties, flags, and inheritance of an existing TopLogic class.
 	 *
 	 * @param moduleName
@@ -371,7 +413,7 @@ public class ModelEditorTool {
 	 *        Comma-separated names of parent classes (optional).
 	 * @return JSON with updated class details.
 	 */
-	@ToolMethod(description = "Update properties, flags, and inheritance of an existing TopLogic class", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Update properties, flags, and inheritance of an existing TopLogic class", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE, commitMessage = "updateClassMessage")
 	public String updateClass(
 			@P("Name of the module containing the class") String moduleName,
 			@P("Name of the class to update") String className,
@@ -459,6 +501,18 @@ public class ModelEditorTool {
 	// ===== Property Operations =====
 
 	/**
+	 * The commit message of
+	 * {@link #createProperty(String, String, String, String, String, String, String, String, Boolean, Boolean, Boolean, Boolean, Boolean)}.
+	 */
+	@CalledByReflection
+	ResKey createPropertyMessage(String moduleName, String className, String propertyName,
+			String propertyType, String labelEn, String labelDe, String descEn, String descDe,
+			Boolean mandatory, Boolean multiple, Boolean ordered, Boolean bag, Boolean isAbstract) {
+		return I18NConstants.PROPERTY_CREATED__PROPERTY.fill(
+			moduleName + TLModelUtil.QUALIFIED_NAME_SEPARATOR + className + TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + propertyName);
+	}
+
+	/**
 	 * Creates a new property on a TopLogic class with primitive types, or returns an existing one.
 	 *
 	 * @param moduleName
@@ -489,7 +543,7 @@ public class ModelEditorTool {
 	 *        Whether abstract (default: false).
 	 * @return JSON with property details.
 	 */
-	@ToolMethod(description = "Create a new PRIMITIVE property on a TopLogic class, or return an existing one by name. Supports all datatypes available in the model (e.g. String, Text, Integer, Double, Date, Color, URL). NOT for enumerations or references to other types — use createReference for those.", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Create a new PRIMITIVE property on a TopLogic class, or return an existing one by name. Supports all datatypes available in the model (e.g. String, Text, Integer, Double, Date, Color, URL). NOT for enumerations or references to other types — use createReference for those.", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE, commitMessage = "createPropertyMessage")
 	public String createProperty(
 			@P("Name of the module containing the class") String moduleName,
 			@P("Name of the class to add the property to") String className,
@@ -577,6 +631,18 @@ public class ModelEditorTool {
 	}
 
 	/**
+	 * The commit message of
+	 * {@link #updateProperty(String, String, String, String, String, String, String, Boolean, Boolean, Boolean, Boolean, Boolean, ToolContext)}.
+	 */
+	@CalledByReflection
+	ResKey updatePropertyMessage(String moduleName, String className, String propertyName, String labelEn,
+			String labelDe, String descEn, String descDe, Boolean mandatory, Boolean multiple,
+			Boolean ordered, Boolean bag, Boolean isAbstract, ToolContext context) {
+		return I18NConstants.PROPERTY_UPDATED__PROPERTY.fill(
+			moduleName + TLModelUtil.QUALIFIED_NAME_SEPARATOR + className + TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + propertyName);
+	}
+
+	/**
 	 * Updates attributes and internationalization of an existing TopLogic class property.
 	 *
 	 * @param moduleName
@@ -605,7 +671,7 @@ public class ModelEditorTool {
 	 *        Whether abstract (optional).
 	 * @return JSON with updated property details.
 	 */
-	@ToolMethod(description = "Update attributes and internationalization of an existing TopLogic class property", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Update attributes and internationalization of an existing TopLogic class property", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE, commitMessage = "updatePropertyMessage")
 	public String updateProperty(
 			@P("Name of the module containing the class") String moduleName,
 			@P("Name of the class containing the property") String className,
@@ -691,6 +757,20 @@ public class ModelEditorTool {
 	// ===== Reference Operations =====
 
 	/**
+	 * The commit message of
+	 * {@link #createReference(String, String, String, String, String, String, String, String, String, Boolean, Boolean, Boolean, Boolean, Boolean, Boolean, Boolean, Boolean, String, String)}.
+	 */
+	@CalledByReflection
+	ResKey createReferenceMessage(String moduleName, String className, String referenceName,
+			String targetModule, String targetClass, String labelEn, String labelDe, String descEn,
+			String descDe, Boolean mandatory, Boolean multiple, Boolean ordered, Boolean bag,
+			Boolean isAbstract, Boolean composite, Boolean aggregate, Boolean navigate, String historyType,
+			String deletionPolicy) {
+		return I18NConstants.REFERENCE_CREATED__REFERENCE.fill(
+			moduleName + TLModelUtil.QUALIFIED_NAME_SEPARATOR + className + TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + referenceName);
+	}
+
+	/**
 	 * Creates a new reference on a TopLogic class pointing to another class or enumeration, or
 	 * returns existing.
 	 *
@@ -734,7 +814,7 @@ public class ModelEditorTool {
 	 *        Deletion policy: CLEAR_REFERENCE, DELETE_REFERER, STABILISE_REFERENCE, or VETO.
 	 * @return JSON with reference details.
 	 */
-	@ToolMethod(description = "Create a new reference on a TopLogic class pointing to another class or enumeration, or return an existing one by name", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Create a new reference on a TopLogic class pointing to another class or enumeration, or return an existing one by name", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE, commitMessage = "createReferenceMessage")
 	public String createReference(
 			@P("Name of the module containing the source class") String moduleName,
 			@P("Name of the source class to add the reference to") String className,
@@ -856,6 +936,18 @@ public class ModelEditorTool {
 	// ===== Backward Reference Operations =====
 
 	/**
+	 * The commit message of
+	 * {@link #createBackwardReference(String, String, String, String, String, String, String, String, Boolean)}.
+	 */
+	@CalledByReflection
+	ResKey createBackwardReferenceMessage(String moduleName, String className, String forwardReferenceName,
+			String backwardReferenceName, String labelEn, String labelDe, String descEn, String descDe,
+			Boolean navigate) {
+		return I18NConstants.REFERENCE_CREATED__REFERENCE.fill(
+			moduleName + TLModelUtil.QUALIFIED_NAME_SEPARATOR + className + TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + backwardReferenceName);
+	}
+
+	/**
 	 * Creates a backward reference to an existing forward reference.
 	 *
 	 * @param moduleName
@@ -878,7 +970,7 @@ public class ModelEditorTool {
 	 *        Whether navigable (default: true).
 	 * @return JSON with backward reference details.
 	 */
-	@ToolMethod(description = "Create a backward reference to an existing forward reference, or return an existing one by name", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Create a backward reference to an existing forward reference, or return an existing one by name", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE, commitMessage = "createBackwardReferenceMessage")
 	public String createBackwardReference(
 			@P("Name of the module containing the source class (that has the forward reference)") String moduleName,
 			@P("Name of the source class that has the forward reference") String className,
@@ -991,6 +1083,17 @@ public class ModelEditorTool {
 	// ===== Enumeration Operations =====
 
 	/**
+	 * The commit message of
+	 * {@link #createEnumeration(String, String, String, String, String, String, String)}.
+	 */
+	@CalledByReflection
+	ResKey createEnumerationMessage(String moduleName, String enumName, String labelEn, String labelDe,
+			String descEn, String descDe, String classifiersJson) {
+		return I18NConstants.ENUMERATION_CREATED__ENUMERATION.fill(
+			moduleName + TLModelUtil.QUALIFIED_NAME_SEPARATOR + enumName);
+	}
+
+	/**
 	 * Creates a new TopLogic enumeration with optional classifiers, or returns an existing one.
 	 *
 	 * @param moduleName
@@ -1010,7 +1113,7 @@ public class ModelEditorTool {
 	 *        label (object with en/de), description (object with en/de). Pass null for none.
 	 * @return JSON with enumeration details.
 	 */
-	@ToolMethod(description = "Create a new TopLogic enumeration with optional classifiers, or get an existing one by name", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Create a new TopLogic enumeration with optional classifiers, or get an existing one by name", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE, commitMessage = "createEnumerationMessage")
 	public String createEnumeration(
 			@P("Name of the module where the enumeration will be created") String moduleName,
 			@P("Name of the enumeration. Must be a valid Java identifier and may contain dots.") String enumName,
@@ -1135,6 +1238,18 @@ public class ModelEditorTool {
 	}
 
 	/**
+	 * The commit message of
+	 * {@link #updateEnumeration(String, String, String, String, String, String, String, String, String, ToolContext)}.
+	 */
+	@CalledByReflection
+	ResKey updateEnumerationMessage(String moduleName, String enumName, String labelEn, String labelDe,
+			String descEn, String descDe, String addClassifiersJson, String updateClassifiersJson,
+			String defaultClassifier, ToolContext context) {
+		return I18NConstants.ENUMERATION_UPDATED__ENUMERATION.fill(
+			moduleName + TLModelUtil.QUALIFIED_NAME_SEPARATOR + enumName);
+	}
+
+	/**
 	 * Updates properties and classifiers of an existing TopLogic enumeration.
 	 *
 	 * @param moduleName
@@ -1157,7 +1272,7 @@ public class ModelEditorTool {
 	 *        Name of classifier to set as default.
 	 * @return JSON with updated enumeration details.
 	 */
-	@ToolMethod(description = "Update properties and classifiers of an existing TopLogic enumeration", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Update properties and classifiers of an existing TopLogic enumeration", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE, commitMessage = "updateEnumerationMessage")
 	public String updateEnumeration(
 			@P("Name of the module containing the enumeration") String moduleName,
 			@P("Name of the enumeration to update") String enumName,
@@ -1624,6 +1739,14 @@ public class ModelEditorTool {
 	// ===== Delete Operations =====
 
 	/**
+	 * The commit message of {@link #deleteModelElement(String, ToolContext)}.
+	 */
+	@CalledByReflection
+	ResKey deleteModelElementMessage(String qualifiedName, ToolContext context) {
+		return I18NConstants.MODEL_ELEMENT_DELETED__NAME.fill(qualifiedName);
+	}
+
+	/**
 	 * Deletes a model element from the TopLogic application model.
 	 *
 	 * <p>
@@ -1641,7 +1764,7 @@ public class ModelEditorTool {
 		+ "Performs safety checks before deletion — returns detailed blockers on failure. "
 		+ "Qualified name format: 'moduleName' for modules, 'moduleName:TypeName' for classes/enums, "
 		+ "'moduleName:TypeName#partName' for properties/references/classifiers.", group = ToolGroups.MODEL_STRUCTURE,
-		marking = AnswerMarking.NONE)
+		marking = AnswerMarking.NONE, commitMessage = "deleteModelElementMessage")
 	public String deleteModelElement(
 			@P("Qualified name of the element to delete")
 			String qualifiedName,

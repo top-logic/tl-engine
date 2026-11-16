@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The tickets as a list and the selected ticket in detail, shown in a dialog (see
+	ticket-browser-dialog.view.xml and ticket-browser-dialog-fixed.view.xml). The list creates and
+	deletes tickets, the detail edits the selected one on three tabs of very different length: the
+	overview with two fields, all fields of the ticket, and its resolution.
+	
+	The content changes its height with the selection and the tab: nothing selected shows a single
+	line, a selected ticket the fields of the displayed tab. A dialog without a height grows with it
+	and keeps the tallest height it had while it is open, so its footer does not move when a shorter
+	tab is displayed.
+-->
+<view>
+	<channels>
+		<channel name="ticket"/>
+	</channels>
+
+	<split-panel
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane
+				min-size="200"
+				size="35"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Tickets</en>
+						<de>Tickets</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
+							<create-transient type="demo.tickets:Ticket">
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="tickets-create.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="ticket"
+										/>
+									</open-dialog>
+								</with-result>
+							</create-transient>
+						</generic-command>
+						<generic-command
+							clique="delete"
+							image="css:bi bi-trash"
+							inputs="ticket"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<confirm expr="#('Delete ticket {0}?'@en, 'Ticket {0} löschen?'@de).fill($ticket.get(`demo.tickets:Ticket#name`))"/>
+							<delete-object/>
+							<write-channel name="ticket"
+								clear="true"
+							/>
+						</generic-command>
+					</commands>
+					<table
+						observed-types="demo.tickets:Ticket"
+						selection="ticket"
+						types="demo.tickets:Ticket"
+					>
+						<columns>
+							<column
+								attribute="name"
+								sort="ASC"
+							/>
+							<column attribute="status"/>
+						</columns>
+						<rows>all(`demo.tickets:Ticket`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane
+				min-size="300"
+				size="65"
+				unit="%"
+			>
+				<panel>
+					<title>
+						<en>Ticket</en>
+						<de>Ticket</de>
+					</title>
+					<tab-bar active-tab="overview">
+						<tab id="overview">
+							<label>
+								<en>Overview</en>
+								<de>Übersicht</de>
+							</label>
+							<form
+								input="ticket"
+								with-inset="true"
+							>
+								<field attribute="name"/>
+								<field attribute="status"/>
+							</form>
+						</tab>
+						<tab id="all-fields">
+							<label>
+								<en>All fields</en>
+								<de>Alle Felder</de>
+							</label>
+							<form
+								input="ticket"
+								with-inset="true"
+							>
+								<field attribute="name"/>
+								<field attribute="status"/>
+								<field attribute="publicStatus"/>
+								<field attribute="headline"/>
+								<field attribute="resolution"/>
+								<field attribute="category"/>
+								<field attribute="tags"/>
+								<field attribute="keywords"/>
+								<field attribute="estimate"/>
+								<field attribute="channel"/>
+							</form>
+						</tab>
+						<tab id="resolution">
+							<label>
+								<en>Resolution</en>
+								<de>Lösung</de>
+							</label>
+							<form
+								input="ticket"
+								with-inset="true"
+							>
+								<field attribute="headline"/>
+								<field attribute="resolution"/>
+							</form>
+						</tab>
+					</tab-bar>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

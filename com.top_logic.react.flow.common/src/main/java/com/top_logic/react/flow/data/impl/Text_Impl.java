@@ -17,7 +17,11 @@ public class Text_Impl extends com.top_logic.react.flow.data.impl.Box_Impl imple
 
 	private String _fillStyle = null;
 
+	private boolean _ellipsis = false;
+
 	private transient double _baseLine = 0.0d;
+
+	private transient String _shownValue = null;
 
 	/**
 	 * Creates a {@link Text_Impl} instance.
@@ -162,6 +166,24 @@ public class Text_Impl extends com.top_logic.react.flow.data.impl.Box_Impl imple
 	}
 
 	@Override
+	public final boolean isEllipsis() {
+		return _ellipsis;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.Text setEllipsis(boolean value) {
+		internalSetEllipsis(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isEllipsis()} without chain call utility. */
+	protected final void internalSetEllipsis(boolean value) {
+		_listener.beforeSet(this, ELLIPSIS__PROP, value);
+		_ellipsis = value;
+		_listener.afterChanged(this, ELLIPSIS__PROP);
+	}
+
+	@Override
 	public final double getBaseLine() {
 		return _baseLine;
 	}
@@ -177,6 +199,29 @@ public class Text_Impl extends com.top_logic.react.flow.data.impl.Box_Impl imple
 		_listener.beforeSet(this, BASE_LINE__PROP, value);
 		_baseLine = value;
 		_listener.afterChanged(this, BASE_LINE__PROP);
+	}
+
+	@Override
+	public final String getShownValue() {
+		return _shownValue;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.Text setShownValue(String value) {
+		internalSetShownValue(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getShownValue()} without chain call utility. */
+	protected final void internalSetShownValue(String value) {
+		_listener.beforeSet(this, SHOWN_VALUE__PROP, value);
+		_shownValue = value;
+		_listener.afterChanged(this, SHOWN_VALUE__PROP);
+	}
+
+	@Override
+	public final boolean hasShownValue() {
+		return _shownValue != null;
 	}
 
 	@Override
@@ -242,7 +287,9 @@ public class Text_Impl extends com.top_logic.react.flow.data.impl.Box_Impl imple
 			FONT_FAMILY__PROP, 
 			STROKE_STYLE__PROP, 
 			FILL_STYLE__PROP, 
-			BASE_LINE__PROP);
+			ELLIPSIS__PROP, 
+			BASE_LINE__PROP, 
+			SHOWN_VALUE__PROP);
 		java.util.List<String> tmp = new java.util.ArrayList<>();
 		tmp.addAll(com.top_logic.react.flow.data.impl.Box_Impl.PROPERTIES);
 		tmp.addAll(local);
@@ -255,7 +302,8 @@ public class Text_Impl extends com.top_logic.react.flow.data.impl.Box_Impl imple
 		java.util.HashSet<String> tmp = new java.util.HashSet<>();
 		tmp.addAll(com.top_logic.react.flow.data.impl.Box_Impl.TRANSIENT_PROPERTIES);
 		tmp.addAll(java.util.Arrays.asList(
-				BASE_LINE__PROP));
+				BASE_LINE__PROP, 
+				SHOWN_VALUE__PROP));
 		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
 	}
 
@@ -278,7 +326,9 @@ public class Text_Impl extends com.top_logic.react.flow.data.impl.Box_Impl imple
 			case FONT_FAMILY__PROP: return getFontFamily();
 			case STROKE_STYLE__PROP: return getStrokeStyle();
 			case FILL_STYLE__PROP: return getFillStyle();
+			case ELLIPSIS__PROP: return isEllipsis();
 			case BASE_LINE__PROP: return getBaseLine();
+			case SHOWN_VALUE__PROP: return getShownValue();
 			default: return super.get(field);
 		}
 	}
@@ -292,7 +342,9 @@ public class Text_Impl extends com.top_logic.react.flow.data.impl.Box_Impl imple
 			case FONT_FAMILY__PROP: internalSetFontFamily((String) value); break;
 			case STROKE_STYLE__PROP: internalSetStrokeStyle((String) value); break;
 			case FILL_STYLE__PROP: internalSetFillStyle((String) value); break;
+			case ELLIPSIS__PROP: internalSetEllipsis((boolean) value); break;
 			case BASE_LINE__PROP: internalSetBaseLine((double) value); break;
+			case SHOWN_VALUE__PROP: internalSetShownValue((String) value); break;
 			default: super.set(field, value); break;
 		}
 	}
@@ -320,6 +372,8 @@ public class Text_Impl extends com.top_logic.react.flow.data.impl.Box_Impl imple
 			out.name(FILL_STYLE__PROP);
 			out.value(getFillStyle());
 		}
+		out.name(ELLIPSIS__PROP);
+		out.value(isEllipsis());
 	}
 
 	@Override
@@ -365,8 +419,20 @@ public class Text_Impl extends com.top_logic.react.flow.data.impl.Box_Impl imple
 				}
 				break;
 			}
+			case ELLIPSIS__PROP: {
+				out.value(isEllipsis());
+				break;
+			}
 			case BASE_LINE__PROP: {
 				out.value(getBaseLine());
+				break;
+			}
+			case SHOWN_VALUE__PROP: {
+				if (hasShownValue()) {
+					out.value(getShownValue());
+				} else {
+					out.nullValue();
+				}
 				break;
 			}
 			default: super.writeFieldValue(scope, out, field);
@@ -382,6 +448,7 @@ public class Text_Impl extends com.top_logic.react.flow.data.impl.Box_Impl imple
 			case FONT_FAMILY__PROP: setFontFamily(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case STROKE_STYLE__PROP: setStrokeStyle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case FILL_STYLE__PROP: setFillStyle(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case ELLIPSIS__PROP: setEllipsis(in.nextBoolean()); break;
 			default: super.readField(scope, in, field);
 		}
 	}

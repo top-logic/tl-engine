@@ -6,9 +6,11 @@
 package com.top_logic.layout.view.tiles;
 
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
@@ -21,9 +23,12 @@ import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.model.ObservedTypes;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
+import com.top_logic.model.util.TLModelPartRef;
 
 /**
  * {@link TileLabelProvider} that computes the label from current channel values using a TL-Script
@@ -34,6 +39,12 @@ import com.top_logic.model.search.ui.ScriptContextVariables;
  * expression over their current values, which it sees as variables named after the channels or by
  * their {@code as} names. The expression's result is converted to a {@link ResKey} according to its
  * runtime type - intended for labels derived from business object names.
+ * </p>
+ *
+ * <p>
+ * Where the label is kept up to date, it follows the objects on its inputs. An expression reading
+ * an object beyond them - {@code $project.get(`my.app:Project#customer`).get(`my.app:Customer#name`)}
+ * - names that object's type in {@link Config#getObservedTypes() observed-types}.
  * </p>
  *
  * @implNote The result is turned into a {@link ResKey} by
@@ -67,11 +78,29 @@ public class ScriptedTileLabel implements TileLabelProvider {
 		@NonNullable
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getExpr();
+
+		/** Configuration name for {@link #getObservedTypes()}. */
+		String OBSERVED_TYPES = "observed-types";
+
+		/**
+		 * Types whose object changes (create / update / delete) compute the label again, in
+		 * addition to the objects on the {@link #getInputs() inputs}, which are always observed.
+		 *
+		 * <p>
+		 * Configure this for a label reading an object it reaches only through the object on an
+		 * input - the name of the customer of the displayed project, for instance.
+		 * </p>
+		 */
+		@Name(OBSERVED_TYPES)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
+		List<TLModelPartRef> getObservedTypes();
 	}
 
 	private final List<InputRef> _inputs;
 
 	private final QueryExecutor _executor;
+
+	private final List<TLModelPartRef> _observedTypeRefs;
 
 	/**
 	 * Creates a new {@link ScriptedTileLabel}.
@@ -80,6 +109,7 @@ public class ScriptedTileLabel implements TileLabelProvider {
 	public ScriptedTileLabel(InstantiationContext context, Config config) {
 		_inputs = config.getInputs();
 		_executor = InputScript.compile(config, Config.EXPR);
+		_observedTypeRefs = config.getObservedTypes();
 	}
 
 	@Override
@@ -94,5 +124,13 @@ public class ScriptedTileLabel implements TileLabelProvider {
 	@Override
 	public List<ViewChannel> observedChannels(ViewContext context) {
 		return ChannelInputs.resolve(context, _inputs);
+	}
+
+	/**
+	 * The {@link Config#getObservedTypes() observed types} of the label.
+	 */
+	@Override
+	public Set<TLStructuredType> observedTypes() {
+		return ObservedTypes.resolve(_observedTypeRefs);
 	}
 }

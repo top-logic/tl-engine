@@ -78,6 +78,7 @@ import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.DelegatingColumn;
 import com.top_logic.table.impl.TreeRowSource;
 import com.top_logic.tool.boundsec.BoundRole;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.Resources;
 
@@ -1209,9 +1210,12 @@ public class SecurityCoverageTable implements UIElement {
 		return switch (finding.getKind()) {
 			case NO_ROLE_SOURCE -> I18NConstants.COVERAGE_PROBLEM_NO_ROLE_SOURCE;
 			case NO_READ_GRANT -> I18NConstants.COVERAGE_PROBLEM_NO_READ_GRANT;
-			case DEAD_GRANT -> I18NConstants.COVERAGE_PROBLEM_DEAD_GRANT__OPERATION_ROLES.fill(
-				finding.getOperationLabel(),
-				finding.getRoles().stream().map(BoundedRole::getName).sorted().collect(Collectors.joining(VALUE_SEPARATOR)));
+			case DEAD_GRANT -> (SimpleBoundCommandGroup.CREATE.equals(finding.getOperation())
+				? I18NConstants.COVERAGE_PROBLEM_DEAD_CREATE_GRANT__OPERATION_ROLES
+				: I18NConstants.COVERAGE_PROBLEM_DEAD_GRANT__OPERATION_ROLES).fill(
+					finding.getOperationLabel(),
+					finding.getRoles().stream().map(BoundedRole::getName).sorted()
+						.collect(Collectors.joining(VALUE_SEPARATOR)));
 			case SHADOWED_RULES -> I18NConstants.COVERAGE_PROBLEM_SHADOWED_RULES__RULES
 				.fill(String.join(VALUE_SEPARATOR, finding.getRuleIds()));
 			case UNGRANTED_OPERATION -> I18NConstants.COVERAGE_PROBLEM_UNGRANTED_OPERATION__OPERATION

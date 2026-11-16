@@ -3,27 +3,58 @@
 <!--
 	Last frame of the project drill-down: one ticket. Displayed read-only, so the milestone and
 	the assignee are links leading to where the application displays them.
+	
+	The Milestone panel below edits the milestone of the ticket in a form of its own. Both forms
+	name a frame of the drill-down: the ticket's title names this frame, the milestone's name the
+	frame below it. Renaming either and saving renames its crumb in the breadcrumb (and, for the
+	ticket, the title of the browser tab) at once, while the other form keeps its unsaved input -
+	renaming a frame does not build its content anew.
 -->
 <view>
 	<channels>
 		<channel name="ticket"/>
+		<derived-channel name="milestone"
+			expr="if($ticket == null, null, $ticket.get(`tl.demo.projectManagement:Ticket#milestone`))"
+			inputs="ticket"
+		/>
 	</channels>
 
-	<panel>
-		<title>
-			<en>Ticket</en>
-			<de>Ticket</de>
-		</title>
-		<form
-			input="ticket"
-			with-inset="true"
-		>
-			<field attribute="number"/>
-			<field attribute="title"/>
-			<field attribute="description"/>
-			<field attribute="milestone"/>
-			<field attribute="assignee"/>
-			<field attribute="watchers"/>
-		</form>
-	</panel>
+	<split-panel orientation="vertical">
+		<panes>
+			<pane>
+				<panel>
+					<title>
+						<en>Ticket</en>
+						<de>Ticket</de>
+					</title>
+					<form
+						input="ticket"
+						with-inset="true"
+					>
+						<field attribute="number"/>
+						<field attribute="title"/>
+						<field attribute="description"/>
+						<field attribute="milestone"/>
+						<field attribute="assignee"/>
+						<field attribute="watchers"/>
+					</form>
+				</panel>
+			</pane>
+			<pane>
+				<panel>
+					<title>
+						<en>Milestone</en>
+						<de>Meilenstein</de>
+					</title>
+					<form
+						input="milestone"
+						with-inset="true"
+					>
+						<field attribute="name"/>
+						<field attribute="dueDate"/>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
 </view>

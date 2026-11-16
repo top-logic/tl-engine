@@ -13,12 +13,17 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Supplier;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.navigation.RevealPath;
+import com.top_logic.model.listen.ModelScope;
 
 /**
  * Ambient handle to the surrounding {@link TileStackElement &lt;tile-stack&gt;}.
@@ -61,6 +66,15 @@ import com.top_logic.layout.view.navigation.RevealPath;
  * Together with the place of its stack in the display, the scope answers the
  * {@link #framePlace(int) place of a frame} of the path, so that what a frame contains can be
  * located and revealed like any other part of the display.
+ * </p>
+ *
+ * <p>
+ * A frame of the path named by the {@link TileFrame#hasDeclaredLabel() label of its declaration}
+ * keeps that label up to date: the scope observes the objects the label is computed from (see
+ * {@link FrameRoute#labelObserver(Map, Runnable)}) for as long as the frame is on the path, and
+ * writes the path with the frame named anew when a change of one of them changes the label. The
+ * frame keeps displaying what it displays - only its name in the breadcrumb and in the title of the
+ * page changes. A label a navigation gives the frame it pushes stays as given.
  * </p>
  */
 public class TileStackScope {
@@ -106,8 +120,27 @@ public class TileStackScope {
 	private List<TileFrame> _restoredPath = List.of();
 
 	/**
+	 * Supplies the scope the objects frame labels are computed from are observed in, {@code null}
+	 * for a scope keeping the labels as computed when the frames were put on the path.
+	 */
+	private final Supplier<ModelScope> _modelScope;
+
+	/**
+	 * The subscription to the path, by which the {@link #_labelObservations} follow it; {@code null}
+	 * without a {@link #_modelScope}, or once {@link #dispose() disposed}.
+	 */
+	private Registration _pathRegistration;
+
+	/**
+	 * The observation of the label of each frame of the path at the same position, {@code null}
+	 * where the label of the frame is kept as it is.
+	 */
+	private List<LabelObservation> _labelObservations = new ArrayList<>();
+
+	/**
 	 * Creates a {@link TileStackScope} backed by the given path channel, whose place in the display
-	 * is unknown, so that {@link #framePlace(int)} answers {@code null}.
+	 * is unknown, so that {@link #framePlace(int)} answers {@code null}, and that keeps the labels
+	 * of its frames as computed when they were put on the path.
 	 *
 	 * @param pathChannel
 	 *        The channel holding the {@code List<TileFrame>} path. Must not be {@code null}.
@@ -115,7 +148,7 @@ public class TileStackScope {
 	 *        The declarations of the frames that may follow the initial view, in declaration order.
 	 */
 	public TileStackScope(ViewChannel pathChannel, List<FrameRoute> frameRoutes) {
-		this(pathChannel, FrameRoute.initial(null, frameRoutes), null, null);
+		this(pathChannel, FrameRoute.initial(null, frameRoutes), null, null, null);
 	}
 
 	/**
@@ -131,13 +164,45 @@ public class TileStackScope {
 	 *        {@link #framePlace(int)} unanswered.
 	 * @param element
 	 *        The element a frame of the stack is addressed through, the stack itself.
+	 * @param modelScope
+	 *        Supplies the scope the objects the labels of the frames are computed from are observed
+	 *        in, so that a frame named by the {@link TileFrame#hasDeclaredLabel() label of its
+	 *        declaration} is named anew when one of them changes. Asked whenever such a frame is
+	 *        put on the path. {@code null} keeps every label as computed when the frame was put on
+	 *        the path. A scope observing objects must be {@link #dispose() disposed}.
 	 */
-	public TileStackScope(ViewChannel pathChannel, FrameRoute root, RevealPath place, TileStackElement element) {
+	public TileStackScope(ViewChannel pathChannel, FrameRoute root, RevealPath place, TileStackElement element,
+			Supplier<ModelScope> modelScope) {
 		_pathChannel = pathChannel;
 		_root = root;
 		_byId = Collections.unmodifiableMap(index(root));
 		_place = place;
 		_element = element;
+		_modelScope = modelScope;
+		if (modelScope != null) {
+			_pathRegistration = pathChannel.addListener((sender, oldValue, newValue) -> observeLabels());
+			observeLabels();
+		}
+	}
+
+	/**
+	 * Stops observing the objects the labels of the frames are computed from.
+	 *
+	 * <p>
+	 * Called when the stack is disposed. The path stays as it is, with the labels the frames have.
+	 * </p>
+	 */
+	public void dispose() {
+		if (_pathRegistration != null) {
+			_pathRegistration.dispose();
+			_pathRegistration = null;
+		}
+		for (LabelObservation observation : _labelObservations) {
+			if (observation != null) {
+				observation.stop();
+			}
+		}
+		_labelObservations = new ArrayList<>();
 	}
 
 	/**
@@ -328,9 +393,9 @@ public class TileStackScope {
 	 * </p>
 	 *
 	 * <p>
-	 * A given frame {@link TileFrame#equals(Object) equal} to the one the path holds at its position
-	 * stays displayed as the user left it. A given frame without a label is named by the label of its
-	 * declaration, as {@link #push(String, ResKey, Map)} names it.
+	 * A given frame that {@link TileFrame#showsSame(TileFrame) shows the same} as the one the path
+	 * holds at its position stays displayed as the user left it. A given frame without a label is
+	 * named by the label of its declaration, as {@link #push(String, ResKey, Map)} names it.
 	 * </p>
 	 *
 	 * @param position
@@ -418,8 +483,123 @@ public class TileStackScope {
 	 * the declaration.
 	 */
 	private static TileFrame frame(FrameRoute declaration, ResKey label, Map<String, Object> params) {
-		ResKey frameLabel = label != null ? label : declaration.computeLabel(params);
-		return new TileFrame(declaration.id(), declaration.viewRef(), frameLabel, params);
+		if (label != null) {
+			return new TileFrame(declaration.id(), declaration.viewRef(), label, params);
+		}
+		return new TileFrame(declaration.id(), declaration.viewRef(), declaration.computeLabel(params), params, true);
+	}
+
+	/**
+	 * Brings the observations of the frame labels in line with the current path.
+	 *
+	 * <p>
+	 * The observation of a frame that stays at its position - showing the same, however it is named
+	 * now - goes on; the observations of the frames the path dropped or replaced end, and the frames
+	 * it took up are observed where they are named by their declaration.
+	 * </p>
+	 */
+	private void observeLabels() {
+		if (_pathRegistration == null) {
+			return;
+		}
+		List<TileFrame> path = readPath();
+		List<LabelObservation> before = _labelObservations;
+		List<LabelObservation> after = new ArrayList<>(path.size());
+		for (int position = 0; position < path.size(); position++) {
+			TileFrame frame = path.get(position);
+			LabelObservation kept = position < before.size() ? before.get(position) : null;
+			if (kept != null && kept.follows(frame)) {
+				before.set(position, null);
+				kept.update(frame);
+				after.add(kept);
+			} else {
+				after.add(observe(frame));
+			}
+		}
+		_labelObservations = after;
+		for (LabelObservation dropped : before) {
+			if (dropped != null) {
+				dropped.stop();
+			}
+		}
+	}
+
+	/**
+	 * Starts observing the objects the label of the given frame is computed from.
+	 *
+	 * @return The observation, or {@code null} if the label of the frame is kept as it is.
+	 */
+	private LabelObservation observe(TileFrame frame) {
+		if (!frame.hasDeclaredLabel()) {
+			return null;
+		}
+		FrameRoute declaration = _byId.get(frame.getFrameId());
+		if (declaration == null) {
+			return null;
+		}
+		LabelObservation result = new LabelObservation(declaration, frame);
+		ChannelObjectObserver observer = declaration.labelObserver(frame.getParams(), result::relabel);
+		if (observer == null) {
+			return null;
+		}
+		result.start(observer);
+		return result;
+	}
+
+	/**
+	 * The observation of the objects the label of a frame of the path is computed from.
+	 */
+	private final class LabelObservation {
+
+		private final FrameRoute _declaration;
+
+		/** The frame as the path holds it. */
+		private TileFrame _frame;
+
+		private ChannelObjectObserver _observer;
+
+		LabelObservation(FrameRoute declaration, TileFrame frame) {
+			_declaration = declaration;
+			_frame = frame;
+		}
+
+		void start(ChannelObjectObserver observer) {
+			_observer = observer;
+			observer.attach(_modelScope.get());
+		}
+
+		void stop() {
+			_observer.detach();
+		}
+
+		/**
+		 * Whether this observation goes on for the given frame taking the place of the observed one.
+		 */
+		boolean follows(TileFrame frame) {
+			return frame.hasDeclaredLabel() && _frame.showsSame(frame);
+		}
+
+		void update(TileFrame frame) {
+			_frame = frame;
+		}
+
+		/**
+		 * Computes the label again and writes the path with the frame named by it, if it changed.
+		 */
+		void relabel() {
+			List<TileFrame> current = readPath();
+			int position = _labelObservations.indexOf(this);
+			if (position < 0 || position >= current.size() || current.get(position) != _frame) {
+				return;
+			}
+			ResKey label = _declaration.computeLabel(_frame.getParams());
+			if (Objects.equals(label, _frame.getLabel())) {
+				return;
+			}
+			List<TileFrame> next = new ArrayList<>(current);
+			next.set(position, _frame.relabel(label));
+			_pathChannel.set(Collections.unmodifiableList(next));
+		}
 	}
 
 	@SuppressWarnings("unchecked")

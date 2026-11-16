@@ -332,15 +332,12 @@ public class TileElement implements UIElement {
 	}
 
 	/**
-	 * The name the tile's action is offered under: the command's own label, or - where the command
-	 * carries none - the name of the tile, so that the tile is announced by what it shows.
+	 * The name the tile's action is offered under where the command has no label of its own: the
+	 * name of the tile, so that the tile is announced by what it shows.
 	 */
 	private String actionName() {
-		ResKey label = _actionConfig.getLabel();
-		if (label == null) {
-			ResKey title = name();
-			label = title == null ? I18NConstants.TABLE_ACTIVATE_ROW : I18NConstants.TILE_ACTIVATE__TITLE.fill(title);
-		}
+		ResKey title = name();
+		ResKey label = title == null ? I18NConstants.TABLE_ACTIVATE_ROW : I18NConstants.TILE_ACTIVATE__TITLE.fill(title);
 		return Resources.getInstance().getString(label);
 	}
 

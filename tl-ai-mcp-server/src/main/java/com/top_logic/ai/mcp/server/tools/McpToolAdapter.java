@@ -11,10 +11,12 @@ import java.util.Map;
 
 import com.top_logic.ai.mcp.server.authentication.McpCallerContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.ToolPermissionFilter;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
+import com.top_logic.tl.ai.core.agent.TurnCommitMessage;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolResult;
@@ -202,7 +204,9 @@ public class McpToolAdapter {
 	 * writes state this application's transaction covers, committed after the tool ran, and an
 	 * all-or-nothing rollback on any failure. The tool checks its writes under the caller's rights
 	 * itself, as it does in a chat turn. A {@code READ} tool needs none of it, and an
-	 * {@code EXTERNAL} one has nothing this transaction could take back.
+	 * {@code EXTERNAL} one has nothing this transaction could take back. The change is committed with
+	 * the {@link Tool#commitMessage(Map, com.top_logic.tl.ai.tool.api.ToolExecutionContext) message}
+	 * of the call, see {@link TurnCommitMessage}.
 	 * </p>
 	 */
 	private static McpSchema.CallToolResult execute(CallToolRequest request, Tool tool, ToolContext context) {
@@ -214,14 +218,20 @@ public class McpToolAdapter {
 		TransactionScope scope = context.transaction();
 		// The mode of this call, not of the tool: the dry run of a write tool changes nothing.
 		boolean writes = ToolCatalog.callMode(tool, arguments).writesApplicationState();
+		ResKey commitMessage = null;
 		if (writes) {
 			scope.begin();
 		}
 		try {
+			if (writes) {
+				// Before the call, in its transaction: what it is about to delete can still be read.
+				commitMessage = TurnCommitMessage.of(context.runInfo().agentName(), null,
+					List.of(ToolCatalog.commitMessage(tool, arguments, context)));
+			}
 			ToolResult result = tool.execute(arguments, context);
 
 			if (writes) {
-				scope.commit();
+				scope.commit(commitMessage);
 			}
 
 			return published(result);

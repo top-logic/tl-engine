@@ -44,6 +44,7 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.element.AbstractTableElement;
+import com.top_logic.layout.view.element.TreeStructureConfig;
 import com.top_logic.layout.view.element.TreeTableElement;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
@@ -78,6 +79,12 @@ public class TestTreeTableRowEdit extends AbstractModelAccessTest {
 
 	/** Tag of the tree table configurations under test. */
 	private static final String TREE_TABLE = "tree-table";
+
+	/**
+	 * Attribute of a tree table showing its rows closed: which rows are displayed, and therefore
+	 * join the edit, is what the tests open.
+	 */
+	private static final String COLLAPSED = " " + TreeStructureConfig.INITIAL_EXPANSION_DEPTH + "='0'";
 
 	/** Name of the input channel holding the project the tree is built from. */
 	private static final String PROJECT_CHANNEL = "project";
@@ -227,6 +234,31 @@ public class TestTreeTableRowEdit extends AbstractModelAccessTest {
 	}
 
 	/**
+	 * A row-editing tree table saying nothing about its expansion opens its top-level rows, and
+	 * keeps them open when it enters edit mode, where their children join the session.
+	 */
+	public void testTopLevelRowsOpenByDefault() throws Exception {
+		becomeUser(_root);
+		FormControl form = newForm();
+		String xml = "<" + TREE_TABLE + " inputs='" + PROJECT_CHANNEL + "' root='$" + PROJECT_CHANNEL + "'"
+			+ " row-edit='ALL' types='" + qualified(STEP) + "," + qualified(ITEM) + "'>"
+			+ "<children>" + CHILDREN + "</children>"
+			+ "<columns><column attribute='" + NAME + "'/></columns>"
+			+ "</" + TREE_TABLE + ">";
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestTreeTableRowEdit.class);
+		TreeTableElement element =
+			(TreeTableElement) context.getInstance((PolymorphicConfiguration<?>) parseXml(xml));
+		context.checkErrors();
+		RowSetTableControl table = (RowSetTableControl) element.createControl(_context);
+
+		assertEquals(List.of(_stepA, _substepA1, _itemA, _stepB), rowKeys(table));
+
+		assertTrue(form.enterEditMode());
+		assertEquals(List.of(_stepA, _substepA1, _itemA, _stepB), rowKeys(table));
+		assertBuffersOf(List.of(_stepA, _substepA1, _itemA, _stepB), rowData(table));
+	}
+
+	/**
 	 * Opening a row in edit mode adopts its children; a change of an adopted row is buffered and
 	 * stored when the form is saved.
 	 */
@@ -370,7 +402,7 @@ public class TestTreeTableRowEdit extends AbstractModelAccessTest {
 		}
 		becomeUser(_root);
 		FormControl form = newForm();
-		String xml = "<" + TREE_TABLE + " inputs='" + PROJECT_CHANNEL + "' root=\"'root'\" row-edit='ALL'"
+		String xml = "<" + TREE_TABLE + COLLAPSED + " inputs='" + PROJECT_CHANNEL + "' root=\"'root'\" row-edit='ALL'"
 			+ " types='" + qualified(PROJECT) + "," + qualified(STEP) + "'>"
 			+ "<children>if($node == 'root', [$" + PROJECT_CHANNEL + "], " + CHILDREN + ")</children>"
 			+ "<columns><column attribute='" + APPROVED + "'/><column attribute='" + NAME + "'/></columns>"
@@ -975,7 +1007,7 @@ public class TestTreeTableRowEdit extends AbstractModelAccessTest {
 	 *        Further content in front of the columns.
 	 */
 	private static ConfigurationItem parse(String start, String content) throws ConfigurationException {
-		String xml = "<" + start + " inputs='" + PROJECT_CHANNEL + "' root='$" + PROJECT_CHANNEL + "'"
+		String xml = "<" + start + COLLAPSED + " inputs='" + PROJECT_CHANNEL + "' root='$" + PROJECT_CHANNEL + "'"
 			+ " types='" + qualified(STEP) + "," + qualified(ITEM) + "'>"
 			+ "<children>" + CHILDREN + "</children>"
 			+ content

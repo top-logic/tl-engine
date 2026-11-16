@@ -24,21 +24,25 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.db2.DeleteChecker;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelI18N;
+import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.agent.LockConflictException;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.security.ToolSecurityException;
+import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.core.tools.refusal.ApplicationRefusals;
 import com.top_logic.tl.ai.core.tools.refusal.messages.MandatoryAttributes;
 import com.top_logic.tl.ai.core.tools.refusal.messages.Reason;
@@ -172,13 +176,22 @@ public class ObjectEditTool {
 		+ " shows the old and the new values - that IS the confirmation, do not read the object again."
 		+ " For objects chosen by a condition, or values calculated from other data, use changeData. "
 		+ ApplicationRefusals.DESCRIPTION,
-		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL)
+		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL,
+		commitMessage = "updateMessage")
 	public ToolResult updateObject(
 			@P("Identifier of the object, as the context or a tool answer gives it: 'TypeName:id'") String id,
 			@P("Attribute name -> new value, e.g. {\"price\": 12.5, \"status\": \"ACTIVE\", \"dueDate\":"
 				+ " \"2027-05-14\", \"owner\": \"Person:42\"}") Map<String, Object> values,
 			ToolContext context) {
 		return run("updateObject(" + id + ")", context, security -> doUpdate(id, values, security, context));
+	}
+
+	/**
+	 * The commit message of {@link #updateObject(String, Map, ToolContext)}: the object by its label.
+	 */
+	@CalledByReflection
+	ResKey updateMessage(String id, Map<String, Object> values, ToolContext context) {
+		return I18NConstants.OBJECT_UPDATED__OBJECT.fill(TidResolver.labelOrId(id, context.modelSecurity()));
 	}
 
 	private ToolResult doUpdate(String id, Map<String, Object> values, ModelSecurity security,
@@ -277,7 +290,8 @@ public class ObjectEditTool {
 		+ " calculated from other data, use changeData. " + ApplicationRefusals.DESCRIPTION
 		+ " A refusal of the application's rules lists the mandatory attributes of the types concerned"
 		+ " under 'mandatory'.",
-		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL)
+		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL,
+		commitMessage = "createMessage")
 	public ToolResult createObject(
 			@P("Qualified name of the type: 'module:Type'") String type,
 			@P("Attribute name -> value, e.g. {\"name\": \"Example\", \"price\": 12.5, \"status\":"
@@ -289,6 +303,52 @@ public class ObjectEditTool {
 			ToolContext context) {
 		return run("createObject(" + type + ")", context,
 			security -> doCreate(type, values, container, containerReference, security, context));
+	}
+
+	/**
+	 * The commit message of {@link #createObject(String, Map, String, String, ToolContext)}: the type,
+	 * and the name the call gives the new object, if it gives one.
+	 *
+	 * <p>
+	 * The object does not exist before the call, so its label is not known; the value of its
+	 * attribute {@link TLNamed#NAME_ATTRIBUTE}, matched as the call matches every attribute, is the name the
+	 * user gave it.
+	 * </p>
+	 */
+	@CalledByReflection
+	ResKey createMessage(String type, Map<String, Object> values, String container, String containerReference,
+			ToolContext context) {
+		TLClass tlClass;
+		try {
+			tlClass = concreteClass(type);
+		} catch (RuntimeException ex) {
+			return I18NConstants.OBJECT_CREATED__TYPE.fill(String.valueOf(type));
+		}
+		ResKey typeLabel = TLModelNamingConvention.getTypeLabelKey(tlClass);
+		String name = givenName(tlClass, values);
+		return name == null ? I18NConstants.OBJECT_CREATED__TYPE.fill(typeLabel)
+			: I18NConstants.OBJECT_CREATED__TYPE_NAME.fill(typeLabel, name);
+	}
+
+	/** The text the given values set as the {@link TLNamed#NAME_ATTRIBUTE} of the type, or <code>null</code>. */
+	private static String givenName(TLClass type, Map<String, Object> values) {
+		if (values == null) {
+			return null;
+		}
+		for (Map.Entry<String, Object> entry : values.entrySet()) {
+			if (entry.getValue() instanceof String text && !text.isBlank()) {
+				TLStructuredTypePart part;
+				try {
+					part = attribute(type, entry.getKey());
+				} catch (RuntimeException ex) {
+					continue;
+				}
+				if (part != null && TLNamed.NAME_ATTRIBUTE.equals(part.getName())) {
+					return text.strip();
+				}
+			}
+		}
+		return null;
 	}
 
 	private ToolResult doCreate(String typeName, Map<String, Object> values, String containerId,
@@ -729,11 +789,21 @@ public class ObjectEditTool {
 		+ " deletes it: the objects it contains are deleted with it, and the application may refuse the"
 		+ " deletion. The answer says what was deleted. For objects chosen by a condition, use"
 		+ " changeData. " + ApplicationRefusals.DESCRIPTION,
-		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL)
+		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL,
+		commitMessage = "deleteMessage")
 	public ToolResult deleteObject(
 			@P("Identifier of the object, as the context or a tool answer gives it: 'TypeName:id'") String id,
 			ToolContext context) {
 		return run("deleteObject(" + id + ")", context, security -> doDelete(id, security, context));
+	}
+
+	/**
+	 * The commit message of {@link #deleteObject(String, ToolContext)}: the object by its label, read
+	 * before the call deletes it.
+	 */
+	@CalledByReflection
+	ResKey deleteMessage(String id, ToolContext context) {
+		return I18NConstants.OBJECT_DELETED__OBJECT.fill(TidResolver.labelOrId(id, context.modelSecurity()));
 	}
 
 	private ToolResult doDelete(String id, ModelSecurity security, ToolContext context) throws IOException {

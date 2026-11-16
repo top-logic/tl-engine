@@ -26,6 +26,7 @@ import com.top_logic.tl.ai.core.model.Skill;
 import com.top_logic.tl.ai.core.model.TlAiCoreFactory;
 import com.top_logic.tl.ai.core.model.impl.AgentBase;
 import com.top_logic.tl.ai.core.model.impl.SkillBase;
+import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.core.tools.authoring.messages.AgentDetail;
 import com.top_logic.tl.ai.core.tools.authoring.messages.AgentListResult;
 import com.top_logic.tl.ai.core.tools.authoring.messages.AgentSummary;
@@ -81,6 +82,14 @@ public class AgentAuthoringTool {
 	// ---- Skill mutations -------------------------------------------------
 
 	/**
+	 * The commit message of {@link #createSkill(String, String, String, List)}.
+	 */
+	@CalledByReflection
+	ResKey createSkillMessage(String name, String description, String content, List<String> tools) {
+		return I18NConstants.SKILL_CREATED__NAME.fill(name);
+	}
+
+	/**
 	 * Creates a new application skill (reusable instruction text).
 	 *
 	 * @param name
@@ -91,7 +100,7 @@ public class AgentAuthoringTool {
 	 *        The skill's instruction content (markdown).
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Create a new skill (instruction text + optional tools) in the application", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Create a new skill (instruction text + optional tools) in the application", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "createSkillMessage")
 	public String createSkill(
 			@P("Unique skill name — do NOT use the TL_ prefix (reserved for TopLogic)") String name,
 			@P("Short description that tells the agent WHEN to load this skill, not what it does internally") String description,
@@ -128,6 +137,14 @@ public class AgentAuthoringTool {
 	}
 
 	/**
+	 * The commit message of {@link #updateSkill(String, String, String, List)}.
+	 */
+	@CalledByReflection
+	ResKey updateSkillMessage(String name, String description, String content, List<String> tools) {
+		return I18NConstants.SKILL_UPDATED__NAME.fill(name);
+	}
+
+	/**
 	 * Updates an existing application skill. Omitted fields are left unchanged.
 	 *
 	 * @param name
@@ -138,7 +155,7 @@ public class AgentAuthoringTool {
 	 *        New content, or {@code null} to leave unchanged.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Update an existing application skill. Omitted fields are left unchanged.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Update an existing application skill. Omitted fields are left unchanged.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "updateSkillMessage")
 	public String updateSkill(
 			@P("Name of the skill to update") String name,
 			@P(value = "New description — tells the agent WHEN to load (omit to leave unchanged)", required = false) String description,
@@ -181,13 +198,21 @@ public class AgentAuthoringTool {
 	}
 
 	/**
+	 * The commit message of {@link #deleteSkill(String)}.
+	 */
+	@CalledByReflection
+	ResKey deleteSkillMessage(String name) {
+		return I18NConstants.SKILL_DELETED__NAME.fill(name);
+	}
+
+	/**
 	 * Deletes a application skill by name.
 	 *
 	 * @param name
 	 *        Name of the skill to delete.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Delete a application skill by name", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Delete a application skill by name", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "deleteSkillMessage")
 	public String deleteSkill(@P("Name of the skill to delete") String name) {
 		try {
 			OperationResult result = doDeleteSkill(name);
@@ -258,6 +283,16 @@ public class AgentAuthoringTool {
 	// ---- Agent mutations -------------------------------------------------
 
 	/**
+	 * The commit message of
+	 * {@link #createAgent(String, String, String, List, List, List, List)}.
+	 */
+	@CalledByReflection
+	ResKey createAgentMessage(String name, String description, String systemPrompt, List<String> tools,
+			List<String> mcpServers, List<String> skills, List<String> delegations) {
+		return I18NConstants.AGENT_CREATED__NAME.fill(name);
+	}
+
+	/**
 	 * Creates a new agent in the application.
 	 *
 	 * @param name
@@ -276,7 +311,7 @@ public class AgentAuthoringTool {
 	 *        Names of agents this agent may delegate to, or {@code null} for none.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Create a new agent in the application", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Create a new agent in the application", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "createAgentMessage")
 	public String createAgent(
 			@P("Unique agent name — do NOT use the TL_ prefix (reserved for TopLogic)") String name,
 			@P("Short description of the agent") String description,
@@ -321,6 +356,16 @@ public class AgentAuthoringTool {
 	}
 
 	/**
+	 * The commit message of
+	 * {@link #updateAgent(String, String, String, List, List, List, List)}.
+	 */
+	@CalledByReflection
+	ResKey updateAgentMessage(String name, String description, String systemPrompt, List<String> tools,
+			List<String> mcpServers, List<String> skills, List<String> delegations) {
+		return I18NConstants.AGENT_UPDATED__NAME.fill(name);
+	}
+
+	/**
 	 * Updates an existing application agent. Omitted fields are left unchanged.
 	 *
 	 * @param name
@@ -339,7 +384,7 @@ public class AgentAuthoringTool {
 	 *        New delegation list, or {@code null} to leave unchanged (an empty list replaces with none).
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Update an existing application agent. Omitted fields are left unchanged.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Update an existing application agent. Omitted fields are left unchanged.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "updateAgentMessage")
 	public String updateAgent(
 			@P("Name of the agent to update") String name,
 			@P(value = "New description (omit to leave unchanged)", required = false) String description,
@@ -396,13 +441,21 @@ public class AgentAuthoringTool {
 	}
 
 	/**
+	 * The commit message of {@link #deleteAgent(String)}.
+	 */
+	@CalledByReflection
+	ResKey deleteAgentMessage(String name) {
+		return I18NConstants.AGENT_DELETED__NAME.fill(name);
+	}
+
+	/**
 	 * Deletes a application agent by name.
 	 *
 	 * @param name
 	 *        Name of the agent to delete.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
-	@ToolMethod(description = "Delete a application agent by name", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Delete a application agent by name", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "deleteAgentMessage")
 	public String deleteAgent(@P("Name of the agent to delete") String name) {
 		try {
 			OperationResult result = doDeleteAgent(name);

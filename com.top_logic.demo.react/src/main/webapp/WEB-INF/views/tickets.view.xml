@@ -24,6 +24,11 @@
 	link without the parameters says nothing about the filtering and leaves the list as it
 	establishes itself.
 	
+	"Tickets in a dialog" in the toolbar of the ticket list opens the tickets as a list with a
+	detail in a dialog without a height, which grows with its content but does not shrink while it
+	is open; "Tickets in a dialog of fixed height" opens the same content in a dialog of 75 % of the
+	height of the browser window.
+	
 	The <label> of the binding names the browser tab after the selected ticket ("Login broken -
 	TopLogic React Demo"). It reads the ticketName channel, which observes the ticket, so the tab
 	title follows a rename of the displayed ticket as well.
@@ -433,6 +438,26 @@
 										</with-transaction>
 									</default>
 								</switch>
+							</generic-command>
+							<generic-command
+								image="css:bi bi-window-stack"
+								placement="TOOLBAR"
+							>
+								<label>
+									<en>Tickets in a dialog</en>
+									<de>Tickets im Dialog</de>
+								</label>
+								<open-dialog dialog-view="tickets/ticket-browser-dialog.view.xml"/>
+							</generic-command>
+							<generic-command
+								image="css:bi bi-window-fullscreen"
+								placement="TOOLBAR"
+							>
+								<label>
+									<en>Tickets in a dialog of fixed height</en>
+									<de>Tickets im Dialog fester Höhe</de>
+								</label>
+								<open-dialog dialog-view="tickets/ticket-browser-dialog-fixed.view.xml"/>
 							</generic-command>
 						</commands>
 						<inset>

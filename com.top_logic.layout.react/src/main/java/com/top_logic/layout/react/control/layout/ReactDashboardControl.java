@@ -107,8 +107,8 @@ public class ReactDashboardControl extends ReactControl {
 	 *        entry point at all ({@link CommandModel#isVisible()}) and whether the activation is
 	 *        currently accepted ({@link CommandModel#isExecutable()}).
 	 * @param label
-	 *        The name the action is offered under - what the tile is announced as. {@code null} to
-	 *        use the {@link CommandModel#getLabel() model's own label}.
+	 *        The name the action is offered under - what the tile is announced as - while the
+	 *        {@link CommandModel#getLabel() model's own label} is empty. {@code null} for none.
 	 */
 	public record TileAction(CommandModel model, String label) {
 		// Pure data.
@@ -302,8 +302,8 @@ public class ReactDashboardControl extends ReactControl {
 			return null;
 		}
 		Map<String, Object> d = new LinkedHashMap<>();
-		String label = action.label();
-		d.put(ACTION_LABEL, label == null || label.isEmpty() ? model.getLabel() : label);
+		String label = model.getLabel();
+		d.put(ACTION_LABEL, label == null || label.isEmpty() ? action.label() : label);
 		d.put(ACTION_DISABLED, Boolean.valueOf(!model.isExecutable()));
 		d.put(ACTION_TOOLTIP, model.getTooltip());
 		return d;

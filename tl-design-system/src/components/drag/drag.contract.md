@@ -56,7 +56,7 @@ Was beim Ziehen über jeder anderen Ebene liegt, steht auf `--tl-layer-drag` (ü
 |---|---|---|
 | `tl-drag-shield` | `pointer-drag.ts` | deckt das Fenster (`position: fixed`, `inset: 0`), keine Textauswahl; die Geste geht über Pointer-Capture an den Griff |
 | `tl-drag-image` | `touch-drag.ts` | die Kopie unter dem Finger: `opacity: 0.9`, Schatten `--tl-shadow-drag` |
-| `data-tl-armed` | `touch-drag.ts` | bereit nach langem Drücken, noch nicht bewegt: Schatten `--tl-shadow-drag`, `transform: scale(1.02)`, Übergang `--tl-duration-fast`. Ein eigenes Attribut, nicht `data-tl-state`: dort schreibt das Control, ein Re-Render verwürfe ein fremdes Wort. Danach trägt die Quelle `dragging` wie beim Ziehen mit der Maus |
+| `data-tl-armed` | `touch-drag.ts` | bereit nach langem Drücken, noch nicht bewegt: Schatten `--tl-shadow-drag`, `transform: scale(1.02)`, Übergang `--tl-duration-fast` mit `--tl-easing-standard`. Ein eigenes Attribut, nicht `data-tl-state`: dort schreibt das Control, ein Re-Render verwürfe ein fremdes Wort. Danach trägt die Quelle `dragging` wie beim Ziehen mit der Maus |
 | `tl-drop-hint` | `DropHint` | liegt über dem Zieh-Bild (steht im DOM danach) |
 | `tl-pick-highlight` | `element-picker.ts` | Markierung des Element-Pickers: Rand deckend, `--tl-border-width-md` in `--tl-border-interactive`; die Fläche `--tl-surface-brand-subtle` durchscheinend auf `::before` (`opacity: 0.5`); der Zeiger geht hindurch |
 | `data-tl-state~="picking"` am `body` | `element-picker.ts` | Zeiger Fadenkreuz am ganzen Fenster, solange der Picker wählt |

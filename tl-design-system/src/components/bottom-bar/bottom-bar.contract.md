@@ -23,9 +23,11 @@ Das Control ist `TLBottomBar` (`ReactBottomBarControl`).
 | Teil | Token |
 |---|---|
 | Höhe | `--tl-size-shell-bar` |
-| Fläche, Linie | `--tl-surface-layer`, `--tl-border-separator` |
+| Fläche, Linie | `--tl-surface-layer`, Linie oben `--tl-border-width-sm` in `--tl-border-separator` |
 | Aktuelle Seite | `--tl-surface-selected` hinter dem Icon (die Kapsel, ohne Kante), Label `tl-type-label-strong` |
 | Icon, Label | `tl-icon-md`, `tl-type-label` |
+| Eintrag | Schrift `--tl-text-primary`, Lücke `--tl-space-2xs`; unter dem Zeiger `--tl-surface-interactive-hover`, gedrückt `--tl-surface-interactive-active`; der Ring liegt innen, um `--tl-focus-offset` eingerückt |
+| Kapsel hinter dem Icon | Ecke `--tl-radius-full`, seitlicher Abstand `--tl-space-sm` |
 
 ## Attribute
 

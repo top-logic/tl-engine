@@ -1084,8 +1084,11 @@ lists `<agent-command name="…" description="…">` entries, each an ordinary `
 dialog or shows a view. `ChatConversationControl` builds each in its view context (`ViewCommandModel.forCommand`)
 and offers it as a `PageCommand` on its `ChatViewBinding` while attached; `ChatCommandTool`
 (`page-commands.pageCommands`, `page-commands.runPageCommand`, READ / `interaction`) finds it by name across the
-window's bindings of the run's account and runs `ViewCommandModel.perform` in `ChatWindowService.inWindow`, so the
-command's executability and access decide exactly as for a click. The article `ai/chat-ui` ("Page commands an agent
+window's bindings of the run's account and runs `ViewCommandModel.execute(input, parameterValues)` in
+`ChatWindowService.inWindow`, so the command's executability and access decide exactly as for a click. A command's
+`<parameters>` (a `ConfigurationDescriptorConfig`, built once as `DeclaredParameters` of `tl-ai-core`) are listed as
+JSON schema and checked by `DeclaredParameters.bind` before the command runs; the chain sees them as arguments of
+their names. The article `ai/chat-ui` ("Page commands an agent
 may run") has the syntax; `TestPageCommandTool` drives a live window with a dialog manager standing in for the
 browser.
 

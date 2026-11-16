@@ -10,7 +10,6 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.tools.interaction.TaskTool;
 import com.top_logic.tl.ai.core.tools.model.ModelEditorTool;
@@ -180,12 +179,6 @@ public class TestObjectLevelLocking extends TestCase {
 		/** */
 		@Override
 		public void begin() {
-			// no-op
-		}
-
-		/** */
-		@Override
-		public void begin(ResKey msg) {
 			// no-op
 		}
 

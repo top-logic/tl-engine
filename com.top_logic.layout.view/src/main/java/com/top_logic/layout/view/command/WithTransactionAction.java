@@ -151,11 +151,6 @@ public class WithTransactionAction implements ViewAction {
 		_commitMessage = new ViewCommitMessage(context, config);
 	}
 
-	@Override
-	public boolean appliesFormState() {
-		return ViewActions.appliesFormState(_actions);
-	}
-
 	/**
 	 * The rules the actions run in the transaction {@link ViewAction#getIntrinsicRule() bring of
 	 * their own}, combined.

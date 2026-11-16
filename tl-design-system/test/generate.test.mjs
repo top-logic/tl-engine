@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { generate, componentSources } from '../tools/generate.mjs';
+import { rulesOf, aufgeloest } from './lib/component.mjs';
 
 const P = JSON.parse(readFileSync(new URL('../src/primitives.json', import.meta.url)));
 const T = JSON.parse(readFileSync(new URL('../src/tokens.json', import.meta.url)));
@@ -58,10 +59,54 @@ test('base.css: jede Typo-Klasse setzt fünf Eigenschaften aus Variablen', () =>
     const rule = base.slice(i, base.indexOf('}', i));
     assert.ok(rule.includes(`font-family: var(--tl-font-family-${k.family})`), n);
     assert.ok(rule.includes(`font-size: var(--tl-font-size-${k.size})`), n);
-    assert.ok(rule.includes(`font-weight: ${k.weight}`), n);
-    assert.ok(rule.includes(`line-height: ${k.lineHeight}`), n);
-    assert.ok(rule.includes(`letter-spacing: ${k.tracking}`), n);
+    assert.ok(rule.includes(`font-weight: var(--tl-font-weight-${k.weight})`), n);
+    assert.ok(rule.includes(`line-height: var(--tl-font-line-height-${k.lineHeight})`), n);
+    assert.ok(rule.includes(`letter-spacing: var(--tl-font-letter-spacing-${k.tracking})`), n);
   }
+});
+
+// Regressionstest U66 (#30322): das gerechnete Ergebnis jeder Typo- und Druckklasse bleibt gleich, egal ob die Werte
+// in tokens.json, in Rollen oder in Primitiven stehen. Gelesen wird dist/base.css, jedes var() bis zum Literal verfolgt.
+const gerechnet = (selektor, eigenschaften) => {
+  const regel = rulesOf(readFileSync(new URL('../dist/base.css', import.meta.url), 'utf8'))
+    .find(([sel]) => sel.split(',').map((x) => x.trim()).includes(selektor));
+  assert.ok(regel, `${selektor} fehlt in dist/base.css`);
+  return Object.fromEntries(eigenschaften.map((e) => {
+    const m = new RegExp(`(?:^|;|\\s)${e}:\\s*([^;]+)`).exec(regel[1]);
+    assert.ok(m, `${selektor} setzt ${e} nicht`);
+    return [e, aufgeloest(m[1])];
+  }));
+};
+
+test('U66: Typo-Klassen rechnen weiter auf Stärke, Zeilenhöhe und Laufweite von vorher', () => {
+  const soll = {
+    'display': ['600', '1.25', '-0.01em'], 'heading-lg': ['600', '1.3333', '-0.005em'],
+    'heading-md': ['600', '1.4', '0'], 'heading-sm': ['600', '1.5', '0'],
+    'body': ['400', '1.4286', '0'], 'body-strong': ['600', '1.4286', '0'],
+    'label': ['400', '1.3333', '0.01em'], 'label-strong': ['600', '1.3333', '0.01em'],
+    'overline': ['400', '1.3333', '0.04em'], 'code': ['400', '1.4286', '0'],
+  };
+  for (const [n, [weight, lineHeight, tracking]] of Object.entries(soll))
+    assert.deepEqual(gerechnet(`.tl-type-${n}`, ['font-weight', 'line-height', 'letter-spacing']),
+      { 'font-weight': weight, 'line-height': lineHeight, 'letter-spacing': tracking }, n);
+});
+
+test('U66: Druckklassen rechnen weiter auf Größe, Stärke und Zeilenhöhe von vorher', () => {
+  const soll = {
+    title: ['18pt', '600', '1.25'], heading: ['12pt', '600', '1.35'],
+    body: ['10pt', '400', '1.4'], caption: ['8pt', '400', '1.35'],
+  };
+  for (const [n, [size, weight, lineHeight]] of Object.entries(soll))
+    assert.deepEqual(gerechnet(`.tl-print-${n}`, ['font-size', 'font-weight', 'line-height']),
+      { 'font-size': size, 'font-weight': weight, 'line-height': lineHeight }, n);
+});
+
+test('U66: eine unbekannte Rolle in type oder print bricht die Erzeugung ab und nennt Klasse, Feld und Rolle', () => {
+  const kopie = () => JSON.parse(JSON.stringify(T));
+  const t1 = kopie(); t1.type.body.weight = 'bold';
+  assert.throws(() => generate(P, t1), /type\.body.*weight.*font-weight-bold/);
+  const t2 = kopie(); t2.print.title.size = 'print-huge';
+  assert.throws(() => generate(P, t2), /print\.title.*size.*font-size-print-huge/);
 });
 
 test('base.css: Zahlenklasse, Fokusring, Reduced Motion, Druckklassen', () => {
@@ -78,7 +123,7 @@ test('base.css: Zahlenklasse, Fokusring, Reduced Motion, Druckklassen', () => {
   assert.ok(base.includes('@media (prefers-reduced-motion: reduce)'));
   assert.ok(base.includes('transition-duration: 0.01ms !important'));
   assert.ok(base.includes('@media print'));
-  for (const n of Object.keys(T.print)) assert.ok(base.includes(`.tl-print-${n} {`), n);
+  for (const n of Object.keys(T.print).filter((k) => !k.startsWith('_'))) assert.ok(base.includes(`.tl-print-${n} {`), n);
 });
 
 test('base.css: der Body liest Grund, Text und Schrift aus Tokens', () => {

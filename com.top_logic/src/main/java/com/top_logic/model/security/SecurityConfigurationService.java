@@ -1462,6 +1462,17 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	@Override
+	public Set<BoundedRole> getAllowedRoles(TLClass type, TLStructuredTypePart attribute,
+			BoundCommandGroup commandGroup) {
+		return partRights(type, attribute.getName()).getOrDefault(commandGroup, Collections.emptySet());
+	}
+
+	@Override
+	public boolean hasGrant(TLClass type, TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
+		return partRights(type, attribute.getName()).containsKey(commandGroup);
+	}
+
+	@Override
 	public boolean hasSingletonRights(TLClass type) {
 		for (Map.Entry<TLObject, Map<BoundCommandGroup, Set<BoundedRole>>> entry : _singletonRights.entrySet()) {
 			if (entry.getValue().isEmpty()) {
@@ -1479,12 +1490,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	@Override
 	public boolean hasGrant(TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
 		TLStructuredType owner = attribute.getOwner();
-		String name = attribute.getName();
 		if (!(owner instanceof TLClass ownerClass)) {
-			return partRights(owner, name).containsKey(commandGroup);
+			return partRights(owner, attribute.getName()).containsKey(commandGroup);
 		}
 		for (TLClass type : TLModelUtil.getReflexiveTransitiveSpecializations(ownerClass)) {
-			if (partRights(type, name).containsKey(commandGroup)) {
+			if (hasGrant(type, attribute, commandGroup)) {
 				return true;
 			}
 		}

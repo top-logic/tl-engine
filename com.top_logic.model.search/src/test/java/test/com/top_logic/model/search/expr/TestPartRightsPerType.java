@@ -198,7 +198,7 @@ public class TestPartRightsPerType extends AbstractSearchExpressionTest {
 	/**
 	 * The queries without object refer to the owner of the given attribute, only
 	 * {@link ModelAccessRights#hasGrant(TLStructuredTypePart, com.top_logic.tool.boundsec.BoundCommandGroup)}
-	 * also considers its specializations.
+	 * also considers its specializations. The variants with a type answer for that type.
 	 */
 	public void testQueriesWithoutObject() {
 		ModelAccessRights rights = ModelAccessRights.getInstance();
@@ -210,6 +210,39 @@ public class TestPartRightsPerType extends AbstractSearchExpressionTest {
 		assertTrue("A specialization has attribute rights.", rights.hasGrant(named, SimpleBoundCommandGroup.READ));
 		assertTrue(rights.hasGrant(fooName, SimpleBoundCommandGroup.READ));
 		assertFalse(rights.hasGrant(fooName, SimpleBoundCommandGroup.WRITE));
+
+		assertEquals(Collections.singleton(role(NAME_KEEPER)),
+			rights.getAllowedRoles(type("Foo"), named, SimpleBoundCommandGroup.READ));
+		assertEquals(Collections.singleton(role(NAME_KEEPER)),
+			rights.getAllowedRoles(type("SubSub"), named, SimpleBoundCommandGroup.READ));
+		assertTrue(rights.getAllowedRoles(type("Bar"), named, SimpleBoundCommandGroup.READ).isEmpty());
+		assertTrue(rights.hasGrant(type("Sub"), named, SimpleBoundCommandGroup.READ));
+		assertFalse(rights.hasGrant(type("Bar"), named, SimpleBoundCommandGroup.READ));
+		assertFalse(rights.hasGrant(type("BarSibling"), named, SimpleBoundCommandGroup.READ));
+		assertFalse(rights.hasGrant(type("Foo"), fooName, SimpleBoundCommandGroup.WRITE));
+	}
+
+	/**
+	 * TL-Script reading the name with the attribute of {@code Named} sees the attribute rights of
+	 * the object's type, also when the access is compiled into a query.
+	 */
+	public void testScriptAccess() throws Exception {
+		String readName = "x -> $x.get(`TestTLScriptSecurity:Named#name`)";
+		String fooByName =
+			"all(`TestTLScriptSecurity:Foo`).filter(x -> $x.get(`TestTLScriptSecurity:Named#name`) == 'Foo')";
+		String barByName =
+			"all(`TestTLScriptSecurity:Bar`).filter(x -> $x.get(`TestTLScriptSecurity:Named#name`) == 'Bar')";
+
+		becomeUser(_reader);
+		assertEquals("Bar", eval(readName, _bar));
+		assertNull("The attribute rights of Foo apply.", eval(readName, _foo));
+		assertEquals(set(), asSet(eval(fooByName)));
+		assertEquals(set(_bar), asSet(eval(barByName)));
+
+		becomeUser(_keeper);
+		assertEquals("Foo", eval(readName, _foo));
+		assertNull(eval(readName, _bar));
+		assertEquals(set(_foo), asSet(eval(fooByName)));
 	}
 
 	/**

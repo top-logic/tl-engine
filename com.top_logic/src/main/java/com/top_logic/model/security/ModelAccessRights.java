@@ -344,6 +344,25 @@ public interface ModelAccessRights {
 	Set<BoundedRole> getAllowedRoles(TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
 
 	/**
+	 * Returns the roles granted the given command group on the given attribute of objects of the
+	 * given type.
+	 *
+	 * <p>
+	 * Like {@link #getAllowedRoles(TLStructuredTypePart, BoundCommandGroup)}, but for the
+	 * attribute rights in effect for the given type: the most specific attribute rights configured
+	 * on the way from the given type to its generalizations for the name of the given attribute.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type of the objects whose attribute is accessed.
+	 * @param attribute
+	 *        The attribute of the given type.
+	 * @param commandGroup
+	 *        The operation on the attribute.
+	 */
+	Set<BoundedRole> getAllowedRoles(TLClass type, TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
+
+	/**
 	 * Whether the given attribute has an attribute-level grant for the given command group.
 	 *
 	 * <p>
@@ -368,6 +387,25 @@ public interface ModelAccessRights {
 	 *        The operation on the attribute.
 	 */
 	boolean hasGrant(TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
+
+	/**
+	 * Whether the given attribute has an attribute-level grant for the given command group on
+	 * objects of the given type.
+	 *
+	 * <p>
+	 * Like {@link #hasGrant(TLStructuredTypePart, BoundCommandGroup)}, but exactly for the
+	 * attribute rights in effect for the given type, see
+	 * {@link #getAllowedRoles(TLClass, TLStructuredTypePart, BoundCommandGroup)}.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type of the objects whose attribute is accessed.
+	 * @param attribute
+	 *        The attribute of the given type.
+	 * @param commandGroup
+	 *        The operation on the attribute.
+	 */
+	boolean hasGrant(TLClass type, TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
 
 	/**
 	 * Checks whether the given person can perform the given command group on the given attribute

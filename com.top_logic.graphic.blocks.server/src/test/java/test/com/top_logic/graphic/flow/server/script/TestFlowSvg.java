@@ -14,7 +14,6 @@ import junit.framework.TestCase;
 
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.graphic.blocks.svg.RenderContext;
 import com.top_logic.graphic.flow.data.Border;
 import com.top_logic.graphic.flow.data.Box;
 import com.top_logic.graphic.flow.data.Diagram;
@@ -23,6 +22,7 @@ import com.top_logic.graphic.flow.data.Padding;
 import com.top_logic.graphic.flow.data.Text;
 import com.top_logic.graphic.flow.data.VerticalLayout;
 import com.top_logic.graphic.flow.server.script.FlowFactory;
+import com.top_logic.graphic.flow.server.ui.FontFamilyResolver;
 
 /**
  * Test case for {@link FlowFactory#toSvg(Diagram, String, double, Double, Double)}.
@@ -151,7 +151,7 @@ public class TestFlowSvg extends TestCase {
 		// 12pt * 96/72 = 16px
 		String svg12 = readSvg(toSvg(d12, "TestFlowSvg-default-font-12pt.svg", 12.0, null, null));
 		assertTrue("Default font-family missing from the root element: " + svg12,
-			svg12.contains("font-family=\"" + RenderContext.DEFAULT_FONT_DECLARATION + "\""));
+			svg12.contains("font-family=\"" + FontFamilyResolver.getInstance().getDefault().getDeclaration() + "\""));
 		assertTrue("Default font size for 12pt should be 16px: " + svg12,
 			svg12.contains("font-size=\"16px\""));
 

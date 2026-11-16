@@ -13,12 +13,13 @@ package com.top_logic.react.flow.svg;
 public interface RenderContext {
 
 	/**
-	 * Default {@code font-family} assumed in a standalone SVG document when no per-text family is
-	 * set.
+	 * Preferred {@code font-family} in a standalone SVG document for text that has no per-text
+	 * family set.
 	 *
 	 * <p>
-	 * Both the measurement and the SVG output must use this default consistently to ensure that
-	 * rendered text fits its measured box. A context in the browser measures in the font of the
+	 * Both the measurement and the SVG output must use the same family to ensure that rendered
+	 * text fits its measured box. Since this family is not installed everywhere, both resolve
+	 * {@link #DEFAULT_FONT_DECLARATION}, which names it first. A context in the browser measures in the font of the
 	 * element the diagram is displayed in instead, see {@link #getDefaultFontFamily()}.
 	 * </p>
 	 */
@@ -35,6 +36,14 @@ public interface RenderContext {
 	 * of {@link #DEFAULT_FONT_FAMILY} keeps the geometry intact wherever the document is opened.
 	 * {@code Liberation Sans} and {@code Arimo} are metric-compatible with {@code Arial} by
 	 * design; the trailing generic family is a last resort only.
+	 * </p>
+	 *
+	 * <p>
+	 * A context that measures with the fonts installed on a server resolves this list like a
+	 * browser does: it measures with the first installed family and declares that family first,
+	 * see {@link #getDefaultFontDeclaration()}. On a server without {@code Arial}, installing
+	 * {@code Liberation Sans} therefore suffices to measure and render with the metrics of
+	 * {@code Arial}.
 	 * </p>
 	 */
 	String DEFAULT_FONT_DECLARATION = "Arial, 'Liberation Sans', Arimo, Helvetica, sans-serif";
@@ -57,7 +66,8 @@ public interface RenderContext {
 	 * </p>
 	 *
 	 * <p>
-	 * A context for a standalone SVG document uses {@link #DEFAULT_FONT_FAMILY}. A context in the
+	 * A context for a standalone SVG document uses the first installed family of
+	 * {@link #DEFAULT_FONT_DECLARATION}. A context in the
 	 * browser uses the font family of the element the diagram is displayed in, so that the diagram
 	 * shows its text in the theme font of the surrounding user interface and measures it in that
 	 * font.
@@ -76,6 +86,13 @@ public interface RenderContext {
 	 * Measurement resolves a single family, while a viewer resolves whatever the document asks
 	 * for. Naming metric-compatible substitutes alongside the measured family keeps the two in
 	 * agreement on a machine that does not have it.
+	 * </p>
+	 *
+	 * <p>
+	 * A context that measures with the fonts installed on a server resolves
+	 * {@link #DEFAULT_FONT_DECLARATION} against them and declares the family it measures with
+	 * first, followed by the other families of the list. A renderer on the same server, e.g. the
+	 * PDF export, draws the text in exactly the measured family.
 	 * </p>
 	 *
 	 * <p>

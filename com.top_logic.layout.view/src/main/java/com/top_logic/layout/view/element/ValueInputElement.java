@@ -404,8 +404,9 @@ public class ValueInputElement implements UIElement {
 		 * </p>
 		 *
 		 * <p>
-		 * Offered by an input over a text; an input over a number, a date, a truth value or a
-		 * selection ignores it.
+		 * The button is asked for by an input the user empties by deleting what is typed: a text in
+		 * a single line or in a text area, a password and a number. An input over a date, a time of day or a selection offers the button on its
+		 * own whenever it is not mandatory.
 		 * </p>
 		 */
 		@Name(CLEARABLE)

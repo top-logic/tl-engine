@@ -421,11 +421,26 @@ export interface TypingFieldStateJson extends FieldStateJson {
 }
 
 /**
+ * State properties of a field whose value the user empties by deleting what is typed: a text - in
+ * a single line or in a text area -, a password or a number.
+ */
+export interface ClearableFieldStateJson extends TypingFieldStateJson {
+	/**
+	 * Whether the input offers a button that empties it at once, while it holds a value - for a
+	 * search field, for instance. Absent: the input is emptied by deleting what it holds.
+	 *
+	 * A field whose value cannot be deleted that way - a date, a time of day, a selection - needs
+	 * no such flag: it offers the button whenever it is not {@link FieldStateJson.mandatory}.
+	 */
+	clearable: boolean;
+}
+
+/**
  * State of a text field, the component `TLTextInput`.
  *
  * The {@link FieldStateJson.value} is the text, a string.
  */
-export interface TextInputStateJson extends TypingFieldStateJson {
+export interface TextInputStateJson extends ClearableFieldStateJson {
 	/**
 	 * The kind of value the field edits. Absent: plain text.
 	 */
@@ -435,11 +450,6 @@ export interface TextInputStateJson extends TypingFieldStateJson {
 	 * An icon shown inside the input ahead of the text, the encoded form of a theme image.
 	 */
 	icon: string;
-
-	/**
-	 * Whether the input offers a button that empties it, while it holds a value.
-	 */
-	clearable: boolean;
 
 	/**
 	 * Whether the field is a text area of several lines, see {@link TextInputStateJson.rows}.
@@ -551,7 +561,7 @@ export interface SuggestionEntryJson {
  *
  * The {@link FieldStateJson.value} is the password typed, a string.
  */
-export interface PasswordInputStateJson extends TypingFieldStateJson {}
+export interface PasswordInputStateJson extends ClearableFieldStateJson {}
 
 /**
  * State of a number field, the component `TLNumberInput`.
@@ -559,7 +569,7 @@ export interface PasswordInputStateJson extends TypingFieldStateJson {}
  * The {@link FieldStateJson.value} is the number written in the format of the field, a string; the text typed
  * is sent back as it is and parsed by the server.
  */
-export interface NumberInputStateJson extends TypingFieldStateJson {
+export interface NumberInputStateJson extends ClearableFieldStateJson {
 	/**
 	 * The on-screen keyboard the input asks for.
 	 */
@@ -602,6 +612,9 @@ export namespace NumberInputStateJson {
  *
  * A value typed segment by segment is held back until the field is left or Enter is pressed
  * ({@link TypingFieldStateJson.sendValueOnBlur}); a value chosen in a picker is sent at once.
+ *
+ * The input is emptied segment by segment only, so a field that is not {@link FieldStateJson.mandatory} offers a
+ * button that empties it at once while it is editable and holds a value.
  */
 export interface DatePickerStateJson extends TypingFieldStateJson {
 	/**

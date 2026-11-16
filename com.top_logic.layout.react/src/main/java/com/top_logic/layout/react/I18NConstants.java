@@ -510,8 +510,8 @@ public class I18NConstants extends I18NConstantsBase {
 	/**
 	 * @en Clear the input
 	 */
-	@CustomKey("js.textInput.clear")
-	public static ResKey JS_TEXT_INPUT_CLEAR;
+	@CustomKey("js.clearButton.label")
+	public static ResKey JS_CLEAR_BUTTON_LABEL;
 
 	/**
 	 * @en Copy to clipboard

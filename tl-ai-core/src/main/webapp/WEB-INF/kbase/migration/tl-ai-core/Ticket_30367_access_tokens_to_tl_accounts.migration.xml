@@ -112,5 +112,12 @@
 				<visibility value="hidden"/>
 			</annotations>
 		</create-property>
+		<create-property name="tl.accounts:AccessTokenRequest#invitation"
+			type="tl.core:String"
+		>
+			<annotations>
+				<visibility value="read-only"/>
+			</annotations>
+		</create-property>
 	</processors>
 </migration>

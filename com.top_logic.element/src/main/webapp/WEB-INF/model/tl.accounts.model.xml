@@ -110,7 +110,8 @@
 			</attributes>
 		</class>
 		<!--
-			What the "New token" dialog asks for, and where it shows the token it created. Created
+			What the "New token" dialog asks for, and where it shows the token it created. The
+			permissions are chosen in the dialog from those the application offers. Created
 			with new(`tl.accounts:AccessTokenRequest`, transient: true) and never persisted, so no
 			table is declared. The token lives in this object only for as long as the dialog that
 			shows it once.
@@ -126,6 +127,17 @@
 					type="tl.core:Integer"
 				/>
 				<property name="token"
+					type="tl.core:String"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
+				<!--
+					The token together with the address of the endpoint it is meant for, for a token
+					with a permission that binds to the session. Empty otherwise.
+				-->
+				<property name="invitation"
 					type="tl.core:String"
 				>
 					<annotations>

@@ -67,7 +67,7 @@ import com.top_logic.util.model.ModelService;
  * A token carries the names of its permissions, which the modules offering an endpoint contribute
  * to the {@link AccessTokenPermissions}. An endpoint accepts a token only if it
  * {@link #hasPermission(AccessToken, String) has} the endpoint's permission. A permission that
- * {@link AccessTokenPermissions.PermissionConfig#isBindingSession() binds to the session} acts only
+ * {@link AccessTokenPermissions.PermissionConfig#getSessionBinding() binds to the session} acts only
  * in the session the token was created in, whose key the token stores.
  * </p>
  */

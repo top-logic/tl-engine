@@ -14,20 +14,23 @@
 
 		<!--
 			The permissions of an access token for the user interface. Both act only in the session
-			the token was issued from; operating includes observing.
+			the token was issued from, which AgentSessionBinding registers with AgentAccess when the
+			token is created; operating includes observing.
 		-->
 		<config service-class="com.top_logic.element.accesstoken.AccessTokenPermissions">
 			<instance>
 				<permissions>
 					<permission name="ui-observe"
-						binds-session="true"
 						label="class.com.top_logic.layout.view.agent.I18NConstants.PERMISSION_UI_OBSERVE"
-					/>
+					>
+						<session-binding class="com.top_logic.layout.view.agent.AgentSessionBinding"/>
+					</permission>
 					<permission name="ui-act"
-						binds-session="true"
 						implies="ui-observe"
 						label="class.com.top_logic.layout.view.agent.I18NConstants.PERMISSION_UI_ACT"
-					/>
+					>
+						<session-binding class="com.top_logic.layout.view.agent.AgentSessionBinding"/>
+					</permission>
 				</permissions>
 			</instance>
 		</config>

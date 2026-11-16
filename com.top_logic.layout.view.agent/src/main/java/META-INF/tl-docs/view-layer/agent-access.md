@@ -68,7 +68,10 @@ The agent presents an access token of the application (`tl.accounts:AccessToken`
 | `ui-observe` | *Observe the user interface* | read `/windows`, `/observe` and `/record/steps` |
 | `ui-act` | *Operate the user interface* | everything `ui-observe` permits, and every `POST` |
 
-Both bind to the session the token is issued from: a token with one of them stores the key under which `AgentAccess.bindSession(key, session)` registered that session (`AccessToken#sessionKey`). `AccessTokenAuthenticator` (`<access-token/>`) admits the agent to that session as the token's owner.
+Both bind to the session the token is issued from: a token with one of them stores the key under which `AgentAccess.bindSession(key, session)` registered that session (`AccessToken#sessionKey`); the `<session-binding>` of both permissions, `AgentSessionBinding`, does that registration when the token is created. `AccessTokenAuthenticator` (`<access-token/>`) admits the agent to that session as the token's owner.
+
+- **Issuing.** *Settings → Access tokens → New token* (the settings dialog of `tl-layout-view`, view `access-tokens.view.xml`): a name, the validity in days and the permissions. With *Observe the user interface* or *Operate the user interface* chosen, the dialog that follows shows the **invitation** once: the application's agent endpoint and the token in one line, `<host><context>/agent-api tlpat_<secret>`, so an agent gets both by one copy (`accessTokenCreate(...)` and `accessTokenInvitation(token)`). The host is the public address (`AliasManager.HOST` where the application configures it, because the address seen inside a request may be a load balancer's). Every logged-in account may issue such a token: it hands its own rights in its own session to the agent.
+- **Revoking.** The owner revokes a token in the same tab; *Administration → Access control → Access tokens* lists the tokens of all accounts and revokes any of them.
 
 - A token with neither permission - one made for the agent endpoints `/mcp` and `/a2a` only, say - an unknown or revoked token, an expired one and the token of a deleted account admit nobody (401).
 - A token whose session has ended admits nobody (401); its other permissions are not affected.

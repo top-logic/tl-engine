@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Every personal access token of every account, for an administrator (Issue #671). Revoking one here
-	is what to do when a token leaked or an account must lose MCP and A2A access at once; the hint column is
+	Every access token of every account, for an administrator. Revoking one here is what to do when
+	a token leaked or an account must lose the access of its clients at once; the hint column is
 	what a token found in a file or a log is matched against.
 -->
 <view>
@@ -29,11 +29,10 @@
 				</executability>
 				<confirm expr="#('Revoke the token {0} of {1}? A client that uses it is refused from now on.'@en, 'Das Token {0} von {1} widerrufen? Ein Client, der es verwendet, wird ab sofort abgewiesen.'@de).fill($token.get(`tl.accounts:AccessToken#name`), $token.get(`tl.accounts:AccessToken#owner`))"/>
 				<with-transaction>
-					<execute-script function="aiAccessTokenRevoke($token)"/>
+					<execute-script function="accessTokenRevoke($token)"/>
 					<with-result>
-						<write-channel
+						<write-channel name="selectedToken"
 							clear="true"
-							name="selectedToken"
 						/>
 					</with-result>
 				</with-transaction>
@@ -45,12 +44,34 @@
 			types="tl.accounts:AccessToken"
 		>
 			<columns>
-				<column attribute="owner" width="160"/>
-				<column attribute="name" width="220"/>
-				<column attribute="hint" width="110"/>
-				<column attribute="createdAt" width="150"/>
-				<column attribute="expiresAt" width="150"/>
-				<column attribute="lastUsed" width="150"/>
+				<column
+					attribute="owner"
+					width="160"
+				/>
+				<column
+					attribute="name"
+					width="200"
+				/>
+				<column
+					attribute="hint"
+					width="110"
+				/>
+				<column
+					attribute="permissions"
+					width="180"
+				/>
+				<column
+					attribute="createdAt"
+					width="150"
+				/>
+				<column
+					attribute="expiresAt"
+					width="150"
+				/>
+				<column
+					attribute="lastUsed"
+					width="150"
+				/>
 			</columns>
 			<rows><![CDATA[all(`tl.accounts:AccessToken`)
 				.sort((t -> $t.get(`tl.accounts:AccessToken#createdAt`)).comparator().desc())]]></rows>

@@ -23,9 +23,10 @@
 			<instance>
 				<permissions>
 					<permission name="test-ui"
-						binds-session="true"
 						label="test.accesstoken.permission.ui"
-					/>
+					>
+						<session-binding class="test.com.top_logic.layout.view.accesstoken.RecordingSessionBinding"/>
+					</permission>
 				</permissions>
 			</instance>
 		</config>

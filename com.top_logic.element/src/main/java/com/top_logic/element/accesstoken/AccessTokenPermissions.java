@@ -8,6 +8,7 @@ package com.top_logic.element.accesstoken;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import java.util.Set;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
@@ -41,7 +43,7 @@ import com.top_logic.basic.util.ResKey;
  * &lt;config service-class="com.top_logic.element.accesstoken.AccessTokenPermissions"&gt;
  *   &lt;instance&gt;
  *     &lt;permissions&gt;
- *       &lt;permission name="ui-act" label="..." binds-session="true" implies="ui-observe"/&gt;
+ *       &lt;permission name="ui-act" label="..." implies="ui-observe"/&gt;
  *     &lt;/permissions&gt;
  *   &lt;/instance&gt;
  * &lt;/config&gt;
@@ -92,11 +94,11 @@ public class AccessTokenPermissions extends ConfiguredManagedClass<AccessTokenPe
 		/** @see #getLabel() */
 		String LABEL = "label";
 
-		/** @see #isBindingSession() */
-		String BINDS_SESSION = "binds-session";
-
 		/** @see #getImplies() */
 		String IMPLIES = "implies";
+
+		/** @see #getSessionBinding() */
+		String SESSION_BINDING = "session-binding";
 
 		/**
 		 * How the permission is shown to the person creating a token.
@@ -106,24 +108,28 @@ public class AccessTokenPermissions extends ConfiguredManagedClass<AccessTokenPe
 		ResKey getLabel();
 
 		/**
-		 * Whether the permission acts only in the session the token was issued from.
-		 *
-		 * <p>
-		 * A token with such a permission stores the key of that session.
-		 * </p>
-		 *
-		 * @see AccessToken#getSessionKey()
-		 */
-		@Name(BINDS_SESSION)
-		boolean isBindingSession();
-
-		/**
 		 * Names of further permissions a token with this permission has as well.
 		 */
 		@Name(IMPLIES)
 		@Format(CommaSeparatedStrings.class)
 		List<String> getImplies();
+
+		/**
+		 * How the endpoint of the permission finds the session the token was issued from.
+		 *
+		 * <p>
+		 * A permission with a session binding acts only in the session the token was issued from:
+		 * a token with such a permission stores the key of that session, under which the binding
+		 * registers it. Empty for a permission that does not bind to the session.
+		 * </p>
+		 *
+		 * @see AccessToken#getSessionKey()
+		 */
+		@Name(SESSION_BINDING)
+		PolymorphicConfiguration<? extends SessionBinding> getSessionBinding();
 	}
+
+	private final Map<String, SessionBinding> _sessionBindings = new HashMap<>();
 
 	/**
 	 * Creates a {@link AccessTokenPermissions} from configuration.
@@ -134,6 +140,9 @@ public class AccessTokenPermissions extends ConfiguredManagedClass<AccessTokenPe
 		Map<String, PermissionConfig> permissions = config.getPermissions();
 		for (PermissionConfig permission : permissions.values()) {
 			String name = permission.getName();
+			if (permission.getSessionBinding() != null) {
+				_sessionBindings.put(name, context.getInstance(permission.getSessionBinding()));
+			}
 			if (name.isEmpty() || !name.equals(name.strip()) || name.chars().anyMatch(Character::isWhitespace)) {
 				context.error("An access token permission name must not contain white space: '" + name + "' at "
 					+ permission.location());
@@ -162,13 +171,20 @@ public class AccessTokenPermissions extends ConfiguredManagedClass<AccessTokenPe
 	}
 
 	/**
-	 * Whether any of the given permissions {@link PermissionConfig#isBindingSession() binds to the
-	 * session}.
+	 * The {@link PermissionConfig#getSessionBinding() session binding} of the permission with the
+	 * given name, or <code>null</code> if it has none.
+	 */
+	public SessionBinding getSessionBinding(String name) {
+		return _sessionBindings.get(name);
+	}
+
+	/**
+	 * Whether any of the given permissions binds to the session, that is, has a
+	 * {@link PermissionConfig#getSessionBinding() session binding}.
 	 */
 	public boolean isBindingSession(Collection<String> names) {
 		for (String name : names) {
-			PermissionConfig permission = getPermission(name);
-			if (permission != null && permission.isBindingSession()) {
+			if (_sessionBindings.containsKey(name)) {
 				return true;
 			}
 		}

@@ -117,7 +117,7 @@ public interface AccessToken extends TLNamed {
 
 	/**
 	 * The key of the session the token was issued from, if it has a permission that
-	 * {@link AccessTokenPermissions.PermissionConfig#isBindingSession() binds to the session};
+	 * {@link AccessTokenPermissions.PermissionConfig#getSessionBinding() binds to the session};
 	 * <code>null</code> otherwise.
 	 */
 	default String getSessionKey() {

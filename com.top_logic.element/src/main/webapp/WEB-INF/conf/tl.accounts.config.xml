@@ -20,6 +20,23 @@
 		<config service-class="com.top_logic.element.accesstoken.AccessTokenPermissions">
 			<instance class="com.top_logic.element.accesstoken.AccessTokenPermissions"/>
 		</config>
+		<!--
+			Who may read an access token: its owner, plus administrators. Model access is
+			deny-by-default, so without this an account that is no administrator could not even list
+			its own tokens.
+
+			The technical role "AccessTokenOwner", held by nobody globally, is derived per token from
+			its "owner" by a role rule, and the security configuration grants Read to that role.
+			Administrators bypass the check. Revoking goes through accessTokenRevoke, which checks
+			owner or administrator itself, so no Delete grant is written here.
+		-->
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="AccessTokenOwner"/>
+				</roles>
+			</instance>
+		</config>
 		<config service-class="com.top_logic.basic.util.ResourcesModule">
 			<instance>
 				<bundles>
@@ -41,6 +58,14 @@
 						<!-- Deny writing for all. -->
 						<grant operation="Write"/>
 					</part>
+					<!-- See the role AccessTokenOwner above. -->
+					<class name="tl.accounts:AccessToken">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="AccessTokenOwner"
+						/>
+					</class>
 				</security-config>
 			</instance>
 		</config>
@@ -51,6 +76,21 @@
 		-->
 		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
 			<instance>
+				<role-rules>
+					<rules>
+						<!-- See the role AccessTokenOwner above. -->
+						<rule id="tl.accounts.accessToken.owner"
+							inherit="true"
+							meta-element="tl.accounts:AccessToken"
+							role="AccessTokenOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.accounts:AccessToken#owner"/>
+							</path>
+						</rule>
+					</rules>
+				</role-rules>
 				<security-parents>
 					<rule
 						id="SecRootForGroup"

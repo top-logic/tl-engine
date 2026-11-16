@@ -17,30 +17,6 @@ import com.top_logic.basic.util.ResKey2;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * Something that is not an access token was to be revoked.
-	 *
-	 * @en This is not an access token.
-	 * @de Dies ist kein Zugriffstoken.
-	 */
-	public static ResKey ERROR_NOT_A_TOKEN;
-
-	/**
-	 * Somebody tried to revoke a token of another account without being an administrator.
-	 *
-	 * @en You can only revoke your own access tokens.
-	 * @de Sie können nur Ihre eigenen Zugriffstokens widerrufen.
-	 */
-	public static ResKey ERROR_TOKEN_NOT_OWNED;
-
-	/**
-	 * A token was to be created without a logged-in account to create it for.
-	 *
-	 * @en An access token belongs to an account. Log in to create one.
-	 * @de Ein Zugriffstoken gehört zu einem Konto. Melden Sie sich an, um eines zu erstellen.
-	 */
-	public static ResKey ERROR_NO_ACCOUNT;
-
-	/**
 	 * A request to an agent endpoint carried no bearer token.
 	 *
 	 * @en No personal access token: send it as "Authorization: Bearer <token>".

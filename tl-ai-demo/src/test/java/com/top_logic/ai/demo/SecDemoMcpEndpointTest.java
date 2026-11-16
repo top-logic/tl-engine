@@ -45,12 +45,12 @@ import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.view.accesstoken.AccessTokenFunctions;
 import com.top_logic.model.TLObject;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.tl.ai.core.access.AccessTokenAuthenticator;
 import com.top_logic.tl.ai.core.access.EndpointAuthentication;
-import com.top_logic.tl.ai.core.access.AccessTokenFunctions;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.ToolPermissionFilter;
 import com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity;
@@ -690,7 +690,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * A person revokes their own token, and not somebody else's; an administrator revokes any.
 	 *
 	 * <p>
-	 * The check is in {@code aiAccessTokenRevoke} rather than in the view, because a command's input
+	 * The check is in {@code accessTokenRevoke} rather than in the view, because a command's input
 	 * is whatever a channel holds.
 	 * </p>
 	 */
@@ -699,7 +699,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 
 		actAs(BEN);
 		try {
-			AccessTokenFunctions.accessTokenRevoke(annas);
+			AccessTokenFunctions.revoke(annas);
 			fail("Ben must not revoke Anna's token.");
 		} catch (TopLogicException expected) {
 			// The only acceptable outcome.
@@ -707,7 +707,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 		assertTrue("Anna's token must still be there.", annas.tValid());
 
 		actAs(anyAdministrator());
-		assertTrue(AccessTokenFunctions.accessTokenRevoke(annas));
+		assertTrue(AccessTokenFunctions.revoke(annas));
 		assertFalse("An administrator revokes any token.", annas.tValid());
 	}
 

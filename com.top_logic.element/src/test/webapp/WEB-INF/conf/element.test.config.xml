@@ -29,14 +29,16 @@
 						label="test.accesstoken.permission.c"
 					/>
 					<permission name="test-observe"
-						binds-session="true"
 						label="test.accesstoken.permission.observe"
-					/>
+					>
+						<session-binding class="test.com.top_logic.element.accesstoken.TestingSessionBinding"/>
+					</permission>
 					<permission name="test-act"
-						binds-session="true"
 						implies="test-observe"
 						label="test.accesstoken.permission.act"
-					/>
+					>
+						<session-binding class="test.com.top_logic.element.accesstoken.TestingSessionBinding"/>
+					</permission>
 				</permissions>
 			</instance>
 		</config>

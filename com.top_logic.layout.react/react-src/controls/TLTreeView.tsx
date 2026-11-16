@@ -480,6 +480,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <ul
+      id={controlId}
       ref={listRef}
       role="tree"
       aria-label={i18n['js.tree.label']}

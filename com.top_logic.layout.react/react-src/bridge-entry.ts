@@ -4,6 +4,8 @@ export { registerRootWrapper, DEFAULT_ROOT_WRAPPER_ORDER } from './bridge/root-w
 export type { RootWrapper, RootWrapperOptions } from './bridge/root-wrapper';
 export { connect, expectEvents, subscribe, unsubscribe } from './bridge/sse-client';
 export {
+  MOUNT_ATTRIBUTE,
+  findMountPoint,
   mount,
   mountField,
   unmount,

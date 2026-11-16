@@ -39,7 +39,7 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 
 // The bridge first, as the page loads it: the bridge entry reaches it through modules that the SSE client imports
 // as well, and these must see the mocked SSE client.
-import { mount, unmount } from '../bridge/tl-react-bridge';
+import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
 import { register, registerPart } from 'tl-react-bridge';
 import TLStack from './TLStack';
 import TLDeckPane from './TLDeckPane';
@@ -73,7 +73,7 @@ beforeAll(() => {
 
 afterEach(async () => {
   act(() => unmount(ROOT_ID));
-  document.getElementById(ROOT_ID)?.remove();
+  findMountPoint(ROOT_ID)?.remove();
   await settle();
 });
 
@@ -94,7 +94,7 @@ async function settle(): Promise<void> {
 /** Mounts a column holding the given child controls. */
 function mountColumn(children: Record<string, unknown>[]): void {
   const element = document.createElement('div');
-  element.id = ROOT_ID;
+  element.setAttribute(MOUNT_ATTRIBUTE, ROOT_ID);
   document.body.appendChild(element);
   act(() => mount(ROOT_ID, 'TLStack', { direction: 'column', children }, 'w', '/ctx'));
 }

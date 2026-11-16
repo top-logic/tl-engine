@@ -34,7 +34,7 @@ das Fest ist [laut Programm](https://www.example.org/sommerfest "Das Sommerfest 
 
 | Source | Registered by | Kind |
 |---|---|---|
-| an object a read tool showed - `query`, `present`, a script tool, `getInstance`, `listInstances` | `ReadFilter` where it discloses an identity (`_tid`/`_display`, `label [id:TID]`); `getInstance`, `listInstances`, `readText`, `viewDocument` explicitly | the first declared kind whose `types` cover the object's type, else `object` |
+| an object a read tool showed - `query`, `present`, a script tool, `getInstance`, `listInstances` | `ReadFilter` where it discloses an identity (`_tid`, `_type`, `_display`); `getInstance`, `listInstances`, `readText`, `viewDocument` explicitly | the first declared kind whose `types` cover the object's type, else `object` |
 | a web page | `webFetch` and the browser's full renders (`browserNavigate`, `browserSnapshot`), through `WebSources` | `web` |
 | an application's own record | the application's tool, `ToolExecutionContext.readSource(...)` | the application's kind |
 

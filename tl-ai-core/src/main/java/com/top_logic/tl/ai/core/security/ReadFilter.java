@@ -404,10 +404,24 @@ public final class ReadFilter {
 	 *
 	 * @param obj
 	 *        The object to name; must be one the principal may read.
-	 * @return The JSON text, {@code null} for no object.
+	 * @return The JSON text; the JSON literal {@code null} for no object.
 	 */
 	public static String identityJson(TLObject obj) {
-		return json(obj == null ? null : identity(obj));
+		return identityJson(obj, null);
+	}
+
+	/**
+	 * {@link #identityJson(TLObject)} with the name a page configured for the object as its
+	 * {@link #DISPLAY}.
+	 *
+	 * @param obj
+	 *        The object to name; must be one the principal may read.
+	 * @param display
+	 *        What to call the object; {@code null} for its label.
+	 * @return The JSON text; the JSON literal {@code null} for no object.
+	 */
+	public static String identityJson(TLObject obj, String display) {
+		return json(obj == null ? null : identity(obj, display));
 	}
 
 	/**
@@ -504,12 +518,16 @@ public final class ReadFilter {
 	 * </p>
 	 */
 	private static Map<String, Object> identity(TLObject obj) {
+		return identity(obj, null);
+	}
+
+	private static Map<String, Object> identity(TLObject obj, String display) {
 		Map<String, Object> result = new LinkedHashMap<>();
 		String id = idOf(obj);
 		result.put(TID, id);
 		TLStructuredType type = obj.tType();
 		result.put(TYPE, type == null ? null : TLModelUtil.qualifiedName(type));
-		String label = MetaLabelProvider.INSTANCE.getLabel(obj);
+		String label = display != null ? display : MetaLabelProvider.INSTANCE.getLabel(obj);
 		result.put(DISPLAY, label);
 		read(obj, id, label);
 		return result;

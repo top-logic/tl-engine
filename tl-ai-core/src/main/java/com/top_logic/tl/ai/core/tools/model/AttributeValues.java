@@ -473,10 +473,10 @@ final class AttributeValues {
 	 * may not read left out.
 	 *
 	 * <p>
-	 * A date is written in the ISO form this class reads, a classifier by its name, and an
-	 * internationalised text as one text per language - so the confirmation of a change says it in the
-	 * same terms the call did, and a mistake in it is visible. A referenced object is its identity
-	 * ({@link ReadFilter#disclose(Object)}), whose {@link ReadFilter#TID} is what the call names it by.
+	 * A date is written in the ISO form this class reads and an internationalised text as one text per
+	 * language - so the confirmation of a change says it in the same terms the call did, and a mistake
+	 * in it is visible. A referenced object and a classifier are their identity
+	 * ({@link ReadFilter#disclose(Object)}), as every object the model is shown.
 	 * </p>
 	 */
 	static Object echo(TLStructuredTypePart part, Object value, ReadFilter filter) {
@@ -493,9 +493,6 @@ final class AttributeValues {
 				result.add(echo(part, item, filter));
 			}
 			return result;
-		}
-		if (value instanceof TLClassifier classifier) {
-			return classifier.getName();
 		}
 		if (value instanceof Date date) {
 			return dateText(part, date);

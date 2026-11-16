@@ -17,12 +17,14 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.tl.ai.core.agent.environment.TurnContext;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.model.TidResolver;
 import com.top_logic.tl.ai.core.tools.present.PresentAs;
@@ -69,6 +71,8 @@ public class TestChatSelection extends BasicTestCase {
 			first = ChatHistoryService.createSession("Hosting August", user);
 			second = ChatHistoryService.createSession("Domain renewal", user);
 		}
+		// The sessions are created in a context of their own; this test's view has to see them.
+		HistoryUtils.updateSessionRevision();
 	}
 
 	/** Nothing selected is a statement, not a gap: the agent is told, rather than left guessing. */
@@ -83,28 +87,28 @@ public class TestChatSelection extends BasicTestCase {
 	public void testOneObjectIsNamedThreeWays() {
 		String value = ChatSelection.describe(first, TestChatSelection::title);
 
-		assertContains("Hosting August", value);
-		assertContains("[type:tl.ai.execution:AgentSession]", value);
-		assertContains("[id:" + ReadFilter.idOf(first) + "]", value);
+		assertContains("\"" + ReadFilter.DISPLAY + "\":\"Hosting August\"", value);
+		assertContains("\"" + ReadFilter.TYPE + "\":\"tl.ai.execution:AgentSession\"", value);
+		assertContains(tid(first), value);
 	}
 
 	/** A page that names no expression gets the label the user sees everywhere else in the app. */
 	public void testTheApplicationsOwnLabelIsTheDefault() {
 		String value = ChatSelection.describe(first, null);
 
-		assertTrue("The application's own label leads the line: " + value,
-			value.startsWith(MetaLabelProvider.INSTANCE.getLabel(first)));
-		assertContains("[id:" + ReadFilter.idOf(first) + "]", value);
+		assertEquals("The application's own label is the object's name.",
+			ReadFilter.identityJson(first, MetaLabelProvider.INSTANCE.getLabel(first)), value);
 	}
 
 	/**
-	 * The point of stating the identifier: a model that copies the line back into a tool call
-	 * reaches the object the user selected.
+	 * The point of stating the identifier: the model passes the selection's identifier to a tool
+	 * call and reaches the object the user selected.
 	 */
 	public void testTheIdentifierIsTheOneTheToolsReadBack() {
 		String value = ChatSelection.describe(first, TestChatSelection::title);
 
-		assertEquals(ReadFilter.idOf(first), TidResolver.objectId(value));
+		assertEquals(ReadFilter.identityJson(first, "Hosting August"), value);
+		assertSame(first, TidResolver.resolve(ReadFilter.idOf(first), ModelSecurity.UNCHECKED));
 	}
 
 	/** Several objects are one line, in the order the page selected them. */
@@ -141,8 +145,8 @@ public class TestChatSelection extends BasicTestCase {
 
 		String value = ChatSelection.describe(table, TestChatSelection::title);
 
-		assertTrue(value, value.startsWith("a table of 2 objects: Hosting August"));
-		assertContains("[id:" + ReadFilter.idOf(second) + "]", value);
+		assertTrue(value, value.startsWith("a table of 2 objects: " + ReadFilter.identityJson(first, "Hosting August")));
+		assertContains(tid(second), value);
 	}
 
 	/** A page that knows a better word for its objects says it, and nothing else changes. */
@@ -150,7 +154,7 @@ public class TestChatSelection extends BasicTestCase {
 		String value = ChatSelection.describe(first, object -> "the August hosting bill");
 
 		assertContains("the August hosting bill", value);
-		assertContains("[id:" + ReadFilter.idOf(first) + "]", value);
+		assertContains(tid(first), value);
 	}
 
 	/** A value that is no model object has no type and no id to state, and says what it is. */
@@ -169,9 +173,13 @@ public class TestChatSelection extends BasicTestCase {
 		String block = TurnContext.compose(List.of(fact), 2);
 
 		assertContains(TurnContext.OPEN_TAG, block);
-		assertContains("Selected invoice: Hosting August", block);
-		assertContains("[id:" + ReadFilter.idOf(first) + "]", block);
+		assertContains("Selected invoice: " + ReadFilter.identityJson(first, "Hosting August"), block);
 		assertContains(TurnContext.CLOSE_TAG, block);
+	}
+
+	/** How the selection names the given object: the identifier of its identity. */
+	private static String tid(Object object) {
+		return "\"" + ReadFilter.TID + "\":\"" + ReadFilter.idOf((TLObject) object) + "\"";
 	}
 
 	private static int countOccurrences(String text, String part) {

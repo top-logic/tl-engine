@@ -10,7 +10,7 @@ Das Control ist `TLPanel` (`ReactPanelControl`).
 |---|---|---|
 | `title` | string | Titel, `h2` im `tl-titlebar` |
 | `explanation` | string, optional | Erklärung dessen, was das Panel zeigt (etwa die Beschreibung des Attributs einer Tabelle): Tooltip des Titels. Ohne Titel steht neben dem Körper ein Info-Icon (`tl-panel__info`, Glyphe `bi bi-info-circle`, Name „Hilfe“, die Erklärung als Tooltip); Körper und Icon liegen dann in `tl-panel__explained`. |
-| `explanationHelp` | boolean | Die Erklärung ist auch Hilfetext (Bearbeiten-Modus): ein Hilfeknopf (Part `Button`, `small`, Glyphe `fa-regular fa-circle-question`, Name „Hilfe“, die Erklärung als Tooltip, `aria-expanded`, `aria-controls`) in `tl-titlebar__explanation` hinter dem Titel — ohne Titel das Info-Icon als Knopf — blendet `tl-panel__help-text` unter dem Kopf ein und aus. Ohne `explanationHelp` steht am Titel kein Icon. |
+| `explanationHelp` | boolean | Die Erklärung ist auch Hilfetext (Bearbeiten-Modus): ein Hilfeknopf (Part `Button`, `small`, Glyphe `bi bi-info-circle` — dieselbe wie das Info-Icon, `EXPLANATION_ICON` —, Name „Hilfe“, die Erklärung als Tooltip, `aria-expanded`, `aria-controls`) in `tl-titlebar__explanation` hinter dem Titel — ohne Titel das Info-Icon als Knopf — blendet `tl-panel__help-text` unter dem Kopf ein und aus. Ohne `explanationHelp` steht am Titel kein Icon. |
 | `titleContent` | Kind, optional | frei gestalteter Inhalt neben dem Titel (`tl-titlebar__content`) |
 | `toolbar` | Kind, optional | Toolbar im Kopf (`tl-titlebar__actions`) |
 | `buttonBar` | Kind, optional | Toolbar am Fuß (`tl-button-bar`, Knöpfe secondary) |

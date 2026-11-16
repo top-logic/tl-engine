@@ -11,7 +11,8 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 // The bridge first, as the page loads it: the bridge entry reaches it through modules that the SSE client imports
 // as well, and these must see the mocked SSE client.
 import { mount, unmount } from '../bridge/tl-react-bridge';
-import { React, register, registerPart, useFieldLabelProps, useTLState, TLChild, FormLayoutContext, TOOLTIP_ATTR } from 'tl-react-bridge';
+import { React, register, registerPart, useFieldLabelProps, useTLState, TLChild, FormLayoutContext, TOOLTIP_ATTR,
+  EXPLANATION_ICON } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import TLFormField from './TLFormField';
 import ButtonPart from './button/ButtonPart';
@@ -35,6 +36,9 @@ const WARNING_2 = 'Address not verified.';
 
 /** The explanation of the field, as the server sends it for the label and as help text. */
 const EXPLANATION = 'The address replies are sent to.';
+
+/** The selector of the glyph every explanation icon shows. */
+const EXPLANATION_GLYPH = '.' + EXPLANATION_ICON.replace(/^css:/, '').trim().split(/\s+/).join('.');
 
 /** The name of the help and info icon for assistive technology, the fallback of its translation. */
 const HELP_NAME = 'Help';
@@ -304,6 +308,19 @@ describe('the explanation of a form field', () => {
     expect(helpText()!.textContent).toBe(EXPLANATION);
     expect(info()!.getAttribute('aria-expanded')).toBe('true');
     expect(descriptions()).toEqual([EXPLANATION]);
+  });
+
+  it('shows the explanation icon beside a visible label', async () => {
+    await mountField({ helpText: EXPLANATION, tooltipText: EXPLANATION });
+
+    const help = root().querySelector<HTMLElement>('.tl-form-field__label > .tl-form-field__help')!;
+    expect(help.querySelector(EXPLANATION_GLYPH)).not.toBeNull();
+  });
+
+  it('shows the same explanation icon in place of a hidden label', async () => {
+    await mountField({ labelPosition: 'hidden', helpText: EXPLANATION, tooltipText: EXPLANATION });
+
+    expect(info()!.querySelector(EXPLANATION_GLYPH)).not.toBeNull();
   });
 
   it('shows the info icon of a hidden label in view mode as image carrying the explanation', async () => {

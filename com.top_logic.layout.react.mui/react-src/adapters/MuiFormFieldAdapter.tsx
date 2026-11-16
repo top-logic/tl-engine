@@ -1,7 +1,6 @@
 import {
   React, useTLState, useTLCommand, TLChild, ThemeIcon, FieldLabelContext, fieldLabel, focusFieldInput, rootClassName,
-  useFormLayout, usePart, TOOLTIP_ATTR, FieldExplanation, explanationTooltip, EXPLANATION_HELP_ICON,
-  EXPLANATION_INFO_ICON,
+  useFormLayout, usePart, TOOLTIP_ATTR, FieldExplanation, explanationTooltip,
 } from 'tl-react-bridge';
 import type { TLCellProps, FormFieldStateJson } from 'tl-react-bridge';
 import FormControl from '@mui/material/FormControl';
@@ -156,7 +155,7 @@ const MuiFormFieldAdapter: React.FC<TLCellProps> = ({ controlId }) => {
           </FormLabel>
           {dirty && <span className="tl-form-field__dirty" aria-hidden="true" />}
           {showHelp && explanation !== null && (
-            <FieldExplanation tooltip={explanation} image={EXPLANATION_HELP_ICON} className="tl-form-field__help"
+            <FieldExplanation tooltip={explanation} className="tl-form-field__help"
               helpId={helpTextId} helpVisible={helpVisible} onToggleHelp={toggleHelp} />
           )}
         </div>
@@ -176,7 +175,7 @@ const MuiFormFieldAdapter: React.FC<TLCellProps> = ({ controlId }) => {
         )}
         {showInfo && (
           <span className="tl-form-field__info">
-            <FieldExplanation tooltip={explanation} image={EXPLANATION_INFO_ICON} className="tl-form-field__help"
+            <FieldExplanation tooltip={explanation} className="tl-form-field__help"
               helpId={showHelp ? helpTextId : undefined} helpVisible={helpVisible} onToggleHelp={toggleHelp} />
           </span>
         )}

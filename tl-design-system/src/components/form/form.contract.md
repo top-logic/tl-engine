@@ -22,7 +22,7 @@ Vom Server über `useTLState()`, aus `ReactFormFieldChromeControl`, `ReactFormGr
 | `errorIcon` | string, optional | Kodiertes ThemeImage vor dem Fehlertext (`ThemeIcon` in `tl-icon-sm`). |
 | `warnings` | Liste von string, optional | Warnungen, nur ohne Fehler: jede Warnung ist ein eigenes `tl-form-field__message` mit `aria-live="polite"`, mit Icon und Text. |
 | `warningIcon` | string, optional | Kodiertes ThemeImage vor jeder Warnung. |
-| `helpText` | string, optional | Hilfetext: ein Hilfeknopf (`tl-button tl-button--ghost tl-button--sm tl-button--icon tl-form-field__help`, Glyphe `fa-regular fa-circle-question`, Name „Hilfe“) in der Beschriftung blendet `tl-form-field__help-text` ein und aus. Sein Tooltip ist die Erklärung des Felds (`hasTooltip`, `tooltipText`, sonst der Hilfetext), nicht sein Name. |
+| `helpText` | string, optional | Hilfetext: ein Hilfeknopf (`tl-button tl-button--ghost tl-button--sm tl-button--icon tl-form-field__help`, Glyphe `bi bi-info-circle` — dieselbe wie das Info-Icon, `EXPLANATION_ICON` —, Name „Hilfe“) in der Beschriftung blendet `tl-form-field__help-text` ein und aus. Sein Tooltip ist die Erklärung des Felds (`hasTooltip`, `tooltipText`, sonst der Hilfetext), nicht sein Name. |
 | `hasTooltip` | boolean | Die Erklärung des Felds ist ein reicher Tooltip, den der Server unter dem Schlüssel `tooltip` hält: an der Beschriftung, am Hilfeknopf und am Info-Icon. |
 | `tooltipText` | string, optional | Schlichter Text als Erklärung des Felds, an denselben Stellen; der reiche Tooltip geht vor. |
 | `dirty` | boolean | Das Feld ist geändert: `data-tl-state="dirty"` an der Wurzel, der Punkt `tl-form-field__dirty` erscheint. |

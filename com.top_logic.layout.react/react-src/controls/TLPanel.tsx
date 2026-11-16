@@ -2,7 +2,6 @@ import {
   React, useTLState, useTLCommand, TLChild, useI18N, useFillHost, FillProvider, FillBarrier, rootClassName, stateAttr,
   ThemeIcon, ButtonDefaults, useStandaloneKeyboardScope, usePart, SurfaceProvider, useSurface, cardSurfaceClass, panelSurface, isInteractiveWithin,
   useFloatingFrame, FloatingFrame, FloatingRail, FieldExplanation, explanationTooltip, tooltipProps,
-  EXPLANATION_HELP_ICON, EXPLANATION_INFO_ICON,
 } from 'tl-react-bridge';
 import type { TLCellProps, Surface } from 'tl-react-bridge';
 
@@ -173,8 +172,8 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   // The explanation stands at the title; without title, an info icon beside the content carries it.
   const explanationDeclaration = explanationTooltip(false, explanation);
   const showInfo = !hasTitle && explanationDeclaration !== null;
-  const explanationIcon = (image: string, className: string) => explanationDeclaration !== null && (
-    <FieldExplanation tooltip={explanationDeclaration} image={image} className={className}
+  const explanationIcon = (className: string) => explanationDeclaration !== null && (
+    <FieldExplanation tooltip={explanationDeclaration} className={className}
       helpId={explanationHelp ? helpId : undefined} helpVisible={helpVisible} onToggleHelp={toggleHelp} />
   );
 
@@ -211,7 +210,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
         <div className="tl-titlebar" onDoubleClick={handleHeadDoubleClick} onClick={handleHeadClick}>
           {hasTitle && <h2 className="tl-titlebar__title tl-type-heading-sm" {...tooltipProps(explanation)}>{title}</h2>}
           {hasTitle && explanationHelp && (
-            <span className="tl-titlebar__explanation">{explanationIcon(EXPLANATION_HELP_ICON, 'tl-titlebar__help')}</span>
+            <span className="tl-titlebar__explanation">{explanationIcon('tl-titlebar__help')}</span>
           )}
           {!!state.titleContent && (
             <div className="tl-titlebar__content">
@@ -268,7 +267,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
       {!isMinimized && (showInfo ? (
         <div className="tl-panel__explained">
           {body}
-          <span className="tl-panel__info">{explanationIcon(EXPLANATION_INFO_ICON, 'tl-panel__help')}</span>
+          <span className="tl-panel__info">{explanationIcon('tl-panel__help')}</span>
         </div>
       ) : body)}
       {!isMinimized && <FloatingRail host={floating} edge="bottom" />}

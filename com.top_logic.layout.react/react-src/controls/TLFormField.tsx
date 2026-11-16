@@ -2,7 +2,6 @@ import {
   React, useTLState, useTLCommand, TLChild, rootClassName, useI18N, TOOLTIP_ATTR, FieldLabelContext, fieldLabel,
   focusFieldInput, ThemeIcon, useFormLayout, usePart, usePopover, useCloseOnOutsidePress, pressClosedSurface,
   useStandaloneKeyboardScope, anchoredOverlayProps, createPortal, FieldExplanation, explanationTooltip,
-  EXPLANATION_HELP_ICON, EXPLANATION_INFO_ICON,
 } from 'tl-react-bridge';
 import type { TLCellProps, FormFieldStateJson } from 'tl-react-bridge';
 
@@ -195,7 +194,7 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
           {required && !readOnly && <span className="tl-form-field__required" aria-hidden="true">*</span>}
           {dirty && <span className="tl-form-field__dirty" aria-hidden="true" />}
           {showHelp && explanation !== null && (
-            <FieldExplanation tooltip={explanation} image={EXPLANATION_HELP_ICON} className="tl-form-field__help"
+            <FieldExplanation tooltip={explanation} className="tl-form-field__help"
               helpId={helpTextId} helpVisible={helpVisible} onToggleHelp={toggleHelp} />
           )}
         </div>
@@ -215,7 +214,7 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
         )}
         {showInfo && (
           <span className="tl-form-field__info">
-            <FieldExplanation tooltip={explanation} image={EXPLANATION_INFO_ICON} className="tl-form-field__help"
+            <FieldExplanation tooltip={explanation} className="tl-form-field__help"
               helpId={showHelp ? helpTextId : undefined} helpVisible={helpVisible} onToggleHelp={toggleHelp} />
           </span>
         )}

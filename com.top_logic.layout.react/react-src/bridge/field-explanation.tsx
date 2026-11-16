@@ -8,11 +8,11 @@ const I18N_KEYS = {
   'js.formField.help': 'Help',
 };
 
-/** The icon of an explanation beside the label it explains. */
-export const EXPLANATION_HELP_ICON = 'css:fa-regular fa-circle-question';
-
-/** The icon of an explanation standing in for a label that is not shown. */
-export const EXPLANATION_INFO_ICON = 'css:bi bi-info-circle';
+/**
+ * The icon of every explanation: beside the label or title it explains, and standing in for a label
+ * or title that is not shown.
+ */
+export const EXPLANATION_ICON = 'css:bi bi-info-circle';
 
 /** The value of {@link TOOLTIP_ATTR} fetching the rich explanation the server holds for the control. */
 const RICH_EXPLANATION = 'key:tooltip';
@@ -40,9 +40,6 @@ export interface FieldExplanationProps {
   /** What the icon explains, as tooltip declaration ({@link explanationTooltip}). */
   tooltip: string;
 
-  /** The icon, a theme image in its encoded form; {@link EXPLANATION_HELP_ICON} or {@link EXPLANATION_INFO_ICON}. */
-  image: string;
-
   /**
    * The ID of the element holding the help text the icon shows and hides. Absent: the icon explains
    * through its tooltip only, e.g. while a form shows values.
@@ -61,7 +58,7 @@ export interface FieldExplanationProps {
 
 /**
  * The icon explaining a label, a field without a visible label or a title: the explanation is its
- * tooltip, and its name for assistive technology is "Help".
+ * tooltip, and its name for assistive technology is "Help". All of them show {@link EXPLANATION_ICON}.
  *
  * <p>With a help text ({@link FieldExplanationProps.helpId}), the icon is a button of the part
  * `Button` that shows and hides it (`aria-expanded`, `aria-controls`); the tooltip declaration is
@@ -69,7 +66,7 @@ export interface FieldExplanationProps {
  * Without one, the icon is an image carrying the tooltip.</p>
  */
 export function FieldExplanation(props: FieldExplanationProps) {
-  const { tooltip, image, helpId, helpVisible, onToggleHelp, className } = props;
+  const { tooltip, helpId, helpVisible, onToggleHelp, className } = props;
   const i18n = useI18N(I18N_KEYS);
   const Button = usePart('Button');
   const name = i18n['js.formField.help'];
@@ -77,13 +74,13 @@ export function FieldExplanation(props: FieldExplanationProps) {
 
   if (helpId !== undefined) {
     return (
-      <Button label={name} image={image} display="icon-only" appearance="ghost" small className={className}
+      <Button label={name} image={EXPLANATION_ICON} display="icon-only" appearance="ghost" small className={className}
         onClick={onToggleHelp} aria-expanded={helpVisible === true} aria-controls={helpId} {...declaration} />
     );
   }
   return (
     <span role="img" aria-label={name} className={className} {...declaration}>
-      <ThemeIcon encoded={image} className="tl-icon-sm" />
+      <ThemeIcon encoded={EXPLANATION_ICON} className="tl-icon-sm" />
     </span>
   );
 }

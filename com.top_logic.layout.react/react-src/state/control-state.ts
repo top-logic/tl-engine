@@ -966,12 +966,14 @@ export interface WindowStateJson extends ControlStateJson {
 	title: string;
 
 	/**
-	 * The width of the window, a CSS length (e.g. `32rem`, `640px`).
+	 * The width of the window, a CSS length (e.g. `32rem`, `640px`) or a percentage of
+	 * the width of the browser window (e.g. `80%`).
 	 */
 	width: string;
 
 	/**
-	 * The height of the window, a CSS length. Absent: the height of the content.
+	 * The height of the window, a CSS length or a percentage of the height of the browser window
+	 * (e.g. `75%`). Absent: the height of the content.
 	 */
 	height: string;
 

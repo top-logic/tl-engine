@@ -263,6 +263,13 @@
 			</instance>
 		</config>
 		<!--
+			A user who cannot edit an object because someone else is editing it is told who that is
+			(e.g. the form of the sensor locking demo opened read-only).
+		-->
+		<config service-class="com.top_logic.base.locking.token.TokenService">
+			<instance report-lock-owner-details="true"/>
+		</config>
+		<!--
 			Every newly created account joins the "user" group defined by the engine. The
 			administration hub shows the default-group flag on that group. The members of the
 			"DemoProjectManagers" group create projects; an administrator adds an account to it in

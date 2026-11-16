@@ -34,7 +34,6 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.overlay.DialogManager;
-import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.InterruptibleViewAction;
@@ -146,12 +145,6 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 		@Name(MESSAGE)
 		ResKey getMessage();
 	}
-
-	/**
-	 * Names the operation a failure is reported for: the command chain taken up again after the
-	 * identity was confirmed.
-	 */
-	private static final String RESUME_DESCRIPTION = "Continuing the command chain after the identity confirmation";
 
 	private final ResKey _title;
 
@@ -475,7 +468,7 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 				if (closePrompt != null) {
 					closePrompt.run();
 				}
-				resume(context, input, continuation);
+				ChainInWindow.resume(context, input, continuation, VerifyIdentityAction.class);
 			});
 		} catch (Throwable ex) {
 			// The request running this answers for the identity, not for the chain: whatever could
@@ -486,36 +479,12 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 	}
 
 	/**
-	 * Continues the chain, reporting what it throws in the window the chain belongs to.
-	 *
-	 * <p>
-	 * The failure travels the way a failed command travels: an internal error is logged as one and
-	 * shown generically, a user-level failure carries its own message into the window's snackbar,
-	 * see {@link CommandErrors#report(ErrorSink, Throwable, String, Class)}.
-	 * </p>
-	 */
-	private void resume(ReactContext context, Object input, Continuation continuation) {
-		try {
-			continuation.resume(input);
-		} catch (Throwable ex) {
-			CommandErrors.report(context.getErrorSink(), ex, RESUME_DESCRIPTION, VerifyIdentityAction.class);
-		}
-	}
-
-	/**
 	 * Runs the given action in the window of the given context, from whatever thread is calling.
 	 *
-	 * @implNote The step that needs a browser: the action is run in the window's sub-session and as
-	 *           one interaction of the session, so that its display updates reach that window's
-	 *           page and its texts are resolved in that window's language. A window whose page is
-	 *           gone is not acted on.
+	 * @implNote The step that needs a browser, see {@link ChainInWindow#runInWindow(ReactContext, Runnable)}.
 	 */
 	protected void runInWindow(ReactContext context, Runnable action) {
-		String windowName = context.getWindowName();
-		if (!ReactWindowReplay.inWindow(context.getWindowRegistry(), windowName, action)) {
-			Logger.warn("Window '" + windowName + "' is gone, the command chain waiting in it does not continue.",
-				VerifyIdentityAction.class);
-		}
+		ChainInWindow.runInWindow(context, action);
 	}
 
 	/**

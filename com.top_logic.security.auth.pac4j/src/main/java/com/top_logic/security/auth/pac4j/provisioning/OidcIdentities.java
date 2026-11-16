@@ -11,15 +11,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
-import com.top_logic.base.accesscontrol.IdentityVerificationHandler;
-import com.top_logic.base.accesscontrol.VerificationResult;
-import com.top_logic.base.accesscontrol.VerifiedIdentity;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
-import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.security.auth.pac4j.model.OidcIdentity;
@@ -141,42 +135,6 @@ public class OidcIdentities {
 			throw new TopLogicException(I18NConstants.ERROR_OTHER_IDENTITY__NAME.fill(account.getName()));
 		}
 		return addIdentity(account, client, subject);
-	}
-
-	/**
-	 * The {@link IdentityVerificationHandler} that connects the identity an external authentication
-	 * confirms with the account of the session that asked for it.
-	 *
-	 * <p>
-	 * The handler takes the {@link VerifiedIdentity#getClientName() client} and
-	 * {@link VerifiedIdentity#getSubject() subject} of the confirmed identity and never resolves its
-	 * {@link VerifiedIdentity#getAccount() account}: the authentication is no login, so it neither
-	 * looks up nor creates an account through the account mapping of the client. The identity is
-	 * {@link #connect(Person, String, String) connected} in a transaction of its own.
-	 * </p>
-	 *
-	 * @param onConnected
-	 *        Run after the identity has been connected and committed, e.g. to show the connected
-	 *        identity in the window that asked.
-	 */
-	public static IdentityVerificationHandler connectHandler(Runnable onConnected) {
-		Objects.requireNonNull(onConnected, "No continuation.");
-		return (expected, identity) -> {
-			if (!identity.hasClientIdentity()) {
-				return VerificationResult.refused(I18NConstants.ERROR_NO_CLIENT_IDENTITY);
-			}
-			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-			try (Transaction tx = kb.beginTransaction(I18NConstants.CONNECT_IDENTITY)) {
-				connect(expected, identity.getClientName(), identity.getSubject());
-				tx.commit();
-			} catch (TopLogicException ex) {
-				Logger.info("Not connecting " + identity + " with account '" + expected.getName() + "': "
-					+ ex.getMessage(), OidcIdentities.class);
-				return VerificationResult.refused(ex.getErrorKey());
-			}
-			onConnected.run();
-			return VerificationResult.verified(I18NConstants.IDENTITY_CONNECTED);
-		};
 	}
 
 	/**

@@ -116,6 +116,22 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey REAUTHENTICATION_MESSAGE;
 
 	/**
+	 * @en Sign in at the identity provider
+	 */
+	public static ResKey IDENTIFY_EXTERNALLY_TITLE;
+
+	/**
+	 * @en Sign in at the identity provider. The button below opens the sign-in in a new window, and
+	 *     this dialog closes by itself once the sign-in is complete.
+	 */
+	public static ResKey IDENTIFY_EXTERNALLY_MESSAGE;
+
+	/**
+	 * @en This login cannot be used here.
+	 */
+	public static ResKey ERROR_LOGIN_METHOD_NOT_IDENTIFYING;
+
+	/**
 	 * @en Your password cannot be verified. The change was not applied.
 	 */
 	public static ResKey ERROR_PASSWORD_NOT_VERIFIABLE;

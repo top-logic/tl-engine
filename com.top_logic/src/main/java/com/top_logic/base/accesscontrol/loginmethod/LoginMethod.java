@@ -109,9 +109,23 @@ public interface LoginMethod {
 	 *        {@link ExternalAuthenticationServlet#VERIFICATION_PARAM}.
 	 * @return The URL to open, or <code>null</code> when this method cannot authenticate a user
 	 *         within an established session.
+	 *
+	 * @see #canIdentify()
 	 */
 	default String getIdentificationUrl(String token) {
 		return null;
+	}
+
+	/**
+	 * Whether {@link #getIdentificationUrl(String)} answers a URL.
+	 *
+	 * <p>
+	 * Asked without side effects, e.g. to decide whether a view offers to connect this method with
+	 * the account of the session.
+	 * </p>
+	 */
+	default boolean canIdentify() {
+		return false;
 	}
 
 	/**

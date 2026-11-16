@@ -85,6 +85,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey CONNECT_IDENTITY;
 
+	/**
+	 * @en Remove an external login from an account.
+	 */
+	public static ResKey REMOVE_IDENTITY;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

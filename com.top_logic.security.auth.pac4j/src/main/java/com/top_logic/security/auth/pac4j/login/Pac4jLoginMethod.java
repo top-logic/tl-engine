@@ -148,11 +148,10 @@ public class Pac4jLoginMethod implements LoginMethod {
 	 */
 	@Override
 	public String getIdentificationUrl(String token) {
-		String reauthenticationClient = Pac4jConfigFactory.getReauthenticationName(_clientName);
-		if (!hasClient(reauthenticationClient)) {
-			// The client cannot demand a fresh authentication.
+		if (!canIdentify()) {
 			return null;
 		}
+		String reauthenticationClient = Pac4jConfigFactory.getReauthenticationName(_clientName);
 
 		DisplayContext context = DefaultDisplayContext.getDisplayContext();
 		dropStoredProfile(context);
@@ -174,10 +173,15 @@ public class Pac4jLoginMethod implements LoginMethod {
 	}
 
 	/**
-	 * Whether the pac4j configuration has a client of the given name.
+	 * Whether this method's client can demand a fresh authentication, i.e. whether the pac4j
+	 * configuration has its {@link Pac4jConfigFactory#getReauthenticationName(String)
+	 * re-authentication client}.
 	 */
-	private static boolean hasClient(String clientName) {
-		return Pac4jConfigFactory.getInstance().getPac4jConfig().getClients().findClient(clientName).isPresent();
+	@Override
+	public boolean canIdentify() {
+		String reauthenticationClient = Pac4jConfigFactory.getReauthenticationName(_clientName);
+		return Pac4jConfigFactory.getInstance().getPac4jConfig().getClients().findClient(reauthenticationClient)
+			.isPresent();
 	}
 
 	/**

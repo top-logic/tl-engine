@@ -29,6 +29,7 @@ import com.top_logic.base.accesscontrol.VerifiedIdentity;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.encryption.SecureRandomService;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -37,19 +38,22 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory;
 import com.top_logic.security.auth.pac4j.model.OidcIdentity;
+import com.top_logic.security.auth.pac4j.provisioning.ConnectOidcIdentity;
 import com.top_logic.security.auth.pac4j.provisioning.I18NConstants;
 import com.top_logic.security.auth.pac4j.provisioning.OidcIdentities;
+import com.top_logic.security.auth.pac4j.provisioning.OidcIdentityFunctions;
 import com.top_logic.security.auth.pac4j.provisioning.OidcProvisioningUserMapping;
 import com.top_logic.security.auth.pac4j.provisioning.OidcProvisioningUserMapping.Config;
 import com.top_logic.security.auth.pac4j.servlet.Pac4jAuthenticationServlet;
 import com.top_logic.tool.boundsec.wrap.Group;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
  * Tests connecting a further external login with an account through an identity verification
- * ({@link OidcIdentities#connectHandler(Runnable)}), and removing it again
- * ({@link OidcIdentities#removeIdentity(Person, OidcIdentity)}).
+ * ({@link ConnectOidcIdentity}), and removing it again
+ * ({@link OidcIdentities#removeIdentity(Person, OidcIdentity)}, {@link OidcIdentityFunctions}).
  */
 public class TestOidcIdentityConnection extends BasicTestCase {
 
@@ -65,13 +69,10 @@ public class TestOidcIdentityConnection extends BasicTestCase {
 
 	private IdentityVerifications _verifications;
 
-	private AtomicInteger _connected;
-
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		_verifications = new IdentityVerifications(IdentityVerifications.DEFAULT_VALIDITY, Clock.systemUTC());
-		_connected = new AtomicInteger();
 	}
 
 	@Override
@@ -107,7 +108,6 @@ public class TestOidcIdentityConnection extends BasicTestCase {
 
 		assertEquals(Outcome.VERIFIED, result.getOutcome());
 		assertEquals(I18NConstants.IDENTITY_CONNECTED, result.getMessage());
-		assertEquals(1, _connected.get());
 		OidcIdentity identity = OidcIdentities.findIdentity(kb(), CLIENT, "sub-alice");
 		assertNotNull("The identity must be stored under the configured client.", identity);
 		assertSame(account, OidcIdentities.getOwner(identity));
@@ -152,7 +152,6 @@ public class TestOidcIdentityConnection extends BasicTestCase {
 
 		assertEquals(Outcome.REFUSED, result.getOutcome());
 		assertEquals(I18NConstants.ERROR_IDENTITY_OF_OTHER_ACCOUNT, result.getMessage());
-		assertEquals(0, _connected.get());
 		assertTrue(OidcIdentities.getIdentities(intruder).isEmpty());
 		assertEquals(1, OidcIdentities.getIdentities(owner).size());
 		assertSame(owner, OidcIdentities.getOwner(OidcIdentities.findIdentity(kb(), CLIENT, "sub-owned")));
@@ -206,7 +205,7 @@ public class TestOidcIdentityConnection extends BasicTestCase {
 	 */
 	public void testNoClientIdentityRefused() {
 		Person account = account("cNoClient");
-		String token = _verifications.register(account, OidcIdentities.connectHandler(_connected::incrementAndGet));
+		String token = _verifications.register(account, ConnectOidcIdentity.INSTANCE);
 
 		VerificationResult result = _verifications.complete(token, VerifiedIdentity.ofAccount(account));
 
@@ -220,7 +219,7 @@ public class TestOidcIdentityConnection extends BasicTestCase {
 	 */
 	public void testTokenBoundToSessionAndSingleUse() {
 		Person account = account("cToken");
-		String token = _verifications.register(account, OidcIdentities.connectHandler(_connected::incrementAndGet));
+		String token = _verifications.register(account, ConnectOidcIdentity.INSTANCE);
 
 		IdentityVerifications otherSession =
 			new IdentityVerifications(IdentityVerifications.DEFAULT_VALIDITY, Clock.systemUTC());
@@ -232,7 +231,6 @@ public class TestOidcIdentityConnection extends BasicTestCase {
 		assertEquals(Outcome.UNKNOWN,
 			_verifications.complete(token, verified(profile(OTHER_CLIENT, "sub-token-2"))).getOutcome());
 		assertNull(OidcIdentities.findIdentity(kb(), OTHER_CLIENT, "sub-token-2"));
-		assertEquals(1, _connected.get());
 	}
 
 	/**
@@ -344,8 +342,76 @@ public class TestOidcIdentityConnection extends BasicTestCase {
 		assertTrue("A membership another identity grants must stay.", shared.getDirectMembers().contains(account));
 	}
 
+	/**
+	 * The script functions list and remove the logins of the session's account only.
+	 */
+	public void testFunctionsActOnSessionAccountOnly() {
+		Person self = account("fSelf");
+		Person other = account("fOther");
+		OidcIdentity own = addIdentity(self, CLIENT, "sub-f-own");
+		addIdentity(self, OTHER_CLIENT, "sub-f-own-2");
+		OidcIdentity foreign = addIdentity(other, CLIENT, "sub-f-foreign");
+		addIdentity(other, OTHER_CLIENT, "sub-f-foreign-2");
+
+		asUser(self, () -> {
+			assertEquals(OidcIdentities.getIdentities(self), OidcIdentityFunctions.identities());
+			assertFalse(OidcIdentityFunctions.identities().contains(foreign));
+
+			assertEquals(I18NConstants.ERROR_NOT_CONNECTED, OidcIdentityFunctions.removeRefusal(foreign));
+			try {
+				OidcIdentityFunctions.remove(foreign);
+				fail("A login of another account must not be removed.");
+			} catch (TopLogicException ex) {
+				assertEquals(I18NConstants.ERROR_NOT_CONNECTED, ex.getErrorKey());
+			}
+			assertTrue(foreign.tValid());
+			assertEquals(2, OidcIdentities.getIdentities(other).size());
+
+			assertNull(OidcIdentityFunctions.removeRefusal(own));
+			OidcIdentityFunctions.remove(own);
+			assertEquals(1, OidcIdentities.getIdentities(self).size());
+
+			OidcIdentity last = OidcIdentities.getIdentities(self).get(0);
+			assertEquals(I18NConstants.ERROR_LAST_LOGIN, OidcIdentityFunctions.removeRefusal(last));
+			try {
+				OidcIdentityFunctions.remove(last);
+				fail("The last login must not be removed.");
+			} catch (TopLogicException ex) {
+				assertEquals(I18NConstants.ERROR_LAST_LOGIN, ex.getErrorKey());
+			}
+		});
+	}
+
+	/**
+	 * Without a session account, there is nothing to list or remove.
+	 */
+	public void testFunctionsWithoutSessionAccount() {
+		Person owner = account("fNobody");
+		OidcIdentity identity = addIdentity(owner, CLIENT, "sub-f-nobody");
+		addIdentity(owner, OTHER_CLIENT, "sub-f-nobody-2");
+
+		asUser(null, () -> {
+			assertTrue(OidcIdentityFunctions.identities().isEmpty());
+			assertEquals(I18NConstants.ERROR_NOT_CONNECTED, OidcIdentityFunctions.removeRefusal(identity));
+			try {
+				OidcIdentityFunctions.remove(identity);
+				fail("Nothing must be removed without a session account.");
+			} catch (TopLogicException ex) {
+				assertEquals(I18NConstants.ERROR_NOT_CONNECTED, ex.getErrorKey());
+			}
+			assertTrue(identity.tValid());
+		});
+	}
+
+	private static void asUser(Person person, Runnable test) {
+		ThreadContext.inSystemContext(TestOidcIdentityConnection.class, () -> {
+			TLContextManager.getSubSession().setPerson(person);
+			test.run();
+		});
+	}
+
 	private VerificationResult connect(Person account, OidcProfile profile, Supplier<Person> resolver) {
-		String token = _verifications.register(account, OidcIdentities.connectHandler(_connected::incrementAndGet));
+		String token = _verifications.register(account, ConnectOidcIdentity.INSTANCE);
 		return _verifications.complete(token, Pac4jAuthenticationServlet.createVerifiedIdentity(profile, resolver));
 	}
 

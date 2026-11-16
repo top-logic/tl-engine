@@ -23,9 +23,10 @@ Das Control ist `TLAppShell` (`ReactAppShellControl`).
 
 ## Verhalten
 
-- Der Breakpoint (768 px Fensterbreite) steht nur hier. Die Shell meldet ihn dem Server, gibt ihn den Komponenten in
-  ihr als Kontext (`useDisplayClass`) und setzt `data-tl-display` an ihrer Wurzel. Eine Komponente außerhalb einer
-  Shell ist `regular`.
+- Der Breakpoint (768 px Fensterbreite) steht an einer Stelle der Brücke (`useMeasuredDisplayClass`). Die Shell
+  meldet die Darstellungsklasse dem Server, gibt sie den Komponenten in ihr als Kontext (`useDisplayClass`) und setzt
+  `data-tl-display` an ihrer Wurzel. Eine Komponente außerhalb einer Shell ist `regular`; ein Dialog, der neben der
+  Shell steht, misst die Klasse am selben Breakpoint selbst.
 - Der Inhalt ist das Landmark `<main>`.
 
 ## Tokens

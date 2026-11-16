@@ -135,11 +135,6 @@ public class GenericViewCommand implements ViewCommand {
 		return _label;
 	}
 
-	@Override
-	public boolean appliesFormState() {
-		return ViewActions.appliesFormState(_actions);
-	}
-
 	/**
 	 * The rules the actions of the chain {@link ViewAction#getIntrinsicRule() bring of their own},
 	 * combined.

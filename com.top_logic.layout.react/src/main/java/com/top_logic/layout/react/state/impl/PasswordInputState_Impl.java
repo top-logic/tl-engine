@@ -3,7 +3,7 @@ package com.top_logic.layout.react.state.impl;
 /**
  * Implementation of {@link com.top_logic.layout.react.state.PasswordInputState}.
  */
-public class PasswordInputState_Impl extends com.top_logic.layout.react.state.impl.TypingFieldState_Impl implements com.top_logic.layout.react.state.PasswordInputState {
+public class PasswordInputState_Impl extends com.top_logic.layout.react.state.impl.ClearableFieldState_Impl implements com.top_logic.layout.react.state.PasswordInputState {
 
 	/**
 	 * Creates a {@link PasswordInputState_Impl} instance.
@@ -12,6 +12,12 @@ public class PasswordInputState_Impl extends com.top_logic.layout.react.state.im
 	 */
 	public PasswordInputState_Impl() {
 		super();
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.PasswordInputState setClearable(boolean value) {
+		internalSetClearable(value);
+		return this;
 	}
 
 	@Override

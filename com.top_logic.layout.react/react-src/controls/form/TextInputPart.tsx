@@ -43,7 +43,8 @@ function classes(...names: (string | false | undefined)[]): string {
  *
  * <p>The input stands in the group of the design system (tl-field-group), which carries the
  * classes of the box: the icon (tl-field-group__icon) ahead of the input and the action after it
- * lie inside the frame of the input, which makes room for them. The group is drawn whether or not
+ * lie inside the frame of the input, which makes room for them; a text area has an action but no
+ * icon. The group is drawn whether or not
  * the box has an icon or an action, so that the input keeps its place in the tree - and with it the
  * focus - while they come and go. A suffix (tl-field-group__suffix) stands after the input, beside
  * its frame; the action stays inside the frame.</p>
@@ -95,6 +96,7 @@ const TextInputPart: React.FC<TextInputPartProps> = ({
           className={preformatted ? PREFORMATTED_CLASS : MULTILINE_CLASS}
           {...common}
         />
+        {action}
       </span>
     );
   }

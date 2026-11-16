@@ -1,4 +1,4 @@
-import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, createPortal, useFieldLabelProps, ThemeIcon, useListReorder, reorderState, filterOptions, labelMatches, useFocusAfterRemove, usePart, OptionValues, ICON_HANDLE, ICON_CLEAR, ICON_SEARCH, ICON_LIST_OPEN, ICON_LIST_CLOSED, ICON_CONFIRM } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, createPortal, useFieldLabelProps, ThemeIcon, useListReorder, reorderState, filterOptions, labelMatches, useFocusAfterRemove, usePart, OptionValues, ICON_HANDLE, ICON_SEARCH, ICON_LIST_OPEN, ICON_LIST_CLOSED, ICON_CONFIRM } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson, ReorderItemProps, ReorderHandleProps, ColorRole } from 'tl-react-bridge';
 import {
   ARG_OPTION,
@@ -10,6 +10,7 @@ import {
 import type { OptionDescriptor } from './selectOptions';
 import { chipFocusTargets } from './chip/chipFocus';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
+import { ClearButton, offersClearByModel } from './form/ClearButton';
 import { findTypeAheadMatch, isTypeAheadKey, useTypeAhead } from './typeAhead';
 
 const { useState, useCallback, useRef, useEffect, useMemo } = React;
@@ -226,7 +227,6 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const value = (state.value ?? []) as OptionDescriptor[];
   const multiSelect = state.multiSelect === true;
   const customOrder = state.customOrder === true;
-  const mandatory = state.mandatory === true;
   const disabled = state.disabled === true;
   const editable = state.editable !== false;
   const optionsLoaded = state.optionsLoaded === true;
@@ -660,7 +660,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
 
   // -- Editable or disabled rendering --
 
-  const showClearButton = !mandatory && value.length > 0 && !disabled;
+  const showClearButton = offersClearByModel(state, value.length > 0);
   const listboxId = `${controlId}-listbox`;
 
   // The position is usePopover's (see above); layer, surface and shadow are the design system's
@@ -799,14 +799,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
         </span>
         <span className="tl-select__controls">
           {showClearButton && (
-            <Button
-              label={i18n['js.dropdownSelect.clear']}
-              image={ICON_CLEAR}
-              display="icon-only"
-              appearance="ghost"
-              small
-              onClick={clearAll}
-            />
+            <ClearButton label={i18n['js.dropdownSelect.clear']} onClick={clearAll} />
           )}
           <span className="tl-select__arrow" aria-hidden="true">
             <ThemeIcon

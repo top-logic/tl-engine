@@ -564,7 +564,57 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		TLObject high = classifier("HIGH");
 		assertTrue(rights().isDiscoverAllowed(_stranger, high));
 		assertTrue(rights().isDiscoverAllowed(_stranger, TLModelUtil.findType("TestTLScriptSecurity:PathB")));
-		assertFalse(rights().isAllowed(_stranger, high, SimpleBoundCommandGroup.READ));
+		assertTrue(rights().isDiscoverAllowed(_stranger, (TLObject) part("PathB", "priority")));
+	}
+
+	/**
+	 * A model element is readable for every user, also for one holding no role at all and without
+	 * any grant on <code>tl.model</code> (ticket #30275): a classifier, a type and an attribute.
+	 */
+	public void testModelElementReadable() {
+		assertTrue(rights().isReadAllowed(_stranger, classifier("HIGH")));
+		assertTrue(rights().isReadAllowed(_stranger, TLModelUtil.findType("TestTLScriptSecurity:PathB")));
+		assertTrue(rights().isReadAllowed(_stranger, (TLObject) part("PathB", "priority")));
+	}
+
+	/**
+	 * Modifying and deleting a model element stays protected (ticket #30275).
+	 */
+	public void testModelElementNotWritable() {
+		TLObject high = classifier("HIGH");
+		assertFalse(rights().isAllowed(_stranger, high, SimpleBoundCommandGroup.WRITE));
+		assertFalse(rights().isAllowed(_stranger, high, SimpleBoundCommandGroup.DELETE));
+		assertFalse(rights().isAllowed(_stranger, TLModelUtil.findType("TestTLScriptSecurity:PathB"),
+			SimpleBoundCommandGroup.WRITE));
+	}
+
+	/**
+	 * The value of an enumeration attribute of a readable object is delivered completely to a user
+	 * holding no right on <code>tl.model</code> (ticket #30275): all classifiers of a multiple
+	 * attribute, and the classifier of a single one, each of them readable for the user. A filter
+	 * that drops every object its user may not read (as the read filter of the agent tools does)
+	 * therefore keeps them.
+	 */
+	public void testEnumerationValueReadable() throws Exception {
+		grantWrite(_pathUser, _b1);
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			_b1.tUpdateByName("priority", classifier("HIGH"));
+			_b1.tUpdateByName("tags", Arrays.asList(classifier("LOW"), classifier("HIGH")));
+			tx.commit();
+		}
+		assertTrue(rights().isReadAllowed(_pathUser, _b1, part("PathB", "priority")));
+		assertTrue(rights().isReadAllowed(_pathUser, _b1, part("PathB", "tags")));
+
+		becomeUser(_pathUser);
+		Object priority = eval("b -> $b.get(`TestTLScriptSecurity:PathB#priority`)", _b1);
+		assertEquals(classifier("HIGH"), priority);
+		assertTrue(rights().isReadAllowed(_pathUser, (TLObject) priority));
+
+		List<?> tags = asList(eval("b -> $b.get(`TestTLScriptSecurity:PathB#tags`)", _b1));
+		assertEquals(Arrays.asList(classifier("LOW"), classifier("HIGH")), tags);
+		for (Object tag : tags) {
+			assertTrue(rights().isReadAllowed(_pathUser, (TLObject) tag));
+		}
 	}
 
 	/**

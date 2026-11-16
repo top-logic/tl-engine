@@ -297,14 +297,22 @@
 							roles="TestTLScriptSecurity.PathViewer"
 						/>
 					</part>
-					<!-- The path writer may set the enumeration attributes of a B. -->
+					<!-- The path writer may read and set the enumeration attributes of a B. -->
 					<part name="TestTLScriptSecurity:PathB#priority">
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.PathWriter"
+						/>
 						<grant
 							operation="Write"
 							roles="TestTLScriptSecurity.PathWriter"
 						/>
 					</part>
 					<part name="TestTLScriptSecurity:PathB#tags">
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.PathWriter"
+						/>
 						<grant
 							operation="Write"
 							roles="TestTLScriptSecurity.PathWriter"

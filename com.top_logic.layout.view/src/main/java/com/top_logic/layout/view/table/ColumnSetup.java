@@ -105,6 +105,9 @@ import com.top_logic.util.Resources;
  *        {@link #binding()} built. A collection of values is displayed value by value. A display
  *        that is a {@link LabelProvider} gives the cells the text the free-text search finds them
  *        by, the labels of a collection's values joined as for any cell holding several values.
+ *        In a {@link ColumnProviderService#isLabelColumn(ColumnType) label column}, that label is
+ *        also the {@link #text() text} the column sorts and text-filters its values by and, unless
+ *        the {@link #export()} configures a renderer, the value an export writes.
  * @param sortable
  *        Whether the column sorts at all. A column that does not sort offers no sorting and
  *        ignores its {@link #comparator()}; a table grouped by it keeps its groups in the order of
@@ -387,17 +390,18 @@ public record ColumnSetup(
 				}
 			};
 		}
+		Function<Object, Object> cellValue = binding()::cellValue;
 		if (display != null) {
-			result = withDisplay(result, display);
+			result = withDisplay(result, cellValue, display, exportsLabel() ? displayLabels() : null);
 		}
 		if (tooltip != null) {
-			result = withTooltip(result, tooltip);
+			result = withTooltip(result, cellValue, tooltip);
 		}
 		if (cellClass != null) {
-			result = withCellClass(result, cellClass);
+			result = withCellClass(result, cellValue, cellClass);
 		}
 		if (cellRole != null) {
-			result = withCellRole(result, cellRole);
+			result = withCellRole(result, cellValue, cellRole);
 		}
 		if (!export.exported()) {
 			result = DelegatingColumn.notExportable(result);
@@ -507,22 +511,78 @@ public record ColumnSetup(
 	}
 
 	/**
+	 * The text a value of this column is written as where the column compares its values as text:
+	 * what a {@link ColumnProviderService#isLabelColumn(ColumnType) label column} sorts its values
+	 * by when it declares no {@link #comparator()}, and what its text filter matches against.
+	 *
+	 * <p>
+	 * In a label column with a {@link #display()} that is a {@link LabelProvider}, a value the
+	 * display {@link #displays(Object) displays} is written as the display labels it, so that the
+	 * column sorts and filters by what it shows; a collection of values by the labels of its values,
+	 * joined as for any cell holding several values. Every other value is written as the
+	 * {@link #type()} of the values derives, see {@link ColumnProviderService#displayText(ColumnType)}.
+	 * </p>
+	 *
+	 * <p>
+	 * It is given the cell values themselves, also {@code null} and the
+	 * {@link ColumnProviderService#UNREADABLE} marker.
+	 * </p>
+	 */
+	public Function<Object, String> text() {
+		Function<Object, String> typeText = ColumnProviderService.displayText(type);
+		LabelProvider labels = displayLabels();
+		if (labels == null) {
+			return typeText;
+		}
+		return cellValue -> displays(cellValue) ? labelText(labels, cellValue) : typeText.apply(cellValue);
+	}
+
+	/**
+	 * The {@link #display()} as the labels of the values of a
+	 * {@link ColumnProviderService#isLabelColumn(ColumnType) label column}, {@code null} for a
+	 * column that is no label column or whose display computes no labels.
+	 */
+	private LabelProvider displayLabels() {
+		if (display instanceof LabelProvider labels && ColumnProviderService.getInstance().isLabelColumn(type)) {
+			return labels;
+		}
+		return null;
+	}
+
+	/**
+	 * Whether an export writes the labels the {@link #display()} shows the values with, rather than
+	 * the values: in a {@link ColumnProviderService#isLabelColumn(ColumnType) label column} whose
+	 * display computes labels, and whose {@link #export()} configures no renderer of its own.
+	 */
+	private boolean exportsLabel() {
+		return export.renderer() == null && displayLabels() != null;
+	}
+
+	/**
 	 * The given column displaying its values through the given display.
 	 *
 	 * <p>
-	 * A data cell and the header row of a group show their value as the given display does, where
-	 * it {@link #displays(Object) displays} the value, and as the given column does otherwise; a
-	 * collection of values value by value. A display that is a {@link LabelProvider} is what the
-	 * free-text search reads a cell by, so that the search finds what the cell shows.
+	 * A data cell and the header row of a group show their cell value as the given display does,
+	 * where it {@link #displays(Object) displays} the value, and as the given column does
+	 * otherwise; a collection of values value by value. A display that is a {@link LabelProvider}
+	 * is what the free-text search reads a cell by, so that the search finds what the cell shows.
 	 * </p>
+	 *
+	 * @param cellValue
+	 *        The cell value a value of the given column stands for, see
+	 *        {@link ColumnBinding#cellValue(Object)}.
+	 * @param exportLabels
+	 *        The labels an export writes a displayed value as, {@code null} for an export writing
+	 *        the value of the given column.
 	 */
-	private static <V> Column<Object, V> withDisplay(Column<Object, V> column, ReactControlProvider display) {
+	private static <V> Column<Object, V> withDisplay(Column<Object, V> column, Function<Object, Object> cellValue,
+			ReactControlProvider display, LabelProvider exportLabels) {
 		return new DelegatingColumn<>(column) {
 			@Override
 			public CellContent renderCell(Object row) {
-				V cellValue = super.value(row);
-				if (displays(cellValue)) {
-					return displayed(display, cellValue);
+				Object value = cellValue.apply(super.value(row));
+				if (displays(value)) {
+					return displayed(display, value);
 				}
 				return super.renderCell(row);
 			}
@@ -530,18 +590,32 @@ public record ColumnSetup(
 			@Override
 			public CellRenderer<V> renderer() {
 				CellRenderer<V> inner = super.renderer();
-				return groupValue -> displays(groupValue) ? displayed(display, groupValue) : inner.render(groupValue);
+				return groupValue -> {
+					Object value = cellValue.apply(groupValue);
+					return displays(value) ? displayed(display, value) : inner.render(groupValue);
+				};
 			}
 
 			@Override
 			public String searchText(Object row) {
 				if (display instanceof LabelProvider labels) {
-					V cellValue = super.value(row);
-					if (displays(cellValue)) {
-						return labelText(labels, cellValue);
+					Object value = cellValue.apply(super.value(row));
+					if (displays(value)) {
+						return labelText(labels, value);
 					}
 				}
 				return super.searchText(row);
+			}
+
+			@Override
+			public Object exportValue(Object row) {
+				if (exportLabels != null) {
+					Object value = cellValue.apply(super.value(row));
+					if (displays(value)) {
+						return labelText(exportLabels, value);
+					}
+				}
+				return super.exportValue(row);
 			}
 		};
 	}
@@ -554,24 +628,29 @@ public record ColumnSetup(
 	 * row - the value of a group in the header row of the group - the one computed from no row and
 	 * that value. A cell the user may not read has no tooltip.
 	 * </p>
+	 *
+	 * @param cellValue
+	 *        The cell value a value of the given column stands for, see
+	 *        {@link ColumnBinding#cellValue(Object)}.
 	 */
-	private static <V> Column<Object, V> withTooltip(Column<Object, V> column,
+	private static <V> Column<Object, V> withTooltip(Column<Object, V> column, Function<Object, Object> cellValue,
 			BiFunction<Object, Object, String> tooltip) {
 		return new DelegatingColumn<>(column) {
 			@Override
 			public CellContent renderCell(Object row) {
-				V cellValue = super.value(row);
+				Object value = cellValue.apply(super.value(row));
 				CellContent content = super.renderCell(row);
-				if (cellValue == ColumnProviderService.UNREADABLE) {
+				if (value == ColumnProviderService.UNREADABLE) {
 					return content;
 				}
-				return CellContent.withTooltip(content, tooltip.apply(row, cellValue));
+				return CellContent.withTooltip(content, tooltip.apply(row, value));
 			}
 
 			@Override
 			public CellRenderer<V> renderer() {
 				CellRenderer<V> inner = super.renderer();
-				return groupValue -> CellContent.withTooltip(inner.render(groupValue), tooltip.apply(null, groupValue));
+				return groupValue -> CellContent.withTooltip(inner.render(groupValue),
+					tooltip.apply(null, cellValue.apply(groupValue)));
 			}
 		};
 	}
@@ -583,18 +662,22 @@ public record ColumnSetup(
 	 * A data cell gets the class computed from its row and its value, in addition to the class the
 	 * given column puts on it. A cell the user may not read gets no class of its own.
 	 * </p>
+	 *
+	 * @param cellValue
+	 *        The cell value a value of the given column stands for, see
+	 *        {@link ColumnBinding#cellValue(Object)}.
 	 */
-	private static <V> Column<Object, V> withCellClass(Column<Object, V> column,
+	private static <V> Column<Object, V> withCellClass(Column<Object, V> column, Function<Object, Object> cellValue,
 			BiFunction<Object, Object, String> cellClass) {
 		return new DelegatingColumn<>(column) {
 			@Override
 			public String cssClass(Object row) {
 				String inner = super.cssClass(row);
-				V cellValue = super.value(row);
-				if (cellValue == ColumnProviderService.UNREADABLE) {
+				Object value = cellValue.apply(super.value(row));
+				if (value == ColumnProviderService.UNREADABLE) {
 					return inner;
 				}
-				String own = cellClass.apply(row, cellValue);
+				String own = cellClass.apply(row, value);
 				if (StringServices.isEmpty(own)) {
 					return inner;
 				}
@@ -610,17 +693,21 @@ public record ColumnSetup(
 	 * A data cell gets the role computed from its row and its value, the role the given column
 	 * gives it where it computes none. A cell the user may not read gets no role of its own.
 	 * </p>
+	 *
+	 * @param cellValue
+	 *        The cell value a value of the given column stands for, see
+	 *        {@link ColumnBinding#cellValue(Object)}.
 	 */
-	private static <V> Column<Object, V> withCellRole(Column<Object, V> column,
+	private static <V> Column<Object, V> withCellRole(Column<Object, V> column, Function<Object, Object> cellValue,
 			BiFunction<Object, Object, ValueColor> cellRole) {
 		return new DelegatingColumn<>(column) {
 			@Override
 			public ValueColor color(Object row) {
-				V cellValue = super.value(row);
-				if (cellValue == ColumnProviderService.UNREADABLE) {
+				Object value = cellValue.apply(super.value(row));
+				if (value == ColumnProviderService.UNREADABLE) {
 					return super.color(row);
 				}
-				ValueColor own = cellRole.apply(row, cellValue);
+				ValueColor own = cellRole.apply(row, value);
 				return own != null ? own : super.color(row);
 			}
 		};
@@ -630,9 +717,17 @@ public record ColumnSetup(
 	 * The renderer writing a value of this column into a cell of an Excel export, {@code null} for
 	 * the default.
 	 *
+	 * <p>
+	 * A column exporting the labels its {@link #display()} shows its values with writes them as
+	 * texts, by the default renderer: see the {@link #display()} for when it does.
+	 * </p>
+	 *
 	 * @see ColumnExport#rendererFor(ColumnType)
 	 */
 	public ExcelCellRenderer exportRenderer() {
+		if (exportsLabel()) {
+			return null;
+		}
 		return export.rendererFor(type);
 	}
 

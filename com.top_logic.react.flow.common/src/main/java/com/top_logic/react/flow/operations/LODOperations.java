@@ -22,6 +22,11 @@ import com.top_logic.react.flow.svg.SvgWriter;
  * ({@link LODVariant#getMinZoom()}, {@link LODVariant#getMinWidth()},
  * {@link LODVariant#getMinHeight()}). If no variant fits, the last one is used as a fallback.
  * </p>
+ *
+ * <p>
+ * In the measuring mode {@link RenderContext#isWidestVariants()}, no variant is chosen: the
+ * intrinsic size is the maximum width and the maximum height over all variants.
+ * </p>
  */
 public interface LODOperations extends BoxOperations {
 
@@ -32,6 +37,11 @@ public interface LODOperations extends BoxOperations {
 	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
 			double availableWidth, double availableHeight) {
 		LOD self = self();
+		if (context.isWidestVariants()) {
+			computeWidestSize(context, offsetX, offsetY, availableWidth, availableHeight);
+			return;
+		}
+
 		List<LODVariant> variants = self.getVariants();
 		double zoom = context.getZoom();
 
@@ -82,11 +92,44 @@ public interface LODOperations extends BoxOperations {
 
 		double w = chosenContent == null ? 0 : chosenContent.getWidth();
 		double h = chosenContent == null ? 0 : chosenContent.getHeight();
-		self.setWidth(w);
+		setIntrinsicSize(w, h);
+	}
+
+	/**
+	 * Measures all variants and reports the maximum width and height over them.
+	 *
+	 * @see RenderContext#isWidestVariants()
+	 */
+	private void computeWidestSize(RenderContext context, double offsetX, double offsetY,
+			double availableWidth, double availableHeight) {
+		LOD self = self();
+		double w = 0;
+		double h = 0;
+		for (LODVariant v : self.getVariants()) {
+			Box content = v.getContent();
+			if (content == null) {
+				continue;
+			}
+			content.computeIntrinsicSize(context, offsetX, offsetY, availableWidth, availableHeight);
+			w = Math.max(w, content.getWidth());
+			h = Math.max(h, content.getHeight());
+		}
+		self.setX(offsetX);
+		self.setY(offsetY);
+		setIntrinsicSize(w, h);
+	}
+
+	/**
+	 * Sets the size of this box from the given content size, respecting
+	 * {@link LOD#getFixedHeight()}.
+	 */
+	private void setIntrinsicSize(double contentWidth, double contentHeight) {
+		LOD self = self();
+		self.setWidth(contentWidth);
 		if (self.getFixedHeight() > 0) {
 			self.setHeight(self.getFixedHeight());
 		} else {
-			self.setHeight(h);
+			self.setHeight(contentHeight);
 		}
 	}
 

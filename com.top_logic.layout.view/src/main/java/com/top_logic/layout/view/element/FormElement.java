@@ -60,8 +60,6 @@ import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActionChain;
 import com.top_logic.layout.view.command.ViewActions;
 import com.top_logic.layout.view.command.ViewCommand;
-import com.top_logic.layout.view.command.CombinedViewExecutabilityRule;
-import com.top_logic.layout.view.command.FormValid;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.form.FormCommandModel;
@@ -543,10 +541,6 @@ public class FormElement extends ContainerElement {
 
 			String trigger = null;
 			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig, trigger, formContext);
-			if (cmd.appliesFormState()) {
-				// The form rejects the command while errors are on screen, so do not offer it.
-				rule = CombinedViewExecutabilityRule.combine(List.of(rule, new FormValid(formControl)));
-			}
 
 			// Created in the form context, the command runs there wherever the panel shows it.
 			models.add(ViewCommandModel.create(formContext, cmd, cmdConfig, trigger, rule));

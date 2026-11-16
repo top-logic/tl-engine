@@ -29,6 +29,13 @@ replacePart('Spinner', MuiSpinnerAdapter);
 replacePart('FieldValue', MuiFieldValueAdapter);
 replacePart('Divider', MuiDividerAdapter);
 
+/** A resize observer that never reports: jsdom lays nothing out. */
+class NoResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -313,6 +320,7 @@ describe('PickerPopover', () => {
     };
     register('PickersInnerPicker', Inner);
     const inner = { controlId: 'ip', module: 'PickersInnerPicker', state: {} } as ReturnType<typeof childControl>;
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
     const sent = mountAdapter(TLWindow, { title: 'Fenster', child: inner, closable: true });
     await settle();
     await userEvent.click(screen.getByRole('button', { name: 'Waehlen' }));

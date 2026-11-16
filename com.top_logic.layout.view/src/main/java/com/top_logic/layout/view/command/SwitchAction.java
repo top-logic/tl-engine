@@ -340,14 +340,9 @@ public class SwitchAction extends ArgumentsViewAction {
 		return _default;
 	}
 
-	@Override
-	public boolean appliesFormState() {
-		return ViewActions.appliesFormState(_default)
-			|| _cases.stream().anyMatch(candidate -> ViewActions.appliesFormState(candidate.actions()));
-	}
-
 	/**
-	 * Destructive as soon as one of the cases or the default is, see {@link #appliesFormState()}.
+	 * Destructive as soon as one of the cases or the default is, since the button's tone cannot
+	 * depend on the decision.
 	 */
 	@Override
 	public ButtonTone getTone() {

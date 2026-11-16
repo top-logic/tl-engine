@@ -208,6 +208,15 @@ public class OAuthServerServlet extends HttpServlet {
 		}
 		resp.setHeader(CACHE_CONTROL_HEADER, NO_STORE);
 
+		DiscoveryContext context = DiscoveryContext.fromRequest(req);
+		if (!OAuthAuthorizationServer.isSecure(context)) {
+			Logger.info("Refused an authorization request reaching the application over plain HTTP at '"
+				+ context.applicationUrl() + "'.", OAuthServerServlet.class);
+			writeRefusal(resp, Resources.getLogInstance()
+				.getString(I18NConstants.ERROR_AUTHORIZATION_WITHOUT_TLS__URL.fill(context.applicationUrl())));
+			return;
+		}
+
 		AuthorizationRequest request;
 		try {
 			request = AuthorizationRequest.parse(parameters(req));
@@ -217,7 +226,6 @@ public class OAuthServerServlet extends HttpServlet {
 			return;
 		}
 
-		DiscoveryContext context = DiscoveryContext.fromRequest(req);
 		String pendingId;
 		try {
 			pendingId = ThreadContext.inSystemContext(OAuthServerServlet.class,

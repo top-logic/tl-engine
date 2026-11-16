@@ -24,6 +24,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NO_REDIRECT_URI;
 
 	/**
+	 * @en The application is reached at "{0}" over plain HTTP. An OAuth client sends the
+	 *     authorization code and its tokens only over HTTPS (or to localhost), so a sign-in here
+	 *     could never complete. Reach the application over HTTPS.
+	 * @de Die Anwendung wird unter "{0}" über unverschlüsseltes HTTP erreicht. Ein OAuth-Client
+	 *     sendet den Autorisierungscode und seine Tokens nur über HTTPS (oder an localhost), daher
+	 *     könnte eine Anmeldung hier nie abgeschlossen werden. Rufen Sie die Anwendung über HTTPS auf.
+	 */
+	public static ResKey1 ERROR_AUTHORIZATION_WITHOUT_TLS__URL;
+
+	/**
 	 * @en The redirect URI "{0}" is not an absolute URI with a host.
 	 * @de Die Redirect-URI "{0}" ist keine absolute URI mit Host.
 	 */

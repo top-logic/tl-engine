@@ -473,6 +473,26 @@ public class OAuthAuthorizationServer extends ConfiguredManagedClass<OAuthAuthor
 	}
 
 	/**
+	 * Whether a client reaches the application in the given context over a connection that may
+	 * carry tokens: <code>https</code>, or the loopback interface.
+	 *
+	 * <p>
+	 * OAuth 2.1 requires TLS for every endpoint of the authorization server except on the loopback
+	 * interface; a conforming client refuses to send the authorization code to a token endpoint
+	 * reached over plain <code>http</code>.
+	 * </p>
+	 */
+	public static boolean isSecure(DiscoveryContext context) {
+		URI url;
+		try {
+			url = new URI(context.applicationUrl());
+		} catch (URISyntaxException ex) {
+			return false;
+		}
+		return RedirectUris.HTTPS.equalsIgnoreCase(url.getScheme()) || RedirectUris.isLoopback(url);
+	}
+
+	/**
 	 * The authorization server metadata (RFC 8414) as the client reaching the given context sees
 	 * it.
 	 */

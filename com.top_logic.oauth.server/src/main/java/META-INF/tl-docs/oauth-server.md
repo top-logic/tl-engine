@@ -60,6 +60,10 @@ native client listens on an ephemeral port.
 The authorization endpoint checks the request with `validateAuthorizationRequest` (see
 [below](#api-for-an-authorization-endpoint)):
 
+- A request reaching the application over plain `http` on a host other than the loopback interface
+  is shown to the person as a page with status `400`: OAuth 2.1 requires TLS, and a conforming
+  client (e.g. Claude Code) refuses to send the code to such a token endpoint, so the sign-in could
+  never complete.
 - An unknown client or a redirect URI the client did not register is shown to the person as a page
   with status `400`; the browser is never sent to an address nobody vouched for.
 - Any other refusal - wrong response type, missing PKCE challenge or method other than `S256`, no

@@ -29,6 +29,7 @@ import com.nimbusds.oauth2.sdk.pkce.CodeChallengeMethod;
 import com.nimbusds.oauth2.sdk.pkce.CodeVerifier;
 import com.nimbusds.oauth2.sdk.util.URLUtils;
 
+import com.top_logic.basic.AliasManager;
 import com.top_logic.oauth.server.I18NConstants;
 import com.top_logic.oauth.server.OAuthAuthorizationServer;
 import com.top_logic.oauth.server.OAuthException;
@@ -41,6 +42,16 @@ import com.top_logic.oauth.server.ValidatedAuthorization;
  * decision about a pending authorization on the consent page.
  */
 public class TestOAuthAuthorizationEndpoint extends AbstractOAuthServerTest {
+
+	/**
+	 * The variable the configured {@link AliasManager#HOST} alias is read from.
+	 */
+	private static final String HOST_VARIABLE = "tl_host";
+
+	/**
+	 * The address of the application on a network host, reached over plain HTTP.
+	 */
+	private static final String NETWORK_HOST = "http://app.example.com";
 
 	/** The consent page configured for the test. */
 	private static final String CONSENT_PAGE = "/view/oauth-consent.view.xml";
@@ -87,7 +98,35 @@ public class TestOAuthAuthorizationEndpoint extends AbstractOAuthServerTest {
 		assertEquals(state, authorization.state());
 	}
 
-	/**
+		/**
+	 * An authorization request reaching the application over plain HTTP on a host other than the
+	 * loopback interface is refused with a page, since no conforming client could redeem the code.
+	 */
+	public void testPlainHttpOnNetworkHostShowsPage() throws Exception {
+		String clientId = register(REDIRECT_URI);
+		String path = authorizePath(request(clientId, REDIRECT_URI, new CodeVerifier(), resource(RESOURCE_PATH),
+			new State(), CodeChallengeMethod.S256));
+
+		String previous = System.getProperty(HOST_VARIABLE);
+		System.setProperty(HOST_VARIABLE, NETWORK_HOST);
+		AliasManager.getInstance().reload();
+		try {
+			WebResponse response = get(path);
+
+			assertEquals(400, response.getResponseCode());
+			assertNull(response.getHeaderField(LOCATION_HEADER));
+			assertTrue(response.getText(), response.getText().contains(NETWORK_HOST));
+		} finally {
+			if (previous == null) {
+				System.clearProperty(HOST_VARIABLE);
+			} else {
+				System.setProperty(HOST_VARIABLE, previous);
+			}
+			AliasManager.getInstance().reload();
+		}
+	}
+
+/**
 	 * An unknown client is told the person, never the redirect URI.
 	 */
 	public void testUnknownClientShowsPage() throws Exception {

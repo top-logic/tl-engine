@@ -28,6 +28,7 @@ import com.top_logic.basic.config.NamePath;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.AllowedValues;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.constraint.check.ConstraintChecker;
 import com.top_logic.basic.config.constraint.check.ConstraintFailure;
@@ -59,9 +60,9 @@ import com.top_logic.util.Resources;
  * <p>
  * The parameters are declared in the form of the {@code <properties>} of a layout template (a
  * {@link ConfigurationDescriptorConfig}): per parameter its name, type, label and description (the
- * tooltip of the label), whether it is mandatory, its default, its allowed values
- * ({@link Options} or an enumeration type) and its constraints. A parameter holding a model object
- * uses the format {@link AgentObjectFormat} and the type
+ * tooltip of the label), whether it is mandatory, its default, its allowed values (a fixed list
+ * {@link AllowedValues}, computed {@link Options}, or an enumeration type) and its constraints. A
+ * parameter holding a model object uses the format {@link AgentObjectFormat} and the type
  * restriction {@link com.top_logic.model.format.ObjectType}. A list parameter has the type
  * {@link List}, its element type and a format of separated elements ({@link CommaSeparatedListValueProvider}), e.g.
  * {@link com.top_logic.basic.config.CommaSeparatedStrings} or, for model objects,
@@ -141,7 +142,7 @@ public final class DeclaredParameters {
 	 *
 	 * <p>
 	 * Self-contained: every part is inline, there are no references to other schemas. A parameter
-	 * with {@link Options} lists its allowed values.
+	 * with {@link AllowedValues} or {@link Options} lists its allowed values.
 	 * </p>
 	 */
 	public Schema schema() {

@@ -30,6 +30,7 @@ import com.top_logic.gui.ThemeFactory;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
+import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -141,6 +142,23 @@ public class TestInPlaceLocking extends AbstractModelAccessTest {
 	}
 
 	/**
+	 * (a) A value chosen from the options of a cell is not written either while a form holds the
+	 * lock of the object.
+	 */
+	public void testLockedObjectIsNotWrittenByChoice() throws Exception {
+		lockingForm();
+		Object stored = _project.tValueByName(CATEGORY_REF);
+
+		FieldModel cell = cell(table("", qualified(CATEGORY), CATEGORY_REF));
+		assertTrue("Not a choice: " + cell, cell instanceof SelectFieldModel);
+		cell.setValue(List.of(_otherCategory));
+
+		assertSame("The locked object is not written.", stored, _project.tValueByName(CATEGORY_REF));
+		assertEquals(List.of(TestFormLocking.lockConflictInfo(I18NConstants.CELL_VALUE_NOT_SAVED, _project)),
+			_messages.shown());
+	}
+
+	/**
 	 * (b) Nobody holds the lock of the object: the entered value is written, and no lock is held
 	 * afterwards.
 	 */
@@ -203,10 +221,25 @@ public class TestInPlaceLocking extends AbstractModelAccessTest {
 	 *        The configuration of the lock handler of the table, empty for the default.
 	 */
 	private TableViewControl<?> table(String lockHandler) throws ConfigurationException {
-		String attribute = "`" + qualified(PROJECT) + "#" + NAME + "`";
+		return table(lockHandler, "tl.core:String", NAME);
+	}
+
+	/**
+	 * A table edited in place, showing the project with a column editing the given attribute.
+	 *
+	 * @param lockHandler
+	 *        The configuration of the lock handler of the table, empty for the default.
+	 * @param type
+	 *        The type of the values of the column.
+	 * @param attributeName
+	 *        The attribute of the project the column reads and writes.
+	 */
+	private TableViewControl<?> table(String lockHandler, String type, String attributeName)
+			throws ConfigurationException {
+		String attribute = "`" + qualified(PROJECT) + "#" + attributeName + "`";
 		String xml = "<table inputs='" + PROJECT_CHANNEL + "' rows='[$" + PROJECT_CHANNEL + "]' edit-in-place='true'>"
 			+ lockHandler
-			+ "<columns><computed-column name='" + COLUMN + "' type='tl.core:String'>"
+			+ "<columns><computed-column name='" + COLUMN + "' type='" + type + "'>"
 			+ "<value>$row.get(" + attribute + ")</value>"
 			+ "<update>$row.set(" + attribute + ", $value)</update>"
 			+ "</computed-column></columns></table>";

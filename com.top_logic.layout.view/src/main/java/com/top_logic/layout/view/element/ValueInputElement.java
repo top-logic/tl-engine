@@ -59,7 +59,6 @@ import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
-import com.top_logic.layout.view.channel.DeletedObjects;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.GenericViewCommand;
@@ -82,7 +81,6 @@ import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.annotate.TLValueNormalizer;
 import com.top_logic.model.annotate.util.ValueNormalizer;
 import com.top_logic.model.config.AttributeConfigBase;
-import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
@@ -930,14 +928,7 @@ public class ValueInputElement implements UIElement {
 	 *        passed on as nothing.
 	 */
 	private List<?> options(TLType type, Object[] inputValues) {
-		if (_options == null) {
-			return AttributeOptions.optionsFor(type);
-		}
-		Object[] args = new Object[inputValues.length];
-		for (int n = 0, cnt = args.length; n < cnt; n++) {
-			args[n] = DeletedObjects.withoutDeleted(inputValues[n]);
-		}
-		return SearchExpression.asList(_options.execute(args));
+		return AttributeOptions.optionsFor(type, _options, inputValues);
 	}
 
 }

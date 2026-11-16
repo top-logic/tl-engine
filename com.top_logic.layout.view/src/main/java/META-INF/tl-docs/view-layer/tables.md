@@ -20,9 +20,9 @@ order: 60
 The `<columns>` of a `<table>` (and of a `<composition-table>`) is a list of column declarations (`ColumnsConfig` / `ColumnDeclaration` in `com.top_logic.layout.view.table`), tag-dispatched and resolved in display order. A row is any object a TL-Script expression yields — a model object, a transient one, a dictionary — so a declaration says what a cell holds rather than which attribute it reads. Four kinds:
 
 - **`<column attribute="title"/>`** (`AttributeColumn`) — the attribute decides everything: display, sort, filter, search, width, header, and what an edited cell writes. The attribute is taken from the row's own type: in a table over rows of several types (listed in `types`), a row whose type does not hold the attribute has no cell in the column - it shows nothing at all, no empty input and no unchecked checkbox, in view and in edit mode - while a row holding the attribute shows its value, also an empty one (`ColumnSetup#cellExists()`, announced as the column's `Column#existence()`). An enumeration column sorts, and groups, in the enumeration's order — the declaration order of its classifiers; by label only for an enumeration annotated `<unordered-enum/>`. Its options filter offers the classifiers in declaration order.
-- **`<computed-column name="total" type="tl.core:Double">`** (`ComputedColumn`) with `<value>$row…</value>` — a value computed per row. The declared `type` (plus `multiple`) gives the column the same type-derived display, sort, filter and width an attribute column gets; a column declaring no type shows its values by their display label. `<update>$row.set(…, $value)</update>` makes the column editable and `<can-update>$row…</can-update>` decides per row whether the edit is offered; an edited column must declare its type, because the type picks the input control. `<aggregate>$members…</aggregate>` is what the column shows in a group header row.
+- **`<computed-column name="total" type="tl.core:Double">`** (`ComputedColumn`) with `<value>$row…</value>` — a value computed per row. The declared `type` (plus `multiple`) gives the column the same type-derived display, sort, filter and width an attribute column gets; a column declaring no type shows its values by their display label. `<update>$row.set(…, $value)</update>` makes the column editable and `<can-update>$row…</can-update>` decides per row whether the edit is offered; an edited column must declare its type, because the type picks the input control. A value of a class or an enumeration is chosen in a select (several values with `multiple="true"`): from the instances of the class respectively the classifiers of the enumeration, or from what `<options>$row…</options>` computes for the row when its cell goes into editing - in the order it computes them, without deleted objects (`ValueCellEditing#options`, `FunctionSelectFieldModel`; the computation is the one of `<value-input>`, `AttributeOptions.optionsFor(TLType, QueryExecutor, Object...)`). `<options>` at a column without `<update>`, or at one whose `type` is entered rather than chosen (e.g. `tl.core:String`), is a configuration error. `<aggregate>$members…</aggregate>` is what the column shows in a group header row.
 - **`<embedded-columns reference="assignee">`** (`EmbeddedColumns`) — the columns of an object the row points to, shown as columns of the row. `reference` is a reference name or a dotted path (`milestone.tickets`), and a step holding several objects makes every embedded column collect the values of all of them; alternatively `<object>$row…</object>` plus `name`, `type` and `<label>` computes the embedded object. Nested declarations are of any kind and resolve against the embedded type; an embedding declaring nothing shows that type's main properties. Names are prefixed with the path (`assignee.name`) and labels with the reference labels (`Assignee / Name`, `I18NConstants.EMBEDDED_COLUMN_LABEL__PREFIX_COLUMN`), so a column of the row and one of the embedded object stay apart in the header and in the column selection. Embedded columns are read-only — an embedded object is changed where that object itself is edited.
-- **`<dynamic-columns name="milestones" type="tl.core:Integer">`** (`DynamicColumns`) — one column per element of the set `<columns>…</columns>` computes, for a table of tasks with a column per milestone. `<value>$row… $column…</value>` fills a cell from the row and the object its column stands for; `<column-name>` and `<column-label>` name and label a column (default: the object's display label), `<column-type>` computes the type per column where `type` does not fit all of them, `width` is the column's display width in pixels - a number for all columns (`width="130"`) or an expression over `$column` giving each column its own (`` <width>$column.get(`my:Field#kind`) == `my:Kind#DATE` ? 130 : 260</width> ``; nothing or `0` keeps the width the type derives) - and `<update>` / `<can-update>` / `<aggregate>` see the column object as well. A column's name is the declaration name, a dot and the column object's name, so a user's arrangement of it survives; the filter is the one the type derives, or a `<filter>` the declaration states for all of its columns, as on a single column. The columns are those the expression yields when the table is built - which of them currently exist may follow a channel through `column-exists-if` (see [columns that exist under a condition](#columns-that-exist-under-a-condition)); a table whose set of column objects follows a channel is placed in a `<switch input="…" rebuild="true">` over that channel, which builds it anew for every value (see [conditional content](doc:view-layer/layout#content-shown-under-one-condition-visible-if)).
+- **`<dynamic-columns name="milestones" type="tl.core:Integer">`** (`DynamicColumns`) — one column per element of the set `<columns>…</columns>` computes, for a table of tasks with a column per milestone. `<value>$row… $column…</value>` fills a cell from the row and the object its column stands for; `<column-name>` and `<column-label>` name and label a column (default: the object's display label), `<column-type>` computes the type per column where `type` does not fit all of them, `width` is the column's display width in pixels - a number for all columns (`width="130"`) or an expression over `$column` giving each column its own (`` <width>$column.get(`my:Field#kind`) == `my:Kind#DATE` ? 130 : 260</width> ``; nothing or `0` keeps the width the type derives) - and `<update>` / `<can-update>` / `<options>` / `<aggregate>` see the column object as well - so the options of a cell can depend on its column. A column's name is the declaration name, a dot and the column object's name, so a user's arrangement of it survives; the filter is the one the type derives, or a `<filter>` the declaration states for all of its columns, as on a single column. The columns are those the expression yields when the table is built - which of them currently exist may follow a channel through `column-exists-if` (see [columns that exist under a condition](#columns-that-exist-under-a-condition)); a table whose set of column objects follows a channel is placed in a `<switch input="…" rebuild="true">` over that channel, which builds it anew for every value (see [conditional content](doc:view-layer/layout#content-shown-under-one-condition-visible-if)).
 
 Further rules that hold across the kinds:
 
@@ -30,7 +30,7 @@ Further rules that hold across the kinds:
 
   | Script | Variables (default names) | Renamed by |
   |---|---|---|
-  | `row-role`, `row-class`, `<value>`, `<can-update>`, `<object>` | `row` | `row-as` on the `<table>` / `<tree-table>` / `<composition-table>` |
+  | `row-role`, `row-class`, `<value>`, `<can-update>`, `<options>`, `<object>` | `row` | `row-as` on the `<table>` / `<tree-table>` / `<composition-table>` |
   | `<update>` | `row`, then the entered `value` | `value-as` on the column (`<computed-column>`, `<dynamic-columns>`) |
   | `<tooltip>` | `row`, then the cell `value` (in a group header row: no `row`, the `value` of the group); in `<dynamic-columns>` `row`, `column`, `value` | `row-as` on the table, `value-as` on the column |
   | `cell-role`, `cell-class` | `row`, then the cell `value`; in `<dynamic-columns>` `row`, `column`, `value` | `row-as` on the table, `value-as` on the column |
@@ -38,7 +38,7 @@ Further rules that hold across the kinds:
   | `<dynamic-columns>`: `<columns>` | — | |
   | `<column-name>`, `<column-label>`, `<column-type>`, `<column-visible>`, `width`, `column-exists-if` | `column` | `column-as` on the `<dynamic-columns>` |
   | `exists-if` | — (the inputs only) | |
-  | `<dynamic-columns>`: `<value>`, `<can-update>` / `<update>` | `row`, `column` / `row`, `column`, `value` | as above |
+  | `<dynamic-columns>`: `<value>`, `<can-update>`, `<options>` / `<update>` | `row`, `column` / `row`, `column`, `value` | as above |
   | `<aggregate>` | `members` (the rows of the group); in `<dynamic-columns>` also `column` | — |
   | `<comparator>` | `left`, `right` | — |
   | `<match>` of a `ScriptedFilter` | `params`, the cell `value`, `row` | `value-as` on its column, `row-as` on the table |
@@ -86,6 +86,20 @@ This is no choice of the user, unlike `visible="false"` / `column-visible`, whic
 ```
 
 The condition travels as `ColumnSetup#exists()` (a `ChannelCondition`); the table element evaluates the conditions of all columns before the first state is sent (`ColumnExistence`), and follows their channels until the control is disposed, handing the absent columns to `TableViewControl#setAbsentColumns`.
+
+## Column alignment
+
+Numeric model attributes align to the end of the cell automatically, so digits line up. Dates stay at the start, and so do attributes with multiple values. A column declaration overrides this with `align="start"` or `align="end"` (`align` of the column configuration):
+
+```xml
+<table>
+  <columns>
+    <column attribute="name"/>
+    <column attribute="amount" align="end"/>
+    <column attribute="zipCode" align="start"/>
+  </columns>
+</table>
+```
 
 ## Selecting rows and nodes
 

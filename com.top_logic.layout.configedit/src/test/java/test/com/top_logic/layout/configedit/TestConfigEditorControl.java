@@ -51,6 +51,7 @@ import com.top_logic.basic.func.Function2;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.configedit.ConfigCollection;
 import com.top_logic.layout.configedit.ConfigCollectionValue;
 import com.top_logic.layout.configedit.ConfigAnnotationControlProvider;
@@ -78,6 +79,7 @@ import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
 import com.top_logic.layout.provider.label.ClassLabelProvider;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
@@ -87,6 +89,7 @@ import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -2734,6 +2737,48 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
+	 * Every option of the type selector explains itself by the documentation of its implementation
+	 * class, as the options of any other selection do: the tooltip of the class's resource key.
+	 */
+	public void testTypeSelectorOptionsExplainTheirImplementation() {
+		PolymorphicTestConfig config = TypedConfiguration.newConfigItem(PolymorphicTestConfig.class);
+		config.setHandler(TypedConfiguration.newConfigItem(HandlerAConfig.class));
+
+		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
+		ReactDropdownSelectControl typeSelect = null;
+		for (ReactControl child : findPolymorphicControl(editor).displayedChildren()) {
+			if (PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(child.scriptingName())) {
+				for (ReactControl field : child.displayedChildren()) {
+					typeSelect = (ReactDropdownSelectControl) field;
+				}
+			}
+		}
+		assertNotNull("The type selector must be a dropdown select.", typeSelect);
+		// The client loads the options when the list is opened, and asks for their tooltips then.
+		typeSelect.executeClientCommand(ReactDropdownSelectControl.CMD_LOAD_OPTIONS, Collections.emptyMap());
+
+		String documentation =
+			Resources.getInstance().getString(ResKey.forClass(HandlerB.class).tooltip(), null);
+		assertNotNull("The test bundle must document the implementation class.", documentation);
+		TooltipContent tooltip = typeSelect.getTooltipContent(optionTooltipKey(typeSelect, HandlerB.class));
+		assertNotNull("An implementation class with documentation must explain its option.", tooltip);
+		assertEquals(documentation, tooltip.getHtml());
+
+		assertNull("An implementation class without documentation has no tooltip.",
+			typeSelect.getTooltipContent(optionTooltipKey(typeSelect, HandlerA.class)));
+	}
+
+	/**
+	 * The tooltip key the client declares for the option of the given implementation class in the
+	 * given type selector.
+	 */
+	private static String optionTooltipKey(ReactDropdownSelectControl typeSelect, Class<?> implementation) {
+		String id = typeSelect.objectIdentities().idOf(PolymorphicOptions.keyFor(implementation));
+		assertNotNull("The option must have been sent to the client.", id);
+		return ReactDropdownSelectControl.OPTION_TOOLTIP_PREFIX + id;
+	}
+
+	/**
 	 * A single option that is chosen and cannot be removed needs no type selector, but a property
 	 * without value does: the selector is the only way to create the value, also where the
 	 * property is mandatory.
@@ -2961,6 +3006,6 @@ public class TestConfigEditorControl extends TestCase {
 		return ModuleLicenceTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestConfigEditorControl.class,
 				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE,
-				ConfigControlService.Module.INSTANCE));
+				ResourcesModule.Module.INSTANCE, ConfigControlService.Module.INSTANCE));
 	}
 }

@@ -23,6 +23,7 @@ import test.com.top_logic.layout.react.control.CommandFailures;
 import test.com.top_logic.layout.view.model.CommittedModelChanges;
 import test.com.top_logic.layout.view.model.CommittedModelChanges.ScopedReactContext;
 
+import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
@@ -38,6 +39,7 @@ import com.top_logic.basic.format.TimeFormatDefinition;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -51,12 +53,15 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.ScriptingModelKey;
+import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.NumberDisplay;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactSliderControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.select.OptionOrder;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
@@ -277,13 +282,13 @@ public class TestValueInputElement extends TestCase {
 	private static final int KEY_LABEL_WITH_TOOLTIP = 25;
 
 	/** Position of the input of the test view showing its label as placeholder. */
-	private static final int LABEL_AS_PLACEHOLDER = 26;
+	private static final int LABEL_AS_PLACEHOLDER = 28;
 
 	/**
 	 * Position of the input of the test view whose label position is placeholder, with a
 	 * placeholder of its own.
 	 */
-	private static final int LABEL_POSITION_PLACEHOLDER_WITH_PLACEHOLDER = 27;
+	private static final int LABEL_POSITION_PLACEHOLDER_WITH_PLACEHOLDER = 29;
 
 	/** The label of the inputs at {@link #LABEL_AS_PLACEHOLDER} and {@link #LABEL_POSITION_PLACEHOLDER_WITH_PLACEHOLDER}. */
 	private static final String SEARCH_TERM = "Search term";
@@ -291,8 +296,17 @@ public class TestValueInputElement extends TestCase {
 	/** The tooltip of the inline label of the input at {@link #INLINE_LABEL_WITH_TOOLTIP}. */
 	private static final String INLINE_TOOLTIP = "Words every shown row contains.";
 
+	/**
+	 * Position of the input of the test view choosing several texts in an order the user arranges,
+	 * running its command on every choice.
+	 */
+	private static final int ORDERED_CHOICE = 26;
+
+	/** Position of the input of the test view choosing several texts without an order. */
+	private static final int UNORDERED_CHOICE = 27;
+
 	/** The number of inputs in the test view. */
-	private static final int INPUT_COUNT = 28;
+	private static final int INPUT_COUNT = 30;
 
 	/** Name of the module a test creates to see it offered by an input displaying the modules. */
 	private static final String CREATED_MODULE = "test.input.created";
@@ -308,6 +322,9 @@ public class TestValueInputElement extends TestCase {
 
 	/** The channel the checkboxes of the test view write to. */
 	private static final String FLAG = "flag";
+
+	/** The channel the inputs of the test view choosing several texts write to. */
+	private static final String PICKED = "picked";
 
 	/** The value a test enters in a text input. */
 	private static final String ENTERED = "DEMO-1";
@@ -331,6 +348,9 @@ public class TestValueInputElement extends TestCase {
 	/** The channel the checkboxes of the test view write to. */
 	private ViewChannel _flag;
 
+	/** The channel the inputs of the test view choosing several texts write to. */
+	private ViewChannel _picked;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -344,6 +364,8 @@ public class TestValueInputElement extends TestCase {
 		_viewContext.registerChannel(TERM, _term);
 		_flag = new DefaultViewChannel(FLAG);
 		_viewContext.registerChannel(FLAG, _flag);
+		_picked = new DefaultViewChannel(PICKED);
+		_viewContext.registerChannel(PICKED, _picked);
 		_viewContext.registerChannel(CHANGE, new DefaultViewChannel(CHANGE));
 		RecordingCommand.EXECUTED.clear();
 	}
@@ -364,6 +386,7 @@ public class TestValueInputElement extends TestCase {
 	@Override
 	protected void tearDown() throws Exception {
 		RecordingCommand.EXECUTED.clear();
+		_picked = null;
 		_flag = null;
 		_term = null;
 		_viewContext = null;
@@ -1043,6 +1066,92 @@ public class TestValueInputElement extends TestCase {
 	 */
 	public void testComputedOptionsAreSortedByLabelOnRequest() throws Exception {
 		assertEquals(List.of("Monday", "No day", "Tuesday"), offeredLabels(COMPUTED_OPTIONS_BY_LABEL));
+	}
+
+	/**
+	 * An input of several values stating {@link ValueInputElement.Config#getOrdered() ordered} lets
+	 * the user arrange the chosen values; one that does not shows them in the order of the options.
+	 */
+	public void testAnOrderedChoiceOffersArrangingItsValues() throws Exception {
+		assertTrue("Several values form a list in their order: " + config(parseInputs(), ORDERED_CHOICE),
+			config(parseInputs(), ORDERED_CHOICE).getOrdered());
+		assertFalse(config(parseInputs(), UNORDERED_CHOICE).getOrdered());
+
+		assertEquals("The chips of an ordered input are dragged.", Boolean.TRUE,
+			clientState(select(input(ORDERED_CHOICE))).get(DropdownSelectState.CUSTOM_ORDER__PROP));
+		assertEquals("Without an order, the chips stand in the order of the options.", Boolean.FALSE,
+			clientState(select(input(UNORDERED_CHOICE))).get(DropdownSelectState.CUSTOM_ORDER__PROP));
+	}
+
+	/**
+	 * Arranging the chosen values of an {@link ValueInputElement.Config#getOrdered() ordered} input
+	 * puts them on the channel as a list in the arranged order, and runs the command of the input
+	 * over it.
+	 */
+	public void testArrangedValuesReachTheChannelInTheirOrder() throws Exception {
+		ReactDropdownSelectControl control = select(input(ORDERED_CHOICE));
+		String a = offeredId(control, "A");
+		String b = offeredId(control, "B");
+		String c = offeredId(control, "C");
+
+		control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED,
+			Map.of(FieldValueArguments.VALUE, List.of(a, b, c)));
+		assertEquals(List.of("A", "B", "C"), _picked.get());
+
+		RecordingCommand.EXECUTED.clear();
+		control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED,
+			Map.of(FieldValueArguments.VALUE, List.of(c, a, b)));
+
+		assertEquals("The channel holds the values in the order the user arranged.",
+			List.of("C", "A", "B"), _picked.get());
+		assertEquals("Arranging the values is a choice of the user and runs the command over it.",
+			List.of(List.of("C", "A", "B")), RecordingCommand.EXECUTED);
+		assertEquals("The chips are shown in the arranged order.",
+			List.of("C", "A", "B"), chosenLabels(control));
+	}
+
+	/** An order of the values of an input holding a single value is a configuration error. */
+	public void testAnOrderOfASingleValueIsAnError() throws Exception {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestValueInputElement.class);
+		ConfigurationReader reader = new ConfigurationReader(context, Collections.singletonMap(
+			ValueInputElement.Config.TAG_NAME,
+			TypedConfiguration.getConfigurationDescriptor(ValueInputElement.Config.class)));
+		reader.setSource(CharacterContents.newContent(
+			"<" + ValueInputElement.Config.TAG_NAME + " " + ValueInputElement.Config.VALUE + "='" + PICKED + "' "
+				+ ValueInputElement.Config.ORDERED + "='true'/>",
+			"test-ordered-single.view.xml"));
+		ValueInputElement.Config config = (ValueInputElement.Config) reader.read();
+		context.checkErrors();
+
+		try {
+			context.getInstance(config);
+			context.checkErrors();
+			fail("An ordered single value must be reported.");
+		} catch (ConfigurationException | AbortExecutionException ex) {
+			// Expected: the element reports the error to its instantiation context.
+		}
+	}
+
+	/** The option id of the option with the given label, as the client is handed it. */
+	private static String offeredId(ReactDropdownSelectControl control, String label) {
+		control.executeCommand(ReactDropdownSelectControl.CMD_LOAD_OPTIONS, Map.of());
+		for (Object option : (List<?>) control.scriptingScalarState(ProjectionMode.AGENT)
+			.get(DropdownSelectState.OPTIONS__PROP)) {
+			Map<?, ?> descriptor = (Map<?, ?>) option;
+			if (label.equals(descriptor.get(DropdownSelectState.Option.LABEL__PROP))) {
+				return (String) descriptor.get(ScriptingModelKey.ID);
+			}
+		}
+		throw new AssertionError("No option labelled '" + label + "' is offered.");
+	}
+
+	/** The labels of the chosen values the given select control shows, in the order shown. */
+	private static List<String> chosenLabels(ReactDropdownSelectControl control) {
+		List<String> labels = new ArrayList<>();
+		for (Object value : (List<?>) clientState(control).get(DropdownSelectState.VALUE__PROP)) {
+			labels.add((String) ((Map<?, ?>) value).get(DropdownSelectState.Option.LABEL__PROP));
+		}
+		return labels;
 	}
 
 	/**

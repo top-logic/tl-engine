@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CollectionUtil;
@@ -25,6 +26,7 @@ import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.react.flow.callback.ClickHandler;
 import com.top_logic.react.flow.data.ClickTarget;
 import com.top_logic.react.flow.data.ContextMenu;
@@ -81,10 +83,12 @@ public class FlowDiagramControl extends ReactControl {
 		 * Called after the selection changed, with the user objects of the elements now selected.
 		 *
 		 * <p>
-		 * A listener refuses the change by throwing a
-		 * {@link com.top_logic.layout.view.channel.ChannelVetoException} - the unsaved changes of a
-		 * form the selection would replace block it. The refusal unwinds through whoever changed
-		 * the selection; the diagram keeps what the client displays.
+		 * A listener refuses the change by throwing a {@link ChannelVetoException} - the unsaved
+		 * changes of a form the selection would replace block it. The refusal unwinds through
+		 * whoever changed the selection. A selection the user made in the diagram is restored to the
+		 * one displayed before, both in the control and in the client, without telling the
+		 * listeners again, and the veto is rethrown; clicking the same element again asks again.
+		 * A listener notified before the refusing one keeps what it was told.
 		 * </p>
 		 *
 		 * @param userObjects
@@ -332,23 +336,46 @@ public class FlowDiagramControl extends ReactControl {
 		if (_diagram == null) {
 			return;
 		}
-		List<Widget> selected = new ArrayList<>();
-		WidgetTraversal.visitAll(_diagram, widget -> {
+		List<Widget> selected = mark(widget -> {
 			Object userObject = widget.getUserObject();
-			boolean select =
-				userObject != null && SelectionUtil.isSelectable(widget) && userObjects.contains(userObject);
-			if (select) {
-				selected.add(widget);
-			}
-			if (SelectionUtil.isSelected(widget) != select) {
-				// Only a widget whose marking actually changes is written, so that the patch
-				// carries the elements that change their appearance and no others.
-				SelectionUtil.setSelected(widget, select);
-			}
+			return userObject != null && SelectionUtil.isSelectable(widget) && userObjects.contains(userObject);
 		});
 		if (!selected.equals(_diagram.getSelection())) {
 			_diagram.setSelection(selected);
 		}
+	}
+
+	/**
+	 * Makes the given elements the selection of the diagram again, in the given order, and marks
+	 * exactly them as selected, without telling anybody about it.
+	 */
+	private void restoreSelection(List<Widget> selection) {
+		mark(selection::contains);
+		if (!selection.equals(_diagram.getSelection())) {
+			_diagram.setSelection(new ArrayList<>(selection));
+		}
+	}
+
+	/**
+	 * Marks the diagram elements the given criterion accepts as selected and every other one as
+	 * unselected.
+	 *
+	 * @return The marked elements, in the order of the diagram.
+	 */
+	private List<Widget> mark(Predicate<Widget> select) {
+		List<Widget> selected = new ArrayList<>();
+		WidgetTraversal.visitAll(_diagram, widget -> {
+			boolean selectWidget = select.test(widget);
+			if (selectWidget) {
+				selected.add(widget);
+			}
+			if (SelectionUtil.isSelected(widget) != selectWidget) {
+				// Only a widget whose marking actually changes is written, so that the patch
+				// carries the elements that change their appearance and no others.
+				SelectionUtil.setSelected(widget, selectWidget);
+			}
+		});
+		return selected;
 	}
 
 	/**
@@ -578,6 +605,12 @@ public class FlowDiagramControl extends ReactControl {
 
 	/**
 	 * Applies the changes the client made to the diagram, among them the selection it displays.
+	 *
+	 * <p>
+	 * A selection change the {@link SelectionListener}s refuse with a {@link ChannelVetoException}
+	 * is taken back: the diagram selects what it selected before the update, sends that to the
+	 * client, which still marks the refused selection, and rethrows the veto.
+	 * </p>
 	 */
 	void processUpdate(String patch) throws IOException {
 		if (_graphScope == null) {
@@ -588,6 +621,7 @@ public class FlowDiagramControl extends ReactControl {
 
 		// Whether the patch reports a plain click replacing the selection.
 		Diagram diagram = _diagram;
+		List<Widget> selectionBefore = new ArrayList<>(diagram.getSelection());
 		boolean[] replacing = { false };
 		Listener clickKind = (obj, property, value) -> {
 			if (obj == diagram && Diagram.INCREMENTAL_SELECTION__PROP.equals(property)) {
@@ -610,6 +644,10 @@ public class FlowDiagramControl extends ReactControl {
 
 		try {
 			notifySelectionChanged(replacing[0]);
+		} catch (ChannelVetoException ex) {
+			restoreSelection(selectionBefore);
+			pushDiagramChanges();
+			throw ex;
 		} finally {
 			refreshDiagramState();
 		}

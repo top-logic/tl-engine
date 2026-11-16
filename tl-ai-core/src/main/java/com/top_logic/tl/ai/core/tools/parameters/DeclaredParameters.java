@@ -160,7 +160,7 @@ public final class DeclaredParameters {
 				}
 				EnumSchema allowed = EnumSchema.create();
 				for (Object option : options) {
-					allowed.addEnumLiteral(specification(property, option));
+					allowed.addEnumLiteral(JSON.toString(specification(property, option)));
 				}
 				if (propertySchema instanceof ArraySchema list) {
 					// The options are the values allowed for each element.

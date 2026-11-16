@@ -13,6 +13,7 @@ import java.util.Map;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.json.JsonValueBinding;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.json.schema.model.EnumSchema;
 import com.top_logic.basic.json.schema.model.ObjectSchema;
 import com.top_logic.basic.json.schema.model.Schema;
@@ -72,7 +73,7 @@ public class I18NStructuredTextJsonBinding implements JsonValueBinding<I18NStruc
 
 		EnumSchema localeEnum = EnumSchema.create();
 		for (Locale locale : ResourcesModule.getInstance().getSupportedLocales()) {
-			localeEnum.addEnumLiteral(locale.toLanguageTag());
+			localeEnum.addEnumLiteral(JSON.toString(locale.toLanguageTag()));
 		}
 		schema.setPropertyNames(localeEnum);
 

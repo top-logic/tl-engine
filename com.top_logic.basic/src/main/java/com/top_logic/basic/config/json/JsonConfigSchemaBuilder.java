@@ -35,6 +35,7 @@ import com.top_logic.basic.config.constraint.impl.Negative;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.config.constraint.impl.NonPositive;
 import com.top_logic.basic.config.constraint.impl.Positive;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.json.schema.model.AllOfSchema;
 import com.top_logic.basic.json.schema.model.AnyOfSchema;
 import com.top_logic.basic.json.schema.model.ArraySchema;
@@ -469,7 +470,7 @@ public class JsonConfigSchemaBuilder {
 		AllOfSchema allOf = AllOfSchema.create();
 
 		ObjectSchema implRef = ObjectSchema.create();
-		implRef.putProperty(TYPE_PROPERTY, ConstSchema.create().setConstValue(instanceType.getName()));
+		implRef.putProperty(TYPE_PROPERTY, ConstSchema.create().setConstValue(JSON.toString(instanceType.getName())));
 		implRef.addRequired(TYPE_PROPERTY);
 		allOf.addAllOf(implRef);
 
@@ -862,7 +863,7 @@ public class JsonConfigSchemaBuilder {
 		String typeId = resolveTypeId(descriptor, descriptor.getConfigurationInterface());
 
 		ObjectSchema result = ObjectSchema.create();
-		result.putProperty(TYPE_PROPERTY, ConstSchema.create().setConstValue(typeId));
+		result.putProperty(TYPE_PROPERTY, ConstSchema.create().setConstValue(JSON.toString(typeId)));
 		result.addRequired(TYPE_PROPERTY);
 
 		return result;
@@ -1291,7 +1292,7 @@ public class JsonConfigSchemaBuilder {
 		// Boolean type
 		if (type == boolean.class || type == Boolean.class) {
 			if (asMapKey) {
-				return EnumSchema.create().addEnumLiteral("true").addEnumLiteral("false");
+				return EnumSchema.create().addEnumLiteral(JSON.toString("true")).addEnumLiteral(JSON.toString("false"));
 			}
 			return BooleanSchema.create();
 		}
@@ -1365,7 +1366,7 @@ public class JsonConfigSchemaBuilder {
 		if (!hasDocumentation) {
 			EnumSchema schema = EnumSchema.create();
 			for (String literal : literals) {
-				schema.addEnumLiteral(literal);
+				schema.addEnumLiteral(JSON.toString(literal));
 			}
 			return schema;
 		}
@@ -1373,7 +1374,7 @@ public class JsonConfigSchemaBuilder {
 		// Build oneOf schema with documentation
 		OneOfSchema oneOf = OneOfSchema.create();
 		for (int i = 0; i < constants.length; i++) {
-			ConstSchema constSchema = ConstSchema.create().setConstValue(literals[i]);
+			ConstSchema constSchema = ConstSchema.create().setConstValue(JSON.toString(literals[i]));
 			if (titles[i] != null) {
 				constSchema.setTitle(titles[i]);
 			}

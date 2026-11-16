@@ -12,7 +12,7 @@ import com.top_logic.base.discovery.AgentDiscoveryServlet;
 import com.top_logic.base.discovery.DiscoveryContext;
 import com.top_logic.base.discovery.LlmsTxtSection;
 import com.top_logic.basic.StringServices;
-import com.top_logic.tl.ai.core.access.EndpointCredential;
+import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 import com.top_logic.util.Resources;
 
 /**
@@ -70,10 +70,22 @@ public final class McpConnectionGuide {
 		out.append("\n\n");
 		appendCredentials(out, credentials, context, resources);
 
+		boolean signIn = offersSignIn(credentials);
+		if (signIn) {
+			out.append('\n');
+			out.append(resources.getString(I18NConstants.LLMS_CONNECT_CLAUDE_SIGN_IN)).append("\n\n");
+			out.append("```bash\n");
+			out.append(claudeMcpAdd(config, context));
+			out.append('\n');
+			out.append("```\n");
+		}
+
 		EndpointCredential header = firstHeaderCredential(credentials);
 		if (header != null) {
 			out.append('\n');
-			out.append(resources.getString(I18NConstants.LLMS_CONNECT_CLAUDE)).append("\n\n");
+			out.append(resources.getString(
+				signIn ? I18NConstants.LLMS_CONNECT_CLAUDE_HEADER_ALTERNATIVE : I18NConstants.LLMS_CONNECT_CLAUDE))
+				.append("\n\n");
 			out.append("```bash\n");
 			out.append(claudeMcpAdd(config, context, header.header(), resources.getString(header.headerValue()),
 				" \\\n    "));
@@ -94,8 +106,24 @@ public final class McpConnectionGuide {
 
 	/**
 	 * The command of {@link #CLAUDE_MCP_ADD} that adds the MCP endpoint of this application to
+	 * Claude Code without a credential, for a server that offers a sign-in
+	 * ({@link EndpointCredential#signIn()}): Claude Code signs the person in through the browser
+	 * when it first connects.
+	 *
+	 * @param config
+	 *        The configuration of the server.
+	 * @param context
+	 *        The URLs of the application.
+	 */
+	public static String claudeMcpAdd(MCPServerService.Config<?> config, DiscoveryContext context) {
+		return CLAUDE_MCP_ADD + ' ' + McpServerCard.localName(McpServerCard.name(config, context)) + ' '
+			+ context.url(MCPServerService.MCP_ENDPOINT);
+	}
+
+	/**
+	 * The command of {@link #CLAUDE_MCP_ADD} that adds the MCP endpoint of this application to
 	 * Claude Code, as a server named after the {@link McpServerCard#name(MCPServerService.Config,
-	 * DiscoveryContext) server card}.
+	 * DiscoveryContext) server card}, with the given credential header.
 	 *
 	 * @param config
 	 *        The configuration of the server.
@@ -111,8 +139,7 @@ public final class McpConnectionGuide {
 	 */
 	public static String claudeMcpAdd(MCPServerService.Config<?> config, DiscoveryContext context, String header,
 			String headerValue, String separator) {
-		return CLAUDE_MCP_ADD + ' ' + McpServerCard.localName(McpServerCard.name(config, context)) + ' '
-			+ context.url(MCPServerService.MCP_ENDPOINT) + separator
+		return claudeMcpAdd(config, context) + separator
 			+ HEADER_OPTION + " \"" + header + ": " + headerValue + '"';
 	}
 
@@ -147,6 +174,15 @@ public final class McpConnectionGuide {
 		for (EndpointCredential credential : credentials) {
 			out.append("- ").append(credential.describeWithOrigin(context, resources)).append('\n');
 		}
+	}
+
+	private static boolean offersSignIn(List<EndpointCredential> credentials) {
+		for (EndpointCredential credential : credentials) {
+			if (credential.signIn()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static EndpointCredential firstHeaderCredential(List<EndpointCredential> credentials) {

@@ -447,6 +447,44 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey AUTHORIZATION_REFUSED_TITLE;
 
+	/**
+	 * {@link com.top_logic.service.openapi.server.authentication.conf.EndpointCredential#credential()
+	 * Credential} of an endpoint accepting the access tokens of this server.
+	 *
+	 * @en An OAuth access token, which the client obtains by itself after the person logged in to
+	 *     the application in the browser and allowed the client
+	 * @de Ein OAuth-Zugriffstoken, das der Client selbst bezieht, nachdem sich die Person im Browser
+	 *     an der Anwendung angemeldet und den Client erlaubt hat
+	 */
+	public static ResKey CREDENTIAL_SIGN_IN;
+
+	/**
+	 * {@link com.top_logic.service.openapi.server.authentication.conf.EndpointCredential#obtain()
+	 * How} a client obtains an access token of this server.
+	 *
+	 * @en The client finds the authorization server in the protected resource metadata {0}.
+	 *     Configure only the address of the endpoint in the client, no header.
+	 * @de Der Client findet den Autorisierungsserver in den Metadaten der geschützten Ressource {0}.
+	 *     Konfigurieren Sie im Client nur die Adresse des Endpunkts, keinen Header.
+	 */
+	public static ResKey1 CREDENTIAL_SIGN_IN_OBTAIN__URL;
+
+	/**
+	 * Something that is not an OAuth grant was to be revoked.
+	 *
+	 * @en This is not an authorization of an OAuth client.
+	 * @de Dies ist keine Autorisierung eines OAuth-Clients.
+	 */
+	public static ResKey ERROR_NOT_A_GRANT;
+
+	/**
+	 * Somebody tried to revoke the grant of another account without being an administrator.
+	 *
+	 * @en You can only revoke the authorizations of your own account.
+	 * @de Sie können nur die Autorisierungen Ihres eigenen Kontos widerrufen.
+	 */
+	public static ResKey ERROR_GRANT_NOT_OWNED;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

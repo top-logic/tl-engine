@@ -27,12 +27,12 @@ import com.top_logic.base.discovery.AgentDiscoveryServlet;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.view.ViewServlet;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
-import com.top_logic.layout.view.ViewServlet;
+import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 import com.top_logic.tl.ai.core.access.AccessTokenAuthentication;
 import com.top_logic.tl.ai.core.access.EndpointAuthentication;
-import com.top_logic.tl.ai.core.access.EndpointCredential;
 import com.top_logic.util.Resources;
 
 /**
@@ -157,6 +157,25 @@ public class TestMcpAuthenticationFilter extends TestCase {
 	}
 
 	/**
+	 * With several authentications configured, a refusal carries the challenge of each of them,
+	 * so that a client finds the protected resource metadata of an OAuth scheme beside the
+	 * challenge of HTTP basic.
+	 */
+	public void testARefusalCarriesTheChallengesOfAllSchemes() throws IOException, ServletException {
+		Recorded recorded = new Recorded();
+
+		String bearer = "Bearer realm=\"test\", resource_metadata=\"" + HttpDoubles.APPLICATION_URL
+			+ "/.well-known/oauth-protected-resource/mcp\"";
+		guard(refusing(bearer).or(refusing()), recorded);
+
+		assertFalse(recorded.chainInvoked);
+		assertEquals(HttpServletResponse.SC_UNAUTHORIZED, recorded.status);
+		assertEquals(List.of(bearer, "Basic realm=\"test\""), recorded.responseHeaders("WWW-Authenticate"));
+		String body = recorded.body.toString();
+		assertTrue(body, body.contains("No credential."));
+	}
+
+	/**
 	 * A refusal that is no {@code 401} - nothing configured - gets no connection guidance: no
 	 * credential would change its answer.
 	 */
@@ -229,13 +248,20 @@ public class TestMcpAuthenticationFilter extends TestCase {
 	 * An authenticator that always fails, with a challenge of its own.
 	 */
 	private static Authenticator refusing() {
+		return refusing("Basic realm=\"test\"");
+	}
+
+	/**
+	 * An authenticator that always fails, with the given challenge.
+	 */
+	private static Authenticator refusing(String challenge) {
 		return new Authenticator() {
 			@Override
 			public Person authenticate(HttpServletRequest req, HttpServletResponse resp)
 					throws AuthenticationFailure {
 				AuthenticationFailure failure = new AuthenticationFailure(ResKey.text("No credential."));
 				failure.setResponseEnhancer((response, ex, path) -> {
-					response.setHeader("WWW-Authenticate", "Basic realm=\"test\"");
+					response.setHeader("WWW-Authenticate", challenge);
 					response.sendError(HttpServletResponse.SC_UNAUTHORIZED, ex.getMessage());
 				});
 				throw failure;

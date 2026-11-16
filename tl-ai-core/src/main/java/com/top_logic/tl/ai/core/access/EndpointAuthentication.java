@@ -23,6 +23,7 @@ import com.top_logic.service.openapi.common.authentication.oauth.CredentialSecre
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.apikey.ServerAPIKeySecret;
+import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.impl.NeverAuthenticated;
 import com.top_logic.service.openapi.server.authentication.oauth.ServerCredentialSecret;

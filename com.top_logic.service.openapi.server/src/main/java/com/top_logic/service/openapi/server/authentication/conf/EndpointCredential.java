@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.core.access;
+package com.top_logic.service.openapi.server.authentication.conf;
 
 import java.util.Locale;
 import java.util.function.Function;
@@ -12,13 +12,12 @@ import com.top_logic.base.discovery.DiscoveryContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyPosition;
 import com.top_logic.service.openapi.common.document.SecuritySchemeObject;
-import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.util.Resources;
 
 /**
- * How a client presents the credential of one authentication an agent endpoint accepts, told to
- * the client: in a self-description of the endpoint (an MCP server card, <code>llms.txt</code>)
- * and in the answer to a request without a valid credential.
+ * How a client presents the credential of one authentication an endpoint accepts, told to the
+ * client: in a self-description of the endpoint (an MCP server card, <code>llms.txt</code>) and in
+ * the answer to a request without a valid credential.
  *
  * <p>
  * An authentication describes its credential itself by implementing {@link Provider}. Every other
@@ -27,21 +26,30 @@ import com.top_logic.util.Resources;
  * {@link #fromSecurityScheme(SecuritySchemeObject)}.
  * </p>
  *
+ * <p>
+ * A credential is either configured in the client - a secret the client sends in a
+ * {@link #header() header} - or obtained by the client itself through a {@link #signIn() sign-in},
+ * e.g. an OAuth access token the client requests after the person logged in through the browser.
+ * </p>
+ *
  * @param credential
  *        What the client sends, in plain words, e.g. "a personal access token".
  * @param header
- *        The name of the request header that carries the credential, or <code>null</code> if the
- *        credential is not sent in a header.
+ *        The name of the request header in which the client is configured to send the credential,
+ *        or <code>null</code> if the credential is not configured in the client.
  * @param headerValue
  *        The value of {@link #header()}, with a placeholder for the secret part, e.g.
  *        "Bearer &lt;personal access token&gt;"; <code>null</code> if {@link #header()} is
  *        <code>null</code>.
  * @param obtain
- *        Where a person gets such a credential, for the application at the URLs of the given
- *        context; <code>null</code> if there is nothing to say about it.
+ *        Where a person gets such a credential, or how the client obtains it, for the application
+ *        at the URLs of the given context; <code>null</code> if there is nothing to say about it.
+ * @param signIn
+ *        Whether the client obtains the credential by itself, so that nothing has to be configured
+ *        in the client but the address of the endpoint.
  */
 public record EndpointCredential(ResKey credential, String header, ResKey headerValue,
-		Function<DiscoveryContext, ResKey> obtain) {
+		Function<DiscoveryContext, ResKey> obtain, boolean signIn) {
 
 	/**
 	 * The HTTP request header carrying the credential of an HTTP authentication scheme.
@@ -63,6 +71,28 @@ public record EndpointCredential(ResKey credential, String header, ResKey header
 		 */
 		EndpointCredential endpointCredential();
 
+	}
+
+	/**
+	 * Creates a description of a credential that is configured in the client.
+	 *
+	 * @see #EndpointCredential(ResKey, String, ResKey, Function, boolean)
+	 */
+	public EndpointCredential(ResKey credential, String header, ResKey headerValue,
+			Function<DiscoveryContext, ResKey> obtain) {
+		this(credential, header, headerValue, obtain, false);
+	}
+
+	/**
+	 * The description of a credential the client obtains by itself, see {@link #signIn()}.
+	 *
+	 * @param credential
+	 *        See {@link #credential()}.
+	 * @param obtain
+	 *        How the client obtains the credential, see {@link #obtain()}.
+	 */
+	public static EndpointCredential bySignIn(ResKey credential, Function<DiscoveryContext, ResKey> obtain) {
+		return new EndpointCredential(credential, null, null, obtain, true);
 	}
 
 	/**
@@ -124,7 +154,8 @@ public record EndpointCredential(ResKey credential, String header, ResKey header
 	}
 
 	/**
-	 * Whether the credential is sent in a request header, see {@link #header()}.
+	 * Whether the client is configured to send the credential in a request header, see
+	 * {@link #header()}.
 	 */
 	public boolean isHeader() {
 		return header != null;

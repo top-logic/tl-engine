@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 import com.top_logic.ai.mcp.server.MCPServerService;
 import com.top_logic.base.discovery.DiscoveryContext;
 import com.top_logic.basic.StringServices;
-import com.top_logic.tl.ai.core.access.EndpointCredential;
+import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 import com.top_logic.util.Resources;
 
 /**
@@ -207,7 +207,9 @@ public final class McpServerCard {
 	 *
 	 * <p>
 	 * Credentials sent in the same header share one entry. A header is required only if it carries
-	 * every credential the server accepts; otherwise a client chooses one of the credentials.
+	 * every credential the server accepts; otherwise a client chooses one of the credentials. A
+	 * credential the client obtains by itself through a sign-in ({@link EndpointCredential#signIn()})
+	 * names no header to configure, so a server offering one requires no header.
 	 * </p>
 	 */
 	private static List<RemoteHeader> headers(List<EndpointCredential> credentials, Resources resources) {

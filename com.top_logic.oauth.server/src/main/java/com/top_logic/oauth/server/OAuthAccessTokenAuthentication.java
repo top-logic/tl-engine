@@ -22,6 +22,7 @@ import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 import com.top_logic.service.openapi.common.document.SecuritySchemeObject;
 import com.top_logic.service.openapi.common.util.OpenAPIConfigs;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 
 /**
@@ -33,11 +34,17 @@ import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentica
  * {@link Config#getResource() resource} it was issued for, so that a token a client obtained for
  * one endpoint cannot be replayed at another. See the developer article <code>oauth-server</code>.
  * </p>
+ *
+ * <p>
+ * A client needs no configured credential: a refusal names the protected resource metadata of the
+ * endpoint ({@link ProtectedResources}), from which the client learns the authorization server and
+ * signs the person in.
+ * </p>
  */
 @Label("OAuth access token of this application")
 public class OAuthAccessTokenAuthentication
 		extends AbstractConfiguredInstance<OAuthAccessTokenAuthentication.Config<?>>
-		implements ServerAuthentication<OAuthAccessTokenAuthentication.Config<?>> {
+		implements ServerAuthentication<OAuthAccessTokenAuthentication.Config<?>>, EndpointCredential.Provider {
 
 	/**
 	 * Configuration options for {@link OAuthAccessTokenAuthentication}.
@@ -89,9 +96,26 @@ public class OAuthAccessTokenAuthentication
 		return securityScheme;
 	}
 
+	/**
+	 * A credential the client obtains by itself: it finds the authorization server in the
+	 * protected resource metadata of the endpoint and signs the person in through the browser.
+	 */
+	@Override
+	public EndpointCredential endpointCredential() {
+		String metadataPath = ProtectedResources.metadataPath(getConfig().getResource());
+		return EndpointCredential.bySignIn(I18NConstants.CREDENTIAL_SIGN_IN,
+			context -> I18NConstants.CREDENTIAL_SIGN_IN_OBTAIN__URL.fill(context.url(metadataPath)));
+	}
+
+	/**
+	 * Creates the authenticator and announces the {@link Config#getResource() resource} in
+	 * {@link ProtectedResources}, so that its metadata is served from now on.
+	 */
 	@Override
 	public Authenticator createAuthenticator(List<? extends SecretConfiguration> availableSecrets) {
-		return new OAuthAccessTokenAuthenticator(getConfig().getResource());
+		String resource = getConfig().getResource();
+		ProtectedResources.register(resource);
+		return new OAuthAccessTokenAuthenticator(resource);
 	}
 
 }

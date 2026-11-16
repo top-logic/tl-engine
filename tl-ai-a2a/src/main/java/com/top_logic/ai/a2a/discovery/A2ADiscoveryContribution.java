@@ -17,7 +17,7 @@ import com.top_logic.base.discovery.DiscoveryContext;
 import com.top_logic.base.discovery.LlmsTxtSection;
 import com.top_logic.base.discovery.catalog.CatalogEntry;
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.tl.ai.core.access.EndpointCredential;
+import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 import com.top_logic.util.Resources;
 
 /**

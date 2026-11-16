@@ -22,10 +22,10 @@ import com.top_logic.base.discovery.catalog.CatalogEntry;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.view.ViewServlet;
+import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.tl.ai.core.access.AccessTokenAuthentication;
 import com.top_logic.tl.ai.core.access.EndpointAuthentication;
-import com.top_logic.tl.ai.core.access.EndpointCredential;
 import com.top_logic.util.Resources;
 
 /**

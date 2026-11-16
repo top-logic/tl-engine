@@ -47,7 +47,7 @@ import com.top_logic.util.TLContextManager;
  * the registry follows ({@link #handleSessionIdChange(HttpSession, String)}). Each window is represented by one {@link WindowEntry} that owns its
  * per-window state; the registry only maps window IDs to entries, resolves singleton windows, and
  * decides when a window has stayed away long enough to be torn down: one whose page was unloaded
- * ({@link #sweepUnloadedWindows()}) and one whose client went away
+ * ({@link #sweepUnloadedWindows(String)}) and one whose client went away
  * ({@link #tearDownIfAbandoned(String, long)}).
  * </p>
  */
@@ -823,7 +823,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * therefore keeps its queue, its control tree and its model scope for
 	 * {@link #UNLOAD_GRACE_MILLIS}: a reload arriving within that period finds all of it and can
 	 * render the tree it already has, while a window that really went away is collected by
-	 * {@link #sweepUnloadedWindows()}.
+	 * {@link #sweepUnloadedWindows(String)}.
 	 * </p>
 	 *
 	 * <p>
@@ -861,7 +861,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 		// Nothing is displayed until the page comes back, so the tree stops observing the model. It
 		// re-attaches by being rendered again; a page that does not come back is collected by
-		// sweepUnloadedWindows().
+		// sweepUnloadedWindows(String).
 		ReactControl rootControl = entry.getRootControl();
 		if (rootControl != null) {
 			inWindowContext(windowId, rootControl::detach);
@@ -870,7 +870,7 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 
 	/**
 	 * Tears down the windows whose page was unloaded and did not come back within
-	 * {@link #UNLOAD_GRACE_MILLIS}.
+	 * {@link #UNLOAD_GRACE_MILLIS}, except the window whose page the current request displays.
 	 *
 	 * <p>
 	 * Called from request handling rather than from a timer, so that the teardown runs in a thread
@@ -880,9 +880,36 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * no further requests is released when the session ends
 	 * ({@link #valueUnbound(HttpSessionBindingEvent)}).
 	 * </p>
+	 *
+	 * <p>
+	 * The requested window has come back, however long its page was away - a tab that left the
+	 * application for another site and returns by a link or the back button. It is marked as
+	 * displayed before anything is torn down, so that neither this sweep nor one of another request
+	 * takes away the subsession the request is about to display the window in.
+	 * </p>
+	 *
+	 * @param displayedWindow
+	 *        The window whose page the current request displays; {@code null} for none.
 	 */
-	public void sweepUnloadedWindows() {
-		long now = System.currentTimeMillis();
+	public void sweepUnloadedWindows(String displayedWindow) {
+		sweepUnloadedWindows(displayedWindow, System.currentTimeMillis());
+	}
+
+	/**
+	 * {@link #sweepUnloadedWindows(String)} at the given time.
+	 *
+	 * @param displayedWindow
+	 *        The window whose page the current request displays; {@code null} for none.
+	 * @param now
+	 *        The current time in milliseconds.
+	 */
+	public void sweepUnloadedWindows(String displayedWindow, long now) {
+		if (displayedWindow != null) {
+			WindowEntry displayed = _windows.get(displayedWindow);
+			if (displayed != null) {
+				displayed.markDisplayed();
+			}
+		}
 		for (WindowEntry entry : _windows.values()) {
 			long unloadedAt = entry.getUnloadedAt();
 			if (unloadedAt == 0 || now - unloadedAt < UNLOAD_GRACE_MILLIS) {
@@ -908,8 +935,8 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * scope and subsession keep every later commit in memory. Its {@link SSEUpdateQueue} reports it
 	 * from its heartbeat, see {@link SSEUpdateQueue#checkAbandoned(long)}, and the window is torn
 	 * down by {@link #windowClosed(String)}, as one {@link Interaction}, like a window whose page was
-	 * unloaded and did not come back ({@link #sweepUnloadedWindows()}). A client that comes back later
-	 * finds its window unknown and reloads the page.
+	 * unloaded and did not come back ({@link #sweepUnloadedWindows(String)}). A client that comes
+	 * back later finds its window unknown and reloads the page.
 	 * </p>
 	 *
 	 * <p>

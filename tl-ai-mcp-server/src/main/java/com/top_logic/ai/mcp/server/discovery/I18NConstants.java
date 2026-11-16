@@ -83,6 +83,25 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey LLMS_CONNECT_CLAUDE;
 
 	/**
+	 * Introduces the command that connects Claude Code to a server offering a sign-in.
+	 *
+	 * @en Connect Claude Code without a credential; it signs you in through the browser when it
+	 *     first connects:
+	 * @de Claude Code ohne Zugangsdaten verbinden; es meldet Sie beim ersten Verbinden im Browser
+	 *     an:
+	 */
+	public static ResKey LLMS_CONNECT_CLAUDE_SIGN_IN;
+
+	/**
+	 * Introduces the command that connects Claude Code with a credential header, after the command
+	 * without credential ({@link #LLMS_CONNECT_CLAUDE_SIGN_IN the command without credential}).
+	 *
+	 * @en Alternatively, connect Claude Code with a credential in a header:
+	 * @de Alternativ Claude Code mit Zugangsdaten in einem Header verbinden:
+	 */
+	public static ResKey LLMS_CONNECT_CLAUDE_HEADER_ALTERNATIVE;
+
+	/**
 	 * Note on where to keep the credential of an MCP client.
 	 *
 	 * @en Prefer --scope user, so that the credential stays in your own configuration. Never commit a

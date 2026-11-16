@@ -1,5 +1,5 @@
 ---
-description: Read before letting MCP, A2A or REST clients sign in to an application through OAuth instead of a personal access token, or when changing the authorization server of tl-oauth-server - the OAuthAuthorizationServer service and its settings (token lifetimes, consent page, dynamic client registration, client ID metadata documents and their fetcher), the endpoints /.well-known/oauth-authorization-server, /oauth/authorize, /oauth/token and /oauth/register, the consent page oauth-consent.view.xml of tl-oauth-server-view with the TL-Script functions oauthRefusal, oauthRequest, oauthApprove and oauthDeny, the authentication scheme oauth-access-token-authentication with its resource, and the stored model tl.oauth.server (OAuthPendingAuthorization, OAuthGrant, OAuthToken, OAuthAuthorizationCode, OAuthClient).
+description: Read before letting MCP, A2A or REST clients sign in to an application through OAuth instead of a personal access token, or when changing the authorization server of tl-oauth-server - the OAuthAuthorizationServer service and its settings (token lifetimes, consent page, dynamic client registration, client ID metadata documents and their fetcher), the endpoints /.well-known/oauth-authorization-server, /oauth/authorize, /oauth/token and /oauth/register, the consent page oauth-consent.view.xml of tl-oauth-server-view with the TL-Script functions oauthRefusal, oauthRequest, oauthApprove and oauthDeny, the authentication scheme oauth-access-token-authentication with its resource, the protected resource metadata /.well-known/oauth-protected-resource (ProtectedResources, resource_metadata in the challenge), how an MCP client such as Claude Code discovers the server, the grant lists of the settings dialog and the administration with oauthRevoke, and the stored model tl.oauth.server (OAuthPendingAuthorization, OAuthGrant, OAuthToken, OAuthAuthorizationCode, OAuthClient).
 ---
 
 # OAuth authorization server
@@ -25,6 +25,7 @@ absolute application URL including the context path, built like every URL of the
 |------|--------|---------|
 | `/.well-known/oauth-authorization-server` | GET | Authorization server metadata (RFC 8414). |
 | `/.well-known/openid-configuration` | GET | The same document, for clients that append this path to the issuer. |
+| `/.well-known/oauth-protected-resource<path>` | GET | Protected resource metadata (RFC 9728) of an endpoint accepting the tokens, see [below](#protected-resource-metadata); `404` for a path no endpoint accepts tokens for. |
 | `/oauth/token` | POST | Token endpoint: grants `authorization_code` and `refresh_token`. |
 | `/oauth/register` | POST | Dynamic client registration (RFC 7591); `404` when switched off. |
 | `/oauth/authorize` | GET | Authorization endpoint: checks the request and sends the browser to the [consent page](#consent-page). |
@@ -135,9 +136,142 @@ endpoints, REST services) accepts the access tokens with the scheme
 resolved against the application URL as the request reaches it. A token is accepted only if it was
 issued for this resource, is not expired and its grant is not revoked; the request then acts as the
 person who authorized the client. Every refusal is a `401` with a
-`WWW-Authenticate: Bearer` challenge (`error="invalid_token"` when a token was presented). A bearer
-value that does not have the format of an access token of this server is refused without a
-database lookup, so the scheme can be configured beside the personal access token authentication.
+`WWW-Authenticate: Bearer` challenge naming the [protected resource metadata](#protected-resource-metadata)
+of the endpoint, plus `error="invalid_token"` when a token was presented:
+
+```
+WWW-Authenticate: Bearer realm="tl-ai-demo", resource_metadata="https://host/app/.well-known/oauth-protected-resource/mcp"
+```
+
+A bearer value that does not have the format of an access token of this server is refused without
+a database lookup, so the scheme can be configured beside the personal access token
+authentication. When several schemes are configured on an endpoint, a refusal carries the
+challenge of each of them, in the order of the configuration.
+
+The scheme describes its credential to the self-description of the endpoint (`EndpointCredential`
+of `tl-service-openapi-server`): a *sign-in*, a token the client obtains by itself, with the URL
+of the protected resource metadata. The MCP server card therefore requires no header, and the
+`llms.txt` section of the MCP endpoint shows a `claude mcp add` command without credential.
+
+## Protected resource metadata
+
+Creating the authenticator of an `oauth-access-token-authentication` registers its resource in
+`com.top_logic.oauth.server.ProtectedResources`, whichever service builds it and whenever that
+service starts. For each registered resource, the servlet answers the metadata (RFC 9728) at
+`/.well-known/oauth-protected-resource` followed by the path of the resource relative to the
+application, inside the context of the application:
+
+```
+GET /app/.well-known/oauth-protected-resource/mcp
+
+{"resource":"https://host/app/mcp","authorization_servers":["https://host/app"],"bearer_methods_supported":["header"]}
+```
+
+`resource` is the absolute resource URI, `authorization_servers` the issuer. For a resource
+configured as absolute URI, the path of the metadata is the path of that URI. A path no endpoint
+accepts tokens for answers `404`.
+
+RFC 9728 derives the location of the metadata by inserting the well-known path between host and
+path of the resource (`https://host/.well-known/oauth-protected-resource/app/mcp`), which for an
+application with a context path lies outside the application. A client therefore learns the
+location from the `resource_metadata` of the challenge; a client that ignores the challenge finds
+the metadata only for an application in the root context.
+
+## Discovery by an MCP client
+
+An MCP client configured with the endpoint URL alone (`claude mcp add --transport http <name>
+https://host/app/mcp`) connects like this, shown with the requests of the MCP TypeScript SDK that
+Claude Code uses:
+
+1. `POST /app/mcp` without token - `401` with the challenge above.
+2. `GET` the `resource_metadata` URL - the protected resource metadata. The client checks that its
+   `resource` matches the endpoint URL.
+3. The authorization server metadata of the issuer `https://host/app`. Following RFC 8414 the
+   client tries `https://host/.well-known/oauth-authorization-server/app` first and then
+   `https://host/.well-known/openid-configuration/app` - both outside the application, answered
+   by whatever serves the root of the host (a `404` there lets the client go on) - and then
+   `https://host/app/.well-known/openid-configuration`, which the application serves. The client
+   requires the `issuer` of the document to equal the issuer of step 2 exactly. An application in
+   the root context is found at the first URL. The development server of `tl-ide-jetty` sends the
+   first URL to `/app/.well-known/oauth-authorization-server` (`307`); in production the server
+   in front of the application does the same, see [behind a reverse proxy](#behind-a-reverse-proxy).
+4. `POST /app/oauth/register` - dynamic client registration (or a client ID metadata document).
+5. The browser opens `/app/oauth/authorize`; the person logs in on the consent page and allows the
+   client.
+6. `POST /app/oauth/token` - code with PKCE verifier and `resource=https://host/app/mcp`.
+7. `POST /app/mcp` with `Authorization: Bearer tloat_...`; refreshed with the refresh token when
+   it expires.
+
+## Behind a reverse proxy
+
+A client derives the well-known locations of an application at `https://host/app` by inserting
+the well-known path before the context path (RFC 8414 and RFC 9728):
+`https://host/.well-known/oauth-authorization-server/app`,
+`https://host/.well-known/oauth-protected-resource/app/mcp`. These requests reach whatever serves
+the root of the host, not the application. The server in front of the application forwards them
+to the application, which serves the same documents below its context path:
+
+| Requested at the host root | Served by the application |
+|----------------------------|---------------------------|
+| `/.well-known/<type>/app` | `/app/.well-known/<type>` |
+| `/.well-known/<type>/app/<rest>` | `/app/.well-known/<type>/<rest>` |
+
+The same rule covers every well-known type (`oauth-authorization-server`,
+`openid-configuration`, `oauth-protected-resource`), so no list of names is needed. The other
+rule: **an unknown path at the host root, `/.well-known/...` in particular, must not be redirected
+to the application.** A client follows the redirect, receives the login page with status `200`
+and fails to read it as metadata; with `404` it tries its next candidate URL.
+
+Apache httpd (`mod_rewrite`, `mod_proxy`, `mod_proxy_http`), application at `/app` on
+`localhost:8080`:
+
+```apache
+RewriteEngine On
+# RFC 8414 / RFC 9728: /.well-known/<type>/app[/rest] -> /app/.well-known/<type>[/rest]
+RewriteRule "^/\.well-known/([^/]+)/app(/.*)?$" "http://localhost:8080/app/.well-known/$1$2" [P,L]
+
+ProxyPreserveHost On
+ProxyPass        /app http://localhost:8080/app
+ProxyPassReverse /app http://localhost:8080/app
+```
+
+nginx:
+
+```nginx
+# RFC 8414 / RFC 9728: /.well-known/<type>/app[/rest] -> /app/.well-known/<type>[/rest]
+location ~ ^/\.well-known/([^/]+)/app(/.*)?$ {
+    proxy_pass http://127.0.0.1:8080/app/.well-known/$1$2$is_args$args;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+
+location /app/ {
+    proxy_pass http://127.0.0.1:8080/app/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+Both forward rather than redirect, so the client receives the document at the URL it asked for.
+The documents name the issuer and the resource as the application sees its own URL, so the host
+the client uses must reach the application unchanged (`ProxyPreserveHost`, `Host`), or the
+application names its public URL itself with the alias `%HOST%`; otherwise the client's check
+that the `issuer` equals the issuer it asked for fails.
+
+## Authorizations in the user interface
+
+`tl-oauth-server-view` lists the grants:
+
+- *Settings → Authorized clients* (`oauth/grants.view.xml`, a same-path overlay of
+  `settings-tabs.view.xml`): the clients the logged-in person allowed, with client, endpoint,
+  created and last used, and the command *Revoke*.
+- *Administration → Access control → OAuth authorizations* (`oauth/admin-grants.view.xml`, an
+  overlay of `admin/admin.view.xml`): every grant of every account.
+
+Both revoke through the TL-Script function `oauthRevoke($grant)`, which allows the owner of the
+grant and administrators. A person reads the own grants through the technical role
+`OAuthGrantOwner`, derived per grant from its `owner` by a role rule
+(`tl-oauth-server.grants.config.xml`); the other types of the model are marked `internal`.
 
 ## Settings
 
@@ -202,7 +336,8 @@ The model `tl.oauth.server` holds:
   use.
 - `OAuthGrant` - the permission a person gave a client for one resource: client, resource, scope,
   created, last used, hash of the code it was created from. Deleting it
-  (`OAuthAuthorizationServer.revoke`) revokes all its tokens; deleting the person deletes it.
+  (`OAuthAuthorizationServer.revoke`, TL-Script `oauthRevoke`) revokes all its tokens; deleting
+  the person deletes it.
 - `OAuthToken` - an access or refresh token of a grant: hash, expiry, whether it is an exchanged
   refresh token, and the hash of the refresh token it replaced.
 - `OAuthPendingAuthorization` - an accepted authorization request waiting for the decision on the

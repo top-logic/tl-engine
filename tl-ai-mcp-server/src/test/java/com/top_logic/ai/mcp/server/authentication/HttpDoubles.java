@@ -11,8 +11,10 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import jakarta.servlet.FilterChain;
@@ -78,6 +80,12 @@ public final class HttpDoubles {
 		/** Response headers the code under test set, by name. */
 		public final Map<String, String> responseHeaders = new LinkedHashMap<>();
 
+		/**
+		 * Every value of every response header, by name, in the order they were added; a
+		 * <code>setHeader</code> replaces the values of its name.
+		 */
+		public final Map<String, List<String>> responseHeaderValues = new LinkedHashMap<>();
+
 		/** Whether the filter chain was invoked. */
 		public boolean chainInvoked;
 
@@ -93,6 +101,19 @@ public final class HttpDoubles {
 				}
 			}
 			return null;
+		}
+
+		/**
+		 * All values of the response header of the given name, ignoring case as HTTP does.
+		 */
+		public List<String> responseHeaders(String name) {
+			List<String> result = new ArrayList<>();
+			for (Map.Entry<String, List<String>> entry : responseHeaderValues.entrySet()) {
+				if (entry.getKey().equalsIgnoreCase(name)) {
+					result.addAll(entry.getValue());
+				}
+			}
+			return result;
 		}
 	}
 
@@ -151,8 +172,14 @@ public final class HttpDoubles {
 							recorded.status = ((Integer) args[0]).intValue();
 							return null;
 						case "setHeader":
+							recorded.responseHeaders.put((String) args[0], (String) args[1]);
+							recorded.responseHeaderValues.put((String) args[0],
+								new ArrayList<>(List.of((String) args[1])));
+							return null;
 						case "addHeader":
 							recorded.responseHeaders.put((String) args[0], (String) args[1]);
+							recorded.responseHeaderValues.computeIfAbsent((String) args[0], x -> new ArrayList<>())
+								.add((String) args[1]);
 							return null;
 						case "getHeader":
 							return recorded.responseHeader((String) args[0]);

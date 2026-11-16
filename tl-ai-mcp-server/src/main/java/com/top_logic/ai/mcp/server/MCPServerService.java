@@ -16,10 +16,10 @@ import jakarta.servlet.ServletException;
 
 
 import com.top_logic.ai.mcp.server.authentication.McpAuthenticationFilter;
-import com.top_logic.ai.mcp.server.discovery.McpServerCard;
-import com.top_logic.ai.mcp.server.discovery.ServerCard;
 import com.top_logic.ai.mcp.server.authentication.McpSessionPrincipals;
 import com.top_logic.ai.mcp.server.completions.ModuleNameCompletion;
+import com.top_logic.ai.mcp.server.discovery.McpServerCard;
+import com.top_logic.ai.mcp.server.discovery.ServerCard;
 import com.top_logic.ai.mcp.server.dynamic.ConfigurableResourceTemplate;
 import com.top_logic.ai.mcp.server.dynamic.DynamicResource;
 import com.top_logic.ai.mcp.server.resources.ConfigSchemaResource;
@@ -56,11 +56,11 @@ import com.top_logic.basic.module.services.ServletContextService;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentications;
-import com.top_logic.tl.ai.core.access.EndpointAuthentication;
 import com.top_logic.tl.ai.core.access.AccessTokenAuthentication;
-import com.top_logic.tl.ai.core.access.EndpointCredential;
+import com.top_logic.tl.ai.core.access.EndpointAuthentication;
 import com.top_logic.tl.ai.core.access.EndpointSecret;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.tool.api.AICategory;

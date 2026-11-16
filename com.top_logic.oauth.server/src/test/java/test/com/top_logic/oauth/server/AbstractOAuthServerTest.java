@@ -71,6 +71,7 @@ import com.top_logic.oauth.server.I18NConstants;
 import com.top_logic.oauth.server.OAuthAuthorizationServer;
 import com.top_logic.oauth.server.OAuthException;
 import com.top_logic.oauth.server.OAuthServerServlet;
+import com.top_logic.oauth.server.ProtectedResources;
 import com.top_logic.oauth.server.ValidatedAuthorization;
 import com.top_logic.oauth.server.model.OAuthAuthorizationCode;
 import com.top_logic.oauth.server.model.OAuthGrant;
@@ -148,6 +149,7 @@ public abstract class AbstractOAuthServerTest extends BasicTestCase {
 			OAuthAuthorizationServer.TOKEN_PATH, OAuthAuthorizationServer.REGISTRATION_PATH }) {
 			runner.registerServlet(path, OAuthServerServlet.class.getName());
 		}
+		runner.registerServlet(ProtectedResources.METADATA_PATH + "/*", OAuthServerServlet.class.getName());
 		_client = runner.newClient();
 		_client.setExceptionsThrownOnErrorStatus(false);
 		StaticFetcher.DOCUMENTS.clear();

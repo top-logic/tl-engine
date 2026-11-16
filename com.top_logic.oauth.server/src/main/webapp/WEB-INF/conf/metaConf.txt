@@ -1,1 +1,2 @@
 tl-oauth-server.conf.config.xml
+tl-oauth-server.grants.config.xml

@@ -33,7 +33,8 @@ import com.top_logic.service.openapi.server.authentication.Authenticator;
  * </p>
  *
  * <p>
- * Every refusal is a <code>401</code> with a <code>WWW-Authenticate: Bearer</code> challenge, see
+ * Every refusal is a <code>401</code> with a <code>WWW-Authenticate: Bearer</code> challenge naming
+ * the protected resource metadata of the endpoint (RFC 9728), see
  * {@link #challenge(HttpServletRequest, BearerTokenError)}; none of them, neither the answer nor
  * the log line, contains the presented token. A bearer value that does not have the format of an
  * access token of this server is refused without a database lookup, so that another bearer scheme
@@ -41,6 +42,12 @@ import com.top_logic.service.openapi.server.authentication.Authenticator;
  * </p>
  */
 public class OAuthAccessTokenAuthenticator implements Authenticator {
+
+	/**
+	 * The parameter of the <code>WWW-Authenticate</code> challenge naming the URL of the protected
+	 * resource metadata (RFC 9728, section 5.1).
+	 */
+	public static final String RESOURCE_METADATA_PARAMETER = "resource_metadata";
 
 	private final String _resource;
 
@@ -85,10 +92,7 @@ public class OAuthAccessTokenAuthenticator implements Authenticator {
 	 * The resource URI of the endpoint, as the given request reaches it.
 	 */
 	public String resource(HttpServletRequest req) {
-		if (_resource.startsWith("/")) {
-			return DiscoveryContext.fromRequest(req).url(_resource);
-		}
-		return _resource;
+		return ProtectedResources.resourceUri(_resource, DiscoveryContext.fromRequest(req));
 	}
 
 	/**
@@ -96,12 +100,15 @@ public class OAuthAccessTokenAuthenticator implements Authenticator {
 	 * {@code error}.
 	 *
 	 * <p>
-	 * A subclass may add parameters to the challenge, e.g. the location of the protected resource
-	 * metadata.
+	 * The challenge names the absolute URL of the protected resource metadata of the endpoint in
+	 * the parameter {@link #RESOURCE_METADATA_PARAMETER} (RFC 9728, section 5.1), from which a
+	 * client learns the authorization server to sign in with.
 	 * </p>
 	 */
 	protected String challenge(HttpServletRequest req, BearerTokenError error) {
-		return error.setRealm(Version.getApplicationName()).toWWWAuthenticateHeader();
+		String challenge = error.setRealm(Version.getApplicationName()).toWWWAuthenticateHeader();
+		String metadataUrl = DiscoveryContext.fromRequest(req).url(ProtectedResources.metadataPath(_resource));
+		return challenge + ", " + RESOURCE_METADATA_PARAMETER + "=\"" + metadataUrl + '"';
 	}
 
 	private AuthenticationFailure failure(HttpServletRequest req, ResKey message, BearerTokenError error) {

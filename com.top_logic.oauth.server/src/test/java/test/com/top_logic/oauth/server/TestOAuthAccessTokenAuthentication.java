@@ -16,18 +16,30 @@ import junit.framework.Test;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import com.meterware.httpunit.WebResponse;
 import com.nimbusds.oauth2.sdk.token.AccessTokenType;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import com.nimbusds.oauth2.sdk.token.BearerTokenError;
 import com.nimbusds.oauth2.sdk.token.Tokens;
+import com.nimbusds.oauth2.sdk.util.JSONObjectUtils;
 
 import com.top_logic.base.accesscontrol.AuthorizationUtil;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.oauth.server.I18NConstants;
 import com.top_logic.oauth.server.OAuthAccessTokenAuthentication;
+import com.top_logic.oauth.server.OAuthAccessTokenAuthenticator;
+import com.top_logic.oauth.server.OAuthFunctions;
+import com.top_logic.oauth.server.OAuthServerServlet;
+import com.top_logic.oauth.server.ProtectedResources;
+import com.top_logic.oauth.server.model.OAuthGrant;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
+import com.top_logic.util.Resources;
+import com.top_logic.util.TLContextManager;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Test of {@link OAuthAccessTokenAuthentication}: which access tokens are accepted at an
@@ -80,6 +92,24 @@ public class TestOAuthAccessTokenAuthentication extends AbstractOAuthServerTest 
 	}
 
 	/**
+	 * The owner revokes a grant through the TL-Script function; its tokens are refused afterwards.
+	 */
+	public void testRevokeFunction() throws Exception {
+		Tokens tokens = signIn(register(REDIRECT_URI));
+		OAuthGrant grant = grantOf(tokens.getAccessToken().getValue());
+
+		assertTrue(TLContextManager.inPersonContext(root(), () -> OAuthFunctions.revoke(List.of(grant))));
+
+		assertRefused(RESOURCE_PATH, tokens.getBearerAccessToken(), BearerTokenError.INVALID_TOKEN);
+		try {
+			TLContextManager.inPersonContext(root(), () -> OAuthFunctions.revoke("no grant"));
+			fail("Only a grant can be revoked.");
+		} catch (TopLogicException ex) {
+			assertEquals(I18NConstants.ERROR_NOT_A_GRANT, ex.getErrorKey());
+		}
+	}
+
+	/**
 	 * A token issued for another endpoint is refused.
 	 */
 	public void testTokenForOtherResource() throws Exception {
@@ -109,6 +139,72 @@ public class TestOAuthAccessTokenAuthentication extends AbstractOAuthServerTest 
 		assertFalse(challenge, challenge.contains(BearerTokenError.INVALID_TOKEN.getCode()));
 	}
 
+	/**
+	 * Every refusal names the protected resource metadata of the endpoint.
+	 */
+	public void testChallengeNamesResourceMetadata() throws Exception {
+		String expected = OAuthAccessTokenAuthenticator.RESOURCE_METADATA_PARAMETER + "=\""
+			+ context().url(ProtectedResources.METADATA_PATH + RESOURCE_PATH) + '"';
+
+		String missing = assertRefused(RESOURCE_PATH, null, BearerTokenError.MISSING_TOKEN)
+			.get(AuthorizationUtil.AUTHENTICATE_RESPONSE_HEADER_NAME);
+		assertTrue(missing, missing.contains(expected));
+
+		String invalid = assertRefused(RESOURCE_PATH, new BearerAccessToken("tloat_unknown"),
+			BearerTokenError.INVALID_TOKEN).get(AuthorizationUtil.AUTHENTICATE_RESPONSE_HEADER_NAME);
+		assertTrue(invalid, invalid.contains(expected));
+	}
+
+	/**
+	 * The protected resource metadata of an endpoint accepting the tokens names the resource and
+	 * the issuer of this server.
+	 */
+	public void testProtectedResourceMetadata() throws Exception {
+		authenticator(RESOURCE_PATH);
+
+		WebResponse response = get(ProtectedResources.METADATA_PATH + RESOURCE_PATH);
+		assertEquals(response.getText(), 200, response.getResponseCode());
+		assertEquals("*", response.getHeaderField(OAuthServerServlet.ACCESS_CONTROL_ALLOW_ORIGIN_HEADER));
+		Map<String, Object> json = JSONObjectUtils.parse(response.getText());
+		assertEquals(resource(RESOURCE_PATH).toString(), json.get("resource"));
+		assertEquals(List.of(metadata().getIssuer().getValue()), json.get("authorization_servers"));
+		assertEquals(List.of(ProtectedResources.BEARER_METHOD_HEADER), json.get("bearer_methods_supported"));
+	}
+
+	/**
+	 * A resource configured as absolute URI has its metadata at the path of the URI.
+	 */
+	public void testProtectedResourceMetadataOfAbsoluteResource() throws Exception {
+		String absolute = resource("/a2a/agent").toString();
+		authenticator(absolute);
+
+		WebResponse response = get(ProtectedResources.METADATA_PATH + "/a2a/agent");
+		assertEquals(response.getText(), 200, response.getResponseCode());
+		assertEquals(absolute, JSONObjectUtils.parse(response.getText()).get("resource"));
+	}
+
+	/**
+	 * No metadata for a resource no endpoint accepts tokens for.
+	 */
+	public void testUnknownResourceMetadata() throws Exception {
+		assertEquals(404, get(ProtectedResources.METADATA_PATH + "/unknown").getResponseCode());
+		assertEquals(404, get(ProtectedResources.METADATA_PATH + "/mcp/more").getResponseCode());
+	}
+
+	/**
+	 * The credential is described as a sign-in naming the protected resource metadata, without a
+	 * header to configure.
+	 */
+	public void testEndpointCredential() throws Exception {
+		EndpointCredential credential = EndpointCredential.of(authentication(RESOURCE_PATH), "oauth");
+
+		assertTrue(credential.signIn());
+		assertFalse(credential.isHeader());
+		assertEquals(I18NConstants.CREDENTIAL_SIGN_IN, credential.credential());
+		String description = credential.describeWithOrigin(context(), Resources.getLogInstance());
+		assertTrue(description, description.contains(context().url(ProtectedResources.METADATA_PATH + RESOURCE_PATH)));
+	}
+
 	private Map<String, String> assertRefused(String resource, BearerAccessToken token, BearerTokenError expected)
 			throws Exception {
 		Map<String, String> headers = new LinkedHashMap<>();
@@ -133,10 +229,14 @@ public class TestOAuthAccessTokenAuthentication extends AbstractOAuthServerTest 
 	}
 
 	private static Authenticator authenticator(String resource) {
+		return authentication(resource).createAuthenticator(List.of());
+	}
+
+	private static OAuthAccessTokenAuthentication authentication(String resource) {
 		OAuthAccessTokenAuthentication.Config<?> config =
 			TypedConfiguration.newConfigItem(OAuthAccessTokenAuthentication.Config.class);
 		config.update(config.descriptor().getProperty(OAuthAccessTokenAuthentication.Config.RESOURCE), resource);
-		return TypedConfigUtil.createInstance(config).createAuthenticator(List.of());
+		return TypedConfigUtil.createInstance(config);
 	}
 
 	/**

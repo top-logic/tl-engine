@@ -20,6 +20,11 @@ import com.top_logic.service.openapi.server.authentication.Authenticator;
 /**
  * {@link Authenticator} trying multiple {@link Authenticator}s in order and authenticates the
  * request, if one of them is able to authenticate.
+ *
+ * <p>
+ * If none of them authenticates the request, the answer carries the challenges of all of them, see
+ * {@link CombinedResponseEnhancer}: a client learns every way it may authenticate.
+ * </p>
  */
 public class DispatchingAuthenticator implements Authenticator {
 
@@ -48,8 +53,10 @@ public class DispatchingAuthenticator implements Authenticator {
 				addProblems(problems, ex1.getErrorKey());
 				addProblems(problems, ex2.getErrorKey());
 
-				throw new AuthenticationFailure(
-					I18NConstants.ERROR_AUTH_FAILED__REASONS.fill(problems));
+				AuthenticationFailure failure =
+					new AuthenticationFailure(I18NConstants.ERROR_AUTH_FAILED__REASONS.fill(problems));
+				failure.setResponseEnhancer(new CombinedResponseEnhancer(List.of(ex1, ex2)));
+				throw failure;
 			}
 		}
 	}

@@ -324,6 +324,38 @@ public class TestReactWindowRegistry extends TestCase {
 	}
 
 	/**
+	 * The sweep collects a window whose page stayed away beyond the grace period, but not the window
+	 * whose page the sweeping request displays: a tab that left the application for another site and
+	 * comes back late keeps its subsession, so that the commands of the displayed page find it.
+	 */
+	public void testSweepSparesTheDisplayedWindow() {
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
+		TLSessionContext session = DefaultSessionContext.newDefaultSessionContext();
+		TLSubSessionContext returning = createSubSession(session, "vTab", Locale.GERMAN);
+		createSubSession(session, "vGone", Locale.GERMAN);
+		displayPage(registry, registry.getOrCreateWindow("vTab"));
+		displayPage(registry, registry.getOrCreateWindow("vGone"));
+		String tabPage = registry.issuePageLoad("vTab");
+		String gonePage = registry.issuePageLoad("vGone");
+		inRequest(session, null, () -> {
+			registry.windowUnloaded("vTab", tabPage);
+			registry.windowUnloaded("vGone", gonePage);
+		});
+
+		long muchLater = System.currentTimeMillis() + 10 * 60 * 1000;
+		inRequest(session, null, () -> registry.sweepUnloadedWindows("vTab", muchLater));
+
+		assertNull("A window that did not come back is collected.", registry.getWindow("vGone"));
+		assertNull("...with its subsession.", session.getSubSession("vGone"));
+		assertNotNull("The window displayed by the request is kept.", registry.getWindow("vTab"));
+		assertSame("...with its subsession.", returning, session.getSubSession("vTab"));
+		assertEquals("It is displayed again.", 0, registry.getWindow("vTab").getUnloadedAt());
+
+		inRequest(session, null, () -> registry.sweepUnloadedWindows(null, muchLater + 10 * 60 * 1000));
+		assertNotNull("A displayed window is no candidate of a later sweep.", registry.getWindow("vTab"));
+	}
+
+	/**
 	 * Closing a window removes its subsession from the session, and only its own.
 	 */
 	public void testCloseRemovesWindowSubSession() {

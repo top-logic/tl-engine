@@ -40,6 +40,9 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.util.Resources;
 
+import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonWriter;
+
 /**
  * The public HTTP endpoints of the {@link OAuthAuthorizationServer}.
  *
@@ -47,6 +50,9 @@ import com.top_logic.util.Resources;
  * <li><code>GET</code> {@link OAuthAuthorizationServer#METADATA_PATH} and
  * {@link OAuthAuthorizationServer#OPENID_CONFIGURATION_PATH}: the authorization server metadata
  * (RFC 8414).</li>
+ * <li><code>GET</code> {@link ProtectedResources#METADATA_PATH} followed by the path of a resource:
+ * the protected resource metadata (RFC 9728) of a resource whose tokens an endpoint accepts, see
+ * {@link ProtectedResources}; <code>404</code> for any other resource.</li>
  * <li><code>GET</code> {@link OAuthAuthorizationServer#AUTHORIZATION_PATH}: the authorization
  * endpoint, which sends the browser to the consent page.</li>
  * <li><code>POST</code> {@link OAuthAuthorizationServer#TOKEN_PATH}: the token endpoint.</li>
@@ -111,16 +117,43 @@ public class OAuthServerServlet extends HttpServlet {
 			authorize(server, req, resp);
 			return;
 		}
+		if (server != null && isProtectedResourceMetadataPath(path)) {
+			protectedResourceMetadata(path.substring(ProtectedResources.METADATA_PATH.length()), req, resp);
+			return;
+		}
 		if (server == null || !isMetadataPath(path)) {
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
+		writeMetadata(resp, server.metadata(DiscoveryContext.fromRequest(req)).toJSONObject().toJSONString());
+	}
+
+	/**
+	 * Answers the protected resource metadata of the resource whose metadata path ends with the
+	 * given suffix, see {@link ProtectedResources#lookup(String)}.
+	 */
+	private static void protectedResourceMetadata(String suffix, HttpServletRequest req, HttpServletResponse resp)
+			throws IOException {
+		String resource = ProtectedResources.lookup(suffix);
+		if (resource == null) {
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+		ProtectedResourceMetadata metadata = ProtectedResources.metadata(resource, DiscoveryContext.fromRequest(req));
+		StringW buffer = new StringW();
+		try (JsonWriter json = new JsonWriter(buffer)) {
+			metadata.writeTo(json);
+		}
+		writeMetadata(resp, buffer.toString());
+	}
+
+	private static void writeMetadata(HttpServletResponse resp, String json) throws IOException {
 		allowAnyOrigin(resp);
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setContentType(JSON_MEDIA_TYPE);
 		resp.setCharacterEncoding(StandardCharsets.UTF_8.name());
 		resp.setHeader(CACHE_CONTROL_HEADER, METADATA_CACHE_CONTROL);
-		resp.getWriter().write(server.metadata(DiscoveryContext.fromRequest(req)).toJSONObject().toJSONString());
+		resp.getWriter().write(json);
 	}
 
 	@Override
@@ -327,6 +360,11 @@ public class OAuthServerServlet extends HttpServlet {
 	private static boolean isMetadataPath(String path) {
 		return OAuthAuthorizationServer.METADATA_PATH.equals(path)
 			|| OAuthAuthorizationServer.OPENID_CONFIGURATION_PATH.equals(path);
+	}
+
+	private static boolean isProtectedResourceMetadataPath(String path) {
+		return path.equals(ProtectedResources.METADATA_PATH)
+			|| path.startsWith(ProtectedResources.METADATA_PATH + '/');
 	}
 
 	private static void allowAnyOrigin(HttpServletResponse resp) {

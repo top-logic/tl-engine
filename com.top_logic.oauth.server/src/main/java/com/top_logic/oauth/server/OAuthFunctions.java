@@ -6,25 +6,29 @@
 package com.top_logic.oauth.server;
 
 import java.net.URI;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
+import com.top_logic.oauth.server.model.OAuthGrant;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
  * TL-Script functions of the consent page of the {@link OAuthAuthorizationServer}, on which a
- * person decides about the authorization request of a client.
+ * person decides about the authorization request of a client, and of the list of the authorizations
+ * a person gave ({@link #revoke(Object)}).
  *
  * <p>
- * Every function takes the identifier of the pending authorization, which the authorization
- * endpoint passes to the consent page in the parameter
+ * Every function of the consent page takes the identifier of the pending authorization, which the
+ * authorization endpoint passes to the consent page in the parameter
  * {@link OAuthAuthorizationServer#PENDING_PARAMETER}. The identifier is the proof: the lookup does
  * not depend on access rights.
  * </p>
@@ -163,6 +167,36 @@ public class OAuthFunctions extends TLScriptFunctions {
 		} catch (OAuthException ex) {
 			throw new TopLogicException(ex.getErrorKey(), ex);
 		}
+	}
+
+	/**
+	 * Revokes the authorization a person gave a client: its access and refresh tokens are refused
+	 * from now on.
+	 *
+	 * @param grant
+	 *        The authorization ({@link OAuthGrant}), or a collection holding exactly one.
+	 * @return Always <code>true</code>.
+	 * @throws TopLogicException
+	 *         If the current user is neither the owner of the authorization nor an administrator.
+	 *
+	 * @implNote Calls {@link OAuthAuthorizationServer#revoke(OAuthGrant)}.
+	 */
+	@Label("Revoke OAuth authorization")
+	public static boolean revoke(@Mandatory Object grant) {
+		server().revoke(revocable(grant));
+		return true;
+	}
+
+	private static OAuthGrant revocable(Object grant) {
+		Object single = grant instanceof Collection<?> many && many.size() == 1 ? many.iterator().next() : grant;
+		if (!(single instanceof OAuthGrant resolved)) {
+			throw new TopLogicException(I18NConstants.ERROR_NOT_A_GRANT);
+		}
+		Person actor = TLContext.currentUser();
+		if (actor == null || (!actor.equals(resolved.getOwner()) && !actor.isAdmin())) {
+			throw new TopLogicException(I18NConstants.ERROR_GRANT_NOT_OWNED);
+		}
+		return resolved;
 	}
 
 	private static OAuthAuthorizationServer server() {

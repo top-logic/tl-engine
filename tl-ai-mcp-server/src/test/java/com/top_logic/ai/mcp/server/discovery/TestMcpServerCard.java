@@ -7,6 +7,7 @@ package com.top_logic.ai.mcp.server.discovery;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,15 +29,16 @@ import com.top_logic.base.discovery.LlmsTxtSection;
 import com.top_logic.base.discovery.catalog.CatalogEntry;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.servlet.CacheControlFilter;
 import com.top_logic.layout.view.ViewServlet;
 import com.top_logic.service.openapi.common.authentication.apikey.APIKeyPosition;
 import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthentication;
+import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.http.basic.BasicAuthentication;
 import com.top_logic.tl.ai.core.access.AccessTokenAuthentication;
 import com.top_logic.tl.ai.core.access.EndpointAuthentication;
-import com.top_logic.tl.ai.core.access.EndpointCredential;
 import com.top_logic.util.Resources;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
@@ -264,6 +266,39 @@ public class TestMcpServerCard extends TestCase {
 		assertFalse(AccessTokenAuthentication.isAccepted(List.of(basic().getValue())));
 	}
 
+	/**
+	 * A credential the client obtains by itself names no header: a server offering it requires no
+	 * header, and <code>llms.txt</code> shows the command without credential before the one with a
+	 * header.
+	 */
+	public void testSignIn() throws IOException {
+		EndpointCredential signIn = EndpointCredential.bySignIn(ResKey.text("OAuth sign-in"),
+			context -> ResKey.text("Metadata at " + context.url("/.well-known/oauth-protected-resource/mcp")));
+		List<EndpointCredential> credentials = new ArrayList<>();
+		credentials.add(signIn);
+		credentials.addAll(credentials(personalAccessTokens()));
+
+		List<Map<String, Object>> headers = asList(remote(credentials).get("headers"));
+		assertEquals(1, headers.size());
+		assertEquals("Authorization", headers.get(0).get("name"));
+		assertEquals("The sign-in needs no header.", Boolean.FALSE, headers.get(0).get("isRequired"));
+
+		Resources resources = Resources.getLogInstance();
+		String text = McpConnectionGuide.llmsTxtSection(config(), credentials, CONTEXT, resources).markdown();
+		String plainCommand = "claude mcp add --transport http --scope user ehome " + APP + "/mcp\n";
+		assertTrue(text, text.contains(plainCommand));
+		assertTrue(text, text.contains("Metadata at " + APP + "/.well-known/oauth-protected-resource/mcp"));
+		assertTrue(text, text.contains(resources.getString(I18NConstants.LLMS_CONNECT_CLAUDE_HEADER_ALTERNATIVE)));
+		assertTrue("The command without credential comes first: " + text,
+			text.indexOf(plainCommand) < text.indexOf("--header"));
+
+		assertEquals(List.of(),
+			remote(List.of(signIn)).get("headers"));
+		String signInOnly = McpConnectionGuide.llmsTxtSection(config(), List.of(signIn), CONTEXT, resources).markdown();
+		assertTrue(signInOnly, signInOnly.contains(plainCommand));
+		assertFalse(signInOnly, signInOnly.contains("--header"));
+	}
+
 	/** Without a credential sent in a header, there is no command to show. */
 	public void testLlmsTxtSectionWithoutHeaderCredential() {
 		LlmsTxtSection section = McpConnectionGuide.llmsTxtSection(config(),
@@ -282,7 +317,7 @@ public class TestMcpServerCard extends TestCase {
 			credentials.get(0).credential());
 		assertNotNull(credentials.get(0).obtain());
 		assertEquals("Authorization", credentials.get(1).header());
-		assertEquals(com.top_logic.tl.ai.core.access.I18NConstants.CREDENTIAL_HTTP_BASIC_VALUE,
+		assertEquals(com.top_logic.service.openapi.server.authentication.conf.I18NConstants.CREDENTIAL_HTTP_BASIC_VALUE,
 			credentials.get(1).headerValue());
 		assertNull(credentials.get(1).obtain());
 		assertEquals("X-Api-Key", credentials.get(2).header());

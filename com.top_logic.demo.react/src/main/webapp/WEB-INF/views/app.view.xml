@@ -188,6 +188,15 @@
 							<de>Gantt-Terminplan</de>
 						</label>
 					</nav-item>
+					<nav-item id="graph-demo"
+						icon="css:bi bi-diagram-2"
+					>
+						<view-ref view="demo/graph-demo.view.xml"/>
+						<label>
+							<en>Graph Demo</en>
+							<de>Graph-Demo</de>
+						</label>
+					</nav-item>
 					<nav-item id="flow-clip-demo"
 						icon="css:bi bi-crop"
 					>

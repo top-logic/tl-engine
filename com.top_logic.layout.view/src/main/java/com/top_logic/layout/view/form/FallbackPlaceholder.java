@@ -186,9 +186,8 @@ public class FallbackPlaceholder {
 		if (_model.isEditable()) {
 			Set<TLStructuredTypePart> dependencies = new HashSet<>();
 			OverlayLookup overlays = _form == null ? null : _form.getValidationModel();
-			try (TracingScope scope = TracingScope.open(pointer -> dependencies.add(pointer.attribute()), overlays)) {
-				fallback = storage.getFallbackValue(object, part);
-			}
+			fallback =
+				storage.traceFallbackValue(object, part, pointer -> dependencies.add(pointer.attribute()), overlays);
 			_dependencies = dependencies;
 		} else {
 			_dependencies = Collections.emptySet();

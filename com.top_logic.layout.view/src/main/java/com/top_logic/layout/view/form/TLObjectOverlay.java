@@ -7,6 +7,8 @@ package com.top_logic.layout.view.form;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +54,14 @@ import com.top_logic.util.error.TopLogicException;
  * changes to the base object ({@link #apply()}, {@link #applyToBuffer()}) or discarding all of them
  * ({@link #reset()}) - changes no value seen through the overlay and announces nothing.
  * </p>
+ *
+ * <p>
+ * An attribute with a {@link StorageWithFallback} keeps its explicit value in the
+ * {@link StorageWithFallback#getStorageAttr() storage attribute}. A change of the storage attribute
+ * is a change of the attribute with fallback as well, whether it is written through the attribute
+ * with fallback or directly: it is announced for both attributes, and both are
+ * {@link #isChanged(TLStructuredTypePart) changed}.
+ * </p>
  */
 public class TLObjectOverlay extends TransientObject implements TLFormObjectBase {
 
@@ -60,6 +70,16 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	private final Map<TLStructuredTypePart, Object> _changes = new LinkedHashMap<>();
 
 	private final List<ValueChangeListener> _valueChangeListeners = new ArrayList<>();
+
+	/**
+	 * The attributes with a {@link StorageWithFallback} of the type of this overlay, indexed by the
+	 * definition of their {@link StorageWithFallback#getStorageAttr() storage attribute}.
+	 *
+	 * <p>
+	 * Computed on first use, see {@link #withFallbackToAnnounce(TLStructuredTypePart)}.
+	 * </p>
+	 */
+	private Map<TLStructuredTypePart, List<TLStructuredTypePart>> _withFallback;
 
 	/**
 	 * @see #isReceivingTransfer()
@@ -210,19 +230,44 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 *
 	 * <p>
 	 * When the value seen through the overlay changes, the {@link ValueChangeListener}s are
-	 * informed after the value is recorded.
+	 * informed after the value is recorded. A change of a storage attribute is announced for the
+	 * attributes with fallback keeping their explicit value in it as well, after the change of the
+	 * storage attribute.
 	 * </p>
 	 */
 	@Override
 	public void tUpdate(TLStructuredTypePart part, Object value) {
-		Object oldValue = valueBeforeChange(part);
 		if (part.getStorageImplementation() instanceof StorageWithFallback fallback) {
+			// Writing the storage attribute announces the change of this attribute.
 			fallback.setExplicitValue(this, part, value);
-			fireValueChanged(part, oldValue);
 			return;
 		}
+		List<TLStructuredTypePart> withFallback = withFallbackToAnnounce(part);
+		Object oldValue = valueBeforeChange(part);
+		List<Object> oldFallbackValues = valuesBeforeChange(withFallback);
 		_changes.put(part, value);
 		fireValueChanged(part, oldValue);
+		fireValuesChanged(withFallback, oldFallbackValues);
+	}
+
+	/**
+	 * The attributes with a {@link StorageWithFallback} of the type of this overlay that keep their
+	 * explicit value in the given attribute, if a listener is to be informed about their change.
+	 */
+	private List<TLStructuredTypePart> withFallbackToAnnounce(TLStructuredTypePart storageAttr) {
+		if (_valueChangeListeners.isEmpty()) {
+			return Collections.emptyList();
+		}
+		if (_withFallback == null) {
+			Map<TLStructuredTypePart, List<TLStructuredTypePart>> index = new HashMap<>();
+			for (TLStructuredTypePart part : tType().getAllParts()) {
+				if (part.getStorageImplementation() instanceof StorageWithFallback fallback) {
+					index.computeIfAbsent(fallback.getStorageAttr().getDefinition(), x -> new ArrayList<>()).add(part);
+				}
+			}
+			_withFallback = index;
+		}
+		return _withFallback.getOrDefault(storageAttr.getDefinition(), Collections.emptyList());
 	}
 
 	/**
@@ -247,6 +292,36 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 */
 	private Object valueBeforeChange(TLStructuredTypePart part) {
 		return _valueChangeListeners.isEmpty() ? null : getFieldValue(part);
+	}
+
+	/**
+	 * The values of the given attributes before a change, see
+	 * {@link #valueBeforeChange(TLStructuredTypePart)}.
+	 */
+	private List<Object> valuesBeforeChange(List<TLStructuredTypePart> parts) {
+		if (parts.isEmpty()) {
+			return Collections.emptyList();
+		}
+		List<Object> result = new ArrayList<>(parts.size());
+		for (TLStructuredTypePart part : parts) {
+			result.add(valueBeforeChange(part));
+		}
+		return result;
+	}
+
+	/**
+	 * Informs the {@link ValueChangeListener}s about a change of each of the given attributes, see
+	 * {@link #fireValueChanged(TLStructuredTypePart, Object)}.
+	 *
+	 * @param parts
+	 *        The attributes possibly changed.
+	 * @param oldValues
+	 *        The values of the attributes before the change, in the order of the attributes.
+	 */
+	private void fireValuesChanged(List<TLStructuredTypePart> parts, List<Object> oldValues) {
+		for (int n = 0, cnt = parts.size(); n < cnt; n++) {
+			fireValueChanged(parts.get(n), oldValues.get(n));
+		}
 	}
 
 	/**
@@ -388,8 +463,16 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 
 	/**
 	 * Whether the given attribute has been changed in this overlay.
+	 *
+	 * <p>
+	 * An attribute with a {@link StorageWithFallback} is changed, if its
+	 * {@link StorageWithFallback#getStorageAttr() storage attribute} is.
+	 * </p>
 	 */
 	public boolean isChanged(TLStructuredTypePart part) {
+		if (part.getStorageImplementation() instanceof StorageWithFallback fallback) {
+			return _changes.containsKey(fallback.getStorageAttr());
+		}
 		return _changes.containsKey(part);
 	}
 
@@ -540,19 +623,31 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 *
 	 * <p>
 	 * When the value seen through the overlay changes thereby, the {@link ValueChangeListener}s are
-	 * informed.
+	 * informed, like for {@link #tUpdate(TLStructuredTypePart, Object)}.
+	 * </p>
+	 *
+	 * <p>
+	 * The change of an attribute with a {@link StorageWithFallback} is the change of its
+	 * {@link StorageWithFallback#getStorageAttr() storage attribute}, which is discarded.
 	 * </p>
 	 *
 	 * @param part
 	 *        The attribute whose change is discarded.
 	 */
 	public void revert(TLStructuredTypePart part) {
+		if (part.getStorageImplementation() instanceof StorageWithFallback fallback) {
+			revert(fallback.getStorageAttr());
+			return;
+		}
 		if (!_changes.containsKey(part)) {
 			return;
 		}
+		List<TLStructuredTypePart> withFallback = withFallbackToAnnounce(part);
 		Object oldValue = valueBeforeChange(part);
+		List<Object> oldFallbackValues = valuesBeforeChange(withFallback);
 		_changes.remove(part);
 		fireValueChanged(part, oldValue);
+		fireValuesChanged(withFallback, oldFallbackValues);
 	}
 
 	/**

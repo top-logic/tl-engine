@@ -84,6 +84,6 @@ If the receiving module is optional, i.e. not every application that contained t
 
 ## Changing the versioning of a table
 
-Switching a table between versioned and unversioned (`versioned` of its `<metaobject>`) needs no data migration: both kinds of table have the same columns. The knowledge base reads the flag from the stored schema, which is replaced by the configured one at the end of every start that runs a migration (`StoreTypeConfiguration`); from then on the table is handled with the new flag.
+Switching a table between versioned and unversioned (`versioned` of its `<metaobject>`) needs no migration: both kinds of table have the same columns. The knowledge base reads the flag from the stored schema. At the first start with the changed configuration, the `MigrationService` writes the changed definition of the type to the stored schema, so the table is handled with the new flag from this start on (see [changing the schema of an existing database](doc:persistency/type-systems#changing-the-schema-of-an-existing-database)).
 
 A table that was versioned keeps the rows of its former states after the switch. The knowledge base removes them through the regular cleanup of unversioned types (`HistoryCleanup`, interval `cleanup-unversioned-types-interval` of the knowledge base configuration).

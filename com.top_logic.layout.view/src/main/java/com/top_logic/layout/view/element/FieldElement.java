@@ -106,6 +106,12 @@ public class FieldElement implements UIElement {
 		 * label-less field.
 		 *
 		 * <p>
+		 * With {@code placeholder}, the label is not shown beside the field but as placeholder in
+		 * the empty input, and remains the accessible name of the input. An input that shows no
+		 * placeholder - a checkbox, a slider, a table - shows no label, as with {@code hide-label}.
+		 * </p>
+		 *
+		 * <p>
 		 * If not set, the position falls back to a {@link LabelPositionAnnotation} on the model
 		 * attribute, and without one to the responsive default of the enclosing form layout.
 		 * </p>

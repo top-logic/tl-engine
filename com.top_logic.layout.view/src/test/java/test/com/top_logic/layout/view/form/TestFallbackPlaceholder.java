@@ -200,7 +200,7 @@ public class TestFallbackPlaceholder extends AbstractTicketFormTest {
 		return field.getInnerControl().scriptingScalarState().get(FieldState.PLACEHOLDER__PROP);
 	}
 
-	private static TLStorage fallbackStorage(String storageAttribute, String fallbackAttribute) {
+	static TLStorage fallbackStorage(String storageAttribute, String fallbackAttribute) {
 		AttributeWithFallbackStorage.Config<?> storageConfig =
 			TypedConfiguration.newConfigItem(AttributeWithFallbackStorage.Config.class);
 		storageConfig.update(storageConfig.descriptor().getProperty(AttributeWithFallbackStorage.Config.STORAGE_ATTRIBUTE), storageAttribute);

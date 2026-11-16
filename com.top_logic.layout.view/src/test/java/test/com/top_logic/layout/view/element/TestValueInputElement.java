@@ -276,11 +276,23 @@ public class TestValueInputElement extends TestCase {
 	/** Position of the input of the test view labelled by a resource key with a tooltip. */
 	private static final int KEY_LABEL_WITH_TOOLTIP = 25;
 
+	/** Position of the input of the test view showing its label as placeholder. */
+	private static final int LABEL_AS_PLACEHOLDER = 26;
+
+	/**
+	 * Position of the input of the test view whose label position is placeholder, with a
+	 * placeholder of its own.
+	 */
+	private static final int LABEL_POSITION_PLACEHOLDER_WITH_PLACEHOLDER = 27;
+
+	/** The label of the inputs at {@link #LABEL_AS_PLACEHOLDER} and {@link #LABEL_POSITION_PLACEHOLDER_WITH_PLACEHOLDER}. */
+	private static final String SEARCH_TERM = "Search term";
+
 	/** The tooltip of the inline label of the input at {@link #INLINE_LABEL_WITH_TOOLTIP}. */
 	private static final String INLINE_TOOLTIP = "Words every shown row contains.";
 
 	/** The number of inputs in the test view. */
-	private static final int INPUT_COUNT = 26;
+	private static final int INPUT_COUNT = 28;
 
 	/** Name of the module a test creates to see it offered by an input displaying the modules. */
 	private static final String CREATED_MODULE = "test.input.created";
@@ -957,6 +969,27 @@ public class TestValueInputElement extends TestCase {
 		String tooltip = Resources.getInstance().getString(
 			com.top_logic.layout.view.I18NConstants.TABLE_EXPORT_EXCEL.tooltip());
 		assertExplained(chrome(KEY_LABEL_WITH_TOOLTIP), tooltip);
+	}
+
+	/**
+	 * An input with the label position {@code placeholder} hides its label beside the input and
+	 * shows it as placeholder in the empty input; the label still names the input.
+	 */
+	public void testLabelAsPlaceholder() throws Exception {
+		ReactFormFieldChromeControl chrome = chrome(LABEL_AS_PLACEHOLDER);
+		Map<String, Object> state = chrome.scriptingScalarState();
+		assertEquals("The label is not shown beside the input.",
+			com.top_logic.layout.react.control.layout.LabelPosition.HIDDEN.getExternalName(),
+			state.get(FormFieldState.LABEL_POSITION__PROP));
+		assertEquals("The label still names the input.", SEARCH_TERM, state.get(FormFieldState.LABEL__PROP));
+		assertEquals("The label is shown in the empty input.",
+			SEARCH_TERM, field(chrome).scriptingScalarState().get(FieldState.PLACEHOLDER__PROP));
+	}
+
+	/** A placeholder configured for the input takes precedence over the label. */
+	public void testExplicitPlaceholderWinsOverLabel() throws Exception {
+		ReactFormFieldChromeControl chrome = chrome(LABEL_POSITION_PLACEHOLDER_WITH_PLACEHOLDER);
+		assertEquals("Words", field(chrome).scriptingScalarState().get(FieldState.PLACEHOLDER__PROP));
 	}
 
 	/** A label without a tooltip explains nothing. */

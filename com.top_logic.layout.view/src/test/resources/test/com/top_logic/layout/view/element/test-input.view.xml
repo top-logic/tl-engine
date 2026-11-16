@@ -232,6 +232,25 @@
 				label="class.com.top_logic.layout.view.I18NConstants.TABLE_EXPORT_EXCEL"
 				value="term"
 			/>
+			<value-input
+				label-position="placeholder"
+				value="term"
+			>
+				<label>
+					<en>Search term</en>
+				</label>
+			</value-input>
+			<value-input
+				label-position="placeholder"
+				value="term"
+			>
+				<label>
+					<en>Search term</en>
+				</label>
+				<placeholder>
+					<en>Words</en>
+				</placeholder>
+			</value-input>
 		</children>
 	</panel>
 </view>

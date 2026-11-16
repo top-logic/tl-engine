@@ -650,23 +650,35 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * the user to choose one.
 	 *
 	 * <p>
-	 * A group of radio buttons offers the choice of no value as an option of its own; while a
-	 * placeholder is set, that option is labelled with the inherited value it stands for.
+	 * A group of radio buttons shows no placeholder: its option for no value keeps its label.
 	 * </p>
 	 */
 	@Override
-	public void setPlaceholder(String placeholder) {
-		super.setPlaceholder(placeholder);
-		Resources resources = Resources.getInstance();
-		String emptyLabel;
-		if (placeholder == null) {
-			emptyLabel = resources.getString(emptyOptionLabel(_display));
-		} else if (_display == SelectDisplay.RADIO) {
-			emptyLabel = resources.getString(I18NConstants.VALUE_INHERITED__VALUE.fill(placeholder));
-		} else {
-			emptyLabel = placeholder;
-		}
-		putState(DropdownSelectState.EMPTY_OPTION_LABEL__PROP, emptyLabel);
+	protected void showPlaceholder(String placeholder) {
+		super.showPlaceholder(placeholder);
+		putState(DropdownSelectState.EMPTY_OPTION_LABEL__PROP,
+			placeholder == null || _display == SelectDisplay.RADIO ? defaultEmptyLabel() : placeholder);
+	}
+
+	/**
+	 * Shows the inherited value where the field holds no value, in place of the label inviting the
+	 * user to choose one.
+	 *
+	 * <p>
+	 * A group of radio buttons offers the choice of no value as an option of its own; while a value
+	 * is inherited, that option is labelled with the inherited value it stands for.
+	 * </p>
+	 */
+	@Override
+	protected void showFallbackText(String fallbackText) {
+		super.showFallbackText(fallbackText);
+		putState(DropdownSelectState.EMPTY_OPTION_LABEL__PROP, _display == SelectDisplay.RADIO
+			? Resources.getInstance().getString(I18NConstants.VALUE_INHERITED__VALUE.fill(fallbackText))
+			: fallbackText);
+	}
+
+	private String defaultEmptyLabel() {
+		return Resources.getInstance().getString(emptyOptionLabel(_display));
 	}
 
 	/**

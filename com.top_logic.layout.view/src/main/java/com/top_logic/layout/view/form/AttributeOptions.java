@@ -26,6 +26,7 @@ import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.react.control.select.OptionOrder;
 import com.top_logic.layout.react.field.FieldSpec;
+import com.top_logic.layout.view.channel.DeletedObjects;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLObject;
@@ -36,6 +37,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.expr.trace.ScriptTracer;
 import com.top_logic.model.search.providers.OptionsByExpression;
 import com.top_logic.model.util.Pointer;
@@ -203,6 +205,37 @@ public class AttributeOptions {
 			return enumOptions(primitive);
 		}
 		return null;
+	}
+
+	/**
+	 * The options a value of the given type is chosen from, computed by the given expression or,
+	 * where there is none, offered by the type itself.
+	 *
+	 * <p>
+	 * The expression is applied to the given arguments, an object deleted in them passed on as
+	 * nothing. The options it computes are offered in its order, without the objects deleted in
+	 * the meantime. Without an expression, the options are those of {@link #optionsFor(TLType)}.
+	 * </p>
+	 *
+	 * @param type
+	 *        The model type of the value.
+	 * @param options
+	 *        The expression computing the options, {@code null} for the options of the type.
+	 * @param args
+	 *        The arguments the expression is applied to.
+	 * @return The options, or {@code null} where a value of the type is entered rather than
+	 *         chosen.
+	 */
+	public static List<?> optionsFor(TLType type, QueryExecutor options, Object... args) {
+		if (options == null) {
+			return optionsFor(type);
+		}
+		Object[] values = new Object[args.length];
+		for (int n = 0, cnt = values.length; n < cnt; n++) {
+			values[n] = DeletedObjects.withoutDeleted(args[n]);
+		}
+		return SearchExpression.asList(
+			DeletedObjects.withoutDeleted(SearchExpression.asList(options.execute(values))));
 	}
 
 	/**

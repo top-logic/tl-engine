@@ -29,11 +29,13 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.element.FormElement;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.model.TLObject;
@@ -282,6 +284,30 @@ public class TestFormLocking extends AbstractModelAccessTest {
 	}
 
 	/**
+	 * A form displayed with its edit-mode channel set on an object nobody has locked offers Save
+	 * and Cancel and no Edit, as a form that entered edit mode by its Edit command does.
+	 */
+	public void testStartInEditModeEnablesTheEditCommands() throws Exception {
+		Window started = new Window(_project, true);
+		started.display(formElement(EDIT_MODE_FORM));
+
+		Window clicked = new Window(_otherProject, false);
+		FormControl form = clicked.display(formElement(EDIT_MODE_FORM));
+		clicked.command(FormControl.CMD_EDIT).executeCommand(form.getReactContext());
+
+		assertEditCommands("after Edit", clicked);
+		assertEditCommands("started in edit mode", started);
+	}
+
+	private static void assertEditCommands(String how, Window window) {
+		assertFalse("Edit offered " + how + ".", window.command(FormControl.CMD_EDIT).isExecutable());
+		assertTrue("Save not executable " + how + ".", window.command(FormControl.CMD_SAVE).isExecutable());
+		assertTrue("Save not visible " + how + ".", window.command(FormControl.CMD_SAVE).isVisible());
+		assertTrue("Cancel not executable " + how + ".", window.command(FormControl.CMD_CANCEL).isExecutable());
+		assertTrue("Cancel not visible " + how + ".", window.command(FormControl.CMD_CANCEL).isVisible());
+	}
+
+	/**
 	 * The text the user reads when a form shows the given object read-only because someone else
 	 * has locked it.
 	 */
@@ -333,16 +359,27 @@ public class TestFormLocking extends AbstractModelAccessTest {
 
 		final RecordingErrorSink _messages = new RecordingErrorSink();
 
+		/** The scope of the panel around the form, which displays the form's commands. */
+		final CommandScope _commands = new CommandScope(List.of());
+
 		private final ViewContext _context;
 
 		Window(TLObject object, boolean editMode) {
 			_context = new DefaultViewContext(
 				new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")))
-					.withErrorSink(_messages);
+					.withErrorSink(_messages)
+					.withScope(CommandScope.class, _commands);
 			_input.set(object);
 			_editMode.set(Boolean.valueOf(editMode));
 			_context.registerChannel(INPUT, _input);
 			_context.registerChannel(EDIT_MODE, _editMode);
+		}
+
+		/** The command of the given name the displayed form offers to the panel around it. */
+		CommandModel command(String name) {
+			CommandModel result = _commands.resolveCommand(name);
+			assertNotNull("The displayed form offers the command " + name + ".", result);
+			return result;
 		}
 
 		FormControl display(FormElement element) {

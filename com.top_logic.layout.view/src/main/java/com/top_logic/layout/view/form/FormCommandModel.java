@@ -116,7 +116,7 @@ public class FormCommandModel implements CommandModel {
 	 * @return The edit command model.
 	 */
 	public static FormCommandModel editCommand(FormControl form) {
-		return new FormCommandModel("formEdit", I18NConstants.FORM_EDIT, Icons.FORM_EDIT,
+		return new FormCommandModel(FormControl.CMD_EDIT, I18NConstants.FORM_EDIT, Icons.FORM_EDIT,
 			CommandPlacement.TOOLBAR, form,
 			ctx -> form.enterEditMode(),
 			f -> f.getCurrentObject() != null && !f.isEditMode() && f.editPermission().isExecutable(),
@@ -157,7 +157,7 @@ public class FormCommandModel implements CommandModel {
 	 * @return The save command model.
 	 */
 	public static FormCommandModel saveCommand(FormControl form, Consumer<ReactContext> action) {
-		return new FormCommandModel("formSave", I18NConstants.FORM_SAVE, Icons.FORM_SAVE,
+		return new FormCommandModel(FormControl.CMD_SAVE, I18NConstants.FORM_SAVE, Icons.FORM_SAVE,
 			CommandPlacement.TOOLBAR, form,
 			action,
 			FormControl::isEditMode,
@@ -176,7 +176,7 @@ public class FormCommandModel implements CommandModel {
 	 * @return The cancel command model.
 	 */
 	public static FormCommandModel cancelCommand(FormControl form) {
-		return new FormCommandModel("formCancel", I18NConstants.FORM_CANCEL, Icons.FORM_CANCEL,
+		return new FormCommandModel(FormControl.CMD_CANCEL, I18NConstants.FORM_CANCEL, Icons.FORM_CANCEL,
 			CommandPlacement.TOOLBAR, form,
 			ctx -> form.executeCancel(),
 			FormControl::isEditMode,
@@ -198,7 +198,7 @@ public class FormCommandModel implements CommandModel {
 	 * @return The cancel command model.
 	 */
 	public static FormCommandModel cancelCommand(FormControl form, Consumer<ReactContext> action) {
-		return new FormCommandModel("formCancel", I18NConstants.FORM_CANCEL, Icons.FORM_CANCEL,
+		return new FormCommandModel(FormControl.CMD_CANCEL, I18NConstants.FORM_CANCEL, Icons.FORM_CANCEL,
 			CommandPlacement.TOOLBAR, form,
 			action,
 			FormControl::isEditMode,
@@ -236,9 +236,16 @@ public class FormCommandModel implements CommandModel {
 
 	/**
 	 * Subscribes to form state changes to track executability.
+	 *
+	 * <p>
+	 * The form may have changed its state while this command did not follow it - before the form
+	 * was displayed for the first time (e.g. a form entering edit mode by itself while it is built)
+	 * or while it was not displayed -, so the executability is evaluated anew.
+	 * </p>
 	 */
 	public void attach() {
 		_form.addFormModelListener(_formModelListener);
+		handleFormStateChanged(_form);
 	}
 
 	/**

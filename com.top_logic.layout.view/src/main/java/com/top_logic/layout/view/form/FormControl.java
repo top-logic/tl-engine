@@ -979,8 +979,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 *
 	 * @throws TopLogicException
 	 *         If any participant reports a validation error. The exception lists the
-	 *         {@link #visibleErrorDetails() errors} below its message, see
-	 *         {@link ValidationErrors#refusal(ResKey, List)}.
+	 *         {@link #visibleErrorDetails() errors} below its message and names this form as the
+	 *         place of the errors, see {@link ValidationErrors#refusal(ResKey, List, ReactControl)}.
 	 */
 	public void validateOrThrow() {
 		if (_validationModel != null) {
@@ -995,8 +995,11 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			}
 		}
 		if (!valid) {
+			// The command storing the form comes from a button outside of it (a toolbar, the footer
+			// of a dialog), so the refusal names the form as the place of the errors.
 			throw ValidationErrors.refusal(
-				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS, visibleErrorDetails());
+				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS, visibleErrorDetails(),
+				this);
 		}
 	}
 

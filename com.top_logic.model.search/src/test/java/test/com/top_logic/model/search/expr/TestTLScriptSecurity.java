@@ -432,13 +432,14 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	 *
 	 * <p>
 	 * No rights are configured for the meta-model, so a non-administrative user holds no role on a
-	 * {@code TLClass}. A script delivering a type (or the type of an object) must nevertheless return
-	 * it, otherwise the computation would silently lose its meta-data.
+	 * {@code TLClass}. Nevertheless every user may read a model element, and a script delivering a
+	 * type (or the type of an object) returns it, otherwise the computation would silently lose its
+	 * meta-data.
 	 * </p>
 	 */
 	public void testModelElementsNotFiltered() throws Exception {
 		becomeUser(_other);
-		assertFalse("Test premise: the user holds no read right on the meta-model.",
+		assertTrue("Every user may read a model element without a right on the meta-model.",
 			ModelAccessRights.getInstance().isReadAllowed(_other, (TLObject) projectType()));
 
 		assertEquals(projectType(), execute(search("`TestTLScriptSecurity:Project`")));

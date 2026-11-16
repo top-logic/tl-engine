@@ -292,6 +292,37 @@ public class TreeRowSource<N, R> implements RowSource<R>, RowHierarchy<R> {
 	}
 
 	/**
+	 * Expands the rows with the given keys, as {@link #setExpanded(Object, boolean)} does for each
+	 * of them, computing the displayed rows once.
+	 *
+	 * @param rowKeys
+	 *        The {@link TreeStructure#key(Object) keys} of the rows to expand.
+	 */
+	public void expand(Collection<?> rowKeys) {
+		if (_expanded.addAll(rowKeys)) {
+			recompute();
+			fireInvalidated();
+		}
+	}
+
+	/**
+	 * Expands exactly the rows with the given keys, collapsing all others, and computes the
+	 * displayed rows once.
+	 *
+	 * @param rowKeys
+	 *        The {@link TreeStructure#key(Object) keys} of the rows to expand.
+	 */
+	public void setExpandedKeys(Collection<?> rowKeys) {
+		Set<Object> expanded = new HashSet<>(rowKeys);
+		if (!expanded.equals(_expanded)) {
+			_expanded.clear();
+			_expanded.addAll(expanded);
+			recompute();
+			fireInvalidated();
+		}
+	}
+
+	/**
 	 * Recomputes the displayed rows after the {@link TreeStructure} changed - a node added or
 	 * removed, children replaced - and notifies the listeners.
 	 *

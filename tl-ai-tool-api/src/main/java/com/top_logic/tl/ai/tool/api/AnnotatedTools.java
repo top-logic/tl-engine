@@ -21,6 +21,7 @@ import java.util.Set;
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.tool.api.json.JsonTree;
 
@@ -95,8 +96,10 @@ public final class AnnotatedTools {
 
 		return new ReflectiveTool(toolName, description, schema, mode, concurrencySafe,
 			truncationHint, annotation.group(), List.of(annotation.types()), annotation.marking(),
-			provider, method, dryRunParameter(method, annotation.dryRun()), check(method, annotation.check()),
-			unavailable(method, annotation.unavailable()));
+			provider, method, dryRunParameter(method, annotation.dryRun()),
+			companion(method, annotation.check(), String.class, "check", "the refusal as a String"),
+			unavailable(method, annotation.unavailable()),
+			companion(method, annotation.commitMessage(), ResKey.class, "commit message", "a ResKey"));
 	}
 
 	/**
@@ -126,28 +129,45 @@ public final class AnnotatedTools {
 	}
 
 	/**
-	 * The method {@link ToolMethod#check()} names, or <code>null</code> for a tool that refuses
-	 * nothing early.
+	 * The method of the tool method's class that a companion property of {@link ToolMethod} - its
+	 * {@link ToolMethod#check()} or {@link ToolMethod#commitMessage()} - names, or <code>null</code>
+	 * for an empty name.
+	 *
+	 * <p>
+	 * Such a method takes exactly the parameters of the tool method and is invoked with the same
+	 * arguments. Checked when the tool is created: a misspelled name fails there, not in a run.
+	 * </p>
+	 *
+	 * @param method
+	 *        The tool method.
+	 * @param name
+	 *        The name of the companion method.
+	 * @param returnType
+	 *        What the companion method must return.
+	 * @param role
+	 *        What the companion method is to the tool, for the error message.
+	 * @param result
+	 *        What the companion method must return, in words, for the error message.
 	 */
-	private static Method check(Method method, String name) {
+	private static Method companion(Method method, String name, Class<?> returnType, String role, String result) {
 		if (name.isEmpty()) {
 			return null;
 		}
 		for (Class<?> clazz = method.getDeclaringClass(); clazz != null; clazz = clazz.getSuperclass()) {
 			try {
-				Method check = clazz.getDeclaredMethod(name, method.getParameterTypes());
-				if (check.getReturnType() != String.class) {
-					throw new IllegalArgumentException("The check '" + name + "' of tool method '"
-						+ method.getName() + "' must return the refusal as a String.");
+				Method companion = clazz.getDeclaredMethod(name, method.getParameterTypes());
+				if (companion.getReturnType() != returnType) {
+					throw new IllegalArgumentException("The " + role + " '" + name + "' of tool method '"
+						+ method.getName() + "' must return " + result + ".");
 				}
-				check.setAccessible(true);
-				return check;
+				companion.setAccessible(true);
+				return companion;
 			} catch (NoSuchMethodException ex) {
 				// Look further up.
 			}
 		}
 		throw new IllegalArgumentException("Tool method '" + method.getName() + "' names '" + name
-			+ "' as its check, and its class has no method of that name with the same parameters.");
+			+ "' as its " + role + ", and its class has no method of that name with the same parameters.");
 	}
 
 	/**
@@ -155,7 +175,7 @@ public final class AnnotatedTools {
 	 * in every run.
 	 *
 	 * <p>
-	 * Checked when the tool is created, like the {@link #check(Method, String) check}: a misspelled
+	 * Checked when the tool is created, like the {@link #companion(Method, String, Class, String, String) check}: a misspelled
 	 * name would otherwise offer the tool in every run, which is the very failure the declaration is
 	 * there to prevent.
 	 * </p>
@@ -667,10 +687,12 @@ public final class AnnotatedTools {
 
 		private final Method _unavailable;
 
+		private final Method _commitMessage;
+
 		ReflectiveTool(String name, String description, ToolSchema schema,
 				ToolMode mode, boolean concurrencySafe, int truncationHint, String group,
 				List<String> types, AnswerMarking marking, Object provider, Method method, Parameter dryRun,
-				Method check, Method unavailable) {
+				Method check, Method unavailable, Method commitMessage) {
 			_name = name;
 			_description = description;
 			_schema = schema;
@@ -685,6 +707,7 @@ public final class AnnotatedTools {
 			_dryRun = dryRun;
 			_check = check;
 			_unavailable = unavailable;
+			_commitMessage = commitMessage;
 		}
 
 		@Override
@@ -753,6 +776,35 @@ public final class AnnotatedTools {
 				throw new RuntimeException(cause.getMessage(), cause);
 			} catch (IllegalAccessException e) {
 				throw new RuntimeException("Cannot invoke the check of tool method: " + _method.getName(), e);
+			}
+		}
+
+		/**
+		 * The answer of the {@link ToolMethod#commitMessage() commit message method}, invoked with
+		 * the arguments the tool method would be invoked with; <code>null</code> for arguments that
+		 * do not coerce - the call then fails on them when it runs.
+		 */
+		@Override
+		public ResKey commitMessage(Map<String, Object> arguments, ToolExecutionContext context) {
+			if (_commitMessage == null) {
+				return Tool.super.commitMessage(arguments, context);
+			}
+			Object[] invokeArgs;
+			try {
+				invokeArgs = invokeArgs(arguments, context);
+			} catch (ToolArgumentCoercionException ex) {
+				return null;
+			}
+			try {
+				return (ResKey) _commitMessage.invoke(_provider, invokeArgs);
+			} catch (InvocationTargetException e) {
+				Throwable cause = e.getCause();
+				if (cause instanceof RuntimeException re) {
+					throw re;
+				}
+				throw new RuntimeException(cause.getMessage(), cause);
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException("Cannot invoke the commit message of tool method: " + _method.getName(), e);
 			}
 		}
 

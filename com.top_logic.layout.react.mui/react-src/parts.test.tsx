@@ -475,7 +475,7 @@ describe('the TopLogic drawing of the parts', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('draws a multi-line box as the text area of the design system, without icon and action, passing its keys', async () => {
+  it('draws a multi-line box as the text area of the design system, with its action but no icon, passing its keys', async () => {
     const { TextInputPart } = await defaults();
     const onKeyDown = vi.fn();
 
@@ -487,7 +487,9 @@ describe('the TopLogic drawing of the parts', () => {
     expect(area.className).toBe('tl-field tl-field--multiline tl-type-body');
     expect(area.getAttribute('rows')).toBe('3');
     expect(document.querySelector('.my-icon')).toBeNull();
-    expect(screen.queryByRole('button')).toBeNull();
+    const action = screen.getByRole('button', { name: 'X' });
+    expect(action.parentElement).toBe(area.parentElement);
+    expect(action.parentElement!.classList).toContain('tl-field-group');
     await userEvent.type(area, '{Enter}');
     expect(onKeyDown.mock.calls.map(([event]) => event.key)).toEqual(['Enter']);
   });

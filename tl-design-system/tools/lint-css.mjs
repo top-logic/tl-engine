@@ -168,6 +168,32 @@ const MODIFIERS = {
   'tl-rich-text': new Set([]), // Fehler: aria-invalid am Rahmen (tl-field).
   'tl-compact-field': new Set([]), // Bearbeitbar: data-tl-state~="edit".
   'tl-chart': new Set([]),
+  // Blöcke ohne Modifier — der leere Eintrag ist die Entscheidung „keine“ (Punkt 11a: jeder Block braucht einen Eintrag).
+  'tl-copy-button': new Set([]), // field.css
+  'tl-field-hint': new Set([]), // field.css
+  'tl-field-hint-host': new Set([]), // field.css
+  'tl-field-value-group': new Set([]), // field.css
+  'tl-drag-image': new Set([]), // drag.css
+  'tl-drag-shield': new Set([]), // drag.css
+  'tl-pick-highlight': new Set([]), // drag.css
+  'tl-fab': new Set([]), // floating-action.css
+  'tl-floating-rail': new Set([]), // floating-action.css
+  'tl-fill': new Set([]), // layout.css, table.css
+  'tl-region': new Set([]), // layout.css, tabs.css, dialog.css
+  'tl-reveal-on-hover': new Set([]), // layout.css
+};
+
+// Punkt 11b: Die Modifier eines Elements (block__element--modifier) sind ebenso entschieden. Ein Element ohne
+// Eintrag hat keinen Modifier.
+const ELEMENT_MODIFIERS = {
+  'tl-card__body': new Set(['pad-default', 'pad-compact']),
+  'tl-form-field__input': new Set(['resettable']),
+  'tl-menu__item': new Set(['danger']),
+  'tl-overlay__layer': new Set(['bottom', 'bottom-left', 'bottom-right', 'center', 'fill', 'left', 'right', 'top',
+    'top-left', 'top-right']), // Die Anker der Überlagerung.
+  'tl-rich-text__markup': new Set(['inline']),
+  'tl-table__cell': new Set(['command']),
+  'tl-tooltip__body': new Set(['text']),
 };
 
 // Die einzige Ausnahme vom Ring: der Behälter mit virtuellem Cursor, nur in base.css (Spec 3b §3).
@@ -177,8 +203,16 @@ export function knownVariables(css) {
   return new Set([...css.matchAll(/--tl-[a-z0-9-]+(?=:)/g)].map((m) => m[0]));
 }
 
-export function lint(css, { known, file }) {
+/** Die Klassen, die ein Stylesheet (base.css) in seinen Selektoren definiert — die Grundklassen. */
+export function baseClasses(css) {
+  const out = new Set();
+  for (const d of declarations(css)) for (const c of d.selector.matchAll(/\.([A-Za-z0-9_-]+)/g)) out.add(c[1]);
+  return out;
+}
+
+export function lint(css, { known, file, base = new Set() }) {
   const out = [];
+  const reported = new Set(); // Block und Element-Modifier je Datei einmal melden, nicht je Deklaration.
   const say = (d, msg) => out.push(`${file}:${d.line} ${d.selector} { ${d.property} } — ${msg}`);
   for (const d of declarations(css)) {
     const sel = d.selector;
@@ -201,7 +235,21 @@ export function lint(css, { known, file }) {
       if (!BEM.test(cls[1])) out.push(`${file}:${d.line} .${cls[1]} — kein tl-Präfix oder kein BEM (block__element--modifier)`);
     for (const cls of sel2.matchAll(/\.([A-Za-z0-9_-]+)/g)) {
       if (ELEMENT_STATE_MODIFIER.test(cls[1])) out.push(`${file}:${d.line} .${cls[1]} — Zustand als Element-Modifier; Zustände sind Attribute`);
-      else if (STATE_MODIFIER.test(cls[1])) out.push(`${file}:${d.line} .${cls[1]} — Zustand als Modifier; Zustände sind Attribute`);
+      else {
+        if (STATE_MODIFIER.test(cls[1])) out.push(`${file}:${d.line} .${cls[1]} — Zustand als Modifier; Zustände sind Attribute`);
+        // Punkt 11b: ein Element-Modifier muss entschieden sein.
+        const em = /^(tl-[a-z0-9-]+?__[a-z0-9-]+?)--([a-z0-9-]+)$/.exec(cls[1]);
+        if (em && !ELEMENT_MODIFIERS[em[1]]?.has(em[2]) && !reported.has(cls[1])) {
+          reported.add(cls[1]);
+          out.push(`${file}:${d.line} .${cls[1]} — Element-Modifier ${cls[1]} nicht entschieden; erlaubt an ${em[1]}: ${[...(ELEMENT_MODIFIERS[em[1]] ?? [])].join(', ') || 'keiner'}`);
+        }
+      }
+      // Punkt 11a: jeder Block hat einen Eintrag in MODIFIERS (auch der leere); die Grundklassen aus base.css nicht.
+      const blk = cls[1].split('__')[0].split('--')[0];
+      if (BEM.test(cls[1]) && !MODIFIERS[blk] && !base.has(cls[1]) && !reported.has(blk)) {
+        reported.add(blk);
+        out.push(`${file}:${d.line} .${cls[1]} — Block ${blk} ohne Eintrag in MODIFIERS`);
+      }
       const m = /^(tl-[a-z0-9-]+?)--([a-z0-9-]+)$/.exec(cls[1]);
       if (m && MODIFIERS[m[1]] && !MODIFIERS[m[1]].has(m[2]))
         out.push(`${file}:${d.line} .${cls[1]} — kein Modifier von ${m[1]}; erlaubt: ${[...MODIFIERS[m[1]]].join(', ')}`);
@@ -227,6 +275,8 @@ export function lint(css, { known, file }) {
     if (d.property === 'line-height' && !isTypeClass && sel !== 'body')
       say(d, 'line-height außerhalb einer Typo-Klasse');
 
+    if (TYPE_FILES.test(file) && /\.tl-(type|print)-/.test(sel) && /^(font-family|font-size|font-weight|line-height|letter-spacing)$/.test(d.property)
+      && !/^var\(--tl-font-[a-z0-9-]+\)$/.test(d.value.trim())) say(d, 'Typo-Klasse liest nur --tl-font-*');
     if (d.property === 'z-index' && !/^var\(--tl-layer-/.test(d.value)) say(d, 'z-index nur aus --tl-layer-*');
     if (d.property === 'box-shadow' && !/^var\(--tl-shadow-/.test(d.value) && !/^inset\b/.test(d.value) && !HOF.test(d.value.trim()))
       say(d, 'box-shadow nur --tl-shadow-*, inset-Linie oder Hof (0 0 0 <Maß> surface-state-hover/-hover-strong/-active)');
@@ -258,7 +308,7 @@ export function lint(css, { known, file }) {
     // Punkt 1: benannte Farben (weiß, rot, …) sind ein Farbliteral wie ein Hex-Wert.
     for (const word of rest.split(/\s+/)) if (NAMED_COLORS.has(word.toLowerCase())) say(d, `Farbliteral (benannte Farbe): ${d.value}`);
     if (TIME.test(rest) && !/0\.01ms/.test(rest)) say(d, `Dauer-Literal: ${d.value}`);
-    if (file !== 'base.css' || !/\.tl-print-|\.tl-icon-|line-height|letter-spacing/.test(sel + d.property))
+    if (file !== 'base.css' || !/\.tl-icon-/.test(sel))
       if (LENGTH.test(rest)) say(d, `Maß-Literal: ${d.value}`);
   }
   return out;
@@ -276,8 +326,9 @@ if (typeof process !== 'undefined' && import.meta.url === `file://${process.argv
     const T = JSON.parse(readFileSync(new URL('../src/tokens.json', import.meta.url), 'utf8'));
     for (const c of componentSources(comps)) files.push([c.name, expandRoles(c.css, T)]);
   }
+  const base = baseClasses(readFileSync(new URL('base.css', dist), 'utf8'));
   let n = 0;
-  for (const [f, css] of files) for (const v of lint(css, { known, file: f })) { console.log(v); n++; }
+  for (const [f, css] of files) for (const v of lint(css, { known, file: f, base })) { console.log(v); n++; }
   console.log(n ? `${n} Verstöße` : 'Klassen-Gate grün');
   process.exit(n ? 1 : 0);
 }

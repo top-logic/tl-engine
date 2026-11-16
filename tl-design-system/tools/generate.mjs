@@ -121,18 +121,30 @@ function baseCss(T) {
   // stehen vor der Klasse in derselben Regel, je auf eigener Zeile. Vorangestellt, nicht angehängt — die Regel
   // endet weiter mit `.tl-type-<n> {`.
   const prose = (n) => ((T.prose ?? {})[n] ?? []).map((el) => `.tl-prose ${el},\n`).join('');
-  const type = Object.entries(T.type).filter(([k]) => !k.startsWith('_')).map(([n, k]) => `${prose(n)}.tl-type-${n} {
-  font-family: var(--tl-font-family-${k.family});
-  font-size: var(--tl-font-size-${k.size});
-  font-weight: ${k.weight};
-  line-height: ${k.lineHeight};
-  letter-spacing: ${k.tracking};
-}`).join('\n\n');
-  const print = Object.entries(T.print).map(([n, k]) => `  .tl-print-${n} {
-    font-size: ${k.size};
-    font-weight: ${k.weight};
-    line-height: ${k.lineHeight};
-  }`).join('\n');
+  // Jedes Feld nennt eine Rolle aus T.measure; eine unbekannte Rolle bricht die Erzeugung ab, statt eine
+  // var() auf eine nicht definierte Variable zu schreiben.
+  const rolle = (klasse, feld, name) => {
+    if (!(name in T.measure)) throw new Error(`${klasse}: ${feld} nennt die Rolle ${name}, die in tokens.json measure fehlt`);
+    return `var(--tl-${name})`;
+  };
+  const type = Object.entries(T.type).filter(([k]) => !k.startsWith('_')).map(([n, k]) => {
+    const c = `type.${n}`;
+    return `${prose(n)}.tl-type-${n} {
+  font-family: ${rolle(c, 'family', `font-family-${k.family}`)};
+  font-size: ${rolle(c, 'size', `font-size-${k.size}`)};
+  font-weight: ${rolle(c, 'weight', `font-weight-${k.weight}`)};
+  line-height: ${rolle(c, 'lineHeight', `font-line-height-${k.lineHeight}`)};
+  letter-spacing: ${rolle(c, 'tracking', `font-letter-spacing-${k.tracking}`)};
+}`;
+  }).join('\n\n');
+  const print = Object.entries(T.print).filter(([k]) => !k.startsWith('_')).map(([n, k]) => {
+    const c = `print.${n}`;
+    return `  .tl-print-${n} {
+    font-size: ${rolle(c, 'size', `font-size-${k.size}`)};
+    font-weight: ${rolle(c, 'weight', `font-weight-${k.weight}`)};
+    line-height: ${rolle(c, 'lineHeight', `font-line-height-${k.lineHeight}`)};
+  }`;
+  }).join('\n');
   return `${HEAD}/* Grundklassen. Jede liest nur Variablen. */
 html {
   -webkit-text-size-adjust: 100%;

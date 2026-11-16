@@ -94,13 +94,14 @@ public class ScriptToolStore {
 	 *         script body does not parse/compile.
 	 */
 	public void create(String name, String label, String description, List<ParamSpec> parameters,
-			String implementation, String mode, boolean concurrencySafe) {
+			String implementation, String mode, boolean concurrencySafe, String commitMessage) {
 		requireName(name);
 		Map<String, ScriptToolConfig> tools = factoryTools();
 		if (tools.containsKey(name)) {
 			throw new IllegalArgumentException("A script tool named '" + name + "' already exists.");
 		}
-		tools.put(name, buildConfig(name, label, description, parameters, implementation, mode, concurrencySafe));
+		tools.put(name, buildConfig(name, label, description, parameters, implementation, mode, concurrencySafe,
+			commitMessage, null));
 	}
 
 	/**
@@ -117,8 +118,19 @@ public class ScriptToolStore {
 		return new ArrayList<>(factoryTools().values());
 	}
 
+	/**
+	 * A tool configuration from the given values.
+	 *
+	 * @param commitMessage
+	 *        The source of the {@link ScriptToolConfig#getCommitMessage() commit message} expression;
+	 *        <code>null</code> or blank for none.
+	 * @param existing
+	 *        The configuration the result replaces, whose properties this store does not author are
+	 *        kept; <code>null</code> for a new tool.
+	 */
 	private ScriptToolConfig buildConfig(String name, String label, String description,
-			List<ParamSpec> parameters, String implementation, String mode, boolean concurrencySafe) {
+			List<ParamSpec> parameters, String implementation, String mode, boolean concurrencySafe,
+			String commitMessage, ScriptToolConfig existing) {
 		ScriptToolConfig cfg = TypedConfiguration.newConfigItem(ScriptToolConfig.class);
 		cfg.setName(name);
 		if (label != null && !label.isBlank()) {
@@ -136,6 +148,15 @@ public class ScriptToolStore {
 		cfg.update(cfg.descriptor().getProperty(ScriptToolConfig.MODE), parseMode(mode));
 		cfg.update(cfg.descriptor().getProperty(ScriptToolConfig.CONCURRENCY_SAFE),
 			Boolean.valueOf(concurrencySafe));
+		if (commitMessage != null && !commitMessage.isBlank()) {
+			cfg.update(cfg.descriptor().getProperty(ScriptToolConfig.COMMIT_MESSAGE),
+				parseExpression(ScriptToolConfig.COMMIT_MESSAGE, commitMessage));
+		}
+		if (existing != null) {
+			cfg.update(cfg.descriptor().getProperty(ScriptToolConfig.SUMMARY), existing.getSummary());
+			cfg.update(cfg.descriptor().getProperty(ScriptToolConfig.TRUNCATION_HINT),
+				Integer.valueOf(existing.getTruncationHint()));
+		}
 		compileCheck(cfg);
 		return cfg;
 	}
@@ -182,6 +203,15 @@ public class ScriptToolStore {
 		}
 	}
 
+	private static Expr parseExpression(String property, String source) {
+		try {
+			return ExprFormat.INSTANCE.getValue(property, source);
+		} catch (ConfigurationException ex) {
+			throw new IllegalArgumentException("The TL-Script of '" + property + "' does not parse: "
+				+ ex.getMessage(), ex);
+		}
+	}
+
 	private static ToolMode parseMode(String mode) {
 		if (mode == null || mode.isBlank()) {
 			return ToolMode.DATA_WRITE;
@@ -200,13 +230,14 @@ public class ScriptToolStore {
 
 	/**
 	 * Updates an existing TL-Script tool. Null arguments leave the corresponding field unchanged;
-	 * a non-null {@code parameters} replaces the full parameter list.
+	 * a non-null {@code parameters} replaces the full parameter list, and a blank
+	 * {@code commitMessage} removes the commit message expression.
 	 *
 	 * @throws IllegalArgumentException
 	 *         If no tool with the given name exists, or a new value fails validation.
 	 */
 	public void update(String name, String label, String description, List<ParamSpec> parameters,
-			String implementation, String mode, Boolean concurrencySafe) {
+			String implementation, String mode, Boolean concurrencySafe, String commitMessage) {
 		requireName(name);
 		Map<String, ScriptToolConfig> tools = factoryTools();
 		ScriptToolConfig existing = tools.get(name);
@@ -222,7 +253,9 @@ public class ScriptToolStore {
 			implementation != null ? implementation
 				: ExprFormat.INSTANCE.getSpecification(existing.getImplementation()),
 			mode != null ? mode : existing.getMode().name(),
-			concurrencySafe != null ? concurrencySafe.booleanValue() : existing.isConcurrencySafe());
+			concurrencySafe != null ? concurrencySafe.booleanValue() : existing.isConcurrencySafe(),
+			commitMessage != null ? commitMessage : commitMessageOf(existing),
+			existing);
 		tools.put(name, merged);
 	}
 
@@ -250,6 +283,15 @@ public class ScriptToolStore {
 				descriptionText(p.getDescription()), p.isMandatory(), p.isMultiple(), def));
 		}
 		return specs;
+	}
+
+	/**
+	 * The source of the given tool's {@link ScriptToolConfig#getCommitMessage() commit message}
+	 * expression, or <code>null</code> when it has none.
+	 */
+	public static String commitMessageOf(ScriptToolConfig cfg) {
+		return cfg.getCommitMessage() == null ? null
+			: ExprFormat.INSTANCE.getSpecification(cfg.getCommitMessage());
 	}
 
 	private static String labelOf(ScriptToolConfig cfg) {

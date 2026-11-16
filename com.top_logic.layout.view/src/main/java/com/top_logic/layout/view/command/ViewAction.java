@@ -88,20 +88,6 @@ public interface ViewAction {
 	}
 
 	/**
-	 * Whether this action applies the values entered into the enclosing form.
-	 *
-	 * <p>
-	 * A command containing such an action cannot succeed while the form displays validation
-	 * errors, so it is disabled until they are fixed.
-	 * </p>
-	 *
-	 * @see FormValid
-	 */
-	default boolean appliesFormState() {
-		return false;
-	}
-
-	/**
 	 * The executability this action brings of its own, decided by what the action knows about the
 	 * operation it performs rather than by what the command using it configured.
 	 *

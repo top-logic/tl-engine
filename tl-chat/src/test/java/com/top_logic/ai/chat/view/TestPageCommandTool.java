@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -29,6 +30,7 @@ import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.MultiFileManager;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.func.Function0;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.gui.ThemeFactory;
@@ -52,7 +54,9 @@ import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.tools.model.AgentObjectFormat;
 import com.top_logic.tl.ai.core.tools.refusal.messages.ApplicationRefusal;
 import com.top_logic.tl.ai.core.tools.refusal.messages.Reason;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
@@ -99,11 +103,29 @@ public class TestPageCommandTool extends BasicTestCase {
 	 */
 	private static final String CHECKING = "checkingCommand";
 
-	/** A command of the fixture's page that takes an object and writes it to {@link #SHOWN}. */
+	/**
+	 * A command of the fixture's page that takes an object as parameter {@link #OBJECT} and writes
+	 * it to {@link #SHOWN}.
+	 */
 	private static final String SHOW = "showObject";
 
-	/** What object {@link #SHOW} takes, as the page tells the model. */
-	private static final String SHOW_INPUT = "The object to show.";
+	/** The object parameter of {@link #SHOW} and {@link #GUARDED}. */
+	private static final String OBJECT = "object";
+
+	/** What {@link #OBJECT} is, as the page tells the model. */
+	private static final String OBJECT_DESCRIPTION = "The object to show.";
+
+	/**
+	 * A command of the fixture's page that takes one of the {@link Tabs} as mandatory parameter
+	 * {@link #TAB} and writes it to {@link #SHOWN}.
+	 */
+	private static final String OPEN_TAB = "openTab";
+
+	/** The text parameter of {@link #OPEN_TAB}. */
+	private static final String TAB = "tab";
+
+	/** What {@link #TAB} is, as the page tells the model. */
+	private static final String TAB_DESCRIPTION = "The tab to open.";
 
 	/** A command of the fixture's page that takes an object and whose rule refuses every object. */
 	private static final String GUARDED = "guardedCommand";
@@ -188,9 +210,9 @@ public class TestPageCommandTool extends BasicTestCase {
 		String listed = _tool.pageCommands(context());
 		assertSays("- " + OPEN + ": " + OPEN_DESCRIPTION, listed);
 		assertSays("- " + LOCKED + ": ", listed);
-		assertSays("- " + OPEN + ": " + OPEN_DESCRIPTION + " Takes no object.", listed);
-		assertSays("- " + SHOW + ": Shows an object. Takes an object, its id passed as '"
-			+ ChatCommandTool.ARG_INPUT + "': " + SHOW_INPUT, listed);
+		assertSays("- " + OPEN + ": " + OPEN_DESCRIPTION + " Takes no arguments.", listed);
+		assertSays("- " + SHOW + ": Shows an object. Its '" + ChatCommandTool.ARG_ARGUMENTS + "': {", listed);
+		assertSays(OBJECT_DESCRIPTION, listed);
 
 		String result = _tool.runPageCommand(OPEN, null, context());
 
@@ -268,15 +290,82 @@ public class TestPageCommandTool extends BasicTestCase {
 	}
 
 	/**
-	 * The object the agent passes is the main argument of the command's run: its chain processes
-	 * it, here by writing it to a channel.
+	 * The schema of a command's parameters lists which are mandatory and the values allowed for one
+	 * with options.
 	 */
-	public void testTheObjectIsTheArgumentOfTheRun() throws Exception {
+	public void testTheListShowsTheSchemaOfTheParameters() throws Exception {
 		displayPage();
 
-		String result = _tool.runPageCommand(SHOW, tid(user), context());
+		String listed = _tool.pageCommands(context());
 
-		assertSays("The command '" + SHOW + "' ran in the user's page for ", result);
+		String line = listed.lines().filter(l -> l.startsWith("- " + OPEN_TAB + ":")).findFirst().orElseThrow();
+		assertSays("\"required\":[\"" + TAB + "\"]", line);
+		assertSays("\"enum\":[\"" + Tabs.OVERVIEW + "\",\"" + Tabs.DETAILS + "\"]", line);
+		assertSays(TAB_DESCRIPTION, line);
+	}
+
+	/** A text parameter is an argument of its name in the command's chain. */
+	public void testATextParameterIsAnArgumentOfTheChain() throws Exception {
+		displayPage();
+
+		String result = _tool.runPageCommand(OPEN_TAB, Map.of(TAB, Tabs.DETAILS), context());
+
+		assertSays("The command '" + OPEN_TAB + "' ran in the user's page", result);
+		assertEquals("The chain saw the tab.", Tabs.DETAILS, _shown.get());
+	}
+
+	/** A missing mandatory parameter is refused; the command does not run. */
+	public void testAMissingMandatoryParameterIsRefused() throws Exception {
+		displayPage();
+
+		String result = _tool.runPageCommand(OPEN_TAB, null, context());
+
+		assertSays("Nothing was run: ", result);
+		assertSays("'" + TAB + "' is required", result);
+		assertNull("The chain did not run.", _shown.get());
+	}
+
+	/** A value not among the options of its parameter is refused; the command does not run. */
+	public void testAValueNotAmongTheOptionsIsRefused() throws Exception {
+		displayPage();
+
+		String result = _tool.runPageCommand(OPEN_TAB, Map.of(TAB, "history"), context());
+
+		assertSays("Nothing was run: ", result);
+		assertSays("is not allowed", result);
+		assertSays(Tabs.OVERVIEW, result);
+		assertNull("The chain did not run.", _shown.get());
+	}
+
+	/** Arguments for a command without parameters are refused; the command does not run. */
+	public void testArgumentsForACommandTakingNoneAreRefused() throws Exception {
+		displayPage();
+
+		String result = _tool.runPageCommand(OPEN, Map.of(OBJECT, tid(user)), context());
+
+		assertSays("Nothing was run: ", result);
+		assertSays("takes no arguments", result);
+		assertNull("Nothing was opened.", _dialogs._open);
+	}
+
+	/** An unknown parameter is refused, naming the ones the command takes. */
+	public void testAnUnknownParameterIsRefused() throws Exception {
+		displayPage();
+
+		String result = _tool.runPageCommand(OPEN_TAB, Map.of(TAB, Tabs.DETAILS, "color", "red"), context());
+
+		assertSays("Unknown arguments: color", result);
+		assertSays(TAB, result);
+		assertNull("The chain did not run.", _shown.get());
+	}
+
+	/** An object parameter is passed by its id and is an argument of its name in the chain. */
+	public void testAnObjectParameterIsAnArgumentOfTheChain() throws Exception {
+		displayPage();
+
+		String result = _tool.runPageCommand(SHOW, Map.of(OBJECT, tid(user)), context());
+
+		assertSays("The command '" + SHOW + "' ran in the user's page with ", result);
 		assertSays(tid(user), result);
 		assertSame("The chain processed the object.", user, _shown.get());
 	}
@@ -290,20 +379,10 @@ public class TestPageCommandTool extends BasicTestCase {
 		ToolContext run = new ToolContext(new TestPresentTool.RunAs(new TestPresentTool.NoReadSecurity()),
 			ApprovalCallback.AUTO_APPROVE);
 
-		String result = _tool.runPageCommand(SHOW, tid(user), run);
+		String result = _tool.runPageCommand(SHOW, Map.of(OBJECT, tid(user)), run);
 
 		assertSays("Nothing was run: ", result);
 		assertNull("The chain did not run.", _shown.get());
-	}
-
-	/** An object for a command without an input description is refused; the command does not run. */
-	public void testAnObjectForACommandTakingNoneIsRefused() throws Exception {
-		displayPage();
-
-		String result = _tool.runPageCommand(OPEN, tid(user), context());
-
-		assertSays("Nothing was run: the command '" + OPEN + "' takes no object.", result);
-		assertNull("Nothing was opened.", _dialogs._open);
 	}
 
 	/**
@@ -313,11 +392,10 @@ public class TestPageCommandTool extends BasicTestCase {
 	public void testARuleRefusingTheObjectAnswersWithItsReason() throws Exception {
 		displayPage();
 
-		String result = _tool.runPageCommand(GUARDED, tid(user), context());
+		String result = _tool.runPageCommand(GUARDED, Map.of(OBJECT, tid(user)), context());
 
 		ApplicationRefusal refusal = refusal(result);
 		assertEquals(GUARDED, refusal.getCommand());
-		assertEquals(tid(user), refusal.getInput());
 		assertEquals(List.of(GUARDED_REASON), messages(refusal));
 		assertNull("Its chain did not run.", _shown.get());
 	}
@@ -333,7 +411,8 @@ public class TestPageCommandTool extends BasicTestCase {
 	/**
 	 * Builds the page in the window of the run - a {@code <chat-conversation>} listing a command
 	 * opening a dialog, two that are never executable, one writing the object it takes to
-	 * {@link #SHOWN} and one refusing every object - without displaying it.
+	 * {@link #SHOWN}, one writing the tab it takes there, and one refusing every object - without
+	 * displaying it.
 	 */
 	private void buildPage() throws Exception {
 		_window = LiveWindow.open(user, WINDOW, subSession());
@@ -358,18 +437,46 @@ public class TestPageCommandTool extends BasicTestCase {
 					+ "<executability><rule class='" + BeingChecked.class.getName() + "'/></executability>"
 					+ "<open-dialog dialog-view='" + DIALOG + "'/>"
 					+ "</agent-command>"
-					+ "<agent-command name='" + SHOW + "' description='Shows an object.' input-description='"
-					+ SHOW_INPUT + "'>"
-					+ "<write-channel name='" + SHOWN + "'/>"
+					+ "<agent-command name='" + SHOW + "' description='Shows an object.'>"
+					+ objectParameter()
+					+ "<execute-script function='$" + OBJECT + "'>"
+					+ "<with-result><write-channel name='" + SHOWN + "'/></with-result>"
+					+ "</execute-script>"
 					+ "</agent-command>"
-					+ "<agent-command name='" + GUARDED + "' description='Shows no object.' input-description='"
-					+ SHOW_INPUT + "'>"
-					+ "<executability><disabled-if expr='if($input != null, \"" + GUARDED_REASON
+					+ "<agent-command name='" + OPEN_TAB + "' description='Opens a tab.'"
+					+ " label-expr='$" + TAB + "'>"
+					+ "<parameters>"
+					+ "<property name='" + TAB + "' type='String'>"
+					+ "<label><en>Tab</en><tooltip><en>" + TAB_DESCRIPTION + "</en></tooltip></label>"
+					+ "<mandatory/>"
+					+ "<options fun='" + Tabs.class.getName() + "'/>"
+					+ "</property>"
+					+ "</parameters>"
+					+ "<execute-script function='$" + TAB + "'>"
+					+ "<with-result><write-channel name='" + SHOWN + "'/></with-result>"
+					+ "</execute-script>"
+					+ "</agent-command>"
+					+ "<agent-command name='" + GUARDED + "' description='Shows no object.'>"
+					+ objectParameter()
+					+ "<executability><disabled-if expr='if($" + OBJECT + " != null, \"" + GUARDED_REASON
 					+ "\")'/></executability>"
-					+ "<write-channel name='" + SHOWN + "'/>"
+					+ "<execute-script function='$" + OBJECT + "'>"
+					+ "<with-result><write-channel name='" + SHOWN + "'/></with-result>"
+					+ "</execute-script>"
 					+ "</agent-command>"
 					+ "</agent-commands>"
 					+ "</chat-conversation>")));
+	}
+
+	/** The declaration of the mandatory object parameter {@link #OBJECT}. */
+	private static String objectParameter() {
+		return "<parameters>"
+			+ "<property name='" + OBJECT + "' type='" + TLObject.class.getName() + "'>"
+			+ "<label><en>Object</en><tooltip><en>" + OBJECT_DESCRIPTION + "</en></tooltip></label>"
+			+ "<mandatory/>"
+			+ "<format value='" + AgentObjectFormat.class.getName() + "'/>"
+			+ "</property>"
+			+ "</parameters>";
 	}
 
 	/** A run of no particular account, which asks the chats of every account of the window. */
@@ -405,6 +512,21 @@ public class TestPageCommandTool extends BasicTestCase {
 	/** The application's messages of the given refusal. */
 	private static List<String> messages(ApplicationRefusal refusal) {
 		return refusal.getReasons().stream().map(Reason::getText).toList();
+	}
+
+	/**
+	 * The options of the parameter {@link #TAB}.
+	 */
+	public static class Tabs extends Function0<List<String>> {
+
+		static final String OVERVIEW = "overview";
+
+		static final String DETAILS = "details";
+
+		@Override
+		public List<String> apply() {
+			return List.of(OVERVIEW, DETAILS);
+		}
 	}
 
 	/**

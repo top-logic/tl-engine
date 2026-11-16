@@ -9,16 +9,19 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.security.ToolSecurityException;
 import com.top_logic.tl.ai.core.text.TextEdits;
+import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.core.tools.model.TidResolver;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
@@ -235,7 +238,7 @@ public class TextEditTool {
 		+ " text, anchor on a passage you keep and put it back together with the new text in"
 		+ " 'newText'. Never send the whole value.",
 		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE,
-		marking = AnswerMarking.TOOL)
+		marking = AnswerMarking.TOOL, commitMessage = "editMessage")
 	public String editText(
 			@P("Identifier of the object, as a tool answer printed it: 'TypeName:id'") String objectId,
 			@P("Name of the Text or String attribute to change") String attribute,
@@ -257,6 +260,24 @@ public class TextEditTool {
 				TextEditTool.class);
 			return ERROR + "The value could not be changed: " + ex.getMessage();
 		}
+	}
+
+	/**
+	 * The commit message of {@link #editText(String, String, String, String, Boolean, ToolContext)}:
+	 * the attribute and the object, by their labels where they resolve.
+	 */
+	@CalledByReflection
+	ResKey editMessage(String objectId, String attribute, String oldText, String newText, Boolean replaceAll,
+			ToolContext context) {
+		Object attributeLabel = String.valueOf(attribute);
+		try {
+			TLObject target = TidResolver.resolve(objectId, context.modelSecurity());
+			attributeLabel = TLModelI18N.getI18NKey(editableText(target, attribute));
+		} catch (RuntimeException ex) {
+			// The attribute by the name the call gave.
+		}
+		return I18NConstants.TEXT_EDITED__ATTRIBUTE_OBJECT.fill(attributeLabel,
+			TidResolver.labelOrId(objectId, context.modelSecurity()));
 	}
 
 	private String doEditText(String objectId, String attribute, String oldText, String newText,

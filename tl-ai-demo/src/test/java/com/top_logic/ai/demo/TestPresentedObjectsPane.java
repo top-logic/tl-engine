@@ -7,6 +7,8 @@ package com.top_logic.ai.demo;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -67,11 +69,19 @@ public class TestPresentedObjectsPane extends TestCase {
 			rail.getSections().stream().map(SectionConfig::getName).collect(Collectors.toList()));
 	}
 
-	/** The overlay adds the demo's command to the shipped conversation. */
-	public void testTheOverlayAddsTheAgentCommand() throws Exception {
+	/**
+	 * The overlay adds the demo's commands to the shipped conversation, each with the parameters
+	 * the agent passes.
+	 */
+	public void testTheOverlayAddsTheAgentCommands() throws Exception {
 		ChatConversationElement.Config conversation = search(view(), ChatConversationElement.Config.class);
-		assertEquals(Arrays.asList("createInvoice"), conversation.getAgentCommands().stream()
-			.map(ChatConversationElement.AgentCommand::getName).collect(Collectors.toList()));
+		Map<String, List<String>> parameters = new LinkedHashMap<>();
+		for (ChatConversationElement.AgentCommand command : conversation.getAgentCommands()) {
+			parameters.put(command.getName(), command.getDeclaredParameters().names());
+		}
+		assertEquals(Map.of(
+			"createInvoice", List.of("event"),
+			"openEventTab", List.of("tab", "event")), parameters);
 	}
 
 	/** The chat page, folded from the shipped view and this demo's overlay. */

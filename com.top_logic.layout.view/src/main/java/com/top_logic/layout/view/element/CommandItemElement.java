@@ -102,12 +102,12 @@ public class CommandItemElement implements SidebarItemElement {
 		}
 		ViewCommandModel model = ViewCommandModel.forCommand(context, _command, _commandConfig);
 
+		// Label, icon and the state the rules assign right now are part of what the sidebar is first
+		// sent.
+		model.revalidate();
 		ThemeImage image = model.getImage();
 		CommandItem item = new CommandItem(_id, model.getLabel(), ReactImages.encode(context, image),
 			model::executeCommand);
-
-		// The state the rules assign right now is part of what the sidebar is first sent.
-		model.revalidate();
 		item.setExecutableState(model.getExecutableState());
 		item.setTooltip(model.getTooltip());
 
@@ -119,10 +119,15 @@ public class CommandItemElement implements SidebarItemElement {
 				boolean hidden = item.isHidden();
 				boolean disabled = item.isDisabled();
 				String tooltip = item.getTooltip();
+				String label = item.getLabel();
+				String icon = item.getIcon();
 				item.setExecutableState(model.getExecutableState());
 				item.setTooltip(model.getTooltip());
+				item.setLabel(model.getLabel());
+				item.setIcon(ReactImages.encode(context, model.getImage()));
 				if (hidden != item.isHidden() || disabled != item.isDisabled()
-					|| !Objects.equals(tooltip, item.getTooltip())) {
+					|| !Objects.equals(tooltip, item.getTooltip()) || !Objects.equals(label, item.getLabel())
+					|| !Objects.equals(icon, item.getIcon())) {
 					// Only what the client displays needs to be sent again; the reason of a refusal
 					// stays on the server.
 					sidebar.refreshItems();

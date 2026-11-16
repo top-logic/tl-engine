@@ -60,7 +60,7 @@ public class TestMailHelper extends BasicTestCase {
 	 */
 	public static final String VALID_USER_NAME = "test-user1";
 
-	private static final String INVALID_ADDRESS = "fal§e@develop.local";
+	private static final String INVALID_ADDRESS = "fal se@develop.local";
 
 	private static final String SERVER_ALIAS = "%IMAP_SERVER%";
 

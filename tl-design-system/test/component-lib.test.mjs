@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { varsOf, colorVarsOf, declarationsOf, specimenProblems, missingInContract } from './lib/component.mjs';
+import { varsOf, colorVarsOf, declarationsOf, specimenProblems, missingInContract, namedInContract } from './lib/component.mjs';
 
 const CSS = `/* Kopf — steht vor dem ersten Selektor, wie in jeder Komponentendatei. */
 .tl-a, .tl-a--x { color: var(--tl-text-primary); border: var(--tl-border-width-sm) solid var(--tl-border-control); }
@@ -25,4 +25,17 @@ test('specimenProblems meldet fehlende Schalter und Inline-Styles', () => {
 
 test('missingInContract nennt, was nicht in Backticks steht', () => {
   assert.deepEqual(missingInContract('liest `--tl-text-primary`', ['--tl-text-primary', 'aria-invalid']), ['aria-invalid']);
+});
+
+test('namedInContract: ein Begriff gilt nur als ganzes Wort im Codespan, nicht als Präfix eines längeren Namens', () => {
+  assert.equal(namedInContract('`tl-picker__actions`', 'tl-picker'), false, 'Präfix eines Elements');
+  assert.equal(namedInContract('`tl-picker-x`', 'tl-picker'), false, 'Präfix eines Blocks');
+  assert.equal(namedInContract('`tl-picker`', 'tl-picker'), true);
+  assert.equal(namedInContract('`tl-popover tl-menu`', 'tl-menu'), true, 'Wort in einem Span mit mehreren Klassen');
+  assert.equal(namedInContract('tl-picker ohne Backticks', 'tl-picker'), false);
+  assert.equal(namedInContract('`role="tooltip"` und `--tl-surface-inverse`', 'role="tooltip"'), true, 'Sonderzeichen');
+  assert.equal(namedInContract('`role="tooltip"` und `--tl-surface-inverse`', '--tl-surface-inverse'), true);
+  assert.equal(namedInContract('`aria-invalid="true"`', 'aria-invalid'), true, 'Wert hinter dem Namen');
+  assert.equal(namedInContract('`a\nb tl-x`', 'tl-x'), true, 'Span über Zeilen');
+  assert.equal(namedInContract('`--tl-text-primary-strong`', '--tl-text-primary'), false);
 });

@@ -50,9 +50,9 @@ public interface RenderContext {
 	 * Default {@code font-size} (in CSS pixels) assumed when no per-text size is set.
 	 *
 	 * <p>
-	 * Matches the default rule {@code text:not([font-size]):not([class]) { font-size: 14px }} from
-	 * {@code tl-blocks.css}, which applies to both the block editor and flow diagrams in the
-	 * interactive client.
+	 * Matches the default rule {@code .tlDiagram text:not([font-size]):not([class]) { font-size:
+	 * 14px }} from {@code tl-blocks.css}, which applies to flow diagrams in the interactive
+	 * client.
 	 * </p>
 	 *
 	 * @see #DEFAULT_FONT_FAMILY

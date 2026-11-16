@@ -203,9 +203,11 @@ test('Tiefe: der Trenner im Kopf steht immer, leise in Ruhe, unter dem Zeiger in
   // Wo die Zelle ihre Kante selbst zeichnet, keine zweite Linie daneben — aber der Griff zeigt sich unter dem Zeiger.
   assert.match(alleDeklarationen(css, '.tl-table__header-cell[data-tl-state~="frozen-last"] > .tl-table__resize:not(:hover, :active, :focus-visible)::after'),
     /background:\s*transparent/);
-  // Die ganze Kopfzelle zeigt die Fläche unter dem Zeiger, sobald sie sortiert oder einen Griff trägt.
-  assert.match(alleDeklarationen(css, ".tl-table__header-cell:has(> .tl-table__sort, > .tl-table__resize):hover"),
+  // Die ganze Kopfzelle zeigt die Fläche unter dem Zeiger, sobald sie sortiert oder einen Griff trägt; eine getönte
+  // Kopfzelle (data-tl-role) behält ihre Tönung.
+  assert.match(alleDeklarationen(css, ".tl-table__header-cell:not([data-tl-role]):has(> .tl-table__sort, > .tl-table__resize):hover"),
     /background:\s*var\(--tl-surface-interactive-strong\)/);
+  assert.doesNotMatch(ohneKommentar(css), /\.tl-table__header-cell:has\(> \.tl-table__sort, > \.tl-table__resize\):hover/);
   assert.match(alleDeklarationen(css, ".tl-table__columns:hover"), /background:\s*var\(--tl-surface-interactive-strong\)/);
   assert.doesNotMatch(ohneKommentar(css), /\.tl-table__sort:hover\)/);
 });

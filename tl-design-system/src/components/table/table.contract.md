@@ -267,7 +267,9 @@ trägt ihre, die übrigen die der Zeile. An einer ausgewählten Zeile und ihren 
 gewinnt. Zeigen ändert die Tönung nicht, haftende Zellen erben die Tönung ihrer Zeile.
 `columns[].headerRole` setzt `data-tl-role` an die Kopfzelle, über dieselben drei `@tl-roles`-Arten gezeichnet:
 die Fläche der Rolle, dazu ein Streifen unten (`--tl-border-width-accent`) in der Linie der Rolle, die Überschrift
-in `--tl-text-primary`. `columns[].headerClass` steht nur an der Kopfzelle, die Datenzellen tragen sie nicht.
+in `--tl-text-primary`; Zeigen ändert die Tönung nicht (keine kräftigere Fläche je Rolle), das Grau des Zeigens
+(`--tl-surface-interactive-strong`) bekommt nur eine Kopfzelle ohne Rolle. `columns[].headerClass` steht nur an der
+Kopfzelle, die Datenzellen tragen sie nicht.
 
 ## Zellinhalt
 

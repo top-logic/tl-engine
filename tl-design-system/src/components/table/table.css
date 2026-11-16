@@ -167,8 +167,9 @@
    sortieren oder in der Breite ziehen; die Auswahl- und die Befehlsspalte tragen keinen der beiden. Der Kopf liegt auf
    surface-layer-muted, und surface-interactive-hover ist dort im Hellen dieselbe Farbe (gray-4 auf gray-3): der Kopf
    zeigt darum eine Stufe kräftiger, surface-interactive-strong — wie ein Knopf im Feld (skalen.md „Knöpfe im Feld
-   zeigen eine Stufe kräftiger“). */
-.tl-table__header-cell:has(> .tl-table__sort, > .tl-table__resize):hover {
+   zeigen eine Stufe kräftiger“). Eine getönte Kopfzelle (data-tl-role) behält beim Zeigen ihre Tönung, wie eine
+   getönte Zeile: das Design-System hat keine kräftigere Fläche je Rolle, und das Grau nähme dem Kopf seine Rolle. */
+.tl-table__header-cell:not([data-tl-role]):has(> .tl-table__sort, > .tl-table__resize):hover {
   background: var(--tl-surface-interactive-strong);
 }
 

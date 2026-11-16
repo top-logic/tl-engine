@@ -81,6 +81,7 @@ public class TestSQLMigrationProcessor extends BasicTestCase {
 		col1.setSize(20);
 		table.getColumns().add(col1);
 		DBSchemaUtils.createTables(_writeConnection, schema, true);
+		_writeConnection.commit();
 		try {
 			String insertValue = BasicTestCase.randomString(50, true, false, false, false);
 			CompiledStatement insert = query(insert(table(tableName, "t"),
@@ -113,6 +114,7 @@ public class TestSQLMigrationProcessor extends BasicTestCase {
 			}
 		} finally {
 			DBSchemaUtils.resetTables(_writeConnection, schema, false);
+			_writeConnection.commit();
 		}
 	}
 

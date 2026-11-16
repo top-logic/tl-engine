@@ -26,6 +26,11 @@ import com.top_logic.basic.sql.PooledConnection;
 /**
  * {@link MigrationProcessor} dropping the configured tables.
  * 
+ * <p>
+ * A configured table that does not exist is skipped. The drop is not committed, the migration
+ * commits it together with the other changes of its version.
+ * </p>
+ * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class DropTablesProcessor extends AbstractConfiguredInstance<DropTablesProcessor.Config>
@@ -66,11 +71,23 @@ public class DropTablesProcessor extends AbstractConfiguredInstance<DropTablesPr
 		try {
 			DBSchema schema = DBSchemaFactory.createDBSchema();
 			for (String tableName : getConfig().getTables()) {
+				if (!DBSchemaUtils.exists(connection, tableName)) {
+					log.info("Table '" + tableName + "' does not exist, nothing to drop.");
+					continue;
+				}
 				DBTable table = DBSchemaFactory.createTable(tableName);
 				schema.getTables().add(table);
 			}
-			DBSchemaUtils.resetTables(connection, schema, false);
-			log.info("Dropped tables: " + getConfig().getTables().stream().collect(Collectors.joining(", ")));
+			if (schema.getTables().isEmpty()) {
+				return;
+			}
+
+			String tableNames = schema.getTables().stream().map(DBTable::getDBName).collect(Collectors.joining(", "));
+			if (DBSchemaUtils.resetTables(connection, schema, false)) {
+				log.info("Dropped tables: " + tableNames);
+			} else {
+				log.error("Failed to drop tables: " + tableNames);
+			}
 		} catch (SQLException ex) {
 			log.error("Failed to drop tables.", ex);
 		}

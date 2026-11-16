@@ -1387,7 +1387,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	@Override
 	public boolean isAllowed(Person person, TLObject instance, BoundCommandGroup commandGroup) {
-		if (!(instance instanceof BoundObject)) {
+		if (!isPersistent(instance)) {
 			return true;
 		}
 		if (isDeleted(instance)) {
@@ -1409,6 +1409,19 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return allowedBypass;
 		}
 		return decide(decisionCache(), person, instance, commandGroup);
+	}
+
+	/**
+	 * Whether the given object is a persistent object, the object a {@link KnowledgeItem} stands
+	 * for.
+	 *
+	 * <p>
+	 * A transient object, a form object editing a persistent object, and <code>null</code> are no
+	 * persistent objects, they are not access controlled.
+	 * </p>
+	 */
+	private static boolean isPersistent(TLObject object) {
+		return object != null && !object.tTransient() && object.tHandle().getWrapper() == object;
 	}
 
 	/**
@@ -1499,8 +1512,12 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			}
 			return false;
 		}
+		if (!(instance instanceof BoundObject holder)) {
+			// A persistent object that cannot hold roles grants no role to anybody.
+			return false;
+		}
 		Set<BoundedRole> roles = getRoles(instance, commandGroup);
-		return accessManager().hasRole(person, (BoundObject) instance, roles);
+		return accessManager().hasRole(person, holder, roles);
 	}
 
 	/**
@@ -1626,7 +1643,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	@Override
 	public boolean isAllowed(Person person, TLObject instance, TLStructuredTypePart attribute,
 			BoundCommandGroup commandGroup) {
-		if (!(instance instanceof BoundObject)) {
+		if (!isPersistent(instance)) {
 			return true;
 		}
 		if (isDeleted(instance)) {

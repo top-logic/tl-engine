@@ -449,6 +449,15 @@ public interface ModelAccessRights {
 	 * readable object is therefore readable for every person who may read the attribute. Modifying,
 	 * creating and deleting a model element is checked like for any other object.
 	 * </p>
+	 *
+	 * <p>
+	 * Every persistent object is checked, whatever its implementation class. A transient object
+	 * (including a form object editing a persistent object) is not checked, every operation on it
+	 * is allowed. A persistent object that cannot hold roles (it is no
+	 * {@link com.top_logic.tool.boundsec.BoundObject}) grants no role: an operation on it is allowed
+	 * only for a person bypassing the model security, for a type without security, or through an
+	 * access parent of its type.
+	 * </p>
 	 */
 	boolean isAllowed(Person person, TLObject instance, BoundCommandGroup commandGroup);
 
@@ -506,6 +515,12 @@ public interface ModelAccessRights {
 	 *
 	 * <p>
 	 * No attribute of a deleted object is accessible to anybody.
+	 * </p>
+	 *
+	 * <p>
+	 * Like {@link #isAllowed(Person, TLObject, BoundCommandGroup)}, every attribute of a transient
+	 * object is accessible, and a persistent object that cannot hold roles grants no role on its
+	 * attributes.
 	 * </p>
 	 */
 	boolean isAllowed(Person person, TLObject instance, TLStructuredTypePart attribute, BoundCommandGroup commandGroup);

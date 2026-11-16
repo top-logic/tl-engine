@@ -27,7 +27,13 @@ decision, grants and roles, to another object. A composition part gets its conta
 parent by default, so the rows of a composition table, the comments of a ticket or the attachments
 of a comment need no definition of their own. See [Access parent](#access-parent-delegating-the-whole-decision).
 
-The check itself is `SecurityConfigurationService.isAllowed(Person, TLObject, BoundCommandGroup)`:
+The check itself is `SecurityConfigurationService.isAllowed(Person, TLObject, BoundCommandGroup)`.
+It applies to every persistent object, whatever its implementation class; a transient object (a
+draft of a create dialog, a form object editing a persistent object) is not checked. Every
+persistent wrapper can hold roles (`AbstractWrapper` is a `BoundObject`); a persistent object that
+cannot (a plain knowledge item standing for itself) grants no role, so only the bypasses, the mark
+`without-security` and an access parent give access to it.
+
 
 1. Bypasses: code running with bypassed security checks (`ThreadContext.isSecurityBypassed()`), a
    system command group, and an administrator (`ThreadContext.isAdmin()`, the one check whether the

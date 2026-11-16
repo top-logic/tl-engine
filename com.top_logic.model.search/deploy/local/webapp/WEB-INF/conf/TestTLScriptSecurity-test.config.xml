@@ -21,6 +21,7 @@
 					<role name="TestTLScriptSecurity.PathViewer"/>
 					<role name="TestTLScriptSecurity.NoteWriter"/>
 					<role name="TestTLScriptSecurity.PathWriter"/>
+					<role name="TestTLScriptSecurity.UnitReader"/>
 				</roles>
 			</instance>
 		</config>
@@ -365,6 +366,13 @@
 							roles="TestTLScriptSecurity.PathViewer"
 						/>
 					</part>
+					<!-- Units and currencies are readable for whoever holds the role on the security root. -->
+					<module name="tl.units">
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.UnitReader"
+						/>
+					</module>
 				</security-config>
 			</instance>
 		</config>
@@ -518,6 +526,16 @@
 						</inheritance-rule>
 					</rules>
 				</role-rules>
+				<!-- Units and currencies inherit the roles held on the security root. -->
+				<security-parents>
+					<rule
+						id="TestTLScriptSecurity.UnitRoot"
+						inherit="true"
+						meta-element="tl.units:AbstractUnit"
+					>
+						<singleton module="SecurityStructure"/>
+					</rule>
+				</security-parents>
 			</instance>
 		</config>
 	</services>

@@ -92,7 +92,8 @@ const SidebarEntryContent: React.FC<{ item: NavItem | CommandItemInfo; collapsed
         <SidebarIcon icon={item.icon} />
       )}
       {!collapsed && <span className="tl-menu__label">{item.label}</span>}
-      {!collapsed && badge && <StateBadge badge={badge} alone={false} />}
+      {/* The space separates label and count in the accessible name; the flex layout does not draw it. */}
+      {!collapsed && badge && <>{' '}<StateBadge badge={badge} alone={false} /></>}
     </>
   );
 };

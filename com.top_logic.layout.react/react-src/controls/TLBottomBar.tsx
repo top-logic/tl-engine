@@ -11,7 +11,7 @@ interface BottomBarItem {
   id: string;
   label: string;
   icon: string;
-  badge?: Partial<BadgeJson>;
+  badge?: Partial<BadgeJson> | null;
 }
 
 /**

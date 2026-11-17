@@ -11,7 +11,10 @@ export const StateBadge: React.FC<{
   /** The state of the badge. */
   badge: Partial<BadgeJson>;
 
-  /** Whether the badge stands alone at an element without a visible label, see {@link badgePartProps}. */
+  /**
+   * Whether the badge stands alone at an element that is named by its label and the badge, see
+   * {@link badgePartProps}.
+   */
   alone: boolean;
 }> = ({ badge, alone }) => {
   const Badge = usePart('Badge');

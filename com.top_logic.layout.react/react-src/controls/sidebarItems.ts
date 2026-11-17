@@ -16,7 +16,7 @@ export interface SidebarItemBase {
   /** Not drawn, together with what it contains; an open navigation item stays open nevertheless. */
   hidden?: boolean;
   /** The badge of a navigation or command item; absent where it shows none. */
-  badge?: Partial<BadgeJson>;
+  badge?: Partial<BadgeJson> | null;
 }
 
 export interface NavItem extends SidebarItemBase {

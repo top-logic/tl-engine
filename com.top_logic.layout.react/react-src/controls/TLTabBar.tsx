@@ -56,7 +56,8 @@ const TLTabBar: React.FC<TLCellProps> = ({ controlId }) => {
           >
             {tab.icon && <ThemeIcon encoded={tab.icon} className="tl-icon-sm" />}
             <span>{tab.label}</span>
-            {tab.badge && <StateBadge badge={tab.badge} alone={false} />}
+            {/* The space separates label and count in the accessible name; the flex layout does not draw it. */}
+            {tab.badge && <>{' '}<StateBadge badge={tab.badge} alone={false} /></>}
           </button>
         ))}
       </TabStrip>

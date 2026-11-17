@@ -143,9 +143,9 @@ export interface ButtonPartProps extends PartAttributes {
   /**
    * The badge of the button, drawn through the part `Badge`: after the label, over the corner of
    * the icon of a button showing its icon alone. It is part of the accessible name of the button
-   * (see {@link buttonPartAttributes}). Absent: none.
+   * (see {@link buttonPartAttributes}). Absent or `null`: none.
    */
-  badge?: Partial<BadgeJson>;
+  badge?: Partial<BadgeJson> | null;
 
   /**
    * Classes added to the drawn element. They mark the part and carry no layout: the element
@@ -799,26 +799,41 @@ export interface BadgePartProps extends PartAttributes {
 /**
  * The props of the part `Badge` showing the given state of a badge.
  *
- * <p>Beside a visible label (a button, a tab, an entry of the navigation) the content of the badge
- * is text read with that label; a dot is an image named by the {@link BadgeJson.label}. A badge
- * standing alone - at an icon, at an avatar - is always an image named by its label, or by its
- * content where it has no label.</p>
+ * <p>Beside a visible label (a button, a tab, an entry of the navigation) the badge is read with
+ * that label: a plain count is text, a count with a {@link BadgeJson.label} and a dot are an image
+ * named by the {@link badgeName name of the badge}. A badge standing alone - over the corner of an
+ * icon or an avatar - is hidden from assistive technology: the element it stands at is named by its
+ * label and the badge ({@link labelWithBadge}).</p>
  *
  * @param badge The state of the badge.
- * @param alone Whether the badge stands alone at an element without a visible label.
+ * @param alone Whether the badge stands alone at an element that is named by {@link labelWithBadge}.
  */
 export function badgePartProps(badge: Partial<BadgeJson>, alone: boolean): BadgePartProps {
   const dot = badge.dot === true;
-  return {
+  const props: BadgePartProps = {
     content: dot ? undefined : badge.content,
     dot: dot || undefined,
     colorRole: badge.role,
-    label: alone || dot ? badgeName(badge) : undefined,
   };
+  if (alone) {
+    props['aria-hidden'] = true;
+  } else if (dot || badge.label) {
+    props.label = badgeName(badge);
+  }
+  return props;
 }
 
-/** The name of the given badge for assistive technology: its label, or its content. */
+/**
+ * The name of the given badge for assistive technology: of a dot its label; of a count its content,
+ * after its label where it has one ("New entries: 3").
+ */
 export function badgeName(badge: Partial<BadgeJson>): string | undefined {
+  if (badge.dot === true) {
+    return badge.label;
+  }
+  if (badge.label && badge.content) {
+    return badge.label + ': ' + badge.content;
+  }
   return badge.label ?? badge.content;
 }
 
@@ -827,10 +842,10 @@ export function badgeName(badge: Partial<BadgeJson>): string | undefined {
  * the label followed by the {@link badgeName name of the badge}.
  *
  * @param label The label of the element.
- * @param badge The badge of the element; absent: the label alone.
+ * @param badge The badge of the element; absent or `null`: the label alone.
  */
-export function labelWithBadge(label: string | undefined, badge: Partial<BadgeJson> | undefined): string | undefined {
-  const name = badge === undefined ? undefined : badgeName(badge);
+export function labelWithBadge(label: string | undefined, badge: Partial<BadgeJson> | null | undefined): string | undefined {
+  const name = badge ? badgeName(badge) : undefined;
   if (!name) {
     return label;
   }

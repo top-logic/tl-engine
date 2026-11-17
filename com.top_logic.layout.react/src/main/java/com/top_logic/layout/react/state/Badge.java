@@ -5,13 +5,16 @@ package com.top_logic.layout.react.state;
  * counts or marks something waiting there, drawn through the part {@code Badge} of
  * 'tl-react-bridge'.
  *
- * A state property holding a badge is absent where the element shows none. A badge shows either
+ * A state property holding a badge is absent where the element shows none; an update removing the
+ * badge of an element sends it as {@code null}, which means the same. A badge shows either
  * the {@link #getContent()}, or - where {@link #isDot()} is set - a dot without content.
  *
- * The badge belongs to the accessible name of its element: beside a visible label (a button, a
- * tab) the content is visible text that is read with the label; on an element without visible
- * text (an icon, an avatar) and for a dot the badge is an image named by its {@link #getLabel()}, or by
- * its content where there is no label.
+ * The badge belongs to the accessible name of its element. Its own name is the {@link #getLabel()} of a
+ * dot, and the {@link #getContent()} of a count, after the {@link #getLabel()} where there is one ("New
+ * entries: 3"). Beside a visible label (a button, a tab) a plain count is visible text read with
+ * the label, a dot or a count with a label an image of that name; an element without visible text
+ * (an icon-only button, an avatar) is named by its label followed by the name of its badge
+ * ("Inbox, 3"), and the badge itself is hidden from assistive technology.
  */
 public interface Badge extends de.haumacher.msgbuf.data.DataObject {
 
@@ -141,8 +144,8 @@ public interface Badge extends de.haumacher.msgbuf.data.DataObject {
 	com.top_logic.layout.react.state.Badge setRole(com.top_logic.layout.react.state.Badge.Role value);
 
 	/**
-	 * The accessible name of the badge where its content does not say it itself (a dot, a count
-	 * standing alone at an icon). Absent: the content names the badge.
+	 * The accessible name of a dot, or what a count counts, read before the count ("New entries:
+	 * 3"). Absent: the content alone names a count; a dot stays unnamed.
 	 */
 	String getLabel();
 

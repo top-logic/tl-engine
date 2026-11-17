@@ -46,7 +46,8 @@ const ButtonPart: React.FC<ButtonPartProps> = (props) => {
         </span>
       ) : icon}
       {showLabel && <span className={block + '__label'}>{label}</span>}
-      {showLabel && badge && <StateBadge badge={badge} alone={false} />}
+      {/* The space separates label and count in the accessible name; the flex layout does not draw it. */}
+      {showLabel && badge && <>{' '}<StateBadge badge={badge} alone={false} /></>}
     </>
   );
 

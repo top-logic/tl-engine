@@ -119,7 +119,7 @@ describe('TLButton with a badge', () => {
     expect(badge().getAttribute('role')).toBeNull();
     // The accessible name of a button showing its label is its text: the label and the count.
     expect(button().getAttribute('aria-label')).toBeNull();
-    expect(button().textContent).toBe(LABEL + '3');
+    expect(button().textContent).toBe(LABEL + ' 3');
   });
 
   it('draws the brand without a role attribute', () => {
@@ -143,21 +143,48 @@ describe('TLButton with a badge', () => {
     mountButton({ image: ICON, displayMode: 'icon-only', badge: { content: '12' } });
 
     expect(badge().parentElement!.classList).toContain('tl-icon-badge__count');
-    expect(badge().getAttribute('role')).toBe('img');
-    expect(badge().getAttribute('aria-label')).toBe('12');
+    // The button names the count; the badge over the icon is not read a second time.
+    expect(badge().getAttribute('aria-hidden')).toBe('true');
+    expect(badge().hasAttribute('role')).toBe(false);
     expect(button().getAttribute('aria-label')).toBe(LABEL + ', 12');
   });
 
-  it('names a button with icon and label by both, as its aria-label replaces the text', () => {
-    mountButton({ image: ICON, displayMode: 'icon-label', badge: { content: '5', label: '5 new' } });
+  it('combines the label of a counting badge with its count, never replacing it', () => {
+    mountButton({ image: ICON, displayMode: 'icon-only', badge: { content: '1', label: 'Open tickets' } });
 
-    expect(button().getAttribute('aria-label')).toBe(LABEL + ', 5 new');
+    expect(button().getAttribute('aria-label')).toBe(LABEL + ', Open tickets: 1');
+  });
+
+  it('names a button with icon and label by both, as its aria-label replaces the text', () => {
+    mountButton({ image: ICON, displayMode: 'icon-label', badge: { content: '5', label: 'new' } });
+
+    expect(button().getAttribute('aria-label')).toBe(LABEL + ', new: 5');
     expect(badge().textContent).toBe('5');
+  });
+
+  it('reads a counting badge with a label beside a visible label as an image of label and count', () => {
+    mountButton({ badge: { content: '5', label: 'new' } });
+
+    expect(badge().getAttribute('role')).toBe('img');
+    expect(badge().getAttribute('aria-label')).toBe('new: 5');
   });
 
   it('draws no badge without one', () => {
     mountButton();
 
     expect(badge()).toBeNull();
+  });
+
+  it('reads a badge of null as none, at a button with icon and label and at one showing its icon alone', () => {
+    mountButton({ image: ICON, displayMode: 'icon-label', badge: null });
+    expect(badge()).toBeNull();
+    expect(button().getAttribute('aria-label')).toBe(LABEL);
+    act(() => unmount(ROOT_ID));
+    findMountPoint(ROOT_ID)?.remove();
+
+    mountButton({ image: ICON, displayMode: 'icon-only', badge: null });
+    expect(badge()).toBeNull();
+    expect(button().querySelector('.tl-icon-badge')).toBeNull();
+    expect(button().getAttribute('aria-label')).toBe(LABEL);
   });
 });

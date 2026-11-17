@@ -96,7 +96,7 @@ const MuiButtonAdapter: React.FC<ButtonPartProps> = (props) => {
       <ToggleButton {...common} value={TOGGLE_VALUE} selected={checked} size={size} {...toggleAttributes}>
         {showIcon && <ThemeIcon encoded={image} className={display === 'icon-only' ? ICON_ALONE_CLASS : ICON_WITH_LABEL_CLASS} />}
         {(!showIcon || display !== 'icon-only') && label}
-        {(!showIcon || display !== 'icon-only') && badgeAfterLabel}
+        {(!showIcon || display !== 'icon-only') && badge && <>{' '}{badgeAfterLabel}</>}
       </ToggleButton>
     );
   }

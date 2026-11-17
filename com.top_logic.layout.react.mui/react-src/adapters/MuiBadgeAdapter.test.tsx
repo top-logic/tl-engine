@@ -67,6 +67,10 @@ describe('the part Badge as MUI Badge', () => {
     expect(marker.textContent).toBe('');
   });
 
+  it('passes aria-hidden to its root, for a badge its element names', () => {
+    expect(draw({ 'aria-hidden': true }).getAttribute('aria-hidden')).toBe('true');
+  });
+
   it('is an image named by its label where it has one, and plain text without', () => {
     const named = draw({ content: '4', label: '4 new entries' });
     expect(named.getAttribute('role')).toBe('img');

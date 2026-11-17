@@ -8,9 +8,12 @@ import type { AvatarStateJson } from 'tl-react-bridge';
 import type { ThemeOptions } from '@mui/material/styles';
 import TLAvatar from '../../../com.top_logic.layout.react/react-src/controls/TLAvatar';
 import MuiAvatarAdapter, { CATEGORY_ATTRIBUTE, SIZE_ATTRIBUTE } from './MuiAvatarAdapter';
+import MuiBadgeAdapter from './MuiBadgeAdapter';
 import { CONTROL_ID, mountAdapter, styleRules } from './wire-test-support';
 
 replacePart('Avatar', MuiAvatarAdapter);
+
+replacePart('Badge', MuiBadgeAdapter);
 
 /** A display name and the category it maps to. */
 const NAME = 'Ada Lovelace';
@@ -41,6 +44,22 @@ afterEach(() => {
 });
 
 describe('TLAvatar as MUI Avatar', () => {
+  it('is one image named by the name and the badge, a label combined with the count', () => {
+    mountAvatar({ name: NAME, badge: { content: '3', label: 'Open tickets' } as AvatarStateJson['badge'] });
+
+    const image = screen.getByRole('img', { name: NAME + ', Open tickets: 3' });
+    expect(image.id).toBe(CONTROL_ID);
+    expect(image.querySelector('.MuiAvatar-root')!.getAttribute('aria-hidden')).toBe('true');
+    expect(image.querySelector('.tl-icon-badge__count .MuiBadge-root')!.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('reads a badge of null as none', () => {
+    mountAvatar({ name: NAME, badge: null as unknown as AvatarStateJson['badge'] });
+
+    expect(root().classList).toContain('MuiAvatar-root');
+    expect(document.querySelector('.tl-icon-badge')).toBeNull();
+  });
+
   it('shows the picture with the name as its text alternative', () => {
     mountAvatar({ url: '/images/ada.png', name: NAME });
 

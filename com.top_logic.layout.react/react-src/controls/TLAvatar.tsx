@@ -1,4 +1,4 @@
-import { React, useTLState, useImageSrc, usePart, StateBadge } from 'tl-react-bridge';
+import { React, useTLState, useImageSrc, usePart, StateBadge, labelWithBadge } from 'tl-react-bridge';
 import type { TLCellProps, AvatarStateJson } from 'tl-react-bridge';
 
 /**
@@ -6,8 +6,10 @@ import type { TLCellProps, AvatarStateJson } from 'tl-react-bridge';
  * `Avatar`. It shows the picture of the one it represents; where there is none, initials on the
  * category the display name maps to; without a name, the neutral circle.
  *
- * A badge of the avatar stands over its corner (tl-icon-badge), drawn through the part `Badge` as an
- * image named by the label of the badge, or by its content.
+ * A badge of the avatar stands over its corner (tl-icon-badge), drawn through the part `Badge`. The
+ * avatar with its badge is then one image named by the name and the badge ({@link labelWithBadge},
+ * e.g. "Anna Meier, Open tickets: 3"); the circle and the badge inside are hidden from assistive
+ * technology.
  *
  * The state is described by AvatarStateJson.
  */
@@ -28,8 +30,13 @@ const TLAvatar: React.FC<TLCellProps> = ({ controlId }) => {
 
   // The badge over the corner of the avatar: the element around the part places it (view-layer/parts.md).
   return (
-    <span id={controlId} className={cssClass ? 'tl-icon-badge ' + cssClass : 'tl-icon-badge'}>
-      <Avatar name={state.name} src={src} size={state.size ?? 'medium'} />
+    <span
+      id={controlId}
+      className={cssClass ? 'tl-icon-badge ' + cssClass : 'tl-icon-badge'}
+      role="img"
+      aria-label={labelWithBadge(state.name ?? undefined, badge)}
+    >
+      <Avatar name={state.name} src={src} size={state.size ?? 'medium'} aria-hidden={true} />
       <span className="tl-icon-badge__count"><StateBadge badge={badge} alone={true} /></span>
     </span>
   );

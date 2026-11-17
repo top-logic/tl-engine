@@ -409,7 +409,24 @@ describe('TLButton with a badge as MUI Button', () => {
     mountButton({ label: 'Inbox', image: IMAGE_EDIT, displayMode: 'icon-only', badge: { content: '12' } as ButtonStateJson['badge'] });
 
     const button = screen.getByRole('button', { name: 'Inbox, 12' });
-    expect(button.querySelector('.tl-icon-badge__count .MuiBadge-root')).not.toBeNull();
+    expect(button.querySelector('.tl-icon-badge__count .MuiBadge-root')!.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('combines the label of a counting badge with its count in the name of an icon button', () => {
+    mountButton({ label: 'Inbox', image: IMAGE_EDIT, displayMode: 'icon-only', badge: { content: '1', label: 'Open tickets' } as ButtonStateJson['badge'] });
+
+    expect(screen.getByRole('button', { name: 'Inbox, Open tickets: 1' })).not.toBeNull();
+  });
+
+  it('reads a badge of null as none, with icon and label and with the icon alone', () => {
+    mountButton({ label: 'Inbox', image: IMAGE_EDIT, displayMode: 'icon-label', badge: null as unknown as ButtonStateJson['badge'] });
+    expect(screen.getByRole('button', { name: 'Inbox' }).querySelector('.MuiBadge-root')).toBeNull();
+    cleanup();
+
+    mountButton({ label: 'Inbox', image: IMAGE_EDIT, displayMode: 'icon-only', badge: null as unknown as ButtonStateJson['badge'] });
+    const button = screen.getByRole('button', { name: 'Inbox' });
+    expect(button.querySelector('.MuiBadge-root')).toBeNull();
+    expect(button.querySelector('.tl-icon-badge')).toBeNull();
   });
 });
 

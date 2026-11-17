@@ -509,6 +509,17 @@ describe('the counts of the navigation as MUI badges', () => {
     expectPlacedByCorner(document.querySelector('.MuiBadge-root')!, 'tl-icon-badge__count');
   });
 
+  it('reads a badge of null as none at an entry of the sidebar and an item of the bottom bar', async () => {
+    const plain = { ...ARCHIVE, badge: null };
+    mountAdapter(TLSidebar, { items: [plain], activeItemId: 'archive', collapsed: true, drawerOpen: false });
+    await settle();
+    expect(badges()).toEqual([]);
+    cleanup();
+
+    mountAdapter(TLBottomBar, { items: [plain], activeItemId: 'archive' });
+    expect(badges()).toEqual([]);
+  });
+
   it('draws the count of an item of the bottom bar, and none for an item without', () => {
     mountAdapter(TLBottomBar, { items: [INBOX, ARCHIVE], activeItemId: 'inbox' });
 

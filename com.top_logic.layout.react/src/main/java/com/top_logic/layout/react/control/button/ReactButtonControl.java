@@ -216,8 +216,16 @@ public class ReactButtonControl extends ReactControl {
 
 	/**
 	 * Sets the badge of the button, {@code null} for none.
+	 *
+	 * <p>
+	 * A button that never had a badge sends no {@link ButtonState#BADGE__PROP} at all; a badge
+	 * removed later is sent as {@code null}, which the client reads as absent.
+	 * </p>
 	 */
 	public void setBadge(BadgeDisplay badge) {
+		if (badge == null && getState(ButtonState.BADGE__PROP) == null) {
+			return;
+		}
 		putState(ButtonState.BADGE__PROP, badge == null ? null : badge.toState());
 	}
 

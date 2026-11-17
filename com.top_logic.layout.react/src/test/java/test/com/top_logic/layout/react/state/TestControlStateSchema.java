@@ -46,6 +46,7 @@ import com.top_logic.layout.react.control.common.BadgeDisplay;
 import com.top_logic.layout.react.control.common.BadgeRole;
 import com.top_logic.layout.react.control.common.LinkKind;
 import com.top_logic.layout.react.control.common.ReactAlertControl;
+import com.top_logic.layout.react.control.common.ReactAvatarControl;
 import com.top_logic.layout.react.control.common.ReactLinkControl;
 import com.top_logic.layout.react.control.common.ReactProgressControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
@@ -91,6 +92,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.AccordionState;
 import com.top_logic.layout.react.state.AlertState;
 import com.top_logic.layout.react.state.AppBarState;
+import com.top_logic.layout.react.state.AvatarState;
 import com.top_logic.layout.react.state.Badge;
 import com.top_logic.layout.react.state.BreadcrumbState;
 import com.top_logic.layout.react.state.ButtonState;
@@ -234,6 +236,26 @@ public class TestControlStateSchema extends TestCase {
 	 */
 	public void testButtonDisplayMode() {
 		assertSameNames(ButtonDisplayMode.values(), ButtonState.DisplayMode.values(), ButtonState.DisplayMode::valueOf);
+	}
+
+	/**
+	 * A button and an avatar without a badge send no badge at all; one whose badge is removed
+	 * sends {@code null}, which the client reads as absent.
+	 */
+	public void testNoBadgeIsAbsent() {
+		ReactButtonControl button = new ReactButtonControl(createContext(), "label", context -> {
+			// No action.
+		});
+		button.setBadge(null);
+		assertFalse(state(button).containsKey(ButtonState.BADGE__PROP));
+		button.setBadge(new BadgeDisplay("3", false, BadgeRole.BRAND, null));
+		assertEquals(Map.of(Badge.CONTENT__PROP, "3"), state(button).get(ButtonState.BADGE__PROP));
+		button.setBadge(null);
+		assertNull(state(button).get(ButtonState.BADGE__PROP));
+
+		ReactAvatarControl avatar = new ReactAvatarControl(createContext(), "Anna Meier");
+		avatar.setBadge(null);
+		assertFalse(state(avatar).containsKey(AvatarState.BADGE__PROP));
 	}
 
 	/**

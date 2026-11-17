@@ -117,8 +117,8 @@ public interface AvatarState extends com.top_logic.layout.react.state.ImageSourc
 	com.top_logic.layout.react.state.AvatarState setSize(com.top_logic.layout.react.state.AvatarState.Size value);
 
 	/**
-	 * The badge at the corner of the avatar, an image named by its {@link Badge#getLabel()}, or by its
-	 * {@link Badge#getContent()} where it has no label. Absent: none.
+	 * The badge at the corner of the avatar. The avatar with its badge is one image named by the
+	 * {@link #getName()} and the badge ("Anna Meier, Open tickets: 3"). Absent: none.
 	 */
 	com.top_logic.layout.react.state.Badge getBadge();
 

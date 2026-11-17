@@ -132,6 +132,7 @@ const MuiTabBarAdapter: React.FC<TLCellProps> = ({ controlId }) => {
             label={tab.badge ? (
               <span style={LABEL_WITH_BADGE_STYLE}>
                 {tab.label}
+                {' '}
                 <StateBadge badge={tab.badge} alone={false} />
               </span>
             ) : tab.label}

@@ -46,6 +46,7 @@
  *   TLNumberInput     - NumberInputState
  *   TLOptionChips     - DropdownSelectState
  *   TLProgress        - ProgressState
+ *   TLDivider         - DividerState
  *   TLLink            - LinkState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
@@ -2010,6 +2011,80 @@ export interface ProgressStateJson extends ControlStateJson {
 	 * The text beside the bar, plain text (e.g. `3 / 4`). Absent: the bar stands alone.
 	 */
 	label: string;
+}
+
+/**
+ * State of a line separating the content before it from the content after it, the component
+ * `TLDivider`, drawn by the part `Divider`.
+ *
+ * The component sends no commands.
+ */
+export interface DividerStateJson extends ControlStateJson {
+	/**
+	 * The direction of the line. Absent: `horizontal`.
+	 */
+	orientation: DividerStateJson.Orientation;
+
+	/**
+	 * A short text shown in the line, plain text; only a horizontal line carries one. Absent: a
+	 * plain line.
+	 */
+	label: string;
+
+	/**
+	 * Where the {@link DividerStateJson.label} stands in the line. Absent: `center`.
+	 */
+	labelPosition: DividerStateJson.LabelPosition;
+
+	/**
+	 * Where the line begins. Absent: `none`, the whole width.
+	 */
+	inset: DividerStateJson.Inset;
+}
+
+export namespace DividerStateJson {
+	/**
+	 * The direction of a divider.
+	 */
+	export type Orientation =
+		/**
+		 * A line across, between content stacked one above the other.
+		 */
+		| 'horizontal'
+		/**
+		 * A line standing in a row and stretching to its height.
+		 */
+		| 'vertical';
+
+	/**
+	 * Where the text of a divider stands in its line.
+	 */
+	export type LabelPosition =
+		/**
+		 * At the start of the line.
+		 */
+		| 'start'
+		/**
+		 * In the middle, with a line on either side.
+		 */
+		| 'center'
+		/**
+		 * At the end of the line.
+		 */
+		| 'end';
+
+	/**
+	 * Where a divider begins.
+	 */
+	export type Inset =
+		/**
+		 * The line spans the whole width.
+		 */
+		| 'none'
+		/**
+		 * The line is shortened at its start by the indent of an entry of a list.
+		 */
+		| 'start';
 }
 
 /**

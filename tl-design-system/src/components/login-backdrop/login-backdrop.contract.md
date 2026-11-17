@@ -34,10 +34,11 @@ Keine Server-Aktion. Ein Klick auf den Hintergrund (nicht auf den Inhalt) löst 
 | Höhe des Logos | `--tl-size-login-logo` |
 | Punkte (nur der Client liest sie) | `--tl-surface-halftone`, Hervorhebung `--tl-surface-halftone-strong` |
 | Raster (nur der Client) | Abstand `--tl-size-halftone-step`, Radius der Hervorhebung `--tl-size-halftone-glow` |
-| Bewegung (nur der Client) | Welle `--tl-duration-ripple`, Formwechsel `--tl-duration-morph` |
+| Bewegung (nur der Client) | Welle `--tl-duration-ripple` |
 
-Eine Dekoration schuldet keinen Kontrast: die Punkte tragen keine Information. Bei `prefers-reduced-motion: reduce`
-entfallen Hervorhebung und Welle, der Formwechsel geschieht ohne Überblenden.
+Eine Dekoration schuldet keinen Kontrast: die Punkte tragen keine Information. In Ruhe sind sie klein und blass, eine
+feine Textur; erst Hervorhebung und Welle heben sie in `--tl-surface-halftone-strong` an. Bei
+`prefers-reduced-motion: reduce` entfallen Hervorhebung und Welle.
 
 ## Attribute
 

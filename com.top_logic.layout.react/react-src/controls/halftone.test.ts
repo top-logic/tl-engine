@@ -1,14 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  CLICKS_PER_SHAPE,
-  SHAPES,
   activeRipples,
   dotRadius,
-  drawShape,
   glowFactor,
   isBackgroundTarget,
-  nextShape,
   prefersReducedMotion,
   readHalftoneTheme,
   boundedStep,
@@ -17,8 +13,8 @@ import {
 import type { Ripple } from './halftone';
 
 describe('dotRadius', () => {
-  it('is largest at the centre: a third of the step', () => {
-    expect(dotRadius(0, 500, 16)).toBeCloseTo(5.28, 5);
+  it('is largest at the centre: a seventh of the step', () => {
+    expect(dotRadius(0, 500, 16)).toBeCloseTo(2.24, 5);
   });
 
   it('is zero at and beyond the half diagonal', () => {
@@ -36,7 +32,7 @@ describe('dotRadius', () => {
   });
 
   it('leaves out dots too small to see', () => {
-    // (1 - 0.99)^1.3 * 5.28 is far below 0.35.
+    // (1 - 0.99)^0.6 * 2.24 is far below 0.35.
     expect(dotRadius(495, 500, 16)).toBe(0);
     expect(dotRadius(300, 500, 16)).toBeGreaterThanOrEqual(0.35);
   });
@@ -96,20 +92,6 @@ describe('activeRipples', () => {
   });
 });
 
-describe('nextShape', () => {
-  it('changes the shape every fifth click, cycling through all three', () => {
-    expect(CLICKS_PER_SHAPE).toBe(5);
-    expect(SHAPES).toEqual(['dot', 'plus', 'square']);
-    for (let clicks = 0; clicks < 5; clicks++) {
-      expect(nextShape(clicks)).toBe('dot');
-    }
-    expect(nextShape(5)).toBe('plus');
-    expect(nextShape(9)).toBe('plus');
-    expect(nextShape(10)).toBe('square');
-    expect(nextShape(15)).toBe('dot');
-  });
-});
-
 describe('isBackgroundTarget', () => {
   const root = document.createElement('div');
   const content = document.createElement('div');
@@ -134,49 +116,6 @@ describe('isBackgroundTarget', () => {
   it('is false for a target outside the root or none', () => {
     expect(isBackgroundTarget(document.body, root, content)).toBe(false);
     expect(isBackgroundTarget(null, root, content)).toBe(false);
-  });
-});
-
-describe('drawShape', () => {
-  /** A context recording the calls the shapes are drawn with. */
-  function recorder() {
-    const calls: [string, ...number[]][] = [];
-    const g = {
-      beginPath: () => calls.push(['beginPath']),
-      arc: (...a: number[]) => calls.push(['arc', ...a]),
-      fill: () => calls.push(['fill']),
-      fillRect: (...a: number[]) => calls.push(['fillRect', ...a]),
-    };
-    return { g: g as unknown as CanvasRenderingContext2D, calls };
-  }
-
-  it('draws a dot as a filled circle', () => {
-    const { g, calls } = recorder();
-    drawShape(g, 'dot', 10, 20, 3);
-    expect(calls).toEqual([['beginPath'], ['arc', 10, 20, 3, 0, Math.PI * 2], ['fill']]);
-  });
-
-  it('draws a plus as two bars 2.6 r long and half an r thick', () => {
-    const { g, calls } = recorder();
-    drawShape(g, 'plus', 10, 20, 4);
-    // length 10.4, thickness 2
-    expect(calls).toEqual([
-      ['fillRect', 10 - 5.2, 20 - 1, 10.4, 2],
-      ['fillRect', 10 - 1, 20 - 5.2, 2, 10.4],
-    ]);
-  });
-
-  it('keeps the bars of a small plus at least 0.7 px thick', () => {
-    const { g, calls } = recorder();
-    drawShape(g, 'plus', 0, 0, 1);
-    expect(calls[0][4]).toBeCloseTo(0.7, 10);
-    expect(calls[1][3]).toBeCloseTo(0.7, 10);
-  });
-
-  it('draws a square 1.8 r on a side', () => {
-    const { g, calls } = recorder();
-    drawShape(g, 'square', 10, 20, 5);
-    expect(calls).toEqual([['fillRect', 10 - 4.5, 20 - 4.5, 9, 9]]);
   });
 });
 
@@ -219,7 +158,7 @@ describe('readHalftoneTheme', () => {
     define(`:root {
       --tl-surface-halftone: #112233; --tl-surface-halftone-strong: #445566;
       --tl-size-halftone-step: 1rem; --tl-size-halftone-glow: 2.5rem;
-      --tl-duration-ripple: 1800ms; --tl-duration-morph: 0.7s;
+      --tl-duration-ripple: 1.8s;
     }`);
     const theme = readHalftoneTheme(root)!;
     expect(theme.color).toBe('#112233');
@@ -227,7 +166,6 @@ describe('readHalftoneTheme', () => {
     expect(theme.step).toBe(16);
     expect(theme.glow).toBe(40);
     expect(theme.rippleMs).toBe(1800);
-    expect(theme.morphMs).toBe(700);
   });
 
   it('is null without the base colour', () => {

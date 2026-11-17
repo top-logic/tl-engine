@@ -26,10 +26,10 @@ import com.top_logic.util.Resources;
  * {@link UIElement} that shows its content in front of a halftone backdrop, for the login display.
  *
  * <p>
- * The element fills the space it is given. Behind the content stands a grid of dots in the brand
- * color. A subtle highlight follows the mouse pointer, a click on the background sends a ripple
- * across the grid, and repeated clicks trigger a hidden shape change. Nothing moves at rest, and
- * with "reduce motion" set in the system the grid stands still.
+ * The element fills the space it is given. Behind the content stands a fine grid of dots in the
+ * brand color. A subtle highlight follows the mouse pointer, and a click on the background sends
+ * a ripple across the grid. Nothing moves at rest, and with "reduce motion" set in the system the
+ * grid stands still.
  * </p>
  *
  * <p>

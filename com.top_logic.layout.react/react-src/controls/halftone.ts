@@ -1,20 +1,11 @@
 /**
- * The computations behind the halftone grid of the login backdrop: how large a dot is, how the pointer and a click
- * ripple lift the dots near them, and which shape the grid is drawn in.
+ * The computations behind the halftone grid of the login backdrop: how large a dot is and how the pointer and a click
+ * ripple lift the dots near them.
  *
  * Everything here is a pure function of its arguments (or reads the page where it says so); the component
  * `TLLoginBackdrop` owns the canvas, the events and the timing.
  */
 import { tokenMs, tokenPx } from 'tl-react-bridge';
-
-/** The shape one grid point is drawn in. */
-export type HalftoneShape = 'dot' | 'plus' | 'square';
-
-/** The shapes in the order the grid passes through them. */
-export const SHAPES: HalftoneShape[] = ['dot', 'plus', 'square'];
-
-/** How many clicks on the background it takes to change the shape. */
-export const CLICKS_PER_SHAPE = 5;
 
 /** The most ripples that run at the same time; a click beyond that drops the oldest. */
 const MAX_RIPPLES = 8;
@@ -29,8 +20,8 @@ const RIPPLE_BAND = 20;
 const RIPPLE_TRAVEL = 0.55;
 
 /**
- * The radius of the dot at the given distance from the centre of the grid: a third of the step at the centre, falling
- * to nothing at the half diagonal. A radius too small to see is zero.
+ * The radius of the dot at the given distance from the centre of the grid: a seventh of the step at the centre, falling
+ * gently to nothing at the half diagonal, so the grid stays a fine texture at rest. A radius too small to see is zero.
  *
  * @param distance Distance of the grid point from the centre (px).
  * @param halfDiagonal Half the diagonal of the area, where the dots end (px).
@@ -41,7 +32,7 @@ export function dotRadius(distance: number, halfDiagonal: number, step: number):
   if (d >= 1) {
     return 0;
   }
-  const r = 0.33 * step * Math.pow(1 - d, 1.3);
+  const r = 0.14 * step * Math.pow(1 - d, 0.6);
   return r < MIN_RADIUS ? 0 : r;
 }
 
@@ -98,14 +89,6 @@ export function activeRipples(ripples: Ripple[], now: number, durationMs: number
 }
 
 /**
- * The shape after the given number of clicks on the background: every {@link CLICKS_PER_SHAPE}th click moves on to the
- * next of the {@link SHAPES}, and after the last the first comes again.
- */
-export function nextShape(clicks: number): HalftoneShape {
-  return SHAPES[Math.floor(clicks / CLICKS_PER_SHAPE) % SHAPES.length];
-}
-
-/**
  * Whether a click at the given target counts as one on the background: the root, the content itself, and everything
  * outside the content - not the card, the logo or a link inside it.
  *
@@ -120,33 +103,7 @@ export function isBackgroundTarget(target: EventTarget | null, root: Element, co
   return target === content || !content.contains(target);
 }
 
-/**
- * Fills one grid point in the current fill style of the context: a circle of the radius, a plus whose two bars are
- * `2.6 r` long and `max(0.7, 0.5 r)` thick, or a square with an edge of `1.8 r`.
- *
- * @param g The drawing context, its fill style set.
- * @param shape The shape.
- * @param x Horizontal centre (px).
- * @param y Vertical centre (px).
- * @param r The radius of the dot the shape stands for (px).
- */
-export function drawShape(g: CanvasRenderingContext2D, shape: HalftoneShape, x: number, y: number, r: number): void {
-  if (shape === 'dot') {
-    g.beginPath();
-    g.arc(x, y, r, 0, Math.PI * 2);
-    g.fill();
-  } else if (shape === 'plus') {
-    const length = 2.6 * r;
-    const thickness = Math.max(0.7, 0.5 * r);
-    g.fillRect(x - length / 2, y - thickness / 2, length, thickness);
-    g.fillRect(x - thickness / 2, y - length / 2, thickness, length);
-  } else {
-    const edge = 1.8 * r;
-    g.fillRect(x - edge / 2, y - edge / 2, edge, edge);
-  }
-}
-
-/** Whether the user asked for reduced motion: then there is no highlight, no ripple and no crossfade. */
+/** Whether the user asked for reduced motion: then there is neither highlight nor ripple. */
 export function prefersReducedMotion(): boolean {
   return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
@@ -163,8 +120,6 @@ export interface HalftoneTheme {
   glow: number;
   /** How long a ripple runs (ms). */
   rippleMs: number;
-  /** How long the crossfade between two shapes runs (ms). */
-  morphMs: number;
 }
 
 /** The grid step (px) used where the token gives none, or none that can be drawn. */
@@ -208,6 +163,5 @@ export function readHalftoneTheme(root: Element): HalftoneTheme | null {
     step: boundedStep(tokenPx(root, '--tl-size-halftone-step', DEFAULT_STEP)),
     glow: tokenPx(root, '--tl-size-halftone-glow', 40),
     rippleMs: tokenMs('--tl-duration-ripple', 1800),
-    morphMs: tokenMs('--tl-duration-morph', 700),
   };
 }

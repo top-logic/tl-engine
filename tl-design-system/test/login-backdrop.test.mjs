@@ -48,7 +48,7 @@ test('login-backdrop.contract.md nennt Klassen, Tokens und Client', () => {
     'tl-login-backdrop__logo', '--tl-surface-base', '--tl-surface-layer', '--tl-border-separator',
     '--tl-border-width-sm', '--tl-radius-md', '--tl-space-sm', '--tl-space-md', '--tl-space-lg',
     '--tl-size-login-logo', '--tl-focus-width', '--tl-focus-offset', '--tl-surface-halftone', '--tl-surface-halftone-strong', '--tl-size-halftone-step',
-    '--tl-size-halftone-glow', '--tl-duration-ripple', '--tl-duration-morph', 'TLLoginBackdrop',
+    '--tl-size-halftone-glow', '--tl-duration-ripple', 'TLLoginBackdrop',
     'child', 'logo', 'logoDark', 'logoAlt']), []);
 });
 

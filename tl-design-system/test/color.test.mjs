@@ -206,8 +206,8 @@ test('markenRollen rechnet die Halbton-Rollen aus dem Farbton der Saat', () => {
   const H = hexZuOklch(saat).H;
   const dH = (h) => Math.abs(((h - H + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI) * 180 / Math.PI;
   const soll = [
-    ['light', 'surface-halftone', 0.794], ['light', 'surface-halftone-strong', 0.735],
-    ['dark', 'surface-halftone', 0.375], ['dark', 'surface-halftone-strong', 0.454],
+    ['light', 'surface-halftone', 0.921], ['light', 'surface-halftone-strong', 0.735],
+    ['dark', 'surface-halftone', 0.280], ['dark', 'surface-halftone-strong', 0.454],
   ];
   for (const [mode, rolle, L] of soll) {
     const o = hexZuOklch(r[mode][rolle]);

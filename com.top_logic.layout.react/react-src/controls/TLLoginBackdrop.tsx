@@ -3,15 +3,13 @@ import type { TLCellProps } from 'tl-react-bridge';
 import {
   activeRipples,
   dotRadius,
-  drawShape,
   glowFactor,
   isBackgroundTarget,
-  nextShape,
   prefersReducedMotion,
   readHalftoneTheme,
   rippleFactor,
 } from './halftone';
-import type { HalftoneShape, HalftoneTheme, Ripple } from './halftone';
+import type { HalftoneTheme, Ripple } from './halftone';
 
 /** The share of the way to the target the pointer highlight covers per animation frame. */
 const GLOW_EASE = 0.15;
@@ -30,7 +28,7 @@ const RIPPLE_GROWTH = 2.2;
 const SAME = (a: HalftoneTheme | null, b: HalftoneTheme | null): boolean =>
   a === b || (a !== null && b !== null
     && a.color === b.color && a.strong === b.strong && a.step === b.step && a.glow === b.glow
-    && a.rippleMs === b.rippleMs && a.morphMs === b.morphMs);
+    && a.rippleMs === b.rippleMs);
 
 /** What changes while the grid is shown, between two drawings; kept outside of React state, since it does not render. */
 interface GridState {
@@ -41,13 +39,6 @@ interface GridState {
   /** How much the highlight shows, from 0 to 1: it follows the pointer's presence with a delay. */
   glow: number;
   ripples: Ripple[];
-  /** Clicks on the background so far. */
-  clicks: number;
-  shape: HalftoneShape;
-  /** The shape the grid changes from, while it crossfades. */
-  previous: HalftoneShape;
-  /** When the crossfade started; far in the past while there is none. */
-  morphStart: number;
 }
 
 /**
@@ -62,11 +53,10 @@ interface GridState {
  * The dots are largest at the centre and fade out toward the corners. The colours, the grid step, the radius of the
  * highlight and the durations come from the design system tokens and are read again when the density, theme or mode
  * of the page switches. A mouse pointer lifts the dots near it, a click on the background sends a ripple through the
- * grid, and every fifth such click changes the shape of the dots with a crossfade. With reduced motion there is
- * neither highlight nor ripple, and the shape changes at once.
+ * grid. With reduced motion there is neither highlight nor ripple.
  *
  * The grid is drawn on occasion only - when mounted, resized, switched, or touched - and an animation frame runs only
- * while the highlight fades, a ripple travels or the shape crossfades; at rest the page does no work.
+ * while the highlight fades or a ripple travels; at rest the page does no work.
  *
  * Takes part in the fill contract as a container: the backdrop fills its container, so the page it frames is as high
  * as the window.
@@ -82,10 +72,6 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
     inside: false,
     glow: 0,
     ripples: [],
-    clicks: 0,
-    shape: 'dot',
-    previous: 'dot',
-    morphStart: -Infinity,
   });
 
   const theme = useTokenSwitch<HalftoneTheme | null>(
@@ -100,7 +86,7 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
     if (!root || !content || !canvas || !g || !theme) {
       return undefined;
     }
-    const { color, strong, step, glow, rippleMs, morphMs } = theme;
+    const { color, strong, step, glow, rippleMs } = theme;
     const s = grid.current;
     let frame = 0;
     let width = 0;
@@ -118,17 +104,19 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
     };
 
     /** One dot: in the base colour, and over it in the strong one as much as the lift `k` says. */
-    const paint = (shape: HalftoneShape, x: number, y: number, r: number, k: number) => {
+    const paint = (x: number, y: number, r: number, k: number) => {
       if (r < MIN_DRAWN_RADIUS) {
         return;
       }
+      g.beginPath();
+      g.arc(x, y, r, 0, Math.PI * 2);
       g.globalAlpha = 1;
       g.fillStyle = color;
-      drawShape(g, shape, x, y, r);
+      g.fill();
       if (k > 0.01) {
         g.globalAlpha = Math.min(1, k);
         g.fillStyle = strong;
-        drawShape(g, shape, x, y, r);
+        g.fill();
       }
     };
 
@@ -141,7 +129,6 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
       const cy = height / 2;
       const halfDiagonal = Math.hypot(width, height) / 2;
       const reach = halfDiagonal * 2;
-      const morph = morphMs > 0 ? Math.max(0, Math.min(1, (now - s.morphStart) / morphMs)) : 1;
       const lifted = s.pointer !== null && s.glow > 0;
       for (let y = cy % step; y < height; y += step) {
         for (let x = cx % step; x < width; x += step) {
@@ -157,12 +144,7 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
             r += RIPPLE_GROWTH * w;
             k += w;
           }
-          if (morph < 1) {
-            paint(s.previous, x, y, r * (1 - morph), k);
-            paint(s.shape, x, y, r * morph, k);
-          } else {
-            paint(s.shape, x, y, r, k);
-          }
+          paint(x, y, r, k);
         }
       }
       g.globalAlpha = 1;
@@ -183,7 +165,7 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
         }
         s.ripples = activeRipples(s.ripples, now, rippleMs);
         draw(now);
-        if (s.glow !== target || s.ripples.length > 0 || now - s.morphStart < morphMs) {
+        if (s.glow !== target || s.ripples.length > 0) {
           frame = requestAnimationFrame(tick);
         }
       });
@@ -253,28 +235,12 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
     };
 
     const onClick = (e: MouseEvent) => {
-      if (!isBackgroundTarget(e.target, root, content)) {
+      if (!isBackgroundTarget(e.target, root, content) || prefersReducedMotion()) {
         return;
       }
-      const reduced = prefersReducedMotion();
-      const now = performance.now();
-      s.clicks++;
-      let changed = false;
-      if (!reduced) {
-        const box = root.getBoundingClientRect();
-        s.ripples = [...s.ripples, { x: e.clientX - box.left, y: e.clientY - box.top, start: now }];
-        changed = true;
-      }
-      const shape = nextShape(s.clicks);
-      if (shape !== s.shape) {
-        s.previous = s.shape;
-        s.shape = shape;
-        s.morphStart = reduced ? -Infinity : now;
-        changed = true;
-      }
-      if (changed) {
-        schedule();
-      }
+      const box = root.getBoundingClientRect();
+      s.ripples = [...s.ripples, { x: e.clientX - box.left, y: e.clientY - box.top, start: performance.now() }];
+      schedule();
     };
 
     const redraw = () => guarded(() => { resize(); draw(performance.now()); });
@@ -284,8 +250,8 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
     root.addEventListener('pointermove', onPointerMove);
     root.addEventListener('pointerleave', onPointerLeave);
     root.addEventListener('click', onClick);
-    // What was running when the tokens switched goes on: the highlight fading, a ripple, the crossfade.
-    if (s.ripples.length > 0 || s.glow !== (s.inside ? 1 : 0) || performance.now() - s.morphStart < morphMs) {
+    // What was running when the tokens switched goes on: the highlight fading, a ripple.
+    if (s.ripples.length > 0 || s.glow !== (s.inside ? 1 : 0)) {
       schedule();
     }
     return () => {

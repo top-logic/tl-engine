@@ -361,12 +361,12 @@ export const MARKE_SUBTLE = {
 };
 
 /** Helligkeit und Chroma der Halbton-Punkte des Login-Hintergrunds (Dekoration, kein Textpaar, darum nicht in der
- *  Paarliste). Aus den TopLogic-Primitiven gelesen: hell blue-21 (Grundpunkt) und blue-27 (hervorgehoben), dunkel
- *  blue-62 und blue-55. Ton wie die Marke; hell L 0,794/0,735, dunkel L 0,375/0,454 entspricht der Skizze mit
- *  38 % bzw. 45 % Deckkraft. */
+ *  Paarliste). Aus den TopLogic-Primitiven gelesen: hell blue-8 (Grundpunkt) und blue-27 (hervorgehoben), dunkel
+ *  blue-72 und blue-55. Ton wie die Marke. Der Grundpunkt entspricht der Markenfarbe mit etwa 16 % Deckkraft auf
+ *  surface-base (feine Textur in Ruhe), der hervorgehobene etwa 40 %. */
 export const MARKE_HALFTONE = {
-  light: { base: { L: 0.794, C: 0.104 }, strong: { L: 0.735, C: 0.137 } },
-  dark: { base: { L: 0.375, C: 0.151 }, strong: { L: 0.454, C: 0.184 } },
+  light: { base: { L: 0.921, C: 0.035 }, strong: { L: 0.735, C: 0.137 } },
+  dark: { base: { L: 0.280, C: 0.049 }, strong: { L: 0.454, C: 0.184 } },
 };
 
 /** Helligkeit und Chroma der Auswahlflächen. Hell liegt die gewählte Fläche auf der getönten Marke, die gezeigte

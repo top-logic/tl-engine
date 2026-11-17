@@ -1,11 +1,14 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { act } from 'react';
 
+/** The listeners of the state updates of the mounted controls, by control ID. */
+const updates = new Map<string, (patch: Record<string, unknown>) => void>();
+
 vi.mock('../bridge/sse-client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../bridge/sse-client')>()),
   connect: () => {},
-  subscribe: () => {},
-  unsubscribe: () => {},
+  subscribe: (controlId: string, listener: (patch: Record<string, unknown>) => void) => updates.set(controlId, listener),
+  unsubscribe: (controlId: string) => updates.delete(controlId),
 }));
 
 // The bridge first, as the page loads it: the bridge entry reaches it through modules that the SSE client imports
@@ -453,5 +456,26 @@ describe('a right click on a row', () => {
     rightClick(mains()[1]);
     await settle();
     expect(sent).toEqual([]);
+  });
+});
+
+describe('the row whose menu was open', () => {
+  it('hands the focus to the trigger of its neighbour when it disappears, with the focus ring', async () => {
+    await mountList({ hasRowMenu: true });
+    const focusCalls: unknown[] = [];
+    const arne = triggers()[1];
+    const anna = triggers()[0];
+    anna.focus = (options?: FocusOptions) => {
+      focusCalls.push(options);
+      HTMLElement.prototype.focus.call(anna, options);
+    };
+    click(arne);
+    await settle();
+
+    const rows = (listState().rows as Record<string, unknown>[]).filter((row) => row.id !== 'r2');
+    act(() => updates.get(LIST_ID)!({ rows }));
+
+    expect(document.activeElement).toBe(anna);
+    expect(focusCalls).toEqual([{ focusVisible: true }]);
   });
 });

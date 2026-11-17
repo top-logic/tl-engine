@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.chat.view.list;
+package com.top_logic.ai.chat.view;
 
 import java.util.List;
 import java.util.Map;
@@ -28,6 +28,8 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.list.DataListControl;
+import com.top_logic.layout.view.list.DataListElement;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;

@@ -100,7 +100,7 @@ To find the module that owns a class or feature, use the `tl-mcp` tools (`module
 
 Standard Maven layout, plus these TopLogic conventions:
 
-- **Tests** live under `src/test/java/test/com/top_logic/...` — note the extra `test.` package prefix.
+- **Tests** live in `src/test/java`. New tests go into the package of the tested class (Maven standard, access to package-private members); most existing tests use the extra `test.` package prefix (`src/test/java/test/com/top_logic/...`), which stays allowed.
 - **Webapp config** (web modules) under `src/main/webapp/WEB-INF/`: `layouts/` (layout XML), `model/` (model XML), `conf/` (app config), `kbase/` (kbase definitions).
 - Model types are also declared in `*.type.xml`.
 
@@ -226,7 +226,8 @@ external/JS identifiers.
 
 ## Testing Conventions
 
-- Test classes use the `test.` package prefix (e.g., `test.com.top_logic.basic.GenericTest`)
+- The module's `TestAll` (`AbstractBasicTestAll`) collects every test of the whole test source tree `src/test/java`: a public `TestCase` or a class with a static `suite()` method, named `Test<Something>` or `<Something>Test`. Put a new test into the package of the tested class; the `test.` package prefix of the existing tests (e.g., `test.com.top_logic.basic.GenericTest`) stays allowed. A module needs no surefire includes of its own.
+- A test whose precondition the build may lack (a key, a browser, a network) calls `org.junit.Assume`; the `TestAll` reports a violated assumption as skipped (`AssumptionAwareRunner`).
 - Many base test classes exist for common scenarios (see `Abstract*Test.java` patterns)
 - Tests requiring a knowledge base extend `AbstractDBKnowledgeBaseTest`
 - Tests are JUnit 4 based
@@ -324,8 +325,9 @@ mvn exec:java@migrate-ticket28336
   `tl-chat-classic` (the chat in a classic LayoutServlet tab), `tl-ai-views` (agents
   editing `.view.xml` views), `tl-ai-vector-index`, `tl-ai-index` / `tl-ai-index-onnx`
   (hybrid search), `tl-ai-eval` (model eval harness) and the demo application
-  `tl-ai-demo`. Their tests live in packages mirroring the production code and are
-  found through the surefire includes in each module POM (see `tl-ai-core/pom.xml`).
+  `tl-ai-demo`. All of them live in packages below `com.top_logic.ai` (`tl-ai-classic` in
+  `com.top_logic.ai.classic`); their tests sit in the package of the tested class and run
+  through the standard `TestAll`.
   The developer articles of the chapter `ai` (in `tl-ai-core`) describe them.
 - **test-migrate-apps/** - Test applications for migration scenarios
 - **bos-settings/** - Build settings and configuration

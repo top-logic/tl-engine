@@ -31,6 +31,7 @@ import com.top_logic.react.flow.data.Sticky;
 import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.operations.BoxOperations;
 import com.top_logic.react.flow.operations.ConnectorSymbolRenderer;
+import com.top_logic.react.flow.operations.Interactivity;
 import com.top_logic.react.flow.operations.StickyOperations;
 import com.top_logic.react.flow.operations.WidgetTraversal;
 import com.top_logic.react.flow.operations.drag.DragController;
@@ -554,7 +555,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		// in SVG hit-testing and receive clicks normally.
 		out.beginRect(x0, y0, totalW, totalH);
 		out.setFill("transparent");
-		out.writeAttribute("pointer-events", "all");
+		out.writeAttribute(Interactivity.POINTER_EVENTS_ATTR, Interactivity.POINTER_EVENTS_ALL);
 		out.endRect();
 		double colW = self.getColumnWidth();
 		double headerH = self.getHeaderHeight();
@@ -574,8 +575,13 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			// The whole content fits into the box: no clipping and scrolling.
 			drawRowLanes(self, out, null, true, true);
 			drawDecorations(self, out);
+			java.util.Set<Box> decorationLabels = buildDecorationLabels(self);
 			for (Box content : self.getContents()) {
-				out.write(content);
+				if (decorationLabels.contains(content)) {
+					drawDecorationLabel(out, content, false);
+				} else {
+					out.write(content);
+				}
 			}
 			drawEdges(self, out);
 			out.endGroup();
@@ -666,10 +672,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		out.endGroup();
 
 		// --- 6. Labels of decorations above the frozen rows (scroll X only) ---
-		// No background: the layer catches events only where a label is drawn.
+		// No background, and the pointer passes through the layer except at interactive labels.
 		out.beginGroup();
 		out.writeClipPathRef(clipDecorations);
 		out.writeCssClass("tl-gantt-vp-decoration-labels");
+		Interactivity.writePassThrough(out);
 		out.beginGroup();
 		out.writeId(out.uniqueId(self, SCROLL_DECORATION_LABELS_PURPOSE));
 		out.translate(-scrollXPx, 0);
@@ -936,12 +943,50 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		for (GanttDecoration deco : decos) {
 			Box label = deco.getLabel();
 			if (label != null && isPinnedLabel(deco, rowIds, frozenRowIds) == drawPinned) {
-				if (drawPinned) {
-					drawPinnedLabelBackground(out, label);
-				}
-				out.write(label);
+				drawDecorationLabel(out, label, drawPinned);
 			}
 		}
+	}
+
+	/**
+	 * Draws the label of a decoration.
+	 *
+	 * <p>
+	 * The label is drawn on top of the items. It receives pointer events only if it contains an
+	 * interactive part, see {@link Interactivity#writeOverlayPointerEvents(SvgWriter,
+	 * com.top_logic.react.flow.data.Widget)}; otherwise clicks reach the items below it. Its
+	 * backdrop counts as part of the label.
+	 * </p>
+	 *
+	 * @param withBackground
+	 *        Whether to draw a backdrop behind the label, see
+	 *        {@link #drawPinnedLabelBackground(SvgWriter, Box)}.
+	 */
+	private static void drawDecorationLabel(SvgWriter out, Box label, boolean withBackground) {
+		out.beginGroup();
+		Interactivity.writeOverlayPointerEvents(out, label);
+		if (withBackground) {
+			drawPinnedLabelBackground(out, label);
+		}
+		out.write(label);
+		out.endGroup();
+	}
+
+	/**
+	 * Returns the labels of all decorations.
+	 */
+	private static java.util.Set<Box> buildDecorationLabels(GanttLayout self) {
+		java.util.Set<Box> labels = new java.util.HashSet<>();
+		List<GanttDecoration> decos = self.getDecorations();
+		if (decos != null) {
+			for (GanttDecoration deco : decos) {
+				Box label = deco.getLabel();
+				if (label != null) {
+					labels.add(label);
+				}
+			}
+		}
+		return labels;
 	}
 
 	/**
@@ -1067,6 +1112,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 		out.beginGroup();
 		out.writeCssClass("tl-gantt-decorations");
+		// The lines and ranges of decorations are not interactive.
+		Interactivity.writePassThrough(out);
 
 		for (GanttDecoration decoration : decorations) {
 			// Compute vertical extent.
@@ -1161,6 +1208,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 		out.beginGroup();
 		out.writeCssClass("tl-gantt-edges");
+		// A Gantt edge has no interactive part, clicks reach the items below it.
+		Interactivity.writePassThrough(out);
 
 		for (GanttEdge edge : edges) {
 			GanttItem sourceItem = itemById.get(edge.getSourceItemId());

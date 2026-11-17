@@ -178,7 +178,8 @@ public class TestChangeDataTool extends BasicTestCase {
 		ToolResult result = _tool.changeData(resolve(memory) + ".set(" + KIND
 			+ ", `tl.ai.execution:MemoryKind#PREFERENCE`)", true, context());
 
-		assertContains("kind \"FACT\" -> \"PREFERENCE\"", result.text());
+		assertContains("kind " + ReadFilter.identityJson(classifier("FACT")) + " -> "
+			+ ReadFilter.identityJson(classifier("PREFERENCE")), result.text());
 		assertEquals("FACT", kindOf(memory));
 	}
 
@@ -328,6 +329,10 @@ public class TestChangeDataTool extends BasicTestCase {
 
 	private static String set(Agent agent, String description) {
 		return resolve(agent) + ".set(" + DESCRIPTION + ", '" + description + "')";
+	}
+
+	private static TLObject classifier(String name) {
+		return (TLObject) TLModelUtil.findPart("tl.ai.execution:MemoryKind#" + name);
 	}
 
 	private static String resolve(TLObject object) {

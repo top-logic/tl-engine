@@ -304,23 +304,23 @@ message InstanceEntry {
 	/**
 	 * The identifier a later call names the object by (<code>getInstance</code>, <code>present</code>, cite).
 	 */
-	string id;
-
-	/**
-	 * What the object is called.
-	 */
-	string label;
+	string id [Name = "_tid"];
 
 	/**
 	 * The qualified name of the object's own type, which may be a subtype of the listed one.
 	 */
-	string type;
+	string type [Name = "_type"];
 
 	/**
-	 * The requested attributes the acting account may read, by name, each serialized as JSON the way
-	 * {@code InstanceResponse.attributes} is.
+	 * What the object is called.
 	 */
-	map<string, string> attributes;
+	string label [Name = "_display"];
+
+	/**
+	 * The requested attributes the acting account may read, by name, as
+	 * {@code InstanceResponse.attributes} holds them.
+	 */
+	json attributes;
 }
 
 /**
@@ -409,9 +409,11 @@ message InstanceTypeInfo {
  */
 message InstanceMetadata {
 	/**
-	 * Container TID, if the instance is contained and the acting account may read the container.
+	 * The identity of the container - <code>_tid</code>, <code>_type</code> and
+	 * <code>_display</code> - if the instance is contained and the acting account may read the
+	 * container.
 	 */
-	string container;
+	json container;
 
 	/**
 	 * Name of the container reference.
@@ -431,7 +433,7 @@ message InstanceResponse {
 	/**
 	 * Instance TID.
 	 */
-	string tid;
+	string tid [Name = "_tid"];
 
 	/**
 	 * Type information.
@@ -439,14 +441,13 @@ message InstanceResponse {
 	InstanceTypeInfo type;
 
 	/**
-	 * Map of attribute names to values, holding only the attributes the acting account may read.
+	 * Object from attribute names to values, holding only the attributes the acting account may read.
 	 *
-	 * Note: Values are serialized as JSON and need to be parsed.
-	 * Primitive values are strings, collections are arrays, and a reference to another object is
-	 * that object's identity - <code>_tid</code>, <code>_type</code> and <code>_display</code> -
-	 * or absent when the acting account may not read it.
+	 * Collections are arrays, dates ISO 8601 texts, and a reference to another object is that
+	 * object's identity - <code>_tid</code>, <code>_type</code> and <code>_display</code> - or
+	 * absent when the acting account may not read it.
 	 */
-	map<string, string> attributes;
+	json attributes;
 
 	/**
 	 * Instance metadata.

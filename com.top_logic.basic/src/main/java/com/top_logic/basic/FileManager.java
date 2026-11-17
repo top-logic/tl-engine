@@ -77,6 +77,23 @@ public abstract class FileManager {
 	public abstract List<Path> getPaths();
 
 	/**
+	 * The web application folder of the application module.
+	 *
+	 * <p>
+	 * Files created by the running application and by development tools are placed here, see
+	 * {@link #getIDEFile(String)}. The folder need not exist yet.
+	 * </p>
+	 *
+	 * <p>
+	 * By default, the first of the {@link #getIDEPaths()}.
+	 * </p>
+	 */
+	@FrameworkInternal
+	public Path getTopLevelWebapp() {
+		return getIDEPaths().get(0).toPath();
+	}
+
+	/**
 	 * Checks whether a resource with the given name exists.
 	 */
 	public boolean exists(String name) {
@@ -263,7 +280,9 @@ public abstract class FileManager {
 	 *         If reading the contents or writing the destination fails.
 	 */
 	public void createData(String aName, BinaryContent content) throws IOException {
-		FileUtilities.copyToFile(content, getIDEFile(aName));
+		File destination = getIDEFile(aName);
+		destination.getParentFile().mkdirs();
+		FileUtilities.copyToFile(content, destination);
 		refresh(aName);
 	}
 

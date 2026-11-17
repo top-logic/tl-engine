@@ -85,10 +85,13 @@ public class AWTContext implements RenderContext {
 		LineMetrics metrics = font.getLineMetrics(text, _fontRenderContext);
 		Rectangle2D bounds = font.getStringBounds(text, _fontRenderContext);
 
+		// Height and baseline come from the line metrics of the font without the leading, so that
+		// texts of the same font have the same height and baseline independent of their letters,
+		// as in the client-side canvas measurement.
 		// Convert from AWT points to CSS pixels — see class JavaDoc.
 		return new TextMetricsImpl(
 			bounds.getWidth() * PX_PER_PT,
-			bounds.getHeight() * PX_PER_PT,
+			(metrics.getAscent() + metrics.getDescent()) * PX_PER_PT,
 			metrics.getAscent() * PX_PER_PT);
 	}
 

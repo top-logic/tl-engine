@@ -59,6 +59,7 @@ import com.top_logic.layout.view.table.CellEditing;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnExistence;
+import com.top_logic.layout.view.table.ColumnHeader;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.model.TLClass;
@@ -270,6 +271,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * {@link #_tableControl} exist, {@link Registration#NONE} while there is none.
 	 */
 	private Registration _existence = Registration.NONE;
+
+	/**
+	 * The observation of the channels the headings of the data columns of the current
+	 * {@link #_tableControl} read, {@link Registration#NONE} while there is none.
+	 */
+	private Registration _headers = Registration.NONE;
 
 	private final Set<Object> _selectedKeys = new java.util.LinkedHashSet<>();
 
@@ -1071,6 +1078,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		view.setAbsentColumns(existence.absentColumns());
 
 		disposeExistence();
+		disposeHeaders();
 		_arrangement.release();
 		disposeFilterBinding();
 		disposeDisplayedRowsBinding();
@@ -1083,6 +1091,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			// A notification in progress may still reach the observation of a replaced table.
 			if (_tableControl == shown) {
 				shown.setAbsentColumns(absent);
+			}
+		});
+		_headers = ColumnHeader.observe(setups, () -> {
+			// A notification in progress may still reach the observation of a replaced table.
+			if (_tableControl == shown) {
+				shown.refreshColumnHeaders();
 			}
 		});
 		_tableControl.setFilterBar(_filterBar);
@@ -1289,6 +1303,14 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	private void disposeExistence() {
 		_existence.dispose();
 		_existence = Registration.NONE;
+	}
+
+	/**
+	 * Stops following the channels the headings of the current table read.
+	 */
+	private void disposeHeaders() {
+		_headers.dispose();
+		_headers = Registration.NONE;
 	}
 
 	/**
@@ -1556,6 +1578,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	protected void onCleanup() {
 		_arrangement.release();
 		disposeExistence();
+		disposeHeaders();
 		disposeFilterBinding();
 		disposeDisplayedRowsBinding();
 		// The toolbar and the table itself are part of the state and are disposed with it; only the
@@ -1704,6 +1727,16 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		@Override
 		public ValueColor color(TLObject row) {
 			return _inner.color(row);
+		}
+
+		@Override
+		public String headerClass() {
+			return _inner.headerClass();
+		}
+
+		@Override
+		public ValueColor headerRole() {
+			return _inner.headerRole();
 		}
 
 		@Override

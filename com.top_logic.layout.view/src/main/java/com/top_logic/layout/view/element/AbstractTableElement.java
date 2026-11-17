@@ -76,6 +76,7 @@ import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnExistence;
+import com.top_logic.layout.view.table.ColumnHeader;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.ColumnsConfig;
@@ -1230,6 +1231,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, treeMode);
 		control.addCleanupAction(existence.observe(control::setAbsentColumns)::dispose);
+		control.addCleanupAction(ColumnHeader.observe(setups, control::refreshColumnHeaders)::dispose);
 		activate.bind(control);
 		control.setCssClass(_config.getCssClass());
 		control.setFilterBar(filterBar());

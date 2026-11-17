@@ -98,9 +98,7 @@ public class FormCommandModel implements CommandModel {
 		_action = action;
 		_executableWhen = executableWhen;
 		_visibleWhen = visibleWhen;
-		_executable = executableWhen.test(form);
-		_visible = visibleWhen.test(form);
-		_tooltip = tooltip();
+		updateState();
 	}
 
 	/**
@@ -238,14 +236,14 @@ public class FormCommandModel implements CommandModel {
 	 * Subscribes to form state changes to track executability.
 	 *
 	 * <p>
-	 * The form may have changed its state while this command did not follow it - before the form
-	 * was displayed for the first time (e.g. a form entering edit mode by itself while it is built)
-	 * or while it was not displayed -, so the executability is evaluated anew.
+	 * Brings the state of the command up to date first: the form may have changed its state while
+	 * this command did not observe it - before it was displayed for the first time (a form entering
+	 * edit mode while it is built), or while it was hidden.
 	 * </p>
 	 */
 	public void attach() {
+		update();
 		_form.addFormModelListener(_formModelListener);
-		handleFormStateChanged(_form);
 	}
 
 	/**
@@ -373,18 +371,33 @@ public class FormCommandModel implements CommandModel {
 	}
 
 	private void handleFormStateChanged(FormModel source) {
-		boolean newExecutable = _executableWhen.test(_form);
-		boolean newVisible = _visibleWhen.test(_form);
-		boolean wasExecutable = _executable;
-		boolean wasVisible = _visible;
-		String oldTooltip = _tooltip;
-		_executable = newExecutable;
-		_visible = newVisible;
-		_tooltip = tooltip();
-		if (newExecutable != wasExecutable || newVisible != wasVisible || !Objects.equals(oldTooltip, _tooltip)) {
+		update();
+	}
+
+	/**
+	 * Re-evaluates the state of this command from the form and notifies the state change listeners,
+	 * if it changed.
+	 */
+	private void update() {
+		if (updateState()) {
 			for (Runnable listener : _stateChangeListeners) {
 				listener.run();
 			}
 		}
+	}
+
+	/**
+	 * Re-evaluates visibility, executability and tooltip of this command from the form.
+	 *
+	 * @return Whether the state changed.
+	 */
+	private boolean updateState() {
+		boolean wasExecutable = _executable;
+		boolean wasVisible = _visible;
+		String oldTooltip = _tooltip;
+		_executable = _executableWhen.test(_form);
+		_visible = _visibleWhen.test(_form);
+		_tooltip = tooltip();
+		return _executable != wasExecutable || _visible != wasVisible || !Objects.equals(oldTooltip, _tooltip);
 	}
 }

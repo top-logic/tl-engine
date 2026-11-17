@@ -35,7 +35,8 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
  * A configured script body may return anything, model objects included, so the result goes through the
  * run's {@link ReadFilter} rather than straight into
  * {@link SearchExpression#asString(Object)} - which labels a model object, and a label is business
- * data. Object arguments are read with the same rights, when
+ * data. It reaches the model as JSON: a value, an array for a list, an object for a dictionary, and
+ * every model object in it as its identity. Object arguments are read with the same rights, when
  * {@link DeclaredParameters#bind(Map, ModelSecurity)} resolves their id.
  * </p>
  *
@@ -195,16 +196,16 @@ public class ScriptToolExecutor implements Tool {
 		}
 		try {
 			// Both directions are filtered. An object argument the principal may not read is refused
-			// where its id is bound above, and the result is disclosed through the same filter -
-			// SearchExpression.asString labels a model object, and a label is business data. Being
+			// where its id is bound above, and the result is disclosed through the same filter as JSON -
+			// a model object's label is business data. Being
 			// business data is also what the rendering is marked as, for the model's benefit.
 			Object result = _executor.executeWith(Args.some(positional));
 			// The summary is disclosed through the same filter as the result: it is computed from the
 			// raw value, so a summary naming an object would otherwise reach the model past the check
 			// the result itself passed.
 			String summary = _summary == null ? null
-				: readFilter.text(_name, _summary.execute(result));
-			return new ToolResult(readFilter.text(_name, result), summary, _truncationHint);
+				: readFilter.markedJson(_name, _summary.execute(result));
+			return new ToolResult(readFilter.markedJson(_name, result), summary, _truncationHint);
 		} catch (Exception ex) {
 			Logger.error("Error executing script tool '" + _name + "': " + ex.getMessage(), ex,
 				ScriptToolExecutor.class);

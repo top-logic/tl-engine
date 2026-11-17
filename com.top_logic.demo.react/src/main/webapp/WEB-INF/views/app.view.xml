@@ -188,6 +188,15 @@
 							<de>Gantt-Terminplan</de>
 						</label>
 					</nav-item>
+					<nav-item id="graph-demo"
+						icon="css:bi bi-diagram-2"
+					>
+						<view-ref view="demo/graph-demo.view.xml"/>
+						<label>
+							<en>Graph Demo</en>
+							<de>Graph-Demo</de>
+						</label>
+					</nav-item>
 					<nav-item id="flow-clip-demo"
 						icon="css:bi bi-crop"
 					>
@@ -276,6 +285,15 @@
 						<label>
 							<en>Tiles Multi-Tab Demo</en>
 							<de>Tiles Mehr-Tab-Demo</de>
+						</label>
+					</nav-item>
+					<nav-item id="tiles-typed-demo"
+						icon="css:bi bi-funnel"
+					>
+						<view-ref view="demo/tiles-typed-demo.view.xml"/>
+						<label>
+							<en>Tiles Typed Demo</en>
+							<de>Tiles-Demo nach Typ</de>
 						</label>
 					</nav-item>
 					<nav-item id="responsive-md-demo"

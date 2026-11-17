@@ -7,6 +7,8 @@ package com.top_logic.tl.ai.core.tools.script;
 
 import java.util.List;
 
+import com.top_logic.model.search.configured.ConfiguredTLScriptFunctions;
+import com.top_logic.model.search.configured.QueryExecutorMethod;
 import com.top_logic.model.search.expr.AbstractObjectCreation;
 import com.top_logic.model.search.expr.Add;
 import com.top_logic.model.search.expr.DeleteObject;
@@ -48,11 +50,30 @@ final class SideEffects {
 	}
 
 	/**
+	 * The name {@link #firstEffect(SearchExpression)} reports for setting an attribute named by a
+	 * literal: the TL-Script function {@code set}, which compiles to an {@link Update}.
+	 */
+	static final String SET = "set";
+
+	/**
 	 * Whether the expression has any effect: a write to the knowledge base, or a function that acts
 	 * outside it.
 	 */
 	static boolean any(SearchExpression expression) {
-		return Boolean.TRUE.equals(expression.visit(AnyEffect.INSTANCE, null));
+		return firstEffect(expression) != null;
+	}
+
+	/**
+	 * The name of the first function in the expression that has an effect, or <code>null</code> if
+	 * it has none.
+	 *
+	 * <p>
+	 * For a call of a configured TL-Script function, it is the name of that function: whether it has
+	 * an effect is read from its body and the bodies of the configured functions it calls.
+	 * </p>
+	 */
+	static String firstEffect(SearchExpression expression) {
+		return expression.visit(FirstEffect.INSTANCE, null);
 	}
 
 	/**
@@ -78,13 +99,28 @@ final class SideEffects {
 	 * {@code throw} ends the evaluation. A date question needs the conversions, and treating them as
 	 * effects would refuse it.
 	 * </p>
+	 *
+	 * <p>
+	 * For a call of a configured TL-Script function, the answer is read from the current bodies of
+	 * the configured functions, see {@link ConfiguredTLScriptFunctions#isSideEffectFree(String)}:
+	 * the compiled call itself counts as having an effect, see
+	 * {@link QueryExecutorMethod#isSideEffectFree()}.
+	 * </p>
 	 */
 	private static boolean hasEffect(GenericMethod function) {
+		if (function instanceof QueryExecutorMethod) {
+			return !isConfiguredFunctionSideEffectFree(function.getName());
+		}
 		if (function.isSideEffectFree()) {
 			return false;
 		}
 		return !(function instanceof ToUserCalendar || function instanceof ToSystemCalendar
 			|| function instanceof Throw);
+	}
+
+	private static boolean isConfiguredFunctionSideEffectFree(String name) {
+		ConfiguredTLScriptFunctions.Module module = ConfiguredTLScriptFunctions.Module.INSTANCE;
+		return module.isActive() && module.getImplementationInstance().isSideEffectFree(name);
 	}
 
 	/**
@@ -97,29 +133,27 @@ final class SideEffects {
 			|| function instanceof Copy;
 	}
 
-	/** Whether there is an effect anywhere in the expression. */
-	private static final class AnyEffect extends DefaultDescendingVisitor<Boolean, Void> {
+	/** The first function in the expression that has an effect. */
+	private static final class FirstEffect extends DefaultDescendingVisitor<String, Void> {
 
-		static final AnyEffect INSTANCE = new AnyEffect();
+		static final FirstEffect INSTANCE = new FirstEffect();
 
 		@Override
-		protected Boolean composeUpdate(Update expr, Void arg, Boolean selfResult, Boolean valueResult) {
-			return Boolean.TRUE;
+		protected String composeUpdate(Update expr, Void arg, String selfResult, String valueResult) {
+			return SET;
 		}
 
 		@Override
-		protected Boolean composeGenericMethod(GenericMethod expr, Void arg, List<Boolean> argumentsResult) {
-			return Boolean.valueOf(hasEffect(expr) || Boolean.TRUE.equals(combine(argumentsResult)));
+		protected String composeGenericMethod(GenericMethod expr, Void arg, List<String> argumentsResult) {
+			if (hasEffect(expr)) {
+				return expr.getName();
+			}
+			return combine(argumentsResult);
 		}
 
 		@Override
-		protected Boolean combine(Boolean result1, Boolean result2) {
-			return Boolean.valueOf(Boolean.TRUE.equals(result1) || Boolean.TRUE.equals(result2));
-		}
-
-		@Override
-		protected Boolean none() {
-			return Boolean.FALSE;
+		protected String combine(String result1, String result2) {
+			return result1 != null ? result1 : result2;
 		}
 	}
 

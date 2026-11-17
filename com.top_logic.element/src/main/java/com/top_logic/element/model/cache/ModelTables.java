@@ -112,7 +112,8 @@ public class ModelTables {
 						analyzeType(classType);
 					} catch (RuntimeException ex) {
 						// Safety. Do not fail when something is strange in the model.
-						Logger.error("Unable to analyze type " + TLModelUtil.qualifiedName(type), ex);
+						Logger.error("Unable to analyze type " + TLModelUtil.qualifiedName(type), ex,
+							ModelTables.class);
 					}
 				}
 			}
@@ -128,7 +129,8 @@ public class ModelTables {
 				analyzeTypePart(part);
 			} catch (RuntimeException ex) {
 				// Safety. Do not fail when something is strange in the model.
-				Logger.error("Unable to analyze type part " + TLModelUtil.qualifiedName(part), ex);
+				Logger.error("Unable to analyze type part " + TLModelUtil.qualifiedName(part), ex,
+					ModelTables.class);
 			}
 		}
 	}

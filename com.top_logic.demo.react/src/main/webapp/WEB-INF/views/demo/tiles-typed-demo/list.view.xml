@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Initial frame of the typed drill-down: the transactions of the type the embedding binds to the
+	channel "type". Activating a row pushes the transaction frame.
+-->
+<view>
+	<channels>
+		<channel name="type"/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Transactions</en>
+			<de>Transaktionen</de>
+		</title>
+		<table types="demo.charts:Transaktion">
+			<columns>
+				<column attribute="beschreibung"/>
+				<column attribute="datum"/>
+				<column attribute="wert"/>
+				<column attribute="kategorie"/>
+			</columns>
+			<inputs>
+				<input channel="type"/>
+			</inputs>
+			<rows>if($type == null, [], all($type))</rows>
+			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+				bind-input-to="transaction"
+				frame="transaction"
+			/>
+		</table>
+	</panel>
+</view>

@@ -63,7 +63,7 @@ export function kontrastPaare(T) {
   // Hervorhebung im Select-Popup und Link im Status
   paar('border-interactive', 'surface-layer', 3.0); // Griff des Splits auf einer Fläche (Welle 4c)
   paar('border-interactive', 'surface-layer-nested', 3.0); // Ring einer ausgewählten Option in einer Fläche (Q24)
-  paar('border-interactive', 'surface-overlay', 3.0); paar('border-interactive', 'surface-selected', 3.0); paar('text-link', 'surface-overlay', 4.5); // Linie des Zelleditors auf der gewählten Zeile
+  paar('border-interactive', 'surface-overlay', 3.0); paar('border-interactive', 'surface-selected', 3.0); paar('text-link', 'surface-overlay', 4.5); // border-interactive auf surface-selected: Auswahl-Blau und Fokusring in der gewählten Zeile (der Feldrahmen der Zelle ist border-emphasis)
   paar('text-primary', 'surface-field', 4.5); paar('icon-secondary', 'surface-field', 3.0); // Schalterknopf
   // Griff des Mischers auf jeder Datenfarbe: 9:1 zwischen den Ringen sichert auf jeder Farbe einen Ring mit
   // 3:1 (Spec 5a §4).
@@ -81,7 +81,7 @@ export function kontrastPaare(T) {
   // Vordergrund. Kopfzeile und Gruppenzeile der Tabelle tragen Text auf surface-layer-muted.
   for (const bg of AUSWAHL) {
     paar('icon-primary', bg, 3.0); paar('icon-secondary', bg, 3.0); paar('border-selected', bg, 3.0);
-    paar('border-interactive', bg, 3.0); // Linie des Zelleditors auf der gewählten Zeile, auch gezeigt
+    paar('border-interactive', bg, 3.0); // Fokusring des Zellfelds auf der gewählten Zeile, auch gezeigt
     // Nebentext, Hilfetext und Link in einer gewählten Zeile (09.10.): 4,5 auf beiden Zuständen.
     paar('text-secondary', bg, 4.5); paar('text-link', bg, 4.5); paar('text-helper', bg, 4.5);
   }

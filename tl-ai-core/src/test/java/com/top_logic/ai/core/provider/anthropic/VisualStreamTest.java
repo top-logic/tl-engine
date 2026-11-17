@@ -26,9 +26,9 @@ import com.top_logic.ai.core.provider.StreamEvent;
  * <p>
  * This is <b>not test coverage</b>: it asserts nothing, and it spends a real Anthropic API call. So
  * it is gated behind {@link VisualHarness}, like the browser end-to-end tests are gated behind
- * {@code BrowserE2e}. Without the flag it reports as <b>skipped</b> - a package-wide run such as
- * {@code -Dtest='com.top_logic.ai.core.**'} must neither bill an API call nor report a passing
- * test that checked nothing.
+ * {@code BrowserE2e}. Without the flag it reports as <b>skipped</b> in the <code>TestAll</code> of
+ * the module - the build must neither bill an API call nor report a passing test that checked
+ * nothing.
  * </p>
  *
  * <p>Run manually:</p>

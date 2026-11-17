@@ -53,7 +53,7 @@ Without its property, a gated test reports as skipped, never as passed. Examples
 
 ```bash
 mvn test -DskipTests=false -pl tl-ai-browser -Dtl.ai.browser.e2e=true \
-    -Dtest=com.top_logic.tl.ai.browser.TestBrowserTool,com.top_logic.tl.ai.browser.TestBrowserUrlProvenance
+    -Dtest=com.top_logic.ai.browser.TestBrowserTool,com.top_logic.ai.browser.TestBrowserUrlProvenance
 
 mvn test -DskipTests=false -pl tl-ai-core -Dtl.ai.injection.e2e=true \
     -Dtest=com.top_logic.ai.core.tools.web.TestPromptInjectionBarrier
@@ -76,7 +76,7 @@ mvn test -DskipTests=false -pl tl-ai-eval
 The **real models** spend real money and are behind `-Dtl.ai.eval=true`. Without it `TestEvalPmMatrix` reports as skipped; the gate is asked by the class's `suite()` as well, so a build that does not run the eval does not boot the agent stack to report a skip.
 
 ```bash
-mvn test -DskipTests=false -pl tl-ai-eval -Dtl.ai.eval=true -Dtest=com.top_logic.tl.ai.eval.TestEvalPmMatrix
+mvn test -DskipTests=false -pl tl-ai-eval -Dtl.ai.eval=true -Dtest=com.top_logic.ai.eval.TestEvalPmMatrix
 ```
 
 The CSV lands in `tl-ai-eval/target/eval/`. How to add a scenario, how to read the CSV and - most importantly - what the numbers may not be used for is in `tl-ai-eval/README.md`. The short version: with a handful of scenarios this shows that a model is unusable with this harness, never that one good model is three points better than another.
@@ -88,7 +88,7 @@ The CSV lands in `tl-ai-eval/target/eval/`. How to add a scenario, how to read t
 ```bash
 export tl_openai_api_key=... tl_anthropic_api_key=... tl_brave_api_key=...
 mvn test -DskipTests=false -pl tl-ai-eval -Dtl.ai.research.e2e=true \
-    -Dtest=com.top_logic.tl.ai.eval.TestResearchEval \
+    -Dtest=com.top_logic.ai.eval.TestResearchEval \
     -Dtl.ai.research.scenarios=fact-nobel-phd -Dtl.ai.research.repeats=1
 ```
 

@@ -21,14 +21,14 @@
 		<config service-class="com.top_logic.basic.module.ModuleSystem">
 			<instance>
 				<modules>
-					<module key="com.top_logic.tl.ai.index.AiIndexService$Module" value="true"/>
+					<module key="com.top_logic.ai.index.AiIndexService$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.tl.ai.index.AiIndexService">
-			<instance class="com.top_logic.tl.ai.index.AiIndexService">
-				<embedder class="com.top_logic.tl.ai.index.onnx.OnnxEmbedder"
+		<config service-class="com.top_logic.ai.index.AiIndexService">
+			<instance class="com.top_logic.ai.index.AiIndexService">
+				<embedder class="com.top_logic.ai.index.onnx.OnnxEmbedder"
 					model-dir="%AI_INDEX_MODEL_DIR%"
 					model-file="model_int8.onnx"
 					pooling="CLS"

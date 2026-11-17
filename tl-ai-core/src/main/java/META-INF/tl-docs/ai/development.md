@@ -19,8 +19,8 @@ The modules follow the engine's layout. Package roots:
 | `tl-ai-a2a` | `com.top_logic.ai.a2a.*` (protocol, server, client) |
 | `tl-ai-views` | `com.top_logic.ai.views` |
 | `tl-ai-vector-index` | `com.top_logic.ai.vector.index.*` |
-| `tl-ai-index`, `tl-ai-index-onnx` | `com.top_logic.tl.ai.index.*` |
-| `tl-ai-eval` | `com.top_logic.tl.ai.eval` |
+| `tl-ai-index`, `tl-ai-index-onnx` | `com.top_logic.ai.index.*` |
+| `tl-ai-eval` | `com.top_logic.ai.eval` |
 
 Configuration files per module:
 

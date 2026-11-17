@@ -19,7 +19,6 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import org.junit.Assume;
-import org.junit.runner.RunWith;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
@@ -40,7 +39,6 @@ import com.top_logic.ai.core.agent.AgentFactory;
 import com.top_logic.ai.core.agent.AgentPolicyService;
 import com.top_logic.ai.core.agent.AgentRuntimeService;
 import com.top_logic.ai.core.agent.event.AgentEventListener;
-import test.com.top_logic.basic.junit.AssumptionAwareRunner;
 import com.top_logic.ai.core.message.Conversation;
 import com.top_logic.ai.core.message.TextContent;
 import com.top_logic.ai.core.message.UserMessage;
@@ -81,7 +79,6 @@ import com.top_logic.util.model.ModelService;
  * @see AgentFactory
  * @see com.top_logic.ai.core.agent.TransactionScope
  */
-@RunWith(AssumptionAwareRunner.class)
 public class TestConcurrentAgents extends BasicTestCase {
 
 	/** Default number of parallel agent runs when {@value #CONCURRENCY_PROPERTY} is not set. */

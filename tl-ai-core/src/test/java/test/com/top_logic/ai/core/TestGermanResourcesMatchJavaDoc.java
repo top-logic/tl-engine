@@ -74,12 +74,10 @@ import junit.framework.TestCase;
  * authored half of the comparison exists nowhere else. TestConfigPresentation, which checks the
  * generated texts themselves, can and does read the classpath instead.
  *
- * It lives in the "test" package root, which is where the engine's test.TestAll collects a module's
- * tests from - so it runs in a plain "mvn test -DskipTests=false". The rest of tl-ai's tests sit
- * outside that root and therefore run only when a -Dtest argument names them, which is not enough
- * for a check whose job is to notice something nobody is looking at. It is also where the engine
- * keeps its own resource check, TestI18NConstantsTranslations, which asks the complementary
- * question: whether a translation exists at all.
+ * It lives in the "test" package root rather than in the package of a tested class, because it
+ * tests no class but the resources of all AI modules. That is also where the engine keeps its own
+ * resource check, TestI18NConstantsTranslations, which asks the complementary question: whether a
+ * translation exists at all.
  *
  * It walks every AI module of the reactor rather than only its own. Surefire runs a test with its
  * module directory as the working directory, so a per-module check would be the smaller step - but

@@ -14,7 +14,7 @@ import com.top_logic.ai.core.message.TokenUsage;
 
 /**
  * {@link AgentEventListener} decorator that writes a run's lifecycle as structured, greppable
- * diagnostic lines to the dedicated {@code com.top_logic.tl.ai} logger category, then forwards
+ * diagnostic lines to the dedicated {@code com.top_logic.ai} logger category, then forwards
  * every event unchanged to the wrapped listener.
  *
  * <p>
@@ -51,7 +51,7 @@ import com.top_logic.ai.core.message.TokenUsage;
  * even with debug off: provider retries and reactive (context-overflow) compaction.</li>
  * <li><b>DEBUG</b> - the full per-run / per-turn / per-tool trace. Off by default, so there is zero
  * output (and, guarded by {@link Logger#isDebugEnabled(Object)}, near-zero overhead) unless the
- * {@code com.top_logic.tl.ai} category is raised to {@code debug}.</li>
+ * {@code com.top_logic.ai} category is raised to {@code debug}.</li>
  * </ul>
  *
  * @see AgentEventListener

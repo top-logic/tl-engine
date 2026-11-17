@@ -43,8 +43,8 @@ import com.top_logic.ai.core.tools.ToolStubs;
  * <p>
  * This is <b>not test coverage</b>: it asserts nothing. Its whole value is the rendered transcript,
  * so it is gated behind {@link VisualHarness}, like the browser end-to-end tests are gated behind
- * {@code BrowserE2e}. Without the flag every method reports as <b>skipped</b>, so a package-wide run
- * such as {@code -Dtest='com.top_logic.ai.core.**'} neither fails on the missing
+ * {@code BrowserE2e}. Without the flag every method reports as <b>skipped</b> in the
+ * <code>TestAll</code> of the module, so the build neither fails on the missing
  * {@code ThreadContextManager} nor reports a passing test that checked nothing.
  * </p>
  *

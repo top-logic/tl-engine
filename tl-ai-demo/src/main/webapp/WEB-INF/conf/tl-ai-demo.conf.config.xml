@@ -131,7 +131,7 @@
 			that file is on this application's configuration load path (see
 			TestBrowserToolsServiceDemoConfig).
 		-->
-		<config service-class="com.top_logic.tl.ai.browser.BrowserToolsService">
+		<config service-class="com.top_logic.ai.browser.BrowserToolsService">
 			<instance allowed-domains="quotes.toscrape.com" />
 		</config>
 

@@ -134,6 +134,79 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 	}
 
 	/**
+	 * Reverting the subtree restores a node referenced through the opt-in reference {@code peers}
+	 * and keeps the changes of a part of the opt-out composition {@code noise} and of an unrelated
+	 * node.
+	 */
+	public void testRevertAnnotatedPeer() {
+		TLObject root = createNode(null, "root");
+		TLObject peer = createNode(null, "peer");
+		TLObject noiseChild = createNoiseChild(root, "noise-child");
+		TLObject unrelated = createNode(null, "unrelated");
+		try (Transaction tx = beginTX()) {
+			root.tUpdateByName("peers", List.of(peer));
+			tx.commit();
+		}
+
+		Revision snapshot = currentRevision();
+
+		rename(peer, "peer-2");
+		rename(noiseChild, "noise-child-2");
+		rename(unrelated, "unrelated-2");
+
+		List<ResKey> problems = ChangeSetReverter.revertSubtreeTo(root, snapshot,
+			com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
+
+		assertEquals(List.of(), problems);
+		assertEquals("peer", peer.tValueByName("name"));
+		assertEquals("noise-child-2", noiseChild.tValueByName("name"));
+		assertEquals("unrelated-2", unrelated.tValueByName("name"));
+	}
+
+	/**
+	 * Reverting the subtree of a member restores its {@code home} node (opt-in backward reference,
+	 * the member is the root) and keeps the changes of a part of the opt-out composition
+	 * {@code noise} and of an unrelated node.
+	 */
+	public void testRevertAnnotatedHome() {
+		TLObject member = createNode(null, "member");
+		TLObject home = createNode(null, "home");
+		TLObject noiseChild = createNoiseChild(member, "noise-child");
+		TLObject unrelated = createNode(null, "unrelated");
+		try (Transaction tx = beginTX()) {
+			home.tUpdateByName("homeMembers", List.of(member));
+			tx.commit();
+		}
+		assertEquals(home, member.tValueByName("home"));
+
+		Revision snapshot = currentRevision();
+
+		rename(home, "home-2");
+		rename(noiseChild, "noise-child-2");
+		rename(unrelated, "unrelated-2");
+
+		List<ResKey> problems = ChangeSetReverter.revertSubtreeTo(member, snapshot,
+			com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
+
+		assertEquals(List.of(), problems);
+		assertEquals("home", home.tValueByName("name"));
+		assertEquals("noise-child-2", noiseChild.tValueByName("name"));
+		assertEquals("unrelated-2", unrelated.tValueByName("name"));
+	}
+
+	private TLObject createNoiseChild(TLObject parent, String name) {
+		try (Transaction tx = beginTX()) {
+			TLObject node = _factory.createObject(_nodeType, parent);
+			node.tUpdateByName("name", name);
+			List<Object> current = new ArrayList<>((Collection<?>) parent.tValueByName("noise"));
+			current.add(node);
+			parent.tUpdateByName("noise", current);
+			tx.commit();
+			return node;
+		}
+	}
+
+	/**
 	 * No changes in the configured window yields no-op revert with no problems.
 	 */
 	public void testRevertWithNoChanges() {

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 
 /**
  * Optional enrichment a {@link ReactControl} may implement to describe itself to the headless interface
@@ -21,7 +22,7 @@ import com.top_logic.layout.react.control.ReactControl;
  * interface lets a control override the headless-typed parts of that projection:
  * </p>
  * <ul>
- * <li>a curated {@link #scriptingState() state} projection hiding presentation noise, and</li>
+ * <li>a curated {@link #scriptingState(ProjectionMode) state} projection hiding presentation noise, and</li>
  * <li>an {@link #scriptingActions() action} list with argument schemas so an agent need not guess the
  * shape of a command's {@code arguments} map.</li>
  * </ul>
@@ -39,10 +40,12 @@ public interface ScriptingNode {
 	/**
 	 * A curated view of this node's data state for a headless consumer.
 	 *
+	 * @param mode
+	 *        How the objects the node displays are identified.
 	 * @return The state map, or {@code null} to fall back to the control's generic
-	 *         {@link ReactControl#scriptingScalarState() scalar state}.
+	 *         {@link ReactControl#scriptingScalarState(ProjectionMode) scalar state}.
 	 */
-	default Map<String, Object> scriptingState() {
+	default Map<String, Object> scriptingState(ProjectionMode mode) {
 		return null;
 	}
 

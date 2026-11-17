@@ -297,7 +297,7 @@ public class TestFormCommitsPendingEntries extends BasicTestCase {
 			&& StringServices.isEmpty(field.getValue())) {
 			field.setValue("filled");
 		}
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			fillMandatoryValues(child);
 		}
 	}
@@ -313,7 +313,7 @@ public class TestFormCommitsPendingEntries extends BasicTestCase {
 		if (control instanceof ReactDropdownSelectControl select) {
 			result.add(select);
 		}
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			collectSelectors(child, result);
 		}
 	}
@@ -339,7 +339,7 @@ public class TestFormCommitsPendingEntries extends BasicTestCase {
 				return button;
 			}
 		}
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			ReactButtonControl found = find(child, add, label);
 			if (found != null) {
 				return found;

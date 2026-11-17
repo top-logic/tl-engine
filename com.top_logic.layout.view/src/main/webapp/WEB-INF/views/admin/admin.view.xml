@@ -180,6 +180,13 @@
 							</label>
 							<view-ref view="admin/system/secrets.view.xml"/>
 						</tab>
+						<tab id="config-variables">
+							<label>
+								<en>Configuration variables</en>
+								<de>Konfigurationsvariablen</de>
+							</label>
+							<view-ref view="admin/system/config-variables.view.xml"/>
+						</tab>
 						<tab id="locks">
 							<label>
 								<en>Locks</en>

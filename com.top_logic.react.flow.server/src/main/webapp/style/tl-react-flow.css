@@ -2,11 +2,6 @@
  * Stylesheet for the React flow diagram on the screen.
  */
 /*
- * Font a text is measured with when it carries no explicit font of its own. The layout reserves
- * space for a text using these values, so they must stay in sync with RenderContext.
- */
-
-/*
  * The element a diagram is drawn into on the screen. Its size comes from its container alone: the
  * SVG lies on top of it instead of in the flow, so the aspect ratio of the SVG's viewBox never
  * gives it a height. The client lays the diagram out within that size. A filling diagram keeps a
@@ -27,6 +22,14 @@
 	top: 0;
 	left: 0;
 	display: block;
+}
+/*
+ * The client measures texts without spacing between letters and words, so diagram text must not
+ * inherit it from the theme.
+ */
+.tl-flow-diagram text {
+	letter-spacing: normal;
+	word-spacing: normal;
 }
 
 .tlSelectionMarker {
@@ -70,6 +73,20 @@ g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--tl-borde
 .tl-gantt-vp-sidebar text:not([fill]),
 .tl-gantt-vp-header text:not([fill]),
 .tl-gantt-vp-corner text:not([fill]) {
+	fill: var(--tl-text-primary);
+}
+
+/*
+ * The labels of the decorations a Gantt chart shows at the top of its data rows (e.g. the label of
+ * a "today" line), drawn over the items of the first data row. The model paints a white backdrop
+ * behind each of them, which an exported PDF keeps; on the screen it is the surface of the panel,
+ * slightly translucent, and a label without a color of its own takes the text color.
+ */
+.tl-gantt-pinned-label-bg {
+	fill: var(--tl-surface-layer);
+	fill-opacity: 0.9;
+}
+.tl-gantt-vp-decoration-labels text:not([fill]) {
 	fill: var(--tl-text-primary);
 }
 

@@ -245,7 +245,7 @@ describe('the selection boxes of a table as MUI checkboxes', () => {
 
     // The press toggles the row alone: no plain row click selecting it exclusively.
     expect(sent.mock.calls.filter(([command]) => command === CMD_SELECT))
-      .toEqual([[CMD_SELECT, { rowIndex: 1, ctrlKey: true, shiftKey: false }]]);
+      .toEqual([[CMD_SELECT, { rowId: 'r1', ctrlKey: true, shiftKey: false }]]);
   });
 
   it('has no selection box for a group row', async () => {

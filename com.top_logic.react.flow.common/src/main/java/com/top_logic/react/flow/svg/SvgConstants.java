@@ -113,6 +113,11 @@ public interface SvgConstants {
 	String ID_ATTR = "id";
 
 	/**
+	 * Attribute referencing the {@link #CLIP_PATH} element that clips an element.
+	 */
+	String CLIP_PATH_ATTR = "clip-path";
+
+	/**
 	 * CSS class attribute.
 	 */
 	String CLASS_ATTR = "class";

@@ -30,7 +30,6 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.reflect.TypeIndex;
-import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.Computation;
@@ -756,28 +755,37 @@ public class ModuleUtil {
 	 */
 	private void stopInThreadContext(final Iterator<BasicRuntimeModule<?>> modules) {
 		final ObjectFlag<BasicRuntimeModule<?>> threadContextModule = new ObjectFlag<>(null);
-		InContext job = new InContext() {
-			
-			@Override
-			public void inContext() {
-				while (modules.hasNext()) {
-					BasicRuntimeModule<?> module = modules.next();
-					if (!module.isActive()) {
-						continue;
-					}
-					if (ModuleUtil.this.isThreadContextModule(module)) {
-						// can not stop thread context module in thread context
-						threadContextModule.set(module);
-						break;
-					}
-					ModuleUtil.this.stop(module);
-				}
-			}
-		};
-		ThreadContext.inSystemContext(ModuleUtil.class, job);
+		// A lambda instead of an inner class: the job must not need a class of the application that
+		// is loaded first at shutdown, when the application's jars may no longer be accessible.
+		ThreadContext.inSystemContext(ModuleUtil.class,
+			() -> stopUntilThreadContextModule(modules, threadContextModule));
 		if (threadContextModule.get() != null) {
 			// stop thread context module
 			stop(threadContextModule.get());
+		}
+	}
+
+	/**
+	 * Stops the given modules until the {@link ThreadContextManager} module is reached.
+	 *
+	 * @param modules
+	 *        The modules to stop.
+	 * @param threadContextModule
+	 *        Receives the {@link ThreadContextManager} module, if it is reached. It cannot be
+	 *        stopped within the thread context it provides.
+	 */
+	private void stopUntilThreadContextModule(Iterator<BasicRuntimeModule<?>> modules,
+			ObjectFlag<BasicRuntimeModule<?>> threadContextModule) {
+		while (modules.hasNext()) {
+			BasicRuntimeModule<?> module = modules.next();
+			if (!module.isActive()) {
+				continue;
+			}
+			if (isThreadContextModule(module)) {
+				threadContextModule.set(module);
+				break;
+			}
+			stop(module);
 		}
 	}
 

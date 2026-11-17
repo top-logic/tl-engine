@@ -334,8 +334,33 @@ public interface ModelAccessRights {
 	 * Without a grant for the command group, the result is empty and the decision on the object
 	 * applies to the attribute.
 	 * </p>
+	 *
+	 * <p>
+	 * Attribute rights are configured for a type and an attribute name and apply to that type and
+	 * its specializations. The result is the one for objects of the
+	 * {@link TLStructuredTypePart#getOwner() owner} of the given attribute.
+	 * </p>
 	 */
 	Set<BoundedRole> getAllowedRoles(TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
+
+	/**
+	 * Returns the roles granted the given command group on the given attribute of objects of the
+	 * given type.
+	 *
+	 * <p>
+	 * Like {@link #getAllowedRoles(TLStructuredTypePart, BoundCommandGroup)}, but for the
+	 * attribute rights in effect for the given type: the most specific attribute rights configured
+	 * on the way from the given type to its generalizations for the name of the given attribute.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type of the objects whose attribute is accessed.
+	 * @param attribute
+	 *        The attribute of the given type.
+	 * @param commandGroup
+	 *        The operation on the attribute.
+	 */
+	Set<BoundedRole> getAllowedRoles(TLClass type, TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
 
 	/**
 	 * Whether the given attribute has an attribute-level grant for the given command group.
@@ -349,13 +374,38 @@ public interface ModelAccessRights {
 	 * one bypassing the model security, independent of the object the attribute is accessed on.
 	 * </p>
 	 *
+	 * <p>
+	 * Attribute rights are configured for a type and an attribute name and apply to that type and
+	 * its specializations. The answer is conservative: it is <code>true</code> as soon as the
+	 * {@link TLStructuredTypePart#getOwner() owner} of the given attribute or any of its
+	 * specializations has an attribute-level grant for the attribute's name.
+	 * </p>
+	 *
 	 * @param attribute
-	 *        The attribute to check, any override of it decides like its
-	 *        {@link TLStructuredTypePart#getDefinition() definition}.
+	 *        The attribute to check.
 	 * @param commandGroup
 	 *        The operation on the attribute.
 	 */
 	boolean hasGrant(TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
+
+	/**
+	 * Whether the given attribute has an attribute-level grant for the given command group on
+	 * objects of the given type.
+	 *
+	 * <p>
+	 * Like {@link #hasGrant(TLStructuredTypePart, BoundCommandGroup)}, but exactly for the
+	 * attribute rights in effect for the given type, see
+	 * {@link #getAllowedRoles(TLClass, TLStructuredTypePart, BoundCommandGroup)}.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type of the objects whose attribute is accessed.
+	 * @param attribute
+	 *        The attribute of the given type.
+	 * @param commandGroup
+	 *        The operation on the attribute.
+	 */
+	boolean hasGrant(TLClass type, TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
 
 	/**
 	 * Checks whether the given person can perform the given command group on the given attribute
@@ -440,6 +490,15 @@ public interface ModelAccessRights {
 	 * A deleted object is accessible for nobody, not even for a person bypassing the model
 	 * security.
 	 * </p>
+	 *
+	 * <p>
+	 * Every person may perform {@link SimpleBoundCommandGroup#DISCOVER} and
+	 * {@link SimpleBoundCommandGroup#READ} on a {@link TLModelPart model element} that is not
+	 * deleted: it is meta-data, not a business object, see
+	 * {@link #isDiscoverAllowed(Person, TLObject)}. The value of an enumeration attribute of a
+	 * readable object is therefore readable for every person who may read the attribute. Modifying,
+	 * creating and deleting a model element is checked like for any other object.
+	 * </p>
 	 */
 	boolean isAllowed(Person person, TLObject instance, BoundCommandGroup commandGroup);
 
@@ -474,8 +533,9 @@ public interface ModelAccessRights {
 	 * </p>
 	 *
 	 * <p>
-	 * Every person may discover a {@link TLModelPart model element} (a type, an attribute, a module,
-	 * a classifier of an enumeration) that is not deleted. A model element is meta-data that a
+	 * Every person may discover and read a {@link TLModelPart model element} (a type, an attribute,
+	 * a module, a classifier of an enumeration) that is not deleted, see
+	 * {@link #isAllowed(Person, TLObject, BoundCommandGroup)}. A model element is meta-data that a
 	 * computation works with, not a business object - a script may e.g. deliver the type of an
 	 * object, a table column may be described by its attribute, and the value of an enumeration
 	 * attribute is chosen from the classifiers of its enumeration. Hiding such an element would break
@@ -496,6 +556,12 @@ public interface ModelAccessRights {
 	 *
 	 * <p>
 	 * No attribute of a deleted object is accessible to anybody.
+	 * </p>
+	 *
+	 * <p>
+	 * The attribute rights applying are those of the type of the given instance for the name of
+	 * the given attribute: the most specific attribute rights configured on the way from that type
+	 * to its generalizations.
 	 * </p>
 	 */
 	boolean isAllowed(Person person, TLObject instance, TLStructuredTypePart attribute, BoundCommandGroup commandGroup);

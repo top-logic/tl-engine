@@ -49,6 +49,11 @@ import com.top_logic.util.model.ModelService;
 /**
  * {@link ConfiguredManagedClass} holding additional TL-Script functions that can be defined within
  * the application.
+ *
+ * <p>
+ * Whether a configured function is free of side effects is determined from its body and the
+ * bodies of the configured functions it calls.
+ * </p>
  * 
  * @param <C>
  *        Type of the configuration.
@@ -111,6 +116,18 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 	private volatile Map<String, Factory> _factories = Collections.emptyMap();
 
 	/**
+	 * Which configured functions are free of side effects, computed on demand from the current
+	 * {@link #_executors}, see {@link #isSideEffectFree(String)}.
+	 *
+	 * <p>
+	 * The analysis belongs to the executors it was computed from. Compiling the scripts again
+	 * (after a change of the configuration or a reload of the model) publishes new executors, which
+	 * makes the analysis outdated.
+	 * </p>
+	 */
+	private volatile ConfiguredFunctionSideEffects _sideEffects;
+
+	/**
 	 * The application model the {@link #_builders scripts} and {@link #_executors executors} were
 	 * compiled against, <code>null</code> before the first call.
 	 *
@@ -153,6 +170,7 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 			executors.put(builder.getKey(), createExecutor(builder.getKey(), builder.getValue()));
 		}
 		_executors = executors;
+		_sideEffects = null;
 	}
 
 	/**
@@ -199,6 +217,7 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 		_factories.clear();
 		_executors.clear();
 		_executorsNoSecurity.clear();
+		_sideEffects = null;
 		super.shutDown();
 	}
 
@@ -276,6 +295,36 @@ public class ConfiguredTLScriptFunctions<C extends ConfiguredTLScriptFunctions.C
 			return SearchExpression.filterSecurity(execution.apply(Boolean.FALSE));
 		}
 		return execution.apply(Boolean.valueOf(usesSecurity));
+	}
+
+	/**
+	 * Whether the configured function with the given name is free of side effects.
+	 *
+	 * <p>
+	 * The answer is read from the compiled bodies of all configured functions, see
+	 * {@link ConfiguredFunctionSideEffects}: a function has a side effect, iff its body contains a
+	 * built-in function with a side effect or calls a configured function with a side effect.
+	 * Functions calling each other or themselves are free of side effects, if none of their bodies
+	 * contains an effect. The analysis is computed on the first request after the scripts were
+	 * compiled, so a change of the configuration takes effect with the next request.
+	 * </p>
+	 *
+	 * <p>
+	 * A compiled call of a configured function does not use this answer, see
+	 * {@link QueryExecutorMethod#isSideEffectFree()}.
+	 * </p>
+	 *
+	 * @return <code>false</code> for a name that is no configured function, and for a function
+	 *         whose body could not be compiled.
+	 */
+	public boolean isSideEffectFree(String functionName) {
+		Map<String, QueryExecutor> executors = _executors;
+		ConfiguredFunctionSideEffects analysis = _sideEffects;
+		if (analysis == null || !analysis.isBasedOn(executors)) {
+			analysis = new ConfiguredFunctionSideEffects(executors);
+			_sideEffects = analysis;
+		}
+		return analysis.isSideEffectFree(functionName);
 	}
 
 	/**

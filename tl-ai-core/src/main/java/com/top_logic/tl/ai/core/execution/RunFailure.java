@@ -97,7 +97,7 @@ public final class RunFailure {
 	 *
 	 * <p>
 	 * A run whose model has a provider without its credentials does not fail with an exception: it
-	 * ends with a provider error of the kind {@link ProviderException.Kind#AUTHENTICATION}, whose
+	 * ends with a provider error of the kind {@link ProviderException.Kind#NO_CREDENTIALS}, whose
 	 * message names the secret to provide.
 	 * </p>
 	 *

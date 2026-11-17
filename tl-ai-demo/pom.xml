@@ -25,6 +25,11 @@
       <artifactId>tl-starter-ai</artifactId>
       <type>pom</type>
     </dependency>
+    <!-- The browser tools: the demo's agents read JavaScript-heavy pages and keep logins in cookie pools. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-ai-browser</artifactId>
+    </dependency>
     <!-- The "Albert" tab of the classic LayoutServlet UI, hosting the React chat. -->
     <dependency>
       <groupId>com.top-logic</groupId>

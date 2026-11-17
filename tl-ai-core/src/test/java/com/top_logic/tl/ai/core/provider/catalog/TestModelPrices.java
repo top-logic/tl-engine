@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.provider.catalog;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -45,6 +46,34 @@ public class TestModelPrices extends TestCase {
 		assertEquals("0.2 M at 1.25 + 0.1 M at 10 + 0.8 M cached at 0.125.", 0.25 + 1.0 + 0.1, cost, DELTA);
 	}
 
+	/** A catalog tier applies above its own threshold, the base prices below it. */
+	public void testTheCatalogTierIsUsedAboveItsThreshold() {
+		String json = """
+			{
+			  "anthropic": {
+			    "models": {
+			      "claude-haiku-5-5": {
+			        "id": "claude-haiku-5-5",
+			        "cost": {
+			          "input": 0.1, "output": 0.5, "cache_read": 0.01, "cache_write": 0.125,
+			          "tiers": [ { "input": 0.5, "output": 2.5, "cache_read": 0.05, "cache_write": 0.625,
+			                       "tier": { "type": "context", "size": 100000 } } ]
+			        },
+			        "limit": { "context": 400000, "output": 64000 }
+			      }
+			    }
+			  }
+			}
+			""";
+		ModelInfo info = ModelsDevFetcher.parseJson(json, Map.of("anthropic", Set.of("claude-haiku-5-5")))
+			.get("claude-haiku-5-5");
+
+		assertEquals("0.1 M at 0.1 + 0.1 M output at 0.5.", 0.01 + 0.05,
+			CostCalculator.costOf(info.cost(), new TokenUsage(100_000, 100_000, 0, 0, 0)).total(), DELTA);
+		assertEquals("0.2 M at 0.5 + 0.1 M output at 2.5.", 0.1 + 0.25,
+			CostCalculator.costOf(info.cost(), new TokenUsage(200_000, 100_000, 0, 0, 0)).total(), DELTA);
+	}
+
 	/** A local model is priced by its override; unset cache and reasoning prices fall back. */
 	public void testAnOverrideGivesALocalModelAPrice() {
 		OverrideConfig override = override("qwen-local", Double.valueOf(0.20), Double.valueOf(0.60));
@@ -69,7 +98,7 @@ public class TestModelPrices extends TestCase {
 
 	/** An override written only for the limits of a catalog model keeps the catalog's prices. */
 	public void testAnOverrideWithoutAPriceKeepsTheCatalogPrice() {
-		ModelCost catalogPrice = new ModelCost(3, 15, 0.3, 3.75, null, null, null, null);
+		ModelCost catalogPrice = new ModelCost(3, 15, 0.3, 3.75, null, null, null, List.of());
 		ModelInfo catalog = new ModelInfo("claude-test", null, new ModelInfo.ModelLimits(200_000, 64_000, 0),
 			null, catalogPrice, null, false, null);
 
@@ -80,7 +109,7 @@ public class TestModelPrices extends TestCase {
 
 	/** An override that names a price replaces the catalog's. */
 	public void testAnOverridePriceReplacesTheCatalogPrice() {
-		ModelCost catalogPrice = new ModelCost(3, 15, 0.3, 3.75, null, null, null, null);
+		ModelCost catalogPrice = new ModelCost(3, 15, 0.3, 3.75, null, null, null, List.of());
 		ModelInfo catalog = new ModelInfo("claude-test", null, new ModelInfo.ModelLimits(200_000, 64_000, 0),
 			null, catalogPrice, null, false, null);
 

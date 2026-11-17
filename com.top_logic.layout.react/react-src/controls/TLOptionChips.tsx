@@ -1,5 +1,6 @@
 import {
   React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps, usePart, OptionValues,
+  optionTooltipProps,
 } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson, ColorRole } from 'tl-react-bridge';
 import { ARG_OPTION, CMD_GOTO } from './selectOptions';
@@ -21,7 +22,8 @@ const { useCallback, useMemo, useRef } = React;
  * image and the color role of the option, in a `tl-chip-group` of the design system, which carries
  * the field's state (see fieldStateAttrs); every chip is given that state as its validation, too. A
  * read-only field shows its values as the other choice fields do (OptionValues); a disabled field
- * renders every chip disabled (see showsValueOnly).
+ * renders every chip disabled (see showsValueOnly). Every chip offers the explanation of its option
+ * as tooltip (see optionTooltipProps), which the server answers.
  *
  * The server hands this control the complete option list as soon as it is displayed - there is no
  * moment at which it could ask for it.
@@ -105,6 +107,7 @@ const TLOptionChips: React.FC<TLCellProps> = ({ controlId }) => {
           validation={validation}
           disabled={disabled}
           onClick={() => toggle(option)}
+          {...optionTooltipProps(option)}
         />
       ))}
     </div>

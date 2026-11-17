@@ -243,7 +243,46 @@ export function getApiBase(): string {
 }
 
 /**
- * Mounts a React component into the given DOM element.
+ * The attribute naming the control whose React root the element takes, see
+ * {@code ReactControl.MOUNT_ATTRIBUTE}.
+ *
+ * <p>The mount point carries the control ID in this attribute, not as {@code id}: the ID belongs
+ * to the root element the component renders (with {@code id={controlId}}), so that it is unique in
+ * the document.</p>
+ */
+export const MOUNT_ATTRIBUTE = 'data-react-mount';
+
+/** The CSS selector matching every mount point. */
+const MOUNT_SELECTOR = '[' + MOUNT_ATTRIBUTE + ']';
+
+/**
+ * The mount point of the given control in the given root, see {@link MOUNT_ATTRIBUTE}; {@code null}
+ * if there is none.
+ */
+export function findMountPoint(controlId: string, root: ParentNode = document): HTMLElement | null {
+  for (const element of root.querySelectorAll<HTMLElement>(MOUNT_SELECTOR)) {
+    if (element.getAttribute(MOUNT_ATTRIBUTE) === controlId) {
+      return element;
+    }
+  }
+  return null;
+}
+
+/** The controls whose mount points are the given element or lie within it. */
+function mountedIn(element: HTMLElement): string[] {
+  const result: string[] = [];
+  const own = element.getAttribute(MOUNT_ATTRIBUTE);
+  if (own) {
+    result.push(own);
+  }
+  for (const inner of element.querySelectorAll<HTMLElement>(MOUNT_SELECTOR)) {
+    result.push(inner.getAttribute(MOUNT_ATTRIBUTE)!);
+  }
+  return result;
+}
+
+/**
+ * Mounts a React component into the mount point of the given control, see {@link findMountPoint}.
  */
 export function mount(
   controlId: string,
@@ -275,7 +314,7 @@ export function mount(
   // Always update windowName (it may change between mount calls).
   setI18NWindowName(resolvedWindowName);
 
-  const element = document.getElementById(controlId);
+  const element = findMountPoint(controlId);
   if (!element) {
     console.error('[TLReact] Mount point not found:', controlId);
     return;
@@ -1192,7 +1231,7 @@ export {
 // --- MutationObserver for auto-mount and auto-unmount ---
 
 /**
- * Discovers unmounted {@code [data-react-module]} elements in the given root
+ * Discovers unmounted mount points (see {@link MOUNT_ATTRIBUTE}) in the given root
  * and mounts them. Context ({@code windowName}, {@code contextPath}) is read
  * from per-element data attributes written by {@code ReactControl.write()}.
  *
@@ -1206,9 +1245,10 @@ export function discoverAndMount(root: ParentNode = document.body): void {
   const bodyWindowName = document.body.dataset.windowName;
   const bodyContextPath = document.body.dataset.contextPath;
 
-  const elements = root.querySelectorAll<HTMLElement>('[data-react-module]');
+  const elements = root.querySelectorAll<HTMLElement>(MOUNT_SELECTOR);
   for (const el of elements) {
-    if (!el.id || _mounts.has(el.id)) {
+    const controlId = el.getAttribute(MOUNT_ATTRIBUTE);
+    if (!controlId || _mounts.has(controlId)) {
       continue;
     }
     const moduleName = el.dataset.reactModule;
@@ -1219,7 +1259,7 @@ export function discoverAndMount(root: ParentNode = document.body): void {
     }
     const stateJson = el.dataset.reactState;
     const state = stateJson ? JSON.parse(stateJson) : {};
-    mount(el.id, moduleName, state, windowName, contextPath);
+    mount(controlId, moduleName, state, windowName, contextPath);
   }
 }
 
@@ -1237,13 +1277,10 @@ function setupDOMObserver(): void {
     for (const mutation of mutations) {
       for (const removed of mutation.removedNodes) {
         if (removed instanceof HTMLElement) {
-          const id = removed.id;
-          if (id && _mounts.has(id) && _mounts.get(id)!.root !== null) {
-            unmount(id);
-          }
-          for (const [mountId, entry] of _mounts.entries()) {
-            if (entry.root !== null && removed.querySelector('#' + CSS.escape(mountId))) {
-              unmount(mountId);
+          for (const id of mountedIn(removed)) {
+            const entry = _mounts.get(id);
+            if (entry !== undefined && entry.root !== null) {
+              unmount(id);
             }
           }
         }
@@ -1255,11 +1292,11 @@ function setupDOMObserver(): void {
       for (const added of mutation.addedNodes) {
         if (added instanceof HTMLElement) {
           // The added node itself may be a mount point.
-          if (added.dataset?.reactModule) {
+          if (added.hasAttribute(MOUNT_ATTRIBUTE)) {
             discoverAndMount(added.parentElement ?? document.body);
           } else {
             // Or it may contain mount points as descendants.
-            if (added.querySelector('[data-react-module]')) {
+            if (added.querySelector(MOUNT_SELECTOR)) {
               discoverAndMount(added);
             }
           }

@@ -12,6 +12,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.filter.TextFilterState;
 
@@ -230,6 +231,56 @@ public interface TableView<R> {
 	 * </p>
 	 */
 	Column<R, ?> column(String column);
+
+	/**
+	 * The text the header row of the given group shows for the value the group stands for.
+	 *
+	 * <p>
+	 * The value is written as the column the rows are grouped by at the group's level displays it.
+	 * A column that displays its values by a control rather than a text writes the value by its
+	 * label. The number of rows in the group, which the header shows next to the value, is not part
+	 * of the text.
+	 * </p>
+	 *
+	 * @param group
+	 *        The group of a {@link RowKind#GROUP_HEADER group header} row.
+	 * @return The text, empty if the group stands for no value.
+	 */
+	default String groupText(Group<R> group) {
+		List<Object> values = group.key().values();
+		List<String> grouping = state().getGrouping().columns();
+		int level = values.size() - 1;
+		if (level < 0 || level >= grouping.size()) {
+			return "";
+		}
+		Column<R, ?> groupColumn = column(grouping.get(level));
+		if (groupColumn == null) {
+			return "";
+		}
+		Object value = values.get(level);
+		CellContent content = renderGroupValue(groupColumn, value);
+		String text = "";
+		if (content instanceof CellContent.Text plain) {
+			text = plain.text();
+		} else if (content instanceof CellContent.Labeled labeled) {
+			text = labeled.text();
+		}
+		if ((text == null || text.isEmpty()) && value != null) {
+			// The column displays its values by a control rather than a text.
+			return MetaLabelProvider.INSTANCE.getLabel(value);
+		}
+		return text == null ? "" : text;
+	}
+
+	/**
+	 * Renders a group value through the renderer of the column it was taken from.
+	 *
+	 * @implNote The value is a group key value of this very column, hence of its value type.
+	 */
+	@SuppressWarnings("unchecked")
+	private static <R, V> CellContent renderGroupValue(Column<R, V> column, Object value) {
+		return column.renderer().render((V) value);
+	}
 
 	/**
 	 * The CSS class marking the given row as a whole, or {@code null} for none.

@@ -1057,7 +1057,7 @@ itself to offer:
 | | |
 |--|--|
 | The tool | `present(query, ids, as, chart, title, channel)` - `PresentTool` in tl-ai-core holds the logic, `com.top_logic.ai.chat.tools.ChatPresentTool` delivers to the page; registered as `present.present` from `tl-chat.conf.config.xml`, so every host of this module has it. Classified READ / `interaction`: it reads business data and changes page state, not the knowledge base, so there is nothing to approve - and the approval card would sit in the very page it is filling. |
-| What | A TL-Script `query` evaluating to the objects - "show me all events as a table" is `present(query: all(`demo.events:Event`), as: TABLE)`, one call, with no listing and fetching first (#616) - or the `ids` of objects the model already holds. `as` is `TABLE`, `CHART` (with `chart: {kind, label, value}`, two TL-Script functions of one object) or `FORM`; omitted, one object is a form and several are a table. The answer lists the objects as `label [id:TID]` (a chart's as `label: value [id:TID]`), so the model can talk about them without reading them again. |
+| What | A TL-Script `query` evaluating to the objects - "show me all events as a table" is `present(query: all(`demo.events:Event`), as: TABLE)`, one call, with no listing and fetching first (#616) - or the `ids` of objects the model already holds. `as` is `TABLE`, `CHART` (with `chart: {kind, label, value}`, two TL-Script functions of one object) or `FORM`; omitted, one object is a form and several are a table. The answer lists the objects as JSON identities `{"_tid", "_type", "_display"}` (a chart's points as `{"object": <identity>, "label", "value"}`), cut at 50 as `{"items", "total"}`, so the model can talk about them without reading them again. |
 | Data (#655) | A query may compute data instead of objects, in the format of a chart component's `data` script: a whole Chart.js configuration `{'type', 'data': {'labels', 'datasets'}, 'options'}` - stacked, a line over bars, two axes - or its short forms, `{label: number}` (what `groupBy(key, g -> $g.size())` returns), `{label: {series: number}}` and a list of records. `ChartData` (tl-ai-core) turns every form into the one configuration, checks it (a known type, numbers only, objects only in `metadata` and only readable ones) and cuts it to 200 points per series and 20 series, saying so in the answer. Shown as `CHART` (the default for data) or as `TABLE` - a label column and a column per series, `ComputedColumn`s over plain rows. A point of data has no object, so a click opens nothing. |
 | The value | A form's object stands on the channel as itself - what a `<form>`, a subject or a context fact reading "the open object" understands. A table or a chart stands there as the `Presentation`, which a `<chat-rail>` renders and `ChatSelection` states to the agent. |
 | The rights | A query is evaluated without being able to modify anything, and its objects are reduced to the ones the **acting user** may read (`ReadFilter`), the way `filterSecurity` would. Every id resolves through `TidResolver` with the same rights, all or nothing: an object they may not read is refused exactly like one that does not exist. A chart's functions are tried on every object before anything is shown, so a failing function is the model's error to correct, not an empty chart. |
@@ -1084,8 +1084,11 @@ lists `<agent-command name="…" description="…">` entries, each an ordinary `
 dialog or shows a view. `ChatConversationControl` builds each in its view context (`ViewCommandModel.forCommand`)
 and offers it as a `PageCommand` on its `ChatViewBinding` while attached; `ChatCommandTool`
 (`page-commands.pageCommands`, `page-commands.runPageCommand`, READ / `interaction`) finds it by name across the
-window's bindings of the run's account and runs `ViewCommandModel.perform` in `ChatWindowService.inWindow`, so the
-command's executability and access decide exactly as for a click. The article `ai/chat-ui` ("Page commands an agent
+window's bindings of the run's account and runs `ViewCommandModel.execute(input, parameterValues)` in
+`ChatWindowService.inWindow`, so the command's executability and access decide exactly as for a click. A command's
+`<parameters>` (a `ConfigurationDescriptorConfig`, built once as `DeclaredParameters` of `tl-ai-core`) are listed as
+JSON schema and checked by `DeclaredParameters.bind` before the command runs; the chain sees them as arguments of
+their names. The article `ai/chat-ui` ("Page commands an agent
 may run") has the syntax; `TestPageCommandTool` drives a live window with a dialog manager standing in for the
 browser.
 
@@ -1305,7 +1308,7 @@ line instead (#494):
 which states, as a per-turn fact of the `<turn-context>` block:
 
 ```
-Selected object: KI im Mittelstand 2026 [type:demo.events:Event] [id:GenericObject:12345]
+Selected object: {"_tid":"GenericObject:12345","_type":"demo.events:Event","_display":"KI im Mittelstand 2026"}
 ```
 
 | | |
@@ -1315,9 +1318,9 @@ Selected object: KI im Mittelstand 2026 [type:demo.events:Event] [id:GenericObje
 | `<label>` | TL-Script naming one object. Empty uses the application's own label - which is what the user sees on their screen, and therefore the right answer to a question about it. |
 
 **Three things, not one**, and each is load-bearing (`ChatSelection`): the label answers "which one
-do I have open?", the qualified type name says what kind of thing it is, and the identifier is the
-same `label [id:TID]` form every tool result writes, so the model feeds it straight into the next
-tool call and `TidResolver` reads it back. A label alone leaves the agent searching for the object
+do I have open?", the qualified type name says what kind of thing it is, and the identifier makes it
+actionable. The three form the same JSON identity every tool result writes, so the model passes its
+`_tid` straight into the next tool call and `TidResolver` resolves it. A label alone leaves the agent searching for the object
 the user is looking at, which is the state #494 was filed about.
 
 Never stable, and it cannot be configured to be: a selection is the value that changes most often in

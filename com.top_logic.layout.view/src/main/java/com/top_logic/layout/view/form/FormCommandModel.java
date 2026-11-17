@@ -20,7 +20,6 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.view.I18NConstants;
-import com.top_logic.layout.view.command.FormValid;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -99,9 +98,7 @@ public class FormCommandModel implements CommandModel {
 		_action = action;
 		_executableWhen = executableWhen;
 		_visibleWhen = visibleWhen;
-		_executable = executableWhen.test(form);
-		_visible = visibleWhen.test(form);
-		_tooltip = tooltip();
+		updateState();
 	}
 
 	/**
@@ -129,9 +126,9 @@ public class FormCommandModel implements CommandModel {
 	 * Creates the "Save" command model with default behavior.
 	 *
 	 * <p>
-	 * Executable while the form is in edit mode and displays no validation errors. Calls
-	 * {@link FormControl#executeSave()}. Disabled by errors, it names them as reason, see
-	 * {@link FormValid}.
+	 * Executable while the form is in edit mode, also while it displays validation errors. Calls
+	 * {@link FormControl#executeSave()}, which refuses to store input with errors and names them
+	 * (see {@link FormControl#validateOrThrow()}).
 	 * </p>
 	 *
 	 * @param form
@@ -146,9 +143,9 @@ public class FormCommandModel implements CommandModel {
 	 * Creates the "Save" command model with a custom action chain.
 	 *
 	 * <p>
-	 * Executable while the form is in edit mode and displays no validation errors. Executes the
-	 * given action instead of calling {@link FormControl#executeSave()}. Disabled by errors, it
-	 * names them as reason, see {@link FormValid}.
+	 * Executable while the form is in edit mode, also while it displays validation errors. Executes
+	 * the given action instead of calling {@link FormControl#executeSave()}; storing the form state
+	 * in it refuses input with errors and names them (see {@link FormControl#validateOrThrow()}).
 	 * </p>
 	 *
 	 * @param form
@@ -158,24 +155,11 @@ public class FormCommandModel implements CommandModel {
 	 * @return The save command model.
 	 */
 	public static FormCommandModel saveCommand(FormControl form, Consumer<ReactContext> action) {
-		FormValid valid = new FormValid(form);
 		return new FormCommandModel("formSave", I18NConstants.FORM_SAVE, Icons.FORM_SAVE,
 			CommandPlacement.TOOLBAR, form,
 			action,
-			FormCommandModel::isSavable,
 			FormControl::isEditMode,
-			f -> valid.isExecutable(null));
-	}
-
-	/**
-	 * Whether the form can currently be saved: it is being edited and shows no validation errors.
-	 *
-	 * <p>
-	 * Errors that are still hidden do not block the save - the save attempt is what reveals them.
-	 * </p>
-	 */
-	private static boolean isSavable(FormControl form) {
-		return form.isEditMode() && !form.hasVisibleErrors();
+			FormControl::isEditMode);
 	}
 
 	/**
@@ -250,8 +234,15 @@ public class FormCommandModel implements CommandModel {
 
 	/**
 	 * Subscribes to form state changes to track executability.
+	 *
+	 * <p>
+	 * Brings the state of the command up to date first: the form may have changed its state while
+	 * this command did not observe it - before it was displayed for the first time (a form entering
+	 * edit mode while it is built), or while it was hidden.
+	 * </p>
 	 */
 	public void attach() {
+		update();
 		_form.addFormModelListener(_formModelListener);
 	}
 
@@ -380,18 +371,33 @@ public class FormCommandModel implements CommandModel {
 	}
 
 	private void handleFormStateChanged(FormModel source) {
-		boolean newExecutable = _executableWhen.test(_form);
-		boolean newVisible = _visibleWhen.test(_form);
-		boolean wasExecutable = _executable;
-		boolean wasVisible = _visible;
-		String oldTooltip = _tooltip;
-		_executable = newExecutable;
-		_visible = newVisible;
-		_tooltip = tooltip();
-		if (newExecutable != wasExecutable || newVisible != wasVisible || !Objects.equals(oldTooltip, _tooltip)) {
+		update();
+	}
+
+	/**
+	 * Re-evaluates the state of this command from the form and notifies the state change listeners,
+	 * if it changed.
+	 */
+	private void update() {
+		if (updateState()) {
 			for (Runnable listener : _stateChangeListeners) {
 				listener.run();
 			}
 		}
+	}
+
+	/**
+	 * Re-evaluates visibility, executability and tooltip of this command from the form.
+	 *
+	 * @return Whether the state changed.
+	 */
+	private boolean updateState() {
+		boolean wasExecutable = _executable;
+		boolean wasVisible = _visible;
+		String oldTooltip = _tooltip;
+		_executable = _executableWhen.test(_form);
+		_visible = _visibleWhen.test(_form);
+		_tooltip = tooltip();
+		return _executable != wasExecutable || _visible != wasVisible || !Objects.equals(oldTooltip, _tooltip);
 	}
 }

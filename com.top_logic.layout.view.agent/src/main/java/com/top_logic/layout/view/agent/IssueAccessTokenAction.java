@@ -101,6 +101,7 @@ public class IssueAccessTokenAction extends AbstractConfiguredInstance<IssueAcce
 		// The invitation travels on as the action's result, so that the surrounding chain opens the
 		// dialog displaying it. This is the one and only time the token in it is readable.
 		TLObject issued = TransientObjectFactory.INSTANCE.createObject(AccessTokens.issuedType());
+		issued.tUpdate(AccessTokens.issuedType().getPart(AccessTokens.LABEL), label);
 		issued.tUpdate(AccessTokens.issuedType().getPart(AccessTokens.INVITATION), invitation(secret));
 		return issued;
 	}

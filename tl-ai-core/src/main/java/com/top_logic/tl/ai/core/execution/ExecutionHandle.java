@@ -176,8 +176,8 @@ public final class ExecutionHandle {
 	 * <p>
 	 * Unlike {@link #runId()}, which is distinct for every run (every chat message is a new run),
 	 * this id is the same across all runs of one conversation, so a resource keyed on it - notably
-	 * the interactive browser session (see {@code BrowserTool}) - is reused across the messages of a
-	 * conversation instead of being recreated per message.
+	 * the interactive browser session of {@code BrowserTool} (tl-ai-browser) - is reused across the
+	 * messages of a conversation instead of being recreated per message.
 	 * </p>
 	 *
 	 * @see RunInfo#conversationId()

@@ -5,6 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { generate, componentSources, expandRoles } from '../tools/generate.mjs';
+import { primitives } from '../tools/resolve.mjs';
 import { componentCssFiles, rulesOf } from './lib/component.mjs';
 
 const P = JSON.parse(readFileSync(new URL('../src/primitives.json', import.meta.url)));
@@ -96,4 +97,22 @@ test('components.css: der gefüllte Termin und sein Punkt lesen je Kategorie die
     assert.deepEqual(rolle('.tl-calendar__event', k), [`background: var(--tl-${k}-surface); color: var(--tl-text-on-${k});`], k);
     assert.deepEqual(rolle('.tl-calendar__chip-dot', k), [`background: var(--tl-${k}-surface);`], k);
   }
+});
+
+// Der Excel-Export der Tabelle füllt Zellen in der Fläche ihrer Rolle; er liest die Werte aus role-fills.properties,
+// das der Build aus tokens.json schreibt. Je getönte Rolle eine Zeile, der Wert der Primitive hinter ihrer Fläche
+// im hellen Modus.
+test('role-fills.properties nennt je getönte Rolle die Fläche des hellen Modus als Wert', () => {
+  const prim = primitives(P);
+  const wert = (token) => prim[/^\{([a-z0-9-]+)\}$/.exec(T.color.light[token])[1]];
+  const erwartet = [['brand', wert('surface-brand-subtle')],
+    ...KATEGORIEN.map((k) => [k, wert(`${k}-subtle`)]),
+    ...STATUS.map((s) => [s, wert(`status-${s}-subtle`)])];
+  const gelesen = generate(P, T)['role-fills.properties'].split('\n')
+    .filter((z) => z && !z.startsWith('#')).map((z) => z.split('='));
+  assert.deepEqual(new Map(gelesen), new Map(erwartet));
+  for (const [, farbe] of gelesen) assert.match(farbe, /^#[0-9A-F]{6}$/i);
+  const datei = (rel) => readFileSync(new URL(rel, import.meta.url), 'utf8');
+  assert.equal(datei('../src/main/webapp/style/tl-design-system/role-fills.properties'), datei('../dist/role-fills.properties'),
+    'role-fills.properties: Webapp-Ordner weicht von dist/ ab — node tools/generate.mjs');
 });

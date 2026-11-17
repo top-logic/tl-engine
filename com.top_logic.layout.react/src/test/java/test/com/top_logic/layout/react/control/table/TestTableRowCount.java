@@ -182,7 +182,7 @@ public class TestTableRowCount extends TestCase {
 		assertEquals(text(I18NConstants.TABLE_ROW_COUNT__COUNT.fill(3)), _table.clientState(ROW_COUNT));
 
 		_table.executeClientCommand(TableViewControl.CMD_EXPAND, Map.of(
-			ExpandArguments.ROW_INDEX, Integer.valueOf(0),
+			ExpandArguments.ROW_ID, _table.rowIdAt(0),
 			ExpandArguments.EXPANDED, Boolean.FALSE));
 		assertEquals(text(I18NConstants.TABLE_ROW_COUNT__COUNT.fill(3)), _table.clientState(ROW_COUNT));
 
@@ -213,7 +213,7 @@ public class TestTableRowCount extends TestCase {
 	public void testSelectAllInGroupedTableWithCollapsedGroup() {
 		_table.executeClientCommand(TableViewControl.CMD_GROUP, Map.of(GroupArguments.COLUMN, COLUMN_STATUS));
 		_table.executeClientCommand(TableViewControl.CMD_EXPAND, Map.of(
-			ExpandArguments.ROW_INDEX, Integer.valueOf(0),
+			ExpandArguments.ROW_ID, _table.rowIdAt(0),
 			ExpandArguments.EXPANDED, Boolean.FALSE));
 		assertEquals("One collapsed header, the other header with its single row.",
 			Integer.valueOf(3), _table.clientState(TOTAL_ROW_COUNT));

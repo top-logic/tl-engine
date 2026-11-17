@@ -129,7 +129,7 @@ Die Schrift setzen die Typo-Klassen im TSX; `calendar.css` setzt keine.
 | Fall | Fläche | Schrift |
 |---|---|---|
 | ohne Kategorie, ohne Serverfarbe | `--tl-surface-brand` | `--tl-text-on-brand` |
-| Kategorie `N` | `--tl-category-N-surface` | `--tl-text-on-category-N` (gerechnet) |
+| Kategorie `N` | `--tl-category-<n>-surface` | `--tl-text-on-category-<n>` (gerechnet) |
 | Serverfarbe `color` | inline, die Datenfarbe | inline, `textOn(color)`: `--tl-text-contrast-light` oder `--tl-text-contrast-dark`; ist die Farbe nicht lesbar, gilt die Kategorie bzw. die Marke |
 
 Der Punkt eines Chips liest dieselbe Fläche, ohne Schrift. Die Regeln je Kategorie schreibt der Generator
@@ -141,6 +141,7 @@ außerhalb des Pakets.
 | Teil | Token |
 |---|---|
 | Wurzel | `--tl-surface-layer`, `--tl-text-primary` |
+| Werkzeugleiste | seitlicher Abstand `--tl-space-sm` |
 | Ränder, Stundenlinien | `--tl-border-width-sm` in `--tl-border-separator` |
 | Tagesspalte, arbeitsfreier Tag | `--tl-surface-base` |
 | Arbeitszeit | `--tl-surface-layer` |

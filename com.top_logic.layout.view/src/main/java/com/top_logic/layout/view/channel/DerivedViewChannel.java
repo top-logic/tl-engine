@@ -29,8 +29,8 @@ import com.top_logic.model.listen.ModelScope;
  * </p>
  *
  * <p>
- * By default, a derived channel is read-only: calling {@link #set(Object)} throws
- * {@link UnsupportedOperationException}. When bound with a reverse function via
+ * By default, a derived channel is read-only: it is not {@link #isWritable() writable}, and calling
+ * {@link #set(Object)} throws {@link UnsupportedOperationException}. When bound with a reverse function via
  * {@link #bind(List, Function, Function)}, the channel becomes bidirectional: setting a value
  * applies the reverse function and propagates the result to the first input channel.
  * </p>
@@ -182,6 +182,15 @@ public class DerivedViewChannel implements ObservingChannel {
 	@Override
 	public Object get() {
 		return _value;
+	}
+
+	/**
+	 * Whether this channel was {@link #bind(List, Function, Function) bound} with a reverse function
+	 * mapping a written value back to its first input.
+	 */
+	@Override
+	public boolean isWritable() {
+		return _reverseFunction != null;
 	}
 
 	@Override

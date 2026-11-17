@@ -18,7 +18,11 @@
 		>
 			<field attribute="name"/>
 			<field attribute="locked"/>
-			<field attribute="string"/>
+			<!-- The label stands in the empty input as its placeholder. -->
+			<field
+				attribute="string"
+				label-position="placeholder"
+			/>
 			<field attribute="multiLine"/>
 			<field attribute="html"/>
 			<field attribute="i18n"/>
@@ -44,6 +48,8 @@
 			<field attribute="priorityRadio"/>
 			<field attribute="flags"/>
 			<field attribute="date"/>
+			<field attribute="dueDateRequired"/>
+			<field attribute="dueDate"/>
 			<field attribute="dateTime"/>
 			<field attribute="dateTimeShort"/>
 			<field attribute="dateTimeSeconds"/>
@@ -65,7 +71,11 @@
 			<field attribute="image"/>
 			<field attribute="attachments"/>
 			<field attribute="documents"/>
-			<field attribute="priority"/>
+			<!-- The label stands in the empty input as its placeholder. -->
+			<field
+				attribute="priority"
+				label-position="placeholder"
+			/>
 			<field attribute="tags"/>
 			<field attribute="owner"/>
 			<field attribute="watchers"/>

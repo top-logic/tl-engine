@@ -120,6 +120,26 @@ public class TestImplementableInterfaceDoc extends TestCase {
 	}
 
 	/**
+	 * Only abstract getters of a configuration interface are properties: default methods and
+	 * methods annotated with <code>@Factory</code> or <code>@External</code> get no label and
+	 * tooltip keys, neither in the declaring nor in an inheriting interface.
+	 */
+	public void testPropertyGetters() {
+		String type = PACKAGE + ".PropertyRule";
+		assertEquals("Plain value", _messages.getProperty(type + ".plain-value"));
+		assertEquals("The value of a property.", _messages.getProperty(type + ".plain-value.tooltip"));
+
+		for (String owner : new String[] { type, PACKAGE + ".PropertyRuleSub" }) {
+			for (String property : new String[] { "computed-value", "created", "external-value" }) {
+				String key = owner + "." + property;
+				assertNull(key, _messages.getProperty(key));
+				assertNull(key, _messages.getProperty(key + ".tooltip"));
+			}
+		}
+		assertEquals("Sub value", _messages.getProperty(PACKAGE + ".PropertyRuleSub.sub-value"));
+	}
+
+	/**
 	 * Missing documentation of an implementable method is not reported.
 	 */
 	public void testNoWarnings() {

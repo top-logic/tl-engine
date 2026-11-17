@@ -47,6 +47,13 @@ import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.view.command.CommandScope;
+import com.top_logic.layout.view.form.FormControl;
+import com.top_logic.layout.view.form.FormModel;
+import com.top_logic.layout.view.form.RowEditPolicy;
+import com.top_logic.layout.view.form.RowSetBinding;
+import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.UIElement;
@@ -68,6 +75,7 @@ import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnExistence;
+import com.top_logic.layout.view.table.ColumnHeader;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.ColumnsConfig;
@@ -161,6 +169,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		/** Configuration name for {@link #getEditInPlace()}. */
 		String EDIT_IN_PLACE = "edit-in-place";
+
+		/** Configuration name for {@link #getRowEdit()}. */
+		String ROW_EDIT = "row-edit";
+
+		/** Configuration name for {@link #getOnRemove()}. */
+		String ON_REMOVE = "on-remove";
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
@@ -286,6 +300,34 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 */
 		@Name(EDIT_IN_PLACE)
 		boolean getEditInPlace();
+
+		/**
+		 * Which rows are editable while the enclosing form is in edit mode.
+		 *
+		 * <p>
+		 * When set, the table must be nested inside a form; cell edits buffer on row overlays and
+		 * are committed together with the form's save. By default the table is read-only.
+		 * </p>
+		 *
+		 * <p>
+		 * The rows of a {@link TreeTableElement tree table} join the edit of the form when they are
+		 * displayed: opening a row in edit mode makes its children editable.
+		 * </p>
+		 */
+		@Name(ROW_EDIT)
+		RowEditPolicy getRowEdit();
+
+		/**
+		 * What removing a row means when the form is saved.
+		 *
+		 * <p>
+		 * When unset, the table offers no row removal. Applies to a table with
+		 * {@link #getRowEdit() row-edit} only. A {@link TreeTableElement tree table} removes its
+		 * rows by deleting them ({@link RowSetBinding.RemoveMode#DELETE}).
+		 * </p>
+		 */
+		@Name(ON_REMOVE)
+		RowSetBinding.RemoveMode getOnRemove();
 
 		/**
 		 * Optional {@link ViewChannel} to write the selected row object(s) to.
@@ -902,6 +944,144 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	}
 
 	/**
+	 * Reports the options a table with {@link Config#getRowEdit() row-edit} cannot have.
+	 *
+	 * <p>
+	 * A row-editing table buffers its edits in the form, so its cells are not edited in place,
+	 * which writes at once. It is a control of its own, which carries no drag-and-drop seam, so a
+	 * {@link Config#getDrag() drag} or a drop declared there would apply to nothing.
+	 * </p>
+	 *
+	 * @param drops
+	 *        The compiled drops of the table.
+	 */
+	protected final void checkRowEdit(InstantiationContext context, List<DeclaredDrop> drops) {
+		if (_config.getRowEdit() == RowEditPolicy.NONE) {
+			return;
+		}
+		if (_config.getDrag() != null || !drops.isEmpty()) {
+			context.error("A <" + tagName() + "> with '" + Config.ROW_EDIT + "' offers neither <" + Config.DRAG
+				+ "> nor <" + DropConfig.TAG_NAME + ">.");
+		}
+		if (_config.getEditInPlace()) {
+			context.error("A <" + tagName() + "> with '" + Config.ROW_EDIT + "' is not edited in place ('"
+				+ Config.EDIT_IN_PLACE + "').");
+		}
+	}
+
+	/**
+	 * The form a table with {@link Config#getRowEdit() row-edit} is edited in.
+	 *
+	 * @throws IllegalStateException
+	 *         If the table is not nested in a form.
+	 */
+	protected final FormControl rowEditForm(ViewContext context) {
+		FormModel formModel = context.getFormModel();
+		if (!(formModel instanceof FormControl formControl)) {
+			throw new IllegalStateException(
+				"A <" + tagName() + "> with '" + Config.ROW_EDIT + "' requires an enclosing <form>.");
+		}
+		return formControl;
+	}
+
+	/**
+	 * Creates the control of a table with {@link Config#getRowEdit() row-edit}, configured with all
+	 * that this element declares for every table: the columns of the given types, the
+	 * personalization, the filters and presets, the filter, search and displayed-rows channels, the
+	 * selection, the activation and the row class.
+	 *
+	 * <p>
+	 * The caller adds how the rows are arranged and what is particular to its table, and
+	 * {@link RowSetTableControl#init() initializes} the control.
+	 * </p>
+	 *
+	 * @param formControl
+	 *        The form the rows are edited in, see {@link #rowEditForm(ViewContext)}.
+	 * @param binding
+	 *        The semantics of the row set.
+	 * @param types
+	 *        The {@link #types(Object[]) types} of the rows for this build of the table.
+	 * @param rowTypes
+	 *        The model types of the rows, see {@link #resolveRowTypes(RowTypes, Collection)}.
+	 * @param inputChannels
+	 *        The input channels of the table.
+	 * @param rowCssClass
+	 *        The CSS class of a row computed from its object, {@code null} for none.
+	 * @param rowColor
+	 *        The color role of a row computed from its object, {@code null} for none.
+	 */
+	protected final RowSetTableControl createRowEditControl(ViewContext context, FormControl formControl,
+			RowSetBinding binding, RowTypes types, List<TLStructuredType> rowTypes, List<ViewChannel> inputChannels,
+			Function<? super TLObject, String> rowCssClass, Function<? super TLObject, ValueColor> rowColor) {
+		TLStructuredType rowType = rowTypes.isEmpty() ? null : rowTypes.get(0);
+		ChannelRef selectionRef = _config.getSelection();
+		ViewChannel selectionChannel = selectionRef != null ? context.resolveChannel(selectionRef) : null;
+
+		ViewCommandModel activation = activationModel(context);
+
+		List<ColumnDeclaration> declarations = columns(types, rowType);
+		List<String> declaredNames = ColumnDeclarations.declaredNames(declarations);
+		TableId tableId = tableId(types);
+		RowSetTableControl control =
+			new RowSetTableControl(context, formControl, binding, declarations, _config.getRowEdit());
+		if (!types.isEmpty()) {
+			// Without configured types, the columns follow the type of the rows the binding creates.
+			control.setRowTypes(rowTypes);
+		}
+		control.setCssClass(_config.getCssClass());
+		control.setFramed(false);
+		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId);
+		control.setNamedFilters(
+			(columns, withheld) -> declaredFilters(tableId, columns, declaredNames, withheld,
+				ChannelInputs.arguments(inputChannels)),
+			filterStore(), initialFilter());
+		control.setFilterChannels(channel(context, _config.getActivePreset()),
+			channel(context, _config.getSearchTerm()));
+		control.setDisplayedRowsChannel(channel(context, _config.getDisplayedRows()));
+		control.setFilterBar(filterBar());
+		control.setDefaultSort(defaultSort());
+		control.setFixedColumns(_config.getFixedColumns());
+		control.setSelectionChannel(selectionChannel);
+		control.setSelectionMode(_config.getSelectionMode());
+		control.setActivationHandler(activationHandler(activation));
+		control.setTrailingColumns(this.<TLObject> rowCommandColumns(activation, control::activate));
+		control.setRowCssClass(rowCssClass);
+		control.setRowColor(rowColor);
+		return control;
+	}
+
+	/**
+	 * Contributes the commands changing the rows of a table with {@link Config#getRowEdit()
+	 * row-edit} to the enclosing command scope (next to the form's save and cancel commands): the
+	 * {@link RowSetTableControl#getAddRowCommand() add-row command}, when the table creates rows,
+	 * and the {@link RowSetTableControl#getRemoveSelectedRowsCommand() removal of the selected
+	 * rows}, when it removes rows and lets the user select several. The table itself renders
+	 * frameless, so it has no own toolbar to host them.
+	 *
+	 * @param createsRows
+	 *        Whether the table creates rows, see {@link RowSetTableControl#setRowCreation}.
+	 */
+	protected final void contributeRowCommands(ViewContext context, FormControl formControl,
+			RowSetBinding binding, RowSetTableControl control, boolean createsRows) {
+		CommandScope scope = context.getScope(CommandScope.class);
+		if (scope == null) {
+			return;
+		}
+		if (createsRows) {
+			contribute(scope, formControl, control.getAddRowCommand());
+		}
+		if (binding.getRemoveMode() != RowSetBinding.RemoveMode.NONE
+			&& _config.getSelectionMode() == SelectionMode.MULTI) {
+			contribute(scope, formControl, control.getRemoveSelectedRowsCommand());
+		}
+	}
+
+	private static void contribute(CommandScope scope, FormControl formControl, CommandModel command) {
+		scope.addCommand(command);
+		formControl.addCleanupAction(() -> scope.removeCommand(command));
+	}
+
+	/**
 	 * Binds the selection of a table built by
 	 * {@link AbstractTableElement#createTable(ViewContext, RowTypes, List, Object[], Function, boolean, GroupSpec, List, Function, Function, SelectionBinder)}
 	 * to its {@link Config#getSelection() selection channel}.
@@ -958,11 +1138,14 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The binding of the selection channel, {@code null} without one.
 	 * @param setups
 	 *        The descriptors of the declared columns.
+	 * @param existence
+	 *        Which of the columns exist, followed by the control; to be
+	 *        {@link ColumnExistence#recheck() checked again} whenever the table is updated.
 	 */
 	protected record ReadOnlyTable<S extends RowSource<Object>, B>(TableViewControl<Object> control,
 			DefaultTableView<Object> view, S source, TableId tableId, List<Column<Object, ?>> columns,
 			List<String> declaredNames,
-			B selectionBinding, List<ColumnSetup> setups) {
+			B selectionBinding, List<ColumnSetup> setups, ColumnExistence existence) {
 		// Pure data.
 	}
 
@@ -1023,21 +1206,24 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		initialState.setFrozenCount(_config.getFixedColumns());
 		initialState.setGrouping(grouping);
 		initialState.setSelection(Selection.none(_config.getSelectionMode()));
+		// The columns that do not exist must not be displayed from the first state on, and no
+		// declared filter may refer to a column withheld from the user.
+		ColumnExistence existence = ColumnExistence.of(setups);
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState,
 			PersonalConfigViewStateStore.INSTANCE, tableId, hiddenByDefault,
-			declaredFilters(tableId, columns, declaredNames, inputValues), filterStore(), _initialFilter);
+			declaredFilters(tableId, columns, declaredNames, existence.withheldColumns(), inputValues),
+			filterStore(), _initialFilter);
 		if (rowCssClass != null) {
 			view.setRowCssClass(rowCssClass);
 		}
 		if (rowColor != null) {
 			view.setRowColor(rowColor);
 		}
-		// The columns that do not exist must not be displayed from the first state on.
-		ColumnExistence existence = ColumnExistence.of(setups);
 		view.setAbsentColumns(existence.absentColumns());
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, treeMode);
 		control.addCleanupAction(existence.observe(control::setAbsentColumns)::dispose);
+		control.addCleanupAction(ColumnHeader.observe(setups, control::refreshColumnHeaders)::dispose);
 		activate.bind(control);
 		control.setCssClass(_config.getCssClass());
 		control.setFilterBar(filterBar());
@@ -1069,13 +1255,16 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		control.setActivationHandler(activationHandler(activation));
 
-		return new ReadOnlyTable<>(control, view, source, tableId, columns, declaredNames, selectionBinding, setups);
+		return new ReadOnlyTable<>(control, view, source, tableId, columns, declaredNames, selectionBinding, setups,
+			existence);
 	}
 
 	/**
-	 * Takes up a change of the inputs in the given table: the criteria of the presets are computed
-	 * from the inputs, so a changed input means other criteria - they are resolved again, and a chip
-	 * the user has applied goes on filtering by what it now means.
+	 * Takes up an update of the given table - a change of its rows, of the model or of its inputs:
+	 * whether its columns exist is asked again, since it may depend on the access rights of the
+	 * user, see {@link ColumnExistence#recheck()}; and the criteria of the presets are resolved
+	 * again, since they are computed from the inputs and must not refer to a column withheld from
+	 * the user. A chip the user has applied goes on filtering by what it now means.
 	 *
 	 * <p>
 	 * Only the {@link ReadOnlyTable#view() view} takes up the resolved presets. A caller that does
@@ -1088,12 +1277,13 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The values of the input channels now.
 	 * @return Whether the table declares presets, so that its named filters were replaced.
 	 */
-	protected final boolean refreshPresets(ReadOnlyTable<?, ?> table, Object[] inputValues) {
+	protected final boolean refreshColumnsAndPresets(ReadOnlyTable<?, ?> table, Object[] inputValues) {
+		table.existence().recheck();
 		if (_presets.isEmpty()) {
 			return false;
 		}
-		table.view().setDeclaredFilters(
-			declaredFilters(table.tableId(), table.columns(), table.declaredNames(), inputValues));
+		table.view().setDeclaredFilters(declaredFilters(table.tableId(), table.columns(), table.declaredNames(),
+			table.existence().withheldColumns(), inputValues));
 		return true;
 	}
 
@@ -1126,7 +1316,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	/**
 	 * The tag this element is configured with, for messages about its configuration.
 	 */
-	private String tagName() {
+	protected final String tagName() {
 		Class<?> configInterface = _config.descriptor().getConfigurationInterface();
 		TagName tag = configInterface.getAnnotation(TagName.class);
 		return tag != null ? tag.value() : configInterface.getSimpleName();
@@ -1264,13 +1454,16 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The names of the columns the table declares; one of them missing from the given
 	 *        columns is withheld from the current user, see
 	 *        {@link ColumnDeclarations#withheld(Collection, List)}.
+	 * @param withheld
+	 *        The names of the given columns the access rights of the current user withhold now,
+	 *        see {@link ColumnExistence#withheldColumns()}.
 	 * @param arguments
 	 *        The values of the {@link Config#getInputs() input channels}, in declaration order -
 	 *        the arguments of every criterion expression, as they are the arguments of the
 	 *        functions computing the rows.
 	 */
 	protected final List<NamedFilter> declaredFilters(TableId tableId, List<? extends Column<?, ?>> columns,
-			Collection<String> declaredNames, Object[] arguments) {
+			Collection<String> declaredNames, Set<String> withheld, Object[] arguments) {
 		if (_presets.isEmpty()) {
 			return List.of();
 		}
@@ -1283,8 +1476,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			declarations.add(new DeclaredFilters.Declaration(preset.id(), preset.label(), criteria,
 				preset.cssClass(), preset.counted()));
 		}
-		return DeclaredFilters.resolve(_log, tableId.value(), declarations, columns,
-			ColumnDeclarations.withheld(declaredNames, columns));
+		Set<String> withheldColumns = new LinkedHashSet<>(ColumnDeclarations.withheld(declaredNames, columns));
+		withheldColumns.addAll(withheld);
+		return DeclaredFilters.resolve(_log, tableId.value(), declarations, columns, withheldColumns);
 	}
 
 	/**

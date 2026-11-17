@@ -205,6 +205,7 @@ public class SchemaSetup implements ConfiguredInstance<SchemaConfiguration> {
 		PooledConnection connection = pool.borrowWriteConnection();
 		try {
 			DBSchemaUtils.createTables(connection, schema, checkExistence);
+			connection.commit();
 		} finally {
 			pool.releaseWriteConnection(connection);
 		}

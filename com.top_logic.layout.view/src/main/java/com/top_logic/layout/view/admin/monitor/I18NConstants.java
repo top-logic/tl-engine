@@ -39,11 +39,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey SYSTEM_ENVIRONMENT_SECTION_VM_ARGUMENTS;
 
 	/**
-	 * @en Configuration variables
-	 */
-	public static ResKey SYSTEM_ENVIRONMENT_SECTION_CONFIGURATION_VARIABLES;
-
-	/**
 	 * @en Status
 	 */
 	public static ResKey APPLICATION_MONITOR_SECTION_STATUS;

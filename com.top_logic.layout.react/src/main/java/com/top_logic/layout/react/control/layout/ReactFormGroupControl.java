@@ -14,6 +14,7 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactCompositeControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * A {@link ReactControl} that renders a nestable, optionally collapsible form section via the
@@ -47,6 +48,9 @@ public class ReactFormGroupControl extends ReactCompositeControl {
 
 	/** State key telling whether the group is currently folded away. */
 	public static final String COLLAPSED = "collapsed";
+
+	/** Command folding the group away or unfolding it. */
+	public static final String TOGGLE_COLLAPSE_COMMAND = "toggleCollapse";
 
 	/**
 	 * State key holding the {@link GroupBorder#getExternalName() name} of the {@link GroupBorder}
@@ -185,11 +189,40 @@ public class ReactFormGroupControl extends ReactCompositeControl {
 	}
 
 	/**
-	 * Handles the toggleCollapse command sent when the user toggles the collapse state.
+	 * Handles the {@link #TOGGLE_COLLAPSE_COMMAND} sent when the user toggles the collapse state.
 	 */
-	@ReactCommandHandler(value = "toggleCollapse", technical = true)
+	@ReactCommandHandler(TOGGLE_COLLAPSE_COMMAND)
 	void handleToggleCollapse() {
 		toggleCollapsed();
+	}
+
+	/**
+	 * The {@link #TOGGLE_COLLAPSE_COMMAND} is offered by a {@link #COLLAPSIBLE collapsible} group
+	 * only.
+	 */
+	@Override
+	public ExecutableState scriptingCommandState(String command) {
+		if (TOGGLE_COLLAPSE_COMMAND.equals(command) && !Boolean.TRUE.equals(getState(COLLAPSIBLE))) {
+			return ExecutableState.NOT_EXEC_HIDDEN;
+		}
+		return super.scriptingCommandState(command);
+	}
+
+	/**
+	 * The header of a {@link #isCollapsed() collapsed} group alone: its content is rendered but
+	 * hidden.
+	 */
+	@Override
+	public List<ReactControl> visibleChildren() {
+		if (!_collapsed) {
+			return super.visibleChildren();
+		}
+		List<ReactControl> result = new ArrayList<>();
+		if (_headerControl != null) {
+			result.add(_headerControl);
+		}
+		result.addAll(_headerActions);
+		return result;
 	}
 
 }

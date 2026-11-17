@@ -9,6 +9,9 @@ import {
 } from 'tl-react-bridge';
 import type { TLCellProps, NumberInputStateJson } from 'tl-react-bridge';
 import { showsValueOnly, validationOf } from './form/fieldState';
+import { ClearButton, offersClearOnRequest } from './form/ClearButton';
+
+const { useCallback, useRef } = React;
 
 /**
  * A number input field rendered via React, drawn by the part `TextInput`.
@@ -38,6 +41,10 @@ import { showsValueOnly, validationOf } from './form/fieldState';
  * sent, defaulting to VALUE_DEBOUNCE_MS; state.sendValueOnBlur overrides it, and this field sets
  * it, so the span matters here only where the server turns the blur behaviour off.
  *
+ * A number is emptied by deleting its text. state.clearable adds the ClearButton inside the box,
+ * shown only while the input holds something (see offersClearOnRequest); it sends no value at once,
+ * instead of when the field is left, and hands the focus back to the input.
+ *
  * The state of the value is the validation of the box (see validationOf), a mandatory field a
  * required box, and the message of an error the tooltip of the input. A read-only field shows the
  * text, drawn by the part `FieldValue`; a disabled field renders the input as an inactive one (see
@@ -51,11 +58,19 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<NumberInputStateJson>>();
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
-  const { text, setText, onBlur, onKeyDown } = useTLTypingField({ emptyValue: null });
+  const { text, setText, commit, onBlur, onKeyDown } = useTLTypingField({ emptyValue: null });
   const TextInput = usePart('TextInput');
   const FieldValue = usePart('FieldValue');
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
 
   const unit = state.unit || undefined;
+
+  const handleClear = useCallback(async () => {
+    setText('');
+    // The gesture is the whole edit, so it is reported at once rather than when the field is left.
+    await commit();
+    inputRef.current?.focus();
+  }, [setText, commit]);
 
   if (state.hidden === true) {
     return null;
@@ -69,6 +84,7 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
     <span id={controlId}>
       <TextInput
         id={inputId}
+        ref={inputRef}
         {...labelProps}
         type="text"
         inputMode={state.inputMode ?? 'numeric'}
@@ -80,6 +96,7 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
         tooltip={state.hasError === true ? state.errorMessage : undefined}
         className={rootClassName(state) || undefined}
         suffix={unit}
+        action={offersClearOnRequest(state, text !== '') ? <ClearButton onClick={handleClear} /> : undefined}
         onChange={setText}
         onBlur={onBlur}
         onKeyDown={onKeyDown}

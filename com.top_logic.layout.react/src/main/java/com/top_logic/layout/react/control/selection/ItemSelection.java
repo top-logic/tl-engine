@@ -8,7 +8,7 @@ package com.top_logic.layout.react.control.selection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -16,13 +16,12 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.util.ResKey1;
-import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.ScriptingModelKey;
-import com.top_logic.layout.scripting.recorder.ref.ModelName;
+import com.top_logic.layout.react.control.identity.DisplayedObjectId;
+import com.top_logic.layout.react.control.identity.ObjectIdIndex;
+import com.top_logic.layout.react.control.identity.ObjectIdentities;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.table.SelectionMode;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * The selection among the objects a control displays as items, each under a client key.
@@ -46,23 +45,23 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * The control owning a selection publishes it: it passes a {@link #ItemSelection(Supplier, Consumer)
  * publisher} receiving the selected keys whenever the selection changes, and publishes
- * {@link #selectedKeys()} itself after {@link #setItems(Collection) displaying other items}. For the
- * recording of a selection by the business identity of the selected object, see
- * {@link #recordByName(Map, String, Class, String)} and {@link #selectByName(SelectByNameArguments,
- * ResKey1)}.
+ * {@link #selectedKeys()} itself after {@link #setItems(Collection) displaying other items}.
+ * </p>
+ *
+ * <p>
+ * The client keys are the ids the commands of the owning control take the items by: the control
+ * offers the {@link #identities() identities} of the items as its object identities and marks the
+ * key argument of its selection command {@link DisplayedObjectId}, so a recorded selection names
+ * the business key of the selected object and replays by the client key it has in the replaying
+ * session.
  * </p>
  */
 public class ItemSelection {
 
-	private final Supplier<String> _keyAllocator;
-
 	private final Consumer<List<String>> _publisher;
 
 	/** Client keys of the displayed objects. */
-	private Map<Object, String> _keys = new HashMap<>();
-
-	/** Displayed objects by their client key. */
-	private final Map<String, Object> _itemsByKey = new HashMap<>();
+	private final ObjectIdIndex _keys;
 
 	/** The displayed objects in display order. */
 	private List<Object> _items = List.of();
@@ -91,7 +90,7 @@ public class ItemSelection {
 	 *        selection changes.
 	 */
 	public ItemSelection(Supplier<String> keyAllocator, Consumer<List<String>> publisher) {
-		_keyAllocator = keyAllocator;
+		_keys = new ObjectIdIndex(keyAllocator);
 		_publisher = publisher;
 	}
 
@@ -108,19 +107,8 @@ public class ItemSelection {
 	 *        The displayed objects in display order.
 	 */
 	public void setItems(Collection<?> items) {
-		Map<Object, String> keys = new HashMap<>();
-		_itemsByKey.clear();
-		for (Object item : items) {
-			String key = keys.computeIfAbsent(item, this::keyFor);
-			_itemsByKey.put(key, item);
-		}
-		_keys = keys;
+		_keys.setObjects(items);
 		_items = List.copyOf(items);
-	}
-
-	private String keyFor(Object item) {
-		String existing = _keys.get(item);
-		return existing != null ? existing : _keyAllocator.get();
 	}
 
 	/**
@@ -134,21 +122,33 @@ public class ItemSelection {
 	 * The client key of the given object, {@code null} if it is not displayed.
 	 */
 	public String keyOf(Object item) {
-		return _keys.get(item);
+		return _keys.idOf(item);
 	}
 
 	/**
 	 * The object displayed under the given client key, {@code null} if none is.
 	 */
 	public Object item(String key) {
-		return _itemsByKey.get(key);
+		return _keys.objectOf(key);
+	}
+
+	/**
+	 * The identities of the displayed objects: the client key each one is displayed under, and its
+	 * global business key.
+	 *
+	 * <p>
+	 * A key resolves only to a displayed object.
+	 * </p>
+	 */
+	public ObjectIdentities identities() {
+		return _keys;
 	}
 
 	/**
 	 * Whether the given object is displayed.
 	 */
 	public boolean displays(Object item) {
-		return _keys.containsKey(item);
+		return _keys.contains(item);
 	}
 
 	/**
@@ -209,7 +209,7 @@ public class ItemSelection {
 	public List<String> selectedKeys() {
 		List<String> keys = new ArrayList<>(_selection.size());
 		for (Object item : _selection) {
-			String key = _keys.get(item);
+			String key = _keys.idOf(item);
 			if (key != null) {
 				keys.add(key);
 			}
@@ -218,44 +218,101 @@ public class ItemSelection {
 	}
 
 	/**
-	 * The given client keys as the headless projection shows them: each the
-	 * {@link ScriptingModelKey#identity(Object, Object, Object) business identity} of the object it
-	 * names, the client key itself for an object without one.
+	 * Replaces the client keys in the given lists of a headless projection by the business keys of
+	 * their objects, unless the projection {@link ProjectionMode#projectsIds(ObjectIdentities) shows
+	 * ids}.
 	 *
 	 * <p>
 	 * A client key is allocated per session, so an assertion on a projection holding it would fail
-	 * in every other session; the business identity is what
-	 * {@link #selectByName(SelectByNameArguments, ResKey1)} selects by.
+	 * in every other session. An object without a business key keeps its client key.
 	 * </p>
-	 *
-	 * @param keys
-	 *        Client keys of displayed objects, e.g. {@link #selectedKeys()}.
-	 */
-	public List<Object> scriptingIdentities(List<String> keys) {
-		List<Object> result = new ArrayList<>(keys.size());
-		for (String key : keys) {
-			Object item = _itemsByKey.get(key);
-			result.add(item == null ? key : ScriptingModelKey.identity(null, item, key));
-		}
-		return result;
-	}
-
-	/**
-	 * Replaces the client keys in the given lists of a headless projection by their
-	 * {@link #scriptingIdentities(List) identities}.
 	 *
 	 * @param projection
 	 *        The projected state of the control owning this selection.
+	 * @param mode
+	 *        How the projection identifies objects.
+	 * @param identities
+	 *        The {@link com.top_logic.layout.react.control.ScriptingControl#objectIdentities()
+	 *        object identities} of the control owning this selection, {@code null} if it offers
+	 *        none.
 	 * @param properties
 	 *        The properties of the projection holding lists of client keys.
 	 */
 	@SuppressWarnings("unchecked")
-	public void identifyKeys(Map<String, Object> projection, String... properties) {
+	public void identifyKeys(Map<String, Object> projection, ProjectionMode mode, ObjectIdentities identities,
+			String... properties) {
+		if (mode.projectsIds(identities)) {
+			return;
+		}
 		for (String property : properties) {
 			if (projection.get(property) instanceof List<?> keys) {
-				projection.put(property, scriptingIdentities((List<String>) keys));
+				List<Object> result = new ArrayList<>(keys.size());
+				for (String key : (List<String>) keys) {
+					Object item = _keys.objectOf(key);
+					result.add(item == null ? key : ScriptingModelKey.identity(identities().keyContext(), item, key));
+				}
+				projection.put(property, result);
 			}
 		}
+	}
+
+	/**
+	 * Replaces the client keys in the given list of a headless projection by an entry for each
+	 * displayed object, see {@link #identifyItem(String, ProjectionMode, ObjectIdentities)}.
+	 *
+	 * @param projection
+	 *        The projected state of the control owning this selection.
+	 * @param mode
+	 *        How the projection identifies objects.
+	 * @param identities
+	 *        The {@link com.top_logic.layout.react.control.ScriptingControl#objectIdentities()
+	 *        object identities} of the control owning this selection, {@code null} if it offers
+	 *        none.
+	 * @param property
+	 *        The property of the projection holding the list of client keys.
+	 */
+	@SuppressWarnings("unchecked")
+	public void identifyItems(Map<String, Object> projection, ProjectionMode mode, ObjectIdentities identities,
+			String property) {
+		if (projection.get(property) instanceof List<?> keys) {
+			List<Object> result = new ArrayList<>(keys.size());
+			for (String key : (List<String>) keys) {
+				result.add(identifyItem(key, mode, identities));
+			}
+			projection.put(property, result);
+		}
+	}
+
+	/**
+	 * The entry of the headless projection identifying the object displayed under the given client
+	 * key.
+	 *
+	 * <p>
+	 * Where the projection {@link ProjectionMode#projectsIds(ObjectIdentities) shows ids}, the entry
+	 * holds the client key under {@link ScriptingModelKey#ID} - the id the selection command takes -
+	 * and the label of the object; otherwise the business key of the object, see
+	 * {@link ScriptingModelKey#putIdentity(Map, ProjectionMode, ObjectIdentities, Object, Object, String, Object)}.
+	 * </p>
+	 *
+	 * @param key
+	 *        The client key of a displayed object.
+	 * @param mode
+	 *        How the projection identifies objects.
+	 * @param identities
+	 *        The {@link com.top_logic.layout.react.control.ScriptingControl#objectIdentities()
+	 *        object identities} of the control owning this selection, {@code null} if it offers
+	 *        none.
+	 */
+	public Map<String, Object> identifyItem(String key, ProjectionMode mode, ObjectIdentities identities) {
+		Map<String, Object> entry = new LinkedHashMap<>();
+		Object item = _keys.objectOf(key);
+		if (item == null) {
+			entry.put(ScriptingModelKey.ID, key);
+		} else {
+			ScriptingModelKey.putIdentity(entry, mode, identities, identities().keyContext(), item,
+				ScriptingModelKey.ID, key);
+		}
+		return entry;
 	}
 
 	/**
@@ -284,7 +341,7 @@ public class ItemSelection {
 	 * @see #select(Object, boolean, boolean)
 	 */
 	public boolean select(String key, boolean toggle, boolean range) {
-		Object item = _itemsByKey.get(key);
+		Object item = _keys.objectOf(key);
 		if (item == null) {
 			return false;
 		}
@@ -366,64 +423,6 @@ public class ItemSelection {
 			}
 		}
 		return result;
-	}
-
-	/**
-	 * The replay-stable form of a selection by client key: the same selection naming the selected
-	 * object by its {@link ScriptingModelKey business identity}, since client keys are allocated per
-	 * session.
-	 *
-	 * <p>
-	 * The client command carries the item's client key in the given argument, and the
-	 * {@link SelectionModifiers modifiers} under their names.
-	 * </p>
-	 *
-	 * @param arguments
-	 *        The arguments of the client command.
-	 * @param keyArgument
-	 *        The argument carrying the client key of the selected item.
-	 * @param recordedType
-	 *        The arguments type of the recorded command.
-	 * @param recordedCommand
-	 *        The name of the recorded command, whose handler calls
-	 *        {@link #selectByName(SelectByNameArguments, ResKey1)}.
-	 * @return The command to record, {@code null} if the arguments name no displayed item with a
-	 *         business identity.
-	 */
-	public RecordedCommand recordByName(Map<String, Object> arguments, String keyArgument,
-			Class<? extends SelectByNameArguments> recordedType, String recordedCommand) {
-		if (arguments == null || !(arguments.get(keyArgument) instanceof String key)) {
-			return null;
-		}
-		Object item = _itemsByKey.get(key);
-		ModelName name = item == null ? null : ScriptingModelKey.name(null, item);
-		if (name == null) {
-			return null;
-		}
-		SelectByNameArguments recorded = TypedConfiguration.newConfigItem(recordedType);
-		recorded.setName(recordedCommand);
-		recorded.setKey(name);
-		recorded.setToggle(Boolean.TRUE.equals(arguments.get(SelectionModifiers.TOGGLE)));
-		recorded.setRange(Boolean.TRUE.equals(arguments.get(SelectionModifiers.RANGE)));
-		return new RecordedCommand(recorded);
-	}
-
-	/**
-	 * Selects the item of the object named by the given {@link ModelName business identity} as the
-	 * user does - the replay of a selection {@link #recordByName(Map, String, Class, String)
-	 * recorded} by name.
-	 *
-	 * @param unresolved
-	 *        The error reported, with the name, when it designates no displayed object: a recorded
-	 *        selection that does not resolve is an explicit failure, never a silent no-op.
-	 */
-	public void selectByName(SelectByNameArguments args, ResKey1 unresolved) {
-		ModelName name = args.getKey();
-		Object item = ScriptingModelKey.locate(null, name);
-		if (item == null || !displays(item)) {
-			throw new TopLogicException(unresolved.fill(name));
-		}
-		select(item, args.isToggle(), args.isRange());
 	}
 
 }

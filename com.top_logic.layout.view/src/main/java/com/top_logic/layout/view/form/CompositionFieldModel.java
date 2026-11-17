@@ -30,7 +30,13 @@ public class CompositionFieldModel extends AbstractFieldModel {
 	// Note: AbstractFieldModel tracks _defaultValue and _value internally.
 	// We use _value (via getValue/setValue) as the current list and _defaultValue as the
 	// original list for dirty tracking. We override isDirty() to also check row overlays.
-	// No separate _currentList/_originalList fields to avoid state duplication.
+	// No separate _currentList field to avoid state duplication.
+
+	/**
+	 * The original list: the instance set as default value, kept to append rows to it, see
+	 * {@link #addOriginalRows(List)}. It is not handed out.
+	 */
+	private final List<TLObject> _originalList;
 
 	private final List<TLObjectOverlay> _rowOverlays = new ArrayList<>();
 
@@ -45,7 +51,8 @@ public class CompositionFieldModel extends AbstractFieldModel {
 		// Decouple the dirty-tracking snapshot from the current list: the inherited constructor
 		// stores one and the same instance for both, which would make membership changes
 		// undetectable if the current list ever got mutated in place.
-		setDefaultValue(new ArrayList<>(initialList));
+		_originalList = new ArrayList<>(initialList);
+		setDefaultValue(_originalList);
 	}
 
 	@Override
@@ -65,6 +72,30 @@ public class CompositionFieldModel extends AbstractFieldModel {
 	 */
 	public void addRowOverlay(TLObjectOverlay overlay) {
 		_rowOverlays.add(overlay);
+	}
+
+	/**
+	 * Adds rows the list held from the start: appends them to the original list and to the current
+	 * list.
+	 *
+	 * <p>
+	 * The rows are no change of the membership of the list: the {@link #isDirty() dirty state}
+	 * stays as it is, and no value change is announced. The rows are registered for dirty tracking
+	 * by {@link #addRowOverlay(TLObjectOverlay)}.
+	 * </p>
+	 *
+	 * @param rows
+	 *        The buffers of the rows.
+	 */
+	public void addOriginalRows(List<? extends TLObject> rows) {
+		if (rows.isEmpty()) {
+			return;
+		}
+		_originalList.addAll(rows);
+		// A new list instance: a list handed out by getCurrentList() keeps its content.
+		List<TLObject> current = new ArrayList<>(getCurrentList());
+		current.addAll(rows);
+		setValueInternal(current);
 	}
 
 	/**

@@ -64,7 +64,8 @@ public final class UntrustedEnvelope {
 	 * The envelope for text read off a web page.
 	 *
 	 * <p>
-	 * Applied by {@code BrowserTool} and {@code WebFetchTool} of {@code tl-ai-core}.
+	 * Applied by {@code WebFetchTool} of {@code tl-ai-core} and {@code BrowserTool} of
+	 * {@code tl-ai-browser}.
 	 * </p>
 	 */
 	public static final UntrustedEnvelope PAGE_CONTENT = new UntrustedEnvelope("untrusted_page_content",

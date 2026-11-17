@@ -25,7 +25,10 @@ public enum JobStatus {
 	/** The job stopped with an error, which the state names. */
 	FAILED,
 
-	/** The job was cancelled, so it produced neither a result nor an error. */
+	/**
+	 * The job was cancelled; it has no error, and a result only when its body returned what it got
+	 * done before the cancel.
+	 */
 	CANCELLED;
 
 	/**

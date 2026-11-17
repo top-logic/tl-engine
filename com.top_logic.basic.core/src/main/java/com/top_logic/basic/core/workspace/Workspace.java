@@ -38,6 +38,14 @@ public class Workspace {
 	// TODO #26368: Remove.
 	public static final String WORKSPACE_PROPERTY = "eclipse.workspace";
 
+	/**
+	 * System property or environment variable holding an explicit resource path of the
+	 * application, a list of folders separated by {@link File#pathSeparator}.
+	 *
+	 * @see #applicationResources(String...)
+	 */
+	public static final String RESOURCE_PATH_PROPERTY = "tl_resource_path";
+
 	/* package */static final String URI_PREFIX = "URI//"; //$NON-NLS-1$
 
 	private static final Logger LOG = Logger.getLogger(Workspace.class.getName());
@@ -95,7 +103,8 @@ public class Workspace {
 		}
 
 		result = result.complete();
-		LOG.info("Using resource paths: " + result.getResourcePath());
+		LOG.info("Using resource paths: " + result.getResourcePath() + ", application module webapp: "
+			+ result.getToplevelWebapp());
 		return result;
 	}
 
@@ -248,16 +257,40 @@ public class Workspace {
 
 	/**
 	 * Create the paths of the currently running modular web application.
+	 *
+	 * @see #applicationResources(String...)
 	 */
 	public static List<Path> applicationModules(String... deployAspects) {
-		final String resourcepath = Environment.getSystemPropertyOrEnvironmentVariable("tl_resource_path", null);
+		return applicationResources(deployAspects).resourceDirs();
+	}
+
+	/**
+	 * The resource folders and the web application folder of the application module of the
+	 * currently running modular web application.
+	 *
+	 * <p>
+	 * If the system property or environment variable {@link #RESOURCE_PATH_PROPERTY} is set, the
+	 * resource folders are taken from there and the application module is unknown. Otherwise, both
+	 * are determined from the classpath of the running JVM, see
+	 * {@link #getAppPaths(String, String[])}.
+	 * </p>
+	 *
+	 * @param deployAspects
+	 *        The deploy aspects to include, {@link ModuleLayout#DEFAULT_DEPLOY_ASPECTS} if none are
+	 *        given.
+	 */
+	public static ApplicationResources applicationResources(String... deployAspects) {
+		final String resourcepath = Environment.getSystemPropertyOrEnvironmentVariable(RESOURCE_PATH_PROPERTY, null);
 		if (resourcepath != null) {
 			// use externally provided resource path
-			return Stream.of(resourcepath.split(File.pathSeparator)).map(Paths::get).collect(Collectors.toList());
+			List<Path> resourceDirs =
+				Stream.of(resourcepath.split(File.pathSeparator)).map(Paths::get).collect(Collectors.toList());
+			return new ApplicationResources(resourceDirs, null);
 		}
 		String[] deployAspectsWithDefaults = deployAspects.length == 0 ? ModuleLayout.DEFAULT_DEPLOY_ASPECTS : deployAspects;
 		try {
-			return getAppPaths(ModuleLayoutConstants.DEPLOY_FOLDER_NAME, deployAspectsWithDefaults).getResourceDirs();
+			PathInfo pathInfo = getAppPaths(ModuleLayoutConstants.DEPLOY_FOLDER_NAME, deployAspectsWithDefaults);
+			return new ApplicationResources(pathInfo.getResourceDirs(), pathInfo.getToplevelWebapp());
 		} catch (IOException ex) {
 			throw new IOError(ex);
 		}

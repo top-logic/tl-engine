@@ -10,7 +10,9 @@ import java.util.List;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.ResourceProvider;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.DerivedProperty;
@@ -175,30 +177,67 @@ public class PolymorphicOptions {
 	 * is a type name, and a selector is given the type an entry actually has even where that type
 	 * is no longer offered (see {@link ReactDropdownSelectControl}).
 	 * </p>
+	 *
+	 * @see #keyLabelProvider(List, OptionMapping)
 	 */
-	public static LabelProvider keyLabelProvider(List<?> options) {
+	public static ResourceProvider keyLabelProvider(List<?> options) {
 		return keyLabelProvider(options, null);
 	}
 
 	/**
-	 * A {@link LabelProvider} resolving option keys to their
+	 * A {@link ResourceProvider} resolving option keys to their
 	 * {@link #labelFor(Object, OptionMapping) labels}, given the {@link OptionMapping} of the
 	 * options.
 	 *
+	 * <p>
+	 * An option key is explained by the {@link ClassLabelProvider#getTooltip(Object) tooltip} of
+	 * the type it names, the documentation of the implementation class, which a selector of the
+	 * type shows as tooltip of the option.
+	 * </p>
+	 *
 	 * @see #keyLabelProvider(List)
 	 */
-	public static LabelProvider keyLabelProvider(List<?> options, OptionMapping mapping) {
-		return value -> {
+	public static ResourceProvider keyLabelProvider(List<?> options, OptionMapping mapping) {
+		return new KeyResourceProvider(options, mapping);
+	}
+
+	/**
+	 * {@link ResourceProvider} of {@link PolymorphicOptions#keyLabelProvider(List, OptionMapping)}.
+	 */
+	private static final class KeyResourceProvider extends AbstractResourceProvider {
+
+		private final List<?> _options;
+
+		private final OptionMapping _mapping;
+
+		KeyResourceProvider(List<?> options, OptionMapping mapping) {
+			_options = options;
+			_mapping = mapping;
+		}
+
+		@Override
+		public String getLabel(Object value) {
 			if (!(value instanceof String key) || key.isEmpty()) {
 				return "";
 			}
-			for (Object option : options) {
-				if (key.equals(keyFor(option))) {
-					return labelFor(option, mapping);
-				}
+			Object option = optionForKey(_options, key);
+			if (option != null) {
+				return labelFor(option, _mapping);
 			}
 			return labelForTypeName(key);
-		};
+		}
+
+		@Override
+		public String getTooltip(Object value) {
+			if (!(value instanceof String key) || key.isEmpty()) {
+				return null;
+			}
+			Class<?> type = typeOf(optionForKey(_options, key));
+			if (type == null) {
+				type = typeForName(key);
+			}
+			return type == null ? null : CLASS_LABELS.getTooltip(type);
+		}
 	}
 
 	/**
@@ -270,12 +309,20 @@ public class PolymorphicOptions {
 	 * left as the bare name where it is not.
 	 */
 	private static String labelForTypeName(String key) {
+		Class<?> type = typeForName(key);
+		// A key naming a type this application does not have: nothing better than the name itself
+		// to say, and saying it beats saying nothing.
+		return type == null ? key : CLASS_LABELS.getLabel(type);
+	}
+
+	/**
+	 * The type a key names, {@code null} if this application has no such type.
+	 */
+	private static Class<?> typeForName(String key) {
 		try {
-			return CLASS_LABELS.getLabel(Class.forName(key));
+			return Class.forName(key);
 		} catch (ClassNotFoundException | LinkageError ex) {
-			// The key names a type this application does not have. Nothing better than the name
-			// itself to say, and saying it beats saying nothing.
-			return key;
+			return null;
 		}
 	}
 

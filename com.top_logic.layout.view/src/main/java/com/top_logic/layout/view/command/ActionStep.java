@@ -80,11 +80,6 @@ public class ActionStep extends ArgumentsViewAction {
 		}
 	}
 
-	@Override
-	public boolean appliesFormState() {
-		return _action.appliesFormState() || ViewActions.appliesFormState(_followUps);
-	}
-
 	/**
 	 * The rule of the action, combined with the rules of the follow-up actions, which run whenever
 	 * the action runs.

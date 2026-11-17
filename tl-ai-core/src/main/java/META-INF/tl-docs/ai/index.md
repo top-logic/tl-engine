@@ -1,5 +1,5 @@
 ---
-description: Read before adding AI agents to a TopLogic application or working on the AI modules (tl-ai-core, tl-ai-tool-api, tl-chat, tl-ai-mcp-server, tl-ai-a2a, tl-ai-views, tl-ai-vector-index, tl-ai-index, tl-ai-eval) - which module provides what, the LLM providers tl-ai-core ships (anthropic, openai, mistral, xai) with their API key secrets (tl_anthropic_api_key, tl_openai_api_key, tl_mistral_api_key, tl_xai_api_key), the model variables (tl_<provider>_models, tl_ai_default_model), inactive providers without a key, overriding the providers of LLMProviderService, and where each topic of the chapter is.
+description: Read before adding AI agents to a TopLogic application or working on the AI modules (tl-ai-core, tl-ai-tool-api, tl-ai-browser, tl-chat, tl-ai-mcp-server, tl-ai-a2a, tl-ai-views, tl-ai-vector-index, tl-ai-index, tl-ai-eval) - which module provides what, the LLM providers tl-ai-core ships (anthropic, openai, mistral, xai) with their API key secrets (tl_anthropic_api_key, tl_openai_api_key, tl_mistral_api_key, tl_xai_api_key), the model variables (tl_<provider>_models, tl_ai_default_model), inactive providers without a key, overriding the providers of LLMProviderService, and where each topic of the chapter is.
 order: 50
 ---
 
@@ -17,6 +17,7 @@ All modules are engine modules with the group id `com.top-logic` and the engine 
 |---|---|---|
 | `tl-ai-tool-api` | Shared tool contracts: `Tool`, `ToolResult`, `ToolMode`, `@ToolMethod`, `@P`, `ToolSchema`, `ToolGroups`, the `UntrustedEnvelope` and the service-level `ToolRegistryService`. No implementations. | the ability to define tools in a module that does not depend on the agent framework |
 | `tl-ai-core` | The agent framework: the agent loop, the LLM providers, the tool dispatcher and the shipped tools, the MCP client, delegation and subagents, memory and compaction, the security layers, the TL-Script functions (`aiAgentChat`, `aiCallTool`, ...). | agents run from TL-Script, from the scheduler or from code; the base of every other AI module |
+| `tl-ai-browser` | The browser tools `web-browser.*`: a real Chromium (through Playwright) that reads JavaScript-rendered pages, clicks, types, takes screenshots and keeps logins in encrypted cookie pools, and the skill `TL_webBrowser`. A module of its own because Playwright brings its browser driver; its article `ai/browser` describes it. | agents that read and operate web pages a static fetch cannot |
 | `tl-ai-mcp-server` | Model Context Protocol server at `/mcp/*`: the application's model and objects as MCP resources, and the tools an administrator publishes. Switched off by default, see [the MCP endpoint](doc:ai/security/mcp-endpoint). | external AI clients (Claude Code, Claude Desktop, Cursor) working with the application |
 | `tl-ai-a2a` | The A2A protocol (JSON-RPC): configured agents served at `/a2a/{agent}`, and the client tools `a2a.*` for local agents. Closed until an application configures `<agents>` and `<authentications>`. | agents of other systems talking to this application's agents and vice versa |
 | `tl-chat` | The agentic chat: the commands of the chat controls and the frames on the window's event stream, the React chat front end, chat sessions, human-in-the-loop approval, the view elements `<chat-conversation>`, `<chat-rail>`, `<chat-dock>`. | the built-in assistant in React (`.view.xml`) pages |
@@ -28,7 +29,7 @@ All modules are engine modules with the group id `com.top-logic` and the engine 
 | `tl-ai-eval` | The model eval harness: the same business tasks put to several models through the agent loop, graded against the database they leave behind. | nothing - it is a test harness, see [testing](doc:ai/testing#the-model-eval) |
 | `tl-ai-demo` | The demo application of the AI modules: chat, MCP server, A2A, living views, hybrid search and the security test bed. | nothing - it is an application |
 
-The module dependency order is `tl-ai-tool-api` → `tl-ai-core` → `tl-ai-mcp-server` / `tl-ai-a2a` / `tl-chat` / `tl-ai-vector-index` / `tl-ai-index` / `tl-ai-eval`; `tl-chat` → `tl-chat-classic`; `tl-ai-index` → `tl-ai-index-onnx`; `tl-ai-core` → `tl-ai-views`; `tl-ai-demo` depends on all of them but `tl-ai-eval`. The modules are built with the engine, e.g. `mvn install -pl tl-ai-core` from the engine root.
+The module dependency order is `tl-ai-tool-api` → `tl-ai-core` → `tl-ai-browser` / `tl-ai-mcp-server` / `tl-ai-a2a` / `tl-chat` / `tl-ai-vector-index` / `tl-ai-index` / `tl-ai-eval`; `tl-chat` → `tl-chat-classic`; `tl-ai-index` → `tl-ai-index-onnx`; `tl-ai-core` → `tl-ai-views`; `tl-ai-demo` depends on all of them but `tl-ai-eval`. The modules are built with the engine, e.g. `mvn install -pl tl-ai-core` from the engine root.
 
 ## Configuring the LLM providers
 
@@ -36,10 +37,10 @@ The providers are configured on `LLMProviderService` (service editor: *LLM provi
 
 | Provider | Class | API key (secret) | Models (variable) | Models without the variable |
 |---|---|---|---|---|
-| `anthropic` | `AnthropicProviderConfig` | `tl_anthropic_api_key` | `tl_anthropic_models` | `claude-sonnet-4-6,claude-opus-4-7,claude-haiku-4-5` |
+| `anthropic` | `AnthropicProviderConfig` | `tl_anthropic_api_key` | `tl_anthropic_models` | `claude-sonnet-5-5,claude-opus-5-5,claude-haiku-5-5` |
 | `openai` | `OpenAIProviderConfig` | `tl_openai_api_key` | `tl_openai_models` | `gpt-5.5,gpt-5.4-mini` |
 | `mistral` | `MistralProviderConfig` | `tl_mistral_api_key` | `tl_mistral_models` | `mistral-medium-latest,mistral-small-latest` |
-| `xai` | `XAIProviderConfig` | `tl_xai_api_key` | `tl_xai_models` | `grok-4.3,grok-4-1-fast` |
+| `xai` | `XAIProviderConfig` | `tl_xai_api_key` | `tl_xai_models` | `grok-4.7,grok-4.3` |
 
 ```bash
 export tl_anthropic_api_key="sk-ant-..."
@@ -75,9 +76,9 @@ An application changes the providers in its own configuration of `LLMProviderSer
 
 `<providers config:override="true">` replaces the shipped list by the application's own, for an application that must not offer the public providers; `config:override="true"` on the `<config service-class="...">` element replaces the whole service configuration, the model catalog included, which is also what the Service Editor writes when it saves the service. Since a shipped provider exposes its models also without a key, an unqualified model that an additional provider exposes too is ambiguous and refuses the start of `AgentRuntimeService`: name the provider (`default-provider`, `provider` of an agent override) or replace the list.
 
-This is the recommended form of a key, because the configuration then holds the name of the secret, not the key: a key resolved from an alias such as `api-key="%ANTHROPIC_API_KEY%"` is part of the effective configuration, and the Service Editor writes it into the file it stores. The chapter [secrets and credentials](doc:credentials) describes all forms a key can take and where it can come from.
+This is the recommended form of a key, because the configuration then holds the name of the secret, not the key: a key resolved from an alias would be part of the effective configuration, and the Service Editor would write it into the file it stores. The chapter [secrets and credentials](doc:credentials) describes all forms a key can take and where it can come from.
 
-The variables `tl_openai_api_key`, `tl_anthropic_api_key`, `tl_mistral_api_key` and `tl_xai_api_key` hold the plain key. `tl-ai-core.conf.xml` also defines the aliases `%OPENAI_API_KEY%`, `%ANTHROPIC_API_KEY%`, `%MISTRAL_API_KEY%` and `%XAI_API_KEY%` for them, for applications whose configuration references the aliases: an alias is read as an encrypted value, so such an application either writes `api-key="unencrypted:%ANTHROPIC_API_KEY%"` (the variable holding the plain key) or, better, replaces the alias by the `<api-key>` element above ([migration](doc:credentials/migration)).
+The variables `tl_openai_api_key`, `tl_anthropic_api_key`, `tl_mistral_api_key` and `tl_xai_api_key` hold the plain key. `tl-ai-core` defines no alias for them; a configuration names the secret with the `<api-key>` element above. An application that referenced one of the former aliases `%OPENAI_API_KEY%`, `%ANTHROPIC_API_KEY%`, `%MISTRAL_API_KEY%` or `%XAI_API_KEY%` replaces it by that element ([migration](doc:credentials/migration#aliases-referencing-a-key)).
 
 A key given directly in the configuration is an `api-key` attribute. It is an encrypted configuration value, so a key in plain text carries the prefix `unencrypted:` - with no space after the colon, which would become part of the key: `api-key="unencrypted:sk-..."`.
 

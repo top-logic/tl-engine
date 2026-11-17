@@ -56,8 +56,8 @@ public class TestTableActivation extends TestCase {
 	/** An object no row displays. */
 	private static final String UNDISPLAYED = "x";
 
-	/** An index no row has. */
-	private static final int UNKNOWN_ROW = 17;
+	/** An id no row has. */
+	private static final String UNKNOWN_ROW = "unknown";
 
 	private TableViewControl<String> _table;
 
@@ -176,8 +176,13 @@ public class TestTableActivation extends TestCase {
 
 	/** Sends the client's activate command for the row at the given index. */
 	private TopLogicException activate(int rowIndex) {
+		return activate(_table.rowIdAt(rowIndex));
+	}
+
+	/** Sends the client's activate command for the row with the given id. */
+	private TopLogicException activate(String rowId) {
 		return CommandFailures.outcome(() -> _table.executeClientCommand(TableViewControl.CMD_ACTIVATE,
-			Map.of(ActivateRowArguments.ROW_INDEX, Integer.valueOf(rowIndex))));
+			Map.of(ActivateRowArguments.ROW_ID, rowId)));
 	}
 
 	/** The single column showing the row object itself. */

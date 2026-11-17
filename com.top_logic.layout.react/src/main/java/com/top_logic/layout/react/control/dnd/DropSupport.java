@@ -10,37 +10,33 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.function.Predicate;
 
-import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.control.CommandErrors;
-import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.RecordedCommand;
-import com.top_logic.layout.react.control.ScriptingModelKey;
-import com.top_logic.layout.react.servlet.SSEUpdateQueue;
-import com.top_logic.layout.scripting.recorder.ref.ModelName;
-import com.top_logic.layout.scripting.runtime.ActionContext;
+import com.top_logic.layout.react.scripting.ScriptingSession;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
  * The part of the drop protocol every control accepting drops shares: the wire names, resolving
- * the dragged objects from the source control, answering drop probes, and recording a drop in
- * replay-stable form.
+ * the dragged objects from the source control, and answering drop probes.
  *
  * <p>
  * A control accepting drops creates one {@link DropSupport} and keeps to itself only what its
  * drop targets are: which client-side key designates which target, and what a drop on it does.
  * A control whose items are places of a drop - rows of a table, nodes of a tree - hands its
  * {@link DropTarget} to {@link #setTarget(DropTarget)} and resolves the item and zone a drop names
- * into a {@link DropPlace}; applying, probing, recording and replaying a drop is then
- * {@link #drop(DropArguments, DropPlace.Resolver)}, {@link #probe(DropProbeArguments, DropPlace.Resolver)},
- * {@link #recordDrop(Map, DropPlace.Resolver)} and {@link #dropObjects(DropObjectsArguments, Predicate)}.
+ * into a {@link DropPlace}; applying and probing a drop is then
+ * {@link #drop(DropArguments, DropPlace.Resolver)} and
+ * {@link #probe(DropProbeArguments, DropPlace.Resolver)}.
+ * </p>
+ *
+ * <p>
+ * A drop is recorded and replayed as it is dispatched: the ids it names are
+ * {@link com.top_logic.layout.react.control.identity.DisplayedObjectId}s, see {@link DropArguments}.
  * </p>
  */
 public final class DropSupport {
@@ -127,12 +123,6 @@ public final class DropSupport {
 	public static final String CMD_DROP = "drop";
 
 	/**
-	 * The command applying a drop of objects named by their business identity, the form a drop is
-	 * recorded in, see {@link DropObjectsArguments}.
-	 */
-	public static final String CMD_DROP_OBJECTS = "dropObjects";
-
-	/**
 	 * The command the client sends while a drag hovers a target, asking whether a drop right there
 	 * would be accepted; answered in {@link #DROP_VERDICTS}.
 	 *
@@ -207,20 +197,18 @@ public final class DropSupport {
 	}
 
 	/**
-	 * The control registered in the owner's window under the given id, or {@code null} if none is
-	 * (or the id is missing).
+	 * The control of the owner's window the given reference designates - its control id or its
+	 * semantic address -, or {@code null} if none is (or the reference is missing).
+	 *
+	 * @see ScriptingSession#controlOf(String)
 	 */
-	public ReactCommandTarget registeredControl(String controlId) {
-		SSEUpdateQueue queue = _owner.getReactContext().getSSEQueue();
-		if (controlId == null || queue == null) {
-			return null;
-		}
-		return queue.getControl(controlId);
+	public ReactControl registeredControl(String reference) {
+		return ScriptingSession.forWindowOf(_owner).controlOf(reference);
 	}
 
 	/**
 	 * Resolves the dragged objects a client drop names through the {@link DragSourceControl} the
-	 * {@link DropArguments#getSource() source id} designates.
+	 * {@link DropArguments#getSource() source} designates.
 	 *
 	 * <p>
 	 * A drop from a control that is no drag source or has dragging switched off, of a kind that is
@@ -235,8 +223,8 @@ public final class DropSupport {
 	 *        The client drop.
 	 */
 	public Dragged dragged(AcceptedKinds accepted, DropArguments args) {
-		ReactCommandTarget registered = registeredControl(args.getSource());
-		if (!(registered instanceof DragSourceControl source) || !(registered instanceof ReactControl sourceControl)) {
+		ReactControl sourceControl = registeredControl(args.getSource());
+		if (!(sourceControl instanceof DragSourceControl source)) {
 			return Dragged.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		if (!source.isDragEnabled() || !accepted.accepts(source.dragKind())) {
@@ -307,7 +295,7 @@ public final class DropSupport {
 	 *
 	 * <p>
 	 * The dragged objects are resolved by the {@link DragSourceControl} the
-	 * {@link DropArguments#getSource() source id} designates (see
+	 * {@link DropArguments#getSource() source} designates (see
 	 * {@link #dragged(AcceptedKinds, DropArguments)}), the place by the owner. A drop on an owner
 	 * without a {@link #setTarget(DropTarget) target}, naming an unknown zone, or naming an item
 	 * the owner no longer displays is refused. A target offering only drops on the control as a
@@ -417,84 +405,6 @@ public final class DropSupport {
 	}
 
 	/**
-	 * Rewrites a client {@link #CMD_DROP} into the replay-stable {@link #CMD_DROP_OBJECTS} form,
-	 * naming the location the {@link #setTarget(DropTarget) target} accepts the drop at.
-	 *
-	 * @param arguments
-	 *        The arguments of the client drop.
-	 * @param places
-	 *        Resolves the item the drop names into the place it was made at.
-	 * @return The recorded step, or {@code null} when the drop is refused or cannot be named.
-	 *
-	 * @see #recordDrop(Map, Function)
-	 */
-	public RecordedCommand recordDrop(Map<String, Object> arguments, DropPlace.Resolver places) {
-		return recordDrop(arguments, args -> {
-			Resolved resolved = resolve(args, places);
-			if (resolved.refusal() != null) {
-				return null;
-			}
-			return _target.check(resolved.request()).location();
-		});
-	}
-
-	/**
-	 * Applies a drop of the objects named by their {@link ScriptingModelKey business identity} -
-	 * the replay-stable counterpart of {@link #drop(DropArguments, DropPlace.Resolver)}, which a
-	 * recorded drop is captured as so it survives sorting, filtering and a fresh session.
-	 *
-	 * <p>
-	 * The drop is offered exactly the recorded location, for the recorded mode: the operation that
-	 * applied it when it was recorded applies it again.
-	 * </p>
-	 *
-	 * <p>
-	 * Drift contract: a recorded identity that no longer designates a present object, or a location
-	 * the owner does not display, is an explicit failure (replay reports {@code success:false}),
-	 * never a partially applied drop. Unlike a refusal, a drift means the replayed script no longer
-	 * matches the application, hence an error rather than a warning.
-	 * </p>
-	 *
-	 * @param args
-	 *        Carries the identities of the dropped objects and of the reference objects of the
-	 *        location.
-	 * @param displayed
-	 *        Whether the owner displays the place the resolved location names - the item dropped
-	 *        onto, the parent and the item inserted before. Not asked for a
-	 *        {@link DropLocation.Control} location.
-	 */
-	public void dropObjects(DropObjectsArguments args, Predicate<DropLocation> displayed) {
-		DropTarget target = _target;
-		if (target == null || !target.acceptedKinds().accepts(args.getKind())) {
-			throw refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
-		}
-		ActionContext actionContext = ScriptingModelKey.newActionContextOrNull();
-
-		List<ModelName> unresolved = new ArrayList<>();
-		List<Object> objects = locateAll(actionContext, args.getObjects(), unresolved);
-		DropLocation location = recordedLocation(actionContext, args, unresolved);
-		if (location == null) {
-			throw refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
-		}
-		// The reference objects must be places of the owner: a recorded drop that lands somewhere
-		// else is a drift, not a drop.
-		boolean elsewhere = unresolved.isEmpty() && !(location instanceof DropLocation.Control)
-			&& !displayed.test(location);
-		if (elsewhere) {
-			for (ModelName reference : new ModelName[] { args.getTargetObject(), args.getParent(), args.getBefore() }) {
-				if (reference != null) {
-					unresolved.add(reference);
-				}
-			}
-		}
-		if (elsewhere || !unresolved.isEmpty() || objects.isEmpty()) {
-			throw new TopLogicException(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(unresolved));
-		}
-
-		apply(DropRequest.at(null, args.getKind(), objects, location));
-	}
-
-	/**
 	 * The {@link #DROP_MODES} state value announcing the given modes.
 	 */
 	public static List<String> wireNames(Set<DropMode> modes) {
@@ -548,151 +458,6 @@ public final class DropSupport {
 		}
 		_verdicts.put(args.getProbe(), verdict);
 		return new LinkedHashMap<>(_verdicts);
-	}
-
-	/**
-	 * The objects the given business identities designate.
-	 *
-	 * @param context
-	 *        The action context to resolve the identities in, {@code null} if there is none.
-	 * @param names
-	 *        The identities to resolve.
-	 * @param unresolvedOut
-	 *        Receives each identity that designates no object.
-	 * @return The designated objects, in the order of their identities.
-	 */
-	public static List<Object> locateAll(ActionContext context, List<ModelName> names,
-			List<ModelName> unresolvedOut) {
-		List<Object> result = new ArrayList<>(names.size());
-		for (ModelName name : names) {
-			Object object = ScriptingModelKey.locate(context, null, name);
-			if (object == null) {
-				unresolvedOut.add(name);
-			} else {
-				result.add(object);
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Rewrites a client {@link #CMD_DROP} into the replay-stable {@link #CMD_DROP_OBJECTS} form: the
-	 * live drop names the dragged items and the place it was made at by session-bound client keys,
-	 * the recorded step names the business objects and the {@link DropLocation} the drop is applied
-	 * at.
-	 *
-	 * <p>
-	 * Recording the location rather than the place keeps a replay independent of what the control
-	 * displays next to the place: a drop below a row inserts before the row following it, which
-	 * after a sort is another one.
-	 * </p>
-	 *
-	 * @param arguments
-	 *        The arguments of the client drop.
-	 * @param locationOf
-	 *        The location the owner applies the given drop at, {@code null} for a drop it refuses.
-	 *        Must not modify anything.
-	 * @return The recorded step, or {@code null} when the drop is refused or an object cannot be
-	 *         named, so the drop is recorded verbatim rather than as an incomplete set.
-	 */
-	public RecordedCommand recordDrop(Map<String, Object> arguments, Function<DropArguments, DropLocation> locationOf) {
-		if (!(_owner.commandItem(CMD_DROP, arguments) instanceof DropArguments args)) {
-			return null;
-		}
-		if (!(registeredControl(args.getSource()) instanceof DragSourceControl source)) {
-			return null;
-		}
-		List<?> objects = args.isSelection() ? source.dragSelection() : source.dragObjects(args.getKeys());
-		if (objects.isEmpty()) {
-			return null;
-		}
-		DropLocation location = locationOf.apply(args);
-		if (location == null) {
-			return null;
-		}
-		DropObjectsArguments recorded = TypedConfiguration.newConfigItem(DropObjectsArguments.class);
-		recorded.setName(CMD_DROP_OBJECTS);
-		recorded.setKind(source.dragKind());
-		for (Object object : objects) {
-			ModelName name = ScriptingModelKey.name(null, object);
-			if (name == null) {
-				return null;
-			}
-			recorded.getObjects().add(name);
-		}
-		recorded.setMode(location.mode().wireName());
-		if (location instanceof DropLocation.Onto onto) {
-			ModelName target = ScriptingModelKey.name(null, onto.target());
-			if (target == null) {
-				return null;
-			}
-			recorded.setTargetObject(target);
-		} else if (location instanceof DropLocation.Insert insert) {
-			if (insert.parent() != null) {
-				ModelName parent = ScriptingModelKey.name(null, insert.parent());
-				if (parent == null) {
-					return null;
-				}
-				recorded.setParent(parent);
-			}
-			if (insert.before() != null) {
-				ModelName before = ScriptingModelKey.name(null, insert.before());
-				if (before == null) {
-					return null;
-				}
-				recorded.setBefore(before);
-			}
-		}
-		return new RecordedCommand(recorded);
-	}
-
-	/**
-	 * The {@link DropLocation} a recorded drop names.
-	 *
-	 * @param context
-	 *        The action context to resolve the identities in, {@code null} if there is none.
-	 * @param args
-	 *        The recorded drop.
-	 * @param unresolvedOut
-	 *        Receives each identity of a reference object that designates no object; the location
-	 *        then holds {@code null} in its place.
-	 * @return The location, or {@code null} if the recorded drop names an unknown mode or omits the
-	 *         reference object its mode requires.
-	 */
-	public static DropLocation recordedLocation(ActionContext context, DropObjectsArguments args,
-			List<ModelName> unresolvedOut) {
-		DropMode mode = DropMode.fromWire(args.getMode());
-		if (mode == null) {
-			return null;
-		}
-		switch (mode) {
-			case CONTROL:
-				return new DropLocation.Control();
-			case ONTO:
-				if (args.getTargetObject() == null) {
-					return null;
-				}
-				return new DropLocation.Onto(locate(context, args.getTargetObject(), unresolvedOut));
-			case ORDERED:
-				return new DropLocation.Insert(locate(context, args.getParent(), unresolvedOut),
-					locate(context, args.getBefore(), unresolvedOut));
-		}
-		throw new IllegalArgumentException("Unknown drop mode: " + mode);
-	}
-
-	/**
-	 * The object the given identity designates, {@code null} for no identity; an identity
-	 * designating no object is added to the given list.
-	 */
-	private static Object locate(ActionContext context, ModelName name, List<ModelName> unresolvedOut) {
-		if (name == null) {
-			return null;
-		}
-		Object object = ScriptingModelKey.locate(context, null, name);
-		if (object == null) {
-			unresolvedOut.add(name);
-		}
-		return object;
 	}
 
 	/**

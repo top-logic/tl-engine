@@ -27,6 +27,10 @@
 	The Details form shows the selected step through the derived channel detailNode, which
 	has a value only while exactly one step is selected.
 	
+	The button on every row of Build steps opens the edit dialog of its step (also by a double click
+	on the row). It computes its label and icon from its row: the label names the step, the icon is
+	a box for a step built from nothing and a diagram for a step built from other steps.
+	
 	Products are created, edited (also by a double click on the row) and deleted in the Products
 	tile; deleting a product deletes its build steps, which are parts of it. A build step is created
 	in the selected product from the Build steps tile and becomes the only selected step, so Details
@@ -333,6 +337,21 @@ $parts.isEmpty()
 						<column attribute="marker"/>
 					</columns>
 					<rows>all(`test.flowchart:FlowNode`)</rows>
+					<on-activate class="com.top_logic.layout.view.command.GenericViewCommand"
+						image="css:bi bi-pencil"
+						image-expr="$row.get(`test.flowchart:FlowNode#inputs`).isEmpty() ? 'css:bi bi-box' : 'css:bi bi-diagram-3'"
+						label-expr="#(&quot;Edit {0}&quot;@en, &quot;{0} bearbeiten&quot;@de).fill($row.get(`test.flowchart:FlowNode#name`))"
+					>
+						<label>
+							<en>Edit</en>
+							<de>Bearbeiten</de>
+						</label>
+						<open-dialog
+							bind-input-to="model"
+							close-on-backdrop="true"
+							dialog-view="demo/edit-flow-step.view.xml"
+						/>
+					</on-activate>
 				</table>
 			</panel>
 		</tile>

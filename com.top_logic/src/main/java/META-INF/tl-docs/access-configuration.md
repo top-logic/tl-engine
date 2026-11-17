@@ -52,10 +52,12 @@ The check itself is `SecurityConfigurationService.isAllowed(Person, TLObject, Bo
    grants and by the rights on the attributes and compositions of its type).
 6. `AccessManager.hasRole(person, object, roles)` decides whether the user holds one of them on the
    object.
-7. For an attribute value: if the attribute has its own `<part>` grants for the operation, they
-   **replace** the class grant for this attribute - the user must hold one of those roles, on the
-   object or, for a delegating object, on the end of its chain of access parents; a grant without
-   roles denies everyone. Without attribute-level grants the class-level decision stands.
+7. For an attribute value: the attribute rights in effect for the object's type and the attribute's
+   name are looked up (see [Attribute rights](#attribute-rights-which-types-a-part-applies-to)). If
+   they grant the operation, they **replace** the class grant for this attribute - the user must
+   hold one of those roles, on the object or, for a delegating object, on the end of its chain of
+   access parents; a grant without roles denies everyone. Without attribute-level grants the
+   class-level decision stands.
 
 `Discover` - every right on an object or one of its attributes implies the operation `Discover`, see [the Discover specification](doc:access-discover-spec).
 How code and TL-Script ask for a decision (`ModelAccessRights`, `canRead`, ...) and which objects
@@ -145,6 +147,57 @@ instead of replacing them.
   rules. A module rule applies to every class of the module, also to specializations defined in
   the module, whatever its `inherit`; `inherit="true"` additionally passes it on to
   specializations defined in other modules.
+
+### Attribute rights: which types a `<part>` applies to
+
+A `<part name="T#a">` entry configures the rights of the attribute `a` for the type `T` and all
+its specializations, no matter whether `T` defines the attribute, overrides it or only inherits it.
+For an object, the **most specific** entry on the way from its type to its generalizations decides:
+
+- An entry of the type itself wins.
+- Otherwise the entries the generalizations pass on count, and an entry of a type is dropped when
+  an entry of one of its specializations is passed on as well.
+- An entry replaces the entries of the generalizations for **all** operations: an entry of `T#a`
+  granting only `Read` leaves `Write` on `a` of `T` to the class rights, even if a generalization
+  restricts `Write`.
+- A generalization without an entry for the attribute adds nothing.
+- If two independent generalizations pass on entries with **different** rights and the type has no
+  entry of its own, the start fails with a configuration error. Entries with equal rights are no
+  conflict. An entry of the type itself resolves the conflict.
+
+Example with the type `Named` defining `name`, its specialization `Foo` overriding `name`, and its
+specializations `Bar` and `Bar`'s specialization `Sub` inheriting `name` unchanged:
+
+```xml
+<part name="my.module:Named#name">
+	<grant operation="Write" roles="Editor"/>
+</part>
+<part name="my.module:Foo#name">
+	<grant operation="Read" roles="Keeper"/>
+</part>
+<part name="my.module:Sub#name">
+	<grant operation="Read" roles="Keeper"/>
+</part>
+```
+
+- `name` of a `Bar` is read by the class rights of `Bar` and written by `Editor` only.
+- `name` of a `Foo` is read by `Keeper` only and written by the class rights of `Foo`, since the
+  entry of `Foo` replaces that of `Named`.
+- `name` of a `Sub` (and of its specializations) behaves like that of a `Foo`, while `Bar` and the
+  other specializations of `Bar` keep the rights of `Named`.
+
+The check of an object uses its type: TL-Script `` $bar.get(`my.module:Named#name`) `` sees the rights
+of `Bar`, `` $foo.get(`my.module:Named#name`) `` those of `Foo`. A question without an object names the
+type explicitly with `ModelAccessRights.getAllowedRoles(TLClass, TLStructuredTypePart, ...)` and
+`hasGrant(TLClass, TLStructuredTypePart, ...)`. The variants without a type refer to the owner of
+the given attribute, except that `hasGrant(TLStructuredTypePart, ...)` is conservative: it is true as
+soon as the owner or any of its specializations has an attribute right for the attribute's name, so
+that TL-Script never compiles an access into a query that skips the check a specialization needs.
+
+The "Access rights…" dialog of a type shows and edits the attribute rights in effect for that type
+and stores a change as an entry of that type. When the type has no entry of its own for the
+attribute yet, the dialog creates it with the rights the type inherits, so that an edit changes
+nothing but the grant edited.
 
 A custom operation can also authorize a configured TL-Script function as a whole, see
 [privileged TL-Script functions](doc:access-privileged-scripts). The UI units of the React view
@@ -418,7 +471,7 @@ module not listed in its `excluded-modules` and reports, per type:
 |---|---|---|
 | no role source | neither a role rule nor a role parent rule applies and no composition holds the objects, so no user can hold a role and every access is denied (direct assignments do not count as a definition) | access parent through a to-one reference, role parent rule, role rule, or mark internal |
 | no read grant | no role is granted `Read` on the type (after module and inherited grants), so its objects are inaccessible to every user | grant on the type or its module, or mark internal |
-| dead grant | an operation is granted to roles that no rule can deliver on the type or its role parents; the grant never takes effect | add a rule delivering the role, or grant a delivered role |
+| dead grant | an operation is granted to roles that no rule can deliver where the operation is checked; the grant never takes effect. `Create` is checked where an object is created (`isAllowedCreate(person, type, context)`): on a container, i.e. a concrete class whose composition - as in effect on that class, a narrowing override included - holds the type or one of its generalizations, or on its role parents; on the security root for a type no composition holds. Every other operation is checked on the type or its role parents | add a rule delivering the role there, or grant a role delivered there |
 | shadowed rules | the type has a configured access parent, but role rules or role parent rules apply to it; they have no effect | delete the rules, or drop the access parent |
 | ungranted operation | an operation declared for the type (not a built-in one) is held by no role there, neither by a grant nor through an implying operation, so every check of it on the type is refused | grant it to a role, or declare it `implied-by` an operation the roles hold |
 | inapplicable operation | a view unit, a command, a form or a privileged script checks an operation on the type that does not apply to it (a check on the security root is reported for the type of the root) | declare the operation for the type, or check another one |
@@ -464,7 +517,10 @@ when it has an access parent (whether the parent is accessible is reported with 
   sets is dropped - by a mark, or by removing it in the dialog - by storing `<self/>`, written with
   `config:override="true"`, since an access parent left out would leave that one in effect.
 - The grants of a type are edited as a matrix in Administration → Access control → Grants: a row
-  per role a user can hold on the type (`SecurityCoverageAnalysis.getHoldableRoles`), a column per
+  per role a user can hold on the type (`SecurityCoverageAnalysis.getHoldableRoles`) or holding a
+  grant that takes effect (`SecurityCoverageAnalysis.isLiveGrant`, e.g. a `Create` grant to a role
+  delivered on the container), a row marked ineffective per role none of whose grants takes
+  effect, a column per
   operation applying to it (see the section "Administration of grants" of the article
   `view-layer/access-control`). A changed
   cell is stored as a single `<grant>` or `<revoke>` of the role in the entry of the type

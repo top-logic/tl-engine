@@ -25,6 +25,8 @@ public class FunctionFieldModel extends BoundFieldModel {
 
 	private final BiConsumer<Object, Object> _write;
 
+	private Runnable _afterSetValue;
+
 	/**
 	 * Creates a {@link FunctionFieldModel}.
 	 *
@@ -48,6 +50,27 @@ public class FunctionFieldModel extends BoundFieldModel {
 	@Override
 	public Object getObject() {
 		return _object;
+	}
+
+	/**
+	 * Runs the given action after every {@link #setValue(Object)}, when the field shows the value
+	 * that was set.
+	 *
+	 * @param action
+	 *        The action to run, e.g. to build what depends on the written value again;
+	 *        {@code null} for none.
+	 */
+	public void setAfterSetValue(Runnable action) {
+		_afterSetValue = action;
+	}
+
+	@Override
+	public void setValue(Object value) {
+		super.setValue(value);
+		Runnable action = _afterSetValue;
+		if (action != null) {
+			action.run();
+		}
 	}
 
 	@Override

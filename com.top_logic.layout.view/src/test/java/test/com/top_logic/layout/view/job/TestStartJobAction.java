@@ -17,20 +17,26 @@ import junit.framework.Test;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.view.command.ArgumentsProbe;
 
 import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.CancelScope;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.layout.view.command.WithResultActions;
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.command.ActionStep;
+import com.top_logic.layout.view.command.ArgumentsViewAction;
+import com.top_logic.layout.view.command.ViewActions;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.InputRef;
@@ -67,6 +73,15 @@ public class TestStartJobAction extends AbstractJobTest {
 
 	/** What the actions beside the job logged. */
 	private final List<String> _log = Collections.synchronizedList(new ArrayList<>());
+
+	/** The name under which the on-cancel actions of these tests see what a job got done. */
+	private static final String REPORT = "report";
+
+	/** What a cancelled job of these tests got done. */
+	private static final String PARTIAL = "2 of 3 files";
+
+	/** An action recording the scope it is created in and the arguments it runs with. */
+	private static final String PROBE = "<action class='" + ArgumentsProbe.class.getName() + "'/>";
 
 	/**
 	 * Tests that the channel holds the running job before the command suspends, so what displays it
@@ -540,9 +555,10 @@ public class TestStartJobAction extends AbstractJobTest {
 	}
 
 	/**
-	 * Tests that a result the job still produces after it was cancelled is discarded.
+	 * Tests that what the body still returns after the job was cancelled stays as the result of the
+	 * cancelled job.
 	 */
-	public void testAResultProducedAfterTheCancellationIsDiscarded() throws Exception {
+	public void testAResultReturnedAfterTheCancellationIsKept() throws Exception {
 		CountDownLatch started = new CountDownLatch(1);
 		CountDownLatch cancelled = new CountDownLatch(1);
 		start(body((job, arguments) -> {
@@ -558,7 +574,128 @@ public class TestStartJobAction extends AbstractJobTest {
 		JobState last = awaitFinished();
 
 		assertEquals(JobStatus.CANCELLED, last.status());
-		assertNull("The result of a cancelled job is discarded.", last.result());
+		assertEquals("What the body returned is what the cancelled job got done.", "too late", last.result());
+	}
+
+	/**
+	 * Tests that a cancelled job with on-cancel actions runs them with what it got done, under the
+	 * name given for it, and goes on with the chain instead of aborting the command: the
+	 * compensations of the actions before the job do not run.
+	 */
+	public void testACancelledJobRunsItsOnCancelActions() throws Exception {
+		List<Object> seen = Collections.synchronizedList(new ArrayList<>());
+		CountDownLatch started = new CountDownLatch(1);
+		CountDownLatch cancelled = new CountDownLatch(1);
+		run(List.of(compensate("read"),
+			job(partial(started, cancelled), List.of(probe("with-result", WithResultActions.RESULT, seen)),
+				List.of(probe("on-cancel", REPORT, seen))),
+			record("after")));
+
+		assertTrue(started.await(TIMEOUT, TimeUnit.MILLISECONDS));
+		current().control().cancel();
+		cancelled.countDown();
+
+		JobState last = awaitFinished();
+
+		assertEquals(JobStatus.CANCELLED, last.status());
+		assertEquals(PARTIAL, last.result());
+		assertEquals("The on-cancel actions see what the job got done.", List.of("on-cancel", PARTIAL), seen);
+		assertEquals("The chain goes on, nothing is compensated.", List.of("after"), _log);
+		assertEquals(1, _completions.size());
+		assertNotNull("The command is not aborted.", _completions.get(0));
+	}
+
+	/**
+	 * Tests that a cancelled job without on-cancel actions aborts the command, although its state
+	 * shows what it got done.
+	 */
+	public void testACancelledJobWithoutOnCancelActionsAbortsTheCommand() throws Exception {
+		List<Object> seen = Collections.synchronizedList(new ArrayList<>());
+		CountDownLatch started = new CountDownLatch(1);
+		CountDownLatch cancelled = new CountDownLatch(1);
+		run(List.of(compensate("read"),
+			job(partial(started, cancelled), List.of(probe("with-result", WithResultActions.RESULT, seen)), null),
+			record("after")));
+
+		assertTrue(started.await(TIMEOUT, TimeUnit.MILLISECONDS));
+		current().control().cancel();
+		cancelled.countDown();
+
+		JobState last = awaitFinished();
+
+		assertEquals(JobStatus.CANCELLED, last.status());
+		assertEquals(PARTIAL, last.result());
+		assertEquals(List.of(), seen);
+		assertEquals(List.of("read compensated"), _log);
+		assertEquals(Collections.singletonList(null), _completions);
+	}
+
+	/**
+	 * Tests that a completed job runs its with-result actions, not its on-cancel actions, and goes
+	 * on with the chain.
+	 */
+	public void testACompletedJobRunsItsWithResultActions() throws Exception {
+		List<Object> seen = Collections.synchronizedList(new ArrayList<>());
+		run(List.of(compensate("read"),
+			job(body((job, arguments) -> "produced"), List.of(probe("with-result", WithResultActions.RESULT, seen)),
+				List.of(probe("on-cancel", WithResultActions.RESULT, seen))),
+			record("after")));
+
+		JobState last = awaitFinished();
+
+		assertEquals(JobStatus.COMPLETED, last.status());
+		assertEquals(List.of("with-result", "produced"), seen);
+		assertEquals(List.of("after"), _log);
+		assertEquals(1, _completions.size());
+		assertNotNull(_completions.get(0));
+	}
+
+	/**
+	 * Tests that a failed job aborts the command even when it has on-cancel actions.
+	 */
+	public void testAFailedJobAbortsTheCommandDespiteOnCancelActions() throws Exception {
+		List<Object> seen = Collections.synchronizedList(new ArrayList<>());
+		run(List.of(compensate("read"),
+			job(body((job, arguments) -> {
+				throw new TopLogicException(ResKey.text("broken"));
+			}), List.of(probe("with-result", WithResultActions.RESULT, seen)),
+				List.of(probe("on-cancel", WithResultActions.RESULT, seen))),
+			record("after")));
+
+		JobState last = awaitFinished();
+
+		assertEquals(JobStatus.FAILED, last.status());
+		assertEquals(List.of(), seen);
+		assertEquals(List.of("read compensated"), _log);
+		assertEquals(Collections.singletonList(null), _completions);
+	}
+
+	/**
+	 * Tests that the configured with-result and on-cancel actions see the result under the name
+	 * given with {@code as}, in addition to the arguments of the chain.
+	 */
+	public void testTheConfiguredFollowUpsSeeTheResultUnderItsName() throws Exception {
+		ArgumentsProbe.reset();
+		try {
+			DefaultInstantiationContext context = new DefaultInstantiationContext(TestStartJobAction.class);
+			ConfigurationReader reader = new ConfigurationReader(context, Collections.singletonMap(
+				StartJobAction.Config.TAG_NAME,
+				TypedConfiguration.getConfigurationDescriptor(StartJobAction.Config.class)));
+			reader.setSource(CharacterContents.newContent(
+				"<start-job job='" + JOB + "' cancelable='true' function='null'>"
+					+ "<with-result as='imported'>" + PROBE + "</with-result>"
+					+ "<on-cancel as='" + REPORT + "'>" + PROBE + "</on-cancel>"
+					+ "</start-job>"));
+			StartJobAction.Config config = (StartJobAction.Config) reader.read();
+			List<ViewAction> actions = ViewActions.instantiate(context, List.of(config), ARGUMENTS);
+			context.checkErrors();
+
+			assertEquals(1, actions.size());
+			assertEquals(List.of(ARGUMENT, "imported"), ArgumentsProbe.SCOPES.get(0).names());
+			assertEquals(List.of(ARGUMENT, REPORT), ArgumentsProbe.SCOPES.get(1).names());
+		} finally {
+			ArgumentsProbe.reset();
+		}
 	}
 
 	/**
@@ -629,6 +766,44 @@ public class TestStartJobAction extends AbstractJobTest {
 			result.add(Integer.valueOf(state.currentPhase()));
 		}
 		return result;
+	}
+
+	/**
+	 * A job body that waits for the cancel, then catches it and returns {@link #PARTIAL}, as a body
+	 * returning the part of its work it got done.
+	 */
+	private static JobBody partial(CountDownLatch started, CountDownLatch cancelled) {
+		return (job, arguments) -> {
+			started.countDown();
+			awaitQuietly(cancelled);
+			try {
+				job.checkCancelled();
+				return "everything";
+			} catch (AbortExecutionException ex) {
+				return PARTIAL;
+			}
+		};
+	}
+
+	/** An action starting the given work as a cancelable job with the given follow-up actions. */
+	private StartJobAction job(JobBody body, List<ViewAction> withResult, List<ViewAction> onCancel) {
+		return new StartJobAction(new ChannelRef(JOB), ARGUMENTS, List.of(), List.of(), true, 0, body,
+			WithResultActions.RESULT, withResult, REPORT, onCancel);
+	}
+
+	/**
+	 * An action recording its name and the argument of the given name, as a follow-up action of a
+	 * job.
+	 */
+	private static ViewAction probe(String name, String argument, List<Object> seen) {
+		return new ArgumentsViewAction() {
+			@Override
+			public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
+				seen.add(name);
+				seen.add(arguments.get(argument));
+				continuation.resume(arguments.value());
+			}
+		};
 	}
 
 	/** An action that logs its name and hands the value of the command on. */

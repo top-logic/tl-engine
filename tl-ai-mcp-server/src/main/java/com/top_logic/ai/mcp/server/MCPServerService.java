@@ -112,8 +112,11 @@ import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
 @ServiceCategory.Of(AICategory.class)
 public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Config<?>> {
 
-	/** Path for the MCP endpoint (must match web.xml servlet mapping /mcp). */
-	private static final String MCP_ENDPOINT = "/mcp";
+	/**
+	 * Path of the MCP endpoint below the context path; the servlet mapping of
+	 * {@link MCPTransportServlet} in the module's {@code web-fragment.xml} must match it.
+	 */
+	static final String MCP_ENDPOINT = "/mcp";
 
 	/**
 	 * Configuration interface for {@link MCPServerService}.
@@ -307,7 +310,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		 * names a single tool - and may give it the name, title and description an external model
 		 * reads - or a whole tool group. A tool that is not listed is unknown to an MCP client. A
 		 * listed tool is still authorized per call against the caller's roles and the background
-		 * allowlist.
+		 * allowlist, and a caller sees in {@code tools/list} only the listed tools it may call.
 		 * </p>
 		 */
 		@Name(EXPOSED_TOOLS)
@@ -503,9 +506,11 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		return HttpServletStreamableServerTransportProvider.builder()
 			.jsonMapper(McpJsonDefaults.getMapper())
 			.mcpEndpoint(MCP_ENDPOINT)
-			// No keep-alive of the SDK's: it pings, but never removes a session that does not
-			// answer. McpSessionKeeper does both.
-			.securityValidator(DefaultServerTransportSecurityValidator.builder()
+			// Neither keep-alive nor session sweep of the SDK's: its sweep removes a session from the
+			// transport without telling anybody, so McpSessionPrincipals would keep its owner
+			// forever. McpSessionKeeper pings, removes idle sessions and releases their owners.
+			.sessionSweepInterval(null)
+			.httpHeaderValidator(DefaultServerTransportSecurityValidator.builder()
 				.allowedOrigins(config.getAllowedOrigins())
 				.allowedHosts(config.getAllowedHosts())
 				.build())
@@ -562,8 +567,8 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 			+ " request is authenticated and acts as the account it authenticated: resource reads are"
 			+ " filtered by that account's model access rights, and tool calls are authorized against"
 			+ " its roles, bounded by the <background-allowlist> because an MCP caller has no human to"
-			+ " answer an approval prompt. tools/list shows every published tool to any authenticated"
-			+ " caller. See the developer article ai/security/mcp-endpoint.",
+			+ " answer an approval prompt. tools/list shows a caller only the published tools it may"
+			+ " call. See the developer article ai/security/mcp-endpoint.",
 			MCPServerService.class);
 	}
 
@@ -633,14 +638,29 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 			builder.resourceTemplates(resource.createSpecification());
 		}
 
-		// Register the published tools, and only those: a tool that is not registered here is an
-		// unknown tool to every MCP client.
+		_publishedTools = publishTools(builder, McpExposure.resolve(getConfig().getExposedTools()));
+	}
+
+	/**
+	 * Registers the given published tools, and only those, with the given server.
+	 *
+	 * <p>
+	 * A tool that is not registered here is an unknown tool to every MCP client. Of the registered
+	 * ones, {@code tools/list} shows a caller only those it may call, see
+	 * {@link McpToolAdapter#visibilityFilter(List)}.
+	 * </p>
+	 *
+	 * @return The names the tools are published under.
+	 */
+	static List<String> publishTools(McpServer.SyncSpecification<?> builder,
+			List<McpExposure.Published> publishedTools) {
 		List<String> published = new ArrayList<>();
-		for (McpExposure.Published tool : McpExposure.resolve(getConfig().getExposedTools())) {
+		for (McpExposure.Published tool : publishedTools) {
 			builder.tools(McpToolAdapter.adapt(tool));
 			published.add(tool.name());
 		}
-		_publishedTools = published;
+		builder.addToolFilter(McpToolAdapter.visibilityFilter(publishedTools));
+		return published;
 	}
 
 	@Override

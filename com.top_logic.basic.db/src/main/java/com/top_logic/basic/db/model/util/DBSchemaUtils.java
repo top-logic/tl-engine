@@ -8,6 +8,7 @@ package com.top_logic.basic.db.model.util;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
@@ -124,21 +125,87 @@ public class DBSchemaUtils {
 	 *         If access to the database fails.
 	 */
 	public static boolean exists(PooledConnection db, String tableName) throws SQLException {
-		DBHelper sqlDialect = db.getSQLDialect();
-		final String checkStatement = "SELECT * FROM " + sqlDialect.tableRef(tableName) + " WHERE 1=0";
-		Savepoint savePoint = sqlDialect.setSavepoint(db);
-		try (Statement checkStmt = db.createStatement()) {
-			try {
-				checkStmt.execute(checkStatement);
-				return true;
-			} catch (SQLException ex) {
-				sqlDialect.rollback(db, savePoint);
-				// table does not exist
-				return false;
+		return existingTableName(db, db.getSQLDialect(), tableName) != null;
+	}
+
+	/**
+	 * The name under which the database catalog knows the table with the given name.
+	 * 
+	 * <p>
+	 * The lookup uses the {@link DatabaseMetaData} instead of a statement that fails for a missing
+	 * table: in some databases (e.g. <i>PostgreSQL</i>), a failing statement aborts the whole
+	 * transaction.
+	 * </p>
+	 * 
+	 * @param connection
+	 *        Connection of the database to look in.
+	 * @param sqlDialect
+	 *        The SQL dialect of the database.
+	 * @param tableName
+	 *        Database table name as used in statements created by the given dialect.
+	 * @return The table name as reported by the catalog, or <code>null</code> if no such table
+	 *         exists.
+	 * @throws SQLException
+	 *         If access to the database fails.
+	 */
+	public static String existingTableName(Connection connection, DBHelper sqlDialect, String tableName)
+			throws SQLException {
+		DatabaseMetaData metaData = connection.getMetaData();
+		String catalog = connection.getCatalog();
+		String schema = sqlDialect.getCurrentSchema(connection);
+		String metaDataName = sqlDialect.tablePattern(tableName);
+
+		// Note: The table name argument is a pattern in which '_' matches any character. Instead of
+		// escaping, which not all drivers support, the result is filtered for the given name.
+		try (ResultSet tables = metaData.getTables(catalog, schema, metaDataName, null)) {
+			while (tables.next()) {
+				String name = tables.getString("TABLE_NAME");
+				if (metaDataName.equalsIgnoreCase(name)) {
+					return name;
+				}
 			}
-		} finally {
-			sqlDialect.releaseSavepoint(db, savePoint);
 		}
+		return null;
+	}
+
+	/**
+	 * Whether the foreign key with the given name exists in the given table.
+	 * 
+	 * <p>
+	 * The lookup uses the {@link DatabaseMetaData}, see
+	 * {@link #existingTableName(Connection, DBHelper, String)}.
+	 * </p>
+	 * 
+	 * @param connection
+	 *        Connection of the database to look in.
+	 * @param sqlDialect
+	 *        The SQL dialect of the database.
+	 * @param tableName
+	 *        Database name of the table defining the foreign key.
+	 * @param foreignKeyName
+	 *        Database name of the foreign key constraint.
+	 * @return Whether the table exists and defines the given foreign key.
+	 * @throws SQLException
+	 *         If access to the database fails.
+	 */
+	public static boolean existsForeignKey(Connection connection, DBHelper sqlDialect, String tableName,
+			String foreignKeyName) throws SQLException {
+		String existingTable = existingTableName(connection, sqlDialect, tableName);
+		if (existingTable == null) {
+			return false;
+		}
+
+		DatabaseMetaData metaData = connection.getMetaData();
+		String catalog = connection.getCatalog();
+		String schema = sqlDialect.getCurrentSchema(connection);
+		try (ResultSet keys = metaData.getImportedKeys(catalog, schema, existingTable)) {
+			while (keys.next()) {
+				if (foreignKeyName.equalsIgnoreCase(keys.getString("FK_NAME"))) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -156,7 +223,14 @@ public class DBSchemaUtils {
 	public static boolean resetTable(ConnectionPool pool, String tableName, boolean truncate) {
 		PooledConnection connection = pool.borrowWriteConnection();
 		try {
-			return tryResetTable(connection, tableName, truncate);
+			boolean success = tryResetTable(connection, tableName, truncate);
+
+			// Note: MSSQL supports transactional schema modifications.
+			connection.commit();
+			return success;
+		} catch (SQLException ex) {
+			handleDropFailure(ex, "Cannot drop table '" + tableName + "'.");
+			return false;
 		} finally {
 			pool.releaseWriteConnection(connection);
 		}
@@ -164,6 +238,10 @@ public class DBSchemaUtils {
 
 	/**
 	 * Drop a table with the given name.
+	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
 	 * 
 	 * @param connection
 	 *        Connection to the database to drop the table in.
@@ -175,9 +253,8 @@ public class DBSchemaUtils {
 	 *         drop did not exist.
 	 */
 	public static boolean tryResetTable(PooledConnection connection, String tableName, boolean truncate) {
-		try {
-			resetTable(connection, tableName, truncate);
-			return true;
+		try (Statement statement = connection.createStatement()) {
+			return tryResetTable(connection.getSQLDialect(), statement, tableName, truncate);
 		} catch (SQLException ex) {
 			handleDropFailure(ex, "Cannot drop table '" + tableName + "'.");
 			return false;
@@ -186,6 +263,10 @@ public class DBSchemaUtils {
 
 	/**
 	 * Drop a table with the given name.
+	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
 	 * 
 	 * @param connection
 	 *        Connection to the database to drop the table in.
@@ -202,9 +283,6 @@ public class DBSchemaUtils {
 		} finally {
 			statement.close();
 		}
-
-		// Note: MSSQL supports transactional schema modifications.
-		connection.commit();
 	}
 
 	/**
@@ -238,6 +316,10 @@ public class DBSchemaUtils {
 	 * uses instead of truncating table if it may be possible that the tables have currently a
 	 * different layout.
 	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
+	 * 
 	 * @param connection
 	 *        The connection to the database to drop the table in.
 	 * @param schema
@@ -265,7 +347,11 @@ public class DBSchemaUtils {
 	public static boolean resetTables(ConnectionPool pool, DBSchema schema, boolean truncate) {
 		PooledConnection connection = pool.borrowWriteConnection();
 		try {
-			return resetTables(connection, schema, truncate);
+			boolean success = resetTables(connection, schema, truncate);
+
+			// Note: MSSQL supports transactional schema modifications.
+			connection.commit();
+			return success;
 		} catch (SQLException ex) {
 			// Ignore, table does not exist.
 			handleDropFailure(ex, "Cannot drop tables.");
@@ -277,6 +363,10 @@ public class DBSchemaUtils {
 
 	/**
 	 * Drop all tables of the given schema from the given database.
+	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
 	 * 
 	 * @param connection
 	 *        {@link PooledConnection} to the database to drop the table in.
@@ -317,21 +407,33 @@ public class DBSchemaUtils {
 		} finally {
 			statement.close();
 		}
-		// Note: MSSQL supports transactional schema modifications.
-		connection.commit();
 		return success;
 	}
 	
-	private static boolean tryDropForeignKey(DBHelper sqlDialect, Statement statement, DBForeignKey foreignKey) {
+	private static boolean tryDropForeignKey(DBHelper sqlDialect, Statement statement, DBForeignKey foreignKey)
+			throws SQLException {
 		String foreignKeyName = CreateStatementBuilder.qName(sqlDialect, foreignKey);
+		String tableName = foreignKey.getTable().getDBName();
+		Connection connection = statement.getConnection();
 
-		try {
-			dropForeignKey(sqlDialect, statement, foreignKey.getTable().getDBName(), foreignKeyName);
-		} catch (SQLException ex) {
+		// Note: A failing statement must be avoided, since it aborts the whole transaction in some
+		// databases.
+		if (!existsForeignKey(connection, sqlDialect, tableName, foreignKeyName)) {
 			// Table may not yet exist.
-			handleDropFailure(ex, "Cannot drop foreign key '" + foreignKeyName + "' on table '"
-				+ foreignKey.getTable().getDBName() + "'.");
+			Logger.info("Foreign key '" + foreignKeyName + "' on table '" + tableName
+				+ "' does not exist, nothing to drop.", DBSchemaUtils.class);
 			return false;
+		}
+
+		Savepoint savePoint = sqlDialect.setSavepoint(connection);
+		try {
+			dropForeignKey(sqlDialect, statement, tableName, foreignKeyName);
+		} catch (SQLException ex) {
+			sqlDialect.rollback(connection, savePoint);
+			handleDropFailure(ex, "Cannot drop foreign key '" + foreignKeyName + "' on table '" + tableName + "'.");
+			return false;
+		} finally {
+			sqlDialect.releaseSavepoint(connection, savePoint);
 		}
 		return true;
 	}
@@ -345,11 +447,18 @@ public class DBSchemaUtils {
 			throws SQLException {
 		Connection connection = statement.getConnection();
 
+		// Note: A failing statement must be avoided, since it aborts the whole transaction in some
+		// databases.
+		if (existingTableName(connection, sqlDialect, tableName) == null) {
+			// Table may not yet exist.
+			Logger.info("Table '" + tableName + "' does not exist, nothing to drop.", DBSchemaUtils.class);
+			return false;
+		}
+
 		Savepoint savePoint = sqlDialect.setSavepoint(connection);
 		try {
 			resetTable(sqlDialect, statement, tableName, truncate);
 		} catch (SQLException ex) {
-			// Table may not yet exist.
 			sqlDialect.rollback(connection, savePoint);
 			handleDropFailure(ex, "Cannot drop table '" + tableName + "'.");
 			return false;
@@ -691,6 +800,9 @@ public class DBSchemaUtils {
 		PooledConnection connection = pool.borrowWriteConnection();
 		try {
 			create(connection, schema);
+
+			// Note: MSSQL supports transactional schema modifications.
+			connection.commit();
 		} finally {
 			pool.releaseWriteConnection(connection);
 		}
@@ -698,6 +810,10 @@ public class DBSchemaUtils {
 
 	/**
 	 * Creates the given {@link DBSchemaPart} in the given database.
+	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
 	 * 
 	 * @param connection
 	 *        {@link PooledConnection} to the database to create tables in.
@@ -714,7 +830,6 @@ public class DBSchemaUtils {
 		} catch (IOException ex) {
 			throw new UnreachableAssertion("Reading from string must not fail.", ex);
 		}
-		connection.commit();
 	}
 
 	/**
@@ -752,6 +867,10 @@ public class DBSchemaUtils {
 	/**
 	 * Creates the given {@link DBSchema} in the given database.
 	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
+	 * 
 	 * @param connection
 	 *        {@link PooledConnection} to the database to create tables in.
 	 * @param schema
@@ -771,9 +890,6 @@ public class DBSchemaUtils {
 
 			create(connection, table);
 		}
-
-		// MSSQL supports transactional schema manipulation.
-		connection.commit();
 	}
 	
 	/**

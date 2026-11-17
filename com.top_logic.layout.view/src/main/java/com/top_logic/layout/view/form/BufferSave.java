@@ -42,7 +42,8 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <p>
- * A new object reached through a composition is created in the context of the object holding it.
+ * A new object reached through a composition is created in the context of the object holding it,
+ * also when it is reached first as one of the buffers to store or through another reference.
  * A new object reached only through a reference that is no composition is not part of the
  * referencing object: it is created without a context, like a root, and its own compositions and
  * references are followed in turn. An original or an overlay in a reference that is no composition
@@ -131,6 +132,35 @@ public class BufferSave {
 	 * @return The persistent objects the buffers stand for, in the same order.
 	 */
 	public static List<TLObject> save(List<? extends TLObject> buffers, TLObject container, TLReference reference) {
+		return save(buffers, container, reference, List.of());
+	}
+
+	/**
+	 * Stores the given buffers as {@link #save(List, TLObject, TLReference)} does, and makes the
+	 * given holders refer to what was stored.
+	 *
+	 * <p>
+	 * A holder is a buffer that is not stored here - the editing buffer of a form, which the form
+	 * stores itself - but whose references hold buffers or new objects stored here: the new row of
+	 * a table inserted into a composition of the form's object, say. Each such value is replaced in
+	 * the holder by the persistent object it is stored as, so that storing the holder afterwards
+	 * neither creates a new object a second time nor writes a buffer. Other values of the holder are
+	 * left as they are.
+	 * </p>
+	 *
+	 * @param buffers
+	 *        Buffers of a root level, or originals, which are stored as they are.
+	 * @param container
+	 *        The persistent object holding the buffers, see
+	 *        {@link #save(List, TLObject, TLReference)}.
+	 * @param reference
+	 *        The reference of the container holding the buffers, {@code null} for none.
+	 * @param holders
+	 *        Buffers not stored here whose references are to be updated.
+	 * @return The persistent objects the buffers stand for, in the same order.
+	 */
+	public static List<TLObject> save(List<? extends TLObject> buffers, TLObject container, TLReference reference,
+			Collection<? extends TLObjectOverlay> holders) {
 		BufferSave save = new BufferSave();
 		for (TLObject buffer : buffers) {
 			save.visit(buffer, container, reference);
@@ -142,7 +172,54 @@ public class BufferSave {
 		for (TLObject buffer : buffers) {
 			result.add((TLObject) save.resolve(buffer));
 		}
+		for (TLObjectOverlay holder : holders) {
+			save.updateHolder(holder);
+		}
 		return result;
+	}
+
+	/**
+	 * Replaces the buffers and new objects stored here in the references of the given holder by the
+	 * persistent objects they are stored as.
+	 */
+	private void updateHolder(TLObjectOverlay holder) {
+		for (TLStructuredTypePart part : holder.getChangedParts()) {
+			if (!(part instanceof TLReference)) {
+				continue;
+			}
+			Object value = holder.tValue(part);
+			Object stored = resolveStored(value);
+			if (stored != value) {
+				holder.tUpdate(part, stored);
+			}
+		}
+	}
+
+	/**
+	 * The given value with each buffer and new object stored here replaced by its persistent
+	 * object; the value itself where it holds none.
+	 */
+	private Object resolveStored(Object value) {
+		if (value instanceof Collection<?> collection) {
+			List<Object> result = new ArrayList<>(collection.size());
+			boolean changed = false;
+			for (Object element : collection) {
+				Object resolved = resolveStored(element);
+				changed |= resolved != element;
+				result.add(resolved);
+			}
+			if (!changed) {
+				return value;
+			}
+			return collection instanceof Set<?> ? new LinkedHashSet<>(result) : result;
+		}
+		if (value instanceof TLObjectOverlay overlay && _visited.contains(overlay)) {
+			return resolve(overlay);
+		}
+		if (value instanceof TLObject object && _created.containsKey(object)) {
+			return _created.get(object);
+		}
+		return value;
 	}
 
 	private BufferSave() {
@@ -164,15 +241,25 @@ public class BufferSave {
 		}
 		if (buffer instanceof TLObjectOverlay overlay) {
 			if (!_visited.add(overlay)) {
+				if (reference != null) {
+					// The object it buffers may have been reached before through no composition.
+					visit(overlay.getBase(), container, reference);
+				}
 				return;
 			}
 			// An overlay of a buffer stores into what its base is stored as.
 			visit(overlay.getBase(), container, reference);
 			_overlays.add(overlay);
 		} else if (buffer.tTransient()) {
-			if (container != null || reference != null) {
-				// Reached through a composition, also after having been reached through a reference.
-				_contexts.putIfAbsent(buffer, new Context(container, reference));
+			if (reference != null) {
+				// Reached through a composition, also after having been reached through a reference
+				// or as one of the stored buffers: the composition decides the context.
+				Context before = _contexts.get(buffer);
+				if (before == null || before.reference() == null) {
+					_contexts.put(buffer, new Context(container, reference));
+				}
+			} else if (container != null) {
+				_contexts.putIfAbsent(buffer, new Context(container, null));
 			}
 			if (!_visited.add(buffer)) {
 				return;

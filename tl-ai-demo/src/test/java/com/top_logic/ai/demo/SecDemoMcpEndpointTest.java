@@ -13,6 +13,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.BiFunction;
 
 import junit.framework.Test;
@@ -44,6 +46,8 @@ import com.top_logic.tl.ai.core.access.EndpointAuthentication;
 import com.top_logic.tl.ai.core.access.AccessTokenFunctions;
 import com.top_logic.tl.ai.core.access.AccessTokens;
 import com.top_logic.tl.ai.core.access.model.AccessToken;
+import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.ToolPermissionFilter;
 import com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.TLContext;
@@ -51,7 +55,9 @@ import com.top_logic.util.error.TopLogicException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpServerFeatures;
+import io.modelcontextprotocol.server.McpSyncListFilter;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema;
 
@@ -293,10 +299,65 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 		assertNull("Precondition: no MCP caller is bound on this thread.", McpCallerContext.caller());
 
 		McpSchema.CallToolResult result =
-			toolHandler(MODEL_READ_TOOL).apply(null, new McpSchema.CallToolRequest("t", Map.of()));
+			toolHandler(MODEL_READ_TOOL).apply(null,
+				McpSchema.CallToolRequest.builder("t").arguments(Map.of()).build());
 
 		assertTrue("A call with no account must not execute.", Boolean.TRUE.equals(result.isError()));
 		assertHas("The refusal must say what is missing.", "account", text(result));
+	}
+
+	// --- Tool listing ------------------------------------------------------------------------------
+
+	/**
+	 * {@code tools/list} shows an account the published tools it may call, and not those its call
+	 * would be refused.
+	 *
+	 * <p>
+	 * {@code Anna} holds {@code data.write}, but the background allowlist withholds it - see
+	 * {@link #testACapabilityWithheldInBackgroundIsRefused()} - and {@code egress} is off it - see
+	 * {@link #testAnMcpCallerCannotReachAnExternalSystem()}. {@code Ben} holds {@code model.read}, and
+	 * calls the model browser - see {@link #testAnAuthenticatedToolCallExecutes()}.
+	 * </p>
+	 */
+	public void testToolsListShowsOnlyWhatTheAccountMayCall() {
+		List<McpExposure.Published> published =
+			publish(MODEL_READ_TOOL, CLASSIFIED_WRITE_SCRIPT_TOOL, EXTERNAL_TOOL);
+
+		Set<String> annas = listedTools(ANNA, published);
+		assertFalse("A tool withheld by the background allowlist is not listed: " + annas,
+			annas.contains(CLASSIFIED_WRITE_SCRIPT_TOOL));
+		assertFalse("A tool that leaves the application is not listed: " + annas,
+			annas.contains(EXTERNAL_TOOL));
+
+		Set<String> bens = listedTools(BEN, published);
+		assertTrue("A tool the account may call is listed: " + bens, bens.contains(MODEL_READ_TOOL));
+	}
+
+	/**
+	 * For every published tool and every persona, the tool is listed exactly when its call is not
+	 * refused by the gate - and a refused call answers the gate's reason.
+	 */
+	public void testToolsListAndToolCallAgree() {
+		List<McpExposure.Published> published = publish(MODEL_READ_TOOL, LIST_TOOL,
+			CLASSIFIED_READ_SCRIPT_TOOL, CLASSIFIED_WRITE_SCRIPT_TOOL, EXTERNAL_TOOL);
+
+		for (String login : List.of(ANNA, BEN, DORA)) {
+			Set<String> listed = listedTools(login, published);
+			ToolPermissionFilter gate =
+				new ToolPermissionFilter(ToolContext.forBackgroundRun(account(login)).security());
+			for (McpExposure.Published entry : published) {
+				String denial = gate.denialReason(entry.tool());
+				String what = login + " / " + entry.configName() + " (" + denial + ")";
+				assertEquals("Listed exactly when the call gate lets it pass: " + what, denial == null,
+					listed.contains(entry.configName()));
+				if (denial != null) {
+					McpSchema.CallToolResult result = callTool(login, entry.configName(), Map.of());
+					assertTrue("A tool that is not listed is refused when called: " + what,
+						Boolean.TRUE.equals(result.isError()));
+					assertEquals(what, denial, text(result));
+				}
+			}
+		}
 	}
 
 	// --- The filter, with a real account ------------------------------------------------------------
@@ -591,7 +652,8 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 		String[] answer = new String[1];
 
 		Recording recording = requestWith(token, () -> answer[0] =
-			text(handler.apply(null, new McpSchema.CallToolRequest(LIST_TOOL, new HashMap<>(args)))));
+			text(handler.apply(null,
+				McpSchema.CallToolRequest.builder(LIST_TOOL).arguments(new HashMap<>(args)).build())));
 
 		assertTrue("A valid token must reach the protocol: " + recording.status, recording.chainInvoked);
 		return answer[0];
@@ -631,7 +693,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 		String uri = "toplogic://model/modules/" + module + "/types/" + type + "/instances";
 		return contentOf(McpCallerContext.withCaller(account(login),
 			() -> TypeInstancesResource.createSpecification().readHandler()
-				.apply(null, new McpSchema.ReadResourceRequest(uri))));
+				.apply(null, McpSchema.ReadResourceRequest.builder(uri).build())));
 	}
 
 	/** Calls a registered tool as the given persona, through the MCP tool handler. */
@@ -639,7 +701,40 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 			Map<String, Object> args) {
 		return McpCallerContext.withCaller(account(login),
 			() -> toolHandler(qualifiedToolName)
-				.apply(null, new McpSchema.CallToolRequest(qualifiedToolName, new HashMap<>(args))));
+				.apply(null, McpSchema.CallToolRequest.builder(qualifiedToolName)
+					.arguments(new HashMap<>(args))
+					.build()));
+	}
+
+	/** Publishes the given tools under their default names, as an {@code <exposed-tools>} list. */
+	private static List<McpExposure.Published> publish(String... qualifiedToolNames) {
+		List<ExposedTool> entries = new ArrayList<>();
+		for (String qualifiedToolName : qualifiedToolNames) {
+			ExposedTool entry = TypedConfiguration.newConfigItem(ExposedTool.class);
+			entry.setTool(qualifiedToolName);
+			entries.add(entry);
+		}
+		List<McpExposure.Published> published = McpExposure.resolve(entries);
+		assertEquals("The live registry publishes " + List.of(qualifiedToolNames), qualifiedToolNames.length,
+			published.size());
+		return published;
+	}
+
+	/**
+	 * The qualified names of the given published tools that {@code tools/list} shows the given
+	 * persona, decided by the filter the service registers for it.
+	 */
+	private static Set<String> listedTools(String login, List<McpExposure.Published> published) {
+		McpSyncListFilter<McpSchema.Tool> filter = McpToolAdapter.visibilityFilter(published);
+		return McpCallerContext.withCaller(account(login), () -> {
+			Set<String> listed = new TreeSet<>();
+			for (McpExposure.Published entry : published) {
+				if (filter.isVisible(McpTransportContext.EMPTY, McpToolAdapter.adapt(entry).tool())) {
+					listed.add(entry.configName());
+				}
+			}
+			return listed;
+		});
 	}
 
 	private static BiFunction<McpSyncServerExchange, McpSchema.CallToolRequest,
@@ -658,7 +753,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	}
 
 	private static McpSchema.ReadResourceRequest readRequest(String tid) {
-		return new McpSchema.ReadResourceRequest("toplogic://instance/" + tid);
+		return McpSchema.ReadResourceRequest.builder("toplogic://instance/" + tid).build();
 	}
 
 	/** The text of the single content item of a resource result. */

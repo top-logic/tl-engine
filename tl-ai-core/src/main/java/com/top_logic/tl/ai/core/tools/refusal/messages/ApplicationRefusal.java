@@ -26,9 +26,6 @@ public class ApplicationRefusal extends de.haumacher.msgbuf.data.AbstractDataObj
 	/** @see #getCommand() */
 	public static final String COMMAND__PROP = "command";
 
-	/** @see #getInput() */
-	public static final String INPUT__PROP = "input";
-
 	/** @see #getObject() */
 	public static final String OBJECT__PROP = "object";
 
@@ -45,9 +42,7 @@ public class ApplicationRefusal extends de.haumacher.msgbuf.data.AbstractDataObj
 
 	private String _command = null;
 
-	private String _input = null;
-
-	private String _object = null;
+	private Object _object = null;
 
 	private String _type = null;
 
@@ -112,49 +107,24 @@ public class ApplicationRefusal extends de.haumacher.msgbuf.data.AbstractDataObj
 	}
 
 	/**
-	 * The id of the object the agent asked the refused page command to run for, if it passed one.
+	 * The identity of the object the refused operation was about - <code>_tid</code>,
+	 * <code>_type</code> and <code>_display</code>, as every tool result discloses an object - if it
+	 * names one.
 	 */
-	public final String getInput() {
-		return _input;
-	}
-
-	/**
-	 * @see #getInput()
-	 */
-	public com.top_logic.tl.ai.core.tools.refusal.messages.ApplicationRefusal setInput(String value) {
-		internalSetInput(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getInput()} without chain call utility. */
-	protected final void internalSetInput(String value) {
-		_input = value;
-	}
-
-	/**
-	 * Checks, whether {@link #getInput()} has a value.
-	 */
-	public final boolean hasInput() {
-		return _input != null;
-	}
-
-	/**
-	 * The object the refused operation was about, as <code>label [id:TID]</code>, if it names one.
-	 */
-	public final String getObject() {
+	public final Object getObject() {
 		return _object;
 	}
 
 	/**
 	 * @see #getObject()
 	 */
-	public com.top_logic.tl.ai.core.tools.refusal.messages.ApplicationRefusal setObject(String value) {
+	public com.top_logic.tl.ai.core.tools.refusal.messages.ApplicationRefusal setObject(Object value) {
 		internalSetObject(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getObject()} without chain call utility. */
-	protected final void internalSetObject(String value) {
+	protected final void internalSetObject(Object value) {
 		_object = value;
 	}
 
@@ -286,7 +256,6 @@ public class ApplicationRefusal extends de.haumacher.msgbuf.data.AbstractDataObj
 		java.util.List<String> local = java.util.Arrays.asList(
 			REFUSED__PROP, 
 			COMMAND__PROP, 
-			INPUT__PROP, 
 			OBJECT__PROP, 
 			TYPE__PROP, 
 			REASONS__PROP, 
@@ -317,7 +286,6 @@ public class ApplicationRefusal extends de.haumacher.msgbuf.data.AbstractDataObj
 		switch (field) {
 			case REFUSED__PROP: return isRefused();
 			case COMMAND__PROP: return getCommand();
-			case INPUT__PROP: return getInput();
 			case OBJECT__PROP: return getObject();
 			case TYPE__PROP: return getType();
 			case REASONS__PROP: return getReasons();
@@ -331,8 +299,7 @@ public class ApplicationRefusal extends de.haumacher.msgbuf.data.AbstractDataObj
 		switch (field) {
 			case REFUSED__PROP: internalSetRefused((boolean) value); break;
 			case COMMAND__PROP: internalSetCommand((String) value); break;
-			case INPUT__PROP: internalSetInput((String) value); break;
-			case OBJECT__PROP: internalSetObject((String) value); break;
+			case OBJECT__PROP: internalSetObject((Object) value); break;
 			case TYPE__PROP: internalSetType((String) value); break;
 			case REASONS__PROP: internalSetReasons(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.tools.refusal.messages.Reason.class, value)); break;
 			case MANDATORY__PROP: internalSetMandatory(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.tools.refusal.messages.MandatoryAttributes.class, value)); break;
@@ -360,13 +327,9 @@ public class ApplicationRefusal extends de.haumacher.msgbuf.data.AbstractDataObj
 			out.name(COMMAND__PROP);
 			out.value(getCommand());
 		}
-		if (hasInput()) {
-			out.name(INPUT__PROP);
-			out.value(getInput());
-		}
 		if (hasObject()) {
 			out.name(OBJECT__PROP);
-			out.value(getObject());
+			de.haumacher.msgbuf.json.JsonUtil.writeJsonValue(out, getObject());
 		}
 		if (hasType()) {
 			out.name(TYPE__PROP);
@@ -391,8 +354,7 @@ public class ApplicationRefusal extends de.haumacher.msgbuf.data.AbstractDataObj
 		switch (field) {
 			case REFUSED__PROP: setRefused(in.nextBoolean()); break;
 			case COMMAND__PROP: setCommand(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case INPUT__PROP: setInput(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case OBJECT__PROP: setObject(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case OBJECT__PROP: setObject(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case TYPE__PROP: setType(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case REASONS__PROP: {
 				java.util.List<com.top_logic.tl.ai.core.tools.refusal.messages.Reason> newValue = new java.util.ArrayList<>();

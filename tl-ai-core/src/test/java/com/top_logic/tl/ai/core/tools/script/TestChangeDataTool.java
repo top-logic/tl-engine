@@ -178,14 +178,15 @@ public class TestChangeDataTool extends BasicTestCase {
 		ToolResult result = _tool.changeData(resolve(memory) + ".set(" + KIND
 			+ ", `tl.ai.execution:MemoryKind#PREFERENCE`)", true, context());
 
-		assertContains("kind \"FACT\" -> \"PREFERENCE\"", result.text());
+		assertContains("kind " + ReadFilter.identityJson(classifier("FACT")) + " -> "
+			+ ReadFilter.identityJson(classifier("PREFERENCE")), result.text());
 		assertEquals("FACT", kindOf(memory));
 	}
 
 	/**
 	 * A translated attribute, whose translations the engine keeps in rows of a table of their own, is
-	 * reported on the object holding it, with both values: the report reads the transaction as the
-	 * pre-commit guard does (Gitea #638).
+	 * reported on the object holding it, with both values: the report reads the engine's bookkeeping
+	 * of the transaction (Gitea #638).
 	 */
 	public void testAChangedTranslationIsReportedWithItsValues() {
 		TLObject cover = cover("one");
@@ -328,6 +329,10 @@ public class TestChangeDataTool extends BasicTestCase {
 
 	private static String set(Agent agent, String description) {
 		return resolve(agent) + ".set(" + DESCRIPTION + ", '" + description + "')";
+	}
+
+	private static TLObject classifier(String name) {
+		return (TLObject) TLModelUtil.findPart("tl.ai.execution:MemoryKind#" + name);
 	}
 
 	private static String resolve(TLObject object) {

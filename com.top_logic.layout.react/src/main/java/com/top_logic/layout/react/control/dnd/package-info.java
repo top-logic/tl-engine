@@ -34,5 +34,12 @@
  * its mode, and the control draws the {@link com.top_logic.layout.react.control.dnd.DropMarker marker}
  * of that location.
  * </p>
+ *
+ * <p>
+ * The script recorder records a drop as the client sends it, with the source control named by its
+ * address and the dragged and the target item by the business keys of their objects; a replay
+ * resolves them back to the ids of the replaying session, see
+ * {@link com.top_logic.layout.react.control.dnd.DropArguments}.
+ * </p>
  */
 package com.top_logic.layout.react.control.dnd;

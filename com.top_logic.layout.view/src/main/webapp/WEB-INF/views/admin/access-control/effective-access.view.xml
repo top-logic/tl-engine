@@ -98,6 +98,7 @@
 									</generic-command>
 								</commands>
 								<tree-table id="types-table"
+									initial-expansion-depth="0"
 									personalization-key="effective-access-types"
 									selection="selection"
 								>

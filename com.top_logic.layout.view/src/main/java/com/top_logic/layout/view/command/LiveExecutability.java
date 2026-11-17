@@ -7,6 +7,7 @@ package com.top_logic.layout.view.command;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.listener.Registration;
@@ -186,7 +187,20 @@ public class LiveExecutability {
 	 *        The value of the main argument, see {@link CommandArguments#arguments(Object, List)}.
 	 */
 	public ActionArguments arguments(Object main) {
-		return _arguments.arguments(main, inputValues());
+		return arguments(main, Map.of());
+	}
+
+	/**
+	 * The arguments for the given main argument, the given values of the parameters and the
+	 * current {@link #inputValues() values of the input channels}.
+	 *
+	 * @param main
+	 *        The value of the main argument, see {@link CommandArguments#arguments(Object, List)}.
+	 * @param parameterValues
+	 *        The values of the {@link CommandArguments#getParameters() parameters} by name.
+	 */
+	public ActionArguments arguments(Object main, Map<String, ?> parameterValues) {
+		return _arguments.arguments(main, inputValues(), parameterValues);
 	}
 
 	/**
@@ -210,7 +224,20 @@ public class LiveExecutability {
 	 *        without the objects deleted meanwhile.
 	 */
 	public ExecutableState getState(Object main) {
-		return _rule.isExecutableFor(arguments(DeletedObjects.withoutDeleted(main)));
+		return getState(main, Map.of());
+	}
+
+	/**
+	 * The state the rule assigns to the arguments of a run with the given main argument and the
+	 * given values of the parameters.
+	 *
+	 * @param main
+	 *        See {@link #getState(Object)}.
+	 * @param parameterValues
+	 *        The values of the {@link CommandArguments#getParameters() parameters} by name.
+	 */
+	public ExecutableState getState(Object main, Map<String, ?> parameterValues) {
+		return _rule.isExecutableFor(arguments(DeletedObjects.withoutDeleted(main), parameterValues));
 	}
 
 	/**

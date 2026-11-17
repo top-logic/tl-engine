@@ -22,6 +22,7 @@ import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.RunFailure;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Message;
@@ -504,6 +505,12 @@ public class ConversationLogListener implements AgentEventListener {
 	 * caller opened one with the user's message; the turn is opened here as on
 	 * {@link AgentEvent.RunStarted}, so that the error is on record in any case.
 	 * </p>
+	 *
+	 * <p>
+	 * The message is recorded as the user reads it: the text of its
+	 * {@link AgentEvent.ProviderError#messageKey()} in the language of the run's thread, which works
+	 * in the context of the user the conversation belongs to.
+	 * </p>
 	 */
 	private void handleProviderError(AgentEvent.ProviderError e) {
 		Turn turn = _log.currentTurn();
@@ -512,7 +519,7 @@ public class ConversationLogListener implements AgentEventListener {
 		}
 		turn.addAssistantPart(new Part.ErrorPart(
 			UUID.randomUUID().toString(), e.timestamp(),
-			e.kind(), e.message()));
+			e.kind(), RunFailure.userMessage(e.message(), e.messageKey())));
 	}
 
 	/**

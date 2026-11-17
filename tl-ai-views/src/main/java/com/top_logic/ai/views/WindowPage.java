@@ -142,7 +142,7 @@ public final class WindowPage {
 				}
 			}
 		}
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			collect(child, session, shown);
 		}
 	}
@@ -153,7 +153,7 @@ public final class WindowPage {
 		if (own != null) {
 			return own;
 		}
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			T found = first(child, property);
 			if (found != null) {
 				return found;

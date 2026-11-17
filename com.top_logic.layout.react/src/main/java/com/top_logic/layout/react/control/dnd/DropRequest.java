@@ -21,8 +21,7 @@ import com.top_logic.layout.react.control.ReactControl;
  * </p>
  *
  * @param source
- *        The control the objects were dragged out of, or {@code null} when the drop was replayed
- *        from a recorded script.
+ *        The control the objects were dragged out of.
  * @param kind
  *        The {@link DragSourceControl#dragKind() kind} of the drag, {@code null} for a drag without
  *        a kind.
@@ -39,8 +38,8 @@ public record DropRequest(ReactControl source, String kind, List<?> objects,
 	 * A request offering exactly the given location, for its mode, and none for any other mode.
 	 *
 	 * <p>
-	 * This is the request of a drop that is already placed: a replayed drop, or a drop whose
-	 * {@link DropEvent} is applied.
+	 * This is the request of a drop that is already placed: a drop whose {@link DropEvent} is
+	 * applied.
 	 * </p>
 	 */
 	public static DropRequest at(ReactControl source, String kind, List<?> objects, DropLocation location) {

@@ -11,6 +11,7 @@ import java.util.Map;
 import com.top_logic.layout.table.model.Column;
 import com.top_logic.layout.table.model.ColumnConfiguration;
 import com.top_logic.layout.table.model.TableConfiguration;
+import com.top_logic.table.ColumnAlignment;
 
 /**
  * Server-side column definition that serializes to a JSON map for the React table state.
@@ -40,6 +41,15 @@ public class ColumnDef {
 	/** @see #setSortPriority(int) */
 	private static final String SORT_PRIORITY = "sortPriority";
 
+	/** @see #setAlignment(ColumnAlignment) */
+	private static final String ALIGN = "align";
+
+	/** The value of {@link #ALIGN} for a column ending at the end of its cells. */
+	private static final String ALIGN_END = "end";
+
+	/** @see #setAggregates(boolean) */
+	private static final String AGGREGATE = "aggregate";
+
 	private final String _name;
 
 	private final String _label;
@@ -51,6 +61,10 @@ public class ColumnDef {
 	private String _sortDirection;
 
 	private int _sortPriority;
+
+	private ColumnAlignment _alignment = ColumnAlignment.START;
+
+	private boolean _aggregates;
 
 	/**
 	 * Creates a new {@link ColumnDef}.
@@ -108,6 +122,35 @@ public class ColumnDef {
 	}
 
 	/**
+	 * Sets the side of its cells the column puts its content on.
+	 *
+	 * <p>
+	 * Only an alignment to the {@link ColumnAlignment#END end} is sent to the client, as the
+	 * {@value #ALIGN} key with the value {@value #ALIGN_END}; the {@link ColumnAlignment#START
+	 * start} is what a column without the key has.
+	 * </p>
+	 */
+	public ColumnDef setAlignment(ColumnAlignment alignment) {
+		_alignment = alignment;
+		return this;
+	}
+
+	/**
+	 * Sets whether the column aggregates the rows of a group, so that the header row of a group
+	 * shows that aggregate in it.
+	 *
+	 * <p>
+	 * Only a column that does is sent to the client, as the {@value #AGGREGATE} key with the value
+	 * {@code true}; the client lets the value of the group run into the columns in front of the
+	 * first such column and no further.
+	 * </p>
+	 */
+	public ColumnDef setAggregates(boolean aggregates) {
+		_aggregates = aggregates;
+		return this;
+	}
+
+	/**
 	 * Converts this column definition to a map suitable for JSON serialization in the React state.
 	 */
 	public Map<String, Object> toStateMap() {
@@ -121,6 +164,12 @@ public class ColumnDef {
 		}
 		if (_sortPriority > 0) {
 			map.put(SORT_PRIORITY, Integer.valueOf(_sortPriority));
+		}
+		if (_alignment == ColumnAlignment.END) {
+			map.put(ALIGN, ALIGN_END);
+		}
+		if (_aggregates) {
+			map.put(AGGREGATE, Boolean.TRUE);
 		}
 		return map;
 	}

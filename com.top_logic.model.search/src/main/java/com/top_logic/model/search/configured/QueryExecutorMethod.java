@@ -15,6 +15,7 @@ import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
 import com.top_logic.model.search.expr.GenericMethodWithSecurity;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.compile.SearchExpressionCompiler;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
@@ -107,6 +108,17 @@ public class QueryExecutorMethod extends GenericMethodWithSecurity {
 		return getName();
 	}
 
+	/**
+	 * A call of a configured function counts as having a side effect, whatever its body does.
+	 *
+	 * <p>
+	 * The compiler decides on transformations that require freedom of side effects once, when
+	 * compiling an expression, see {@link SearchExpressionCompiler#compile(SearchExpression)}. The
+	 * configured function can be changed afterwards, without the compiled expressions calling it
+	 * being compiled again. Whether the configured function is free of side effects at the current
+	 * point in time is answered by {@link ConfiguredTLScriptFunctions#isSideEffectFree(String)}.
+	 * </p>
+	 */
 	@Override
 	public boolean isSideEffectFree() {
 		return false;

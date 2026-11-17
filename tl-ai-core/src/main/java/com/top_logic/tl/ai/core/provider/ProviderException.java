@@ -37,8 +37,18 @@ public class ProviderException extends Exception {
 		/** Request too large for the model's context window. */
 		CONTEXT_WINDOW_EXCEEDED,
 
-		/** 401/403 — invalid or expired API key. */
+		/** 401/403 — the provider rejected the credentials sent: an invalid or expired API key. */
 		AUTHENTICATION,
+
+		/**
+		 * The provider has no credentials, so it was not called.
+		 *
+		 * <p>
+		 * Unlike {@link #AUTHENTICATION}, no key was sent and none was rejected: the secret the
+		 * provider needs is not configured. The message names the secret to provide.
+		 * </p>
+		 */
+		NO_CREDENTIALS,
 
 		/** 400 — malformed request. */
 		INVALID_REQUEST,

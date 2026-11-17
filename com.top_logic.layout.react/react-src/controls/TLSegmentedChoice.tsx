@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps, OptionValues } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps, OptionValues, optionTooltipProps } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
 import { ARG_OPTION, CMD_GOTO, OptionContent, optionRoleAttr } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
@@ -19,7 +19,9 @@ const { useCallback, useMemo, useRef } = React;
  * state (see fieldStateAttrs). The label stands in a `tl-segmented__label`, which ends in an ellipsis
  * where the segment is too narrow. A read-only field shows its values in `tl-select__values`, as the
  * dropdown does; a disabled field renders the bar with every segment an inactive button (native
- * `disabled`, see showsValueOnly).
+ * `disabled`, see showsValueOnly). Every segment offers the explanation of its option as tooltip
+ * (see optionTooltipProps), which the server answers; it takes the place of the full text of a label
+ * cut off by the ellipsis.
  *
  * The server hands this control the complete option list as soon as it is displayed - there is no
  * moment at which it could ask for it.
@@ -143,6 +145,7 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId }) => {
             data-tl-role={optionRoleAttr(option)}
             disabled={disabled}
             onClick={() => choose(option)}
+            {...optionTooltipProps(option)}
           >
             <OptionContent option={option} labelClassName="tl-segmented__label" />
           </button>

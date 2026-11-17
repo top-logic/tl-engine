@@ -12,6 +12,8 @@ import java.util.Map;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import com.top_logic.base.accesscontrol.Login;
+import com.top_logic.base.accesscontrol.Login.AccountLockedException;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
@@ -151,14 +153,23 @@ public final class EndpointAuthentication {
 	 * @return The caller, or <code>null</code> if the credential authenticated but names no account -
 	 *         which an endpoint refuses, because it never acts in system context.
 	 * @throws AuthenticationFailure
-	 *         With the scheme's own challenge, see {@link AuthenticationFailure#enhanceResponse}.
+	 *         With the scheme's own challenge, see {@link AuthenticationFailure#enhanceResponse}; also
+	 *         if the credential names a {@link Person#isLocked() locked} account.
 	 */
 	public static Caller resolve(Authenticator authenticator, HttpServletRequest req, HttpServletResponse resp,
 			Class<?> requester) throws AuthenticationFailure {
 		return ThreadContext.<Caller, AuthenticationFailure, RuntimeException> inSystemContext(requester,
 			() -> {
 				Person account = authenticator.authenticate(req, resp);
-				return account == null ? null : new Caller(account, account.getName());
+				if (account == null) {
+					return null;
+				}
+				try {
+					Login.checkNotLocked(account);
+				} catch (AccountLockedException ex) {
+					throw new AuthenticationFailure(ex.getReason(), ex);
+				}
+				return new Caller(account, account.getName());
 			});
 	}
 

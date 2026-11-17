@@ -103,4 +103,24 @@ for (const density of ['normal', 'compact']) {
       assert.equal(f.background, 'rgba(0, 0, 0, 0)', `ed-ro/${key} ohne Fläche`);
     }
   });
+
+  test(`Bearbeitete Zeile [${density}]: Knöpfe im Feld lassen dessen Rahmen oben und unten frei`, async () => {
+    await browser.goto(origin + '/src/components/table/table.spec.html');
+    const m = await browser.evaluate(`(() => {
+      document.documentElement.dataset.tlDensity = '${density}';
+      const e = document.createElement('i'); e.style.cssText = 'position:absolute;width:var(--tl-border-width-sm)'; document.body.append(e);
+      const bw = e.getBoundingClientRect().width; e.remove();
+      const knoepfe = document.querySelectorAll('#ed-panel .tl-field-group > .tl-button, #ed-panel .tl-select__controls > .tl-button, #ed-panel .tl-compact-field > .tl-button');
+      return { bw, list: [...knoepfe].map((k) => {
+        const f = k.closest('.tl-field-group')?.querySelector('.tl-field') ?? k.closest('.tl-field');
+        const kr = k.getBoundingClientRect(), fr = f.getBoundingClientRect();
+        return { name: k.closest('.tl-table__cell').dataset.test + ' ' + [...k.classList].filter((c) => c.includes('__')).join(''),
+          oben: kr.top - fr.top, unten: fr.bottom - kr.bottom };
+      }) };
+    })()`);
+    assert.ok(m.list.some((k) => k.name.startsWith('ed-direct-status')), 'der Öffner des kompakten Felds wird gemessen');
+    const falsch = m.list.filter((k) => k.oben < m.bw - 0.01 || k.unten < m.bw - 0.01)
+      .map((k) => `${k.name}: oben ${k.oben} px, unten ${k.unten} px, Rahmen ${m.bw} px`);
+    assert.deepEqual(falsch, []);
+  });
 }

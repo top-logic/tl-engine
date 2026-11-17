@@ -15,6 +15,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.component.EditAttributedComponent;
 import com.top_logic.element.structured.StructuredElement;
@@ -249,7 +250,7 @@ public class AdminElementComponent extends EditAttributedComponent {
 	 * @return the field
 	 */
 	protected FormMember createOrderField(StructuredElement anElement, ResPrefix resPrefix, boolean create) {
-		return newOrderField(anElement, create, Resources.getInstance().getString(getResPrefix().key("atEnd")));
+		return newOrderField(anElement, create, getResPrefix().key("atEnd"));
 	}
 
 	/**
@@ -266,10 +267,11 @@ public class AdminElementComponent extends EditAttributedComponent {
 	 * @param create
 	 *        Whether the element is being created, then it has no siblings to choose from.
 	 * @param atEndLabel
-	 *        The label of the choice to place the element at the end.
+	 *        The label of the choice to place the element at the end, resolved only when the
+	 *        choice is displayed.
 	 * @return The new field.
 	 */
-	public static SelectField newOrderField(StructuredElement anElement, boolean create, String atEndLabel) {
+	public static SelectField newOrderField(StructuredElement anElement, boolean create, ResKey atEndLabel) {
 		List<StructuredElement> allSiblings =
 			create ? List.of() : Arrays.asList(StructuredElementFactory.getSiblings(anElement));
 		List<StructuredElement> theSiblings = DiscoverableOptions.discoverable(allSiblings);
@@ -287,7 +289,7 @@ public class AdminElementComponent extends EditAttributedComponent {
 					return (((StructuredElement) anObject).getName());
 				}
 				else {
-					return atEndLabel;
+					return Resources.getInstance().getString(atEndLabel);
 				}
 			}
 		});

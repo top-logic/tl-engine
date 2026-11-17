@@ -19,6 +19,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.layout.structured.AdminElementComponent;
 import com.top_logic.element.layout.structured.StructuredElementApplyHandler;
 import com.top_logic.element.structured.StructuredElement;
@@ -52,7 +53,7 @@ public class TestOrderFieldDiscover extends TestCase {
 
 	private static final String RESPONSIBLE = "responsible";
 
-	private static final String AT_END = "at end";
+	private static final ResKey AT_END = ResKey.legacy("element.structure.edit.atEnd");
 
 	/** Mandatory attributes of the demo types. */
 	private static final String[] MANDATORY_BOOLEANS =

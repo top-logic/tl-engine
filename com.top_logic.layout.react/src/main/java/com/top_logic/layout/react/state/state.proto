@@ -26,7 +26,6 @@
  *   TLCard            - CardState
  *   TLAppBar          - AppBarState
  *   TLBreadcrumb      - BreadcrumbState
- *   TLAvatar          - AvatarState
  *   TLSlider          - SliderState
  *   TLFloatingAction  - FloatingActionState
  *   TLDataList        - DataListState
@@ -44,6 +43,7 @@
  *   TLOptionChips     - DropdownSelectState
  *   TLProgress        - ProgressState
  *   TLLink            - LinkState
+ *   TLAvatar          - AvatarState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
  * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
@@ -2200,6 +2200,45 @@ message DataListState extends ControlState {
 	}
 
 	/**
+	 * What stands in front of the lines of a {@link Row}: an icon, or an avatar showing a picture or
+	 * the initials of a name.
+	 */
+	message Leading {
+		/**
+		 * The display name the avatar stands for, plain text: the source of its initials, its category
+		 * and its accessible name. Empty: none.
+		 */
+		string name;
+
+		/**
+		 * An icon drawn instead of an avatar, the encoded form of an icon-font image. Empty: no icon.
+		 */
+		string icon;
+
+		/**
+		 * The picture of the avatar, the address of an image (a path or a {@code data} URI). Empty: the
+		 * avatar shows the initials of the {@link #name}.
+		 */
+		string image;
+	}
+
+	/**
+	 * What stands after the lines of a {@link Row}: metadata text, or a badge.
+	 */
+	message Trailing {
+		/**
+		 * The text, plain text.
+		 */
+		string text;
+
+		/**
+		 * Whether the {@link #text} is drawn as a badge (a count or a short status) instead of
+		 * metadata text.
+		 */
+		bool badge;
+	}
+
+	/**
 	 * An entry of the list.
 	 */
 	message Row {
@@ -2218,6 +2257,16 @@ message DataListState extends ControlState {
 		 * Absent: the row belongs to the group without heading.
 		 */
 		string group;
+
+		/**
+		 * What stands in front of the lines. Absent: nothing.
+		 */
+		Leading leading;
+
+		/**
+		 * What stands after the lines. Absent: nothing.
+		 */
+		Trailing trailing;
 
 		/**
 		 * Additional CSS classes of the row element, separated by spaces, computed by the

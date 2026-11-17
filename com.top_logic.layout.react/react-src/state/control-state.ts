@@ -30,7 +30,6 @@
  *   TLCard            - CardState
  *   TLAppBar          - AppBarState
  *   TLBreadcrumb      - BreadcrumbState
- *   TLAvatar          - AvatarState
  *   TLSlider          - SliderState
  *   TLFloatingAction  - FloatingActionState
  *   TLDataList        - DataListState
@@ -48,6 +47,7 @@
  *   TLOptionChips     - DropdownSelectState
  *   TLProgress        - ProgressState
  *   TLLink            - LinkState
+ *   TLAvatar          - AvatarState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
  * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
@@ -2261,6 +2261,45 @@ export namespace DataListStateJson {
 	}
 
 	/**
+	 * What stands in front of the lines of a {@link DataListStateJson.Row}: an icon, or an avatar showing a picture or
+	 * the initials of a name.
+	 */
+	export interface Leading {
+		/**
+		 * The display name the avatar stands for, plain text: the source of its initials, its category
+		 * and its accessible name. Empty: none.
+		 */
+		name: string;
+
+		/**
+		 * An icon drawn instead of an avatar, the encoded form of an icon-font image. Empty: no icon.
+		 */
+		icon: string;
+
+		/**
+		 * The picture of the avatar, the address of an image (a path or a `data` URI). Empty: the
+		 * avatar shows the initials of the {@link DataListStateJson.Leading.name}.
+		 */
+		image: string;
+	}
+
+	/**
+	 * What stands after the lines of a {@link DataListStateJson.Row}: metadata text, or a badge.
+	 */
+	export interface Trailing {
+		/**
+		 * The text, plain text.
+		 */
+		text: string;
+
+		/**
+		 * Whether the {@link DataListStateJson.Trailing.text} is drawn as a badge (a count or a short status) instead of
+		 * metadata text.
+		 */
+		badge: boolean;
+	}
+
+	/**
 	 * An entry of the list.
 	 */
 	export interface Row {
@@ -2279,6 +2318,16 @@ export namespace DataListStateJson {
 		 * Absent: the row belongs to the group without heading.
 		 */
 		group: string;
+
+		/**
+		 * What stands in front of the lines. Absent: nothing.
+		 */
+		leading?: DataListStateJson.Leading;
+
+		/**
+		 * What stands after the lines. Absent: nothing.
+		 */
+		trailing?: DataListStateJson.Trailing;
 
 		/**
 		 * Additional CSS classes of the row element, separated by spaces, computed by the

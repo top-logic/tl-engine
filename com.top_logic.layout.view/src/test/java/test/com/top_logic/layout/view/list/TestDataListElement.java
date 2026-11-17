@@ -182,6 +182,28 @@ public class TestDataListElement extends BasicTestCase {
 	}
 
 	/**
+	 * Tests what stands in front of and after the lines of each row: an avatar name, an icon of an
+	 * icon font, and a badge that is left out for a count of {@code 0}.
+	 */
+	public void testLeadingAndTrailing() {
+		List<Map<?, ?>> rows = rows(list());
+
+		Map<?, ?> alpha = (Map<?, ?>) rows.get(0).get(DataListState.Row.LEADING__PROP);
+		assertEquals("alpha", alpha.get(DataListState.Leading.NAME__PROP));
+		assertFalse("No image: " + alpha, alpha.containsKey(DataListState.Leading.ICON__PROP)
+			|| alpha.containsKey(DataListState.Leading.IMAGE__PROP));
+		Map<?, ?> bravo = (Map<?, ?>) rows.get(2).get(DataListState.Row.LEADING__PROP);
+		assertEquals("bravo", bravo.get(DataListState.Leading.NAME__PROP));
+		assertEquals("css:bi bi-box", bravo.get(DataListState.Leading.ICON__PROP));
+		assertFalse(bravo.containsKey(DataListState.Leading.IMAGE__PROP));
+
+		Map<?, ?> anna = (Map<?, ?>) rows.get(1).get(DataListState.Row.TRAILING__PROP);
+		assertEquals(String.valueOf((PREFIX + "anna").length()), anna.get(DataListState.Trailing.TEXT__PROP));
+		assertEquals(Boolean.TRUE, anna.get(DataListState.Trailing.BADGE__PROP));
+		assertFalse("A count of 0 shows no badge.", rows.get(2).containsKey(DataListState.Row.TRAILING__PROP));
+	}
+
+	/**
 	 * Tests that selecting a row writes its object to the selection channel, that a value written
 	 * to the channel from elsewhere is shown as selected, and that an empty ID clears the selection.
 	 */

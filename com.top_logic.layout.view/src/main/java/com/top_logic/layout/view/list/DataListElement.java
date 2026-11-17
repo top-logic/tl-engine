@@ -57,6 +57,18 @@ import com.top_logic.model.util.TLModelPartRef;
  * </p>
  *
  * <p>
+ * In front of the lines a row shows an avatar or an icon ({@link Config#getLeading() leading}),
+ * after them metadata text or a badge ({@link Config#getTrailing() trailing}).
+ * </p>
+ *
+ * <p>
+ * Placed in a {@code <context-menu>} whose {@code input} is the {@link Config#getSelection()
+ * selection} channel, the list offers the commands of the menu on a right click on a row: a row
+ * outside the selection is selected first, a row inside it keeps the selection, so the menu acts on
+ * the row clicked.
+ * </p>
+ *
+ * <p>
  * Where the list shares its place with other columns, {@link Config#getDrawerBelow() drawer-below}
  * keeps it usable in a narrow window: below that width of its place, a
  * {@link Config#getCollapsible() collapsible} list shows only its narrow strip, and its toggle
@@ -176,6 +188,12 @@ public class DataListElement implements UIElement {
 
 		/** Configuration property name for {@link #getEmptyText()}. */
 		String EMPTY_TEXT = "empty-text";
+
+		/** Configuration property name for {@link #getLeading()}. */
+		String LEADING = "leading";
+
+		/** Configuration property name for {@link #getTrailing()}. */
+		String TRAILING = "trailing";
 
 		/**
 		 * The element implementation.
@@ -397,6 +415,20 @@ public class DataListElement implements UIElement {
 		@Label("Empty text")
 		@Nullable
 		ResKey getEmptyText();
+
+		/**
+		 * What stands in front of the lines of a row: an avatar or an icon.
+		 */
+		@Name(LEADING)
+		@Label("Leading")
+		LeadingConfig getLeading();
+
+		/**
+		 * What stands after the lines of a row: metadata text or a badge.
+		 */
+		@Name(TRAILING)
+		@Label("Trailing")
+		TrailingConfig getTrailing();
 	}
 
 	/** Container for the {@link LineConfig lines} of a {@link DataListElement}. */
@@ -405,6 +437,113 @@ public class DataListElement implements UIElement {
 		/** The lines to display, top to bottom. */
 		@DefaultContainer
 		List<LineConfig> getLines();
+	}
+
+	/**
+	 * How the {@link TrailingConfig trailing} value of a row is shown.
+	 */
+	public enum TrailingDisplay implements ExternallyNamed {
+
+		/** As metadata text, e.g. a date. */
+		TEXT("text"),
+
+		/**
+		 * As a badge, a count or a short status. An empty value or {@code 0} shows no badge.
+		 */
+		BADGE("badge");
+
+		private final String _externalName;
+
+		TrailingDisplay(String externalName) {
+			_externalName = externalName;
+		}
+
+		@Override
+		public String getExternalName() {
+			return _externalName;
+		}
+	}
+
+	/**
+	 * Configuration of what stands in front of the lines of a row: an avatar showing a picture or
+	 * the initials of a name, or an icon.
+	 *
+	 * <p>
+	 * Without {@link #getName() name} and {@link #getImage() image}, or where both yield nothing
+	 * for a row, nothing stands there.
+	 * </p>
+	 */
+	public interface LeadingConfig extends ConfigurationItem {
+
+		/** Configuration property name for {@link #getName()}. */
+		String NAME = "name";
+
+		/** Configuration property name for {@link #getImage()}. */
+		String IMAGE = "image";
+
+		/**
+		 * A TL-Script function of one row computing the name the avatar stands for: the source of
+		 * its initials and of its color category, and its name for assistive technology. The result
+		 * is shown by its label.
+		 */
+		@Name(NAME)
+		@Nullable
+		Expr getName();
+
+		/**
+		 * A TL-Script function of one row computing its picture or icon.
+		 *
+		 * <p>
+		 * The result is an icon - e.g. the value of an attribute of type {@code tl.core:Icon} -, the
+		 * text of an icon resource, e.g. {@code "css:fas fa-user"}, or image data: a value of type
+		 * {@code tl.core:Binary} with an image content type ({@code image/...}) of at most 32 KB. An
+		 * icon of an icon font is shown as icon; a picture is shown in the avatar. Any other result
+		 * counts as none: the avatar shows the initials of the {@link #getName() name}.
+		 * </p>
+		 */
+		@Name(IMAGE)
+		@Nullable
+		Expr getImage();
+	}
+
+	/**
+	 * Configuration of what stands after the lines of a row: metadata text, or a badge.
+	 *
+	 * <p>
+	 * The value is an {@link #getAttribute() attribute} of the row object or a
+	 * {@link #getValue() computed value}, like the one of a {@link LineConfig line}.
+	 * </p>
+	 */
+	public interface TrailingConfig extends ConfigurationItem {
+
+		/** Configuration property name for {@link #getAttribute()}. */
+		String ATTRIBUTE = "attribute";
+
+		/** Configuration property name for {@link #getValue()}. */
+		String VALUE = "value";
+
+		/** Configuration property name for {@link #getDisplay()}. */
+		String DISPLAY = "display";
+
+		/**
+		 * The model attribute shown. Use {@link #getValue()} instead for a computed value.
+		 */
+		@Name(ATTRIBUTE)
+		@Nullable
+		String getAttribute();
+
+		/**
+		 * A TL-Script function of one row computing the value shown - a formatted date, a count.
+		 */
+		@Name(VALUE)
+		@Nullable
+		Expr getValue();
+
+		/**
+		 * How the value is shown.
+		 */
+		@Name(DISPLAY)
+		TrailingDisplay getDisplay();
 	}
 
 	/** Configuration for a single line of a row - like a table {@code <column>}, but stacked. */

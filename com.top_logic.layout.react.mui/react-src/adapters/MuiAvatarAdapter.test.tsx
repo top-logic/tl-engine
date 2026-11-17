@@ -1,12 +1,16 @@
-// The wire contract of TLAvatar, checked against the MUI adapter.
+// The wire contract of TLAvatar, checked with its part Avatar drawn by the MUI adapter: the control maps
+// its state to the part, the adapter draws it.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup } from '@testing-library/react';
-import { categoryOf, tooltipProps } from 'tl-react-bridge';
+import { categoryOf, tooltipProps, replacePart } from 'tl-react-bridge';
 import type { AvatarStateJson } from 'tl-react-bridge';
 import type { ThemeOptions } from '@mui/material/styles';
+import TLAvatar from '../../../com.top_logic.layout.react/react-src/controls/TLAvatar';
 import MuiAvatarAdapter, { CATEGORY_ATTRIBUTE, SIZE_ATTRIBUTE } from './MuiAvatarAdapter';
 import { CONTROL_ID, mountAdapter, styleRules } from './wire-test-support';
+
+replacePart('Avatar', MuiAvatarAdapter);
 
 /** A display name and the category it maps to. */
 const NAME = 'Ada Lovelace';
@@ -16,7 +20,7 @@ const CATEGORY = categoryOf(NAME);
 const [TOOLTIP_ATTR, TOOLTIP] = Object.entries(tooltipProps(NAME))[0];
 
 function mountAvatar(state: Partial<AvatarStateJson>, theme?: ThemeOptions) {
-  return mountAdapter(MuiAvatarAdapter, state, { theme });
+  return mountAdapter(TLAvatar, state, { theme });
 }
 
 function root(): HTMLElement {

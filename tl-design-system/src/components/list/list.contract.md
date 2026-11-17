@@ -13,8 +13,13 @@ passen will, liest die Tokens.
 | `rows` | Liste | Die Einträge in Reihenfolge, je Eintrag: |
 | `rows[].id` | string | Kennung; damit kommen `select` und `rowMenu` zurück. |
 | `rows[].lines` | Liste | Die Zeilen, je Zeile `text` und `emphasis` (`primary` \| `secondary`); fehlt `emphasis`, ist die erste Zeile primär, jede weitere sekundär. Eine leere Zeile nach der ersten steht nicht. |
-| `rows[].leading` | optional | Avatar (Name und Bild, Part `Avatar`) oder Icon vorn im Eintrag. |
-| `rows[].trailing` | optional | Metadaten (Text) oder Zähler (Part `Badge`) hinten im Eintrag. |
+| `rows[].leading` | optional | Was vorn im Eintrag steht; fehlt es, steht nichts: |
+| `rows[].leading.name` | string | Name, für den das Avatar steht (Initialen, Kategorie). |
+| `rows[].leading.icon` | string | Icon einer Icon-Schrift (kodiert), gezeichnet statt eines Avatars. |
+| `rows[].leading.image` | string | Adresse des Bilds im Avatar (Pfad oder `data`-URI); fehlt es, zeigt das Avatar die Initialen. |
+| `rows[].trailing` | optional | Was hinten im Eintrag steht; fehlt es, steht nichts: |
+| `rows[].trailing.text` | string | Der Text. |
+| `rows[].trailing.badge` | boolean | Der Text steht als Zähler (Part `Badge`), sonst als Metadaten. |
 | `rows[].group` | string, optional | Zwischenüberschrift der Gruppe; Gruppen stehen in der Reihenfolge ihres ersten Eintrags. |
 | `rows[].cssClass` | string, optional | Klassen der Anwendung am Eintrag; sie gehören nicht zum Paket. |
 | `selectedId` | string | Der gewählte Eintrag. |
@@ -34,6 +39,7 @@ passen will, liest die Tokens.
 |---|---|
 | `select` | Klick auf einen Eintrag (`tl-list__main`), Enter oder Leertaste darauf |
 | `rowMenu` | der Auslöser der Befehle eines Eintrags; mit der Lage des Klicks |
+| `select` | Rechtsklick auf einen Eintrag außerhalb der Auswahl; das Ereignis läuft weiter zu einer Kontextmenü-Region (`tl-menu-region`) um die Liste, die danach ihr Menü öffnet. Ein Rechtsklick auf den gewählten Eintrag behält die Auswahl. |
 
 Suchen, Ein-/Ausklappen und die Schublade bleiben auf dem Client.
 
@@ -103,8 +109,9 @@ Bauteile anderer Blöcke:
 
 | Bauteil | Wo und wie |
 |---|---|
-| `tl-avatar` | Part `Avatar` in `tl-list__leading` |
-| `tl-badge` | Part `Badge` in `tl-list__trailing` |
+| `tl-avatar` | Part `Avatar` in `tl-list__leading`, mit `aria-hidden="true"`: sein Name steht in den Zeilen, die der Knopf vorliest |
+| Icon | `ThemeIcon` mit `tl-icon-md` in `tl-list__leading`, wenn `leading.icon` steht |
+| `tl-badge` | Part `Badge` in `tl-list__trailing`, wenn `trailing.badge` steht; Metadaten-Text sonst mit `.tl-type-label` am `tl-list__trailing` |
 | `tl-toggle` | der Ein-/Ausklapper im Kopf |
 | `tl-button` | Befehle der Liste (`tl-list__commands`), Auslöser der Befehle eines Eintrags (direktes Kind von `tl-list__item`, damit `tl-reveal-on-hover` ihn beim Zeigen auf den Eintrag und bei Tastaturfokus darin zeigt) |
 | `tl-field-group` | die Suche (`SearchField`, Name `js.dataList.search`), `tl-list__search` an ihrer Hülle |

@@ -177,6 +177,121 @@ public interface DataListState extends com.top_logic.layout.react.state.ControlS
 
 	}
 	/**
+	 * What stands in front of the lines of a {@link Row}: an icon, or an avatar showing a picture or
+	 * the initials of a name.
+	 */
+	public interface Leading extends de.haumacher.msgbuf.data.DataObject {
+
+		/**
+		 * Creates a {@link com.top_logic.layout.react.state.DataListState.Leading} instance.
+		 */
+		static com.top_logic.layout.react.state.DataListState.Leading create() {
+			return new com.top_logic.layout.react.state.impl.DataListState_Impl.Leading_Impl();
+		}
+
+		/** Identifier for the {@link com.top_logic.layout.react.state.DataListState.Leading} type in JSON format. */
+		String LEADING__TYPE = "Leading";
+
+		/** @see #getName() */
+		String NAME__PROP = "name";
+
+		/** @see #getIcon() */
+		String ICON__PROP = "icon";
+
+		/** @see #getImage() */
+		String IMAGE__PROP = "image";
+
+		/**
+		 * The display name the avatar stands for, plain text: the source of its initials, its category
+		 * and its accessible name. Empty: none.
+		 */
+		String getName();
+
+		/**
+		 * @see #getName()
+		 */
+		com.top_logic.layout.react.state.DataListState.Leading setName(String value);
+
+		/**
+		 * An icon drawn instead of an avatar, the encoded form of an icon-font image. Empty: no icon.
+		 */
+		String getIcon();
+
+		/**
+		 * @see #getIcon()
+		 */
+		com.top_logic.layout.react.state.DataListState.Leading setIcon(String value);
+
+		/**
+		 * The picture of the avatar, the address of an image (a path or a {@code data} URI). Empty: the
+		 * avatar shows the initials of the {@link #getName()}.
+		 */
+		String getImage();
+
+		/**
+		 * @see #getImage()
+		 */
+		com.top_logic.layout.react.state.DataListState.Leading setImage(String value);
+
+		/** Reads a new instance from the given reader. */
+		static com.top_logic.layout.react.state.DataListState.Leading readLeading(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+			com.top_logic.layout.react.state.impl.DataListState_Impl.Leading_Impl result = new com.top_logic.layout.react.state.impl.DataListState_Impl.Leading_Impl();
+			result.readContent(in);
+			return result;
+		}
+
+	}
+	/**
+	 * What stands after the lines of a {@link Row}: metadata text, or a badge.
+	 */
+	public interface Trailing extends de.haumacher.msgbuf.data.DataObject {
+
+		/**
+		 * Creates a {@link com.top_logic.layout.react.state.DataListState.Trailing} instance.
+		 */
+		static com.top_logic.layout.react.state.DataListState.Trailing create() {
+			return new com.top_logic.layout.react.state.impl.DataListState_Impl.Trailing_Impl();
+		}
+
+		/** Identifier for the {@link com.top_logic.layout.react.state.DataListState.Trailing} type in JSON format. */
+		String TRAILING__TYPE = "Trailing";
+
+		/** @see #getText() */
+		String TEXT__PROP = "text";
+
+		/** @see #isBadge() */
+		String BADGE__PROP = "badge";
+
+		/**
+		 * The text, plain text.
+		 */
+		String getText();
+
+		/**
+		 * @see #getText()
+		 */
+		com.top_logic.layout.react.state.DataListState.Trailing setText(String value);
+
+		/**
+		 * Whether the {@link #getText()} is drawn as a badge (a count or a short status) instead of
+		 * metadata text.
+		 */
+		boolean isBadge();
+
+		/**
+		 * @see #isBadge()
+		 */
+		com.top_logic.layout.react.state.DataListState.Trailing setBadge(boolean value);
+
+		/** Reads a new instance from the given reader. */
+		static com.top_logic.layout.react.state.DataListState.Trailing readTrailing(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+			com.top_logic.layout.react.state.impl.DataListState_Impl.Trailing_Impl result = new com.top_logic.layout.react.state.impl.DataListState_Impl.Trailing_Impl();
+			result.readContent(in);
+			return result;
+		}
+
+	}
+	/**
 	 * An entry of the list.
 	 */
 	public interface Row extends de.haumacher.msgbuf.data.DataObject {
@@ -199,6 +314,12 @@ public interface DataListState extends com.top_logic.layout.react.state.ControlS
 
 		/** @see #getGroup() */
 		String GROUP__PROP = "group";
+
+		/** @see #getLeading() */
+		String LEADING__PROP = "leading";
+
+		/** @see #getTrailing() */
+		String TRAILING__PROP = "trailing";
 
 		/** @see #getCssClass() */
 		String CSS_CLASS__PROP = "cssClass";
@@ -243,6 +364,36 @@ public interface DataListState extends com.top_logic.layout.react.state.ControlS
 		 * @see #getGroup()
 		 */
 		com.top_logic.layout.react.state.DataListState.Row setGroup(String value);
+
+		/**
+		 * What stands in front of the lines. Absent: nothing.
+		 */
+		com.top_logic.layout.react.state.DataListState.Leading getLeading();
+
+		/**
+		 * @see #getLeading()
+		 */
+		com.top_logic.layout.react.state.DataListState.Row setLeading(com.top_logic.layout.react.state.DataListState.Leading value);
+
+		/**
+		 * Checks, whether {@link #getLeading()} has a value.
+		 */
+		boolean hasLeading();
+
+		/**
+		 * What stands after the lines. Absent: nothing.
+		 */
+		com.top_logic.layout.react.state.DataListState.Trailing getTrailing();
+
+		/**
+		 * @see #getTrailing()
+		 */
+		com.top_logic.layout.react.state.DataListState.Row setTrailing(com.top_logic.layout.react.state.DataListState.Trailing value);
+
+		/**
+		 * Checks, whether {@link #getTrailing()} has a value.
+		 */
+		boolean hasTrailing();
 
 		/**
 		 * Additional CSS classes of the row element, separated by spaces, computed by the

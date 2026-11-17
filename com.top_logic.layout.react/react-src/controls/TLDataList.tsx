@@ -1,6 +1,6 @@
 import {
   React, useTLState, useTLCommand, useI18N, usePart, useFocusTrap, useStandaloneKeyboardScope, TLChild, rootClassName,
-  stateAttr, ICON_ROW_MENU,
+  stateAttr, ThemeIcon, ICON_ROW_MENU,
 } from 'tl-react-bridge';
 import type { TLCellProps, DataListStateJson, ChildControlJson } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
@@ -97,6 +97,8 @@ interface ListPartsProps {
   emptyText: string;
   selectedId: string;
   onSelect: (row: Row) => void;
+  /** A right click on a row, before the event goes on to a context menu region around the list. */
+  onRowContextMenu: (row: Row) => void;
   showRowMenu: boolean;
   revealRowMenu: boolean;
   onRowMenu: (row: Row, event: React.MouseEvent<HTMLElement>) => void;
@@ -108,6 +110,8 @@ interface ListPartsProps {
 function ListParts(props: ListPartsProps) {
   const DisclosureToggle = usePart('DisclosureToggle');
   const MenuTrigger = usePart('MenuTrigger');
+  const Avatar = usePart('Avatar');
+  const Badge = usePart('Badge');
   const { labels, title, query } = props;
 
   return (
@@ -169,7 +173,11 @@ function ListParts(props: ListPartsProps) {
               ) : null}
               <ul className="tl-list__items">
                 {group.rows.map((row) => (
-                  <li key={row.id} className={['tl-list__item', row.cssClass].filter(Boolean).join(' ')}>
+                  <li
+                    key={row.id}
+                    className={['tl-list__item', row.cssClass].filter(Boolean).join(' ')}
+                    onContextMenu={() => props.onRowContextMenu(row)}
+                  >
                     <button
                       type="button"
                       className="tl-list__main"
@@ -177,6 +185,16 @@ function ListParts(props: ListPartsProps) {
                       title={firstText(row)}
                       onClick={() => props.onSelect(row)}
                     >
+                      {row.leading ? (
+                        <span className="tl-list__leading">
+                          {row.leading.icon ? (
+                            <ThemeIcon encoded={row.leading.icon} className="tl-icon-md" />
+                          ) : (
+                            // The name of the avatar is what the lines say; the button reads it once.
+                            <Avatar name={row.leading.name || null} src={row.leading.image || null} aria-hidden="true" />
+                          )}
+                        </span>
+                      ) : null}
                       <span className="tl-list__text">
                         {(row.lines ?? []).map((line: Line, index: number) => {
                           // A line whose value is empty for this row - a state the row is not in - is
@@ -190,6 +208,13 @@ function ListParts(props: ListPartsProps) {
                           );
                         })}
                       </span>
+                      {row.trailing ? (
+                        row.trailing.badge ? (
+                          <span className="tl-list__trailing"><Badge content={row.trailing.text} /></span>
+                        ) : (
+                          <span className="tl-list__trailing tl-type-label">{row.trailing.text}</span>
+                        )
+                      ) : null}
                     </button>
                     {props.showRowMenu ? (
                       <MenuTrigger
@@ -220,6 +245,9 @@ function ListParts(props: ListPartsProps) {
  *
  * The state is described by DataListStateJson. The rows come from the server; search and collapse
  * are client-side, a row click sends {@link CMD_SELECT}, the trigger of a row {@link CMD_ROW_MENU}.
+ * In front of the lines a row shows an icon or an avatar (part `Avatar`), after them metadata text or
+ * a badge (part `Badge`). A right click on a row outside the selection selects it and lets the event
+ * go on to a context menu region (`<context-menu>`) around the list.
  *
  * Below `drawerBelow` rem of width of its host, a collapsible list keeps only its strip in the flow,
  * and its toggle opens the list as a modal drawer over its neighbours (tl-drawer--container with
@@ -356,6 +384,17 @@ const TLDataList: React.FC<TLCellProps> = ({ controlId }) => {
     onSelect: (row: Row) => {
       closeDrawer();
       void command(CMD_SELECT, { [ARG_ID]: row.id });
+    },
+    /*
+     * The rule of a context menu around the list: a right click on a row outside the selection
+     * selects the row, on the selected row it keeps the selection. The event is left alone, so that
+     * it reaches the menu region; the commands of the page go through one FIFO channel, so the
+     * selection reaches the server before the region asks for its menu.
+     */
+    onRowContextMenu: (row: Row) => {
+      if (row.id !== selectedId) {
+        void command(CMD_SELECT, { [ARG_ID]: row.id });
+      }
     },
     showRowMenu,
     revealRowMenu: rowActions !== 'always',

@@ -80,6 +80,175 @@ public class DataListState_Impl extends com.top_logic.layout.react.state.impl.Co
 
 	}
 	/**
+	 * Implementation of {@link com.top_logic.layout.react.state.DataListState.Leading}.
+	 */
+	public static class Leading_Impl extends de.haumacher.msgbuf.data.AbstractDataObject implements com.top_logic.layout.react.state.DataListState.Leading {
+
+		private String _name = "";
+
+		private String _icon = "";
+
+		private String _image = "";
+
+		/**
+		 * Creates a {@link Leading_Impl} instance.
+		 *
+		 * @see com.top_logic.layout.react.state.DataListState.Leading#create()
+		 */
+		public Leading_Impl() {
+			super();
+		}
+
+		@Override
+		public final String getName() {
+			return _name;
+		}
+
+		@Override
+		public com.top_logic.layout.react.state.DataListState.Leading setName(String value) {
+			internalSetName(value);
+			return this;
+		}
+
+		/** Internal setter for {@link #getName()} without chain call utility. */
+		protected final void internalSetName(String value) {
+			_name = value;
+		}
+
+		@Override
+		public final String getIcon() {
+			return _icon;
+		}
+
+		@Override
+		public com.top_logic.layout.react.state.DataListState.Leading setIcon(String value) {
+			internalSetIcon(value);
+			return this;
+		}
+
+		/** Internal setter for {@link #getIcon()} without chain call utility. */
+		protected final void internalSetIcon(String value) {
+			_icon = value;
+		}
+
+		@Override
+		public final String getImage() {
+			return _image;
+		}
+
+		@Override
+		public com.top_logic.layout.react.state.DataListState.Leading setImage(String value) {
+			internalSetImage(value);
+			return this;
+		}
+
+		/** Internal setter for {@link #getImage()} without chain call utility. */
+		protected final void internalSetImage(String value) {
+			_image = value;
+		}
+
+		@Override
+		public final void writeTo(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+			writeContent(out);
+		}
+
+		@Override
+		protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+			super.writeFields(out);
+			out.name(NAME__PROP);
+			out.value(getName());
+			out.name(ICON__PROP);
+			out.value(getIcon());
+			out.name(IMAGE__PROP);
+			out.value(getImage());
+		}
+
+		@Override
+		protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+			switch (field) {
+				case NAME__PROP: setName(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+				case ICON__PROP: setIcon(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+				case IMAGE__PROP: setImage(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+				default: super.readField(in, field);
+			}
+		}
+
+	}
+	/**
+	 * Implementation of {@link com.top_logic.layout.react.state.DataListState.Trailing}.
+	 */
+	public static class Trailing_Impl extends de.haumacher.msgbuf.data.AbstractDataObject implements com.top_logic.layout.react.state.DataListState.Trailing {
+
+		private String _text = "";
+
+		private boolean _badge = false;
+
+		/**
+		 * Creates a {@link Trailing_Impl} instance.
+		 *
+		 * @see com.top_logic.layout.react.state.DataListState.Trailing#create()
+		 */
+		public Trailing_Impl() {
+			super();
+		}
+
+		@Override
+		public final String getText() {
+			return _text;
+		}
+
+		@Override
+		public com.top_logic.layout.react.state.DataListState.Trailing setText(String value) {
+			internalSetText(value);
+			return this;
+		}
+
+		/** Internal setter for {@link #getText()} without chain call utility. */
+		protected final void internalSetText(String value) {
+			_text = value;
+		}
+
+		@Override
+		public final boolean isBadge() {
+			return _badge;
+		}
+
+		@Override
+		public com.top_logic.layout.react.state.DataListState.Trailing setBadge(boolean value) {
+			internalSetBadge(value);
+			return this;
+		}
+
+		/** Internal setter for {@link #isBadge()} without chain call utility. */
+		protected final void internalSetBadge(boolean value) {
+			_badge = value;
+		}
+
+		@Override
+		public final void writeTo(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+			writeContent(out);
+		}
+
+		@Override
+		protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
+			super.writeFields(out);
+			out.name(TEXT__PROP);
+			out.value(getText());
+			out.name(BADGE__PROP);
+			out.value(isBadge());
+		}
+
+		@Override
+		protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
+			switch (field) {
+				case TEXT__PROP: setText(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+				case BADGE__PROP: setBadge(in.nextBoolean()); break;
+				default: super.readField(in, field);
+			}
+		}
+
+	}
+	/**
 	 * Implementation of {@link com.top_logic.layout.react.state.DataListState.Row}.
 	 */
 	public static class Row_Impl extends de.haumacher.msgbuf.data.AbstractDataObject implements com.top_logic.layout.react.state.DataListState.Row {
@@ -89,6 +258,10 @@ public class DataListState_Impl extends com.top_logic.layout.react.state.impl.Co
 		private final java.util.List<com.top_logic.layout.react.state.DataListState.Line> _lines = new java.util.ArrayList<>();
 
 		private String _group = "";
+
+		private com.top_logic.layout.react.state.DataListState.Leading _leading = null;
+
+		private com.top_logic.layout.react.state.DataListState.Trailing _trailing = null;
 
 		private String _cssClass = "";
 
@@ -168,6 +341,48 @@ public class DataListState_Impl extends com.top_logic.layout.react.state.impl.Co
 		}
 
 		@Override
+		public final com.top_logic.layout.react.state.DataListState.Leading getLeading() {
+			return _leading;
+		}
+
+		@Override
+		public com.top_logic.layout.react.state.DataListState.Row setLeading(com.top_logic.layout.react.state.DataListState.Leading value) {
+			internalSetLeading(value);
+			return this;
+		}
+
+		/** Internal setter for {@link #getLeading()} without chain call utility. */
+		protected final void internalSetLeading(com.top_logic.layout.react.state.DataListState.Leading value) {
+			_leading = value;
+		}
+
+		@Override
+		public final boolean hasLeading() {
+			return _leading != null;
+		}
+
+		@Override
+		public final com.top_logic.layout.react.state.DataListState.Trailing getTrailing() {
+			return _trailing;
+		}
+
+		@Override
+		public com.top_logic.layout.react.state.DataListState.Row setTrailing(com.top_logic.layout.react.state.DataListState.Trailing value) {
+			internalSetTrailing(value);
+			return this;
+		}
+
+		/** Internal setter for {@link #getTrailing()} without chain call utility. */
+		protected final void internalSetTrailing(com.top_logic.layout.react.state.DataListState.Trailing value) {
+			_trailing = value;
+		}
+
+		@Override
+		public final boolean hasTrailing() {
+			return _trailing != null;
+		}
+
+		@Override
 		public final String getCssClass() {
 			return _cssClass;
 		}
@@ -201,6 +416,14 @@ public class DataListState_Impl extends com.top_logic.layout.react.state.impl.Co
 			out.endArray();
 			out.name(GROUP__PROP);
 			out.value(getGroup());
+			if (hasLeading()) {
+				out.name(LEADING__PROP);
+				getLeading().writeTo(out);
+			}
+			if (hasTrailing()) {
+				out.name(TRAILING__PROP);
+				getTrailing().writeTo(out);
+			}
 			out.name(CSS_CLASS__PROP);
 			out.value(getCssClass());
 		}
@@ -220,6 +443,8 @@ public class DataListState_Impl extends com.top_logic.layout.react.state.impl.Co
 				}
 				break;
 				case GROUP__PROP: setGroup(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+				case LEADING__PROP: setLeading(com.top_logic.layout.react.state.DataListState.Leading.readLeading(in)); break;
+				case TRAILING__PROP: setTrailing(com.top_logic.layout.react.state.DataListState.Trailing.readTrailing(in)); break;
 				case CSS_CLASS__PROP: setCssClass(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 				default: super.readField(in, field);
 			}

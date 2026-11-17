@@ -18,6 +18,8 @@ import ButtonPart from './button/ButtonPart';
 import DisclosureTogglePart from './button/DisclosureTogglePart';
 import MenuTriggerPart from './button/MenuTriggerPart';
 import TextInputPart from './form/TextInputPart';
+import AvatarPart from './AvatarPart';
+import BadgePart from './chip/BadgePart';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -67,6 +69,8 @@ beforeAll(() => {
   registerPart('DisclosureToggle', DisclosureTogglePart);
   registerPart('MenuTrigger', MenuTriggerPart);
   registerPart('TextInput', TextInputPart);
+  registerPart('Avatar', AvatarPart);
+  registerPart('Badge', BadgePart);
   register('TestCommand', CommandStub);
   register('TLDataList', TLDataList);
 });
@@ -381,5 +385,73 @@ describe('a collapsible list in a narrow host', () => {
     resize(1100);
     expect(drawer()).toBeNull();
     expect(list().getAttribute('data-tl-state')).toBe('collapsed');
+  });
+});
+
+describe('what stands in front of and after the lines', () => {
+  it('is an avatar with the initials of the name, or with the picture, or an icon', async () => {
+    await mountList({
+      rows: [
+        { id: 'r1', lines: [{ text: 'Anna Albrecht' }], leading: { name: 'Anna Albrecht' } },
+        { id: 'r2', lines: [{ text: 'Arne' }], leading: { name: 'Arne', image: '/images/arne.png' } },
+        { id: 'r3', lines: [{ text: 'Office' }], leading: { icon: 'css:bi bi-building' } },
+        { id: 'r4', lines: [{ text: 'Nobody' }] },
+      ],
+    });
+    const leading = mains().map((main) => main.querySelector('.tl-list__leading'));
+    const initials = leading[0]!.querySelector('.tl-avatar')!;
+    expect(initials.textContent).toBe('AA');
+    expect(initials.getAttribute('data-tl-role')).toMatch(/^category-[1-8]$/);
+    expect(initials.getAttribute('aria-hidden')).toBe('true');
+    expect(leading[1]!.querySelector('.tl-avatar img')!.getAttribute('src')).toBe('/images/arne.png');
+    expect(leading[2]!.querySelector('.tl-avatar')).toBeNull();
+    expect(leading[2]!.querySelector('i')!.className).toContain('bi-building');
+    expect(leading[3]).toBeNull();
+  });
+
+  it('is metadata text or a badge', async () => {
+    await mountList({
+      rows: [
+        { id: 'r1', lines: [{ text: 'Anna' }], trailing: { text: 'yesterday' } },
+        { id: 'r2', lines: [{ text: 'Arne' }], trailing: { text: '3', badge: true } },
+      ],
+    });
+    const trailing = mains().map((main) => main.querySelector('.tl-list__trailing')!);
+    expect(trailing[0].textContent).toBe('yesterday');
+    expect(trailing[0].querySelector('.tl-badge')).toBeNull();
+    expect(trailing[1].querySelector('.tl-badge')!.textContent).toBe('3');
+  });
+});
+
+describe('a right click on a row', () => {
+  function rightClick(element: Element): MouseEvent {
+    const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
+    act(() => {
+      element.dispatchEvent(event);
+    });
+    return event;
+  }
+
+  it('selects a row outside the selection and lets the event go on to a menu region', async () => {
+    await mountList({ selectedId: 'r1' });
+    let reached = false;
+    const listener = () => { reached = true; };
+    document.body.addEventListener('contextmenu', listener);
+    try {
+      const event = rightClick(mains()[2]);
+      await settle();
+      expect(sent).toEqual([{ command: CMD_SELECT, args: { [ARG_ID]: 'r3' } }]);
+      expect(event.defaultPrevented).toBe(false);
+      expect(reached).toBe(true);
+    } finally {
+      document.body.removeEventListener('contextmenu', listener);
+    }
+  });
+
+  it('keeps the selection on the selected row', async () => {
+    await mountList({ selectedId: 'r2' });
+    rightClick(mains()[1]);
+    await settle();
+    expect(sent).toEqual([]);
   });
 });

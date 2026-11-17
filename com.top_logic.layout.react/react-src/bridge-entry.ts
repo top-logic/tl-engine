@@ -75,6 +75,8 @@ export type {
   ChipPartProps,
   ColorRole,
   BadgePartProps,
+  AvatarPartProps,
+  AvatarSize,
   DividerPartProps,
   DividerOrientation,
   ProgressBarPartProps,

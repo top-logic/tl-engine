@@ -18,6 +18,13 @@
 				value="m -> 'Module'"
 			/>
 		</lines>
+		<leading name="m -> $m.get(`tl.model:TLNamedPart#name`).subString(14)"
+			image="m -> if($m.get(`tl.model:TLNamedPart#name`) == 'test.datalist.bravo', 'css:bi bi-box', null)"
+		/>
+		<trailing
+			display="badge"
+			value="m -> if($m.get(`tl.model:TLNamedPart#name`).stringStartsWith('test.datalist.a'), $m.get(`tl.model:TLNamedPart#name`).length(), 0)"
+		/>
 		<row-commands>
 			<generic-command name="rename"
 				inputs="row"

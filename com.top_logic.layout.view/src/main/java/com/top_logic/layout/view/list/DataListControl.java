@@ -17,7 +17,9 @@ import java.util.Set;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactParam;
@@ -34,15 +36,20 @@ import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.list.DataListElement.Config;
+import com.top_logic.layout.view.list.DataListElement.LeadingConfig;
 import com.top_logic.layout.view.list.DataListElement.LineConfig;
 import com.top_logic.layout.view.list.DataListElement.LinesConfig;
 import com.top_logic.layout.view.list.DataListElement.RowActions;
+import com.top_logic.layout.view.list.DataListElement.TrailingConfig;
+import com.top_logic.layout.view.list.DataListElement.TrailingDisplay;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
+import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.util.Resources;
 
@@ -97,6 +104,15 @@ public class DataListControl extends ReactControl {
 	/** Argument of {@link #CMD_ROW_MENU}: the client y coordinate to open the menu at. */
 	public static final String ARG_Y = "y";
 
+	/** The encoded form of the invisible image, which the client renders as nothing. */
+	private static final String NO_IMAGE = "none";
+
+	/** The prefix of an image embedded as data URI. */
+	private static final String DATA_URI_PREFIX = "data:";
+
+	/** The count a badge shows no badge for. */
+	private static final String NO_COUNT = "0";
+
 	/** The {@link Config#getRowChannel() row channel} name used when none is configured. */
 	private static final String DEFAULT_ROW_CHANNEL = "row";
 
@@ -107,6 +123,18 @@ public class DataListControl extends ReactControl {
 	private final QueryExecutor _groupExecutor;
 
 	private final QueryExecutor _cssClassExecutor;
+
+	/** The name an avatar in front of a row stands for, or {@code null} for none. */
+	private final QueryExecutor _leadingNameExecutor;
+
+	/** The picture or icon in front of a row, or {@code null} for none. */
+	private final QueryExecutor _leadingImageExecutor;
+
+	/** What stands after the lines of a row, or {@code null} for nothing. */
+	private final LineSpec _trailing;
+
+	/** Whether {@link #_trailing} is shown as a badge. */
+	private final boolean _trailingBadge;
 
 	private final List<ViewChannel> _inputChannels = new ArrayList<>();
 
@@ -145,6 +173,19 @@ public class DataListControl extends ReactControl {
 		_rowsExecutor = QueryExecutor.compile(config.getRows());
 		_groupExecutor = config.getGroupBy() == null ? null : QueryExecutor.compile(config.getGroupBy());
 		_cssClassExecutor = config.getRowCssClass() == null ? null : QueryExecutor.compile(config.getRowCssClass());
+
+		LeadingConfig leading = config.getLeading();
+		_leadingNameExecutor = leading == null ? null : compile(leading.getName());
+		_leadingImageExecutor = leading == null ? null : compile(leading.getImage());
+
+		TrailingConfig trailing = config.getTrailing();
+		if (trailing == null || (trailing.getValue() == null && blank(trailing.getAttribute()))) {
+			_trailing = null;
+			_trailingBadge = false;
+		} else {
+			_trailing = new LineSpec(trailing.getAttribute(), compile(trailing.getValue()), null);
+			_trailingBadge = trailing.getDisplay() == TrailingDisplay.BADGE;
+		}
 
 		LinesConfig linesConfig = config.getLines();
 		if (linesConfig != null) {
@@ -358,6 +399,14 @@ public class DataListControl extends ReactControl {
 			if (_cssClassExecutor != null) {
 				entry.put(DataListState.Row.CSS_CLASS__PROP, text(_cssClassExecutor.execute(object)));
 			}
+			Map<String, Object> leading = leading(object);
+			if (leading != null) {
+				entry.put(DataListState.Row.LEADING__PROP, leading);
+			}
+			Map<String, Object> trailing = trailing(object);
+			if (trailing != null) {
+				entry.put(DataListState.Row.TRAILING__PROP, trailing);
+			}
 			out.add(entry);
 		}
 		_rowsById = byId;
@@ -438,17 +487,91 @@ public class DataListControl extends ReactControl {
 		return null;
 	}
 
+	/**
+	 * What stands in front of the lines of the given row, see {@link DataListState.Leading}, or
+	 * {@code null} for nothing.
+	 *
+	 * <p>
+	 * An image of an icon font is an icon, any other image - image data, an image file - the
+	 * picture of the avatar, see {@link ReactImages#encode(com.top_logic.layout.react.ReactContext, ThemeImage)}.
+	 * </p>
+	 */
+	private Map<String, Object> leading(TLObject object) {
+		String name = _leadingNameExecutor == null ? "" : label(_leadingNameExecutor.execute(object));
+		ThemeImage image =
+			_leadingImageExecutor == null ? null : ThemeImage.fromValue(_leadingImageExecutor.execute(object));
+		String encoded = image == null ? null : ReactImages.encode(getReactContext(), image);
+		if (NO_IMAGE.equals(encoded)) {
+			encoded = null;
+		}
+		if (name.isEmpty() && encoded == null) {
+			return null;
+		}
+		Map<String, Object> result = new LinkedHashMap<>();
+		if (!name.isEmpty()) {
+			result.put(DataListState.Leading.NAME__PROP, name);
+		}
+		if (encoded != null) {
+			if (isIconFont(encoded)) {
+				result.put(DataListState.Leading.ICON__PROP, encoded);
+			} else {
+				result.put(DataListState.Leading.IMAGE__PROP, encoded);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Whether the given encoded image is drawn by an icon font, not loaded as a picture: the client
+	 * loads only an encoded form starting with a slash or {@code data:} as picture, see
+	 * {@link ReactImages}.
+	 */
+	private static boolean isIconFont(String encoded) {
+		return !(encoded.startsWith("/") || encoded.startsWith(DATA_URI_PREFIX));
+	}
+
+	/**
+	 * What stands after the lines of the given row, see {@link DataListState.Trailing}, or
+	 * {@code null} for nothing: no value, or an empty value or {@code 0} as badge.
+	 */
+	private Map<String, Object> trailing(TLObject object) {
+		if (_trailing == null) {
+			return null;
+		}
+		String text = text(_trailing, object);
+		if (text.isEmpty() || (_trailingBadge && NO_COUNT.equals(text))) {
+			return null;
+		}
+		Map<String, Object> result = new LinkedHashMap<>();
+		result.put(DataListState.Trailing.TEXT__PROP, text);
+		if (_trailingBadge) {
+			result.put(DataListState.Trailing.BADGE__PROP, Boolean.TRUE);
+		}
+		return result;
+	}
+
+	/** The text the given line or trailing value shows for the given row. */
+	private static String text(LineSpec spec, TLObject object) {
+		if (spec.executor() != null) {
+			return label(spec.executor().execute(object));
+		}
+		TLStructuredTypePart part = attribute(object, spec.attribute());
+		return attributeLabel(part, part == null ? null : object.tValue(part));
+	}
+
+	private static QueryExecutor compile(Expr expr) {
+		return expr == null ? null : QueryExecutor.compile(expr);
+	}
+
+	private static boolean blank(String value) {
+		return value == null || value.isBlank();
+	}
+
 	/** The display lines for a row, honouring the configured attributes / values and emphasis. */
 	private List<Map<String, Object>> lines(TLObject object) {
 		List<Map<String, Object>> lines = new ArrayList<>();
 		for (LineSpec spec : _lineSpecs) {
-			String text;
-			if (spec.executor() != null) {
-				text = label(spec.executor().execute(object));
-			} else {
-				TLStructuredTypePart part = attribute(object, spec.attribute());
-				text = attributeLabel(part, part == null ? null : object.tValue(part));
-			}
+			String text = text(spec, object);
 			Map<String, Object> line = new LinkedHashMap<>();
 			line.put(DataListState.Line.TEXT__PROP, text);
 			if (spec.emphasis() != null) {
@@ -487,8 +610,15 @@ public class DataListControl extends ReactControl {
 		return label(value);
 	}
 
-	/** A display label for an expression result (formats dates, objects and text uniformly). */
+	/**
+	 * A display label for an expression result: a number in the number format of the user (a count
+	 * of TL-Script, a floating point number, without a fraction where it has none), dates, objects
+	 * and text by their label.
+	 */
 	private static String label(Object value) {
+		if (value instanceof Number number) {
+			return HTMLFormatter.getInstance().getNumberFormat().format(number);
+		}
 		return value == null ? "" : MetaLabelProvider.INSTANCE.getLabel(value);
 	}
 

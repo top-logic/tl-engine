@@ -450,6 +450,25 @@ controls. The complete mapping is the table in
 [Following the MUI theme](doc:view-layer/customer-component-library#following-the-mui-theme); the
 computation is `com.top_logic.layout.react.mui/react-src/themeProperties.ts`.
 
+A `<text>` takes one of the ten roles of the type scale of the design system as its variant, and
+`MuiTextAdapter` draws each role with the nearest MUI variant:
+
+| Role | MUI variant |
+| --- | --- |
+| `display` | `h4` |
+| `heading-lg` | `h5` |
+| `heading-md` | `h6` |
+| `heading-sm` | `subtitle1` |
+| `body` | `body2` |
+| `body-strong` | `body2` in the theme's `fontWeightMedium` |
+| `label` | `caption` |
+| `label-strong` | `subtitle2` |
+| `overline` | `overline` |
+| `code` | `body2` in the fixed-width font of the design system (`--tl-font-family-mono`) |
+
+The remaining MUI variants (`h1`–`h3`, `body1`, `button`) have no role
+of their own; a `<text>` does not reach them.
+
 #### Limits
 
 - **Some values do not reach the TopLogic components**: the table's row height (36px, computed with

@@ -2,22 +2,37 @@ import { React, useTLState, rootClassName, usePart, TOOLTIP_ATTR } from 'tl-reac
 import type { TLCellProps, TextStateJson, ColorRole } from 'tl-react-bridge';
 import Typography from '@mui/material/Typography';
 import type { TypographyProps } from '@mui/material/Typography';
-import type { SxProps, Theme } from '@mui/material/styles';
 
 /** The value of {@link TOOLTIP_ATTR} fetching the rich tooltip the server holds for the control. */
 const RICH_TOOLTIP = 'key:tooltip';
 
 /**
- * The MUI typography variant of each typographic role. Running text is `body2`, the size of the
- * text in the MUI inputs and of the values a form displays.
+ * The MUI typography variant of each typographic role, the nearest variant of the MUI type scale.
+ * Running text is `body2`, the size of the text in the MUI inputs and of the values a form
+ * displays. A role MUI has no variant for is drawn in the variant of its size and set apart by
+ * {@link ROLE_SX}.
  */
 const VARIANTS: Record<TextStateJson.Variant, TypographyProps['variant']> = {
-  body: 'body2',
-  title: 'h6',
-  headline: 'h5',
   display: 'h4',
-  label: 'subtitle2',
-  caption: 'caption',
+  'heading-lg': 'h5',
+  'heading-md': 'h6',
+  'heading-sm': 'subtitle1',
+  body: 'body2',
+  'body-strong': 'body2',
+  label: 'caption',
+  'label-strong': 'subtitle2',
+  overline: 'overline',
+  code: 'body2',
+};
+
+/**
+ * What sets a role apart from the MUI variant it is drawn in: running text that stands out takes
+ * the emphasized weight of the MUI theme, code the fixed-width font of the design system
+ * (`font-family-mono`), which MUI has no typography key for.
+ */
+const ROLE_SX: Partial<Record<TextStateJson.Variant, { fontWeight?: string; fontFamily?: string }>> = {
+  'body-strong': { fontWeight: 'fontWeightMedium' },
+  code: { fontFamily: 'var(--tl-font-family-mono)' },
 };
 
 /**
@@ -40,7 +55,7 @@ const COLORS: Record<TextStateJson.Tone, TypographyProps['color'] | undefined> =
  * The color of text on a filled surface: the role of the design system TLText draws it in
  * (`text-on-brand`). The surface is the application's, not one the text knows.
  */
-const ON_COLOR_SX: SxProps<Theme> = { color: 'var(--tl-text-on-brand)' };
+const ON_COLOR_SX = { color: 'var(--tl-text-on-brand)' };
 
 /**
  * The color role a text of the given tone is drawn in as a pill without a role of its own, as
@@ -60,8 +75,10 @@ function roleOfTone(tone: TextStateJson.Tone): ColorRole {
  * <p>Mapping from the control state:</p>
  * <ul>
  * <li>text → the content of a `Typography` rendered as a `span`, as TLText renders one;</li>
- * <li>variant → the typography variant: body → `body2`, title → `h6`, headline → `h5`,
- *     display → `h4`, label → `subtitle2`, caption → `caption`;</li>
+ * <li>variant → the nearest typography variant: display → `h4`, heading-lg → `h5`, heading-md →
+ *     `h6`, heading-sm → `subtitle1`, body → `body2`, body-strong → `body2` in the emphasized
+ *     weight, label → `caption`, label-strong → `subtitle2`, overline → `overline`, code → `body2`
+ *     in the fixed-width font;</li>
  * <li>tone → the `color` of the `Typography`: primary → `textPrimary`, secondary and helper →
  *     `textSecondary`, placeholder → `textDisabled`, success, warning and error → the palette color of that
  *     name, on-color → the role for text on a filled surface (`text-on-brand`, as in TLText);</li>
@@ -96,9 +113,10 @@ const MuiTextAdapter: React.FC<TLCellProps> = ({ controlId }) => {
     );
   }
 
+  const variant = state.variant ?? 'body';
   return (
-    <Typography id={controlId} component="span" variant={VARIANTS[state.variant ?? 'body']}
-      color={COLORS[tone]} sx={tone === 'on-color' ? ON_COLOR_SX : undefined}
+    <Typography id={controlId} component="span" variant={VARIANTS[variant]}
+      color={COLORS[tone]} sx={{ ...ROLE_SX[variant], ...(tone === 'on-color' ? ON_COLOR_SX : undefined) }}
       noWrap={state.overflow === 'ellipsis'} role={state.role || undefined}
       className={rootClassName(state)} {...tooltip}>
       {text}

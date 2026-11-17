@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<stack>
+		<text
+			label="body"
+			variant="body"
+		/>
+		<text
+			label="display"
+			variant="display"
+		/>
+		<text
+			label="heading-lg"
+			variant="heading-lg"
+		/>
+		<text
+			label="heading-md"
+			variant="heading-md"
+		/>
+		<text
+			label="heading-sm"
+			variant="heading-sm"
+		/>
+		<text
+			label="body-strong"
+			variant="body-strong"
+		/>
+		<text
+			label="label"
+			variant="label"
+		/>
+		<text
+			label="label-strong"
+			variant="label-strong"
+		/>
+		<text
+			label="overline"
+			variant="overline"
+		/>
+		<text
+			label="code"
+			variant="code"
+		/>
+	</stack>
+</view>

@@ -13,11 +13,12 @@ package com.top_logic.graphic.blocks.svg;
 public interface RenderContext {
 
 	/**
-	 * Default {@code font-family} assumed when no per-text family is set.
+	 * Preferred {@code font-family} for text that has no per-text family set.
 	 *
 	 * <p>
-	 * Both the measurement (server- and client-side) and the SVG output must use this default
-	 * consistently to ensure that rendered text fits its measured box.
+	 * Both the measurement (server- and client-side) and the SVG output must use the same family
+	 * to ensure that rendered text fits its measured box. Since this family is not installed
+	 * everywhere, both resolve {@link #DEFAULT_FONT_DECLARATION}, which names it first.
 	 * </p>
 	 */
 	String DEFAULT_FONT_FAMILY = "Arial";
@@ -34,6 +35,14 @@ public interface RenderContext {
 	 * {@code Liberation Sans} and {@code Arimo} are metric-compatible with {@code Arial} by
 	 * design; the trailing generic family is a last resort only.
 	 * </p>
+	 *
+	 * <p>
+	 * A context that measures with the fonts installed on a server resolves this list like a
+	 * browser does: it measures with the first installed family and declares that family first,
+	 * see {@link #getDefaultFontDeclaration()}. On a server without {@code Arial}, installing
+	 * {@code Liberation Sans} therefore suffices to measure and render with the metrics of
+	 * {@code Arial}.
+	 * </p>
 	 */
 	String DEFAULT_FONT_DECLARATION = "Arial, 'Liberation Sans', Arimo, Helvetica, sans-serif";
 
@@ -41,9 +50,9 @@ public interface RenderContext {
 	 * Default {@code font-size} (in CSS pixels) assumed when no per-text size is set.
 	 *
 	 * <p>
-	 * Matches the default rule {@code text:not([font-size]):not([class]) { font-size: 14px }} from
-	 * {@code tl-blocks.css}, which applies to both the block editor and flow diagrams in the
-	 * interactive client.
+	 * Matches the default rule {@code .tlDiagram text:not([font-size]):not([class]) { font-size:
+	 * 14px }} from {@code tl-blocks.css}, which applies to flow diagrams in the interactive
+	 * client.
 	 * </p>
 	 *
 	 * @see #DEFAULT_FONT_FAMILY
@@ -73,6 +82,13 @@ public interface RenderContext {
 	 * Measurement resolves a single family, while a viewer resolves whatever the document asks
 	 * for. Naming metric-compatible substitutes alongside the measured family keeps the two in
 	 * agreement on a machine that does not have it.
+	 * </p>
+	 *
+	 * <p>
+	 * A context that measures with the fonts installed on a server resolves
+	 * {@link #DEFAULT_FONT_DECLARATION} against them and declares the family it measures with
+	 * first, followed by the other families of the list. A renderer on the same server, e.g. the
+	 * PDF export, draws the text in exactly the measured family.
 	 * </p>
 	 *
 	 * @see #DEFAULT_FONT_DECLARATION

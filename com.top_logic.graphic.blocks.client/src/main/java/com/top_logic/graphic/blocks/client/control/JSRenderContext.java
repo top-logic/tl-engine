@@ -56,8 +56,9 @@ public class JSRenderContext implements RenderContext {
 	public TextMetrics measure(String text, String fontFamily, String fontSize, String fontWeight) {
 		// Resolve nulls to the context defaults. The canvas font is reset per call so that the
 		// measurement matches the font that will actually be rendered on the corresponding
-		// SVG <text> element.
-		String family = fontFamily != null ? fontFamily : DEFAULT_FONT_FAMILY;
+		// SVG <text> element. The canvas resolves a family list like the browser does when
+		// rendering the text.
+		String family = fontFamily != null ? fontFamily : DEFAULT_FONT_DECLARATION;
 		String size = fontSize != null ? fontSize : _defaultFontSize;
 		String weight = fontWeight != null ? fontWeight : "normal";
 

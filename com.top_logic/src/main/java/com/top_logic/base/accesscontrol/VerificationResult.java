@@ -26,9 +26,16 @@ public final class VerificationResult {
 
 	private final ResKey _message;
 
+	private final boolean _delivered;
+
 	private VerificationResult(Outcome outcome, ResKey message) {
+		this(outcome, message, false);
+	}
+
+	private VerificationResult(Outcome outcome, ResKey message, boolean delivered) {
 		_outcome = Objects.requireNonNull(outcome, "No outcome.");
 		_message = Objects.requireNonNull(message, "No message.");
+		_delivered = delivered;
 	}
 
 	/**
@@ -86,9 +93,38 @@ public final class VerificationResult {
 		return _message;
 	}
 
+	/**
+	 * Whether the result has reached the place that asked for the verification.
+	 *
+	 * <p>
+	 * A delivered result is shown, and whatever waited for it continues or gives up, where the
+	 * verification was asked for. The browser window that brought the confirmation then has nothing
+	 * left to say and closes itself; an undelivered result is shown in that window.
+	 * </p>
+	 *
+	 * @see #delivered()
+	 */
+	public boolean isDelivered() {
+		return _delivered;
+	}
+
+	/**
+	 * This result, marked as having reached the place that asked for the verification.
+	 *
+	 * <p>
+	 * For a handler that has told the asker the result, see {@link #isDelivered()}.
+	 * </p>
+	 */
+	public VerificationResult delivered() {
+		if (_delivered) {
+			return this;
+		}
+		return new VerificationResult(_outcome, _message, true);
+	}
+
 	@Override
 	public String toString() {
-		return _outcome + "(" + _message + ")";
+		return _outcome + "(" + _message + (_delivered ? ", delivered" : "") + ")";
 	}
 
 }

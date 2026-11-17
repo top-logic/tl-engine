@@ -132,7 +132,9 @@ public class TestIdentityVerifications extends BasicTestCase {
 	public void testCompleteRunsContinuation() {
 		String token = _verifications.register(expectedAccount(), onVerified());
 
-		assertEquals(Outcome.VERIFIED, complete(token, expectedAccount()));
+		VerificationResult result = _verifications.complete(token, VerifiedIdentity.ofAccount(expectedAccount()));
+		assertEquals(Outcome.VERIFIED, result.getOutcome());
+		assertTrue("The continuation carries the confirmation to the asker.", result.isDelivered());
 		assertEquals("The continuation must run exactly once.", 1, _verifiedCount.get());
 		assertEquals("The entry must be consumed.", 0, _verifications.size());
 	}

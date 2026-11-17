@@ -378,8 +378,11 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 	 *
 	 * <p>
 	 * A page of its own, with nothing to click and nowhere to go: the work the confirmation unblocks
-	 * continues in the window that asked for it. The page tries to close itself, and reads as a
-	 * complete answer where the browser refuses to close a window the user opened.
+	 * continues in the window that asked for it. A result that has been
+	 * {@link VerificationResult#isDelivered() delivered} there - accepted or refused - is shown in
+	 * that window, and the page tries to close itself; it reads as a complete answer where the
+	 * browser refuses to close a window the user opened. A result that reached no one (e.g. an
+	 * expired verification) is told by this page alone.
 	 * </p>
 	 */
 	protected void writeVerificationResult(HttpServletResponse response, VerificationResult result)
@@ -417,7 +420,7 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 				out.writeText(message);
 				out.endTag(HTMLConstants.PARAGRAPH);
 
-				if (result.isVerified()) {
+				if (result.isDelivered()) {
 					out.beginScript();
 					out.append("window.close();");
 					out.endScript();

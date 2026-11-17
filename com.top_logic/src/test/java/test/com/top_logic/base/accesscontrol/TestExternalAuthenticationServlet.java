@@ -293,14 +293,16 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 	}
 
 	/**
-	 * Every outcome produces a page that says what happened, and only the confirmed one tries to
-	 * close the window.
+	 * Every outcome produces a page that says what happened, and exactly the results delivered to
+	 * the window that asked - accepted or refused - try to close the window.
 	 */
 	public void testResultPage() throws Exception {
-		assertPage(VerificationResult.verified(I18NConstants.IDENTITY_VERIFIED), true);
+		assertPage(VerificationResult.verified(I18NConstants.IDENTITY_VERIFIED).delivered(), true);
+		assertPage(VerificationResult.refused(I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED).delivered(), true);
+		assertPage(VerificationResult.verified(I18NConstants.IDENTITY_VERIFIED), false);
+		assertPage(VerificationResult.refused(I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED), false);
 		assertPage(VerificationResult.mismatch(), false);
 		assertPage(VerificationResult.unknown(), false);
-		assertPage(VerificationResult.refused(I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED), false);
 	}
 
 	private void assertPage(VerificationResult result, boolean closesWindow) throws Exception {
@@ -311,7 +313,7 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 		assertContains("<!DOCTYPE html>", page);
 		assertContains(Resources.getInstance().getString(I18NConstants.IDENTITY_VERIFICATION_TITLE), page);
 		assertContains(Resources.getInstance().getString(result.getMessage()), page);
-		assertEquals("Only a confirmed identity may close the window.", closesWindow,
+		assertEquals("Exactly a delivered result may close the window.", closesWindow,
 			page.contains("window.close()"));
 	}
 

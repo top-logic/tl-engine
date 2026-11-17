@@ -31,7 +31,9 @@ public interface IdentityVerificationHandler {
 	 *        never from the request that returns.
 	 * @param identity
 	 *        What the external authentication has just confirmed.
-	 * @return What became of the verification, with the message for the user.
+	 * @return What became of the verification, with the message for the user. A handler that has
+	 *         told the place that asked for the verification returns the result
+	 *         {@link VerificationResult#delivered() delivered}.
 	 */
 	VerificationResult handle(Person expected, VerifiedIdentity identity);
 
@@ -45,8 +47,14 @@ public interface IdentityVerificationHandler {
 	 * says nothing about the session's own user.
 	 * </p>
 	 *
+	 * <p>
+	 * An accepted identity is {@link VerificationResult#delivered() delivered}: the continuation is
+	 * what carries it to the place that asked.
+	 * </p>
+	 *
 	 * @param onVerified
-	 *        Run once the expected account has authenticated again.
+	 *        Run once the expected account has authenticated again, carrying the confirmation to the
+	 *        place that asked for it.
 	 */
 	static IdentityVerificationHandler reauthentication(Runnable onVerified) {
 		Objects.requireNonNull(onVerified, "No continuation to run.");
@@ -55,7 +63,7 @@ public interface IdentityVerificationHandler {
 				return VerificationResult.mismatch();
 			}
 			onVerified.run();
-			return VerificationResult.verified(I18NConstants.IDENTITY_VERIFIED);
+			return VerificationResult.verified(I18NConstants.IDENTITY_VERIFIED).delivered();
 		};
 	}
 

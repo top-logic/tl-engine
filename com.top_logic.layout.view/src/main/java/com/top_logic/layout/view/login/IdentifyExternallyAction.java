@@ -23,9 +23,11 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.view.command.Continuation;
@@ -46,8 +48,9 @@ import com.top_logic.util.TLContext;
  * dialog. The request returning from the provider is no login: the identity it confirms goes to
  * the {@link Config#getHandler() handler}, together with the account of the session that ran the
  * command. When the handler accepts it, the dialog closes and the chain resumes with its input
- * unchanged; when the handler refuses it, the dialog closes, its reason is shown and the chain
- * aborts. A cancelled dialog aborts the chain.
+ * unchanged; when the handler refuses it (or fails), the dialog closes, its reason is shown and the
+ * chain aborts. Either way the answer is shown in the window that ran the command, and the sign-in
+ * window closes itself. A cancelled dialog aborts the chain.
  * </p>
  *
  * <p>
@@ -129,6 +132,11 @@ public class IdentifyExternallyAction extends InterruptibleViewAction {
 		ResKey getMessage();
 	}
 
+	/**
+	 * Names the operation a failure of the {@link Config#getHandler() handler} is reported for.
+	 */
+	private static final String HANDLER_DESCRIPTION = "Taking over the identity confirmed by the identity provider";
+
 	private final IdentityVerificationHandler _handler;
 
 	private final ResKey _title;
@@ -194,30 +202,56 @@ public class IdentifyExternallyAction extends InterruptibleViewAction {
 	 * window the chain waits in.
 	 *
 	 * <p>
-	 * Runs on the thread of the request that came back from the provider. What fails in the window
-	 * is logged and left there: the request answers for the identity alone.
+	 * Runs on the thread of the request that came back from the provider. Every answer of the
+	 * handler - an accepted identity, a refused one, and a failure of the handler itself - closes the
+	 * waiting dialog and is shown in the window that ran the command; the result is then
+	 * {@link VerificationResult#delivered() delivered}, and the window that came back from the
+	 * provider has nothing left to show. What fails in the window is logged and left there: the
+	 * request answers for the identity alone.
 	 * </p>
 	 */
 	private VerificationResult handle(ReactContext context, Runnable closePrompt, Person expected,
 			VerifiedIdentity identity, Object input, Continuation continuation) {
-		VerificationResult result = _handler.handle(expected, identity);
+		VerificationResult result;
+		Throwable failure;
 		try {
-			ChainInWindow.runInWindow(context, () -> {
+			result = _handler.handle(expected, identity);
+			failure = null;
+		} catch (RuntimeException ex) {
+			I18NFailure i18nFailure = CommandErrors.findI18NFailure(ex);
+			result = VerificationResult.refused(
+				i18nFailure != null ? i18nFailure.getErrorKey() : I18NConstants.ERROR_IDENTIFICATION_FAILED);
+			failure = ex;
+		}
+
+		VerificationResult answer = result;
+		Throwable handlerFailure = failure;
+		boolean delivered;
+		try {
+			delivered = ChainInWindow.runInWindow(context, () -> {
 				if (closePrompt != null) {
 					closePrompt.run();
 				}
-				if (result.isVerified()) {
+				if (handlerFailure != null) {
+					CommandErrors.report(context.getErrorSink(), handlerFailure, HANDLER_DESCRIPTION,
+						IdentifyExternallyAction.class);
+					continuation.abort();
+				} else if (answer.isVerified()) {
 					ChainInWindow.resume(context, input, continuation, IdentifyExternallyAction.class);
 				} else {
-					ViewMessages.error(context, result.getMessage());
+					ViewMessages.error(context, answer.getMessage());
 					continuation.abort();
 				}
 			});
 		} catch (Throwable ex) {
+			delivered = false;
 			Logger.error("The answer of the identity provider could not be carried into window '"
 				+ context.getWindowName() + "'.", ex, IdentifyExternallyAction.class);
 		}
-		return result;
+		if (!delivered && failure != null) {
+			Logger.error(HANDLER_DESCRIPTION, failure, IdentifyExternallyAction.class);
+		}
+		return delivered ? result.delivered() : result;
 	}
 
 	/**

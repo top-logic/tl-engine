@@ -45,13 +45,17 @@ public final class ChainInWindow {
 	 * its display updates reach that window's page and its texts are resolved in that window's
 	 * language. A window whose page is gone is not acted on.
 	 * </p>
+	 *
+	 * @return Whether the action has been run, {@code false} when the window is gone.
 	 */
-	public static void runInWindow(ReactContext context, Runnable action) {
+	public static boolean runInWindow(ReactContext context, Runnable action) {
 		String windowName = context.getWindowName();
 		if (!ReactWindowReplay.inWindow(context.getWindowRegistry(), windowName, action)) {
 			Logger.warn("Window '" + windowName + "' is gone, the command chain waiting in it does not continue.",
 				ChainInWindow.class);
+			return false;
 		}
+		return true;
 	}
 
 	/**

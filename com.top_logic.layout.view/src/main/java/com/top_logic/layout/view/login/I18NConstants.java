@@ -132,6 +132,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_LOGIN_METHOD_NOT_IDENTIFYING;
 
 	/**
+	 * @en The sign-in at the identity provider could not be taken over.
+	 */
+	public static ResKey ERROR_IDENTIFICATION_FAILED;
+
+	/**
 	 * @en Your password cannot be verified. The change was not applied.
 	 */
 	public static ResKey ERROR_PASSWORD_NOT_VERIFIABLE;

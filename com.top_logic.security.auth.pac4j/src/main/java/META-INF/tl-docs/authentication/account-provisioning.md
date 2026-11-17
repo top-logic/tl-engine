@@ -154,6 +154,12 @@ it. The request coming back is no login:
 - Connecting grants no groups: the identity's groups are synchronized at its first login, see
   [Groups](#groups).
 
+The outcome is shown in the application window that started *Connect*: its waiting dialog closes,
+and a refusal appears as an error message there. The sign-in window closes itself once the answer
+has reached that window (`VerificationResult#isDelivered()`); only an answer that reached no window
+(e.g. an expired token, or the application window was closed meanwhile) is shown in the sign-in
+window.
+
 Afterwards a login through the connected client opens the same account (step 1 of [Finding the
 account](#finding-the-account)).
 

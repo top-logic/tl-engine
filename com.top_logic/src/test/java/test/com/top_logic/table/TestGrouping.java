@@ -28,7 +28,7 @@ import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
 
 /**
- * Test for single-level grouping in {@link ListRowSource} and the group-header / subtotal
+ * Test for grouping in {@link ListRowSource} and the group-header / subtotal
  * rendering in {@link DefaultTableView}.
  */
 public class TestGrouping extends TestCase {

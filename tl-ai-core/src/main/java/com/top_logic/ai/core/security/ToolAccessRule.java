@@ -9,7 +9,7 @@ import com.top_logic.ai.tool.api.ToolGroups;
 
 /*
  * Deliberately free of resources: the sentence an administrator reads is assembled in the view
- * (com.top_logic.tl.ai.core.security.layout.ToolAccessLabels), so that a test can assert the decision
+ * (com.top_logic.ai.classic.security.layout.ToolAccessLabels), so that a test can assert the decision
  * and its provenance as data rather than by matching translated prose.
  */
 

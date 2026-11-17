@@ -20,7 +20,7 @@ import com.top_logic.ai.tool.api.registry.ToolRegistryService.ToolFactoryConfig;
 import com.top_logic.basic.util.I18NBundleSPI;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.core.security.layout.AdminToolDescriptions;
+import com.top_logic.ai.classic.security.layout.AdminToolDescriptions;
 import com.top_logic.ai.core.tools.registry.ScriptToolFactory;
 
 /**

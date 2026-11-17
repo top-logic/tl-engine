@@ -568,15 +568,16 @@ public class SecurityDefinitionEditor {
 	}
 
 	/**
-	 * The name of the access rights entry of the given attribute.
+	 * The name of the access rights entry of the given attribute for the given type.
 	 *
 	 * <p>
-	 * An attribute is configured by its definition, so an override of an attribute shares the
-	 * entry of the attribute it overrides.
+	 * The rights of an attribute are configured for a type and the attribute name, and apply to
+	 * that type and its specializations, no matter whether the type defines, overrides or inherits
+	 * the attribute.
 	 * </p>
 	 */
-	public static String entryName(TLStructuredTypePart attribute) {
-		return TLModelUtil.qualifiedName(attribute.getDefinition());
+	public static String entryName(TLClass type, TLStructuredTypePart attribute) {
+		return TLModelUtil.qualifiedTypePartName(TLModelUtil.qualifiedName(type), attribute.getName());
 	}
 
 	/**
@@ -590,7 +591,7 @@ public class SecurityDefinitionEditor {
 	 *
 	 * @param name
 	 *        The name of the access rights entry: the qualified name of a type, a module, an
-	 *        attribute (see {@link #entryName(TLStructuredTypePart)}) or a singleton.
+	 *        attribute (see {@link #entryName(TLClass, TLStructuredTypePart)}) or a singleton.
 	 * @return A snapshot of the stored rules, empty when there are none.
 	 * @throws ConfigurationException
 	 *         When the stored configuration cannot be parsed.
@@ -645,25 +646,51 @@ public class SecurityDefinitionEditor {
 	}
 
 	/**
-	 * Drops the stored rules for the given role and operation on the given attribute.
+	 * Drops the stored rules for the given role and operation on the given attribute of the given
+	 * type.
 	 *
 	 * @see #dropStoredGrant(TLClass, BoundCommandGroup, BoundedRole)
+	 * @see #entryName(TLClass, TLStructuredTypePart)
 	 */
-	public void dropStoredGrant(TLStructuredTypePart attribute, BoundCommandGroup operation, BoundedRole role)
-			throws IOException, ConfigurationException {
-		editStoredRules(entryName(attribute), TLPartAccessRights.class, rules -> dropRole(rules, operation, role));
+	public void dropStoredGrant(TLClass type, TLStructuredTypePart attribute, BoundCommandGroup operation,
+			BoundedRole role) throws IOException, ConfigurationException {
+		editStoredRules(entryName(type, attribute), TLPartAccessRights.class,
+			rules -> dropRole(rules, operation, role));
 	}
 
 	/**
-	 * Drops all stored rules of the given operation on the given attribute, so that the underlying
-	 * configuration layers decide about it again.
+	 * Drops all stored rules of the given operation on the given attribute of the given type, so
+	 * that the underlying configuration layers decide about it again.
 	 *
 	 * @see #dropStoredGrant(TLClass, BoundCommandGroup, BoundedRole)
+	 * @see #entryName(TLClass, TLStructuredTypePart)
 	 */
-	public void dropStoredRules(TLStructuredTypePart attribute, BoundCommandGroup operation)
+	public void dropStoredRules(TLClass type, TLStructuredTypePart attribute, BoundCommandGroup operation)
 			throws IOException, ConfigurationException {
-		editStoredRules(entryName(attribute), TLPartAccessRights.class,
+		editStoredRules(entryName(type, attribute), TLPartAccessRights.class,
 			rules -> rules.removeIf(rule -> isFor(rule, operation)));
+	}
+
+	/**
+	 * Stores the given roles as the grant of the given operation on the given attribute of the
+	 * given type, replacing the stored rules of the operation.
+	 *
+	 * <p>
+	 * A grant listing no roles denies the operation on the attribute to every role.
+	 * </p>
+	 *
+	 * @see #entryName(TLClass, TLStructuredTypePart)
+	 */
+	public void setAttributeGrant(TLClass type, TLStructuredTypePart attribute, BoundCommandGroup operation,
+			Collection<BoundedRole> roles) throws IOException, ConfigurationException {
+		editStoredRules(entryName(type, attribute), TLPartAccessRights.class, rules -> {
+			rules.removeIf(rule -> isFor(rule, operation));
+			AccessRule grant = newRule(AccessGrant.class, operation, null);
+			for (BoundedRole role : roles) {
+				grant.getRoles().add(roleConfig(role));
+			}
+			rules.add(grant);
+		});
 	}
 
 	/**
@@ -703,22 +730,24 @@ public class SecurityDefinitionEditor {
 	 * An attribute with a grant of an operation restricts the operation to the roles granted it on
 	 * the attribute. Granting it to a role therefore restricts the attribute, if it was not
 	 * restricted before. A role the operation is revoked from may no longer perform it on the
-	 * attribute, also if it is the last one; {@link #dropAttributeGrants(TLStructuredTypePart, BoundCommandGroup)}
-	 * lifts the restriction instead.
+	 * attribute, also if it is the last one;
+	 * {@link #dropAttributeGrants(TLClass, TLStructuredTypePart, BoundCommandGroup)} lifts the
+	 * restriction instead.
 	 * </p>
 	 *
 	 * @see #setGranted(TLClass, BoundCommandGroup, BoundedRole, boolean)
+	 * @see #entryName(TLClass, TLStructuredTypePart)
 	 */
-	public void setGranted(TLStructuredTypePart attribute, BoundCommandGroup operation, BoundedRole role,
-			boolean granted) throws IOException, ConfigurationException {
-		editStoredRules(entryName(attribute), TLPartAccessRights.class,
+	public void setGranted(TLClass type, TLStructuredTypePart attribute, BoundCommandGroup operation,
+			BoundedRole role, boolean granted) throws IOException, ConfigurationException {
+		editStoredRules(entryName(type, attribute), TLPartAccessRights.class,
 			rules -> setRule(rules, operation, role, granted));
 	}
 
 	/**
-	 * Lifts the restriction of the given operation on the given attribute: the operation is decided
-	 * by the rights on the object again, whatever the underlying configuration layers grant on the
-	 * attribute.
+	 * Lifts the restriction of the given operation on the given attribute of the given type: the
+	 * operation is decided by the rights on the object again, whatever the underlying configuration
+	 * layers or the generalizations of the type grant on the attribute.
 	 *
 	 * <p>
 	 * The stored rules of the operation are replaced by a revocation without roles, which drops
@@ -730,9 +759,9 @@ public class SecurityDefinitionEditor {
 	 * @throws ConfigurationException
 	 *         When the stored configuration cannot be parsed.
 	 */
-	public void dropAttributeGrants(TLStructuredTypePart attribute, BoundCommandGroup operation)
+	public void dropAttributeGrants(TLClass type, TLStructuredTypePart attribute, BoundCommandGroup operation)
 			throws IOException, ConfigurationException {
-		editStoredRules(entryName(attribute), TLPartAccessRights.class, rules -> {
+		editStoredRules(entryName(type, attribute), TLPartAccessRights.class, rules -> {
 			rules.removeIf(rule -> isFor(rule, operation));
 			rules.add(newRule(AccessRevoke.class, operation, null));
 		});
@@ -839,10 +868,14 @@ public class SecurityDefinitionEditor {
 		result.update(result.descriptor().getProperty(AccessRule.OPERATION),
 			new CommandGroupReference(operation.getID()));
 		if (role != null) {
-			RoleConfig roleConfig = TypedConfiguration.newConfigItem(RoleConfig.class);
-			roleConfig.setName(role.getName());
-			result.getRoles().add(roleConfig);
+			result.getRoles().add(roleConfig(role));
 		}
+		return result;
+	}
+
+	private static RoleConfig roleConfig(BoundedRole role) {
+		RoleConfig result = TypedConfiguration.newConfigItem(RoleConfig.class);
+		result.setName(role.getName());
 		return result;
 	}
 

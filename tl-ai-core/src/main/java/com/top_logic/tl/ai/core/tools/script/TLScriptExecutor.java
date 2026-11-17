@@ -56,10 +56,12 @@ public class TLScriptExecutor {
 	private static final ResKey CHANGE = ResKey.text("changeData");
 
 	/**
-	 * The message a read-only tool refuses a script with that changes something.
+	 * The message a read-only tool refuses a script with that changes something, a
+	 * {@link String#format(String, Object...) format} filled with the name of the first function
+	 * with an effect, see {@link NotReadOnly#NotReadOnly(String)}.
 	 */
-	public static final String NOT_READ_ONLY = "The expression changes data (it creates, sets, deletes or has"
-		+ " another side effect), and this tool only reads. Remove the writing part. To change data, use"
+	public static final String NOT_READ_ONLY = "The expression changes data: '%s' creates, sets, deletes or has"
+		+ " another side effect, and this tool only reads. Remove the writing part. To change data, use"
 		+ " updateObject, createObject or deleteObject for one known object, or changeData.";
 
 	/**
@@ -160,8 +162,25 @@ public class TLScriptExecutor {
 	 */
 	public static final class NotReadOnly extends IllegalArgumentException {
 
-		NotReadOnly() {
-			super(NOT_READ_ONLY);
+		private final String _function;
+
+		/**
+		 * Creates a {@link NotReadOnly}.
+		 *
+		 * @param function
+		 *        See {@link #getFunction()}.
+		 */
+		NotReadOnly(String function) {
+			super(String.format(NOT_READ_ONLY, function));
+			_function = function;
+		}
+
+		/**
+		 * The name of the first function in the script that has an effect; for a configured TL-Script
+		 * function its name.
+		 */
+		public String getFunction() {
+			return _function;
 		}
 	}
 
@@ -318,14 +337,15 @@ public class TLScriptExecutor {
 	 * </p>
 	 *
 	 * @throws NotReadOnly
-	 *         For an expression with a side effect.
+	 *         For an expression with a side effect; it names the first function with an effect.
 	 * @throws IllegalArgumentException
 	 *         As {@link #compile(String)}.
 	 */
 	public static QueryExecutor compileReadOnly(String script) {
 		SearchExpression expression = expression(script);
-		if (SideEffects.any(expression)) {
-			throw new NotReadOnly();
+		String effect = SideEffects.firstEffect(expression);
+		if (effect != null) {
+			throw new NotReadOnly(effect);
 		}
 		return executor(expression);
 	}

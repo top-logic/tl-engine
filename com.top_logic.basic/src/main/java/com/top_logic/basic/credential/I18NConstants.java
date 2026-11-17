@@ -23,6 +23,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_SECRET_VARIABLE_UNDEFINED__NAME;
 
 	/**
+	 * @en The encrypted value of the secret variable "{0}" cannot be decrypted. It was modified or
+	 *     encrypted with another key.
+	 */
+	public static ResKey1 ERROR_SECRET_VARIABLE_NOT_DECRYPTABLE__NAME;
+
+	/**
 	 * @en The secret file "{0}" cannot be read.
 	 */
 	public static ResKey1 ERROR_SECRET_FILE_UNREADABLE__PATH;

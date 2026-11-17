@@ -10,6 +10,7 @@ import java.util.List;
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.DragEdge;
 import com.top_logic.react.flow.data.DropArea;
+import com.top_logic.react.flow.data.Widget;
 
 /**
  * Interface for layouts that support interactive drag-and-drop of their child boxes.
@@ -170,8 +171,21 @@ public interface DragController {
 	 * Callback for applying pan-related SVG transform updates.
 	 */
 	interface PanRenderer {
-		/** Sets the {@code transform} attribute on the element with the given ID. */
-		void setTranslate(String elementId, double tx, double ty);
+		/**
+		 * Sets the {@code transform} attribute on the element the given owner has drawn with the
+		 * ID for the given purpose.
+		 *
+		 * @param owner
+		 *        The widget that has drawn the element.
+		 * @param purpose
+		 *        The purpose the owner requested the ID of the element for, see
+		 *        {@link com.top_logic.react.flow.svg.SvgWriter#uniqueId(Widget, String)}.
+		 * @param tx
+		 *        The translation along the X axis.
+		 * @param ty
+		 *        The translation along the Y axis.
+		 */
+		void setTranslate(Widget owner, String purpose, double tx, double ty);
 	}
 
 	/**

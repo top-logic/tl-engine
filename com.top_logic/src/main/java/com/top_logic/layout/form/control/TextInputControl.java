@@ -14,6 +14,8 @@ import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.base.services.simpleajax.JSFunctionCall;
 import com.top_logic.base.services.simpleajax.PropertyUpdate;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
@@ -86,6 +88,19 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
 
     private int maxLengthShown = -1;
 
+	/**
+	 * The text a {@link FormField} gives its {@link TextInputControl} as placeholder, when its label
+	 * is shown in the empty input instead of beside it, see
+	 * {@link com.top_logic.model.annotate.LabelPosition#PLACEHOLDER}.
+	 *
+	 * <p>
+	 * A placeholder {@link #setPlaceHolder(String) set at the control} and the
+	 * {@link FormField#getPlaceholder() placeholder of the field} - e.g. the value an attribute
+	 * inherits - take precedence: this text is shown only while neither is set.
+	 * </p>
+	 */
+	public static final Property<String> LABEL_PLACEHOLDER = TypedAnnotatable.property(String.class, "labelPlaceholder");
+
 	private String _placeHolder;
 
 	private int _maxLength;
@@ -107,7 +122,14 @@ public class TextInputControl extends AbstractFormFieldControl implements WithPl
 
 	@Override
 	public String getPlaceHolder() {
-		return _placeHolder != null ? _placeHolder : getModelPlaceholder();
+		if (_placeHolder != null) {
+			return _placeHolder;
+		}
+		String modelPlaceholder = getModelPlaceholder();
+		if (!StringServices.isEmpty(modelPlaceholder)) {
+			return modelPlaceholder;
+		}
+		return getFieldModel().get(LABEL_PLACEHOLDER);
 	}
 
 	/**

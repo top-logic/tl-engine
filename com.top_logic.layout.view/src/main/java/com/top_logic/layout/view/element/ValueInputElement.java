@@ -59,7 +59,6 @@ import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
-import com.top_logic.layout.view.channel.DeletedObjects;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.GenericViewCommand;
@@ -82,7 +81,6 @@ import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.annotate.TLValueNormalizer;
 import com.top_logic.model.annotate.util.ValueNormalizer;
 import com.top_logic.model.config.AttributeConfigBase;
-import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
@@ -114,7 +112,8 @@ import com.top_logic.util.error.TopLogicException;
  * A value of an enumeration or a class is chosen from options: the classifiers respectively the
  * instances of the type, or whatever the {@link Config#getOptions() options expression} computes.
  * With {@link Config#getMultiple() multiple} set, the channel holds a collection of such values
- * instead of a single one.
+ * instead of a single one. An {@link Config#getOrdered() ordered} collection is a list whose order
+ * the user arranges, as in the field of an ordered attribute.
  * </p>
  *
  * <p>
@@ -128,7 +127,8 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * The value is declared in the words of an attribute of a class in the model: its
  * {@link Config#getType() type}, whether it is {@link Config#getMandatory() mandatory}, whether it
- * holds {@link Config#getMultiple() multiple} values, and the {@link Config#getAnnotations()
+ * holds {@link Config#getMultiple() multiple} values in an {@link Config#getOrdered() order} of
+ * their own, and the {@link Config#getAnnotations()
  * annotations} that shape its display - a {@code <classification-display>}, a
  * {@code <multi-line>}, a {@code <format>}, an {@code <input-control>} - which act on the input as
  * they act on a field of such an attribute. An annotation the input does not state is taken from
@@ -166,12 +166,15 @@ public class ValueInputElement implements UIElement {
 	/**
 	 * Configuration for {@link ValueInputElement}.
 	 */
-	@TagName("value-input")
+	@TagName(Config.TAG_NAME)
 	@TypeIcon("css:bi bi-input-cursor-text")
 	public interface Config extends UIElement.Config, Inputs, AttributeConfigBase, ActionScopeDefinition {
 
 	/** Access to the default methods of this interface for the configuration proxy. */
 	Lookup LOOKUP = MethodHandles.lookup();
+
+		/** The tag name of a {@link ValueInputElement} in a view. */
+		String TAG_NAME = "value-input";
 
 		/** Configuration name for {@link #getOnSubmitAs()}. */
 		String SUBMIT_AS = "submit-as";
@@ -201,6 +204,9 @@ public class ValueInputElement implements UIElement {
 
 		/** Configuration name for {@link #getMultiple()}. */
 		String MULTIPLE = "multiple";
+
+		/** Configuration name for {@link #getOrdered()}. */
+		String ORDERED = TLStructuredTypePart.ORDERED_ATTR;
 
 		/** Configuration name for {@link #getMandatory()}. */
 		String MANDATORY = TLStructuredTypePart.MANDATORY_ATTR;
@@ -333,6 +339,25 @@ public class ValueInputElement implements UIElement {
 		 */
 		@Name(MULTIPLE)
 		boolean getMultiple();
+
+		/**
+		 * Whether the order of the {@link #getMultiple() multiple} values is part of the value, so
+		 * that the user arranges it.
+		 *
+		 * <p>
+		 * The same statement the ordered flag makes for an attribute: the chosen values are moved
+		 * by dragging their chips or with Alt and an arrow key, and the channel holds them as a
+		 * list in the order shown. Without it, the values are shown in the order of the options,
+		 * and the order of the list on the channel means nothing.
+		 * </p>
+		 *
+		 * <p>
+		 * Only a value of {@link #getMultiple() multiple} values has an order; stating it for a
+		 * single value is a configuration error.
+		 * </p>
+		 */
+		@Name(ORDERED)
+		boolean getOrdered();
 
 		/**
 		 * Whether the value may not be empty.
@@ -473,6 +498,13 @@ public class ValueInputElement implements UIElement {
 		 * label-less input.
 		 *
 		 * <p>
+		 * With {@code placeholder}, the label is not shown beside the input but as placeholder in
+		 * the empty input, and remains the accessible name of the input. An explicit
+		 * {@link #getPlaceholder() placeholder} takes precedence over the label. An input that
+		 * shows no placeholder shows no label, as with {@code hide-label}.
+		 * </p>
+		 *
+		 * <p>
 		 * If not set, the position falls back to the responsive default of the enclosing layout.
 		 * </p>
 		 */
@@ -587,6 +619,8 @@ public class ValueInputElement implements UIElement {
 
 	private final boolean _multiple;
 
+	private final boolean _ordered;
+
 	private final boolean _mandatory;
 
 	private final AnnotationLookup _annotations;
@@ -633,6 +667,11 @@ public class ValueInputElement implements UIElement {
 		_observedTypes = config.getObservedTypes();
 		_optionOrder = config.getOptionOrder();
 		_multiple = config.getMultiple();
+		_ordered = config.getOrdered();
+		if (_ordered && !_multiple) {
+			context.error("A <" + Config.TAG_NAME + "> with '" + Config.ORDERED + "' arranges several values and needs '"
+				+ Config.MULTIPLE + "': " + config.location());
+		}
 		_mandatory = config.getMandatory();
 		_annotations = config;
 		_normalizer = ValueNormalizer.annotated(config);
@@ -682,6 +721,7 @@ public class ValueInputElement implements UIElement {
 		Resources resources = Resources.getInstance();
 		String label = _label == null ? null : resources.getString(_label);
 		FieldSpec spec = FieldControlService.fieldSpec(type, _annotations, label, _multiple, field);
+		spec.setOrdered(_ordered);
 		if (_optionOrder != null) {
 			spec.setOptionOrder(AttributeOptions.comparator(_optionOrder));
 		} else if (_options != null) {
@@ -690,6 +730,8 @@ public class ValueInputElement implements UIElement {
 		}
 		if (_placeholder != null) {
 			spec.setPlaceholder(resources.getString(_placeholder));
+		} else if (spec.getPlaceholder() == null) {
+			spec.setPlaceholder(AttributeFieldControl.labelPlaceholder(_labelPosition, label));
 		}
 		spec.setIcon(_icon).setClearable(_clearable).setDebounce(_debounce);
 		ReactControl input = FieldControlService.getInstance().createFieldControl(context, type, _annotations,
@@ -930,14 +972,7 @@ public class ValueInputElement implements UIElement {
 	 *        passed on as nothing.
 	 */
 	private List<?> options(TLType type, Object[] inputValues) {
-		if (_options == null) {
-			return AttributeOptions.optionsFor(type);
-		}
-		Object[] args = new Object[inputValues.length];
-		for (int n = 0, cnt = args.length; n < cnt; n++) {
-			args[n] = DeletedObjects.withoutDeleted(inputValues[n]);
-		}
-		return SearchExpression.asList(_options.execute(args));
+		return AttributeOptions.optionsFor(type, _options, inputValues);
 	}
 
 }

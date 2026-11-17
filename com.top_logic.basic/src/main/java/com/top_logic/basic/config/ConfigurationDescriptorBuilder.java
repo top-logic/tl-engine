@@ -227,6 +227,13 @@ public final class ConfigurationDescriptorBuilder {
 
 	/**
 	 * Builds the {@link #getDescriptor()} from the information given in the constructor.
+	 *
+	 * <p>
+	 * The rule which methods of the configuration interface are property getters is repeated in
+	 * the documentation generator (com.top_logic.build.doclet.TLDoclet, which works on the source
+	 * model instead of reflection), which creates the label and tooltip resource keys of the
+	 * properties. A change of the rule must be done in both places.
+	 * </p>
 	 */
 	public void build() {
 		if (! configurationInterface.isInterface()) {

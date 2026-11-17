@@ -128,6 +128,17 @@ import com.top_logic.util.Resources;
  *        attribute. A row without a cell shows nothing in the column - neither a value, nor an
  *        input, nor a tooltip, a class or a color role -, and the built column announces the test as its
  *        {@link Column#existence()}.
+ * @param header
+ *        The color role and the CSS class of the heading of the column, {@link ColumnHeader#NONE}
+ *        for a heading without either. They are put on the heading only, not on the data cells, see
+ *        {@link Column#headerRole()} and {@link Column#headerClass()}. Never {@code null}.
+ * @param released
+ *        Whether the access rights of the current user release the column,
+ *        {@link ChannelCondition#ALWAYS} for a column no right withholds. While the condition does
+ *        not hold, the column is withheld from the user: it does not exist, as if its
+ *        {@link #exists()} condition did not hold, and nothing the table offers may refer to it -
+ *        a declared filter with a criterion on it is not offered, see {@link ColumnExistence}.
+ *        Never {@code null}.
  */
 public record ColumnSetup(
 		String name,
@@ -149,7 +160,44 @@ public record ColumnSetup(
 		boolean sortable,
 		ColumnAlignment align,
 		ChannelCondition exists,
-		CellExistence<Object> cellExists) {
+		CellExistence<Object> cellExists,
+		ColumnHeader header,
+		ChannelCondition released) {
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column no access right withholds.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip,
+			BiFunction<Object, Object, String> cellClass, BiFunction<Object, Object, ValueColor> cellRole,
+			ReactControlProvider display, boolean sortable, ColumnAlignment align, ChannelCondition exists,
+			CellExistence<Object> cellExists, ColumnHeader header) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, cellClass, cellRole, display, sortable, align, exists, cellExists, header,
+			ChannelCondition.ALWAYS);
+	}
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column whose heading has neither a color role nor a CSS
+	 * class of its own.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip,
+			BiFunction<Object, Object, String> cellClass, BiFunction<Object, Object, ValueColor> cellRole,
+			ReactControlProvider display, boolean sortable, ColumnAlignment align, ChannelCondition exists,
+			CellExistence<Object> cellExists) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, cellClass, cellRole, display, sortable, align, exists, cellExists, ColumnHeader.NONE,
+			ChannelCondition.ALWAYS);
+	}
 
 	/**
 	 * Creates a {@link ColumnSetup} of a column that always exists, has a cell for every row, whose
@@ -270,7 +318,20 @@ public record ColumnSetup(
 		}
 		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
 			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, align,
-			exists.and(condition), cellExists);
+			exists.and(condition), cellExists, header, released);
+	}
+
+	/**
+	 * This descriptor for a column the access rights of the user release only where the given
+	 * condition holds in addition to its own {@link #released()} condition.
+	 */
+	public ColumnSetup releasedIf(ChannelCondition condition) {
+		if (condition == ChannelCondition.ALWAYS) {
+			return this;
+		}
+		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
+			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, align, exists, cellExists,
+			header, released.and(condition));
 	}
 
 	/**
@@ -281,8 +342,9 @@ public record ColumnSetup(
 	 * displaying its values through the {@link #display()} when it declares one, with the
 	 * {@link #tooltip()} on its cells and on the header rows of the groups it forms when it
 	 * computes one, with the {@link #cellClass()} and the {@link #cellRole()} on its cells when it
-	 * computes them, and left out of exports when its {@link #export()} says so. It puts its
-	 * content on the side its {@link #alignment() alignment} names.
+	 * computes them, with the {@link #header()} on its heading, and left out of exports when its
+	 * {@link #export()} says so. It puts its content on the side its {@link #alignment() alignment}
+	 * names.
 	 */
 	public Column<Object, ?> buildColumn() {
 		return decorate(binding().createColumn(this));
@@ -433,7 +495,7 @@ public record ColumnSetup(
 		if (cellExists != null) {
 			result = withCellExistence(result, cellExists);
 		}
-		return result;
+		return header.decorate(result);
 	}
 
 	/**

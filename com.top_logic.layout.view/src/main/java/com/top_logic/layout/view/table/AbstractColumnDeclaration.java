@@ -34,9 +34,12 @@ import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.model.TLClassifier;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
+import com.top_logic.model.annotate.ui.AnnotationValueColorProvider;
+import com.top_logic.model.annotate.ui.TLColor;
 import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -127,6 +130,12 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getCellRole()}. */
 		String CELL_ROLE = "cell-role";
+
+		/** Configuration name for {@link #getHeaderRole()}. */
+		String HEADER_ROLE = "header-role";
+
+		/** Configuration name for {@link #getHeaderClass()}. */
+		String HEADER_CLASS = "header-class";
 
 		/** Configuration name for {@link #getDisplay()}. */
 		String DISPLAY = "display";
@@ -321,8 +330,10 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		 * The result is the name of a role: <code>error</code>, <code>warning</code>,
 		 * <code>success</code> and <code>info</code> mark a state, <code>brand</code> sets a value
 		 * apart, <code>neutral</code> names the role without a tint, and <code>category-1</code> to
-		 * <code>category-8</code> tell values apart whose meaning the application defines. Nothing
-		 * or an empty text leaves the cell without a role, a text naming no role is an error. The
+		 * <code>category-8</code> tell values apart whose meaning the application defines. A
+		 * classifier of an enumeration names the role its <code>&lt;color role="..."/&gt;</code>
+		 * annotation names. Nothing, an empty text and a classifier without a role leave the cell
+		 * without a role, a text naming no role is an error. The
 		 * design system decides how a role looks in each theme. A cell with a role of its own is
 		 * drawn in it, also within a row of another {@link RowRoleConfig#getRowRole() row role}.
 		 * </p>
@@ -347,6 +358,63 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getCellRole();
+
+		/**
+		 * The color role of the heading of the column: an expression computing the role the heading
+		 * is tinted in.
+		 *
+		 * <p>
+		 * The expression sees the values of the inputs of the column, of the table for a column
+		 * without inputs of its own; it sees no row, the heading belongs to the whole column. The
+		 * result names a role as the one of the {@link #getCellRole() cell role} does: a role name
+		 * such as <code>warning</code> or <code>category-3</code>, or a classifier of an enumeration
+		 * whose <code>&lt;color role="..."/&gt;</code> annotation names it. Nothing, an empty text
+		 * and a classifier without a role leave the heading without a role, a text naming no role
+		 * is an error.
+		 * </p>
+		 *
+		 * <p>
+		 * The role is put on the heading only, the data cells do not carry it. It follows the
+		 * inputs: when one of them takes a new value, the heading is drawn in the role computed
+		 * anew, without the table being built again. Unset (the default) leaves the heading without
+		 * a role. The {@link #getHeaderClass() header class} next to it is the hook for the
+		 * application's own stylesheet.
+		 * </p>
+		 *
+		 * <p>
+		 * Example tinting the heading of a column in the role of the classifier the input
+		 * <code>phase</code> holds:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;column attribute="effort" header-role="$phase"/&gt;
+		 * </pre>
+		 */
+		@Name(HEADER_ROLE)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getHeaderRole();
+
+		/**
+		 * The CSS class of the heading of the column: an expression computing the class the
+		 * heading carries.
+		 *
+		 * <p>
+		 * The expression sees the variables of the {@link #getHeaderRole() header role}. The result
+		 * is put on the heading as the one of the {@link #getCellClass() cell class} is put on a
+		 * cell: nothing or an empty string gives the heading no class, a list all of its members as
+		 * classes, any other value its text.
+		 * </p>
+		 *
+		 * <p>
+		 * The class is put on the heading only, the data cells do not carry it; it is the hook for
+		 * the application's own stylesheet. It follows the inputs as the
+		 * {@link #getHeaderRole() header role} does. Unset (the default) leaves the heading without
+		 * a class of its own.
+		 * </p>
+		 */
+		@Name(HEADER_CLASS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getHeaderClass();
 
 		/**
 		 * How a cell of the column displays its value, in place of the display the type of the
@@ -430,6 +498,18 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 	private final QueryExecutor _cellRole;
 
+	/** The compiled {@link Config#getHeaderRole() header role}, {@code null} for none. */
+	private final QueryExecutor _headerRole;
+
+	/** The compiled {@link Config#getHeaderClass() header class}, {@code null} for none. */
+	private final QueryExecutor _headerClass;
+
+	/**
+	 * The inputs whose values the {@link #_headerRole} and the {@link #_headerClass} see, empty
+	 * without either.
+	 */
+	private final List<InputRef> _headerInputs;
+
 	/** The configured {@link Config#getDisplay() display}, {@code null} for the type-derived one. */
 	private final ReactControlProvider _display;
 
@@ -483,6 +563,10 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_existsIf = InputScript.compile(config, Config.EXISTS_IF);
 		_existsInputs = _existsIf != null
 			? InputScript.inputs(config, config.descriptor().getProperty(Config.EXISTS_IF)) : List.of();
+		_headerRole = InputScript.compile(config, Config.HEADER_ROLE);
+		_headerClass = InputScript.compile(config, Config.HEADER_CLASS);
+		_headerInputs = _headerRole != null || _headerClass != null
+			? InputScript.inputs(config, config.descriptor().getProperty(Config.HEADER_ROLE)) : List.of();
 		_hiddenByDefault = !config.getVisible();
 		_sortable = config.getSortable();
 		_export = ColumnExport.of(context, config);
@@ -504,12 +588,13 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 * {@link Config#getTooltip() tooltips}, its {@link Config#getCellClass() cell classes} or its
 	 * {@link Config#getCellRole() cell roles} with a script: the script sees their values, so the
 	 * cells follow them. Likewise the inputs its {@link Config#getExistsIf() existence condition}
-	 * sees.
+	 * and its {@link Config#getHeaderRole() header role} and {@link Config#getHeaderClass() header
+	 * class} see.
 	 * </p>
 	 */
 	@Override
 	public List<InputRef> inputs() {
-		return union(_scriptInputs, _binding.inputs(), _existsInputs);
+		return union(_scriptInputs, _binding.inputs(), _existsInputs, _headerInputs);
 	}
 
 	/**
@@ -549,6 +634,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_scriptInputs = List.of();
 		_existsIf = null;
 		_existsInputs = List.of();
+		_headerRole = null;
+		_headerClass = null;
+		_headerInputs = List.of();
 		_hiddenByDefault = hiddenByDefault;
 		_sortable = true;
 		_export = ColumnExport.DEFAULT;
@@ -616,7 +704,22 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 			_width, _readonly ? null : editing, aggregate(_aggregate, inputs), comparator(_comparator, inputs),
 			_hiddenByDefault, _export, tooltip(_tooltip, inputs), cellClass(_cellClass, inputs),
 			cellRole(_cellRole, inputs), _display, _sortable, _align, exists(_existsIf, _existsInputs, scope),
-			cellExists);
+			cellExists, header(scope));
+	}
+
+	/**
+	 * The heading of a column of this declaration, {@link ColumnHeader#NONE} for a declaration
+	 * computing neither a {@link Config#getHeaderRole() header role} nor a
+	 * {@link Config#getHeaderClass() header class}.
+	 *
+	 * @param scope
+	 *        What the column is resolved against, holding the session the channels belong to.
+	 */
+	private ColumnHeader header(ColumnResolution scope) {
+		if (_headerRole == null && _headerClass == null) {
+			return ColumnHeader.NONE;
+		}
+		return ColumnHeader.of(_headerRole, _headerClass, ChannelInputs.resolve(scope.context(), _headerInputs));
 	}
 
 	/**
@@ -745,8 +848,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 *
 	 * <p>
 	 * A script names a role by its {@link ValueColor#getExternalName() external name}, such as
-	 * <code>warning</code> or <code>category-3</code>; a {@link ValueColor} a Java function hands
-	 * to the script is taken as it is. Nothing and an empty text name no role.
+	 * <code>warning</code> or <code>category-3</code>, or by a classifier of an enumeration whose
+	 * {@link TLColor} annotation names it; a {@link ValueColor} a Java function hands to the script
+	 * is taken as it is. Nothing, an empty text and a classifier without a role name no role.
 	 * </p>
 	 *
 	 * @param result
@@ -762,6 +866,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		}
 		if (result instanceof ValueColor color) {
 			return color;
+		}
+		if (result instanceof TLClassifier classifier) {
+			return AnnotationValueColorProvider.INSTANCE.colorOf(classifier);
 		}
 		if (result instanceof CharSequence text) {
 			String name = text.toString();

@@ -90,7 +90,7 @@ abstract message Schema {
 	string description;
 
 	/**
-	 * Default value (JSON-serialized string).
+	 * Default value in JSON syntax (a text value including its quotes, e.g. <code>"abc"</code>, a number as <code>42</code>).
 	 */
 	@Name("default")
 	@Nullable
@@ -112,7 +112,7 @@ abstract message Schema {
 	bool writeOnly;
 
 	/**
-	 * Example values (JSON-serialized strings).
+	 * Example values, each in JSON syntax (a text value including its quotes).
 	 */
 	repeated string examples;
 }
@@ -465,7 +465,7 @@ message ObjectSchema extends Schema {
  */
 message EnumSchema extends Schema {
 	/**
-	 * Allowed values (JSON-serialized strings).
+	 * Allowed values, each in JSON syntax (a text value including its quotes, e.g. <code>"open"</code>, a number as <code>1</code>).
 	 */
 	@Name("enum")
 	repeated string enumLiterals;
@@ -480,7 +480,7 @@ message EnumSchema extends Schema {
  */
 message ConstSchema extends Schema {
 	/**
-	 * Constant value (JSON-serialized string).
+	 * Constant value in JSON syntax (a text value including its quotes).
 	 */
 	@Name("const")
 	string constValue;

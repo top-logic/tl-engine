@@ -1,7 +1,7 @@
 import {
   BACKGROUND_COMMAND,
   React, useTLState, useTLCommand, useI18N, TLChild, useFill, FillBarrier, startPointerDrag, rootClassName, stateAttr,
-  separatorMove, separatorStep, movedSize,
+  separatorMove, separatorStep, movedSize, useElementWidth, useTokenPx,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
@@ -18,6 +18,12 @@ const RESET_SIZES_COMMAND = 'resetSizes';
 
 /** The unit of a pane whose size is given in pixels; any other pane is sized in percent. */
 const UNIT_PX = 'px';
+
+/** The token giving the width of a handle between panes side by side (split.css). */
+const HANDLE_TOKEN = '--tl-space-xs';
+
+/** The width of a handle without a design system. */
+const HANDLE_FALLBACK_PX = 8;
 
 const I18N_KEYS = {
   'js.splitPanel.handle': 'Change the size of the areas',
@@ -59,6 +65,33 @@ function paneFlex(child: ChildDescriptor, allCollapsed: boolean, effectiveHorizo
     return allCollapsed && !effectiveHorizontal ? '1 0 0%' : '0 0 auto';
   }
   return child.unit === UNIT_PX ? `0 1 ${child.size}px` : `${child.size} 1 0%`;
+}
+
+/**
+ * Whether two neighbouring panes are separated by a handle: in a resizable split panel between two open panes.
+ */
+function hasHandle(resizable: boolean, before: ChildDescriptor, after: ChildDescriptor | undefined): boolean {
+  return resizable && after !== undefined && !before.collapsed && !after.collapsed;
+}
+
+/**
+ * The width in pixels the panes of a horizontal split panel need side by side: the minimum sizes of the open panes
+ * (in pixels, whether a pane is sized in pixels or in percent) and the handles between them. A collapsed pane needs
+ * no room of its own in this sum.
+ *
+ * @param handleWidth The width of a handle in pixels.
+ */
+function requiredWidth(children: ChildDescriptor[], resizable: boolean, handleWidth: number): number {
+  let width = 0;
+  children.forEach((child, i) => {
+    if (!child.collapsed) {
+      width += Math.max(0, child.minSize || 0);
+    }
+    if (hasHandle(resizable, child, children[i + 1])) {
+      width += handleWidth;
+    }
+  });
+  return width;
 }
 
 /**
@@ -106,6 +139,11 @@ function resized(children: ChildDescriptor[], pixels: number[]): ChildDescriptor
  * percent share the rest, and the handle between them has to span the available extent. Each pane is a bounded region
  * (tl-region) that ends the fill chain: it stretches a child of its own size to its height, holds a filling child to
  * exactly that height, and scrolls what does not fit into it.
+ *
+ * A horizontal split panel whose own width is less than its open panes need side by side (their minimum sizes and the
+ * handles between them) stacks its panes (`data-tl-state~="stacked"`): each pane spans the full width and is as high as
+ * its content, the split panel scrolls vertically, and there are no handles. A collapsed pane stays collapsed. The
+ * sizes of the panes stay as they are: the panes get them back as soon as the room suffices again.
  */
 const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -121,6 +159,12 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const effectiveHorizontal = allCollapsed ? !isHorizontal : isHorizontal;
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const width = useElementWidth(containerRef);
+  const handleWidth = useTokenPx(containerRef, HANDLE_TOKEN, HANDLE_FALLBACK_PX);
+
+  // A width of 0 is no measurement (not laid out, hidden): the panes keep their arrangement.
+  const stacked = isHorizontal && !allCollapsed && width > 0
+    && width < requiredWidth(children, resizable, handleWidth);
 
   /** The sizes moved by keys and not yet sent, in pixels per pane. */
   const keySizes = useRef<number[] | null>(null);
@@ -157,6 +201,10 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
   }, [children, sendCommand, panes, allCollapsed, effectiveHorizontal]);
 
   const computeChildStyle = (child: ChildDescriptor): React.CSSProperties => {
+    if (stacked) {
+      // Full width (the stretch of the column) and the height of the content.
+      return { overflow: child.scrolling || 'auto', flex: '0 0 auto' };
+    }
     const style: React.CSSProperties = {
       overflow: child.scrolling || 'auto',
       flex: paneFlex(child, allCollapsed, effectiveHorizontal),
@@ -253,7 +301,7 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
         key={`child-${i}`}
         id={paneId(i)}
         className="tl-split__pane tl-region"
-        data-tl-state={stateAttr(child.collapsed && effectiveHorizontal && 'collapsed')}
+        data-tl-state={stateAttr(child.collapsed && effectiveHorizontal && !stacked && 'collapsed')}
         style={computeChildStyle(child)}
       >
         <FillBarrier>
@@ -262,8 +310,8 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
       </div>
     );
 
-    // A handle between two panes that are both open.
-    if (resizable && i < children.length - 1 && !child.collapsed && !children[i + 1].collapsed) {
+    // A handle between two panes that are both open, as long as they are side by side.
+    if (!stacked && hasHandle(resizable, child, children[i + 1])) {
       elements.push(
         <div
           key={`handle-${i}`}
@@ -291,7 +339,7 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
       ref={containerRef}
       id={controlId}
       className={rootClassName(state, 'tl-split', `tl-split--${orientation}`, fillClass)}
-      data-tl-state={stateAttr(allCollapsed && 'all-collapsed')}
+      data-tl-state={stateAttr(allCollapsed && 'all-collapsed', stacked && 'stacked')}
     >
       {elements}
     </div>

@@ -17,24 +17,24 @@ public class InstanceEntry extends de.haumacher.msgbuf.data.AbstractDataObject i
 	public static final String INSTANCE_ENTRY__TYPE = "InstanceEntry";
 
 	/** @see #getId() */
-	public static final String ID__PROP = "id";
-
-	/** @see #getLabel() */
-	public static final String LABEL__PROP = "label";
+	public static final String ID__PROP = "_tid";
 
 	/** @see #getType() */
-	public static final String TYPE__PROP = "type";
+	public static final String TYPE__PROP = "_type";
+
+	/** @see #getLabel() */
+	public static final String LABEL__PROP = "_display";
 
 	/** @see #getAttributes() */
 	public static final String ATTRIBUTES__PROP = "attributes";
 
 	private String _id = "";
 
-	private String _label = "";
-
 	private String _type = "";
 
-	private final java.util.Map<String, String> _attributes = new java.util.LinkedHashMap<>();
+	private String _label = "";
+
+	private Object _attributes = null;
 
 	/**
 	 * Creates a {@link InstanceEntry} instance.
@@ -66,26 +66,6 @@ public class InstanceEntry extends de.haumacher.msgbuf.data.AbstractDataObject i
 	}
 
 	/**
-	 * What the object is called.
-	 */
-	public final String getLabel() {
-		return _label;
-	}
-
-	/**
-	 * @see #getLabel()
-	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry setLabel(String value) {
-		internalSetLabel(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getLabel()} without chain call utility. */
-	protected final void internalSetLabel(String value) {
-		_label = value;
-	}
-
-	/**
 	 * The qualified name of the object's own type, which may be a subtype of the listed one.
 	 */
 	public final String getType() {
@@ -106,49 +86,51 @@ public class InstanceEntry extends de.haumacher.msgbuf.data.AbstractDataObject i
 	}
 
 	/**
-	 * The requested attributes the acting account may read, by name, each serialized as JSON the way
-	 * {@code InstanceResponse.attributes} is.
+	 * What the object is called.
 	 */
-	public final java.util.Map<String, String> getAttributes() {
+	public final String getLabel() {
+		return _label;
+	}
+
+	/**
+	 * @see #getLabel()
+	 */
+	public com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry setLabel(String value) {
+		internalSetLabel(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getLabel()} without chain call utility. */
+	protected final void internalSetLabel(String value) {
+		_label = value;
+	}
+
+	/**
+	 * The requested attributes the acting account may read, by name, as
+	 * {@code InstanceResponse.attributes} holds them.
+	 */
+	public final Object getAttributes() {
 		return _attributes;
 	}
 
 	/**
 	 * @see #getAttributes()
 	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry setAttributes(java.util.Map<String, String> value) {
+	public com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry setAttributes(Object value) {
 		internalSetAttributes(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getAttributes()} without chain call utility. */
-	protected final void internalSetAttributes(java.util.Map<String, String> value) {
-		if (value == null) throw new IllegalArgumentException("Property 'attributes' cannot be null.");
-		_attributes.clear();
-		_attributes.putAll(value);
+	protected final void internalSetAttributes(Object value) {
+		_attributes = value;
 	}
 
 	/**
-	 * Adds a key value pair to the {@link #getAttributes()} map.
+	 * Checks, whether {@link #getAttributes()} has a value.
 	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.InstanceEntry putAttribute(String key, String value) {
-		internalPutAttribute(key, value);
-		return this;
-	}
-
-	/** Implementation of {@link #putAttribute(String, String)} without chain call utility. */
-	protected final void  internalPutAttribute(String key, String value) {
-		if (_attributes.containsKey(key)) {
-			throw new IllegalArgumentException("Property 'attributes' already contains a value for key '" + key + "'.");
-		}
-		_attributes.put(key, value);
-	}
-
-	/**
-	 * Removes a key from the {@link #getAttributes()} map.
-	 */
-	public final void removeAttribute(String key) {
-		_attributes.remove(key);
+	public final boolean hasAttributes() {
+		return _attributes != null;
 	}
 
 	@Override
@@ -160,8 +142,8 @@ public class InstanceEntry extends de.haumacher.msgbuf.data.AbstractDataObject i
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			ID__PROP, 
-			LABEL__PROP, 
 			TYPE__PROP, 
+			LABEL__PROP, 
 			ATTRIBUTES__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
@@ -188,8 +170,8 @@ public class InstanceEntry extends de.haumacher.msgbuf.data.AbstractDataObject i
 	public Object get(String field) {
 		switch (field) {
 			case ID__PROP: return getId();
-			case LABEL__PROP: return getLabel();
 			case TYPE__PROP: return getType();
+			case LABEL__PROP: return getLabel();
 			case ATTRIBUTES__PROP: return getAttributes();
 			default: return null;
 		}
@@ -199,9 +181,9 @@ public class InstanceEntry extends de.haumacher.msgbuf.data.AbstractDataObject i
 	public void set(String field, Object value) {
 		switch (field) {
 			case ID__PROP: internalSetId((String) value); break;
-			case LABEL__PROP: internalSetLabel((String) value); break;
 			case TYPE__PROP: internalSetType((String) value); break;
-			case ATTRIBUTES__PROP: internalSetAttributes((java.util.Map<String, String>) value); break;
+			case LABEL__PROP: internalSetLabel((String) value); break;
+			case ATTRIBUTES__PROP: internalSetAttributes((Object) value); break;
 		}
 	}
 
@@ -222,35 +204,23 @@ public class InstanceEntry extends de.haumacher.msgbuf.data.AbstractDataObject i
 		super.writeFields(out);
 		out.name(ID__PROP);
 		out.value(getId());
-		out.name(LABEL__PROP);
-		out.value(getLabel());
 		out.name(TYPE__PROP);
 		out.value(getType());
-		out.name(ATTRIBUTES__PROP);
-		out.beginObject();
-		for (java.util.Map.Entry<String,String> entry : getAttributes().entrySet()) {
-			out.name(entry.getKey());
-			out.value(entry.getValue());
+		out.name(LABEL__PROP);
+		out.value(getLabel());
+		if (hasAttributes()) {
+			out.name(ATTRIBUTES__PROP);
+			de.haumacher.msgbuf.json.JsonUtil.writeJsonValue(out, getAttributes());
 		}
-		out.endObject();
 	}
 
 	@Override
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case ID__PROP: setId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TYPE__PROP: setType(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case ATTRIBUTES__PROP: {
-				java.util.Map<String, String> newValue = new java.util.LinkedHashMap<>();
-				in.beginObject();
-				while (in.hasNext()) {
-					newValue.put(in.nextName(), de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in));
-				}
-				in.endObject();
-				setAttributes(newValue);
-				break;
-			}
+			case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case ATTRIBUTES__PROP: setAttributes(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			default: super.readField(in, field);
 		}
 	}

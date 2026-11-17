@@ -78,6 +78,19 @@ public enum LabelPosition implements ExternallyNamed {
 	@Label("Hidden")
 	HIDE_LABEL("hide-label"),
 
+	/**
+	 * The label is not displayed beside the input but as placeholder in the empty input.
+	 * 
+	 * <p>
+	 * The label disappears as soon as a value is entered and remains the accessible name of the
+	 * input. A placeholder configured explicitly for the input takes precedence. An input that
+	 * shows no placeholder - a checkbox, a slider, a table - shows no label at all, as with
+	 * {@link #HIDE_LABEL}.
+	 * </p>
+	 */
+	@Label("As placeholder")
+	PLACEHOLDER("placeholder"),
+
 	;
 	
 	private String _externalName;
@@ -121,6 +134,17 @@ public enum LabelPosition implements ExternallyNamed {
 			default:
 				return null;
 		}
+	}
+
+	/**
+	 * Whether the label is not displayed beside the value: {@link #HIDE_LABEL} and
+	 * {@link #PLACEHOLDER}.
+	 */
+	public boolean isLabelHidden() {
+		return switch (this) {
+			case HIDE_LABEL, PLACEHOLDER -> true;
+			default -> false;
+		};
 	}
 
 	/**

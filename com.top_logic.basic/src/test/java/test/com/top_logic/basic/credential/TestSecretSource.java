@@ -169,6 +169,17 @@ public class TestSecretSource extends AbstractTypedConfigurationTestCase {
 		assertEquals("plain", source.getSecret());
 	}
 
+	/** The variable may hold the secret in the authenticated encrypted format. */
+	public void testEnvironmentEncrypted() throws ConfigurationException {
+		Config config = read("<config><api-key class='" + EnvironmentSecretSource.class.getName()
+			+ "' name='" + TEST_VARIABLE + "'/></config>");
+		SecretSource source = getInstance(config.getApiKey());
+
+		System.setProperty(TEST_VARIABLE, ConfigurationEncryption.encrypt("encrypted"));
+		assertEquals("encrypted", source.getSecret());
+		assertEquals("encrypted", source.lookup());
+	}
+
 	public void testElementWithoutClassIsNamed() throws Exception {
 		System.setProperty(TEST_VARIABLE, "from-env");
 		Config config = read("<config><api-key name='" + TEST_VARIABLE + "'/></config>");

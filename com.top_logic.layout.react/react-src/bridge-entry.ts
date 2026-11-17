@@ -4,6 +4,8 @@ export { registerRootWrapper, DEFAULT_ROOT_WRAPPER_ORDER } from './bridge/root-w
 export type { RootWrapper, RootWrapperOptions } from './bridge/root-wrapper';
 export { connect, expectEvents, subscribe, unsubscribe } from './bridge/sse-client';
 export {
+  MOUNT_ATTRIBUTE,
+  findMountPoint,
   mount,
   mountField,
   unmount,
@@ -28,7 +30,7 @@ export {
 export type { TLTypingField, TLTypingFieldOptions } from './bridge/tl-react-bridge';
 export { useUncontrolledFieldSync } from './bridge/uncontrolled-field';
 export type { UncontrolledFieldSync, UncontrolledFieldSyncOptions } from './bridge/uncontrolled-field';
-export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, firstFocusable } from './bridge/focus-trap';
+export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, anchoredOverlayOf, firstFocusable } from './bridge/focus-trap';
 export { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, TOOLTIP_WHEN_CLIPPED, tooltipProps } from './bridge/tooltip-host';
 export { BACKGROUND_COMMAND, CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
 export type { CommandOptions, CommandResponse } from './bridge/command-channel';
@@ -36,6 +38,8 @@ export { pushLocalStep } from './bridge/route-sync';
 export { isPageLeaving, leavePage, onPageLeave, reloadForStaleUi } from './bridge/page-leave';
 export { FieldLabelContext, fieldLabel, fieldInputId, useFieldLabelProps, focusFieldInput } from './bridge/field-label';
 export type { FieldLabel, FieldLabelProps } from './bridge/field-label';
+export { FieldExplanation, explanationTooltip, EXPLANATION_ICON } from './bridge/field-explanation';
+export type { FieldExplanationProps } from './bridge/field-explanation';
 export { FormLayoutContext, useFormLayout } from './bridge/form-layout';
 export type { FormLayout } from './bridge/form-layout';
 export { useTabList } from './bridge/tab-list';
@@ -84,7 +88,7 @@ export {
   useSuggestions, applySuggestion, CMD_SUGGEST, ARG_SUGGEST_TEXT, ARG_SUGGEST_CARET, SUGGEST_DEBOUNCE_MS,
 } from './bridge/suggestions';
 export type { Suggestions, SuggestionsOptions, SuggestionsAnswer, ComboboxAttributes } from './bridge/suggestions';
-export { OptionValues } from './bridge/option-values';
+export { OptionValues, OPTION_TOOLTIP_PREFIX, optionTooltipProps } from './bridge/option-values';
 export type { OptionDescriptor } from './bridge/option-values';
 export { writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, kindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, boundaryAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDrag, TLDragStart } from './bridge/drag-drop';
@@ -171,6 +175,7 @@ export { lockMode, THEME_CLIENT_API, LOCK_MODE_FUNCTION } from './bridge/theme-m
 export type { ThemeMode } from './bridge/theme-mode';
 export { rootClassName, stateAttr } from './bridge/css';
 export { tokenPx, tokenMs, useTokenPx, useTokenSwitch } from './bridge/token-px';
+export { useElementWidth } from './bridge/element-size';
 export { isEditorTarget } from './bridge/editor-target';
 export { filterOptions, labelMatches } from './bridge/filter-options';
 export { useFocusAfterRemove } from './bridge/focus-after-remove';

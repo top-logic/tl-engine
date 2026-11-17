@@ -84,6 +84,16 @@ import com.top_logic.model.listen.ModelScope;
  * </p>
  *
  * <p>
+ * A change of a persistent object held by a channel - the channel keeps its value, but an attribute
+ * of the object it points to is edited (see {@link ChannelObjectObserver}) - is answered as a change
+ * of that channel's value would be, except for an ordinary input: where the root object the input
+ * yields stays the same, the tree is reconciled in place, keeping its nodes, and every displayed node
+ * is {@link Display#invalidateNode(DefaultTreeUINode) invalidated}; only a changed root object
+ * builds the tree anew. An input object the tree displays as a node - the root of a tree built from
+ * its input, above all - is followed as every displayed object is.
+ * </p>
+ *
+ * <p>
  * Every change the tree goes through is announced to the
  * {@link #addStructureListener(Runnable) structure listeners}, which is what a display holding on
  * to the nodes - a selection, above all - needs to express itself on the tree as it is now.
@@ -207,6 +217,14 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 
 	/** The registrations of this listener for the displayed objects, by their identity. */
 	private final Map<ObjectKey, Registration> _observed = new HashMap<>();
+
+	/**
+	 * Observers of the objects held by the input channels the tree depends on, by the
+	 * {@link #withRowIndependentInputs(Collection) row-independent inputs} and by the
+	 * {@link #withCellInputs(Collection) cell inputs}; created when the observation begins for the
+	 * first time, when the roles of the channels are known.
+	 */
+	private List<ChannelObjectObserver> _channelObjectObservers;
 
 	/** The registrations on the observed types and the input channels, while attached. */
 	private final List<Registration> _registrations = new ArrayList<>();
@@ -406,7 +424,32 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		syncObjectListeners();
 		registerTypeListeners();
 		registerChannelListeners();
+		for (ChannelObjectObserver observer : channelObjectObservers()) {
+			observer.attach(scope);
+		}
 		catchUp();
+	}
+
+	/**
+	 * The observers of the objects held by the channels, one for each role a channel plays.
+	 */
+	private List<ChannelObjectObserver> channelObjectObservers() {
+		if (_channelObjectObservers == null) {
+			List<ViewChannel> treeInputs = new ArrayList<>(_inputChannels);
+			treeInputs.removeAll(_rowIndependentInputs);
+			List<ViewChannel> rowIndependentInputs = new ArrayList<>(_inputChannels);
+			rowIndependentInputs.retainAll(_rowIndependentInputs);
+			List<ViewChannel> cellInputs = _cellInputs;
+
+			_channelObjectObservers = List.of(
+				new ChannelObjectObserver(treeInputs, Set.of(),
+					event -> onHeldObjectChange(event, treeInputs, true, this::inputObjectChanged)),
+				new ChannelObjectObserver(rowIndependentInputs, Set.of(),
+					event -> onHeldObjectChange(event, rowIndependentInputs, false, _display::inputsChanged)),
+				new ChannelObjectObserver(cellInputs, Set.of(),
+					event -> onHeldObjectChange(event, cellInputs, false, _display::nodesChanged)));
+		}
+		return _channelObjectObservers;
 	}
 
 	/**
@@ -421,6 +464,9 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 
 		_treeModel.removeTreeModelListener(this);
 		deregisterObjectListeners();
+		for (ChannelObjectObserver observer : _channelObjectObservers) {
+			observer.detach();
+		}
 		for (Registration registration : _registrations) {
 			registration.dispose();
 		}
@@ -461,6 +507,20 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		if (!resumed) {
 			return;
 		}
+		reconcileDisplayed(true);
+	}
+
+	/**
+	 * Brings the tree built from the current root object up to date with the objects it displays,
+	 * whatever they went through: reconciles the child lists of the tree,
+	 * {@link Display#invalidateNode(DefaultTreeUINode) invalidates} every displayed node, and tells
+	 * the display about it.
+	 *
+	 * @param announceUnchanged
+	 *        Whether the {@link #addStructureListener(Runnable) structure listeners} are told even
+	 *        where the tree did not change.
+	 */
+	private void reconcileDisplayed(boolean announceUnchanged) {
 		boolean changed;
 		boolean before = beginUpdate();
 		try {
@@ -473,7 +533,9 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		}
 		invalidateSubtree(_treeModel.getRoot());
 		_display.nodesChanged();
-		notifyStructureChanged();
+		if (changed || announceUnchanged) {
+			notifyStructureChanged();
+		}
 	}
 
 	/**
@@ -686,6 +748,60 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 			return;
 		}
 		reEvaluateTree();
+	}
+
+	/**
+	 * Runs the given reaction where the given event concerns an object one of the given channels
+	 * holds, and the tree is observed.
+	 *
+	 * <p>
+	 * The event is inspected, since the tree acts on the changes it is told about and not on every
+	 * notification: a scope may report more than the objects a listener was registered for.
+	 * </p>
+	 *
+	 * @param skipDisplayed
+	 *        Whether a held object the tree has a node for is left to the tree's own observation of
+	 *        its nodes (see {@link #notifyChange(ModelChangeEvent)}), which brings the tree up to
+	 *        date with that change already.
+	 */
+	private void onHeldObjectChange(ModelChangeEvent event, List<ViewChannel> channels, boolean skipDisplayed,
+			Runnable reaction) {
+		if (!_attached || !concernsHeldObject(event, channels, skipDisplayed)) {
+			return;
+		}
+		reaction.run();
+	}
+
+	/**
+	 * Whether the given event reports a change of an object one of the given channels holds.
+	 *
+	 * @param skipDisplayed
+	 *        Whether objects the tree has a node for are left out.
+	 */
+	private boolean concernsHeldObject(ModelChangeEvent event, List<ViewChannel> channels, boolean skipDisplayed) {
+		for (ViewChannel channel : channels) {
+			for (TLObject object : ChannelObjectObserver.objects(channel.get())) {
+				if (skipDisplayed && isDisplayed(object)) {
+					continue;
+				}
+				if (event.getChange(object) != ModelChangeEvent.ChangeType.NONE) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * An object held by an input the tree depends on changed: a tree whose root object stays is
+	 * reconciled in place, otherwise it is built anew.
+	 */
+	private void inputObjectChanged() {
+		if (rootUpToDate()) {
+			reconcileDisplayed(false);
+		} else {
+			reEvaluateTree();
+		}
 	}
 
 	// --- Reconciliation ---

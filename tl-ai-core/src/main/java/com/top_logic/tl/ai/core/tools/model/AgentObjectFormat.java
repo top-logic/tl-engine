@@ -49,7 +49,7 @@ public class AgentObjectFormat extends AbstractConfigurationValueProvider<TLObje
 	 * Description of the identifier form in the JSON schema.
 	 */
 	public static final String ID_DESCRIPTION = "The id of an object in the form 'TypeName:id', as tools report it"
-		+ " (also accepted: an entry 'label [id:TypeName:id]').";
+		+ " in the " + ReadFilter.TID + " of the object.";
 
 	/**
 	 * Description of the type restriction in the JSON schema, followed by the qualified type name.

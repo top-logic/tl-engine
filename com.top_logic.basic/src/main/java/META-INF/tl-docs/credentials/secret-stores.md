@@ -54,11 +54,13 @@ All stores are in `com.top_logic.basic.credential`, the Key Vault store in `tl-c
 
 ### EnvironmentSecretStore
 
-The default. Reads the system property or environment variable named like the secret - a JNDI value of the application context first, then a system property, then an environment variable, the order of the `${env:...}` aliases. An empty variable counts as not set. The variable holds the plain secret; a value with the prefix `unencrypted:` is accepted as well and the prefix is stripped, an encrypted value is not:
+The default. Reads the system property or environment variable named like the secret - a JNDI value of the application context first, then a system property, then an environment variable, the order of the `${env:...}` aliases. An empty variable counts as not set. The variable holds the plain secret; a value with the prefix `unencrypted:` is accepted as well and the prefix is stripped:
 
 ```bash
 export tl_openai_api_key="sk-..."
 ```
+
+A value encrypted with the configuration key in the authenticated format (prefix `{gcm}`, as written by the maintenance page `EncodeConfigurationValues.jsp`) is decrypted. The encryption only obscures the secret - the key is part of the application - so the application writes a warning to the log once per variable that holds an encrypted value; the plain value or a store for secrets (directory, key vault) is recommended. A `{gcm}` value that cannot be decrypted (modified, encrypted with another key) is an error naming the variable, not the value. A value in the old unauthenticated format without prefix cannot be told apart from a plain value and is read as plain secret.
 
 ### DirectorySecretStore
 

@@ -16,6 +16,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.BufferingProtocol;
+import com.top_logic.basic.config.CommaSeparatedListValueProvider;
 import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationDescriptorConfig;
@@ -27,6 +28,7 @@ import com.top_logic.basic.config.NamePath;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.AllowedValues;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.constraint.check.ConstraintChecker;
 import com.top_logic.basic.config.constraint.check.ConstraintFailure;
@@ -38,6 +40,7 @@ import com.top_logic.basic.func.IGenericFunction;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.json.schema.JsonSchemaWriter;
+import com.top_logic.basic.json.schema.model.ArraySchema;
 import com.top_logic.basic.json.schema.model.EnumSchema;
 import com.top_logic.basic.json.schema.model.FalseSchema;
 import com.top_logic.basic.json.schema.model.ObjectSchema;
@@ -57,10 +60,14 @@ import com.top_logic.util.Resources;
  * <p>
  * The parameters are declared in the form of the {@code <properties>} of a layout template (a
  * {@link ConfigurationDescriptorConfig}): per parameter its name, type, label and description (the
- * tooltip of the label), whether it is mandatory, its default, its allowed values
- * ({@link Options} or an enumeration type) and its constraints. A parameter holding a model object
- * uses the format {@link AgentObjectFormat} and the type
- * restriction {@link com.top_logic.model.format.ObjectType}.
+ * tooltip of the label), whether it is mandatory, its default, its allowed values (a fixed list
+ * {@link AllowedValues}, computed {@link Options}, or an enumeration type) and its constraints. A
+ * parameter holding a model object uses the format {@link AgentObjectFormat} and the type
+ * restriction {@link com.top_logic.model.format.ObjectType}. A list parameter has the type
+ * {@link List}, its element type and a format of separated elements ({@link CommaSeparatedListValueProvider}), e.g.
+ * {@link com.top_logic.basic.config.CommaSeparatedStrings} or, for model objects,
+ * {@link com.top_logic.tl.ai.core.tools.model.AgentObjectListFormat}; the model passes its values
+ * as JSON array, and options and constraints apply to each element.
  * </p>
  *
  * <p>
@@ -135,7 +142,7 @@ public final class DeclaredParameters {
 	 *
 	 * <p>
 	 * Self-contained: every part is inline, there are no references to other schemas. A parameter
-	 * with {@link Options} lists its allowed values.
+	 * with {@link AllowedValues} or {@link Options} lists its allowed values.
 	 * </p>
 	 */
 	public Schema schema() {
@@ -154,7 +161,12 @@ public final class DeclaredParameters {
 				}
 				EnumSchema allowed = EnumSchema.create();
 				for (Object option : options) {
-					allowed.addEnumLiteral(specification(property, option));
+					allowed.addEnumLiteral(JSON.toString(specification(property, option)));
+				}
+				if (propertySchema instanceof ArraySchema list) {
+					// The options are the values allowed for each element.
+					list.setItems(allowed);
+					continue;
 				}
 				allowed.setTitle(propertySchema.getTitle());
 				allowed.setDescription(propertySchema.getDescription());
@@ -342,12 +354,19 @@ public final class DeclaredParameters {
 	}
 
 	/**
-	 * The text form of a value of the given parameter, as the model writes it.
+	 * The text form of a value of the given parameter, or of an element of a list parameter, as the
+	 * model writes it.
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private static String specification(PropertyDescriptor property, Object value) {
 		ConfigurationValueProvider provider = property.getValueProvider();
-		if (provider != null) {
+		if (provider instanceof CommaSeparatedListValueProvider listFormat) {
+			try {
+				return listFormat.getElementSpecification(value);
+			} catch (RuntimeException ex) {
+				// Not an element of the format's type, fall back to its text.
+			}
+		} else if (provider != null) {
 			try {
 				return provider.getSpecification(value);
 			} catch (RuntimeException ex) {

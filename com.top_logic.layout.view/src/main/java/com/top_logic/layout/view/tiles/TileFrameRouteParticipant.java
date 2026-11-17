@@ -188,7 +188,8 @@ public class TileFrameRouteParticipant implements RoutingParticipant {
 			return;
 		}
 
-		Map<String, Object> params = route.resolveParams(match, _scope.getPath().subList(0, base));
+		Map<String, Object> params =
+			route.resolveParams(match, _scope.getPath().subList(0, base), _scope.inputs(route));
 		if (params == null) {
 			Logger.info("Route '" + match.pattern() + "' names nothing " + route.describe()
 				+ " can display, ending the path at " + base + " frames.",
@@ -303,7 +304,7 @@ public class TileFrameRouteParticipant implements RoutingParticipant {
 		List<FrameRoute> declarations = _scope.declarations(path);
 		for (int n = 0; n < path.size(); n++) {
 			TileFrame frame = path.get(n);
-			String segment = n < declarations.size() ? declarations.get(n).segment(frame.getParams()) : null;
+			String segment = n < declarations.size() ? segment(declarations.get(n), frame) : null;
 			if (segment == null) {
 				Logger.debug(() -> "Frame '" + frame.getFrameId() + "' has no address, "
 					+ "the URL describes the path up to it.", TileFrameRouteParticipant.class);
@@ -312,6 +313,13 @@ public class TileFrameRouteParticipant implements RoutingParticipant {
 			result.add(segment);
 		}
 		return result;
+	}
+
+	/**
+	 * The URL segments the given declaration describes the given frame with in this stack.
+	 */
+	private String segment(FrameRoute declaration, TileFrame frame) {
+		return declaration.segment(frame.getParams(), _scope.inputs(declaration));
 	}
 
 	/**

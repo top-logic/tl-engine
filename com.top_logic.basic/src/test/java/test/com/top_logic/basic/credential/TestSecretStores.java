@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 
 import junit.framework.Test;
 
+import test.com.top_logic.basic.TestConfigurationEncryption;
 import test.com.top_logic.basic.config.AbstractTypedConfigurationTestCase;
 
 import com.top_logic.basic.AliasManager;
@@ -177,6 +178,44 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 		assertTrue(source.matches("s3cr3t"));
 		assertFalse(source.matches("other"));
 		assertFalse(source.matches(null));
+	}
+
+	/** A variable value in the authenticated encrypted format is decrypted. */
+	public void testDefaultStoreEncrypted() throws Exception {
+		System.setProperty(SECRET, ConfigurationEncryption.encrypt("s3cr3t"));
+		SecretSource source = named(SECRET);
+		assertEquals("s3cr3t", source.getSecret());
+		assertEquals("s3cr3t", source.lookup());
+		assertTrue(source.matches("s3cr3t"));
+	}
+
+	/**
+	 * A variable value in the authenticated encrypted format that cannot be decrypted is an error
+	 * naming the variable, but not the value.
+	 */
+	public void testDefaultStoreEncryptedInvalid() throws Exception {
+		String encrypted = ConfigurationEncryption.encrypt("s3cr3t");
+		String modified = encrypted.substring(0, encrypted.length() - 2)
+			+ (encrypted.charAt(encrypted.length() - 2) == 'A' ? 'B' : 'A') + encrypted.charAt(encrypted.length() - 1);
+		System.setProperty(SECRET, modified);
+		SecretSource source = named(SECRET);
+
+		I18NRuntimeException ex = failure(source);
+		assertEquals(I18NConstants.ERROR_SECRET_VARIABLE_NOT_DECRYPTABLE__NAME.fill(SECRET), ex.getErrorKey());
+		assertNoSecret(ex, modified);
+		assertNoSecret(ex, "s3cr3t");
+
+		ex = failure(source::lookup);
+		assertEquals(I18NConstants.ERROR_SECRET_VARIABLE_NOT_DECRYPTABLE__NAME.fill(SECRET), ex.getErrorKey());
+	}
+
+	/**
+	 * A variable value in the unauthenticated encrypted format without prefix cannot be told apart
+	 * from a plain value and is read unchanged.
+	 */
+	public void testDefaultStoreUnauthenticatedIsPlain() throws Exception {
+		System.setProperty(SECRET, TestConfigurationEncryption.UNAUTHENTICATED_VALUE);
+		assertEquals(TestConfigurationEncryption.UNAUTHENTICATED_VALUE, named(SECRET).getSecret());
 	}
 
 	public void testDirectoryStore() throws Exception {

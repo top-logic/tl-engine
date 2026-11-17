@@ -8,6 +8,7 @@ package test.com.top_logic.layout.view.tiles;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import junit.framework.Test;
@@ -701,12 +702,14 @@ public class TestTileFrameRouteParticipant extends TestCase {
 		return text.startsWith(prefix) ? text.substring(prefix.length()) : null;
 	}
 
-	private static Map<String, Function<Object, String>> toUrl(String name, Function<Object, String> conversion) {
-		return Map.of(name, conversion);
+	private static Map<String, BiFunction<List<ViewChannel>, Object, String>> toUrl(String name,
+			Function<Object, String> conversion) {
+		return Map.of(name, (inputs, value) -> conversion.apply(value));
 	}
 
-	private static Map<String, Function<String, Object>> fromUrl(String name, Function<String, Object> conversion) {
-		return Map.of(name, conversion);
+	private static Map<String, BiFunction<List<ViewChannel>, String, Object>> fromUrl(String name,
+			Function<String, Object> conversion) {
+		return Map.of(name, (inputs, text) -> conversion.apply(text));
 	}
 
 	/**

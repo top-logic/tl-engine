@@ -5,6 +5,8 @@
  */
 package test.com.top_logic.layout.view.form;
 
+import java.util.List;
+
 import junit.framework.Test;
 
 import test.com.top_logic.basic.module.ServiceTestSetup;
@@ -24,6 +26,7 @@ import com.top_logic.model.TLClassProperty;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.TLValueListeners;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.ModelService;
 
@@ -34,7 +37,7 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * The ticket has a {@link #BRANCH} whose explicit value is kept in {@link #CUSTOM_BRANCH} and
  * whose fallback is the {@link #DEFAULT_BRANCH}, a derived attribute computed from the
- * {@link #STATUS}.
+ * {@link #STATUS}. A change of the {@link #TITLE} resets the {@link #BRANCH}.
  * </p>
  */
 @SuppressWarnings("javadoc")
@@ -76,6 +79,17 @@ public class TestFallbackPlaceholder extends AbstractTicketFormTest {
 		// A part of a transient model does not initialize its storage, which the fallback storage
 		// needs to resolve the attributes it reads.
 		((StorageImplementation) branch.getStorageImplementation()).init(branch);
+		_ticketType.getPart(TITLE).setAnnotation(resetBranch());
+	}
+
+	private static TLValueListeners resetBranch() {
+		TestFormValueListeners.AssignValue.Config assign =
+			TypedConfiguration.newConfigItem(TestFormValueListeners.AssignValue.Config.class);
+		assign.setTarget(BRANCH);
+		assign.setValue(null);
+		TLValueListeners result = TypedConfiguration.newConfigItem(TLValueListeners.class);
+		result.getListeners().add(assign);
+		return result;
 	}
 
 	/**
@@ -150,6 +164,29 @@ public class TestFallbackPlaceholder extends AbstractTicketFormTest {
 	}
 
 	/**
+	 * A value listener of another attribute resetting the attribute with fallback changes the
+	 * attribute: its field shows the reset immediately, with the fallback as placeholder, and the
+	 * listeners of the attribute run.
+	 */
+	public void testListenerResetIsShown() {
+		_ticket.tUpdateByName(BRANCH, "dev");
+		_form.enterEditMode();
+		assertEquals("dev", shown(_branch));
+		TestFormValueListeners.CALLS.clear();
+
+		model(_title).setValue("Logout fails");
+
+		assertEquals(List.of("title:Login fails->Logout fails=>branch"), TestFormValueListeners.CALLS);
+		assertTrue(_form.getOverlay().isChanged(part(BRANCH)));
+		assertNull("The field shows the reset before the save.", shown(_branch));
+		assertEquals("open", placeholder(_branch));
+		assertEquals(CSS_FALLBACK, _branch.getChromeControl().getCssClass());
+		assertTrue(_branch.isDirty());
+		assertEquals("Nothing is stored before the save.", "dev", _ticket.tValueByName(CUSTOM_BRANCH));
+		TestFormValueListeners.CALLS.clear();
+	}
+
+	/**
 	 * A field that is not editable shows the value of the attribute also while the form is edited.
 	 */
 	public void testReadOnlyFieldShowsFallbackAsValue() {
@@ -200,7 +237,7 @@ public class TestFallbackPlaceholder extends AbstractTicketFormTest {
 		return field.getInnerControl().scriptingScalarState().get(FieldState.PLACEHOLDER__PROP);
 	}
 
-	private static TLStorage fallbackStorage(String storageAttribute, String fallbackAttribute) {
+	static TLStorage fallbackStorage(String storageAttribute, String fallbackAttribute) {
 		AttributeWithFallbackStorage.Config<?> storageConfig =
 			TypedConfiguration.newConfigItem(AttributeWithFallbackStorage.Config.class);
 		storageConfig.update(storageConfig.descriptor().getProperty(AttributeWithFallbackStorage.Config.STORAGE_ATTRIBUTE), storageAttribute);

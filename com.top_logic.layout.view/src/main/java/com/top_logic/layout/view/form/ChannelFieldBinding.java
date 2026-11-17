@@ -5,10 +5,6 @@
  */
 package com.top_logic.layout.view.form;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Consumer;
 
 import com.top_logic.basic.listener.Registration;
@@ -179,13 +175,7 @@ public class ChannelFieldBinding {
 		if (!_selection) {
 			return channelValue;
 		}
-		if (channelValue == null) {
-			return Collections.emptyList();
-		}
-		if (channelValue instanceof Collection<?> collection) {
-			return new ArrayList<>(collection);
-		}
-		return Collections.singletonList(channelValue);
+		return SelectionValues.selection(channelValue);
 	}
 
 	/**
@@ -195,18 +185,7 @@ public class ChannelFieldBinding {
 		if (!_selection) {
 			return fieldValue;
 		}
-		List<?> selection;
-		if (fieldValue instanceof List<?> list) {
-			selection = list;
-		} else if (fieldValue == null) {
-			selection = Collections.emptyList();
-		} else {
-			selection = Collections.singletonList(fieldValue);
-		}
-		if (_multiple) {
-			return new ArrayList<>(selection);
-		}
-		return selection.isEmpty() ? null : selection.get(0);
+		return SelectionValues.value(fieldValue, _multiple);
 	}
 
 }

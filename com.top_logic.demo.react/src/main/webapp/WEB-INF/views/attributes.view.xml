@@ -531,8 +531,16 @@
 										</label>
 										<field attribute="name"/>
 										<field attribute="locked"/>
-										<field attribute="string"/>
-										<field attribute="multiLine"/>
+										<!-- The label stands in the empty input as its placeholder. -->
+										<field
+											attribute="string"
+											label-position="placeholder"
+										/>
+										<!-- Without its label, the field explains itself through the info icon beside the input. -->
+										<field
+											attribute="multiLine"
+											label-position="hide-label"
+										/>
 										<field attribute="html"/>
 										<field attribute="i18n"/>
 										<field attribute="i18nMultiline"/>
@@ -597,7 +605,11 @@
 										<field attribute="activeRadio"/>
 										<field attribute="activeSelect"/>
 										<field attribute="priorityRadio"/>
-										<field attribute="priority"/>
+										<!-- The label stands in the empty input as its placeholder. -->
+										<field
+											attribute="priority"
+											label-position="placeholder"
+										/>
 										<field attribute="tags"/>
 									</group>
 									<group
@@ -754,6 +766,46 @@
 								or not - and without the per-row actions.
 							-->
 							<export download-name="#('Editable table'@en, 'Editierbare Tabelle'@de)"/>
+						</table>
+					</form>
+				</panel>
+			</tab>
+			<tab id="grid-all"
+				icon="css:bi bi-grid-3x3"
+			>
+				<label>
+					<en>All rows editable</en>
+					<de>Alle Zeilen editierbar</de>
+				</label>
+				<panel>
+					<title>
+						<en>Editing all rows of a table</en>
+						<de>Bearbeiten aller Zeilen einer Tabelle</de>
+					</title>
+					<!--
+						In edit mode every row is editable. The focus of a cell editor - by a click or by
+						Tab - selects its row, so "Delete selected" in the toolbar removes the row being
+						worked in. "Add" adds a row; the removed rows are deleted on "Save".
+					-->
+					<form input="gridAnchor">
+						<table
+							create-type="demo.react:Demo"
+							observed-types="demo.react:Demo"
+							on-remove="DELETE"
+							personalization-key="attributes-grid-all"
+							row-edit="ALL"
+							selection-mode="multi"
+							types="demo.react:Demo"
+						>
+							<columns>
+								<column attribute="name"/>
+								<column attribute="string"/>
+								<column attribute="priority"/>
+								<column attribute="active"/>
+								<column attribute="amount"/>
+								<column attribute="date"/>
+							</columns>
+							<rows>all(`demo.react:Demo`)</rows>
 						</table>
 					</form>
 				</panel>

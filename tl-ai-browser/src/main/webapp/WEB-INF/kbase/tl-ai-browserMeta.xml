@@ -7,10 +7,13 @@
 	     storageState (state, Binary), the shared flag (Boolean), the updatedAt timestamp (DateTime)
 	     and the owner reference use generic flex/association storage, mirroring how Screenshot stores
 	     its image/capturedAt/owner. No unique index on name: uniqueness is per-owner (two users may
-	     each have a pool of the same name), enforced in CookiePoolService, not at the table level. -->
+	     each have a pool of the same name), enforced in CookiePoolService, not at the table level.
+	     Unversioned: a pool is technical login state without a history of its own; the cleanup of
+	     unversioned types removes the previous (encrypted) state of an updated pool. -->
 	<metaobject
 		object_name="CookiePool"
 		super_class="TLObject"
+		versioned="false"
 	>
 		<mo_attribute
 			att_name="name"

@@ -141,3 +141,16 @@
 .tlDemoApproved {
 	color: var(--tl-status-success-text);
 }
+
+/*
+ * The heading of the key column of the header roles demo (header-class="'tlDemoKeyColumn'" in
+ * views/demo/table-columns.view.xml): its title in the link color, a line of the brand below it.
+ * The class is put on the heading only, the cells of the column do not carry it.
+ */
+.tl-table__header-cell.tlDemoKeyColumn {
+	box-shadow: inset 0 calc(-1 * var(--tl-border-width-accent)) 0 var(--tl-border-interactive);
+}
+
+.tl-table__header-cell.tlDemoKeyColumn .tl-table__label {
+	color: var(--tl-text-link);
+}

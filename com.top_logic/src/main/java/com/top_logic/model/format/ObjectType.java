@@ -9,6 +9,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,7 +29,8 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Restricts a configuration property holding a {@link TLObject} to objects of a model type.
+ * Restricts a configuration property holding a {@link TLObject}, or a collection of them, to objects
+ * of a model type.
  *
  * <p>
  * An object of the {@link #value() type} or of one of its specializations is accepted. In a
@@ -83,9 +85,10 @@ public @interface ObjectType {
 	}
 
 	/**
-	 * Checks that a {@link TLObject} value is an instance of the expected model type.
+	 * Checks that a {@link TLObject} value, or each element of a collection of them, is an instance
+	 * of the expected model type.
 	 */
-	public class Algorithm extends ValueConstraint<TLObject> {
+	public class Algorithm extends ValueConstraint<Object> {
 
 		private final String _typeName;
 
@@ -96,14 +99,18 @@ public @interface ObjectType {
 		 *        Qualified name of the expected model type.
 		 */
 		public Algorithm(String typeName) {
-			super(TLObject.class);
+			super(Object.class);
 			_typeName = typeName;
 		}
 
 		@Override
-		protected void checkValue(PropertyModel<TLObject> propertyModel) {
-			TLObject value = propertyModel.getValue();
+		protected void checkValue(PropertyModel<Object> propertyModel) {
+			Object value = propertyModel.getValue();
 			if (value == null) {
+				return;
+			}
+			Collection<?> objects = value instanceof Collection<?> collection ? collection : List.of(value);
+			if (objects.isEmpty()) {
 				return;
 			}
 			TLType expectedType;
@@ -117,10 +124,13 @@ public @interface ObjectType {
 				propertyModel.setProblemDescription(I18NConstants.ERROR_NO_SUCH_OBJECT_TYPE__TYPE.fill(_typeName));
 				return;
 			}
-			if (!TLModelUtil.isCompatibleInstance(expectedType, value)) {
-				propertyModel.setProblemDescription(
-					I18NConstants.ERROR_OBJECT_TYPE_MISMATCH__EXPECTED_ACTUAL.fill(_typeName,
-						TLModelUtil.qualifiedName(value.tType())));
+			for (Object element : objects) {
+				if (element instanceof TLObject object && !TLModelUtil.isCompatibleInstance(expectedType, object)) {
+					propertyModel.setProblemDescription(
+						I18NConstants.ERROR_OBJECT_TYPE_MISMATCH__EXPECTED_ACTUAL.fill(_typeName,
+							TLModelUtil.qualifiedName(object.tType())));
+					return;
+				}
 			}
 		}
 	}

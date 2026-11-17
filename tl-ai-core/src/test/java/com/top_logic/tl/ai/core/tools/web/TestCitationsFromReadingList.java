@@ -158,8 +158,8 @@ public class TestCitationsFromReadingList extends BasicTestCase {
 	}
 
 	/**
-	 * An object a {@code query} answered with is a source as well: the query renders its result
-	 * itself - {@code label [type:...] [id:...]} - and that rendering puts it on the reading list.
+	 * An object a {@code query} answered with is a source as well: the query discloses it as its
+	 * identity, and that disclosure puts it on the reading list.
 	 * Found in the live check, where a model linked the events a query had listed and every link was
 	 * dropped.
 	 */

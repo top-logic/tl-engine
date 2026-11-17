@@ -305,6 +305,13 @@ public class DynamicColumns implements ColumnDeclaration {
 		 * is an internationalized text, a string, or any object shown by its display label. Unset,
 		 * the object itself labels its column.
 		 * </p>
+		 *
+		 * <p>
+		 * Like every label, the header label is computed without the access rights of the current
+		 * user, so that a user sees the label of a column object the user may only discover. The
+		 * {@link #getColumns() columns} themselves, the cell values and the {@link #getTooltip()
+		 * tooltips} are computed with the access rights of the current user.
+		 * </p>
 		 */
 		@Name(COLUMN_LABEL)
 		@Nullable
@@ -913,6 +920,11 @@ public class DynamicColumns implements ColumnDeclaration {
 			_columns = InputScript.compile(config, Config.COLUMNS);
 			_columnName = InputScript.compile(config, Config.COLUMN_NAME);
 			_columnLabel = InputScript.compile(config, Config.COLUMN_LABEL);
+			if (_columnLabel != null) {
+				// Labels belong to Discover (R1/R12 of the Discover specification) and are computed
+				// unsecured. The columns, their values and tooltips stay secured.
+				_columnLabel.disableSecurity();
+			}
 			_columnType = InputScript.compile(config, Config.COLUMN_TYPE);
 			_width = InputScript.compile(config, Config.WIDTH);
 			_columnVisible = InputScript.compile(config, Config.COLUMN_VISIBLE);

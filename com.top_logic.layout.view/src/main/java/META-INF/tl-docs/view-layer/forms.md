@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, fields of attributes with a <fallback-storage> showing the inherited value, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form, resetting or recomputing dependent fields when a field changes with <value-listeners> and <script>, also in the rows of a <composition-table>), the fields of the object a reference of the form's object points to, edited and saved with it (<object-fields attribute="...">), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, fields of attributes with a <fallback-storage> showing the inherited value, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form, resetting or recomputing dependent fields when a field changes with <value-listeners> and <script>, also in the rows of a <composition-table>), the fields of the object a reference of the form's object points to, edited and saved with it (<object-fields attribute="...">), when the object of a form is locked in edit mode (<lockHandler>, DefaultLockHandler, NoTokenHandling), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -465,6 +465,25 @@ multi-valued `tl.core:Binary` property.
 
 The display is how the field looks, not what it says: it is a rendering-only state key, kept out of
 the headless projection, so a scripted test reads the same options and the same value in every shape.
+
+## Locking the edited object
+
+A `<form>` locks the object it displays when it enters edit mode, and releases the lock when it leaves edit mode (save, cancel, another object, the form disposed with its view). A second form trying to edit the same object - in another window or another user's session - fails with the message of the lock held there. The lock is taken through the form's `<lockHandler>`, which defaults to `DefaultLockHandler`: it locks through the application-wide `LockService`, whose lock strategy for the object is selected by the handler's `lockOperation`.
+
+Every form displayed creates a handler of its own from this configuration, so forms of the same view in different windows, sessions and `<tile-stack>` frames lock independently, and releasing one lock touches no other.
+
+Only a persistent object is locked: a transient draft, such as the object of a create dialog, is visible to no other session and is edited without a lock. A form starting in edit mode (`initial-edit-mode="true"`, or an `editMode` channel holding `true`) locks a persistent object just as the Edit button does.
+
+A form entering edit mode by itself - when it is displayed with `initial-edit-mode="true"` or an `editMode` channel holding `true`, and when a form with `initial-edit-mode="true"` switches to another object - does not fail on an object someone else has locked: it shows the object read-only, sets its `editMode` channel to `false`, and tells the user in passing that the object is shown read-only, with the details of the conflict. Whether these name the holder of the lock is decided by `report-lock-owner-details` of the application's `TokenService`. The Edit button and `<enter-edit-mode/>` still fail with the message of the lock held there.
+
+A form that deliberately works without a lock disables locking explicitly:
+
+```xml
+<form input="item">
+	<lockHandler class="com.top_logic.base.locking.handler.NoTokenHandling"/>
+	...
+</form>
+```
 
 ## Unsaved changes are asked before a channel write, transitively
 

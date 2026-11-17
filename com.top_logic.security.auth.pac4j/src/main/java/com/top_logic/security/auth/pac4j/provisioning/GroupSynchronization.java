@@ -75,6 +75,34 @@ class GroupSynchronization {
 	}
 
 	/**
+	 * Takes back all group memberships the given identity has granted the given account, except
+	 * those another identity of the account grants as well.
+	 *
+	 * <p>
+	 * For an identity that is about to be removed from the account: the memberships it brought go
+	 * with it, exactly as when a login through it no longer yields a group. Must be called in a
+	 * transaction.
+	 * </p>
+	 */
+	static void revokeAll(Person account, OidcIdentity stored) {
+		Set<Group> granted = stored.getGrantedGroupsModifiable();
+		for (Group group : new ArrayList<>(granted)) {
+			revoke(account, stored, granted, group);
+		}
+	}
+
+	/**
+	 * Takes back the membership in the given group that the given identity has granted, keeping it
+	 * if another identity of the account grants it as well.
+	 */
+	private static void revoke(Person account, OidcIdentity stored, Set<Group> granted, Group group) {
+		granted.remove(group);
+		if (!grantedByOtherIdentity(account, stored, group)) {
+			group.removeMember(account);
+		}
+	}
+
+	/**
 	 * Brings the group memberships of the given account up to date with the given identity.
 	 *
 	 * <p>
@@ -99,10 +127,7 @@ class GroupSynchronization {
 			if (yielded.contains(group)) {
 				continue;
 			}
-			granted.remove(group);
-			if (!grantedByOtherIdentity(account, stored, group)) {
-				group.removeMember(account);
-			}
+			revoke(account, stored, granted, group);
 		}
 
 		for (Group group : yielded) {

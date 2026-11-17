@@ -20,6 +20,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.command.ViewCommands;
@@ -143,7 +144,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * selected, filtered, activated and dragged - whatever computes the rows.
 	 */
 	@TypeIcon("css:bi bi-table")
-	public interface Config extends UIElement.Config, Inputs, ActionScopeDefinition, RowAsConfig {
+	public interface Config extends UIElement.Config, Inputs, ActionScopeDefinition, RowAsConfig, LockHandlerOptions {
 
 	/** Access to the default methods of this interface for the configuration proxy. */
 	Lookup LOOKUP = MethodHandles.lookup();
@@ -296,6 +297,13 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 * settings - a checkbox per row and column - whose every click is a change of its own. A
 		 * column over an attribute is not edited in place: an object is edited in a form, where
 		 * the edits are saved together.
+		 * </p>
+		 *
+		 * <p>
+		 * While a value is written, the object of its row is locked through the
+		 * {@link #getLockHandler() lock handler}. When someone else holds the lock, e.g. a form
+		 * editing the object, nothing is written, the cell shows the stored value again, and the
+		 * user is told who holds the lock.
 		 * </p>
 		 */
 		@Name(EDIT_IN_PLACE)
@@ -905,6 +913,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		_config = config;
 		_log = context;
 
+		// Each displayed table edited in place creates its own handler.
+		LockHandlerOptions.checkLockHandler(context, config);
+
 		_declarations = ColumnDeclarations.instantiate(context, config.getColumns());
 		_declaredNames = ColumnDeclarations.declaredNames(_declarations);
 
@@ -1032,7 +1043,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		control.setFramed(false);
 		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId);
 		control.setNamedFilters(
-			columns -> declaredFilters(tableId, columns, declaredNames, ChannelInputs.arguments(inputChannels)),
+			(columns, withheld) -> declaredFilters(tableId, columns, declaredNames, withheld,
+				ChannelInputs.arguments(inputChannels)),
 			filterStore(), initialFilter());
 		control.setFilterChannels(channel(context, _config.getActivePreset()),
 			channel(context, _config.getSearchTerm()));
@@ -1137,11 +1149,14 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The binding of the selection channel, {@code null} without one.
 	 * @param setups
 	 *        The descriptors of the declared columns.
+	 * @param existence
+	 *        Which of the columns exist, followed by the control; to be
+	 *        {@link ColumnExistence#recheck() checked again} whenever the table is updated.
 	 */
 	protected record ReadOnlyTable<S extends RowSource<Object>, B>(TableViewControl<Object> control,
 			DefaultTableView<Object> view, S source, TableId tableId, List<Column<Object, ?>> columns,
 			List<String> declaredNames,
-			B selectionBinding, List<ColumnSetup> setups) {
+			B selectionBinding, List<ColumnSetup> setups, ColumnExistence existence) {
 		// Pure data.
 	}
 
@@ -1191,9 +1206,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		// The activation button and the cells edited in place reach the table control through
 		// this holder, since the control is built from the view over these very columns.
 		ControlActivation activate = new ControlActivation();
+		// One handler for the control: it holds a lock only while a cell value is written.
+		LockHandler lockHandler = _config.getEditInPlace() ? LockHandlerOptions.createLockHandler(_config) : null;
 		List<Column<Object, ?>> columns = new ArrayList<>(setups.size());
 		for (ColumnSetup setup : setups) {
-			columns.add(_config.getEditInPlace() ? setup.buildInPlaceColumn(activate::rowWritten) : setup.buildColumn());
+			columns.add(lockHandler != null ? setup.buildInPlaceColumn(activate::rowWritten, lockHandler)
+				: setup.buildColumn());
 		}
 		columns.addAll(this.<Object> rowCommandColumns(activation, activate));
 		S source = sourceFactory.apply(columns);
@@ -1202,17 +1220,19 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		initialState.setFrozenCount(_config.getFixedColumns());
 		initialState.setGrouping(grouping);
 		initialState.setSelection(Selection.none(_config.getSelectionMode()));
+		// The columns that do not exist must not be displayed from the first state on, and no
+		// declared filter may refer to a column withheld from the user.
+		ColumnExistence existence = ColumnExistence.of(setups);
 		DefaultTableView<Object> view = new DefaultTableView<>(columns, source, initialState,
 			PersonalConfigViewStateStore.INSTANCE, tableId, hiddenByDefault,
-			declaredFilters(tableId, columns, declaredNames, inputValues), filterStore(), _initialFilter);
+			declaredFilters(tableId, columns, declaredNames, existence.withheldColumns(), inputValues),
+			filterStore(), _initialFilter);
 		if (rowCssClass != null) {
 			view.setRowCssClass(rowCssClass);
 		}
 		if (rowColor != null) {
 			view.setRowColor(rowColor);
 		}
-		// The columns that do not exist must not be displayed from the first state on.
-		ColumnExistence existence = ColumnExistence.of(setups);
 		view.setAbsentColumns(existence.absentColumns());
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, treeMode);
@@ -1249,13 +1269,16 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		control.setActivationHandler(activationHandler(activation));
 
-		return new ReadOnlyTable<>(control, view, source, tableId, columns, declaredNames, selectionBinding, setups);
+		return new ReadOnlyTable<>(control, view, source, tableId, columns, declaredNames, selectionBinding, setups,
+			existence);
 	}
 
 	/**
-	 * Takes up a change of the inputs in the given table: the criteria of the presets are computed
-	 * from the inputs, so a changed input means other criteria - they are resolved again, and a chip
-	 * the user has applied goes on filtering by what it now means.
+	 * Takes up an update of the given table - a change of its rows, of the model or of its inputs:
+	 * whether its columns exist is asked again, since it may depend on the access rights of the
+	 * user, see {@link ColumnExistence#recheck()}; and the criteria of the presets are resolved
+	 * again, since they are computed from the inputs and must not refer to a column withheld from
+	 * the user. A chip the user has applied goes on filtering by what it now means.
 	 *
 	 * <p>
 	 * Only the {@link ReadOnlyTable#view() view} takes up the resolved presets. A caller that does
@@ -1268,12 +1291,13 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The values of the input channels now.
 	 * @return Whether the table declares presets, so that its named filters were replaced.
 	 */
-	protected final boolean refreshPresets(ReadOnlyTable<?, ?> table, Object[] inputValues) {
+	protected final boolean refreshColumnsAndPresets(ReadOnlyTable<?, ?> table, Object[] inputValues) {
+		table.existence().recheck();
 		if (_presets.isEmpty()) {
 			return false;
 		}
-		table.view().setDeclaredFilters(
-			declaredFilters(table.tableId(), table.columns(), table.declaredNames(), inputValues));
+		table.view().setDeclaredFilters(declaredFilters(table.tableId(), table.columns(), table.declaredNames(),
+			table.existence().withheldColumns(), inputValues));
 		return true;
 	}
 
@@ -1444,13 +1468,16 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The names of the columns the table declares; one of them missing from the given
 	 *        columns is withheld from the current user, see
 	 *        {@link ColumnDeclarations#withheld(Collection, List)}.
+	 * @param withheld
+	 *        The names of the given columns the access rights of the current user withhold now,
+	 *        see {@link ColumnExistence#withheldColumns()}.
 	 * @param arguments
 	 *        The values of the {@link Config#getInputs() input channels}, in declaration order -
 	 *        the arguments of every criterion expression, as they are the arguments of the
 	 *        functions computing the rows.
 	 */
 	protected final List<NamedFilter> declaredFilters(TableId tableId, List<? extends Column<?, ?>> columns,
-			Collection<String> declaredNames, Object[] arguments) {
+			Collection<String> declaredNames, Set<String> withheld, Object[] arguments) {
 		if (_presets.isEmpty()) {
 			return List.of();
 		}
@@ -1463,8 +1490,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			declarations.add(new DeclaredFilters.Declaration(preset.id(), preset.label(), criteria,
 				preset.cssClass(), preset.counted()));
 		}
-		return DeclaredFilters.resolve(_log, tableId.value(), declarations, columns,
-			ColumnDeclarations.withheld(declaredNames, columns));
+		Set<String> withheldColumns = new LinkedHashSet<>(ColumnDeclarations.withheld(declaredNames, columns));
+		withheldColumns.addAll(withheld);
+		return DeclaredFilters.resolve(_log, tableId.value(), declarations, columns, withheldColumns);
 	}
 
 	/**

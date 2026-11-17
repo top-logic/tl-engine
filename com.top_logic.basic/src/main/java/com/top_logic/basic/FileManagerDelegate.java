@@ -38,6 +38,11 @@ public class FileManagerDelegate extends FileManager {
 	}
 
 	@Override
+	public Path getTopLevelWebapp() {
+		return _delegate.getTopLevelWebapp();
+	}
+
+	@Override
 	public List<Path> getPaths() {
 		return _delegate.getPaths();
 	}

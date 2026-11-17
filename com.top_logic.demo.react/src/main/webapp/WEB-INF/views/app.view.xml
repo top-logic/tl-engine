@@ -494,6 +494,15 @@
 							<de>Temperaturen</de>
 						</label>
 					</nav-item>
+					<nav-item id="sensor-locking"
+						icon="css:bi bi-lock"
+					>
+						<view-ref view="demo/sensor-locking.view.xml"/>
+						<label>
+							<en>Sensor locking</en>
+							<de>Sperren von Sensoren</de>
+						</label>
+					</nav-item>
 					<nav-item id="styling-demo"
 						icon="css:bi bi-palette"
 					>

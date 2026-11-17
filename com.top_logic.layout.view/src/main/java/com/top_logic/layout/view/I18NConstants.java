@@ -41,6 +41,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey FORM_NO_MODEL;
 
 	/**
+	 * @en The object is shown read-only.
+	 */
+	public static ResKey FORM_SHOWN_READ_ONLY;
+
+	/**
+	 * @en The value was not saved.
+	 */
+	public static ResKey CELL_VALUE_NOT_SAVED;
+
+	/**
 	 * @en No configuration to edit.
 	 */
 	public static ResKey CONFIG_FORM_NO_MODEL;

@@ -32,6 +32,10 @@ public class WellKnownTypes {
 
 	private static final String NAME_ANNOTATION = "com.top_logic.basic.config.annotation.Name";
 
+	private static final String EXTERNAL_ANNOTATION = "com.top_logic.basic.config.annotation.External";
+
+	private static final String FACTORY_ANNOTATION = "com.top_logic.basic.config.annotation.Factory";
+
 	private static final String IN_APP_ANNOTATION = "com.top_logic.basic.annotation.InApp";
 
 	private static final String TEMPLATE_VARIABLE_ANNOTATION = "com.top_logic.layout.basic.TemplateVariable";
@@ -76,6 +80,10 @@ public class WellKnownTypes {
 	ExecutableElement _nameValue;
 
 	TypeMirror _abstractAnnotation;
+
+	TypeMirror _externalAnnotation;
+
+	TypeMirror _factoryAnnotation;
 
 	TypeMirror _labelAnnotation;
 
@@ -133,6 +141,8 @@ public class WellKnownTypes {
 		_inAppAnnotation = typeMirror(IN_APP_ANNOTATION);
 		_usesSecurityAnnotation = typeMirror(USES_SECURITY_ANNOTATION);
 		_abstractAnnotation = typeMirror(ABSTRACT_ANNOTATION);
+		_externalAnnotation = typeMirror(EXTERNAL_ANNOTATION);
+		_factoryAnnotation = typeMirror(FACTORY_ANNOTATION);
 		TypeElement name = typeElement(NAME_ANNOTATION);
 		if (name != null) {
 			_nameAnnotation = name.asType();
@@ -300,6 +310,20 @@ public class WellKnownTypes {
 	 */
 	public boolean hasAbstractAnnotation(Element elem) {
 		return hasAnnotation(elem, _abstractAnnotation);
+	}
+
+	/**
+	 * Whether the {@value #EXTERNAL_ANNOTATION} annotation is present.
+	 */
+	public boolean hasExternalAnnotation(Element elem) {
+		return hasAnnotation(elem, _externalAnnotation);
+	}
+
+	/**
+	 * Whether the {@value #FACTORY_ANNOTATION} annotation is present.
+	 */
+	public boolean hasFactoryAnnotation(Element elem) {
+		return hasAnnotation(elem, _factoryAnnotation);
 	}
 
 	private boolean hasAnnotation(Element doc, TypeMirror requiredAnnotation) {

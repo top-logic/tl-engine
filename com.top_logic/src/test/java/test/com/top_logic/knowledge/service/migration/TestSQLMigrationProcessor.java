@@ -113,7 +113,7 @@ public class TestSQLMigrationProcessor extends BasicTestCase {
 				assertFalse(result.next());
 			}
 		} finally {
-			DBSchemaUtils.resetTables(_writeConnection, schema, false);
+			DBSchemaUtils.dropTables(_writeConnection, schema);
 			_writeConnection.commit();
 		}
 	}

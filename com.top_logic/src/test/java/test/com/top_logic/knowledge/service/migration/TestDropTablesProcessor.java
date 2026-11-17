@@ -86,7 +86,7 @@ public class TestDropTablesProcessor extends BasicTestCase {
 	protected void tearDown() throws Exception {
 		try {
 			_connection.rollback();
-			DBSchemaUtils.resetTables(_connection, _schema, false);
+			DBSchemaUtils.dropTables(_connection, _schema);
 			_connection.commit();
 		} finally {
 			_pool.releaseWriteConnection(_connection);

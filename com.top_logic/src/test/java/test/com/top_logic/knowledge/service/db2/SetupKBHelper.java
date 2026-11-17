@@ -9,6 +9,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.junit.Assert;
+
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.db.schema.BranchLastSetup;
 import test.com.top_logic.basic.db.schema.MultipleBranchSetup;
@@ -62,7 +64,7 @@ public class SetupKBHelper {
 		kb = new DBKnowledgeBaseAccess(schemaSetup);
 		kb.initialize(log, _configuration);
 
-		schemaSetup.resetTables(kb.getConnectionPool(), kb.getMORepository(), true);
+		clearTables(schemaSetup);
 		schemaSetup.createTables(kb.getConnectionPool(), kb.getMORepository(), true);
 		dropSequences();
 		new InitialKBDataSetup().setupInitialData(log, kb);
@@ -104,8 +106,21 @@ public class SetupKBHelper {
 		kb.shutDown();
 		dropSequences();
 		SchemaSetup schemaSetup = newSchemaSetup(_configuration, _additionalProviders);
-		schemaSetup.resetTables(kb.getConnectionPool(), kb.getMORepository(), true);
+		clearTables(schemaSetup);
 		kb = null;
+	}
+
+	/**
+	 * Deletes all rows from the tables of the test database.
+	 * 
+	 * <p>
+	 * A table that does not exist yet is not an error, an existing table that cannot be cleared
+	 * fails the test.
+	 * </p>
+	 */
+	private void clearTables(SchemaSetup schemaSetup) {
+		Assert.assertTrue("Cannot clear the tables of the test knowledge base.",
+			schemaSetup.clearTables(kb.getConnectionPool(), kb.getMORepository()));
 	}
 
 	/**

@@ -56,7 +56,7 @@ All names and props are typed: `replacePart('Checkbox', C)` accepts only a compo
 | `FieldValue` | `FieldValuePartProps` | the one read-only value, as text or link, with an optional suffix (the unit of a number), a value of a color role as a pill (part `Chip`) within it; a multi-line value, optionally preformatted, with an optional action beside it | every text, password, number, select, date and slider field that is not editable; the chosen values of a choice field (`OptionValues`); the object in a table cell (`TLResourceCell`); a text shown as a link opening an address (`TLLink`) |
 | `Chip` | `ChipPartProps` | a compact value: with a color role, a toggle, removable, reorderable by a handle, or running an action | the toggles of `TLOptionChips`, the chosen values of a dropdown, the named filters of a table, the files of a file chip field, the options of a color role in a list, read-only values of a color role (inside `FieldValue`), texts drawn as a pill |
 | `Badge` | `BadgePartProps` | a small marker carrying a count | the counts of the sidebar and the bottom bar |
-| `Divider` | `DividerPartProps` | a line between content, horizontal or vertical | between the groups of a toolbar, the sections of a toolbar menu, the items of the sidebar |
+| `Divider` | `DividerPartProps` | a line between content, horizontal or vertical; a horizontal one optionally with a short text in the line (`label`, at `labelPosition` `start`, `center` or `end`, an element of the role `separator` instead of an `hr`), optionally shortened at its start by the indent of an entry of a list (`inset` `start`) | `TLDivider` (the element `<divider>`, see [Layout](doc:view-layer/layout#a-line-between-content-divider)), between the groups of a toolbar, the sections of a toolbar menu, the items of the sidebar |
 | `ProgressBar` | `ProgressBarPartProps` | a determinate or indeterminate bar with an optional label naming it, or named by another element | `TLProgress`, the status of a job, the loading options of a dropdown, the loading children of a tree node |
 | `Spinner` | `SpinnerPartProps` | a turning ring: small in place of an icon, or a busy indicator of its own | the icon popup loading its icons |
 | `Listbox` | `ListboxPartProps` | a list of entries floating at an anchor element, one of them active, from which the user picks one; it never takes the focus, the element controlling it names the active entry by `aria-activedescendant` | the suggestions under a text field offering them (`TLTextInput`, see `useSuggestions` of `tl-react-bridge`) |
@@ -86,7 +86,7 @@ A component library has two ways in (see
   the complete state of the control and sends its commands.
 
 The atomic controls `TLButton`, `TLToggleButton`, `TLCheckbox`, `TLTextInput`,
-`TLPasswordInput`, `TLNumberInput`, `TLOptionChips` and `TLProgress` draw their look through parts
+`TLPasswordInput`, `TLNumberInput`, `TLOptionChips`, `TLProgress` and `TLDivider` draw their look through parts
 only. Replace their parts, not the controls: a replaced part also reaches the inline places the
 control never covers.
 

@@ -421,7 +421,7 @@ anything.
 | `FieldValue` | the part: the value of a field that is not editable | `Typography`, `Link` |
 | `Chip` | the part: option chips, chosen values of a dropdown, filters of a table, file chips, values with a color role | `Chip` |
 | `Badge` | the part: the counts of the sidebar and the bottom bar | `Badge` |
-| `Divider` | the part: the lines of toolbars, toolbar menus and the sidebar | `Divider` |
+| `Divider` | the part: the lines of `<divider>`, toolbars, toolbar menus and the sidebar | `Divider`: a vertical line is a `flexItem`; the `label` is its children, `labelPosition` `start` / `center` / `end` its `textAlign` `left` / `center` / `right`, `inset` `start` its `variant="inset"` |
 | `ProgressBar` | the part: progress controls, job status, loading options | `LinearProgress` |
 | `Spinner` | the part: busy indicators | `CircularProgress` |
 | `Listbox` | the part: the suggestions under a text field | `Paper`, `List`, `ListItemButton` |

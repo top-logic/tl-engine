@@ -354,12 +354,12 @@ the commands the component sends. The controls a library replaces as a whole:
 | `TLCard` | `CardState` |
 | `TLAppBar` | `AppBarState` |
 | `TLBreadcrumb` | `BreadcrumbState` |
-| `TLAvatar` | `AvatarState` |
 | `TLSlider` | `SliderState` |
 | `TLFloatingAction` | `FloatingActionState` |
+| `TLDataList` | `DataListState` |
 
 The header also lists the atomic controls `TLButton`, `TLToggleButton`, `TLCheckbox`,
-`TLTextInput`, `TLPasswordInput`, `TLNumberInput`, `TLOptionChips` and `TLProgress`. Their look is
+`TLTextInput`, `TLPasswordInput`, `TLNumberInput`, `TLOptionChips`, `TLProgress` and `TLAvatar`. Their look is
 drawn by parts ([Parts and controls](#parts-and-controls)); a library replaces those parts.
 
 The shared parts are `ControlState` (`hidden`, `cssClass`), `FieldState` (value, `editable`,

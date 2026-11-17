@@ -67,6 +67,11 @@ public class TestDataListElement extends BasicTestCase {
 	/** The list of the fixture, showing the modules named with {@link #PREFIX}. */
 	private static final String FIXTURE = "data-list.view.xml";
 
+	/**
+	 * A list of the same modules counting their classes, observing the type of the classes as well.
+	 */
+	private static final String RELATED_FIXTURE = "data-list-related.view.xml";
+
 	/** Prefix of the names of the modules the list shows; the next letter is their group. */
 	private static final String PREFIX = "test.datalist.";
 
@@ -204,6 +209,24 @@ public class TestDataListElement extends BasicTestCase {
 	}
 
 	/**
+	 * Tests that the list follows a change of an object that is no row but of an observed type: a
+	 * class created in a module changes the count of its badge, while the list stays displayed.
+	 */
+	public void testRelatedObjectOfObservedType() throws Exception {
+		DataListControl list = list(RELATED_FIXTURE);
+		assertFalse("No class, no badge.", rows(list).get(2).containsKey(DataListState.Row.TRAILING__PROP));
+
+		try (Transaction tx = kb().beginTransaction()) {
+			TLModelUtil.addClass(_modules.get(0), "Ticket");
+			tx.commit();
+		}
+		_scope.synthesizeModelEvents();
+
+		Map<?, ?> bravo = (Map<?, ?>) rows(list).get(2).get(DataListState.Row.TRAILING__PROP);
+		assertEquals("1", bravo.get(DataListState.Trailing.TEXT__PROP));
+	}
+
+	/**
 	 * Tests that selecting a row writes its object to the selection channel, that a value written
 	 * to the channel from elsewhere is shown as selected, and that an empty ID clears the selection.
 	 */
@@ -267,19 +290,23 @@ public class TestDataListElement extends BasicTestCase {
 	}
 
 	private DataListControl list() {
-		DataListControl result = (DataListControl) element().createControl(_context);
+		return list(FIXTURE);
+	}
+
+	private DataListControl list(String fixture) {
+		DataListControl result = (DataListControl) element(fixture).createControl(_context);
 		result.attach();
 		return result;
 	}
 
-	private DataListElement element() {
+	private DataListElement element(String fixture) {
 		try {
-			ViewElement view = new FixtureViews(TestDataListElement.class).getView(FIXTURE);
+			ViewElement view = new FixtureViews(TestDataListElement.class).getView(fixture);
 			ChildGroup group = view.getChildGroups().get(0);
 			UIElement content = ((ChildGroup.Elements) group).children().get(0);
 			return (DataListElement) content;
 		} catch (ConfigurationException ex) {
-			throw new AssertionError("Not a readable view: " + FIXTURE, ex);
+			throw new AssertionError("Not a readable view: " + fixture, ex);
 		}
 	}
 

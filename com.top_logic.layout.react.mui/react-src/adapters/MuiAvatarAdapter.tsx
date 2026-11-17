@@ -92,6 +92,8 @@ const NO_CONTENT = <></>;
  * <li>name → the category (`categoryOf`) in {@link CATEGORY_ATTRIBUTE}, and the tooltip
  *     of the name (`tooltipProps`), as the TopLogic drawing shows it;</li>
  * <li>size (absent: `medium`) → {@link SIZE_ATTRIBUTE};</li>
+ * <li>decorative → `aria-hidden`, no role, no accessible name, no tooltip, an empty `alt`; the
+ *     picture or the initials on the category stay;</li>
  * <li>id, className and the passed-through attributes → the root of the `Avatar`.</li>
  * </ul>
  *
@@ -99,7 +101,7 @@ const NO_CONTENT = <></>;
  * of the theme, keyed by the two attributes, so that a theme's `styleOverrides` of `MuiAvatar`
  * restyle them.</p>
  */
-const MuiAvatarAdapter: React.FC<AvatarPartProps> = ({ id, name: givenName, src, size, className, ...attributes }) => {
+const MuiAvatarAdapter: React.FC<AvatarPartProps> = ({ id, name: givenName, src, size, decorative, className, ...attributes }) => {
   const name = givenName || undefined;
   const rootProps = {
     id,
@@ -112,6 +114,13 @@ const MuiAvatarAdapter: React.FC<AvatarPartProps> = ({ id, name: givenName, src,
     return src
       ? <Avatar {...rootProps} src={src} alt="" />
       : <Avatar {...rootProps} aria-hidden="true">{NO_CONTENT}</Avatar>;
+  }
+
+  if (decorative) {
+    const shown = { ...rootProps, [CATEGORY_ATTRIBUTE]: categoryOf(name), 'aria-hidden': true as const };
+    return src
+      ? <Avatar {...shown} src={src} alt="">{avatarInitials(name)}</Avatar>
+      : <Avatar {...shown}>{avatarInitials(name)}</Avatar>;
   }
 
   const named = { ...rootProps, [CATEGORY_ATTRIBUTE]: categoryOf(name), ...tooltipProps(name) };

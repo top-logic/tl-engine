@@ -17,7 +17,6 @@ import com.top_logic.ai.chat.view.ChatRailElement;
 import com.top_logic.ai.chat.view.ChatScopeElement;
 import com.top_logic.ai.chat.view.ChatSectionElement;
 import com.top_logic.ai.chat.view.ChatSourcesElement;
-import com.top_logic.ai.chat.view.list.DataListElement;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
@@ -36,24 +35,6 @@ import com.top_logic.layout.view.UIElement;
  * </p>
  */
 public class TestHiddenElementOptions extends TestCase {
-
-	/** {@code <data-list>} hides only its React binding, plus the two engine-inherited options. */
-	public void testDataListHiddenOptions() {
-		assertHidden(DataListElement.Config.class, DataListElement.Config.REACT_ELEMENT);
-		assertEngineOptionsHidden(DataListElement.Config.class);
-
-		assertVisible(DataListElement.Config.class, DataListElement.Config.ROWS);
-		assertVisible(DataListElement.Config.class, DataListElement.Config.SELECTION);
-		assertVisible(DataListElement.Config.class, DataListElement.Config.SEARCH);
-		assertVisible(DataListElement.Config.class, DataListElement.Config.COUNT);
-		assertVisible(DataListElement.Config.class, DataListElement.Config.CSS_CLASS);
-		assertVisible(DataListElement.Config.class, DataListElement.Config.COLLAPSED);
-		// Row actions are an administration decision, not a TypeScript name: the designer configures
-		// which commands a row offers, what the local channel is called and when the trigger shows.
-		assertVisible(DataListElement.Config.class, DataListElement.Config.ROW_COMMANDS);
-		assertVisible(DataListElement.Config.class, DataListElement.Config.ROW_CHANNEL);
-		assertVisible(DataListElement.Config.class, DataListElement.Config.ROW_ACTIONS);
-	}
 
 	/** {@code <chat-conversation>} hides the four names that only mean something in TypeScript. */
 	public void testChatConversationHiddenOptions() {

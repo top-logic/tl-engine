@@ -109,7 +109,7 @@ Bauteile anderer Blöcke:
 
 | Bauteil | Wo und wie |
 |---|---|
-| `tl-avatar` | Part `Avatar` in `tl-list__leading`, mit `aria-hidden="true"`: sein Name steht in den Zeilen, die der Knopf vorliest |
+| `tl-avatar` | Part `Avatar` in `tl-list__leading` als Dekoration (`decorative`: `aria-hidden="true"`, ohne `role` und Namen): sein Name steht in den Zeilen, die der Knopf vorliest |
 | Icon | `ThemeIcon` mit `tl-icon-md` in `tl-list__leading`, wenn `leading.icon` steht |
 | `tl-badge` | Part `Badge` in `tl-list__trailing`, wenn `trailing.badge` steht; Metadaten-Text sonst mit `.tl-type-label` am `tl-list__trailing` |
 | `tl-toggle` | der Ein-/Ausklapper im Kopf |

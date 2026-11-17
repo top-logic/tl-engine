@@ -63,6 +63,13 @@ function firstText(row: Row): string {
   return row.lines?.[0]?.text ?? '';
 }
 
+/**
+ * Options of a focus moved by the list itself to where the user's place in it is now: shown with
+ * its ring whatever device moved it there (the `focusVisible` option of the HTML standard, which the
+ * DOM types of TypeScript do not know yet).
+ */
+const FOCUS_VISIBLE = { focusVisible: true } as FocusOptions;
+
 /** The root font size in px, which is what the `drawerBelow` rem value is measured in. */
 function remInPx(): number {
   return parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
@@ -191,7 +198,7 @@ function ListParts(props: ListPartsProps) {
                             <ThemeIcon encoded={row.leading.icon} className="tl-icon-md" />
                           ) : (
                             // The name of the avatar is what the lines say; the button reads it once.
-                            <Avatar name={row.leading.name || null} src={row.leading.image || null} aria-hidden="true" />
+                            <Avatar name={row.leading.name || null} src={row.leading.image || null} decorative />
                           )}
                         </span>
                       ) : null}
@@ -364,9 +371,11 @@ const TLDataList: React.FC<TLCellProps> = ({ controlId }) => {
     const neighbour =
       [...before.slice(0, gone)].reverse().find((id) => ids.includes(id)) ??
       before.slice(gone + 1).find((id) => ids.includes(id));
+    // The trigger is revealed only while it shows the focus ring (tl-reveal-on-hover): moved here by
+    // code after a Delete chosen with the mouse, the focus would otherwise land on an invisible button.
     const target = neighbour ? triggers.current.get(neighbour) : null;
-    if (target) target.focus();
-    else body.current?.focus();
+    if (target) target.focus(FOCUS_VISIBLE);
+    else body.current?.focus(FOCUS_VISIBLE);
   }, [rows]);
 
   const shared = {

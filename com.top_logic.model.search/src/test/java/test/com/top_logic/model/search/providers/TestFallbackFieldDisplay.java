@@ -169,6 +169,51 @@ public class TestFallbackFieldDisplay extends AbstractSearchExpressionTest {
 		assertEquals("other", valueField.getValue());
 	}
 
+	/**
+	 * Fallback, explicit value, changed fallback and reset of the explicit value in an active
+	 * field: an explicit value hides a changed fallback, after the reset the new fallback shows.
+	 */
+	public void testExplicitValueAndChangedFallback() {
+		FormField nameField = field(NAME);
+		FormField valueField = field(VALUE);
+		nameField.setValue("first");
+		assertEmpty(valueField.getValue());
+		assertEquals("first", valueField.getPlaceholder());
+
+		valueField.setValue("explicit");
+		assertEquals("explicit", valueField.getValue());
+
+		nameField.setValue("second");
+		assertEquals("The explicit value is kept.", "explicit", valueField.getValue());
+		assertEquals("second", valueField.getPlaceholder());
+
+		valueField.setValue(null);
+		assertEmpty(valueField.getValue());
+		assertEquals("The new fallback shows.", "second", valueField.getPlaceholder());
+	}
+
+	/**
+	 * Fallback, explicit value, changed fallback and reset of the explicit value in an inactive
+	 * field, with the explicit value set in the field of the storage attribute.
+	 */
+	public void testExplicitValueAndChangedFallbackInactive() {
+		FormField storageField = field(VALUE_STORAGE);
+		FormField nameField = field(NAME);
+		FormField valueField = field(VALUE);
+		nameField.setValue("first");
+		valueField.setImmutable(true);
+		assertEquals("first", valueField.getValue());
+
+		storageField.setValue("explicit");
+		assertEquals("explicit", valueField.getValue());
+
+		nameField.setValue("second");
+		assertEquals("The explicit value is kept.", "explicit", valueField.getValue());
+
+		storageField.setValue(null);
+		assertEquals("The new fallback shows.", "second", valueField.getValue());
+	}
+
 	public void testStorageAttributeOfOverlay() {
 		FormField nameField = field(NAME);
 		FormField valueField = field(VALUE);

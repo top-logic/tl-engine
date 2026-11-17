@@ -19,6 +19,7 @@ import DisclosureTogglePart from './button/DisclosureTogglePart';
 import CheckboxPart from './form/CheckboxPart';
 import TextInputPart from './form/TextInputPart';
 import ChipPart from './chip/ChipPart';
+import SkeletonPart from './skeleton/SkeletonPart';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -92,6 +93,7 @@ beforeAll(() => {
   registerPart('Checkbox', CheckboxPart);
   registerPart('TextInput', TextInputPart);
   registerPart('Chip', ChipPart);
+  registerPart('Skeleton', SkeletonPart);
   register('TableTestEditor', EditorCell);
   register('TableTestText', TextCell);
   register('TLTableView', TLTableView);
@@ -204,5 +206,37 @@ describe('a table whose rows are not all edited', () => {
     await settle();
 
     expect(selections()).toEqual([]);
+  });
+});
+
+describe('a table whose rows in the visible window are not all sent', () => {
+  it('draws the missing rows as text skeletons and marks the grid busy', async () => {
+    // jsdom lays nothing out: the body shows five rows of the fallback row height (36px).
+    const clientHeight = vi.spyOn(Element.prototype, 'clientHeight', 'get')
+      .mockImplementation(function (this: Element) { return this.classList.contains('tl-table__body') ? 5 * 36 : 0; });
+    try {
+      mountTable({ totalRowCount: 10 });
+      await settle();
+
+      const placeholders = Array.from(document.querySelectorAll('.tl-table__placeholder'));
+      expect(placeholders).toHaveLength(2);
+      for (const placeholder of placeholders) {
+        expect(placeholder.getAttribute('aria-hidden')).toBe('true');
+        const skeleton = placeholder.firstElementChild!;
+        expect(skeleton.className).toBe('tl-skeleton tl-skeleton--text');
+        expect(skeleton.getAttribute('aria-hidden')).toBe('true');
+      }
+      expect(document.querySelector('.tl-table__grid')!.getAttribute('aria-busy')).toBe('true');
+    } finally {
+      clientHeight.mockRestore();
+    }
+  });
+
+  it('does not mark the grid busy when all rows of the window are sent', async () => {
+    mountTable({});
+    await settle();
+
+    expect(document.querySelectorAll('.tl-table__placeholder')).toHaveLength(0);
+    expect(document.querySelector('.tl-table__grid')!.hasAttribute('aria-busy')).toBe(false);
   });
 });

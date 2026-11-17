@@ -618,6 +618,17 @@
 							roles="demo.react.Administrator"
 						/>
 					</module>
+					<!--
+						A user - every member of the "user" group, by the role rule on the security
+						root below - reads the units and currencies, but does not change them.
+					-->
+					<module name="tl.units">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.User"
+						/>
+					</module>
 					<!-- The administrator role opens the administration area. -->
 					<singleton name="SecurityStructure#ROOT">
 						<grant
@@ -758,6 +769,16 @@
 								<step attribute="tl.demo.projectManagement:ProjectScope#tickets"/>
 							</path>
 						</inheritance-rule>
+						<!--
+							Every member of the "user" group is a user on the security root, from which
+							the units and currencies inherit their roles.
+						-->
+						<singleton-rule id="UsersOnRoot"
+							role="demo.react.User"
+							target="SecurityStructure#ROOT"
+						>
+							<group-with-name name="user"/>
+						</singleton-rule>
 						<!--
 							Every member of the "user" group is a user on the person contacts and on every
 							object of the ticket demo.

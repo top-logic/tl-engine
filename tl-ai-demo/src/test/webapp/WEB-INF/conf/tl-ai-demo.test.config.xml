@@ -15,6 +15,23 @@
 		</config>
 
 		<!--
+			A permission of another endpoint, bound to the session like the permissions of the user
+			interface, for SecDemoMcpEndpointTest: the agent endpoints refuse a token that has only
+			this one.
+		-->
+		<config service-class="com.top_logic.element.accesstoken.AccessTokenPermissions">
+			<instance>
+				<permissions>
+					<permission name="test-ui"
+						label="test.accesstoken.permission.ui"
+					>
+						<session-binding class="test.com.top_logic.layout.view.accesstoken.RecordingSessionBinding"/>
+					</permission>
+				</permissions>
+			</instance>
+		</config>
+
+		<!--
 			The providers tl-ai-core ships, as the demo runs on them; no test calls a provider. The
 			bundled catalog only: a test must not depend on reaching the internet.
 		-->

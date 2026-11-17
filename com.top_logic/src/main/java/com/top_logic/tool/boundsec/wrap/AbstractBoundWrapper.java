@@ -11,13 +11,13 @@ import com.top_logic.knowledge.wrap.AbstractWrapper;
 /**
  * Base class of persistent objects that are {@link com.top_logic.tool.boundsec.BoundObject}s.
  * 
- * <p>
- * The security behavior is defined by {@link BoundWrapper}.
- * </p>
- *
  * @author <a href="mailto:dro@top-logic.com">Dieter Rothb&auml;cher</a>
+ * 
+ * @deprecated Every {@link AbstractWrapper} is a {@link BoundWrapper}, extend
+ *             {@link AbstractWrapper} directly.
  */
-public abstract class AbstractBoundWrapper extends AbstractWrapper implements BoundWrapper {
+@Deprecated
+public abstract class AbstractBoundWrapper extends AbstractWrapper {
 
 	/** Constructor */
     public AbstractBoundWrapper(KnowledgeObject ko) {

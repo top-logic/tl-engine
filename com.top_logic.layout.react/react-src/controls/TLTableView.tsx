@@ -1,4 +1,4 @@
-import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, BACKGROUND_REPORT, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
 import { FOCUSABLE_SELECTOR, editableInRow, focusTargetInRow, focusablesIn, rowCells } from './tableRowFocus';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
@@ -6,6 +6,7 @@ import type { HintAnchor, DropVerdict } from './DropHint';
 import { Menu, MenuItem } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
 import { chipFocusTargets } from './chip/chipFocus';
+import { FilterPresets } from './table/FilterPresets';
 
 /**
  * Registers the table's keyboard row-navigation bindings into the enclosing (focus-gated) scope.
@@ -89,6 +90,7 @@ const I18N_KEYS = {
   'js.table.saveFilter': 'Save this filter',
   'js.table.filterName': 'Filter name',
   'js.table.deleteFilter': 'Delete this filter',
+  'js.table.morePresets': '+ {0} more',
   'js.table.cancelSave': 'Do not save',
 };
 
@@ -426,7 +428,6 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const DisclosureToggle = usePart('DisclosureToggle');
   const Checkbox = usePart('Checkbox');
   const TextInput = usePart('TextInput');
-  const Chip = usePart('Chip');
   const Skeleton = usePart('Skeleton');
   const rootRef = React.useRef<HTMLDivElement>(null);
   // The grid (role=grid) holds the keyboard focus and points at the cursor row with
@@ -891,9 +892,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       if (!forced && reported && reported.start === viewport.start && reported.count === viewport.count) return;
       reportedViewportRef.current = viewport;
       // Asks for the rows the user scrolled to, in the background: the table shows skeleton rows until they arrive.
-      sendCommand('scroll', viewport, BACKGROUND_COMMAND);
+      sendCommand('scroll', viewport, BACKGROUND_REPORT);
     }, 80);
   }, [sendCommand, viewportOf]);
+
+  // A table that is removed reports no viewport any more.
+  React.useEffect(() => () => {
+    if (scrollTimeoutRef.current !== null) {
+      clearTimeout(scrollTimeoutRef.current);
+      scrollTimeoutRef.current = null;
+    }
+  }, []);
 
   // The header scrolls by itself only when the browser brings a focused header control into view (Tab to
   // a sort or filter button beyond the edge); the body follows, and its scroll event aligns both again.
@@ -1834,27 +1843,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       {filterBar && (
         <div ref={filterBarRef} className="tl-table__filter-bar">
           {namedFilters.length > 0 && (
-            <span className="tl-chip-group">
-              {namedFilters.map((named) => {
-                const isActive = named.id === activeNamedFilter;
-                // Only a filter of the user's own can be deleted; a declared one is part of the
-                // table and offers no remove affordance.
-                return (
-                  <Chip
-                    key={named.id}
-                    label={named.label}
-                    detail={named.count !== undefined ? String(named.count) : undefined}
-                    className={named.cssClass}
-                    pressed={isActive}
-                    tooltip={isActive ? i18n['js.table.clearFilter'] : named.label}
-                    onClick={() => handleNamedFilter(named.id)}
-                    onRemove={named.deletable ? (e) => handleDeleteNamedFilter(named.id, e) : undefined}
-                    removeLabel={i18n['js.table.deleteFilter']}
-                    {...(named.deletable ? { [FILTER_CHIP_ATTR]: true } : {})}
-                  />
-                );
-              })}
-            </span>
+            <FilterPresets
+              presets={namedFilters}
+              activeId={activeNamedFilter}
+              densityKey={String(rowHeight)}
+              chipAttr={FILTER_CHIP_ATTR}
+              moreText={i18n['js.table.morePresets']}
+              clearLabel={i18n['js.table.clearFilter']}
+              deleteLabel={i18n['js.table.deleteFilter']}
+              onToggle={handleNamedFilter}
+              onDelete={handleDeleteNamedFilter}
+            />
           )}
           <SearchField
             className="tl-table__search"

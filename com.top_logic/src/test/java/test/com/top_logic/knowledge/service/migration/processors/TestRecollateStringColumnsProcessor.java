@@ -211,7 +211,7 @@ public class TestRecollateStringColumnsProcessor extends AbstractDBKnowledgeBase
 	 * Suite of {@link TestRecollateStringColumnsProcessor}.
 	 */
 	public static Test suite() {
-		return suiteDefaultDB(TestRecollateStringColumnsProcessor.class);
+		return suite(TestRecollateStringColumnsProcessor.class);
 	}
 
 }

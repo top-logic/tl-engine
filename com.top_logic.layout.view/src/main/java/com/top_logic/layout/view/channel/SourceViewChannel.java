@@ -8,6 +8,7 @@ package com.top_logic.layout.view.channel;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.listen.ModelScope;
 
 /**
@@ -65,7 +66,26 @@ public class SourceViewChannel extends DefaultViewChannel implements ObservingCh
 	 *        deliver every value.
 	 */
 	public SourceViewChannel(String name, ViewContext context, ChannelSource source, long updateInterval) {
-		super(name);
+		this(name, null, context, source, updateInterval);
+	}
+
+	/**
+	 * Creates a {@link SourceViewChannel} with a declared value type.
+	 *
+	 * @param name
+	 *        The channel name (for debugging).
+	 * @param valueType
+	 *        See {@link #getValueType()}, {@code null} for none.
+	 * @param context
+	 *        See {@link #SourceViewChannel(String, ViewContext, ChannelSource, long)}.
+	 * @param source
+	 *        See {@link #SourceViewChannel(String, ViewContext, ChannelSource, long)}.
+	 * @param updateInterval
+	 *        See {@link #SourceViewChannel(String, ViewContext, ChannelSource, long)}.
+	 */
+	public SourceViewChannel(String name, TLClass valueType, ViewContext context, ChannelSource source,
+			long updateInterval) {
+		super(name, valueType);
 		_name = name;
 		_context = context;
 		_source = source;

@@ -95,6 +95,8 @@ export function kontrastPaare(T) {
   // icon-secondary auf surface-interactive-strong steht seit Bernhards Knöpfen im Feld schon in der Liste (b985047).
   paar('icon-secondary', 'surface-layer', 3.0);
   paar('border-emphasis', 'surface-layer', 3.0);
+  // Feldrahmen in der gezeigten und gewählten Tabellenzeile (#30383), auch auf der gezeigten Zebrazeile (U85).
+  for (const bg of [...AUSWAHL, 'surface-interactive-hover', 'surface-interactive-strong']) paar('border-emphasis', bg, 3.0);
   for (const bg of [...AUSWAHL, 'surface-interactive-hover']) {
     paar('status-error-border', bg, 3.0);
     paar('status-warning-border', bg, 3.0);

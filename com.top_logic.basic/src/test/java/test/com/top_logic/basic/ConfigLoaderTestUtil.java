@@ -236,8 +236,6 @@ public class ConfigLoaderTestUtil {
 
 		addDBConfigFile(additionalFiles, "com.mysql.cj.jdbc.MysqlConnectionPoolDataSource", "test-with-mysql.xml");
 		addDBConfigFile(additionalFiles, "org.h2.jdbcx.JdbcDataSource", "test-with-h2.xml");
-		addDBConfigFile(additionalFiles, "oracle.jdbc.pool.OracleConnectionPoolDataSource", "test-with-oracle.xml");
-		addDBConfigFile(additionalFiles, "oracle.jdbc.pool.OracleConnectionPoolDataSource", "test-with-oracle12.xml");
 		addDBConfigFile(additionalFiles, "oracle.jdbc.pool.OracleConnectionPoolDataSource", "test-with-oracle19.xml");
 		addDBConfigFile(additionalFiles, "com.ibm.db2.jcc.DB2SimpleDataSource", "test-with-db2.xml");
 		addDBConfigFile(additionalFiles, "com.microsoft.sqlserver.jdbc.SQLServerDataSource", "test-with-mssql.xml");

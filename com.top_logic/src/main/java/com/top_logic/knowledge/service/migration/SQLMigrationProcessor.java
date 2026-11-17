@@ -27,7 +27,6 @@ import com.top_logic.basic.sql.DB2Helper;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.H2Helper;
 import com.top_logic.basic.sql.MSSQLHelper;
-import com.top_logic.basic.sql.MySQL55Helper;
 import com.top_logic.basic.sql.MySQLHelper;
 import com.top_logic.basic.sql.OracleHelper;
 import com.top_logic.basic.sql.PooledConnection;
@@ -43,19 +42,8 @@ import com.top_logic.dsa.DatabaseAccessException;
 public class SQLMigrationProcessor implements MigrationProcessor, ConfiguredInstance<SQLMigrationProcessor.Config> {
 
 	private enum DatabaseType implements ExternallyNamed {
-		DB2("db2"), H2("h2"), MSSQL("mssql"), MYSQL("mysql"), MYSQL55("mysql55") {
-			@Override
-			DatabaseType getFallback() {
-				return MYSQL;
-			}
-		},
-		ORACLE("oracle"), ORACLE10("oracle10"), ORACLE12("oracle12"), ORACLE19("oracle19") {
-
-			@Override
-			DatabaseType getFallback() {
-				return DatabaseType.ORACLE;
-			}
-		},
+		DB2("db2"), H2("h2"), MSSQL("mssql"), MYSQL("mysql"),
+		ORACLE("oracle"),
 		POSTGRESQL("postgresql") {
 			@Override
 			DatabaseType getFallback() {
@@ -270,16 +258,8 @@ public class SQLMigrationProcessor implements MigrationProcessor, ConfiguredInst
 			type = DatabaseType.MSSQL;
 		} else if (sqlDialect instanceof MySQLHelper) {
 			type = DatabaseType.MYSQL;
-			if (sqlDialect instanceof MySQL55Helper) {
-				type = DatabaseType.MYSQL55;
-			}
 		} else if (sqlDialect instanceof OracleHelper) {
 			type = DatabaseType.ORACLE;
-//			if (sqlDialect instanceof Oracle10Helper) {
-//				type = DatabaseType.ORACLE10;
-//			} else if (sqlDialect instanceof Oracle12Helper) {
-//				type = DatabaseType.ORACLE12;
-//			}
 		} else if (sqlDialect instanceof PostgreSQLHelper) {
 			type = DatabaseType.POSTGRESQL;
 		} else {

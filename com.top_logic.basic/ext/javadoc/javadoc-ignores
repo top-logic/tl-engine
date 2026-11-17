@@ -456,7 +456,6 @@ com.top_logic.basic.sql.MSAccessHelper.java: Invalid camel case word 'MySQL', th
 com.top_logic.basic.sql.MSAccessHelper.java: Invalid camel case word 'resultSet', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.basic.sql.MSSQLHelper.java: Invalid camel case word 'MySQL', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.basic.sql.MSSQLHelper.java: Invalid camel case word 'OverWritten', this may only be used within JavaDoc links or HTML code tags.
-com.top_logic.basic.sql.MySQL55Helper.java: Invalid camel case word 'MySQL', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.basic.sql.MySQLHelper.java: Invalid camel case word 'MySQL', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.basic.sql.MySQLHelper.java: Invalid camel case word 'aStm', this may only be used within JavaDoc links or HTML code tags.
 com.top_logic.basic.sql.ObjectBuilder.java: Invalid camel case word 'JavaBeans', this may only be used within JavaDoc links or HTML code tags.

@@ -376,6 +376,83 @@
 						/>
 					</attributes>
 				</class>
+				<!--
+					Attribute rights per type: Named defines name, Foo overrides it, Bar and its
+					specializations inherit it unchanged. The attribute rights configured for
+					Foo#name and Sub#name apply only to these types and their specializations.
+				-->
+				<interface name="Named">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="accountA"
+							type="tl.accounts:Person"
+						/>
+						<reference name="accountB"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+				</interface>
+
+				<class name="Foo">
+					<generalizations>
+						<generalization type="Named"/>
+					</generalizations>
+					<attributes>
+						<property name="name"
+							override="true"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<class name="Bar">
+					<generalizations>
+						<generalization type="Named"/>
+					</generalizations>
+				</class>
+
+				<class name="Sub">
+					<generalizations>
+						<generalization type="Bar"/>
+					</generalizations>
+				</class>
+
+				<class name="SubSub">
+					<generalizations>
+						<generalization type="Sub"/>
+					</generalizations>
+				</class>
+
+				<class name="BarSibling">
+					<generalizations>
+						<generalization type="Bar"/>
+					</generalizations>
+				</class>
+
+				<!--
+					Two independent generalizations of LeftRight, for attribute rights that contradict
+					each other.
+				-->
+				<interface name="Left">
+					<generalizations>
+						<generalization type="Named"/>
+					</generalizations>
+				</interface>
+
+				<interface name="Right">
+					<generalizations>
+						<generalization type="Named"/>
+					</generalizations>
+				</interface>
+
+				<class name="LeftRight">
+					<generalizations>
+						<generalization type="Left"/>
+						<generalization type="Right"/>
+					</generalizations>
+				</class>
 			</types>
 		</module>
 	</modules>

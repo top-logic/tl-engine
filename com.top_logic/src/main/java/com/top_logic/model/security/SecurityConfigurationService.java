@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -340,6 +341,14 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	/**
 	 * Configuration of access rights to values for a {@link TLStructuredTypePart}. The part is
 	 * identified by its qualified name.
+	 *
+	 * <p>
+	 * The rights apply to the attribute of the named type and of all its specializations, no matter
+	 * whether the named type defines, overrides or inherits the attribute. For an object, the most
+	 * specific entry on the way from its type to its generalizations decides. Entries of two
+	 * independent generalizations of a type that grant different rights for the same attribute
+	 * are a configuration error, unless the type has an entry of its own for the attribute.
+	 * </p>
 	 */
 	@TagName("part")
 	@DisplayOrder({
@@ -378,7 +387,28 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	private Map<TLObject, Map<BoundCommandGroup, Set<BoundedRole>>> _singletonRights = new HashMap<>();
 
-	private Map<TLStructuredTypePart, Map<BoundCommandGroup, Set<BoundedRole>>> _typePartRights = new HashMap<>();
+	/**
+	 * The attribute rights of the {@link TLPartAccessRights part entries}, by the type named in the
+	 * entry and the attribute name.
+	 *
+	 * <p>
+	 * The type named in an entry is the type the rights are configured for, no matter whether it
+	 * defines, overrides or inherits the attribute.
+	 * </p>
+	 *
+	 * @see #_expandedPartRights
+	 */
+	private final Map<TLStructuredType, Map<String, Map<BoundCommandGroup, Set<BoundedRole>>>> _declaredPartRights =
+		new HashMap<>();
+
+	/**
+	 * The attribute rights in effect for each class, by attribute name: the most specific entry of
+	 * {@link #_declaredPartRights} on the way from the class to its generalizations.
+	 *
+	 * @see #partRights(TLStructuredType, String)
+	 */
+	private final Map<TLClass, Map<String, Map<BoundCommandGroup, Set<BoundedRole>>>> _expandedPartRights =
+		new HashMap<>();
 
 	private Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> _expandedClassRights = new HashMap<>();
 
@@ -530,6 +560,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		_typesWithoutSecurity = origins(_declaredWithoutSecurity);
 		_internalTypes = origins(_declaredInternal);
 		computeClassRights(classRules, moduleRules);
+		computePartRights(context);
 		computeDiscoverRoles();
 		applyImplications();
 		inheritAccessParents(explicitParents);
@@ -742,9 +773,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	private void computeDiscoverRoles() {
 		for (TLClass type : TLModelUtil.getAllGlobalClasses(_applicationModel)) {
 			Set<BoundedRole> roles = new HashSet<>();
+			for (Map<BoundCommandGroup, Set<BoundedRole>> partRights : _expandedPartRights
+				.getOrDefault(type, Collections.emptyMap()).values()) {
+				partRights.values().forEach(roles::addAll);
+			}
 			for (TLStructuredTypePart part : type.getAllParts()) {
-				_typePartRights.getOrDefault(part.getDefinition(), Collections.emptyMap()).values()
-					.forEach(roles::addAll);
 				if (part instanceof TLReference reference && reference.isComposite()
 					&& reference.getType() instanceof TLClass target) {
 					for (TLClass created : TLModelUtil.getConcreteSpecializations(target)) {
@@ -830,16 +863,154 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			.addAll(resolveRules(context, config, moduleOperations(module)));
 	}
 
+	/**
+	 * Enters the rights of a {@link TLPartAccessRights part entry} into {@link #_declaredPartRights}
+	 * under the type named in the entry, which may define, override or only inherit the attribute.
+	 */
 	private void handleTLPart(InstantiationContext context, TLObject part, TLPartAccessRights config) {
 		if (!(part instanceof TLStructuredTypePart typePart)) {
 			context.error("The configured part " + part + " is not a structured type part.");
 			return;
 		}
-		Predicate<BoundCommandGroup> applies = typePart.getOwner() instanceof TLClass owner
-			? getOperations(owner)::appliesTo
+		String qualifiedName = config.getName();
+		String typeName =
+			qualifiedName.substring(0, qualifiedName.lastIndexOf(TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR));
+		// The part was resolved in this type, which is therefore a structured type.
+		TLStructuredType type = (TLStructuredType) TLModelUtil.findType(_applicationModel, typeName);
+		Predicate<BoundCommandGroup> applies = type instanceof TLClass clazz
+			? getOperations(clazz)::appliesTo
 			: ApplicableOperations::isBuiltIn;
 		applyRules(resolveRules(context, config, applies),
-			_typePartRights.computeIfAbsent(typePart.getDefinition(), unused -> new HashMap<>()));
+			_declaredPartRights.computeIfAbsent(type, unused -> new HashMap<>())
+				.computeIfAbsent(typePart.getName(), unused -> new HashMap<>()));
+	}
+
+	/**
+	 * Computes the attribute rights in effect for every class, see {@link #_expandedPartRights}.
+	 *
+	 * <p>
+	 * Attribute rights that contradict each other, because two independent generalizations of a
+	 * class pass on different rights for the same attribute and the class has no rights of its own
+	 * for it, are reported as configuration error.
+	 * </p>
+	 */
+	private void computePartRights(InstantiationContext context) {
+		if (_declaredPartRights.isEmpty()) {
+			return;
+		}
+		Map<TLClass, Map<String, Set<TLClass>>> origins = new HashMap<>();
+		Set<TLClass> types = new LinkedHashSet<>(TLModelUtil.getAllGlobalClasses(_applicationModel));
+		for (TLStructuredType declared : _declaredPartRights.keySet()) {
+			if (declared instanceof TLClass clazz) {
+				types.add(clazz);
+			}
+		}
+		for (TLClass type : types) {
+			Map<String, Set<TLClass>> typeOrigins = partRightOrigins(type, origins);
+			for (Map.Entry<String, Set<TLClass>> entry : typeOrigins.entrySet()) {
+				String name = entry.getKey();
+				Set<TLClass> sources = entry.getValue();
+				if (contradicts(sources, name)) {
+					if (!inheritsContradiction(type, name, origins)) {
+						context.error("The attribute rights of " + TLModelUtil.qualifiedName(type)
+							+ TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + name
+							+ " are ambiguous: its generalizations "
+							+ sources.stream().map(TLModelUtil::qualifiedName).sorted().toList()
+							+ " define different rights for the attribute. Configure the attribute rights for "
+							+ TLModelUtil.qualifiedName(type) + " itself.");
+					}
+					continue;
+				}
+				_expandedPartRights.computeIfAbsent(type, unused -> new HashMap<>())
+					.put(name, _declaredPartRights.get(sources.iterator().next()).get(name));
+			}
+		}
+	}
+
+	/**
+	 * Whether the given types configure different attribute rights for the attribute with the given
+	 * name.
+	 */
+	private boolean contradicts(Set<TLClass> sources, String name) {
+		Map<BoundCommandGroup, Set<BoundedRole>> rights = null;
+		for (TLClass source : sources) {
+			Map<BoundCommandGroup, Set<BoundedRole>> sourceRights = _declaredPartRights.get(source).get(name);
+			if (rights == null) {
+				rights = sourceRights;
+			} else if (!rights.equals(sourceRights)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Whether a generalization of the given type already has contradicting attribute rights for
+	 * the given attribute, so that the contradiction is reported there.
+	 */
+	private boolean inheritsContradiction(TLClass type, String name, Map<TLClass, Map<String, Set<TLClass>>> origins) {
+		for (TLClass generalization : type.getGeneralizations()) {
+			Set<TLClass> sources = origins.get(generalization).get(name);
+			if (sources != null && contradicts(sources, name)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * The types whose {@link #_declaredPartRights} are in effect for the given type, by attribute
+	 * name.
+	 *
+	 * <p>
+	 * For an attribute the type has rights for itself, this is the type alone. Otherwise, the types
+	 * the generalizations of the type pass on, without those that are a generalization of another
+	 * one of them, since the rights of the more specific type win. More than one type remains only
+	 * if independent generalizations configure rights for the attribute.
+	 * </p>
+	 *
+	 * @param origins
+	 *        The already computed results, by type.
+	 */
+	private Map<String, Set<TLClass>> partRightOrigins(TLClass type, Map<TLClass, Map<String, Set<TLClass>>> origins) {
+		Map<String, Set<TLClass>> result = origins.get(type);
+		if (result != null) {
+			return result;
+		}
+		result = new HashMap<>();
+		for (TLClass generalization : type.getGeneralizations()) {
+			for (Map.Entry<String, Set<TLClass>> entry : partRightOrigins(generalization, origins).entrySet()) {
+				result.computeIfAbsent(entry.getKey(), unused -> new LinkedHashSet<>()).addAll(entry.getValue());
+			}
+		}
+		for (Set<TLClass> sources : result.values()) {
+			if (sources.size() > 1) {
+				List<TLClass> candidates = new ArrayList<>(sources);
+				sources.removeIf(source -> candidates.stream()
+					.anyMatch(other -> other != source && TLModelUtil.isGeneralization(source, other)));
+			}
+		}
+		for (String name : _declaredPartRights.getOrDefault(type, Collections.emptyMap()).keySet()) {
+			result.put(name, Collections.singleton(type));
+		}
+		origins.put(type, result);
+		return result;
+	}
+
+	/**
+	 * The attribute rights in effect for the attribute with the given name on objects of the given
+	 * type, see {@link #_expandedPartRights}.
+	 *
+	 * @return The roles granted each operation; empty when no attribute rights apply.
+	 */
+	private Map<BoundCommandGroup, Set<BoundedRole>> partRights(TLStructuredType type, String name) {
+		Map<String, Map<BoundCommandGroup, Set<BoundedRole>>> rights = type instanceof TLClass clazz
+			? _expandedPartRights.get(clazz)
+			: _declaredPartRights.get(type);
+		if (rights == null) {
+			return Collections.emptyMap();
+		}
+		return rights.getOrDefault(name, Collections.emptyMap());
 	}
 
 	private void handleTLSingleton(InstantiationContext context, TLObject singleton, TLSingletonAccessRights config) {
@@ -1287,9 +1458,18 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	@Override
 	public Set<BoundedRole> getAllowedRoles(TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
-		return _typePartRights
-			.getOrDefault(attribute.getDefinition(), Collections.emptyMap())
-			.getOrDefault(commandGroup, Collections.emptySet());
+		return partRights(attribute.getOwner(), attribute.getName()).getOrDefault(commandGroup, Collections.emptySet());
+	}
+
+	@Override
+	public Set<BoundedRole> getAllowedRoles(TLClass type, TLStructuredTypePart attribute,
+			BoundCommandGroup commandGroup) {
+		return partRights(type, attribute.getName()).getOrDefault(commandGroup, Collections.emptySet());
+	}
+
+	@Override
+	public boolean hasGrant(TLClass type, TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
+		return partRights(type, attribute.getName()).containsKey(commandGroup);
 	}
 
 	@Override
@@ -1309,9 +1489,16 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	@Override
 	public boolean hasGrant(TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
-		return _typePartRights
-			.getOrDefault(attribute.getDefinition(), Collections.emptyMap())
-			.containsKey(commandGroup);
+		TLStructuredType owner = attribute.getOwner();
+		if (!(owner instanceof TLClass ownerClass)) {
+			return partRights(owner, attribute.getName()).containsKey(commandGroup);
+		}
+		for (TLClass type : TLModelUtil.getReflexiveTransitiveSpecializations(ownerClass)) {
+			if (hasGrant(type, attribute, commandGroup)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -1322,9 +1509,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// nor on its attribute values.
 			return true;
 		}
-		Map<BoundCommandGroup, Set<BoundedRole>> partRights =
-			_typePartRights.getOrDefault(attribute.getDefinition(), Collections.emptyMap());
-		Set<BoundedRole> requiredPartRoles = partRights.get(commandGroup);
+		Set<BoundedRole> requiredPartRoles = partRights(type, attribute.getName()).get(commandGroup);
 		if (requiredPartRoles == null) {
 			// No attribute-level grant: the attribute is not restricted beyond the object. The right
 			// to create the object covers its initial values, independent of the person (a transient
@@ -1663,8 +1848,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// nor on its attribute values.
 			return true;
 		}
-		Map<BoundCommandGroup, Set<BoundedRole>> partRights =
-			_typePartRights.getOrDefault(attribute.getDefinition(), Collections.emptyMap());
+		Map<BoundCommandGroup, Set<BoundedRole>> partRights = partRights(instance.tType(), attribute.getName());
 		if (!partRights.containsKey(commandGroup)) {
 			// No grant of the attribute itself: the class decision applies.
 			return decide(decisionCache(), person, instance, commandGroup);

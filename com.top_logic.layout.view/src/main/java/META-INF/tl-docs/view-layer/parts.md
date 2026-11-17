@@ -55,7 +55,8 @@ All names and props are typed: `replacePart('Checkbox', C)` accepts only a compo
 | `TextInput` | `TextInputPartProps` | a text box, single-line (text, password, number, search, …) with optional icon, end action and suffix (the unit of a number), or multi-line; a combobox (`role`) when it offers suggestions | `TLTextInput`, `TLPasswordInput`, `TLNumberInput`, the search field (`SearchField`) of a table and of its column selection, the name of a filter to save, the filters of a dropdown and of the icon and color popups |
 | `FieldValue` | `FieldValuePartProps` | the one read-only value, as text or link, with an optional suffix (the unit of a number), a value of a color role as a pill (part `Chip`) within it; a multi-line value, optionally preformatted, with an optional action beside it | every text, password, number, select, date and slider field that is not editable; the chosen values of a choice field (`OptionValues`); the object in a table cell (`TLResourceCell`); a text shown as a link opening an address (`TLLink`) |
 | `Chip` | `ChipPartProps` | a compact value: with a color role, a toggle, removable, reorderable by a handle, or running an action | the toggles of `TLOptionChips`, the chosen values of a dropdown, the named filters of a table, the files of a file chip field, the options of a color role in a list, read-only values of a color role (inside `FieldValue`), texts drawn as a pill |
-| `Badge` | `BadgePartProps` | a small marker carrying a count | the counts of the sidebar and the bottom bar |
+| `Badge` | `BadgePartProps` | a small marker carrying a count | the counts of the sidebar and the bottom bar, the badge after the lines of an entry of a data list (`TLDataList`, `<trailing display="badge">`) |
+| `Avatar` | `AvatarPartProps` | a circle standing for a person or an object: the picture (`src`), else the initials of the `name` on the category the name maps to, else the neutral circle; `size` `small` / `medium` / `large` / `x-large`; `decorative` hides it from assistive technology where the name stands beside it | `TLAvatar` (`<avatar>`), the avatar in front of the lines of an entry of a data list (`TLDataList`, `<leading>`) |
 | `Divider` | `DividerPartProps` | a line between content, horizontal or vertical | between the groups of a toolbar, the sections of a toolbar menu, the items of the sidebar |
 | `ProgressBar` | `ProgressBarPartProps` | a determinate or indeterminate bar with an optional label naming it, or named by another element | `TLProgress`, the status of a job, the loading options of a dropdown, the loading children of a tree node |
 | `Spinner` | `SpinnerPartProps` | a turning ring: small in place of an icon, or a busy indicator of its own | the icon popup loading its icons |
@@ -63,7 +64,9 @@ All names and props are typed: `replacePart('Checkbox', C)` accepts only a compo
 | `CopyButton` | `CopyButtonPartProps` | a small button copying a text to the clipboard, showing a check mark for a moment after the copy and announcing it (`role="status"`), a warning and the failure label where the text cannot be copied; the copy is `useCopyToClipboard` of `tl-react-bridge`: the clipboard API in a secure context, the copy command of the document otherwise or where the API refuses | the read-only value of a preformatted multi-line text (`TLTextInput`, as `action` of `FieldValue`) |
 
 A part may draw another part through `usePart`: the `FieldValue` of a color role holds a `Chip`, a
-removable `Chip` draws its remove button with the `Button`, the `TextInput` takes a `Button` as its
+removable `Chip` draws its remove button with the `Button`, an entry of a data list (`TLDataList`)
+draws its avatar with the `Avatar`, its badge with the `Badge`, its row trigger with the `MenuTrigger`
+and its collapse toggle with the `DisclosureToggle`, the `TextInput` takes a `Button` as its
 end action, a multi-line `FieldValue` an action at its top end (the `CopyButton`), in a column of
 its own so that it covers no line. A replacement of the inner part then appears inside the outer
 one, whichever of them is replaced.

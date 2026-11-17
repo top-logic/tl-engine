@@ -406,7 +406,11 @@ describe('what stands in front of and after the lines', () => {
     expect(initials.textContent).toBe('AA');
     expect(initials.getAttribute('data-tl-role')).toMatch(/^category-[1-8]$/);
     expect(initials.getAttribute('aria-hidden')).toBe('true');
+    expect(initials.hasAttribute('role')).toBe(false);
+    expect(initials.hasAttribute('aria-label')).toBe(false);
     expect(leading[1]!.querySelector('.tl-avatar img')!.getAttribute('src')).toBe('/images/arne.png');
+    expect(leading[1]!.querySelector('.tl-avatar img')!.getAttribute('alt')).toBe('');
+    expect(leading[1]!.querySelector('.tl-avatar')!.getAttribute('aria-hidden')).toBe('true');
     expect(leading[2]!.querySelector('.tl-avatar')).toBeNull();
     expect(leading[2]!.querySelector('i')!.className).toContain('bi-building');
     expect(leading[3]).toBeNull();

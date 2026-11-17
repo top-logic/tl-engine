@@ -198,7 +198,7 @@ function ListParts(props: ListPartsProps) {
                             <ThemeIcon encoded={row.leading.icon} className="tl-icon-md" />
                           ) : (
                             // The name of the avatar is what the lines say; the button reads it once.
-                            <Avatar name={row.leading.name || null} src={row.leading.image || null} aria-hidden="true" />
+                            <Avatar name={row.leading.name || null} src={row.leading.image || null} decorative />
                           )}
                         </span>
                       ) : null}

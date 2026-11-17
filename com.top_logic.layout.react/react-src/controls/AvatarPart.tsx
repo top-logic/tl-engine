@@ -24,13 +24,17 @@ const TYPE_CLASS: Record<AvatarSize, string> = {
  * system (tl-avatar). The picture where there is one, else the initials of the name on its category,
  * else the neutral circle.
  */
-const AvatarPart: React.FC<AvatarPartProps> = ({ id, name, src, size = 'medium', className, ...attributes }) => {
+const AvatarPart: React.FC<AvatarPartProps> = ({ id, name, src, size = 'medium', decorative, className, ...attributes }) => {
   const abbreviation = SIZE_CLASS[size];
   const classes = (...more: (string | undefined)[]) =>
     ['tl-avatar', abbreviation ? `tl-avatar--${abbreviation}` : '', ...more, className].filter(Boolean).join(' ');
 
   if (src) {
-    return (
+    return decorative ? (
+      <span id={id} className={classes()} aria-hidden="true" {...attributes}>
+        <img className="tl-avatar__image" src={src} alt="" />
+      </span>
+    ) : (
       <span id={id} className={classes()} {...tooltipProps(name ?? undefined)} {...attributes}>
         <img className="tl-avatar__image" src={src} alt={name ?? ''} />
       </span>
@@ -41,14 +45,15 @@ const AvatarPart: React.FC<AvatarPartProps> = ({ id, name, src, size = 'medium',
     return <span id={id} className={classes()} aria-hidden="true" {...attributes} />;
   }
 
+  const named = decorative
+    ? { 'aria-hidden': true as const }
+    : { role: 'img', 'aria-label': name, ...tooltipProps(name) };
   return (
     <span
       id={id}
       className={classes(TYPE_CLASS[size] ?? TYPE_CLASS.medium)}
       data-tl-role={`category-${categoryOf(name)}`}
-      role="img"
-      aria-label={name}
-      {...tooltipProps(name)}
+      {...named}
       {...attributes}
     >
       {avatarInitials(name)}

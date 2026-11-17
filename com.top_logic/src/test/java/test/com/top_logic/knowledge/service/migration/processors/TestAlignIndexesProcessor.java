@@ -399,7 +399,7 @@ public class TestAlignIndexesProcessor extends AbstractDBKnowledgeBaseTest {
 	 * Suite of {@link TestAlignIndexesProcessor}.
 	 */
 	public static Test suite() {
-		return suiteDefaultDB(TestAlignIndexesProcessor.class);
+		return suiteNeedsBranches(TestAlignIndexesProcessor.class);
 	}
 
 }

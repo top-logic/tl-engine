@@ -131,6 +131,10 @@
 				>
 					<annotations>
 						<visibility value="read-only"/>
+						<multi-line
+							preformatted="true"
+							rows="1"
+						/>
 					</annotations>
 				</property>
 				<!--
@@ -142,6 +146,10 @@
 				>
 					<annotations>
 						<visibility value="read-only"/>
+						<multi-line
+							preformatted="true"
+							rows="3"
+						/>
 					</annotations>
 				</property>
 			</attributes>

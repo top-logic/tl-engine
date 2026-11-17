@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The one time an access token is shown. Only its hash is stored, so once this dialog is closed
+	nobody - the owner, an administrator, the application - can show it again; a lost token is
+	revoked and replaced. A token with a permission that binds to the session is shown as the
+	invitation for the client: the address of the endpoint and the token in one line, so that the
+	client gets both by one copy.
+-->
+<view>
+	<channels>
+		<!-- The transient AccessTokenRequest the token was written onto. -->
+		<channel name="model"/>
+	</channels>
+	<window
+		resizable="false"
+		width="560px"
+	>
+		<title>
+			<en>Copy your access token</en>
+			<de>Zugriffstoken kopieren</de>
+		</title>
+		<switch input="model">
+			<case test="$model.get(`tl.accounts:AccessTokenRequest#invitation`) != null">
+				<form
+					input="model"
+					mode-switch="false"
+					with-inset="true"
+				>
+					<text>
+						<label>
+							<en>Copy the invitation now and hand it to the client: the token in it is shown this one time and cannot be read again.</en>
+							<de>Kopieren Sie die Einladung jetzt und geben Sie sie dem Client: Das darin enthaltene Token wird nur dieses eine Mal angezeigt und ist danach nicht mehr lesbar.</de>
+						</label>
+					</text>
+					<field attribute="name"/>
+					<field attribute="invitation"/>
+				</form>
+			</case>
+			<default>
+				<form
+					input="model"
+					mode-switch="false"
+					with-inset="true"
+				>
+					<text>
+						<label>
+							<en>Copy the token now. It is not shown again.</en>
+							<de>Kopieren Sie das Token jetzt. Es wird nicht wieder angezeigt.</de>
+						</label>
+					</text>
+					<field attribute="name"/>
+					<field attribute="token"/>
+				</form>
+			</default>
+		</switch>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-check-lg"
+				>
+					<label>
+						<en>Done</en>
+						<de>Fertig</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

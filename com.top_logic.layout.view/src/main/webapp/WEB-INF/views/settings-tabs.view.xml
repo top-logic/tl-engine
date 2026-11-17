@@ -379,6 +379,22 @@
 					</stack>
 				</inset>
 			</tab>
+
+			<!--
+				The access tokens of the account: a client - an agent, an MCP client - acts as the
+				account with a token, within the permissions of the token. Present only where a
+				module offers a permission for a token, since otherwise no token can be created.
+			-->
+			<tab id="access-tokens"
+				icon="css:bi bi-key"
+			>
+				<label>
+					<en>Access tokens</en>
+					<de>Zugriffstokens</de>
+				</label>
+				<visibility expr="!accessTokenPermissions().isEmpty()"/>
+				<view-ref view="access-tokens.view.xml"/>
+			</tab>
 		</tabs>
 	</tab-bar>
 </view>

@@ -83,13 +83,15 @@ public class OidcIdentityFunctions extends TLScriptFunctions {
 	 *
 	 * <p>
 	 * A login of another account, and every login in the anonymous session, cannot be removed; the
-	 * last way to sign in to the account cannot either, see
-	 * {@link OidcIdentities#canRemove(Person, OidcIdentity)}. Suited as reason of a disabled
-	 * command: <code>&lt;disabled-if expr="oidcRemoveRefusal($identity)"/&gt;</code>.
+	 * last way to sign in to the account cannot either. Suited as reason of a disabled command:
+	 * <code>&lt;disabled-if expr="oidcRemoveRefusal($identity)"/&gt;</code>.
 	 * </p>
 	 *
 	 * @param identity
 	 *        The login to remove.
+	 * @return The reason why the login cannot be removed, <code>null</code> if it can.
+	 *
+	 * @see OidcIdentities#canRemove(Person, OidcIdentity)
 	 */
 	@Label("Reason not to remove a login")
 	@SideEffectFree

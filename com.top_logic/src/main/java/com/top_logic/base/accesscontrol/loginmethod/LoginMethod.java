@@ -6,6 +6,7 @@
 package com.top_logic.base.accesscontrol.loginmethod;
 
 import com.top_logic.base.accesscontrol.ExternalAuthenticationServlet;
+import com.top_logic.base.accesscontrol.IdentityVerificationHandler;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 
@@ -87,6 +88,44 @@ public interface LoginMethod {
 	 */
 	default String getReauthenticationUrl(String token) {
 		return null;
+	}
+
+	/**
+	 * Builds the URL a browser is sent to so that the identity provider of this method
+	 * authenticates whoever is at the keyboard and returns to the application carrying the given
+	 * token.
+	 *
+	 * <p>
+	 * Unlike {@link #getReauthenticationUrl(String)}, this does not require that this method
+	 * established the running session: the user of a session proves that they also hold an identity
+	 * at this provider, e.g. to connect it with their account. The provider is asked for a fresh
+	 * authentication, and the request that returns stays in the same session; what the confirmed
+	 * identity means is decided by the {@link IdentityVerificationHandler} the token was registered
+	 * with.
+	 * </p>
+	 *
+	 * @param token
+	 *        The token of the awaited verification, to be carried back in the request parameter
+	 *        {@link ExternalAuthenticationServlet#VERIFICATION_PARAM}.
+	 * @return The URL to open, or <code>null</code> when this method cannot authenticate a user
+	 *         within an established session.
+	 *
+	 * @see #canIdentify()
+	 */
+	default String getIdentificationUrl(String token) {
+		return null;
+	}
+
+	/**
+	 * Whether {@link #getIdentificationUrl(String)} answers a URL.
+	 *
+	 * <p>
+	 * Asked without side effects, e.g. to decide whether a view offers to connect this method with
+	 * the account of the session.
+	 * </p>
+	 */
+	default boolean canIdentify() {
+		return false;
 	}
 
 	/**

@@ -473,8 +473,8 @@ stage as wide as the field and of a fixed height, the theme token `--tl-size-ima
 height of the stage instead. Several images are stepped through with the buttons at the edges of the
 stage or the arrow keys, wrapping around, and a counter "2 of 5" tells where the field is.
 
-- **Displayed** (also disabled): a click on the image opens it in a view filling the page, over a
-  scrim, with the same stepping; Escape, a click on the scrim or "Close" closes it.
+- **Displayed** (also disabled): a click on the image opens it in a view covering the page, scaled
+  to fill it, with the same stepping; Escape or "Close" closes it.
 - **Edited**: a click on the image opens the *arrange view*: a tile per image, all of one size, each
   with a button replacing its image by a picked file - a file dropped on the tile replaces it as
   well - and a button "✕" removing it; the images of an ordered attribute are moved by the handle of

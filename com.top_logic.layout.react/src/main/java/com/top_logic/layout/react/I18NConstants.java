@@ -354,10 +354,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_IMAGE_FIELD_OPEN;
 
 	/**
-	 * @en Edit images, {0} shown
+	 * @en Edit {0}
 	 */
 	@CustomKey("js.imageField.edit")
 	public static ResKey JS_IMAGE_FIELD_EDIT;
+
+	/**
+	 * @en Show {0}
+	 */
+	@CustomKey("js.imageField.show")
+	public static ResKey JS_IMAGE_FIELD_SHOW;
 
 	/**
 	 * @en Done

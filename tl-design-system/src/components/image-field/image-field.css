@@ -5,7 +5,7 @@
    Bild ist die Bühne die gestrichelte Fläche (tl-image-field__drop), die eine Datei aufnimmt oder per Klick die
    Dateiauswahl öffnet. Die Ansicht zum Anordnen (tl-image-field--arrange) zeigt jedes Bild als gleich große Kachel
    mit den Knöpfen (Part Button) und die Fläche als letzte; darunter die Leiste mit „Fertig“. Die ganzseitige Ansicht
-   (tl-image-viewer) liegt über einem Scrim. Dragover an Bühne, Kachel und Fläche zeichnet upload.css, Gezogen und
+   (tl-image-viewer) deckt die Seite. Dragover an Bühne, Kachel und Fläche zeichnet upload.css, Gezogen und
    Einfügemarke drag.css (die Reihe der Kacheln trägt data-tl-axis="horizontal"), den Ring base.css. */
 
 .tl-image-field {
@@ -171,8 +171,10 @@
   white-space: nowrap;
 }
 
-/* Die ganzseitige Ansicht: das Bild eingepasst in den Viewport mit dem Rand space-lg, über dem Scrim. Die Knöpfe zum
-   Blättern mittig an den Rändern, der Zähler unten mittig, der Knopf zum Schließen oben am Zeilenende. */
+/* Die ganzseitige Ansicht: das Bild eingepasst in den Viewport mit dem Rand space-lg. Die Knöpfe zum
+   Blättern mittig an den Rändern, der Zähler unten mittig, der Knopf zum Schließen oben am Zeilenende. Die Ansicht
+   deckt die Seite ganz (Fläche surface-base), damit ihre Knöpfe nicht in denen der Seite darunter stehen; ein kleines
+   Bild wird auf den Viewport vergrößert. */
 .tl-image-viewer {
   display: flex;
   position: fixed;
@@ -182,14 +184,14 @@
   justify-content: center;
   box-sizing: border-box;
   padding: var(--tl-space-lg);
-  background: var(--tl-surface-scrim);
+  background: var(--tl-surface-base);
 }
 .tl-image-viewer[hidden] { display: none; }
 
 .tl-image-viewer__image {
   display: block;
-  max-inline-size: 100%;
-  max-block-size: 100%;
+  inline-size: 100%;
+  block-size: 100%;
   object-fit: contain;
   border-radius: var(--tl-radius-sm);
 }

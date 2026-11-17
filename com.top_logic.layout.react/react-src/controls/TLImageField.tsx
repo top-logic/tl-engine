@@ -44,7 +44,8 @@ const I18N_KEYS = {
   'js.imageField.next': 'Next image',
   'js.imageField.counter': '{0} of {1}',
   'js.imageField.open': 'Show {0} full page',
-  'js.imageField.edit': 'Edit images, {0} shown',
+  'js.imageField.edit': 'Edit {0}',
+  'js.imageField.show': 'Show {0}',
   'js.imageField.done': 'Done',
   'js.imageField.close': 'Close',
   'js.image.alt': 'Image',
@@ -68,7 +69,7 @@ function format(text: string, ...values: (string | number)[]): string {
  *
  * Several images are stepped through with the buttons over the stage or the arrow keys, a counter
  * tells where the field is. A click on the image of a field that is only displayed (or disabled)
- * opens it in a view filling the page, with the same stepping; Escape closes it. A click on the image
+ * opens it in a view covering the page, with the same stepping; Escape closes it. A click on the image
  * of an edited field opens the arrange view: a tile per image with a button picking a file that
  * replaces it, a button removing it and, where the order of the images is part of the value, a handle
  * moving it by dragging or with Alt + arrow key; a dashed area after the tiles takes further images.
@@ -354,7 +355,7 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
                   if (!event.defaultPrevented) reorderProps.onDrop?.(event);
                 }}>
                 <button type="button" className="tl-image-field__show"
-                  aria-label={format(t['js.imageField.open'], altOf(tile))}
+                  aria-label={format(t['js.imageField.show'], altOf(tile))}
                   aria-current={index === currentIndex ? true : undefined}
                   onClick={() => show(tile)}>
                   <img className="tl-image-field__image" src={imageUrl(tile)} alt={altOf(tile)} />
@@ -490,8 +491,8 @@ interface ImageViewerProps {
 }
 
 /**
- * The view showing an image filling the page, over a scrim: the buttons stepping through the images,
- * the counter, and a button closing the view. Escape and a click on the scrim close it as well; the
+ * The view showing an image filling the page, covering it: the buttons stepping through the images,
+ * the counter, and a button closing the view. Escape and a click on its margin close it as well; the
  * focus goes back to where it was.
  */
 const ImageViewer: React.FC<ImageViewerProps> = ({ tile, url, alt, counter, stepButtons, closeLabel, onStep, onClose }) => {

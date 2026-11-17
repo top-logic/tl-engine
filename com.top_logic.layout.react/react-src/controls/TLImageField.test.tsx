@@ -204,7 +204,7 @@ describe('image field', () => {
   it('opens the arrange view of an edited field, and goes back to the stage at the tile clicked', () => {
     const field = mountField({ editable: true, multiple: true, ordered: true, images: [A, B] });
 
-    click(field, 'Edit images, a.png shown');
+    click(field, 'Edit a.png');
     const arrange = currentField();
     expect(arrange.classList.contains('tl-image-field--arrange')).toBe(true);
     expect(previewKeys(arrange)).toEqual(['0', '1']);
@@ -213,7 +213,7 @@ describe('image field', () => {
     const input = arrange.querySelector('.tl-image-field__drop input[type="file"]') as HTMLInputElement;
     expect(input.multiple).toBe(true);
 
-    click(arrange, 'Show b.png full page');
+    click(arrange, 'Show b.png');
     expect(currentField().classList.contains('tl-image-field--arrange')).toBe(false);
     expect(previewKeys(currentField())).toEqual(['1']);
   });
@@ -221,7 +221,7 @@ describe('image field', () => {
   it('removes an image in the arrange view, and leaves it by Done', async () => {
     const field = mountField({ editable: true, multiple: false, images: [A] });
 
-    click(field, 'Edit images, a.png shown');
+    click(field, 'Edit a.png');
     // A single image has no area adding further ones and nothing to move.
     expect(currentField().querySelector('.tl-image-field__drop')).toBeNull();
     expect(currentField().querySelector('button[aria-label="Move a.png"]')).toBeNull();

@@ -32,7 +32,7 @@ Vom Server (`ReactImageFieldControl`) über `useTLState()`; die Basisschlüssel 
 |---|---|
 | Knöpfe zum Blättern, ← und → auf der Bühne oder in der ganzseitigen Ansicht | Das vorige oder nächste Bild, nach dem letzten wieder das erste; nur im Client. |
 | Klick auf das Bild der Bühne | Lesend oder deaktiviert die ganzseitige Ansicht, im Bearbeiten die Ansicht zum Anordnen. |
-| Escape, Klick auf den Scrim, Knopf „Schließen“ | Schließt die ganzseitige Ansicht; der Fokus geht an das Bild der Bühne zurück. |
+| Escape, Klick auf den Rand der Ansicht, Knopf „Schließen“ | Schließt die ganzseitige Ansicht; der Fokus geht an das Bild der Bühne zurück. |
 | „Fertig“, Escape, Klick auf das Bild einer Kachel | Zurück zur Bühne, beim Bild der Kachel. |
 | Datei auf die Bühne gelegt | Upload über den Upload-Kanal, Teile `file`: ein einzelnes Bild wird ersetzt (Teil `replace` mit dem `key` des Bilds); bei mehreren Bildern ein Teil `after` mit dem `key` des gezeigten Bilds, die Dateien kommen dahinter. Die Bühne zeigt danach das erste neue Bild. |
 | Klick auf die Fläche, Datei gewählt oder auf die Fläche gelegt | Upload, Teile `file`; ein einzelnes Bild wird ersetzt, mehrere werden angefügt. |
@@ -57,8 +57,8 @@ Vom Server (`ReactImageFieldControl`) über `useTLState()`; die Basisschlüssel 
 | `tl-image-field__bar` | die Leiste mit „Fertig“, am Zeilenende |
 | `tl-image-field__drop` | die Fläche, die ein Bild aufnimmt: in der Reihe so groß wie eine Kachel, auf der Bühne so groß wie sie |
 | `tl-image-field__label` | die Beschriftung der Fläche, einzeilig mit Ellipse |
-| `tl-image-viewer` | die ganzseitige Ansicht über dem Scrim |
-| `tl-image-viewer__image` | das Bild, eingepasst in den Viewport |
+| `tl-image-viewer` | die ganzseitige Ansicht, deckt die Seite |
+| `tl-image-viewer__image` | das Bild, eingepasst in den Viewport, auch vergrößert |
 | `tl-image-viewer__step` | ein Knopf zum Blättern, mit `--previous` und `--next` |
 | `tl-image-viewer__counter` | der Zähler, unten mittig |
 | `tl-image-viewer__close` | der Knopf „Schließen“, oben am Zeilenende |
@@ -88,7 +88,7 @@ Vom Server (`ReactImageFieldControl`) über `useTLState()`; die Basisschlüssel 
 | Kachel, Fläche in der Reihe | Größe `--tl-size-11` in beide Richtungen; das Bild eingepasst auf der Fläche der Kachel `--tl-surface-field` |
 | Knöpfe der Kachel | Abstand zur Ecke und untereinander `--tl-space-2xs` |
 | Fläche | Rand `--tl-border-width-md` gestrichelt in `--tl-border-control`, Innenabstand `--tl-space-sm`, Abstand Icon–Beschriftung `--tl-space-xs`, Fläche `--tl-surface-field`, Text `--tl-text-secondary`; beim Zeigen Rand `--tl-border-emphasis`, Fläche `--tl-surface-interactive-hover`; deaktiviert Rand `--tl-border-disabled`, Text `--tl-text-disabled` |
-| Ganzseitige Ansicht | Ebene `--tl-layer-overlay`, Scrim `--tl-surface-scrim`, Rand zum Viewport und Abstand der Knöpfe und des Zählers `--tl-space-lg` |
+| Ganzseitige Ansicht | Ebene `--tl-layer-overlay`, Fläche `--tl-surface-base` (deckt die Seite), Rand zum Viewport und Abstand der Knöpfe und des Zählers `--tl-space-lg` |
 
 ## Konformität
 

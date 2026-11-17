@@ -52,10 +52,12 @@ The check itself is `SecurityConfigurationService.isAllowed(Person, TLObject, Bo
    grants and by the rights on the attributes and compositions of its type).
 6. `AccessManager.hasRole(person, object, roles)` decides whether the user holds one of them on the
    object.
-7. For an attribute value: if the attribute has its own `<part>` grants for the operation, they
-   **replace** the class grant for this attribute - the user must hold one of those roles, on the
-   object or, for a delegating object, on the end of its chain of access parents; a grant without
-   roles denies everyone. Without attribute-level grants the class-level decision stands.
+7. For an attribute value: the attribute rights in effect for the object's type and the attribute's
+   name are looked up (see [Attribute rights](#attribute-rights-which-types-a-part-applies-to)). If
+   they grant the operation, they **replace** the class grant for this attribute - the user must
+   hold one of those roles, on the object or, for a delegating object, on the end of its chain of
+   access parents; a grant without roles denies everyone. Without attribute-level grants the
+   class-level decision stands.
 
 `Discover` - every right on an object or one of its attributes implies the operation `Discover`, see [the Discover specification](doc:access-discover-spec).
 How code and TL-Script ask for a decision (`ModelAccessRights`, `canRead`, ...) and which objects
@@ -145,6 +147,57 @@ instead of replacing them.
   rules. A module rule applies to every class of the module, also to specializations defined in
   the module, whatever its `inherit`; `inherit="true"` additionally passes it on to
   specializations defined in other modules.
+
+### Attribute rights: which types a `<part>` applies to
+
+A `<part name="T#a">` entry configures the rights of the attribute `a` for the type `T` and all
+its specializations, no matter whether `T` defines the attribute, overrides it or only inherits it.
+For an object, the **most specific** entry on the way from its type to its generalizations decides:
+
+- An entry of the type itself wins.
+- Otherwise the entries the generalizations pass on count, and an entry of a type is dropped when
+  an entry of one of its specializations is passed on as well.
+- An entry replaces the entries of the generalizations for **all** operations: an entry of `T#a`
+  granting only `Read` leaves `Write` on `a` of `T` to the class rights, even if a generalization
+  restricts `Write`.
+- A generalization without an entry for the attribute adds nothing.
+- If two independent generalizations pass on entries with **different** rights and the type has no
+  entry of its own, the start fails with a configuration error. Entries with equal rights are no
+  conflict. An entry of the type itself resolves the conflict.
+
+Example with the type `Named` defining `name`, its specialization `Foo` overriding `name`, and its
+specializations `Bar` and `Bar`'s specialization `Sub` inheriting `name` unchanged:
+
+```xml
+<part name="my.module:Named#name">
+	<grant operation="Write" roles="Editor"/>
+</part>
+<part name="my.module:Foo#name">
+	<grant operation="Read" roles="Keeper"/>
+</part>
+<part name="my.module:Sub#name">
+	<grant operation="Read" roles="Keeper"/>
+</part>
+```
+
+- `name` of a `Bar` is read by the class rights of `Bar` and written by `Editor` only.
+- `name` of a `Foo` is read by `Keeper` only and written by the class rights of `Foo`, since the
+  entry of `Foo` replaces that of `Named`.
+- `name` of a `Sub` (and of its specializations) behaves like that of a `Foo`, while `Bar` and the
+  other specializations of `Bar` keep the rights of `Named`.
+
+The check of an object uses its type: TL-Script `` $bar.get(`my.module:Named#name`) `` sees the rights
+of `Bar`, `` $foo.get(`my.module:Named#name`) `` those of `Foo`. A question without an object names the
+type explicitly with `ModelAccessRights.getAllowedRoles(TLClass, TLStructuredTypePart, ...)` and
+`hasGrant(TLClass, TLStructuredTypePart, ...)`. The variants without a type refer to the owner of
+the given attribute, except that `hasGrant(TLStructuredTypePart, ...)` is conservative: it is true as
+soon as the owner or any of its specializations has an attribute right for the attribute's name, so
+that TL-Script never compiles an access into a query that skips the check a specialization needs.
+
+The "Access rights…" dialog of a type shows and edits the attribute rights in effect for that type
+and stores a change as an entry of that type. When the type has no entry of its own for the
+attribute yet, the dialog creates it with the rights the type inherits, so that an edit changes
+nothing but the grant edited.
 
 A custom operation can also authorize a configured TL-Script function as a whole, see
 [privileged TL-Script functions](doc:access-privileged-scripts). The UI units of the React view

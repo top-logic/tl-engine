@@ -14,6 +14,7 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
@@ -319,6 +320,22 @@ public record ColumnSetup(
 		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
 			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, align,
 			exists.and(condition), cellExists, header, released);
+	}
+
+	/**
+	 * This descriptor for a column whose cells are edited only on the rows the given condition
+	 * accepts in addition, see {@link CellEditing#restrictedTo(Predicate)}.
+	 *
+	 * @param rows
+	 *        Whether a row can be edited.
+	 */
+	public ColumnSetup restrictedTo(Predicate<Object> rows) {
+		if (editing == null) {
+			return this;
+		}
+		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing.restrictedTo(rows),
+			aggregate, comparator, hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, align,
+			exists, cellExists, header, released);
 	}
 
 	/**

@@ -16,6 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.Logger;
@@ -267,6 +268,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** @see #setRowColor(Function) */
 	private Function<? super TLObject, ValueColor> _rowColor;
 
+	/** @see #setRowEditable(Predicate) */
+	private Predicate<Object> _rowEditable;
+
 	/**
 	 * The observation of the conditions deciding which of the data columns of the current
 	 * {@link #_tableControl} exist, {@link Registration#NONE} while there is none.
@@ -403,7 +407,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			.setImage(Icons.COMPOSITION_TABLE_DELETE)
 			.setPlacement(CommandPlacement.TOOLBAR)
 			.setVisible(this::offersSelectedRowsRemoval)
-			.setExecutable(() -> offersSelectedRowsRemoval() && !_selectedKeys.isEmpty());
+			.setExecutable(() -> offersSelectedRowsRemoval() && !_selectedKeys.isEmpty() && selectionRemovable());
 
 		// Row-set tables should span the full form row.
 		putState("fullLine", Boolean.TRUE);
@@ -785,6 +789,32 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * Sets which rows can be edited at all.
+	 *
+	 * <p>
+	 * A refused row shows all of its cells read-only, whatever its columns offer, and cannot be
+	 * removed: it has no delete button, and the {@link #getRemoveSelectedRowsCommand() removal of
+	 * the selected rows} cannot be executed while it is selected. Rows can still be added below
+	 * it. Takes effect when the columns are built next.
+	 * </p>
+	 *
+	 * @param rowEditable
+	 *        Whether a row can be edited, {@code null} for every row the columns offer the edit
+	 *        on.
+	 */
+	public void setRowEditable(Predicate<Object> rowEditable) {
+		_rowEditable = rowEditable;
+	}
+
+	/**
+	 * Whether the given row can be removed from the table while it is edited, as far as the
+	 * {@link #setRowEditable(Predicate) row condition} is concerned.
+	 */
+	public boolean isRemovable(Object row) {
+		return _rowEditable == null || _rowEditable.test(row);
+	}
+
+	/**
 	 * The inner {@link TableViewControl}, or {@code null} if not yet initialized.
 	 */
 	public TableViewControl<TLObject> getTableControl() {
@@ -881,9 +911,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * <p>
 	 * The command is offered in edit mode of a table that removes rows and lets the user
 	 * {@link SelectionMode#MULTI select several rows} (the header checkbox selects all of them);
-	 * it is executable while a row is selected. Like the {@link #getAddRowCommand() add-row
-	 * command}, a {@link #setFramed framed} table shows it in its own toolbar, the creator of a
-	 * frameless table offers it through the enclosing command scope.
+	 * it is executable while rows are selected that can all be {@link #isRemovable(Object)
+	 * removed}. Like the {@link #getAddRowCommand() add-row command}, a {@link #setFramed framed}
+	 * table shows it in its own toolbar, the creator of a frameless table offers it through the
+	 * enclosing command scope.
 	 * </p>
 	 */
 	public CommandModel getRemoveSelectedRowsCommand() {
@@ -900,10 +931,22 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	private void removeSelectedRows() {
-		if (!offersSelectedRowsRemoval()) {
+		if (!offersSelectedRowsRemoval() || !selectionRemovable()) {
 			return;
 		}
 		removeRows(selectedRows());
+	}
+
+	/**
+	 * Whether every selected row {@link #isRemovable(Object) can be removed}.
+	 */
+	private boolean selectionRemovable() {
+		for (TLObject row : selectedRows()) {
+			if (!isRemovable(row)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private void addRowOfChosenType(ReactContext context) {
@@ -1051,7 +1094,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		if (editMode && binding().getRemoveMode() != RowSetBinding.RemoveMode.NONE) {
 			columns.add(DefaultColumn.<TLObject, TLObject> builder(COLUMN_DELETE, row -> row)
 				.label(ResKey.text(""))
-				.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDeleteButton(ctx, row))))
+				.renderer(row -> isRemovable(row)
+					? new CellContent.Raw((CellControlFactory) (ctx -> createDeleteButton(ctx, row)))
+					: CellContent.empty())
 				.width(ACTION_COLUMN_WIDTH)
 				.pinnedEnd(true)
 				.build());
@@ -1221,7 +1266,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			: new ColumnResolution(_rowTypes, _context);
 		List<ColumnDeclaration> declarations =
 			_columns.isEmpty() ? ColumnDeclarations.mainColumns(scope.rowType()) : _columns;
-		for (ColumnSetup setup : ColumnDeclarations.resolve(declarations, scope)) {
+		for (ColumnSetup resolved : ColumnDeclarations.resolve(declarations, scope)) {
+			ColumnSetup setup = _rowEditable == null ? resolved : resolved.restrictedTo(_rowEditable);
 			setups.add(setup);
 			columns.add(adapt(setup.buildColumn(), setup, editMode, edited));
 		}

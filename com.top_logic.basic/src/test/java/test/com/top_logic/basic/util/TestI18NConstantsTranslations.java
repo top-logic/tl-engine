@@ -5,6 +5,14 @@
  */
 package test.com.top_logic.basic.util;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.CodeSource;
+
 import junit.framework.Test;
 
 import test.com.top_logic.basic.AssertNoErrorLogListener;
@@ -38,6 +46,7 @@ public class TestI18NConstantsTranslations extends GenericTest {
 		AssertNoErrorLogListener listener = new AssertNoErrorLogListener(true);
 		listener.activate();
 		try {
+			File moduleDir = new File(".");
 			new I18NConstantsChecker() {
 
 				@Override
@@ -45,22 +54,56 @@ public class TestI18NConstantsTranslations extends GenericTest {
 					if (super.skipClassCheck(i18NClass)) {
 						return true;
 					}
-					return isInJarFile(i18NClass);
-				}
-				
-				/**
-				 * Test only those classes which lie in the tested module. This is done by checking
-				 * if the class file is not in a JAR file.
-				 */
-				private boolean isInJarFile(Class<?> c) {
-					String base = c.getProtectionDomain().getCodeSource().getLocation().getFile();
-					return (base.endsWith(".jar") || base.indexOf(".jar!") > 0);
+					return !isModuleClass(i18NClass, moduleDir);
 				}
 
 			}.checkI18N();
 			listener.assertNoErrorLogged("Errors while checking I18NConstants: ");
 		} finally {
 			listener.deactivate();
+		}
+	}
+
+	/**
+	 * Whether the given class belongs to the module in the given directory.
+	 * 
+	 * @see #isModuleLocation(URL, File)
+	 */
+	static boolean isModuleClass(Class<?> c, File moduleDir) {
+		CodeSource codeSource = c.getProtectionDomain().getCodeSource();
+		if (codeSource == null) {
+			return false;
+		}
+		return isModuleLocation(codeSource.getLocation(), moduleDir);
+	}
+
+	/**
+	 * Whether a class loaded from the given code source location belongs to the module in the given
+	 * directory.
+	 * 
+	 * <p>
+	 * The tested module is the one whose base directory is the working directory of the test run. A
+	 * class belongs to it, if its code source lies below this directory (e.g. its
+	 * <code>target/classes</code> or <code>target/test-classes</code>). JARs of the Maven repository
+	 * and class directories of other modules of the same reactor build are not part of the module.
+	 * </p>
+	 * 
+	 * @param location
+	 *        The {@link CodeSource#getLocation() code source location} of a class, may be
+	 *        {@code null}.
+	 * @param moduleDir
+	 *        The base directory of the tested module.
+	 */
+	static boolean isModuleLocation(URL location, File moduleDir) {
+		if (location == null || !"file".equals(location.getProtocol())) {
+			return false;
+		}
+		try {
+			Path codePath = Paths.get(location.toURI()).toRealPath();
+			Path modulePath = moduleDir.toPath().toRealPath();
+			return codePath.startsWith(modulePath);
+		} catch (URISyntaxException | IOException ex) {
+			return false;
 		}
 	}
 

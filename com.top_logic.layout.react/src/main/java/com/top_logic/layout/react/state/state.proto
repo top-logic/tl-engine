@@ -29,6 +29,7 @@
  *   TLAvatar          - AvatarState
  *   TLSlider          - SliderState
  *   TLFloatingAction  - FloatingActionState
+ *   TLDataList        - DataListState
  *
  * The message of an atomic control, which draws its look through the parts of 'tl-react-bridge'
  * (see "replacePart" and the developer article view-layer/parts). A component library replaces
@@ -2137,4 +2138,148 @@ message SliderState extends FieldState {
 	 * inherits no value, and an empty field puts its handle at the lower bound.
 	 */
 	double fallbackValue;
+}
+
+/**
+ * State of a selectable, groupable, searchable list of objects in the style of a contact or
+ * message list, the component {@code TLDataList} (design system: tl-list).
+ *
+ * A click on a row sends the command {@code select} with the {@link Row#id} of the row as argument
+ * {@code id}; an empty {@code id} clears the selection. The trigger of the row commands sends the
+ * command {@code rowMenu} with the {@link Row#id} as argument {@code id} and the client
+ * coordinates of the click as arguments {@code x} and {@code y}; the server opens the menu.
+ * Searching, collapsing and the drawer stay on the client.
+ */
+message DataListState extends ControlState {
+
+	/**
+	 * How prominently a {@link Line} is shown.
+	 */
+	enum Emphasis {
+		/** The prominent line. */
+		@Name("primary")
+		PRIMARY;
+
+		/** A muted secondary line. */
+		@Name("secondary")
+		SECONDARY;
+	}
+
+	/**
+	 * When the trigger of the row commands is shown.
+	 */
+	enum RowActions {
+		/** Revealed when the pointer is over the row or something in it has the keyboard focus. */
+		@Name("hover")
+		HOVER;
+
+		/** Always visible. */
+		@Name("always")
+		ALWAYS;
+
+		/** Never rendered. */
+		@Name("none")
+		NONE;
+	}
+
+	/**
+	 * A line of text of a {@link Row}.
+	 */
+	message Line {
+		/**
+		 * The text of the line, plain text. A line after the first one whose text is empty is not
+		 * drawn.
+		 */
+		string text;
+
+		/**
+		 * How prominently the line is shown. Absent: the first line of a row is
+		 * {@link Emphasis#PRIMARY}, every further line {@link Emphasis#SECONDARY}.
+		 */
+		Emphasis emphasis;
+	}
+
+	/**
+	 * An entry of the list.
+	 */
+	message Row {
+		/**
+		 * The ID of the row, by which the client names it to the server.
+		 */
+		string id;
+
+		/**
+		 * The lines of the row, top to bottom.
+		 */
+		repeated Line lines;
+
+		/**
+		 * The heading of the group the row belongs to. Groups stand in the order of their first row.
+		 * Absent: the row belongs to the group without heading.
+		 */
+		string group;
+
+		/**
+		 * Additional CSS classes of the row element, separated by spaces, computed by the
+		 * application. Absent: none.
+		 */
+		string cssClass;
+	}
+
+	/**
+	 * The rows in display order.
+	 */
+	repeated Row rows;
+
+	/**
+	 * The {@link Row#id} of the selected row. Empty: none.
+	 */
+	string selectedId;
+
+	/**
+	 * The title in the header of the list, plain text. Empty: no title.
+	 */
+	string title;
+
+	/**
+	 * The text of an empty list, plain text. Empty: a general text of the component.
+	 */
+	string emptyText;
+
+	/**
+	 * Whether the list shows a search field filtering the rows by the text of their lines.
+	 */
+	bool search;
+
+	/**
+	 * Whether the header carries the toggle collapsing the list to a narrow strip.
+	 */
+	bool collapsible;
+
+	/**
+	 * Whether the list starts collapsed; needs {@link #collapsible}.
+	 */
+	bool collapsed;
+
+	/**
+	 * The width of the element containing the list, in rem, below which a {@link #collapsible} list
+	 * keeps only its strip and its toggle opens the list as a drawer over its neighbours. Zero: the
+	 * list never becomes a drawer.
+	 */
+	int32 drawerBelow;
+
+	/**
+	 * The command buttons of the list, in display order. Absent: none.
+	 */
+	repeated ChildControl buttons;
+
+	/**
+	 * Whether there are commands per row that the trigger of a row opens.
+	 */
+	bool hasRowMenu;
+
+	/**
+	 * When the trigger of the row commands is shown. Absent means {@link RowActions#HOVER}.
+	 */
+	RowActions rowActions;
 }

@@ -165,6 +165,7 @@ export type {
   AvatarStateJson,
   SliderStateJson,
   FloatingActionStateJson,
+  DataListStateJson,
 } from './state/control-state';
 export { useI18N } from './bridge/i18n';
 export { useCopyToClipboard, COPIED_DISPLAY_MS } from './bridge/clipboard';

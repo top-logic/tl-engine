@@ -82,3 +82,17 @@ test('tl-list: Specimen — gewählter Eintrag, Avatar und Badge als Parts, Ausl
   assert.match(html, /tl-reveal-on-hover" aria-haspopup="menu" aria-label="Aktionen: /);
   assert.match(html, /<div class="tl-list" data-tl-state="collapsed"/);
 });
+
+test('tl-list: als Schublade — der Ort ist Anker, der Streifen blendet nur eigene Kinder aus, der Scrim deckt den Behälter', () => {
+  const anker = decl(':where(:has(> .tl-list > .tl-drawer__scrim))');
+  assert.match(anker, /position:\s*relative/);
+  assert.match(anker, /isolation:\s*isolate/);
+  assert.ok(declarationsOf(css, '.tl-list[data-tl-state~="collapsed"] > .tl-list__body'));
+  assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /\.tl-list\[data-tl-state~="collapsed"\] \.tl-list__/);
+  const scrim = declarationsOf(readGenerated('drawer', 'drawer.css'), '.tl-drawer__scrim') ?? '';
+  assert.match(scrim, /position:\s*absolute/);
+  assert.match(scrim, /z-index:\s*var\(--tl-layer-raised\)/);
+  assert.match(scrim, /background:\s*var\(--tl-surface-scrim\)/);
+  assert.deepEqual(missingInContract(readComponent('drawer', 'drawer.contract.md'), ['tl-drawer__scrim', '--tl-surface-scrim']), []);
+  assert.deepEqual(missingInContract(readComponent('list', 'list.contract.md'), ['drawerBelow', 'tl-drawer__scrim', 'tl-drawer--container']), []);
+});

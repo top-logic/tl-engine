@@ -23,6 +23,7 @@ passen will, liest die Tokens.
 | `search` | boolean | Die Suche steht; sie filtert auf dem Client über den Text aller Zeilen. |
 | `collapsible` | boolean | Der Kopf trägt den Ein-/Ausklapper. |
 | `collapsed` | boolean | Der erste Stand: eingeklappt. |
+| `drawerBelow` | number | Breite des Orts in rem, unter der eine einklappbare Liste zur Schublade wird; 0: nie. |
 | `buttons` | Liste | Befehle der Liste, je ein Command-Button-Control. |
 | `hasRowMenu` | boolean | Es gibt Befehle je Eintrag. |
 | `rowActions` | `hover` \| `always` \| `none` | Wann der Auslöser der Befehle eines Eintrags steht. |
@@ -34,7 +35,19 @@ passen will, liest die Tokens.
 | `select` | Klick auf einen Eintrag (`tl-list__main`), Enter oder Leertaste darauf |
 | `rowMenu` | der Auslöser der Befehle eines Eintrags; mit der Lage des Klicks |
 
-Suchen und Ein-/Ausklappen bleiben auf dem Client.
+Suchen, Ein-/Ausklappen und die Schublade bleiben auf dem Client.
+
+## Schublade
+
+Ist der Ort der Liste (ihr Elternelement) schmaler als `drawerBelow` rem, bleibt eine einklappbare Liste ein Streifen
+(`data-tl-state~="collapsed"`), wie breit der Ort auch wieder wird: die Wahl des Nutzers für die Spalte gilt erst
+wieder, wenn der Ort breit genug ist. Der Ausklapper des Streifens öffnet die Liste als modale Schublade im Ort: im
+Streifen stehen `tl-drawer__scrim` und `aside` `tl-drawer tl-drawer--start tl-drawer--narrow tl-drawer--container`
+mit `data-tl-state~="open"`, `role="dialog"`, `aria-modal="true"` und dem Titel als Namen; darin eine zweite, offene
+`tl-list` mit Kopf, Befehlen, Suche und Körper. Der Ort wird dafür positioniert und isoliert. Der Fokus geht auf den
+gewählten Eintrag, sonst den ersten, sonst den ersten fokussierbaren; er bleibt in der Schublade. Escape (außer in
+einer Suche mit Text), der Scrim, der Ausklapper darin, die Wahl eines Eintrags und ein Befehl schließen sie; der
+Fokus kehrt zum Ausklapper des Streifens zurück.
 
 ## Tastatur
 
@@ -46,15 +59,15 @@ Jeder Eintrag ist ein Knopf und liegt in der Tab-Folge, dahinter sein Auslöser.
 |---|---|
 | `tl-list` | `div`; der Titel ist der Name der Liste (`aria-label`), wenn es einen gibt |
 | `tl-list__header` | `div`; steht weder Titel noch Ein-/Ausklapper, trägt er `hidden` |
-| Ein-/Ausklapper | Part `Button` (ghost, klein, icon-only) mit `aria-expanded`, Name je nach Stand „Einklappen“ bzw. „Ausklappen“ |
+| Ein-/Ausklapper | Part `DisclosureToggle` (`tl-toggle tl-toggle--end`) mit `aria-expanded`, Name je nach Stand `js.dataList.collapse` bzw. `js.dataList.expand` |
 | `tl-list__body` | `div` mit `aria-live="polite"` und `tabindex="-1"` (Ziel des Fokus, wenn der letzte Eintrag verschwindet) |
 | `tl-list__group` | `section`, benannt über ihre Zwischenüberschrift (`aria-labelledby`); die einzige Gruppe ohne Überschrift über `aria-label` = Titel |
 | `tl-list__subheader` | `h2` |
 | `tl-list__items` | `ul` |
 | `tl-list__item` | `li` |
 | `tl-list__main` | `button`; am gewählten Eintrag `aria-current="true"`; `title` = die erste Zeile |
-| Auslöser der Befehle | Part `Button` (ghost, klein, icon-only) mit `aria-haspopup="menu"` und dem Namen „Aktionen: “ + erste Zeile, bei `rowActions` = `hover` mit `tl-reveal-on-hover` |
-| `tl-list__message` | `p`: leer, oder kein Treffer der Suche |
+| Auslöser der Befehle | Part `MenuTrigger` (ghost, klein, icon-only) mit `aria-haspopup="menu"` und dem Namen `js.dataList.rowActions` + „: “ + erste Zeile, bei `rowActions` = `hover` mit `tl-reveal-on-hover` |
+| `tl-list__message` | `p`: leer (`emptyText`, sonst `js.dataList.empty`), oder kein Treffer der Suche (`js.dataList.noMatch`) |
 
 Verschwindet der Eintrag, dessen Befehle offen waren (Löschen), geht der Fokus auf den Auslöser des Nachbarn davor,
 sonst dahinter, sonst auf `tl-list__body`.
@@ -81,7 +94,7 @@ Ellipse. Die Liste setzt keine Fläche und keinen Rand: Breite, Fläche und Lini
 | Attribut | Wann |
 |---|---|
 | `aria-current="true"` | am `tl-list__main` des gewählten Eintrags |
-| `data-tl-state~="collapsed"` | an der Wurzel, eingeklappt: es stehen nur der Kopf mit dem Ein-/Ausklapper und die Befehle als Icon |
+| `data-tl-state~="collapsed"` | an der Wurzel, eingeklappt oder Schublade: es stehen nur der Kopf mit dem Ein-/Ausklapper und die Befehle als Icon; die Regeln greifen nur an den eigenen Kindern |
 | `hidden` | an jedem Element, das gerade nicht steht |
 
 Gewählt und eingeklappt sind Zustände: Attribute, nie Modifier (Klassen-Gate).
@@ -92,8 +105,10 @@ Bauteile anderer Blöcke:
 |---|---|
 | `tl-avatar` | Part `Avatar` in `tl-list__leading` |
 | `tl-badge` | Part `Badge` in `tl-list__trailing` |
-| `tl-button` | Ein-/Ausklapper, Befehle der Liste (`tl-list__commands`), Auslöser der Befehle eines Eintrags (direktes Kind von `tl-list__item`, damit `tl-reveal-on-hover` ihn beim Zeigen auf den Eintrag und bei Tastaturfokus darin zeigt) |
-| `tl-field-group` | die Suche (`SearchField`) in `tl-list__search` |
+| `tl-toggle` | der Ein-/Ausklapper im Kopf |
+| `tl-button` | Befehle der Liste (`tl-list__commands`), Auslöser der Befehle eines Eintrags (direktes Kind von `tl-list__item`, damit `tl-reveal-on-hover` ihn beim Zeigen auf den Eintrag und bei Tastaturfokus darin zeigt) |
+| `tl-field-group` | die Suche (`SearchField`, Name `js.dataList.search`), `tl-list__search` an ihrer Hülle |
+| `tl-drawer`, `tl-drawer__scrim` | die offene Schublade im Streifen (`drawer.contract.md`) |
 
 Klassen:
 

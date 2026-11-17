@@ -18,9 +18,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.annotation.InApp;
-import com.top_logic.base.locking.handler.DefaultLockHandler;
-import com.top_logic.base.locking.handler.LockHandler;
-import com.top_logic.base.locking.handler.NoTokenHandling;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
@@ -36,10 +33,8 @@ import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
-import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
-import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.IReactControl;
@@ -60,8 +55,6 @@ import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActionChain;
 import com.top_logic.layout.view.command.ViewActions;
 import com.top_logic.layout.view.command.ViewCommand;
-import com.top_logic.layout.view.command.CombinedViewExecutabilityRule;
-import com.top_logic.layout.view.command.FormValid;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.form.FormCommandModel;
@@ -92,7 +85,7 @@ public class FormElement extends ContainerElement {
 	 */
 	@TagName("form")
 	@TypeIcon("css:bi bi-ui-checks")
-	public interface Config extends ContainerElement.Config, FormLayoutOptions, ActionScopeDefinition {
+	public interface Config extends ContainerElement.Config, FormLayoutOptions, LockHandlerOptions, ActionScopeDefinition {
 
 	/** Access to the default methods of this interface for the configuration proxy. */
 	Lookup LOOKUP = MethodHandles.lookup();
@@ -117,9 +110,6 @@ public class FormElement extends ContainerElement {
 
 		/** Configuration name for {@link #getModeSwitch()}. */
 		String MODE_SWITCH = "mode-switch";
-
-		/** Configuration name for {@link #getLockHandler()}. */
-		String LOCK_HANDLER = "lockHandler";
 
 		/** Configuration name for {@link #getCommands()}. */
 		String COMMANDS = "commands";
@@ -211,21 +201,6 @@ public class FormElement extends ContainerElement {
 		@Name(MODE_SWITCH)
 		@BooleanDefault(true)
 		boolean getModeSwitch();
-
-		/**
-		 * Algorithm for edit-mode token handling.
-		 *
-		 * <p>
-		 * Defaults to {@link DefaultLockHandler} which uses the application-wide
-		 * {@link com.top_logic.base.locking.LockService LockService}. To disable locking, configure
-		 * {@link com.top_logic.base.locking.handler.NoTokenHandling NoTokenHandling}.
-		 * </p>
-		 */
-		@Name(LOCK_HANDLER)
-		@ImplementationClassDefault(DefaultLockHandler.class)
-		@Options(fun = AllInAppImplementations.class)
-		@DisplayMinimized
-		PolymorphicConfiguration<? extends LockHandler> getLockHandler();
 
 		/**
 		 * Commands to contribute to the enclosing command scope.
@@ -351,8 +326,6 @@ public class FormElement extends ContainerElement {
 
 	private final LabelPosition _labelPosition;
 
-	private final LockHandler _lockHandler;
-
 	private final List<ViewCommand> _formCommands;
 
 	private final List<ViewCommand.Config> _formCommandConfigs;
@@ -370,7 +343,9 @@ public class FormElement extends ContainerElement {
 		_config = config;
 		_maxColumns = config.getMaxColumns();
 		_labelPosition = FormLayoutOptions.layoutPosition(context, config.getLabelPosition());
-		_lockHandler = createLockHandler(context, config);
+
+		// Each displayed form creates its own handler.
+		LockHandlerOptions.checkLockHandler(context, config);
 
 		_formCommands = new ArrayList<>();
 		_formCommandConfigs = new ArrayList<>();
@@ -404,20 +379,6 @@ public class FormElement extends ContainerElement {
 		return result;
 	}
 
-	private LockHandler createLockHandler(InstantiationContext context, Config config) {
-		if (config.getInitialEditMode()) {
-			// No locking needed when the form starts in edit mode (e.g. create dialogs).
-			return NoTokenHandling.INSTANCE;
-		}
-
-		LockHandler result = context.getInstance(config.getLockHandler());
-		if (result != null) {
-			return result;
-		}
-
-		return NoTokenHandling.INSTANCE;
-	}
-
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		// 1. Resolve input channel.
@@ -434,7 +395,8 @@ public class FormElement extends ContainerElement {
 		String noModelMessage = Resources.getInstance().getString(messageKey);
 
 		// 4. Create FormControl with initial object.
-		FormControl formControl = new FormControl(context, initialObject, noModelMessage, _lockHandler);
+		FormControl formControl =
+			new FormControl(context, initialObject, noModelMessage, LockHandlerOptions.createLockHandler(_config));
 		formControl.setCssClass(_config.getCssClass());
 		formControl.setLayout(_maxColumns, _labelPosition);
 
@@ -488,14 +450,14 @@ public class FormElement extends ContainerElement {
 		// 11. Auto-enter edit mode if configured (after children are set so listeners receive
 		// the formStateChanged event). If an editMode channel is wired and already holds true,
 		// honour that; otherwise fall back to the initial-edit-mode config flag. The form enters edit
-		// mode only if its edit permission allows; otherwise it stays in view mode and resets the
-		// edit-mode channel to false.
+		// mode only if its edit permission allows and nobody else holds the lock of its object;
+		// otherwise it stays in view mode and resets the edit-mode channel to false.
 		ViewChannel editModeChannel = editModeRef != null ? context.resolveChannel(editModeRef) : null;
 		boolean initialEditMode = editModeChannel != null
 			? Boolean.TRUE.equals(editModeChannel.get())
 			: _config.getInitialEditMode();
 		if (initialEditMode) {
-			formControl.enterEditMode();
+			formControl.enterEditModeByItself();
 		}
 		if (editModeChannel == null && _config.getInitialEditMode()) {
 			// Without an edit-mode channel governing the mode, initial-edit-mode means "editable
@@ -543,10 +505,6 @@ public class FormElement extends ContainerElement {
 
 			String trigger = null;
 			ViewExecutabilityRule rule = ViewExecutabilityRules.build(cmdConfig, trigger, formContext);
-			if (cmd.appliesFormState()) {
-				// The form rejects the command while errors are on screen, so do not offer it.
-				rule = CombinedViewExecutabilityRule.combine(List.of(rule, new FormValid(formControl)));
-			}
 
 			// Created in the form context, the command runs there wherever the panel shows it.
 			models.add(ViewCommandModel.create(formContext, cmd, cmdConfig, trigger, rule));

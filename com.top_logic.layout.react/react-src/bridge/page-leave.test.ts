@@ -305,6 +305,42 @@ describe('a command for a control that is gone', () => {
   });
 });
 
+/** The payload of the command the given fetch mock sent as its call with the given index. */
+function sentPayload(fetchMock: ReturnType<typeof vi.fn>, index: number): Record<string, unknown> {
+  const init = fetchMock.mock.calls[index][1] as RequestInit;
+  return JSON.parse(init.body as string) as Record<string, unknown>;
+}
+
+describe('the tidy-up flag of a command', () => {
+  it('travels with a command that only tidies up and with a field value, not with others', async () => {
+    const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(new Response('{"success":true}', { status: 200 })));
+    vi.stubGlobal('fetch', fetchMock);
+    const { enqueueCommand, CMD_VALUE_CHANGED, FIELD_IGNORE_STALE_UI } = await load();
+
+    await enqueueCommand(COMMAND_URL, PAYLOAD, { ignoreStaleUi: true });
+    await enqueueCommand(COMMAND_URL, { ...PAYLOAD, command: CMD_VALUE_CHANGED });
+    await enqueueCommand(COMMAND_URL, PAYLOAD);
+    await enqueueCommand(COMMAND_URL, PAYLOAD, { ignoreStaleUi: false });
+
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(sentPayload(fetchMock, 0)[FIELD_IGNORE_STALE_UI]).toBe(true);
+    expect(sentPayload(fetchMock, 1)[FIELD_IGNORE_STALE_UI]).toBe(true);
+    expect(sentPayload(fetchMock, 2)).not.toHaveProperty(FIELD_IGNORE_STALE_UI);
+    expect(sentPayload(fetchMock, 3)).not.toHaveProperty(FIELD_IGNORE_STALE_UI);
+    expect(PAYLOAD).not.toHaveProperty(FIELD_IGNORE_STALE_UI);
+  });
+
+  it('does not keep a field value from loading a page again the server no longer knows', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(STALE_ANSWER.body, { status: STALE_ANSWER.status })));
+    const { enqueueCommand, isPageLeaving, CMD_VALUE_CHANGED } = await load();
+
+    await enqueueCommand(COMMAND_URL, { ...PAYLOAD, command: CMD_VALUE_CHANGED });
+
+    expect(nav.replace).toHaveBeenCalledWith('/ctx/view/property/42?tab=2');
+    expect(isPageLeaving()).toBe(true);
+  });
+});
+
 describe('the re-entry address', () => {
   it('drops the window name and the fragment', async () => {
     const { reentryUrl } = await load();

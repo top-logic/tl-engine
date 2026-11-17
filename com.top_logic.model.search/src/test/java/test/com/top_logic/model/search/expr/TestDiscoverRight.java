@@ -17,6 +17,7 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialRolesManager;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
@@ -38,6 +39,7 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.providers.ConstraintCheckByExpression;
+import com.top_logic.model.search.providers.DynamicColumnProviderByExpression;
 import com.top_logic.model.search.providers.I18NConstants;
 import com.top_logic.model.search.providers.LabelByExpression;
 import com.top_logic.model.search.providers.LabelProviderByExpression;
@@ -287,6 +289,35 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		assertEquals(Arrays.asList(_a1), eval("r -> $r.get(`TestTLScriptSecurity:PathRoot#as`)", _root));
 		assertEquals(Arrays.asList(_b1), eval("a -> $a.get(`TestTLScriptSecurity:PathA#bs`)", _a1));
 		assertEquals(Arrays.asList(_c1), eval("b -> $b.get(`TestTLScriptSecurity:PathB#cs`)", _b1));
+	}
+
+	/**
+	 * The composition descendants follow a composite reference only where the user may read it, as
+	 * {@code get} does.
+	 */
+	public void testDescendantsFollowOnlyReadableCompositions() throws Exception {
+		TLObject n1;
+		TLObject n2;
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			n1 = node("PathNote", "n1");
+			_b1.tUpdateByName("notes", Collections.singletonList(n1));
+			n2 = node("PathNote", "n2");
+			_b2.tUpdateByName("notes", Collections.singletonList(n2));
+			tx.commit();
+		}
+		String descendants = "b -> $b.objectDescendants()";
+
+		becomeUser(_pathUser);
+		// The path role on b1 reads its notes.
+		assertEquals(Arrays.asList(n1), asList(eval(descendants, _b1)));
+		// Without a role on b2, its notes are not readable.
+		assertEquals(Collections.emptyList(), asList(eval(descendants, _b2)));
+
+		becomeUser(_stranger);
+		assertEquals(Collections.emptyList(), asList(eval(descendants, _b1)));
+
+		becomeUser(PersonManager.getManager().getRoot());
+		assertEquals(Arrays.asList(n2), asList(eval(descendants, _b2)));
 	}
 
 	public void testLabelOfDiscoverableVisibleAttributeNot() throws Exception {
@@ -564,7 +595,57 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		TLObject high = classifier("HIGH");
 		assertTrue(rights().isDiscoverAllowed(_stranger, high));
 		assertTrue(rights().isDiscoverAllowed(_stranger, TLModelUtil.findType("TestTLScriptSecurity:PathB")));
-		assertFalse(rights().isAllowed(_stranger, high, SimpleBoundCommandGroup.READ));
+		assertTrue(rights().isDiscoverAllowed(_stranger, (TLObject) part("PathB", "priority")));
+	}
+
+	/**
+	 * A model element is readable for every user, also for one holding no role at all and without
+	 * any grant on <code>tl.model</code> (ticket #30275): a classifier, a type and an attribute.
+	 */
+	public void testModelElementReadable() {
+		assertTrue(rights().isReadAllowed(_stranger, classifier("HIGH")));
+		assertTrue(rights().isReadAllowed(_stranger, TLModelUtil.findType("TestTLScriptSecurity:PathB")));
+		assertTrue(rights().isReadAllowed(_stranger, (TLObject) part("PathB", "priority")));
+	}
+
+	/**
+	 * Modifying and deleting a model element stays protected (ticket #30275).
+	 */
+	public void testModelElementNotWritable() {
+		TLObject high = classifier("HIGH");
+		assertFalse(rights().isAllowed(_stranger, high, SimpleBoundCommandGroup.WRITE));
+		assertFalse(rights().isAllowed(_stranger, high, SimpleBoundCommandGroup.DELETE));
+		assertFalse(rights().isAllowed(_stranger, TLModelUtil.findType("TestTLScriptSecurity:PathB"),
+			SimpleBoundCommandGroup.WRITE));
+	}
+
+	/**
+	 * The value of an enumeration attribute of a readable object is delivered completely to a user
+	 * holding no right on <code>tl.model</code> (ticket #30275): all classifiers of a multiple
+	 * attribute, and the classifier of a single one, each of them readable for the user. A filter
+	 * that drops every object its user may not read (as the read filter of the agent tools does)
+	 * therefore keeps them.
+	 */
+	public void testEnumerationValueReadable() throws Exception {
+		grantWrite(_pathUser, _b1);
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			_b1.tUpdateByName("priority", classifier("HIGH"));
+			_b1.tUpdateByName("tags", Arrays.asList(classifier("LOW"), classifier("HIGH")));
+			tx.commit();
+		}
+		assertTrue(rights().isReadAllowed(_pathUser, _b1, part("PathB", "priority")));
+		assertTrue(rights().isReadAllowed(_pathUser, _b1, part("PathB", "tags")));
+
+		becomeUser(_pathUser);
+		Object priority = eval("b -> $b.get(`TestTLScriptSecurity:PathB#priority`)", _b1);
+		assertEquals(classifier("HIGH"), priority);
+		assertTrue(rights().isReadAllowed(_pathUser, (TLObject) priority));
+
+		List<?> tags = asList(eval("b -> $b.get(`TestTLScriptSecurity:PathB#tags`)", _b1));
+		assertEquals(Arrays.asList(classifier("LOW"), classifier("HIGH")), tags);
+		for (Object tag : tags) {
+			assertTrue(rights().isReadAllowed(_pathUser, (TLObject) tag));
+		}
 	}
 
 	/**
@@ -762,6 +843,44 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		QueryExecutor titleExpr = (QueryExecutor) privateField(TitleByExpression.class, "_expr", provider);
 		becomeUser(_pathUser);
 		assertNull(titleExpr.execute(_a1));
+	}
+
+	/**
+	 * R12: The header label of a column of a {@link DynamicColumnProviderByExpression} is computed
+	 * unsecured; the columns and the cell values are computed secured.
+	 */
+	public void testDynamicColumnLabelUnsecured() throws Exception {
+		DynamicColumnProviderByExpression provider = dynamicColumnProvider();
+		QueryExecutor columns = (QueryExecutor) privateField(DynamicColumnProviderByExpression.class, "_columns", provider);
+		QueryExecutor accessor =
+			(QueryExecutor) privateField(DynamicColumnProviderByExpression.class, "_accessor", provider);
+		java.lang.reflect.Method label =
+			DynamicColumnProviderByExpression.class.getDeclaredMethod("label", Object.class, Object.class);
+		label.setAccessible(true);
+
+		becomeUser(_pathUser);
+		assertEquals("The path user discovers a1 only.", Arrays.asList(_a1), asList(columns.execute(_root)));
+		assertEquals("The label of a discover-only column object is filled.", "a1", label.invoke(provider, _a1, _root));
+		assertNull("The cell value is read secured.", accessor.execute(_root, _a1, _root));
+
+		becomeUser(_stranger);
+		assertEquals("Without Discover, there is no column.", Arrays.asList(), asList(columns.execute(_root)));
+	}
+
+	private static DynamicColumnProviderByExpression dynamicColumnProvider() throws Exception {
+		DynamicColumnProviderByExpression.Config<?> config =
+			TypedConfiguration.newConfigItem(DynamicColumnProviderByExpression.Config.class);
+		config.update(config.descriptor().getProperty(DynamicColumnProviderByExpression.Config.COLUMNS),
+			parse("model -> all(`TestTLScriptSecurity:PathA`)"));
+		config.update(config.descriptor().getProperty(DynamicColumnProviderByExpression.Config.COLUMN_LABEL),
+			parse("column -> model -> $column.get(`TestTLScriptSecurity:PathNode#name`)"));
+		config.update(config.descriptor().getProperty(DynamicColumnProviderByExpression.Config.COLUMN_TYPE),
+			parse("`tl.core:String`"));
+		config.update(config.descriptor().getProperty(DynamicColumnProviderByExpression.Config.ACCESSOR),
+			parse("row -> column -> model -> $column.get(`TestTLScriptSecurity:PathNode#name`)"));
+		// The table component is not resolved, the test does not adapt a table.
+		return new DynamicColumnProviderByExpression(new DefaultInstantiationContext(TestDiscoverRight.class),
+			config);
 	}
 
 	private static Object privateField(Class<?> type, String name, Object instance) throws Exception {

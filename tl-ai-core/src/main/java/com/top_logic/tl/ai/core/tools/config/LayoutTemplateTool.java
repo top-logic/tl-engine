@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -18,12 +19,14 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.json.JsonConfigurationReader;
 import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.knowledge.gui.layout.LayoutConfig;
 import com.top_logic.layout.editor.DynamicComponentDefinition;
 import com.top_logic.layout.editor.DynamicComponentService;
 import com.top_logic.mig.html.layout.LayoutStorage;
 import com.top_logic.mig.html.layout.TLLayout;
+import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.core.tools.config.messages.LayoutCreateResponse;
 import com.top_logic.tl.ai.core.tools.config.messages.LayoutTemplateInfo;
 import com.top_logic.tl.ai.core.tools.config.messages.LayoutTemplateListResponse;
@@ -265,6 +268,14 @@ public class LayoutTemplateTool {
 	}
 
 	/**
+	 * The commit message of {@link #createLayout(String, String, String)}.
+	 */
+	@CalledByReflection
+	ResKey createLayoutMessage(String templateName, String layoutKey, String argumentsJson) {
+		return I18NConstants.LAYOUT_CREATED__LAYOUT.fill(layoutKey);
+	}
+
+	/**
 	 * Creates a new layout from a template.
 	 *
 	 * <p>
@@ -282,7 +293,7 @@ public class LayoutTemplateTool {
 	 *        JSON string with the template arguments.
 	 * @return JSON string indicating success or failure.
 	 */
-	@ToolMethod(description = "Create a new layout from a template. Use listLayoutTemplates to find templates and getConfigSchema with toplogic://schema/layout-template/{name} to get the parameter schema.", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Create a new layout from a template. Use listLayoutTemplates to find templates and getConfigSchema with toplogic://schema/layout-template/{name} to get the parameter schema.", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE, commitMessage = "createLayoutMessage")
 	public String createLayout(
 			@P("The name of the template to instantiate") String templateName,
 			@P("The layout key for the new layout") String layoutKey,

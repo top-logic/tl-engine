@@ -107,12 +107,12 @@ The cheat sheet of the query language (`QueryLanguage`, which a failing query is
 | `InstanceBrowserTool.listInstances` | Filters the instance list through `readable(...)` **before** the count is taken and before the page is cut, so `totalCount` is the number of instances the user may see. An unfiltered `totalCount` leaks cardinality; a page cut before the filter leaks it through short pages. |
 | `InstanceBrowserTool.getInstance` | Resolves the TID through the read check, then serializes only the attributes `canRead(obj, attr)` allows. The container is another object's identity and is disclosed only when that object is readable too. |
 | `QueryTool.query`, `ChangeDataTool.changeData` | The result is disclosed through `ReadFilter`: an unreadable object is left out, so a script whose whole result is one hidden object reports `null`. `changeData`'s report of what changed names an attribute the principal may not read without its values, and an object it may not read without its label. Inside TL-Script the engine enforces the model access rights itself; `changeData` and its dry run refuse a system context. |
-| `ScriptToolExecutor` (every TL-Script tool) | The result is rendered through `ReadFilter.text(...)`. Object-typed *arguments* are read-checked where their TID is resolved, so a script body cannot be handed an object the principal may not read. |
+| `ScriptToolExecutor` (every TL-Script tool) | The result is disclosed as JSON through `ReadFilter.markedJson(...)`, every object in it as its identity. Object *arguments* are read-checked when the arguments are bound to the declared parameters (`DeclaredParameters`, `AgentObjectFormat`), so a script body cannot be handed an object the principal may not read. |
 | `ViewDocumentTool.viewDocument` | Uses the resolver's check, so "no such object" and "not yours" are one answer. |
 | `VectorIndexSearchTool`, `index.search` | Filtered per hit at query time, see [result filtering](doc:ai/security/result-filtering#the-vector-index). |
 | The MCP resources `InstanceResource`, `TypeInstancesResource`, `<dynamic-resources>` | Read as the authenticated account and disclosed through the same filter: "not found" for an unreadable object, unreadable attributes left out, listings filtered before they are counted and paginated. |
 | `ModelSearchTool.searchModel`, `ModelBrowserTool.listModules` / `listTypes` / `listTypeParts` / `listClassifiers`, `TypeAnalysisTool.*`, the MCP model-metadata resources | Disclose model *structure* - types, attributes, labels - not business data, so the read filter has nothing to filter. `outlineModel`, which hands over the whole model in one call, is bounded by `accessibleTypes(READ)` ([the model digest](doc:ai/security/result-filtering#the-model-digest)); these tools enumerate the same information a type at a time and are not bounded by it. |
-| `ModelEditorTool.*`, `ModelAnnotationEditorTool.*` | Structural: gated by the `model.structure` group at L1; L4 backstops the commit. |
+| `ModelEditorTool.*`, `ModelAnnotationEditorTool.*` | Structural: gated by the `model.structure` group at L1, which is their only check - they ask no per-object model right. |
 | `McpTool` (remote tools), `ScriptToolExecutor` | Declare no group, so they are denied until an administrator classifies them in `<tool-groups>`. |
 
 ## How the two layers combine
@@ -129,7 +129,7 @@ The cheat sheet of the query language (`QueryLanguage`, which a failing query is
         └───────────────────────────────┬───────────────────────────────────┘
                                         │ pass, per object
         ┌───────────────────────────────▼───────────────────────────────────┐
-        │  L3 pre-filter results  ·  L4 re-assert before commit             │
+        │  L3 pre-filter results                                            │
         └───────────────────────────────────────────────────────────────────┘
 ```
 
@@ -140,7 +140,6 @@ Worked example: a clerk holding the role `SalesAssistantUser` asks "list all cus
 1. **L1** - the clerk holds `SalesAssistantUser` on the security root through the tier rule, and the policy grants that role `data.read`. `listInstances` passes. `changeData` is in `script` (privileged, not granted) - denied, and the model is told so.
 2. **L2** - `listInstances` calls `readable(...)`. `ModelAccessRights` finds the Read grant of `Customer` for `SalesAssistantUser` and evaluates the role *per instance*: through the scope rule the clerk holds it on their own region's customers only. Result: their region's customers.
 3. **L3** - the filtered list is serialized; `totalCount` reports the filtered count.
-4. **L4** - no write happened, nothing to guard.
 
 **The scope assignment alone is not enough.** A role held only on regional customers is invisible to L1, which looks at the root and nowhere else, so step 1 would deny `listInstances` and step 2 would never run. The tier assignment makes L1 pass; the scope assignment makes L2 narrow. Neither substitutes for the other, and `use-default-security-parent` must stay `false`, or the tier assignment swallows the scope one. The [worked example](doc:ai/security/role-model-worked-example) builds exactly this, in full.
 

@@ -15,6 +15,12 @@ import com.top_logic.react.flow.data.ClipBox;
  */
 public interface ClipBoxOperations extends DecorationOperations {
 
+	/**
+	 * Purpose of the {@link SvgConstants#CLIP_PATH} element of a {@link ClipBox}, see
+	 * {@link SvgWriter#uniqueId(com.top_logic.react.flow.data.Widget, String)}.
+	 */
+	String CLIP_PATH_PURPOSE = "clip";
+
 	@Override
 	ClipBox self();
 
@@ -34,8 +40,10 @@ public interface ClipBoxOperations extends DecorationOperations {
 		out.beginGroup();
 		out.attachModel(self());
 
+		String clipPathId = out.uniqueId(self(), CLIP_PATH_PURPOSE);
+
 		out.beginGroup();
-		out.writeAttribute("clip-path", "url(#" + getClipPathID() + ")");
+		out.writeClipPathRef(clipPathId);
 		out.writeCssClass(self().getCssClass());
 
 		DecorationOperations.super.drawContent(out);
@@ -43,20 +51,13 @@ public interface ClipBoxOperations extends DecorationOperations {
 		out.endGroup();
 
 		out.beginClipPath();
-		out.writeAttribute("id", getClipPathID());
+		out.writeId(clipPathId);
 
 		out.rect(self().getX(), self().getY(), self().getWidth(), self().getHeight());
 
 		out.endClipPath();
 
 		out.endGroup();
-	}
-
-	/**
-	 * Client ID of the {@link SvgConstants#CLIP_PATH} element.
-	 */
-	default String getClipPathID() {
-		return self().getClientId() + "-clipPath";
 	}
 
 }

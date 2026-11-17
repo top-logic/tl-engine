@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic.element/grid.template.xml"
+>
+	<arguments
+		defaultColumns="email,state,createdAt,approved,approvedBy,account"
+		fixedColumns="1"
+		type="tl.security.selfservice:Registration"
+	>
+		<name key="dynamic.a8966052-59d6-4b06-9464-48f79462d5d3">
+			<en>Registrations</en>
+			<de>Registrierungen</de>
+		</name>
+		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
+			elements="model->all(`tl.security.selfservice:Registration`)"
+			supportsElement="true"
+		/>
+		<buttons>
+			<button id="exportExcelGrid"
+				class="com.top_logic.layout.table.export.StreamingExcelExportHandler"
+			>
+				<downloadNameProvider class="com.top_logic.layout.table.export.ComponentDownloadName"/>
+			</button>
+			<button id="ID_cf827bb0_b065_4380_b32c_36d3f259ae2f"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				form-apply="false"
+				image="css:bi bi-person-check"
+				target="selection(self())"
+				transaction="false"
+			>
+				<resourceKey key="dynamic.d735aa5c-7f01-43e7-b0c9-47ec42cad507">
+					<en>Approve registration</en>
+					<de>Registrierung freigeben</de>
+				</resourceKey>
+				<executability>
+					<rule-by-expression
+						decision="registration -> $registration == null ? false : ($registration.get(`tl.security.selfservice:Registration#state`) == `tl.security.selfservice:RegistrationState#APPROVED` ? #&quot;tl.security.selfservice.registrations.approve.approved&quot; : true)"
+						show-disabled="true"
+					/>
+				</executability>
+				<operation><![CDATA[registration -> {
+  sent = registrationApprove($registration);
+  $sent == false ?
+    info(#"tl.security.selfservice.registrations.approve.notSent", level: "warn") :
+    ($sent == null ?
+      info(#"tl.security.selfservice.registrations.approve.done") :
+      info(#"tl.security.selfservice.registrations.approve.sent"))
+}]]></operation>
+			</button>
+		</buttons>
+		<contextMenu class="com.top_logic.element.layout.grid.GridContextMenuProvider">
+			<contextMenuFactory>
+				<titleProvider class="com.top_logic.layout.provider.MetaLabelProvider"/>
+			</contextMenuFactory>
+		</contextMenu>
+	</arguments>
+</config:template-call>

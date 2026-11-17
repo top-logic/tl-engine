@@ -5,6 +5,8 @@
  */
 package com.top_logic.tl.ai.core.provider.catalog;
 
+import java.util.List;
+
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Label;
@@ -241,6 +243,6 @@ public class ModelCatalogEntry {
 			config.getCacheReadPrice(),
 			config.getCacheWritePrice(),
 			config.getReasoningPrice(),
-			null, null, null);
+			null, null, List.of());
 	}
 }

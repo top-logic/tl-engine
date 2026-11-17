@@ -431,10 +431,11 @@ public class WebFetchTool {
 	 * </p>
 	 *
 	 * <p>
-	 * The envelope is the same one, from the same place, that {@code BrowserTool} puts around what it
-	 * reads: a page is a page whether a browser rendered it or this tool fetched it, and a barrier
-	 * that covered only one of the two routes to a page would just tell an attacker which route to
-	 * aim at. The note about the window is the tool's own sentence, so it stays outside.
+	 * The envelope is the same one, from the same place, that {@code BrowserTool} (tl-ai-browser)
+	 * puts around what it reads: a page is a page whether a browser rendered it or this tool
+	 * fetched it, and a barrier that covered only one of the two routes to a page would just tell
+	 * an attacker which route to aim at. The note about the window is the tool's own sentence, so
+	 * it stays outside.
 	 * </p>
 	 *
 	 * @param requestedUrl
@@ -526,9 +527,19 @@ public class WebFetchTool {
 	/**
 	 * Converts an HTML document to Markdown after stripping non-content chrome (scripts, styles,
 	 * navigation, etc.). Relative links and image sources are resolved against {@code baseUrl} so
-	 * the resulting Markdown contains usable absolute URLs. Package-visible for testing.
+	 * the resulting Markdown contains usable absolute URLs.
+	 *
+	 * <p>
+	 * The one conversion of a page into what the model reads, whichever tool obtained the page.
+	 * </p>
+	 *
+	 * @param html
+	 *        The HTML source of the page.
+	 * @param baseUrl
+	 *        The address the page was read from.
+	 * @return The page's content as Markdown.
 	 */
-	static String htmlToMarkdown(String html, String baseUrl) {
+	public static String htmlToMarkdown(String html, String baseUrl) {
 		return htmlToMarkdown(Jsoup.parse(html, baseUrl), new ArrayList<>());
 	}
 

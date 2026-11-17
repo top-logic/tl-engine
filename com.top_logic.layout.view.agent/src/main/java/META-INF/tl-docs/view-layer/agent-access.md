@@ -1,11 +1,11 @@
 ---
-description: Read before letting an agent outside the browser drive a running session of the React view UI - the module tl-layout-view-agent, the HTTP endpoint /agent-api (AgentServlet - windows, observe, act, navigate, record, replay), access tokens and invitations (AccessTokens, issue-access-token, revoke-access-token, the Agent access dialog and administration tab), the AgentAccess service with its AgentAuthenticator plug-in, and what an admitted agent may do.
+description: Read before letting an agent outside the browser drive a running session of the React view UI - the module tl-layout-view-agent, the HTTP endpoint /agent-api (AgentServlet - windows, observe, act, navigate, record, replay), the access token permissions ui-observe and ui-act of tl.accounts:AccessToken (AccessTokenAuthenticator), the AgentAccess service with its AgentAuthenticator plug-in, and what an admitted agent may do.
 order: 115
 ---
 
 # Agent access to a running session
 
-The optional module `tl-layout-view-agent` (`com.top_logic.layout.view.agent`) publishes the [headless interface](doc:view-layer/headless-interface) of a running session over HTTP, and admits an agent outside the browser to it with an access token the user issues from that session. An application that does not depend on the module has neither the endpoint nor the tokens.
+The optional module `tl-layout-view-agent` (`com.top_logic.layout.view.agent`) publishes the [headless interface](doc:view-layer/headless-interface) of a running session over HTTP, and admits an agent outside the browser to it with an access token the user issues from that session. An application that does not depend on the module has neither the endpoint nor the permissions of an access token for the user interface.
 
 ## The endpoint `/agent-api`
 
@@ -14,15 +14,21 @@ The optional module `tl-layout-view-agent` (`com.top_logic.layout.view.agent`) p
 | Request | Answer |
 |---|---|
 | `GET /windows` | `{"windows": [...]}`, the windows of the session |
-| `GET /observe?windowName=W` | the observation of the window (`ScriptingSession.observeJson()`); with `&mode=actions` the flat list of actionable nodes |
-| `POST /act` `{"windowName", "address", "command", "arguments"}` | `{"success", "error"?, "reply"?, "observation"}` - the command dispatched to the addressed control, and the settled observation afterwards. `reply` holds the properties of the msgbuf message the command's handler replied with, see [answering a command](doc:view-layer/client-server-protocol#answering-a-command); `error` the message of a command that failed, with `success` false. `args` is accepted for `arguments`. |
+| `GET /observe?windowName=W&mode=M` | the observation of the window: with `mode=tree` (the default) the whole tree (`ScriptingSession.observe()`), with `mode=actions` the flat list of actionable nodes `{"actions": [...]}` (`ScriptingSession.observeActions()`); another `mode` is answered with 400 |
+| `POST /act` `{"windowName", "address", "command", "arguments"}` | `{"success", "error"?, "reply"?, "observation"}` - the command dispatched to the addressed control, and the settled observation afterwards. `reply` holds the properties of the msgbuf message the command's handler replied with, see [answering a command](doc:view-layer/client-server-protocol#answering-a-command); `error` the message of a command that failed, with `success` false, in the language of the user: what the command reported, or for a command the addressed control does not have the command and the address. An internal failure is reported by a generic message only; its technical details are in the server log. `args` is accepted for `arguments`. |
 | `POST /navigate` `{"windowName", "url"}` | `{"success", "url", "message"?, "observation"}` - the window's router taken to a route URL |
 | `POST /record/start`, `/record/stop` `{"windowName"}` | `{"recording", "steps"}` |
 | `GET /record/steps?windowName=W` | `{"recording", "steps"}` |
 | `POST /record/assert` `{"windowName", "address", "expect"?}` | the recorder state with an assertion step appended: the `expect`ed entries, or the node's whole current state |
 | `POST /replay` `{"windowName", "steps"}` | `{"success", "results", "observation"}` |
 
-A step reads `{"address", "command", "arguments", "description"}`; `/replay` takes the steps in the form `/record/steps` returns them (the `description` is ignored), so a recording is replayed by posting its steps back. An assertion step (`assertState`) is verified, every other step dispatched. Replay stops at the first step that fails - later steps assume the state it should have produced - and `results` ends with that step, carrying its `error` or, for an assertion, its `mismatches` (`key`, `expected`, `actual`). Errors are answered with `{"error": ...}`: an unknown path with 404, a missing parameter or an unknown window with 404 on a `GET` and with 400 on a `POST`, a malformed body with 400.
+An observation is taken in the `AGENT` projection mode (see [object ids and keys](doc:view-layer/headless-interface#object-ids-and-keys)): a row, tree node, option or card is shown by its `id` and `label`, and the arguments of `/act` name it by that `id` - e.g. `{"command": "select", "arguments": {"rowId": "..."}}` with the `id` of a row of the observed table. An action taking arguments names their JSON schema by `"argsSchema": {"$ref": "#/schemas/<id>"}`: a reference into the `schemas` member of the observation (the root of the tree, the object of `mode=actions`, the `observation` of `/act`, `/navigate` and `/replay`), which lists each schema the actions refer to once - the schema of a typed argument interface by the interface's simple name (e.g. `SelectRowArguments`), the schema of a command's declared `@ReactParam`s by control class and command (e.g. `ReactDropdownSelectControl.goto`). Ids are valid in the session they were observed in; business keys appear only in recorded steps and assertions, which `/replay` translates back to the ids of the replaying session.
+
+An observation shows what the user sees and can operate (see [what the observation contains](doc:view-layer/headless-interface#what-the-observation-contains)): invisible controls - hidden ones, covered tile frames, the content of collapsed groups, the fields of a form without an object - are left out, and a node lists only the actions it offers in its current state, so a disabled button has no `click` and a read-only field no `valueChanged`. `/act` refuses a command the node does not offer, answering `success: false` with the reason. A table describes each row of its viewport in its `rows` state (`id`, `label`, cell texts); the controls of a row appear only where they can be operated - a button, a link, an editable field - under a node of the row, e.g. `/…/tableView/row[v12]/button[Öffnen]`, a tree node's under `/…/treeView/node[v7]/…`, a card's under `/…/kanbanBoard/card[v40]/…`. `/record/assert` records the address with the row named by its key, so the assertion holds in another session.
+
+A step reads `{"address", "command", "arguments", "description"}`; `/replay` takes the steps in the form `/record/steps` returns them (the `description` is ignored), so a recording is replayed by posting its steps back. An assertion step (`assertState`) is verified, every other step dispatched. Replay stops at the first step that fails - later steps assume the state it should have produced - and `results` ends with that step, carrying its `error` or, for an assertion, its `mismatches` (`key`, `expected`, `actual`). Errors are answered with `{"error": ...}`: an unknown path with 404, a missing parameter or an unknown window with 404 on a `GET` and with 400 on a `POST`, a malformed body or an unknown `mode` with 400, a failure while handling the request with 500.
+
+Every answer is built completely - the observation projected, the command run - before its first byte is written, and then streamed into the response (`JsonAnswers`): as compact JSON, or indented for a human reader with the query parameter `pretty=true` (on any request, e.g. `/observe?windowName=W&pretty=true`). A failure while building it, even an `OutOfMemoryError`, is therefore logged and answered with 500 and `{"error": ...}` rather than a broken connection, which a reverse proxy would report as 502.
 
 Each request that reads or changes a window runs like a browser command: in that window's subsession, within an interaction of the session. After a command the model events are synthesized, so the observation in the answer is settled and the caller never waits for asynchronous delivery.
 
@@ -55,14 +61,21 @@ Another kind of credential is added by implementing `AgentAuthenticator` (with a
 
 ## Access tokens
 
-An access token (`tl.agent:AccessToken`, model `tl.agent`) belongs to the account that issued it and admits an agent to the session it was issued from.
+The agent presents an access token of the application (`tl.accounts:AccessToken`, see `com.top_logic.element.accesstoken.AccessTokens` in `tl-element`): `tlpat_` followed by the secret, stored as its SHA-256 hash only. The module contributes two permissions of such a token to `AccessTokenPermissions`:
 
-- **Issuing.** The development menu of the app bar has *Agent access* in its `automation` group (overlay `dev-menu.view.xml` of the module), opening `agent-access.view.xml`: the account's own tokens, *New token* and *Withdraw*. *New token* asks for a label, the validity in hours and whether the agent may act (`tl.agent:NewAccessToken`, transient); `<issue-access-token/>` (`IssueAccessTokenAction`) creates the token and returns the **invitation**, which `agent-access-token.view.xml` shows once.
-- **The invitation** is the application's agent endpoint and the token in one line, `<host><context>/agent-api tlagt_<id>_<secret>`, so an agent gets both by one copy. The host is the public address (`AliasManager.HOST` where the application configures it, because the address seen inside a request may be a load balancer's).
-- **The secret** is stored as a SHA-256 hash only (`secretHash`); the id part (`tokenId`) finds the token without comparing against every hash. The plain secret exists in the invitation and nowhere else: a lost token is withdrawn and issued anew, never recovered - not even by an administrator.
-- **Use.** Each admission sets `lastUsed` on the token (in a commit of its own), so the owner sees that an agent uses it.
-- **Withdrawing** (`<revoke-access-token/>`, `RevokeAccessTokenAction`) deletes the token; the session's registration is dropped once no valid token refers to it any more. An account withdraws its own tokens; the administration (Administration → *Agent access*, contributed as a section of `admin/admin.view.xml` by the module's overlay, view `admin/system/agent-tokens.view.xml`) lists the tokens of all accounts with the same withdraw command.
-- **Expiry.** An expired token admits nobody and leaves the lists. The scheduler task `AccessTokenCleanup` (a `ScriptTask`, daily at 03:17) deletes expired tokens.
+| Permission | Label | The agent may |
+|---|---|---|
+| `ui-observe` | *Observe the user interface* | read `/windows`, `/observe` and `/record/steps` |
+| `ui-act` | *Operate the user interface* | everything `ui-observe` permits, and every `POST` |
+
+Both bind to the session the token is issued from: a token with one of them stores the key under which `AgentAccess.bindSession(key, session)` registered that session (`AccessToken#sessionKey`); the `<session-binding>` of both permissions, `AgentSessionBinding`, does that registration when the token is created. `AccessTokenAuthenticator` (`<access-token/>`) admits the agent to that session as the token's owner.
+
+- **Issuing.** *Settings → Access tokens → New token* (the settings dialog of `tl-layout-view`, view `access-tokens.view.xml`): a name, the validity in days and the permissions. With *Observe the user interface* or *Operate the user interface* chosen, the dialog that follows shows the **invitation** once: the application's agent endpoint and the token in one line, `<host><context>/agent-api tlpat_<secret>`, so an agent gets both by one copy (`accessTokenCreate(...)` and `accessTokenInvitation(token)`). The host is the public address (`AliasManager.HOST` where the application configures it, because the address seen inside a request may be a load balancer's). Every logged-in account may issue such a token: it hands its own rights in its own session to the agent.
+- **Revoking.** The owner revokes a token in the same tab; *Administration → Access control → Access tokens* lists the tokens of all accounts and revokes any of them.
+
+- A token with neither permission - one made for the agent endpoints `/mcp` and `/a2a` only, say - an unknown or revoked token, an expired one and the token of a deleted account admit nobody (401).
+- A token whose session has ended admits nobody (401); its other permissions are not affected.
+- Each admission records the use on the token (`lastUsed`, at most once a minute).
 
 ## Pitfalls
 

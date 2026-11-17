@@ -35,11 +35,13 @@ Das Control ist `TLDrawer` (`ReactDrawerControl`).
 
 | Teil | Token |
 |---|---|
-| Fläche | `--tl-surface-overlay`; Schatten `--tl-shadow-dialog` nur offen |
+| Fläche | `--tl-surface-overlay`, Schrift `--tl-text-primary`; Schatten `--tl-shadow-dialog` nur offen |
 | Ebene | `--tl-layer-overlay`; im Behälter `--tl-layer-raised` |
 | Maße | `--tl-size-drawer-narrow`, `--tl-size-drawer-medium`, `--tl-size-drawer-wide` |
 | Bewegung | `transform` über `--tl-duration-base`, kommend `--tl-easing-entrance`, gehend `--tl-easing-exit` |
 | Kopf | `tl-titlebar` |
+| Körper | Innenabstand `--tl-space-md` |
+| Ring im Behälter | innen, um `--tl-focus-offset` eingerückt |
 
 ## Attribute
 

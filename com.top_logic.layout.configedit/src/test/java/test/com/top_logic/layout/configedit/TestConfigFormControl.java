@@ -455,7 +455,7 @@ public class TestConfigFormControl extends TestCase {
 	 * control, or {@code null} if none is currently rendered.
 	 *
 	 * <p>
-	 * Reached through {@link ReactControl#scriptingChildren()} and
+	 * Reached through {@link ReactControl#displayedChildren()} and
 	 * {@link ReactControl#scriptingScalarState()} - the same headless projection
 	 * {@code TestConfigEditorControl#findHeaderButton} uses - walked recursively since a button
 	 * here may sit several levels below the {@link ConfigFormControl} itself (e.g. inside the
@@ -469,7 +469,7 @@ public class TestConfigFormControl extends TestCase {
 			&& label.equals(button.scriptingScalarState().get("label"))) {
 			return button;
 		}
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			ReactButtonControl found = findButton(child, label);
 			if (found != null) {
 				return found;
@@ -510,7 +510,7 @@ public class TestConfigFormControl extends TestCase {
 				return button;
 			}
 		}
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			ReactButtonControl found = findAddButton(child);
 			if (found != null) {
 				return found;
@@ -521,7 +521,7 @@ public class TestConfigFormControl extends TestCase {
 
 	/**
 	 * Finds the {@link FieldModel} of the field bound to the given property, walking the same
-	 * {@link ReactControl#scriptingChildren()} projection {@link #findButton(ReactControl, String)}
+	 * {@link ReactControl#displayedChildren()} projection {@link #findButton(ReactControl, String)}
 	 * uses down to the {@link ConfigFieldModel} the field control's {@link ReactControl#getModel()}
 	 * carries - the way {@code TestConfigEditorControl#countKeyFields} reaches a field model too.
 	 */
@@ -541,7 +541,7 @@ public class TestConfigFormControl extends TestCase {
 			&& propertyName.equals(fieldModel.getProperty().getPropertyName())) {
 			found.add(fieldModel);
 		}
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			collectFields(child, propertyName, found);
 		}
 	}
@@ -551,7 +551,7 @@ public class TestConfigFormControl extends TestCase {
 			&& propertyName.equals(fieldModel.getProperty().getPropertyName())) {
 			return fieldModel;
 		}
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			FieldModel found = fieldOf(child, propertyName);
 			if (found != null) {
 				return found;
@@ -578,11 +578,11 @@ public class TestConfigFormControl extends TestCase {
 	 */
 	private FieldModel findTypeFieldModel(ReactControl control) {
 		if (PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(control.scriptingName())) {
-			for (ReactControl field : control.scriptingChildren()) {
+			for (ReactControl field : control.displayedChildren()) {
 				return (FieldModel) field.getModel();
 			}
 		}
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			FieldModel found = findTypeFieldModel(child);
 			if (found != null) {
 				return found;
@@ -698,7 +698,7 @@ public class TestConfigFormControl extends TestCase {
 			&& fieldOf(chrome, propertyName) != null) {
 			return (List<String>) chrome.scriptingScalarState().get("warnings");
 		}
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			List<String> found = chromeWarningsOf(child, propertyName);
 			if (found != null) {
 				return found;
@@ -716,7 +716,7 @@ public class TestConfigFormControl extends TestCase {
 			&& fieldOf(chrome, propertyName) != null) {
 			return (String) chrome.scriptingScalarState().get("error");
 		}
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			String found = chromeErrorOf(child, propertyName);
 			if (found != null) {
 				return found;
@@ -1460,7 +1460,7 @@ public class TestConfigFormControl extends TestCase {
 		if (control instanceof ReactCheckboxControl checkbox) {
 			return checkbox;
 		}
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			ReactCheckboxControl found = findCheckbox(child);
 			if (found != null) {
 				return found;

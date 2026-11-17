@@ -1,0 +1,483 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The chat page of the assistant Albert, shipped for every React application that depends on
+	tl-chat. An application shows it with one sidebar item in its app.view.xml overlay:
+
+	  <nav-item id="albert" icon="css:bi bi-chat-dots">
+	    <label><en>Albert</en><de>Albert</de></label>
+	    <view-ref view="tl-chat/albert.view.xml"/>
+	  </nav-item>
+
+	The page is generic: it knows nothing of the application. On the left the chats of the logged-in
+	account, grouped by the day of their last change, with "New chat" and, per row, rename and delete.
+	In the middle the conversation. On the right a rail, open at the first visit, with the plan of the
+	agent (Progress), the sources it cited, and what it remembers about the account; in its pane the
+	rail shows what the agent presents - a table, a chart or a form - and the object a user opens
+	from it.
+
+	A chat is about the object open in the pane ("paneItem"): the first message of a new chat writes
+	that object as the subject of the chat. While the pane shows an object that is the subject of chats
+	of the account, the chat list shows only these chats (and the open one); otherwise it shows all
+	chats of the account.
+
+	The chat list is a TL-Script over all(), which returns only what the account may see. The rights
+	of an account on its own chats and memories are shipped by tl-ai-core
+	(tl-ai-core.chatSecurity.config.xml, role AiChatOwner); the application writes nothing for them.
+
+	The pane needs three parts together, or "show me all X as a table" breaks: the channel
+	"paneObject", present="paneObject" on <chat-conversation> (the only channel the agent may write)
+	and input="paneObject" on <chat-rail> (what displays it). <selection channel="selected"> tells
+	the agent which object the user has open: the one in the pane, else the one of "pageSelection".
+
+	The page uses the default chat id, so a <chat-dock> without chat-id in the footer of the
+	application shell shows the same conversation as this page. Such a dock embeds this page:
+
+	  <chat-channels channels="pageSelection"/>
+	  <chat-dock icon="css:bi bi-stars">
+	    <label><en>Albert</en><de>Albert</de></label>
+	    <view-ref view="tl-chat/albert.view.xml">
+	      <bind channel="chatDraft" to="chatDraft"/>
+	      <bind channel="pageSelection" to="pageSelection"/>
+	    </view-ref>
+	  </chat-dock>
+
+	The shell declares "pageSelection", <chat-channels> publishes it, and the pages write it with
+	<page-selection>. A conversation in a closed dock offers the agent nothing;
+	the dock hides itself while a page shows the same conversation, and closes when one appears.
+
+	An embedding view binds the channels of the page with <view-ref><bind channel="..." to="..."/>:
+
+	  - "chatDraft", "chatReference", "chatQuote": the text in the composer, an object the composer
+	    inserts as a reference, and a passage of an object it inserts as a quote. A command of another
+	    page writes them to put a question into this composer;
+	  - "paneObject": what the rail's pane shows;
+	  - "pageSelection": what the page behind a dock has open.
+
+	An application changes the page with a same-path overlay (WEB-INF/views/tl-chat/albert.view.xml
+	of its own module, see the developer article view-layer/overlays). The ids to address:
+
+	  - "albert": the <chat> (attribute chat-id);
+	  - "chats": the list of chats (its <row-commands>, <group-by>, <commands>);
+	  - "conversation": the <chat-conversation> (<placeholder>, <prompts>, <controls>, <actions>,
+	    <context>, <mention>, <agent-commands>, agent);
+	  - "rail": the <chat-rail>. Its sections are addressed by their name: "progress", "sources",
+	    "memories". A <section> with a new name is added; config:position="after"
+	    config:reference="sources" places it after "sources". A <section> with a shipped name changes
+	    that section, config:operation="remove" removes it.
+
+	The developer article ai/adding-albert describes the steps around this page.
+-->
+<view>
+	<channels>
+		<channel name="chatSession"/>
+		<!--
+			What the rail's pane shows: what the agent presented - a table, a chart or a form, of any
+			type - and an object the user opens from it. Empty means the rail shows its sections; the
+			pane's close button empties it again.
+		-->
+		<channel name="paneObject"/>
+		<!--
+			The one object open in the pane, and nothing while it shows a table or a chart: the object a
+			new chat is about, and the one the chat list is scoped to.
+		-->
+		<derived-channel name="paneItem"
+			inputs="paneObject"
+		>
+			<expr><![CDATA[ifElse($paneObject.instanceOf(`tl.model:TLObject`), $paneObject, null)]]></expr>
+		</derived-channel>
+		<!-- The counts the rail shows on the section headers and the strip icons. -->
+		<channel name="progressBadge"/>
+		<channel name="sourcesBadge"/>
+		<channel name="memoriesBadge"/>
+		<!--
+			The composer's unsent text, the object a command puts into it as a reference token, and the
+			passage of an object a command quotes into it. Declared here so that the page works on its
+			own; an embedding view binds its own channels over them.
+		-->
+		<channel name="chatDraft"/>
+		<channel name="chatReference"/>
+		<channel name="chatQuote"/>
+		<!--
+			What the page behind a dock has open. Empty on its own; a dock that embeds this page binds
+			the shell's channel over it, which the pages write with <page-selection>.
+		-->
+		<channel name="pageSelection"/>
+		<!--
+			The object the agent is told the user has open: what the rail's pane shows, and while it
+			shows nothing, what the page behind the dock has open.
+		-->
+		<derived-channel name="selected"
+			inputs="paneObject, pageSelection"
+		>
+			<expr><![CDATA[ifElse(isEmpty($paneObject), $pageSelection, $paneObject)]]></expr>
+		</derived-channel>
+	</channels>
+	<chat id="albert"
+		direction="row"
+	>
+		<!--
+			The chat list and the conversation share the "chatSession" channel: the list writes the
+			chat the user selects, the conversation writes back the chat it creates. "New chat" clears
+			the channel.
+		-->
+		<data-list id="chats"
+			collapsible="true"
+			observed-types="tl.ai.execution:AgentSession, tl.ai.execution:AgentExecution, tl.ai.execution:InteractionRequest"
+			row-actions="hover"
+			row-channel="session"
+			search="true"
+			selection="chatSession"
+		>
+			<commands>
+				<generic-command image="css:bi bi-plus-lg"
+					inputs="chatSession"
+				>
+					<label>
+						<en>New chat</en>
+						<de>Neuer Chat</de>
+					</label>
+					<executability>
+						<disabled-if>
+							<expr><![CDATA[if($chatSession == null, #("This is a new chat already."@en, "Dies ist bereits ein neuer Chat."@de), null)]]></expr>
+						</disabled-if>
+					</executability>
+					<write-channel name="chatSession"
+						clear="true"
+					/>
+				</generic-command>
+			</commands>
+			<empty-text>
+				<en>No chats yet</en>
+				<de>Noch keine Chats</de>
+			</empty-text>
+			<!--
+				isDateEqual and isDateGreater compare dates, not calendars: the calendar is only for the
+				day arithmetic, and each bound goes back to a date with toDate().
+			-->
+			<group-by><![CDATA[s -> {
+				d = $s.get(`tl.ai.execution:AgentSession#lastUpdated`);
+				t = today().toSystemCalendar();
+				switch {
+					$d.isDateEqual($t.toDate()): #("Today"@en, "Heute"@de);
+					$d.isDateEqual($t.withDayAdded(-1).toDate()): #("Yesterday"@en, "Gestern"@de);
+					$d.isDateGreater($t.withDayAdded(-7).toDate()): #("Previous 7 days"@en, "Letzte 7 Tage"@de);
+					default: #("Older"@en, "Älter"@de);
+				}
+			}]]></group-by>
+			<lines>
+				<line attribute="title"/>
+				<!--
+					What goes on in the chat while the user looks elsewhere: something waits for them, a
+					subagent finished since they last had the chat open, or an agent works there. The
+					list observes executions and interaction requests so that the line follows.
+				-->
+				<line emphasis="secondary">
+					<value><![CDATA[s -> {
+						activity = chatActivity($s);
+						switch {
+							$activity == "waiting": #("Waiting for you"@en, "Wartet auf dich"@de);
+							$activity == "news": #("New result"@en, "Neues Ergebnis"@de);
+							$activity == "running": #("Working …"@en, "Arbeitet …"@de);
+							default: null;
+						}
+					}]]></value>
+				</line>
+			</lines>
+			<row-css-class><![CDATA[s -> {
+				activity = chatActivity($s);
+				switch {
+					$activity == "waiting": "is-waiting";
+					$activity == "news": "has-news";
+					$activity == "running": "is-working";
+					default: null;
+				}
+			}]]></row-css-class>
+			<!--
+				Both commands write through the aiSession* functions, not the attribute: they check that
+				the chat is the user's, update lastUpdated (the group of the chat in this list) and
+				notify a second browser tab.
+			-->
+			<row-commands>
+				<generic-command
+					image="css:bi bi-pencil"
+					inputs="session"
+				>
+					<label>
+						<en>Rename</en>
+						<de>Umbenennen</de>
+					</label>
+					<open-dialog close-on-backdrop="false"
+						bind-input-to="model"
+						dialog-view="tl-chat/rename-chat.view.xml"
+					/>
+				</generic-command>
+				<generic-command
+					clique="delete"
+					image="css:bi bi-trash"
+					inputs="session"
+				>
+					<label>
+						<en>Delete</en>
+						<de>Löschen</de>
+					</label>
+					<!-- A chat that is still being answered is not one anyone means to throw away. -->
+					<executability>
+						<visible-if>
+							<expr><![CDATA[isEmpty($session)
+								|| $session.referers(`tl.ai.execution:AgentExecution#session`)
+									.filter(e -> $e.get(`tl.ai.execution:AgentExecution#status`)
+										== `tl.ai.execution:ExecutionStatus#RUNNING`)
+									.isEmpty()]]></expr>
+						</visible-if>
+					</executability>
+					<confirm>
+						<cancel-label>
+							<en>Keep</en>
+							<de>Behalten</de>
+						</cancel-label>
+						<confirm-label>
+							<en>Delete</en>
+							<de>Löschen</de>
+						</confirm-label>
+						<title>
+							<en>Delete chat</en>
+							<de>Chat löschen</de>
+						</title>
+						<expr><![CDATA[{
+							title = $session.get(`tl.ai.execution:AgentSession#title`);
+							{
+								"en": "Delete “" + $title + "”? This cannot be undone.",
+								"de": "„" + $title + "“ löschen? Das kann nicht rückgängig gemacht werden."
+							}.internationalize();
+						}]]></expr>
+					</confirm>
+					<!-- Clears the open conversation only when it is the deleted chat. -->
+					<execute-script>
+						<inputs>
+							<input
+								as="open"
+								channel="chatSession"
+							/>
+						</inputs>
+						<function><![CDATA[{
+							aiSessionDelete($session);
+							ifElse($session == $open, null, $open);
+						}]]></function>
+						<with-result>
+							<write-channel name="chatSession"/>
+						</with-result>
+					</execute-script>
+				</generic-command>
+			</row-commands>
+			<!--
+				With an object open in the pane, the chats about that object, and the open chat. With no
+				object open, or an object that is the subject of no chat (for example something the agent
+				presented), all chats of the account. The open chat stays in the list while it is open.
+
+				The rows ask the chats for their subject, not the object for its referers: the chats of
+				the account are necessary for the fallback, and a referers lookup fails on an object that
+				was deleted while the pane still holds it.
+			-->
+			<inputs>
+				<input channel="paneItem"/>
+				<input channel="chatSession"/>
+			</inputs>
+			<rows><![CDATA[object -> open -> {
+				chats = all(`tl.ai.execution:AgentSession`)
+					.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
+					.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#CHAT`);
+				about = ifElse(isEmpty($object), list(),
+					$chats.filter(s -> $s.get(`tl.ai.execution:AgentSession#subject`) == $object));
+				ifElse($about.isEmpty(),
+					$chats,
+					ifElse(isEmpty($open), $about,
+						$about.filter(s -> $s != $open).union(list($open))))
+					.sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc());
+			}]]></rows>
+			<title>
+				<en>Chats</en>
+				<de>Chats</de>
+			</title>
+		</data-list>
+		<!-- The panel bounds the conversation's height, so the transcript scrolls inside it. -->
+		<panel fill="true">
+			<!--
+				`present` names the one channel of this view the agent may write: "show me all X as a
+				table" ends as that table in the rail's pane, in one tool call.
+
+				`subject`: a chat this element creates (the first message of a new chat) is about the
+				object open in the pane. The chat list above is scoped by it.
+
+				`draft`, `reference` and `quote` connect the composer to the channels of the same names,
+				so that a command can put a question into it. The user sends it.
+			-->
+			<chat-conversation id="conversation"
+				draft="chatDraft"
+				input="chatSession"
+				present="paneObject"
+				prompt-improver-agent="TL_PromptImprover"
+				quote="chatQuote"
+				reference="chatReference"
+				subject="paneItem"
+			>
+				<actions rate="true"/>
+				<controls
+					attachments="true"
+					auto-approve="true"
+					enter-hint="true"
+					model-picker="true"
+					thinking="true"
+				/>
+				<!--
+					Which object the user has open - in the pane, else on the page behind the dock: its
+					label, type and identifier.
+				-->
+				<selection name="Open object"
+					channel="selected"
+				/>
+			</chat-conversation>
+		</panel>
+		<!--
+			While "paneObject" holds something, the rail shows it in its pane in place of the sections:
+			a table, a chart or a form, for any type. A row clicked in a table opens that object's form,
+			and the pane's "back" returns to the table as it was.
+		-->
+		<chat-rail id="rail"
+			input="paneObject"
+			strip="true"
+		>
+			<section name="progress"
+				badge="progressBadge"
+				icon="css:bi bi-list-check"
+				open="true"
+			>
+				<label>
+					<en>Progress</en>
+					<de>Fortschritt</de>
+				</label>
+				<!-- The agent's plan: the AgentTask objects the run of the open chat writes. -->
+				<data-list
+					collapsible="false"
+					count="progressBadge"
+					observed-types="tl.ai.execution:AgentTask"
+					search="false"
+				>
+					<row-css-class><![CDATA[t -> switch {
+						$t.get(`tl.ai.execution:AgentTask#status`) == "completed": "is-done";
+						$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": "is-running";
+						default: "is-pending";
+					}]]></row-css-class>
+					<empty-text>
+						<en>Nothing planned yet</en>
+						<de>Noch nichts geplant</de>
+					</empty-text>
+					<!-- The inputs of a data-list are the positional arguments of its rows function. -->
+					<inputs>
+						<input channel="chatSession"/>
+					</inputs>
+					<lines>
+						<line attribute="subject"/>
+						<line emphasis="secondary">
+							<value><![CDATA[t -> switch {
+								$t.get(`tl.ai.execution:AgentTask#status`) == "completed": #("Done"@en, "Erledigt"@de);
+								$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": #("In progress"@en, "Läuft"@de);
+								default: #("Pending"@en, "Offen"@de);
+							}]]></value>
+						</line>
+					</lines>
+					<rows><![CDATA[session -> ifElse(isEmpty($session), list(),
+						$session.referers(`tl.ai.execution:AgentTask#session`)
+							.sort((t -> $t.get(`tl.ai.execution:AgentTask#ordinal`)).comparator()))]]></rows>
+				</data-list>
+			</section>
+			<section name="sources"
+				badge="sourcesBadge"
+				icon="css:bi bi-quote"
+			>
+				<label>
+					<en>Sources</en>
+					<de>Quellen</de>
+				</label>
+				<chat-sources badge="sourcesBadge"/>
+			</section>
+			<!--
+				What the agent keeps about this account. The rows are filtered by owner, and "Forget"
+				goes through aiMemoryDelete, which refuses a memory of another account.
+			-->
+			<section name="memories"
+				badge="memoriesBadge"
+				icon="css:bi bi-bookmark-heart"
+			>
+				<label>
+					<en>Memory</en>
+					<de>Gedächtnis</de>
+				</label>
+				<data-list
+					collapsible="false"
+					count="memoriesBadge"
+					observed-types="tl.ai.execution:UserMemory"
+					row-actions="hover"
+					row-channel="memory"
+					search="false"
+				>
+					<empty-text>
+						<en>Nothing remembered yet</en>
+						<de>Noch nichts gemerkt</de>
+					</empty-text>
+					<lines>
+						<line attribute="text"/>
+						<line emphasis="secondary">
+							<value><![CDATA[m -> {
+								kind = $m.get(`tl.ai.execution:UserMemory#kind`);
+								created = $m.get(`tl.ai.execution:UserMemory#createdAt`);
+								ifElse(isEmpty($kind), "", $kind.label())
+									+ ifElse(isEmpty($created), "",
+										" - " + dateFormat("yyyy-MM-dd").format($created));
+							}]]></value>
+						</line>
+					</lines>
+					<row-commands>
+						<generic-command
+							clique="delete"
+							image="css:bi bi-trash"
+							inputs="memory"
+						>
+							<label>
+								<en>Forget</en>
+								<de>Vergessen</de>
+							</label>
+							<confirm>
+								<cancel-label>
+									<en>Keep</en>
+									<de>Behalten</de>
+								</cancel-label>
+								<confirm-label>
+									<en>Forget</en>
+									<de>Vergessen</de>
+								</confirm-label>
+								<title>
+									<en>Forget this</en>
+									<de>Das vergessen</de>
+								</title>
+								<expr><![CDATA[{
+									text = $memory.get(`tl.ai.execution:UserMemory#text`);
+									{
+										"en": "Forget “" + $text + "”? Albert will no longer know it.",
+										"de": "„" + $text + "“ vergessen? Albert weiß es dann nicht mehr."
+									}.internationalize();
+								}]]></expr>
+							</confirm>
+							<execute-script>
+								<function><![CDATA[aiMemoryDelete($memory)]]></function>
+							</execute-script>
+						</generic-command>
+					</row-commands>
+					<rows><![CDATA[all(`tl.ai.execution:UserMemory`)
+						.filter(m -> $m.get(`tl.ai.execution:UserMemory#owner`) == currentUser())
+						.sort((m -> $m.get(`tl.ai.execution:UserMemory#createdAt`)).comparator().desc())]]></rows>
+				</data-list>
+			</section>
+		</chat-rail>
+	</chat>
+</view>

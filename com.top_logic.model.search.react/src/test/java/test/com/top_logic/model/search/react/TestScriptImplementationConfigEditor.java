@@ -417,7 +417,7 @@ public class TestScriptImplementationConfigEditor extends BasicTestCase {
 	}
 
 	private static ReactControl typeSelector(PolymorphicItemControl control) {
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			if (PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(child.scriptingName())) {
 				return child;
 			}
@@ -442,7 +442,7 @@ public class TestScriptImplementationConfigEditor extends BasicTestCase {
 		if (type.isInstance(control)) {
 			result.add(type.cast(control));
 		}
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			collect(child, type, result);
 		}
 	}

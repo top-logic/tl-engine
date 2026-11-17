@@ -1839,11 +1839,22 @@ public class TLDoclet implements Doclet {
 		/**
 		 * Whether the given method of a configuration interface is the getter of a configuration
 		 * property.
+		 *
+		 * <p>
+		 * Applies the rule by which the configuration descriptor is built from the interface
+		 * (com.top_logic.basic.config.ConfigurationDescriptorBuilder, which is not on the class
+		 * path of the doclet): Static methods, default methods, methods with parameters, setters
+		 * and methods annotated with <code>@External</code> or <code>@Factory</code> are no
+		 * properties.
+		 * </p>
 		 */
 		private boolean isPropertyGetter(ExecutableElement method) {
 			return !asString(method).startsWith("set")
 				&& !isStatic(method)
-				&& method.getParameters().isEmpty();
+				&& !method.isDefault()
+				&& method.getParameters().isEmpty()
+				&& !_wellKnown.hasExternalAnnotation(method)
+				&& !_wellKnown.hasFactoryAnnotation(method);
 		}
 
 		private void collectPropertyDoc(TypeElement type) {

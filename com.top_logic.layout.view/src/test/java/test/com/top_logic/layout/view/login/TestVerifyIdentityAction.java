@@ -26,6 +26,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.base.accesscontrol.LoginFailure;
+import com.top_logic.base.accesscontrol.VerificationResult;
 import com.top_logic.base.accesscontrol.LoginFailuresModule;
 import com.top_logic.base.accesscontrol.loginmethod.LoginMethod;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -52,6 +53,7 @@ import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActionChain;
 import com.top_logic.layout.view.element.PanelElement;
+import com.top_logic.layout.view.login.ChainAwaitingIdentity;
 import com.top_logic.layout.view.login.I18NConstants;
 import com.top_logic.layout.view.login.PasswordPromptDialogControl.Verifier;
 import com.top_logic.layout.view.login.VerifyIdentityAction;
@@ -250,6 +252,43 @@ public class TestVerifyIdentityAction extends TestCase {
 		assertEquals("The guard hands its input on unchanged.", List.of("in"), _downstream);
 		assertEquals(List.of("in"), _completions);
 		assertEquals("A confirmation that arrived withdraws nothing.", List.of(), guard.withdrawn());
+	}
+
+	/**
+	 * Tests that a sign-in as another account closes the waiting prompt, shows why in the window
+	 * the chain waits in, and aborts the chain.
+	 */
+	public void testExternalMismatchAbortsInWindow() throws IOException {
+		Fixture guard = externalGuard();
+
+		run(guard, "in", dialogContext(sink()));
+		guard.answer(VerificationResult.mismatch());
+
+		assertTrue("The prompt closes on any answer.", guard.waiting().closed());
+		assertTrue("Nothing downstream of a refused confirmation runs.", _downstream.isEmpty());
+		assertEquals(Collections.singletonList(null), _completions);
+		assertEquals("The refusal is shown in the window the chain waits in.", 1, _shown.size());
+		assertEquals(Resources.getInstance().getString(
+			com.top_logic.base.accesscontrol.I18NConstants.ERROR_IDENTITY_MISMATCH), message(_shown.get(0)));
+	}
+
+	/**
+	 * Tests that a confirmation answered after its expiry closes the waiting prompt, shows that it
+	 * expired in the window the chain waits in, and aborts the chain.
+	 */
+	public void testExternalExpiryAbortsInWindow() throws IOException {
+		Fixture guard = externalGuard();
+
+		run(guard, "in", dialogContext(sink()));
+		guard.expire();
+
+		assertTrue("The prompt closes on an expiry.", guard.waiting().closed());
+		assertTrue("Nothing downstream of an expired confirmation runs.", _downstream.isEmpty());
+		assertEquals(Collections.singletonList(null), _completions);
+		assertEquals("The expiry is shown in the window the chain waits in.", 1, _shown.size());
+		assertEquals(Resources.getInstance().getString(
+			com.top_logic.base.accesscontrol.I18NConstants.ERROR_IDENTITY_VERIFICATION_EXPIRED),
+			message(_shown.get(0)));
 	}
 
 	/**
@@ -493,7 +532,7 @@ public class TestVerifyIdentityAction extends TestCase {
 
 		private final List<String> _withdrawn = new ArrayList<>();
 
-		private Runnable _onVerified;
+		private ChainAwaitingIdentity _awaiting;
 
 		private Prompt _prompt;
 
@@ -516,8 +555,8 @@ public class TestVerifyIdentityAction extends TestCase {
 		}
 
 		@Override
-		protected String registerVerification(Runnable onVerified) {
-			_onVerified = onVerified;
+		protected String registerVerification(ChainAwaitingIdentity waiting) {
+			_awaiting = waiting;
 			return TOKEN;
 		}
 
@@ -596,8 +635,25 @@ public class TestVerifyIdentityAction extends TestCase {
 		 * provider has confirmed the expected account.
 		 */
 		void confirm() {
-			assertNotNull("The guard awaits a confirmation.", _onVerified);
-			_onVerified.run();
+			answer(VerificationResult.verified(com.top_logic.base.accesscontrol.I18NConstants.IDENTITY_VERIFIED));
+		}
+
+		/**
+		 * Reports the answer of the identity provider, as the authentication servlet does once the
+		 * handler of the verification has decided on it.
+		 */
+		void answer(VerificationResult result) {
+			assertNotNull("The guard awaits a confirmation.", _awaiting);
+			_awaiting.answer(result);
+		}
+
+		/**
+		 * Reports that the awaited confirmation has expired, as the registry does when the answer
+		 * comes too late.
+		 */
+		void expire() {
+			assertNotNull("The guard awaits a confirmation.", _awaiting);
+			_awaiting.expired(null);
 		}
 	}
 

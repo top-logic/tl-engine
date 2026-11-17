@@ -142,7 +142,7 @@ public final class CitationExcerpt {
 			}
 			if (structured) {
 				// A record has fields or nothing to show. A window of a text result around its id is
-				// the transport - "Event [type:...] [id:...] Next event [type:...]" - not the record.
+				// the transport, not the record.
 				continue;
 			}
 			String text = plain(blob);

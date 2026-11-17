@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.kanban;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.layout.react.control.identity.DisplayedObjectId;
 import com.top_logic.layout.react.control.selection.SelectionModifiers;
 
 /**
@@ -16,9 +17,9 @@ import com.top_logic.layout.react.control.selection.SelectionModifiers;
  *
  * <p>
  * The {@link Label} doubles as the {@link com.top_logic.layout.form.values.edit.ConfigLabelProvider}
- * template that renders a recorded step for humans. A card selection is recorded as a
- * {@link SelectCardByKeyArguments} naming the card's business object, because the card key is
- * allocated per session.
+ * template that renders a recorded step for humans. The card is given by the key the board
+ * displays it under, which a recorded step carries as the business key of the card's object, see
+ * {@link DisplayedObjectId}.
  * </p>
  */
 @Label("Select card {card}")
@@ -32,6 +33,7 @@ public interface SelectCardArguments extends SelectionModifiers {
 	 */
 	@Name(CARD)
 	@Mandatory
+	@DisplayedObjectId
 	String getCard();
 
 }

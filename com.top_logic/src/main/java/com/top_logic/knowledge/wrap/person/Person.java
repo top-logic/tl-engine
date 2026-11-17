@@ -106,6 +106,13 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	 */
 	public static final String MFA_REQUIREMENT_ATTR = "mfaRequirement";
 
+	/**
+	 * The attribute "locked" of type {@link #PERSON_TYPE}.
+	 * 
+	 * @see #isLocked()
+	 */
+	public static final String LOCKED_ATTR = "locked";
+
 	/** Full qualified name of the {@link TLType} of a {@link Person}. */
 	public static final String PERSON_TYPE = "tl.accounts:Person";
 
@@ -609,6 +616,27 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	 */
 	public void setAdmin(boolean value) {
 		tSetDataBoolean(ADMIN_ATTR, value);
+	}
+
+	/**
+	 * Whether this account is locked.
+	 * 
+	 * <p>
+	 * A locked account cannot log in, neither interactively nor through an API. Locking an account
+	 * ends its running sessions.
+	 * </p>
+	 * 
+	 * @see com.top_logic.base.accesscontrol.Login#checkMayLogIn(Person)
+	 */
+	public boolean isLocked() {
+		return tGetDataBooleanValue(LOCKED_ATTR);
+	}
+
+	/**
+	 * @see #isLocked()
+	 */
+	public void setLocked(boolean value) {
+		tSetDataBoolean(LOCKED_ATTR, value);
 	}
 
 	/**

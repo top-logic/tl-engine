@@ -258,6 +258,7 @@ The remaining features are single modules, declared like any other dependency (w
 | Account self-service | `tl-layout-view-selfservice` | `tl-security-selfservice` |
 | Process engine | `tl-bpe-view` (built on `tl-bpe`, the engine without user interface) | `tl-bpe-app` (built on `tl-bpe-classic`) |
 | Chat tab of the AI agents | (part of `tl-starter-ai`) | `tl-chat-classic` |
+| Browser tools of the AI agents (a real Chromium through Playwright) | `tl-ai-browser` | `tl-ai-browser` |
 | Single sign-on (pac4j) | `tl-security-auth-pac4j` | `tl-security-auth-pac4j` |
 | OpenAPI client / server | `tl-service-openapi-client` / `tl-service-openapi-server` | same |
 
@@ -270,6 +271,11 @@ them from).
 An application using the AI agents must configure the LLM providers its agents use (API keys,
 models); nothing is preconfigured. The services `LLMProviderService` and `AgentRuntimeService`
 are described in the article `ai/providers` of `tl-ai-core`.
+
+`tl-starter-ai` does not contain the browser tools: `tl-ai-browser` brings Playwright with its
+browser driver, which makes the application considerably larger, so an application opts in with
+that single module when its agents have to operate web pages (article `ai/browser` of
+`tl-ai-browser`).
 
 ## Fragment modules
 

@@ -16,7 +16,6 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -474,9 +473,10 @@ final class AttributeValues {
 	 * may not read left out.
 	 *
 	 * <p>
-	 * A date is written in the ISO form this class reads, a classifier by its name, and an
-	 * internationalised text as one text per language - so the confirmation of a change says it in the
-	 * same terms the call did, and a mistake in it is visible.
+	 * A date is written in the ISO form this class reads and an internationalised text as one text per
+	 * language - so the confirmation of a change says it in the same terms the call did, and a mistake
+	 * in it is visible. A referenced object and a classifier are their identity
+	 * ({@link ReadFilter#disclose(Object)}), as every object the model is shown.
 	 * </p>
 	 */
 	static Object echo(TLStructuredTypePart part, Object value, ReadFilter filter) {
@@ -494,26 +494,13 @@ final class AttributeValues {
 			}
 			return result;
 		}
-		if (value instanceof TLClassifier classifier) {
-			return classifier.getName();
-		}
 		if (value instanceof Date date) {
 			return dateText(part, date);
 		}
 		if (value instanceof ResKey key) {
 			return Resources.getInstance(userLocale()).getString(key, null);
 		}
-		if (value instanceof TLObject) {
-			Object disclosed = filter.disclose(value);
-			if (disclosed instanceof Map<?, ?> identity) {
-				// The label and the identifier, the pair every other text answer uses.
-				Map<String, Object> result = new LinkedHashMap<>();
-				result.put("label", identity.get(ReadFilter.DISPLAY));
-				result.put("id", identity.get(ReadFilter.TID));
-				return result;
-			}
-			return disclosed;
-		}
+		// A model object becomes its identity, as in every other tool result.
 		return filter.disclose(value);
 	}
 

@@ -36,9 +36,10 @@ import com.top_logic.basic.Logger;
 
 /**
  * A tiny filtering HTTP forward proxy, bound to an ephemeral port on the loopback interface, that
- * every browser session is pinned to - the <b>outer, authoritative</b> layer of the browser tool's
- * SSRF and domain policy. {@code webFetch} sends its requests through one as well, with a domain
- * policy that permits everything, for the DNS pinning alone (#581).
+ * every browser session of the browser tools (module {@code tl-ai-browser}) is pinned to - the
+ * <b>outer, authoritative</b> layer of their SSRF and domain policy. {@code webFetch} sends its
+ * requests through one as well, with a domain policy that permits everything, for the DNS pinning
+ * alone (#581).
  *
  * <p>
  * <b>Why this exists.</b> The per-context Playwright security route
@@ -95,7 +96,7 @@ import com.top_logic.basic.Logger;
  * too, whatever the server said - because a server that ignores the request's close signal would
  * otherwise leave the client believing its connection <em>to the proxy</em> is reusable. Only the head
  * is touched; the body is relayed byte-for-byte and never buffered. A protocol upgrade
- * ({@code Upgrade:} / {@code Connection: upgrade}, i.e. plain WebSocket) is exempt from that and
+ * ({@code Upgrade:} / {@code Connection: upgrade}, i.e. a plain web socket) is exempt from that and
  * forwarded as-is - but only for as long as it really is one: the exemption holds once upstream has
  * answered {@code 101 Switching Protocols}, since such a connection belongs to one origin for the rest
  * of its life, and is withdrawn on any other answer, where the connection is ended instead of pumped.
@@ -111,19 +112,18 @@ import com.top_logic.basic.Logger;
  * replace it.
  * </p>
  */
-final class FilteringProxy implements AutoCloseable {
+public final class FilteringProxy implements AutoCloseable {
 
 	/**
 	 * The administrator-owned domain policy, as the proxy needs it: one question per outbound
 	 * connection, regardless of what kind of request it belongs to.
 	 *
 	 * <p>
-	 * Kept separate from {@link BrowserSession.DomainPolicy} (which answers only about a
-	 * <em>top-level</em> navigation) because the proxy cannot tell a main document from a
-	 * sub-resource: all it sees is a destination.
+	 * Kept separate from a policy for <em>top-level</em> navigations because the proxy cannot tell a
+	 * main document from a sub-resource: all it sees is a destination.
 	 * </p>
 	 */
-	interface RequestPolicy {
+	public interface RequestPolicy {
 
 		/**
 		 * The reason a connection to {@code host} is refused by the domain policy, or {@code null}
@@ -151,7 +151,7 @@ final class FilteringProxy implements AutoCloseable {
 	 * necessarily, on a loopback address the real resolver refuses).
 	 * </p>
 	 */
-	interface AddressResolver {
+	public interface AddressResolver {
 
 		/**
 		 * Resolves and validates {@code host}.
@@ -173,20 +173,20 @@ final class FilteringProxy implements AutoCloseable {
 	 * @param refusal
 	 *        The human-readable refusal reason, or {@code null} when permitted.
 	 */
-	record Target(InetSocketAddress address, String refusal) {
+	public record Target(InetSocketAddress address, String refusal) {
 
 		/** A permitted target. */
-		static Target to(InetSocketAddress address) {
+		public static Target to(InetSocketAddress address) {
 			return new Target(address, null);
 		}
 
 		/** A refused target carrying the reason. */
-		static Target refused(String refusal) {
+		public static Target refused(String refusal) {
 			return new Target(null, refusal);
 		}
 
 		/** Whether the connection may be made. */
-		boolean permitted() {
+		public boolean permitted() {
 			return refusal == null;
 		}
 	}
@@ -202,7 +202,7 @@ final class FilteringProxy implements AutoCloseable {
 	 * case because that is how header names arrive at the Playwright API.
 	 * </p>
 	 */
-	static final String REFUSAL_HEADER = "x-tl-browser-policy-refused";
+	public static final String REFUSAL_HEADER = "x-tl-browser-policy-refused";
 
 	/**
 	 * How long the proxy waits for a head - the client's request head, or the response head it relays
@@ -366,7 +366,7 @@ final class FilteringProxy implements AutoCloseable {
 	 *        The administrator-owned domain policy to apply to every connection.
 	 * @return The started proxy, listening on an ephemeral loopback port.
 	 */
-	static FilteringProxy start(RequestPolicy policy) {
+	public static FilteringProxy start(RequestPolicy policy) {
 		return start(policy, ssrfResolver(), 1);
 	}
 
@@ -379,7 +379,7 @@ final class FilteringProxy implements AutoCloseable {
 	 *        The service's session cap, from which the connection bound is derived.
 	 * @return The started proxy, listening on an ephemeral loopback port.
 	 */
-	static FilteringProxy start(RequestPolicy policy, int maxSessions) {
+	public static FilteringProxy start(RequestPolicy policy, int maxSessions) {
 		return start(policy, ssrfResolver(), maxSessions);
 	}
 
@@ -393,7 +393,7 @@ final class FilteringProxy implements AutoCloseable {
 	 *        {@link #ssrfResolver()}.
 	 * @return The started proxy, listening on an ephemeral loopback port.
 	 */
-	static FilteringProxy start(RequestPolicy policy, AddressResolver resolver) {
+	public static FilteringProxy start(RequestPolicy policy, AddressResolver resolver) {
 		return start(policy, resolver, 1);
 	}
 
@@ -409,7 +409,7 @@ final class FilteringProxy implements AutoCloseable {
 	 *        The service's session cap, from which the connection bound is derived.
 	 * @return The started proxy, listening on an ephemeral loopback port.
 	 */
-	static FilteringProxy start(RequestPolicy policy, AddressResolver resolver, int maxSessions) {
+	public static FilteringProxy start(RequestPolicy policy, AddressResolver resolver, int maxSessions) {
 		ServerSocket listener;
 		try {
 			// Loopback-only and ephemeral: nothing outside this host can reach the proxy, and no
@@ -427,7 +427,7 @@ final class FilteringProxy implements AutoCloseable {
 	}
 
 	/** The production {@link AddressResolver}: resolve once, refuse non-global addresses, pin the result. */
-	static AddressResolver ssrfResolver() {
+	public static AddressResolver ssrfResolver() {
 		return ssrfResolver(UrlSafety.NameLookup.SYSTEM);
 	}
 
@@ -446,26 +446,25 @@ final class FilteringProxy implements AutoCloseable {
 	}
 
 	/**
-	 * The {@code --proxy-server} value pinning a browser to this proxy.
-	 *
-	 * @see BrowserSession#buildLaunchOptions(boolean, boolean, String, boolean)
+	 * The address of this proxy as a browser's proxy setting names it ({@code --proxy-server} of
+	 * Chromium).
 	 */
-	String serverUrl() {
+	public String serverUrl() {
 		return "http://127.0.0.1:" + port();
 	}
 
 	/** The ephemeral loopback port this proxy listens on. */
-	int port() {
+	public int port() {
 		return _listener.getLocalPort();
 	}
 
 	/** How many connections this proxy has refused. */
-	long refusedCount() {
+	public long refusedCount() {
 		return _refusedCount.get();
 	}
 
 	/** How many connections this proxy has forwarded. */
-	long forwardedCount() {
+	public long forwardedCount() {
 		return _forwardedCount.get();
 	}
 
@@ -478,7 +477,7 @@ final class FilteringProxy implements AutoCloseable {
 	}
 
 	/** The most recently refused hosts (at most {@link #REFUSAL_HISTORY}), oldest first. */
-	List<String> refusedHosts() {
+	public List<String> refusedHosts() {
 		synchronized (_refusedHosts) {
 			return new ArrayList<>(_refusedHosts);
 		}
@@ -499,7 +498,7 @@ final class FilteringProxy implements AutoCloseable {
 	 * @param host
 	 *        The destination host, in any spelling.
 	 */
-	String refusalFor(String host) {
+	public String refusalFor(String host) {
 		synchronized (_refusedHosts) {
 			return _refusals.get(normalizeTarget(host));
 		}
@@ -574,7 +573,7 @@ final class FilteringProxy implements AutoCloseable {
 	 *
 	 * @see #decide(RequestPolicy, AddressResolver, String, int)
 	 */
-	static Target decide(RequestPolicy policy, String host, int port) {
+	public static Target decide(RequestPolicy policy, String host, int port) {
 		return decide(policy, ssrfResolver(), host, port);
 	}
 

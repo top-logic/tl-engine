@@ -96,10 +96,11 @@ public class TestMcpToolMode extends TestCase {
 
 	/** The extracted construction path still carries name, description and schema through. */
 	public void testWrappedToolIdentity() {
-		McpSchema.Tool definition = new McpSchema.Tool("createIssue", null, "Files an issue",
-			new McpSchema.JsonSchema("object", Map.of("title", Map.of("type", "string")),
-				List.of("title"), null, null, null),
-			null, null, null);
+		McpSchema.Tool definition = McpSchema.Tool.builder("createIssue",
+			Map.of("type", "object", "properties", Map.of("title", Map.of("type", "string")),
+				"required", List.of("title")))
+			.description("Files an issue")
+			.build();
 
 		McpTool tool = McpServerRegistry.createTool("jira", definition, null);
 
@@ -112,9 +113,7 @@ public class TestMcpToolMode extends TestCase {
 
 	/** A server that sends no description at all yields the empty string, not {@code null}. */
 	public void testMissingDescription() {
-		McpSchema.Tool definition = new McpSchema.Tool("bare", null, null,
-			new McpSchema.JsonSchema("object", Map.of(), List.of(), null, null, null),
-			null, null, null);
+		McpSchema.Tool definition = McpSchema.Tool.builder("bare", emptyObjectSchema()).build();
 
 		McpTool tool = McpServerRegistry.createTool("jira", definition, null);
 
@@ -166,8 +165,13 @@ public class TestMcpToolMode extends TestCase {
 	}
 
 	private static McpSchema.Tool definition(String name, McpSchema.ToolAnnotations annotations) {
-		return new McpSchema.Tool(name, null, "Does something",
-			new McpSchema.JsonSchema("object", Map.of(), List.of(), null, null, null),
-			null, annotations, null);
+		return McpSchema.Tool.builder(name, emptyObjectSchema())
+			.description("Does something")
+			.annotations(annotations)
+			.build();
+	}
+
+	private static Map<String, Object> emptyObjectSchema() {
+		return Map.of("type", "object", "properties", Map.of());
 	}
 }

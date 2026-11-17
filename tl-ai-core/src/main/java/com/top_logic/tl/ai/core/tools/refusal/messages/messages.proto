@@ -27,16 +27,11 @@ message ApplicationRefusal {
 	string command;
 
 	/**
-	 * The id of the object the agent asked the refused page command to run for, if it passed one.
+	 * The identity of the object the refused operation was about - <code>_tid</code>,
+	 * <code>_type</code> and <code>_display</code>, as every tool result discloses an object - if it
+	 * names one.
 	 */
-	@Nullable
-	string input;
-
-	/**
-	 * The object the refused operation was about, as <code>label [id:TID]</code>, if it names one.
-	 */
-	@Nullable
-	string object;
+	json object;
 
 	/**
 	 * The qualified name of the type of the object that was not created, if a creation was refused.
@@ -60,11 +55,11 @@ message ApplicationRefusal {
  */
 message Reason {
 	/**
-	 * The object the reason is about, as <code>label [id:TID]</code>, if the refusal covers several
+	 * The identity of the object the reason is about - <code>_tid</code>, <code>_type</code> and
+	 * <code>_display</code>, as every tool result discloses an object - if the refusal covers several
 	 * objects.
 	 */
-	@Nullable
-	string object;
+	json object;
 
 	/**
 	 * Where the object stands in the call, if it is a part of the object a call creates.

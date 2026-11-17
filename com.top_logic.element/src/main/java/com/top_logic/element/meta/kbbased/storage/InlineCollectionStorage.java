@@ -144,7 +144,7 @@ public abstract class InlineCollectionStorage<C extends InlineCollectionStorage.
 
 	@Override
 	public ObjectKey getBaseObjectId(Map<String, Object> row) {
-		return (ObjectKey) row.get(getConfig().getContainerColumn());
+		return StoreInTargetDescriptor.baseObjectId(getConfig(), row);
 	}
 
 	@Override
@@ -159,18 +159,7 @@ public abstract class InlineCollectionStorage<C extends InlineCollectionStorage.
 
 	@Override
 	public ObjectKey getPartId(Map<String, Object> row) {
-		String referenceColumn = getConfig().getReferenceColumn();
-		if (referenceColumn == null) {
-			// A row stores a value of the reference exactly when its container column holds a
-			// value. The container column is no key attribute, so the row of an update that keeps
-			// the container does not contain the container column.
-			if (row.get(getConfig().getContainerColumn()) == null) {
-				return null;
-			}
-			return getAttribute().getDefinition().tId();
-		} else {
-			return (ObjectKey) row.get(referenceColumn);
-		}
+		return StoreInTargetDescriptor.partId(getConfig(), getAttribute(), row);
 	}
 
 	@Override

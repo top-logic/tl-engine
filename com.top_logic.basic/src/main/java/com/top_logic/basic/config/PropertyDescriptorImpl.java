@@ -37,6 +37,7 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.col.MutableInteger;
 import com.top_logic.basic.col.map.MultiMaps;
 import com.top_logic.basic.config.annotation.Abstract;
+import com.top_logic.basic.config.annotation.AllowedValues;
 import com.top_logic.basic.config.annotation.Container;
 import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.DerivedRef;
@@ -62,6 +63,7 @@ import com.top_logic.basic.config.annotation.defaults.ShortDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.config.format.BuiltInFormats;
+import com.top_logic.basic.config.xml.AbstractListBinding;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.config.script.ScriptImplementationFormat;
 import com.top_logic.basic.config.script.ScriptImplementationProvider;
@@ -200,6 +202,8 @@ public abstract class PropertyDescriptorImpl
 	private AlgorithmSpec _algorithmSpec;
 
 	private boolean _encrypted;
+
+	private List<?> _allowedValues;
 
 	private boolean _localExplicitDefault;
 
@@ -664,6 +668,64 @@ public abstract class PropertyDescriptorImpl
 				checkNullValue(property);
 			}
 		}
+		checkAllowedValues(property, value);
+	}
+
+	/**
+	 * Checks that the given value is one of the {@link PropertyDescriptor#getAllowedValues()
+	 * allowed values} of the given property.
+	 * 
+	 * <p>
+	 * For a property with multiple values (a list or an array), each element is checked.
+	 * </p>
+	 *
+	 * @param property
+	 *        The property to check the value for.
+	 * @param value
+	 *        The value of the property.
+	 * @throws IllegalArgumentException
+	 *         If the value (one of its elements) is not allowed.
+	 * 
+	 * @see AllowedValues
+	 */
+	public static void checkAllowedValues(PropertyDescriptor property, Object value)
+			throws IllegalArgumentException {
+		List<?> allowedValues = property.getAllowedValues();
+		if (allowedValues == null || value == null) {
+			return;
+		}
+		if (value.getClass().isArray()) {
+			for (Object element : arrayAsList(value)) {
+				checkAllowedValue(property, allowedValues, element);
+			}
+		} else if (value instanceof Collection<?> elements && isMultiValued(property.getType())) {
+			for (Object element : elements) {
+				checkAllowedValue(property, allowedValues, element);
+			}
+		} else {
+			checkAllowedValue(property, allowedValues, value);
+		}
+	}
+
+	private static void checkAllowedValue(PropertyDescriptor property, List<?> allowedValues, Object value) {
+		if (allowedValues.contains(value)) {
+			return;
+		}
+		String valueSpec = value instanceof Enum<?> literal ? ConfigUtil.getEnumExternalName(literal)
+			: String.valueOf(value);
+		String allowedSpec = String.join(", ", property.getAnnotation(AllowedValues.class).value());
+		throw new IllegalArgumentException(
+			message(property, "Value '" + valueSpec + "' is not one of the allowed values '" + allowedSpec + "'."),
+			new ConfigurationException(I18NConstants.ERROR_INVALID_VALUE__VALUE_OPTIONS.fill(valueSpec, allowedSpec),
+				property.getPropertyName(), valueSpec));
+	}
+
+	/**
+	 * Whether a property of the given type has multiple values, whose elements are restricted by
+	 * {@link AllowedValues}.
+	 */
+	private static boolean isMultiValued(Class<?> type) {
+		return type.isArray() || Collection.class.isAssignableFrom(type);
 	}
 
 	private static void checkNonNullValue(PropertyDescriptor property, Object value) throws IllegalArgumentException {
@@ -1000,6 +1062,63 @@ public abstract class PropertyDescriptorImpl
 		}
 		initScriptImplementation();
 		_nullable = new NullableAspect(this, protocol);
+		initAllowedValues(protocol);
+	}
+
+	/**
+	 * Parses the values of the {@link AllowedValues} annotation in the format of this property (of
+	 * its elements for a property with multiple values).
+	 */
+	private void initAllowedValues(Protocol protocol) {
+		_allowedValues = null;
+		AllowedValues annotation = getAnnotation(AllowedValues.class);
+		if (annotation == null) {
+			return;
+		}
+		boolean multiValued = isMultiValued(getType());
+		ConfigurationValueProvider<?> format;
+		boolean elementFormat;
+		if (kind() == PropertyKind.PLAIN) {
+			format = getValueProvider();
+			elementFormat = !multiValued;
+		} else if (kind() == PropertyKind.COMPLEX && getValueBinding() instanceof AbstractListBinding<?, ?> listBinding) {
+			format = listBinding.getElementFormat();
+			elementFormat = true;
+		} else {
+			error(protocol, "Allowed values can only be given for a property whose values have a text format.");
+			return;
+		}
+
+		List<Object> allowedValues = new ArrayList<>();
+		for (String literal : annotation.value()) {
+			try {
+				Object value = format.getValue(getPropertyName(), literal);
+				if (!elementFormat) {
+					value = singleElement(literal, value);
+				}
+				allowedValues.add(value);
+			} catch (ConfigurationException ex) {
+				error(protocol, "Allowed value '" + literal + "' cannot be read in the format of the property.", ex);
+			}
+		}
+		_allowedValues = Collections.unmodifiableList(allowedValues);
+
+		if (!multiValued && !allowedValues.isEmpty() && !hasExplicitDefault() && !isNullable()) {
+			setImplicitDefault(new LiteralDefault(allowedValues.get(0)));
+		}
+	}
+
+	private static Object singleElement(String literal, Object value) throws ConfigurationException {
+		List<?> elements = value.getClass().isArray() ? arrayAsList(value) : new ArrayList<>((Collection<?>) value);
+		if (elements.size() != 1) {
+			throw new ConfigurationException("Allowed value '" + literal + "' does not describe a single element.");
+		}
+		return elements.get(0);
+	}
+
+	@Override
+	public List<?> getAllowedValues() {
+		return _allowedValues;
 	}
 
 	/**

@@ -114,7 +114,7 @@ function TLFlowDiagram({ controlId, state }: TLFlowDiagramProps) {
         }
     }, [diagramJson]);
 
-    return <div ref={ref} className={rootClassName(state, DIAGRAM_CLASS, fillClass)} />;
+    return <div id={controlId} ref={ref} className={rootClassName(state, DIAGRAM_CLASS, fillClass)} />;
 }
 
 export default TLFlowDiagram;

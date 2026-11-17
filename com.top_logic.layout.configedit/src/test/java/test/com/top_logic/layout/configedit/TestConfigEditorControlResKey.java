@@ -260,7 +260,7 @@ public class TestConfigEditorControlResKey extends TestCase {
 	}
 
 	private static void collectFields(ReactControl control, List<ReactControl> fields) {
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			if (child instanceof ReactFormFieldChromeControl) {
 				fields.add(child);
 			}

@@ -8,6 +8,7 @@ package com.top_logic.table.impl;
 import java.util.Optional;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellExistence;
@@ -139,8 +140,23 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 	}
 
 	@Override
+	public String headerClass() {
+		return _inner.headerClass();
+	}
+
+	@Override
+	public ValueColor headerRole() {
+		return _inner.headerRole();
+	}
+
+	@Override
 	public String cssClass(R row) {
 		return _inner.cssClass(row);
+	}
+
+	@Override
+	public ValueColor color(R row) {
+		return _inner.color(row);
 	}
 
 	@Override

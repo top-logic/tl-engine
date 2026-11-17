@@ -3189,9 +3189,16 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 
 	/**
 	 * Creates a <code>DROP</code> statement for a foreign key constraint.
+	 *
+	 * <p>
+	 * The constraint name is quoted as a part of a table (see {@link #columnRef(String)}), as
+	 * when creating the constraint. Otherwise, a name containing lower case letters (e.g. a name
+	 * shortened by {@link #qualifiedName(String, String)}) does not match the created constraint
+	 * in databases that convert unquoted names to upper case.
+	 * </p>
 	 */
 	public String dropForeignKey(String tableName, String foreignKeyName) {
-		return alterTable(tableName) + "DROP CONSTRAINT " + tableRef(foreignKeyName);
+		return alterTable(tableName) + "DROP CONSTRAINT " + columnRef(foreignKeyName);
 	}
 
 	/**
@@ -3461,10 +3468,22 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	}
 
 	/**
+	 * Sets a savepoint before a statement whose failure is tolerated.
+	 *
+	 * <p>
+	 * A database in which a failing statement aborts the whole transaction (e.g.
+	 * <i>PostgreSQL</i>) creates a savepoint, so that the failure can be undone with
+	 * {@link #rollback(Connection, Savepoint)} without losing the rest of the transaction. Other
+	 * databases only roll back the failing statement itself and need no savepoint.
+	 * </p>
+	 *
 	 * @see Connection#setSavepoint()
-	 * 
+	 *
 	 * @param connection
 	 *        Connection to a specific database.
+	 * @return The new savepoint, or <code>null</code> if none is required. The result must be
+	 *         passed to {@link #rollback(Connection, Savepoint)} or
+	 *         {@link #releaseSavepoint(Connection, Savepoint)}.
 	 * @throws SQLException
 	 *         Database access error occurs.
 	 */

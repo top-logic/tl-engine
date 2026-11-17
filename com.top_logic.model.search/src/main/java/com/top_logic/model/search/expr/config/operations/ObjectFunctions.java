@@ -5,13 +5,23 @@
  */
 package com.top_logic.model.search.expr.config.operations;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.IdentifierUtil;
 import com.top_logic.basic.TLID;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.identifier.DefaultObjectKey;
@@ -25,13 +35,17 @@ import com.top_logic.knowledge.service.db2.MOKnowledgeItem;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.expr.AccessLike;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.CompatibilityService;
 
 /**
- * TL-Script functions identifying a persistent object by a text and finding it again.
+ * TL-Script functions identifying a persistent object by a text and finding it again, and
+ * navigating the composition structure of an object.
  *
  * <p>
  * There are two texts. The identifier ({@link #id(TLObject)}) names an object within its type and
@@ -317,5 +331,95 @@ public class ObjectFunctions extends TLScriptFunctions {
 			return null;
 		}
 		return item.getWrapper();
+	}
+
+	/**
+	 * All parts of the composition of the given object: the objects in its composite references,
+	 * the objects in their composite references, and so on.
+	 *
+	 * <p>
+	 * The composite references of a type include those inherited from its generalizations; a
+	 * reference that is no composition is not followed. Each descendant is delivered once, after
+	 * its container and in the order of the composite references of the container's type and of
+	 * their values (depth first). Typical use is the set of objects of a partition in an import,
+	 * all parts of a composite root: <code>root -&gt; $root.objectDescendants()</code>.
+	 * </p>
+	 *
+	 * <p>
+	 * The composite references are read like {@code get} reads them: when the script is evaluated
+	 * with the access rights of the current user, a composite reference is only followed if the
+	 * user may read it on the object, and only the objects the user may discover are delivered and
+	 * descended into. An object the user must not discover is missing together with its parts.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object whose descendants are requested.
+	 * @param includeRoot
+	 *        Whether the given object itself is part of the result, as its first element.
+	 * @param usesSecurity
+	 *        Whether the call is evaluated with the access rights of the current user.
+	 * @return The descendants of the given object, empty for no object.
+	 */
+	@Label("Composition descendants of an object")
+	@SideEffectFree
+	public static Set<TLObject> descendants(@Mandatory TLObject object, @BooleanDefault(false) boolean includeRoot,
+			@UsesSecurity boolean usesSecurity) {
+		Set<TLObject> result = new LinkedHashSet<>();
+		if (object == null) {
+			return result;
+		}
+
+		Map<TLStructuredType, List<TLReference>> compositeReferences = new HashMap<>();
+		Deque<Iterator<?>> stack = new ArrayDeque<>();
+		stack.push(Collections.singletonList(object).iterator());
+		while (!stack.isEmpty()) {
+			Iterator<?> siblings = stack.peek();
+			if (!siblings.hasNext()) {
+				stack.pop();
+				continue;
+			}
+			TLObject current = (TLObject) siblings.next();
+			if (!result.add(current)) {
+				// Already visited.
+				continue;
+			}
+
+			List<TLReference> references =
+				compositeReferences.computeIfAbsent(current.tType(), ObjectFunctions::compositeReferences);
+			List<Object> parts = new ArrayList<>();
+			for (TLReference reference : references) {
+				Object value = AccessLike.lookupValue(current, reference, usesSecurity);
+				if (value instanceof Collection<?> values) {
+					for (Object part : values) {
+						if (part instanceof TLObject) {
+							parts.add(part);
+						}
+					}
+				} else if (value instanceof TLObject) {
+					parts.add(value);
+				}
+			}
+			if (!parts.isEmpty()) {
+				stack.push(parts.iterator());
+			}
+		}
+		if (!includeRoot) {
+			result.remove(object);
+		}
+		return result;
+	}
+
+	/**
+	 * The composite references of the given type, including those inherited from its
+	 * generalizations.
+	 */
+	private static List<TLReference> compositeReferences(TLStructuredType type) {
+		List<TLReference> result = new ArrayList<>();
+		for (TLStructuredTypePart part : type.getAllParts()) {
+			if (part instanceof TLReference reference && reference.isComposite()) {
+				result.add(reference);
+			}
+		}
+		return result;
 	}
 }

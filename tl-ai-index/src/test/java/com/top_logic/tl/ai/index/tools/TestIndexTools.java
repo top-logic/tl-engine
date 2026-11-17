@@ -99,15 +99,20 @@ public class TestIndexTools extends BasicTestCase {
 		}
 
 		String search = _answers.get("c-search");
-		assertTrue(search, search.contains("[id:" + ReadFilter.idOf(made[1]) + "]"));
+		assertTrue(search, search.contains(tid(made[1])));
 		assertTrue(search, search.contains("page 2"));
 		assertTrue(search, search.contains("The base plate is made of anodised aluminium."));
 		assertTrue("The answer is marked as business data: " + search, search.contains("<untrusted_"));
 
 		String similar = _answers.get("c-similar");
-		assertTrue(similar, similar.contains("[id:" + ReadFilter.idOf(made[2]) + "]"));
+		assertTrue(similar, similar.contains(tid(made[2])));
 		assertFalse("The start object is no hit: " + similar,
-			similar.contains("1. Pump specification [id:"));
+			similar.contains("1. {" + tid(made[1])));
+	}
+
+	/** How an answer names the given object: the identifier of its identity. */
+	private static String tid(TLObject object) {
+		return "\"" + ReadFilter.TID + "\":\"" + ReadFilter.idOf(object) + "\"";
 	}
 
 	private void run(AiIndex index, ModelSecurity rights, ToolCall... calls) {

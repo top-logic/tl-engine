@@ -11,6 +11,7 @@ import java.io.IOError;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -52,6 +53,7 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.objects.KnowledgeItem.State;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.CommitActions;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -64,6 +66,7 @@ import com.top_logic.knowledge.service.event.CommitChecker;
 import com.top_logic.knowledge.service.event.CommitVetoException;
 import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.knowledge.service.event.ModificationListener;
+import com.top_logic.knowledge.service.event.PendingChanges;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.values.edit.AllQualifiedTLTypeNames;
@@ -76,7 +79,10 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLQuery;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.TLChangeHandler;
+import com.top_logic.model.annotate.TLChangeHandlers;
 import com.top_logic.model.annotate.TLConstraints;
+import com.top_logic.model.annotate.TLLifecycleHandler;
 import com.top_logic.model.annotate.TLRange;
 import com.top_logic.model.annotate.TLSize;
 import com.top_logic.model.annotate.TLUpdateMode;
@@ -308,17 +314,43 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 	}
 
 	@Override
-	public Modification createModification(KnowledgeBase kb, CommitActions commitActions,
-			Map<ObjectKey, ? extends KnowledgeItem> createdObjects,
-			Map<ObjectKey, ? extends KnowledgeItem> updatedObjects,
-			Map<ObjectKey, ? extends KnowledgeItem> removedObjects) {
+	public Modification createModification(KnowledgeBase kb, CommitActions commitActions, PendingChanges changes) {
+		return applyInitializers(changes.getCreated())
+			.andThen(notifyCreated(commitActions, changes.getCreated()))
+			.andThen(createChangeHandling(kb, commitActions, changes));
+	}
 
-		return applyInitializers(createdObjects);
+	/**
+	 * Creates the {@link Modification} that calls the {@link TLChangeHandler}s of the attributes
+	 * changed in the transaction being committed.
+	 * 
+	 * <p>
+	 * The resulting {@link Modification} runs after the {@link TLObjectInitializer}s of the created
+	 * objects. The old and new values passed to the handlers must be determined in this method,
+	 * since the given {@link PendingChanges} are only valid during the call and the modifications
+	 * created by all {@link ModificationListener}s change the transaction afterwards.
+	 * </p>
+	 * 
+	 * @param kb
+	 *        The {@link KnowledgeBase} being committed.
+	 * @param commitActions
+	 *        Registration of actions to execute after the commit, passed to the handlers.
+	 * @param changes
+	 *        The changes of the transaction being committed.
+	 * @return The {@link Modification} calling the handlers, {@link Modification#NONE} if none
+	 *         must be called.
+	 * 
+	 * @see TLChangeHandlers
+	 */
+	protected Modification createChangeHandling(KnowledgeBase kb, CommitActions commitActions,
+			PendingChanges changes) {
+		return Modification.NONE;
 	}
 
 	private Modification applyInitializers(Map<ObjectKey, ? extends KnowledgeItem> createdObjects) {
 		TLModelOperations operations = TLModelCacheService.getOperations();
-		Modification result = Modification.NONE;
+		List<TLObject> objects = new ArrayList<>();
+		List<List<TLObjectInitializer>> initializersByObject = new ArrayList<>();
 		for (KnowledgeItem created : createdObjects.values()) {
 			TLObject object = created.getWrapper();
 			TLStructuredType type = object.tType();
@@ -329,18 +361,116 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 			if (initializers.isEmpty()) {
 				continue;
 			}
-			result = result.andThen(() -> {
-				for (TLObjectInitializer initializer : initializers) {
+			objects.add(object);
+			initializersByObject.add(initializers);
+		}
+		if (objects.isEmpty()) {
+			return Modification.NONE;
+		}
+		// A flat loop instead of a chain of Modification.andThen(), whose nesting depth would grow
+		// with the number of created objects.
+		return () -> {
+			for (int n = 0, cnt = objects.size(); n < cnt; n++) {
+				TLObject object = objects.get(n);
+				for (TLObjectInitializer initializer : initializersByObject.get(n)) {
 					initializer.initializeObject(object);
 				}
-			});
-		}
-		return result;
+			}
+		};
 	}
 
+	/**
+	 * Creates the {@link Modification} that informs the {@link TLLifecycleHandler}s of the types of
+	 * the created objects.
+	 * 
+	 * <p>
+	 * The resulting {@link Modification} runs after the {@link TLObjectInitializer}s of all created
+	 * objects, so that a handler sees initialized objects, and before the
+	 * {@link #createChangeHandling(KnowledgeBase, CommitActions, PendingChanges) change handlers}.
+	 * </p>
+	 * 
+	 * @see TLLifecycleHandler#created(TLObject, CommitActions)
+	 */
+	private Modification notifyCreated(CommitActions commitActions,
+			Map<ObjectKey, ? extends KnowledgeItem> createdObjects) {
+		if (getModel() == null || createdObjects.isEmpty()) {
+			// The model itself is being created, no handlers are annotated yet.
+			return Modification.NONE;
+		}
+		TLModelOperations operations = TLModelCacheService.getOperations();
+		List<TLObject> objects = new ArrayList<>();
+		List<List<TLLifecycleHandler>> handlersByObject = new ArrayList<>();
+		for (KnowledgeItem created : createdObjects.values()) {
+			TLObject object = created.getWrapper();
+			TLStructuredType type = object.tType();
+			if (type == null) {
+				continue;
+			}
+			List<TLLifecycleHandler> handlers = operations.getLifecycleHandlers(type);
+			if (handlers.isEmpty()) {
+				continue;
+			}
+			objects.add(object);
+			handlersByObject.add(handlers);
+		}
+		if (objects.isEmpty()) {
+			return Modification.NONE;
+		}
+		return () -> {
+			for (int n = 0, cnt = objects.size(); n < cnt; n++) {
+				TLObject object = objects.get(n);
+				for (TLLifecycleHandler handler : handlersByObject.get(n)) {
+					handler.created(object, commitActions);
+				}
+			}
+		};
+	}
+
+	/**
+	 * Asks the {@link TLLifecycleHandler}s of the type of the deleted object for the changes to
+	 * make after the deletion.
+	 *
+	 * <p>
+	 * The handlers are looked up in the committed model: The deletion is reported in the middle of
+	 * a cascading delete, where the transaction may already have deleted model elements that are
+	 * still referenced, e.g. the singleton of a module that is deleted next, or a type that is still
+	 * the type of an attribute whose reference vetoes the deletion.
+	 * </p>
+	 *
+	 * @see TLLifecycleHandler#deleting(TLObject, CommitActions)
+	 */
 	@Override
 	public Modification notifyUpcomingDeletion(KnowledgeBase kb, CommitActions commitActions, KnowledgeItem item) {
-		return Modification.NONE;
+		if (getModel() == null || item.getState() == State.NEW) {
+			// No handlers without model, and the creation of a new object has not been reported.
+			return Modification.NONE;
+		}
+		TLObject object = item.getWrapper();
+		List<TLLifecycleHandler> handlers = kb.withoutModifications(() -> {
+			TLStructuredType type = object.tType();
+			if (type == null) {
+				return Collections.<TLLifecycleHandler> emptyList();
+			}
+			return TLModelCacheService.getOperations().getLifecycleHandlers(type);
+		});
+		if (handlers.isEmpty()) {
+			return Modification.NONE;
+		}
+		List<Modification> modifications = new ArrayList<>();
+		for (TLLifecycleHandler handler : handlers) {
+			Modification modification = handler.deleting(object, commitActions);
+			if (modification != Modification.NONE) {
+				modifications.add(modification);
+			}
+		}
+		if (modifications.isEmpty()) {
+			return Modification.NONE;
+		}
+		return () -> {
+			for (Modification modification : modifications) {
+				modification.execute();
+			}
+		};
 	}
 
 	@Override

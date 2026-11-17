@@ -7,6 +7,8 @@ order: 90
 
 [Tool access](doc:ai/security/tool-access-configuration) decides *which tools* a role may use at all; the `egress` group decides whether an agent may send data out. This article is about *where those tools may go*.
 
+`webFetch` and `webSearch` are part of `tl-ai-core`. The browser tools (`web-browser.*`, `BrowserToolsService`) come with the optional module `tl-ai-browser`, see its article `ai/browser`; what this article says about the browser applies where an application depends on it.
+
 ## Three questions, three layers
 
 | Question | Answered by | Configurable? |

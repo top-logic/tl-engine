@@ -274,7 +274,9 @@ public interface GanttLayout extends com.top_logic.react.flow.data.Layout, com.t
 	 * <p>
 	 * The effective column width is
 	 * {@code max(rowLabelMinWidth, maxLabelIntrinsicWidth + 2 * rowLabelPadding)} so the column
-	 * grows automatically to fit the widest label across all rows.
+	 * grows automatically to fit the widest label across all rows. A label with several
+	 * level-of-detail variants counts with its widest variant, so the column width does not depend
+	 * on the {@link #getZoom()}.
 	 * </p>
 	 */
 	double getRowLabelMinWidth();

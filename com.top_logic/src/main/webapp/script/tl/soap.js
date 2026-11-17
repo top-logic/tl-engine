@@ -46,16 +46,13 @@ function WebService(serviceUrl) {
 	 *            null.
 	 * @param {Boolean}
 	 *            ignoreResponse whether the response of the server is irrelevant
-	 * @param {Boolean}
-	 *            sequential whether to wait for the answer to be returned from 
-	 *            the server before continuing execution
 	 */
-	this.sendRequest = function(request, onCompletion, onError, ignoreResponse, sequential, retry) {
+	this.sendRequest = function(request, onCompletion, onError, ignoreResponse, retry) {
 		var http = this.createXMLHTTP();
 
-		http.open("POST", this.CONTEXT_PATH + this.serviceUrl, /*async*/ !sequential);
-		http.setRequestHeader("SOAPAction", "\"\"");
-		http.setRequestHeader("Content-Type", "text/xml; charset=utf-8");
+		http.open("POST", this.CONTEXT_PATH + this.serviceUrl, /*async*/ true);
+		http.setRequestHeader("SOAPAction", this.SOAP_ACTION);
+		http.setRequestHeader("Content-Type", this.CONTENT_TYPE);
 		if (retry != null) {
 			http.setRequestHeader("X-Retry", "" + retry);
 		}
@@ -119,9 +116,37 @@ function WebService(serviceUrl) {
 		}
 		http.send(request);
 	};
+
+	/**
+	 * Sends a request to the server while the page is being left (closed, reloaded, 
+	 * or navigated away from).
+	 * 
+	 * <p>
+	 * The browser delivers the request even after the page has been discarded. The 
+	 * response is not processed.
+	 * </p>
+	 * 
+	 * @param {String}
+	 *            request the XML request send to the server
+	 */
+	this.sendRequestOnLeave = function(request) {
+		fetch(this.CONTEXT_PATH + this.serviceUrl, {
+			method: "POST",
+			keepalive: true,
+			headers: {
+				"SOAPAction": this.SOAP_ACTION,
+				"Content-Type": this.CONTENT_TYPE
+			},
+			body: request
+		}).catch(function() {
+			// The page is gone, there is no one to report an error to.
+		});
+	};
 };
 
 WebService.prototype = {
+	SOAP_ACTION: "\"\"",
+	CONTENT_TYPE: "text/xml; charset=utf-8",
 	ERROR_NO_AJAX_RESPONSE: -1,
 	ERROR_CANNOT_PARSE_RESPONSE: -2
 };

@@ -62,7 +62,6 @@ import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactCommandAnswer;
 import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
 import com.top_logic.layout.react.control.upload.UploadSupport;
@@ -143,12 +142,27 @@ public class ReactServlet extends TopLogicServlet {
 	 *
 	 * <p>
 	 * The page is still valid, only the target of the request is gone, so the client does not
-	 * reload the page. A command sent with the option {@code ignoreStaleUi} drops such an answer
-	 * silently; any other command logs it as failed. The client-side counterpart of this constant
-	 * is {@code ERROR_CODE_CONTROL_GONE} in {@code command-channel.ts}.
+	 * reload the page, but logs the command as failed. A command carrying
+	 * {@link #FIELD_IGNORE_STALE_UI} is answered with success instead. The client-side counterpart
+	 * of this constant is {@code ERROR_CODE_CONTROL_GONE} in {@code command-channel.ts}.
 	 * </p>
 	 */
 	public static final String ERROR_CODE_CONTROL_GONE = "control-gone";
+
+	/**
+	 * Field of a command's payload declaring that the command only tidies up: when its control is
+	 * not displayed any more, there is nothing left to tidy, and the command is answered with
+	 * success instead of {@link #ERROR_CODE_CONTROL_GONE} or {@link #ERROR_CODE_STALE_UI}.
+	 *
+	 * <p>
+	 * The client decides which commands carry the field: those sent with the option
+	 * {@code ignoreStaleUi}, and every field value, which was abandoned with a field that left the
+	 * display. A success answer leaves no failed request in the browser console, which an error
+	 * status would, however the client handles it. The client-side counterpart of this constant is
+	 * {@code FIELD_IGNORE_STALE_UI} in {@code command-channel.ts}.
+	 * </p>
+	 */
+	public static final String FIELD_IGNORE_STALE_UI = "ignoreStaleUi";
 
 	/** Name of the global command the client sends when the browser navigated in its history. */
 	private static final String CMD_NAVIGATE_TO_ROUTE = "navigateToRoute";
@@ -563,6 +577,7 @@ public class ReactServlet extends TopLogicServlet {
 		String commandName = (String) commandData.get("command");
 		String windowName = (String) commandData.get("windowName");
 		Map<String, Object> arguments = (Map<String, Object>) commandData.get("arguments");
+		boolean ignoreStaleUi = Boolean.TRUE.equals(commandData.get(FIELD_IGNORE_STALE_UI));
 
 		// Handle window lifecycle commands (no control target).
 		// Must be checked before the controlId null check since these commands have empty controlId.
@@ -620,18 +635,14 @@ public class ReactServlet extends TopLogicServlet {
 		WindowContext window = resolveWindow(request, session, windowName);
 		SSEUpdateQueue queue = window.queue();
 		if (queue == null) {
-			// Diagnostic for "controls don't react": the client posts a command for a window that
-			// has no queue in this session (e.g. a stale tab after the window was discarded, or a
-			// window-name mismatch). Log the known windows to compare against the requested one.
-			Logger.warn("Command '" + commandName + "' for control '" + controlId
-				+ "' targets unknown window '" + windowName + "'. Known windows: "
-				+ ReactWindowRegistry.forSession(session).windowNames(), ReactServlet.class);
+			ReactWindowRegistry.forSession(session).reportStaleWindow(windowName,
+				describeCommand(commandName, controlId));
 			sendError(response, HttpServletResponse.SC_BAD_REQUEST, ERROR_CODE_STALE_UI,
 				"Unknown window: " + windowName);
 			return;
 		}
 		if (queue.getControl(controlId) == null) {
-			answerMissingControl(response, queue, windowName, controlId, commandName);
+			answerMissingControl(response, session, queue, windowName, controlId, commandName, ignoreStaleUi);
 			return;
 		}
 
@@ -659,7 +670,11 @@ public class ReactServlet extends TopLogicServlet {
 			}
 		}
 		if (control == null) {
-			sendControlNotFound(response, controlId);
+			if (ignoreStaleUi) {
+				sendSuccess(response);
+			} else {
+				sendControlNotFound(response, controlId);
+			}
 			return;
 		}
 		// Answered once the interaction has delivered its events, so that the answer can name the
@@ -670,29 +685,39 @@ public class ReactServlet extends TopLogicServlet {
 
 	/**
 	 * Answers a command whose target control is not displayed in the window.
+	 *
+	 * @param ignoreStaleUi
+	 *        Whether the command declared that it only tidies up, see
+	 *        {@link #FIELD_IGNORE_STALE_UI}.
 	 */
-	private void answerMissingControl(HttpServletResponse response, SSEUpdateQueue queue,
-			String windowName, String controlId, String commandName) throws IOException {
-		if (ReactFormFieldControl.CMD_VALUE_CHANGED.equals(commandName)) {
-			// A debounced field value flushed after its control left the display: the edit was
-			// abandoned (e.g. the dialog was canceled), so dropping the value is the intended
-			// outcome, not an error.
+	private void answerMissingControl(HttpServletResponse response, HttpSession session, SSEUpdateQueue queue,
+			String windowName, String controlId, String commandName, boolean ignoreStaleUi) throws IOException {
+		if (ignoreStaleUi) {
+			// The sender declared the command harmless without its target (e.g. a field value of an
+			// abandoned edit, the detach of a disposed component): there is nothing left to do.
 			Logger.debug("Dropped '" + commandName + "' for undisplayed control '" + controlId + "'.",
 				ReactServlet.class);
 			sendSuccess(response);
 			return;
 		}
 		if (!queue.hasControls()) {
-			// The window's queue holds no controls at all: it was created empty by an SSE
-			// reconnect after the session was replaced underneath the open page. The page's
-			// control tree lives in the discarded session - let the client re-bootstrap.
-			Logger.warn("Command '" + commandName + "' for control '" + controlId + "' targets window '"
-				+ windowName + "' without any registered controls (session replaced).", ReactServlet.class);
+			// The window displays no page: its page was unloaded and the window waits for it to come
+			// back, or its page was never rendered. The page the client shows is not the one the
+			// window held - let the client re-bootstrap.
+			ReactWindowRegistry.forSession(session).reportStaleWindow(windowName,
+				describeCommand(commandName, controlId));
 			sendError(response, HttpServletResponse.SC_NOT_FOUND, ERROR_CODE_STALE_UI,
 				"Control not found: " + controlId);
 			return;
 		}
 		sendControlNotFound(response, controlId);
+	}
+
+	/**
+	 * Describes a command for a {@link ReactWindowRegistry#reportStaleWindow(String, String) report}.
+	 */
+	private static String describeCommand(String commandName, String controlId) {
+		return "Command '" + commandName + "' for control '" + controlId + "'";
 	}
 
 	/**
@@ -753,7 +778,8 @@ public class ReactServlet extends TopLogicServlet {
 			String description) {
 		if (failure != null) {
 			CommandErrors.report(errorSink(control), failure, description, ReactServlet.class);
-			return ReactCommandAnswer.failure(null, CommandErrors.text(failure));
+			return ReactCommandAnswer.failure(CommandErrors.errorCode(failure), CommandErrors.text(failure),
+				CommandErrors.invalidInputScope(failure));
 		}
 		return ReactCommandAnswer.success(reply);
 	}

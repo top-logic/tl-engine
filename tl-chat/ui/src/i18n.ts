@@ -290,6 +290,7 @@ const EN = {
   providerErrorOverloaded: 'The model is overloaded just now. Try again in a moment.',
   providerErrorContext: 'The conversation has grown past what this model can read. Start a new chat, or switch to a model with a larger context.',
   providerErrorAuth: 'The model rejected the access key. Please tell your administrator.',
+  providerErrorNoCredentials: 'No AI model is available: its provider has no access key. Please contact your administrator.',
   providerErrorInvalid: 'The model refused the request. The attempt was discarded; you can send again.',
   applicationError: 'The application could not complete this request. That is not the model’s doing, so sending the same message again will not help.',
   errorDetails: 'Technical details',
@@ -604,6 +605,7 @@ const DE: Bundle = {
   providerErrorOverloaded: 'Das Modell ist gerade überlastet. Versuche es gleich noch einmal.',
   providerErrorContext: 'Das Gespräch ist länger, als dieses Modell lesen kann. Beginne einen neuen Chat oder wechsle zu einem Modell mit größerem Kontext.',
   providerErrorAuth: 'Das Modell hat den Zugangsschlüssel abgelehnt. Bitte wende dich an deine Administration.',
+  providerErrorNoCredentials: 'Es ist kein KI-Modell verfügbar: Seinem Anbieter fehlt der Zugangsschlüssel. Bitte wende dich an deine Administration.',
   providerErrorInvalid: 'Das Modell hat die Anfrage abgelehnt. Der Versuch wurde verworfen, du kannst erneut senden.',
   applicationError: 'Die Anwendung konnte diese Anfrage nicht abschließen. Das lag nicht am Modell, ein erneutes Senden derselben Nachricht hilft also nicht.',
   errorDetails: 'Technische Details',
@@ -698,6 +700,13 @@ export function formatTimestamp(timestamp: number, language: Language): string {
 }
 
 /**
+ * Error kind of a run whose model's provider has no credentials in this application.
+ *
+ * Unlike `AUTHENTICATION` - a key the provider rejected - no key was there to send.
+ */
+export const PROVIDER_ERROR_NO_CREDENTIALS = 'NO_CREDENTIALS'
+
+/**
  * What a failed run says to the reader, in their language.
  *
  * The provider's own message names a field of a JSON request and is written for whoever wrote that
@@ -708,10 +717,17 @@ export function formatTimestamp(timestamp: number, language: Language): string {
  * `APPLICATION_ERROR` is the one kind that is not the provider's: the server sends it when the run
  * died in this application, not at the model. It reads differently on purpose - every other text
  * here ends in "try again", and for this one trying again repeats the same failure (#410).
+ *
+ * {@link PROVIDER_ERROR_NO_CREDENTIALS} is not the provider's either: no request was sent, because
+ * this application holds no key for the model's provider. Its `serverMessage` is written by the
+ * application in the reader's language and names the secret to set, so it is the text itself; the
+ * generic label stands in only when the server sent none.
  */
-export function providerErrorText(kind: string | undefined, language: Language): string {
+export function providerErrorText(kind: string | undefined, language: Language, serverMessage?: string): string {
   const labels = bundle(language)
   switch ((kind ?? '').toUpperCase()) {
+    case PROVIDER_ERROR_NO_CREDENTIALS:
+      return serverMessage?.trim() || labels.providerErrorNoCredentials
     case 'RATE_LIMITED':
       return labels.providerErrorRateLimited
     case 'BILLING':

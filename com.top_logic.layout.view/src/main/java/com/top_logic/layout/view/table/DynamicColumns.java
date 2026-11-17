@@ -24,8 +24,6 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.config.constraint.annotation.Constraint;
-import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
@@ -35,11 +33,13 @@ import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.table.ColumnFilter;
 
 /**
  * The {@code <dynamic-columns>} of a table: one column per element of a computed set of objects.
@@ -54,10 +54,10 @@ import com.top_logic.model.util.TLModelPartRef;
  * <p>
  * The columns are named after the declaration and the object each of them stands for, so that the
  * user's arrangement of a column is remembered under a name that stays with it. They share what the
- * declaration says about all of them: the type of their values (or an expression computing it per
- * column), their display width and whether they stay read-only while the rows are edited. Their
- * filter is the one their type derives; a filter of their own is not declared, as there is no
- * single column to declare it for.
+ * declaration says about all of them: the type of their values and their display width (or an
+ * expression computing either per column) and whether they stay read-only while the rows are
+ * edited. Their filter is the one their type derives, or the one the declaration states for all of
+ * them.
  * </p>
  *
  * <p>
@@ -136,6 +136,9 @@ public class DynamicColumns implements ColumnDeclaration {
 		/** Configuration name for {@link #getCanUpdate()}. */
 		String CAN_UPDATE = "can-update";
 
+		/** Configuration name for {@link #getOptions()}. */
+		String OPTIONS = "options";
+
 		/** Configuration name for {@link #getAggregate()}. */
 		String AGGREGATE = "aggregate";
 
@@ -148,8 +151,20 @@ public class DynamicColumns implements ColumnDeclaration {
 		/** Configuration name for {@link #getCellClass()}. */
 		String CELL_CLASS = AbstractColumnDeclaration.Config.CELL_CLASS;
 
+		/** Configuration name for {@link #getCellRole()}. */
+		String CELL_ROLE = AbstractColumnDeclaration.Config.CELL_ROLE;
+
+		/** Configuration name for {@link #getHeaderRole()}. */
+		String HEADER_ROLE = AbstractColumnDeclaration.Config.HEADER_ROLE;
+
+		/** Configuration name for {@link #getHeaderClass()}. */
+		String HEADER_CLASS = AbstractColumnDeclaration.Config.HEADER_CLASS;
+
 		/** Configuration name for {@link #getDisplay()}. */
 		String DISPLAY = AbstractColumnDeclaration.Config.DISPLAY;
+
+		/** Configuration name for {@link #getFilter()}. */
+		String FILTER = AbstractColumnDeclaration.Config.FILTER;
 
 		/** Configuration name for {@link #getSortable()}. */
 		String SORTABLE = AbstractColumnDeclaration.Config.SORTABLE;
@@ -225,17 +240,23 @@ public class DynamicColumns implements ColumnDeclaration {
 		Expr getColumnType();
 
 		/**
-		 * The default display width of every column of this declaration, in pixels.
+		 * The expression computing the default display width of one column, in pixels.
 		 *
 		 * <p>
-		 * This is the width the user sees until they resize a column themselves; from then on their
-		 * own width is remembered. {@code 0} - the default - keeps the width the type of the values
-		 * derives.
+		 * The expression sees the variables of the {@link #getColumnType() column type}. This is the
+		 * width the user sees until they resize a column themselves; from then on their own width
+		 * is remembered. A constant number, e.g. <code>130</code>, is the width of every column of
+		 * this declaration; an expression gives each column its own width, e.g.
+		 * <code>$column.get(`my:Field#kind`) == `my:Kind#DATE` ? 130 : 260</code>. The result is a
+		 * non-negative number. Nothing at all or {@code 0} keeps the width the type of the values
+		 * of the column derives; so does a declaration without a width.
 		 * </p>
 		 */
 		@Name(WIDTH)
-		@Constraint(NonNegative.class)
-		int getWidth();
+		@Nullable
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getWidth();
 
 		/**
 		 * Whether the columns of this declaration stay read-only while the rows of the table are
@@ -283,6 +304,13 @@ public class DynamicColumns implements ColumnDeclaration {
 		 * The expression sees the variables of the {@link #getColumnType() column type}. The result
 		 * is an internationalized text, a string, or any object shown by its display label. Unset,
 		 * the object itself labels its column.
+		 * </p>
+		 *
+		 * <p>
+		 * Like every label, the header label is computed without the access rights of the current
+		 * user, so that a user sees the label of a column object the user may only discover. The
+		 * {@link #getColumns() columns} themselves, the cell values and the {@link #getTooltip()
+		 * tooltips} are computed with the access rights of the current user.
 		 * </p>
 		 */
 		@Name(COLUMN_LABEL)
@@ -400,6 +428,30 @@ public class DynamicColumns implements ColumnDeclaration {
 		Expr getCanUpdate();
 
 		/**
+		 * The values an edited cell value of a row is chosen from.
+		 *
+		 * <p>
+		 * The expression sees the variables of the {@link #getValue() value} - the row and the
+		 * object the column stands for - and computes the options for the cell that is edited,
+		 * when the edit begins. The options are offered in the order the expression computes them;
+		 * deleted objects are not offered.
+		 * </p>
+		 *
+		 * <p>
+		 * Unset, a value of a class is chosen from the instances of the class, a value of an
+		 * enumeration from its classifiers. Options are declared only for columns with an
+		 * {@link #getUpdate() update}; they apply to the columns whose type is a class or an
+		 * enumeration.
+		 * </p>
+		 */
+		@Name(OPTIONS)
+		@Nullable
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getOptions();
+
+		/**
 		 * What a column shows for a group of rows: an expression whose result is displayed in the
 		 * group's header row.
 		 *
@@ -483,6 +535,70 @@ public class DynamicColumns implements ColumnDeclaration {
 		Expr getCellClass();
 
 		/**
+		 * The color role of a cell of every column: an expression computing the role the cell is
+		 * tinted in from the row, the object the column stands for and the value of the cell.
+		 *
+		 * <p>
+		 * The expression sees the variables of the {@link #getCellClass() cell class}. Its result
+		 * names the role as the one of a single column's
+		 * {@link AbstractColumnDeclaration.Config#getCellRole() cell role} does: a role name such as
+		 * <code>error</code>, <code>warning</code>, <code>success</code>, <code>info</code>,
+		 * <code>neutral</code>, <code>brand</code> or <code>category-1</code> to
+		 * <code>category-8</code> or a classifier with a <code>&lt;color role="..."/&gt;</code>
+		 * annotation, nothing for no role; a text naming no role is an error, and
+		 * <code>neutral</code> names the role without a tint. A cell the user may not read and the
+		 * header row of a group get no role.
+		 * </p>
+		 */
+		@Name(CELL_ROLE)
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getCellRole();
+
+		/**
+		 * The color role of the heading of every column: an expression computing the role the
+		 * heading is tinted in from the object the column stands for.
+		 *
+		 * <p>
+		 * The expression sees the variables of the {@link #getColumnType() column type} - the
+		 * object the column stands for and the values of the {@link #getInputs() inputs}. Its
+		 * result names the role as the one of a single column's
+		 * {@link AbstractColumnDeclaration.Config#getHeaderRole() header role} does: a role name, a
+		 * classifier with a <code>&lt;color role="..."/&gt;</code> annotation, nothing for no role;
+		 * a text naming no role is an error. So each column's heading can be drawn in the role of
+		 * the object it stands for, e.g. <code>$column.get(`my:Phase#status`)</code>.
+		 * </p>
+		 *
+		 * <p>
+		 * The role is put on the heading only, the data cells do not carry it. It follows the
+		 * inputs without the table being built again. Unset, the headings have no role.
+		 * </p>
+		 */
+		@Name(HEADER_ROLE)
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getHeaderRole();
+
+		/**
+		 * The CSS class of the heading of every column: an expression computing the class from the
+		 * object the column stands for.
+		 *
+		 * <p>
+		 * The expression sees the variables of the {@link #getHeaderRole() header role}. Its result
+		 * is put on the heading as the one of a single column's
+		 * {@link AbstractColumnDeclaration.Config#getHeaderClass() header class}: nothing or an empty
+		 * string gives the heading no class, a list all of its members, any other value its text.
+		 * The data cells do not carry it. Unset, the headings have no class of their own.
+		 * </p>
+		 */
+		@Name(HEADER_CLASS)
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getHeaderClass();
+
+		/**
 		 * How a cell of every column displays its value, in place of the display the type of the
 		 * values derives.
 		 *
@@ -495,6 +611,21 @@ public class DynamicColumns implements ColumnDeclaration {
 		 */
 		@Name(DISPLAY)
 		PolymorphicConfiguration<? extends ReactControlProvider> getDisplay();
+
+		/**
+		 * An application-defined filter of every column, in place of the filter the type of the
+		 * values derives.
+		 *
+		 * <p>
+		 * Each column filters by it as a single column filters by its
+		 * {@link AbstractColumnDeclaration.Config#getFilter() filter}: a filter matching a text
+		 * matches the text of the cell value, a filter integrating its own column - e.g. a
+		 * {@link ScriptedFilter} - builds the column. Unset, every column filters by the filter its
+		 * type derives.
+		 * </p>
+		 */
+		@Name(FILTER)
+		PolymorphicConfiguration<? extends ColumnFilter<?>> getFilter();
 
 		/**
 		 * Whether the table can be sorted by the columns.
@@ -513,8 +644,6 @@ public class DynamicColumns implements ColumnDeclaration {
 
 	private final String _name;
 
-	private final int _width;
-
 	private final boolean _readonly;
 
 	private final ColumnExport _export;
@@ -529,14 +658,14 @@ public class DynamicColumns implements ColumnDeclaration {
 	/** How the cells display their values, {@code null} for the display their type derives. */
 	private final ReactControlProvider _display;
 
+	/** How every column is built, deciding its filter. */
+	private final ColumnBinding _binding;
+
 	/**
 	 * Creates a {@link DynamicColumns} showing one column per object of the given set.
 	 *
 	 * @param name
 	 *        The name every column is named after, ahead of the name of the object it stands for.
-	 * @param width
-	 *        The default display width of every column in pixels, {@code 0} to keep the width the
-	 *        type of its values derives.
 	 * @param readonly
 	 *        Whether the columns stay read-only while the rows of the table are edited.
 	 * @param export
@@ -544,9 +673,9 @@ public class DynamicColumns implements ColumnDeclaration {
 	 * @param columns
 	 *        The columns to show, computed for what the table resolves its columns against.
 	 */
-	public DynamicColumns(String name, int width, boolean readonly, ColumnExport export,
+	public DynamicColumns(String name, boolean readonly, ColumnExport export,
 			Function<ColumnResolution, DynamicColumnSet> columns) {
-		this(name, width, readonly, export, columns, List.of());
+		this(name, readonly, export, columns, List.of());
 	}
 
 	/**
@@ -555,9 +684,6 @@ public class DynamicColumns implements ColumnDeclaration {
 	 *
 	 * @param name
 	 *        The name every column is named after, ahead of the name of the object it stands for.
-	 * @param width
-	 *        The default display width of every column in pixels, {@code 0} to keep the width the
-	 *        type of its values derives.
 	 * @param readonly
 	 *        Whether the columns stay read-only while the rows of the table are edited.
 	 * @param export
@@ -567,9 +693,9 @@ public class DynamicColumns implements ColumnDeclaration {
 	 * @param inputs
 	 *        The channels the given columns are computed with, see {@link #inputs()}.
 	 */
-	public DynamicColumns(String name, int width, boolean readonly, ColumnExport export,
+	public DynamicColumns(String name, boolean readonly, ColumnExport export,
 			Function<ColumnResolution, DynamicColumnSet> columns, List<InputRef> inputs) {
-		this(name, width, readonly, export, true, columns, inputs);
+		this(name, readonly, export, true, columns, inputs);
 	}
 
 	/**
@@ -578,9 +704,6 @@ public class DynamicColumns implements ColumnDeclaration {
 	 *
 	 * @param name
 	 *        The name every column is named after, ahead of the name of the object it stands for.
-	 * @param width
-	 *        The default display width of every column in pixels, {@code 0} to keep the width the
-	 *        type of its values derives.
 	 * @param readonly
 	 *        Whether the columns stay read-only while the rows of the table are edited.
 	 * @param export
@@ -592,9 +715,9 @@ public class DynamicColumns implements ColumnDeclaration {
 	 * @param inputs
 	 *        The channels the given columns are computed with, see {@link #inputs()}.
 	 */
-	public DynamicColumns(String name, int width, boolean readonly, ColumnExport export, boolean sortable,
+	public DynamicColumns(String name, boolean readonly, ColumnExport export, boolean sortable,
 			Function<ColumnResolution, DynamicColumnSet> columns, List<InputRef> inputs) {
-		this(name, width, readonly, export, sortable, columns, inputs, null);
+		this(name, readonly, export, sortable, columns, inputs, null);
 	}
 
 	/**
@@ -604,9 +727,6 @@ public class DynamicColumns implements ColumnDeclaration {
 	 *
 	 * @param name
 	 *        The name every column is named after, ahead of the name of the object it stands for.
-	 * @param width
-	 *        The default display width of every column in pixels, {@code 0} to keep the width the
-	 *        type of its values derives.
 	 * @param readonly
 	 *        Whether the columns stay read-only while the rows of the table are edited.
 	 * @param export
@@ -621,17 +741,47 @@ public class DynamicColumns implements ColumnDeclaration {
 	 *        How the cells display their values, {@code null} for the display their type derives,
 	 *        see {@link ColumnSetup#display()}.
 	 */
-	public DynamicColumns(String name, int width, boolean readonly, ColumnExport export, boolean sortable,
+	public DynamicColumns(String name, boolean readonly, ColumnExport export, boolean sortable,
 			Function<ColumnResolution, DynamicColumnSet> columns, List<InputRef> inputs,
 			ReactControlProvider display) {
+		this(name, readonly, export, sortable, columns, inputs, display, ColumnBinding.TYPE_DERIVED);
+	}
+
+	/**
+	 * Creates a {@link DynamicColumns} showing one column per object of the given set, computed
+	 * with the values of the given channels, whose cells display their values through the given
+	 * display, every column built by the given binding.
+	 *
+	 * @param name
+	 *        The name every column is named after, ahead of the name of the object it stands for.
+	 * @param readonly
+	 *        Whether the columns stay read-only while the rows of the table are edited.
+	 * @param export
+	 *        How every column takes part in an export of the table.
+	 * @param sortable
+	 *        Whether the table can be sorted by the columns, see {@link ColumnSetup#sortable()}.
+	 * @param columns
+	 *        The columns to show, computed for what the table resolves its columns against.
+	 * @param inputs
+	 *        The channels the given columns are computed with, see {@link #inputs()}.
+	 * @param display
+	 *        How the cells display their values, {@code null} for the display their type derives,
+	 *        see {@link ColumnSetup#display()}.
+	 * @param binding
+	 *        How every column is built, e.g. with a declared filter, see
+	 *        {@link ColumnSetup#binding()}. The channels it reads are inputs of the columns.
+	 */
+	public DynamicColumns(String name, boolean readonly, ColumnExport export, boolean sortable,
+			Function<ColumnResolution, DynamicColumnSet> columns, List<InputRef> inputs,
+			ReactControlProvider display, ColumnBinding binding) {
 		_name = name;
-		_width = width;
 		_readonly = readonly;
 		_export = export;
 		_sortable = sortable;
 		_columns = columns;
 		_inputs = inputs;
 		_display = display;
+		_binding = binding;
 	}
 
 	/**
@@ -639,9 +789,10 @@ public class DynamicColumns implements ColumnDeclaration {
 	 */
 	@CalledByReflection
 	public DynamicColumns(InstantiationContext context, Config config) {
-		this(config.getName(), config.getWidth(), config.getReadonly(), ColumnExport.of(context, config),
+		this(config.getName(), config.getReadonly(), ColumnExport.of(context, config),
 			config.getSortable(), scripted(context, config), config.getInputs(),
-			context.getInstance(config.getDisplay()));
+			context.getInstance(config.getDisplay()),
+			AbstractColumnDeclaration.binding(context, config.getFilter()));
 	}
 
 	/**
@@ -659,6 +810,8 @@ public class DynamicColumns implements ColumnDeclaration {
 			context.error("Edited columns must declare the type of their values, so that it is known"
 				+ " which control enters them: columns '" + config.getName() + "'.");
 		}
+		ColumnFunctions.checkOptions(context, config, Config.UPDATE, Config.OPTIONS, config.getType(),
+			"columns '" + config.getName() + "'");
 		if (!config.getSortable() && config.getComparator() != null) {
 			context.error("Columns that are not '" + Config.SORTABLE + "' have no '" + Config.COMPARATOR
 				+ "': columns '" + config.getName() + "'.");
@@ -676,12 +829,12 @@ public class DynamicColumns implements ColumnDeclaration {
 	 *
 	 * <p>
 	 * The channels every function of the declaration reads, the one computing the set of columns
-	 * included.
+	 * included, and the channels the declared filter reads.
 	 * </p>
 	 */
 	@Override
 	public List<InputRef> inputs() {
-		return _inputs;
+		return AbstractColumnDeclaration.union(_inputs, _binding.inputs());
 	}
 
 	@Override
@@ -708,12 +861,13 @@ public class DynamicColumns implements ColumnDeclaration {
 			ColumnType type = set.type(column);
 			Function<Object, Object> value = set.value(column);
 			CellEditing editing = _readonly ? null
-				: ValueCellEditing.forUpdate(type, value, set.update(column), set.canUpdate(column));
+				: ValueCellEditing.forUpdate(type, value, set.update(column), set.canUpdate(column),
+					set.options(column, type));
 
 			result.add(new ColumnSetup(_name + NAME_SEPARATOR + set.name(column), set.label(column), type, value,
-				scope.context(), ColumnBinding.TYPE_DERIVED, _width, editing, set.aggregate(column),
+				scope.context(), _binding, set.width(column), editing, set.aggregate(column),
 				set.comparator(column), !set.visible(column), _export, set.tooltip(column), set.cellClass(column),
-				_display, _sortable, null, set.exists(column)));
+				set.cellRole(column), _display, _sortable, null, set.exists(column), null, set.header(column)));
 		}
 		return result;
 	}
@@ -731,6 +885,8 @@ public class DynamicColumns implements ColumnDeclaration {
 
 		private final QueryExecutor _columnType;
 
+		private final QueryExecutor _width;
+
 		private final QueryExecutor _columnVisible;
 
 		private final QueryExecutor _columnExists;
@@ -742,6 +898,12 @@ public class DynamicColumns implements ColumnDeclaration {
 		private final QueryExecutor _tooltip;
 
 		private final QueryExecutor _cellClass;
+
+		private final QueryExecutor _cellRole;
+
+		private final QueryExecutor _headerRole;
+
+		private final QueryExecutor _headerClass;
 
 		private final ColumnFunctions _functions;
 
@@ -758,14 +920,24 @@ public class DynamicColumns implements ColumnDeclaration {
 			_columns = InputScript.compile(config, Config.COLUMNS);
 			_columnName = InputScript.compile(config, Config.COLUMN_NAME);
 			_columnLabel = InputScript.compile(config, Config.COLUMN_LABEL);
+			if (_columnLabel != null) {
+				// Labels belong to Discover (R1/R12 of the Discover specification) and are computed
+				// unsecured. The columns, their values and tooltips stay secured.
+				_columnLabel.disableSecurity();
+			}
 			_columnType = InputScript.compile(config, Config.COLUMN_TYPE);
+			_width = InputScript.compile(config, Config.WIDTH);
 			_columnVisible = InputScript.compile(config, Config.COLUMN_VISIBLE);
 			_columnExists = InputScript.compile(config, Config.COLUMN_EXISTS_IF);
 			_aggregate = InputScript.compile(config, Config.AGGREGATE);
 			_comparator = InputScript.compile(config, Config.COMPARATOR);
 			_tooltip = InputScript.compile(config, Config.TOOLTIP);
 			_cellClass = InputScript.compile(config, Config.CELL_CLASS);
-			_functions = ColumnFunctions.compile(config, Config.VALUE, Config.UPDATE, Config.CAN_UPDATE);
+			_cellRole = InputScript.compile(config, Config.CELL_ROLE);
+			_headerRole = InputScript.compile(config, Config.HEADER_ROLE);
+			_headerClass = InputScript.compile(config, Config.HEADER_CLASS);
+			_functions = ColumnFunctions.compile(config, Config.VALUE, Config.UPDATE, Config.CAN_UPDATE,
+				Config.OPTIONS);
 			_typeRef = config.getType();
 			_multiple = config.getMultiple();
 			_name = config.getName();
@@ -837,6 +1009,22 @@ public class DynamicColumns implements ColumnDeclaration {
 			}
 
 			@Override
+			public int width(Object column) {
+				if (_width == null) {
+					return 0;
+				}
+				Object width = _width.execute(_cells.inputs(column));
+				if (width == null) {
+					return 0;
+				}
+				if (!(width instanceof Number number) || number.doubleValue() < 0) {
+					throw new IllegalStateException("The columns of '" + _name + "' compute the width " + width
+						+ ", which is not a non-negative number of pixels.");
+				}
+				return number.intValue();
+			}
+
+			@Override
 			public boolean visible(Object column) {
 				if (_columnVisible == null) {
 					return true;
@@ -863,6 +1051,11 @@ public class DynamicColumns implements ColumnDeclaration {
 			@Override
 			public Predicate<Object> canUpdate(Object column) {
 				return _cells.canUpdate(column);
+			}
+
+			@Override
+			public ValueCellEditing.Options options(Object column, ColumnType type) {
+				return _cells.options(type, column);
 			}
 
 			@Override
@@ -902,6 +1095,21 @@ public class DynamicColumns implements ColumnDeclaration {
 				QueryExecutor cellClass = _cellClass;
 				return (row, value) -> AbstractColumnDeclaration
 					.cssClass(cellClass.execute(_cells.inputs(row, column, value)));
+			}
+
+			@Override
+			public BiFunction<Object, Object, ValueColor> cellRole(Object column) {
+				if (_cellRole == null) {
+					return null;
+				}
+				QueryExecutor cellRole = _cellRole;
+				return (row, value) -> AbstractColumnDeclaration
+					.valueColor(cellRole.execute(_cells.inputs(row, column, value)));
+			}
+
+			@Override
+			public ColumnHeader header(Object column) {
+				return ColumnHeader.of(_headerRole, _headerClass, _cells.channels(), column);
 			}
 
 		}

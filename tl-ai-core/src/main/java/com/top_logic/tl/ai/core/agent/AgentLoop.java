@@ -95,7 +95,6 @@ import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
 import com.top_logic.tl.ai.core.provider.health.ModelHealthMark;
 import com.top_logic.tl.ai.core.provider.health.ModelOptions;
 import com.top_logic.tl.ai.core.provider.health.ModelTarget;
-import com.top_logic.tl.ai.core.security.PreCommitGuard;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
@@ -216,6 +215,14 @@ public class AgentLoop {
 	 * rolling back would silently discard writes of tools that succeeded in the same turn.
 	 */
 	private final Set<String> _turnBlockedCallIds = ConcurrentHashMap.newKeySet();
+
+	/**
+	 * The {@link ToolCatalog#commitMessage(Tool, ToolCall, ToolContext) commit messages} of the calls
+	 * of the current turn that ran without failing and write application state, by tool call ID. Calls of a batch run
+	 * concurrently, so the turn's commit message reads them in the order of the model's response,
+	 * not in the order they completed - see {@link #turnCommitMessage}.
+	 */
+	private final Map<String, ResKey> _turnCommitMessages = new ConcurrentHashMap<>();
 
 	/**
 	 * Whether a call of the current turn has run. Until one has, the turn may still move its view of
@@ -860,7 +867,7 @@ public class AgentLoop {
 			}
 			continuations = 0;
 
-			if (!executeToolCalls(toolCalls, context, conversation, listener, runId, turn)) {
+			if (!executeToolCalls(assistantMsg, toolCalls, context, conversation, listener, runId, turn)) {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.ABORTED;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage, totalCost));
@@ -1208,7 +1215,7 @@ public class AgentLoop {
 			}
 			continuations = 0;
 
-			if (!executeToolCalls(toolCalls, context, conversation, listener, runId, turn)) {
+			if (!executeToolCalls(assistantMsg, toolCalls, context, conversation, listener, runId, turn)) {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.ABORTED;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage, totalCost));
@@ -1303,13 +1310,16 @@ public class AgentLoop {
 	}
 
 	/**
+	 * @param assistantMsg
+	 *        The model's response the calls are part of; its text describes the turn's commit.
 	 * @return {@code true} if all tool calls were executed, {@code false} if interrupted
 	 */
-	private boolean executeToolCalls(List<ToolCall> toolCalls, ToolContext context,
+	private boolean executeToolCalls(AssistantMessage assistantMsg, List<ToolCall> toolCalls, ToolContext context,
 			Conversation conversation, AgentEventListener listener, String runId, int turn) {
 
 		_turnDeniedCallIds.clear();
 		_turnBlockedCallIds.clear();
+		_turnCommitMessages.clear();
 		_turnCallRan = false;
 
 		// Before anything of the turn reads - the checks of its calls included - so that the turn
@@ -1358,20 +1368,42 @@ public class AgentLoop {
 					+ " were rolled back and NOT persisted — including changes reported as successful."
 					+ " Re-apply any changes that are still needed.");
 		} else {
-			commitTransaction(context, conversation, listener, runId, turn);
+			commitTransaction(turnCommitMessage(assistantMsg, toolCalls, context), context, conversation,
+				listener, runId, turn);
 		}
 
 		return true;
 	}
 
 	/**
+	 * The commit message of the turn the given model response started: see
+	 * {@link TurnCommitMessage}.
+	 */
+	private ResKey turnCommitMessage(AssistantMessage assistantMsg, List<ToolCall> toolCalls, ToolContext context) {
+		StringBuilder text = new StringBuilder();
+		for (ContentPart part : assistantMsg.content()) {
+			if (part instanceof TextContent textPart) {
+				// A blank line between parts: each part is at least a paragraph of its own.
+				text.append(textPart.text()).append("\n\n");
+			}
+		}
+		List<ResKey> toolMessages = new ArrayList<>();
+		for (ToolCall call : toolCalls) {
+			ResKey message = _turnCommitMessages.get(call.id());
+			if (message != null) {
+				toolMessages.add(message);
+			}
+		}
+		return TurnCommitMessage.of(context.runInfo().agentName(), text.toString(), toolMessages);
+	}
+
+	/**
 	 * Rolls the whole turn back and corrects the picture the model was left with.
 	 *
 	 * <p>
-	 * The one rollback route for "everything this turn wrote is gone": a failed tool call, a
-	 * {@link com.top_logic.tl.ai.core.security.PreCommitGuard} violation and a commit that itself
-	 * failed all go through here, so all-or-nothing means the same thing in every case and the model
-	 * is told in the same shape. Leaving the commit-failure path out was what let an agent report a
+	 * The one rollback route for "everything this turn wrote is gone": a failed tool call and a
+	 * commit that itself failed both go through here, so all-or-nothing means the same thing in both
+	 * cases and the model is told in the same shape. Leaving the commit-failure path out was what let an agent report a
 	 * created object, by the identifier its tool had returned, that no commit ever persisted.
 	 * </p>
 	 *
@@ -1489,20 +1521,19 @@ public class AgentLoop {
 		emit(listener, new AgentEvent.TransactionBegan(runId, turn, now()));
 	}
 
-	/** */
-	private void commitTransaction(ToolContext context, Conversation conversation,
+	/**
+	 * Commits the turn's transaction, if it has one, with the given message.
+	 */
+	private void commitTransaction(ResKey message, ToolContext context, Conversation conversation,
 			AgentEventListener listener, String runId, int turn) {
 		TransactionScope scope = context.transaction();
 		if (!scope.isActive()) {
-			// No write tool ran this turn: nothing to commit and nothing to guard.
-			return;
-		}
-		if (!preCommitGuardPasses(context, conversation, listener, runId, turn)) {
+			// No write tool ran this turn: nothing to commit.
 			return;
 		}
 		Revision rev;
 		try {
-			scope.commit();
+			scope.commit(message);
 			rev = scope.commitRevision();
 		} catch (RuntimeException e) {
 			// Every failed commit, whatever its type. TransactionScope.commit() wraps what the
@@ -1530,43 +1561,6 @@ public class AgentLoop {
 		}
 		long revNum = rev != null ? rev.getCommitNumber() : -1;
 		emit(listener, new AgentEvent.TransactionCommitted(runId, turn, now(), revNum));
-	}
-
-	/**
-	 * The last gate before the turn's changes are persisted: may the run's principal make every
-	 * change this turn accumulated?
-	 *
-	 * <p>
-	 * The layer that catches tools which performed no check of their own - remote MCP tools,
-	 * TL-Script tools authored in the running application, and any Java tool whose author forgot. On a
-	 * violation the whole turn is rolled back through {@link #rollbackTurn}, the same route a failed
-	 * tool call takes; each violation is audited by the guard itself.
-	 * </p>
-	 *
-	 * <p>
-	 * Costs nothing for a run that enforces no model access: the guard is asked whether it enforces
-	 * <em>before</em> the change set is read from the transaction.
-	 * </p>
-	 *
-	 * @return Whether the commit may proceed.
-	 */
-	private boolean preCommitGuardPasses(ToolContext context, Conversation conversation,
-			AgentEventListener listener, String runId, int turn) {
-		SecurityContext security = context.security();
-		PreCommitGuard guard = PreCommitGuard.forRun();
-		if (!guard.enforces()) {
-			return true;
-		}
-		List<PreCommitGuard.Violation> violations = guard.check(security, context.transaction().changes());
-		if (violations.isEmpty()) {
-			return true;
-		}
-		rollbackTurn(context, conversation, listener, runId, turn, "Pre-commit security check failed",
-			"The data changes of this turn were rolled back and NOT persisted, because your account is"
-				+ " not permitted to make all of them: " + PreCommitGuard.describe(violations)
-				+ ". The rollback is all-or-nothing, so the permitted changes of this turn are gone as"
-				+ " well. Do not retry the same change; ask the user for help or continue without it.");
-		return false;
 	}
 
 	/**
@@ -2066,7 +2060,15 @@ public class AgentLoop {
 			_turnCallRan = true;
 		}
 
+		// Before the call and on its thread, inside the turn's transaction: what the call is about to
+		// delete can still be read.
+		ResKey commitMessage = tool != null && callMode.writesApplicationState()
+			? ToolCatalog.commitMessage(tool, toolCall, execContext)
+			: null;
 		ToolResultMessage result = _registry.execute(toolCall, execContext);
+		if (commitMessage != null && !(result.state() instanceof ToolState.Failed)) {
+			_turnCommitMessages.put(toolCall.id(), commitMessage);
+		}
 		return truncateIfNeeded(result, listener, runId, turn);
 	}
 
@@ -2521,9 +2523,9 @@ public class AgentLoop {
 	 *
 	 * <p>
 	 * A model whose provider has no credentials is not called at all: it is passed over without a
-	 * mark, and a run left with no model whose provider has them ends like a run whose provider
-	 * refused its key - with a {@link ProviderException.Kind#AUTHENTICATION} failure, whose message
-	 * names the secret to provide.
+	 * mark, and a run left with no model whose provider has them ends with a
+	 * {@link ProviderException.Kind#NO_CREDENTIALS} failure, whose message names the secret to
+	 * provide.
 	 * </p>
 	 *
 	 * @param call
@@ -2603,8 +2605,8 @@ public class AgentLoop {
 	 *
 	 * <p>
 	 * The run ends on it like on any other provider failure: with
-	 * {@link StopReason#ERROR}, the kind {@link ProviderException.Kind#AUTHENTICATION} - the kind a
-	 * provider reports for a key it does not accept - and the given reason as message. The reason
+	 * {@link StopReason#ERROR}, the kind {@link ProviderException.Kind#NO_CREDENTIALS} - no provider
+	 * was called, so no key was rejected - and the given reason as message. The reason
 	 * travels as resource key (see {@link ProviderException#errorKey()}), so that the chat shows it
 	 * in the language of the user who reads it.
 	 * </p>
@@ -2613,7 +2615,7 @@ public class AgentLoop {
 	 *        Why no provider can be called, naming the secret to provide.
 	 */
 	private static ProviderException noCredentials(ResKey reason) {
-		return new ProviderException(ProviderException.Kind.AUTHENTICATION, -1, reason);
+		return new ProviderException(ProviderException.Kind.NO_CREDENTIALS, -1, reason);
 	}
 
 	/**

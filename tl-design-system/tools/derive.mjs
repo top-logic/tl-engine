@@ -5,7 +5,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolve, primitives } from './resolve.mjs';
-import { grauRampe, kategorienVerteilen, kategorieRollen, markenRollen, beschriftungAbleiten, hexZuOklch, aufKontrast, farbtonAbstand, UNBUNT_C }
+import { grauRampe, kategorienVerteilen, kategorieRollen, markenRollen, beschriftungAbleiten, hexZuOklch, aufKontrast, KontrastNichtErreichbar, farbtonAbstand, UNBUNT_C }
   from './lib/color.mjs';
 import { diagrammReihen, pruefeReihen } from './lib/diagramm.mjs';
 import { kontrastPaare, werte } from './lib/pairs.mjs';
@@ -184,7 +184,7 @@ export function derive(P, T, json, quelle = 'input') {
         eineGeschrieben = setze(mode, `category-${k}-border`, r[mode].border) || eineGeschrieben;
         const roh = r[mode].surface;
         let flaeche = roh;
-        try { flaeche = aufKontrast(roh, [kandidaten.hellerKandidat], 4.5, 'dunkler').hex; } catch { /* der Befund meldet es */ }
+        try { flaeche = aufKontrast(roh, [kandidaten.hellerKandidat], 4.5, 'dunkler').hex; } catch (e) { if (!(e instanceof KontrastNichtErreichbar)) throw e; /* der Befund meldet es */ }
         const geschriebenFlaeche = setze(mode, `category-${k}-surface`, flaeche);
         eineGeschrieben = geschriebenFlaeche || eineGeschrieben;
         if (geschriebenFlaeche && flaeche !== roh) hinweise.push(`${mode}: category-${k}-surface abgedunkelt, damit die helle Schrift 4,5:1 hält`);
@@ -263,7 +263,7 @@ export function derive(P, T, json, quelle = 'input') {
       let hex = vorher;
       for (const soll of [...new Set(liste.map((x) => x.soll))].sort((a, b) => a - b)) {
         const gegen = liste.filter((x) => x.soll === soll).map((x) => werte(Rk, mode, x.bg));
-        try { hex = aufKontrast(hex, gegen, soll, mode === 'light' ? 'dunkler' : 'heller').hex; } catch { /* der Befund meldet es */ }
+        try { hex = aufKontrast(hex, gegen, soll, mode === 'light' ? 'dunkler' : 'heller').hex; } catch (e) { if (!(e instanceof KontrastNichtErreichbar)) throw e; /* der Befund meldet es */ }
       }
       if (hex === vorher) continue;
       Rk.color[mode][rolle] = hex;
@@ -312,7 +312,7 @@ export function derive(P, T, json, quelle = 'input') {
         || KANDIDATEN_PRIMITIVE(T).some((n) => Object.hasOwn(geliefert, n)));
     const istGeliefert = (pf && Object.hasOwn(geliefert, pf)) || (pb && Object.hasOwn(geliefert, pb)) || Boolean(gelieferteBeschriftung);
     let vorschlag;
-    try { vorschlag = aufKontrast(werte(Rk, mode, fg), [werte(Rk, mode, bg)], soll, mode === 'light' ? 'dunkler' : 'heller').hex; } catch { vorschlag = null; }
+    try { vorschlag = aufKontrast(werte(Rk, mode, fg), [werte(Rk, mode, bg)], soll, mode === 'light' ? 'dunkler' : 'heller').hex; } catch (e) { if (!(e instanceof KontrastNichtErreichbar)) throw e; vorschlag = null; }
     befunde.push({ mode, fg, bg, ist, soll, vorschlag, geliefert: istGeliefert });
   }
   const gerechnet = befunde.filter((b) => !b.geliefert);

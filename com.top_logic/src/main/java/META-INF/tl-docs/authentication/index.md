@@ -1,5 +1,5 @@
 ---
-description: Read before changing how users log in to a TopLogic application - the login dialog of the classic UI (OpenLoginDialogHook, LoginViewDialog, <login-hooks> on MainLayout$GlobalConfig, the LoginHook interfaces) and of the React view UI (login.view.xml, login-form.view.xml, LoginAction / <login>, <login-commands> fed by LoginCommandsConfig, the single sign-on buttons <login-methods> fed by LoginMethodConfig / LoginMethodProvider / LoginMethod, e.g. Pac4jLoginMethodProvider), finding the account of an external login (ExternalUserMapping, ExternalIdentity, the refusal reason of LoginDeniedException), the login steps after the authentication (LoginStepsConfig, LoginStep, LoginFlow, the expired password, the second factor through the configured SecondFactor methods, a configured <dialog-step> ended by <continue-login/>), login throttling with LoginFailuresModule, and where multi-factor authentication, passkeys and the self-service flows are described.
+description: Read before changing how users log in to a TopLogic application - the login dialog of the classic UI (OpenLoginDialogHook, LoginViewDialog, <login-hooks> on MainLayout$GlobalConfig, the LoginHook interfaces) and of the React view UI (login.view.xml, login-form.view.xml, LoginAction / <login>, <login-commands> fed by LoginCommandsConfig, the single sign-on buttons <login-methods> fed by LoginMethodConfig / LoginMethodProvider / LoginMethod, e.g. Pac4jLoginMethodProvider), finding the account of an external login (ExternalUserMapping, ExternalIdentity, the refusal reason of LoginDeniedException), locked accounts (Person#isLocked, Login#checkMayLogIn, AccountLockedException), the login steps after the authentication (LoginStepsConfig, LoginStep, LoginFlow, the expired password, the second factor through the configured SecondFactor methods, a configured <dialog-step> ended by <continue-login/>), login throttling with LoginFailuresModule, and where multi-factor authentication, passkeys and the self-service flows are described.
 order: 25
 ---
 
@@ -23,6 +23,23 @@ answers a reason to deny the login, or `null`; a denial surfaces as `LoginHookFa
 
 Whether the password must be changed before the session starts is decided by
 `Login.isPasswordValidAndNotExpired(password, account)`.
+
+### Locked accounts
+
+An account whose attribute `tl.accounts:Person#locked` (`Person.isLocked()`) is set cannot log in
+through any path. `Login.checkMayLogIn(account)` is the check every login runs after the identity is
+established: it refuses a locked account with an `AccountLockedException` (a `LoginDeniedException`
+whose reason tells the user that the account is locked) and then applies the maintenance mode
+(`checkAllowedGroups`). The password login refuses a locked account only after the password was
+verified; a wrong password gets the generic refusal, so the answer does not disclose the lock. The
+external logins (`ExternalAuthenticationServlet`), the passkey login and the completion of a React
+`LoginFlow` run the same check. `SessionService.loginUser` / `loginUserInWindow` refuse a locked
+account as a backstop. The stateless APIs (the OpenAPI server, the MCP and A2A endpoints) answer a
+request authenticated for a locked account as an authentication failure (`Login.checkNotLocked`).
+
+Locking an account ends its running sessions: `SessionService` listens for commits and terminates
+the sessions of every account that is locked (or deleted) in a commit, also for commits of another
+cluster node.
 
 ## Login in the classic UI
 
@@ -71,7 +88,7 @@ the anonymous account. The login is either the dialog `login.view.xml` (opened f
 or, for an application that shows a visitor nothing else, the page named by `login-view` on
 `ViewConfig` (the framework ships `login-page.view.xml`). Both reference `login-form.view.xml`:
 the fields of the transient type `tl.login:Credentials`, the action `<login/>` (`LoginAction`),
-the contributed `<login-commands/>` and the SSO buttons `<login-methods/>`. The article
+the contributed `<login-commands/>`, the full-width "Login" button and, below it under "or", the SSO buttons `<login-methods/>`. The article
 `view-layer/app-shell` of `com.top_logic.layout.view` describes the login page.
 
 `LoginAction` checks the credentials and then runs the [login steps](#login-steps) for the
@@ -95,7 +112,8 @@ own (`start(context, flow)`); a step that does not apply is skipped. `tl-layout-
    `<verify-otp persist="true"/>`). With several methods, `second-factor-choice.view.xml` lets the
    user choose. See [the second factor of the React login](doc:authentication/mfa#second-factor-methods-of-the-react-login).
 
-After the last step, `LoginFlow` re-checks maintenance mode and allowed groups and logs the user in
+After the last step, `LoginFlow` re-checks whether the account may log in (lock, maintenance mode
+and allowed groups, see [locked accounts](#locked-accounts)) and logs the user in
 within the current browser window (`SessionService.loginUserInWindow`): the HTTP session is kept
 and only its ID is changed, other open tabs keep their user, and a tab opened later starts with the
 user logged in. The window's control tree is discarded and the window reloads
@@ -105,7 +123,7 @@ on the reload it triggers.
 Every login entry runs the steps: the password `<login/>`, the passwordless passkey login of
 `tl-security-passkey`, which begins the flow with the second factor marked as proven
 (`SecondFactorLoginStep.PROVEN`), so that only the further steps run, and the account created from
-an invitation (`<accept-invitation/>` of `tl-layout-view-selfservice`). A login entry whose page is
+an invitation or a registration (`<create-own-account/>` of `tl-layout-view-selfservice`). A login entry whose page is
 not meant for the user logged in sets `LoginFlow.LANDING_PAGE`: after the last step the window
 loads that page instead of reloading the one it shows.
 
@@ -183,8 +201,10 @@ depending on it. The self-service module `com.top_logic.layout.view.selfservice`
 The entries are keyed by `id`, so an overlay can address a contributed element.
 
 A further way to log in that belongs beside the single sign-on buttons is added with a same-path
-overlay of `login-form.view.xml` instead: an element in `<form config:ref="credentials">`, placed
-with `config:position="after" config:reference="login-methods"`. `tl-security-passkey` adds its
+overlay of `login-form.view.xml` instead: an element in `<stack config:ref="login-alternatives">`
+inside `<form config:ref="credentials">`, placed with
+`config:position="after" config:reference="login-methods"` (a reference to `login-methods` directly in the
+form fails when the view loads). `tl-security-passkey` adds its
 button "Sign in with passkey" (`<passkey-login>`) this way; it logs in with a passkey alone and
 runs the [login steps](#login-steps) without the password and second-factor steps (see the passkeys
 article of this chapter).
@@ -227,6 +247,18 @@ A `LoginMethod` answers:
 - `getReauthenticationUrl(token)` - optional; the address that has the provider confirm the user of
   the running session once more, or `null` when the method cannot. pac4j answers it only for a
   session its own client established.
+- `getIdentificationUrl(token)` - optional; the address that has the provider authenticate whoever
+  is at the keyboard within the running session, whichever method established it, or `null` when
+  the method cannot. pac4j answers it for every client that can demand a fresh authentication (its
+  re-authentication client).
+
+Both addresses carry a token of `IdentityVerifications` (`ExternalAuthenticationServlet.VERIFICATION_PARAM`).
+The request returning from the provider is no login: the servlet hands the confirmed identity
+(`VerifiedIdentity`: client, subject and, only on demand, the account the login mapping resolves)
+to the `IdentityVerificationHandler` the token was registered with. The handler of a
+re-authentication accepts only the session's own account; another handler may, for example,
+connect the identity with the session's account. The outcome page tells the user the handler's
+message and closes the window on success.
 
 The buttons are determined each time the element is rendered, so a method that becomes available
 (a secret is provided) appears without a restart. An external login that failed returns to the login

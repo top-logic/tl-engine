@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.annotate.ui.ValueColor;
 
 /**
  * A declarative, type-safe column definition.
@@ -217,11 +218,56 @@ public interface Column<R, V> {
 	}
 
 	/**
+	 * Optional CSS class put on the heading of this column only, or {@code null} for none.
+	 *
+	 * <p>
+	 * In contrast to {@link #cssClass()}, the data cells do not carry it: it is the hook for an
+	 * application's own stylesheet to mark the heading. It is asked whenever the columns are
+	 * displayed, so it may follow a state that changes while the table is shown.
+	 * </p>
+	 *
+	 * @see #headerRole() The color role of the heading.
+	 */
+	default String headerClass() {
+		return null;
+	}
+
+	/**
+	 * Optional color role the heading of this column is tinted in, or {@code null} for none.
+	 *
+	 * <p>
+	 * A UI tier draws the heading in that role, independently of the roles of the data cells
+	 * ({@link #color(Object)}). It is asked whenever the columns are displayed, so it may follow a
+	 * state that changes while the table is shown.
+	 * </p>
+	 *
+	 * @see #headerClass() The application's own styling hook for the heading.
+	 */
+	default ValueColor headerRole() {
+		return null;
+	}
+
+	/**
 	 * Optional CSS class for a cell in the given row, or {@code null} for none.
 	 *
 	 * @see #cssClass() The class the whole column carries.
 	 */
 	default String cssClass(R row) {
+		return null;
+	}
+
+	/**
+	 * Optional color role of the cell in the given row, or {@code null} for none.
+	 *
+	 * <p>
+	 * A UI tier draws the cell tinted in that role, so that a single cell can be marked by what its
+	 * row object is (e.g. by its state). The role is independent of the CSS class
+	 * {@link #cssClass(Object)}, which stays the application's own styling hook.
+	 * </p>
+	 *
+	 * @see TableView#cellColor(Row, String)
+	 */
+	default ValueColor color(R row) {
 		return null;
 	}
 

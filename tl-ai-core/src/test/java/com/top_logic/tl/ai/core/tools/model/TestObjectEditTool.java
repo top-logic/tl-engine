@@ -5,6 +5,11 @@
  */
 package com.top_logic.tl.ai.core.tools.model;
 
+import static com.top_logic.tl.ai.core.tools.I18NConstants.OBJECT_CREATED__TYPE;
+import static com.top_logic.tl.ai.core.tools.I18NConstants.OBJECT_CREATED__TYPE_NAME;
+import static com.top_logic.tl.ai.core.tools.I18NConstants.OBJECT_DELETED__OBJECT;
+import static com.top_logic.tl.ai.core.tools.I18NConstants.OBJECT_UPDATED__OBJECT;
+
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -30,12 +35,15 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.base.locking.LockService;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.tl.ai.core.agent.ExecutionMode;
@@ -190,7 +198,7 @@ public class TestObjectEditTool extends BasicTestCase {
 		ToolResult result = update(agent, values("name", null, "description", "changed"));
 
 		ApplicationRefusal refusal = refusal(result);
-		assertEquals(ReadFilter.labelled(agent), refusal.getObject());
+		assertEquals(ReadFilter.forSecurity(ModelSecurity.UNCHECKED).disclose(agent), refusal.getObject());
 		assertEquals(List.of("name"), attributes(refusal));
 		assertEquals("The violating value must be undone.", name, agent.getName());
 		assertEquals("The other value of the same call must be undone too.", "kept", agent.getDescription());
@@ -613,7 +621,7 @@ public class TestObjectEditTool extends BasicTestCase {
 		ToolResult result = inGerman(() -> call(() -> _tool.deleteObject(idOf(archive), ToolContext.EMPTY)));
 
 		ApplicationRefusal refusal = refusal(result);
-		assertEquals(ReadFilter.labelled(archive), refusal.getObject());
+		assertEquals(ReadFilter.forSecurity(ModelSecurity.UNCHECKED).disclose(archive), refusal.getObject());
 		assertEquals(List.of(Resources.getInstance(Locale.GERMAN).getString(I18NConstants.ARCHIVE_IS_KEPT)),
 			refusal.getReasons().stream().map(Reason::getText).toList());
 		assertTrue(archive.tValid());
@@ -688,6 +696,47 @@ public class TestObjectEditTool extends BasicTestCase {
 
 		assertSucceeded(result);
 		assertEquals("after", agent.getDescription());
+	}
+
+	// -- commit messages --
+
+	/** An update is logged with the label of the object it changes. */
+	public void testTheUpdateIsLoggedWithTheObjectsLabel() {
+		Agent agent = agent("before");
+
+		ResKey message = commitMessage("updateObject", Map.of("id", idOf(agent), "values", values("description", "x")));
+
+		assertEquals(OBJECT_UPDATED__OBJECT.fill(MetaLabelProvider.INSTANCE.getLabel(agent)), message);
+	}
+
+	/** A creation is logged with the type and, where the call gives one, the new object's name. */
+	public void testTheCreationIsLoggedWithTypeAndName() {
+		TLClass agentType = (TLClass) TLModelUtil.findType(AGENT_TYPE);
+		TLClass memoryType = (TLClass) TLModelUtil.findType(MEMORY_TYPE);
+
+		assertEquals(
+			OBJECT_CREATED__TYPE_NAME.fill(TLModelNamingConvention.getTypeLabelKey(agentType), "Planner"),
+			commitMessage("createObject", Map.of("type", AGENT_TYPE, "values", values("Name", "Planner"))));
+		assertEquals(OBJECT_CREATED__TYPE.fill(TLModelNamingConvention.getTypeLabelKey(memoryType)),
+			commitMessage("createObject", Map.of("type", MEMORY_TYPE, "values", values("text", "x"))));
+	}
+
+	/**
+	 * A deletion is logged with the label of the object, read before it is gone; an identifier that
+	 * names nothing is logged as it is, and describing the call does not fail.
+	 */
+	public void testTheDeletionIsLoggedWithTheObjectsLabel() {
+		Agent agent = agent("doomed");
+
+		assertEquals(OBJECT_DELETED__OBJECT.fill(MetaLabelProvider.INSTANCE.getLabel(agent)),
+			commitMessage("deleteObject", Map.of("id", idOf(agent))));
+		assertEquals(OBJECT_DELETED__OBJECT.fill("Agent:no-such-id"),
+			commitMessage("deleteObject", Map.of("id", "Agent:no-such-id")));
+	}
+
+	private ResKey commitMessage(String toolName, Map<String, Object> arguments) {
+		return TLContextManager.inPersonContext(_owner,
+			() -> tool(toolName).commitMessage(arguments, ToolContext.EMPTY));
 	}
 
 	// -- helpers --

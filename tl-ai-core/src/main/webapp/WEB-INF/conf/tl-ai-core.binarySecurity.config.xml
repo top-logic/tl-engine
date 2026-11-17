@@ -2,13 +2,13 @@
 
 <!--
 	The shipped read policy for the perceivable binaries this module stores (issue #227): screenshots,
-	cookie pools, the web pages agent runs read, and the research runs it keeps (issues #764, #827),
-	whose report is rendered as a binary.
+	the web pages agent runs read, and the research runs it keeps (issues #764, #827), whose report
+	is rendered as a binary. A module storing further binaries of an account puts them under the same
+	role with a rule and a grant of its own (tl-ai-browser does so for its cookie pools).
 
-	A screenshot is a picture of a page somebody drove a browser to while logged in somewhere, and a
-	cookie pool is that login itself. Both are reachable through "viewDocument", which loads a
-	"tl.core:Binary" attribute into a model's context, so "who may read one" is not a question this
-	module may leave to whoever deploys it.
+	A screenshot is a picture of a page somebody drove a browser to while logged in somewhere. It is
+	reachable through "viewDocument", which loads a "tl.core:Binary" attribute into a model's context,
+	so "who may read one" is not a question this module may leave to whoever deploys it.
 
 	THE POLICY: the owner, plus administrators. A binary whose owner cannot be resolved - one an
 	unattended run captured, with no Person to name - is readable by administrators and by code
@@ -36,12 +36,6 @@
 	(SecurityConfigurationService.isAllowedBypass), which is where the "plus administrators" half of
 	the policy comes from; it is not granted here, because a grant would be a second place saying
 	it.
-
-	WHAT THIS DOES NOT DECIDE. A shared cookie pool (CookiePool#shared) is selectable by every user
-	and every agent session - that is what sharing a login means, and CookiePoolService enforces it
-	on the selection path, which never asks model security. Sharing a login is not the same as
-	letting a model READ the stored session state, so the read policy stays owner-plus-administrator
-	for a shared pool too.
 
 	AN INSTALLATION THAT WANTS A WIDER RULE states one: add its own role to the grants below, or a
 	role rule of its own that puts "AiBinaryOwner" on the objects a reporting role is to reach. It
@@ -157,17 +151,6 @@
 								<step attribute="tl.ai.execution:ResearchRun#owner"/>
 							</path>
 						</rule>
-
-						<rule id="tl.ai.cookiepool.owner"
-							inherit="true"
-							meta-element="tl.ai.cookiepool:CookiePool"
-							role="AiBinaryOwner"
-							type="reference"
-						>
-							<path>
-								<step attribute="tl.ai.cookiepool:CookiePool#owner"/>
-							</path>
-						</rule>
 					</rules>
 				</role-rules>
 			</instance>
@@ -210,13 +193,6 @@
 						/>
 					</class>
 					<class name="tl.ai.execution:ArchivedPage">
-						<grant
-							inherit="true"
-							operation="Read"
-							roles="AiBinaryOwner"
-						/>
-					</class>
-					<class name="tl.ai.cookiepool:CookiePool">
 						<grant
 							inherit="true"
 							operation="Read"

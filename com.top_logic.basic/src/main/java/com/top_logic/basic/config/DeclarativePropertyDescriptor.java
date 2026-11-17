@@ -143,6 +143,12 @@ public class DeclarativePropertyDescriptor extends PropertyDescriptorImpl {
 		} else {
 			if (!isMultiRefType(_declaredType) && !isIndexedRefType(_declaredType)) {
 				initInstanceType(_declaredType);
+			} else if (getElementType() == null) {
+				error(protocol, "A property of type '" + _declaredType.getName() + "' needs the type of its elements,"
+					+ " declared in the attribute '" + PropertyDescriptorConfig.ELEMENT_TYPE + "'.");
+				// Continue with the most general element type, so that resolving the descriptor
+				// reports further errors instead of failing on the missing one.
+				setElementType(Object.class);
 			}
 		}
 

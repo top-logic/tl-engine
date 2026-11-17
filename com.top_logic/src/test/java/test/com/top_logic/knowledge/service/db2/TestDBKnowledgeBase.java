@@ -2285,14 +2285,15 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 			newAB(b1, b2);
 			
 			try {
-	            Logger.configureStdout("FATAL"); // suppress the (correct) ERROR
+				Logger.configureStdout("FATAL"); // suppress the (correct) ERROR
+				// The listener is notified after the database commit, its failure does not undo
+				// the commit.
 				commit(tx);
-				fail("Expected failure.");
-			} catch (KnowledgeBaseRuntimeException ex) {
-				// Expected.
 			} finally {
-			    Logger.configureStdout();
+				Logger.configureStdout();
 			}
+			assertTrue(b1.isAlive());
+			assertTrue(b2.isAlive());
 		} finally {
 			kb().removeUpdateListener(listener);
 		}
@@ -2315,14 +2316,15 @@ public class TestDBKnowledgeBase extends AbstractDBKnowledgeBaseTest {
 			newAB(b1, b2);
 			
 			try {
-			    Logger.configureStdout("FATAL"); // suppress the (correct) ERROR
+				Logger.configureStdout("FATAL"); // suppress the (correct) ERROR
+				// The listener is notified after the database commit, its failure does not undo
+				// the commit.
 				commit(tx);
-				fail("Expected error.");
-			} catch (ExpectedError ex) {
-				// Expected.
 			} finally {
-			    Logger.configureStdout(); 
+				Logger.configureStdout();
 			}
+			assertTrue(b1.isAlive());
+			assertTrue(b2.isAlive());
 		} finally {
 			kb().removeUpdateListener(listener);
 		}

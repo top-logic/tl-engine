@@ -14,6 +14,7 @@ import java.util.function.Predicate;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.channel.ChannelCondition;
+import com.top_logic.model.annotate.ui.ValueColor;
 
 /**
  * The columns a {@link DynamicColumns} shows: the objects standing for them, and what each of those
@@ -63,6 +64,21 @@ public interface DynamicColumnSet {
 	 *        One of the objects standing for a column.
 	 */
 	ColumnType type(Object column);
+
+	/**
+	 * The default display width of the column the given object stands for, in pixels, see
+	 * {@link ColumnSetup#width()}.
+	 *
+	 * <p>
+	 * {@code 0} - the default - keeps the width the type of the values of the column derives.
+	 * </p>
+	 *
+	 * @param column
+	 *        One of the objects standing for a column.
+	 */
+	default int width(Object column) {
+		return 0;
+	}
 
 	/**
 	 * Whether the column the given object stands for is shown from the start, rather than only
@@ -117,6 +133,23 @@ public interface DynamicColumnSet {
 	}
 
 	/**
+	 * The options an edited cell value of the column the given object stands for is chosen from,
+	 * or {@code null} where a value of the column's type is entered rather than chosen.
+	 *
+	 * <p>
+	 * By default, a value of a class or an enumeration is chosen from the options of its type.
+	 * </p>
+	 *
+	 * @param column
+	 *        One of the objects standing for a column.
+	 * @param type
+	 *        What the values of that column are, see {@link #type(Object)}.
+	 */
+	default ValueCellEditing.Options options(Object column, ColumnType type) {
+		return ValueCellEditing.options(type, null, row -> new Object[0]);
+	}
+
+	/**
 	 * What the column the given object stands for shows for a group of rows, computed from the
 	 * group's member rows, or {@code null} for a column that leaves its group cell empty.
 	 *
@@ -158,6 +191,29 @@ public interface DynamicColumnSet {
 	 */
 	default BiFunction<Object, Object, String> cellClass(Object column) {
 		return null;
+	}
+
+	/**
+	 * The color role of a cell of the given column, computed from the row and the value of the
+	 * cell, {@code null} for a column whose cells have none.
+	 *
+	 * @see ColumnSetup#cellRole()
+	 */
+	default BiFunction<Object, Object, ValueColor> cellRole(Object column) {
+		return null;
+	}
+
+	/**
+	 * The color role and the CSS class of the heading of the given column,
+	 * {@link ColumnHeader#NONE} for a heading without either.
+	 *
+	 * @param column
+	 *        One of the objects standing for a column.
+	 *
+	 * @see ColumnSetup#header()
+	 */
+	default ColumnHeader header(Object column) {
+		return ColumnHeader.NONE;
 	}
 
 }

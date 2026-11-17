@@ -30,6 +30,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.core.tools.model.ChangeReport;
 import com.top_logic.tl.ai.core.tools.refusal.ApplicationRefusals;
 import com.top_logic.tl.ai.core.tools.script.TLScriptExecutor.Change;
@@ -85,7 +86,7 @@ import com.top_logic.util.TLContext;
  * (a dry run does not), decided by the run's own policy - background allowlist, administrator bypass,
  * role grants - exactly as for a {@code data.write} tool. A call in a system context is refused: the
  * engine checks no rights there and records no user as the author. What the answer shows passes
- * {@link ReadFilter}; the pre-commit guard asks again for whatever the turn changed.
+ * {@link ReadFilter}.
  * </p>
  */
 public class ChangeDataTool {
@@ -159,7 +160,7 @@ public class ChangeDataTool {
 		+ " again without dryRun: the user approves the change, and the answer lists what was changed -"
 		+ " that is the confirmation. " + ApplicationRefusals.DESCRIPTION,
 		mode = ToolMode.DATA_WRITE, group = ToolGroups.SCRIPT, marking = AnswerMarking.TOOL,
-		dryRun = "dryRun", check = "refusal")
+		dryRun = "dryRun", check = "refusal", commitMessage = "commitMessage")
 	public ToolResult changeData(
 			@P("The change as one script. Use the qualified names outlineModel or searchModel reported, and"
 				+ " \"Type:123\".objectResolveKey() for an object whose id you have.") String script,
@@ -175,6 +176,15 @@ public class ChangeDataTool {
 			return ToolResult.of(dryRun(checked.change(), context));
 		}
 		return ToolResult.of(change(checked.change(), context));
+	}
+
+	/**
+	 * The commit message of {@link #changeData(String, Boolean, ToolContext)}: one for every call,
+	 * because what a script changes is said by the script, not by its arguments.
+	 */
+	@CalledByReflection
+	ResKey commitMessage(String script, Boolean dryRun, ToolContext context) {
+		return I18NConstants.DATA_CHANGED_BY_SCRIPT;
 	}
 
 	/**
@@ -345,7 +355,8 @@ public class ChangeDataTool {
 	 * empty text, or the list of nothings {@code foreach} returns.
 	 */
 	private static String result(Object value, ModelSecurity security) {
-		Object visible = ReadFilter.forSecurity(security).visible(value);
+		ReadFilter filter = ReadFilter.forSecurity(security);
+		Object visible = filter.visible(value);
 		if (visible instanceof Collection<?> many) {
 			List<Object> values = many.stream().filter(Objects::nonNull).collect(Collectors.toList());
 			if (values.isEmpty()) {
@@ -359,7 +370,7 @@ public class ChangeDataTool {
 		if (visible == null || "".equals(visible)) {
 			return "";
 		}
-		return "\nThe script returns: " + QueryTool.render(visible).replace("\n", "; ");
+		return "\nThe script returns: " + ReadFilter.json(filter.disclose(visible));
 	}
 
 	/**

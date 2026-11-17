@@ -34,35 +34,29 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
-import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.CommandScope;
-import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
-import com.top_logic.layout.view.dnd.DropConfig;
 import com.top_logic.layout.view.form.FormControl;
-import com.top_logic.layout.view.form.FormModel;
 import com.top_logic.layout.view.form.QueryRowSetBinding;
 import com.top_logic.layout.view.form.RowEditPolicy;
-import com.top_logic.layout.view.form.RowSetBinding;
 import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
-import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.TableDropConfig;
 import com.top_logic.layout.view.table.RowClassConfig;
-import com.top_logic.layout.view.table.RowClassFunction;
+import com.top_logic.layout.view.table.RowFunction;
+import com.top_logic.layout.view.table.RowRoleConfig;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -71,10 +65,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.GroupSpec;
-import com.top_logic.table.SelectionMode;
-import com.top_logic.table.TableId;
 import com.top_logic.table.impl.ListRowSource;
-import com.top_logic.table.impl.PersonalConfigViewStateStore;
 
 /**
  * Declarative {@link UIElement} that renders a model-defined table (the {@code 
@@ -101,7 +92,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	 * Configuration for {@link TableElement}.
 	 */
 	@TagName("table")
-	public interface Config extends AbstractTableElement.Config, RowClassConfig {
+	public interface Config extends AbstractTableElement.Config, RowClassConfig, RowRoleConfig {
 
 		/** Access to the default methods of this interface for the configuration proxy. */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -119,17 +110,11 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		/** Configuration name for {@link #getObservedTypes()}. */
 		String OBSERVED_TYPES = "observed-types";
 
-		/** Configuration name for {@link #getRowEdit()}. */
-		String ROW_EDIT = "row-edit";
-
 		/** Configuration name for {@link #getCreateType()}. */
 		String CREATE_TYPE = "create-type";
 
 		/** Configuration name for {@link #getCreateTypeExpr()}. */
 		String CREATE_TYPE_EXPR = "create-type-expr";
-
-		/** Configuration name for {@link #getOnRemove()}. */
-		String ON_REMOVE = "on-remove";
 
 		/** Configuration name for {@link #getRowCount()}. */
 		String ROW_COUNT = "row-count";
@@ -176,17 +161,6 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		@Name(OBSERVED_TYPES)
 		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
 		List<TLModelPartRef> getObservedTypes();
-
-		/**
-		 * Which rows are editable while the enclosing form is in edit mode.
-		 *
-		 * <p>
-		 * When set, the table must be nested inside a form; cell edits buffer on row overlays and
-		 * are committed together with the form's save. By default the table is read-only.
-		 * </p>
-		 */
-		@Name(ROW_EDIT)
-		RowEditPolicy getRowEdit();
 
 		/**
 		 * The type of the rows created in edit mode.
@@ -236,16 +210,6 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		@Name(CREATE_TYPE_EXPR)
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getCreateTypeExpr();
-
-		/**
-		 * What removing a row means when the form is saved.
-		 *
-		 * <p>
-		 * When unset, the table offers no row removal.
-		 * </p>
-		 */
-		@Name(ON_REMOVE)
-		RowSetBinding.RemoveMode getOnRemove();
 
 		/**
 		 * Whether the table tells below its rows how many rows it has.
@@ -308,7 +272,10 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	private final QueryExecutor _createTypeExpr;
 
 	/** The compiled {@link Config#getRowClass() row class function}. */
-	private final RowClassFunction _rowClass;
+	private final RowFunction<String> _rowClass;
+
+	/** The compiled {@link Config#getRowRole() row role function}. */
+	private final RowFunction<ValueColor> _rowRole;
 
 	/** The declared {@link Config#getDrops() drops} with their actions, in declaration order. */
 	private final List<DeclaredDrop> _drops;
@@ -325,19 +292,10 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			context.error("A <table> states its create type either as a fixed type ('" + Config.CREATE_TYPE
 				+ "') or by an expression ('" + Config.CREATE_TYPE_EXPR + "'), not both.");
 		}
-		_rowClass = RowClassFunction.compile(config);
+		_rowClass = RowFunction.rowClass(config);
+		_rowRole = RowFunction.rowRole(config);
 		_drops = compileDrops(context, config.getDrops(), dropConfig -> dropConfig.getTarget().signature());
-		if (config.getRowEdit() != RowEditPolicy.NONE && (config.getDrag() != null || !_drops.isEmpty())) {
-			// The editable table is a control of its own, which carries no drag-and-drop seam; a
-			// declaration there would apply to nothing.
-			context.error("A <table> with '" + Config.ROW_EDIT + "' offers neither <" + Config.DRAG
-				+ "> nor <" + DropConfig.TAG_NAME + ">.");
-		}
-		if (config.getRowEdit() != RowEditPolicy.NONE && config.getEditInPlace()) {
-			// A row-edit table buffers its edits in the form, an edit in place writes at once.
-			context.error("A <table> with '" + Config.ROW_EDIT + "' is not edited in place ('"
-				+ Config.EDIT_IN_PLACE + "').");
-		}
+		checkRowEdit(context, _drops);
 	}
 
 	@Override
@@ -353,9 +311,10 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		}
 
 		Function<Object, String> rowCssClass = _rowClass.bind(inputChannels);
+		Function<Object, ValueColor> rowColor = _rowRole.bind(inputChannels);
 		ReadOnlyTable<ListRowSource<Object>, TableSelectionBinding> table = createTable(context,
 			types, resolveRowTypes(types, rows), inputValues, columns -> new ListRowSource<>(new ArrayList<>(rows), columns), false,
-			initialGrouping(), _drops, rowCssClass, ROW_SELECTION);
+			initialGrouping(), _drops, rowCssClass, rowColor, ROW_SELECTION);
 		TableViewControl<Object> control = table.control();
 		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setRowCount(_config.getRowCount());
@@ -366,7 +325,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		// Refresh the rows when observed objects change or an input channel changes.
 		QueryExecutor rowsExecutor = _rowsExecutor;
 		Runnable refresh = () -> {
-			refreshPresets(table, ChannelInputs.arguments(inputChannels));
+			refreshColumnsAndPresets(table, ChannelInputs.arguments(inputChannels));
 			control.refreshData();
 			if (table.selectionBinding() != null) {
 				table.selectionBinding().rowsRefreshed();
@@ -374,13 +333,13 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		};
 		// An input change leaving the rows as they are - a change of the table's own selection
 		// above all - keeps the cells where no column reads that input, and only refreshes what is
-		// computed from the inputs apart from the rows.
+		// computed from the inputs apart from the rows, and which columns exist.
 		InputRoles roles = inputRoles(context, inputChannels);
 		Runnable inputsChanged = () -> {
-			if (refreshPresets(table, ChannelInputs.arguments(inputChannels))) {
-				// Pushes the rows again as well, for their row class.
+			if (refreshColumnsAndPresets(table, ChannelInputs.arguments(inputChannels))) {
+				// Pushes the rows again as well, for their row class and role.
 				control.refreshFilters();
-			} else if (rowCssClass != null) {
+			} else if (rowCssClass != null || rowColor != null) {
 				control.repaintRows();
 			}
 		};
@@ -413,11 +372,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	 */
 	private IReactControl createEditableControl(ViewContext context, List<ViewChannel> inputChannels,
 			Object[] inputValues, RowTypes types, RowsResult initialRows) {
-		FormModel formModel = context.getFormModel();
-		if (!(formModel instanceof FormControl formControl)) {
-			throw new IllegalStateException(
-				"A <table> with '" + Config.ROW_EDIT + "' requires an enclosing <form>.");
-		}
+		FormControl formControl = rowEditForm(context);
 
 		TLClass createType = createType(inputValues);
 		List<TLStructuredType> rowTypes = resolveRowTypes(types, initialRows.rows());
@@ -432,80 +387,23 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			createType == null ? List.of() : List.copyOf(ModelAccessPolicy.concreteTypes(createType)),
 			_config.getOnRemove());
 
-		ChannelRef selectionRef = _config.getSelection();
-		ViewChannel selectionChannel = selectionRef != null ? context.resolveChannel(selectionRef) : null;
-
-		ViewCommandModel activation = activationModel(context);
-
-		List<ColumnDeclaration> declarations = columns(types, rowType);
-		List<String> declaredNames = ColumnDeclarations.declaredNames(declarations);
-		TableId tableId = tableId(types);
-		RowSetTableControl control =
-			new RowSetTableControl(context, formControl, binding, declarations, _config.getRowEdit());
-		if (!types.isEmpty()) {
-			// Without configured types, the columns follow the type of the rows the binding creates.
-			control.setRowTypes(rowTypes);
-		}
+		RowSetTableControl control = createRowEditControl(context, formControl, binding, types, rowTypes,
+			inputChannels, _rowClass.bind(inputChannels), _rowRole.bind(inputChannels));
 		diagnosticsTarget[0] = control;
-		control.setCssClass(_config.getCssClass());
 		applyRowDiagnostics(control, initialRows.securityReport());
-		control.setFramed(false);
-		control.setPersonalization(PersonalConfigViewStateStore.INSTANCE, tableId);
-		control.setNamedFilters(
-			columns -> declaredFilters(tableId, columns, declaredNames, ChannelInputs.arguments(inputChannels)),
-			filterStore(), initialFilter());
-		control.setFilterChannels(channel(context, _config.getActivePreset()),
-			channel(context, _config.getSearchTerm()));
-		control.setDisplayedRowsChannel(channel(context, _config.getDisplayedRows()));
-		control.setFilterBar(filterBar());
 		control.setRowCount(_config.getRowCount());
-		control.setDefaultSort(defaultSort());
 		control.setGrouping(initialGrouping());
-		control.setFixedColumns(_config.getFixedColumns());
-		control.setSelectionChannel(selectionChannel);
-		control.setSelectionMode(_config.getSelectionMode());
 		InputRoles roles = inputRoles(context, inputChannels);
 		control.setRowRefresh(args -> refreshRows(rowsExecutor, args, control),
 			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels, roles.rowIndependent(),
 			roles.cellIndependent(), roles.columnOnly());
-		control.setActivationHandler(activationHandler(activation));
-		control.setTrailingColumns(this.<TLObject> rowCommandColumns(activation, control::activate));
-		control.setRowCssClass(_rowClass.bind(inputChannels));
 		control.init();
 
-		contributeRowCommands(context, formControl, binding, control);
+		contributeRowCommands(context, formControl, binding, control, !binding.getCreateTypes().isEmpty());
 		contributeExportCommand(context, control, () -> control.getTableControl().getView(),
 			control::getExportRenderers, inputChannels);
 
 		return control;
-	}
-
-	/**
-	 * Contributes the commands changing the rows of the table to the enclosing command scope (next
-	 * to the form's save and cancel commands): the {@link RowSetTableControl#getAddRowCommand()
-	 * add-row command}, when the table creates rows, and the
-	 * {@link RowSetTableControl#getRemoveSelectedRowsCommand() removal of the selected rows}, when
-	 * it removes rows and lets the user select several. The table itself renders frameless, so it
-	 * has no own toolbar to host them.
-	 */
-	private void contributeRowCommands(ViewContext context, FormControl formControl,
-			RowSetBinding binding, RowSetTableControl control) {
-		CommandScope scope = context.getScope(CommandScope.class);
-		if (scope == null) {
-			return;
-		}
-		if (!binding.getCreateTypes().isEmpty()) {
-			contribute(scope, formControl, control.getAddRowCommand());
-		}
-		if (binding.getRemoveMode() != RowSetBinding.RemoveMode.NONE
-			&& _config.getSelectionMode() == SelectionMode.MULTI) {
-			contribute(scope, formControl, control.getRemoveSelectedRowsCommand());
-		}
-	}
-
-	private static void contribute(CommandScope scope, FormControl formControl, CommandModel command) {
-		scope.addCommand(command);
-		formControl.addCleanupAction(() -> scope.removeCommand(command));
 	}
 
 	/**

@@ -52,9 +52,9 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * <p>
  * Never a substitute for the per-object checks. A tool can declare a type it does not touch, or touch
  * one it did not declare, so what actually protects the data is {@link ModelSecurity#canRead} on each
- * object, the read filtering of the results and the pre-commit guard. This layer exists so that a
- * refusal the user could not have got past arrives as a sentence naming the type instead of as an
- * empty result the model reports to the user as "there are none".
+ * object, the read filtering of the results and the write checks under the user's rights. This
+ * layer exists so that a refusal the user could not have got past arrives as a sentence naming the
+ * type instead of as an empty result the model reports to the user as "there are none".
  * </p>
  *
  * <p>

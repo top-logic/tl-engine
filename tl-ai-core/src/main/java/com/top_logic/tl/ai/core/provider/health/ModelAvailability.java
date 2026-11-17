@@ -97,10 +97,11 @@ public final class ModelAvailability {
 	 * says nothing.
 	 *
 	 * <p>
-	 * Two kinds say nothing on purpose. A malformed request is this application's fault and would
+	 * Three kinds say nothing on purpose. A malformed request is this application's fault and would
 	 * be malformed for the next model too, and a context overflow is answered by compacting, not by
 	 * changing models - marking either one would route healthy models away over a fault that
-	 * travels with the request.
+	 * travels with the request. A provider without credentials was not called at all, so the model
+	 * did not fail; such a model is passed over without a mark.
 	 * </p>
 	 */
 	public static HealthCause causeOf(ProviderException.Kind kind) {
@@ -111,7 +112,7 @@ public final class ModelAvailability {
 			case BILLING, AUTHENTICATION -> HealthCause.QUOTA;
 			case RATE_LIMITED, OVERLOADED -> HealthCause.CAPACITY;
 			case UNKNOWN -> HealthCause.TRANSIENT;
-			case INVALID_REQUEST, CONTEXT_WINDOW_EXCEEDED -> null;
+			case INVALID_REQUEST, CONTEXT_WINDOW_EXCEEDED, NO_CREDENTIALS -> null;
 		};
 	}
 

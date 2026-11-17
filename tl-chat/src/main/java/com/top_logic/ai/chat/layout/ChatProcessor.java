@@ -163,12 +163,12 @@ public class ChatProcessor {
 
 	/**
 	 * What the user is told a provider error of a run said: the message the run has for the user
-	 * ({@link AgentEvent.ProviderError#messageKey()}) in the user's language, otherwise the
-	 * provider's own words.
+	 * ({@link AgentEvent.ProviderError#messageKey()}) in the language of the current thread,
+	 * otherwise the provider's own words.
 	 *
 	 * <p>
-	 * The run itself translates nothing: it reports in no particular user's language, and the chat
-	 * of a conversation is read by whoever opened it.
+	 * Called on the thread of the run, which works in the context of the window the message was
+	 * sent in, so that the text is in the language of the conversation's user.
 	 * </p>
 	 */
 	public static String providerErrorMessage(AgentEvent.ProviderError error) {

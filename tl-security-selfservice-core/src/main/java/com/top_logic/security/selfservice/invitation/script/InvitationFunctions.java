@@ -90,4 +90,20 @@ public class InvitationFunctions extends TLScriptFunctions {
 	public static ResKey refusal(String token) {
 		return InvitationModule.getInstance().refusal(token);
 	}
+
+	/**
+	 * Why a value is not accepted as e-mail address of an invitation or a registration.
+	 *
+	 * @param email
+	 *        The address to check.
+	 * @return The message telling that the address is invalid; <code>null</code> if it is
+	 *         valid.
+	 *
+	 * @implNote Calls {@link InvitationModule#emailRefusal(String)}.
+	 */
+	@Label("Refusal of an e-mail address")
+	@SideEffectFree
+	public static ResKey emailRefusal(String email) {
+		return InvitationModule.emailRefusal(email);
+	}
 }

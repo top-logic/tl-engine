@@ -197,18 +197,7 @@ public class AttributeSelectFieldModel extends AttributeFieldModel implements Se
 	}
 
 	private Object toAttributeValue(Object selection) {
-		List<?> values;
-		if (selection instanceof List) {
-			values = (List<?>) selection;
-		} else if (selection == null) {
-			values = Collections.emptyList();
-		} else {
-			values = Collections.singletonList(selection);
-		}
-		if (_multiple) {
-			return new ArrayList<>(values);
-		}
-		return values.isEmpty() ? null : values.get(0);
+		return SelectionValues.value(selection, _multiple);
 	}
 
 	@Override

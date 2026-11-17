@@ -858,7 +858,7 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 				if (!isUpdateForCreate() && !isChanged() && !fallbackDisplay.isChanged()) {
 					return;
 				}
-				updateValue(toAttributeValue(field, fallbackDisplay.getExplicitValue()));
+				updateValue(fieldToAttributeValue(field, fallbackDisplay.getExplicitValue()));
 				return;
 			}
 
@@ -883,16 +883,24 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 */
 	@FrameworkInternal
 	public final Object fieldToAttributeValue(FormField field) {
-		return toAttributeValue(field, field.getValue());
+		return fieldToAttributeValue(field, field.getValue());
 	}
 
 	/**
 	 * Converts the given value in the representation of the given field to a potential attribute
 	 * value.
 	 *
+	 * @param field
+	 *        The {@link FormField} the value is meant for.
+	 * @param fieldValue
+	 *        A value in the representation of the given field, e.g. the explicit value of a field
+	 *        displaying an attribute with fallback.
+	 * @return The value that can be used as value for this {@link AttributeUpdate}.
+	 *
 	 * @see #fieldToAttributeValue(FormField)
 	 */
-	private Object toAttributeValue(FormField field, Object fieldValue) {
+	@FrameworkInternal
+	public final Object fieldToAttributeValue(FormField field, Object fieldValue) {
 		if (field instanceof StringField) {
 			if (StringServices.isEmpty(fieldValue)) {
 				// The field value represents "null".

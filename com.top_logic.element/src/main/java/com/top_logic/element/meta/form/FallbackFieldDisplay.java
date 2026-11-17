@@ -186,6 +186,13 @@ public class FallbackFieldDisplay implements ValueListener, ActivePropertyListen
 	}
 
 	/**
+	 * The attribute the {@link #getExplicitValue() explicit value} is stored in.
+	 */
+	public TLStructuredTypePart getStorageAttribute() {
+		return _storageAttr;
+	}
+
+	/**
 	 * Whether the explicit value differs from the value the field was initialized with.
 	 */
 	public boolean isChanged() {

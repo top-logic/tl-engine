@@ -116,7 +116,7 @@ public class TestMaskedReferenceField extends AbstractModelAccessTest {
 		assertFalse(json, json.contains("hiddenCategory"));
 		assertFalse(json, json.contains("aHiddenCategory"));
 		assertEquals(MASKED, Resources.getInstance().getString(
-			com.top_logic.layout.react.I18NConstants.MASKED_VALUE));
+			com.top_logic.model.security.I18NConstants.MASKED_VALUE));
 	}
 
 	/**

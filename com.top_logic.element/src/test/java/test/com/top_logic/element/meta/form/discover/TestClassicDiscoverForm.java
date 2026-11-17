@@ -7,6 +7,8 @@ package test.com.top_logic.element.meta.form.discover;
 
 import static com.top_logic.model.security.I18NConstants.ERROR_TARGET_NOT_DISCOVERABLE__OBJECT_ATTRIBUTE;
 
+import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -38,10 +40,18 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.layout.Flavor;
 import com.top_logic.layout.ResPrefix;
+import com.top_logic.layout.ResourceProvider;
+import com.top_logic.layout.VetoException;
+import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.layout.form.FormField;
+import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.layout.form.model.SelectFieldUtils;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
+import com.top_logic.layout.form.model.utility.MaskedValues;
 import com.top_logic.layout.form.model.utility.OptionModel;
+import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.table.provider.generic.TableConfigModelService;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -317,6 +327,88 @@ public class TestClassicDiscoverForm extends BasicTestCase {
 				handler.save(Map.of(TARGETS, List.of(_own)), holder);
 				assertEquals(List.of(_own), holder.tValueByName(TARGETS));
 			});
+			return null;
+		});
+	}
+
+	/**
+	 * A reference field shows an undiscoverable element by the placeholder, without tooltip, image
+	 * and link, and a discoverable element by its label.
+	 */
+	public void testFieldMasksUndiscoverableElement() {
+		asUser(() -> {
+			AttributeFormContext form = form();
+			SelectField targets = (SelectField) editField(form, form.editObject(_holder), TARGETS);
+			assertTrue(SelectFieldUtils.isMaskUndiscoverable(targets));
+			ResourceProvider labels = (ResourceProvider) SelectFieldUtils.getOptionLabelProvider(targets);
+			assertEquals(MaskedValues.placeholder(), labels.getLabel(_hiddenStored));
+			assertNull(labels.getTooltip(_hiddenStored));
+			assertNull(labels.getImage(_hiddenStored, Flavor.DEFAULT));
+			assertNull(labels.getLink(DummyDisplayContext.newInstance(), _hiddenStored));
+			assertNull(labels.getCssClass(_hiddenStored));
+			assertEquals(MetaResourceProvider.INSTANCE.getLabel(_own), labels.getLabel(_own));
+			assertFalse(SelectFieldUtils.getOptionContextMenu(targets).hasContextMenu(_hiddenStored));
+			return null;
+		});
+	}
+
+	/**
+	 * The read-only display of a field shows the placeholder instead of the label of an
+	 * undiscoverable element.
+	 */
+	public void testReadOnlyTextMasked() {
+		String text = asUser(() -> {
+			AttributeFormContext form = form();
+			FormField targets = editField(form, form.editObject(_holder), TARGETS);
+			StringBuilder out = new StringBuilder();
+			try {
+				SelectFieldUtils.writeSelectionAsTextImmutable(out, targets);
+			} catch (IOException ex) {
+				throw new RuntimeException(ex);
+			}
+			return out.toString();
+		});
+		assertTrue(text, text.contains(MaskedValues.placeholder()));
+		assertFalse(text, text.contains("hiddenStored"));
+		assertTrue(text, text.contains(MetaResourceProvider.INSTANCE.getLabel(_own)));
+	}
+
+	/**
+	 * In an order by label, undiscoverable elements come after all others, so that their position
+	 * does not disclose their label.
+	 */
+	public void testMaskedSortedLast() {
+		asUser(() -> {
+			AttributeFormContext form = form();
+			FormField generated = editField(form, form.editObject(_holder), GENERATED);
+			List<Object> values = new ArrayList<>(List.of(_hidden, _own, _hiddenStored, _ownChild));
+			Collections.sort(values, SelectFieldUtils.getOptionComparator(generated));
+			assertEquals(set(_own, _ownChild), new HashSet<>(values.subList(0, 2)));
+			assertEquals(set(_hidden, _hiddenStored), new HashSet<>(values.subList(2, 4)));
+			return null;
+		});
+	}
+
+	/**
+	 * Writing the selection of a field as text and parsing it back keeps all undiscoverable
+	 * elements, although they are all shown by the same placeholder.
+	 */
+	public void testTextRoundTripKeepsMaskedElements() {
+		inTransaction(() -> _holder.tUpdateByName(TARGETS, List.of(_hiddenStored, _own, _hidden)));
+		asUser(() -> {
+			AttributeFormContext form = form();
+			FormField targets = editField(form, form.editObject(_holder), TARGETS);
+			StringBuilder text = new StringBuilder();
+			try {
+				SelectFieldUtils.writeSelectionAsTextEditable(text, targets);
+				targets.update(text.toString());
+			} catch (IOException | VetoException ex) {
+				throw new RuntimeException(ex);
+			}
+			assertFalse(targets.hasError() ? targets.getError() : null, targets.hasError());
+			List<?> value = (List<?>) targets.getValue();
+			assertEquals(3, value.size());
+			assertEquals(set(_hiddenStored, _own, _hidden), new HashSet<>(value));
 			return null;
 		});
 	}

@@ -47,6 +47,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_TARGET_NOT_DISCOVERABLE__OBJECT_ATTRIBUTE;
 
+	/**
+	 * @en *****
+	 */
+	public static ResKey MASKED_VALUE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

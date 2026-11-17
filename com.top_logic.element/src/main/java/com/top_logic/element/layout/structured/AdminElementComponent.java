@@ -28,7 +28,9 @@ import com.top_logic.layout.form.constraints.StringLengthConstraint;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.layout.form.model.SelectFieldUtils;
 import com.top_logic.layout.form.model.StringField;
+import com.top_logic.layout.form.model.utility.DiscoverableOptions;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -247,26 +249,55 @@ public class AdminElementComponent extends EditAttributedComponent {
 	 * @return the field
 	 */
 	protected FormMember createOrderField(StructuredElement anElement, ResPrefix resPrefix, boolean create) {
-        StructuredElement[] theSiblings = (create) ? new StructuredElement[0] : StructuredElementFactory.getSiblings(anElement);
-        StructuredElement   theNext     = StructuredElementFactory.findNextSibling(anElement);
-        List                theList     = Arrays.asList(theSiblings);
-        SelectField         theField    = FormFactory.newSelectField(AdminElementComponent.ELEMENT_ORDER, theList, false, (theSiblings.length == 0));
-        theField.setOptionLabelProvider(new LabelProvider() {
+		return newOrderField(anElement, create, Resources.getInstance().getString(getResPrefix().key("atEnd")));
+	}
 
-            @Override
+	/**
+	 * Creates the {@link SelectField} choosing the sibling the given element is placed before.
+	 *
+	 * <p>
+	 * The siblings are an object source: only those the current user may discover are offered, see
+	 * {@link DiscoverableOptions#discoverable(List)}. A current next sibling the user may not
+	 * discover is shown as placeholder, see {@link SelectFieldUtils#setMaskUndiscoverable(com.top_logic.layout.form.FormField, boolean)}.
+	 * </p>
+	 *
+	 * @param anElement
+	 *        The element to place.
+	 * @param create
+	 *        Whether the element is being created, then it has no siblings to choose from.
+	 * @param atEndLabel
+	 *        The label of the choice to place the element at the end.
+	 * @return The new field.
+	 */
+	public static SelectField newOrderField(StructuredElement anElement, boolean create, String atEndLabel) {
+		List<StructuredElement> allSiblings =
+			create ? List.of() : Arrays.asList(StructuredElementFactory.getSiblings(anElement));
+		List<StructuredElement> theSiblings = DiscoverableOptions.discoverable(allSiblings);
+		StructuredElement theNext = StructuredElementFactory.findNextSibling(anElement);
+		// Without any sibling there is no position to choose. With only undiscoverable siblings,
+		// placing the element at the end is still possible.
+		boolean immutable = allSiblings.isEmpty();
+		SelectField theField =
+			FormFactory.newSelectField(AdminElementComponent.ELEMENT_ORDER, theSiblings, false, immutable);
+		theField.setOptionLabelProvider(new LabelProvider() {
+
+			@Override
 			public String getLabel(Object anObject) {
-                if (anObject instanceof StructuredElement) {
-                    return (((StructuredElement) anObject).getName());
-                }
-                else {
-					return (Resources.getInstance().getString(getResPrefix().key("atEnd")));
-                }
-            }
-        });
-        theField.setAsSingleSelection(theNext);
+				if (anObject instanceof StructuredElement) {
+					return (((StructuredElement) anObject).getName());
+				}
+				else {
+					return atEndLabel;
+				}
+			}
+		});
+		SelectFieldUtils.setMaskUndiscoverable(theField, true);
+		// The current position is the initial value: the field is changed only when the user
+		// chooses another position, also when choosing the end.
+		theField.initializeField(theNext == null ? List.of() : List.of(theNext));
 
-        return (theField);
-    }
+		return (theField);
+	}
 
     /**
      * Return the factory for  {@link com.top_logic.element.structured.StructuredElement elements}.

@@ -127,6 +127,24 @@ public final class DiscoverRight {
 	}
 
 	/**
+	 * Whether a form field shows the given value of a reference as placeholder
+	 * {@link I18NConstants#MASKED_VALUE}, because the current user may not discover it.
+	 *
+	 * <p>
+	 * A field holds the stored value of a reference, so it may contain such objects. Their identity
+	 * - label, image, tooltip, link - is not shown: the field shows the placeholder instead, keeps
+	 * the object at its place in the value, and writes it back unchanged unless the user removes it.
+	 * </p>
+	 *
+	 * @param value
+	 *        The value to check. May be <code>null</code>.
+	 * @see #isDiscoverable(Object)
+	 */
+	public static boolean isMasked(Object value) {
+		return !isDiscoverable(value);
+	}
+
+	/**
 	 * Checks that the current user may discover every object the given new value adds to the given
 	 * reference.
 	 *

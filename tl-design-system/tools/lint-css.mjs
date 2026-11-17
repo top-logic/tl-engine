@@ -183,6 +183,7 @@ const MODIFIERS = {
   'tl-fill': new Set([]), // layout.css, table.css
   'tl-region': new Set([]), // layout.css, tabs.css, dialog.css
   'tl-reveal-on-hover': new Set([]), // layout.css
+  'tl-table-view-options': new Set([]), // table.css
 };
 
 // Punkt 11b: Die Modifier eines Elements (block__element--modifier) sind ebenso entschieden. Ein Element ohne

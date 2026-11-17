@@ -9,7 +9,7 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 }));
 
 // The bridge first, as the page loads it, so that the modules it imports see the mocked SSE client.
-import { mount, unmount } from '../bridge/tl-react-bridge';
+import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
 import { register } from 'tl-react-bridge';
 import TLLoginBackdrop from './TLLoginBackdrop';
 
@@ -83,7 +83,7 @@ beforeEach(() => {
 
 afterEach(() => {
   act(() => unmount(CONTROL_ID));
-  document.getElementById(CONTROL_ID)?.remove();
+  findMountPoint(CONTROL_ID)?.remove();
   style.remove();
   document.documentElement.removeAttribute('data-tl-mode');
   vi.unstubAllGlobals();
@@ -97,10 +97,10 @@ afterAll(() => {
 /** Mounts a backdrop with the given state and answers the element it is drawn into. */
 function mountBackdrop(state: Record<string, unknown>): HTMLElement {
   const element = document.createElement('div');
-  element.id = CONTROL_ID;
+  element.setAttribute(MOUNT_ATTRIBUTE, CONTROL_ID);
   document.body.appendChild(element);
   act(() => mount(CONTROL_ID, 'TLLoginBackdrop', state, 'w', '/ctx'));
-  return document.getElementById(CONTROL_ID)!;
+  return element;
 }
 
 /** Lets the root of the backdrop be 320 by 240 px large and the canvas draw on a fake context. */

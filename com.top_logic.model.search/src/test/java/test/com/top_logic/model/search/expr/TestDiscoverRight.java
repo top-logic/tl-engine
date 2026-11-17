@@ -17,6 +17,7 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialRolesManager;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
@@ -38,6 +39,7 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.providers.ConstraintCheckByExpression;
+import com.top_logic.model.search.providers.DynamicColumnProviderByExpression;
 import com.top_logic.model.search.providers.I18NConstants;
 import com.top_logic.model.search.providers.LabelByExpression;
 import com.top_logic.model.search.providers.LabelProviderByExpression;
@@ -841,6 +843,44 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		QueryExecutor titleExpr = (QueryExecutor) privateField(TitleByExpression.class, "_expr", provider);
 		becomeUser(_pathUser);
 		assertNull(titleExpr.execute(_a1));
+	}
+
+	/**
+	 * R12: The header label of a column of a {@link DynamicColumnProviderByExpression} is computed
+	 * unsecured; the columns and the cell values are computed secured.
+	 */
+	public void testDynamicColumnLabelUnsecured() throws Exception {
+		DynamicColumnProviderByExpression provider = dynamicColumnProvider();
+		QueryExecutor columns = (QueryExecutor) privateField(DynamicColumnProviderByExpression.class, "_columns", provider);
+		QueryExecutor accessor =
+			(QueryExecutor) privateField(DynamicColumnProviderByExpression.class, "_accessor", provider);
+		java.lang.reflect.Method label =
+			DynamicColumnProviderByExpression.class.getDeclaredMethod("label", Object.class, Object.class);
+		label.setAccessible(true);
+
+		becomeUser(_pathUser);
+		assertEquals("The path user discovers a1 only.", Arrays.asList(_a1), asList(columns.execute(_root)));
+		assertEquals("The label of a discover-only column object is filled.", "a1", label.invoke(provider, _a1, _root));
+		assertNull("The cell value is read secured.", accessor.execute(_root, _a1, _root));
+
+		becomeUser(_stranger);
+		assertEquals("Without Discover, there is no column.", Arrays.asList(), asList(columns.execute(_root)));
+	}
+
+	private static DynamicColumnProviderByExpression dynamicColumnProvider() throws Exception {
+		DynamicColumnProviderByExpression.Config<?> config =
+			TypedConfiguration.newConfigItem(DynamicColumnProviderByExpression.Config.class);
+		config.update(config.descriptor().getProperty(DynamicColumnProviderByExpression.Config.COLUMNS),
+			parse("model -> all(`TestTLScriptSecurity:PathA`)"));
+		config.update(config.descriptor().getProperty(DynamicColumnProviderByExpression.Config.COLUMN_LABEL),
+			parse("column -> model -> $column.get(`TestTLScriptSecurity:PathNode#name`)"));
+		config.update(config.descriptor().getProperty(DynamicColumnProviderByExpression.Config.COLUMN_TYPE),
+			parse("`tl.core:String`"));
+		config.update(config.descriptor().getProperty(DynamicColumnProviderByExpression.Config.ACCESSOR),
+			parse("row -> column -> model -> $column.get(`TestTLScriptSecurity:PathNode#name`)"));
+		// The table component is not resolved, the test does not adapt a table.
+		return new DynamicColumnProviderByExpression(new DefaultInstantiationContext(TestDiscoverRight.class),
+			config);
 	}
 
 	private static Object privateField(Class<?> type, String name, Object instance) throws Exception {

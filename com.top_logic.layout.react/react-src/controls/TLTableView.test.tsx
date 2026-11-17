@@ -8,6 +8,20 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
   unsubscribe: () => {},
 }));
 
+/** The options of every command enqueued to the command channel, by command name. */
+const enqueued = vi.hoisted(() => [] as { command: string; options: unknown }[]);
+
+vi.mock('../bridge/command-channel', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../bridge/command-channel')>();
+  return {
+    ...original,
+    enqueueCommand: (...args: Parameters<typeof original.enqueueCommand>) => {
+      enqueued.push({ command: args[1].command, options: args[2] });
+      return original.enqueueCommand(...args);
+    },
+  };
+});
+
 // The bridge first, as the page loads it: the bridge entry reaches it through modules that the SSE client imports
 // as well, and these must see the mocked SSE client.
 import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
@@ -112,6 +126,7 @@ afterAll(async () => {
 /** Mounts a table of three rows with the given state, and records the commands it sends. */
 function mountTable(state: Record<string, unknown>): void {
   sent = [];
+  enqueued.length = 0;
   vi.stubGlobal('ResizeObserver', class {
     observe(): void {}
     unobserve(): void {}
@@ -204,5 +219,64 @@ describe('a table whose rows are not all edited', () => {
     await settle();
 
     expect(selections()).toEqual([]);
+  });
+});
+
+/** The command reporting the rows the table shows (TableViewControl.CMD_SCROLL). */
+const CMD_SCROLL = 'scroll';
+
+/** The delay after which the table reports the rows a scroll brought into view. */
+const SCROLL_REPORT_DELAY = 80;
+
+/** Gives the body of the table the height of two rows and scrolls it, as the user does. */
+function scrollBody(): void {
+  const body = document.querySelector<HTMLElement>(`#${TABLE_ID} .tl-table__body`)!;
+  Object.defineProperty(body, 'clientHeight', { configurable: true, get: () => 72 });
+  act(() => {
+    body.dispatchEvent(new Event('scroll'));
+  });
+}
+
+/** The scroll commands the table sent. */
+function scrolls(): Sent[] {
+  return sent.filter(command => command.command === CMD_SCROLL);
+}
+
+describe('the viewport report of a table', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('reports the rows a scroll brought into view in the background, ignoring a disposed table', async () => {
+    mountTable({});
+    await settle();
+    vi.useFakeTimers();
+    scrollBody();
+    act(() => {
+      vi.advanceTimersByTime(SCROLL_REPORT_DELAY);
+    });
+    vi.useRealTimers();
+    await settle();
+
+    expect(scrolls()).toEqual([{ command: CMD_SCROLL, args: { start: 0, count: 2 } }]);
+    expect(enqueued.filter(entry => entry.command === CMD_SCROLL))
+      .toEqual([{ command: CMD_SCROLL, options: { background: true, ignoreStaleUi: true } }]);
+  });
+
+  it('reports nothing when it is removed before the report is due', async () => {
+    mountTable({});
+    await settle();
+    vi.useFakeTimers();
+    scrollBody();
+    act(() => unmount(TABLE_ID));
+
+    expect(vi.getTimerCount()).toBe(0);
+    act(() => {
+      vi.advanceTimersByTime(SCROLL_REPORT_DELAY);
+    });
+    vi.useRealTimers();
+    await settle();
+
+    expect(scrolls()).toEqual([]);
   });
 });

@@ -1,7 +1,7 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, useStandaloneKeyboardScope,
   FillBarrier, rootClassName, tooltipProps, ThemeIcon, usePart,
-  useDisplayClass, useFocusTrap, pressClosedSurface, ICON_EXPAND,
+  useDisplayClass, useFocusTrap, pressClosedSurface, ICON_EXPAND, StateBadge, labelWithBadge,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { Menu, MenuItem, MenuHeader, MenuSeparator, menuItemClassName } from 'tl-react-bridge';
@@ -71,6 +71,32 @@ function containsCurrent(item: SidebarItemData, activeItemId: string): boolean {
     || containsCurrent(child, activeItemId));
 }
 
+/**
+ * What an entry of the rail shows inside its button: the icon and, in the open rail, the label. The
+ * badge of the entry stands after the label, or over the corner of the icon in the folded rail; the
+ * element around the part places it (view-layer/parts.md). In the folded rail the button is named by
+ * {@link labelWithBadge}.
+ */
+const SidebarEntryContent: React.FC<{ item: NavItem | CommandItemInfo; collapsed: boolean }> = ({ item, collapsed }) => {
+  const badge = item.badge;
+  return (
+    <>
+      {collapsed && badge ? (
+        <span className="tl-icon-badge">
+          <SidebarIcon icon={item.icon} />
+          <span className="tl-icon-badge__count">
+            <StateBadge badge={badge} alone={true} />
+          </span>
+        </span>
+      ) : (
+        <SidebarIcon icon={item.icon} />
+      )}
+      {!collapsed && <span className="tl-menu__label">{item.label}</span>}
+      {!collapsed && badge && <StateBadge badge={badge} alone={false} />}
+    </>
+  );
+};
+
 const SidebarNavItem: React.FC<{
   item: NavItem;
   active: boolean;
@@ -79,37 +105,21 @@ const SidebarNavItem: React.FC<{
   tabIndex: number;
   itemRef: (el: HTMLElement | null) => void;
   onFocus: (id: string) => void;
-}> = ({ item, active, collapsed, onSelect, tabIndex, itemRef, onFocus }) => {
-  const Badge = usePart('Badge');
-  const badge = item.badge?.content;
-  return (
-    <button
-      type="button"
-      className={menuItemClassName(active, 'tl-sidebar__item')}
-      aria-current={active ? 'page' : undefined}
-      onClick={() => onSelect(item.id)}
-      aria-label={collapsed ? item.label : undefined}
-      {...tooltipProps(collapsed ? item.label : undefined)}
-      tabIndex={tabIndex}
-      ref={itemRef}
-      onFocus={() => onFocus(item.id)}
-    >
-      {collapsed && badge ? (
-        // The count over the corner of the icon: the element around the part places it (view-layer/parts.md).
-        <span className="tl-icon-badge">
-          <SidebarIcon icon={item.icon} />
-          <span className="tl-icon-badge__count">
-            <Badge content={badge} />
-          </span>
-        </span>
-      ) : (
-        <SidebarIcon icon={item.icon} />
-      )}
-      {!collapsed && <span className="tl-menu__label">{item.label}</span>}
-      {!collapsed && badge && <Badge content={badge} />}
-    </button>
-  );
-};
+}> = ({ item, active, collapsed, onSelect, tabIndex, itemRef, onFocus }) => (
+  <button
+    type="button"
+    className={menuItemClassName(active, 'tl-sidebar__item')}
+    aria-current={active ? 'page' : undefined}
+    onClick={() => onSelect(item.id)}
+    aria-label={collapsed ? labelWithBadge(item.label, item.badge) : undefined}
+    {...tooltipProps(collapsed ? item.label : undefined)}
+    tabIndex={tabIndex}
+    ref={itemRef}
+    onFocus={() => onFocus(item.id)}
+  >
+    <SidebarEntryContent item={item} collapsed={collapsed} />
+  </button>
+);
 
 const SidebarCommandItem: React.FC<{
   item: CommandItemInfo;
@@ -124,14 +134,13 @@ const SidebarCommandItem: React.FC<{
     className={menuItemClassName(false, 'tl-sidebar__item')}
     onClick={() => onExecute(item.id)}
     disabled={item.disabled}
-    aria-label={collapsed ? item.label : undefined}
+    aria-label={collapsed ? labelWithBadge(item.label, item.badge) : undefined}
     {...tooltipProps(item.tooltip ?? (collapsed ? item.label : undefined))}
     tabIndex={tabIndex}
     ref={itemRef}
     onFocus={() => onFocus(item.id)}
   >
-    <SidebarIcon icon={item.icon} />
-    {!collapsed && <span className="tl-menu__label">{item.label}</span>}
+    <SidebarEntryContent item={item} collapsed={collapsed} />
   </button>
 );
 
@@ -160,7 +169,6 @@ const SidebarGroupFlyout: React.FC<{
   onExecute: (id: string) => void;
   onClose: () => void;
 }> = ({ item, activeItemId, anchor, onSelect, onExecute, onClose }) => {
-  const Badge = usePart('Badge');
   const entries = (children: SidebarItemData[]): React.ReactNode[] => children.map((child, index) => (
     <React.Fragment key={child.id}>
       {hasDividerBefore(children, index) && <MenuSeparator />}
@@ -174,7 +182,7 @@ const SidebarGroupFlyout: React.FC<{
       return (
         <MenuItem icon={nav.icon} label={nav.label ?? ''}
           current={nav.id === activeItemId ? 'page' : false}
-          trailing={nav.badge?.content ? <Badge content={nav.badge.content} /> : undefined}
+          trailing={nav.badge ? <StateBadge badge={nav.badge} alone={false} /> : undefined}
           onSelect={() => { onSelect(nav.id); onClose(); }} />
       );
     }
@@ -184,6 +192,7 @@ const SidebarGroupFlyout: React.FC<{
       return (
         <MenuItem icon={command.icon} label={command.label ?? ''}
           disabled={command.disabled} tooltip={command.tooltip}
+          trailing={command.badge ? <StateBadge badge={command.badge} alone={false} /> : undefined}
           onSelect={() => { onExecute(command.id); onClose(); }} />
       );
     }

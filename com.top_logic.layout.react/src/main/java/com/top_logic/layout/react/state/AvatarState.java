@@ -92,6 +92,9 @@ public interface AvatarState extends com.top_logic.layout.react.state.ImageSourc
 	/** @see #getSize() */
 	String SIZE__PROP = "size";
 
+	/** @see #getBadge() */
+	String BADGE__PROP = "badge";
+
 	/**
 	 * The display name of the one the avatar represents, plain text, the source of the initials,
 	 * the category and the accessible name. Absent or {@code null}: the neutral circle.
@@ -112,6 +115,22 @@ public interface AvatarState extends com.top_logic.layout.react.state.ImageSourc
 	 * @see #getSize()
 	 */
 	com.top_logic.layout.react.state.AvatarState setSize(com.top_logic.layout.react.state.AvatarState.Size value);
+
+	/**
+	 * The badge at the corner of the avatar, an image named by its {@link Badge#getLabel()}, or by its
+	 * {@link Badge#getContent()} where it has no label. Absent: none.
+	 */
+	com.top_logic.layout.react.state.Badge getBadge();
+
+	/**
+	 * @see #getBadge()
+	 */
+	com.top_logic.layout.react.state.AvatarState setBadge(com.top_logic.layout.react.state.Badge value);
+
+	/**
+	 * Checks, whether {@link #getBadge()} has a value.
+	 */
+	boolean hasBadge();
 
 	@Override
 	com.top_logic.layout.react.state.AvatarState setUrl(String value);

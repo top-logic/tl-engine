@@ -359,19 +359,19 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	}
 
 	/**
-	 * Updates the badge on a navigation item.
+	 * Updates the badge of the entry of a navigation or command item.
 	 *
 	 * @param itemId
-	 *        The ID of the navigation item to update.
+	 *        The ID of the item to update, also of an item within a group.
 	 * @param badge
 	 *        The new badge, or {@code null} to remove the badge.
 	 */
 	public void updateBadge(String itemId, BadgeDisplay badge) {
-		NavigationItem navItem = findNavItem(itemId, _items);
-		if (navItem == null || Objects.equals(navItem.getBadge(), badge)) {
+		SidebarItem item = findItem(itemId);
+		if (item == null || Objects.equals(item.getBadge(), badge)) {
 			return;
 		}
-		navItem.setBadge(badge);
+		item.setBadge(badge);
 		refreshItems();
 	}
 
@@ -405,7 +405,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	 *
 	 * <p>
 	 * To be called after an item's state was changed through its setters
-	 * ({@link NavigationItem#setBadge(BadgeDisplay)}, {@link CommandItem#setHidden(boolean)},
+	 * ({@link SidebarItem#setBadge(BadgeDisplay)}, {@link CommandItem#setHidden(boolean)},
 	 * {@link CommandItem#setDisabled(boolean)}): the items are held as objects and serialized as a
 	 * whole, so a change to one of them reaches the display only with the list it is part of.
 	 * </p>

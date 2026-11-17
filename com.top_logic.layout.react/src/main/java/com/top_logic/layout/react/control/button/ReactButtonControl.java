@@ -14,6 +14,7 @@ import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.control.common.BadgeDisplay;
 import com.top_logic.layout.react.state.ButtonState;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
@@ -98,6 +99,7 @@ public class ReactButtonControl extends ReactControl {
 		setHidden(!model.isVisible());
 		setImage(model.getImage());
 		setTooltip(model.getTooltip());
+		setBadge(model.getBadge());
 		setKeyGesture(model.getKeyGesture());
 		_requestedDisplay = model.getDisplayMode();
 		setDisplayMode(offered(model, _requestedDisplay, true));
@@ -210,6 +212,13 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	public void setTooltip(String tooltip) {
 		putState(ButtonState.TOOLTIP__PROP, (tooltip == null || tooltip.isEmpty()) ? null : tooltip);
+	}
+
+	/**
+	 * Sets the badge of the button, {@code null} for none.
+	 */
+	public void setBadge(BadgeDisplay badge) {
+		putState(ButtonState.BADGE__PROP, badge == null ? null : badge.toState());
 	}
 
 	/**
@@ -411,6 +420,7 @@ public class ReactButtonControl extends ReactControl {
 		setActive(_model.isActive());
 		setHidden(!_model.isVisible());
 		setTooltip(_model.getTooltip());
+		setBadge(_model.getBadge());
 
 		ThemeImage image = _model.getImage();
 		boolean hadImage = getState(ButtonState.IMAGE__PROP) != null;

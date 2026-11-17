@@ -15,12 +15,12 @@ export interface SidebarItemBase {
   icon?: string;
   /** Not drawn, together with what it contains; an open navigation item stays open nevertheless. */
   hidden?: boolean;
+  /** The badge of a navigation or command item; absent where it shows none. */
+  badge?: Partial<BadgeJson>;
 }
 
 export interface NavItem extends SidebarItemBase {
   type: 'nav';
-  /** The badge of the item; absent where it shows none. */
-  badge?: BadgeJson;
 }
 
 export interface CommandItemInfo extends SidebarItemBase {

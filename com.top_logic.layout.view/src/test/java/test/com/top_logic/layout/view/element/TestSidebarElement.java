@@ -224,6 +224,23 @@ public class TestSidebarElement extends BasicTestCase {
 	}
 
 	/**
+	 * Tests that a command item shows the badge of the command it hosts, and follows its channel.
+	 */
+	public void testACommandItemShowsTheBadgeOfItsCommand() {
+		ReactSidebarControl sidebar = sidebar(FIXTURE);
+		assertNull("A channel holding nothing is worth no badge.", item(sidebar, "cmdDisabled").get(BADGE));
+
+		_count.set(Integer.valueOf(5));
+
+		assertEquals("The badge of the command is shown at its item, in the role the command declares.",
+			Map.of(Badge.CONTENT__PROP, "5", Badge.ROLE__PROP, "error"), item(sidebar, "cmdDisabled").get(BADGE));
+
+		_count.set(Integer.valueOf(0));
+
+		assertNull("Nothing to count leaves no badge behind.", item(sidebar, "cmdDisabled").get(BADGE));
+	}
+
+	/**
 	 * Tests that a command item follows the executability of the command it hosts: it is withheld
 	 * or shown out of reach while the rules reject the input, and takes its place back when they
 	 * accept it.

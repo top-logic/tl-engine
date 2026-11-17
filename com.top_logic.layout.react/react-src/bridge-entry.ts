@@ -53,6 +53,8 @@ export type { MenuProps } from './bridge/menu';
 export { ButtonDefaults, useButtonDefaults, menuItemProps } from './bridge/button-defaults';
 export type { ButtonAppearance, ButtonDefaultsValue } from './bridge/button-defaults';
 export { registerPart, replacePart, usePart, buttonPartAttributes, buttonLinkAttributes } from './bridge/parts';
+export { badgePartProps, badgeName, labelWithBadge } from './bridge/parts';
+export { StateBadge } from './bridge/StateBadge';
 export type {
   PartProps,
   PartName,

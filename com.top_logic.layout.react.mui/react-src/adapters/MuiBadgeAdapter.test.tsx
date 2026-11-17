@@ -43,4 +43,40 @@ describe('the part Badge as MUI Badge', () => {
   it('shows a content that is no number as it is', () => {
     expect(draw({ content: 'neu' }).querySelector('.MuiBadge-badge')!.textContent).toBe('neu');
   });
+
+  it('draws the color of its role, brand as the primary color', () => {
+    const marker = (props: Partial<BadgePartProps>) => draw(props).querySelector('.MuiBadge-badge')!;
+
+    expect(marker({ colorRole: 'brand' }).classList).toContain('MuiBadge-colorPrimary');
+    cleanup();
+    expect(marker({ colorRole: 'error' }).classList).toContain('MuiBadge-colorError');
+    cleanup();
+    expect(marker({ colorRole: 'warning' }).classList).toContain('MuiBadge-colorWarning');
+    cleanup();
+    expect(marker({ colorRole: 'success' }).classList).toContain('MuiBadge-colorSuccess');
+    cleanup();
+    expect(marker({ colorRole: 'info' }).classList).toContain('MuiBadge-colorInfo');
+  });
+
+  it('draws a dot without content', () => {
+    const badge = draw({ content: undefined, dot: true, colorRole: 'error' });
+
+    const marker = badge.querySelector('.MuiBadge-badge')!;
+    expect(marker.classList).toContain('MuiBadge-dot');
+    expect(marker.classList).not.toContain('MuiBadge-invisible');
+    expect(marker.textContent).toBe('');
+  });
+
+  it('is an image named by its label where it has one, and plain text without', () => {
+    const named = draw({ content: '4', label: '4 new entries' });
+    expect(named.getAttribute('role')).toBe('img');
+    expect(named.getAttribute('aria-label')).toBe('4 new entries');
+    cleanup();
+
+    const plain = draw({ content: '4' });
+    expect(plain.hasAttribute('role')).toBe(false);
+    expect(plain.hasAttribute('aria-label')).toBe(false);
+    // Read as text of the element around it, although MUI hides the content of its marker.
+    expect(plain.querySelector('.MuiBadge-badge')!.hasAttribute('aria-hidden')).toBe(false);
+  });
 });

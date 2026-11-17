@@ -18,16 +18,19 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
+import com.top_logic.model.listen.ModelScope;
 import com.top_logic.util.Resources;
 
 /**
  * The badge of an element declared {@link WithBadge}: what its channel holds, as a
- * {@link BadgeDisplay}, kept up to date on the control showing it.
+ * {@link BadgeDisplay}, kept up to date while it is displayed.
  *
  * <p>
- * The badge follows a new value on the channel for as long as the control exists, and a change of
- * the object the value points to while the control is attached. A control attached again after a
- * detach shows the object as it is then. Disposing the control ends both.
+ * While {@link #attach(ModelScope, Consumer) attached}, the badge follows a new value on the
+ * channel and a change of the object the value points to. Attaching shows the badge as it is then,
+ * so that a display returning on screen catches up with what it missed. A control displaying the
+ * badge {@link #bind(ReactControl, Consumer) binds} it to its own attachment; a model shared by
+ * several controls attaches it with its own.
  * </p>
  */
 public class BadgeBinding {
@@ -45,6 +48,15 @@ public class BadgeBinding {
 	private final BadgeRole _role;
 
 	private final String _label;
+
+	/** Receives the badge while attached, {@code null} while detached. */
+	private Consumer<? super BadgeDisplay> _show;
+
+	/** The registration of the channel listener while attached. */
+	private Registration _registration;
+
+	/** The observation of the object on the channel while attached. */
+	private ChannelObjectObserver _observer;
 
 	private BadgeBinding(ViewContext context, ViewChannel channel, BadgeRole role, String label) {
 		_context = context;
@@ -80,23 +92,67 @@ public class BadgeBinding {
 	}
 
 	/**
-	 * Keeps the badge shown by the given control up to date.
+	 * Keeps the badge shown by the given control up to date while the control is attached.
 	 *
 	 * @param control
-	 *        The control showing the badge; its attachment decides whether changes of the object on
-	 *        the channel are followed, its disposal ends the binding.
+	 *        The control showing the badge; its attachment {@link #attach(ModelScope, Consumer)
+	 *        attaches} the badge, its detachment and its disposal {@link #detach() detach} it.
 	 * @param show
 	 *        Receives the badge to show, {@code null} for none, whenever it may have changed.
 	 */
 	public void bind(ReactControl control, Consumer<? super BadgeDisplay> show) {
-		Runnable update = () -> show.accept(current());
+		control.addAttachListener(() -> attach(_context.getModelScope(), show));
+		control.addDetachListener(this::detach);
+		control.addCleanupAction(this::detach);
+	}
 
-		Registration registration = _channel.addListener((sender, oldValue, newValue) -> update.run());
-		control.addCleanupAction(registration::dispose);
+	/**
+	 * Begins following the channel and the object on it, and shows the badge as it is now.
+	 *
+	 * <p>
+	 * Idempotent: attaching while attached changes nothing.
+	 * </p>
+	 *
+	 * @param scope
+	 *        The scope the object observation registers on, {@code null} for a display built outside
+	 *        a browser window, which follows the channel value alone.
+	 * @param show
+	 *        Receives the badge to show, {@code null} for none, whenever it may have changed.
+	 */
+	public void attach(ModelScope scope, Consumer<? super BadgeDisplay> show) {
+		if (_show != null) {
+			return;
+		}
+		_show = show;
+		_registration = _channel.addListener((sender, oldValue, newValue) -> update());
+		_observer = new ChannelObjectObserver(List.of(_channel), Set.of(), event -> update());
+		_observer.attach(scope);
+		update();
+	}
 
-		ChannelObjectObserver observer = new ChannelObjectObserver(List.of(_channel), Set.of(), update);
-		control.addAttachListener(() -> observer.attach(_context.getModelScope()));
-		control.addDetachListener(observer::detach);
+	/**
+	 * Stops following, removing every listener {@link #attach(ModelScope, Consumer)} registered.
+	 *
+	 * <p>
+	 * Idempotent: detaching while not attached changes nothing.
+	 * </p>
+	 */
+	public void detach() {
+		if (_show == null) {
+			return;
+		}
+		_show = null;
+		_registration.dispose();
+		_registration = null;
+		_observer.detach();
+		_observer = null;
+	}
+
+	private void update() {
+		Consumer<? super BadgeDisplay> show = _show;
+		if (show != null) {
+			show.accept(current());
+		}
 	}
 
 	/**

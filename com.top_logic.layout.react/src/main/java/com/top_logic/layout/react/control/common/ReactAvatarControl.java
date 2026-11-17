@@ -57,6 +57,13 @@ public class ReactAvatarControl extends ReactControl implements DataProvider {
 	}
 
 	/**
+	 * Shows the given badge at the corner of the avatar, {@code null} for none.
+	 */
+	public void setBadge(BadgeDisplay badge) {
+		putState(AvatarState.BADGE__PROP, badge == null ? null : badge.toState());
+	}
+
+	/**
 	 * Sets the diameter of the circle.
 	 */
 	public void setSize(AvatarSize size) {

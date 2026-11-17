@@ -1,4 +1,4 @@
-import { React, ThemeIcon, buttonPartAttributes, buttonLinkAttributes } from 'tl-react-bridge';
+import { React, ThemeIcon, buttonPartAttributes, buttonLinkAttributes, StateBadge } from 'tl-react-bridge';
 import type { ButtonPartProps, PartRef } from 'tl-react-bridge';
 import { buttonClassName } from './buttonClassName';
 
@@ -14,11 +14,14 @@ import { buttonClassName } from './buttonClassName';
  * icon. Beside a label the icon is small. A checked radio entry reads strong, like the entry in force: a
  * menu entry has no check mark of its own. The label is drawn in the label element of the button or
  * of the menu entry.</p>
+ *
+ * <p>A badge ({@link ButtonPartProps.badge}) is drawn through the part `Badge` after the label, and
+ * over the corner of the icon of a button showing its icon alone (tl-icon-badge).</p>
  */
 const ButtonPart: React.FC<ButtonPartProps> = (props) => {
   const {
     id, ref, href, target: _target, label, image, display, appearance, danger, small, active, checked, radio,
-    disabled, tabIndex, tooltip: _tooltip, className, onClick, onMouseDown, onPointerDown, onKeyDown, ...attributes
+    disabled, tabIndex, tooltip: _tooltip, badge, className, onClick, onMouseDown, onPointerDown, onKeyDown, ...attributes
   } = props;
   const iconOnly = display === 'icon-only';
   // A button showing no icon shows its label, also in icon-only mode.
@@ -30,12 +33,20 @@ const ButtonPart: React.FC<ButtonPartProps> = (props) => {
   const classes = buttonClassName({
     appearance, danger, small: smallIcon, icon: iconOnly && !!image, current: active || (radio === true && checked === true), extra: className,
   });
+  const icon = image && display !== 'label-only' && (
+    <ThemeIcon encoded={image} className={block + '__icon ' + (showLabel || smallIcon ? 'tl-icon-sm' : 'tl-icon-md')} />
+  );
   const content = (
     <>
-      {image && display !== 'label-only' && (
-        <ThemeIcon encoded={image} className={block + '__icon ' + (showLabel || smallIcon ? 'tl-icon-sm' : 'tl-icon-md')} />
-      )}
+      {icon && badge && !showLabel ? (
+        // The badge over the corner of the icon: the element around the part places it (view-layer/parts.md).
+        <span className="tl-icon-badge">
+          {icon}
+          <span className="tl-icon-badge__count"><StateBadge badge={badge} alone={true} /></span>
+        </span>
+      ) : icon}
       {showLabel && <span className={block + '__label'}>{label}</span>}
+      {showLabel && badge && <StateBadge badge={badge} alone={false} />}
     </>
   );
 

@@ -221,6 +221,24 @@ public class TestBadgeBinding extends BasicTestCase {
 	}
 
 	/**
+	 * Tests that a new channel value reaches no detached control, and is shown when it is attached
+	 * again.
+	 */
+	public void testANewValueWhileDetachedIsShownOnAttach() {
+		_count.set(Integer.valueOf(3));
+		ReactTextControl control = attachedControl();
+		control.detach();
+
+		_count.set(Integer.valueOf(7));
+		assertTrue("A detached control follows no channel: " + _shown, _shown.isEmpty());
+
+		control.attach();
+		assertEquals(List.of(count("7")), _shown);
+
+		control.cleanupTree();
+	}
+
+	/**
 	 * Tests that disposing the control ends the binding: neither a new channel value nor an object
 	 * change reaches it, and no listener is left behind.
 	 */
@@ -265,6 +283,8 @@ public class TestBadgeBinding extends BasicTestCase {
 		ReactTextControl control = new ReactTextControl(_context, "");
 		binding.bind(control, _shown::add);
 		control.attach();
+		assertEquals("Attaching shows the badge as it is.", List.of(binding.current()), _shown);
+		_shown.clear();
 		return control;
 	}
 

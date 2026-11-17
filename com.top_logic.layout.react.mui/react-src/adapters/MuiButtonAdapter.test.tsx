@@ -10,9 +10,11 @@ import type { ButtonStateJson, ButtonDefaultsValue, ToggleButtonStateJson } from
 import TLButton from '../../../com.top_logic.layout.react/react-src/controls/TLButton';
 import TLToggleButton from '../../../com.top_logic.layout.react/react-src/controls/TLToggleButton';
 import MuiButtonAdapter from './MuiButtonAdapter';
+import MuiBadgeAdapter from './MuiBadgeAdapter';
 import { CONTROL_ID, mountAdapter, settle } from './wire-test-support';
 
 replacePart('Button', MuiButtonAdapter);
+replacePart('Badge', MuiBadgeAdapter);
 
 /** The only command a button sends: it was clicked (or its keyboard gesture was pressed). */
 const CMD_CLICK = 'click';
@@ -392,3 +394,22 @@ describe('radio group in a menu', () => {
     expect(errors).not.toHaveBeenCalled();
   });
 });
+
+describe('TLButton with a badge as MUI Button', () => {
+  it('draws the count after the label, read with the label', () => {
+    mountButton({ label: 'Inbox', badge: { content: '3', role: 'error' } as ButtonStateJson['badge'] });
+
+    const button = screen.getByRole('button', { name: /^Inbox\s*3$/ });
+    const marker = button.querySelector('.MuiBadge-badge')!;
+    expect(marker.textContent).toBe('3');
+    expect(marker.classList).toContain('MuiBadge-colorError');
+  });
+
+  it('puts the badge over the corner of the icon of an icon button and into its name', () => {
+    mountButton({ label: 'Inbox', image: IMAGE_EDIT, displayMode: 'icon-only', badge: { content: '12' } as ButtonStateJson['badge'] });
+
+    const button = screen.getByRole('button', { name: 'Inbox, 12' });
+    expect(button.querySelector('.tl-icon-badge__count .MuiBadge-root')).not.toBeNull();
+  });
+});
+

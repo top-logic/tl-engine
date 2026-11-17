@@ -20,9 +20,6 @@ public class NavigationItem extends SidebarItem {
 	/** Type discriminator for navigation items. */
 	public static final String TYPE_NAV = "nav";
 
-	/** @see #setBadge(BadgeDisplay) */
-	private static final String BADGE = "badge";
-
 	private final String _label;
 
 	private final String _icon;
@@ -30,8 +27,6 @@ public class NavigationItem extends SidebarItem {
 	private final Supplier<ReactControl> _contentFactory;
 
 	private final DirtyChannel _dirtyChannel;
-
-	private BadgeDisplay _badge;
 
 	private String _route;
 
@@ -87,7 +82,7 @@ public class NavigationItem extends SidebarItem {
 		_icon = icon;
 		_contentFactory = contentFactory;
 		_dirtyChannel = dirtyChannel;
-		_badge = badge;
+		setBadge(badge);
 	}
 
 	/**
@@ -116,23 +111,6 @@ public class NavigationItem extends SidebarItem {
 	 */
 	public DirtyChannel getDirtyChannel() {
 		return _dirtyChannel;
-	}
-
-	/**
-	 * The badge of the item, or {@code null} for no badge.
-	 */
-	public BadgeDisplay getBadge() {
-		return _badge;
-	}
-
-	/**
-	 * Sets the badge.
-	 *
-	 * @param badge
-	 *        The badge, or {@code null} to remove the badge.
-	 */
-	public void setBadge(BadgeDisplay badge) {
-		_badge = badge;
 	}
 
 	/**
@@ -218,9 +196,6 @@ public class NavigationItem extends SidebarItem {
 		map.put(LABEL, _label);
 		if (_icon != null) {
 			map.put(ICON, _icon);
-		}
-		if (_badge != null) {
-			map.put(BADGE, _badge.toState());
 		}
 		if (_hidden) {
 			map.put(HIDDEN, Boolean.TRUE);

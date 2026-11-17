@@ -226,6 +226,12 @@ export interface ButtonStateJson extends ControlStateJson {
 	 * The keyboard gesture that triggers the button (e.g. `ENTER`, `Ctrl+S`).
 	 */
 	keyGesture: string;
+
+	/**
+	 * The badge of the button. Absent: none. Beside a visible label it is visible text of the
+	 * button; at a button showing its icon alone it is part of the accessible name.
+	 */
+	badge?: BadgeJson;
 }
 
 export namespace ButtonStateJson {
@@ -959,6 +965,11 @@ export namespace TabBarStateJson {
 		 * while another tab is visible.
 		 */
 		hidden: boolean;
+
+		/**
+		 * The badge of the tab, standing after its label as visible text of the tab. Absent: none.
+		 */
+		badge?: BadgeJson;
 	}
 }
 
@@ -2124,6 +2135,12 @@ export interface AvatarStateJson extends ImageSourceStateJson {
 	 * The diameter of the circle. Absent means `'medium'`.
 	 */
 	size: AvatarStateJson.Size;
+
+	/**
+	 * The badge at the corner of the avatar, an image named by its {@link BadgeJson.label}, or by its
+	 * {@link BadgeJson.content} where it has no label. Absent: none.
+	 */
+	badge?: BadgeJson;
 }
 
 export namespace AvatarStateJson {

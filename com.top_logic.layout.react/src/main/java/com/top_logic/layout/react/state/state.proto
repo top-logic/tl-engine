@@ -299,6 +299,12 @@ message ButtonState extends ControlState {
 	 * The keyboard gesture that triggers the button (e.g. {@code ENTER}, {@code Ctrl+S}).
 	 */
 	string keyGesture;
+
+	/**
+	 * The badge of the button. Absent: none. Beside a visible label it is visible text of the
+	 * button; at a button showing its icon alone it is part of the accessible name.
+	 */
+	Badge badge;
 }
 
 /**
@@ -939,6 +945,11 @@ message TabBarState extends ControlState {
 		 * while another tab is visible.
 		 */
 		bool hidden;
+
+		/**
+		 * The badge of the tab, standing after its label as visible text of the tab. Absent: none.
+		 */
+		Badge badge;
 	}
 
 	/**
@@ -2142,6 +2153,12 @@ message AvatarState extends ImageSourceState {
 	 * The diameter of the circle. Absent means {@link Size#MEDIUM}.
 	 */
 	Size size;
+
+	/**
+	 * The badge at the corner of the avatar, an image named by its {@link Badge#label}, or by its
+	 * {@link Badge#content} where it has no label. Absent: none.
+	 */
+	Badge badge;
 }
 
 /**

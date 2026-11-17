@@ -16,6 +16,7 @@ import com.top_logic.util.Resources;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.common.BadgeDisplay;
 import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
@@ -25,6 +26,7 @@ import com.top_logic.layout.react.dirty.DirtyChannel;
 import com.top_logic.layout.react.dirty.StateHandler;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DeletedObjects;
+import com.top_logic.layout.view.element.BadgeBinding;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.ObservedTypes;
@@ -136,6 +138,16 @@ public class ViewCommandModel implements CommandModel {
 	private final List<Runnable> _stateChangeListeners = new ArrayList<>();
 
 	/**
+	 * The badge declared at the command, {@code null} for a command without one.
+	 */
+	private final BadgeBinding _badgeBinding;
+
+	/**
+	 * The badge shown at the command's button, {@code null} for none.
+	 */
+	private BadgeDisplay _badge;
+
+	/**
 	 * Creates a new {@link ViewCommandModel}.
 	 *
 	 * @param context
@@ -216,6 +228,8 @@ public class ViewCommandModel implements CommandModel {
 		_label = label(input);
 		_tooltip = tooltip(input);
 		_image = image(input);
+		_badgeBinding = BadgeBinding.create(context, config);
+		_badge = _badgeBinding == null ? null : _badgeBinding.current();
 	}
 
 	/**
@@ -675,6 +689,9 @@ public class ViewCommandModel implements CommandModel {
 	 */
 	public void attach(ModelScope scope) {
 		_executability.attach(scope);
+		if (_badgeBinding != null) {
+			_badgeBinding.attach(scope, this::updateBadge);
+		}
 		updateExecutableState();
 	}
 
@@ -691,6 +708,25 @@ public class ViewCommandModel implements CommandModel {
 	 */
 	public void detach() {
 		_executability.detach();
+		if (_badgeBinding != null) {
+			_badgeBinding.detach();
+		}
+	}
+
+	@Override
+	public BadgeDisplay getBadge() {
+		return _badge;
+	}
+
+	/**
+	 * Takes the badge to show, and reports it if it changed.
+	 */
+	private void updateBadge(BadgeDisplay badge) {
+		if (Objects.equals(badge, _badge)) {
+			return;
+		}
+		_badge = badge;
+		fireStateChanged();
 	}
 
 	@Override

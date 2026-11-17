@@ -468,7 +468,7 @@ describe('a text drawn as a pill (TLText) as MUI chip', () => {
 });
 
 describe('the counts of the navigation as MUI badges', () => {
-  const INBOX = { id: 'inbox', type: 'nav', label: 'Eingang', icon: 'css:fa-solid fa-inbox', badge: '3' };
+  const INBOX = { id: 'inbox', type: 'nav', label: 'Eingang', icon: 'css:fa-solid fa-inbox', badge: { content: '3' } };
   const ARCHIVE = { id: 'archive', type: 'nav', label: 'Archiv', icon: 'css:fa-solid fa-box' };
 
   /**

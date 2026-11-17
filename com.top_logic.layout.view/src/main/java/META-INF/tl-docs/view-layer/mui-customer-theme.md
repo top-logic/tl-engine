@@ -420,7 +420,7 @@ anything.
 | `TextInput` | the part: text, password and number fields, the searches and filters of tables and popups | `TextField` |
 | `FieldValue` | the part: the value of a field that is not editable | `Typography`, `Link` |
 | `Chip` | the part: option chips, chosen values of a dropdown, filters of a table, file chips, values with a color role | `Chip` |
-| `Badge` | the part: the counts of the sidebar and the bottom bar | `Badge` |
+| `Badge` | the part: the badges of buttons, tabs, avatars, the sidebar and the bottom bar | `Badge` standing on its own: `content` → `badgeContent`, `dot` → `variant="dot"`, `colorRole` → `color` (`brand` → `primary`, the status roles → the MUI color of the same name); a `label` names the root (`role="img"`, `aria-label`), without one the content MUI hides from assistive technology is read as text |
 | `Divider` | the part: the lines of toolbars, toolbar menus and the sidebar | `Divider` |
 | `ProgressBar` | the part: progress controls, job status, loading options | `LinearProgress` |
 | `Spinner` | the part: busy indicators | `CircularProgress` |

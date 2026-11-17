@@ -75,32 +75,6 @@ class GroupSynchronization {
 	}
 
 	/**
-	 * Whether {@link #synchronize(KnowledgeBase, Person, OidcIdentity, ExternalIdentity)} would
-	 * change something.
-	 */
-	boolean needsUpdate(KnowledgeBase kb, Person account, OidcIdentity stored, ExternalIdentity identity) {
-		if (!isActive()) {
-			return false;
-		}
-		Set<Group> yielded = yieldedGroups(kb, identity);
-		Set<? extends Group> granted = stored.getGrantedGroups();
-		for (Group group : yielded) {
-			if (!isDirectMember(group, account)) {
-				return true;
-			}
-			if (!granted.contains(group) && grantedByOtherIdentity(account, stored, group)) {
-				return true;
-			}
-		}
-		for (Group group : granted) {
-			if (!yielded.contains(group)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
 	 * Brings the group memberships of the given account up to date with the given identity.
 	 *
 	 * <p>

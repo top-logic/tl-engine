@@ -70,8 +70,7 @@ import com.top_logic.util.error.TopLogicException;
  * After the account is known, its group memberships are synchronized with the claim
  * {@link Config#getGroupClaim()} (see {@link Config#getGroupMapping()}), then the
  * {@link Config#getListeners() listeners} are called in the same transaction. An exception rolls
- * the transaction back and refuses the login. A login that changes nothing and has no listeners to
- * call opens no transaction.
+ * the transaction back and refuses the login.
  * </p>
  *
  * <p>
@@ -344,16 +343,21 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 		String getAuthenticationDevice();
 
 		/**
-		 * The claim with the login name of the account.
+		 * The claim with the login name of the account, e.g.
+		 * {@value OidcProvisioningUserMapping#PREFERRED_USERNAME_CLAIM}.
 		 *
 		 * <p>
 		 * The name of an account to create, and the name an identity is linked by
-		 * ({@link #getLinkByName()}). Without this claim, the
-		 * {@link ExternalIdentity#getName() name} the client extracts is used.
+		 * ({@link #getLinkByName()}).
+		 * </p>
+		 *
+		 * <p>
+		 * Empty, or without this claim in the identity: the {@link ExternalIdentity#getName() name}
+		 * the <code>user-name-extractor</code> of the client extracts, the name
+		 * {@link DefaultExternalUserMapping} looks up as well.
 		 * </p>
 		 */
 		@Name(LOGIN_NAME_CLAIM)
-		@StringDefault(PREFERRED_USERNAME_CLAIM)
 		String getLoginNameClaim();
 
 		/**
@@ -493,32 +497,13 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 			throw new LoginDeniedException("Identity without client or subject: " + identity);
 		}
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		if (_listeners.isEmpty()) {
-			Person known = findBySubject(kb, identity);
-			if (known != null) {
-				if (!_groups.needsUpdate(kb, known, OidcIdentities.getIdentity(known, identity.getClientName()),
-					identity)) {
-					return known;
-				}
-			} else if (!_bindIdentities) {
-				// Without binding, looking up an existing account changes nothing.
-				Person existing = findAccount(kb, identity);
-				if (existing != null) {
-					return existing;
-				}
-			}
-		}
 		try (Transaction tx = kb.beginTransaction(I18NConstants.EXTERNAL_LOGIN)) {
-			boolean created = false;
 			Person account = findAccount(kb, identity);
-			if (account == null) {
+			boolean created = account == null;
+			if (created) {
 				account = createAccount(kb, identity);
-				created = true;
 			}
-			if (_groups.isActive()) {
-				_groups.synchronize(kb, account, OidcIdentities.getIdentity(account, identity.getClientName()),
-					identity);
-			}
+			_groups.synchronize(kb, account, OidcIdentities.getIdentity(account, identity.getClientName()), identity);
 			if (created) {
 				for (ExternalLoginListener listener : _listeners) {
 					listener.onCreate(account, identity);
@@ -533,31 +518,31 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 	}
 
 	/**
-	 * The existing account of the given identity, attaching the identity to an account found by
-	 * e-mail or name when identities are bound.
+	 * The existing account of the given identity, found by subject, e-mail or name in this order,
+	 * attaching the identity to an account found by e-mail or name when identities are bound.
 	 *
 	 * @return The account, <code>null</code> if none was found.
 	 * @throws UnknownAccountException
 	 *         If the account found is not {@link Person#isAlive() alive}.
 	 */
 	private Person findAccount(KnowledgeBase kb, ExternalIdentity identity) {
-		Person known = findBySubject(kb, identity);
-		if (known != null) {
-			return known;
+		String loginName = getLoginName(identity);
+		Person bySubject = findBySubject(kb, identity);
+		if (bySubject != null) {
+			return ExternalUserMapping.checkAlive(bySubject, loginName);
 		}
 
 		if (getConfig().getLinkByEmail() && isEmailVerified(identity)) {
-			Person account = findByEmail(getEmail(identity));
-			if (account != null) {
-				return link(account, identity);
+			Person byEmail = ExternalUserMapping.checkAlive(findByEmail(getEmail(identity)), loginName);
+			if (byEmail != null) {
+				return link(byEmail, identity);
 			}
 		}
 
 		if (getConfig().getLinkByName()) {
-			String loginName = getLoginName(identity);
-			Person account = StringServices.isEmpty(loginName) ? null : Person.byName(kb, loginName);
-			if (account != null) {
-				return link(account, identity);
+			Person byName = ExternalUserMapping.lookupAccount(loginName);
+			if (byName != null) {
+				return link(byName, identity);
 			}
 		}
 
@@ -568,26 +553,10 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 	 * The account carrying the {@link OidcIdentity} with client and subject of the given identity.
 	 *
 	 * @return The account, <code>null</code> if none carries it.
-	 * @throws UnknownAccountException
-	 *         If the account is not {@link Person#isAlive() alive}.
 	 */
-	private Person findBySubject(KnowledgeBase kb, ExternalIdentity identity) {
+	private static Person findBySubject(KnowledgeBase kb, ExternalIdentity identity) {
 		OidcIdentity stored = OidcIdentities.findIdentity(kb, identity.getClientName(), identity.getSubject());
-		return stored == null ? null : checkAlive(OidcIdentities.getOwner(stored), identity);
-	}
-
-	/**
-	 * The given account, if it is {@link Person#isAlive() alive}.
-	 *
-	 * @throws UnknownAccountException
-	 *         If the account is not alive, like {@link ExternalUserMapping#findAccount(String)}.
-	 */
-	private Person checkAlive(Person account, ExternalIdentity identity) {
-		if (account != null && !account.isAlive()) {
-			throw new UnknownAccountException(getLoginName(identity),
-				"Account '" + account.getName() + "' of " + identity + " is not alive.");
-		}
-		return account;
+		return stored == null ? null : OidcIdentities.getOwner(stored);
 	}
 
 	/**
@@ -595,7 +564,6 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 	 * bound.
 	 */
 	private Person link(Person account, ExternalIdentity identity) {
-		checkAlive(account, identity);
 		if (!_bindIdentities) {
 			return account;
 		}

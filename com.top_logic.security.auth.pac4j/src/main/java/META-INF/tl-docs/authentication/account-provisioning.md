@@ -65,8 +65,9 @@ The account of a login is the first one found in this order:
    goes on. Switch it on only for an identity provider whose confirmation of e-mail addresses is
    trusted: whoever controls an address there gets the account with that address.
 3. With `link-by-name="true"` (the default): the account with the login name of the login. The
-   login name is the claim `login-name-claim` (default `preferred_username`), without it the name
-   the `user-name-extractor` of the client extracts.
+   login name is the name the `user-name-extractor` of the client extracts, the name the default
+   mapping looks up as well; a claim set in `login-name-claim` (e.g. `preferred_username`) takes
+   its place when the login carries it.
 4. With `create-accounts="true"` (default `false`): a new account, see [Creating
    accounts](#creating-accounts).
 
@@ -164,8 +165,8 @@ public class ProjectMembershipListener implements ExternalLoginListener {
 }
 ```
 
-A login by subject that changes nothing (no new account, no new link, no group change) and has no
-listeners opens no transaction.
+A login that changes nothing (no new account, no new link, no group change, no change by a
+listener) creates no revision.
 
 ### Listener in TL-Script
 
@@ -213,9 +214,8 @@ this mapping with `groups-by-name="true"`. Two environment variables switch its 
 | `tl_pac_create_accounts` | `false` | `true` creates an account for an unknown identity, with name and e-mail address from the claims (`create-accounts`), and binds every account to its identity (`link-identities`). |
 | `tl_pac_group_claim` | empty | The name of the claim whose values name the groups of the application an account is a member of, e.g. `groups` (`group-claim`). Values without a group of that name are ignored. Empty: no groups are synchronized. |
 
-Without both variables, the client finds an existing account by its login name
-(`preferred_username`) at every login and refuses an unknown name, as a client without user mapping
-does; no identity is attached. With `tl_pac_group_claim` alone, no account is created, but an
+Without both variables, the client finds an existing account by its login name at every login
+and refuses an unknown name, as a client without user mapping does; no identity is attached. With `tl_pac_group_claim` alone, no account is created, but an
 account that logs in is bound to its identity, so that the memberships of the claim can be revoked
 again.
 

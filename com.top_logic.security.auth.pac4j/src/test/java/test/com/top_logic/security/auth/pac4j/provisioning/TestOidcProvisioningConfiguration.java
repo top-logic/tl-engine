@@ -16,6 +16,7 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.base.accesscontrol.ExternalUserMapping;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
@@ -76,7 +77,7 @@ public class TestOidcProvisioningConfiguration extends TestCase {
 		assertEquals(1, mappingConfig.getListeners().size());
 		assertEquals(TestOidcLoginListeners.RecordingListener.class,
 			mappingConfig.getListeners().get(0).getImplementationClass());
-		assertEquals(OidcProvisioningUserMapping.PREFERRED_USERNAME_CLAIM, mappingConfig.getLoginNameClaim());
+		assertTrue("The login name is the name of the client.", StringServices.isEmpty(mappingConfig.getLoginNameClaim()));
 	}
 
 	/**

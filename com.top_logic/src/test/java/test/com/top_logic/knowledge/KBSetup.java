@@ -59,12 +59,6 @@ public class KBSetup extends RearrangableThreadContextSetup {
 		/** Indicates usage of the MSSQL-based DB-KnowledgeBase */
 		public static final KBType KB_MSSQL = new KBType(DBType.MSSQL_DB, false);
 
-		/** Indicates usage of the Oracle-based DB-KnowledgeBase */
-		public static final KBType KB_ORACLE = new KBType(DBType.ORACLE_DB, false);
-
-		/** Indicates usage of the Oracle12-based DB-KnowledgeBase */
-		public static final KBType KB_ORACLE12 = new KBType(DBType.ORACLE12_DB, false);
-
 		/** Indicates usage of the Oracle19-based DB-KnowledgeBase */
 		public static final KBType KB_ORACLE19 = new KBType(DBType.ORACLE19_DB, false);
 
@@ -427,8 +421,6 @@ public class KBSetup extends RearrangableThreadContextSetup {
 			theSuite.addTest(newTest(testCase, KBType.KB_MYSQL, f));
 			theSuite.addTest(newTest(testCase, KBType.KB_MSSQL, f));
 			theSuite.addTest(newTest(testCase, KBType.KB_H2, f));
-			theSuite.addTest(newTest(testCase, KBType.KB_ORACLE, f));
-			theSuite.addTest(newTest(testCase, KBType.KB_ORACLE12, f));
 			theSuite.addTest(newTest(testCase, KBType.KB_ORACLE19, f));
     		// #8797 licence has been expired
 //			theSuite.addTest(newTest(testCase, KBType.KB_DB2, f));

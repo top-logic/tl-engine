@@ -193,8 +193,8 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
             int minor = meta.getDatabaseMinorVersion();
             String version = meta.getDatabaseProductVersion();
 			if (major < 5 // just to be sure
-				|| (major == 5 && minor < 5)) { // can't check for last Version, sorry
-				throw new SQLException("Need at least MySQL 5.5 (is " + version + ")");
+				|| (major == 5 && minor < 6)) { // can't check for last Version, sorry
+				throw new SQLException("Need at least MySQL 5.6 (is " + version + ")");
             }
 			return MySQLHelper.getInstance(con);
         }
@@ -203,19 +203,16 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 		}
         if (driver.startsWith("Oracle")) {
 			int driverVersionMajor = meta.getDriverMajorVersion();
-            // int minor = meta.getDriverMinorVersion();
-			// String version = meta.getDriverVersion();
 			int dbVersion = meta.getDatabaseMajorVersion();
-			if (driverVersionMajor <= 9) {
-                throw new SQLException("Oracle 9 and lower are not supported");
-            }
-			if (driverVersionMajor >= 12) {
-				if(dbVersion < 12) {
-					return Oracle12toLowerHelper.class;
-				}
-				return Oracle12Helper.class;
-            }
-			return Oracle10Helper.class;
+			if (driverVersionMajor < 12) {
+				throw new SQLException("Oracle JDBC driver 11 and lower are not supported (is "
+					+ meta.getDriverVersion() + ")");
+			}
+			if (dbVersion < 12) {
+				throw new SQLException("Oracle 11 and lower are not supported (is "
+					+ meta.getDatabaseProductVersion() + ")");
+			}
+			return Oracle12Helper.class;
         }
 		if (driver.indexOf("Microsoft") >= 0 || driver.indexOf("SQLServer") >= 0 || driver.indexOf("jTDS") >= 0) {
 			int dbMajorVersion = meta.getDatabaseMajorVersion();

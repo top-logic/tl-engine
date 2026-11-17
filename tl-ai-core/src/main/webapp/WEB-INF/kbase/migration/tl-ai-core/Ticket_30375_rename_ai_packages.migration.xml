@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The AI modules live in the Java packages com.top_logic.ai.* (Ticket #30375). The stored model
+	baseline and the annotations of the persistent model parts name classes of the packages
+	com.top_logic.tl.ai.* (package bindings, constraint classes, storage implementations); these
+	names are replaced in the columns holding them.
+
+	A pre-processor, so that the names are replaced before any processor or the model upgrade reads
+	the model baseline.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30375_rename_ai_packages"
+		module="tl-ai-core"
+	/>
+	<dependencies>
+		<dependency name="Ticket_30357_delete_cookie_pool_without_browser"
+			module="tl-ai-core"
+		/>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30183_account_lock"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_29741_hide_anonymous_in_options"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_30183_account_lock"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_29410_filename_binary"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-doc"
+		/>
+		<dependency name="Ticket_29037_Update_diagram_attribute"
+			module="tl-bpe"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+	</dependencies>
+	<pre-processors>
+		<string-column-transform
+			column="propValue"
+			raw-table-names="true"
+			table="TL_PROPERTIES"
+		>
+			<target-replacement
+				replacement="com.top_logic.ai."
+				target="com.top_logic.tl.ai."
+			/>
+		</string-column-transform>
+		<string-column-transform
+			column="ANNOTATIONS"
+			raw-table-names="true"
+			table="TL_MODULE"
+		>
+			<target-replacement
+				replacement="com.top_logic.ai."
+				target="com.top_logic.tl.ai."
+			/>
+		</string-column-transform>
+		<string-column-transform
+			column="ANNOTATIONS"
+			raw-table-names="true"
+			table="META_ELEMENT"
+		>
+			<target-replacement
+				replacement="com.top_logic.ai."
+				target="com.top_logic.tl.ai."
+			/>
+		</string-column-transform>
+		<string-column-transform
+			column="ANNOTATIONS"
+			raw-table-names="true"
+			table="META_ATTRIBUTE"
+		>
+			<target-replacement
+				replacement="com.top_logic.ai."
+				target="com.top_logic.tl.ai."
+			/>
+		</string-column-transform>
+		<string-column-transform
+			column="ANNOTATIONS"
+			raw-table-names="true"
+			table="TL_DATATYPE"
+		>
+			<target-replacement
+				replacement="com.top_logic.ai."
+				target="com.top_logic.tl.ai."
+			/>
+		</string-column-transform>
+		<string-column-transform
+			column="STORAGE_MAPPING"
+			raw-table-names="true"
+			table="TL_DATATYPE"
+		>
+			<target-replacement
+				replacement="com.top_logic.ai."
+				target="com.top_logic.tl.ai."
+			/>
+		</string-column-transform>
+		<string-column-transform
+			column="ANNOTATIONS"
+			raw-table-names="true"
+			table="FAST_LIST"
+		>
+			<target-replacement
+				replacement="com.top_logic.ai."
+				target="com.top_logic.tl.ai."
+			/>
+		</string-column-transform>
+		<string-column-transform
+			column="ANNOTATIONS"
+			raw-table-names="true"
+			table="FAST_LIST_ELT"
+		>
+			<target-replacement
+				replacement="com.top_logic.ai."
+				target="com.top_logic.tl.ai."
+			/>
+		</string-column-transform>
+		<string-column-transform
+			column="ANNOTATIONS"
+			raw-table-names="true"
+			table="TL_MODEL"
+		>
+			<target-replacement
+				replacement="com.top_logic.ai."
+				target="com.top_logic.tl.ai."
+			/>
+		</string-column-transform>
+	</pre-processors>
+</migration>

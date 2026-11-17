@@ -365,12 +365,13 @@
 					</title>
 					<!--
 						The table starts grouped by the computed load column, which classifies a contact
-						by the number of assigned tickets. Its comparator orders the classes none, few, many -
+						by the number of assigned tickets, and within each class by the number of tickets
+						itself. The comparator of the load column orders the classes none, few, many -
 						alphabetically they would read few, many, none. The ticket column sums the tickets
-						of a group in its header row.
+						of a group in its header row, on both levels.
 					-->
 					<table
-						group-by="load"
+						group-by="load, tickets"
 						observed-types="Contacts:PersonContact,tl.demo.projectManagement:Ticket"
 						personalization-key="table-columns-group-order"
 						types="Contacts:PersonContact"

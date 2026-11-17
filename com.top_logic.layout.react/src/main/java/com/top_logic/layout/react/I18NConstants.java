@@ -871,10 +871,22 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_GROUP_BY;
 
 	/**
+	 * @en Additionally group by this column
+	 */
+	@CustomKey("js.table.groupByAlso")
+	public static ResKey JS_TABLE_GROUP_BY_ALSO;
+
+	/**
 	 * @en Remove grouping
 	 */
 	@CustomKey("js.table.ungroup")
 	public static ResKey JS_TABLE_UNGROUP;
+
+	/**
+	 * @en Remove grouping by this column
+	 */
+	@CustomKey("js.table.ungroupColumn")
+	public static ResKey JS_TABLE_UNGROUP_COLUMN;
 
 	/**
 	 * @en The rows are grouped by this column

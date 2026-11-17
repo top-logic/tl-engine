@@ -212,9 +212,9 @@ public class TestOidcGroupSynchronization extends BasicTestCase {
 	}
 
 	/**
-	 * A login by subject that changes nothing commits no transaction.
+	 * A login by subject that changes nothing creates no revision.
 	 */
-	public void testNoTransactionWithoutChange() {
+	public void testNoRevisionWithoutChange() {
 		OidcProvisioningUserMapping mapping = groupMapping();
 		Person account = login(mapping, identity("sub-quiet", "gQuiet", List.of("devs")));
 		long revision = kb().getHistoryManager().getLastRevision();

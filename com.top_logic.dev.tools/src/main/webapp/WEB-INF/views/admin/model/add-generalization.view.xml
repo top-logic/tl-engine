@@ -5,14 +5,12 @@
 	model (bound to the model channel by the opening command): the class to add as generalization. The
 	primary command stores the form state, runs the ModelEditAction in ADD_GENERALIZATION mode inside a
 	transaction (refusing a final class and a generalization that would make the class its own
-	generalization), bumps the reload channel so the generalization table and the diagram read the class
-	again, and closes the dialog.
+	generalization), and closes the dialog.
 -->
 <view>
 	<channels>
 		<channel name="model"/>
 		<channel name="container"/>
-		<channel name="reload"/>
 	</channels>
 	<window
 		resizable="false"
@@ -52,11 +50,6 @@
 							</with-transaction>
 						</with-result>
 					</store-form-state>
-					<execute-script function="now()">
-						<with-result>
-							<write-channel name="reload"/>
-						</with-result>
-					</execute-script>
 					<close-dialog/>
 				</generic-command>
 			</commands>

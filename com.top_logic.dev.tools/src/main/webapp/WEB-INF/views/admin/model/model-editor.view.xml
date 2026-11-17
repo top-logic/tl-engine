@@ -7,9 +7,8 @@
 	types of other modules as attribute lines); the detail form (bottom) edits whichever of the two is
 	selected - the model element, or the module itself while the diagram has no selection. The
 	toolbars create and delete modules, types and attributes, and the class form adds and removes
-	generalizations, through the ModelEditAction; the reload
-	channel is bumped after a diagram-affecting mutation so the diagram re-reads the (unchanged)
-	module input and reflects the change. Beside the diagram, the Instances tab lists all instances of
+	generalizations, through the ModelEditAction. The diagram observes the model types it draws, so
+	it follows every model change, also one made in another session. Beside the diagram, the Instances tab lists all instances of
 	the class selected in the diagram, edits them in place, exports them to Excel or XML and imports an
 	XML file written by that export (admin/model/import-instances.view.xml).
 -->
@@ -17,7 +16,6 @@
 	<channels>
 		<channel name="selectedModule"/>
 		<channel name="selectedPart"/>
-		<channel name="reload"/>
 		<channel name="selectedInstances"/>
 		<!-- Bumped after an import, so the instance table reads its rows again. -->
 		<channel name="instancesReload"/>
@@ -186,10 +184,6 @@
 																	channel="container"
 																	to="selectedModule"
 																/>
-																<bind
-																	channel="reload"
-																	to="reload"
-																/>
 															</open-dialog>
 														</with-result>
 													</execute-script>
@@ -219,10 +213,6 @@
 																<bind
 																	channel="container"
 																	to="selectedPart"
-																/>
-																<bind
-																	channel="reload"
-																	to="reload"
 																/>
 															</open-dialog>
 														</with-result>
@@ -254,10 +244,6 @@
 																	channel="container"
 																	to="selectedPart"
 																/>
-																<bind
-																	channel="reload"
-																	to="reload"
-																/>
 															</open-dialog>
 														</with-result>
 													</execute-script>
@@ -284,20 +270,23 @@
 													<write-channel name="selectedPart"
 														clear="true"
 													/>
-													<execute-script function="now()">
-														<with-result>
-															<write-channel name="reload"/>
-														</with-result>
-													</execute-script>
 												</generic-command>
 											</commands>
-											<flow-diagram selection="selectedPart">
+											<!--
+												The diagram observes the model types it draws: a type, attribute,
+												classifier or generalization created, changed or deleted - in this
+												session or another one - redraws it. A generalization is a link
+												between two classes, whose change is announced as a change of both.
+											-->
+											<flow-diagram
+												observed-types="tl.model:TLModule, tl.model:TLClass, tl.model:TLEnumeration, tl.model:TLClassifier, tl.model:TLReference, tl.model:TLAssociationEnd, tl.model:TLProperty"
+												selection="selectedPart"
+											>
 												<inputs>
 													<input
 														as="module"
 														channel="selectedModule"
 													/>
-													<input channel="reload"/>
 												</inputs>
 												<createChart><![CDATA[{
 	allTypes = $module == null ? list() : $module.get(`tl.model:TLModule#types`)
@@ -399,6 +388,7 @@
 				multiple = $p.get(`tl.model:TLStructuredTypePart#multiple`);
 				card = $mandatory ? ($multiple ? "1..*" : "1") : ($multiple ? "*" : "0..1");
 				composite = $p.get(`tl.model:TLReference#end`).get(`tl.model:TLAssociationEnd#composite`);
+				aggregate = !$composite && $p.get(`tl.model:TLReference#oppositeEnd`).get(`tl.model:TLAssociationEnd#aggregate`);
 				isOverride = $p.get(`tl.model:TLStructuredTypePart#override`);
 				isDerived = $p.get(`tl.model:DerivedTLTypePart#derived`);
 
@@ -430,9 +420,9 @@
 				reactFlowGraphEdge(
 					$nodeByName[$c.get(`tl.model:TLNamedPart#name`)],
 					$nodeByName[$targetType.get(`tl.model:TLNamedPart#name`)],
-					priority: $composite ? 2 : 1,
-					sourceSymbol: $composite ? "FILLED_DIAMOND" : null,
-					targetSymbol: $composite ? null : "ARROW",
+					priority: $composite || $aggregate ? 2 : 1,
+					sourceSymbol: $composite ? "FILLED_DIAMOND" : ($aggregate ? "DIAMOND" : null),
+					targetSymbol: $composite || $aggregate ? null : "ARROW",
 					strokeStyle: $isDerived ? "#bbbbbb" : "black",
 					decorations: $decos,
 					selectable: true,
@@ -656,18 +646,6 @@
 											>
 												<field attribute="mandatory"/>
 												<field attribute="multiple"/>
-												<!-- The diagram shows the cardinality at the edge of the reference. -->
-												<save-action>
-													<with-transaction>
-														<store-form-state/>
-													</with-transaction>
-													<execute-script function="now()">
-														<with-result>
-															<write-channel name="reload"/>
-														</with-result>
-													</execute-script>
-													<leave-edit-mode/>
-												</save-action>
 											</form>
 										</panel>
 									</stack>
@@ -716,10 +694,13 @@
 										</panel>
 										<!--
 											The direct generalizations of the class. Adding and removing them goes
-											through the ModelEditAction, which refuses a final class and a cycle;
-											the reload channel makes the table and the diagram read the class again.
+											through the ModelEditAction, which refuses a final class and a cycle.
+											A change of the generalizations is announced as a change of the class
+											on the input, so the table reads them again. The panel is as high as
+											its few rows (fill="false"), so the stack below the class form keeps
+											its natural height and the detail pane scrolls it as a whole.
 										-->
-										<panel>
+										<panel fill="false">
 											<title>
 												<en>Generalizations</en>
 												<de>Generalisierungen</de>
@@ -746,10 +727,6 @@
 																<bind
 																	channel="container"
 																	to="selectedPart"
-																/>
-																<bind
-																	channel="reload"
-																	to="reload"
 																/>
 															</open-dialog>
 														</with-result>
@@ -780,15 +757,10 @@
 													<write-channel name="selectedGeneralization"
 														clear="true"
 													/>
-													<execute-script function="now()">
-														<with-result>
-															<write-channel name="reload"/>
-														</with-result>
-													</execute-script>
 												</generic-command>
 											</commands>
 											<table
-												inputs="selectedPart as specialization, reload"
+												inputs="selectedPart as specialization"
 												selection="selectedGeneralization"
 											>
 												<rows>$specialization == null || !$specialization.instanceOf(`tl.model:TLClass`) ? list() : $specialization.get(`tl.model:TLClass#generalizations`)</rows>

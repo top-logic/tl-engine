@@ -43,13 +43,7 @@ public class SQLMigrationProcessor implements MigrationProcessor, ConfiguredInst
 
 	private enum DatabaseType implements ExternallyNamed {
 		DB2("db2"), H2("h2"), MSSQL("mssql"), MYSQL("mysql"),
-		ORACLE("oracle"), ORACLE19("oracle19") {
-
-			@Override
-			DatabaseType getFallback() {
-				return DatabaseType.ORACLE;
-			}
-		},
+		ORACLE("oracle"),
 		POSTGRESQL("postgresql") {
 			@Override
 			DatabaseType getFallback() {
@@ -88,7 +82,7 @@ public class SQLMigrationProcessor implements MigrationProcessor, ConfiguredInst
 		 * File name prefix of the SQL file. The actual file name has the form <i>
 		 * {@code fileNamePrefix}.{@code sqlDialect}.sql</i>, where {@code fileNamePrefix} is
 		 * value of {@link #getFileNamePrefix()}, and {@code sqlDialect} something like 'mysql',
-		 * 'oracle', or 'mssql'.
+		 * 'oracle', or 'mssql'. 'oracle' is used for all supported Oracle versions.
 		 */
 		@Mandatory
 		String getFileNamePrefix();

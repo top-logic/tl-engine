@@ -1,5 +1,5 @@
 import {
-  BACKGROUND_COMMAND, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, EscapeToClose, useFocusTrap,
+  BACKGROUND_REPORT, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, EscapeToClose, useFocusTrap,
   firstFocusable, FillBarrier, startPointerDrag, rootClassName, tooltipProps, ButtonDefaults, ThemeIcon, useTokenPx,
   ICON_CLOSE, ICON_MAXIMIZE, ICON_RESTORE, SurfaceProvider, useFloatingFrame, FloatingFrame, FloatingRail,
   useMeasuredDisplayClass,
@@ -332,7 +332,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           sendCommand('resize', {
             ...(lw != null ? { width: Math.round(lw) } : {}),
             ...(lh != null ? { height: Math.round(lh) } : {}),
-          }, BACKGROUND_COMMAND);
+          }, BACKGROUND_REPORT);
           // Keep local dimensions — server uses putStateSilent() which does not push back.
         }
         dragState.current = null;

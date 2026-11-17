@@ -289,6 +289,35 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		assertEquals(Arrays.asList(_c1), eval("b -> $b.get(`TestTLScriptSecurity:PathB#cs`)", _b1));
 	}
 
+	/**
+	 * The composition descendants follow a composite reference only where the user may read it, as
+	 * {@code get} does.
+	 */
+	public void testDescendantsFollowOnlyReadableCompositions() throws Exception {
+		TLObject n1;
+		TLObject n2;
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			n1 = node("PathNote", "n1");
+			_b1.tUpdateByName("notes", Collections.singletonList(n1));
+			n2 = node("PathNote", "n2");
+			_b2.tUpdateByName("notes", Collections.singletonList(n2));
+			tx.commit();
+		}
+		String descendants = "b -> $b.objectDescendants()";
+
+		becomeUser(_pathUser);
+		// The path role on b1 reads its notes.
+		assertEquals(Arrays.asList(n1), asList(eval(descendants, _b1)));
+		// Without a role on b2, its notes are not readable.
+		assertEquals(Collections.emptyList(), asList(eval(descendants, _b2)));
+
+		becomeUser(_stranger);
+		assertEquals(Collections.emptyList(), asList(eval(descendants, _b1)));
+
+		becomeUser(PersonManager.getManager().getRoot());
+		assertEquals(Arrays.asList(n2), asList(eval(descendants, _b2)));
+	}
+
 	public void testLabelOfDiscoverableVisibleAttributeNot() throws Exception {
 		becomeUser(_pathUser);
 		assertEquals(Arrays.asList("a1"),

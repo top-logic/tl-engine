@@ -94,12 +94,22 @@ const LAST_EVENT_HEADER = 'X-TL-Last-Event';
  */
 export type CommandResponse = Record<string, unknown>;
 
+/**
+ * Field of a command's payload telling the server that the command only tidies up (see
+ * {@link CommandOptions.ignoreStaleUi}): the server answers it with success when its control is not
+ * displayed any more, so that the browser logs no failed request. Set by {@link enqueueCommand}.
+ * Must match {@code ReactServlet#FIELD_IGNORE_STALE_UI}.
+ */
+export const FIELD_IGNORE_STALE_UI = 'ignoreStaleUi';
+
 /** JSON payload of a control command POST. */
 export interface CommandPayload {
   controlId: string;
   command: string;
   windowName: string;
   arguments: Record<string, unknown>;
+  /** See {@link FIELD_IGNORE_STALE_UI}. */
+  [FIELD_IGNORE_STALE_UI]?: boolean;
 }
 
 /**
@@ -206,6 +216,8 @@ export interface CommandOptions {
    * component whose control the server has disposed already, for instance because the page or a
    * classic tab holding it was left - passes `true`: there is nothing left to tidy, and loading the
    * page again would throw away a page that is fine. The command then resolves with `undefined`.
+   * The option also travels with the command (see {@link FIELD_IGNORE_STALE_UI}), so that the
+   * server answers it with success when the addressed control is gone.
    */
   ignoreStaleUi?: boolean;
 
@@ -234,6 +246,12 @@ export const BACKGROUND_COMMAND: Readonly<CommandOptions> = Object.freeze({ back
  * <p>Unless it is a {@link CommandOptions.background background} command, the command counts as one
  * the user waits for from now until its answer has arrived (see {@link busyCommandEnqueued}).</p>
  *
+ * <p>A command sent with {@link CommandOptions.ignoreStaleUi} carries {@link FIELD_IGNORE_STALE_UI} in
+ * its payload. So does every {@link CMD_VALUE_CHANGED}: a value for a field that left the display
+ * was abandoned with its field, which is no error. Unlike a command sent with the option, a
+ * {@link CMD_VALUE_CHANGED} answered with {@link ERROR_CODE_STALE_UI} still loads the page
+ * again.</p>
+ *
  * @returns a promise resolving with this command's answer once it has arrived, or with
  *          {@code undefined} when the command failed or the page started leaving before its turn
  *          came; it never rejects (transport failures are logged).
@@ -246,7 +264,10 @@ export function enqueueCommand(
   if (payload.command !== CMD_VALUE_CHANGED && options?.flushFields !== false) {
     void flushPendingFieldValues();
   }
-  const result = _chain.then(() => post(url, payload, options));
+  const sent = options?.ignoreStaleUi || payload.command === CMD_VALUE_CHANGED
+    ? { ...payload, [FIELD_IGNORE_STALE_UI]: true }
+    : payload;
+  const result = _chain.then(() => post(url, sent, options));
   _chain = result;
   if (options?.background !== true) {
     busyCommandEnqueued();

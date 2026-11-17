@@ -33,7 +33,11 @@ import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.DynamicVisibility;
+import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.annotate.util.AttributeSettings;
+import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
@@ -42,7 +46,8 @@ import com.top_logic.util.model.ModelService;
 
 /**
  * Test of {@link ModelEditAction} creating references of a given kind with an opposite reference,
- * and adding and removing generalizations of a class.
+ * and adding and removing generalizations of a class, and of the visibility of the reference kind
+ * and opposite fields of the "new attribute" dialog.
  */
 @SuppressWarnings("javadoc")
 public class TestModelEditAction extends TestCase {
@@ -223,6 +228,46 @@ public class TestModelEditAction extends TestCase {
 		});
 	}
 
+	public void testReferenceFieldsShownForClass() {
+		inTestModule((owner, target, enumeration) -> {
+			TLObject input = newAttribute(target, KIND_NORMAL, null);
+			assertEquals(FormVisibility.DEFAULT, mode(input, KIND));
+			assertEquals(FormVisibility.DEFAULT, mode(input, OPPOSITE));
+		});
+	}
+
+	public void testReferenceFieldsHiddenForEnumeration() {
+		inTestModule((owner, target, enumeration) -> {
+			TLObject input = newAttribute(enumeration, KIND_NORMAL, null);
+			assertEquals(FormVisibility.HIDDEN, mode(input, KIND));
+			assertEquals(FormVisibility.HIDDEN, mode(input, OPPOSITE));
+		});
+	}
+
+	public void testReferenceFieldsHiddenWithoutType() {
+		inTestModule((owner, target, enumeration) -> {
+			TLObject input = newAttribute(null, KIND_NORMAL, "");
+			assertEquals(FormVisibility.HIDDEN, mode(input, KIND));
+			assertEquals(FormVisibility.HIDDEN, mode(input, OPPOSITE));
+		});
+	}
+
+	public void testReferenceFieldsWithValueStayVisible() {
+		inTestModule((owner, target, enumeration) -> {
+			// A value entered for a class stays visible, so it can be reset.
+			TLObject input = newAttribute(enumeration, KIND_COMPOSITION, BACK);
+			assertEquals(FormVisibility.DEFAULT, mode(input, KIND));
+			assertEquals(FormVisibility.DEFAULT, mode(input, OPPOSITE));
+		});
+	}
+
+	private static FormVisibility mode(TLObject input, String attribute) {
+		TLStructuredTypePart part = input.tType().getPartOrFail(attribute);
+		ModeSelector selector = DynamicVisibility.modeSelector(part);
+		assertNotNull(selector);
+		return selector.getMode(input, part, true);
+	}
+
 	private static TLAssociationEnd ownerEnd(TLReference reference) {
 		return TLModelUtil.getOtherEnd(reference.getEnd());
 	}
@@ -237,13 +282,17 @@ public class TestModelEditAction extends TestCase {
 	}
 
 	private static TLReference createReference(TLClass owner, Object target, String kind, String opposite) {
+		return (TLReference) execute(Mode.CREATE_ATTRIBUTE, owner, newAttribute(target, kind, opposite));
+	}
+
+	private static TLObject newAttribute(Object target, String kind, String opposite) {
 		TLObject input = TransientObjectFactory.INSTANCE.createObject((TLClass) TLModelUtil.findType(NEW_ATTRIBUTE));
 		input.tUpdateByName(NAME, REF);
 		input.tUpdateByName(TYPE, target);
 		input.tUpdateByName(KIND,
 			((TLEnumeration) TLModelUtil.findType(REFERENCE_KIND)).getClassifier(kind));
 		input.tUpdateByName(OPPOSITE, opposite);
-		return (TLReference) execute(Mode.CREATE_ATTRIBUTE, owner, input);
+		return input;
 	}
 
 	private static Object addGeneralization(TLClass specialization, TLClass generalization) {

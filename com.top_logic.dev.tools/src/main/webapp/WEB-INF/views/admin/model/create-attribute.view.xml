@@ -3,7 +3,8 @@
 <!--
 	Dialog to add an attribute to the selected type. The form edits a transient NewAttribute model
 	(bound to the model channel by the opening command): the attribute name, value type and cardinality
-	(mandatory / multiple). The primary command stores the form state, runs the ModelEditAction in
+	(mandatory / multiple), and for a class as value type the reference kind (normal, composition,
+	aggregation) and the name of a navigable opposite reference in that class. The primary command stores the form state, runs the ModelEditAction in
 	CREATE_ATTRIBUTE mode inside a transaction (adding a property or, for a class or enumeration value
 	type, a reference to the type derived from the container channel), writes the new attribute to the selection channel bound to the parent view,
 	bumps the reload channel so the diagram re-reads its module, and closes the dialog.
@@ -33,6 +34,8 @@
 			<field attribute="type"/>
 			<field attribute="mandatory"/>
 			<field attribute="multiple"/>
+			<field attribute="referenceKind"/>
+			<field attribute="opposite"/>
 			<commands>
 				<generic-command
 					image="css:bi bi-check-lg"

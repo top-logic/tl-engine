@@ -128,7 +128,11 @@
 						</dynamic-visibility>
 					</annotations>
 				</property>
-				<!-- Composition and aggregation require a class as value type. -->
+				<!--
+					Composition and aggregation require a class as value type. The field is offered while a
+					class is chosen; for another type it stays visible as long as it holds a kind other than
+					normal, so the user can reset a value entered for a class.
+				-->
 				<reference name="referenceKind"
 					kind="forwards"
 					type="ReferenceKind"
@@ -137,11 +141,50 @@
 						<default-value>
 							<classifier value="normal"/>
 						</default-value>
+						<dynamic-visibility>
+							<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+								function="obj -> {type = $obj.get(`tl.devtools:NewAttribute#type`); kind = $obj.get(`tl.devtools:NewAttribute#referenceKind`); if(($type != null &amp;&amp; $type.instanceOf(`tl.model:TLClass`)) || ($kind != null &amp;&amp; $kind != `tl.devtools:ReferenceKind#normal`), 'default', 'hidden')}"
+							/>
+						</dynamic-visibility>
 					</annotations>
 				</reference>
-				<!-- Name of the reference from the target class back to the owner; empty for none. -->
+				<!--
+					Name of the reference from the target class back to the owner; empty for none. Offered
+					while a class is chosen; for another type it stays visible as long as it holds a name, so
+					the user can clear a value entered for a class.
+				-->
 				<property name="opposite"
 					type="tl.core:String"
+				>
+					<annotations>
+						<dynamic-visibility>
+							<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+								function="obj -> {type = $obj.get(`tl.devtools:NewAttribute#type`); opposite = $obj.get(`tl.devtools:NewAttribute#opposite`); if(($type != null &amp;&amp; $type.instanceOf(`tl.model:TLClass`)) || !$opposite.isEmpty(), 'default', 'hidden')}"
+							/>
+						</dynamic-visibility>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+
+		<!--
+			Transient-only type describing a reference in the detail form of the model editor: its kind
+			(composition from the destination end, aggregation from the owner end) and its opposite
+			reference. Instances are created with new(`tl.devtools:ReferenceDetails`, transient: true) for
+			display only, so no table is declared.
+		-->
+		<class name="ReferenceDetails">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="referenceKind"
+					kind="forwards"
+					type="ReferenceKind"
+				/>
+				<reference name="opposite"
+					kind="forwards"
+					type="tl.model:TLReference"
 				/>
 			</attributes>
 		</class>

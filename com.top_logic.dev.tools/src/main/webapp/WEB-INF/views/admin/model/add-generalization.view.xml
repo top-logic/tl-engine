@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog to add a generalization to the selected class. The form edits a transient NewGeneralization
+	model (bound to the model channel by the opening command): the class to add as generalization. The
+	primary command stores the form state, runs the ModelEditAction in ADD_GENERALIZATION mode inside a
+	transaction (refusing a final class and a generalization that would make the class its own
+	generalization), bumps the reload channel so the generalization table and the diagram read the class
+	again, and closes the dialog.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="container"/>
+		<channel name="reload"/>
+	</channels>
+	<window
+		resizable="false"
+		width="420px"
+	>
+		<title>
+			<en>Add generalization</en>
+			<de>Generalisierung hinzufügen</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="generalization"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Add</en>
+						<de>Hinzufügen</de>
+					</label>
+					<store-form-state>
+						<with-result>
+							<with-transaction>
+								<commitMessage>
+									<en>Added generalization {0}.</en>
+									<de>Generalisierung {0} hinzugefügt.</de>
+								</commitMessage>
+								<action class="com.top_logic.dev.tools.model.ModelEditAction"
+									container="container"
+									mode="ADD_GENERALIZATION"
+								/>
+							</with-transaction>
+						</with-result>
+					</store-form-state>
+					<execute-script function="now()">
+						<with-result>
+							<write-channel name="reload"/>
+						</with-result>
+					</execute-script>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

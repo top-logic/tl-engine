@@ -822,8 +822,8 @@
 
 /* --- Leer und lädt nach ---------------------------------------------------------- */
 
-/* Zeilen im sichtbaren Fenster, die der Server noch nicht geschickt hat: ein tl-skeleton in
-   Zeilenhöhe. Ohne Zeilen steht im Körper eine tl-status-Zeile. */
+/* Zeilen im sichtbaren Fenster, die der Server noch nicht geschickt hat: ein tl-skeleton als
+   Textzeile. Ohne Zeilen steht im Körper eine tl-status-Zeile. */
 .tl-table__placeholder {
   display: flex;
   align-items: center;

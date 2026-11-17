@@ -23,7 +23,8 @@ import com.top_logic.basic.util.ResKey;
  * <code>env</code> aliases of the configuration: a JNDI value of the application context first,
  * then a system property, then an environment variable. The variable is read like by the
  * {@link EnvironmentSecretStore}: it holds the plain secret, a value with the prefix
- * <code>unencrypted:</code> is accepted with the prefix stripped.
+ * <code>unencrypted:</code> is accepted with the prefix stripped, a value with the prefix
+ * {@link com.top_logic.basic.ConfigurationEncryption#AUTHENTICATED_PREFIX} is decrypted.
  * </p>
  *
  * <p>

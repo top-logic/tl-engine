@@ -247,6 +247,11 @@ public class ComputedColumnProviderByExpression
 		 * If no label function is specified, the static label from
 		 * {@link ColumnProviderConfig#getColumnLabel()} is used.
 		 * </p>
+		 * 
+		 * <p>
+		 * Like every label, the column label is computed without the access rights of the current
+		 * user, so that a user sees the label of an object the user may only discover.
+		 * </p>
 		 */
 		@Name(DYNAMIC_COLUMN_LABEL)
 		Expr getDynamicColumnLabel();
@@ -296,6 +301,11 @@ public class ComputedColumnProviderByExpression
 		_columnType = config.getColumnType().resolveType();
 		_canUpdate = QueryExecutor.compileOptional(config.getCanUpdate());
 		_dynamicColumnLabel = QueryExecutor.compileOptional(config.getDynamicColumnLabel());
+		if (_dynamicColumnLabel != null) {
+			// Labels belong to Discover (R1/R12 of the Discover specification) and are computed
+			// unsecured.
+			_dynamicColumnLabel.disableSecurity();
+		}
 		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, c -> _component = c);
 	}
 

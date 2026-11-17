@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- typed configuration for TestAgentTokenMigration -->
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<services>
+
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/TestAgentTokenMigration.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
+
+	</services>
+
+</application>

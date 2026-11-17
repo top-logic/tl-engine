@@ -47,6 +47,7 @@ import com.top_logic.layout.view.table.ColumnsConfig;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.impl.TransientObjectFactory;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
@@ -602,6 +603,46 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 
 	private static <V> ColumnFilter<V> filterOf(Column<Object, V> column) {
 		return column.filter().orElseThrow();
+	}
+
+	/**
+	 * The header label of a column of {@code <dynamic-columns>} is computed unsecured, so a user who
+	 * may only discover the column object sees its label; the columns themselves and the tooltips are
+	 * computed secured.
+	 */
+	public void testDynamicColumnLabelOfDiscoverOnlyObject() throws ConfigurationException {
+		String categoryName = "`" + MODULE + ":" + CATEGORY + "#" + NAME + "`";
+		String dynamicColumns = "<columns>"
+			+ "<dynamic-columns name='categories' column-as='m' type='tl.core:String'>"
+			+ "<columns>all(`" + MODULE + ":" + CATEGORY + "`)</columns>"
+			+ "<column-label>$m.get(" + categoryName + ")</column-label>"
+			+ "<value>$m.get(" + categoryName + ")</value>"
+			+ "<tooltip>$m.get(" + categoryName + ")</tooltip>"
+			+ "</dynamic-columns>"
+			+ "</columns>";
+
+		// The viewer of the project discovers its category, but may not read it.
+		becomeUser(_roleless);
+		assertTrue(ModelAccessRights.getInstance().isDiscoverAllowed(_category));
+		assertFalse(ModelAccessRights.getInstance().isReadAllowed(_category));
+		ColumnSetup discovered = findByLabel(columns(dynamicColumns), "category");
+		assertNull("The tooltip is computed secured.", discovered.tooltip().apply(_project, null));
+
+		becomeUser(_outsider);
+		assertFalse(ModelAccessRights.getInstance().isDiscoverAllowed(_category));
+		for (ColumnSetup column : columns(dynamicColumns)) {
+			assertFalse("Without Discover, there is no column for the category.",
+				ResKey.text("category").equals(column.label()));
+		}
+	}
+
+	private static ColumnSetup findByLabel(List<ColumnSetup> columns, String label) {
+		for (ColumnSetup column : columns) {
+			if (ResKey.text(label).equals(column.label())) {
+				return column;
+			}
+		}
+		throw new AssertionError("No column labelled '" + label + "' in " + names(columns) + ".");
 	}
 
 	private ColumnSetup column(String name) throws ConfigurationException {

@@ -15,11 +15,11 @@ import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.core.security.RoleToolAccess;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
-import com.top_logic.tl.ai.core.security.ToolAuthorization;
-import com.top_logic.tl.ai.core.security.ToolIdentity;
+import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.RoleToolAccess;
+import com.top_logic.ai.core.security.ToolAccessPolicy;
+import com.top_logic.ai.core.security.ToolAuthorization;
+import com.top_logic.ai.core.security.ToolIdentity;
 
 /**
  * The rows of the Tool-Katalog: every registered tool, joined with the policy in effect.

@@ -26,11 +26,11 @@ import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
-import com.top_logic.tl.ai.core.tools.web.BrowsingPolicy;
-import com.top_logic.tl.ai.core.tools.web.FilteringProxy;
-import com.top_logic.tl.ai.core.tools.web.UrlSafety;
-import com.top_logic.tl.ai.core.tools.web.WebSearchTool;
-import com.top_logic.tl.ai.core.tools.web.WebToolsService;
+import com.top_logic.ai.core.tools.web.BrowsingPolicy;
+import com.top_logic.ai.core.tools.web.FilteringProxy;
+import com.top_logic.ai.core.tools.web.UrlSafety;
+import com.top_logic.ai.core.tools.web.WebSearchTool;
+import com.top_logic.ai.core.tools.web.WebToolsService;
 
 /**
  * Service owning the pool of isolated, per-session headless Chromium browsers used by

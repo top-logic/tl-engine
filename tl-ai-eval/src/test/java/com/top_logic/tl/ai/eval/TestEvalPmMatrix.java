@@ -22,15 +22,15 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.tl.ai.core.agent.AgentApplicationService;
-import com.top_logic.tl.ai.core.agent.AgentPolicyService;
-import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
-import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
-import com.top_logic.tl.ai.core.provider.LLMProviderService;
-import com.top_logic.tl.ai.core.provider.ScriptedProvider;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.agent.AgentApplicationService;
+import com.top_logic.ai.core.agent.AgentPolicyService;
+import com.top_logic.ai.core.agent.AgentRuntimeService;
+import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
+import test.com.top_logic.basic.junit.AssumptionAwareRunner;
+import com.top_logic.ai.core.provider.LLMProviderService;
+import com.top_logic.ai.core.provider.ScriptedProvider;
+import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 

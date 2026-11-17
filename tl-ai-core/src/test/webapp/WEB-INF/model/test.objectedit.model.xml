@@ -93,7 +93,7 @@
 			<annotations>
 				<delete-constraints>
 					<delete-constraint>
-						<expr>archive -> if($archive.get(`test.objectedit:Archive#kept`), #"class.com.top_logic.tl.ai.core.tools.model.I18NConstants.ARCHIVE_IS_KEPT")</expr>
+						<expr>archive -> if($archive.get(`test.objectedit:Archive#kept`), #"class.test.com.top_logic.ai.core.tools.model.I18NConstants.ARCHIVE_IS_KEPT")</expr>
 					</delete-constraint>
 				</delete-constraints>
 			</annotations>

@@ -12,7 +12,7 @@ import junit.framework.Test;
 import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
+import com.top_logic.ai.core.agent.TopLogicSecurityContext;
 
 /**
  * Classifying a TL-Script tool in {@code <tool-groups>}, end to end.

@@ -19,7 +19,7 @@ import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.index.config.IndexedTypes;
 
 /**

@@ -165,7 +165,7 @@
 			its list. An application that ships its own agents names <skill name="TL_webBrowser"/>
 			in their <skills> the same way.
 		-->
-		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
+		<config service-class="com.top_logic.ai.core.agent.TopLogicAgentDefinitions">
 			<instance>
 				<skills>
 					<skill name="TL_webBrowser"

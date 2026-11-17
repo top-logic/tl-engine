@@ -23,8 +23,8 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.react.scripting.WindowAccess;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tl.ai.core.agent.RunWindow;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.agent.RunWindow;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
 
 /**
  * Connects agent runs to the browser windows the chat is displayed in.

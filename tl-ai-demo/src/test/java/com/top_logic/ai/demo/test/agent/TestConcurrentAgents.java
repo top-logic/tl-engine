@@ -34,20 +34,20 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.layout.provider.LabelProviderService;
-import com.top_logic.tl.ai.core.agent.AgentApplicationService;
-import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
-import com.top_logic.tl.ai.core.agent.AgentFactory;
-import com.top_logic.tl.ai.core.agent.AgentPolicyService;
-import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
-import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
-import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
-import com.top_logic.tl.ai.core.message.Conversation;
-import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.model.Agent;
-import com.top_logic.tl.ai.core.model.TlAiCoreFactory;
-import com.top_logic.tl.ai.core.model.impl.AgentBase;
-import com.top_logic.tl.ai.core.provider.LLMProviderService;
+import com.top_logic.ai.core.agent.AgentApplicationService;
+import com.top_logic.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.ai.core.agent.AgentFactory;
+import com.top_logic.ai.core.agent.AgentPolicyService;
+import com.top_logic.ai.core.agent.AgentRuntimeService;
+import com.top_logic.ai.core.agent.event.AgentEventListener;
+import test.com.top_logic.basic.junit.AssumptionAwareRunner;
+import com.top_logic.ai.core.message.Conversation;
+import com.top_logic.ai.core.message.TextContent;
+import com.top_logic.ai.core.message.UserMessage;
+import com.top_logic.ai.core.model.Agent;
+import com.top_logic.ai.core.model.TlAiCoreFactory;
+import com.top_logic.ai.core.model.impl.AgentBase;
+import com.top_logic.ai.core.provider.LLMProviderService;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -58,7 +58,7 @@ import com.top_logic.util.model.ModelService;
  * {@value #AGENT_NAME} and records its outcome. The test fails if any run throws.
  * Used to exercise the agent loop, lock model and provider streaming under
  * concurrent load — if N concurrent runs take roughly N× a single run, look for
- * serialization in {@link com.top_logic.tl.ai.core.agent.TransactionScope} or in
+ * serialization in {@link com.top_logic.ai.core.agent.TransactionScope} or in
  * provider-side rate limits.</p>
  *
  * <h3>Configuration</h3>
@@ -79,7 +79,7 @@ import com.top_logic.util.model.ModelService;
  * of any provider, the test is reported as skipped.</p>
  *
  * @see AgentFactory
- * @see com.top_logic.tl.ai.core.agent.TransactionScope
+ * @see com.top_logic.ai.core.agent.TransactionScope
  */
 @RunWith(AssumptionAwareRunner.class)
 public class TestConcurrentAgents extends BasicTestCase {

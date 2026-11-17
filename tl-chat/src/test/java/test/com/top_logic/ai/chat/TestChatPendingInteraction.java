@@ -44,14 +44,14 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
-import com.top_logic.tl.ai.core.agent.approval.InteractionAsker;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.agent.approval.ApprovalRequest;
+import com.top_logic.ai.core.agent.approval.InteractionAsker;
+import com.top_logic.ai.core.agent.approval.UserInteractionRequest;
+import com.top_logic.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.ai.core.agent.event.AgentEvent;
+import com.top_logic.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
 import com.top_logic.util.model.ModelService;
 
 /**

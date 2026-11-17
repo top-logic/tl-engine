@@ -14,13 +14,13 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
-import com.top_logic.tl.ai.core.agent.AgentApplicationService;
-import com.top_logic.tl.ai.core.agent.AgentDefinition;
-import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
-import com.top_logic.tl.ai.core.agent.AgentPolicyService;
-import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
-import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
-import com.top_logic.tl.ai.core.provider.LLMProviderService;
+import com.top_logic.ai.core.agent.AgentApplicationService;
+import com.top_logic.ai.core.agent.AgentDefinition;
+import com.top_logic.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.ai.core.agent.AgentPolicyService;
+import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
+import com.top_logic.ai.core.agent.AgentRuntimeService;
+import com.top_logic.ai.core.provider.LLMProviderService;
 
 /**
  * That the arms of the matrix differ in their model and in nothing else.

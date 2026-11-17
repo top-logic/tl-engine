@@ -308,7 +308,7 @@
 			<instance>
 				<tool-factories>
 					<factory name="secdemo-reporting">
-						<implementation class="com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory">
+						<implementation class="com.top_logic.ai.core.tools.registry.ScriptToolFactory">
 							<tools>
 								<tool name="countTickets"
 									mode="READ"
@@ -332,7 +332,7 @@
 						</implementation>
 					</factory>
 					<factory name="secdemo-editing">
-						<implementation class="com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory">
+						<implementation class="com.top_logic.ai.core.tools.registry.ScriptToolFactory">
 							<tools>
 								<tool name="addTicket"
 									mode="DATA_WRITE"
@@ -352,7 +352,7 @@
 												</tooltip>
 											</label>
 											<mandatory/>
-											<format value="com.top_logic.tl.ai.core.tools.model.AgentObjectFormat"/>
+											<format value="com.top_logic.ai.core.tools.model.AgentObjectFormat"/>
 											<object-type value="pm:Project"/>
 										</property>
 										<property name="title"
@@ -391,7 +391,7 @@
 						/>
 					</factory>
 					<factory name="secdemo-unclassified">
-						<implementation class="com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory">
+						<implementation class="com.top_logic.ai.core.tools.registry.ScriptToolFactory">
 							<tools>
 								<tool name="countTicketsUnclassified"
 									mode="READ"
@@ -436,8 +436,8 @@
 			the web fetch, the task tools and the authoring tools are denied to every persona -
 			deny-by-default, no <deny> needed.
 		-->
-		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
-			<instance class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+		<config service-class="com.top_logic.ai.core.security.AiToolAccessService">
+			<instance class="com.top_logic.ai.core.security.AiToolAccessService">
 				<!--
 					A TL-Script tool declares no group, so this is the only place it can get one. Every
 					tool is named, one at a time: there is no pattern syntax, and a tool that appears

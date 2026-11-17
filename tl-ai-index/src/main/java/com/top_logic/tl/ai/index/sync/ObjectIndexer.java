@@ -22,7 +22,7 @@ import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.index.config.IndexedType;
 import com.top_logic.tl.ai.index.config.IndexedTypes;
 import com.top_logic.tl.ai.index.embed.Embedder;

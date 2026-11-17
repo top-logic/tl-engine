@@ -7,7 +7,7 @@ package com.top_logic.tl.ai.eval;
 
 import java.util.List;
 
-import com.top_logic.tl.ai.core.session.Citation;
+import com.top_logic.ai.core.session.Citation;
 
 /**
  * What a run answered: the text a {@link CitationExpectation} and a {@link JudgeExpectation} grade.

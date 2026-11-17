@@ -22,7 +22,7 @@ import com.top_logic.basic.module.RestartException;
 import com.top_logic.basic.module.TypedRuntimeModule.ModuleConfiguration;
 import com.top_logic.gui.ThemeUtil;
 import com.top_logic.layout.admin.component.TLServiceUtils;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.util.autoconf.OverrideConfigurationWriter;
 import com.top_logic.util.error.TopLogicException;
 

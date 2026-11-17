@@ -4,8 +4,8 @@
 	<module name="tl.ai.access">
 		<annotations>
 			<package-binding
-				implementation-package="com.top_logic.tl.ai.core.access.model.impl"
-				interface-package="com.top_logic.tl.ai.core.access.model"
+				implementation-package="com.top_logic.ai.core.access.model.impl"
+				interface-package="com.top_logic.ai.core.access.model"
 			/>
 		</annotations>
 		<types>

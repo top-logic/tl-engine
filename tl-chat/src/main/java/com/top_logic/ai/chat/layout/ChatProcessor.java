@@ -39,51 +39,51 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.AgentFactory;
-import com.top_logic.tl.ai.core.agent.AgentLoop;
-import com.top_logic.tl.ai.core.agent.AgentResult;
-import com.top_logic.tl.ai.core.agent.SecurityContext;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.TransactionScope;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
-import com.top_logic.tl.ai.core.agent.environment.RunFactsBinding;
-import com.top_logic.tl.ai.core.agent.environment.UserMemories;
-import com.top_logic.tl.ai.core.agent.environment.UserMemoryBinding;
-import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
-import com.top_logic.tl.ai.core.agent.event.CompositeAgentEventListener;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
-import com.top_logic.tl.ai.core.execution.AgentEnvironment;
-import com.top_logic.tl.ai.core.execution.AgentRunner;
-import com.top_logic.tl.ai.core.execution.AgentTaskMirror;
-import com.top_logic.tl.ai.core.execution.RunFailure;
-import com.top_logic.tl.ai.core.execution.model.AgentSession;
-import com.top_logic.tl.ai.core.limits.I18NConstants;
-import com.top_logic.tl.ai.core.limits.RunLimitExceededException;
-import com.top_logic.tl.ai.core.limits.RunLimits;
-import com.top_logic.tl.ai.core.memory.ConversationMemory;
-import com.top_logic.tl.ai.core.message.ContentPart;
-import com.top_logic.tl.ai.core.message.Conversation;
-import com.top_logic.tl.ai.core.message.ImageContent;
-import com.top_logic.tl.ai.core.message.PdfContent;
-import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.scripting.Converters;
-import com.top_logic.tl.ai.core.security.RunEntryPoint;
-import com.top_logic.tl.ai.core.security.RunPrincipal;
-import com.top_logic.tl.ai.core.security.RunSecurity;
-import com.top_logic.tl.ai.core.session.Citation;
-import com.top_logic.tl.ai.core.session.ConversationLog;
-import com.top_logic.tl.ai.core.session.ConversationLogListener;
-import com.top_logic.tl.ai.core.session.Part;
-import com.top_logic.tl.ai.core.session.Turn;
-import com.top_logic.tl.ai.core.tools.ToolRegistry;
-import com.top_logic.tl.ai.core.tools.interaction.ToolRegistryReloadFlag;
-import com.top_logic.tl.ai.core.tools.task.TaskStore;
+import com.top_logic.ai.core.agent.AgentFactory;
+import com.top_logic.ai.core.agent.AgentLoop;
+import com.top_logic.ai.core.agent.AgentResult;
+import com.top_logic.ai.core.agent.SecurityContext;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.agent.TransactionScope;
+import com.top_logic.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.ai.core.agent.environment.EnvironmentFact;
+import com.top_logic.ai.core.agent.environment.RunFactsBinding;
+import com.top_logic.ai.core.agent.environment.UserMemories;
+import com.top_logic.ai.core.agent.environment.UserMemoryBinding;
+import com.top_logic.ai.core.agent.event.AgentEvent;
+import com.top_logic.ai.core.agent.event.AgentEventListener;
+import com.top_logic.ai.core.agent.event.CompositeAgentEventListener;
+import com.top_logic.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.ai.core.agent.subagent.SubagentNews;
+import com.top_logic.ai.core.agent.subagent.SubagentRegistryBinding;
+import com.top_logic.ai.core.execution.AgentEnvironment;
+import com.top_logic.ai.core.execution.AgentRunner;
+import com.top_logic.ai.core.execution.AgentTaskMirror;
+import com.top_logic.ai.core.execution.RunFailure;
+import com.top_logic.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.limits.I18NConstants;
+import com.top_logic.ai.core.limits.RunLimitExceededException;
+import com.top_logic.ai.core.limits.RunLimits;
+import com.top_logic.ai.core.memory.ConversationMemory;
+import com.top_logic.ai.core.message.ContentPart;
+import com.top_logic.ai.core.message.Conversation;
+import com.top_logic.ai.core.message.ImageContent;
+import com.top_logic.ai.core.message.PdfContent;
+import com.top_logic.ai.core.message.TextContent;
+import com.top_logic.ai.core.message.UserMessage;
+import com.top_logic.ai.core.scripting.Converters;
+import com.top_logic.ai.core.security.RunEntryPoint;
+import com.top_logic.ai.core.security.RunPrincipal;
+import com.top_logic.ai.core.security.RunSecurity;
+import com.top_logic.ai.core.session.Citation;
+import com.top_logic.ai.core.session.ConversationLog;
+import com.top_logic.ai.core.session.ConversationLogListener;
+import com.top_logic.ai.core.session.Part;
+import com.top_logic.ai.core.session.Turn;
+import com.top_logic.ai.core.tools.ToolRegistry;
+import com.top_logic.ai.core.tools.interaction.ToolRegistryReloadFlag;
+import com.top_logic.ai.core.tools.task.TaskStore;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
@@ -154,7 +154,7 @@ public class ChatProcessor {
 	/**
 	 * The agent a request that names none runs as.
 	 *
-	 * @see AgentFactory#defaultAgentFor(com.top_logic.tl.ai.core.security.RunAuthorization)
+	 * @see AgentFactory#defaultAgentFor(com.top_logic.ai.core.security.RunAuthorization)
 	 */
 	private static String defaultAgent(ToolContext context, AgentFactory agentFactory) {
 		String resolved = AgentFactory.defaultAgentFor(context.security().runAuthorization());
@@ -984,7 +984,7 @@ public class ChatProcessor {
 	 *
 	 * <p>
 	 * The security context comes from the installation's
-	 * {@link com.top_logic.tl.ai.core.security.SecurityContextFactory} - by default the one backed by
+	 * {@link com.top_logic.ai.core.security.SecurityContextFactory} - by default the one backed by
 	 * TopLogic's roles and model access rights. A live {@link TransactionScope} carries the KB
 	 * transactions, and the {@link ApprovalCallback} is backed by the {@link UserInteractionStore} for
 	 * human-in-the-loop approval.
@@ -1336,9 +1336,9 @@ public class ChatProcessor {
 		}
 		ResKey notice = switch (result.stopReason()) {
 			case BUDGET_EXHAUSTED -> RunLimits.budgetStopNotice(context.security());
-			case NO_ANSWER -> com.top_logic.tl.ai.core.agent.I18NConstants.RUN_STOPPED_NO_ANSWER;
-			case OUTPUT_LIMIT -> com.top_logic.tl.ai.core.agent.I18NConstants.RUN_STOPPED_OUTPUT_LIMIT;
-			case MAX_TURNS -> com.top_logic.tl.ai.core.agent.I18NConstants.RUN_STOPPED_TURN_LIMIT;
+			case NO_ANSWER -> com.top_logic.ai.core.agent.I18NConstants.RUN_STOPPED_NO_ANSWER;
+			case OUTPUT_LIMIT -> com.top_logic.ai.core.agent.I18NConstants.RUN_STOPPED_OUTPUT_LIMIT;
+			case MAX_TURNS -> com.top_logic.ai.core.agent.I18NConstants.RUN_STOPPED_TURN_LIMIT;
 			default -> null;
 		};
 		if (notice == null) {
@@ -1352,7 +1352,7 @@ public class ChatProcessor {
 	 * The citations the validator kept for the turn, in marker order.
 	 *
 	 * <p>
-	 * Collected over every {@link com.top_logic.tl.ai.core.session.Part.TextPart} of the turn
+	 * Collected over every {@link com.top_logic.ai.core.session.Part.TextPart} of the turn
 	 * rather than the last one alone: a turn that wrote text, called a tool and wrote more text
 	 * carries markers in more than one part, and the answer the chat renders is all of them.
 	 * </p>
@@ -1670,7 +1670,7 @@ public class ChatProcessor {
 		/**
 		 * Whether the run's events delivered an {@link AgentEvent.ProviderError} to the windows
 		 * showing the chat - its own, or the one a failure that ended the run is reported as (see
-		 * {@link com.top_logic.tl.ai.core.execution.RunRecording#fail(Throwable)}).
+		 * {@link com.top_logic.ai.core.execution.RunRecording#fail(Throwable)}).
 		 */
 		public boolean isErrorStreamed() {
 			return _errorStreamed;

@@ -14,10 +14,10 @@ import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.ai.tool.api.ToolMethod;
 import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.ai.tool.api.UntrustedEnvelope;
-import com.top_logic.tl.ai.core.citation.CitationKinds;
-import com.top_logic.tl.ai.core.citation.ReadingListBinding;
-import com.top_logic.tl.ai.core.tools.web.UrlProvenance;
-import com.top_logic.tl.ai.core.tools.web.WebFetchTool;
+import com.top_logic.ai.core.citation.CitationKinds;
+import com.top_logic.ai.core.citation.ReadingListBinding;
+import com.top_logic.ai.core.tools.web.UrlProvenance;
+import com.top_logic.ai.core.tools.web.WebFetchTool;
 
 /**
  * {@code webFetch} as the eval has it: a page of {@link FixtureWeb} is read from there, every other

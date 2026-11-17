@@ -5,8 +5,8 @@
  */
 package com.top_logic.tl.ai.browser;
 
-import static com.top_logic.tl.ai.core.tools.web.TestBrowsingPolicy.origin;
-import static com.top_logic.tl.ai.core.tools.web.TestBrowsingPolicy.policy;
+import static com.top_logic.ai.core.tools.web.TestBrowsingPolicy.origin;
+import static com.top_logic.ai.core.tools.web.TestBrowsingPolicy.policy;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -28,13 +28,13 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.browser.BrowserToolsService.GovernedPolicy;
-import com.top_logic.tl.ai.core.tools.web.BrowsingPolicy;
-import com.top_logic.tl.ai.core.tools.web.BrowsingPolicyConfig.Access;
-import com.top_logic.tl.ai.core.tools.web.BrowsingPolicyConfig;
-import com.top_logic.tl.ai.core.tools.web.FilteringProxy.AddressResolver;
-import com.top_logic.tl.ai.core.tools.web.FilteringProxy.Target;
-import com.top_logic.tl.ai.core.tools.web.FilteringProxy;
-import com.top_logic.tl.ai.core.tools.web.RecordingServer;
+import com.top_logic.ai.core.tools.web.BrowsingPolicy;
+import com.top_logic.ai.core.tools.web.BrowsingPolicyConfig.Access;
+import com.top_logic.ai.core.tools.web.BrowsingPolicyConfig;
+import com.top_logic.ai.core.tools.web.FilteringProxy.AddressResolver;
+import com.top_logic.ai.core.tools.web.FilteringProxy.Target;
+import com.top_logic.ai.core.tools.web.FilteringProxy;
+import com.top_logic.ai.core.tools.web.RecordingServer;
 
 /**
  * Tests that the browsing governance of issue #347 is actually <b>enforced</b> by the browser: at the
@@ -48,7 +48,7 @@ import com.top_logic.tl.ai.core.tools.web.RecordingServer;
  * tell the two apart.
  * </p>
  *
- * @see com.top_logic.tl.ai.core.tools.web.TestBrowsingPolicyEnforcement
+ * @see com.top_logic.ai.core.tools.web.TestBrowsingPolicyEnforcement
  */
 public class TestBrowserPolicyEnforcement extends TestCase {
 

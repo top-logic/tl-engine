@@ -68,16 +68,16 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
-import com.top_logic.tl.ai.core.cost.CostConversion;
-import com.top_logic.tl.ai.core.cost.Money;
-import com.top_logic.tl.ai.core.execution.model.AgentSession;
-import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.ai.core.agent.approval.UserInteractionRequest;
+import com.top_logic.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.ai.core.agent.event.AgentEvent;
+import com.top_logic.ai.core.agent.subagent.SubagentInbox;
+import com.top_logic.ai.core.agent.subagent.SubagentNews;
+import com.top_logic.ai.core.cost.CostConversion;
+import com.top_logic.ai.core.cost.Money;
+import com.top_logic.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.message.TokenUsage;
 
 /**
  * Push-based implementation of {@link ChatEventHandler} that writes the chat's frames onto the
@@ -992,7 +992,7 @@ public class ChatSSEHandler implements ChatEventHandler {
 	}
 
 	private int usedTokens() {
-		com.top_logic.tl.ai.core.memory.ConversationMemory memory = _tracker.getConversationMemory();
+		com.top_logic.ai.core.memory.ConversationMemory memory = _tracker.getConversationMemory();
 		return memory == null ? 0 : memory.estimateTokens();
 	}
 
@@ -1001,7 +1001,7 @@ public class ChatSSEHandler implements ChatEventHandler {
 		if (backendWindow != null) {
 			return backendWindow.intValue();
 		}
-		com.top_logic.tl.ai.core.memory.ConversationMemory memory = _tracker.getConversationMemory();
+		com.top_logic.ai.core.memory.ConversationMemory memory = _tracker.getConversationMemory();
 		return memory == null ? 0 : memory.contextWindowTokens();
 	}
 

@@ -19,12 +19,12 @@ mvn test -DskipTests=false -pl tl-ai-core,tl-chat,tl-ai-mcp-server
 A single test class is selected with `-Dtest`, which must name the **fully qualified** class name (several are separated by commas):
 
 ```bash
-mvn test -DskipTests=false -pl tl-ai-core -Dtest=com.top_logic.tl.ai.core.agent.TestAgentLoop
+mvn test -DskipTests=false -pl tl-ai-core -Dtest=com.top_logic.ai.core.agent.TestAgentLoop
 ```
 
 ## Where the tests are and how they are found
 
-The engine's `tl-parent-core` configures surefire with the single include `test/TestAll.java`, the engine's generic suite, which collects everything below `src/test/java/test`. The AI modules keep most of their tests in packages that **mirror the production code** instead - a test of `com.top_logic.tl.ai.core.agent` sits in `com.top_logic.tl.ai.core.agent`, not in `test.com.top_logic.tl.ai.core.agent`. So every AI module repeats two includes in its own POM (see the comment in `tl-ai-core/pom.xml`):
+The engine's `tl-parent-core` configures surefire with the single include `test/TestAll.java`, the engine's generic suite, which collects everything below `src/test/java/test`. The AI modules keep most of their tests in packages that **mirror the production code** instead - a test of `com.top_logic.ai.core.agent` sits in `com.top_logic.ai.core.agent`, not in `test.com.top_logic.ai.core.agent`. So every AI module repeats two includes in its own POM (see the comment in `tl-ai-core/pom.xml`):
 
 | Include | Runs |
 |---|---|
@@ -35,7 +35,7 @@ Both are regular expressions, and each accepts a class in two spellings: as the 
 
 **Adding a test.** Put it next to the code it tests, in the mirrored package, and name it `Test<Something>` or `<Something>Test`. Nothing else is needed - no suite to register it in, no include to extend. `TestSuiteReachability` (in `tl-ai-core`) fails the build if a test class is somewhere no include reaches, or is named so that no collector recognises it, so a test that would silently never run says so instead. Do not write a stub in the `test` package that forwards to it: the class would run twice, which the same test rejects.
 
-A test that needs a knowledge base is still a unit test: wrap it in the H2 setups (`KBSetup.getSingleKBTest`, `ServiceTestSetup`) as the existing ones do, and it runs with the rest. A test that starts agent runs starts the modules `AgentRuntimeService`, `AgentApplicationService` and `AgentPolicyService`. A test that needs something the build may not have - a key, a browser, an external service - belongs behind one of the opt-in gates below, so that it reports as **skipped** rather than failing or, worse, passing without having done anything. The gates are classes next to `AssumptionAwareRunner` in `tl-ai-core/src/test/java/com/top_logic/tl/ai/core/junit` (and beside the tests in `tl-ai-eval` and `tl-ai-index-onnx`); a gate is also asked by a class's `suite()` where the setup would boot the very service the key is missing for.
+A test that needs a knowledge base is still a unit test: wrap it in the H2 setups (`KBSetup.getSingleKBTest`, `ServiceTestSetup`) as the existing ones do, and it runs with the rest. A test that starts agent runs starts the modules `AgentRuntimeService`, `AgentApplicationService` and `AgentPolicyService`. A test that needs something the build may not have - a key, a browser, an external service - belongs behind one of the opt-in gates below, so that it reports as **skipped** rather than failing or, worse, passing without having done anything. The gates are classes next to `AssumptionAwareRunner` in `tl-ai-core/src/test/java/com/top_logic/ai/core/junit` (and beside the tests in `tl-ai-eval` and `tl-ai-index-onnx`); a gate is also asked by a class's `suite()` where the setup would boot the very service the key is missing for.
 
 ## Opt-in gates
 
@@ -56,7 +56,7 @@ mvn test -DskipTests=false -pl tl-ai-browser -Dtl.ai.browser.e2e=true \
     -Dtest=com.top_logic.tl.ai.browser.TestBrowserTool,com.top_logic.tl.ai.browser.TestBrowserUrlProvenance
 
 mvn test -DskipTests=false -pl tl-ai-core -Dtl.ai.injection.e2e=true \
-    -Dtest=com.top_logic.tl.ai.core.tools.web.TestPromptInjectionBarrier
+    -Dtest=com.top_logic.ai.core.tools.web.TestPromptInjectionBarrier
 
 mvn test -DskipTests=false -pl tl-ai-demo -Dtl.ai.vector.e2e=true \
     -Dtest=com.top_logic.ai.demo.VectorIndexIntegrationTest

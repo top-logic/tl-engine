@@ -6,8 +6,8 @@
 package com.top_logic.ai.chat.backend;
 
 import com.top_logic.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.ai.core.agent.event.AgentEvent;
+import com.top_logic.ai.core.agent.event.AgentEventListener;
 
 /**
  * What produces the answers of a conversation in place of the framework's own agent loop - a
@@ -84,7 +84,7 @@ public interface ConversationBackend {
 	 * <p>
 	 * A stop of the user cancels {@code cancel}, on the thread of the stop request; the backend
 	 * listens with {@link CancellationToken#onCancel(Runnable)}, ends its process's work, emits
-	 * {@link AgentEvent.RunCompleted} with {@link com.top_logic.tl.ai.core.agent.StopReason#ABORTED}
+	 * {@link AgentEvent.RunCompleted} with {@link com.top_logic.ai.core.agent.StopReason#ABORTED}
 	 * and returns what it answered so far.
 	 * </p>
 	 *

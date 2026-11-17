@@ -13,7 +13,7 @@ import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.browser.BrowserSession.DomainPolicy;
 import com.top_logic.tl.ai.browser.BrowserToolsService.PageView;
-import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
+import test.com.top_logic.basic.junit.AssumptionAwareRunner;
 
 /**
  * Gated end-to-end tests for the two browser bot-defence features, exercised against a real Chromium

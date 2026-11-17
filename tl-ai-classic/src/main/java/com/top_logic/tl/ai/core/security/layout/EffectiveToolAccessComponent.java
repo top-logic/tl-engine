@@ -44,15 +44,15 @@ import com.top_logic.layout.tree.model.DefaultTreeTableModel;
 import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableBuilder;
 import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableNode;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.core.security.EffectiveToolAccess;
-import com.top_logic.tl.ai.core.security.EffectiveToolAccess.CapabilityAccess;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
-import com.top_logic.tl.ai.core.security.RunAuthorization;
-import com.top_logic.tl.ai.core.security.ToolAccessExplanation;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
+import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.EffectiveToolAccess;
+import com.top_logic.ai.core.security.EffectiveToolAccess.CapabilityAccess;
+import com.top_logic.ai.core.security.RoleAccessPolicy;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Dimension;
+import com.top_logic.ai.core.security.RunAuthorization;
+import com.top_logic.ai.core.security.ToolAccessExplanation;
+import com.top_logic.ai.core.security.ToolAccessPolicy;
 import com.top_logic.util.Resources;
 
 /*

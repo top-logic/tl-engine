@@ -18,12 +18,12 @@ import junit.framework.TestCase;
 import com.top_logic.tl.ai.browser.BrowserSession.DomainPolicy;
 import com.top_logic.tl.ai.browser.BrowserToolsService.PageView;
 import com.top_logic.tl.ai.browser.BrowserToolsService.ScreenshotCapture;
-import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
-import com.top_logic.tl.ai.core.tools.web.FilteringProxy.AddressResolver;
-import com.top_logic.tl.ai.core.tools.web.FilteringProxy.RequestPolicy;
-import com.top_logic.tl.ai.core.tools.web.FilteringProxy.Target;
-import com.top_logic.tl.ai.core.tools.web.FilteringProxy;
-import com.top_logic.tl.ai.core.tools.web.RecordingServer;
+import test.com.top_logic.basic.junit.AssumptionAwareRunner;
+import com.top_logic.ai.core.tools.web.FilteringProxy.AddressResolver;
+import com.top_logic.ai.core.tools.web.FilteringProxy.RequestPolicy;
+import com.top_logic.ai.core.tools.web.FilteringProxy.Target;
+import com.top_logic.ai.core.tools.web.FilteringProxy;
+import com.top_logic.ai.core.tools.web.RecordingServer;
 
 /**
  * End-to-end tests, with a real Chromium, that <b>every</b> verb re-checks the document it is about to

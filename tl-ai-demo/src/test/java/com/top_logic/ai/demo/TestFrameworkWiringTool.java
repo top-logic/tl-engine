@@ -18,11 +18,11 @@ import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.layout.provider.LabelProviderService;
-import com.top_logic.tl.ai.core.agent.ToolRef;
-import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
-import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions.AgentConfig;
-import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions.SkillConfig;
-import com.top_logic.tl.ai.core.tools.authoring.FrameworkWiringPersistence;
+import com.top_logic.ai.core.agent.ToolRef;
+import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
+import com.top_logic.ai.core.agent.TopLogicAgentDefinitions.AgentConfig;
+import com.top_logic.ai.core.agent.TopLogicAgentDefinitions.SkillConfig;
+import com.top_logic.ai.core.tools.authoring.FrameworkWiringPersistence;
 import com.top_logic.util.model.ModelService;
 
 /**

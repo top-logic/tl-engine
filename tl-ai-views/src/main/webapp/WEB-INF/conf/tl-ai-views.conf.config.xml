@@ -32,7 +32,7 @@
 			The skill "Build views". An application gives it to its agent with
 			<skill name="TL_buildViews"/> in the agent's <skills>; loading it delivers the tools.
 		-->
-		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
+		<config service-class="com.top_logic.ai.core.agent.TopLogicAgentDefinitions">
 			<instance>
 				<skills>
 					<skill name="TL_buildViews"

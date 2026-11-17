@@ -36,8 +36,8 @@ import com.top_logic.layout.view.ReloadableControl;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.command.CommandCliqueService;
-import com.top_logic.tl.ai.core.agent.RunWindow;
-import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.agent.RunWindow;
+import com.top_logic.ai.core.agent.ToolContext;
 import com.top_logic.util.model.ModelService;
 
 /**

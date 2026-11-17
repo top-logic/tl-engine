@@ -26,7 +26,7 @@ import test.com.top_logic.knowledge.KBSetup;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.index.AiIndex;
 import com.top_logic.tl.ai.index.AiIndexConfig;
 import com.top_logic.tl.ai.index.embed.HashingEmbedder;

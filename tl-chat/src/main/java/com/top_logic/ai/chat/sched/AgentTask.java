@@ -31,7 +31,7 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.sched.task.impl.StateHandlingTask;
 import com.top_logic.util.sched.task.result.TaskResult.ResultType;

@@ -20,7 +20,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.security.ReadFilter;
 
 /**
  * AI tool that performs semantic search against the {@link VectorIndex}.

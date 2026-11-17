@@ -8,7 +8,7 @@ package com.top_logic.tl.ai.core.security.layout;
 import java.util.Set;
 
 import com.top_logic.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.core.security.RoleToolAccess;
+import com.top_logic.ai.core.security.RoleToolAccess;
 
 /**
  * What makes a capability group worth looking at twice.

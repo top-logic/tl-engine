@@ -10,11 +10,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import com.top_logic.tl.ai.core.agent.StopReason;
-import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
-import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.core.provider.ProviderException.Kind;
+import com.top_logic.ai.core.agent.StopReason;
+import com.top_logic.ai.core.agent.event.AgentEvent;
+import com.top_logic.ai.core.agent.event.AgentEventListener;
+import com.top_logic.ai.core.message.TokenUsage;
+import com.top_logic.ai.core.provider.ProviderException.Kind;
 
 /**
  * The {@link AgentEventListener} the eval hangs on a run, and everything it learned from it.

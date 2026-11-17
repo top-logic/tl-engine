@@ -19,16 +19,16 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.browser.BrowserSession.DomainPolicy;
 import com.top_logic.tl.ai.browser.BrowserToolsService.PageView;
-import com.top_logic.tl.ai.core.citation.ReadingList;
-import com.top_logic.tl.ai.core.citation.ReadingListBinding;
-import com.top_logic.tl.ai.core.execution.RunInfoBinding;
-import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
-import com.top_logic.tl.ai.core.tools.web.FilteringProxy;
-import com.top_logic.tl.ai.core.tools.web.FilteringProxy.AddressResolver;
-import com.top_logic.tl.ai.core.tools.web.FilteringProxy.RequestPolicy;
-import com.top_logic.tl.ai.core.tools.web.FilteringProxy.Target;
-import com.top_logic.tl.ai.core.tools.web.RecordingServer;
-import com.top_logic.tl.ai.core.tools.web.UrlProvenance;
+import com.top_logic.ai.core.citation.ReadingList;
+import com.top_logic.ai.core.citation.ReadingListBinding;
+import com.top_logic.ai.core.execution.RunInfoBinding;
+import test.com.top_logic.basic.junit.AssumptionAwareRunner;
+import com.top_logic.ai.core.tools.web.FilteringProxy;
+import com.top_logic.ai.core.tools.web.FilteringProxy.AddressResolver;
+import com.top_logic.ai.core.tools.web.FilteringProxy.RequestPolicy;
+import com.top_logic.ai.core.tools.web.FilteringProxy.Target;
+import com.top_logic.ai.core.tools.web.RecordingServer;
+import com.top_logic.ai.core.tools.web.UrlProvenance;
 
 /**
  * End-to-end tests, with a real Chromium, that the URL provenance rule holds for the navigations a

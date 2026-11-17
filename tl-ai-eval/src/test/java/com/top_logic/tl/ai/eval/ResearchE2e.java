@@ -7,7 +7,7 @@ package com.top_logic.tl.ai.eval;
 
 import org.junit.Assume;
 
-import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
+import test.com.top_logic.basic.junit.AssumptionAwareRunner;
 
 /**
  * The switch that turns the real research questions on, and the assumption that makes a build without

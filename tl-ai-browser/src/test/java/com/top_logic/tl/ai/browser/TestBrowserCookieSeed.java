@@ -14,7 +14,7 @@ import junit.framework.TestCase;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.browser.BrowserSession.DomainPolicy;
-import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
+import test.com.top_logic.basic.junit.AssumptionAwareRunner;
 
 /**
  * Gated end-to-end test that a {@link BrowserSession} opened with an initial {@code storageState}

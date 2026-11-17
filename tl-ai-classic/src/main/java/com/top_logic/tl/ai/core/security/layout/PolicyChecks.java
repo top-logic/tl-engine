@@ -15,13 +15,13 @@ import java.util.function.Predicate;
 
 import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
+import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Dimension;
+import com.top_logic.ai.core.security.ToolAccessPolicy;
+import com.top_logic.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
+import com.top_logic.ai.core.security.ToolAccessPolicy.Baseline;
+import com.top_logic.ai.core.security.ToolAccessPolicy.Grant;
+import com.top_logic.ai.core.security.ToolAccessPolicy.RoleAccess;
 
 /**
  * What is wrong with a policy, said in the language of whoever is editing it.

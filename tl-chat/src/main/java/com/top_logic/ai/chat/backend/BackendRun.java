@@ -7,12 +7,12 @@ package com.top_logic.ai.chat.backend;
 
 import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.basic.Logger;
-import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
-import com.top_logic.tl.ai.core.execution.RunRecording;
-import com.top_logic.tl.ai.core.session.ConversationLog;
-import com.top_logic.tl.ai.core.session.ConversationLogListener;
-import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
+import com.top_logic.ai.core.agent.event.AgentEvent;
+import com.top_logic.ai.core.agent.event.AgentEventListener;
+import com.top_logic.ai.core.execution.RunRecording;
+import com.top_logic.ai.core.session.ConversationLog;
+import com.top_logic.ai.core.session.ConversationLogListener;
+import com.top_logic.ai.core.session.ConversationLogListenerBinding;
 
 /**
  * One run of a chat answered by a {@link ConversationBackend}: the backend's events recorded as an

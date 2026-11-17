@@ -31,10 +31,10 @@ import com.top_logic.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.basic.Logger;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.execution.model.AgentExecution;
-import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.execution.model.AgentExecution;
+import com.top_logic.ai.core.execution.model.AgentSession;
 import com.top_logic.util.TLContext;
 
 /**

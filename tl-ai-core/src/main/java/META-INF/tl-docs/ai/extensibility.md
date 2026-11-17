@@ -50,7 +50,7 @@ A TL-Script tool declares its parameters as an agent command does, see [paramete
         <property name="project" type="com.top_logic.model.TLObject">
             <label><en>Project</en><tooltip><en>The project to add the ticket to.</en></tooltip></label>
             <mandatory/>
-            <format value="com.top_logic.tl.ai.core.tools.model.AgentObjectFormat"/>
+            <format value="com.top_logic.ai.core.tools.model.AgentObjectFormat"/>
             <object-type value="my.module:Project"/>
         </property>
         <property name="title" type="String">

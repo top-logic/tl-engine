@@ -5,9 +5,9 @@
  */
 package com.top_logic.tl.ai.core.security.layout;
 
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
-import com.top_logic.tl.ai.core.security.ToolAccessExplanation;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Dimension;
+import com.top_logic.ai.core.security.ToolAccessExplanation;
 
 /**
  * One row of the Effektive-Rechte table.

@@ -617,7 +617,7 @@ setting. Two things about the mechanism are worth knowing before using it. A sav
 users only when the service is restarted - *Administration → System → Services → Restart*, or the
 next application start; saving alone changes nothing a running agent does. And the editor saves the
 configuration of **every** agent as it currently reads, into
-`WEB-INF/autoconf/com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions.config.xml`, so from then
+`WEB-INF/autoconf/com.top_logic.ai.core.agent.TopLogicAgentDefinitions.config.xml`, so from then
 on the installation carries its own copy of the shipped prompts and tool lists too; *Reset
 configuration* in the same editor deletes that file and gives the shipped texts back at the next
 restart. An installation that wants to change two texts and keep receiving the rest of every release

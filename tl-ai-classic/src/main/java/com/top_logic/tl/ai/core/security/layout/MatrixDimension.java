@@ -5,7 +5,7 @@
  */
 package com.top_logic.tl.ai.core.security.layout;
 
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Dimension;
 
 /**
  * What the columns of one matrix of the policy editor are.

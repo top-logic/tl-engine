@@ -15,15 +15,15 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Cause;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Fallback;
-import com.top_logic.tl.ai.core.security.RoleToolAccess;
-import com.top_logic.tl.ai.core.security.RunAuthorization;
-import com.top_logic.tl.ai.core.security.ToolAccessExplanation;
+import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.RoleAccessPolicy;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Cause;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Dimension;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Fallback;
+import com.top_logic.ai.core.security.RoleToolAccess;
+import com.top_logic.ai.core.security.RunAuthorization;
+import com.top_logic.ai.core.security.ToolAccessExplanation;
 
 /**
  * What one role on its own may use under the policy being edited, and why.

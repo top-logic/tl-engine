@@ -13,10 +13,10 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.ai.tool.api.RunInfo;
-import com.top_logic.tl.ai.core.citation.ReadingList;
-import com.top_logic.tl.ai.core.citation.ReadingListBinding;
-import com.top_logic.tl.ai.core.execution.RunInfoBinding;
-import com.top_logic.tl.ai.core.tools.web.UrlProvenance;
+import com.top_logic.ai.core.citation.ReadingList;
+import com.top_logic.ai.core.citation.ReadingListBinding;
+import com.top_logic.ai.core.execution.RunInfoBinding;
+import com.top_logic.ai.core.tools.web.UrlProvenance;
 
 /**
  * Tests that {@link BrowserTool} follows the {@link UrlProvenance} rule before it starts a browser:
@@ -27,7 +27,7 @@ import com.top_logic.tl.ai.core.tools.web.UrlProvenance;
  * the links and forms of a page is {@link TestBrowserUrlProvenance}.
  * </p>
  *
- * @see com.top_logic.tl.ai.core.tools.web.TestUrlProvenance
+ * @see com.top_logic.ai.core.tools.web.TestUrlProvenance
  */
 public class TestBrowserToolUrlProvenance extends TestCase {
 

@@ -7,7 +7,7 @@
 			an invoice a read tool showed the model is put on the run's reading list as one of these
 			kinds, by its type; the reader is shown the label.
 		-->
-		<config service-class="com.top_logic.tl.ai.core.citation.CitationKinds">
+		<config service-class="com.top_logic.ai.core.citation.CitationKinds">
 			<instance>
 				<kinds>
 					<kind name="event"
@@ -69,7 +69,7 @@
 			than two reading tool calls runs two of them at a time; the log says at the first such
 			batch "Parallel tool calls are bounded to 2 at a time".
 		-->
-		<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+		<config service-class="com.top_logic.ai.core.agent.AgentRuntimeService">
 			<instance>
 				<capacity
 					chat-workers="1"

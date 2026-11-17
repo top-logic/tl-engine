@@ -9,9 +9,9 @@ import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.tl.ai.core.agent.AgentDefinition;
-import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
-import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
+import com.top_logic.ai.core.agent.AgentDefinition;
+import com.top_logic.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.ai.core.agent.AgentRuntimeService;
 
 /**
  * What the application says about an agent that decides whether a role can run it: the model it is

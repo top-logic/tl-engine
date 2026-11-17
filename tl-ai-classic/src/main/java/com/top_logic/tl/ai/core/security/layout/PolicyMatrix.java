@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import com.top_logic.tl.ai.core.security.EffectiveToolAccess;
-import com.top_logic.tl.ai.core.security.RoleToolAccess;
+import com.top_logic.ai.core.security.EffectiveToolAccess;
+import com.top_logic.ai.core.security.RoleToolAccess;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BackgroundChoice;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BaselineChoice;
 import com.top_logic.tl.ai.core.security.layout.PolicyDraft.CellState;

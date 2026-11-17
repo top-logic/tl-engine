@@ -14,11 +14,11 @@ import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.TopLogicSecurityContext;
-import com.top_logic.tl.ai.core.agent.TransactionScope;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.agent.TopLogicSecurityContext;
+import com.top_logic.ai.core.agent.TransactionScope;
+import com.top_logic.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.ai.core.security.AiToolAccessService;
 
 /**
  * The ceiling on a run that has nobody to answer an approval prompt, and the two other things that
@@ -180,7 +180,7 @@ public class SecDemoBackgroundAccessTest extends SecDemoPersonaTest {
 	 * statement about the authorization gate rather than about approval.
 	 * </p>
 	 *
-	 * @see com.top_logic.tl.ai.core.agent.ToolContext#forDetachedSubagent
+	 * @see com.top_logic.ai.core.agent.ToolContext#forDetachedSubagent
 	 */
 	public void testDetachedSubagentIsRefusedAWriteToolItsParentTurnMayUse() {
 		ToolContext parentTurn = new ToolContext(securityFor(ANNA), ApprovalCallback.AUTO_APPROVE,

@@ -14,6 +14,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.core.agent.I18NConstants;
+import com.top_logic.ai.core.agent.NameBasedInstanceResolver;
 import com.top_logic.basic.FileManager;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;

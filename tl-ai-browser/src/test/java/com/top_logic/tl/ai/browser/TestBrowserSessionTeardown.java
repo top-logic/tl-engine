@@ -14,7 +14,7 @@ import org.junit.runner.RunWith;
 import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.browser.BrowserSession.DomainPolicy;
-import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
+import test.com.top_logic.basic.junit.AssumptionAwareRunner;
 
 /**
  * Gated end-to-end tests that closing a {@link BrowserSession} really destroys its operating-system

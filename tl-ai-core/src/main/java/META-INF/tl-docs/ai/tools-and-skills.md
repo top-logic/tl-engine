@@ -26,7 +26,7 @@ A tool has three names: the bare `Tool.name()` the model calls, the configured `
 - `AnnotatedTools` (in `tl-ai-tool-api`) scans `@ToolMethod` methods into `Tool` instances.
 - `ToolCatalog` - the frozen registry of a run, with JSON-Schema validation of the arguments; a call for an absent tool is answered with which absence it is (`ToolCatalog.absenceReason`), see [capability notices](doc:ai/security/capability-notices).
 - `DynamicToolCatalog` - the catalog with skill overlays, see below.
-- Sub-packages of `com.top_logic.tl.ai.core.tools`: `model/` (model browser, editor, search, the object tools), `script/` (TL-Script execution), `interaction/` (delegation, `askUser`, skills), `task/` (task store), `config/` (schemas, layouts), `integration/` (Gitea), `web/` (web search, web fetch, browser), `memory/`, `registry/` (factories, TL-Script tools), `util/` (serialization, I18N).
+- Sub-packages of `com.top_logic.ai.core.tools`: `model/` (model browser, editor, search, the object tools), `script/` (TL-Script execution), `interaction/` (delegation, `askUser`, skills), `task/` (task store), `config/` (schemas, layouts), `integration/` (Gitea), `web/` (web search, web fetch, browser), `memory/`, `registry/` (factories, TL-Script tools), `util/` (serialization, I18N).
 
 ### The data tools
 
@@ -62,10 +62,10 @@ Which skills and tools an agent is offered depends on the acting user's rights: 
 **Where it lives.** The context is development material, so it lives in the application's source and is deployed with it: a `TextPromptContributor` with `name="application-context"` (`TextPromptContributor.Config.APPLICATION_CONTEXT`) among the prompt contributors of `AgentApplicationService` ([prompt contributors](doc:ai/environment#prompt-contributors)):
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
-	<instance class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+<config service-class="com.top_logic.ai.core.agent.AgentApplicationService">
+	<instance class="com.top_logic.ai.core.agent.AgentApplicationService">
 		<prompt-contributors>
-			<contributor class="com.top_logic.tl.ai.core.agent.TextPromptContributor"
+			<contributor class="com.top_logic.ai.core.agent.TextPromptContributor"
 				name="application-context"
 			>
 				<text>
@@ -86,7 +86,7 @@ Which skills and tools an agent is offered depends on the acting user's rights: 
 
 1. every file that already holds the entry - normally one; a second one exists when the service editor saved `AgentApplicationService` after the entry was written, and both are updated;
 2. otherwise the file that configures `AgentApplicationService` and is read last (files are read in name order, and one with `config:override="true"` drops what earlier ones said), where the entry is added to `<prompt-contributors>`;
-3. otherwise a new file `ai-application-context.config.xml` that adds the entry **without** `config:override` - the contributors are an unkeyed list, to which a later layer appends. Its name differs from the service editor's `com.top_logic.tl.ai.core.agent.AgentApplicationService.config.xml` and sorts before it, so a later service-editor snapshot (which then contains the entry) replaces the entry instead of adding it twice.
+3. otherwise a new file `ai-application-context.config.xml` that adds the entry **without** `config:override` - the contributors are an unkeyed list, to which a later layer appends. Its name differs from the service editor's `com.top_logic.ai.core.agent.AgentApplicationService.config.xml` and sorts before it, so a later service-editor snapshot (which then contains the entry) replaces the entry instead of adding it twice.
 
 The file is edited in place: only the entry is written, every other character stays (`XmlSpans`). The answer names the file and tells the developer to restart the service and commit the file.
 

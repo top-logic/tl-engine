@@ -18,22 +18,22 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.knowledge.service.HistoryUtils;
-import com.top_logic.tl.ai.core.agent.StopReason;
-import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.core.cost.Money;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
-import com.top_logic.tl.ai.core.execution.RunRecording;
-import com.top_logic.tl.ai.core.execution.model.AgentSession;
-import com.top_logic.tl.ai.core.message.Conversation;
-import com.top_logic.tl.ai.core.message.Message;
-import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.session.ConversationLog;
-import com.top_logic.tl.ai.core.session.ConversationLogReplay;
-import com.top_logic.tl.ai.core.session.Part;
-import com.top_logic.tl.ai.core.session.Turn;
-import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
+import com.top_logic.ai.core.agent.StopReason;
+import com.top_logic.ai.core.agent.event.AgentEvent;
+import com.top_logic.ai.core.cost.Money;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.execution.AgentExecutionStore.SessionKind;
+import com.top_logic.ai.core.execution.RunRecording;
+import com.top_logic.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.message.Conversation;
+import com.top_logic.ai.core.message.Message;
+import com.top_logic.ai.core.message.TokenUsage;
+import com.top_logic.ai.core.message.UserMessage;
+import com.top_logic.ai.core.session.ConversationLog;
+import com.top_logic.ai.core.session.ConversationLogReplay;
+import com.top_logic.ai.core.session.Part;
+import com.top_logic.ai.core.session.Turn;
+import com.top_logic.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.util.model.ModelService;
 
 /**

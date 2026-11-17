@@ -11,17 +11,17 @@ import junit.framework.TestCase;
 
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.tl.ai.core.tools.web.FilteringProxy.RequestPolicy;
-import com.top_logic.tl.ai.core.tools.web.FilteringProxy.Target;
-import com.top_logic.tl.ai.core.tools.web.FilteringProxy;
-import com.top_logic.tl.ai.core.tools.web.UrlSafety;
+import com.top_logic.ai.core.tools.web.FilteringProxy.RequestPolicy;
+import com.top_logic.ai.core.tools.web.FilteringProxy.Target;
+import com.top_logic.ai.core.tools.web.FilteringProxy;
+import com.top_logic.ai.core.tools.web.UrlSafety;
 
 /**
  * Tests the domain policy {@link BrowserToolsService} applies to every connection of a browser
  * session, as the {@link FilteringProxy} decides it: the installation's allowlist and blocklist on
  * top of the SSRF check, which no setting relaxes.
  *
- * @see com.top_logic.tl.ai.core.tools.web.TestFilteringProxy
+ * @see com.top_logic.ai.core.tools.web.TestFilteringProxy
  */
 public class TestBrowserRequestPolicy extends TestCase {
 

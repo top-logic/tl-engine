@@ -16,6 +16,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.ai.core.agent.NameBasedInstanceResolver;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
@@ -31,8 +32,8 @@ import com.top_logic.model.instance.importer.XMLInstanceImporter;
 import com.top_logic.model.instance.importer.schema.AttributeValueConf;
 import com.top_logic.model.instance.importer.schema.ObjectConf;
 import com.top_logic.model.instance.importer.schema.ObjectsConf;
-import com.top_logic.tl.ai.core.model.Agent;
-import com.top_logic.tl.ai.core.model.TlAiCoreFactory;
+import com.top_logic.ai.core.model.Agent;
+import com.top_logic.ai.core.model.TlAiCoreFactory;
 import com.top_logic.util.model.ModelService;
 
 /**

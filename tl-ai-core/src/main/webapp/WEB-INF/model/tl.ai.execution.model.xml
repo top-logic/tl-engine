@@ -4,8 +4,8 @@
 	<module name="tl.ai.execution">
 		<annotations>
 			<package-binding
-				implementation-package="com.top_logic.tl.ai.core.execution.model.impl"
-				interface-package="com.top_logic.tl.ai.core.execution.model"
+				implementation-package="com.top_logic.ai.core.execution.model.impl"
+				interface-package="com.top_logic.ai.core.execution.model"
 			/>
 		</annotations>
 		<types>
@@ -870,7 +870,7 @@
 							<storage-algorithm>
 								<derived-storage>
 									<expression-evaluation>
-										<method-call method="com.top_logic.tl.ai.core.execution.model.impl.ResearchRunImpl#computeDocument()"/>
+										<method-call method="com.top_logic.ai.core.execution.model.impl.ResearchRunImpl#computeDocument()"/>
 									</expression-evaluation>
 								</derived-storage>
 							</storage-algorithm>
@@ -890,7 +890,7 @@
 							<storage-algorithm>
 								<derived-storage>
 									<expression-evaluation>
-										<method-call method="com.top_logic.tl.ai.core.execution.model.impl.ResearchRunImpl#computeTokens()"/>
+										<method-call method="com.top_logic.ai.core.execution.model.impl.ResearchRunImpl#computeTokens()"/>
 									</expression-evaluation>
 								</derived-storage>
 							</storage-algorithm>
@@ -1020,7 +1020,7 @@
 							<storage-algorithm>
 								<derived-storage>
 									<expression-evaluation>
-										<method-call method="com.top_logic.tl.ai.core.execution.model.impl.ResearchSourceImpl#computeDisplayName()"/>
+										<method-call method="com.top_logic.ai.core.execution.model.impl.ResearchSourceImpl#computeDisplayName()"/>
 									</expression-evaluation>
 								</derived-storage>
 							</storage-algorithm>

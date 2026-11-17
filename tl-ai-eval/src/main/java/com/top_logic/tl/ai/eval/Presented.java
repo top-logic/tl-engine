@@ -10,8 +10,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
-import com.top_logic.tl.ai.core.tools.present.ChartKind;
-import com.top_logic.tl.ai.core.tools.present.PresentAs;
+import com.top_logic.ai.core.tools.present.ChartKind;
+import com.top_logic.ai.core.tools.present.PresentAs;
 
 /**
  * An {@link Expectation} on what the run <b>showed the user</b>: its last {@code present} call

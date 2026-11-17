@@ -7,7 +7,7 @@ order: 65
 
 ## MCP client
 
-`McpServerRegistry` (package `com.top_logic.tl.ai.core.mcp`, a service of `tl-ai-core`) manages the connections to external MCP servers over stdio or HTTP. `McpTool` wraps a remote tool under the sanitized name `mcp__{server}__{tool}`; an agent definition references MCP servers by name, and their tools become part of the agent's frozen tool base. Which servers a role may reach is decided by `<mcp-access>` ([run access](doc:ai/security/run-access)).
+`McpServerRegistry` (package `com.top_logic.ai.core.mcp`, a service of `tl-ai-core`) manages the connections to external MCP servers over stdio or HTTP. `McpTool` wraps a remote tool under the sanitized name `mcp__{server}__{tool}`; an agent definition references MCP servers by name, and their tools become part of the agent's frozen tool base. Which servers a role may reach is decided by `<mcp-access>` ([run access](doc:ai/security/run-access)).
 
 A remote server is untrusted. Its tools cannot be introspected, so every one is `ToolMode.EXTERNAL` - read and write alike, whatever hints the server sends, because a server could otherwise obtain auto-approval for itself by claiming `readOnlyHint: true`. A remote tool declares no group and is denied until an administrator names it in `<tool-groups>`, typically in `egress`; its answer is marked as untrusted data.
 
@@ -23,7 +23,7 @@ The module ships switched off (`MCPServerService$Module` is `false`). Every requ
 
 ## Endpoint authentication
 
-`EndpointAuthentication` (package `com.top_logic.tl.ai.core.access`) builds the authenticator of `/mcp/*` and `/a2a/*` from a service's `<authentications>`. It reuses the OpenAPI server's `Authenticator` framework (HTTP basic, API key, OAuth bearer), and configuring nothing means every request is answered with 503 - neither endpoint ever serves an anonymous caller, and a credential mapped to no account is refused instead of being run in system context. The personal access tokens (`tl.ai.access:AccessToken`, `<personal-access-token-authentication>`, the *Access tokens* settings tab) live there too, so both endpoints accept them; [personal access tokens](doc:ai/security/mcp-endpoint#personal-access-tokens) describes them.
+`EndpointAuthentication` (package `com.top_logic.ai.core.access`) builds the authenticator of `/mcp/*` and `/a2a/*` from a service's `<authentications>`. It reuses the OpenAPI server's `Authenticator` framework (HTTP basic, API key, OAuth bearer), and configuring nothing means every request is answered with 503 - neither endpoint ever serves an anonymous caller, and a credential mapped to no account is refused instead of being run in system context. The personal access tokens (`tl.ai.access:AccessToken`, `<personal-access-token-authentication>`, the *Access tokens* settings tab) live there too, so both endpoints accept them; [personal access tokens](doc:ai/security/mcp-endpoint#personal-access-tokens) describes them.
 
 ## A2A
 

@@ -21,7 +21,7 @@ import java.util.function.Function;
 import java.util.function.LongSupplier;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
+import com.top_logic.ai.core.agent.RunCancellationBinding;
 
 /**
  * Bounded pool of keyed, reusable heavy resources (browser sessions) with fail-fast admission

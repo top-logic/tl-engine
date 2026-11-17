@@ -41,10 +41,10 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
-import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.agent.RunCancellationBinding;
+import com.top_logic.ai.core.agent.approval.ApprovalRequest;
+import com.top_logic.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 

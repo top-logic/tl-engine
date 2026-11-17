@@ -11,7 +11,7 @@ import java.nio.file.Path;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.index.config.ChunkingConfig;
 import com.top_logic.tl.ai.index.config.IndexedTypeConfig;
 import com.top_logic.tl.ai.index.config.IndexedTypes;

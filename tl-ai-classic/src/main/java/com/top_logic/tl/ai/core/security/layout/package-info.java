@@ -8,7 +8,7 @@
  * The "Agent-Sicherheit" administration view: what the tool-access policy means, in one place.
  *
  * <p>
- * Three views over {@link com.top_logic.tl.ai.core.security.AiToolAccessService}, contributed as a tab
+ * Three views over {@link com.top_logic.ai.core.security.AiToolAccessService}, contributed as a tab
  * of <em>Administration &#8594; Berechtigungen</em> by
  * {@code WEB-INF/layouts/admin/security/index.layout.overlay.xml}:
  * </p>
@@ -26,7 +26,7 @@
  *
  * <p>
  * Nothing here decides who may do what. The decisions come from
- * {@link com.top_logic.tl.ai.core.security.EffectiveToolAccess}, which is the read-only twin of the
+ * {@link com.top_logic.ai.core.security.EffectiveToolAccess}, which is the read-only twin of the
  * enforcement path; what the editor writes is the same configuration file the engine's service editor
  * writes, which remains the raw view of the same policy. The catalog and the editor report the
  * <em>saved</em> policy, the effective-permissions view the <em>running</em> service, and the editor

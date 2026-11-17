@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.core.citation.Finding;
+import com.top_logic.ai.core.citation.Finding;
 import com.top_logic.tl.ai.index.lucene.Locator;
 
 /**

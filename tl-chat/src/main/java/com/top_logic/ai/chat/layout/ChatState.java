@@ -18,12 +18,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
-import com.top_logic.tl.ai.core.memory.ConversationMemory;
-import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.core.session.ConversationLog;
-import com.top_logic.tl.ai.core.tools.ToolRegistry;
-import com.top_logic.tl.ai.core.tools.task.TaskStore;
+import com.top_logic.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.ai.core.memory.ConversationMemory;
+import com.top_logic.ai.core.message.TokenUsage;
+import com.top_logic.ai.core.session.ConversationLog;
+import com.top_logic.ai.core.tools.ToolRegistry;
+import com.top_logic.ai.core.tools.task.TaskStore;
 
 /**
  * What one chat holds in the memory of one window: its messages, the model's memory and the log

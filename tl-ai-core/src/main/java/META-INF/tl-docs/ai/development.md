@@ -12,7 +12,7 @@ The modules follow the engine's layout. Package roots:
 | Module | Base package |
 |---|---|
 | `tl-ai-tool-api` | `com.top_logic.ai.tool.api` (+ `.registry`) |
-| `tl-ai-core` | `com.top_logic.tl.ai.core.*` (`agent`, `provider`, `tools`, `message`, `memory`, `mcp`, `session`, `scripting`, `security`, `citation`, `limits`, `cost`, `observe`, `access`, ...) |
+| `tl-ai-core` | `com.top_logic.ai.core.*` (`agent`, `provider`, `tools`, `message`, `memory`, `mcp`, `session`, `scripting`, `security`, `citation`, `limits`, `cost`, `observe`, `access`, ...) |
 | `tl-chat` | `com.top_logic.ai.chat.*` (`api`, `layout`, `history`, `sched`) |
 | `tl-chat-classic` | `com.top_logic.ai.chat.classic` |
 | `tl-ai-mcp-server` | `com.top_logic.ai.mcp.server.*` (`tools`, `resources`, `dynamic`, `completions`, `authentication`) |
@@ -37,7 +37,7 @@ How tests are placed and run is described in [testing](doc:ai/testing).
 - The guard is `TestGermanResourcesMatchJavaDoc`. It walks every AI module of the reactor, so run it once from `tl-ai-core` whichever module changed:
 
   ```bash
-  mvn test -DskipTests=false -pl tl-ai-core -Dtest=test.com.top_logic.tl.ai.core.TestGermanResourcesMatchJavaDoc
+  mvn test -DskipTests=false -pl tl-ai-core -Dtest=test.com.top_logic.ai.core.TestGermanResourcesMatchJavaDoc
   ```
 
   It fails when a documented constant has no `@de`, when the shipped German is not the `@de` text, when a `@de` text reaches no bundle, and when a bundle holds a `[missing:...]` generator placeholder.

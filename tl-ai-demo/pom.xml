@@ -75,8 +75,7 @@
 
     <!-- Tests -->
     <!--
-      The junit gates of tl-ai-core - AssumptionAwareRunner and the switches beside it - so that
-      a test here which needs something the build may not have (an embedding key) reports as
+      The junit gates of tl-ai-core - the switches such as VectorIndexE2e - so that a test here which needs something the build may not have (an embedding key) reports as
       skipped rather than failing in its setup. Test scope, and surefire's dependenciesToScan
       names tl-basic only, so nothing of tl-ai-core's own test suite runs here.
     -->

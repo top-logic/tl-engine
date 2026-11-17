@@ -57,9 +57,9 @@ import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentications;
-import com.top_logic.tl.ai.core.access.EndpointAuthentication;
-import com.top_logic.tl.ai.core.access.EndpointSecret;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.access.EndpointAuthentication;
+import com.top_logic.ai.core.access.EndpointSecret;
+import com.top_logic.ai.core.security.AiToolAccessService;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.server.McpServer;

@@ -11,8 +11,8 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.table.component.TableComponent;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
+import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.ToolAccessPolicy;
 
 /*
  * The class comment below is exported to META-INF/messages_*.properties by the build's doclet and kept

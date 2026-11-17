@@ -28,7 +28,7 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;

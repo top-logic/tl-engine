@@ -35,10 +35,10 @@ import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.security.ReadFilter;
-import com.top_logic.tl.ai.core.tools.model.InstanceBrowserTool;
-import com.top_logic.tl.ai.core.tools.script.QueryTool;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.tools.model.InstanceBrowserTool;
+import com.top_logic.ai.core.tools.script.QueryTool;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 

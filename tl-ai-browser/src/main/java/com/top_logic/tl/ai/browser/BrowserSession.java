@@ -39,11 +39,11 @@ import com.top_logic.tl.ai.browser.BrowserToolsService.CaptchaSignal;
 import com.top_logic.tl.ai.browser.BrowserToolsService.InteractiveElement;
 import com.top_logic.tl.ai.browser.BrowserToolsService.PageView;
 import com.top_logic.tl.ai.browser.BrowserToolsService.ScreenshotCapture;
-import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
-import com.top_logic.tl.ai.core.citation.SeenUrls;
-import com.top_logic.tl.ai.core.tools.web.FilteringProxy;
-import com.top_logic.tl.ai.core.tools.web.UrlProvenance;
-import com.top_logic.tl.ai.core.tools.web.UrlSafety;
+import com.top_logic.ai.core.agent.RunCancellationBinding;
+import com.top_logic.ai.core.citation.SeenUrls;
+import com.top_logic.ai.core.tools.web.FilteringProxy;
+import com.top_logic.ai.core.tools.web.UrlProvenance;
+import com.top_logic.ai.core.tools.web.UrlSafety;
 
 /**
  * One isolated, interactive browser session: its own {@link Playwright} instance, {@link Browser},

@@ -10,7 +10,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.concurrent.atomic.AtomicInteger;
-import com.top_logic.tl.ai.core.tools.web.RecordingServer;
+import com.top_logic.ai.core.tools.web.RecordingServer;
 
 /**
  * A minimal loopback <b>UDP</b> listener for the WebRTC-egress test that records whether any datagram

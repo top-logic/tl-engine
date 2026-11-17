@@ -24,9 +24,9 @@ import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tl.ai.core.agent.RunWindow;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.ai.core.agent.RunWindow;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.execution.model.AgentExecution;
 import com.top_logic.util.TLContextManager;
 
 /**

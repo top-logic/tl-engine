@@ -124,49 +124,6 @@
 
   <build>
     <plugins>
-      <!--
-        Which test classes a build runs.
-
-        tl-parent-core configures surefire with the single include "test/TestAll.java". That names
-        the engine's generic suite, which additionally collects everything below
-        src/test/java/test - so a test in the "test" package root runs by itself. The first include
-        below names the same class. The AI modules keep most of their tests in packages that mirror
-        the production code instead - a test for com.top_logic.tl.ai.core.agent sits in
-        com.top_logic.tl.ai.core.agent, not in test.com.top_logic.tl.ai.core.agent.
-
-        The second include picks them up by their location. It has to be a %regex[] pattern: a
-        path pattern like com/**/Test*.java is implicitly prefixed with "**/" by surefire, which
-        would match the engine's own test classes inside the tl-basic test jar named in
-        dependenciesToScan, and would match this module's own test/com/... classes a second
-        time. A %regex[] include is anchored at the start of the path, so it matches exactly the
-        two package roots the AI modules own and nothing else.
-
-        Both includes are %regex[] patterns, the first one too, and each accepts a class in two
-        spellings: as the class file path (com/top_logic/.../TestX.class) and as the class name
-        (com.top_logic....TestX). The plugin selects the classes by their path. Surefire 3.6.0
-        then filters that selection again in the test JVM. There it matches a %regex[] include
-        against the class name, and when Ant and %regex[] includes are both configured, it keeps
-        only a class that matches one of each kind. With the path spelling alone, or with
-        "test/TestAll.java" next to a regex, the build runs no test at all and passes with
-        "Tests run: 0". The second filter can only remove classes from the selection, so the
-        class-name spelling selects nothing that the path does not. Surefire 3.6.1 matches the
-        path in both places (apache/maven-surefire#3465); once the build uses it, the class-name
-        spelling can go.
-
-        Whether every test file is in fact reachable this way is asserted by
-        TestSuiteReachability, so a test class in a package nobody scans fails the build instead
-        of silently not running. Every AI module repeats these two includes in its own POM.
-      -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <includes>
-            <include>%regex[test[/.]TestAll(\.class)?]</include>
-            <include>%regex[com[/.]top_logic[/.](ai|tl[/.]ai)[/.](.*[/.])?(Test[A-Z0-9][^/.$]*|[^/.$]*Test)(\.class)?]</include>
-          </includes>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>de.haumacher.msgbuf</groupId>
         <artifactId>msgbuf-generator-maven-plugin</artifactId>

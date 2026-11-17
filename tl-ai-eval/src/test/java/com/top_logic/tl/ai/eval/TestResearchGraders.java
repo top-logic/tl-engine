@@ -11,7 +11,7 @@ import junit.framework.TestCase;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
-import com.top_logic.tl.ai.core.session.Citation;
+import com.top_logic.ai.core.session.Citation;
 
 /**
  * The graders of a research answer that need no model: {@code <citations>}, and how a judge's rubric

@@ -18,7 +18,7 @@ import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.tl.ai.core.mcp.McpTool;
+import com.top_logic.ai.core.mcp.McpTool;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.json.McpJsonMapper;

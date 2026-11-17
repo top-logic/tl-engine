@@ -44,10 +44,10 @@ import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentications;
-import com.top_logic.tl.ai.core.access.EndpointAuthentication;
-import com.top_logic.tl.ai.core.access.EndpointSecret;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.observe.ObserverQueue;
+import com.top_logic.ai.core.access.EndpointAuthentication;
+import com.top_logic.ai.core.access.EndpointSecret;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.observe.ObserverQueue;
 
 /**
  * Connects this application's agents to other agents over the A2A protocol v1.0: exposes configured

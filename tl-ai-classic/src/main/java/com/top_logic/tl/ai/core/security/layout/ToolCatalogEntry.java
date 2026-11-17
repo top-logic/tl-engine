@@ -7,7 +7,7 @@ package com.top_logic.tl.ai.core.security.layout;
 
 import java.util.Set;
 
-import com.top_logic.tl.ai.core.security.RoleToolAccess;
+import com.top_logic.ai.core.security.RoleToolAccess;
 
 /**
  * One row of the Tool-Katalog: a registered tool joined with what the policy says about it.

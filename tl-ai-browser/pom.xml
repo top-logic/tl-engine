@@ -50,8 +50,8 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-    <!-- AssumptionAwareRunner and the test fixtures of the web tools (RecordingServer, the
-         screenshot fixtures) live in tl-ai-core's test sources. -->
+    <!-- The test fixtures of the web tools (RecordingServer, the screenshot fixtures) live in
+         tl-ai-core's test sources. -->
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-ai-core</artifactId>

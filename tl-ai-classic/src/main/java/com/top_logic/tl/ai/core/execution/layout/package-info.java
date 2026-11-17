@@ -10,7 +10,7 @@
  * <p>
  * The views themselves are layout XML plus TL-Script; this package holds the one operation that
  * cannot be expressed declaratively - cancelling a running agent run has to go through
- * {@link com.top_logic.tl.ai.core.execution.AgentExecutionStore}, not through a UI transaction.
+ * {@link com.top_logic.ai.core.execution.AgentExecutionStore}, not through a UI transaction.
  * </p>
  */
 package com.top_logic.tl.ai.core.execution.layout;

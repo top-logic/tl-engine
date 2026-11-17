@@ -25,7 +25,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
-import com.top_logic.tl.ai.core.access.EndpointAuthentication;
+import com.top_logic.ai.core.access.EndpointAuthentication;
 
 /**
  * Tests which requests {@link McpAuthenticationFilter} refuses, and how.

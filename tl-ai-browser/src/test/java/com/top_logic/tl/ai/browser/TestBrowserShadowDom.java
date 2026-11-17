@@ -14,7 +14,7 @@ import junit.framework.TestCase;
 import com.top_logic.tl.ai.browser.BrowserSession.DomainPolicy;
 import com.top_logic.tl.ai.browser.BrowserToolsService.InteractiveElement;
 import com.top_logic.tl.ai.browser.BrowserToolsService.PageView;
-import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
+import test.com.top_logic.basic.junit.AssumptionAwareRunner;
 
 /**
  * Gated end-to-end tests that the capture/ref script pierces <em>open</em> shadow DOM: an

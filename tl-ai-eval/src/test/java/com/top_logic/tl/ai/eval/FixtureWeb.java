@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.top_logic.tl.ai.core.tools.web.WebSearchHit;
+import com.top_logic.ai.core.tools.web.WebSearchHit;
 
 /**
  * The web as a scripted eval run sees it: search results and pages a test writes.

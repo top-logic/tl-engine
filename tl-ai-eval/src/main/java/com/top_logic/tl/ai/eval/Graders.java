@@ -20,15 +20,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.security.ModelSecurity;
-import com.top_logic.tl.ai.core.session.Citation;
-import com.top_logic.tl.ai.core.tools.ToolCatalog;
-import com.top_logic.tl.ai.core.tools.model.TidResolver;
-import com.top_logic.tl.ai.core.tools.present.ChartKind;
-import com.top_logic.tl.ai.core.tools.present.ChartSpec;
-import com.top_logic.tl.ai.core.tools.present.PresentAs;
-import com.top_logic.tl.ai.core.tools.present.Presentation;
-import com.top_logic.tl.ai.core.tools.script.TLScriptExecutor;
+import com.top_logic.ai.core.security.ModelSecurity;
+import com.top_logic.ai.core.session.Citation;
+import com.top_logic.ai.core.tools.ToolCatalog;
+import com.top_logic.ai.core.tools.model.TidResolver;
+import com.top_logic.ai.core.tools.present.ChartKind;
+import com.top_logic.ai.core.tools.present.ChartSpec;
+import com.top_logic.ai.core.tools.present.PresentAs;
+import com.top_logic.ai.core.tools.present.Presentation;
+import com.top_logic.ai.core.tools.script.TLScriptExecutor;
 
 /**
  * Deciding whether an {@link Expectation} held.

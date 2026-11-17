@@ -17,8 +17,8 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.browser.BrowserSession.DomainPolicy;
 import com.top_logic.tl.ai.browser.BrowserToolsService.PageView;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
+import com.top_logic.ai.core.agent.ToolContext;
+import test.com.top_logic.basic.junit.AssumptionAwareRunner;
 
 /**
  * Tests that every way a browser operation can fail reaches the model as a <b>short, actionable

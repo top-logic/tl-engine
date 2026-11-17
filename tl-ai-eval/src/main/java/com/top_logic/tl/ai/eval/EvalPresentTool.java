@@ -5,9 +5,9 @@
  */
 package com.top_logic.tl.ai.eval;
 
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.tools.present.PresentTool;
-import com.top_logic.tl.ai.core.tools.present.Presentation;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.tools.present.PresentTool;
+import com.top_logic.ai.core.tools.present.Presentation;
 
 /**
  * The {@code present} tool of an eval run, which has no page: it accepts what is presented, as a

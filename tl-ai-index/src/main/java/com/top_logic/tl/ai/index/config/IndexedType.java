@@ -22,7 +22,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.index.text.Chunker;
 import com.top_logic.tl.ai.index.text.TextValues;
 

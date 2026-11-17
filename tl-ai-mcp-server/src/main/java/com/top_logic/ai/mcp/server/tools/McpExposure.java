@@ -18,7 +18,7 @@ import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.AiToolAccessService;
 
 /**
  * Which tools of the {@link ToolRegistryService} the MCP server publishes, and how.

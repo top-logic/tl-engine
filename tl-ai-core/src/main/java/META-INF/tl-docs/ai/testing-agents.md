@@ -22,15 +22,15 @@ How the AI modules' own tests are organized and run is in [testing the AI module
 
 ## Configuring the scripted provider
 
-`com.top_logic.tl.ai.core.provider.ScriptedProvider` is an ordinary provider of `LLMProviderService` (see [providers](doc:ai/providers)). The test configuration of the application declares it, gives the model it serves its metadata - no catalog knows a scripted model - and puts the agent under test on it:
+`com.top_logic.ai.core.provider.ScriptedProvider` is an ordinary provider of `LLMProviderService` (see [providers](doc:ai/providers)). The test configuration of the application declares it, gives the model it serves its metadata - no catalog knows a scripted model - and puts the agent under test on it:
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService"
+<config service-class="com.top_logic.ai.core.provider.LLMProviderService"
   config:override="true"
 >
-  <instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
+  <instance class="com.top_logic.ai.core.provider.LLMProviderService">
     <providers>
-      <provider class="com.top_logic.tl.ai.core.provider.ScriptedProvider"
+      <provider class="com.top_logic.ai.core.provider.ScriptedProvider"
         models="scripted-model"
         name="scripted"
       />
@@ -49,8 +49,8 @@ How the AI modules' own tests are organized and run is in [testing the AI module
   </instance>
 </config>
 
-<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
-  <instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService"
+<config service-class="com.top_logic.ai.core.agent.AgentRuntimeService">
+  <instance class="com.top_logic.ai.core.agent.AgentRuntimeService"
     default-model="scripted-model"
   >
     <agent-overrides>
@@ -60,7 +60,7 @@ How the AI modules' own tests are organized and run is in [testing the AI module
 </config>
 ```
 
-The provider has no properties of its own: what it answers is the installed script, not configuration. Credentials configured on it are honored - while they are not available, the provider is inactive, as a real one would be. `tl-ai-eval` configures it this way (`src/test/webapp/WEB-INF/autoconf/com.top_logic.tl.ai.core.provider.LLMProviderService.config.xml`).
+The provider has no properties of its own: what it answers is the installed script, not configuration. Credentials configured on it are honored - while they are not available, the provider is inactive, as a real one would be. `tl-ai-eval` configures it this way (`src/test/webapp/WEB-INF/autoconf/com.top_logic.ai.core.provider.LLMProviderService.config.xml`).
 
 ## Scripts and replies
 

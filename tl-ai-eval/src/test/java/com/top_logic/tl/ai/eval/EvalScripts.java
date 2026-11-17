@@ -12,15 +12,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
 
-import com.top_logic.tl.ai.core.message.ContentPart;
-import com.top_logic.tl.ai.core.message.Message;
-import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.ToolCall;
-import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
-import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
-import com.top_logic.tl.ai.core.provider.ScriptedProvider;
+import com.top_logic.ai.core.message.ContentPart;
+import com.top_logic.ai.core.message.Message;
+import com.top_logic.ai.core.message.TextContent;
+import com.top_logic.ai.core.message.ToolCall;
+import com.top_logic.ai.core.message.UserMessage;
+import com.top_logic.ai.core.provider.ProviderRequest;
+import com.top_logic.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.ai.core.provider.ScriptedModel.Script;
+import com.top_logic.ai.core.provider.ScriptedProvider;
 
 /**
  * The answers a {@link ScriptedProvider} gives, written as the {@code pm} scenarios' reference

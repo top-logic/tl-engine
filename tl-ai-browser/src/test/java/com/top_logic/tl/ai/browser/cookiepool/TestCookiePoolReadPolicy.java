@@ -27,8 +27,8 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.tl.ai.browser.cookiepool.model.CookiePool;
-import com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity;
-import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.model.ModelService;
 
@@ -44,7 +44,7 @@ import com.top_logic.util.model.ModelService;
  * configuration this module ships.
  * </p>
  *
- * @see com.top_logic.tl.ai.core.security.TestPerceivableBinaryReadPolicy
+ * @see com.top_logic.ai.core.security.TestPerceivableBinaryReadPolicy
  */
 public class TestCookiePoolReadPolicy extends BasicTestCase {
 

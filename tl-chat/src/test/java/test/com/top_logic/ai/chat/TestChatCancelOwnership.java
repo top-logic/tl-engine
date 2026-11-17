@@ -33,7 +33,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
 import com.top_logic.util.model.ModelService;
 
 /**

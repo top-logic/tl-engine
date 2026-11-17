@@ -12,8 +12,8 @@ import junit.framework.TestCase;
 import com.top_logic.ai.tool.api.AnnotatedTools;
 import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.tools.ToolCatalog;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.tools.ToolCatalog;
 
 /**
  * The writing tools of {@link BrowserTool} describe their calls for the revision log.

@@ -11,10 +11,10 @@ import java.util.List;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.tl.ai.core.tools.web.WebSearchEngine;
-import com.top_logic.tl.ai.core.tools.web.WebSearchHit;
-import com.top_logic.tl.ai.core.tools.web.WebSearchQuery;
-import com.top_logic.tl.ai.core.tools.web.WebSearchResults;
+import com.top_logic.ai.core.tools.web.WebSearchEngine;
+import com.top_logic.ai.core.tools.web.WebSearchHit;
+import com.top_logic.ai.core.tools.web.WebSearchQuery;
+import com.top_logic.ai.core.tools.web.WebSearchResults;
 
 /**
  * A {@link WebSearchEngine} that answers the queries a test wrote into {@link FixtureWeb}.

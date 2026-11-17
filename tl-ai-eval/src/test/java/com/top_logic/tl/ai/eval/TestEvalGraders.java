@@ -12,7 +12,7 @@ import junit.framework.TestCase;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
-import com.top_logic.tl.ai.core.agent.StopReason;
+import com.top_logic.ai.core.agent.StopReason;
 
 /**
  * The half of the grading that needs no knowledge base: which tools were called, and how a

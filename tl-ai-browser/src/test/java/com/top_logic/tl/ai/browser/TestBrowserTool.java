@@ -37,15 +37,15 @@ import com.top_logic.tl.ai.browser.BrowserToolsService.BlockSignal;
 import com.top_logic.tl.ai.browser.BrowserToolsService.CaptchaSignal;
 import com.top_logic.tl.ai.browser.BrowserToolsService.InteractiveElement;
 import com.top_logic.tl.ai.browser.BrowserToolsService.PageView;
-import com.top_logic.tl.ai.core.agent.SecurityContext;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.TransactionScope;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.execution.model.AgentExecution;
-import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
-import com.top_logic.tl.ai.core.tools.web.FilteringProxy;
-import com.top_logic.tl.ai.core.tools.web.UrlSafety;
-import com.top_logic.tl.ai.core.tools.web.WebFetchTool;
+import com.top_logic.ai.core.agent.SecurityContext;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.agent.TransactionScope;
+import com.top_logic.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.ai.core.execution.model.AgentExecution;
+import test.com.top_logic.basic.junit.AssumptionAwareRunner;
+import com.top_logic.ai.core.tools.web.FilteringProxy;
+import com.top_logic.ai.core.tools.web.UrlSafety;
+import com.top_logic.ai.core.tools.web.WebFetchTool;
 
 import junit.framework.TestCase;
 

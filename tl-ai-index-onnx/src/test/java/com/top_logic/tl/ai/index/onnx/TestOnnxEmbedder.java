@@ -21,7 +21,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
+import test.com.top_logic.basic.junit.AssumptionAwareRunner;
 import com.top_logic.tl.ai.index.embed.AbstractEmbedder;
 import com.top_logic.tl.ai.index.lucene.Vectors;
 

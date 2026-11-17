@@ -16,14 +16,14 @@ import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.core.security.EffectiveToolAccess;
-import com.top_logic.tl.ai.core.security.EffectiveToolAccess.CapabilityAccess;
-import com.top_logic.tl.ai.core.security.RoleToolAccess;
-import com.top_logic.tl.ai.core.security.ToolAccessExplanation;
-import com.top_logic.tl.ai.core.security.ToolAccessRule;
-import com.top_logic.tl.ai.core.security.ToolAccessRule.Kind;
-import com.top_logic.tl.ai.core.security.ToolIdentity;
+import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.EffectiveToolAccess;
+import com.top_logic.ai.core.security.EffectiveToolAccess.CapabilityAccess;
+import com.top_logic.ai.core.security.RoleToolAccess;
+import com.top_logic.ai.core.security.ToolAccessExplanation;
+import com.top_logic.ai.core.security.ToolAccessRule;
+import com.top_logic.ai.core.security.ToolAccessRule.Kind;
+import com.top_logic.ai.core.security.ToolIdentity;
 
 /**
  * The read-only query behind the "Agent-Sicherheit" view, one persona at a time.

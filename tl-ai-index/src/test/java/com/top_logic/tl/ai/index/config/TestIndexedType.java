@@ -21,7 +21,7 @@ import test.com.top_logic.knowledge.KBSetup;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.index.config.IndexedType.PendingChunk;
 import com.top_logic.tl.ai.index.text.Chunker;
 import com.top_logic.util.model.ModelService;

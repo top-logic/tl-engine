@@ -28,7 +28,7 @@ import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.security.ReadFilter;
 import com.top_logic.util.TLContext;
 
 /**

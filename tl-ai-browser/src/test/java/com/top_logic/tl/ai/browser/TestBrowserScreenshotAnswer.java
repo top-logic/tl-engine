@@ -17,10 +17,10 @@ import test.com.top_logic.knowledge.KBSetup;
 import com.top_logic.ai.tool.api.ToolMethod;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.screenshots.ScreenshotFixtures;
-import com.top_logic.tl.ai.core.screenshots.ScreenshotService;
-import com.top_logic.tl.ai.core.screenshots.model.Screenshot;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.screenshots.ScreenshotFixtures;
+import com.top_logic.ai.core.screenshots.ScreenshotService;
+import com.top_logic.ai.core.screenshots.model.Screenshot;
 import com.top_logic.util.model.ModelService;
 
 /**

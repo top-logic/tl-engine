@@ -14,8 +14,8 @@ import java.util.Set;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tl.ai.core.security.ModelSecurity;
-import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.security.ModelSecurity;
+import com.top_logic.ai.core.security.ReadFilter;
 
 /**
  * The scope objects a reader may search in.

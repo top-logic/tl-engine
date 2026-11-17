@@ -15,7 +15,7 @@ import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.agent.ToolContext;
 
 /**
  * The declared-types pair of the security test bed (issue #258).

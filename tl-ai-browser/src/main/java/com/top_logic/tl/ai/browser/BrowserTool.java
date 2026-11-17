@@ -32,20 +32,20 @@ import com.top_logic.tl.ai.browser.BrowserToolsService.PageView;
 import com.top_logic.tl.ai.browser.BrowserToolsService.ScreenshotCapture;
 import com.top_logic.tl.ai.browser.cookiepool.CookiePoolService;
 import com.top_logic.tl.ai.browser.cookiepool.model.CookiePool;
-import com.top_logic.tl.ai.core.agent.AgentTuning;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.execution.ExecutionHandle;
-import com.top_logic.tl.ai.core.execution.model.AgentExecution;
-import com.top_logic.tl.ai.core.screenshots.ScreenshotService;
-import com.top_logic.tl.ai.core.screenshots.model.Screenshot;
-import com.top_logic.tl.ai.core.tools.web.BrowsingPolicies;
-import com.top_logic.tl.ai.core.tools.web.BrowsingPolicy;
-import com.top_logic.tl.ai.core.tools.web.UrlProvenance;
-import com.top_logic.tl.ai.core.tools.web.UrlSafety;
-import com.top_logic.tl.ai.core.tools.web.WebFetchTool;
-import com.top_logic.tl.ai.core.tools.web.WebSources;
-import com.top_logic.tl.ai.core.tools.web.WebToolsService;
+import com.top_logic.ai.core.agent.AgentTuning;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.execution.ExecutionHandle;
+import com.top_logic.ai.core.execution.model.AgentExecution;
+import com.top_logic.ai.core.screenshots.ScreenshotService;
+import com.top_logic.ai.core.screenshots.model.Screenshot;
+import com.top_logic.ai.core.tools.web.BrowsingPolicies;
+import com.top_logic.ai.core.tools.web.BrowsingPolicy;
+import com.top_logic.ai.core.tools.web.UrlProvenance;
+import com.top_logic.ai.core.tools.web.UrlSafety;
+import com.top_logic.ai.core.tools.web.WebFetchTool;
+import com.top_logic.ai.core.tools.web.WebSources;
+import com.top_logic.ai.core.tools.web.WebToolsService;
 import com.top_logic.util.TLContext;
 
 /**
@@ -63,7 +63,7 @@ import com.top_logic.util.TLContext;
  * {@code browserBack}) return only a terse status plus the current refs, so the model calls
  * {@code browserSnapshot} when it needs to read the page. {@code browserScreenshot} additionally
  * captures a PNG of the current page, persists it as a {@code Screenshot} object in the session of
- * the run and returns the URL {@link com.top_logic.tl.ai.core.screenshots.ScreenshotServlet} serves
+ * the run and returns the URL {@link com.top_logic.ai.core.screenshots.ScreenshotServlet} serves
  * it at, so the model can show the picture in its answer.
  * </p>
  *
@@ -383,7 +383,7 @@ public class BrowserTool {
 
 	/**
 	 * Captures a PNG screenshot of the session's current page and persists it as a {@link Screenshot}
-	 * business object, a part of the {@link com.top_logic.tl.ai.core.execution.model.AgentSession}
+	 * business object, a part of the {@link com.top_logic.ai.core.execution.model.AgentSession}
 	 * the run belongs to.
 	 *
 	 * <p>

@@ -6,8 +6,8 @@
 package com.top_logic.ai.a2a.server;
 
 import com.top_logic.ai.tool.api.Tool;
-import com.top_logic.tl.ai.core.agent.SecurityContext;
-import com.top_logic.tl.ai.core.security.SecurityContextProxy;
+import com.top_logic.ai.core.agent.SecurityContext;
+import com.top_logic.ai.core.security.SecurityContextProxy;
 
 /**
  * The rights of an A2A run of an agent exposed with {@code allow-writes="false"}: those of the

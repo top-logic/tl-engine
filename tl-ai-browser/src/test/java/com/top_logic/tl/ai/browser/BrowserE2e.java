@@ -7,7 +7,7 @@ package com.top_logic.tl.ai.browser;
 
 import org.junit.Assume;
 
-import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
+import test.com.top_logic.basic.junit.AssumptionAwareRunner;
 
 /**
  * The switch that turns the browser end-to-end tests on, and the {@link Assume assumption} that

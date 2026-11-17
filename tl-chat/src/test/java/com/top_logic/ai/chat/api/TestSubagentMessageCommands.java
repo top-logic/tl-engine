@@ -34,17 +34,17 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.StopReason;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
-import com.top_logic.tl.ai.core.cost.CostConversion;
-import com.top_logic.tl.ai.core.cost.Money;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.limits.BudgetAllowance;
-import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.ai.core.agent.StopReason;
+import com.top_logic.ai.core.agent.subagent.SubagentInbox;
+import com.top_logic.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.ai.core.agent.subagent.SubagentJobStatus;
+import com.top_logic.ai.core.agent.subagent.SubagentResult;
+import com.top_logic.ai.core.cost.CostConversion;
+import com.top_logic.ai.core.cost.Money;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.limits.BudgetAllowance;
+import com.top_logic.ai.core.message.TokenUsage;
 import com.top_logic.util.model.ModelService;
 
 /**

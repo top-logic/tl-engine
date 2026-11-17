@@ -18,15 +18,15 @@ import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonToken;
 
 import com.top_logic.ai.tool.api.UntrustedEnvelope;
-import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.LLMProviderService;
-import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.ResponseFormat;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.session.Citation;
+import com.top_logic.ai.core.message.TextContent;
+import com.top_logic.ai.core.message.UserMessage;
+import com.top_logic.ai.core.provider.LLMProvider;
+import com.top_logic.ai.core.provider.LLMProviderService;
+import com.top_logic.ai.core.provider.ProviderException;
+import com.top_logic.ai.core.provider.ProviderRequest;
+import com.top_logic.ai.core.provider.ResponseFormat;
+import com.top_logic.ai.core.provider.StreamEvent;
+import com.top_logic.ai.core.session.Citation;
 
 /**
  * The model that decides a {@link JudgeExpectation}: one call per expectation, a rubric in, one

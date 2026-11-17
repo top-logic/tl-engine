@@ -38,8 +38,8 @@
       <scope>test</scope>
     </dependency>
     <!--
-      AssumptionAwareRunner and the house gate classes live in tl-ai-core's test sources; the
-      eval gate is one more of them and reuses the runner rather than copying it.
+      The house gate classes live in tl-ai-core's test sources; the eval gate is one more of
+      them.
     -->
     <dependency>
       <groupId>com.top-logic</groupId>

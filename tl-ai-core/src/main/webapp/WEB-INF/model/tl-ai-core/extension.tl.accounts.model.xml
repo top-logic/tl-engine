@@ -23,7 +23,7 @@
 					<annotations>
 						<label-position value="above-value"/>
 						<constraints>
-							<constraint class="com.top_logic.tl.ai.core.agent.environment.PreferencesLengthConstraint"/>
+							<constraint class="com.top_logic.ai.core.agent.environment.PreferencesLengthConstraint"/>
 						</constraints>
 					</annotations>
 				</property>

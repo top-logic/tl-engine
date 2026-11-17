@@ -33,7 +33,7 @@ import com.top_logic.basic.credential.RequestAuthentication;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.credential.SecretSourceFormat;
 import com.top_logic.basic.exception.I18NRuntimeException;
-import com.top_logic.tl.ai.core.provider.ModelDiscoveryHelper;
+import com.top_logic.ai.core.provider.ModelDiscoveryHelper;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;

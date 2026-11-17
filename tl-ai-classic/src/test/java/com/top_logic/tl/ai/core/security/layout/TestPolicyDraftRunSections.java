@@ -15,10 +15,10 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
+import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.RoleAccessPolicy;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Dimension;
 
 import java.util.Set;
 

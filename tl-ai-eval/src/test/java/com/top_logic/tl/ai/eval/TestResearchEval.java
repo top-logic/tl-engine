@@ -35,15 +35,15 @@ import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.tl.ai.core.agent.AgentApplicationService;
-import com.top_logic.tl.ai.core.agent.AgentPolicyService;
-import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
-import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
-import com.top_logic.tl.ai.core.provider.LLMProviderService;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.core.tools.web.WebToolsService;
+import com.top_logic.ai.core.agent.AgentApplicationService;
+import com.top_logic.ai.core.agent.AgentPolicyService;
+import com.top_logic.ai.core.agent.AgentRuntimeService;
+import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
+import test.com.top_logic.basic.junit.AssumptionAwareRunner;
+import com.top_logic.ai.core.provider.LLMProviderService;
+import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.tools.web.WebToolsService;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
@@ -209,8 +209,8 @@ public class TestResearchEval extends BasicTestCase {
 				xmlns:config="http://www.top-logic.com/ns/config/6.0"
 			>
 				<services>
-					<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
-						<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService" default-model="%s">
+					<config service-class="com.top_logic.ai.core.agent.AgentRuntimeService">
+						<instance class="com.top_logic.ai.core.agent.AgentRuntimeService" default-model="%s">
 							%s
 							<agent-overrides>%s</agent-overrides>
 						</instance>

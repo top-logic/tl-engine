@@ -8,6 +8,7 @@ package com.top_logic.layout.view.element;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
@@ -19,6 +20,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactLoginBackdropControl;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.UIElement;
+import com.top_logic.layout.view.ViewConfig;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.util.Resources;
 
@@ -34,7 +36,8 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * The content is centered above the backdrop. To arrange several children, wrap them in a stack
- * element.
+ * element. Above the content stands the logo, or without one the title of the application, and at
+ * the bottom of the page "Powered by TopLogic".
  * </p>
  */
 public class LoginBackdropElement extends ContainerElement {
@@ -62,7 +65,8 @@ public class LoginBackdropElement extends ContainerElement {
 		 * Path of a static resource of the web application, e.g. "/images/logo.svg".
 		 *
 		 * <p>
-		 * The logo stands above the content. Without it, no logo is shown.
+		 * The logo stands above the content. Without it, the title of the application is shown
+		 * there.
 		 * </p>
 		 */
 		@Name(LOGO)
@@ -86,7 +90,7 @@ public class LoginBackdropElement extends ContainerElement {
 		 * What the logo shows, for a reader who cannot see it.
 		 *
 		 * <p>
-		 * Left unset, the logo counts as decoration and is not announced.
+		 * Left unset, the logo is described by the title of the application.
 		 * </p>
 		 */
 		@Name(LOGO_ALT)
@@ -125,6 +129,10 @@ public class LoginBackdropElement extends ContainerElement {
 		result.setLogoDark(url(context, _logoDark));
 		if (_logoAlt != null) {
 			result.setLogoAlt(Resources.getInstance().getString(_logoAlt));
+		}
+		ResKey title = ApplicationConfig.getInstance().getConfig(ViewConfig.class).getTitle();
+		if (title != null) {
+			result.setAppTitle(Resources.getInstance().getString(title));
 		}
 		result.setCssClass(_cssClass);
 		return result;

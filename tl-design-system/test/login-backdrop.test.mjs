@@ -10,6 +10,7 @@ const has = (sel, d) => assert.ok(decl(sel).includes(d), `${sel} { ${d} } fehlt 
 
 test('Wurzel: Fläche mit Rand, Inhalt mittig', () => {
   for (const d of ['position: relative;', 'overflow: hidden;', 'display: grid;', 'place-items: center;',
+    'grid-template-rows: minmax(0, 1fr) auto;',
     'background: var(--tl-surface-base);', 'padding: var(--tl-space-lg);']) has('.tl-login-backdrop', d);
 });
 
@@ -36,6 +37,13 @@ test('Logo steht auf eigener Unterlage', () => {
   for (const d of ['max-height: var(--tl-size-login-logo);', 'max-width: 100%;']) has('.tl-login-backdrop__logo', d);
 });
 
+test('Name der Anwendung und Fußzeile', () => {
+  for (const d of ['margin: 0;', 'color: var(--tl-text-primary);']) has('.tl-login-backdrop__title', d);
+  // Positioniert, sonst malt die Zeichenfläche über sie.
+  for (const d of ['position: relative;', 'margin: 0;', 'padding-top: var(--tl-space-md);',
+    'color: var(--tl-text-secondary);']) has('.tl-login-backdrop__footer', d);
+});
+
 test('kein Modus-Selektor im CSS (ein img, Quelle folgt dem Modus)', () => {
   assert.ok(!/data-tl-mode|data-tl-logo-mode/.test(css.replace(/\/\*[\s\S]*?\*\//g, '')));
 });
@@ -45,11 +53,11 @@ test('login-backdrop.contract.md nennt Klassen, Tokens und Client', () => {
   try { md = readComponent('login-backdrop', 'login-backdrop.contract.md'); } catch { /* fehlt */ }
   assert.deepEqual(missingInContract(md, [
     'tl-login-backdrop', 'tl-login-backdrop__canvas', 'tl-login-backdrop__content', 'tl-login-backdrop__brand',
-    'tl-login-backdrop__logo', '--tl-surface-base', '--tl-surface-layer', '--tl-border-separator',
+    'tl-login-backdrop__logo', 'tl-login-backdrop__title', 'tl-login-backdrop__footer', '--tl-surface-base', '--tl-surface-layer', '--tl-border-separator',
     '--tl-border-width-sm', '--tl-radius-md', '--tl-space-sm', '--tl-space-md', '--tl-space-lg',
-    '--tl-size-login-logo', '--tl-focus-width', '--tl-focus-offset', '--tl-surface-halftone', '--tl-surface-halftone-strong', '--tl-size-halftone-step',
+    '--tl-size-login-logo', '--tl-focus-width', '--tl-focus-offset', '--tl-text-primary', '--tl-text-secondary', '--tl-surface-halftone', '--tl-surface-halftone-strong', '--tl-size-halftone-step',
     '--tl-size-halftone-glow', '--tl-duration-ripple', 'TLLoginBackdrop',
-    'child', 'logo', 'logoDark', 'logoAlt']), []);
+    'child', 'logo', 'logoDark', 'logoAlt', 'appTitle', 'js.loginBackdrop.poweredBy']), []);
 });
 
 test('login-backdrop.spec.html besteht den Specimen-Harness', () => {

@@ -21,13 +21,13 @@
   </div>
 
   <p class="tl-type-body">Die Zeichenfläche (<code>tl-login-backdrop__canvas</code>) bleibt im Specimen leer: das Raster zeichnet der Client
-    (<code>TLLoginBackdrop</code>). Gezeigt werden Fläche, Rand, Logo auf seiner Unterlage und die Karte darüber.</p>
+    (<code>TLLoginBackdrop</code>). Gezeigt werden Fläche, Rand, Name der Anwendung auf seiner Unterlage (mit Logo stünde dort das <code>img</code>), die Karte darüber und die Fußzeile.</p>
 
   <div class="tl-login-backdrop" id="backdrop">
     <canvas class="tl-login-backdrop__canvas" aria-hidden="true"></canvas>
     <div class="tl-login-backdrop__content">
       <div class="tl-login-backdrop__brand">
-        <svg class="tl-login-backdrop__logo" viewBox="0 0 96 48" role="img" aria-label="Logo (Platzhalter)"><rect width="96" height="48" rx="8" fill="currentColor"/></svg>
+        <h1 class="tl-login-backdrop__title">Beispiel-Anwendung</h1>
       </div>
       <section class="tl-panel" aria-label="Anmeldung">
         <p class="tl-type-heading-sm">Anmelden</p>
@@ -36,6 +36,7 @@
       </section>
       <a class="tl-type-label" href="#backdrop">Passwort vergessen?</a>
     </div>
+    <p class="tl-login-backdrop__footer tl-type-label">Powered by TopLogic</p>
   </div>
 </main>
 <script>

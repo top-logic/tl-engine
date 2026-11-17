@@ -137,6 +137,26 @@ describe('the structure', () => {
     expect(root.querySelector('img')!.getAttribute('alt')).toBe('');
   });
 
+  it('describes a logo without a text of its own by the application title', () => {
+    const root = mountBackdrop({ logo: '/light.svg', appTitle: 'Acme App' });
+    expect(root.querySelector('img')!.getAttribute('alt')).toBe('Acme App');
+    expect(root.querySelector('h1')).toBeNull();
+  });
+
+  it('shows the application title as heading in the brand where there is no logo', () => {
+    const root = mountBackdrop({ appTitle: 'Acme App' });
+    const title = root.querySelector('.tl-login-backdrop__brand > h1.tl-login-backdrop__title')!;
+    expect(title.textContent).toBe('Acme App');
+    expect(root.querySelector('img')).toBeNull();
+  });
+
+  it('says it is powered by TopLogic, below the content', () => {
+    const root = mountBackdrop({});
+    const footer = root.querySelector('.tl-login-backdrop > p.tl-login-backdrop__footer')!;
+    expect(footer.textContent).toBe('Powered by TopLogic');
+    expect(root.querySelector('.tl-login-backdrop__content')!.contains(footer)).toBe(false);
+  });
+
   it('follows the mode with the one logo, falling back to the light one', async () => {
     const root = mountBackdrop({ logo: '/light.svg', logoDark: '/dark.svg' });
     expect(root.querySelectorAll('img')).toHaveLength(1);

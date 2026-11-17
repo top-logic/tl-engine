@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, useFillHost, FillProvider, rootClassName, useTokenSwitch } from 'tl-react-bridge';
+import { React, useTLState, useI18N, TLChild, useFillHost, FillProvider, rootClassName, useTokenSwitch } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import {
   activeRipples,
@@ -10,6 +10,10 @@ import {
   rippleFactor,
 } from './halftone';
 import type { HalftoneTheme, Ripple } from './halftone';
+
+const I18N_KEYS = {
+  'js.loginBackdrop.poweredBy': 'Powered by TopLogic',
+};
 
 /** The share of the way to the target the pointer highlight covers per animation frame. */
 const GLOW_EASE = 0.15;
@@ -48,7 +52,10 @@ interface GridState {
  * - child: ChildDescriptor | null - the content in front of the grid (the login card and what belongs to it)
  * - logo: string | null - URL of the logo shown above the content; without it no logo is rendered
  * - logoDark: string | null - URL of the logo in dark mode; without it the logo is used in both modes
- * - logoAlt: string | null - the alternative text of the logo; empty, since the logo only decorates, when absent
+ * - logoAlt: string | null - the alternative text of the logo; the application title when absent
+ * - appTitle: string | null - the name of the application, shown as heading where there is no logo
+ *
+ * Logo or title stand on a plate above the content; at the bottom of the page stands "Powered by TopLogic".
  *
  * The dots are largest at the centre and fade out toward the corners. The colours, the grid step, the radius of the
  * highlight and the durations come from the design system tokens and are read again when the density, theme or mode
@@ -63,6 +70,7 @@ interface GridState {
  */
 const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
+  const i18n = useI18N(I18N_KEYS);
   const [fillClass, fillHost] = useFillHost(true);
   const rootRef = React.useRef<HTMLDivElement>(null);
   const contentRef = React.useRef<HTMLDivElement>(null);
@@ -268,19 +276,23 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
   const logo = state.logo as string | null | undefined;
   const logoDark = state.logoDark as string | null | undefined;
   const logoAlt = state.logoAlt as string | null | undefined;
+  const appTitle = state.appTitle as string | null | undefined;
 
   return (
     <FillProvider host={fillHost}>
       <div id={controlId} ref={rootRef} className={rootClassName(state, 'tl-login-backdrop', fillClass)}>
         <canvas ref={canvasRef} className="tl-login-backdrop__canvas" aria-hidden="true" />
         <div ref={contentRef} className="tl-login-backdrop__content">
-          {!!logo && (
+          {!!(logo || appTitle) && (
             <div className="tl-login-backdrop__brand">
-              <img className="tl-login-backdrop__logo" src={dark && logoDark ? logoDark : logo} alt={logoAlt ?? ''} />
+              {logo
+                ? <img className="tl-login-backdrop__logo" src={dark && logoDark ? logoDark : logo} alt={logoAlt ?? appTitle ?? ''} />
+                : <h1 className="tl-login-backdrop__title">{appTitle}</h1>}
             </div>
           )}
           {!!state.child && <TLChild control={state.child} />}
         </div>
+        <p className="tl-login-backdrop__footer tl-type-label">{i18n['js.loginBackdrop.poweredBy']}</p>
       </div>
     </FillProvider>
   );

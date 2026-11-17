@@ -35,6 +35,9 @@ public class ReactLoginBackdropControl extends ReactControl {
 	/** @see #setLogoAlt(String) */
 	public static final String LOGO_ALT = "logoAlt";
 
+	/** State key for the name of the application. */
+	public static final String APP_TITLE = "appTitle";
+
 	private final ReactControl _child;
 
 	/**
@@ -81,6 +84,18 @@ public class ReactLoginBackdropControl extends ReactControl {
 	 */
 	public void setLogoAlt(String alt) {
 		putState(LOGO_ALT, emptyToNull(alt));
+	}
+
+	/**
+	 * Sets the name of the application, shown above the content where there is no
+	 * {@link #setLogo(String) logo}, and describing a logo without a {@link #setLogoAlt(String)
+	 * description of its own}.
+	 *
+	 * @param title
+	 *        The name, or {@code null} for an application without one.
+	 */
+	public void setAppTitle(String title) {
+		putState(APP_TITLE, emptyToNull(title));
 	}
 
 	private static String emptyToNull(String value) {

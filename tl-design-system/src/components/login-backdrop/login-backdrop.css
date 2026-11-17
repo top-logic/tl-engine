@@ -1,12 +1,15 @@
 /* Login-Backdrop — der Hintergrund der Anmeldeseite.
    Eine Zeichenfläche (canvas) füllt die Wurzel und liegt hinter dem Inhalt; der Client zeichnet darauf ein
    Halbton-Raster. Das Stylesheet kennt nur Fläche, Rand und Anordnung. Die Zeichenfläche fängt keine Zeiger,
-   der Inhalt (Karte, Logo, Link) liegt darüber und scrollt, wenn das Fenster niedriger ist als er. Das Logo
-   steht auf einer eigenen Unterlage, weil die Punkte dahinter keinen Kontrast zu ihm garantieren. */
+   der Inhalt (Karte, Logo oder Name der Anwendung, Link) liegt darüber und scrollt, wenn das Fenster niedriger
+   ist als er. Logo oder Name stehen auf einer eigenen Unterlage, weil die Punkte dahinter keinen Kontrast zu
+   ihnen garantieren. Darunter, am unteren Rand, steht „Powered by TopLogic“. */
 
 .tl-login-backdrop {
   position: relative;
   display: grid;
+  /* Oben der Inhalt, mittig im freien Platz; unten die Fußzeile. */
+  grid-template-rows: minmax(0, 1fr) auto;
   place-items: center;
   overflow: hidden;
   padding: var(--tl-space-lg);
@@ -47,4 +50,17 @@
   display: block;
   max-width: 100%;
   max-height: var(--tl-size-login-logo);
+}
+
+.tl-login-backdrop__title {
+  margin: 0;
+  color: var(--tl-text-primary);
+}
+
+.tl-login-backdrop__footer {
+  /* Positioniert, damit sie über der Zeichenfläche liegt. */
+  position: relative;
+  margin: 0;
+  padding-top: var(--tl-space-md);
+  color: var(--tl-text-secondary);
 }

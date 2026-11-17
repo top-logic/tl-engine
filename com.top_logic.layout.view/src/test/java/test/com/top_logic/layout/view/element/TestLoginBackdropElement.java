@@ -49,6 +49,7 @@ public class TestLoginBackdropElement extends TestCase {
 		assertNull(state(backdrop, ReactLoginBackdropControl.LOGO));
 		assertNull(state(backdrop, ReactLoginBackdropControl.LOGO_DARK));
 		assertNull(state(backdrop, ReactLoginBackdropControl.LOGO_ALT));
+		assertNull("An application without a title has none.", state(backdrop, ReactLoginBackdropControl.APP_TITLE));
 	}
 
 	/** A logo resource is addressed within the application. */

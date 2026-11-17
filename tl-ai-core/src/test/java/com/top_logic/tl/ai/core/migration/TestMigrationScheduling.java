@@ -64,6 +64,8 @@ public class TestMigrationScheduling extends BasicTestCase {
 
 	private static final String TICKET_30054 = "Ticket_30054_delete_screenshots_without_session";
 
+	private static final String TICKET_30357 = "Ticket_30357_delete_cookie_pool_without_browser";
+
 	private static final String TICKET_30367 = "Ticket_30367_access_tokens_to_tl_accounts";
 
 	/**
@@ -95,7 +97,7 @@ public class TestMigrationScheduling extends BasicTestCase {
 	public void testApplicationMigrationOnIssue230() throws Exception {
 		List<String> pending = pending(ISSUE_230, ISSUE_230);
 
-		assertEquals(List.of(ISSUE_487, ISSUE_594, TICKET_30054, TICKET_30367), pending);
+		assertEquals(List.of(ISSUE_487, ISSUE_594, TICKET_30054, TICKET_30357, TICKET_30367), pending);
 	}
 
 	/**
@@ -107,7 +109,7 @@ public class TestMigrationScheduling extends BasicTestCase {
 	public void testApplicationMovedToIssue487() throws Exception {
 		List<String> pending = pending(ISSUE_230, ISSUE_487);
 
-		assertEquals(List.of(ISSUE_594, TICKET_30054, TICKET_30367), pending);
+		assertEquals(List.of(ISSUE_594, TICKET_30054, TICKET_30357, TICKET_30367), pending);
 	}
 
 	/**
@@ -117,7 +119,7 @@ public class TestMigrationScheduling extends BasicTestCase {
 	public void testNoApplicationMigration() throws Exception {
 		List<String> pending = pending(ISSUE_230, null);
 
-		assertEquals(List.of(ISSUE_487, ISSUE_594, TICKET_30054, TICKET_30367), pending);
+		assertEquals(List.of(ISSUE_487, ISSUE_594, TICKET_30054, TICKET_30357, TICKET_30367), pending);
 	}
 
 	/**
@@ -127,7 +129,7 @@ public class TestMigrationScheduling extends BasicTestCase {
 	public void testIssue487Applied() throws Exception {
 		List<String> pending = pending(ISSUE_487, ISSUE_487);
 
-		assertEquals(List.of(ISSUE_594, TICKET_30054, TICKET_30367), pending);
+		assertEquals(List.of(ISSUE_594, TICKET_30054, TICKET_30357, TICKET_30367), pending);
 	}
 
 	/**
@@ -137,8 +139,8 @@ public class TestMigrationScheduling extends BasicTestCase {
 	 * left - nothing is moved, with or without an application migration written on alpha8.
 	 */
 	public void testAlpha8DatabaseOnAlpha9() throws Exception {
-		assertEquals(List.of(TICKET_30054, TICKET_30367), pending(ISSUE_594, null));
-		assertEquals(List.of(TICKET_30054, TICKET_30367), pending(ISSUE_594, ISSUE_594));
+		assertEquals(List.of(TICKET_30054, TICKET_30357, TICKET_30367), pending(ISSUE_594, null));
+		assertEquals(List.of(TICKET_30054, TICKET_30357, TICKET_30367), pending(ISSUE_594, ISSUE_594));
 	}
 
 	/**

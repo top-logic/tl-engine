@@ -10,7 +10,7 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 
 // The bridge first, as the page loads it: the bridge entry reaches it through modules that the SSE client imports
 // as well, and these must see the mocked SSE client.
-import { mount, unmount } from '../bridge/tl-react-bridge';
+import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
 import { register, registerPart } from 'tl-react-bridge';
 import TLButton from './TLButton';
 import ButtonPart from './button/ButtonPart';
@@ -41,7 +41,7 @@ beforeAll(() => {
 
 afterEach(async () => {
   act(() => unmount(ROOT_ID));
-  document.getElementById(ROOT_ID)?.remove();
+  findMountPoint(ROOT_ID)?.remove();
   for (const release of answers) release();
   await settle();
   vi.unstubAllGlobals();
@@ -63,7 +63,7 @@ function mountButton(): void {
     });
   }));
   const element = document.createElement('div');
-  element.id = ROOT_ID;
+  element.setAttribute(MOUNT_ATTRIBUTE, ROOT_ID);
   document.body.appendChild(element);
   act(() => mount(ROOT_ID, 'TLButton', { label: LABEL }, 'w', '/ctx'));
 }
@@ -78,7 +78,7 @@ async function settle(): Promise<void> {
 }
 
 function button(): HTMLButtonElement {
-  return document.querySelector<HTMLButtonElement>(`#${ROOT_ID} button`)!;
+  return document.getElementById(ROOT_ID) as HTMLButtonElement;
 }
 
 describe('TLButton', () => {

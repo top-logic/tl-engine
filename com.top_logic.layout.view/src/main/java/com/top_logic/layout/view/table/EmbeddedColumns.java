@@ -390,7 +390,8 @@ public class EmbeddedColumns implements ColumnDeclaration {
 	 * as the embedded column does, and does not sort where the embedded column does not; a column
 	 * collecting the values of several objects orders those collections
 	 * {@link ColumnSetup#elementwise(Comparator) element by element} by the same comparator. It
-	 * exists where the embedded column does.
+	 * exists where the embedded column does, and its heading is the {@link ColumnSetup#header()
+	 * heading} of the embedded column.
 	 *
 	 * @param setup
 	 *        The column as the embedded object's own table would show it.
@@ -421,8 +422,10 @@ public class EmbeddedColumns implements ColumnDeclaration {
 			embeddedCellFunction(setup.cellRole(), navigation),
 			setup.display(),
 			setup.sortable(),
+			setup.align(),
 			setup.exists(),
 			null,
+			setup.header(),
 			setup.released());
 	}
 

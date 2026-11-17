@@ -131,7 +131,7 @@ public final class TidDiagnostics {
 	 * The sentence a model gets when the identifier it passed cannot be resolved.
 	 *
 	 * @param identifier
-	 *        What the model named, as {@link TidResolver#objectId(String)} extracted it. May be
+	 *        What the model named, trimmed. May be
 	 *        <code>null</code> or empty.
 	 * @param types
 	 *        What may be asked about a type name; {@link Types#NONE} when nothing can be.

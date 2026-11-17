@@ -5,5 +5,6 @@
 /war
 /src/main/webapp/script/top-logic.js
 /src/main/webapp/style/_*.css
+/src/main/webapp/images/tmp/
 /.settings/com.gwtplugins.gwt.eclipse.core.prefs
 /**/*~

@@ -108,6 +108,15 @@
 								<step attribute="TestSecurityCoverage:Covered#owner"/>
 							</path>
 						</rule>
+						<rule id="TestSecurityCoverage_named"
+							inherit="true"
+							meta-element="TestSecurityCoverage:Named"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:Named#owner"/>
+							</path>
+						</rule>
 						<rule id="TestSecurityCoverage_deadGrant"
 							meta-element="TestSecurityCoverage:DeadGrant"
 							role="TestSecurityCoverage.Reader"
@@ -408,6 +417,29 @@
 						/>
 					</class>
 					<!-- No class grant: only the attribute grant implies Discover. -->
+					<class name="TestSecurityCoverage:Named">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="TestSecurityCoverage.Reader"
+						/>
+					</class>
+					<part name="TestSecurityCoverage:Named#name">
+						<!-- Writing the name is denied to every role. -->
+						<grant operation="Write"/>
+					</part>
+					<part name="TestSecurityCoverage:Foo#name">
+						<!-- Applies to Foo and Sub, not to Named and Bar. -->
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+					</part>
 					<part name="TestSecurityCoverage:PartOnly#label">
 						<grant
 							operation="Read"

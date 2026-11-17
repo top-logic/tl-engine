@@ -473,6 +473,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String COLUMN_CSS_CLASS = "cssClass";
 
 	/**
+	 * Per-column state key holding the {@link ColumnView#headerClass() CSS class} the client puts on
+	 * the heading of that column only. Absent for a column whose heading has none.
+	 */
+	private static final String COLUMN_HEADER_CLASS = "headerClass";
+
+	/**
+	 * Per-column state key holding the {@link ValueColor#getExternalName() name} of the
+	 * {@link ColumnView#headerRole() color role} the client tints the heading of that column in.
+	 * Absent for a column whose heading has none.
+	 */
+	private static final String COLUMN_HEADER_ROLE = "headerRole";
+
+	/**
 	 * Per-column state key holding the description of the column's {@link ColumnView#label() label},
 	 * which the client offers on the heading. Absent for a column whose label has none.
 	 */
@@ -480,6 +493,14 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/** State key telling the client whether to display the filter bar. */
 	private static final String FILTER_BAR = "filterBar";
+
+	/**
+	 * State key telling the client whether the focus of a control in a cell selects the row the
+	 * control stands in.
+	 *
+	 * @see #setSelectOnEditorFocus(boolean)
+	 */
+	private static final String SELECT_ON_EDITOR_FOCUS = "selectOnEditorFocus";
 
 	/** State key holding the filters the table offers under a name, one map per filter. */
 	private static final String NAMED_FILTERS = "namedFilters";
@@ -796,6 +817,24 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	public void setColumnSelect(boolean columnSelect) {
 		_columnSelect = columnSelect;
 		putState(COLUMN_SELECT, Boolean.valueOf(columnSelect));
+	}
+
+	/**
+	 * Whether the focus of a control in a cell - an editor, a button - selects the row the control
+	 * stands in.
+	 *
+	 * <p>
+	 * Switch this on for a table whose rows are all edited at once: the row the user works in is
+	 * then the selected row, which the commands on the selection act on. The selection is a plain
+	 * {@link #CMD_SELECT selection} of that row, sent only for a row not selected yet; it leaves the
+	 * focused control and its value alone. Without it, operating a control in a cell does not change
+	 * the selection.
+	 * </p>
+	 *
+	 * @see #SELECT_ON_EDITOR_FOCUS
+	 */
+	public void setSelectOnEditorFocus(boolean selectOnEditorFocus) {
+		putState(SELECT_ON_EDITOR_FOCUS, Boolean.valueOf(selectOnEditorFocus));
 	}
 
 	/**
@@ -1124,6 +1163,28 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	private void refreshColumns() {
+		putState(COLUMNS, columnsState());
+		putState(FROZEN_COLUMN_COUNT, Integer.valueOf(_view.frozenColumnCount()));
+	}
+
+	/**
+	 * Sends the state of the columns again, for a change of what their headings show - such as
+	 * their {@link ColumnView#headerClass() class} or {@link ColumnView#headerRole() color role} -
+	 * that leaves the columns and the rows as they are.
+	 *
+	 * <p>
+	 * Neither a row nor a cell control is built again. Nothing is sent when the columns state the
+	 * client holds is unchanged.
+	 * </p>
+	 */
+	public void refreshColumnHeaders() {
+		putChangedState(COLUMNS, columnsState());
+	}
+
+	/**
+	 * The state of the displayed columns, one map per column, in display order.
+	 */
+	private List<Map<String, Object>> columnsState() {
 		Resources resources = Resources.getInstance();
 		// Grouping buckets rows by a column's value, which is meaningful for the columns the user
 		// may choose at all - an action column carries the row itself, and would yield one group
@@ -1145,6 +1206,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 				def.setSortDirection(SORT_DESC);
 			}
 			def.setSortPriority(column.sortPriority());
+			def.setAlignment(column.alignment());
+			def.setAggregates(column.aggregates());
 			Map<String, Object> columnState = def.toStateMap();
 			columnState.put(COLUMN_FILTERABLE, Boolean.valueOf(column.filterable()));
 			columnState.put(COLUMN_FILTER_ACTIVE, Boolean.valueOf(isFilterActive(column.name())));
@@ -1153,14 +1216,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			if (column.cssClass() != null) {
 				columnState.put(COLUMN_CSS_CLASS, column.cssClass());
 			}
+			if (column.headerClass() != null) {
+				columnState.put(COLUMN_HEADER_CLASS, column.headerClass());
+			}
+			if (column.headerRole() != null) {
+				columnState.put(COLUMN_HEADER_ROLE, column.headerRole().getExternalName());
+			}
 			String tooltip = LabelDescription.description(resources, column.label());
 			if (!StringServices.isEmpty(tooltip)) {
 				columnState.put(COLUMN_TOOLTIP, tooltip);
 			}
 			columns.add(columnState);
 		}
-		putState(COLUMNS, columns);
-		putState(FROZEN_COLUMN_COUNT, Integer.valueOf(_view.frozenColumnCount()));
+		return columns;
 	}
 
 	private boolean isFilterActive(String column) {

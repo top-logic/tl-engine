@@ -501,10 +501,10 @@ public class TypeGrants {
 	 * when the attribute is not restricted.
 	 */
 	private Set<BoundedRole> effectiveAttributeRoles(TLStructuredTypePart attribute, BoundCommandGroup operation) {
-		if (!_rights.hasGrant(attribute, operation)) {
+		if (!_rights.hasGrant(_type, attribute, operation)) {
 			return null;
 		}
-		return _rights.getAllowedRoles(attribute, operation);
+		return _rights.getAllowedRoles(_type, attribute, operation);
 	}
 
 	/**
@@ -512,14 +512,42 @@ public class TypeGrants {
 	 * attribute are applied, <code>null</code> when the attribute is not restricted then.
 	 *
 	 * <p>
-	 * The rules of the underlying configuration layers and the stored ones are applied in order,
-	 * as for the {@link #storedTypeRoles(BoundCommandGroup) type}; an attribute inherits nothing.
+	 * With an {@link #hasOwnEntry(TLStructuredTypePart) entry of its own} for the attribute, the
+	 * rules of the underlying configuration layers and the stored ones of that entry are applied
+	 * in order, as for the {@link #storedTypeRoles(BoundCommandGroup) type}; such an entry inherits
+	 * nothing. Without one, the type has the attribute rights its generalizations pass on, as they
+	 * are in effect.
 	 * </p>
 	 */
 	private Set<BoundedRole> storedAttributeRoles(TLStructuredTypePart attribute, BoundCommandGroup operation)
 			throws ConfigurationException {
-		String entry = SecurityDefinitionEditor.entryName(attribute);
+		if (!hasOwnEntry(attribute)) {
+			Set<BoundedRole> inherited = effectiveAttributeRoles(attribute, operation);
+			return inherited == null ? null : new HashSet<>(inherited);
+		}
+		String entry = attributeEntry(attribute);
 		return apply(apply(null, baseRules(entry), operation), storedRules(entry), operation);
+	}
+
+	/**
+	 * Whether the type has an access rights entry of its own for the given attribute, in the
+	 * underlying configuration layers or stored.
+	 *
+	 * <p>
+	 * An entry of its own replaces the attribute rights the generalizations of the type pass on,
+	 * for all operations.
+	 * </p>
+	 */
+	private boolean hasOwnEntry(TLStructuredTypePart attribute) throws ConfigurationException {
+		String entry = attributeEntry(attribute);
+		if (_baseRules == null) {
+			_baseRules = _editor.baseRules();
+		}
+		return _baseRules.containsKey(entry) || !storedRules(entry).isEmpty();
+	}
+
+	private String attributeEntry(TLStructuredTypePart attribute) {
+		return SecurityDefinitionEditor.entryName(_type, attribute);
 	}
 
 	/**
@@ -595,6 +623,13 @@ public class TypeGrants {
 	 * denying the attribute to everybody.
 	 * </p>
 	 *
+	 * <p>
+	 * A grant on an attribute is stored for the type, so that it applies to the type and its
+	 * specializations only. When the type has no entry of its own for the attribute yet, the entry
+	 * is created with the attribute rights the type inherits, so that the change affects nothing
+	 * but the grant changed.
+	 * </p>
+	 *
 	 * @param row
 	 *        The row of the grant.
 	 * @param operation
@@ -622,18 +657,38 @@ public class TypeGrants {
 			if (storedTypeRoles(operation).contains(role) != granted) {
 				_editor.setGranted(_type, operation, role, granted);
 			}
-		} else if (!granted && isLastRole(attribute, role, operation)) {
-			_editor.dropStoredRules(attribute, operation);
-			_storedRules.clear();
-			if (storedAttributeRoles(attribute, operation) != null) {
-				_editor.dropAttributeGrants(attribute, operation);
-			}
 		} else {
-			_editor.dropStoredGrant(attribute, operation, role);
-			_storedRules.clear();
-			Set<BoundedRole> remaining = storedAttributeRoles(attribute, operation);
-			if ((remaining != null && remaining.contains(role)) != granted) {
-				_editor.setGranted(attribute, operation, role, granted);
+			if (!hasOwnEntry(attribute)) {
+				copyInheritedAttributeRights(attribute);
+			}
+			if (!granted && isLastRole(attribute, role, operation)) {
+				_editor.dropStoredRules(_type, attribute, operation);
+				_storedRules.clear();
+				if (storedAttributeRoles(attribute, operation) != null) {
+					_editor.dropAttributeGrants(_type, attribute, operation);
+				}
+			} else {
+				_editor.dropStoredGrant(_type, attribute, operation, role);
+				_storedRules.clear();
+				Set<BoundedRole> remaining = storedAttributeRoles(attribute, operation);
+				if ((remaining != null && remaining.contains(role)) != granted) {
+					_editor.setGranted(_type, attribute, operation, role, granted);
+				}
+			}
+		}
+		_storedRules.clear();
+	}
+
+	/**
+	 * Stores the attribute rights the type inherits for the given attribute in an entry of the type
+	 * itself.
+	 */
+	private void copyInheritedAttributeRights(TLStructuredTypePart attribute)
+			throws IOException, ConfigurationException {
+		for (BoundCommandGroup operation : _operations) {
+			if (_rights.hasGrant(_type, attribute, operation)) {
+				_editor.setAttributeGrant(_type, attribute, operation,
+					sortedByName(_rights.getAllowedRoles(_type, attribute, operation)));
 			}
 		}
 		_storedRules.clear();

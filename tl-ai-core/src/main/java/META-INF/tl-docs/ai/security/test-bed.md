@@ -124,11 +124,11 @@ Every conversion of a model object into something the agent sees goes through on
 | D1 | a listing and its count are filtered per object | `anna`, then `ben` | `aiCallTool("model-instances.listInstances", {"moduleName": "pm", "typeName": "Project"})` | Anna `"totalCount":1`; Ben `"totalCount":0`, `"instances":[]` |
 | D2 | an unreadable object is reported missing | `anna`, then `cara` | `aiCallTool("model-instances.getInstance", {"tids": ["<a Beta ticket's TID>"]})` | Anna: `Object with TID '...' not found`, as for a TID naming nothing; Cara: the ticket |
 | D3 | an unreadable attribute is omitted | `ben`, then `anna` | the same with an Alpha ticket's TID | Ben: `title` and no `body` key; Anna: `body` too - the `<part name="pm:Ticket#body">` grant |
-| D4 | a query result carries no hidden identity | `dora`, then `anna` | ``aiCallTool("model-query.query", {"expression": "all(`pm:Project`)"})`` | Dora `(empty list)`; Anna `Alpha [type:pm:Project] [id:...]` |
+| D4 | a query result carries no hidden identity | `dora`, then `anna` | ``aiCallTool("model-query.query", {"expression": "all(`pm:Project`)"})`` | Dora `[]`; Anna `[{"_tid":"...","_type":"pm:Project","_display":"Alpha"}]` |
 | D5 | a single hidden object is `null` | `dora` | the same with ``all(`pm:Project`).firstElement()`` | `null` |
 | D6 | an aggregate is not filtered | `dora` | `secdemo-reporting.countTickets`, then `countVisibleTickets` | `3`, then `0` - a count is a number before any filter sees it; the second tool filters inside the script |
-| D7 | a string coercion returns a label | `dora` | ``... "all(`pm:Project`).map(p -> toString($p))"`` | `Alpha`, `Beta` - labels are not access-checked (`MetaLabelProvider`) |
-| D8 | the control | `dora`, then `anna` | ``... "filterSecurity(all(`pm:Project`)).map(p -> toString($p))"`` | Dora `(empty list)`; Anna `Alpha` |
+| D7 | a string coercion returns a label | `dora` | ``... "all(`pm:Project`).map(p -> toString($p))"`` | `["Alpha","Beta"]` - labels are not access-checked (`MetaLabelProvider`) |
+| D8 | the control | `dora`, then `anna` | ``... "filterSecurity(all(`pm:Project`)).map(p -> toString($p))"`` | Dora `[]`; Anna `["Alpha"]` |
 | D9 | the model digest names only readable types | `ben`, then `anna` | `aiCallTool("model-browser.outlineModel", {"includeFramework": false})` | Ben: `class Ticket` without `class Project`; Anna: both |
 | D10 | a module without a readable type is absent | any | the same call | no `## demo.events` - its model has no `<security-config>` grant |
 | D11 | structure is not instances | `dora` | the same call, then the D1 listing | `class Project` in the digest, `"totalCount":0` in the listing |

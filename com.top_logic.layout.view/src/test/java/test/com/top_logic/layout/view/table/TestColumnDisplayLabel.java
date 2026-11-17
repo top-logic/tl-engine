@@ -292,7 +292,7 @@ public class TestColumnDisplayLabel extends AbstractModelAccessTest {
 		return new ColumnSetup(setup.name(), setup.label(), setup.type(), setup.value(), setup.viewContext(),
 			setup.binding(), setup.width(), setup.editing(), setup.aggregate(), setup.comparator(),
 			setup.hiddenByDefault(), setup.export(), setup.tooltip(), setup.cellClass(), setup.cellRole(), display,
-			setup.sortable(), setup.exists(), setup.cellExists());
+			setup.sortable(), setup.align(), setup.exists(), setup.cellExists());
 	}
 
 	/** {@link ReactControlProvider} recording the values it is given, creating no control. */

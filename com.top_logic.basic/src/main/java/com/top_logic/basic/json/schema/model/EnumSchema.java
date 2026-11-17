@@ -39,7 +39,7 @@ public class EnumSchema extends com.top_logic.basic.json.schema.model.Schema {
 	}
 
 	/**
-	 * Allowed values (JSON-serialized strings).
+	 * Allowed values, each in JSON syntax (a text value including its quotes, e.g. <code>"open"</code>, a number as <code>1</code>).
 	 */
 	public final java.util.List<String> getEnumLiterals() {
 		return _enumLiterals;

@@ -1,4 +1,4 @@
-import { React, useFieldLabelProps, rootClassName, OptionValues } from 'tl-react-bridge';
+import { React, useFieldLabelProps, rootClassName, OptionValues, optionTooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
@@ -19,7 +19,8 @@ import { showsValueOnly } from './field';
  * where it has a color role ({@link OptionContent}); hasError → `aria-invalid` and the color
  * `error`; a field that is not editable shows the chosen values ({@link OptionValues});
  * disabled → the group disabled; hidden → nothing is rendered. The group carries the control ID
- * and is labelled by the surrounding form field.</p>
+ * and is labelled by the surrounding form field. Every segment offers the explanation of its
+ * option as tooltip (see optionTooltipProps).</p>
  *
  * <p>Not reproduced: the radio keyboard pattern of a field choosing one (TLSegmentedChoice is one
  * tab stop whose arrow keys move the choice); the MUI group has no such mode. Not used: label,
@@ -54,7 +55,8 @@ const MuiSegmentedChoiceAdapter: React.FC<TLCellProps> = ({ controlId }) => {
       className={rootClassName(state)}
     >
       {options.map(option => (
-        <ToggleButton key={option.value} value={option.value} onClick={() => press(option)}>
+        <ToggleButton key={option.value} value={option.value} onClick={() => press(option)}
+          {...optionTooltipProps(option)}>
           <OptionContent option={option} />
         </ToggleButton>
       ))}

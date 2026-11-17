@@ -342,14 +342,30 @@
 										<de>Erzeugt ein Ticket mit dem angegebenen Titel im angegebenen Projekt. Ist in tool-groups eingetragen und gehört damit zur Gruppe data.write.</de>
 									</description>
 									<parameters>
-										<parameter name="project"
-											type="pm:Project"
-											mandatory="true"
-										/>
-										<parameter name="title"
-											type="tl.core:String"
-											mandatory="true"
-										/>
+										<property name="project"
+											type="com.top_logic.model.TLObject"
+										>
+											<label>
+												<en>Project</en>
+												<tooltip>
+													<en>The project to add the ticket to.</en>
+												</tooltip>
+											</label>
+											<mandatory/>
+											<format value="com.top_logic.tl.ai.core.tools.model.AgentObjectFormat"/>
+											<object-type value="pm:Project"/>
+										</property>
+										<property name="title"
+											type="String"
+										>
+											<label>
+												<en>Title</en>
+												<tooltip>
+													<en>The title of the new ticket.</en>
+												</tooltip>
+											</label>
+											<mandatory/>
+										</property>
 									</parameters>
 									<implementation>$project.set(`pm:Project#tickets`, $project.get(`pm:Project#tickets`).concat(new(`pm:Ticket`)..set(`pm:Ticket#title`, $title)))</implementation>
 								</tool>

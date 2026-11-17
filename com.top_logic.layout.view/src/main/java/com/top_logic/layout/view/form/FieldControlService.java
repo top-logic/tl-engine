@@ -734,8 +734,9 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        The field model holding the value. The object it is {@link BoundFieldModel#getObject()
 	 *        bound to} is the object a {@link TLUnit unit} function is computed for.
 	 * @return The description to pass to {@link ReactFieldControlProvider#createControl}. Its values
-	 *         are not {@link FieldSpec#isOrdered() ordered}: with no attribute holding them, nothing
-	 *         stores an order the user could arrange. Its {@link FieldSpec#getOptionOrder() options
+	 *         are not {@link FieldSpec#isOrdered() ordered}: with no attribute holding them, the type
+	 *         states no order the user could arrange; a caller whose values carry an order states it
+	 *         instead. Its {@link FieldSpec#getOptionOrder() options
 	 *         are ordered} as the options of the type are, see
 	 *         {@link AttributeOptions#orderFor(TLType)}; a caller offering options of its own states
 	 *         their order instead.

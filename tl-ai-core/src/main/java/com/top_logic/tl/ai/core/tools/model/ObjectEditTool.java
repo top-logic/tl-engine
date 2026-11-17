@@ -26,7 +26,6 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.db2.DeleteChecker;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLObject;
@@ -129,6 +128,12 @@ public class ObjectEditTool {
 	/** The lock the interactive editors take, so an object a user has open is not written behind them. */
 	private static final String LOCK = "editValues";
 
+	/** The key the container a created object was added to is disclosed under in {@code in}. */
+	private static final String IN_OBJECT = "object";
+
+	/** The key the reference a created object was added to is named under in {@code in}. */
+	private static final String IN_REFERENCE = "reference";
+
 	/** How every answer that changed something ends. */
 	private static final String SAVED = "The change is saved when this turn ends.";
 
@@ -157,7 +162,7 @@ public class ObjectEditTool {
 	 * Sets attributes of one object.
 	 *
 	 * @param id
-	 *        The object, as {@code "TypeName:id"} or a whole {@code label [id:TID]} entry.
+	 *        The object's identifier, {@code "TypeName:id"}.
 	 * @param values
 	 *        Attribute name to new value, in the forms {@link AttributeValues} reads.
 	 * @param context
@@ -235,7 +240,7 @@ public class ObjectEditTool {
 		});
 		if (!violations.isEmpty()) {
 			return refusal(ApplicationRefusals.toJson(ApplicationRefusals.refusal()
-				.setObject(ReadFilter.labelled(target))
+				.setObject(ReadFilter.forSecurity(security).disclose(target))
 				.setReasons(violations)));
 		}
 
@@ -252,7 +257,7 @@ public class ObjectEditTool {
 			changes.put(part.getName(), change);
 		}
 		Map<String, Object> answer = new LinkedHashMap<>();
-		answer.put("object", ReadFilter.labelled(target));
+		answer.put("object", filter.disclose(target));
 		answer.put("changed", changes);
 		return ToolResult.of("Changed " + converted.size() + (converted.size() == 1 ? " attribute" : " attributes")
 			+ ". " + SAVED + "\n" + ReadFilter.marked(ReadFilter.idOf(target), json(answer)));
@@ -388,7 +393,12 @@ public class ObjectEditTool {
 		}
 
 		ReadFilter filter = ReadFilter.forSecurity(security);
-		String in = container == null ? null : ReadFilter.labelled(container) + " / " + place.getName();
+		Map<String, Object> in = null;
+		if (container != null) {
+			in = new LinkedHashMap<>();
+			in.put(IN_OBJECT, filter.disclose(container));
+			in.put(IN_REFERENCE, place.getName());
+		}
 		TLObject root = created.of(tree);
 		int count = created.count();
 		return ToolResult.of((count == 1 ? "Created 1 object; use its id to change it further. "
@@ -519,7 +529,7 @@ public class ObjectEditTool {
 		}
 
 		/** What the answer shows of a created object: its id, its type, its values and its parts. */
-		Map<String, Object> shown(NewObject planned, ReadFilter filter, String in) {
+		Map<String, Object> shown(NewObject planned, ReadFilter filter, Map<String, Object> in) {
 			TLObject object = of(planned);
 			Map<String, Object> values = new LinkedHashMap<>();
 			for (TLStructuredTypePart part : planned.values().keySet()) {
@@ -533,7 +543,7 @@ public class ObjectEditTool {
 					: shownParts.isEmpty() ? null : shownParts.get(0));
 			}
 			Map<String, Object> answer = new LinkedHashMap<>();
-			answer.put("created", ReadFilter.labelled(object));
+			answer.put("created", filter.disclose(object));
 			answer.put("type", qualified(planned.type()));
 			if (in != null) {
 				answer.put("in", in);
@@ -780,7 +790,7 @@ public class ObjectEditTool {
 	 * Deletes one object the way the application deletes it.
 	 *
 	 * @param id
-	 *        The object, as {@code "TypeName:id"} or a whole {@code label [id:TID]} entry.
+	 *        The object's identifier, {@code "TypeName:id"}.
 	 * @param context
 	 *        The run's context: its rights and the turn's transaction.
 	 * @return What was deleted, or a failed result saying why nothing was.
@@ -835,11 +845,11 @@ public class ObjectEditTool {
 			new DeleteChecker(deletions).checkAll();
 		} catch (TopLogicException ex) {
 			return refusal(ApplicationRefusals.toJson(ApplicationRefusals.refusal()
-				.setObject(ReadFilter.labelled(target))
+				.setObject(ReadFilter.forSecurity(security).disclose(target))
 				.addReason(ApplicationRefusals.reason(ex.getErrorKey()))));
 		}
 
-		String deleted = ReadFilter.labelled(target);
+		Object deleted = ReadFilter.forSecurity(security).disclose(target);
 		String typeName = qualified(target.tType());
 		lock(context, target);
 		writing("deleteObject", () -> {
@@ -1131,11 +1141,11 @@ public class ObjectEditTool {
 	}
 
 	/**
-	 * How a refusal names an object: its label and its type. The label is disclosed only after the
-	 * read check passed, like everywhere else it is shown.
+	 * How a refusal names an object: its identity, as every tool result discloses it. It is disclosed
+	 * only after the read check passed, like everywhere else it is shown.
 	 */
 	private static String nameOf(TLObject object) {
-		return "'" + MetaLabelProvider.INSTANCE.getLabel(object) + "' (" + qualified(object.tType()) + ")";
+		return ReadFilter.identityJson(object);
 	}
 
 	private static String qualified(TLType type) {

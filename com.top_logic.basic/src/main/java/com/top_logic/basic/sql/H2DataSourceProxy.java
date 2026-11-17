@@ -34,6 +34,16 @@ import com.top_logic.basic.shared.collection.CollectionUtilShared;
  * query with a result that does not reflect a change another connection has committed in between.
  * </p>
  * 
+ * <p>
+ * This works around the H2 bug h2database/h2database#4580
+ * (https://github.com/h2database/h2database/issues/4580): a re-executed query with an IN list and
+ * a row limit still returns rows another connection has deleted. It is fixed by
+ * h2database/h2database#4581 (https://github.com/h2database/h2database/pull/4581). The canary test
+ * {@code test.com.top_logic.basic.sql.TestH2ResultReuse#testH2StaleInListResultStillPresent()}
+ * fails as soon as the used H2 version contains the fix; then the statement cache switch is
+ * removed together with that test.
+ * </p>
+ * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class H2DataSourceProxy extends ReadOnlySupportDataSource {
@@ -63,6 +73,11 @@ public class H2DataSourceProxy extends ReadOnlySupportDataSource {
 
 	private static final char SETTING_SEPARATOR = ';';
 
+	/**
+	 * Workaround for h2database/h2database#4580, to be removed when the canary test
+	 * {@code TestH2ResultReuse#testH2StaleInListResultStillPresent()} reports the fix
+	 * h2database/h2database#4581 in the used H2 version.
+	 */
 	private static final String NO_QUERY_CACHE = QUERY_CACHE_SIZE_SETTING + "=0";
 
 	private static final String DEFAULT_DRIVER_NAME = "org.h2.jdbcx.JdbcDataSource";

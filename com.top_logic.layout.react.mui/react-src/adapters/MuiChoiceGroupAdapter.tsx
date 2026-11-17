@@ -1,4 +1,4 @@
-import { React, useFieldLabelProps, rootClassName, usePart, OptionValues } from 'tl-react-bridge';
+import { React, useFieldLabelProps, rootClassName, usePart, OptionValues, optionTooltipProps } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson, FieldValidation } from 'tl-react-bridge';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
@@ -32,7 +32,9 @@ const EMPTY = '';
  * the validation `warning` of every checkbox; a field that is not editable
  * shows the chosen values ({@link OptionValues}); disabled → every input disabled; hidden →
  * nothing is rendered. The group (role `radiogroup` or `group`) carries the control ID and is
- * labelled by the surrounding form field.</p>
+ * labelled by the surrounding form field. Every option - its radio button with its label, its
+ * checkbox and the label beside it - offers the explanation of the option as tooltip (see
+ * optionTooltipProps).</p>
  *
  * <p>Not used: label, errorMessage, hasWarnings of a radio group, tooltip, placeholder, nullable, submitOnEnter,
  * optionsLoaded (the server sends the complete option list with the control), customOrder,
@@ -64,7 +66,8 @@ const MuiChoiceGroupAdapter: React.FC<TLCellProps> = ({ controlId }) => {
         {options.map(option => (
           <Checkbox
             key={option.value}
-            label={<OptionContent option={option} />}
+            label={<span {...optionTooltipProps(option)}><OptionContent option={option} /></span>}
+            {...optionTooltipProps(option)}
             checked={chosen.has(option.value)}
             disabled={disabled}
             validation={validation}
@@ -102,6 +105,7 @@ const MuiChoiceGroupAdapter: React.FC<TLCellProps> = ({ controlId }) => {
           label={<OptionContent option={option} />}
           disabled={disabled}
           control={<Radio color={color} />}
+          {...optionTooltipProps(option)}
         />
       ))}
     </RadioGroup>

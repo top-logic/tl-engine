@@ -27,7 +27,7 @@ public class Reason extends de.haumacher.msgbuf.data.AbstractDataObject implemen
 	/** @see #getText() */
 	public static final String TEXT__PROP = "text";
 
-	private String _object = null;
+	private Object _object = null;
 
 	private String _place = null;
 
@@ -45,23 +45,24 @@ public class Reason extends de.haumacher.msgbuf.data.AbstractDataObject implemen
 	}
 
 	/**
-	 * The object the reason is about, as <code>label [id:TID]</code>, if the refusal covers several
+	 * The identity of the object the reason is about - <code>_tid</code>, <code>_type</code> and
+	 * <code>_display</code>, as every tool result discloses an object - if the refusal covers several
 	 * objects.
 	 */
-	public final String getObject() {
+	public final Object getObject() {
 		return _object;
 	}
 
 	/**
 	 * @see #getObject()
 	 */
-	public com.top_logic.tl.ai.core.tools.refusal.messages.Reason setObject(String value) {
+	public com.top_logic.tl.ai.core.tools.refusal.messages.Reason setObject(Object value) {
 		internalSetObject(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getObject()} without chain call utility. */
-	protected final void internalSetObject(String value) {
+	protected final void internalSetObject(Object value) {
 		_object = value;
 	}
 
@@ -193,7 +194,7 @@ public class Reason extends de.haumacher.msgbuf.data.AbstractDataObject implemen
 	@Override
 	public void set(String field, Object value) {
 		switch (field) {
-			case OBJECT__PROP: internalSetObject((String) value); break;
+			case OBJECT__PROP: internalSetObject((Object) value); break;
 			case PLACE__PROP: internalSetPlace((String) value); break;
 			case ATTRIBUTE__PROP: internalSetAttribute((String) value); break;
 			case TEXT__PROP: internalSetText((String) value); break;
@@ -217,7 +218,7 @@ public class Reason extends de.haumacher.msgbuf.data.AbstractDataObject implemen
 		super.writeFields(out);
 		if (hasObject()) {
 			out.name(OBJECT__PROP);
-			out.value(getObject());
+			de.haumacher.msgbuf.json.JsonUtil.writeJsonValue(out, getObject());
 		}
 		if (hasPlace()) {
 			out.name(PLACE__PROP);
@@ -234,7 +235,7 @@ public class Reason extends de.haumacher.msgbuf.data.AbstractDataObject implemen
 	@Override
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
-			case OBJECT__PROP: setObject(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case OBJECT__PROP: setObject(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case PLACE__PROP: setPlace(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case ATTRIBUTE__PROP: setAttribute(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TEXT__PROP: setText(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;

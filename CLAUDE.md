@@ -114,6 +114,16 @@ of it into a parallel variant just to keep a questionable subtle difference aliv
 parsers or resolvers for the same thing drift apart with every extension. If the difference really
 matters, ask instead of deciding it by duplication.
 
+### No Customer-Application Details in the Engine
+
+The engine is used by many applications. Its code, JavaDoc, TL-Script help pages, `messages_*.properties`,
+`tl-docs` articles, test data, configuration examples, and Trac ticket and PR texts **never** mention a
+variable, type, module, view or term of a customer application, even if that application motivated the
+change. Examples use only what the engine itself ships (its own aliases such as `%TRANSLATION_ENABLED%`,
+types of the demo applications) or neutral placeholders (`%MY_SWITCH%`, `my.module:MyType`). A ticket
+plan that names a customer detail is rewritten with an engine example before implementing; grep the
+diff for such names before committing.
+
 ### Coding Conventions
 
 **Member Variable Naming:**

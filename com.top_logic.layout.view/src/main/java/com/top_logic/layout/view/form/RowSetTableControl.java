@@ -23,6 +23,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.LabelDescription;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactCommandHandler;
@@ -59,6 +60,7 @@ import com.top_logic.layout.view.table.CellEditing;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnExistence;
+import com.top_logic.layout.view.table.ColumnHeader;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.model.TLClass;
@@ -69,11 +71,13 @@ import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.TracingScope;
 import com.top_logic.model.util.Pointer;
+import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellExistence;
 import com.top_logic.table.CellRenderer;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnAlignment;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupKey;
@@ -278,6 +282,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	private Runnable _columnRefresh = () -> {
 		// No table.
 	};
+
+	/**
+	 * The observation of the channels the headings of the data columns of the current
+	 * {@link #_tableControl} read, {@link Registration#NONE} while there is none.
+	 */
+	private Registration _headers = Registration.NONE;
 
 	private final Set<Object> _selectedKeys = new java.util.LinkedHashSet<>();
 
@@ -977,14 +987,28 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/**
 	 * Sets the panel title: the bound attribute's display label if available, else the fallback
 	 * title. A frameless table shows no title.
+	 *
+	 * <p>
+	 * The {@link LabelDescription description} of the bound attribute explains the table: a framed
+	 * table offers it at its title, a frameless one through an info icon beside the table. In edit
+	 * mode it is offered as help text as well, as the help of a field.
+	 * </p>
+	 *
+	 * @param editMode
+	 *        Whether the table is edited.
 	 */
-	private void updateTitle() {
+	private void updateTitle(boolean editMode) {
+		TLStructuredTypePart boundPart = binding().getBoundPart();
+		String explanation =
+			boundPart == null ? null : LabelDescription.description(TLModelI18N.getI18NKey(boundPart));
+		putState(ReactPanelControl.EXPLANATION, explanation);
+		putState(ReactPanelControl.EXPLANATION_HELP, Boolean.valueOf(explanation != null && editMode));
+
 		if (!_framed) {
 			putState("title", null);
 			return;
 		}
 		String title = _fallbackTitle;
-		TLStructuredTypePart boundPart = binding().getBoundPart();
 		if (boundPart != null) {
 			String label = MetaLabelProvider.INSTANCE.getLabel(boundPart);
 			if (label != null) {
@@ -998,7 +1022,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	@Override
 	protected void buildContent(List<? extends TLObject> rowObjects, boolean editMode) {
-		updateTitle();
+		updateTitle(editMode);
 
 		List<Column<TLObject, ?>> columns = new ArrayList<>();
 
@@ -1069,6 +1093,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		view.setAbsentColumns(existence.absentColumns());
 
 		disposeExistence();
+		disposeHeaders();
 		_arrangement.release();
 		disposeFilterBinding();
 		disposeDisplayedRowsBinding();
@@ -1084,7 +1109,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				shown.setAbsentColumns(absent);
 			}
 		});
+		_headers = ColumnHeader.observe(setups, () -> {
+			// A notification in progress may still reach the observation of a replaced table.
+			if (_tableControl == shown) {
+				shown.refreshColumnHeaders();
+			}
+		});
 		_tableControl.setFilterBar(_filterBar);
+		// Where all rows are edited, the row of the focused editor is the row the commands act on.
+		_tableControl.setSelectOnEditorFocus(_policy == RowEditPolicy.ALL && editMode);
 		_tableControl.setRowCount(_rowCount);
 		_tableControl.setActivationHandler(_activationHandler);
 
@@ -1295,6 +1328,14 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		_columnRefresh = () -> {
 			// No table.
 		};
+	}
+
+	/**
+	 * Stops following the channels the headings of the current table read.
+	 */
+	private void disposeHeaders() {
+		_headers.dispose();
+		_headers = Registration.NONE;
 	}
 
 	/**
@@ -1562,6 +1603,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	protected void onCleanup() {
 		_arrangement.release();
 		disposeExistence();
+		disposeHeaders();
 		disposeFilterBinding();
 		disposeDisplayedRowsBinding();
 		// The toolbar and the table itself are part of the state and are disposed with it; only the
@@ -1611,6 +1653,21 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		@Override
 		public ResKey label() {
 			return _inner.label();
+		}
+
+		@Override
+		public ColumnAlignment alignment() {
+			return _inner.alignment();
+		}
+
+		@Override
+		public boolean pinnedEnd() {
+			return _inner.pinnedEnd();
+		}
+
+		@Override
+		public String cssClass() {
+			return _inner.cssClass();
 		}
 
 		@Override
@@ -1695,6 +1752,16 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		@Override
 		public ValueColor color(TLObject row) {
 			return _inner.color(row);
+		}
+
+		@Override
+		public String headerClass() {
+			return _inner.headerClass();
+		}
+
+		@Override
+		public ValueColor headerRole() {
+			return _inner.headerRole();
 		}
 
 		@Override

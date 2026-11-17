@@ -52,8 +52,9 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * A server-side control that mounts a {@code React} component on the client.
  *
  * <p>
- * The control renders a mount-point {@code <div>} and a bootstrap script that calls
- * {@code TLReact.mount()} on the client. State updates are delivered via SSE.
+ * The control renders a mount-point {@code <div>} (marked with {@link #MOUNT_ATTRIBUTE}) that the
+ * client bridge discovers and mounts the component into. The component renders its root element
+ * with the control ID as {@code id}. State updates are delivered via SSE.
  * </p>
  *
  * <p>
@@ -71,6 +72,17 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * </p>
  */
 public class ReactControl implements HTMLFragment, IReactControl, ScriptingControl {
+
+	/**
+	 * Attribute of the mount point written by {@link #write(TagWriter)}, naming the ID of the
+	 * control whose {@code React} root the element takes.
+	 *
+	 * <p>
+	 * The mount point does not carry the control ID as {@code id}: the ID belongs to the root element
+	 * the client component renders, so that it is unique in the document.
+	 * </p>
+	 */
+	public static final String MOUNT_ATTRIBUTE = "data-react-mount";
 
 	/**
 	 * Key under which the {@link #diagnostics() diagnostic observations} appear in the
@@ -885,7 +897,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 			String stateJson = toJsonString(_reactContext, _reactState);
 
 			out.beginBeginTag(HTMLConstants.DIV);
-			writeIdAttribute(out);
+			writeMountAttribute(out);
 			writeControlClasses(out);
 			out.writeAttribute("data-react-module", _reactModule);
 			out.writeAttribute("data-react-state", stateJson);
@@ -967,10 +979,10 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	/**
-	 * Writes the control ID as an HTML attribute.
+	 * Writes the control ID as {@link #MOUNT_ATTRIBUTE} of the mount point.
 	 */
-	protected void writeIdAttribute(TagWriter out) throws IOException {
-		out.writeAttribute("id", _id);
+	protected void writeMountAttribute(TagWriter out) throws IOException {
+		out.writeAttribute(MOUNT_ATTRIBUTE, _id);
 	}
 
 	/**

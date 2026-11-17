@@ -5,7 +5,7 @@
  */
 package test.com.top_logic.layout.view.form;
 
-import static com.top_logic.model.search.expr.I18NConstants.*;
+import static com.top_logic.model.security.I18NConstants.*;
 
 import java.util.ArrayList;
 import java.util.Collection;

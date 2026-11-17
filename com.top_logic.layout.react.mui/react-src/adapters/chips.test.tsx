@@ -16,6 +16,7 @@ import TLText from '../../../com.top_logic.layout.react/react-src/controls/TLTex
 import TLSidebar from '../../../com.top_logic.layout.react/react-src/controls/TLSidebar';
 import TLBottomBar from '../../../com.top_logic.layout.react/react-src/controls/TLBottomBar';
 import MuiChipAdapter from './MuiChipAdapter';
+import MuiSkeletonAdapter from './MuiSkeletonAdapter';
 import MuiBadgeAdapter from './MuiBadgeAdapter';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
@@ -29,6 +30,7 @@ import { CONTROL_ID, childControl, mountAdapter, patchState, settle } from './wi
 import type { MountOptions } from './wire-test-support';
 
 replacePart('Chip', MuiChipAdapter);
+replacePart('Skeleton', MuiSkeletonAdapter);
 replacePart('Badge', MuiBadgeAdapter);
 // The read-only values without a color role, the buttons, toggles and search boxes of the controls.
 replacePart('FieldValue', MuiFieldValueAdapter);

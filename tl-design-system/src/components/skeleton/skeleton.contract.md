@@ -8,7 +8,7 @@ Zugänglichkeit, nicht das Aussehen; wer ins Bild passen will, liest die Tokens.
 Der Platzhalter ist der ersetzbare Part `Skeleton` (`SkeletonPart`); eine Kunden-Komponentenbibliothek zeichnet
 ihn mit ihrem eigenen Platzhalter. Er steht dort, wo der Client während des Ladens die Form des Inhalts kennt:
 die Tabelle zeichnet Zeilen, die der Server noch nicht geschickt hat, als Textzeile in `tl-table__placeholder`
-(3b §10), das Raster trägt `aria-busy`; ein Bild mit bekannten Maßen trägt bis zum Laden ein Rechteck, das
+(3b §10), das Raster trägt `aria-busy`; ein Bild mit bekannter Höhe oder bekanntem Seitenverhältnis trägt bis zum Laden ein Rechteck, das
 seinen Rahmen `tl-media` füllt, der Rahmen trägt `aria-busy`.
 
 | Schlüssel | Typ | Bedeutung |

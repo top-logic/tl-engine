@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, images with a preview in an image field (<binary-display presentation="image-upload">, an image gallery of tl.imagegallery:GalleryImage), normalizing an entered value with <value-normalizer>, fields of derived attributes, fields of attributes with a <fallback-storage> showing the inherited value, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form, resetting or recomputing dependent fields when a field changes with <value-listeners> and <script>, also in the rows of a <composition-table>), the fields of the object a reference of the form's object points to, edited and saved with it (<object-fields attribute="...">), when the object of a form is locked in edit mode (<lockHandler>, DefaultLockHandler, NoTokenHandling), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, images in an image field stepping through them, arranging them and showing them full page (<binary-display presentation="image-upload">, its size with <dimensions>, an image gallery of tl.imagegallery:GalleryImage), normalizing an entered value with <value-normalizer>, fields of derived attributes, fields of attributes with a <fallback-storage> showing the inherited value, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form, resetting or recomputing dependent fields when a field changes with <value-listeners> and <script>, also in the rows of a <composition-table>), the fields of the object a reference of the form's object points to, edited and saved with it (<object-fields attribute="...">), when the object of a form is locked in edit mode (<lockHandler>, DefaultLockHandler, NoTokenHandling), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -465,18 +465,32 @@ multi-valued `tl.core:Binary` property.
 **Images** — `<binary-display presentation="image-upload"/>`
 (`BinaryDisplay.BinaryPresentation.IMAGE_UPLOAD`) shows a binary value as images
 (`FieldControlRegistry.IMAGE`, `ReactImageFieldControl`, client `TLImageField`), a single and a
-multi-valued value alike. Each image is a tile showing its preview, all tiles of one size. While the
-field is edited, a tile carries a button replacing its image by a picked file - a file dropped on the
-tile replaces it as well - and a button "✕" removing it; the images of an ordered attribute are moved
-by the handle of their tile, by dragging or with Alt + arrow key. Without an image - for a single
-value also right after "✕" - the field is a dashed area of the size of a tile, "Upload image", that
-takes a dropped file or opens the file picker on click; a multi-valued field keeps this area after
-its last tile and adds every file dropped or picked there. A field that is only displayed shows the
-previews alone. The previews are fetched from the data endpoint of the control, the images never
-enter the client state. The image field is chosen by the annotation only: `<accepted-types
-value="image/*"/>` alone keeps the chips. `<accepted-types>` and `<max-upload-size>` act as for every
-binary value, and the annotations act on a `<value-input>` of type `tl.core:Binary` as well. In a
-table cell the names of the images stand for the field, with a button opening it in a dialog.
+multi-valued value alike. The field takes a whole row of the form
+(`ReactFormFieldControl.prefersWholeLine()`; a `<render-whole-line value="false"/>` at the attribute
+or `full-line="false"` at the `<field>` keeps it in its column). It shows one image at a time on a
+stage as wide as the field and of a fixed height, the theme token `--tl-size-image-stage`;
+`<dimensions width="..." height="..."/>` at the attribute sets the largest width of the image and the
+height of the stage instead. Several images are stepped through with the buttons at the edges of the
+stage or the arrow keys, wrapping around, and a counter "2 of 5" tells where the field is.
+
+- **Displayed** (also disabled): a click on the image opens it in a view filling the page, over a
+  scrim, with the same stepping; Escape, a click on the scrim or "Close" closes it.
+- **Edited**: a click on the image opens the *arrange view*: a tile per image, all of one size, each
+  with a button replacing its image by a picked file - a file dropped on the tile replaces it as
+  well - and a button "✕" removing it; the images of an ordered attribute are moved by the handle of
+  their tile, by dragging or with Alt + arrow key. A multi-valued field keeps a dashed area
+  "Upload image" after the last tile that adds every file dropped or picked there. "Done", Escape or
+  a click on the image of a tile goes back to the stage, at that image.
+- **Dropping on the stage** of an edited field replaces a single image; among several images, the
+  files are inserted after the image shown, and the stage moves to the first one added.
+- **Without an image**, the stage of an edited field is the dashed area that takes a dropped file or
+  opens the file picker on click; a displayed field shows nothing.
+
+The images are fetched from the data endpoint of the control, they never enter the client state. The
+image field is chosen by the annotation only: `<accepted-types value="image/*"/>` alone keeps the
+chips. `<accepted-types>` and `<max-upload-size>` act as for every binary value, and the annotations
+act on a `<value-input>` of type `tl.core:Binary` as well. In a table cell the names of the images
+stand for the field, with a button opening it in a dialog.
 
 ```xml
 <property name="pictures"
@@ -487,6 +501,7 @@ table cell the names of the images stand for the field, with a button opening it
 	<annotations>
 		<accepted-types value="image/*"/>
 		<binary-display presentation="image-upload"/>
+		<dimensions height="400px"/>
 	</annotations>
 </property>
 ```
@@ -494,7 +509,7 @@ table cell the names of the images stand for the field, with a button opening it
 **Image galleries** — a gallery is a multi-valued, ordered reference to `tl.imagegallery:GalleryImage`;
 each image is an object of its own, stored and deleted by the storage of the gallery
 (`ImageGalleryStorage`, chosen automatically for such a reference). It is edited in the same image
-field without any annotation: `FieldControlService` maps the type `tl.imagegallery:GalleryImage` to
+field, `<dimensions>` included, without any other annotation: `FieldControlService` maps the type `tl.imagegallery:GalleryImage` to
 `GalleryFieldControlProvider`, which shows the image of each gallery image and turns an uploaded file
 into a new gallery image (`TransientGalleryImage`) that the storage makes persistent on save - in an
 edited object and in a new one alike. The file picker offers images (`image/*`). Only a gallery is

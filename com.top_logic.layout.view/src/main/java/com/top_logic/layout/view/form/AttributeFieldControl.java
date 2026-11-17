@@ -15,6 +15,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.SimpleEditContext;
+import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.model.AbstractFieldModel;
@@ -25,6 +26,7 @@ import com.top_logic.layout.react.LabelDescription;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.PendingInput;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
@@ -37,6 +39,7 @@ import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.annotate.LabelPositionAnnotation;
 import com.top_logic.model.annotate.ModeSelector;
+import com.top_logic.model.annotate.RenderWholeLineAnnotation;
 import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.definition.FormVisibility;
@@ -738,10 +741,20 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		return LabelDescription.description(TLModelI18N.getI18NKey(part));
 	}
 
+	/**
+	 * Whether the field takes a whole row: as the view says, else as the attribute says, else as
+	 * its {@link ReactFormFieldControl#prefersWholeLine() control prefers}.
+	 */
 	private boolean resolveFullLine(TLStructuredTypePart part) {
 		if (_fullLineOverride != null) {
 			return _fullLineOverride.booleanValue();
 		}
-		return AttributeOperations.renderWholeLine(part, SimpleEditContext.createContext(part));
+		EditContext editContext = SimpleEditContext.createContext(part);
+		RenderWholeLineAnnotation annotation = editContext.getAnnotation(RenderWholeLineAnnotation.class);
+		if (annotation != null) {
+			return annotation.getValue();
+		}
+		return AttributeOperations.renderWholeLine(part, editContext)
+			|| (_innerControl instanceof ReactFormFieldControl field && field.prefersWholeLine());
 	}
 }

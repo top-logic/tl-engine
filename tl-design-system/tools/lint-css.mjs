@@ -159,7 +159,8 @@ const MODIFIERS = {
   'tl-media': new Set(['cover', 'contain', 'document', 'preview']), // Einpassung, Papier, Vorschau; gespiegelt: data-tl-state.
   'tl-prose': new Set([]),
   'tl-file': new Set([]), // Leer: data-tl-state.
-  'tl-image-field': new Set([]), // Ein Bild wie mehrere: gleich große Kacheln; Ziehen, Ablegen: data-tl-state.
+  'tl-image-field': new Set(['arrange']), // Bühne oder Ansicht zum Anordnen; Ziehen, Ablegen: data-tl-state.
+  'tl-image-viewer': new Set([]), // Ganzseitige Ansicht eines Bildfelds.
   'tl-steps': new Set(['vertical']), // Erledigt: data-tl-state; aktuell: aria-current.
   'tl-job-status': new Set([]),
   'tl-calendar': new Set([]), // Heute, arbeitsfrei, anderer Monat, Termintag, Vorschau, gewählt: Attribute; Kategorie: data-tl-role.
@@ -191,6 +192,8 @@ const MODIFIERS = {
 const ELEMENT_MODIFIERS = {
   'tl-card__body': new Set(['pad-default', 'pad-compact']),
   'tl-form-field__input': new Set(['explained', 'resettable']),
+  'tl-image-field__step': new Set(['previous', 'next']),
+  'tl-image-viewer__step': new Set(['previous', 'next']),
   'tl-menu__item': new Set(['danger']),
   'tl-overlay__layer': new Set(['bottom', 'bottom-left', 'bottom-right', 'center', 'fill', 'left', 'right', 'top',
     'top-left', 'top-right']), // Die Anker der Überlagerung.

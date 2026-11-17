@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
@@ -41,6 +42,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.config.annotation.TLOptions;
 import com.top_logic.element.meta.OptionProvider;
 import com.top_logic.element.meta.SimpleEditContext;
+import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
@@ -82,6 +84,7 @@ import com.top_logic.model.annotate.ui.ReferenceDisplay;
 import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.ui.MultiLine;
 import com.top_logic.model.annotate.ui.TLAcceptedTypes;
+import com.top_logic.model.annotate.ui.TLDimensions;
 import com.top_logic.model.annotate.util.ValueNormalizer;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.TracingScope;
@@ -641,6 +644,20 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	}
 
 	/**
+	 * One size of the {@link TLDimensions} annotation of the value as CSS value, {@code null} where
+	 * the value has no such annotation or the annotation leaves that size open.
+	 */
+	private static String dimension(AnnotationLookup annotations,
+			Function<TLDimensions, DisplayDimension> size) {
+		TLDimensions annotation = annotations == null ? null : annotations.getAnnotation(TLDimensions.class);
+		if (annotation == null) {
+			return null;
+		}
+		DisplayDimension value = size.apply(annotation);
+		return value == null ? null : value.toString();
+	}
+
+	/**
 	 * Creates the control the given provider builds for the given field.
 	 *
 	 * <p>
@@ -788,6 +805,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			.setUnit(unit(annotations, type, ownerOf(model)))
 			.setAcceptedTypes(acceptedTypes(annotations, type))
 			.setMaxUploadSize(maxUploadSize(annotations, type))
+			.setWidth(dimension(annotations, TLDimensions::getWidth))
+			.setHeight(dimension(annotations, TLDimensions::getHeight))
 			.setSendValueOnBlur(ValueNormalizer.isAnnotated(annotations));
 	}
 

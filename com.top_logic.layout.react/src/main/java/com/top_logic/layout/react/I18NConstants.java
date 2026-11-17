@@ -330,6 +330,48 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_IMAGE_FIELD_REMOVE;
 
 	/**
+	 * @en Previous image
+	 */
+	@CustomKey("js.imageField.previous")
+	public static ResKey JS_IMAGE_FIELD_PREVIOUS;
+
+	/**
+	 * @en Next image
+	 */
+	@CustomKey("js.imageField.next")
+	public static ResKey JS_IMAGE_FIELD_NEXT;
+
+	/**
+	 * @en {0} of {1}
+	 */
+	@CustomKey("js.imageField.counter")
+	public static ResKey JS_IMAGE_FIELD_COUNTER;
+
+	/**
+	 * @en Show {0} full page
+	 */
+	@CustomKey("js.imageField.open")
+	public static ResKey JS_IMAGE_FIELD_OPEN;
+
+	/**
+	 * @en Edit images, {0} shown
+	 */
+	@CustomKey("js.imageField.edit")
+	public static ResKey JS_IMAGE_FIELD_EDIT;
+
+	/**
+	 * @en Done
+	 */
+	@CustomKey("js.imageField.done")
+	public static ResKey JS_IMAGE_FIELD_DONE;
+
+	/**
+	 * @en Close
+	 */
+	@CustomKey("js.imageField.close")
+	public static ResKey JS_IMAGE_FIELD_CLOSE;
+
+	/**
 	 * @en Open camera
 	 */
 	@CustomKey("js.photoCapture.open")

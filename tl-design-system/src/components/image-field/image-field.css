@@ -1,24 +1,100 @@
 /* Bildfeld — Vertrag image-field.contract.md. Leser ist TLImageField.
-   Ein Feld für ein Bild oder mehrere, nach dem Bild-Upload-Feld der klassischen Oberfläche: mit Bild die Vorschau
-   (tl-image-field__tile) und darüber die Knöpfe (Part Button), ohne Bild die gestrichelte Fläche
-   (tl-image-field__drop), die eine Datei aufnimmt oder per Klick die Dateiauswahl öffnet. Ein Bild ist eine Kachel,
-   mehrere stehen als Reihe gleich großer Kacheln; die Fläche hat die Größe einer Kachel und steht als letzte. Dragover an Kachel und Fläche
-   zeichnet upload.css, Gezogen und Einfügemarke drag.css (die Wurzel trägt data-tl-axis="horizontal"), den Ring der
-   Fläche base.css. */
+   Ein Feld für ein Bild oder mehrere. Die Bühne (tl-image-field__stage) zeigt ein Bild auf der ganzen Breite des
+   Felds, eingepasst in die Höhe --tl-size-image-stage (die Annotation dimensions gibt Breite und Höhe inline);
+   mehrere Bilder blättern die Knöpfe am Rand (tl-image-field__step) durch, der Zähler steht unten am Zeilenende. Ohne
+   Bild ist die Bühne die gestrichelte Fläche (tl-image-field__drop), die eine Datei aufnimmt oder per Klick die
+   Dateiauswahl öffnet. Die Ansicht zum Anordnen (tl-image-field--arrange) zeigt jedes Bild als gleich große Kachel
+   mit den Knöpfen (Part Button) und die Fläche als letzte; darunter die Leiste mit „Fertig“. Die ganzseitige Ansicht
+   (tl-image-viewer) liegt über einem Scrim. Dragover an Bühne, Kachel und Fläche zeichnet upload.css, Gezogen und
+   Einfügemarke drag.css (die Reihe der Kacheln trägt data-tl-axis="horizontal"), den Ring base.css. */
 
 .tl-image-field {
   display: flex;
-  flex-wrap: wrap;
-  align-items: start;
+  flex-direction: column;
   gap: var(--tl-space-sm);
   min-width: 0;
 }
 .tl-image-field[hidden] { display: none; }
 
-/* Jedes Bild ist eine gleich große Kachel, einzeln wie in der Reihe; das Bild liegt eingepasst auf der Fläche des
-   Felds. */
-.tl-image-field__tile {
+/* Die Bühne: so breit wie das Feld, fest so hoch wie die Höhe der Bühne, damit das Blättern nichts verschiebt. */
+.tl-image-field__stage {
+  display: flex;
+  position: relative;
+  align-items: stretch;
+  justify-content: center;
+  inline-size: 100%;
+  block-size: var(--tl-size-image-stage);
+  box-sizing: border-box;
+  border-radius: var(--tl-radius-sm);
+  background: var(--tl-surface-field);
+}
+.tl-image-field__stage[hidden] { display: none; }
+
+/* Ohne Bild füllt die Fläche die Bühne; die Bühne ist dann nur so hoch wie eine Kachel. */
+.tl-image-field__stage[data-tl-state~="empty"] {
+  block-size: var(--tl-size-11);
+  background: none;
+}
+
+/* Das Bild ist ein Knopf: er öffnet die ganzseitige Ansicht oder, im Bearbeiten, die Ansicht zum Anordnen. */
+.tl-image-field__show {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--tl-radius-sm);
+  background: none;
+  cursor: zoom-in;
+}
+.tl-image-field__show[hidden] { display: none; }
+
+.tl-image-field__image {
   display: block;
+  max-inline-size: 100%;
+  max-block-size: 100%;
+  object-fit: contain;
+  border-radius: var(--tl-radius-sm);
+}
+
+/* Die Knöpfe zum Blättern liegen mittig am linken und rechten Rand der Bühne. */
+.tl-image-field__step {
+  position: absolute;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+}
+.tl-image-field__step[hidden] { display: none; }
+.tl-image-field__step--previous { inset-inline-start: var(--tl-space-sm); }
+.tl-image-field__step--next { inset-inline-end: var(--tl-space-sm); }
+
+/* Der Zähler steht unten am Zeilenende über dem Bild. */
+.tl-image-field__counter {
+  position: absolute;
+  inset-block-end: var(--tl-space-sm);
+  inset-inline-end: var(--tl-space-sm);
+  padding: var(--tl-space-2xs) var(--tl-space-xs);
+  border-radius: var(--tl-radius-sm);
+  background: var(--tl-surface-inverse);
+  color: var(--tl-text-inverse);
+}
+.tl-image-field__counter[hidden] { display: none; }
+
+/* Die Ansicht zum Anordnen: die Kacheln und die Fläche in einer umbrechenden Reihe. */
+.tl-image-field__tiles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: var(--tl-space-sm);
+}
+.tl-image-field__tiles[hidden] { display: none; }
+
+/* Jedes Bild ist eine gleich große Kachel; das Bild liegt eingepasst auf der Fläche des Felds. */
+.tl-image-field__tile {
+  display: flex;
   position: relative;
   inline-size: var(--tl-size-11);
   block-size: var(--tl-size-11);
@@ -27,12 +103,13 @@
 }
 .tl-image-field__tile[hidden] { display: none; }
 
-.tl-image-field__image {
-  display: block;
+.tl-image-field__tile .tl-image-field__show {
+  cursor: pointer;
+}
+
+.tl-image-field__tile .tl-image-field__image {
   inline-size: 100%;
   block-size: 100%;
-  object-fit: contain;
-  border-radius: var(--tl-radius-sm);
 }
 
 /* Die Knöpfe der Kachel liegen in ihrer oberen Ecke am Zeilenende über dem Bild. */
@@ -45,7 +122,15 @@
 }
 .tl-image-field__actions[hidden] { display: none; }
 
-/* Die Fläche, die ein Bild aufnimmt: gestrichelt, Icon und Beschriftung in der Mitte. */
+/* Die Leiste unter den Kacheln mit „Fertig“, am Zeilenende. */
+.tl-image-field__bar {
+  display: flex;
+  justify-content: flex-end;
+}
+.tl-image-field__bar[hidden] { display: none; }
+
+/* Die Fläche, die ein Bild aufnimmt: gestrichelt, Icon und Beschriftung in der Mitte. In der Reihe so groß wie eine
+   Kachel, auf der leeren Bühne so breit wie das Feld. */
 .tl-image-field__drop {
   display: flex;
   position: relative;
@@ -54,6 +139,7 @@
   gap: var(--tl-space-xs);
   inline-size: var(--tl-size-11);
   block-size: var(--tl-size-11);
+  box-sizing: border-box;
   padding: var(--tl-space-sm);
   border: var(--tl-border-width-md) dashed var(--tl-border-control);
   border-radius: var(--tl-radius-sm);
@@ -62,6 +148,11 @@
   cursor: pointer;
 }
 .tl-image-field__drop[hidden] { display: none; }
+
+.tl-image-field__stage .tl-image-field__drop {
+  inline-size: 100%;
+  block-size: 100%;
+}
 
 .tl-image-field__drop:hover:not([aria-disabled="true"]) {
   border-color: var(--tl-border-emphasis);
@@ -80,7 +171,58 @@
   white-space: nowrap;
 }
 
-/* Der Fehler des letzten Hochladens bricht unter Bild und Fläche. */
+/* Die ganzseitige Ansicht: das Bild eingepasst in den Viewport mit dem Rand space-lg, über dem Scrim. Die Knöpfe zum
+   Blättern mittig an den Rändern, der Zähler unten mittig, der Knopf zum Schließen oben am Zeilenende. */
+.tl-image-viewer {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: var(--tl-layer-overlay);
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: var(--tl-space-lg);
+  background: var(--tl-surface-scrim);
+}
+.tl-image-viewer[hidden] { display: none; }
+
+.tl-image-viewer__image {
+  display: block;
+  max-inline-size: 100%;
+  max-block-size: 100%;
+  object-fit: contain;
+  border-radius: var(--tl-radius-sm);
+}
+
+.tl-image-viewer__step {
+  position: absolute;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+}
+.tl-image-viewer__step[hidden] { display: none; }
+.tl-image-viewer__step--previous { inset-inline-start: var(--tl-space-lg); }
+.tl-image-viewer__step--next { inset-inline-end: var(--tl-space-lg); }
+
+.tl-image-viewer__counter {
+  position: absolute;
+  inset-block-end: var(--tl-space-lg);
+  inset-inline-start: 50%;
+  transform: translateX(-50%);
+  padding: var(--tl-space-2xs) var(--tl-space-xs);
+  border-radius: var(--tl-radius-sm);
+  background: var(--tl-surface-inverse);
+  color: var(--tl-text-inverse);
+}
+.tl-image-viewer__counter[hidden] { display: none; }
+
+.tl-image-viewer__close {
+  position: absolute;
+  inset-block-start: var(--tl-space-lg);
+  inset-inline-end: var(--tl-space-lg);
+}
+.tl-image-viewer__close[hidden] { display: none; }
+
+/* Der Fehler des letzten Hochladens steht unter Bühne oder Kacheln. */
 .tl-image-field > .tl-file-upload__status {
-  flex-basis: 100%;
+  align-self: flex-start;
 }

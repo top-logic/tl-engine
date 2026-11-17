@@ -499,7 +499,7 @@
 							</dynamic-visibility>
 						</annotations>
 					</property>
-					<!-- Several images shown with a preview each, arranged by the user. -->
+					<!-- Several images stepped through one at a time, arranged by the user, on a lower stage. -->
 					<property name="pictures"
 						multiple="true"
 						ordered="true"
@@ -508,6 +508,7 @@
 						<annotations>
 							<accepted-types value="image/*"/>
 							<binary-display presentation="image-upload"/>
+							<dimensions height="320px"/>
 							<max-upload-size value="5m"/>
 						</annotations>
 					</property>

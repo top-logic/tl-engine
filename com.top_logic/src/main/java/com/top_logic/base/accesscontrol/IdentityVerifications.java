@@ -41,7 +41,9 @@ import com.top_logic.knowledge.wrap.person.Person;
  * </p>
  *
  * <p>
- * A token is valid once and for {@link #DEFAULT_VALIDITY a limited time}. It is drawn from
+ * A token is valid once and for {@link #DEFAULT_VALIDITY a limited time}. An expired entry is kept
+ * for another such period, so that a late answer still {@link IdentityVerificationHandler#expired(Person)
+ * reaches} the side that waits for it instead of leaving it waiting. The token is drawn from
  * {@link SecureRandomService}, so knowing one says nothing about the next, and it is the only thing
  * the round trip carries - the account of the session stays here and is never taken from the
  * returning request.
@@ -194,12 +196,14 @@ public class IdentityVerifications {
 	 * @param identity
 	 *        What the external authentication confirmed.
 	 * @return What became of the entry, as the handler of the entry answered it. The handler has
-	 *         not been called when the result is {@link Outcome#UNKNOWN}.
+	 *         not been asked when the result is {@link Outcome#UNKNOWN}; for an entry that has
+	 *         expired, it has been {@link IdentityVerificationHandler#expired(Person) told so}.
 	 */
 	public VerificationResult complete(String token, VerifiedIdentity identity) {
 		PendingIdentityVerification entry;
+		Instant now;
 		synchronized (this) {
-			Instant now = _clock.instant();
+			now = _clock.instant();
 			dropExpired(now);
 			entry = token == null ? null : _pending.remove(token);
 			if (entry == null) {
@@ -208,6 +212,9 @@ public class IdentityVerifications {
 		}
 		// Outside the lock: the handler resumes the waiting command and must not be run while the
 		// registry of its own session is held.
+		if (entry.isExpired(now)) {
+			return entry.expire() ? VerificationResult.expired().delivered() : VerificationResult.expired();
+		}
 		return entry.handle(identity);
 	}
 
@@ -236,8 +243,13 @@ public class IdentityVerifications {
 		return _pending.size();
 	}
 
+	/**
+	 * Drops the entries that have been expired for longer than the validity, whose late answer is
+	 * no longer reported.
+	 */
 	private void dropExpired(Instant now) {
-		_pending.values().removeIf(entry -> entry.isExpired(now));
+		Instant expiredBefore = now.minus(_validity);
+		_pending.values().removeIf(entry -> entry.isExpired(expiredBefore));
 	}
 
 	/**

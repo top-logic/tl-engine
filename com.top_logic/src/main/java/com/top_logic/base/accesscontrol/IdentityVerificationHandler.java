@@ -38,6 +38,25 @@ public interface IdentityVerificationHandler {
 	VerificationResult handle(Person expected, VerifiedIdentity identity);
 
 	/**
+	 * Reports that the verification expired before the external authentication came back.
+	 *
+	 * <p>
+	 * Run instead of {@link #handle(Person, VerifiedIdentity)}, once, on the thread of the request
+	 * that brings the late answer: the side that waits learns that no answer will come, as it would
+	 * learn of a refusal. A verification that is never answered at all is not reported.
+	 * </p>
+	 *
+	 * @param expected
+	 *        The account of the session that registered the verification.
+	 * @return Whether the expiry has reached the place that asked for the verification, see
+	 *         {@link VerificationResult#isDelivered()}.
+	 */
+	default boolean expired(Person expected) {
+		// Nothing waits by default.
+		return false;
+	}
+
+	/**
 	 * The handler of a fresh authentication of the session's own user.
 	 *
 	 * <p>
@@ -58,12 +77,32 @@ public interface IdentityVerificationHandler {
 	 */
 	static IdentityVerificationHandler reauthentication(Runnable onVerified) {
 		Objects.requireNonNull(onVerified, "No continuation to run.");
+		IdentityVerificationHandler check = reauthentication();
+		return (expected, identity) -> {
+			VerificationResult result = check.handle(expected, identity);
+			if (!result.isVerified()) {
+				return result;
+			}
+			onVerified.run();
+			return result.delivered();
+		};
+	}
+
+	/**
+	 * The check of a fresh authentication of the session's own user, for a caller that acts on
+	 * the result itself.
+	 *
+	 * <p>
+	 * Accepts the identity only if its {@link VerifiedIdentity#getAccount() account} is the expected
+	 * one, see {@link #reauthentication(Runnable)}.
+	 * </p>
+	 */
+	static IdentityVerificationHandler reauthentication() {
 		return (expected, identity) -> {
 			if (!expected.equals(identity.getAccount())) {
 				return VerificationResult.mismatch();
 			}
-			onVerified.run();
-			return VerificationResult.verified(I18NConstants.IDENTITY_VERIFIED).delivered();
+			return VerificationResult.verified(I18NConstants.IDENTITY_VERIFIED);
 		};
 	}
 

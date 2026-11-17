@@ -303,6 +303,8 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 		assertPage(VerificationResult.refused(I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED), false);
 		assertPage(VerificationResult.mismatch(), false);
 		assertPage(VerificationResult.unknown(), false);
+		assertPage(VerificationResult.expired().delivered(), true);
+		assertPage(VerificationResult.expired(), false);
 	}
 
 	private void assertPage(VerificationResult result, boolean closesWindow) throws Exception {

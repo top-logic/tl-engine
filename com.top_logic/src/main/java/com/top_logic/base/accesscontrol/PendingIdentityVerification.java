@@ -77,6 +77,15 @@ public final class PendingIdentityVerification {
 	}
 
 	/**
+	 * Tells the {@link #getHandler() handler} that this verification has expired.
+	 *
+	 * @return Whether the expiry has reached the place that asked for the verification.
+	 */
+	boolean expire() {
+		return _handler.expired(_expectedAccount);
+	}
+
+	/**
 	 * The point in time from which on this verification counts as no longer offered.
 	 */
 	public Instant getExpiry() {

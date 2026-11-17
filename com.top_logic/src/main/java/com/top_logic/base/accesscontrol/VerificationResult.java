@@ -22,6 +22,9 @@ public final class VerificationResult {
 	private static final VerificationResult MISMATCH =
 		new VerificationResult(Outcome.MISMATCH, I18NConstants.ERROR_IDENTITY_MISMATCH);
 
+	private static final VerificationResult EXPIRED =
+		new VerificationResult(Outcome.UNKNOWN, I18NConstants.ERROR_IDENTITY_VERIFICATION_EXPIRED);
+
 	private final Outcome _outcome;
 
 	private final ResKey _message;
@@ -70,6 +73,15 @@ public final class VerificationResult {
 	 */
 	public static VerificationResult unknown() {
 		return UNKNOWN;
+	}
+
+	/**
+	 * The verification under the token has expired before the identity arrived; it is no longer
+	 * offered, and its handler has been {@link IdentityVerificationHandler#expired(com.top_logic.knowledge.wrap.person.Person)
+	 * told so}.
+	 */
+	public static VerificationResult expired() {
+		return EXPIRED;
 	}
 
 	/**

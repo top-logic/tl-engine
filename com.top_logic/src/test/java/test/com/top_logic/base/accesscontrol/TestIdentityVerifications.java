@@ -10,7 +10,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -25,6 +27,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.base.accesscontrol.I18NConstants;
+import com.top_logic.base.accesscontrol.IdentityVerificationHandler;
 import com.top_logic.base.accesscontrol.IdentityVerifications;
 import com.top_logic.base.accesscontrol.IdentityVerifications.Outcome;
 import com.top_logic.base.accesscontrol.VerificationResult;
@@ -250,29 +253,69 @@ public class TestIdentityVerifications extends BasicTestCase {
 	}
 
 	/**
-	 * An entry is offered for the validity of the registry and no longer.
+	 * An entry is offered for the validity of the registry and no longer; a late answer tells its
+	 * handler that it has expired.
 	 */
 	public void testExpiry() {
-		String token = _verifications.register(expectedAccount(), onVerified());
+		List<Person> expired = new ArrayList<>();
+		String token = _verifications.register(expectedAccount(), expiryRecorder(expired));
 
 		_clock.advance(VALIDITY.minusSeconds(1));
 		assertEquals("Within the validity the entry is still offered.", 1, _verifications.size());
 
 		_clock.advance(Duration.ofSeconds(1));
-		assertEquals(Outcome.UNKNOWN, complete(token, expectedAccount()));
+		VerificationResult result = _verifications.complete(token, VerifiedIdentity.ofAccount(expectedAccount()));
+		assertEquals(Outcome.UNKNOWN, result.getOutcome());
+		assertEquals(I18NConstants.ERROR_IDENTITY_VERIFICATION_EXPIRED, result.getMessage());
+		assertTrue("The handler has told the asker.", result.isDelivered());
 		assertEquals("An expired entry must not run its continuation.", 0, _verifiedCount.get());
-		assertEquals("An expired entry must not be kept.", 0, _verifications.size());
+		assertEquals("The handler learns that its entry has expired.", List.of(expectedAccount()), expired);
+		assertEquals("An expired entry must not be kept after its late answer.", 0, _verifications.size());
+
+		assertEquals("The token stays single-use.", Outcome.UNKNOWN, complete(token, expectedAccount()));
+		assertEquals("The expiry is reported once.", 1, expired.size());
 	}
 
 	/**
-	 * Registering after the validity has passed clears out what has expired.
+	 * An expired entry is held for another validity, so that a late answer is still reported, and
+	 * dropped silently afterwards.
 	 */
 	public void testExpiredEntriesAreDropped() {
-		_verifications.register(expectedAccount(), onVerified());
+		List<Person> expired = new ArrayList<>();
+		String late = _verifications.register(expectedAccount(), expiryRecorder(expired));
+		String lost = _verifications.register(expectedAccount(), expiryRecorder(expired));
 		_clock.advance(VALIDITY);
 
 		_verifications.register(expectedAccount(), onVerified());
-		assertEquals("Only the entry registered now must be held.", 1, _verifications.size());
+		assertEquals("Expired entries are held for their late answer.", 3, _verifications.size());
+
+		assertEquals(Outcome.UNKNOWN, complete(late, expectedAccount()));
+		assertEquals("The late answer is reported.", 1, expired.size());
+
+		_clock.advance(VALIDITY);
+		_verifications.register(expectedAccount(), onVerified());
+		assertEquals("Entries expired for longer than the validity are dropped.", 2, _verifications.size());
+
+		assertEquals(Outcome.UNKNOWN, complete(lost, expectedAccount()));
+		assertEquals("A dropped entry is not reported.", 1, expired.size());
+	}
+
+	/**
+	 * A handler that accepts nothing and records the accounts of the entries reported as expired.
+	 */
+	private static IdentityVerificationHandler expiryRecorder(List<Person> expired) {
+		return new IdentityVerificationHandler() {
+			@Override
+			public VerificationResult handle(Person expected, VerifiedIdentity identity) {
+				throw new AssertionError("An expired entry must not be handled.");
+			}
+
+			@Override
+			public boolean expired(Person expected) {
+				expired.add(expected);
+				return true;
+			}
+		};
 	}
 
 	/**

@@ -1,5 +1,5 @@
 ---
-description: Read before putting a <flow-diagram> into a .view.xml or adding a diagram element type - the createChart script and its inputs, the reactFlow* functions, the size of a diagram and its view (layout to the offered space, Gantt viewport, reactFlowChart fixedView), the selection channel shared with tables and forms (reactFlowSelection, selectable reactFlowGraphEdge, selection-mode for multiple selection, the ctrl+drag selection rectangle), and the drawing rule for widgets (one top-level SVG element carrying the widget's id).
+description: Read before putting a <flow-diagram> into a .view.xml or adding a diagram element type - the createChart script and its inputs, the reactFlow* functions, the size of a diagram and its view (layout to the offered space, Gantt viewport, reactFlowChart fixedView), the selection channel shared with tables and forms (reactFlowSelection, selectable reactFlowGraphEdge, selection-mode for multiple selection, the ctrl+drag selection rectangle), the context menu of a diagram through <context-menu input="..."> on the selection channel, and the drawing rule for widgets (one top-level SVG element carrying the widget's id).
 order: 75
 ---
 
@@ -75,6 +75,27 @@ A diagram element is selectable when the script makes it so: `reactFlowSelection
 Rebuilding the diagram drops its selection, so a form with unsaved input bound to the selection channel is asked about its changes before an input of the diagram is written (see [unsaved changes](doc:view-layer/forms#unsaved-changes-are-asked-before-a-channel-write-transitively)).
 
 The stylesheet of the module (`/style/tl-react-flow.css`) marks the selection by CSS classes: a selectable element carries `tlCanSelect`, a selected one `tlSelected`. Inside a selected node, an element of the class `tlSelectionStroke` gets the interactive border color as stroke, one of `tlSelectionFill` the selection background, and one of `tlSelectionMarker` is shown only while the node is selected; the visible line of a selected edge is drawn in that color. A script highlights its nodes by giving these classes to the border and fill inside `reactFlowSelection`, as the model editor does with `reactFlowBorder(cssClass: "tlSelectionStroke", content: reactFlowFill(fill: "white", cssClass: "tlSelectionFill", …))`.
+
+## Context menu
+
+A diagram has no menu of its own. Put it into a `<context-menu>` whose `input` is the diagram's `selection` channel, and its `CONTEXT_MENU` commands open on a right-click, as for a table:
+
+```xml
+<context-menu input="selection">
+  <flow-diagram selection="selection" selection-mode="multi"> ... </flow-diagram>
+  <commands>
+    <generic-command inputs="selection" placement="CONTEXT_MENU"> ... </generic-command>
+  </commands>
+</context-menu>
+```
+
+Before the menu opens, the right-click adjusts the selection the menu acts on (`FlowDiagramControl.selectForContextMenu()`):
+
+- On an element outside the selection, that element is selected alone - like a click without a modifier, so the selected objects the diagram does not display are given up as well.
+- On a selected element, the selection stays as it is, also a selection of several elements, and the menu acts on all of them.
+- On the empty area, the selection is cleared: commands that need an object are not executable, commands without one are.
+
+A modifier key does not change this: a right-click never adds to the selection. A form with unsaved input bound to the selection channel is asked about its changes before the selection changes, as for a click. The client reports the right-click before the menu region asks for the menu, both through the command channel of the page, so the menu always opens on the adjusted selection.
 
 ## Drawing rule for diagram elements
 

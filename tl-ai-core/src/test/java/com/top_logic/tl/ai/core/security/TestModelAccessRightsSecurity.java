@@ -73,6 +73,11 @@ public class TestModelAccessRightsSecurity extends TestCase {
 		}
 
 		@Override
+		public boolean hasGrant(TLClass type, TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
 		public boolean isAllowedCreate(Person person, TLClass type, TLObject context) {
 			return _grantedCreate.contains(type + "@" + context);
 		}
@@ -89,6 +94,12 @@ public class TestModelAccessRightsSecurity extends TestCase {
 
 		@Override
 		public Set<BoundedRole> getAllowedRoles(TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Set<BoundedRole> getAllowedRoles(TLClass type, TLStructuredTypePart attribute,
+				BoundCommandGroup commandGroup) {
 			throw new UnsupportedOperationException();
 		}
 

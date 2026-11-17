@@ -39,7 +39,7 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 
 // The bridge first, as the page loads it: the bridge entry reaches it through modules that the SSE client imports
 // as well, and these must see the mocked SSE client.
-import { mount, unmount } from '../bridge/tl-react-bridge';
+import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
 import { React, register } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import TLSplitPanel from './TLSplitPanel';
@@ -95,7 +95,7 @@ beforeAll(() => {
 
 afterEach(async () => {
   act(() => unmount(SPLIT_ID));
-  document.getElementById(SPLIT_ID)?.remove();
+  findMountPoint(SPLIT_ID)?.remove();
   vi.unstubAllGlobals();
   // Lets the DOM observer of the bridge see the removals while the test environment exists.
   await settle();
@@ -119,7 +119,7 @@ function mountSplit(state: Record<string, unknown> = { orientation: 'horizontal'
     return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
   }));
   const element = document.createElement('div');
-  element.id = SPLIT_ID;
+  element.setAttribute(MOUNT_ATTRIBUTE, SPLIT_ID);
   document.body.appendChild(element);
   act(() => mount(SPLIT_ID, 'TLSplitPanel', state, 'w', '/ctx'));
   panes().forEach((pane, i) => {

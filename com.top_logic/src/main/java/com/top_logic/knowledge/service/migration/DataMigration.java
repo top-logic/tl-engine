@@ -266,8 +266,25 @@ public class DataMigration {
 		log.info(border);
 	}
 
-	private void processProcessors(MigrationContext context, Log log, PooledConnection connection,
-			List<PolymorphicConfiguration<? extends MigrationProcessor>> processorConfigs) {
+	/**
+	 * Executes the given {@link MigrationProcessor}s in their order.
+	 * 
+	 * <p>
+	 * A failing processor is reported to the given {@link Log}, the following processors are
+	 * executed nevertheless.
+	 * </p>
+	 * 
+	 * @param context
+	 *        The context of the running migration.
+	 * @param log
+	 *        The {@link Log} to report to.
+	 * @param connection
+	 *        The connection to the database to migrate.
+	 * @param processorConfigs
+	 *        Configurations of the processors to execute.
+	 */
+	public static void processProcessors(MigrationContext context, Log log, PooledConnection connection,
+			List<? extends PolymorphicConfiguration<? extends MigrationProcessor>> processorConfigs) {
 		List<? extends MigrationProcessor> processors = processorConfigs.stream()
 			.map(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY::getInstance)
 			.collect(Collectors.toList());

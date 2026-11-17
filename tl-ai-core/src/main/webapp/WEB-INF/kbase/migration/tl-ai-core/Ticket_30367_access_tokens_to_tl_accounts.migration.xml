@@ -17,7 +17,7 @@
 		module="tl-ai-core"
 	/>
 	<dependencies>
-		<dependency name="Ticket_30054_delete_screenshots_without_session"
+		<dependency name="Ticket_30357_delete_cookie_pool_without_browser"
 			module="tl-ai-core"
 		/>
 		<dependency name="Ticket_29492_enlarge_layout_key"

@@ -1,9 +1,10 @@
 # Vertrag: Avatar
 
-Eine Kundenkomponente, die unter dem TopLogic-Namen `TLAvatar` registriert ist (Stufe C der Spec),
-bekommt den Zustand unten, rendert einen Kreis und trägt die genannten Attribute. TopLogic
-garantiert dann Funktion und Zugänglichkeit — nicht das Aussehen. Wer ins Bild passen will, liest
-die Tokens.
+Das Control `TLAvatar` und das Avatar vor einem Eintrag einer Liste (`list.contract.md`) zeichnen den
+Kreis über das Part `Avatar` (`AvatarPartProps`: `name`, `src`, `size`). Eine Kundenkomponente, die das
+Part ersetzt (`replacePart`), bekommt diese Werte, rendert einen Kreis und trägt die genannten
+Attribute. TopLogic garantiert dann Funktion und Zugänglichkeit — nicht das Aussehen. Wer ins Bild
+passen will, liest die Tokens.
 
 ## Zustand
 

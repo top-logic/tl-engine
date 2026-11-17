@@ -1,5 +1,5 @@
-import { React, useTLState, useImageSrc, avatarInitials, categoryOf, rootClassName, tooltipProps } from 'tl-react-bridge';
-import type { TLCellProps, AvatarStateJson } from 'tl-react-bridge';
+import { React, avatarInitials, categoryOf, tooltipProps } from 'tl-react-bridge';
+import type { AvatarPartProps, AvatarSize } from 'tl-react-bridge';
 import Avatar from '@mui/material/Avatar';
 import type { CSSObject, Theme } from '@mui/material/styles';
 import type { TypographyVariant } from '@mui/material/styles';
@@ -14,7 +14,7 @@ export const CATEGORY_ATTRIBUTE = 'data-category';
 
 /**
  * The attribute of the avatar root naming its size: `small`, `medium`, `large` or `x-large` (the
- * values of AvatarStateJson.Size), `medium` where the state names none. A theme restyles a size
+ * values of AvatarSize), `medium` where the part names none. A theme restyles a size
  * through `components.MuiAvatar.styleOverrides.root`, e.g. `{ '&[data-size="small"]': { … } }`.
  */
 export const SIZE_ATTRIBUTE = 'data-size';
@@ -22,17 +22,17 @@ export const SIZE_ATTRIBUTE = 'data-size';
 /** The number of category roles of the design system. */
 const CATEGORY_COUNT = 8;
 
-/** The size of an avatar whose state names none. */
-const DEFAULT_SIZE: AvatarStateJson.Size = 'medium';
+/** The size of an avatar whose props name none. */
+const DEFAULT_SIZE: AvatarSize = 'medium';
 
 /**
  * The diameter of each size, the design system's size token, and the typography variant of the
  * MUI theme its initials take the font size from: the variants the styling properties of the
- * label, body and heading type styles of the design system are derived from, as TLAvatar reads
- * its initials in `tl-type-label-strong`, `tl-type-body-strong`, `tl-type-heading-md` and
+ * label, body and heading type styles of the design system are derived from, as the TopLogic
+ * drawing of the part reads its initials in `tl-type-label-strong`, `tl-type-body-strong`, `tl-type-heading-md` and
  * `tl-type-heading-lg`.
  */
-const SIZES: Record<AvatarStateJson.Size, { diameter: string; type: TypographyVariant }> = {
+const SIZES: Record<AvatarSize, { diameter: string; type: TypographyVariant }> = {
   small: { diameter: 'var(--tl-size-avatar-sm)', type: 'caption' },
   medium: { diameter: 'var(--tl-size-avatar-md)', type: 'body2' },
   large: { diameter: 'var(--tl-size-avatar-lg)', type: 'h5' },
@@ -80,39 +80,32 @@ export function avatarRootStyle({ theme }: { theme: Theme }): CSSObject {
 const NO_CONTENT = <></>;
 
 /**
- * Renders the state of a TopLogic avatar (module name `TLAvatar`) with the MUI `Avatar`.
+ * Draws the part `Avatar` ({@link AvatarPartProps}) with the MUI `Avatar`: the avatar control
+ * (TLAvatar) and the leading avatar of an entry of a data list (TLDataList).
  *
- * <p>Mapping from the control state:</p>
+ * <p>Mapping from the props:</p>
  * <ul>
- * <li>picture (url, or hasData with dataRevision, read through `useImageSrc`) → `src`, with
- *     `alt` = name; where the picture fails to load, the initials of the name;</li>
+ * <li>src → `src`, with `alt` = name; where the picture fails to load, the initials of the name;</li>
  * <li>no picture, a name → the initials of the name (`avatarInitials`) as children,
  *     `role="img"` and `aria-label` = name;</li>
  * <li>no picture, no name → the empty neutral circle, `aria-hidden`;</li>
  * <li>name → the category (`categoryOf`) in {@link CATEGORY_ATTRIBUTE}, and the tooltip
- *     of the name (`tooltipProps`), as TLAvatar shows it;</li>
+ *     of the name (`tooltipProps`), as the TopLogic drawing shows it;</li>
  * <li>size (absent: `medium`) → {@link SIZE_ATTRIBUTE};</li>
- * <li>hidden → nothing is rendered; the configured CSS class → className of the `Avatar`, which
- *     carries the control ID.</li>
+ * <li>id, className and the passed-through attributes → the root of the `Avatar`.</li>
  * </ul>
  *
  * <p>The colors, diameters and font sizes are the default root style {@link avatarRootStyle}
  * of the theme, keyed by the two attributes, so that a theme's `styleOverrides` of `MuiAvatar`
  * restyle them.</p>
  */
-const MuiAvatarAdapter: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState<Partial<AvatarStateJson>>();
-  const src = useImageSrc();
-
-  if (state.hidden === true) {
-    return null;
-  }
-
-  const name = state.name || undefined;
+const MuiAvatarAdapter: React.FC<AvatarPartProps> = ({ id, name: givenName, src, size, className, ...attributes }) => {
+  const name = givenName || undefined;
   const rootProps = {
-    id: controlId,
-    className: rootClassName(state) || undefined,
-    [SIZE_ATTRIBUTE]: state.size ?? DEFAULT_SIZE,
+    id,
+    className: className || undefined,
+    [SIZE_ATTRIBUTE]: size ?? DEFAULT_SIZE,
+    ...attributes,
   };
 
   if (name === undefined) {

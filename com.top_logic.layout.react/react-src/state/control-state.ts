@@ -30,9 +30,9 @@
  *   TLCard            - CardState
  *   TLAppBar          - AppBarState
  *   TLBreadcrumb      - BreadcrumbState
- *   TLAvatar          - AvatarState
  *   TLSlider          - SliderState
  *   TLFloatingAction  - FloatingActionState
+ *   TLDataList        - DataListState
  *
  * The message of an atomic control, which draws its look through the parts of 'tl-react-bridge'
  * (see "replacePart" and the developer article view-layer/parts). A component library replaces
@@ -47,6 +47,7 @@
  *   TLOptionChips     - DropdownSelectState
  *   TLProgress        - ProgressState
  *   TLLink            - LinkState
+ *   TLAvatar          - AvatarState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
  * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
@@ -2204,4 +2205,198 @@ export interface SliderStateJson extends FieldStateJson {
 	 * inherits no value, and an empty field puts its handle at the lower bound.
 	 */
 	fallbackValue: number;
+}
+
+/**
+ * State of a selectable, groupable, searchable list of objects in the style of a contact or
+ * message list, the component `TLDataList` (design system: tl-list).
+ *
+ * A click on a row sends the command `select` with the {@link DataListStateJson.Row.id} of the row as argument
+ * `id`; an empty `id` clears the selection. The trigger of the row commands sends the
+ * command `rowMenu` with the {@link DataListStateJson.Row.id} as argument `id` and the client
+ * coordinates of the click as arguments `x` and `y`; the server opens the menu.
+ * Searching, collapsing and the drawer stay on the client.
+ */
+export interface DataListStateJson extends ControlStateJson {
+	/**
+	 * The rows in display order.
+	 */
+	rows: DataListStateJson.Row[];
+
+	/**
+	 * The {@link DataListStateJson.Row.id} of the selected row. Empty: none.
+	 */
+	selectedId: string;
+
+	/**
+	 * The title in the header of the list, plain text. Empty: no title.
+	 */
+	title: string;
+
+	/**
+	 * The text of an empty list, plain text. Empty: a general text of the component.
+	 */
+	emptyText: string;
+
+	/**
+	 * Whether the list shows a search field filtering the rows by the text of their lines.
+	 */
+	search: boolean;
+
+	/**
+	 * Whether the header carries the toggle collapsing the list to a narrow strip.
+	 */
+	collapsible: boolean;
+
+	/**
+	 * Whether the list starts collapsed; needs {@link DataListStateJson.collapsible}.
+	 */
+	collapsed: boolean;
+
+	/**
+	 * The width of the element containing the list, in rem, below which a {@link DataListStateJson.collapsible} list
+	 * keeps only its strip and its toggle opens the list as a drawer over its neighbours. Zero: the
+	 * list never becomes a drawer.
+	 */
+	drawerBelow: number;
+
+	/**
+	 * The command buttons of the list, in display order. Absent: none.
+	 */
+	buttons: ChildControlJson[];
+
+	/**
+	 * Whether there are commands per row that the trigger of a row opens.
+	 */
+	hasRowMenu: boolean;
+
+	/**
+	 * When the trigger of the row commands is shown. Absent means `'hover'`.
+	 */
+	rowActions: DataListStateJson.RowActions;
+}
+
+export namespace DataListStateJson {
+	/**
+	 * How prominently a {@link DataListStateJson.Line} is shown.
+	 */
+	export type Emphasis =
+		/**
+		 * The prominent line.
+		 */
+		| 'primary'
+		/**
+		 * A muted secondary line.
+		 */
+		| 'secondary';
+
+	/**
+	 * When the trigger of the row commands is shown.
+	 */
+	export type RowActions =
+		/**
+		 * Revealed when the pointer is over the row or something in it has the keyboard focus.
+		 */
+		| 'hover'
+		/**
+		 * Always visible.
+		 */
+		| 'always'
+		/**
+		 * Never rendered.
+		 */
+		| 'none';
+
+	/**
+	 * A line of text of a {@link DataListStateJson.Row}.
+	 */
+	export interface Line {
+		/**
+		 * The text of the line, plain text. A line after the first one whose text is empty is not
+		 * drawn.
+		 */
+		text: string;
+
+		/**
+		 * How prominently the line is shown. Absent: the first line of a row is
+		 * `'primary'`, every further line `'secondary'`.
+		 */
+		emphasis: DataListStateJson.Emphasis;
+	}
+
+	/**
+	 * What stands in front of the lines of a {@link DataListStateJson.Row}: an icon, or an avatar showing a picture or
+	 * the initials of a name.
+	 */
+	export interface Leading {
+		/**
+		 * The display name the avatar stands for, plain text: the source of its initials, its category
+		 * and its accessible name. Empty: none.
+		 */
+		name: string;
+
+		/**
+		 * An icon drawn instead of an avatar, the encoded form of an icon-font image. Empty: no icon.
+		 */
+		icon: string;
+
+		/**
+		 * The picture of the avatar, the address of an image (a path or a `data` URI). Empty: the
+		 * avatar shows the initials of the {@link DataListStateJson.Leading.name}.
+		 */
+		image: string;
+	}
+
+	/**
+	 * What stands after the lines of a {@link DataListStateJson.Row}: metadata text, or a badge.
+	 */
+	export interface Trailing {
+		/**
+		 * The text, plain text.
+		 */
+		text: string;
+
+		/**
+		 * Whether the {@link DataListStateJson.Trailing.text} is drawn as a badge (a count or a short status) instead of
+		 * metadata text.
+		 */
+		badge: boolean;
+	}
+
+	/**
+	 * An entry of the list.
+	 */
+	export interface Row {
+		/**
+		 * The ID of the row, by which the client names it to the server.
+		 */
+		id: string;
+
+		/**
+		 * The lines of the row, top to bottom.
+		 */
+		lines: DataListStateJson.Line[];
+
+		/**
+		 * The heading of the group the row belongs to. Groups stand in the order of their first row.
+		 * Absent: the row belongs to the group without heading.
+		 */
+		group: string;
+
+		/**
+		 * What stands in front of the lines. Absent: nothing.
+		 */
+		leading?: DataListStateJson.Leading;
+
+		/**
+		 * What stands after the lines. Absent: nothing.
+		 */
+		trailing?: DataListStateJson.Trailing;
+
+		/**
+		 * Additional CSS classes of the row element, separated by spaces, computed by the
+		 * application. Absent: none.
+		 */
+		cssClass: string;
+	}
 }

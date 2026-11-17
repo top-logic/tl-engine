@@ -20,6 +20,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Supplies;
@@ -146,7 +147,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * selected, filtered, activated and dragged - whatever computes the rows.
 	 */
 	@TypeIcon("css:bi bi-table")
-	public interface Config extends UIElement.Config, Inputs, ActionScopeDefinition, RowAsConfig {
+	public interface Config extends UIElement.Config, Inputs, ActionScopeDefinition, RowAsConfig, LockHandlerOptions {
 
 	/** Access to the default methods of this interface for the configuration proxy. */
 	Lookup LOOKUP = MethodHandles.lookup();
@@ -302,6 +303,13 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 * settings - a checkbox per row and column - whose every click is a change of its own. A
 		 * column over an attribute is not edited in place: an object is edited in a form, where
 		 * the edits are saved together.
+		 * </p>
+		 *
+		 * <p>
+		 * While a value is written, the object of its row is locked through the
+		 * {@link #getLockHandler() lock handler}. When someone else holds the lock, e.g. a form
+		 * editing the object, nothing is written, the cell shows the stored value again, and the
+		 * user is told who holds the lock.
 		 * </p>
 		 */
 		@Name(EDIT_IN_PLACE)
@@ -947,6 +955,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		_config = config;
 		_log = context;
 
+		// Each displayed table edited in place creates its own handler.
+		LockHandlerOptions.checkLockHandler(context, config);
+
 		_declarations = ColumnDeclarations.instantiate(context, config.getColumns());
 		_declaredNames = ColumnDeclarations.declaredNames(_declarations);
 
@@ -1272,9 +1283,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		// The activation button and the cells edited in place reach the table control through
 		// this holder, since the control is built from the view over these very columns.
 		ControlActivation activate = new ControlActivation();
+		// One handler for the control: it holds a lock only while a cell value is written.
+		LockHandler lockHandler = _config.getEditInPlace() ? LockHandlerOptions.createLockHandler(_config) : null;
 		List<Column<Object, ?>> columns = new ArrayList<>(setups.size());
 		for (ColumnSetup setup : setups) {
-			columns.add(_config.getEditInPlace() ? setup.buildInPlaceColumn(activate::rowWritten) : setup.buildColumn());
+			columns.add(lockHandler != null ? setup.buildInPlaceColumn(activate::rowWritten, lockHandler)
+				: setup.buildColumn());
 		}
 		columns.addAll(this.<Object> rowCommandColumns(activation, activate));
 		S source = sourceFactory.apply(columns);

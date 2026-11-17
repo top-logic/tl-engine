@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing the tab "External logins" to the settings dialog of tl-layout-view
+	(WEB-INF/views/settings-tabs.view.xml): the logins at external identity providers connected with
+	the account, and the providers a further login can be connected from. A same-path overlay, merged
+	onto the base in dependency order, so tl-layout-view needs no knowledge of this module.
+	
+	The tab is offered only while the application has a client that can identify the user of a
+	running session (oidcClients()); without one there is nothing to connect.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<tab-bar config:ref="settings-tabs">
+		<tabs>
+			<tab id="external-logins"
+				config:operation="add"
+				config:position="end"
+				icon="css:bi bi-box-arrow-in-right"
+			>
+				<label>
+					<en>External logins</en>
+					<de>Externe Anmeldungen</de>
+				</label>
+				<visibility expr="!oidcClients().isEmpty()"/>
+				<view-ref view="tl-security-auth-pac4j/external-logins.view.xml"/>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

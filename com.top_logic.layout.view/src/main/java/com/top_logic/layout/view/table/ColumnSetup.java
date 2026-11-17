@@ -16,6 +16,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.LabelProvider;
@@ -394,17 +395,20 @@ public record ColumnSetup(
 	 * @param written
 	 *        Called with the row after a value of its cell was written, e.g. to build the cells
 	 *        whose values may follow the written one again.
+	 * @param lockHandler
+	 *        Locks the object of a row while a value of its cell is written, see
+	 *        {@link ValueCellEditing#createInPlaceModel(ReactContext, Object, LockHandler, Runnable)}.
 	 */
-	public Column<Object, ?> buildInPlaceColumn(Consumer<Object> written) {
+	public Column<Object, ?> buildInPlaceColumn(Consumer<Object> written, LockHandler lockHandler) {
 		Column<Object, ?> column = buildColumn();
 		if (!(editing instanceof ValueCellEditing valueEditing)) {
 			return column;
 		}
-		return inPlace(column, valueEditing, written);
+		return inPlace(column, valueEditing, written, lockHandler);
 	}
 
 	private <V> Column<Object, V> inPlace(Column<Object, V> column, ValueCellEditing editing,
-			Consumer<Object> written) {
+			Consumer<Object> written, LockHandler lockHandler) {
 		return new DelegatingColumn<>(column) {
 			@Override
 			public CellContent renderCell(Object row) {
@@ -412,7 +416,7 @@ public record ColumnSetup(
 				CellControlFactory factory;
 				if (editing.canEdit(row)) {
 					factory = context -> createEditControl(context, row,
-						editing.createInPlaceModel(row, () -> written.accept(row)));
+						editing.createInPlaceModel(context, row, lockHandler, () -> written.accept(row)));
 				} else if (editing.value(row) != null) {
 					// A value the row does not offer to edit is shown by the same control, disabled.
 					factory = context -> editing.createControl(context, row, editing.createReadOnlyModel(row));

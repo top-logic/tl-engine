@@ -362,7 +362,6 @@ public class TestCreateStatementBuilder extends BasicTestCase {
 	 */
 	public static Test suite() {
 		Test t = DatabaseTestSetup.getDBTest(TestCreateStatementBuilder.class,
-			//			test.com.top_logic.basic.DatabaseTestSetup.DBType.ORACLE_DB,
 			new TestFactory() {
 			
 			@Override

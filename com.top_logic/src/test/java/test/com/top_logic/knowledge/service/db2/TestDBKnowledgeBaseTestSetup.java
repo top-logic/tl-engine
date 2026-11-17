@@ -47,10 +47,6 @@ public class TestDBKnowledgeBaseTestSetup extends AbstractDBKnowledgeBaseTest {
 	public static Test suite() {
 		if (DatabaseTestSetup.useOnlyDefaultDB()) {
 			switch (DatabaseTestSetup.DEFAULT_DB) {
-				case ORACLE_DB:
-					return suite(TestDBKnowledgeBaseTestSetup.class, DBType.ORACLE_DB);
-				case ORACLE12_DB:
-					return suite(TestDBKnowledgeBaseTestSetup.class, DBType.ORACLE12_DB);
 				case ORACLE19_DB:
 					return suite(TestDBKnowledgeBaseTestSetup.class, DBType.ORACLE19_DB);
 				default:
@@ -59,8 +55,6 @@ public class TestDBKnowledgeBaseTestSetup extends AbstractDBKnowledgeBaseTest {
 		}
 
 		TestSuite test = new TestSuite();
-		test.addTest(suite(TestDBKnowledgeBaseTestSetup.class, DBType.ORACLE_DB));
-		test.addTest(suite(TestDBKnowledgeBaseTestSetup.class, DBType.ORACLE12_DB));
 		test.addTest(suite(TestDBKnowledgeBaseTestSetup.class, DBType.ORACLE19_DB));
 		return test;
 	}

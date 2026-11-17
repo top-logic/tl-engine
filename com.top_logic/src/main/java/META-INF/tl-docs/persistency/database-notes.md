@@ -15,9 +15,9 @@ slow query can be recognized as a property of the generated SQL on that DBMS.
 | DBMS | Dialect | Configuration file |
 |---|---|---|
 | H2 | `H2Helper` | `db-h2.config.xml`; places the branch column last by default (see below) |
-| MySQL / MariaDB | `MySQLHelper`, `MySQL55Helper` | `db-mysql.config.xml`, `db-mysql55.config.xml` |
+| MySQL / MariaDB | `MySQLHelper` | `db-mysql.config.xml` |
 | PostgreSQL | `PostgreSQLHelper` | `db-postgresql.config.xml` |
-| Oracle | `Oracle10Helper`, `Oracle12Helper`, `Oracle12toLowerHelper` | `db-oracle.config.xml`, `db-oracle-10.config.xml` |
+| Oracle | `Oracle12Helper` (Oracle 12 and later) | `db-oracle.config.xml` |
 | MS SQL Server | `MSSQLHelper`, `MSSQLHelper90` | `db-mssql.config.xml` |
 | DB2 | `DB2Helper` | `db-db2.config.xml` |
 | MS Access | `MSAccessHelper` | – |
@@ -27,7 +27,7 @@ pool of the `ConnectionPoolRegistry`; a deployment selects one through its `meta
 without a `<sql-dialect>` (as in `db-postgresql.config.xml`) gets its dialect from the JDBC driver
 name and database version (`DBHelper.inspectDialect`). With `adjust-from-connection` (default
 `true`) a configured dialect adjusts its settings from the connection; `MySQLHelper` also picks its
-variant from the server version and `sql_mode` there.
+variant from the `sql_mode` there.
 
 ## H2: an IN list seeks an index only on its first column
 

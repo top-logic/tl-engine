@@ -63,6 +63,11 @@ final class UncheckedAccessRights implements ModelAccessRights {
 	}
 
 	@Override
+	public boolean hasGrant(TLClass type, TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
+		return false;
+	}
+
+	@Override
 	public boolean isAllowedCreate(Person person, TLObject parent, TLStructuredTypePart compositionAttribute,
 			TLClass type) {
 		return true;
@@ -101,6 +106,15 @@ final class UncheckedAccessRights implements ModelAccessRights {
 	 */
 	@Override
 	public Set<BoundedRole> getAllowedRoles(TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
+		return Collections.emptySet();
+	}
+
+	/**
+	 * @implNote See {@link #getAllowedRoles(TLClass, BoundCommandGroup)}.
+	 */
+	@Override
+	public Set<BoundedRole> getAllowedRoles(TLClass type, TLStructuredTypePart attribute,
+			BoundCommandGroup commandGroup) {
 		return Collections.emptySet();
 	}
 

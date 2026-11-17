@@ -100,19 +100,6 @@ public class AnnotatedToolObjectParamTest extends BasicTestCase {
 	}
 
 	/**
-	 * The whole {@code label [id:TID]} entry a text result writes is accepted too, because that is
-	 * what the model has in front of it.
-	 */
-	public void testLabelWithIdentifierIsAccepted() throws Exception {
-		TLObject room = createRoom("Elbblick");
-
-		ToolResult result = tool().execute(
-			Map.of("room", "Elbblick [id:" + tid(room) + "]"), unchecked());
-
-		assertEquals("Elbblick", result.text());
-	}
-
-	/**
 	 * An object the principal may not read is refused, spelled exactly like one that does not exist -
 	 * and refused before the method runs, so the turn's writes are not rolled back.
 	 */

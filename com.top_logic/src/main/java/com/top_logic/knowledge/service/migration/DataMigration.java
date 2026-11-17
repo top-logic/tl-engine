@@ -266,8 +266,25 @@ public class DataMigration {
 		log.info(border);
 	}
 
-	private void processProcessors(MigrationContext context, Log log, PooledConnection connection,
-			List<PolymorphicConfiguration<? extends MigrationProcessor>> processorConfigs) {
+	/**
+	 * Executes the given {@link MigrationProcessor}s in their order.
+	 * 
+	 * <p>
+	 * A failing processor is reported to the given {@link Log}, the following processors are
+	 * executed nevertheless.
+	 * </p>
+	 * 
+	 * @param context
+	 *        The context of the running migration.
+	 * @param log
+	 *        The {@link Log} to report to.
+	 * @param connection
+	 *        The connection to the database to migrate.
+	 * @param processorConfigs
+	 *        Configurations of the processors to execute.
+	 */
+	public static void processProcessors(MigrationContext context, Log log, PooledConnection connection,
+			List<? extends PolymorphicConfiguration<? extends MigrationProcessor>> processorConfigs) {
 		List<? extends MigrationProcessor> processors = processorConfigs.stream()
 			.map(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY::getInstance)
 			.collect(Collectors.toList());
@@ -449,7 +466,8 @@ public class DataMigration {
 	 *
 	 * <p>
 	 * All tables of the schema are dropped and created again before the script is executed, except
-	 * the given ones, which keep their content.
+	 * the given ones, which keep their content. The re-created tables and each statement of the
+	 * script are committed.
 	 * </p>
 	 *
 	 * @param in
@@ -469,6 +487,10 @@ public class DataMigration {
 		DBSchema schema = schemaSetup.buildSchema(newRepository);
 		schema.getTables().removeIf(table -> keepTables.contains(table.getName()));
 		DBSchemaUtils.recreateTables(connection, schema);
+
+		// The script is loaded with a commit after each statement, the empty schema is committed
+		// before.
+		connection.commit();
 
 		new SQLLoader(connection)
 			.setAutoCommit(true)

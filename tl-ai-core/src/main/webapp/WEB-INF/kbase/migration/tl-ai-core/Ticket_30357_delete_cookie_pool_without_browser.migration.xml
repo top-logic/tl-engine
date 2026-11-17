@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	tl-ai-core has handed the table type CookiePool and its model module tl.ai.cookiepool over to
+	the optional module tl-ai-browser (Ticket #30253). They are kept only in an application with
+	tl-ai-browser, whose schema declares CookiePool. In an application without tl-ai-browser, table,
+	class and module are deleted in one step, so that the table is not kept alive as a recovered
+	in-app schema and the incremental model upgrade finds no class without a table.
+
+	Only tl-ai-core can do this: its migrations reach the databases of applications without
+	tl-ai-browser.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30357_delete_cookie_pool_without_browser"
+		module="tl-ai-core"
+	/>
+	<dependencies>
+		<dependency name="Ticket_30054_delete_screenshots_without_session"
+			module="tl-ai-core"
+		/>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30183_account_lock"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_29741_hide_anonymous_in_options"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_30183_account_lock"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_29410_filename_binary"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_28604_changelog"
+			module="tl-doc"
+		/>
+		<dependency name="Ticket_29037_Update_diagram_attribute"
+			module="tl-bpe"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+	</dependencies>
+	<processors>
+		<if-tables-undeclared>
+			<tables>
+				<table object_name="CookiePool"/>
+			</tables>
+			<processors>
+				<!--
+					Deletes the cookie pools with their flex attributes (among them the encrypted
+					login state) and their links. This needs the table, so it runs before the table
+					is dropped.
+				-->
+				<delete-class name="tl.ai.cookiepool:CookiePool"
+					type-table="CookiePool"
+				/>
+				<delete-table>
+					<table object_name="CookiePool"/>
+				</delete-table>
+
+				<!--
+					Fails rather than deleting silently: anything left in the module at this point is
+					a type this migration failed to remove.
+				-->
+				<delete-module name="tl.ai.cookiepool"
+					fail-on-existing-types="true"
+				/>
+			</processors>
+		</if-tables-undeclared>
+	</processors>
+</migration>

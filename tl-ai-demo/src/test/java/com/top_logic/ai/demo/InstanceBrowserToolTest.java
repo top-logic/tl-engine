@@ -36,6 +36,7 @@ import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.model.InstanceBrowserTool;
 import com.top_logic.tl.ai.core.tools.script.QueryTool;
 import com.top_logic.util.TLContextManager;
@@ -165,7 +166,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			String result = tool.getInstance(List.of(tid), ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
-			assertTrue("Result should contain tid", result.contains("\"tid\""));
+			assertTrue("Result should contain tid", result.contains("\"" + ReadFilter.TID + "\""));
 			assertTrue("Result should contain type info", result.contains("\"type\""));
 			assertTrue("Result should contain attributes", result.contains("\"attributes\""));
 			assertTrue("Result should contain metadata", result.contains("\"metadata\""));
@@ -227,10 +228,11 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 				null, null, ToolContext.EMPTY);
 
 			String tid = objects.getEvent(0).tId().asString();
-			assertTrue(result, result.contains("\"id\":\"" + tid + "\""));
-			assertTrue(result, result.contains("\"type\":\"" + EVENTS_MODULE + ":" + EVENT_CLASS + "\""));
+			assertTrue(result, result.contains("\"" + ReadFilter.TID + "\":\"" + tid + "\""));
+			assertTrue(result,
+				result.contains("\"" + ReadFilter.TYPE + "\":\"" + EVENTS_MODULE + ":" + EVENT_CLASS + "\""));
 			assertTrue(result, result.contains("Herbstkonferenz"));
-			assertTrue(result, result.contains("\"maxParticipants\":\"100\""));
+			assertTrue(result, result.contains("\"maxParticipants\":100"));
 			assertFalse("An attribute the type does not have is left out: " + result,
 				result.contains("noSuchAttribute"));
 			assertFalse("An attribute nobody asked for is left out: " + result, result.contains("ticketPrice"));
@@ -246,8 +248,8 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 
 			String result = tool.getInstance(List.of(first, second, "Event:99999"), ToolContext.EMPTY);
 
-			assertTrue(result, result.contains("\"tid\":\"" + first + "\""));
-			assertTrue(result, result.contains("\"tid\":\"" + second + "\""));
+			assertTrue(result, result.contains("\"" + ReadFilter.TID + "\":\"" + first + "\""));
+			assertTrue(result, result.contains("\"" + ReadFilter.TID + "\":\"" + second + "\""));
 			// One id that names nothing does not hide the ones that do.
 			assertTrue(result, result.contains("\"errors\":[\"Event:99999: "));
 		});
@@ -287,8 +289,9 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 				"all(`demo.events:Event`).sort((e -> $e.get(`demo.events:Event#maxParticipants`)).comparator().desc()).firstElement()",
 				ToolContext.EMPTY);
 
-			assertTrue(result, result.contains("Herbstkonferenz [type:demo.events:Event] [id:"
-				+ objects.getEvent(0).tId().asString() + "]"));
+			assertTrue(result, result.contains("{\"" + ReadFilter.TID + "\":\"" + objects.getEvent(0).tId().asString()
+				+ "\",\"" + ReadFilter.TYPE + "\":\"demo.events:Event\",\"" + ReadFilter.DISPLAY
+				+ "\":\"Herbstkonferenz\"}"));
 		});
 	}
 
@@ -314,7 +317,9 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			}
 			String result = new QueryTool().query(sixty.append(")").toString(), ToolContext.EMPTY);
 
-			assertTrue(result, result.contains("... and 10 more (60 in all)"));
+			assertTrue(result, result.contains("\"" + ReadFilter.TOTAL + "\":60"));
+			assertTrue(result, result.contains("[1,2,3,"));
+			assertTrue(result, result.contains("The list is cut at 50 of 60 entries."));
 		});
 	}
 

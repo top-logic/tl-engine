@@ -218,7 +218,7 @@ public class JsonSchemaSerializer implements Schema.Visitor<Void, JsonWriter, IO
 			out.name("enum");
 			out.beginArray();
 			for (String literal : self.getEnumLiterals()) {
-				out.value(literal);
+				out.jsonValue(literal);
 			}
 			out.endArray();
 		}
@@ -231,7 +231,7 @@ public class JsonSchemaSerializer implements Schema.Visitor<Void, JsonWriter, IO
 	public Void visit(ConstSchema self, JsonWriter out) throws IOException {
 		out.beginObject();
 		writeBaseFields(self, out);
-		writeNonEmptyString(out, "const", self.getConstValue());
+		writeJsonValue(out, "const", self.getConstValue());
 		out.endObject();
 		return null;
 	}
@@ -329,7 +329,7 @@ public class JsonSchemaSerializer implements Schema.Visitor<Void, JsonWriter, IO
 		// Metadata annotations
 		writeNonEmptyString(out, "title", schema.getTitle());
 		writeNonEmptyString(out, "description", schema.getDescription());
-		writeNonEmptyString(out, "default", schema.getDefaultValue());
+		writeJsonValue(out, "default", schema.getDefaultValue());
 
 		if (schema.isDeprecated()) {
 			out.name("deprecated");
@@ -344,7 +344,7 @@ public class JsonSchemaSerializer implements Schema.Visitor<Void, JsonWriter, IO
 			out.value(true);
 		}
 
-		writeStringArray(out, "examples", schema.getExamples());
+		writeJsonValueArray(out, "examples", schema.getExamples());
 	}
 
 	/**
@@ -354,6 +354,31 @@ public class JsonSchemaSerializer implements Schema.Visitor<Void, JsonWriter, IO
 		if (value != null && !value.isEmpty()) {
 			out.name(fieldName);
 			out.value(value);
+		}
+	}
+
+	/**
+	 * Writes a field with a JSON-serialized value only if value is non-null and non-empty.
+	 */
+	private void writeJsonValue(JsonWriter out, String fieldName, String jsonValue) throws IOException {
+		if (jsonValue != null && !jsonValue.isEmpty()) {
+			out.name(fieldName);
+			out.jsonValue(jsonValue);
+		}
+	}
+
+	/**
+	 * Writes an array of JSON-serialized values only if list is non-empty.
+	 */
+	private void writeJsonValueArray(JsonWriter out, String fieldName, java.util.List<String> jsonValues)
+			throws IOException {
+		if (jsonValues != null && !jsonValues.isEmpty()) {
+			out.name(fieldName);
+			out.beginArray();
+			for (String jsonValue : jsonValues) {
+				out.jsonValue(jsonValue);
+			}
+			out.endArray();
 		}
 	}
 

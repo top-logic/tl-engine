@@ -154,6 +154,12 @@ public class DynamicColumns implements ColumnDeclaration {
 		/** Configuration name for {@link #getCellRole()}. */
 		String CELL_ROLE = AbstractColumnDeclaration.Config.CELL_ROLE;
 
+		/** Configuration name for {@link #getHeaderRole()}. */
+		String HEADER_ROLE = AbstractColumnDeclaration.Config.HEADER_ROLE;
+
+		/** Configuration name for {@link #getHeaderClass()}. */
+		String HEADER_CLASS = AbstractColumnDeclaration.Config.HEADER_CLASS;
+
 		/** Configuration name for {@link #getDisplay()}. */
 		String DISPLAY = AbstractColumnDeclaration.Config.DISPLAY;
 
@@ -298,6 +304,13 @@ public class DynamicColumns implements ColumnDeclaration {
 		 * The expression sees the variables of the {@link #getColumnType() column type}. The result
 		 * is an internationalized text, a string, or any object shown by its display label. Unset,
 		 * the object itself labels its column.
+		 * </p>
+		 *
+		 * <p>
+		 * Like every label, the header label is computed without the access rights of the current
+		 * user, so that a user sees the label of a column object the user may only discover. The
+		 * {@link #getColumns() columns} themselves, the cell values and the {@link #getTooltip()
+		 * tooltips} are computed with the access rights of the current user.
 		 * </p>
 		 */
 		@Name(COLUMN_LABEL)
@@ -531,7 +544,8 @@ public class DynamicColumns implements ColumnDeclaration {
 		 * {@link AbstractColumnDeclaration.Config#getCellRole() cell role} does: a role name such as
 		 * <code>error</code>, <code>warning</code>, <code>success</code>, <code>info</code>,
 		 * <code>neutral</code>, <code>brand</code> or <code>category-1</code> to
-		 * <code>category-8</code>, nothing for no role; a text naming no role is an error, and
+		 * <code>category-8</code> or a classifier with a <code>&lt;color role="..."/&gt;</code>
+		 * annotation, nothing for no role; a text naming no role is an error, and
 		 * <code>neutral</code> names the role without a tint. A cell the user may not read and the
 		 * header row of a group get no role.
 		 * </p>
@@ -542,6 +556,47 @@ public class DynamicColumns implements ColumnDeclaration {
 		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getCellRole();
+
+		/**
+		 * The color role of the heading of every column: an expression computing the role the
+		 * heading is tinted in from the object the column stands for.
+		 *
+		 * <p>
+		 * The expression sees the variables of the {@link #getColumnType() column type} - the
+		 * object the column stands for and the values of the {@link #getInputs() inputs}. Its
+		 * result names the role as the one of a single column's
+		 * {@link AbstractColumnDeclaration.Config#getHeaderRole() header role} does: a role name, a
+		 * classifier with a <code>&lt;color role="..."/&gt;</code> annotation, nothing for no role;
+		 * a text naming no role is an error. So each column's heading can be drawn in the role of
+		 * the object it stands for, e.g. <code>$column.get(`my:Phase#status`)</code>.
+		 * </p>
+		 *
+		 * <p>
+		 * The role is put on the heading only, the data cells do not carry it. It follows the
+		 * inputs without the table being built again. Unset, the headings have no role.
+		 * </p>
+		 */
+		@Name(HEADER_ROLE)
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getHeaderRole();
+
+		/**
+		 * The CSS class of the heading of every column: an expression computing the class from the
+		 * object the column stands for.
+		 *
+		 * <p>
+		 * The expression sees the variables of the {@link #getHeaderRole() header role}. Its result
+		 * is put on the heading as the one of a single column's
+		 * {@link AbstractColumnDeclaration.Config#getHeaderClass() header class}: nothing or an empty
+		 * string gives the heading no class, a list all of its members, any other value its text.
+		 * The data cells do not carry it. Unset, the headings have no class of their own.
+		 * </p>
+		 */
+		@Name(HEADER_CLASS)
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getHeaderClass();
 
 		/**
 		 * How a cell of every column displays its value, in place of the display the type of the
@@ -812,7 +867,7 @@ public class DynamicColumns implements ColumnDeclaration {
 			result.add(new ColumnSetup(_name + NAME_SEPARATOR + set.name(column), set.label(column), type, value,
 				scope.context(), _binding, set.width(column), editing, set.aggregate(column),
 				set.comparator(column), !set.visible(column), _export, set.tooltip(column), set.cellClass(column),
-				set.cellRole(column), _display, _sortable, null, set.exists(column), null));
+				set.cellRole(column), _display, _sortable, null, set.exists(column), null, set.header(column)));
 		}
 		return result;
 	}
@@ -846,6 +901,10 @@ public class DynamicColumns implements ColumnDeclaration {
 
 		private final QueryExecutor _cellRole;
 
+		private final QueryExecutor _headerRole;
+
+		private final QueryExecutor _headerClass;
+
 		private final ColumnFunctions _functions;
 
 		private final TLModelPartRef _typeRef;
@@ -861,6 +920,11 @@ public class DynamicColumns implements ColumnDeclaration {
 			_columns = InputScript.compile(config, Config.COLUMNS);
 			_columnName = InputScript.compile(config, Config.COLUMN_NAME);
 			_columnLabel = InputScript.compile(config, Config.COLUMN_LABEL);
+			if (_columnLabel != null) {
+				// Labels belong to Discover (R1/R12 of the Discover specification) and are computed
+				// unsecured. The columns, their values and tooltips stay secured.
+				_columnLabel.disableSecurity();
+			}
 			_columnType = InputScript.compile(config, Config.COLUMN_TYPE);
 			_width = InputScript.compile(config, Config.WIDTH);
 			_columnVisible = InputScript.compile(config, Config.COLUMN_VISIBLE);
@@ -870,6 +934,8 @@ public class DynamicColumns implements ColumnDeclaration {
 			_tooltip = InputScript.compile(config, Config.TOOLTIP);
 			_cellClass = InputScript.compile(config, Config.CELL_CLASS);
 			_cellRole = InputScript.compile(config, Config.CELL_ROLE);
+			_headerRole = InputScript.compile(config, Config.HEADER_ROLE);
+			_headerClass = InputScript.compile(config, Config.HEADER_CLASS);
 			_functions = ColumnFunctions.compile(config, Config.VALUE, Config.UPDATE, Config.CAN_UPDATE,
 				Config.OPTIONS);
 			_typeRef = config.getType();
@@ -1039,6 +1105,11 @@ public class DynamicColumns implements ColumnDeclaration {
 				QueryExecutor cellRole = _cellRole;
 				return (row, value) -> AbstractColumnDeclaration
 					.valueColor(cellRole.execute(_cells.inputs(row, column, value)));
+			}
+
+			@Override
+			public ColumnHeader header(Object column) {
+				return ColumnHeader.of(_headerRole, _headerClass, _cells.channels(), column);
 			}
 
 		}

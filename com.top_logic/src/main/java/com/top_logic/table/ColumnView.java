@@ -6,6 +6,7 @@
 package com.top_logic.table;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.annotate.ui.ValueColor;
 
 /**
  * The UI-facing descriptor of one visible column: its current display metadata and
@@ -32,6 +33,15 @@ import com.top_logic.basic.util.ResKey;
  * @param cssClass
  *        The {@link Column#cssClass() CSS class} every cell of this column carries, or
  *        {@code null} for none.
+ * @param aggregates
+ *        Whether this column {@link Column#aggregate() aggregates} the rows of a group, so that
+ *        the header row of a group shows that aggregate in it.
+ * @param headerClass
+ *        The {@link Column#headerClass() CSS class} of the heading of this column only, or
+ *        {@code null} for none.
+ * @param headerRole
+ *        The {@link Column#headerRole() color role} of the heading of this column, or {@code null}
+ *        for none.
  * @param sortDirection
  *        The current sort direction, or {@code null} if this column is not part of the
  *        sort order.
@@ -49,6 +59,9 @@ public record ColumnView(
 		boolean pinnedEnd,
 		ColumnAlignment alignment,
 		String cssClass,
+		boolean aggregates,
+		String headerClass,
+		ValueColor headerRole,
 		SortDirection sortDirection,
 		int sortPriority) {
 	// Pure value type.

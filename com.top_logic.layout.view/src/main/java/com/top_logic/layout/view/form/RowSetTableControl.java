@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -59,6 +60,7 @@ import com.top_logic.layout.view.table.CellEditing;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnExistence;
+import com.top_logic.layout.view.table.ColumnHeader;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.model.TLClass;
@@ -189,13 +191,13 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	private TableId _tableId;
 
-	/** @see #setNamedFilters(Function, NamedFilterStore, String) */
-	private Function<List<? extends Column<?, ?>>, List<NamedFilter>> _declaredFilters;
+	/** @see #setNamedFilters(BiFunction, NamedFilterStore, String) */
+	private BiFunction<List<? extends Column<?, ?>>, Set<String>, List<NamedFilter>> _declaredFilters;
 
-	/** @see #setNamedFilters(Function, NamedFilterStore, String) */
+	/** @see #setNamedFilters(BiFunction, NamedFilterStore, String) */
 	private NamedFilterStore _filterStore;
 
-	/** @see #setNamedFilters(Function, NamedFilterStore, String) */
+	/** @see #setNamedFilters(BiFunction, NamedFilterStore, String) */
 	private String _initialFilter;
 
 	/** @see #setFilterBar(boolean) */
@@ -270,6 +272,22 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * {@link #_tableControl} exist, {@link Registration#NONE} while there is none.
 	 */
 	private Registration _existence = Registration.NONE;
+
+	/**
+	 * Asks again which of the data columns of the current {@link #_tableControl} exist and which
+	 * declared filters are offered, see
+	 * {@link #refreshColumnsAndDeclaredFilters(ColumnExistence, DefaultTableView, List)}; does
+	 * nothing while there is no table.
+	 */
+	private Runnable _columnRefresh = () -> {
+		// No table.
+	};
+
+	/**
+	 * The observation of the channels the headings of the data columns of the current
+	 * {@link #_tableControl} read, {@link Registration#NONE} while there is none.
+	 */
+	private Registration _headers = Registration.NONE;
 
 	private final Set<Object> _selectedKeys = new java.util.LinkedHashSet<>();
 
@@ -484,7 +502,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * @param declaredFilters
 	 *        Materializes the declared filters over the table's columns, called whenever the columns
 	 *        are rebuilt and whenever the rows are refreshed - the criteria a table declares can
-	 *        depend on the inputs it is refreshed for.
+	 *        depend on the inputs it is refreshed for. It is given the names of the columns the
+	 *        access rights of the user withhold now, see {@link ColumnExistence#withheldColumns()},
+	 *        on which no declared filter may filter.
 	 * @param filterStore
 	 *        Where the filters the user saves under a name are persisted, or {@code null} to offer
 	 *        only the declared ones.
@@ -492,7 +512,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 *        The {@link NamedFilter#id() identifier} of the filter the table is filtered by until a
 	 *        personalization of its own exists, or {@code null} to start out unfiltered.
 	 */
-	public void setNamedFilters(Function<List<? extends Column<?, ?>>, List<NamedFilter>> declaredFilters,
+	public void setNamedFilters(
+			BiFunction<List<? extends Column<?, ?>>, Set<String>, List<NamedFilter>> declaredFilters,
 			NamedFilterStore filterStore, String initialFilter) {
 		_declaredFilters = declaredFilters;
 		_filterStore = filterStore;
@@ -1060,17 +1081,19 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			}
 			initialState.setFrozenCount(Math.min(_fixedColumns + leadingActions, columns.size()));
 		}
+		// The columns that do not exist must not be displayed from the first state on, and no
+		// declared filter may refer to a column withheld from the user.
+		ColumnExistence existence = ColumnExistence.of(setups);
 		List<NamedFilter> declaredFilters =
-			_declaredFilters == null ? List.of() : _declaredFilters.apply(columns);
+			_declaredFilters == null ? List.of() : _declaredFilters.apply(columns, existence.withheldColumns());
 		DefaultTableView<TLObject> view = new DefaultTableView<>(columns, source, initialState, _store,
 			_tableId, _hiddenByDefault, declaredFilters, _filterStore, _initialFilter);
 		view.setRowCssClass(_rowCssClass);
 		view.setRowColor(_rowColor);
-		// The columns that do not exist must not be displayed from the first state on.
-		ColumnExistence existence = ColumnExistence.of(setups);
 		view.setAbsentColumns(existence.absentColumns());
 
 		disposeExistence();
+		disposeHeaders();
 		_arrangement.release();
 		disposeFilterBinding();
 		disposeDisplayedRowsBinding();
@@ -1079,10 +1102,17 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 		_tableControl = new TableViewControl<>(_context, view, view.hierarchy() != null);
 		TableViewControl<TLObject> shown = _tableControl;
+		_columnRefresh = () -> refreshColumnsAndDeclaredFilters(existence, view, columns);
 		_existence = existence.observe(absent -> {
 			// A notification in progress may still reach the observation of a replaced table.
 			if (_tableControl == shown) {
 				shown.setAbsentColumns(absent);
+			}
+		});
+		_headers = ColumnHeader.observe(setups, () -> {
+			// A notification in progress may still reach the observation of a replaced table.
+			if (_tableControl == shown) {
+				shown.refreshColumnHeaders();
 			}
 		});
 		_tableControl.setFilterBar(_filterBar);
@@ -1122,8 +1152,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			@Override
 			public void rowsReplaced() {
 				// The criteria a table declares can depend on the inputs it is refreshed for, so
-				// they are resolved again for their new values.
-				refreshDeclaredFilters(view, columns);
+				// they are resolved again for their new values; whether a column exists may depend
+				// on the access rights of the user, which change with the model.
+				refreshColumnsAndDeclaredFilters(existence, view, columns);
 				_cellDependencies.clear();
 				table.refreshData();
 			}
@@ -1132,7 +1163,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			public void inputsChanged() {
 				// The rows and their cells stay; what is computed from the inputs apart from the
 				// rows is computed again.
-				if (refreshDeclaredFilters(view, columns)) {
+				if (refreshColumnsAndDeclaredFilters(existence, view, columns)) {
 					// Pushes the rows again as well, for their row class and role.
 					table.refreshFilters();
 				} else if (_rowCssClass != null || _rowColor != null) {
@@ -1156,15 +1187,19 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
-	 * Resolves the criteria of the declared filters again for the current input values.
+	 * Asks again which columns exist, see {@link ColumnExistence#recheck()}, and resolves the
+	 * criteria of the declared filters again for the current input values and the columns withheld
+	 * from the user now.
 	 *
 	 * @return Whether the table declares filters, so that they were replaced on the given view.
 	 */
-	private boolean refreshDeclaredFilters(DefaultTableView<TLObject> view, List<Column<TLObject, ?>> columns) {
+	private boolean refreshColumnsAndDeclaredFilters(ColumnExistence existence, DefaultTableView<TLObject> view,
+			List<Column<TLObject, ?>> columns) {
+		existence.recheck();
 		if (_declaredFilters == null) {
 			return false;
 		}
-		view.setDeclaredFilters(_declaredFilters.apply(columns));
+		view.setDeclaredFilters(_declaredFilters.apply(columns, existence.withheldColumns()));
 		return true;
 	}
 
@@ -1205,6 +1240,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 		_arrangement.setRows(fieldModel().getCurrentList());
 		if (_tableControl != null) {
+			_columnRefresh.run();
 			_cellDependencies.clear();
 			_tableControl.refreshData();
 		}
@@ -1289,6 +1325,17 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	private void disposeExistence() {
 		_existence.dispose();
 		_existence = Registration.NONE;
+		_columnRefresh = () -> {
+			// No table.
+		};
+	}
+
+	/**
+	 * Stops following the channels the headings of the current table read.
+	 */
+	private void disposeHeaders() {
+		_headers.dispose();
+		_headers = Registration.NONE;
 	}
 
 	/**
@@ -1556,6 +1603,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	protected void onCleanup() {
 		_arrangement.release();
 		disposeExistence();
+		disposeHeaders();
 		disposeFilterBinding();
 		disposeDisplayedRowsBinding();
 		// The toolbar and the table itself are part of the state and are disposed with it; only the
@@ -1704,6 +1752,16 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		@Override
 		public ValueColor color(TLObject row) {
 			return _inner.color(row);
+		}
+
+		@Override
+		public String headerClass() {
+			return _inner.headerClass();
+		}
+
+		@Override
+		public ValueColor headerRole() {
+			return _inner.headerRole();
 		}
 
 		@Override

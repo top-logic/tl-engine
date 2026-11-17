@@ -23,6 +23,8 @@ import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.base.locking.handler.NoTokenHandling;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.ConfigurationError;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
@@ -37,6 +39,7 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
@@ -214,12 +217,16 @@ public class FormElement extends ContainerElement {
 		 * Algorithm for edit-mode token handling.
 		 *
 		 * <p>
+		 * When entering edit mode, the form locks the persistent object it displays; a transient
+		 * object (e.g. the draft of a create dialog) is not locked. Every form instance creates its
+		 * own handler, so that the locks of different forms, windows and users are independent.
 		 * Defaults to {@link DefaultLockHandler} which uses the application-wide
 		 * {@link com.top_logic.base.locking.LockService LockService}. To disable locking, configure
-		 * {@link com.top_logic.base.locking.handler.NoTokenHandling NoTokenHandling}.
+		 * {@link NoTokenHandling}.
 		 * </p>
 		 */
 		@Name(LOCK_HANDLER)
+		@ItemDefault
 		@ImplementationClassDefault(DefaultLockHandler.class)
 		@Options(fun = AllInAppImplementations.class)
 		@DisplayMinimized
@@ -349,8 +356,6 @@ public class FormElement extends ContainerElement {
 
 	private final LabelPosition _labelPosition;
 
-	private final LockHandler _lockHandler;
-
 	private final List<ViewCommand> _formCommands;
 
 	private final List<ViewCommand.Config> _formCommandConfigs;
@@ -368,7 +373,10 @@ public class FormElement extends ContainerElement {
 		_config = config;
 		_maxColumns = config.getMaxColumns();
 		_labelPosition = FormLayoutOptions.layoutPosition(context, config.getLabelPosition());
-		_lockHandler = createLockHandler(context, config);
+
+		// Reports a lock handler that cannot be instantiated when the view is loaded. Each
+		// displayed form creates its own handler, see createLockHandler().
+		context.getInstance(config.getLockHandler());
 
 		_formCommands = new ArrayList<>();
 		_formCommandConfigs = new ArrayList<>();
@@ -402,18 +410,26 @@ public class FormElement extends ContainerElement {
 		return result;
 	}
 
-	private LockHandler createLockHandler(InstantiationContext context, Config config) {
-		if (config.getInitialEditMode()) {
-			// No locking needed when the form starts in edit mode (e.g. create dialogs).
-			return NoTokenHandling.INSTANCE;
+	/**
+	 * Creates the {@link LockHandler} of a single {@link FormControl}.
+	 *
+	 * <p>
+	 * A {@link LockHandler} holds the lock it acquired, so every control needs a handler of its
+	 * own: the element is shared by all windows displaying its view.
+	 * </p>
+	 *
+	 * @throws ConfigurationError
+	 *         If the configured handler cannot be instantiated.
+	 */
+	private LockHandler createLockHandler() {
+		PolymorphicConfiguration<? extends LockHandler> handlerConfig = _config.getLockHandler();
+		DefaultInstantiationContext problems = new DefaultInstantiationContext(FormElement.class);
+		LockHandler result = problems.getInstance(handlerConfig);
+		if (problems.hasErrors() || result == null) {
+			// Falling back to no locking would let concurrent edits through.
+			throw new ConfigurationError("Invalid lock handler at " + handlerConfig.location() + ".");
 		}
-
-		LockHandler result = context.getInstance(config.getLockHandler());
-		if (result != null) {
-			return result;
-		}
-
-		return NoTokenHandling.INSTANCE;
+		return result;
 	}
 
 	@Override
@@ -432,7 +448,7 @@ public class FormElement extends ContainerElement {
 		String noModelMessage = Resources.getInstance().getString(messageKey);
 
 		// 4. Create FormControl with initial object.
-		FormControl formControl = new FormControl(context, initialObject, noModelMessage, _lockHandler);
+		FormControl formControl = new FormControl(context, initialObject, noModelMessage, createLockHandler());
 		formControl.setCssClass(_config.getCssClass());
 		formControl.setLayout(_maxColumns, _labelPosition);
 

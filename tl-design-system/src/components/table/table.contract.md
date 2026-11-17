@@ -23,8 +23,11 @@ rechnet sie aus `--tl-size-row` (`useTokenPx`).
 | `columns[].filterable` | boolean | Die Kopfzelle trägt den Trichter (`tl-table__filter`). |
 | `columns[].filterActive` | boolean | Ein Filter der Spalte wirkt: `data-tl-state~="filtered"`, der Trichter heißt `js.table.filterActive` statt `js.table.filter`. |
 | `columns[].groupable` | boolean | Nach der Spalte darf gruppiert werden. |
+| `columns[].aggregate` | `true` | Nur an einer Spalte, die in der Gruppenzeile eine Aggregation zeigt. Der Gruppenwert läuft über die Spalten vor der ersten solchen Spalte hinweg (siehe `aria-colspan`); fehlt das Merkmal, läuft er bis an die angehefteten Spalten am Ende. |
 | `columns[].pinnedEnd` | boolean | Angeheftet am rechten Ende: `data-tl-state~="pinned"`, die erste davon `"pinned-first"`. |
 | `columns[].cssClass` | string | Klasse an jeder Zelle der Spalte, Kopf eingeschlossen. |
+| `columns[].headerClass` | string | Klasse nur an der Kopfzelle (`Column#headerClass`), nicht an den Datenzellen; gehört der Anwendung. |
+| `columns[].headerRole` | string | Farbrolle des Kopfs (`Column#headerRole`): `data-tl-role` an `tl-table__header-cell`; fehlt: keine Tönung. |
 | `columns[].tooltip` | string | Was die Überschrift über ihren Text hinaus sagt. |
 | `totalRowCount` | number | Zeilen insgesamt; Grundlage von `aria-rowcount`. |
 | `rows` | Liste | Die Zeilen im sichtbaren Fenster, je Zeile: |
@@ -193,6 +196,7 @@ zeichnet `drag.css` (`drag.contract.md`), den Cursor-Ring `base.css`.
 | `aria-expanded` | an aufklappbaren Zeilen und ihrem `tl-toggle` |
 | `aria-busy` | am Raster, solange Zeilen nachgeladen werden |
 | `data-tl-state~="cursor"` | an der Cursorzeile (genau eine, die Id aus `aria-activedescendant`) |
+| `aria-colspan` | an der ersten Zelle einer Gruppenzeile, wenn ihr Wert über Nachbarspalten läuft: die Zahl der Spalten, die sie deckt; die gedeckten Zellen werden nicht gezeichnet, die Zelle behält `data-col` der ersten Spalte, steht sie links fixiert, bleibt sie haften |
 | `data-tl-state~="group"` | an einer Gruppenzeile: eigene Zeilenform auf `--tl-surface-layer-muted`, der Gruppenwert halbfett (`tl-type-body-strong`), die Anzahl als Kapsel (`tl-table__count`) |
 | `data-tl-align="end"` | an Kopf- und Datenzelle einer Zahlenspalte (`ColumnKind.NUMBER`): rechtsbündig, Ziffern gleich breit; fehlt es, steht die Spalte am Anfang |
 | `data-tl-state~="frozen"` | an Kopf- und Zellen der fixierten Spalten; die letzte zusätzlich `"frozen-last"` |
@@ -264,6 +268,11 @@ einzelne Zellen. Gezeichnet über `@tl-roles: brand`, `status` und `category` (F
 `--tl-status-<s>-border`, `--tl-category-<n>-border`); `neutral` zeichnet nichts. Eine Zelle mit eigener Rolle
 trägt ihre, die übrigen die der Zeile. An einer ausgewählten Zeile und ihren Zellen steht keine Rolle: die Auswahl
 gewinnt. Zeigen ändert die Tönung nicht, haftende Zellen erben die Tönung ihrer Zeile.
+`columns[].headerRole` setzt `data-tl-role` an die Kopfzelle, über dieselben drei `@tl-roles`-Arten gezeichnet:
+die Fläche der Rolle, dazu ein Streifen unten (`--tl-border-width-accent`) in der Linie der Rolle, die Überschrift
+in `--tl-text-primary`; Zeigen ändert die Tönung nicht (keine kräftigere Fläche je Rolle), das Grau des Zeigens
+(`--tl-surface-interactive-strong`) bekommt nur eine Kopfzelle ohne Rolle. `columns[].headerClass` steht nur an der
+Kopfzelle, die Datenzellen tragen sie nicht.
 
 ## Zellinhalt
 

@@ -28,9 +28,15 @@ import com.top_logic.react.flow.svg.event.SVGClickHandler;
  * Operations for a {@link GraphEdge}.
  *
  * <p>
- * When a {@link GraphEdge#getUserObject() userObject} is set, the edge becomes selectable: a wider
- * invisible click target is drawn along the polyline, and clicking it updates the
- * {@link Diagram#getSelection() diagram selection}.
+ * When the edge is {@link GraphEdge#isSelectable() selectable}, a wider invisible click target is
+ * drawn along the polyline, and clicking it updates the {@link Diagram#getSelection() diagram
+ * selection}.
+ * </p>
+ *
+ * <p>
+ * An edge that is not selectable lets the pointer pass through to the elements below it. Only those
+ * of its decorations that {@link Interactivity#containsInteractive(Widget) contain an interactive
+ * part} receive pointer events.
  * </p>
  */
 public interface GraphEdgeOperations extends WidgetOperations, SVGClickHandler {
@@ -73,6 +79,8 @@ public interface GraphEdgeOperations extends WidgetOperations, SVGClickHandler {
 			}
 			out.writeCssClass(cssClass);
 			self().setClickHandler(out.attachOnClick(this, self()));
+		} else {
+			Interactivity.writePassThrough(out);
 		}
 
 		// Draw the polyline path, shortened by symbol insets at both ends.
@@ -132,7 +140,7 @@ public interface GraphEdgeOperations extends WidgetOperations, SVGClickHandler {
 		// area enclosed by the path clickable, blocking nodes behind it).
 		if (selectable) {
 			out.beginPath();
-			out.writeAttribute("pointer-events", "stroke");
+			out.writeAttribute(Interactivity.POINTER_EVENTS_ATTR, Interactivity.POINTER_EVENTS_STROKE);
 			out.setStrokeWidth(Math.max(CLICK_TARGET_WIDTH, thickness));
 			out.setStroke("transparent");
 			out.setFill("none");
@@ -253,6 +261,9 @@ public interface GraphEdgeOperations extends WidgetOperations, SVGClickHandler {
 
 			out.beginGroup();
 			out.translate(x, y);
+			if (Interactivity.containsInteractive(decoration)) {
+				out.writeAttribute(Interactivity.POINTER_EVENTS_ATTR, Interactivity.POINTER_EVENTS_ALL);
+			}
 			{
 				decoration.draw(out);
 			}

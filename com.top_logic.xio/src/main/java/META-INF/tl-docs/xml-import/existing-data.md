@@ -1,5 +1,5 @@
 ---
-description: Read before writing an XML import definition (com.top_logic.xio) that imports into data that already exists or imports the same document again - <resolve-existing> (ResolveExisting) with objects, key, argument-var and partition, <unless-known> (UnlessKnown) with <update> and its var, condition and arguments, sharing the attribute handlers of creation and update with <group> and <ref handler-id>, and <update-known> (UpdateKnown) with <tag name id-attribute var> updating known descendants at any depth - with a worked example adding a second language to imported objects and their nested descendants.
+description: Read before writing an XML import definition (com.top_logic.xio) that imports into data that already exists or imports the same document again - <resolve-existing> (ResolveExisting) with objects, key, argument-var and partition (a partition of all parts of a composition with objectDescendants), <unless-known> (UnlessKnown) with <update> and its var, condition and arguments, sharing the attribute handlers of creation and update with <group> and <ref handler-id>, and <update-known> (UpdateKnown) with <tag name id-attribute var> updating known descendants at any depth - with a worked example adding a second language to imported objects and their nested descendants.
 order: 60
 ---
 
@@ -56,6 +56,20 @@ Without `partition`, all existing objects form one index. For a large data set o
 ```
 
 for IDs of the form `<partition>_<local-id>`.
+
+A partition is often a composition: a top-level object and all its parts at any depth. The TL-Script function `objectDescendants(object, includeRoot)` delivers the parts of an object's composition, following all its composite references (including inherited ones) and those of its parts; with `includeRoot: true` the object itself comes first. It computes the composite references once per type, so it stays fast for a partition of many thousand parts.
+
+```xml
+<resolve-existing
+	key="x -> $x.get(`test.com.top_logic.xio.importer.test17:Item#extId`)"
+	objects="c -> p -> $c.get(`test.com.top_logic.xio.importer.test17:Container#elements`).filter(r -> $r.get(`test.com.top_logic.xio.importer.test17:Item#extId`) == $p).firstElement().objectDescendants(includeRoot: true)"
+	partition="id -> $id.split('_', limit: 2).firstElement()"
+>
+	...
+</resolve-existing>
+```
+
+Here the ID of a top-level item is the partition key, and an ID `P1_a_x` is looked up among the item `P1` and all its descendants (`Item#children`, at any depth).
 
 ## `<unless-known>`
 

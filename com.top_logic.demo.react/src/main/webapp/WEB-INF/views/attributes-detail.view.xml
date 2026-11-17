@@ -25,7 +25,11 @@
 				</label>
 				<field attribute="name"/>
 				<field attribute="locked"/>
-				<field attribute="string"/>
+				<!-- The label stands in the empty input as its placeholder. -->
+				<field
+					attribute="string"
+					label-position="placeholder"
+				/>
 				<field attribute="multiLine"/>
 				<field attribute="html"/>
 				<field attribute="i18n"/>
@@ -91,7 +95,11 @@
 				<field attribute="activeRadio"/>
 				<field attribute="activeSelect"/>
 				<field attribute="priorityRadio"/>
-				<field attribute="priority"/>
+				<!-- The label stands in the empty input as its placeholder. -->
+				<field
+					attribute="priority"
+					label-position="placeholder"
+				/>
 				<field attribute="tags"/>
 			</group>
 			<group

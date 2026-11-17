@@ -102,6 +102,7 @@ class ConfigBuilderImpl implements ConfigBuilder {
 		if (property.getDescriptor() != configurationDescriptor) {
 			throw new IllegalArgumentException("Property of wrong descriptor.");
 		}
+		PropertyDescriptorImpl.checkAllowedValues(property, value);
 		NamedConstant valueSetId = property.getValueSetIdentifier();
 		values.put(valueSetId, Boolean.TRUE);
 		return values.put(property.identifier(), value);

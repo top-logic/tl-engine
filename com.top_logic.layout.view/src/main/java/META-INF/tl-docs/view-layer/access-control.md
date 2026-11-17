@@ -295,7 +295,11 @@ object by themselves; a view configures nothing for it (`ModelAccessPolicy.onAtt
 - **Reading.** A `<field>` whose attribute the user may not read on the displayed object is hidden,
   and its value is not sent to the client. In a table, a `<column>` over such an attribute shows an
   empty cell in that row, and a column whose attribute the user can read on no row at all (no role is
-  granted `Read` of it, or the user is restricted) is not offered.
+  granted `Read` of it, or the user is restricted) is withheld: it is neither displayed nor offered in
+  the column selection, and a preset with a criterion on it is not offered. The table asks again on
+  every update (a change of its rows, of an observed object, of an input): once the user gains a role
+  granting `Read`, the column appears without the table being built again, and the user's arrangement
+  of it (position, width, shown or hidden) is kept (`ColumnSetup#released()`, `ColumnExistence`).
 - **Writing.** In edit mode, a field the user may not write is read-only; when the refusal depends on
   the object (the user holds `Write` elsewhere, not here), the field is disabled and names the
   refusal in its tooltip. A table edits only the cells the user may write.

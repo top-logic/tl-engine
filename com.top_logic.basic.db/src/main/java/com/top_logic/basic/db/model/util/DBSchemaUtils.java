@@ -223,7 +223,14 @@ public class DBSchemaUtils {
 	public static boolean resetTable(ConnectionPool pool, String tableName, boolean truncate) {
 		PooledConnection connection = pool.borrowWriteConnection();
 		try {
-			return tryResetTable(connection, tableName, truncate);
+			boolean success = tryResetTable(connection, tableName, truncate);
+
+			// Note: MSSQL supports transactional schema modifications.
+			connection.commit();
+			return success;
+		} catch (SQLException ex) {
+			handleDropFailure(ex, "Cannot drop table '" + tableName + "'.");
+			return false;
 		} finally {
 			pool.releaseWriteConnection(connection);
 		}
@@ -231,6 +238,10 @@ public class DBSchemaUtils {
 
 	/**
 	 * Drop a table with the given name.
+	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
 	 * 
 	 * @param connection
 	 *        Connection to the database to drop the table in.
@@ -242,15 +253,8 @@ public class DBSchemaUtils {
 	 *         drop did not exist.
 	 */
 	public static boolean tryResetTable(PooledConnection connection, String tableName, boolean truncate) {
-		try {
-			boolean success;
-			try (Statement statement = connection.createStatement()) {
-				success = tryResetTable(connection.getSQLDialect(), statement, tableName, truncate);
-			}
-
-			// Note: MSSQL supports transactional schema modifications.
-			connection.commit();
-			return success;
+		try (Statement statement = connection.createStatement()) {
+			return tryResetTable(connection.getSQLDialect(), statement, tableName, truncate);
 		} catch (SQLException ex) {
 			handleDropFailure(ex, "Cannot drop table '" + tableName + "'.");
 			return false;
@@ -259,6 +263,10 @@ public class DBSchemaUtils {
 
 	/**
 	 * Drop a table with the given name.
+	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
 	 * 
 	 * @param connection
 	 *        Connection to the database to drop the table in.
@@ -275,9 +283,6 @@ public class DBSchemaUtils {
 		} finally {
 			statement.close();
 		}
-
-		// Note: MSSQL supports transactional schema modifications.
-		connection.commit();
 	}
 
 	/**
@@ -311,6 +316,10 @@ public class DBSchemaUtils {
 	 * uses instead of truncating table if it may be possible that the tables have currently a
 	 * different layout.
 	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
+	 * 
 	 * @param connection
 	 *        The connection to the database to drop the table in.
 	 * @param schema
@@ -338,7 +347,11 @@ public class DBSchemaUtils {
 	public static boolean resetTables(ConnectionPool pool, DBSchema schema, boolean truncate) {
 		PooledConnection connection = pool.borrowWriteConnection();
 		try {
-			return resetTables(connection, schema, truncate);
+			boolean success = resetTables(connection, schema, truncate);
+
+			// Note: MSSQL supports transactional schema modifications.
+			connection.commit();
+			return success;
 		} catch (SQLException ex) {
 			// Ignore, table does not exist.
 			handleDropFailure(ex, "Cannot drop tables.");
@@ -350,6 +363,10 @@ public class DBSchemaUtils {
 
 	/**
 	 * Drop all tables of the given schema from the given database.
+	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
 	 * 
 	 * @param connection
 	 *        {@link PooledConnection} to the database to drop the table in.
@@ -390,8 +407,6 @@ public class DBSchemaUtils {
 		} finally {
 			statement.close();
 		}
-		// Note: MSSQL supports transactional schema modifications.
-		connection.commit();
 		return success;
 	}
 	
@@ -785,6 +800,9 @@ public class DBSchemaUtils {
 		PooledConnection connection = pool.borrowWriteConnection();
 		try {
 			create(connection, schema);
+
+			// Note: MSSQL supports transactional schema modifications.
+			connection.commit();
 		} finally {
 			pool.releaseWriteConnection(connection);
 		}
@@ -792,6 +810,10 @@ public class DBSchemaUtils {
 
 	/**
 	 * Creates the given {@link DBSchemaPart} in the given database.
+	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
 	 * 
 	 * @param connection
 	 *        {@link PooledConnection} to the database to create tables in.
@@ -808,7 +830,6 @@ public class DBSchemaUtils {
 		} catch (IOException ex) {
 			throw new UnreachableAssertion("Reading from string must not fail.", ex);
 		}
-		connection.commit();
 	}
 
 	/**
@@ -846,6 +867,10 @@ public class DBSchemaUtils {
 	/**
 	 * Creates the given {@link DBSchema} in the given database.
 	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
+	 * 
 	 * @param connection
 	 *        {@link PooledConnection} to the database to create tables in.
 	 * @param schema
@@ -865,9 +890,6 @@ public class DBSchemaUtils {
 
 			create(connection, table);
 		}
-
-		// MSSQL supports transactional schema manipulation.
-		connection.commit();
 	}
 	
 	/**

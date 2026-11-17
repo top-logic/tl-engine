@@ -17,9 +17,11 @@ import com.top_logic.element.meta.form.AttributeFormFactory;
 import com.top_logic.element.meta.form.FallbackFieldDisplay;
 import com.top_logic.element.meta.form.FieldModeObserver;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
+import com.top_logic.element.model.copy.CopyOperation;
 import com.top_logic.layout.ResPrefix;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.util.TLModelUtil;
@@ -165,6 +167,52 @@ public class TestFallbackFieldDisplay extends AbstractSearchExpressionTest {
 
 		nameField.setValue("other");
 		assertEquals("other", valueField.getValue());
+	}
+
+	public void testStorageAttributeOfOverlay() {
+		FormField nameField = field(NAME);
+		FormField valueField = field(VALUE);
+		nameField.setValue("fallback");
+		valueField.setValue("explicit");
+
+		assertEquals("Storage attribute without field reflects the explicit value.", "explicit",
+			_item.tValue(part(VALUE_STORAGE)));
+		assertEquals("explicit", _item.tValue(part(VALUE)));
+
+		valueField.setValue(null);
+		assertEmpty(_item.tValue(part(VALUE_STORAGE)));
+		assertEquals("fallback", _item.tValue(part(VALUE)));
+	}
+
+	public void testCopyOverlay() {
+		FormField nameField = field(NAME);
+		FormField valueField = field(VALUE);
+		nameField.setValue("fallback");
+		valueField.setValue("explicit");
+
+		TLObject copy = transientCopy();
+		assertEquals("Copy keeps the entered explicit value.", "explicit", copy.tValue(part(VALUE_STORAGE)));
+		assertEquals("explicit", copy.tValue(part(VALUE)));
+	}
+
+	public void testCopyOverlayDisplayingFallback() {
+		FormField nameField = field(NAME);
+		FormField valueField = field(VALUE);
+		nameField.setValue("fallback");
+		valueField.setImmutable(true);
+		assertEquals("fallback", valueField.getValue());
+
+		TLObject copy = transientCopy();
+		assertEmpty(copy.tValue(part(VALUE_STORAGE)));
+	}
+
+	private TLObject transientCopy() {
+		CopyOperation operation = CopyOperation.initial();
+		operation.setContext(null, null);
+		operation.setTransient(true);
+		TLObject copy = (TLObject) operation.copyReference(_item);
+		operation.finish();
+		return copy;
 	}
 
 	private FieldModeObserver modeObserver(FormField field) {

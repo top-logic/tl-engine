@@ -21,6 +21,7 @@
 					<role name="TestTLScriptSecurity.PathViewer"/>
 					<role name="TestTLScriptSecurity.NoteWriter"/>
 					<role name="TestTLScriptSecurity.PathWriter"/>
+					<role name="TestTLScriptSecurity.UnitReader"/>
 					<role name="TestTLScriptSecurity.NameReader"/>
 					<role name="TestTLScriptSecurity.NameKeeper"/>
 				</roles>
@@ -395,6 +396,13 @@
 							roles="TestTLScriptSecurity.PathViewer"
 						/>
 					</part>
+					<!-- Units and currencies are readable for whoever holds the role on the security root. -->
+					<module name="tl.units">
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.UnitReader"
+						/>
+					</module>
 				</security-config>
 			</instance>
 		</config>

@@ -175,7 +175,7 @@ public class TestRowSetTableCellChrome extends AbstractModelAccessTest {
 			null, ColumnBinding.TYPE_DERIVED, 0, editing, null, null, false);
 		Column<Object, ?> column = setup.buildInPlaceColumn(r -> {
 			// Nothing to refresh.
-		});
+		}, NoTokenHandling.INSTANCE);
 
 		CellContent cell = column.renderCell(row);
 		assertTrue("Not shown through a control: " + cell, cell instanceof CellContent.Raw);

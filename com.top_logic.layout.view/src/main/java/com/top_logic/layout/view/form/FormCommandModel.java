@@ -114,7 +114,7 @@ public class FormCommandModel implements CommandModel {
 	 * @return The edit command model.
 	 */
 	public static FormCommandModel editCommand(FormControl form) {
-		return new FormCommandModel("formEdit", I18NConstants.FORM_EDIT, Icons.FORM_EDIT,
+		return new FormCommandModel(FormControl.CMD_EDIT, I18NConstants.FORM_EDIT, Icons.FORM_EDIT,
 			CommandPlacement.TOOLBAR, form,
 			ctx -> form.enterEditMode(),
 			f -> f.getCurrentObject() != null && !f.isEditMode() && f.editPermission().isExecutable(),
@@ -155,7 +155,7 @@ public class FormCommandModel implements CommandModel {
 	 * @return The save command model.
 	 */
 	public static FormCommandModel saveCommand(FormControl form, Consumer<ReactContext> action) {
-		return new FormCommandModel("formSave", I18NConstants.FORM_SAVE, Icons.FORM_SAVE,
+		return new FormCommandModel(FormControl.CMD_SAVE, I18NConstants.FORM_SAVE, Icons.FORM_SAVE,
 			CommandPlacement.TOOLBAR, form,
 			action,
 			FormControl::isEditMode,
@@ -174,7 +174,7 @@ public class FormCommandModel implements CommandModel {
 	 * @return The cancel command model.
 	 */
 	public static FormCommandModel cancelCommand(FormControl form) {
-		return new FormCommandModel("formCancel", I18NConstants.FORM_CANCEL, Icons.FORM_CANCEL,
+		return new FormCommandModel(FormControl.CMD_CANCEL, I18NConstants.FORM_CANCEL, Icons.FORM_CANCEL,
 			CommandPlacement.TOOLBAR, form,
 			ctx -> form.executeCancel(),
 			FormControl::isEditMode,
@@ -196,7 +196,7 @@ public class FormCommandModel implements CommandModel {
 	 * @return The cancel command model.
 	 */
 	public static FormCommandModel cancelCommand(FormControl form, Consumer<ReactContext> action) {
-		return new FormCommandModel("formCancel", I18NConstants.FORM_CANCEL, Icons.FORM_CANCEL,
+		return new FormCommandModel(FormControl.CMD_CANCEL, I18NConstants.FORM_CANCEL, Icons.FORM_CANCEL,
 			CommandPlacement.TOOLBAR, form,
 			action,
 			FormControl::isEditMode,

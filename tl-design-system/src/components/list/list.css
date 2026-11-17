@@ -1,0 +1,218 @@
+/* Liste — eine auswählbare, gruppierbare, durchsuchbare Liste von Objekten im Stil einer Kontakt- oder
+   Nachrichtenliste (MUI: List, ListItem, ListItemButton, ListItemAvatar, ListItemText, ListSubheader). Leser ist
+   TLDataList. Oben ein Kopf (Titel, Ein-/Ausklapper), Befehle und die Suche; darunter rollt der Körper mit den Gruppen,
+   je Gruppe eine Zwischenüberschrift und die Einträge. Ein Eintrag ist ein Knopf (tl-list__main) mit vorn dem
+   Avatar oder Icon, dann den Zeilen (primär, sekundär) und hinten Metadaten oder einem Badge; neben dem Knopf steht
+   der Auslöser der Befehle des Eintrags, ein Icon-Knopf, der über tl-reveal-on-hover (layout.css) beim Zeigen und
+   bei Tastaturfokus erscheint. Zustände sind Attribute: aria-current="true" am Knopf des gewählten Eintrags (Markenton
+   und Kante, wie Baum, Tabelle und Sidebar), data-tl-state~="collapsed" an der Wurzel. Die Liste setzt keine
+   Fläche und keinen Rand: sie füllt, was ihr Ort ihr gibt. Die Typo tragen die Elemente (tl-type-*), von außen. */
+
+.tl-list {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  color: var(--tl-text-primary);
+}
+.tl-list[hidden] { display: none; }
+
+/* Eingeklappt bleibt ein Streifen so breit wie ein Icon-Knopf mit space-2xs Rand je Seite — wie die eingeklappte
+   Sidebar eine Rechnung aus zwei Maßen, die der Dichte folgt. Titel, Suche und Körper stehen nicht. */
+.tl-list[data-tl-state~="collapsed"] {
+  width: calc(var(--tl-size-control) + 2 * var(--tl-space-2xs));
+}
+
+.tl-list[data-tl-state~="collapsed"] .tl-list__title,
+.tl-list[data-tl-state~="collapsed"] .tl-list__search,
+.tl-list[data-tl-state~="collapsed"] .tl-list__body {
+  display: none;
+}
+
+/* --- Kopf, Befehle, Suche ----------------------------------------------------- */
+
+.tl-list__header {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  min-height: var(--tl-size-bar);
+  padding: 0 var(--tl-space-2xs) 0 var(--tl-space-control-x);
+}
+.tl-list__header[hidden] { display: none; }
+
+.tl-list[data-tl-state~="collapsed"] .tl-list__header {
+  justify-content: center;
+  padding: 0 var(--tl-space-2xs);
+}
+
+.tl-list__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Die Befehle stehen untereinander und lesen vom Anfang her, wie die Einträge darunter. */
+.tl-list__commands {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--tl-space-2xs);
+  padding: var(--tl-space-2xs) var(--tl-space-xs);
+}
+.tl-list__commands[hidden] { display: none; }
+
+.tl-list__commands > .tl-button {
+  justify-content: start;
+}
+
+/* Eingeklappt steht von einem Befehl nur sein Icon, mittig; die Beschriftung bleibt sein Name. */
+.tl-list[data-tl-state~="collapsed"] .tl-list__commands {
+  padding-inline: var(--tl-space-2xs);
+}
+
+.tl-list[data-tl-state~="collapsed"] .tl-list__commands > .tl-button {
+  justify-content: center;
+}
+
+.tl-list[data-tl-state~="collapsed"] .tl-list__commands .tl-button__label {
+  position: absolute;
+  width: var(--tl-size-hidden);
+  height: var(--tl-size-hidden);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.tl-list__search {
+  flex: none;
+  padding: var(--tl-space-2xs) var(--tl-space-xs);
+}
+
+/* --- Körper und Gruppen --------------------------------------------------------- */
+
+/* Der Körper rollt in sich; ein Wischen, das das Ende erreicht, läuft nicht in die Seite weiter. Weil er rollt,
+   liegen die Ringe der Knöpfe darin innen (unten). */
+.tl-list__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 var(--tl-space-2xs) var(--tl-space-xs);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.tl-list__group + .tl-list__group {
+  margin-top: var(--tl-space-xs);
+}
+
+.tl-list__subheader {
+  margin: 0;
+  padding: var(--tl-space-xs) var(--tl-space-control-x) var(--tl-space-2xs);
+  color: var(--tl-text-secondary);
+}
+
+.tl-list__items {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tl-list__message {
+  margin: 0;
+  padding: var(--tl-space-xs) var(--tl-space-control-x);
+  color: var(--tl-text-secondary);
+}
+
+/* --- Eintrag ---------------------------------------------------------------------- */
+
+.tl-list__item {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  border-radius: var(--tl-radius-sm);
+}
+.tl-list__item[hidden] { display: none; }
+
+.tl-list__item:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+/* Gewählt: Markenton und Kante (innerer Schatten an der Anfangsseite in LTR, kein border-left), wie im Baum und in der
+   Sidebar; Zeigen auf den gewählten Eintrag hebt die Fläche eine Stufe. */
+.tl-list__item:has(> .tl-list__main[aria-current="true"]) {
+  background: var(--tl-surface-selected);
+  box-shadow: inset var(--tl-border-width-accent) 0 0 0 var(--tl-border-selected);
+}
+
+.tl-list__item:has(> .tl-list__main[aria-current="true"]):hover {
+  background: var(--tl-surface-selected-hover);
+}
+
+/* Der Auslöser der Befehle des Eintrags steht neben dem Knopf; die Zeile verschiebt nichts, wenn er erscheint. */
+.tl-list__item > .tl-button {
+  flex: none;
+  margin-inline-end: var(--tl-space-2xs);
+}
+
+/* Reset ohne Spezifität: die Typo-Klasse am Knopf gewinnt. */
+:where(.tl-list__main) { font: inherit; }
+
+.tl-list__main {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--tl-space-sm);
+  min-width: 0;
+  min-height: var(--tl-size-row);
+  padding: var(--tl-space-2xs) var(--tl-space-control-x);
+  border: 0;
+  border-radius: var(--tl-radius-sm);
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+/* Der Körper rollt: die Ringe liegen innen. */
+.tl-list__main:focus-visible,
+.tl-list__item > .tl-button:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+.tl-list__leading,
+.tl-list__trailing {
+  display: flex;
+  flex: none;
+  align-items: center;
+}
+
+/* Hinten stehen Metadaten (Text) oder ein Badge, am Ende der Zeile. */
+.tl-list__trailing {
+  margin-inline-start: auto;
+  color: var(--tl-text-secondary);
+}
+
+/* Die Zeilen nehmen den Rest; jede steht auf einer Zeile und endet mit Ellipse. */
+.tl-list__text {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tl-list__primary,
+.tl-list__secondary {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-list__secondary {
+  color: var(--tl-text-secondary);
+}

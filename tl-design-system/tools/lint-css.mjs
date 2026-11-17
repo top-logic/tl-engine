@@ -124,6 +124,7 @@ const MODIFIERS = {
   'tl-login-card': new Set([]), // Karte der Anmeldeseite (#30296): eine Form, kein Zustand.
   'tl-table': new Set([]),
   'tl-tree': new Set([]),
+  'tl-list': new Set([]), // Gewählt: aria-current am Knopf des Eintrags; eingeklappt: data-tl-state~="collapsed".
   'tl-overlay': new Set(['fill']), // Die Anker sind Element-Modifier (tl-overlay__layer--<anker>), keine des Blocks.
   'tl-titlebar': new Set([]),
   'tl-dialog': new Set([]), // Ein- und Ausblenden, maximiert: data-tl-state.

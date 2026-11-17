@@ -60,6 +60,7 @@ export function kontrastPaare(T) {
     paar('text-helper', bg, 4.5); paar('text-secondary', bg, 4.5);
   }
   paar('text-secondary', 'surface-overlay', 4.5); // Popup-Status des Select
+  paar('text-secondary', 'surface-interactive-hover', 4.5); // Nebentext und Metadaten eines gezeigten Listeneintrags (tl-list)
   // Hervorhebung im Select-Popup und Link im Status
   paar('border-interactive', 'surface-layer', 3.0); // Griff des Splits auf einer Fläche (Welle 4c)
   paar('border-interactive', 'surface-layer-nested', 3.0); // Ring einer ausgewählten Option in einer Fläche (Q24)

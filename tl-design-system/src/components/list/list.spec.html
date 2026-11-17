@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Liste</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  /* Der Ort der Liste: Breite und Höhe gibt ihr Behälter, nicht das Paket. */
+  .specimen-host { display: flex; gap: 24px; align-items: stretch; height: 420px; }
+  .specimen-host > .tl-list:not([data-tl-state~="collapsed"]) { width: 320px; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Liste</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <!-- Kontakte, gruppiert nach Anfangsbuchstaben: Kopf mit Titel und Ein-/Ausklapper, ein Befehl, die Suche. Einträge mit
+       Avatar, Name (primär), E-Mail (sekundär) und hinten Metadaten oder einem Badge; einer ist gewählt, einer hat ein
+       Icon statt eines Avatars, einer nur eine Zeile, einer einen Namen, der mit Ellipse endet. Der Auslöser der Befehle
+       erscheint beim Zeigen; in der zweiten Liste steht er immer. Daneben dieselbe Liste eingeklappt und eine leere. -->
+  <template id="rows">
+    <div class="specimen-host">
+      <div class="tl-list" aria-label="Kontakte">
+        <div class="tl-list__header">
+          <span class="tl-list__title tl-type-heading-sm">Kontakte</span>
+          <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-expanded="true" aria-label="Einklappen" data-tooltip="text:Einklappen"><i class="tl-icon-sm bi bi-chevron-left tl-button__icon" aria-hidden="true"></i></button>
+        </div>
+        <div class="tl-list__commands">
+          <button type="button" class="tl-button tl-button--secondary tl-type-body-strong"><i class="tl-icon-sm bi bi-plus-lg tl-button__icon" aria-hidden="true"></i><span class="tl-button__label">Neuer Kontakt</span></button>
+        </div>
+        <div class="tl-list__search">
+          <span class="tl-field-group">
+            <span class="tl-field-group__icon"><i class="tl-icon-sm bi bi-search" aria-hidden="true"></i></span>
+            <input class="tl-field tl-type-body" type="search" placeholder="Suchen" aria-label="Suchen">
+          </span>
+        </div>
+        <div class="tl-list__body" aria-live="polite" tabindex="-1">
+          <section class="tl-list__group" aria-labelledby="group-a">
+            <h2 class="tl-list__subheader tl-type-label-strong" id="group-a">A</h2>
+            <ul class="tl-list__items">
+              <li class="tl-list__item">
+                <button type="button" class="tl-list__main" title="Anna Albrecht">
+                  <span class="tl-list__leading"><span class="tl-avatar tl-type-body-strong" data-tl-role="category-3" role="img" aria-label="Anna Albrecht" title="Anna Albrecht">AA</span></span>
+                  <span class="tl-list__text">
+                    <span class="tl-list__primary tl-type-body">Anna Albrecht</span>
+                    <span class="tl-list__secondary tl-type-label">anna.albrecht@example.com</span>
+                  </span>
+                  <span class="tl-list__trailing"><span class="tl-badge tl-type-label-strong tl-nums" role="img" aria-label="3 offene Tickets">3</span></span>
+                </button>
+                <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reveal-on-hover" aria-haspopup="menu" aria-label="Aktionen: Anna Albrecht"><i class="tl-icon-sm bi bi-three-dots-vertical tl-button__icon" aria-hidden="true"></i></button>
+              </li>
+              <li class="tl-list__item">
+                <button type="button" class="tl-list__main" aria-current="true" title="Arne Andersen">
+                  <span class="tl-list__leading"><span class="tl-avatar tl-type-body-strong" data-tl-role="category-6" role="img" aria-label="Arne Andersen" title="Arne Andersen">AA</span></span>
+                  <span class="tl-list__text">
+                    <span class="tl-list__primary tl-type-body">Arne Andersen</span>
+                    <span class="tl-list__secondary tl-type-label">arne.andersen@example.com</span>
+                  </span>
+                  <span class="tl-list__trailing tl-type-label">gestern</span>
+                </button>
+                <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reveal-on-hover" aria-haspopup="menu" aria-label="Aktionen: Arne Andersen"><i class="tl-icon-sm bi bi-three-dots-vertical tl-button__icon" aria-hidden="true"></i></button>
+              </li>
+            </ul>
+          </section>
+          <section class="tl-list__group" aria-labelledby="group-b">
+            <h2 class="tl-list__subheader tl-type-label-strong" id="group-b">B</h2>
+            <ul class="tl-list__items">
+              <li class="tl-list__item">
+                <button type="button" class="tl-list__main" title="Bertram von Bülow-Bernstorff zu Brandenburg-Bayreuth">
+                  <span class="tl-list__leading"><span class="tl-avatar tl-type-body-strong" data-tl-role="category-1" role="img" aria-label="Bertram von Bülow-Bernstorff zu Brandenburg-Bayreuth" title="Bertram von Bülow-Bernstorff zu Brandenburg-Bayreuth">BB</span></span>
+                  <span class="tl-list__text">
+                    <span class="tl-list__primary tl-type-body">Bertram von Bülow-Bernstorff zu Brandenburg-Bayreuth</span>
+                    <span class="tl-list__secondary tl-type-label">bertram.buelow-bernstorff@example.com</span>
+                  </span>
+                  <span class="tl-list__trailing"><span class="tl-badge tl-type-label-strong tl-nums" role="img" aria-label="12 offene Tickets">12</span></span>
+                </button>
+                <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reveal-on-hover" aria-haspopup="menu" aria-label="Aktionen: Bertram von Bülow-Bernstorff zu Brandenburg-Bayreuth"><i class="tl-icon-sm bi bi-three-dots-vertical tl-button__icon" aria-hidden="true"></i></button>
+              </li>
+              <li class="tl-list__item">
+                <button type="button" class="tl-list__main" title="Büro Berlin">
+                  <span class="tl-list__leading"><i class="tl-icon-md bi bi-building" aria-hidden="true"></i></span>
+                  <span class="tl-list__text">
+                    <span class="tl-list__primary tl-type-body">Büro Berlin</span>
+                  </span>
+                </button>
+                <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reveal-on-hover" aria-haspopup="menu" aria-label="Aktionen: Büro Berlin"><i class="tl-icon-sm bi bi-three-dots-vertical tl-button__icon" aria-hidden="true"></i></button>
+              </li>
+            </ul>
+          </section>
+        </div>
+      </div>
+
+      <div class="tl-list" data-tl-state="collapsed" aria-label="Kontakte">
+        <div class="tl-list__header">
+          <span class="tl-list__title tl-type-heading-sm">Kontakte</span>
+          <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-expanded="false" aria-label="Ausklappen" data-tooltip="text:Ausklappen"><i class="tl-icon-sm bi bi-chevron-right tl-button__icon" aria-hidden="true"></i></button>
+        </div>
+        <div class="tl-list__commands">
+          <button type="button" class="tl-button tl-button--secondary tl-type-body-strong"><i class="tl-icon-sm bi bi-plus-lg tl-button__icon" aria-hidden="true"></i><span class="tl-button__label">Neuer Kontakt</span></button>
+        </div>
+        <div class="tl-list__body" aria-live="polite" tabindex="-1"></div>
+      </div>
+
+      <div class="tl-list" aria-label="Schritte">
+        <div class="tl-list__header" hidden></div>
+        <div class="tl-list__body" aria-live="polite" tabindex="-1">
+          <section class="tl-list__group" aria-label="Schritte">
+            <ul class="tl-list__items">
+              <li class="tl-list__item">
+                <button type="button" class="tl-list__main" title="Angebot erstellen">
+                  <span class="tl-list__text">
+                    <span class="tl-list__primary tl-type-body">Angebot erstellen</span>
+                    <span class="tl-list__secondary tl-type-label">erledigt</span>
+                  </span>
+                </button>
+                <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-haspopup="menu" aria-label="Aktionen: Angebot erstellen"><i class="tl-icon-sm bi bi-three-dots-vertical tl-button__icon" aria-hidden="true"></i></button>
+              </li>
+              <li class="tl-list__item">
+                <button type="button" class="tl-list__main" aria-current="true" title="Angebot prüfen">
+                  <span class="tl-list__text">
+                    <span class="tl-list__primary tl-type-body">Angebot prüfen</span>
+                    <span class="tl-list__secondary tl-type-label">läuft</span>
+                  </span>
+                </button>
+                <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-haspopup="menu" aria-label="Aktionen: Angebot prüfen"><i class="tl-icon-sm bi bi-three-dots-vertical tl-button__icon" aria-hidden="true"></i></button>
+              </li>
+            </ul>
+          </section>
+        </div>
+      </div>
+
+      <div class="tl-list" aria-label="Rechnungen">
+        <div class="tl-list__header">
+          <span class="tl-list__title tl-type-heading-sm">Rechnungen</span>
+        </div>
+        <div class="tl-list__body" aria-live="polite" tabindex="-1">
+          <p class="tl-list__message tl-type-label">Keine Einträge</p>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <section class="specimen__panel" id="on-layer"><p class="tl-type-heading-sm">Auf surface-layer</p></section>
+  <section class="specimen__base" id="on-base"><p class="tl-type-heading-sm">Auf surface-base</p></section>
+</main>
+<script>
+  const tpl = document.getElementById('rows');
+  for (const id of ['on-layer', 'on-base']) {
+    const rows = tpl.content.cloneNode(true);
+    for (const el of rows.querySelectorAll('[id]')) el.id += '-' + id;
+    for (const a of ['aria-describedby', 'aria-labelledby', 'aria-controls'])
+      for (const el of rows.querySelectorAll('[' + a + ']')) el.setAttribute(a, el.getAttribute(a) + '-' + id);
+    document.getElementById(id).append(rows);
+  }
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

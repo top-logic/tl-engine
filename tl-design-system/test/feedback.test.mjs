@@ -19,11 +19,12 @@ test('Alert: je Bedeutung subtle-Fläche, border-Linie, Text text-primary, Icon 
     assert.deepEqual(contrastProblems(R, mode, STATUS.map((s) => ({ fg: `status-${s}-text`, bg: `status-${s}-subtle`, soll: 3.0 }))), []);
 });
 
-test('Badge: Marke mit abgeleiteter Beschriftung, Ziffern tabellarisch über tl-nums, Pille', () => {
+test('Badge: Marke mit abgeleiteter Beschriftung, Ziffern tabellarisch über tl-nums, Pille; der Punkt in der Linie der Marke', () => {
   const css = readComponent('badge', 'badge.css');
-  assert.deepEqual(colorVarsOf(css), ['surface-brand', 'text-on-brand']);
+  assert.deepEqual(colorVarsOf(css), ['border-interactive', 'surface-brand', 'text-on-brand']);
   assert.match(declarationsOf(css, '.tl-badge') ?? '', /--tl-radius-full/);
 });
+
 
 test('Divider: Trennlinie ohne Kontrastschuld, horizontal und vertikal', () => {
   const css = readComponent('divider', 'divider.css');

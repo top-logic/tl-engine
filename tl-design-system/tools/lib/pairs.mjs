@@ -112,6 +112,11 @@ export function kontrastPaare(T) {
     // Diagrammmarke (Spec Diagrammfarben §2): nicht-textliche Grafik, 3:1 auf Grund und Layer.
     for (const bg of ['surface-base', 'surface-layer']) paar(`category-${k}-mark`, bg, 3.0);
   }
+  // Punkt des Badges (#29653): ohne Schrift, seine Fläche braucht 3:1 zum Grund — die Linie der Marke und der Text
+  // jeder Bedeutung, auf jedem Grund, an dem ein Badge steht (Panel, Dialog, gezeigter und gewählter Eintrag, Reiter).
+  for (const fill of ['border-interactive', ...STATUS.map((s) => `status-${s}-text`)])
+    for (const bg of ['surface-base', 'surface-layer', 'surface-layer-nested', 'surface-overlay',
+      'surface-interactive-hover', 'surface-selected', 'surface-brand-subtle']) paar(fill, bg, 3.0);
   // Tooltip: Text auf der inversen Fläche (Welle 5d).
   paar('text-inverse', 'surface-inverse', 4.5);
   for (const [name, { surface }] of Object.entries(T.derived.light))

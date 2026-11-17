@@ -132,6 +132,13 @@ import com.top_logic.util.Resources;
  *        The color role and the CSS class of the heading of the column, {@link ColumnHeader#NONE}
  *        for a heading without either. They are put on the heading only, not on the data cells, see
  *        {@link Column#headerRole()} and {@link Column#headerClass()}. Never {@code null}.
+ * @param released
+ *        Whether the access rights of the current user release the column,
+ *        {@link ChannelCondition#ALWAYS} for a column no right withholds. While the condition does
+ *        not hold, the column is withheld from the user: it does not exist, as if its
+ *        {@link #exists()} condition did not hold, and nothing the table offers may refer to it -
+ *        a declared filter with a criterion on it is not offered, see {@link ColumnExistence}.
+ *        Never {@code null}.
  */
 public record ColumnSetup(
 		String name,
@@ -154,7 +161,25 @@ public record ColumnSetup(
 		ColumnAlignment align,
 		ChannelCondition exists,
 		CellExistence<Object> cellExists,
-		ColumnHeader header) {
+		ColumnHeader header,
+		ChannelCondition released) {
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column no access right withholds.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip,
+			BiFunction<Object, Object, String> cellClass, BiFunction<Object, Object, ValueColor> cellRole,
+			ReactControlProvider display, boolean sortable, ColumnAlignment align, ChannelCondition exists,
+			CellExistence<Object> cellExists, ColumnHeader header) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, cellClass, cellRole, display, sortable, align, exists, cellExists, header,
+			ChannelCondition.ALWAYS);
+	}
 
 	/**
 	 * Creates a {@link ColumnSetup} of a column whose heading has neither a color role nor a CSS
@@ -170,7 +195,8 @@ public record ColumnSetup(
 			ReactControlProvider display, boolean sortable, ColumnAlignment align, ChannelCondition exists,
 			CellExistence<Object> cellExists) {
 		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
-			export, tooltip, cellClass, cellRole, display, sortable, align, exists, cellExists, ColumnHeader.NONE);
+			export, tooltip, cellClass, cellRole, display, sortable, align, exists, cellExists, ColumnHeader.NONE,
+			ChannelCondition.ALWAYS);
 	}
 
 	/**
@@ -292,7 +318,20 @@ public record ColumnSetup(
 		}
 		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
 			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, align,
-			exists.and(condition), cellExists, header);
+			exists.and(condition), cellExists, header, released);
+	}
+
+	/**
+	 * This descriptor for a column the access rights of the user release only where the given
+	 * condition holds in addition to its own {@link #released()} condition.
+	 */
+	public ColumnSetup releasedIf(ChannelCondition condition) {
+		if (condition == ChannelCondition.ALWAYS) {
+			return this;
+		}
+		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
+			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, align, exists, cellExists,
+			header, released.and(condition));
 	}
 
 	/**

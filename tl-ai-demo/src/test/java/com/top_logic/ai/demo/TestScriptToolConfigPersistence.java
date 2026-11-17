@@ -113,7 +113,7 @@ public class TestScriptToolConfigPersistence extends BasicTestCase {
 			ToolResult result = tool.execute(
 				Map.of("title", "Room", "room", ScriptToolFactoryTest.id(room), "tags", List.of("a", "b")),
 				ToolContext.EMPTY);
-			assertEquals("Room: lab 2", MarkedResults.disclosed(result.text()));
+			assertEquals("\"Room: lab 2\"", MarkedResults.disclosed(result.text()));
 		} finally {
 			ScriptToolFactoryTest.delete(room);
 		}

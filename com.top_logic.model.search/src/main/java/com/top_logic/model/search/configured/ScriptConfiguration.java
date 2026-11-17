@@ -101,6 +101,14 @@ public interface ScriptConfiguration extends NamedConfigMandatory {
 	 * The expression has access to all parameters in {@link #getParameters()}. The return value of
 	 * the expression is the return value of the called script.
 	 * </p>
+	 * 
+	 * <p>
+	 * Whether the function is free of side effects is read from the expression: it has a side
+	 * effect, iff the expression contains a function with a side effect (e.g. it creates, sets or
+	 * deletes objects), also within another configured function it calls. A function that only reads
+	 * can therefore be used where only expressions without side effects are allowed, e.g. in a
+	 * read-only query of an AI agent.
+	 * </p>
 	 */
 	@Mandatory
 	@PropertyEditor(PlainEditor.class)

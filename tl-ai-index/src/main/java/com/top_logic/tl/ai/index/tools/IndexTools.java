@@ -66,8 +66,8 @@ public class IndexTools {
 	 */
 	@ToolMethod(description = "Search the application's objects by words and by meaning in one query. It finds an"
 		+ " object by what its text is about, also when the text uses other words or another language: a German"
-		+ " question finds an English text. Answers the best objects you may read, best first, each with its id,"
-		+ " the passage that matched and where that passage is (the page of a document). Use it to find objects by"
+		+ " question finds an English text. Answers the best objects you may read, best first, each with its"
+		+ " identity (pass its " + ReadFilter.TID + " to other tools), the passage that matched and where that passage is (the page of a document). Use it to find objects by"
 		+ " their content; use a query on attributes for exact conditions.",
 		mode = ToolMode.READ, group = ToolGroups.DATA_READ, unavailable = "unavailable")
 	public String search(
@@ -106,7 +106,7 @@ public class IndexTools {
 	 */
 	@ToolMethod(description = "Find the objects whose content is closest to a given object's - in meaning and in"
 		+ " their characteristic words - without a query: duplicates, related statements, the documents about"
-		+ " the same thing. Answers the objects you may read, best first, each with its id and the passage that"
+		+ " the same thing. Answers the objects you may read, best first, each with its identity and the passage that"
 		+ " matched. The given object itself is not in the answer.",
 		mode = ToolMode.READ, group = ToolGroups.DATA_READ, unavailable = "unavailable")
 	public String similar(
@@ -131,8 +131,7 @@ public class IndexTools {
 		}
 		try {
 			Hits hits = _index.get().similar(object, request, security);
-			ReadFilter.shown(object);
-			return render("Objects similar to " + ReadFilter.labelled(object), hits);
+			return render("Objects similar to " + ReadFilter.identityJson(object), hits);
 		} catch (SearchRefusedException ex) {
 			return "error: " + ex.getMessage();
 		}
@@ -175,7 +174,7 @@ public class IndexTools {
 		Set<String> scopeIds = new LinkedHashSet<>();
 		if (scopes != null) {
 			for (String scope : scopes) {
-				scopeIds.add(TidResolver.objectId(scope));
+				scopeIds.add(scope.strip());
 			}
 		}
 		return new SearchRequest(query, types == null ? Set.of() : Set.copyOf(types), scopeIds, keywords, mode,
@@ -183,8 +182,8 @@ public class IndexTools {
 	}
 
 	/**
-	 * The answer: one entry per hit with its id, where the passage is and the passage itself, then
-	 * what the search could not see.
+	 * The answer: one entry per hit with its identity ({@link ReadFilter#identityJson(TLObject)}), where
+	 * the passage is and the passage itself, then what the search could not see.
 	 */
 	static String render(String title, Hits hits) {
 		StringBuilder out = new StringBuilder();
@@ -197,8 +196,8 @@ public class IndexTools {
 		}
 		int number = 0;
 		for (Hit hit : hits.hits()) {
-			out.append("\n\n").append(++number).append(". ").append(ReadFilter.withId(hit.label(), hit.id()))
-				.append(" - ").append(hit.type()).append(", text '").append(hit.part()).append('\'');
+			out.append("\n\n").append(++number).append(". ").append(ReadFilter.identityJson(hit.object()))
+				.append(", text '").append(hit.part()).append('\'');
 			if (hit.locator().page() > 0) {
 				out.append(", page ").append(hit.locator().page());
 			}

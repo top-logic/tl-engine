@@ -198,7 +198,7 @@ public class TestObjectEditTool extends BasicTestCase {
 		ToolResult result = update(agent, values("name", null, "description", "changed"));
 
 		ApplicationRefusal refusal = refusal(result);
-		assertEquals(ReadFilter.labelled(agent), refusal.getObject());
+		assertEquals(ReadFilter.forSecurity(ModelSecurity.UNCHECKED).disclose(agent), refusal.getObject());
 		assertEquals(List.of("name"), attributes(refusal));
 		assertEquals("The violating value must be undone.", name, agent.getName());
 		assertEquals("The other value of the same call must be undone too.", "kept", agent.getDescription());
@@ -621,7 +621,7 @@ public class TestObjectEditTool extends BasicTestCase {
 		ToolResult result = inGerman(() -> call(() -> _tool.deleteObject(idOf(archive), ToolContext.EMPTY)));
 
 		ApplicationRefusal refusal = refusal(result);
-		assertEquals(ReadFilter.labelled(archive), refusal.getObject());
+		assertEquals(ReadFilter.forSecurity(ModelSecurity.UNCHECKED).disclose(archive), refusal.getObject());
 		assertEquals(List.of(Resources.getInstance(Locale.GERMAN).getString(I18NConstants.ARCHIVE_IS_KEPT)),
 			refusal.getReasons().stream().map(Reason::getText).toList());
 		assertTrue(archive.tValid());

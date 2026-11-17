@@ -160,7 +160,7 @@ public class VectorIndexSearchTool {
 		for (VectorReadFilter.Hit hit : hits.hits()) {
 			JSONObject entry = new JSONObject();
 			entry.put("score", hit.match().score());
-			entry.put("object", ReadFilter.labelled(hit.source()));
+			entry.put("object", jsonData(readFilter.disclose(hit.source())));
 			entry.put("attributes", jsonData(readFilter.attributesOf(hit.source())));
 			results.add(entry);
 		}

@@ -5,23 +5,15 @@
  */
 package com.top_logic.tl.ai.core.tools.script;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
+import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.ai.tool.api.AnswerMarking;
 import com.top_logic.ai.tool.api.P;
 import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.ai.tool.api.ToolMethod;
 import com.top_logic.ai.tool.api.ToolMode;
-import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredType;
-import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.security.ReadFilter;
 
 /**
  * Answers a question about the data with one TL-Script expression, evaluated on the server.
@@ -75,8 +67,8 @@ public class QueryTool {
 	 *        The expression.
 	 * @param context
 	 *        The run, supplying the rights the result is filtered with.
-	 * @return The result: a value, an object as {@code label [type:...] [id:...]}, or one line per
-	 *         entry of a list; or why it could not be evaluated.
+	 * @return The result as JSON - a value, an object as its identity, an array for a list, an object
+	 *         for a dictionary; or why it could not be evaluated.
 	 */
 	@ToolMethod(
 		description = "Answer a question about the data with one read-only TL-Script expression, "
@@ -87,7 +79,10 @@ public class QueryTool {
 			+ "all(`crm:Customer`).sort((c -> $c.get(`crm:Customer#revenue`)).comparator().desc()).firstElement() "
 			+ "(sort takes a comparator, not a key), or "
 			+ "all(`crm:Customer`).map(c -> $c.get(`crm:Customer#revenue`)).sum(). "
-			+ "Objects come back as label [type:...] [id:...]; a list is cut at 50 entries. "
+			+ "The result is JSON; an object in it comes back as {\"" + ReadFilter.TID + "\": ..., \""
+			+ ReadFilter.TYPE + "\": ..., \"" + ReadFilter.DISPLAY + "\": ...} - pass its " + ReadFilter.TID
+			+ " to other tools. A list longer than " + MAX_ROWS + " entries comes back as {\"" + ReadFilter.ITEMS
+			+ "\": [the first " + MAX_ROWS + "], \"" + ReadFilter.TOTAL + "\": n}. "
 			+ "The expression must not change data. To SHOW objects to the user, call present "
 			+ "with the query instead where you have it.",
 		mode = ToolMode.READ, group = ToolGroups.DATA_READ,
@@ -108,73 +103,13 @@ public class QueryTool {
 			return "Error: " + (result.isRefusal() ? result.getErrorMessage()
 				: QueryLanguage.withReadingHelp(result.getErrorMessage()));
 		}
-		Object visible = ReadFilter.of(context).visible(result.getResult());
-		return ReadFilter.marked("query", render(visible));
-	}
-
-	/** The result as the model reads it: one value, or one line per entry of a list. */
-	static String render(Object value) {
-		if (value instanceof Collection<?> many) {
-			List<Object> entries = new ArrayList<>(many);
-			if (entries.isEmpty()) {
-				return "(empty list)";
-			}
-			StringBuilder out = new StringBuilder();
-			int shown = Math.min(entries.size(), MAX_ROWS);
-			for (int n = 0; n < shown; n++) {
-				if (n > 0) {
-					out.append('\n');
-				}
-				out.append(one(entries.get(n)));
-			}
-			if (entries.size() > shown) {
-				out.append("\n... and ").append(entries.size() - shown).append(" more (")
-					.append(entries.size()).append(" in all). Narrow the expression, aggregate it,")
-					.append(" or show the list with present.");
-			}
-			return out.toString();
+		ReadFilter filter = ReadFilter.of(context);
+		Object visible = filter.visible(result.getResult());
+		String answer = filter.markedJson("query", visible, MAX_ROWS);
+		if (visible instanceof Collection<?> many && many.size() > MAX_ROWS) {
+			return answer + "\nThe list is cut at " + MAX_ROWS + " of " + many.size()
+				+ " entries. Narrow the expression, aggregate it, or show the list with present.";
 		}
-		return one(value);
-	}
-
-	private static String one(Object value) {
-		if (value == null) {
-			return "null";
-		}
-		if (value instanceof TLObject object) {
-			TLStructuredType type = object.tType();
-			if (type == null) {
-				return ReadFilter.labelled(object);
-			}
-			// Rendered here rather than by ReadFilter.labelled, so it is put on the reading list here.
-			ReadFilter.shown(object);
-			return ReadFilter.withId(MetaLabelProvider.INSTANCE.getLabel(object)
-				+ " [type:" + TLModelUtil.qualifiedName(type) + "]", ReadFilter.idOf(object));
-		}
-		if (value instanceof Number number) {
-			double asDouble = number.doubleValue();
-			if (asDouble == Math.rint(asDouble) && !Double.isInfinite(asDouble) && Math.abs(asDouble) < 1e15) {
-				return Long.toString((long) asDouble);
-			}
-			return String.valueOf(number);
-		}
-		if (value instanceof Map<?, ?> map) {
-			StringBuilder out = new StringBuilder("{");
-			for (Map.Entry<?, ?> entry : map.entrySet()) {
-				if (out.length() > 1) {
-					out.append(", ");
-				}
-				out.append(entry.getKey()).append(": ").append(one(entry.getValue()));
-			}
-			return out.append('}').toString();
-		}
-		if (value instanceof Collection<?> nested) {
-			List<String> parts = new ArrayList<>();
-			for (Object element : nested) {
-				parts.add(one(element));
-			}
-			return parts.toString();
-		}
-		return SearchExpression.asString(value);
+		return answer;
 	}
 }

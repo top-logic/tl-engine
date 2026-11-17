@@ -96,7 +96,8 @@ alike:
 A filter on `all(...)` is compiled into the database query for an access on the query root only if,
 for the owner type of the accessed attribute and its concrete specializations, every role holding
 `Discover` also holds `Read`, no access parent is configured, no singleton of these types has grants
-of its own and the attribute has no read grant of its own. An access to a reference attribute on the root is never compiled; otherwise the filter is
+of its own and the attribute has no read grant, neither for its owner type nor for one of its
+specializations. An access to a reference attribute on the root is never compiled; otherwise the filter is
 interpreted.
 
 Model elements (types, attributes, modules, the classifiers of an enumeration) are discoverable and

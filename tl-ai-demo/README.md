@@ -102,8 +102,7 @@ instead of opening the dialog. Without an event in the request, the dialog opens
 Try a page command with a choice of values (#30308): ask "Zeig mir das Programm von KI im
 Mittelstand". Albert runs `openEventTab` with `tab` = `sessions` and the event's id as `event`; the
 page **Veranstaltungen** opens with that event selected and its tab *Programm* open, where the user edits
-the sessions as usual. The tab is one of the ids the parameter's `<options>` allow
-(`com.top_logic.ai.demo.events.EventDetailTabs`); each tab of the event detail is a view file of its
+the sessions as usual. The tab is one of the ids the parameter's `<allowed-values>` list; each tab of the event detail is a view file of its
 own (`events/event-<tab>.view.xml`), so the command opens it with `<show-view>`, one `<case>` per id.
 Without an event, the tab opens for the event selected on the page.
 

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Graph layout of a flow diagram: selectable nodes, a selectable edge, and edges that are not
+	selectable. The edges that are not selectable let clicks pass through to the nodes below them,
+	except at a label that shows a tooltip.
+-->
+<view>
+	<channels>
+		<channel name="selectedElement"/>
+	</channels>
+	<panel>
+		<title>
+			<en>Graph Demo</en>
+			<de>Graph-Demo</de>
+		</title>
+		<flow-diagram selection="selectedElement">
+			<inputs/>
+			<createChart><![CDATA[{
+node = id -> label -> reactFlowSelection(userObject: $id,
+	content: reactFlowFill(fill: "#e3f2fd",
+		content: reactFlowBorder(
+			reactFlowPadding(reactFlowText($label), left: 30, right: 30, top: 14, bottom: 14))));
+
+customer = $node("node:customer", "Customer");
+order    = $node("node:order",    "Order");
+product  = $node("node:product",  "Product");
+invoice  = $node("node:invoice",  "Invoice");
+
+/* Label placed at the end of an edge, reaching into the target node. */
+endLabel = content -> reactFlowDecoration(content: $content, linePosition: 1.0, offsetPosition: "CENTER_TOP");
+
+/* Selectable edge: a click on the line or its label selects the edge. */
+places = reactFlowGraphEdge($customer, $order, priority: 1, targetSymbol: "FILLED_ARROW",
+	decorations: list(reactFlowDecoration(content: reactFlowPadding(reactFlowText("places", fontSize: 10), all: 2), linePosition: 0.5)),
+	selectable: true, userObject: "edge:customer->order");
+
+/* Edge that is not selectable, with a label showing a tooltip over the target node: the label
+   receives the pointer and shows the tooltip, a click elsewhere on the node selects the node. */
+items = reactFlowGraphEdge($order, $product, priority: 1, targetSymbol: "FILLED_ARROW",
+	decorations: list($endLabel(reactFlowTooltip("Each order has one or more products.",
+		reactFlowFill(fill: "#fff3e0", content: reactFlowPadding(reactFlowText("items 1..*", fontSize: 10), all: 2))))));
+
+/* Edge that is not selectable, with a plain label over the target node: a click on the label
+   selects the node below it. */
+billedBy = reactFlowGraphEdge($order, $invoice, priority: 1, targetSymbol: "FILLED_ARROW",
+	decorations: list($endLabel(reactFlowPadding(reactFlowText("billed by", fontSize: 10), all: 2))));
+
+reactFlowChart(
+	root: reactFlowPadding(all: 20,
+		content: reactFlowGraphLayout(
+			list($customer, $order, $product, $invoice),
+			list($places, $items, $billedBy))))
+}]]></createChart>
+		</flow-diagram>
+		<text input="selectedElement"/>
+	</panel>
+</view>

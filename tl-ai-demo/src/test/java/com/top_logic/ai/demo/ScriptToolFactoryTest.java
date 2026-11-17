@@ -104,7 +104,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 
 		ToolResult result = tool.execute(Map.of(MESSAGE, "hello"), ToolContext.EMPTY);
 
-		assertEquals("hello", MarkedResults.disclosed(result.text()));
+		assertEquals("\"hello\"", MarkedResults.disclosed(result.text()));
 	}
 
 	/**
@@ -117,7 +117,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 
 		ToolResult result = tool.execute(Map.of(), ToolContext.EMPTY);
 
-		assertEquals("hi!", MarkedResults.disclosed(result.text()));
+		assertEquals("\"hi!\"", MarkedResults.disclosed(result.text()));
 	}
 
 	/**
@@ -198,7 +198,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 
 			ToolResult result = tool.execute(Map.of("target", id(room)), ToolContext.EMPTY);
 
-			assertEquals("fixture-room", MarkedResults.disclosed(result.text()));
+			assertEquals("\"fixture-room\"", MarkedResults.disclosed(result.text()));
 		} finally {
 			delete(room);
 		}
@@ -220,7 +220,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 			ToolResult result =
 				tool.execute(Map.of("targets", List.of(id(roomA), id(roomB), id(roomC))), ToolContext.EMPTY);
 
-			assertEquals("a,b,c", MarkedResults.disclosed(result.text()));
+			assertEquals("\"a,b,c\"", MarkedResults.disclosed(result.text()));
 		} finally {
 			delete(roomA);
 			delete(roomB);
@@ -240,13 +240,13 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 
 		// Declaration-order call
 		ToolResult result = tool.execute(Map.of("first", "a", "second", "b"), ToolContext.EMPTY);
-		assertEquals("a-b", MarkedResults.disclosed(result.text()));
+		assertEquals("\"a-b\"", MarkedResults.disclosed(result.text()));
 
 		// Reversed insertion order in the map - result must be identical because binding is by name
 		Map<String, Object> reversed = new LinkedHashMap<>();
 		reversed.put("second", "b");
 		reversed.put("first", "a");
-		assertEquals("a-b", MarkedResults.disclosed(tool.execute(reversed, ToolContext.EMPTY).text()));
+		assertEquals("\"a-b\"", MarkedResults.disclosed(tool.execute(reversed, ToolContext.EMPTY).text()));
 	}
 
 	/**
@@ -282,7 +282,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 		assertTrue("Allowed values in schema: " + schema,
 			schema.contains("\"" + Colors.RED + "\"") && schema.contains("\"" + Colors.GREEN + "\""));
 
-		assertEquals(Colors.RED,
+		assertEquals("\"" + Colors.RED + "\"",
 			MarkedResults.disclosed(tool.execute(Map.of("color", Colors.RED), ToolContext.EMPTY).text()));
 
 		ToolResult refused = tool.execute(Map.of("color", "blue"), ToolContext.EMPTY);
@@ -375,7 +375,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 		ToolResult result = singleTool(config)
 			.execute(Map.of("items", List.of("a", "b", "c")), ToolContext.EMPTY);
 
-		assertEquals("3 rows", MarkedResults.disclosed(result.summary()));
+		assertEquals("\"3 rows\"", MarkedResults.disclosed(result.summary()));
 	}
 
 	/**

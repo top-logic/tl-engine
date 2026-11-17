@@ -49,6 +49,7 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.present.ChartKind;
 import com.top_logic.tl.ai.core.tools.present.ChartSpec;
 import com.top_logic.tl.ai.core.tools.present.PresentAs;
@@ -315,7 +316,7 @@ public class TestPresentTool extends BasicTestCase {
 		String result = present(List.of(tid(first)), PANE);
 
 		assertSays("The user now sees the form", result);
-		assertSays("[id:" + tid(first) + "]", result);
+		assertSays("\"" + ReadFilter.TID + "\":\"" + tid(first) + "\"", result);
 		assertEquals(List.of(first), _written);
 		assertEquals(first, _channel.get());
 	}
@@ -397,7 +398,8 @@ public class TestPresentTool extends BasicTestCase {
 		String result = chart(new ChartSpec(ChartKind.BAR, label, "s -> 7"));
 
 		assertSays("a bar chart of", result);
-		assertSays("row: 7 [id:" + tid(first) + "]", result);
+		assertSays("\"" + ReadFilter.TID + "\":\"" + tid(first) + "\"", result);
+		assertSays("\"label\":\"row\",\"value\":7}", result);
 		Presentation shown = (Presentation) _channel.get();
 		assertEquals(PresentAs.CHART, shown.as());
 	}
@@ -529,19 +531,6 @@ public class TestPresentTool extends BasicTestCase {
 		allow();
 
 		present(List.of(tid(first), tid(first)), PANE);
-
-		assertEquals(List.of(first), _written);
-	}
-
-	/**
-	 * A whole {@code label [id:TID]} entry, as a text tool result writes it, names the object it
-	 * carries - a model that copies what it just read is right rather than wrong.
-	 */
-	public void testAnIdCopiedOutOfATextResultWorks() throws Exception {
-		withWindow();
-		allow();
-
-		present(List.of("First [id:" + tid(first) + "]"), PANE);
 
 		assertEquals(List.of(first), _written);
 	}

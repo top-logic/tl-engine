@@ -252,12 +252,12 @@ public class TestReadFilter extends TestCase {
 		assertNull(filter("employee.title").attributesOf(employee));
 	}
 
-	/** The text rendering never sees an object the principal may not read. */
-	public void testTextOfHiddenObjectIsEmpty() {
-		String rendered = filter("visible").text("aTool", HIDDEN);
+	/** The JSON rendering never sees an object the principal may not read. */
+	public void testJsonOfHiddenObjectIsNull() {
+		String rendered = filter("visible").markedJson("aTool", HIDDEN);
 
 		assertTrue("Nothing of the hidden object is rendered: " + rendered,
-			rendered.contains("<untrusted_model_data source=\"aTool\">\n\n</untrusted_model_data>"));
+			rendered.contains("<untrusted_model_data source=\"aTool\">\nnull\n</untrusted_model_data>"));
 	}
 
 	// --- Model data is marked as untrusted, and the marking is not a substitute for filtering. ---
@@ -280,44 +280,45 @@ public class TestReadFilter extends TestCase {
 		assertTrue("the payload survives verbatim", marked.contains("{\"title\": \"Alpha\"}"));
 	}
 
-	/**
-	 * Several values become one line each, so that the model can pick one out of the result.
-	 *
-	 * <p>
-	 * A collection used to be rendered as a single label - TL-Script's own {@code asString} joins
-	 * one - and a run of labels with commas in them is a string nothing can be read out of. For
-	 * model objects each line also carries the object's identifier, which is what a later call
-	 * names it by; that half is pinned by {@code TestObjectIds}, because a label needs a booted
-	 * application and a plain string does not.
-	 * </p>
-	 */
-	public void testSeveralValuesAreOneLineEach() {
-		String rendered = filter("visible").text("aTool", List.of("first", "second", "third"));
+	/** A list is a JSON array, so that the model can pick one value out of the result. */
+	public void testSeveralValuesAreAnArray() {
+		String rendered = filter("visible").markedJson("aTool", List.of("first", "second", "third"));
 
-		assertTrue(rendered, rendered.contains("first\nsecond\nthird"));
+		assertTrue(rendered, rendered.contains("[\"first\",\"second\",\"third\"]"));
 	}
 
-	/** One value in a collection is that value: a list of one is not a list to a reader. */
-	public void testOneValueInACollectionIsThatValue() {
-		String rendered = filter("visible").text("aTool", List.of("only"));
+	/** A list of one value is still a list. */
+	public void testOneValueInACollectionIsAnArray() {
+		String rendered = filter("visible").markedJson("aTool", List.of("only"));
 
-		assertTrue(rendered, rendered.contains(">\nonly\n<"));
+		assertTrue(rendered, rendered.contains(">\n[\"only\"]\n<"));
 	}
 
-	/** An empty collection renders as nothing at all, inside the envelope. */
-	public void testEmptyCollectionRendersNothing() {
-		String rendered = filter("visible").text("aTool", List.of());
+	/** An empty collection is an empty array, inside the envelope. */
+	public void testEmptyCollectionIsAnEmptyArray() {
+		String rendered = filter("visible").markedJson("aTool", List.of());
 
 		assertTrue(rendered,
-			rendered.contains("<untrusted_model_data source=\"aTool\">\n\n</untrusted_model_data>"));
+			rendered.contains("<untrusted_model_data source=\"aTool\">\n[]\n</untrusted_model_data>"));
 	}
 
-	/** The rendering path marks what it renders, so a caller cannot get an unmarked one by accident. */
-	public void testRenderedTextIsMarkedToo() {
-		String rendered = filter("visible").text("aTool", "a stored value");
+	/** The JSON path marks what it renders, so a caller cannot get an unmarked one by accident. */
+	public void testRenderedJsonIsMarkedToo() {
+		String rendered = filter("visible").markedJson("aTool", "a stored value");
 
 		assertTrue(rendered, rendered.contains("<untrusted_model_data source=\"aTool\">"));
-		assertTrue(rendered, rendered.contains("a stored value"));
+		assertTrue(rendered, rendered.contains("\"a stored value\""));
+	}
+
+	/** An unreadable object inside a dictionary leaves the entry out of the JSON object. */
+	public void testHiddenEntryIsLeftOutOfTheJson() {
+		Map<String, Object> input = new LinkedHashMap<>();
+		input.put("owner", HIDDEN);
+		input.put("count", 2.0);
+
+		String rendered = filter("visible").markedJson("aTool", input);
+
+		assertTrue(rendered, rendered.contains(">\n{\"count\":2}\n<"));
 	}
 
 	/**

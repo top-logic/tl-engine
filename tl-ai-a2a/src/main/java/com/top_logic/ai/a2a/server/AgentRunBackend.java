@@ -413,7 +413,7 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 			? "the agent " + agent + " of the application '" + peer + "'"
 			: "the remote client '" + peer + "'";
 		String about = subject == null ? ""
-			: " This conversation is about " + ReadFilter.labelled(subject) + " in this application.";
+			: " This conversation is about " + ReadFilter.identityJson(subject) + " in this application.";
 		return "[A2A message from " + from + ". You talk to that agent, not to a person: what you ask with"
 			+ " askUser goes to it, and your final answer is returned to it." + about + "]\n\n";
 	}

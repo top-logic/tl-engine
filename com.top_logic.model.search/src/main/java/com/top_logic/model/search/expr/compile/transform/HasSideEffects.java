@@ -24,8 +24,15 @@ public class HasSideEffects extends DefaultDescendingVisitor<Boolean, Void> {
 	 */
 	public static final HasSideEffects INSTANCE = new HasSideEffects();
 
-	private HasSideEffects() {
-		// Singleton constructor.
+	/**
+	 * Creates a {@link HasSideEffects}.
+	 *
+	 * <p>
+	 * Use {@link #INSTANCE}; subclasses refine the decision.
+	 * </p>
+	 */
+	protected HasSideEffects() {
+		super();
 	}
 
 	@Override

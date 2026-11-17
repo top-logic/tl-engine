@@ -74,6 +74,7 @@ public class TestDBSchemaUtils extends BasicTestCase {
 		PooledConnection write = pool.borrowWriteConnection();
 		try {
 			DBSchemaUtils.create(write, table);
+			write.commit();
 		} finally {
 			pool.releaseWriteConnection(write);
 		}
@@ -88,6 +89,7 @@ public class TestDBSchemaUtils extends BasicTestCase {
 		PooledConnection write2 = pool.borrowWriteConnection();
 		try {
 			DBSchemaUtils.resetTables(write2, schema, true);
+			write2.commit();
 		} finally {
 			pool.releaseWriteConnection(write2);
 		}
@@ -102,6 +104,7 @@ public class TestDBSchemaUtils extends BasicTestCase {
 		PooledConnection write3 = pool.borrowWriteConnection();
 		try {
 			DBSchemaUtils.resetTables(write3, schema, false);
+			write3.commit();
 		} finally {
 			pool.releaseWriteConnection(write3);
 		}
@@ -211,8 +214,46 @@ public class TestDBSchemaUtils extends BasicTestCase {
 
 			assertTrue(context + "Existing tables and foreign keys must be dropped.",
 				DBSchemaUtils.resetTables(connection, existing, false));
+			connection.commit();
 			assertFalse(context, DBSchemaUtils.exists(connection, TARGET_TABLE));
 			assertFalse(context, DBSchemaUtils.exists(connection, SOURCE_TABLE));
+		}
+	}
+
+	/**
+	 * Test that dropping tables through a given connection does not commit the transaction of the
+	 * caller.
+	 * 
+	 * <p>
+	 * Only missing tables are dropped, since <i>H2</i> commits the transaction with each DDL
+	 * statement.
+	 * </p>
+	 */
+	public void testResetTablesNoCommit() throws SQLException {
+		ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();
+		PooledConnection connection = pool.borrowWriteConnection();
+		try {
+			DBSchema existing = createDBSchema();
+			existing.getTables().add(idTable(TARGET_TABLE));
+			DBSchemaUtils.create(connection, existing);
+			connection.commit();
+			try {
+				DBSchema missing = createDBSchema();
+				missing.getTables().add(idTable(MISSING_TABLE));
+
+				insertId(connection, 1);
+				assertFalse(DBSchemaUtils.tryResetTable(connection, MISSING_TABLE, false));
+				assertFalse(DBSchemaUtils.resetTables(connection, missing, false));
+				connection.rollback();
+
+				assertEquals("Transaction of the caller must not be committed.", 0, idCount(connection));
+			} finally {
+				connection.rollback();
+				DBSchemaUtils.resetTables(connection, existing, false);
+				connection.commit();
+			}
+		} finally {
+			pool.releaseWriteConnection(connection);
 		}
 	}
 

@@ -395,19 +395,19 @@ public class TestOperationDeclarations extends AbstractSearchExpressionTest {
 				+ "<operations><operation name='Show' implied-by='NoSuchOperation'/></operations></class>"));
 	}
 
-	private static void assertNoErrors(ConfigBuilder config) {
+	static void assertNoErrors(ConfigBuilder config) {
 		BufferingProtocol log = config.instantiate();
 		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
 	}
 
-	private static void assertError(String expectedMessagePart, ConfigBuilder config) {
+	static void assertError(String expectedMessagePart, ConfigBuilder config) {
 		BufferingProtocol log = config.instantiate();
 		String errors = log.getErrors().toString();
 		assertTrue("Expected an error containing '" + expectedMessagePart + "': " + errors,
 			errors.contains(expectedMessagePart));
 	}
 
-	private static ConfigBuilder config() {
+	static ConfigBuilder config() {
 		return new ConfigBuilder();
 	}
 
@@ -415,7 +415,7 @@ public class TestOperationDeclarations extends AbstractSearchExpressionTest {
 	 * Builds a configuration of the {@link SecurityConfigurationService} from XML entries and
 	 * instantiates the service, collecting the configuration errors.
 	 */
-	private static class ConfigBuilder {
+	static class ConfigBuilder {
 
 		private final SecurityConfigurationService.Config _config =
 			TypedConfiguration.newConfigItem(SecurityConfigurationService.Config.class);
@@ -434,10 +434,19 @@ public class TestOperationDeclarations extends AbstractSearchExpressionTest {
 			return this;
 		}
 
+		private SecurityConfigurationService _service;
+
 		BufferingProtocol instantiate() {
 			BufferingProtocol log = new BufferingProtocol();
-			new SecurityConfigurationService(new DefaultInstantiationContext(log), _config);
+			_service = new SecurityConfigurationService(new DefaultInstantiationContext(log), _config);
 			return log;
+		}
+
+		/**
+		 * The service created by the last {@link #instantiate()}.
+		 */
+		SecurityConfigurationService service() {
+			return _service;
 		}
 	}
 

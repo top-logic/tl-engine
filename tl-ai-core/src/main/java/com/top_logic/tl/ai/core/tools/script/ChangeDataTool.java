@@ -355,7 +355,8 @@ public class ChangeDataTool {
 	 * empty text, or the list of nothings {@code foreach} returns.
 	 */
 	private static String result(Object value, ModelSecurity security) {
-		Object visible = ReadFilter.forSecurity(security).visible(value);
+		ReadFilter filter = ReadFilter.forSecurity(security);
+		Object visible = filter.visible(value);
 		if (visible instanceof Collection<?> many) {
 			List<Object> values = many.stream().filter(Objects::nonNull).collect(Collectors.toList());
 			if (values.isEmpty()) {
@@ -369,7 +370,7 @@ public class ChangeDataTool {
 		if (visible == null || "".equals(visible)) {
 			return "";
 		}
-		return "\nThe script returns: " + QueryTool.render(visible).replace("\n", "; ");
+		return "\nThe script returns: " + ReadFilter.json(filter.disclose(visible));
 	}
 
 	/**

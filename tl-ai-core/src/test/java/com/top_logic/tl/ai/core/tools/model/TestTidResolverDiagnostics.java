@@ -125,12 +125,11 @@ public class TestTidResolverDiagnostics extends BasicTestCase {
 		assertSame(agent, TidResolver.resolve(ReadFilter.idOf(agent), ModelSecurity.UNCHECKED));
 	}
 
-	/** So is the {@code label [id:TID]} form a text result writes. */
-	public void testTheLabelledFormStillResolves() {
-		TLObject agent = createAgent("labelled");
+	/** An identifier with the white space a model may copy around it still names its object. */
+	public void testASurroundedIdentifierStillResolves() {
+		TLObject agent = createAgent("surrounded");
 
-		assertSame(agent, TidResolver.resolve(ReadFilter.withId("Some agent", ReadFilter.idOf(agent)),
-			ModelSecurity.UNCHECKED));
+		assertSame(agent, TidResolver.resolve(" " + ReadFilter.idOf(agent) + "\n", ModelSecurity.UNCHECKED));
 	}
 
 	/**

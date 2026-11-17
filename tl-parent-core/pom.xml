@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>com.top-logic</groupId>
 		<artifactId>tl-parent-build</artifactId>
-		<version>8.0.0-alpha12</version>
+		<version>0.0.49-FFA</version>
 
 		<relativePath>../tl-parent-build</relativePath>
 	</parent>
@@ -176,7 +176,7 @@
 					<dependency>
 						<groupId>com.top-logic</groupId>
 						<artifactId>tl-build-processor</artifactId>
-						<version>8.0.0-alpha12</version>
+						<version>0.0.49-FFA</version>
 						<classifier>jar-with-dependencies</classifier>
 					</dependency>
 				</dependencies>

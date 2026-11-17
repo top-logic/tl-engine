@@ -47,6 +47,9 @@ public class ColumnDef {
 	/** The value of {@link #ALIGN} for a column ending at the end of its cells. */
 	private static final String ALIGN_END = "end";
 
+	/** @see #setAggregates(boolean) */
+	private static final String AGGREGATE = "aggregate";
+
 	private final String _name;
 
 	private final String _label;
@@ -60,6 +63,8 @@ public class ColumnDef {
 	private int _sortPriority;
 
 	private ColumnAlignment _alignment = ColumnAlignment.START;
+
+	private boolean _aggregates;
 
 	/**
 	 * Creates a new {@link ColumnDef}.
@@ -131,6 +136,21 @@ public class ColumnDef {
 	}
 
 	/**
+	 * Sets whether the column aggregates the rows of a group, so that the header row of a group
+	 * shows that aggregate in it.
+	 *
+	 * <p>
+	 * Only a column that does is sent to the client, as the {@value #AGGREGATE} key with the value
+	 * {@code true}; the client lets the value of the group run into the columns in front of the
+	 * first such column and no further.
+	 * </p>
+	 */
+	public ColumnDef setAggregates(boolean aggregates) {
+		_aggregates = aggregates;
+		return this;
+	}
+
+	/**
 	 * Converts this column definition to a map suitable for JSON serialization in the React state.
 	 */
 	public Map<String, Object> toStateMap() {
@@ -147,6 +167,9 @@ public class ColumnDef {
 		}
 		if (_alignment == ColumnAlignment.END) {
 			map.put(ALIGN, ALIGN_END);
+		}
+		if (_aggregates) {
+			map.put(AGGREGATE, Boolean.TRUE);
 		}
 		return map;
 	}

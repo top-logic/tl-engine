@@ -6,6 +6,8 @@
  * dividers and headings appear follows from the sections that currently show something.
  */
 
+import type { BadgeJson } from 'tl-react-bridge';
+
 export interface SidebarItemBase {
   id: string;
   type: string;
@@ -17,7 +19,8 @@ export interface SidebarItemBase {
 
 export interface NavItem extends SidebarItemBase {
   type: 'nav';
-  badge?: string;
+  /** The badge of the item; absent where it shows none. */
+  badge?: BadgeJson;
 }
 
 export interface CommandItemInfo extends SidebarItemBase {

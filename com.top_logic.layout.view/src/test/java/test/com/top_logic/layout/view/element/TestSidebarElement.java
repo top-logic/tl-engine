@@ -26,6 +26,7 @@ import com.top_logic.layout.react.control.sidebar.NavigationItem;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
 import com.top_logic.layout.react.control.sidebar.SectionItem;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.Badge;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -214,7 +215,8 @@ public class TestSidebarElement extends BasicTestCase {
 
 		_count.set(Integer.valueOf(3));
 
-		assertEquals("The badge names what the channel holds.", "3", item(sidebar, "inner").get(BADGE));
+		assertEquals("The badge names what the channel holds.",
+			Map.of(Badge.CONTENT__PROP, "3"), item(sidebar, "inner").get(BADGE));
 
 		_count.set(null);
 

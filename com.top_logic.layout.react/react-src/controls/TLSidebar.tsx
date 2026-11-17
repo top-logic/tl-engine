@@ -81,6 +81,7 @@ const SidebarNavItem: React.FC<{
   onFocus: (id: string) => void;
 }> = ({ item, active, collapsed, onSelect, tabIndex, itemRef, onFocus }) => {
   const Badge = usePart('Badge');
+  const badge = item.badge?.content;
   return (
     <button
       type="button"
@@ -93,19 +94,19 @@ const SidebarNavItem: React.FC<{
       ref={itemRef}
       onFocus={() => onFocus(item.id)}
     >
-      {collapsed && item.badge ? (
+      {collapsed && badge ? (
         // The count over the corner of the icon: the element around the part places it (view-layer/parts.md).
         <span className="tl-icon-badge">
           <SidebarIcon icon={item.icon} />
           <span className="tl-icon-badge__count">
-            <Badge content={item.badge} />
+            <Badge content={badge} />
           </span>
         </span>
       ) : (
         <SidebarIcon icon={item.icon} />
       )}
       {!collapsed && <span className="tl-menu__label">{item.label}</span>}
-      {!collapsed && item.badge && <Badge content={item.badge} />}
+      {!collapsed && badge && <Badge content={badge} />}
     </button>
   );
 };
@@ -173,7 +174,7 @@ const SidebarGroupFlyout: React.FC<{
       return (
         <MenuItem icon={nav.icon} label={nav.label ?? ''}
           current={nav.id === activeItemId ? 'page' : false}
-          trailing={nav.badge ? <Badge content={nav.badge} /> : undefined}
+          trailing={nav.badge?.content ? <Badge content={nav.badge.content} /> : undefined}
           onSelect={() => { onSelect(nav.id); onClose(); }} />
       );
     }

@@ -136,6 +136,7 @@ export type {
   FieldStateJson,
   TypingFieldStateJson,
   ChildControlJson,
+  BadgeJson,
   ButtonStateJson,
   ToggleButtonStateJson,
   CheckboxStateJson,

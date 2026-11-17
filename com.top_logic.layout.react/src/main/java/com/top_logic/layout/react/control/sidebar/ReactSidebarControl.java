@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -21,6 +22,7 @@ import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ScriptingControl;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.common.BadgeDisplay;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.DirtyChannel;
 import com.top_logic.layout.react.routing.RouteChangeListener;
@@ -362,11 +364,11 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	 * @param itemId
 	 *        The ID of the navigation item to update.
 	 * @param badge
-	 *        The new badge text, or {@code null} to remove the badge.
+	 *        The new badge, or {@code null} to remove the badge.
 	 */
-	public void updateBadge(String itemId, String badge) {
+	public void updateBadge(String itemId, BadgeDisplay badge) {
 		NavigationItem navItem = findNavItem(itemId, _items);
-		if (navItem == null) {
+		if (navItem == null || Objects.equals(navItem.getBadge(), badge)) {
 			return;
 		}
 		navItem.setBadge(badge);
@@ -403,7 +405,7 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	 *
 	 * <p>
 	 * To be called after an item's state was changed through its setters
-	 * ({@link NavigationItem#setBadge(String)}, {@link CommandItem#setHidden(boolean)},
+	 * ({@link NavigationItem#setBadge(BadgeDisplay)}, {@link CommandItem#setHidden(boolean)},
 	 * {@link CommandItem#setDisabled(boolean)}): the items are held as objects and serialized as a
 	 * whole, so a change to one of them reaches the display only with the list it is part of.
 	 * </p>

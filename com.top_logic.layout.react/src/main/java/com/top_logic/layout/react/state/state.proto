@@ -381,6 +381,68 @@ message ChildControl {
 }
 
 /**
+ * A small marker at the corner of an element - a button, a tab, a navigation entry, an avatar - that
+ * counts or marks something waiting there, drawn through the part {@code Badge} of
+ * 'tl-react-bridge'.
+ *
+ * A state property holding a badge is absent where the element shows none. A badge shows either
+ * the {@link #content}, or - where {@link #dot} is set - a dot without content.
+ *
+ * The badge belongs to the accessible name of its element: beside a visible label (a button, a
+ * tab) the content is visible text that is read with the label; on an element without visible
+ * text (an icon, an avatar) and for a dot the badge is an image named by its {@link #label}, or by
+ * its content where there is no label.
+ */
+message Badge {
+	/**
+	 * The color role of a badge.
+	 */
+	enum Role {
+		/** The color of the brand. */
+		@Name("brand")
+		BRAND;
+
+		/** Something failed. */
+		@Name("error")
+		ERROR;
+
+		/** Something calls for attention before it fails. */
+		@Name("warning")
+		WARNING;
+
+		/** Something went well. */
+		@Name("success")
+		SUCCESS;
+
+		/** Something to know. */
+		@Name("info")
+		INFO;
+	}
+
+	/**
+	 * What the badge shows: a count of at most two digits, the overflow {@code 99+}, or a short
+	 * text. Absent for a {@link #dot}.
+	 */
+	string content;
+
+	/**
+	 * Whether the badge is a dot marking the element without counting.
+	 */
+	bool dot;
+
+	/**
+	 * The color role. Absent means {@link Role#BRAND}.
+	 */
+	Role role;
+
+	/**
+	 * The accessible name of the badge where its content does not say it itself (a dot, a count
+	 * standing alone at an icon). Absent: the content names the badge.
+	 */
+	string label;
+}
+
+/**
  * State of a toggle button, the component {@code TLToggleButton}.
  *
  * A click sends the command {@code click} to the server.

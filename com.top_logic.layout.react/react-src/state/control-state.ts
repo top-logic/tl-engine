@@ -381,6 +381,70 @@ export interface ChildControlJson {
 }
 
 /**
+ * A small marker at the corner of an element - a button, a tab, a navigation entry, an avatar - that
+ * counts or marks something waiting there, drawn through the part `Badge` of
+ * 'tl-react-bridge'.
+ *
+ * A state property holding a badge is absent where the element shows none. A badge shows either
+ * the {@link BadgeJson.content}, or - where {@link BadgeJson.dot} is set - a dot without content.
+ *
+ * The badge belongs to the accessible name of its element: beside a visible label (a button, a
+ * tab) the content is visible text that is read with the label; on an element without visible
+ * text (an icon, an avatar) and for a dot the badge is an image named by its {@link BadgeJson.label}, or by
+ * its content where there is no label.
+ */
+export interface BadgeJson {
+	/**
+	 * What the badge shows: a count of at most two digits, the overflow `99+`, or a short
+	 * text. Absent for a {@link BadgeJson.dot}.
+	 */
+	content: string;
+
+	/**
+	 * Whether the badge is a dot marking the element without counting.
+	 */
+	dot: boolean;
+
+	/**
+	 * The color role. Absent means `'brand'`.
+	 */
+	role: BadgeJson.Role;
+
+	/**
+	 * The accessible name of the badge where its content does not say it itself (a dot, a count
+	 * standing alone at an icon). Absent: the content names the badge.
+	 */
+	label: string;
+}
+
+export namespace BadgeJson {
+	/**
+	 * The color role of a badge.
+	 */
+	export type Role =
+		/**
+		 * The color of the brand.
+		 */
+		| 'brand'
+		/**
+		 * Something failed.
+		 */
+		| 'error'
+		/**
+		 * Something calls for attention before it fails.
+		 */
+		| 'warning'
+		/**
+		 * Something went well.
+		 */
+		| 'success'
+		/**
+		 * Something to know.
+		 */
+		| 'info';
+}
+
+/**
  * State of a toggle button, the component `TLToggleButton`.
  *
  * A click sends the command `click` to the server.

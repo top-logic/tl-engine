@@ -247,6 +247,25 @@
 								<step attribute="TestSecurityCoverage:CreatedBySelf#owner"/>
 							</path>
 						</rule>
+						<!-- Role sources of TestClassicDiscoverForm: the owner edits a holder and discovers a target. -->
+						<rule id="TestDiscoverForm_holder"
+							inherit="true"
+							meta-element="TestDiscoverForm:Holder"
+							role="TestDiscoverForm.Editor"
+						>
+							<path>
+								<step attribute="TestDiscoverForm:Holder#owner"/>
+							</path>
+						</rule>
+						<rule id="TestDiscoverForm_target"
+							inherit="true"
+							meta-element="TestDiscoverForm:Target"
+							role="TestDiscoverForm.Editor"
+						>
+							<path>
+								<step attribute="TestDiscoverForm:Target#owner"/>
+							</path>
+						</rule>
 					</rules>
 				</role-rules>
 
@@ -512,6 +531,28 @@
 					<class name="TestSecurityCoverageInternal:MarkedInModule"
 						internal="true"
 					/>
+					<module name="TestDiscoverForm">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestDiscoverForm.Editor"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="TestDiscoverForm.Editor"
+						/>
+						<grant
+							inherit="true"
+							operation="Create"
+							roles="TestDiscoverForm.Editor"
+						/>
+						<grant
+							inherit="true"
+							operation="Delete"
+							roles="TestDiscoverForm.Editor"
+						/>
+					</module>
 				</security-config>
 			</instance>
 		</config>
@@ -540,6 +581,7 @@
 					<role name="TestSecurityCoverage.ContainerCreator"/>
 					<role name="TestSecurityCoverage.SelfCreator"/>
 					<role name="TestSecurityCoverage.ItemCreator"/>
+					<role name="TestDiscoverForm.Editor"/>
 				</roles>
 			</instance>
 		</config>
@@ -556,6 +598,7 @@
 					<declaration file="/WEB-INF/model/TestXMLInstanceImporter.model.xml"/>
 					<declaration file="/WEB-INF/model/TestSecurityCoverage.model.xml"/>
 					<declaration file="/WEB-INF/model/TestPathNavigation.model.xml"/>
+					<declaration file="/WEB-INF/model/TestDiscoverForm.model.xml"/>
 				</declarations>
 				<settings>
 					<module name="TestXMLInstanceImporter"

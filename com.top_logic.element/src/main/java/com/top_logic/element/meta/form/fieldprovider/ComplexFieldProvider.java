@@ -23,6 +23,7 @@ import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.constraints.GenericMandatoryConstraint;
 import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.layout.form.model.utility.DiscoverableOptions;
 import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
@@ -142,7 +143,7 @@ public class ComplexFieldProvider extends AbstractSelectFieldProvider
 
 	private OptionModel<?> filterOptions(OptionModel<?> options, EditContext editContext) {
 		if (!(options instanceof ListOptionModel)) {
-			return options;
+			return DiscoverableOptions.discoverable(options);
 		}
 		ListOptionModel<?> baseListModel = (ListOptionModel<?>) options;
 		return new LazyListOptionModel<Object>(

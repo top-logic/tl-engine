@@ -19,6 +19,7 @@ import java.util.Map.Entry;
 import java.util.RandomAccess;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLModelPart;
@@ -95,6 +96,37 @@ public final class DiscoverRight {
 	}
 
 	/**
+	 * Whether the current user may discover the given single value.
+	 *
+	 * @see #isDiscoverable(Person, Object)
+	 */
+	public static boolean isDiscoverable(Object value) {
+		return isDiscoverable(TLContext.currentUser(), value);
+	}
+
+	/**
+	 * Whether the given user may discover the given single value.
+	 *
+	 * <p>
+	 * A value that is no {@link TLObject} (a string, a number, a node of a technical tree) is
+	 * discoverable: only business objects are protected. A {@link TLModelPart model element} is
+	 * discoverable for every user, see {@link ModelAccessRights#isDiscoverAllowed(Person, TLObject)}.
+	 * The value is not inspected further: a collection is a single value here, use
+	 * {@link #filter(Person, Object, Consumer)} to filter its elements.
+	 * </p>
+	 *
+	 * @param user
+	 *        The user whose discover right decides.
+	 * @param value
+	 *        The value to check. May be <code>null</code>.
+	 */
+	public static boolean isDiscoverable(Person user, Object value) {
+		// The access rights are only needed for an object: a value without objects is accepted also
+		// when the security service is not active.
+		return !(value instanceof TLObject object) || ModelAccessRights.getInstance().isDiscoverAllowed(user, object);
+	}
+
+	/**
 	 * Checks that the current user may discover every object the given new value adds to the given
 	 * reference.
 	 *
@@ -115,6 +147,42 @@ public final class DiscoverRight {
 	 *         current user cannot discover.
 	 */
 	public static void checkNewTargets(TLObject self, TLStructuredTypePart part, Object newValue) {
+		checkNewTargets(self, part, () -> self.tValue(part), newValue);
+	}
+
+	/**
+	 * Checks that the current user may discover every object the given new value adds to the given
+	 * stored value of a reference.
+	 *
+	 * <p>
+	 * Used where the object holding the reference does not exist yet (the stored value of an object
+	 * being created is empty) or where its stored value is not its current value.
+	 * </p>
+	 *
+	 * @param self
+	 *        The object to modify, used to describe the denial. May be a form overlay of an object
+	 *        that is not yet created.
+	 * @param part
+	 *        The attribute of the given object to modify. Only references are checked.
+	 * @param storedValue
+	 *        The stored value of the reference. Objects contained in it may stay even if the user
+	 *        cannot discover them.
+	 * @param newValue
+	 *        The value that is going to be stored: a single object, a {@link Collection} or an array
+	 *        of objects, or <code>null</code>.
+	 * @throws TopLogicException
+	 *         If the new value refers to an object that is not contained in the stored value and that
+	 *         the current user cannot discover.
+	 *
+	 * @see #checkNewTargets(TLObject, TLStructuredTypePart, Object)
+	 */
+	public static void checkNewTargets(TLObject self, TLStructuredTypePart part, Object storedValue,
+			Object newValue) {
+		checkNewTargets(self, part, () -> storedValue, newValue);
+	}
+
+	private static void checkNewTargets(TLObject self, TLStructuredTypePart part, Supplier<?> storedValue,
+			Object newValue) {
 		if (!(part instanceof TLReference)) {
 			return;
 		}
@@ -122,7 +190,7 @@ public final class DiscoverRight {
 		if (newTargets.isEmpty()) {
 			return;
 		}
-		Set<?> stored = asSet(self.tValue(part));
+		Set<?> stored = asSet(storedValue.get());
 		ModelAccessRights accessRights = ModelAccessRights.getInstance();
 		for (Object target : newTargets) {
 			if (target instanceof TLObject object && !stored.contains(object)
@@ -187,9 +255,7 @@ public final class DiscoverRight {
 		}
 
 		private Object filterObject(TLObject value) {
-			// The access rights are only needed for an object: a value without objects is filtered
-			// also when the security service is not active.
-			if (ModelAccessRights.getInstance().isDiscoverAllowed(_user, value)) {
+			if (isDiscoverable(_user, value)) {
 				return value;
 			}
 			if (_onDropped != null) {

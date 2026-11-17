@@ -56,6 +56,13 @@ public abstract class AbstractListBinding<V, E> implements ConfigurationValueBin
 		this.valueProvider = valueProvider;
 	}
 
+	/**
+	 * The {@link ConfigurationValueProvider} for parsing and serializing the list element values.
+	 */
+	public ConfigurationValueProvider<E> getElementFormat() {
+		return valueProvider;
+	}
+
 	@Override
 	public V loadConfigItem(XMLStreamReader in, V baseValue)
 			throws XMLStreamException, ConfigurationException {

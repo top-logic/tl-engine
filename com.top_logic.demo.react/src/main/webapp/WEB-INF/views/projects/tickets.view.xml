@@ -8,7 +8,8 @@
 	keyboard cursor, or its chevron button - pushes the ticket's detail, announced with the
 	ticket's title.
 	
-	The toolbar creates a ticket in the project of the milestone and deletes the selected one. The
+	The toolbar opens the selected ticket for editing in a frame whose form starts in edit mode,
+	creates a ticket in the project of the milestone and deletes the selected one. The
 	project is derived from the milestone, whose container it is. The draft of a created ticket
 	belongs to the milestone of the list, so the dialog shows it preset. The table observes tickets,
 	so both are reflected in the rows without a reload. A created ticket draws the next number of
@@ -65,6 +66,21 @@
 					</with-result>
 				</create-transient>
 			</generic-command>
+			<navigate-push
+				bind-input-to="ticket"
+				frame="ticket-edit"
+				image="css:bi bi-pencil"
+				inputs="ticket"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Edit</en>
+					<de>Bearbeiten</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+			</navigate-push>
 			<generic-command
 				image="css:bi bi-trash"
 				inputs="ticket"

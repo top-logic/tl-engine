@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,6 +110,12 @@ public class TileStackScope {
 
 	private final Map<String, FrameRoute> _byId;
 
+	/**
+	 * The channels the parameter conversions of each declaration read, as
+	 * {@link FrameRoute#resolveInputs(ViewContext)} resolves them for this stack.
+	 */
+	private final Map<FrameRoute, Map<String, List<ViewChannel>>> _inputs;
+
 	/** The place of the stack in the display, {@code null} for a scope created without it. */
 	private final RevealPath _place;
 
@@ -148,7 +155,7 @@ public class TileStackScope {
 	 *        The declarations of the frames that may follow the initial view, in declaration order.
 	 */
 	public TileStackScope(ViewChannel pathChannel, List<FrameRoute> frameRoutes) {
-		this(pathChannel, FrameRoute.initial(null, frameRoutes), null, null, null);
+		this(pathChannel, FrameRoute.initial(null, frameRoutes), null, null, null, null);
 	}
 
 	/**
@@ -170,12 +177,24 @@ public class TileStackScope {
 	 *        declaration} is named anew when one of them changes. Asked whenever such a frame is
 	 *        put on the path. {@code null} keeps every label as computed when the frame was put on
 	 *        the path. A scope observing objects must be {@link #dispose() disposed}.
+	 * @param declaringView
+	 *        The context of the view declaring the stack, in which the
+	 *        {@link FrameParamConfig#getInputs() inputs} of the frame parameters are resolved, see
+	 *        {@link FrameRoute#resolveInputs(ViewContext)}. {@code null} only for a stack whose
+	 *        parameters read no inputs.
+	 * @throws IllegalArgumentException
+	 *         If an input of a frame parameter names a channel the view declaring the stack does not
+	 *         know.
 	 */
 	public TileStackScope(ViewChannel pathChannel, FrameRoute root, RevealPath place, TileStackElement element,
-			Supplier<ModelScope> modelScope) {
+			Supplier<ModelScope> modelScope, ViewContext declaringView) {
 		_pathChannel = pathChannel;
 		_root = root;
 		_byId = Collections.unmodifiableMap(index(root));
+		_inputs = new IdentityHashMap<>();
+		for (FrameRoute route : _byId.values()) {
+			_inputs.put(route, route.resolveInputs(declaringView));
+		}
 		_place = place;
 		_element = element;
 		_modelScope = modelScope;
@@ -262,6 +281,19 @@ public class TileStackScope {
 	 */
 	public FrameRoute root() {
 		return _root;
+	}
+
+	/**
+	 * The channels the parameter conversions of the given declaration read in this stack, to be
+	 * handed to {@link FrameRoute#segment(Map, Map)} and
+	 * {@link FrameRoute#resolveParams(com.top_logic.layout.react.routing.RouteMatch, List, Map)}.
+	 *
+	 * @param declaration
+	 *        A declaration of the stack.
+	 */
+	public Map<String, List<ViewChannel>> inputs(FrameRoute declaration) {
+		Map<String, List<ViewChannel>> result = _inputs.get(declaration);
+		return result == null ? Map.of() : result;
 	}
 
 	/**

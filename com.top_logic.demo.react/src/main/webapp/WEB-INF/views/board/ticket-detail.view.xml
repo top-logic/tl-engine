@@ -20,6 +20,7 @@
 			with-inset="true"
 		>
 			<field attribute="name"/>
+			<field attribute="key"/>
 			<field attribute="status"/>
 			<field attribute="statusLabel"/>
 			<field attribute="publicStatus"/>

@@ -76,6 +76,21 @@ public class TestTypeGrants extends BasicTestCase {
 	/** The attribute of {@link #PART_ONLY} granting Read. */
 	private static final String PART_ONLY_LABEL = PART_ONLY + "#label";
 
+	/** Type whose attribute {@link #NAME} denies writing to every role. */
+	private static final String NAMED = MODULE + ":Named";
+
+	/** Specialization of {@link #NAMED} with attribute rights of its own for {@link #NAME}. */
+	private static final String FOO = MODULE + ":Foo";
+
+	/** Specialization of {@link #FOO}. */
+	private static final String SUB = MODULE + ":Sub";
+
+	/** Specialization of {@link #NAMED} inheriting its attribute rights. */
+	private static final String BAR = MODULE + ":Bar";
+
+	/** The attribute of {@link #NAMED} with attribute rights per type. */
+	private static final String NAME = NAMED + "#name";
+
 	/** The composition {@link #EXPLICIT_PART} delegates through. */
 	private static final String EXPLICIT_PARTS = COVERED + "#explicitParts";
 
@@ -326,14 +341,71 @@ public class TestTypeGrants extends BasicTestCase {
 		assertTrue(restricted.granted());
 		assertTrue(restricted.pending());
 		assertEquals(List.of("grant Read " + ROLE_READER),
-			describe(_editor.storedRules(SecurityDefinitionEditor.entryName(owner))));
+			describe(_editor.storedRules(SecurityDefinitionEditor.entryName(type(COVERED), owner))));
 
 		grants.setGranted(row, READ, false);
 		Cell lifted = grants.getCell(row, READ);
 		assertFalse("Revoking the last role lifts the restriction.", lifted.restricted());
 		assertFalse(lifted.pending());
 		assertEquals("The underlying layers do not restrict the attribute, so nothing is stored.", List.of(),
-			describe(_editor.storedRules(SecurityDefinitionEditor.entryName(owner))));
+			describe(_editor.storedRules(SecurityDefinitionEditor.entryName(type(COVERED), owner))));
+	}
+
+	/**
+	 * Attribute rights configured for a type appear for that type and its specializations only.
+	 */
+	public void testAttributeRightsPerType() throws Exception {
+		TLStructuredTypePart name = attribute(NAME);
+		Row read = new Row(name, reader());
+
+		assertFalse(grants(NAMED).getCell(read, READ).restricted());
+		assertFalse("Not for a sibling.", grants(BAR).getCell(read, READ).restricted());
+		for (String type : List.of(FOO, SUB)) {
+			Cell cell = grants(type).getCell(read, READ);
+			assertTrue(type, cell.restricted());
+			assertTrue(type, cell.granted());
+			assertFalse(type, cell.pending());
+		}
+
+		Cell inheritedWrite = grants(BAR).getCell(read, WRITE);
+		assertTrue("Bar inherits the write restriction of Named.", inheritedWrite.restricted());
+		assertFalse(inheritedWrite.granted());
+		assertFalse(inheritedWrite.pending());
+		assertFalse("The rights of Foo replace those of Named.", grants(FOO).getCell(read, WRITE).restricted());
+	}
+
+	/**
+	 * A grant on an attribute changed for a type is stored for that type alone, and keeps the
+	 * attribute rights the type inherits for the other operations.
+	 */
+	public void testAttributeGrantStoredForType() throws Exception {
+		TLStructuredTypePart name = attribute(NAME);
+		Row read = new Row(name, reader());
+
+		TypeGrants bar = grants(BAR);
+		bar.setGranted(read, READ, true);
+
+		assertEquals(List.of("grant Write", "grant Read " + ROLE_READER),
+			describe(_editor.storedRules(SecurityDefinitionEditor.entryName(type(BAR), name))));
+		assertEquals("The generalization is not changed.", List.of(),
+			describe(_editor.storedRules(SecurityDefinitionEditor.entryName(type(NAMED), name))));
+
+		Cell readCell = bar.getCell(read, READ);
+		assertTrue(readCell.restricted());
+		assertTrue(readCell.granted());
+		assertTrue(readCell.pending());
+		Cell writeCell = bar.getCell(read, WRITE);
+		assertTrue("The inherited write restriction is kept.", writeCell.restricted());
+		assertFalse(writeCell.granted());
+		assertFalse(writeCell.pending());
+
+		assertFalse("Named is not changed.", grants(NAMED).getCell(read, READ).restricted());
+
+		bar.setGranted(read, READ, false);
+		assertFalse("Revoking the last role lifts the restriction.", bar.getCell(read, READ).restricted());
+		assertTrue(bar.getCell(read, WRITE).restricted());
+		assertEquals(List.of("grant Write"),
+			describe(_editor.storedRules(SecurityDefinitionEditor.entryName(type(BAR), name))));
 	}
 
 	/**

@@ -124,6 +124,7 @@
 								with-inset="true"
 							>
 								<field attribute="name"/>
+								<field attribute="key"/>
 								<field attribute="status"/>
 								<field attribute="publicStatus"/>
 								<field attribute="headline"/>

@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.IdentityHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -152,20 +151,7 @@ public interface ChannelCondition {
 	 *         the conditions, at the latest when it is disposed itself.
 	 */
 	static Registration observe(Collection<? extends ChannelCondition> conditions, Runnable onChange) {
-		List<ViewChannel> channels = union(conditions);
-		if (channels.isEmpty()) {
-			return Registration.NONE;
-		}
-		ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> onChange.run();
-		Set<Registration> registrations = new LinkedHashSet<>();
-		for (ViewChannel channel : channels) {
-			registrations.add(channel.addListener(listener));
-		}
-		return Registration.onDispose(() -> {
-			for (Registration registration : registrations) {
-				registration.dispose();
-			}
-		});
+		return ChannelInputs.observe(union(conditions), onChange);
 	}
 
 }

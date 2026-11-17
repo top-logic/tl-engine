@@ -4,6 +4,8 @@ export { registerRootWrapper, DEFAULT_ROOT_WRAPPER_ORDER } from './bridge/root-w
 export type { RootWrapper, RootWrapperOptions } from './bridge/root-wrapper';
 export { connect, expectEvents, subscribe, unsubscribe } from './bridge/sse-client';
 export {
+  MOUNT_ATTRIBUTE,
+  findMountPoint,
   mount,
   mountField,
   unmount,
@@ -173,6 +175,7 @@ export { lockMode, THEME_CLIENT_API, LOCK_MODE_FUNCTION } from './bridge/theme-m
 export type { ThemeMode } from './bridge/theme-mode';
 export { rootClassName, stateAttr } from './bridge/css';
 export { tokenPx, tokenMs, useTokenPx, useTokenSwitch } from './bridge/token-px';
+export { useElementWidth } from './bridge/element-size';
 export { isEditorTarget } from './bridge/editor-target';
 export { filterOptions, labelMatches } from './bridge/filter-options';
 export { useFocusAfterRemove } from './bridge/focus-after-remove';

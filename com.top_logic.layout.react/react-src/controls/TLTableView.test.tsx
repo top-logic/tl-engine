@@ -10,7 +10,7 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 
 // The bridge first, as the page loads it: the bridge entry reaches it through modules that the SSE client imports
 // as well, and these must see the mocked SSE client.
-import { mount, unmount } from '../bridge/tl-react-bridge';
+import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
 import { React, register, registerPart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import TLTableView from './TLTableView';
@@ -99,7 +99,7 @@ beforeAll(() => {
 
 afterEach(async () => {
   act(() => unmount(TABLE_ID));
-  document.getElementById(TABLE_ID)?.remove();
+  findMountPoint(TABLE_ID)?.remove();
   vi.unstubAllGlobals();
   await settle();
 });
@@ -125,7 +125,7 @@ function mountTable(state: Record<string, unknown>): void {
     return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
   }));
   const element = document.createElement('div');
-  element.id = TABLE_ID;
+  element.setAttribute(MOUNT_ATTRIBUTE, TABLE_ID);
   document.body.appendChild(element);
   act(() => mount(TABLE_ID, 'TLTableView', {
     columns: [

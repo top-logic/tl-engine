@@ -10,6 +10,7 @@ import junit.framework.TestCase;
 import com.top_logic.basic.json.schema.JsonSchemaParser;
 import com.top_logic.basic.json.schema.JsonSchemaWriter;
 import com.top_logic.basic.json.schema.model.ArraySchema;
+import com.top_logic.basic.json.schema.model.ConstSchema;
 import com.top_logic.basic.json.schema.model.EnumSchema;
 import com.top_logic.basic.json.schema.model.NumericSchema;
 import com.top_logic.basic.json.schema.model.ObjectSchema;
@@ -108,9 +109,28 @@ public class TestJsonSchemaParser extends TestCase {
 		assertTrue("Should be EnumSchema", schema instanceof EnumSchema);
 		EnumSchema enumSchema = (EnumSchema) schema;
 		assertEquals("Should have 3 values", 3, enumSchema.getEnumLiterals().size());
-		assertTrue("Should contain 'red'", enumSchema.getEnumLiterals().contains("red"));
-		assertTrue("Should contain 'green'", enumSchema.getEnumLiterals().contains("green"));
-		assertTrue("Should contain 'blue'", enumSchema.getEnumLiterals().contains("blue"));
+		assertTrue("Should contain 'red'", enumSchema.getEnumLiterals().contains("\"red\""));
+		assertTrue("Should contain 'green'", enumSchema.getEnumLiterals().contains("\"green\""));
+		assertTrue("Should contain 'blue'", enumSchema.getEnumLiterals().contains("\"blue\""));
+	}
+
+	/**
+	 * Tests that enum literals, constants, defaults, and examples are read as JSON values in their
+	 * JSON-serialized form.
+	 */
+	public void testParseJsonValueLiterals() throws Exception {
+		EnumSchema enumSchema = (EnumSchema) JsonSchemaParser.parse("{\"enum\": [1, \"two\", true, null, 2.5]}");
+		assertEquals(java.util.List.of("1", "\"two\"", "true", "null", "2.5"), enumSchema.getEnumLiterals());
+
+		ConstSchema constSchema = (ConstSchema) JsonSchemaParser.parse("{\"const\": 42}");
+		assertEquals("42", constSchema.getConstValue());
+
+		Schema numeric = JsonSchemaParser.parse("{\"type\": \"integer\", \"default\": 3, \"examples\": [1, \"x\"]}");
+		assertEquals("3", numeric.getDefaultValue());
+		assertEquals(java.util.List.of("1", "\"x\""), numeric.getExamples());
+
+		String json = "{\"enum\":[1,\"two\",true,null]}";
+		assertEquals(json, JsonSchemaWriter.toJson(JsonSchemaParser.parse(json)));
 	}
 
 	/**

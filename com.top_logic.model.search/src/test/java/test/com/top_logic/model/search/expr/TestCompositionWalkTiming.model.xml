@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model>
+	<module name="TestCompositionWalkTiming">
+		<class name="Part"
+			abstract="true"
+		>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<reference name="note"
+					composite="true"
+					type="Note"
+				/>
+				<reference name="notes"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Note"
+				/>
+				<reference name="related"
+					multiple="true"
+					type="Part"
+				/>
+			</attributes>
+		</class>
+
+		<class name="Note">
+			<generalizations>
+				<generalization type="Part"/>
+			</generalizations>
+		</class>
+
+		<class name="Root">
+			<generalizations>
+				<generalization type="Part"/>
+			</generalizations>
+			<attributes>
+				<reference name="groups1"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Group"
+				/>
+				<reference name="groups2"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Group"
+				/>
+				<reference name="groups3"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Group"
+				/>
+				<reference name="groups4"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Group"
+				/>
+			</attributes>
+		</class>
+
+		<class name="Group">
+			<generalizations>
+				<generalization type="Part"/>
+			</generalizations>
+			<attributes>
+				<reference name="head"
+					composite="true"
+					type="Element"
+				/>
+				<reference name="elements1"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Element"
+				/>
+				<reference name="elements2"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Element"
+				/>
+				<reference name="elements3"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Element"
+				/>
+				<reference name="elements4"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Element"
+				/>
+				<reference name="elements5"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Element"
+				/>
+				<reference name="elements6"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Element"
+				/>
+				<reference name="elements7"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Element"
+				/>
+				<reference name="elements8"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Element"
+				/>
+			</attributes>
+		</class>
+
+		<class name="Element">
+			<generalizations>
+				<generalization type="Part"/>
+			</generalizations>
+			<attributes>
+				<reference name="main"
+					composite="true"
+					type="Leaf"
+				/>
+				<reference name="leaves1"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Leaf"
+				/>
+				<reference name="leaves2"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Leaf"
+				/>
+				<reference name="leaves3"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Leaf"
+				/>
+				<reference name="leaves4"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Leaf"
+				/>
+				<reference name="leaves5"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Leaf"
+				/>
+				<reference name="leaves6"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Leaf"
+				/>
+				<reference name="leaves7"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Leaf"
+				/>
+				<reference name="leaves8"
+					composite="true"
+					multiple="true"
+					ordered="true"
+					type="Leaf"
+				/>
+			</attributes>
+		</class>
+
+		<class name="Leaf">
+			<generalizations>
+				<generalization type="Part"/>
+			</generalizations>
+		</class>
+	</module>
+</model>

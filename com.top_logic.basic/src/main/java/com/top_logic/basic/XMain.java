@@ -26,6 +26,7 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 
 import com.top_logic.basic.XMLProperties.XMLPropertiesConfig;
+import com.top_logic.basic.core.workspace.ApplicationResources;
 import com.top_logic.basic.io.WrappedIOException;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
@@ -443,8 +444,9 @@ public class XMain extends Main {
 	 */
 	protected void fetchMultiLoadProps() {
 		// The file manager is needed for the configuration to resolve files
-		List<Path> resourcePaths = Workspace.applicationModules(_deployAspects);
-		FileManager multiLoaderFileManager = MultiFileManager.createMultiFileManager(resourcePaths);
+		ApplicationResources resources = Workspace.applicationResources(_deployAspects);
+		FileManager multiLoaderFileManager =
+			MultiFileManager.createMultiFileManager(resources.resourceDirs(), resources.topLevelWebapp());
 		FileManager.setInstance(multiLoaderFileManager);
     }
 

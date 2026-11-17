@@ -11,6 +11,7 @@ import com.top_logic.basic.json.schema.JsonSchemaSerializer;
 import com.top_logic.basic.json.schema.JsonSchemaWriter;
 import com.top_logic.basic.json.schema.model.ArraySchema;
 import com.top_logic.basic.json.schema.model.BooleanSchema;
+import com.top_logic.basic.json.schema.model.ConstSchema;
 import com.top_logic.basic.json.schema.model.EnumSchema;
 import com.top_logic.basic.json.schema.model.JsonSchemaDocument;
 import com.top_logic.basic.json.schema.model.NullSchema;
@@ -155,20 +156,40 @@ public class TestJsonSchemaSerializer extends TestCase {
 		EnumSchema statusSchema = EnumSchema.create()
 			.setTitle("Status")
 			.setDescription("Order status")
-			.addEnumLiteral("pending")
-			.addEnumLiteral("processing")
-			.addEnumLiteral("shipped")
-			.addEnumLiteral("delivered")
-			.addEnumLiteral("cancelled");
+			.addEnumLiteral("\"pending\"")
+			.addEnumLiteral("\"processing\"")
+			.addEnumLiteral("\"shipped\"")
+			.addEnumLiteral("\"delivered\"")
+			.addEnumLiteral("\"cancelled\"");
 
 		String json = JsonSchemaWriter.toJson(statusSchema, true);
 
 		assertTrue("Should have enum", json.contains("\"enum\""));
 		assertTrue("Should have pending", json.contains("\"pending\""));
 		assertTrue("Should have delivered", json.contains("\"delivered\""));
+		assertFalse("Literals are written as JSON values, not quoted again", json.contains("\\\""));
 
 		System.out.println("Enum Schema:");
 		System.out.println(json);
+	}
+
+	/**
+	 * Tests that enum literals, constants, defaults, and examples are written as the JSON values
+	 * they describe.
+	 */
+	public void testJsonValueLiterals() {
+		assertEquals("{\"enum\":[1,\"two\",true,null]}", JsonSchemaWriter.toJson(EnumSchema.create()
+			.addEnumLiteral("1")
+			.addEnumLiteral("\"two\"")
+			.addEnumLiteral("true")
+			.addEnumLiteral("null")));
+		assertEquals("{\"const\":42}", JsonSchemaWriter.toJson(ConstSchema.create().setConstValue("42")));
+		assertEquals("{\"default\":3,\"examples\":[1,2],\"type\":\"integer\"}",
+			JsonSchemaWriter.toJson(NumericSchema.create()
+				.setIntegerOnly(true)
+				.setDefaultValue("3")
+				.addExample("1")
+				.addExample("2")));
 	}
 
 	/**
@@ -254,8 +275,9 @@ public class TestJsonSchemaSerializer extends TestCase {
 
 		assertTrue("Should have title", json.contains("\"title\": \"Username\""));
 		assertTrue("Should have description", json.contains("\"description\""));
-		assertTrue("Should have default", json.contains("\"default\""));
-		assertTrue("Should have examples", json.contains("\"examples\""));
+		assertTrue("Should have default", json.contains("\"default\": \"anonymous\""));
+		assertTrue("Should have examples", json.contains("\"john_doe\""));
+		assertFalse("Default and examples are written as JSON values, not quoted again", json.contains("\\\""));
 
 		System.out.println("Annotated Schema:");
 		System.out.println(json);

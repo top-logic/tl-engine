@@ -6,8 +6,13 @@
 package com.top_logic.layout.view.channel;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.ViewContext;
 
 /**
@@ -67,6 +72,35 @@ public class ChannelInputs {
 		}
 		System.arraycopy(trailing, 0, arguments, inputs.size(), trailing.length);
 		return arguments;
+	}
+
+	/**
+	 * Follows the given channels: runs the given action whenever one of them takes a new value,
+	 * once per change, however often a channel occurs among them.
+	 *
+	 * @param channels
+	 *        The channels to follow.
+	 * @param onChange
+	 *        What to run, typically evaluating anew what depends on the channels.
+	 * @return The registration ending the observation. It has to be disposed by whoever follows
+	 *         the channels, at the latest when it is disposed itself.
+	 */
+	public static Registration observe(Collection<ViewChannel> channels, Runnable onChange) {
+		Set<ViewChannel> distinct = Collections.newSetFromMap(new IdentityHashMap<>());
+		distinct.addAll(channels);
+		if (distinct.isEmpty()) {
+			return Registration.NONE;
+		}
+		ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> onChange.run();
+		List<Registration> registrations = new ArrayList<>(distinct.size());
+		for (ViewChannel channel : distinct) {
+			registrations.add(channel.addListener(listener));
+		}
+		return Registration.onDispose(() -> {
+			for (Registration registration : registrations) {
+				registration.dispose();
+			}
+		});
 	}
 
 }

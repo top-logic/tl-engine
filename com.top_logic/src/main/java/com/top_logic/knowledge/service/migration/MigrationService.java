@@ -21,10 +21,12 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -106,6 +108,7 @@ import com.top_logic.knowledge.service.db2.migration.db.transformers.StoreTypeCo
 import com.top_logic.knowledge.service.db2.migration.sql.InsertWriter;
 import com.top_logic.knowledge.service.db2.migration.sql.SQLDumper;
 import com.top_logic.knowledge.service.migration.processors.AddApplicationTypesProcessor;
+import com.top_logic.knowledge.service.migration.processors.AdoptTypeChangesProcessor;
 import com.top_logic.knowledge.service.migration.processors.AlignTableLayoutProcessor;
 import com.top_logic.layout.admin.component.TLServiceUtils;
 import com.top_logic.model.annotate.util.AttributeSettings;
@@ -373,17 +376,39 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	 * afterwards are created in the configured layout.
 	 * </p>
 	 *
+	 * <p>
+	 * With <code>adoptTypeChanges</code>, changed definitions of types that are part of both
+	 * schemas are written to the stored schema, if they do not change the tables (see
+	 * {@link AdoptTypeChangesProcessor}).
+	 * </p>
+	 *
 	 * @param log
 	 *        {@link ProcessBuilder} to write errors (and any messages) to.
 	 * @param connection
 	 *        {@link PooledConnection} to write changes to.
+	 * @param adoptTypeChanges
+	 *        Whether to adopt changed type definitions without table changes.
 	 * @return Whether any changes have been written to the given connection.
 	 */
 	private boolean executeAutomaticSchemaMigrations(MigrationContext context, Protocol log,
-			PooledConnection connection) {
+			PooledConnection connection, boolean adoptTypeChanges) {
 		boolean layoutChanged = alignTableLayout(context, log, connection);
-		boolean typesAdded = addApplicationTypes(context, log, connection);
-		return layoutChanged || typesAdded;
+
+		MapDifference<String, EqualityRedirect<MetaObjectName>> diff = typeDifference(context);
+		boolean typesAdded = addApplicationTypes(context, log, connection, diff);
+		boolean typesAdopted =
+			adoptTypeChanges && adoptTypeChanges(context, log, connection, diff.entriesDiffering().keySet());
+		return layoutChanged || typesAdded || typesAdopted;
+	}
+
+	/**
+	 * The difference between the types of the stored and the configured schema.
+	 */
+	private static MapDifference<String, EqualityRedirect<MetaObjectName>> typeDifference(
+			MigrationContext context) {
+		Map<String, MetaObjectName> applicationTypes = context.getApplicationSchema().getMetaObjects().getTypes();
+		Map<String, MetaObjectName> persistentTypes = context.getPersistentSchema().getMetaObjects().getTypes();
+		return Maps.difference(wrap(persistentTypes), wrap(applicationTypes));
 	}
 
 	/**
@@ -406,26 +431,21 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	 * Creates tables for the types of the configured schema that are not part of the stored
 	 * schema.
 	 *
+	 * @param diff
+	 *        The {@link #typeDifference(MigrationContext) difference} between the types of the
+	 *        stored and the configured schema.
 	 * @return Whether any changes have been written to the given connection.
 	 */
-	private boolean addApplicationTypes(MigrationContext context, Protocol log, PooledConnection connection) {
-		Map<String, MetaObjectName> applicationTypes = context.getApplicationSchema().getMetaObjects().getTypes();
-		Map<String, MetaObjectName> persistentTypes = context.getPersistentSchema().getMetaObjects().getTypes();
-
-		MapDifference<String, EqualityRedirect<MetaObjectName>> diff = Maps.difference(
-			wrap(persistentTypes), wrap(applicationTypes));
-
-		recoverMetaDefinitions(log, persistentTypes, diff.entriesOnlyOnLeft().keySet());
+	private boolean addApplicationTypes(MigrationContext context, Protocol log, PooledConnection connection,
+			MapDifference<String, EqualityRedirect<MetaObjectName>> diff) {
+		Map<String, MetaObjectName> lostTypes = unwrap(diff.entriesOnlyOnLeft());
+		recoverMetaDefinitions(log, lostTypes, lostTypes.keySet());
 
 		Map<String, EqualityRedirect<MetaObjectName>> newTypes = diff.entriesOnlyOnRight();
 		if (!newTypes.isEmpty()) {
 			AddApplicationTypesProcessor.Config<?> addConfig =
 				TypedConfiguration.newConfigItem(AddApplicationTypesProcessor.Config.class);
-
-			for (String newTypeName : newTypes.keySet()) {
-				MetaObjectName newType = applicationTypes.get(newTypeName);
-				addConfig.getSchema().getTypes().put(newTypeName, newType);
-			}
+			addConfig.getSchema().getTypes().putAll(unwrap(newTypes));
 
 			MigrationConfig migration = TypedConfiguration.newConfigItem(MigrationConfig.class);
 			migration.getProcessors().add(addConfig);
@@ -437,6 +457,28 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Writes the changed definitions of the given types to the stored schema, if they do not
+	 * change the tables, and reports a warning for the others.
+	 *
+	 * @param changedTypes
+	 *        Names of the types defined differently in the stored and the configured schema.
+	 * @return Whether any changes have been written to the given connection.
+	 *
+	 * @see AdoptTypeChangesProcessor
+	 */
+	private boolean adoptTypeChanges(MigrationContext context, Protocol log, PooledConnection connection,
+			Set<String> changedTypes) {
+		if (changedTypes.isEmpty()) {
+			return false;
+		}
+		AdoptTypeChangesProcessor.Config adoptConfig =
+			TypedConfiguration.newConfigItem(AdoptTypeChangesProcessor.Config.class);
+		adoptConfig.setTypes(new ArrayList<>(changedTypes));
+		execute(context, log, connection, adoptConfig);
+		return true;
 	}
 
 	/**
@@ -454,8 +496,9 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			for (var typeName : oldTypeNames) {
 				inappSchema.getTypes().put(typeName, persistentTypes.get(typeName));
 			}
-			File schemaFile = null;
-			File configFile = null;
+			FileManager fileManager = FileManager.getInstance();
+			String schemaResource = null;
+			String configResource = null;
 			try {
 				int id = 1;
 				String resourceName;
@@ -464,11 +507,11 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 				do {
 					baseName = "inapp-schema-" + id;
 					resourceName = ModuleLayoutConstants.AUTOCONF_FOLDER_RESOURCE + baseName + ".meta.xml";
-					newFile = FileManager.getInstance().getIDEFile(resourceName);
+					newFile = fileManager.getIDEFile(resourceName);
 					id++;
 				} while (newFile.exists());
-				schemaFile = newFile;
-				storeResource(inappSchema, schemaFile);
+				schemaResource = resourceName;
+				File schemaFile = storeResource(fileManager, inappSchema, schemaResource);
 
 				// Create a configuration fragment that loads the synthesized schema definition.
 				ApplicationConfig.Config configFragment =
@@ -491,10 +534,8 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 					}
 					configFragment.getConfigs().put(ApplicationTypes.class, typesConfig);
 				}
-				configFile = FileManager.getInstance().getIDEFile(
-					ModuleLayoutConstants.AUTOCONF_FOLDER_RESOURCE + baseName + ".config.xml");
-				storeResource(configFragment,
-					configFile);
+				configResource = ModuleLayoutConstants.AUTOCONF_FOLDER_RESOURCE + baseName + ".config.xml";
+				storeResource(fileManager, configFragment, configResource);
 
 				log.info("Created schema configuration with recovered types: " + schemaFile.getAbsolutePath());
 
@@ -504,21 +545,21 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 				log.info("Cannot create schema add-on configuration: " + ex.getMessage(), Log.WARN);
 
 				// Clean up to avoid an inconsistent state.
-				if (schemaFile != null) {
-					schemaFile.delete();
-				}
-				if (configFile != null) {
-					configFile.delete();
-				}
+				deleteResource(fileManager, schemaResource);
+				deleteResource(fileManager, configResource);
 			}
 		}
 	}
 
 	/**
-	 * Creates a new configuration file.
+	 * Creates a new configuration file for the given resource and makes it visible to the given
+	 * {@link FileManager}.
+	 *
+	 * @return The created file.
 	 */
-	private void storeResource(ConfigurationItem conf, File file)
+	private File storeResource(FileManager fileManager, ConfigurationItem conf, String resourceName)
 			throws XMLStreamException, IOException, FileNotFoundException, SAXException {
+		File file = fileManager.getIDEFile(resourceName);
 		file.getParentFile().mkdirs();
 		try (var out = new FileOutputStream(file)) {
 			try (OutputStreamWriter writer = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
@@ -528,6 +569,20 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			}
 		}
 		XMLPrettyPrinter.normalizeFile(file);
+		fileManager.refresh(resourceName);
+		return file;
+	}
+
+	/**
+	 * Deletes the file of the given resource, if any, and makes the deletion visible to the given
+	 * {@link FileManager}.
+	 */
+	private void deleteResource(FileManager fileManager, String resourceName) {
+		if (resourceName == null) {
+			return;
+		}
+		fileManager.getIDEFile(resourceName).delete();
+		fileManager.refresh(resourceName);
 	}
 
 	private void execute(MigrationContext context, Protocol log, PooledConnection connection,
@@ -540,6 +595,14 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		for (java.util.Map.Entry<K, V> entry : map.entrySet()) {
 			result.put(entry.getKey(),
 				new EqualityRedirect<>(entry.getValue(), ConfigEquality.INSTANCE_ALL_BUT_DERIVED));
+		}
+		return result;
+	}
+
+	private static <K, V> Map<K, V> unwrap(Map<K, EqualityRedirect<V>> map) {
+		Map<K, V> result = new LinkedHashMap<>();
+		for (java.util.Map.Entry<K, EqualityRedirect<V>> entry : map.entrySet()) {
+			result.put(entry.getKey(), entry.getValue().getValue());
 		}
 		return result;
 	}
@@ -614,7 +677,7 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 				log.info("No configured migrations.");
 
 				if (_automaticMigration) {
-					boolean changes = executeAutomaticSchemaMigrations(context, log, connection);
+					boolean changes = executeAutomaticSchemaMigrations(context, log, connection, true);
 
 					// Check that everything is ok.
 					log.checkErrors();
@@ -808,7 +871,7 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		// The migration processors work on the table layout of the stored schema, which the state
 		// of the context is derived from. The layout is aligned with the configuration only
 		// afterwards, including the tables the processors have created.
-		executeAutomaticSchemaMigrations(context, log, connection);
+		executeAutomaticSchemaMigrations(context, log, connection, false);
 
 		if (migration.isReplayRequired()) {
 			commitConnection(log, connection, "Unable to commit changes before KnowledgeBase replay.");

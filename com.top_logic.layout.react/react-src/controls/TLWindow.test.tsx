@@ -10,7 +10,7 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 
 // The bridge first, as the page loads it: the bridge entry reaches it through modules that the SSE client imports
 // as well, and these must see the mocked SSE client.
-import { mount, unmount } from '../bridge/tl-react-bridge';
+import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
 import { React, register } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import TLWindow from './TLWindow';
@@ -45,7 +45,7 @@ beforeAll(() => {
 
 afterEach(async () => {
   act(() => unmount(WINDOW_ID));
-  document.getElementById(WINDOW_ID)?.remove();
+  findMountPoint(WINDOW_ID)?.remove();
   vi.unstubAllGlobals();
   await settle();
 });
@@ -121,7 +121,7 @@ function mountWindow(state: Record<string, unknown>): void {
   vi.stubGlobal('ResizeObserver', FakeResizeObserver);
   vi.stubGlobal('innerHeight', VIEWPORT_HEIGHT);
   const element = document.createElement('div');
-  element.id = WINDOW_ID;
+  element.setAttribute(MOUNT_ATTRIBUTE, WINDOW_ID);
   document.body.appendChild(element);
   act(() => mount(WINDOW_ID, 'TLWindow', { title: 'Window', resizable: true, child: CONTENT, ...state }, 'w', '/ctx'));
 }
@@ -176,7 +176,7 @@ describe('the height of a window without a configured height', () => {
     mountWindow({ width: '500px' });
     laidOut(500);
     act(() => unmount(WINDOW_ID));
-    document.getElementById(WINDOW_ID)?.remove();
+    findMountPoint(WINDOW_ID)?.remove();
     // The DOM observer of the bridge sees the removal before the window opens again.
     await settle();
 

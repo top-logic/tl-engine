@@ -7,6 +7,8 @@
 				<declarations>
 					<declaration file="/WEB-INF/model/TestViewModelAccess.model.xml"/>
 					<declaration file="/WEB-INF/model/TestViewObjectFields.model.xml"/>
+					<declaration file="/WEB-INF/model/TestViewFallbackStorage.model.xml"/>
+					<declaration file="/WEB-INF/model/TestViewCheckDependencies.model.xml"/>
 				</declarations>
 			</instance>
 		</config>
@@ -26,6 +28,8 @@
 					<role name="TestViewModelAccess.Responsible"/>
 					<role name="TestViewModelAccess.Reader"/>
 					<role name="TestViewModelAccess.Viewer"/>
+					<role name="TestViewModelAccess.NameReader"/>
+					<role name="TestViewModelAccess.NameKeeper"/>
 				</roles>
 			</instance>
 		</config>
@@ -142,6 +146,29 @@
 							roles="TestViewModelAccess.Viewer"
 						/>
 					</class>
+					<class name="TestViewModelAccess:Named">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestViewModelAccess.NameReader"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="TestViewModelAccess.NameReader"
+						/>
+					</class>
+					<part name="TestViewModelAccess:Foo#name">
+						<!-- Applies to Foo only, not to Bar sharing the attribute definition. -->
+						<grant
+							operation="Read"
+							roles="TestViewModelAccess.NameKeeper"
+						/>
+						<grant
+							operation="Write"
+							roles="TestViewModelAccess.NameKeeper"
+						/>
+					</part>
 					<part name="TestViewModelAccess:Category#name">
 						<!--
 							The reader of a category may rename it, although the category grants writing
@@ -301,6 +328,24 @@
 									inverse="true"
 								/>
 								<step attribute="TestViewModelAccess:Project#viewer"/>
+							</path>
+						</rule>
+						<rule id="TestViewModelAccess_Named_NameReader"
+							inherit="true"
+							meta-element="TestViewModelAccess:Named"
+							role="TestViewModelAccess.NameReader"
+						>
+							<path>
+								<step attribute="TestViewModelAccess:Named#accountA"/>
+							</path>
+						</rule>
+						<rule id="TestViewModelAccess_Named_NameKeeper"
+							inherit="true"
+							meta-element="TestViewModelAccess:Named"
+							role="TestViewModelAccess.NameKeeper"
+						>
+							<path>
+								<step attribute="TestViewModelAccess:Named#accountB"/>
 							</path>
 						</rule>
 						<rule id="TestViewModelAccess_Category_Reader"

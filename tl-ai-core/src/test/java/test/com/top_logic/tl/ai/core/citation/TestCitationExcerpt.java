@@ -136,15 +136,19 @@ public class TestCitationExcerpt extends TestCase {
 	}
 
 	/**
-	 * A record that only a text result named - a query's {@code label [type:...] [id:...]} lines -
-	 * has no fields to show, and a window of those lines is the transport, not the record.
+	 * A record a query result named by its identity is shown as that identity, and nothing of the
+	 * other objects of the same result.
 	 */
-	public void testARecordNamedOnlyInTextShowsNothingRatherThanTheTransport() {
+	public void testARecordNamedInAQueryResultShowsItsIdentity() {
 		String result = "<untrusted_model_data source=\"query\">\n"
-			+ "KI im Mittelstand [type:demo.events:Event] [id:GenericObject:2808]\n"
-			+ "Teamworkshop [type:demo.events:Event] [id:GenericObject:2977]\n</untrusted_model_data>";
+			+ "[{\"_tid\":\"GenericObject:2808\",\"_type\":\"demo.events:Event\",\"_display\":\"KI im Mittelstand\"},"
+			+ "{\"_tid\":\"GenericObject:2977\",\"_type\":\"demo.events:Event\",\"_display\":\"Teamworkshop\"}]"
+			+ "\n</untrusted_model_data>";
 
-		assertEquals("", CitationExcerpt.ofSource("GenericObject:2808", "KI im Mittelstand", true, List.of(result)));
+		String excerpt = CitationExcerpt.ofSource("GenericObject:2808", "KI im Mittelstand", true, List.of(result));
+
+		assertTrue(excerpt, excerpt.contains("KI im Mittelstand"));
+		assertFalse(excerpt, excerpt.contains("Teamworkshop"));
 	}
 
 	/** Found nowhere, the popover still names the source rather than staying blank. */

@@ -37,7 +37,7 @@ vi.mock('./sse-client', async (importOriginal) => ({
   },
 }));
 
-import { createChildContext, isMountedControl, mount, unmount } from './tl-react-bridge';
+import { MOUNT_ATTRIBUTE, findMountPoint, createChildContext, isMountedControl, mount, unmount } from './tl-react-bridge';
 import { register } from './registry';
 import TLChild from './TLChild';
 
@@ -91,7 +91,7 @@ const mounted: string[] = [];
 function mountParent(state: Record<string, unknown>): string {
   const id = nextId('p');
   const element = document.createElement('div');
-  element.id = id;
+  element.setAttribute(MOUNT_ATTRIBUTE, id);
   document.body.appendChild(element);
   act(() => mount(id, 'TestParent', state, 'w', '/ctx'));
   mounted.push(id);
@@ -105,7 +105,7 @@ function shownSelection(): string | null | undefined {
 afterEach(async () => {
   for (const id of mounted.splice(0)) {
     act(() => unmount(id));
-    document.getElementById(id)?.remove();
+    findMountPoint(id)?.remove();
   }
   // Lets the DOM observer of the bridge see the removals while the test environment exists.
   await Promise.resolve();

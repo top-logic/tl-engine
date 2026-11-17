@@ -246,6 +246,25 @@
 				options="['A', 'B', 'C']"
 				value="picked"
 			/>
+			<value-input
+				label-position="placeholder"
+				value="term"
+			>
+				<label>
+					<en>Search term</en>
+				</label>
+			</value-input>
+			<value-input
+				label-position="placeholder"
+				value="term"
+			>
+				<label>
+					<en>Search term</en>
+				</label>
+				<placeholder>
+					<en>Words</en>
+				</placeholder>
+			</value-input>
 		</children>
 	</panel>
 </view>

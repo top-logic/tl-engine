@@ -77,6 +77,17 @@ public class ReactFormFieldControl extends ReactControl {
 	private boolean _multiline;
 
 	/**
+	 * The text the empty input shows, see {@link #setPlaceholder(String)}.
+	 */
+	private String _placeholder;
+
+	/**
+	 * The inherited value as text, shown in place of {@link #_placeholder} while not {@code null},
+	 * see {@link #setFallbackText(String)}.
+	 */
+	private String _fallbackText;
+
+	/**
 	 * While handling a client {@code valueChanged}, the value the client sent — so the model
 	 * listener can recognize (and skip) the redundant echo of exactly that value back to the client
 	 * that already holds it optimistically. {@code null} when not applying a client value.
@@ -252,23 +263,69 @@ public class ReactFormFieldControl extends ReactControl {
 	 * </p>
 	 */
 	public void setPlaceholder(String placeholder) {
-		putState(FieldState.PLACEHOLDER__PROP, placeholder);
+		_placeholder = placeholder;
+		updatePlaceholder();
 	}
 
 	/**
 	 * Shows the value the field inherits while it holds none of its own.
 	 *
 	 * <p>
-	 * By default the inherited value is shown as {@link #setPlaceholder(String) placeholder},
-	 * written by {@link #formatValue(Object)}. A control whose input has no place for a text where
-	 * it is empty shows the inherited value in a way of its own.
+	 * By default the inherited value is shown in place of the {@link #setPlaceholder(String)
+	 * placeholder}, written by {@link #formatValue(Object)}. A control whose input has no place for
+	 * a text where it is empty shows the inherited value in a way of its own.
 	 * </p>
 	 *
 	 * @param fallback
-	 *        The inherited value, {@code null} for none.
+	 *        The inherited value, {@code null} for none: the input shows its
+	 *        {@link #setPlaceholder(String) placeholder} again.
 	 */
 	public void setFallbackValue(Object fallback) {
-		setPlaceholder(formatValue(fallback));
+		setFallbackText(formatValue(fallback));
+	}
+
+	/**
+	 * Shows the given text of an inherited value in place of the {@link #setPlaceholder(String)
+	 * placeholder}.
+	 *
+	 * @param fallbackText
+	 *        The text, {@code null} to show the placeholder again.
+	 */
+	protected void setFallbackText(String fallbackText) {
+		_fallbackText = fallbackText;
+		updatePlaceholder();
+	}
+
+	private void updatePlaceholder() {
+		if (_fallbackText != null) {
+			showFallbackText(_fallbackText);
+		} else {
+			showPlaceholder(_placeholder);
+		}
+	}
+
+	/**
+	 * Sends the {@link #setPlaceholder(String) placeholder} to the client.
+	 *
+	 * @param placeholder
+	 *        The text the empty input shows, {@code null} for none.
+	 */
+	protected void showPlaceholder(String placeholder) {
+		putState(FieldState.PLACEHOLDER__PROP, placeholder);
+	}
+
+	/**
+	 * Sends the text of the inherited value to the client, see {@link #setFallbackText(String)}.
+	 *
+	 * <p>
+	 * By default the text is shown as placeholder of the empty input.
+	 * </p>
+	 *
+	 * @param fallbackText
+	 *        The text of the inherited value, not {@code null}.
+	 */
+	protected void showFallbackText(String fallbackText) {
+		putState(FieldState.PLACEHOLDER__PROP, fallbackText);
 	}
 
 	/**

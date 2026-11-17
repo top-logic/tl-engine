@@ -41,7 +41,9 @@ test('Name der Anwendung und Fußzeile', () => {
   for (const d of ['margin: 0;', 'color: var(--tl-text-primary);']) has('.tl-login-backdrop__title', d);
   // Positioniert, sonst malt die Zeichenfläche über sie.
   for (const d of ['position: relative;', 'margin: 0;', 'padding-top: var(--tl-space-md);',
+    'display: flex;', 'align-items: center;', 'gap: var(--tl-space-xs);',
     'color: var(--tl-text-secondary);']) has('.tl-login-backdrop__footer', d);
+  for (const d of ['height: var(--tl-size-login-wordmark);', 'width: auto;']) has('.tl-login-backdrop__wordmark', d);
 });
 
 test('kein Modus-Selektor im CSS (ein img, Quelle folgt dem Modus)', () => {
@@ -53,9 +55,9 @@ test('login-backdrop.contract.md nennt Klassen, Tokens und Client', () => {
   try { md = readComponent('login-backdrop', 'login-backdrop.contract.md'); } catch { /* fehlt */ }
   assert.deepEqual(missingInContract(md, [
     'tl-login-backdrop', 'tl-login-backdrop__canvas', 'tl-login-backdrop__content', 'tl-login-backdrop__brand',
-    'tl-login-backdrop__logo', 'tl-login-backdrop__title', 'tl-login-backdrop__footer', '--tl-surface-base', '--tl-surface-layer', '--tl-border-separator',
+    'tl-login-backdrop__logo', 'tl-login-backdrop__title', 'tl-login-backdrop__footer', 'tl-login-backdrop__wordmark', '--tl-surface-base', '--tl-surface-layer', '--tl-border-separator',
     '--tl-border-width-sm', '--tl-radius-md', '--tl-space-sm', '--tl-space-md', '--tl-space-lg',
-    '--tl-size-login-logo', '--tl-focus-width', '--tl-focus-offset', '--tl-text-primary', '--tl-text-secondary', '--tl-surface-halftone', '--tl-surface-halftone-strong', '--tl-size-halftone-step',
+    '--tl-size-login-logo', '--tl-focus-width', '--tl-focus-offset', '--tl-text-primary', '--tl-text-secondary', '--tl-space-xs', '--tl-size-login-wordmark', '--tl-surface-halftone', '--tl-surface-halftone-strong', '--tl-size-halftone-step',
     '--tl-size-halftone-glow', '--tl-duration-ripple', 'TLLoginBackdrop',
     'child', 'logo', 'logoDark', 'logoAlt', 'appTitle', 'js.loginBackdrop.poweredBy']), []);
 });

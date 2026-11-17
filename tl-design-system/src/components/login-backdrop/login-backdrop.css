@@ -3,7 +3,7 @@
    Halbton-Raster. Das Stylesheet kennt nur Fläche, Rand und Anordnung. Die Zeichenfläche fängt keine Zeiger,
    der Inhalt (Karte, Logo oder Name der Anwendung, Link) liegt darüber und scrollt, wenn das Fenster niedriger
    ist als er. Logo oder Name stehen auf einer eigenen Unterlage, weil die Punkte dahinter keinen Kontrast zu
-   ihnen garantieren. Darunter, am unteren Rand, steht „Powered by TopLogic“. */
+   ihnen garantieren. Am unteren Rand steht „Powered by“ mit der TopLogic-Wortmarke in der Textfarbe. */
 
 .tl-login-backdrop {
   position: relative;
@@ -62,5 +62,15 @@
   position: relative;
   margin: 0;
   padding-top: var(--tl-space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
   color: var(--tl-text-secondary);
+}
+
+/* Die Wortmarke zeichnet in der Farbe der Fußzeile (currentColor), Breite aus dem Seitenverhältnis. */
+.tl-login-backdrop__wordmark {
+  display: block;
+  height: var(--tl-size-login-wordmark);
+  width: auto;
 }

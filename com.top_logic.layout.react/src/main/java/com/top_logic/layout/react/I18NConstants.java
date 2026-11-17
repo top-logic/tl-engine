@@ -520,7 +520,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TEXT_INPUT_COPY;
 
 	/**
-	 * @en Powered by TopLogic
+	 * @en Powered by
 	 */
 	@CustomKey("js.loginBackdrop.poweredBy")
 	public static ResKey JS_LOGIN_BACKDROP_POWERED_BY;

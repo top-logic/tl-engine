@@ -440,4 +440,5 @@ test('Login-Hintergrund: Halbton-Rollen, Dauern und Maße sind Referenzen', () =
   assert.equal(T.measure['size-halftone-step'], '{size-4}');
   assert.equal(T.measure['size-halftone-glow'], '{height-5}');
   assert.equal(T.measure['size-login-logo'], '{size-8}');
+  assert.equal(T.measure['size-login-wordmark'], '{size-4}');
 });

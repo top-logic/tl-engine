@@ -150,10 +150,14 @@ describe('the structure', () => {
     expect(root.querySelector('img')).toBeNull();
   });
 
-  it('says it is powered by TopLogic, below the content', () => {
+  it('says it is powered by TopLogic, with the word mark named for assistive technology, below the content', () => {
     const root = mountBackdrop({});
     const footer = root.querySelector('.tl-login-backdrop > p.tl-login-backdrop__footer')!;
-    expect(footer.textContent).toBe('Powered by TopLogic');
+    expect(footer.textContent).toBe('Powered by');
+    const mark = footer.querySelector('svg.tl-login-backdrop__wordmark')!;
+    expect(mark.getAttribute('role')).toBe('img');
+    expect(mark.getAttribute('aria-label')).toBe('TopLogic');
+    expect(mark.querySelectorAll('path[fill="currentColor"]').length).toBe(6);
     expect(root.querySelector('.tl-login-backdrop__content')!.contains(footer)).toBe(false);
   });
 

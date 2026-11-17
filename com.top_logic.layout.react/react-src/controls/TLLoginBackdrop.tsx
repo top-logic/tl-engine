@@ -10,9 +10,10 @@ import {
   rippleFactor,
 } from './halftone';
 import type { HalftoneTheme, Ripple } from './halftone';
+import { WORDMARK_PATHS, WORDMARK_VIEW_BOX } from './toplogic-wordmark';
 
 const I18N_KEYS = {
-  'js.loginBackdrop.poweredBy': 'Powered by TopLogic',
+  'js.loginBackdrop.poweredBy': 'Powered by',
 };
 
 /** The share of the way to the target the pointer highlight covers per animation frame. */
@@ -55,7 +56,8 @@ interface GridState {
  * - logoAlt: string | null - the alternative text of the logo; the application title when absent
  * - appTitle: string | null - the name of the application, shown as heading where there is no logo
  *
- * Logo or title stand on a plate above the content; at the bottom of the page stands "Powered by TopLogic".
+ * Logo or title stand on a plate above the content; at the bottom of the page stands "Powered by" with the TopLogic
+ * word mark, drawn in the colour of the text.
  *
  * The dots are largest at the centre and fade out toward the corners. The colours, the grid step, the radius of the
  * highlight and the durations come from the design system tokens and are read again when the density, theme or mode
@@ -292,7 +294,12 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
           )}
           {!!state.child && <TLChild control={state.child} />}
         </div>
-        <p className="tl-login-backdrop__footer tl-type-label">{i18n['js.loginBackdrop.poweredBy']}</p>
+        <p className="tl-login-backdrop__footer tl-type-label">
+          {i18n['js.loginBackdrop.poweredBy']}
+          <svg className="tl-login-backdrop__wordmark" viewBox={WORDMARK_VIEW_BOX} role="img" aria-label="TopLogic">
+            {WORDMARK_PATHS.map((d) => <path key={d} d={d} fill="currentColor" />)}
+          </svg>
+        </p>
       </div>
     </FillProvider>
   );

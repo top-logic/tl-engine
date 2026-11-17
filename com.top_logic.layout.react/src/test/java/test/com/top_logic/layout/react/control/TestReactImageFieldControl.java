@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -105,6 +106,22 @@ public class TestReactImageFieldControl extends TestCase {
 		images.handleUpload(null, Arrays.asList(TestReactFileChipsControl.part("x.png", "X"), after(images.key(0))));
 
 		assertEquals("x.png", ((BinaryData) model.getValue()).getName());
+	}
+
+	/**
+	 * Reading the value again answers new but equal files; they keep the keys of their tiles, so the
+	 * client neither loads them again nor asks for a key that is gone. Two equal images are still
+	 * two tiles.
+	 */
+	public void testEqualValuesKeepTheirKeys() {
+		FieldModel model = new AbstractFieldModel(Arrays.asList(A, B, image("a.png")));
+		Images images = images(model, true);
+		List<String> keys = List.of(images.key(0), images.key(1), images.key(2));
+		assertEquals("Equal images are separate tiles.", 3, Set.copyOf(keys).size());
+
+		model.setValue(Arrays.asList(image("a.png"), image("b.png"), image("a.png")));
+
+		assertEquals(keys, List.of(images.key(0), images.key(1), images.key(2)));
 	}
 
 	/**

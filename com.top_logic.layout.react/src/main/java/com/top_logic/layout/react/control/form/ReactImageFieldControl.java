@@ -7,9 +7,11 @@ package com.top_logic.layout.react.control.form;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.IdentityHashMap;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -253,22 +255,24 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 	 * A value that was displayed before keeps the key of its tile, so the client keeps the identity
 	 * of the tile and its loaded preview while images are added, removed and moved around it. A new
 	 * value gets a key never used before in this control, so its preview is never taken from the
-	 * cache of an earlier image. Values are told apart by identity, not by equality: two equal
-	 * images are two tiles.
+	 * cache of an earlier image. Values are matched by equality, because reading the value of an
+	 * attribute again may answer new but equal objects, e.g. the files of a multi-valued binary
+	 * attribute; each previous key is taken by one value only, so two equal images are two tiles.
 	 * </p>
 	 */
 	private void updateImages() {
-		Map<Object, String> previousKeys = new IdentityHashMap<>();
+		Map<Object, Deque<String>> previousKeys = new HashMap<>();
 		for (int n = 0, cnt = _values.size(); n < cnt; n++) {
-			previousKeys.put(_values.get(n), _keys.get(n));
+			previousKeys.computeIfAbsent(_values.get(n), x -> new ArrayDeque<>()).add(_keys.get(n));
 		}
 
 		List<Object> values = images(getFieldModel().getValue());
 		List<String> keys = new ArrayList<>(values.size());
 		List<Map<String, Object>> tiles = new ArrayList<>(values.size());
 		for (Object value : values) {
-			// Removed, so that the same value occurring twice gets two keys.
-			String key = previousKeys.remove(value);
+			// Taken, so that the same value occurring twice gets two keys.
+			Deque<String> candidates = previousKeys.get(value);
+			String key = candidates == null ? null : candidates.poll();
 			if (key == null) {
 				key = String.valueOf(_nextKey++);
 			}

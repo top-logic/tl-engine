@@ -8,6 +8,7 @@ package com.top_logic.layout.view.form;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -305,6 +307,13 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * </p>
 	 */
 	private final Map<TLObject, Set<Pointer>> _cellDependencies = new IdentityHashMap<>();
+
+	/**
+	 * For each row of the edited table, the decisions taken when its cells were built - whether a
+	 * cell is edited, whether the row can be removed - and the attribute values they were taken
+	 * from, see {@link #decide(TLObject, String, BooleanSupplier)}.
+	 */
+	private final Map<TLObject, EditDecisions> _editDecisions = new IdentityHashMap<>();
 
 	/**
 	 * The rows whose read-only cells are built again when the current interaction has completed,
@@ -1094,7 +1103,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		if (editMode && binding().getRemoveMode() != RowSetBinding.RemoveMode.NONE) {
 			columns.add(DefaultColumn.<TLObject, TLObject> builder(COLUMN_DELETE, row -> row)
 				.label(ResKey.text(""))
-				.renderer(row -> isRemovable(row)
+				.renderer(row -> decide(row, COLUMN_DELETE, () -> isRemovable(row))
 					? new CellContent.Raw((CellControlFactory) (ctx -> createDeleteButton(ctx, row)))
 					: CellContent.empty())
 				.width(ACTION_COLUMN_WIDTH)
@@ -1107,6 +1116,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		// Create or replace the row source and table control (column set may change between
 		// edit/view mode).
 		_cellDependencies.clear();
+		_editDecisions.clear();
 		RowSource<TLObject> source =
 			_arrangement.createSource(rowObjects, isEditing() ? session() : null, columns);
 		TableViewState initialState =
@@ -1201,6 +1211,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				// on the access rights of the user, which change with the model.
 				refreshColumnsAndDeclaredFilters(existence, view, columns);
 				_cellDependencies.clear();
+				_editDecisions.clear();
 				table.refreshData();
 			}
 
@@ -1288,6 +1299,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		if (_tableControl != null) {
 			_columnRefresh.run();
 			_cellDependencies.clear();
+			_editDecisions.clear();
 			_tableControl.refreshData();
 		}
 	}
@@ -1549,11 +1561,100 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	private <T> T traced(TLObject row, OverlayLookup overlays, Supplier<T> render) {
-		Set<Pointer> dependencies = _cellDependencies.computeIfAbsent(row, x -> new HashSet<>());
+		return traced(_cellDependencies.computeIfAbsent(row, x -> new HashSet<>()), overlays, render);
+	}
+
+	/**
+	 * Computes something in a {@link TracingScope} over the given overlays, recording the
+	 * attribute values read in the given dependencies.
+	 */
+	private static <T> T traced(Set<Pointer> dependencies, OverlayLookup overlays, Supplier<T> render) {
 		try (TracingScope scope = TracingScope.open(
 			pointer -> dependencies.add(Pointer.create(editedObject(pointer.object()), pointer.attribute())),
 			overlays)) {
 			return render.get();
+		}
+	}
+
+	/**
+	 * Takes a decision about the edit of the given row while its cells are built - whether a cell
+	 * of it is edited, whether it can be removed - and records it, together with the attribute
+	 * values it was taken from.
+	 *
+	 * <p>
+	 * A decision may depend on values of the row that are edited - the condition of a
+	 * {@link ColumnSetup#editing() column} or the {@link #setRowEditable(Predicate) row
+	 * condition} reading an attribute of the row. When one of these values changes, the decision
+	 * is taken again, and the cells of the row are built again if it turns out differently, see
+	 * {@link #rowValueChanged(TLObject, TLStructuredTypePart)}.
+	 * </p>
+	 *
+	 * @param row
+	 *        The row the decision is about.
+	 * @param key
+	 *        What the decision is about, the name of the column whose cell it decides.
+	 * @param decision
+	 *        Takes the decision.
+	 * @return The decision taken.
+	 */
+	private boolean decide(TLObject row, String key, BooleanSupplier decision) {
+		OverlayLookup overlays = isEditing() ? formControl().getValidationModel() : null;
+		if (overlays == null) {
+			return decision.getAsBoolean();
+		}
+		EditDecisions decisions = _editDecisions.computeIfAbsent(row, x -> new EditDecisions(overlays));
+		return decisions.take(key, decision);
+	}
+
+	/**
+	 * The decisions taken about the edit of a row, and the attribute values they were taken from,
+	 * see {@link RowSetTableControl#decide(TLObject, String, BooleanSupplier)}.
+	 */
+	private static final class EditDecisions {
+
+		private final OverlayLookup _overlays;
+
+		private final Set<Pointer> _dependencies = new HashSet<>();
+
+		private final Map<String, BooleanSupplier> _decisions = new HashMap<>();
+
+		private final Map<String, Boolean> _taken = new HashMap<>();
+
+		EditDecisions(OverlayLookup overlays) {
+			_overlays = overlays;
+		}
+
+		/**
+		 * Takes the given decision, recording what it was taken from.
+		 */
+		boolean take(String key, BooleanSupplier decision) {
+			boolean result = evaluate(decision);
+			_decisions.put(key, decision);
+			_taken.put(key, Boolean.valueOf(result));
+			return result;
+		}
+
+		/**
+		 * Whether one of the decisions was taken from the given value.
+		 */
+		boolean dependsOn(Pointer value) {
+			return _dependencies.contains(value);
+		}
+
+		/**
+		 * Whether one of the decisions turns out differently when taken again now.
+		 */
+		boolean changed() {
+			for (Map.Entry<String, BooleanSupplier> entry : _decisions.entrySet()) {
+				if (evaluate(entry.getValue()) != _taken.get(entry.getKey()).booleanValue()) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		private boolean evaluate(BooleanSupplier decision) {
+			return traced(_dependencies, _overlays, decision::getAsBoolean).booleanValue();
 		}
 	}
 
@@ -1610,6 +1711,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				_staleRows.add(dependent);
 			}
 		}
+		// The decisions about the edit of a row - the row itself among them - may follow the value.
+		for (Map.Entry<TLObject, EditDecisions> entry : _editDecisions.entrySet()) {
+			if (entry.getValue().dependsOn(changed)) {
+				_staleRows.add(entry.getKey());
+			}
+		}
 	}
 
 	private void scheduleRebuild(boolean scheduled) {
@@ -1621,9 +1728,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	private void rebuildStaleRows() {
 		List<Object> stale = new ArrayList<>();
 		for (TLObject row : _staleRows) {
-			if (!isRowEditable(row)) {
+			EditDecisions decisions = _editDecisions.get(row);
+			if (!isRowEditable(row) || (decisions != null && decisions.changed())) {
 				// Recorded anew when the cells are built again.
 				_cellDependencies.remove(row);
+				_editDecisions.remove(row);
 				stale.add(_arrangement.key(row));
 			}
 		}
@@ -1657,6 +1766,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		_toolbar = null;
 		_tableControl = null;
 		_cellDependencies.clear();
+		_editDecisions.clear();
 		_staleRows.clear();
 		super.onCleanup();
 	}
@@ -1728,7 +1838,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		@Override
 		public CellContent renderCell(TLObject row) {
-			if (_editable && row != null && isRowEditable(row) && offersEdit(row)) {
+			if (_editable && row != null && decide(row, name(), () -> isRowEditable(row) && offersEdit(row))) {
 				return new CellContent.Raw((CellControlFactory) context -> {
 					ReactControl editControl = buildEditCellControl(context, row, _setup);
 					return editControl != null

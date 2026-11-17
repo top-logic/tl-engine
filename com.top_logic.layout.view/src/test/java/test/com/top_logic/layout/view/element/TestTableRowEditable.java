@@ -7,6 +7,7 @@ package test.com.top_logic.layout.view.element;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import junit.framework.Test;
 
@@ -19,6 +20,7 @@ import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.gui.ThemeFactory;
@@ -30,7 +32,9 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.table.CellControlFactory;
+import com.top_logic.layout.react.servlet.DeliveryScope;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.ChildControl;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
@@ -41,6 +45,7 @@ import com.top_logic.layout.view.form.CompositionRowModel;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.RowSetTableControl;
+import com.top_logic.layout.view.form.TLObjectOverlay;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.SearchBuilder;
@@ -69,6 +74,29 @@ public class TestTableRowEditable extends AbstractModelAccessTest {
 
 	/** The name of a step. */
 	private static final String STEP_NAME = qualified(STEP) + "#" + NAME;
+
+	/** Name of the attribute of a step whose cell {@link #CAN_UPDATE_NOTE} restricts. */
+	private static final String NOTE_ATTRIBUTE = "note";
+
+	/** Name of the attribute of a step {@link #CAN_UPDATE_NOTE} reads. */
+	private static final String STATE = "state";
+
+	/**
+	 * The {@link #STATE} of a step whose note is not edited; a state of the test model names the
+	 * mode of another attribute of the step.
+	 */
+	private static final String LOCKED = "read-only";
+
+	/** The note column, edited unless the step is {@link #LOCKED}. */
+	private static final String CAN_UPDATE_NOTE = "<column attribute='" + NOTE_ATTRIBUTE + "'>"
+		+ "<can-update>$row.get(`" + qualified(STEP) + "#" + STATE + "`) != '" + LOCKED + "'</can-update>"
+		+ "</column>";
+
+	/** The state of the table control: its displayed rows. */
+	private static final String ROWS_STATE = "rows";
+
+	/** The state of a displayed row: its cells by column name. */
+	private static final String CELLS_STATE = "cells";
 
 	/** The row condition refusing the step named {@link #FIXED}. */
 	private static final String ROW_EDITABLE =
@@ -179,17 +207,105 @@ public class TestTableRowEditable extends AbstractModelAccessTest {
 	}
 
 	/**
+	 * The decisions about the edit of a row follow the edited values of the row they read: a cell
+	 * whose <code>can-update</code> reads a value turns read-only and editable again as the value
+	 * changes, a row the row condition refuses after a change of its name loses its delete button
+	 * and the edit of its cells. A change of a value no decision reads keeps the cells of the row.
+	 */
+	public void testDecisionsFollowEditedValues() throws Exception {
+		RowSetTableControl table = editedTable(ROW_EDITABLE, CAN_UPDATE_NOTE);
+		TLObject open = (TLObject) row(table, _open).data();
+		String editor = module(cells(table, _open), NOTE_ATTRIBUTE);
+		String display = module(cells(table, _fixed), NOTE_ATTRIBUTE);
+		String deleteButton = module(cells(table, _open), RowSetTableControl.COLUMN_DELETE);
+		assertFalse("An edited cell is shown by its input.", editor.equals(display));
+
+		// A value no decision reads: the cells of the row are kept.
+		Map<?, ?> before = cells(table, _open);
+		interaction(() -> cellModel(table, _open, NOTE_ATTRIBUTE).setValue("noted"));
+		Map<?, ?> after = cells(table, _open);
+		assertEquals(controlId(before, NOTE_ATTRIBUTE), controlId(after, NOTE_ATTRIBUTE));
+		assertEquals(controlId(before, NAME), controlId(after, NAME));
+
+		// The value the condition of the note column reads.
+		interaction(() -> open.tUpdateByName(STATE, LOCKED));
+		assertEquals(display, module(cells(table, _open), NOTE_ATTRIBUTE));
+		assertEquals("The other cells stay edited.", editor, module(cells(table, _open), NAME));
+		interaction(() -> open.tUpdateByName(STATE, null));
+		assertEquals(editor, module(cells(table, _open), NOTE_ATTRIBUTE));
+
+		// The value the row condition reads, entered in the cell of the row.
+		interaction(() -> cellModel(table, _open, NAME).setValue(FIXED));
+		Map<?, ?> refused = cells(table, _open);
+		assertEquals(display, module(refused, NAME));
+		assertEquals(display, module(refused, NOTE_ATTRIBUTE));
+		assertFalse("No delete button.", deleteButton.equals(module(refused, RowSetTableControl.COLUMN_DELETE)));
+		interaction(() -> open.tUpdateByName(NAME, "reopened"));
+		Map<?, ?> accepted = cells(table, _open);
+		assertEquals(editor, module(accepted, NAME));
+		assertEquals(deleteButton, module(accepted, RowSetTableControl.COLUMN_DELETE));
+	}
+
+	/**
+	 * Runs the given change as an interaction of the client does: the work it schedules for the
+	 * completed interaction runs when it has completed.
+	 */
+	private static void interaction(Runnable change) {
+		DeliveryScope.enter();
+		try {
+			change.run();
+		} finally {
+			DeliveryScope.exit();
+		}
+	}
+
+	/**
+	 * The cells of the given step as the client receives them, by column name.
+	 */
+	private Map<?, ?> cells(RowSetTableControl table, TLObject step) {
+		TableView<?> view = table.getTableControl().getView();
+		int index = view.rows(0, view.rowCount()).indexOf(row(view, step));
+		Map<?, ?> state = parseJSON(table.getTableControl().stateAsJSON());
+		Map<?, ?> row = (Map<?, ?>) ((List<?>) state.get(ROWS_STATE)).get(index);
+		return (Map<?, ?>) row.get(CELLS_STATE);
+	}
+
+	private static String module(Map<?, ?> cells, String column) {
+		return (String) ((Map<?, ?>) cells.get(column)).get(ChildControl.MODULE__PROP);
+	}
+
+	private static String controlId(Map<?, ?> cells, String column) {
+		return (String) ((Map<?, ?>) cells.get(column)).get(ChildControl.CONTROL_ID__PROP);
+	}
+
+	private static Map<?, ?> parseJSON(String json) {
+		try {
+			return (Map<?, ?>) JSON.fromString(json);
+		} catch (JSON.ParseException ex) {
+			throw new AssertionError("Not the JSON state of a control: " + json, ex);
+		}
+	}
+
+	/**
 	 * Builds a row-editing table over the steps with the given row condition, in a form over the
 	 * project, and enters edit mode.
 	 */
 	private RowSetTableControl editedTable(String rowEditable) throws Exception {
+		return editedTable(rowEditable, "<computed-column name='" + COMPUTED + "' type='tl.core:String'"
+			+ " value=\"$row.get(`" + STEP_NAME + "`)\" update=\"$row.set(`" + STEP_NAME + "`, $value)\"/>");
+	}
+
+	/**
+	 * Builds a row-editing table over the steps with the given row condition and a name column
+	 * followed by the given columns, in a form over the project, and enters edit mode.
+	 */
+	private RowSetTableControl editedTable(String rowEditable, String columns) throws Exception {
 		TableElement element = table("<table inputs='" + STEPS_CHANNEL + "' rows='$" + STEPS_CHANNEL + "'"
 			+ " row-edit='ALL' on-remove='DELETE' selection-mode='MULTI'>"
 			+ rowEditable
 			+ "<columns>"
 			+ "<column attribute='" + NAME + "'/>"
-			+ "<computed-column name='" + COMPUTED + "' type='tl.core:String'"
-			+ " value=\"$row.get(`" + STEP_NAME + "`)\" update=\"$row.set(`" + STEP_NAME + "`, $value)\"/>"
+			+ columns
 			+ "</columns></table>");
 		FormControl form = new FormControl(_reactContext, _project, "no model", NoTokenHandling.INSTANCE);
 		_context.setFormModel(form);
@@ -226,8 +342,8 @@ public class TestTableRowEditable extends AbstractModelAccessTest {
 
 	private static <R> Row<R> row(TableView<R> view, TLObject step) {
 		for (Row<R> row : view.rows(0, view.rowCount())) {
-			if (row.data() instanceof TLObject object
-				&& object.tValueByName(NAME).equals(step.tValueByName(NAME))) {
+			if (row.data() == step
+				|| (row.data() instanceof TLObjectOverlay overlay && overlay.getBase() == step)) {
 				return row;
 			}
 		}

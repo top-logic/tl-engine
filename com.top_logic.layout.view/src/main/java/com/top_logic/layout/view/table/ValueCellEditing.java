@@ -177,7 +177,8 @@ public class ValueCellEditing implements CellEditing {
 	 *
 	 * <p>
 	 * The result is a {@link ValueCellEditing} as well, so that its cells are still edited in place
-	 * where the table edits in place, see {@link ColumnSetup#buildInPlaceColumn(java.util.function.Consumer)}.
+	 * where the table edits in place, see
+	 * {@link ColumnSetup#buildInPlaceColumn(java.util.function.Consumer, LockHandler)}.
 	 * </p>
 	 */
 	@Override

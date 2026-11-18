@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- Tables of the OAuth authorization server (tl.oauth.server). Everything looked up by a presented
+     secret or identifier has a column of its own with an index, because every token request and
+     every request to a protected endpoint looks it up; the rest uses the generic flex/association
+     storage. The unique indexes on OAuthGrant.codeHash and OAuthToken.predecessorHash make an
+     authorization code and a refresh token single use even for two exchanges at the same time. -->
+<objectlist>
+
+	<metaobject
+		object_name="OAuthClient"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="clientId"
+			att_type="String"
+			db_size="64"
+			mandatory="true"
+		/>
+		<index>
+			<mo_index name="clientId" unique="true">
+				<index-parts>
+					<index_part name="clientId"/>
+				</index-parts>
+			</mo_index>
+		</index>
+	</metaobject>
+
+	<metaobject
+		object_name="OAuthGrant"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="codeHash"
+			att_type="String"
+			db_size="64"
+			mandatory="true"
+		/>
+		<index>
+			<mo_index name="codeHash" unique="true">
+				<index-parts>
+					<index_part name="codeHash"/>
+				</index-parts>
+			</mo_index>
+		</index>
+	</metaobject>
+
+	<metaobject
+		object_name="OAuthToken"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="tokenHash"
+			att_type="String"
+			db_size="64"
+			mandatory="true"
+		/>
+		<mo_attribute
+			att_name="predecessorHash"
+			att_type="String"
+			db_size="64"
+			mandatory="true"
+		/>
+		<index>
+			<mo_index name="tokenHash" unique="true">
+				<index-parts>
+					<index_part name="tokenHash"/>
+				</index-parts>
+			</mo_index>
+			<mo_index name="predecessorHash" unique="true">
+				<index-parts>
+					<index_part name="predecessorHash"/>
+				</index-parts>
+			</mo_index>
+		</index>
+	</metaobject>
+
+	<metaobject
+		object_name="OAuthAuthorizationCode"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="codeHash"
+			att_type="String"
+			db_size="64"
+			mandatory="true"
+		/>
+		<index>
+			<mo_index name="codeHash" unique="true">
+				<index-parts>
+					<index_part name="codeHash"/>
+				</index-parts>
+			</mo_index>
+		</index>
+	</metaobject>
+
+	<metaobject
+		object_name="OAuthPendingAuthorization"
+		super_class="TLObject"
+	>
+		<mo_attribute
+			att_name="idHash"
+			att_type="String"
+			db_size="64"
+			mandatory="true"
+		/>
+		<index>
+			<mo_index name="idHash" unique="true">
+				<index-parts>
+					<index_part name="idHash"/>
+				</index-parts>
+			</mo_index>
+		</index>
+	</metaobject>
+
+</objectlist>

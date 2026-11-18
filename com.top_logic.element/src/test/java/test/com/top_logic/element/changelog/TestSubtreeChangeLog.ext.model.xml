@@ -68,5 +68,41 @@
 				</reference>
 			</attributes>
 		</class>
+		<!-- Composition stored in the rows of its parts (column "containerSet" of the part). -->
+		<class name="Owner">
+			<annotations>
+				<table name="PreloadTest"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<reference name="parts"
+					composite="true"
+					multiple="true"
+					type="Part"
+				>
+					<annotations>
+						<storage-algorithm>
+							<inline-set-storage container-column="containerSet"/>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="Part">
+			<annotations>
+				<table name="PreloadTest"/>
+			</annotations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<reference name="owner"
+					inverse-reference="parts"
+					type="Owner"
+				/>
+			</attributes>
+		</class>
 	</module>
 </model>

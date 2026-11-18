@@ -58,16 +58,35 @@ public class TableAcceptSelection implements Command {
 	}
 
 	private List<?> getSelection() {
+		List<Object> result = new ArrayList<>();
 		if (!_targetSelectField.isOptionsTree()) {
-			return _tableSelectorContext.getSelection();
+			result.addAll(_tableSelectorContext.getSelection());
 		} else {
 			List<?> treeTableSelection = _tableSelectorContext.getSelection();
-			List<Object> result = new ArrayList<>();
 			for (Object treeTableNode : treeTableSelection) {
 				result.add(((DefaultTreeTableNode) treeTableNode).getBusinessObject());
 			}
-			return result;
 		}
+		return keepHidden(result);
+	}
+
+	/**
+	 * Adds the elements of the value the table did not show, so that applying the selection keeps
+	 * them.
+	 *
+	 * @see TableSelectorContext#getHiddenSelection()
+	 */
+	private List<?> keepHidden(List<Object> selection) {
+		List<?> hidden = _tableSelectorContext.getHiddenSelection();
+		if (hidden.isEmpty()) {
+			return selection;
+		}
+		if (_targetSelectField.isMultiple()) {
+			selection.addAll(hidden);
+			return selection;
+		}
+		// A single value the user may not discover stays, unless the user selected another one.
+		return selection.isEmpty() ? new ArrayList<>(hidden) : selection;
 	}
 
 }

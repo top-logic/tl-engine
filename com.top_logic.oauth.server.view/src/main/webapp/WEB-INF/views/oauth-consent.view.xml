@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The page on which a person allows or denies the authorization request of an OAuth client, e.g.
+	Claude Code asking to call the MCP endpoint of the application as the person.
+	
+	The authorization endpoint (/oauth/authorize) checks the request, keeps it as a pending
+	authorization and sends the browser here, with its identifier in the "pending" query parameter,
+	which the query binding below puts on the pending channel. A request that cannot be decided -
+	unknown, already answered, expired - is named as such. A visitor who is not logged in logs in on
+	the page and gets back to it with the same URL. A logged-in person sees which client asks, where
+	the answer goes, which endpoint it wants to call and as whom: Allow issues the authorization code
+	and sends the browser back to the client, Deny sends the error access_denied back. Both run as
+	commands of the page, so another site cannot trigger them.
+-->
+<view>
+	<channels>
+		<!-- The identifier of the pending authorization, from the URL. -->
+		<channel name="pending"/>
+		<!-- Why the request cannot be decided, empty for an open request. -->
+		<derived-channel name="refusal"
+			inputs="pending"
+		>
+			<expr><![CDATA[oauthRefusal($pending)]]></expr>
+		</derived-channel>
+		<!-- What the request asks for, see oauthRequest(). -->
+		<derived-channel name="request"
+			inputs="pending"
+		>
+			<expr><![CDATA[oauthRequest($pending)]]></expr>
+		</derived-channel>
+		<derived-channel name="client"
+			inputs="request"
+		>
+			<expr><![CDATA[$request["client"]]]></expr>
+		</derived-channel>
+		<derived-channel name="clientHost"
+			inputs="request"
+		>
+			<expr><![CDATA[$request["clientHost"]]]></expr>
+		</derived-channel>
+		<derived-channel name="redirectHost"
+			inputs="request"
+		>
+			<expr><![CDATA[$request["redirectHost"]]]></expr>
+		</derived-channel>
+		<derived-channel name="resource"
+			inputs="request"
+		>
+			<expr><![CDATA[$request["resource"]]]></expr>
+		</derived-channel>
+		<derived-channel name="currentUser"
+			expr="currentUser()"
+		/>
+		<!-- The credentials of the login form shown to a visitor: transient, never stored. -->
+		<derived-channel name="model"
+			expr="new(`tl.login:Credentials`, transient: true)"
+		/>
+	</channels>
+	<query-bindings>
+		<bind
+			channel="pending"
+			query-param="pending"
+		/>
+	</query-bindings>
+	<inset>
+		<stack align="center">
+			<panel
+				appearance="card"
+				width="480px"
+				with-inset="true"
+			>
+				<title>
+					<en>Allow access</en>
+					<de>Zugriff erlauben</de>
+				</title>
+				<switch input="refusal">
+					<case test="$refusal != null">
+						<text
+							input="refusal"
+							tone="error"
+						/>
+					</case>
+					<default>
+						<switch input="currentUser">
+							<case test="$currentUser.accountIsAnonymous()">
+								<stack
+									align="stretch"
+									direction="column"
+									gap="compact"
+								>
+									<text>
+										<label>
+											<en>An application asks for access to your account. Log in to decide about it.</en>
+											<de>Eine Anwendung bittet um Zugriff auf Ihr Konto. Melden Sie sich an, um darüber zu entscheiden.</de>
+										</label>
+									</text>
+									<view-ref view="login-form.view.xml">
+										<bind
+											channel="model"
+											to="model"
+										/>
+									</view-ref>
+								</stack>
+							</case>
+							<default>
+								<stack
+									align="stretch"
+									direction="column"
+									gap="compact"
+								>
+									<text variant="label">
+										<label>
+											<en>Application</en>
+											<de>Anwendung</de>
+										</label>
+									</text>
+									<text input="client"/>
+									<switch input="clientHost">
+										<case test="$clientHost != null">
+											<stack
+												align="stretch"
+												direction="column"
+												gap="compact"
+											>
+												<text variant="label">
+													<label>
+														<en>Described by</en>
+														<de>Beschrieben von</de>
+													</label>
+												</text>
+												<text input="clientHost"/>
+											</stack>
+										</case>
+									</switch>
+									<text variant="label">
+										<label>
+											<en>Returns to</en>
+											<de>Kehrt zurück zu</de>
+										</label>
+									</text>
+									<text input="redirectHost"/>
+									<text variant="label">
+										<label>
+											<en>Endpoint</en>
+											<de>Endpunkt</de>
+										</label>
+									</text>
+									<text input="resource"/>
+									<text variant="label">
+										<label>
+											<en>Logged in as</en>
+											<de>Angemeldet als</de>
+										</label>
+									</text>
+									<text input="currentUser"/>
+									<text tone="secondary">
+										<label>
+											<en>If you allow access, the application acts as you, with all your rights, at the endpoint named above, until you revoke the authorization.</en>
+											<de>Wenn Sie den Zugriff erlauben, handelt die Anwendung als Sie, mit all Ihren Rechten, an dem oben genannten Endpunkt, bis Sie die Autorisierung widerrufen.</de>
+										</label>
+									</text>
+									<stack
+										direction="row"
+										gap="compact"
+									>
+										<button>
+											<action class="com.top_logic.layout.view.command.GenericViewCommand"
+												inputs="pending"
+											>
+												<label>
+													<en>Deny</en>
+													<de>Ablehnen</de>
+												</label>
+												<execute-script function="oauthDeny($pending)">
+													<with-result>
+														<open-url new-window="false"/>
+													</with-result>
+												</execute-script>
+											</action>
+										</button>
+										<button appearance="primary">
+											<action class="com.top_logic.layout.view.command.GenericViewCommand"
+												inputs="pending"
+											>
+												<label>
+													<en>Allow</en>
+													<de>Erlauben</de>
+												</label>
+												<execute-script function="oauthApprove($pending)">
+													<with-result>
+														<open-url new-window="false"/>
+													</with-result>
+												</execute-script>
+											</action>
+										</button>
+									</stack>
+								</stack>
+							</default>
+						</switch>
+					</default>
+				</switch>
+			</panel>
+		</stack>
+	</inset>
+</view>

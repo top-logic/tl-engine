@@ -27,6 +27,7 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel.SelectOptionsListener;
 import com.top_logic.layout.form.model.SelectFieldModel;
+import com.top_logic.layout.form.model.utility.MaskedValues;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.ReactImages;
@@ -49,7 +50,7 @@ import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.listen.ObservedObjects;
-import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
@@ -442,15 +443,16 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl implements
 	 * <p>
 	 * A field holds the unfiltered value of a reference, so it may contain such objects. Their
 	 * identity - label, image, color, link - is not sent to the client: the field shows the
-	 * placeholder {@link I18NConstants#MASKED_VALUE} instead, keeps the object at its place in the
-	 * value, and writes it back unchanged unless the user removes it.
+	 * placeholder {@link com.top_logic.model.security.I18NConstants#MASKED_VALUE} instead, keeps the
+	 * object at its place in the value, and writes it back unchanged unless the user removes it.
 	 * </p>
 	 *
 	 * @param option
 	 *        The value to check, may be {@code null}.
+	 * @see DiscoverRight#isMasked(Object)
 	 */
 	public static boolean isMasked(Object option) {
-		return option instanceof TLObject object && !ModelAccessRights.getInstance().isDiscoverAllowed(object);
+		return DiscoverRight.isMasked(option);
 	}
 
 	/**
@@ -995,7 +997,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl implements
 		if (isMasked(option)) {
 			// Only the opaque id, so the masked value is written back unchanged.
 			descriptor.put(DropdownSelectState.Option.LABEL__PROP,
-				Resources.getInstance().getString(I18NConstants.MASKED_VALUE));
+				MaskedValues.placeholder());
 			return descriptor;
 		}
 		descriptor.put(DropdownSelectState.Option.LABEL__PROP, _labelProvider.getLabel(option));

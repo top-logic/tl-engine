@@ -135,7 +135,7 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 			TLObject template = create.getValue();
 
 			for (TLStructuredTypePart part : revived.tType().getAllParts()) {
-				if (part.isDerived()) {
+				if (!isApplicable(part)) {
 					continue;
 				}
 
@@ -216,6 +216,9 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 
 				for (Modification modification : update.getModifications()) {
 					TLStructuredTypePart part = modification.getPart();
+					if (!isApplicable(part)) {
+						continue;
+					}
 
 					// The original value that was set before the original change.
 					Object oldBaseValue = oldBaseObject.tValue(part);
@@ -292,6 +295,19 @@ public interface ChangeSet extends com.top_logic.element.changelog.model.impl.Ch
 			}
 		}
 		return problems;
+	}
+
+	/**
+	 * Whether a value of the given part is set when applying this change set.
+	 *
+	 * <p>
+	 * A derived part (e.g. the backwards end of a reference) cannot be set. Its value follows from
+	 * the value of the part it is derived from, e.g. from the forward end of the reference, whose
+	 * change is part of the same change set.
+	 * </p>
+	 */
+	private static boolean isApplicable(TLStructuredTypePart part) {
+		return !part.isDerived();
 	}
 
 	private Object resolveNewValue(List<ResKey> problems, long rev, TLStructuredTypePart part, TLObject template,

@@ -1,5 +1,5 @@
 ---
-description: Read before switching on or administering the MCP endpoint /mcp/* of tl-ai-mcp-server - the module MCPServerService$Module (off by default, 503), <authentications> and <secrets> (personal access tokens tlpat_, API key, HTTP basic, OAuth bearer; user-id required), what <exposed-tools> publishes, <instructions>, allowed-origins / allowed-hosts, what an authenticated caller can read and call (ReadFilter, background allowlist, session ownership), and the MCP tool annotations.
+description: Read before switching on or administering the MCP endpoint /mcp/* of tl-ai-mcp-server - the module MCPServerService$Module (off by default, 503), <authentications> and <secrets> (OAuth sign-in with oauth-access-token-authentication, personal access tokens tlpat_, API key, HTTP basic, external OAuth bearer; user-id required; combined WWW-Authenticate challenges), how a client finds and connects to it (server card /mcp/server-card, card-name, description, AI Catalog entry, llms.txt section, plain-text 401 with guidance, EndpointCredential), what <exposed-tools> publishes, <instructions>, allowed-origins / allowed-hosts, what an authenticated caller can read and call (ReadFilter, background allowlist, session ownership), and the MCP tool annotations.
 order: 91
 ---
 
@@ -66,14 +66,15 @@ Enabling the module is not enough, deliberately.
 
 The key is read from its secret source at each check, here the secret `mcp_api_key` of the secret store of the installation (by default the environment variable of that name, see [secret stores](doc:credentials/secret-stores)), so it can be rotated without a restart and the configuration never holds it. Unlike other secrets, the `<api-key>` of an API-key secret names the class of its source, because a key without `class` is a key kept in the configuration (the form the service editor generates tokens for). A key kept in the configuration itself is the attribute `api-key="..."` with an encrypted value (or `unencrypted:` followed by the key); the service editor generates such a key with *Update token*.
 
-Four schemes are available, and a caller may present any one of the configured ones:
+Five schemes are available, and a caller may present any one of the configured ones:
 
 | Scheme | Element | What it checks | When to use it |
 |---|---|---|---|
+| **OAuth sign-in** | `<oauth-access-token-authentication resource="/mcp"/>` (module `tl-oauth-server`) | An access token the application's own authorization server issued for `/mcp`, see the article `oauth-server` of `tl-oauth-server` | **When people connect an MCP client that signs in by itself** (Claude Code, Cursor, ...). The client is configured with the endpoint URL alone; the person logs in in the browser and allows the client; nothing to copy, rotate or configure per person |
 | **Personal access token** | `<personal-access-token-authentication>` | A `tlpat_` token a person created for their own account, see [below](#personal-access-tokens) | **When people connect their own MCP client.** Each person creates, sees and revokes their own tokens; no configuration per person |
 | **API key** | `<api-key-authentication>` + `<api-key-server-secret>` | A key in a header, query parameter or cookie, mapped to one account | **The default for a service account.** Revocable on its own, attributable to one account, and keeps a person's login out of a client configuration file. Every mainstream MCP client can send a static header |
 | **HTTP basic** | `<basic-authentication in-user-context="true"/>` | The account's own password, against its `AuthenticationDevice` | A one-line `curl` smoke test, or a deployment with no key management. Puts a real password into a client configuration, so it is not the default |
-| **OAuth bearer** | `<client-credentials-authentication>` + `<client-credentials-server-secret>` | A bearer token, validated by RFC 7662 introspection against an authorization server | A deployment that already runs an OIDC provider. TopLogic issues no tokens of its own, so this needs one |
+| **External OAuth bearer** | `<client-credentials-authentication>` + `<client-credentials-server-secret>` | A bearer token, validated by RFC 7662 introspection against an external authorization server | A deployment whose clients get their tokens from an OIDC provider it already runs |
 
 The secret elements have the same names and attributes as on the OpenAPI server, so a secret can be copied from there unchanged; they are the MCP service's own types, because the engine accepts its OpenAPI secret types only in the OpenAPI server's configuration. There is no `<basic-auth-server-secret>`: HTTP basic with a technical login processes a request in system context, which `/mcp/*` refuses.
 
@@ -83,6 +84,65 @@ The secret elements have the same names and attributes as on the OpenAPI server,
 - **Prefer a dedicated service account** over a real person's login, so that revoking MCP access does not mean disabling somebody's login.
 
 A misconfigured authentication - a scheme with no matching secret, say - authenticates nobody rather than being skipped, so a configuration mistake cannot widen access.
+
+A refused request carries the `WWW-Authenticate` challenge of **every** configured scheme, one header field each, in the order of `<authentications>` (`CombinedResponseEnhancer` of the OpenAPI server); the status is 401 if any scheme answers 401. The MCP client of Claude Code joins the header fields and looks for `resource_metadata` only if the joined value starts with a `Bearer` challenge - so list `<oauth-access-token-authentication>` (or another bearer scheme) before `<basic-authentication>`.
+
+### Signing in with OAuth
+
+With `tl-oauth-server` (and `tl-oauth-server-view` for the consent page) on the classpath, the endpoint accepts the application's own OAuth access tokens:
+
+```xml
+<config service-class="com.top_logic.ai.mcp.server.MCPServerService">
+    <instance>
+        <authentications>
+            <oauth-access-token-authentication domain="oauth" resource="/mcp"/>
+            <personal-access-token-authentication domain="tokens"/>
+        </authentications>
+    </instance>
+</config>
+```
+
+A person connects Claude Code with the address alone:
+
+```bash
+claude mcp add --transport http --scope user <name> https://host/app/mcp
+```
+
+On the first request the endpoint answers 401 with `WWW-Authenticate: Bearer realm="...", resource_metadata="https://host/app/.well-known/oauth-protected-resource/mcp"`. The client reads the protected resource metadata there (RFC 9728), finds the authorization server, registers itself, opens the browser for the login and the consent page, and from then on sends and renews its access token by itself. How the client finds the authorization server metadata, the consent page and the lifetimes of the tokens are described in the article `oauth-server` of `tl-oauth-server`, section *Discovery by an MCP client*. The person sees and revokes the authorization in *Settings → Authorized clients*, an administrator every authorization in *Administration → Access control → OAuth authorizations*.
+
+## How a client finds and connects to the endpoint
+
+An agent that knows only the application's URL finds the endpoint through the application's self-description ([agent discovery](doc:agent-discovery)); `tl-ai-mcp-server` adds `McpDiscoveryContribution` to it by a configuration overlay. While `MCPServerService` runs:
+
+- **Server card** (SEP-2127) at `GET <context>/mcp/server-card`, media type `application/mcp-server-card+json`. It is the one request below `/mcp` served **without a credential**: `McpAuthenticationFilter` lets exactly `GET` and the CORS preflight `OPTIONS` of that path through (`ServerCardResource.isPublicRequest`); any other method on it and any other path below `/mcp` stay guarded. While the service is off, the path answers 503 like the rest of `/mcp/*`. The answer carries `Access-Control-Allow-Origin: *`, `Cache-Control: public, max-age=3600` and an `ETag` (a hash of the body); a `GET` with a matching `If-None-Match` is answered 304. The card names the server and its endpoint and never a credential, tool or resource:
+
+  ```json
+  {
+    "$schema": "https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json",
+    "name": "de.haumacher.apps/ehome",
+    "version": "1.0.0",
+    "description": "MCP server of eHome",
+    "title": "eHome",
+    "websiteUrl": "https://apps.haumacher.de/ehome",
+    "remotes": [{
+      "type": "streamable-http",
+      "url": "https://apps.haumacher.de/ehome/mcp",
+      "headers": [{
+        "name": "Authorization",
+        "description": "A personal access token, sent as header \"Authorization: Bearer <personal access token>\"",
+        "isRequired": true,
+        "isSecret": true
+      }]
+    }]
+  }
+  ```
+
+  `name` is `card-name` on `MCPServerService` (reverse-DNS, `namespace/name`; invalid characters become `-`); empty derives it from the application URL - the host reversed, a slash, the last context path segment (`mcp` for the root context). `description` is the property of that name (at most 100 characters); empty derives "MCP server of <server-name>". `title` is `server-name`, `version` is `server-version`. A header entry exists for each request header a client is configured to send a credential in; it is `isRequired` only if it carries every accepted credential. A query-parameter or cookie API key gets no header entry, and neither does the OAuth sign-in: the client obtains its token by itself, so a server offering it requires no header.
+- **AI Catalog entry**: `urn:air:<host>:mcp:<name>` (the part of the card name after the slash), type `application/mcp-server-card+json`, URL the card.
+- **`llms.txt` section "MCP server"**: the endpoint (and that the form with a trailing slash works), the card URL, the accepted credentials in plain words, where a person creates a personal access token (*Settings → Access tokens → New token* in `<context>/view/`, with the permission *Agent interfaces (MCP/A2A)*) when `<personal-access-token-authentication>` is configured, where a client finds the authorization server when `<oauth-access-token-authentication>` is configured, a `claude mcp add --transport http --scope user <name> <context>/mcp` command without credential when a scheme offers a sign-in, a `claude mcp add ... --header "..."` command for the first credential sent in a header, a note to keep the token out of a committed `.mcp.json` (write `${MCP_TOKEN}` there), and the configured `<instructions>`.
+- **A refused request explains itself.** A request without a valid credential keeps the scheme's status and challenge headers (`WWW-Authenticate`), but its body is `text/plain; charset=UTF-8` instead of the container's error page: the scheme's message and, for a 401, the `llms.txt` URL, the card URL and the accepted credentials with where to get one. The texts come from the resource bundles in the log locale, the locale of the scheme's own message, so an answer is in one language. A 503 (no authentication configured) gets the plain-text message without guidance - no credential would change it.
+
+How a credential is presented is described by `EndpointCredential` (`tl-service-openapi-server`, package `com.top_logic.service.openapi.server.authentication.conf`): an authentication implementing `EndpointCredential.Provider` describes itself (the personal access token does, including where to create one; the OAuth access token authentication describes a *sign-in*, a credential the client obtains by itself, naming the protected resource metadata); every other one is described by the OpenAPI security scheme it exports (`createSchemaObject`) - HTTP basic or another HTTP scheme, OAuth / OpenID Connect bearer, API key in header, query or cookie. An authentication added later is described by implementing the provider interface, without touching the card or the guidance.
 
 ## Personal access tokens
 
@@ -102,7 +162,7 @@ A personal access token lets a person connect an MCP client - Claude Code, Curso
 </config>
 ```
 
-**Creating one.** *Settings → Access tokens → New token* (the settings dialog of `tl-layout-view`): a name, typically the client it is for, optionally how many days it stays valid, and the permissions - *Agent interfaces (MCP/A2A)* for an MCP or A2A client. The token is shown **once**, in the dialog that follows; nothing can show it again, so a lost token is revoked and replaced. The same tab lists the person's tokens - name, the first characters, permissions, expiry - and revokes one. An application without the settings dialog places `access-tokens.view.xml` wherever its own settings are, as `tl-ai-demo` does on *My settings*. The tokens, their permissions and the views are shared by every endpoint that accepts access tokens, see `com.top_logic.element.accesstoken.AccessTokens` in `tl-element`; the agent access to the user interface (`tl-layout-view-agent`) uses the same tokens with permissions of its own.
+**Creating one.** *Settings → Access tokens → New token* (the settings dialog of `tl-layout-view`): a name, typically the client it is for, optionally how many days it stays valid, and the permissions - *Agent interfaces (MCP/A2A)* for an MCP or A2A client. The token is shown **once**, in the dialog that follows; nothing can show it again, so a lost token is revoked and replaced. For a token with *Agent interfaces (MCP/A2A)* the dialog also shows the address of the MCP endpoint and the `claude mcp add` command with the token, each ready to copy, while the MCP server runs and accepts access tokens (overlay `access-token-created.view.xml` of `tl-ai-mcp-server`, TL-Script functions `mcpAcceptsAccessToken`, `mcpEndpointUrl`, `mcpClaudeCommand`). The same tab lists the person's tokens - name, the first characters, permissions, expiry - and revokes one. An application without the settings dialog places `access-tokens.view.xml` wherever its own settings are, as `tl-ai-demo` does on *My settings*. The tokens, their permissions and the views are shared by every endpoint that accepts access tokens, see `com.top_logic.element.accesstoken.AccessTokens` in `tl-element`; the agent access to the user interface (`tl-layout-view-agent`) uses the same tokens with permissions of its own.
 
 **Administering them.** *Administration → Access control → Access tokens* lists the tokens of every account and revokes any of them - what to do when a token leaked or an account must lose MCP access at once. Deleting an account deletes its tokens. A person reads only their own tokens: model access is deny-by-default, so the owner holds the technical role `AccessTokenOwner` on each of their tokens through a role rule on `owner` (configured in `tl-element`), and that role is granted Read.
 
@@ -198,7 +258,6 @@ The agent framework's own MCP client ignores all of it: the hints are a server's
 
 ### What it does not do
 
-- **No RFC 9728 protected-resource metadata.** Nothing serves `/.well-known/oauth-protected-resource`, and the bearer challenge carries no `resource_metadata`, so an OAuth client cannot discover this server automatically - it has to be configured. The MCP specification makes authorization optional.
 - **An aggregate a TL-Script computes passes the read filter untouched.** ``all(`X`).size()`` is a number by the time the filter sees it; it is bounded by the secured evaluation, which delivers only the objects the account may discover to the script.
 - **The model-metadata resources** (types of a module, parts of a type, classifiers, usages, configuration schemas) disclose model structure, not business data, and are not bounded by the account's readable types.
 
@@ -220,10 +279,10 @@ Configure at least one authentication and its secret as above, and restart. The 
 
 **Still restrict who can reach the path**, at the network or reverse-proxy level, on any deployment where that is cheap. Authentication makes the endpoint safe to expose; it does not make an exposed port a good idea.
 
-The service's own settings (`server-name`, `server-version`, `keep-alive-interval`, `<instructions>`, `<exposed-tools>`, `allowed-origins`, `allowed-hosts`, `<dynamic-resources>`) are documented on `com.top_logic.ai.mcp.server.MCPServerService.Config`. `tl-ai-demo` has an aspect for a local demo, `mcp-demo.config.xml`: uncommented in `metaConf.txt`, it switches the endpoint on with HTTP basic login and opens `model.read` to background runs, so that the three model-reading tools the demo publishes answer. It is for a local demo only; the file says how to connect Claude Code.
+The service's own settings (`server-name`, `server-version`, `card-name`, `description`, `keep-alive-interval`, `<instructions>`, `<exposed-tools>`, `allowed-origins`, `allowed-hosts`, `<dynamic-resources>`) are documented on `com.top_logic.ai.mcp.server.MCPServerService.Config`. `tl-ai-demo` has an aspect for a local demo, `mcp-demo.config.xml`: uncommented in `metaConf.txt`, it switches the endpoint on with HTTP basic login and opens `model.read` to background runs, so that the three model-reading tools the demo publishes answer. It is for a local demo only; the file says how to connect Claude Code.
 
 ## Where this is tested
 
-- `tl-ai-mcp-server`: `TestMcpServerProtocol` (over the real transport: `initialize` carries the instructions, `tools/list` shows only the published tool with its title and annotations, a tool that is not published is unknown, a foreign `Origin` is refused and a missing one is served, a request without an account is listed no tool, the endpoint URL with a trailing slash opens and serves a session while another path below it is not served), `TestMcpExposure` (which tools an entry publishes, and every configuration that is refused), `TestMcpAuthentication` (nothing configured serves nobody; a scheme's own 401 challenge), `TestMcpAuthenticationFilter` (what is refused, and that a refused request never reaches the protocol), `TestMcpSessionPrincipals` (session ownership), `TestMcpToolAnnotations` (the table above).
+- `tl-ai-mcp-server`: `TestMcpServerProtocol` (over the real transport: `initialize` carries the instructions, `tools/list` shows only the published tool with its title and annotations, a tool that is not published is unknown, a foreign `Origin` is refused and a missing one is served, a request without an account is listed no tool, the endpoint URL with a trailing slash opens and serves a session while another path below it, and a POST to the server card's path, is not served), `TestMcpExposure` (which tools an entry publishes, and every configuration that is refused), `TestMcpAuthentication` (nothing configured serves nobody; a scheme's own 401 challenge), `TestMcpAuthenticationFilter` (what is refused, that a refused request never reaches the protocol, the plain-text 401 with guidance, and that only reading the server card is public), `TestMcpServerCard` (the card's fields and name rules, its headers per credential, ETag/304, CORS preflight, the catalog entry, the `llms.txt` section, the inactive contribution), `TestMcpSessionPrincipals` (session ownership), `TestMcpToolAnnotations` (the table above).
 - `tl-element`: `TestAccessTokens` (the token format, its hash, lookup, expiry, the last-used stamp and the permissions); `tl-ai-core`: `TestAccessTokenMigration` (tokens of `tl.ai.access` become `tl.accounts:AccessToken` with the permission `agent-endpoints`).
 - `tl-ai-demo`: `SecDemoMcpEndpointTest`, against the security test bed's real accounts and access rights - a resource read filtered per object, an attribute left out, a listing counted after filtering, an API key resolved to its account, a tool call authorized and one refused by the background allowlist, `tools/list` showing each account exactly the tools whose call it passes, and a personal access token acting as its owner, refused when revoked or expired.

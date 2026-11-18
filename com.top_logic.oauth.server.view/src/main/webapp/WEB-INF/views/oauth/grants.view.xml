@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The OAuth clients the logged-in account allowed to act as it: a client such as Claude Code that
+	signed the person in through the browser (see oauth-consent.view.xml) and calls an endpoint of
+	the application with the access tokens it received. Revoking an authorization here refuses all
+	its tokens at once; the client has to sign in again.
+	
+	Self-contained, so it works wherever it is referenced: the settings dialog's tab "Authorized
+	clients" (settings-tabs.view.xml of this module) and any page of an application that has no
+	settings dialog. The rows are filtered by owner, and the revoke command goes through oauthRevoke,
+	which refuses an authorization of somebody else even when a channel happens to hold one.
+-->
+<view>
+	<channels>
+		<channel name="selectedGrant"/>
+	</channels>
+	<panel>
+		<title>
+			<en>Authorized clients</en>
+			<de>Autorisierte Clients</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-x-circle"
+				inputs="selectedGrant as grant"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Revoke</en>
+					<de>Widerrufen</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<confirm expr="#('Revoke the authorization of {0}? The client is refused from now on and has to sign in again.'@en, 'Die Autorisierung von {0} widerrufen? Der Client wird ab sofort abgewiesen und muss sich neu anmelden.'@de).fill($grant.get(`tl.oauth.server:OAuthGrant#clientName`))"/>
+				<with-transaction>
+					<execute-script function="oauthRevoke($grant)"/>
+					<with-result>
+						<write-channel name="selectedGrant"
+							clear="true"
+						/>
+					</with-result>
+				</with-transaction>
+			</generic-command>
+		</commands>
+		<table
+			observed-types="tl.oauth.server:OAuthGrant"
+			selection="selectedGrant"
+			types="tl.oauth.server:OAuthGrant"
+		>
+			<!-- Sized to fit the 560px settings dialog; the scope is one click away in the column selection. -->
+			<columns>
+				<column
+					attribute="clientName"
+					width="130"
+				/>
+				<column
+					attribute="resource"
+					width="150"
+				/>
+				<column
+					attribute="createdAt"
+					width="125"
+				/>
+				<column
+					attribute="lastUsed"
+					width="125"
+				/>
+			</columns>
+			<rows><![CDATA[all(`tl.oauth.server:OAuthGrant`)
+				.filter(g -> $g.get(`tl.oauth.server:OAuthGrant#owner`) == currentUser())
+				.sort((g -> $g.get(`tl.oauth.server:OAuthGrant#createdAt`)).comparator().desc())]]></rows>
+		</table>
+	</panel>
+</view>

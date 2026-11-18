@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<data-list
+		count="count"
+		css-class="my-list"
+		group-by="m -> $m.get(`tl.model:TLNamedPart#name`).subString(14, 15)"
+		observed-types="tl.model:TLModule"
+		row-css-class="m -> 'is-module'"
+		selection="selection"
+	>
+		<rows><![CDATA[all(`tl.model:TLModule`).filter(m -> $m.get(`tl.model:TLNamedPart#name`).stringStartsWith('test.datalist.'))
+	.sort(comparator(m -> $m.get(`tl.model:TLNamedPart#name`)))]]></rows>
+		<lines>
+			<line attribute="name"/>
+			<line
+				emphasis="secondary"
+				value="m -> 'Module'"
+			/>
+		</lines>
+		<leading name="m -> $m.get(`tl.model:TLNamedPart#name`).subString(14)"
+			image="m -> if($m.get(`tl.model:TLNamedPart#name`) == 'test.datalist.bravo', 'css:bi bi-box', null)"
+		/>
+		<trailing
+			display="badge"
+			value="m -> if($m.get(`tl.model:TLNamedPart#name`).stringStartsWith('test.datalist.a'), $m.get(`tl.model:TLNamedPart#name`).length(), 0)"
+		/>
+		<row-commands>
+			<generic-command name="rename"
+				inputs="row"
+				label="Rename"
+				label-expr="'Rename ' + $row.get(`tl.model:TLNamedPart#name`)"
+			/>
+		</row-commands>
+	</data-list>
+</view>

@@ -794,8 +794,8 @@ public class TestKnowledgeBase extends BasicTestCase {
      */
     public static Test suite () {
 		return KBSetup.getKBTest(TestKnowledgeBase.class);
-		// return KBSetup.getKBTest(TestKnowledgeBase.class, KBSetup.KB_ORACLE);
-		// return KBSetup.getKBTest(new TestKnowledgeBase("testNullIndex"), KBSetup.KB_ORACLE);
+		// return KBSetup.getKBTest(TestKnowledgeBase.class, KBSetup.KBType.KB_ORACLE19);
+		// return KBSetup.getKBTest(new TestKnowledgeBase("testNullIndex"), KBSetup.KBType.KB_ORACLE19);
     }
 
     /** Main function for direct testing.

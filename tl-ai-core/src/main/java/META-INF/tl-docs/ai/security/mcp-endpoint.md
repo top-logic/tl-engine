@@ -88,6 +88,8 @@ A misconfigured authentication - a scheme with no matching secret, say - authent
 
 A personal access token lets a person connect an MCP client - Claude Code, Cursor, any client that can send a static header - as themselves, without an administrator configuring anything per person and without putting their password into a client configuration file.
 
+**What a token must permit.** The endpoints accept only a token with the permission *Agent interfaces (MCP/A2A)* (`agent-endpoints`, contributed by `tl-ai-core` to the `AccessTokenPermissions`). A token without it - one created only for driving the user interface, say - is refused exactly like an unknown token: `401` with `WWW-Authenticate: Bearer error="invalid_token"`.
+
 **Switching it on** is one line beside the module switch; the scheme needs no secret, because the tokens are not configured:
 
 ```xml
@@ -100,9 +102,9 @@ A personal access token lets a person connect an MCP client - Claude Code, Curso
 </config>
 ```
 
-**Creating one.** *Settings → Access tokens → New token* (the engine's settings dialog, which `tl-ai-core` extends): a name, typically the client it is for, and optionally how many days it stays valid. The token is shown **once**, in the dialog that follows; nothing can show it again, so a lost token is revoked and replaced. The same tab lists the person's tokens - name, the first characters, created, expires, last used - and revokes one. An application without the settings dialog places `tl-ai-core/access-tokens.view.xml` wherever its own settings are, as `tl-ai-demo` does on *My settings*.
+**Creating one.** *Settings → Access tokens → New token* (the settings dialog of `tl-layout-view`): a name, typically the client it is for, optionally how many days it stays valid, and the permissions - *Agent interfaces (MCP/A2A)* for an MCP or A2A client. The token is shown **once**, in the dialog that follows; nothing can show it again, so a lost token is revoked and replaced. The same tab lists the person's tokens - name, the first characters, permissions, expiry - and revokes one. An application without the settings dialog places `access-tokens.view.xml` wherever its own settings are, as `tl-ai-demo` does on *My settings*. The tokens, their permissions and the views are shared by every endpoint that accepts access tokens, see `com.top_logic.element.accesstoken.AccessTokens` in `tl-element`; the agent access to the user interface (`tl-layout-view-agent`) uses the same tokens with permissions of its own.
 
-**Administering them.** *Administration → Access tokens* lists the tokens of every account and revokes any of them - what to do when a token leaked or an account must lose MCP access at once. Deleting an account deletes its tokens. A person reads only their own tokens: model access is deny-by-default, so the owner holds the technical role `AccessTokenOwner` on each of their tokens through a role rule on `owner`, and that role is granted Read.
+**Administering them.** *Administration → Access control → Access tokens* lists the tokens of every account and revokes any of them - what to do when a token leaked or an account must lose MCP access at once. Deleting an account deletes its tokens. A person reads only their own tokens: model access is deny-by-default, so the owner holds the technical role `AccessTokenOwner` on each of their tokens through a role rule on `owner` (configured in `tl-element`), and that role is granted Read.
 
 **Connecting Claude Code:**
 
@@ -223,5 +225,5 @@ The service's own settings (`server-name`, `server-version`, `keep-alive-interva
 ## Where this is tested
 
 - `tl-ai-mcp-server`: `TestMcpServerProtocol` (over the real transport: `initialize` carries the instructions, `tools/list` shows only the published tool with its title and annotations, a tool that is not published is unknown, a foreign `Origin` is refused and a missing one is served, a request without an account is listed no tool, the endpoint URL with a trailing slash opens and serves a session while another path below it is not served), `TestMcpExposure` (which tools an entry publishes, and every configuration that is refused), `TestMcpAuthentication` (nothing configured serves nobody; a scheme's own 401 challenge), `TestMcpAuthenticationFilter` (what is refused, and that a refused request never reaches the protocol), `TestMcpSessionPrincipals` (session ownership), `TestMcpToolAnnotations` (the table above).
-- `tl-ai-core`: `TestAccessTokens` (the token format and its hash).
+- `tl-element`: `TestAccessTokens` (the token format, its hash, lookup, expiry, the last-used stamp and the permissions); `tl-ai-core`: `TestAccessTokenMigration` (tokens of `tl.ai.access` become `tl.accounts:AccessToken` with the permission `agent-endpoints`).
 - `tl-ai-demo`: `SecDemoMcpEndpointTest`, against the security test bed's real accounts and access rights - a resource read filtered per object, an attribute left out, a listing counted after filtering, an API key resolved to its account, a tool call authorized and one refused by the background allowlist, `tools/list` showing each account exactly the tools whose call it passes, and a personal access token acting as its owner, refused when revoked or expired.

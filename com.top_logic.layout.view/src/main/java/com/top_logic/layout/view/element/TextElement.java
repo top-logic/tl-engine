@@ -119,14 +119,19 @@ public class TextElement implements UIElement {
 		TextOverflow getOverflow();
 
 		/**
-		 * What the text is for: {@link TextVariant#BODY running text} (the default), a
-		 * {@link TextVariant#TITLE title}, a {@link TextVariant#HEADLINE headline}, a
-		 * {@link TextVariant#DISPLAY display} statement, the {@link TextVariant#LABEL label} of a
-		 * value or a {@link TextVariant#CAPTION caption}.
+		 * What the text is for, a role of the type scale of the design system:
+		 * {@link TextVariant#BODY running text} (the default) or
+		 * {@link TextVariant#BODY_STRONG running text that stands out}, a
+		 * {@link TextVariant#DISPLAY display} statement such as a key figure, a heading of one of
+		 * three levels ({@link TextVariant#HEADING_LG large}, {@link TextVariant#HEADING_MD medium},
+		 * {@link TextVariant#HEADING_SM small}), {@link TextVariant#LABEL small text} such as the
+		 * name of a value or {@link TextVariant#LABEL_STRONG small text that stands out}, an
+		 * {@link TextVariant#OVERLINE overline} above a heading, or {@link TextVariant#CODE code} in
+		 * a fixed-width font.
 		 *
 		 * <p>
-		 * The font family, size, line height and weight of the role come from the design tokens of
-		 * the active theme.
+		 * The font family, size, weight, line height and letter spacing of the role come from the
+		 * design tokens of the active theme.
 		 * </p>
 		 */
 		@Name(VARIANT)

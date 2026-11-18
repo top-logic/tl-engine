@@ -28,8 +28,9 @@ import com.top_logic.model.listen.ModelScope;
  *
  * <p>
  * As every object that is not {@link #tTransient() transient}, it has a {@link #tHandle() handle}.
- * The handle only answers its {@link KnowledgeItem#getState() state}: the object stands for an
- * object stored in an earlier transaction.
+ * The handle only answers its {@link KnowledgeItem#getState() state} and its
+ * {@link KnowledgeItem#getWrapper() wrapper}: the object stands for an object stored in an earlier
+ * transaction, and it is the persistent object of its handle.
  * </p>
  */
 public class IdentifiedObject extends TransientTLObjectImpl {
@@ -88,6 +89,8 @@ public class IdentifiedObject extends TransientTLObjectImpl {
 				switch (method.getName()) {
 					case "getState":
 						return KnowledgeItem.State.PERSISTENT;
+					case "getWrapper":
+						return IdentifiedObject.this;
 					case "equals":
 						return proxy == args[0];
 					case "hashCode":
@@ -96,7 +99,7 @@ public class IdentifiedObject extends TransientTLObjectImpl {
 						return "handle of " + _id;
 					default:
 						throw new UnsupportedOperationException(
-							"The handle of a test object only answers its state: " + method);
+							"The handle of a test object only answers its state and wrapper: " + method);
 				}
 			});
 	}

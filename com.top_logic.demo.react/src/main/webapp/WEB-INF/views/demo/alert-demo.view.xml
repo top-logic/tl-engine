@@ -25,7 +25,7 @@
 			<de>Hinweisboxen</de>
 		</title>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>Severities</en>
 				<de>Schweregrade</de>
@@ -64,7 +64,7 @@
 			</message>
 		</alert>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>Closable, with a command</en>
 				<de>Schließbar, mit Kommando</de>

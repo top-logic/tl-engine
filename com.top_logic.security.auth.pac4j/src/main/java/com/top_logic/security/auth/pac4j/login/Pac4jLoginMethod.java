@@ -123,10 +123,8 @@ public class Pac4jLoginMethod implements LoginMethod {
 	 *
 	 * <p>
 	 * Answered only for the session this method itself established: a session logged in elsewhere is
-	 * not confirmed by an identity provider it never authenticated against. The URL selects the
-	 * {@link Pac4jConfigFactory#getReauthenticationName(String) re-authentication client}, which
-	 * demands a fresh authentication, and carries the token back to the authentication servlet. It
-	 * names no start page - the window it is opened in reports the outcome and closes.
+	 * not confirmed by an identity provider it never authenticated against. The URL is the
+	 * {@link #getIdentificationUrl(String) identification URL} of this method.
 	 * </p>
 	 */
 	@Override
@@ -134,11 +132,31 @@ public class Pac4jLoginMethod implements LoginMethod {
 		if (!isSessionOwner()) {
 			return null;
 		}
+		return getIdentificationUrl(token);
+	}
+
+	/**
+	 * The URL sending the browser through this method's identity provider, so that it confirms who
+	 * is at the keyboard.
+	 *
+	 * <p>
+	 * The URL selects the {@link Pac4jConfigFactory#getReauthenticationName(String)
+	 * re-authentication client}, which demands a fresh authentication, and carries the token back
+	 * to the authentication servlet. It names no start page - the window it is opened in reports the
+	 * outcome and closes.
+	 * </p>
+	 */
+	@Override
+	public String getIdentificationUrl(String token) {
+		if (!canIdentify()) {
+			return null;
+		}
+		String reauthenticationClient = Pac4jConfigFactory.getReauthenticationName(_clientName);
 
 		DisplayContext context = DefaultDisplayContext.getDisplayContext();
 		dropStoredProfile(context);
 
-		StringBuilder url = servletUrl(context, Pac4jConfigFactory.getReauthenticationName(_clientName));
+		StringBuilder url = servletUrl(context, reauthenticationClient);
 		url.append('&').append(ExternalAuthenticationServlet.VERIFICATION_PARAM).append('=').append(encode(token));
 		return url.toString();
 	}
@@ -152,6 +170,18 @@ public class Pac4jLoginMethod implements LoginMethod {
 		result.append(context.getContextPath()).append(OPENID_SERVLET);
 		result.append('?').append(CLIENT_PARAM).append('=').append(encode(clientName));
 		return result;
+	}
+
+	/**
+	 * Whether this method's client can demand a fresh authentication, i.e. whether the pac4j
+	 * configuration has its {@link Pac4jConfigFactory#getReauthenticationName(String)
+	 * re-authentication client}.
+	 */
+	@Override
+	public boolean canIdentify() {
+		String reauthenticationClient = Pac4jConfigFactory.getReauthenticationName(_clientName);
+		return Pac4jConfigFactory.getInstance().getPac4jConfig().getClients().findClient(reauthenticationClient)
+			.isPresent();
 	}
 
 	/**

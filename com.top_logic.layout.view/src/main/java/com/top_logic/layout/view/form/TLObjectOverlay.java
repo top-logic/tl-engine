@@ -63,11 +63,26 @@ import com.top_logic.util.error.TopLogicException;
  * with fallback or directly: it is announced for both attributes, and both are
  * {@link #isChanged(TLStructuredTypePart) changed}.
  * </p>
+ *
+ * <p>
+ * An attribute and all its overrides share one value: a value written through an override is read
+ * through the overridden attribute and vice versa. A change is announced for the attribute it was
+ * written through.
+ * </p>
  */
 public class TLObjectOverlay extends TransientObject implements TLFormObjectBase {
 
 	private final TLObject _base;
 
+	/**
+	 * The changed values, indexed by the {@link TLStructuredTypePart#getDefinition() definition} of
+	 * their attribute.
+	 *
+	 * <p>
+	 * An attribute and its overrides share one value, whichever of them it is written or read
+	 * through.
+	 * </p>
+	 */
 	private final Map<TLStructuredTypePart, Object> _changes = new LinkedHashMap<>();
 
 	private final List<ValueChangeListener> _valueChangeListeners = new ArrayList<>();
@@ -246,7 +261,7 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 		List<TLStructuredTypePart> withFallback = withFallbackToAnnounce(part);
 		Object oldValue = valueBeforeChange(part);
 		List<Object> oldFallbackValues = valuesBeforeChange(withFallback);
-		_changes.put(part, value);
+		_changes.put(part.getDefinition(), value);
 		fireValueChanged(part, oldValue);
 		fireValuesChanged(withFallback, oldFallbackValues);
 	}
@@ -372,8 +387,9 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 			// fallback follows the edits of this overlay.
 			return fallback.getAttributeValue(this, attribute);
 		}
-		if (_changes.containsKey(attribute)) {
-			return _changes.get(attribute);
+		TLStructuredTypePart definition = attribute.getDefinition();
+		if (_changes.containsKey(definition)) {
+			return _changes.get(definition);
 		}
 		if (attribute.isDerived()) {
 			return TracingScope.computeOnOverlay(_base, this, attribute);
@@ -429,7 +445,7 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 */
 	public boolean isDirty() {
 		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
-			if (isChange(entry.getValue(), baseValue(entry.getKey()))) {
+			if (isChange(entry.getValue(), baseValue(getOwnPart(entry.getKey())))) {
 				return true;
 			}
 		}
@@ -472,9 +488,9 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 */
 	public boolean isChanged(TLStructuredTypePart part) {
 		if (part.getStorageImplementation() instanceof StorageWithFallback fallback) {
-			return _changes.containsKey(fallback.getStorageAttr());
+			return _changes.containsKey(fallback.getStorageAttr().getDefinition());
 		}
-		return _changes.containsKey(part);
+		return _changes.containsKey(part.getDefinition());
 	}
 
 	/**
@@ -483,7 +499,31 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 * @see #isChanged(TLStructuredTypePart)
 	 */
 	public List<TLStructuredTypePart> getChangedParts() {
-		return new ArrayList<>(_changes.keySet());
+		List<TLStructuredTypePart> result = new ArrayList<>(_changes.size());
+		for (TLStructuredTypePart definition : _changes.keySet()) {
+			result.add(getOwnPart(definition));
+		}
+		return result;
+	}
+
+	/**
+	 * The attribute of the type of this overlay sharing its value with the given attribute: the
+	 * attribute of the type with the same {@link TLStructuredTypePart#getDefinition() definition},
+	 * the given attribute itself if the type has no such attribute.
+	 *
+	 * <p>
+	 * The changes are kept under the definition of the attribute they were written through. They
+	 * are reported and transferred through the attribute of the type of this overlay, which carries
+	 * the annotations and the storage of the attribute for this object.
+	 * </p>
+	 */
+	public TLStructuredTypePart getOwnPart(TLStructuredTypePart part) {
+		TLStructuredTypePart definition = part.getDefinition();
+		TLStructuredTypePart own = tType().getPart(definition.getName());
+		if (own != null && own.getDefinition().equals(definition)) {
+			return own;
+		}
+		return part;
 	}
 
 	/**
@@ -498,7 +538,8 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 * @see #isDirty()
 	 */
 	public boolean isModified(TLStructuredTypePart part) {
-		return _changes.containsKey(part) && isChange(_changes.get(part), baseValue(part));
+		TLStructuredTypePart definition = part.getDefinition();
+		return _changes.containsKey(definition) && isChange(_changes.get(definition), baseValue(part));
 	}
 
 	/**
@@ -537,7 +578,7 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 		}
 		try {
 			for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
-				_base.tUpdate(entry.getKey(), entry.getValue());
+				_base.tUpdate(getOwnPart(entry.getKey()), entry.getValue());
 			}
 		} finally {
 			if (receiver != null) {
@@ -588,7 +629,7 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 */
 	public void checkApply() {
 		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
-			TLStructuredTypePart part = entry.getKey();
+			TLStructuredTypePart part = getOwnPart(entry.getKey());
 			Object value = entry.getValue();
 			if (isChange(value, baseValue(part))) {
 				Update.checkWritePermission(_base, part);
@@ -640,13 +681,14 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 			revert(fallback.getStorageAttr());
 			return;
 		}
-		if (!_changes.containsKey(part)) {
+		TLStructuredTypePart definition = part.getDefinition();
+		if (!_changes.containsKey(definition)) {
 			return;
 		}
 		List<TLStructuredTypePart> withFallback = withFallbackToAnnounce(part);
 		Object oldValue = valueBeforeChange(part);
 		List<Object> oldFallbackValues = valuesBeforeChange(withFallback);
-		_changes.remove(part);
+		_changes.remove(definition);
 		fireValueChanged(part, oldValue);
 		fireValuesChanged(withFallback, oldFallbackValues);
 	}

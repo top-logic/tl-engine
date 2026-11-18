@@ -27,7 +27,7 @@
 			<de>Popover</de>
 		</title>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>Inputs in a popover</en>
 				<de>Eingaben in einem Popover</de>
@@ -101,7 +101,7 @@
 			/>
 		</stack>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>Details on hover</en>
 				<de>Details beim Überfahren</de>
@@ -142,7 +142,7 @@
 			</popover>
 		</stack>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>Placements</en>
 				<de>Platzierungen</de>
@@ -225,7 +225,7 @@
 			</popover>
 		</stack>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>In a dialog</en>
 				<de>In einem Dialog</de>

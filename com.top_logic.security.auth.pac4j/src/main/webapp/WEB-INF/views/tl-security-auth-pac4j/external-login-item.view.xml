@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	One login connected with the account of the session, in the list of the tab "External logins"
+	(external-logins.view.xml of this module): the provider and the identifier the provider knows the
+	user by, with the button removing the login.
+	
+	Removing changes how the account signs in, so it asks for a fresh confirmation of the session
+	first (<verify-identity/>). The last way to sign in - no password and no further login - is not
+	removed: the button is disabled and tells why (oidcRemoveRefusal()), and the removal itself
+	refuses it as well.
+-->
+<view>
+	<channels>
+		<!-- The login shown (bound by the list). -->
+		<channel name="identity"/>
+		<!-- The name of the provider, the label of its login method, or the client name of a provider no longer offered. -->
+		<derived-channel name="provider"
+			expr="if(loginMethodLabel($identity.get(`tl.security.pac4j:OidcIdentity#client`)) == null, $identity.get(`tl.security.pac4j:OidcIdentity#client`), loginMethodLabel($identity.get(`tl.security.pac4j:OidcIdentity#client`)))"
+			inputs="identity"
+		/>
+		<derived-channel name="subject"
+			expr="$identity.get(`tl.security.pac4j:OidcIdentity#subject`)"
+			inputs="identity"
+		/>
+	</channels>
+	<stack
+		align="center"
+		direction="row"
+		gap="compact"
+		justify="space-between"
+	>
+		<stack gap="compact">
+			<text input="provider"/>
+			<text
+				input="subject"
+				tone="secondary"
+				variant="label"
+			/>
+		</stack>
+		<button appearance="ghost">
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-trash"
+				inputs="identity"
+				observed-types="tl.security.pac4j:OidcIdentity"
+			>
+				<label>
+					<en>Remove</en>
+					<de>Entfernen</de>
+				</label>
+				<executability>
+					<disabled-if expr="oidcRemoveRefusal($identity)"/>
+				</executability>
+				<confirm expr="#('Remove the login &quot;{0}&quot;? You can no longer sign in with it.'@en, 'Die Anmeldung „{0}“ entfernen? Sie können sich damit nicht mehr anmelden.'@de).fill($provider)">
+					<inputs>
+						<input channel="provider"/>
+					</inputs>
+				</confirm>
+				<verify-identity>
+					<message>
+						<en>Enter your password to remove the login.</en>
+						<de>Geben Sie Ihr Passwort ein, um die Anmeldung zu entfernen.</de>
+					</message>
+				</verify-identity>
+				<execute-script function="oidcRemove($identity)"/>
+			</action>
+		</button>
+	</stack>
+</view>

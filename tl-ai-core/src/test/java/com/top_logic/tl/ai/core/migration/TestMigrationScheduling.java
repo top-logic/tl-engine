@@ -66,6 +66,8 @@ public class TestMigrationScheduling extends BasicTestCase {
 
 	private static final String TICKET_30357 = "Ticket_30357_delete_cookie_pool_without_browser";
 
+	private static final String TICKET_30367 = "Ticket_30367_access_tokens_to_tl_accounts";
+
 	/**
 	 * The engine versions a database created or last started by tl-ai 2.0.4 stores - the heads of
 	 * 8.0.0-alpha8, read from such a database.
@@ -95,7 +97,7 @@ public class TestMigrationScheduling extends BasicTestCase {
 	public void testApplicationMigrationOnIssue230() throws Exception {
 		List<String> pending = pending(ISSUE_230, ISSUE_230);
 
-		assertEquals(List.of(ISSUE_487, ISSUE_594, TICKET_30054, TICKET_30357), pending);
+		assertEquals(List.of(ISSUE_487, ISSUE_594, TICKET_30054, TICKET_30357, TICKET_30367), pending);
 	}
 
 	/**
@@ -107,7 +109,7 @@ public class TestMigrationScheduling extends BasicTestCase {
 	public void testApplicationMovedToIssue487() throws Exception {
 		List<String> pending = pending(ISSUE_230, ISSUE_487);
 
-		assertEquals(List.of(ISSUE_594, TICKET_30054, TICKET_30357), pending);
+		assertEquals(List.of(ISSUE_594, TICKET_30054, TICKET_30357, TICKET_30367), pending);
 	}
 
 	/**
@@ -117,7 +119,7 @@ public class TestMigrationScheduling extends BasicTestCase {
 	public void testNoApplicationMigration() throws Exception {
 		List<String> pending = pending(ISSUE_230, null);
 
-		assertEquals(List.of(ISSUE_487, ISSUE_594, TICKET_30054, TICKET_30357), pending);
+		assertEquals(List.of(ISSUE_487, ISSUE_594, TICKET_30054, TICKET_30357, TICKET_30367), pending);
 	}
 
 	/**
@@ -127,25 +129,24 @@ public class TestMigrationScheduling extends BasicTestCase {
 	public void testIssue487Applied() throws Exception {
 		List<String> pending = pending(ISSUE_487, ISSUE_487);
 
-		assertEquals(List.of(ISSUE_594, TICKET_30054, TICKET_30357), pending);
+		assertEquals(List.of(ISSUE_594, TICKET_30054, TICKET_30357, TICKET_30367), pending);
 	}
 
 	/**
 	 * A database tl-ai 2.0.5 or later left on 8.0.0-alpha8, started on the engine this builds on:
 	 * the engine's own migrations since alpha8 run, and of {@code tl-ai-core} only the deletion of
-	 * the screenshots without a session (#30054) and of the cookie pools of an application without
-	 * {@code tl-ai-browser} (#30357) are left - nothing is moved, with or without an application
-	 * migration written on alpha8.
+	 * the screenshots without a session (#30054), the deletion of the cookie pools without a browser
+	 * (#30357) and the move of the access tokens (#30367) are left - nothing is moved, with or without an application migration written on alpha8.
 	 */
 	public void testAlpha8DatabaseOnAlpha9() throws Exception {
-		assertEquals(List.of(TICKET_30054, TICKET_30357), pending(ISSUE_594, null));
-		assertEquals(List.of(TICKET_30054, TICKET_30357), pending(ISSUE_594, ISSUE_594));
+		assertEquals(List.of(TICKET_30054, TICKET_30357, TICKET_30367), pending(ISSUE_594, null));
+		assertEquals(List.of(TICKET_30054, TICKET_30357, TICKET_30367), pending(ISSUE_594, ISSUE_594));
 	}
 
 	/**
-	 * A database on which the deletion of the screenshots without a session (#30054) did run: of
-	 * {@code tl-ai-core} only the deletion of the cookie pools of an application without
-	 * {@code tl-ai-browser} (#30357) is left.
+	 * A database on which the deletion of the screenshots without a session (#30054) did run: only
+	 * the deletion of the cookie pools without a browser (#30357) and the move of the access tokens
+	 * (#30367) are left.
 	 *
 	 * <p>
 	 * Without an application migration only: one that depends on {@code Ticket_30054} cannot be
@@ -154,7 +155,7 @@ public class TestMigrationScheduling extends BasicTestCase {
 	 * </p>
 	 */
 	public void testTicket30054Applied() throws Exception {
-		assertEquals(List.of(TICKET_30357), pending(TICKET_30054, null));
+		assertEquals(List.of(TICKET_30357, TICKET_30367), pending(TICKET_30054, null));
 	}
 
 	/**

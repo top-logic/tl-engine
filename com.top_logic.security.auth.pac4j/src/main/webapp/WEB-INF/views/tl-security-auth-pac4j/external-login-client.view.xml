@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	One provider a further login can be connected from, in the tab "External logins"
+	(external-logins.view.xml of this module), with the button connecting it.
+	
+	Connecting binds an identity of a third party to the account, so the session is confirmed afresh
+	first (<verify-identity/>). The user then signs in at the provider in a window of its own
+	(<identify-externally/>); the identity confirmed there is connected with the account of the
+	session (ConnectOidcIdentity), never moved from another account, and no account is looked up or
+	created for it.
+-->
+<view>
+	<channels>
+		<!-- The client name of the provider (bound by the list). -->
+		<channel name="client"/>
+		<derived-channel name="provider"
+			expr="loginMethodLabel($client)"
+			inputs="client"
+		/>
+	</channels>
+	<stack
+		align="center"
+		direction="row"
+		gap="compact"
+		justify="space-between"
+	>
+		<text input="provider"/>
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-link-45deg"
+				inputs="client"
+			>
+				<label>
+					<en>Connect</en>
+					<de>Verbinden</de>
+				</label>
+				<verify-identity>
+					<message>
+						<en>Enter your password to connect a further login with your account.</en>
+						<de>Geben Sie Ihr Passwort ein, um eine weitere Anmeldung mit Ihrem Konto zu verbinden.</de>
+					</message>
+				</verify-identity>
+				<identify-externally handler="com.top_logic.security.auth.pac4j.provisioning.ConnectOidcIdentity">
+					<message>
+						<en>Sign in at the provider with the login to connect. The button below opens the sign-in in a new window, and this dialog closes by itself once the login is connected.</en>
+						<de>Melden Sie sich beim Anbieter mit der Anmeldung an, die verbunden werden soll. Die Schaltfläche unten öffnet die Anmeldung in einem neuen Fenster; dieser Dialog schließt sich von selbst, sobald die Anmeldung verbunden ist.</de>
+					</message>
+				</identify-externally>
+			</action>
+		</button>
+	</stack>
+</view>

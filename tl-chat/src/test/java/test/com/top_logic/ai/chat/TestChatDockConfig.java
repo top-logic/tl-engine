@@ -13,7 +13,7 @@ import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.ai.chat.view.ChatDockElement.Config;
 import com.top_logic.ai.chat.view.ChatScopeElement;
-import com.top_logic.ai.chat.view.list.DataListElement;
+import com.top_logic.layout.view.list.DataListElement;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 

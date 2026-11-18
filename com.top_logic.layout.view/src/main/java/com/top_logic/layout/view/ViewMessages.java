@@ -6,11 +6,14 @@
 package com.top_logic.layout.view;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tells the user something in passing - that what they asked for happened, or why it did not.
@@ -53,6 +56,22 @@ public class ViewMessages {
 	 */
 	public static void error(ReactContext context, ResKey message, ResKey details) {
 		error(context, ResKey.message(message, details));
+	}
+
+	/**
+	 * Reports that an object was not edited, because someone else holds its lock.
+	 *
+	 * @param title
+	 *        What became of the user's edit, e.g. that the object is shown read-only.
+	 * @param conflict
+	 *        The failure of acquiring the lock, whose details say who holds it (where the
+	 *        application reports the holder of a lock).
+	 */
+	public static void lockConflict(ReactContext context, ResKey title, TopLogicException conflict) {
+		TopLogicException info = new TopLogicException(title);
+		info.initDetails(conflict.getDetails());
+		info.initSeverity(ErrorSeverity.INFO);
+		CommandErrors.show(context == null ? null : context.getErrorSink(), info);
 	}
 
 	private static void show(ReactContext context, ResKey message, Report report) {

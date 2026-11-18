@@ -19,6 +19,7 @@ import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.AttributeFormFactory;
+import com.top_logic.element.meta.form.FallbackFieldDisplay;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.gui.MetaAttributeGUIHelper;
 import com.top_logic.knowledge.service.KBUtils;
@@ -878,6 +879,17 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 				return;
 			}
 	
+			FallbackFieldDisplay fallbackDisplay = FallbackFieldDisplay.get(field);
+			if (fallbackDisplay != null) {
+				// The field may display the fallback value, but only its explicit value is
+				// transferred to the model.
+				if (!isUpdateForCreate() && !isChanged() && !fallbackDisplay.isChanged()) {
+					return;
+				}
+				updateValue(fieldToAttributeValue(field, fallbackDisplay.getExplicitValue()));
+				return;
+			}
+
 			if (!isUpdateRequired()) {
 				return;
 			}
@@ -899,7 +911,24 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 */
 	@FrameworkInternal
 	public final Object fieldToAttributeValue(FormField field) {
-		Object fieldValue = field.getValue();
+		return fieldToAttributeValue(field, field.getValue());
+	}
+
+	/**
+	 * Converts the given value in the representation of the given field to a potential attribute
+	 * value.
+	 *
+	 * @param field
+	 *        The {@link FormField} the value is meant for.
+	 * @param fieldValue
+	 *        A value in the representation of the given field, e.g. the explicit value of a field
+	 *        displaying an attribute with fallback.
+	 * @return The value that can be used as value for this {@link AttributeUpdate}.
+	 *
+	 * @see #fieldToAttributeValue(FormField)
+	 */
+	@FrameworkInternal
+	public final Object fieldToAttributeValue(FormField field, Object fieldValue) {
 		if (field instanceof StringField) {
 			if (StringServices.isEmpty(fieldValue)) {
 				// The field value represents "null".
@@ -916,12 +945,22 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 			}
 		} else if (field instanceof SelectField) {
 			if (!((SelectField)field).isMultiple()) {
-				fieldValue = ((SelectField) field).getSingleSelection();
+				fieldValue = singleValue(fieldValue);
 			}
 		} else if (field instanceof DataField) {
 			if (!((DataField) field).isMultiple()) {
-				fieldValue = ((DataField) field).getDataItem();
+				fieldValue = singleValue(fieldValue);
 			}
+		}
+		return fieldValue;
+	}
+
+	/**
+	 * The single value of a single-valued field whose value may be a collection.
+	 */
+	private static Object singleValue(Object fieldValue) {
+		if (fieldValue instanceof Collection<?> collection) {
+			return collection.isEmpty() ? null : collection.iterator().next();
 		}
 		return fieldValue;
 	}

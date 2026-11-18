@@ -17,6 +17,17 @@
 						<custom-params>
 							<custom-param key="acr_values" value="%PAC_ACR_VALUES%" />
 						</custom-params>
+						<!--
+							Accounts are created at login only with tl_pac_create_accounts=true; only then, or with
+							a group claim (tl_pac_group_claim), is an account bound to the subject of its identity.
+							Without both variables an existing account is found by its login name.
+						-->
+						<user-mapping class="com.top_logic.security.auth.pac4j.provisioning.OidcProvisioningUserMapping"
+							create-accounts="%PAC_CREATE_ACCOUNTS%"
+							group-claim="%PAC_GROUP_CLAIM%"
+							groups-by-name="true"
+							link-identities="%PAC_CREATE_ACCOUNTS%"
+						/>
 					</client>
 				</clients>
 			</instance>

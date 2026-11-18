@@ -96,7 +96,8 @@ alike:
 A filter on `all(...)` is compiled into the database query for an access on the query root only if,
 for the owner type of the accessed attribute and its concrete specializations, every role holding
 `Discover` also holds `Read`, no access parent is configured, no singleton of these types has grants
-of its own and the attribute has no read grant of its own. An access to a reference attribute on the root is never compiled; otherwise the filter is
+of its own and the attribute has no read grant, neither for its owner type nor for one of its
+specializations. An access to a reference attribute on the root is never compiled; otherwise the filter is
 interpreted.
 
 Model elements (types, attributes, modules, the classifiers of an enumeration) are discoverable and
@@ -248,7 +249,7 @@ Whether a script is evaluated secured is decided by its kind, not by the script 
 |---|---|
 | derived attributes (`AttributeByExpression`, `AttributeValueLocatorByExpression`) | option lists (`OptionsByExpression`, `TreeOptionsByExpression`, `DefaultSelectionProviderByExpression`, `CreateTypeOptionsByExpression`) |
 | constraints, including uniqueness checks (`ConstraintCheckByExpression`, `DeleteConstraintByExpression`), change and lifecycle handlers (`ChangeHandlerByExpression`, `LifecycleHandlerByExpression`) | default values (`DefaultByExpression`) |
-| **labels** (`LabelProviderByExpression`, the label script of `LabelByExpression`) | executability (`ExecutabilityByExpression`) |
+| **labels** (`LabelProviderByExpression`, the label script of `LabelByExpression`), the header labels of dynamic table columns (`column-label` of `<dynamic-columns>`, `columnLabel` of `DynamicColumnProviderByExpression`, `dynamicColumnLabel` of `ComputedColumnProviderByExpression`) | executability (`ExecutabilityByExpression`) |
 | role rules and access parents (`PathByExpression`, `ScriptAccessParent`, `SecurityObjectByExpression`) | process initialisation (`ProcessInitializerByExpression`) |
 | lock strategies (`LockStrategyByExpression`) | scripts in layouts and views, commands, the script console |
 | BPE execution, scheduled tasks (`ScriptTask`), migration scripts, message consumers | tooltips and titles (`TooltipProviderByExpression`, `TitleByExpression`, the tooltip script of `LabelByExpression`) |
@@ -262,7 +263,12 @@ Rules for the individual kinds:
 
 - **Labels are computed unsecured.** By R1 the label belongs to `Discover`; a secured label script
   reading `A#name` would deliver an empty label for a user holding only `Discover` on `A`.
-  *Before this change, label scripts were evaluated secured.*
+
+  The header label of a dynamic table column is a label as well and is computed unsecured like a
+  `LabelProviderByExpression`: the `column-label` of `<dynamic-columns>`, the `columnLabel` of
+  `DynamicColumnProviderByExpression` and the `dynamicColumnLabel` of
+  `ComputedColumnProviderByExpression`. Which columns exist, their cell values and their tooltips
+  are still computed secured, so a column exists only for an object the user may discover.
 - **Tooltips and titles are computed secured.** Only the label belongs to `Discover` (R1). A tooltip
   or title script typically shows attribute values (a budget, a description) and would disclose them
   to a user holding only `Discover`.
@@ -386,11 +392,18 @@ as the value of a reference (R7).
 
 ## Consequences
 
-- **Scope: the React view layer.** The user interface part of this specification (R4, R8, R11, R11a) is
-  implemented for the React view layer. The classic layout UI does not check attribute rights; its
-  script based providers deliver the discoverable (not only the readable) objects, so a table there
-  shows all column values of a row the user may only discover. An application using model based
-  security with `Discover`-only roles must use the React view layer for such types.
+- **Scope: forms of both user interfaces, tables of the React view layer.** The forms of the React
+  view layer and of the classic layout UI implement R4, R7 and R11 with the same layer (R8):
+  `DiscoverRight` restricts values and checks the new targets of a reference on save,
+  `DiscoverableOptions` restricts the option lists (also those of a Java option generator), and in
+  the classic UI a reference field shows undiscoverable elements by the placeholder
+  (`SelectFieldUtils.setMaskUndiscoverable`, `MaskedValues`) in every presentation: selection,
+  dropdown, select dialogs, read-only display and text input. In a tree of options, an
+  undiscoverable node hides its subtree. The table cells of R11a are implemented for the React view
+  layer. The classic layout UI does not check attribute rights in tables; its script based providers
+  deliver the discoverable (not only the readable) objects, so a table there shows all column values
+  of a row the user may only discover. An application using model based security with
+  `Discover`-only roles must use the React view layer for such tables.
 
 - **The guarantee depends on every object source filtering.** Every source - including script
   functions of applications - must use the common layer (R8). The input checks (R5) stay as a second

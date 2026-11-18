@@ -21,6 +21,9 @@
 					<role name="TestTLScriptSecurity.PathViewer"/>
 					<role name="TestTLScriptSecurity.NoteWriter"/>
 					<role name="TestTLScriptSecurity.PathWriter"/>
+					<role name="TestTLScriptSecurity.UnitReader"/>
+					<role name="TestTLScriptSecurity.NameReader"/>
+					<role name="TestTLScriptSecurity.NameKeeper"/>
 				</roles>
 			</instance>
 		</config>
@@ -297,6 +300,13 @@
 							roles="TestTLScriptSecurity.PathViewer"
 						/>
 					</part>
+					<!-- The path role reads the notes of a B, which are parts of the B's composition. -->
+					<part name="TestTLScriptSecurity:PathB#notes">
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.PathViewer"
+						/>
+					</part>
 					<!-- The path writer may read and set the enumeration attributes of a B. -->
 					<part name="TestTLScriptSecurity:PathB#priority">
 						<grant
@@ -359,12 +369,40 @@
 							roles="TestTLScriptSecurity.ProjectReader"
 						/>
 					</singleton>
+					<class name="TestTLScriptSecurity:Named">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestTLScriptSecurity.NameReader"
+						/>
+					</class>
+					<!-- Foo overrides name: the rights apply to Foo, not to the other types sharing the definition. -->
+					<part name="TestTLScriptSecurity:Foo#name">
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.NameKeeper"
+						/>
+					</part>
+					<!-- Sub inherits name unchanged: the rights apply to Sub and SubSub, not to Bar and BarSibling. -->
+					<part name="TestTLScriptSecurity:Sub#name">
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.NameKeeper"
+						/>
+					</part>
 					<part name="TestTLScriptSecurity:PathOffice#title">
 						<grant
 							operation="Read"
 							roles="TestTLScriptSecurity.PathViewer"
 						/>
 					</part>
+					<!-- Units and currencies are readable for whoever holds the role on the security root. -->
+					<module name="tl.units">
+						<grant
+							operation="Read"
+							roles="TestTLScriptSecurity.UnitReader"
+						/>
+					</module>
 				</security-config>
 			</instance>
 		</config>
@@ -481,6 +519,26 @@
 							<path>
 								<step attribute="TestTLScriptSecurity:Proposal#readers"/>
 								<step attribute="TestTLScriptSecurity:Employee#account"/>
+							</path>
+						</rule>
+						<rule
+							id="7e2c41d8-5b93-4f0a-a6c1-2d8e9b3f4a01"
+							inherit="true"
+							meta-element="TestTLScriptSecurity:Named"
+							role="TestTLScriptSecurity.NameReader"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:Named#accountA"/>
+							</path>
+						</rule>
+						<rule
+							id="7e2c41d8-5b93-4f0a-a6c1-2d8e9b3f4a02"
+							inherit="true"
+							meta-element="TestTLScriptSecurity:Named"
+							role="TestTLScriptSecurity.NameKeeper"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:Named#accountB"/>
 							</path>
 						</rule>
 						<inheritance-rule

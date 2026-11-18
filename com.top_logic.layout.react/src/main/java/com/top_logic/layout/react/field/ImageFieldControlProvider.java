@@ -14,8 +14,9 @@ import com.top_logic.layout.react.control.form.ListElementFieldModel;
 import com.top_logic.layout.react.control.form.ReactImageFieldControl;
 
 /**
- * Edits values that show images as a {@link ReactImageFieldControl}: a preview of each image,
- * replaced by dropping or picking a file, removed by a button, and an area taking further images.
+ * Edits values that show images as a {@link ReactImageFieldControl}: one image at a time on a stage
+ * as wide as the field, and an arrange view with a tile per image, replaced by dropping or picking a
+ * file, removed by a button, and an area taking further images.
  *
  * <p>
  * The control holds a single image and the images of a {@link FieldSpec#isMultiple() multi-valued}
@@ -26,7 +27,8 @@ import com.top_logic.layout.react.control.form.ReactImageFieldControl;
  * names of its images stand for it. The files the file picker offers are the
  * {@link FieldSpec#getAcceptedTypes() accepted types} of the field, or the default types of this
  * provider where the field states none, each up to the {@link FieldSpec#getMaxUploadSize() upload
- * limit} of the field.
+ * limit} of the field. The {@link FieldSpec#getWidth() width} and {@link FieldSpec#getHeight()
+ * height} of the field limit the size of the stage.
  * </p>
  *
  * @see FieldControlRegistry#IMAGE
@@ -70,6 +72,7 @@ public class ImageFieldControlProvider implements ReactFieldControlProvider {
 		if (field.isMultiple()) {
 			control.setMaxCount(field.getMaxCount());
 		}
+		control.setDimensions(field.getWidth(), field.getHeight());
 		return control;
 	}
 

@@ -65,7 +65,9 @@ public class CompiledContext extends CompiledExpression {
 	 * the result filter implies the read check, i.e. if no object of the accessed type can be
 	 * discoverable without being readable. The access is compiled only if
 	 * <ul>
-	 * <li>the accessed attribute has no attribute-level read restriction,</li>
+	 * <li>the accessed attribute has no attribute-level read restriction, neither for the type
+	 * defining it nor for any of its specializations (see
+	 * {@link ModelAccessRights#hasGrant(TLStructuredTypePart, com.top_logic.tool.boundsec.BoundCommandGroup)}),</li>
 	 * <li>the attribute is not a reference (the interpreted access filters undiscoverable targets,
 	 * which a comparison on the stored reference would not),</li>
 	 * <li>for the declaring class and all its concrete specializations, the roles granted Discover

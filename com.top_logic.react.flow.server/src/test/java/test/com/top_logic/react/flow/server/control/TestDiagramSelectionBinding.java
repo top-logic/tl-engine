@@ -59,6 +59,9 @@ public class TestDiagramSelectionBinding extends TestCase {
 	/** Another node of the diagram under test. */
 	private static final String NODE_B = "b";
 
+	/** A third node of the diagram under test. */
+	private static final String NODE_C = "c";
+
 	/** An object no node of the diagram carries. */
 	private static final String ELSEWHERE = "elsewhere";
 
@@ -395,6 +398,91 @@ public class TestDiagramSelectionBinding extends TestCase {
 		assertEquals(NODE_A, _channel.get());
 	}
 
+	/**
+	 * Tests that a context menu opened on an element outside the selection selects that element
+	 * alone, also giving up the selected objects the diagram does not display.
+	 */
+	public void testContextMenuOnUnselectedElementSelectsItAlone() throws IOException {
+		bind(diagram(true, NODE_A, NODE_B, NODE_C));
+		_channel.set(Set.of(NODE_A, NODE_B, ELSEWHERE));
+		_notifiedValues.clear();
+
+		contextMenuOn(NODE_C);
+
+		assertEquals(Set.of(NODE_C), selectedUserObjects());
+		assertTrue(isMarked(NODE_C));
+		assertFalse(isMarked(NODE_A));
+		assertFalse(isMarked(NODE_B));
+		assertEquals("The menu targets the element it was opened on.", NODE_C, _channel.get());
+		assertEquals(List.of(NODE_C), _notifiedValues);
+	}
+
+	/**
+	 * Tests that a context menu opened on an element of a selection of several elements keeps the
+	 * selection, so that the menu acts on all of them.
+	 */
+	public void testContextMenuOnSelectedElementKeepsTheSelection() throws IOException {
+		bind(diagram(true, NODE_A, NODE_B, NODE_C));
+		Set<String> value = Set.of(NODE_A, NODE_B, ELSEWHERE);
+		_channel.set(value);
+		_notifiedValues.clear();
+
+		contextMenuOn(NODE_B);
+
+		assertEquals(Set.of(NODE_A, NODE_B), selectedUserObjects());
+		assertTrue(isMarked(NODE_A));
+		assertTrue(isMarked(NODE_B));
+		assertFalse(isMarked(NODE_C));
+		assertEquals("The selection stays the target of the menu.", value, _channel.get());
+		assertEquals("Nothing is written.", List.of(), _notifiedValues);
+	}
+
+	/**
+	 * Tests that a context menu opened on the selected element of a single-select diagram keeps it
+	 * selected.
+	 */
+	public void testContextMenuOnSelectedElementOfSingleSelectKeepsIt() throws IOException {
+		_channel.set(NODE_A);
+		_notifiedValues.clear();
+
+		contextMenuOn(NODE_A);
+
+		assertEquals(Set.of(NODE_A), selectedUserObjects());
+		assertEquals(NODE_A, _channel.get());
+		assertEquals(List.of(), _notifiedValues);
+	}
+
+	/**
+	 * Tests that a context menu opened on the empty area of the diagram clears the selection, also
+	 * the selected objects the diagram does not display, so that the menu targets no object.
+	 */
+	public void testContextMenuOnEmptyAreaClearsTheSelection() throws IOException {
+		bind(diagram(true, NODE_A, NODE_B, NODE_C));
+		_channel.set(Set.of(NODE_A, NODE_B, ELSEWHERE));
+		_notifiedValues.clear();
+
+		contextMenuOn(null);
+
+		assertEquals(Set.of(), selectedUserObjects());
+		assertFalse(isMarked(NODE_A));
+		assertFalse(isMarked(NODE_B));
+		assertNull("The menu targets no object.", _channel.get());
+		assertEquals(Collections.singletonList(null), _notifiedValues);
+	}
+
+	/**
+	 * Tests that the client marks the element a context menu selected, through the diagram the
+	 * control serves.
+	 */
+	public void testContextMenuSelectionReachesTheClient() throws IOException {
+		bind(diagram(true, NODE_A, NODE_B, NODE_C));
+		_channel.set(Set.of(NODE_A, NODE_B));
+
+		contextMenuOn(NODE_C);
+
+		assertEquals(Set.of(NODE_C), markedCssClasses(readAsClient(_control.render())));
+	}
+
 	@Override
 	protected void tearDown() throws Exception {
 		_binding.dispose();
@@ -437,6 +525,28 @@ public class TestDiagramSelectionBinding extends TestCase {
 	private void clientSelects(String userObject) throws IOException {
 		_control.executeClientCommand(FlowDiagramControl.CMD_UPDATE,
 			Map.of(FlowDiagramControl.ARG_PATCH, clientSelectionPatch(_control.render(), userObject)));
+	}
+
+	/**
+	 * Opens the context menu on the node carrying the given user object the way the client does:
+	 * naming the node by the ID the client knows it by.
+	 *
+	 * @param userObject
+	 *        The user object of the node, or <code>null</code> for the empty area of the diagram.
+	 */
+	private void contextMenuOn(String userObject) throws IOException {
+		Map<String, Object> args;
+		if (userObject == null) {
+			args = Map.of();
+		} else {
+			DefaultScope clientScope = new DefaultScope(2, 1);
+			Diagram clientDiagram =
+				Diagram.readDiagram(clientScope, new JsonReader(new StringR(_control.render())));
+			Widget node = node(clientDiagram, widget -> userObject.equals(widget.getCssClass()));
+			assertNotNull("No node for '" + userObject + "' in the served diagram.", node);
+			args = Map.of(FlowDiagramControl.ARG_NODE_ID, Integer.valueOf(clientScope.id(node)));
+		}
+		_control.executeClientCommand(FlowDiagramControl.CMD_CONTEXT_MENU, args);
 	}
 
 	/**

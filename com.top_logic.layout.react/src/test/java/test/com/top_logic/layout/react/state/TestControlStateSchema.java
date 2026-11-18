@@ -677,7 +677,7 @@ public class TestControlStateSchema extends TestCase {
 		ReactTextControl control = new ReactTextControl(createContext(), "Text", "css");
 		control.setText("Text", "error");
 		control.setOverflow(TextOverflow.ELLIPSIS);
-		control.setVariant(TextVariant.TITLE);
+		control.setVariant(TextVariant.HEADING_SM);
 		control.setTone(TextTone.SECONDARY);
 		control.setAppearance(TextAppearance.PILL);
 		control.setRole("alert");

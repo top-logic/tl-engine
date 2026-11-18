@@ -95,12 +95,14 @@ public interface BinaryDisplay extends TLAttributeAnnotation, TLTypeAnnotation {
 		 * Display as field to upload via click or drop and display of the uploaded image.
 		 * 
 		 * <p>
-		 * In the React UI, a single binary value as well as a multi-valued one: without an image, an
-		 * area to drop an image on or to click for the file picker; with an image, its preview and a
-		 * button removing it. Several images are shown as a row of such previews, each replaced by
-		 * dropping or picking another file and, for an ordered attribute, moved within the row; the
-		 * area at the end of the row adds further images. A value that is only displayed shows the
-		 * previews alone.
+		 * In the React UI, a single binary value as well as a multi-valued one: the field takes a
+		 * whole row of the form and shows one image at a time as wide as the form, at most as large
+		 * as the dimensions annotation of the attribute allows; several images are stepped through
+		 * with a counter. A click opens the image in a view filling the page, or, while the value is
+		 * edited, the arrange view, where each image is replaced, removed and, for an ordered
+		 * attribute, moved, and further images are added. A file dropped on the image replaces a
+		 * single image and is inserted after the image shown among several. Without an image, the
+		 * field is an area to drop an image on or to click for the file picker.
 		 * </p>
 		 */
 		@Label("Image drop field")

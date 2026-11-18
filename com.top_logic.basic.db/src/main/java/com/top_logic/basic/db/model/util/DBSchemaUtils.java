@@ -215,15 +215,20 @@ public class DBSchemaUtils {
 	 *        The database to drop the table in.
 	 * @param tableName
 	 *        The name of the table to be dropped.
-	 * @param truncate
-	 *        Whether to only empty the tables instead of dropping them.
 	 * @return Whether the table was dropped successfully, <code>false</code>, e.g. if the table to
 	 *         drop did not exist.
 	 */
-	public static boolean resetTable(ConnectionPool pool, String tableName, boolean truncate) {
+	public static boolean dropTable(ConnectionPool pool, String tableName) {
 		PooledConnection connection = pool.borrowWriteConnection();
 		try {
-			return tryResetTable(connection, tableName, truncate);
+			boolean success = tryDropTable(connection, tableName);
+
+			// Note: MSSQL supports transactional schema modifications.
+			connection.commit();
+			return success;
+		} catch (SQLException ex) {
+			logFailure(ex, "Cannot drop table '" + tableName + "'.");
+			return false;
 		} finally {
 			pool.releaseWriteConnection(connection);
 		}
@@ -232,27 +237,22 @@ public class DBSchemaUtils {
 	/**
 	 * Drop a table with the given name.
 	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
+	 * 
 	 * @param connection
 	 *        Connection to the database to drop the table in.
 	 * @param tableName
 	 *        The name of the table to be dropped.
-	 * @param truncate
-	 *        Whether to only empty the tables instead of dropping them.
 	 * @return Whether the table was dropped successfully, <code>false</code>, e.g. if the table to
 	 *         drop did not exist.
 	 */
-	public static boolean tryResetTable(PooledConnection connection, String tableName, boolean truncate) {
-		try {
-			boolean success;
-			try (Statement statement = connection.createStatement()) {
-				success = tryResetTable(connection.getSQLDialect(), statement, tableName, truncate);
-			}
-
-			// Note: MSSQL supports transactional schema modifications.
-			connection.commit();
-			return success;
+	public static boolean tryDropTable(PooledConnection connection, String tableName) {
+		try (Statement statement = connection.createStatement()) {
+			return tryDropTable(connection.getSQLDialect(), statement, tableName);
 		} catch (SQLException ex) {
-			handleDropFailure(ex, "Cannot drop table '" + tableName + "'.");
+			logFailure(ex, "Cannot drop table '" + tableName + "'.");
 			return false;
 		}
 	}
@@ -260,39 +260,53 @@ public class DBSchemaUtils {
 	/**
 	 * Drop a table with the given name.
 	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
+	 * 
 	 * @param connection
 	 *        Connection to the database to drop the table in.
 	 * @param tableName
 	 *        The name of the table to be dropped.
-	 * @param truncate
-	 *        Whether to only empty the tables instead of dropping them.
 	 */
-	public static void resetTable(PooledConnection connection, String tableName, boolean truncate) throws SQLException {
+	public static void dropTable(PooledConnection connection, String tableName) throws SQLException {
 		DBHelper sqlDialect = connection.getSQLDialect();
-		Statement statement = connection.createStatement();
-		try {
-			resetTable(sqlDialect, statement, tableName, truncate);
-		} finally {
-			statement.close();
+		try (Statement statement = connection.createStatement()) {
+			statement.execute(dropTableStatement(sqlDialect, tableName));
 		}
-
-		// Note: MSSQL supports transactional schema modifications.
-		connection.commit();
 	}
 
 	/**
 	 * Drop all tables of the given schema from the given database.
 	 * 
-	 * @see DBSchemaUtils#resetTables(PooledConnection, DBSchema, boolean)
+	 * @param pool
+	 *        The database to drop the tables in.
+	 * @param schema
+	 *        The schema whose tables should be dropped.
+	 * @return Whether all tables have been dropped successfully, <code>false</code>, e.g. if some
+	 *         tables to drop did not exist.
+	 * 
+	 * @see #dropTables(PooledConnection, DBSchema)
 	 */
 	public static boolean dropTables(ConnectionPool pool, DBSchema schema) {
-		return resetTables(pool, schema, false);
+		PooledConnection connection = pool.borrowWriteConnection();
+		try {
+			boolean success = dropTables(connection, schema);
+
+			// Note: MSSQL supports transactional schema modifications.
+			connection.commit();
+			return success;
+		} catch (SQLException ex) {
+			logFailure(ex, "Cannot drop tables.");
+			return false;
+		} finally {
+			pool.releaseWriteConnection(connection);
+		}
 	}
 
 	/**
 	 * Drop all tables of the given schema from the given database and recreates them. This can be
-	 * uses instead of truncating table if it may be possible that the tables have currently a
-	 * different layout.
+	 * used instead of clearing the tables, if the tables may currently have a different layout.
 	 * 
 	 * @param pool
 	 *        The database to drop the table in.
@@ -308,8 +322,11 @@ public class DBSchemaUtils {
 
 	/**
 	 * Drop all tables of the given schema from the given connection and recreates them. This can be
-	 * uses instead of truncating table if it may be possible that the tables have currently a
-	 * different layout.
+	 * used instead of clearing the tables, if the tables may currently have a different layout.
+	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
 	 * 
 	 * @param connection
 	 *        The connection to the database to drop the table in.
@@ -319,52 +336,30 @@ public class DBSchemaUtils {
 	 * @see #recreateTables(ConnectionPool, DBSchema)
 	 */
 	public static void recreateTables(PooledConnection connection, DBSchema schema) throws SQLException {
-		resetTables(connection, schema, false);
+		dropTables(connection, schema);
 		create(connection, schema);
-	}
-
-	/**
-	 * Drop/Truncate all tables of the given schema from the given database.
-	 * 
-	 * @param pool
-	 *        The database to drop the table in.
-	 * @param schema
-	 *        The schema whose tables should be dropped.
-	 * @param truncate
-	 *        Whether to only empty the tables instead of dropping them.
-	 * @return Whether all tables have been dropped successfully, <code>false</code>, e.g. if some
-	 *         tables to drop did not exist.
-	 */
-	public static boolean resetTables(ConnectionPool pool, DBSchema schema, boolean truncate) {
-		PooledConnection connection = pool.borrowWriteConnection();
-		try {
-			return resetTables(connection, schema, truncate);
-		} catch (SQLException ex) {
-			// Ignore, table does not exist.
-			handleDropFailure(ex, "Cannot drop tables.");
-			return false;
-		} finally {
-			pool.releaseWriteConnection(connection);
-		}
 	}
 
 	/**
 	 * Drop all tables of the given schema from the given database.
 	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
+	 * 
 	 * @param connection
 	 *        {@link PooledConnection} to the database to drop the table in.
 	 * @param schema
 	 *        The schema whose tables should be dropped.
-	 * @param truncate
-	 *        Whether to only empty the tables instead of dropping them.
 	 * @return Whether all tables have been dropped successfully, <code>false</code>, e.g. if some
 	 *         tables to drop did not exist.
+	 * 
+	 * @see #dropTables(ConnectionPool, DBSchema)
 	 */
-	public static boolean resetTables(PooledConnection connection, DBSchema schema, boolean truncate) throws SQLException {
+	public static boolean dropTables(PooledConnection connection, DBSchema schema) throws SQLException {
 		boolean success = true;
 		DBHelper sqlDialect = connection.getSQLDialect();
-		Statement statement = connection.createStatement();
-		try {
+		try (Statement statement = connection.createStatement()) {
 			List<DBTable> tables = new ArrayList<>(schema.getTables());
 
 			// Drop in reverse order to increase the chance to drop tables with foreign keys
@@ -373,28 +368,93 @@ public class DBSchemaUtils {
 
 			// First delete foreign keys to prevent failures due to deletion order (where a
 			// referenced table is deleted before the referencing table).
-			if (!truncate) {
-				for (DBTable table : tables) {
-					for (DBForeignKey foreignKey : table.getForeignKeys()) {
-						if (!tryDropForeignKey(sqlDialect, statement, foreignKey)) {
-							success = false;
-						}
+			for (DBTable table : tables) {
+				for (DBForeignKey foreignKey : table.getForeignKeys()) {
+					if (!tryDropForeignKey(sqlDialect, statement, foreignKey)) {
+						success = false;
 					}
 				}
 			}
 			for (DBTable table : tables) {
-				if (!tryResetTable(sqlDialect, statement, table.getDBName(), truncate)) {
+				if (!tryDropTable(sqlDialect, statement, table.getDBName())) {
 					success = false;
 				}
 			}
-		} finally {
-			statement.close();
 		}
-		// Note: MSSQL supports transactional schema modifications.
-		connection.commit();
 		return success;
 	}
-	
+
+	/**
+	 * Deletes all rows from all tables of the given schema in the given database.
+	 * 
+	 * @param pool
+	 *        The database to clear the tables in.
+	 * @param schema
+	 *        The schema whose tables should be cleared.
+	 * @return Whether all existing tables have been cleared successfully.
+	 * 
+	 * @see #clearTables(PooledConnection, DBSchema)
+	 */
+	public static boolean clearTables(ConnectionPool pool, DBSchema schema) {
+		PooledConnection connection = pool.borrowWriteConnection();
+		try {
+			boolean success = clearTables(connection, schema);
+			connection.commit();
+			return success;
+		} catch (SQLException ex) {
+			logFailure(ex, "Cannot clear tables.");
+			return false;
+		} finally {
+			pool.releaseWriteConnection(connection);
+		}
+	}
+
+	/**
+	 * Deletes all rows from all tables of the given schema.
+	 * 
+	 * <p>
+	 * The tables are cleared with <code>DELETE</code> statements in reverse foreign key order
+	 * (see {@link #sortTopologically(Collection)}), so that rows of a referencing table are deleted
+	 * before the rows they reference. A table of the schema that does not exist in the database is
+	 * skipped.
+	 * </p>
+	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
+	 * 
+	 * @param connection
+	 *        {@link PooledConnection} to the database to clear the tables in.
+	 * @param schema
+	 *        The schema whose tables should be cleared.
+	 * @return Whether all existing tables have been cleared successfully.
+	 * 
+	 * @see #clearTables(ConnectionPool, DBSchema)
+	 */
+	public static boolean clearTables(PooledConnection connection, DBSchema schema) throws SQLException {
+		boolean success = true;
+		DBHelper sqlDialect = connection.getSQLDialect();
+		try (Statement statement = connection.createStatement()) {
+			List<DBTable> tables = sortTopologically(schema.getTables());
+			Collections.reverse(tables);
+
+			for (DBTable table : tables) {
+				String tableName = table.getDBName();
+
+				// Note: A failing statement must be avoided, since it aborts the whole transaction in
+				// some databases.
+				if (existingTableName(connection, sqlDialect, tableName) == null) {
+					continue;
+				}
+				if (!tryExecute(sqlDialect, statement, "DELETE FROM " + sqlDialect.tableRef(tableName),
+					"Cannot clear table '" + tableName + "'.")) {
+					success = false;
+				}
+			}
+		}
+		return success;
+	}
+
 	private static boolean tryDropForeignKey(DBHelper sqlDialect, Statement statement, DBForeignKey foreignKey)
 			throws SQLException {
 		String foreignKeyName = CreateStatementBuilder.qName(sqlDialect, foreignKey);
@@ -410,25 +470,11 @@ public class DBSchemaUtils {
 			return false;
 		}
 
-		Savepoint savePoint = sqlDialect.setSavepoint(connection);
-		try {
-			dropForeignKey(sqlDialect, statement, tableName, foreignKeyName);
-		} catch (SQLException ex) {
-			sqlDialect.rollback(connection, savePoint);
-			handleDropFailure(ex, "Cannot drop foreign key '" + foreignKeyName + "' on table '" + tableName + "'.");
-			return false;
-		} finally {
-			sqlDialect.releaseSavepoint(connection, savePoint);
-		}
-		return true;
+		return tryExecute(sqlDialect, statement, sqlDialect.dropForeignKey(tableName, foreignKeyName),
+			"Cannot drop foreign key '" + foreignKeyName + "' on table '" + tableName + "'.");
 	}
 
-	private static void dropForeignKey(DBHelper sqlDialect, Statement statement, String tableName, String foreignKeyName)
-			throws SQLException {
-		statement.execute(sqlDialect.dropForeignKey(tableName, foreignKeyName));
-	}
-
-	private static boolean tryResetTable(DBHelper sqlDialect, Statement statement, String tableName, boolean truncate)
+	private static boolean tryDropTable(DBHelper sqlDialect, Statement statement, String tableName)
 			throws SQLException {
 		Connection connection = statement.getConnection();
 
@@ -440,12 +486,29 @@ public class DBSchemaUtils {
 			return false;
 		}
 
+		return tryExecute(sqlDialect, statement, dropTableStatement(sqlDialect, tableName),
+			"Cannot drop table '" + tableName + "'.");
+	}
+
+	private static String dropTableStatement(DBHelper sqlDialect, String tableName) {
+		return "DROP TABLE " + sqlDialect.tableRef(tableName);
+	}
+
+	/**
+	 * Executes the given SQL statement protected by a savepoint, so that a failure does not abort
+	 * the transaction of the caller.
+	 * 
+	 * @return Whether the statement was executed successfully.
+	 */
+	private static boolean tryExecute(DBHelper sqlDialect, Statement statement, String sql, String failureMessage)
+			throws SQLException {
+		Connection connection = statement.getConnection();
 		Savepoint savePoint = sqlDialect.setSavepoint(connection);
 		try {
-			resetTable(sqlDialect, statement, tableName, truncate);
+			statement.execute(sql);
 		} catch (SQLException ex) {
 			sqlDialect.rollback(connection, savePoint);
-			handleDropFailure(ex, "Cannot drop table '" + tableName + "'.");
+			logFailure(ex, failureMessage);
 			return false;
 		} finally {
 			sqlDialect.releaseSavepoint(connection, savePoint);
@@ -453,22 +516,13 @@ public class DBSchemaUtils {
 		return true;
 	}
 
-	private static void handleDropFailure(SQLException ex, String message) {
+	private static void logFailure(SQLException ex, String message) {
 		if (Logger.isDebugEnabled(DBSchemaUtils.class)) {
 			// Full stack trace.
 			Logger.info(message, ex, DBSchemaUtils.class);
 		} else {
 			// Only single line info.
 			Logger.info(DebugHelper.fullMessage(message, ex), DBSchemaUtils.class);
-		}
-	}
-
-	private static void resetTable(DBHelper sqlDialect, Statement statement, String tableName, boolean truncate)
-			throws SQLException {
-		if (truncate) {
-			statement.execute(sqlDialect.getTruncateTableStatement(tableName));
-		} else {
-			statement.execute("DROP TABLE " + sqlDialect.tableRef(tableName));
 		}
 	}
 
@@ -785,6 +839,9 @@ public class DBSchemaUtils {
 		PooledConnection connection = pool.borrowWriteConnection();
 		try {
 			create(connection, schema);
+
+			// Note: MSSQL supports transactional schema modifications.
+			connection.commit();
 		} finally {
 			pool.releaseWriteConnection(connection);
 		}
@@ -792,6 +849,10 @@ public class DBSchemaUtils {
 
 	/**
 	 * Creates the given {@link DBSchemaPart} in the given database.
+	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
 	 * 
 	 * @param connection
 	 *        {@link PooledConnection} to the database to create tables in.
@@ -808,7 +869,6 @@ public class DBSchemaUtils {
 		} catch (IOException ex) {
 			throw new UnreachableAssertion("Reading from string must not fail.", ex);
 		}
-		connection.commit();
 	}
 
 	/**
@@ -846,6 +906,10 @@ public class DBSchemaUtils {
 	/**
 	 * Creates the given {@link DBSchema} in the given database.
 	 * 
+	 * <p>
+	 * The change is not committed, the caller owning the connection commits it.
+	 * </p>
+	 * 
 	 * @param connection
 	 *        {@link PooledConnection} to the database to create tables in.
 	 * @param schema
@@ -865,9 +929,6 @@ public class DBSchemaUtils {
 
 			create(connection, table);
 		}
-
-		// MSSQL supports transactional schema manipulation.
-		connection.commit();
 	}
 	
 	/**

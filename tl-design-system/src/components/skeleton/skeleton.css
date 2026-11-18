@@ -1,7 +1,8 @@
 /* Skeleton — docs/skalen.md „Progress: ein Anteil, kein Urteil“ (die vertiefte Fläche).
    Platzhalter für Inhalt, der lädt: die neutrale, vertiefte Fläche, die auch die Spur des Progress
-   trägt, und ein langsamer Puls. Maße setzt der Ort, an dem er steht (Zeile, Block, Kreis); das
-   Stylesheet kennt nur Mindesthöhe und Radius. Der globale Reduced-Motion-Schalter aus base.css beendet
+   trägt, und ein langsamer Puls. Drei Formen: das Rechteck ist die Grundform, --text ist eine Zeile
+   des Fließtexts, --circle ein Kreis. Maße setzt der Ort, an dem er steht; das Stylesheet kennt nur
+   Mindesthöhe, Radius und die Höhe einer Textzeile. Der globale Reduced-Motion-Schalter aus base.css beendet
    die Animation nach einem Durchlauf, darum gibt es hier keine eigene Regel. `alternate` endet bei
    opacity 0,5 — deshalb setzt nichts einen Fill-Mode, und die Ruhelage ist opacity 1 (wie beim
    Progress-Sweep). Der Behälter trägt aria-busy, der Platzhalter ist aria-hidden. */
@@ -14,6 +15,23 @@
   animation: tl-skeleton-pulse var(--tl-duration-loop) var(--tl-easing-standard) infinite alternate;
 }
 .tl-skeleton[hidden] { display: none; }
+
+/* Eine Zeile des Fließtexts: so hoch wie ihre Zeilenbox (tl-type-body). Mehrere Zeilen stehen
+   untereinander mit Zeilenabstand; die letzte ist kürzer, wie das Ende eines Absatzes. */
+.tl-skeleton--text {
+  height: calc(var(--tl-font-size-body) * var(--tl-font-line-height-body));
+}
+.tl-skeleton--text + .tl-skeleton--text {
+  margin-block-start: var(--tl-space-2xs);
+}
+.tl-skeleton--text + .tl-skeleton--text:last-child {
+  width: 50%;
+}
+
+/* Ein Kreis (Avatar, Symbol): Breite und Höhe setzt der Ort. */
+.tl-skeleton--circle {
+  border-radius: 50%;
+}
 
 @keyframes tl-skeleton-pulse {
   from { opacity: 1; }

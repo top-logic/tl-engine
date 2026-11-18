@@ -1,0 +1,35 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.oauth.server;
+
+option NoReflection;
+option NoXml;
+option NoBinary;
+option NoInterfaces;
+option NoListener;
+option NoVisit;
+
+/**
+ * The metadata of a protected resource (RFC 9728): the document a client reads to learn which
+ * authorization server issues the access tokens a resource accepts.
+ *
+ * <p>
+ * Served by the <code>OAuthServerServlet</code> for every resource guarded by the
+ * <code>OAuthAccessTokenAuthentication</code>.
+ * </p>
+ */
+message ProtectedResourceMetadata {
+	/** The resource identifier: the absolute URL of the protected endpoint. */
+	string resource;
+
+	/** The issuer identifiers of the authorization servers that issue tokens for the resource. */
+	@Name("authorization_servers")
+	repeated string authorizationServers;
+
+	/** How a token is presented to the resource, here always <code>header</code>. */
+	@Name("bearer_methods_supported")
+	repeated string bearerMethodsSupported;
+}

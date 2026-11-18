@@ -37,6 +37,7 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.command.ContextDependentRule;
 import com.top_logic.layout.view.command.DeleteObjectAction;
 import com.top_logic.layout.view.command.DeleteVetoDisabled;
@@ -461,6 +462,49 @@ public class TestIntrinsicAccessRules extends AbstractModelAccessTest {
 		becomeUser(_root);
 		ExecutableState anonymous = rule.isExecutable(PersonManager.getManager().getAnonymous());
 		assertTrue("Deleting the anonymous account is disabled, got: " + anonymous, anonymous.isDisabled());
+	}
+
+	/**
+	 * Without an object, the declared type of the command input decides: hidden for a user who may
+	 * delete no object of the type, disabled for a user who may delete some. Without declared type,
+	 * the command is disabled; with an object, the object decides.
+	 */
+	public void testDeleteDeclaredType() throws Exception {
+		ViewExecutabilityRule rule = delete();
+		ActionArguments empty = ActionArguments.of(CHANNEL, null).withValueType(type(PROJECT));
+		ActionArguments emptyCollection = ActionArguments.of(CHANNEL, List.of()).withValueType(type(PROJECT));
+		ActionArguments untyped = ActionArguments.of(CHANNEL, null);
+		ActionArguments project = ActionArguments.of(CHANNEL, _project).withValueType(type(PROJECT));
+
+		becomeUser(_roleless);
+		assertSame(ExecutableState.NOT_EXEC_HIDDEN, rule.isExecutableFor(empty));
+		assertSame(ExecutableState.NOT_EXEC_HIDDEN, rule.isExecutableFor(emptyCollection));
+		assertSame(ExecutableState.NO_EXEC_NO_MODEL, rule.isExecutableFor(untyped));
+
+		becomeUser(_outsider);
+		assertSame(ExecutableState.NO_EXEC_NO_MODEL, rule.isExecutableFor(empty));
+		assertDisabled(com.top_logic.layout.view.security.I18NConstants.ERROR_DELETE_DENIED,
+			rule.isExecutableFor(project));
+
+		becomeUser(_responsible);
+		assertSame(ExecutableState.NO_EXEC_NO_MODEL, rule.isExecutableFor(empty));
+		assertSame(ExecutableState.EXECUTABLE, rule.isExecutableFor(project));
+	}
+
+	/**
+	 * The declared type belongs to its argument: it is kept when another argument is added or
+	 * becomes the default, and dropped when the argument is shadowed.
+	 */
+	public void testArgumentValueType() {
+		ActionArguments typed = ActionArguments.of(CHANNEL, null).withValueType(type(PROJECT));
+		assertSame(type(PROJECT), typed.valueType());
+
+		ActionArguments extended = typed.with("other", null);
+		assertNull(extended.valueType());
+		assertSame(type(PROJECT), extended.withDefault(CHANNEL).valueType());
+
+		assertNull(typed.with(CHANNEL, null).valueType());
+		assertNull(ActionArguments.NONE.valueType());
 	}
 
 	private static ViewExecutabilityRule delete() {

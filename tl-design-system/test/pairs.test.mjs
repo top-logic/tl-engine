@@ -62,6 +62,12 @@ test('3b: die Paare der Daten stehen in der Liste', () => {
     assert.ok(namen.has(k), k);
 });
 
+test('#30383: der Feldrahmen der Tabellenzeile ist gegen jede Zeilenfläche geprüft', () => {
+  const namen = new Set(kontrastPaare(T).map((p) => `${p.fg}|${p.bg}`));
+  for (const bg of ['surface-selected', 'surface-selected-hover', 'surface-interactive-hover', 'surface-interactive-strong'])
+    assert.ok(namen.has(`border-emphasis|${bg}`), bg);
+});
+
 test('UI-Durchgang 1: die Paare der Auswahl und der gedämpften Fläche stehen in der Liste', () => {
   const namen = new Set(kontrastPaare(T).map((p) => `${p.fg}|${p.bg}`));
   for (const k of ['border-interactive|surface-selected', 'border-selected|surface-selected', 'border-selected|surface-selected-hover',

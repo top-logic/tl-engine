@@ -26,13 +26,11 @@
 .tl-chat-dock,
 .tl-chat-rail,
 .tl-chat-section,
-.tl-data-list,
 .tl-cockpit *,
 .tl-chat-conversation *,
 .tl-chat-dock *,
 .tl-chat-rail *,
-.tl-chat-section *,
-.tl-data-list * {
+.tl-chat-section * {
   box-sizing: border-box;
 }
 
@@ -289,172 +287,66 @@
   display: none;
 }
 
-/* --- Composed data list ------------------------------------------------ */
+/* --- Session list ------------------------------------------------------ */
 
 /*
- * <data-list> reuses the App session rail's look; make it fill its host pane and let a row show an
- * optional muted second line. It does not take App's own drawer, which asks the `chat-shell`
- * container a composed list is not in; a collapsible list has one of its own instead, for a host
- * narrower than its `drawer-below` (#548, see "A list in a narrow host" below).
+ * The session list is the engine's <data-list> (design system: tl-list), marked `tl-chat-sessions`
+ * by the view. It stands as a column of the chat row with the session rail's width and surface;
+ * collapsed, and below its `drawer-below` as the strip of a drawer, it keeps the rail's narrow
+ * width. The rows, the search, the selection and the drawer are the engine's.
  */
-/*
- * <data-list> renders outside .tl-cockpit, so the chat's button reset and focus ring do not reach it.
- * Without this, the row/new/search <button>s show the browser's default chrome (grey, square, bordered)
- * instead of the .rail* styling - so reset them the same way here.
- */
-:where(.tl-data-list button) {
-  font: inherit;
-  color: inherit;
-  background: none;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
-}
-
-.tl-data-list :focus-visible {
-  outline: 2px solid var(--focus, var(--button-primary));
-  outline-offset: 2px;
-  border-radius: var(--r-1);
-}
-
-.tl-data-list {
-  /*
-   * <data-list> renders outside .tl-cockpit, so the chat's component tokens are not in scope here;
-   * redeclare the ones the .rail* styles need. (A themeable token layer would hoist these to :root;
-   * see the tokens note.)
-   */
+.tl-chat-sessions {
   --chat-sidebar: 16.5rem;
   --chat-rail-narrow: 3.25rem;
-  --r-1: calc(var(--corner-radius, 0.25rem) * 1.5);
-  --r-2: calc(var(--corner-radius, 0.25rem) * 2.5);
-  --r-3: calc(var(--corner-radius, 0.25rem) * 4);
-  --r-pill: 999px;
-  --chat-small: var(--body-01-font-size, 0.75rem);
-  --chat-danger: var(--support-danger, var(--support-error, #d3181b));
-  --chat-danger-soft: var(
-    --background-danger--lighter,
-    color-mix(in srgb, var(--support-error, #d3181b) 12%, transparent)
-  );
-  --chat-warn: var(--text-warning, var(--support-warning, #d3a118));
-  --chat-link: var(--link, var(--link-primary, var(--button-primary, #2968c8)));
-  --chat-shadow: var(--shadow-menu, 0 2px 6px 0 rgba(0, 0, 0, 0.32));
 
-  display: flex;
   flex: 0 0 auto;
   width: var(--chat-sidebar);
-  height: 100%;
-  min-height: 0;
+  background: var(--layer);
+  border-right: 1px solid var(--border-subtle);
 }
 
-.tl-data-list.is-collapsed {
+.tl-chat-sessions[data-tl-state~="collapsed"] {
   width: var(--chat-rail-narrow);
 }
 
-.tl-data-list .rail {
-  position: relative;
-  inset: auto;
-  z-index: auto;
-  width: 100%;
-  flex: 1 1 auto;
-  height: 100%;
-  transform: none;
-  box-shadow: none;
-}
-
 /*
- * The column the host gave it, not the fixed narrow one the App rail collapses to: this list fills
- * whatever width it was placed in, collapsed or not.
- *
- * Six further rules used to stand here, each undoing one line of the App's mobile-drawer query for
- * a list that is not in a drawer and never was. That query is now scoped to the `chat-shell`
- * container (Issue #427) and does not reach this element at all, so the base rules apply and the
- * counter-rules are gone.
+ * Pointing at a row. The list stands on the rail's surface `--layer`, which is as light as the
+ * design system's `--tl-surface-interactive-hover` - a hovered row would not stand out. On this
+ * surface the rail's own hover step shows it, as in the App's session rail. A selected row keeps
+ * the selection surfaces of the list, which rank above this rule.
  */
-.tl-data-list .rail.is-collapsed {
-  width: 100%;
-  flex-basis: auto;
-}
-
-.tl-data-list .rail-open {
-  align-items: flex-start;
-}
-
-.tl-data-list .rail-open-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.tl-data-list .rail-line {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tl-data-list .rail-line-secondary {
-  font-size: var(--chat-small);
-  color: var(--text-secondary);
+.tl-chat-sessions .tl-list__item:hover {
+  background: var(--layer-hover);
 }
 
 /*
- * A list in a narrow host (#548).
- *
- * Below its `drawer-below` width a collapsible list keeps only its strip in the flow and opens over
- * its neighbour. data-list.tsx measures the host and sets `.is-drawer`; everything here is geometry.
- *
- * The open list is placed against the host, not against the list: the host becomes the containing
- * block, so the scrim covers exactly the row the list stands in - never the app bar or the page
- * around a dock - and the panel, which keeps `left: auto`, opens at its static position, i.e. where
- * the strip is. `isolation` keeps the z-indexes below local to the host: they lift the drawer over
- * whatever its neighbour stacks inside itself, and the application's own menus and dialogs still
- * open above it.
+ * A list in a rail section is content of the section's card: it is flush with the card, which
+ * already has its inset, rather than adding the list's own.
  */
-:has(> .tl-data-list.is-drawer) {
-  position: relative;
-  isolation: isolate;
-}
-
-.tl-data-list.is-drawer {
-  width: var(--chat-rail-narrow);
-}
-
-.tl-data-list.is-drawer-open .rail {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  z-index: 31;
-  width: min(var(--chat-sidebar), 88vw);
-  height: auto;
-  box-shadow: var(--chat-shadow);
-}
-
-.tl-data-list .data-list-scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 30;
-  /* The engine's own drawer backdrop: dark in both themes, where `--background-inverse` is not. */
-  background: var(--overlay, rgb(0 0 0 / 40%));
+.tl-chat-rail .tl-list__body {
+  padding-inline: 0;
 }
 
 /*
- * Row states a `css-class` expression hands out.
+ * Row states a `row-css-class` expression hands out.
  *
  * Which class a row gets is the view's decision; these three are what a list of steps needs and are
  * named after no particular domain, so any list can use them: something finished, something running,
  * something not started yet. They read the host theme's tokens, so a theme restyles them with
  * everything else. An application that wants its own states writes its own rules - nothing here
- * assumes these names.
+ * assumes these names. A running row carries the accent bar at its start, the edge a selected row
+ * carries in the selection color.
  */
-.tl-data-list .rail-item.is-running .rail-item-mark {
-  background: var(--button-primary);
+.tl-list__item.is-running {
+  box-shadow: inset var(--tl-border-width-accent) 0 0 0 var(--button-primary);
 }
 
-.tl-data-list .rail-item.is-done .rail-line-primary {
+.tl-list__item.is-done .tl-list__primary {
   color: var(--text-secondary);
   text-decoration: line-through;
 }
 
-.tl-data-list .rail-item.is-pending .rail-line-primary {
+.tl-list__item.is-pending .tl-list__primary {
   color: var(--text-secondary);
 }
 
@@ -464,17 +356,17 @@
  * line says the same at a glance; the line is the text a screen reader reads. Named after no domain,
  * like the three states above.
  */
-.tl-data-list .rail-item.is-working .rail-line-secondary,
-.tl-data-list .rail-item.is-waiting .rail-line-secondary,
-.tl-data-list .rail-item.has-news .rail-line-secondary {
+.tl-list__item.is-working .tl-list__secondary,
+.tl-list__item.is-waiting .tl-list__secondary,
+.tl-list__item.has-news .tl-list__secondary {
   display: flex;
   align-items: center;
   gap: 0.375rem;
 }
 
-.tl-data-list .rail-item.is-working .rail-line-secondary::before,
-.tl-data-list .rail-item.is-waiting .rail-line-secondary::before,
-.tl-data-list .rail-item.has-news .rail-line-secondary::before {
+.tl-list__item.is-working .tl-list__secondary::before,
+.tl-list__item.is-waiting .tl-list__secondary::before,
+.tl-list__item.has-news .tl-list__secondary::before {
   content: '';
   flex: 0 0 auto;
   width: 0.4375rem;
@@ -483,23 +375,23 @@
   background: currentColor;
 }
 
-.tl-data-list .rail-item.is-working .rail-line-secondary::before {
+.tl-list__item.is-working .tl-list__secondary::before {
   background: var(--button-primary);
   animation: chat-pulse 1.6s ease-in-out infinite;
 }
 
 /* The dot carries the warning colour; a yellow text would be too faint to read on light themes. */
-.tl-data-list .rail-item.is-waiting .rail-line-secondary {
+.tl-list__item.is-waiting .tl-list__secondary {
   color: var(--text-primary);
   font-weight: 600;
 }
 
-.tl-data-list .rail-item.is-waiting .rail-line-secondary::before {
-  background: var(--chat-warn);
+.tl-list__item.is-waiting .tl-list__secondary::before {
+  background: var(--text-warning, var(--support-warning, #d3a118));
 }
 
-.tl-data-list .rail-item.has-news .rail-line-secondary {
-  color: var(--chat-link);
+.tl-list__item.has-news .tl-list__secondary {
+  color: var(--link, var(--link-primary, var(--button-primary, #2968c8)));
   font-weight: 600;
 }
 
@@ -538,7 +430,7 @@
    *
    * That measure alone still overflowed a phone: beside a 16.5 rem session list, the rail's strip
    * and two gaps, a 20 rem floor made the row 688 px wide at any window below it (#548). A list that
-   * is a drawer leaves only its strip, and then the floor gives way by what is left beside the
+   * is a strip leaves only its strip, and then the floor gives way by what is left beside the
    * conversation - the rule after this one. Beside a list that is a column the floor holds as it is.
    */
   min-width: min(var(--chat-conversation-min-width), 100vw);
@@ -550,8 +442,11 @@
   line-height: var(--body-02-line-height, 1.25rem);
 }
 
-/* The floor beside a list that is a drawer: the window less the strips and gaps still beside it. */
-:has(> .tl-data-list.is-drawer) .tl-chat-conversation {
+/*
+ * The floor beside a session list that is a strip - collapsed, or the strip of its drawer: the window
+ * less the strips and gaps still beside it.
+ */
+:has(> .tl-chat-sessions[data-tl-state~="collapsed"]) .tl-chat-conversation {
   min-width: min(var(--chat-conversation-min-width), 100vw - var(--chat-conversation-floor-reserve));
 }
 
@@ -560,7 +455,7 @@
  * a floor measured on the window overflowed the panel of a phone by those 3 rem (#565). The dock's
  * own width is the measure there, and nothing in the dock can shrink that either.
  */
-.tl-chat-dock :has(> .tl-data-list.is-drawer) .tl-chat-conversation {
+.tl-chat-dock :has(> .tl-chat-sessions[data-tl-state~="collapsed"]) .tl-chat-conversation {
   min-width: min(
     var(--chat-conversation-min-width),
     var(--chat-dock-width) - var(--chat-conversation-floor-reserve)
@@ -915,31 +810,6 @@
   background: var(--background);
 }
 
-/*
- * As wide as its section, not the session list's 16.5 rem: that is wider than a section of a rail
- * drawer at a phone's width, and the rows were cut off at the card's edge instead of elided (#565).
- */
-.tl-chat-rail .tl-data-list {
-  width: auto;
-}
-
-/*
- * A list inside a section is content, not a rail of its own.
- *
- * `<data-list>` renders the session rail's chrome - its own surface, its own right border, its own
- * padding. Nested in a section that already is a card, that reads as a box in a box.
- */
-.tl-chat-rail .tl-data-list .rail {
-  width: auto;
-  min-width: 0;
-  background: none;
-  border-right: 0;
-}
-
-.tl-chat-rail .tl-data-list .rail-list {
-  padding-inline: 0;
-}
-
 /* The sections' own column. Named apart from App's `.side-column`, which is a grid child. */
 .tl-chat-rail .rail-column {
   flex: 0 0 auto;
@@ -1109,19 +979,6 @@
   cursor: default;
 }
 
-/*
- * The wrapper of a <data-list> header command adds no box of its own: the command's button inside
- * it is the rail's "new" button. That button is the engine's command button, which centres its
- * content; the rail's button reads from the start, as every row below it does.
- */
-.rail-command {
-  display: contents;
-}
-
-.rail-command > .rail-new {
-  justify-content: flex-start;
-}
-
 .rail-search {
   display: flex;
   align-items: center;
@@ -1232,44 +1089,6 @@
 .rail-delete:hover {
   color: var(--chat-danger);
   background: var(--chat-danger-soft);
-}
-
-/*
- * The per-row action trigger of a <data-list>, revealed the way .rail-delete is: on hover and on
- * :focus-within, so the keyboard reaches it. It sits in space the row already reserves, and
- * .rail-open keeps `flex: 1; min-width: 0`, so the title shortens instead of the row reflowing when
- * the trigger appears.
- */
-.rail-row-menu {
-  margin-right: 0.25rem;
-  flex: 0 0 auto;
-  opacity: 0;
-}
-
-.rail-item:hover .rail-row-menu,
-.rail-item:focus-within .rail-row-menu,
-.rail-row-menu.is-always,
-.rail-row-menu:focus-visible {
-  opacity: 1;
-}
-
-/* Three dots, not three rings: the shared .icon-button svg rule strokes and does not fill. */
-.rail-row-menu svg circle {
-  fill: currentColor;
-  stroke: none;
-}
-
-/*
- * No hover to reveal anything with, so the trigger is always there - the same caveat a
- * <panel hover-actions> carries. A finger also needs more than the 1.5rem glyph box, so the trigger
- * grows to the 44px minimum there; the glyph is centred by .icon-button and does not grow with it.
- */
-@media (hover: none) {
-  .rail-row-menu {
-    opacity: 1;
-    min-width: 2.75rem;
-    min-height: 2.75rem;
-  }
 }
 
 .rail-message {
@@ -3715,9 +3534,8 @@
 
 /*
  * The session rail as a drawer over the transcript, because a column beside it would leave the
- * thread less than it needs. `chat-shell` is App's own root, so none of this reaches a composed
- * `<data-list>` - which renders the same `.rail` chrome and is sized by the view that placed it.
- * That element used to need a counter-rule for nearly every line here; it does not any more.
+ * thread less than it needs. `chat-shell` is App's own root, so none of this reaches the session list
+ * of a composed chat, which is the engine's `<data-list>`.
  */
 @container chat-shell (max-width: 1100px) {
   .rail-scrim {
@@ -3875,9 +3693,9 @@
   .tl-chat-section *,
   .tl-chat-section *::before,
   .tl-chat-section *::after,
-  .tl-data-list *,
-  .tl-data-list *::before,
-  .tl-data-list *::after,
+  .tl-list__item *,
+  .tl-list__item *::before,
+  .tl-list__item *::after,
   .tl-chat-dock *,
   .tl-chat-dock *::before,
   .tl-chat-dock *::after {
@@ -4068,6 +3886,14 @@
   margin: 0;
   color: var(--text-secondary);
   font-size: var(--chat-small);
+}
+
+/*
+ * In a rail section the empty text stands where the empty text of a list in the next section
+ * stands (the message of tl-list, inset as far as the text of a row), so the sections line up.
+ */
+.tl-chat-rail .side-empty {
+  padding: var(--tl-space-xs) var(--tl-space-control-x);
 }
 
 .progress-list {

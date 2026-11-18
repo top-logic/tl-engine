@@ -25,7 +25,8 @@ endpoints, batch jobs - asks the same definition.
 | `isAllowedCreate(person, type, context)` | may the person create an object of the type in the context; `null` context: on the security root |
 | `isAllowedInitial(person, draft, attribute, operation)` | may the person fill in the attribute of an object that is still to be created (a transient draft, an object created in the current transaction) |
 | `getAllowedRoles(type, operation)` | the roles granted the operation on the type, including those holding it through an implying operation; meaningless for a type `isWithoutSecurity` |
-| `getAllowedRoles(attribute, operation)`, `hasGrant(attribute, operation)` | the attribute-level grant; without one the result is empty and the decision on the object applies |
+| `getAllowedRoles(type, attribute, operation)`, `hasGrant(type, attribute, operation)` | the attribute-level grant in effect on objects of the type, see [Attribute rights](doc:access-configuration#attribute-rights-which-types-a-part-applies-to); without one the result is empty and the decision on the object applies |
+| `getAllowedRoles(attribute, operation)`, `hasGrant(attribute, operation)` | the same for the owner of the attribute; `hasGrant` is conservative and is also true when only a specialization of the owner has an attribute-level grant |
 | `getAccessibleTypes(person, operation)` | the types the person holds the operation on, on the security root; a person bypassing security gets all types, a restricted person none. The objects still need their own check. |
 
 An answer of `getAllowedRoles` combined with `AccessManager.getRoles(person, object)` explains a

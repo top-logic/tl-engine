@@ -32,7 +32,7 @@ export { useUncontrolledFieldSync } from './bridge/uncontrolled-field';
 export type { UncontrolledFieldSync, UncontrolledFieldSyncOptions } from './bridge/uncontrolled-field';
 export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, anchoredOverlayOf, firstFocusable } from './bridge/focus-trap';
 export { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, TOOLTIP_WHEN_CLIPPED, tooltipProps } from './bridge/tooltip-host';
-export { BACKGROUND_COMMAND, CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
+export { BACKGROUND_COMMAND, BACKGROUND_REPORT, CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
 export type { CommandOptions, CommandResponse } from './bridge/command-channel';
 export { pushLocalStep } from './bridge/route-sync';
 export { isPageLeaving, leavePage, onPageLeave, reloadForStaleUi } from './bridge/page-leave';
@@ -75,8 +75,12 @@ export type {
   ChipPartProps,
   ColorRole,
   BadgePartProps,
+  AvatarPartProps,
+  AvatarSize,
   DividerPartProps,
   DividerOrientation,
+  SkeletonPartProps,
+  SkeletonShape,
   ProgressBarPartProps,
   SpinnerPartProps,
   SpinnerSize,
@@ -165,6 +169,7 @@ export type {
   AvatarStateJson,
   SliderStateJson,
   FloatingActionStateJson,
+  DataListStateJson,
 } from './state/control-state';
 export { useI18N } from './bridge/i18n';
 export { useCopyToClipboard, COPIED_DISPLAY_MS } from './bridge/clipboard';

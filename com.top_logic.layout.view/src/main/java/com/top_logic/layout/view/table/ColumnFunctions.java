@@ -58,7 +58,9 @@ public class ColumnFunctions {
 	 *        that is displayed but not edited.
 	 * @param canUpdate
 	 *        The name of the property deciding whether the cell of a row is edited, holding nothing
-	 *        where every row of an edited column offers the edit.
+	 *        where every row of an edited column offers the edit. {@code null} for a column
+	 *        whose edit condition is applied by its declaration, see
+	 *        {@link AbstractColumnDeclaration.Config#getCanUpdate()}.
 	 * @param options
 	 *        The name of the property computing the options an edited value is chosen from,
 	 *        holding nothing where the options are those of the type of the values.
@@ -66,7 +68,7 @@ public class ColumnFunctions {
 	public static ColumnFunctions compile(ConfigurationItem config, String value, String update,
 			String canUpdate, String options) {
 		return new ColumnFunctions(InputScript.compile(config, value), InputScript.compile(config, update),
-			InputScript.compile(config, canUpdate), InputScript.compile(config, options),
+			canUpdate == null ? null : InputScript.compile(config, canUpdate), InputScript.compile(config, options),
 			InputScript.inputs(config, config.descriptor().getProperty(value)));
 	}
 

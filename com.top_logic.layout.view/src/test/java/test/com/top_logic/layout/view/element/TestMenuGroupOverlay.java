@@ -150,7 +150,7 @@ public class TestMenuGroupOverlay extends TestCase {
 
 	/**
 	 * The development menu shipped with this module takes an entry contributed into its automation
-	 * group the way the agent access module contributes one.
+	 * group by the overlay of another module.
 	 */
 	public void testDevMenuTakesContribution() throws Exception {
 		String base = Files.readString(new File(DEV_MENU).toPath(), StandardCharsets.UTF_8);
@@ -163,7 +163,7 @@ public class TestMenuGroupOverlay extends TestCase {
 									<executability>
 										<authenticated-only/>
 									</executability>
-									<open-dialog dialog-view="agent-access.view.xml"/>
+									<open-dialog dialog-view="contributed.view.xml"/>
 								</generic-command>
 							</group>
 						</groups>

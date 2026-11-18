@@ -68,6 +68,7 @@
 			       <module key="com.top_logic.base.office.excel.handler.POITypeProvider$Module" value="true"/>
 			       <module key="com.top_logic.base.accesscontrol.LoginFailuresModule$Module" value="true"/>
 			       <module key="com.top_logic.model.security.SecurityConfigurationService$Module" value="true"/>
+			       <module key="com.top_logic.base.discovery.AgentDiscoveryService$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
@@ -140,6 +141,10 @@
 			<instance class="com.top_logic.base.operation.OperationModeService"
 				mode="%OPERATION_MODE%"
 			/>
+		</config>
+
+		<config service-class="com.top_logic.base.discovery.AgentDiscoveryService">
+			<instance class="com.top_logic.base.discovery.AgentDiscoveryService"/>
 		</config>
 
 		<config service-class="com.top_logic.base.time.TimeRangeService">

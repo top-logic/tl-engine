@@ -244,8 +244,8 @@ public class TreeElement implements UIElement {
 		 * <p>
 		 * The activated node becomes the tree's selection first, then the command runs with that
 		 * node's business object as its input. The command's own executability rules decide over
-		 * that object, so a node the rules reject activates nothing. Without a command, activating a
-		 * node only selects it.
+		 * that object: activating a node the rules hide or disable the command for only selects it,
+		 * without a message. Without a command, activating a node only selects it.
 		 * </p>
 		 *
 		 * <p>
@@ -497,7 +497,7 @@ public class TreeElement implements UIElement {
 		if (_onActivate != null && _onActivateConfig != null) {
 			ViewCommandModel activation =
 				ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig, _config.getOnActivateAs());
-			treeControl.setActivationHandler(node -> activation.execute(TreeFunctions.businessObject(node)));
+			treeControl.setActivationHandler(node -> activation.activate(TreeFunctions.businessObject(node)));
 		}
 
 		// 9. Wire dragging and dropping of nodes.

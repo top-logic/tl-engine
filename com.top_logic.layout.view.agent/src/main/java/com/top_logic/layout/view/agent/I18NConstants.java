@@ -6,54 +6,28 @@
 package com.top_logic.layout.view.agent;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
- * I18N constants of the agent access token administration.
+ * I18N constants of the agent access to the user interface.
  */
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en No access token request to issue a token for.
+	 * Label of the access token permission {@link AccessTokenAuthenticator#UI_OBSERVE_PERMISSION}.
+	 *
+	 * @en Observe the user interface
+	 * @de Oberfläche beobachten
 	 */
-	public static ResKey ERROR_ACCESS_TOKEN_NO_INPUT;
+	public static ResKey PERMISSION_UI_OBSERVE;
 
 	/**
-	 * @en An access token can only be issued for a logged-in account.
+	 * Label of the access token permission {@link AccessTokenAuthenticator#UI_ACT_PERMISSION}.
+	 *
+	 * @en Operate the user interface
+	 * @de Oberfläche bedienen
 	 */
-	public static ResKey ERROR_ACCESS_TOKEN_NO_ACCOUNT;
-
-	/**
-	 * @en Please name the access token, so that you can tell it apart when withdrawing it.
-	 */
-	public static ResKey ERROR_ACCESS_TOKEN_NO_LABEL;
-
-	/**
-	 * @en Please state how long the access token remains valid.
-	 */
-	public static ResKey ERROR_ACCESS_TOKEN_NO_VALIDITY;
-
-	/**
-	 * @en No access token to withdraw.
-	 */
-	public static ResKey ERROR_ACCESS_TOKEN_NO_TOKEN;
-
-
-	/**
-	 * @en Issued access token "{0}" for {1}.
-	 */
-	public static ResKey2 ACCESS_TOKEN_ISSUED__LABEL_ACCOUNT;
-
-	/**
-	 * @en Withdrew access token "{0}" of {1}.
-	 */
-	public static ResKey2 ACCESS_TOKEN_WITHDRAWN__LABEL_ACCOUNT;
-
-	/**
-	 * @en Used access token "{0}" of {1}.
-	 */
-	public static ResKey2 ACCESS_TOKEN_USED__LABEL_ACCOUNT;
+	public static ResKey PERMISSION_UI_ACT;
 
 	static {
 		initConstants(I18NConstants.class);

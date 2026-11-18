@@ -1,0 +1,83 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.ai.mcp.server.discovery;
+
+option NoReflection;
+option NoXml;
+option NoBinary;
+option NoInterfaces;
+option NoListener;
+
+/**
+ * An MCP server card (SEP-2127): the description of an MCP server a client reads before it
+ * connects, served at <code>/mcp/server-card</code> with the media type
+ * <code>application/mcp-server-card+json</code>.
+ *
+ * <p>
+ * A card never contains a credential, nor the tools or resources of the server: a client learns
+ * those from the server after it connected.
+ * </p>
+ */
+message ServerCard {
+	/** The URL of the JSON schema the card follows. */
+	@Name("$schema")
+	string schema;
+
+	/**
+	 * The name of the server in reverse-DNS form, e.g. <code>com.example/orders</code>, matching
+	 * <code>^[a-zA-Z0-9.-]+/[a-zA-Z0-9._-]+$</code>.
+	 */
+	string name;
+
+	/** The version of the server. */
+	string version;
+
+	/** What the server offers, at most 100 characters. */
+	string description;
+
+	/** The human-readable name of the server, at most 100 characters. */
+	@Nullable
+	string title;
+
+	/** The URL of the website of the server, here the application. */
+	@Nullable
+	string websiteUrl;
+
+	/** The endpoints a client connects to. */
+	repeated ServerRemote remotes;
+}
+
+/**
+ * An endpoint of a {@link ServerCard} a client connects to over the network.
+ */
+message ServerRemote {
+	/** The transport, e.g. <code>streamable-http</code>. */
+	string type;
+
+	/** The absolute URL of the endpoint. */
+	string url;
+
+	/** The request headers a client sends to the endpoint. */
+	repeated RemoteHeader headers;
+}
+
+/**
+ * A request header a client sends to a {@link ServerRemote}.
+ */
+message RemoteHeader {
+	/** The name of the header, e.g. <code>Authorization</code>. */
+	string name;
+
+	/** What to put into the header. */
+	@Nullable
+	string description;
+
+	/** Whether every request must carry the header. */
+	bool isRequired;
+
+	/** Whether the value of the header is a secret a client must not disclose. */
+	bool isSecret;
+}

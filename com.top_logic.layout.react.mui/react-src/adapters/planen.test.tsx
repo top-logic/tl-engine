@@ -28,6 +28,7 @@ import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiChipAdapter from './MuiChipAdapter';
+import MuiSkeletonAdapter from './MuiSkeletonAdapter';
 import { CONTROL_ID, childControl, mountAdapter, patchState, settle } from './wire-test-support';
 
 // The table looks up the toggle of its tree rows, the selection boxes of its rows, the box of its search, the chips of
@@ -38,6 +39,7 @@ replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
 replacePart('Chip', MuiChipAdapter);
+replacePart('Skeleton', MuiSkeletonAdapter);
 // The counter of a Kanban column is the part Badge; its TopLogic drawing is the badge of the design system (tl-badge),
 // which the board's test asks for.
 replacePart('Badge', BadgePart);

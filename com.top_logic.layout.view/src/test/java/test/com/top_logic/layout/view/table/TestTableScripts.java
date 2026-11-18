@@ -343,6 +343,7 @@ public class TestTableScripts extends BasicTestCase {
 		AttributeColumn.Config attribute = (AttributeColumn.Config) table.getColumns().getColumns().get(1);
 		assertScope(List.of("other", AbstractColumnDeclaration.Config.MEMBERS_VARIABLE), attribute,
 			AbstractColumnDeclaration.Config.AGGREGATE);
+		assertScope(List.of("other", "item"), attribute, AbstractColumnDeclaration.Config.CAN_UPDATE);
 
 		ColumnFunctions.Resolved functions =
 			ColumnFunctions.compile(column, ComputedColumn.Config.VALUE, ComputedColumn.Config.UPDATE,

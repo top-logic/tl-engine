@@ -5,6 +5,9 @@
  */
 package test.com.top_logic.model.search.expr;
 
+import static com.top_logic.model.security.I18NConstants.ERROR_TARGET_NOT_DISCOVERABLE__OBJECT_ATTRIBUTE;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,6 +20,7 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialRolesManager;
+import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
@@ -38,11 +42,13 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.providers.ConstraintCheckByExpression;
+import com.top_logic.model.search.providers.DynamicColumnProviderByExpression;
 import com.top_logic.model.search.providers.I18NConstants;
 import com.top_logic.model.search.providers.LabelByExpression;
 import com.top_logic.model.search.providers.LabelProviderByExpression;
 import com.top_logic.model.search.providers.TitleByExpression;
 import com.top_logic.model.search.providers.TooltipProviderByExpression;
+import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
@@ -287,6 +293,35 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		assertEquals(Arrays.asList(_a1), eval("r -> $r.get(`TestTLScriptSecurity:PathRoot#as`)", _root));
 		assertEquals(Arrays.asList(_b1), eval("a -> $a.get(`TestTLScriptSecurity:PathA#bs`)", _a1));
 		assertEquals(Arrays.asList(_c1), eval("b -> $b.get(`TestTLScriptSecurity:PathB#cs`)", _b1));
+	}
+
+	/**
+	 * The composition descendants follow a composite reference only where the user may read it, as
+	 * {@code get} does.
+	 */
+	public void testDescendantsFollowOnlyReadableCompositions() throws Exception {
+		TLObject n1;
+		TLObject n2;
+		try (Transaction tx = _kb.beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			n1 = node("PathNote", "n1");
+			_b1.tUpdateByName("notes", Collections.singletonList(n1));
+			n2 = node("PathNote", "n2");
+			_b2.tUpdateByName("notes", Collections.singletonList(n2));
+			tx.commit();
+		}
+		String descendants = "b -> $b.objectDescendants()";
+
+		becomeUser(_pathUser);
+		// The path role on b1 reads its notes.
+		assertEquals(Arrays.asList(n1), asList(eval(descendants, _b1)));
+		// Without a role on b2, its notes are not readable.
+		assertEquals(Collections.emptyList(), asList(eval(descendants, _b2)));
+
+		becomeUser(_stranger);
+		assertEquals(Collections.emptyList(), asList(eval(descendants, _b1)));
+
+		becomeUser(PersonManager.getManager().getRoot());
+		assertEquals(Arrays.asList(n2), asList(eval(descendants, _b2)));
 	}
 
 	public void testLabelOfDiscoverableVisibleAttributeNot() throws Exception {
@@ -557,6 +592,55 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 	}
 
 	/**
+	 * The core filter drops undiscoverable objects and keeps discoverable objects and model
+	 * elements, reporting what it dropped.
+	 */
+	public void testCoreFilterDropsUndiscoverable() {
+		TLObject high = classifier("HIGH");
+		List<TLObject> dropped = new ArrayList<>();
+		Object filtered = DiscoverRight.filter(_pathUser, Arrays.asList(_a1, _a2, high, _c1, _c2), dropped::add);
+		assertEquals(Arrays.asList(_a1, high, _c1), filtered);
+		assertEquals(Arrays.asList(_a2, _c2), dropped);
+	}
+
+	/**
+	 * A value without undiscoverable objects is returned as it is, also when it contains a model
+	 * element.
+	 */
+	public void testCoreFilterKeepsDiscoverableValue() {
+		List<TLObject> value = Arrays.asList(_a1, classifier("HIGH"));
+		assertSame(value, DiscoverRight.filter(_pathUser, value, null));
+		assertSame(_c1, DiscoverRight.filter(_pathUser, _c1, null));
+		assertNull(DiscoverRight.filter(_pathUser, _c2, null));
+	}
+
+	/**
+	 * The core check of new reference targets denies a target the user may not discover.
+	 */
+	public void testCoreCheckDeniesNewUndiscoverableTarget() throws Exception {
+		TLObject hidden = createHiddenC("hidden");
+		becomeUser(_pathUser);
+		try {
+			DiscoverRight.checkNewTargets(_b1, part("PathB", "cs"), Arrays.asList(_c1, hidden));
+			fail("An undiscoverable new target must be denied.");
+		} catch (TopLogicException ex) {
+			assertEquals(ERROR_TARGET_NOT_DISCOVERABLE__OBJECT_ATTRIBUTE.getKey(), ex.getErrorKey().getKey());
+		}
+	}
+
+	/**
+	 * A target the reference already holds passes the check, also if the user may not discover it;
+	 * a discoverable new target and a classifier pass as well.
+	 */
+	public void testCoreCheckAllowsStoredAndDiscoverableTargets() throws Exception {
+		TLObject c3 = createReadableC("c3");
+		becomeUser(_pathUser);
+		assertFalse(rights().isDiscoverAllowed(_c2));
+		DiscoverRight.checkNewTargets(_b1, part("PathB", "cs"), Arrays.asList(_c2, c3));
+		DiscoverRight.checkNewTargets(_b1, part("PathB", "priority"), classifier("HIGH"));
+	}
+
+	/**
 	 * A model element is discoverable for every user, also for one holding no role at all (ticket
 	 * #30016): a classifier, whose type is an enumeration and no class, and a type.
 	 */
@@ -812,6 +896,44 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		QueryExecutor titleExpr = (QueryExecutor) privateField(TitleByExpression.class, "_expr", provider);
 		becomeUser(_pathUser);
 		assertNull(titleExpr.execute(_a1));
+	}
+
+	/**
+	 * R12: The header label of a column of a {@link DynamicColumnProviderByExpression} is computed
+	 * unsecured; the columns and the cell values are computed secured.
+	 */
+	public void testDynamicColumnLabelUnsecured() throws Exception {
+		DynamicColumnProviderByExpression provider = dynamicColumnProvider();
+		QueryExecutor columns = (QueryExecutor) privateField(DynamicColumnProviderByExpression.class, "_columns", provider);
+		QueryExecutor accessor =
+			(QueryExecutor) privateField(DynamicColumnProviderByExpression.class, "_accessor", provider);
+		java.lang.reflect.Method label =
+			DynamicColumnProviderByExpression.class.getDeclaredMethod("label", Object.class, Object.class);
+		label.setAccessible(true);
+
+		becomeUser(_pathUser);
+		assertEquals("The path user discovers a1 only.", Arrays.asList(_a1), asList(columns.execute(_root)));
+		assertEquals("The label of a discover-only column object is filled.", "a1", label.invoke(provider, _a1, _root));
+		assertNull("The cell value is read secured.", accessor.execute(_root, _a1, _root));
+
+		becomeUser(_stranger);
+		assertEquals("Without Discover, there is no column.", Arrays.asList(), asList(columns.execute(_root)));
+	}
+
+	private static DynamicColumnProviderByExpression dynamicColumnProvider() throws Exception {
+		DynamicColumnProviderByExpression.Config<?> config =
+			TypedConfiguration.newConfigItem(DynamicColumnProviderByExpression.Config.class);
+		config.update(config.descriptor().getProperty(DynamicColumnProviderByExpression.Config.COLUMNS),
+			parse("model -> all(`TestTLScriptSecurity:PathA`)"));
+		config.update(config.descriptor().getProperty(DynamicColumnProviderByExpression.Config.COLUMN_LABEL),
+			parse("column -> model -> $column.get(`TestTLScriptSecurity:PathNode#name`)"));
+		config.update(config.descriptor().getProperty(DynamicColumnProviderByExpression.Config.COLUMN_TYPE),
+			parse("`tl.core:String`"));
+		config.update(config.descriptor().getProperty(DynamicColumnProviderByExpression.Config.ACCESSOR),
+			parse("row -> column -> model -> $column.get(`TestTLScriptSecurity:PathNode#name`)"));
+		// The table component is not resolved, the test does not adapt a table.
+		return new DynamicColumnProviderByExpression(new DefaultInstantiationContext(TestDiscoverRight.class),
+			config);
 	}
 
 	private static Object privateField(Class<?> type, String name, Object instance) throws Exception {

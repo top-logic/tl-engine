@@ -324,6 +324,36 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_IMAGE_FIELD_UPLOAD;
 
 	/**
+	 * @en Add image
+	 */
+	@CustomKey("js.imageField.add")
+	public static ResKey JS_IMAGE_FIELD_ADD;
+
+	/**
+	 * @en Replace
+	 */
+	@CustomKey("js.imageField.replaceShown")
+	public static ResKey JS_IMAGE_FIELD_REPLACE_SHOWN;
+
+	/**
+	 * @en Remove
+	 */
+	@CustomKey("js.imageField.removeShown")
+	public static ResKey JS_IMAGE_FIELD_REMOVE_SHOWN;
+
+	/**
+	 * @en Manage images
+	 */
+	@CustomKey("js.imageField.manage")
+	public static ResKey JS_IMAGE_FIELD_MANAGE;
+
+	/**
+	 * @en Images ({0})
+	 */
+	@CustomKey("js.imageField.editorTitle")
+	public static ResKey JS_IMAGE_FIELD_EDITOR_TITLE;
+
+	/**
 	 * @en Replace {0}
 	 */
 	@CustomKey("js.imageField.replace")
@@ -334,6 +364,48 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.imageField.remove")
 	public static ResKey JS_IMAGE_FIELD_REMOVE;
+
+	/**
+	 * @en Previous image
+	 */
+	@CustomKey("js.imageField.previous")
+	public static ResKey JS_IMAGE_FIELD_PREVIOUS;
+
+	/**
+	 * @en Next image
+	 */
+	@CustomKey("js.imageField.next")
+	public static ResKey JS_IMAGE_FIELD_NEXT;
+
+	/**
+	 * @en {0} of {1}
+	 */
+	@CustomKey("js.imageField.counter")
+	public static ResKey JS_IMAGE_FIELD_COUNTER;
+
+	/**
+	 * @en Show {0} full page
+	 */
+	@CustomKey("js.imageField.open")
+	public static ResKey JS_IMAGE_FIELD_OPEN;
+
+	/**
+	 * @en Show {0}
+	 */
+	@CustomKey("js.imageField.show")
+	public static ResKey JS_IMAGE_FIELD_SHOW;
+
+	/**
+	 * @en Done
+	 */
+	@CustomKey("js.imageField.done")
+	public static ResKey JS_IMAGE_FIELD_DONE;
+
+	/**
+	 * @en Close
+	 */
+	@CustomKey("js.imageField.close")
+	public static ResKey JS_IMAGE_FIELD_CLOSE;
 
 	/**
 	 * @en Open camera
@@ -440,6 +512,44 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.breadcrumb.label")
 	public static ResKey JS_BREADCRUMB_LABEL;
+
+	// -- Data list client-side i18n keys --
+
+	/**
+	 * @en Collapse list
+	 */
+	@CustomKey("js.dataList.collapse")
+	public static ResKey JS_DATA_LIST_COLLAPSE;
+
+	/**
+	 * @en Expand list
+	 */
+	@CustomKey("js.dataList.expand")
+	public static ResKey JS_DATA_LIST_EXPAND;
+
+	/**
+	 * @en Search
+	 */
+	@CustomKey("js.dataList.search")
+	public static ResKey JS_DATA_LIST_SEARCH;
+
+	/**
+	 * @en Nothing to show.
+	 */
+	@CustomKey("js.dataList.empty")
+	public static ResKey JS_DATA_LIST_EMPTY;
+
+	/**
+	 * @en No matching entries.
+	 */
+	@CustomKey("js.dataList.noMatch")
+	public static ResKey JS_DATA_LIST_NO_MATCH;
+
+	/**
+	 * @en Actions
+	 */
+	@CustomKey("js.dataList.rowActions")
+	public static ResKey JS_DATA_LIST_ROW_ACTIONS;
 
 	// -- Toolbar client-side i18n keys --
 
@@ -611,11 +721,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en No value
 	 */
 	public static ResKey VALUE_NONE;
-
-	/**
-	 * @en *****
-	 */
-	public static ResKey MASKED_VALUE;
 
 	/**
 	 * @en Inherited: {0}
@@ -949,6 +1054,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_DELETE_FILTER;
 
 	/**
+	 * @en + {0} more
+	 */
+	@CustomKey("js.table.morePresets")
+	public static ResKey JS_TABLE_MORE_PRESETS;
+
+	/**
 	 * @en Do not save
 	 */
 	@CustomKey("js.table.cancelSave")
@@ -978,6 +1089,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en {0} selected, {1} of them filtered out
 	 */
 	public static ResKey2 TABLE_ROW_COUNT_SELECTED_FILTERED__COUNT_FILTERED;
+
+	/**
+	 * @en Filter: {0}
+	 */
+	public static ResKey1 TABLE_FILTER_PRESET__NAME;
+
+	/**
+	 * @en {0,choice,1#1 filter active|2#{0} filters active}
+	 */
+	public static ResKey1 TABLE_FILTERS_ACTIVE__COUNT;
 
 	/**
 	 * @en Selection changed.

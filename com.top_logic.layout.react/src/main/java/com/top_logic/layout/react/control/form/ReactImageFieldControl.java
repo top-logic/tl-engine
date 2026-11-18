@@ -7,9 +7,11 @@ package com.top_logic.layout.react.control.form;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.IdentityHashMap;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,17 +35,21 @@ import com.top_logic.util.Resources;
 import de.haumacher.msgbuf.data.DataObject;
 
 /**
- * A field holding one image or several, each shown as a preview.
+ * A field holding one image or several, showing one image at a time as large as the form allows.
  *
  * <p>
- * A field holding a {@link #isMultiple() single image} shows its preview and, while the field is
- * {@link FieldModel#isEditable() editable}, a button removing it; without an image it is an area an
- * image is dropped on or that opens the file picker. A dropped or picked file replaces the image. A
- * field holding {@link #isMultiple() several images} shows a row of such tiles, one per image,
- * followed by the area adding further images. Each tile replaces its image by a file dropped on it or
- * picked through its button, removes it, and moves it within the row where the
- * {@link #isOrdered() order} is part of the value. A field that is only displayed shows the previews
- * alone.
+ * The field shows the image it is at on a stage as wide as the field, at most as high as the theme
+ * or the {@link #setDimensions(String, String) dimensions} of the field allow; with
+ * {@link #isMultiple() several images}, buttons and the arrow keys step through them and a counter
+ * tells where the field is. A click on the image opens it in a view filling the page. A field that
+ * is {@link FieldModel#isEditable() edited} has buttons below the stage adding images after the
+ * image shown, replacing it, removing it and, with several images, opening an editor covering the
+ * page: a tile per image that replaces its image by a file dropped on it or picked through its
+ * button, removes it, and moves it among the others where the {@link #isOrdered() order} is part of
+ * the value, followed by an area adding further images. A file dropped on the stage of a field
+ * holding a single image replaces it; dropped on the stage of a field holding several, it is
+ * inserted after the image shown. Without an image, the stage is an area an image is dropped on or
+ * that opens the file picker. The control takes a {@link #prefersWholeLine() whole row} of a form.
  * </p>
  *
  * <p>
@@ -54,13 +60,15 @@ import de.haumacher.msgbuf.data.DataObject;
  * the client state: the control serves the data endpoint as a {@link DataProvider}, delivering the
  * image of the tile whose key is requested, and the upload endpoint as an {@link UploadHandler},
  * taking every {@link UploadSupport#FILE_PART file part} of the request. An upload carrying a
- * {@link #REPLACE_PART} replaces the image of the tile it names by the first file.
+ * {@link #REPLACE_PART} replaces the image of the tile it names by the first file, an upload carrying
+ * an {@link #AFTER_PART} inserts the files after the image of the tile it names.
  * </p>
  *
  * <p>
  * The state carries the {@link #IMAGES}, whether the field holds {@link #MULTIPLE several} images,
  * whether they are {@link #ORDERED arranged} by the user, the file types the file picker offers
- * under {@link UploadSupport#ACCEPT}, the {@link #maxUploadSize() upload limit} under
+ * under {@link UploadSupport#ACCEPT}, the largest {@link #WIDTH width} and {@link #HEIGHT height} of
+ * the stage, the {@link #maxUploadSize() upload limit} under
  * {@link UploadSupport#MAX_UPLOAD_SIZE}, the {@link #setMaxCount(int) maximum number of images}
  * under {@link ValueCountLimit#MAX_COUNT}, at which the client offers no further image, and the
  * message of a failed upload under {@link UploadSupport#ERROR}, cleared by the next successful
@@ -91,6 +99,24 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 	 * its content is the {@link #IMAGE_KEY key} of the tile.
 	 */
 	public static final String REPLACE_PART = "replace";
+
+	/**
+	 * Name of the multipart part of an upload naming the tile after whose image the uploaded files
+	 * are inserted; its content is the {@link #IMAGE_KEY key} of the tile.
+	 */
+	public static final String AFTER_PART = "after";
+
+	/**
+	 * State key for the CSS width the stage shows an image at most, absent for the width of the
+	 * field.
+	 */
+	public static final String WIDTH = "width";
+
+	/**
+	 * State key for the CSS height the stage shows an image at most, absent for the height of the
+	 * theme.
+	 */
+	public static final String HEIGHT = "height";
 
 	/** State key for the tiles, one per image and in image order. */
 	public static final String IMAGES = "images";
@@ -165,8 +191,8 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 	 *
 	 * <p>
 	 * The client offers no further image once the field holds that many; an upload of more images
-	 * than there is room for is refused as a whole, see {@link ValueCountLimit}. Replacing an image
-	 * does not change the number.
+	 * than there is room for is refused as a whole, see {@link ValueCountLimit}. Replacing or
+	 * removing an image stays possible.
 	 * </p>
 	 *
 	 * @param maxCount
@@ -223,6 +249,25 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 		putState(UploadSupport.ACCEPT, UploadSupport.acceptAttribute(acceptedTypes));
 	}
 
+	/**
+	 * Limits the size the stage shows an image at.
+	 *
+	 * @param width
+	 *        The CSS width an image is shown at most, <code>null</code> for the width of the field.
+	 * @param height
+	 *        The CSS height an image is shown at most, <code>null</code> for the height of the
+	 *        theme.
+	 */
+	public void setDimensions(String width, String height) {
+		putState(WIDTH, width);
+		putState(HEIGHT, height);
+	}
+
+	@Override
+	public boolean prefersWholeLine() {
+		return true;
+	}
+
 	@Override
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
 		updateImages();
@@ -235,22 +280,24 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 	 * A value that was displayed before keeps the key of its tile, so the client keeps the identity
 	 * of the tile and its loaded preview while images are added, removed and moved around it. A new
 	 * value gets a key never used before in this control, so its preview is never taken from the
-	 * cache of an earlier image. Values are told apart by identity, not by equality: two equal
-	 * images are two tiles.
+	 * cache of an earlier image. Values are matched by equality, because reading the value of an
+	 * attribute again may answer new but equal objects, e.g. the files of a multi-valued binary
+	 * attribute; each previous key is taken by one value only, so two equal images are two tiles.
 	 * </p>
 	 */
 	private void updateImages() {
-		Map<Object, String> previousKeys = new IdentityHashMap<>();
+		Map<Object, Deque<String>> previousKeys = new HashMap<>();
 		for (int n = 0, cnt = _values.size(); n < cnt; n++) {
-			previousKeys.put(_values.get(n), _keys.get(n));
+			previousKeys.computeIfAbsent(_values.get(n), x -> new ArrayDeque<>()).add(_keys.get(n));
 		}
 
 		List<Object> values = images(getFieldModel().getValue());
 		List<String> keys = new ArrayList<>(values.size());
 		List<Map<String, Object>> tiles = new ArrayList<>(values.size());
 		for (Object value : values) {
-			// Removed, so that the same value occurring twice gets two keys.
-			String key = previousKeys.remove(value);
+			// Taken, so that the same value occurring twice gets two keys.
+			Deque<String> candidates = previousKeys.get(value);
+			String key = candidates == null ? null : candidates.poll();
 			if (key == null) {
 				key = String.valueOf(_nextKey++);
 			}
@@ -293,7 +340,8 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 	 * <p>
 	 * A file uploaded for the tile a {@link #REPLACE_PART} names replaces the image of that tile. A
 	 * field holding a single image takes the first file as its image. A field holding several images
-	 * appends every file, in the order the client sent them.
+	 * inserts every file, in the order the client sent them, after the image of the tile an
+	 * {@link #AFTER_PART} names, or appends them where the upload names no tile still shown.
 	 * </p>
 	 *
 	 * <p>
@@ -310,9 +358,11 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 		}
 		List<BinaryData> files;
 		String replacedKey;
+		String afterKey;
 		try {
 			files = UploadSupport.toBinaryData(parts);
-			replacedKey = replacedKey(parts);
+			replacedKey = partText(parts, REPLACE_PART);
+			afterKey = partText(parts, AFTER_PART);
 		} catch (IOException ex) {
 			Logger.error("Failed to process image upload.", ex, ReactImageFieldControl.class);
 			putState(UploadSupport.ERROR, Resources.getInstance().getString(I18NConstants.FILE_UPLOAD_FAILED));
@@ -340,8 +390,10 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 		if (replaced >= 0) {
 			values.set(replaced, _imageValues.valueOf(files.get(0)));
 		} else {
+			int after = afterKey == null ? -1 : _keys.indexOf(afterKey);
+			int position = after >= 0 ? after + 1 : values.size();
 			for (BinaryData file : files) {
-				values.add(_imageValues.valueOf(file));
+				values.add(position++, _imageValues.valueOf(file));
 			}
 		}
 		getFieldModel().setValue(values);
@@ -349,12 +401,12 @@ public class ReactImageFieldControl extends ReactFormFieldControl implements Upl
 	}
 
 	/**
-	 * The key of the tile the {@link #REPLACE_PART} of the given upload names, <code>null</code> if
-	 * it names none.
+	 * The text of the part of the given upload with the given name, the key of a tile, or
+	 * <code>null</code> if the upload has no such part.
 	 */
-	private static String replacedKey(Collection<Part> parts) throws IOException {
+	private static String partText(Collection<Part> parts, String name) throws IOException {
 		for (Part part : parts) {
-			if (REPLACE_PART.equals(part.getName())) {
+			if (name.equals(part.getName())) {
 				return new String(part.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 			}
 		}

@@ -15,6 +15,34 @@
 			</instance>
 		</config>
 
+		<!-- Permissions for test.com.top_logic.element.accesstoken.TestAccessTokens. -->
+		<config service-class="com.top_logic.element.accesstoken.AccessTokenPermissions">
+			<instance>
+				<permissions>
+					<permission name="test-a"
+						label="test.accesstoken.permission.a"
+					/>
+					<permission name="test-b"
+						label="test.accesstoken.permission.b"
+					/>
+					<permission name="test-c"
+						label="test.accesstoken.permission.c"
+					/>
+					<permission name="test-observe"
+						label="test.accesstoken.permission.observe"
+					>
+						<session-binding class="test.com.top_logic.element.accesstoken.TestingSessionBinding"/>
+					</permission>
+					<permission name="test-act"
+						implies="test-observe"
+						label="test.accesstoken.permission.act"
+					>
+						<session-binding class="test.com.top_logic.element.accesstoken.TestingSessionBinding"/>
+					</permission>
+				</permissions>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocatorFactory">
 			<instance class="com.top_logic.element.meta.kbbased.filtergen.AttributeValueLocatorFactory">
 				<locators>
@@ -78,6 +106,15 @@
 						>
 							<path>
 								<step attribute="TestSecurityCoverage:Covered#owner"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_named"
+							inherit="true"
+							meta-element="TestSecurityCoverage:Named"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:Named#owner"/>
 							</path>
 						</rule>
 						<rule id="TestSecurityCoverage_deadGrant"
@@ -238,6 +275,25 @@
 								<step attribute="TestSecurityCoverage:CreatedBySelf#owner"/>
 							</path>
 						</rule>
+						<!-- Role sources of TestClassicDiscoverForm: the owner edits a holder and discovers a target. -->
+						<rule id="TestDiscoverForm_holder"
+							inherit="true"
+							meta-element="TestDiscoverForm:Holder"
+							role="TestDiscoverForm.Editor"
+						>
+							<path>
+								<step attribute="TestDiscoverForm:Holder#owner"/>
+							</path>
+						</rule>
+						<rule id="TestDiscoverForm_target"
+							inherit="true"
+							meta-element="TestDiscoverForm:Target"
+							role="TestDiscoverForm.Editor"
+						>
+							<path>
+								<step attribute="TestDiscoverForm:Target#owner"/>
+							</path>
+						</rule>
 					</rules>
 				</role-rules>
 
@@ -380,6 +436,29 @@
 						/>
 					</class>
 					<!-- No class grant: only the attribute grant implies Discover. -->
+					<class name="TestSecurityCoverage:Named">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="TestSecurityCoverage.Reader"
+						/>
+					</class>
+					<part name="TestSecurityCoverage:Named#name">
+						<!-- Writing the name is denied to every role. -->
+						<grant operation="Write"/>
+					</part>
+					<part name="TestSecurityCoverage:Foo#name">
+						<!-- Applies to Foo and Sub, not to Named and Bar. -->
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+					</part>
 					<part name="TestSecurityCoverage:PartOnly#label">
 						<grant
 							operation="Read"
@@ -480,6 +559,28 @@
 					<class name="TestSecurityCoverageInternal:MarkedInModule"
 						internal="true"
 					/>
+					<module name="TestDiscoverForm">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestDiscoverForm.Editor"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="TestDiscoverForm.Editor"
+						/>
+						<grant
+							inherit="true"
+							operation="Create"
+							roles="TestDiscoverForm.Editor"
+						/>
+						<grant
+							inherit="true"
+							operation="Delete"
+							roles="TestDiscoverForm.Editor"
+						/>
+					</module>
 				</security-config>
 			</instance>
 		</config>
@@ -508,6 +609,7 @@
 					<role name="TestSecurityCoverage.ContainerCreator"/>
 					<role name="TestSecurityCoverage.SelfCreator"/>
 					<role name="TestSecurityCoverage.ItemCreator"/>
+					<role name="TestDiscoverForm.Editor"/>
 				</roles>
 			</instance>
 		</config>
@@ -524,6 +626,7 @@
 					<declaration file="/WEB-INF/model/TestXMLInstanceImporter.model.xml"/>
 					<declaration file="/WEB-INF/model/TestSecurityCoverage.model.xml"/>
 					<declaration file="/WEB-INF/model/TestPathNavigation.model.xml"/>
+					<declaration file="/WEB-INF/model/TestDiscoverForm.model.xml"/>
 				</declarations>
 				<settings>
 					<module name="TestXMLInstanceImporter"

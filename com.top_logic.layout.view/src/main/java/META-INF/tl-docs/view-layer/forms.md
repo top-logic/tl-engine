@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, the maximum number of values of a multi-valued attribute with <value-count max="...">, images with a preview in an image field (<binary-display presentation="image-upload">, an image gallery of tl.imagegallery:GalleryImage), normalizing an entered value with <value-normalizer>, fields of derived attributes, fields of attributes with a <fallback-storage> showing the inherited value, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form, resetting or recomputing dependent fields when a field changes with <value-listeners> and <script>, also in the rows of a <composition-table>), the fields of the object a reference of the form's object points to, edited and saved with it (<object-fields attribute="...">), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, images in an image field stepping through them, arranging them and showing them full page (<binary-display presentation="image-upload">, its size with <dimensions>, an image gallery of tl.imagegallery:GalleryImage), the maximum number of values of a multi-valued attribute with <value-count max="...">, normalizing an entered value with <value-normalizer>, fields of derived attributes, fields of attributes with a <fallback-storage> showing the inherited value, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form, resetting or recomputing dependent fields when a field changes with <value-listeners> and <script>, also in the rows of a <composition-table>), the fields of the object a reference of the form's object points to, edited and saved with it (<object-fields attribute="...">), when the object of a form is locked in edit mode (<lockHandler>, DefaultLockHandler, NoTokenHandling), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -467,19 +467,48 @@ multi-valued `tl.core:Binary` property.
 **Images** — `<binary-display presentation="image-upload"/>`
 (`BinaryDisplay.BinaryPresentation.IMAGE_UPLOAD`) shows a binary value as images
 (`FieldControlRegistry.IMAGE`, `ReactImageFieldControl`, client `TLImageField`), a single and a
-multi-valued value alike. Each image is a tile showing its preview, all tiles of one size. While the
-field is edited, a tile carries a button replacing its image by a picked file - a file dropped on the
-tile replaces it as well - and a button "✕" removing it; the images of an ordered attribute are moved
-by the handle of their tile, by dragging or with Alt + arrow key. Without an image - for a single
-value also right after "✕" - the field is a dashed area of the size of a tile, "Upload image", that
-takes a dropped file or opens the file picker on click; a multi-valued field keeps this area after
-its last tile and adds every file dropped or picked there. A field that is only displayed shows the
-previews alone. The previews are fetched from the data endpoint of the control, the images never
-enter the client state. The image field is chosen by the annotation only: `<accepted-types
-value="image/*"/>` alone keeps the chips. `<accepted-types>`, `<max-upload-size>` and `<value-count>`
-act as for every binary value - at the maximum number of images the area adding images is left out,
-while the images can still be replaced - and the annotations act on a `<value-input>` of type `tl.core:Binary` as well. In a
-table cell the names of the images stand for the field, with a button opening it in a dialog.
+multi-valued value alike. The field takes a whole row of the form
+(`ReactFormFieldControl.prefersWholeLine()`; a `<render-whole-line value="false"/>` at the attribute
+or `full-line="false"` at the `<field>` keeps it in its column). It shows one image at a time on a
+stage as wide as the field and of a fixed height, the theme token `--tl-size-image-stage`;
+`<dimensions width="..." height="..."/>` at the attribute sets the largest width of the image and the
+height of the stage instead. The stage has no background of its own: an image smaller than the stage
+stands centered at its own size, never enlarged, a larger one is fitted into it. The stage of a
+single-valued field has no fixed height: it is exactly as large as its image, at most as wide as the
+field and as high as the theme token or the `<dimensions>` allow. Several images are stepped through with the buttons at the edges of the
+stage or the arrow keys, wrapping around, and a counter "2 of 5" tells where the field is.
+
+- **Displayed, disabled and edited** alike: a click on the image opens it in a view covering the
+  page opaquely on a dark ground (the token `--tl-surface-lightbox`, dark in both modes), scaled to
+  fill it, with the same stepping; its buttons and the counter stand in the margins around the
+  image, never over it. Escape or "Close" closes it.
+- **Edited**: a bar of buttons below the stage acts on the image shown - "Add image" (multi-valued
+  fields) inserts the picked files after it, "Replace" replaces it by a picked file, "Remove"
+  removes it - and "Manage images" (multi-valued fields) opens the *editor* on the scrim over the page. The
+  form never shows more than the stage and this bar. The editor shows a tile per image, all of one
+  width, each with a bar below the image: a button replacing its image by a picked file - a file
+  dropped on the tile replaces it as well - and a button "✕" removing it; the images of an ordered
+  attribute are moved by the handle of their tile, by dragging or with Alt + arrow key. A dashed
+  tile "Upload image" after the last one adds every file dropped or picked there. "Done" or Escape
+  closes the editor; a click on the image of a tile closes it and shows that image on the stage.
+- **Dropping on the stage** of an edited field replaces a single image; among several images, the
+  files are inserted after the image shown, and the stage moves to the first one added.
+- **While uploading**, from the files picked or dropped until the image they become is visible, the
+  stage (or the tile whose image is replaced) shows a spinner over the image and the buttons are
+  disabled; the dashed area shows the spinner and "Uploading…". An image whose data has not arrived
+  yet, e.g. after stepping, shows the spinner as well.
+- **Without an image**, the dashed area fills the whole stage of an edited multi-valued field, as
+  large as the stage with an image, and the bar below it keeps "Add image" alone, so the first upload
+  does not make the field grow; a single-valued
+  field shows a small dashed area. It takes a dropped file or opens the file picker on click. A displayed field shows nothing.
+
+The images are fetched from the data endpoint of the control, they never enter the client state. The
+image field is chosen by the annotation only: `<accepted-types value="image/*"/>` alone keeps the
+chips. `<accepted-types>`, `<max-upload-size>` and `<value-count>` act as for every binary value -
+at the maximum number of images, "Add image", the dashed tile of the editor and dropping on the stage
+are left out, while the images can still be replaced and removed - and the annotations act on a
+`<value-input>` of type `tl.core:Binary` as well. In a table cell the names of the images
+stand for the field, with a button opening it in a dialog.
 
 ```xml
 <property name="pictures"
@@ -491,6 +520,7 @@ table cell the names of the images stand for the field, with a button opening it
 		<accepted-types value="image/*"/>
 		<binary-display presentation="image-upload"/>
 		<value-count max="3"/>
+		<dimensions height="400px"/>
 	</annotations>
 </property>
 ```
@@ -498,7 +528,7 @@ table cell the names of the images stand for the field, with a button opening it
 **Image galleries** — a gallery is a multi-valued, ordered reference to `tl.imagegallery:GalleryImage`;
 each image is an object of its own, stored and deleted by the storage of the gallery
 (`ImageGalleryStorage`, chosen automatically for such a reference). It is edited in the same image
-field without any annotation: `FieldControlService` maps the type `tl.imagegallery:GalleryImage` to
+field, `<dimensions>` included, without any other annotation: `FieldControlService` maps the type `tl.imagegallery:GalleryImage` to
 `GalleryFieldControlProvider`, which shows the image of each gallery image and turns an uploaded file
 into a new gallery image (`TransientGalleryImage`) that the storage makes persistent on save - in an
 edited object and in a new one alike. The file picker offers images (`image/*`). Only a gallery is
@@ -524,6 +554,25 @@ the field is resolved as if no provider were configured for the type.
 
 The display is how the field looks, not what it says: it is a rendering-only state key, kept out of
 the headless projection, so a scripted test reads the same options and the same value in every shape.
+
+## Locking the edited object
+
+A `<form>` locks the object it displays when it enters edit mode, and releases the lock when it leaves edit mode (save, cancel, another object, the form disposed with its view). A second form trying to edit the same object - in another window or another user's session - fails with the message of the lock held there. The lock is taken through the form's `<lockHandler>`, which defaults to `DefaultLockHandler`: it locks through the application-wide `LockService`, whose lock strategy for the object is selected by the handler's `lockOperation`.
+
+Every form displayed creates a handler of its own from this configuration, so forms of the same view in different windows, sessions and `<tile-stack>` frames lock independently, and releasing one lock touches no other.
+
+Only a persistent object is locked: a transient draft, such as the object of a create dialog, is visible to no other session and is edited without a lock. A form starting in edit mode (`initial-edit-mode="true"`, or an `editMode` channel holding `true`) locks a persistent object just as the Edit button does.
+
+A form entering edit mode by itself - when it is displayed with `initial-edit-mode="true"` or an `editMode` channel holding `true`, and when a form with `initial-edit-mode="true"` switches to another object - does not fail on an object someone else has locked: it shows the object read-only, sets its `editMode` channel to `false`, and tells the user in passing that the object is shown read-only, with the details of the conflict. Whether these name the holder of the lock is decided by `report-lock-owner-details` of the application's `TokenService`. The Edit button and `<enter-edit-mode/>` still fail with the message of the lock held there.
+
+A form that deliberately works without a lock disables locking explicitly:
+
+```xml
+<form input="item">
+	<lockHandler class="com.top_logic.base.locking.handler.NoTokenHandling"/>
+	...
+</form>
+```
 
 ## Unsaved changes are asked before a channel write, transitively
 

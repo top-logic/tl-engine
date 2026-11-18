@@ -118,12 +118,13 @@ const MODIFIERS = {
   'tl-toolbar': new Set(['wrap']), // Bricht um statt zu kollabieren (Wysiwyg, 5d): eine Form, kein Zustand.
   'tl-tabs': new Set([]),
   'tl-breadcrumb': new Set([]),
-  'tl-skeleton': new Set([]),
+  'tl-skeleton': new Set(['text', 'circle']), // Die Form; das Rechteck ist die Grundform.
   'tl-status': new Set([]),
   'tl-login-alternatives': new Set([]), // Gruppe der Anmelde-Alternativen (#30296): eine Form, kein Zustand.
   'tl-login-card': new Set([]), // Karte der Anmeldeseite (#30296): eine Form, kein Zustand.
   'tl-table': new Set([]),
   'tl-tree': new Set([]),
+  'tl-list': new Set([]), // Gewählt: aria-current am Knopf des Eintrags; eingeklappt: data-tl-state~="collapsed".
   'tl-overlay': new Set(['fill']), // Die Anker sind Element-Modifier (tl-overlay__layer--<anker>), keine des Blocks.
   'tl-titlebar': new Set([]),
   'tl-dialog': new Set([]), // Ein- und Ausblenden, maximiert: data-tl-state.
@@ -159,7 +160,9 @@ const MODIFIERS = {
   'tl-media': new Set(['cover', 'contain', 'document', 'preview']), // Einpassung, Papier, Vorschau; gespiegelt: data-tl-state.
   'tl-prose': new Set([]),
   'tl-file': new Set([]), // Leer: data-tl-state.
-  'tl-image-field': new Set([]), // Ein Bild wie mehrere: gleich große Kacheln; Ziehen, Ablegen: data-tl-state.
+  'tl-image-field': new Set(['single']), // Bühne und Leiste; single: ein einzelnes Bild (eine Form); Ziehen, Ablegen: data-tl-state.
+  'tl-image-overlay': new Set(['view']), // Ebene über der Seite: Editor eines Bildfelds, mit view die ganzseitige Ansicht (eine Form).
+  'tl-image-editor': new Set([]), // Kacheln eines Bildfelds; Ziehen, Ablegen: data-tl-state.
   'tl-steps': new Set(['vertical']), // Erledigt: data-tl-state; aktuell: aria-current.
   'tl-job-status': new Set([]),
   'tl-calendar': new Set([]), // Heute, arbeitsfrei, anderer Monat, Termintag, Vorschau, gewählt: Attribute; Kategorie: data-tl-role.
@@ -191,6 +194,8 @@ const MODIFIERS = {
 const ELEMENT_MODIFIERS = {
   'tl-card__body': new Set(['pad-default', 'pad-compact']),
   'tl-form-field__input': new Set(['explained', 'resettable']),
+  'tl-image-field__step': new Set(['previous', 'next']),
+  'tl-image-overlay__step': new Set(['previous', 'next']),
   'tl-menu__item': new Set(['danger']),
   'tl-overlay__layer': new Set(['bottom', 'bottom-left', 'bottom-right', 'center', 'fill', 'left', 'right', 'top',
     'top-left', 'top-right']), // Die Anker der Überlagerung.

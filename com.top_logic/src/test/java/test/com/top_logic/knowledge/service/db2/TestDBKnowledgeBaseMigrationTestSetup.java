@@ -34,8 +34,6 @@ public class TestDBKnowledgeBaseMigrationTestSetup extends AbstractDBKnowledgeBa
 		TestSuite test = new TestSuite();
 		if (DatabaseTestSetup.useOnlyDefaultDB()) {
 			switch (DatabaseTestSetup.DEFAULT_DB) {
-				case ORACLE_DB:
-				case ORACLE12_DB:
 				case ORACLE19_DB:
 					test.addTest(suite(TestDBKnowledgeBaseMigrationTestSetup.class, DatabaseTestSetup.DEFAULT_DB));
 					break;
@@ -43,8 +41,6 @@ public class TestDBKnowledgeBaseMigrationTestSetup extends AbstractDBKnowledgeBa
 					test.addTest(SimpleTestFactory.newSuccessfulTest("Skipped, only default DB is tested."));
 			}
 		} else {
-			test.addTest(suite(TestDBKnowledgeBaseMigrationTestSetup.class, DBType.ORACLE_DB));
-			test.addTest(suite(TestDBKnowledgeBaseMigrationTestSetup.class, DBType.ORACLE12_DB));
 			test.addTest(suite(TestDBKnowledgeBaseMigrationTestSetup.class, DBType.ORACLE19_DB));
 		}
 		return test;

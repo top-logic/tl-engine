@@ -8,6 +8,8 @@ package test.com.top_logic.element.changelog;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import junit.framework.Test;
 
@@ -17,10 +19,12 @@ import com.top_logic.element.changelog.ChangeLogBuilder;
 import com.top_logic.element.changelog.SubtreeFilter;
 import com.top_logic.element.changelog.model.Change;
 import com.top_logic.element.changelog.model.ChangeSet;
+import com.top_logic.element.changelog.model.Update;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.element.model.ModelFactory;
 import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
@@ -43,6 +47,14 @@ import com.top_logic.util.model.ModelService;
 public class TestChangeSubtreeAnnotation extends TestWithModelExtension {
 
 	private static final String MODULE = "test.com.top_logic.element.changelog.TestSubtreeChangeLog";
+
+	private static final String OWNER = "Owner";
+
+	private static final String PART = "Part";
+
+	private static final String PARTS = "parts";
+
+	private static final String OWNER_REF = "owner";
 
 	private TLModule _testModule;
 
@@ -294,6 +306,215 @@ public class TestChangeSubtreeAnnotation extends TestWithModelExtension {
 		assertContains(log, child);
 	}
 
+	/**
+	 * Multi-valued navigation: a node referenced through the opt-in reference {@code peers} of two
+	 * roots belongs to the change subtree of both, but not to the one of a root not referencing it.
+	 */
+	public void testPeerOfTwoRoots() {
+		TLObject r1 = createNode("r1");
+		TLObject r2 = createNode("r2");
+		TLObject r3 = createNode("r3");
+		TLObject x = createNode("x");
+		addPeer(r1, x);
+		addPeer(r2, x);
+
+		Revision modification = rename(x, "x-2");
+
+		assertTrue(mentionsAt(log(r1), x, modification));
+		assertTrue(mentionsAt(log(r2), x, modification));
+		assertFalse(containsRevision(log(r3), modification));
+	}
+
+	/**
+	 * A node removed from the opt-in reference {@code peers} leaves the change subtree of the
+	 * former owner: its later modifications are no longer part of the owner's change log.
+	 */
+	public void testRemovedPeerLeavesSubtree() {
+		TLObject r1 = createNode("r1");
+		TLObject x = createNode("x");
+		addPeer(r1, x);
+
+		Revision whilePeer = rename(x, "x-2");
+
+		try (Transaction tx = beginTX()) {
+			List<Object> peers = new ArrayList<>((Collection<?>) r1.tValueByName("peers"));
+			peers.remove(x);
+			r1.tUpdateByName("peers", peers);
+			tx.commit();
+		}
+
+		Revision afterRemoval = rename(x, "x-3");
+
+		Collection<ChangeSet> log = log(r1);
+		assertTrue(mentionsAt(log, x, whilePeer));
+		assertFalse(containsRevision(log, afterRemoval));
+	}
+
+	/**
+	 * Membership is evaluated in the revision of each change: a composition part modified in its
+	 * first container, moved to a second one and modified there shows its first modification in
+	 * the log of the first container only, the second modification in the log of the second
+	 * container only, and the move in both.
+	 */
+	public void testRootChangesOverTime() {
+		TLObject a = createNode("a");
+		TLObject b = createNode("b");
+		TLObject x = createChild(a, "x");
+
+		Revision change1 = rename(x, "x-1");
+		Revision change2 = moveChild(x, a, b);
+		Revision change3 = rename(x, "x-3");
+
+		Collection<ChangeSet> logA = log(a);
+		Collection<ChangeSet> logB = log(b);
+
+		assertTrue(mentionsAt(logA, x, change1));
+		assertFalse(containsRevision(logB, change1));
+
+		assertTrue(containsRevision(logA, change2));
+		assertTrue(containsRevision(logB, change2));
+
+		assertTrue(mentionsAt(logB, x, change3));
+		assertFalse(containsRevision(logA, change3));
+	}
+
+	/**
+	 * Moving a part from {@code a.children} to {@code b.children} is part of the change log of both
+	 * containers: for {@code a} through the state in the revision before the move, for {@code b}
+	 * through the state in the revision of the move.
+	 */
+	public void testMoveOutOfComposition() {
+		TLObject a = createNode("a");
+		TLObject b = createNode("b");
+		TLObject x = createChild(a, "x");
+
+		Revision move = moveChild(x, a, b);
+
+		assertTrue(containsRevision(log(a), move));
+		assertTrue(containsRevision(log(b), move));
+	}
+
+	/**
+	 * Moving a part from {@code a.parts} to {@code b.parts} of a composition stored in the rows of
+	 * its parts ({@code inline-set-storage}) is an update of both containers and of the opposite
+	 * end {@code owner} of the part. It is part of the change log of both containers, but not of an
+	 * uninvolved container.
+	 */
+	public void testMoveOutOfInlineComposition() {
+		TLClass ownerType = (TLClass) _testModule.getType(OWNER);
+		TLClass partType = (TLClass) _testModule.getType(PART);
+		TLObject a = createNamed(ownerType, null, "a");
+		TLObject b = createNamed(ownerType, null, "b");
+		TLObject c = createNamed(ownerType, null, "c");
+		TLObject x = createNamed(partType, a, "x");
+		try (Transaction tx = beginTX()) {
+			a.tUpdateByName(PARTS, List.of(x));
+			tx.commit();
+		}
+
+		Revision move;
+		try (Transaction tx = beginTX()) {
+			a.tUpdateByName(PARTS, List.of());
+			b.tUpdateByName(PARTS, List.of(x));
+			tx.commit();
+			move = tx.getCommitRevision();
+		}
+		assertEquals(b, x.tValueByName(OWNER_REF));
+
+		ChangeSet changeSet = findRevision(new ChangeLogBuilder(_kb, ModelService.getApplicationModel()).build(), move);
+		assertNotNull(changeSet);
+		assertEquals(3, changeSet.getChanges().size());
+		assertEquals(Set.of(PARTS), updatedParts(changeSet, a));
+		assertEquals(Set.of(PARTS), updatedParts(changeSet, b));
+		assertEquals(Set.of(OWNER_REF), updatedParts(changeSet, x));
+
+		assertTrue(containsRevision(log(a), move));
+		assertTrue(containsRevision(log(b), move));
+		assertFalse(containsRevision(log(c), move));
+	}
+
+	private static Set<String> updatedParts(ChangeSet changeSet, TLObject obj) {
+		for (Change change : changeSet.getChanges()) {
+			if (change instanceof Update update && sameIdentity(change, obj)) {
+				return update.getModifications()
+					.stream()
+					.map(modification -> modification.getPart().getName())
+					.collect(Collectors.toSet());
+			}
+		}
+		fail("No update of " + obj + " in " + changeSet.getChanges());
+		return null;
+	}
+
+	private TLObject createNamed(TLClass type, TLObject container, String name) {
+		try (Transaction tx = beginTX()) {
+			TLObject result = _factory.createObject(type, container);
+			result.tUpdateByName("name", name);
+			tx.commit();
+			return result;
+		}
+	}
+
+	private TLObject createChild(TLObject parent, String name) {
+		try (Transaction tx = beginTX()) {
+			TLObject child = _factory.createObject(_nodeType, parent);
+			child.tUpdateByName("name", name);
+			List<Object> children = new ArrayList<>((Collection<?>) parent.tValueByName("children"));
+			children.add(child);
+			parent.tUpdateByName("children", children);
+			tx.commit();
+			return child;
+		}
+	}
+
+	private Revision moveChild(TLObject child, TLObject from, TLObject to) {
+		try (Transaction tx = beginTX()) {
+			List<Object> fromChildren = new ArrayList<>((Collection<?>) from.tValueByName("children"));
+			fromChildren.remove(child);
+			from.tUpdateByName("children", fromChildren);
+			List<Object> toChildren = new ArrayList<>((Collection<?>) to.tValueByName("children"));
+			toChildren.add(child);
+			to.tUpdateByName("children", toChildren);
+			tx.commit();
+			return tx.getCommitRevision();
+		}
+	}
+
+	private void addPeer(TLObject owner, TLObject peer) {
+		try (Transaction tx = beginTX()) {
+			List<Object> peers = new ArrayList<>((Collection<?>) owner.tValueByName("peers"));
+			peers.add(peer);
+			owner.tUpdateByName("peers", peers);
+			tx.commit();
+		}
+	}
+
+	private static boolean containsRevision(Collection<ChangeSet> log, Revision revision) {
+		return findRevision(log, revision) != null;
+	}
+
+	private static boolean mentionsAt(Collection<ChangeSet> log, TLObject obj, Revision revision) {
+		ChangeSet cs = findRevision(log, revision);
+		if (cs == null) {
+			return false;
+		}
+		for (Change change : cs.getChanges()) {
+			if (sameIdentity(change, obj)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static ChangeSet findRevision(Collection<ChangeSet> log, Revision revision) {
+		for (ChangeSet cs : log) {
+			if (cs.getRevision().getCommitNumber() == revision.getCommitNumber()) {
+				return cs;
+			}
+		}
+		return null;
+	}
+
 	private TLObject createNode(String name) {
 		try (Transaction tx = beginTX()) {
 			TLObject node = _factory.createObject(_nodeType, null);
@@ -303,10 +524,11 @@ public class TestChangeSubtreeAnnotation extends TestWithModelExtension {
 		}
 	}
 
-	private void rename(TLObject node, String newName) {
+	private Revision rename(TLObject node, String newName) {
 		try (Transaction tx = beginTX()) {
 			node.tUpdateByName("name", newName);
 			tx.commit();
+			return tx.getCommitRevision();
 		}
 	}
 

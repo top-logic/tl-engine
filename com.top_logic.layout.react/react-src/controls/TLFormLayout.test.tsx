@@ -46,6 +46,7 @@ import { register, registerPart } from 'tl-react-bridge';
 import TLFormLayout from './TLFormLayout';
 import TLImageField from './TLImageField';
 import ButtonPart from './button/ButtonPart';
+import SpinnerPart from './progress/SpinnerPart';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -74,6 +75,7 @@ beforeAll(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   vi.stubGlobal('ResizeObserver', InertResizeObserver);
   registerPart('Button', ButtonPart);
+  registerPart('Spinner', SpinnerPart);
   register('TLFormLayout', TLFormLayout);
   register('TLImageField', TLImageField);
 });

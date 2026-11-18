@@ -94,6 +94,10 @@ public final class FieldSpec {
 
 	private int _maxCount;
 
+	private String _width;
+
+	private String _height;
+
 	private FieldSpec(Class<?> valueType, String label) {
 		_valueType = valueType;
 		_label = label;
@@ -735,6 +739,54 @@ public final class FieldSpec {
 	}
 
 	/**
+	 * The CSS width the content of the field is displayed at most, or {@code null} for the width the
+	 * field has.
+	 *
+	 * <p>
+	 * The width of the dimensions annotation of an attribute
+	 * ({@link com.top_logic.model.annotate.ui.TLDimensions}). It limits content that has a size of its
+	 * own, such as the image an image field shows.
+	 * </p>
+	 */
+	public String getWidth() {
+		return _width;
+	}
+
+	/**
+	 * Sets the {@link #getWidth() width}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setWidth(String width) {
+		_width = width;
+		return this;
+	}
+
+	/**
+	 * The CSS height the content of the field is displayed at most, or {@code null} for the height
+	 * the theme sets.
+	 *
+	 * <p>
+	 * The height of the dimensions annotation of an attribute
+	 * ({@link com.top_logic.model.annotate.ui.TLDimensions}). It limits content that has a size of its
+	 * own, such as the image an image field shows.
+	 * </p>
+	 */
+	public String getHeight() {
+		return _height;
+	}
+
+	/**
+	 * Sets the {@link #getHeight() height}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setHeight(String height) {
+		_height = height;
+		return this;
+	}
+
+	/**
 	 * This specification describing a single one of the values of a
 	 * {@link #isMultiple() multi-valued} field.
 	 *
@@ -795,6 +847,8 @@ public final class FieldSpec {
 		result._acceptedTypes = _acceptedTypes;
 		result._maxUploadSize = _maxUploadSize;
 		result._maxCount = _maxCount;
+		result._width = _width;
+		result._height = _height;
 		return result;
 	}
 

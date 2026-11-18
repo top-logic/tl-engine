@@ -781,6 +781,12 @@
   background-repeat: no-repeat;
 }
 
+/* Der Fokusring liegt nach innen über dem Hintergrund (outline-offset oben) und deckte die Ecke bis auf einen Fleck;
+   um seine Breite größer bleibt unter ihm so viel Ecke sichtbar wie ohne Fokus. */
+.tl-table__cell .tl-field[aria-required="true"]:focus-visible {
+  background-size: calc(var(--tl-space-xs) + var(--tl-focus-width)) calc(var(--tl-space-xs) + var(--tl-focus-width));
+}
+
 :where(.tl-table__row:hover, .tl-table__row[aria-selected="true"]) .tl-table__cell .tl-field:not(:disabled, [readonly], [aria-disabled="true"]) {
   box-shadow: inset 0 0 0 var(--tl-border-width-sm) var(--tl-border-emphasis);
 }

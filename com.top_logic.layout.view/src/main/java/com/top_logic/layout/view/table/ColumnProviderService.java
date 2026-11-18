@@ -111,8 +111,8 @@ import com.top_logic.util.TLCollator;
  * <li>A provider configured in this service for the {@link TLType} of the values
  * (app-extensible).</li>
  * <li>A built-in default derived from the type's structure, offering one or several kinds of
- * filter (see {@link Column#filters()}): enumeration (single- or multi-valued) → its classifiers;
- * {@code INT}/{@code FLOAT} → numeric range, values; {@code DATE} → date range, values (on day
+ * filter (see {@link Column#filters() the filters of a column}): enumeration (single- or
+ * multi-valued) → its classifiers; {@code INT}/{@code FLOAT} → numeric range, values; {@code DATE} → date range, values (on day
  * basis for a date and a date with time of day); {@code BOOLEAN}/{@code TRISTATE} → boolean;
  * {@code STRING} → text, values; anything else (custom primitives, references, multi-valued or
  * unresolved descriptors) → values, a display-label text filter.</li>
@@ -121,8 +121,8 @@ import com.top_logic.util.TLCollator;
  * <p>
  * A list of values offers the values occurring in the rows, as long as there are at most
  * {@link Config#getMaxValueOptions()} distinct ones, see
- * {@link OptionsColumnFilter#occurring(Function, BoundCodec, int)}. A cell holding several values
- * matches if one of them is selected.
+ * {@link OptionsColumnFilter#occurring(Function, BoundCodec, int) the occurring values filter}. A
+ * cell holding several values matches if one of them is selected.
  * </p>
  *
  * <p>

@@ -494,6 +494,18 @@ public class ReactFormFieldControl extends ReactControl {
 	}
 
 	/**
+	 * Whether this control takes a whole row of a form where the form leaves that to the field.
+	 *
+	 * <p>
+	 * True for a control whose content is shown best as wide as the form, e.g. an image. A form
+	 * that states for the field whether it takes a whole row decides instead.
+	 * </p>
+	 */
+	public boolean prefersWholeLine() {
+		return false;
+	}
+
+	/**
 	 * Whether the user says when the value entered in this field is complete, instead of every
 	 * change of the value being complete in itself.
 	 *

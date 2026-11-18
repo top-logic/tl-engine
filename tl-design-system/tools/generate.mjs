@@ -213,12 +213,14 @@ ${type}
    Zeile. Ein Feld mit aria-activedescendant ist kein Behälter und behält den Ring: das Suchfeld eines
    Select (input) und das Select ohne Suchfeld (role=combobox) — ihr Cursor steht im Popup.
    Eine Dashboard-Kachel mit Aktion trägt den Ring, wenn ihr verborgener Knopf (tl-visually-hidden) den Tastaturfokus
-   hat: der Knopf ist unsichtbar, die Kachel ist, was der Nutzer drückt (Spec 5c §6).
+   hat: der Knopf ist unsichtbar, die Kachel ist, was der Nutzer drückt (Spec 5c §6). Ebenso die Fläche eines Bildfelds,
+   die ein Bild aufnimmt (tl-image-field__drop): ihr verborgenes Dateifeld hat den Fokus, die Fläche wird gedrückt.
    Die hervorgehobene Option einer Select-Liste ist die Tastaturposition (der Fokus bleibt im Feld, aria-activedescendant):
    ihr ::after trägt den Ring, innen, wie das Cursor-Element — kein zweiter Ring in der Komponente. */
 :where(a, button, input, select, textarea, summary, [tabindex], [contenteditable]):where(:not(:not(input, textarea, [role="combobox"])[aria-activedescendant])):focus-visible,
 :where(:not(input, textarea, [role="combobox"])[aria-activedescendant]:focus-visible [data-tl-state~="cursor"])::after,
 .tl-dashboard__tile:has(> .tl-dashboard__action:focus-visible),
+.tl-image-field__drop:has(> input:focus-visible),
 .tl-select__option[data-tl-state~="highlighted"]::after {
   outline: var(--tl-focus-width) solid var(--tl-focus-ring);
   outline-offset: var(--tl-focus-offset);

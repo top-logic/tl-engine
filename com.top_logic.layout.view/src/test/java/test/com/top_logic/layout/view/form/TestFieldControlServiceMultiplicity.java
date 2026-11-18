@@ -35,6 +35,7 @@ import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
 import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
+import com.top_logic.layout.react.control.form.ReactImageFieldControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactFileChipsControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
@@ -298,12 +299,72 @@ public class TestFieldControlServiceMultiplicity extends TestCase {
 			Boolean.TRUE, control.scriptingScalarState().get(ReactValueListControl.UPLOAD));
 	}
 
-	/** An image drop field is displayed as file chips: the React UI offers no image drop field. */
-	public void testFilesAskingForAnImageDropFieldAreDisplayedAsChips() {
+	/**
+	 * The files of a multi-valued binary attribute asking for an image drop field are edited in an
+	 * image field: one control for the whole collection, arranging the images of an ordered
+	 * attribute.
+	 */
+	public void testFilesAskingForAnImageDropFieldAreDisplayedAsImages() {
+		TLStructuredTypePart part = property("files", _binaryType, true, true);
+		part.setAnnotation(BinaryDisplay.display(BinaryPresentation.IMAGE_UPLOAD));
+
+		ReactControl control = control(part, List.of(file("a.png"), file("b.png")));
+
+		assertEquals(ReactImageFieldControl.class, control.getClass());
+		ReactImageFieldControl images = (ReactImageFieldControl) control;
+		assertTrue(images.isMultiple());
+		assertTrue("The images of an ordered attribute are arranged by the user.", images.isOrdered());
+		assertEquals(2, ((List<?>) control.scriptingScalarState().get(ReactImageFieldControl.IMAGES)).size());
+
+		TLStructuredTypePart unordered = property("unordered", _binaryType, true, false);
+		unordered.setAnnotation(BinaryDisplay.display(BinaryPresentation.IMAGE_UPLOAD));
+		assertFalse(((ReactImageFieldControl) control(unordered, List.of())).isOrdered());
+	}
+
+	/** A single file asking for an image drop field is edited in an image field holding one image. */
+	public void testASingleFileAskingForAnImageDropFieldIsDisplayedAsAnImage() {
+		TLStructuredTypePart part = property("file", _binaryType, false, false);
+		part.setAnnotation(BinaryDisplay.display(BinaryPresentation.IMAGE_UPLOAD));
+
+		ReactControl control = control(part, file("a.png"));
+
+		assertEquals(ReactImageFieldControl.class, control.getClass());
+		assertFalse(((ReactImageFieldControl) control).isMultiple());
+		assertEquals(1, ((List<?>) control.scriptingScalarState().get(ReactImageFieldControl.IMAGES)).size());
+	}
+
+	/**
+	 * The accepted types and the size limit of a binary attribute reach the image field; an image
+	 * field is not chosen by the accepted types alone.
+	 */
+	public void testTheImageFieldTakesTheUploadSettings() {
+		long limit = 5L * 1024 * 1024;
+		TLStructuredTypePart part = property("pictures", _binaryType, true, true);
+		part.setAnnotation(acceptedTypes("image/*"));
+		part.setAnnotation(maxUploadSize(limit));
+		assertEquals("Images are offered by the image drop field only.",
+			ReactFileChipsControl.class, control(part, List.of()).getClass());
+
+		part.setAnnotation(BinaryDisplay.display(BinaryPresentation.IMAGE_UPLOAD));
+		ReactControl control = control(part, List.of());
+		assertEquals(ReactImageFieldControl.class, control.getClass());
+		assertEquals("image/*", control.scriptingScalarState().get(UploadSupport.ACCEPT));
+		assertEquals(Long.valueOf(limit), control.scriptingScalarState().get(UploadSupport.MAX_UPLOAD_SIZE));
+		assertEquals(limit, ((UploadHandler) control).maxUploadSize());
+	}
+
+	/**
+	 * A cell showing images gives the names of their files in one line and opens the image field in
+	 * a dialog.
+	 */
+	public void testACellOfImagesShowsTheirNames() {
 		TLStructuredTypePart part = property("files", _binaryType, true, false);
 		part.setAnnotation(BinaryDisplay.display(BinaryPresentation.IMAGE_UPLOAD));
 
-		assertEquals(ReactFileChipsControl.class, control(part, List.of()).getClass());
+		ReactControl cell = display(ColumnType.of(part), List.of(file("a.png"), file("b.png")));
+
+		assertEquals(ReactCompactFieldControl.class, cell.getClass());
+		assertEquals("a.png, b.png", ((ReactCompactFieldControl) cell).getPreviewText());
 	}
 
 	/** A binary display stated at the type decides for an attribute that states none. */

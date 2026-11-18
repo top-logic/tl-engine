@@ -666,8 +666,8 @@ is not limited. It is enforced three times:
   among its `<annotations>`.
 - **When adding.** The field description carries the maximum (`FieldSpec.getMaxCount()`), and every
   control adding values offers no further value once the field holds the maximum: the file chips
-  hide their add button, the list of values its add button, the image field its area adding images;
-  removing a value offers adding again. Values added at once - the files of one upload or one drop -
+  hide their add button, the list of values its add button, the image field its button "Add image",
+  the dashed tile of its editor and dropping on its stage; removing a value offers adding again. Values added at once - the files of one upload or one drop -
   are taken all or none (`ValueCountLimit`): an addition beyond the room left is refused as a whole
   with a message naming the maximum, the number of added values and the room left ("Nothing was
   added: at most 3 values are allowed. 2 selected, room for 1."). The file chips and the image field

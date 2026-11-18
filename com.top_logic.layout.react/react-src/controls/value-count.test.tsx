@@ -139,16 +139,46 @@ describe('file chips', () => {
 });
 
 describe('image field', () => {
-  const dropArea = (root: HTMLElement) => root.querySelector('.tl-image-field__drop');
+  /** The labels of the buttons of the bar below the stage. */
+  const barLabels = (root: HTMLElement) =>
+    Array.from(root.querySelectorAll('.tl-image-field__bar button')).map(button => button.getAttribute('aria-label'));
 
-  it('leaves out the area adding images at the maximum, but keeps replacing them', () => {
+  /** Opens the editor covering the page and answers it. */
+  const openEditor = (root: HTMLElement) => {
+    const manage = root.querySelector('button[aria-label="Manage images"]') as HTMLButtonElement;
+    act(() => manage.click());
+    return document.body.querySelector('.tl-image-overlay .tl-image-editor') as HTMLElement;
+  };
+
+  /** Drops a file on the stage and answers whether it was taken. */
+  const dropOnStage = (root: HTMLElement) => {
+    const event = new Event('dragover', { bubbles: true, cancelable: true });
+    Object.defineProperty(event, 'dataTransfer', { value: { types: ['Files'], files: [], dropEffect: 'none' } });
+    act(() => { root.querySelector('.tl-image-field__stage')!.dispatchEvent(event); });
+    return event.defaultPrevented;
+  };
+
+  it('offers no further image at the maximum, but keeps replacing and removing them', () => {
     const root = mountControl('TLImageField', { editable: true, multiple: true, images: images(3), maxCount: 3 });
-    expect(dropArea(root)).toBeNull();
-    expect(root.querySelectorAll('button[aria-label^="Replace"]')).toHaveLength(3);
+    expect(barLabels(root)).toEqual(['Replace', 'Remove', 'Manage images']);
+    expect(root.querySelector('input[type="file"][multiple]')).toBeNull();
+    expect(dropOnStage(root)).toBe(false);
+
+    const editor = openEditor(root);
+    expect(editor.querySelector('.tl-image-field__drop')).toBeNull();
+    expect(editor.querySelectorAll('button[aria-label^="Replace"]')).toHaveLength(3);
+    expect(editor.querySelectorAll('button[aria-label^="Remove"]')).toHaveLength(3);
   });
 
-  it('offers the area adding images below the maximum', () => {
+  it('offers a further image below the maximum', () => {
     const root = mountControl('TLImageField', { editable: true, multiple: true, images: images(2), maxCount: 3 });
-    expect(dropArea(root)).not.toBeNull();
+    expect(barLabels(root)).toEqual(['Add image', 'Replace', 'Remove', 'Manage images']);
+    expect(dropOnStage(root)).toBe(true);
+    expect(openEditor(root).querySelector('.tl-image-field__drop')).not.toBeNull();
+  });
+
+  it('keeps replacing a single image by a file dropped on the stage', () => {
+    const root = mountControl('TLImageField', { editable: true, multiple: false, images: images(1), maxCount: 0 });
+    expect(dropOnStage(root)).toBe(true);
   });
 });

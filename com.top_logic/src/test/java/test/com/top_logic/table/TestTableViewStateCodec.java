@@ -46,6 +46,17 @@ public class TestTableViewStateCodec extends TestCase {
 		assertEquals(List.of("department"), restored.getGrouping().columns());
 	}
 
+	/** Tests that a grouping by several columns is restored with all its levels in order. */
+	public void testNestedGroupingRoundTrip() {
+		TableViewState original = new TableViewState();
+		original.setGrouping(new GroupSpec(List.of("department", "location")));
+
+		TableViewState restored = new TableViewState();
+		TableViewStateCodec.readInto(restored, TableViewStateCodec.toJson(original));
+
+		assertEquals(new GroupSpec(List.of("department", "location")), restored.getGrouping());
+	}
+
 	public void testHiddenColumnsRoundTrip() {
 		TableViewState original = new TableViewState();
 		original.setColumnOrder(List.of("name"));

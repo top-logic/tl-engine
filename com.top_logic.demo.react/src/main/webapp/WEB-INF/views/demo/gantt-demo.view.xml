@@ -142,7 +142,10 @@ freezeLabel = reactFlowGanttSpan(model: "marker:freeze", rowModel: "axis:markers
 /* === Data rows (default rowPadding: 4) === */
 
 r_design = reactFlowGanttRow(model: "phase:design", label: reactFlowPadding(reactFlowText("Design"),         all: 4), borderColor: "rgba(128,128,128,0.25)");
-r_impl   = reactFlowGanttRow(model: "phase:impl",   label: reactFlowPadding(reactFlowText("Implementation"), all: 4), backgroundColor: "rgba(128,128,128,0.06)", borderColor: "rgba(128,128,128,0.25)");
+/* A phase with sub-rows: the toggle in its label collapses the sub-rows with their items and edges. */
+r_backend  = reactFlowGanttRow(model: "phase:impl:backend",  label: reactFlowPadding(reactFlowText("Backend"),  all: 4), backgroundColor: "rgba(128,128,128,0.06)", borderColor: "rgba(128,128,128,0.25)");
+r_frontend = reactFlowGanttRow(model: "phase:impl:frontend", label: reactFlowPadding(reactFlowText("Frontend"), all: 4), backgroundColor: "rgba(128,128,128,0.06)", borderColor: "rgba(128,128,128,0.25)");
+r_impl   = reactFlowGanttRow(model: "phase:impl",   label: reactFlowPadding(reactFlowText("Implementation"), all: 4), children: list($r_backend, $r_frontend), backgroundColor: "rgba(128,128,128,0.06)", borderColor: "rgba(128,128,128,0.25)");
 r_test   = reactFlowGanttRow(model: "phase:test",   label: reactFlowPadding(reactFlowText("Testing"),        all: 4), borderColor: "rgba(128,128,128,0.25)");
 r_deploy = reactFlowGanttRow(model: "phase:deploy", label: reactFlowPadding(reactFlowText("Deployment"),   all: 4), backgroundColor: "rgba(128,128,128,0.06)", borderColor: "rgba(128,128,128,0.25)");
 r_docs   = reactFlowGanttRow(model: "phase:docs",   label: reactFlowPadding(reactFlowText("Documentation"), all: 4), borderColor: "rgba(128,128,128,0.25)");
@@ -167,6 +170,11 @@ beta  = reactFlowGanttPoint(model: "milestone:beta", rowModel: "phase:test",
 	)), at: 20544);
 qa    = reactFlowGanttSpan(model: "task:qa",   rowModel: "phase:test",
 	box: $selectable("task:qa", reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("QA"),    all: 3)), fill: "#f8d7da")), start: 20544, end: 20574);
+
+api = reactFlowGanttSpan(model: "task:api", rowModel: "phase:impl:backend",
+	box: $selectable("task:api", reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("API"), all: 3)), fill: "#c8e6c9")), start: 20500, end: 20520);
+ui    = reactFlowGanttSpan(model: "task:ui",  rowModel: "phase:impl:frontend",
+	box: $selectable("task:ui", reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("UI"), all: 3)), fill: "#c8e6c9")), start: 20520, end: 20540);
 
 fixed_row = reactFlowGanttSpan(model: "task:fixed-row", rowModel: "phase:design",
 	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Fixed Row"), all: 3)), fill: "#e0d4f9"),
@@ -217,6 +225,12 @@ e4 = reactFlowGanttEdge(model: "dep:docs->launch", sourceModel: "task:docs", sou
 e5 = reactFlowGanttEdge(model: "dep:build->qa", sourceModel: "task:build", sourceEndpoint: "END", targetModel: "task:qa", targetEndpoint: "START", enforce: "STRICT",
 	strokeColor: "#808080", targetSymbol: "filledArrow");
 
+/* Edges of the items in the sub-rows of "Implementation", hidden while the phase is collapsed. */
+e6 = reactFlowGanttEdge(model: "dep:api->ui", sourceModel: "task:api", sourceEndpoint: "END", targetModel: "task:ui", targetEndpoint: "START",
+	targetSymbol: "filledArrow");
+e7 = reactFlowGanttEdge(model: "dep:ui->qa", sourceModel: "task:ui", sourceEndpoint: "END", targetModel: "task:qa", targetEndpoint: "START",
+	targetSymbol: "filledArrow");
+
 /* === Decorations === */
 
 /* Grid lines at month boundaries */
@@ -234,12 +248,11 @@ freeze = reactFlowGanttRangeDeco(model: "freeze", from: 20513, to: 20520, colorR
 
 reactFlowGantt(
 	rootRows:    list($r_axis1, $r_axis2, $r_markers, $r_design, $r_impl, $r_test, $r_deploy, $r_docs, $r_review, $r_launch, $r_maint),
-	items:       concat($yearSpans, $monthYearSpans, $monthSpans, $daySpans, list($freezeLabel, $spec, $build, $beta, $qa, $fixed_row, $no_resize, $deploy_item, $docs_item, $review_item, $launch_item, $maint_item, $docs_approved, $docs_anchor)),
-	edges:       list($e1, $e2, $e3, $e4, $e5),
+	items:       concat($yearSpans, $monthYearSpans, $monthSpans, $daySpans, list($freezeLabel, $spec, $build, $api, $ui, $beta, $qa, $fixed_row, $no_resize, $deploy_item, $docs_item, $review_item, $launch_item, $maint_item, $docs_approved, $docs_anchor)),
+	edges:       list($e1, $e2, $e3, $e4, $e5, $e6, $e7),
 	decorations: list($gl_feb, $gl_mar, $gl_apr, $gl_may, $freeze, $today),
 	rangeMin:    $rangeMin,
 	rangeMax:    $rangeMax,
-	initialZoom: 8,
 	frozenRows:  3
 )
 }]]></createChart>

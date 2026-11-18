@@ -9,6 +9,7 @@ import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -75,6 +76,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en File upload failed.
 	 */
 	public static ResKey FILE_UPLOAD_FAILED;
+
+	/**
+	 * @en Nothing was added: at most {0} values are allowed. {1} selected, room for {2}.
+	 */
+	public static ResKey3 ERROR_TOO_MANY_VALUES_ADDED__MAX_SELECTED_ROOM;
 
 	/**
 	 * @en No file data received.
@@ -1000,10 +1006,22 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_GROUP_BY;
 
 	/**
+	 * @en Additionally group by this column
+	 */
+	@CustomKey("js.table.groupByAlso")
+	public static ResKey JS_TABLE_GROUP_BY_ALSO;
+
+	/**
 	 * @en Remove grouping
 	 */
 	@CustomKey("js.table.ungroup")
 	public static ResKey JS_TABLE_UNGROUP;
+
+	/**
+	 * @en Remove grouping by this column
+	 */
+	@CustomKey("js.table.ungroupColumn")
+	public static ResKey JS_TABLE_UNGROUP_COLUMN;
 
 	/**
 	 * @en The rows are grouped by this column

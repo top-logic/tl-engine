@@ -23,6 +23,7 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.FieldValueArguments;
@@ -30,6 +31,7 @@ import com.top_logic.layout.react.control.form.MoveElementArguments;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactValueListControl;
 import com.top_logic.layout.react.control.form.RemoveElementArguments;
+import com.top_logic.layout.react.control.form.ValueCountLimit;
 import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
@@ -37,6 +39,7 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests that a field holding several values is edited as a list of single-value controls: one
@@ -474,6 +477,68 @@ public class TestReactValueListControl extends TestCase {
 		assertNull(list.getFieldModel().getValue());
 		assertEquals(0, list.elements().size());
 	}
+
+	/**
+	 * A list stating a maximum number of values publishes it, refuses a value added at the maximum
+	 * and takes one again after a removal.
+	 */
+	public void testAddAtMaximum() {
+		ValueList list = list(Arrays.asList("T1", "T2"), FieldSpec.of(String.class, "Texts").setMaxCount(2));
+		assertEquals(Integer.valueOf(2), list.state(ValueCountLimit.MAX_COUNT));
+
+		try {
+			list.add();
+			fail("A value beyond the maximum must be refused.");
+		} catch (TopLogicException ex) {
+			assertEquals(ERROR_KEY, ex.getErrorKey().getKey());
+		}
+		assertEquals(Arrays.asList("T1", "T2"), list.getFieldModel().getValue());
+
+		list.remove(0);
+		list.add();
+		assertEquals(Arrays.asList("T2", null), list.getFieldModel().getValue());
+	}
+
+	/**
+	 * A list without a maximum publishes none and takes any number of values.
+	 */
+	public void testNoMaximum() {
+		ValueList list = list(Arrays.asList("T1", "T2"), FieldSpec.of(String.class, "Texts"));
+		assertEquals(Integer.valueOf(0), list.state(ValueCountLimit.MAX_COUNT));
+
+		list.add();
+		assertEquals(3, list.elements().size());
+	}
+
+	/**
+	 * An upload of more files than the maximum leaves room for is refused as a whole, naming the
+	 * maximum, the number of files and the room left; an upload that fits is taken.
+	 */
+	public void testUploadBeyondMaximum() {
+		BinaryData a = BinaryDataFactory.createBinaryData("A".getBytes(), "text/plain", "a.txt");
+		ValueList list =
+			list(new AbstractFieldModel(Arrays.asList(a)), files().setMaxCount(3), FieldControlRegistry.BINARY);
+
+		try {
+			list.handleUpload(null, Arrays.asList(
+				TestReactFileChipsControl.part("c.txt", "C"),
+				TestReactFileChipsControl.part("d.txt", "D"),
+				TestReactFileChipsControl.part("e.txt", "E")));
+			fail("An upload beyond the maximum must be refused.");
+		} catch (TopLogicException ex) {
+			assertEquals(ERROR_KEY, ex.getErrorKey().getKey());
+			assertEquals(List.of(3, 3, 2), List.of(ex.getErrorKey().arguments()));
+		}
+		assertEquals("Nothing of a refused upload is added.", Arrays.asList(a), list.getFieldModel().getValue());
+
+		list.handleUpload(null, Arrays.asList(
+			TestReactFileChipsControl.part("c.txt", "C"),
+			TestReactFileChipsControl.part("d.txt", "D")));
+		assertEquals(3, ((List<?>) list.getFieldModel().getValue()).size());
+	}
+
+	/** The key of the problem of adding more values than the maximum allows. */
+	private static final String ERROR_KEY = I18NConstants.ERROR_TOO_MANY_VALUES_ADDED__MAX_SELECTED_ROOM.getKey();
 
 	private static FieldSpec files() {
 		return FieldSpec.of(BinaryData.class, "Files").setMultiple(true);

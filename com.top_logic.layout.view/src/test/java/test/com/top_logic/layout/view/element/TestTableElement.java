@@ -20,6 +20,7 @@ import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
@@ -91,7 +92,7 @@ public class TestTableElement extends TestCase {
 		// Verify the table identity and the filter bar switch.
 		assertEquals("Configured personalization key", "test-table", tableConfig.getPersonalizationKey());
 		assertTrue("Filter bar should be switched on", tableConfig.getFilterBar());
-		assertEquals("Configured initial grouping", "owner", tableConfig.getGroupBy());
+		assertEquals("Configured initial grouping", List.of("owner"), tableConfig.getGroupBy());
 
 		// Verify the channels publishing the filtering.
 		assertNotNull("Active preset channel should be set", tableConfig.getActivePreset());
@@ -187,12 +188,27 @@ public class TestTableElement extends TestCase {
 			List.of("owner"), element.initialGrouping().columns());
 
 		TableElement.Config ungrouped = TypedConfiguration.copy(readTableConfig());
-		ungrouped.update(ungrouped.descriptor().getProperty(TableElement.Config.GROUP_BY), null);
+		ungrouped.update(ungrouped.descriptor().getProperty(TableElement.Config.GROUP_BY), List.of());
 		TableElement withoutGrouping = (TableElement) new DefaultInstantiationContext(
 			TestTableElement.class).getInstance(ungrouped);
 
 		assertEquals("A table that configures no grouping starts ungrouped.",
 			GroupSpec.NONE, withoutGrouping.initialGrouping());
+	}
+
+	/**
+	 * Tests that a comma-separated {@code group-by} becomes a grouping with a level per column, in
+	 * the order given.
+	 */
+	public void testInitialGroupingBySeveralColumns() throws Exception {
+		TableElement.Config config = TypedConfiguration.copy(readTableConfig());
+		PropertyDescriptor groupBy = config.descriptor().getProperty(TableElement.Config.GROUP_BY);
+		config.update(groupBy, groupBy.getValueProvider().getValue(TableElement.Config.GROUP_BY, "owner, active"));
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestTableElement.class);
+		TableElement element = (TableElement) context.getInstance(config);
+		context.checkErrors();
+
+		assertEquals(new GroupSpec(List.of("owner", "active")), element.initialGrouping());
 	}
 
 	/**

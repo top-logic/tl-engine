@@ -37,9 +37,12 @@ import com.top_logic.react.flow.operations.WidgetTraversal;
 import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.operations.util.DiagramUtil;
 import com.top_logic.react.flow.svg.RenderContext;
+import com.top_logic.react.flow.svg.SvgConstants;
 import com.top_logic.react.flow.svg.SvgWriter;
 import com.top_logic.react.flow.svg.event.MouseButton;
 import com.top_logic.react.flow.svg.event.SVGClickEvent;
+import com.top_logic.react.flow.svg.event.SVGEvent;
+import com.top_logic.react.flow.svg.event.SVGKeyEvent;
 import com.top_logic.react.flow.svg.event.SVGWheelEvent;
 import com.top_logic.react.flow.svg.event.SVGWheelHandler;
 
@@ -76,6 +79,13 @@ import com.top_logic.react.flow.svg.event.SVGWheelHandler;
  * viewport, so that the last row and the end of the time range can be scrolled fully into view.
  * Dragging a thumb scrolls proportionally, a click on a track beside its thumb scrolls by one
  * page.
+ * </p>
+ *
+ * <p>
+ * A row with children has a collapse toggle in the label column. A
+ * {@link GanttRow#isCollapsed() collapsed} row hides its descendants together with their items,
+ * the edges of these items and the decorations relevant only for them; the rows below move up,
+ * see {@link GanttRowLayout}.
  * </p>
  *
  * <p>
@@ -191,6 +201,72 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	String CLIP_DECORATIONS_PURPOSE = "clip-deco";
 
 	/**
+	 * Purpose of the group around the label of a row, whose text names the collapse toggle of the
+	 * row.
+	 */
+	String ROW_LABEL_PURPOSE = "row-label";
+
+	/** Purpose of the collapse toggle of a row with children. */
+	String ROW_TOGGLE_PURPOSE = "row-toggle";
+
+	/**
+	 * CSS class of the group drawing a dependency edge (its line and symbols).
+	 *
+	 * <p>
+	 * On the screen, an edge is subdued unless it is {@link #EDGE_RELATED_CSS_CLASS related} to
+	 * the item under the pointer or a selected item, or {@link #EDGE_VIOLATED_CSS_CLASS
+	 * violated}. The group names the items it connects in {@link #EDGE_SOURCE_ATTR} and
+	 * {@link #EDGE_TARGET_ATTR}.
+	 * </p>
+	 */
+	String EDGE_CSS_CLASS = "tl-gantt-edge";
+
+	/**
+	 * CSS class the diagram control adds to an {@link #EDGE_CSS_CLASS edge} of the item under the
+	 * pointer or of a selected item.
+	 */
+	String EDGE_RELATED_CSS_CLASS = "tl-gantt-edge--related";
+
+	/**
+	 * CSS class of an {@link #EDGE_CSS_CLASS edge} whose dependency is violated. It is never
+	 * subdued.
+	 */
+	String EDGE_VIOLATED_CSS_CLASS = "tl-gantt-edge--violated";
+
+	/** Attribute of an {@link #EDGE_CSS_CLASS edge} holding the ID of its source item. */
+	String EDGE_SOURCE_ATTR = "data-tl-source";
+
+	/** Attribute of an {@link #EDGE_CSS_CLASS edge} holding the ID of its target item. */
+	String EDGE_TARGET_ATTR = "data-tl-target";
+
+	/** Attribute of the group around the box of an item holding the ID of the item. */
+	String ITEM_ID_ATTR = "data-tl-item";
+
+	/** CSS class of the collapse toggle of a row with children. */
+	String ROW_TOGGLE_CSS_CLASS = "tl-gantt-row-toggle";
+
+	/** CSS class of the chevron in the collapse toggle of a row. */
+	String ROW_TOGGLE_CHEVRON_CSS_CLASS = "tl-gantt-row-toggle-chevron";
+
+	/** Largest extent of the chevron of a collapse toggle, in pixels. */
+	double ROW_TOGGLE_CHEVRON_SIZE = 8.0;
+
+	/** Space between the chevron of a collapse toggle and the edge of the toggle, in pixels. */
+	double ROW_TOGGLE_INSET = 2.0;
+
+	/** Stroke width of the chevron of a collapse toggle, in pixels. */
+	double ROW_TOGGLE_STROKE_WIDTH = 1.5;
+
+	/**
+	 * Stroke color of the chevron of a collapse toggle.
+	 *
+	 * <p>
+	 * Written as attribute, so that an export without stylesheet shows the chevron as well.
+	 * </p>
+	 */
+	String ROW_TOGGLE_COLOR = "#555555";
+
+	/**
 	 * Geometry of a single row: its Y start (inclusive), Y end (exclusive), and total height.
 	 *
 	 * @param yStart
@@ -243,25 +319,18 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 		// --- Pass 0: measure the widest variant of each row label; record max label width ---
 		// The label column does not depend on the zoom: it is as wide as the widest variant of
-		// each row label, whichever variant the zoom selects later.
+		// each row label, whichever variant the zoom selects later. It does not depend on the
+		// collapsed rows either: the labels of hidden rows are measured as well.
 		RenderContext labelColumnContext = context.withWidestVariants();
 		double maxLabelIntrinsicWidth = 0.0;
 		for (int i = 0; i < totalRows; i++) {
-			GanttRow row = rowList.get(i);
-			Box label = row.getLabel();
-			if (label == null) {
-				continue;
-			}
-			int depth = rows.depth(i);
-			// Label x is rough; what matters here is the intrinsic width.
-			double tmpX = offsetX + rowLabelPadding + depth * indentWidth;
-			double tmpY = offsetY + row.getRowPadding();
-			label.computeIntrinsicSize(labelColumnContext, tmpX, tmpY,
-					Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
-			double labelW = label.getWidth() + depth * indentWidth;
-			if (labelW > maxLabelIntrinsicWidth) {
-				maxLabelIntrinsicWidth = labelW;
-			}
+			maxLabelIntrinsicWidth = Math.max(maxLabelIntrinsicWidth, measureLabel(self, rows,
+				rowList.get(i), rows.depth(i), labelColumnContext, offsetX, offsetY));
+		}
+		List<GanttRow> hiddenRows = rows.hiddenRows();
+		for (int i = 0, cnt = hiddenRows.size(); i < cnt; i++) {
+			maxLabelIntrinsicWidth = Math.max(maxLabelIntrinsicWidth, measureLabel(self, rows,
+				hiddenRows.get(i), rows.hiddenDepth(i), labelColumnContext, offsetX, offsetY));
 		}
 
 		// The label column does not depend on the zoom, the zoom fitting the time axis into the
@@ -370,11 +439,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			if (label == null) {
 				continue;
 			}
-			int depth = rows.depth(i);
+			double indent = rows.labelIndent(rows.depth(i)) * indentWidth;
 			double rp = row.getRowPadding();
-			double labelX = offsetX + rowLabelPadding + depth * indentWidth;
+			double labelX = offsetX + rowLabelPadding + indent;
 			double labelY = rows.yStart(i) + rp;
-			double labelW = columnWidth - 2 * rowLabelPadding - depth * indentWidth;
+			double labelW = columnWidth - 2 * rowLabelPadding - indent;
 			double labelH = rowTotalHeight[i] - 2 * rp;
 			// Select the variant for the zoom of the time axis within the reserved column.
 			label.computeIntrinsicSize(itemContext, labelX, labelY,
@@ -398,7 +467,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			double chartX0 = offsetX + columnWidth;
 			for (GanttDecoration deco : decos) {
 				Box decoLabel = deco.getLabel();
-				if (decoLabel == null) {
+				if (decoLabel == null || isHiddenDecoration(deco, rows)) {
 					continue;
 				}
 				// Determine y0 for this decoration label: the top of the data rows for a label above
@@ -445,6 +514,25 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		boolean[] scrollbars = GanttScrollGeometry.scrollbars(contentWidth, totalHeight, maxWidth, maxHeight);
 		self.setWidth(Math.min(contentWidth + (scrollbars[0] ? SCROLLBAR_SIZE : 0), maxWidth));
 		self.setHeight(Math.min(totalHeight + (scrollbars[1] ? SCROLLBAR_SIZE : 0), maxHeight));
+	}
+
+	/**
+	 * Computes the intrinsic size of the label of the given row.
+	 *
+	 * @return The width the label takes in the label column, including its indentation.
+	 */
+	private static double measureLabel(GanttLayout self, GanttRowLayout rows, GanttRow row, int depth,
+			RenderContext context, double offsetX, double offsetY) {
+		Box label = row.getLabel();
+		if (label == null) {
+			return 0.0;
+		}
+		double indent = rows.labelIndent(depth) * self.getIndentWidth();
+		// Label x is rough; what matters here is the intrinsic width.
+		double tmpX = offsetX + self.getRowLabelPadding() + indent;
+		double tmpY = offsetY + row.getRowPadding();
+		label.computeIntrinsicSize(context, tmpX, tmpY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+		return label.getWidth() + indent;
 	}
 
 	/**
@@ -565,14 +653,22 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			// The whole content fits into the box: no clipping and scrolling.
 			drawRowLanes(self, rows, out, true, true);
 			drawDecorations(self, rows, out);
-			java.util.Set<Box> decorationLabels = buildDecorationLabels(self);
+			java.util.Set<Box> decorationLabels = buildDecorationLabels(self, rows);
+			java.util.Set<Box> notInContents = buildNotInContents(self, rows);
+			drawItemBoxes(self, rows, out, true);
+			drawItemBoxes(self, rows, out, false);
 			for (Box content : self.getContents()) {
+				if (notInContents.contains(content)) {
+					continue;
+				}
 				if (decorationLabels.contains(content)) {
 					drawDecorationLabel(out, content, false);
 				} else {
 					out.write(content);
 				}
 			}
+			drawRowLabels(self, rows, out, true);
+			drawRowLabels(self, rows, out, false);
 			drawEdges(self, rows, out);
 			out.endGroup();
 			return;
@@ -629,7 +725,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		out.beginGroup();
 		out.writeId(out.uniqueId(self, SCROLL_SIDEBAR_PURPOSE));
 		out.translate(0, -scrollY);
-		drawRowLabels(rows, out, false);
+		drawRowLabels(self, rows, out, false);
 		out.endGroup();
 		out.endGroup();
 
@@ -658,7 +754,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		out.setStroke("none");
 		out.endRect();
 		drawRowLanes(self, rows, out, true, false);
-		drawRowLabels(rows, out, true);
+		drawRowLabels(self, rows, out, true);
 		out.endGroup();
 
 		// --- 6. Labels of decorations above the frozen rows (scroll X only) ---
@@ -859,14 +955,29 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	private static void drawItemBoxes(GanttLayout self, GanttRowLayout rows, SvgWriter out,
 			boolean drawFrozen) {
 		for (GanttItem item : self.getItems()) {
+			if (rows.isHidden(item.getRowId())) {
+				continue;
+			}
 			boolean isFrozen = rows.isFrozen(item.getRowId());
 			if (isFrozen == drawFrozen) {
-				Box box = item.getBox();
-				if (box != null) {
-					out.write(box);
-				}
+				drawItemBox(item, out);
 			}
 		}
+	}
+
+	/**
+	 * Draws the box of the given item in a group naming the item in {@link #ITEM_ID_ATTR}, so that
+	 * the diagram control finds the edges of the item under the pointer.
+	 */
+	private static void drawItemBox(GanttItem item, SvgWriter out) {
+		Box box = item.getBox();
+		if (box == null) {
+			return;
+		}
+		out.beginGroup();
+		out.writeAttribute(ITEM_ID_ATTR, item.getId());
+		out.write(box);
+		out.endGroup();
 	}
 
 	/**
@@ -885,7 +996,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		}
 		for (GanttDecoration deco : decos) {
 			Box label = deco.getLabel();
-			if (label != null && isPinnedLabel(deco, rows) == drawPinned) {
+			if (label != null && !isHiddenDecoration(deco, rows) && isPinnedLabel(deco, rows) == drawPinned) {
 				drawDecorationLabel(out, label, drawPinned);
 			}
 		}
@@ -916,20 +1027,80 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	}
 
 	/**
-	 * Returns the labels of all decorations.
+	 * Returns the labels of all decorations that are not {@link #isHiddenDecoration(GanttDecoration,
+	 * GanttRowLayout) hidden}.
 	 */
-	private static java.util.Set<Box> buildDecorationLabels(GanttLayout self) {
+	private static java.util.Set<Box> buildDecorationLabels(GanttLayout self, GanttRowLayout rows) {
 		java.util.Set<Box> labels = new java.util.HashSet<>();
 		List<GanttDecoration> decos = self.getDecorations();
 		if (decos != null) {
 			for (GanttDecoration deco : decos) {
 				Box label = deco.getLabel();
-				if (label != null) {
+				if (label != null && !isHiddenDecoration(deco, rows)) {
 					labels.add(label);
 				}
 			}
 		}
 		return labels;
+	}
+
+	/**
+	 * The {@link GanttLayout#getContents() contents} that a chart without viewport does not draw
+	 * in the order of its contents: the row labels, which are drawn together with the collapse
+	 * toggles (see {@link #drawRowLabels(GanttLayout, GanttRowLayout, SvgWriter, boolean)}), the
+	 * item boxes, which are drawn in groups naming their items (see
+	 * {@link #drawItemBoxes(GanttLayout, GanttRowLayout, SvgWriter, boolean)}), and the labels of
+	 * hidden decorations.
+	 */
+	private static java.util.Set<Box> buildNotInContents(GanttLayout self, GanttRowLayout rows) {
+		java.util.Set<Box> result = new java.util.HashSet<>();
+		for (GanttRow row : rows.rows()) {
+			addIfPresent(result, row.getLabel());
+		}
+		for (GanttRow row : rows.hiddenRows()) {
+			addIfPresent(result, row.getLabel());
+		}
+		for (GanttItem item : self.getItems()) {
+			addIfPresent(result, item.getBox());
+		}
+		List<GanttDecoration> decos = self.getDecorations();
+		if (decos != null) {
+			for (GanttDecoration deco : decos) {
+				if (isHiddenDecoration(deco, rows)) {
+					addIfPresent(result, deco.getLabel());
+				}
+			}
+		}
+		return result;
+	}
+
+	private static void addIfPresent(java.util.Set<Box> boxes, Box box) {
+		if (box != null) {
+			boxes.add(box);
+		}
+	}
+
+	/**
+	 * Whether the given decoration is hidden, because all rows it is relevant for are
+	 * {@link GanttRowLayout#isHidden(String) hidden} below collapsed rows.
+	 *
+	 * <p>
+	 * A decoration with at least one visible relevant row spans its visible relevant rows only.
+	 * </p>
+	 */
+	private static boolean isHiddenDecoration(GanttDecoration deco, GanttRowLayout rows) {
+		List<String> relevantFor = deco.getRelevantFor();
+		if (relevantFor == null) {
+			return false;
+		}
+		boolean hidden = false;
+		for (String rowId : relevantFor) {
+			if (rows.contains(rowId)) {
+				return false;
+			}
+			hidden |= rows.isHidden(rowId);
+		}
+		return hidden;
 	}
 
 	/**
@@ -980,19 +1151,116 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	}
 
 	/**
-	 * Draws row label boxes for either frozen or data rows.
+	 * Draws row label boxes and the collapse toggles of the rows with children, for either frozen
+	 * or data rows.
 	 *
 	 * @param drawFrozen if true, draw labels for frozen rows; if false, draw labels for data rows
 	 */
-	private static void drawRowLabels(GanttRowLayout rows, SvgWriter out, boolean drawFrozen) {
+	private static void drawRowLabels(GanttLayout self, GanttRowLayout rows, SvgWriter out, boolean drawFrozen) {
 		for (int i = 0, cnt = rows.size(); i < cnt; i++) {
 			if (rows.isFrozen(i) == drawFrozen) {
-				Box label = rows.row(i).getLabel();
+				GanttRow row = rows.row(i);
+				Box label = row.getLabel();
 				if (label != null) {
+					out.beginGroup();
+					out.writeId(out.uniqueId(label, ROW_LABEL_PURPOSE));
 					out.write(label);
+					out.endGroup();
+				}
+				if (!row.getChildren().isEmpty()) {
+					drawRowToggle(self, rows, i, out);
 				}
 			}
 		}
+	}
+
+	/**
+	 * Draws the collapse toggle of the row with children at the given display index.
+	 *
+	 * <p>
+	 * The toggle takes the indentation step before the label of the row, see
+	 * {@link GanttRowLayout#labelIndent(int)}. It is a focusable button named by the label of the
+	 * row. A click, Enter, or Space switches {@link GanttRow#isCollapsed()} and lays out the chart
+	 * again.
+	 * </p>
+	 */
+	private static void drawRowToggle(GanttLayout self, GanttRowLayout rows, int index, SvgWriter out) {
+		GanttRow row = rows.row(index);
+		Box label = row.getLabel();
+		boolean collapsed = row.isCollapsed();
+
+		double width = self.getIndentWidth();
+		double x = self.getX() + self.getRowLabelPadding() + rows.depth(index) * width;
+		double padding = row.getRowPadding();
+		double y = rows.yStart(index) + padding;
+		double height = Math.max(0, rows.height(index) - 2 * padding);
+
+		out.beginGroup();
+		// The ID is stable over a new layout, so that the toggle keeps the keyboard focus.
+		out.writeId(label != null ? out.uniqueId(label, ROW_TOGGLE_PURPOSE)
+			: out.uniqueId(self, ROW_TOGGLE_PURPOSE + "-" + index));
+		out.writeCssClass(ROW_TOGGLE_CSS_CLASS);
+		out.writeAttribute(SvgConstants.TABINDEX_ATTR, SvgConstants.TABINDEX_FOCUSABLE);
+		out.writeAttribute(SvgConstants.ROLE_ATTR, SvgConstants.ROLE_BUTTON);
+		out.writeAttribute(SvgConstants.ARIA_EXPANDED_ATTR, Boolean.toString(!collapsed));
+		if (label != null) {
+			out.writeAttribute(SvgConstants.ARIA_LABELLEDBY_ATTR, out.uniqueId(label, ROW_LABEL_PURPOSE));
+		}
+		out.writeAttribute(Interactivity.POINTER_EVENTS_ATTR, Interactivity.POINTER_EVENTS_ALL);
+		out.attachOnClick(event -> {
+			// The click belongs to the toggle, not to the elements or the diagram below it.
+			event.stopPropagation();
+			if (event.getButton(MouseButton.LEFT)) {
+				toggleRow(row, event);
+			}
+		}, row);
+		out.attachOnKeyDown(event -> {
+			String key = event.getKey();
+			if (SVGKeyEvent.KEY_ENTER.equals(key) || SVGKeyEvent.KEY_SPACE.equals(key)) {
+				event.stopPropagation();
+				event.preventDefault();
+				toggleRow(row, event);
+			}
+		}, row);
+
+		// Hit area of the toggle.
+		out.beginRect(x, y, width, height);
+		out.setFill("transparent");
+		out.setStroke("none");
+		out.endRect();
+
+		double size = Math.max(0, Math.min(ROW_TOGGLE_CHEVRON_SIZE, Math.min(width, height) - 2 * ROW_TOGGLE_INSET));
+		double cx = x + width / 2;
+		double cy = y + height / 2;
+		out.beginPath();
+		out.writeCssClass(ROW_TOGGLE_CHEVRON_CSS_CLASS);
+		out.setStroke(ROW_TOGGLE_COLOR);
+		out.setStrokeWidth(ROW_TOGGLE_STROKE_WIDTH);
+		out.setFill("none");
+		out.beginData();
+		if (collapsed) {
+			// Pointing right: the children are hidden.
+			out.moveToAbs(cx - size / 4, cy - size / 2);
+			out.lineToAbs(cx + size / 4, cy);
+			out.lineToAbs(cx - size / 4, cy + size / 2);
+		} else {
+			// Pointing down: the children are shown.
+			out.moveToAbs(cx - size / 2, cy - size / 4);
+			out.lineToAbs(cx, cy + size / 4);
+			out.lineToAbs(cx + size / 2, cy - size / 4);
+		}
+		out.endData();
+		out.endPath();
+
+		out.endGroup();
+	}
+
+	/**
+	 * Switches whether the children of the given row are hidden and requests a new layout.
+	 */
+	private static void toggleRow(GanttRow row, SVGEvent event) {
+		row.setCollapsed(!row.isCollapsed());
+		event.requestRelayout();
 	}
 
 	private static void drawDecorations(GanttLayout self, GanttRowLayout rows, SvgWriter out) {
@@ -1015,6 +1283,10 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		Interactivity.writePassThrough(out);
 
 		for (GanttDecoration decoration : decorations) {
+			if (isHiddenDecoration(decoration, rows)) {
+				continue;
+			}
+
 			// Compute vertical extent.
 			List<String> relevantFor = decoration.getRelevantFor();
 			double y0;
@@ -1128,6 +1400,10 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			if (sourceItem == null || targetItem == null) {
 				continue;
 			}
+			if (rows.isHidden(sourceItem.getRowId()) || rows.isHidden(targetItem.getRowId())) {
+				// An item below a collapsed row is not drawn, nor are its edges.
+				continue;
+			}
 			routes.add(EdgeRoute.create(edge, sourceItem, targetItem, rows, routing));
 		}
 		routing.route();
@@ -1172,12 +1448,14 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	 * @param dashes
 	 *        The dash pattern of the line, the pattern for a violated dependency while it is
 	 *        violated; empty or {@code null} for a solid line.
+	 * @param violated
+	 *        Whether the dependency of the edge is violated.
 	 * @param horizontal
 	 *        The horizontal segment between the stubs.
 	 */
 	record EdgeRoute(GanttEdge edge, double sx, double sy, double tx, double ty, double sDir, double tDir,
 			double sInset, double tInset, String strokeColor, String role, double strokeWidth, List<Double> dashes,
-			GanttEdgeRouting.Segment horizontal) {
+			boolean violated, GanttEdgeRouting.Segment horizontal) {
 
 		/**
 		 * Computes the route of the given edge and adds its horizontal segment to the given
@@ -1242,7 +1520,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 				sx + sDir * (EDGE_HORIZONTAL_STUB + sInset), tx + tDir * (EDGE_HORIZONTAL_STUB + tInset),
 				sy, ty);
 			return new EdgeRoute(edge, sx, sy, tx, ty, sDir, tDir, sInset, tInset, strokeColor, role, strokeWidth,
-				dashes, horizontal);
+				dashes, violated, horizontal);
 		}
 
 		/** Writes the edge, after its horizontal segment has been routed. */
@@ -1250,6 +1528,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			double sStubX = sx + sDir * (EDGE_HORIZONTAL_STUB + sInset);
 			double tStubX = tx + tDir * (EDGE_HORIZONTAL_STUB + tInset);
 			double midY = horizontal.y();
+
+			out.beginGroup();
+			out.writeCssClass(violated ? EDGE_CSS_CLASS + " " + EDGE_VIOLATED_CSS_CLASS : EDGE_CSS_CLASS);
+			out.writeAttribute(EDGE_SOURCE_ATTR, edge.getSourceItemId());
+			out.writeAttribute(EDGE_TARGET_ATTR, edge.getTargetItemId());
 
 			out.beginPath();
 			ColorRoles.writeRole(out, role);
@@ -1275,6 +1558,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 				strokeWidth, role);
 			ConnectorSymbolRenderer.drawSymbol(out, tx, ty, -tDir, 0, edge.getTargetSymbol(), strokeColor,
 				strokeWidth, role);
+			out.endGroup();
 		}
 	}
 

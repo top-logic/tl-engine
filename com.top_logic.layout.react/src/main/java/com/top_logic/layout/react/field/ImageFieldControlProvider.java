@@ -69,6 +69,9 @@ public class ImageFieldControlProvider implements ReactFieldControlProvider {
 		if (field.getMaxUploadSize() > 0) {
 			control.setMaxUploadSize(field.getMaxUploadSize());
 		}
+		if (field.isMultiple()) {
+			control.setMaxCount(field.getMaxCount());
+		}
 		control.setDimensions(field.getWidth(), field.getHeight());
 		return control;
 	}

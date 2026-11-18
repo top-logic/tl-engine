@@ -201,4 +201,34 @@ public interface SvgConstants {
 	 * <code>clipPath</code> element.
 	 */
 	String CLIP_PATH = "clipPath";
+
+	/**
+	 * Attribute making an element focusable, see {@link #TABINDEX_FOCUSABLE}.
+	 */
+	String TABINDEX_ATTR = "tabindex";
+
+	/**
+	 * Value of {@link #TABINDEX_ATTR} adding an element to the keyboard focus order.
+	 */
+	String TABINDEX_FOCUSABLE = "0";
+
+	/**
+	 * Attribute giving an element its accessibility role, e.g. {@link #ROLE_BUTTON}.
+	 */
+	String ROLE_ATTR = "role";
+
+	/**
+	 * Value of {@link #ROLE_ATTR} for an element acting as a button.
+	 */
+	String ROLE_BUTTON = "button";
+
+	/**
+	 * Attribute telling whether the content controlled by an element is expanded.
+	 */
+	String ARIA_EXPANDED_ATTR = "aria-expanded";
+
+	/**
+	 * Attribute naming the element whose text is the accessible name of an element.
+	 */
+	String ARIA_LABELLEDBY_ATTR = "aria-labelledby";
 }

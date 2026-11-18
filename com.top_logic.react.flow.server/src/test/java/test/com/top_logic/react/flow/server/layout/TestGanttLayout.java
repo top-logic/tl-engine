@@ -42,6 +42,7 @@ import com.top_logic.react.flow.operations.ColorRoles;
 import com.top_logic.react.flow.operations.StickyOperations;
 import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.operations.layout.GanttLayoutOperations;
+import com.top_logic.react.flow.operations.layout.GanttRowLayout;
 import com.top_logic.react.flow.server.script.FlowFactory;
 import com.top_logic.react.flow.server.script.ToColorRole;
 import com.top_logic.react.flow.server.svg.SvgTagWriter;
@@ -51,6 +52,8 @@ import com.top_logic.react.flow.svg.event.MouseButton;
 import com.top_logic.react.flow.svg.event.Registration;
 import com.top_logic.react.flow.svg.event.SVGClickEvent;
 import com.top_logic.react.flow.svg.event.SVGClickHandler;
+import com.top_logic.react.flow.svg.event.SVGKeyEvent;
+import com.top_logic.react.flow.svg.event.SVGKeyHandler;
 import com.top_logic.react.flow.svg.event.SVGWheelEvent;
 import com.top_logic.react.flow.svg.event.SVGWheelHandler;
 import com.top_logic.util.error.TopLogicException;
@@ -315,12 +318,34 @@ public class TestGanttLayout extends TestCase {
 		return renderToSvg(d);
 	}
 
-	/** The content of the group holding the edges of a chart. */
+	/** The content of the group holding the edges of a chart (up to its end tag). */
 	private static String edgeGroup(String svg) {
 		int start = svg.indexOf("tl-gantt-edges");
 		assertTrue("edge group present", start >= 0);
-		int end = svg.indexOf("</g>", start);
-		return svg.substring(start, end);
+		return svg.substring(start, groupEnd(svg, start));
+	}
+
+	/** The position of the end tag of the group whose start tag contains the given position. */
+	private static int groupEnd(String svg, int pos) {
+		int depth = 1;
+		int next = svg.indexOf('>', pos) + 1;
+		while (true) {
+			int open = svg.indexOf("<g", next);
+			int close = svg.indexOf("</g>", next);
+			assertTrue("group closed", close >= 0);
+			if (open >= 0 && open < close) {
+				if (svg.charAt(svg.indexOf('>', open) - 1) != '/') {
+					depth++;
+				}
+				next = open + 2;
+			} else {
+				depth--;
+				if (depth == 0) {
+					return close;
+				}
+				next = close + 4;
+			}
+		}
 	}
 
 	private static int countPaths(String svg) {
@@ -1563,6 +1588,8 @@ public class TestGanttLayout extends TestCase {
 
 		boolean _stopped;
 
+		boolean _relayout;
+
 		/** The translations by the purpose of the translated group. */
 		final java.util.Map<String, double[]> _translations = new java.util.HashMap<>();
 
@@ -1589,6 +1616,11 @@ public class TestGanttLayout extends TestCase {
 		@Override
 		public void updateTransform(Widget owner, String purpose, double translateX, double translateY) {
 			_translations.put(purpose, new double[] { translateX, translateY });
+		}
+
+		@Override
+		public void requestRelayout() {
+			_relayout = true;
 		}
 
 		@Override
@@ -2272,6 +2304,388 @@ public class TestGanttLayout extends TestCase {
 			String path = pathElement(after, n);
 			assertTrue("violated role: " + path, path.contains("data-tl-role=\"error\""));
 			assertTrue("violated width: " + path, path.contains("stroke-width=\"2"));
+		}
+	}
+
+	/**
+	 * A chart with a parent row "p" (children "c1", "c2") and a root row "q" below it. Items: "pa"
+	 * in "p", "c1a" in "c1", "c2a" in "c2", "qa" in "q". Edges: "pa" to "qa" (both rows stay
+	 * visible), "c1a" to "c2a" (inside the parent), "c1a" to "qa" (from a child into a visible
+	 * row). Decorations: "only-child" relevant for "c1" only, "child-and-q" relevant for "c2" and
+	 * "q".
+	 */
+	private static GanttLayout collapsibleChart() {
+		GanttRow parent = row("p", "Parent");
+		parent.setChildren(Arrays.asList(row("c1", "Child 1"), row("c2", "Child 2")));
+		List<GanttItem> items = Arrays.asList(
+			span("pa", "p", 0, 10, "P task"),
+			span("c1a", "c1", 10, 20, "C1 task"),
+			span("c2a", "c2", 30, 40, "C2 task"),
+			span("qa", "q", 50, 60, "Q task"));
+		GanttLayout layout = GanttLayout.create()
+			.setRowLabelMinWidth(100.0)
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0)
+			.setIndentWidth(16.0)
+			.setItems(items)
+			.setEdges(Arrays.asList(
+				collapseEdge("e-pq", "pa", "qa"),
+				collapseEdge("e-c1c2", "c1a", "c2a"),
+				collapseEdge("e-c1q", "c1a", "qa")))
+			.setDecorations(Arrays.asList(
+				GanttLineDecoration.create().setId("only-child").setAt(15.0).setColor("#00FF00")
+					.setRelevantFor(Arrays.asList("c1")).setLabel(Text.create().setValue("Only child")),
+				GanttLineDecoration.create().setId("child-and-q").setAt(45.0).setColor("#0000FF")
+					.setRelevantFor(Arrays.asList("c2", "q")).setLabel(Text.create().setValue("Child and Q"))));
+		addRowsWithLabels(layout, Arrays.asList(parent, row("q", "Q row")));
+		for (GanttItem item : items) {
+			layout.addContent(item.getBox());
+		}
+		return layout;
+	}
+
+	private static GanttEdge collapseEdge(String id, String source, String target) {
+		return GanttEdge.create()
+			.setId(id)
+			.setSourceItemId(source).setSourceEndpoint(GanttEndpoint.END)
+			.setTargetItemId(target).setTargetEndpoint(GanttEndpoint.START)
+			.setEnforce(GanttEnforce.STRICT);
+	}
+
+	private static GanttRow rootRow(GanttLayout layout, String id) {
+		for (GanttRow root : layout.getRootRows()) {
+			if (root.getId().equals(id)) {
+				return root;
+			}
+		}
+		throw new AssertionError("No root row " + id);
+	}
+
+	/** Lays out and draws the diagram of the given chart, creating the diagram on first use. */
+	private static String layoutAndRender(GanttLayout layout) throws Exception {
+		Diagram d = layout.getDiagram();
+		if (d == null) {
+			d = Diagram.create().setRoot(layout);
+		}
+		d.layout(new AWTContext(12f));
+		return renderToSvg(d);
+	}
+
+	/**
+	 * Without collapsed rows, all rows, items, edges and decorations are shown.
+	 */
+	public void testExpandedRowsShowChildren() throws Exception {
+		GanttLayout layout = collapsibleChart();
+
+		String svg = layoutAndRender(layout);
+
+		GanttRowLayout rows = layout.getRowLayout();
+		assertEquals("visible rows", 4, rows.size());
+		assertEquals("no hidden rows", 0, rows.hiddenRows().size());
+		assertEquals("q is the fourth row", 3, rows.indexOf("q"));
+		assertEquals("height", 4 * DEFAULT_ROW_TOTAL_HEIGHT, layout.getHeight(), 0.01);
+		for (String text : Arrays.asList("Child 1", "Child 2", "C1 task", "C2 task", "Q task", "Only child",
+			"Child and Q")) {
+			assertTrue("drawn: " + text, svg.contains(">" + text + "<"));
+		}
+		assertEquals("edges", 3, countPaths(edgeGroup(svg)));
+		assertEquals("decoration lines", 2, countPaths(section(svg, "tl-gantt-decorations", "</g>")));
+	}
+
+	/**
+	 * A collapsed row hides its children with their items, the edges of these items and the
+	 * decorations relevant only for them. The row below starts directly below the collapsed row.
+	 */
+	public void testCollapsedRowHidesChildren() throws Exception {
+		GanttLayout layout = collapsibleChart();
+		rootRow(layout, "p").setCollapsed(true);
+
+		String svg = layoutAndRender(layout);
+
+		GanttRowLayout rows = layout.getRowLayout();
+		assertEquals("visible rows", 2, rows.size());
+		assertEquals("q directly below the collapsed row", 1, rows.indexOf("q"));
+		assertEquals("q starts at the end of p", rows.yEnd(0), rows.yStart(1), 0.01);
+		assertEquals("height", 2 * DEFAULT_ROW_TOTAL_HEIGHT, layout.getHeight(), 0.01);
+		assertFalse("c1 not in the display order", rows.contains("c1"));
+		assertTrue("c1 hidden", rows.isHidden("c1"));
+		assertTrue("c2 hidden", rows.isHidden("c2"));
+		assertNull("no geometry of a hidden row", rows.geometry("c2"));
+
+		for (String text : Arrays.asList("Child 1", "Child 2", "C1 task", "C2 task", "Only child")) {
+			assertFalse("not drawn: " + text, svg.contains(">" + text + "<"));
+		}
+		for (String text : Arrays.asList("Parent", "P task", "Q task", "Child and Q")) {
+			assertTrue("drawn: " + text, svg.contains(">" + text + "<"));
+		}
+
+		// Only the edge between the two visible rows remains.
+		String edges = edgeGroup(svg);
+		assertEquals("edges", 1, countPaths(edges));
+		double[] edge = pathCoordinates(pathElement(edges, 0));
+		GanttItem pa = layout.getItems().get(0);
+		GanttItem qa = layout.getItems().get(3);
+		assertEquals("edge starts at the parent task", pa.getBox().getX() + pa.getBox().getWidth(), edge[0], 0.01);
+		assertEquals("edge ends at the q task", qa.getBox().getX(), edge[edge.length - 2], 0.01);
+
+		// The decoration relevant for a hidden and a visible row spans the visible row only.
+		String decorations = section(svg, "tl-gantt-decorations", "</g>");
+		assertEquals("decoration lines", 1, countPaths(decorations));
+		double[] line = pathCoordinates(pathElement(decorations, 0));
+		assertEquals("line from the top of q", rows.yStart(1), line[1], 0.01);
+		assertEquals("line to the bottom of q", rows.yEnd(1), line[3], 0.01);
+	}
+
+	/**
+	 * Collapsing a row does not change the label column, it is measured over all rows.
+	 */
+	public void testCollapseKeepsLabelColumn() throws Exception {
+		GanttLayout layout = collapsibleChart();
+		GanttRow wide = row("c3", "A child row with a very long label");
+		rootRow(layout, "p").addChildren(wide);
+		layout.addContent(wide.getLabel());
+
+		layoutAndRender(layout);
+		double expandedWidth = layout.getColumnWidth();
+		assertTrue("wide label widens the column", expandedWidth > 100.0);
+
+		rootRow(layout, "p").setCollapsed(true);
+		layoutAndRender(layout);
+		assertEquals("column width", expandedWidth, layout.getColumnWidth(), 0.01);
+	}
+
+	/**
+	 * In a chart with a parent row, the labels leave room for the collapse toggle: a label is
+	 * indented by one step more than its depth.
+	 */
+	public void testLabelsLeaveRoomForToggle() throws Exception {
+		GanttLayout layout = collapsibleChart();
+
+		layoutAndRender(layout);
+
+		double base = layout.getX() + ROW_LABEL_PADDING;
+		GanttRow parent = rootRow(layout, "p");
+		assertEquals("root label", base + 16.0, parent.getLabel().getX(), 0.01);
+		assertEquals("child label", base + 32.0, parent.getChildren().get(0).getLabel().getX(), 0.01);
+		assertEquals("root without children", base + 16.0, rootRow(layout, "q").getLabel().getX(), 0.01);
+
+		GanttLayout flat = GanttLayout.create().setRangeMin(0).setRangeMax(100).setZoom(1.0);
+		addRowsWithLabels(flat, Arrays.asList(row("a", "A"), row("b", "B")));
+		layoutAndRender(flat);
+		assertEquals("flat chart without toggle column", flat.getX() + ROW_LABEL_PADDING,
+			flat.getRootRows().get(0).getLabel().getX(), 0.01);
+	}
+
+	/**
+	 * A row with children has a focusable toggle button named by the label of its row, which
+	 * reports whether the children are shown.
+	 */
+	public void testToggleIsAccessibleButton() throws Exception {
+		GanttLayout layout = collapsibleChart();
+
+		String svg = layoutAndRender(layout);
+
+		int pos = svg.indexOf("class=\"" + GanttLayoutOperations.ROW_TOGGLE_CSS_CLASS + "\"");
+		assertTrue("toggle present", pos >= 0);
+		assertEquals("one toggle", pos,
+			svg.lastIndexOf("class=\"" + GanttLayoutOperations.ROW_TOGGLE_CSS_CLASS + "\""));
+		String toggle = startTag(svg, svg.lastIndexOf("<g", pos));
+		assertTrue(toggle, toggle.contains("tabindex=\"0\""));
+		assertTrue(toggle, toggle.contains("role=\"button\""));
+		assertTrue(toggle, toggle.contains("aria-expanded=\"true\""));
+
+		String marker = "aria-labelledby=\"";
+		int idStart = toggle.indexOf(marker);
+		assertTrue("named by a label: " + toggle, idStart >= 0);
+		idStart += marker.length();
+		String labelId = toggle.substring(idStart, toggle.indexOf('"', idStart));
+		int labelPos = svg.indexOf("id=\"" + labelId + "\"");
+		assertTrue("label group present", labelPos >= 0);
+		assertTrue("label group holds the row label",
+			svg.substring(labelPos, svg.indexOf("</g>", labelPos)).contains(">Parent<"));
+
+		// The chevron has fixed paint, so that an export without stylesheet shows it.
+		String chevron = startTag(svg, svg.indexOf("<path", pos));
+		assertTrue(chevron, chevron.contains("stroke=\"" + GanttLayoutOperations.ROW_TOGGLE_COLOR + "\""));
+
+		rootRow(layout, "p").setCollapsed(true);
+		String collapsed = layoutAndRender(layout);
+		int collapsedPos = collapsed.indexOf("class=\"" + GanttLayoutOperations.ROW_TOGGLE_CSS_CLASS + "\"");
+		assertTrue("collapsed state",
+			startTag(collapsed, collapsed.lastIndexOf("<g", collapsedPos)).contains("aria-expanded=\"false\""));
+	}
+
+	/**
+	 * A click on the toggle, Enter, or Space collapses and expands the row and requests a new
+	 * layout; other keys are left alone.
+	 */
+	public void testToggleSwitchesCollapsed() throws Exception {
+		GanttLayout layout = collapsibleChart();
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+		ToggleRecorder recorder = new ToggleRecorder();
+		draw(d, recorder);
+		GanttRow parent = rootRow(layout, "p");
+
+		ClickEvent click = new ClickEvent(0, 0);
+		recorder._click.onClick(click);
+		assertTrue("collapsed by click", parent.isCollapsed());
+		assertTrue("click consumed", click._stopped);
+		assertTrue("relayout requested", click._relayout);
+
+		KeyEvent other = new KeyEvent("a");
+		recorder._key.onKeyDown(other);
+		assertTrue("other key ignored", parent.isCollapsed());
+		assertFalse("other key not stopped", other._stopped);
+		assertFalse("other key keeps its default", other._prevented);
+		assertFalse("no relayout for another key", other._relayout);
+
+		KeyEvent enter = new KeyEvent(SVGKeyEvent.KEY_ENTER);
+		recorder._key.onKeyDown(enter);
+		assertFalse("expanded by Enter", parent.isCollapsed());
+		assertTrue("Enter consumed", enter._stopped && enter._prevented);
+		assertTrue("relayout requested", enter._relayout);
+
+		KeyEvent space = new KeyEvent(SVGKeyEvent.KEY_SPACE);
+		recorder._key.onKeyDown(space);
+		assertTrue("collapsed by Space", parent.isCollapsed());
+		assertTrue("Space does not scroll the page", space._prevented);
+	}
+
+	/**
+	 * An edge is drawn as a group naming the items it connects, and the box of an item as a group
+	 * naming the item, so that the diagram control can emphasise the edges of an item. Only a
+	 * violated edge is marked as violated.
+	 */
+	public void testEdgesNameTheirItems() throws Exception {
+		GanttLayout layout = collapsibleChart();
+		// Move "C2 task" before "C1 task" ends: the edge from c1a to c2a is violated.
+		((GanttSpan) layout.getItems().get(2)).setStart(15).setEnd(25);
+
+		String svg = layoutAndRender(layout);
+		String edges = edgeGroup(svg);
+
+		String violated = edgeStartTag(edges, "c1a", "c2a");
+		assertTrue(violated, violated.contains("class=\"" + GanttLayoutOperations.EDGE_CSS_CLASS + " "
+			+ GanttLayoutOperations.EDGE_VIOLATED_CSS_CLASS + "\""));
+		String satisfied = edgeStartTag(edges, "pa", "qa");
+		assertTrue(satisfied, satisfied.contains("class=\"" + GanttLayoutOperations.EDGE_CSS_CLASS + "\""));
+		assertFalse("no opacity in the drawing: " + edges, edges.contains("opacity"));
+
+		for (String item : Arrays.asList("pa", "c1a", "c2a", "qa")) {
+			int pos = svg.indexOf(GanttLayoutOperations.ITEM_ID_ATTR + "=\"" + item + "\"");
+			assertTrue("item group present: " + item, pos >= 0);
+		}
+		int qaGroup = svg.lastIndexOf("<g", svg.indexOf(GanttLayoutOperations.ITEM_ID_ATTR + "=\"qa\""));
+		assertTrue("item group holds the item box",
+			svg.substring(qaGroup, groupEnd(svg, qaGroup)).contains(">Q task<"));
+	}
+
+	/**
+	 * In a chart with a viewport, the item boxes are drawn in groups naming their items as well.
+	 */
+	public void testViewportItemsNameTheirItems() throws Exception {
+		GanttLayout layout = manyRows(0);
+		GanttSpan task = span("t", "r5", 10, 20, "Task");
+		layout.addItem(task);
+		layout.addContent(task.getBox());
+
+		String svg = renderViewport(layout);
+
+		String content = contentSection(svg);
+		int pos = content.indexOf(GanttLayoutOperations.ITEM_ID_ATTR + "=\"t\"");
+		assertTrue("item group in the content group", pos >= 0);
+	}
+
+	/**
+	 * The stylesheet of an exported diagram does not subdue edges: an exported chart shows all
+	 * edges in full.
+	 */
+	public void testExportDoesNotSubdueEdges() throws Exception {
+		GanttLayout layout = collapsibleChart();
+		Diagram d = Diagram.create().setRoot(layout);
+
+		String svg;
+		try (java.io.InputStream in = FlowFactory.toSvg(d, "gantt.svg", 12.0, null, null).getStream()) {
+			svg = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+		}
+
+		assertTrue("edges exported", svg.contains("class=\"" + GanttLayoutOperations.EDGE_CSS_CLASS));
+		assertFalse("export styles do not address edges", svg.contains("." + GanttLayoutOperations.EDGE_CSS_CLASS));
+		assertFalse("no opacity on edges", edgeGroup(svg).contains("opacity"));
+	}
+
+	/** The start tag of the group of the edge between the given items. */
+	private static String edgeStartTag(String edges, String source, String target) {
+		int pos = edges.indexOf(GanttLayoutOperations.EDGE_SOURCE_ATTR + "=\"" + source + "\" "
+			+ GanttLayoutOperations.EDGE_TARGET_ATTR + "=\"" + target + "\"");
+		assertTrue("edge " + source + " -> " + target + " present: " + edges, pos >= 0);
+		return startTag(edges, edges.lastIndexOf("<g", pos));
+	}
+
+	/** {@link SvgTagWriter} recording the handlers of the collapse toggle. */
+	private static class ToggleRecorder extends SvgTagWriter {
+
+		SVGClickHandler _click;
+
+		SVGKeyHandler _key;
+
+		ToggleRecorder() {
+			super(new TagWriter(new StringWriter()));
+		}
+
+		@Override
+		public Registration attachOnClick(SVGClickHandler handler, Object sender) {
+			if (sender instanceof GanttRow) {
+				_click = handler;
+			}
+			return Registration.NONE;
+		}
+
+		@Override
+		public Registration attachOnKeyDown(SVGKeyHandler handler, Object sender) {
+			_key = handler;
+			return Registration.NONE;
+		}
+	}
+
+	/** {@link SVGKeyEvent} recording what the handler did with it. */
+	private static class KeyEvent implements SVGKeyEvent {
+
+		private final String _key;
+
+		boolean _stopped;
+
+		boolean _prevented;
+
+		boolean _relayout;
+
+		KeyEvent(String key) {
+			_key = key;
+		}
+
+		@Override
+		public String getKey() {
+			return _key;
+		}
+
+		@Override
+		public Object getSender() {
+			return null;
+		}
+
+		@Override
+		public void stopPropagation() {
+			_stopped = true;
+		}
+
+		@Override
+		public void preventDefault() {
+			_prevented = true;
+		}
+
+		@Override
+		public void requestRelayout() {
+			_relayout = true;
 		}
 	}
 

@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -31,8 +32,10 @@ import com.top_logic.basic.config.annotation.defaults.ByteDefault;
 import com.top_logic.basic.config.annotation.defaults.CharDefault;
 import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
 import com.top_logic.basic.config.annotation.defaults.FloatDefault;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.defaults.ShortDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
@@ -540,10 +543,40 @@ public class TLScriptMethod extends GenericMethodWithSecurity {
 				StringDefault defAnnotation = p.getAnnotation(StringDefault.class);
 				return defAnnotation == null ? null : defAnnotation.value();
 			} else if (type.isEnum()) {
-				return type.getEnumConstants()[0];
+				return enumDefault(p);
 			} else {
 				return null;
 			}
+		}
+
+		/**
+		 * The default value of an enum parameter, following the rules of an enum property of a
+		 * typed configuration.
+		 *
+		 * <p>
+		 * A parameter annotated with {@link NullDefault} defaults to <code>null</code>, a parameter
+		 * annotated with {@link FormattedDefault} to the constant with the given name (see
+		 * {@link ConfigUtil#getEnum(Class, String)}), an unannotated parameter to the first
+		 * constant.
+		 * </p>
+		 */
+		private Object enumDefault(Parameter p) {
+			@SuppressWarnings("unchecked")
+			Class<? extends Enum<?>> enumType = (Class<? extends Enum<?>>) p.getType();
+			if (p.getAnnotation(NullDefault.class) != null) {
+				return null;
+			}
+			FormattedDefault formattedDefault = p.getAnnotation(FormattedDefault.class);
+			if (formattedDefault != null) {
+				try {
+					return ConfigUtil.getEnum(enumType, formattedDefault.value());
+				} catch (ConfigurationException ex) {
+					throw new IllegalArgumentException("Invalid default '" + formattedDefault.value()
+						+ "' of parameter '" + p.getName() + "' of '" + signature(_method) + "': "
+						+ ex.getMessage(), ex);
+				}
+			}
+			return enumType.getEnumConstants()[0];
 		}
 
 		@Override

@@ -23,7 +23,6 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.FaviconTag;
 import com.top_logic.layout.react.resource.ClientResources;
@@ -149,16 +148,6 @@ public class ViewServlet extends TopLogicServlet {
 	 */
 	public static final String BUSY_DELAY_ATTR = "data-busy-delay";
 
-	/**
-	 * The title of a page whose application has no {@link ViewConfig#getTitle() title}.
-	 *
-	 * <p>
-	 * The page is loaded with it and shows it while its display names no labeled route: the title
-	 * the display composes takes its place as soon as there is one.
-	 * </p>
-	 */
-	public static final String DEFAULT_TITLE = "TopLogic";
-
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
@@ -174,6 +163,17 @@ public class ViewServlet extends TopLogicServlet {
 		if (windowName == null) {
 			writeBootstrapPage(request, response);
 			return;
+		}
+
+		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
+
+		// Collect the windows whose page was unloaded and did not come back within the grace period
+		// - before the subsession of this window is looked up, and sparing this window, whose page
+		// comes back with this request: otherwise a tab returning from another site after the grace
+		// period would be torn down after its subsession was installed for the page, and the page
+		// would be displayed in a subsession no later command finds.
+		try (Interaction interaction = windowRegistry.beginInteraction()) {
+			windowRegistry.sweepUnloadedWindows(windowName);
 		}
 
 		// Create or reuse the SubSession for this browser tab. On F5 (page reload) the
@@ -208,12 +208,16 @@ public class ViewServlet extends TopLogicServlet {
 			}
 		}
 
-		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
-
 		// Rendering the page attaches the window's tree, and that changes the display like any
 		// command does - on a reload, while the report of the page just unloaded detaches the same
 		// tree. The trees are therefore only touched within an interaction.
 		try (Interaction interaction = windowRegistry.beginInteraction()) {
+			// The page sees the current state of the knowledge base, including the commits other
+			// threads made since the window's last request: the session revision of a window that
+			// exists already only advances when its model events are synthesized, and a reloaded page
+			// renders the control tree the window keeps.
+			windowRegistry.synthesizeModelEvents(windowName);
+
 			displayWindow(request, response, subSession, windowRegistry, windowName, address);
 
 			// The client of the rendered page connects within seconds. One that never does - the tab
@@ -250,8 +254,6 @@ public class ViewServlet extends TopLogicServlet {
 			TLSubSessionContext subSession, ReactWindowRegistry windowRegistry, String windowName,
 			String address) throws IOException {
 		PageAddress page = PageAddress.parse(address);
-		// Collect the windows whose page was unloaded and did not come back within the grace period.
-		windowRegistry.sweepUnloadedWindows();
 		SSEUpdateQueue sseQueue = windowRegistry.getOrCreateQueue(windowName);
 		// The page rendered now replaces the one the window displayed: the previous page's stream and
 		// poll end, and what is enqueued from here on waits for this page's client.
@@ -710,13 +712,6 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * The {@link ViewConfig#getTitle() title of the application}, or {@code null} if it has none.
-	 */
-	private static ResKey applicationTitle() {
-		return ApplicationConfig.getInstance().getConfig(ViewConfig.class).getTitle();
-	}
-
-	/**
 	 * Writes the {@link #BUSY_DELAY_ATTR} of the page body, while its begin tag is open.
 	 *
 	 * @param out
@@ -769,7 +764,7 @@ public class ViewServlet extends TopLogicServlet {
 			routeManager.adoptUrl(requestedRoute);
 		}
 
-		routeManager.setApplicationTitle(applicationTitle());
+		routeManager.setApplicationTitle(com.top_logic.layout.I18NConstants.APPLICATION_TITLE);
 		routeManager.setUrlChangeHandler((changedUrl, title, replace) -> {
 			RouteChangeEvent event = RouteChangeEvent.create()
 				.setUrl(changedUrl)
@@ -1132,9 +1127,7 @@ public class ViewServlet extends TopLogicServlet {
 		out.endBeginTag();
 		// The application title: the page title the display composes is sent once the route of the
 		// page is adopted.
-		ResKey applicationTitle = applicationTitle();
-		out.writeText(
-			applicationTitle == null ? DEFAULT_TITLE : Resources.getInstance().getString(applicationTitle));
+		out.writeText(Resources.getInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE));
 		out.endTag(HTMLConstants.TITLE);
 		// The application icon: without it the browser asks for /favicon.ico, which an application
 		// at the root of the server does not have.

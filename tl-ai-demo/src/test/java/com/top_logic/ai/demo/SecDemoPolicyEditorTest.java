@@ -12,27 +12,27 @@ import java.util.function.Predicate;
 
 import junit.framework.Test;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.equal.ConfigEquality;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Dimension;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
-import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
-import com.top_logic.tl.ai.core.security.ToolAccessRule;
-import com.top_logic.tl.ai.core.security.layout.MatrixDimension;
-import com.top_logic.tl.ai.core.security.layout.PolicyChecks;
-import com.top_logic.tl.ai.core.security.layout.PolicyDraft;
-import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BackgroundChoice;
-import com.top_logic.tl.ai.core.security.layout.PolicyDraft.BaselineChoice;
-import com.top_logic.tl.ai.core.security.layout.PolicyDraft.CellState;
-import com.top_logic.tl.ai.core.security.layout.PolicyMatrix;
-import com.top_logic.tl.ai.core.security.layout.PolicyMatrix.RowState;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
+import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Dimension;
+import com.top_logic.ai.core.security.ToolAccessPolicy;
+import com.top_logic.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
+import com.top_logic.ai.core.security.ToolAccessPolicy.Baseline;
+import com.top_logic.ai.core.security.ToolAccessPolicy.Grant;
+import com.top_logic.ai.core.security.ToolAccessPolicy.RoleAccess;
+import com.top_logic.ai.core.security.ToolAccessRule;
+import com.top_logic.ai.classic.security.layout.MatrixDimension;
+import com.top_logic.ai.classic.security.layout.PolicyChecks;
+import com.top_logic.ai.classic.security.layout.PolicyDraft;
+import com.top_logic.ai.classic.security.layout.PolicyDraft.BackgroundChoice;
+import com.top_logic.ai.classic.security.layout.PolicyDraft.BaselineChoice;
+import com.top_logic.ai.classic.security.layout.PolicyDraft.CellState;
+import com.top_logic.ai.classic.security.layout.PolicyMatrix;
+import com.top_logic.ai.classic.security.layout.PolicyMatrix.RowState;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
@@ -623,7 +623,7 @@ public class SecDemoPolicyEditorTest extends SecDemoPersonaTest {
 
 	/** The plain resource key of the named constant of the view's resources. */
 	private static String key(String constant) {
-		return "class.com.top_logic.tl.ai.core.security.layout.I18NConstants." + constant;
+		return "class.com.top_logic.ai.classic.security.layout.I18NConstants." + constant;
 	}
 
 	/** The capability groups the given role entry grants. */

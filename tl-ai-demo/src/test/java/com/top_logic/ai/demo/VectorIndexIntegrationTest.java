@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.runner.RunWith;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -42,10 +41,9 @@ import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tl.ai.core.junit.AssumptionAwareRunner;
-import com.top_logic.tl.ai.core.junit.VectorIndexE2e;
-import com.top_logic.tl.ai.core.security.ModelSecurity;
-import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.junit.VectorIndexE2e;
+import com.top_logic.ai.core.security.ModelSecurity;
+import com.top_logic.ai.core.security.ReadFilter;
 import com.top_logic.util.model.ModelService;
 
 import dev.langchain4j.data.segment.TextSegment;
@@ -59,7 +57,6 @@ import dev.langchain4j.store.embedding.EmbeddingMatch;
  * embedding key cannot run it and reports it as skipped instead.
  * </p>
  */
-@RunWith(AssumptionAwareRunner.class)
 public class VectorIndexIntegrationTest extends BasicTestCase {
 
 	/**

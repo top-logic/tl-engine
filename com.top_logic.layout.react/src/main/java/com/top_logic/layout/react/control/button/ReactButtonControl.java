@@ -14,6 +14,7 @@ import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.control.common.BadgeDisplay;
 import com.top_logic.layout.react.state.ButtonState;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
@@ -98,6 +99,7 @@ public class ReactButtonControl extends ReactControl {
 		setHidden(!model.isVisible());
 		setImage(model.getImage());
 		setTooltip(model.getTooltip());
+		setBadge(model.getBadge());
 		setKeyGesture(model.getKeyGesture());
 		_requestedDisplay = model.getDisplayMode();
 		setDisplayMode(offered(model, _requestedDisplay, true));
@@ -210,6 +212,21 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	public void setTooltip(String tooltip) {
 		putState(ButtonState.TOOLTIP__PROP, (tooltip == null || tooltip.isEmpty()) ? null : tooltip);
+	}
+
+	/**
+	 * Sets the badge of the button, {@code null} for none.
+	 *
+	 * <p>
+	 * A button that never had a badge sends no {@link ButtonState#BADGE__PROP} at all; a badge
+	 * removed later is sent as {@code null}, which the client reads as absent.
+	 * </p>
+	 */
+	public void setBadge(BadgeDisplay badge) {
+		if (badge == null && getState(ButtonState.BADGE__PROP) == null) {
+			return;
+		}
+		putState(ButtonState.BADGE__PROP, badge == null ? null : badge.toState());
 	}
 
 	/**
@@ -411,6 +428,7 @@ public class ReactButtonControl extends ReactControl {
 		setActive(_model.isActive());
 		setHidden(!_model.isVisible());
 		setTooltip(_model.getTooltip());
+		setBadge(_model.getBadge());
 
 		ThemeImage image = _model.getImage();
 		boolean hadImage = getState(ButtonState.IMAGE__PROP) != null;

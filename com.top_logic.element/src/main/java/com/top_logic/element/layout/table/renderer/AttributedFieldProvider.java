@@ -24,6 +24,7 @@ import com.top_logic.layout.Accessor;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.layout.form.model.SelectFieldUtils;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.table.model.AbstractFieldProvider;
 import com.top_logic.mig.html.HTMLFormatter;
@@ -84,6 +85,8 @@ public class AttributedFieldProvider extends AbstractFieldProvider {
 					case LegacyTypeCodes.TYPE_WRAPPER: {
 						SelectField field = FormFactory.newSelectField(aName, options, false,
 							Collections.singletonList(theValue), isMandatory, false, null);
+						// The value of a reference may hold objects the user may not discover.
+						SelectFieldUtils.setMaskUndiscoverable(field, true);
 						if (optionOrder != null) {
 							field.setOptionComparator(optionOrder);
 						}
@@ -92,6 +95,8 @@ public class AttributedFieldProvider extends AbstractFieldProvider {
 					case LegacyTypeCodes.TYPE_TYPEDSET: {
 						SelectField field = FormFactory.newSelectField(aName, options, true,
 							CollectionUtil.toList((Collection) theValue), isMandatory, false, null);
+						// The value of a reference may hold objects the user may not discover.
+						SelectFieldUtils.setMaskUndiscoverable(field, true);
 						if (optionOrder != null) {
 							field.setOptionComparator(optionOrder);
 						}

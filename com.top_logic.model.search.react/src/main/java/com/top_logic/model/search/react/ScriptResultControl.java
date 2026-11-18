@@ -156,7 +156,7 @@ public class ScriptResultControl extends ReactControl {
 		List<Column<Object, ?>> columns = new ArrayList<>(parts.size());
 		for (TLStructuredTypePart part : parts.values()) {
 			String name = part.getName();
-			columns.add(columnService.createColumn(name, TLModelNamingConvention.resourceKey(part),
+			columns.add(columnService.createColumn(name, TLModelNamingConvention.getTypePartLabelKey(part),
 				ColumnType.of(part), row -> ColumnProviderService.attributeValue(row, name)));
 		}
 		ListRowSource<Object> source = new ListRowSource<>(elements, columns);
@@ -250,7 +250,7 @@ public class ScriptResultControl extends ReactControl {
 		String name = part.getName();
 		return DefaultColumn
 			.<ScriptResultRow, Object> builder(name, row -> ColumnProviderService.attributeValue(row.value(), name))
-			.label(TLModelNamingConvention.resourceKey(part))
+			.label(TLModelNamingConvention.getTypePartLabelKey(part))
 			.renderer(value -> ColumnProviderService.displayContent(ColumnType.of(part), value))
 			.sort(ColumnProviderService.cellSort(() -> Comparator.comparing(ColumnProviderService::label)))
 			.filter(new TextColumnFilter<>(ColumnProviderService::label))

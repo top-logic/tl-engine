@@ -2,7 +2,7 @@ import type React from 'react';
 import type { ComponentType } from 'react';
 import type { ButtonAppearance } from './button-defaults';
 import { menuItemProps } from './button-defaults';
-import type { ButtonStateJson } from '../state/control-state';
+import type { BadgeJson, ButtonStateJson } from '../state/control-state';
 import type { ReorderItemProps } from './list-reorder';
 import { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from './tooltip-host';
 
@@ -139,6 +139,13 @@ export interface ButtonPartProps extends PartAttributes {
    * the button does not read it out.
    */
   tooltip?: string;
+
+  /**
+   * The badge of the button, drawn through the part `Badge`: after the label, over the corner of
+   * the icon of a button showing its icon alone. It is part of the accessible name of the button
+   * (see {@link buttonPartAttributes}). Absent or `null`: none.
+   */
+  badge?: Partial<BadgeJson> | null;
 
   /**
    * Classes added to the drawn element. They mark the part and carry no layout: the element
@@ -751,25 +758,98 @@ export interface ChipPartProps extends PartAttributes {
 
 /**
  * The props of the part {@link PartProps.Badge}: a small marker carrying a count or a short status
- * beside an icon or a label, e.g. the number of new entries behind an item of the navigation.
+ * beside an icon or a label, e.g. the number of new entries behind an item of the navigation, or a
+ * {@link dot} marking it without counting.
  *
  * <p>A badge carries digits or an abbreviation only; a text belongs in a {@link ChipPartProps chip}.
  * Where it stands - beside a label or over the corner of an icon - is up to the element around
- * it, e.g. an element of its own over the corner of the icon. Every implementation puts
- * {@link id}, {@link className} and the passed-through attributes on its outermost element.</p>
+ * it, e.g. an element of its own over the corner of the icon. Every implementation draws the badge
+ * in its {@link colorRole}, makes a badge with a {@link label} an image named by that label
+ * (`role="img"`, `aria-label`), and puts {@link id}, {@link className} and the passed-through
+ * attributes on its outermost element. {@link badgePartProps} derives the props from the state of a
+ * badge.</p>
  */
 export interface BadgePartProps extends PartAttributes {
   /** The ID of the drawn element. */
   id?: string;
 
-  /** What the badge shows: a count, or a short status. */
-  content: string;
+  /** What the badge shows: a count, or a short status. Absent for a {@link dot}. */
+  content?: string;
+
+  /** Whether the badge is a dot without content. */
+  dot?: boolean;
+
+  /** The color role of the badge. Absent: `brand`. */
+  colorRole?: BadgeJson.Role;
+
+  /**
+   * The accessible name of a badge that is not read as text of the element around it: a dot, or a
+   * badge standing alone at an icon. Given, the badge is an image named by it. Absent: the content
+   * is plain text of the element around the badge.
+   */
+  label?: string;
 
   /**
    * Classes added to the outermost drawn element. They mark the part and carry no layout: the
    * element around the part places it.
    */
   className?: string;
+}
+
+/**
+ * The props of the part `Badge` showing the given state of a badge.
+ *
+ * <p>Beside a visible label (a button, a tab, an entry of the navigation) the badge is read with
+ * that label: a plain count is text, a count with a {@link BadgeJson.label} and a dot are an image
+ * named by the {@link badgeName name of the badge}. A badge standing alone - over the corner of an
+ * icon or an avatar - is hidden from assistive technology: the element it stands at is named by its
+ * label and the badge ({@link labelWithBadge}).</p>
+ *
+ * @param badge The state of the badge.
+ * @param alone Whether the badge stands alone at an element that is named by {@link labelWithBadge}.
+ */
+export function badgePartProps(badge: Partial<BadgeJson>, alone: boolean): BadgePartProps {
+  const dot = badge.dot === true;
+  const props: BadgePartProps = {
+    content: dot ? undefined : badge.content,
+    dot: dot || undefined,
+    colorRole: badge.role,
+  };
+  if (alone) {
+    props['aria-hidden'] = true;
+  } else if (dot || badge.label) {
+    props.label = badgeName(badge);
+  }
+  return props;
+}
+
+/**
+ * The name of the given badge for assistive technology: of a dot its label; of a count its content,
+ * after its label where it has one ("New entries: 3").
+ */
+export function badgeName(badge: Partial<BadgeJson>): string | undefined {
+  if (badge.dot === true) {
+    return badge.label;
+  }
+  if (badge.label && badge.content) {
+    return badge.label + ': ' + badge.content;
+  }
+  return badge.label ?? badge.content;
+}
+
+/**
+ * The accessible name of an element that is named by the given label and carries the given badge:
+ * the label followed by the {@link badgeName name of the badge}.
+ *
+ * @param label The label of the element.
+ * @param badge The badge of the element; absent or `null`: the label alone.
+ */
+export function labelWithBadge(label: string | undefined, badge: Partial<BadgeJson> | null | undefined): string | undefined {
+  const name = badge ? badgeName(badge) : undefined;
+  if (!name) {
+    return label;
+  }
+  return label ? label + ', ' + name : name;
 }
 
 /**
@@ -1236,7 +1316,8 @@ export function buttonLinkAttributes(props: ButtonPartProps): {
  * The attributes every implementation of {@link ButtonPartProps} sets on the element it draws:
  *
  * <ul>
- * <li>the label as `aria-label` for a button with an icon or one showing its icon alone;</li>
+ * <li>the label, followed by the name of its {@link ButtonPartProps.badge badge}, as `aria-label` for a button
+ *     with an icon or one showing its icon alone;</li>
  * <li>outside a menu `aria-pressed` for an active button or a checked toggle;</li>
  * <li>inside a menu the role and roving tabindex of an entry ({@link menuItemProps}),
  *     `aria-current` for the active entry and `aria-checked` for a toggle (a checkbox entry, or a radio entry, {@link ButtonPartProps.radio});</li>
@@ -1245,7 +1326,7 @@ export function buttonLinkAttributes(props: ButtonPartProps): {
  * </ul>
  */
 export function buttonPartAttributes(props: ButtonPartProps): Record<string, string | number | boolean | undefined> {
-  const { label, image, display, appearance, active, checked, radio, tooltip } = props;
+  const { label, image, display, appearance, active, checked, radio, tooltip, badge } = props;
   const asMenuItem = appearance === 'menu-item';
   const iconOnly = display === 'icon-only';
   const result: Record<string, string | number | boolean | undefined> = {
@@ -1254,7 +1335,7 @@ export function buttonPartAttributes(props: ButtonPartProps): Record<string, str
     'aria-pressed': asMenuItem ? undefined : checked !== undefined ? checked : active ? true : undefined,
     'aria-current': asMenuItem && active ? 'true' : undefined,
     'aria-checked': asMenuItem && checked !== undefined ? checked : undefined,
-    'aria-label': image || iconOnly ? label : undefined,
+    'aria-label': image || iconOnly ? labelWithBadge(label, badge) : undefined,
   };
   const tooltipText = tooltip ?? label;
   if (tooltipText) {

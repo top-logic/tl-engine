@@ -18,7 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.DraftAttachmentDto;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.tl.ai.core.message.ImageContent;
+import com.top_logic.ai.core.message.ImageContent;
 
 /**
  * The files attached to the message a conversation's user is writing, held on the server until the

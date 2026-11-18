@@ -16,9 +16,9 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperFactory;
-import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
-import com.top_logic.tl.ai.core.model.Skill;
-import com.top_logic.tl.ai.core.tools.authoring.AgentAuthoringTool;
+import com.top_logic.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.ai.core.model.Skill;
+import com.top_logic.ai.core.tools.authoring.AgentAuthoringTool;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -70,7 +70,7 @@ public class TestAgentAuthoringTool extends BasicTestCase {
 			List.of(), List.of(), List.of(), List.of());
 		assertTrue("create should report success: " + create, create.contains("\"success\":true"));
 
-		com.top_logic.tl.ai.core.model.Agent agent = findAgent("authoring-test-agent");
+		com.top_logic.ai.core.model.Agent agent = findAgent("authoring-test-agent");
 		assertNotNull("agent must be created", agent);
 		assertEquals("You are a test.", agent.getSystemPrompt());
 		assertTrue("tools empty", agent.getTools().isEmpty());
@@ -93,8 +93,8 @@ public class TestAgentAuthoringTool extends BasicTestCase {
 		assertNull("agent must be deleted", findAgent("authoring-test-agent"));
 	}
 
-	private static com.top_logic.tl.ai.core.model.Agent findAgent(String name) {
-		List<com.top_logic.tl.ai.core.model.Agent> agents = WrapperFactory.getWrappersByAttribute(
+	private static com.top_logic.ai.core.model.Agent findAgent(String name) {
+		List<com.top_logic.ai.core.model.Agent> agents = WrapperFactory.getWrappersByAttribute(
 			AgentDefinitionQuery.AGENT_TABLE, PersistencyLayer.getKnowledgeBase(), "name", name);
 		return agents.isEmpty() ? null : agents.get(0);
 	}

@@ -75,9 +75,11 @@ test('der Marker wird ersetzt, ein unbekannter Marker bricht den Build', () => {
   assert.ok(css.includes('.tl-x__y[data-tl-role="brand"] { background: var(--tl-surface-brand-subtle); border-color: var(--tl-border-interactive); }'));
   assert.ok(expandRoles('/* @tl-roles: status :where(.tl-x__y) */', T)
     .includes(':where(.tl-x__y[data-tl-role="info"]) { background: var(--tl-status-info-subtle);'), ':where-Form');
-  assert.throws(() => expandRoles('/* @tl-roles: status :where(.tl-x--y) */', T), /weder Block- noch Elementklasse/);
+  assert.ok(expandRoles('/* @tl-roles: status-mark .tl-x--y */', T).includes('.tl-x--y[data-tl-role="info"] {'), 'Modifier als Ziel');
+  assert.throws(() => expandRoles('/* @tl-roles: status :where(.tl-x[data-y]) */', T), /weder Block-, Element- noch Modifierklasse/);
   assert.throws(() => expandRoles('/* @tl-roles: farbe .tl-x */', T), /farbe/);
-  assert.throws(() => expandRoles('/* @tl-roles: status .tl-x--y */', T), /weder Block- noch Elementklasse/);
+  assert.throws(() => expandRoles('/* @tl-roles: status .x */', T), /weder Block-, Element- noch Modifierklasse/);
+  assert.throws(() => expandRoles('/* @tl-roles: status .tl-x--y--z */', T), /weder Block-, Element- noch Modifierklasse/);
   assert.ok(!OUT.includes('@tl-roles'), 'Marker im dist-Generat');
 });
 
@@ -97,6 +99,20 @@ test('components.css: der gefüllte Termin und sein Punkt lesen je Kategorie die
     assert.deepEqual(rolle('.tl-calendar__event', k), [`background: var(--tl-${k}-surface); color: var(--tl-text-on-${k});`], k);
     assert.deepEqual(rolle('.tl-calendar__chip-dot', k), [`background: var(--tl-${k}-surface);`], k);
   }
+});
+
+// Badge (#29653): der Zähler füllt sich je Bedeutung mit Fläche und gerechneter Schrift; der Punkt hat keine Schrift und
+// liest den Text der Bedeutung, der 3:1 zu jedem Grund hat (pairs.mjs).
+test('components.css: das Badge liest je Bedeutung die gefüllte Fläche, sein Punkt den Text der Bedeutung', () => {
+  for (const s of STATUS) {
+    assert.deepEqual(rolle('.tl-badge', s), [`background: var(--tl-status-${s}-surface); color: var(--tl-text-on-status-${s});`], s);
+    assert.deepEqual(rolle('.tl-badge--dot', s), [`background: var(--tl-status-${s}-text);`], s);
+  }
+  assert.deepEqual(rolle('.tl-badge', 'brand'), [], 'die Marke ist die Grundfläche, keine eigene Regel');
+  assert.match(regel('.tl-badge--dot').join(';'), /background: var\(--tl-border-interactive\)/, 'Punkt der Marke: ihre Linie');
+  const reihe = rulesOf(OUT).map(([sel]) => sel);
+  assert.ok(reihe.indexOf('.tl-badge--dot[data-tl-role="info"]') > reihe.indexOf('.tl-badge[data-tl-role="info"]'),
+    'die Punktregel steht nach der Zählerregel und gewinnt bei gleicher Spezifität');
 });
 
 // Der Excel-Export der Tabelle füllt Zellen in der Fläche ihrer Rolle; er liest die Werte aus role-fills.properties,

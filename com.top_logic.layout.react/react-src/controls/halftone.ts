@@ -1,0 +1,167 @@
+/**
+ * The computations behind the halftone grid of the login backdrop: how large a dot is and how the pointer and a click
+ * ripple lift the dots near them.
+ *
+ * Everything here is a pure function of its arguments (or reads the page where it says so); the component
+ * `TLLoginBackdrop` owns the canvas, the events and the timing.
+ */
+import { tokenMs, tokenPx } from 'tl-react-bridge';
+
+/** The most ripples that run at the same time; a click beyond that drops the oldest. */
+const MAX_RIPPLES = 8;
+
+/** The dots below this radius (px) are not drawn: they would only blur. */
+const MIN_RADIUS = 0.35;
+
+/** The width (px) of the band a ripple lifts around its front. */
+const RIPPLE_BAND = 20;
+
+/** How far the front of a ripple travels, as a fraction of the reach, until the ripple has ended. */
+const RIPPLE_TRAVEL = 0.55;
+
+/**
+ * The radius of the dot at the given distance from the centre of the grid: a seventh of the step at the centre, falling
+ * gently to nothing at the half diagonal, so the grid stays a fine texture at rest. A radius too small to see is zero.
+ *
+ * @param distance Distance of the grid point from the centre (px).
+ * @param halfDiagonal Half the diagonal of the area, where the dots end (px).
+ * @param step The grid step (px).
+ */
+export function dotRadius(distance: number, halfDiagonal: number, step: number): number {
+  const d = distance / halfDiagonal;
+  if (d >= 1) {
+    return 0;
+  }
+  const r = 0.14 * step * Math.pow(1 - d, 0.6);
+  return r < MIN_RADIUS ? 0 : r;
+}
+
+/**
+ * How strongly the pointer lifts a dot at the given offset from it: one at the pointer, `e^-1` one radius away.
+ *
+ * @param dx Horizontal offset of the dot from the pointer (px).
+ * @param dy Vertical offset of the dot from the pointer (px).
+ * @param radius The radius of the highlight (px).
+ */
+export function glowFactor(dx: number, dy: number, radius: number): number {
+  const d = Math.sqrt(dx * dx + dy * dy) / radius;
+  return Math.exp(-d * d);
+}
+
+/** A click ripple: where it started (px, in the area of the canvas) and when (ms, the clock of the animation frames). */
+export interface Ripple {
+  x: number;
+  y: number;
+  start: number;
+}
+
+/**
+ * How strongly a ripple lifts the point at the given position: a band around the front, which travels outward and
+ * weakens with the age of the ripple. Zero before the start and from the end on.
+ *
+ * @param r The ripple.
+ * @param px Horizontal position of the point (px).
+ * @param py Vertical position of the point (px).
+ * @param now The time now (ms).
+ * @param durationMs How long a ripple runs (ms).
+ * @param reach How far a ripple may reach (px), usually the diagonal of the area.
+ */
+export function rippleFactor(r: Ripple, px: number, py: number, now: number, durationMs: number, reach: number): number {
+  const p = (now - r.start) / durationMs;
+  if (!(p >= 0 && p < 1)) {
+    return 0;
+  }
+  const front = p * reach * RIPPLE_TRAVEL;
+  const off = (Math.hypot(px - r.x, py - r.y) - front) / RIPPLE_BAND;
+  return Math.exp(-off * off) * (1 - p);
+}
+
+/**
+ * The ripples still running, at most {@link MAX_RIPPLES}; the oldest of too many fall away.
+ *
+ * @param ripples The ripples, oldest first.
+ * @param now The time now (ms).
+ * @param durationMs How long a ripple runs (ms).
+ */
+export function activeRipples(ripples: Ripple[], now: number, durationMs: number): Ripple[] {
+  const running = ripples.filter((r) => now - r.start < durationMs);
+  return running.length > MAX_RIPPLES ? running.slice(running.length - MAX_RIPPLES) : running;
+}
+
+/**
+ * Whether a click at the given target counts as one on the background: the root, the content itself, and everything
+ * outside the content - not the card, the logo or a link inside it.
+ *
+ * @param target The target of the event.
+ * @param root The root element of the backdrop.
+ * @param content The element holding the logo and the content the backdrop frames.
+ */
+export function isBackgroundTarget(target: EventTarget | null, root: Element, content: Element): boolean {
+  if (!(target instanceof Node) || !root.contains(target)) {
+    return false;
+  }
+  return target === content || !content.contains(target);
+}
+
+/** Whether the user asked for reduced motion: then there is neither highlight nor ripple. */
+export function prefersReducedMotion(): boolean {
+  return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** What the grid is drawn with, read from the tokens. */
+export interface HalftoneTheme {
+  /** The colour of the dots at rest (`surface-halftone`). */
+  color: string;
+  /** The colour a dot takes where the pointer or a ripple lifts it (`surface-halftone-strong`). */
+  strong: string;
+  /** The grid step (px). */
+  step: number;
+  /** The radius of the pointer highlight (px). */
+  glow: number;
+  /** How long a ripple runs (ms). */
+  rippleMs: number;
+}
+
+/** The grid step (px) used where the token gives none, or none that can be drawn. */
+const DEFAULT_STEP = 16;
+
+/** The smallest grid step (px) taken from the tokens: a smaller one would make a grid of tens of thousands of dots. */
+const MIN_STEP = 4;
+
+/**
+ * The grid step to draw with: the given one, or {@link DEFAULT_STEP} when it is not a finite number or below
+ * {@link MIN_STEP}.
+ *
+ * @param step The step as read from the token (px).
+ */
+export function boundedStep(step: number): number {
+  return Number.isFinite(step) && step >= MIN_STEP ? step : DEFAULT_STEP;
+}
+
+/** Whether the browser takes the text as a colour; true where it cannot tell (no `CSS.supports`). */
+function isColor(value: string): boolean {
+  return typeof CSS === 'undefined' || typeof CSS.supports !== 'function' || CSS.supports('color', value);
+}
+
+/**
+ * Reads the halftone tokens at the given element.
+ *
+ * @param root Where the colours and the step are read; the durations are read at the document root.
+ * @returns The theme, or `null` while a colour is not defined or not a colour the browser takes (no design system
+ *          loaded, a faulty customer theme): nothing is drawn then.
+ */
+export function readHalftoneTheme(root: Element): HalftoneTheme | null {
+  const style = getComputedStyle(root);
+  const color = style.getPropertyValue('--tl-surface-halftone').trim();
+  const strong = style.getPropertyValue('--tl-surface-halftone-strong').trim() || color;
+  if (color === '' || !isColor(color) || !isColor(strong)) {
+    return null;
+  }
+  return {
+    color,
+    strong,
+    step: boundedStep(tokenPx(root, '--tl-size-halftone-step', DEFAULT_STEP)),
+    glow: tokenPx(root, '--tl-size-halftone-glow', 40),
+    rippleMs: tokenMs('--tl-duration-ripple', 1800),
+  };
+}

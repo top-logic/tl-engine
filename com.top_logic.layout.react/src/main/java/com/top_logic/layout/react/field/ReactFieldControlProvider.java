@@ -88,6 +88,24 @@ public interface ReactFieldControlProvider {
 	}
 
 	/**
+	 * Whether this provider edits the given field at all.
+	 *
+	 * <p>
+	 * A provider configured for a kind of value may edit only some shapes of it: the images of a
+	 * gallery, for instance, only where several of them are held in an order. A field this provider
+	 * does not apply to is resolved as if no provider were configured for its kind of value. By
+	 * default a provider applies to every field.
+	 * </p>
+	 *
+	 * @param field
+	 *        What is being edited; its {@link FieldSpec#isMultiple() multiplicity} and
+	 *        {@link FieldSpec#isOrdered() order} are the ones a provider may depend on.
+	 */
+	default boolean appliesTo(FieldSpec field) {
+		return true;
+	}
+
+	/**
 	 * Whether the control this provider creates edits the whole collection of values of a
 	 * {@link FieldSpec#isMultiple() multi-valued} field itself.
 	 *

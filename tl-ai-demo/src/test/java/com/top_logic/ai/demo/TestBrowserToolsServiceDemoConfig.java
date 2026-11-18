@@ -11,7 +11,7 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.basic.config.ApplicationConfig;
-import com.top_logic.tl.ai.browser.BrowserToolsService;
+import com.top_logic.ai.browser.BrowserToolsService;
 
 /**
  * Boots the assembled tl-ai-demo application configuration (the same typed-config load path the

@@ -15,9 +15,9 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
-import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.core.provider.I18NConstants;
-import com.top_logic.tl.ai.core.provider.ProviderException;
+import com.top_logic.ai.core.agent.event.AgentEvent;
+import com.top_logic.ai.core.provider.I18NConstants;
+import com.top_logic.ai.core.provider.ProviderException;
 import com.top_logic.util.Resources;
 
 /**

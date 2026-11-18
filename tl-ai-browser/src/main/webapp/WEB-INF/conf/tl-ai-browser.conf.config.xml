@@ -22,14 +22,14 @@
 			<instance>
 				<modules>
 					<!-- Browser Tools Service: the headless Chromium sessions of the web-browser tools -->
-					<module key="com.top_logic.tl.ai.browser.BrowserToolsService$Module" value="true"/>
+					<module key="com.top_logic.ai.browser.BrowserToolsService$Module" value="true"/>
 					<!-- Cookie Pool Service: encrypted, persistent login state for browserSaveCookies / browserUseCookies -->
-					<module key="com.top_logic.tl.ai.browser.cookiepool.CookiePoolService$Module" value="true"/>
+					<module key="com.top_logic.ai.browser.cookiepool.CookiePoolService$Module" value="true"/>
 				</modules>
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.tl.ai.browser.BrowserToolsService">
+		<config service-class="com.top_logic.ai.browser.BrowserToolsService">
 			<!-- Domain policy is layered, applied in this fixed order of precedence:
 			       1. SSRF always wins: private/loopback/internal addresses are refused
 			          unconditionally and no setting below can relax this.
@@ -128,7 +128,7 @@
 			     state. The stored login state is encrypted at rest via the platform EncryptionService
 			     - if no encryption key is installed, saving is refused rather than stored in plaintext
 			     (the tl-ai-demo config wires an EncryptionService instance with a key). -->
-			<instance class="com.top_logic.tl.ai.browser.BrowserToolsService"
+			<instance class="com.top_logic.ai.browser.BrowserToolsService"
 				headless="true"
 				cookie-pools-enabled="true"
 				navigation-timeout-seconds="30"
@@ -147,12 +147,12 @@
 		</config>
 
 		<!-- The tools: web-browser.* drives the session's Chromium. -->
-		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+		<config service-class="com.top_logic.ai.tool.api.registry.ToolRegistryService">
 			<instance>
 				<tool-factories>
 					<factory name="web-browser">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
-							tool-class="com.top_logic.tl.ai.browser.BrowserTool"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.browser.BrowserTool"
 						/>
 					</factory>
 				</tool-factories>
@@ -165,7 +165,7 @@
 			its list. An application that ships its own agents names <skill name="TL_webBrowser"/>
 			in their <skills> the same way.
 		-->
-		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
+		<config service-class="com.top_logic.ai.core.agent.TopLogicAgentDefinitions">
 			<instance>
 				<skills>
 					<skill name="TL_webBrowser"

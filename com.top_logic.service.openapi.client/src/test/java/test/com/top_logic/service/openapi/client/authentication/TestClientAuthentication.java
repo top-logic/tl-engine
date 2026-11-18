@@ -10,7 +10,6 @@ import java.io.OutputStream;
 import java.io.StringWriter;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
@@ -26,6 +25,7 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.service.openapi.common.authentication.TestOIDCProvider;
 
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -44,7 +44,6 @@ import com.top_logic.basic.credential.LiteralSecretSource;
 import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.io.character.CharacterContents;
-import com.top_logic.basic.json.JSON;
 import com.top_logic.service.openapi.client.authentication.SecurityEnhancer;
 import com.top_logic.service.openapi.client.authentication.apikey.ClientAPIKeySecret;
 import com.top_logic.service.openapi.client.authentication.config.ClientAuthentication;
@@ -57,7 +56,7 @@ import com.top_logic.service.openapi.common.authentication.oauth.OpenIDURIProvid
 
 /**
  * Tests the authentication of requests of the {@link ServiceMethodRegistry} against a mock server
- * that also acts as OAuth authorization server.
+ * whose OAuth authorization server is a {@link TestOIDCProvider}.
  */
 @SuppressWarnings("javadoc")
 public class TestClientAuthentication extends TestCase {
@@ -65,10 +64,6 @@ public class TestClientAuthentication extends TestCase {
 	private static final String DOMAIN = "test-domain";
 
 	private static final String API_PATH = "/api";
-
-	private static final String TOKEN_PATH = "/token";
-
-	private static final String ISSUER_PATH = "/realms/test";
 
 	private static final String CLIENT_ID = "my-app";
 
@@ -97,12 +92,9 @@ public class TestClientAuthentication extends TestCase {
 
 		final String _query;
 
-		final Map<String, String> _parameters;
-
-		Received(Map<String, String> headers, String query, Map<String, String> parameters) {
+		Received(Map<String, String> headers, String query) {
 			_headers = headers;
 			_query = query;
-			_parameters = parameters;
 		}
 
 		String header(String name) {
@@ -117,13 +109,9 @@ public class TestClientAuthentication extends TestCase {
 
 	private String _baseUrl;
 
-	private final List<Received> _tokenRequests = new CopyOnWriteArrayList<>();
+	private TestOIDCProvider _provider;
 
 	private final List<Received> _apiRequests = new CopyOnWriteArrayList<>();
-
-	private volatile int _discoveryRequests;
-
-	private volatile Integer _expiresIn;
 
 	private volatile int _apiStatus;
 
@@ -132,15 +120,14 @@ public class TestClientAuthentication extends TestCase {
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		_expiresIn = Integer.valueOf(3600);
 		_apiStatus = 200;
+		_provider = new TestOIDCProvider().addClient(CLIENT_ID, CLIENT_SECRET, null);
+		_provider.start();
 		_server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
 		_executor = Executors.newCachedThreadPool();
 		_server.setExecutor(_executor);
 		_baseUrl = "http://localhost:" + _server.getAddress().getPort();
-		_server.createContext(TOKEN_PATH, this::handleToken);
 		_server.createContext(API_PATH, this::handleApi);
-		_server.createContext(ISSUER_PATH + "/.well-known/openid-configuration", this::handleDiscovery);
 		_server.start();
 		_client = HttpClients.createDefault();
 	}
@@ -150,6 +137,7 @@ public class TestClientAuthentication extends TestCase {
 		_client.close();
 		_server.stop(0);
 		_executor.shutdownNow();
+		_provider.stop();
 		System.clearProperty(VARIABLE);
 		super.tearDown();
 	}
@@ -246,26 +234,26 @@ public class TestClientAuthentication extends TestCase {
 		assertEquals(200, call(enhancer));
 		assertEquals(200, call(enhancer));
 
-		assertEquals("The token must be fetched once and reused.", 1, _tokenRequests.size());
-		Received tokenRequest = _tokenRequests.get(0);
-		assertEquals("client_credentials", tokenRequest._parameters.get("grant_type"));
-		assertEquals(CLIENT_ID, tokenRequest._parameters.get("client_id"));
-		assertEquals(CLIENT_SECRET, tokenRequest._parameters.get("client_secret"));
+		assertEquals("The token must be fetched once and reused.", 1, tokenRequests().size());
+		Map<String, String> tokenRequest = tokenRequests().get(0);
+		assertEquals("client_credentials", tokenRequest.get("grant_type"));
+		assertEquals(CLIENT_ID, tokenRequest.get("client_id"));
+		assertEquals(CLIENT_SECRET, tokenRequest.get("client_secret"));
 		assertEquals("Bearer token-1", lastApiRequest().header(AUTHORIZATION));
 	}
 
 	public void testOAuthRenewedAfterMargin() throws Exception {
-		_expiresIn = Integer.valueOf(2);
+		_provider.setTokenLifetime(2);
 		SecurityEnhancer enhancer = enhancer(oauthConfig(tokenUrlProvider(), clientSecretAttribute()));
 
 		assertEquals(200, call(enhancer));
 		assertEquals(200, call(enhancer));
-		assertEquals(1, _tokenRequests.size());
+		assertEquals(1, tokenRequests().size());
 
 		// A token living 2s is renewed after half of its lifetime.
 		Thread.sleep(1200);
 		assertEquals(200, call(enhancer));
-		assertEquals(2, _tokenRequests.size());
+		assertEquals(2, tokenRequests().size());
 		assertEquals("Bearer token-2", lastApiRequest().header(AUTHORIZATION));
 	}
 
@@ -275,11 +263,11 @@ public class TestClientAuthentication extends TestCase {
 		assertEquals(200, call(enhancer));
 		_apiStatus = UNAUTHORIZED;
 		assertEquals(UNAUTHORIZED, call(enhancer));
-		assertEquals(1, _tokenRequests.size());
+		assertEquals(1, tokenRequests().size());
 
 		_apiStatus = 200;
 		assertEquals(200, call(enhancer));
-		assertEquals("A rejected token must be replaced.", 2, _tokenRequests.size());
+		assertEquals("A rejected token must be replaced.", 2, tokenRequests().size());
 		assertEquals("Bearer token-2", lastApiRequest().header(AUTHORIZATION));
 	}
 
@@ -289,17 +277,17 @@ public class TestClientAuthentication extends TestCase {
 			"<client-secret client-id='" + CLIENT_ID + "'>" + environmentPassword() + "</client-secret>"));
 
 		assertEquals(200, call(enhancer));
-		assertEquals(CLIENT_SECRET, _tokenRequests.get(0)._parameters.get("client_secret"));
+		assertEquals(CLIENT_SECRET, tokenRequests().get(0).get("client_secret"));
 	}
 
 	public void testOAuthIssuerDiscovery() throws Exception {
 		String provider = "<uri-provider class='" + OpenIDURIProvider.class.getName() + "' open-id-issuer='"
-			+ _baseUrl + ISSUER_PATH + "'/>";
+			+ _provider.getIssuerUrl() + "'/>";
 		SecurityEnhancer enhancer = enhancer(oauthConfig(provider, clientSecretAttribute()));
 
 		assertEquals(200, call(enhancer));
-		assertEquals(1, _discoveryRequests);
-		assertEquals(1, _tokenRequests.size());
+		assertEquals(1, _provider.getDiscoveryRequestCount());
+		assertEquals(1, tokenRequests().size());
 		assertEquals("Bearer token-1", lastApiRequest().header(AUTHORIZATION));
 	}
 
@@ -359,8 +347,8 @@ public class TestClientAuthentication extends TestCase {
 	}
 
 	private String tokenUrlProvider() {
-		return "<uri-provider class='" + DefaultURIProvider.class.getName() + "' token-url='" + _baseUrl
-			+ TOKEN_PATH + "'/>";
+		return "<uri-provider class='" + DefaultURIProvider.class.getName() + "' token-url='"
+			+ _provider.getTokenEndpointUrl() + "'/>";
 	}
 
 	private static String clientSecretAttribute() {
@@ -419,6 +407,10 @@ public class TestClientAuthentication extends TestCase {
 		}).intValue();
 	}
 
+	private List<Map<String, String>> tokenRequests() {
+		return _provider.getTokenRequests();
+	}
+
 	private Received lastApiRequest() {
 		return _apiRequests.get(_apiRequests.size() - 1);
 	}
@@ -433,43 +425,10 @@ public class TestClientAuthentication extends TestCase {
 		send(exchange, _apiStatus, "{}");
 	}
 
-	private void handleToken(HttpExchange exchange) throws IOException {
-		_tokenRequests.add(received(exchange));
-		Map<String, Object> token = new HashMap<>();
-		token.put("access_token", "token-" + _tokenRequests.size());
-		token.put("token_type", "Bearer");
-		if (_expiresIn != null) {
-			token.put("expires_in", _expiresIn);
-		}
-		send(exchange, 200, JSON.toString(token));
-	}
-
-	private void handleDiscovery(HttpExchange exchange) throws IOException {
-		_discoveryRequests++;
-		Map<String, Object> metadata = new HashMap<>();
-		metadata.put("issuer", _baseUrl + ISSUER_PATH);
-		metadata.put("token_endpoint", _baseUrl + TOKEN_PATH);
-		send(exchange, 200, JSON.toString(metadata));
-	}
-
 	private static Received received(HttpExchange exchange) throws IOException {
 		Map<String, String> headers = new HashMap<>();
 		exchange.getRequestHeaders().forEach((name, values) -> headers.put(name.toLowerCase(), values.get(0)));
-		String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-		return new Received(headers, exchange.getRequestURI().getRawQuery(), parseForm(body));
-	}
-
-	private static Map<String, String> parseForm(String body) {
-		Map<String, String> result = new HashMap<>();
-		if (body.isEmpty()) {
-			return result;
-		}
-		for (String pair : body.split("&")) {
-			int separator = pair.indexOf('=');
-			result.put(URLDecoder.decode(pair.substring(0, separator), StandardCharsets.UTF_8),
-				URLDecoder.decode(pair.substring(separator + 1), StandardCharsets.UTF_8));
-		}
-		return result;
+		return new Received(headers, exchange.getRequestURI().getRawQuery());
 	}
 
 	private static void send(HttpExchange exchange, int status, String body) throws IOException {

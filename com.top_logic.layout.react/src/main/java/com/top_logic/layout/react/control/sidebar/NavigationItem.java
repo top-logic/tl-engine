@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.common.BadgeDisplay;
 import com.top_logic.layout.react.dirty.DirtyChannel;
 
 /**
@@ -19,9 +20,6 @@ public class NavigationItem extends SidebarItem {
 	/** Type discriminator for navigation items. */
 	public static final String TYPE_NAV = "nav";
 
-	/** @see #setBadge(String) */
-	private static final String BADGE = "badge";
-
 	private final String _label;
 
 	private final String _icon;
@@ -29,8 +27,6 @@ public class NavigationItem extends SidebarItem {
 	private final Supplier<ReactControl> _contentFactory;
 
 	private final DirtyChannel _dirtyChannel;
-
-	private String _badge;
 
 	private String _route;
 
@@ -77,16 +73,16 @@ public class NavigationItem extends SidebarItem {
 	 * @param contentFactory
 	 *        Factory for lazily creating the content control.
 	 * @param badge
-	 *        Optional badge text (e.g. "3"), or {@code null} for no badge.
+	 *        The badge of the item, or {@code null} for no badge.
 	 */
 	public NavigationItem(String id, String label, String icon, Supplier<ReactControl> contentFactory,
-			DirtyChannel dirtyChannel, String badge) {
+			DirtyChannel dirtyChannel, BadgeDisplay badge) {
 		super(id);
 		_label = label;
 		_icon = icon;
 		_contentFactory = contentFactory;
 		_dirtyChannel = dirtyChannel;
-		_badge = badge;
+		setBadge(badge);
 	}
 
 	/**
@@ -115,23 +111,6 @@ public class NavigationItem extends SidebarItem {
 	 */
 	public DirtyChannel getDirtyChannel() {
 		return _dirtyChannel;
-	}
-
-	/**
-	 * Optional badge text (e.g. "3"), or {@code null} for no badge.
-	 */
-	public String getBadge() {
-		return _badge;
-	}
-
-	/**
-	 * Sets the badge text.
-	 *
-	 * @param badge
-	 *        Badge text (e.g. "5"), or {@code null} to remove the badge.
-	 */
-	public void setBadge(String badge) {
-		_badge = badge;
 	}
 
 	/**
@@ -217,9 +196,6 @@ public class NavigationItem extends SidebarItem {
 		map.put(LABEL, _label);
 		if (_icon != null) {
 			map.put(ICON, _icon);
-		}
-		if (_badge != null) {
-			map.put(BADGE, _badge);
 		}
 		if (_hidden) {
 			map.put(HIDDEN, Boolean.TRUE);

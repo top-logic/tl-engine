@@ -66,10 +66,10 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tl.ai.core.display.CollapsedDisplay;
-import com.top_logic.tl.ai.core.tools.present.ChartData;
-import com.top_logic.tl.ai.core.tools.present.PresentAs;
-import com.top_logic.tl.ai.core.tools.present.Presentation;
+import com.top_logic.ai.core.display.CollapsedDisplay;
+import com.top_logic.ai.core.tools.present.ChartData;
+import com.top_logic.ai.core.tools.present.PresentAs;
+import com.top_logic.ai.core.tools.present.Presentation;
 import com.top_logic.util.Resources;
 
 /**

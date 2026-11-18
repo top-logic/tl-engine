@@ -19,6 +19,7 @@ import TLImageField from './TLImageField';
 import TLValueList from './TLValueList';
 import ButtonPart from './button/ButtonPart';
 import ChipPart from './chip/ChipPart';
+import SpinnerPart from './progress/SpinnerPart';
 import { isFull } from './form/valueCount';
 
 declare global {
@@ -35,6 +36,7 @@ beforeAll(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   registerPart('Button', ButtonPart);
   registerPart('Chip', ChipPart);
+  registerPart('Spinner', SpinnerPart);
   register('TLFileChips', TLFileChips);
   register('TLImageField', TLImageField);
   register('TLValueList', TLValueList);

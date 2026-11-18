@@ -686,38 +686,80 @@
   display: none;
 }
 
-/* Ein Feld in der Zelle ist die Zelle: randlos, so hoch wie die Zeile. Sein Fokus ist der Basis-Ring
-   nach innen (3a §5.2); Fehler und Warnung zeichnen eine innere Linie in Statusfarbe — kein outline in
-   Statusfarbe (3a-Gate). Warnung vor Fehler: der Fehler steht später und gewinnt. */
+/* Ein Feld in der Zelle sieht aus wie im Formular, eine Stufe niedriger (#30383): Fläche surface-field, voller Rahmen,
+   Höhe size-control − space-2xs (28 px normal, 24 px kompakt) — niedriger als die Zeile, damit oben und unten Luft
+   bleibt und benachbarte Zeilen nicht zu einem Raster aus Kästchen zusammenwachsen. Es steht space-2xs −
+   border-width-sm (3 px) unter der Oberkante und hält unten 4 px bis zur Trennlinie — ganze Pixel statt 3,5 mittig;
+   das trägt, solange size-row eine Rasterstufe über size-control liegt (tokens.test.mjs). Seitlich space-2xs Luft,
+   um die der Innenabstand des Felds kleiner ist: der Text steht wie beim Lesen. Die Höhe sitzt fest am direkten
+   Kind der Zelle (Feld oder Hülle: tl-form-field--compact, tl-field-group, tl-table__tree).
+   Fokus ist der Basis-Ring nach innen (3a §5.2); Warnung und Fehler zeichnen einen inneren Rahmen in Statusfarbe. */
 .tl-table__cell:has(.tl-field) {
-  padding: 0;
-  /* Gestreckt, nicht mittig: das Feld steckt in Hüllen (TLChild, tl-field-group), deren height: 100% nur
-     gegen eine gestreckte Höhe greift — mittig blieb das Feld so hoch wie sein Text (Sichtprüfung 23.10.). */
-  align-items: stretch;
+  padding: calc(var(--tl-space-2xs) - var(--tl-border-width-sm)) var(--tl-space-2xs) 0;
+  align-items: flex-start;
 }
 
+/* (0,3,0): schlägt .tl-table__cell .tl-field { height: 100% }, wenn das Feld selbst direktes Kind ist (S2). */
+.tl-table__cell:has(.tl-field) > :not([hidden]) {
+  height: calc(var(--tl-size-control) - var(--tl-space-2xs));
+}
+
+/* Innenabstand an (0,2,0): field.css (Gruppe mit Knopf oder Icon, (0,3,0)) behält Platz für Endknopf und Icon (B1);
+   readonly und disabled rücken so wie beschreibbare Felder (S1). */
 .tl-table__cell .tl-field {
   height: 100%;
   min-height: 0;
+  padding-inline: calc(var(--tl-space-control-x) - var(--tl-space-2xs));
   border: 0;
-  border-radius: 0;
+  border-radius: var(--tl-radius-sm);
   background: transparent;
+}
+
+/* Die Auswahl hat einen Mindestinhalt aus padding-block und Knopf; in der Zelle ohne padding-block, sonst wird sie
+   30/26 px statt 28/24 hoch (B2). Der Pfeil steht space-2xs vor dem Ende wie in jedem anderen Zellfeld. */
+.tl-table__cell .tl-select {
+  padding-block: 0;
+  padding-inline-end: var(--tl-space-2xs);
 }
 
 .tl-table__cell .tl-field:focus-visible {
   outline-offset: calc(-1 * var(--tl-focus-offset));
 }
 
-/* Ein Feld, in das man schreiben kann, zeigt sich durch eine Linie unten in der Rahmenfarbe der Felder —
-   randlos und durchsichtig sah die Zelle im Bearbeiten-Modus aus wie im Lesen. Auf gezeigter und
-   ausgewählter Zeile hielte border-control 3:1 nicht (bis 2,44), dort trägt border-interactive die Linie.
-   Gleich spezifisch wie Warnung und Fehler, die danach stehen und mit ihrem Rahmen gewinnen. */
-.tl-table__cell .tl-field:not(:disabled, [readonly]) {
-  box-shadow: inset 0 calc(-1 * var(--tl-border-width-sm)) 0 var(--tl-border-control);
+/* Knöpfe im Feld (Leeren, Kalender, Pfeil, Öffner des kompakten Felds): kompakt so hoch wie das Feld, sie deckten dessen Rahmen oben und unten
+   (S7) — eine Rahmenbreite kürzer; min-height: 0, weil button.css den Knopf sonst bei size-control-sm hält (kompakt = Feldhöhe),
+   und die Höhe aus Tokens, weil die Prozent im Auswahlfeld an keiner bestimmten Höhe hängen. Ihr Fokusring liegt nach innen wie im kompakten Feld (compact-field.css), sonst
+   schneidet die Zelle ihn oben und unten (B3, focus-clip). */
+.tl-table__cell .tl-field-group > .tl-button,
+.tl-table__cell .tl-select__controls > .tl-button,
+.tl-table__cell .tl-compact-field > .tl-button {
+  min-height: 0;
+  max-height: calc(var(--tl-size-control) - var(--tl-space-2xs) - 2 * var(--tl-border-width-sm));
 }
 
-:where(.tl-table__row:hover, .tl-table__row[aria-selected="true"]) .tl-table__cell .tl-field:not(:disabled, [readonly]) {
-  box-shadow: inset 0 calc(-1 * var(--tl-border-width-sm)) 0 var(--tl-border-interactive);
+.tl-table__cell .tl-field-group > .tl-button:focus-visible,
+.tl-table__cell .tl-select__controls > .tl-button:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Der native Kalenderknopf des Datumsfelds rechnet mit dem Innenabstand des Formularfelds (field.css); in der Zelle
+   ist der um space-2xs kleiner (S7). */
+.tl-table__cell .tl-field::-webkit-calendar-picker-indicator {
+  margin-inline-end: calc(2 * var(--tl-space-2xs) - var(--tl-space-control-x));
+}
+
+/* Ein Feld, in das man schreiben kann: Fläche und Rahmen in border-control. Ein Feld mit disabled, readonly oder
+   aria-disabled (die Auswahl ist ein div, H1) bleibt durchsichtig und ohne Rahmen — es liest sich wie eine
+   Lesezelle. Auf gezeigter und gewählter Zeile trägt border-emphasis den Rahmen (border-control hielte dort hell
+   2,84 / dunkel 2,60); das Blau bleibt Auswahl und Fokusring vorbehalten. Gleich spezifisch wie Warnung und Fehler,
+   die danach stehen und mit ihrem Rahmen gewinnen. */
+.tl-table__cell .tl-field:not(:disabled, [readonly], [aria-disabled="true"]) {
+  background: var(--tl-surface-field);
+  box-shadow: inset 0 0 0 var(--tl-border-width-sm) var(--tl-border-control);
+}
+
+:where(.tl-table__row:hover, .tl-table__row[aria-selected="true"]) .tl-table__cell .tl-field:not(:disabled, [readonly], [aria-disabled="true"]) {
+  box-shadow: inset 0 0 0 var(--tl-border-width-sm) var(--tl-border-emphasis);
 }
 
 .tl-table__cell .tl-field[data-tl-state~="warning"] {
@@ -738,6 +780,12 @@
    Innenabstand hinausgeht. */
 .tl-table__cell:has(> .tl-form-field--compact > .tl-form-field__marker) {
   padding-inline-end: calc(var(--tl-size-icon-sm) / 2);
+}
+
+/* Ihr Fokusring liegt innen wie der der Knöpfe im Feld: außen reichte er über den freigehaltenen Rand hinaus, und die
+   Zelle schnitte ihn rechts und oben ab (focus-clip). */
+.tl-table__cell .tl-form-field__marker:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
 }
 
 /* --- Baum- und Gruppenzeilen ----------------------------------------------------- */
@@ -767,8 +815,8 @@
 }
 
 /* Bearbeitete Baumspalte: die Zelle behält ihren Abstand vorn, so steht der Toggle wie im Lesen (die
-   randlose Feldzelle oben nimmt ihn sonst weg). Das Feld nach dem Toggle ist die übrige Zelle: so hoch
-   wie die Zeile und bis zum Rand, wie die Felder der anderen Spalten. */
+   Feldzelle oben nimmt ihn sonst weg). Das Feld nach dem Toggle ist die übrige Zelle: so hoch
+   wie die Felder der anderen Spalten (eine Stufe niedriger als die Zeile) und bis zum Rand. */
 .tl-table__cell:has(> .tl-table__tree) {
   padding-inline-start: var(--tl-space-control-x);
 }

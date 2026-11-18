@@ -21,14 +21,14 @@ import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
-import com.top_logic.tl.ai.core.agent.environment.TurnContext;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.security.ModelSecurity;
-import com.top_logic.tl.ai.core.security.ReadFilter;
-import com.top_logic.tl.ai.core.tools.model.TidResolver;
-import com.top_logic.tl.ai.core.tools.present.PresentAs;
-import com.top_logic.tl.ai.core.tools.present.Presentation;
+import com.top_logic.ai.core.agent.environment.EnvironmentFact;
+import com.top_logic.ai.core.agent.environment.TurnContext;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.security.ModelSecurity;
+import com.top_logic.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.tools.model.TidResolver;
+import com.top_logic.ai.core.tools.present.PresentAs;
+import com.top_logic.ai.core.tools.present.Presentation;
 import com.top_logic.util.model.ModelService;
 
 /**

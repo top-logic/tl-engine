@@ -5,6 +5,7 @@
  */
 package com.top_logic.react.flow.server.script;
 
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -12,6 +13,10 @@ import com.top_logic.layout.I18NConstantsBase;
  */
 public class I18NConstants extends I18NConstantsBase {
 
+	/**
+	 * @en The color role "{0}" does not exist. Possible color roles are: {1}.
+	 */
+	public static ResKey2 ERROR_UNKNOWN_COLOR_ROLE__VALUE_ROLES;
 
 	static {
 		initConstants(I18NConstants.class);

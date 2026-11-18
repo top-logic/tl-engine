@@ -52,7 +52,7 @@ The variables of these names are unchanged; they hold the plain key.
 Before:
 
 ```xml
-<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig" name="anthropic"
+<provider class="com.top_logic.ai.core.provider.anthropic.AnthropicProviderConfig" name="anthropic"
 	api-key="unencrypted:%ANTHROPIC_API_KEY%"
 />
 ```
@@ -60,7 +60,7 @@ Before:
 After:
 
 ```xml
-<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig" name="anthropic">
+<provider class="com.top_logic.ai.core.provider.anthropic.AnthropicProviderConfig" name="anthropic">
 	<api-key name="tl_anthropic_api_key"/>
 </provider>
 ```
@@ -103,12 +103,12 @@ The `api-key` of the search engines is no longer mandatory: a search engine may 
 
 ```xml
 <!-- Before -->
-<transport class="com.top_logic.tl.ai.core.mcp.HttpMcpTransport" url="https://mcp.example.com/mcp"
+<transport class="com.top_logic.ai.core.mcp.HttpMcpTransport" url="https://mcp.example.com/mcp"
 	bearer-token-env-var="MY_MCP_TOKEN"
 />
 
 <!-- After -->
-<transport class="com.top_logic.tl.ai.core.mcp.HttpMcpTransport" url="https://mcp.example.com/mcp">
+<transport class="com.top_logic.ai.core.mcp.HttpMcpTransport" url="https://mcp.example.com/mcp">
 	<credentials class="com.top_logic.basic.credential.HeaderCredentials" scheme="Bearer">
 		<secret name="MY_MCP_TOKEN"/>
 	</credentials>

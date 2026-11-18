@@ -10,11 +10,11 @@ import java.util.Map;
 
 import junit.framework.Test;
 
-import com.top_logic.tl.ai.core.agent.SecurityContext;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.tools.ToolExecutions;
-import com.top_logic.tl.ai.core.tools.model.ModelDigestGenerator;
+import com.top_logic.ai.core.agent.SecurityContext;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.ai.core.tools.ToolExecutions;
+import com.top_logic.ai.core.tools.model.ModelDigestGenerator;
 
 /**
  * End-to-end test that the model digest describes only the types the acting persona may read

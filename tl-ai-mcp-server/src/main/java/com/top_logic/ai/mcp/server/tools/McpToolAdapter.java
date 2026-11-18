@@ -10,16 +10,16 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.ai.mcp.server.authentication.McpCallerContext;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.ToolPermissionFilter;
-import com.top_logic.tl.ai.core.agent.TransactionScope;
-import com.top_logic.tl.ai.core.agent.TurnCommitMessage;
-import com.top_logic.tl.ai.core.tools.ToolCatalog;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolResult;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.agent.ToolPermissionFilter;
+import com.top_logic.ai.core.agent.TransactionScope;
+import com.top_logic.ai.core.agent.TurnCommitMessage;
+import com.top_logic.ai.core.tools.ToolCatalog;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -205,7 +205,7 @@ public class McpToolAdapter {
 	 * all-or-nothing rollback on any failure. The tool checks its writes under the caller's rights
 	 * itself, as it does in a chat turn. A {@code READ} tool needs none of it, and an
 	 * {@code EXTERNAL} one has nothing this transaction could take back. The change is committed with
-	 * the {@link Tool#commitMessage(Map, com.top_logic.tl.ai.tool.api.ToolExecutionContext) message}
+	 * the {@link Tool#commitMessage(Map, com.top_logic.ai.tool.api.ToolExecutionContext) message}
 	 * of the call, see {@link TurnCommitMessage}.
 	 * </p>
 	 */

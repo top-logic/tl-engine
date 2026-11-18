@@ -24,10 +24,10 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.execution.model.AgentSession;
-import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
+import com.top_logic.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.util.model.ModelService;
 
 /**

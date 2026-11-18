@@ -1,0 +1,324 @@
+import { React, useTLState, useI18N, TLChild, useFillHost, FillProvider, rootClassName, useTokenSwitch, ThemeIcon } from 'tl-react-bridge';
+import type { TLCellProps } from 'tl-react-bridge';
+import {
+  activeRipples,
+  dotRadius,
+  glowFactor,
+  isBackgroundTarget,
+  prefersReducedMotion,
+  readHalftoneTheme,
+  rippleFactor,
+} from './halftone';
+import type { HalftoneTheme, Ripple } from './halftone';
+import { WORDMARK_PATHS, WORDMARK_VIEW_BOX } from './toplogic-wordmark';
+
+const I18N_KEYS = {
+  'js.loginBackdrop.poweredBy': 'Powered by',
+};
+
+/** The share of the way to the target the pointer highlight covers per animation frame. */
+const GLOW_EASE = 0.15;
+
+/** Below this distance from its target the highlight is taken to have arrived. */
+const GLOW_EPSILON = 0.01;
+
+/** Dots smaller than this radius (px), after highlight and ripple were added, are not drawn. */
+const MIN_DRAWN_RADIUS = 0.3;
+
+/** What the highlight and a ripple add to the radius of a dot at full strength (px). */
+const GLOW_GROWTH = 0.8;
+const RIPPLE_GROWTH = 2.2;
+
+/** Whether two readings of the tokens are the same, so a switch that changes nothing the grid uses draws nothing. */
+const SAME = (a: HalftoneTheme | null, b: HalftoneTheme | null): boolean =>
+  a === b || (a !== null && b !== null
+    && a.color === b.color && a.strong === b.strong && a.step === b.step && a.glow === b.glow
+    && a.rippleMs === b.rippleMs);
+
+/** What changes while the grid is shown, between two drawings; kept outside of React state, since it does not render. */
+interface GridState {
+  /** The last position of the pointer in the area of the root; kept after it left, while the highlight fades out there. */
+  pointer: { x: number; y: number } | null;
+  /** Whether the pointer is over the root: the highlight grows toward full while it is, and fades out while it is not. */
+  inside: boolean;
+  /** How much the highlight shows, from 0 to 1: it follows the pointer's presence with a delay. */
+  glow: number;
+  ripples: Ripple[];
+}
+
+/**
+ * The logo on the plate: a picture (image URL or data URI) as `img` with its alternative text, an icon as glyph named
+ * by the same text. With an empty text the logo is decoration, not announced.
+ */
+function Logo({ encoded, alt }: { encoded: string; alt: string }) {
+  if (encoded.startsWith('/') || encoded.startsWith('data:')) {
+    return <img className="tl-login-backdrop__logo" src={encoded} alt={alt} />;
+  }
+  return (
+    <span className="tl-login-backdrop__logo" {...(alt ? { role: 'img', 'aria-label': alt } : { 'aria-hidden': true })}>
+      <ThemeIcon encoded={encoded} className="tl-icon-lg" />
+    </span>
+  );
+}
+
+/**
+ * The background of the login page: a halftone grid drawn on a canvas behind the content, which is centred in front.
+ *
+ * State:
+ * - child: ChildDescriptor | null - the content in front of the grid (the login card and what belongs to it)
+ * - logo: string | null - the encoded theme image of the logo shown above the content (an image URL, a data URI or an
+ *   icon class); without it no logo is rendered
+ * - logoDark: string | null - the encoded theme image of the logo in dark mode; without it the logo is used in both modes
+ * - logoAlt: string | null - the alternative text of the logo; the application title when absent
+ * - appTitle: string | null - the name of the application, shown as heading where there is no logo
+ *
+ * Logo or title stand on a plate above the content; at the bottom of the page stands "Powered by" with the TopLogic
+ * word mark, drawn in the colour of the text.
+ *
+ * The dots are largest at the centre and fade out toward the corners. The colours, the grid step, the radius of the
+ * highlight and the durations come from the design system tokens and are read again when the density, theme or mode
+ * of the page switches. A mouse pointer lifts the dots near it, a click on the background sends a ripple through the
+ * grid. With reduced motion there is neither highlight nor ripple.
+ *
+ * The grid is drawn on occasion only - when mounted, resized, switched, or touched - and an animation frame runs only
+ * while the highlight fades or a ripple travels; at rest the page does no work.
+ *
+ * Takes part in the fill contract as a container: the backdrop fills its container, so the page it frames is as high
+ * as the window.
+ */
+const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
+  const state = useTLState();
+  const i18n = useI18N(I18N_KEYS);
+  const [fillClass, fillHost] = useFillHost(true);
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+  const grid = React.useRef<GridState>({
+    pointer: null,
+    inside: false,
+    glow: 0,
+    ripples: [],
+  });
+
+  const theme = useTokenSwitch<HalftoneTheme | null>(
+    () => (rootRef.current ? readHalftoneTheme(rootRef.current) : null), null, SAME);
+  const dark = useTokenSwitch(() => document.documentElement.getAttribute('data-tl-mode') === 'dark', false);
+
+  React.useEffect(() => {
+    const root = rootRef.current;
+    const content = contentRef.current;
+    const canvas = canvasRef.current;
+    const g = canvas?.getContext('2d');
+    if (!root || !content || !canvas || !g || !theme) {
+      return undefined;
+    }
+    const { color, strong, step, glow, rippleMs } = theme;
+    const s = grid.current;
+    let frame = 0;
+    let width = 0;
+    let height = 0;
+    let off = false;
+
+    /** Sizes the canvas to the root, in device pixels. */
+    const resize = () => {
+      width = root.clientWidth;
+      height = root.clientHeight;
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+      g.setTransform(ratio, 0, 0, ratio, 0, 0);
+    };
+
+    /** One dot: in the base colour, and over it in the strong one as much as the lift `k` says. */
+    const paint = (x: number, y: number, r: number, k: number) => {
+      if (r < MIN_DRAWN_RADIUS) {
+        return;
+      }
+      g.beginPath();
+      g.arc(x, y, r, 0, Math.PI * 2);
+      g.globalAlpha = 1;
+      g.fillStyle = color;
+      g.fill();
+      if (k > 0.01) {
+        g.globalAlpha = Math.min(1, k);
+        g.fillStyle = strong;
+        g.fill();
+      }
+    };
+
+    const draw = (now: number) => {
+      g.clearRect(0, 0, width, height);
+      if (width === 0 || height === 0) {
+        return;
+      }
+      const cx = width / 2;
+      const cy = height / 2;
+      const halfDiagonal = Math.hypot(width, height) / 2;
+      const reach = halfDiagonal * 2;
+      const lifted = s.pointer !== null && s.glow > 0;
+      for (let y = cy % step; y < height; y += step) {
+        for (let x = cx % step; x < width; x += step) {
+          let r = dotRadius(Math.hypot(x - cx, y - cy), halfDiagonal, step);
+          let k = 0;
+          if (lifted) {
+            const h = glowFactor(x - s.pointer!.x, y - s.pointer!.y, glow) * s.glow;
+            r += GLOW_GROWTH * h;
+            k += h;
+          }
+          for (const ripple of s.ripples) {
+            const w = rippleFactor(ripple, x, y, now, rippleMs, reach);
+            r += RIPPLE_GROWTH * w;
+            k += w;
+          }
+          paint(x, y, r, k);
+        }
+      }
+      g.globalAlpha = 1;
+    };
+
+    /** One animation frame: advances what runs, draws, and asks for the next frame only while something still runs. */
+    const tick = (now: number) => {
+      frame = 0;
+      guarded(() => {
+        if (prefersReducedMotion()) {
+          s.glow = 0;
+          s.inside = false;
+        }
+        const target = s.inside ? 1 : 0;
+        s.glow += (target - s.glow) * GLOW_EASE;
+        if (Math.abs(target - s.glow) <= GLOW_EPSILON) {
+          s.glow = target;
+        }
+        s.ripples = activeRipples(s.ripples, now, rippleMs);
+        draw(now);
+        if (s.glow !== target || s.ripples.length > 0) {
+          frame = requestAnimationFrame(tick);
+        }
+      });
+    };
+
+    /**
+     * Turns the grid off for good, after something in drawing it failed: the canvas is cleared as far as it can be, and
+     * nothing is asked for or drawn again. The grid only decorates; no failure of it may reach the login.
+     */
+    const stop = () => {
+      off = true;
+      if (frame !== 0) {
+        cancelAnimationFrame(frame);
+        frame = 0;
+      }
+      try {
+        g.clearRect(0, 0, width, height);
+      } catch {
+        // Nothing left to do for a canvas that fails.
+      }
+    };
+
+    /** Runs a step of the grid, and turns the grid off when it throws. */
+    const guarded = (step: () => void) => {
+      if (off) {
+        return;
+      }
+      try {
+        step();
+      } catch {
+        stop();
+      }
+    };
+
+    /** Draws soon, once for all the occasions until the next frame. */
+    const schedule = () => {
+      if (!off && frame === 0) {
+        frame = requestAnimationFrame(tick);
+      }
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') {
+        return;
+      }
+      if (prefersReducedMotion()) {
+        // No highlight with reduced motion: one that is still visible goes at once, not with a fade.
+        if (s.inside || s.glow !== 0) {
+          s.glow = 0;
+          s.inside = false;
+          guarded(() => draw(performance.now()));
+        }
+        return;
+      }
+      const box = root.getBoundingClientRect();
+      s.pointer = { x: e.clientX - box.left, y: e.clientY - box.top };
+      s.inside = true;
+      schedule();
+    };
+
+    const onPointerLeave = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse' || !s.inside) {
+        return;
+      }
+      s.inside = false;
+      schedule();
+    };
+
+    const onClick = (e: MouseEvent) => {
+      if (!isBackgroundTarget(e.target, root, content) || prefersReducedMotion()) {
+        return;
+      }
+      const box = root.getBoundingClientRect();
+      s.ripples = [...s.ripples, { x: e.clientX - box.left, y: e.clientY - box.top, start: performance.now() }];
+      schedule();
+    };
+
+    const redraw = () => guarded(() => { resize(); draw(performance.now()); });
+    redraw();
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(redraw) : null;
+    observer?.observe(root);
+    root.addEventListener('pointermove', onPointerMove);
+    root.addEventListener('pointerleave', onPointerLeave);
+    root.addEventListener('click', onClick);
+    // What was running when the tokens switched goes on: the highlight fading, a ripple.
+    if (s.ripples.length > 0 || s.glow !== (s.inside ? 1 : 0)) {
+      schedule();
+    }
+    return () => {
+      observer?.disconnect();
+      root.removeEventListener('pointermove', onPointerMove);
+      root.removeEventListener('pointerleave', onPointerLeave);
+      root.removeEventListener('click', onClick);
+      if (frame !== 0) {
+        cancelAnimationFrame(frame);
+      }
+    };
+  }, [theme]);
+
+  const logo = state.logo as string | null | undefined;
+  const logoDark = state.logoDark as string | null | undefined;
+  const logoAlt = state.logoAlt as string | null | undefined;
+  const appTitle = state.appTitle as string | null | undefined;
+
+  return (
+    <FillProvider host={fillHost}>
+      <div id={controlId} ref={rootRef} className={rootClassName(state, 'tl-login-backdrop', fillClass)}>
+        <canvas ref={canvasRef} className="tl-login-backdrop__canvas" aria-hidden="true" />
+        <div ref={contentRef} className="tl-login-backdrop__content">
+          {!!(logo || appTitle) && (
+            <div className="tl-login-backdrop__brand">
+              {logo
+                ? <Logo encoded={dark && logoDark ? logoDark : logo} alt={logoAlt ?? appTitle ?? ''} />
+                : <h1 className="tl-login-backdrop__title">{appTitle}</h1>}
+            </div>
+          )}
+          {!!state.child && <TLChild control={state.child} />}
+        </div>
+        <p className="tl-login-backdrop__footer tl-type-label">
+          {i18n['js.loginBackdrop.poweredBy']}
+          <svg className="tl-login-backdrop__wordmark" viewBox={WORDMARK_VIEW_BOX} role="img" aria-label="TopLogic">
+            {WORDMARK_PATHS.map((d) => <path key={d} d={d} fill="currentColor" />)}
+          </svg>
+        </p>
+      </div>
+    </FillProvider>
+  );
+};
+
+export default TLLoginBackdrop;

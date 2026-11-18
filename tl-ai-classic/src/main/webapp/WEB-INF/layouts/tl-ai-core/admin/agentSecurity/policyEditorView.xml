@@ -24,7 +24,7 @@
 				<layout name="aiToolAccessPolicyAgentsTab">
 					<tabInfo label="admin.ai.agentSecurity.policy.agents.tabber"/>
 					<components>
-						<form class="com.top_logic.tl.ai.core.security.layout.ToolAccessPolicyComponent"
+						<form class="com.top_logic.ai.classic.security.layout.ToolAccessPolicyComponent"
 							dimension="AGENTS"
 							name="aiToolAccessPolicyAgents"
 							resPrefix="admin.ai.agentSecurity.policy."
@@ -33,20 +33,20 @@
 						>
 							<buttons>
 								<button id="applyAgentToolAccessPolicy"
-									class="com.top_logic.tl.ai.core.security.layout.ApplyToolAccessPolicyCommand"
+									class="com.top_logic.ai.classic.security.layout.ApplyToolAccessPolicyCommand"
 									clique="apply"
 								/>
 								<button id="discardAgentToolAccessPolicy"
-									class="com.top_logic.tl.ai.core.security.layout.DiscardToolAccessPolicyCommand"
+									class="com.top_logic.ai.classic.security.layout.DiscardToolAccessPolicyCommand"
 									clique="cancel"
 								/>
 								<button id="undoAgentToolAccessPolicy"
-									class="com.top_logic.tl.ai.core.security.layout.UndoPolicyEditCommand"
+									class="com.top_logic.ai.classic.security.layout.UndoPolicyEditCommand"
 									clique="edit"
 									image="css:fa-solid fa-rotate-left"
 								/>
 								<button id="redoAgentToolAccessPolicy"
-									class="com.top_logic.tl.ai.core.security.layout.RedoPolicyEditCommand"
+									class="com.top_logic.ai.classic.security.layout.RedoPolicyEditCommand"
 									clique="edit"
 									image="css:fa-solid fa-rotate-right"
 								/>
@@ -59,7 +59,7 @@
 				<layout name="aiToolAccessPolicyModelsTab">
 					<tabInfo label="admin.ai.agentSecurity.policy.models.tabber"/>
 					<components>
-						<form class="com.top_logic.tl.ai.core.security.layout.ToolAccessPolicyComponent"
+						<form class="com.top_logic.ai.classic.security.layout.ToolAccessPolicyComponent"
 							dimension="MODELS"
 							name="aiToolAccessPolicyModels"
 							resPrefix="admin.ai.agentSecurity.policy."
@@ -68,20 +68,20 @@
 						>
 							<buttons>
 								<button id="applyAgentToolAccessPolicy"
-									class="com.top_logic.tl.ai.core.security.layout.ApplyToolAccessPolicyCommand"
+									class="com.top_logic.ai.classic.security.layout.ApplyToolAccessPolicyCommand"
 									clique="apply"
 								/>
 								<button id="discardAgentToolAccessPolicy"
-									class="com.top_logic.tl.ai.core.security.layout.DiscardToolAccessPolicyCommand"
+									class="com.top_logic.ai.classic.security.layout.DiscardToolAccessPolicyCommand"
 									clique="cancel"
 								/>
 								<button id="undoAgentToolAccessPolicy"
-									class="com.top_logic.tl.ai.core.security.layout.UndoPolicyEditCommand"
+									class="com.top_logic.ai.classic.security.layout.UndoPolicyEditCommand"
 									clique="edit"
 									image="css:fa-solid fa-rotate-left"
 								/>
 								<button id="redoAgentToolAccessPolicy"
-									class="com.top_logic.tl.ai.core.security.layout.RedoPolicyEditCommand"
+									class="com.top_logic.ai.classic.security.layout.RedoPolicyEditCommand"
 									clique="edit"
 									image="css:fa-solid fa-rotate-right"
 								/>
@@ -94,7 +94,7 @@
 				<layout name="aiToolAccessPolicyMcpServersTab">
 					<tabInfo label="admin.ai.agentSecurity.policy.mcp.tabber"/>
 					<components>
-						<form class="com.top_logic.tl.ai.core.security.layout.ToolAccessPolicyComponent"
+						<form class="com.top_logic.ai.classic.security.layout.ToolAccessPolicyComponent"
 							dimension="MCP_SERVERS"
 							name="aiToolAccessPolicyMcpServers"
 							resPrefix="admin.ai.agentSecurity.policy."
@@ -103,20 +103,20 @@
 						>
 							<buttons>
 								<button id="applyAgentToolAccessPolicy"
-									class="com.top_logic.tl.ai.core.security.layout.ApplyToolAccessPolicyCommand"
+									class="com.top_logic.ai.classic.security.layout.ApplyToolAccessPolicyCommand"
 									clique="apply"
 								/>
 								<button id="discardAgentToolAccessPolicy"
-									class="com.top_logic.tl.ai.core.security.layout.DiscardToolAccessPolicyCommand"
+									class="com.top_logic.ai.classic.security.layout.DiscardToolAccessPolicyCommand"
 									clique="cancel"
 								/>
 								<button id="undoAgentToolAccessPolicy"
-									class="com.top_logic.tl.ai.core.security.layout.UndoPolicyEditCommand"
+									class="com.top_logic.ai.classic.security.layout.UndoPolicyEditCommand"
 									clique="edit"
 									image="css:fa-solid fa-rotate-left"
 								/>
 								<button id="redoAgentToolAccessPolicy"
-									class="com.top_logic.tl.ai.core.security.layout.RedoPolicyEditCommand"
+									class="com.top_logic.ai.classic.security.layout.RedoPolicyEditCommand"
 									clique="edit"
 									image="css:fa-solid fa-rotate-right"
 								/>
@@ -129,7 +129,7 @@
 				<layout name="aiToolAccessPolicyCapabilitiesTab">
 					<tabInfo label="admin.ai.agentSecurity.policy.capabilities.tabber"/>
 					<components>
-						<form class="com.top_logic.tl.ai.core.security.layout.ToolAccessPolicyComponent"
+						<form class="com.top_logic.ai.classic.security.layout.ToolAccessPolicyComponent"
 							dimension="CAPABILITIES"
 							name="aiToolAccessPolicyCapabilities"
 							resPrefix="admin.ai.agentSecurity.policy."
@@ -138,20 +138,20 @@
 						>
 							<buttons>
 								<button id="applyAgentToolAccessPolicy"
-									class="com.top_logic.tl.ai.core.security.layout.ApplyToolAccessPolicyCommand"
+									class="com.top_logic.ai.classic.security.layout.ApplyToolAccessPolicyCommand"
 									clique="apply"
 								/>
 								<button id="discardAgentToolAccessPolicy"
-									class="com.top_logic.tl.ai.core.security.layout.DiscardToolAccessPolicyCommand"
+									class="com.top_logic.ai.classic.security.layout.DiscardToolAccessPolicyCommand"
 									clique="cancel"
 								/>
 								<button id="undoAgentToolAccessPolicy"
-									class="com.top_logic.tl.ai.core.security.layout.UndoPolicyEditCommand"
+									class="com.top_logic.ai.classic.security.layout.UndoPolicyEditCommand"
 									clique="edit"
 									image="css:fa-solid fa-rotate-left"
 								/>
 								<button id="redoAgentToolAccessPolicy"
-									class="com.top_logic.tl.ai.core.security.layout.RedoPolicyEditCommand"
+									class="com.top_logic.ai.classic.security.layout.RedoPolicyEditCommand"
 									clique="edit"
 									image="css:fa-solid fa-rotate-right"
 								/>

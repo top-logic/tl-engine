@@ -15,10 +15,10 @@ import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
-import com.top_logic.tl.ai.core.execution.model.AgentExecution;
-import com.top_logic.tl.ai.core.execution.model.AgentSession;
-import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
-import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
+import com.top_logic.ai.core.execution.model.AgentExecution;
+import com.top_logic.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.execution.model.InteractionRequest;
+import com.top_logic.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 

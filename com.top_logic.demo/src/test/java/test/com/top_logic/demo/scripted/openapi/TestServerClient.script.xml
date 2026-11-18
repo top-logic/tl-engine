@@ -4,6 +4,23 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<actions>
+		<action class="test.com.top_logic.service.openapi.common.authentication.StartTestOIDCProviderOp"
+			comment="OpenID provider for the OpenID authentication of the server and the client"
+			issuer-property="tl_test_testopenapi_url"
+		>
+			<clients>
+				<client id="tl-test-openapi-server"
+					id-property="tl_test_testopenapi_server_id"
+					secret="server-s3cr3t"
+					secret-property="tl_test_testopenapi_server_secret"
+				/>
+				<client id="tl-test-openapi-client"
+					id-property="tl_test_testopenapi_client_id"
+					secret="client-s3cr3t"
+					secret-property="tl_test_testopenapi_client_secret"
+				/>
+			</clients>
+		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp"
 			comment="Setup"
 		>

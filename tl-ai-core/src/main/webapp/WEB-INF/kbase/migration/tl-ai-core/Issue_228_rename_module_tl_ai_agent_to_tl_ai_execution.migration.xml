@@ -57,8 +57,8 @@
 		<create-module name="tl.ai.execution">
 			<annotations>
 				<package-binding
-					implementation-package="com.top_logic.tl.ai.core.execution.model.impl"
-					interface-package="com.top_logic.tl.ai.core.execution.model"
+					implementation-package="com.top_logic.ai.core.execution.model.impl"
+					interface-package="com.top_logic.ai.core.execution.model"
 				/>
 			</annotations>
 		</create-module>

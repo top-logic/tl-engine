@@ -18,8 +18,8 @@
 				</declarations>
 			</instance>
 		</config>
-		<config service-class="com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageService">
-			<instance class="com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageService"/>
+		<config service-class="com.top_logic.ai.core.htmlpages.GeneratedHtmlPageService">
+			<instance class="com.top_logic.ai.core.htmlpages.GeneratedHtmlPageService"/>
 		</config>
 	</services>
 </application>

@@ -68,7 +68,7 @@ A command can take values from the agent - the tab to open, the article to show,
 - **The values are checked before anything runs.** The agent passes the values as the JSON object `arguments`; `DeclaredParameters.bind` reads it into the declared type (`JsonConfigurationReader`) and checks it: an unknown or missing mandatory parameter, a value of the wrong type, a value not among the allowed values or options and a violated constraint are refused with a sentence saying which, and the command does not run. A command without parameters refuses any argument.
 - **Arguments of the chain.** The chain of the command, its `<executability>` and `<access>`, and its `label-expr`, `tooltip-expr` and `image-expr` see each parameter as an argument of its name (`$tab`), next to its inputs (`ViewCommand.Config#parameterNames`). The values are seen by this run only; nothing is written to a channel unless the chain does it. A button of the same command passes no values; there, the parameters are `null`.
 
-An object is a parameter like any other: its type is `com.top_logic.model.TLObject`, its format `com.top_logic.tl.ai.core.tools.model.AgentObjectFormat`, and `<object-type>` restricts it to a model type and its specializations:
+An object is a parameter like any other: its type is `com.top_logic.model.TLObject`, its format `com.top_logic.ai.core.tools.model.AgentObjectFormat`, and `<object-type>` restricts it to a model type and its specializations:
 
 ```xml
 <agent-command name="openProject" inputs="project"
@@ -80,7 +80,7 @@ An object is a parameter like any other: its type is `com.top_logic.model.TLObje
                 <tooltip><en>The project whose view to open.</en></tooltip>
             </label>
             <mandatory/>
-            <format value="com.top_logic.tl.ai.core.tools.model.AgentObjectFormat"/>
+            <format value="com.top_logic.ai.core.tools.model.AgentObjectFormat"/>
             <object-type value="app:Project"/>
         </property>
     </parameters>
@@ -96,7 +96,7 @@ An object is a parameter like any other: its type is `com.top_logic.model.TLObje
 - **Read with the user's rights.** The agent passes the object's id, as tool results write it. It is resolved as `present` resolves its `ids` (`TidResolver` with the run's `ModelSecurity`, which the tool binds for the read, `AgentObjectFormat.withSecurity`): an object the user cannot read is refused exactly like an unknown id, an object of another type is refused naming the expected type, and the command does not run.
 - **Under the name of the parameter.** A parameter of the name of an input shadows that input for this run: `$project` above is the object the agent passed, and its executability rules and access checks decide over it exactly as for a click.
 
-A list is a parameter of the type `java.util.List`, its `element-type` (`String`, `com.top_logic.model.TLObject`) and a format of separated elements (a `CommaSeparatedListValueProvider`): `com.top_logic.basic.config.CommaSeparatedStrings` for texts, `com.top_logic.tl.ai.core.tools.model.AgentObjectListFormat` for objects. The model passes it as JSON array (the schema is an array of the element form); `<options>`, an enumeration and `<object-type>` apply to each element:
+A list is a parameter of the type `java.util.List`, its `element-type` (`String`, `com.top_logic.model.TLObject`) and a format of separated elements (a `CommaSeparatedListValueProvider`): `com.top_logic.basic.config.CommaSeparatedStrings` for texts, `com.top_logic.ai.core.tools.model.AgentObjectListFormat` for objects. The model passes it as JSON array (the schema is an array of the element form); `<options>`, an enumeration and `<object-type>` apply to each element:
 
 ```xml
 <property name="projects" type="java.util.List" element-type="com.top_logic.model.TLObject">
@@ -104,7 +104,7 @@ A list is a parameter of the type `java.util.List`, its `element-type` (`String`
         <en>Projects</en>
         <tooltip><en>The projects to compare.</en></tooltip>
     </label>
-    <format value="com.top_logic.tl.ai.core.tools.model.AgentObjectListFormat"/>
+    <format value="com.top_logic.ai.core.tools.model.AgentObjectListFormat"/>
     <object-type value="app:Project"/>
 </property>
 ```

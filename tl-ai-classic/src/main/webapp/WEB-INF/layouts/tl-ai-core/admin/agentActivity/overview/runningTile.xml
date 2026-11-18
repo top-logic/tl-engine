@@ -100,7 +100,7 @@
 			</table>
 			<buttons>
 				<button id="requestCancel"
-					class="com.top_logic.tl.ai.core.execution.layout.RequestCancelCommand"
+					class="com.top_logic.ai.classic.execution.layout.RequestCancelCommand"
 					clique="additional"
 					target="selection(self())"
 				>

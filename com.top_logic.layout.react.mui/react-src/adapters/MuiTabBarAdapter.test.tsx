@@ -4,8 +4,12 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { TabBarStateJson } from 'tl-react-bridge';
+import { replacePart } from 'tl-react-bridge';
 import MuiTabBarAdapter from './MuiTabBarAdapter';
+import MuiBadgeAdapter from './MuiBadgeAdapter';
 import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
+
+replacePart('Badge', MuiBadgeAdapter);
 
 /** Command choosing another tab. */
 const CMD_SELECT_TAB = 'selectTab';
@@ -122,5 +126,22 @@ describe('TLTabBar as MUI Tabs', () => {
 
     expect(screen.queryByRole('tablist')).toBeNull();
     expect(document.getElementById(CONTROL_ID)).toBeNull();
+  });
+});
+
+describe('TLTabBar with a badge as MUI Tabs', () => {
+  it('draws the count after the label of a tab, and reads a badge of null as none', () => {
+    mountTabBar({
+      activeTabId: 'a',
+      tabs: [
+        { ...TABS[0], badge: { content: '5', role: 'error' } } as TabBarStateJson.Tab,
+        { ...TABS[1], badge: null } as unknown as TabBarStateJson.Tab,
+      ],
+    });
+
+    const counted = screen.getByRole('tab', { name: /^Allgemein\s*5$/ });
+    expect(counted.querySelector('.MuiBadge-colorError')).not.toBeNull();
+    const plain = screen.getByRole('tab', { name: 'Details' });
+    expect(plain.querySelector('.MuiBadge-root')).toBeNull();
   });
 });

@@ -136,10 +136,10 @@ A policy with no `<tool-access>` entries at all boots without one: every run of 
 
 ## Why can this account not use this tool?
 
-Every denial is logged at `WARN` under `com.top_logic.tl.ai.core.security.ToolAuthorization`, naming the tool, its group, the account, the roles that account holds, and the rule that decided:
+Every denial is logged at `WARN` under `com.top_logic.ai.core.security.ToolAuthorization`, naming the tool, its group, the account, the roles that account holds, and the rule that decided:
 
 ```
-WARN com.top_logic.tl.ai.core.security.ToolAuthorization - Tool access denied:
+WARN com.top_logic.ai.core.security.ToolAuthorization - Tool access denied:
 tool='secdemo-editing.addTicket' group=data.write user=ben
 roles=[SecurityStructure.user, ticketReader]
 reason=Permission denied: tool 'secdemo-editing.addTicket' requires the
@@ -149,7 +149,7 @@ reason=Permission denied: tool 'secdemo-editing.addTicket' requires the
 The agent gets the same sentence, so it can tell the user what is missing instead of failing opaquely. Neither the log nor the message ever contains data that was withheld - tool names, group names, operations and role names only. A refusal decided for a **capability** rather than for a tool - a change made with `changeData` - names the capability and the operation instead of a tool:
 
 ```
-WARN com.top_logic.tl.ai.core.security.ToolAuthorization - Tool access denied:
+WARN com.top_logic.ai.core.security.ToolAuthorization - Tool access denied:
 capability='data.write' user=ben roles=[SecurityStructure.user, ticketReader]
 reason=Permission denied: changing data with changeData requires the
 'data.write' capability, which none of your roles grants.

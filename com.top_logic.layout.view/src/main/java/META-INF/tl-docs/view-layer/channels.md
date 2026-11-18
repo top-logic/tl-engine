@@ -52,7 +52,7 @@ Every script of the view layer sees the values of its inputs (the `inputs` or `i
 |---|---|---|
 | `<derived-channel>` `expr`, `<channel>` `init` | — | |
 | `<derived-channel>` `reverse` | `value` (the written value) | — |
-| `<table>` / `<tree-table>` / `<composition-table>`: `row-class`, column `<value>`, `<can-update>`, `<options>`, `<object>` | `row` | `row-as` on the table |
+| `<table>` / `<tree-table>` / `<composition-table>`: `row-class`, `row-editable` (not on `<composition-table>`), column `<value>`, `<can-update>`, `<options>`, `<object>` | `row` | `row-as` on the table |
 | column `<update>` | `row`, `value` (the entered value) | `row-as`, `value-as` on the column |
 | column `<tooltip>` | `row`, `value` (the cell value; in a group header row only the group's `value`) | `row-as`, `value-as` on the column |
 | column `cell-class` | `row`, `value` (the cell value) | `row-as`, `value-as` on the column |

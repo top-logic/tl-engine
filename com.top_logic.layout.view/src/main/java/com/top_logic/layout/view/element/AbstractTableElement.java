@@ -23,6 +23,7 @@ import java.util.function.Supplier;
 import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.layout.view.command.ActionScopeDefinition;
 import com.top_logic.layout.view.command.ActionScope;
@@ -85,6 +86,7 @@ import com.top_logic.layout.view.table.FilterStateConfig;
 import com.top_logic.layout.view.table.FilterStateTemplate;
 import com.top_logic.layout.view.table.RowAsConfig;
 import com.top_logic.layout.view.table.RowCommandColumn;
+import com.top_logic.layout.view.table.RowFunction;
 import com.top_logic.layout.view.table.TableDragConfig;
 import com.top_logic.layout.view.table.TableExportCommand;
 import com.top_logic.model.TLModel;
@@ -92,6 +94,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.search.expr.SecurityFilterReport;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
@@ -176,6 +179,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		/** Configuration name for {@link #getOnRemove()}. */
 		String ON_REMOVE = "on-remove";
+
+		/** Configuration name for {@link #getRowEditable()}. */
+		String ROW_EDITABLE = "row-editable";
 
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
@@ -336,6 +342,39 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 */
 		@Name(ON_REMOVE)
 		RowSetBinding.RemoveMode getOnRemove();
+
+		/**
+		 * Whether a row can be edited at all: an expression over the row yielding whether its cells
+		 * offer the edit.
+		 *
+		 * <p>
+		 * The expression sees the row object as the variable {@value RowAsConfig#DEFAULT_ROW_AS},
+		 * or by the name the table gives it with {@value RowAsConfig#ROW_AS}, and the values of the
+		 * table's inputs. A row the expression refuses shows all of its cells read-only, whatever
+		 * the {@link #getRowEdit() row-edit} policy, the <code>can-update</code> of a column or the
+		 * {@link #getEditInPlace() edit in place} would offer, and it cannot be removed: it has no
+		 * delete button, and the removal of the selected rows is disabled while it is selected.
+		 * Rows can still be added below it.
+		 * </p>
+		 *
+		 * <p>
+		 * The condition only restricts: a cell of an accepted row is edited as its column offers.
+		 * Unset (the default), every row is edited as the columns offer.
+		 * </p>
+		 *
+		 * <p>
+		 * Example editing the milestones of a tree table only, not the scopes grouping them:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;row-editable&gt;$row.instanceOf(`my:Milestone`)&lt;/row-editable&gt;
+		 * </pre>
+		 */
+		@Name(ROW_EDITABLE)
+		@Nullable
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getRowEditable();
 
 		/**
 		 * Optional {@link ViewChannel} to write the selected row object(s) to.
@@ -858,6 +897,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	/** The compiled {@link Config#getTypesExpr()}, {@code null} for a table with fixed types. */
 	private final QueryExecutor _typesExpr;
 
+	/** The compiled {@link Config#getRowEditable() row condition of the edit}. */
+	private final RowFunction<Boolean> _rowEditable;
+
 	/**
 	 * A {@link PresetConfig} with its criterion expressions compiled.
 	 *
@@ -928,6 +970,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		TableExportCommand.Config export = config.getExport();
 		_export = export == null ? null : new TableExportCommand(export);
+
+		_rowEditable = RowFunction.compile(config, Config.ROW_EDITABLE, SearchExpression::isTrue);
 
 		_typesExpr = InputScript.compile(config, Config.TYPES_EXPR);
 		if (_typesExpr != null && !config.getTypes().isEmpty()) {
@@ -1058,7 +1102,39 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		control.setTrailingColumns(this.<TLObject> rowCommandColumns(activation, control::activate));
 		control.setRowCssClass(rowCssClass);
 		control.setRowColor(rowColor);
+		control.setRowEditable(rowEditable(inputChannels));
 		return control;
+	}
+
+	/**
+	 * Which rows can be edited at all, as the {@link Config#getRowEditable() row condition} says.
+	 *
+	 * @param inputChannels
+	 *        The table's input channels, whose current values the condition sees.
+	 * @return The rows that can be edited, {@code null} for a table editing every row as its columns
+	 *         offer.
+	 */
+	protected final Predicate<Object> rowEditable(List<ViewChannel> inputChannels) {
+		Function<Object, Boolean> condition = _rowEditable.bind(inputChannels);
+		return condition == null ? null : condition::apply;
+	}
+
+	/**
+	 * The given column descriptors with their edit restricted to the rows the
+	 * {@link Config#getRowEditable() row condition} accepts.
+	 *
+	 * @param rowEditable
+	 *        See {@link #rowEditable(List)}, {@code null} for no restriction.
+	 */
+	private static List<ColumnSetup> restrictedTo(List<ColumnSetup> setups, Predicate<Object> rowEditable) {
+		if (rowEditable == null) {
+			return setups;
+		}
+		List<ColumnSetup> result = new ArrayList<>(setups.size());
+		for (ColumnSetup setup : setups) {
+			result.add(setup.restrictedTo(rowEditable));
+		}
+		return result;
 	}
 
 	/**
@@ -1202,7 +1278,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		List<ColumnDeclaration> declarations = columns(types, resolution.rowType());
 		List<String> declaredNames = ColumnDeclarations.declaredNames(declarations);
 		TableId tableId = tableId(types);
-		List<ColumnSetup> setups = ColumnDeclarations.resolve(declarations, resolution);
+		List<ColumnSetup> setups = restrictedTo(ColumnDeclarations.resolve(declarations, resolution),
+			rowEditable(ChannelInputs.resolve(context, _config.getInputs())));
 		// The activation button and the cells edited in place reach the table control through
 		// this holder, since the control is built from the view over these very columns.
 		ControlActivation activate = new ControlActivation();
@@ -1373,6 +1450,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * </p>
 	 *
 	 * <p>
+	 * The inputs of a table with a {@link Config#getRowEditable() row condition} are cell inputs as
+	 * well, since the condition decides which cells are edited - except the table's own
+	 * {@link Config#getSelection() selection channel}, see below.
+	 * </p>
+	 *
+	 * <p>
 	 * A channel a column reads that is no input of the table is followed as well: its change
 	 * cannot change the rows, so they are not queried again, but the cells are built again and the
 	 * rows filtered anew, as for a cell input of the table.
@@ -1390,6 +1473,16 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	protected final InputRoles inputRoles(ViewContext context, List<ViewChannel> inputChannels) {
 		List<ViewChannel> columnInputs = ChannelInputs.resolve(context, ColumnDeclarations.inputs(_declarations));
 		Set<ViewChannel> cellInputs = new HashSet<>(columnInputs);
+		ChannelRef selectionRef = _config.getSelection();
+		ViewChannel ownSelection = selectionRef != null ? context.resolveChannel(selectionRef) : null;
+		if (_rowEditable.isDefined()) {
+			// Which cells are edited follows the inputs the row condition sees.
+			for (ViewChannel input : inputChannels) {
+				if (input != ownSelection) {
+					cellInputs.add(input);
+				}
+			}
+		}
 
 		List<ViewChannel> columnOnly = new ArrayList<>();
 		for (ViewChannel input : columnInputs) {
@@ -1405,13 +1498,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			}
 		}
 
-		ChannelRef selectionRef = _config.getSelection();
 		List<ViewChannel> rowIndependent = List.of();
-		if (selectionRef != null) {
-			ViewChannel selection = context.resolveChannel(selectionRef);
-			if (cellIndependent.contains(selection)) {
-				rowIndependent = List.of(selection);
-			}
+		if (ownSelection != null && cellIndependent.contains(ownSelection)) {
+			rowIndependent = List.of(ownSelection);
 		}
 		return new InputRoles(rowIndependent, cellIndependent, columnOnly);
 	}

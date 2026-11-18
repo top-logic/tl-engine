@@ -47,6 +47,9 @@ import com.top_logic.react.flow.svg.event.SVGClickEvent;
 import com.top_logic.react.flow.svg.event.SVGClickHandler;
 import com.top_logic.react.flow.svg.event.SVGDropEvent;
 import com.top_logic.react.flow.svg.event.SVGDropHandler;
+import com.top_logic.react.flow.svg.event.SVGEvent;
+import com.top_logic.react.flow.svg.event.SVGKeyEvent;
+import com.top_logic.react.flow.svg.event.SVGKeyHandler;
 import com.top_logic.react.flow.svg.event.SVGPanEvent;
 import com.top_logic.react.flow.svg.event.SVGPanHandler;
 import com.top_logic.react.flow.svg.event.SVGWheelEvent;
@@ -66,6 +69,9 @@ import com.top_logic.react.flow.data.Widget;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class SVGBuilder implements SvgWriter {
+
+	/** DOM event fired when a key is pressed on the focused element. */
+	private static final String KEYDOWN_EVENT = "keydown";
 
 	private OMSVGDocument _doc;
 
@@ -120,7 +126,7 @@ public class SVGBuilder implements SvgWriter {
 	}
 
 	/**
-	 * Sets the callback invoked when {@link SVGWheelEvent#requestRelayout()} is called.
+	 * Sets the callback invoked when {@link SVGEvent#requestRelayout()} is called.
 	 */
 	public void setRelayoutCallback(Runnable callback) {
 		_relayoutCallback = callback;
@@ -519,6 +525,7 @@ public class SVGBuilder implements SvgWriter {
 	}
 
 	private SVGClickEvent createClickEvent(OMSVGSVGElement svgRoot, MouseEvent<?> event, Object sender) {
+		Runnable relayout = _relayoutCallback;
 		return new SVGClickEvent() {
 			@Override
 			public Object getSender() {
@@ -583,7 +590,60 @@ public class SVGBuilder implements SvgWriter {
 			public void preventDefault() {
 				event.getNativeEvent().preventDefault();
 			}
+
+			@Override
+			public void requestRelayout() {
+				relayout.run();
+			}
 		};
+	}
+
+	@Override
+	public Registration attachOnKeyDown(SVGKeyHandler handler, Object sender) {
+		if (_current == null) {
+			throw new IllegalStateException(
+				"The last built SVG element is closed. In this state it is not possible to add a "
+					+ SVGKeyHandler.class.getName()
+					+ "! Please make sure the handler is added within the desired element before its content.");
+		}
+		elemental2.dom.Element element = jsinterop.base.Js.uncheckedCast(_current.getElement());
+		Runnable relayout = _relayoutCallback;
+		elemental2.dom.EventListener listener = evt -> {
+			elemental2.dom.KeyboardEvent ke = (elemental2.dom.KeyboardEvent) evt;
+			handler.onKeyDown(new SVGKeyEvent() {
+				@Override
+				public Object getSender() {
+					return sender;
+				}
+
+				@Override
+				public String getKey() {
+					return ke.key;
+				}
+
+				@Override
+				public void stopPropagation() {
+					ke.stopPropagation();
+				}
+
+				@Override
+				public void preventDefault() {
+					ke.preventDefault();
+				}
+
+				@Override
+				public void updateTransform(Widget owner, String purpose, double translateX, double translateY) {
+					setTranslate(_ids, owner, purpose, translateX, translateY);
+				}
+
+				@Override
+				public void requestRelayout() {
+					relayout.run();
+				}
+			});
+		};
+		element.addEventListener(KEYDOWN_EVENT, listener);
+		return () -> element.removeEventListener(KEYDOWN_EVENT, listener);
 	}
 
 	@Override

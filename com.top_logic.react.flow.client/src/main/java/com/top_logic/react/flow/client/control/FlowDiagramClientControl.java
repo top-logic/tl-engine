@@ -56,6 +56,7 @@ import elemental2.dom.Event;
 import elemental2.dom.EventListener;
 import elemental2.dom.FontFaceSet;
 import elemental2.dom.HTMLDivElement;
+import elemental2.dom.HTMLElement;
 import elemental2.dom.Image;
 import elemental2.dom.KeyboardEvent;
 import elemental2.dom.PointerEvent;
@@ -1272,11 +1273,19 @@ public class FlowDiagramClientControl implements DiagramContext {
 	 * new layout, and after the control was resized. The view box displayed so far is kept, even if
 	 * it was not stored in the model.
 	 * </p>
+	 *
+	 * <p>
+	 * An element of the diagram that has the keyboard focus gets it back after the re-draw, if the
+	 * re-drawn diagram contains an element with the same ID (e.g. a toggle that requested the new
+	 * layout upon a key press).
+	 * </p>
 	 */
 	void relayout() {
 		if (_diagram == null) {
 			return;
 		}
+
+		String focusedId = focusedElementId();
 
 		layoutDiagram(_diagram);
 
@@ -1299,9 +1308,42 @@ public class FlowDiagramClientControl implements DiagramContext {
 		// Re-inject the drag styles (lost during SVG clear).
 		injectDragStyles();
 
+		restoreFocus(focusedId);
+
 		// Drop transient layout-induced scope changes.
 		_scope.dropChanges();
 		_scope.reset();
+	}
+
+	/**
+	 * The ID of the element of the diagram that has the keyboard focus, or {@code null} if the
+	 * focus is outside the diagram or on an element without ID.
+	 */
+	private String focusedElementId() {
+		Element active = DomGlobal.document.activeElement;
+		if (active == null) {
+			return null;
+		}
+		Element svgElement = Js.cast(_svg.getElement());
+		if (active == svgElement || !svgElement.contains(active)) {
+			return null;
+		}
+		String id = active.id;
+		return id == null || id.isEmpty() ? null : id;
+	}
+
+	/**
+	 * Gives the keyboard focus to the element of the diagram with the given ID.
+	 */
+	private void restoreFocus(String focusedId) {
+		if (focusedId == null) {
+			return;
+		}
+		Element svgElement = Js.cast(_svg.getElement());
+		Element focused = svgElement.querySelector("[id=\"" + focusedId + "\"]");
+		if (focused != null) {
+			Js.<HTMLElement> uncheckedCast(focused).focus();
+		}
 	}
 
 	void onChange(Object... args) {

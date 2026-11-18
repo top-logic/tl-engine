@@ -123,6 +123,26 @@ g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--tl-borde
 }
 
 /*
+ * The toggle collapsing the children of a row of a Gantt chart, in the row label column. The model
+ * paints the chevron in a fixed gray, which an exported PDF keeps; on the screen it takes the
+ * secondary text color, and the toggle shows the focus ring while it has the keyboard focus.
+ */
+.tl-gantt-row-toggle {
+	cursor: pointer;
+	outline: none;
+}
+.tl-gantt-row-toggle-chevron {
+	stroke: var(--tl-text-secondary);
+}
+.tl-gantt-row-toggle:hover > rect {
+	fill: var(--tl-surface-interactive-hover);
+}
+.tl-gantt-row-toggle:focus-visible > rect {
+	stroke: var(--tl-focus-ring);
+	stroke-width: var(--tl-focus-width);
+}
+
+/*
  * The scrollbars a Gantt chart draws while its content is larger than its box: a track along the
  * edge of the scrolling area and a thumb showing the visible part. Only drawn on the screen, an
  * export shows the whole chart.

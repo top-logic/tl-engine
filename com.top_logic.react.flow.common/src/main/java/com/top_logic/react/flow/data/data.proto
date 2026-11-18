@@ -1128,8 +1128,27 @@ message GanttRow {
 	@Ref
 	Box label;
 
-	/** Child rows forming a hierarchy. Phase 1 renders the tree flat with indentation. */
+	/**
+	 * Child rows forming a hierarchy.
+	 *
+	 * <p>
+	 * The children are shown below their parent row, indented by {@link GanttLayout#indentWidth}
+	 * per level. A row with children shows a toggle in the label column that hides the children
+	 * (see {@link #collapsed}).
+	 * </p>
+	 */
 	repeated GanttRow children;
+
+	/**
+	 * Whether the {@link #children} of this row are hidden together with their items and the
+	 * edges of these items, so that the rows below move up.
+	 *
+	 * <p>
+	 * Client-only (transient) view state, switched by the toggle in the label column. It is not
+	 * sent to the server and does not change the model, all rows start expanded.
+	 * </p>
+	 */
+	transient bool collapsed;
 
 	/** Whether items may be dropped into this row during drag. Default true. */
 	bool acceptsDrop = true;

@@ -132,6 +132,13 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 	 * Whether every row type of the table holding the given attribute requires a value for it, its
 	 * visibility lets it be edited, and no row decides that by a {@link DynamicVisibility dynamic
 	 * mode}.
+	 *
+	 * <p>
+	 * A dynamic mode may make a mandatory attribute optional in some rows (mode
+	 * {@link com.top_logic.model.form.definition.FormVisibility#EDITABLE}), and whether its script
+	 * ever does cannot be told in advance. The heading of such a column therefore promises nothing;
+	 * the input of each cell that requires a value still shows its own mark.
+	 * </p>
 	 */
 	private static boolean alwaysRequired(ColumnResolution scope, String attribute) {
 		boolean held = false;

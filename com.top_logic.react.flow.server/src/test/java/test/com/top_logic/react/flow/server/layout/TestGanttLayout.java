@@ -24,6 +24,7 @@ import com.top_logic.react.flow.data.GanttDecoration;
 import com.top_logic.react.flow.data.GanttEdge;
 import com.top_logic.react.flow.data.GanttEndpoint;
 import com.top_logic.react.flow.data.GanttEnforce;
+import com.top_logic.react.flow.data.GanttItem;
 import com.top_logic.react.flow.data.GanttLayout;
 import com.top_logic.react.flow.data.GanttLineDecoration;
 import com.top_logic.react.flow.data.GanttPoint;
@@ -710,6 +711,231 @@ public class TestGanttLayout extends TestCase {
 		addRowsWithLabels(layout, rows);
 		layout.addContent(span.getBox());
 		return layout;
+	}
+
+	// -----------------------------------------------------------------------
+	// Strict dependencies limit dragging
+	// -----------------------------------------------------------------------
+
+	/** X coordinate of position 0 in the charts built by {@link #dependencyChart(List, List)}. */
+	private static final double CHART_X0 = 200.0;
+
+	public void testStrictMoveStopsSuccessorAtPredecessorEnd() {
+		GanttSpan a = span("a", "r1", 10.0, 30.0, "A");
+		GanttSpan b = span("b", "r2", 40.0, 60.0, "B");
+		GanttLayout layout = dependencyChart(items(a, b), edges(endToStart("a", "b", GanttEnforce.STRICT)));
+
+		double[] result = drag(layout).constrainMove(b.getBox(), CHART_X0 + 20.0, b.getBox().getY());
+		assertEquals("successor stops at the end of its predecessor", CHART_X0 + 30.0, result[0], 1e-9);
+	}
+
+	public void testStrictMoveStopsPredecessorAtSuccessorStart() {
+		GanttSpan a = span("a", "r1", 10.0, 30.0, "A");
+		GanttSpan b = span("b", "r2", 40.0, 60.0, "B");
+		GanttLayout layout = dependencyChart(items(a, b), edges(endToStart("a", "b", GanttEnforce.STRICT)));
+
+		double[] result = drag(layout).constrainMove(a.getBox(), CHART_X0 + 35.0, a.getBox().getY());
+		assertEquals("predecessor ends at the start of its successor", CHART_X0 + 20.0, result[0], 1e-9);
+	}
+
+	public void testStrictMoveKeepsAllowedPosition() {
+		GanttSpan a = span("a", "r1", 10.0, 30.0, "A");
+		GanttSpan b = span("b", "r2", 40.0, 60.0, "B");
+		GanttLayout layout = dependencyChart(items(a, b), edges(endToStart("a", "b", GanttEnforce.STRICT)));
+
+		double[] result = drag(layout).constrainMove(b.getBox(), CHART_X0 + 33.0, b.getBox().getY());
+		assertEquals("move within the limits", CHART_X0 + 33.0, result[0], 1e-9);
+	}
+
+	public void testStrictResizeStopsPredecessorEndAtSuccessorStart() {
+		GanttSpan a = span("a", "r1", 10.0, 30.0, "A");
+		GanttSpan b = span("b", "r2", 40.0, 60.0, "B");
+		GanttLayout layout = dependencyChart(items(a, b), edges(endToStart("a", "b", GanttEnforce.STRICT)));
+
+		double result = drag(layout).constrainResize(a.getBox(), DragEdge.E, CHART_X0 + 50.0);
+		assertEquals("end stops at the start of the successor", CHART_X0 + 40.0, result, 1e-9);
+	}
+
+	public void testStrictResizeStopsSuccessorStartAtPredecessorEnd() {
+		GanttSpan a = span("a", "r1", 10.0, 30.0, "A");
+		GanttSpan b = span("b", "r2", 40.0, 60.0, "B");
+		GanttLayout layout = dependencyChart(items(a, b), edges(endToStart("a", "b", GanttEnforce.STRICT)));
+
+		double result = drag(layout).constrainResize(b.getBox(), DragEdge.W, CHART_X0 + 20.0);
+		assertEquals("start stops at the end of the predecessor", CHART_X0 + 30.0, result, 1e-9);
+	}
+
+	public void testStrictResizeOfOtherEndpointNotLimited() {
+		GanttSpan a = span("a", "r1", 10.0, 30.0, "A");
+		GanttSpan b = span("b", "r2", 40.0, 60.0, "B");
+		GanttLayout layout = dependencyChart(items(a, b), edges(endToStart("a", "b", GanttEnforce.STRICT)));
+
+		double result = drag(layout).constrainResize(b.getBox(), DragEdge.E, CHART_X0 + 90.0);
+		assertEquals("end of the successor is free", CHART_X0 + 90.0, result, 1e-9);
+	}
+
+	public void testUnenforcedDependencyDoesNotLimitDrag() {
+		GanttSpan a = span("a", "r1", 10.0, 30.0, "A");
+		GanttSpan b = span("b", "r2", 40.0, 60.0, "B");
+		GanttLayout layout = dependencyChart(items(a, b), edges(endToStart("a", "b", GanttEnforce.NONE)));
+		DragController drag = drag(layout);
+
+		assertEquals("successor moves freely", CHART_X0 + 20.0,
+			drag.constrainMove(b.getBox(), CHART_X0 + 20.0, b.getBox().getY())[0], 1e-9);
+		assertEquals("predecessor moves freely", CHART_X0 + 35.0,
+			drag.constrainMove(a.getBox(), CHART_X0 + 35.0, a.getBox().getY())[0], 1e-9);
+		assertEquals("predecessor end resizes freely", CHART_X0 + 50.0,
+			drag.constrainResize(a.getBox(), DragEdge.E, CHART_X0 + 50.0), 1e-9);
+		assertEquals("successor start resizes freely", CHART_X0 + 20.0,
+			drag.constrainResize(b.getBox(), DragEdge.W, CHART_X0 + 20.0), 1e-9);
+	}
+
+	public void testStrictestOfSeveralDependenciesApplies() {
+		GanttSpan a = span("a", "r1", 10.0, 30.0, "A");
+		GanttSpan c = span("c", "r1", 5.0, 35.0, "C");
+		GanttSpan b = span("b", "r2", 40.0, 60.0, "B");
+		GanttSpan d = span("d", "r3", 70.0, 80.0, "D");
+		GanttSpan e = span("e", "r3", 65.0, 90.0, "E");
+		GanttLayout layout = dependencyChart(items(a, b, c, d, e), edges(
+			endToStart("a", "b", GanttEnforce.STRICT),
+			endToStart("c", "b", GanttEnforce.STRICT),
+			endToStart("b", "d", GanttEnforce.STRICT),
+			endToStart("b", "e", GanttEnforce.STRICT)));
+		DragController drag = drag(layout);
+
+		assertEquals("latest predecessor end", CHART_X0 + 35.0,
+			drag.constrainMove(b.getBox(), CHART_X0 + 20.0, b.getBox().getY())[0], 1e-9);
+		// The end of "b" must not pass the earliest successor start 65.
+		assertEquals("earliest successor start", CHART_X0 + 45.0,
+			drag.constrainMove(b.getBox(), CHART_X0 + 60.0, b.getBox().getY())[0], 1e-9);
+	}
+
+	public void testStrictMoveSnapsBeforeStopping() {
+		GanttSpan a = span("a", "r1", 10.0, 32.5, "A");
+		GanttSpan b = span("b", "r2", 40.0, 60.0, "B");
+		GanttLayout layout = dependencyChart(items(a, b), edges(endToStart("a", "b", GanttEnforce.STRICT)));
+		layout.setSnapTo(5.0);
+
+		double[] result = drag(layout).constrainMove(b.getBox(), CHART_X0 + 21.0, b.getBox().getY());
+		assertEquals("stops exactly at the end of the predecessor", CHART_X0 + 32.5, result[0], 1e-9);
+	}
+
+	public void testStrictMoveOfPointUsesItsPosition() {
+		GanttSpan a = span("a", "r1", 10.0, 30.0, "A");
+		GanttPoint p = point("p", "r2", 50.0, "P");
+		GanttLayout layout = dependencyChart(items(a, p), edges(endToStart("a", "p", GanttEnforce.STRICT)));
+		double halfWidth = p.getBox().getWidth() / 2.0;
+
+		double[] result = drag(layout).constrainMove(p.getBox(), CHART_X0 + 20.0 - halfWidth, p.getBox().getY());
+		assertEquals("point stops at the end of its predecessor", CHART_X0 + 30.0, result[0] + halfWidth, 1e-9);
+	}
+
+	public void testContradictingStrictDependenciesBlockMoveInTime() {
+		// "a" ends after "b" starts: the data already violates the dependency a -> b.
+		GanttSpan a = span("a", "r1", 10.0, 30.0, "A");
+		GanttSpan b = span("b", "r2", 20.0, 60.0, "B");
+		GanttSpan c = span("c", "r3", 50.0, 70.0, "C");
+		GanttLayout layout = dependencyChart(items(a, b, c), edges(
+			endToStart("a", "b", GanttEnforce.STRICT),
+			endToStart("b", "c", GanttEnforce.STRICT)));
+		double r3Y = b.getBox().getY() + DEFAULT_ROW_TOTAL_HEIGHT;
+
+		double[] result = drag(layout).constrainMove(b.getBox(), CHART_X0 + 25.0, r3Y);
+		assertEquals("position in time kept", b.getBox().getX(), result[0], 1e-9);
+		assertEquals("row change applies", r3Y, result[1], 1e-9);
+	}
+
+	public void testMinWidthContradictingStrictDependencyBlocksResize() {
+		GanttSpan b = span("b", "r1", 40.0, 60.0, "B");
+		// "c" starts before "b" ends: the data already violates the dependency b -> c.
+		GanttSpan c = span("c", "r2", 40.5, 70.0, "C");
+		GanttLayout layout = dependencyChart(items(b, c), edges(endToStart("b", "c", GanttEnforce.STRICT)));
+
+		double result = drag(layout).constrainResize(b.getBox(), DragEdge.E, CHART_X0 + 50.0);
+		assertEquals("resize blocked", CHART_X0 + 60.0, result, 1e-9);
+	}
+
+	public void testViolatedStyleOfSpans() throws Exception {
+		assertFalse("successor starts at the end of its predecessor",
+			isDrawnViolated(span("a", "r1", 10.0, 30.0, "A"), span("b", "r2", 30.0, 60.0, "B")));
+		assertTrue("successor starts before the end of its predecessor",
+			isDrawnViolated(span("a", "r1", 10.0, 30.0, "A"), span("b", "r2", 29.0, 60.0, "B")));
+	}
+
+	public void testViolatedStyleOfPoints() throws Exception {
+		assertFalse("point at the end of its predecessor",
+			isDrawnViolated(span("a", "r1", 10.0, 30.0, "A"), point("b", "r2", 30.0, "B")));
+		assertTrue("point before the end of its predecessor",
+			isDrawnViolated(span("a", "r1", 10.0, 30.0, "A"), point("b", "r2", 29.0, "B")));
+		assertFalse("successor starts at a point predecessor",
+			isDrawnViolated(point("a", "r1", 30.0, "A"), span("b", "r2", 30.0, 60.0, "B")));
+		assertTrue("successor starts before a point predecessor",
+			isDrawnViolated(point("a", "r1", 30.0, "A"), span("b", "r2", 29.0, 60.0, "B")));
+	}
+
+	/**
+	 * Whether the strict edge from the end of the first to the start of the second item is drawn
+	 * in its violated style.
+	 */
+	private static boolean isDrawnViolated(GanttItem a, GanttItem b) throws Exception {
+		GanttEdge edge = endToStart(a.getId(), b.getId(), GanttEnforce.STRICT)
+			.setStrokeColor("#123456")
+			.setViolatedStrokeColor("#ff0000");
+		return edgeGroup(renderToSvg(dependencyDiagram(items(a, b), edges(edge)))).contains("#FF0000");
+	}
+
+	private static GanttPoint point(String id, String rowId, double at, String label) {
+		return GanttPoint.create()
+			.setId(id).setRowId(rowId)
+			.setAt(at)
+			.setBox(cell(label));
+	}
+
+	private static GanttEdge endToStart(String sourceId, String targetId, GanttEnforce enforce) {
+		return GanttEdge.create()
+			.setId(sourceId + "->" + targetId)
+			.setSourceItemId(sourceId)
+			.setSourceEndpoint(GanttEndpoint.END)
+			.setTargetItemId(targetId)
+			.setTargetEndpoint(GanttEndpoint.START)
+			.setEnforce(enforce);
+	}
+
+	private static List<GanttItem> items(GanttItem... items) {
+		return Arrays.asList(items);
+	}
+
+	private static List<GanttEdge> edges(GanttEdge... edges) {
+		return Arrays.asList(edges);
+	}
+
+	private static DragController drag(GanttLayout layout) {
+		return (DragController) layout;
+	}
+
+	/**
+	 * Lays out a chart with the rows "r1" to "r3", the given items and edges, a label column of
+	 * width {@link #CHART_X0} and the zoom 1.
+	 */
+	private static GanttLayout dependencyChart(List<GanttItem> items, List<GanttEdge> edges) {
+		return (GanttLayout) dependencyDiagram(items, edges).getRoot();
+	}
+
+	/** The laid out diagram of a {@link #dependencyChart(List, List)}. */
+	private static Diagram dependencyDiagram(List<GanttItem> items, List<GanttEdge> edges) {
+		GanttLayout layout = GanttLayout.create()
+			.setRowLabelMinWidth(CHART_X0)
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0)
+			.setItems(items)
+			.setEdges(edges);
+		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1"), row("r2", "Row 2"), row("r3", "Row 3")));
+		for (GanttItem item : items) {
+			layout.addContent(item.getBox());
+		}
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+		assertEquals("label column width", CHART_X0, layout.getColumnWidth(), 1e-9);
+		return d;
 	}
 
 	// -----------------------------------------------------------------------

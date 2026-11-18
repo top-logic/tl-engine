@@ -213,6 +213,9 @@ e3 = reactFlowGanttEdge(model: "dep:docs->approved", sourceModel: "task:docs", s
    source row instead of crossing the items of the row in between. */
 e4 = reactFlowGanttEdge(model: "dep:docs->launch", sourceModel: "task:docs", sourceEndpoint: "END", targetModel: "task:launch", targetEndpoint: "START",
 	strokeRole: "category-3", strokeWidth: 1.5, targetSymbol: "filledArrow");
+/* A strict dependency: dragging "QA" stops at the end of "Build", dragging "Build" stops at the start of "QA". */
+e5 = reactFlowGanttEdge(model: "dep:build->qa", sourceModel: "task:build", sourceEndpoint: "END", targetModel: "task:qa", targetEndpoint: "START", enforce: "STRICT",
+	strokeColor: "#808080", targetSymbol: "filledArrow");
 
 /* === Decorations === */
 
@@ -232,7 +235,7 @@ freeze = reactFlowGanttRangeDeco(model: "freeze", from: 20513, to: 20520, colorR
 reactFlowGantt(
 	rootRows:    list($r_axis1, $r_axis2, $r_markers, $r_design, $r_impl, $r_test, $r_deploy, $r_docs, $r_review, $r_launch, $r_maint),
 	items:       concat($yearSpans, $monthYearSpans, $monthSpans, $daySpans, list($freezeLabel, $spec, $build, $beta, $qa, $fixed_row, $no_resize, $deploy_item, $docs_item, $review_item, $launch_item, $maint_item, $docs_approved, $docs_anchor)),
-	edges:       list($e1, $e2, $e3, $e4),
+	edges:       list($e1, $e2, $e3, $e4, $e5),
 	decorations: list($gl_feb, $gl_mar, $gl_apr, $gl_may, $freeze, $today),
 	rangeMin:    $rangeMin,
 	rangeMax:    $rangeMax,

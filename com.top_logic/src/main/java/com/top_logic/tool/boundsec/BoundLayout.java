@@ -14,6 +14,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.component.LayoutContainerBoundChecker;
 import com.top_logic.mig.html.layout.Layout;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.securityObjectProvider.SecurityRootObjectProvider;
 
 /**
  * A Layout that that will care for Bound security.
@@ -94,8 +95,11 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 			return _securityMaster;
 		}
 
-		if (getChildCount() == 1) {
-			/* When there is only one child, treat it as security master. */
+		if (getChildCount() == 1 && !hasOwnSecurityObjectProvider()) {
+			/* When there is only one child, treat it as security master - unless this layout
+			 * configures a security object of its own. A dialog always has exactly one child (its
+			 * content layout), so otherwise a security object configured at the dialog would be
+			 * ignored. */
 			LayoutComponent child = getChild(0);
 			if (child instanceof BoundCheckerComponent childChecker) {
 				// Only BoundCheckerComponent can be "security master".
@@ -103,6 +107,20 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Whether this layout configures a {@link #getSecurityObjectProvider() security object
+	 * provider} that differs from the default {@link SecurityRootObjectProvider}.
+	 *
+	 * <p>
+	 * The default can not be detected by checking whether the configuration value is set: Layout
+	 * templates (e.g. the dialog template) always pass the security object to the layout, even if
+	 * it is not specified in the template call.
+	 * </p>
+	 */
+	private boolean hasOwnSecurityObjectProvider() {
+		return !(_securityObjectProvider instanceof SecurityRootObjectProvider);
 	}
 
 	/**

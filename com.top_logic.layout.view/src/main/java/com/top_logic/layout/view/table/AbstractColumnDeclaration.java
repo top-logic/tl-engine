@@ -151,12 +151,27 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		/** Configuration name for {@link #getSortable()}. */
 		String SORTABLE = "sortable";
 
+		/** Configuration name for {@link #getEmptyGroupLabel()}. */
+		String EMPTY_GROUP_LABEL = "empty-group-label";
+
 		/**
 		 * The column header label, or unset to keep the label the column derives - the label of the
 		 * attribute it shows, and the column's name where no attribute says it.
 		 */
 		@Name(LABEL)
 		ResKey getLabel();
+
+		/**
+		 * What the header row of a group shows when the table is grouped by this column and the
+		 * rows of the group have no value in it.
+		 *
+		 * <p>
+		 * Unset, the group is labeled with the neutral "(empty)". Set it where the missing value
+		 * means something to the user, e.g. "Not assigned" for a column of persons responsible.
+		 * </p>
+		 */
+		@Name(EMPTY_GROUP_LABEL)
+		ResKey getEmptyGroupLabel();
 
 		/**
 		 * An application-defined filter for this column, overriding the type-derived default. The
@@ -530,6 +545,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 	private final ResKey _label;
 
+	private final ResKey _emptyGroupLabel;
+
 	private final ColumnBinding _binding;
 
 	private final boolean _readonly;
@@ -602,6 +619,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 */
 	protected AbstractColumnDeclaration(InstantiationContext context, Config<?> config) {
 		_label = config.getLabel();
+		_emptyGroupLabel = config.getEmptyGroupLabel();
 		_binding = binding(context, config.getFilter());
 		_readonly = config.getReadonly();
 		_canUpdate = InputScript.compile(config, Config.CAN_UPDATE);
@@ -680,6 +698,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 */
 	protected AbstractColumnDeclaration(boolean hiddenByDefault) {
 		_label = null;
+		_emptyGroupLabel = null;
 		_binding = ColumnBinding.TYPE_DERIVED;
 		_readonly = false;
 		_canUpdate = null;
@@ -772,7 +791,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 			_width, editing(editing, inputs), aggregate(_aggregate, inputs), comparator(_comparator, inputs),
 			_hiddenByDefault, _export, tooltip(_tooltip, inputs), cellClass(_cellClass, inputs),
 			cellRole(_cellRole, inputs), _display, _sortable, _align, exists(_existsIf, _existsInputs, scope),
-			cellExists, header(scope));
+			cellExists, header(scope), ChannelCondition.ALWAYS, _emptyGroupLabel);
 	}
 
 	/**

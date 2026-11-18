@@ -7,10 +7,10 @@ package com.top_logic.table.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -23,7 +23,6 @@ import java.util.function.Predicate;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.FilterSpec;
-import com.top_logic.table.Group;
 import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.MatchCounts;
@@ -46,16 +45,23 @@ import com.top_logic.table.SortSpec;
  * </p>
  *
  * <p>
- * Single-level grouping is supported: a non-empty {@link GroupSpec} buckets the
- * filtered/sorted rows by the first grouping column's value and emits an expandable
- * {@link GroupRow group header} per bucket (which doubles as the subtotal row) followed by
- * the group's data rows. The groups are ordered by the grouping column's own
- * {@link Column#sort() comparator}, a {@code null} group value last; the direction is taken
- * from the {@link SortSpec} if it sorts the grouping column, ascending otherwise. A grouping
- * column without sort capability keeps the groups in the order of the given rows - the order in
- * which the first rows of the groups appear in the backing list, whatever the {@link SortSpec}
- * sorts by. Within a group, the rows keep the order of the {@link SortSpec}. A {@link GroupSpec} with
- * more than one column is rejected.
+ * A non-empty {@link GroupSpec} buckets the filtered/sorted rows by the first grouping column's
+ * value and emits an expandable {@link GroupRow group header} per bucket (which doubles as the
+ * subtotal row) followed by the group's content. Each further grouping column nests a level of
+ * groups into the groups of the level above; the data rows follow the headers of the innermost
+ * level. A header has the {@link Row#depth() depth} of its level, the data rows the depth of the
+ * number of grouping columns. A group is identified by the {@link GroupKey} of the values of all
+ * levels down to its own, so that a nested group keeps its expansion state while a group above it
+ * is collapsed.
+ * </p>
+ *
+ * <p>
+ * The groups of a level are ordered by the grouping column's own {@link Column#sort()
+ * comparator}, a {@code null} group value last; the direction is taken from the {@link SortSpec}
+ * if it sorts the grouping column, ascending otherwise. A grouping column without sort capability
+ * keeps the groups in the order of the given rows - the order in which the first rows of the
+ * groups appear in the backing list, whatever the {@link SortSpec} sorts by. Within a group, the
+ * rows keep the order of the {@link SortSpec}.
  * </p>
  *
  * @param <R>
@@ -89,11 +95,11 @@ public class ListRowSource<R> implements RowSource<R> {
 	private List<R> _matching = List.of();
 
 	/**
-	 * For a grouping column without sort capability, the position of each group value among the
-	 * {@link #_matching} rows in the order of the backing list, by which the groups are ordered;
+	 * If a grouping column has no sort capability, the position of each of the {@link #_matching}
+	 * rows in the order of the backing list, by which the groups of such a column are ordered;
 	 * {@code null} otherwise.
 	 */
-	private Map<Object, Integer> _givenGroupOrder;
+	private Map<R, Integer> _givenPosition;
 
 	/**
 	 * The keys of {@link #_matching}, for {@link #matchingKeys(Collection)}, or {@code null} until
@@ -298,9 +304,6 @@ public class ListRowSource<R> implements RowSource<R> {
 
 	@Override
 	public RowSource<R> withGrouping(GroupSpec grouping) {
-		if (grouping.columns().size() > 1) {
-			throw new UnsupportedOperationException("Multi-column grouping is not yet implemented in ListRowSource.");
-		}
 		_grouping = grouping;
 		recompute();
 		fireInvalidated();
@@ -382,7 +385,7 @@ public class ListRowSource<R> implements RowSource<R> {
 				rows.add(element);
 			}
 		}
-		_givenGroupOrder = givenGroupOrder(rows);
+		_givenPosition = givenPosition(rows);
 		Comparator<R> order = ColumnLogic.comparator(_sort, _byName);
 		if (order != null) {
 			rows.sort(order);
@@ -394,24 +397,26 @@ public class ListRowSource<R> implements RowSource<R> {
 	}
 
 	/**
-	 * The position of each value of the grouping column among the given rows, in the order its
-	 * first row has there, or {@code null} if the rows are not grouped or the grouping column has
-	 * its own order.
+	 * The position of each of the given rows in their order, or {@code null} if the rows are not
+	 * grouped or every grouping column has its own order.
 	 *
 	 * @param rows
 	 *        The filtered rows in the order of the backing list, before they are sorted.
 	 */
-	private Map<Object, Integer> givenGroupOrder(List<R> rows) {
-		if (_grouping.columns().isEmpty()) {
+	private Map<R, Integer> givenPosition(List<R> rows) {
+		boolean needed = false;
+		for (String name : _grouping.columns()) {
+			if (_byName.get(name).sort().isEmpty()) {
+				needed = true;
+				break;
+			}
+		}
+		if (!needed) {
 			return null;
 		}
-		Column<R, ?> groupColumn = _byName.get(_grouping.columns().get(0));
-		if (groupColumn.sort().isPresent()) {
-			return null;
-		}
-		Map<Object, Integer> result = new HashMap<>();
+		Map<R, Integer> result = new IdentityHashMap<>();
 		for (R row : rows) {
-			result.putIfAbsent(groupColumn.value(row), result.size());
+			result.putIfAbsent(row, result.size());
 		}
 		return result;
 	}
@@ -425,19 +430,46 @@ public class ListRowSource<R> implements RowSource<R> {
 	}
 
 	/**
-	 * Buckets the (already filtered and sorted) rows by the first grouping column's value
-	 * and emits an expandable group header per bucket followed by its data rows when
-	 * expanded.
+	 * The group headers of all grouping levels with the data rows of the expanded groups (of all
+	 * groups, if requested).
+	 *
+	 * @param rows
+	 *        The filtered and sorted rows.
+	 * @param all
+	 *        Whether the content of collapsed groups is included, too.
+	 */
+	private List<Row<R>> groupedRows(List<R> rows, boolean all) {
+		List<Row<R>> displayed = new ArrayList<>();
+		addGroups(displayed, rows, List.of(), all);
+		return displayed;
+	}
+
+	/**
+	 * Buckets the (already filtered and sorted) rows by the value of the grouping column of the
+	 * level below the given group path and adds an expandable group header per bucket, followed by
+	 * its content when expanded: the groups of the next level or, at the innermost level, its data
+	 * rows.
 	 *
 	 * <p>
 	 * The buckets are ordered by {@link ColumnLogic#groupComparator(Column, SortSpec)}; for a
 	 * grouping column without sort capability they keep the order of the given rows, see
-	 * {@link #_givenGroupOrder}, whatever the rows are sorted by. The rows within a bucket keep the
+	 * {@link #_givenPosition}, whatever the rows are sorted by. The rows within a bucket keep the
 	 * order of the sorted input.
 	 * </p>
+	 *
+	 * @param displayed
+	 *        The rows to add to.
+	 * @param rows
+	 *        The rows of the enclosing group, all rows at the outermost level.
+	 * @param path
+	 *        The values of the enclosing group's {@link GroupKey}, empty at the outermost level.
+	 * @param all
+	 *        Whether the content of collapsed groups is added, too.
 	 */
-	private List<Row<R>> groupedRows(List<R> rows, boolean all) {
-		Column<R, ?> groupColumn = _byName.get(_grouping.columns().get(0));
+	private void addGroups(List<Row<R>> displayed, List<R> rows, List<Object> path, boolean all) {
+		List<String> grouping = _grouping.columns();
+		int level = path.size();
+		Column<R, ?> groupColumn = _byName.get(grouping.get(level));
 		Map<Object, List<R>> buckets = new LinkedHashMap<>();
 		for (R row : rows) {
 			buckets.computeIfAbsent(groupColumn.value(row), key -> new ArrayList<>()).add(row);
@@ -446,24 +478,36 @@ public class ListRowSource<R> implements RowSource<R> {
 		Comparator<Object> groupOrder = ColumnLogic.groupComparator(groupColumn, _sort);
 		if (groupOrder != null) {
 			ordered.sort(Map.Entry.comparingByKey(groupOrder));
-		} else if (_givenGroupOrder != null) {
-			Map<Object, Integer> rank = _givenGroupOrder;
-			ordered.sort(Comparator.comparingInt(bucket -> rank.get(bucket.getKey())));
+		} else if (_givenPosition != null) {
+			Map<Object, Integer> rank = new HashMap<>();
+			for (Map.Entry<Object, List<R>> bucket : ordered) {
+				int first = Integer.MAX_VALUE;
+				for (R member : bucket.getValue()) {
+					first = Math.min(first, _givenPosition.get(member).intValue());
+				}
+				rank.put(bucket.getKey(), Integer.valueOf(first));
+			}
+			ordered.sort(Comparator.comparingInt(bucket -> rank.get(bucket.getKey()).intValue()));
 		}
-		List<Row<R>> displayed = new ArrayList<>();
+		boolean innermost = level + 1 == grouping.size();
 		for (Map.Entry<Object, List<R>> bucket : ordered) {
-			GroupKey key = new GroupKey(Collections.singletonList(bucket.getKey()));
+			List<Object> values = new ArrayList<>(level + 1);
+			values.addAll(path);
+			values.add(bucket.getKey());
+			GroupKey key = new GroupKey(values);
 			List<R> members = bucket.getValue();
-			Group<R> group = new SimpleGroup<>(key, members);
 			boolean expanded = !_collapsed.contains(key);
-			displayed.add(new GroupRow<>(group, 0, expanded));
+			displayed.add(new GroupRow<>(new SimpleGroup<>(key, members), level, expanded));
 			if (expanded || all) {
-				for (R member : members) {
-					displayed.add(new DataRow<>(_keyOf.apply(member), member, 1));
+				if (innermost) {
+					for (R member : members) {
+						displayed.add(new DataRow<>(_keyOf.apply(member), member, level + 1));
+					}
+				} else {
+					addGroups(displayed, members, values, all);
 				}
 			}
 		}
-		return displayed;
 	}
 
 	private void fireInvalidated() {

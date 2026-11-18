@@ -113,6 +113,7 @@ public class ContentControl extends AbstractLayoutControl<ContentControl> implem
 	protected void writeControlAttributes(DisplayContext context, TagWriter out) throws IOException {
 		super.writeControlAttributes(context, out);
 		out.writeAttribute(TL_CONTEXT_MENU_ATTR, getID());
+		out.writeAttribute(TL_CONTENT_CONTROL_ATTR, getID());
 	}
 
 	@Override

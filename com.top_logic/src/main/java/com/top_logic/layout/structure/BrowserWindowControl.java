@@ -83,6 +83,7 @@ import com.top_logic.layout.layoutRenderer.BrowserWindowRenderer;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.servlet.CacheControl;
 import com.top_logic.layout.servlet.ContentDisposition;
+import com.top_logic.layout.window.WindowComponent;
 import com.top_logic.layout.window.WindowManager;
 import com.top_logic.mig.html.layout.CommandDispatcher;
 import com.top_logic.mig.html.layout.ComponentName;
@@ -1381,6 +1382,10 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 				}
 				if (dispatchEnter(event)) {
 					if (dialogs.isEmpty()) {
+						LayoutComponent defaultComponent = findDefaultCommandComponent(getSourceComponent(event));
+						if (defaultComponent != null) {
+							return dispatchDefaultCommand(commandContext, defaultComponent);
+						}
 						return dispatchEvent(commandContext, LayoutComponent::getDefaultCommand, getChildControl());
 					} else {
 						DialogModel dialogModel = getActiveDialog().getDialogModel();
@@ -1399,6 +1404,69 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 				return HandlerResult.DEFAULT_RESULT;
 			}
 		}
+	}
+
+	@Override
+	protected void writeControlAttributes(DisplayContext context, TagWriter out) throws IOException {
+		super.writeControlAttributes(context, out);
+		out.writeAttribute(TL_WINDOW_CONTROL_ATTR, getID());
+	}
+
+	/**
+	 * The component displayed by the {@link ContentControl} of this window in which the given
+	 * event occurred.
+	 * 
+	 * @return The component, or <code>null</code>, if the event does not name a
+	 *         {@link ContentControl} of this window.
+	 * 
+	 * @see KeyEvent#getContentControlId()
+	 */
+	private LayoutComponent getSourceComponent(KeyEvent event) {
+		String contentControlId = event.getContentControlId();
+		if (contentControlId == null) {
+			return null;
+		}
+		Object sourceControl = getFrameScope().getCommandListener(contentControlId);
+		if (!(sourceControl instanceof ContentControl)) {
+			return null;
+		}
+		return ((ContentControl) sourceControl).getModel();
+	}
+
+	/**
+	 * The component whose {@link LayoutComponent#getDefaultCommand() default command} is executed
+	 * when the user presses enter within the given component.
+	 * 
+	 * <p>
+	 * This is the given component itself or its nearest ancestor with a default command. The search
+	 * does not leave the window of the given component.
+	 * </p>
+	 * 
+	 * @param source
+	 *        The component in which enter was pressed, may be <code>null</code>.
+	 * @return The component whose default command is executed, or <code>null</code>, if neither
+	 *         the given component nor any of its ancestors within its window has a default
+	 *         command.
+	 */
+	public static LayoutComponent findDefaultCommandComponent(LayoutComponent source) {
+		for (LayoutComponent component = source; component != null; component = component.getParent()) {
+			if (component.getDefaultCommand() != null) {
+				return component;
+			}
+			if (component instanceof WindowComponent) {
+				break;
+			}
+		}
+		return null;
+	}
+
+	private HandlerResult dispatchDefaultCommand(DisplayContext commandContext, LayoutComponent component) {
+		CommandHandler handler = component.getDefaultCommand();
+		if (!isExecutable(handler, component)) {
+			// Prevent error, if command temporarily not executable.
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		return CommandDispatcher.getInstance().dispatchCommand(handler, commandContext, component);
 	}
 
 	private boolean dispatchEnter(KeyEvent event) {

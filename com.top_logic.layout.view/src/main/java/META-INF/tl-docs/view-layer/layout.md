@@ -1,5 +1,5 @@
 ---
-description: Read before arranging content in a .view.xml with <stack>, <grid>, <columns>, <split-panel> (pane sizes, stacking when too narrow), <object-list> (with <link-access> / <remove-access>), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>), sizing a dialog with <window width height>, or displaying content of a view in an enclosing region with <slot> / <slot-content> (SlotRegistry routing by tree distance, the <empty> fallback of a slot, the app bar slots appbar-content and appbar-leading).
+description: Read before arranging content in a .view.xml with <stack>, <grid>, <divider> (a horizontal or vertical line, with a text in the line or inset), <columns>, <split-panel> (pane sizes, stacking when too narrow), <object-list> (with <link-access> / <remove-access>), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>), sizing a dialog with <window width height>, or displaying content of a view in an enclosing region with <slot> / <slot-content> (SlotRegistry routing by tree distance, the <empty> fallback of a slot, the app bar slots appbar-content and appbar-leading).
 order: 20
 ---
 
@@ -79,6 +79,44 @@ Bounding the width leaves the **fill contract** (see below) alone: `max-width` a
 work across the direction of a column, while filling is about the height a container takes from its
 own container. A bounded stack that hosts a filling child still carries `tl-fill` and still reports
 filling upwards, so a table inside a centered content column keeps bounding its own scroll viewport.
+
+## A line between content: `<divider>`
+
+`<divider>` (`DividerElement`, `ReactDividerControl`, `TLDivider`) draws a line that separates the
+content before it from the content after it - in a stack, between the children of a row, in a card.
+It is drawn by the part `Divider` (see [Parts](doc:view-layer/parts)), so a customer component
+library that replaces the part draws it as well; colour and width come from the tokens of the theme
+(`--tl-border-separator`, `--tl-border-width-sm`), and the line carries the role `separator`.
+
+- **`orientation`** - `horizontal` (the default): a line across, between content stacked one above
+  the other; `vertical`: a line standing in a row (`<stack direction="row">`), stretched to the
+  height of the row. The direction is always the written one; it is not derived from the element
+  around the line.
+- **`label`** - a short, translatable text shown in the line, e.g. the name of the section below
+  it. Only a horizontal line carries one; a `label` on a vertical line is a configuration error.
+- **`label-position`** - where the text stands: `start`, `center` (the default) or `end`.
+- **`inset`** - `none` (the default): the whole width; `start`: shortened at its start by the indent
+  of an entry of a list (one level of a tree, `--tl-size-control-sm`), for the lines between the
+  entries of a list.
+
+```xml
+<divider/>
+
+<divider label-position="start">
+	<label>
+		<en>Address</en>
+		<de>Adresse</de>
+	</label>
+</divider>
+
+<stack direction="row">
+	<card>...</card>
+	<divider orientation="vertical"/>
+	<card>...</card>
+</stack>
+```
+
+The space around the line is the gap of the container it stands in, as for every other child.
 
 ## A page of weighted columns: `<columns>`
 

@@ -15,6 +15,8 @@ public class KeyEvent extends KeySelector {
 
 	private Object _source;
 
+	private String _contentControlId;
+
 	/**
 	 * Create a {@link KeyEvent}.
 	 * 
@@ -44,8 +46,25 @@ public class KeyEvent extends KeySelector {
 	 *        See {@link #getModifiers()}.
 	 */
 	public KeyEvent(Object source, KeyCode keyCode, int modifiers) {
+		this(source, keyCode, modifiers, null);
+	}
+
+	/**
+	 * Create a {@link KeyEvent}.
+	 * 
+	 * @param source
+	 *        See {@link #getSource()}.
+	 * @param keyCode
+	 *        See {@link #getKeyCode()}.
+	 * @param modifiers
+	 *        See {@link #getModifiers()}.
+	 * @param contentControlId
+	 *        See {@link #getContentControlId()}.
+	 */
+	public KeyEvent(Object source, KeyCode keyCode, int modifiers, String contentControlId) {
 		super(keyCode, modifiers);
 		_source = source;
+		_contentControlId = contentControlId;
 	}
 
 	/**
@@ -66,6 +85,18 @@ public class KeyEvent extends KeySelector {
 		Object oldSource = _source;
 		_source = source;
 		return oldSource;
+	}
+
+	/**
+	 * The ID of the {@link com.top_logic.layout.structure.ContentControl} that encloses the
+	 * client-side element in which the key was pressed.
+	 * 
+	 * @return The ID of the nearest client-side ancestor with the attribute
+	 *         {@link com.top_logic.mig.html.HTMLConstants#TL_CONTENT_CONTROL_ATTR}, or
+	 *         <code>null</code>, if the key was pressed outside of a component's content.
+	 */
+	public String getContentControlId() {
+		return _contentControlId;
 	}
 
 }

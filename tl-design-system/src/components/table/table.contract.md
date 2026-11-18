@@ -259,6 +259,7 @@ Klassen:
 | `tl-table__spacer` | Platzhalter eines Blatts an der Stelle des Toggles |
 | `tl-table__value` | der Wert neben dem Toggle; endet mit Ellipse |
 | `tl-table__count` | Anzahl der Gruppenzeile, eine Kapsel |
+| `tl-table__no-value` | Text an Stelle eines fehlenden Werts, z. B. der Wert der Gruppe der Zeilen ohne Wert in der Gruppierungsspalte („(leer)“ oder die Bezeichnung der Spalte, `empty-group-label`): `--tl-text-secondary` in `tl-type-body`, nicht halbfett wie die übrige Gruppenzeile |
 | `tl-table__placeholder` | Zeile im Fenster, die der Server noch nicht geschickt hat: `aria-hidden`, trägt ein `tl-skeleton`; keine Ladezeile mit `tl-progress` |
 | `tl-table__footer` | die Zeilenzahl unter dem Rahmen, `tl-type-label`; steht nur, solange `rowCount` nicht leer ist |
 | `tl-table__row-count` | wie viele Zeilen (von wie vielen) |

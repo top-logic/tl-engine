@@ -28,6 +28,8 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 		}
 	};
 
+	private transient boolean _collapsed = false;
+
 	private boolean _acceptsDrop = true;
 
 	private double _rowPadding = 4.0;
@@ -146,6 +148,24 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 	}
 
 	@Override
+	public final boolean isCollapsed() {
+		return _collapsed;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttRow setCollapsed(boolean value) {
+		internalSetCollapsed(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isCollapsed()} without chain call utility. */
+	protected final void internalSetCollapsed(boolean value) {
+		_listener.beforeSet(this, COLLAPSED__PROP, value);
+		_collapsed = value;
+		_listener.afterChanged(this, COLLAPSED__PROP);
+	}
+
+	@Override
 	public final boolean isAcceptsDrop() {
 		return _acceptsDrop;
 	}
@@ -257,6 +277,7 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 			USER_OBJECT__PROP, 
 			LABEL__PROP, 
 			CHILDREN__PROP, 
+			COLLAPSED__PROP, 
 			ACCEPTS_DROP__PROP, 
 			ROW_PADDING__PROP, 
 			MIN_CONTENT_HEIGHT__PROP, 
@@ -269,7 +290,8 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 	static {
 		java.util.HashSet<String> tmp = new java.util.HashSet<>();
 		tmp.addAll(java.util.Arrays.asList(
-				USER_OBJECT__PROP));
+				USER_OBJECT__PROP, 
+				COLLAPSED__PROP));
 		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
 	}
 
@@ -290,6 +312,7 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 			case USER_OBJECT__PROP: return getUserObject();
 			case LABEL__PROP: return getLabel();
 			case CHILDREN__PROP: return getChildren();
+			case COLLAPSED__PROP: return isCollapsed();
 			case ACCEPTS_DROP__PROP: return isAcceptsDrop();
 			case ROW_PADDING__PROP: return getRowPadding();
 			case MIN_CONTENT_HEIGHT__PROP: return getMinContentHeight();
@@ -306,6 +329,7 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 			case USER_OBJECT__PROP: internalSetUserObject((java.lang.Object) value); break;
 			case LABEL__PROP: internalSetLabel((com.top_logic.react.flow.data.Box) value); break;
 			case CHILDREN__PROP: internalSetChildren(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.react.flow.data.GanttRow.class, value)); break;
+			case COLLAPSED__PROP: internalSetCollapsed((boolean) value); break;
 			case ACCEPTS_DROP__PROP: internalSetAcceptsDrop((boolean) value); break;
 			case ROW_PADDING__PROP: internalSetRowPadding((double) value); break;
 			case MIN_CONTENT_HEIGHT__PROP: internalSetMinContentHeight((double) value); break;
@@ -373,6 +397,10 @@ public class GanttRow_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGraph
 					x.writeTo(scope, out);
 				}
 				out.endArray();
+				break;
+			}
+			case COLLAPSED__PROP: {
+				out.value(isCollapsed());
 				break;
 			}
 			case ACCEPTS_DROP__PROP: {

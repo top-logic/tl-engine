@@ -23,11 +23,15 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.form.ImageValues;
 import com.top_logic.layout.react.control.form.ReactImageFieldControl;
+import com.top_logic.layout.react.control.form.ValueCountLimit;
+import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.util.Resources;
 
 /**
  * Tests the {@link ReactImageFieldControl}: where uploaded images go, and what the control tells
@@ -122,6 +126,38 @@ public class TestReactImageFieldControl extends TestCase {
 		model.setValue(Arrays.asList(image("a.png"), image("b.png"), image("a.png")));
 
 		assertEquals(keys, List.of(images.key(0), images.key(1), images.key(2)));
+	}
+
+	/**
+	 * A field stating a maximum number of images publishes it; an upload adding more images than
+	 * there is room for is refused as a whole with a message naming the maximum, the number of
+	 * images and the room left, while replacing an image at the maximum is taken.
+	 */
+	public void testUploadBeyondMaximum() {
+		FieldModel model = new AbstractFieldModel(Arrays.asList(A, B));
+		Images images = images(model, true);
+		assertEquals("No maximum by default", Integer.valueOf(0), images.state(ValueCountLimit.MAX_COUNT));
+		images.setMaxCount(3);
+		assertEquals(Integer.valueOf(3), images.state(ValueCountLimit.MAX_COUNT));
+
+		images.handleUpload(null, Arrays.asList(
+			TestReactFileChipsControl.part("x.png", "X"),
+			TestReactFileChipsControl.part("y.png", "Y"),
+			after(images.key(0))));
+
+		assertEquals(Resources.getInstance()
+			.getString(I18NConstants.ERROR_TOO_MANY_VALUES_ADDED__MAX_SELECTED_ROOM.fill(3, 2, 1)),
+			images.state(UploadSupport.ERROR));
+		assertEquals("Nothing of a refused upload is added", List.of("a.png", "b.png"), names(model));
+
+		images.handleUpload(null, Arrays.asList(TestReactFileChipsControl.part("x.png", "X"), after(images.key(1))));
+		assertNull(images.state(UploadSupport.ERROR));
+		assertEquals(List.of("a.png", "b.png", "x.png"), names(model));
+
+		images.handleUpload(null, Arrays.asList(TestReactFileChipsControl.part("y.png", "Y"),
+			new TextPart(ReactImageFieldControl.REPLACE_PART, ReactImageFieldControl.REPLACE_PART, images.key(0))));
+		assertNull(images.state(UploadSupport.ERROR));
+		assertEquals("An image is replaced at the maximum", List.of("y.png", "b.png", "x.png"), names(model));
 	}
 
 	/**

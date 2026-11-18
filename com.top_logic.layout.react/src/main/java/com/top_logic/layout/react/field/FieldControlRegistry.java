@@ -147,8 +147,9 @@ public class FieldControlRegistry {
 	 * {@link FieldSpec#isCompact() compact} field, a table cell for instance, they are displayed in
 	 * place, wrapping within the room of the cell, rather than opened from a preview. The files the
 	 * file picker offers are the {@link FieldSpec#getAcceptedTypes() accepted types} of the field,
-	 * each up to the {@link FieldSpec#getMaxUploadSize() upload limit} of the field. The preview of
-	 * the files is their names, separated by commas.
+	 * each up to the {@link FieldSpec#getMaxUploadSize() upload limit} of the field, and no more
+	 * files than the {@link FieldSpec#getMaxCount() maximum number of values} of the field. The
+	 * preview of the files is their names, separated by commas.
 	 * </p>
 	 *
 	 * @implNote Declared before {@link #getInstance() the shared registry}, which registers it while
@@ -167,6 +168,7 @@ public class FieldControlRegistry {
 			if (field.getMaxUploadSize() > 0) {
 				control.setMaxUploadSize(field.getMaxUploadSize());
 			}
+			control.setMaxCount(field.getMaxCount());
 			return control;
 		}
 

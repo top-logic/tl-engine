@@ -426,7 +426,8 @@ public class EmbeddedColumns implements ColumnDeclaration {
 			setup.exists(),
 			null,
 			setup.header(),
-			setup.released());
+			setup.released(),
+			setup.emptyGroupLabel());
 	}
 
 	/**

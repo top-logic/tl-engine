@@ -176,6 +176,20 @@ public class ValueCellEditing implements CellEditing {
 	 * {@inheritDoc}
 	 *
 	 * <p>
+	 * The result is a {@link ValueCellEditing} as well, so that its cells are still edited in place
+	 * where the table edits in place, see
+	 * {@link ColumnSetup#buildInPlaceColumn(java.util.function.Consumer, LockHandler)}.
+	 * </p>
+	 */
+	@Override
+	public ValueCellEditing restrictedTo(Predicate<Object> rows) {
+		return new ValueCellEditing(_type, _value, _update, _canUpdate.and(rows), _options);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
 	 * A value chosen from options is edited by a {@link FunctionSelectFieldModel} offering the
 	 * options computed for the row now.
 	 * </p>

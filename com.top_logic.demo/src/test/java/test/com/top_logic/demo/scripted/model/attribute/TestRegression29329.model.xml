@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model
+	xmlns="http://www.top-logic.com/ns/dynamic-types/6.0"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<module name="test.test29329">
+		<enum name="Type">
+			<classifier name="type1"/>
+			<classifier name="type2"/>
+			<classifier name="type3"/>
+		</enum>
+		<class name="Owner">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<form-definition>
+					<form>
+						<field
+							attribute="name"
+							fullQualifiedName="test.test29329:Owner#name"
+							type="tl.core:String"
+						/>
+						<field
+							attribute="parts"
+							fullQualifiedName="test.test29329:Owner#parts"
+							type="test.test29329:Part"
+						/>
+					</form>
+				</form-definition>
+			</annotations>
+			<attributes>
+				<property name="name"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<reference name="parts"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Part"
+				>
+					<annotations>
+						<annotation config:interface="com.top_logic.element.meta.form.fieldprovider.TLDetailDialog">
+							<defaultI18n key="dynamic.68e44c88-3428-4f98-819b-3977f598cd3c">
+								<de>Details!</de>
+							</defaultI18n>
+						</annotation>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="Part">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="number"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<fallback-storage
+								fallback-attribute="numberDefault"
+								storage-attribute="numberStorage"
+							/>
+						</storage-algorithm>
+						<dynamic-visibility>
+							<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression">
+								<function>self -&gt; $self.get(`test.test29329:Part#type`) == `test.test29329:Type#type1` ? "hidden" : "editable"</function>
+							</mode-selector>
+						</dynamic-visibility>
+					</annotations>
+				</property>
+				<property name="numberStorage"
+					type="tl.core:String"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</property>
+				<property name="numberDefault"
+					type="tl.core:String"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr>self -&gt; $self.get(`test.test29329:Part#type`) == `test.test29329:Type#type2` ? "no number" : "Axx xxx xxx"</expr>
+							</query>
+						</storage-algorithm>
+						<visibility value="hidden"/>
+					</annotations>
+				</property>
+				<reference name="type"
+					kind="forwards"
+					mandatory="true"
+					navigate="true"
+					type="Type"
+				/>
+			</attributes>
+		</class>
+	</module>
+</model>

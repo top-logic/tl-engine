@@ -94,6 +94,7 @@
 				<field attribute="tri"/>
 				<field attribute="activeRadio"/>
 				<field attribute="activeSelect"/>
+				<field attribute="activeSwitch"/>
 				<field attribute="priorityRadio"/>
 				<!-- The label stands in the empty input as its placeholder. -->
 				<field

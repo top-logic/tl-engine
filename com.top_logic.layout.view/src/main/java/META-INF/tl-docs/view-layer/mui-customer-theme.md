@@ -423,6 +423,7 @@ anything.
 | `Badge` | the part: the counts of the sidebar and the bottom bar, the badges of data lists | `Badge` |
 | `Avatar` | the part: avatar controls (`TLAvatar`), the avatars of data lists | `Avatar` |
 | `Divider` | the part: the lines of toolbars, toolbar menus and the sidebar | `Divider` |
+| `Skeleton` | the part: the rows of a table not sent yet, a picture of known height or proportions still loading | `Skeleton` (`text`, `rectangular`, `circular`; standing still for reduced motion) |
 | `ProgressBar` | the part: progress controls, job status, loading options | `LinearProgress` |
 | `Spinner` | the part: busy indicators | `CircularProgress` |
 | `Listbox` | the part: the suggestions under a text field | `Paper`, `List`, `ListItemButton` |

@@ -77,6 +77,9 @@ const WIDTHS = [200, 240, 560, 30];
 
 let sent: Sent[] = [];
 
+/** The commands the split panel sent that the server answers with success once the panel is gone. */
+let staleUiIgnored: string[] = [];
+
 beforeAll(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   // The DOM observer of the bridge looks for mounts below a removed element with CSS.escape, which jsdom does not
@@ -111,10 +114,14 @@ afterAll(async () => {
 /** Mounts the split panel, records the commands it sends, and gives its panes their {@link WIDTHS}. */
 function mountSplit(state: Record<string, unknown> = { orientation: 'horizontal', resizable: true, children: CHILDREN }): void {
   sent = [];
+  staleUiIgnored = [];
   vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => {
     const body = JSON.parse(String(init?.body ?? '{}'));
     if (body.controlId === SPLIT_ID) {
       sent.push({ command: body.command, args: body.arguments });
+      if (body.ignoreStaleUi) {
+        staleUiIgnored.push(body.command);
+      }
     }
     return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
   }));
@@ -183,6 +190,19 @@ describe('the sizes of a split panel', () => {
       })),
     }));
     expect(flexes()).toEqual(['0 1 250px', '25.33 1 0%', '74.67 1 0%', '0 0 auto']);
+  });
+
+  it('sends its sizes as a report that a disposed panel ignores', async () => {
+    mountSplit();
+    const separator = handle();
+    act(() => {
+      separator.dispatchEvent(pointer('pointerdown', 100));
+      separator.dispatchEvent(pointer('pointermove', 150));
+      separator.dispatchEvent(pointer('pointerup', 150));
+    });
+    await settle();
+
+    expect(staleUiIgnored).toEqual(['updateSizes']);
   });
 
   it('gives a pane in percent its weight back when the drag ends at the sizes the panes had', async () => {

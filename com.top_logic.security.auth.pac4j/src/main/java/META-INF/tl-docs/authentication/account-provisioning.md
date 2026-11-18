@@ -1,5 +1,5 @@
 ---
-description: Read before letting an external login (pac4j / OpenID Connect client of tl-security-auth-pac4j) find accounts by the subject of the identity provider, link existing accounts by verified e-mail or login name, create accounts on the first login, or assign their groups from a claim - the user mapping OidcProvisioningUserMapping configured as user-mapping of a client and its options (link-by-email, link-by-name, create-accounts, name-conflict refuse/rename, require-verified-email, allowed-email-domains, authentication-device, the claim names, group-claim, group-mapping, groups-by-name, default-groups, listeners), connecting a further login with one's own account and removing it (the settings tab External logins, ConnectOidcIdentity, identify-externally, the functions oidcClients, oidcIdentities, oidcRemoveRefusal, oidcRemove), the model type tl.security.pac4j:OidcIdentity with the reference tl.accounts:Person#oidcIdentities and its grantedGroups, the Java interface ExternalLoginListener (onCreate, onLogin), the refusal reasons shown on the login page (LoginDeniedException with a reason), and why the e-mail address needs tl-contact.
+description: Read before letting an external login (pac4j / OpenID Connect client of tl-security-auth-pac4j) find accounts by the subject of the identity provider, link existing accounts by verified e-mail or login name, create accounts on the first login, or assign their groups from a claim - the user mapping OidcProvisioningUserMapping configured as user-mapping of a client and its options (link-identities, link-by-email, link-by-name, create-accounts, name-conflict refuse/rename, require-verified-email, allowed-email-domains, authentication-device, the claim names, group-claim, group-mapping, groups-by-name, default-groups, listeners), connecting a further login with one's own account and removing it (the settings tab External logins, ConnectOidcIdentity, identify-externally, the functions oidcClients, oidcIdentities, oidcRemoveRefusal, oidcRemove), the model type tl.security.pac4j:OidcIdentity with the reference tl.accounts:Person#oidcIdentities and its grantedGroups, the Java interface ExternalLoginListener (onCreate, onLogin), the refusal reasons shown on the login page (LoginDeniedException with a reason), why the e-mail address needs tl-contact, and the account creation of the generic OpenID client pac4j-generic through the variables tl_pac_create_accounts and tl_pac_group_claim.
 order: 30
 ---
 
@@ -65,15 +65,25 @@ The account of a login is the first one found in this order:
    goes on. Switch it on only for an identity provider whose confirmation of e-mail addresses is
    trusted: whoever controls an address there gets the account with that address.
 3. With `link-by-name="true"` (the default): the account with the login name of the login. The
-   login name is the claim `login-name-claim` (default `preferred_username`), without it the name
-   the `user-name-extractor` of the client extracts.
+   login name is the name the `user-name-extractor` of the client extracts, the name the default
+   mapping looks up as well; a claim set in `login-name-claim` (e.g. `preferred_username`) takes
+   its place when the login carries it.
 4. With `create-accounts="true"` (default `false`): a new account, see [Creating
    accounts](#creating-accounts).
 
-Otherwise the login is refused as unknown account: the user sees the page for unknown accounts.
-An account found in step 2 or 3 gets the identity attached; if it already carries another identity
+Otherwise the login is refused as unknown account: the user sees the page for unknown accounts,
+also for an account that is no longer alive.
+
+**Binding.** With `link-identities="true"` (the default), an account found in step 2 or 3 gets the
+identity attached, a created one as well, so that later logins find it in step 1, also after the
+login name has changed at the identity provider. If the account already carries another identity
 of the same client, the login is refused (a second person must not take over an account through
-the same identity provider).
+the same identity provider; this also refuses a user deleted and created again at the identity
+provider until the old identity is removed). With `link-identities="false"`, a login attaches no
+identity: step 1 still finds an account carrying the identity, otherwise every login looks the
+account up anew by e-mail or name, like a client without user mapping. An account whose groups are
+synchronized (`group-claim` or `default-groups`, see [Groups](#groups)) is bound to its identity
+regardless of `link-identities`, since the identity records the granted memberships.
 
 **E-mail addresses need `tl-contact`.** An account has no e-mail address of its own: the address
 is that of its contact (`Person.getUser()`), which exists only in an application with the module
@@ -209,8 +219,8 @@ public class ProjectMembershipListener implements ExternalLoginListener {
 }
 ```
 
-A login by subject that changes nothing (no new account, no new link, no group change) and has no
-listeners opens no transaction.
+A login that changes nothing (no new account, no new link, no group change, no change by a
+listener) creates no revision.
 
 ### Listener in TL-Script
 
@@ -246,6 +256,22 @@ accounts the login creates. Without `tl-contact`, the account itself stores the 
 
 A script failure refuses the login like an exception of a Java listener. A message raised with
 `throw("...")` is shown to the user as the reason of the refusal.
+
+## The generic OpenID Connect client
+
+The generic client `pac4j-generic` of an application generated with `useSSO=true` (see
+[The generic OpenID Connect login](doc:application-project#the-generic-openid-connect-login)) uses
+this mapping with `groups-by-name="true"`. Two environment variables switch its options:
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `tl_pac_create_accounts` | `false` | `true` creates an account for an unknown identity, with name and e-mail address from the claims (`create-accounts`), and binds every account to its identity (`link-identities`). |
+| `tl_pac_group_claim` | empty | The name of the claim whose values name the groups of the application an account is a member of, e.g. `groups` (`group-claim`). Values without a group of that name are ignored. Empty: no groups are synchronized. |
+
+Without both variables, the client finds an existing account by its login name at every login
+and refuses an unknown name, as a client without user mapping does; no identity is attached. With `tl_pac_group_claim` alone, no account is created, but an
+account that logs in is bound to its identity, so that the memberships of the claim can be revoked
+again.
 
 ## Refusals
 

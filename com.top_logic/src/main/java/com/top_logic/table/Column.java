@@ -191,6 +191,19 @@ public interface Column<R, V> {
 	}
 
 	/**
+	 * Whether a value is required in every cell of this column the user edits, so that its heading
+	 * marks the column as mandatory.
+	 *
+	 * <p>
+	 * Only a column that edits its cells can require a value. A value that is required in some rows
+	 * only is marked at the input of the cell, not at the heading.
+	 * </p>
+	 */
+	default boolean required() {
+		return false;
+	}
+
+	/**
 	 * The side of its cells this column puts its content on, its heading included.
 	 *
 	 * <p>

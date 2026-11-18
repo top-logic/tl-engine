@@ -34,7 +34,7 @@ Keine Server-Aktion. Ein Klick auf den Hintergrund (nicht auf den Inhalt) löst 
 | Fläche | `--tl-surface-base` |
 | Rand der Wurzel | `--tl-space-lg` |
 | Abstand im Inhalt | `--tl-space-md` |
-| Platz für den Fokusring im scrollenden Inhalt | `--tl-focus-width` und `--tl-focus-offset` |
+| Platz für den Fokusring an der Kante der scrollenden Wurzel | `--tl-focus-width` und `--tl-focus-offset` |
 | Unterlage des Logos | `--tl-surface-layer`, Rand `--tl-border-separator` in `--tl-border-width-sm`, Radius `--tl-radius-md`, Innenabstand `--tl-space-sm` und `--tl-space-md` |
 | Höhe des Logos | `--tl-size-login-logo` |
 | Name der Anwendung | `--tl-text-primary`, Schrift `h1` (`heading-lg`) |
@@ -54,7 +54,7 @@ feine Textur; erst Hervorhebung und Welle heben sie in `--tl-surface-halftone-st
 |---|---|
 | `tl-login-backdrop` | immer; die Wurzel |
 | `tl-login-backdrop__canvas` | die Zeichenfläche, `aria-hidden="true"` |
-| `tl-login-backdrop__content` | der Inhalt über dem Raster; scrollt, wenn er höher ist als das Fenster |
+| `tl-login-backdrop__content` | der Inhalt über dem Raster; ist er höher als das Fenster, scrollt die Wurzel, nicht er; was darin steht, wird nie breiter als er |
 | `tl-login-backdrop__brand` | die Unterlage, nur mit Logo oder Name |
 | `tl-login-backdrop__logo` | das Logo in der Unterlage: das `img` eines Bildes, oder der `span` um die Glyphe (`tl-icon-lg`) eines Icons, mit `role="img"` und `aria-label` (ohne Text `aria-hidden`) |
 | `tl-login-backdrop__title` | das `h1` mit dem Namen der Anwendung, nur ohne Logo |

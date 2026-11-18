@@ -92,6 +92,12 @@ public class VerticalLayout_Impl extends com.top_logic.react.flow.data.impl.RowL
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.VerticalLayout setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return VERTICAL_LAYOUT__TYPE;
 	}

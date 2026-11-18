@@ -74,6 +74,12 @@ public class ClipBox_Impl extends com.top_logic.react.flow.data.impl.Decoration_
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.ClipBox setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return CLIP_BOX__TYPE;
 	}

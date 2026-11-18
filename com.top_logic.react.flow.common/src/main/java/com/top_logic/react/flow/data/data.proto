@@ -25,6 +25,21 @@ abstract message Widget {
 	
 	/** Private information that must be kept during the layout and rendering phases. */
 	transient java.lang.Object renderInfo;
+
+	/**
+	 * Whether a drop on the diagram is made onto this element.
+	 *
+	 * <p>
+	 * Derived state the server keeps in sync with the element: set for an element with a
+	 * {@link #userObject}, see
+	 * {@link com.top_logic.react.flow.operations.WidgetOperations#isDropTargetByDefinition()}. The
+	 * {@link #userObject} itself is not transmitted, so this flag tells the client the elements a
+	 * drop is made onto. The target of a drop is the innermost element under the pointer that has
+	 * this flag or is a {@link DropRegion}; a drop region without the flag stands for the diagram as
+	 * a whole.
+	 * </p>
+	 */
+	bool dropTarget;
 }
 
 /** Top-level diagram element that can be layouted and rendered. */
@@ -789,16 +804,12 @@ message ClickTarget extends Decoration {
 	
 }
 
-/** A box that accepts drop events by invoking a server callback. */
+/**
+ * A box marking the target of a drop on the diagram: the drop of a flow diagram is made onto the
+ * user object of the region, or on the diagram as a whole for a region without one.
+ */
 @Operations("com.top_logic.react.flow.operations.DropRegionOperations")
 message DropRegion extends Decoration {
-
-	/** Server-side-only field to store the callback to invoke when a drop occurs. */
-	transient com.top_logic.react.flow.callback.DropHandler dropHandler;
-	
-	/** Internal field to store the drop handler registration (client-side only). */
-	transient com.top_logic.react.flow.svg.event.Registration handlerRegistration;
-	
 }
 
 /** A box that shows a tooltip when the mouse hovers over its contents. */

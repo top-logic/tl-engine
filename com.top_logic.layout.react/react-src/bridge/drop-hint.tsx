@@ -1,7 +1,9 @@
-import { React, usePopover, createPortal } from 'tl-react-bridge';
-import type { TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
+import React from 'react';
+import { createPortal } from 'react-dom';
+import { usePopover } from './popover';
+import type { TLDropMarker, TLRunningDrag } from './drag-drop';
 
-// What a drop target (table, tree, Kanban board) shows while a drag hovers it and the server refuses
+// What a drop target (table, tree, Kanban board, flow diagram) shows while a drag hovers it and the server refuses
 // a drop there: the verdict answered to a drop probe, and the hint carrying the reason next to the
 // pointer.
 
@@ -19,7 +21,7 @@ export interface HintAnchor {
  * Why the target under the running drag refuses it: a tl-popover at the pointer, below the drag image
  * or, where the viewport has no room there, above it - not on it where either side has room, since the browser
  * draws the drag image over everything (a native tooltip is not shown while a drag runs). A hint that fits
- * neither side is shifted along the cross axis into the viewport and may then overlap the drag image. The target (table, tree, Kanban board)
+ * neither side is shifted along the cross axis into the viewport and may then overlap the drag image. The target (table, tree, Kanban board, flow diagram)
  * moves it through `moveRef` on every dragover, so only the hint renders while the pointer moves, not
  * the target.
  *

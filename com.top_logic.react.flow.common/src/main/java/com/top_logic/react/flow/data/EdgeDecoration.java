@@ -73,6 +73,9 @@ public interface EdgeDecoration extends com.top_logic.react.flow.data.Widget, co
 	@Override
 	com.top_logic.react.flow.data.EdgeDecoration setRenderInfo(java.lang.Object value);
 
+	@Override
+	com.top_logic.react.flow.data.EdgeDecoration setDropTarget(boolean value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.EdgeDecoration readEdgeDecoration(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

@@ -5,22 +5,27 @@
  */
 package com.top_logic.react.flow.server.ui;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
+import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.ComplexDefault;
@@ -38,6 +43,10 @@ import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.VetoForwarder;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewScripts;
+import com.top_logic.layout.view.command.ActionScope;
+import com.top_logic.layout.view.command.ActionScopeDefinition;
+import com.top_logic.layout.view.dnd.DeclaredDrop;
+import com.top_logic.layout.view.dnd.DropArguments;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -60,6 +69,12 @@ import com.top_logic.table.SelectionMode;
  * that sees the current values of the configured {@link Config#getInputs() input channels} and the
  * configured {@link Config#getHandlers() handlers} as variables.
  * </p>
+ *
+ * <p>
+ * The {@link Config#getDrops() drops} make the diagram a target of the view layer's drag and drop:
+ * a drop onto a node - the innermost box under the pointer that is a drop region or has a user
+ * object - or on the diagram as a whole, with the point of the drop in diagram units.
+ * </p>
  */
 @InApp
 public class FlowDiagramElement implements UIElement {
@@ -69,7 +84,10 @@ public class FlowDiagramElement implements UIElement {
 	 */
 	@TagName("flow-diagram")
 	@TypeIcon("css:bi bi-bezier2")
-	public interface Config extends UIElement.Config, Inputs {
+	public interface Config extends UIElement.Config, Inputs, ActionScopeDefinition {
+
+		/** Access to the default methods of this interface for the configuration proxy. */
+		Lookup LOOKUP = MethodHandles.lookup();
 
 		@Override
 		@ClassDefault(FlowDiagramElement.class)
@@ -89,6 +107,9 @@ public class FlowDiagramElement implements UIElement {
 
 		/** Configuration name for {@link #getObservedTypes()}. */
 		String OBSERVED_TYPES = "observed-types";
+
+		/** Configuration name for {@link #getDrops()}. */
+		String DROPS = "drops";
 
 		/**
 		 * TL-Script expression that creates a {@link Diagram}.
@@ -182,6 +203,40 @@ public class FlowDiagramElement implements UIElement {
 		List<TLModelPartRef> getObservedTypes();
 
 		/**
+		 * What this diagram accepts a drop of, and what it does with the dropped objects.
+		 *
+		 * <p>
+		 * A drop is made onto a node or on the diagram as a whole, see
+		 * {@link FlowDropConfig#getTarget()}. A node is the innermost box under the pointer that is
+		 * a drop region ({@code reactFlowDropRegion}) or has a user object; the user object is the
+		 * target of the drop, and a drop region without one stands for the diagram as a whole. The
+		 * point of the drop is the argument {@value DropArguments#X} / {@value DropArguments#Y}:
+		 * relative to the upper left corner of the node, or to the origin of the diagram, in diagram
+		 * units independent of zoom and scrolling - so that an action can place a new node exactly
+		 * where the drop was made. A drop is applied by the first declared entry that accepts it.
+		 * Empty (default) leaves the diagram accepting no drop.
+		 * </p>
+		 */
+		@Name(DROPS)
+		@DefaultContainer
+		@TreeProperty
+		List<FlowDropConfig> getDrops();
+
+		/**
+		 * A {@link #getDrops() drop} runs its actions with the {@link DropArguments arguments} of
+		 * its signature.
+		 */
+		@Override
+		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			ActionScope drop =
+				DropArguments.scopeOf(part, getDrops(), dropConfig -> dropConfig.getTarget().signature());
+			if (drop != null) {
+				return drop;
+			}
+			return outer;
+		}
+
+		/**
 		 * Common super-interface for configurations of a {@link DiagramHandler}.
 		 */
 		@Abstract
@@ -208,6 +263,9 @@ public class FlowDiagramElement implements UIElement {
 
 	private final Object[] _handlers;
 
+	/** The declared {@link Config#getDrops() drops} with their actions, in declaration order. */
+	private final List<DeclaredDrop> _drops;
+
 	/**
 	 * Creates a {@link FlowDiagramElement} from configuration.
 	 *
@@ -227,6 +285,9 @@ public class FlowDiagramElement implements UIElement {
 
 		InputScript.checkInputNames(config.getInputs(), handlerNames);
 		_createChart = ViewScripts.compile(config.getCreateChart(), variables(config));
+		_drops = config.getDrops().stream()
+			.map(drop -> DeclaredDrop.compile(context, drop, drop.getTarget().signature()))
+			.toList();
 	}
 
 	/**
@@ -272,7 +333,12 @@ public class FlowDiagramElement implements UIElement {
 		control.addAttachListener(() -> observer.attach(context.getModelScope()));
 		control.addDetachListener(observer::detach);
 
-		// 5. Wire selection channel if configured.
+		// 5. Accept the declared drops.
+		if (!_drops.isEmpty()) {
+			control.setDropTarget(DeclaredDrop.bind(context, control, control::refreshDropTarget, _drops));
+		}
+
+		// 6. Wire selection channel if configured.
 		ChannelRef selectionRef = _config.getSelection();
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);

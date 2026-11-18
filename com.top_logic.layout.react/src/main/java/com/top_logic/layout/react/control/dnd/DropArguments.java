@@ -57,6 +57,12 @@ public interface DropArguments extends ReactCommand {
 	/** @see #getZone() */
 	String ZONE = "zone";
 
+	/** @see #getX() */
+	String X = "x";
+
+	/** @see #getY() */
+	String Y = "y";
+
 	/**
 	 * The control the drag started in: its control id, as the browser sends it, or its semantic
 	 * address, as an agent observes it and a recorded step carries it.
@@ -109,5 +115,32 @@ public interface DropArguments extends ReactCommand {
 	 */
 	@Name(ZONE)
 	String getZone();
+
+	/**
+	 * The horizontal coordinate of the point the drop was made at, absent where the receiving
+	 * control reports no point.
+	 *
+	 * <p>
+	 * A control displaying its items on a surface reports the point in the coordinate system of the
+	 * target: relative to the upper left corner of the item dropped on, or to the origin of the
+	 * surface for a drop beside the items, in the units of the surface. A point is reported with
+	 * both coordinates or not at all.
+	 * </p>
+	 *
+	 * @see DropPoint
+	 */
+	@Name(X)
+	@Nullable
+	Double getX();
+
+	/**
+	 * The vertical coordinate of the point the drop was made at, absent where the receiving control
+	 * reports no point.
+	 *
+	 * @see #getX()
+	 */
+	@Name(Y)
+	@Nullable
+	Double getY();
 
 }

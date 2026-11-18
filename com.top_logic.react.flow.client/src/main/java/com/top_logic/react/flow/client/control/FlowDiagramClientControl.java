@@ -30,15 +30,16 @@ import com.top_logic.react.flow.client.bridge.CommandSender;
 import com.top_logic.react.flow.client.bridge.ReactBridge;
 import com.top_logic.react.flow.client.bridge.StateListener;
 import com.top_logic.react.flow.control.FlowControlCommon;
+import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.ClickTarget;
 import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.DropRegion;
 import com.top_logic.react.flow.data.MouseButton;
 import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.operations.SelectionUtil;
+import com.top_logic.react.flow.operations.WidgetTraversal;
 import com.top_logic.react.flow.model.Drawable;
 import com.top_logic.react.flow.svg.SvgWriter;
-import com.top_logic.react.flow.svg.event.SVGDropEvent;
 
 import de.haumacher.msgbuf.graph.DefaultScope;
 import de.haumacher.msgbuf.graph.SharedGraphNode;
@@ -124,6 +125,39 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	/** CSS class hiding the {@link #ZOOM_DISPLAY_CSS_CLASS zoom display}. */
 	private static final String INVISIBLE_CSS_CLASS = "invisible";
+
+	/**
+	 * Entry of the result of {@link #nodeAt(double, double, boolean)} holding the ID of the drop
+	 * target under the pointer as a string, {@code null} for the diagram as a whole.
+	 */
+	private static final String NODE_AT_NODE = "node";
+
+	/**
+	 * Entry of the result of {@link #nodeAt(double, double, boolean)} holding the horizontal
+	 * coordinate of the pointer in the coordinate system of the target.
+	 */
+	private static final String NODE_AT_X = "x";
+
+	/**
+	 * Entry of the result of {@link #nodeAt(double, double, boolean)} holding the vertical
+	 * coordinate of the pointer in the coordinate system of the target.
+	 */
+	private static final String NODE_AT_Y = "y";
+
+	/**
+	 * Entry of the result of {@link #nodeAt(double, double, boolean)} holding the left edge of the
+	 * drop target on the screen, in client coordinates; absent for the diagram as a whole.
+	 */
+	private static final String NODE_AT_LEFT = "left";
+
+	/** Like {@link #NODE_AT_LEFT}, the top edge. */
+	private static final String NODE_AT_TOP = "top";
+
+	/** Like {@link #NODE_AT_LEFT}, the width. */
+	private static final String NODE_AT_WIDTH = "width";
+
+	/** Like {@link #NODE_AT_LEFT}, the height. */
+	private static final String NODE_AT_HEIGHT = "height";
 
 	/** CSS property whose computed value of the page root is the length of a wheel line step. */
 	private static final String FONT_SIZE_PROPERTY = "font-size";
@@ -594,6 +628,11 @@ public class FlowDiagramClientControl implements DiagramContext {
 		_dropSVG = new EventListener() {
 			@Override
 			public void handleEvent(Event evt) {
+				// Only the end of a pan is handled here; a drop of objects dragged onto the diagram
+				// is left to the drop handling of the view layer.
+				if (!_draggingToPan) {
+					return;
+				}
 				DragEvent event = (DragEvent) evt;
 
 				event.stopImmediatePropagation();
@@ -1580,16 +1619,6 @@ public class FlowDiagramClientControl implements DiagramContext {
 		send(FlowControlCommon.CMD_DISPATCH_CLICK, args, false);
 	}
 
-	@SuppressWarnings("unusable-by-js")
-	@Override
-	public void processDrop(DropRegion node, SVGDropEvent event) {
-		int nodeId = _scope.id(node);
-		if (hasWindowTlDnD()) {
-			JavaScriptObject args = createDropArgs(FlowControlCommon.ARG_NODE_ID, nodeId, FlowControlCommon.ARG_DATA);
-			send(FlowControlCommon.CMD_DISPATCH_DROP, args, false);
-		}
-	}
-
 	/**
 	 * Reports the element a context menu is opened on.
 	 *
@@ -1629,18 +1658,6 @@ public class FlowDiagramClientControl implements DiagramContext {
 		return args;
 	}-*/;
 
-	private static native JavaScriptObject createDropArgs(String nodeIdKey, int nodeId, String dataKey) /*-{
-		var data = null;
-		if ($wnd.services && $wnd.services.ajax && $wnd.services.ajax.mainLayout
-				&& $wnd.services.ajax.mainLayout.tlDnD) {
-			data = $wnd.services.ajax.mainLayout.tlDnD.data;
-		}
-		var args = {};
-		args[nodeIdKey] = nodeId;
-		args[dataKey] = data;
-		return args;
-	}-*/;
-
 	private static native void setNumber(JavaScriptObject obj, String key, int value) /*-{
 		obj[key] = value;
 	}-*/;
@@ -1658,9 +1675,247 @@ public class FlowDiagramClientControl implements DiagramContext {
 		return arr;
 	}-*/;
 
-	private native boolean hasWindowTlDnD() /*-{
-		return !!($wnd.services && $wnd.services.ajax && $wnd.services.ajax.mainLayout
-				&& $wnd.services.ajax.mainLayout.tlDnD);
+	/**
+	 * The target of a drop at the given point of the screen, and the point in the coordinate system
+	 * of that target.
+	 *
+	 * <p>
+	 * The target is the innermost element under the pointer that is a drop region or a
+	 * {@link Widget#isDropTarget() drop target} - an element with a user object. A drop region
+	 * without a user object stands for the diagram as a whole, and so does the place beside them. The
+	 * point is converted to diagram units through the inverse of the SVG's screen transformation, so
+	 * it does not depend on zoom and scrolling; for an element it is relative to the element's upper
+	 * left corner, for the diagram relative to its origin.
+	 * </p>
+	 *
+	 * @param clientX
+	 *        The horizontal position of the pointer, in client coordinates.
+	 * @param clientY
+	 *        The vertical position of the pointer, in client coordinates.
+	 * @param findNode
+	 *        Whether a drop is made onto an element at all; without, the target is always the
+	 *        diagram as a whole.
+	 * @return An object with the entries {@link #NODE_AT_NODE}, {@link #NODE_AT_X} and
+	 *         {@link #NODE_AT_Y}, and for an element in addition its place on the screen in
+	 *         {@link #NODE_AT_LEFT}, {@link #NODE_AT_TOP}, {@link #NODE_AT_WIDTH} and
+	 *         {@link #NODE_AT_HEIGHT}.
+	 */
+	@SuppressWarnings("unusable-by-js")
+	@JsMethod
+	public JavaScriptObject nodeAt(double clientX, double clientY, boolean findNode) {
+		JavaScriptObject result = JavaScriptObject.createObject();
+		OMSVGMatrix ctm = _svg.getScreenCTM();
+		if (ctm == null) {
+			setNull(result, NODE_AT_NODE);
+			setDouble(result, NODE_AT_X, 0);
+			setDouble(result, NODE_AT_Y, 0);
+			return result;
+		}
+		OMSVGMatrix inverse = ctm.inverse();
+		double x = clientX * inverse.getA() + clientY * inverse.getC() + inverse.getE();
+		double y = clientX * inverse.getB() + clientY * inverse.getD() + inverse.getF();
+
+		Element svgElement = Js.cast(_svg.getElement());
+		JavaScriptObject elements = findNode ? attachedElements(svgElement) : null;
+		Box target = findNode ? dropTargetAt(svgElement, elements, clientX, clientY) : null;
+		if (target == null) {
+			setNull(result, NODE_AT_NODE);
+			setDouble(result, NODE_AT_X, x);
+			setDouble(result, NODE_AT_Y, y);
+			return result;
+		}
+
+		// The point and the place of the node in the coordinate system the node was laid out in.
+		Element system = coordinateSystem(svgElement, elements, target);
+		setString(result, NODE_AT_NODE, Integer.toString(_scope.id(target)));
+		setDouble(result, NODE_AT_X, localX(system, clientX, clientY) - target.getX());
+		setDouble(result, NODE_AT_Y, localY(system, clientX, clientY) - target.getY());
+		double left = screenX(system, target.getX(), target.getY());
+		double top = screenY(system, target.getX(), target.getY());
+		setDouble(result, NODE_AT_LEFT, left);
+		setDouble(result, NODE_AT_TOP, top);
+		setDouble(result, NODE_AT_WIDTH,
+			screenX(system, target.getX() + target.getWidth(), target.getY() + target.getHeight()) - left);
+		setDouble(result, NODE_AT_HEIGHT,
+			screenY(system, target.getX() + target.getWidth(), target.getY() + target.getHeight()) - top);
+		return result;
+	}
+
+	/**
+	 * The innermost element whose bounds contain the given point of the screen and that is a
+	 * {@link DropRegion} or a {@link Widget#isDropTarget() drop target}, if it is a drop target.
+	 *
+	 * <p>
+	 * The bounds count, not the painted pixels: a gap between the parts a node draws belongs to the
+	 * node. An element is laid out in the coordinate system of the SVG it is drawn into - a layout
+	 * may translate the elements it places -, so the point is compared in that system.
+	 * </p>
+	 *
+	 * @return The element a drop at the given point is made onto, {@code null} for a drop on the
+	 *         diagram as a whole: beside such elements, or on a drop region without a user object.
+	 */
+	private Box dropTargetAt(Element svgElement, JavaScriptObject elements, double clientX, double clientY) {
+		if (_diagram == null) {
+			return null;
+		}
+		Box[] innermost = { null };
+		int[] innermostDepth = { -1 };
+		WidgetTraversal.visitAll(_diagram, widget -> {
+			if (!(widget instanceof Box)) {
+				return;
+			}
+			Box box = (Box) widget;
+			if (!isDropCandidate(box)) {
+				return;
+			}
+			Element system = coordinateSystem(svgElement, elements, box);
+			if (!contains(box, localX(system, clientX, clientY), localY(system, clientX, clientY))) {
+				return;
+			}
+			int depth = depth(box);
+			if (depth > innermostDepth[0]) {
+				innermost[0] = box;
+				innermostDepth[0] = depth;
+			}
+		});
+		Box result = innermost[0];
+		if (result == null || !result.isDropTarget()) {
+			return null;
+		}
+		return result;
+	}
+
+	/**
+	 * The SVG element whose coordinate system the given element was laid out in: the parent of the
+	 * SVG element drawn for it, or else for the first element inside it, or else for the nearest
+	 * element around it; the SVG itself where none is drawn.
+	 *
+	 * @param elements
+	 *        The SVG elements drawn for the elements of the diagram, see
+	 *        {@link #attachedElements(Element)}.
+	 */
+	private static Element coordinateSystem(Element svgElement, JavaScriptObject elements, Box box) {
+		Element own = elementOf(elements, box);
+		if (own != null) {
+			return parentOrSvg(own, svgElement);
+		}
+		Element[] inner = { null };
+		WidgetTraversal.visitContents(box, widget -> {
+			if (inner[0] == null) {
+				inner[0] = elementOf(elements, widget);
+			}
+		});
+		if (inner[0] != null) {
+			return parentOrSvg(inner[0], svgElement);
+		}
+		for (Widget parent = box.getParent(); parent instanceof Box; parent = ((Box) parent).getParent()) {
+			Element outer = elementOf(elements, parent);
+			if (outer != null) {
+				return parentOrSvg(outer, svgElement);
+			}
+		}
+		return svgElement;
+	}
+
+	private static Element parentOrSvg(Element element, Element svgElement) {
+		Element parent = element.parentElement;
+		return parent == null || !svgElement.contains(parent) ? svgElement : parent;
+	}
+
+	/**
+	 * The first SVG element drawn for each element of the diagram, by element.
+	 */
+	private static native JavaScriptObject attachedElements(Element svgElement) /*-{
+		var result = new Map();
+		var all = svgElement.querySelectorAll('*');
+		for (var n = 0; n < all.length; n++) {
+			var widget = all[n].__tlWidget;
+			if (widget && !result.has(widget)) {
+				result.set(widget, all[n]);
+			}
+		}
+		return result;
+	}-*/;
+
+	/**
+	 * The SVG element drawn for the given element, {@code null} if there is none.
+	 */
+	private static native Element elementOf(JavaScriptObject elements, Object widget) /*-{
+		return elements.get(widget) || null;
+	}-*/;
+
+	/**
+	 * The horizontal coordinate of the given point of the screen in the user space of the given
+	 * SVG element, {@code NaN} for an element that is not displayed.
+	 */
+	private static native double localX(Element element, double clientX, double clientY) /*-{
+		var ctm = element.getScreenCTM();
+		if (!ctm) {
+			return NaN;
+		}
+		var m = ctm.inverse();
+		return clientX * m.a + clientY * m.c + m.e;
+	}-*/;
+
+	/** Like {@link #localX(Element, double, double)}, the vertical coordinate. */
+	private static native double localY(Element element, double clientX, double clientY) /*-{
+		var ctm = element.getScreenCTM();
+		if (!ctm) {
+			return NaN;
+		}
+		var m = ctm.inverse();
+		return clientX * m.b + clientY * m.d + m.f;
+	}-*/;
+
+	/**
+	 * The horizontal position on the screen of the given point of the user space of the given SVG
+	 * element.
+	 */
+	private static native double screenX(Element element, double x, double y) /*-{
+		var m = element.getScreenCTM();
+		return m ? x * m.a + y * m.c + m.e : NaN;
+	}-*/;
+
+	/** Like {@link #screenX(Element, double, double)}, the vertical position. */
+	private static native double screenY(Element element, double x, double y) /*-{
+		var m = element.getScreenCTM();
+		return m ? x * m.b + y * m.d + m.f : NaN;
+	}-*/;
+
+	/**
+	 * Whether the given element ends the search for the target of a drop: a {@link DropRegion}
+	 * (without a user object, it stands for the diagram as a whole), or an element with a user
+	 * object.
+	 */
+	private static boolean isDropCandidate(Box box) {
+		return box.isDropTarget() || box instanceof DropRegion;
+	}
+
+	/**
+	 * Whether the bounds of the given element contain the given point of the diagram.
+	 */
+	private static boolean contains(Box box, double x, double y) {
+		return x >= box.getX() && x <= box.getX() + box.getWidth()
+			&& y >= box.getY() && y <= box.getY() + box.getHeight();
+	}
+
+	/**
+	 * The number of boxes the given one is nested in.
+	 */
+	private static int depth(Box box) {
+		int result = 0;
+		for (Widget parent = box.getParent(); parent instanceof Box; parent = ((Box) parent).getParent()) {
+			result++;
+		}
+		return result;
+	}
+
+	private static native void setDouble(JavaScriptObject obj, String key, double value) /*-{
+		obj[key] = value;
+	}-*/;
+
+	private static native void setNull(JavaScriptObject obj, String key) /*-{
+		obj[key] = null;
 	}-*/;
 
 	/**

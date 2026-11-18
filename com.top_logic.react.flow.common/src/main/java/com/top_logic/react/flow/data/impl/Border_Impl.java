@@ -244,6 +244,12 @@ public class Border_Impl extends com.top_logic.react.flow.data.impl.Decoration_I
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.Border setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return BORDER__TYPE;
 	}

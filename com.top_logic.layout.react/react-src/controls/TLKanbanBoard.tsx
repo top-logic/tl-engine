@@ -1,7 +1,7 @@
 import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, useI18N, usePart, TLChild, FillBarrier, useFill, rootClassName, stateAttr, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, boundaryAt, isInteractiveWithin, kindAccepted } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone } from 'tl-react-bridge';
-import { DropHint, NO_DRAG_IMAGE } from './DropHint';
-import type { DropVerdict, HintAnchor } from './DropHint';
+import { DropHint, NO_DRAG_IMAGE } from 'tl-react-bridge';
+import type { DropVerdict, HintAnchor } from 'tl-react-bridge';
 import { useOptionSelection, ATTR_OPTION_KEY } from './option-selection';
 import { useRovingFocus } from './useRovingFocus';
 

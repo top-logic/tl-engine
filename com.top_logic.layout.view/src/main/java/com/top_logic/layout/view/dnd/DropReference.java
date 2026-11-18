@@ -12,15 +12,16 @@ import com.top_logic.layout.react.control.dnd.DropLocation;
 import com.top_logic.layout.view.channel.ChannelRef;
 
 /**
- * One object a drop refers to at its {@link DropLocation}, such as the item dropped onto or the
- * item the dropped objects are inserted before.
+ * One value a drop refers to at its {@link DropLocation}, such as the item dropped onto, the item
+ * the dropped objects are inserted before, or a coordinate of the point the drop is made at.
  *
  * <p>
  * The references of a drop are fixed by its {@link DropSignature}. Each reference is an argument of
  * the {@link DropConfig#getRefuseIf() refusal function} and of the action chain of the drop, named
  * {@link #defaultName()} or by the name the {@code <drop>} gives it under {@link #nameProperty()},
- * see {@link DropArguments}. It is written to the channel the {@code <drop>} declares for it under
- * {@link #channelProperty()} before the action chain runs.
+ * see {@link DropArguments}. An object (rather than a coordinate of the point the drop is made at) is
+ * written to the channel the {@code <drop>} declares for it under {@link #channelProperty()} before
+ * the action chain runs.
  * </p>
  *
  * @param defaultName
@@ -32,12 +33,12 @@ import com.top_logic.layout.view.channel.ChannelRef;
  *        {@code null} if none is declared.
  * @param channelProperty
  *        The name of the {@link DropConfig} property declaring the channel this reference is
- *        written to.
+ *        written to, {@code null} for a coordinate, which is an argument only.
  * @param channel
  *        Reads the channel declared under {@code channelProperty} from a drop configuration,
  *        {@code null} if none is declared.
  * @param value
- *        The object referred to at a location, {@code null} where the location refers to none.
+ *        The value referred to at a location, {@code null} where the location refers to none.
  */
 public record DropReference(String defaultName, String nameProperty, Function<DropConfig, String> name,
 		String channelProperty, Function<DropConfig, ChannelRef> channel, Function<DropLocation, Object> value) {
@@ -71,6 +72,22 @@ public record DropReference(String defaultName, String nameProperty, Function<Dr
 		location -> location instanceof DropLocation.Insert insert ? insert.before() : null);
 
 	/**
+	 * The horizontal coordinate of the {@link DropLocation#point() point} a drop is made at,
+	 * {@code null} where the location has no point.
+	 */
+	public static final DropReference X = new DropReference(DropArguments.X, DropConfig.X_AS,
+		DropConfig::getXAs, null, config -> null,
+		location -> location.point() == null ? null : Double.valueOf(location.point().x()));
+
+	/**
+	 * The vertical coordinate of the {@link DropLocation#point() point} a drop is made at,
+	 * {@code null} where the location has no point.
+	 */
+	public static final DropReference Y = new DropReference(DropArguments.Y, DropConfig.Y_AS,
+		DropConfig::getYAs, null, config -> null,
+		location -> location.point() == null ? null : Double.valueOf(location.point().y()));
+
+	/**
 	 * All references a {@link DropConfig} can declare a channel or a name for.
 	 *
 	 * <p>
@@ -79,6 +96,6 @@ public record DropReference(String defaultName, String nameProperty, Function<Dr
 	 * {@link DeclaredDrop#compile(com.top_logic.basic.config.InstantiationContext, DropConfig, DropSignature)}.
 	 * </p>
 	 */
-	public static final List<DropReference> ALL = List.of(TARGET, PARENT, BEFORE);
+	public static final List<DropReference> ALL = List.of(TARGET, PARENT, BEFORE, X, Y);
 
 }

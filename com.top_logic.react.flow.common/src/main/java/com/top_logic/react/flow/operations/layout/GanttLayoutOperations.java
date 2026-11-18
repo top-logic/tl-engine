@@ -28,6 +28,7 @@ import com.top_logic.react.flow.data.GanttSpan;
 import com.top_logic.react.flow.data.Sticky;
 import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.operations.BoxOperations;
+import com.top_logic.react.flow.operations.ColorRoles;
 import com.top_logic.react.flow.operations.ConnectorSymbolRenderer;
 import com.top_logic.react.flow.operations.Interactivity;
 import com.top_logic.react.flow.operations.StickyOperations;
@@ -1046,10 +1047,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 			if (decoration instanceof GanttLineDecoration line) {
 				double x = chartX0 + (line.getAt() - rangeMin) * zoom;
-				String color = line.getColor();
-				if (color == null || color.isEmpty()) {
-					color = "#606060";
-				}
+				String role = decorationRole(line);
+				String color = role == null ? line.getColor() : ColorRoles.lineFallback(role);
 
 				double sw = line.getStrokeWidth();
 				if (sw <= 0.0) {
@@ -1057,6 +1056,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 				}
 
 				out.beginPath();
+				ColorRoles.writeRole(out, role);
 				out.setStroke(color);
 				out.setStrokeWidth(sw);
 				out.setFill("none");
@@ -1074,12 +1074,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			} else if (decoration instanceof GanttRangeDecoration range) {
 				double xFrom = chartX0 + (range.getFrom() - rangeMin) * zoom;
 				double xTo = chartX0 + (range.getTo() - rangeMin) * zoom;
-				String color = range.getColor();
-				if (color == null || color.isEmpty()) {
-					color = "rgba(100,100,100,0.2)";
-				}
+				String role = decorationRole(range);
+				String color = role == null ? range.getColor() : ColorRoles.areaFallback(role);
 
 				out.beginRect(xFrom, y0, xTo - xFrom, y1 - y0);
+				ColorRoles.writeRole(out, role);
 				out.setFill(color);
 				out.setStroke("none");
 				out.endRect();
@@ -1089,6 +1088,18 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		}
 
 		out.endGroup();
+	}
+
+	/**
+	 * The color role of the given decoration: {@code null} if it has a fixed color, otherwise its
+	 * {@link GanttDecoration#getColorRole() role} or {@link ColorRoles#NEUTRAL}.
+	 */
+	private static String decorationRole(GanttDecoration decoration) {
+		if (!ColorRoles.isEmpty(decoration.getColor())) {
+			return null;
+		}
+		String role = decoration.getColorRole();
+		return ColorRoles.isEmpty(role) ? ColorRoles.NEUTRAL : role;
 	}
 
 	/**
@@ -1149,11 +1160,15 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	 *        Space taken by the source symbol at the start of the source stub.
 	 * @param tInset
 	 *        Space taken by the target symbol at the start of the target stub.
+	 * @param strokeColor
+	 *        The fixed color of the edge, or the substitute color of its role.
+	 * @param role
+	 *        The color role of the edge, {@code null} for an edge in a fixed color.
 	 * @param horizontal
 	 *        The horizontal segment between the stubs.
 	 */
 	record EdgeRoute(GanttEdge edge, double sx, double sy, double tx, double ty, double sDir, double tDir,
-			double sInset, double tInset, String strokeColor, double strokeWidth, List<Double> dashes,
+			double sInset, double tInset, String strokeColor, String role, double strokeWidth, List<Double> dashes,
 			GanttEdgeRouting.Segment horizontal) {
 
 		/**
@@ -1170,27 +1185,37 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			double tx = endpointX(targetItem, targetEndpoint);
 			double ty = centerY(targetItem);
 
-			// Visual properties from the edge (application-defined).
-			// Switch to violated style if constraint is violated and a violated style is defined.
-			boolean hasViolatedStyle = edge.getViolatedStrokeColor() != null
-				&& !edge.getViolatedStrokeColor().isEmpty();
-			boolean violated = hasViolatedStyle
-				&& isConstraintViolated(sourceItem, sourceEndpoint, targetItem, targetEndpoint);
+			// Visual properties from the edge (application-defined), in the violated style while
+			// the dependency is violated.
+			boolean violated = isConstraintViolated(sourceItem, sourceEndpoint, targetItem, targetEndpoint);
 
-			String strokeColor;
+			String color;
+			String role;
 			double strokeWidth;
 			List<Double> dashes;
 			if (violated) {
-				strokeColor = edge.getViolatedStrokeColor();
+				color = edge.getViolatedStrokeColor();
+				role = edge.getViolatedStrokeRole();
 				strokeWidth = edge.getViolatedStrokeWidth() > 0 ? edge.getViolatedStrokeWidth() : edge.getStrokeWidth();
 				List<Double> vd = edge.getViolatedDashes();
 				dashes = (vd != null && !vd.isEmpty()) ? vd : edge.getDashes();
 			} else {
-				strokeColor = edge.getStrokeColor();
+				color = edge.getStrokeColor();
+				role = edge.getStrokeRole();
 				strokeWidth = edge.getStrokeWidth();
 				dashes = edge.getDashes();
 			}
-			if (strokeColor == null || strokeColor.isEmpty()) strokeColor = "#606060";
+			// A fixed color takes precedence over the role, an edge without either is neutral.
+			String strokeColor;
+			if (ColorRoles.isEmpty(color)) {
+				if (ColorRoles.isEmpty(role)) {
+					role = violated ? ColorRoles.ERROR : ColorRoles.NEUTRAL;
+				}
+				strokeColor = ColorRoles.lineFallback(role);
+			} else {
+				strokeColor = color;
+				role = null;
+			}
 			if (strokeWidth <= 0) strokeWidth = EDGE_STROKE_WIDTH_NORMAL;
 
 			// The first and last segments are horizontal stubs out of the item boxes, to the left
@@ -1208,7 +1233,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 				rows.indexOf(sourceItem.getRowId()), rows.indexOf(targetItem.getRowId()),
 				sx + sDir * (EDGE_HORIZONTAL_STUB + sInset), tx + tDir * (EDGE_HORIZONTAL_STUB + tInset),
 				sy, ty);
-			return new EdgeRoute(edge, sx, sy, tx, ty, sDir, tDir, sInset, tInset, strokeColor, strokeWidth,
+			return new EdgeRoute(edge, sx, sy, tx, ty, sDir, tDir, sInset, tInset, strokeColor, role, strokeWidth,
 				dashes, horizontal);
 		}
 
@@ -1219,6 +1244,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			double midY = horizontal.y();
 
 			out.beginPath();
+			ColorRoles.writeRole(out, role);
 			out.setStroke(strokeColor);
 			out.setStrokeWidth(strokeWidth);
 			out.setFill("none");
@@ -1238,9 +1264,9 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			// Symbols point from the stub into the item box. Each symbol is a path of its own
 			// without dash array, so it is drawn solid also for a dashed edge.
 			ConnectorSymbolRenderer.drawSymbol(out, sx, sy, -sDir, 0, edge.getSourceSymbol(), strokeColor,
-				strokeWidth);
+				strokeWidth, role);
 			ConnectorSymbolRenderer.drawSymbol(out, tx, ty, -tDir, 0, edge.getTargetSymbol(), strokeColor,
-				strokeWidth);
+				strokeWidth, role);
 		}
 	}
 

@@ -12,6 +12,7 @@ import java.util.List;
 import junit.framework.TestCase;
 
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.react.flow.data.Border;
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.ConnectorSymbol;
@@ -36,9 +37,12 @@ import com.top_logic.react.flow.data.Sticky;
 import com.top_logic.react.flow.data.Text;
 import com.top_logic.react.flow.data.VerticalLayout;
 import com.top_logic.react.flow.data.Widget;
+import com.top_logic.react.flow.operations.ColorRoles;
 import com.top_logic.react.flow.operations.StickyOperations;
 import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.operations.layout.GanttLayoutOperations;
+import com.top_logic.react.flow.server.script.FlowFactory;
+import com.top_logic.react.flow.server.script.ToColorRole;
 import com.top_logic.react.flow.server.svg.SvgTagWriter;
 import com.top_logic.react.flow.server.ui.AWTContext;
 import com.top_logic.react.flow.svg.RenderContext;
@@ -48,6 +52,7 @@ import com.top_logic.react.flow.svg.event.SVGClickEvent;
 import com.top_logic.react.flow.svg.event.SVGClickHandler;
 import com.top_logic.react.flow.svg.event.SVGWheelEvent;
 import com.top_logic.react.flow.svg.event.SVGWheelHandler;
+import com.top_logic.util.error.TopLogicException;
 
 /** Tests for {@link com.top_logic.react.flow.operations.layout.GanttLayoutOperations}. */
 public class TestGanttLayout extends TestCase {
@@ -1904,5 +1909,160 @@ public class TestGanttLayout extends TestCase {
 		// Points: start, source stub, source corner, target corner, target stub, end.
 		assertEquals("horizontal segment", line[5], line[7], 1e-9);
 		return line[5];
+	}
+
+	// -----------------------------------------------------------------------
+	// Color roles of edges and decorations
+	// -----------------------------------------------------------------------
+
+	/** An edge without color and role is drawn in the neutral role. */
+	public void testEdgeWithoutColorIsNeutral() throws Exception {
+		String line = pathElement(edgeGroup(renderEdge(GanttEdge.create(), 10.0, 30.0, 40.0, 60.0)), 0);
+		assertTrue("neutral role: " + line, line.contains("data-tl-role=\"neutral\""));
+		assertTrue("neutral substitute color: " + line,
+			line.contains("stroke=\"" + ColorRoles.NEUTRAL_LINE_FALLBACK + "\""));
+	}
+
+	/** A violated edge without color and role is drawn in the error role, its symbol as well. */
+	public void testViolatedEdgeWithoutColorIsError() throws Exception {
+		GanttEdge edge = GanttEdge.create().setTargetSymbol(ConnectorSymbol.FILLED_ARROW);
+		// Source ends at 50, target starts at 40: the dependency is violated.
+		String edges = edgeGroup(renderEdge(edge, 10.0, 50.0, 40.0, 60.0));
+		for (int n = 0; n <= 1; n++) {
+			String path = pathElement(edges, n);
+			assertTrue("error role: " + path, path.contains("data-tl-role=\"error\""));
+			assertTrue("error substitute color: " + path,
+				path.contains("stroke=\"" + ColorRoles.lineFallback(ColorRoles.ERROR) + "\""));
+		}
+	}
+
+	/** A violated edge is drawn in its violated role, whatever its enforcement mode. */
+	public void testViolatedEdgeIndependentOfEnforcement() throws Exception {
+		GanttSpan a = span("a", "r1", 10.0, 50.0, "A");
+		GanttSpan b = span("b", "r2", 40.0, 60.0, "B");
+		GanttEdge edge = edge("e1", "a", "b").setEnforce(GanttEnforce.NONE).setViolatedStrokeRole("warning");
+		String line = pathElement(edgeGroup(render(threeRowChart(Arrays.asList(a, b), edge))), 0);
+		assertTrue("violated role: " + line, line.contains("data-tl-role=\"warning\""));
+	}
+
+	/** A fixed color takes precedence over the role: the edge carries no role. */
+	public void testEdgeWithColorHasNoRole() throws Exception {
+		GanttEdge edge = GanttEdge.create().setStrokeColor("#123456").setStrokeRole("brand");
+		String line = pathElement(edgeGroup(renderEdge(edge, 10.0, 30.0, 40.0, 60.0)), 0);
+		assertFalse("no role: " + line, line.contains("data-tl-role"));
+		assertTrue("fixed color: " + line, line.contains("stroke=\"#123456\""));
+	}
+
+	/** A range decoration in a role carries the role and is filled in its substitute color. */
+	public void testRangeDecorationWithRole() throws Exception {
+		GanttRangeDecoration range = GanttRangeDecoration.create()
+			.setId("range")
+			.setFrom(60.0).setTo(80.0)
+			.setColorRole("category-3");
+		String rect = decorationElement(renderDecoration(range), "<rect");
+		assertTrue("role: " + rect, rect.contains("data-tl-role=\"category-3\""));
+		assertTrue("substitute color: " + rect,
+			rect.contains("fill=\"" + ColorRoles.areaFallback("category-3") + "\""));
+	}
+
+	/** A line decoration without color and role is drawn in the neutral role. */
+	public void testLineDecorationWithoutColorIsNeutral() throws Exception {
+		GanttLineDecoration line = GanttLineDecoration.create().setId("line").setAt(50.0);
+		String path = decorationElement(renderDecoration(line), "<path");
+		assertTrue("neutral role: " + path, path.contains("data-tl-role=\"neutral\""));
+	}
+
+	/** A line decoration with a fixed color carries no role. */
+	public void testLineDecorationWithColorHasNoRole() throws Exception {
+		GanttLineDecoration line =
+			GanttLineDecoration.create().setId("line").setAt(50.0).setColor("#3070d0").setColorRole("error");
+		String path = decorationElement(renderDecoration(line), "<path");
+		assertFalse("no role: " + path, path.contains("data-tl-role"));
+	}
+
+	/**
+	 * The script function of a decoration sets its default color only if neither color nor role
+	 * is given.
+	 */
+	public void testDecorationFactoryDefaultColorOnlyWithoutRole() {
+		GanttRangeDecoration plain = FlowFactory.ganttRangeDeco("plain", 0, 10, null, null, null, null, null, null);
+		assertFalse("default color", ColorRoles.isEmpty(plain.getColor()));
+		assertNull("no role", plain.getColorRole());
+
+		GanttRangeDecoration withRole =
+			FlowFactory.ganttRangeDeco("role", 0, 10, null, null, null, null, null, "category-3");
+		assertTrue("no color", ColorRoles.isEmpty(withRole.getColor()));
+		assertEquals("role", "category-3", withRole.getColorRole());
+
+		GanttLineDecoration lineWithRole =
+			FlowFactory.ganttLineDeco("line", 5, null, null, null, null, null, null, "error");
+		assertTrue("no color", ColorRoles.isEmpty(lineWithRole.getColor()));
+		assertEquals("role", "error", lineWithRole.getColorRole());
+	}
+
+	/** Renders a chart with a single row and the given decoration. */
+	private static String renderDecoration(GanttDecoration decoration) throws Exception {
+		GanttLayout layout = GanttLayout.create()
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0)
+			.setDecorations(Arrays.asList(decoration));
+		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1")));
+		return render(layout);
+	}
+
+	/** The start tag of the first element with the given tag start in the decoration group. */
+	private static String decorationElement(String svg, String tagStart) {
+		int group = svg.indexOf("tl-gantt-decorations");
+		assertTrue("decoration group present", group >= 0);
+		int pos = svg.indexOf(tagStart, group);
+		assertTrue(tagStart + " present", pos >= 0);
+		return svg.substring(pos, svg.indexOf(">", pos) + 1);
+	}
+
+	/**
+	 * Dragging the target of an edge before its source turns the edge into its violated style
+	 * after the next layout: the role of the violated state, also for its symbol.
+	 */
+	public void testDragIntoViolationRedrawsInViolatedRole() throws Exception {
+		GanttRow r1 = FlowFactory.ganttRow("r1", cell("Row 1"), null, null, null, null, null, null);
+		GanttRow r2 = FlowFactory.ganttRow("r2", cell("Row 2"), null, null, null, null, null, null);
+		GanttSpan build = FlowFactory.ganttSpan("build", "r1", cell("Build"), 10, 30,
+			null, null, null, null, null, null, null, null, null, null);
+		GanttPoint beta = FlowFactory.ganttPoint("beta", "r2", cell("Beta"), 50, null, null, null, null, null, null);
+		GanttEdge edge = FlowFactory.ganttEdge("e", "build", GanttEndpoint.END, "beta", GanttEndpoint.START, null,
+			null, null, null, null, 2.0, null, null, ConnectorSymbol.FILLED_ARROW, null, null);
+		GanttLayout layout = FlowFactory.gantt(Arrays.asList(r1, r2), Arrays.asList(build, beta),
+			Arrays.asList(edge), null, 0, 100, 1.0, null, null);
+		Diagram d = Diagram.create().setRoot(layout);
+		RenderContext context = new AWTContext(12f);
+		d.layout(context);
+		String before = edgeGroup(renderToSvg(d));
+		assertTrue("not violated: " + before, pathElement(before, 0).contains("data-tl-role=\"neutral\""));
+
+		Box box = beta.getBox();
+		((DragController) layout).commitDrag(box, box.getX() - 40, box.getY(), box.getWidth(), box.getHeight());
+		d.layout(context);
+		String after = edgeGroup(renderToSvg(d));
+		for (int n = 0; n <= 1; n++) {
+			String path = pathElement(after, n);
+			assertTrue("violated role: " + path, path.contains("data-tl-role=\"error\""));
+			assertTrue("violated width: " + path, path.contains("stroke-width=\"2"));
+		}
+	}
+
+	/**
+	 * A color role given to a TL-Script function: a missing argument stays "no role", so that the
+	 * default of the element applies (and not the first role of {@link ValueColor}).
+	 */
+	public void testColorRoleConversion() {
+		ToColorRole conversion = new ToColorRole();
+		assertNull("no role", conversion.fromScript(null));
+		assertEquals("error", conversion.fromScript(ValueColor.ERROR));
+		assertEquals("category-3", conversion.fromScript("category-3"));
+		try {
+			conversion.fromScript("no-such-role");
+			fail("Unknown role must be rejected.");
+		} catch (TopLogicException ex) {
+			// expected
+		}
 	}
 }

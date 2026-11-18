@@ -40,6 +40,9 @@ public interface GanttDecoration extends de.haumacher.msgbuf.graph.SharedGraphNo
 	/** @see #getColor() */
 	String COLOR__PROP = "color";
 
+	/** @see #getColorRole() */
+	String COLOR_ROLE__PROP = "colorRole";
+
 	/** @see #getLabel() */
 	String LABEL__PROP = "label";
 
@@ -102,7 +105,12 @@ public interface GanttDecoration extends de.haumacher.msgbuf.graph.SharedGraphNo
 	void removeRelevantForModel(java.lang.Object value);
 
 	/**
-	 * CSS-style color.
+	 * Fixed CSS-style color.
+	 *
+	 * <p>
+	 * Takes precedence over {@link #getColorRole()}. Empty = draw in the color of the
+	 * {@link #getColorRole()}.
+	 * </p>
 	 */
 	String getColor();
 
@@ -110,6 +118,31 @@ public interface GanttDecoration extends de.haumacher.msgbuf.graph.SharedGraphNo
 	 * @see #getColor()
 	 */
 	com.top_logic.react.flow.data.GanttDecoration setColor(String value);
+
+	/**
+	 * Checks, whether {@link #getColor()} has a value.
+	 */
+	boolean hasColor();
+
+	/**
+	 * Color role of the decoration, unless a fixed {@link #getColor()} is given.
+	 *
+	 * <p>
+	 * The external name of a color role, see {@link GanttEdge#getStrokeRole()}. A line is drawn in the
+	 * line color of the role, a range is filled with its area color. Empty = {@code neutral}.
+	 * </p>
+	 */
+	String getColorRole();
+
+	/**
+	 * @see #getColorRole()
+	 */
+	com.top_logic.react.flow.data.GanttDecoration setColorRole(String value);
+
+	/**
+	 * Checks, whether {@link #getColorRole()} has a value.
+	 */
+	boolean hasColorRole();
 
 	/**
 	 * Label box drawn near the decoration. The box is owned by the enclosing

@@ -32,6 +32,7 @@ import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.image.util.ImageUtils;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.react.flow.server.svg.SvgTagWriter;
 import com.top_logic.react.flow.callback.ClickHandler;
 import com.top_logic.react.flow.data.Align;
@@ -106,6 +107,12 @@ public class FlowFactory extends TLScriptFunctions {
 	 * SVG.
 	 */
 	private static final String EXPORT_CSS = "tl-react-flow-export.css";
+
+	/** Color of a Gantt line decoration created without color and color role. */
+	private static final String DEFAULT_LINE_DECORATION_COLOR = "#c02020";
+
+	/** Color of a Gantt range decoration created without color and color role. */
+	private static final String DEFAULT_RANGE_DECORATION_COLOR = "rgba(255, 220, 120, 0.35)";
 
 	/**
 	 * Factory for {@link Diagram}s.
@@ -1838,13 +1845,16 @@ public class FlowFactory extends TLScriptFunctions {
 	 * @param enforce
 	 *        Constraint enforcement mode, or {@code null} for {@link GanttEnforce#NONE}.
 	 * @param strokeColor
-	 *        Stroke color for the normal (non-violated) state.
+	 *        Fixed stroke color for the normal (non-violated) state, or {@code null} to draw the
+	 *        edge in the color of its role. Takes precedence over the role.
 	 * @param strokeWidth
 	 *        Line thickness in pixels for the normal state.
 	 * @param dashes
 	 *        Dash pattern for the normal state, or {@code null} for a solid line.
 	 * @param violatedStrokeColor
-	 *        Stroke color applied when the constraint is violated.
+	 *        Fixed stroke color applied when the dependency is violated (the source endpoint lies
+	 *        after the target endpoint), or {@code null} to draw a violated edge in the color of
+	 *        its violated role. Takes precedence over the role.
 	 * @param violatedStrokeWidth
 	 *        Line thickness when the constraint is violated.
 	 * @param violatedDashes
@@ -1855,6 +1865,13 @@ public class FlowFactory extends TLScriptFunctions {
 	 * @param targetSymbol
 	 *        Symbol at the target end, pointing into the target item (e.g. filled arrow), or
 	 *        {@code null} for no symbol.
+	 * @param strokeRole
+	 *        Color role of the edge in the normal state, a {@link ValueColor} or its name, or
+	 *        {@code null} for {@link ValueColor#NEUTRAL}. The role follows the theme and the dark
+	 *        mode.
+	 * @param violatedStrokeRole
+	 *        Color role of the edge while the dependency is violated, a {@link ValueColor} or its
+	 *        name, or {@code null} for {@link ValueColor#ERROR}.
 	 * @return The new edge.
 	 */
 	@SideEffectFree
@@ -1873,7 +1890,9 @@ public class FlowFactory extends TLScriptFunctions {
 			Double violatedStrokeWidth,
 			List<Double> violatedDashes,
 			ConnectorSymbol sourceSymbol,
-			ConnectorSymbol targetSymbol) {
+			ConnectorSymbol targetSymbol,
+			@ScriptConversion(ToColorRole.class) String strokeRole,
+			@ScriptConversion(ToColorRole.class) String violatedStrokeRole) {
 		GanttEdge edge = GanttEdge.create()
 			.setUserObject(model)
 			.setSourceModel(sourceModel).setSourceEndpoint(sourceEndpoint)
@@ -1887,6 +1906,8 @@ public class FlowFactory extends TLScriptFunctions {
 		if (violatedDashes != null && !violatedDashes.isEmpty()) edge.setViolatedDashes(violatedDashes);
 		if (sourceSymbol != null) edge.setSourceSymbol(sourceSymbol);
 		if (targetSymbol != null) edge.setTargetSymbol(targetSymbol);
+		if (strokeRole != null) edge.setStrokeRole(strokeRole);
+		if (violatedStrokeRole != null) edge.setViolatedStrokeRole(violatedStrokeRole);
 		return edge;
 	}
 
@@ -1898,7 +1919,8 @@ public class FlowFactory extends TLScriptFunctions {
 	 * @param at
 	 *        Position of the line on the axis.
 	 * @param color
-	 *        Stroke color of the line, or {@code null} for the default color.
+	 *        Fixed stroke color of the line. Takes precedence over the color role. Without color
+	 *        and color role, the line is drawn in a default color.
 	 * @param label
 	 *        Rendering content shown as the line's label.
 	 * @param relevantFor
@@ -1909,6 +1931,9 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        Stroke width of the line, in pixels.
 	 * @param dashes
 	 *        Dash pattern, or {@code null} for a solid line.
+	 * @param colorRole
+	 *        Color role of the line, a {@link ValueColor} or its name, used if no color is given.
+	 *        The role follows the theme and the dark mode.
 	 * @return The new line decoration.
 	 */
 	@Label("Create Gantt line decoration")
@@ -1920,12 +1945,13 @@ public class FlowFactory extends TLScriptFunctions {
 			List<Object> relevantFor,
 			Boolean canMove,
 			Double strokeWidth,
-			List<Double> dashes) {
+			List<Double> dashes,
+			@ScriptConversion(ToColorRole.class) String colorRole) {
 		GanttLineDecoration deco = GanttLineDecoration.create()
 			.setUserObject(model)
 			.setAt(at)
-			.setColor(color != null ? color : "#c02020")
 			.setLabel(label);
+		applyColor(deco, color, colorRole, DEFAULT_LINE_DECORATION_COLOR);
 		if (relevantFor != null) {
 			deco.setRelevantForModels(relevantFor);
 		}
@@ -1945,7 +1971,8 @@ public class FlowFactory extends TLScriptFunctions {
 	 * @param to
 	 *        End position of the range on the axis; must satisfy {@code to >= from}.
 	 * @param color
-	 *        Fill color of the range, or {@code null} for the default color.
+	 *        Fixed fill color of the range. Takes precedence over the color role. Without color
+	 *        and color role, the range is filled in a default color.
 	 * @param label
 	 *        Rendering content shown as the range's label.
 	 * @param relevantFor
@@ -1954,6 +1981,9 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        Whether the user may drag the range to another position.
 	 * @param canResize
 	 *        Whether the user may drag the range's edges to resize it.
+	 * @param colorRole
+	 *        Color role of the range, a {@link ValueColor} or its name, used if no color is given.
+	 *        The role follows the theme and the dark mode.
 	 * @return The new range decoration.
 	 */
 	@Label("Create Gantt range decoration")
@@ -1965,18 +1995,33 @@ public class FlowFactory extends TLScriptFunctions {
 			Box label,
 			List<Object> relevantFor,
 			Boolean canMove,
-			Boolean canResize) {
+			Boolean canResize,
+			@ScriptConversion(ToColorRole.class) String colorRole) {
 		GanttRangeDecoration deco = GanttRangeDecoration.create()
 			.setUserObject(model)
 			.setFrom(from).setTo(to)
-			.setColor(color != null ? color : "rgba(255, 220, 120, 0.35)")
 			.setLabel(label);
+		applyColor(deco, color, colorRole, DEFAULT_RANGE_DECORATION_COLOR);
 		if (relevantFor != null) {
 			deco.setRelevantForModels(relevantFor);
 		}
 		if (canMove != null) deco.setCanMove(canMove);
 		if (canResize != null) deco.setCanResize(canResize);
 		return deco;
+	}
+
+	/**
+	 * Sets the color of a decoration: the given fixed color, otherwise the given role, otherwise
+	 * the given default color.
+	 */
+	private static void applyColor(GanttDecoration deco, String color, String colorRole, String defaultColor) {
+		if (color != null) {
+			deco.setColor(color);
+		} else if (colorRole != null) {
+			deco.setColorRole(colorRole);
+		} else {
+			deco.setColor(defaultColor);
+		}
 	}
 
 	/**

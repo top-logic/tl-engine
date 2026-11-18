@@ -118,12 +118,13 @@ const MODIFIERS = {
   'tl-toolbar': new Set(['wrap']), // Bricht um statt zu kollabieren (Wysiwyg, 5d): eine Form, kein Zustand.
   'tl-tabs': new Set([]),
   'tl-breadcrumb': new Set([]),
-  'tl-skeleton': new Set([]),
+  'tl-skeleton': new Set(['text', 'circle']), // Die Form; das Rechteck ist die Grundform.
   'tl-status': new Set([]),
   'tl-login-alternatives': new Set([]), // Gruppe der Anmelde-Alternativen (#30296): eine Form, kein Zustand.
   'tl-login-card': new Set([]), // Karte der Anmeldeseite (#30296): eine Form, kein Zustand.
   'tl-table': new Set([]),
   'tl-tree': new Set([]),
+  'tl-list': new Set([]), // Gewählt: aria-current am Knopf des Eintrags; eingeklappt: data-tl-state~="collapsed".
   'tl-overlay': new Set(['fill']), // Die Anker sind Element-Modifier (tl-overlay__layer--<anker>), keine des Blocks.
   'tl-titlebar': new Set([]),
   'tl-dialog': new Set([]), // Ein- und Ausblenden, maximiert: data-tl-state.

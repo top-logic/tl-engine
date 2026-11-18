@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	A <data-list> of the contacts, beside a form showing the contact selected in it.
+	
+	Each entry shows the avatar of the contact (<leading>: the initials of its name on the color its
+	name maps to), its name as primary and its e-mail as secondary line, and a badge with the number
+	of tickets assigned to the contact (<trailing display="badge">, none for 0). The entries are
+	grouped by the initial of the last name, and the search filters them by their lines.
+	
+	The rows are sorted by the key the groups are formed by - the last name, ignoring case - so the
+	groups stand in alphabetical order.
+	
+	The list and the form stand in a row: the list at its own width, the form taking the rest. A
+	collapsed list leaves only its strip, and the form gets the space (tl-demo-react.css).
+	
+	The list observes contacts and tickets: a contact created, changed or deleted - in the form, in
+	the menu, or anywhere else - and a ticket assigned to a contact or taken from it change the list.
+	
+	"New contact" above the list creates a contact in a dialog and selects it. A right click on an
+	entry opens the menu of the <context-menu> around the list: it selects the entry first (an entry
+	outside the selection), so its commands act on the contact clicked.
+-->
+<view>
+	<channels>
+		<channel name="contact"/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>List</en>
+			<de>Liste</de>
+		</title>
+		<stack
+			css-class="tlDemoMasterDetail"
+			direction="row"
+			fill="true"
+		>
+			<context-menu input="contact">
+				<data-list
+					css-class="tlDemoContactList"
+					observed-types="Contacts:PersonContact, tl.demo.projectManagement:Ticket"
+					search="true"
+					selection="contact"
+				>
+					<title>
+						<en>Contacts</en>
+						<de>Kontakte</de>
+					</title>
+					<rows><![CDATA[all(`Contacts:PersonContact`)
+	.sort(comparator(c -> {
+		name = $c.get(`Contacts:PersonContact#name`);
+		if(isEmpty($name), '', $name.toLowerCase())
+	}))]]></rows>
+					<group-by><![CDATA[c -> {
+	name = $c.get(`Contacts:PersonContact#name`);
+	if(isEmpty($name), '#', $name.subString(0, 1).toUpperCase())
+}]]></group-by>
+					<leading name="c -> list($c.get(`Contacts:PersonContact#firstname`), $c.get(`Contacts:PersonContact#name`)).filter(p -> !isEmpty($p)).join(' ')"/>
+					<lines>
+						<line value="c -> list($c.get(`Contacts:PersonContact#firstname`), $c.get(`Contacts:PersonContact#name`)).filter(p -> !isEmpty($p)).join(' ')"/>
+						<line
+							attribute="email"
+							emphasis="secondary"
+						/>
+					</lines>
+					<trailing
+						display="badge"
+						value="c -> $c.referers(`tl.demo.projectManagement:Ticket#assignee`).size()"
+					/>
+					<empty-text>
+						<en>No contacts</en>
+						<de>Keine Kontakte</de>
+					</empty-text>
+					<commands>
+						<generic-command image="css:bi bi-person-plus">
+							<label>
+								<en>New contact</en>
+								<de>Neuer Kontakt</de>
+							</label>
+							<create-transient type="Contacts:PersonContact">
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="demo/create-contact.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="contact"
+										/>
+									</open-dialog>
+								</with-result>
+							</create-transient>
+						</generic-command>
+					</commands>
+				</data-list>
+				<commands>
+					<generic-command
+						image="css:bi bi-envelope"
+						inputs="contact"
+						placement="CONTEXT_MENU"
+					>
+						<label>
+							<en>Write e-mail</en>
+							<de>E-Mail schreiben</de>
+						</label>
+						<executability>
+							<null-input-disabled/>
+						</executability>
+						<open-url url="'mailto:' + $contact.get(`Contacts:PersonContact#email`)"/>
+					</generic-command>
+					<generic-command
+						image="css:bi bi-trash"
+						inputs="contact"
+						placement="CONTEXT_MENU"
+					>
+						<label>
+							<en>Delete</en>
+							<de>Löschen</de>
+						</label>
+						<executability>
+							<null-input-disabled/>
+						</executability>
+						<confirm>
+							<expr><![CDATA[#("Delete {0}?"@en, "{0} löschen?"@de).fill($contact)]]></expr>
+						</confirm>
+						<delete-object/>
+						<write-channel name="contact"
+							clear="true"
+						/>
+					</generic-command>
+				</commands>
+			</context-menu>
+			<form
+				input="contact"
+				with-inset="true"
+			>
+				<field attribute="firstname"/>
+				<field attribute="name"/>
+				<field attribute="email"/>
+				<field attribute="phone"/>
+			</form>
+		</stack>
+	</panel>
+</view>

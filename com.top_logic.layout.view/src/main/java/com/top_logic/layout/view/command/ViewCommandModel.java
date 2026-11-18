@@ -635,9 +635,45 @@ public class ViewCommandModel implements CommandModel {
 			throw CommandErrors.notExecutable(state);
 		}
 
+		run(input, parameterValues, () -> execute(input, parameterValues));
+	}
+
+	/**
+	 * Executes the command for a gesture of the user activating the given input - a double-click on
+	 * a table row, say - like {@link #execute(Object)} does, except that the command's
+	 * executability rules rejecting the input end the activation silently.
+	 *
+	 * <p>
+	 * A gesture activating an object is no explicit request for the command: the user may just pick
+	 * the object. An input the rules hide or disable the command for therefore activates nothing,
+	 * without a refusal. An input the rules accept runs the command as {@link #execute(Object)}
+	 * does, including the check for unsaved changes.
+	 * </p>
+	 *
+	 * @param input
+	 *        The command's input value.
+	 * @throws TopLogicException
+	 *         The failure of the command.
+	 */
+	public void activate(Object input) {
+		if (!executability(input).isExecutable()) {
+			return;
+		}
+
+		run(input, Map.of(), () -> activate(input));
+	}
+
+	/**
+	 * Runs the command with arguments its rules accepted, unless the forms its
+	 * {@link ViewCommand.Config#getCheckDirty() dirty check} names hold unsaved changes.
+	 *
+	 * @param retry
+	 *        The continuation of the {@link ChannelVetoException} reporting unsaved changes.
+	 */
+	private void run(Object input, Map<String, ?> parameterValues, Runnable retry) {
 		List<StateHandler> unsaved = unsavedChanges();
 		if (!unsaved.isEmpty()) {
-			throw new ChannelVetoException(unsaved, () -> execute(input, parameterValues));
+			throw new ChannelVetoException(unsaved, retry);
 		}
 
 		// Confirmation is a chain concern: place a <confirm> guard in the command's action chain

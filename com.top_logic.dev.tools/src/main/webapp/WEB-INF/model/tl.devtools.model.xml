@@ -9,6 +9,17 @@
 		</enum>
 
 		<!--
+			Kind of reference created through the model editor: a plain reference, a composition (the
+			owner contains the referenced objects) or an aggregation (the owner groups the referenced
+			objects without containing them).
+		-->
+		<enum name="ReferenceKind">
+			<classifier name="normal"/>
+			<classifier name="composition"/>
+			<classifier name="aggregation"/>
+		</enum>
+
+		<!--
 			Transient-only type holding the input of the "new module" dialog: the name of the model
 			module to create. Instances are created with new(`tl.devtools:NewModule`, transient: true)
 			and are never persisted (the action creates the module directly), so no table is declared.
@@ -71,7 +82,8 @@
 		<!--
 			Transient-only type holding the input of the "new attribute" dialog: the name, value type and
 			cardinality of the attribute to add to the selected type (a property for a primitive value
-			type, a reference for a class or enumeration). Instances are created with
+			type, a reference for a class or enumeration), and for a reference its kind and the name of
+			its navigable opposite in the target type. Instances are created with
 			new(`tl.devtools:NewAttribute`, transient: true) and are never persisted (the action adds the
 			attribute directly), so no table is declared.
 		-->
@@ -116,6 +128,89 @@
 						</dynamic-visibility>
 					</annotations>
 				</property>
+				<!--
+					Composition and aggregation require a class as value type. The field is offered while a
+					class is chosen; for another type it stays visible as long as it holds a kind other than
+					normal, so the user can reset a value entered for a class.
+				-->
+				<reference name="referenceKind"
+					kind="forwards"
+					type="ReferenceKind"
+				>
+					<annotations>
+						<default-value>
+							<classifier value="normal"/>
+						</default-value>
+						<dynamic-visibility>
+							<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+								function="obj -> {type = $obj.get(`tl.devtools:NewAttribute#type`); kind = $obj.get(`tl.devtools:NewAttribute#referenceKind`); if(($type != null &amp;&amp; $type.instanceOf(`tl.model:TLClass`)) || ($kind != null &amp;&amp; $kind != `tl.devtools:ReferenceKind#normal`), 'default', 'hidden')}"
+							/>
+						</dynamic-visibility>
+					</annotations>
+				</reference>
+				<!--
+					Name of the reference from the target class back to the owner; empty for none. Offered
+					while a class is chosen; for another type it stays visible as long as it holds a name, so
+					the user can clear a value entered for a class.
+				-->
+				<property name="opposite"
+					type="tl.core:String"
+				>
+					<annotations>
+						<dynamic-visibility>
+							<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+								function="obj -> {type = $obj.get(`tl.devtools:NewAttribute#type`); opposite = $obj.get(`tl.devtools:NewAttribute#opposite`); if(($type != null &amp;&amp; $type.instanceOf(`tl.model:TLClass`)) || !$opposite.isEmpty(), 'default', 'hidden')}"
+							/>
+						</dynamic-visibility>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+
+		<!--
+			Transient-only type describing a reference in the detail form of the model editor: its kind
+			(composition from the destination end, aggregation from the owner end) and its opposite
+			reference. Instances are created with new(`tl.devtools:ReferenceDetails`, transient: true) for
+			display only, so no table is declared.
+		-->
+		<class name="ReferenceDetails">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<reference name="referenceKind"
+					kind="forwards"
+					type="ReferenceKind"
+				/>
+				<reference name="opposite"
+					kind="forwards"
+					type="tl.model:TLReference"
+				/>
+			</attributes>
+		</class>
+
+		<!--
+			Transient-only type holding the input of the "add generalization" dialog: the class to add as
+			generalization of the selected class. Instances are created with
+			new(`tl.devtools:NewGeneralization`, transient: true) and are never persisted (the action
+			changes the class directly), so no table is declared.
+		-->
+		<class name="NewGeneralization">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<!-- Offers the classes declared in a module (no associations, no types local to another type). -->
+				<reference name="generalization"
+					kind="forwards"
+					type="tl.model:TLClass"
+				>
+					<annotations>
+						<options>
+							<options-by-expression function="obj -> all(`tl.model:TLClass`).filter(t -> !$t.instanceOf(`tl.model:TLAssociation`) &amp;&amp; $t.get(`tl.model:TLType#scope`).instanceOf(`tl.model:TLModule`))"/>
+						</options>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 	</module>

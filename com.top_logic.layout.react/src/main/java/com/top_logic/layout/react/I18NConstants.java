@@ -417,6 +417,44 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.breadcrumb.label")
 	public static ResKey JS_BREADCRUMB_LABEL;
 
+	// -- Data list client-side i18n keys --
+
+	/**
+	 * @en Collapse list
+	 */
+	@CustomKey("js.dataList.collapse")
+	public static ResKey JS_DATA_LIST_COLLAPSE;
+
+	/**
+	 * @en Expand list
+	 */
+	@CustomKey("js.dataList.expand")
+	public static ResKey JS_DATA_LIST_EXPAND;
+
+	/**
+	 * @en Search
+	 */
+	@CustomKey("js.dataList.search")
+	public static ResKey JS_DATA_LIST_SEARCH;
+
+	/**
+	 * @en Nothing to show.
+	 */
+	@CustomKey("js.dataList.empty")
+	public static ResKey JS_DATA_LIST_EMPTY;
+
+	/**
+	 * @en No matching entries.
+	 */
+	@CustomKey("js.dataList.noMatch")
+	public static ResKey JS_DATA_LIST_NO_MATCH;
+
+	/**
+	 * @en Actions
+	 */
+	@CustomKey("js.dataList.rowActions")
+	public static ResKey JS_DATA_LIST_ROW_ACTIONS;
+
 	// -- Toolbar client-side i18n keys --
 
 	/**

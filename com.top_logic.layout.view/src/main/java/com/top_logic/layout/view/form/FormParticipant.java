@@ -146,6 +146,11 @@ public interface FormParticipant {
 	 * The form announces a value written to an attribute no participant displays, see
 	 * {@link FormControl}.
 	 * </p>
+	 *
+	 * <p>
+	 * An attribute and its overrides share one value, so a field shows the given attribute, if it
+	 * shows an attribute with the same {@link TLStructuredTypePart#getDefinition() definition}.
+	 * </p>
 	 */
 	default boolean displays(TLObject object, TLStructuredTypePart part) {
 		return false;

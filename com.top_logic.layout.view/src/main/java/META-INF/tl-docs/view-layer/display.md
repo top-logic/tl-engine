@@ -16,12 +16,12 @@ every text of a role at once — see
 <stack>
 	<text
 		label="Quarterly report"
-		variant="headline"
+		variant="heading-lg"
 	/>
 	<text
 		label="Figures as of yesterday."
 		tone="helper"
-		variant="caption"
+		variant="label"
 	/>
 	<text
 		appearance="pill"
@@ -31,18 +31,21 @@ every text of a role at once — see
 </stack>
 ```
 
-- **`variant`** — what the text is for: `body` (the default), `title`, `headline`, `display`,
-  `label`, `caption`. The family, size, line height and weight come from the tokens.
+- **`variant`** — what the text is for, a role of the type scale of the design system: `display`
+  (a key figure), the headings `heading-lg`, `heading-md` and `heading-sm`, `body` (the default) and
+  `body-strong`, the small text `label` and `label-strong`, `overline` (a line above a heading, wide
+  letter spacing) and `code` (fixed-width font). The family, size, weight, line height and letter
+  spacing come from the tokens.
 - **`tone`** — what its colour means: `primary` (the default), `secondary`, `helper`,
   `placeholder`, `success`, `warning`, `error`, `on-color`.
 - **`appearance`** — the shape it is drawn in: `text` (the default) or `pill`.
 
-Every text is a `tl-text` with the type class of its variant (`tl-type-heading-lg` …) and its tone
+Every text is a `tl-text` with the type class of its variant (`tl-type-<variant>`) and its tone
 as the attribute `data-tl-tone` (`secondary`, `helper`, `placeholder`, `success`, `warning`, `error`,
 `on-brand`); the primary tone carries no attribute and inherits the colour of its surroundings, which
-is how text on the primary app bar reads in the bar's colour. A strong text names the strong type
-class, `css-class="tl-type-body-strong"`. A text without a value takes no room, unless it carries a
-role (a live region). A text keeps the line breaks of its value: a `\n` in the value is a line break,
+is how text on the primary app bar reads in the bar's colour. A text that stands out is a role of its
+own, `variant="body-strong"` or `variant="label-strong"`. A text without a value takes no room,
+unless it carries a role (a live region). A text keeps the line breaks of its value: a `\n` in the value is a line break,
 while runs of spaces collapse and the text wraps at the width available (`white-space: pre-line`). A
 text with `overflow="ellipsis"` and a text in a table cell stay on one line. Indentation collapses
 as well, so a multi-line value whose indentation matters (a stack trace, source code) is no
@@ -159,7 +162,7 @@ A value of any other type has no HTML representation; the element reports that i
 	<item>
 		<card padding="compact">
 			<html display="thumbnail" input="element"/>
-			<text css-class="tl-type-body-strong" input="element"/>
+			<text input="element" variant="body-strong"/>
 			<button appearance="link">
 				<action class="com.top_logic.layout.view.command.GenericViewCommand" inputs="element">
 					<label><en>Show</en></label>

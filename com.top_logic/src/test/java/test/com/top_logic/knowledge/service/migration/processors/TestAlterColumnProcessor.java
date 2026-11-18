@@ -36,6 +36,7 @@ import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.schema.config.AttributeConfig;
 import com.top_logic.dob.schema.config.DBColumnType;
 import com.top_logic.dob.schema.config.MetaObjectConfig;
+import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBaseConfiguration;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
@@ -88,6 +89,39 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 		_kb = _setup.setup();
 
 		storeSchema(configuredSchema());
+		try {
+			assertColumnConfigured(CONCRETE_TABLE);
+			assertColumnConfigured(OTHER_CONCRETE_TABLE);
+		} catch (AssertionError | SQLException ex) {
+			// JUnit does not call tearDown() after a failed setUp().
+			tearDown();
+			throw ex;
+		}
+	}
+
+	/**
+	 * Asserts that {@link #COLUMN} has its configured size and mandatory mode in the table of the
+	 * given type.
+	 *
+	 * <p>
+	 * The tables of the test database are only cleared but not recreated before each test, so that
+	 * a change of the column a previous test did not undo would falsify the following tests.
+	 * </p>
+	 */
+	private void assertColumnConfigured(String typeName) throws SQLException {
+		DBAttribute configured = configuredColumn();
+		DBColumn column = dbColumn(typeName);
+		String context = "Column '" + COLUMN + "' of '" + typeName + "' changed by a previous test: ";
+		assertEquals(context + "size", configured.getSQLSize(), column.getSize());
+		assertEquals(context + "mandatory", configured.isSQLNotNull(), column.isMandatory());
+	}
+
+	private MOAttribute configuredAttribute() {
+		return ((MOClass) _kb.getMORepository().getTypeOrNull(ABSTRACT_TABLE)).getAttribute(COLUMN);
+	}
+
+	private DBAttribute configuredColumn() {
+		return configuredAttribute().getDbMapping()[0];
 	}
 
 	@Override
@@ -116,26 +150,30 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 		config.setDBSize(NEW_SIZE);
 
 		BufferingProtocol log = migrate(TypedConfigUtil.createInstance(config));
-		assertTrue("Stored schema not updated: " + log.getInfos(), log.getInfos().stream().anyMatch(
-			info -> info.contains("Updating persistent schema of column '" + COLUMN + "' in table '"
-				+ ABSTRACT_TABLE + "'.")));
+		try {
+			assertTrue("Stored schema not updated: " + log.getInfos(), log.getInfos().stream().anyMatch(
+				info -> info.contains("Updating persistent schema of column '" + COLUMN + "' in table '"
+					+ ABSTRACT_TABLE + "'.")));
 
-		assertEquals(Integer.valueOf(NEW_SIZE), storedColumn().getDBSize());
-		assertEquals(NEW_SIZE, dbColumn(CONCRETE_TABLE).getSize());
-		assertEquals(NEW_SIZE, dbColumn(OTHER_CONCRETE_TABLE).getSize());
-		assertTrue("Type change dropped mandatory.", dbColumn(CONCRETE_TABLE).isMandatory());
-		assertTrue("Type change dropped mandatory.", dbColumn(OTHER_CONCRETE_TABLE).isMandatory());
+			assertEquals(Integer.valueOf(NEW_SIZE), storedColumn().getDBSize());
+			assertEquals(NEW_SIZE, dbColumn(CONCRETE_TABLE).getSize());
+			assertEquals(NEW_SIZE, dbColumn(OTHER_CONCRETE_TABLE).getSize());
+			assertTrue("Type change dropped mandatory.", dbColumn(CONCRETE_TABLE).isMandatory());
+			assertTrue("Type change dropped mandatory.", dbColumn(OTHER_CONCRETE_TABLE).isMandatory());
 
-		List<String> infos = log.getInfos();
-		DBHelper sqlDialect = _pool.getSQLDialect();
-		for (String typeName : new String[] { CONCRETE_TABLE, OTHER_CONCRETE_TABLE }) {
-			String analyzed = "Analyzed table '" + dbTableName(typeName) + "'.";
-			if (sqlDialect.supportsAnalyzeTable()) {
-				assertEquals("Table not analyzed exactly once: " + infos, 1,
-					infos.stream().filter(analyzed::equals).count());
-			} else {
-				assertFalse("Analyze without dialect support: " + infos, infos.contains(analyzed));
+			List<String> infos = log.getInfos();
+			DBHelper sqlDialect = _pool.getSQLDialect();
+			for (String typeName : new String[] { CONCRETE_TABLE, OTHER_CONCRETE_TABLE }) {
+				String analyzed = "Analyzed table '" + dbTableName(typeName) + "'.";
+				if (sqlDialect.supportsAnalyzeTable()) {
+					assertEquals("Table not analyzed exactly once: " + infos, 1,
+						infos.stream().filter(analyzed::equals).count());
+				} else {
+					assertFalse("Analyze without dialect support: " + infos, infos.contains(analyzed));
+				}
 			}
+		} finally {
+			migrate(restoreColumn(COLUMN));
 		}
 	}
 
@@ -145,10 +183,13 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 	 */
 	public void testNoAnalyzeWithoutTypeChange() throws Exception {
 		String renamed = COLUMN + "Renamed";
-		assertNotAnalyzed(migrate(renameColumn(COLUMN, renamed)).getInfos());
-
-		// Restore the original column, since the database is shared with other tests.
-		assertNotAnalyzed(migrate(renameColumn(renamed, COLUMN)).getInfos());
+		List<String> infos = migrate(renameColumn(COLUMN, renamed)).getInfos();
+		try {
+			assertNotAnalyzed(infos);
+		} finally {
+			infos = migrate(restoreColumn(renamed)).getInfos();
+		}
+		assertNotAnalyzed(infos);
 	}
 
 	private static void assertNotAnalyzed(List<String> infos) {
@@ -170,10 +211,12 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 		long size = dbColumn(CONCRETE_TABLE).getSize();
 
 		migrate(changeMandatory(COLUMN, false));
-		assertFalse(dbColumn(CONCRETE_TABLE).isMandatory());
-		assertEquals(size, dbColumn(CONCRETE_TABLE).getSize());
-
-		migrate(changeMandatory(COLUMN, true));
+		try {
+			assertFalse(dbColumn(CONCRETE_TABLE).isMandatory());
+			assertEquals(size, dbColumn(CONCRETE_TABLE).getSize());
+		} finally {
+			migrate(restoreColumn(COLUMN));
+		}
 		assertTrue(dbColumn(CONCRETE_TABLE).isMandatory());
 		assertEquals(size, dbColumn(CONCRETE_TABLE).getSize());
 	}
@@ -201,9 +244,34 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 			assertEquals(NEW_SIZE, column.getSize());
 			assertFalse(column.isMandatory());
 		} finally {
-			// Restore the original column, since the database is shared with other tests.
-			migrate(renameColumn(renamed, COLUMN));
+			migrate(restoreColumn(renamed));
 		}
+	}
+
+	/**
+	 * Restores the name, size and mandatory mode of the configured {@link #COLUMN}.
+	 *
+	 * <p>
+	 * Each test that alters the column restores it, since the tables of the test database are only
+	 * cleared but not recreated before the next test.
+	 * </p>
+	 *
+	 * @param currentName
+	 *        The current name of the column.
+	 */
+	private AlterColumnProcessor restoreColumn(String currentName) {
+		MOAttribute configured = configuredAttribute();
+		DBAttribute dbColumn = configuredColumn();
+		AlterColumnProcessor.Config<?> config =
+			TypedConfiguration.newConfigItem(AlterColumnProcessor.Config.class);
+		config.setTable(ABSTRACT_TABLE);
+		config.setColumn(currentName);
+		if (!currentName.equals(COLUMN)) {
+			config.setNewName(COLUMN);
+		}
+		config.setNewMandatory(Boolean.valueOf(configured.isMandatory()));
+		config.setDBSize(Integer.valueOf(dbColumn.getSQLSize()));
+		return TypedConfigUtil.createInstance(config);
 	}
 
 	private static AlterColumnProcessor changeMandatory(String column, boolean mandatory) {

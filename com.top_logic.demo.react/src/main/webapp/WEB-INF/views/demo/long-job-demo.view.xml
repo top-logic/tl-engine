@@ -544,7 +544,7 @@
 			label="#('Working…'@en, 'In Arbeit…'@de)"
 		/>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>A command running in the request</en>
 				<de>Ein Befehl, der in der Anfrage läuft</de>

@@ -18,7 +18,7 @@ import com.top_logic.model.TLStructuredTypePart;
  * {@link CellClassProvider} assigning CSS class values to a table cell depending on the explicit
  * assignment status of the displayed value.
  * 
- * @see UpdateFallbackDisplay
+ * @see StorageWithFallback#getCssFallback()
  */
 public class FallbackCellClassProvider extends AbstractCellClassProvider {
 

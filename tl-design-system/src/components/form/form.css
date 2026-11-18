@@ -177,7 +177,7 @@
    das Ende hinaus: sie verdeckt keinen Inhalt der Eingabe (Pfeil, Leeren-Knopf), und ein Behälter, der oben und unten
    beschneidet (die Tabellenzelle, deren Zeile kaum höher ist als das Feld), schneidet sie nicht ab; über das Ende
    reicht sie um eine halbe Markenbreite, die der Innenabstand des Behälters aufnimmt (eine Feldzelle der Tabelle
-   hat keinen und hält ihn frei, solange die Marke steht, siehe table.css). Die Wurzel ist
+   hat nur space-2xs und hält ihn frei, solange die Marke steht, siehe table.css). Die Wurzel ist
    ihr Bezugsrahmen. Die Marke ist rund (eine Form, kein Radius) und in der Farbe der Meldung. */
 .tl-form-field--compact {
   position: relative;

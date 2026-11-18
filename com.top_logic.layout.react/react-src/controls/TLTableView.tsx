@@ -400,6 +400,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const DisclosureToggle = usePart('DisclosureToggle');
   const Checkbox = usePart('Checkbox');
   const TextInput = usePart('TextInput');
+  const Skeleton = usePart('Skeleton');
   const rootRef = React.useRef<HTMLDivElement>(null);
   // The grid (role=grid) holds the keyboard focus and points at the cursor row with
   // aria-activedescendant; the body inside it only scrolls.
@@ -2081,7 +2082,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           {missing.map((index) => (
             <div key={'skeleton-' + index} className="tl-table__placeholder" aria-hidden="true"
               style={{ position: 'absolute', top: index * rowHeight, height: rowHeight, left: 0, right: 0 }}>
-              <span className="tl-skeleton" />
+              <Skeleton shape="text" />
             </div>
           ))}
           {rows.map((row) => (

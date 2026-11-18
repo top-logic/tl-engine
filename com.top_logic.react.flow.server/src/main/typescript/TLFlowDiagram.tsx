@@ -1,4 +1,4 @@
-import { React, rootClassName, subscribe, unsubscribe, useFill } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, React, rootClassName, subscribe, unsubscribe, useFill, useTLCommand } from 'tl-react-bridge';
 
 /**
  * CSS class of the element the diagram is drawn into (tl-react-flow.css): the SVG is positioned within it and never
@@ -26,6 +26,10 @@ interface TLFlowDiagramProps {
  * after that serialization belong to the new diagram, and only a control applying the updates in
  * the order they were sent gets each patch to the diagram it was made for. The updates arriving
  * while the GWT module is still loading are kept and handed to the control once it is mounted.
+ *
+ * The control sends its commands through the command channel of the page (useTLCommand), so that a
+ * command of the diagram - e.g. the selection a right-click makes before the context menu around
+ * the diagram opens - reaches the server before a command the user triggers afterwards.
  */
 function TLFlowDiagram({ controlId, state }: TLFlowDiagramProps) {
     // The diagram always spans the space its container offers: the client lays it out within that space, so its
@@ -33,6 +37,10 @@ function TLFlowDiagram({ controlId, state }: TLFlowDiagramProps) {
     const fillClass = useFill(true);
     const ref = React.useRef<HTMLDivElement>(null);
     const controlRef = React.useRef<any>(null);
+
+    const sendCommand = useTLCommand();
+    const sendRef = React.useRef(sendCommand);
+    sendRef.current = sendCommand;
 
     const diagramJson = typeof state.diagram === 'string'
         ? state.diagram
@@ -77,14 +85,15 @@ function TLFlowDiagram({ controlId, state }: TLFlowDiagramProps) {
                 return;
             }
 
-            const windowName = document.body.dataset.windowName || 'main';
-            const contextPath = document.body.dataset.contextPath || '';
+            // Sends a command of the control, until it is unmounted.
+            const send = (command: string, args: Record<string, unknown>, background: boolean) => {
+                if (cancelled) return;
+                void sendRef.current(command, args, background ? BACKGROUND_COMMAND : undefined);
+            };
 
             // The control subscribes to the updates of its own while mounting.
             unsubscribe(controlId, buffer);
-            const control = gwtApi.mount(
-                div, controlId, windowName, contextPath, mountJson
-            );
+            const control = gwtApi.mount(div, controlId, send, mountJson);
             controlRef.current = control;
             for (const update of pending) {
                 control.onServerState(update);

@@ -1145,6 +1145,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	/**
 	 * The path and style of a dependency edge.
 	 *
+	 * @param edge
+	 *        The dependency edge this route draws.
 	 * @param sx
 	 *        X coordinate of the source endpoint.
 	 * @param sy
@@ -1165,6 +1167,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	 *        The fixed color of the edge, or the substitute color of its role.
 	 * @param role
 	 *        The color role of the edge, {@code null} for an edge in a fixed color.
+	 * @param strokeWidth
+	 *        The width of the line, the width for a violated dependency while it is violated.
+	 * @param dashes
+	 *        The dash pattern of the line, the pattern for a violated dependency while it is
+	 *        violated; empty or {@code null} for a solid line.
 	 * @param horizontal
 	 *        The horizontal segment between the stubs.
 	 */

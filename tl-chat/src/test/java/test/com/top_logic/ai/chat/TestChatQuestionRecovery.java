@@ -26,12 +26,12 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore.InteractionType;
-import com.top_logic.tl.ai.core.execution.model.AgentExecution;
-import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.agent.approval.UserInteractionRequest;
+import com.top_logic.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.execution.AgentExecutionStore.InteractionType;
+import com.top_logic.ai.core.execution.model.AgentExecution;
+import com.top_logic.ai.core.execution.model.AgentSession;
 import com.top_logic.util.model.ModelService;
 
 /**

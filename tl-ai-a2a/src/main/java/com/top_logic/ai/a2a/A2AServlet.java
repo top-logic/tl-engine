@@ -22,7 +22,7 @@ import com.top_logic.ai.a2a.protocol.Json;
 import com.top_logic.ai.a2a.server.A2ARequestHandler;
 import com.top_logic.basic.Logger;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
-import com.top_logic.tl.ai.core.access.EndpointAuthentication;
+import com.top_logic.ai.core.access.EndpointAuthentication;
 import com.top_logic.util.TLContextManager;
 
 /**

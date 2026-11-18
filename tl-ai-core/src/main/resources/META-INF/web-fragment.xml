@@ -7,7 +7,7 @@
 
 	<servlet>
 		<servlet-name>GeneratedHtmlPageServlet</servlet-name>
-		<servlet-class>com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageServlet</servlet-class>
+		<servlet-class>com.top_logic.ai.core.htmlpages.GeneratedHtmlPageServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>
@@ -24,7 +24,7 @@
 	-->
 	<servlet>
 		<servlet-name>PdfJsResourceServlet</servlet-name>
-		<servlet-class>com.top_logic.tl.ai.core.htmlpages.PdfJsResourceServlet</servlet-class>
+		<servlet-class>com.top_logic.ai.core.htmlpages.PdfJsResourceServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>
@@ -38,7 +38,7 @@
 	-->
 	<servlet>
 		<servlet-name>ScreenshotServlet</servlet-name>
-		<servlet-class>com.top_logic.tl.ai.core.screenshots.ScreenshotServlet</servlet-class>
+		<servlet-class>com.top_logic.ai.core.screenshots.ScreenshotServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>
@@ -52,7 +52,7 @@
 	-->
 	<servlet>
 		<servlet-name>ArchivedPageServlet</servlet-name>
-		<servlet-class>com.top_logic.tl.ai.core.citation.ArchivedPageServlet</servlet-class>
+		<servlet-class>com.top_logic.ai.core.citation.ArchivedPageServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>

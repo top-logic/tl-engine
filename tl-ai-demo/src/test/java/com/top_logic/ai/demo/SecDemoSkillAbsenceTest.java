@@ -11,21 +11,21 @@ import java.util.Set;
 
 import junit.framework.Test;
 
-import com.top_logic.tl.ai.core.agent.AgentCapabilities;
-import com.top_logic.tl.ai.core.agent.AgentDefinition;
-import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
-import com.top_logic.tl.ai.core.agent.AgentFactory;
-import com.top_logic.tl.ai.core.agent.SecurityContext;
-import com.top_logic.tl.ai.core.agent.SkillDefinition;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
-import com.top_logic.tl.ai.core.agent.TransactionScope;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.message.ToolCall;
-import com.top_logic.tl.ai.core.message.ToolResultMessage;
-import com.top_logic.tl.ai.core.message.ToolState;
-import com.top_logic.tl.ai.core.tools.ToolRegistry;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.core.agent.AgentCapabilities;
+import com.top_logic.ai.core.agent.AgentDefinition;
+import com.top_logic.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.ai.core.agent.AgentFactory;
+import com.top_logic.ai.core.agent.SecurityContext;
+import com.top_logic.ai.core.agent.SkillDefinition;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
+import com.top_logic.ai.core.agent.TransactionScope;
+import com.top_logic.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.ai.core.message.ToolCall;
+import com.top_logic.ai.core.message.ToolResultMessage;
+import com.top_logic.ai.core.message.ToolState;
+import com.top_logic.ai.core.tools.ToolRegistry;
 
 /**
  * What a persona is told when {@code loadSkill} cannot hand over the skill it asked for.

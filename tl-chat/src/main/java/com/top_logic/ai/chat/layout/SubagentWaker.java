@@ -10,8 +10,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.SchedulerService;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.ai.core.agent.subagent.SubagentJobRegistry;
 
 /**
  * Starts a turn of the lead when the subagents of a chat have news and no turn of the lead runs to

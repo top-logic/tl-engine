@@ -36,7 +36,7 @@ Denials and rollbacks are logged to the application log, with run, turn, account
 
 | Occasion | Record |
 |---|---|
-| A tool or capability refused by the tool policy (L1) | `WARN` under `com.top_logic.tl.ai.core.security.ToolAuthorization`, naming the tool, its group, the account, the roles it holds and the deciding rule - see [diagnosing a denial](doc:ai/security/tool-access-recipes#why-can-this-account-not-use-this-tool) |
+| A tool or capability refused by the tool policy (L1) | `WARN` under `com.top_logic.ai.core.security.ToolAuthorization`, naming the tool, its group, the account, the roles it holds and the deciding rule - see [diagnosing a denial](doc:ai/security/tool-access-recipes#why-can-this-account-not-use-this-tool) |
 | A `ToolSecurityException` raised by a tool (L2) | a denied tool result and a log record naming operation and type |
 | A refused commit | one `ERROR` line by `AgentLoop.commitTransaction` naming run, turn and cause |
 | A refused browsing origin | `INFO` - see [browsing governance](doc:ai/security/browsing-governance#what-the-operator-sees) |

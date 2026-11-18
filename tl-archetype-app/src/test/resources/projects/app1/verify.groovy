@@ -17,7 +17,7 @@ def expected = [
 	"bin/launch/Start My App.launch": true,
 	"bin/launch/Setup My App.launch": true,
 	"bin/launch/Layout Inline Selected.launch": false,
-	"src/main/webapp/WEB-INF/autoconf/com.top_logic.tl.ai.core.security.AiToolAccessService.config.xml": true
+	"src/main/webapp/WEB-INF/autoconf/com.top_logic.ai.core.security.AiToolAccessService.config.xml": true
 ];
 expected.each { path, present ->
 	def file = new File(project, path);

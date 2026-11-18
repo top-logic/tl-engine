@@ -14,8 +14,8 @@ import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
-import com.top_logic.tl.ai.core.access.AccessTokenAuthentication;
-import com.top_logic.tl.ai.core.access.AccessTokenAuthenticator;
+import com.top_logic.ai.core.access.AccessTokenAuthentication;
+import com.top_logic.ai.core.access.AccessTokenAuthenticator;
 
 /**
  * TL-Script functions telling a person how to connect an MCP client to this application, e.g. in

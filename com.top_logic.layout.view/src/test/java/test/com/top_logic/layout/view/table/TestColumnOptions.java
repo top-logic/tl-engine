@@ -15,6 +15,7 @@ import junit.framework.Test;
 
 import test.com.top_logic.layout.view.security.AbstractModelAccessTest;
 
+import com.top_logic.base.locking.handler.NoTokenHandling;
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -180,9 +181,10 @@ public class TestColumnOptions extends AbstractModelAccessTest {
 				+ " value='$row.get(`" + PROJECT_CATEGORY + "`)'"
 				+ " update='$row.set(`" + PROJECT_CATEGORY + "`, $value)'/>");
 
-		BoundFieldModel field = ((ValueCellEditing) setup.editing()).createInPlaceModel(_project, () -> {
-			// Nothing depends on the cell.
-		});
+		BoundFieldModel field = ((ValueCellEditing) setup.editing()).createInPlaceModel(_context, _project,
+			NoTokenHandling.INSTANCE, () -> {
+				// Nothing depends on the cell.
+			});
 		field.setValue(List.of(_otherCategory));
 
 		assertSame(_otherCategory, _project.tValueByName(CATEGORY_REF));
@@ -214,9 +216,10 @@ public class TestColumnOptions extends AbstractModelAccessTest {
 				+ " value='$row.get(`" + PROJECT_CATEGORIES + "`)'"
 				+ " update='$row.set(`" + PROJECT_CATEGORIES + "`, $value)'/>");
 
-		BoundFieldModel field = ((ValueCellEditing) setup.editing()).createInPlaceModel(_project, () -> {
-			// Nothing depends on the cell.
-		});
+		BoundFieldModel field = ((ValueCellEditing) setup.editing()).createInPlaceModel(_context, _project,
+			NoTokenHandling.INSTANCE, () -> {
+				// Nothing depends on the cell.
+			});
 		assertTrue(assertSelect(field).isMultiple());
 		assertEquals(List.of(), field.getValue());
 
@@ -268,8 +271,8 @@ public class TestColumnOptions extends AbstractModelAccessTest {
 		assertEquals(List.of(_otherCategory), assertSelect(model(computed.get(0), _project)).getOptions());
 		assertEquals(List.of(_hiddenCategory), assertSelect(model(computed.get(1), _project)).getOptions());
 
-		BoundFieldModel field = ((ValueCellEditing) computed.get(0).editing()).createInPlaceModel(_otherProject,
-			() -> {
+		BoundFieldModel field = ((ValueCellEditing) computed.get(0).editing()).createInPlaceModel(_context,
+			_otherProject, NoTokenHandling.INSTANCE, () -> {
 				// Nothing depends on the cell.
 			});
 		field.setValue(List.of(_otherCategory));

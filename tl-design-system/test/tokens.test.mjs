@@ -230,6 +230,16 @@ test('eine Leiste ist Control-Höhe plus space-2xs oben und unten, in beiden Dic
   }
 });
 
+test('#30383: eine Zeile ist eine Rasterstufe höher als ein Control, in beiden Dichten', () => {
+  // Das Feld in der bearbeiteten Zeile steht space-2xs − border-width-sm unter der Oberkante; das ergibt ganze
+  // Pixel (3 oben, 4 unten) nur, solange size-row − size-control = space-2xs.
+  for (const d of ['normal', 'compact']) {
+    const row = parseFloat(R.density[d]['size-row']);
+    const control = parseFloat(R.density[d]['size-control']);
+    assert.equal(row - control, parseFloat(R.measure['space-2xs']), d);
+  }
+});
+
 test('Zeilenhöhen der Typo-Klassen liegen auf dem 4-px-Raster', () => {
   for (const [n, k] of Object.entries(T.type)) {
     if (n.startsWith('_')) continue;

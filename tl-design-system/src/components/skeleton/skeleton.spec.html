@@ -11,10 +11,8 @@
 <link rel="stylesheet" href="/dist/components.css">
 <link rel="stylesheet" href="/specimen/specimen.css">
 <style>
-  .specimen__line { width: 100%; }
-  .specimen__line--short { width: 60%; }
   .specimen__block { height: 6rem; }
-  .specimen__circle { width: var(--tl-size-control); height: var(--tl-size-control); border-radius: var(--tl-radius-full); }
+  .specimen__circle { width: var(--tl-size-control); height: var(--tl-size-control); }
 </style>
 </head>
 <body>
@@ -29,19 +27,26 @@
   <!-- Jede Zeile: eine Form, mit Beschriftung. Das Skript setzt die Zeilen auf jede Fläche. -->
   <template id="rows">
     <div class="specimen__row">
-      <span class="tl-type-label">Textzeile</span>
-      <div class="specimen__stack specimen__stack--snug" aria-busy="true">
-        <span class="tl-skeleton specimen__line" aria-hidden="true"></span>
-        <span class="tl-skeleton specimen__line specimen__line--short" aria-hidden="true"></span>
+      <span class="tl-type-label">Textzeile (shape="text")</span>
+      <div aria-busy="true"><span class="tl-skeleton tl-skeleton--text" aria-hidden="true"></span></div>
+    </div>
+    <div class="specimen__row">
+      <span class="tl-type-label">Drei Zeilen (lines="3")</span>
+      <div aria-busy="true">
+        <div aria-hidden="true">
+          <span class="tl-skeleton tl-skeleton--text"></span>
+          <span class="tl-skeleton tl-skeleton--text"></span>
+          <span class="tl-skeleton tl-skeleton--text"></span>
+        </div>
       </div>
     </div>
     <div class="specimen__row">
-      <span class="tl-type-label">Block</span>
+      <span class="tl-type-label">Rechteck (shape="rect")</span>
       <div aria-busy="true"><span class="tl-skeleton specimen__block" aria-hidden="true"></span></div>
     </div>
     <div class="specimen__row">
-      <span class="tl-type-label">Avatar-Kreis</span>
-      <div aria-busy="true"><span class="tl-skeleton specimen__circle" aria-hidden="true"></span></div>
+      <span class="tl-type-label">Kreis (shape="circle")</span>
+      <div aria-busy="true"><span class="tl-skeleton tl-skeleton--circle specimen__circle" aria-hidden="true"></span></div>
     </div>
   </template>
 

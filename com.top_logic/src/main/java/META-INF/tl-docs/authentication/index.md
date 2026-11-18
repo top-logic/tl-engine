@@ -247,6 +247,18 @@ A `LoginMethod` answers:
 - `getReauthenticationUrl(token)` - optional; the address that has the provider confirm the user of
   the running session once more, or `null` when the method cannot. pac4j answers it only for a
   session its own client established.
+- `getIdentificationUrl(token)` - optional; the address that has the provider authenticate whoever
+  is at the keyboard within the running session, whichever method established it, or `null` when
+  the method cannot. pac4j answers it for every client that can demand a fresh authentication (its
+  re-authentication client).
+
+Both addresses carry a token of `IdentityVerifications` (`ExternalAuthenticationServlet.VERIFICATION_PARAM`).
+The request returning from the provider is no login: the servlet hands the confirmed identity
+(`VerifiedIdentity`: client, subject and, only on demand, the account the login mapping resolves)
+to the `IdentityVerificationHandler` the token was registered with. The handler of a
+re-authentication accepts only the session's own account; another handler may, for example,
+connect the identity with the session's account. The outcome page tells the user the handler's
+message and closes the window on success.
 
 The buttons are determined each time the element is rendered, so a method that becomes available
 (a secret is provided) appears without a restart. An external login that failed returns to the login

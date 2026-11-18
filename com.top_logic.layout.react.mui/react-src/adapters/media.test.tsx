@@ -25,6 +25,7 @@ import TLJobStatus from '../../../com.top_logic.layout.react/react-src/controls/
 import ButtonPart from '../../../com.top_logic.layout.react/react-src/controls/button/ButtonPart';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiChipAdapter from './MuiChipAdapter';
+import MuiSkeletonAdapter from './MuiSkeletonAdapter';
 import MuiProgressBarAdapter from './MuiProgressBarAdapter';
 import { CONTROL_ID, childControl, mountAdapter, patchState, settle } from './wire-test-support';
 
@@ -33,6 +34,7 @@ import { CONTROL_ID, childControl, mountAdapter, patchState, settle } from './wi
 replacePart('Button', MuiButtonAdapter);
 replacePart('Chip', MuiChipAdapter);
 replacePart('ProgressBar', MuiProgressBarAdapter);
+replacePart('Skeleton', MuiSkeletonAdapter);
 
 /** The texts of the controls: the keys, as the test stub translates each key to itself. */
 const LABEL_NO_FILE = 'js.download.noFile';

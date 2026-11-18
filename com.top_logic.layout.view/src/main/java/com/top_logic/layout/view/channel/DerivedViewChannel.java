@@ -13,6 +13,7 @@ import java.util.function.Function;
 
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.form.StateHandler;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelScope;
 
@@ -53,6 +54,8 @@ public class DerivedViewChannel implements ObservingChannel {
 
 	private final String _name;
 
+	private final TLClass _valueType;
+
 	private Object _value;
 
 	private final ChannelListeners _listeners = new ChannelListeners(this);
@@ -75,7 +78,25 @@ public class DerivedViewChannel implements ObservingChannel {
 	 *        The channel name (for error messages and debugging).
 	 */
 	public DerivedViewChannel(String name) {
+		this(name, null);
+	}
+
+	/**
+	 * Creates a {@link DerivedViewChannel} with a declared value type.
+	 *
+	 * @param name
+	 *        The channel name (for error messages and debugging).
+	 * @param valueType
+	 *        See {@link #getValueType()}, {@code null} for none.
+	 */
+	public DerivedViewChannel(String name, TLClass valueType) {
 		_name = name;
+		_valueType = valueType;
+	}
+
+	@Override
+	public TLClass getValueType() {
+		return _valueType;
 	}
 
 	/**

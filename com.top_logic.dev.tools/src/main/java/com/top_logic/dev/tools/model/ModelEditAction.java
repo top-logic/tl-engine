@@ -17,6 +17,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.WithResultActions;
+import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -36,7 +37,8 @@ import com.top_logic.util.model.ModelService;
 
 /**
  * {@link ViewAction} that mutates the application model from the model editor: creates a module,
- * type (class or enumeration) or attribute, or deletes a model part.
+ * type (class or enumeration) or attribute, adds or removes a generalization of a class, or deletes a
+ * model part.
  *
  * <p>
  * The mutating operations create their result through the {@link TLModelUtil} primitives and return
@@ -69,6 +71,26 @@ public class ModelEditAction implements ViewAction {
 	private static final String MULTIPLE = "multiple";
 
 	/**
+	 * Transient input attribute holding the {@code tl.devtools:ReferenceKind} of a new reference.
+	 */
+	private static final String REFERENCE_KIND = "referenceKind";
+
+	/**
+	 * Transient input attribute holding the name of the opposite reference to create in the target
+	 * class of a new reference.
+	 */
+	private static final String OPPOSITE = "opposite";
+
+	/** Transient input attribute holding the class to add as generalization. */
+	private static final String GENERALIZATION = "generalization";
+
+	/** Classifier name of {@code tl.devtools:ReferenceKind} selecting a composition. */
+	private static final String KIND_COMPOSITION = "composition";
+
+	/** Classifier name of {@code tl.devtools:ReferenceKind} selecting an aggregation. */
+	private static final String KIND_AGGREGATION = "aggregation";
+
+	/**
 	 * The model mutation a {@link ModelEditAction} performs.
 	 */
 	public enum Mode {
@@ -83,6 +105,12 @@ public class ModelEditAction implements ViewAction {
 
 		/** Add a new classifier named by the input to the container enumeration. */
 		CREATE_CLASSIFIER,
+
+		/** Add the class selected in the input as generalization of the container class. */
+		ADD_GENERALIZATION,
+
+		/** Remove the class passed as the action input from the generalizations of the container class. */
+		REMOVE_GENERALIZATION,
 
 		/** Delete the model part passed as the action input. */
 		DELETE;
@@ -118,7 +146,9 @@ public class ModelEditAction implements ViewAction {
 		/**
 		 * Name of the channel holding the container the new element is created in: the target module for
 		 * {@link Mode#CREATE_TYPE}, the owner type (or one of its parts) for
-		 * {@link Mode#CREATE_ATTRIBUTE}. Unused by {@link Mode#CREATE_MODULE} and {@link Mode#DELETE}.
+		 * {@link Mode#CREATE_ATTRIBUTE}, the enumeration for {@link Mode#CREATE_CLASSIFIER}, the
+		 * specialized class for {@link Mode#ADD_GENERALIZATION} and {@link Mode#REMOVE_GENERALIZATION}.
+		 * Unused by {@link Mode#CREATE_MODULE} and {@link Mode#DELETE}.
 		 */
 		@Name(CONTAINER)
 		@Nullable
@@ -149,6 +179,10 @@ public class ModelEditAction implements ViewAction {
 				return createAttribute(context, input);
 			case CREATE_CLASSIFIER:
 				return createClassifier(context, input);
+			case ADD_GENERALIZATION:
+				return addGeneralization(context, input);
+			case REMOVE_GENERALIZATION:
+				return removeGeneralization(context, input);
 			case DELETE:
 				return delete(input);
 		}
@@ -183,8 +217,11 @@ public class ModelEditAction implements ViewAction {
 	 *
 	 * <p>
 	 * An attribute with a {@link TLPrimitive} value type becomes a {@link TLProperty}; an attribute
-	 * referring to a class or an enumeration becomes a navigable, non-composite {@link TLReference}
-	 * (see {@link TLModelUtil#addForwardReference(TLClass, String, TLType)}).
+	 * referring to a class or an enumeration becomes a navigable {@link TLReference} (see
+	 * {@link TLModelUtil#addForwardReferenceEnd(TLClass, String, TLType, boolean)}). A reference to a
+	 * class may be a composition or an aggregation (see {@link #REFERENCE_KIND}) and may get a
+	 * navigable opposite reference in the target class (see {@link #OPPOSITE}). All input is checked
+	 * before the model is changed.
 	 * </p>
 	 */
 	private TLStructuredTypePart createAttribute(ReactContext context, Object input) {
@@ -198,11 +235,13 @@ public class ModelEditAction implements ViewAction {
 		if (multiple && !supportsMultiple(valueType)) {
 			throw new TopLogicException(I18NConstants.ERROR_MULTIPLE_NOT_SUPPORTED__TYPE.fill(valueType));
 		}
+		requireUnusedName(owner, name);
+
 		TLStructuredTypePart part;
 		if (valueType instanceof TLPrimitive) {
 			part = TLModelUtil.addProperty(owner, name, valueType);
 		} else if (owner instanceof TLClass ownerClass) {
-			part = TLModelUtil.addForwardReference(ownerClass, name, valueType);
+			part = createReference(ownerClass, name, valueType, model);
 		} else {
 			throw new TopLogicException(I18NConstants.ERROR_REFERENCE_NOT_SUPPORTED__OWNER.fill(owner));
 		}
@@ -213,6 +252,54 @@ public class ModelEditAction implements ViewAction {
 			part.setMultiple(true);
 		}
 		return part;
+	}
+
+	/**
+	 * Adds a reference of the {@link #REFERENCE_KIND kind} given in the input to the owner class, and
+	 * the {@link #OPPOSITE opposite} reference to the target class if the input names one.
+	 */
+	private static TLReference createReference(TLClass owner, String name, TLType targetType, TLObject model) {
+		String kind = model.tValueByName(REFERENCE_KIND) instanceof TLClassifier classifier ? classifier.getName() : null;
+		boolean composite = KIND_COMPOSITION.equals(kind);
+		boolean aggregate = KIND_AGGREGATION.equals(kind);
+		if ((composite || aggregate) && !(targetType instanceof TLClass)) {
+			throw new TopLogicException(I18NConstants.ERROR_KIND_REQUIRES_CLASS__TYPE.fill(targetType));
+		}
+		String opposite = trimmed(model.tValueByName(OPPOSITE));
+		TLClass targetClass = null;
+		if (opposite != null) {
+			if (!(targetType instanceof TLClass c)) {
+				throw new TopLogicException(I18NConstants.ERROR_REFERENCE_NOT_SUPPORTED__OWNER.fill(targetType));
+			}
+			targetClass = c;
+			if (targetClass == owner && opposite.equals(name)) {
+				throw new TopLogicException(I18NConstants.ERROR_PART_EXISTS__TYPE_NAME.fill(owner, name));
+			}
+			requireUnusedName(targetClass, opposite);
+		}
+
+		TLAssociationEnd end = TLModelUtil.addForwardReferenceEnd(owner, name, targetType, composite);
+		TLAssociationEnd ownerEnd = TLModelUtil.getOtherEnd(end);
+		if (aggregate) {
+			// The owner end points to the whole of the aggregation.
+			ownerEnd.setAggregate(true);
+		}
+		TLReference reference = TLModelUtil.addReference(owner, name, end);
+		if (targetClass != null) {
+			TLModelUtil.addReference(targetClass, opposite, ownerEnd);
+			ownerEnd.setNavigate(true);
+		}
+		return reference;
+	}
+
+	/**
+	 * Rejects the given name for a new part of the given type, if the type already has a part of
+	 * that name.
+	 */
+	private static void requireUnusedName(TLStructuredType type, String name) {
+		if (type.getPart(name) != null) {
+			throw new TopLogicException(I18NConstants.ERROR_PART_EXISTS__TYPE_NAME.fill(type, name));
+		}
 	}
 
 	/**
@@ -246,6 +333,55 @@ public class ModelEditAction implements ViewAction {
 			throw new TopLogicException(I18NConstants.ERROR_NO_TARGET);
 		}
 		return TLModelUtil.addClassifier(enumeration, name);
+	}
+
+	/**
+	 * Adds the class selected in the input (see {@link #GENERALIZATION}) as generalization of the
+	 * container class.
+	 *
+	 * <p>
+	 * A class that is already a direct generalization is not added twice. A generalization is
+	 * rejected if it is {@link TLClass#isFinal() final} or if it would make the class its own
+	 * transitive generalization.
+	 * </p>
+	 */
+	private TLClass addGeneralization(ReactContext context, Object input) {
+		TLClass specialization = containerClass(context);
+		if (!(asTransient(input).tValueByName(GENERALIZATION) instanceof TLClass generalization)) {
+			throw new TopLogicException(I18NConstants.ERROR_MISSING_GENERALIZATION);
+		}
+		if (specialization.getGeneralizations().contains(generalization)) {
+			return specialization;
+		}
+		if (generalization.isFinal()) {
+			throw new TopLogicException(I18NConstants.ERROR_FINAL_GENERALIZATION__CLASS.fill(generalization));
+		}
+		if (TLModelUtil.isGeneralization(specialization, generalization)) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_CYCLIC_GENERALIZATION__CLASS_GENERALIZATION.fill(specialization, generalization));
+		}
+		specialization.getGeneralizations().add(generalization);
+		return specialization;
+	}
+
+	/**
+	 * Removes the class passed as the action input from the generalizations of the container class.
+	 */
+	private TLClass removeGeneralization(ReactContext context, Object input) {
+		TLClass specialization = containerClass(context);
+		specialization.getGeneralizations().remove(input);
+		return specialization;
+	}
+
+	/**
+	 * The class held by the configured container channel, or a {@link TopLogicException} when it
+	 * holds none.
+	 */
+	private TLClass containerClass(ReactContext context) {
+		if (container(context) instanceof TLClass result) {
+			return result;
+		}
+		throw new TopLogicException(I18NConstants.ERROR_NO_TARGET);
 	}
 
 	/**
@@ -288,12 +424,19 @@ public class ModelEditAction implements ViewAction {
 	 * when missing.
 	 */
 	private static String requireName(Object input) {
-		Object value = input instanceof TLObject object ? object.tValueByName(NAME) : null;
-		String name = value == null ? null : value.toString().trim();
-		if (name == null || name.isEmpty()) {
+		String name = trimmed(input instanceof TLObject object ? object.tValueByName(NAME) : null);
+		if (name == null) {
 			throw new TopLogicException(I18NConstants.ERROR_MISSING_NAME);
 		}
 		return name;
+	}
+
+	/**
+	 * The trimmed string value of the given input value, or {@code null} when it is empty.
+	 */
+	private static String trimmed(Object value) {
+		String result = value == null ? null : value.toString().trim();
+		return result == null || result.isEmpty() ? null : result;
 	}
 
 	/**

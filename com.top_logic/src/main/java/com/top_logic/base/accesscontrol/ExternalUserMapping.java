@@ -133,17 +133,53 @@ public interface ExternalUserMapping {
 		if (StringServices.isEmpty(loginName)) {
 			throw new LoginDeniedException("No login name was given.");
 		}
-		Person person = Person.byName(loginName);
+		Person person = lookupAccount(loginName);
 		if (person == null) {
 			String message = "No account with login name '" + loginName + "' found!";
 			throw new UnknownAccountException(loginName, message);
 		}
-		if (!person.isAlive()) {
-			String message = "Account with login name '" + loginName + "' is not alive!";
+		return person;
+	}
+
+	/**
+	 * Looks up the {@link Person} with the given {@link Person#getName() user name}, for a mapping
+	 * that tries further ways to find an account when there is no account of that name.
+	 *
+	 * @param loginName
+	 *        <code>TopLogic</code> name of the {@link Person} to login.
+	 * @return The {@link Person} with the given name, <code>null</code> if the name is empty or no
+	 *         account has it.
+	 *
+	 * @throws UnknownAccountException
+	 *         If the account of that name is not alive.
+	 *
+	 * @see #findAccount(String)
+	 */
+	static Person lookupAccount(String loginName) throws UnknownAccountException {
+		if (StringServices.isEmpty(loginName)) {
+			return null;
+		}
+		return checkAlive(Person.byName(loginName), loginName);
+	}
+
+	/**
+	 * The given account found for an external login, if it is {@link Person#isAlive() alive}.
+	 *
+	 * @param account
+	 *        The account found, may be <code>null</code>.
+	 * @param loginName
+	 *        The name the external login is known by, for the error report.
+	 * @return The given account.
+	 *
+	 * @throws UnknownAccountException
+	 *         If the given account is not alive.
+	 */
+	static Person checkAlive(Person account, String loginName) throws UnknownAccountException {
+		if (account != null && !account.isAlive()) {
+			String message = "Account with login name '" + account.getName() + "' is not alive!";
 			throw new UnknownAccountException(loginName, message);
 		}
-		return person;
-
+		return account;
 	}
 
 }

@@ -1,18 +1,10 @@
 import { React, useTLState, rootClassName, usePart } from 'tl-react-bridge';
 import type { TLCellProps, TextStateJson, ColorRole } from 'tl-react-bridge';
 
-/**
- * The type class of each variant (design system, base.css). Caption and label share the label size:
- * the type scale has one size below the body.
- */
-const TYPE_CLASS: Record<string, string> = {
-  display: 'tl-type-display',
-  headline: 'tl-type-heading-lg',
-  title: 'tl-type-heading-sm',
-  body: 'tl-type-body',
-  label: 'tl-type-label',
-  caption: 'tl-type-label',
-};
+/** The type class of a typographic role (design system, base.css): `tl-type-<role>`. */
+function typeClass(variant: TextStateJson.Variant): string {
+  return 'tl-type-' + variant;
+}
 
 /**
  * The data-tl-tone of each tone (text.css); the primary tone carries none and inherits the color of
@@ -46,8 +38,9 @@ function roleOfTone(tone: string): ColorRole {
  * pill - `appearance="pill"` or a value with a color role - the text is the part `Chip` of that role
  * inside a plain `span`.
  *
- * The state is described by TextStateJson. A strong text is the strong type class given as the
- * element's CSS class (`tl-type-body-strong`).
+ * The state is described by TextStateJson. Each typographic role is a role of the type scale of
+ * the design system and is drawn with its type class, a text standing out included
+ * (`body-strong`, `label-strong`).
  */
 const TLText: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<TextStateJson>>();
@@ -56,7 +49,7 @@ const TLText: React.FC<TLCellProps> = ({ controlId }) => {
   const hasTooltip = state.hasTooltip === true;
   const role = state.role || undefined;
   const colorRole = state.colorRole || undefined;
-  const variant: string = state.variant || 'body';
+  const variant: TextStateJson.Variant = state.variant || 'body';
   const tone: string = state.tone || 'primary';
   const pill = state.appearance === 'pill';
   const tooltip = hasTooltip ? 'key:tooltip' : undefined;
@@ -81,7 +74,7 @@ const TLText: React.FC<TLCellProps> = ({ controlId }) => {
       className={rootClassName(
         state,
         'tl-text',
-        TYPE_CLASS[variant] ?? TYPE_CLASS.body,
+        typeClass(variant),
         state.overflow === 'ellipsis' && 'tl-text--truncate',
       )}
       data-tl-tone={TONE_ATTR[tone]}

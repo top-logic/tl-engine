@@ -57,3 +57,11 @@
   inline-size: 100%;
   block-size: 100%;
 }
+
+/* Ein Bild mit bekannter Größe lädt: die Ebene deckt die Wurzel, und das Raster gibt dem Platzhalter (Part Skeleton)
+   die ganze Fläche, auch wenn eine Komponentenbibliothek ihn zeichnet. Die Wurzel trägt aria-busy. */
+.tl-media__loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+}

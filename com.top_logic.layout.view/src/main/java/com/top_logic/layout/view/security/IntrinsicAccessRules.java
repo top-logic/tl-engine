@@ -14,6 +14,7 @@ import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.command.ContextDependentRule;
 import com.top_logic.layout.view.command.NullInputDisabled;
 import com.top_logic.layout.view.command.ObservableRule;
@@ -62,27 +63,53 @@ public final class IntrinsicAccessRules {
 	 * that is no object is refused.
 	 * </p>
 	 *
+	 * <p>
+	 * Without an object, the {@link ActionArguments#valueType() declared type} of the main argument
+	 * decides, where one is known: the command is hidden when the user may perform the operation on
+	 * no object of that type (see {@link ModelAccessPolicy#isOffered(BoundCommandGroup, TLClass)}),
+	 * and disabled otherwise.
+	 * </p>
+	 *
 	 * @param operation
 	 *        The operation the action performs on the object(s) it receives.
 	 */
 	public static ViewExecutabilityRule onInput(BoundCommandGroup operation) {
-		return input -> {
-			Collection<?> elements;
-			if (input == null) {
-				elements = List.of();
-			} else if (input instanceof Collection<?> collection) {
-				elements = collection;
-			} else {
-				elements = List.of(input);
+		return new InputRule(operation);
+	}
+
+	/**
+	 * {@link ViewExecutabilityRule} checking an operation on the main argument of the command, see
+	 * {@link IntrinsicAccessRules#onInput(BoundCommandGroup)}.
+	 */
+	private static final class InputRule implements ViewExecutabilityRule {
+
+		private final BoundCommandGroup _operation;
+
+		InputRule(BoundCommandGroup operation) {
+			_operation = operation;
+		}
+
+		@Override
+		public ExecutableState isExecutableFor(ActionArguments arguments) {
+			Object input = arguments.value();
+			TLClass type = arguments.valueType();
+			if (type != null && elements(input).isEmpty() && !ModelAccessPolicy.isOffered(_operation, type)) {
+				return ExecutableState.NOT_EXEC_HIDDEN;
 			}
+			return isExecutable(input);
+		}
+
+		@Override
+		public ExecutableState isExecutable(Object input) {
+			Collection<?> elements = elements(input);
 			if (elements.isEmpty()) {
 				return ExecutableState.NO_EXEC_NO_MODEL;
 			}
 			ExecutableState firstRefusal = null;
 			for (Object element : elements) {
 				ExecutableState state = element instanceof TLObject object
-					? ModelAccessPolicy.onObject(operation, object, null)
-					: ExecutableState.createDisabledState(ModelAccessPolicy.deniedReason(operation));
+					? ModelAccessPolicy.onObject(_operation, object, null)
+					: ExecutableState.createDisabledState(ModelAccessPolicy.deniedReason(_operation));
 				if (state.isHidden()) {
 					return state;
 				}
@@ -91,7 +118,21 @@ public final class IntrinsicAccessRules {
 				}
 			}
 			return firstRefusal != null ? firstRefusal : ExecutableState.EXECUTABLE;
-		};
+		}
+
+		/**
+		 * The objects the operation is performed on: the elements of a collection, none for
+		 * {@code null}, the given value otherwise.
+		 */
+		private static Collection<?> elements(Object input) {
+			if (input == null) {
+				return List.of();
+			}
+			if (input instanceof Collection<?> collection) {
+				return collection;
+			}
+			return List.of(input);
+		}
 	}
 
 	/**

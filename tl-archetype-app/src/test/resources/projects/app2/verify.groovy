@@ -70,11 +70,6 @@ def metaConf = new File(project, "src/main/webapp/WEB-INF/conf/metaConf.txt").re
 if (metaConf != ["db-default.xml", "top-logic.singleBranch.config.xml", "pac4j-generic.xml", "classicapp.conf.xml"]) {
 	throw new AssertionError("Unexpected metaConf.txt " + metaConf + ".");
 }
-// Without the React UI, there is no view configuration titling the browser tab.
-def conf = new File(project, "src/main/webapp/WEB-INF/conf/classicapp.conf.config.xml");
-if (conf.text.contains("com.top_logic.layout.view.ViewConfig")) {
-	throw new AssertionError("Unexpected view configuration in " + conf + ".");
-}
 
 // The artifact IDs of all dependencies the build resolved, transitive ones included (written by
 // the goal dependency:list into target/dependencies.txt).

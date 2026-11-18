@@ -7,7 +7,9 @@ package com.top_logic.layout.react.control.layout;
 
 import java.util.Set;
 
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactControl;
 
 /**
@@ -55,24 +57,26 @@ public class ReactLoginBackdropControl extends ReactControl {
 	}
 
 	/**
-	 * Sets the address of the logo shown in light mode, and in dark mode where there is no
+	 * Sets the logo shown in light mode, and in dark mode where there is no
 	 * {@link #setLogoDark(String) dark logo}.
 	 *
-	 * @param url
-	 *        The address, or {@code null} to show no logo.
+	 * @param image
+	 *        The {@link ReactImages#encode(ReactContext, ThemeImage) encoded form} of the logo, or
+	 *        {@code null} to show no logo.
 	 */
-	public void setLogo(String url) {
-		putState(LOGO, emptyToNull(url));
+	public void setLogo(String image) {
+		putState(LOGO, emptyToNull(image));
 	}
 
 	/**
-	 * Sets the address of the logo shown in dark mode.
+	 * Sets the logo shown in dark mode.
 	 *
-	 * @param url
-	 *        The address, or {@code null} to show the {@link #setLogo(String) logo} in both modes.
+	 * @param image
+	 *        The {@link ReactImages#encode(ReactContext, ThemeImage) encoded form} of the logo, or
+	 *        {@code null} to show the {@link #setLogo(String) logo} in both modes.
 	 */
-	public void setLogoDark(String url) {
-		putState(LOGO_DARK, emptyToNull(url));
+	public void setLogoDark(String image) {
+		putState(LOGO_DARK, emptyToNull(image));
 	}
 
 	/**

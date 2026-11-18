@@ -143,6 +143,22 @@ describe('the structure', () => {
     expect(root.querySelector('h1')).toBeNull();
   });
 
+  it('shows an icon logo as glyph, named by the alternative text', () => {
+    const root = mountBackdrop({ logo: 'css:bi bi-building', appTitle: 'Acme App' });
+    const logo = root.querySelector('.tl-login-backdrop__brand > span.tl-login-backdrop__logo')!;
+    expect(logo.getAttribute('role')).toBe('img');
+    expect(logo.getAttribute('aria-label')).toBe('Acme App');
+    expect(logo.querySelector('i.bi.bi-building.tl-icon-lg')).not.toBeNull();
+    expect(root.querySelector('img')).toBeNull();
+  });
+
+  it('hides an icon logo without a text from assistive technology', () => {
+    const root = mountBackdrop({ logo: 'css:bi bi-building' });
+    const logo = root.querySelector('span.tl-login-backdrop__logo')!;
+    expect(logo.getAttribute('aria-hidden')).toBe('true');
+    expect(logo.getAttribute('role')).toBeNull();
+  });
+
   it('shows the application title as heading in the brand where there is no logo', () => {
     const root = mountBackdrop({ appTitle: 'Acme App' });
     const title = root.querySelector('.tl-login-backdrop__brand > h1.tl-login-backdrop__title')!;

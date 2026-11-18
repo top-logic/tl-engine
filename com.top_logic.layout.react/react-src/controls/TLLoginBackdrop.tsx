@@ -1,4 +1,4 @@
-import { React, useTLState, useI18N, TLChild, useFillHost, FillProvider, rootClassName, useTokenSwitch } from 'tl-react-bridge';
+import { React, useTLState, useI18N, TLChild, useFillHost, FillProvider, rootClassName, useTokenSwitch, ThemeIcon } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import {
   activeRipples,
@@ -47,12 +47,28 @@ interface GridState {
 }
 
 /**
+ * The logo on the plate: a picture (image URL or data URI) as `img` with its alternative text, an icon as glyph named
+ * by the same text. With an empty text the logo is decoration, not announced.
+ */
+function Logo({ encoded, alt }: { encoded: string; alt: string }) {
+  if (encoded.startsWith('/') || encoded.startsWith('data:')) {
+    return <img className="tl-login-backdrop__logo" src={encoded} alt={alt} />;
+  }
+  return (
+    <span className="tl-login-backdrop__logo" {...(alt ? { role: 'img', 'aria-label': alt } : { 'aria-hidden': true })}>
+      <ThemeIcon encoded={encoded} className="tl-icon-lg" />
+    </span>
+  );
+}
+
+/**
  * The background of the login page: a halftone grid drawn on a canvas behind the content, which is centred in front.
  *
  * State:
  * - child: ChildDescriptor | null - the content in front of the grid (the login card and what belongs to it)
- * - logo: string | null - URL of the logo shown above the content; without it no logo is rendered
- * - logoDark: string | null - URL of the logo in dark mode; without it the logo is used in both modes
+ * - logo: string | null - the encoded theme image of the logo shown above the content (an image URL, a data URI or an
+ *   icon class); without it no logo is rendered
+ * - logoDark: string | null - the encoded theme image of the logo in dark mode; without it the logo is used in both modes
  * - logoAlt: string | null - the alternative text of the logo; the application title when absent
  * - appTitle: string | null - the name of the application, shown as heading where there is no logo
  *
@@ -288,7 +304,7 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
           {!!(logo || appTitle) && (
             <div className="tl-login-backdrop__brand">
               {logo
-                ? <img className="tl-login-backdrop__logo" src={dark && logoDark ? logoDark : logo} alt={logoAlt ?? appTitle ?? ''} />
+                ? <Logo encoded={dark && logoDark ? logoDark : logo} alt={logoAlt ?? appTitle ?? ''} />
                 : <h1 className="tl-login-backdrop__title">{appTitle}</h1>}
             </div>
           )}

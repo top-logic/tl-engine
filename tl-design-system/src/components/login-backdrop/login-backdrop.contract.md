@@ -11,10 +11,10 @@ Das Control heißt `TLLoginBackdrop` (Client). Es trägt diese Schlüssel:
 | Schlüssel | Typ | Bedeutung |
 |---|---|---|
 | `child` | Control | Der Inhalt vor dem Raster, meist die Anmeldekarte. |
-| `logo` | URL | Das Logo; fehlt es, wird `tl-login-backdrop__brand` nicht gezeichnet. |
-| `logoDark` | URL | Die Fassung für den dunklen Modus; fehlt sie, gilt `logo`. |
+| `logo` | kodiertes Theme-Bild | Das Logo: URL eines Bildes, `data:`-URI oder Icon (`css:`); fehlt es, wird `tl-login-backdrop__brand` nicht gezeichnet. |
+| `logoDark` | kodiertes Theme-Bild | Die Fassung für den dunklen Modus; fehlt sie, gilt `logo`. |
 | `logoAlt` | Text | Der Alternativtext des Logos; fehlt er, gilt `appTitle`. |
-| `appTitle` | Text | Der Name der Anwendung (Titel ihrer `ViewConfig`). Ohne Logo steht er als `h1` auf der Unterlage. |
+| `appTitle` | Text | Der Name der Anwendung (`title` von `<login-backdrop>`, sonst der Ressourcenschlüssel `tl.title`). Ohne Logo steht er als `h1` auf der Unterlage. |
 
 Fehlen Logo und Name, wird `tl-login-backdrop__brand` nicht gezeichnet. Die Fußzeile steht immer da: der Text des
 Schlüssels `js.loginBackdrop.poweredBy`, dahinter die Wortmarke als `svg` mit `role="img"` und `aria-label="TopLogic"`,
@@ -56,7 +56,7 @@ feine Textur; erst Hervorhebung und Welle heben sie in `--tl-surface-halftone-st
 | `tl-login-backdrop__canvas` | die Zeichenfläche, `aria-hidden="true"` |
 | `tl-login-backdrop__content` | der Inhalt über dem Raster; scrollt, wenn er höher ist als das Fenster |
 | `tl-login-backdrop__brand` | die Unterlage, nur mit Logo oder Name |
-| `tl-login-backdrop__logo` | das `img` in der Unterlage |
+| `tl-login-backdrop__logo` | das Logo in der Unterlage: das `img` eines Bildes, oder der `span` um die Glyphe (`tl-icon-lg`) eines Icons, mit `role="img"` und `aria-label` (ohne Text `aria-hidden`) |
 | `tl-login-backdrop__title` | das `h1` mit dem Namen der Anwendung, nur ohne Logo |
 | `tl-login-backdrop__footer` | „Powered by“ und Wortmarke am unteren Rand |
 | `tl-login-backdrop__wordmark` | das `svg` der TopLogic-Wortmarke in der Fußzeile |

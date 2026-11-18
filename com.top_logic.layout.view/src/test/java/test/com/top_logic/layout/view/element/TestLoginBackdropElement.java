@@ -23,6 +23,9 @@ import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.gui.ThemeFactory;
+import com.top_logic.layout.I18NConstants;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactLoginBackdropControl;
@@ -32,10 +35,12 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.element.InsetElement;
 import com.top_logic.layout.view.element.LoginBackdropElement;
+import com.top_logic.util.Resources;
 
 /**
  * Tests what a {@link LoginBackdropElement} publishes to the client: the logo resources made
- * addressable within the application, the translated description of the logo, and the content.
+ * addressable within the application, the translated description of the logo, the application
+ * title, and the content.
  */
 public class TestLoginBackdropElement extends TestCase {
 
@@ -49,18 +54,49 @@ public class TestLoginBackdropElement extends TestCase {
 		assertNull(state(backdrop, ReactLoginBackdropControl.LOGO));
 		assertNull(state(backdrop, ReactLoginBackdropControl.LOGO_DARK));
 		assertNull(state(backdrop, ReactLoginBackdropControl.LOGO_ALT));
-		assertNull("An application without a title has none.", state(backdrop, ReactLoginBackdropControl.APP_TITLE));
 	}
 
-	/** A logo resource is addressed within the application. */
+	/** A configured title names the application. */
+	public void testTitle() {
+		ReactControl backdrop = createBackdrop(config -> set(config, LoginBackdropElement.Config.TITLE,
+			ResKey.text("Acme App")));
+
+		assertEquals("Acme App", state(backdrop, ReactLoginBackdropControl.APP_TITLE));
+	}
+
+	/** Without a title, the application is named by its application title. */
+	public void testAppTitleIsApplicationTitle() {
+		ReactControl backdrop = createBackdrop(config -> { /* Nothing. */ });
+
+		assertEquals(Resources.getInstance().getString(I18NConstants.APPLICATION_TITLE),
+			state(backdrop, ReactLoginBackdropControl.APP_TITLE));
+	}
+
+	/** A logo file is addressed within the application. */
 	public void testLogoIsAddressedWithinApplication() {
 		ReactControl backdrop = createBackdrop(config -> {
-			set(config, LoginBackdropElement.Config.LOGO, "/images/a.svg");
-			set(config, LoginBackdropElement.Config.LOGO_DARK, "/images/b.svg");
+			set(config, LoginBackdropElement.Config.LOGO, ThemeImage.internalDecode("/images/a.svg"));
+			set(config, LoginBackdropElement.Config.LOGO_DARK, ThemeImage.internalDecode("/images/b.svg"));
 		});
 
 		assertEquals(CONTEXT_PATH + "/images/a.svg", state(backdrop, ReactLoginBackdropControl.LOGO));
 		assertEquals(CONTEXT_PATH + "/images/b.svg", state(backdrop, ReactLoginBackdropControl.LOGO_DARK));
+	}
+
+	/** A logo given as icon reaches the client in its encoded form. */
+	public void testIconLogo() {
+		ReactControl backdrop = createBackdrop(
+			config -> set(config, LoginBackdropElement.Config.LOGO, ThemeImage.cssIcon("bi bi-building")));
+
+		assertEquals("css:bi bi-building", state(backdrop, ReactLoginBackdropControl.LOGO));
+	}
+
+	/** The invisible image is no logo: the title of the application takes its place. */
+	public void testInvisibleLogoIsNone() {
+		ReactControl backdrop = createBackdrop(
+			config -> set(config, LoginBackdropElement.Config.LOGO, ThemeImage.none()));
+
+		assertNull(state(backdrop, ReactLoginBackdropControl.LOGO));
 	}
 
 	/** The description of the logo is translated. */
@@ -107,13 +143,14 @@ public class TestLoginBackdropElement extends TestCase {
 	}
 
 	/**
-	 * Test suite requiring the {@link TypeIndex} module and the {@link ResourcesModule}, which
-	 * translates the description of the logo.
+	 * Test suite requiring the {@link TypeIndex} module, the {@link ResourcesModule}, which
+	 * translates the description of the logo, and the {@link ThemeFactory}, in which the logo is
+	 * resolved.
 	 */
 	public static Test suite() throws ModuleException {
 		return ModuleTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestLoginBackdropElement.class, TypeIndex.Module.INSTANCE,
-				ResourcesModule.Module.INSTANCE));
+				ResourcesModule.Module.INSTANCE, ThemeFactory.Module.INSTANCE));
 	}
 
 }

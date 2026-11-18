@@ -27,6 +27,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * </p>
 	 * 
 	 * <p>
+	 * Every application sets it in its own resource bundle; the framework and its feature modules
+	 * do not.
+	 * </p>
+	 * 
+	 * <p>
 	 * To prevent the display on the log-in page, see theme variable
 	 * {@link Icons#HIDE_APP_TITLE_ON_LOGIN_PAGE}.
 	 * </p>

@@ -121,4 +121,12 @@ public record ProviderRequest(
 			List<ToolSchema> tools, int maxOutputTokens) {
 		this(model, systemPrompt, messages, tools, maxOutputTokens, Map.of(), null, null, null, 0);
 	}
+
+	/**
+	 * This request with the given tool choice.
+	 */
+	public ProviderRequest withToolChoice(ToolChoice choice) {
+		return new ProviderRequest(model, systemPrompt, messages, tools, maxOutputTokens, modelOptions,
+			responseFormat, choice, timeout, stableToolCount);
+	}
 }

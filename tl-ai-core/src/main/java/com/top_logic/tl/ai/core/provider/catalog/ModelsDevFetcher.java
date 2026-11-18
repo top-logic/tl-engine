@@ -239,7 +239,7 @@ public final class ModelsDevFetcher {
 
 		for (Map.Entry<String, ModelInfo> entry : defaultVersions.entrySet()) {
 			if (!exact.containsKey(entry.getKey())) {
-				result.put(entry.getKey(), withId(entry.getValue(), entry.getKey()));
+				result.put(entry.getKey(), entry.getValue().withId(entry.getKey()));
 			}
 		}
 		for (ModelInfo info : exact.values()) {
@@ -252,11 +252,6 @@ public final class ModelsDevFetcher {
 	 */
 	private static String modelName(String defaultVersionKey) {
 		return defaultVersionKey.substring(0, defaultVersionKey.length() - DEFAULT_VERSION_SUFFIX.length());
-	}
-
-	private static ModelInfo withId(ModelInfo info, String id) {
-		return new ModelInfo(id, info.family(), info.limits(), info.capabilities(), info.cost(), info.dates(),
-			info.openWeights(), info.status());
 	}
 
 	private static ModelInfo parseModelEntry(JsonReader reader) throws Exception {

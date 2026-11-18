@@ -52,6 +52,23 @@ public final class AnthropicRequestBuilder {
 	 * Builds the Anthropic Messages API request JSON from a {@link ProviderRequest}.
 	 */
 	public static String buildRequestJson(ProviderRequest request) throws ProviderException {
+		return buildRequestJson(request, null);
+	}
+
+	/**
+	 * Builds the request JSON of the Messages API from a {@link ProviderRequest}, for the Anthropic
+	 * API or for an endpoint that names the model in its path.
+	 *
+	 * @param request
+	 *        The request to send.
+	 * @param anthropicVersion
+	 *        <code>null</code> for the Anthropic API, which takes the model in the body and the API
+	 *        version as a header. Otherwise the API version written into the body instead of the
+	 *        model, for an endpoint that names the model in its path (Google Vertex AI, e.g.
+	 *        {@code vertex-2023-10-16}).
+	 */
+	public static String buildRequestJson(ProviderRequest request, String anthropicVersion)
+			throws ProviderException {
 		String cacheTtl = cacheTtl(request.modelOptions());
 
 		List<Message> messages = request.messages();
@@ -59,9 +76,13 @@ public final class AnthropicRequestBuilder {
 		int cacheFrom = userRoleCount - Math.min(2, userRoleCount);
 
 		AnthropicRequest req = AnthropicRequest.create()
-			.setModel(request.model())
 			.setMaxTokens(request.maxOutputTokens())
 			.setStream(true);
+		if (anthropicVersion == null) {
+			req.setModel(request.model());
+		} else {
+			req.setAnthropicVersion(anthropicVersion);
+		}
 
 		writeSamplingParams(req, request.modelOptions());
 		writeThinkingParams(req, request.model(), request.maxOutputTokens(), request.modelOptions());

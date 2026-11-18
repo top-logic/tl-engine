@@ -112,8 +112,21 @@ message StreamErrorInfo {
 
 /** Anthropic Messages API request body. */
 message AnthropicRequest {
-	/** The model identifier. */
+	/**
+	 * The model identifier.
+	 *
+	 * <p>
+	 * Absent where the endpoint names the model in its path (Google Vertex AI).
+	 * </p>
+	 */
+	@Nullable
 	string model [Name = "model"];
+	/**
+	 * The version of the Messages API, for an endpoint that takes it in the body instead of a
+	 * header (Google Vertex AI, e.g. {@code vertex-2023-10-16}).
+	 */
+	@Nullable
+	string anthropic_version [Name = "anthropic_version"];
 	/** Maximum number of output tokens. */
 	int max_tokens [Name = "max_tokens"];
 	/** Whether to stream the response. */

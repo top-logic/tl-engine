@@ -86,9 +86,22 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 
 	/** Creates an {@link AnthropicMessagesProvider}. */
 	public AnthropicMessagesProvider(CredentialProvider credentials, String baseUrl, String apiVersion, HttpClient httpClient) {
+		this(credentials, baseUrl, apiVersion, httpClient, AnthropicProviderConfig.DEFAULT_CATALOG_PROVIDER_ID);
+	}
+
+	/**
+	 * Creates an {@link AnthropicMessagesProvider} with the given {@link HttpClient}.
+	 *
+	 * @param catalogProviderId
+	 *        The {@link com.top_logic.tl.ai.core.provider.LLMProviderConfig#getCatalogProviderId()
+	 *        catalog provider ID} of the configured provider, stamped onto the thinking blocks it
+	 *        produces; <code>null</code> if none is configured.
+	 */
+	public AnthropicMessagesProvider(CredentialProvider credentials, String baseUrl, String apiVersion,
+			HttpClient httpClient, String catalogProviderId) {
 		super(credentials, baseUrl, httpClient);
 		_apiVersion = Objects.requireNonNull(apiVersion, "API version must not be null.");
-		_catalogProviderId = AnthropicProviderConfig.DEFAULT_CATALOG_PROVIDER_ID;
+		_catalogProviderId = catalogProviderId;
 	}
 
 	/**
@@ -106,6 +119,13 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 			Duration.ofSeconds(requestTimeoutSeconds), customHeaders);
 		_apiVersion = Objects.requireNonNull(apiVersion, "API version must not be null.");
 		_catalogProviderId = catalogProviderId;
+	}
+
+	/**
+	 * The version of the Messages API this provider speaks.
+	 */
+	protected final String apiVersion() {
+		return _apiVersion;
 	}
 
 	@Override
@@ -261,29 +281,61 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 
 		Duration retryAfter = parseRetryAfter(response.headers());
 		String requestId = response.headers().firstValue("request-id").orElse(null);
-		String[] error = parseError(body);
-		ProviderException.Kind kind = classifyError(error[0], status);
+		ErrorBody error = parseError(body);
+		ProviderException.Kind kind = classifyError(error, status);
 
-		throw new ProviderException(kind, status, error[1], retryAfter, requestId, null);
+		throw new ProviderException(kind, status, error.message(), retryAfter, requestId, null);
 	}
 
 	/**
-	 * Parses both {@code error.type} and {@code error.message} from an Anthropic error JSON body.
+	 * The kind of an error response.
 	 *
-	 * @return two-element array: {@code [type, message]}. Empty strings if parsing fails.
+	 * @param error
+	 *        The parsed body of the response.
+	 * @param statusCode
+	 *        The HTTP status of the response.
 	 */
-	private String[] parseError(String jsonBody) {
+	protected ProviderException.Kind classifyError(ErrorBody error, int statusCode) {
+		return classifyError(error.type(), statusCode);
+	}
+
+	/**
+	 * The {@code error} object of an error response body.
+	 *
+	 * <p>
+	 * The Anthropic API answers {@code {"type": "error", "error": {"type": ..., "message": ...}}}.
+	 * A Google Cloud endpoint in front of it answers its own errors as
+	 * {@code {"error": {"code": ..., "message": ..., "status": ...}}}; both are read here.
+	 * </p>
+	 *
+	 * @param type
+	 *        The Anthropic {@code error.type}; empty if absent.
+	 * @param message
+	 *        The {@code error.message}; the whole body if it cannot be parsed.
+	 * @param status
+	 *        The Google {@code error.status}, e.g. {@code RESOURCE_EXHAUSTED}; empty if absent.
+	 */
+	protected record ErrorBody(String type, String message, String status) {
+		// Values only.
+	}
+
+	/**
+	 * Parses the {@code error} object of an error response body, see {@link ErrorBody}.
+	 */
+	protected static ErrorBody parseError(String jsonBody) {
 		String type = "";
 		String message = "";
+		String status = "";
 		try (JsonReader json = jsonReader(jsonBody)) {
 			json.beginObject();
 			while (json.hasNext()) {
-				if ("error".equals(json.nextName())) {
+				if (ERROR_FIELD.equals(json.nextName())) {
 					json.beginObject();
 					while (json.hasNext()) {
 						switch (json.nextName()) {
-							case "type" -> type = json.nextString();
-							case "message" -> message = json.nextString();
+							case ERROR_TYPE_FIELD -> type = json.nextString();
+							case ERROR_MESSAGE_FIELD -> message = json.nextString();
+							case ERROR_STATUS_FIELD -> status = json.nextString();
 							default -> json.skipValue();
 						}
 					}
@@ -298,8 +350,20 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 				message = jsonBody;
 			}
 		}
-		return new String[] { type, message };
+		return new ErrorBody(type, message, status);
 	}
+
+	/** Field of an error response body with the error object. */
+	private static final String ERROR_FIELD = "error";
+
+	/** Field of the error object with the Anthropic error type. */
+	private static final String ERROR_TYPE_FIELD = "type";
+
+	/** Field of the error object with the message. */
+	private static final String ERROR_MESSAGE_FIELD = "message";
+
+	/** Field of the error object with the Google status. */
+	private static final String ERROR_STATUS_FIELD = "status";
 
 	/**
 	 * Maps Anthropic {@code error.type} strings to a
@@ -324,7 +388,7 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 	 * {@link ErrorClassifier#classifyByStatus(int) status fallback}, Anthropic additionally maps
 	 * {@code 413} to a context-window overflow.
 	 */
-	static ProviderException.Kind classifyError(String errorType, int statusCode) {
+	protected static ProviderException.Kind classifyError(String errorType, int statusCode) {
 		ProviderException.Kind byType = ERROR_TYPE_MAP.get(errorType);
 		if (byType != null) {
 			return byType;

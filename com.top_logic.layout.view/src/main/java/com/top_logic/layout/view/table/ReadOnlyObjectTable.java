@@ -55,7 +55,7 @@ public final class ReadOnlyObjectTable {
 		}
 		ListRowSource<Object> source = new ListRowSource<>(new ArrayList<>(rows), columns);
 		DefaultTableView<Object> view = DefaultTableView.create(columns, source);
-		// A column of an attribute the user may read on no row does not exist.
+		// A column the access rights of the user withhold, or whose condition does not hold, does not exist.
 		view.setAbsentColumns(ColumnExistence.of(setups).absentColumns());
 		return new TableViewControl<>(viewContext, view, false);
 	}

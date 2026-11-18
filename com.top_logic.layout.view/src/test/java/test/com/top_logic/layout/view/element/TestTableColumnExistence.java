@@ -27,8 +27,6 @@ import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.gui.ThemeFactory;
-import com.top_logic.knowledge.service.I18NConstants;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -189,29 +187,6 @@ public class TestTableColumnExistence extends AbstractModelAccessTest {
 		assertFalse(offered(control.getView()).contains(BUDGET));
 		assertTrue("The arrangement of the absent column is kept.",
 			control.getView().state().getColumnOrder().contains(BUDGET));
-	}
-
-	/**
-	 * A column of an attribute the user may read on no row is withheld, and exists from the first
-	 * refresh of the rows after the user may read it on some row: the user's first object of a type
-	 * grants the role reading it. Without, the rows that arrive with that object show no cell.
-	 */
-	public void testWithheldColumnExistsAfterFirstReadableRow() throws Exception {
-		becomeUser(_roleless);
-		TableViewControl<?> control = readOnly("<table types='" + qualified(PROJECT) + "' rows='[]'>"
-			+ "<columns><column attribute='" + NAME + "'/><column attribute='" + BUDGET + "'/></columns></table>");
-
-		assertEquals(List.of(), sentColumns(control));
-		assertFalse(offered(control.getView()).contains(BUDGET));
-
-		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
-			_project.tUpdateByName(RESPONSIBLE, _roleless);
-			tx.commit();
-		}
-		control.refreshData();
-
-		assertEquals(List.of(NAME, BUDGET), sentColumns(control));
-		assertTrue(offered(control.getView()).contains(BUDGET));
 	}
 
 	/**

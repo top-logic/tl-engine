@@ -711,12 +711,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** Whether the table tells below its rows how many it has. */
 	private boolean _rowCount = true;
 
-	/**
-	 * The absent columns decided anew after a refresh of the rows, {@code null} for none, see
-	 * {@link #setAbsentColumnsOnRefresh(Supplier)}.
-	 */
-	private Supplier<Set<String>> _absentColumns;
-
 	/** Whether rows may be dragged at all. */
 	private boolean _dragEnabled;
 
@@ -2051,29 +2045,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	public void refreshData() {
 		_selectedKeys.retainAll(_view.containedKeys(_selectedKeys));
 		commitSelection();
-		Set<String> absent = _absentColumns == null ? null : _absentColumns.get();
-		if (absent != null && !absent.equals(_view.absentColumns())) {
-			rearrange(() -> _view.setAbsentColumns(absent));
-		} else {
-			rebuildAfterRowChange();
-		}
-	}
-
-	/**
-	 * Decides which columns are {@link #setAbsentColumns(Set) absent} anew whenever the
-	 * {@link #refreshData() rows were refreshed}.
-	 *
-	 * <p>
-	 * For a table whose columns exist depending on the data, e.g. on whether the user may read an
-	 * attribute on some row: the rows of a refresh may be the first that grant it.
-	 * </p>
-	 *
-	 * @param absentColumns
-	 *        The names of the columns that do not exist for the current data, {@code null} for a
-	 *        table whose columns do not depend on its data.
-	 */
-	public void setAbsentColumnsOnRefresh(Supplier<Set<String>> absentColumns) {
-		_absentColumns = absentColumns;
+		rebuildAfterRowChange();
 	}
 
 	private void rebuildAfterRowChange() {

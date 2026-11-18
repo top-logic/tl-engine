@@ -420,13 +420,14 @@ anything.
 | `TextInput` | the part: text, password and number fields, the searches and filters of tables and popups | `TextField` |
 | `FieldValue` | the part: the value of a field that is not editable | `Typography`, `Link` |
 | `Chip` | the part: option chips, chosen values of a dropdown, filters of a table, file chips, values with a color role | `Chip` |
-| `Badge` | the part: the counts of the sidebar and the bottom bar | `Badge` |
+| `Badge` | the part: the counts of the sidebar and the bottom bar, the badges of data lists | `Badge` |
+| `Avatar` | the part: avatar controls (`TLAvatar`), the avatars of data lists | `Avatar` |
 | `Divider` | the part: the lines of toolbars, toolbar menus and the sidebar | `Divider` |
 | `Skeleton` | the part: the rows of a table not sent yet, a picture of known height or proportions still loading | `Skeleton` (`text`, `rectangular`, `circular`; standing still for reduced motion) |
 | `ProgressBar` | the part: progress controls, job status, loading options | `LinearProgress` |
 | `Spinner` | the part: busy indicators | `CircularProgress` |
 | `Listbox` | the part: the suggestions under a text field | `Paper`, `List`, `ListItemButton` |
-| `TLDatePicker`, `TLSelect`, `TLDropdownSelect`, `TLSegmentedChoice`, `TLChoiceGroup`, `TLTabBar`, `TLWindow`, `TLDialog`, `TLMenu`, `TLSnackbar`, `TLAlert`, `TLFormField`, `TLText`, `TLCard`, `TLAppBar`, `TLBreadcrumb`, `TLAvatar`, `TLSlider` | the control as a whole | the MUI counterpart, documented on each `Mui*Adapter.tsx` |
+| `TLDatePicker`, `TLSelect`, `TLDropdownSelect`, `TLSegmentedChoice`, `TLChoiceGroup`, `TLTabBar`, `TLWindow`, `TLDialog`, `TLMenu`, `TLSnackbar`, `TLAlert`, `TLFormField`, `TLText`, `TLCard`, `TLAppBar`, `TLBreadcrumb`, `TLSlider` | the control as a whole | the MUI counterpart, documented on each `Mui*Adapter.tsx` |
 | `TLFloatingAction` | the control as a whole: one action, several actions | `Fab` (`extended` when the action shows its label), `SpeedDial` with a `SpeedDialAction` per action (its label as tooltip) |
 
 The parts are described in [Parts: the atoms of the React UI](doc:view-layer/parts), the controls
@@ -549,8 +550,8 @@ Two things to know about the adapters:
   control is a `css-class` in the view ([Basics: composition, spacing, height and styling](doc:view-layer/basics#styling-a-single-element-css-class));
   the adapters put it on their root element (`rootClassName`).
 - **Some adapters bring a default style** for their MUI component, which the theme's
-  `styleOverrides.root` follow, so the theme wins on every property it sets. The avatar
-  (`TLAvatar` → `MuiAvatar`) is one: its default keeps the look of the design system — the
+  `styleOverrides.root` follow, so the theme wins on every property it sets. The part `Avatar`
+  (`MuiAvatar`, drawing `TLAvatar` and the avatars of data lists) is one: its default keeps the look of the design system — the
   neutral circle, the surface and border of the category the display name maps to, the initials in
   `text.primary`, the diameters of the size tokens. The adapter marks the root with the category
   (`data-category="1"` to `"8"`, present whenever the avatar has a name) and the size

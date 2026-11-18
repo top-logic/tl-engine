@@ -15,6 +15,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
+import com.top_logic.model.security.DiscoverRight;
 
 /**
  * {@link GenericMethod} updating a property of a {@link TLObject} where the
@@ -55,7 +56,7 @@ public class DynamicSet extends GenericMethodWithSecurity {
 
 		if (usesSecurity()) {
 			Update.checkWritePermission(obj, part);
-			Update.checkNewTargets(obj, part, value);
+			DiscoverRight.checkNewTargets(obj, part, value);
 		}
 
 		obj.tUpdate(part, value);

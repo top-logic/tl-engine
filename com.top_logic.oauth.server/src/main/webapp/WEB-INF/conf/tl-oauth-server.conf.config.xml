@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<modules>
+					<module name="tl-oauth-server"/>
+				</modules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.module.ModuleSystem">
+			<instance>
+				<modules>
+					<module key="com.top_logic.oauth.server.OAuthAuthorizationServer$Module" value="true"/>
+				</modules>
+			</instance>
+		</config>
+
+		<!--
+			The authorization server. See the developer article oauth-server for the endpoints and
+			all settings.
+		-->
+		<config service-class="com.top_logic.oauth.server.OAuthAuthorizationServer">
+			<instance class="com.top_logic.oauth.server.OAuthAuthorizationServer"/>
+		</config>
+
+		<!-- Removes expired codes and tokens, unusable grants and unused registered clients. -->
+		<config service-class="com.top_logic.util.sched.Scheduler">
+			<instance>
+				<task class="com.top_logic.oauth.server.OAuthCleanUpTask"
+					name="OAuthCleanUpTask"
+				>
+					<schedules>
+						<periodically interval="1h"/>
+					</schedules>
+				</task>
+			</instance>
+		</config>
+
+		<!-- Names the authorization server metadata in llms.txt while the authorization server runs. -->
+		<config service-class="com.top_logic.base.discovery.AgentDiscoveryService">
+			<instance>
+				<contributions>
+					<contribution class="com.top_logic.oauth.server.OAuthDiscoveryContribution"/>
+				</contributions>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/tl-oauth-serverMeta.xml"/>
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+	</configs>
+</application>

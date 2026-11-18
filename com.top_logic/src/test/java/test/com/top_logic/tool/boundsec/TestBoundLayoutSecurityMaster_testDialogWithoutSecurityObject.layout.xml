@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments
+		helpID="ID_4e7d2a10_8c3b_4f6e_b1d9_0a5c7e2f9b34"
+	>
+		<title title="test.dialog"/>
+		<open-handler id="openDialog"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+		/>
+		<components>
+			<layout name="content">
+				<component class="com.top_logic.mig.html.layout.SimpleBoundComponent"
+					name="first"
+				/>
+				<component class="com.top_logic.mig.html.layout.SimpleBoundComponent"
+					name="second"
+				/>
+			</layout>
+		</components>
+	</arguments>
+</config:template-call>

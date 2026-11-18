@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<!--
+			Who may read the authorization a person gave an OAuth client: the person, plus
+			administrators. Model access is deny-by-default, so without this a person who is no
+			administrator could not even list the clients they allowed.
+			
+			The technical role "OAuthGrantOwner", held by nobody globally, is derived per grant from
+			its "owner" by a role rule, and the security configuration grants Read to that role.
+			Administrators bypass the check. Revoking goes through oauthRevoke, which checks owner or
+			administrator itself, so no Delete grant is written here.
+			
+			The other types of the module are read and written by the authorization server alone, in
+			a system interaction, and never on behalf of a person.
+		-->
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="OAuthGrantOwner"/>
+				</roles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<rules>
+						<rule id="tl.oauth.server.grant.owner"
+							inherit="true"
+							meta-element="tl.oauth.server:OAuthGrant"
+							role="OAuthGrantOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.oauth.server:OAuthGrant#owner"/>
+							</path>
+						</rule>
+					</rules>
+				</role-rules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="tl.oauth.server:OAuthGrant">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="OAuthGrantOwner"
+						/>
+					</class>
+					<class name="tl.oauth.server:OAuthClient"
+						internal="true"
+					/>
+					<class name="tl.oauth.server:OAuthToken"
+						internal="true"
+					/>
+					<class name="tl.oauth.server:OAuthAuthorizationCode"
+						internal="true"
+					/>
+					<class name="tl.oauth.server:OAuthPendingAuthorization"
+						internal="true"
+					/>
+				</security-config>
+			</instance>
+		</config>
+	</services>
+</application>

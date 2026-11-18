@@ -16,7 +16,7 @@ import com.top_logic.basic.util.ResKey;
 public abstract class LicenseTool {
 
 	/**
-	 * Called during application startup to show some info on system output.
+	 * Called during application startup to log some info about the product and its license.
 	 */
 	public abstract void printHeader();
 

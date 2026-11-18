@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<!-- Forms of the classic UI and the Discover right, see TestClassicDiscoverForm. -->
+		<module name="TestDiscoverForm">
+			<types>
+				<!-- Edited object: the owner may read and write it. -->
+				<class name="Holder">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="targets"
+							multiple="true"
+							ordered="true"
+							type="Target"
+						/>
+						<reference name="target"
+							type="Target"
+						/>
+						<reference name="generated"
+							multiple="true"
+							type="Target"
+						>
+							<annotations>
+								<options>
+									<generator class="test.com.top_logic.element.meta.form.discover.TestAllTargetsGenerator"/>
+								</options>
+							</annotations>
+						</reference>
+						<reference name="tree"
+							multiple="true"
+							type="Target"
+						>
+							<annotations>
+								<options>
+									<generator class="test.com.top_logic.element.meta.form.discover.TestTargetTreeGenerator"/>
+								</options>
+							</annotations>
+						</reference>
+					</attributes>
+				</class>
+
+				<!-- Reference target: discoverable for its owner only. -->
+				<class name="Target">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="children"
+							multiple="true"
+							ordered="true"
+							type="Target"
+						/>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

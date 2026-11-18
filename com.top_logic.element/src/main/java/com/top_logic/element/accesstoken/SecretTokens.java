@@ -91,4 +91,22 @@ public final class SecretTokens {
 		}
 	}
 
+	/**
+	 * Whether the two strings are equal, compared in a time that does not depend on where they
+	 * differ.
+	 *
+	 * <p>
+	 * For comparing a presented secret (or a value derived from it) against a stored one, so that
+	 * the duration of a refusal tells an attacker nothing about how much of a guess was right.
+	 * </p>
+	 *
+	 * @return Whether both are non-<code>null</code> and equal.
+	 */
+	public static boolean constantTimeEquals(String a, String b) {
+		if (a == null || b == null) {
+			return false;
+		}
+		return MessageDigest.isEqual(a.getBytes(StandardCharsets.UTF_8), b.getBytes(StandardCharsets.UTF_8));
+	}
+
 }

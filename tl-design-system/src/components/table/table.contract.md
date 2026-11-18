@@ -182,6 +182,7 @@ Körper scrollen waagerecht gemeinsam: das TSX überträgt `scrollLeft` des Kör
 | Zelle mit Feldmarke | am Ende eine halbe Markenbreite frei: `--tl-size-icon-sm` / 2; der Fokusring der Marke liegt innen (`outline-offset` −`--tl-focus-offset`) |
 | Platzhalter | Innenabstand `--tl-space-control-x`, Linie darunter wie die Zeile |
 | Ablehnung | Rand `--tl-status-error-border`, Text `--tl-status-error-text` |
+| „+ n weitere“ | der Chevron steht im Label, die Lücke zum Text ist `--tl-space-2xs` |
 
 Der Kopf scrollt waagerecht ohne eigenen Balken (`scrollbar-width: none`); Kopf und Körper folgen einander in beide Richtungen (12.10.). Schrift: `.tl-type-body` am `tl-table__body`, von der Komponente gesetzt. Die Gruppenzeile ist stark: jede ihrer Zellen
 trägt `tl-type-body-strong`, und ein Lesewert darin erbt sie (`field.contract.md`, 09.10.). Ein Text setzt seine
@@ -221,7 +222,7 @@ Bauteile anderer Blöcke:
 | `tl-button--icon` | Trichter (`--sm --ghost`, `aria-label` und Tooltip `js.table.filter`, bei aktivem Filter `js.table.filterActive`), Spaltenwahl (`--ghost`, `js.table.columns`, in angehefteter letzter Kopfzelle `--sm`), Speichern; Icons `tl-icon-sm` |
 | `tl-badge` | Stufe einer mehrstufigen Sortierung im Sortierknopf |
 | `tl-status` | statt Zeilen in der leeren Tabelle: `role="row"` `aria-rowindex="2"` (im `treegrid` mit `aria-level="1"`) > `div.tl-status` mit `role="gridcell"` — die Zelle ist die Statuszeile —, Text `js.table.empty`; die Zeile klebt am linken Rand des Körpers (`position: sticky`), auch wenn er waagerecht gescrollt ist. Die Tabelle hat keine Ladezeile: Zeilen im Fenster, die noch fehlen, sind `tl-table__placeholder` (`aria-hidden`), das Raster trägt `aria-busy`. |
-| `tl-skeleton` | in `tl-table__placeholder` für Zeilen im Fenster, die der Server noch nicht geschickt hat; der Platzhalter ist `aria-hidden`, das Raster trägt `aria-busy` |
+| `tl-skeleton` | als Textzeile (`tl-skeleton--text`, Part `Skeleton` mit `shape="text"`) in `tl-table__placeholder` für Zeilen im Fenster, die der Server noch nicht geschickt hat; der Platzhalter ist `aria-hidden`, das Raster trägt `aria-busy` |
 | `tl-chip` | benannter Filter in der Filterleiste: `span.tl-chip` > `tl-chip__toggle` (`aria-pressed`) und, wenn löschbar, `tl-chip__remove`. Verschwindet die Kapsel mit ihrem fokussierten `tl-chip__remove`, geht der Fokus zum Entfernen-Knopf der Nachbarkapsel (gleicher Platz, sonst der vorige), ohne einen ins Suchfeld, sonst ins Raster (WCAG 2.4.3; derselbe Helfer wie beim Wert-Chip des Select) |
 | `tl-field-group` | Suche (`tl-table__search`) mit Lupe und, solange Text steht, Löschknopf (`js.textInput.clear`), nach dem Löschen bleibt der Fokus im Feld — dieselbe Suche wie in der Spaltenwahl (`reorder-list.contract.md`); der Name beim Speichern ist ein `tl-field` in `tl-table__save` |
 | `tl-popover` | Grund einer Ablehnung beim Ziehen, mit `tl-drop-hint` (`drag.contract.md`; vorher `tl-table__hint`), Lage aus `bridge/popover.ts` |
@@ -232,6 +233,7 @@ Klassen:
 |---|---|
 | `tl-table` | die Wurzel; Ziel, wenn auf der Tabelle als Ganzem abgelegt wird |
 | `tl-table__filter-bar` | die Filterleiste über dem Rahmen |
+| `tl-table__more` | der Chip „+ n weitere“ in der Filterleiste: ein `tl-chip` (`tl-chip__toggle`, `aria-haspopup="menu"`), der die übrigen benannten Filter als Menü öffnet; die Klasse gibt ihm nur `flex: none`, die Form liefert `tl-chip` |
 | `tl-table__search` | die `tl-field-group` der Suche, am rechten Ende |
 | `tl-table__save` | Speichern der Kriterien (Name, Speichern, Abbrechen) |
 | `tl-table__frame` | der Rahmen um Raster, Spaltenwahl und Fixiergrenze |

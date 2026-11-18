@@ -318,7 +318,7 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 	 * Suite of {@link TestAlterColumnProcessor}.
 	 */
 	public static Test suite() {
-		return suiteDefaultDB(TestAlterColumnProcessor.class);
+		return suite(TestAlterColumnProcessor.class);
 	}
 
 }

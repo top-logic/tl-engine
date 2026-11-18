@@ -171,6 +171,39 @@ public class TestDiagramSelectionVeto extends TestCase {
 		assertEquals(NODE_B, _channel.get());
 	}
 
+	/**
+	 * Tests that the selection a context menu opened on another element makes is taken back when
+	 * the channel refuses it, and that the client marks the element selected before again.
+	 */
+	public void testRefusedContextMenuSelectionIsRestored() throws IOException {
+		display(diagram(false, NODE_A, NODE_B), NODE_A);
+
+		assertVetoed(_client.openContextMenu(NODE_B));
+
+		assertEquals(Set.of(NODE_A), _control.getSelectedUserObjects());
+		assertEquals("The channel keeps its value.", NODE_A, _channel.get());
+
+		_client.applyServerPatches();
+		assertEquals("The client marks the element selected before again.",
+			Set.of(NODE_A), _client.marked());
+	}
+
+	/**
+	 * Tests that a context menu opened on the empty area the channel refuses to clear keeps the
+	 * selection.
+	 */
+	public void testRefusedContextMenuClearingIsRestored() throws IOException {
+		display(diagram(false, NODE_A, NODE_B), NODE_A);
+
+		assertVetoed(_client.openContextMenu(null));
+
+		assertEquals(Set.of(NODE_A), _control.getSelectedUserObjects());
+		assertEquals(NODE_A, _channel.get());
+
+		_client.applyServerPatches();
+		assertEquals(Set.of(NODE_A), _client.marked());
+	}
+
 	@Override
 	protected void tearDown() throws Exception {
 		if (_binding != null) {
@@ -269,6 +302,17 @@ public class TestDiagramSelectionVeto extends TestCase {
 			_scope.createPatch(new JsonWriter(patch));
 			Map<String, Object> args = Map.of(FlowDiagramControl.ARG_PATCH, patch.toString());
 			return () -> _control.handleUpdate(_context, args);
+		}
+
+		/**
+		 * The report that a context menu opens on the node drawn with the given CSS class, or on
+		 * the empty area for <code>null</code>.
+		 */
+		Update openContextMenu(String cssClass) {
+			Map<String, Object> args = cssClass == null
+				? Map.of()
+				: Map.of(FlowDiagramControl.ARG_NODE_ID, Integer.valueOf(_scope.id(node(cssClass))));
+			return () -> _control.handleContextMenu(_context, args);
 		}
 
 		/** The diagram patches the control sent since the client last received them. */

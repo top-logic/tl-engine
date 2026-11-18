@@ -86,6 +86,13 @@ public final class RowFunction<T> {
 	}
 
 	/**
+	 * Whether the table configures an expression for this function.
+	 */
+	public boolean isDefined() {
+		return _executor != null;
+	}
+
+	/**
 	 * The function computing the value for a row object in a table reading the given inputs.
 	 *
 	 * @param inputs

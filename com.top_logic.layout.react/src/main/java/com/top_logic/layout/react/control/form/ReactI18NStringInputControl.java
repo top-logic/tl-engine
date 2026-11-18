@@ -125,10 +125,10 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 			// Show the user-locale value; if it is empty, offer the best available translation as a
 			// placeholder so a value set only in another language is not hidden.
 			putState(FieldState.VALUE__PROP, emptyToNull(userText));
-			setPlaceholder(isEmpty(userText) ? fallbackValue(resKey) : null);
+			setFallbackText(isEmpty(userText) ? fallbackValue(resKey) : null);
 		} else {
 			putState(FieldState.VALUE__PROP, displayText(resKey));
-			setPlaceholder(null);
+			setFallbackText(null);
 		}
 	}
 

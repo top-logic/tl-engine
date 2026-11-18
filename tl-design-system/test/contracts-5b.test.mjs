@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { missingInContract, specimenProblems } from './lib/component.mjs';
 const datei = (d, f) => readFileSync(new URL(`../src/components/${d}/${f}`, import.meta.url), 'utf8');
 const SOLL = {
-  'media/media.contract.md': ['tl-media', 'tl-media__frame', 'tl-media__placeholder', 'tl-media--cover',
+  'media/media.contract.md': ['tl-media', 'tl-media__frame', 'tl-media__placeholder', 'tl-media__loading', 'aria-busy="true"', 'tl-media--cover',
     'tl-media--contain', 'tl-status', '--tl-surface-document'],
   'prose/prose.contract.md': ['tl-prose', 'heading-lg', 'heading-md', 'heading-sm', 'text-link', 'border-separator'],
   'overlay/overlay.contract.md': ['tl-overlay--fill', 'tl-overlay__base', 'tl-overlay__action'],

@@ -239,8 +239,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		addModelListener();
 
-		_innerControl =
-			FieldControlService.getInstance().createFieldControl(_context, part, _model, _inputControl);
+		_innerControl = createInnerControl(part);
 
 		String label = resolveLabel();
 		String description = resolveDescription(part);
@@ -317,8 +316,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 			addModelListener();
 
-			_innerControl =
-			FieldControlService.getInstance().createFieldControl(_context, part, _model, _inputControl);
+			_innerControl = createInnerControl(part);
 
 			String description = resolveDescription(part);
 			_chrome.setLabel(resolveLabel());
@@ -548,6 +546,12 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	 * Maps a model-level {@link LabelPosition} to the wire-level position understood by the field
 	 * chrome, resolving the edit-mode-dependent {@link LabelPosition#ABOVE_INPUT} against the
 	 * field's current editability.
+	 *
+	 * <p>
+	 * The chrome hides the label of a {@link LabelPosition#PLACEHOLDER} field, as of a
+	 * {@link LabelPosition#HIDE_LABEL} one; the input shows it as its placeholder, see
+	 * {@link #labelPlaceholder(LabelPosition, String)}.
+	 * </p>
 	 */
 	public static com.top_logic.layout.react.control.layout.LabelPosition wirePosition(
 			LabelPosition position, boolean editable) {
@@ -564,11 +568,35 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			case AFTER_VALUE:
 				return com.top_logic.layout.react.control.layout.LabelPosition.AFTER;
 			case HIDE_LABEL:
+			case PLACEHOLDER:
 				return com.top_logic.layout.react.control.layout.LabelPosition.HIDDEN;
 			case DEFAULT:
 			default:
 				return null;
 		}
+	}
+
+	/**
+	 * The placeholder an input shows for its label at the given position.
+	 *
+	 * @param position
+	 *        The model-level {@link LabelPosition} of the field, {@code null} if not specified.
+	 * @param label
+	 *        The label of the field.
+	 * @return The label for {@link LabelPosition#PLACEHOLDER}, {@code null} for every other
+	 *         position.
+	 */
+	public static String labelPlaceholder(LabelPosition position, String label) {
+		return position == LabelPosition.PLACEHOLDER ? label : null;
+	}
+
+	/**
+	 * Creates the input control of the field, showing its label as placeholder where the
+	 * {@link #legacyLabelPosition(TLStructuredTypePart) label position} asks for it.
+	 */
+	private ReactControl createInnerControl(TLStructuredTypePart part) {
+		return FieldControlService.getInstance().createFieldControl(_context, part, _model, _inputControl,
+			labelPlaceholder(legacyLabelPosition(part), resolveLabel()));
 	}
 
 	private void onModeDependencyChanged() {

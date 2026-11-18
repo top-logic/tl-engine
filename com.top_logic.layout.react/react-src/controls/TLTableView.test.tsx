@@ -8,6 +8,20 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
   unsubscribe: () => {},
 }));
 
+/** The options of every command enqueued to the command channel, by command name. */
+const enqueued = vi.hoisted(() => [] as { command: string; options: unknown }[]);
+
+vi.mock('../bridge/command-channel', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../bridge/command-channel')>();
+  return {
+    ...original,
+    enqueueCommand: (...args: Parameters<typeof original.enqueueCommand>) => {
+      enqueued.push({ command: args[1].command, options: args[2] });
+      return original.enqueueCommand(...args);
+    },
+  };
+});
+
 // The bridge first, as the page loads it: the bridge entry reaches it through modules that the SSE client imports
 // as well, and these must see the mocked SSE client.
 import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
@@ -19,6 +33,7 @@ import DisclosureTogglePart from './button/DisclosureTogglePart';
 import CheckboxPart from './form/CheckboxPart';
 import TextInputPart from './form/TextInputPart';
 import ChipPart from './chip/ChipPart';
+import SkeletonPart from './skeleton/SkeletonPart';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -92,6 +107,7 @@ beforeAll(() => {
   registerPart('Checkbox', CheckboxPart);
   registerPart('TextInput', TextInputPart);
   registerPart('Chip', ChipPart);
+  registerPart('Skeleton', SkeletonPart);
   register('TableTestEditor', EditorCell);
   register('TableTestText', TextCell);
   register('TLTableView', TLTableView);
@@ -112,6 +128,7 @@ afterAll(async () => {
 /** Mounts a table of three rows with the given state, and records the commands it sends. */
 function mountTable(state: Record<string, unknown>): void {
   sent = [];
+  enqueued.length = 0;
   vi.stubGlobal('ResizeObserver', class {
     observe(): void {}
     unobserve(): void {}
@@ -228,5 +245,96 @@ describe('the heading of a column that requires a value', () => {
     mountTable({});
 
     expect(document.querySelector(REQUIRED)).toBeNull();
+  });
+});
+
+describe('a table whose rows in the visible window are not all sent', () => {
+  it('draws the missing rows as text skeletons and marks the grid busy', async () => {
+    // jsdom lays nothing out: the body shows five rows of the fallback row height (36px).
+    const clientHeight = vi.spyOn(Element.prototype, 'clientHeight', 'get')
+      .mockImplementation(function (this: Element) { return this.classList.contains('tl-table__body') ? 5 * 36 : 0; });
+    try {
+      mountTable({ totalRowCount: 10 });
+      await settle();
+
+      const placeholders = Array.from(document.querySelectorAll('.tl-table__placeholder'));
+      expect(placeholders).toHaveLength(2);
+      for (const placeholder of placeholders) {
+        expect(placeholder.getAttribute('aria-hidden')).toBe('true');
+        const skeleton = placeholder.firstElementChild!;
+        expect(skeleton.className).toBe('tl-skeleton tl-skeleton--text');
+        expect(skeleton.getAttribute('aria-hidden')).toBe('true');
+      }
+      expect(document.querySelector('.tl-table__grid')!.getAttribute('aria-busy')).toBe('true');
+    } finally {
+      clientHeight.mockRestore();
+    }
+  });
+
+  it('does not mark the grid busy when all rows of the window are sent', async () => {
+    mountTable({});
+    await settle();
+
+    expect(document.querySelectorAll('.tl-table__placeholder')).toHaveLength(0);
+    expect(document.querySelector('.tl-table__grid')!.hasAttribute('aria-busy')).toBe(false);
+  });
+});
+
+/** The command reporting the rows the table shows (TableViewControl.CMD_SCROLL). */
+const CMD_SCROLL = 'scroll';
+
+/** The delay after which the table reports the rows a scroll brought into view. */
+const SCROLL_REPORT_DELAY = 80;
+
+/** Gives the body of the table the height of two rows and scrolls it, as the user does. */
+function scrollBody(): void {
+  const body = document.querySelector<HTMLElement>(`#${TABLE_ID} .tl-table__body`)!;
+  Object.defineProperty(body, 'clientHeight', { configurable: true, get: () => 72 });
+  act(() => {
+    body.dispatchEvent(new Event('scroll'));
+  });
+}
+
+/** The scroll commands the table sent. */
+function scrolls(): Sent[] {
+  return sent.filter(command => command.command === CMD_SCROLL);
+}
+
+describe('the viewport report of a table', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('reports the rows a scroll brought into view in the background, ignoring a disposed table', async () => {
+    mountTable({});
+    await settle();
+    vi.useFakeTimers();
+    scrollBody();
+    act(() => {
+      vi.advanceTimersByTime(SCROLL_REPORT_DELAY);
+    });
+    vi.useRealTimers();
+    await settle();
+
+    expect(scrolls()).toEqual([{ command: CMD_SCROLL, args: { start: 0, count: 2 } }]);
+    expect(enqueued.filter(entry => entry.command === CMD_SCROLL))
+      .toEqual([{ command: CMD_SCROLL, options: { background: true, ignoreStaleUi: true } }]);
+  });
+
+  it('reports nothing when it is removed before the report is due', async () => {
+    mountTable({});
+    await settle();
+    vi.useFakeTimers();
+    scrollBody();
+    act(() => unmount(TABLE_ID));
+
+    expect(vi.getTimerCount()).toBe(0);
+    act(() => {
+      vi.advanceTimersByTime(SCROLL_REPORT_DELAY);
+    });
+    vi.useRealTimers();
+    await settle();
+
+    expect(scrolls()).toEqual([]);
   });
 });

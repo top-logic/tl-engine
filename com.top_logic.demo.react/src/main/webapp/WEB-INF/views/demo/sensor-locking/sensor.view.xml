@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Sensor frame of the sensor locking demo, pushed when a row of the sensor table is activated.
+	
+	The editMode channel starts with true, so the form enters edit mode by itself and locks the
+	sensor. When someone else holds the lock, the form shows the sensor read-only, the channel
+	goes to false, and a notice names who holds the lock; Edit then reports the lock again. Leaving
+	the frame or saving releases the lock.
+-->
+<view>
+	<channels>
+		<channel name="sensor"/>
+		<channel name="navPath"/>
+		<channel name="editMode"
+			init="true"
+		/>
+		<derived-channel name="depth"
+			expr="$navPath.size()"
+			inputs="navPath"
+		/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Sensor</en>
+			<de>Sensor</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-arrow-left"
+				inputs="depth"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Back</en>
+					<de>Zurück</de>
+				</label>
+				<executability>
+					<visible-if expr="$depth > 0"/>
+				</executability>
+				<navigate-pop/>
+			</generic-command>
+		</commands>
+		<form
+			editMode="editMode"
+			input="sensor"
+			with-inset="true"
+		>
+			<field attribute="name"/>
+			<field attribute="minTemperature"/>
+			<field attribute="maxTemperature"/>
+		</form>
+	</panel>
+</view>

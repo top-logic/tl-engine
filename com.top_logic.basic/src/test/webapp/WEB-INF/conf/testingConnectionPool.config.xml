@@ -20,8 +20,6 @@
 								<secret name="db2_passwd" value="unencrypted:passwd"/>
 								<secret name="mssql_passwd" value="unencrypted:password"/>
 								<secret name="mysql_passwd" value="unencrypted:passwd"/>
-								<secret name="oracle_passwd" value="unencrypted:passwd"/>
-								<secret name="oracle12_passwd" value="unencrypted:passwd"/>
 								<secret name="oracle19_passwd" value="unencrypted:passwd"/>
 								<secret name="postgresql_passwd" value="unencrypted:passwd"/>
 							</secrets>

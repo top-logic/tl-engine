@@ -5,8 +5,6 @@
  */
 package com.top_logic.security.captcha.form;
 
-import static com.top_logic.mig.html.HTMLConstants.*;
-
 import java.io.IOException;
 import java.util.Map;
 

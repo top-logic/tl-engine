@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objectlist xmlns="http://www.top-logic.com/ns/meta/5.8">
+	<metaobjects>
+		<!--
+			Access tokens (tl.accounts:AccessToken). The hash gets a column of its own with a unique
+			index, because every request authenticated by a token looks it up by it; the dates and
+			the owner use the generic flex/association storage.
+		-->
+		<metaobject
+			object_name="PersonalAccessToken"
+			super_class="TLObject"
+		>
+			<attributes>
+				<mo_attribute
+					att_name="name"
+					att_type="String"
+					db_size="255"
+					mandatory="true"
+				/>
+				<mo_attribute
+					att_name="hint"
+					att_type="String"
+					db_size="32"
+					mandatory="true"
+				/>
+				<mo_attribute
+					att_name="secretHash"
+					att_type="String"
+					db_size="64"
+					mandatory="true"
+				/>
+				<mo_attribute
+					att_name="permissions"
+					att_type="String"
+					db_size="1024"
+					mandatory="true"
+				/>
+				<mo_attribute
+					att_name="sessionKey"
+					att_type="String"
+					db_size="64"
+					mandatory="false"
+				/>
+			</attributes>
+			<index>
+				<mo_index name="secretHash"
+					unique="true"
+				>
+					<index-parts>
+						<index_part name="secretHash"/>
+					</index-parts>
+				</mo_index>
+			</index>
+		</metaobject>
+	</metaobjects>
+</objectlist>

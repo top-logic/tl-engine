@@ -32,13 +32,13 @@ import com.top_logic.base.accesscontrol.ExternalAuthenticationServlet;
 import com.top_logic.base.accesscontrol.ExternalLoginFailure;
 import com.top_logic.base.accesscontrol.ExternalUserMapping;
 import com.top_logic.base.accesscontrol.I18NConstants;
-import com.top_logic.base.accesscontrol.IdentityVerifications.Outcome;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.base.accesscontrol.Login.UnknownAccountException;
 import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.accesscontrol.SessionService;
+import com.top_logic.base.accesscontrol.VerificationResult;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.thread.ThreadContext;
@@ -73,9 +73,9 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 		}
 
 		@Override
-		public void writeVerificationResult(HttpServletResponse response, Outcome outcome)
+		public void writeVerificationResult(HttpServletResponse response, VerificationResult result)
 				throws IOException {
-			super.writeVerificationResult(response, outcome);
+			super.writeVerificationResult(response, result);
 		}
 
 		@Override
@@ -293,37 +293,30 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 	}
 
 	/**
-	 * Every outcome produces a page that says what happened, and only the confirmed one tries to
-	 * close the window.
+	 * Every outcome produces a page that says what happened, and exactly the results delivered to
+	 * the window that asked - accepted or refused - try to close the window.
 	 */
 	public void testResultPage() throws Exception {
-		assertPage(Outcome.VERIFIED, true);
-		assertPage(Outcome.MISMATCH, false);
-		assertPage(Outcome.UNKNOWN, false);
+		assertPage(VerificationResult.verified(I18NConstants.IDENTITY_VERIFIED).delivered(), true);
+		assertPage(VerificationResult.refused(I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED).delivered(), true);
+		assertPage(VerificationResult.verified(I18NConstants.IDENTITY_VERIFIED), false);
+		assertPage(VerificationResult.refused(I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED), false);
+		assertPage(VerificationResult.mismatch(), false);
+		assertPage(VerificationResult.unknown(), false);
+		assertPage(VerificationResult.expired().delivered(), true);
+		assertPage(VerificationResult.expired(), false);
 	}
 
-	private void assertPage(Outcome outcome, boolean closesWindow) throws Exception {
+	private void assertPage(VerificationResult result, boolean closesWindow) throws Exception {
 		InvocationContext invocation = _client.newInvocation(new GetMethodWebRequest("http://ignore/lpServlet"));
-		new TestingServlet().writeVerificationResult(invocation.getResponse(), outcome);
+		new TestingServlet().writeVerificationResult(invocation.getResponse(), result);
 		String page = invocation.getServletResponse().getText();
 
 		assertContains("<!DOCTYPE html>", page);
 		assertContains(Resources.getInstance().getString(I18NConstants.IDENTITY_VERIFICATION_TITLE), page);
-		assertContains(expectedMessage(outcome), page);
-		assertEquals("Only a confirmed identity may close the window.", closesWindow,
+		assertContains(Resources.getInstance().getString(result.getMessage()), page);
+		assertEquals("Exactly a delivered result may close the window.", closesWindow,
 			page.contains("window.close()"));
-	}
-
-	private String expectedMessage(Outcome outcome) {
-		Resources resources = Resources.getInstance();
-		switch (outcome) {
-			case VERIFIED:
-				return resources.getString(I18NConstants.IDENTITY_VERIFIED);
-			case MISMATCH:
-				return resources.getString(I18NConstants.ERROR_IDENTITY_MISMATCH);
-			default:
-				return resources.getString(I18NConstants.ERROR_IDENTITY_VERIFICATION_UNKNOWN);
-		}
 	}
 
 	/**

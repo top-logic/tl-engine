@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- typed configuration for TestAgentAccessTokens -->
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<services>
+
+		<!-- A permission of another endpoint: the user interface refuses a token that has only this one. -->
+		<config service-class="com.top_logic.element.accesstoken.AccessTokenPermissions">
+			<instance>
+				<permissions>
+					<permission name="test-other"
+						label="test.accesstoken.permission.other"
+					/>
+				</permissions>
+			</instance>
+		</config>
+
+	</services>
+
+</application>

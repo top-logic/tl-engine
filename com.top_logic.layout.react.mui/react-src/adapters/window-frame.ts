@@ -6,7 +6,7 @@
 // of its own; the server keeps no position, only the size the user gave the window last (command
 // `resize`, forgotten again with `resetSize`).
 
-import { BACKGROUND_COMMAND, React, startPointerDrag } from 'tl-react-bridge';
+import { BACKGROUND_REPORT, React, startPointerDrag } from 'tl-react-bridge';
 import type { CommandOptions, WindowStateJson } from 'tl-react-bridge';
 
 const { useCallback, useEffect, useRef, useState } = React;
@@ -230,7 +230,7 @@ export function useWindowFrame(
           sendCommand(CMD_RESIZE, {
             ...(lw != null ? { [ARG_WIDTH]: Math.round(lw) } : {}),
             ...(lh != null ? { [ARG_HEIGHT]: Math.round(lh) } : {}),
-          }, BACKGROUND_COMMAND);
+          }, BACKGROUND_REPORT);
         }
       },
 

@@ -9,7 +9,6 @@ import static com.top_logic.mig.html.HTMLConstants.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.col.Maybe;
@@ -70,12 +70,14 @@ import com.top_logic.layout.form.control.ButtonControl;
 import com.top_logic.layout.form.control.ErrorControl;
 import com.top_logic.layout.form.control.ImageButtonRenderer;
 import com.top_logic.layout.form.model.CompositeField;
+import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.TableField;
 import com.top_logic.layout.form.tag.TableTag;
 import com.top_logic.layout.form.template.AbstractFormFieldControlProvider;
 import com.top_logic.layout.form.template.ControlProvider;
+import com.top_logic.layout.messagebox.AbstractFormDialogBase;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -86,6 +88,7 @@ import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.structure.DefaultDialogModel;
 import com.top_logic.layout.structure.DefaultLayoutData;
+import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.layout.structure.MediaQueryControl;
 import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.layout.table.AbstractCellRenderer;
@@ -375,47 +378,89 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 				Fragments.message(title),
 				true, true, null);
 
-			// See
-			// com.top_logic.element.layout.formeditor.builder.EditFormBuilder
-			AttributeFormContext formContext;
-			{
-				formContext = new AttributeFormContext(ResPrefix.NONE);
-				TypedForm typedForm = TypedForm.lookup(Collections.emptyMap(), editObject);
+			return new DetailsDialog(dialogModel, operation, editObject).open(openerContext);
+		}
+
+		/**
+		 * Dialog editing a transient copy of a row of the composition table.
+		 *
+		 * <p>
+		 * The dialog owns its form as {@link AbstractFormDialogBase}. This allows to address the
+		 * fields of the dialog in recorded scripts.
+		 * </p>
+		 */
+		private final class DetailsDialog extends AbstractFormDialogBase {
+
+			private final CopyOperation _operation;
+
+			private final TLObject _editObject;
+
+			DetailsDialog(DialogModel dialogModel, CopyOperation operation, TLObject editObject) {
+				super(dialogModel);
+				_operation = operation;
+				_editObject = editObject;
+			}
+
+			@Override
+			protected FormContext createFormContext() {
+				return new AttributeFormContext(ResPrefix.NONE);
+			}
+
+			@Override
+			protected void fillFormContext(FormContext context) {
+				// See com.top_logic.element.layout.formeditor.builder.EditFormBuilder
+				TypedForm typedForm = TypedForm.lookup(Collections.emptyMap(), _editObject);
 
 				FormEditorContext editContext = new FormEditorContext.Builder()
 					.formMode(FormMode.EDIT)
 					.formType(typedForm.getFormType())
 					.concreteType(typedForm.getDisplayedType())
-					.model(editObject)
-					.formContext(formContext)
-					.contentGroup(formContext)
+					.model(_editObject)
+					.formContext(context)
+					.contentGroup(context)
 					.editMode(!_immutable)
 					.build();
 
 				FormEditorUtil.createAttributes(editContext, typedForm.getFormDefinition());
-				formContext.setImmutable(_immutable);
+				context.setImmutable(_immutable);
 			}
 
-			// See com.top_logic.layout.form.declarative.DirectFormDisplay.
-			MediaQueryControl content = new MediaQueryControl(
-				Fragments.div(FormConstants.FORM_BODY_CSS_CLASS,
-					MetaControlProvider.INSTANCE.createControl(formContext)));
-
-			content.setConstraint(DefaultLayoutData.DEFAULT_CONSTRAINT);
-
-			if (_immutable) {
-				return MessageBox.open(openerContext, dialogModel, content,
-					Arrays.asList(MessageBox.button(ButtonType.CLOSE, dialogModel.getCloseAction())));
+			@Override
+			protected HTMLFragment createView() {
+				return Fragments.div(FormConstants.FORM_BODY_CSS_CLASS,
+					MetaControlProvider.INSTANCE.createControl(getFormContext()));
 			}
 
-			CommandModel okButton = MessageBox.button(ButtonType.OK, applyContext -> {
+			@Override
+			protected HTMLFragment createLayout() {
+				// See com.top_logic.layout.form.declarative.DirectFormDisplay.
+				MediaQueryControl content = new MediaQueryControl(createView());
+				content.setConstraint(DefaultLayoutData.DEFAULT_CONSTRAINT);
+				return content;
+			}
+
+			@Override
+			protected void fillButtons(List<CommandModel> buttons) {
+				if (_immutable) {
+					addClose(buttons, ButtonType.CLOSE);
+					return;
+				}
+
+				CommandModel okButton = MessageBox.button(ButtonType.OK, this::apply);
+				getDialogModel().setDefaultCommand(okButton);
+				buttons.add(okButton);
+				addCancel(buttons);
+			}
+
+			private HandlerResult apply(DisplayContext applyContext) {
+				FormContext formContext = getFormContext();
 				if (!formContext.checkAll()) {
 					return AbstractApplyCommandHandler.createErrorResult(formContext);
 				}
 				formContext.store();
 
 				Map<TLObject, TLObject> origByCopy = new HashMap<>();
-				for (var entry : operation.getCorrespondence().entrySet()) {
+				for (var entry : _operation.getCorrespondence().entrySet()) {
 					origByCopy.put(entry.getValue(), entry.getKey());
 				}
 
@@ -453,7 +498,7 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 				};
 				CopyOperation copyBack =
 					CopyOperation.initial().setTransient(true).setConstructor(constructor);
-				copyBack.copyReference(editObject);
+				copyBack.copyReference(_editObject);
 				copyBack.finish();
 
 				// All objects that have not used during the copy-back
@@ -471,13 +516,8 @@ public class CompositionFieldProvider extends AbstractWrapperFieldProvider {
 				int rowIndex = viewModel.getRowOfObject(_formObj);
 				viewModel.updateRows(rowIndex, rowIndex);
 
-				return dialogModel.getCloseAction().executeCommand(applyContext);
-			});
-
-			dialogModel.setDefaultCommand(okButton);
-			return MessageBox.open(openerContext, dialogModel, content,
-				Arrays.asList(okButton,
-					MessageBox.button(ButtonType.CANCEL, dialogModel.getCloseAction())));
+				return getDialogModel().getCloseAction().executeCommand(applyContext);
+			}
 		}
 
 		/**

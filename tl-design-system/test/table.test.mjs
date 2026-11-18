@@ -45,18 +45,29 @@ test('tl-table: Zeile size-row, Kopf size-bar, Zustände als Attribute, keine Li
   assert.match(declarationsOf(css, '.tl-table__header-cell[data-tl-state~="filtered"] .tl-table__filter') ?? '', /text-link/);
 });
 
-test('ein bearbeitbares Feld in der Zelle zeigt sich durch eine Linie unten, auf gezeigter und ausgewählter Zeile in border-interactive', () => {
-  // Sichtprüfung 23.10.: randlos und durchsichtig sah die Zelle im Bearbeiten-Modus aus wie im Lesen. Gemessen gegen die
-  // Zeile: border-control hält auf surface-layer 3,42 hell / 3,69 dunkel, auf der ausgewählten Zeile nur 2,78 / 2,44;
-  // border-interactive dort 4,75 / 3,63, gezeigt 5,21 / 3,87.
-  // Das Feld ist so hoch wie die Zeile: die Zelle streckt ihre Hülle, sonst sitzt die Linie mitten in der Zeile.
-  assert.match(declarationsOf(css, '.tl-table__cell:has(.tl-field)') ?? '', /align-items:\s*stretch/);
-  const feld = '.tl-table__cell .tl-field:not(:disabled, [readonly])';
-  assert.match(declarationsOf(css, feld) ?? '',
-    /box-shadow:\s*inset 0 calc\(-1 \* var\(--tl-border-width-sm\)\) 0 var\(--tl-border-control\)/);
+test('#30383: ein bearbeitbares Feld in der Zelle hat Fläche und Rahmen wie im Formular, eine Stufe niedriger', () => {
+  // Gemessen 17.11.: border-control hält hell 3,42 weiß / 3,10 Zebra, dunkel 3,69 / 3,29; auf gezeigter und
+  // gewählter Zeile trägt border-emphasis (dunkel gray-36: 3,16–4,27). Das Blau bleibt Auswahl und Fokusring.
+  const zelle = declarationsOf(css, '.tl-table__cell:has(.tl-field)') ?? '';
+  assert.match(zelle, /padding:\s*calc\(var\(--tl-space-2xs\) - var\(--tl-border-width-sm\)\) var\(--tl-space-2xs\) 0/);
+  assert.match(zelle, /align-items:\s*flex-start/);
+  assert.match(declarationsOf(css, '.tl-table__cell:has(.tl-field) > :not([hidden])') ?? '',
+    /height:\s*calc\(var\(--tl-size-control\) - var\(--tl-space-2xs\)\)/);
+  // Innenabstand an (0,2,0), damit field.css Platz für Endknopf und Icon behält (Plan-Review B1).
+  assert.match(declarationsOf(css, '.tl-table__cell .tl-field') ?? '',
+    /padding-inline:\s*calc\(var\(--tl-space-control-x\) - var\(--tl-space-2xs\)\)/);
+  assert.match(declarationsOf(css, '.tl-table__cell .tl-select') ?? '', /padding-block:\s*0/);
+  const feld = '.tl-table__cell .tl-field:not(:disabled, [readonly], [aria-disabled="true"])';
+  const d = declarationsOf(css, feld) ?? '';
+  assert.match(d, /background:\s*var\(--tl-surface-field\)/);
+  assert.match(d, /box-shadow:\s*inset 0 0 0 var\(--tl-border-width-sm\) var\(--tl-border-control\)/);
+  assert.doesNotMatch(d, /padding/);
   assert.match(declarationsOf(css, `:where(.tl-table__row:hover, .tl-table__row[aria-selected="true"]) ${feld}`) ?? '',
-    /box-shadow:\s*inset 0 calc\(-1 \* var\(--tl-border-width-sm\)\) 0 var\(--tl-border-interactive\)/);
-  // Fehler und Warnung stehen danach und gewinnen: ihr Rahmen ist die ganze Zelle.
+    /box-shadow:\s*inset 0 0 0 var\(--tl-border-width-sm\) var\(--tl-border-emphasis\)/);
+  // Kein Blau am Feldrahmen der Zelle: der Fokusring hätte sonst dieselbe Farbe (Kontrast 1,00).
+  for (const [sel, decl] of rulesOf(css))
+    if (sel.includes('.tl-table__cell') && sel.includes('.tl-field')) assert.doesNotMatch(decl, /border-interactive/, sel);
+  // Warnung und Fehler stehen danach und gewinnen.
   assert.ok(css.indexOf(`:where(.tl-table__row:hover, .tl-table__row[aria-selected="true"]) ${feld}`)
     < css.indexOf('.tl-table__cell .tl-field[data-tl-state~="warning"]'));
 });
@@ -250,12 +261,16 @@ test('Tiefe: die Gruppenzeile ist eine eigene Zeilenform, ihre Anzahl eine Kapse
   assert.doesNotMatch(k, /text-secondary/);
 });
 
+test('Tiefe: „+ n weitere“ ist ein Element der Filterleiste, das nur sein Layout braucht (Chip liefert die Form)', () => {
+  assert.match(declarationsOf(css, '.tl-table__more') ?? '', /flex:\s*none/);
+});
+
 test('Tiefe: Vertrag und Specimen nennen die neuen Attribute und Klassen', () => {
   const md = readComponent('table', 'table.contract.md');
   assert.deepEqual(missingInContract(md, ['data-tl-align="end"',
-    'data-tl-state~="group"', 'tl-type-overline', '--tl-surface-layer-muted', 'tl-reveal-on-hover']), []);
+    'data-tl-state~="group"', 'tl-table__more', 'tl-type-overline', '--tl-surface-layer-muted', 'tl-reveal-on-hover']), []);
   const html = readComponent('table', 'table.spec.html');
-  for (const t of ['data-tl-align="end"', 'tl-type-overline',
+  for (const t of ['data-tl-align="end"', 'tl-table__more', 'tl-type-overline',
     'data-tl-state="filtered"', 'aria-sort="ascending"'])
     assert.ok(html.includes(t), `Specimen zeigt ${t}`);
   for (const wort of ['group']) assert.match(html, new RegExp(`data-tl-state="[^"]*\\b${wort}\\b`), `Specimen zeigt das Zustandswort ${wort}`);

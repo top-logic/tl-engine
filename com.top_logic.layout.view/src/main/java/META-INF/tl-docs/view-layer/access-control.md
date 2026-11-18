@@ -258,7 +258,10 @@ the checks decide on the main argument of the command, after its `<executability
   `<create>`. An empty container channel means a creation without container: without `reference`
   it is checked against the security root (refused → hidden), with `reference` there is nothing to
   add the object to and the command is disabled;
-- `<delete-object>`: `Delete` on every processed object, plus the delete veto;
+- `<delete-object>`: `Delete` on every processed object, plus the delete veto. Without an object
+  the command is disabled - or hidden, when its input channel declares the class of its values
+  (`type`, see [channels](doc:view-layer/channels#declaring-the-class-of-the-values-type)) and the
+  user may perform the operation on no object of that class;
 - `<link-element>` and `<remove-element>`: the `<link-access>` and `<remove-access>` the enclosing
   `<object-list>` declares, with the same `<operation>` and `<create>` checks over the inputs of the
   list and the element (see [the object list](doc:view-layer/layout#repeating-a-template-over-a-computed-list-object-list)). Without a declaration

@@ -36,7 +36,9 @@ import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.DropRegion;
 import com.top_logic.react.flow.data.MouseButton;
 import com.top_logic.react.flow.data.Widget;
+import com.top_logic.react.flow.operations.SelectableBoxOperations;
 import com.top_logic.react.flow.operations.SelectionUtil;
+import com.top_logic.react.flow.operations.layout.GanttLayoutOperations;
 import com.top_logic.react.flow.operations.WidgetTraversal;
 import com.top_logic.react.flow.model.Drawable;
 import com.top_logic.react.flow.svg.SvgWriter;
@@ -58,8 +60,10 @@ import elemental2.dom.Event;
 import elemental2.dom.EventListener;
 import elemental2.dom.FontFaceSet;
 import elemental2.dom.HTMLDivElement;
+import elemental2.dom.HTMLElement;
 import elemental2.dom.Image;
 import elemental2.dom.KeyboardEvent;
+import elemental2.dom.NodeList;
 import elemental2.dom.PointerEvent;
 import elemental2.dom.ResizeObserver;
 import elemental2.dom.ResizeObserverCallback;
@@ -104,6 +108,21 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	/** DOM event fired when the user asks for a context menu. */
 	private static final String CONTEXT_MENU_EVENT = "contextmenu";
+
+	/** DOM event fired when the pointer enters an element or one of its descendants. */
+	private static final String POINTER_OVER_EVENT = "pointerover";
+
+	/** DOM event fired when the pointer leaves an element and all of its descendants. */
+	private static final String POINTER_LEAVE_EVENT = "pointerleave";
+
+	/** Selector of the group around the box of an item. */
+	private static final String ITEM_SELECTOR = "[" + GanttLayoutOperations.ITEM_ID_ATTR + "]";
+
+	/** Selector of an edge between items. */
+	private static final String EDGE_SELECTOR = "." + GanttLayoutOperations.EDGE_CSS_CLASS;
+
+	/** Selector of a selected element. */
+	private static final String SELECTED_SELECTOR = "." + SelectableBoxOperations.TL_SELECTED;
 
 	/** State key the server sends the serialized diagram with. */
 	private static final String DIAGRAM_STATE = "diagram";
@@ -313,6 +332,22 @@ public class FlowDiagramClientControl implements DiagramContext {
 	private EventListener _contextMenu;
 
 	/**
+	 * Tracks the item under the pointer for {@link #updateEdgeHighlight()}.
+	 */
+	private EventListener _pointerOverItem;
+
+	/**
+	 * Clears the item under the pointer when the pointer leaves the diagram.
+	 */
+	private EventListener _pointerLeaveDiagram;
+
+	/**
+	 * The ID of the item under the pointer (see {@link GanttLayoutOperations#ITEM_ID_ATTR}), or
+	 * {@code null}.
+	 */
+	private String _hoveredItem;
+
+	/**
 	 * Creates a {@link FlowDiagramClientControl}.
 	 */
 	private FlowDiagramClientControl(String controlId, CommandSender sender) {
@@ -455,6 +490,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 				_viewbox = _svg.getViewBox().getBaseVal();
 				calcZoomLevel(false);
+				updateEdgeHighlight();
 
 				Element selectedPart = _control.querySelector(".tlSelected");
 				if (selectedPart != null && !diagram.isFixedView() && !keepShown) {
@@ -857,6 +893,74 @@ public class FlowDiagramClientControl implements DiagramContext {
 		svgElement.addEventListener("pointerup", _pointerUp);
 		svgElement.addEventListener(CONTEXT_MENU_EVENT, _contextMenu);
 		DomGlobal.window.addEventListener("keydown", _keyDownEsc);
+
+		_pointerOverItem = evt -> setHoveredItem(itemId((Element) evt.target));
+		_pointerLeaveDiagram = evt -> setHoveredItem(null);
+		svgElement.addEventListener(POINTER_OVER_EVENT, _pointerOverItem);
+		svgElement.addEventListener(POINTER_LEAVE_EVENT, _pointerLeaveDiagram);
+	}
+
+	/**
+	 * The ID of the item drawn by the given element or one of its ancestors, see
+	 * {@link GanttLayoutOperations#ITEM_ID_ATTR}, {@code null} if there is none.
+	 */
+	private static String itemId(Element target) {
+		if (target == null) {
+			return null;
+		}
+		Element item = target.closest(ITEM_SELECTOR);
+		return item == null ? null : item.getAttribute(GanttLayoutOperations.ITEM_ID_ATTR);
+	}
+
+	private void setHoveredItem(String itemId) {
+		if (itemId == null ? _hoveredItem == null : itemId.equals(_hoveredItem)) {
+			return;
+		}
+		_hoveredItem = itemId;
+		updateEdgeHighlight();
+	}
+
+	/**
+	 * Marks the edges of the item under the pointer and of the selected items as
+	 * {@link GanttLayoutOperations#EDGE_RELATED_CSS_CLASS related}, and only those.
+	 *
+	 * <p>
+	 * An edge names the items it connects (see {@link GanttLayoutOperations#EDGE_SOURCE_ATTR},
+	 * {@link GanttLayoutOperations#EDGE_TARGET_ATTR}). Called whenever the item under the pointer
+	 * changes and after each drawing, so that the marks follow the selection and survive a new
+	 * layout.
+	 * </p>
+	 */
+	private void updateEdgeHighlight() {
+		if (_svg == null) {
+			return;
+		}
+		Element svgElement = Js.cast(_svg.getElement());
+		NodeList<Element> edges = svgElement.querySelectorAll(EDGE_SELECTOR);
+		if (edges.length == 0) {
+			return;
+		}
+		Set<String> related = new HashSet<>();
+		if (_hoveredItem != null) {
+			related.add(_hoveredItem);
+		}
+		NodeList<Element> selected = svgElement.querySelectorAll(SELECTED_SELECTOR);
+		for (int n = 0; n < selected.length; n++) {
+			String id = itemId(selected.item(n));
+			if (id != null) {
+				related.add(id);
+			}
+		}
+		for (int n = 0; n < edges.length; n++) {
+			Element edge = edges.item(n);
+			boolean isRelated = related.contains(edge.getAttribute(GanttLayoutOperations.EDGE_SOURCE_ATTR))
+				|| related.contains(edge.getAttribute(GanttLayoutOperations.EDGE_TARGET_ATTR));
+			if (isRelated) {
+				edge.classList.add(GanttLayoutOperations.EDGE_RELATED_CSS_CLASS);
+			} else {
+				edge.classList.remove(GanttLayoutOperations.EDGE_RELATED_CSS_CLASS);
+			}
+		}
 	}
 
 	/**
@@ -1375,11 +1479,19 @@ public class FlowDiagramClientControl implements DiagramContext {
 	 * new layout, and after the control was resized. The view box displayed so far is kept, even if
 	 * it was not stored in the model.
 	 * </p>
+	 *
+	 * <p>
+	 * An element of the diagram that has the keyboard focus gets it back after the re-draw, if the
+	 * re-drawn diagram contains an element with the same ID (e.g. a toggle that requested the new
+	 * layout upon a key press).
+	 * </p>
 	 */
 	void relayout() {
 		if (_diagram == null) {
 			return;
 		}
+
+		String focusedId = focusedElementId();
 
 		layoutDiagram(_diagram);
 
@@ -1402,9 +1514,43 @@ public class FlowDiagramClientControl implements DiagramContext {
 		// Re-inject the drag styles (lost during SVG clear).
 		injectDragStyles();
 
+		restoreFocus(focusedId);
+		updateEdgeHighlight();
+
 		// Drop transient layout-induced scope changes.
 		_scope.dropChanges();
 		_scope.reset();
+	}
+
+	/**
+	 * The ID of the element of the diagram that has the keyboard focus, or {@code null} if the
+	 * focus is outside the diagram or on an element without ID.
+	 */
+	private String focusedElementId() {
+		Element active = DomGlobal.document.activeElement;
+		if (active == null) {
+			return null;
+		}
+		Element svgElement = Js.cast(_svg.getElement());
+		if (active == svgElement || !svgElement.contains(active)) {
+			return null;
+		}
+		String id = active.id;
+		return id == null || id.isEmpty() ? null : id;
+	}
+
+	/**
+	 * Gives the keyboard focus to the element of the diagram with the given ID.
+	 */
+	private void restoreFocus(String focusedId) {
+		if (focusedId == null) {
+			return;
+		}
+		Element svgElement = Js.cast(_svg.getElement());
+		Element focused = svgElement.querySelector("[id=\"" + focusedId + "\"]");
+		if (focused != null) {
+			Js.<HTMLElement> uncheckedCast(focused).focus();
+		}
 	}
 
 	void onChange(Object... args) {
@@ -1590,6 +1736,8 @@ public class FlowDiagramClientControl implements DiagramContext {
 				widget.draw(updateWriter);
 			}
 		}
+
+		updateEdgeHighlight();
 	}
 
 	private SVGBuilder svgBuilder() {
@@ -1983,6 +2131,8 @@ public class FlowDiagramClientControl implements DiagramContext {
 			svgElement.removeEventListener("pointermove", _pointerMove);
 			svgElement.removeEventListener("pointerup", _pointerUp);
 			svgElement.removeEventListener(CONTEXT_MENU_EVENT, _contextMenu);
+			svgElement.removeEventListener(POINTER_OVER_EVENT, _pointerOverItem);
+			svgElement.removeEventListener(POINTER_LEAVE_EVENT, _pointerLeaveDiagram);
 		}
 		DomGlobal.window.removeEventListener("keydown", _keyDownEsc);
 

@@ -41,4 +41,16 @@ public interface SVGEvent {
 		// No-op for non-interactive writers.
 	}
 
+	/**
+	 * Requests a full layout recomputation and SVG re-draw.
+	 *
+	 * <p>
+	 * Use this when a model change (e.g. zoom, a collapsed row) alters element positions. For pure
+	 * scroll (transform-only changes), use {@link #updateTransform} instead.
+	 * </p>
+	 */
+	default void requestRelayout() {
+		// No-op for non-interactive writers.
+	}
+
 }

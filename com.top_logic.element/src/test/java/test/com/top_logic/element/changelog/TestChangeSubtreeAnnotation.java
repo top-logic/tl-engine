@@ -8,6 +8,8 @@ package test.com.top_logic.element.changelog;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import junit.framework.Test;
 
@@ -17,6 +19,7 @@ import com.top_logic.element.changelog.ChangeLogBuilder;
 import com.top_logic.element.changelog.SubtreeFilter;
 import com.top_logic.element.changelog.model.Change;
 import com.top_logic.element.changelog.model.ChangeSet;
+import com.top_logic.element.changelog.model.Update;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.element.model.ModelFactory;
@@ -44,6 +47,14 @@ import com.top_logic.util.model.ModelService;
 public class TestChangeSubtreeAnnotation extends TestWithModelExtension {
 
 	private static final String MODULE = "test.com.top_logic.element.changelog.TestSubtreeChangeLog";
+
+	private static final String OWNER = "Owner";
+
+	private static final String PART = "Part";
+
+	private static final String PARTS = "parts";
+
+	private static final String OWNER_REF = "owner";
 
 	private TLModule _testModule;
 
@@ -381,6 +392,67 @@ public class TestChangeSubtreeAnnotation extends TestWithModelExtension {
 
 		assertTrue(containsRevision(log(a), move));
 		assertTrue(containsRevision(log(b), move));
+	}
+
+	/**
+	 * Moving a part from {@code a.parts} to {@code b.parts} of a composition stored in the rows of
+	 * its parts ({@code inline-set-storage}) is an update of both containers and of the opposite
+	 * end {@code owner} of the part. It is part of the change log of both containers, but not of an
+	 * uninvolved container.
+	 */
+	public void testMoveOutOfInlineComposition() {
+		TLClass ownerType = (TLClass) _testModule.getType(OWNER);
+		TLClass partType = (TLClass) _testModule.getType(PART);
+		TLObject a = createNamed(ownerType, null, "a");
+		TLObject b = createNamed(ownerType, null, "b");
+		TLObject c = createNamed(ownerType, null, "c");
+		TLObject x = createNamed(partType, a, "x");
+		try (Transaction tx = beginTX()) {
+			a.tUpdateByName(PARTS, List.of(x));
+			tx.commit();
+		}
+
+		Revision move;
+		try (Transaction tx = beginTX()) {
+			a.tUpdateByName(PARTS, List.of());
+			b.tUpdateByName(PARTS, List.of(x));
+			tx.commit();
+			move = tx.getCommitRevision();
+		}
+		assertEquals(b, x.tValueByName(OWNER_REF));
+
+		ChangeSet changeSet = findRevision(new ChangeLogBuilder(_kb, ModelService.getApplicationModel()).build(), move);
+		assertNotNull(changeSet);
+		assertEquals(3, changeSet.getChanges().size());
+		assertEquals(Set.of(PARTS), updatedParts(changeSet, a));
+		assertEquals(Set.of(PARTS), updatedParts(changeSet, b));
+		assertEquals(Set.of(OWNER_REF), updatedParts(changeSet, x));
+
+		assertTrue(containsRevision(log(a), move));
+		assertTrue(containsRevision(log(b), move));
+		assertFalse(containsRevision(log(c), move));
+	}
+
+	private static Set<String> updatedParts(ChangeSet changeSet, TLObject obj) {
+		for (Change change : changeSet.getChanges()) {
+			if (change instanceof Update update && sameIdentity(change, obj)) {
+				return update.getModifications()
+					.stream()
+					.map(modification -> modification.getPart().getName())
+					.collect(Collectors.toSet());
+			}
+		}
+		fail("No update of " + obj + " in " + changeSet.getChanges());
+		return null;
+	}
+
+	private TLObject createNamed(TLClass type, TLObject container, String name) {
+		try (Transaction tx = beginTX()) {
+			TLObject result = _factory.createObject(type, container);
+			result.tUpdateByName("name", name);
+			tx.commit();
+			return result;
+		}
 	}
 
 	private TLObject createChild(TLObject parent, String name) {

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="test.com.top_logic.element.meta.TestChangeHandlersRejected">
+			<types>
+				<class name="Rejected">
+					<annotations>
+						<table name="PreloadTest"/>
+					</annotations>
+					<attributes>
+						<property name="text"
+							type="tl.core:String"
+						/>
+						<property name="fallback"
+							type="tl.core:String"
+						/>
+						<property name="derived"
+							type="tl.core:String"
+						>
+							<annotations>
+								<storage-algorithm>
+									<fallback-storage
+										fallback-attribute="fallback"
+										storage-attribute="text"
+									/>
+								</storage-algorithm>
+								<change-handlers>
+									<handler class="test.com.top_logic.element.meta.TestChangeHandlers$Recorder"/>
+								</change-handlers>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

@@ -13,11 +13,14 @@ package com.top_logic.react.flow.svg;
 public interface RenderContext {
 
 	/**
-	 * Default {@code font-family} assumed when no per-text family is set.
+	 * Preferred {@code font-family} in a standalone SVG document for text that has no per-text
+	 * family set.
 	 *
 	 * <p>
-	 * Both the measurement and the SVG output must use this default consistently to ensure that
-	 * rendered text fits its measured box.
+	 * Both the measurement and the SVG output must use the same family to ensure that rendered
+	 * text fits its measured box. Since this family is not installed everywhere, both resolve
+	 * {@link #DEFAULT_FONT_DECLARATION}, which names it first. A context in the browser measures in the font of the
+	 * element the diagram is displayed in instead, see {@link #getDefaultFontFamily()}.
 	 * </p>
 	 */
 	String DEFAULT_FONT_FAMILY = "Arial";
@@ -33,6 +36,14 @@ public interface RenderContext {
 	 * of {@link #DEFAULT_FONT_FAMILY} keeps the geometry intact wherever the document is opened.
 	 * {@code Liberation Sans} and {@code Arimo} are metric-compatible with {@code Arial} by
 	 * design; the trailing generic family is a last resort only.
+	 * </p>
+	 *
+	 * <p>
+	 * A context that measures with the fonts installed on a server resolves this list like a
+	 * browser does: it measures with the first installed family and declares that family first,
+	 * see {@link #getDefaultFontDeclaration()}. On a server without {@code Arial}, installing
+	 * {@code Liberation Sans} therefore suffices to measure and render with the metrics of
+	 * {@code Arial}.
 	 * </p>
 	 */
 	String DEFAULT_FONT_DECLARATION = "Arial, 'Liberation Sans', Arimo, Helvetica, sans-serif";
@@ -54,6 +65,14 @@ public interface RenderContext {
 	 * it.
 	 * </p>
 	 *
+	 * <p>
+	 * A context for a standalone SVG document uses the first installed family of
+	 * {@link #DEFAULT_FONT_DECLARATION}. A context in the
+	 * browser uses the font family of the element the diagram is displayed in, so that the diagram
+	 * shows its text in the theme font of the surrounding user interface and measures it in that
+	 * font.
+	 * </p>
+	 *
 	 * @see #DEFAULT_FONT_FAMILY
 	 */
 	default String getDefaultFontFamily() {
@@ -67,6 +86,18 @@ public interface RenderContext {
 	 * Measurement resolves a single family, while a viewer resolves whatever the document asks
 	 * for. Naming metric-compatible substitutes alongside the measured family keeps the two in
 	 * agreement on a machine that does not have it.
+	 * </p>
+	 *
+	 * <p>
+	 * A context that measures with the fonts installed on a server resolves
+	 * {@link #DEFAULT_FONT_DECLARATION} against them and declares the family it measures with
+	 * first, followed by the other families of the list. A renderer on the same server, e.g. the
+	 * PDF export, draws the text in exactly the measured family.
+	 * </p>
+	 *
+	 * <p>
+	 * A context in the browser declares the font family list of the element the diagram is
+	 * displayed in, the browser resolves it for measurement and rendering alike.
 	 * </p>
 	 *
 	 * @see #DEFAULT_FONT_DECLARATION
@@ -144,47 +175,44 @@ public interface RenderContext {
 	}
 
 	/**
+	 * Whether boxes measure the widest of their alternative contents instead of choosing one.
+	 *
+	 * <p>
+	 * In this measuring mode a level-of-detail box reports as intrinsic size the maximum width and
+	 * the maximum height over all of its content variants, independent of {@link #getZoom()} and of
+	 * the offered space. A layout uses it to reserve space that does not change when a different
+	 * variant is chosen later, e.g. the label column of a Gantt chart whose labels choose their
+	 * variant by the zoom of the time axis.
+	 * </p>
+	 *
+	 * @see #withWidestVariants()
+	 */
+	default boolean isWidestVariants() {
+		return false;
+	}
+
+	/**
 	 * Returns a context that delegates all text measurement to this context but reports the given
 	 * zoom factor from {@link #getZoom()}.
+	 *
+	 * <p>
+	 * The {@link #isWidestVariants() measuring mode} of this context is kept.
+	 * </p>
 	 */
 	default RenderContext withZoom(double zoom) {
-		RenderContext self = this;
-		return new RenderContext() {
-			@Override
-			public String getDefaultFontFamily() {
-				return self.getDefaultFontFamily();
-			}
+		return new DelegatingRenderContext(this, zoom, isWidestVariants());
+	}
 
-			@Override
-			public String getDefaultFontDeclaration() {
-				return self.getDefaultFontDeclaration();
-			}
-
-			@Override
-			public double getDefaultFontSizePx() {
-				return self.getDefaultFontSizePx();
-			}
-
-			@Override
-			public TextMetrics measure(String text) {
-				return self.measure(text);
-			}
-
-			@Override
-			public TextMetrics measure(String text, String fontFamily, double fontSize) {
-				return self.measure(text, fontFamily, fontSize);
-			}
-
-			@Override
-			public TextMetrics measure(String text, String fontFamily, double fontSize, String fontWeight) {
-				return self.measure(text, fontFamily, fontSize, fontWeight);
-			}
-
-			@Override
-			public double getZoom() {
-				return zoom;
-			}
-		};
+	/**
+	 * Returns a context that delegates all text measurement to this context but measures
+	 * {@link #isWidestVariants() the widest variants}.
+	 *
+	 * <p>
+	 * The {@link #getZoom() zoom} of this context is kept.
+	 * </p>
+	 */
+	default RenderContext withWidestVariants() {
+		return new DelegatingRenderContext(this, getZoom(), true);
 	}
 
 }

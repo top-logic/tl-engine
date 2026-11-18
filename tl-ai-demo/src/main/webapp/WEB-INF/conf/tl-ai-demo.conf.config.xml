@@ -93,7 +93,7 @@
 
 		<!--
 			Installation encryption key for the platform EncryptionService, used by CookiePoolService
-			to encrypt browser cookie/login pools at rest (see tl-ai-core CookiePoolService). The
+			to encrypt browser cookie/login pools at rest (see tl-ai-browser CookiePoolService). The
 			platform's default EncryptionService instance installs NO key, so getEncryption() would
 			throw and cookie pools could not be saved.
 
@@ -121,17 +121,17 @@
 
 		<!--
 			Browsing target of the DEMO application. The product default in
-			tl-ai-core.conf.config.xml is an EMPTY allowlist (fail-closed: a fresh installation
+			tl-ai-browser.conf.config.xml is an EMPTY allowlist (fail-closed: a fresh installation
 			browses nothing until an administrator configures domains), so the JS-heavy site the
 			browser tool is validated against is allowlisted here, where it belongs - in the demo
 			rather than in every installation.
 
 			Deliberately an override with no class attribute: it can only resolve against the
-			BrowserToolsService instance declared in tl-ai-core.conf.config.xml, so it also proves
+			BrowserToolsService instance declared in tl-ai-browser.conf.config.xml, so it also proves
 			that file is on this application's configuration load path (see
 			TestBrowserToolsServiceDemoConfig).
 		-->
-		<config service-class="com.top_logic.tl.ai.core.tools.web.BrowserToolsService">
+		<config service-class="com.top_logic.tl.ai.browser.BrowserToolsService">
 			<instance allowed-domains="quotes.toscrape.com" />
 		</config>
 

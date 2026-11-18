@@ -212,6 +212,13 @@ public class DynamicColumnProviderByExpression
 		 * If no label function is specified, the textual representation of the column object as
 		 * computed by the {@link #getColumns()} function is used as label.
 		 * </p>
+		 * 
+		 * <p>
+		 * Like every label, the column label is computed without the access rights of the current
+		 * user, so that a user sees the label of a column object the user may only discover. The
+		 * {@link #getColumns() columns} themselves are computed with the access rights of the
+		 * current user.
+		 * </p>
 		 */
 		@Name(COLUMN_LABEL)
 		Expr getColumnLabel();
@@ -423,6 +430,11 @@ public class DynamicColumnProviderByExpression
 		context.resolveReference(InstantiationContext.OUTER, LayoutComponent.class, c -> _component = c);
 		_columns = QueryExecutor.compile(config.getColumns());
 		_columnLabel = config.getColumnLabel() == null ? null : QueryExecutor.compile(config.getColumnLabel());
+		if (_columnLabel != null) {
+			// Labels belong to Discover (R1/R12 of the Discover specification) and are computed
+			// unsecured. The list of columns stays secured.
+			_columnLabel.disableSecurity();
+		}
 		_accessor = QueryExecutor.compile(config.getAccessor());
 		_updater = config.getUpdater() == null ? null : QueryExecutor.compile(config.getUpdater());
 		_canUpdate = QueryExecutor.compileOptional(config.getCanUpdate());

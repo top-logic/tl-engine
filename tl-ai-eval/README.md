@@ -258,7 +258,7 @@ instead.
 Follow-ups, each of which changes what the report can say:
 
 - **Cost in currency.** The price catalogue is already fetched and parsed (`ModelInfo.cost()`), and
-  nothing in the codebase reads it. Tokens × price, including the cache tiers and the ">200k" tier,
+  nothing in the codebase reads it. Tokens × price, including the cache prices and the prompt-size tiers,
   with "no price known" as a first-class outcome rather than zero.
 - **An `askUser` responder.** An unattended run that reaches `askUser` blocks until the interaction
   timeout. No scenario here triggers it; one that did would need a watcher answering from a script.

@@ -8,17 +8,29 @@ package com.top_logic.tl.ai.core.session;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
 
+import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
+
+import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.provider.I18NConstants;
+import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.util.Resources;
 
 /**
  * Tests for {@link ConversationLogListener}.
@@ -636,6 +648,30 @@ public class TestConversationLogListener extends TestCase {
 		_listener.resolveInteraction(id, "Postgres");
 		Part.InteractionPart resolved = (Part.InteractionPart) _log.currentTurn().findPart(id);
 		assertEquals("Postgres", resolved.userResponse());
+	}
+
+	/**
+	 * A provider error with a message for the user is recorded in the language of the run that
+	 * reported it, which is the language the conversation is read in after a reload.
+	 */
+	public void testProviderErrorRecordedInTheLanguageOfTheRun() {
+		ResKey reason = I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET
+			.fill("mistral-medium-latest", "mistral", ResKey.text("tl_mistral_api_key"));
+		ThreadContext.inSystemContext(TestConversationLogListener.class, () -> {
+			ThreadContextManager.getSubSession().setCurrentLocale(Locale.GERMAN);
+			_listener.onEvent(new AgentEvent.ProviderError("r1", 1, Instant.now(),
+				ProviderException.Kind.NO_CREDENTIALS.name(), "logged text", reason));
+		});
+
+		Part.ErrorPart error = (Part.ErrorPart) _log.currentTurn().assistantParts().get(0);
+		assertEquals(ProviderException.Kind.NO_CREDENTIALS.name(), error.kind());
+		assertEquals(Resources.getInstance(Locale.GERMAN).getString(reason), error.message());
+	}
+
+	/** Suite providing the resources the message of a provider error is resolved with. */
+	public static Test suite() {
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestConversationLogListener.class, ResourcesModule.Module.INSTANCE, ThreadContextManager.Module.INSTANCE));
 	}
 
 	private static Part.ThinkingPart onlyThinkingPart(Turn turn) {

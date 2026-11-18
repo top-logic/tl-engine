@@ -73,6 +73,25 @@ public @interface ToolMethod {
 	String check() default "";
 
 	/**
+	 * The name of a method of the same class that describes a call for the revision log.
+	 *
+	 * <p>
+	 * That method takes exactly the parameters of the tool method, receives the same arguments and
+	 * returns the call's commit message as a {@link com.top_logic.basic.util.ResKey}, or
+	 * <code>null</code> for the generic one naming the tool. It is asked right before the call runs,
+	 * inside the turn's transaction, so the objects the arguments name can still be read - also the
+	 * one the call deletes. It must not change anything.
+	 * </p>
+	 *
+	 * <p>
+	 * Empty, the default, means the call is recorded with the generic message.
+	 * </p>
+	 *
+	 * @see Tool#commitMessage(java.util.Map, ToolExecutionContext)
+	 */
+	String commitMessage() default "";
+
+	/**
 	 * The name of a method of the same class that says why this tool can do nothing in the current
 	 * run.
 	 *
@@ -174,9 +193,10 @@ public @interface ToolMethod {
 	 * <b>Not every tool can declare, and none has to.</b> Instance browsing, TL-Script execution and
 	 * search take the type from their arguments, so there is nothing fixed to name; they are governed
 	 * by the per-object checks that apply to every tool regardless - {@code ModelSecurity.canRead} on
-	 * each object touched, the read filtering of the results, and the pre-commit guard. A declaration
-	 * is an early, coarse refusal in front of those checks, never a replacement for them, and a tool
-	 * can lie about what it touches while the per-object checks cannot be lied to.
+	 * each object touched, the read filtering of the results, and the checks of every write under the
+	 * user's rights. A declaration is an early, coarse refusal in front of those checks, never a
+	 * replacement for them, and a tool can lie about what it touches while the per-object checks
+	 * cannot be lied to.
 	 * </p>
 	 *
 	 * <p>

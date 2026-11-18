@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- typed configuration for TestAccessTokenFunctions -->
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<services>
+
+		<config service-class="com.top_logic.element.accesstoken.AccessTokenPermissions">
+			<instance>
+				<permissions>
+					<permission name="test-plain"
+						label="test.accesstoken.permission.plain"
+					/>
+					<permission name="test-session"
+						label="test.accesstoken.permission.session"
+					>
+						<session-binding class="test.com.top_logic.layout.view.accesstoken.RecordingSessionBinding"/>
+					</permission>
+				</permissions>
+			</instance>
+		</config>
+
+	</services>
+
+</application>

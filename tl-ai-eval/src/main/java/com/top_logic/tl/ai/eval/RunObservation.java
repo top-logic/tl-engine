@@ -14,6 +14,7 @@ import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.provider.ProviderException.Kind;
 
 /**
  * The {@link AgentEventListener} the eval hangs on a run, and everything it learned from it.
@@ -40,14 +41,15 @@ public class RunObservation implements AgentEventListener {
 	 * Provider errors that say something about <em>our</em> access, not about the model.
 	 *
 	 * <p>
-	 * A wrong key, an unpaid bill or a provider that is down did not put the scenario to the model
-	 * at all. Reporting such a run as a failure would attribute a number to a question nobody was
-	 * asked, and - worse - would put a plausible-looking 0.00 into a table next to an arm whose key
-	 * happened to work.
+	 * A wrong or missing key, an unpaid bill or a provider that is down did not put the scenario to
+	 * the model at all. Reporting such a run as a failure would attribute a number to a question
+	 * nobody was asked, and - worse - would put a plausible-looking 0.00 into a table next to an arm
+	 * whose key happened to work.
 	 * </p>
 	 */
 	private static final Set<String> INFRASTRUCTURE_KINDS =
-		Set.of("AUTHENTICATION", "BILLING", "OVERLOADED");
+		Set.of(Kind.AUTHENTICATION.name(), Kind.NO_CREDENTIALS.name(), Kind.BILLING.name(),
+			Kind.OVERLOADED.name());
 
 	/**
 	 * One tool call the loop dispatched: the name the model used, and its arguments as it wrote them.

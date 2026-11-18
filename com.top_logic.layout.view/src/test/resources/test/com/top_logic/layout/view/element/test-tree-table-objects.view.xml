@@ -9,6 +9,7 @@
 
 	<tree-table
 		children="$childLists[$node]"
+		initial-expansion-depth="0"
 		parents="$holders[$node]"
 		root="'root'"
 		selection="selected"

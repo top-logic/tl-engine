@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	One drill-down view embedded twice, restricted by the embedding.
+	
+	Both tabs embed the same stack view demo/tiles-typed-demo/stack.view.xml through a <view-ref>
+	and hand it a different type on its channel "type": the sales tab the transactions of type
+	demo.charts:Verkauf, the purchases tab those of type demo.charts:Einkauf. The stack view lists
+	the transactions of its type and drills down into one of them.
+	
+	The transaction frame puts the transaction into the address bar
+	(/view/tiles-typed-demo/sales/transaction/<id>). Its <param> reads the type of the embedding as
+	an input, so a hand-written address naming a purchase in the sales tab (or a sale in the
+	purchases tab) restores no frame: the tab shows its list instead of a transaction of the other
+	type under its own breadcrumb.
+-->
+<view>
+	<channels>
+		<channel name="salesType"
+			init="`demo.charts:Verkauf`"
+		/>
+		<channel name="purchasesType"
+			init="`demo.charts:Einkauf`"
+		/>
+	</channels>
+
+	<tab-bar active-tab="sales">
+		<tabs>
+			<tab id="sales">
+				<label>
+					<en>Sales</en>
+					<de>Verkäufe</de>
+				</label>
+				<view-ref view="demo/tiles-typed-demo/stack.view.xml">
+					<bind
+						channel="type"
+						to="salesType"
+					/>
+				</view-ref>
+			</tab>
+			<tab id="purchases">
+				<label>
+					<en>Purchases</en>
+					<de>Einkäufe</de>
+				</label>
+				<view-ref view="demo/tiles-typed-demo/stack.view.xml">
+					<bind
+						channel="type"
+						to="purchasesType"
+					/>
+				</view-ref>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

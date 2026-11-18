@@ -1,4 +1,5 @@
-/* JobStatus — Spec 2026-10-19 Welle 5b §7: was ein langer Auftrag meldet. Kopf mit Zustand, Laufzeit und Abbrechen;
+/* JobStatus — Spec 2026-10-19 Welle 5b §7: was ein langer Auftrag meldet. Kopf mit Zustand, Laufzeit und Abbrechen
+   (solange er läuft) oder Schließen (wenn er geendet hat);
    darunter die Live-Zeile (nur sie trägt role="status"), die Schritte als tl-steps--vertical, der Balken (Part
    ProgressBar), die Meldung und der Fehler als eigene Zeile mit role="alert", darunter die Einzelprobleme als Liste
    wie in der Snackbar. */
@@ -21,6 +22,11 @@
 }
 
 .tl-job-status__cancel {
+  margin-inline-start: auto;
+}
+
+.tl-job-status__close {
+  display: flex;
   margin-inline-start: auto;
 }
 

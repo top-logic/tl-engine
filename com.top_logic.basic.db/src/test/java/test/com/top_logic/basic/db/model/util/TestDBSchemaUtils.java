@@ -9,12 +9,16 @@ import static com.top_logic.basic.db.model.DBSchemaFactory.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import junit.framework.Test;
+
+import org.postgresql.PGConnection;
+import org.postgresql.jdbc.AutoSave;
 
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.BasicTestCase;
@@ -23,6 +27,7 @@ import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.basic.db.model.DBColumn;
 import com.top_logic.basic.db.model.DBColumnRef;
+import com.top_logic.basic.db.model.DBForeignKey;
 import com.top_logic.basic.db.model.DBIndex;
 import com.top_logic.basic.db.model.DBPrimary;
 import com.top_logic.basic.db.model.DBSchema;
@@ -69,6 +74,7 @@ public class TestDBSchemaUtils extends BasicTestCase {
 		PooledConnection write = pool.borrowWriteConnection();
 		try {
 			DBSchemaUtils.create(write, table);
+			write.commit();
 		} finally {
 			pool.releaseWriteConnection(write);
 		}
@@ -82,7 +88,8 @@ public class TestDBSchemaUtils extends BasicTestCase {
 
 		PooledConnection write2 = pool.borrowWriteConnection();
 		try {
-			DBSchemaUtils.resetTables(write2, schema, true);
+			DBSchemaUtils.clearTables(write2, schema);
+			write2.commit();
 		} finally {
 			pool.releaseWriteConnection(write2);
 		}
@@ -96,7 +103,8 @@ public class TestDBSchemaUtils extends BasicTestCase {
 
 		PooledConnection write3 = pool.borrowWriteConnection();
 		try {
-			DBSchemaUtils.resetTables(write3, schema, false);
+			DBSchemaUtils.dropTables(write3, schema);
+			write3.commit();
 		} finally {
 			pool.releaseWriteConnection(write3);
 		}
@@ -106,6 +114,284 @@ public class TestDBSchemaUtils extends BasicTestCase {
 			assertFalse(DBSchemaUtils.exists(read4, table));
 		} finally {
 			pool.releaseReadConnection(read4);
+		}
+	}
+
+	private static final String TARGET_TABLE = "TEST_TOLERATED_TARGET";
+
+	private static final String SOURCE_TABLE = "TEST_TOLERATED_SOURCE";
+
+	private static final String MISSING_TABLE = "TEST_TOLERATED_MISSING";
+
+	private static final String COL_ID = "ID";
+
+	private static final String COL_REF = "REF";
+
+	/**
+	 * Test that checking for and dropping missing tables and foreign keys, and a failing statement
+	 * protected by {@link DBHelper#setSavepoint(java.sql.Connection)}, do not abort the
+	 * surrounding transaction.
+	 * 
+	 * <p>
+	 * In <i>PostgreSQL</i> without the driver option <code>autosave=always</code>, a failing
+	 * statement aborts the whole transaction and the commit acts as rollback. On
+	 * <i>PostgreSQL</i>, the test therefore runs with each {@link AutoSave} mode, set on the
+	 * connection.
+	 * </p>
+	 */
+	public void testToleratedFailuresKeepTransaction() throws SQLException {
+		ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();
+		PooledConnection connection = pool.borrowWriteConnection();
+		try {
+			if (connection.isWrapperFor(PGConnection.class)) {
+				PGConnection pgConnection = connection.unwrap(PGConnection.class);
+				AutoSave before = pgConnection.getAutosave();
+				try {
+					for (AutoSave mode : AutoSave.values()) {
+						pgConnection.setAutosave(mode);
+						checkToleratedFailuresKeepTransaction(connection, "autosave=" + mode + ": ");
+					}
+				} finally {
+					pgConnection.setAutosave(before);
+				}
+			} else {
+				checkToleratedFailuresKeepTransaction(connection, "");
+			}
+		} finally {
+			pool.releaseWriteConnection(connection);
+		}
+	}
+
+	private void checkToleratedFailuresKeepTransaction(PooledConnection connection, String context)
+			throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+
+		DBSchema existing = foreignKeySchema();
+		DBForeignKey foreignKey = existing.getTable(SOURCE_TABLE).getForeignKeys().iterator().next();
+
+		DBSchema missing = createDBSchema();
+		DBTable missingTable = idTable(MISSING_TABLE);
+		missingTable.getColumns().add(column(COL_REF, DBType.INT));
+		DBForeignKey missingKey = createForeignKey("FK_MISSING");
+		missingKey.getSourceColumnRefs().add(ref(COL_REF));
+		missingKey.setTargetTableRef(tableRef(TARGET_TABLE));
+		missingKey.getTargetColumnRefs().add(ref(COL_ID));
+		missingTable.getForeignKeys().add(missingKey);
+		missing.getTables().add(missingTable);
+
+		DBSchemaUtils.create(connection, existing);
+		connection.commit();
+		try {
+			insertId(connection, 1);
+			assertTrue(context, DBSchemaUtils.exists(connection, TARGET_TABLE));
+			assertFalse(context, DBSchemaUtils.exists(connection, MISSING_TABLE));
+			assertFalse(context + "Missing table must be reported.",
+				DBSchemaUtils.tryDropTable(connection, MISSING_TABLE));
+			insertId(connection, 2);
+			assertFalse(context + "Missing table must be reported.",
+				DBSchemaUtils.dropTables(connection, missing));
+			insertId(connection, 3);
+			failProtectedBySavepoint(connection, context);
+			insertId(connection, 4);
+			connection.commit();
+
+			assertEquals(context + "Rows of the transaction lost.", 4, idCount(connection));
+			assertTrue(context, DBSchemaUtils.existsForeignKey(connection, sqlDialect, SOURCE_TABLE,
+				sqlDialect.qualifiedName(SOURCE_TABLE, foreignKey.getDBName())));
+			assertFalse(context, DBSchemaUtils.existsForeignKey(connection, sqlDialect, SOURCE_TABLE, "FK_NONE"));
+		} finally {
+			// Do not keep a pending transaction, if the test failed.
+			connection.rollback();
+
+			assertTrue(context + "Existing tables and foreign keys must be dropped.",
+				DBSchemaUtils.dropTables(connection, existing));
+			connection.commit();
+			assertFalse(context, DBSchemaUtils.exists(connection, TARGET_TABLE));
+			assertFalse(context, DBSchemaUtils.exists(connection, SOURCE_TABLE));
+		}
+	}
+
+	/**
+	 * Test that dropping tables through a given connection does not commit the transaction of the
+	 * caller.
+	 * 
+	 * <p>
+	 * Only missing tables are dropped, since <i>H2</i> commits the transaction with each DDL
+	 * statement.
+	 * </p>
+	 */
+	public void testDropTablesNoCommit() throws SQLException {
+		ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();
+		PooledConnection connection = pool.borrowWriteConnection();
+		try {
+			DBSchema existing = createDBSchema();
+			existing.getTables().add(idTable(TARGET_TABLE));
+			DBSchemaUtils.create(connection, existing);
+			connection.commit();
+			try {
+				DBSchema missing = createDBSchema();
+				missing.getTables().add(idTable(MISSING_TABLE));
+
+				insertId(connection, 1);
+				assertFalse(DBSchemaUtils.tryDropTable(connection, MISSING_TABLE));
+				assertFalse(DBSchemaUtils.dropTables(connection, missing));
+				connection.rollback();
+
+				assertEquals("Transaction of the caller must not be committed.", 0, idCount(connection));
+			} finally {
+				connection.rollback();
+				DBSchemaUtils.dropTables(connection, existing);
+				connection.commit();
+			}
+		} finally {
+			pool.releaseWriteConnection(connection);
+		}
+	}
+
+	/**
+	 * Test that {@link DBSchemaUtils#clearTables(ConnectionPool, DBSchema)} empties tables
+	 * referencing each other with a foreign key and keeps them.
+	 */
+	public void testClearTables() throws SQLException {
+		ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();
+		DBSchema schema = foreignKeySchema();
+
+		PooledConnection connection = pool.borrowWriteConnection();
+		try {
+			DBSchemaUtils.create(connection, schema);
+			connection.commit();
+			try {
+				insertId(connection, 1);
+				insertSource(connection, 10, 1);
+				connection.commit();
+				assertEquals(1, rowCount(connection, TARGET_TABLE));
+				assertEquals(1, rowCount(connection, SOURCE_TABLE));
+
+				assertTrue(DBSchemaUtils.clearTables(pool, schema));
+
+				assertTrue(DBSchemaUtils.exists(connection, TARGET_TABLE));
+				assertTrue(DBSchemaUtils.exists(connection, SOURCE_TABLE));
+				assertEquals(0, rowCount(connection, TARGET_TABLE));
+				assertEquals(0, rowCount(connection, SOURCE_TABLE));
+			} finally {
+				connection.rollback();
+				DBSchemaUtils.dropTables(connection, schema);
+				connection.commit();
+			}
+		} finally {
+			pool.releaseWriteConnection(connection);
+		}
+	}
+
+	/**
+	 * Test that {@link DBSchemaUtils#clearTables(PooledConnection, DBSchema)} skips a table that
+	 * does not exist and clears the existing ones.
+	 */
+	public void testClearTablesSkipsMissingTable() throws SQLException {
+		ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();
+		PooledConnection connection = pool.borrowWriteConnection();
+		try {
+			DBSchema existing = createDBSchema();
+			existing.getTables().add(idTable(TARGET_TABLE));
+			DBSchemaUtils.create(connection, existing);
+			connection.commit();
+			try {
+				insertId(connection, 1);
+				connection.commit();
+
+				DBSchema schema = createDBSchema();
+				schema.getTables().add(idTable(MISSING_TABLE));
+				schema.getTables().add(idTable(TARGET_TABLE));
+				assertTrue(DBSchemaUtils.clearTables(connection, schema));
+				connection.commit();
+
+				assertFalse(DBSchemaUtils.exists(connection, MISSING_TABLE));
+				assertEquals(0, rowCount(connection, TARGET_TABLE));
+			} finally {
+				connection.rollback();
+				DBSchemaUtils.dropTables(connection, existing);
+				connection.commit();
+			}
+		} finally {
+			pool.releaseWriteConnection(connection);
+		}
+	}
+
+	/**
+	 * Schema of {@link #SOURCE_TABLE} referencing {@link #TARGET_TABLE} with a foreign key.
+	 * 
+	 * <p>
+	 * The referencing table comes last, so that clearing the tables in the order of the schema
+	 * would fail.
+	 * </p>
+	 */
+	private static DBSchema foreignKeySchema() {
+		DBSchema schema = createDBSchema();
+		schema.getTables().add(idTable(TARGET_TABLE));
+		DBTable source = idTable(SOURCE_TABLE);
+		source.getColumns().add(column(COL_REF, DBType.INT));
+		DBForeignKey foreignKey = createForeignKey("FK_REF");
+		foreignKey.getSourceColumnRefs().add(ref(COL_REF));
+		foreignKey.setTargetTableRef(tableRef(TARGET_TABLE));
+		foreignKey.getTargetColumnRefs().add(ref(COL_ID));
+		source.getForeignKeys().add(foreignKey);
+		schema.getTables().add(source);
+		return schema;
+	}
+
+	private static void insertSource(PooledConnection connection, int id, int ref) throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+		try (Statement stmt = connection.createStatement()) {
+			stmt.executeUpdate("INSERT INTO " + sqlDialect.tableRef(SOURCE_TABLE) + " ("
+				+ sqlDialect.columnRef(COL_ID) + ", " + sqlDialect.columnRef(COL_REF) + ") VALUES (" + id + ", "
+				+ ref + ")");
+		}
+	}
+
+	/**
+	 * Executes a failing statement protected by a savepoint, as code tolerating a failure does.
+	 */
+	private static void failProtectedBySavepoint(PooledConnection connection, String context) throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+		Savepoint savePoint = sqlDialect.setSavepoint(connection);
+		try (Statement stmt = connection.createStatement()) {
+			stmt.executeQuery("SELECT * FROM " + sqlDialect.tableRef(MISSING_TABLE)).close();
+			fail(context + "Table must not exist: " + MISSING_TABLE);
+		} catch (SQLException ex) {
+			sqlDialect.rollback(connection, savePoint);
+		} finally {
+			sqlDialect.releaseSavepoint(connection, savePoint);
+		}
+	}
+
+	private static DBTable idTable(String name) {
+		DBTable table = createTable(name);
+		table.getColumns().add(column(COL_ID, DBType.INT));
+		DBPrimary primary = createPrimary();
+		primary.getColumnRefs().add(ref(COL_ID));
+		table.setPrimaryKey(primary);
+		return table;
+	}
+
+	private static void insertId(PooledConnection connection, int id) throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+		try (Statement stmt = connection.createStatement()) {
+			stmt.executeUpdate("INSERT INTO " + sqlDialect.tableRef(TARGET_TABLE) + " ("
+				+ sqlDialect.columnRef(COL_ID) + ") VALUES (" + id + ")");
+		}
+	}
+
+	private static int idCount(PooledConnection connection) throws SQLException {
+		return rowCount(connection, TARGET_TABLE);
+	}
+
+	private static int rowCount(PooledConnection connection, String tableName) throws SQLException {
+		try (Statement stmt = connection.createStatement()) {
+			try (ResultSet result =
+				stmt.executeQuery("SELECT COUNT(*) FROM " + connection.getSQLDialect().tableRef(tableName))) {
+				assertTrue(result.next());
+				return result.getInt(1);
+			}
 		}
 	}
 
@@ -325,7 +611,7 @@ public class TestDBSchemaUtils extends BasicTestCase {
 		PooledConnection connection = pool.borrowWriteConnection();
 		try {
 			if (DBSchemaUtils.exists(connection, table)) {
-				DBSchemaUtils.resetTable(connection, KEYS_TABLE, false);
+				DBSchemaUtils.dropTable(connection, KEYS_TABLE);
 			}
 			DBSchemaUtils.create(connection, table);
 			DBHelper sqlDialect = connection.getSQLDialect();
@@ -381,7 +667,7 @@ public class TestDBSchemaUtils extends BasicTestCase {
 	private static void dropKeysTable(ConnectionPool pool) throws SQLException {
 		PooledConnection connection = pool.borrowWriteConnection();
 		try {
-			DBSchemaUtils.resetTable(connection, KEYS_TABLE, false);
+			DBSchemaUtils.dropTable(connection, KEYS_TABLE);
 			connection.commit();
 		} finally {
 			pool.releaseWriteConnection(connection);

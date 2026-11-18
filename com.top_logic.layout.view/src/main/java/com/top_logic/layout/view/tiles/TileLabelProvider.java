@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.tiles;
 
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.util.ResKey;
@@ -13,22 +14,26 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.routing.ParamBindingConfig;
+import com.top_logic.model.TLStructuredType;
 
 /**
  * Strategy producing the breadcrumb label of a {@link TileFrame} at push time.
  *
  * <p>
- * The result is captured into {@link TileFrame#getLabel()} once when the frame is created and
- * thereafter does not re-evaluate. To compute a label that depends on a value already on a
- * channel of the caller's scope (e.g. the name of the selected business object), pick the
- * {@link ScriptedTileLabel} implementation; for fixed text use {@link StaticTileLabel}.
+ * The result is captured into {@link TileFrame#getLabel()} when the frame is created. To compute a
+ * label that depends on a value already on a channel of the caller's scope (e.g. the name of the
+ * selected business object), pick the {@link ScriptedTileLabel} implementation; for fixed text use
+ * {@link StaticTileLabel}.
  * </p>
  *
  * <p>
- * A user of the provider that names something for as long as it is displayed - a
+ * A user of the provider that names something for as long as it is displayed - the
+ * {@link FrameRouteConfig#getLabel() declaration of a frame} naming it in the breadcrumb, a
  * {@link ParamBindingConfig#getLabel() route parameter} naming the page in the browser tab -
  * computes the label again whenever one of the {@link #observedChannels(ViewContext) observed
- * channels} takes a new value.
+ * channels} takes a new value, whenever one of the objects these channels hold is changed, and
+ * whenever an object of one of the {@link #observedTypes() observed types} is created, changed or
+ * deleted (see {@link com.top_logic.layout.view.model.ChannelObjectObserver}).
  * </p>
  */
 public interface TileLabelProvider {
@@ -59,6 +64,23 @@ public interface TileLabelProvider {
 	 */
 	default List<ViewChannel> observedChannels(ViewContext context) {
 		return List.of();
+	}
+
+	/**
+	 * The types whose objects the label reads beyond the objects on the
+	 * {@link #observedChannels(ViewContext) observed channels}.
+	 *
+	 * <p>
+	 * A user of the provider that keeps a label up to date computes the label again whenever an
+	 * object of one of these types is created, changed or deleted - so that a label reading an object
+	 * it reaches only through the object on a channel (the customer of a project, say) follows that
+	 * object being renamed.
+	 * </p>
+	 *
+	 * @return The types; empty for a label that reads no object beyond those on its channels.
+	 */
+	default Set<TLStructuredType> observedTypes() {
+		return Set.of();
 	}
 
 	/**

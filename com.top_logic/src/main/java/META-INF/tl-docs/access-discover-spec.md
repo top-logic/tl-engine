@@ -96,12 +96,15 @@ alike:
 A filter on `all(...)` is compiled into the database query for an access on the query root only if,
 for the owner type of the accessed attribute and its concrete specializations, every role holding
 `Discover` also holds `Read`, no access parent is configured, no singleton of these types has grants
-of its own and the attribute has no read grant of its own. An access to a reference attribute on the root is never compiled; otherwise the filter is
+of its own and the attribute has no read grant, neither for its owner type nor for one of its
+specializations. An access to a reference attribute on the root is never compiled; otherwise the filter is
 interpreted.
 
-Model elements (types, attributes, modules, the classifiers of an enumeration) are discoverable for
-every user: they are meta-data, not business objects, so they are neither filtered nor masked, and
-setting an enumeration attribute to a classifier passes the check of R7. A form field showing the value of a
+Model elements (types, attributes, modules, the classifiers of an enumeration) are discoverable and
+readable for every user, without a grant on `tl.model`: they are meta-data, not business objects, so
+they are neither filtered nor masked, the value of an enumeration attribute of a readable object
+reaches every reader of the attribute completely, and setting an enumeration attribute to a
+classifier passes the check of R7. Modifying, creating and deleting a model element stays protected. A form field showing the value of a
 reference attribute masks instead of filtering, see R11.
 
 The security filter report (`SecurityFilterReport`, the diagnostic for hidden rows) records only the
@@ -245,8 +248,8 @@ Whether a script is evaluated secured is decided by its kind, not by the script 
 | Unsecured (on behalf of the system) | Secured (on behalf of the user) |
 |---|---|
 | derived attributes (`AttributeByExpression`, `AttributeValueLocatorByExpression`) | option lists (`OptionsByExpression`, `TreeOptionsByExpression`, `DefaultSelectionProviderByExpression`, `CreateTypeOptionsByExpression`) |
-| constraints, including uniqueness checks (`ConstraintCheckByExpression`, `DeleteConstraintByExpression`) | default values (`DefaultByExpression`) |
-| **labels** (`LabelProviderByExpression`, the label script of `LabelByExpression`) | executability (`ExecutabilityByExpression`) |
+| constraints, including uniqueness checks (`ConstraintCheckByExpression`, `DeleteConstraintByExpression`), change and lifecycle handlers (`ChangeHandlerByExpression`, `LifecycleHandlerByExpression`) | default values (`DefaultByExpression`) |
+| **labels** (`LabelProviderByExpression`, the label script of `LabelByExpression`), the header labels of dynamic table columns (`column-label` of `<dynamic-columns>`, `columnLabel` of `DynamicColumnProviderByExpression`, `dynamicColumnLabel` of `ComputedColumnProviderByExpression`) | executability (`ExecutabilityByExpression`) |
 | role rules and access parents (`PathByExpression`, `ScriptAccessParent`, `SecurityObjectByExpression`) | process initialisation (`ProcessInitializerByExpression`) |
 | lock strategies (`LockStrategyByExpression`) | scripts in layouts and views, commands, the script console |
 | BPE execution, scheduled tasks (`ScriptTask`), migration scripts, message consumers | tooltips and titles (`TooltipProviderByExpression`, `TitleByExpression`, the tooltip script of `LabelByExpression`) |
@@ -260,7 +263,12 @@ Rules for the individual kinds:
 
 - **Labels are computed unsecured.** By R1 the label belongs to `Discover`; a secured label script
   reading `A#name` would deliver an empty label for a user holding only `Discover` on `A`.
-  *Before this change, label scripts were evaluated secured.*
+
+  The header label of a dynamic table column is a label as well and is computed unsecured like a
+  `LabelProviderByExpression`: the `column-label` of `<dynamic-columns>`, the `columnLabel` of
+  `DynamicColumnProviderByExpression` and the `dynamicColumnLabel` of
+  `ComputedColumnProviderByExpression`. Which columns exist, their cell values and their tooltips
+  are still computed secured, so a column exists only for an object the user may discover.
 - **Tooltips and titles are computed secured.** Only the label belongs to `Discover` (R1). A tooltip
   or title script typically shows attribute values (a budget, a description) and would disclose them
   to a user holding only `Discover`.

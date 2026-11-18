@@ -28,7 +28,6 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tl.ai.core.security.ToolChangeSet;
 import com.top_logic.tl.ai.core.tools.model.LockHolderLookup;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.util.Resources;
@@ -223,6 +222,11 @@ public class TransactionScope implements AutoCloseable {
 	/**
 	 * Begin a KB transaction.
 	 *
+	 * <p>
+	 * The transaction is opened with the neutral message {@link I18NConstants#AGENT_CHANGE}; the
+	 * caller states what the turn changed when it commits, see {@link #commit(ResKey)}.
+	 * </p>
+	 *
 	 * @throws IllegalStateException if a transaction is already active
 	 */
 	public void begin() {
@@ -230,21 +234,27 @@ public class TransactionScope implements AutoCloseable {
 			throw new IllegalStateException("Transaction already active.");
 		}
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		_transaction = kb.beginTransaction(ResKey.text("Agent edit"));
+		_transaction = kb.beginTransaction(I18NConstants.AGENT_CHANGE);
 	}
 
 	/**
-	 * Begin a KB transaction with a custom commit message.
+	 * Commit the active transaction with the given message and release all locks.
 	 *
-	 * @param commitMessage the message stored with the revision
-	 * @throws IllegalStateException if a transaction is already active
+	 * <p>
+	 * The message replaces the one the transaction was {@link #begin() opened} with and is what the
+	 * revision log records for the change. Failures are reported as by {@link #commit()}.
+	 * </p>
+	 *
+	 * @param message
+	 *        What the committed changes do, see {@link TurnCommitMessage}.
+	 * @throws TransactionException if the commit fails (changes are rolled back)
+	 * @throws IllegalStateException if no transaction is active
 	 */
-	public void begin(ResKey commitMessage) {
+	public void commit(ResKey message) {
 		if (_transaction != null) {
-			throw new IllegalStateException("Transaction already active.");
+			_transaction.setCommitMessage(message);
 		}
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		_transaction = kb.beginTransaction(commitMessage);
+		commit();
 	}
 
 	/**
@@ -486,24 +496,6 @@ public class TransactionScope implements AutoCloseable {
 	}
 
 	/**
-	 * The changes the active transaction has accumulated so far.
-	 *
-	 * <p>
-	 * Read from the engine's own transaction bookkeeping, not from what the tools reported: the
-	 * {@link com.top_logic.tl.ai.core.security.PreCommitGuard} exists for tools that performed no
-	 * check of their own, and such a tool would equally fail to declare what it wrote.
-	 * </p>
-	 *
-	 * @return The accumulated changes, or {@link ToolChangeSet#EMPTY} if no transaction is active.
-	 */
-	public ToolChangeSet changes() {
-		if (_transaction == null) {
-			return ToolChangeSet.EMPTY;
-		}
-		return ToolChangeSet.pending(_transaction.getKnowledgeBase());
-	}
-
-	/**
 	 * The revision created by the last successful {@link #commit()}, or {@code null}.
 	 */
 	public Revision commitRevision() {
@@ -580,12 +572,6 @@ public class TransactionScope implements AutoCloseable {
 
 		/** */
 		@Override
-		public void begin(ResKey commitMessage) {
-			// no-op
-		}
-
-		/** */
-		@Override
 		public void commit() {
 			// no-op
 		}
@@ -600,12 +586,6 @@ public class TransactionScope implements AutoCloseable {
 		@Override
 		public boolean isActive() {
 			return false;
-		}
-
-		/** */
-		@Override
-		public ToolChangeSet changes() {
-			return ToolChangeSet.EMPTY;
 		}
 
 		/** */

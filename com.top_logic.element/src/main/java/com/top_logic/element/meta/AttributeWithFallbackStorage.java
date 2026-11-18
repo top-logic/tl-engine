@@ -265,6 +265,7 @@ public class AttributeWithFallbackStorage extends AbstractStorageBase<AttributeW
 	/**
 	 * The attribute storing explicitly set values.
 	 */
+	@Override
 	public TLStructuredTypePart getStorageAttr() {
 		return _storageAttr;
 	}

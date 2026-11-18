@@ -5,6 +5,8 @@
  */
 package com.top_logic.tl.ai.core.cost;
 
+import java.util.List;
+
 import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -16,7 +18,7 @@ import com.top_logic.tl.ai.core.provider.catalog.ModelInfo.TieredCost;
  *
  * <p>
  * The prices are the shape models.dev publishes: US dollars per million tokens, with optional cache,
- * reasoning and over-200k prices. Round prices make the expected amounts readable.
+ * reasoning and prompt-size tier prices. Round prices make the expected amounts readable.
  * </p>
  */
 public class TestCostCalculator extends TestCase {
@@ -24,7 +26,7 @@ public class TestCostCalculator extends TestCase {
 	private static final double DELTA = 1e-12;
 
 	/** A full price list: input 3, output 15, cache read 0.30, cache write 3.75, reasoning 10. */
-	private static final ModelCost FULL = new ModelCost(3, 15, 0.30, 3.75, 10.0, null, null, null);
+	private static final ModelCost FULL = new ModelCost(3, 15, 0.30, 3.75, 10.0, null, null, List.of());
 
 	/** Each kind of token is charged at its own price. */
 	public void testEachKindOfTokenHasItsOwnPrice() {
@@ -49,7 +51,7 @@ public class TestCostCalculator extends TestCase {
 
 	/** Without a reasoning price, the reasoning share costs what the rest of the output costs. */
 	public void testReasoningWithoutAPriceCostsTheOutputPrice() {
-		ModelCost noReasoning = new ModelCost(3, 15, null, null, null, null, null, null);
+		ModelCost noReasoning = new ModelCost(3, 15, null, null, null, null, null, List.of());
 		CostBreakdown cost = CostCalculator.costOf(noReasoning, new TokenUsage(0, 1_000_000, 400_000, 0, 0));
 
 		assertEquals(15.0, cost.output() + cost.reasoning(), DELTA);
@@ -57,7 +59,7 @@ public class TestCostCalculator extends TestCase {
 
 	/** Without cache prices, cached tokens cost the input price: they were sent all the same. */
 	public void testCachedTokensWithoutAPriceCostTheInputPrice() {
-		ModelCost noCache = new ModelCost(2, 8, null, null, null, null, null, null);
+		ModelCost noCache = new ModelCost(2, 8, null, null, null, null, null, List.of());
 		CostBreakdown cost = CostCalculator.costOf(noCache, new TokenUsage(0, 0, 0, 1_000_000, 500_000));
 
 		assertEquals(2.0, cost.cacheRead(), DELTA);
@@ -70,7 +72,7 @@ public class TestCostCalculator extends TestCase {
 	 */
 	public void testTheTierAppliesAboveTheThreshold() {
 		ModelCost tiered = new ModelCost(3, 15, 0.30, 3.75, null, null, null,
-			new TieredCost(6, 22.5, 0.60, 7.5));
+			List.of(new TieredCost(200_000, 6, 22.5, 0.60, 7.5)));
 
 		CostBreakdown below = CostCalculator.costOf(tiered, new TokenUsage(150_000, 1_000_000, 0, 50_000, 0));
 		assertEquals("200 000 prompt tokens are not over the threshold: 0.15 M at 3.", 0.45, below.input(), DELTA);
@@ -85,12 +87,45 @@ public class TestCostCalculator extends TestCase {
 
 	/** The cached part of the prompt counts towards the threshold: the model read all of it. */
 	public void testCachedTokensCountTowardsTheThreshold() {
-		ModelCost tiered = new ModelCost(1, 1, 1.0, 1.0, null, null, null, new TieredCost(2, 2, null, null));
+		ModelCost tiered = new ModelCost(1, 1, 1.0, 1.0, null, null, null, List.of(new TieredCost(200_000, 2, 2, null, null)));
 		CostBreakdown cost = CostCalculator.costOf(tiered, new TokenUsage(1_000, 0, 0, 250_000, 0));
 
 		assertEquals("The tier names no cache price, so cache reads cost the tier's input price.",
 			0.5, cost.cacheRead(), DELTA);
 		assertEquals(0.002, cost.input(), DELTA);
+	}
+
+	/**
+	 * A tier applies above its own threshold: Haiku 5.5 costs five times as much above 100 000
+	 * prompt tokens.
+	 */
+	public void testATierAppliesAboveItsOwnThreshold() {
+		ModelCost haiku = new ModelCost(0.1, 0.5, 0.01, 0.125, null, null, null,
+			List.of(new TieredCost(100_000, 0.5, 2.5, 0.05, 0.625)));
+
+		CostBreakdown below = CostCalculator.costOf(haiku, new TokenUsage(100_000, 1_000_000, 0, 0, 0));
+		assertEquals("100 000 prompt tokens are not over the threshold: 0.1 M at 0.1.", 0.01, below.input(), DELTA);
+		assertEquals(0.5, below.output(), DELTA);
+
+		CostBreakdown above = CostCalculator.costOf(haiku, new TokenUsage(100_001, 1_000_000, 0, 0, 0));
+		assertEquals("Over the threshold every input token costs the tier's 0.5.", 100_001 * 0.5 / 1_000_000,
+			above.input(), DELTA);
+		assertEquals("The output costs the tier's 2.5.", 2.5, above.output(), DELTA);
+	}
+
+	/** Of several tiers, a request is charged at the one with the highest threshold it exceeds. */
+	public void testTheHighestExceededTierApplies() {
+		// Given out of order: the price sorts its tiers by threshold.
+		ModelCost price = new ModelCost(1, 10, null, null, null, null, null, List.of(
+			new TieredCost(200_000, 3, 30, null, null),
+			new TieredCost(100_000, 2, 20, null, null)));
+
+		assertEquals("Below both thresholds: base output price 10.", 1.0,
+			CostCalculator.costOf(price, new TokenUsage(50_000, 100_000, 0, 0, 0)).output(), DELTA);
+		assertEquals("Over 100 000: the first tier's output price 20.", 2.0,
+			CostCalculator.costOf(price, new TokenUsage(150_000, 100_000, 0, 0, 0)).output(), DELTA);
+		assertEquals("Over 200 000: the second tier's output price 30.", 3.0,
+			CostCalculator.costOf(price, new TokenUsage(250_000, 100_000, 0, 0, 0)).output(), DELTA);
 	}
 
 	/** A model without a price costs nothing. */

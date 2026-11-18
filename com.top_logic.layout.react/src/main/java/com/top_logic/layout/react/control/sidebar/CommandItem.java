@@ -19,9 +19,9 @@ public class CommandItem extends SidebarItem {
 	/** Type discriminator for command items. */
 	public static final String TYPE_COMMAND = "command";
 
-	private final String _label;
+	private String _label;
 
-	private final String _icon;
+	private String _icon;
 
 	private final Command _action;
 
@@ -81,10 +81,24 @@ public class CommandItem extends SidebarItem {
 	}
 
 	/**
+	 * @see #getLabel()
+	 */
+	public void setLabel(String label) {
+		_label = label;
+	}
+
+	/**
 	 * The icon CSS class, or {@code null}.
 	 */
 	public String getIcon() {
 		return _icon;
+	}
+
+	/**
+	 * @see #getIcon()
+	 */
+	public void setIcon(String icon) {
+		_icon = icon;
 	}
 
 	/**

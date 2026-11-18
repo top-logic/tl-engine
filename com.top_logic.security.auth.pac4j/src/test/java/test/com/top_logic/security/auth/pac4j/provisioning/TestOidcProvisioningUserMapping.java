@@ -13,6 +13,8 @@ import java.util.Map;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import org.pac4j.oidc.profile.OidcProfile;
+
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
@@ -30,12 +32,14 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory;
 import com.top_logic.security.auth.pac4j.model.OidcIdentity;
 import com.top_logic.security.auth.pac4j.provisioning.I18NConstants;
 import com.top_logic.security.auth.pac4j.provisioning.NameConflict;
 import com.top_logic.security.auth.pac4j.provisioning.OidcIdentities;
 import com.top_logic.security.auth.pac4j.provisioning.OidcProvisioningUserMapping;
 import com.top_logic.security.auth.pac4j.provisioning.OidcProvisioningUserMapping.Config;
+import com.top_logic.security.auth.pac4j.servlet.Pac4jAuthenticationServlet;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -288,6 +292,28 @@ public class TestOidcProvisioningUserMapping extends BasicTestCase {
 		} catch (UnknownAccountException ex) {
 			// expected
 		}
+	}
+
+	/**
+	 * A fresh authentication through the re-authentication client derived from the client finds
+	 * the identity a login through the client has stored: it attaches no further identity and
+	 * creates no account.
+	 */
+	public void testReauthenticationFindsStoredIdentity() {
+		OidcProvisioningUserMapping mapping = mapping(Config.CREATE_ACCOUNTS, true);
+		Person account = login(mapping, identity("sub-reauth", "pReauth", null, null, null, false));
+		int accountsBefore = Person.all().size();
+
+		OidcProfile profile = new OidcProfile();
+		profile.setId("sub-reauth");
+		profile.setClientName(Pac4jConfigFactory.getReauthenticationName(CLIENT));
+		profile.addAttribute(OidcProvisioningUserMapping.PREFERRED_USERNAME_CLAIM, "pReauthChanged");
+		Person again = login(mapping, Pac4jAuthenticationServlet.createIdentity(profile, "pReauthChanged"));
+
+		assertSame(account, again);
+		assertEquals(accountsBefore, Person.all().size());
+		assertEquals(1, OidcIdentities.getIdentities(account).size());
+		assertNotNull(OidcIdentities.getIdentity(account, CLIENT));
 	}
 
 	private Person login(OidcProvisioningUserMapping mapping, ExternalIdentity identity) {

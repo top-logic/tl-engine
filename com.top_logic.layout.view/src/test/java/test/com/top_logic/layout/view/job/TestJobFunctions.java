@@ -53,6 +53,20 @@ public class TestJobFunctions extends AbstractJobTest {
 			last.error().toString().contains("unannounced"));
 	}
 
+	/**
+	 * Tests that a script declares the point of no return of its job, after which the job is no
+	 * longer cancelable and ends with the result of the script.
+	 */
+	public void testTheScriptDeclaresThePointOfNoReturn() throws Exception {
+		start(new ScriptJobBody(compile("x -> job -> { $job.jobUncancelable(); 'done'; }")), true, List.of());
+
+		JobState last = awaitFinished();
+
+		assertEquals(JobStatus.COMPLETED, last.status());
+		assertEquals("done", last.result());
+		assertFalse(last.control().isCancelable());
+	}
+
 	/** Tests that a script announces the steps of its job as a list of names. */
 	public void testAListOfNamesAnnouncesTheStepsOfTheJob() throws Exception {
 		script("x -> job -> { $job.jobPhases(['read', 'write']); $job.jobPhase('write'); }", List.of());
@@ -104,7 +118,7 @@ public class TestJobFunctions extends AbstractJobTest {
 
 	/** Tests how a display reads a running job. */
 	public void testADisplayReadsARunningJob() throws Exception {
-		JobState state = new JobState(JobStatus.RUNNING, List.of(), -1, null, null, null, null, null, null, List.of(), null);
+		JobState state = new JobState(JobStatus.RUNNING, List.of(), -1, null, null, null, null, null, null, List.of(), false, null);
 
 		assertEquals(Boolean.TRUE, eval("s -> $s.jobIsRunning()", state));
 		assertEquals(Boolean.FALSE, eval("s -> $s.jobIsFinished()", state));
@@ -114,7 +128,7 @@ public class TestJobFunctions extends AbstractJobTest {
 	/** Tests how a display reads a completed job, whose result it takes over. */
 	public void testADisplayReadsACompletedJob() throws Exception {
 		JobState state =
-			new JobState(JobStatus.COMPLETED, List.of(), 0, null, null, null, null, "produced", null, List.of(), null);
+			new JobState(JobStatus.COMPLETED, List.of(), 0, null, null, null, null, "produced", null, List.of(), false, null);
 
 		assertEquals(Boolean.FALSE, eval("s -> $s.jobIsRunning()", state));
 		assertEquals(Boolean.TRUE, eval("s -> $s.jobIsFinished()", state));
@@ -128,7 +142,7 @@ public class TestJobFunctions extends AbstractJobTest {
 	public void testADisplayReadsAFailedJob() throws Exception {
 		ResKey error = ResKey.text("the import file is unreadable");
 		List<ResKey> details = List.of(I18NConstants.ERROR_NO_JOB_TO_REPORT_TO, I18NConstants.PHASE_INIT);
-		JobState state = new JobState(JobStatus.FAILED, List.of(), 0, null, null, null, null, null, error, details, null);
+		JobState state = new JobState(JobStatus.FAILED, List.of(), 0, null, null, null, null, null, error, details, false, null);
 
 		assertEquals("failed", eval("s -> $s.jobStatus()", state));
 		assertSame(error, eval("s -> $s.jobError()", state));
@@ -138,7 +152,7 @@ public class TestJobFunctions extends AbstractJobTest {
 
 	/** Tests that a cancelled job is named by the text a display switches over. */
 	public void testACancelledJobIsNamedByItsText() throws Exception {
-		JobState state = new JobState(JobStatus.CANCELLED, List.of(), 0, null, null, null, null, null, null, List.of(), null);
+		JobState state = new JobState(JobStatus.CANCELLED, List.of(), 0, null, null, null, null, null, null, List.of(), false, null);
 
 		assertEquals("cancelled", eval("s -> $s.jobStatus()", state));
 	}

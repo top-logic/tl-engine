@@ -6,12 +6,14 @@
 package com.top_logic.model.search.expr.config.operations;
 
 import java.awt.Dimension;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import jakarta.activation.MimeType;
@@ -21,9 +23,13 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.StreamUtilities;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.layout.image.util.ImageType;
 import com.top_logic.layout.image.util.ImageUtils;
+import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.util.error.TopLogicException;
 
@@ -129,6 +135,90 @@ public class BinaryFunctions extends TLScriptFunctions {
 		result.put(IMAGE_WIDTH, Double.valueOf(size.width));
 		result.put(IMAGE_HEIGHT, Double.valueOf(size.height));
 		return result;
+	}
+
+	/**
+	 * Scales down the image in the given binary value, so that it fits into the given size.
+	 *
+	 * <p>
+	 * The aspect ratio of the image is kept, and an image is never enlarged: An image that already
+	 * fits into the given size is returned unchanged. The transparency of the image is kept. A JPEG
+	 * image is scaled to a JPEG image, every other image format to a PNG image. The name of the
+	 * result is the name of the given value with the extension of the result format.
+	 * </p>
+	 *
+	 * <p>
+	 * A vector image (<code>image/svg+xml</code>) scales by itself and is returned unchanged.
+	 * </p>
+	 *
+	 * <p>
+	 * Example: Storing a scaled-down version of an uploaded picture as icon of an object:
+	 * </p>
+	 *
+	 * <pre>
+	 * $symbol.set(`my.app:Symbol#icon`, $picture.binaryScaleImage(32, 32))
+	 * </pre>
+	 *
+	 * @param data
+	 *        The binary value containing an encoded image.
+	 * @param maxWidth
+	 *        The maximum width of the result in pixels.
+	 * @param maxHeight
+	 *        The maximum height of the result in pixels.
+	 * @return The scaled image, or <code>null</code> if no value is given or the value is not a
+	 *         readable image.
+	 */
+	@Label("Scale down an image")
+	@SideEffectFree
+	public static BinaryDataSource scaleImage(@Mandatory BinaryDataSource data, @Mandatory Double maxWidth,
+			@Mandatory Double maxHeight) {
+		if (data == null) {
+			return null;
+		}
+		int width = toPixels(maxWidth);
+		int height = toPixels(maxHeight);
+
+		String contentType = data.getContentType();
+		if (contentType != null && contentType.toLowerCase(Locale.ROOT).startsWith(HTMLConstants.TYPE_SVG)) {
+			return data;
+		}
+
+		BinaryData content = data.toData();
+		BufferedImage image;
+		String format;
+		try {
+			format = ImageUtils.getImageMimeType(content);
+			image = format == null ? null : ImageUtils.createImage(content.getStream());
+		} catch (IOException ex) {
+			Logger.debug("Not a readable image: " + data.getName(), ex, BinaryFunctions.class);
+			return null;
+		}
+		if (image == null) {
+			return null;
+		}
+		if (image.getWidth() <= width && image.getHeight() <= height) {
+			return data;
+		}
+
+		ImageType type = ImageType.JPG.getMimeType().equals(format) ? ImageType.JPG : ImageType.PNG;
+		BufferedImage scaled = ImageUtils.scaleToBoundary(image, width, height);
+		return ImageUtils.getImageData(scaled, type, resultName(data.getName(), type));
+	}
+
+	private static int toPixels(Double size) {
+		if (size == null || !(size.doubleValue() >= 1)) {
+			throw new TopLogicException(I18NConstants.ERROR_INVALID_IMAGE_SIZE__VALUE.fill(size));
+		}
+		return size.intValue();
+	}
+
+	private static String resultName(String name, ImageType type) {
+		if (StringServices.isEmpty(name) || Content.NO_NAME.equals(name)) {
+			return Content.NO_NAME;
+		}
+		int dot = name.lastIndexOf('.');
+		String baseName = dot > 0 ? name.substring(0, dot) : name;
+		return baseName + '.' + type.getFormatName();
 	}
 
 	/**

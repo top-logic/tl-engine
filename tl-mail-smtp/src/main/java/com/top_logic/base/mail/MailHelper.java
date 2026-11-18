@@ -257,16 +257,18 @@ public class MailHelper extends ConfiguredManagedClass<ConfiguredManagedClass.Co
     }
     
     /** 
-     * Add email address to a receiver set of strings if not empty (after trimming).
-     * 
+     * Add the trimmed email address to a receiver set of strings, if it is valid.
+     *
      * @param anAddress the email address.
      * @param aRcvSet   the email address set. Must no be <code>null</code>
-     * 
+     *
      * @return true when email was added (even when supressed as duplicate)
+     *
+     * @see #checkAddressFormat(String)
      */
     protected boolean addAddress(String anAddress, Set<String> aRcvSet) {
         if (this.checkAddressFormat(anAddress)) {
-            aRcvSet.add(anAddress);
+            aRcvSet.add(anAddress.trim());
             return true;
         }
         return false; // was not added
@@ -300,15 +302,14 @@ public class MailHelper extends ConfiguredManagedClass<ConfiguredManagedClass.Co
     }
     
     /**
-     * This method returns whether the given e-mail address is valid.
+     * Whether the given e-mail address is valid.
      * 
-     * @param  anAddress A e-mail address.
-     * @return Returns <code>true</code> if the e-mail address is valid,
-     *         <code>false</code> otherwise.
+     * @param  anAddress An e-mail address, may be <code>null</code>.
+     * @return Whether the address is accepted by
+     *         {@link MailAddressFormat#checkEMailAddress(String)}.
      */
     public final boolean checkAddressFormat(String anAddress) {
-        return ! StringServices.isEmpty(anAddress)
-               && MailAddressFormat.MAIL_ADDRESS_PATTERN.matcher(anAddress).matches();
+        return MailAddressFormat.checkEMailAddress(anAddress);
     }
     
     /** 

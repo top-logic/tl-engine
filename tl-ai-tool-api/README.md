@@ -126,6 +126,31 @@ what the run is attached to rather than on the turn: its answer changes the tool
 provider caches by prefix. The tool still refuses the same calls when it runs, because not every
 caller asks first.
 
+### What a call is logged as
+
+Every turn of an agent that changes the application commits once, and the revision log shows what
+the turn did: the first paragraph the model wrote alongside its calls, or, without one, the commit
+messages of the turn's writing calls, each prefixed with the agent's name. A tool states its message
+per call with `Tool.commitMessage(arguments, context)`; the default only names the tool. An annotated
+tool names a method of the same class that takes the tool method's parameters and returns a `ResKey`:
+
+```java
+@ToolMethod(description = "...", mode = ToolMode.DATA_WRITE, commitMessage = "deleteMessage")
+public ToolResult deleteContract(@P("...") String id, ToolContext context) { ... }
+
+@CalledByReflection
+ResKey deleteMessage(String id, ToolContext context) {
+    return I18NConstants.CONTRACT_DELETED__CONTRACT.fill(TidResolver.labelOrId(id, context.modelSecurity()));
+}
+```
+
+Use one I18N key per kind of change, filled from the arguments, so that the log reads in the language
+of whoever reads it. The message is asked right before the call runs, inside the turn's transaction:
+an object the call deletes can still be labelled, an object it creates is known only by what the
+arguments say about it. The method must not change anything, and it should not fail - a message that
+fails or answers `null` is replaced by the generic one, but resolve an identifier to a label with a
+fallback to the identifier rather than letting it throw.
+
 ### A tool that changes a long text
 
 If your tool writes a long text value - a document body, a prompt, a stored note - do **not** take
@@ -315,7 +340,7 @@ without knowing of agents - is ended by stopping the run as well.
 
 An administrator can configure a tool whose body is TL-Script instead of Java, with
 `ScriptToolFactory`. It reaches the same `ToolResult`, and the two fields that matter for a long
-answer are configured beside the implementation:
+answer are configured beside the implementation, as is the message a writing call is logged with:
 
 ```xml
 <factory name="script-tools">
@@ -326,6 +351,11 @@ answer are configured beside the implementation:
         <implementation>all(`acme:Invoice`).filter(i -> $i.get(`acme:Invoice#overdue`))</implementation>
         <summary>rows -> $rows.size() + " overdue invoices"</summary>
       </tool>
+      <tool name="createContact">
+        <parameters>...</parameters>
+        <implementation>new(`acme:Contact`).set(`acme:Contact#name`, $name)</implementation>
+        <commit-message>#("Kontakt {0} angelegt"@de, "Contact {0} created"@en).fill($name)</commit-message>
+      </tool>
     </tools>
   </implementation>
 </factory>
@@ -335,6 +365,7 @@ answer are configured beside the implementation:
 |--|--|
 | `truncation-hint` | How many characters of the result reach the model before it is cut. Unset uses the installation's default. |
 | `summary` | One argument - the value the body answered - and the short form compaction keeps in place of the result. Unset keeps the beginning of the result. It is disclosed under the same read rights as the result, so it may name objects. |
+| `commit-message` | What a call changed - see [What a call is logged as](#what-a-call-is-logged-as). The tool's parameters are bound as in the implementation, e.g. `"Kontakt " + $name + " angelegt"`. An internationalized text is logged as it is, any other value as its text. Unset, or answering nothing, logs the call with the tool's `label`, and without one with a generic message naming the tool. It is evaluated before the call runs and must not change anything. |
 
 ### What bounds a failure
 

@@ -28,6 +28,7 @@ import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.control.table.ReactResourceCellControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -42,6 +43,7 @@ import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.table.AttributeColumn;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnProviderService;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Row;
@@ -72,13 +74,15 @@ public class TestRowSetTableCells extends AbstractModelAccessTest {
 		super.setUp();
 		_reactContext = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 		ColumnDeclaration column = column("<column attribute='" + NAME + "' readonly='true'"
-			+ " tooltip=\"'tip ' + $value\" cell-class=\"'marked'\">"
-			+ "<display class='" + ResourceDisplayByExpression.class.getName() + "' label=\"'D:' + $value\"/>"
+			+ " tooltip=\"'tip ' + $value\" cell-class=\"'marked'\" cell-role=\"'warning'\">"
+			+ "<display class='" + ResourceDisplayByExpression.class.getName() + "' label=\"'D:' + $value\""
+			+ " role=\"'info'\"/>"
 			+ "</column>");
 		TLContextManager.inPersonContext(_responsible, () -> {
 			_form = new FormControl(_reactContext, _project, "no model", NoTokenHandling.INSTANCE);
 			_table = new RowSetTableControl(new DefaultViewContext(_reactContext), _form,
 				new AttributeRowSetBinding(TASKS), List.of(column), RowEditPolicy.ALL);
+			_table.setRowColor(row -> ValueColor.SUCCESS);
 			_table.init();
 		});
 	}
@@ -96,7 +100,10 @@ public class TestRowSetTableCells extends AbstractModelAccessTest {
 		return _responsible;
 	}
 
-	/** In view mode a cell shows the display, the tooltip and the class of its column. */
+	/**
+	 * In view mode a cell shows the display, the tooltip, the class and the role of its column,
+	 * and the row the role of the table.
+	 */
 	public void testViewModeCell() {
 		assertDecoratedCell();
 	}
@@ -121,6 +128,9 @@ public class TestRowSetTableCells extends AbstractModelAccessTest {
 			((CellControlFactory) ((CellContent.Raw) cell).payload()).create(_reactContext);
 		assertTrue("Not the display of the column: " + control, control instanceof ReactResourceCellControl);
 		assertEquals("D:task", state(control).get(LABEL_STATE));
+		assertEquals(ValueColor.INFO.getExternalName(), state(control).get(ReactValueColor.ROLE));
+		assertEquals(ValueColor.WARNING, view.cellColor(row, NAME));
+		assertEquals(ValueColor.SUCCESS, view.rowColor(row));
 		String cssClass = view.cellCssClass(row, NAME);
 		assertNotNull(cssClass);
 		assertTrue(cssClass, List.of(cssClass.split(" ")).contains("marked"));

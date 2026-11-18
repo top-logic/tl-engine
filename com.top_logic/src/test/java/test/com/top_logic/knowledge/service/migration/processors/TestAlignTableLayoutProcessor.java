@@ -719,7 +719,7 @@ public class TestAlignTableLayoutProcessor extends AbstractDBKnowledgeBaseTest {
 	 * Suite of {@link TestAlignTableLayoutProcessor}.
 	 */
 	public static Test suite() {
-		return suiteDefaultDB(TestAlignTableLayoutProcessor.class);
+		return suiteNeedsBranches(TestAlignTableLayoutProcessor.class);
 	}
 
 }

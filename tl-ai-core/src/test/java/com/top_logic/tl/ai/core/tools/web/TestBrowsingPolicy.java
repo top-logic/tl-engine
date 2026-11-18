@@ -306,8 +306,8 @@ public class TestBrowsingPolicy extends TestCase {
 		return TypedConfiguration.newConfigItem(BrowsingPolicyConfig.class);
 	}
 
-	/** A policy with the given default and rules. Package-visible: the enforcement tests share it. */
-	static Policy policy(String name, Access access, OriginRule... origins) {
+	/** A policy with the given default and rules, for the enforcement tests of the web tools. */
+	public static Policy policy(String name, Access access, OriginRule... origins) {
 		Policy policy = TypedConfiguration.newConfigItem(Policy.class);
 		policy.setName(name);
 		policy.setAccess(access);
@@ -317,8 +317,8 @@ public class TestBrowsingPolicy extends TestCase {
 		return policy;
 	}
 
-	/** One origin rule. Package-visible: the enforcement tests share it. */
-	static OriginRule origin(String host, Access access) {
+	/** One origin rule, for the enforcement tests of the web tools. */
+	public static OriginRule origin(String host, Access access) {
 		OriginRule origin = TypedConfiguration.newConfigItem(OriginRule.class);
 		origin.setHost(host);
 		origin.setAccess(access);

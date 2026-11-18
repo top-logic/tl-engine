@@ -66,6 +66,7 @@ import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.UpdateListener;
 import com.top_logic.knowledge.service.event.CommitVetoException;
 import com.top_logic.knowledge.service.event.Modification;
+import com.top_logic.knowledge.service.event.PendingChanges;
 import com.top_logic.knowledge.service.merge.ChangedDeleted;
 import com.top_logic.knowledge.service.merge.ConcurrentChange;
 import com.top_logic.knowledge.service.merge.ConcurrentCreation;
@@ -917,6 +918,7 @@ public class DefaultDBContext extends DBContext {
 
 		try {
 			kb.updateCaches(link.getUpdateEvent());
+			kb.commitPublished();
 		} catch (Throwable ex) {
 			logPublicationFailure(commitNumber, "updating the association caches", ex);
 		}
@@ -1022,10 +1024,11 @@ public class DefaultDBContext extends DBContext {
 	}
 
 	private void executeCallbackModifications() throws KnowledgeBaseException {
-		Map<ObjectKey, DBKnowledgeItem> createdObjects = unmodifyableCopy(newObjectsById);
-		Map<ObjectKey, DBKnowledgeItem> updatedObjects = unmodifyableCopy(changedObjectsById);
-		Map<ObjectKey, DBKnowledgeItem> removedObjects = Collections.unmodifiableMap(removedObjectsById);
-		List<Modification> modifications = kb.fireKBChangeEvent(this, createdObjects, updatedObjects, removedObjects);
+		PendingChanges changes = new DBPendingChanges(
+			unmodifyableCopy(newObjectsById),
+			unmodifyableCopy(changedObjectsById),
+			unmodifyableCopy(removedObjectsById));
+		List<Modification> modifications = kb.fireKBChangeEvent(this, changes);
 		if (modifications.isEmpty()) {
 			return;
 		}
@@ -1186,7 +1189,6 @@ public class DefaultDBContext extends DBContext {
 		try {
 			publishKBCaches();
 			publishAssociationCaches();
-			kb.commitPublished();
 		} finally {
 			HistoryUtils.updateSessionAndInteractionRevision(kb, currentContext, currentRev);
 		}

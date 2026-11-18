@@ -47,6 +47,7 @@ import com.top_logic.layout.view.table.ColumnsConfig;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.impl.TransientObjectFactory;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
@@ -72,7 +73,7 @@ import com.top_logic.util.Resources;
  * <p>
  * A cell whose value the user may not read on its row shows the placeholder
  * {@link com.top_logic.layout.react.I18NConstants#MASKED_VALUE} instead of its value, a column whose attribute the user
- * may read on no row is not offered, and a cell is edited only where the user may write it - the
+ * may read on no row is withheld, and a cell is edited only where the user may write it - the
  * condition the edited tables (row edit and composition table) ask through
  * {@link AttributeCellEditing#canEdit(Object)}.
  * </p>
@@ -465,27 +466,27 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * A column whose attribute the user may read on no row is not offered; the others are.
+	 * A column whose attribute the user may read on no row is withheld - it does not exist for the
+	 * table -; the others are not.
 	 */
-	public void testColumnReadByNoRoleNotOffered() throws ConfigurationException {
+	public void testColumnReadByNoRoleWithheld() throws ConfigurationException {
 		becomeUser(_responsible);
-		List<String> names = offered(columns());
+		Set<String> withheld = ColumnExistence.of(columns()).withheldColumns();
 
-		assertFalse(names.contains(CLASSIFIED));
-		assertTrue(names.contains(BUDGET));
-		assertTrue(names.contains(NAME));
+		assertTrue(withheld.contains(CLASSIFIED));
+		assertFalse(withheld.contains(BUDGET));
+		assertFalse(withheld.contains(NAME));
 	}
 
 	/**
-	 * The columns withheld from the user are told apart from columns the table does not declare.
+	 * The column of an attribute the user may read on no row is resolved nevertheless, so that it
+	 * can appear once the user gains the right: it is not withheld for good.
 	 */
-	public void testWithheldColumns() throws ConfigurationException {
+	public void testWithheldColumnsResolved() throws ConfigurationException {
 		becomeUser(_responsible);
-		List<ColumnSetup> setups = columns();
-		List<Column<?, ?>> built = setups.stream().<Column<?, ?>> map(ColumnSetup::buildColumn).toList();
+		List<Column<?, ?>> built = columns().stream().<Column<?, ?>> map(ColumnSetup::buildColumn).toList();
 
-		assertEquals(Set.of(CLASSIFIED), ColumnExistence.of(setups).withheldColumns());
-		assertEquals("Every declared column is built.", Set.of(),
+		assertEquals(Set.of(),
 			ColumnDeclarations.withheld(List.of(NAME, BUDGET, CLASSIFIED, COMPUTED_BUDGET), built));
 	}
 
@@ -494,11 +495,12 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 	 */
 	public void testDerivedColumnsFollowReadRight() {
 		becomeUser(_responsible);
-		List<String> names = offered(ColumnDeclarations.resolve(ColumnDeclarations.mainColumns(type(PROJECT)),
-			new ColumnResolution(type(PROJECT), null)));
+		Set<String> withheld = ColumnExistence.of(ColumnDeclarations.resolve(
+			ColumnDeclarations.mainColumns(type(PROJECT)), new ColumnResolution(type(PROJECT), null)))
+			.withheldColumns();
 
-		assertFalse(names.contains(CLASSIFIED));
-		assertTrue(names.contains(BUDGET));
+		assertTrue(withheld.contains(CLASSIFIED));
+		assertFalse(withheld.contains(BUDGET));
 	}
 
 	/**
@@ -509,6 +511,7 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 		List<ColumnSetup> columns = columns();
 
 		assertTrue(names(columns).contains(CLASSIFIED));
+		assertEquals(Set.of(), ColumnExistence.of(columns).withheldColumns());
 		assertEquals(BUDGET_VALUE, find(columns, BUDGET).value().apply(_project));
 	}
 
@@ -602,6 +605,46 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 		return column.filter().orElseThrow();
 	}
 
+	/**
+	 * The header label of a column of {@code <dynamic-columns>} is computed unsecured, so a user who
+	 * may only discover the column object sees its label; the columns themselves and the tooltips are
+	 * computed secured.
+	 */
+	public void testDynamicColumnLabelOfDiscoverOnlyObject() throws ConfigurationException {
+		String categoryName = "`" + MODULE + ":" + CATEGORY + "#" + NAME + "`";
+		String dynamicColumns = "<columns>"
+			+ "<dynamic-columns name='categories' column-as='m' type='tl.core:String'>"
+			+ "<columns>all(`" + MODULE + ":" + CATEGORY + "`)</columns>"
+			+ "<column-label>$m.get(" + categoryName + ")</column-label>"
+			+ "<value>$m.get(" + categoryName + ")</value>"
+			+ "<tooltip>$m.get(" + categoryName + ")</tooltip>"
+			+ "</dynamic-columns>"
+			+ "</columns>";
+
+		// The viewer of the project discovers its category, but may not read it.
+		becomeUser(_roleless);
+		assertTrue(ModelAccessRights.getInstance().isDiscoverAllowed(_category));
+		assertFalse(ModelAccessRights.getInstance().isReadAllowed(_category));
+		ColumnSetup discovered = findByLabel(columns(dynamicColumns), "category");
+		assertNull("The tooltip is computed secured.", discovered.tooltip().apply(_project, null));
+
+		becomeUser(_outsider);
+		assertFalse(ModelAccessRights.getInstance().isDiscoverAllowed(_category));
+		for (ColumnSetup column : columns(dynamicColumns)) {
+			assertFalse("Without Discover, there is no column for the category.",
+				ResKey.text("category").equals(column.label()));
+		}
+	}
+
+	private static ColumnSetup findByLabel(List<ColumnSetup> columns, String label) {
+		for (ColumnSetup column : columns) {
+			if (ResKey.text(label).equals(column.label())) {
+				return column;
+			}
+		}
+		throw new AssertionError("No column labelled '" + label + "' in " + names(columns) + ".");
+	}
+
 	private ColumnSetup column(String name) throws ConfigurationException {
 		return find(columns(), name);
 	}
@@ -633,11 +676,6 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 
 	private static List<String> names(List<ColumnSetup> columns) {
 		return columns.stream().map(ColumnSetup::name).toList();
-	}
-
-	/** The names of the given columns that exist for the current user. */
-	private static List<String> offered(List<ColumnSetup> columns) {
-		return columns.stream().filter(column -> column.exists().holds()).map(ColumnSetup::name).toList();
 	}
 
 	/**

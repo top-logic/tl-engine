@@ -1,10 +1,12 @@
-import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, BACKGROUND_REPORT, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { FOCUSABLE_SELECTOR, editableInRow, focusTargetInRow, focusablesIn, rowCells } from './tableRowFocus';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
 import type { HintAnchor, DropVerdict } from './DropHint';
 import { Menu, MenuItem } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
 import { chipFocusTargets } from './chip/chipFocus';
+import { FilterPresets } from './table/FilterPresets';
 
 /**
  * Registers the table's keyboard row-navigation bindings into the enclosing (focus-gated) scope.
@@ -39,22 +41,22 @@ const TableKeyBindings: React.FC<{
   // a button in the table keeps its arrows.
   useKeyboardBinding('ArrowRight', () => { if (!onGrid()) { return false; } onExpand(true); return true; });
   useKeyboardBinding('ArrowLeft', () => { if (!onGrid()) { return false; } onExpand(false); return true; });
-  useKeyboardBinding('ArrowUp', () => move('up', false, false));
-  useKeyboardBinding('ArrowDown', () => move('down', false, false));
+  useKeyboardBinding('ArrowUp', () => move(DIR_UP, false, false));
+  useKeyboardBinding('ArrowDown', () => move(DIR_DOWN, false, false));
   useKeyboardBinding('Home', () => move('home', false, false));
   useKeyboardBinding('End', () => move('end', false, false));
   useKeyboardBinding('PageUp', () => move('pageUp', false, false));
   useKeyboardBinding('PageDown', () => move('pageDown', false, false));
   // Shift extends the range (multi only); in single selection it behaves like a plain move.
-  useKeyboardBinding('Shift+ArrowUp', () => move('up', isMulti, false));
-  useKeyboardBinding('Shift+ArrowDown', () => move('down', isMulti, false));
+  useKeyboardBinding('Shift+ArrowUp', () => move(DIR_UP, isMulti, false));
+  useKeyboardBinding('Shift+ArrowDown', () => move(DIR_DOWN, isMulti, false));
   useKeyboardBinding('Shift+Home', () => move('home', isMulti, false));
   useKeyboardBinding('Shift+End', () => move('end', isMulti, false));
   useKeyboardBinding('Shift+PageUp', () => move('pageUp', isMulti, false));
   useKeyboardBinding('Shift+PageDown', () => move('pageDown', isMulti, false));
   // Ctrl moves the focus cursor without changing the selection (multi only).
-  useKeyboardBinding('Ctrl+ArrowUp', () => move('up', false, isMulti));
-  useKeyboardBinding('Ctrl+ArrowDown', () => move('down', false, isMulti));
+  useKeyboardBinding('Ctrl+ArrowUp', () => move(DIR_UP, false, isMulti));
+  useKeyboardBinding('Ctrl+ArrowDown', () => move(DIR_DOWN, false, isMulti));
   // Space toggles the cursor row - on the grid only: on a button or a checkbox in the table it is
   // that control's. Ctrl+A selects all (multi only).
   useKeyboardBinding('Space', () => { if (cursorIndex < 0 || !onGrid()) { return false; } onToggle(); return true; });
@@ -88,6 +90,7 @@ const I18N_KEYS = {
   'js.table.saveFilter': 'Save this filter',
   'js.table.filterName': 'Filter name',
   'js.table.deleteFilter': 'Delete this filter',
+  'js.table.morePresets': '+ {0} more',
   'js.table.cancelSave': 'Do not save',
 };
 
@@ -181,10 +184,31 @@ interface ColumnState {
    */
   cssClass?: string;
   /**
+   * CSS class put on the heading of the column only, not on its data cells: the application's own
+   * styling hook for the heading. Absent for none.
+   */
+  headerClass?: string;
+  /**
+   * Color role the heading of the column is tinted in, put on the heading as `data-tl-role`; the design
+   * system draws it. Absent for none. Independent of {@link headerClass}.
+   */
+  headerRole?: string;
+  /**
    * What the column's label says about itself over and above its text, offered on the heading.
    * Absent for a label that describes itself.
    */
   tooltip?: string;
+  /**
+   * How the column's cells sit in it, their heading included: `end` for numbers, which the column
+   * then aligns at the end so that their digits line up. Absent for the start, the default.
+   */
+  align?: 'end';
+  /**
+   * Set when the column aggregates the rows of a group, so that the header row of a group shows
+   * that aggregate in it. A group's value runs into the columns in front of the first such column
+   * and no further. Absent for a column without one.
+   */
+  aggregate?: true;
 }
 
 /** One of the filter criteria the table offers under a name, displayed as a chip in the filter bar. */
@@ -202,7 +226,12 @@ interface NamedFilterState {
 }
 
 interface RowState {
+  /**
+   * The id the server displays the row under; every command on the row names it by this id. The
+   * row keeps it while it is displayed, also when the rows are sorted or filtered anew.
+   */
   id: string;
+  /** The position of the row among the displayed rows, what the rows are laid out by. */
   index: number;
   cells: Record<string, unknown>;
   /**
@@ -217,6 +246,16 @@ interface RowState {
    * addition to its column's class; the others carry the column's class only.
    */
   cellClasses?: Record<string, string>;
+  /**
+   * The color role the row is tinted in (`error`, `brand`, `category-1`, ...), which the design
+   * system draws from `data-tl-role`; absent for none. Independent of {@link cssClass}.
+   */
+  colorRole?: string;
+  /**
+   * The color role of the cells that are marked, by column name. A cell named here is tinted in
+   * its own role instead of the row's. Independent of {@link cellClasses}.
+   */
+  cellRoles?: Record<string, string>;
   treeDepth?: number;
   expandable?: boolean;
   expanded?: boolean;
@@ -229,11 +268,38 @@ interface RowState {
 /** The selection of a table that has no row selected, shared so that it keeps its identity. */
 const NO_ROWS: number[] = [];
 
+/** The argument of a command on a row naming the row by its {@link RowState.id}. */
+const ARG_ROW_ID = 'rowId';
+
+/** Command moving the keyboard cursor, resolved on the server relative to the cursor row. */
+const CMD_MOVE_SELECTION = 'moveSelection';
+
+/** Direction of a {@link CMD_MOVE_SELECTION} to the previous row. */
+const DIR_UP = 'up';
+
+/** Direction of a {@link CMD_MOVE_SELECTION} to the next row. */
+const DIR_DOWN = 'down';
+
 /** Command asking the server whether a drop at the hovered target would be accepted. */
 const CMD_DROP_PROBE = 'dropProbe';
 
 /** Command applying a drop (DropSupport.CMD_DROP). */
 const CMD_DROP = 'drop';
+
+/** Command selecting a row (TableViewControl.CMD_SELECT), naming it by {@link ARG_ROW_ID}. */
+const CMD_SELECT = 'select';
+
+/** Argument of a {@link CMD_SELECT} telling whether the row is toggled into the selection. */
+const ARG_CTRL_KEY = 'ctrlKey';
+
+/** Argument of a {@link CMD_SELECT} telling whether the selection is extended up to the row. */
+const ARG_SHIFT_KEY = 'shiftKey';
+
+/**
+ * State key (TableViewControl.SELECT_ON_EDITOR_FOCUS) telling whether the focus of a control in a
+ * cell selects the row the control stands in.
+ */
+const SELECT_ON_EDITOR_FOCUS = 'selectOnEditorFocus';
 
 /** State word (drag.css) of each marker drawn at a row. */
 const ROW_MARKER_STATE: Record<Exclude<TLDropMarker, 'control'>, string> = {
@@ -271,7 +337,8 @@ const MIN_COL_WIDTH = 50;
 const measureColumnContentWidth = (root: HTMLElement, columnName: string): number => {
   const cells = Array.from(
     root.querySelectorAll<HTMLElement>('.tl-table__header-cell, .tl-table__cell'))
-    .filter((cell) => cell.dataset.col === columnName);
+    // A cell spanning several columns (the value of a group) belongs to no one of them.
+    .filter((cell) => cell.dataset.col === columnName && !cell.hasAttribute('aria-colspan'));
   if (cells.length === 0) {
     return 0;
   }
@@ -287,6 +354,11 @@ const measureColumnContentWidth = (root: HTMLElement, columnName: string): numbe
       // the copy is in the document.
       copy.querySelectorAll('.tl-table__resize').forEach((handle) => handle.remove());
       copy.querySelectorAll('[id]').forEach((element) => element.removeAttribute('id'));
+      // Measured as revealed: a hidden funnel takes no width (table.css), but it opens up under the
+      // pointer, and a fitted heading would then lose its end to the ellipsis.
+      if (copy.classList.contains('tl-table__header-cell')) {
+        copy.dataset.tlState = ((copy.dataset.tlState ?? '') + ' filtered').trim();
+      }
       copy.style.position = 'static';
       copy.style.flex = 'none';
       copy.style.width = 'max-content';
@@ -303,52 +375,6 @@ const measureColumnContentWidth = (root: HTMLElement, columnName: string): numbe
     box.remove();
   }
 };
-
-/**
- * Elements that accept text/edit focus inside an editable cell. Disabled/read-only controls are
- * excluded: a read-only row still renders its boolean columns as a disabled checkbox {@code
- * <input>}, which must not count as "this row is editable".
- */
-const EDITABLE_SELECTOR =
-  'input:not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly]), '
-  + 'select:not([disabled]), [contenteditable="true"]';
-
-/** Every keyboard-focusable element inside a row cell, including enabled action buttons/links. */
-const FOCUSABLE_SELECTOR = EDITABLE_SELECTOR + ', button:not([disabled]), a[href]';
-
-/** The cell {@code <div>}s (carrying data-row/data-col) of the given row, in column order. */
-function rowCells(body: HTMLElement, rowId: string): HTMLElement[] {
-  return Array.from(body.querySelectorAll<HTMLElement>('[data-row][data-col]'))
-    .filter((c) => c.dataset.row === rowId);
-}
-
-/**
- * The editable input to focus within a row: the given column's input when present, otherwise the
- * first (or, with {@code last}, the last) editable cell in column order. Returns null when the row
- * has no editable cell (e.g. a not-yet-selected row in a single-row-editing table).
- */
-function editableInRow(
-  body: HTMLElement, rowId: string, opts: { col?: string; last?: boolean } = {}
-): HTMLElement | null {
-  const cells = rowCells(body, rowId);
-  if (opts.col) {
-    const target = cells.find((c) => c.dataset.col === opts.col);
-    const inCol = target?.querySelector<HTMLElement>(EDITABLE_SELECTOR);
-    if (inCol) return inCol;
-  }
-  if (opts.col) {
-    // Asked for one specific column: a cell whose control takes no caret (a dropdown, a checkbox)
-    // must not send the focus to some other column - that would move the focus, and the horizontal
-    // scroll position with it, away from the cell the user addressed.
-    return null;
-  }
-  const ordered = opts.last ? [...cells].reverse() : cells;
-  for (const c of ordered) {
-    const found = c.querySelector<HTMLElement>(EDITABLE_SELECTOR);
-    if (found) return found;
-  }
-  return null;
-}
 
 /**
  * The attribute marking the chip of a named filter that can be deleted, by which the focus finds the
@@ -393,18 +419,6 @@ const ColumnsButton: React.FC<{
  * renders the rows its viewport shows, so the table needs a height bounded by its container rather
  * than one following its rows. Its containers fill in turn, up to the next bounded region.
  */
-/** A highlight class of the application among the given classes (#29815). */
-const STATUS_CLASS = /(?:^|\s)tl-status-(error|warning|success|info)(?=\s|$)/;
-
-/**
- * The status role the highlight class among the given classes stands for: `tl-status-error`,
- * `-warning`, `-success` or `-info`, which the design system draws as `data-tl-role` on the row or the
- * cell. Undefined without such a class.
- */
-function statusRole(cssClass: string | undefined): string | undefined {
-  return cssClass ? STATUS_CLASS.exec(cssClass)?.[1] : undefined;
-}
-
 const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const fillClass = useFill(true);
@@ -414,7 +428,6 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const DisclosureToggle = usePart('DisclosureToggle');
   const Checkbox = usePart('Checkbox');
   const TextInput = usePart('TextInput');
-  const Chip = usePart('Chip');
   const rootRef = React.useRef<HTMLDivElement>(null);
   // The grid (role=grid) holds the keyboard focus and points at the cursor row with
   // aria-activedescendant; the body inside it only scrolls.
@@ -447,6 +460,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
    */
   const selectAllState = (state.selectAllState as string) ?? 'none';
   const cursorIndex = (state.cursorIndex as number) ?? -1;
+  /** The id of the row at the cursor, empty when no row has keyboard focus. */
+  const cursorId = (state.cursorId as string) ?? '';
   /**
    * The indexes of the selected rows among the rows sent. The selection is a state of its own, not a
    * flag of each row, so a change of it reaches the client without the rows.
@@ -477,6 +492,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const rowCount = (state.rowCount as string) ?? '';
   /** How many rows are selected; empty while nothing is or the table selects a single row only. */
   const rowCountSelected = (state.rowCountSelected as string) ?? '';
+  const selectOnEditorFocus = (state[SELECT_ON_EDITOR_FOCUS] as boolean) ?? false;
 
   const sortedColumnCount = React.useMemo(
     () => columns.filter((c) => c.sortPriority && c.sortPriority > 0).length,
@@ -875,9 +891,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       if (!forced && reported && reported.start === viewport.start && reported.count === viewport.count) return;
       reportedViewportRef.current = viewport;
       // Asks for the rows the user scrolled to, in the background: the table shows skeleton rows until they arrive.
-      sendCommand('scroll', viewport, BACKGROUND_COMMAND);
+      sendCommand('scroll', viewport, BACKGROUND_REPORT);
     }, 80);
   }, [sendCommand, viewportOf]);
+
+  // A table that is removed reports no viewport any more.
+  React.useEffect(() => () => {
+    if (scrollTimeoutRef.current !== null) {
+      clearTimeout(scrollTimeoutRef.current);
+      scrollTimeoutRef.current = null;
+    }
+  }, []);
 
   // The header scrolls by itself only when the browser brings a focused header control into view (Tab to
   // a sort or filter button beyond the edge); the body follows, and its scroll event aligns both again.
@@ -1033,7 +1057,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         probes.sent.add(probe);
         const args: Record<string, unknown> = {
           source: drag.payload.source,
-          keys: drag.payload.keys.join(','),
+          keys: drag.payload.keys,
           selection: drag.payload.selection,
           zone: target.zone,
           drag: drag.id,
@@ -1083,9 +1107,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (payload) {
       const args: Record<string, unknown> = {
         source: payload.source,
-        // Comma-separated: the command argument is a formatted string list, and a row key holds
-        // no comma.
-        keys: payload.keys.join(','),
+        keys: payload.keys,
         selection: payload.selection,
         zone: target.zone,
       };
@@ -1098,7 +1120,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, [columnDragging, columnReorder.containerProps, dropAcceptsAny, dropAccepts, dropTargetAt, sendCommand]);
 
   // -- Selection handlers --
-  const handleRowClick = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
+  const handleRowClick = React.useCallback((row: RowState, event: React.MouseEvent) => {
     // A click that concluded a text-selection drag inside the row copies text,
     // it does not change the row selection.
     const selection = window.getSelection();
@@ -1114,7 +1136,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       // editable, the focus effect moves the caret into that column's input.
       if (!event.ctrlKey && !event.metaKey && !event.shiftKey) {
         const col = (event.target as Element)?.closest?.('[data-col]')?.getAttribute('data-col');
-        pendingFocusRef.current = { index: rowIndex, col: col ?? undefined };
+        pendingFocusRef.current = { index: row.index, col: col ?? undefined };
       }
     }
     // Operating a control inside a cell - a button, a checkbox, an input - is not a selection
@@ -1123,42 +1145,59 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     // overwrite the value the control is sending at the same moment, and the edit would be lost.
     // A control that cannot be operated - the read-only checkbox of a row not yet editable - does
     // nothing with the click, which then selects the row as a click on its text would.
-    if (isOperableTarget(event.target) && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
+    // Where the focus of a control selects its row (see handleRowFocus), that focus has already
+    // decided what a click on the control selects, also with a modifier key held.
+    if (isOperableTarget(event.target) && (selectOnEditorFocus || (!event.ctrlKey && !event.metaKey && !event.shiftKey))) {
       return;
     }
     sendCommand('select', {
-      rowIndex,
+      [ARG_ROW_ID]: row.id,
       ctrlKey: event.ctrlKey || event.metaKey,
       shiftKey: event.shiftKey,
     });
-  }, [sendCommand]);
+  }, [sendCommand, selectOnEditorFocus]);
+
+  // Where every row is edited at once, the row the user works in is the row the row commands act on:
+  // a control of a cell taking the focus - by a click or by Tab - selects its row. The selection
+  // touches neither the focus nor the control, whose pending value the command channel sends ahead of
+  // the selection. Only the cells count; the box of the selection cell toggles the row on its own.
+  const handleRowFocus = React.useCallback((row: RowState, event: React.FocusEvent) => {
+    if (!selectOnEditorFocus || selectedIndexes.has(row.index)) {
+      return;
+    }
+    const target = event.target;
+    if (!isOperableTarget(target) || !(target instanceof Element) || !target.closest('[data-col]')) {
+      return;
+    }
+    sendCommand(CMD_SELECT, { [ARG_ROW_ID]: row.id, [ARG_CTRL_KEY]: false, [ARG_SHIFT_KEY]: false });
+  }, [selectOnEditorFocus, selectedIndexes, sendCommand]);
 
   // A double-click opens the row: the server selects it and runs what the view configured for an
   // activation. A double-click inside an interactive cell element belongs to that element
   // (selecting a word in a text input), so it opens nothing.
-  const handleRowActivate = React.useCallback((rowIndex: number, event: React.MouseEvent) => {
+  const handleRowActivate = React.useCallback((row: RowState, event: React.MouseEvent) => {
     if (isInteractiveTarget(event.target)) {
       return;
     }
     // The click that preceded this double-click already toggled the group, and a group row has
     // nothing to open beyond that.
-    if (rows.find((r) => r.index === rowIndex)?.groupCount != null) {
+    if (row.groupCount != null) {
       return;
     }
-    sendCommand('activate', { rowIndex });
-  }, [sendCommand, rows]);
+    sendCommand('activate', { [ARG_ROW_ID]: row.id });
+  }, [sendCommand]);
 
   // -- Keyboard navigation (server-resolved; see moveSelection) --
   const handleMove = React.useCallback((direction: string, extend: boolean, move: boolean) => {
-    sendCommand('moveSelection', { direction, extend, move });
+    sendCommand(CMD_MOVE_SELECTION, { direction, extend, move });
   }, [sendCommand]);
 
   const handleToggleCursor = React.useCallback(() => {
-    if (cursorIndex < 0) {
+    if (!cursorId) {
       return;
     }
-    sendCommand('select', { rowIndex: cursorIndex, ctrlKey: isMulti, shiftKey: false });
-  }, [sendCommand, cursorIndex, isMulti]);
+    sendCommand('select', { [ARG_ROW_ID]: cursorId, ctrlKey: isMulti, shiftKey: false });
+  }, [sendCommand, cursorId, isMulti]);
 
   const handleSelectAllRows = React.useCallback(() => {
     sendCommand('selectAll', { selected: true });
@@ -1167,16 +1206,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // Enter opens the row carrying the keyboard cursor. Declined (false) when no row does, or when
   // the focus sits in a cell element that answers Enter itself (a text input, an action button).
   const handleActivateCursor = React.useCallback(() => {
-    if (cursorIndex < 0) {
+    if (!cursorId) {
       return false;
     }
     const active = document.activeElement as Element | null;
     if (active?.closest?.(FOCUSABLE_SELECTOR)) {
       return false;
     }
-    sendCommand('activate', { rowIndex: cursorIndex });
+    sendCommand('activate', { [ARG_ROW_ID]: cursorId });
     return true;
-  }, [sendCommand, cursorIndex]);
+  }, [sendCommand, cursorId]);
 
   // Predicate for the focus-gated table scope: active only while focus is within this table.
   const isTableFocused = React.useCallback(
@@ -1249,7 +1288,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (active && active !== document.body && !gridRef.current?.contains(active)) {
       return;
     }
-    const input = editableInRow(body, row.id, { col: pending.col, last: pending.last });
+    const input = focusTargetInRow(body, row.id, { col: pending.col, last: pending.last });
     if (!input) {
       return;
     }
@@ -1264,7 +1303,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // Tab at a row boundary wraps to the neighbouring row: forward from the last editable cell to the
   // start of the next row, backward from the first to the end of the previous row. In a single-row-
   // editing table the neighbour must first be selected to become editable; when it is already
-  // editable (all rows editable) native Tab handles the move and this steps aside.
+  // editable (all rows editable) native Tab handles the move and this steps aside. From the cursor
+  // row the step is the keyboard's "next row", resolved on the server, so it reaches a neighbour the
+  // client has not been sent yet; the viewport follows the cursor, and the focus moves once the row
+  // has arrived editable.
   const handleBodyKeyDown = React.useCallback((e: React.KeyboardEvent) => {
     if (e.key !== 'Tab') {
       return;
@@ -1283,8 +1325,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (!row) {
       return;
     }
-    const focusables = rowCells(body, rowId)
-      .flatMap((c) => Array.from(c.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)));
+    const focusables = focusablesIn(rowCells(body, rowId), FOCUSABLE_SELECTOR);
     const pos = focusables.indexOf(active);
     if (pos < 0) {
       return;
@@ -1304,16 +1345,26 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       // Neighbour already editable (all-rows-editable table): native Tab flows into it.
       return;
     }
+    if (row.index === cursorIndex) {
+      e.preventDefault();
+      pendingFocusRef.current = { index: targetIndex, last: !forward };
+      sendCommand(CMD_MOVE_SELECTION, { direction: forward ? DIR_DOWN : DIR_UP, extend: false, move: false });
+      return;
+    }
+    // Off the cursor row, the neighbour is named by its id; one not sent yet is left to native Tab.
+    if (!neighbour) {
+      return;
+    }
     e.preventDefault();
     pendingFocusRef.current = { index: targetIndex, last: !forward };
-    sendCommand('select', { rowIndex: targetIndex, ctrlKey: false, shiftKey: false });
-  }, [rows, totalRowCount, sendCommand]);
+    sendCommand('select', { [ARG_ROW_ID]: neighbour.id, ctrlKey: false, shiftKey: false });
+  }, [rows, totalRowCount, cursorIndex, sendCommand]);
 
-  const handleCheckboxClick = React.useCallback((rowIndex: number) => {
+  const handleCheckboxClick = React.useCallback((row: RowState) => {
     // The box is no stop of its own (tabindex -1): the keyboard stays with the grid, whose cursor
     // follows the selection.
     gridRef.current?.focus({ preventScroll: true });
-    sendCommand('select', { rowIndex, ctrlKey: true, shiftKey: false });
+    sendCommand('select', { [ARG_ROW_ID]: row.id, ctrlKey: true, shiftKey: false });
   }, [sendCommand]);
 
   const handleSelectAll = React.useCallback(() => {
@@ -1321,9 +1372,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand, selectAllState]);
 
   // -- Expand handler --
-  const handleExpand = React.useCallback((rowIndex: number, expanded: boolean, event: React.MouseEvent) => {
+  const handleExpand = React.useCallback((row: RowState, expanded: boolean, event: React.MouseEvent) => {
     event.stopPropagation();
-    sendCommand('expand', { rowIndex, expanded });
+    sendCommand('expand', { [ARG_ROW_ID]: row.id, expanded });
   }, [sendCommand]);
 
   // Right and left at the cursor: open or close its tree or group row; where there is nothing to open
@@ -1331,7 +1382,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const handleExpandCursor = React.useCallback((expanded: boolean) => {
     const row = rows.find((r) => r.index === cursorIndex);
     if (row?.expandable && row.expanded !== expanded) {
-      sendCommand('expand', { rowIndex: row.index, expanded });
+      sendCommand('expand', { [ARG_ROW_ID]: row.id, expanded });
       return;
     }
     const body = scrollContainerRef.current;
@@ -1721,6 +1772,27 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const widthStyle = (colIdx: number, w: number, isFrozen: boolean): React.CSSProperties =>
     colIdx === lastUnpinnedIdx && !isFrozen ? { flex: `1 0 ${w}px`, minWidth: w } : { width: w, minWidth: w };
 
+  // How far the value of a group runs along its header row, as the end (exclusive) of the columns
+  // its cell covers, and their width together. The cell of the first column spans itself and the
+  // columns after it that are not pinned and aggregate nothing - it stops in front of the first
+  // column that shows an aggregate in the group row, as text runs on into empty cells of a
+  // spreadsheet. The same for every group row, so it is computed from the columns, not per row.
+  // With frozen columns the cell ends with them: it sticks to the start with them, and a sticky cell
+  // nearly as wide as the row scrolls away with it instead (the group value vanished), while an
+  // aggregate behind it would slide underneath.
+  const groupSpan = (() => {
+    let end = Math.min(1, columns.length);
+    const limit = frozenColumnCount > 0 ? Math.min(frozenColumnCount, columns.length) : columns.length;
+    while (end > 0 && end < limit && !columns[end].pinnedEnd && !columns[end].aggregate) {
+      end++;
+    }
+    let width = 0;
+    for (let i = 0; i < end; i++) {
+      width += getColWidth(columns[i]);
+    }
+    return { end, width };
+  })();
+
   // The sort order as the heading announces it. WAI-ARIA knows no levels: aria-sort names the first
   // level only, and only there (APG sortable table); every other heading leaves it out.
   const ariaSort = (col: ColumnState): 'ascending' | 'descending' | undefined => {
@@ -1770,27 +1842,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       {filterBar && (
         <div ref={filterBarRef} className="tl-table__filter-bar">
           {namedFilters.length > 0 && (
-            <span className="tl-chip-group">
-              {namedFilters.map((named) => {
-                const isActive = named.id === activeNamedFilter;
-                // Only a filter of the user's own can be deleted; a declared one is part of the
-                // table and offers no remove affordance.
-                return (
-                  <Chip
-                    key={named.id}
-                    label={named.label}
-                    detail={named.count !== undefined ? String(named.count) : undefined}
-                    className={named.cssClass}
-                    pressed={isActive}
-                    tooltip={isActive ? i18n['js.table.clearFilter'] : named.label}
-                    onClick={() => handleNamedFilter(named.id)}
-                    onRemove={named.deletable ? (e) => handleDeleteNamedFilter(named.id, e) : undefined}
-                    removeLabel={i18n['js.table.deleteFilter']}
-                    {...(named.deletable ? { [FILTER_CHIP_ATTR]: true } : {})}
-                  />
-                );
-              })}
-            </span>
+            <FilterPresets
+              presets={namedFilters}
+              activeId={activeNamedFilter}
+              densityKey={String(rowHeight)}
+              chipAttr={FILTER_CHIP_ATTR}
+              moreText={i18n['js.table.morePresets']}
+              clearLabel={i18n['js.table.clearFilter']}
+              deleteLabel={i18n['js.table.deleteFilter']}
+              onToggle={handleNamedFilter}
+              onDelete={handleDeleteNamedFilter}
+            />
           )}
           <SearchField
             className="tl-table__search"
@@ -1898,9 +1960,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 key={col.name}
                 role="columnheader"
                 aria-sort={ariaSort(col)}
-                className={'tl-table__header-cell' + (col.cssClass ? ' ' + col.cssClass : '')}
+                className={'tl-table__header-cell' + (col.cssClass ? ' ' + col.cssClass : '')
+                  + (col.headerClass ? ' ' + col.headerClass : '')}
                 data-col={col.name}
+                data-tl-role={col.headerRole}
                 data-col-idx={colIdx}
+                data-tl-align={col.align}
                 data-tl-state={stateAttr(...words, col.filterActive && 'filtered',
                   reorderState(columnReorder.itemState(colIdx)))}
                 style={{
@@ -2029,7 +2094,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               draggable={dragEnabled && row.draggable !== false}
               className={'tl-table__row' + (row.cssClass ? ' ' + row.cssClass : '')}
               // The selection wins over a highlight: a selected row carries no role.
-              data-tl-role={isSelected(row) ? undefined : statusRole(row.cssClass)}
+              data-tl-role={isSelected(row) ? undefined : row.colorRole}
               data-tl-state={stateAttr(row.index === cursorIndex && 'cursor', row.groupCount != null && 'group',
                 draggedWord(row), dropWord(row))}
               style={{
@@ -2052,10 +2117,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                   e.preventDefault();
                 }
               }}
-              onClick={(e) => handleRowClick(row.index, e)}
+              onClick={(e) => handleRowClick(row, e)}
+              onFocus={(e) => handleRowFocus(row, e)}
               onDragStart={dragEnabled && row.draggable !== false ? (e) => handleRowDragStart(row, isSelected(row), e) : undefined}
               onDragEnd={dragEnabled && row.draggable !== false ? () => { setDropState(null); setDraggedRow(null); } : undefined}
-              onDoubleClick={(e) => handleRowActivate(row.index, e)}
+              onDoubleClick={(e) => handleRowActivate(row, e)}
             >
               {isMulti && (
                 <div role="gridcell"
@@ -2069,14 +2135,20 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                       small
                       aria-label={i18n['js.table.selectRow']}
                       checked={isSelected(row)}
-                      onChange={() => handleCheckboxClick(row.index)}
+                      onChange={() => handleCheckboxClick(row)}
                       tabIndex={-1}
                     />
                   )}
                 </div>
               )}
               {columns.map((col, colIdx) => {
-                const w = getColWidth(col);
+                // The value of a group runs into the cells its first cell spans; they are not drawn.
+                const spans = row.groupCount != null && groupSpan.end > 1;
+                if (spans && colIdx > 0 && colIdx < groupSpan.end) {
+                  return null;
+                }
+                const spanning = spans && colIdx === 0;
+                const w = spanning ? groupSpan.width : getColWidth(col);
                 const { isFrozen, isPinned, words } = placeOf(colIdx);
                 const rowCellClass = row.cellClasses?.[col.name];
                 const isTreeColumn = treeMode && colIdx === 0;
@@ -2091,15 +2163,21 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                   <div
                     key={col.name}
                     role="gridcell"
+                    aria-colspan={spanning ? groupSpan.end : undefined}
                     className={'tl-table__cell' + (row.groupCount != null ? ' tl-type-body-strong' : '') + (col.cssClass ? ' ' + col.cssClass : '')
                       + (rowCellClass ? ' ' + rowCellClass : '')}
                     data-row={row.id}
                     data-col={col.name}
+                    data-tl-align={col.align}
                     data-tl-state={stateAttr(...words)}
-                    data-tl-role={isSelected(row) ? undefined : statusRole(rowCellClass) ?? statusRole(col.cssClass)}
+                    data-tl-role={isSelected(row) ? undefined : row.cellRoles?.[col.name]}
                     {...(isTreeColumn ? {} : cellTooltipProps)}
                     style={{
-                      ...widthStyle(colIdx, w, isFrozen),
+                      // A cell spanning up to the last column the user arranges takes the space left
+                      // over, frozen or not.
+                      ...(spanning && groupSpan.end - 1 === lastUnpinnedIdx
+                        ? { flex: `1 0 ${w}px`, minWidth: w }
+                        : widthStyle(colIdx, w, isFrozen)),
                       ...(isFrozen ? { left: frozenOffsets[colIdx] } : {}),
                       ...(isPinned ? { right: pinnedOffsets[colIdx] + buttonReserve } : {}),
                     }}
@@ -2114,7 +2192,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                             label={toggleLabel}
                             tabIndex={-1}
                             onMouseDown={(e) => e.preventDefault()}
-                            onClick={(e) => handleExpand(row.index, !row.expanded, e)}
+                            onClick={(e) => handleExpand(row, !row.expanded, e)}
                           />
                         ) : (
                           <span className="tl-table__spacer" />

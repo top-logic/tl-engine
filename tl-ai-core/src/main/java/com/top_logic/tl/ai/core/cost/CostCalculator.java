@@ -31,20 +31,16 @@ import com.top_logic.tl.ai.core.provider.catalog.ModelInfo.TieredCost;
  *
  * <p>
  * <b>Tiered prices.</b> Some models cost more per token when one request carries a long prompt. The
- * catalog states that as a second price list for prompts over {@link #TIER_THRESHOLD} tokens, and
- * it applies to the whole request, not to the tokens above the threshold. That is why a cost is
- * computed per request: summed over a run, the prompts no longer say which request crossed it.
+ * catalog states that as further price lists ({@link ModelCost#tiers()}), each for prompts over its
+ * own {@link TieredCost#threshold() threshold}. A request is charged at the tier with the highest
+ * threshold its prompt exceeds, and that tier applies to the whole request, not to the tokens above
+ * the threshold. That is why a cost is computed per request: summed over a run, the prompts no
+ * longer say which request crossed a threshold.
  * </p>
  *
  * @see RunCosts
  */
 public final class CostCalculator {
-
-	/**
-	 * How many prompt tokens a request may carry before the {@link ModelCost#tieredCost() tiered
-	 * prices} apply - the {@code context_over_200k} entry of the catalog.
-	 */
-	public static final int TIER_THRESHOLD = 200_000;
 
 	private static final double PER_MILLION = 1_000_000d;
 
@@ -65,8 +61,8 @@ public final class CostCalculator {
 		if (price == null || usage == null) {
 			return CostBreakdown.ZERO;
 		}
-		TieredCost tier = price.tieredCost();
-		boolean tiered = tier != null && usage.promptTokens() > TIER_THRESHOLD;
+		TieredCost tier = price.tierFor(usage.promptTokens());
+		boolean tiered = tier != null;
 
 		double input = tiered ? tier.input() : price.input();
 		double output = tiered ? tier.output() : price.output();

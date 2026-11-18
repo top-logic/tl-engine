@@ -9,6 +9,12 @@
 	
 	The thumbnail is left to the browser to load when the card comes into view; a grid of cards far
 	down the page is what lazy loading is for.
+	
+	The button of the card computes its label, tooltip and icon from the flow node: it is labeled
+	with the name of the node, explains its marker as tooltip (the fixed tooltip where the node has
+	none), and shows a box for a node built from nothing and a diagram for a node built from other
+	nodes. It opens the edit dialog of the node; a rename stored there relabels the button right
+	away, since the computed values follow the object the button works on.
 -->
 <view>
 	<channels>
@@ -37,5 +43,28 @@
 			css-class="tl-type-body-strong"
 			input="element"
 		/>
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-pencil"
+				image-expr="$element.get(`test.flowchart:FlowNode#inputs`).isEmpty() ? 'css:bi bi-box' : 'css:bi bi-diagram-3'"
+				inputs="element"
+				label-expr="$element.get(`test.flowchart:FlowNode#name`)"
+				tooltip-expr="$element.get(`test.flowchart:FlowNode#marker`)"
+			>
+				<label>
+					<en>Edit</en>
+					<de>Bearbeiten</de>
+				</label>
+				<tooltip>
+					<en>Edit the build step.</en>
+					<de>Den Bauschritt bearbeiten.</de>
+				</tooltip>
+				<open-dialog
+					bind-input-to="model"
+					close-on-backdrop="true"
+					dialog-view="demo/edit-flow-step.view.xml"
+				/>
+			</action>
+		</button>
 	</card>
 </view>

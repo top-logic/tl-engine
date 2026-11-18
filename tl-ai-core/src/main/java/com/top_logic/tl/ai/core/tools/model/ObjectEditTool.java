@@ -24,21 +24,24 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.db2.DeleteChecker;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelI18N;
+import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.agent.LockConflictException;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.security.ToolSecurityException;
+import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.core.tools.refusal.ApplicationRefusals;
 import com.top_logic.tl.ai.core.tools.refusal.messages.MandatoryAttributes;
 import com.top_logic.tl.ai.core.tools.refusal.messages.Reason;
@@ -95,8 +98,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * <li>A call in a <em>system</em> context is refused outright. The engine grants every right there
  * whoever the run's principal is, and its commit would be recorded under the system's name rather
  * than the user's; a write that cannot be checked or attributed is not made.</li>
- * <li>The approval prompt of a {@link ToolMode#DATA_WRITE} tool comes on top of all this, and the
- * pre-commit guard asks the same questions again for whatever the turn changed.</li>
+ * <li>The approval prompt of a {@link ToolMode#DATA_WRITE} tool comes on top of all this.</li>
  * <li>The answer shows only values the principal may read.</li>
  * </ul>
  *
@@ -126,6 +128,12 @@ public class ObjectEditTool {
 	/** The lock the interactive editors take, so an object a user has open is not written behind them. */
 	private static final String LOCK = "editValues";
 
+	/** The key the container a created object was added to is disclosed under in {@code in}. */
+	private static final String IN_OBJECT = "object";
+
+	/** The key the reference a created object was added to is named under in {@code in}. */
+	private static final String IN_REFERENCE = "reference";
+
 	/** How every answer that changed something ends. */
 	private static final String SAVED = "The change is saved when this turn ends.";
 
@@ -154,7 +162,7 @@ public class ObjectEditTool {
 	 * Sets attributes of one object.
 	 *
 	 * @param id
-	 *        The object, as {@code "TypeName:id"} or a whole {@code label [id:TID]} entry.
+	 *        The object's identifier, {@code "TypeName:id"}.
 	 * @param values
 	 *        Attribute name to new value, in the forms {@link AttributeValues} reads.
 	 * @param context
@@ -173,13 +181,22 @@ public class ObjectEditTool {
 		+ " shows the old and the new values - that IS the confirmation, do not read the object again."
 		+ " For objects chosen by a condition, or values calculated from other data, use changeData. "
 		+ ApplicationRefusals.DESCRIPTION,
-		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL)
+		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL,
+		commitMessage = "updateMessage")
 	public ToolResult updateObject(
 			@P("Identifier of the object, as the context or a tool answer gives it: 'TypeName:id'") String id,
 			@P("Attribute name -> new value, e.g. {\"price\": 12.5, \"status\": \"ACTIVE\", \"dueDate\":"
 				+ " \"2027-05-14\", \"owner\": \"Person:42\"}") Map<String, Object> values,
 			ToolContext context) {
 		return run("updateObject(" + id + ")", context, security -> doUpdate(id, values, security, context));
+	}
+
+	/**
+	 * The commit message of {@link #updateObject(String, Map, ToolContext)}: the object by its label.
+	 */
+	@CalledByReflection
+	ResKey updateMessage(String id, Map<String, Object> values, ToolContext context) {
+		return I18NConstants.OBJECT_UPDATED__OBJECT.fill(TidResolver.labelOrId(id, context.modelSecurity()));
 	}
 
 	private ToolResult doUpdate(String id, Map<String, Object> values, ModelSecurity security,
@@ -223,7 +240,7 @@ public class ObjectEditTool {
 		});
 		if (!violations.isEmpty()) {
 			return refusal(ApplicationRefusals.toJson(ApplicationRefusals.refusal()
-				.setObject(ReadFilter.labelled(target))
+				.setObject(ReadFilter.forSecurity(security).disclose(target))
 				.setReasons(violations)));
 		}
 
@@ -240,7 +257,7 @@ public class ObjectEditTool {
 			changes.put(part.getName(), change);
 		}
 		Map<String, Object> answer = new LinkedHashMap<>();
-		answer.put("object", ReadFilter.labelled(target));
+		answer.put("object", filter.disclose(target));
 		answer.put("changed", changes);
 		return ToolResult.of("Changed " + converted.size() + (converted.size() == 1 ? " attribute" : " attributes")
 			+ ". " + SAVED + "\n" + ReadFilter.marked(ReadFilter.idOf(target), json(answer)));
@@ -278,7 +295,8 @@ public class ObjectEditTool {
 		+ " calculated from other data, use changeData. " + ApplicationRefusals.DESCRIPTION
 		+ " A refusal of the application's rules lists the mandatory attributes of the types concerned"
 		+ " under 'mandatory'.",
-		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL)
+		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL,
+		commitMessage = "createMessage")
 	public ToolResult createObject(
 			@P("Qualified name of the type: 'module:Type'") String type,
 			@P("Attribute name -> value, e.g. {\"name\": \"Example\", \"price\": 12.5, \"status\":"
@@ -290,6 +308,52 @@ public class ObjectEditTool {
 			ToolContext context) {
 		return run("createObject(" + type + ")", context,
 			security -> doCreate(type, values, container, containerReference, security, context));
+	}
+
+	/**
+	 * The commit message of {@link #createObject(String, Map, String, String, ToolContext)}: the type,
+	 * and the name the call gives the new object, if it gives one.
+	 *
+	 * <p>
+	 * The object does not exist before the call, so its label is not known; the value of its
+	 * attribute {@link TLNamed#NAME_ATTRIBUTE}, matched as the call matches every attribute, is the name the
+	 * user gave it.
+	 * </p>
+	 */
+	@CalledByReflection
+	ResKey createMessage(String type, Map<String, Object> values, String container, String containerReference,
+			ToolContext context) {
+		TLClass tlClass;
+		try {
+			tlClass = concreteClass(type);
+		} catch (RuntimeException ex) {
+			return I18NConstants.OBJECT_CREATED__TYPE.fill(String.valueOf(type));
+		}
+		ResKey typeLabel = TLModelNamingConvention.getTypeLabelKey(tlClass);
+		String name = givenName(tlClass, values);
+		return name == null ? I18NConstants.OBJECT_CREATED__TYPE.fill(typeLabel)
+			: I18NConstants.OBJECT_CREATED__TYPE_NAME.fill(typeLabel, name);
+	}
+
+	/** The text the given values set as the {@link TLNamed#NAME_ATTRIBUTE} of the type, or <code>null</code>. */
+	private static String givenName(TLClass type, Map<String, Object> values) {
+		if (values == null) {
+			return null;
+		}
+		for (Map.Entry<String, Object> entry : values.entrySet()) {
+			if (entry.getValue() instanceof String text && !text.isBlank()) {
+				TLStructuredTypePart part;
+				try {
+					part = attribute(type, entry.getKey());
+				} catch (RuntimeException ex) {
+					continue;
+				}
+				if (part != null && TLNamed.NAME_ATTRIBUTE.equals(part.getName())) {
+					return text.strip();
+				}
+			}
+		}
+		return null;
 	}
 
 	private ToolResult doCreate(String typeName, Map<String, Object> values, String containerId,
@@ -329,7 +393,12 @@ public class ObjectEditTool {
 		}
 
 		ReadFilter filter = ReadFilter.forSecurity(security);
-		String in = container == null ? null : ReadFilter.labelled(container) + " / " + place.getName();
+		Map<String, Object> in = null;
+		if (container != null) {
+			in = new LinkedHashMap<>();
+			in.put(IN_OBJECT, filter.disclose(container));
+			in.put(IN_REFERENCE, place.getName());
+		}
 		TLObject root = created.of(tree);
 		int count = created.count();
 		return ToolResult.of((count == 1 ? "Created 1 object; use its id to change it further. "
@@ -460,7 +529,7 @@ public class ObjectEditTool {
 		}
 
 		/** What the answer shows of a created object: its id, its type, its values and its parts. */
-		Map<String, Object> shown(NewObject planned, ReadFilter filter, String in) {
+		Map<String, Object> shown(NewObject planned, ReadFilter filter, Map<String, Object> in) {
 			TLObject object = of(planned);
 			Map<String, Object> values = new LinkedHashMap<>();
 			for (TLStructuredTypePart part : planned.values().keySet()) {
@@ -474,7 +543,7 @@ public class ObjectEditTool {
 					: shownParts.isEmpty() ? null : shownParts.get(0));
 			}
 			Map<String, Object> answer = new LinkedHashMap<>();
-			answer.put("created", ReadFilter.labelled(object));
+			answer.put("created", filter.disclose(object));
 			answer.put("type", qualified(planned.type()));
 			if (in != null) {
 				answer.put("in", in);
@@ -721,7 +790,7 @@ public class ObjectEditTool {
 	 * Deletes one object the way the application deletes it.
 	 *
 	 * @param id
-	 *        The object, as {@code "TypeName:id"} or a whole {@code label [id:TID]} entry.
+	 *        The object's identifier, {@code "TypeName:id"}.
 	 * @param context
 	 *        The run's context: its rights and the turn's transaction.
 	 * @return What was deleted, or a failed result saying why nothing was.
@@ -730,11 +799,21 @@ public class ObjectEditTool {
 		+ " deletes it: the objects it contains are deleted with it, and the application may refuse the"
 		+ " deletion. The answer says what was deleted. For objects chosen by a condition, use"
 		+ " changeData. " + ApplicationRefusals.DESCRIPTION,
-		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL)
+		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL,
+		commitMessage = "deleteMessage")
 	public ToolResult deleteObject(
 			@P("Identifier of the object, as the context or a tool answer gives it: 'TypeName:id'") String id,
 			ToolContext context) {
 		return run("deleteObject(" + id + ")", context, security -> doDelete(id, security, context));
+	}
+
+	/**
+	 * The commit message of {@link #deleteObject(String, ToolContext)}: the object by its label, read
+	 * before the call deletes it.
+	 */
+	@CalledByReflection
+	ResKey deleteMessage(String id, ToolContext context) {
+		return I18NConstants.OBJECT_DELETED__OBJECT.fill(TidResolver.labelOrId(id, context.modelSecurity()));
 	}
 
 	private ToolResult doDelete(String id, ModelSecurity security, ToolContext context) throws IOException {
@@ -742,8 +821,8 @@ public class ObjectEditTool {
 		if (!security.canDelete(target)) {
 			throw denied("delete", target);
 		}
-		// The parts it contains go with it, so they are the user's to delete as well. Asked here, by
-		// type, because the pre-commit guard would otherwise refuse the whole turn for one of them.
+		// The parts it contains go with it, so they are the user's to delete as well. Asked for each
+		// of them before anything is deleted, so that a refusal changes nothing; reported by type.
 		Set<TLObject> parts = new LinkedHashSet<>();
 		collectParts(target, parts);
 		Set<String> withheld = parts.stream()
@@ -766,11 +845,11 @@ public class ObjectEditTool {
 			new DeleteChecker(deletions).checkAll();
 		} catch (TopLogicException ex) {
 			return refusal(ApplicationRefusals.toJson(ApplicationRefusals.refusal()
-				.setObject(ReadFilter.labelled(target))
+				.setObject(ReadFilter.forSecurity(security).disclose(target))
 				.addReason(ApplicationRefusals.reason(ex.getErrorKey()))));
 		}
 
-		String deleted = ReadFilter.labelled(target);
+		Object deleted = ReadFilter.forSecurity(security).disclose(target);
 		String typeName = qualified(target.tType());
 		lock(context, target);
 		writing("deleteObject", () -> {
@@ -1062,11 +1141,11 @@ public class ObjectEditTool {
 	}
 
 	/**
-	 * How a refusal names an object: its label and its type. The label is disclosed only after the
-	 * read check passed, like everywhere else it is shown.
+	 * How a refusal names an object: its identity, as every tool result discloses it. It is disclosed
+	 * only after the read check passed, like everywhere else it is shown.
 	 */
 	private static String nameOf(TLObject object) {
-		return "'" + MetaLabelProvider.INSTANCE.getLabel(object) + "' (" + qualified(object.tType()) + ")";
+		return ReadFilter.identityJson(object);
 	}
 
 	private static String qualified(TLType type) {

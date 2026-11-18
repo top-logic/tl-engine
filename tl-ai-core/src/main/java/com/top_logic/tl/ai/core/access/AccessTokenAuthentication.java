@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.func.misc.AlwaysFalse;
+import com.top_logic.element.accesstoken.AccessTokens;
 import com.top_logic.layout.view.ViewServlet;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 import com.top_logic.service.openapi.common.document.SecuritySchemeObject;

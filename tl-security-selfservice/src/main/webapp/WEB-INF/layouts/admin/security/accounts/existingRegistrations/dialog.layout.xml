@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/dialog.template.xml"
+>
+	<arguments helpID="ID_1967beef_c28f_494b_9d85_bc849259908a">
+		<title>
+			<title key="dynamic.ab6de2e7-c8b2-411b-ab56-d879cbd7d75a">
+				<en>Registrations</en>
+				<de>Registrierungen</de>
+			</title>
+		</title>
+		<open-handler id="ID_8b85e0a1_68f6_4977_9847_c3dd8287c453"
+			config:interface="com.top_logic.layout.editor.config.DialogOpenHandlerConfig"
+			clique="additional"
+			image="css:bi bi-person-check"
+			targetComponent="admin/security/accounts/existingRegistrations/registrationsGrid.layout.xml#Grid"
+		>
+			<target class="com.top_logic.layout.channel.linking.impl.NullLinking"/>
+			<resourceKey key="dynamic.ab6de2e7-c8b2-411b-ab56-d879cbd7d75a">
+				<en>Registrations</en>
+				<de>Registrierungen</de>
+			</resourceKey>
+		</open-handler>
+		<components>
+			<layout-reference resource="admin/security/accounts/existingRegistrations/innerLayout.layout.xml">
+				<content-layouting class="com.top_logic.layout.structure.ContentLayouting">
+					<contextMenuFactory class="com.top_logic.layout.basic.contextmenu.component.factory.PlainComponentContextMenuFactory">
+						<titleProvider class="com.top_logic.layout.provider.label.NoLabelProvider"/>
+						<customCommands class="com.top_logic.layout.basic.contextmenu.config.NoContextMenuCommands"/>
+					</contextMenuFactory>
+				</content-layouting>
+			</layout-reference>
+		</components>
+	</arguments>
+</config:template-call>

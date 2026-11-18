@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps, usePart, OptionValues } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, CMD_VALUE_CHANGED, rootClassName, useFieldLabelProps, usePart, OptionValues, optionTooltipProps } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
 import { ARG_OPTION, CMD_GOTO, OptionLabel } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
@@ -31,6 +31,9 @@ const ORIENTATION_HORIZONTAL: DropdownSelectStateJson.Orientation = 'horizontal'
  * group, or on every checkbox, since a `group` takes no `aria-invalid`. A read-only field shows its
  * values in `tl-select__values`, as the dropdown does; a disabled field renders every input inactive
  * (native `disabled`, see showsValueOnly).
+ *
+ * Every option - its radio button with its text, its checkbox and the label beside it - offers the
+ * explanation of the option as tooltip (see optionTooltipProps), which the server answers.
  *
  * The server hands this control the complete option list as soon as it is displayed - there is no
  * moment at which it could ask for it.
@@ -106,7 +109,8 @@ const TLChoiceGroup: React.FC<TLCellProps> = ({ controlId }) => {
         {options.map((option) => (
           <Checkbox
             key={option.value}
-            label={<OptionLabel option={option} />}
+            label={<span {...optionTooltipProps(option)}><OptionLabel option={option} /></span>}
+            {...optionTooltipProps(option)}
             checked={selectedIds.has(option.value)}
             disabled={disabled}
             validation={validation}
@@ -139,7 +143,7 @@ const TLChoiceGroup: React.FC<TLCellProps> = ({ controlId }) => {
         </label>
       )}
       {options.map((option) => (
-        <label key={option.value} className="tl-choice tl-type-body">
+        <label key={option.value} className="tl-choice tl-type-body" {...optionTooltipProps(option)}>
           <input
             type="radio"
             className="tl-radio"

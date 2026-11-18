@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.base.accesscontrol.Login;
+import com.top_logic.base.accesscontrol.Login.AccountLockedException;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.basic.Logger;
@@ -130,6 +131,11 @@ public class LoginFlow extends LazyTypedAnnotatable {
 	/**
 	 * Begins this flow in the window of the given context: replaces a flow begun before in the
 	 * window, and runs the first applying step or, when none applies, logs the account in.
+	 *
+	 * <p>
+	 * The login entry has checked {@link #checkMayLogIn(Person) whether the account may log in} at
+	 * all before, so that no step is shown to an account that is refused anyway.
+	 * </p>
 	 *
 	 * @param context
 	 *        The context of the display the login is in.
@@ -298,8 +304,9 @@ public class LoginFlow extends LazyTypedAnnotatable {
 	 * </p>
 	 *
 	 * <p>
-	 * Re-checks the maintenance mode before the login: the steps can complete long after the
-	 * authentication, so maintenance mode may have been activated in between.
+	 * Re-checks {@link Login#checkMayLogIn(Person) whether the account may log in} before the
+	 * login: the steps can complete long after the authentication, so maintenance mode may have
+	 * been activated or the account locked in between.
 	 * </p>
 	 *
 	 * @param context
@@ -308,13 +315,7 @@ public class LoginFlow extends LazyTypedAnnotatable {
 	protected void complete(ReactContext context) {
 		String userName = _account.getName();
 		Person account = Person.byName(userName);
-		try {
-			Login.getInstance().checkAllowedGroups(account);
-		} catch (InMaintenanceModeException ex) {
-			Logger.info("Login completion for '" + userName + "' rejected: maintenance mode active.",
-				LoginFlow.class);
-			throw new TopLogicException(Login.getMaintenanceMessage(userName), ex);
-		}
+		checkMayLogIn(account);
 
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 		SessionService.getInstance().loginUserInWindow(displayContext.asRequest(), displayContext.asResponse(),
@@ -327,6 +328,31 @@ public class LoginFlow extends LazyTypedAnnotatable {
 		} else {
 			// A page of its own builds the tree of the window anew for the user.
 			context.getSSEQueue().enqueue(PageNavigationEvent.create().setUrl(landingPage));
+		}
+	}
+
+	/**
+	 * Checks whether the given authenticated account may log in, see
+	 * {@link Login#checkMayLogIn(Person)}.
+	 *
+	 * <p>
+	 * Must be called only after the identity of the user is established, since the reason tells
+	 * the state of the account.
+	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         With the reason to tell the user, if the account may not log in.
+	 */
+	public static void checkMayLogIn(Person account) {
+		String userName = account.getName();
+		try {
+			Login.getInstance().checkMayLogIn(account);
+		} catch (InMaintenanceModeException ex) {
+			Logger.info("Login of '" + userName + "' rejected: maintenance mode active.", LoginFlow.class);
+			throw new TopLogicException(Login.getMaintenanceMessage(userName), ex);
+		} catch (AccountLockedException ex) {
+			Logger.info("Login of '" + userName + "' rejected: " + ex.getMessage(), LoginFlow.class);
+			throw new TopLogicException(ex.getReason(), ex);
 		}
 	}
 

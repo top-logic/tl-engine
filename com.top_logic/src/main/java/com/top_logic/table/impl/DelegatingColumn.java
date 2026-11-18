@@ -8,11 +8,13 @@ package com.top_logic.table.impl;
 import java.util.Optional;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellExistence;
 import com.top_logic.table.CellRenderer;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnAlignment;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.Sort;
 
@@ -128,13 +130,33 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 	}
 
 	@Override
+	public ColumnAlignment alignment() {
+		return _inner.alignment();
+	}
+
+	@Override
 	public String cssClass() {
 		return _inner.cssClass();
 	}
 
 	@Override
+	public String headerClass() {
+		return _inner.headerClass();
+	}
+
+	@Override
+	public ValueColor headerRole() {
+		return _inner.headerRole();
+	}
+
+	@Override
 	public String cssClass(R row) {
 		return _inner.cssClass(row);
+	}
+
+	@Override
+	public ValueColor color(R row) {
+		return _inner.color(row);
 	}
 
 	@Override
@@ -157,6 +179,25 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 			@Override
 			public int defaultWidth() {
 				return width;
+			}
+		};
+	}
+
+	/**
+	 * The given column with another {@link Column#alignment() alignment}.
+	 *
+	 * @param column
+	 *        The column to align differently.
+	 * @param alignment
+	 *        The side of its cells the column puts its content on.
+	 * @return A column identical to the given one, except for its {@link Column#alignment()
+	 *         alignment}.
+	 */
+	public static <R, V> Column<R, V> withAlignment(Column<R, V> column, ColumnAlignment alignment) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public ColumnAlignment alignment() {
+				return alignment;
 			}
 		};
 	}

@@ -10,11 +10,13 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellExistence;
 import com.top_logic.table.CellRenderer;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnAlignment;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.Sort;
 
@@ -63,9 +65,13 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 	private final boolean _pinnedEnd;
 
+	private final ColumnAlignment _alignment;
+
 	private final String _cssClass;
 
 	private final Function<? super R, String> _css;
+
+	private final Function<? super R, ValueColor> _color;
 
 	private final CellExistence<R> _existence;
 
@@ -87,8 +93,10 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		// is visible there at every scroll position already.
 		_frozenEligible = builder._frozenEligible && !_pinnedEnd;
 		_selectable = builder._selectable && !_pinnedEnd;
+		_alignment = builder._alignment;
 		_cssClass = builder._cssClass;
 		_css = builder._css;
+		_color = builder._color;
 		_existence = builder._existence;
 	}
 
@@ -177,6 +185,11 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 	}
 
 	@Override
+	public ColumnAlignment alignment() {
+		return _alignment;
+	}
+
+	@Override
 	public String cssClass() {
 		return _cssClass;
 	}
@@ -184,6 +197,11 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 	@Override
 	public String cssClass(R row) {
 		return _css == null ? null : _css.apply(row);
+	}
+
+	@Override
+	public ValueColor color(R row) {
+		return _color == null ? null : _color.apply(row);
 	}
 
 	@Override
@@ -235,6 +253,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 		int _width = 150;
 
+		ColumnAlignment _alignment = ColumnAlignment.START;
+
 		String _cssClass;
 
 		boolean _frozenEligible = true;
@@ -244,6 +264,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		boolean _pinnedEnd;
 
 		Function<? super R, String> _css;
+
+		Function<? super R, ValueColor> _color;
 
 		CellExistence<R> _existence;
 
@@ -393,6 +415,16 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		}
 
 		/**
+		 * Sets the side of its cells the column puts its content on.
+		 *
+		 * @see Column#alignment()
+		 */
+		public Builder<R, V> alignment(ColumnAlignment alignment) {
+			_alignment = alignment;
+			return this;
+		}
+
+		/**
 		 * Sets the CSS class every cell of the column carries.
 		 *
 		 * @see Column#cssClass()
@@ -409,6 +441,16 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		 */
 		public Builder<R, V> css(Function<? super R, String> css) {
 			_css = css;
+			return this;
+		}
+
+		/**
+		 * Sets a per-row color role provider.
+		 *
+		 * @see Column#color(Object)
+		 */
+		public Builder<R, V> color(Function<? super R, ValueColor> color) {
+			_color = color;
 			return this;
 		}
 

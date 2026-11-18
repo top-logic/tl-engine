@@ -39,19 +39,26 @@ import com.top_logic.basic.util.ResKey;
  * @param finishedAt
  *        When the job ended, or {@code null} while it runs.
  * @param result
- *        What the job produced, only for a {@link JobStatus#COMPLETED} one; {@code null} otherwise.
+ *        What the job produced: for a {@link JobStatus#COMPLETED} one its result, for a
+ *        {@link JobStatus#CANCELLED} one what its body returned after the cancel - the part of the
+ *        work it got done - or {@code null} when the body ended by throwing; {@code null} for a
+ *        running or failed job.
  * @param error
  *        Why the job failed, only for a {@link JobStatus#FAILED} one; {@code null} otherwise.
  * @param errorDetails
  *        The messages explaining the {@link #error()}, e.g. the individual problems behind a
  *        rejected commit; empty for a job that did not fail and for a failure without details.
+ * @param cancelable
+ *        Whether the reader may ask the job to stop at the moment of this snapshot: a job that is
+ *        cancelable at all and whose body has not yet reached its
+ *        {@link JobMonitor#uncancelable() point of no return}.
  * @param control
  *        The handle the display cancels the job through, {@code null} for a job that is not
  *        observed by one.
  */
 public record JobState(JobStatus status, List<JobPhase> phases, int currentPhase, Double fraction,
 		ResKey message, Date startedAt, Date finishedAt, Object result, ResKey error, List<ResKey> errorDetails,
-		JobControl control) {
+		boolean cancelable, JobControl control) {
 
 	/**
 	 * Creates a {@link JobState}, holding on to the phases and the error details as lists of its
@@ -111,7 +118,7 @@ public record JobState(JobStatus status, List<JobPhase> phases, int currentPhase
 	 * Whether the reader may ask this job to stop right now.
 	 */
 	public boolean isCancelable() {
-		return isRunning() && control != null && control.isCancelable();
+		return isRunning() && cancelable && control != null;
 	}
 
 }

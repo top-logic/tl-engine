@@ -82,6 +82,7 @@ import com.top_logic.react.flow.data.SelectableBox;
 import com.top_logic.react.flow.data.Sized;
 import com.top_logic.react.flow.data.SpaceDistribution;
 import com.top_logic.react.flow.data.Stack;
+import com.top_logic.react.flow.data.Sticky;
 import com.top_logic.react.flow.data.Text;
 import com.top_logic.react.flow.data.Tooltip;
 import com.top_logic.react.flow.data.TreeConnection;
@@ -157,6 +158,10 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        The css class for the text box.
 	 * @param userObject
 	 *        User object of the new text box.
+	 * @param ellipsis
+	 *        Whether a line that is wider than the box it is given is cut and ends with an
+	 *        ellipsis ("…"), like <code>text-overflow: ellipsis</code> in CSS. The full text is
+	 *        then shown as tooltip.
 	 * @return The newly created text box.
 	 */
 	@SideEffectFree
@@ -169,7 +174,8 @@ public class FlowFactory extends TLScriptFunctions {
 		double fontSize,
 		String fontWeight,
 		String cssClass,
-		Object userObject
+		Object userObject,
+		boolean ellipsis
 	) {
 		if (text == null) {
 			return Empty.create().setUserObject(userObject);
@@ -189,7 +195,8 @@ public class FlowFactory extends TLScriptFunctions {
 					.setFontFamily(fontFamily)
 					.setFontSize(fontSize)
 					.setFontWeight(fontWeight)
-					.setCssClass(cssClass)).toList())
+					.setCssClass(cssClass)
+					.setEllipsis(ellipsis)).toList())
 				.setGap(6)
 				.setUserObject(userObject);
 		} else {
@@ -201,6 +208,7 @@ public class FlowFactory extends TLScriptFunctions {
 				.setFontSize(fontSize)
 				.setFontWeight(fontWeight)
 				.setCssClass(cssClass)
+				.setEllipsis(ellipsis)
 				.setUserObject(userObject);
 		}
 	}
@@ -231,6 +239,43 @@ public class FlowFactory extends TLScriptFunctions {
 		return Align.create()
 			.setXAlign(hAlign)
 			.setYAlign(vAlign)
+			.setContent(nonNull(content))
+			.setCssClass(cssClass)
+			.setUserObject(userObject);
+	}
+
+	/**
+	 * Factory for {@link Sticky}.
+	 *
+	 * <p>
+	 * The new box takes the whole width it is given, e.g. the width of a Gantt span, and keeps its
+	 * content at the left edge of the visible time range while a Gantt chart scrolls horizontally,
+	 * like <code>position: sticky</code> in CSS: if the box starts left of the visible area, its
+	 * content moves to the left edge of the visible area, but at most so far that it still ends at
+	 * the right edge of the box. Borders and backgrounds around the box stay in place, only the
+	 * content moves. A level-of-detail box in the content chooses its variant by the width of the
+	 * whole box.
+	 * </p>
+	 *
+	 * <p>
+	 * The box takes effect in the header and data rows of a Gantt chart.
+	 * </p>
+	 *
+	 * @param content
+	 *        The box to keep visible.
+	 * @param cssClass
+	 *        The css class for the new box.
+	 * @param userObject
+	 *        User object of the new box.
+	 * @return The new box.
+	 */
+	@Label("Sticky")
+	public static Decoration sticky(
+		@Mandatory Box content,
+		String cssClass,
+		Object userObject
+	) {
+		return Sticky.create()
 			.setContent(nonNull(content))
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
@@ -1400,7 +1445,6 @@ public class FlowFactory extends TLScriptFunctions {
 		return ClipBox.create()
 			.setContent(content)
 			.setUserObject(userObject)
-			.setClientId(cssClass)
 			.setCssClass(cssClass);
 	}
 

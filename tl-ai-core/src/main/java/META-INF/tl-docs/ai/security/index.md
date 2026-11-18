@@ -1,5 +1,5 @@
 ---
-description: Read before configuring or changing the security of AI agent runs - the principle (a run acts as exactly one authenticated account), the threat model (assets, trust boundaries, threats T1-T13, objectives, non-goals), the enforcement layers L0-L6 (identity, tool RBAC, model access rights, result filtering, pre-commit guard, output guard, audit), and what an application must configure (<security-config>, <tool-access>, <background-allowlist>).
+description: Read before configuring or changing the security of AI agent runs - the principle (a run acts as exactly one authenticated account), the threat model (assets, trust boundaries, threats T1-T13, objectives, non-goals), the enforcement layers L0-L5 (identity, tool RBAC, model access rights, result filtering, output guard, audit), who checks a write, and what an application must configure (<security-config>, <tool-access>, <background-allowlist>).
 order: 70
 ---
 
@@ -80,7 +80,7 @@ The decisive property: **everything that enters the context window is untrusted 
 |---|---|---|
 | T1 | **Agent over-privilege.** The agent invokes any tool in its catalog regardless of who is chatting - a read-only clerk drives the model editor. | L1 |
 | T2 | **Data over-read.** Data tools return objects the user may not see, and the answer, the transcript and the event stream carry them. Objects and attribute values are filtered per object and per attribute; counts and coerced labels are bounded by the Discover right of the secured evaluation. | L2, L3 |
-| T3 | **Prompt-injection-driven tool abuse.** A malicious value in a business object, an MCP tool description or a fetched page instructs the agent to call a write tool or exfiltrate data. | L1, L2, L4; approval for write modes; marking of untrusted content - not mitigated by prompting alone |
+| T3 | **Prompt-injection-driven tool abuse.** A malicious value in a business object, an MCP tool description or a fetched page instructs the agent to call a write tool or exfiltrate data. | L1, L2; approval for write modes; marking of untrusted content - not mitigated by prompting alone |
 | T4 | **Exfiltration through an outbound tool.** The agent is induced to put secret data into a `webFetch` URL, an issue body or a call to an external MCP server. | L2 on the read side (it never gets the data), the `egress` group, the browsing policy and URL provenance |
 | T5 | **Unattended over-privilege.** A background run auto-approves every approval-gated tool. | Identity, and the `<background-allowlist>` ceiling |
 | T6 | **Unrestricted contexts.** A permissive `SecurityContext` built on a production path. | L0: the permissive constructs are test seams, and no production path builds one |
@@ -89,7 +89,7 @@ The decisive property: **everything that enters the context window is untrusted 
 | T9 | **Escalation through a self-selected security level.** | There is no level to select, and no production path builds a permissive context |
 | T10 | **Leakage through the vector index.** Search returns chunks of indexed objects the user may not read. | L3: query-time filtering per hit; the embedding of unfiltered text is accepted and stated |
 | T11 | **Schema disclosure.** The model digest enumerates every module, type and attribute. | L3: the digest emits only the types the principal may read |
-| T12 | **A write without authority reaching the commit.** A tool that forgot its check writes through the shared `TransactionScope`. | L4, the pre-commit guard |
+| T12 | **A write without authority reaching the commit.** A tool writes through the shared `TransactionScope`, and the turn commits what it wrote. | L2, asked by the tool that writes: a Java tool through `ModelSecurity`, TL-Script through the engine's own checks - see [the layers](#the-layers) |
 | T13 | **Disclosure across sessions.** A transcript keeps what the agent read; a later reader of the session sees data they may no longer be entitled to. | Out of scope, see the non-goals |
 
 ### Objectives
@@ -98,7 +98,7 @@ The decisive property: **everything that enters the context window is untrusted 
 - **O2 - Least privilege on tools.** A user may invoke a tool only if a role they hold is granted that tool. Unknown tools default to denied.
 - **O3 - Least privilege on data.** Every model access performed on the user's behalf is checked with `ModelAccessRights` against that `Person`.
 - **O4 - Deny by default.** Absence of configuration denies, independently at the tool layer and at the model layer.
-- **O5 - Defense in depth.** Filtering the tool list is a UX affordance, never the enforcement point; every layer re-checks, and a tool that skips its own check is still caught before the commit.
+- **O5 - Defense in depth.** Filtering the tool list is a UX affordance, never the enforcement point; the invocation gate re-checks every call, and every read and every write is checked per object where it is made.
 - **O6 - Separation of duties.** Who may *use* an agent, who may *define* agents and tools, and who may *write the security policy* are three different privileges.
 - **O7 - Auditability.** Every denial and every rolled-back write is logged with run, turn, user, tool and reason.
 - **O8 - Explainability.** A denial produces a reason the model can act on ("you lack capability X") and an operator can trace, without disclosing the content that was withheld.
@@ -142,21 +142,18 @@ The decisive property: **everything that enters the context window is untrusted 
                        └───────────────────┬─────────────────────────┘
                                            │
                        ┌───────────────────▼─────────────────────────┐
-   end of turn  ──────▶│ L4  Pre-commit action guard                 │  every commit
-                       │     PreCommitGuard @ commitTransaction      │
-                       └───────────────────┬─────────────────────────┘
-                                           │
-                       ┌───────────────────▼─────────────────────────┐
-   emit answer  ──────▶│ L5  Output guard: HTML allow-list,          │
+   emit answer  ──────▶│ L4  Output guard: HTML allow-list,          │
                        │     cited links checked                     │
                        └───────────────────┬─────────────────────────┘
                                            │
                        ┌───────────────────▼─────────────────────────┐
-                       │ L6  Audit log (denials, rollbacks)          │
+                       │ L5  Audit log (denials, rollbacks)          │
                        └─────────────────────────────────────────────┘
 ```
 
-The layers are **independent**: L1 does not assume L2 ran, L4 does not assume L2 ran. That is the point - L4 exists precisely because some tool will forget L2. All types live in `com.top_logic.tl.ai.core.security` unless named otherwise.
+The layers are **independent**: L1 does not assume L2 ran, and L3 filters what a tool hands back whatever the tool checked. All types live in `com.top_logic.tl.ai.core.security` unless named otherwise.
+
+**A write is checked by the tool that makes it**, under the run's account, and the turn commits what its tools wrote ([the agent loop](doc:ai/agent-loop)). A Java tool asks the run's `ModelSecurity` before it writes - the [object tools](doc:ai/security/object-tools) do so per object and per attribute, the initial values of a new object included; asking is the obligation of every Java tool that writes. TL-Script - `changeData` and every script tool - writes through `new`, `set`, `add`, `remove` and `delete`, which check the user's rights themselves; for an object created in the same transaction `set` asks the right to give it an initial value. A remote MCP tool writes in its own system, outside this application's transaction.
 
 | Layer | Article |
 |---|---|
@@ -164,8 +161,7 @@ The layers are **independent**: L1 does not assume L2 ran, L4 does not assume L2
 | L1 tool authorization | [Tool authorization](doc:ai/security/tool-authorization), [capability notices](doc:ai/security/capability-notices), [declared types](doc:ai/security/declared-types) |
 | L2 data authorization | [Data authorization](doc:ai/security/data-authorization), [object tools](doc:ai/security/object-tools) |
 | L3 result filtering | [Result filtering](doc:ai/security/result-filtering) |
-| L4 pre-commit guard | [Pre-commit guard](doc:ai/security/pre-commit-guard) |
-| L5 output guard, L6 audit | [Output guard and audit](doc:ai/security/output-guard-and-audit) |
+| L4 output guard, L5 audit | [Output guard and audit](doc:ai/security/output-guard-and-audit) |
 
 ## What an application has to configure
 

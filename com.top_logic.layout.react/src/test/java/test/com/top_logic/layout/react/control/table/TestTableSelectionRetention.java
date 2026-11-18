@@ -218,7 +218,7 @@ public class TestTableSelectionRetention extends TestCase {
 	/** Sends the client's command collapsing the row at the given index. */
 	private void collapse(int rowIndex) {
 		_table.executeClientCommand(TableViewControl.CMD_EXPAND, Map.of(
-			ExpandArguments.ROW_INDEX, Integer.valueOf(rowIndex),
+			ExpandArguments.ROW_ID, _table.rowIdAt(rowIndex),
 			ExpandArguments.EXPANDED, Boolean.FALSE));
 	}
 

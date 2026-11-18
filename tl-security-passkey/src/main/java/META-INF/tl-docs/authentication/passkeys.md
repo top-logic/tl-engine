@@ -184,9 +184,9 @@ and whether the relying party does not know the credential (`isCredentialUnknown
 ## The login flows
 
 - **Passwordless** (usage `login`): the module's same-path overlay of `login-form.view.xml` adds
-  `<passkey-login id="passkey-login">` (label "Sign in with passkey") to the form `credentials`,
-  right after the single sign-on buttons (`<login-methods id="login-methods">`), as wide as they
-  are. The form is shared by the login dialog and the login page, so both offer it; see
+  `<passkey-login id="passkey-login">` (label "Sign in with passkey") to the group
+  `<stack config:ref="login-alternatives">` of the form `credentials`, right after the single sign-on
+  buttons (`<login-methods id="login-methods">`), below "or", as wide as they are. The form is shared by the login dialog and the login page, so both offer it; see
   [overlays](doc:view-layer/overlays).
   The browser offers the discoverable passkeys of any account; the login continues for the account
   the passkey belongs to through the [login steps](doc:authentication#login-steps), with the

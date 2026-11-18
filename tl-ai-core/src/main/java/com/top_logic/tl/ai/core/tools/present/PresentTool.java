@@ -7,8 +7,10 @@ package com.top_logic.tl.ai.core.tools.present;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.model.TLObject;
@@ -44,8 +46,8 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
  * "Show me all events as a table" used to cost a model ten tool calls: load the skill with the
  * instance tools, list the instances, fetch each one, write a Markdown table, cite every row. With a
  * query the server finds the objects itself and the page renders them with their own columns, so the
- * same request is one call. The objects come back in the answer as {@code label [id:TID]}, so the
- * model can talk about them without fetching them again.
+ * same request is one call. The objects come back in the answer as their identity
+ * ({@link ReadFilter#disclose(Object)}), so the model can talk about them without fetching them again.
  * </p>
  *
  * <h2>Data, not only objects</h2>
@@ -80,6 +82,15 @@ public abstract class PresentTool {
 	/** How many objects the answer lists before it only counts the rest. */
 	public static final int MAX_LISTED = 50;
 
+	/** The key the object of a chart's point is disclosed under. */
+	private static final String POINT_OBJECT = "object";
+
+	/** The key the label of a chart's point is written under. */
+	private static final String POINT_LABEL = "label";
+
+	/** The key the value of a chart's point is written under. */
+	private static final String POINT_VALUE = "value";
+
 	/**
 	 * Shows objects to the user beside the conversation.
 	 *
@@ -100,8 +111,8 @@ public abstract class PresentTool {
 	 *        Where on the page, for a page that offers more than one place; {@code null} otherwise.
 	 * @param context
 	 *        The run, supplying the rights the objects are found with.
-	 * @return What the user now sees, with the objects as {@code label [id:TID]} or the data's labels
-	 *         and values, or why nothing was shown.
+	 * @return What the user now sees, with the objects as their identity or the data's labels and
+	 *         values, or why nothing was shown.
 	 */
 	@ToolMethod(
 		description = "Show model objects, or data computed from them, to the user beside this conversation, "
@@ -129,8 +140,8 @@ public abstract class PresentTool {
 				+ "all(`crm:Customer`).groupBy(c -> $c.get(`crm:Customer#region`), g -> $g.size()). "
 				+ "Use the qualified names outlineModel or searchModel reported.",
 				required = false) String query,
-			@P(value = "Ids of objects you already hold, as tool results wrote them ([id:...]). "
-				+ "Instead of 'query'.", required = false) List<String> ids,
+			@P(value = "Ids of objects you already hold: the " + ReadFilter.TID + " of each, as tool results "
+				+ "wrote it. Instead of 'query'.", required = false) List<String> ids,
 			@P(value = "TABLE, CHART or FORM. Omit to get a form for one object, a table for several and a "
 				+ "chart of data.",
 				required = false) PresentAs as,
@@ -228,7 +239,7 @@ public abstract class PresentTool {
 		if (refusal != null) {
 			return refusal;
 		}
-		return describe(presentation, points);
+		return describe(presentation, points, readFilter);
 	}
 
 	/**
@@ -296,28 +307,25 @@ public abstract class PresentTool {
 	protected abstract String deliver(Presentation presentation, String channel, ToolContext context);
 
 	/**
-	 * The answer to a call that reached the user: what is shown, and the objects as
-	 * {@code label [id:TID]}, marked as business data.
+	 * The answer to a call that reached the user: what is shown, and the objects as JSON, marked as
+	 * business data - each object as its identity, a chart's point as its object, label and value.
 	 */
-	private static String describe(Presentation presentation, List<Presentation.Point> points) {
+	private static String describe(Presentation presentation, List<Presentation.Point> points,
+			ReadFilter readFilter) {
 		List<TLObject> objects = presentation.objects();
-		StringBuilder rows = new StringBuilder();
-		int listed = Math.min(objects.size(), MAX_LISTED);
-		for (int n = 0; n < listed; n++) {
-			if (n > 0) {
-				rows.append('\n');
+		Object shown;
+		if (points.isEmpty()) {
+			shown = objects;
+		} else {
+			List<Map<String, Object>> rows = new ArrayList<>(points.size());
+			for (Presentation.Point point : points) {
+				Map<String, Object> row = new LinkedHashMap<>();
+				row.put(POINT_OBJECT, point.object());
+				row.put(POINT_LABEL, point.label());
+				row.put(POINT_VALUE, point.value());
+				rows.add(row);
 			}
-			if (points.isEmpty()) {
-				rows.append(ReadFilter.labelled(objects.get(n)));
-			} else {
-				Presentation.Point point = points.get(n);
-				ReadFilter.shown(point.object());
-				rows.append(ReadFilter.withId(point.label() + ": " + ChartData.number(point.value()),
-					ReadFilter.idOf(point.object())));
-			}
-		}
-		if (objects.size() > listed) {
-			rows.append("\n... and ").append(objects.size() - listed).append(" more");
+			shown = rows;
 		}
 		String what;
 		switch (presentation.as()) {
@@ -333,7 +341,7 @@ public abstract class PresentTool {
 					+ (objects.size() == 1 ? " object:" : " objects:");
 				break;
 		}
-		return what + "\n" + ReadFilter.marked("present", rows.toString())
+		return what + "\n" + readFilter.markedJson("present", shown, MAX_LISTED)
 			+ "\nDo not repeat these as a table. Say in one or two sentences what the user sees.";
 	}
 

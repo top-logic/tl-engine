@@ -9,6 +9,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.element.WithVisibility;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.ui.ScriptContextVariables;
@@ -99,7 +100,10 @@ public interface AccessControl extends Inputs {
 	 * <p>
 	 * Mandatory with an {@link #getObject() object}. When the view is loaded, the
 	 * {@link #getOperation() operation} must apply to this type. An object that is no instance of
-	 * the type is denied.
+	 * the type is denied, and a warning is logged, since the mismatch points to a configuration
+	 * error: the check is meant for objects of the type. A unit that is meant to be shown only for objects of some types
+	 * declares a {@link WithVisibility visibility condition} testing the type; while that condition
+	 * does not hold, the unit is left out and its object is not checked.
 	 * </p>
 	 */
 	@Name(TYPE)

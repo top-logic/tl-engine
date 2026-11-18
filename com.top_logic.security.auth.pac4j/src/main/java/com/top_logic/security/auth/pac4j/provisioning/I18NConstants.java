@@ -53,6 +53,43 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey EXTERNAL_LOGIN;
 
+	/**
+	 * @en The login is connected with your account. You can close this window.
+	 */
+	public static ResKey IDENTITY_CONNECTED;
+
+	/**
+	 * @en This login is already connected with another account. It has not been connected with
+	 *     yours.
+	 */
+	public static ResKey ERROR_IDENTITY_OF_OTHER_ACCOUNT;
+
+	/**
+	 * @en The identity provider has not identified you, nothing has been connected.
+	 */
+	public static ResKey ERROR_NO_CLIENT_IDENTITY;
+
+	/**
+	 * @en The login cannot be removed: the account would have no way left to sign in. Set a
+	 *     password or connect another login first.
+	 */
+	public static ResKey ERROR_LAST_LOGIN;
+
+	/**
+	 * @en The login is not connected with this account.
+	 */
+	public static ResKey ERROR_NOT_CONNECTED;
+
+	/**
+	 * @en Connect an external login with an account.
+	 */
+	public static ResKey CONNECT_IDENTITY;
+
+	/**
+	 * @en Remove an external login from an account.
+	 */
+	public static ResKey REMOVE_IDENTITY;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -77,7 +77,8 @@ import com.top_logic.util.error.TopLogicException;
  * <li>{@value #CATEGORY}: the type of the references {@value #CATEGORY_REF} and {@value #CATEGORIES}
  * (multiple, unordered) of a project. The account in {@value #READER} holds the role
  * {@value #ROLE_READER}, which grants read on the category and, by a grant of the attribute, writing
- * its {@value #NAME}.</li>
+ * its {@value #NAME}. The {@value #VIEWER} of a project referencing a category in {@value #CATEGORY_REF}
+ * holds {@value #ROLE_VIEWER} on the category, which grants Discover only.</li>
  * <li>{@value #MILESTONE}: the type of the composition {@value #MILESTONES} of a project,
  * {@value #NOTE}: the type of the composition {@value #NOTES} of a category. Neither is configured,
  * so both are decided by their container, the access parent a composition part gets by

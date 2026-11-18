@@ -47,7 +47,9 @@ import com.top_logic.model.util.TLModelPartRef;
  * A column declaring an update expression is edited where the rows of the table are: what an edited
  * value means for the row is what that expression does with it, and which rows offer the edit is what
  * the predicate says. The control the value is entered with follows from the declared type, so a
- * column that is edited declares one.
+ * column that is edited declares one. A value of a class or an enumeration is chosen from options:
+ * the instances of the class respectively the classifiers of the enumeration, or what the options
+ * expression computes for the row.
  * </p>
  */
 @InApp
@@ -77,8 +79,8 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 		/** Configuration name for {@link #getUpdate()}. */
 		String UPDATE = "update";
 
-		/** Configuration name for {@link #getCanUpdate()}. */
-		String CAN_UPDATE = "can-update";
+		/** Configuration name for {@link #getOptions()}. */
+		String OPTIONS = "options";
 
 		@Override
 		@ClassDefault(ComputedColumn.class)
@@ -157,19 +159,25 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 		Expr getUpdate();
 
 		/**
-		 * Whether the cell of a row can be edited: an expression yielding whether the edit is
-		 * offered for the row.
+		 * The values an edited cell value of a row is chosen from.
 		 *
 		 * <p>
-		 * The expression sees the variables of the {@link #getValue() value}. Unset, every row of a
-		 * column that declares an update is edited.
+		 * The expression sees the variables of the {@link #getValue() value} and computes the
+		 * options for the row whose cell is edited, when the edit begins. The options are offered
+		 * in the order the expression computes them; deleted objects are not offered.
+		 * </p>
+		 *
+		 * <p>
+		 * Unset, a value of a class is chosen from the instances of the class, a value of an
+		 * enumeration from its classifiers. Options are declared only for a column with an
+		 * {@link #getUpdate() update} whose {@link #getType() type} is a class or an enumeration.
 		 * </p>
 		 */
-		@Name(CAN_UPDATE)
+		@Name(OPTIONS)
 		@Nullable
 		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
 		@ScriptContextVariables(InputScript.Variables.class)
-		Expr getCanUpdate();
+		Expr getOptions();
 
 	}
 
@@ -191,12 +199,14 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 		_typeRef = config.getType();
 		_multiple = config.getMultiple();
 		_functions =
-			ColumnFunctions.compile(config, Config.VALUE, Config.UPDATE, Config.CAN_UPDATE);
+			ColumnFunctions.compile(config, Config.VALUE, Config.UPDATE, null, Config.OPTIONS);
 
 		if (_functions.updates() && _typeRef == null) {
 			context.error("An edited column must declare the type of its values, so that it is known"
 				+ " which control enters them: column '" + _name + "'.");
 		}
+		ColumnFunctions.checkOptions(context, config, Config.UPDATE, Config.OPTIONS, _typeRef,
+			"column '" + _name + "'");
 	}
 
 	@Override

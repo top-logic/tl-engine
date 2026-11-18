@@ -499,8 +499,26 @@ message Text extends Box {
 	@Nullable
 	string fillStyle;
 	
+	/**
+	 * Whether the text is cut to the width it is given.
+	 *
+	 * <p>
+	 * If set and the text is wider than its box, it is cut and ends with an ellipsis ("…"), like
+	 * <code>text-overflow: ellipsis</code> in CSS. The full text is then shown as tooltip.
+	 * Otherwise, the text is drawn completely, even if it extends beyond its box.
+	 * </p>
+	 */
+	boolean ellipsis;
+
 	/** The Y offset from the top-left corner of the text box, where the text is rendered. */
 	transient double baseLine;
+
+	/**
+	 * The text actually drawn, if {@link #value} is cut to the width of the box (see
+	 * {@link #ellipsis}), <code>null</code> if {@link #value} is drawn completely.
+	 */
+	@Nullable
+	transient string shownValue;
 }
 
 /** An embedded image. */
@@ -893,6 +911,37 @@ message Padding extends Decoration {
 	double right;
 }
 
+/**
+ * A box keeping its content at the left edge of the visible time range of a horizontally
+ * scrolled Gantt chart, like <code>position: sticky</code> in CSS.
+ *
+ * <p>
+ * The box takes the whole width it is given (e.g. the width of a span) and gives its content its
+ * natural width. While the box is scrolled partly out of the visible area to the left, its
+ * content moves right to the left edge of the visible area, but at most so far that it still ends
+ * at the right edge of the box. Borders and backgrounds around the box stay in place, only the
+ * content moves.
+ * </p>
+ *
+ * <p>
+ * The content is sized with the whole width of the box, so that a level-of-detail box in the
+ * content chooses its variant by the width of the whole box, not by its visible part.
+ * </p>
+ *
+ * <p>
+ * The box takes effect in the header and data rows of a Gantt chart. Elsewhere, its content
+ * stays at the left edge of the box.
+ * </p>
+ */
+@Operations("com.top_logic.react.flow.operations.StickyOperations")
+message Sticky extends Decoration {
+	/**
+	 * The current horizontal offset of the content relative to the left edge of the box, set by
+	 * the scrolling container.
+	 */
+	transient double shift;
+}
+
 /** Element with explicit given width and height. */
 @Operations("com.top_logic.react.flow.operations.SizedOperations")
 message Sized extends Decoration {
@@ -1077,6 +1126,12 @@ message GanttRow {
 	 * The box is owned by the enclosing {@link GanttLayout#getContents() contents} and is
 	 * positioned by the layout algorithm. Applications can use any {@link Box} subtype here:
 	 * plain text, icon+text, badges, etc.
+	 * </p>
+	 *
+	 * <p>
+	 * A level-of-detail box ({@link LOD}) in the label chooses its variant by the
+	 * {@link GanttLayout#zoom} of the time axis, like the items of the chart. The label column
+	 * reserves the width of its widest variant, so that it does not change while zooming.
 	 * </p>
 	 */
 	@Ref
@@ -1456,7 +1511,9 @@ message GanttLayout extends Layout {
 	 * <p>
 	 * The effective column width is
 	 * {@code max(rowLabelMinWidth, maxLabelIntrinsicWidth + 2 * rowLabelPadding)} so the column
-	 * grows automatically to fit the widest label across all rows.
+	 * grows automatically to fit the widest label across all rows. A label with several
+	 * level-of-detail variants counts with its widest variant, so the column width does not depend
+	 * on the {@link #zoom}.
 	 * </p>
 	 */
 	double rowLabelMinWidth = 200.0;

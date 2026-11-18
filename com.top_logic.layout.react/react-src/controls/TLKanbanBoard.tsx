@@ -442,7 +442,7 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
         probes.sent.add(probe);
         void sendCommand(CMD_DROP_PROBE, {
           source: drag.payload.source,
-          keys: drag.payload.keys.join(','),
+          keys: drag.payload.keys,
           selection: drag.payload.selection,
           targetKey: target.target,
           zone: ZONE_OF_POSITION[target.position],
@@ -481,8 +481,7 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
     if (payload) {
       void sendCommand(CMD_DROP, {
         source: payload.source,
-        // Comma-separated: the command argument is a formatted string list, and a key holds no comma.
-        keys: payload.keys.join(','),
+        keys: payload.keys,
         selection: payload.selection,
         targetKey: target.target,
         zone: ZONE_OF_POSITION[target.position],
@@ -565,7 +564,7 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
     // The drop a drag of these cards would make there: the keys, not the selection, as in a drag.
     void sendCommand(CMD_DROP, {
       source: controlId,
-      keys: moved.join(','),
+      keys: moved,
       selection: false,
       targetKey: drop.target,
       zone: ZONE_OF_POSITION[drop.position],

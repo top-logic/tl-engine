@@ -7,6 +7,8 @@ package com.top_logic.ai.demo;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -24,6 +26,8 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.tl.ai.core.tools.parameters.DeclaredParameters;
+import com.top_logic.tl.ai.core.tools.parameters.DeclaredParameters.InvalidArguments;
 
 /**
  * What the chat page shows for the objects an agent <code>present</code>s (Issues #493, #616).
@@ -67,11 +71,42 @@ public class TestPresentedObjectsPane extends TestCase {
 			rail.getSections().stream().map(SectionConfig::getName).collect(Collectors.toList()));
 	}
 
-	/** The overlay adds the demo's command to the shipped conversation. */
-	public void testTheOverlayAddsTheAgentCommand() throws Exception {
+	/**
+	 * The overlay adds the demo's commands to the shipped conversation, each with the parameters
+	 * the agent passes.
+	 */
+	public void testTheOverlayAddsTheAgentCommands() throws Exception {
 		ChatConversationElement.Config conversation = search(view(), ChatConversationElement.Config.class);
-		assertEquals(Arrays.asList("createInvoice"), conversation.getAgentCommands().stream()
-			.map(ChatConversationElement.AgentCommand::getName).collect(Collectors.toList()));
+		Map<String, List<String>> parameters = new LinkedHashMap<>();
+		for (ChatConversationElement.AgentCommand command : conversation.getAgentCommands()) {
+			parameters.put(command.getName(), command.getDeclaredParameters().names());
+		}
+		assertEquals(Map.of(
+			"createInvoice", List.of("event"),
+			"openEventTab", List.of("tab", "event")), parameters);
+	}
+
+	/**
+	 * The tab of {@code openEventTab} is one of the tab ids its {@code <allowed-values>} list: the
+	 * model gets them as {@code enum} of the parameter's schema, and another value is refused.
+	 */
+	public void testTheTabIsOneOfTheAllowedValues() throws Exception {
+		ChatConversationElement.Config conversation = search(view(), ChatConversationElement.Config.class);
+		DeclaredParameters parameters = conversation.getAgentCommands().stream()
+			.filter(command -> "openEventTab".equals(command.getName()))
+			.findFirst().orElseThrow().getDeclaredParameters();
+
+		String schema = parameters.schemaJson();
+		assertTrue(schema,
+			schema.contains("\"enum\":[\"overview\",\"sessions\",\"registrations\",\"sponsorships\",\"invoices\"]"));
+
+		assertEquals("sessions", parameters.bind(Map.of("tab", "sessions"), null).get("tab"));
+		try {
+			parameters.bind(Map.of("tab", "speakers"), null);
+			fail("A tab that is not allowed is refused.");
+		} catch (InvalidArguments ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("overview, sessions, registrations, sponsorships, invoices"));
+		}
 	}
 
 	/** The chat page, folded from the shipped view and this demo's overlay. */

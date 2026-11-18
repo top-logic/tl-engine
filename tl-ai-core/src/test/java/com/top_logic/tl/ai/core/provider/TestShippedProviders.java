@@ -42,13 +42,13 @@ public class TestShippedProviders extends TestCase {
 
 	private static final List<Shipped> SHIPPED = List.of(
 		new Shipped("anthropic", "tl_anthropic_api_key", "tl_anthropic_models",
-			List.of("claude-sonnet-4-6", "claude-opus-4-7", "claude-haiku-4-5")),
+			List.of("claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-5-5")),
 		new Shipped("openai", "tl_openai_api_key", "tl_openai_models",
 			List.of("gpt-5.5", "gpt-5.4-mini")),
 		new Shipped("mistral", "tl_mistral_api_key", "tl_mistral_models",
 			List.of("mistral-medium-latest", "mistral-small-latest")),
 		new Shipped("xai", "tl_xai_api_key", "tl_xai_models",
-			List.of("grok-4.3", "grok-4-1-fast")));
+			List.of("grok-4.7", "grok-4.3")));
 
 	/** The variable of the default model of the agents. */
 	private static final String DEFAULT_MODEL_VARIABLE = "tl_ai_default_model";

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Creating an access token. The model is a transient tl.accounts:AccessTokenRequest; the
+	permissions are chosen from those the application offers. Create stores the token's hash, writes
+	the token itself - and, for a permission that binds to this session, the invitation naming the
+	endpoint - onto that transient object only, and replaces this dialog by the one that shows it -
+	once.
+-->
+<view>
+	<channels>
+		<!-- Transient AccessTokenRequest bound to the form. -->
+		<channel name="model"/>
+		<!-- The chosen permissions, as offered by accessTokenPermissions(). -->
+		<channel name="permissions"/>
+	</channels>
+	<window
+		resizable="false"
+		width="460px"
+	>
+		<title>
+			<en>New access token</en>
+			<de>Neues Zugriffstoken</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<text>
+				<label>
+					<en>A client acts as you with this token, with your rights, within the permissions you choose. A permission for the user interface acts in this session only.</en>
+					<de>Ein Client handelt mit diesem Token als Sie, mit Ihren Rechten, im Rahmen der Berechtigungen, die Sie wählen. Eine Berechtigung für die Oberfläche wirkt nur in dieser Sitzung.</de>
+				</label>
+			</text>
+			<field attribute="name"/>
+			<field attribute="validForDays"/>
+			<value-input
+				mandatory="true"
+				multiple="true"
+				options="accessTokenPermissions()"
+				value="permissions"
+			>
+				<label>
+					<en>Permissions</en>
+					<de>Berechtigungen</de>
+				</label>
+			</value-input>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					inputs="model as request, permissions"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Create</en>
+						<de>Erstellen</de>
+					</label>
+					<store-form-state/>
+					<with-transaction>
+						<execute-script>
+							<function><![CDATA[{
+	token = accessTokenCreate(
+		$request.get(`tl.accounts:AccessTokenRequest#name`),
+		$request.get(`tl.accounts:AccessTokenRequest#validForDays`),
+		$permissions);
+	$request
+		..set(`tl.accounts:AccessTokenRequest#token`, $token)
+		..set(`tl.accounts:AccessTokenRequest#invitation`, accessTokenInvitation($token));
+}]]></function>
+						</execute-script>
+						<with-result>
+							<close-dialog/>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="access-token-created.view.xml"
+							/>
+						</with-result>
+					</with-transaction>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

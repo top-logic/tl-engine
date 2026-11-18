@@ -415,8 +415,10 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 *
 		 * <p>
 		 * The activated row becomes the table's selection first, then the command runs with that row
-		 * as its main argument, named by {@link #getOnActivateAs() activate-as}. The command's own executability rules decide over the row, so a row the
-		 * rules reject activates nothing. Without a command, activating a row only selects it.
+		 * as its main argument, named by {@link #getOnActivateAs() activate-as}. The command's own
+		 * executability rules decide over the row: activating a row the rules hide or disable the
+		 * command for only selects it, without a message. Without a command, activating a row only
+		 * selects it.
 		 * </p>
 		 *
 		 * <p>
@@ -1779,12 +1781,17 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	/**
 	 * The handler running the activation command with the activated row, {@code null} when the
 	 * table configures none.
+	 *
+	 * <p>
+	 * A row the command's executability rules reject is only selected, see
+	 * {@link ViewCommandModel#activate(Object)}.
+	 * </p>
 	 */
 	protected static <R> TableViewControl.ActivationHandler<R> activationHandler(ViewCommandModel activation) {
 		if (activation == null) {
 			return null;
 		}
-		return row -> activation.execute(row);
+		return row -> activation.activate(row);
 	}
 
 	/**

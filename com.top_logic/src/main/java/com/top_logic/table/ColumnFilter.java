@@ -121,6 +121,24 @@ public interface ColumnFilter<V> {
 	}
 
 	/**
+	 * Whether this kind of filter is offered for a table whose column has the given facet counts.
+	 *
+	 * <p>
+	 * A filter offering the {@link FilterInput.Options#occurring() occurring values} is only
+	 * offered as long as the values are few enough to choose from. A UI shows a kind that is not
+	 * offered only if the current state of the column is of that kind, and then as not available.
+	 * The default offers this filter always.
+	 * </p>
+	 *
+	 * @param counts
+	 *        The facet counts of the column as this filter buckets its values, see
+	 *        {@link RowSource#matchCounts(String, String)}.
+	 */
+	default boolean offered(MatchCounts counts) {
+		return true;
+	}
+
+	/**
 	 * Whether this filter wants per-option {@link MatchCounts facet counts} computed.
 	 */
 	default boolean countsMatches() {

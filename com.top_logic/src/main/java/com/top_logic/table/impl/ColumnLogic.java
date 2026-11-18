@@ -193,6 +193,14 @@ final class ColumnLogic {
 	}
 
 	/**
+	 * The ascending order of the given column's values, see {@link #directedOrder(Sort, boolean)},
+	 * or {@code null} if the column is not sortable.
+	 */
+	static Comparator<Object> valueOrder(Column<?, ?> column) {
+		return valueComparator(column, true);
+	}
+
+	/**
 	 * The comparator of the given column's values in the given direction, see
 	 * {@link #directedOrder(Sort, boolean)}, or {@code null} if the column is not sortable.
 	 *

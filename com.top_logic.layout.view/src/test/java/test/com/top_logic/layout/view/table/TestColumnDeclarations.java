@@ -55,6 +55,7 @@ import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
@@ -140,7 +141,7 @@ public class TestColumnDeclarations extends TestCase {
 		assertEquals(ResKey.text("missing"), setup.label());
 		assertFalse("Nothing is known about the values.", setup.type().resolved());
 		assertEquals("Such a column text-filters by the display label.", TextColumnFilter.class,
-			setup.buildColumn().filter().get().getClass());
+			setup.buildColumn().filter(ColumnFilter.KIND_TEXT).get().getClass());
 	}
 
 	/**
@@ -203,7 +204,7 @@ public class TestColumnDeclarations extends TestCase {
 
 		assertFalse("Nothing is known about the values.", setup.type().resolved());
 		assertEquals("Such a column text-filters by the display label.", TextColumnFilter.class,
-			setup.buildColumn().filter().get().getClass());
+			setup.buildColumn().filter(ColumnFilter.KIND_TEXT).get().getClass());
 	}
 
 	/**

@@ -65,8 +65,9 @@ public class ColumnFilterEditor implements FilterEditor {
 		_counts = counts;
 		ColumnFilter<?> currentKind = current == null ? null : find(ColumnFilterState.kindOf(current));
 		if (currentKind == null) {
-			// A state of a kind the column does not offer (any longer) is not edited.
-			_initialKind = _kinds.get(0).kind();
+			// A state of a kind the column does not have (any longer) is not edited. An unfiltered
+			// column starts with the first kind it offers.
+			_initialKind = firstOffered();
 			_initialState = null;
 		} else {
 			_initialKind = currentKind.kind();
@@ -76,11 +77,40 @@ public class ColumnFilterEditor implements FilterEditor {
 		_invert = new AbstractFieldModel(currentKind != null && ColumnFilterState.isInverted(current));
 	}
 
+	private String firstOffered() {
+		for (ColumnFilter<?> filter : _kinds) {
+			if (filter.offered(_counts.apply(filter.kind()))) {
+				return filter.kind();
+			}
+		}
+		return _kinds.get(0).kind();
+	}
+
 	/**
 	 * The kinds of filter this editor switches between.
 	 */
 	public List<? extends ColumnFilter<?>> kinds() {
 		return _kinds;
+	}
+
+	/**
+	 * Whether the given kind of filter is {@link ColumnFilter#offered(MatchCounts) offered} for the
+	 * column.
+	 *
+	 * <p>
+	 * A kind that is not offered is shown only while it is the {@link #activeKind() active} one,
+	 * because the current state of the column is of that kind, and then as not available.
+	 * </p>
+	 *
+	 * @param kind
+	 *        The {@link ColumnFilter#kind()} of one of the {@link #kinds()}.
+	 */
+	public boolean offered(String kind) {
+		ColumnFilter<?> filter = find(kind);
+		if (filter == null) {
+			throw new IllegalArgumentException("No filter of kind '" + kind + "'.");
+		}
+		return filter.offered(_counts.apply(filter.kind()));
 	}
 
 	/**

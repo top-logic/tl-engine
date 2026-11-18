@@ -9,6 +9,7 @@ import java.text.DateFormat;
 import java.text.Format;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.DateUtil;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -31,6 +33,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.Positive;
+import com.top_logic.basic.format.NumberFormats;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
@@ -71,6 +74,7 @@ import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterPushdown;
 import com.top_logic.table.FilterState;
+import com.top_logic.table.MatchCounts;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.table.Option;
@@ -106,12 +110,20 @@ import com.top_logic.util.TLCollator;
  * <ol>
  * <li>A provider configured in this service for the {@link TLType} of the values
  * (app-extensible).</li>
- * <li>A built-in default derived from the type's structure: enumeration → options filter,
- * {@code INT}/{@code FLOAT} → numeric range, {@code DATE} → date range,
- * {@code BOOLEAN}/{@code TRISTATE} → boolean, {@code STRING} → text; anything else (custom
- * primitives, references, multi-valued or unresolved descriptors) → a display-label text
- * filter.</li>
+ * <li>A built-in default derived from the type's structure, offering one or several kinds of
+ * filter (see {@link Column#filters()}): enumeration (single- or multi-valued) → its classifiers;
+ * {@code INT}/{@code FLOAT} → numeric range, values; {@code DATE} → date range, values (on day
+ * basis for a date and a date with time of day); {@code BOOLEAN}/{@code TRISTATE} → boolean;
+ * {@code STRING} → text, values; anything else (custom primitives, references, multi-valued or
+ * unresolved descriptors) → values, a display-label text filter.</li>
  * </ol>
+ *
+ * <p>
+ * A list of values offers the values occurring in the rows, as long as there are at most
+ * {@link Config#getMaxValueOptions()} distinct ones, see
+ * {@link OptionsColumnFilter#occurring(Function, BoundCodec, int)}. A cell holding several values
+ * matches if one of them is selected.
+ * </p>
  *
  * <p>
  * The built-in default is the only place a type is inspected, and it is fully overridable per type
@@ -170,6 +182,9 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 
 		/** Property name of {@link #getLabelWidth()}. */
 		String LABEL_WIDTH = "label-width";
+
+		/** Property name of {@link #getMaxValueOptions()}. */
+		String MAX_VALUE_OPTIONS = "max-value-options";
 
 		/**
 		 * Provider mappings keyed by model type reference.
@@ -256,6 +271,21 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 		@IntDefault(150)
 		@Constraint(Positive.class)
 		int getLabelWidth();
+
+		/**
+		 * The maximum number of distinct values a column may hold for its filter to offer them as a
+		 * list of values to choose from.
+		 *
+		 * <p>
+		 * A column holding more distinct values is filtered by its other kinds of filter only (a
+		 * range, a text). A column of classifiers of an enumeration offers all classifiers,
+		 * however many there are.
+		 * </p>
+		 */
+		@Name(MAX_VALUE_OPTIONS)
+		@IntDefault(50)
+		@Constraint(Positive.class)
+		int getMaxValueOptions();
 
 	}
 
@@ -457,6 +487,11 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			}
 
 			@Override
+			public boolean offered(MatchCounts counts) {
+				return filter.offered(counts);
+			}
+
+			@Override
 			public String kind() {
 				return filter.kind();
 			}
@@ -496,10 +531,14 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	private Column<Object, ?> defaultColumn(String name, ResKey label, ColumnType type,
 			Function<Object, Object> value, Function<Object, String> text) {
 		int width = defaultWidth(type);
+		int maxValues = getConfig().getMaxValueOptions();
 		if (AttributeOptions.labelsFor(type.part()) != null) {
 			// Options displayed by labels of their own are sorted and searched by these labels,
 			// not by the values the labels stand for.
-			return labelColumn(name, label, type, width, value, text);
+			return labelColumn(name, label, type, width, value, text, maxValues);
+		}
+		if (type.multiple() && type.type() instanceof TLEnumeration enumeration) {
+			return multipleOptionsColumn(name, label, type, width, value, text, enumeration);
 		}
 		switch (columnKind(type)) {
 			case BOOLEAN:
@@ -508,29 +547,62 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 				return booleanColumn(name, label, type, width, value, false);
 			case TRISTATE:
 				return booleanColumn(name, label, type, width, value, true);
-			case NUMBER:
+			case NUMBER: {
 				// A bound is typed the way the column writes its values, so a German user enters a
 				// decimal fraction with a comma.
 				Format numberFormat = numberFormat(type);
+				BoundCodec<Number> codec = BoundCodec.numbers(numberFormat);
 				return typedColumn(name, label, type, width, value, Number.class,
 					Comparator.comparingDouble(Number::doubleValue),
-					comparableFilter(Comparator.comparingDouble(Number::doubleValue),
-						BoundCodec.numbers(numberFormat)));
-			case DATE:
+					List.of(
+						comparableFilter(Comparator.comparingDouble(Number::doubleValue), codec),
+						OptionsColumnFilter.<Number, Number> occurring(
+							number -> number instanceof Number ? List.of(NumberFormats.normalize(numberFormat, number))
+								: List.of(),
+							codec, maxValues)));
+			}
+			case DATE: {
 				// A bound is typed the way the column writes its values: in the annotated format
 				// of the attribute, or the default one for the part of a point in time it holds.
+				ReactDatePickerControl.Kind temporalKind = temporalKind(type);
+				BoundCodec<Date> codec = BoundCodec.dates(dateInputFormats(type), temporalKind.parsePatterns());
 				return typedColumn(name, label, type, width, value, Date.class,
 					Comparator.<Date> naturalOrder(),
-					comparableFilter(Comparator.<Date> naturalOrder(),
-						BoundCodec.dates(dateInputFormats(type), temporalKind(type).parsePatterns())));
+					List.of(
+						comparableFilter(Comparator.<Date> naturalOrder(), codec),
+						dateValuesFilter(temporalKind, codec, maxValues)));
+			}
 			case STRING:
 				return typedColumn(name, label, type, width, value, String.class,
-					Comparator.<String> naturalOrder(), stringFilter());
+					Comparator.<String> naturalOrder(),
+					List.of(
+						stringFilter(),
+						OptionsColumnFilter.<String, String> occurring(
+							string -> string instanceof String && !string.isEmpty() ? List.of(string) : List.of(),
+							BoundCodec.text(Function.identity()), maxValues)));
 			case ENUMERATION:
 				return optionsColumn(name, label, type, width, value, (TLEnumeration) type.type());
 			default:
-				return labelColumn(name, label, type, width, value, text);
+				return labelColumn(name, label, type, width, value, text, maxValues);
 		}
+	}
+
+	/**
+	 * The filter offering the points in time occurring in a column: the days they fall on, or the
+	 * exact times of a column showing a time of day only.
+	 */
+	private static OptionsColumnFilter<Date> dateValuesFilter(ReactDatePickerControl.Kind temporalKind,
+			BoundCodec<Date> codec, int maxValues) {
+		if (temporalKind == ReactDatePickerControl.Kind.TIME) {
+			return OptionsColumnFilter.<Date, Date> occurring(
+				date -> date instanceof Date ? List.of(new Date(date.getTime())) : List.of(), codec, maxValues);
+		}
+		// A day is written as a date, whatever part of a point in time the column shows.
+		ReactDatePickerControl.Kind day = ReactDatePickerControl.Kind.DATE;
+		BoundCodec<Date> dayCodec = temporalKind == day ? codec
+			: BoundCodec.dates(List.of(day.displayFormat()), day.parsePatterns());
+		return OptionsColumnFilter.<Date, Date> occurring(
+			date -> date instanceof Date ? List.of(DateUtil.adjustToDayBegin(date)) : List.of(), dayCodec, maxValues);
 	}
 
 	/**
@@ -819,11 +891,21 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 */
 	private static <V> Column<Object, Object> typedColumn(String name, ResKey label, ColumnType type, int width,
 			Function<Object, Object> value, Class<V> valueType, Comparator<V> comparator, ColumnFilter<V> filter) {
+		return typedColumn(name, label, type, width, value, valueType, comparator, List.of(filter));
+	}
+
+	/**
+	 * A column reading a typed value, as {@link #typedColumn(String, ResKey, ColumnType, int,
+	 * Function, Class, Comparator, ColumnFilter)} does, offering the given kinds of filter.
+	 */
+	private static <V> Column<Object, Object> typedColumn(String name, ResKey label, ColumnType type, int width,
+			Function<Object, Object> value, Class<V> valueType, Comparator<V> comparator,
+			List<? extends ColumnFilter<? extends V>> filters) {
 		@SuppressWarnings("unchecked")
-		ColumnFilter<Object> markerAware = (ColumnFilter<Object>) filter;
+		List<ColumnFilter<Object>> markerAware = (List<ColumnFilter<Object>>) (List<?>) filters;
 		return valueColumn(name, label, type, width, row -> typedValue(value.apply(row), valueType))
 			.sort(cellSort(() -> comparator))
-			.filter(markerAware)
+			.filters(markerAware)
 			.build();
 	}
 
@@ -950,10 +1032,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 */
 	private static Column<Object, Object> optionsColumn(String name, ResKey label, ColumnType type, int width,
 			Function<Object, Object> value, TLEnumeration enumeration) {
-		List<Option> options = new ArrayList<>();
-		for (TLClassifier classifier : enumeration.getClassifiers()) {
-			options.add(new Option(classifier, TLModelNamingConvention.resourceKey(classifier)));
-		}
+		List<Option> options = classifierOptions(enumeration);
 		return valueColumn(name, label, type, width, value)
 			.sort(cellSort(
 				() -> Comparator.comparing((Object cellValue) -> (TLClassifier) cellValue,
@@ -964,15 +1043,65 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	}
 
 	/**
-	 * The fallback column: sorts and text-filters by the given text of the cell value, the text
-	 * the cell shows, which for a cell holding several values is the text of all of them.
+	 * The classifiers of the given enumeration as options, in their declaration order.
+	 */
+	private static List<Option> classifierOptions(TLEnumeration enumeration) {
+		List<Option> options = new ArrayList<>();
+		for (TLClassifier classifier : enumeration.getClassifiers()) {
+			options.add(new Option(classifier, TLModelNamingConvention.resourceKey(classifier)));
+		}
+		return options;
+	}
+
+	/**
+	 * The fallback column: offers the values occurring in it and sorts and text-filters by the given
+	 * text of the cell value, the text the cell shows, which for a cell holding several values is
+	 * the text of all of them.
 	 */
 	private static Column<Object, Object> labelColumn(String name, ResKey label, ColumnType type, int width,
-			Function<Object, Object> value, Function<Object, String> text) {
+			Function<Object, Object> value, Function<Object, String> text, int maxValues) {
 		// An unreadable cell is searched by the placeholder it shows, which reveals nothing.
+		BiFunction<Object, Object, String> elementText = elementText(type);
 		return valueColumn(name, label, type, width, value)
 			.sort(cellSort(() -> Comparator.comparing(text)))
-			.filter(new TextColumnFilter<>(text))
+			.filters(List.of(
+				OptionsColumnFilter.<Object, Object> occurring(ColumnProviderService::elementKeys,
+					new ObjectValueCodec(element -> elementText.apply(null, element)), maxValues),
+				new TextColumnFilter<>(text)))
+			.build();
+	}
+
+	/**
+	 * The values a cell of a label column stands for in a list of values: the elements of a cell
+	 * holding several values, or the value itself.
+	 *
+	 * <p>
+	 * A value the user may not read ({@link #UNREADABLE}) or an object the user may not discover
+	 * ({@link ReactDropdownSelectControl#isMasked(Object) masked}) is shown by a placeholder, so it
+	 * is no value to choose from.
+	 * </p>
+	 */
+	private static Collection<Object> elementKeys(Object value) {
+		Collection<?> elements = value instanceof Collection<?> collection ? collection : Collections.singletonList(value);
+		List<Object> result = new ArrayList<>(elements.size());
+		for (Object element : elements) {
+			if (element != null && !isPlaceholder(element)) {
+				result.add(element);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * A column over several classifiers of an enumeration per cell: sorted and searched by the text
+	 * it shows, filtered by the classifiers of the enumeration, a cell matching if one of its
+	 * classifiers is selected.
+	 */
+	private static Column<Object, Object> multipleOptionsColumn(String name, ResKey label, ColumnType type, int width,
+			Function<Object, Object> value, Function<Object, String> text, TLEnumeration enumeration) {
+		return valueColumn(name, label, type, width, value)
+			.sort(cellSort(() -> Comparator.comparing(text)))
+			.filter(new OptionsColumnFilter<>(classifierOptions(enumeration), ColumnProviderService::elementKeys))
 			.build();
 	}
 

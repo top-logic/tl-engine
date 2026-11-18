@@ -16,8 +16,14 @@ import com.top_logic.layout.form.model.FieldModel;
  * Toolkit-neutral and control-agnostic: the UI tier picks the input control from the
  * {@link #model() field model} itself (a {@code SelectFieldModel} renders a dropdown, a
  * boolean-valued model a checkbox, anything else a text input) using its standard form
- * controls — there is no per-datatype mapping here. For a dropdown,
- * {@link #optionLabels()} supplies the option display labels.
+ * controls. For a dropdown, {@link #optionLabels()} supplies the option display labels.
+ * </p>
+ *
+ * <p>
+ * A field holding a value of the filtered column - a bound of a range - is marked by its
+ * {@link #valueCodec()}: its model holds the typed value (a number, a date), so that a UI tier
+ * knowing the type of the column enters it as a form does (a number field, a date picker). A UI
+ * tier without such an input enters it as text, written and read by the codec.
  * </p>
  */
 public final class FilterField {
@@ -28,11 +34,13 @@ public final class FilterField {
 
 	private final LabelProvider _optionLabels;
 
+	private final BoundCodec<?> _valueCodec;
+
 	/**
 	 * Creates a {@link FilterField} rendered by the field model's natural control.
 	 */
 	public FilterField(ResKey label, FieldModel model) {
-		this(label, model, null);
+		this(label, model, (LabelProvider) null);
 	}
 
 	/**
@@ -46,9 +54,28 @@ public final class FilterField {
 	 *        Option labels for a select field model, else {@code null}.
 	 */
 	public FilterField(ResKey label, FieldModel model, LabelProvider optionLabels) {
+		this(label, model, optionLabels, null);
+	}
+
+	/**
+	 * Creates a {@link FilterField} holding a value of the filtered column.
+	 *
+	 * @param label
+	 *        The field label.
+	 * @param model
+	 *        The field model holding the typed value, {@code null} for none.
+	 * @param valueCodec
+	 *        Writes and reads the value as text, for a UI tier entering it as text.
+	 */
+	public FilterField(ResKey label, FieldModel model, BoundCodec<?> valueCodec) {
+		this(label, model, null, valueCodec);
+	}
+
+	private FilterField(ResKey label, FieldModel model, LabelProvider optionLabels, BoundCodec<?> valueCodec) {
 		_label = label;
 		_model = model;
 		_optionLabels = optionLabels;
+		_valueCodec = valueCodec;
 	}
 
 	/** The field label. */
@@ -64,6 +91,14 @@ public final class FilterField {
 	/** Option labels for a select field model, or {@code null}. */
 	public LabelProvider optionLabels() {
 		return _optionLabels;
+	}
+
+	/**
+	 * The codec writing and reading the value of a field holding a value of the filtered column as
+	 * text, or {@code null} if the field holds no such value.
+	 */
+	public BoundCodec<?> valueCodec() {
+		return _valueCodec;
 	}
 
 }

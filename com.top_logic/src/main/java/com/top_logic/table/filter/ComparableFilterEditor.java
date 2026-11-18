@@ -17,6 +17,11 @@ import com.top_logic.util.Resources;
  * {@link FilterEditor} for a {@link ComparableColumnFilter}: an operator dropdown plus one
  * or two bound-value fields (the second used only for {@link ComparisonOperator#BETWEEN}).
  *
+ * <p>
+ * The bound fields hold the typed bounds and are marked with the filter's
+ * {@link ComparableColumnFilter#codec() codec}, see {@link FilterField#valueCodec()}.
+ * </p>
+ *
  * @param <V>
  *        The compared value type.
  */
@@ -66,27 +71,16 @@ public class ComparableFilterEditor<V> implements FilterEditor {
 		ComparisonOperator operator =
 			current != null && current.operator() != null ? current.operator() : ComparisonOperator.EQ;
 		_operator = new SimpleSelectFieldModel(operator, List.of(ComparisonOperator.values()), false);
-		_primary = new AbstractFieldModel(text(current != null ? current.primary() : null));
-		_secondary = new AbstractFieldModel(text(current != null ? current.secondary() : null));
-	}
-
-	/**
-	 * A bound as the text the user reads and edits, in the user's language.
-	 */
-	private String text(V value) {
-		if (value == null || _codec == null) {
-			return "";
-		}
-		String formatted = _codec.format(value);
-		return formatted == null ? "" : formatted;
+		_primary = new AbstractFieldModel(current != null ? current.primary() : null);
+		_secondary = new AbstractFieldModel(current != null ? current.secondary() : null);
 	}
 
 	@Override
 	public List<FilterField> fields() {
 		return List.of(
 			new FilterField(I18NConstants.OPERATOR, _operator, OPERATOR_LABELS),
-			new FilterField(I18NConstants.VALUE, _primary),
-			new FilterField(I18NConstants.UPPER_BOUND, _secondary));
+			new FilterField(I18NConstants.VALUE, _primary, _codec),
+			new FilterField(I18NConstants.UPPER_BOUND, _secondary, _codec));
 	}
 
 	@Override
@@ -95,14 +89,18 @@ public class ComparableFilterEditor<V> implements FilterEditor {
 		ComparisonOperator operator = operatorValue instanceof ComparisonOperator op
 			? op
 			: ComparisonOperator.valueOf(String.valueOf(operatorValue));
-		return new RangeFilterState<>(operator, parse(_primary), parse(_secondary));
+		return new RangeFilterState<>(operator, bound(_primary), bound(_secondary));
 	}
 
-	private V parse(AbstractFieldModel model) {
-		if (_codec == null) {
-			return null;
-		}
-		return _codec.parse(TextFilterEditor.string(model));
+	/**
+	 * The typed bound a field holds.
+	 *
+	 * @implNote The fields are created holding a bound of the filtered column, which a UI tier
+	 *           replaces only by another one.
+	 */
+	@SuppressWarnings("unchecked")
+	private V bound(AbstractFieldModel model) {
+		return (V) model.getValue();
 	}
 
 }

@@ -25,6 +25,7 @@ import com.top_logic.table.filter.ComparableColumnFilter;
 import com.top_logic.table.filter.ComparisonOperator;
 import com.top_logic.table.filter.FilterEditor;
 import com.top_logic.table.filter.FilterEditors;
+import com.top_logic.table.filter.FilterField;
 import com.top_logic.table.filter.OptionsColumnFilter;
 import com.top_logic.table.filter.OptionsFilterState;
 import com.top_logic.table.filter.RangeFilterState;
@@ -135,7 +136,7 @@ public class TestFilterEditors extends TestCase {
 	public void testComparableEditorReadBack() {
 		FilterEditor editor = FilterEditors.create(ComparableColumnFilter.integers(), null, MatchCounts.NONE);
 		field(editor, 0).setValue(ComparisonOperator.GE);   // operator
-		field(editor, 1).setValue("18");                    // primary
+		field(editor, 1).setValue(Integer.valueOf(18));     // primary, typed
 
 		@SuppressWarnings("unchecked")
 		RangeFilterState<Integer> state = (RangeFilterState<Integer>) editor.read();
@@ -145,9 +146,11 @@ public class TestFilterEditors extends TestCase {
 	}
 
 	/**
-	 * A bound is shown and read in the reader's language: a German user sees and types the decimal
-	 * fraction with a comma.
+	 * A bound field holds the typed bound and carries the codec a UI without a typed input writes and
+	 * reads it with, in the reader's language: a German user sees and types the decimal fraction
+	 * with a comma.
 	 */
+	@SuppressWarnings("unchecked")
 	public void testComparableEditorInTheReadersLanguage() {
 		ComparableColumnFilter<Number> filter = new ComparableColumnFilter<>(
 			Comparator.comparingDouble(Number::doubleValue),
@@ -155,14 +158,20 @@ public class TestFilterEditors extends TestCase {
 		FilterEditor editor = FilterEditors.create(filter,
 			RangeFilterState.of(ComparisonOperator.GE, Double.valueOf(37.5)), MatchCounts.NONE);
 
-		assertEquals("37,5", field(editor, 1).getValue());
+		FilterField primary = editor.fields().get(1);
+		assertEquals(Double.valueOf(37.5), primary.model().getValue());
+		BoundCodec<Number> codec = (BoundCodec<Number>) primary.valueCodec();
+		assertSame(filter.codec(), codec);
+		assertEquals("37,5", codec.format((Number) primary.model().getValue()));
 
-		field(editor, 1).setValue("12,25");
+		primary.model().setValue(codec.parse("12,25"));
 		assertEquals(Double.valueOf(12.25), ((RangeFilterState<?>) editor.read()).primary());
 
-		field(editor, 1).setValue("kein Wert");
+		primary.model().setValue(codec.parse("kein Wert"));
 		assertNull("Text that is not a number leaves the bound unset.",
 			((RangeFilterState<?>) editor.read()).primary());
+
+		assertNull("The operator holds no value of the column.", editor.fields().get(0).valueCodec());
 	}
 
 	public void testComparableEditorBetween() {
@@ -170,8 +179,8 @@ public class TestFilterEditors extends TestCase {
 			RangeFilterState.between(5, 10), MatchCounts.NONE);
 		// Seeded from state.
 		assertEquals(ComparisonOperator.BETWEEN, field(editor, 0).getValue());
-		assertEquals("5", field(editor, 1).getValue());
-		assertEquals("10", field(editor, 2).getValue());
+		assertEquals(Integer.valueOf(5), field(editor, 1).getValue());
+		assertEquals(Integer.valueOf(10), field(editor, 2).getValue());
 
 		@SuppressWarnings("unchecked")
 		RangeFilterState<Integer> state = (RangeFilterState<Integer>) editor.read();

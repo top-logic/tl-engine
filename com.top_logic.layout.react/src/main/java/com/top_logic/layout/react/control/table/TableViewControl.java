@@ -27,6 +27,7 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.react.control.identity.ObjectIdIndex;
 import com.top_logic.layout.react.control.identity.ObjectIdentities;
 import com.top_logic.layout.react.control.identity.ProjectionMode;
+import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
@@ -84,6 +85,7 @@ import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableView;
 import com.top_logic.table.TableViewState;
+import com.top_logic.table.filter.BoundCodec;
 import com.top_logic.table.filter.FilterEditor;
 import com.top_logic.table.filter.FilterEditors;
 import com.top_logic.table.filter.FilterField;
@@ -2033,6 +2035,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 */
 	private static ReactControl fieldControl(ReactContext context, FilterField field) {
 		FieldModel model = field.model();
+		if (field.valueCodec() != null) {
+			return new ReactTextInputControl(context, textModel(model, field.valueCodec()));
+		}
 		if (model instanceof SelectFieldModel selectModel) {
 			LabelProvider labels = field.optionLabels() != null ? field.optionLabels() : String::valueOf;
 			return new ReactSelectFormFieldControl(context, selectModel, labels);
@@ -2041,6 +2046,22 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			return new ReactCheckboxControl(context, model);
 		}
 		return new ReactTextInputControl(context, model);
+	}
+
+	/**
+	 * A text field model editing the typed value of the given model as the text the given codec
+	 * writes and reads; a text the codec cannot read clears the value.
+	 */
+	private static <V> FieldModel textModel(FieldModel typed, BoundCodec<V> codec) {
+		@SuppressWarnings("unchecked")
+		String text = codec.format((V) typed.getValue());
+		return new AbstractFieldModel(text == null ? "" : text) {
+			@Override
+			public void setValue(Object newValue) {
+				super.setValue(newValue);
+				typed.setValue(codec.parse(newValue == null ? null : newValue.toString()));
+			}
+		};
 	}
 
 	/**

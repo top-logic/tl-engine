@@ -1646,8 +1646,10 @@ public class DefaultTableView<R> implements TableView<R> {
 	 * generically.
 	 *
 	 * <p>
-	 * A stored state without {@link #KIND} is one of the first kind of filter of the column. A state
-	 * naming a kind the column does not offer is not restored.
+	 * A stored state without {@link #KIND} - the form a state of a column with a single kind of
+	 * filter was stored in - is read by the kinds of filter of the column in their order: the
+	 * first kind whose {@link ColumnFilter#fromJson(Object)} accepts it is the kind of the restored
+	 * state. A state naming a kind the column does not have is not restored.
 	 * </p>
 	 */
 	private FilterCodec filterCodec() {
@@ -1684,8 +1686,20 @@ public class DefaultTableView<R> implements TableView<R> {
 				if (definition == null || !(json instanceof Map<?, ?> map)) {
 					return null;
 				}
+				boolean inverted = Boolean.TRUE.equals(map.get(INVERTED));
 				Object storedKind = map.get(KIND);
-				String kind = storedKind == null ? null : String.valueOf(storedKind);
+				if (storedKind == null) {
+					// A state stored without its kind is one of the kinds the column offers: the first
+					// one, in the column's order, that can read it.
+					for (ColumnFilter<?> filter : definition.filters()) {
+						FilterState inner = filter.fromJson(map.get(STATE));
+						if (inner != null) {
+							return ColumnFilterState.of(definition.filters(), filter.kind(), inner, inverted);
+						}
+					}
+					return null;
+				}
+				String kind = String.valueOf(storedKind);
 				ColumnFilter<?> filter = definition.filter(kind).orElse(null);
 				if (filter == null) {
 					return null;
@@ -1694,7 +1708,7 @@ public class DefaultTableView<R> implements TableView<R> {
 				if (inner == null) {
 					return null;
 				}
-				return ColumnFilterState.of(definition.filters(), kind, inner, Boolean.TRUE.equals(map.get(INVERTED)));
+				return ColumnFilterState.of(definition.filters(), kind, inner, inverted);
 			}
 		};
 	}

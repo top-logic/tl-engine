@@ -331,7 +331,10 @@ public class ListRowSource<R> implements RowSource<R> {
 				addFacetCounts(definition, kind, element, counts);
 			}
 		}
+		List<? extends R> elements = _elements;
 		return new MatchCounts() {
+			private List<Object> _values;
+
 			@Override
 			public int count(Object optionValue) {
 				Integer count = counts.get(optionValue);
@@ -342,7 +345,38 @@ public class ListRowSource<R> implements RowSource<R> {
 			public boolean isAvailable() {
 				return true;
 			}
+
+			@Override
+			public List<Object> values() {
+				if (_values == null) {
+					_values = facetValues(definition, kind, elements);
+				}
+				return _values;
+			}
 		};
+	}
+
+	/**
+	 * The distinct facet keys of the given column over the given rows, in the column's ascending
+	 * sort order, or in the order of their first occurrence for a column that cannot be sorted.
+	 */
+	private static <R, V> List<Object> facetValues(Column<R, V> column, String kind, List<? extends R> elements) {
+		Set<Object> keys = new LinkedHashSet<>();
+		Optional<ColumnFilter<V>> filter = column.filter(kind);
+		for (R element : elements) {
+			V value = column.value(element);
+			if (filter.isPresent()) {
+				keys.addAll(filter.get().facetKeys(value));
+			} else if (value != null) {
+				keys.add(value);
+			}
+		}
+		List<Object> result = new ArrayList<>(keys);
+		Comparator<Object> order = ColumnLogic.valueOrder(column);
+		if (order != null) {
+			result.sort(order);
+		}
+		return Collections.unmodifiableList(result);
 	}
 
 	private static <R, V> void addFacetCounts(Column<R, V> column, String kind, R element,

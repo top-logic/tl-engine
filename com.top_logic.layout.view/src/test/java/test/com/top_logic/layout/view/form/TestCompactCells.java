@@ -220,7 +220,7 @@ public class TestCompactCells extends TestCase {
 		Comparator<Object> order = column.sort().get().comparator();
 		assertTrue("Sorted by the labels of the parts.", order.compare(alphaBeta, gamma) < 0);
 
-		ColumnFilter<Object> filter = column.filter().get();
+		ColumnFilter<Object> filter = column.filter(ColumnFilter.KIND_TEXT).get();
 		var state = filter.fromJson(Map.of(TextColumnFilter.PATTERN, labels(List.of(alphaBeta.get(1))).get(0),
 			TextColumnFilter.CASE_SENSITIVE, Boolean.FALSE,
 			TextColumnFilter.MODE, TextMatchMode.CONTAINS.name(),

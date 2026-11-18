@@ -2,7 +2,7 @@
    Eine Zeichenfläche (canvas) füllt die Wurzel und liegt hinter dem Inhalt; der Client zeichnet darauf ein
    Halbton-Raster. Das Stylesheet kennt nur Fläche, Rand und Anordnung. Die Zeichenfläche fängt keine Zeiger,
    der Inhalt (Karte, Logo oder Name der Anwendung, Link) liegt darüber. Ist das Fenster niedriger als Inhalt und
-   Fußzeile, scrollt die ganze Seite, kein Kasten in ihr; schmaler als der Inhalt wird nichts, was darin steht. Logo oder Name stehen auf einer eigenen Unterlage, weil die Punkte dahinter keinen Kontrast zu
+   Fußzeile, scrollt die ganze Seite, kein Kasten in ihr. Logo oder Name stehen auf einer eigenen Unterlage, weil die Punkte dahinter keinen Kontrast zu
    ihnen garantieren. Am unteren Rand steht „Powered by“ mit der TopLogic-Wortmarke in der Textfarbe. */
 
 .tl-login-backdrop {
@@ -11,8 +11,6 @@
   /* Oben der Inhalt, mittig im freien Platz; unten die Fußzeile. Reicht die Höhe nicht, wächst die erste Zeile
      über das Fenster hinaus und die Wurzel scrollt, die Fußzeile steht dann am Ende. */
   grid-template-rows: 1fr auto;
-  /* Die Spalte wächst nicht mit einem breiten Inhalt mit, sonst greift dessen max-width nicht. */
-  grid-template-columns: minmax(0, 1fr);
   place-items: center;
   overflow: hidden auto;
   padding: var(--tl-space-lg);
@@ -35,15 +33,8 @@
   flex-direction: column;
   align-items: center;
   gap: var(--tl-space-md);
-  max-width: 100%;
   /* Die Wurzel scrollt und schneidet auch seitlich: der Innenabstand lässt dem Fokusring Platz (focus-clip). */
   padding: calc(var(--tl-focus-width) + var(--tl-focus-offset));
-}
-
-/* Eine feste Breite (z. B. die Karte) gibt höchstens vor, wie breit es werden darf: auf dem Handy nie breiter als
-   das Fenster. */
-.tl-login-backdrop__content > * {
-  max-width: 100%;
 }
 
 .tl-login-backdrop__brand {

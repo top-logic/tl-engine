@@ -54,7 +54,7 @@ feine Textur; erst Hervorhebung und Welle heben sie in `--tl-surface-halftone-st
 |---|---|
 | `tl-login-backdrop` | immer; die Wurzel |
 | `tl-login-backdrop__canvas` | die Zeichenfläche, `aria-hidden="true"` |
-| `tl-login-backdrop__content` | der Inhalt über dem Raster; ist er höher als das Fenster, scrollt die Wurzel, nicht er; was darin steht, wird nie breiter als er |
+| `tl-login-backdrop__content` | der Inhalt über dem Raster; ist er höher als das Fenster, scrollt die Wurzel, nicht er |
 | `tl-login-backdrop__brand` | die Unterlage, nur mit Logo oder Name |
 | `tl-login-backdrop__logo` | das Logo in der Unterlage: das `img` eines Bildes, oder der `span` um die Glyphe (`tl-icon-lg`) eines Icons, mit `role="img"` und `aria-label` (ohne Text `aria-hidden`) |
 | `tl-login-backdrop__title` | das `h1` mit dem Namen der Anwendung, nur ohne Logo |

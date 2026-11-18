@@ -11,7 +11,7 @@ const has = (sel, d) => assert.ok(decl(sel).includes(d), `${sel} { ${d} } fehlt 
 test('Wurzel: Fläche mit Rand, Inhalt mittig', () => {
   // Reicht die Höhe nicht, scrollt die ganze Seite (Wurzel), kein Kasten darin; seitlich nie.
   for (const d of ['position: relative;', 'overflow: hidden auto;', 'display: grid;', 'place-items: center;',
-    'grid-template-rows: 1fr auto;', 'grid-template-columns: minmax(0, 1fr);',
+    'grid-template-rows: 1fr auto;',
     'background: var(--tl-surface-base);', 'padding: var(--tl-space-lg);']) has('.tl-login-backdrop', d);
 });
 
@@ -24,12 +24,10 @@ test('Zeichenfläche füllt die Wurzel und fängt keine Zeiger', () => {
   for (const d of ['position: absolute;', 'inset: 0;', 'width: 100%;', 'height: 100%;', 'pointer-events: none;']) has('.tl-login-backdrop__canvas', d);
 });
 
-test('Inhalt: Spalte, kein eigener Scrollbereich, nichts darin breiter als das Fenster', () => {
+test('Inhalt: Spalte, kein eigener Scrollbereich', () => {
   for (const d of ['position: relative;', 'display: flex;', 'flex-direction: column;', 'align-items: center;',
-    'gap: var(--tl-space-md);', 'max-width: 100%;']) has('.tl-login-backdrop__content', d);
+    'gap: var(--tl-space-md);']) has('.tl-login-backdrop__content', d);
   assert.ok(!/overflow|max-height/.test(decl('.tl-login-backdrop__content')), 'Inhalt scrollt nicht selbst');
-  // Eine feste Breite (Karte 420 px) wird auf dem Handy auf die Fensterbreite gekappt.
-  has('.tl-login-backdrop__content > *', 'max-width: 100%;');
   // Der Rand sitzt an der Wurzel; der Innenabstand des Inhalts ist nur Platz für den Fokusring (focus-clip).
   has('.tl-login-backdrop__content', 'padding: calc(var(--tl-focus-width) + var(--tl-focus-offset));');
 });

@@ -5,15 +5,13 @@
 	model (bound to the model channel by the opening command): the classifier name. The primary command
 	stores the form state, runs the ModelEditAction in CREATE_CLASSIFIER mode inside a transaction
 	(adding the classifier to the enumeration derived from the container channel), writes the new
-	classifier to the selection channel bound to the parent view, bumps the reload channel so the
-	diagram re-reads its module, and closes the dialog.
+	classifier to the selection channel bound to the parent view, and closes the dialog.
 -->
 <view>
 	<channels>
 		<channel name="model"/>
 		<channel name="selection"/>
 		<channel name="container"/>
-		<channel name="reload"/>
 	</channels>
 	<window
 		resizable="false"
@@ -56,11 +54,6 @@
 							</with-transaction>
 						</with-result>
 					</store-form-state>
-					<execute-script function="now()">
-						<with-result>
-							<write-channel name="reload"/>
-						</with-result>
-					</execute-script>
 					<close-dialog/>
 				</generic-command>
 			</commands>

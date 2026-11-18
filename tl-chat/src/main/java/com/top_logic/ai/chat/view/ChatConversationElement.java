@@ -50,8 +50,8 @@ import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.tl.ai.core.agent.AgentRuntimeService.AllAgentNameOptions;
-import com.top_logic.tl.ai.core.tools.parameters.DeclaredParameters;
+import com.top_logic.ai.core.agent.AgentRuntimeService.AllAgentNameOptions;
+import com.top_logic.ai.core.tools.parameters.DeclaredParameters;
 
 /**
  * Declarative {@code <chat-conversation/>} element: the transcript and the prompt field as one view
@@ -982,7 +982,7 @@ public class ChatConversationElement implements UIElement {
 		 * tooltip and image expressions see each parameter as argument of its name, e.g.
 		 * {@code $tab}. A parameter holding a model object has the type
 		 * {@code com.top_logic.model.TLObject}, the format
-		 * {@code com.top_logic.tl.ai.core.tools.model.AgentObjectFormat} and the model type in
+		 * {@code com.top_logic.ai.core.tools.model.AgentObjectFormat} and the model type in
 		 * {@code <object-type>}: the agent passes the id of the object, which is read with the
 		 * rights of the user. A click on a button of the same command has no values for the
 		 * parameters; there, they are {@code null}.

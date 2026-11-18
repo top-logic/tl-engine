@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.view.element;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -58,7 +59,16 @@ import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.NumberDisplay;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
+import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.layout.image.gallery.GalleryImage;
+import com.top_logic.layout.image.gallery.TransientGalleryImage;
+import com.top_logic.layout.react.control.form.ImageValues;
+import com.top_logic.layout.react.control.upload.UploadSupport;
+import com.top_logic.layout.react.field.GalleryFieldControlProvider;
+import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.form.ReactImageFieldControl;
 import com.top_logic.layout.react.control.form.ReactSliderControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.identity.ProjectionMode;
@@ -106,6 +116,8 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.annotate.ui.BinaryDisplay;
+import com.top_logic.model.annotate.ui.BinaryDisplay.BinaryPresentation;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
 import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ClassificationDisplay.ClassificationPresentation;
@@ -313,6 +325,9 @@ public class TestValueInputElement extends TestCase {
 
 	/** The enumeration the choice inputs of the test view choose from, part of the application model. */
 	private static final String CHANGE_TYPE = "tl.changelog:ChangeType";
+
+	/** The datatype of a file, part of the application model. */
+	private static final String BINARY_TYPE = "tl.core:Binary";
 
 	/** The channel the choice inputs of the test view write to. */
 	private static final String CHANGE = "change";
@@ -1239,6 +1254,116 @@ public class TestValueInputElement extends TestCase {
 			SelectDisplay.RADIO,
 			select(service.createFieldControl(_context, status, declared, spec, field,
 				selectDisplay(SelectDisplay.RADIO))).getDisplay());
+	}
+
+	/**
+	 * A binary value whose input asks for an image drop field is edited in an image field, holding
+	 * one image or several as the input states; without that annotation it is a file field.
+	 */
+	public void testAnImageDropFieldOfTheInputEditsImages() {
+		TLType binary = TLModelUtil.findType(BINARY_TYPE);
+		FieldControlService service = controlService();
+
+		ValueInputElement.Config plain = TypedConfiguration.newConfigItem(ValueInputElement.Config.class);
+		AbstractFieldModel file = new AbstractFieldModel(null);
+		assertEquals("Without an annotation, a single file is edited in a file field.",
+			ReactBinaryFieldControl.class,
+			service.createFieldControl(_context, binary, plain,
+				FieldControlService.fieldSpec(binary, plain, LABEL, false, file), file, null).getClass());
+
+		ValueInputElement.Config declared = TypedConfiguration.newConfigItem(ValueInputElement.Config.class);
+		declared.getAnnotations().add(BinaryDisplay.display(BinaryPresentation.IMAGE_UPLOAD));
+
+		AbstractFieldModel single = new AbstractFieldModel(null);
+		ReactControl image = service.createFieldControl(_context, binary, declared,
+			FieldControlService.fieldSpec(binary, declared, LABEL, false, single), single, null);
+		assertEquals(ReactImageFieldControl.class, image.getClass());
+		assertFalse(((ReactImageFieldControl) image).isMultiple());
+
+		AbstractFieldModel several = new AbstractFieldModel(List.of());
+		ReactControl images = service.createFieldControl(_context, binary, declared,
+			FieldControlService.fieldSpec(binary, declared, LABEL, true, several), several, null);
+		assertEquals(ReactImageFieldControl.class, images.getClass());
+		assertTrue(((ReactImageFieldControl) images).isMultiple());
+	}
+
+	/**
+	 * The images of a gallery are edited in an image field, as an attribute and as an input of the
+	 * gallery type alike: a preview per image, an uploaded file becoming a gallery image.
+	 */
+	public void testAGalleryIsEditedInAnImageField() {
+		TLType gallery = TLModelUtil.findType(GalleryFieldControlProvider.GALLERY_IMAGE_TYPE);
+		BinaryData file = BinaryDataFactory.createBinaryData("a".getBytes(StandardCharsets.UTF_8), "image/png", "a.png");
+
+		TLStructuredTypePart part = _model.addClassProperty(_row, "gallery", gallery);
+		part.setMultiple(true);
+		part.setOrdered(true);
+		AbstractFieldModel images = new AbstractFieldModel(List.of(new TransientGalleryImage(file)));
+		ReactControl attribute = FieldControlService.getInstance().createFieldControl(_context, part, images);
+		assertEquals(ReactImageFieldControl.class, attribute.getClass());
+		ReactImageFieldControl field = (ReactImageFieldControl) attribute;
+		assertTrue(field.isMultiple());
+		assertTrue("The images of an ordered gallery are arranged by the user.", field.isOrdered());
+		assertEquals("A gallery offers images.",
+			GalleryFieldControlProvider.IMAGE_TYPES, attribute.scriptingScalarState().get(UploadSupport.ACCEPT));
+		assertSame("The preview is the image of the gallery image.", file, field.getDownloadData("0"));
+
+		ValueInputElement.Config declared = TypedConfiguration.newConfigItem(ValueInputElement.Config.class);
+		AbstractFieldModel several = new AbstractFieldModel(List.of());
+		ReactControl input = FieldControlService.getInstance().createFieldControl(_context, gallery, declared,
+			FieldControlService.fieldSpec(gallery, declared, LABEL, true, several).setOrdered(true), several, null);
+		assertEquals(ReactImageFieldControl.class, input.getClass());
+		assertTrue(((ReactImageFieldControl) input).isMultiple());
+	}
+
+	/**
+	 * Only a gallery - several images in an order of their own - is edited in an image field: a
+	 * single gallery image and a set of them without order are references to existing images, as
+	 * their storage keeps them, and are chosen from options.
+	 */
+	public void testOnlyAGalleryIsEditedInAnImageField() {
+		TLType gallery = TLModelUtil.findType(GalleryFieldControlProvider.GALLERY_IMAGE_TYPE);
+		FieldControlService service = FieldControlService.getInstance();
+
+		TLStructuredTypePart ordered = _model.addClassProperty(_row, "ordered", gallery);
+		ordered.setMultiple(true);
+		ordered.setOrdered(true);
+		assertEquals("A gallery is displayed by its images.",
+			ReactImageFieldControl.class, service.createDisplayControl(_context, ordered, List.of()).getClass());
+
+		TLStructuredTypePart single = _model.addClassProperty(_row, "single", gallery);
+		assertEquals("A single gallery image is a reference, displayed as an option.",
+			ReactDropdownSelectControl.class, service.createDisplayControl(_context, single, null).getClass());
+		assertFalse(service.createFieldControl(_context, single,
+			new AbstractFieldModel(null)) instanceof ReactImageFieldControl);
+
+		TLStructuredTypePart unordered = _model.addClassProperty(_row, "unordered", gallery);
+		unordered.setMultiple(true);
+		assertEquals("A set of gallery images is a reference, displayed as options.",
+			ReactDropdownSelectControl.class, service.createDisplayControl(_context, unordered, List.of()).getClass());
+		assertFalse(service.createFieldControl(_context, unordered,
+			new AbstractFieldModel(List.of())) instanceof ReactImageFieldControl);
+
+		ValueInputElement.Config declared = TypedConfiguration.newConfigItem(ValueInputElement.Config.class);
+		AbstractFieldModel several = new AbstractFieldModel(List.of());
+		assertFalse("An input of gallery images without order is no gallery.",
+			service.createFieldControl(_context, gallery, declared,
+				FieldControlService.fieldSpec(gallery, declared, LABEL, true, several), several,
+				null) instanceof ReactImageFieldControl);
+	}
+
+	/**
+	 * The gallery images a field holds are shown by their images, an uploaded file becomes a gallery
+	 * image of its own.
+	 */
+	public void testGalleryImagesAreShownByTheirImages() {
+		BinaryData file = BinaryDataFactory.createBinaryData("a".getBytes(StandardCharsets.UTF_8), "image/png", "a.png");
+
+		assertSame(file, ImageValues.GALLERY.imageOf(new TransientGalleryImage(file)));
+		assertNull("A file is no gallery image.", ImageValues.GALLERY.imageOf(file));
+		Object created = ImageValues.GALLERY.valueOf(file);
+		assertTrue(created instanceof GalleryImage);
+		assertSame(file, ((GalleryImage) created).getImage());
 	}
 
 	/**

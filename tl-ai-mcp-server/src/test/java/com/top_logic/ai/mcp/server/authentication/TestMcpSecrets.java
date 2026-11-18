@@ -30,8 +30,8 @@ import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
-import com.top_logic.tl.ai.core.access.EndpointAuthentication;
-import com.top_logic.tl.ai.core.access.EndpointSecret;
+import com.top_logic.ai.core.access.EndpointAuthentication;
+import com.top_logic.ai.core.access.EndpointSecret;
 
 /**
  * Tests that the secrets the developer article {@code ai/security/mcp-endpoint} documents are read

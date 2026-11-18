@@ -16,16 +16,16 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.basic.Logger;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
-import com.top_logic.tl.ai.core.tools.ToolRegistry;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.core.tools.task.TaskStore;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.WindowScope;
-import com.top_logic.tl.ai.core.memory.ConversationMemory;
-import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.ai.core.memory.ConversationMemory;
+import com.top_logic.ai.core.message.TokenUsage;
+import com.top_logic.ai.core.tools.ToolRegistry;
+import com.top_logic.ai.core.tools.task.TaskStore;
 
 /**
  * Session-scoped storage for chat state and processing management.
@@ -374,7 +374,7 @@ public class TaskProgressTracker {
 	 * {@code false} for every tracker of a browser window, which is what the chat UI creates: there
 	 * is a person looking at it. It is set by an entry point that has no window at all - the
 	 * scheduler's {@code AgentTask} - and {@code ChatProcessor} carries it into the run's
-	 * {@link com.top_logic.tl.ai.core.agent.ToolContext#attended() tool context} and into its
+	 * {@link com.top_logic.ai.core.agent.ToolContext#attended() tool context} and into its
 	 * security context's background ceiling.
 	 * </p>
 	 *
@@ -531,7 +531,7 @@ public class TaskProgressTracker {
 
 	/**
 	 * Returns the conversation memory for this session, creating it on first access. The memory
-	 * uses a {@link com.top_logic.tl.ai.core.memory.TruncatingStrategy} to keep conversation
+	 * uses a {@link com.top_logic.ai.core.memory.TruncatingStrategy} to keep conversation
 	 * context within the configured token budget.
 	 */
 	public ConversationMemory getConversationMemory() {

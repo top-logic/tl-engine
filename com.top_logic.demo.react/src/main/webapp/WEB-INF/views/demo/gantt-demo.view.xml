@@ -221,11 +221,14 @@ e3 = reactFlowGanttEdge(model: "dep:docs->approved", sourceModel: "task:docs", s
    source row instead of crossing the items of the row in between. */
 e4 = reactFlowGanttEdge(model: "dep:docs->launch", sourceModel: "task:docs", sourceEndpoint: "END", targetModel: "task:launch", targetEndpoint: "START",
 	strokeRole: "category-3", strokeWidth: 1.5, targetSymbol: "filledArrow");
+/* A strict dependency: dragging "QA" stops at the end of "Build", dragging "Build" stops at the start of "QA". */
+e5 = reactFlowGanttEdge(model: "dep:build->qa", sourceModel: "task:build", sourceEndpoint: "END", targetModel: "task:qa", targetEndpoint: "START", enforce: "STRICT",
+	strokeColor: "#808080", targetSymbol: "filledArrow");
 
 /* Edges of the items in the sub-rows of "Implementation", hidden while the phase is collapsed. */
-e5 = reactFlowGanttEdge(model: "dep:api->ui", sourceModel: "task:api", sourceEndpoint: "END", targetModel: "task:ui", targetEndpoint: "START",
+e6 = reactFlowGanttEdge(model: "dep:api->ui", sourceModel: "task:api", sourceEndpoint: "END", targetModel: "task:ui", targetEndpoint: "START",
 	targetSymbol: "filledArrow");
-e6 = reactFlowGanttEdge(model: "dep:ui->qa", sourceModel: "task:ui", sourceEndpoint: "END", targetModel: "task:qa", targetEndpoint: "START",
+e7 = reactFlowGanttEdge(model: "dep:ui->qa", sourceModel: "task:ui", sourceEndpoint: "END", targetModel: "task:qa", targetEndpoint: "START",
 	targetSymbol: "filledArrow");
 
 /* === Decorations === */
@@ -246,7 +249,7 @@ freeze = reactFlowGanttRangeDeco(model: "freeze", from: 20513, to: 20520, colorR
 reactFlowGantt(
 	rootRows:    list($r_axis1, $r_axis2, $r_markers, $r_design, $r_impl, $r_test, $r_deploy, $r_docs, $r_review, $r_launch, $r_maint),
 	items:       concat($yearSpans, $monthYearSpans, $monthSpans, $daySpans, list($freezeLabel, $spec, $build, $api, $ui, $beta, $qa, $fixed_row, $no_resize, $deploy_item, $docs_item, $review_item, $launch_item, $maint_item, $docs_approved, $docs_anchor)),
-	edges:       list($e1, $e2, $e3, $e4, $e5, $e6),
+	edges:       list($e1, $e2, $e3, $e4, $e5, $e6, $e7),
 	decorations: list($gl_feb, $gl_mar, $gl_apr, $gl_may, $freeze, $today),
 	rangeMin:    $rangeMin,
 	rangeMax:    $rangeMax,

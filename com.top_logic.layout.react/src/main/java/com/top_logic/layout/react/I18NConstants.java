@@ -312,6 +312,96 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_FILE_CHIPS_REMOVE;
 
 	/**
+	 * @en Upload image
+	 */
+	@CustomKey("js.imageField.upload")
+	public static ResKey JS_IMAGE_FIELD_UPLOAD;
+
+	/**
+	 * @en Add image
+	 */
+	@CustomKey("js.imageField.add")
+	public static ResKey JS_IMAGE_FIELD_ADD;
+
+	/**
+	 * @en Replace
+	 */
+	@CustomKey("js.imageField.replaceShown")
+	public static ResKey JS_IMAGE_FIELD_REPLACE_SHOWN;
+
+	/**
+	 * @en Remove
+	 */
+	@CustomKey("js.imageField.removeShown")
+	public static ResKey JS_IMAGE_FIELD_REMOVE_SHOWN;
+
+	/**
+	 * @en Manage images
+	 */
+	@CustomKey("js.imageField.manage")
+	public static ResKey JS_IMAGE_FIELD_MANAGE;
+
+	/**
+	 * @en Images ({0})
+	 */
+	@CustomKey("js.imageField.editorTitle")
+	public static ResKey JS_IMAGE_FIELD_EDITOR_TITLE;
+
+	/**
+	 * @en Replace {0}
+	 */
+	@CustomKey("js.imageField.replace")
+	public static ResKey JS_IMAGE_FIELD_REPLACE;
+
+	/**
+	 * @en Remove {0}
+	 */
+	@CustomKey("js.imageField.remove")
+	public static ResKey JS_IMAGE_FIELD_REMOVE;
+
+	/**
+	 * @en Previous image
+	 */
+	@CustomKey("js.imageField.previous")
+	public static ResKey JS_IMAGE_FIELD_PREVIOUS;
+
+	/**
+	 * @en Next image
+	 */
+	@CustomKey("js.imageField.next")
+	public static ResKey JS_IMAGE_FIELD_NEXT;
+
+	/**
+	 * @en {0} of {1}
+	 */
+	@CustomKey("js.imageField.counter")
+	public static ResKey JS_IMAGE_FIELD_COUNTER;
+
+	/**
+	 * @en Show {0} full page
+	 */
+	@CustomKey("js.imageField.open")
+	public static ResKey JS_IMAGE_FIELD_OPEN;
+
+	/**
+	 * @en Show {0}
+	 */
+	@CustomKey("js.imageField.show")
+	public static ResKey JS_IMAGE_FIELD_SHOW;
+
+	/**
+	 * @en Done
+	 */
+	@CustomKey("js.imageField.done")
+	public static ResKey JS_IMAGE_FIELD_DONE;
+
+	/**
+	 * @en Close
+	 */
+	@CustomKey("js.imageField.close")
+	public static ResKey JS_IMAGE_FIELD_CLOSE;
+
+	/**
 	 * @en Open camera
 	 */
 	@CustomKey("js.photoCapture.open")
@@ -556,6 +646,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.textInput.copy")
 	public static ResKey JS_TEXT_INPUT_COPY;
+
+	/**
+	 * @en Powered by
+	 */
+	@CustomKey("js.loginBackdrop.poweredBy")
+	public static ResKey JS_LOGIN_BACKDROP_POWERED_BY;
 
 	/**
 	 * @en Copied

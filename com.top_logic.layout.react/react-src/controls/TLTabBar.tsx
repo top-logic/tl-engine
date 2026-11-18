@@ -1,4 +1,6 @@
-import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier, rootClassName, ThemeIcon, useTabList, TabStrip } from 'tl-react-bridge';
+import {
+  React, useTLState, useTLCommand, TLChild, useFill, FillBarrier, rootClassName, ThemeIcon, useTabList, TabStrip, StateBadge,
+} from 'tl-react-bridge';
 import type { TLCellProps, TabBarStateJson } from 'tl-react-bridge';
 
 /** A tab as the server describes it, always with its ID and label. */
@@ -14,6 +16,9 @@ const { useCallback } = React;
  * bounded by that (tl-region) and ends the fill chain: it stretches a content of its own size to its
  * height, and a filling control inside a tab resolves its height against the region and scrolls
  * internally.
+ *
+ * The badge of a tab is drawn through the part `Badge` after its label, as text of the tab read with
+ * the label; a dot is an image named by the label of the badge.
  *
  * Keyboard: roving tabindex - only the selected tab is in the tab order. The arrow keys, Home and
  * End move the focus and select the tab reached in one step, through the same command a click
@@ -51,6 +56,8 @@ const TLTabBar: React.FC<TLCellProps> = ({ controlId }) => {
           >
             {tab.icon && <ThemeIcon encoded={tab.icon} className="tl-icon-sm" />}
             <span>{tab.label}</span>
+            {/* The space separates label and count in the accessible name; the flex layout does not draw it. */}
+            {tab.badge && <>{' '}<StateBadge badge={tab.badge} alone={false} /></>}
           </button>
         ))}
       </TabStrip>

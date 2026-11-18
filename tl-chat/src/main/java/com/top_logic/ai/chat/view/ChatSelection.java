@@ -13,9 +13,9 @@ import java.util.function.Function;
 import com.top_logic.basic.Logger;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.security.ReadFilter;
-import com.top_logic.tl.ai.core.tools.present.PresentAs;
-import com.top_logic.tl.ai.core.tools.present.Presentation;
+import com.top_logic.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.tools.present.PresentAs;
+import com.top_logic.ai.core.tools.present.Presentation;
 
 /**
  * How a page's current selection is stated to the agent.

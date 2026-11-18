@@ -26,7 +26,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.visit.LabelVisitor;
-import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.security.ReadFilter;
 import com.top_logic.util.Resources;
 
 import io.modelcontextprotocol.server.McpServerFeatures;

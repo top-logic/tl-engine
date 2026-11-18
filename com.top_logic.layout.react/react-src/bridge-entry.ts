@@ -53,6 +53,8 @@ export type { MenuProps } from './bridge/menu';
 export { ButtonDefaults, useButtonDefaults, menuItemProps } from './bridge/button-defaults';
 export type { ButtonAppearance, ButtonDefaultsValue } from './bridge/button-defaults';
 export { registerPart, replacePart, usePart, buttonPartAttributes, buttonLinkAttributes } from './bridge/parts';
+export { badgePartProps, badgeName, labelWithBadge } from './bridge/parts';
+export { StateBadge } from './bridge/StateBadge';
 export type {
   PartProps,
   PartName,
@@ -140,6 +142,7 @@ export type {
   FieldStateJson,
   TypingFieldStateJson,
   ChildControlJson,
+  BadgeJson,
   ButtonStateJson,
   ToggleButtonStateJson,
   CheckboxStateJson,
@@ -193,7 +196,7 @@ export type { FillHost } from './bridge/fill';
 export { default as TLChild } from './bridge/TLChild';
 export { ThemeIcon } from './bridge/ThemeIcon';
 export type { ChildDescriptor } from './bridge/TLChild';
-export { useChildStates, useChildCommand } from './bridge/child-states';
+export { useChildContexts, useChildStates, useChildCommand } from './bridge/child-states';
 export { useFloatingFrame, FloatingFrame, FloatingRail, useFloatingAnchor, FLOATING_RAIL_CLASS } from './bridge/floating-anchor';
 export type { FloatingEdge, FloatingFrameHost, FloatingAnchor } from './bridge/floating-anchor';
 export { registerTransientOverlay, useTransientOverlay, useTransientOverlayRects, clearance, useOverlayClearance } from './bridge/transient-overlay';

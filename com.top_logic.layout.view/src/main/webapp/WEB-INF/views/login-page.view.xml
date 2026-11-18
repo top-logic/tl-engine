@@ -10,8 +10,9 @@
 	is where the application itself takes over - and the address the visitor asked for is still the
 	one the browser shows.
 	
-	Without a display to go back to there is no Cancel action: the page is the whole display. The card
-	stands in the middle of the window: the stack takes the height of the page and centers it.
+	Without a display to go back to there is no Cancel action: the page is the whole display. The
+	backdrop fills the window and centers the card in front of the halftone grid in the brand color of
+	the theme, with the title of the application above it and "Powered by TopLogic" at the bottom.
 -->
 <view>
 	<channels>
@@ -20,28 +21,22 @@
 			expr="new(`tl.login:Credentials`, transient: true)"
 		/>
 	</channels>
-	<inset>
-		<stack
-			align="center"
-			fill="true"
-			justify="center"
+	<login-backdrop>
+		<panel
+			appearance="card"
+			css-class="tl-login-card"
+			width="420px"
 		>
-			<panel
-				appearance="card"
-				css-class="tl-login-card"
-				width="420px"
-			>
-				<title>
-					<en>Login</en>
-					<de>Anmeldung</de>
-				</title>
-				<view-ref view="login-form.view.xml">
-					<bind
-						channel="model"
-						to="model"
-					/>
-				</view-ref>
-			</panel>
-		</stack>
-	</inset>
+			<title>
+				<en>Login</en>
+				<de>Anmeldung</de>
+			</title>
+			<view-ref view="login-form.view.xml">
+				<bind
+					channel="model"
+					to="model"
+				/>
+			</view-ref>
+		</panel>
+	</login-backdrop>
 </view>

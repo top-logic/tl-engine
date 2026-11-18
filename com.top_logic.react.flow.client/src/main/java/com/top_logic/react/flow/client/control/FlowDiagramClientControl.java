@@ -51,6 +51,7 @@ import de.haumacher.msgbuf.observer.Observable;
 import elemental2.core.JsArray;
 import elemental2.core.JsMath;
 import elemental2.core.JsNumber;
+import elemental2.dom.CSSStyleDeclaration;
 import elemental2.dom.DomGlobal;
 import elemental2.dom.DragEvent;
 import elemental2.dom.Element;
@@ -66,6 +67,7 @@ import elemental2.dom.PointerEvent;
 import elemental2.dom.ResizeObserver;
 import elemental2.dom.ResizeObserverCallback;
 import elemental2.dom.ResizeObserverEntry;
+import elemental2.dom.ViewCSS;
 import elemental2.dom.WheelEvent;
 import jsinterop.annotations.JsMethod;
 import jsinterop.annotations.JsType;
@@ -141,6 +143,14 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	/** CSS class hiding the {@link #ZOOM_DISPLAY_CSS_CLASS zoom display}. */
 	private static final String INVISIBLE_CSS_CLASS = "invisible";
+
+	/** CSS property whose computed value of the page root is the length of a wheel line step. */
+	private static final String FONT_SIZE_PROPERTY = "font-size";
+
+	/**
+	 * Length of a wheel line step in pixels, if the font size of the page cannot be determined.
+	 */
+	private static final double DEFAULT_LINE_HEIGHT = 16;
 
 	private class Scope extends DefaultScope {
 
@@ -666,12 +676,12 @@ public class FlowDiagramClientControl implements DiagramContext {
 					}
 					zoomSVG(factor, event.offsetX, event.offsetY, true);
 				} else if (event.shiftKey) {
-					double scrollFactor = getWheelScrollFactor(evt);
+					double scrollFactor = getWheelScrollFactor(event);
 					double deltaX = event.deltaY * scrollFactor;
 					double deltaY = event.deltaX * scrollFactor;
 					panSVG(deltaX, deltaY, false);
 				} else {
-					int scrollFactor = getWheelScrollFactor(evt);
+					double scrollFactor = getWheelScrollFactor(event);
 					double deltaX = event.deltaX * scrollFactor;
 					double deltaY = event.deltaY * scrollFactor;
 					panSVG(deltaX, deltaY, false);
@@ -1238,13 +1248,39 @@ public class FlowDiagramClientControl implements DiagramContext {
 			: (2 - fract) / JsMath.pow(2, level);
 	}
 
-	private native int getWheelScrollFactor(Event event) /*-{
-		if ($wnd.BAL && $wnd.BAL.getWheelScrollFactor) {
-			return $wnd.BAL.getWheelScrollFactor(event);
+	/**
+	 * The number of pixels a single delta unit of the given wheel event stands for.
+	 *
+	 * <p>
+	 * Pixel steps ({@link WheelEvent#DOM_DELTA_PIXEL}) count as delivered, a line step
+	 * ({@link WheelEvent#DOM_DELTA_LINE}) is the font size of the page, and a page step
+	 * ({@link WheelEvent#DOM_DELTA_PAGE}) is the visible height of the diagram.
+	 * </p>
+	 */
+	private double getWheelScrollFactor(WheelEvent event) {
+		int deltaMode = event.deltaMode;
+		if (deltaMode == WheelEvent.DOM_DELTA_LINE) {
+			return getLineHeight();
+		} else if (deltaMode == WheelEvent.DOM_DELTA_PAGE) {
+			return _control.clientHeight;
+		} else {
+			return 1;
 		}
-		// Fallback: pixel-based scrolling factor.
-		return 1;
-	}-*/;
+	}
+
+	/**
+	 * The computed font size of the page root in pixels, the length of a wheel line step.
+	 */
+	private static double getLineHeight() {
+		ViewCSS view = Js.uncheckedCast(DomGlobal.window);
+		CSSStyleDeclaration style = view.getComputedStyle(DomGlobal.document.documentElement);
+		String fontSize = style == null ? null : style.getPropertyValue(FONT_SIZE_PROPERTY);
+		if (fontSize == null || fontSize.isEmpty()) {
+			return DEFAULT_LINE_HEIGHT;
+		}
+		double size = JsNumber.parseFloat(fontSize);
+		return JsNumber.isFinite(size) && size > 0 ? size : DEFAULT_LINE_HEIGHT;
+	}
 
 	/**
 	 * Pans the displayed section of the SVG by changing the viewbox.

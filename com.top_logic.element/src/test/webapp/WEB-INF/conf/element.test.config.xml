@@ -294,6 +294,15 @@
 								<step attribute="TestDiscoverForm:Target#owner"/>
 							</path>
 						</rule>
+						<!-- Role source of TestLocalTypeSecurity: the owner is responsible for a holder. -->
+						<rule id="TestLocalTypeSecurity_holder"
+							meta-element="TestLocalTypeSecurity:Holder"
+							role="TestLocalTypeSecurity.Responsible"
+						>
+							<path>
+								<step attribute="TestLocalTypeSecurity:Holder#owner"/>
+							</path>
+						</rule>
 					</rules>
 				</role-rules>
 
@@ -559,6 +568,31 @@
 					<class name="TestSecurityCoverageInternal:MarkedInModule"
 						internal="true"
 					/>
+					<class name="TestLocalTypeSecurity:Holder">
+						<grant
+							operation="Read"
+							roles="TestLocalTypeSecurity.Responsible"
+						/>
+						<grant
+							operation="Write"
+							roles="TestLocalTypeSecurity.Responsible"
+						/>
+					</class>
+					<class name="TestLocalTypeSecurity:Free"
+						without-security="true"
+					/>
+					<class name="TestLocalTypeSecurity:Granted">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestLocalTypeSecurity.Responsible"
+						/>
+						<!-- Not passed on to the specializations. -->
+						<grant
+							operation="Write"
+							roles="TestLocalTypeSecurity.Responsible"
+						/>
+					</class>
 					<module name="TestDiscoverForm">
 						<grant
 							inherit="true"
@@ -610,6 +644,7 @@
 					<role name="TestSecurityCoverage.SelfCreator"/>
 					<role name="TestSecurityCoverage.ItemCreator"/>
 					<role name="TestDiscoverForm.Editor"/>
+					<role name="TestLocalTypeSecurity.Responsible"/>
 				</roles>
 			</instance>
 		</config>
@@ -627,6 +662,7 @@
 					<declaration file="/WEB-INF/model/TestSecurityCoverage.model.xml"/>
 					<declaration file="/WEB-INF/model/TestPathNavigation.model.xml"/>
 					<declaration file="/WEB-INF/model/TestDiscoverForm.model.xml"/>
+					<declaration file="/WEB-INF/model/TestLocalTypeSecurity.model.xml"/>
 				</declarations>
 				<settings>
 					<module name="TestXMLInstanceImporter"

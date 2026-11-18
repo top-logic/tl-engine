@@ -17,16 +17,16 @@ Depend on `tl-ai-index`, switch the module on and configure the types:
 <config service-class="com.top_logic.basic.module.ModuleSystem">
 	<instance>
 		<modules>
-			<module key="com.top_logic.tl.ai.index.AiIndexService$Module" value="true"/>
+			<module key="com.top_logic.ai.index.AiIndexService$Module" value="true"/>
 		</modules>
 	</instance>
 </config>
 
-<config service-class="com.top_logic.tl.ai.index.AiIndexService">
-	<instance class="com.top_logic.tl.ai.index.AiIndexService"
+<config service-class="com.top_logic.ai.index.AiIndexService">
+	<instance class="com.top_logic.ai.index.AiIndexService"
 		readable-scopes="all(`my:Project`)"
 	>
-		<embedder class="com.top_logic.tl.ai.index.embed.OpenAiCompatibleEmbedder"
+		<embedder class="com.top_logic.ai.index.embed.OpenAiCompatibleEmbedder"
 			base-url="https://embed.example.eu"
 			model="Snowflake/snowflake-arctic-embed-m-v2.0"
 			dimensions="768"
@@ -93,7 +93,7 @@ until it is complete the old one serves with words only.
 ### The in-process model
 
 ```xml
-<embedder class="com.top_logic.tl.ai.index.onnx.OnnxEmbedder"
+<embedder class="com.top_logic.ai.index.onnx.OnnxEmbedder"
 	model-dir="%VAR_PATH%/models/snowflake-arctic-embed-m-v2.0"
 	model-file="model_int8.onnx"
 	pooling="CLS"

@@ -1944,6 +1944,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * someone chose. A row type declaring no main properties shows all of its non-hidden attributes.
 	 * </p>
 	 *
+	 * <p>
+	 * A table that would have no column at all - one declaring nothing over rows of a type without
+	 * attributes - shows the rows themselves in the {@link ColumnDeclarations#objectColumn(TLStructuredType)
+	 * object column}.
+	 * </p>
+	 *
 	 * @param types
 	 *        The {@link #types(Object[]) types} of the rows for this build of the table.
 	 * @param rowType
@@ -1957,8 +1963,11 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		List<ColumnDeclaration> result = new ArrayList<>(displayed);
 		result.addAll(offeredColumns(displayedNames, types, rowType));
 		if (result.isEmpty()) {
-			throw new IllegalStateException(
-				"A table requires either explicit <column>s or a resolvable row type to derive them from.");
+			if (rowType == null) {
+				throw new IllegalStateException(
+					"A table requires either explicit <column>s or a resolvable row type to derive them from.");
+			}
+			return List.of(ColumnDeclarations.objectColumn(rowType));
 		}
 		return result;
 	}

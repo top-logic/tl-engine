@@ -22,7 +22,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 

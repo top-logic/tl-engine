@@ -10,12 +10,14 @@ const TOKENS = JSON.parse(readFileSync(new URL('../src/tokens.json', import.meta
 const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 const tokensOf = (css) => new Set([...stripComments(css).matchAll(/var\(\s*(--tl-[a-z0-9-]+)/g)].map((m) => m[1]));
 
-/** Muster für ein per Rolle erzeugtes Token: `category-<n>-subtle`, `status-<s>-border`, `text-on-category-<n>`.
+/** Muster für ein per Rolle erzeugtes Token: `category-<n>-subtle`, `status-<s>-border`, `text-on-category-<n>`,
+    `text-on-status-<s>`.
     Ein Token ohne Muster (die Rolle `brand`: `surface-brand-subtle`, `border-interactive`) steht wörtlich. */
 function rolePattern(token) {
   let m;
   if ((m = /^--tl-category-\d+-([a-z-]+)$/.exec(token))) return `category-<n>-${m[1]}`;
   if ((m = /^--tl-text-on-category-\d+$/.exec(token))) return 'text-on-category-<n>';
+  if ((m = /^--tl-text-on-status-(?:error|warning|success|info)$/.exec(token))) return 'text-on-status-<s>';
   if ((m = /^--tl-status-(?:error|warning|success|info)-([a-z-]+)$/.exec(token))) return `status-<s>-${m[1]}`;
   return null;
 }

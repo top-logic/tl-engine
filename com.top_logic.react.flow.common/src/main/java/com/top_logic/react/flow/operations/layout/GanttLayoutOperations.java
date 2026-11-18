@@ -17,6 +17,7 @@ import com.top_logic.react.flow.data.DropArea;
 import com.top_logic.react.flow.data.GanttDecoration;
 import com.top_logic.react.flow.data.GanttEdge;
 import com.top_logic.react.flow.data.GanttEndpoint;
+import com.top_logic.react.flow.data.GanttEnforce;
 import com.top_logic.react.flow.data.GanttItem;
 import com.top_logic.react.flow.data.GanttLayout;
 import com.top_logic.react.flow.data.GanttLineDecoration;
@@ -1420,6 +1421,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	/**
 	 * The path and style of a dependency edge.
 	 *
+	 * @param edge
+	 *        The dependency edge this route draws.
 	 * @param sx
 	 *        X coordinate of the source endpoint.
 	 * @param sy
@@ -1440,6 +1443,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	 *        The fixed color of the edge, or the substitute color of its role.
 	 * @param role
 	 *        The color role of the edge, {@code null} for an edge in a fixed color.
+	 * @param strokeWidth
+	 *        The width of the line, the width for a violated dependency while it is violated.
+	 * @param dashes
+	 *        The dash pattern of the line, the pattern for a violated dependency while it is
+	 *        violated; empty or {@code null} for a solid line.
 	 * @param violated
 	 *        Whether the dependency of the edge is violated.
 	 * @param horizontal
@@ -1575,9 +1583,90 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	 */
 	private static boolean isConstraintViolated(GanttItem source, GanttEndpoint sourceEnd,
 			GanttItem target, GanttEndpoint targetEnd) {
-		double sourcePos = endpointX(source, sourceEnd);
-		double targetPos = endpointX(target, targetEnd);
-		return sourcePos > targetPos;
+		return endpointPosition(source, sourceEnd) > endpointPosition(target, targetEnd);
+	}
+
+	/**
+	 * The position (in the time dimension, in position units) of the given endpoint of an item.
+	 *
+	 * <p>
+	 * A {@link GanttSpan} starts at {@link GanttSpan#getStart()} and ends at
+	 * {@link GanttSpan#getEnd()}, both endpoints of a {@link GanttPoint} are at
+	 * {@link GanttPoint#getAt()}.
+	 * </p>
+	 */
+	private static double endpointPosition(GanttItem item, GanttEndpoint endpoint) {
+		if (item instanceof GanttSpan span) {
+			return endpoint == GanttEndpoint.START ? span.getStart() : span.getEnd();
+		} else if (item instanceof GanttPoint pt) {
+			return pt.getAt();
+		}
+		throw new IllegalArgumentException("Unsupported Gantt item: " + item);
+	}
+
+	/**
+	 * The range of shifts of endpoints of the given item that violate none of its
+	 * {@link GanttEnforce#STRICT} dependencies.
+	 *
+	 * <p>
+	 * Each {@link GanttEdge} with {@link GanttEnforce#STRICT} enforcement requires the position of
+	 * its source endpoint to be less than or equal to the position of its target endpoint (see
+	 * {@link #endpointPosition(GanttItem, GanttEndpoint)}). The endpoints of the other items stay
+	 * where they are. An edge between two endpoints of the same item does not limit a shift.
+	 * </p>
+	 *
+	 * @param item
+	 *        The dragged item.
+	 * @param shifted
+	 *        The endpoint that is shifted, or {@code null} if both endpoints are shifted (a
+	 *        move).
+	 * @return The smallest and the largest allowed shift in position units, unbounded sides are
+	 *         infinite. If the smallest is greater than the largest, the strict dependencies of the
+	 *         item contradict each other (the current positions already violate one of them).
+	 */
+	private static double[] strictShiftRange(GanttLayout self, GanttItem item, GanttEndpoint shifted) {
+		double minShift = Double.NEGATIVE_INFINITY;
+		double maxShift = Double.POSITIVE_INFINITY;
+		List<GanttEdge> edges = self.getEdges();
+		if (edges != null && !edges.isEmpty()) {
+			String itemId = item.getId();
+			Map<String, GanttItem> itemById = null;
+			for (GanttEdge edge : edges) {
+				if (edge.getEnforce() != GanttEnforce.STRICT) {
+					continue;
+				}
+				boolean isSource = itemId.equals(edge.getSourceItemId());
+				boolean isTarget = itemId.equals(edge.getTargetItemId());
+				if (isSource == isTarget) {
+					// Not involved, or an edge between two endpoints of the item itself.
+					continue;
+				}
+				GanttEndpoint ownEndpoint = isSource ? edge.getSourceEndpoint() : edge.getTargetEndpoint();
+				if (shifted != null && ownEndpoint != shifted) {
+					continue;
+				}
+				if (itemById == null) {
+					itemById = new HashMap<>();
+					for (GanttItem other : self.getItems()) {
+						itemById.put(other.getId(), other);
+					}
+				}
+				GanttItem other = itemById.get(isSource ? edge.getTargetItemId() : edge.getSourceItemId());
+				if (other == null) {
+					continue;
+				}
+				GanttEndpoint otherEndpoint = isSource ? edge.getTargetEndpoint() : edge.getSourceEndpoint();
+				double distance = endpointPosition(other, otherEndpoint) - endpointPosition(item, ownEndpoint);
+				if (isSource) {
+					// The own endpoint must not pass the successor's endpoint.
+					maxShift = Math.min(maxShift, distance);
+				} else {
+					// The own endpoint must not pass the predecessor's endpoint.
+					minShift = Math.max(minShift, distance);
+				}
+			}
+		}
+		return new double[] { minShift, maxShift };
 	}
 
 	// -----------------------------------------------------------------------
@@ -1689,6 +1778,24 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		return areas;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * An item that may move in time snaps to {@link GanttLayout#getSnapTo()} and stays within the
+	 * chart. Afterwards, it stops exactly at the endpoint of each {@link GanttEnforce#STRICT}
+	 * dependency it takes part in: as successor not before the endpoint of its predecessor, as
+	 * predecessor not after the endpoint of its successor (the stop position may lie off the snap
+	 * grid). With several strict dependencies, the strictest limit applies. Dependencies with
+	 * {@link GanttEnforce#NONE} do not limit the move. If the limits contradict each other (the
+	 * current positions already violate a strict dependency), the item keeps its position in time
+	 * and only the change of the row applies.
+	 * </p>
+	 *
+	 * <p>
+	 * The vertical position snaps to the nearest row the item may be dropped into.
+	 * </p>
+	 */
 	@Override
 	default double[] constrainMove(Box box, double proposedX, double proposedY) {
 		GanttLayout self = (GanttLayout) this;
@@ -1714,6 +1821,19 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			}
 			// Clamp to chart boundaries.
 			resultX = Math.max(chartX0, Math.min(chartX1 - box.getWidth(), resultX));
+
+			// Stop at the endpoints of strict dependencies.
+			if (item != null && zoom > 0) {
+				double[] range = strictShiftRange(self, item, null);
+				double minX = box.getX() + range[0] * zoom;
+				double maxX = box.getX() + range[1] * zoom;
+				if (minX > maxX) {
+					// Contradicting dependencies block the move in time.
+					resultX = box.getX();
+				} else {
+					resultX = Math.max(minX, Math.min(maxX, resultX));
+				}
+			}
 		}
 
 		// Compute snapped Y: snap to nearest valid row.
@@ -1754,9 +1874,23 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		return DEFAULT_ROW_PADDING;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The dragged edge snaps to {@link GanttLayout#getSnapTo()} and keeps a minimum width (one snap
+	 * unit, or one pixel without snapping). The moved endpoint stops exactly at the endpoint of each
+	 * {@link GanttEnforce#STRICT} dependency attached to it: as successor not before the endpoint of
+	 * its predecessor, as predecessor not after the endpoint of its successor. With several strict
+	 * dependencies, the strictest limit applies. Dependencies with {@link GanttEnforce#NONE} do not
+	 * limit the resize. If the limits (including the minimum width) contradict each other, the
+	 * resize is blocked and the edge keeps its current position.
+	 * </p>
+	 */
 	@Override
 	default double constrainResize(Box box, DragEdge edge, double proposedEdgePos) {
 		GanttLayout self = (GanttLayout) this;
+		GanttItem item = findItemByBox(self, box);
 		double zoom = self.getZoom();
 		double snap = self.getSnapTo();
 		double columnWidth = self.getColumnWidth();
@@ -1773,16 +1907,40 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 		double minWidth = snapPixels > 0 ? snapPixels : 1.0;
 
+		double edgeX;
+		double minX;
+		double maxX;
+		GanttEndpoint shifted;
 		switch (edge) {
 			case W:
 				// West edge: constrain so width >= minWidth.
-				return Math.min(snapped, box.getX() + box.getWidth() - minWidth);
+				edgeX = box.getX();
+				minX = Double.NEGATIVE_INFINITY;
+				maxX = box.getX() + box.getWidth() - minWidth;
+				shifted = GanttEndpoint.START;
+				break;
 			case E:
 				// East edge: constrain so width >= minWidth.
-				return Math.max(snapped, box.getX() + minWidth);
+				edgeX = box.getX() + box.getWidth();
+				minX = box.getX() + minWidth;
+				maxX = Double.POSITIVE_INFINITY;
+				shifted = GanttEndpoint.END;
+				break;
 			default:
 				return proposedEdgePos;
 		}
+
+		// Stop at the endpoints of strict dependencies.
+		if (item != null && zoom > 0) {
+			double[] range = strictShiftRange(self, item, shifted);
+			minX = Math.max(minX, edgeX + range[0] * zoom);
+			maxX = Math.min(maxX, edgeX + range[1] * zoom);
+		}
+		if (minX > maxX) {
+			// Contradicting limits block the resize.
+			return edgeX;
+		}
+		return Math.max(minX, Math.min(maxX, snapped));
 	}
 
 	@Override

@@ -18,8 +18,8 @@
 				</declarations>
 			</instance>
 		</config>
-		<config service-class="com.top_logic.tl.ai.core.screenshots.ScreenshotService">
-			<instance class="com.top_logic.tl.ai.core.screenshots.ScreenshotService"/>
+		<config service-class="com.top_logic.ai.core.screenshots.ScreenshotService">
+			<instance class="com.top_logic.ai.core.screenshots.ScreenshotService"/>
 		</config>
 	</services>
 </application>

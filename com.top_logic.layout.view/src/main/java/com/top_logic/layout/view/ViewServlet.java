@@ -23,7 +23,6 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.FaviconTag;
 import com.top_logic.layout.react.resource.ClientResources;
@@ -148,16 +147,6 @@ public class ViewServlet extends TopLogicServlet {
 	 * </p>
 	 */
 	public static final String BUSY_DELAY_ATTR = "data-busy-delay";
-
-	/**
-	 * The title of a page whose application has no {@link ViewConfig#getTitle() title}.
-	 *
-	 * <p>
-	 * The page is loaded with it and shows it while its display names no labeled route: the title
-	 * the display composes takes its place as soon as there is one.
-	 * </p>
-	 */
-	public static final String DEFAULT_TITLE = "TopLogic";
 
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -723,13 +712,6 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * The {@link ViewConfig#getTitle() title of the application}, or {@code null} if it has none.
-	 */
-	private static ResKey applicationTitle() {
-		return ApplicationConfig.getInstance().getConfig(ViewConfig.class).getTitle();
-	}
-
-	/**
 	 * Writes the {@link #BUSY_DELAY_ATTR} of the page body, while its begin tag is open.
 	 *
 	 * @param out
@@ -782,7 +764,7 @@ public class ViewServlet extends TopLogicServlet {
 			routeManager.adoptUrl(requestedRoute);
 		}
 
-		routeManager.setApplicationTitle(applicationTitle());
+		routeManager.setApplicationTitle(com.top_logic.layout.I18NConstants.APPLICATION_TITLE);
 		routeManager.setUrlChangeHandler((changedUrl, title, replace) -> {
 			RouteChangeEvent event = RouteChangeEvent.create()
 				.setUrl(changedUrl)
@@ -1145,9 +1127,7 @@ public class ViewServlet extends TopLogicServlet {
 		out.endBeginTag();
 		// The application title: the page title the display composes is sent once the route of the
 		// page is adopted.
-		ResKey applicationTitle = applicationTitle();
-		out.writeText(
-			applicationTitle == null ? DEFAULT_TITLE : Resources.getInstance().getString(applicationTitle));
+		out.writeText(Resources.getInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE));
 		out.endTag(HTMLConstants.TITLE);
 		// The application icon: without it the browser asks for /favicon.ico, which an application
 		// at the root of the server does not have.

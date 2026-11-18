@@ -92,4 +92,11 @@ public interface CellEditing {
 		// Nothing to follow.
 	}
 
+	/**
+	 * Whether every row this editing {@link #canEdit(Object) edits} requires a value, so that the
+	 * heading of the column marks it as mandatory.
+	 */
+	default boolean required() {
+		return false;
+	}
 }

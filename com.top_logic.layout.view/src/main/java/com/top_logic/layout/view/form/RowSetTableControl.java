@@ -1666,6 +1666,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 
 		@Override
+		public boolean required() {
+			return _editable && _setup != null && _setup.editing() != null && _setup.editing().required();
+		}
+
+		@Override
 		public String cssClass() {
 			return _inner.cssClass();
 		}

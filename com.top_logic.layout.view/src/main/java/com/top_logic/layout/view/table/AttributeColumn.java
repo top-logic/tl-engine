@@ -20,6 +20,8 @@ import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.annotate.DynamicVisibility;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
@@ -121,8 +123,30 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 		String attribute = _attribute;
 		TLStructuredTypePart part = scope.part(attribute);
 		return List.of(setup(attribute, derivedLabel(part), ColumnType.of(part),
-			row -> ColumnProviderService.attributeValue(row, attribute), new AttributeCellEditing(attribute),
+			row -> ColumnProviderService.attributeValue(row, attribute),
+			new AttributeCellEditing(attribute, alwaysRequired(scope, attribute)),
 			row -> holdsAttribute(row, attribute), scope).releasedIf(readable(scope, part)));
+	}
+
+	/**
+	 * Whether every row type of the table holding the given attribute requires a value for it, its
+	 * visibility lets it be edited, and no row decides that by a {@link DynamicVisibility dynamic
+	 * mode}.
+	 */
+	private static boolean alwaysRequired(ColumnResolution scope, String attribute) {
+		boolean held = false;
+		for (TLStructuredType type : scope.rowTypes()) {
+			TLStructuredTypePart part = type.getPart(attribute);
+			if (part == null) {
+				continue;
+			}
+			if (!part.isMandatory() || part.isDerived() || !DisplayAnnotations.isEditable(part)
+				|| DynamicVisibility.modeSelector(part) != null) {
+				return false;
+			}
+			held = true;
+		}
+		return held;
 	}
 
 	/**

@@ -268,10 +268,15 @@ public class AttributeFieldModel extends BoundFieldModel {
 
 	/**
 	 * Shows a value written to the attribute of the bound overlay by someone else than this model.
+	 *
+	 * <p>
+	 * A value written through an override of the attribute or the attribute it overrides is the
+	 * value of the attribute as well.
+	 * </p>
 	 */
 	private void onOverlayValueChanged(TLObjectOverlay overlay, TLStructuredTypePart part, Object oldValue,
 			Object newValue) {
-		if (overlay != _observedOverlay || part != _part) {
+		if (overlay != _observedOverlay || part.getDefinition() != _part.getDefinition()) {
 			return;
 		}
 		if (_writing) {

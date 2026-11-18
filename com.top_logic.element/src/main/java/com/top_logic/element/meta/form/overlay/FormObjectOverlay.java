@@ -56,8 +56,23 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 
 	private final TLStructuredType _type;
 
+	/**
+	 * The {@link AttributeUpdate}s of this object, indexed by the
+	 * {@link TLStructuredTypePart#getDefinition() definition} of their attribute.
+	 *
+	 * <p>
+	 * An attribute and its overrides share one value, so they share one update, whichever of them
+	 * it is looked up with. The update itself is bound to the attribute of the type of this object
+	 * (see {@link AttributeOperations#getAttributeOverride(TLObject, TLStructuredTypePart)}), whose
+	 * annotations it applies.
+	 * </p>
+	 */
 	private Map<TLStructuredTypePart, AttributeUpdate> _updates = new HashMap<>();
 
+	/**
+	 * The callbacks waiting for the creation of an {@link AttributeUpdate}, see
+	 * {@link #withUpdate(TLStructuredTypePart, Consumer)}, indexed like {@link #_updates}.
+	 */
 	private Map<TLStructuredTypePart, Consumer<AttributeUpdate>> _updateFutures;
 
 	private FormContainer _formContainer;
@@ -125,7 +140,7 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 	
 	@Override
 	public final AttributeUpdate getUpdate(TLStructuredTypePart part) {
-		return _updates.get(part);
+		return _updates.get(part.getDefinition());
 	}
 
 	@Override
@@ -133,9 +148,10 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 		AttributeUpdate update = getUpdate(attribute);
 		if (update == null) {
 			Map<TLStructuredTypePart, Consumer<AttributeUpdate>> futures = mkUpdateFutures();
-			Consumer<AttributeUpdate> clash = futures.put(attribute, callback);
+			TLStructuredTypePart definition = attribute.getDefinition();
+			Consumer<AttributeUpdate> clash = futures.put(definition, callback);
 			if (clash != null) {
-				futures.put(attribute, clash.andThen(callback));
+				futures.put(definition, clash.andThen(callback));
 			}
 		} else {
 			callback.accept(update);
@@ -153,10 +169,10 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 	 * Adds the given {@link AttributeUpdate} to this object.
 	 */
 	private final void addUpdate(AttributeUpdate update) {
-		TLStructuredTypePart attribute = update.getAttribute();
-		_updates.put(attribute, update);
+		TLStructuredTypePart definition = update.getAttribute().getDefinition();
+		_updates.put(definition, update);
 		if (_updateFutures != null) {
-			Consumer<AttributeUpdate> future = _updateFutures.remove(attribute);
+			Consumer<AttributeUpdate> future = _updateFutures.remove(definition);
 			if (future != null) {
 				future.accept(update);
 			}
@@ -165,7 +181,7 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 
 	@Override
 	public final AttributeUpdate removeUpdate(TLStructuredTypePart attribute) {
-		return _updates.remove(attribute);
+		return _updates.remove(attribute.getDefinition());
 	}
 
 	@Override
@@ -430,7 +446,7 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 			return null;
 		}
 
-		AttributeUpdate existing = _updates.get(specializedAttribute);
+		AttributeUpdate existing = _updates.get(specializedAttribute.getDefinition());
 		if (existing != null) {
 			// May happen due to legacy code forcing an update creation while the update has already
 			// been created before.

@@ -2083,6 +2083,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           })}
         </div>
       </div>
+      {/* The viewport does not scroll: it draws the ring of the focused body above the rows, which
+          would cover an outline of the body itself. */}
+      <div className="tl-table__viewport">
       {/* Scrollable body. While everything fits, the focus stays on the grid: tabIndex -1, else
           Chromium makes a scrolling element a tab stop of its own. While it scrolls, it is one
           (bodyScrolls). */}
@@ -2253,6 +2256,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             </div>
           ))}
         </div>
+      </div>
       </div>
       </div>
 

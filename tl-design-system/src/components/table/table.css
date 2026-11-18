@@ -393,6 +393,25 @@
   isolation: isolate;
 }
 
+/* Die Hülle des Körpers scrollt nicht. Hat der Körper selbst den Tastaturfokus (er scrollt, #30129), trägt ihr
+   ::after seinen Ring (die Regel steht in base.css): der eigene Ring des Körpers läge unter seinen positionierten
+   Zeilen. Die Fläche deckt den Körper, liegt über seinem Stapel, ist für den Zeiger durchlässig, der Ring innen. */
+.tl-table__viewport {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+.tl-table__viewport:has(> .tl-table__body:focus-visible)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: var(--tl-layer-sticky);
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+  pointer-events: none;
+}
+
 /* Was bündig an der Kante von tl-table liegt, trägt den Ring innen — tl-table schneidet (overflow: hidden),
    ein Ring außen wäre ganz oder halb weg (focus-clip.test.mjs): das Raster ohne Cursor (leer, kein
    aria-activedescendant — es zeigt den Ring selbst), der Körper, die Spaltenwahl in der Ecke. In der Engine ist

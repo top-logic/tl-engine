@@ -216,11 +216,14 @@ ${type}
    hat: der Knopf ist unsichtbar, die Kachel ist, was der Nutzer drückt (Spec 5c §6). Ebenso die Fläche eines Bildfelds,
    die ein Bild aufnimmt (tl-image-field__drop): ihr verborgenes Dateifeld hat den Fokus, die Fläche wird gedrückt.
    Die hervorgehobene Option einer Select-Liste ist die Tastaturposition (der Fokus bleibt im Feld, aria-activedescendant):
-   ihr ::after trägt den Ring, innen, wie das Cursor-Element — kein zweiter Ring in der Komponente. */
+   ihr ::after trägt den Ring, innen, wie das Cursor-Element — kein zweiter Ring in der Komponente.
+   Der Körper einer Tabelle, solange er scrollt und selbst den Tastaturfokus hat: seine positionierten Zeilen decken
+   seinen eigenen Ring, darum trägt ihn das ::after seiner Hülle (tl-table__viewport), eine Fläche über den Zeilen. */
 :where(a, button, input, select, textarea, summary, [tabindex], [contenteditable]):where(:not(:not(input, textarea, [role="combobox"])[aria-activedescendant])):focus-visible,
 :where(:not(input, textarea, [role="combobox"])[aria-activedescendant]:focus-visible [data-tl-state~="cursor"])::after,
 .tl-dashboard__tile:has(> .tl-dashboard__action:focus-visible),
 .tl-image-field__drop:has(> input:focus-visible),
+.tl-table__viewport:has(> .tl-table__body:focus-visible)::after,
 .tl-select__option[data-tl-state~="highlighted"]::after {
   outline: var(--tl-focus-width) solid var(--tl-focus-ring);
   outline-offset: var(--tl-focus-offset);

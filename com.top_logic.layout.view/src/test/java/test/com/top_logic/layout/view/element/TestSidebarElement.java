@@ -26,6 +26,7 @@ import com.top_logic.layout.react.control.sidebar.NavigationItem;
 import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
 import com.top_logic.layout.react.control.sidebar.SectionItem;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.Badge;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -214,11 +215,29 @@ public class TestSidebarElement extends BasicTestCase {
 
 		_count.set(Integer.valueOf(3));
 
-		assertEquals("The badge names what the channel holds.", "3", item(sidebar, "inner").get(BADGE));
+		assertEquals("The badge names what the channel holds.",
+			Map.of(Badge.CONTENT__PROP, "3"), item(sidebar, "inner").get(BADGE));
 
 		_count.set(null);
 
 		assertNull("Nothing to announce leaves no badge behind.", item(sidebar, "inner").get(BADGE));
+	}
+
+	/**
+	 * Tests that a command item shows the badge of the command it hosts, and follows its channel.
+	 */
+	public void testACommandItemShowsTheBadgeOfItsCommand() {
+		ReactSidebarControl sidebar = sidebar(FIXTURE);
+		assertNull("A channel holding nothing is worth no badge.", item(sidebar, "cmdDisabled").get(BADGE));
+
+		_count.set(Integer.valueOf(5));
+
+		assertEquals("The badge of the command is shown at its item, in the role the command declares.",
+			Map.of(Badge.CONTENT__PROP, "5", Badge.ROLE__PROP, "error"), item(sidebar, "cmdDisabled").get(BADGE));
+
+		_count.set(Integer.valueOf(0));
+
+		assertNull("Nothing to count leaves no badge behind.", item(sidebar, "cmdDisabled").get(BADGE));
 	}
 
 	/**

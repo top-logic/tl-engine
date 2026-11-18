@@ -1,8 +1,8 @@
-/* Badge — docs/skalen.md „Status: vier Bedeutungen“ (die Marke, nicht eine Bedeutung).
-   Ein Zähler an einem Icon oder Reiter: Markenfläche, abgeleitete Beschriftung, Pille. Die Schrift kommt
-   von außen (tl-type-label-strong tl-nums), damit Ziffern tabellarisch stehen und die Höhe aus der
-   Typo-Klasse nicht doppelt festgelegt wird. Ein Badge trägt nur Ziffern oder ein Kürzel — Text gehört
-   in eine Pill. */
+/* Badge — docs/skalen.md „Status: vier Bedeutungen“ (die Marke oder eine Bedeutung).
+   Ein Zähler an einem Icon oder Reiter: gefüllte Fläche der Marke oder einer Bedeutung, abgeleitete Beschriftung,
+   Pille; oder ein Punkt ohne Ziffern. Die Schrift kommt von außen (tl-type-label-strong tl-nums), damit Ziffern
+   tabellarisch stehen und die Höhe aus der Typo-Klasse nicht doppelt festgelegt wird. Ein Badge trägt nur Ziffern
+   oder ein Kürzel — Text gehört in eine Pill. */
 
 .tl-badge {
   display: inline-flex;
@@ -17,6 +17,23 @@
   color: var(--tl-text-on-brand);
 }
 .tl-badge[hidden] { display: none; }
+
+/* Die Bedeutung ist ein Attribut (data-tl-role): je Bedeutung die gefüllte Fläche und die gerechnete Schrift darauf,
+   erzeugt aus src/tokens.json (tools/generate.mjs). Ohne Attribut oder mit brand trägt das Badge die Marke. */
+/* @tl-roles: status-surface .tl-badge */
+
+/* Der Punkt: eine Markierung ohne Ziffern (ein Wert true). Er hat keine Schrift, also muss seine Fläche selbst 3:1
+   zum Grund erreichen; die gefüllte Fläche der Bedeutung schafft das nicht überall, der Text der Bedeutung schon.
+   Die Marke zeichnet ihn in ihrer Linie (wie die getönte Rolle brand ihre Linie). Den Namen trägt das Element
+   (role="img" und aria-label), nicht die Farbe. Beides prüft das Kontrast-Gate (tools/lib/pairs.mjs). */
+.tl-badge--dot {
+  min-width: 0;
+  width: var(--tl-space-xs);
+  height: var(--tl-space-xs);
+  padding: 0;
+  background: var(--tl-border-interactive);
+}
+/* @tl-roles: status-mark .tl-badge--dot */
 
 /* Ein Icon mit Zähler an der Ecke (eingeklappte Sidebar, BottomBar) — Spec 2026-10-16 Welle 4b §6. Die Lage gehört
    dem Element um das Part Badge, nicht dem Badge: eine Komponentenbibliothek setzt die Position ihres Badges selbst

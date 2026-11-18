@@ -6,7 +6,9 @@
 package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.CalledByReflection;
@@ -75,7 +77,7 @@ public class BottomBarElement implements UIElement {
 	 * Configuration for a single bottom bar item.
 	 */
 	@TagName("item")
-	public interface ItemConfig extends com.top_logic.basic.config.ConfigurationItem {
+	public interface ItemConfig extends WithBadge {
 
 		/** Configuration name for {@link #getId()}. */
 		String ID = "id";
@@ -128,9 +130,15 @@ public class BottomBarElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		List<BottomBarEntry> entries = new ArrayList<>(_items.size());
+		Map<String, BadgeBinding> badges = new LinkedHashMap<>();
 		for (ItemConfig item : _items) {
+			BadgeBinding badge = BadgeBinding.create(context, item);
+			if (badge != null) {
+				badges.put(item.getId(), badge);
+			}
 			entries.add(new BottomBarEntry(item.getId(),
-				Resources.getInstance().getString(item.getLabel()), item.getIcon()));
+				Resources.getInstance().getString(item.getLabel()), item.getIcon(),
+				badge == null ? null : badge.current()));
 		}
 		String activeItem = _activeItem != null && !_activeItem.isEmpty()
 			? _activeItem
@@ -139,6 +147,7 @@ public class BottomBarElement implements UIElement {
 			// Visual-only selection in the declarative view; no server-side handler.
 		});
 		result.setCssClass(_cssClass);
+		badges.forEach((id, badge) -> badge.bind(result, display -> result.setItemBadge(id, display)));
 		return result;
 	}
 }

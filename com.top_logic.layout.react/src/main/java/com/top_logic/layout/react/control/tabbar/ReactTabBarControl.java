@@ -10,12 +10,14 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ScriptingControl;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.common.BadgeDisplay;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.dirty.DirtyChannel;
 import com.top_logic.layout.react.routing.RouteChangeListener;
@@ -157,6 +159,9 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 			if (tab.isHidden()) {
 				tabInfo.put(TabBarState.Tab.HIDDEN__PROP, Boolean.TRUE);
 			}
+			if (tab.getBadge() != null) {
+				tabInfo.put(TabBarState.Tab.BADGE__PROP, tab.getBadge().toState());
+			}
 			tabList.add(tabInfo);
 		}
 		return tabList;
@@ -167,6 +172,23 @@ public class ReactTabBarControl extends ReactControl implements RoutingParticipa
 	 */
 	public boolean isTabHidden(String tabId) {
 		return findTab(tabId).isHidden();
+	}
+
+	/**
+	 * Shows the given badge after the label of the tab with the given ID.
+	 *
+	 * @param tabId
+	 *        The ID of the tab.
+	 * @param badge
+	 *        The badge, {@code null} for none.
+	 */
+	public void setTabBadge(String tabId, BadgeDisplay badge) {
+		TabDefinition tab = findTab(tabId);
+		if (Objects.equals(tab.getBadge(), badge)) {
+			return;
+		}
+		tab.withBadge(badge);
+		putState(TabBarState.TABS__PROP, tabStates());
 	}
 
 	/**

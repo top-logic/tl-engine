@@ -6,9 +6,9 @@
 	module's types and their attributes (references between the module's types as edges, references to
 	types of other modules as attribute lines); the detail form (bottom) edits whichever of the two is
 	selected - the model element, or the module itself while the diagram has no selection. The
-	toolbars create and delete modules, types and attributes through the ModelEditAction; the reload
-	channel is bumped after a diagram-affecting mutation so the diagram re-reads the (unchanged)
-	module input and reflects the change. Beside the diagram, the Instances tab lists all instances of
+	toolbars create and delete modules, types and attributes, and the class form adds and removes
+	generalizations, through the ModelEditAction. The diagram observes the model types it draws, so
+	it follows every model change, also one made in another session. Beside the diagram, the Instances tab lists all instances of
 	the class selected in the diagram, edits them in place, exports them to Excel or XML and imports an
 	XML file written by that export (admin/model/import-instances.view.xml).
 -->
@@ -16,7 +16,6 @@
 	<channels>
 		<channel name="selectedModule"/>
 		<channel name="selectedPart"/>
-		<channel name="reload"/>
 		<channel name="selectedInstances"/>
 		<!-- Bumped after an import, so the instance table reads its rows again. -->
 		<channel name="instancesReload"/>
@@ -46,6 +45,17 @@
 			expr="$selectedPart != null &amp;&amp; $selectedPart.instanceOf(`tl.model:TLReference`) ? $selectedPart.get(`tl.model:TLReference#end`) : null"
 			inputs="selectedPart"
 		/>
+		<!--
+			Kind and opposite of the selected reference, for display only: they are fixed when the
+			reference is created. A composition is marked at the destination end of the reference, an
+			aggregation at the end pointing to the owner.
+		-->
+		<derived-channel name="selectedReferenceDetails"
+			expr="$selectedPart == null || !$selectedPart.instanceOf(`tl.model:TLReference`) ? null : { details = new(`tl.devtools:ReferenceDetails`, transient: true); kind = $selectedPart.get(`tl.model:TLReference#end`).get(`tl.model:TLAssociationEnd#composite`) ? `tl.devtools:ReferenceKind#composition` : ($selectedPart.get(`tl.model:TLReference#oppositeEnd`).get(`tl.model:TLAssociationEnd#aggregate`) ? `tl.devtools:ReferenceKind#aggregation` : `tl.devtools:ReferenceKind#normal`); $details.set(`tl.devtools:ReferenceDetails#referenceKind`, $kind); $details.set(`tl.devtools:ReferenceDetails#opposite`, $selectedPart.get(`tl.model:TLReference#opposite`)); $details }"
+			inputs="selectedPart"
+		/>
+		<!-- The generalization selected in the generalization table of the class form. -->
+		<channel name="selectedGeneralization"/>
 	</channels>
 	<split-panel
 		orientation="horizontal"
@@ -174,10 +184,6 @@
 																	channel="container"
 																	to="selectedModule"
 																/>
-																<bind
-																	channel="reload"
-																	to="reload"
-																/>
 															</open-dialog>
 														</with-result>
 													</execute-script>
@@ -207,10 +213,6 @@
 																<bind
 																	channel="container"
 																	to="selectedPart"
-																/>
-																<bind
-																	channel="reload"
-																	to="reload"
 																/>
 															</open-dialog>
 														</with-result>
@@ -242,10 +244,6 @@
 																	channel="container"
 																	to="selectedPart"
 																/>
-																<bind
-																	channel="reload"
-																	to="reload"
-																/>
 															</open-dialog>
 														</with-result>
 													</execute-script>
@@ -272,20 +270,23 @@
 													<write-channel name="selectedPart"
 														clear="true"
 													/>
-													<execute-script function="now()">
-														<with-result>
-															<write-channel name="reload"/>
-														</with-result>
-													</execute-script>
 												</generic-command>
 											</commands>
-											<flow-diagram selection="selectedPart">
+											<!--
+												The diagram observes the model types it draws: a type, attribute,
+												classifier or generalization created, changed or deleted - in this
+												session or another one - redraws it. A generalization is a link
+												between two classes, whose change is announced as a change of both.
+											-->
+											<flow-diagram
+												observed-types="tl.model:TLModule, tl.model:TLClass, tl.model:TLEnumeration, tl.model:TLClassifier, tl.model:TLReference, tl.model:TLAssociationEnd, tl.model:TLProperty"
+												selection="selectedPart"
+											>
 												<inputs>
 													<input
 														as="module"
 														channel="selectedModule"
 													/>
-													<input channel="reload"/>
 												</inputs>
 												<createChart><![CDATA[{
 	allTypes = $module == null ? list() : $module.get(`tl.model:TLModule#types`)
@@ -387,6 +388,7 @@
 				multiple = $p.get(`tl.model:TLStructuredTypePart#multiple`);
 				card = $mandatory ? ($multiple ? "1..*" : "1") : ($multiple ? "*" : "0..1");
 				composite = $p.get(`tl.model:TLReference#end`).get(`tl.model:TLAssociationEnd#composite`);
+				aggregate = !$composite && $p.get(`tl.model:TLReference#oppositeEnd`).get(`tl.model:TLAssociationEnd#aggregate`);
 				isOverride = $p.get(`tl.model:TLStructuredTypePart#override`);
 				isDerived = $p.get(`tl.model:DerivedTLTypePart#derived`);
 
@@ -418,9 +420,9 @@
 				reactFlowGraphEdge(
 					$nodeByName[$c.get(`tl.model:TLNamedPart#name`)],
 					$nodeByName[$targetType.get(`tl.model:TLNamedPart#name`)],
-					priority: $composite ? 2 : 1,
-					sourceSymbol: $composite ? "FILLED_DIAMOND" : null,
-					targetSymbol: $composite ? null : "ARROW",
+					priority: $composite || $aggregate ? 2 : 1,
+					sourceSymbol: $composite ? "FILLED_DIAMOND" : ($aggregate ? "DIAMOND" : null),
+					targetSymbol: $composite || $aggregate ? null : "ARROW",
 					strokeStyle: $isDerived ? "#bbbbbb" : "black",
 					decorations: $decos,
 					selectable: true,
@@ -611,6 +613,27 @@
 												/>
 											</form>
 										</panel>
+										<!--
+											Kind and opposite are fixed when the reference is created (making a
+											reference a composition later requires migrating its data), so they are
+											shown read-only.
+										-->
+										<panel>
+											<title>
+												<en>Kind and opposite</en>
+												<de>Art und Gegenrichtung</de>
+											</title>
+											<form
+												input="selectedReferenceDetails"
+												with-inset="true"
+											>
+												<edit-executability>
+													<visible-if expr="false"/>
+												</edit-executability>
+												<field attribute="referenceKind"/>
+												<field attribute="opposite"/>
+											</form>
+										</panel>
 										<panel>
 											<title>
 												<en>Cardinality</en>
@@ -623,18 +646,6 @@
 											>
 												<field attribute="mandatory"/>
 												<field attribute="multiple"/>
-												<!-- The diagram shows the cardinality at the edge of the reference. -->
-												<save-action>
-													<with-transaction>
-														<store-form-state/>
-													</with-transaction>
-													<execute-script function="now()">
-														<with-result>
-															<write-channel name="reload"/>
-														</with-result>
-													</execute-script>
-													<leave-edit-mode/>
-												</save-action>
 											</form>
 										</panel>
 									</stack>
@@ -661,25 +672,110 @@
 									</panel>
 								</case>
 								<case test="$selectedDetail != null &amp;&amp; $selectedDetail.instanceOf(`tl.model:TLClass`)">
-									<panel>
-										<title>
-											<en>Class</en>
-											<de>Klasse</de>
-										</title>
-										<form
-											input="selectedDetail"
-											with-inset="true"
-											withEditMode="true"
-										>
-											<field attribute="name"/>
-											<field attribute="abstract"/>
-											<field attribute="final"/>
-											<field
-												attribute="annotations"
-												full-line="true"
-											/>
-										</form>
-									</panel>
+									<stack>
+										<panel>
+											<title>
+												<en>Class</en>
+												<de>Klasse</de>
+											</title>
+											<form
+												input="selectedDetail"
+												with-inset="true"
+												withEditMode="true"
+											>
+												<field attribute="name"/>
+												<field attribute="abstract"/>
+												<field attribute="final"/>
+												<field
+													attribute="annotations"
+													full-line="true"
+												/>
+											</form>
+										</panel>
+										<!--
+											The direct generalizations of the class. Adding and removing them goes
+											through the ModelEditAction, which refuses a final class and a cycle.
+											A change of the generalizations is announced as a change of the class
+											on the input, so the table reads them again. The panel is as high as
+											its few rows (fill="false"), so the stack below the class form keeps
+											its natural height and the detail pane scrolls it as a whole.
+										-->
+										<panel fill="false">
+											<title>
+												<en>Generalizations</en>
+												<de>Generalisierungen</de>
+											</title>
+											<commands>
+												<generic-command
+													image="css:bi bi-plus-lg"
+													inputs="selectedPart"
+													placement="TOOLBAR"
+												>
+													<label>
+														<en>Add generalization</en>
+														<de>Generalisierung hinzufügen</de>
+													</label>
+													<executability>
+														<null-input-disabled/>
+													</executability>
+													<execute-script function="new(`tl.devtools:NewGeneralization`, transient: true)">
+														<with-result>
+															<open-dialog
+																bind-input-to="model"
+																dialog-view="admin/model/add-generalization.view.xml"
+															>
+																<bind
+																	channel="container"
+																	to="selectedPart"
+																/>
+															</open-dialog>
+														</with-result>
+													</execute-script>
+												</generic-command>
+												<generic-command
+													image="css:bi bi-dash-lg"
+													inputs="selectedGeneralization"
+													placement="TOOLBAR"
+												>
+													<label>
+														<en>Remove generalization</en>
+														<de>Generalisierung entfernen</de>
+													</label>
+													<executability>
+														<null-input-disabled/>
+													</executability>
+													<with-transaction>
+														<commitMessage>
+															<en>Removed generalization {0}.</en>
+															<de>Generalisierung {0} entfernt.</de>
+														</commitMessage>
+														<action class="com.top_logic.dev.tools.model.ModelEditAction"
+															container="selectedPart"
+															mode="REMOVE_GENERALIZATION"
+														/>
+													</with-transaction>
+													<write-channel name="selectedGeneralization"
+														clear="true"
+													/>
+												</generic-command>
+											</commands>
+											<table
+												inputs="selectedPart as specialization"
+												selection="selectedGeneralization"
+											>
+												<rows>$specialization == null || !$specialization.instanceOf(`tl.model:TLClass`) ? list() : $specialization.get(`tl.model:TLClass#generalizations`)</rows>
+												<columns>
+													<computed-column name="generalization">
+														<label>
+															<en>Generalization</en>
+															<de>Generalisierung</de>
+														</label>
+														<value>$row.get(`tl.model:TLType#module`).get(`tl.model:TLNamedPart#name`) + ":" + $row.get(`tl.model:TLNamedPart#name`)</value>
+													</computed-column>
+												</columns>
+											</table>
+										</panel>
+									</stack>
 								</case>
 								<default>
 									<panel>

@@ -43,7 +43,7 @@ A content column that stays readable on a wide screen is a bounded stack:
 >
 	<text
 		label="Quarterly report"
-		variant="headline"
+		variant="heading-lg"
 	/>
 	<text label="Figures as of yesterday."/>
 </stack>
@@ -61,7 +61,7 @@ further lines where the screen is too narrow for them:
 >
 	<text
 		label="Open tickets"
-		variant="title"
+		variant="heading-sm"
 	/>
 	<button .../>
 </stack>

@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.chat.view.list;
+package com.top_logic.ai.chat.view;
 
 import java.util.List;
 import java.util.Map;
@@ -33,6 +33,8 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.list.DataListControl;
+import com.top_logic.layout.view.list.DataListElement;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.util.TLContext;
@@ -199,7 +201,8 @@ public class TestDataListDeletedObjects extends BasicTestCase {
 	}
 
 	private void openMenu(TLObject row) {
-		_list.rowMenu(Map.of("id", row.tHandle().getObjectName().toExternalForm(), "x", 0, "y", 0));
+		_list.rowMenu(Map.of(DataListControl.ARG_ID, row.tHandle().getObjectName().toExternalForm(),
+			DataListControl.ARG_X, 0, DataListControl.ARG_Y, 0));
 	}
 
 	/**

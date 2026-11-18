@@ -3,33 +3,30 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.chat.view.list;
+package com.top_logic.layout.view.list;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.ai.chat.view.list.DataListElement.Config;
-import com.top_logic.ai.chat.view.list.DataListElement.LineConfig;
-import com.top_logic.ai.chat.view.list.DataListElement.LinesConfig;
-import com.top_logic.ai.chat.view.list.DataListElement.RowActions;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
+import com.top_logic.layout.react.state.DataListState;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
@@ -38,28 +35,36 @@ import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.layout.view.list.DataListElement.Config;
+import com.top_logic.layout.view.list.DataListElement.LeadingConfig;
+import com.top_logic.layout.view.list.DataListElement.LineConfig;
+import com.top_logic.layout.view.list.DataListElement.LinesConfig;
+import com.top_logic.layout.view.list.DataListElement.RowActions;
+import com.top_logic.layout.view.list.DataListElement.TrailingConfig;
+import com.top_logic.layout.view.list.DataListElement.TrailingDisplay;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
+import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
+import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.util.Resources;
-import com.top_logic.util.TLContext;
 
 /**
  * React control for {@code <data-list>}.
  *
  * <p>
- * Runs the {@code rows} TL-Script expression, serialises each row to
- * {@code {id, lines[], group?, cssClass?}} and {@code putState}s the array to the {@code TLDataList}
- * React component; re-runs and re-pushes when observed model objects change. A row click arrives as
- * the {@code select} command carrying the row id; the control resolves it to the row object and
+ * Runs the {@code rows} TL-Script expression, serialises each row as a {@link DataListState.Row}
+ * and publishes them to the {@link #REACT_MODULE} component (state {@link DataListState}); re-runs
+ * and re-publishes when observed model objects change. A row click arrives as the
+ * {@link #CMD_SELECT} command carrying the row id; the control resolves it to the row object and
  * writes it to the two-way {@code selection} channel (and reflects an incoming channel value as the
- * selected id). The channel holds the {@link TLObject} so a consumer like {@code <chat-conversation>}
- * reads the object directly. The optional {@code count} channel receives the number of rows with
- * every serialisation, so a rail section can show it without asking the browser.
+ * selected id). The channel holds the {@link TLObject}, so a detail view reads the object directly.
+ * The optional {@code count} channel receives the number of rows with every serialisation, so a
+ * section around the list can show it without asking the browser.
  * </p>
  *
  * <p>
@@ -73,7 +78,7 @@ import com.top_logic.util.TLContext;
  * Configured {@code row-commands} are offered per row. The row a menu was opened on reaches its
  * commands through a local {@code row-channel} this control registers - the same set-then-execute
  * idiom {@code <context-menu>} uses - so an {@code <executability>} rule sees the row and
- * re-evaluates before the menu is composed. The menu itself is the application's: the {@code rowMenu}
+ * re-evaluates before the menu is composed. The menu itself is the application's: the {@link #CMD_ROW_MENU}
  * command hands a {@link ContextMenuContribution} to the enclosing frame's {@link ContextMenuOpener},
  * which renders, positions and keyboard-operates it. Where there is no opener - a list outside an
  * {@code <app-shell>} - no trigger is rendered.
@@ -81,13 +86,35 @@ import com.top_logic.util.TLContext;
  */
 public class DataListControl extends ReactControl {
 
-	/**
-	 * State key of the header command buttons: the {@link ReactButtonControl}s, in config order.
-	 */
-	private static final String BUTTONS = "buttons";
+	/** The client component rendering the list. */
+	public static final String REACT_MODULE = "TLDataList";
 
-	/** The CSS class of a header command button, the look of the rail's "new" button. */
-	private static final String BUTTON_CSS_CLASS = "rail-new";
+	/** The command selecting a row, see {@link #select(Map)}. */
+	public static final String CMD_SELECT = "select";
+
+	/** The command opening the commands of a row, see {@link #rowMenu(Map)}. */
+	public static final String CMD_ROW_MENU = "rowMenu";
+
+	/** Argument of {@link #CMD_SELECT} and {@link #CMD_ROW_MENU}: the {@link DataListState.Row#getId() row ID}. */
+	public static final String ARG_ID = "id";
+
+	/** Argument of {@link #CMD_ROW_MENU}: the client x coordinate to open the menu at. */
+	public static final String ARG_X = "x";
+
+	/** Argument of {@link #CMD_ROW_MENU}: the client y coordinate to open the menu at. */
+	public static final String ARG_Y = "y";
+
+	/** The encoded form of the invisible image, which the client renders as nothing. */
+	private static final String NO_IMAGE = "none";
+
+	/** The prefix of an image embedded as data URI. */
+	private static final String DATA_URI_PREFIX = "data:";
+
+	/** The count a badge shows no badge for. */
+	private static final String NO_COUNT = "0";
+
+	/** The {@link Config#getRowChannel() row channel} name used when none is configured. */
+	private static final String DEFAULT_ROW_CHANNEL = "row";
 
 	private final QueryExecutor _rowsExecutor;
 
@@ -96,6 +123,18 @@ public class DataListControl extends ReactControl {
 	private final QueryExecutor _groupExecutor;
 
 	private final QueryExecutor _cssClassExecutor;
+
+	/** The name an avatar in front of a row stands for, or {@code null} for none. */
+	private final QueryExecutor _leadingNameExecutor;
+
+	/** The picture or icon in front of a row, or {@code null} for none. */
+	private final QueryExecutor _leadingImageExecutor;
+
+	/** What stands after the lines of a row, or {@code null} for nothing. */
+	private final LineSpec _trailing;
+
+	/** Whether {@link #_trailing} is shown as a badge. */
+	private final boolean _trailingBadge;
 
 	private final List<ViewChannel> _inputChannels = new ArrayList<>();
 
@@ -129,11 +168,24 @@ public class DataListControl extends ReactControl {
 	public DataListControl(ViewContext context, Config config, List<ViewCommand> commands,
 			List<ViewCommand.Config> commandConfigs, List<ViewCommand> rowCommands,
 			List<ViewCommand.Config> rowCommandConfigs) {
-		super(context, null, blankToDefault(config.getReactElement(), "TLDataList"));
+		super(context, null, REACT_MODULE);
 
 		_rowsExecutor = QueryExecutor.compile(config.getRows());
 		_groupExecutor = config.getGroupBy() == null ? null : QueryExecutor.compile(config.getGroupBy());
 		_cssClassExecutor = config.getRowCssClass() == null ? null : QueryExecutor.compile(config.getRowCssClass());
+
+		LeadingConfig leading = config.getLeading();
+		_leadingNameExecutor = leading == null ? null : compile(leading.getName());
+		_leadingImageExecutor = leading == null ? null : compile(leading.getImage());
+
+		TrailingConfig trailing = config.getTrailing();
+		if (trailing == null || (trailing.getValue() == null && blank(trailing.getAttribute()))) {
+			_trailing = null;
+			_trailingBadge = false;
+		} else {
+			_trailing = new LineSpec(trailing.getAttribute(), compile(trailing.getValue()), null);
+			_trailingBadge = trailing.getDisplay() == TrailingDisplay.BADGE;
+		}
 
 		LinesConfig linesConfig = config.getLines();
 		if (linesConfig != null) {
@@ -143,20 +195,19 @@ public class DataListControl extends ReactControl {
 				_lineSpecs.add(new LineSpec(line.getAttribute(), value, emphasis));
 			}
 		}
-		_observedTypes = resolveObservedTypes(config.getObservedTypes());
+		_observedTypes = ObservedTypes.resolve(config.getObservedTypes());
 
 		for (ChannelRef ref : config.getInputs()) {
 			_inputChannels.add(context.resolveChannel(ref));
 		}
 
 		setCssClass(config.getCssClass());
-		putState("search", Boolean.valueOf(config.getSearch()));
-		putState("collapsible", Boolean.valueOf(config.getCollapsible()));
-		putState("collapsed", Boolean.valueOf(config.getCollapsed()));
-		putState("drawerBelow", Integer.valueOf(config.getDrawerBelow()));
-		putState("title", labelOf(config.getTitle()));
-		putState("emptyText", labelOf(config.getEmptyText()));
-		putState("language", currentLanguage());
+		putState(DataListState.SEARCH__PROP, Boolean.valueOf(config.getSearch()));
+		putState(DataListState.COLLAPSIBLE__PROP, Boolean.valueOf(config.getCollapsible()));
+		putState(DataListState.COLLAPSED__PROP, Boolean.valueOf(config.getCollapsed()));
+		putState(DataListState.DRAWER_BELOW__PROP, Integer.valueOf(config.getDrawerBelow()));
+		putState(DataListState.TITLE__PROP, labelOf(config.getTitle()));
+		putState(DataListState.EMPTY_TEXT__PROP, labelOf(config.getEmptyText()));
 
 		// Header buttons are standard view commands (instantiated by the element), each rendered as
 		// the engine's command button: it shows and follows the state of its model (label, image,
@@ -166,11 +217,9 @@ public class DataListControl extends ReactControl {
 			ViewCommandModel model = ViewCommandModel.forCommand(context, commands.get(i), commandConfigs.get(i));
 			_commandModels.add(model);
 
-			ReactButtonControl button = model.createButton(context);
-			button.setCssClass(BUTTON_CSS_CLASS);
-			buttons.add(button);
+			buttons.add(model.createButton(context));
 		}
-		putState(BUTTONS, buttons);
+		putState(DataListState.BUTTONS__PROP, buttons);
 		if (!_commandModels.isEmpty()) {
 			addAttachListener(() -> _commandModels.forEach(model -> model.attach(context.getModelScope())));
 			addDetachListener(() -> _commandModels.forEach(ViewCommandModel::detach));
@@ -193,7 +242,7 @@ public class DataListControl extends ReactControl {
 			_rowChannel = null;
 			_rowMenu = null;
 		} else {
-			String rowChannelName = blankToDefault(config.getRowChannel(), "row");
+			String rowChannelName = blankToDefault(config.getRowChannel(), DEFAULT_ROW_CHANNEL);
 			_rowChannel = new DefaultViewChannel(rowChannelName);
 			context.registerChannel(rowChannelName, _rowChannel);
 			// A row command names the row channel in its inputs, like a command of a <context-menu>
@@ -205,8 +254,8 @@ public class DataListControl extends ReactControl {
 			addAttachListener(() -> _rowCommandModels.forEach(model -> model.attach(context.getModelScope())));
 			addDetachListener(() -> _rowCommandModels.forEach(ViewCommandModel::detach));
 		}
-		putState("hasRowMenu", Boolean.valueOf(_rowMenu != null));
-		putState("rowActions", rowActions.getExternalName());
+		putState(DataListState.HAS_ROW_MENU__PROP, Boolean.valueOf(_rowMenu != null));
+		putState(DataListState.ROW_ACTIONS__PROP, rowActions.getExternalName());
 
 		ChannelRef countRef = config.getCount();
 		// Resolved before the first serialisation below, which is what writes the initial count.
@@ -215,12 +264,11 @@ public class DataListControl extends ReactControl {
 		ChannelRef selectionRef = config.getSelection();
 		if (selectionRef == null) {
 			_selectionChannel = null;
-			putState("selectedId", "");
+			putState(DataListState.SELECTED_ID__PROP, "");
 		} else {
 			_selectionChannel = context.resolveChannel(selectionRef);
 			ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> applyFromChannel(newValue);
-			_selectionChannel.addListener(listener);
-			addCleanupAction(() -> _selectionChannel.removeListener(listener));
+			addCleanupAction(_selectionChannel.addListener(listener)::dispose);
 		}
 
 		List<Object> initial = new ArrayList<>(executeRowsQuery(_rowsExecutor, readChannelValues(_inputChannels)));
@@ -266,21 +314,21 @@ public class DataListControl extends ReactControl {
 	 *        {@code id} is the row id previously pushed in the {@code rows} state; empty clears the
 	 *        selection.
 	 */
-	@ReactCommandHandler(value = "select", params = {
-		@ReactParam(name = "id", type = "string", description = "Row id, or empty to clear.")
+	@ReactCommandHandler(value = CMD_SELECT, params = {
+		@ReactParam(name = ARG_ID, type = "string", description = "Row id, or empty to clear.")
 	})
 	public void select(Map<String, Object> args) {
 		if (_applyingFromChannel[0]) {
 			return;
 		}
-		String id = stringArg(args, "id");
+		String id = stringArg(args, ARG_ID);
 		if (_selectionChannel == null) {
-			putState("selectedId", id);
+			putState(DataListState.SELECTED_ID__PROP, id);
 			return;
 		}
 		TLObject object = id.isEmpty() ? null : _rowsById.get(id);
 		_selectionChannel.set(object);
-		putState("selectedId", object == null ? "" : idOf(object));
+		putState(DataListState.SELECTED_ID__PROP, object == null ? "" : idOf(object));
 	}
 
 	/**
@@ -296,16 +344,16 @@ public class DataListControl extends ReactControl {
 	 *        {@code id} is the row id previously pushed in the {@code rows} state; {@code x} and
 	 *        {@code y} are the client coordinates to open at.
 	 */
-	@ReactCommandHandler(value = "rowMenu", params = {
-		@ReactParam(name = "id", type = "string", description = "Row id the menu belongs to."),
-		@ReactParam(name = "x", type = "number", description = "Client x coordinate to open at."),
-		@ReactParam(name = "y", type = "number", description = "Client y coordinate to open at.")
+	@ReactCommandHandler(value = CMD_ROW_MENU, params = {
+		@ReactParam(name = ARG_ID, type = "string", description = "Row id the menu belongs to."),
+		@ReactParam(name = ARG_X, type = "number", description = "Client x coordinate to open at."),
+		@ReactParam(name = ARG_Y, type = "number", description = "Client y coordinate to open at.")
 	})
 	public void rowMenu(Map<String, Object> args) {
 		if (_rowMenu == null || _menuOpener == null) {
 			return;
 		}
-		TLObject row = _rowsById.get(stringArg(args, "id"));
+		TLObject row = _rowsById.get(stringArg(args, ARG_ID));
 		if (row == null) {
 			return;
 		}
@@ -315,7 +363,7 @@ public class DataListControl extends ReactControl {
 		// has changed since (a run of it has finished, say).
 		_rowChannel.set(row);
 		_rowCommandModels.forEach(ViewCommandModel::revalidate);
-		_menuOpener.open(intArg(args, "x"), intArg(args, "y"),
+		_menuOpener.open(intArg(args, ARG_X), intArg(args, ARG_Y),
 			List.of(new ContextMenuOpener.Targeted(_rowMenu, row)));
 	}
 
@@ -323,7 +371,7 @@ public class DataListControl extends ReactControl {
 		_applyingFromChannel[0] = true;
 		try {
 			TLObject object = firstObject(value);
-			putState("selectedId", object == null ? "" : idOf(object));
+			putState(DataListState.SELECTED_ID__PROP, object == null ? "" : idOf(object));
 		} finally {
 			_applyingFromChannel[0] = false;
 		}
@@ -343,20 +391,28 @@ public class DataListControl extends ReactControl {
 			}
 			byId.put(id, object);
 			Map<String, Object> entry = new LinkedHashMap<>();
-			entry.put("id", id);
-			entry.put("lines", lines(object));
+			entry.put(DataListState.Row.ID__PROP, id);
+			entry.put(DataListState.Row.LINES__PROP, lines(object));
 			if (_groupExecutor != null) {
-				entry.put("group", label(_groupExecutor.execute(object)));
+				entry.put(DataListState.Row.GROUP__PROP, label(_groupExecutor.execute(object)));
 			}
 			if (_cssClassExecutor != null) {
-				entry.put("cssClass", text(_cssClassExecutor.execute(object)));
+				entry.put(DataListState.Row.CSS_CLASS__PROP, text(_cssClassExecutor.execute(object)));
+			}
+			Map<String, Object> leading = leading(object);
+			if (leading != null) {
+				entry.put(DataListState.Row.LEADING__PROP, leading);
+			}
+			Map<String, Object> trailing = trailing(object);
+			if (trailing != null) {
+				entry.put(DataListState.Row.TRAILING__PROP, trailing);
 			}
 			out.add(entry);
 		}
 		_rowsById = byId;
 		releaseVanishedRow();
 		releaseDeleted(_selectionChannel);
-		putState("rows", out);
+		putState(DataListState.ROWS__PROP, out);
 		if (_countChannel != null) {
 			_countChannel.set(Integer.valueOf(out.size()));
 		}
@@ -369,7 +425,7 @@ public class DataListControl extends ReactControl {
 	 * <p>
 	 * The channel holds the row a menu was last opened on, and nothing else writes it. A row that
 	 * left the list - deleted by its own "Delete" command, say - would otherwise stay on it, and the
-	 * row commands' rules would go on deciding over an object the list no longer shows (#676).
+	 * row commands' rules would go on deciding over an object the list no longer shows .
 	 * </p>
 	 */
 	private void releaseVanishedRow() {
@@ -431,27 +487,101 @@ public class DataListControl extends ReactControl {
 		return null;
 	}
 
+	/**
+	 * What stands in front of the lines of the given row, see {@link DataListState.Leading}, or
+	 * {@code null} for nothing.
+	 *
+	 * <p>
+	 * An image of an icon font is an icon, any other image - image data, an image file - the
+	 * picture of the avatar, see {@link ReactImages#encode(com.top_logic.layout.react.ReactContext, ThemeImage)}.
+	 * </p>
+	 */
+	private Map<String, Object> leading(TLObject object) {
+		String name = _leadingNameExecutor == null ? "" : label(_leadingNameExecutor.execute(object));
+		ThemeImage image =
+			_leadingImageExecutor == null ? null : ThemeImage.fromValue(_leadingImageExecutor.execute(object));
+		String encoded = image == null ? null : ReactImages.encode(getReactContext(), image);
+		if (NO_IMAGE.equals(encoded)) {
+			encoded = null;
+		}
+		if (name.isEmpty() && encoded == null) {
+			return null;
+		}
+		Map<String, Object> result = new LinkedHashMap<>();
+		if (!name.isEmpty()) {
+			result.put(DataListState.Leading.NAME__PROP, name);
+		}
+		if (encoded != null) {
+			if (isIconFont(encoded)) {
+				result.put(DataListState.Leading.ICON__PROP, encoded);
+			} else {
+				result.put(DataListState.Leading.IMAGE__PROP, encoded);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Whether the given encoded image is drawn by an icon font, not loaded as a picture: the client
+	 * loads only an encoded form starting with a slash or {@code data:} as picture, see
+	 * {@link ReactImages}.
+	 */
+	private static boolean isIconFont(String encoded) {
+		return !(encoded.startsWith("/") || encoded.startsWith(DATA_URI_PREFIX));
+	}
+
+	/**
+	 * What stands after the lines of the given row, see {@link DataListState.Trailing}, or
+	 * {@code null} for nothing: no value, or an empty value or {@code 0} as badge.
+	 */
+	private Map<String, Object> trailing(TLObject object) {
+		if (_trailing == null) {
+			return null;
+		}
+		String text = text(_trailing, object);
+		if (text.isEmpty() || (_trailingBadge && NO_COUNT.equals(text))) {
+			return null;
+		}
+		Map<String, Object> result = new LinkedHashMap<>();
+		result.put(DataListState.Trailing.TEXT__PROP, text);
+		if (_trailingBadge) {
+			result.put(DataListState.Trailing.BADGE__PROP, Boolean.TRUE);
+		}
+		return result;
+	}
+
+	/** The text the given line or trailing value shows for the given row. */
+	private static String text(LineSpec spec, TLObject object) {
+		if (spec.executor() != null) {
+			return label(spec.executor().execute(object));
+		}
+		TLStructuredTypePart part = attribute(object, spec.attribute());
+		return attributeLabel(part, part == null ? null : object.tValue(part));
+	}
+
+	private static QueryExecutor compile(Expr expr) {
+		return expr == null ? null : QueryExecutor.compile(expr);
+	}
+
+	private static boolean blank(String value) {
+		return value == null || value.isBlank();
+	}
+
 	/** The display lines for a row, honouring the configured attributes / values and emphasis. */
 	private List<Map<String, Object>> lines(TLObject object) {
 		List<Map<String, Object>> lines = new ArrayList<>();
 		for (LineSpec spec : _lineSpecs) {
-			String text;
-			if (spec.executor() != null) {
-				text = label(spec.executor().execute(object));
-			} else {
-				TLStructuredTypePart part = attribute(object, spec.attribute());
-				text = attributeLabel(part, part == null ? null : object.tValue(part));
-			}
+			String text = text(spec, object);
 			Map<String, Object> line = new LinkedHashMap<>();
-			line.put("text", text);
+			line.put(DataListState.Line.TEXT__PROP, text);
 			if (spec.emphasis() != null) {
-				line.put("emphasis", spec.emphasis());
+				line.put(DataListState.Line.EMPHASIS__PROP, spec.emphasis());
 			}
 			lines.add(line);
 		}
 		if (lines.isEmpty()) {
 			Map<String, Object> line = new LinkedHashMap<>();
-			line.put("text", label(object));
+			line.put(DataListState.Line.TEXT__PROP, label(object));
 			lines.add(line);
 		}
 		return lines;
@@ -480,34 +610,20 @@ public class DataListControl extends ReactControl {
 		return label(value);
 	}
 
-	/** A display label for an expression result (formats dates, objects and text uniformly). */
+	/**
+	 * A display label for an expression result: a number in the number format of the user (a count
+	 * of TL-Script, a floating point number, without a fraction where it has none), dates, objects
+	 * and text by their label.
+	 */
 	private static String label(Object value) {
+		if (value instanceof Number number) {
+			return HTMLFormatter.getInstance().getNumberFormat().format(number);
+		}
 		return value == null ? "" : MetaLabelProvider.INSTANCE.getLabel(value);
 	}
 
 	private static String labelOf(ResKey key) {
 		return key == null ? "" : Resources.getInstance().getString(key);
-	}
-
-	private static String currentLanguage() {
-		TLContext tlContext = TLContext.getContext();
-		Locale locale = tlContext == null ? null : tlContext.getCurrentLocale();
-		return locale == null ? Locale.ENGLISH.getLanguage() : locale.getLanguage();
-	}
-
-	private static Set<TLStructuredType> resolveObservedTypes(List<TLModelPartRef> refs) {
-		if (refs == null || refs.isEmpty()) {
-			return Set.of();
-		}
-		Set<TLStructuredType> types = new HashSet<>();
-		for (TLModelPartRef ref : refs) {
-			TLStructuredType type = (TLStructuredType) ref.resolveType();
-			if (type == null) {
-				throw new RuntimeException("Failed to resolve observed type: " + ref.qualifiedName());
-			}
-			types.add(type);
-		}
-		return types;
 	}
 
 	private static Object[] readChannelValues(List<ViewChannel> channels) {

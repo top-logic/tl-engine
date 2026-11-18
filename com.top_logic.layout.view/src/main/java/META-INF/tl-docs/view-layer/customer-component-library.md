@@ -354,12 +354,19 @@ the commands the component sends. The controls a library replaces as a whole:
 | `TLCard` | `CardState` |
 | `TLAppBar` | `AppBarState` |
 | `TLBreadcrumb` | `BreadcrumbState` |
-| `TLAvatar` | `AvatarState` |
 | `TLSlider` | `SliderState` |
 | `TLFloatingAction` | `FloatingActionState` |
+| `TLDataList` | `DataListState` |
+
+The typographic role of a `TLText` (`TextState.variant`) is a role of the type scale of the design
+system - `display`, `heading-lg`, `heading-md`, `heading-sm`, `body`, `body-strong`, `label`,
+`label-strong`, `overline`, `code` - not a style of the library. An adapter of `TLText` draws each
+role in the style of its library that serves the same purpose; the theme maps the library's
+typography onto the tokens of these roles
+([Typography tokens](doc:view-layer/theme-tokens#typography-tokens)).
 
 The header also lists the atomic controls `TLButton`, `TLToggleButton`, `TLCheckbox`,
-`TLTextInput`, `TLPasswordInput`, `TLNumberInput`, `TLOptionChips`, `TLProgress` and `TLDivider`. Their look is
+`TLTextInput`, `TLPasswordInput`, `TLNumberInput`, `TLOptionChips`, `TLProgress`, `TLAvatar` and `TLDivider`. Their look is
 drawn by parts ([Parts and controls](#parts-and-controls)); a library replaces those parts.
 
 The shared parts are `ControlState` (`hidden`, `cssClass`), `FieldState` (value, `editable`,

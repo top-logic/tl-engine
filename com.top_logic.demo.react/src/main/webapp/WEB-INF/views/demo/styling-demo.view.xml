@@ -120,7 +120,7 @@
 			<de>Gestaltung</de>
 		</title>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>Typography</en>
 				<de>Typografie</de>
@@ -128,8 +128,8 @@
 		</text>
 		<text>
 			<label>
-				<en>A text says what it is for, not which font it is drawn in: the variant names the role, and the family, size, line height and weight of that role come from the tokens of the active theme.</en>
-				<de>Ein Text sagt, wofür er da ist, nicht in welcher Schrift er gesetzt wird: Die Variante benennt die Rolle, und Familie, Größe, Zeilenhöhe und Schnitt dieser Rolle kommen aus den Token des aktiven Themes.</de>
+				<en>A text says what it is for, not which font it is drawn in: the variant names the role, and the family, size, weight, line height and letter spacing of that role come from the tokens of the active theme. The roles are the type scale of the design system.</en>
+				<de>Ein Text sagt, wofür er da ist, nicht in welcher Schrift er gesetzt wird: Die Variante benennt die Rolle, und Familie, Größe, Schnitt, Zeilenhöhe und Laufweite dieser Rolle kommen aus den Token des aktiven Themes. Die Rollen sind die Typo-Skala des Design-Systems.</de>
 			</label>
 		</text>
 		<stack gap="compact">
@@ -139,16 +139,22 @@
 					<de>display</de>
 				</label>
 			</text>
-			<text variant="headline">
+			<text variant="heading-lg">
 				<label>
-					<en>headline</en>
-					<de>headline</de>
+					<en>heading-lg</en>
+					<de>heading-lg</de>
 				</label>
 			</text>
-			<text variant="title">
+			<text variant="heading-md">
 				<label>
-					<en>title</en>
-					<de>title</de>
+					<en>heading-md</en>
+					<de>heading-md</de>
+				</label>
+			</text>
+			<text variant="heading-sm">
+				<label>
+					<en>heading-sm</en>
+					<de>heading-sm</de>
 				</label>
 			</text>
 			<text variant="body">
@@ -157,16 +163,34 @@
 					<de>body</de>
 				</label>
 			</text>
+			<text variant="body-strong">
+				<label>
+					<en>body-strong</en>
+					<de>body-strong</de>
+				</label>
+			</text>
 			<text variant="label">
 				<label>
 					<en>label</en>
 					<de>label</de>
 				</label>
 			</text>
-			<text variant="caption">
+			<text variant="label-strong">
 				<label>
-					<en>caption</en>
-					<de>caption</de>
+					<en>label-strong</en>
+					<de>label-strong</de>
+				</label>
+			</text>
+			<text variant="overline">
+				<label>
+					<en>overline</en>
+					<de>overline</de>
+				</label>
+			</text>
+			<text variant="code">
+				<label>
+					<en>code</en>
+					<de>code</de>
 				</label>
 			</text>
 		</stack>
@@ -200,7 +224,7 @@
 					<de>helper</de>
 				</label>
 			</text>
-			<text css-class="tl-type-body-strong">
+			<text variant="body-strong">
 				<label>
 					<en>strong</en>
 					<de>strong</de>
@@ -292,7 +316,7 @@
 			</value-input>
 		</fields>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>A stylesheet of the application: css-class</en>
 				<de>Ein Stylesheet der Anwendung: css-class</de>
@@ -312,7 +336,7 @@
 				<stack gap="compact">
 					<text
 						tone="on-color"
-						variant="headline"
+						variant="heading-lg"
 					>
 						<label>
 							<en>Everything from a token</en>
@@ -329,7 +353,7 @@
 			</card>
 		</stack>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>Arrangement: stack and grid</en>
 				<de>Anordnung: Stack und Grid</de>
@@ -441,7 +465,7 @@
 			gap="default"
 			max-width="40rem"
 		>
-			<text variant="headline">
+			<text variant="heading-lg">
 				<label>
 					<en>A readable column</en>
 					<de>Eine lesbare Spalte</de>
@@ -517,7 +541,7 @@
 			</card>
 		</grid>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>Dividers</en>
 				<de>Trennlinien</de>
@@ -664,7 +688,7 @@
 			/>
 		</stack>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>Emptying an input</en>
 				<de>Eine Eingabe leeren</de>
@@ -736,7 +760,7 @@
 			</value-input>
 		</fields>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>Display variants of an input</en>
 				<de>Darstellungsvarianten einer Eingabe</de>
@@ -1029,7 +1053,7 @@
 			/>
 		</stack>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>A value declared like an attribute</en>
 				<de>Ein Wert, deklariert wie ein Attribut</de>

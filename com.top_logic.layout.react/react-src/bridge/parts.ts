@@ -773,6 +773,52 @@ export interface BadgePartProps extends PartAttributes {
 }
 
 /**
+ * The diameter of an {@link AvatarPartProps avatar}, chosen by where it stands: `small` in a table
+ * cell or a row, `medium` beside text and in lists, `large` in the header of a detail view,
+ * `x-large` where the picture is the content.
+ */
+export type AvatarSize = 'small' | 'medium' | 'large' | 'x-large';
+
+/**
+ * The props of the part {@link PartProps.Avatar}: a circle standing for a person or an object - the
+ * avatar of a user, the leading picture of an entry of a list.
+ *
+ * <p>The circle shows the picture ({@link src}) where there is one; otherwise the initials of the
+ * {@link name} on the category the name maps to (`categoryOf` of 'tl-react-bridge'), the same
+ * category for the same name everywhere; without a name, a neutral circle that is decoration only.
+ * Every implementation names a circle with initials or a picture by the {@link name} for assistive
+ * technology and as tooltip - unless it is {@link decorative} -, and puts {@link id},
+ * {@link className} and the passed-through attributes on its outermost element.</p>
+ */
+export interface AvatarPartProps extends PartAttributes {
+  /** The ID of the drawn element. */
+  id?: string;
+
+  /** The display name of the one the avatar stands for, plain text. Absent: the neutral circle. */
+  name?: string | null;
+
+  /** The address of the picture. Absent: the initials of the {@link name}. */
+  src?: string | null;
+
+  /** The diameter. Absent: `medium`. */
+  size?: AvatarSize;
+
+  /**
+   * Whether the avatar is decoration only, because the element around it says the name already -
+   * the lines of an entry of a list. The circle still shows the picture or the initials on the
+   * category of the {@link name}, but is hidden from assistive technology (`aria-hidden`, no role,
+   * no accessible name, an empty `alt`) and has no tooltip.
+   */
+  decorative?: boolean;
+
+  /**
+   * Classes added to the outermost drawn element. They mark the part and carry no layout: the
+   * element around the part places it.
+   */
+  className?: string;
+}
+
+/**
  * The direction of a {@link DividerPartProps divider}:
  *
  * <ul>
@@ -1080,6 +1126,9 @@ export interface PartProps {
 
   /** A small marker carrying a count: {@link BadgePartProps}. */
   Badge: BadgePartProps;
+
+  /** A circle standing for a person or an object: {@link AvatarPartProps}. */
+  Avatar: AvatarPartProps;
 
   /** A thin line separating content: {@link DividerPartProps}. */
   Divider: DividerPartProps;

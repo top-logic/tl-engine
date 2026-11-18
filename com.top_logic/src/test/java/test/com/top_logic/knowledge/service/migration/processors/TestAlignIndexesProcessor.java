@@ -155,37 +155,46 @@ public class TestAlignIndexesProcessor extends AbstractDBKnowledgeBaseTest {
 		assertDuplicateAccepted(membersTable);
 
 		SchemaConfiguration changed = changedSchema();
-		BufferingProtocol log = align(changed, MEMBERS_ASSOCIATION, UNCHANGED_ASSOCIATION);
-		assertInfo(log, "Aligned the indexes of 1 of 2 tables.");
-		assertInfo(log, "Changed index '" + SOURCE_INDEX + "' of table '" + membersTable + "'");
-		assertInfo(log, "Created index '" + ADDED_INDEX + "' of table '" + membersTable + "'");
-		assertFalse("Unchanged table touched: " + log.getInfos(),
-			log.getInfos().stream().anyMatch(info -> info.contains("'" + unchangedTable + "'")));
+		try {
+			BufferingProtocol log = align(changed, MEMBERS_ASSOCIATION, UNCHANGED_ASSOCIATION);
+			assertInfo(log, "Aligned the indexes of 1 of 2 tables.");
+			assertInfo(log, "Changed index '" + SOURCE_INDEX + "' of table '" + membersTable + "'");
+			assertInfo(log, "Created index '" + ADDED_INDEX + "' of table '" + membersTable + "'");
+			assertFalse("Unchanged table touched: " + log.getInfos(),
+				log.getInfos().stream().anyMatch(info -> info.contains("'" + unchangedTable + "'")));
 
-		DBTable members = extract(membersTable);
-		DBIndex sourceIndex = index(members, SOURCE_INDEX);
-		assertTrue("Source index not unique.", sourceIndex.isUnique());
-		assertEquals(key(SOURCE_COLUMN, DEST_COLUMN), names(sourceIndex));
-		assertEquals(key(DEST_COLUMN, SOURCE_COLUMN), names(index(members, ADDED_INDEX)));
-		assertDuplicateRejected(membersTable);
-		assertEquals("Unchanged table modified.", unchangedBefore, describeIndexes(extract(unchangedTable)));
+			DBTable members = extract(membersTable);
+			DBIndex sourceIndex = index(members, SOURCE_INDEX);
+			assertTrue("Source index not unique.", sourceIndex.isUnique());
+			assertEquals(key(SOURCE_COLUMN, DEST_COLUMN), names(sourceIndex));
+			assertEquals(key(DEST_COLUMN, SOURCE_COLUMN), names(index(members, ADDED_INDEX)));
+			assertDuplicateRejected(membersTable);
+			assertEquals("Unchanged table modified.", unchangedBefore, describeIndexes(extract(unchangedTable)));
 
-		// Aligning again finds nothing to do.
-		storeSchema(changed);
-		log = align(changed, MEMBERS_ASSOCIATION, UNCHANGED_ASSOCIATION);
-		assertInfo(log, "Aligned the indexes of 0 of 2 tables.");
+			// Aligning again finds nothing to do.
+			storeSchema(changed);
+			log = align(changed, MEMBERS_ASSOCIATION, UNCHANGED_ASSOCIATION);
+			assertInfo(log, "Aligned the indexes of 0 of 2 tables.");
 
-		// Back to the configured definitions: the unique index is converted back and the added
-		// index is dropped.
-		log = align(configuredSchema(), MEMBERS_ASSOCIATION);
-		assertInfo(log, "Aligned the indexes of 1 of 1 tables.");
-		assertInfo(log, "Dropped index '" + ADDED_INDEX + "' of table '" + membersTable + "'");
-		members = extract(membersTable);
-		sourceIndex = index(members, SOURCE_INDEX);
-		assertFalse("Source index still unique.", sourceIndex.isUnique());
-		assertEquals(key(SOURCE_COLUMN), names(sourceIndex));
-		assertNull("Index not dropped.", findIndex(members, ADDED_INDEX));
-		assertDuplicateAccepted(membersTable);
+			// Back to the configured definitions: the unique index is converted back and the added
+			// index is dropped.
+			log = align(configuredSchema(), MEMBERS_ASSOCIATION);
+			assertInfo(log, "Aligned the indexes of 1 of 1 tables.");
+			assertInfo(log, "Dropped index '" + ADDED_INDEX + "' of table '" + membersTable + "'");
+			members = extract(membersTable);
+			sourceIndex = index(members, SOURCE_INDEX);
+			assertFalse("Source index still unique.", sourceIndex.isUnique());
+			assertEquals(key(SOURCE_COLUMN), names(sourceIndex));
+			assertNull("Index not dropped.", findIndex(members, ADDED_INDEX));
+			assertDuplicateAccepted(membersTable);
+		} finally {
+			// The test converts the indexes back itself. Restore them also after a failure, since the
+			// tables of the test database are only cleared but not recreated before the next test.
+			if (findIndex(extract(membersTable), ADDED_INDEX) != null) {
+				storeSchema(changed);
+				align(configuredSchema(), MEMBERS_ASSOCIATION);
+			}
+		}
 	}
 
 	/**

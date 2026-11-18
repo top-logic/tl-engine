@@ -12,7 +12,7 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 
 // The bridge first, as the page loads it: the bridge entry reaches it through modules that the SSE client imports
 // as well, and these must see the mocked SSE client.
-import { mount, unmount } from '../bridge/tl-react-bridge';
+import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
 // The controls with their parts, as the page registers them: the table draws its buttons and boxes as parts.
 import '../controls-entry';
 import { React, register } from 'tl-react-bridge';
@@ -59,7 +59,7 @@ beforeAll(() => {
 
 afterEach(async () => {
   act(() => unmount(TABLE_ID));
-  document.getElementById(TABLE_ID)?.remove();
+  findMountPoint(TABLE_ID)?.remove();
   vi.unstubAllGlobals();
   resized = [];
   await settle();
@@ -97,7 +97,7 @@ function mountTable({ compact = false, frozenColumnCount = 0 } = {}): void {
     return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
   }));
   const element = document.createElement('div');
-  element.id = TABLE_ID;
+  element.setAttribute(MOUNT_ATTRIBUTE, TABLE_ID);
   document.body.appendChild(element);
   const columns = ['person', 'budget', 'used'].map(name =>
     ({ name, label: name, width: 150, sortable: false, ...(name === 'budget' ? { hideWhenCompact: true } : {}) }));
@@ -195,8 +195,10 @@ describe('the columns of a table on a phone', () => {
     });
     const freeze = [...document.querySelectorAll<HTMLElement>('[role=menuitem]')]
       .find(item => item.textContent === 'Freeze up to here')!;
-    act(() => freeze.click());
-    await settle();
+    await act(async () => {
+      freeze.click();
+      await settle();
+    });
 
     expect(sent).toContainEqual({ command: 'setFrozenColumnCount', args: { count: 3 } });
   });

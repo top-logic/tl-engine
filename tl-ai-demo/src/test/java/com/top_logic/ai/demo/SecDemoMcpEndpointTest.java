@@ -663,12 +663,12 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 		assertFalse("A token without the permission must not reach the protocol.", recording.chainInvoked);
 		assertEquals(401, recording.status);
 		assertEquals("Refused like an unknown token.", unknownRecording.status, recording.status);
-		assertEquals("Refused like an unknown token.", unknownRecording.message, recording.message);
+		assertEquals("Refused like an unknown token.", unknownRecording.body.toString(), recording.body.toString());
 		assertEquals("Refused like an unknown token.", unknownRecording.responseHeaders.get("WWW-Authenticate"),
 			recording.responseHeaders.get("WWW-Authenticate"));
 		assertHas("The client is told the token is not valid.", "error=\"invalid_token\"",
 			recording.responseHeaders.get("WWW-Authenticate"));
-		assertHasNot("The answer must not echo the token.", created.plain(), recording.message);
+		assertHasNot("The answer must not echo the token.", created.plain(), recording.body.toString());
 		for (LogEntry entry : log.getLogEntries()) {
 			assertHasNot("The log must not contain the token.", created.plain(), entry.getMessage());
 		}

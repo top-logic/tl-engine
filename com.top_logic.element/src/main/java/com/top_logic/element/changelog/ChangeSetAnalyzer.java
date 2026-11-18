@@ -44,6 +44,7 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.util.TLAnnotations;
@@ -363,6 +364,7 @@ public class ChangeSetAnalyzer {
 
 				TLStructuredTypePart part = partByColumn.get(storageAttribute);
 				if (part == null) {
+					addOppositeEnds(changedParts, type, table, storageAttribute, valueUpdates, oldValues);
 					continue;
 				}
 				if (isPersistentCacheAttribute(part)) {
@@ -376,6 +378,70 @@ public class ChangeSetAnalyzer {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * Records the opposite ends of the references whose values are stored in the given column of
+	 * the changed object's own row.
+	 *
+	 * <p>
+	 * A reference stored in the rows of the referenced objects (e.g. an inline collection storage)
+	 * keeps its value in a container column of the target table. Changing that column moves the
+	 * object from one container to another. For the moved object, this is a change of the opposite
+	 * end of the reference, if the opposite end is modelled.
+	 * </p>
+	 *
+	 * @param changedParts
+	 *        Receives the opposite ends that are changed.
+	 * @param type
+	 *        The type of the changed object.
+	 * @param table
+	 *        The table of the changed object.
+	 * @param column
+	 *        The changed column that is not bound to an attribute of the object.
+	 * @param newValues
+	 *        The values of the row after the change.
+	 * @param oldValues
+	 *        The values of the row before the change, or <code>null</code> if not available.
+	 */
+	private void addOppositeEnds(Set<TLStructuredTypePart> changedParts, TLStructuredType type, MetaObject table,
+			String column, Map<String, Object> newValues, Map<String, Object> oldValues) {
+		AssociationStorageDescriptor descriptor = _modelTables.getDescriptorsForTable(table).get(column);
+		if (descriptor == null) {
+			return;
+		}
+		addOppositeEnd(changedParts, type, descriptor.getPartId(newValues));
+		if (oldValues != null) {
+			addOppositeEnd(changedParts, type, descriptor.getPartId(oldValues));
+		}
+	}
+
+	private void addOppositeEnd(Set<TLStructuredTypePart> changedParts, TLStructuredType type, ObjectKey referenceId) {
+		if (referenceId == null) {
+			return;
+		}
+		KnowledgeItem referenceItem = resolvePart(referenceId, _changeSet.getRevision());
+		if (referenceItem == null) {
+			return;
+		}
+		if (!(referenceItem.getWrapper() instanceof TLReference reference)) {
+			return;
+		}
+		if (isPersistentCacheAttribute(reference)) {
+			return;
+		}
+		TLReference opposite = reference.getOpposite();
+		if (opposite == null) {
+			return;
+		}
+		TLStructuredTypePart oppositeEnd = type.getPart(opposite.getName());
+		if (oppositeEnd == null || oppositeEnd.getDefinition() != opposite.getDefinition()) {
+			return;
+		}
+		if (isPersistentCacheAttribute(oppositeEnd)) {
+			return;
+		}
+		changedParts.add(oppositeEnd);
 	}
 
 	private Set<TLStructuredTypePart> enter(TLObject newObject) {
@@ -440,6 +506,18 @@ public class ChangeSetAnalyzer {
 		return false;
 	}
 
+	/**
+	 * Records the changes of the objects whose attribute values are stored in the changed row of a
+	 * foreign table.
+	 *
+	 * <p>
+	 * For an updated row, the owner is determined from the values of the row before and after the
+	 * change. If the row moves from one owner to another, both owners get an update of the
+	 * attribute stored in the row.
+	 * </p>
+	 *
+	 * @return Whether a change of an owner was recorded.
+	 */
 	private boolean analyzeTechnicalUpdate(long revision, MetaObject table, Set<ObjectKey> createdDeletedKeys,
 			ItemChange change) {
 		Map<String, AssociationStorageDescriptor> descriptors = _modelTables.getDescriptorsForTable(table);
@@ -447,46 +525,81 @@ public class ChangeSetAnalyzer {
 			return false;
 		}
 
+		Map<String, Object> oldValues = change instanceof ItemUpdate update ? update.getOldValues() : null;
+
 		boolean technicalUpdate = false;
 		for (AssociationStorageDescriptor descriptor : descriptors.values()) {
-			ObjectKey objId = descriptor.getBaseObjectId(change.getValues());
-			if (objId != null) {
-				ObjectKey oldId = inRevision(objId, revision - 1);
-				ObjectKey newId = inRevision(objId, revision);
-				if (createdDeletedKeys.contains(oldId) || createdDeletedKeys.contains(newId)) {
-					continue;
-				}
-
-				TLObject newObject = resolve(newId).getWrapper();
-				if (excludedByModule(newObject) || isPersistentCacheObject(newObject)) {
-					continue;
-				}
-				ObjectKey partId = descriptor.getPartId(change.getValues());
-				if (partId == null) {
-					Logger.error("Unable to determine part id for update of '"
-							+ MetaLabelProvider.INSTANCE.getLabel(newObject) + "' in revision '" + revision
-							+ "': Changes: " + change.getValues() + ", table: " + table + ", descriptor: "
-							+ descriptor,
-						ChangeSetAnalyzer.class);
-					continue;
-				}
-				KnowledgeItem partKI = resolve(partId);
-				if (partKI == null) {
-					partKI = resolve(inRevision(partId, revision - 1));
-					if (partKI == null) {
-						partKI = resolve(inRevision(partId, revision));
-					}
-				}
-				TLStructuredTypePart part = partKI.getWrapper();
-				if (isPersistentCacheAttribute(part)) {
-					continue;
-				}
-
-				enter(newObject).add(part);
-				technicalUpdate = true;
+			technicalUpdate |=
+				enterOwner(revision, table, createdDeletedKeys, descriptor, change.getValues(), change.getValues());
+			if (oldValues != null) {
+				technicalUpdate |=
+					enterOwner(revision, table, createdDeletedKeys, descriptor, oldValues, change.getValues());
 			}
 		}
 		return technicalUpdate;
+	}
+
+	/**
+	 * Records an update of the owner of a row of a foreign table.
+	 *
+	 * @param row
+	 *        The values of the row from which the owner and the changed attribute are determined.
+	 * @param changedValues
+	 *        The values reported for the change, for diagnostics only.
+	 * @return Whether a change of the owner was recorded.
+	 */
+	private boolean enterOwner(long revision, MetaObject table, Set<ObjectKey> createdDeletedKeys,
+			AssociationStorageDescriptor descriptor, Map<String, Object> row, Map<String, Object> changedValues) {
+		ObjectKey objId = descriptor.getBaseObjectId(row);
+		if (objId == null) {
+			return false;
+		}
+		ObjectKey oldId = inRevision(objId, revision - 1);
+		ObjectKey newId = inRevision(objId, revision);
+		if (createdDeletedKeys.contains(oldId) || createdDeletedKeys.contains(newId)) {
+			return false;
+		}
+
+		KnowledgeItem newItem = resolve(newId);
+		if (newItem == null) {
+			// The former owner is deleted in this revision, its deletion is reported instead.
+			return false;
+		}
+		TLObject newObject = newItem.getWrapper();
+		if (excludedByModule(newObject) || isPersistentCacheObject(newObject)) {
+			return false;
+		}
+		ObjectKey partId = descriptor.getPartId(row);
+		if (partId == null) {
+			Logger.error("Unable to determine part id for update of '"
+					+ MetaLabelProvider.INSTANCE.getLabel(newObject) + "' in revision '" + revision
+					+ "': Changes: " + changedValues + ", table: " + table + ", descriptor: "
+					+ descriptor,
+				ChangeSetAnalyzer.class);
+			return false;
+		}
+		TLStructuredTypePart part = resolvePart(partId, revision).getWrapper();
+		if (isPersistentCacheAttribute(part)) {
+			return false;
+		}
+
+		enter(newObject).add(part);
+		return true;
+	}
+
+	/**
+	 * Resolves the attribute definition with the given ID, also if it is created or deleted in the
+	 * given revision.
+	 */
+	private KnowledgeItem resolvePart(ObjectKey partId, long revision) {
+		KnowledgeItem partKI = resolve(partId);
+		if (partKI == null) {
+			partKI = resolve(inRevision(partId, revision - 1));
+			if (partKI == null) {
+				partKI = resolve(inRevision(partId, revision));
+			}
+		}
+		return partKI;
 	}
 
 	private KnowledgeItem resolve(ObjectKey key) {

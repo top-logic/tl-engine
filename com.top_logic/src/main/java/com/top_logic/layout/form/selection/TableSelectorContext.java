@@ -44,6 +44,7 @@ import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.FormGroup;
 import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.layout.form.model.SelectFieldUtils;
 import com.top_logic.layout.form.model.TableField;
 import com.top_logic.layout.form.model.TreeTableField;
 import com.top_logic.layout.form.tag.TableTag;
@@ -87,6 +88,7 @@ import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.mig.html.provider.resource.INoLinkResourceProvider;
+import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.tool.boundsec.DefaultHandlerResult;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
@@ -106,6 +108,8 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 	private Command _closeAction;
 
 	private SelectField _targetSelectField;
+
+	private final List<Object> _hiddenSelection = new ArrayList<>();
 
 	private Map<Object, DefaultTreeTableNode> _nodeCache;
 
@@ -158,6 +162,7 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 	 * Creates the {@link TableField} holding the options.
 	 */
 	public TableField createTableField() {
+		_hiddenSelection.clear();
 		AbstractRestrainedSelectionModel tableSelectionModel;
 		if (_targetSelectField.isMultiple()) {
 			tableSelectionModel = new DefaultMultiSelectionModel(SelectionModelOwner.NO_OWNER);
@@ -186,7 +191,13 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 
 		List<Object> allRows = new ArrayList<>();
 		List<?> selection = _targetSelectField.getSelection();
-		allRows.addAll(selection);
+		for (Object selected : selection) {
+			if (isHidden(selected)) {
+				_hiddenSelection.add(selected);
+			} else {
+				allRows.add(selected);
+			}
+		}
 		Set<?> selectionSet = _targetSelectField.getSelectionSet();
 		for (Iterator<?> it = _targetSelectField.getOptionModel().iterator(); it.hasNext();) {
 			Object element = it.next();
@@ -201,7 +212,7 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 			new ObjectTableModel(tableConfiguration.getDefaultColumns(), tableConfiguration, allRows);
 		TableField tableField = FormFactory.newTableField(SELECTION_TABLE, getConfigKey());
 
-		initSelectionModel(tableSelectionModel, selectionSet);
+		initSelectionModel(tableSelectionModel, visible(selectionSet));
 
 		TableViewModel viewModel = new TableViewModel(tableModel, getConfigKey()) {
 			@Override
@@ -245,6 +256,11 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 		TLTreeModel<Object> treeModel = (TLTreeModel<Object>) _targetSelectField.getOptionsAsTree().getBaseModel();
 		for (Object selectedNode : _targetSelectField.getSelectionSet()) {
 			List<Object> pathToRoot = treeModel.createPathToRoot(selectedNode);
+			if (isHidden(selectedNode) || (pathToRoot != null && pathToRoot.stream().anyMatch(this::isHidden))) {
+				// Neither the node nor a node below a hidden node is part of the tree of options.
+				_hiddenSelection.add(selectedNode);
+				continue;
+			}
 			DefaultTreeTableNode treeTableNode;
 			if (!CollectionUtil.isEmptyOrNull(pathToRoot)) {
 				treeTableNode = getTreeTableNode(treeTableModel, pathToRoot);
@@ -498,6 +514,30 @@ public class TableSelectorContext extends FormContext implements DynamicRecordab
 
 	CommandField getApplyCommand() {
 		return (CommandField) getButtons().getFirstMemberRecursively(SelectorContext.ACCEPT_SELECTION);
+	}
+
+	/**
+	 * The elements of the value of the target field that the table does not show, because the
+	 * current user may not discover them (or a node on their path to the root).
+	 *
+	 * <p>
+	 * They are not offered for selection, but stay in the value when the selection is applied.
+	 * </p>
+	 *
+	 * @see SelectFieldUtils#isMaskUndiscoverable(com.top_logic.layout.form.FormField)
+	 */
+	List<?> getHiddenSelection() {
+		return _hiddenSelection;
+	}
+
+	private boolean isHidden(Object value) {
+		return SelectFieldUtils.isMaskUndiscoverable(_targetSelectField) && DiscoverRight.isMasked(value);
+	}
+
+	private Set<Object> visible(Set<?> selection) {
+		Set<Object> result = new HashSet<>(selection);
+		result.removeAll(_hiddenSelection);
+		return result;
 	}
 
 	List<?> getSelection() {

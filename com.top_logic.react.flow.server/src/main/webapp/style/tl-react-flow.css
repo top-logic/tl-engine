@@ -32,6 +32,21 @@
 	word-spacing: normal;
 }
 
+/*
+ * The frame over the node a drag hovers. It lies over the diagram on the layer of the drag, at the
+ * place of the node on the screen; its frame is the drop target's state (drag.css). The node stays
+ * visible beneath it: the frame paints no background.
+ */
+.tl-flow-diagram__drop-marker {
+	position: fixed;
+	z-index: var(--tl-layer-drag);
+	pointer-events: none;
+}
+.tl-flow-diagram__drop-marker[data-tl-state] {
+	position: fixed;
+	background: none;
+}
+
 .tlSelectionMarker {
 	display: none;
 }

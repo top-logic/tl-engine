@@ -17,8 +17,8 @@ import { handlePick } from '../../../com.top_logic.layout.react/react-src/bridge
 import { initKeyboardDispatcher } from '../../../com.top_logic.layout.react/react-src/bridge/keyboard-dispatcher';
 import { installTouchDrag } from '../../../com.top_logic.layout.react/react-src/bridge/touch-drag';
 import ButtonPart from '../../../com.top_logic.layout.react/react-src/controls/button/ButtonPart';
-import { DropHint } from '../../../com.top_logic.layout.react/react-src/controls/DropHint';
-import type { HintAnchor } from '../../../com.top_logic.layout.react/react-src/controls/DropHint';
+import { DropHint } from '../../../com.top_logic.layout.react/react-src/bridge/drop-hint';
+import type { HintAnchor } from '../../../com.top_logic.layout.react/react-src/bridge/drop-hint';
 import { HOVER_DELAY_MS } from '../../../com.top_logic.layout.react/react-src/bridge/tooltip-host';
 import type { TooltipResolveDetail } from '../../../com.top_logic.layout.react/react-src/bridge/tooltip-host';
 import type { TooltipData } from '../../../com.top_logic.layout.react/react-src/bridge/TooltipPopover';

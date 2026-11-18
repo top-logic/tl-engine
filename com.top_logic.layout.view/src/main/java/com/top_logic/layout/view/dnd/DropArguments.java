@@ -42,6 +42,12 @@ public class DropArguments {
 	/** Name of the item inserted {@link DropReference#BEFORE before} when no other name is given. */
 	public static final String BEFORE = "before";
 
+	/** Name of the {@link DropReference#X horizontal coordinate} when no other name is given. */
+	public static final String X = "x";
+
+	/** Name of the {@link DropReference#Y vertical coordinate} when no other name is given. */
+	public static final String Y = "y";
+
 	private DropArguments() {
 		// Static utilities only.
 	}

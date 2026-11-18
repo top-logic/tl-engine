@@ -710,6 +710,12 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.GanttLayout setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return GANTT_LAYOUT__TYPE;
 	}

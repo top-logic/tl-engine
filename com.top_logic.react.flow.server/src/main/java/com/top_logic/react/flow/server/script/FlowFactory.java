@@ -89,7 +89,6 @@ import com.top_logic.react.flow.data.TreeConnector;
 import com.top_logic.react.flow.data.TreeLayout;
 import com.top_logic.react.flow.data.VerticalLayout;
 import com.top_logic.react.flow.server.ui.AWTContext;
-import com.top_logic.react.flow.server.handler.ServerDropHandler;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.operations.ScriptConversion;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
@@ -986,27 +985,32 @@ public class FlowFactory extends TLScriptFunctions {
 	}
 	
 	/**
-	 * Creates box that receives drop events.
-	 * 
+	 * Creates a box marking a target of the drops on the diagram.
+	 *
+	 * <p>
+	 * A {@code <drop>} of a {@code <flow-diagram>} is made onto the innermost box under the pointer
+	 * that is a drop region or has a user object. Onto a drop region with a user object, the drop's
+	 * target is that user object. A drop region without one makes a drop on it a drop on the diagram
+	 * as a whole, where no box inside the region with a user object or another drop region is under
+	 * the pointer.
+	 * </p>
+	 *
 	 * @param content
 	 *        The content box.
-	 * @param dropHandler
-	 *        The handler to execute when an element is dropped on thw box.
 	 * @param cssClass
 	 *        The css class for the new box.
 	 * @param userObject
-	 *        User object of the new box.
+	 *        The object a drop on the region is made onto, {@code null} for a drop on the diagram as
+	 *        a whole.
 	 * @return The new box.
 	 */
 	@Label("Create drop region")
 	public static Box dropRegion(
 			@Mandatory Box content,
-			@Mandatory ServerDropHandler dropHandler,
 			String cssClass,
 			Object userObject) {
 		return DropRegion.create()
 			.setContent(nonNull(content))
-			.setDropHandler(dropHandler)
 			.setCssClass(cssClass)
 			.setUserObject(userObject);
 	}

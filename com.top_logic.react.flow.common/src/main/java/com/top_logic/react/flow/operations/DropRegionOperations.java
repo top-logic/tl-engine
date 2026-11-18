@@ -7,15 +7,18 @@ package com.top_logic.react.flow.operations;
 
 import com.top_logic.react.flow.svg.RenderContext;
 import com.top_logic.react.flow.svg.SvgWriter;
-import com.top_logic.react.flow.svg.event.Registration;
-import com.top_logic.react.flow.svg.event.SVGDropEvent;
-import com.top_logic.react.flow.svg.event.SVGDropHandler;
 import com.top_logic.react.flow.data.DropRegion;
 
 /**
  * Operations for {@link DropRegion} diagram elements.
+ *
+ * <p>
+ * A drop region marks the box a drop on a diagram is made onto: the {@code <drop>} of a
+ * {@code <flow-diagram>} takes the user object of the region as its target. The region draws its
+ * content only; the drop itself is handled by the view layer's drag and drop.
+ * </p>
  */
-public interface DropRegionOperations extends DecorationOperations, SVGDropHandler {
+public interface DropRegionOperations extends DecorationOperations {
 
 	@Override
 	DropRegion self();
@@ -32,27 +35,13 @@ public interface DropRegionOperations extends DecorationOperations, SVGDropHandl
 
 	@Override
 	default void draw(SvgWriter out) {
-		Registration clickHandler = self().getHandlerRegistration();
-		if (clickHandler != null) {
-			clickHandler.cancel();
-		}
-
 		out.beginGroup();
 		out.attachModel(self());
 		out.writeCssClass(self().getCssClass());
-		self().setHandlerRegistration(out.attachOnDrop(this, self()));
 		{
 			DecorationOperations.super.draw(out);
 		}
 		out.endGroup();
-	}
-
-	@Override
-	default void onDrop(SVGDropEvent event) {
-		self().getDiagram().getContext().processDrop(self(), event);
-
-		event.stopPropagation();
-		event.preventDefault();
 	}
 
 }

@@ -99,6 +99,12 @@ public class Tooltip_Impl extends com.top_logic.react.flow.data.impl.Decoration_
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.Tooltip setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return TOOLTIP__TYPE;
 	}

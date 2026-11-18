@@ -11,7 +11,6 @@ import com.top_logic.react.flow.model.Drawable;
 import com.top_logic.react.flow.svg.event.Registration;
 import com.top_logic.react.flow.svg.event.SVGClickEvent;
 import com.top_logic.react.flow.svg.event.SVGClickHandler;
-import com.top_logic.react.flow.svg.event.SVGDropHandler;
 import com.top_logic.react.flow.svg.event.SVGKeyEvent;
 import com.top_logic.react.flow.svg.event.SVGKeyHandler;
 import com.top_logic.react.flow.svg.event.SVGPanHandler;
@@ -548,21 +547,6 @@ public interface SvgWriter extends AutoCloseable {
 	 *        The attribute value.
 	 */
 	void writeAttribute(String name, String value);
-
-	/**
-	 * Attatches a callback to the created SVG element that captures a drop.
-	 *
-	 * @param handler
-	 *        The callback that is invoked upon click.
-	 * @param sender
-	 *        The user object to pass to the invoked callback. See
-	 *        {@link SVGClickEvent#getSender()}.
-	 */
-	default Registration attachOnDrop(SVGDropHandler handler, Object sender) {
-		// Ignore by default. This is only supported in specialized writers that build interactive
-		// DOM trees.
-		return Registration.NONE;
-	}
 
 	/**
 	 * Attaches a callback to the currently created SVG element that is called when the user

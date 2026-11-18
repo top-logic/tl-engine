@@ -260,6 +260,12 @@ public class GridLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_I
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.GridLayout setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return GRID_LAYOUT__TYPE;
 	}

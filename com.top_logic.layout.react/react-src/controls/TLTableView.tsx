@@ -1,8 +1,8 @@
 import { BACKGROUND_COMMAND, BACKGROUND_REPORT, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
 import { FOCUSABLE_SELECTOR, editableInRow, focusTargetInRow, focusablesIn, rowCells } from './tableRowFocus';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
-import { DropHint, NO_DRAG_IMAGE } from './DropHint';
-import type { HintAnchor, DropVerdict } from './DropHint';
+import { DropHint, NO_DRAG_IMAGE } from 'tl-react-bridge';
+import type { HintAnchor, DropVerdict } from 'tl-react-bridge';
 import { Menu, MenuItem } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
 import { chipFocusTargets } from './chip/chipFocus';

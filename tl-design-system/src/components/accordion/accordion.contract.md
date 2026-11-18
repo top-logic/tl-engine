@@ -16,6 +16,17 @@ Das Control ist `TLAccordion` (`AccordionState`): `sections[]` mit `id`, `label`
 
 Pfeil auf/ab, Home und End bewegen den Fokus zwischen den Auslösern.
 
+## Tokens
+
+| Teil | Token |
+|---|---|
+| Linie | `--tl-border-width-sm` in `--tl-border-separator` zwischen den Abschnitten und über dem Körper |
+| Kopf | Mindesthöhe `--tl-size-bar`, Lücke `--tl-space-xs`; unter dem Zeiger `--tl-surface-interactive-hover` |
+| Auslöser | Innenabstand `--tl-space-md`, Lücke `--tl-space-xs`; der Ring liegt innen, um `--tl-focus-offset` eingerückt |
+| Pfeil, Icon | `--tl-icon-primary`; der Pfeil dreht über `--tl-duration-fast` mit `--tl-easing-standard` |
+| Befehle | `--tl-space-sm` am Ende |
+| Körper | Innenabstand `--tl-space-md` |
+
 ## Attribute
 
 | Attribut | Wann |

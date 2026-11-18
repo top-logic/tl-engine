@@ -8,7 +8,7 @@ import { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from './tooltip-host'
 
 // The parts (atoms) of the React UI: the presentational elements the controls draw themselves with
 // - a button, the trigger of a menu, the toggle disclosing content, a checkbox, a text box, the value
-// of a field, a chip, a badge, a divider, a progress bar, a spinner, a list to pick from, a button copying a text. A part has a typed props contract and no server state: the control
+// of a field, a chip, a badge, a divider, a placeholder for loading content, a progress bar, a spinner, a list to pick from, a button copying a text. A part has a typed props contract and no server state: the control
 // maps its state to the props of the part, sends its commands and handles keyboard bindings and
 // navigation, and the part only draws. The controls bundle registers a default for every part (registerPart); a customer
 // component library replaces a part (replacePart) and so changes how the part looks wherever a
@@ -26,7 +26,9 @@ import { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from './tooltip-host'
 /**
  * Attributes a part passes on to the element it draws as they are: the `aria-*` attributes naming
  * or describing the element where the props of the part do not, and `data-*` attributes another
- * component finds the element by.
+ * component finds the element by. They are set after the attributes the part derives from its
+ * props, so a tooltip declaration ({@link TOOLTIP_ATTR}) given here replaces the tooltip the part
+ * would show, e.g. with rich content the server holds.
  */
 export interface PartAttributes {
   [attribute: `aria-${string}`]: string | number | boolean | undefined;
@@ -420,10 +422,10 @@ export type TextInputMode = 'text' | 'numeric' | 'decimal' | 'search' | 'email' 
  * <p>The box is controlled: it shows {@link value} as given, and each keystroke reports the text
  * typed through {@link onChange}; it shows the new text only once the control passes it.</p>
  *
- * <p>A single-line box may show an {@link icon} ahead of the text - the magnifier of a search -
- * and an {@link action} at its end - the button emptying it, the link opening what it holds. The
- * box keeps the input in place while icon and action come and go, so that typing keeps the focus.
- * A multi-line box ({@link multiline}) draws neither.</p>
+ * <p>A single-line box may show an {@link icon} ahead of the text - the magnifier of a search.
+ * Every box may show an {@link action} at its end - the button emptying it, the link opening what
+ * it holds. The box keeps the input in place while icon and action come and go, so that typing
+ * keeps the focus.</p>
  *
  * <p>Every implementation marks an invalid box `aria-invalid` and a required one
  * `aria-required`, and puts {@link id}, {@link ref}, {@link role}, {@link name}, the key, focus
@@ -481,9 +483,10 @@ export interface TextInputPartProps extends PartAttributes {
   icon?: string;
 
   /**
-   * The action at the end of a single-line box, inside its frame: a part `Button` drawn
-   * `icon-only`, `ghost` and `small`, e.g. the button emptying the box. It replaces the browser's own
-   * clear button of a `search` box, which the box then does not show. Absent: none.
+   * The action at the end of the box, inside its frame - in a {@link multiline} box at the end of
+   * its first line: a part `Button` drawn `icon-only`, `ghost` and `small`, e.g. the button emptying
+   * the box. It replaces the browser's own clear button of a `search` box, which the box then does
+   * not show. Absent: none.
    */
   action?: React.ReactNode;
 
@@ -770,6 +773,52 @@ export interface BadgePartProps extends PartAttributes {
 }
 
 /**
+ * The diameter of an {@link AvatarPartProps avatar}, chosen by where it stands: `small` in a table
+ * cell or a row, `medium` beside text and in lists, `large` in the header of a detail view,
+ * `x-large` where the picture is the content.
+ */
+export type AvatarSize = 'small' | 'medium' | 'large' | 'x-large';
+
+/**
+ * The props of the part {@link PartProps.Avatar}: a circle standing for a person or an object - the
+ * avatar of a user, the leading picture of an entry of a list.
+ *
+ * <p>The circle shows the picture ({@link src}) where there is one; otherwise the initials of the
+ * {@link name} on the category the name maps to (`categoryOf` of 'tl-react-bridge'), the same
+ * category for the same name everywhere; without a name, a neutral circle that is decoration only.
+ * Every implementation names a circle with initials or a picture by the {@link name} for assistive
+ * technology and as tooltip - unless it is {@link decorative} -, and puts {@link id},
+ * {@link className} and the passed-through attributes on its outermost element.</p>
+ */
+export interface AvatarPartProps extends PartAttributes {
+  /** The ID of the drawn element. */
+  id?: string;
+
+  /** The display name of the one the avatar stands for, plain text. Absent: the neutral circle. */
+  name?: string | null;
+
+  /** The address of the picture. Absent: the initials of the {@link name}. */
+  src?: string | null;
+
+  /** The diameter. Absent: `medium`. */
+  size?: AvatarSize;
+
+  /**
+   * Whether the avatar is decoration only, because the element around it says the name already -
+   * the lines of an entry of a list. The circle still shows the picture or the initials on the
+   * category of the {@link name}, but is hidden from assistive technology (`aria-hidden`, no role,
+   * no accessible name, an empty `alt`) and has no tooltip.
+   */
+  decorative?: boolean;
+
+  /**
+   * Classes added to the outermost drawn element. They mark the part and carry no layout: the
+   * element around the part places it.
+   */
+  className?: string;
+}
+
+/**
  * The direction of a {@link DividerPartProps divider}:
  *
  * <ul>
@@ -800,6 +849,45 @@ export interface DividerPartProps extends PartAttributes {
    * around the part places it.
    */
   className?: string;
+}
+
+/**
+ * The shape of a {@link SkeletonPartProps skeleton}:
+ *
+ * <ul>
+ * <li>`text`: lines of body text, as high as a line of it - the rows of a table not sent yet.</li>
+ * <li>`rect`: a rectangle - an image of known size not loaded yet.</li>
+ * <li>`circle`: a circle - an avatar or a symbol.</li>
+ * </ul>
+ */
+export type SkeletonShape = 'text' | 'rect' | 'circle';
+
+/**
+ * The props of the part {@link PartProps.Skeleton}: a placeholder in the rough shape of content that
+ * is still loading, instead of an empty area or a jump of the layout.
+ *
+ * <p>A skeleton says nothing: every implementation hides it from assistive technology
+ * (`aria-hidden="true"`, for several lines on the element holding them), and the element around it,
+ * which waits for the content, states that it is busy by `aria-busy`. Its size is up to the site:
+ * the element around it gives it its track, or the {@link style} sets the size the site knows, e.g.
+ * of a circle. Every implementation puts {@link className}, {@link style} and the passed-through
+ * attributes on its outermost element.</p>
+ */
+export interface SkeletonPartProps extends PartAttributes {
+  /** The shape of the placeholder; absent: `rect`. */
+  shape?: SkeletonShape;
+
+  /** For the shape `text`: the number of lines, one under the other; absent: one. */
+  lines?: number;
+
+  /**
+   * Classes added to the outermost drawn element. They mark the part and carry no layout: the
+   * element around the part places it.
+   */
+  className?: string;
+
+  /** Inline style of the outermost drawn element: the size the site knows of the content. */
+  style?: React.CSSProperties;
 }
 
 /**
@@ -1002,8 +1090,14 @@ export interface PartProps {
   /** A small marker carrying a count: {@link BadgePartProps}. */
   Badge: BadgePartProps;
 
+  /** A circle standing for a person or an object: {@link AvatarPartProps}. */
+  Avatar: AvatarPartProps;
+
   /** A thin line separating content: {@link DividerPartProps}. */
   Divider: DividerPartProps;
+
+  /** A placeholder for content that is still loading: {@link SkeletonPartProps}. */
+  Skeleton: SkeletonPartProps;
 
   /** A bar showing how much of a task is done: {@link ProgressBarPartProps}. */
   ProgressBar: ProgressBarPartProps;

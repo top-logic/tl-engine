@@ -22,7 +22,7 @@ Tasten am Griff: Pfeile quer zum Griff um `--tl-space-md` (rechts-nach-links ges
 
 | Attribut | Wann |
 |---|---|
-| `tl-split` `tl-split--horizontal` \| `tl-split--vertical` | Wurzel; alle eingeklappt: `data-tl-state~="all-collapsed"` |
+| `tl-split` `tl-split--horizontal` \| `tl-split--vertical` | Wurzel; alle eingeklappt: `data-tl-state~="all-collapsed"`; waagrecht und schmaler als die Mindestbreiten der offenen Flächen samt Griffen: `data-tl-state~="stacked"` (Flächen untereinander, ohne Griffe) |
 | `tl-split__pane` | je Fläche, mit `id`; eingeklappt im waagrechten Split `data-tl-state~="collapsed"` |
 | `tl-split__handle` | zwischen zwei offenen Flächen: `role="separator"`, `tabindex="0"`, `aria-orientation` (`vertical` zwischen Flächen nebeneinander), `aria-controls` auf die Fläche davor, `aria-valuenow` (Anteil der Fläche davor in Prozent), `aria-valuemin`, `aria-valuemax`, `aria-label` aus i18n |
 
@@ -32,6 +32,7 @@ Tasten am Griff: Pfeile quer zum Griff um `--tl-space-md` (rechts-nach-links ges
 |---|---|
 | Trefferzone | `--tl-space-xs` |
 | Linie | `--tl-border-width-sm` `--tl-border-separator`; aktiv `--tl-border-width-md` `--tl-border-interactive` |
+| Ring am Griff | innen, um `--tl-focus-offset` eingerückt |
 
 ## Konformität
 

@@ -77,7 +77,8 @@ import com.top_logic.util.Resources;
  * children function returns; the root object itself is not displayed, its children are the
  * top-level rows. It follows the model as a tree does, see {@link ObservableTreeModel}: a deleted
  * object loses its row, an object that appeared in a child list gets one, and the rows the user
- * opened stay open.
+ * opened stay open. The top levels are expanded when the tree table is displayed, see
+ * {@link TreeStructureConfig#getInitialExpansionDepth()}.
  * </p>
  *
  * <p>
@@ -382,7 +383,8 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		List<ViewChannel> inputChannels = ChannelInputs.resolve(context, _config.getInputs());
-		RowTree tree = new RowTree(_functions, inputChannels, _config.getCanExpandAll());
+		RowTree tree = new RowTree(_functions, inputChannels, _config.getCanExpandAll(),
+			_config.getInitialExpansionDepth());
 		if (_config.getRowEdit() != RowEditPolicy.NONE) {
 			return createEditableControl(context, inputChannels, tree);
 		}
@@ -415,20 +417,23 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 
 			@Override
 			public void nodesChanged() {
+				// The model changed, and with it possibly the access rights of the user.
+				refreshColumnsAndPresets(table, ChannelInputs.arguments(inputChannels));
 				refresh.run();
 			}
 
 			@Override
-			public void treeReplaced(DefaultTreeUINodeModel newModel) {
-				refreshPresets(table, ChannelInputs.arguments(inputChannels));
+			public void treeReplaced(DefaultTreeUINodeModel newModel, List<DefaultTreeUINode> opened,
+					boolean rootChanged) {
+				refreshColumnsAndPresets(table, ChannelInputs.arguments(inputChannels));
 				refresh.run();
 			}
 
 			@Override
 			public void inputsChanged() {
-				// The rows and their cells stay; the criteria of the presets, the row class and the row
-				// role may read the inputs.
-				if (refreshPresets(table, ChannelInputs.arguments(inputChannels))) {
+				// The rows and their cells stay; the existence of the columns, the criteria of the
+				// presets, the row class and the row role may read the inputs.
+				if (refreshColumnsAndPresets(table, ChannelInputs.arguments(inputChannels))) {
 					control.refreshFilters();
 				}
 				if (rowCssClass != null || rowColor != null) {

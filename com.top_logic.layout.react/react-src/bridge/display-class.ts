@@ -11,7 +11,7 @@ import React, { createContext, useContext, useSyncExternalStore } from 'react';
 export type DisplayClass = 'compact' | 'regular';
 
 /** Viewport width (px) at or below which the window is `compact`. */
-export const COMPACT_MAX_WIDTH = 768;
+const COMPACT_MAX_WIDTH = 768;
 
 const QUERY = `(max-width: ${COMPACT_MAX_WIDTH}px)`;
 
@@ -40,7 +40,7 @@ function subscribe(onChange: () => void): () => void {
 }
 
 /** The display class of the browser window, as it is now. */
-export function windowDisplayClass(): DisplayClass {
+function windowDisplayClass(): DisplayClass {
   return query()?.matches ? 'compact' : 'regular';
 }
 

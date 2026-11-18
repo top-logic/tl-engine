@@ -28,6 +28,7 @@ import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiChipAdapter from './MuiChipAdapter';
+import MuiSkeletonAdapter from './MuiSkeletonAdapter';
 import { CONTROL_ID, childControl, mountAdapter, patchState, settle } from './wire-test-support';
 
 // The table looks up the toggle of its tree rows, the selection boxes of its rows, the box of its search, the chips of
@@ -38,6 +39,7 @@ replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
 replacePart('Chip', MuiChipAdapter);
+replacePart('Skeleton', MuiSkeletonAdapter);
 // The counter of a Kanban column is the part Badge; its TopLogic drawing is the badge of the design system (tl-badge),
 // which the board's test asks for.
 replacePart('Badge', BadgePart);
@@ -1788,6 +1790,7 @@ describe('the calendar (spec §3: tl-calendar)', () => {
     it('discards only the new event by Escape inside a window, which stays open (review focus 4)', async () => {
       register('PlanenTestCalendar', TLCalendar);
       const child = { controlId: 'cal', module: 'PlanenTestCalendar', state: calendar('WEEK', WEEK) };
+      vi.stubGlobal('ResizeObserver', NoResizeObserver);
       const sent = mountAdapter(TLWindow, { title: 'Fenster', child, closable: true });
       await settle();
 

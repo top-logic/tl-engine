@@ -31,6 +31,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.LabelDescription;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -159,12 +160,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		 * keys}.
 		 *
 		 * <p>
-		 * A listener refuses the change by throwing a {@link ChannelVetoException} - the unsaved
-		 * changes of a form the selection would replace block it. The table then restores the
-		 * selection it displayed before the refused change, both in its own state and in the
-		 * {@link TableView}, and rethrows, so whoever resolves the unsaved changes retries the
-		 * whole selection change. A listener notified before the refusing one keeps what it was
-		 * told; the retry tells it the same value again.
+		 * A listener refuses the change by throwing. The table then restores the selection it
+		 * displayed before the refused change, both in its own state and in the {@link TableView},
+		 * and rethrows. A {@link ChannelVetoException} - the unsaved changes of a form the
+		 * selection would replace block it - is resolved by whoever catches it, who retries the
+		 * whole selection change. Any other exception, e.g. a {@link TopLogicException} saying why
+		 * the selection must stay, ends the change. A listener notified before the refusing one
+		 * keeps what it was told; a listener that refuses changes for good is therefore registered
+		 * before the listeners that pass the selection on.
+		 * </p>
+		 *
+		 * <p>
+		 * {@link TableViewControl#isUserSelectionChange()} tells during the notification whether the
+		 * user made the change.
 		 * </p>
 		 */
 		void selectionChanged(Set<Object> selectedKeys);
@@ -421,6 +429,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	private static final int PREFETCH_ROWS = 20;
 
+	/** Separates what the row count tells from the filter it names. */
+	private static final String FOOTER_SEPARATOR = " \u00b7 ";
+
 	/**
 	 * The maximum number of rows in the headless projection, see
 	 * {@link #scriptingScalarState(ProjectionMode)}.
@@ -471,6 +482,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String COLUMN_HIDE_WHEN_COMPACT = "hideWhenCompact";
 
 	/**
+	 * Per-column state key holding the {@link ColumnView#headerClass() CSS class} the client puts on
+	 * the heading of that column only. Absent for a column whose heading has none.
+	 */
+	private static final String COLUMN_HEADER_CLASS = "headerClass";
+
+	/**
+	 * Per-column state key holding the {@link ValueColor#getExternalName() name} of the
+	 * {@link ColumnView#headerRole() color role} the client tints the heading of that column in.
+	 * Absent for a column whose heading has none.
+	 */
+	private static final String COLUMN_HEADER_ROLE = "headerRole";
+
+	/**
 	 * Per-column state key holding the description of the column's {@link ColumnView#label() label},
 	 * which the client offers on the heading. Absent for a column whose label has none.
 	 */
@@ -478,6 +502,14 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/** State key telling the client whether to display the filter bar. */
 	private static final String FILTER_BAR = "filterBar";
+
+	/**
+	 * State key telling the client whether the focus of a control in a cell selects the row the
+	 * control stands in.
+	 *
+	 * @see #setSelectOnEditorFocus(boolean)
+	 */
+	private static final String SELECT_ON_EDITOR_FOCUS = "selectOnEditorFocus";
 
 	/** State key holding the filters the table offers under a name, one map per filter. */
 	private static final String NAMED_FILTERS = "namedFilters";
@@ -529,7 +561,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String DROP_VERDICTS = DropSupport.DROP_VERDICTS;
 
 	// Command names.
-	private static final String CMD_OPEN_FILTER = "openFilter";
+	/** The command opening the filter dialog of a column, see {@link OpenFilterArguments}. */
+	public static final String CMD_OPEN_FILTER = "openFilter";
 
 	private static final String CMD_OPEN_COLUMN_SELECT = "openColumnSelect";
 
@@ -659,6 +692,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/** The {@link #_selectionAnchor} belonging to {@link #_committedKeys}. */
 	private int _committedAnchor = -1;
+
+	/**
+	 * Whether the selection change the {@link #addSelectionListener(SelectionListener) selection
+	 * listeners} are notified of was made by the user, see {@link #isUserSelectionChange()}.
+	 */
+	private boolean _userChange;
 
 	/** What a row activation runs, {@code null} for a table whose rows cannot be opened. */
 	private ActivationHandler<R> _activationHandler;
@@ -807,6 +846,24 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
+	 * Whether the focus of a control in a cell - an editor, a button - selects the row the control
+	 * stands in.
+	 *
+	 * <p>
+	 * Switch this on for a table whose rows are all edited at once: the row the user works in is
+	 * then the selected row, which the commands on the selection act on. The selection is a plain
+	 * {@link #CMD_SELECT selection} of that row, sent only for a row not selected yet; it leaves the
+	 * focused control and its value alone. Without it, operating a control in a cell does not change
+	 * the selection.
+	 * </p>
+	 *
+	 * @see #SELECT_ON_EDITOR_FOCUS
+	 */
+	public void setSelectOnEditorFocus(boolean selectOnEditorFocus) {
+		putState(SELECT_ON_EDITOR_FOCUS, Boolean.valueOf(selectOnEditorFocus));
+	}
+
+	/**
 	 * Whether the table displays its filter bar: the {@link TableView#namedFilters() named filters}
 	 * it offers, the free-text search over its displayed columns, and saving the current filter
 	 * under a name.
@@ -927,6 +984,17 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
+	 * Whether the selection change the {@link #addSelectionListener(SelectionListener) selection
+	 * listeners} are notified of right now was made by the user: a click, a key or the activation
+	 * of a row, and not a call of {@link #selectRows(Collection)}.
+	 *
+	 * @return {@code false} outside of a notification.
+	 */
+	public boolean isUserSelectionChange() {
+		return _userChange;
+	}
+
+	/**
 	 * Whether this table lets the user select one row at a time, or any number of them.
 	 *
 	 * <p>
@@ -1040,7 +1108,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		// keyboard range extension continues from where the selection starts.
 		_cursorIndex = firstSelectedRowIndex();
 		_selectionAnchor = _cursorIndex;
-		pushSelection();
+		pushSelection(false);
 		// Scroll the selected row into view when it lies outside the current viewport (e.g. a row
 		// selected programmatically after a create), centering it; keep the viewport otherwise.
 		if (_cursorIndex >= 0 && (_cursorIndex < _viewportStart || _cursorIndex >= _viewportStart + _viewportCount)) {
@@ -1121,6 +1189,28 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	private void refreshColumns() {
+		putState(COLUMNS, columnsState());
+		putState(FROZEN_COLUMN_COUNT, Integer.valueOf(_view.frozenColumnCount()));
+	}
+
+	/**
+	 * Sends the state of the columns again, for a change of what their headings show - such as
+	 * their {@link ColumnView#headerClass() class} or {@link ColumnView#headerRole() color role} -
+	 * that leaves the columns and the rows as they are.
+	 *
+	 * <p>
+	 * Neither a row nor a cell control is built again. Nothing is sent when the columns state the
+	 * client holds is unchanged.
+	 * </p>
+	 */
+	public void refreshColumnHeaders() {
+		putChangedState(COLUMNS, columnsState());
+	}
+
+	/**
+	 * The state of the displayed columns, one map per column, in display order.
+	 */
+	private List<Map<String, Object>> columnsState() {
 		Resources resources = Resources.getInstance();
 		// Grouping buckets rows by a column's value, which is meaningful for the columns the user
 		// may choose at all - an action column carries the row itself, and would yield one group
@@ -1142,6 +1232,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 				def.setSortDirection(SORT_DESC);
 			}
 			def.setSortPriority(column.sortPriority());
+			def.setAlignment(column.alignment());
+			def.setAggregates(column.aggregates());
 			Map<String, Object> columnState = def.toStateMap();
 			columnState.put(COLUMN_FILTERABLE, Boolean.valueOf(column.filterable()));
 			columnState.put(COLUMN_FILTER_ACTIVE, Boolean.valueOf(isFilterActive(column.name())));
@@ -1153,14 +1245,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			if (_hiddenWhenCompact.contains(column.name())) {
 				columnState.put(COLUMN_HIDE_WHEN_COMPACT, Boolean.TRUE);
 			}
-			String tooltip = description(resources, column.label());
+			if (column.headerClass() != null) {
+				columnState.put(COLUMN_HEADER_CLASS, column.headerClass());
+			}
+			if (column.headerRole() != null) {
+				columnState.put(COLUMN_HEADER_ROLE, column.headerRole().getExternalName());
+			}
+			String tooltip = LabelDescription.description(resources, column.label());
 			if (!StringServices.isEmpty(tooltip)) {
 				columnState.put(COLUMN_TOOLTIP, tooltip);
 			}
 			columns.add(columnState);
 		}
-		putState(COLUMNS, columns);
-		putState(FROZEN_COLUMN_COUNT, Integer.valueOf(_view.frozenColumnCount()));
+		return columns;
 	}
 
 	private boolean isFilterActive(String column) {
@@ -1226,18 +1323,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	private static String label(Resources resources, ResKey key) {
 		return key == null ? "" : resources.getString(key);
-	}
-
-	/**
-	 * The description belonging to the given label, {@code null} when the label has none.
-	 *
-	 * <p>
-	 * What a label says about itself over and above its own text, resolved from
-	 * {@link ResKey#tooltipOptional()} - the same description a form field offers on its label.
-	 * </p>
-	 */
-	private static String description(Resources resources, ResKey key) {
-		return key == null ? null : resources.getString(key.tooltipOptional());
 	}
 
 	/**
@@ -1396,9 +1481,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		int total = _view.dataCount();
 		if (_rowCount && matching != RowSource.UNKNOWN_COUNT && total != RowSource.UNKNOWN_COUNT) {
 			Resources resources = Resources.getInstance();
-			rows = resources.getString(isFiltered()
+			int activeFilters = activeFilterCount();
+			rows = resources.getString(activeFilters > 0
 				? I18NConstants.TABLE_ROW_COUNT_FILTERED__MATCHING_TOTAL.fill(matching, total)
 				: I18NConstants.TABLE_ROW_COUNT__COUNT.fill(total));
+			if (activeFilters > 0) {
+				rows += FOOTER_SEPARATOR + activeFilterText(resources, activeFilters);
+			}
 			if (_selectionMode == SelectionMode.MULTI && selectedCount > 0) {
 				int filteredOut = selectedCount - selectedMatching;
 				selected = resources.getString(filteredOut == 0
@@ -1412,20 +1501,31 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Whether the table's rows are narrowed by a column filter or a search - which is what a named
-	 * filter applies as well.
+	 * The number of criteria narrowing the table's rows: the column filters, and the search when it
+	 * has a term - which is what a named filter applies as well.
 	 */
-	private boolean isFiltered() {
+	private int activeFilterCount() {
 		TableViewState state = _view.state();
-		if (state.getSearch() != null) {
-			return true;
-		}
+		int result = state.getSearch() != null ? 1 : 0;
 		for (FilterState filter : state.getFilters().values()) {
 			if (filter != null && !filter.isEmpty()) {
-				return true;
+				result++;
 			}
 		}
-		return false;
+		return result;
+	}
+
+	/**
+	 * Names what narrows the rows: the {@link TableView#activeNamedFilter() named filter} the
+	 * criteria are, or else how many criteria there are.
+	 */
+	private String activeFilterText(Resources resources, int activeFilters) {
+		NamedFilter preset = _view.activeNamedFilter();
+		if (preset != null) {
+			return resources.getString(
+				I18NConstants.TABLE_FILTER_PRESET__NAME.fill(label(resources, preset.label())));
+		}
+		return resources.getString(I18NConstants.TABLE_FILTERS_ACTIVE__COUNT.fill(activeFilters));
 	}
 
 	/** Pushes the given state value unless the client already has it. */
@@ -1750,8 +1850,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			readState = editor::read;
 		}
 
+		ResKey customTitle = customUI != null ? customUI.title() : null;
+		ResKey title = customTitle != null ? customTitle : I18NConstants.JS_TABLE_FILTER;
 		ReactWindowControl window = new ReactWindowControl(context,
-			resources.getString(I18NConstants.JS_TABLE_FILTER), DisplayDimension.px(380),
+			resources.getString(title), DisplayDimension.px(380),
 			() -> dialogs.closeTopDialog(DialogResult.cancelled()));
 		// The window body is flush; the filter form keeps the page inset from its border.
 		window.setChild(new ReactInsetControl(context, body));
@@ -1905,7 +2007,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			if (!effectiveGrouping().equals(grouping)) {
 				relocateSelection();
 				pushGrouping();
-				pushSelection();
+				pushSelection(false);
 			}
 			rebuildAfterRowChange();
 		} finally {
@@ -2184,7 +2286,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		_selectedKeys.clear();
 		_selectedKeys.addAll(selection);
 
-		pushSelection();
+		pushSelection(true);
 	}
 
 	/**
@@ -2299,7 +2401,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		_selectedKeys.add(key);
 		_cursorIndex = rowIndex;
 		_selectionAnchor = rowIndex;
-		pushSelection();
+		pushSelection(true);
 	}
 
 	/**
@@ -2367,7 +2469,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		_selectedKeys.clear();
 		_selectedKeys.addAll(move.selection());
 
-		pushSelection();
+		pushSelection(true);
 		scrollIntoView(move.cursor());
 	}
 
@@ -2460,7 +2562,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		Set<Object> selection = selectAllSelection(args.isSelected());
 		_selectedKeys.clear();
 		_selectedKeys.addAll(selection);
-		pushSelection();
+		pushSelection(true);
 	}
 
 	/**
@@ -3141,19 +3243,24 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * listeners can refuse.
 	 *
 	 * <p>
-	 * A {@link ChannelVetoException} from a listener restores the selection state of the last
-	 * accepted change - the keys, the cursor, the range anchor and the {@link TableView}'s
-	 * selection - and is rethrown, so the table holds what it displays until the refused change is
-	 * retried.
+	 * A listener refusing the change - with a {@link ChannelVetoException} or any other exception
+	 * - restores the selection state of the last accepted change - the keys, the cursor, the range
+	 * anchor and the {@link TableView}'s selection - and the exception is rethrown, so the table
+	 * holds what it displays.
 	 * </p>
+	 *
+	 * @param byUser
+	 *        Whether the user made the change, see {@link #isUserSelectionChange()}.
 	 */
-	private void pushSelection() {
+	private void pushSelection(boolean byUser) {
 		selectInView(_selectedKeys);
+		boolean userChangeBefore = _userChange;
+		_userChange = byUser;
 		try {
 			for (SelectionListener listener : _selectionListeners) {
 				listener.selectionChanged(new LinkedHashSet<>(_selectedKeys));
 			}
-		} catch (ChannelVetoException ex) {
+		} catch (RuntimeException ex) {
 			_selectedKeys.clear();
 			_selectedKeys.addAll(_committedKeys);
 			_cursorIndex = _committedCursor;
@@ -3161,6 +3268,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			selectInView(_selectedKeys);
 			pushSelectionState();
 			throw ex;
+		} finally {
+			_userChange = userChangeBefore;
 		}
 		commitSelection();
 	}

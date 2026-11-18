@@ -24,8 +24,8 @@ public class ModuleEntry implements EntryPoint {
 
 	private native void exportMountFunction() /*-{
 		$wnd.GWT_FlowDiagram = {
-			mount: function(container, controlId, windowName, contextPath, diagramJson) {
-				return @com.top_logic.react.flow.client.control.FlowDiagramClientControl::mount(Lelemental2/dom/HTMLDivElement;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)(container, controlId, windowName, contextPath, diagramJson);
+			mount: function(container, controlId, sender, diagramJson) {
+				return @com.top_logic.react.flow.client.control.FlowDiagramClientControl::mount(Lelemental2/dom/HTMLDivElement;Ljava/lang/String;Lcom/top_logic/react/flow/client/bridge/CommandSender;Ljava/lang/String;)(container, controlId, sender, diagramJson);
 			}
 		};
 	}-*/;

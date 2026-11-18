@@ -44,8 +44,10 @@ import com.top_logic.layout.table.ConfigKey;
  * </p>
  * <ul>
  * <li>{@link WindowState#TITLE__PROP} - the window title</li>
- * <li>{@link WindowState#WIDTH__PROP} - the window width (CSS value, e.g. "500px")</li>
- * <li>{@link WindowState#HEIGHT__PROP} - the window height (CSS value or null for auto)</li>
+ * <li>{@link WindowState#WIDTH__PROP} - the window width (CSS value, e.g. "500px", or percent of
+ * the browser window's width)</li>
+ * <li>{@link WindowState#HEIGHT__PROP} - the window height (CSS value or percent of the browser
+ * window's height, null for the height of the content)</li>
  * <li>{@link WindowState#CUSTOM_WIDTH__PROP}, {@link WindowState#CUSTOM_HEIGHT__PROP} - the
  * remembered size in pixels, if any</li>
  * <li>{@link WindowState#RESIZABLE__PROP} - whether the window can be resized by dragging</li>
@@ -158,6 +160,10 @@ public class ReactWindowControl extends ToolbarControl {
 
 	/**
 	 * Sets the window height.
+	 *
+	 * @param height
+	 *        The height of the window, a percentage relating to the height of the browser window;
+	 *        {@code null} for the height of the content.
 	 */
 	public void setHeight(DisplayDimension height) {
 		putState(WindowState.HEIGHT__PROP, height != null ? height.toString() : null);

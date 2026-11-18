@@ -92,6 +92,15 @@
 							<de>Schlagwörter</de>
 						</label>
 					</nav-item>
+					<nav-item id="currencies"
+						icon="css:bi bi-currency-exchange"
+					>
+						<view-ref view="currencies.view.xml"/>
+						<label>
+							<en>Currencies</en>
+							<de>Währungen</de>
+						</label>
+					</nav-item>
 					<nav-item id="projects"
 						icon="css:bi bi-kanban"
 					>
@@ -188,6 +197,24 @@
 							<de>Gantt-Terminplan</de>
 						</label>
 					</nav-item>
+					<nav-item id="graph-demo"
+						icon="css:bi bi-diagram-2"
+					>
+						<view-ref view="demo/graph-demo.view.xml"/>
+						<label>
+							<en>Graph Demo</en>
+							<de>Graph-Demo</de>
+						</label>
+					</nav-item>
+					<nav-item id="flow-clip-demo"
+						icon="css:bi bi-crop"
+					>
+						<view-ref view="demo/flow-clip-demo.view.xml"/>
+						<label>
+							<en>Clipped diagrams</en>
+							<de>Beschnittene Diagramme</de>
+						</label>
+					</nav-item>
 					<nav-item id="pdf"
 						icon="css:bi bi-file-earmark-pdf"
 					>
@@ -267,6 +294,15 @@
 						<label>
 							<en>Tiles Multi-Tab Demo</en>
 							<de>Tiles Mehr-Tab-Demo</de>
+						</label>
+					</nav-item>
+					<nav-item id="tiles-typed-demo"
+						icon="css:bi bi-funnel"
+					>
+						<view-ref view="demo/tiles-typed-demo.view.xml"/>
+						<label>
+							<en>Tiles Typed Demo</en>
+							<de>Tiles-Demo nach Typ</de>
 						</label>
 					</nav-item>
 					<nav-item id="responsive-md-demo"
@@ -377,6 +413,15 @@
 							<de>Bilder</de>
 						</label>
 					</nav-item>
+					<nav-item id="symbols"
+						icon="css:bi bi-bookmark-star"
+					>
+						<view-ref view="demo/symbols-demo.view.xml"/>
+						<label>
+							<en>Icons from pictures</en>
+							<de>Icons aus Bildern</de>
+						</label>
+					</nav-item>
 					<nav-item id="long-job"
 						icon="css:bi bi-hourglass-split"
 					>
@@ -456,6 +501,24 @@
 						<label>
 							<en>Temperatures</en>
 							<de>Temperaturen</de>
+						</label>
+					</nav-item>
+					<nav-item id="data-list-demo"
+						icon="css:bi bi-person-lines-fill"
+					>
+						<view-ref view="demo/data-list-demo.view.xml"/>
+						<label>
+							<en>List</en>
+							<de>Liste</de>
+						</label>
+					</nav-item>
+					<nav-item id="sensor-locking"
+						icon="css:bi bi-lock"
+					>
+						<view-ref view="demo/sensor-locking.view.xml"/>
+						<label>
+							<en>Sensor locking</en>
+							<de>Sperren von Sensoren</de>
 						</label>
 					</nav-item>
 					<nav-item id="styling-demo"

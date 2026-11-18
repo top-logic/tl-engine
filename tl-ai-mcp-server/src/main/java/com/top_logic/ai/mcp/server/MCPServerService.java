@@ -18,6 +18,8 @@ import jakarta.servlet.ServletException;
 import com.top_logic.ai.mcp.server.authentication.McpAuthenticationFilter;
 import com.top_logic.ai.mcp.server.authentication.McpSessionPrincipals;
 import com.top_logic.ai.mcp.server.completions.ModuleNameCompletion;
+import com.top_logic.ai.mcp.server.discovery.McpServerCard;
+import com.top_logic.ai.mcp.server.discovery.ServerCard;
 import com.top_logic.ai.mcp.server.dynamic.ConfigurableResourceTemplate;
 import com.top_logic.ai.mcp.server.dynamic.DynamicResource;
 import com.top_logic.ai.mcp.server.resources.ConfigSchemaResource;
@@ -30,6 +32,7 @@ import com.top_logic.ai.mcp.server.resources.TypeUsagesResource;
 import com.top_logic.ai.mcp.server.tools.ExposedTool;
 import com.top_logic.ai.mcp.server.tools.McpExposure;
 import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
+import com.top_logic.base.discovery.DiscoveryContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.CommaSeparatedStrings;
@@ -53,13 +56,16 @@ import com.top_logic.basic.module.services.ServletContextService;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentications;
+import com.top_logic.tl.ai.core.access.AccessTokenAuthentication;
 import com.top_logic.tl.ai.core.access.EndpointAuthentication;
 import com.top_logic.tl.ai.core.access.EndpointSecret;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.tool.api.AICategory;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
+import com.top_logic.util.Resources;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.server.McpServer;
@@ -116,7 +122,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 	 * Path of the MCP endpoint below the context path; the servlet mapping of
 	 * {@link MCPTransportServlet} in the module's {@code web-fragment.xml} must match it.
 	 */
-	static final String MCP_ENDPOINT = "/mcp";
+	public static final String MCP_ENDPOINT = "/mcp";
 
 	/**
 	 * Configuration interface for {@link MCPServerService}.
@@ -124,6 +130,8 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 	@DisplayOrder({
 		Config.SERVER_NAME,
 		Config.SERVER_VERSION,
+		Config.CARD_NAME,
+		Config.DESCRIPTION,
 		Config.KEEP_ALIVE_INTERVAL,
 		ServerAuthentications.AUTHENTICATIONS,
 		Config.SECRETS,
@@ -150,6 +158,20 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		 * @see #getServerVersion()
 		 */
 		String SERVER_VERSION = "server-version";
+
+		/**
+		 * Configuration property name for the name of the server in its server card.
+		 *
+		 * @see #getCardName()
+		 */
+		String CARD_NAME = "card-name";
+
+		/**
+		 * Configuration property name for the description of the server in its server card.
+		 *
+		 * @see #getDescription()
+		 */
+		String DESCRIPTION = "description";
 
 		/**
 		 * Configuration property name for keep-alive interval in seconds.
@@ -220,6 +242,38 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 		@Name(SERVER_VERSION)
 		@StringDefault("1.0.0")
 		String getServerVersion();
+
+		/**
+		 * The name of the server in its server card, in reverse-DNS form such as
+		 * {@code com.example/orders}.
+		 *
+		 * <p>
+		 * A namespace of letters, digits, dots and hyphens, a slash, and a name that may also contain
+		 * underscores. Other characters are replaced by a hyphen. Empty derives the name from the
+		 * URL of the application: its host name reversed, a slash and the last segment of its context
+		 * path ({@code mcp} for the root context), e.g. {@code de.haumacher.apps/ehome} for
+		 * {@code https://apps.haumacher.de/ehome}.
+		 * </p>
+		 *
+		 * @see McpServerCard
+		 */
+		@Name(CARD_NAME)
+		@Nullable
+		String getCardName();
+
+		/**
+		 * What the server offers, as its server card tells a client before it connects; at most 100
+		 * characters.
+		 *
+		 * <p>
+		 * Empty derives a description from the {@link #getServerName() server name}.
+		 * </p>
+		 *
+		 * @see McpServerCard
+		 */
+		@Name(DESCRIPTION)
+		@Nullable
+		String getDescription();
 
 		/**
 		 * Keep-alive interval in seconds: how often every MCP session is pinged.
@@ -368,6 +422,8 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 
 	private Authenticator _authenticator;
 
+	private List<EndpointCredential> _credentials = List.of();
+
 	private List<String> _publishedTools = List.of();
 
 	private final McpSessionPrincipals _sessionPrincipals = new McpSessionPrincipals();
@@ -420,6 +476,35 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 	}
 
 	/**
+	 * How a client presents the credentials the configured {@link Config#getAuthentications()
+	 * authentications} accept.
+	 *
+	 * @see EndpointAuthentication#credentials(Map)
+	 */
+	public List<EndpointCredential> getCredentials() {
+		return _credentials;
+	}
+
+	/**
+	 * Whether the configured {@link Config#getAuthentications() authentications} accept a personal
+	 * access token.
+	 */
+	public boolean acceptsAccessTokens() {
+		return AccessTokenAuthentication.isAccepted(getConfig().getAuthentications().values());
+	}
+
+	/**
+	 * The {@link McpServerCard server card} of this server, in the language of
+	 * {@link Resources#getLogInstance()}, the language of the messages of the authentications.
+	 *
+	 * @param context
+	 *        The URLs of the application, as the requesting client reaches it.
+	 */
+	public ServerCard getServerCard(DiscoveryContext context) {
+		return McpServerCard.create(getConfig(), _credentials, context, Resources.getLogInstance());
+	}
+
+	/**
 	 * Which account opened which MCP session.
 	 *
 	 * @see McpSessionPrincipals
@@ -455,6 +540,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 
 			_authenticator =
 				EndpointAuthentication.build(MCP_ENDPOINT + "/*", config.getAuthentications(), config.getSecrets());
+			_credentials = EndpointAuthentication.credentials(config.getAuthentications());
 
 			// Create HTTP transport provider
 			// Note: A statically registered servlet (MCPTransportServlet) delegates requests
@@ -669,6 +755,7 @@ public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Co
 			// Unregister singleton instance
 			_instance = null;
 			_authenticator = null;
+			_credentials = List.of();
 
 			// The transport is destroyed below, so every MCP session it held is gone; keeping their
 			// owners would leave a restarted service deciding about sessions that no longer exist.

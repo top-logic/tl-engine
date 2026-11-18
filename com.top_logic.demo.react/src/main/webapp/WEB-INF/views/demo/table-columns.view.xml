@@ -11,11 +11,16 @@
 	"Conditional columns" shows columns that exist only while a switch is on. "Group order" shows
 	groups ordered by a comparator the grouping column declares, "Row order" groups by a column
 	declared with sortable="false", whose groups follow the order of the rows.
-	"Editable column" edits a computed column through its update function. "Edited in place" edits
+	"Editable column" edits a computed column through its update function. "Cell options" chooses
+	the value of computed reference columns from options computed per row. "Edited in place" edits
 	the due dates of the milestones right in the table, each entered date written at once.
 	"Default columns" shows what a table displays when it declares no columns: the main properties
 	of its row type. "Mixed row types" shows milestones and tickets in one table, each attribute
 	column taking its label, sort order and filter from the row type that holds the attribute.
+	"Display label" shows objects by a label their display computes: the columns filter, sort and
+	export by that label. "Header roles" tints column headings in color roles and marks one with a
+	class of the application's stylesheet, beside a cell role and a row role; the Excel export fills
+	headings and cells in these roles.
 	
 	A column declared with visible="false" ("Share" in "Map rows", "Due date" in "Transient rows"),
 	and a dynamic column its column-visible function rejects ("M3" in "Dynamic columns"), starts out
@@ -504,6 +509,106 @@
 					</form>
 				</panel>
 			</tab>
+			<tab id="cell-options"
+				icon="css:bi bi-ui-radios"
+			>
+				<label>
+					<en>Cell options</en>
+					<de>Zellenoptionen</de>
+				</label>
+				<panel>
+					<title>
+						<en>Choosing a computed reference from options per row</en>
+						<de>Auswahl einer berechneten Referenz aus Optionen je Zeile</de>
+					</title>
+					<!--
+						The tickets are edited in the table: "Edit" makes every row editable, the add command
+						creates a ticket, the trash button of a row deletes it, and "Save" stores the changes.
+						
+						The milestone column is computed and edited through its update function. Its values
+						are milestones, so a cell is edited with a select, whose options the options
+						expression computes for the row when the cell goes into editing: the milestones of
+						the project the ticket belongs to, in the order of the project. A ticket of project P1
+						offers M1 and M2, a ticket of project P2 only M3; a ticket that belongs to no project,
+						such as a ticket just added, offers all milestones, sorted by name.
+						
+						The dynamic columns stand for two references of the ticket, the milestone and the
+						assignee, one column each. The column type is the type of the reference, so both
+						cells are selects; their options expression sees the reference as $ref: the column
+						of the milestone offers the milestones of the ticket's project as above, the column
+						of the assignee all person contacts by name - those of the demo data as well as those of
+						the accounts, such as root.
+					-->
+					<form input="editAnchor">
+						<table
+							create-type="tl.demo.projectManagement:Ticket"
+							observed-types="tl.demo.projectManagement:Ticket,tl.demo.projectManagement:Milestone"
+							on-remove="DELETE"
+							personalization-key="table-columns-cell-options"
+							row-edit="ALL"
+							types="tl.demo.projectManagement:Ticket"
+						>
+							<columns>
+								<column
+									attribute="title"
+									sort="ASC"
+								/>
+								<computed-column name="project"
+									type="tl.demo.projectManagement:ProjectScope"
+								>
+									<label>
+										<en>Project</en>
+										<de>Projekt</de>
+									</label>
+									<value><![CDATA[$row.container()]]></value>
+								</computed-column>
+								<computed-column name="milestone"
+									type="tl.demo.projectManagement:Milestone"
+								>
+									<label>
+										<en>Milestone of the project</en>
+										<de>Meilenstein des Projekts</de>
+									</label>
+									<value><![CDATA[$row.get(`tl.demo.projectManagement:Ticket#milestone`)]]></value>
+									<update><![CDATA[$row.set(`tl.demo.projectManagement:Ticket#milestone`, $value)]]></update>
+									<options><![CDATA[{
+	project = $row.container();
+	$project == null
+		? all(`tl.demo.projectManagement:Milestone`).sort(x -> y -> compare(
+			$x.get(`tl.demo.projectManagement:Milestone#name`),
+			$y.get(`tl.demo.projectManagement:Milestone#name`)))
+		: $project.get(`tl.demo.projectManagement:ProjectScope#milestones`);
+}]]></options>
+								</computed-column>
+								<dynamic-columns name="references"
+									column-as="ref"
+								>
+									<columns><![CDATA[list(`tl.demo.projectManagement:Ticket#milestone`, `tl.demo.projectManagement:Ticket#assignee`)]]></columns>
+									<column-name><![CDATA[$ref == `tl.demo.projectManagement:Ticket#milestone` ? "milestone" : "assignee"]]></column-name>
+									<column-type><![CDATA[$ref == `tl.demo.projectManagement:Ticket#milestone`
+	? `tl.demo.projectManagement:Milestone`
+	: `Contacts:PersonContact`]]></column-type>
+									<value><![CDATA[$row.get($ref)]]></value>
+									<update><![CDATA[$row.set($ref, $value)]]></update>
+									<options><![CDATA[{
+	project = $row.container();
+	$ref == `tl.demo.projectManagement:Ticket#milestone`
+		? ($project == null
+			? all(`tl.demo.projectManagement:Milestone`).sort(x -> y -> compare(
+				$x.get(`tl.demo.projectManagement:Milestone#name`),
+				$y.get(`tl.demo.projectManagement:Milestone#name`)))
+			: $project.get(`tl.demo.projectManagement:ProjectScope#milestones`))
+		: all(`Contacts:PersonContact`).sort(x -> y -> compare(
+			$x.get(`Contacts:PersonContact#name`),
+			$y.get(`Contacts:PersonContact#name`)));
+}]]></options>
+								</dynamic-columns>
+							</columns>
+							<rows><![CDATA[all(`tl.demo.projectManagement:Ticket`)]]></rows>
+						</table>
+					</form>
+				</panel>
+			</tab>
 			<tab id="in-place-column"
 				icon="css:bi bi-input-cursor-text"
 			>
@@ -617,6 +722,155 @@
 							<column attribute="dueDate"/>
 						</columns>
 						<rows><![CDATA[concat(all(`tl.demo.projectManagement:Milestone`), all(`tl.demo.projectManagement:Ticket`))]]></rows>
+					</table>
+				</panel>
+			</tab>
+			<tab id="display-label"
+				icon="css:bi bi-tag"
+			>
+				<label>
+					<en>Display label</en>
+					<de>Anzeige-Label</de>
+				</label>
+				<panel>
+					<title>
+						<en>Columns filtered, sorted and exported by what their display shows</en>
+						<de>Spalten, gefiltert, sortiert und exportiert nach dem, was ihre Anzeige zeigt</de>
+					</title>
+					<!--
+						The code column holds the ticket itself, so that it shows the icon of its type, and
+						shows it by a code computed from its number. The column filter matches the code
+						("T-1"), not the title, the column sorts by the code without declaring a comparator,
+						and the export writes the codes.
+						
+						The dynamic columns show, per milestone, the contact a ticket of that milestone is
+						assigned to, labelled by "@" and the contact's name; their text is that label as well.
+						All of them share a scripted filter: its dialog asks for a range of ticket numbers,
+						and its match sees the cell value as $value (the contact) and the ticket as $row, so
+						it lets a row pass whose cell shows a contact and whose ticket number lies in the
+						range.
+					-->
+					<table
+						observed-types="tl.demo.projectManagement:Ticket,Contacts:PersonContact"
+						personalization-key="table-columns-display-label"
+						types="tl.demo.projectManagement:Ticket"
+					>
+						<columns>
+							<column
+								attribute="title"
+								sort="ASC"
+							/>
+							<computed-column name="code"
+								value="$row"
+							>
+								<label>
+									<en>Code</en>
+									<de>Kennung</de>
+								</label>
+								<display class="com.top_logic.layout.view.element.ResourceDisplayByExpression"
+									label="'T-' + $value.get(`tl.demo.projectManagement:Ticket#number`)"
+								/>
+							</computed-column>
+							<dynamic-columns name="assignedIn"
+								column-as="milestone"
+								readonly="true"
+							>
+								<columns><![CDATA[all(`tl.demo.projectManagement:Milestone`)]]></columns>
+								<column-name><![CDATA[$milestone.get(`tl.demo.projectManagement:Milestone#name`)]]></column-name>
+								<column-label><![CDATA[$milestone.get(`tl.demo.projectManagement:Milestone#name`)]]></column-label>
+								<value><![CDATA[$row.get(`tl.demo.projectManagement:Ticket#milestone`) == $milestone
+	? $row.get(`tl.demo.projectManagement:Ticket#assignee`)
+	: null]]></value>
+								<display class="com.top_logic.layout.view.element.ResourceDisplayByExpression"
+									label="'@' + $value.get(`Contacts:PersonContact#name`)"
+								/>
+								<filter class="com.top_logic.layout.view.table.ScriptedFilter"
+									model="demo.filter:LongRange"
+								>
+									<label>
+										<en>Ticket number range</en>
+										<de>Bereich der Ticketnummern</de>
+									</label>
+									<match><![CDATA[{
+	min = $params.get(`demo.filter:LongRange#min`);
+	max = $params.get(`demo.filter:LongRange#max`);
+	number = $row.get(`tl.demo.projectManagement:Ticket#number`);
+	$value != null && ($min == null || $number >= $min) && ($max == null || $number <= $max);
+}]]></match>
+								</filter>
+							</dynamic-columns>
+						</columns>
+						<export/>
+						<rows><![CDATA[all(`tl.demo.projectManagement:Ticket`)]]></rows>
+					</table>
+				</panel>
+			</tab>
+			<tab id="header-roles"
+				icon="css:bi bi-palette"
+			>
+				<label>
+					<en>Header roles</en>
+					<de>Kopfrollen</de>
+				</label>
+				<panel>
+					<title>
+						<en>Column headings in color roles</en>
+						<de>Spaltenköpfe in Farbrollen</de>
+					</title>
+					<!--
+						The rows are the tickets of the project. The heading of the title column carries the
+						class tlDemoKeyColumn, which the demo stylesheet draws as a heading in the link color
+						with a line of the brand below it. The heading of the assignee column is tinted in the
+						role of a classifier: the status "open" of the ticket demo is annotated with
+						<color role="warning"/>, so the heading is drawn as a warning. The milestone columns
+						are dynamic, in the order of the milestones' names: each heading takes a category of its
+						own by that rank (M1 category-1, M2 category-2, M3 category-3, wrapping after eight).
+						
+						The data follows the model: a ticket without an assignee shows its assignee cell in
+						the error role, and a ticket of a milestone that is not approved is tinted as info
+						as a whole - its assignee cell keeps its own role. Assigning the ticket or approving
+						its milestone in the instance editor changes the tint. The Excel export fills the
+						headings and the cells in the same roles.
+					-->
+					<table
+						observed-types="tl.demo.projectManagement:Ticket,tl.demo.projectManagement:Milestone"
+						personalization-key="table-columns-header-roles"
+						types="tl.demo.projectManagement:Ticket"
+					>
+						<columns>
+							<column
+								attribute="title"
+								header-class="'tlDemoKeyColumn'"
+								sort="ASC"
+							/>
+							<column
+								attribute="assignee"
+								cell-role="$value == null ? 'error' : null"
+								header-role="`demo.tickets:TicketStatus#open`"
+							/>
+							<dynamic-columns name="milestones"
+								column-as="milestone"
+								readonly="true"
+								type="tl.core:Boolean"
+								width="120"
+							>
+								<columns><![CDATA[all(`tl.demo.projectManagement:Milestone`)
+	.sort(x -> y -> compare($x.get(`tl.demo.projectManagement:Milestone#name`), $y.get(`tl.demo.projectManagement:Milestone#name`)))]]></columns>
+								<column-name><![CDATA[$milestone.get(`tl.demo.projectManagement:Milestone#name`)]]></column-name>
+								<column-label><![CDATA[$milestone.get(`tl.demo.projectManagement:Milestone#name`)]]></column-label>
+								<header-role><![CDATA[{
+	name = $milestone.get(`tl.demo.projectManagement:Milestone#name`);
+	rank = all(`tl.demo.projectManagement:Milestone`)
+		.filter(m -> compare($m.get(`tl.demo.projectManagement:Milestone#name`), $name) < 0)
+		.size();
+	"category-" + ($rank % 8 + 1);
+}]]></header-role>
+								<value><![CDATA[$row.get(`tl.demo.projectManagement:Ticket#milestone`) == $milestone]]></value>
+							</dynamic-columns>
+						</columns>
+						<row-role><![CDATA[$row.get(`tl.demo.projectManagement:Ticket#milestone`).get(`tl.demo.projectManagement:Milestone#approved`) ? null : 'info']]></row-role>
+						<export/>
+						<rows><![CDATA[all(`tl.demo.projectManagement:Ticket`)]]></rows>
 					</table>
 				</panel>
 			</tab>

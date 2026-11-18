@@ -84,7 +84,7 @@ public class TestAlterTable extends BasicTestCase {
 
 	@Override
 	protected void tearDown() throws Exception {
-		DBSchemaUtils.resetTables(_pool, _schema, false);
+		DBSchemaUtils.dropTables(_pool, _schema);
 
 		super.tearDown();
 	}

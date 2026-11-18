@@ -1,0 +1,23 @@
+<handler>
+	<tag name="data">
+		<dispatch>
+			<tag name="item">
+				<resolve-existing
+					key="x -> $x.get(`test.com.top_logic.xio.importer.test17:Item#extId`)"
+					objects="c -> p -> $c.get(`test.com.top_logic.xio.importer.test17:Container#elements`).filter(r -> $r.get(`test.com.top_logic.xio.importer.test17:Item#extId`) == $p).firstElement().objectDescendants(includeRoot: true)"
+					partition="id -> $id.split('_', limit: 2).firstElement()"
+				>
+					<object model-type="test.com.top_logic.xio.importer.test17:Item" id-attribute="id" join-duplicates="true">
+						<property name="extId" xml-attribute="id"/>
+						<property name="name" xml-attribute="name"/>
+						<reference name="other" id-attribute="other"/>
+						<linking>
+							<list-linking name="test.com.top_logic.xio.importer.test17:Container#elements"/>
+						</linking>
+						<dispatch/>
+					</object>
+				</resolve-existing>
+			</tag>
+		</dispatch>
+	</tag>
+</handler>

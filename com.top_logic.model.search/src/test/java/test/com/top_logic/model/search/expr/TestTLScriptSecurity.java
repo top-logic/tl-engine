@@ -20,6 +20,7 @@ import junit.framework.Test;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
+import com.top_logic.base.services.CurrencySystem;
 import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.thread.ThreadContext;
@@ -29,9 +30,11 @@ import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.UpdateListener;
+import com.top_logic.knowledge.wrap.currency.Currency;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
@@ -45,6 +48,7 @@ import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -100,6 +104,15 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 			+ ".get(`TestTLScriptSecurity:Employee#salary`) > 1000)";
 
 	private static final String ALL_EMPLOYEES = "all(`TestTLScriptSecurity:Employee`)";
+
+	/** Table of the links between two currencies, a table without implementation class. */
+	private static final String EXCHANGE_LINK = "hasExchange";
+
+	/** Mandatory attribute of an {@link #EXCHANGE_LINK}. */
+	private static final String EXCHANGE_RATE = "exchangeRate";
+
+	/** Mandatory attribute of an {@link #EXCHANGE_LINK}. */
+	private static final String EXCHANGE_DATE = "date";
 
 	/** Name of the test model module all test types belong to. */
 	private static final String MODULE = "TestTLScriptSecurity";
@@ -432,13 +445,14 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 	 *
 	 * <p>
 	 * No rights are configured for the meta-model, so a non-administrative user holds no role on a
-	 * {@code TLClass}. A script delivering a type (or the type of an object) must nevertheless return
-	 * it, otherwise the computation would silently lose its meta-data.
+	 * {@code TLClass}. Nevertheless every user may read a model element, and a script delivering a
+	 * type (or the type of an object) returns it, otherwise the computation would silently lose its
+	 * meta-data.
 	 * </p>
 	 */
 	public void testModelElementsNotFiltered() throws Exception {
 		becomeUser(_other);
-		assertFalse("Test premise: the user holds no read right on the meta-model.",
+		assertTrue("Every user may read a model element without a right on the meta-model.",
 			ModelAccessRights.getInstance().isReadAllowed(_other, (TLObject) projectType()));
 
 		assertEquals(projectType(), execute(search("`TestTLScriptSecurity:Project`")));
@@ -1351,6 +1365,104 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 		assertTrue(accessRights.isAllowed(_other, sub, SimpleBoundCommandGroup.DELETE));
 	}
 
+	/**
+	 * A currency is a persistent object like any other: without a role granted on its type, a
+	 * non-administrative user may neither read, nor write, nor delete it.
+	 */
+	public void testCurrencyDeniedWithoutRole() throws Exception {
+		Currency currency;
+		try (Transaction tx = beginTx()) {
+			currency = Currency.createCurrency("TSA", 1);
+			tx.commit();
+		}
+
+		becomeUser(_other);
+		assertFalse((Boolean) execute(search("c -> canRead($c)"), currency));
+		assertFalse((Boolean) execute(search("c -> canWrite($c)"), currency));
+		assertFalse((Boolean) execute(search("c -> canDelete($c)"), currency));
+	}
+
+	/**
+	 * A role held on the security root reaches a currency through the role parent rule of
+	 * {@code tl.units}; the grant of the role decides which operations it allows.
+	 */
+	public void testCurrencyReadableThroughRoleOnSecurityRoot() throws Exception {
+		BoundObject securityRoot = BoundHelper.getInstance().getDefaultObject();
+		BoundedRole unitReader = BoundedRole.getRoleByName(MODULE + ".UnitReader");
+		try (Transaction tx = beginTx()) {
+			BoundedRole.assignRole((TLObject) securityRoot, _other, unitReader);
+			tx.commit();
+		}
+		try {
+			Currency currency;
+			try (Transaction tx = beginTx()) {
+				currency = Currency.createCurrency("TSB", 1);
+				tx.commit();
+			}
+
+			becomeUser(_other);
+			assertTrue((Boolean) execute(search("c -> canRead($c)"), currency));
+			assertFalse((Boolean) execute(search("c -> canWrite($c)"), currency));
+			assertFalse((Boolean) execute(search("c -> canDelete($c)"), currency));
+
+			becomeUser(_reader);
+			assertFalse((Boolean) execute(search("c -> canRead($c)"), currency));
+		} finally {
+			try (Transaction tx = beginTx()) {
+				BoundedRole.removeRoleForPerson((TLObject) securityRoot, _other, unitReader);
+				tx.commit();
+			}
+		}
+	}
+
+	/**
+	 * A revision cannot hold roles, but it is commit metadata without security: a user without any
+	 * role reads it and its attributes.
+	 */
+	public void testRevisionReadableWithoutRole() throws Exception {
+		becomeUser(_user);
+		Revision revision = (Revision) execute(search("p -> $p.createRevision()"), _p1);
+		assertNotNull(revision);
+		assertFalse(revision instanceof BoundObject);
+
+		becomeUser(_other);
+		assertTrue((Boolean) execute(search("r -> canRead($r)"), revision));
+		assertNotNull(execute(search("r -> $r.get(`tl.core:Revision#date`)"), revision));
+	}
+
+	/**
+	 * A persistent object that cannot hold roles (a knowledge item standing for itself) grants no
+	 * role: it is refused for a non-administrative user, on the object and on its attributes, but
+	 * stays accessible for a person bypassing the security.
+	 */
+	public void testPersistentObjectWithoutRolesRefused() throws Exception {
+		KnowledgeItem link;
+		try (Transaction tx = beginTx()) {
+			Currency source = Currency.createCurrency("TSC", 1);
+			Currency target = Currency.createCurrency("TSD", 2);
+			link = _kb.createAssociation(source.tHandle(), target.tHandle(), EXCHANGE_LINK);
+			link.setAttributeValue(EXCHANGE_RATE, Double.valueOf(2));
+			link.setAttributeValue(EXCHANGE_DATE, new java.util.Date());
+			tx.commit();
+		}
+		TLObject object = link.getWrapper();
+		assertSame(link, object);
+		assertFalse(object instanceof BoundObject);
+
+		ModelAccessRights accessRights = ModelAccessRights.getInstance();
+		TLStructuredTypePart data = part("UnsecuredData", "data");
+
+		becomeUser(_other);
+		assertFalse(accessRights.isAllowed(_other, object, SimpleBoundCommandGroup.READ));
+		assertFalse(accessRights.isAllowed(_other, object, SimpleBoundCommandGroup.WRITE));
+		assertFalse(accessRights.isAllowed(_other, object, SimpleBoundCommandGroup.DELETE));
+		assertFalse(accessRights.isAllowed(_other, object, data, SimpleBoundCommandGroup.READ));
+
+		becomeUser(_root);
+		assertTrue(accessRights.isAllowed(_root, object, SimpleBoundCommandGroup.READ));
+		assertTrue(accessRights.isAllowed(_root, object, SimpleBoundCommandGroup.DELETE));
+	}
+
 	private TLStructuredTypePart part(String className, String partName) {
 		return type(className).getPart(partName);
 	}
@@ -1414,7 +1526,8 @@ public class TestTLScriptSecurity extends AbstractSearchExpressionTest {
 			AccessManager.Module.INSTANCE,
 			TLSecurityDeviceManager.Module.INSTANCE,
 			InitialRolesManager.Module.INSTANCE,
-			SecurityConfigurationService.Module.INSTANCE);
+			SecurityConfigurationService.Module.INSTANCE,
+			CurrencySystem.Module.INSTANCE);
 	}
 
 }

@@ -56,6 +56,8 @@ public class AWTContext implements RenderContext {
 
 	private final FontRenderContext _fontRenderContext;
 
+	private final FontFamilyResolver _fontFamilies;
+
 	private final Map<FontKey, Font> _fontCache = new HashMap<>();
 
 	/**
@@ -66,12 +68,49 @@ public class AWTContext implements RenderContext {
 	 *        {@code font-size} set.
 	 */
 	public AWTContext(float textSize) {
+		this(textSize, FontFamilyResolver.getInstance());
+	}
+
+	/**
+	 * Creates a {@link AWTContext}.
+	 *
+	 * @param textSize
+	 *        The default font size in points used to measure texts that have no explicit
+	 *        {@code font-size} set.
+	 * @param fontFamilies
+	 *        Resolves the {@code font-family} lists of texts and of the default against the
+	 *        installed font families.
+	 */
+	public AWTContext(float textSize, FontFamilyResolver fontFamilies) {
 		_defaultSizePt = textSize;
+		_fontFamilies = fontFamilies;
 		// Use anti-aliased + fractional-metrics rendering — matches how browsers actually paint
 		// SVG text. The default FontRenderContext (no AA, no fractional metrics) produces
 		// noticeably shorter advance widths than the browser, especially for bold weights, which
 		// would cause text to overflow its measured box.
 		_fontRenderContext = new FontRenderContext(null, true, true);
+	}
+
+	/**
+	 * The first family of {@link RenderContext#DEFAULT_FONT_DECLARATION} that is installed.
+	 */
+	@Override
+	public String getDefaultFontFamily() {
+		return _fontFamilies.getDefault().getCSSFamily();
+	}
+
+	/**
+	 * {@link #getDefaultFontFamily()} followed by the other families of
+	 * {@link RenderContext#DEFAULT_FONT_DECLARATION}.
+	 *
+	 * <p>
+	 * A renderer on this machine draws the text in the family it was measured with, a renderer
+	 * elsewhere keeps the metric-compatible substitutes.
+	 * </p>
+	 */
+	@Override
+	public String getDefaultFontDeclaration() {
+		return _fontFamilies.getDefault().getDeclaration();
 	}
 
 	@Override
@@ -85,15 +124,18 @@ public class AWTContext implements RenderContext {
 		LineMetrics metrics = font.getLineMetrics(text, _fontRenderContext);
 		Rectangle2D bounds = font.getStringBounds(text, _fontRenderContext);
 
+		// Height and baseline come from the line metrics of the font without the leading, so that
+		// texts of the same font have the same height and baseline independent of their letters,
+		// as in the client-side canvas measurement.
 		// Convert from AWT points to CSS pixels — see class JavaDoc.
 		return new TextMetricsImpl(
 			bounds.getWidth() * PX_PER_PT,
-			bounds.getHeight() * PX_PER_PT,
+			(metrics.getAscent() + metrics.getDescent()) * PX_PER_PT,
 			metrics.getAscent() * PX_PER_PT);
 	}
 
 	private Font font(String fontFamily, String fontSize, String fontWeight) {
-		String family = fontFamily != null ? fontFamily : DEFAULT_FONT_FAMILY;
+		String family = _fontFamilies.resolve(fontFamily).getAWTFamily();
 		float sizePt = fontSize != null ? parseSizePt(fontSize) : _defaultSizePt;
 		int style = isBold(fontWeight) ? Font.BOLD : Font.PLAIN;
 

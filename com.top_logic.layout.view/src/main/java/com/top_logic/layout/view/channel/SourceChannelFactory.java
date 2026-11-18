@@ -8,6 +8,7 @@ package com.top_logic.layout.view.channel;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.model.TLClass;
 
 /**
  * {@link ChannelFactory} creating {@link SourceViewChannel}s fed by a {@link ChannelSource}.
@@ -21,6 +22,8 @@ public class SourceChannelFactory implements ChannelFactory {
 
 	private final String _name;
 
+	private final TLClass _valueType;
+
 	private final ChannelSource _source;
 
 	private final long _updateInterval;
@@ -31,13 +34,14 @@ public class SourceChannelFactory implements ChannelFactory {
 	@CalledByReflection
 	public SourceChannelFactory(InstantiationContext context, SourceChannelConfig config) {
 		_name = config.getName();
+		_valueType = ChannelFactory.resolveValueType(context, config);
 		_source = context.getInstance(config.getSource());
 		_updateInterval = config.getUpdateInterval();
 	}
 
 	@Override
 	public ViewChannel createChannel(ViewContext context) {
-		return new SourceViewChannel(_name, context, _source, _updateInterval);
+		return new SourceViewChannel(_name, _valueType, context, _source, _updateInterval);
 	}
 
 }

@@ -26,6 +26,7 @@ import org.vectomatic.dom.svg.utils.OMSVGParser;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Timer;
 import com.top_logic.react.flow.callback.DiagramContext;
+import com.top_logic.react.flow.client.bridge.CommandSender;
 import com.top_logic.react.flow.client.bridge.ReactBridge;
 import com.top_logic.react.flow.client.bridge.StateListener;
 import com.top_logic.react.flow.control.FlowControlCommon;
@@ -34,8 +35,8 @@ import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.DropRegion;
 import com.top_logic.react.flow.data.MouseButton;
 import com.top_logic.react.flow.data.Widget;
+import com.top_logic.react.flow.operations.SelectionUtil;
 import com.top_logic.react.flow.model.Drawable;
-import com.top_logic.react.flow.svg.RenderContext;
 import com.top_logic.react.flow.svg.SvgWriter;
 import com.top_logic.react.flow.svg.event.SVGDropEvent;
 
@@ -48,11 +49,13 @@ import de.haumacher.msgbuf.observer.Observable;
 import elemental2.core.JsArray;
 import elemental2.core.JsMath;
 import elemental2.core.JsNumber;
+import elemental2.dom.CSSStyleDeclaration;
 import elemental2.dom.DomGlobal;
 import elemental2.dom.DragEvent;
 import elemental2.dom.Element;
 import elemental2.dom.Event;
 import elemental2.dom.EventListener;
+import elemental2.dom.FontFaceSet;
 import elemental2.dom.HTMLDivElement;
 import elemental2.dom.Image;
 import elemental2.dom.KeyboardEvent;
@@ -60,6 +63,7 @@ import elemental2.dom.PointerEvent;
 import elemental2.dom.ResizeObserver;
 import elemental2.dom.ResizeObserverCallback;
 import elemental2.dom.ResizeObserverEntry;
+import elemental2.dom.ViewCSS;
 import elemental2.dom.WheelEvent;
 import jsinterop.annotations.JsMethod;
 import jsinterop.annotations.JsType;
@@ -75,7 +79,7 @@ import jsinterop.base.Js;
  * <ul>
  * <li>Is mounted from a global JS function ({@code GWT_FlowDiagram.mount(...)})</li>
  * <li>Receives server updates via {@link ReactBridge#subscribe(String, StateListener)}</li>
- * <li>Sends commands to server via {@link ReactBridge#sendCommand}</li>
+ * <li>Sends commands to server via the {@link CommandSender} of the React component mounting it</li>
  * </ul>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -97,11 +101,37 @@ public class FlowDiagramClientControl implements DiagramContext {
 	 */
 	static final double DRAG_THRESHOLD = 4.0;
 
+	/** DOM event fired when the user asks for a context menu. */
+	private static final String CONTEXT_MENU_EVENT = "contextmenu";
+
 	/** State key the server sends the serialized diagram with. */
 	private static final String DIAGRAM_STATE = "diagram";
 
 	/** State key the server sends a patch of its changes to the displayed diagram with. */
 	private static final String DIAGRAM_PATCH_STATE = "diagramPatch";
+
+	/**
+	 * Event the browser fires on {@link elemental2.dom.Document#fonts} when the fonts requested so
+	 * far have been loaded.
+	 */
+	private static final String FONTS_LOADING_DONE_EVENT = "loadingdone";
+
+	/** {@link FontFaceSet#getStatus()} when no font is being loaded. */
+	private static final String FONTS_STATUS_LOADED = "loaded";
+
+	/** CSS class of the element showing the zoom level while the user zooms. */
+	private static final String ZOOM_DISPLAY_CSS_CLASS = "zoomDisplay";
+
+	/** CSS class hiding the {@link #ZOOM_DISPLAY_CSS_CLASS zoom display}. */
+	private static final String INVISIBLE_CSS_CLASS = "invisible";
+
+	/** CSS property whose computed value of the page root is the length of a wheel line step. */
+	private static final String FONT_SIZE_PROPERTY = "font-size";
+
+	/**
+	 * Length of a wheel line step in pixels, if the font size of the page cannot be determined.
+	 */
+	private static final double DEFAULT_LINE_HEIGHT = 16;
 
 	private class Scope extends DefaultScope {
 
@@ -139,7 +169,23 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	private OMSVGSVGElement _svg;
 
-	private RenderContext _renderContext = new JSRenderContext();
+	private JSRenderContext _renderContext;
+
+	/**
+	 * Lays the diagram out again after web fonts have been loaded.
+	 *
+	 * @see #setupFontLoadListener()
+	 */
+	private EventListener _fontsLoaded;
+
+	/** Whether a layout for loaded fonts is scheduled to run after the current event. */
+	private boolean _fontRelayoutScheduled;
+
+	/**
+	 * Whether fonts were loaded while a gesture of the {@link DragHandler} was active, so that the
+	 * diagram still has to be measured and laid out again.
+	 */
+	private boolean _fontRelayoutPending;
 
 	private Scope _scope;
 
@@ -150,9 +196,11 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	private final String _controlId;
 
-	private final String _windowName;
-
-	private final String _contextPath;
+	/**
+	 * The function sending commands to the server, <code>null</code> once the control is
+	 * {@link #destroy() destroyed}.
+	 */
+	private CommandSender _sender;
 
 	final SubIdGenerator _nextId;
 
@@ -218,12 +266,18 @@ public class FlowDiagramClientControl implements DiagramContext {
 	private EventListener _keyDownEsc;
 
 	/**
+	 * Reports the element a context menu is opened on to the server.
+	 *
+	 * @see FlowControlCommon#CMD_CONTEXT_MENU
+	 */
+	private EventListener _contextMenu;
+
+	/**
 	 * Creates a {@link FlowDiagramClientControl}.
 	 */
-	private FlowDiagramClientControl(String controlId, String windowName, String contextPath) {
+	private FlowDiagramClientControl(String controlId, CommandSender sender) {
 		_controlId = controlId;
-		_windowName = windowName;
-		_contextPath = contextPath;
+		_sender = sender;
 		_nextId = new SubIdGenerator(controlId);
 	}
 
@@ -234,23 +288,22 @@ public class FlowDiagramClientControl implements DiagramContext {
 	 *        The DOM element to render into.
 	 * @param controlId
 	 *        The server-side control ID.
-	 * @param windowName
-	 *        Browser window identifier.
-	 * @param contextPath
-	 *        Base path (e.g. "/demo").
+	 * @param sender
+	 *        The function sending the commands of the control to the server.
 	 * @param diagramJson
 	 *        The diagram model as JSON string.
 	 * @return The control instance (exposes {@link #destroy()} to JavaScript).
 	 */
-	public static FlowDiagramClientControl mount(HTMLDivElement container, String controlId, String windowName,
-			String contextPath, String diagramJson) {
-		FlowDiagramClientControl instance = new FlowDiagramClientControl(controlId, windowName, contextPath);
+	public static FlowDiagramClientControl mount(HTMLDivElement container, String controlId, CommandSender sender,
+			String diagramJson) {
+		FlowDiagramClientControl instance = new FlowDiagramClientControl(controlId, sender);
 		instance.init(container, diagramJson);
 		return instance;
 	}
 
 	private void init(HTMLDivElement container, String diagramJson) {
 		_control = container;
+		_renderContext = new JSRenderContext(container);
 
 		_svgDoc = OMSVGParser.currentDocument();
 
@@ -268,13 +321,13 @@ public class FlowDiagramClientControl implements DiagramContext {
 		((Element) _control).setAttribute("draggable", "true");
 
 		_zoomDisplay = (HTMLDivElement) DomGlobal.document.createElement("div");
-		_zoomDisplay.classList.add("zoomDisplay");
+		_zoomDisplay.classList.add(ZOOM_DISPLAY_CSS_CLASS, INVISIBLE_CSS_CLASS);
 		_control.appendChild(_zoomDisplay);
 
 		_hideZoomDisplay = new Timer() {
 			@Override
 			public void run() {
-				_zoomDisplay.classList.add("invisible");
+				_zoomDisplay.classList.add(INVISIBLE_CSS_CLASS);
 			}
 		};
 
@@ -284,6 +337,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 		setupEventListeners();
 		setupResizeObserver();
+		setupFontLoadListener();
 		subscribeToServerUpdates();
 	}
 
@@ -341,7 +395,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 				diagram.setViewBoxHeight(viewBox[3]);
 
 				_scope = scope;
-				diagram.draw(svgBuilder());
+				diagram.draw(svgBuilder(), _renderContext, null);
 
 				// Drop layout-induced scope changes so they don't trigger an update command.
 				_scope.dropChanges();
@@ -350,7 +404,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 				_diagram = diagram;
 
 				_viewbox = _svg.getViewBox().getBaseVal();
-				calcZoomLevel();
+				calcZoomLevel(false);
 
 				Element selectedPart = _control.querySelector(".tlSelected");
 				if (selectedPart != null && !diagram.isFixedView()) {
@@ -372,6 +426,8 @@ public class FlowDiagramClientControl implements DiagramContext {
 	 * </p>
 	 */
 	private void layoutDiagram(Diagram diagram) {
+		_fontRelayoutPending = false;
+		_renderContext.updateDefaultFont();
 		diagram.layout(_renderContext, availableSpace(_controlW), availableSpace(_controlH));
 	}
 
@@ -582,14 +638,14 @@ public class FlowDiagramClientControl implements DiagramContext {
 					if (zL < 100) {
 						factor = factor * 2;
 					}
-					zoomSVG(factor, event.offsetX, event.offsetY);
+					zoomSVG(factor, event.offsetX, event.offsetY, true);
 				} else if (event.shiftKey) {
-					double scrollFactor = getWheelScrollFactor(evt);
+					double scrollFactor = getWheelScrollFactor(event);
 					double deltaX = event.deltaY * scrollFactor;
 					double deltaY = event.deltaX * scrollFactor;
 					panSVG(deltaX, deltaY, false);
 				} else {
-					int scrollFactor = getWheelScrollFactor(evt);
+					double scrollFactor = getWheelScrollFactor(event);
 					double deltaX = event.deltaX * scrollFactor;
 					double deltaY = event.deltaY * scrollFactor;
 					panSVG(deltaX, deltaY, false);
@@ -604,7 +660,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 			public void handleEvent(Event evt) {
 				KeyboardEvent event = (KeyboardEvent) evt;
 				if (event.key == "0" && event.ctrlKey) {
-					zoomSVG(1, 0, 0);
+					zoomSVG(1, 0, 0, true);
 				}
 			}
 		};
@@ -652,8 +708,6 @@ public class FlowDiagramClientControl implements DiagramContext {
 					return;
 				}
 				Element target = (Element) pe.target;
-				DomGlobal.console.log("[DragDebug] pointerdown on: " + target.tagName
-					+ " id=" + target.id);
 				if (_dragHandler.isPending()) {
 					// The release of the previous press went elsewhere.
 					cancelGesture();
@@ -731,10 +785,35 @@ public class FlowDiagramClientControl implements DiagramContext {
 			}
 		};
 
+		_contextMenu = new EventListener() {
+			@Override
+			public void handleEvent(Event evt) {
+				// The event is left to the menu region around the diagram, which opens the menu
+				// after this command has adjusted the selection the menu targets.
+				sendContextMenu(findSelectable((Element) evt.target));
+			}
+		};
+
 		svgElement.addEventListener("pointerdown", _pointerDown);
 		svgElement.addEventListener("pointermove", _pointerMove);
 		svgElement.addEventListener("pointerup", _pointerUp);
+		svgElement.addEventListener(CONTEXT_MENU_EVENT, _contextMenu);
 		DomGlobal.window.addEventListener("keydown", _keyDownEsc);
+	}
+
+	/**
+	 * The element the user can select that is drawn by the given DOM element or by one of its
+	 * ancestors within the diagram, <code>null</code> if there is none.
+	 */
+	private Widget findSelectable(Element target) {
+		Element svgElement = Js.cast(_svg.getElement());
+		for (Element element = target; element != null && element != svgElement; element = element.parentElement) {
+			Object widget = getAttachedWidget(element);
+			if (widget instanceof Widget && SelectionUtil.isSelectable((Widget) widget)) {
+				return (Widget) widget;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -766,6 +845,62 @@ public class FlowDiagramClientControl implements DiagramContext {
 		style.getElement().setInnerText(
 			"." + DragHandler.DRAG_SOURCE_CLASS + " { opacity: 0.3; pointer-events: none; }");
 		_svg.insertBefore(style, _svg.getFirstChild());
+	}
+
+	/**
+	 * Lays the diagram out again whenever web fonts finish loading.
+	 *
+	 * <p>
+	 * Text is measured in the font it is drawn with. While a web font is still loading, the browser
+	 * measures in a fallback font, so a layout made before the font was available reserves the
+	 * wrong space for its text. When fonts are still loading at the first layout, the diagram is
+	 * laid out again as soon as they are ready; fonts requested later (e.g. by text drawn in a font
+	 * not used so far) cause a new layout when they have been loaded.
+	 * </p>
+	 */
+	private void setupFontLoadListener() {
+		FontFaceSet fonts = DomGlobal.document.fonts;
+		if (fonts == null) {
+			return;
+		}
+
+		_fontsLoaded = evt -> scheduleFontRelayout();
+		fonts.addEventListener(FONTS_LOADING_DONE_EVENT, _fontsLoaded);
+
+		if (!FONTS_STATUS_LOADED.equals(fonts.getStatus())) {
+			fonts.getReady().then(ready -> {
+				scheduleFontRelayout();
+				return null;
+			});
+		}
+	}
+
+	/**
+	 * Schedules a single new layout for fonts that have been loaded.
+	 *
+	 * <p>
+	 * The end of a font load is reported both by the {@link #FONTS_LOADING_DONE_EVENT} and by the
+	 * fulfilled {@link FontFaceSet#getReady()} promise, both are answered by one layout.
+	 * </p>
+	 */
+	private void scheduleFontRelayout() {
+		if (_fontRelayoutScheduled) {
+			return;
+		}
+		_fontRelayoutScheduled = true;
+		DomGlobal.setTimeout(args -> {
+			_fontRelayoutScheduled = false;
+			if (!DomGlobal.document.contains(_control)) {
+				return;
+			}
+			if (_dragHandler != null && _dragHandler.isActive()) {
+				// The drag works on the current drawing, it is laid out again when the gesture
+				// ends.
+				_fontRelayoutPending = true;
+				return;
+			}
+			relayout();
+		}, 0);
 	}
 
 	private void setupResizeObserver() {
@@ -807,12 +942,14 @@ public class FlowDiagramClientControl implements DiagramContext {
 	}
 
 	/**
-	 * Lays the diagram out for a size change of the control that happened while a gesture of the
-	 * {@link DragHandler} was in progress.
+	 * Lays the diagram out for a size change of the control or for fonts loaded while a gesture of
+	 * the {@link DragHandler} was in progress.
 	 */
 	private void applyPendingResize() {
 		if (_resizePending) {
 			onResize();
+		} else if (_fontRelayoutPending) {
+			relayout();
 		}
 	}
 
@@ -869,7 +1006,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 				calcZoomLevel(false);
 			} else {
 				// Adapts the view box to the new size first, the layout then uses that size.
-				zoomSVG(0, 0, 0);
+				zoomSVG(0, 0, 0, false);
 				relayout();
 			}
 		} finally {
@@ -964,10 +1101,6 @@ public class FlowDiagramClientControl implements DiagramContext {
 		panSVG(deltaX, deltaY, true);
 	}
 
-	private void calcZoomLevel() {
-		calcZoomLevel(true);
-	}
-
 	/**
 	 * Computes the {@link #_zoomLevel} from the current view box.
 	 *
@@ -997,7 +1130,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 		}
 
 		_zoomDisplay.textContent = "Zoom: " + _zoomLevel + "%";
-		_zoomDisplay.classList.remove("invisible");
+		_zoomDisplay.classList.remove(INVISIBLE_CSS_CLASS);
 
 		_hideZoomDisplay.cancel();
 		_hideZoomDisplay.schedule(5 * 1000);
@@ -1011,13 +1144,39 @@ public class FlowDiagramClientControl implements DiagramContext {
 			: (2 - fract) / JsMath.pow(2, level);
 	}
 
-	private native int getWheelScrollFactor(Event event) /*-{
-		if ($wnd.BAL && $wnd.BAL.getWheelScrollFactor) {
-			return $wnd.BAL.getWheelScrollFactor(event);
+	/**
+	 * The number of pixels a single delta unit of the given wheel event stands for.
+	 *
+	 * <p>
+	 * Pixel steps ({@link WheelEvent#DOM_DELTA_PIXEL}) count as delivered, a line step
+	 * ({@link WheelEvent#DOM_DELTA_LINE}) is the font size of the page, and a page step
+	 * ({@link WheelEvent#DOM_DELTA_PAGE}) is the visible height of the diagram.
+	 * </p>
+	 */
+	private double getWheelScrollFactor(WheelEvent event) {
+		int deltaMode = event.deltaMode;
+		if (deltaMode == WheelEvent.DOM_DELTA_LINE) {
+			return getLineHeight();
+		} else if (deltaMode == WheelEvent.DOM_DELTA_PAGE) {
+			return _control.clientHeight;
+		} else {
+			return 1;
 		}
-		// Fallback: pixel-based scrolling factor.
-		return 1;
-	}-*/;
+	}
+
+	/**
+	 * The computed font size of the page root in pixels, the length of a wheel line step.
+	 */
+	private static double getLineHeight() {
+		ViewCSS view = Js.uncheckedCast(DomGlobal.window);
+		CSSStyleDeclaration style = view.getComputedStyle(DomGlobal.document.documentElement);
+		String fontSize = style == null ? null : style.getPropertyValue(FONT_SIZE_PROPERTY);
+		if (fontSize == null || fontSize.isEmpty()) {
+			return DEFAULT_LINE_HEIGHT;
+		}
+		double size = JsNumber.parseFloat(fontSize);
+		return JsNumber.isFinite(size) && size > 0 ? size : DEFAULT_LINE_HEIGHT;
+	}
 
 	/**
 	 * Pans the displayed section of the SVG by changing the viewbox.
@@ -1056,7 +1215,18 @@ public class FlowDiagramClientControl implements DiagramContext {
 		updateServerViewbox();
 	}
 
-	void zoomSVG(double zoomFactor, double mouseX, double mouseY) {
+	/**
+	 * Changes the size of the view box by the given zoom factor around the given mouse position.
+	 *
+	 * @param zoomFactor
+	 *        The fraction of the control size by which the view box shrinks (grows, if negative);
+	 *        0 adapts the view box to a changed control size only, 1 or more resets it to the
+	 *        control size.
+	 * @param showZoomLevel
+	 *        Whether to show the resulting zoom level to the user for a moment: for a zoom gesture
+	 *        of the user, not for an adaption to a changed control size.
+	 */
+	void zoomSVG(double zoomFactor, double mouseX, double mouseY, boolean showZoomLevel) {
 		if (_viewbox == null || isFixedView()) {
 			return;
 		}
@@ -1064,7 +1234,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 		if (zoomFactor >= 1) {
 			_viewbox.setWidth(_controlW);
 			_viewbox.setHeight(_controlH);
-			calcZoomLevel();
+			calcZoomLevel(showZoomLevel);
 			panSVG(-_viewbox.getX(), -_viewbox.getY(), true);
 		} else {
 			float factor = (float) getFactor();
@@ -1107,7 +1277,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 			_viewbox.setWidth(newVBW);
 			_viewbox.setHeight(newVBH);
 
-			calcZoomLevel();
+			calcZoomLevel(showZoomLevel);
 
 			double deltaX = mouseX * zoomFactor;
 			double deltaY = mouseY * zoomFactor;
@@ -1154,7 +1324,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 		// Clear all SVG children and re-draw.
 		clearSvg();
 
-		_diagram.draw(svgBuilder());
+		_diagram.draw(svgBuilder(), _renderContext, null);
 
 		// Drawing writes the view box stored in the model.
 		_viewbox.setX(vbX);
@@ -1208,7 +1378,14 @@ public class FlowDiagramClientControl implements DiagramContext {
 	}
 
 	private void applyScopeChanges(Collection<? extends SharedGraphNode> dirtyNodes) {
-		SvgWriter updateWriter = new SVGBuilder(_svgDoc, _svg) {
+		SvgWriter updateWriter = new SVGBuilder(_svgDoc, _svg, _nextId) {
+
+			@Override
+			protected void linkModel(OMSVGElement svgElement, Object model) {
+				// A sub-widget not found in the DOM is drawn anew and needs an ID and its widget,
+				// like in a full draw.
+				link(svgElement, model);
+			}
 
 			/** Cache of OMSVGElement wrappers detached during update. */
 			private Map<String, OMSVGElement> _idCache = null;
@@ -1349,13 +1526,10 @@ public class FlowDiagramClientControl implements DiagramContext {
 	}
 
 	private SVGBuilder svgBuilder() {
-		SVGBuilder builder = new SVGBuilder(_svgDoc, _svg) {
+		SVGBuilder builder = new SVGBuilder(_svgDoc, _svg, _nextId) {
 			@Override
 			protected void linkModel(OMSVGElement svgElement, Object model) {
-				String id = _nextId.createId();
-				svgElement.setId(id);
-				((Widget) model).setClientId(id);
-				attachWidget(svgElement.getElement(), model);
+				link(svgElement, model);
 			}
 
 		};
@@ -1364,6 +1538,17 @@ public class FlowDiagramClientControl implements DiagramContext {
 			onChange();
 		});
 		return builder;
+	}
+
+	/**
+	 * Gives a drawn element of a model widget a new ID, stores it as client ID of the widget, and
+	 * attaches the widget to the element, so that events on the element find the widget.
+	 */
+	private void link(OMSVGElement svgElement, Object model) {
+		String id = _nextId.createId();
+		svgElement.setId(id);
+		((Widget) model).setClientId(id);
+		attachWidget(svgElement.getElement(), model);
 	}
 
 	/**
@@ -1390,8 +1575,9 @@ public class FlowDiagramClientControl implements DiagramContext {
 	public void processClick(ClickTarget node, List<MouseButton> pressedButtons) {
 		int nodeId = _scope.id(node);
 		List<String> buttons = pressedButtons.stream().map(x -> x.name()).collect(Collectors.toList());
-		JavaScriptObject args = createClickArgs(nodeId, toJsStringArray(buttons));
-		ReactBridge.sendCommand(_contextPath, _controlId, "dispatchClick", _windowName, args);
+		JavaScriptObject args = createClickArgs(FlowControlCommon.ARG_NODE_ID, nodeId,
+			FlowControlCommon.ARG_MOUSE_BUTTONS, toJsStringArray(buttons));
+		send(FlowControlCommon.CMD_DISPATCH_CLICK, args, false);
 	}
 
 	@SuppressWarnings("unusable-by-js")
@@ -1399,31 +1585,68 @@ public class FlowDiagramClientControl implements DiagramContext {
 	public void processDrop(DropRegion node, SVGDropEvent event) {
 		int nodeId = _scope.id(node);
 		if (hasWindowTlDnD()) {
-			JavaScriptObject args = createDropArgs(nodeId);
-			ReactBridge.sendCommand(_contextPath, _controlId, "dispatchDrop", _windowName, args);
+			JavaScriptObject args = createDropArgs(FlowControlCommon.ARG_NODE_ID, nodeId, FlowControlCommon.ARG_DATA);
+			send(FlowControlCommon.CMD_DISPATCH_DROP, args, false);
 		}
 	}
 
-	private void sendUpdateCommand(String patch) {
-		JavaScriptObject args = createUpdateArgs(patch);
-		ReactBridge.sendCommand(_contextPath, _controlId, "update", _windowName, args);
+	/**
+	 * Reports the element a context menu is opened on.
+	 *
+	 * @param node
+	 *        The selectable element under the pointer, <code>null</code> for the empty area of the
+	 *        diagram.
+	 */
+	private void sendContextMenu(Widget node) {
+		JavaScriptObject args = JavaScriptObject.createObject();
+		if (node != null) {
+			setNumber(args, FlowControlCommon.ARG_NODE_ID, _scope.id(node));
+		}
+		send(FlowControlCommon.CMD_CONTEXT_MENU, args, false);
 	}
 
-	private static native JavaScriptObject createClickArgs(int nodeId, JavaScriptObject mouseButtons) /*-{
-		return { nodeId: nodeId, mouseButtons: mouseButtons };
+	private void sendUpdateCommand(String patch) {
+		JavaScriptObject args = JavaScriptObject.createObject();
+		setString(args, FlowControlCommon.ARG_PATCH, patch);
+		// Pan, zoom and selection changes are no action the user waits for.
+		send(FlowControlCommon.CMD_UPDATE, args, true);
+	}
+
+	/**
+	 * Sends a command to the server-side control, unless this control is destroyed.
+	 */
+	private void send(String command, JavaScriptObject args, boolean background) {
+		if (_sender != null) {
+			_sender.send(command, args, background);
+		}
+	}
+
+	private static native JavaScriptObject createClickArgs(String nodeIdKey, int nodeId, String buttonsKey,
+			JavaScriptObject mouseButtons) /*-{
+		var args = {};
+		args[nodeIdKey] = nodeId;
+		args[buttonsKey] = mouseButtons;
+		return args;
 	}-*/;
 
-	private static native JavaScriptObject createDropArgs(int nodeId) /*-{
+	private static native JavaScriptObject createDropArgs(String nodeIdKey, int nodeId, String dataKey) /*-{
 		var data = null;
 		if ($wnd.services && $wnd.services.ajax && $wnd.services.ajax.mainLayout
 				&& $wnd.services.ajax.mainLayout.tlDnD) {
 			data = $wnd.services.ajax.mainLayout.tlDnD.data;
 		}
-		return { nodeId: nodeId, data: data };
+		var args = {};
+		args[nodeIdKey] = nodeId;
+		args[dataKey] = data;
+		return args;
 	}-*/;
 
-	private static native JavaScriptObject createUpdateArgs(String patch) /*-{
-		return { patch: patch };
+	private static native void setNumber(JavaScriptObject obj, String key, int value) /*-{
+		obj[key] = value;
+	}-*/;
+
+	private static native void setString(JavaScriptObject obj, String key, String value) /*-{
+		obj[key] = value;
 	}-*/;
 
 	private static native JavaScriptObject toJsStringArray(List<String> input) /*-{
@@ -1447,8 +1670,15 @@ public class FlowDiagramClientControl implements DiagramContext {
 	public void destroy() {
 		ReactBridge.unsubscribe(_controlId, _stateListener);
 
+		// A command of an unmounted control has no control to reach any more.
+		_sender = null;
+
 		if (_observer != null) {
 			_observer.disconnect();
+		}
+
+		if (_fontsLoaded != null && DomGlobal.document.fonts != null) {
+			DomGlobal.document.fonts.removeEventListener(FONTS_LOADING_DONE_EVENT, _fontsLoaded);
 		}
 
 		if (_hideZoomDisplay != null) {
@@ -1469,6 +1699,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 			svgElement.removeEventListener("pointerdown", _pointerDown);
 			svgElement.removeEventListener("pointermove", _pointerMove);
 			svgElement.removeEventListener("pointerup", _pointerUp);
+			svgElement.removeEventListener(CONTEXT_MENU_EVENT, _contextMenu);
 		}
 		DomGlobal.window.removeEventListener("keydown", _keyDownEsc);
 

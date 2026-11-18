@@ -12,6 +12,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.model.ObservedTypes;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
 
@@ -27,6 +28,8 @@ import com.top_logic.model.util.TLModelPartRef;
 public class DerivedChannelFactory implements ChannelFactory {
 
 	private final String _name;
+
+	private final TLClass _valueType;
 
 	private final List<InputRef> _inputRefs;
 
@@ -46,6 +49,7 @@ public class DerivedChannelFactory implements ChannelFactory {
 	@CalledByReflection
 	public DerivedChannelFactory(InstantiationContext context, DerivedChannelConfig config) {
 		_name = config.getName();
+		_valueType = ChannelFactory.resolveValueType(context, config);
 		_inputRefs = config.getInputs();
 		_executor = InputScript.compile(config, DerivedChannelConfig.EXPR);
 		_reverseExecutor = InputScript.compile(config, DerivedChannelConfig.REVERSE);
@@ -54,7 +58,7 @@ public class DerivedChannelFactory implements ChannelFactory {
 
 	@Override
 	public ViewChannel createChannel(ViewContext context) {
-		DerivedViewChannel channel = new DerivedViewChannel(_name);
+		DerivedViewChannel channel = new DerivedViewChannel(_name, _valueType);
 		List<ViewChannel> inputs = ChannelInputs.resolve(context, _inputRefs);
 		Function<Object, Object> reverse = _reverseExecutor != null
 			? value -> _reverseExecutor.execute(ChannelInputs.arguments(inputs, value))

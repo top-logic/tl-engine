@@ -42,6 +42,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ACCESS_PARENT_TARGET__OWNER_REFERENCE;
 
+	/**
+	 * @en The value of "{1}" of "{0}" cannot be set to an object you may not discover.
+	 */
+	public static ResKey2 ERROR_TARGET_NOT_DISCOVERABLE__OBJECT_ATTRIBUTE;
+
+	/**
+	 * @en *****
+	 */
+	public static ResKey MASKED_VALUE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

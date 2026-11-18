@@ -176,6 +176,17 @@ public class ViewServlet extends TopLogicServlet {
 			return;
 		}
 
+		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
+
+		// Collect the windows whose page was unloaded and did not come back within the grace period
+		// - before the subsession of this window is looked up, and sparing this window, whose page
+		// comes back with this request: otherwise a tab returning from another site after the grace
+		// period would be torn down after its subsession was installed for the page, and the page
+		// would be displayed in a subsession no later command finds.
+		try (Interaction interaction = windowRegistry.beginInteraction()) {
+			windowRegistry.sweepUnloadedWindows(windowName);
+		}
+
 		// Create or reuse the SubSession for this browser tab. On F5 (page reload) the
 		// window name is the same, so the existing SubSession is reused. In a new tab, a
 		// fresh SubSession is created. This mirrors the traditional layout system's
@@ -208,12 +219,16 @@ public class ViewServlet extends TopLogicServlet {
 			}
 		}
 
-		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
-
 		// Rendering the page attaches the window's tree, and that changes the display like any
 		// command does - on a reload, while the report of the page just unloaded detaches the same
 		// tree. The trees are therefore only touched within an interaction.
 		try (Interaction interaction = windowRegistry.beginInteraction()) {
+			// The page sees the current state of the knowledge base, including the commits other
+			// threads made since the window's last request: the session revision of a window that
+			// exists already only advances when its model events are synthesized, and a reloaded page
+			// renders the control tree the window keeps.
+			windowRegistry.synthesizeModelEvents(windowName);
+
 			displayWindow(request, response, subSession, windowRegistry, windowName, address);
 
 			// The client of the rendered page connects within seconds. One that never does - the tab
@@ -250,8 +265,6 @@ public class ViewServlet extends TopLogicServlet {
 			TLSubSessionContext subSession, ReactWindowRegistry windowRegistry, String windowName,
 			String address) throws IOException {
 		PageAddress page = PageAddress.parse(address);
-		// Collect the windows whose page was unloaded and did not come back within the grace period.
-		windowRegistry.sweepUnloadedWindows();
 		SSEUpdateQueue sseQueue = windowRegistry.getOrCreateQueue(windowName);
 		// The page rendered now replaces the one the window displayed: the previous page's stream and
 		// poll end, and what is enqueued from here on waits for this page's client.

@@ -14,6 +14,7 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
@@ -24,8 +25,8 @@ import com.top_logic.tl.ai.core.security.ReadFilter;
  *
  * <p>
  * The format is the external form of an object's {@link TLObject#tId() object key}, so anything a
- * tool reported as a TID can be fed back in - including a whole {@code label [id:TID]} entry as a
- * text result writes it. The optional {@code #branch} and {@code @revision} suffixes an object key
+ * tool reported as a TID - the {@link ReadFilter#TID} of an object's identity - can be fed back
+ * in. The optional {@code #branch} and {@code @revision} suffixes an object key
  * may carry are stripped: tools always operate on the current revision of the trunk.
  * </p>
  *
@@ -78,7 +79,7 @@ public final class TidResolver {
 			throw new IllegalStateException("Resolving a TID is a read check, and this call names no"
 				+ " principal to check it for. Pass the ModelSecurity of the agent run.");
 		}
-		String identifier = objectId(tid);
+		String identifier = tid.trim();
 		String[] split = identifier.split(":", 2);
 		if (split.length != 2) {
 			// No knowledge base is asked for: an identifier without a colon has no type name to ask
@@ -122,27 +123,21 @@ public final class TidResolver {
 	}
 
 	/**
-	 * The identifier in something the model wrote, which may be a whole {@code label [id:TID]}.
+	 * The label of the object the given identifier names, for a text that only describes a call -
+	 * a commit message - and must not fail it.
 	 *
-	 * <p>
-	 * That is how a tool result written as text names an object
-	 * ({@link com.top_logic.tl.ai.core.security.ReadFilter#withId(String, String)}), so a model that
-	 * copies the entry it just read back into a tool call is right rather than wrong. Anything
-	 * without the marker is returned trimmed and otherwise unchanged - a bare TID is what every
-	 * JSON result carries.
-	 * </p>
-	 *
-	 * @param value
-	 *        What the model named. Must not be <code>null</code>.
-	 * @return The identifier part; never <code>null</code>.
+	 * @param tid
+	 *        The identifier, as the model wrote it.
+	 * @param security
+	 *        The rights of the run's principal; an object it may not read is not labelled.
+	 * @return The object's label, or the identifier itself when it does not resolve.
 	 */
-	public static String objectId(String value) {
-		int start = value.indexOf("[id:");
-		if (start < 0) {
-			return value.trim();
+	public static String labelOrId(String tid, ModelSecurity security) {
+		try {
+			return MetaLabelProvider.INSTANCE.getLabel(resolve(tid, security));
+		} catch (RuntimeException ex) {
+			return tid == null ? "" : tid.trim();
 		}
-		int end = value.indexOf(']', start);
-		return (end < 0 ? value.substring(start + 4) : value.substring(start + 4, end)).trim();
 	}
 
 	/**

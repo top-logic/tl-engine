@@ -27,7 +27,7 @@
   outline-offset: calc(-1 * var(--tl-focus-offset));
 }
 
-/* Bearbeitbar: ein Feld, in der Tabellenzelle das zellfüllende randlose Feld der anderen Zelleditoren; der Knopf
+/* Bearbeitbar: ein Feld, in der Tabellenzelle das Feld der anderen Zelleditoren; der Knopf
    steht space-2xs vom Rand wie die Knöpfe im Select. */
 .tl-compact-field[data-tl-state~="edit"] {
   display: flex;

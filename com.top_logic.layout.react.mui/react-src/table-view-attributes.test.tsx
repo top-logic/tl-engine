@@ -1,5 +1,6 @@
 // What the React table puts on its DOM so that the design system's table styles take effect
-// (UI-Durchgang 1, table): the group row, the overline of the heading and the reveal of the filter funnel.
+// (UI-Durchgang 1, table): the alignment of a column, the group row, the overline of the heading and
+// the reveal of the filter funnel.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
@@ -10,6 +11,7 @@ import MuiDisclosureToggleAdapter from './adapters/MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './adapters/MuiCheckboxAdapter';
 import MuiTextInputAdapter from './adapters/MuiTextInputAdapter';
 import MuiChipAdapter from './adapters/MuiChipAdapter';
+import MuiSkeletonAdapter from './adapters/MuiSkeletonAdapter';
 import { CONTROL_ID, childControl, mountAdapter, settle } from './adapters/wire-test-support';
 
 // The test registry has no parts of its own: the table looks up the ones it draws with.
@@ -18,6 +20,7 @@ replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
 replacePart('Chip', MuiChipAdapter);
+replacePart('Skeleton', MuiSkeletonAdapter);
 
 class NoResizeObserver {
   observe() {}
@@ -33,7 +36,7 @@ afterEach(() => {
 
 const COLUMNS = [
   { name: 'name', label: 'Name', width: 120, sortable: true, filterable: true },
-  { name: 'amount', label: 'Amount', width: 120, sortable: true },
+  { name: 'amount', label: 'Amount', width: 120, sortable: true, align: 'end' },
 ];
 
 function row(index: number, extra: Record<string, unknown> = {}) {
@@ -63,6 +66,42 @@ function rowElement(index: number): HTMLElement {
 }
 
 describe('the columns and rows', () => {
+  it('aligns the heading and the cells of an end column, and only those', async () => {
+    mountTable({});
+    await settle();
+
+    const headers = root().querySelectorAll<HTMLElement>('[role="columnheader"]');
+    expect(headers[0].hasAttribute('data-tl-align')).toBe(false);
+    expect(headers[1].getAttribute('data-tl-align')).toBe('end');
+    const cells = rowElement(0).querySelectorAll<HTMLElement>('[role="gridcell"]');
+    expect(cells[0].hasAttribute('data-tl-align')).toBe(false);
+    expect(cells[1].getAttribute('data-tl-align')).toBe('end');
+  });
+
+  it('keeps the order of title, sort mark and filter in an end column, as in a start column', async () => {
+    mountTable({
+      columns: [
+        { ...COLUMNS[0], sortDirection: 'asc' },
+        { ...COLUMNS[1], filterable: true, sortDirection: 'asc' },
+      ],
+    });
+    await settle();
+
+    const before = (a: Element, b: Element) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+    const headers = Array.from(root().querySelectorAll<HTMLElement>('[role="columnheader"]'));
+    expect(headers).toHaveLength(2);
+    for (const header of headers) {
+      const sort = header.querySelector('.tl-table__sort')!;
+      const label = header.querySelector('.tl-table__label')!;
+      const mark = header.querySelector('.tl-table__sort .tl-table__mark')!;
+      const filter = header.querySelector('.tl-table__filter')!;
+      // Title, sort mark, then the funnel - as it reads from the left, in a start column and in an end column alike;
+      // only the content of an end column moves to the end of the cell (CSS).
+      expect(before(label, mark)).toBe(true);
+      expect(before(sort, filter)).toBe(true);
+    }
+  });
+
   it('marks a group row as a group, and no other row', async () => {
     mountTable({ rows: [row(0, { groupCount: 2 }), row(1)], totalRowCount: 2, treeMode: true });
     await settle();
@@ -87,5 +126,92 @@ describe('the columns and rows', () => {
     const funnel = root().querySelector<HTMLElement>('.tl-table__filter')!;
     expect(funnel.classList).toContain('tl-reveal-on-hover');
     expect(funnel.parentElement!.getAttribute('role')).toBe('columnheader');
+  });
+});
+
+describe('the header row of a group', () => {
+  // Widths that tell the columns apart in a sum: 100 + 110 + 120 + 130 + 40.
+  const WIDE = [
+    { name: 'a', label: 'A', width: 100, sortable: true },
+    { name: 'b', label: 'B', width: 110, sortable: true },
+    { name: 'c', label: 'C', width: 120, sortable: true },
+    { name: 'd', label: 'D', width: 130, sortable: true },
+    { name: 'act', label: '', width: 40, sortable: false, pinnedEnd: true },
+  ];
+
+  function wideRow(index: number, extra: Record<string, unknown> = {}) {
+    const cells: Record<string, unknown> = {};
+    for (const column of WIDE) {
+      cells[column.name] = childControl(column.name + index, column.name + index);
+    }
+    return { id: 'r' + index, index, cells, ...extra };
+  }
+
+  function mountWide(columns: Array<Record<string, unknown>>, state: Record<string, unknown> = {}) {
+    mountTable({
+      columns,
+      rows: [wideRow(0, { groupCount: 2 }), wideRow(1)],
+      totalRowCount: 2,
+      treeMode: true,
+      ...state,
+    });
+  }
+
+  function cells(index: number): HTMLElement[] {
+    return Array.from(rowElement(index).querySelectorAll<HTMLElement>('[role="gridcell"]'));
+  }
+
+  it('lets its value span all columns but the pinned one when no column aggregates', async () => {
+    mountWide(WIDE);
+    await settle();
+
+    const group = cells(0);
+    expect(group.map(cell => cell.dataset.col)).toEqual(['a', 'act']);
+    expect(group[0].style.minWidth).toBe('460px');
+    expect(group[0].getAttribute('aria-colspan')).toBe('4');
+    expect(group[1].hasAttribute('aria-colspan')).toBe(false);
+    expect(group[1].getAttribute('data-tl-state')).toMatch(/\bpinned\b/);
+    expect(rowElement(0).getAttribute('data-tl-state')).toMatch(/\bgroup\b/);
+  });
+
+  it('stops in front of the first column that aggregates, which draws its cell', async () => {
+    mountWide(WIDE.map(column => (column.name === 'c' ? { ...column, aggregate: true } : column)));
+    await settle();
+
+    expect(cells(0).map(cell => cell.dataset.col)).toEqual(['a', 'c', 'd', 'act']);
+    expect(cells(0)[0].style.minWidth).toBe('210px');
+    expect(cells(0)[0].getAttribute('aria-colspan')).toBe('2');
+    expect(cells(0)[1].hasAttribute('aria-colspan')).toBe(false);
+  });
+
+  it('spans nothing when the second column aggregates', async () => {
+    mountWide(WIDE.map(column => (column.name === 'b' ? { ...column, aggregate: true } : column)));
+    await settle();
+
+    expect(cells(0).map(cell => cell.dataset.col)).toEqual(['a', 'b', 'c', 'd', 'act']);
+    expect(cells(0)[0].hasAttribute('aria-colspan')).toBe(false);
+  });
+
+  it('keeps the cells of a data row, one per column', async () => {
+    mountWide(WIDE);
+    await settle();
+
+    expect(cells(1).map(cell => cell.dataset.col)).toEqual(['a', 'b', 'c', 'd', 'act']);
+    expect(cells(1).some(cell => cell.hasAttribute('aria-colspan'))).toBe(false);
+    expect(cells(1)[0].style.minWidth).toBe('100px');
+  });
+
+  it('ends with the frozen columns, so it sticks with them', async () => {
+    mountWide(WIDE, { frozenColumnCount: 1 });
+    await settle();
+    expect(cells(0).map(cell => cell.dataset.col)).toEqual(['a', 'b', 'c', 'd', 'act']);
+    expect(cells(0)[0].hasAttribute('aria-colspan')).toBe(false);
+    expect(cells(0)[0].getAttribute('data-tl-state')).toMatch(/\bfrozen\b/);
+    cleanup();
+
+    mountWide(WIDE, { frozenColumnCount: 2 });
+    await settle();
+    expect(cells(0).map(cell => cell.dataset.col)).toEqual(['a', 'c', 'd', 'act']);
+    expect(cells(0)[0].style.minWidth).toBe('210px');
   });
 });

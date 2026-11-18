@@ -29,19 +29,61 @@ A page can let its agent run some of its commands - open the form in which the u
 ```
 
 - **An agent command is an ordinary command** (`ChatConversationElement.AgentCommand`, a `<generic-command>` with a mandatory `name` and a `description`): its content is its action chain, and its `inputs`, `<executability>` and `<access>` decide whether it can run, as for a button. The description is English, because the model reads it to choose the command.
-- **Two tools** in the group `interaction`, registered by `tl-chat` as the factory `page-commands` and given to `TL_SingleAgent`: `pageCommands` lists the names and descriptions and, for a command taking an object, its `input-description`; `runPageCommand(command, input)` runs one (`ChatCommandTool`). An agent of the application names `page-commands.pageCommands` and `page-commands.runPageCommand` in its `<tools>`.
-- **The run's window.** `ChatConversationControl` builds each command in its view context (`ViewCommandModel.forCommand`) and offers it on the `ChatViewBinding` while it is displayed (`PageCommand`); the tool looks the name up across the bindings of the run's window and account, like a `present` channel, and runs it within the window's interaction through `ChatWindowService.inWindow`. The rules decide over the inputs as they are then (`ViewCommandModel.perform`), so a command they reject is refused with their reason and its chain does not run.
-- **Refused with a reason**: a name the page does not list (the answer names the ones it does), an object for a command without `input-description`, an object the user cannot read, a command not executable now or not for that object, a page holding unsaved changes the command's `check-dirty` asks about, and a run without a window. A run whose window displays no such element is not offered the tools (`Tool.unavailableReason`). Refusals of the tool itself - the name, the object, the page - are English sentences. A refusal of the command's rules, with or without an object, is answered as the structured `ApplicationRefusal` (`ApplicationRefusals`, see [text for the model](doc:ai/development#text-for-the-model-and-text-for-people)): `{"refused": true, "command": …, "input": …, "reasons": [{"text": …}]}`, with `input` the id the agent passed, if any. The reasons of a rule are the application's text in the user's language and are not mixed into an English sentence.
+- **Two tools** in the group `interaction`, registered by `tl-chat` as the factory `page-commands` and given to `TL_SingleAgent`: `pageCommands` lists the names and descriptions and, for a command with [parameters](doc:ai/chat-ui#parameters-of-a-command), the JSON schema of its arguments; `runPageCommand(command, arguments)` runs one (`ChatCommandTool`). An agent of the application names `page-commands.pageCommands` and `page-commands.runPageCommand` in its `<tools>`.
+- **The run's window.** `ChatConversationControl` builds each command in its view context (`ViewCommandModel.forCommand`) and offers it on the `ChatViewBinding` while it is displayed (`PageCommand`); the tool looks the name up across the bindings of the run's window and account, like a `present` channel, and runs it within the window's interaction through `ChatWindowService.inWindow`. The rules decide over the inputs as they are then and over the arguments the agent passed (`ViewCommandModel.execute(input, parameterValues)`), so a command they reject is refused with their reason and its chain does not run.
+- **Refused with a reason**: a name the page does not list (the answer names the ones it does), arguments that do not fit the command's parameters, a command not executable now or not for these arguments, a page holding unsaved changes the command's `check-dirty` asks about, and a run without a window. A run whose window displays no such element is not offered the tools (`Tool.unavailableReason`). Refusals of the tool itself - the name, the arguments, the page - are English sentences. A refusal of the command's rules is answered as the structured `ApplicationRefusal` (`ApplicationRefusals`, see [text for the model](doc:ai/development#text-for-the-model-and-text-for-people)): `{"refused": true, "command": …, "reasons": [{"text": …}]}`. The reasons of a rule are the application's text in the user's language and are not mixed into an English sentence.
 - **No approval.** Both tools are `READ`: the page decided which of its commands an agent may trigger, and the approval card would sit in the page the command acts on. List commands whose effect the user completes in the page - a dialog the user fills in and saves, a view the user looks at - not a chain that changes data by itself.
 
-#### The object a command runs for
+#### Parameters of a command
 
-A command can be for an object the agent names - the git connection of a tenant, the conversation it handed over, the project the user wants to open. Such a command declares it with `input-description`, English text for the model saying which object it takes:
+A command can take values from the agent - the tab to open, the article to show, the status to filter by, the project whose view to open. It declares them as `<parameters>`, in the same form as the `<properties>` of a layout template (a `ConfigurationDescriptorConfig`): per parameter its name and type, a label whose tooltip describes the parameter to the model, `<mandatory/>`, a `default`, the allowed values (a fixed list `<allowed-values value="…"/>`, values computed by `<options fun="…"/>`, or an enumeration type) and constraints.
+
+```xml
+<agent-command name="openProjectTab"
+    description="Opens the overview or the members of the project selected on the project page.">
+    <parameters>
+        <property name="tab" type="String">
+            <label>
+                <en>Tab</en>
+                <tooltip><en>The tab to open: "overview" or "members".</en></tooltip>
+            </label>
+            <mandatory/>
+            <allowed-values value="overview, members"/>
+        </property>
+    </parameters>
+    <switch value="$tab">
+        <case match="'overview'">
+            <show-view view="app/project-overview.view.xml"/>
+        </case>
+        <case match="'members'">
+            <show-view view="app/project-members.view.xml"/>
+        </case>
+    </switch>
+</agent-command>
+```
+
+`<allowed-values>` (the annotation `@AllowedValues`) lists the values in the text format of the parameter, comma-separated; a value outside the list is refused, and without a `default` the first allowed value is the default of a parameter that is not `<nullable/>`. Values that depend on the situation come from an options function instead (`<options fun="…"/>`, a Java class). Each tab of the project page has its content in a view file of its own (`<tab id="members"><view-ref view="app/project-members.view.xml"/></tab>`), because `<show-view>` opens the tab containing the view it names. A `<view-ref>` inside a `<form>` hands the form on, so the fields of such a file still belong to the form around the tab bar.
+
+- **The model gets a JSON schema.** `pageCommands` lists for each command the schema of its parameters (`DeclaredParameters.schema()` in `tl-ai-core`, built by `JsonConfigSchemaBuilder`): the label is the title, its tooltip the description, mandatory parameters are `required`, the values of `<allowed-values>`, of `<options>` and of an enumeration are an `enum` (numbers as JSON numbers). The descriptions are read by the model, so they are English.
+- **The values are checked before anything runs.** The agent passes the values as the JSON object `arguments`; `DeclaredParameters.bind` reads it into the declared type (`JsonConfigurationReader`) and checks it: an unknown or missing mandatory parameter, a value of the wrong type, a value not among the allowed values or options and a violated constraint are refused with a sentence saying which, and the command does not run. A command without parameters refuses any argument.
+- **Arguments of the chain.** The chain of the command, its `<executability>` and `<access>`, and its `label-expr`, `tooltip-expr` and `image-expr` see each parameter as an argument of its name (`$tab`), next to its inputs (`ViewCommand.Config#parameterNames`). The values are seen by this run only; nothing is written to a channel unless the chain does it. A button of the same command passes no values; there, the parameters are `null`.
+
+An object is a parameter like any other: its type is `com.top_logic.model.TLObject`, its format `com.top_logic.tl.ai.core.tools.model.AgentObjectFormat`, and `<object-type>` restricts it to a model type and its specializations:
 
 ```xml
 <agent-command name="openProject" inputs="project"
-    description="Opens the view of a project, in which the user opens its application."
-    input-description="The project whose view to open.">
+    description="Opens the view of a project, in which the user opens its application.">
+    <parameters>
+        <property name="project" type="com.top_logic.model.TLObject">
+            <label>
+                <en>Project</en>
+                <tooltip><en>The project whose view to open.</en></tooltip>
+            </label>
+            <mandatory/>
+            <format value="com.top_logic.tl.ai.core.tools.model.AgentObjectFormat"/>
+            <object-type value="app:Project"/>
+        </property>
+    </parameters>
     <executability>
         <disabled-if expr="if($project.get(`app:Project#archived`), #('The project is archived.'@en, 'Das Projekt ist archiviert.'@de))"/>
     </executability>
@@ -51,27 +93,23 @@ A command can be for an object the agent names - the git connection of a tenant,
 </agent-command>
 ```
 
-- **Deny by default.** Only a command with `input-description` takes an object; `runPageCommand` refuses an object for any other command, and `pageCommands` lists for every command whether it takes one.
-- **Read with the user's rights.** The agent passes the object's id as `input`. The tool resolves it as `present` resolves its `ids` (`TidResolver` with the run's `ModelSecurity`): an object the user cannot read is refused exactly like an unknown id, and the command does not run.
-- **The main argument of this run.** The command runs with the object as its main argument (`ViewCommandModel.execute(context, input)`), the way a table runs a command for one of its rows: in place of the value of its first input (`$project` above), or as `$input` for a command without inputs. Its executability rules and access checks decide over that object exactly as for a click, and a refusal carries their reason in the user's language.
-- **Seen by this run only.** The object is not written into an input channel; the command changes nothing on the page beyond what its chain does - a `<show-views>` binding it to the opened view, a `<write-channel>` storing it.
-- Without `input`, a command with `input-description` runs with the inputs the page holds, as a click does.
+- **Read with the user's rights.** The agent passes the object's id, as tool results write it. It is resolved as `present` resolves its `ids` (`TidResolver` with the run's `ModelSecurity`, which the tool binds for the read, `AgentObjectFormat.withSecurity`): an object the user cannot read is refused exactly like an unknown id, an object of another type is refused naming the expected type, and the command does not run.
+- **Under the name of the parameter.** A parameter of the name of an input shadows that input for this run: `$project` above is the object the agent passed, and its executability rules and access checks decide over it exactly as for a click.
 
-One object per command. A command that needs several values gets them from several commands: one command stores its object in a channel with `<write-channel>`, another one reads that channel as its input. The agent runs them in order; the second command here takes no object of its own and reads the tenant from the channel `tenant` the page declares, as a click would:
+A list is a parameter of the type `java.util.List`, its `element-type` (`String`, `com.top_logic.model.TLObject`) and a format of separated elements (a `CommaSeparatedListValueProvider`): `com.top_logic.basic.config.CommaSeparatedStrings` for texts, `com.top_logic.tl.ai.core.tools.model.AgentObjectListFormat` for objects. The model passes it as JSON array (the schema is an array of the element form); `<options>`, an enumeration and `<object-type>` apply to each element:
 
 ```xml
-<agent-commands>
-    <agent-command name="chooseTenant"
-        description="Chooses the tenant the next git connection is created for. Changes nothing visible."
-        input-description="The tenant.">
-        <write-channel name="tenant"/>
-    </agent-command>
-    <agent-command name="connectGit" inputs="tenant"
-        description="Opens the form of a new git connection for the tenant chooseTenant chose. Run chooseTenant first.">
-        <open-dialog dialog-view="app/git-connection.view.xml" bind-input-to="tenant"/>
-    </agent-command>
-</agent-commands>
+<property name="projects" type="java.util.List" element-type="com.top_logic.model.TLObject">
+    <label>
+        <en>Projects</en>
+        <tooltip><en>The projects to compare.</en></tooltip>
+    </label>
+    <format value="com.top_logic.tl.ai.core.tools.model.AgentObjectListFormat"/>
+    <object-type value="app:Project"/>
+</property>
 ```
+
+A command that needs a value the agent cannot pass - a selection the user makes, an upload - gets it from the page: one command stores a value in a channel with `<write-channel>`, another one reads that channel as its input, and the agent runs them in order.
 
 ### A conversation answered from outside
 

@@ -11,7 +11,7 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 }));
 
 // The bridge first, as the page loads it, so that the modules it imports see the mocked SSE client.
-import { mount, unmount } from '../bridge/tl-react-bridge';
+import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
 import { register, registerPart } from 'tl-react-bridge';
 import TLLink from './TLLink';
 import FieldValuePart from './form/FieldValuePart';
@@ -31,7 +31,7 @@ beforeAll(() => {
 
 afterEach(() => {
   act(() => unmount(CONTROL_ID));
-  document.getElementById(CONTROL_ID)?.remove();
+  findMountPoint(CONTROL_ID)?.remove();
 });
 
 afterAll(() => {
@@ -41,7 +41,7 @@ afterAll(() => {
 /** Mounts a link with the given state and answers the element the link is drawn as. */
 function mountLink(state: Record<string, unknown>): HTMLElement {
   const element = document.createElement('div');
-  element.id = CONTROL_ID;
+  element.setAttribute(MOUNT_ATTRIBUTE, CONTROL_ID);
   document.body.appendChild(element);
   act(() => mount(CONTROL_ID, 'TLLink', state, 'w', '/ctx'));
   return element.querySelector('.tl-field-value')!;

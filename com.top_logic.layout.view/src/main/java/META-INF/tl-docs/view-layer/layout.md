@@ -1,5 +1,5 @@
 ---
-description: Read before arranging content in a .view.xml with <stack>, <grid>, <columns>, <object-list> (with <link-access> / <remove-access>), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>), or displaying content of a view in an enclosing region with <slot> / <slot-content> (SlotRegistry routing by tree distance, the <empty> fallback of a slot, the app bar slots appbar-content and appbar-leading).
+description: Read before arranging content in a .view.xml with <stack>, <grid>, <columns>, <split-panel> (pane sizes, stacking when too narrow), <object-list> (with <link-access> / <remove-access>), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>), sizing a dialog with <window width height>, or displaying content of a view in an enclosing region with <slot> / <slot-content> (SlotRegistry routing by tree distance, the <empty> fallback of a slot, the app bar slots appbar-content and appbar-leading).
 order: 20
 ---
 
@@ -43,7 +43,7 @@ A content column that stays readable on a wide screen is a bounded stack:
 >
 	<text
 		label="Quarterly report"
-		variant="headline"
+		variant="heading-lg"
 	/>
 	<text label="Figures as of yesterday."/>
 </stack>
@@ -61,7 +61,7 @@ further lines where the screen is too narrow for them:
 >
 	<text
 		label="Open tickets"
-		variant="title"
+		variant="heading-sm"
 	/>
 	<button .../>
 </stack>
@@ -95,7 +95,7 @@ Which of the arrangement elements fits:
 | `<grid>` | Many elements built alike, placed in as many equal columns as fit (`min-column-width`, `max-columns`). |
 | `<group>` | A section of the fields of a `<form>` or `<fields>`, under a heading and optionally folded away; it keeps the columns of that grid. |
 | `<stack direction="row">` | A row of elements that neither grow to a share of the width nor wrap. |
-| `<split-panel>` | Panes with splitters the user drags; fills its box, scrolls per pane, and never folds. |
+| `<split-panel>` | Panes with splitters the user drags; fills its box and scrolls per pane. Side by side, it stacks its panes when its width does not hold their minimum sizes. |
 | `<dashboard>` | Tiles of definite row height whose order the user personalizes. |
 
 ```xml
@@ -131,6 +131,14 @@ Which of the arrangement elements fits:
 ```
 
 The client classes an application styles against are `.tl-columns`, `.tl-columns--gap-<gap>` and `.tl-columns__column` (design system, `columns.css`). The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/columns-demo.view.xml`.
+
+## Panes the user resizes: `<split-panel>`
+
+`<split-panel orientation="horizontal" resizable="true">` (`SplitPanelElement`) places its `<pane>`s side by side (`horizontal`) or below each other (`vertical`), with a handle between two open panes the user drags. A pane gives its `size` in `unit` `%` (the panes in percent share the room left, their sizes acting as weights) or `px`, and its `min-size` in pixels. The split panel fills its box, each pane scrolls what does not fit into it, and the sizes the user drags are remembered per user.
+
+**Too narrow for the panes side by side, a horizontal split panel stacks them.** When its own width is less than the `min-size`s of its open panes plus the handles between them, the panes stand below each other: each spans the full width and is as high as its content, the split panel scrolls vertically, and there are no handles. A collapsed pane stays collapsed. Once the width suffices again, the panes are side by side with the sizes they had. As with `<columns>`, it is the width of the element itself that counts, not that of the browser window, so a split panel in a narrow dialog or a sidebar stacks just as it does on a phone. Nothing is configured for it; a vertical split panel keeps its arrangement.
+
+The client classes are `.tl-split`, `.tl-split--horizontal` / `.tl-split--vertical`, `.tl-split__pane` and `.tl-split__handle` (design system, `split.css`); the stacked arrangement is `data-tl-state~="stacked"` on `.tl-split`.
 
 ## Repeating a template over a computed list: `<object-list>`
 
@@ -309,6 +317,25 @@ The app bar of `com.top_logic.demo.react` shows both this and the two ways an un
 - **Lazy content.** `<content>` holds any elements. The wrapper is required, since the `image` property of the popover and the `<image>` element share a tag name. The content is created when the popover opens for the first time and kept while it is closed, so what the user entered there survives closing. It gets the personalization segment `popover` and is part of the view the popover is written in: it shares that view's channels - a form in the content edits the object of a view channel, a `<write-channel>` in it is seen by the rest of the view. A popover needing channels of its own holds a `<view-ref>`.
 - **Closing from the content.** The action `<close-popover/>` (`ClosePopoverAction`) in a command of the content closes the popover, of nested popovers the innermost one. It has no result, and the actions of the chain beside it work with the same arguments, so "apply what was entered, then close" is one command. Outside a popover it does nothing, like `<close-dialog/>` outside a dialog.
 - **Reveal.** The popover is a container of the reveal protocol with its content under the key `content`: displaying something that lives inside the content of a closed popover (see [Navigation](doc:view-layer/navigation)) opens it.
+
+## The frame of a dialog: `<window>`
+
+`<window>` (`WindowElement`, control `ReactWindowControl`, client `TLWindow`) is the root element of a dialog view opened by `<open-dialog>`: a title bar with the toolbar commands of the content, a scrolling body, and a footer with the `<actions>` and the button-bar commands.
+
+```xml
+<window
+	height="75%"
+	title="Details"
+	width="1200px"
+>
+	<split-panel>…</split-panel>
+	<actions>…</actions>
+</window>
+```
+
+- **Size.** `width` (default `500px`) and `height` are given in pixels (`600px`) or in percent of the browser window (`80%`, `75%`) - not of the box the window happens to be placed in. Any other value is an error of the view, reported when it is loaded. Without `height` the window opens at the height of its content and grows with it, but does not shrink while it is open: the tallest height it had stays its minimum, so neither its footer nor - centered - the window itself moves when the content gets shorter (another tab, an emptied selection). The next opening starts at the height of the content again. A list with a detail whose height changes with the selection is the typical case; give such a dialog a `height` where it should have its full size from the start.
+- **Limits and the user's size.** A window never grows larger than the browser window minus its margin (`--tl-space-lg`) and scrolls its body instead. With `resizable="true"` (the default) the user drags the edges to another size, which takes precedence over `width` and `height` and is remembered per dialog for its next opening while it fits into the browser window; a double click on an edge returns to the configured size.
+- **Small screens.** In the compact display class - a browser window up to 768 px wide, the same breakpoint the app shell uses - every window fills the browser window without margin, like a maximized one: `width`, `height` and the grown height do not apply, the window can be neither moved nor resized, and title bar and footer stay while the body scrolls. Back above the breakpoint, the window is displayed as before.
 
 ## Content shown in an enclosing region: `<slot>` and `<slot-content>`
 

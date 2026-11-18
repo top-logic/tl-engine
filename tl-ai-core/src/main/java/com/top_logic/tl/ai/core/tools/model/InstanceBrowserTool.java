@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -44,9 +45,6 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.util.Resources;
-
-import de.haumacher.msgbuf.io.StringW;
-import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
  * Tool for accessing TopLogic instance data from the knowledge base.
@@ -146,7 +144,7 @@ public class InstanceBrowserTool {
 	 *        Pagination cursor from previous response (null/empty for first page).
 	 * @param context
 	 *        Injected execution context, supplying the read filter of the run.
-	 * @return JSON object with the page's instances as {@code label [id:TID]} plus pagination
+	 * @return JSON object with the page's instances, each with its identity, plus pagination
 	 *         metadata, marked as business data; or error JSON, unmarked, if the type was not found.
 	 */
 	@ToolMethod(description = "Get a paginated list of instances for a specific type, to look at a few of them. Each entry has the instance's id, label and type, plus the values of the 'attributes' you name - name the ones you need instead of calling getInstance per instance. Only instances you may read are listed, and the total count is the number of those. Never page through instances to select, sort, count or aggregate them: use query (to state a result) or present (to show objects) with a TL-Script expression. Page size: limit (default 20, max 200); cursor from the previous response for the next page.", mode = ToolMode.READ, group = ToolGroups.DATA_READ, marking = AnswerMarking.TOOL)
@@ -242,11 +240,13 @@ public class InstanceBrowserTool {
 			}
 			if (!wanted.isEmpty()) {
 				// The same per-attribute read decisions getInstance makes, then cut to what was asked.
+				Map<String, Object> values = new LinkedHashMap<>();
 				for (Map.Entry<String, Object> attribute : readFilter.attributesOf(instance).entrySet()) {
 					if (wanted.contains(attribute.getKey())) {
-						entry.putAttribute(attribute.getKey(), serialize(attribute.getValue()));
+						values.put(attribute.getKey(), attribute.getValue());
 					}
 				}
+				entry.setAttributes(values);
 			}
 			result.addInstance(entry);
 		}
@@ -406,18 +406,16 @@ public class InstanceBrowserTool {
 			result.setType(buildTypeInfo(type));
 		}
 
-		// The attribute values, each of them a per-attribute Read decision, each of them serialised by
-		// the one serialiser that makes those decisions.
-		for (Map.Entry<String, Object> attribute : readFilter.attributesOf(tlObject).entrySet()) {
-			result.putAttribute(attribute.getKey(), serialize(attribute.getValue()));
-		}
+		// The attribute values, each of them a per-attribute Read decision, disclosed by the one
+		// serialiser that makes those decisions.
+		result.setAttributes(readFilter.attributesOf(tlObject));
 
 		// Additional metadata. The container is another object's identity, so it is disclosed only when
 		// that object is readable too - a readable child of a hidden parent must not name the parent.
 		InstanceMetadata metadata = InstanceMetadata.create();
 		TLObject container = tlObject.tContainer();
 		boolean containerVisible = container != null && readFilter.canRead(container);
-		metadata.setContainer(containerVisible ? container.tId().toString() : null);
+		metadata.setContainer(containerVisible ? readFilter.disclose(container) : null);
 		metadata.setContainerReference(containerVisible && tlObject.tContainerReference() != null
 			? tlObject.tContainerReference().getName() : null);
 		metadata.setTransient(tlObject.tTransient());
@@ -462,50 +460,5 @@ public class InstanceBrowserTool {
 		}
 
 		return typeInfo;
-	}
-
-	/**
-	 * Writes an already-filtered value as a JSON string.
-	 *
-	 * <p>
-	 * Takes the JSON-compatible data {@link ReadFilter#attributesOf(TLObject)} produced - primitives,
-	 * {@link List}s, {@link Map}s - and never a live {@link TLObject}, which is why it makes no security
-	 * decision. The serialisers that did take live objects, and decided nothing, are gone: there is one
-	 * of those and it takes the run's rights as an argument.
-	 * </p>
-	 */
-	private static String serialize(Object value) throws IOException {
-		StringW buffer = new StringW();
-		try (JsonWriter json = new JsonWriter(buffer)) {
-			writeJsonData(json, value);
-		}
-		return buffer.toString();
-	}
-
-	private static void writeJsonData(JsonWriter json, Object value) throws IOException {
-		if (value == null) {
-			json.nullValue();
-		} else if (value instanceof String string) {
-			json.value(string);
-		} else if (value instanceof Number number) {
-			json.value(number);
-		} else if (value instanceof Boolean bool) {
-			json.value(bool);
-		} else if (value instanceof Map<?, ?> map) {
-			json.beginObject();
-			for (Map.Entry<?, ?> entry : map.entrySet()) {
-				json.name(String.valueOf(entry.getKey()));
-				writeJsonData(json, entry.getValue());
-			}
-			json.endObject();
-		} else if (value instanceof Iterable<?> items) {
-			json.beginArray();
-			for (Object item : items) {
-				writeJsonData(json, item);
-			}
-			json.endArray();
-		} else {
-			json.value(String.valueOf(value));
-		}
 	}
 }

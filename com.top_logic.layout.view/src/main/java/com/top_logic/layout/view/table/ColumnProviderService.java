@@ -39,6 +39,7 @@ import com.top_logic.basic.type.PrimitiveTypeUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.list.FastListElementComparator;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.form.model.utility.MaskedValues;
 import com.top_logic.layout.provider.CollectionLabelProvider;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
@@ -72,7 +73,6 @@ import com.top_logic.table.FilterPushdown;
 import com.top_logic.table.FilterState;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.util.Resources;
 import com.top_logic.table.Option;
 import com.top_logic.table.Sort;
 import com.top_logic.table.filter.BooleanColumnFilter;
@@ -323,20 +323,74 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 *        Reads the cell value from a row.
 	 */
 	public Column<Object, ?> createColumn(String name, ResKey label, ColumnType type, Function<Object, Object> value) {
-		TLType valueType = type.type();
-		if (valueType != null) {
-			ColumnProvider mapped = _providerByQualifiedType.get(TLModelUtil.qualifiedName(valueType));
-			if (mapped != null) {
-				// A provider of its own knows nothing of unreadable cells: it is given the readable
-				// values only, and the unreadable cells are shown by the placeholder around it.
-				Function<Object, Object> readable = row -> {
-					Object cellValue = value.apply(row);
-					return isUnreadable(cellValue) ? null : cellValue;
-				};
-				return new UnreadableAwareColumn<>(mapped.createColumn(name, label, type, readable), value);
-			}
+		return createColumn(name, label, type, value, displayText(type));
+	}
+
+	/**
+	 * Builds the column showing the described values, as
+	 * {@link #createColumn(String, ResKey, ColumnType, Function)} does, a {@link #isLabelColumn(ColumnType)
+	 * label column} sorting and text-filtering its values by the given text.
+	 *
+	 * @param name
+	 *        The column name, which for a column over a model attribute is the attribute name.
+	 * @param type
+	 *        What the column's values are, see {@link ColumnType}.
+	 * @param label
+	 *        The resolved column header label.
+	 * @param value
+	 *        Reads the cell value from a row.
+	 * @param text
+	 *        The text a value of a label column is sorted and filtered by, e.g. the label a display
+	 *        of the column shows it with, see {@link ColumnSetup#text()}. It is given every cell
+	 *        value, also {@code null} and the {@link #UNREADABLE} marker. A column whose values are
+	 *        sorted and filtered by their type ignores it.
+	 */
+	public Column<Object, ?> createColumn(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			Function<Object, String> text) {
+		ColumnProvider mapped = mappedProvider(type);
+		if (mapped != null) {
+			// A provider of its own knows nothing of unreadable cells: it is given the readable
+			// values only, and the unreadable cells are shown by the placeholder around it.
+			Function<Object, Object> readable = row -> {
+				Object cellValue = value.apply(row);
+				return isUnreadable(cellValue) ? null : cellValue;
+			};
+			return new UnreadableAwareColumn<>(mapped.createColumn(name, label, type, readable), value);
 		}
-		return defaultColumn(name, label, type, value);
+		return defaultColumn(name, label, type, value, text);
+	}
+
+	/**
+	 * Whether a column over the described values is a label column: one that sorts and
+	 * text-filters its values by the text they are shown as, since nothing more is known about
+	 * them - objects, values of no known type, several values in one cell, and options labelled by
+	 * labels of their own.
+	 *
+	 * <p>
+	 * A column over values of a type this service has a {@link Config#getProviders() provider}
+	 * for, and a column over typed values - numbers, points in time, truth values, texts,
+	 * classifiers - is no label column: it sorts and filters its values by their type.
+	 * </p>
+	 *
+	 * @param type
+	 *        What the column's values are, see {@link ColumnType}.
+	 */
+	public boolean isLabelColumn(ColumnType type) {
+		if (mappedProvider(type) != null) {
+			return false;
+		}
+		return AttributeOptions.labelsFor(type.part()) != null || columnKind(type) == ColumnKind.LABEL;
+	}
+
+	/**
+	 * The provider configured for the type of the described values, {@code null} for none.
+	 */
+	private ColumnProvider mappedProvider(ColumnType type) {
+		TLType valueType = type.type();
+		if (valueType == null) {
+			return null;
+		}
+		return _providerByQualifiedType.get(TLModelUtil.qualifiedName(valueType));
 	}
 
 	/**
@@ -347,7 +401,20 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 */
 	public Column<Object, ?> createColumn(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			ColumnFilter<String> customFilter) {
-		Function<Object, String> text = displayText(type);
+		return createColumn(name, label, type, value, customFilter, displayText(type));
+	}
+
+	/**
+	 * Builds a column whose filter is an application-defined override matching against the given
+	 * text of a cell value, as {@link #createColumn(String, ResKey, ColumnType, Function, ColumnFilter)}
+	 * does, sorting by that text.
+	 *
+	 * @param text
+	 *        The text a value is sorted and filtered by, see {@link ColumnSetup#text()}. It is given
+	 *        every cell value, also {@code null} and the {@link #UNREADABLE} marker.
+	 */
+	public Column<Object, ?> createColumn(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ColumnFilter<String> customFilter, Function<Object, String> text) {
 		return valueColumn(name, label, type, defaultWidth(type), value)
 			.sort(cellSort(() -> Comparator.comparing(text)))
 			.filter(byText(customFilter, text))
@@ -418,15 +485,16 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 
 	/**
 	 * The built-in column whose filter and comparator are derived from the type of its values,
-	 * shown in the width configured for that kind of value.
+	 * shown in the width configured for that kind of value. A {@link #isLabelColumn(ColumnType)
+	 * label column} sorts and text-filters by the given text of its values.
 	 */
 	private Column<Object, ?> defaultColumn(String name, ResKey label, ColumnType type,
-			Function<Object, Object> value) {
+			Function<Object, Object> value, Function<Object, String> text) {
 		int width = defaultWidth(type);
 		if (AttributeOptions.labelsFor(type.part()) != null) {
 			// Options displayed by labels of their own are sorted and searched by these labels,
 			// not by the values the labels stand for.
-			return labelColumn(name, label, type, width, value);
+			return labelColumn(name, label, type, width, value, text);
 		}
 		switch (columnKind(type)) {
 			case BOOLEAN:
@@ -456,7 +524,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			case ENUMERATION:
 				return optionsColumn(name, label, type, width, value, (TLEnumeration) type.type());
 			default:
-				return labelColumn(name, label, type, width, value);
+				return labelColumn(name, label, type, width, value, text);
 		}
 	}
 
@@ -517,6 +585,17 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 		/** Everything shown by the display label of its values. */
 		LABEL,
 
+	}
+
+	/**
+	 * Whether the described values are numbers, whole or fractional, so that a column showing them
+	 * aligns them at their end.
+	 *
+	 * @param columnType
+	 *        What the column's values are, see {@link ColumnType}.
+	 */
+	static boolean isNumeric(ColumnType columnType) {
+		return columnKind(columnType) == ColumnKind.NUMBER;
 	}
 
 	/**
@@ -880,12 +959,11 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	}
 
 	/**
-	 * The fallback column: sorts and text-filters by the text the cell shows, which for a cell
-	 * holding several values is the text of all of them.
+	 * The fallback column: sorts and text-filters by the given text of the cell value, the text
+	 * the cell shows, which for a cell holding several values is the text of all of them.
 	 */
 	private static Column<Object, Object> labelColumn(String name, ResKey label, ColumnType type, int width,
-			Function<Object, Object> value) {
-		Function<Object, String> text = displayText(type);
+			Function<Object, Object> value, Function<Object, String> text) {
 		// An unreadable cell is searched by the placeholder it shows, which reveals nothing.
 		return valueColumn(name, label, type, width, value)
 			.sort(cellSort(() -> Comparator.comparing(text)))
@@ -1051,7 +1129,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 *
 	 * <p>
 	 * Stands in for the attribute's value, which is never read: the cell shows the placeholder
-	 * {@link com.top_logic.layout.react.I18NConstants#MASKED_VALUE} instead of the empty value of
+	 * {@link com.top_logic.model.security.I18NConstants#MASKED_VALUE} instead of the empty value of
 	 * the attribute, so that a value that may not be read is told apart from no value - an
 	 * unchecked checkbox, an empty text. The cell is not edited, and sorting, filtering and
 	 * exporting the column see only the placeholder, see {@link #attributeValue(Object, String)}.
@@ -1091,7 +1169,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * The value function of a column over a model attribute. A value the current user may not read
 	 * on the row (see {@link ModelAccessPolicy#onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)})
 	 * is not read at all: the cell holds the {@link #UNREADABLE} marker, which every type of column
-	 * displays by the placeholder {@link com.top_logic.layout.react.I18NConstants#MASKED_VALUE} - so
+	 * displays by the placeholder {@link com.top_logic.model.security.I18NConstants#MASKED_VALUE} - so
 	 * that a value the user may not read is told apart from no value. Such a cell is not edited,
 	 * and sorting, filtering and exporting the column see only the placeholder.
 	 * </p>
@@ -1158,7 +1236,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			return "";
 		}
 		if (isPlaceholder(value)) {
-			return Resources.getInstance().getString(com.top_logic.layout.react.I18NConstants.MASKED_VALUE);
+			return MaskedValues.placeholder();
 		}
 		if (value instanceof Collection<?> collection
 			&& collection.stream().anyMatch(ColumnProviderService::isPlaceholder)) {
@@ -1169,7 +1247,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 
 	/**
 	 * Whether the given value is shown by the placeholder
-	 * {@link com.top_logic.layout.react.I18NConstants#MASKED_VALUE}: a value the user may not read
+	 * {@link com.top_logic.model.security.I18NConstants#MASKED_VALUE}: a value the user may not read
 	 * ({@link #UNREADABLE}) or an object the user may not discover
 	 * ({@link ReactDropdownSelectControl#isMasked(Object) masked}).
 	 */

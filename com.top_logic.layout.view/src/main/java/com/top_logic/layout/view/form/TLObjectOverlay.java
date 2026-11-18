@@ -7,6 +7,8 @@ package com.top_logic.layout.view.form;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +28,7 @@ import com.top_logic.model.annotate.util.ConstraintCheck;
 import com.top_logic.model.fallback.StorageWithFallback;
 import com.top_logic.model.form.TracingScope;
 import com.top_logic.model.search.expr.Update;
+import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -52,14 +55,47 @@ import com.top_logic.util.error.TopLogicException;
  * changes to the base object ({@link #apply()}, {@link #applyToBuffer()}) or discarding all of them
  * ({@link #reset()}) - changes no value seen through the overlay and announces nothing.
  * </p>
+ *
+ * <p>
+ * An attribute with a {@link StorageWithFallback} keeps its explicit value in the
+ * {@link StorageWithFallback#getStorageAttr() storage attribute}. A change of the storage attribute
+ * is a change of the attribute with fallback as well, whether it is written through the attribute
+ * with fallback or directly: it is announced for both attributes, and both are
+ * {@link #isChanged(TLStructuredTypePart) changed}.
+ * </p>
+ *
+ * <p>
+ * An attribute and all its overrides share one value: a value written through an override is read
+ * through the overridden attribute and vice versa. A change is announced for the attribute it was
+ * written through.
+ * </p>
  */
 public class TLObjectOverlay extends TransientObject implements TLFormObjectBase {
 
 	private final TLObject _base;
 
+	/**
+	 * The changed values, indexed by the {@link TLStructuredTypePart#getDefinition() definition} of
+	 * their attribute.
+	 *
+	 * <p>
+	 * An attribute and its overrides share one value, whichever of them it is written or read
+	 * through.
+	 * </p>
+	 */
 	private final Map<TLStructuredTypePart, Object> _changes = new LinkedHashMap<>();
 
 	private final List<ValueChangeListener> _valueChangeListeners = new ArrayList<>();
+
+	/**
+	 * The attributes with a {@link StorageWithFallback} of the type of this overlay, indexed by the
+	 * definition of their {@link StorageWithFallback#getStorageAttr() storage attribute}.
+	 *
+	 * <p>
+	 * Computed on first use, see {@link #withFallbackToAnnounce(TLStructuredTypePart)}.
+	 * </p>
+	 */
+	private Map<TLStructuredTypePart, List<TLStructuredTypePart>> _withFallback;
 
 	/**
 	 * @see #isReceivingTransfer()
@@ -210,19 +246,44 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 *
 	 * <p>
 	 * When the value seen through the overlay changes, the {@link ValueChangeListener}s are
-	 * informed after the value is recorded.
+	 * informed after the value is recorded. A change of a storage attribute is announced for the
+	 * attributes with fallback keeping their explicit value in it as well, after the change of the
+	 * storage attribute.
 	 * </p>
 	 */
 	@Override
 	public void tUpdate(TLStructuredTypePart part, Object value) {
-		Object oldValue = valueBeforeChange(part);
 		if (part.getStorageImplementation() instanceof StorageWithFallback fallback) {
+			// Writing the storage attribute announces the change of this attribute.
 			fallback.setExplicitValue(this, part, value);
-			fireValueChanged(part, oldValue);
 			return;
 		}
-		_changes.put(part, value);
+		List<TLStructuredTypePart> withFallback = withFallbackToAnnounce(part);
+		Object oldValue = valueBeforeChange(part);
+		List<Object> oldFallbackValues = valuesBeforeChange(withFallback);
+		_changes.put(part.getDefinition(), value);
 		fireValueChanged(part, oldValue);
+		fireValuesChanged(withFallback, oldFallbackValues);
+	}
+
+	/**
+	 * The attributes with a {@link StorageWithFallback} of the type of this overlay that keep their
+	 * explicit value in the given attribute, if a listener is to be informed about their change.
+	 */
+	private List<TLStructuredTypePart> withFallbackToAnnounce(TLStructuredTypePart storageAttr) {
+		if (_valueChangeListeners.isEmpty()) {
+			return Collections.emptyList();
+		}
+		if (_withFallback == null) {
+			Map<TLStructuredTypePart, List<TLStructuredTypePart>> index = new HashMap<>();
+			for (TLStructuredTypePart part : tType().getAllParts()) {
+				if (part.getStorageImplementation() instanceof StorageWithFallback fallback) {
+					index.computeIfAbsent(fallback.getStorageAttr().getDefinition(), x -> new ArrayList<>()).add(part);
+				}
+			}
+			_withFallback = index;
+		}
+		return _withFallback.getOrDefault(storageAttr.getDefinition(), Collections.emptyList());
 	}
 
 	/**
@@ -247,6 +308,36 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 */
 	private Object valueBeforeChange(TLStructuredTypePart part) {
 		return _valueChangeListeners.isEmpty() ? null : getFieldValue(part);
+	}
+
+	/**
+	 * The values of the given attributes before a change, see
+	 * {@link #valueBeforeChange(TLStructuredTypePart)}.
+	 */
+	private List<Object> valuesBeforeChange(List<TLStructuredTypePart> parts) {
+		if (parts.isEmpty()) {
+			return Collections.emptyList();
+		}
+		List<Object> result = new ArrayList<>(parts.size());
+		for (TLStructuredTypePart part : parts) {
+			result.add(valueBeforeChange(part));
+		}
+		return result;
+	}
+
+	/**
+	 * Informs the {@link ValueChangeListener}s about a change of each of the given attributes, see
+	 * {@link #fireValueChanged(TLStructuredTypePart, Object)}.
+	 *
+	 * @param parts
+	 *        The attributes possibly changed.
+	 * @param oldValues
+	 *        The values of the attributes before the change, in the order of the attributes.
+	 */
+	private void fireValuesChanged(List<TLStructuredTypePart> parts, List<Object> oldValues) {
+		for (int n = 0, cnt = parts.size(); n < cnt; n++) {
+			fireValueChanged(parts.get(n), oldValues.get(n));
+		}
 	}
 
 	/**
@@ -296,8 +387,9 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 			// fallback follows the edits of this overlay.
 			return fallback.getAttributeValue(this, attribute);
 		}
-		if (_changes.containsKey(attribute)) {
-			return _changes.get(attribute);
+		TLStructuredTypePart definition = attribute.getDefinition();
+		if (_changes.containsKey(definition)) {
+			return _changes.get(definition);
 		}
 		if (attribute.isDerived()) {
 			return TracingScope.computeOnOverlay(_base, this, attribute);
@@ -353,7 +445,7 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 */
 	public boolean isDirty() {
 		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
-			if (isChange(entry.getValue(), baseValue(entry.getKey()))) {
+			if (isChange(entry.getValue(), baseValue(getOwnPart(entry.getKey())))) {
 				return true;
 			}
 		}
@@ -388,9 +480,17 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 
 	/**
 	 * Whether the given attribute has been changed in this overlay.
+	 *
+	 * <p>
+	 * An attribute with a {@link StorageWithFallback} is changed, if its
+	 * {@link StorageWithFallback#getStorageAttr() storage attribute} is.
+	 * </p>
 	 */
 	public boolean isChanged(TLStructuredTypePart part) {
-		return _changes.containsKey(part);
+		if (part.getStorageImplementation() instanceof StorageWithFallback fallback) {
+			return _changes.containsKey(fallback.getStorageAttr().getDefinition());
+		}
+		return _changes.containsKey(part.getDefinition());
 	}
 
 	/**
@@ -399,7 +499,31 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 * @see #isChanged(TLStructuredTypePart)
 	 */
 	public List<TLStructuredTypePart> getChangedParts() {
-		return new ArrayList<>(_changes.keySet());
+		List<TLStructuredTypePart> result = new ArrayList<>(_changes.size());
+		for (TLStructuredTypePart definition : _changes.keySet()) {
+			result.add(getOwnPart(definition));
+		}
+		return result;
+	}
+
+	/**
+	 * The attribute of the type of this overlay sharing its value with the given attribute: the
+	 * attribute of the type with the same {@link TLStructuredTypePart#getDefinition() definition},
+	 * the given attribute itself if the type has no such attribute.
+	 *
+	 * <p>
+	 * The changes are kept under the definition of the attribute they were written through. They
+	 * are reported and transferred through the attribute of the type of this overlay, which carries
+	 * the annotations and the storage of the attribute for this object.
+	 * </p>
+	 */
+	public TLStructuredTypePart getOwnPart(TLStructuredTypePart part) {
+		TLStructuredTypePart definition = part.getDefinition();
+		TLStructuredTypePart own = tType().getPart(definition.getName());
+		if (own != null && own.getDefinition().equals(definition)) {
+			return own;
+		}
+		return part;
 	}
 
 	/**
@@ -414,7 +538,8 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 * @see #isDirty()
 	 */
 	public boolean isModified(TLStructuredTypePart part) {
-		return _changes.containsKey(part) && isChange(_changes.get(part), baseValue(part));
+		TLStructuredTypePart definition = part.getDefinition();
+		return _changes.containsKey(definition) && isChange(_changes.get(definition), baseValue(part));
 	}
 
 	/**
@@ -453,7 +578,7 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 		}
 		try {
 			for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
-				_base.tUpdate(entry.getKey(), entry.getValue());
+				_base.tUpdate(getOwnPart(entry.getKey()), entry.getValue());
 			}
 		} finally {
 			if (receiver != null) {
@@ -488,7 +613,7 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 *
 	 * <p>
 	 * A changed reference must not add an object the current user may not discover, see
-	 * {@link Update#checkNewTargets(TLObject, TLStructuredTypePart, Object)}. Objects the reference
+	 * {@link DiscoverRight#checkNewTargets(TLObject, TLStructuredTypePart, Object)}. Objects the reference
 	 * already holds may stay, also when the user cannot discover them (e.g. the masked elements of
 	 * a reference field).
 	 * </p>
@@ -504,12 +629,12 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 */
 	public void checkApply() {
 		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
-			TLStructuredTypePart part = entry.getKey();
+			TLStructuredTypePart part = getOwnPart(entry.getKey());
 			Object value = entry.getValue();
 			if (isChange(value, baseValue(part))) {
 				Update.checkWritePermission(_base, part);
 				// Rows of a composition are buffered in overlays, which stand for their objects.
-				Update.checkNewTargets(_base, part,
+				DiscoverRight.checkNewTargets(_base, part,
 					value instanceof Collection<?> values ? resolveAll(values) : resolve(value));
 			}
 		}
@@ -540,19 +665,32 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 *
 	 * <p>
 	 * When the value seen through the overlay changes thereby, the {@link ValueChangeListener}s are
-	 * informed.
+	 * informed, like for {@link #tUpdate(TLStructuredTypePart, Object)}.
+	 * </p>
+	 *
+	 * <p>
+	 * The change of an attribute with a {@link StorageWithFallback} is the change of its
+	 * {@link StorageWithFallback#getStorageAttr() storage attribute}, which is discarded.
 	 * </p>
 	 *
 	 * @param part
 	 *        The attribute whose change is discarded.
 	 */
 	public void revert(TLStructuredTypePart part) {
-		if (!_changes.containsKey(part)) {
+		if (part.getStorageImplementation() instanceof StorageWithFallback fallback) {
+			revert(fallback.getStorageAttr());
 			return;
 		}
+		TLStructuredTypePart definition = part.getDefinition();
+		if (!_changes.containsKey(definition)) {
+			return;
+		}
+		List<TLStructuredTypePart> withFallback = withFallbackToAnnounce(part);
 		Object oldValue = valueBeforeChange(part);
-		_changes.remove(part);
+		List<Object> oldFallbackValues = valuesBeforeChange(withFallback);
+		_changes.remove(definition);
 		fireValueChanged(part, oldValue);
+		fireValuesChanged(withFallback, oldFallbackValues);
 	}
 
 	/**

@@ -335,9 +335,14 @@ override the client. The client takes its settings from environment variables:
 | `tl_pac_acr_values` | no | The requested authentication context class references. |
 | `tl_pac_client_authentication_method` | no | How the client authenticates at the token endpoint. Default: `client_secret_basic`. |
 | `tl_pac_callback_url` | no | The URL the provider redirects to after the login. Default: `/servlet/callback`, relative to the application. |
+| `tl_pac_create_accounts` | no | `true` creates an account at the login of an unknown user, with name and e-mail address from the claims. Default: `false`, an unknown login name is refused. |
+| `tl_pac_group_claim` | no | The claim whose values name the groups of the application an account is a member of, e.g. `groups`. Default: none, no groups are assigned. |
 
 Without the mandatory variables, the application starts normally and its login page shows no
-single sign-on button. Since the reference is part of the application's `metaConf.txt`, the login
+single sign-on button. How the login finds, creates and binds accounts and synchronizes their
+groups is described in the section "The generic OpenID Connect client" of the article
+`authentication/account-provisioning` of `tl-security-auth-pac4j`.
+Since the reference is part of the application's `metaConf.txt`, the login
 works alike in the development server and in the WAR. A fragment generated with `useSSO=true` only
 depends on `tl-security-auth-pac4j`; enabling the login is the decision of the application.
 

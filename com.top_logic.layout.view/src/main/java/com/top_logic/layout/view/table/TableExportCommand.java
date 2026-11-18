@@ -46,6 +46,7 @@ import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.theme.RoleFills;
 import com.top_logic.layout.table.export.ExcelExportHandler;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
@@ -85,7 +86,9 @@ import com.top_logic.util.error.TopLogicException;
  * displayed rows, filtered, searched and sorted as the table is. A grouped table is written with its
  * groups as an outline of the sheet, a tree table with its levels. Every cell is written from the
  * typed value of its column, by the column's {@link ColumnExportConfig#getExportRenderer() export
- * renderer}.
+ * renderer}. The color roles of the table are written as the fill of the cells, in the colors of
+ * the {@link RoleFills}: a heading in its column's header role, a data cell in its cell role, else
+ * in the role of its row.
  * </p>
  *
  * <p>
@@ -421,7 +424,8 @@ public class TableExportCommand implements ViewCommand {
 			.setStreaming(_config.getStreaming())
 			.setAutoFit(_config.getAutofitColumns())
 			.setFreezeHeader(_config.getFreezeHeader())
-			.setAutoFilter(_config.getAutoFilter());
+			.setAutoFilter(_config.getAutoFilter())
+			.setRoleFills(RoleFills::fill);
 		if (!StringServices.isEmpty(template)) {
 			export.setTemplate(() -> openTemplate(template));
 		}

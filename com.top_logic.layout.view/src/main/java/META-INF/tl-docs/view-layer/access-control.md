@@ -258,7 +258,10 @@ the checks decide on the main argument of the command, after its `<executability
   `<create>`. An empty container channel means a creation without container: without `reference`
   it is checked against the security root (refused → hidden), with `reference` there is nothing to
   add the object to and the command is disabled;
-- `<delete-object>`: `Delete` on every processed object, plus the delete veto;
+- `<delete-object>`: `Delete` on every processed object, plus the delete veto. Without an object
+  the command is disabled - or hidden, when its input channel declares the class of its values
+  (`type`, see [channels](doc:view-layer/channels#declaring-the-class-of-the-values-type)) and the
+  user may perform the operation on no object of that class;
 - `<link-element>` and `<remove-element>`: the `<link-access>` and `<remove-access>` the enclosing
   `<object-list>` declares, with the same `<operation>` and `<create>` checks over the inputs of the
   list and the element (see [the object list](doc:view-layer/layout#repeating-a-template-over-a-computed-list-object-list)). Without a declaration
@@ -295,7 +298,11 @@ object by themselves; a view configures nothing for it (`ModelAccessPolicy.onAtt
 - **Reading.** A `<field>` whose attribute the user may not read on the displayed object is hidden,
   and its value is not sent to the client. In a table, a `<column>` over such an attribute shows an
   empty cell in that row, and a column whose attribute the user can read on no row at all (no role is
-  granted `Read` of it, or the user is restricted) is not offered.
+  granted `Read` of it, or the user is restricted) is withheld: it is neither displayed nor offered in
+  the column selection, and a preset with a criterion on it is not offered. The table asks again on
+  every update (a change of its rows, of an observed object, of an input): once the user gains a role
+  granting `Read`, the column appears without the table being built again, and the user's arrangement
+  of it (position, width, shown or hidden) is kept (`ColumnSetup#released()`, `ColumnExistence`).
 - **Writing.** In edit mode, a field the user may not write is read-only; when the refusal depends on
   the object (the user holds `Write` elsewhere, not here), the field is disabled and names the
   refusal in its tooltip. A table edits only the cells the user may write.
@@ -327,7 +334,10 @@ type under *Administration → Access control → Grants* (`admin/access-control
   `com.top_logic.element`, presented by the TL-Script functions `securityGrants…` of
   `SecurityGrantFunctions`): a row per role a user can hold on objects of the type - delivered by a
   role rule or a role parent rule, or assigned to such an object directly
-  (`SecurityCoverageAnalysis.getHoldableRoles`) - and a row per such role on each attribute; a
+  (`SecurityCoverageAnalysis.getHoldableRoles`) - or holding a grant that takes effect
+  (`SecurityCoverageAnalysis.isLiveGrant`: a `Create` grant counts where an object is created, on
+  its container or, for a type no composition holds, on the security root) - and a row per such
+  role on each attribute; a
   column per operation applying to the type, the built-in ones first. An attribute row offers
   `Read` and `Write` only. Roles that cannot be held on the type and operations that do not apply
   to it are not offered, since a grant of them has no effect.
@@ -342,8 +352,8 @@ type under *Administration → Access control → Grants* (`admin/access-control
   implying `Discover`) is shown checked and cannot be changed in that column. An attribute without a
   grant of the operation is not restricted; granting it to a role restricts the attribute to the
   roles granted, and revoking it from the last of them lifts the restriction again.
-- A role that is granted an operation on the type (in effect or by a stored rule) but cannot be held
-  there gets a row as well, marked ineffective (role `warning` by `row-role`, with a tooltip on the
+- A role that is granted an operation on the type (in effect or by a stored rule) none of whose
+  grants takes effect gets a row as well, marked ineffective (role `warning` by `row-role`, with a tooltip on the
   role), so that the grant the coverage check reports as dead can be revoked here.
 - A grant held through an implying operation shows a read-only check box.
 - A type delegating to an access parent, and a type exempt from access control, has no grants:

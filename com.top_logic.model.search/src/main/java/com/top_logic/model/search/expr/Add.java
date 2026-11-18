@@ -19,6 +19,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
+import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.model.security.ModelAccessRights;
 
 /**
@@ -74,7 +75,7 @@ public class Add extends GenericMethodWithSecurity {
 		}
 
 		if (usesSecurity()) {
-			Update.checkNewTargets(obj, part, insertion);
+			DiscoverRight.checkNewTargets(obj, part, insertion);
 		}
 
 		int insertLength = insertion.size();

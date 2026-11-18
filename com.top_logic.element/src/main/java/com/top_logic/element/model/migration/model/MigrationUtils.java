@@ -891,12 +891,23 @@ public class MigrationUtils {
 
 	/**
 	 * Creates a new {@link TLClass} in the given module with given name.
+	 * 
+	 * <p>
+	 * The type is always written as {@link ClassConfig}, an abstract one with
+	 * {@link ClassConfig#ABSTRACT} set. {@link ClassConfig#FINAL} is written only for a concrete
+	 * class.
+	 * </p>
+	 * 
+	 * @param isFinal
+	 *        Whether the class is final, <code>null</code> to write no explicit value. Ignored for
+	 *        an abstract class.
 	 */
 	public static Element createClassType(Log log, Element module, String typeName, boolean isAbstract,
 			Boolean isFinal, AnnotatedConfig<TLTypeAnnotation> annotations) {
-		String tagName = isAbstract ? InterfaceConfig.TAG_NAME : ClassConfig.TAG_NAME;
-		Element classType = createType(log, module, tagName, typeName, annotations);
-		if (isFinal != null) {
+		Element classType = createType(log, module, ClassConfig.TAG_NAME, typeName, annotations);
+		if (isAbstract) {
+			classType.setAttribute(ClassConfig.ABSTRACT, Boolean.toString(true));
+		} else if (isFinal != null) {
 			classType.setAttribute(ClassConfig.FINAL, Boolean.toString(isFinal.booleanValue()));
 		}
 		return classType;
@@ -1034,8 +1045,12 @@ public class MigrationUtils {
 		return classifierElement;
 	}
 
+	/**
+	 * The value of the given property, <code>null</code> if it is not explicitly set in the given
+	 * configuration.
+	 */
 	@SuppressWarnings("unchecked")
-	static <T> T nullIfUnset(ConfigurationItem config, String propertyName) {
+	public static <T> T nullIfUnset(ConfigurationItem config, String propertyName) {
 		PropertyDescriptor property = config.descriptor().getProperty(propertyName);
 		if (config.valueSet(property)) {
 			return (T) config.value(property);

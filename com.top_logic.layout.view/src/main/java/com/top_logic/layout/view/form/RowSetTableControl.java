@@ -8,13 +8,17 @@ package com.top_logic.layout.view.form;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.Logger;
@@ -22,6 +26,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.LabelDescription;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactCommandHandler;
@@ -58,6 +63,7 @@ import com.top_logic.layout.view.table.CellEditing;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnExistence;
+import com.top_logic.layout.view.table.ColumnHeader;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.model.TLClass;
@@ -68,11 +74,13 @@ import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.TracingScope;
 import com.top_logic.model.util.Pointer;
+import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellExistence;
 import com.top_logic.table.CellRenderer;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnAlignment;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupKey;
@@ -91,6 +99,7 @@ import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.tool.export.ExcelCellRenderer;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Table presentation of a row set edited within a form.
@@ -185,13 +194,13 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	private TableId _tableId;
 
-	/** @see #setNamedFilters(Function, NamedFilterStore, String) */
-	private Function<List<? extends Column<?, ?>>, List<NamedFilter>> _declaredFilters;
+	/** @see #setNamedFilters(BiFunction, NamedFilterStore, String) */
+	private BiFunction<List<? extends Column<?, ?>>, Set<String>, List<NamedFilter>> _declaredFilters;
 
-	/** @see #setNamedFilters(Function, NamedFilterStore, String) */
+	/** @see #setNamedFilters(BiFunction, NamedFilterStore, String) */
 	private NamedFilterStore _filterStore;
 
-	/** @see #setNamedFilters(Function, NamedFilterStore, String) */
+	/** @see #setNamedFilters(BiFunction, NamedFilterStore, String) */
 	private String _initialFilter;
 
 	/** @see #setFilterBar(boolean) */
@@ -261,11 +270,30 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** @see #setRowColor(Function) */
 	private Function<? super TLObject, ValueColor> _rowColor;
 
+	/** @see #setRowEditable(Predicate) */
+	private Predicate<Object> _rowEditable;
+
 	/**
 	 * The observation of the conditions deciding which of the data columns of the current
 	 * {@link #_tableControl} exist, {@link Registration#NONE} while there is none.
 	 */
 	private Registration _existence = Registration.NONE;
+
+	/**
+	 * Asks again which of the data columns of the current {@link #_tableControl} exist and which
+	 * declared filters are offered, see
+	 * {@link #refreshColumnsAndDeclaredFilters(ColumnExistence, DefaultTableView, List)}; does
+	 * nothing while there is no table.
+	 */
+	private Runnable _columnRefresh = () -> {
+		// No table.
+	};
+
+	/**
+	 * The observation of the channels the headings of the data columns of the current
+	 * {@link #_tableControl} read, {@link Registration#NONE} while there is none.
+	 */
+	private Registration _headers = Registration.NONE;
 
 	private final Set<Object> _selectedKeys = new java.util.LinkedHashSet<>();
 
@@ -279,6 +307,13 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * </p>
 	 */
 	private final Map<TLObject, Set<Pointer>> _cellDependencies = new IdentityHashMap<>();
+
+	/**
+	 * For each row of the edited table, the decisions taken when its cells were built - whether a
+	 * cell is edited, whether the row can be removed - and the attribute values they were taken
+	 * from, see {@link #decide(TLObject, String, BooleanSupplier)}.
+	 */
+	private final Map<TLObject, EditDecisions> _editDecisions = new IdentityHashMap<>();
 
 	/**
 	 * The rows whose read-only cells are built again when the current interaction has completed,
@@ -381,7 +416,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			.setImage(Icons.COMPOSITION_TABLE_DELETE)
 			.setPlacement(CommandPlacement.TOOLBAR)
 			.setVisible(this::offersSelectedRowsRemoval)
-			.setExecutable(() -> offersSelectedRowsRemoval() && !_selectedKeys.isEmpty());
+			.setExecutable(() -> offersSelectedRowsRemoval() && !_selectedKeys.isEmpty() && selectionRemovable());
 
 		// Row-set tables should span the full form row.
 		putState("fullLine", Boolean.TRUE);
@@ -480,7 +515,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * @param declaredFilters
 	 *        Materializes the declared filters over the table's columns, called whenever the columns
 	 *        are rebuilt and whenever the rows are refreshed - the criteria a table declares can
-	 *        depend on the inputs it is refreshed for.
+	 *        depend on the inputs it is refreshed for. It is given the names of the columns the
+	 *        access rights of the user withhold now, see {@link ColumnExistence#withheldColumns()},
+	 *        on which no declared filter may filter.
 	 * @param filterStore
 	 *        Where the filters the user saves under a name are persisted, or {@code null} to offer
 	 *        only the declared ones.
@@ -488,7 +525,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 *        The {@link NamedFilter#id() identifier} of the filter the table is filtered by until a
 	 *        personalization of its own exists, or {@code null} to start out unfiltered.
 	 */
-	public void setNamedFilters(Function<List<? extends Column<?, ?>>, List<NamedFilter>> declaredFilters,
+	public void setNamedFilters(
+			BiFunction<List<? extends Column<?, ?>>, Set<String>, List<NamedFilter>> declaredFilters,
 			NamedFilterStore filterStore, String initialFilter) {
 		_declaredFilters = declaredFilters;
 		_filterStore = filterStore;
@@ -760,6 +798,32 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * Sets which rows can be edited at all.
+	 *
+	 * <p>
+	 * A refused row shows all of its cells read-only, whatever its columns offer, and cannot be
+	 * removed: it has no delete button, and the {@link #getRemoveSelectedRowsCommand() removal of
+	 * the selected rows} cannot be executed while it is selected. Rows can still be added below
+	 * it. Takes effect when the columns are built next.
+	 * </p>
+	 *
+	 * @param rowEditable
+	 *        Whether a row can be edited, {@code null} for every row the columns offer the edit
+	 *        on.
+	 */
+	public void setRowEditable(Predicate<Object> rowEditable) {
+		_rowEditable = rowEditable;
+	}
+
+	/**
+	 * Whether the given row can be removed from the table while it is edited, as far as the
+	 * {@link #setRowEditable(Predicate) row condition} is concerned.
+	 */
+	public boolean isRemovable(Object row) {
+		return _rowEditable == null || _rowEditable.test(row);
+	}
+
+	/**
 	 * The inner {@link TableViewControl}, or {@code null} if not yet initialized.
 	 */
 	public TableViewControl<TLObject> getTableControl() {
@@ -856,9 +920,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * <p>
 	 * The command is offered in edit mode of a table that removes rows and lets the user
 	 * {@link SelectionMode#MULTI select several rows} (the header checkbox selects all of them);
-	 * it is executable while a row is selected. Like the {@link #getAddRowCommand() add-row
-	 * command}, a {@link #setFramed framed} table shows it in its own toolbar, the creator of a
-	 * frameless table offers it through the enclosing command scope.
+	 * it is executable while rows are selected that can all be {@link #isRemovable(Object)
+	 * removed}. Like the {@link #getAddRowCommand() add-row command}, a {@link #setFramed framed}
+	 * table shows it in its own toolbar, the creator of a frameless table offers it through the
+	 * enclosing command scope.
 	 * </p>
 	 */
 	public CommandModel getRemoveSelectedRowsCommand() {
@@ -875,10 +940,22 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	private void removeSelectedRows() {
-		if (!offersSelectedRowsRemoval()) {
+		if (!offersSelectedRowsRemoval() || !selectionRemovable()) {
 			return;
 		}
 		removeRows(selectedRows());
+	}
+
+	/**
+	 * Whether every selected row {@link #isRemovable(Object) can be removed}.
+	 */
+	private boolean selectionRemovable() {
+		for (TLObject row : selectedRows()) {
+			if (!isRemovable(row)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	private void addRowOfChosenType(ReactContext context) {
@@ -937,6 +1014,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		if (!createTypes().contains(type)) {
 			return null;
 		}
+		// The new row is selected, which leaves the edited row: the row must not be added if it
+		// cannot be selected.
+		checkLeaving(_selectedKeys);
 		return selected(_creation.addRow(session(), type, selectedRows()));
 	}
 
@@ -959,14 +1039,28 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/**
 	 * Sets the panel title: the bound attribute's display label if available, else the fallback
 	 * title. A frameless table shows no title.
+	 *
+	 * <p>
+	 * The {@link LabelDescription description} of the bound attribute explains the table: a framed
+	 * table offers it at its title, a frameless one through an info icon beside the table. In edit
+	 * mode it is offered as help text as well, as the help of a field.
+	 * </p>
+	 *
+	 * @param editMode
+	 *        Whether the table is edited.
 	 */
-	private void updateTitle() {
+	private void updateTitle(boolean editMode) {
+		TLStructuredTypePart boundPart = binding().getBoundPart();
+		String explanation =
+			boundPart == null ? null : LabelDescription.description(TLModelI18N.getI18NKey(boundPart));
+		putState(ReactPanelControl.EXPLANATION, explanation);
+		putState(ReactPanelControl.EXPLANATION_HELP, Boolean.valueOf(explanation != null && editMode));
+
 		if (!_framed) {
 			putState("title", null);
 			return;
 		}
 		String title = _fallbackTitle;
-		TLStructuredTypePart boundPart = binding().getBoundPart();
 		if (boundPart != null) {
 			String label = MetaLabelProvider.INSTANCE.getLabel(boundPart);
 			if (label != null) {
@@ -980,7 +1074,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	@Override
 	protected void buildContent(List<? extends TLObject> rowObjects, boolean editMode) {
-		updateTitle();
+		updateTitle(editMode);
 
 		List<Column<TLObject, ?>> columns = new ArrayList<>();
 
@@ -1009,7 +1103,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		if (editMode && binding().getRemoveMode() != RowSetBinding.RemoveMode.NONE) {
 			columns.add(DefaultColumn.<TLObject, TLObject> builder(COLUMN_DELETE, row -> row)
 				.label(ResKey.text(""))
-				.renderer(row -> new CellContent.Raw((CellControlFactory) (ctx -> createDeleteButton(ctx, row))))
+				.renderer(row -> decide(row, COLUMN_DELETE, () -> isRemovable(row))
+					? new CellContent.Raw((CellControlFactory) (ctx -> createDeleteButton(ctx, row)))
+					: CellContent.empty())
 				.width(ACTION_COLUMN_WIDTH)
 				.pinnedEnd(true)
 				.build());
@@ -1020,6 +1116,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		// Create or replace the row source and table control (column set may change between
 		// edit/view mode).
 		_cellDependencies.clear();
+		_editDecisions.clear();
 		RowSource<TLObject> source =
 			_arrangement.createSource(rowObjects, isEditing() ? session() : null, columns);
 		TableViewState initialState =
@@ -1039,17 +1136,19 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			}
 			initialState.setFrozenCount(Math.min(_fixedColumns + leadingActions, columns.size()));
 		}
+		// The columns that do not exist must not be displayed from the first state on, and no
+		// declared filter may refer to a column withheld from the user.
+		ColumnExistence existence = ColumnExistence.of(setups);
 		List<NamedFilter> declaredFilters =
-			_declaredFilters == null ? List.of() : _declaredFilters.apply(columns);
+			_declaredFilters == null ? List.of() : _declaredFilters.apply(columns, existence.withheldColumns());
 		DefaultTableView<TLObject> view = new DefaultTableView<>(columns, source, initialState, _store,
 			_tableId, _hiddenByDefault, declaredFilters, _filterStore, _initialFilter);
 		view.setRowCssClass(_rowCssClass);
 		view.setRowColor(_rowColor);
-		// The columns that do not exist must not be displayed from the first state on.
-		ColumnExistence existence = ColumnExistence.of(setups);
 		view.setAbsentColumns(existence.absentColumns());
 
 		disposeExistence();
+		disposeHeaders();
 		_arrangement.release();
 		disposeFilterBinding();
 		disposeDisplayedRowsBinding();
@@ -1058,13 +1157,22 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 		_tableControl = new TableViewControl<>(_context, view, view.hierarchy() != null);
 		TableViewControl<TLObject> shown = _tableControl;
+		_columnRefresh = () -> refreshColumnsAndDeclaredFilters(existence, view, columns);
 		_existence = existence.observe(absent -> {
 			// A notification in progress may still reach the observation of a replaced table.
 			if (_tableControl == shown) {
 				shown.setAbsentColumns(absent);
 			}
 		});
+		_headers = ColumnHeader.observe(setups, () -> {
+			// A notification in progress may still reach the observation of a replaced table.
+			if (_tableControl == shown) {
+				shown.refreshColumnHeaders();
+			}
+		});
 		_tableControl.setFilterBar(_filterBar);
+		// Where all rows are edited, the row of the focused editor is the row the commands act on.
+		_tableControl.setSelectOnEditorFocus(_policy == RowEditPolicy.ALL && editMode);
 		_tableControl.setRowCount(_rowCount);
 		_tableControl.setActivationHandler(_activationHandler);
 
@@ -1099,9 +1207,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			@Override
 			public void rowsReplaced() {
 				// The criteria a table declares can depend on the inputs it is refreshed for, so
-				// they are resolved again for their new values.
-				refreshDeclaredFilters(view, columns);
+				// they are resolved again for their new values; whether a column exists may depend
+				// on the access rights of the user, which change with the model.
+				refreshColumnsAndDeclaredFilters(existence, view, columns);
 				_cellDependencies.clear();
+				_editDecisions.clear();
 				table.refreshData();
 			}
 
@@ -1109,7 +1219,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			public void inputsChanged() {
 				// The rows and their cells stay; what is computed from the inputs apart from the
 				// rows is computed again.
-				if (refreshDeclaredFilters(view, columns)) {
+				if (refreshColumnsAndDeclaredFilters(existence, view, columns)) {
 					// Pushes the rows again as well, for their row class and role.
 					table.refreshFilters();
 				} else if (_rowCssClass != null || _rowColor != null) {
@@ -1133,15 +1243,19 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
-	 * Resolves the criteria of the declared filters again for the current input values.
+	 * Asks again which columns exist, see {@link ColumnExistence#recheck()}, and resolves the
+	 * criteria of the declared filters again for the current input values and the columns withheld
+	 * from the user now.
 	 *
 	 * @return Whether the table declares filters, so that they were replaced on the given view.
 	 */
-	private boolean refreshDeclaredFilters(DefaultTableView<TLObject> view, List<Column<TLObject, ?>> columns) {
+	private boolean refreshColumnsAndDeclaredFilters(ColumnExistence existence, DefaultTableView<TLObject> view,
+			List<Column<TLObject, ?>> columns) {
+		existence.recheck();
 		if (_declaredFilters == null) {
 			return false;
 		}
-		view.setDeclaredFilters(_declaredFilters.apply(columns));
+		view.setDeclaredFilters(_declaredFilters.apply(columns, existence.withheldColumns()));
 		return true;
 	}
 
@@ -1163,7 +1277,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			: new ColumnResolution(_rowTypes, _context);
 		List<ColumnDeclaration> declarations =
 			_columns.isEmpty() ? ColumnDeclarations.mainColumns(scope.rowType()) : _columns;
-		for (ColumnSetup setup : ColumnDeclarations.resolve(declarations, scope)) {
+		for (ColumnSetup resolved : ColumnDeclarations.resolve(declarations, scope)) {
+			ColumnSetup setup = _rowEditable == null ? resolved : resolved.restrictedTo(_rowEditable);
 			setups.add(setup);
 			columns.add(adapt(setup.buildColumn(), setup, editMode, edited));
 		}
@@ -1182,7 +1297,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 		_arrangement.setRows(fieldModel().getCurrentList());
 		if (_tableControl != null) {
+			_columnRefresh.run();
 			_cellDependencies.clear();
+			_editDecisions.clear();
 			_tableControl.refreshData();
 		}
 	}
@@ -1199,6 +1316,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	private void handleSelectionChanged(Set<Object> selectedKeys) {
+		if (_tableControl != null && _tableControl.isUserSelectionChange()) {
+			Set<Object> left = new java.util.LinkedHashSet<>(_selectedKeys);
+			left.removeAll(selectedKeys);
+			checkLeaving(left);
+		}
+
 		// Rows whose selection state flips change their editability under the SELECTED policy, so
 		// their cells must re-render.
 		Set<Object> flipped = new java.util.LinkedHashSet<>(_selectedKeys);
@@ -1220,11 +1343,57 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * Refuses to leave edited rows that have errors.
+	 *
+	 * <p>
+	 * Under the {@link RowEditPolicy#SELECTED} policy, only the selected row is editable. A row
+	 * whose cells show errors would no longer show them once another row is selected, so the user
+	 * cannot leave it: the rows are {@link RowSetEditSession#checkRowErrors(TLObject) checked},
+	 * which also reveals errors the user has not seen yet, and the first row with errors refuses
+	 * with its errors. Rows that are gone from the session, e.g. because they were removed, are not
+	 * checked.
+	 * </p>
+	 *
+	 * @param leftKeys
+	 *        The keys of the rows that are no longer selected after the change.
+	 * @throws TopLogicException
+	 *         If a row has errors.
+	 */
+	private void checkLeaving(Collection<Object> leftKeys) {
+		if (_policy != RowEditPolicy.SELECTED || !isEditing()) {
+			return;
+		}
+		RowSetEditSession session = session();
+		for (Object key : leftKeys) {
+			TLObject row = _arrangement.row(key);
+			if (row == null) {
+				continue;
+			}
+			List<ResKey> errors = session.checkRowErrors(row);
+			if (!errors.isEmpty()) {
+				throw ValidationErrors.refusal(
+					com.top_logic.layout.view.command.I18NConstants.ERROR_ROW_HAS_VALIDATION_ERRORS, errors);
+			}
+		}
+	}
+
+	/**
 	 * Stops following the conditions deciding which columns of the current table exist.
 	 */
 	private void disposeExistence() {
 		_existence.dispose();
 		_existence = Registration.NONE;
+		_columnRefresh = () -> {
+			// No table.
+		};
+	}
+
+	/**
+	 * Stops following the channels the headings of the current table read.
+	 */
+	private void disposeHeaders() {
+		_headers.dispose();
+		_headers = Registration.NONE;
 	}
 
 	/**
@@ -1392,11 +1561,100 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	private <T> T traced(TLObject row, OverlayLookup overlays, Supplier<T> render) {
-		Set<Pointer> dependencies = _cellDependencies.computeIfAbsent(row, x -> new HashSet<>());
+		return traced(_cellDependencies.computeIfAbsent(row, x -> new HashSet<>()), overlays, render);
+	}
+
+	/**
+	 * Computes something in a {@link TracingScope} over the given overlays, recording the
+	 * attribute values read in the given dependencies.
+	 */
+	private static <T> T traced(Set<Pointer> dependencies, OverlayLookup overlays, Supplier<T> render) {
 		try (TracingScope scope = TracingScope.open(
 			pointer -> dependencies.add(Pointer.create(editedObject(pointer.object()), pointer.attribute())),
 			overlays)) {
 			return render.get();
+		}
+	}
+
+	/**
+	 * Takes a decision about the edit of the given row while its cells are built - whether a cell
+	 * of it is edited, whether it can be removed - and records it, together with the attribute
+	 * values it was taken from.
+	 *
+	 * <p>
+	 * A decision may depend on values of the row that are edited - the condition of a
+	 * {@link ColumnSetup#editing() column} or the {@link #setRowEditable(Predicate) row
+	 * condition} reading an attribute of the row. When one of these values changes, the decision
+	 * is taken again, and the cells of the row are built again if it turns out differently, see
+	 * {@link #rowValueChanged(TLObject, TLStructuredTypePart)}.
+	 * </p>
+	 *
+	 * @param row
+	 *        The row the decision is about.
+	 * @param key
+	 *        What the decision is about, the name of the column whose cell it decides.
+	 * @param decision
+	 *        Takes the decision.
+	 * @return The decision taken.
+	 */
+	private boolean decide(TLObject row, String key, BooleanSupplier decision) {
+		OverlayLookup overlays = isEditing() ? formControl().getValidationModel() : null;
+		if (overlays == null) {
+			return decision.getAsBoolean();
+		}
+		EditDecisions decisions = _editDecisions.computeIfAbsent(row, x -> new EditDecisions(overlays));
+		return decisions.take(key, decision);
+	}
+
+	/**
+	 * The decisions taken about the edit of a row, and the attribute values they were taken from,
+	 * see {@link RowSetTableControl#decide(TLObject, String, BooleanSupplier)}.
+	 */
+	private static final class EditDecisions {
+
+		private final OverlayLookup _overlays;
+
+		private final Set<Pointer> _dependencies = new HashSet<>();
+
+		private final Map<String, BooleanSupplier> _decisions = new HashMap<>();
+
+		private final Map<String, Boolean> _taken = new HashMap<>();
+
+		EditDecisions(OverlayLookup overlays) {
+			_overlays = overlays;
+		}
+
+		/**
+		 * Takes the given decision, recording what it was taken from.
+		 */
+		boolean take(String key, BooleanSupplier decision) {
+			boolean result = evaluate(decision);
+			_decisions.put(key, decision);
+			_taken.put(key, Boolean.valueOf(result));
+			return result;
+		}
+
+		/**
+		 * Whether one of the decisions was taken from the given value.
+		 */
+		boolean dependsOn(Pointer value) {
+			return _dependencies.contains(value);
+		}
+
+		/**
+		 * Whether one of the decisions turns out differently when taken again now.
+		 */
+		boolean changed() {
+			for (Map.Entry<String, BooleanSupplier> entry : _decisions.entrySet()) {
+				if (evaluate(entry.getValue()) != _taken.get(entry.getKey()).booleanValue()) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		private boolean evaluate(BooleanSupplier decision) {
+			return traced(_dependencies, _overlays, decision::getAsBoolean).booleanValue();
 		}
 	}
 
@@ -1453,6 +1711,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				_staleRows.add(dependent);
 			}
 		}
+		// The decisions about the edit of a row - the row itself among them - may follow the value.
+		for (Map.Entry<TLObject, EditDecisions> entry : _editDecisions.entrySet()) {
+			if (entry.getValue().dependsOn(changed)) {
+				_staleRows.add(entry.getKey());
+			}
+		}
 	}
 
 	private void scheduleRebuild(boolean scheduled) {
@@ -1464,9 +1728,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	private void rebuildStaleRows() {
 		List<Object> stale = new ArrayList<>();
 		for (TLObject row : _staleRows) {
-			if (!isRowEditable(row)) {
+			EditDecisions decisions = _editDecisions.get(row);
+			if (!isRowEditable(row) || (decisions != null && decisions.changed())) {
 				// Recorded anew when the cells are built again.
 				_cellDependencies.remove(row);
+				_editDecisions.remove(row);
 				stale.add(_arrangement.key(row));
 			}
 		}
@@ -1492,6 +1758,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	protected void onCleanup() {
 		_arrangement.release();
 		disposeExistence();
+		disposeHeaders();
 		disposeFilterBinding();
 		disposeDisplayedRowsBinding();
 		// The toolbar and the table itself are part of the state and are disposed with it; only the
@@ -1499,6 +1766,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		_toolbar = null;
 		_tableControl = null;
 		_cellDependencies.clear();
+		_editDecisions.clear();
 		_staleRows.clear();
 		super.onCleanup();
 	}
@@ -1544,6 +1812,21 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 
 		@Override
+		public ColumnAlignment alignment() {
+			return _inner.alignment();
+		}
+
+		@Override
+		public boolean pinnedEnd() {
+			return _inner.pinnedEnd();
+		}
+
+		@Override
+		public String cssClass() {
+			return _inner.cssClass();
+		}
+
+		@Override
 		public V value(TLObject row) {
 			return _inner.value(row);
 		}
@@ -1555,7 +1838,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		@Override
 		public CellContent renderCell(TLObject row) {
-			if (_editable && row != null && isRowEditable(row) && offersEdit(row)) {
+			if (_editable && row != null && decide(row, name(), () -> isRowEditable(row) && offersEdit(row))) {
 				return new CellContent.Raw((CellControlFactory) context -> {
 					ReactControl editControl = buildEditCellControl(context, row, _setup);
 					return editControl != null
@@ -1625,6 +1908,16 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		@Override
 		public ValueColor color(TLObject row) {
 			return _inner.color(row);
+		}
+
+		@Override
+		public String headerClass() {
+			return _inner.headerClass();
+		}
+
+		@Override
+		public ValueColor headerRole() {
+			return _inner.headerRole();
 		}
 
 		@Override

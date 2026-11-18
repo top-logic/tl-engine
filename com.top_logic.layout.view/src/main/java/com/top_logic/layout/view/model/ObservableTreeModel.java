@@ -70,14 +70,27 @@ import com.top_logic.model.listen.ModelScope;
  *
  * <p>
  * An input change is a different tree: the root object is computed from the new input and the model
- * is built anew. The subtrees that were open are opened again wherever the new tree holds their
- * objects. A change of a {@link #withRowIndependentInputs(Collection) row-independent input} - a
+ * is built anew. A tree built from another root object starts afresh: its nodes are open down to
+ * the {@link #withInitialExpansionDepth(int) initial expansion depth}, the others closed. A tree
+ * built anew from the same root object keeps what was open and closed: the subtrees that were open
+ * are opened again wherever the new tree holds their objects, and only the nodes of objects the tree
+ * had no node for are opened down to the initial expansion depth. A change of a {@link #withRowIndependentInputs(Collection) row-independent input} - a
  * channel the tree's functions receive but whose value cannot change the tree, such as the selection
  * of the very table displaying it - builds nothing; the display is only told that the inputs changed,
  * see {@link Display#inputsChanged()}. A change of a {@link #withCellInputs(Collection) cell input}
  * - a channel the tree's functions do not receive, but what the display builds from the nodes
  * reads - builds nothing either; the display is told that its nodes changed, see
  * {@link Display#nodesChanged()}.
+ * </p>
+ *
+ * <p>
+ * A change of a persistent object held by a channel - the channel keeps its value, but an attribute
+ * of the object it points to is edited (see {@link ChannelObjectObserver}) - is answered as a change
+ * of that channel's value would be, except for an ordinary input: where the root object the input
+ * yields stays the same, the tree is reconciled in place, keeping its nodes, and every displayed node
+ * is {@link Display#invalidateNode(DefaultTreeUINode) invalidated}; only a changed root object
+ * builds the tree anew. An input object the tree displays as a node - the root of a tree built from
+ * its input, above all - is followed as every displayed object is.
  * </p>
  *
  * <p>
@@ -121,10 +134,21 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		void nodesChanged();
 
 		/**
-		 * The tree was built anew from another root object; the given model replaces the one
-		 * displayed so far.
+		 * The tree was built anew; the given model replaces the one displayed so far.
+		 *
+		 * @param treeModel
+		 *        The model displayed from now on.
+		 * @param opened
+		 *        The nodes of the given model opened down to the
+		 *        {@link ObservableTreeModel#withInitialExpansionDepth(int) initial expansion depth}.
+		 * @param rootChanged
+		 *        Whether the tree was built from another root object. Such a tree starts afresh: the
+		 *        given nodes are the only open ones. A tree built from the same root object keeps
+		 *        the nodes that were open open, and the given nodes - nodes of objects the tree
+		 *        displayed so far had no node for - are opened in addition. A display keeping the
+		 *        expansion of its own follows suit.
 		 */
-		void treeReplaced(DefaultTreeUINodeModel treeModel);
+		void treeReplaced(DefaultTreeUINodeModel treeModel, List<DefaultTreeUINode> opened, boolean rootChanged);
 
 		/**
 		 * A {@link ObservableTreeModel#withRowIndependentInputs(Collection) row-independent input}
@@ -155,7 +179,8 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 				}
 
 				@Override
-				public void treeReplaced(DefaultTreeUINodeModel treeModel) {
+				public void treeReplaced(DefaultTreeUINodeModel treeModel, List<DefaultTreeUINode> opened,
+						boolean rootChanged) {
 					tree.setTreeModel(treeModel);
 				}
 			};
@@ -182,6 +207,9 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	/** @see #withCellInputs(Collection) */
 	private List<ViewChannel> _cellInputs = List.of();
 
+	/** @see #withInitialExpansionDepth(int) */
+	private int _initialExpansionDepth;
+
 	private DefaultTreeUINodeModel _treeModel;
 
 	/** What to run when the tree changed, see {@link #addStructureListener(Runnable)}. */
@@ -189,6 +217,14 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 
 	/** The registrations of this listener for the displayed objects, by their identity. */
 	private final Map<ObjectKey, Registration> _observed = new HashMap<>();
+
+	/**
+	 * Observers of the objects held by the input channels the tree depends on, by the
+	 * {@link #withRowIndependentInputs(Collection) row-independent inputs} and by the
+	 * {@link #withCellInputs(Collection) cell inputs}; created when the observation begins for the
+	 * first time, when the roles of the channels are known.
+	 */
+	private List<ChannelObjectObserver> _channelObjectObservers;
 
 	/** The registrations on the observed types and the input channels, while attached. */
 	private final List<Registration> _registrations = new ArrayList<>();
@@ -289,6 +325,25 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	}
 
 	/**
+	 * Sets how many levels of a tree built anew are opened: all nodes down to that depth in a tree
+	 * built from another root object, the nodes of objects the tree displayed before had no node
+	 * for in a tree built from the same root object.
+	 *
+	 * <p>
+	 * Unset, a tree built from another root object shows its top-level nodes closed, and a tree
+	 * built from the same root object opens only the subtrees that were open before.
+	 * </p>
+	 *
+	 * @param depth
+	 *        The number of levels, see {@link TreeNodes#openToDepth(DefaultTreeUINode, int, Set)}.
+	 * @return This instance, for call chaining.
+	 */
+	public ObservableTreeModel withInitialExpansionDepth(int depth) {
+		_initialExpansionDepth = depth;
+		return this;
+	}
+
+	/**
 	 * The tree model displayed now, which an input change replaces with another one.
 	 */
 	public DefaultTreeUINodeModel getTreeModel() {
@@ -369,7 +424,32 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		syncObjectListeners();
 		registerTypeListeners();
 		registerChannelListeners();
+		for (ChannelObjectObserver observer : channelObjectObservers()) {
+			observer.attach(scope);
+		}
 		catchUp();
+	}
+
+	/**
+	 * The observers of the objects held by the channels, one for each role a channel plays.
+	 */
+	private List<ChannelObjectObserver> channelObjectObservers() {
+		if (_channelObjectObservers == null) {
+			List<ViewChannel> treeInputs = new ArrayList<>(_inputChannels);
+			treeInputs.removeAll(_rowIndependentInputs);
+			List<ViewChannel> rowIndependentInputs = new ArrayList<>(_inputChannels);
+			rowIndependentInputs.retainAll(_rowIndependentInputs);
+			List<ViewChannel> cellInputs = _cellInputs;
+
+			_channelObjectObservers = List.of(
+				new ChannelObjectObserver(treeInputs, Set.of(),
+					event -> onHeldObjectChange(event, treeInputs, true, this::inputObjectChanged)),
+				new ChannelObjectObserver(rowIndependentInputs, Set.of(),
+					event -> onHeldObjectChange(event, rowIndependentInputs, false, _display::inputsChanged)),
+				new ChannelObjectObserver(cellInputs, Set.of(),
+					event -> onHeldObjectChange(event, cellInputs, false, _display::nodesChanged)));
+		}
+		return _channelObjectObservers;
 	}
 
 	/**
@@ -384,6 +464,9 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 
 		_treeModel.removeTreeModelListener(this);
 		deregisterObjectListeners();
+		for (ChannelObjectObserver observer : _channelObjectObservers) {
+			observer.detach();
+		}
 		for (Registration registration : _registrations) {
 			registration.dispose();
 		}
@@ -424,6 +507,20 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		if (!resumed) {
 			return;
 		}
+		reconcileDisplayed(true);
+	}
+
+	/**
+	 * Brings the tree built from the current root object up to date with the objects it displays,
+	 * whatever they went through: reconciles the child lists of the tree,
+	 * {@link Display#invalidateNode(DefaultTreeUINode) invalidates} every displayed node, and tells
+	 * the display about it.
+	 *
+	 * @param announceUnchanged
+	 *        Whether the {@link #addStructureListener(Runnable) structure listeners} are told even
+	 *        where the tree did not change.
+	 */
+	private void reconcileDisplayed(boolean announceUnchanged) {
 		boolean changed;
 		boolean before = beginUpdate();
 		try {
@@ -436,7 +533,9 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		}
 		invalidateSubtree(_treeModel.getRoot());
 		_display.nodesChanged();
-		notifyStructureChanged();
+		if (changed || announceUnchanged) {
+			notifyStructureChanged();
+		}
 	}
 
 	/**
@@ -651,6 +750,60 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		reEvaluateTree();
 	}
 
+	/**
+	 * Runs the given reaction where the given event concerns an object one of the given channels
+	 * holds, and the tree is observed.
+	 *
+	 * <p>
+	 * The event is inspected, since the tree acts on the changes it is told about and not on every
+	 * notification: a scope may report more than the objects a listener was registered for.
+	 * </p>
+	 *
+	 * @param skipDisplayed
+	 *        Whether a held object the tree has a node for is left to the tree's own observation of
+	 *        its nodes (see {@link #notifyChange(ModelChangeEvent)}), which brings the tree up to
+	 *        date with that change already.
+	 */
+	private void onHeldObjectChange(ModelChangeEvent event, List<ViewChannel> channels, boolean skipDisplayed,
+			Runnable reaction) {
+		if (!_attached || !concernsHeldObject(event, channels, skipDisplayed)) {
+			return;
+		}
+		reaction.run();
+	}
+
+	/**
+	 * Whether the given event reports a change of an object one of the given channels holds.
+	 *
+	 * @param skipDisplayed
+	 *        Whether objects the tree has a node for are left out.
+	 */
+	private boolean concernsHeldObject(ModelChangeEvent event, List<ViewChannel> channels, boolean skipDisplayed) {
+		for (ViewChannel channel : channels) {
+			for (TLObject object : ChannelObjectObserver.objects(channel.get())) {
+				if (skipDisplayed && isDisplayed(object)) {
+					continue;
+				}
+				if (event.getChange(object) != ModelChangeEvent.ChangeType.NONE) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * An object held by an input the tree depends on changed: a tree whose root object stays is
+	 * reconciled in place, otherwise it is built anew.
+	 */
+	private void inputObjectChanged() {
+		if (rootUpToDate()) {
+			reconcileDisplayed(false);
+		} else {
+			reEvaluateTree();
+		}
+	}
+
 	// --- Reconciliation ---
 
 	/**
@@ -793,26 +946,37 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	}
 
 	/**
-	 * Builds the tree anew from the root object the input names now, opening the subtrees that were
-	 * open again.
+	 * Builds the tree anew from the root object the input names now.
+	 *
+	 * <p>
+	 * A tree built from another root object opens its nodes down to the
+	 * {@link #withInitialExpansionDepth(int) initial expansion depth}. A tree built from the same
+	 * root object opens the subtrees that were open again, and the nodes of the objects the tree had
+	 * no node for down to the initial expansion depth.
+	 * </p>
 	 */
 	private void reEvaluateTree() {
-		Set<Object> expanded = TreeNodes.collectExpanded(_treeModel.getRoot());
+		DefaultTreeUINode oldRoot = _treeModel.getRoot();
+		Object newRoot = _rootFunction.apply(readChannelValues());
+		boolean rootChanged = !Objects.equals(newRoot, oldRoot.getBusinessObject());
+		Set<Object> expanded = rootChanged ? Set.of() : TreeNodes.collectExpanded(oldRoot);
+		Set<Object> known = rootChanged ? Set.of() : TreeNodes.collectComputedObjects(oldRoot);
 
 		_treeModel.removeTreeModelListener(this);
 		deregisterObjectListeners();
 
-		Object newRoot = _rootFunction.apply(readChannelValues());
 		_treeModel = new DefaultTreeUINodeModel(_builder, newRoot);
 		_treeModel.addTreeModelListener(this);
+		List<DefaultTreeUINode> opened;
 		boolean before = beginUpdate();
 		try {
 			TreeNodes.restoreExpansion(_treeModel.getRoot(), expanded);
+			opened = TreeNodes.openToDepth(_treeModel.getRoot(), _initialExpansionDepth, known);
 		} finally {
 			endUpdate(before);
 		}
 
-		_display.treeReplaced(_treeModel);
+		_display.treeReplaced(_treeModel, opened, rootChanged);
 		syncObjectListeners();
 		notifyStructureChanged();
 	}

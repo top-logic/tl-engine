@@ -88,7 +88,7 @@ the anonymous account. The login is either the dialog `login.view.xml` (opened f
 or, for an application that shows a visitor nothing else, the page named by `login-view` on
 `ViewConfig` (the framework ships `login-page.view.xml`). Both reference `login-form.view.xml`:
 the fields of the transient type `tl.login:Credentials`, the action `<login/>` (`LoginAction`),
-the contributed `<login-commands/>` and the SSO buttons `<login-methods/>`. The article
+the contributed `<login-commands/>`, the full-width "Login" button and, below it under "or", the SSO buttons `<login-methods/>`. The article
 `view-layer/app-shell` of `com.top_logic.layout.view` describes the login page.
 
 `LoginAction` checks the credentials and then runs the [login steps](#login-steps) for the
@@ -201,8 +201,10 @@ depending on it. The self-service module `com.top_logic.layout.view.selfservice`
 The entries are keyed by `id`, so an overlay can address a contributed element.
 
 A further way to log in that belongs beside the single sign-on buttons is added with a same-path
-overlay of `login-form.view.xml` instead: an element in `<form config:ref="credentials">`, placed
-with `config:position="after" config:reference="login-methods"`. `tl-security-passkey` adds its
+overlay of `login-form.view.xml` instead: an element in `<stack config:ref="login-alternatives">`
+inside `<form config:ref="credentials">`, placed with
+`config:position="after" config:reference="login-methods"` (a reference to `login-methods` directly in the
+form fails when the view loads). `tl-security-passkey` adds its
 button "Sign in with passkey" (`<passkey-login>`) this way; it logs in with a passkey alone and
 runs the [login steps](#login-steps) without the password and second-factor steps (see the passkeys
 article of this chapter).
@@ -245,6 +247,18 @@ A `LoginMethod` answers:
 - `getReauthenticationUrl(token)` - optional; the address that has the provider confirm the user of
   the running session once more, or `null` when the method cannot. pac4j answers it only for a
   session its own client established.
+- `getIdentificationUrl(token)` - optional; the address that has the provider authenticate whoever
+  is at the keyboard within the running session, whichever method established it, or `null` when
+  the method cannot. pac4j answers it for every client that can demand a fresh authentication (its
+  re-authentication client).
+
+Both addresses carry a token of `IdentityVerifications` (`ExternalAuthenticationServlet.VERIFICATION_PARAM`).
+The request returning from the provider is no login: the servlet hands the confirmed identity
+(`VerifiedIdentity`: client, subject and, only on demand, the account the login mapping resolves)
+to the `IdentityVerificationHandler` the token was registered with. The handler of a
+re-authentication accepts only the session's own account; another handler may, for example,
+connect the identity with the session's account. The outcome page tells the user the handler's
+message and closes the window on success.
 
 The buttons are determined each time the element is rendered, so a method that becomes available
 (a secret is provided) appears without a restart. An external login that failed returns to the login

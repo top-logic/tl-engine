@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The registrations of an event.
+	
+	The content of the tab "registrations" of event-detail.view.xml, in a file of its own so that a command
+	can open the tab with <show-view>. Its fields belong to the form around the tab bar there,
+	which the <view-ref> hands on, so the event is still edited and saved as one.
+-->
+<view>
+	<composition-table attribute="registrations">
+		<columns>
+			<column attribute="participant"/>
+			<column attribute="status"/>
+			<column attribute="pricePaid"/>
+			<column attribute="registeredAt"/>
+			<column attribute="notes"/>
+		</columns>
+	</composition-table>
+</view>

@@ -894,7 +894,7 @@ public class RowSetEditSession implements FormParticipant {
 		}
 		for (BoundFieldModel cell : row.getColumnModels().values()) {
 			if (cell instanceof AttributeFieldModel attributeCell && attributeCell.getObject() == object
-				&& attributeCell.getPart() == part) {
+				&& attributeCell.getPart().getDefinition() == part.getDefinition()) {
 				return true;
 			}
 		}
@@ -1338,6 +1338,44 @@ public class RowSetEditSession implements FormParticipant {
 		return errors(true);
 	}
 
+	/**
+	 * Checks the given row and reveals what is wrong with it.
+	 *
+	 * <p>
+	 * Like {@link #checkErrors()} for a single row: the checks of all attributes of the row run
+	 * again, and the cells of the row show their errors - also the errors of cells the user has not
+	 * touched yet, e.g. an empty mandatory cell of a new row.
+	 * </p>
+	 *
+	 * @param row
+	 *        The row object (the overlay it is edited in).
+	 * @return The errors the cells of the row show, each named by its column; empty if the row is
+	 *         valid, is no row of the session (any more), or the session is not
+	 *         {@link #isRunning() running}.
+	 */
+	public List<ResKey> checkRowErrors(TLObject row) {
+		if (_fieldModel == null) {
+			return List.of();
+		}
+		CompositionRowModel rowModel = findRowModel(row);
+		if (rowModel == null) {
+			return List.of();
+		}
+		if (_validationModel != null) {
+			revalidate(row);
+		}
+		List<ResKey> result = new ArrayList<>();
+		for (Map.Entry<String, BoundFieldModel> cell : rowModel.getColumnModels().entrySet()) {
+			BoundFieldModel cellModel = cell.getValue();
+			cellModel.setRevealed(true);
+			ResKey error = cellModel.getError();
+			if (error != null) {
+				result.add(I18NConstants.ERROR_FORM_FIELD__LABEL_MESSAGE.fill(columnLabel(cell.getKey()), error));
+			}
+		}
+		return result;
+	}
+
 	// -- Row Manipulation --
 
 	/**
@@ -1403,8 +1441,9 @@ public class RowSetEditSession implements FormParticipant {
 	 * Adds a new row of the given type to the row set, optionally initialized by the given function.
 	 *
 	 * <p>
-	 * Creates a transient object of the given type within the owner and appends it to the current
-	 * list. Publishes the membership change and notifies the listeners.
+	 * Creates a transient object of the given type and appends it to the current list. Publishes the
+	 * membership change and notifies the listeners. The object of a row bound to an attribute of the
+	 * owner is created within the owner; the object of a row of a query has no container.
 	 * </p>
 	 *
 	 * @param type
@@ -1421,9 +1460,11 @@ public class RowSetEditSession implements FormParticipant {
 			return null;
 		}
 
-		// Create the transient object within the owner, so that it navigates to its owner (e.g. in
-		// an options expression) before it is stored.
-		return createRow(type, isNested() ? _owner.object() : _owner.base(), initializer);
+		// A row of an attribute of the owner is created within the owner, so that it navigates to its
+		// owner (e.g. in an options expression) before it is stored. A row of a query belongs to no
+		// object of the form and is created without a container, as it is stored.
+		TLObject container = _binding.getBoundPart() == null ? null : isNested() ? _owner.object() : _owner.base();
+		return createRow(type, container, initializer);
 	}
 
 	/**

@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -31,6 +32,7 @@ import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.base.accesscontrol.Login.LoginFailedException;
 import com.top_logic.base.accesscontrol.LoginCredentials;
+import com.top_logic.base.accesscontrol.VerifiedIdentity;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
@@ -76,19 +78,61 @@ public class Pac4jAuthenticationServlet extends ExternalAuthenticationServlet {
 	}
 
 	private LoginCredentials getLoginCredentials(Optional<UserProfile> profileHandle) {
-		UserProfile profile = profileHandle.get();
+		return LoginCredentials.fromUser(findAccount(profileHandle.get()));
+	}
+
+	/**
+	 * The account a login with the given profile opens, as the account mapping of its client
+	 * resolves it.
+	 */
+	private Person findAccount(UserProfile profile) {
 		String clientName = profile.getClientName();
 		ExternalIdentity identity = createIdentity(profile, getUserName(profile, clientName));
 		ExternalUserMapping userMapping = Pac4jConfigFactory.getInstance().getUserMapping(clientName);
-		return LoginCredentials.fromUser(userMapping.findAccountForIdentity(identity));
+		return userMapping.findAccountForIdentity(identity);
+	}
+
+	/**
+	 * The client and subject of the pac4j profile, with the account resolved through the account
+	 * mapping of the client only when the handler of the verification asks for it.
+	 */
+	@Override
+	protected VerifiedIdentity retrieveVerifiedIdentity(HttpServletRequest request, HttpServletResponse response) {
+		Optional<UserProfile> profileHandle = getUserProfile(request, response);
+		if (!profileHandle.isPresent()) {
+			throw new LoginDeniedException("No user profile retrieved.");
+		}
+		UserProfile profile = profileHandle.get();
+		return createVerifiedIdentity(profile, () -> findAccount(profile));
+	}
+
+	/**
+	 * The {@link VerifiedIdentity} that the given pac4j profile describes.
+	 *
+	 * <p>
+	 * The client is the configured client of the profile's {@link UserProfile#getClientName()
+	 * client} (see {@link Pac4jConfigFactory#getConfiguredName(String)}), the subject its
+	 * {@link UserProfile#getId() ID}.
+	 * </p>
+	 *
+	 * @param profile
+	 *        The profile pac4j has built from the answer of the identity provider.
+	 * @param accountResolver
+	 *        Resolves the account of the profile when it is asked for.
+	 */
+	public static VerifiedIdentity createVerifiedIdentity(UserProfile profile, Supplier<Person> accountResolver) {
+		return new VerifiedIdentity(Pac4jConfigFactory.getConfiguredName(profile.getClientName()), profile.getId(),
+			accountResolver);
 	}
 
 	/**
 	 * The {@link ExternalIdentity} that the given pac4j profile describes.
 	 *
 	 * <p>
-	 * The {@link ExternalIdentity#getClientName() client name} is the
-	 * {@link UserProfile#getClientName() client} of the profile, the
+	 * The {@link ExternalIdentity#getClientName() client name} is the configured client of the
+	 * profile's {@link UserProfile#getClientName() client} (see
+	 * {@link Pac4jConfigFactory#getConfiguredName(String)}), so that a fresh authentication through
+	 * a client derived from it finds the identity a login through the client has stored. The
 	 * {@link ExternalIdentity#getSubject() subject} its {@link UserProfile#getId() ID} (for OIDC
 	 * the claim <code>sub</code>), and the {@link ExternalIdentity#getClaims() claims} its
 	 * {@link UserProfile#getAttributes() attributes} without the tokens of the login.
@@ -103,7 +147,8 @@ public class Pac4jAuthenticationServlet extends ExternalAuthenticationServlet {
 	public static ExternalIdentity createIdentity(UserProfile profile, String userName) {
 		Map<String, Object> claims = new LinkedHashMap<>(profile.getAttributes());
 		claims.keySet().removeAll(TOKEN_ATTRIBUTES);
-		return new ExternalIdentity(profile.getClientName(), profile.getId(), userName, claims);
+		String clientName = Pac4jConfigFactory.getConfiguredName(profile.getClientName());
+		return new ExternalIdentity(clientName, profile.getId(), userName, claims);
 	}
 
 	private String getUserName(UserProfile profile, String clientName) {

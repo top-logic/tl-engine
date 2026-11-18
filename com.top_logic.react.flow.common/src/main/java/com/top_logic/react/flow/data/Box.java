@@ -131,13 +131,13 @@ public interface Box extends com.top_logic.react.flow.data.Widget, com.top_logic
 			case LOD.LOD__TYPE: result = com.top_logic.react.flow.data.LOD.create(); break;
 			case SelectableBox.SELECTABLE_BOX__TYPE: result = com.top_logic.react.flow.data.SelectableBox.create(); break;
 			case ClickTarget.CLICK_TARGET__TYPE: result = com.top_logic.react.flow.data.ClickTarget.create(); break;
-			case ContextMenu.CONTEXT_MENU__TYPE: result = com.top_logic.react.flow.data.ContextMenu.create(); break;
 			case DropRegion.DROP_REGION__TYPE: result = com.top_logic.react.flow.data.DropRegion.create(); break;
 			case Tooltip.TOOLTIP__TYPE: result = com.top_logic.react.flow.data.Tooltip.create(); break;
 			case Align.ALIGN__TYPE: result = com.top_logic.react.flow.data.Align.create(); break;
 			case Border.BORDER__TYPE: result = com.top_logic.react.flow.data.Border.create(); break;
 			case Fill.FILL__TYPE: result = com.top_logic.react.flow.data.Fill.create(); break;
 			case Padding.PADDING__TYPE: result = com.top_logic.react.flow.data.Padding.create(); break;
+			case Sticky.STICKY__TYPE: result = com.top_logic.react.flow.data.Sticky.create(); break;
 			case Sized.SIZED__TYPE: result = com.top_logic.react.flow.data.Sized.create(); break;
 			case ClipBox.CLIP_BOX__TYPE: result = com.top_logic.react.flow.data.ClipBox.create(); break;
 			case CompassLayout.COMPASS_LAYOUT__TYPE: result = com.top_logic.react.flow.data.CompassLayout.create(); break;

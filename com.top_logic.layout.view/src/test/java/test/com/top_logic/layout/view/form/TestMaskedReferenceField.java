@@ -5,7 +5,7 @@
  */
 package test.com.top_logic.layout.view.form;
 
-import static com.top_logic.model.search.expr.I18NConstants.*;
+import static com.top_logic.model.security.I18NConstants.*;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -116,7 +116,7 @@ public class TestMaskedReferenceField extends AbstractModelAccessTest {
 		assertFalse(json, json.contains("hiddenCategory"));
 		assertFalse(json, json.contains("aHiddenCategory"));
 		assertEquals(MASKED, Resources.getInstance().getString(
-			com.top_logic.layout.react.I18NConstants.MASKED_VALUE));
+			com.top_logic.model.security.I18NConstants.MASKED_VALUE));
 	}
 
 	/**

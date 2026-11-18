@@ -3,7 +3,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ANCHORED_OVERLAY_ATTR, CMD_VALUE_CHANGED, fieldLabel, replacePart } from 'tl-react-bridge';
+import { ANCHORED_OVERLAY_ATTR, CMD_VALUE_CHANGED, OPTION_TOOLTIP_PREFIX, TOOLTIP_ATTR, fieldLabel, replacePart } from 'tl-react-bridge';
 import { deDE } from '@mui/material/locale';
 import MuiDropdownSelectAdapter from './MuiDropdownSelectAdapter';
 import { CONTROL_ID, mountAdapter, patchState, settle } from './wire-test-support';
@@ -97,6 +97,18 @@ describe('TLDropdownSelect as MUI Autocomplete', () => {
     const list = await screen.findByRole('listbox');
     expect(within(list).getAllByRole('option').map(option => option.textContent)).toEqual(['Alpha', 'Beta', 'Gamma']);
     expect(list.closest(`[${ANCHORED_OVERLAY_ATTR}]`)).not.toBeNull();
+  });
+
+  it('offers the explanation of every option of the list and every chip as tooltip, the list naming the field', async () => {
+    mountDropdown({ value: [ALPHA], multiSelect: true, optionsLoaded: true, options: OPTIONS });
+
+    const list = await openList();
+    expect(within(list).getAllByRole('option').map(option => option.getAttribute(TOOLTIP_ATTR)))
+      .toEqual([`key:${OPTION_TOOLTIP_PREFIX}b`, `key:${OPTION_TOOLTIP_PREFIX}c`]);
+    expect(list.closest(`[${ANCHORED_OVERLAY_ATTR}]`)!.getAttribute(ANCHORED_OVERLAY_ATTR)).toBe(CONTROL_ID);
+    const chip = document.getElementById(CONTROL_ID)!.querySelector(`[${TOOLTIP_ATTR}]`)!;
+    expect(chip.textContent).toBe('Alpha');
+    expect(chip.getAttribute(TOOLTIP_ATTR)).toBe(`key:${OPTION_TOOLTIP_PREFIX}a`);
   });
 
   it('does not ask again for options it has', async () => {

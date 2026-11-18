@@ -212,7 +212,7 @@
 					</computed-column>
 				</columns>
 				<rows>$variables == null ? configVariableDefinitions() : $variables</rows>
-				<row-class>configVariableChangePending($row) ? 'tl-status-warning' : null</row-class>
+				<row-role>configVariableChangePending($row) ? 'warning' : null</row-role>
 			</table>
 		</stack>
 	</panel>

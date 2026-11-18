@@ -110,7 +110,7 @@ describe('the part TextInput as MUI TextField', () => {
     expect(input().closest('.MuiInputBase-root')!.querySelector('.MuiInputAdornment-positionEnd')).toBeNull();
   });
 
-  it('draws a text area of the given rows, without icon and action, passing its keys', () => {
+  it('draws a text area of the given rows, with its action but no icon, passing its keys', () => {
     const onKeyDown = vi.fn();
     draw({ multiline: true, rows: 5, value: 'a\nb', icon: 'css:my-icon', action: <button type="button">X</button>,
       onKeyDown });
@@ -119,7 +119,9 @@ describe('the part TextInput as MUI TextField', () => {
     expect(area.tagName).toBe('TEXTAREA');
     expect(area.getAttribute('rows')).toBe('5');
     expect(document.querySelector('.my-icon')).toBeNull();
-    expect(screen.queryByRole('button')).toBeNull();
+    const action = screen.getByRole('button', { name: 'X' });
+    expect(action.closest('.MuiInputAdornment-positionEnd')).not.toBeNull();
+    expect(action.closest('.MuiInputBase-root')).toBe(area.closest('.MuiInputBase-root'));
     fireEvent.keyDown(area, { key: 'Enter' });
     expect(onKeyDown.mock.calls.map(([event]) => event.key)).toEqual(['Enter']);
   });

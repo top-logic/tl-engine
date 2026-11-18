@@ -7,7 +7,25 @@
    is specified, it is likely that this is used to select an icon font. Therefore, 
    the default setting must not apply also, since the selector is now more specific
    than that of the icon font.
+
+   The font family and size match RenderContext.DEFAULT_FONT_DECLARATION and
+   RenderContext.DEFAULT_FONT_SIZE_PX, with which the client measures texts. Spacing
+   between letters and words is not part of the measurement, so diagram text must not
+   inherit it from the theme.
 */
+
+.tlDiagram text {
+	letter-spacing: normal;
+	word-spacing: normal;
+}
+
+.tlDiagram text:not([font-family]):not([class]) {
+	font-family: Arial, 'Liberation Sans', Arimo, Helvetica, sans-serif;
+}
+
+.tlDiagram text:not([font-size]):not([class]) {
+	font-size: 14px;
+}
 
 g.tlbA path.tlbShape {stroke: #265699; fill: #4C97FF; }
 g.tlbA path.tlbBorder {stroke: #6897d9; fill: none; }

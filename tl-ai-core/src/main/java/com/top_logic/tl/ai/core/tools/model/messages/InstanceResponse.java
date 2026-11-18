@@ -16,7 +16,7 @@ public class InstanceResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 	public static final String INSTANCE_RESPONSE__TYPE = "InstanceResponse";
 
 	/** @see #getTid() */
-	public static final String TID__PROP = "tid";
+	public static final String TID__PROP = "_tid";
 
 	/** @see #getType() */
 	public static final String TYPE__PROP = "type";
@@ -31,7 +31,7 @@ public class InstanceResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 
 	private com.top_logic.tl.ai.core.tools.model.messages.InstanceTypeInfo _type = null;
 
-	private final java.util.Map<String, String> _attributes = new java.util.LinkedHashMap<>();
+	private Object _attributes = null;
 
 	private com.top_logic.tl.ai.core.tools.model.messages.InstanceMetadata _metadata = null;
 
@@ -92,53 +92,34 @@ public class InstanceResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 	}
 
 	/**
-	 * Map of attribute names to values, holding only the attributes the acting account may read.
+	 * Object from attribute names to values, holding only the attributes the acting account may read.
 	 *
-	 * Note: Values are serialized as JSON and need to be parsed.
-	 * Primitive values are strings, collections are arrays, and a reference to another object is
-	 * that object's identity - <code>_tid</code>, <code>_type</code> and <code>_display</code> -
-	 * or absent when the acting account may not read it.
+	 * Collections are arrays, dates ISO 8601 texts, and a reference to another object is that
+	 * object's identity - <code>_tid</code>, <code>_type</code> and <code>_display</code> - or
+	 * absent when the acting account may not read it.
 	 */
-	public final java.util.Map<String, String> getAttributes() {
+	public final Object getAttributes() {
 		return _attributes;
 	}
 
 	/**
 	 * @see #getAttributes()
 	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.InstanceResponse setAttributes(java.util.Map<String, String> value) {
+	public com.top_logic.tl.ai.core.tools.model.messages.InstanceResponse setAttributes(Object value) {
 		internalSetAttributes(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getAttributes()} without chain call utility. */
-	protected final void internalSetAttributes(java.util.Map<String, String> value) {
-		if (value == null) throw new IllegalArgumentException("Property 'attributes' cannot be null.");
-		_attributes.clear();
-		_attributes.putAll(value);
+	protected final void internalSetAttributes(Object value) {
+		_attributes = value;
 	}
 
 	/**
-	 * Adds a key value pair to the {@link #getAttributes()} map.
+	 * Checks, whether {@link #getAttributes()} has a value.
 	 */
-	public com.top_logic.tl.ai.core.tools.model.messages.InstanceResponse putAttribute(String key, String value) {
-		internalPutAttribute(key, value);
-		return this;
-	}
-
-	/** Implementation of {@link #putAttribute(String, String)} without chain call utility. */
-	protected final void  internalPutAttribute(String key, String value) {
-		if (_attributes.containsKey(key)) {
-			throw new IllegalArgumentException("Property 'attributes' already contains a value for key '" + key + "'.");
-		}
-		_attributes.put(key, value);
-	}
-
-	/**
-	 * Removes a key from the {@link #getAttributes()} map.
-	 */
-	public final void removeAttribute(String key) {
-		_attributes.remove(key);
+	public final boolean hasAttributes() {
+		return _attributes != null;
 	}
 
 	/**
@@ -217,7 +198,7 @@ public class InstanceResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 		switch (field) {
 			case TID__PROP: internalSetTid((String) value); break;
 			case TYPE__PROP: internalSetType((com.top_logic.tl.ai.core.tools.model.messages.InstanceTypeInfo) value); break;
-			case ATTRIBUTES__PROP: internalSetAttributes((java.util.Map<String, String>) value); break;
+			case ATTRIBUTES__PROP: internalSetAttributes((Object) value); break;
 			case METADATA__PROP: internalSetMetadata((com.top_logic.tl.ai.core.tools.model.messages.InstanceMetadata) value); break;
 		}
 	}
@@ -243,13 +224,10 @@ public class InstanceResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 			out.name(TYPE__PROP);
 			getType().writeTo(out);
 		}
-		out.name(ATTRIBUTES__PROP);
-		out.beginObject();
-		for (java.util.Map.Entry<String,String> entry : getAttributes().entrySet()) {
-			out.name(entry.getKey());
-			out.value(entry.getValue());
+		if (hasAttributes()) {
+			out.name(ATTRIBUTES__PROP);
+			de.haumacher.msgbuf.json.JsonUtil.writeJsonValue(out, getAttributes());
 		}
-		out.endObject();
 		if (hasMetadata()) {
 			out.name(METADATA__PROP);
 			getMetadata().writeTo(out);
@@ -261,16 +239,7 @@ public class InstanceResponse extends de.haumacher.msgbuf.data.AbstractDataObjec
 		switch (field) {
 			case TID__PROP: setTid(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TYPE__PROP: setType(com.top_logic.tl.ai.core.tools.model.messages.InstanceTypeInfo.readInstanceTypeInfo(in)); break;
-			case ATTRIBUTES__PROP: {
-				java.util.Map<String, String> newValue = new java.util.LinkedHashMap<>();
-				in.beginObject();
-				while (in.hasNext()) {
-					newValue.put(in.nextName(), de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in));
-				}
-				in.endObject();
-				setAttributes(newValue);
-				break;
-			}
+			case ATTRIBUTES__PROP: setAttributes(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;
 			case METADATA__PROP: setMetadata(com.top_logic.tl.ai.core.tools.model.messages.InstanceMetadata.readInstanceMetadata(in)); break;
 			default: super.readField(in, field);
 		}

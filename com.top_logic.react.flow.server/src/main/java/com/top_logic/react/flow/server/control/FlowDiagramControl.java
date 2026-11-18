@@ -12,30 +12,25 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Logger;
-import com.top_logic.layout.basic.contextmenu.ContextMenuProvider;
-import com.top_logic.layout.basic.contextmenu.NoContextMenuProvider;
-import com.top_logic.layout.basic.contextmenu.menu.Menu;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.react.flow.callback.ClickHandler;
+import com.top_logic.react.flow.control.FlowControlCommon;
 import com.top_logic.react.flow.data.ClickTarget;
-import com.top_logic.react.flow.data.ContextMenu;
 import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.DropRegion;
 import com.top_logic.react.flow.data.MouseButton;
-import com.top_logic.react.flow.data.SelectableBox;
 import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.operations.SelectionUtil;
 import com.top_logic.react.flow.operations.WidgetTraversal;
-import com.top_logic.react.flow.server.handler.DiagramContextMenuProviderSPI;
 import com.top_logic.react.flow.server.handler.ServerDropHandler;
 
 import de.haumacher.msgbuf.graph.DefaultScope;
@@ -51,20 +46,21 @@ import de.haumacher.msgbuf.observer.Listener;
  *
  * <p>
  * This control serializes a {@link Diagram} model as initial React state and uses SSE to push
- * incremental msgbuf patches to the client. Client commands (click, drop, update) are received via
- * {@link ReactCommandHandler @ReactCommandHandler}-annotated methods.
+ * incremental msgbuf patches to the client. Client commands (click, drop, update, context menu) are
+ * received via {@link ReactCommandHandler @ReactCommandHandler}-annotated methods.
+ * </p>
+ *
+ * <p>
+ * The diagram has no context menu of its own: a diagram inside a <code>&lt;context-menu&gt;</code>
+ * of the view layer shows the commands of that element. Before the menu opens, the client reports
+ * the element the menu was opened on ({@link FlowControlCommon#CMD_CONTEXT_MENU}), and the control
+ * adjusts the selection the menu targets, see {@link #selectForContextMenu(Number)}.
  * </p>
  */
-public class FlowDiagramControl extends ReactControl {
+public class FlowDiagramControl extends ReactControl implements FlowControlCommon {
 
 	/** The React module identifier for the flow diagram component. */
 	public static final String REACT_MODULE = "TLFlowDiagram";
-
-	/** Name of the command the client sends its changes to the displayed diagram with. */
-	public static final String CMD_UPDATE = "update";
-
-	/** Name of the {@link #CMD_UPDATE} argument holding the msgbuf patch of those changes. */
-	public static final String ARG_PATCH = "patch";
 
 	/** State key holding the serialized {@link Diagram} the client mounts on. */
 	private static final String DIAGRAM_STATE = "diagram";
@@ -81,10 +77,12 @@ public class FlowDiagramControl extends ReactControl {
 		 * Called after the selection changed, with the user objects of the elements now selected.
 		 *
 		 * <p>
-		 * A listener refuses the change by throwing a
-		 * {@link com.top_logic.layout.view.channel.ChannelVetoException} - the unsaved changes of a
-		 * form the selection would replace block it. The refusal unwinds through whoever changed
-		 * the selection; the diagram keeps what the client displays.
+		 * A listener refuses the change by throwing a {@link ChannelVetoException} - the unsaved
+		 * changes of a form the selection would replace block it. The refusal unwinds through
+		 * whoever changed the selection. A selection the user made in the diagram is restored to the
+		 * one displayed before, both in the control and in the client, without telling the
+		 * listeners again, and the veto is rethrown; clicking the same element again asks again.
+		 * A listener notified before the refusing one keeps what it was told.
 		 * </p>
 		 *
 		 * @param userObjects
@@ -132,8 +130,6 @@ public class FlowDiagramControl extends ReactControl {
 	 */
 	private boolean _serializationStale;
 
-	private ContextMenuProvider _contextMenuProvider = NoContextMenuProvider.INSTANCE;
-
 	private final List<SelectionListener> _selectionListeners = new CopyOnWriteArrayList<>();
 
 	private final List<ModelListener> _modelListeners = new CopyOnWriteArrayList<>();
@@ -145,28 +141,11 @@ public class FlowDiagramControl extends ReactControl {
 	 *        The React context for ID allocation and SSE registration.
 	 * @param diagram
 	 *        The diagram model to display, may be {@code null}.
-	 * @param contextMenuProvider
-	 *        The context menu provider, or {@code null} for no context menu.
 	 */
-	public FlowDiagramControl(ReactContext context, Diagram diagram, ContextMenuProvider contextMenuProvider) {
+	public FlowDiagramControl(ReactContext context, Diagram diagram) {
 		super(context, diagram, REACT_MODULE);
 
 		_diagram = diagram;
-		if (contextMenuProvider != null) {
-			_contextMenuProvider = contextMenuProvider;
-		}
-	}
-
-	/**
-	 * Creates a {@link FlowDiagramControl} without a context menu.
-	 *
-	 * @param context
-	 *        The React context for ID allocation and SSE registration.
-	 * @param diagram
-	 *        The diagram model to display, may be {@code null}.
-	 */
-	public FlowDiagramControl(ReactContext context, Diagram diagram) {
-		this(context, diagram, null);
 	}
 
 	@Override
@@ -332,23 +311,46 @@ public class FlowDiagramControl extends ReactControl {
 		if (_diagram == null) {
 			return;
 		}
-		List<Widget> selected = new ArrayList<>();
-		WidgetTraversal.visitAll(_diagram, widget -> {
+		List<Widget> selected = mark(widget -> {
 			Object userObject = widget.getUserObject();
-			boolean select =
-				userObject != null && SelectionUtil.isSelectable(widget) && userObjects.contains(userObject);
-			if (select) {
-				selected.add(widget);
-			}
-			if (SelectionUtil.isSelected(widget) != select) {
-				// Only a widget whose marking actually changes is written, so that the patch
-				// carries the elements that change their appearance and no others.
-				SelectionUtil.setSelected(widget, select);
-			}
+			return userObject != null && SelectionUtil.isSelectable(widget) && userObjects.contains(userObject);
 		});
 		if (!selected.equals(_diagram.getSelection())) {
 			_diagram.setSelection(selected);
 		}
+	}
+
+	/**
+	 * Makes the given elements the selection of the diagram, in the given order, and marks exactly
+	 * them as selected, without telling anybody about it.
+	 */
+	private void selectExactly(List<Widget> selection) {
+		mark(selection::contains);
+		if (!selection.equals(_diagram.getSelection())) {
+			_diagram.setSelection(new ArrayList<>(selection));
+		}
+	}
+
+	/**
+	 * Marks the diagram elements the given criterion accepts as selected and every other one as
+	 * unselected.
+	 *
+	 * @return The marked elements, in the order of the diagram.
+	 */
+	private List<Widget> mark(Predicate<Widget> select) {
+		List<Widget> selected = new ArrayList<>();
+		WidgetTraversal.visitAll(_diagram, widget -> {
+			boolean selectWidget = select.test(widget);
+			if (selectWidget) {
+				selected.add(widget);
+			}
+			if (SelectionUtil.isSelected(widget) != selectWidget) {
+				// Only a widget whose marking actually changes is written, so that the patch
+				// carries the elements that change their appearance and no others.
+				SelectionUtil.setSelected(widget, selectWidget);
+			}
+		});
+		return selected;
 	}
 
 	/**
@@ -368,20 +370,6 @@ public class FlowDiagramControl extends ReactControl {
 		for (ModelListener listener : _modelListeners) {
 			listener.modelReplaced();
 		}
-	}
-
-	/**
-	 * The provider for a context menu for user objects of {@link SelectableBox} nodes.
-	 */
-	public ContextMenuProvider getContextMenuProvider() {
-		return _contextMenuProvider;
-	}
-
-	/**
-	 * @see #getContextMenuProvider()
-	 */
-	public void setContextMenuProvider(ContextMenuProvider contextMenuProvider) {
-		_contextMenuProvider = contextMenuProvider;
 	}
 
 	@Override
@@ -496,88 +484,100 @@ public class FlowDiagramControl extends ReactControl {
 	/**
 	 * Handles click events sent from the client.
 	 */
-	@ReactCommandHandler("dispatchClick")
+	@ReactCommandHandler(CMD_DISPATCH_CLICK)
 	public void handleClick(ReactContext context, Map<String, Object> args) {
 		@SuppressWarnings("unchecked")
-		List<String> buttonNames = (List<String>) args.get("mouseButtons");
+		List<String> buttonNames = (List<String>) args.get(ARG_MOUSE_BUTTONS);
 		Set<MouseButton> buttons =
 			buttonNames.stream().map(n -> MouseButton.valueOf(n)).collect(Collectors.toSet());
-		int nodeId = ((Number) args.get("nodeId")).intValue();
+		int nodeId = ((Number) args.get(ARG_NODE_ID)).intValue();
 		processClick(nodeId, buttons);
 	}
 
 	/**
 	 * Handles drop events sent from the client.
 	 */
-	@ReactCommandHandler("dispatchDrop")
+	@ReactCommandHandler(CMD_DISPATCH_DROP)
 	public void handleDrop(ReactContext context, Map<String, Object> args) {
-		int nodeId = ((Number) args.get("nodeId")).intValue();
+		int nodeId = ((Number) args.get(ARG_NODE_ID)).intValue();
 		// Note: Drop data must be provided by the client in the args map.
 		// Full DnD integration is deferred to a later task.
 	}
 
 	/**
-	 * Handles context menu requests from the client.
+	 * Handles the report of the client that a context menu is about to open on the diagram.
+	 *
+	 * @see #selectForContextMenu(Number)
 	 */
-	@ReactCommandHandler("contextMenu")
+	@ReactCommandHandler(CMD_CONTEXT_MENU)
 	public void handleContextMenu(ReactContext context, Map<String, Object> args) {
-		String contextInfo = (String) args.get("contextInfo");
-		Menu menu = createContextMenu(contextInfo);
-		if (menu != null) {
-			// TODO: Send context menu to client via SSE state update.
-		}
+		selectForContextMenu((Number) args.get(ARG_NODE_ID));
 	}
 
 	/**
-	 * Creates a context menu for the given context info.
+	 * Makes the selection the target of a context menu opened on the given element.
 	 *
-	 * @param contextInfo
-	 *        The context info identifying the target node (typically a node ID).
-	 * @return the context menu, or {@code null} if no menu is available.
+	 * <p>
+	 * The menu acts on the selection, as for a table:
+	 * </p>
+	 * <ul>
+	 * <li>An element that is not selected is selected alone, replacing the whole selection - also
+	 * the selected objects the diagram does not display.</li>
+	 * <li>An element that is selected keeps the selection, also a selection of several elements,
+	 * and the menu acts on all of them.</li>
+	 * <li>The empty area of the diagram (no element) clears the selection, so that only commands
+	 * without an object apply.</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * A changed selection is shown in the client and reported to the {@link SelectionListener}s like
+	 * a plain click. A change they refuse with a {@link ChannelVetoException} is taken back, in the
+	 * control and in the client, and the veto is rethrown.
+	 * </p>
+	 *
+	 * @param nodeId
+	 *        The ID of the selectable element the menu was opened on, <code>null</code> for the
+	 *        empty area of the diagram.
 	 */
-	public Menu createContextMenu(String contextInfo) {
-		if (!(resolve(Integer.parseInt(contextInfo)) instanceof Widget node)) {
-			// The menu was requested in a diagram the control no longer displays.
-			return null;
+	public void selectForContextMenu(Number nodeId) {
+		if (_diagram == null) {
+			return;
 		}
-
-		if (node instanceof ContextMenu contextMenu) {
-			Object userObject = node.getUserObject();
-
-			DiagramContextMenuProviderSPI menuProvider = (DiagramContextMenuProviderSPI) contextMenu.getMenuProvider();
-
-			if (!menuProvider.hasContextMenu(userObject)) {
-				return null;
-			}
-
-			return menuProvider.getContextMenu(userObject, userObject);
-		}
-
-		Object userObject;
-		if (_diagram.getSelection().contains(node)) {
-			// A context menu opened on a selected item means that the operation targets the whole
-			// selection.
-			List<Object> selectedUserObjects = _diagram.getSelection().stream()
-				.map(Widget::getUserObject)
-				.filter(Objects::nonNull)
-				.toList();
-
-			// Make sure not to use collections as user objects for single-select diagrams.
-			userObject = _diagram.isMultiSelect()
-				? selectedUserObjects
-				: CollectionUtil.getFirst(selectedUserObjects);
+		List<Widget> selection;
+		if (nodeId == null) {
+			selection = List.of();
 		} else {
-			userObject = node.getUserObject();
-			if (userObject == null) {
-				return null;
+			if (!(resolve(nodeId.intValue()) instanceof Widget node) || !SelectionUtil.isSelectable(node)) {
+				// The menu was opened in a diagram the control no longer displays.
+				return;
 			}
+			if (SelectionUtil.isSelected(node)) {
+				// The menu acts on the selection the element is part of.
+				return;
+			}
+			selection = List.of(node);
 		}
 
-		return _contextMenuProvider.getContextMenu(node, userObject);
+		List<Widget> selectionBefore = new ArrayList<>(_diagram.getSelection());
+		selectExactly(selection);
+		pushDiagramChanges();
+		try {
+			notifySelectionChanged(true);
+		} catch (ChannelVetoException ex) {
+			selectExactly(selectionBefore);
+			pushDiagramChanges();
+			throw ex;
+		}
 	}
 
 	/**
 	 * Applies the changes the client made to the diagram, among them the selection it displays.
+	 *
+	 * <p>
+	 * A selection change the {@link SelectionListener}s refuse with a {@link ChannelVetoException}
+	 * is taken back: the diagram selects what it selected before the update, sends that to the
+	 * client, which still marks the refused selection, and rethrows the veto.
+	 * </p>
 	 */
 	void processUpdate(String patch) throws IOException {
 		if (_graphScope == null) {
@@ -588,6 +588,7 @@ public class FlowDiagramControl extends ReactControl {
 
 		// Whether the patch reports a plain click replacing the selection.
 		Diagram diagram = _diagram;
+		List<Widget> selectionBefore = new ArrayList<>(diagram.getSelection());
 		boolean[] replacing = { false };
 		Listener clickKind = (obj, property, value) -> {
 			if (obj == diagram && Diagram.INCREMENTAL_SELECTION__PROP.equals(property)) {
@@ -610,6 +611,10 @@ public class FlowDiagramControl extends ReactControl {
 
 		try {
 			notifySelectionChanged(replacing[0]);
+		} catch (ChannelVetoException ex) {
+			selectExactly(selectionBefore);
+			pushDiagramChanges();
+			throw ex;
 		} finally {
 			refreshDiagramState();
 		}

@@ -88,13 +88,21 @@ public class ReactCheckboxControl extends ReactFormFieldControl {
 	}
 
 	/**
+	 * A box has no place for a text, so it shows no placeholder.
+	 */
+	@Override
+	protected void showPlaceholder(String placeholder) {
+		super.showPlaceholder(null);
+	}
+
+	/**
 	 * Describes the inherited value, since a box has no place for a text: the description is
 	 * offered as tooltip and accessible description of the box while it holds no value of its own.
 	 */
 	@Override
-	public void setPlaceholder(String placeholder) {
-		super.setPlaceholder(placeholder == null ? null
-			: Resources.getInstance().getString(I18NConstants.VALUE_INHERITED__VALUE.fill(placeholder)));
+	protected void showFallbackText(String fallbackText) {
+		super.showFallbackText(
+			Resources.getInstance().getString(I18NConstants.VALUE_INHERITED__VALUE.fill(fallbackText)));
 	}
 
 	/**

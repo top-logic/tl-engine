@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestViewFallbackStorage">
+			<types>
+				<class name="Schedule">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+					<attributes>
+						<property name="plan"
+							type="tl.core:String"
+						>
+							<annotations>
+								<value-listeners>
+									<listener class="test.com.top_logic.layout.view.form.TestFallbackValueChanges$RecordValue"
+										target="forecast"
+									/>
+								</value-listeners>
+							</annotations>
+						</property>
+						<property name="forecastStored"
+							type="tl.core:String"
+						/>
+						<property name="forecast"
+							type="tl.core:String"
+						>
+							<annotations>
+								<storage-algorithm>
+									<fallback-storage
+										fallback-attribute="plan"
+										storage-attribute="forecastStored"
+									/>
+								</storage-algorithm>
+								<value-listeners>
+									<listener class="test.com.top_logic.layout.view.form.TestFallbackValueChanges$RecordValue"/>
+								</value-listeners>
+							</annotations>
+						</property>
+						<property name="note"
+							type="tl.core:String"
+						>
+							<annotations>
+								<value-listeners>
+									<listener class="test.com.top_logic.layout.view.form.TestFallbackValueChanges$RecordValue"/>
+								</value-listeners>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

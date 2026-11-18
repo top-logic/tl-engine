@@ -364,6 +364,10 @@
 							roles="DemoTypes.Administrator, DemoTypes.Responsible, DemoTypes.DateAdministrator"
 						/>
 					</part>
+					<!-- The root of the demo types is the singleton of the module, created by the system only. -->
+					<class name="DemoTypes:Root">
+						<revoke operation="Create"/>
+					</class>
 					<class name="DemoTypes:DemoTypes.A">
 						<operations>
 							<operation name="PromoteAdmin"/>

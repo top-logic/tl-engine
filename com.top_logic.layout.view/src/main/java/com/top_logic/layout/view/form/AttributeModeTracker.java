@@ -68,12 +68,14 @@ public class AttributeModeTracker {
 	public record AttributeMode(boolean visible, boolean editable, boolean mandatory, boolean disabled) {
 
 		/**
-		 * Applies the editability of this mode to the given field model: editable, or presented as
-		 * an inactive input, or neither.
+		 * Applies the editability of this mode to the given field model - editable, or presented as
+		 * an inactive input, or neither - and whether a value is required, which the input of the
+		 * field shows (e.g. by offering no button that empties it).
 		 */
 		public void applyTo(AbstractFieldModel model) {
 			model.setDisabled(disabled());
 			model.setEditable(editable());
+			model.setMandatory(mandatory());
 		}
 	}
 

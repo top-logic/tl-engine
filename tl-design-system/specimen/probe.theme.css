@@ -8,6 +8,7 @@
   --tl-surface-layer-muted: #F7F3EE;
   --tl-surface-overlay: #FFFFFF;
   --tl-surface-field: #F7F3EE;
+  --tl-surface-lightbox: #1A1714;
   --tl-surface-interactive-hover: #F6F1EC;
   --tl-surface-interactive-strong: #EBE7E2;
   --tl-surface-interactive-active: #E0DCD7;
@@ -74,6 +75,7 @@
   --tl-text-contrast-dark: #1F1C19;
   --tl-surface-inverse: #1F1C19;
   --tl-text-inverse: #FFFFFF;
+  --tl-border-inverse: #4A4743;
   --tl-text-on-brand: #1F1C19;
   --tl-text-on-brand-hover: #FFFFFF;
   --tl-text-on-brand-active: #FFFFFF;
@@ -97,6 +99,7 @@
   --tl-surface-layer-muted: #2C2825;
   --tl-surface-overlay: #312E2A;
   --tl-surface-field: #2C2825;
+  --tl-surface-lightbox: #1A1714;
   --tl-surface-interactive-hover: #3C3835;
   --tl-surface-interactive-strong: #403D39;
   --tl-surface-interactive-active: #4A4743;
@@ -120,7 +123,7 @@
   --tl-icon-disabled: #6A6662;
   --tl-border-separator: #4A4743;
   --tl-border-control: #7B7773;
-  --tl-border-emphasis: #85817D;
+  --tl-border-emphasis: #8E8A86;
   --tl-border-interactive: #FFA285;
   --tl-border-selected: #FFA285;
   --tl-border-disabled: #3A3733;
@@ -163,6 +166,7 @@
   --tl-text-contrast-dark: #1F1C19;
   --tl-surface-inverse: #FEF9F4;
   --tl-text-inverse: #1F1C19;
+  --tl-border-inverse: #C7C3BE;
   --tl-text-on-brand: #1F1C19;
   --tl-text-on-brand-hover: #1F1C19;
   --tl-text-on-brand-active: #1F1C19;

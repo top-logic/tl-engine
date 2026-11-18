@@ -14,13 +14,16 @@ import java.util.Locale;
 import java.util.Map;
 
 import com.top_logic.base.operation.OperationMode;
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.AgentApplicationService;
 import com.top_logic.tl.ai.core.agent.SystemPromptContributor;
 import com.top_logic.tl.ai.core.agent.TextPromptContributor;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.environment.PromptPlaceholders;
+import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -117,6 +120,14 @@ public class ApplicationContextTool {
 	}
 
 	/**
+	 * The commit message of {@link #saveApplicationContext(String, ToolContext)}.
+	 */
+	@CalledByReflection
+	ResKey saveApplicationContextMessage(String text, ToolContext context) {
+		return I18NConstants.APPLICATION_CONTEXT_SAVED;
+	}
+
+	/**
 	 * Writes the application context into the application's source configuration.
 	 *
 	 * @param text
@@ -132,7 +143,7 @@ public class ApplicationContextTool {
 		+ " while doing so. Call it once, at the end, after the user said the draft is done. It takes effect"
 		+ " when the agent application service is restarted.",
 		mode = ToolMode.STRUCTURAL, group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE,
-		check = "refusal", unavailable = "noSource")
+		check = "refusal", unavailable = "noSource", commitMessage = "saveApplicationContextMessage")
 	public ToolResult saveApplicationContext(
 			@P("The complete application context, in Markdown") String text,
 			ToolContext context) {

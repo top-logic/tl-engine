@@ -73,6 +73,14 @@ import com.top_logic.basic.core.workspace.Workspace;
  * ({@link jakarta.websocket.server.ServerContainer#addEndpoint(Class)}).
  * </p>
  *
+ * <p>
+ * The root of the server redirects <code>/</code> to the application and sends a well-known path
+ * of the application, which clients build by inserting <code>/.well-known/&lt;type&gt;</code>
+ * before the context path, to the application ({@link #wellKnownInContext(String, String)}). Every
+ * other path is answered with <code>404</code>, so that a client probing for a document gets no
+ * login page instead.
+ * </p>
+ *
  * @see Shutdown
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -115,8 +123,9 @@ public class Bootstrap {
 	 * (protocol, host and port, e.g. {@code http://localhost:8080}).
 	 *
 	 * <p>
-	 * When not set, it is set to the local URL of the started server, because the application
-	 * configuration refers to it.
+	 * When not set, the application has no configured address and derives its address from each
+	 * request, so that it answers with the name and port under which a client reached it (e.g.
+	 * <code>localhost</code> on the developer machine, the machine name from another one).
 	 * </p>
 	 */
 	static final String HOST_VARIABLE = "tl_host";
@@ -181,9 +190,8 @@ public class Bootstrap {
 	private void start() throws Exception {
 		String externalIntf = Environment.getSystemPropertyOrEnvironmentVariable(HOST_VARIABLE, null);
 		if (externalIntf == null) {
-			// Set property normally configured to the external interface of the application.
+			// Only the browser opened below uses the local address.
 			externalIntf = "http://" + HOSTNAME + ":" + _port;
-			System.setProperty(HOST_VARIABLE, externalIntf);
 		}
 
 		URL stopUrl = stopUrl(_port);
@@ -288,11 +296,23 @@ public class Bootstrap {
 			STOP_SERVLET);
 
 		ServletContextHandler rootContext = new ServletContextHandler("/");
-		rootContext.addServlet(new ServletHolder("redirect", new HttpServlet() {
+		rootContext.addServlet(new ServletHolder("root", new HttpServlet() {
 			@Override
 			protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 					throws ServletException, IOException {
-				resp.sendRedirect(_contextPath);
+				String path = req.getPathInfo();
+				if (path == null || path.equals("/")) {
+					resp.sendRedirect(_contextPath);
+					return;
+				}
+				String wellKnown = wellKnownInContext(path, _contextPath);
+				if (wellKnown != null) {
+					String query = req.getQueryString();
+					resp.setStatus(HttpServletResponse.SC_TEMPORARY_REDIRECT);
+					resp.setHeader("Location", query == null ? wellKnown : wellKnown + '?' + query);
+					return;
+				}
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 			}
 		}), "/*");
 
@@ -478,4 +498,47 @@ public class Bootstrap {
 		}
 	}
 
+
+	/**
+	 * The path prefix of the well-known locations (RFC 8615).
+	 */
+	public static final String WELL_KNOWN_PREFIX = "/.well-known/";
+
+	/**
+	 * The location inside the application of a well-known document requested at the root of the
+	 * server for the application.
+	 *
+	 * <p>
+	 * OAuth authorization server metadata (RFC 8414, section 3.1) and protected resource metadata
+	 * (RFC 9728, section 3.1) of an application with a context path are requested by inserting the
+	 * well-known path between the host and the path of the issuer or resource:
+	 * <code>/.well-known/oauth-authorization-server/app</code> for the issuer
+	 * <code>https://host/app</code>. The application serves its well-known documents below its
+	 * context path, <code>/app/.well-known/oauth-authorization-server</code>, so the root of the
+	 * server sends such a request there.
+	 * </p>
+	 *
+	 * @param path
+	 *        The path requested at the root of the server.
+	 * @param contextPath
+	 *        The context path of the application, starting with a slash.
+	 * @return The context-relative location below the application, or <code>null</code> if the path
+	 *         is no well-known path of the application.
+	 */
+	public static String wellKnownInContext(String path, String contextPath) {
+		if (!path.startsWith(WELL_KNOWN_PREFIX)) {
+			return null;
+		}
+		String rest = path.substring(WELL_KNOWN_PREFIX.length());
+		int slash = rest.indexOf('/');
+		if (slash <= 0) {
+			return null;
+		}
+		String type = rest.substring(0, slash);
+		String tail = rest.substring(slash);
+		if (!(tail.equals(contextPath) || tail.startsWith(contextPath + '/'))) {
+			return null;
+		}
+		return contextPath + WELL_KNOWN_PREFIX + type + tail.substring(contextPath.length());
+	}
 }

@@ -24,8 +24,19 @@
 	modifier replaces the whole selection. Dragging with Ctrl held draws a rectangle and adds
 	every node inside it to the selection.
 	
+	The diagram lies in a <context-menu> whose input is the selectedNode channel, so its menu acts
+	on the selection, as the menu of a table does: a right-click on a node outside the selection
+	selects that node alone, a right-click on a selected node keeps the selection (also several
+	selected nodes), and a right-click on the empty area clears the selection. Edit needs exactly
+	one selected step, Delete deletes all selected steps, and New creates a step in the product the
+	diagram draws, with or without a selected step.
+	
 	The Details form shows the selected step through the derived channel detailNode, which
 	has a value only while exactly one step is selected.
+	
+	The button on every row of Build steps opens the edit dialog of its step (also by a double click
+	on the row). It computes its label and icon from its row: the label names the step, the icon is
+	a box for a step built from nothing and a diagram for a step built from other steps.
 	
 	Products are created, edited (also by a double click on the row) and deleted in the Products
 	tile; deleting a product deletes its build steps, which are parts of it. A build step is created
@@ -150,18 +161,19 @@
 					<en>Construction Plan</en>
 					<de>Bauplan</de>
 				</title>
-				<flow-diagram
-					observed-types="test.flowchart:FlowNode"
-					selection="selectedNode"
-					selection-mode="multi"
-				>
-					<inputs>
-						<input
-							as="product"
-							channel="selectedProduct"
-						/>
-					</inputs>
-					<createChart><![CDATA[{
+				<context-menu input="selectedNode">
+					<flow-diagram
+						observed-types="test.flowchart:FlowNode"
+						selection="selectedNode"
+						selection-mode="multi"
+					>
+						<inputs>
+							<input
+								as="product"
+								channel="selectedProduct"
+							/>
+						</inputs>
+						<createChart><![CDATA[{
 parts = $product == null ? list() : $product.get(`test.flowchart:Product#buildInstructions`);
 
 nodes = $parts.map(p -> reactFlowSelection(
@@ -257,7 +269,80 @@ $parts.isEmpty()
         )
     )
 }]]></createChart>
-				</flow-diagram>
+					</flow-diagram>
+					<commands>
+						<generic-command
+							image="css:bi bi-pencil"
+							inputs="detailNode"
+							placement="CONTEXT_MENU"
+						>
+							<label>
+								<en>Edit</en>
+								<de>Bearbeiten</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<open-dialog
+								bind-input-to="model"
+								close-on-backdrop="true"
+								dialog-view="demo/edit-flow-step.view.xml"
+							/>
+						</generic-command>
+						<generic-command
+							image="css:bi bi-trash"
+							inputs="selectedNode"
+							placement="CONTEXT_MENU"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<delete-object/>
+							<write-channel name="selectedNode"
+								clear="true"
+							/>
+						</generic-command>
+						<!-- Needs no selected step: a new step is created in the product the diagram draws. -->
+						<generic-command
+							image="css:bi bi-plus-lg"
+							inputs="selectedProduct"
+							placement="CONTEXT_MENU"
+						>
+							<label>
+								<en>New build step</en>
+								<de>Neuer Bauschritt</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<create-transient
+								container="selectedProduct"
+								reference="buildInstructions"
+								type="test.flowchart:FlowNode"
+							>
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="demo/create-flow-step.view.xml"
+									>
+										<bind
+											channel="container"
+											to="selectedProduct"
+										/>
+										<bind
+											channel="selection"
+											to="selectedNode"
+										/>
+									</open-dialog>
+								</with-result>
+							</create-transient>
+						</generic-command>
+					</commands>
+				</context-menu>
 			</panel>
 		</tile>
 		<tile id="steps"
@@ -333,6 +418,21 @@ $parts.isEmpty()
 						<column attribute="marker"/>
 					</columns>
 					<rows>all(`test.flowchart:FlowNode`)</rows>
+					<on-activate class="com.top_logic.layout.view.command.GenericViewCommand"
+						image="css:bi bi-pencil"
+						image-expr="$row.get(`test.flowchart:FlowNode#inputs`).isEmpty() ? 'css:bi bi-box' : 'css:bi bi-diagram-3'"
+						label-expr="#(&quot;Edit {0}&quot;@en, &quot;{0} bearbeiten&quot;@de).fill($row.get(`test.flowchart:FlowNode#name`))"
+					>
+						<label>
+							<en>Edit</en>
+							<de>Bearbeiten</de>
+						</label>
+						<open-dialog
+							bind-input-to="model"
+							close-on-backdrop="true"
+							dialog-view="demo/edit-flow-step.view.xml"
+						/>
+					</on-activate>
 				</table>
 			</panel>
 		</tile>

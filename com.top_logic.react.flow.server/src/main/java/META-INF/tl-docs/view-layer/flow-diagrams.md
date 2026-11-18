@@ -1,5 +1,5 @@
 ---
-description: Read before putting a <flow-diagram> into a .view.xml or adding a diagram element type - the createChart script and its inputs, the reactFlow* functions, the size of a diagram and its view (layout to the offered space, Gantt viewport, reactFlowChart fixedView), the selection channel shared with tables and forms (reactFlowSelection, selectable reactFlowGraphEdge, selection-mode for multiple selection, the ctrl+drag selection rectangle), and the drawing rule for widgets (one top-level SVG element carrying the widget's id).
+description: Read before putting a <flow-diagram> into a .view.xml or adding a diagram element type - the createChart script and its inputs, the reactFlow* functions, the size of a diagram and its view (layout to the offered space, Gantt viewport, reactFlowChart fixedView), the selection channel shared with tables and forms (reactFlowSelection, selectable reactFlowGraphEdge, selection-mode for multiple selection, the ctrl+drag selection rectangle), the context menu of a diagram through <context-menu input="..."> on the selection channel, and the drawing rule for widgets (one top-level SVG element carrying the widget's id).
 order: 75
 ---
 
@@ -16,7 +16,7 @@ order: 75
 
 The diagram is built when the element is displayed and built anew whenever one of the input channels takes a new value; the script runs again as a whole. A mutation that changes what the diagram shows without changing an input - an action editing the displayed module - therefore rebuilds the diagram only through an input of its own: the model editor (`com.top_logic.dev.tools`) declares a `reload` channel as a second input and writes `now()` into it after each change.
 
-The building blocks of the script are the TL-Script functions of `FlowFactory`, all with the prefix `reactFlow` (`@ScriptPrefix`): boxes (`reactFlowText`, `reactFlowImage`, `reactFlowEmpty`), decorations (`reactFlowBorder`, `reactFlowFill`, `reactFlowPadding`, `reactFlowAlign`, `reactFlowClipbox`), layouts (`reactFlowVertical`, `reactFlowHorizontal`, `reactFlowStack`, `reactFlowGrid`, `reactFlowCompass`, `reactFlowFloating`), trees (`reactFlowTree`, `reactFlowConnection`), graphs (`reactFlowGraphLayout`, `reactFlowGraphEdge`), Gantt charts (`reactFlowGantt`, `reactFlowGanttRow`, `reactFlowGanttSpan`, …), interaction (`reactFlowSelection`, `reactFlowClickTarget`, `reactFlowTooltip`, `reactFlowContextMenu`, `reactFlowDropRegion`) and the export `reactFlowToSvg`.
+The building blocks of the script are the TL-Script functions of `FlowFactory`, all with the prefix `reactFlow` (`@ScriptPrefix`): boxes (`reactFlowText`, `reactFlowImage`, `reactFlowEmpty`), decorations (`reactFlowBorder`, `reactFlowFill`, `reactFlowPadding`, `reactFlowAlign`, `reactFlowClipbox`, `reactFlowSticky`), layouts (`reactFlowVertical`, `reactFlowHorizontal`, `reactFlowStack`, `reactFlowGrid`, `reactFlowCompass`, `reactFlowFloating`), trees (`reactFlowTree`, `reactFlowConnection`), graphs (`reactFlowGraphLayout`, `reactFlowGraphEdge`), Gantt charts (`reactFlowGantt`, `reactFlowGanttRow`, `reactFlowGanttSpan`, …), interaction (`reactFlowSelection`, `reactFlowClickTarget`, `reactFlowTooltip`, `reactFlowDropRegion`) and the export `reactFlowToSvg`.
 
 The construction plan of `com.top_logic.demo.react` (`WEB-INF/views/demo/flow-diagram-demo.view.xml`) draws the build steps of the selected product as a tree, and shares the selected steps with a table (shortened):
 
@@ -56,6 +56,8 @@ $parts.isEmpty()
 
 A diagram always fills the space its container offers (it takes part in the fill contract like a table, see [spacing](doc:view-layer/basics#spacing-model)); its height never comes from its drawing. The browser lays the diagram out within the size of that space at scale 1 and again whenever the space changes (`DiagramOperations.layout(context, availableWidth, availableHeight)`). Most elements take their natural size; an element with a viewport of its own - a Gantt chart (`reactFlowGantt`) - limits itself to the space left for it and scrolls its content internally: the wheel and dragging empty space scroll it, and the scrollbars it draws for each direction with a scroll range show where it stands (drag a thumb, or click its track to scroll by a page). Without an `initialZoom`, a Gantt chart fits its time axis into the offered width until the user zooms it with ctrl+wheel. An export (`reactFlowToSvg`) lays the diagram out without a size limit.
 
+A label that should stay readable while a long span is scrolled partly out of view goes into `reactFlowSticky`: like `position: sticky` in CSS, the box takes the whole width of the span and keeps its content at the left edge of the visible time range, at most until the content ends at the end of the span. Borders and backgrounds around it stay in place, e.g. the year cell of a frozen calendar row `reactFlowGanttSpan(…, box: reactFlowBorder(reactFlowSticky(reactFlowText("2026"))))`. It works in the header and data rows of a Gantt chart; a `reactFlowLod` in its content chooses its variant by the width of the whole span. A text that may be longer than its span is given `reactFlowText(…, ellipsis: true)`: it is then cut to the width of the span and ends with "…", and the full text shows as tooltip, like `text-overflow: ellipsis` in CSS; this works for every text that gets less width than it needs, inside `reactFlowSticky` or not. To center a label vertically in a bar that is higher than the text, wrap it in `reactFlowAlign(…, hAlign: "strech", vAlign: "middle")`.
+
 A Gantt dependency (`reactFlowGanttEdge`) is a plain line unless it names connector symbols: `sourceSymbol` and `targetSymbol` take the values of `reactFlowGraphEdge` (`arrow`, `closedArrow`, `filledArrow`, `diamond`, `filledDiamond`) and are drawn pointing into the source and target item, in the stroke color and width the edge currently shows (the violated style while its constraint is violated), solid also for a dashed edge.
 
 A diagram larger than its space is scaled down to fit, never above 100 %, and the user pans it with the wheel or by dragging and zooms it with ctrl+wheel (ctrl+0 resets the zoom). `reactFlowChart(fixedView: true, …)` switches this off: the diagram stays unscaled at its origin, while an element with its own viewport keeps scrolling and zooming. Ctrl+wheel over a diagram never zooms the browser page, whether it is fixed or not. Use it for a diagram that is laid out to its space anyway, e.g. one showing only a Gantt chart below a title, as the Gantt schedule of `com.top_logic.demo.react` does (`WEB-INF/views/demo/gantt-schedule-demo.view.xml`).
@@ -73,6 +75,27 @@ A diagram element is selectable when the script makes it so: `reactFlowSelection
 Rebuilding the diagram drops its selection, so a form with unsaved input bound to the selection channel is asked about its changes before an input of the diagram is written (see [unsaved changes](doc:view-layer/forms#unsaved-changes-are-asked-before-a-channel-write-transitively)).
 
 The stylesheet of the module (`/style/tl-react-flow.css`) marks the selection by CSS classes: a selectable element carries `tlCanSelect`, a selected one `tlSelected`. Inside a selected node, an element of the class `tlSelectionStroke` gets the interactive border color as stroke, one of `tlSelectionFill` the selection background, and one of `tlSelectionMarker` is shown only while the node is selected; the visible line of a selected edge is drawn in that color. A script highlights its nodes by giving these classes to the border and fill inside `reactFlowSelection`, as the model editor does with `reactFlowBorder(cssClass: "tlSelectionStroke", content: reactFlowFill(fill: "white", cssClass: "tlSelectionFill", …))`.
+
+## Context menu
+
+A diagram has no menu of its own. Put it into a `<context-menu>` whose `input` is the diagram's `selection` channel, and its `CONTEXT_MENU` commands open on a right-click, as for a table:
+
+```xml
+<context-menu input="selection">
+  <flow-diagram selection="selection" selection-mode="multi"> ... </flow-diagram>
+  <commands>
+    <generic-command inputs="selection" placement="CONTEXT_MENU"> ... </generic-command>
+  </commands>
+</context-menu>
+```
+
+Before the menu opens, the right-click adjusts the selection the menu acts on (`FlowDiagramControl.selectForContextMenu()`):
+
+- On an element outside the selection, that element is selected alone - like a click without a modifier, so the selected objects the diagram does not display are given up as well.
+- On a selected element, the selection stays as it is, also a selection of several elements, and the menu acts on all of them.
+- On the empty area, the selection is cleared: commands that need an object are not executable, commands without one are.
+
+A modifier key does not change this: a right-click never adds to the selection. A form with unsaved input bound to the selection channel is asked about its changes before the selection changes, as for a click. The client reports the right-click before the menu region asks for the menu, both through the command channel of the page, so the menu always opens on the adjusted selection.
 
 ## Drawing rule for diagram elements
 

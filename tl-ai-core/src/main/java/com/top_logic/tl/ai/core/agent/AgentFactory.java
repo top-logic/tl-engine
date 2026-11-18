@@ -822,7 +822,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			? assignedTimeoutSeconds : AgentParams.DEFAULT_TIMEOUT_SECONDS;
 
 		// toolChoice: assignment override > null (provider default)
-		ToolChoice toolChoice = resolveToolChoice(assignment.toolChoice());
+		ToolChoice toolChoice = ToolChoice.parse(assignment.toolChoice());
 
 		Map<String, Object> modelOptions = buildModelOptions(assignment, modelInfo, family);
 
@@ -981,21 +981,6 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			new ModelInfo.ModelLimits(128_000, 16_384, 0),
 			new ModelInfo.ModelCapabilities(false, true, true, false, false, null, null),
 			null, null, false, null);
-	}
-
-	/**
-	 * Maps the tool choice string to the Java {@link ToolChoice} enum.
-	 */
-	private static ToolChoice resolveToolChoice(String choice) {
-		if (choice == null) {
-			return null;
-		}
-		return switch (choice) {
-			case "AUTO" -> ToolChoice.AUTO;
-			case "REQUIRED" -> ToolChoice.REQUIRED;
-			case "NONE" -> ToolChoice.NONE;
-			default -> null;
-		};
 	}
 
 	/**

@@ -39,6 +39,28 @@ public enum ToolChoice implements ExternallyNamed {
 	}
 
 	/**
+	 * The tool choice of the given configured value.
+	 *
+	 * @param value
+	 *        The name of a tool choice, e.g. {@code REQUIRED} or {@code required}; case does not
+	 *        matter.
+	 * @return The tool choice, <code>null</code> for a blank or unknown value, which leaves the
+	 *         choice to the provider.
+	 */
+	public static ToolChoice parse(String value) {
+		if (value == null) {
+			return null;
+		}
+		String name = value.trim();
+		for (ToolChoice choice : values()) {
+			if (choice.name().equalsIgnoreCase(name)) {
+				return choice;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Format of a comma-separated list of {@link ToolChoice}s in a configuration, e.g.
 	 * {@code auto,required,none}.
 	 */

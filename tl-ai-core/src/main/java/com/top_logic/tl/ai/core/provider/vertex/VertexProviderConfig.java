@@ -454,9 +454,14 @@ public class VertexProviderConfig implements LLMProviderConfig {
 	}
 
 	/**
-	 * The tool choices the endpoint accepts.
+	 * The configured {@link Config#getToolChoice() tool choices}, the same for every model.
 	 */
-	public Set<ToolChoice> toolChoices() {
+	@Override
+	public Set<ToolChoice> getToolChoices(String model) {
+		return toolChoices();
+	}
+
+	private Set<ToolChoice> toolChoices() {
 		List<ToolChoice> configured = _config.getToolChoice();
 		return configured.isEmpty() ? EnumSet.allOf(ToolChoice.class) : EnumSet.copyOf(configured);
 	}

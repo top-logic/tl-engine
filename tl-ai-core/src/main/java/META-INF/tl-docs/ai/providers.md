@@ -1,5 +1,5 @@
 ---
-description: Read before configuring or changing how agent runs reach language models - the four configuration services LLMProviderService, AgentRuntimeService, AgentApplicationService and AgentPolicyService, the provider implementations (LLMProvider, Anthropic, OpenAI, Mistral, xAI, Bedrock, chat completions, local), the providers tl-ai-core ships and when a provider without its key is inactive, the default model of a run without one (defaultTarget), the model catalog, model health and failover (ModelAvailability, <failover> with <chains> and <fallbacks>, aiModelHealth, aiModelHealthReset), and migrating a configuration of the former LLMService.
+description: Read before configuring or changing how agent runs reach language models - the four configuration services LLMProviderService, AgentRuntimeService, AgentApplicationService and AgentPolicyService, the provider implementations (LLMProvider, Anthropic, OpenAI, Mistral, xAI, Bedrock, Google Vertex AI with VertexProviderConfig, chat completions, local), the API family that gives Claude the same options on every provider, a provider that accepts only some tool choices (tool-choice), the providers tl-ai-core ships and when a provider without its key is inactive, the default model of a run without one (defaultTarget), the model catalog, model health and failover (ModelAvailability, <failover> with <chains> and <fallbacks>, aiModelHealth, aiModelHealthReset), and migrating a configuration of the former LLMService.
 order: 62
 ---
 
@@ -29,11 +29,68 @@ A configuration that names the service `com.top_logic.tl.ai.core.provider.LLMSer
 - `mistral/` - Mistral,
 - `xai/` - xAI,
 - `bedrock/` - Amazon Bedrock (Converse API),
+- `vertex/` - Google Vertex AI, for Claude (publisher `anthropic`), see [Claude on Google Vertex AI](#claude-on-google-vertex-ai),
 - `chatcompletions/` and `local/` - OpenAI-compatible chat-completions endpoints, for local models and custom providers with a configurable base URL.
 
 All use the Java `HttpClient` and msgbuf JSON (`AbstractStreamingProvider`, `SSEReader`, `StreamHandler`). A provider's models are discovered from its endpoint (`ModelDiscoveryHelper`) or listed in its `models` attribute. The model catalog (`<model-catalog/>`) supplies model metadata - context window, output limit, prices - from a bundled copy of models.dev, refreshed from the remote catalog in the background unless `fetch-remote-catalog="false"`; `<model-overrides>` add what the catalog does not know. The resolved metadata is state of the running service, not part of its configuration: `LLMProviderService#catalog()` answers it as an immutable snapshot, each model with its origin (bundled, remote, override) and the state of the remote load (disabled, loading, loaded, failed). Each provider authenticates its requests through one `CredentialProvider` held by `AbstractStreamingProvider` and used by `ModelDiscoveryHelper`: the configured `<credentials>`, else its `api-key` (a `SecretSource`; in the attribute form an encrypted value, so a key in plain text carries the prefix `unencrypted:`) in the header of its API, else none. On HTTP 401 the provider calls `invalidate()` and repeats the request once - nothing has been streamed at that point. See [the chapter introduction](doc:ai#configuring-the-llm-providers) for the environment variables and examples.
 
+The catalog looks a model up in the entries of its provider's `catalog-provider-id`, under the key the provider gives for it (`LLMProviderConfig#getCatalogModel`, the model name unless configured otherwise), then under that key with the suffix `@default` - the form in which models.dev lists the models of some providers (`claude-sonnet-5-5@default` on `google-vertex`). An entry under the plain key takes precedence; either way the metadata is stored under the configured model name. The default `catalog-provider-id` of `bedrock` is `amazon-bedrock`, so a Bedrock model such as `eu.anthropic.claude-opus-5-5` gets its catalog data without further configuration; `catalog-provider-id=""` switches the catalog off for a provider.
+
 `ProviderException.Kind` classifies a failure (`ErrorClassifier`): `RATE_LIMITED`, `BILLING`, `OVERLOADED`, `CONTEXT_WINDOW_EXCEEDED`, `AUTHENTICATION` (credentials rejected), `NO_CREDENTIALS` (none available, the provider was not called), `INVALID_REQUEST`, `UNKNOWN`; the chat turns the kind into the message the user reads.
+
+### The API family of a model
+
+Which vendor-specific options a model is given is decided by its **API family** (`LLMProviderConfig#getApiFamily(String)`, constants in `ApiFamilies`), not by the provider that serves it: a provider of one vendor answers its `catalog-provider-id`, `bedrock` answers `anthropic` for a model ID containing `claude`, `vertex` answers `anthropic` for a model of the publisher `anthropic`. Claude therefore gets `thinking_effort`, `top_k` and `cacheTtl` on `anthropic`, `bedrock` and `vertex` alike (`AgentFactory`, `ModelOptions.forTarget`, `EffortLevels`, the provider-specific fields of the agent override). On Bedrock they travel in `additionalModelRequestFields` in the Messages API's spelling, `cacheTtl` as the `ttl` of the cache points.
+
+A provider stamps the thinking blocks it produces with its configured `catalog-provider-id`; `MessageHistorySanitizer` replays a block to a provider of the same ID only, because its signature means nothing elsewhere. Bedrock streams Claude's thinking as `reasoningContent` and receives it back in the same form; a `redactedContent` block is not kept, like a `redacted_thinking` block of the Anthropic API.
+
+### Restricted tool choice
+
+`LLMProviderConfig#getToolChoices(String)` says which tool choices a provider accepts, all of them by default. A request with another one is restricted before it is sent (`ToolChoice.restrict`): `none` becomes `auto` - the tools stay in the request and the model decides -, `required` fails with `INVALID_REQUEST` without a request. The final turn of a run, which asks for `none`, is therefore sent with `auto` to such a provider. The agent settings (`tool-choice` of an agent override) warn when an agent forces a tool call on a model whose provider does not accept that (`ModelToolChoiceConstraint`). `vertex` takes the accepted tool choices from its attribute `tool-choice`.
+
+### Claude on Google Vertex AI
+
+`VertexProviderConfig` reaches the models of Google Vertex AI, directly or through a gateway, and speaks the dialect of each model's publisher; the publisher `anthropic` (Claude) is supported. `tl-ai-core` ships no `vertex` provider; an application adds one:
+
+```xml
+<provider class="com.top_logic.tl.ai.core.provider.vertex.VertexProviderConfig"
+	name="vertex"
+	base-url="https://gateway.example.com/v1"
+	project="my-project"
+	location="eu"
+	tool-choice="auto"
+	models="claude-sonnet-5-5,claude-opus-5-5,claude-haiku-5-5"
+>
+	<api-key name="tl_vertex_api_key"/>
+</provider>
+```
+
+| Attribute | Default | Meaning |
+|---|---|---|
+| `project` | - (mandatory) | the Google Cloud project |
+| `location` | `global` | `global`, a multi-region (`us`, `eu`) or a region (`europe-west4`) |
+| `base-url` | - | a gateway in front of Vertex AI; a trailing `/v1` (the `api-version`) may be included. Without it, the host follows from `location`: `aiplatform.googleapis.com` for `global`, `aiplatform.{location}.rep.googleapis.com` for `us` and `eu`, `{location}-aiplatform.googleapis.com` for a region |
+| `api-version` | `v1` | first segment of the path |
+| `api-key` / `credentials` | - | the key as `Authorization: Bearer`, or a `CredentialProvider`; a Google sign-in (service account, application default credentials) is not built in |
+| `models` | - | the model names |
+| `catalog-provider-id` | `google-vertex` | where the catalog looks the models up |
+| `anthropic-version` | `vertex-2023-10-16` | the `anthropic_version` in the body of a Claude request |
+| `tool-choice` | `auto,required,none` | the tool choices the endpoint accepts, see [restricted tool choice](#restricted-tool-choice) |
+
+A model is called at `{base}/{api-version}/projects/{project}/locations/{location}/publishers/{publisher}/models/{model-id}:streamRawPredict`. For a Claude model the body is the Anthropic Messages body without `model` and with `anthropic_version`; the stream is the Anthropic API's (`VertexAnthropicProvider` extends `AnthropicMessagesProvider`). An error is classified in Anthropic's form (`error.type`) and in Google's (`error.status`, e.g. `RESOURCE_EXHAUSTED` as `RATE_LIMITED`).
+
+`<model-settings>` describe a model whose name says too little:
+
+```xml
+<model-settings>
+	<model name="claude-sonnet-5-5" model-id="claude-sonnet-5-5@20260101" location="us-east5" catalog-model="claude-sonnet-5-5"/>
+	<model name="my-model" publisher="anthropic"/>
+</model-settings>
+```
+
+`publisher` (without it, a model whose name starts with `claude-` is of `anthropic`), `model-id` (the ID in the path, the name by default), `location` (instead of the provider's) and `catalog-model` (the catalog key, the name by default). A model whose publisher is unknown or not supported refuses the start.
+
+**Name collision with `anthropic`.** The shipped provider `anthropic` exposes the Claude models under the same names - also without its key -, so a `claude-sonnet-5-5` of `vertex` is exposed twice, and `AgentRuntimeService` refuses an unqualified reference to it at its start. Name the provider: `default-provider="vertex"` next to `default-model`, `provider="vertex"` on an agent override and on a `<fallback>`; or replace the shipped list with `<providers config:override="true">`.
 
 ## The shipped providers
 

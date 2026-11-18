@@ -5,8 +5,10 @@
  */
 package com.top_logic.tl.ai.core.provider;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.CommaSeparatedStrings;
@@ -296,5 +298,21 @@ public interface LLMProviderConfig {
 	 */
 	default String getCatalogModel(String model) {
 		return model;
+	}
+
+	/**
+	 * The tool choices this provider accepts for the given model.
+	 *
+	 * <p>
+	 * A request with another tool choice is {@link ToolChoice#restrict(ProviderRequest, Set, String)
+	 * restricted} to these before it is sent.
+	 * </p>
+	 *
+	 * @param model
+	 *        A model of this provider.
+	 * @return The accepted tool choices; by default all of them.
+	 */
+	default Set<ToolChoice> getToolChoices(String model) {
+		return EnumSet.allOf(ToolChoice.class);
 	}
 }

@@ -7,7 +7,7 @@ order: 50
 
 The AI modules make a TopLogic application accessible to AI agents. An agent can understand the application - its model, its configuration, its data - work with it and configure it, much like an experienced consultant who knows the application. The same set of tools serves three forms of use: a copilot inside the application (the chat), external AI clients connecting over MCP or A2A, and agents that the application runs on its own, on a schedule or on an event. The [forms of use](doc:ai/forms-of-use) article describes them and their interplay.
 
-The core of the modules is a purpose-built streaming agent loop with multi-provider LLM access (Anthropic, OpenAI, Mistral, xAI, Amazon Bedrock and OpenAI-compatible endpoints), a tool system based on annotated Java methods and TL-Script, skills, multi-agent delegation, memory and compaction, and a layered security architecture that makes every run act as exactly one authenticated account.
+The core of the modules is a purpose-built streaming agent loop with multi-provider LLM access (Anthropic, OpenAI, Mistral, xAI, Amazon Bedrock, Google Vertex AI and OpenAI-compatible endpoints), a tool system based on annotated Java methods and TL-Script, skills, multi-agent delegation, memory and compaction, and a layered security architecture that makes every run act as exactly one authenticated account.
 
 ## Modules
 

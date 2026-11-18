@@ -46,6 +46,7 @@ import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.LLMProviderService.ServiceModelOptions;
 import com.top_logic.tl.ai.core.provider.LLMProviderService.ServiceProviderOptions;
 import com.top_logic.tl.ai.core.provider.ModelToolCallConstraint;
+import com.top_logic.tl.ai.core.provider.ModelToolChoiceConstraint;
 import com.top_logic.tl.ai.core.provider.ProviderExposesModelConstraint;
 import com.top_logic.tl.ai.core.provider.ProviderFieldMode;
 import com.top_logic.tl.ai.core.provider.health.ModelTarget;
@@ -300,10 +301,18 @@ public class AgentRuntimeService extends ConfiguredManagedClass<AgentRuntimeServ
 		/**
 		 * Tool choice (AUTO/REQUIRED/NONE), or {@code null} for provider default.
 		 *
+		 * <p>
+		 * A provider may accept only some of them (see the attribute {@code tool-choice} of the
+		 * provider {@code vertex}); forcing a tool call (REQUIRED) on such a provider is warned
+		 * about here and fails the run.
+		 * </p>
+		 *
 		 * @see #TOOL_CHOICE
 		 */
 		@Name(TOOL_CHOICE)
 		@Nullable
+		@Constraint(value = ModelToolChoiceConstraint.class, args = { @Ref(MODEL), @Ref(PROVIDER) },
+			asWarning = true)
 		String getToolChoice();
 
 		/**

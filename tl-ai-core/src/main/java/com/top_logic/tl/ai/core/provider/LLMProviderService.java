@@ -10,6 +10,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -1188,6 +1189,22 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 		}
 		LLMProviderConfig providerConfig = lookupProvider(modelName, providerName);
 		return providerConfig == null ? null : providerConfig.getCatalogProviderId();
+	}
+
+	/**
+	 * The {@link LLMProviderConfig#getToolChoices(String) tool choices} the provider of the given
+	 * model reference accepts.
+	 *
+	 * @param modelName
+	 *        The model name.
+	 * @param providerName
+	 *        The provider qualifying the model, or {@code null} for an unqualified reference.
+	 * @return The accepted tool choices; all of them if the reference does not resolve to exactly
+	 *         one provider.
+	 */
+	public Set<ToolChoice> getToolChoices(String modelName, String providerName) {
+		LLMProviderConfig providerConfig = lookupProvider(modelName, providerName);
+		return providerConfig == null ? EnumSet.allOf(ToolChoice.class) : providerConfig.getToolChoices(modelName);
 	}
 
 	/**

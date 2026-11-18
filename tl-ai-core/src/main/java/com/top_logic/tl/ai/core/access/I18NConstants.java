@@ -94,9 +94,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * {@link EndpointCredential#obtain() Where} a person creates a personal access token.
 	 *
 	 * @en Every person creates their own personal access token in the application at {0}: Settings
-	 *     → Access tokens → New token. The token is shown only once.
+	 *     → Access tokens → New token, with the permission "Agent interfaces (MCP/A2A)". The token is
+	 *     shown only once.
 	 * @de Jede Person erstellt ihr eigenes persönliches Zugriffstoken in der Anwendung unter {0}:
-	 *     Einstellungen → Zugriffstokens → Neues Token. Das Token wird nur einmal angezeigt.
+	 *     Einstellungen → Zugriffstokens → Neues Token, mit der Berechtigung
+	 *     "Agenten-Schnittstellen (MCP/A2A)". Das Token wird nur einmal angezeigt.
 	 */
 	public static ResKey1 CREDENTIAL_PERSONAL_ACCESS_TOKEN_OBTAIN__URL;
 

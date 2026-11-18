@@ -8,15 +8,18 @@ package com.top_logic.ai.mcp.server.discovery;
 import com.top_logic.ai.mcp.server.MCPServerService;
 import com.top_logic.base.discovery.DiscoveryContext;
 import com.top_logic.basic.StringServices;
+import com.top_logic.element.accesstoken.AccessToken;
+import com.top_logic.element.accesstoken.AccessTokens;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 import com.top_logic.tl.ai.core.access.AccessTokenAuthentication;
+import com.top_logic.tl.ai.core.access.AccessTokenAuthenticator;
 
 /**
  * TL-Script functions telling a person how to connect an MCP client to this application, e.g. in
- * the dialog that shows a personal access token once.
+ * the dialog that shows a new access token once.
  *
  * <p>
  * The URLs are those of the application as the current request reaches it, see
@@ -27,19 +30,26 @@ import com.top_logic.tl.ai.core.access.AccessTokenAuthentication;
 public class McpConnectionFunctions extends TLScriptFunctions {
 
 	/**
-	 * Whether an MCP client connects to this application with a personal access token: the MCP
-	 * server runs and its authentications accept such tokens.
+	 * Whether an MCP client connects to this application with the given access token: the MCP server
+	 * runs, its authentications accept access tokens, and the token has the permission
+	 * {@value AccessTokenAuthenticator#AGENT_ENDPOINTS_PERMISSION}.
 	 *
 	 * <p>
-	 * Example: <code>mcpAcceptsAccessTokens()</code>
+	 * Example: <code>mcpAcceptsAccessToken($token)</code>
 	 * </p>
 	 *
-	 * @return Whether a client connects to the MCP endpoint with a personal access token.
+	 * @param token
+	 *        An access token, as just created by <code>accessTokenCreate()</code>.
+	 * @return Whether a client connects to the MCP endpoint with this token.
 	 */
 	@SideEffectFree
-	public static boolean acceptsAccessTokens() {
+	public static boolean acceptsAccessToken(String token) {
 		MCPServerService service = MCPServerService.getInstance();
-		return service != null && service.acceptsAccessTokens();
+		if (service == null || !service.acceptsAccessTokens() || !AccessTokens.hasFormat(token)) {
+			return false;
+		}
+		AccessToken stored = AccessTokens.find(token);
+		return stored != null && AccessTokens.hasPermission(stored, AccessTokenAuthenticator.AGENT_ENDPOINTS_PERMISSION);
 	}
 
 	/**

@@ -71,6 +71,13 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
+    <!-- TestMcpViewScripts. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

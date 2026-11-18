@@ -92,6 +92,25 @@ public class WebXMLTest extends TestCase {
     }
 
 
+    /**
+     * A servlet mapping and a filter mapping may name several URL patterns (Servlet 2.5).
+     */
+    public void testSeveralUrlPatternsInOneMapping() throws Exception {
+        String webXml = "<?xml version='1.0' encoding='UTF-8'?>"
+            + "<web-app xmlns='http://java.sun.com/xml/ns/javaee' version='2.5'>"
+            + "<servlet><servlet-name>simple</servlet-name><servlet-class>" + SimpleGetServlet.class.getName()
+            + "</servlet-class></servlet>"
+            + "<servlet-mapping><servlet-name>simple</servlet-name>"
+            + "<url-pattern>/first</url-pattern><url-pattern>/second/*</url-pattern></servlet-mapping>"
+            + "</web-app>";
+        ServletRunner sr = new ServletRunner( toInputStream( webXml ) );
+        assertEquals( "first pattern", SimpleGetServlet.RESPONSE_TEXT,
+            sr.getResponse( new GetMethodWebRequest( "http://localhost/first" ) ).getText() );
+        assertEquals( "second pattern", SimpleGetServlet.RESPONSE_TEXT,
+            sr.getResponse( new GetMethodWebRequest( "http://localhost/second/x" ) ).getText() );
+    }
+
+
     public void testRealPath() throws Exception {
 
         WebXMLString wxs = new WebXMLString();

@@ -35,8 +35,6 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.wrap.Group;
-import com.top_logic.util.AbstractStartStopListener;
-import com.top_logic.util.TLContext;
 import com.top_logic.util.license.LicenseTool;
 
 /**
@@ -338,16 +336,13 @@ public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 		String initialPassword =
 			Environment.getSystemPropertyOrEnvironmentVariable("tl_initial_password", null);
 
-		String message;
 		if (initialPassword == null) {
 			initialPassword = SecureRandomService.getInstance().getRandomString();
-			message = "Initial password for '" + loginName + "': " + initialPassword;
-			Logger.info(message, PersonManager.class);
+			Logger.info("Initial password for '" + loginName + "': " + initialPassword, PersonManager.class);
 		} else {
-			message = "Initial password for '" + loginName + "' set up from environment variable.";
-			Logger.info(message, PersonManager.class);
+			Logger.info("Initial password for '" + loginName + "' set up from environment variable.",
+				PersonManager.class);
 		}
-		TLContext.getContext().set(AbstractStartStopListener.PASSWORD_INITIALIZATION_MESSAGE, message);
 
 		device.setPassword(root, initialPassword.toCharArray());
 	}

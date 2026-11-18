@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.chat.view.list;
+package test.com.top_logic.layout.view.list;
 
 import java.util.List;
 
@@ -15,9 +15,14 @@ import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.command.GenericViewCommand;
+import com.top_logic.layout.view.list.DataListElement;
 
 /**
  * Checks the defaults of the {@code <data-list>} configuration: search and collapse on, no grouping
@@ -46,7 +51,9 @@ public class TestDataListElementConfig extends TestCase {
 			DataListElement.RowActions.HOVER, config.getRowActions());
 		assertTrue("No input channels by default.", config.getInputs().isEmpty());
 		assertTrue("A static list by default (no observed types).", config.getObservedTypes().isEmpty());
-		assertEquals("TLDataList", config.getReactElement());
+		assertEquals("A column at every width until a drawer threshold is set.", 0, config.getDrawerBelow());
+		assertNull("Nothing in front of the lines by default.", config.getLeading());
+		assertNull("Nothing after the lines by default.", config.getTrailing());
 		assertEquals(DataListElement.class, config.getImplementationClass());
 	}
 
@@ -54,9 +61,9 @@ public class TestDataListElementConfig extends TestCase {
 	public void testCommandParses() throws Exception {
 		String xml = "<data-list xmlns:config='http://www.top-logic.com/ns/config/6.0'"
 			+ " config:interface='" + DataListElement.Config.class.getName() + "'>"
-			+ "<rows>all(`tl.ai.execution:AgentSession`)</rows>"
+			+ "<rows>all(`tl.model:TLModule`)</rows>"
 			+ "<commands>"
-			+ "<generic-command image='css:bi bi-plus-lg'><write-channel name='chatSession'/></generic-command>"
+			+ "<generic-command image='css:bi bi-plus-lg'><write-channel name='selected'/></generic-command>"
 			+ "</commands>"
 			+ "</data-list>";
 		DataListElement.Config config =
@@ -66,32 +73,32 @@ public class TestDataListElementConfig extends TestCase {
 	}
 
 	/**
-	 * The two hooks a rail section needs: the channel the row count is written to, and the
-	 * expression that gives a row its state class.
+	 * The two hooks a section around the list needs: the channel the row count is written to, and
+	 * the expression that gives a row its state class.
 	 */
 	public void testCountChannelAndRowStateParse() throws Exception {
 		String xml = "<data-list xmlns:config='http://www.top-logic.com/ns/config/6.0'"
 			+ " config:interface='" + DataListElement.Config.class.getName() + "'"
-			+ " count='progressBadge'>"
-			+ "<rows>all(`tl.ai.execution:AgentTask`)</rows>"
+			+ " count='badge'>"
+			+ "<rows>all(`tl.model:TLModule`)</rows>"
 			+ "<row-css-class>t -> \"is-done\"</row-css-class>"
 			+ "</data-list>";
 		DataListElement.Config config =
 			(DataListElement.Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
 		assertNotNull("The count channel is configured.", config.getCount());
-		assertEquals("progressBadge", config.getCount().getChannelName());
+		assertEquals("badge", config.getCount().getChannelName());
 		assertNotNull("The row state expression is configured.", config.getRowCssClass());
 	}
 
 	/**
-	 * A view written for tl-ai 2.0.5, whose {@code <css-class>} was the row function, is refused
-	 * rather than read as the class of the list: the engine's {@code css-class} of every element
-	 * would otherwise take the script text and the rows would lose their state without a word.
+	 * A function of a row written as {@code <css-class>} is refused rather than read as the class of
+	 * the list: the {@code css-class} of every element would otherwise take the script text and the
+	 * rows would lose their state without a word.
 	 */
 	public void testRowFunctionAsCssClassIsRefused() throws Exception {
 		String xml = "<data-list xmlns:config='http://www.top-logic.com/ns/config/6.0'"
 			+ " config:interface='" + DataListElement.Config.class.getName() + "'>"
-			+ "<rows>all(`tl.ai.execution:AgentTask`)</rows>"
+			+ "<rows>all(`tl.model:TLModule`)</rows>"
 			+ "<css-class>t -> \"is-done\"</css-class>"
 			+ "</data-list>";
 		DataListElement.Config config =
@@ -109,8 +116,8 @@ public class TestDataListElementConfig extends TestCase {
 	public void testCssClassOfTheList() throws Exception {
 		String xml = "<data-list xmlns:config='http://www.top-logic.com/ns/config/6.0'"
 			+ " config:interface='" + DataListElement.Config.class.getName() + "'"
-			+ " css-class='appRail'>"
-			+ "<rows>all(`tl.ai.execution:AgentTask`)</rows>"
+			+ " css-class='my-list'>"
+			+ "<rows>all(`tl.model:TLModule`)</rows>"
 			+ "</data-list>";
 		DataListElement.Config config =
 			(DataListElement.Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
@@ -119,7 +126,7 @@ public class TestDataListElementConfig extends TestCase {
 		new DefaultInstantiationContext(log).getInstance(config);
 
 		assertEquals(List.of(), log.getErrors());
-		assertEquals("appRail", config.getCssClass());
+		assertEquals("my-list", config.getCssClass());
 	}
 
 	/**
@@ -129,15 +136,15 @@ public class TestDataListElementConfig extends TestCase {
 	public void testRowCommandsParse() throws Exception {
 		String xml = "<data-list xmlns:config='http://www.top-logic.com/ns/config/6.0'"
 			+ " config:interface='" + DataListElement.Config.class.getName() + "'"
-			+ " row-channel='session' row-actions='always'>"
-			+ "<rows>all(`tl.ai.execution:AgentSession`)</rows>"
+			+ " row-channel='item' row-actions='always'>"
+			+ "<rows>all(`tl.model:TLModule`)</rows>"
 			+ "<row-commands>"
-			+ "<generic-command image='css:bi bi-pencil' inputs='session'>"
-			+ "<open-dialog dialog-view='demo/rename.view.xml'/>"
+			+ "<generic-command image='css:bi bi-pencil' inputs='item'>"
+			+ "<open-dialog dialog-view='my/rename.view.xml'/>"
 			+ "</generic-command>"
-			+ "<generic-command image='css:bi bi-trash' inputs='session'>"
+			+ "<generic-command image='css:bi bi-trash' inputs='item'>"
 			+ "<executability><visible-if expr='true'/></executability>"
-			+ "<execute-script function='aiSessionDelete($session)'/>"
+			+ "<execute-script function='$item.delete()'/>"
 			+ "</generic-command>"
 			+ "</row-commands>"
 			+ "</data-list>";
@@ -146,9 +153,39 @@ public class TestDataListElementConfig extends TestCase {
 
 		assertEquals(2, config.getRowCommands().size());
 		assertEquals(GenericViewCommand.class, config.getRowCommands().get(0).getImplementationClass());
-		assertEquals("session", config.getRowChannel());
+		assertEquals("item", config.getRowChannel());
 		assertEquals(DataListElement.RowActions.ALWAYS, config.getRowActions());
 		assertTrue("Row commands are not header commands.", config.getCommands().isEmpty());
+	}
+
+	/**
+	 * The layout editor offers every option of the list but the two every element hides: the
+	 * implementation class the tag fixes and the personalization key the view context derives.
+	 */
+	public void testHiddenOptions() {
+		assertHidden(UIElement.Config.PERSONALIZATION_KEY);
+		assertHidden(PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME);
+		for (String name : List.of(DataListElement.Config.ROWS, DataListElement.Config.SELECTION,
+			DataListElement.Config.SEARCH, DataListElement.Config.COUNT, DataListElement.Config.CSS_CLASS,
+			DataListElement.Config.COLLAPSED, DataListElement.Config.DRAWER_BELOW, DataListElement.Config.ROW_COMMANDS,
+			DataListElement.Config.ROW_CHANNEL, DataListElement.Config.ROW_ACTIONS, DataListElement.Config.LEADING,
+			DataListElement.Config.TRAILING)) {
+			Hidden hidden = property(name).getAnnotation(Hidden.class);
+			assertTrue("Option '" + name + "' is a designer option and must stay visible.",
+				hidden == null || !hidden.value());
+		}
+	}
+
+	private static void assertHidden(String name) {
+		Hidden hidden = property(name).getAnnotation(Hidden.class);
+		assertTrue("Option '" + name + "' must be hidden from the layout editor.", hidden != null && hidden.value());
+	}
+
+	private static PropertyDescriptor property(String name) {
+		PropertyDescriptor property =
+			TypedConfiguration.getConfigurationDescriptor(DataListElement.Config.class).getProperty(name);
+		assertNotNull("No option '" + name + "'.", property);
+		return property;
 	}
 
 	/** Boots the module system so typed-configuration resolves nested config types via TypeIndex. */

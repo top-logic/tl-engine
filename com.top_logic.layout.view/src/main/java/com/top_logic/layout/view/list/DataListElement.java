@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.chat.view.list;
+package com.top_logic.layout.view.list;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +28,7 @@ import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.IReactControl;
@@ -40,8 +41,8 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
 
 /**
- * Declarative {@code <data-list>} element: a model-bound, styled, grouped, searchable, selectable
- * list - the presentation of a chat rail generalised to any model.
+ * Declarative {@code <data-list>} element: a selectable, groupable, searchable list of model
+ * objects in the style of a contact or message list.
  *
  * <p>
  * The rows come from a TL-Script {@link Config#getRows() rows} expression, exactly as
@@ -49,16 +50,29 @@ import com.top_logic.model.util.TLModelPartRef;
  * against the row object's own type. Each row shows an ordered list of {@link LineConfig lines} (the
  * vertical counterpart of a table's columns); its group label is a further expression. A row click
  * writes the row object to the two-way {@link Config#getSelection() selection} channel. Search and
- * collapse are client-side. Unlike {@code <table>} this renders a styled list (the session-rail
- * look), not a data grid; unlike {@code <object-list>} it is a selectable picker, not an in-place
- * editor of composite items.
+ * collapse are client-side. Unlike {@code <table>} this renders a list (design system:
+ * {@code tl-list}), not a data grid; unlike {@code <object-list>} it is a selectable picker, not an
+ * in-place editor of composite items. For very large sets of objects the table is the element of
+ * choice: the list renders all of its rows.
  * </p>
  *
  * <p>
- * <b>TEMPORARY FORK.</b> The engine has no data-bound list that renders like the navbar with
- * selection + grouping + search. This element fills that gap in {@code tl-ai}, rendered by the
- * {@code TLDataList} React component. <b>Upstream target:</b> a generic {@code <data-list>} in
- * {@code tl-layout-view}; then delete this package.
+ * In front of the lines a row shows an avatar or an icon ({@link Config#getLeading() leading}),
+ * after them metadata text or a badge ({@link Config#getTrailing() trailing}).
+ * </p>
+ *
+ * <p>
+ * Placed in a {@code <context-menu>} whose {@code input} is the {@link Config#getSelection()
+ * selection} channel, the list offers the commands of the menu on a right click on a row: a row
+ * outside the selection is selected first, a row inside it keeps the selection, so the menu acts on
+ * the row clicked.
+ * </p>
+ *
+ * <p>
+ * Where the list shares its place with other columns, {@link Config#getDrawerBelow() drawer-below}
+ * keeps it usable in a narrow window: below that width of its place, a
+ * {@link Config#getCollapsible() collapsible} list shows only its narrow strip, and its toggle
+ * opens the list as a modal drawer over its neighbours.
  * </p>
  */
 public class DataListElement implements UIElement {
@@ -175,8 +189,11 @@ public class DataListElement implements UIElement {
 		/** Configuration property name for {@link #getEmptyText()}. */
 		String EMPTY_TEXT = "empty-text";
 
-		/** Configuration property name for {@link #getReactElement()}. */
-		String REACT_ELEMENT = "react-element";
+		/** Configuration property name for {@link #getLeading()}. */
+		String LEADING = "leading";
+
+		/** Configuration property name for {@link #getTrailing()}. */
+		String TRAILING = "trailing";
 
 		/**
 		 * The element implementation.
@@ -242,10 +259,8 @@ public class DataListElement implements UIElement {
 		 * Optional channel receiving how many rows the list shows, written whenever the rows change.
 		 *
 		 * <p>
-		 * What a {@code <chat-rail/>} section reads to put a number beside its title. Unlike the
-		 * chat's own sections, which count in the browser and report the number back, a list counts
-		 * what it already has on the server - no round trip, and the number is right before the
-		 * first paint.
+		 * What a section around the list reads to put a number beside its title. The list counts
+		 * what it already has on the server, so the number is right before the first paint.
 		 * </p>
 		 */
 		@Name(COUNT)
@@ -277,9 +292,9 @@ public class DataListElement implements UIElement {
 		/**
 		 * Header buttons, rendered above the list. Each is a standard view command - a
 		 * {@code <generic-command>} composing any actions (execute-script, open-dialog, write-channel,
-		 * with-transaction, ...), with the usual label, image, tooltip, executability and input. A chat
-		 * session list, for example, configures one command that clears the {@link #getSelection()
-		 * selection} channel ("New chat").
+		 * with-transaction, ...), with the usual label, image, tooltip, executability and input. A list of
+		 * documents, for example, configures one command that clears the {@link #getSelection()
+		 * selection} channel to start a new document.
 		 */
 		@Name(COMMANDS)
 		@EntryTag("command")
@@ -371,18 +386,18 @@ public class DataListElement implements UIElement {
 		boolean getCollapsed();
 
 		/**
-		 * Width of the surrounding container, in rem, below which the list becomes a drawer.
+		 * Width of the element containing the list, in rem, below which the list becomes a drawer.
 		 *
 		 * <p>
-		 * Below it the list keeps only its narrow strip, and its expand arrow opens the list over its
-		 * neighbour instead of taking a column. The default fits a list beside a conversation and a
-		 * chat rail. Set it to what the list and its neighbours need side by side; 0 keeps a column at
-		 * every width. Needs {@link #getCollapsible()}.
+		 * Below it the list keeps only its narrow strip, and its toggle opens the list as a modal
+		 * drawer over its neighbours instead of taking a column of its own. Set it to the width the
+		 * list and its neighbours need side by side. {@code 0} keeps a column at every width. Needs
+		 * {@link #getCollapsible()}.
 		 * </p>
 		 */
 		@Name(DRAWER_BELOW)
 		@Label("Drawer below")
-		@IntDefault(44)
+		@IntDefault(0)
 		int getDrawerBelow();
 
 		/**
@@ -402,16 +417,18 @@ public class DataListElement implements UIElement {
 		ResKey getEmptyText();
 
 		/**
-		 * Registered React element that renders this list.
-		 *
-		 * Defaults to {@code TLDataList}. Hidden in the layout editor: the value must match a
-		 * registration in {@code TypeScript}.
+		 * What stands in front of the lines of a row: an avatar or an icon.
 		 */
-		@Name(REACT_ELEMENT)
-		@Label("React element")
-		@Hidden
-		@StringDefault("TLDataList")
-		String getReactElement();
+		@Name(LEADING)
+		@Label("Leading")
+		LeadingConfig getLeading();
+
+		/**
+		 * What stands after the lines of a row: metadata text or a badge.
+		 */
+		@Name(TRAILING)
+		@Label("Trailing")
+		TrailingConfig getTrailing();
 	}
 
 	/** Container for the {@link LineConfig lines} of a {@link DataListElement}. */
@@ -420,6 +437,113 @@ public class DataListElement implements UIElement {
 		/** The lines to display, top to bottom. */
 		@DefaultContainer
 		List<LineConfig> getLines();
+	}
+
+	/**
+	 * How the {@link TrailingConfig trailing} value of a row is shown.
+	 */
+	public enum TrailingDisplay implements ExternallyNamed {
+
+		/** As metadata text, e.g. a date. */
+		TEXT("text"),
+
+		/**
+		 * As a badge, a count or a short status. An empty value or {@code 0} shows no badge.
+		 */
+		BADGE("badge");
+
+		private final String _externalName;
+
+		TrailingDisplay(String externalName) {
+			_externalName = externalName;
+		}
+
+		@Override
+		public String getExternalName() {
+			return _externalName;
+		}
+	}
+
+	/**
+	 * Configuration of what stands in front of the lines of a row: an avatar showing a picture or
+	 * the initials of a name, or an icon.
+	 *
+	 * <p>
+	 * Without {@link #getName() name} and {@link #getImage() image}, or where both yield nothing
+	 * for a row, nothing stands there.
+	 * </p>
+	 */
+	public interface LeadingConfig extends ConfigurationItem {
+
+		/** Configuration property name for {@link #getName()}. */
+		String NAME = "name";
+
+		/** Configuration property name for {@link #getImage()}. */
+		String IMAGE = "image";
+
+		/**
+		 * A TL-Script function of one row computing the name the avatar stands for: the source of
+		 * its initials and of its color category, and its name for assistive technology. The result
+		 * is shown by its label.
+		 */
+		@Name(NAME)
+		@Nullable
+		Expr getName();
+
+		/**
+		 * A TL-Script function of one row computing its picture or icon.
+		 *
+		 * <p>
+		 * The result is an icon - e.g. the value of an attribute of type {@code tl.core:Icon} -, the
+		 * text of an icon resource, e.g. {@code "css:fas fa-user"}, or image data: a value of type
+		 * {@code tl.core:Binary} with an image content type ({@code image/...}) of at most 32 KB. An
+		 * icon of an icon font is shown as icon; a picture is shown in the avatar. Any other result
+		 * counts as none: the avatar shows the initials of the {@link #getName() name}.
+		 * </p>
+		 */
+		@Name(IMAGE)
+		@Nullable
+		Expr getImage();
+	}
+
+	/**
+	 * Configuration of what stands after the lines of a row: metadata text, or a badge.
+	 *
+	 * <p>
+	 * The value is an {@link #getAttribute() attribute} of the row object or a
+	 * {@link #getValue() computed value}, like the one of a {@link LineConfig line}.
+	 * </p>
+	 */
+	public interface TrailingConfig extends ConfigurationItem {
+
+		/** Configuration property name for {@link #getAttribute()}. */
+		String ATTRIBUTE = "attribute";
+
+		/** Configuration property name for {@link #getValue()}. */
+		String VALUE = "value";
+
+		/** Configuration property name for {@link #getDisplay()}. */
+		String DISPLAY = "display";
+
+		/**
+		 * The model attribute shown. Use {@link #getValue()} instead for a computed value.
+		 */
+		@Name(ATTRIBUTE)
+		@Nullable
+		String getAttribute();
+
+		/**
+		 * A TL-Script function of one row computing the value shown - a formatted date, a count.
+		 */
+		@Name(VALUE)
+		@Nullable
+		Expr getValue();
+
+		/**
+		 * How the value is shown.
+		 */
+		@Name(DISPLAY)
+		TrailingDisplay getDisplay();
 	}
 
 	/** Configuration for a single line of a row - like a table {@code <column>}, but stacked. */
@@ -457,6 +581,7 @@ public class DataListElement implements UIElement {
 		 */
 		@Name(EMPHASIS)
 		@Nullable
+		@NullDefault
 		Emphasis getEmphasis();
 	}
 
@@ -476,9 +601,8 @@ public class DataListElement implements UIElement {
 		_config = config;
 		String cssClass = config.getCssClass();
 		if (cssClass != null && cssClass.contains("->")) {
-			// Up to tl-ai 2.0.5, css-class was the row function; since the engine gave every element
-			// a css-class of its own, a view still written that way would put the script text on the
-			// list's root element and lose the row classes without a word.
+			// The css-class of an element is the class of its root; a function of a row there would put
+			// the script text on the list and give no row a class.
 			context.error("The css-class of a <data-list> is the class of the list itself, but '"
 				+ cssClass + "' is a function of a row. Rename the property to "
 				+ Config.ROW_CSS_CLASS + ".");

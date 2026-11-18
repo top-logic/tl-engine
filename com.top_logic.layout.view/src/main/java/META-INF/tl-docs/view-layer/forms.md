@@ -470,7 +470,10 @@ multi-valued value alike. The field takes a whole row of the form
 or `full-line="false"` at the `<field>` keeps it in its column). It shows one image at a time on a
 stage as wide as the field and of a fixed height, the theme token `--tl-size-image-stage`;
 `<dimensions width="..." height="..."/>` at the attribute sets the largest width of the image and the
-height of the stage instead. Several images are stepped through with the buttons at the edges of the
+height of the stage instead. The stage has no background of its own: an image smaller than the stage
+stands centered at its own size, never enlarged, a larger one is fitted into it. The stage of a
+single-valued field has no fixed height: it is exactly as large as its image, at most as wide as the
+field and as high as the theme token or the `<dimensions>` allow. Several images are stepped through with the buttons at the edges of the
 stage or the arrow keys, wrapping around, and a counter "2 of 5" tells where the field is.
 
 - **Displayed, disabled and edited** alike: a click on the image opens it in a view covering the
@@ -488,8 +491,14 @@ stage or the arrow keys, wrapping around, and a counter "2 of 5" tells where the
   closes the editor; a click on the image of a tile closes it and shows that image on the stage.
 - **Dropping on the stage** of an edited field replaces a single image; among several images, the
   files are inserted after the image shown, and the stage moves to the first one added.
-- **Without an image**, the stage of an edited field is the dashed area that takes a dropped file or
-  opens the file picker on click; a displayed field shows nothing.
+- **While uploading**, from the files picked or dropped until the image they become is visible, the
+  stage (or the tile whose image is replaced) shows a spinner over the image and the buttons are
+  disabled; the dashed area shows the spinner and "Uploading…". An image whose data has not arrived
+  yet, e.g. after stepping, shows the spinner as well.
+- **Without an image**, the dashed area fills the whole stage of an edited multi-valued field, as
+  large as the stage with an image, and the bar below it keeps "Add image" alone, so the first upload
+  does not make the field grow; a single-valued
+  field shows a small dashed area. It takes a dropped file or opens the file picker on click. A displayed field shows nothing.
 
 The images are fetched from the data endpoint of the control, they never enter the client state. The
 image field is chosen by the annotation only: `<accepted-types value="image/*"/>` alone keeps the

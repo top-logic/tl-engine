@@ -1,14 +1,17 @@
 /* Bildfeld — Vertrag image-field.contract.md. Leser ist TLImageField.
    Ein Feld für ein Bild oder mehrere. Das Formular zeigt nur die Bühne (tl-image-field__stage): ein Bild auf der ganzen
-   Breite des Felds, eingepasst in die Höhe --tl-size-image-stage (die Annotation dimensions gibt Breite und Höhe
-   inline); mehrere Bilder blättern die Knöpfe am Rand (tl-image-field__step) durch, der Zähler steht unten am
-   Zeilenende. Ohne Bild ist die Bühne die gestrichelte Fläche (tl-image-field__drop), die eine Datei aufnimmt oder per
-   Klick die Dateiauswahl öffnet. Im Bearbeiten steht unter der Bühne die Leiste (tl-image-field__bar) mit den Knöpfen
-   (Part Button); die Höhe der Bühne ändert sie nicht. Über der Seite liegt die Ebene tl-image-overlay, für den Editor
-   auf dem Scrim, für die ganzseitige Ansicht (tl-image-overlay--view) deckend dunkel: ihr Inhalt in der Mitte, die
-   Knöpfe zum Blättern und Schließen und der Zähler in den Rändern darum, nie über dem Inhalt. Sie trägt die ganzseitige Ansicht (tl-image-overlay__image) und den Editor (tl-image-editor): je Bild eine
-   gleich große Kachel mit den Knöpfen in einer Leiste unter dem Bild, die Fläche als letzte Kachel. Dragover an Bühne,
-   Kachel und Fläche zeichnet upload.css, Gezogen und Einfügemarke drag.css (die Kacheln tragen
+   Breite des Felds, bei mehreren Bildern fest so hoch wie --tl-size-image-stage, bei einem einzelnen
+   (tl-image-field--single) genau so groß wie das Bild, höchstens so hoch (die Annotation dimensions gibt Breite und
+   Höhe inline); ohne Fläche: ein kleineres Bild in seiner eigenen Größe mittig, ein größeres eingepasst. Mehrere
+   Bilder blättern die Knöpfe am Rand (tl-image-field__step) durch, der Zähler steht unten am Zeilenende. Ohne Bild
+   füllt die gestrichelte Fläche (tl-image-field__drop) die Bühne ganz, bei einem einzelnen Bild ist sie size-11 hoch;
+   sie nimmt eine Datei auf oder öffnet per Klick die Dateiauswahl. Im Bearbeiten steht unter der Bühne die Leiste
+   (tl-image-field__bar) mit den Knöpfen (Part Button); die Höhe der Bühne ändert sie nicht. Über der Seite liegt die
+   Ebene tl-image-overlay, für den Editor auf dem Scrim, für die ganzseitige Ansicht (tl-image-overlay--view) deckend
+   dunkel: ihr Inhalt in der Mitte, die Knöpfe zum Blättern und Schließen und der Zähler in den Rändern darum, nie über
+   dem Inhalt. Sie trägt die ganzseitige Ansicht (tl-image-overlay__image) und den Editor (tl-image-editor): je Bild
+   eine gleich große Kachel mit den Knöpfen in einer Leiste unter dem Bild, die Fläche als letzte Kachel. Dragover an
+   Bühne, Kachel und Fläche zeichnet upload.css, Gezogen und Einfügemarke drag.css (die Kacheln tragen
    data-tl-axis="horizontal"), den Ring base.css. */
 
 .tl-image-field {
@@ -19,7 +22,9 @@
 }
 .tl-image-field[hidden] { display: none; }
 
-/* Die Bühne: so breit wie das Feld, fest so hoch wie die Höhe der Bühne, damit das Blättern nichts verschiebt. */
+/* Die Bühne mehrerer Bilder: so breit wie das Feld, fest so hoch wie die Höhe der Bühne, damit das Blättern nichts
+   verschiebt. Keine Fläche: ein kleineres Bild steht in seiner eigenen Größe mittig, ein größeres wird eingepasst. Ohne
+   Bild füllt die Fläche sie ganz, damit das erste Bild das Feld nicht wachsen lässt. */
 .tl-image-field__stage {
   display: flex;
   position: relative;
@@ -29,14 +34,31 @@
   block-size: var(--tl-size-image-stage);
   box-sizing: border-box;
   border-radius: var(--tl-radius-sm);
-  background: var(--tl-surface-field);
 }
 .tl-image-field__stage[hidden] { display: none; }
 
-/* Ohne Bild füllt die Fläche die Bühne; die Bühne ist dann nur size-11 hoch. */
-.tl-image-field__stage[data-tl-state~="empty"] {
+/* Die Bühne eines einzelnen Bilds (--single): genau so groß wie das Bild, höchstens so breit wie das Feld; das Bild
+   höchstens so hoch wie die Höhe der Bühne (die Annotation dimensions setzt sie am Bild inline). Ohne Bild die kleine
+   Fläche, size-11 hoch. */
+.tl-image-field--single > .tl-image-field__stage {
+  align-self: flex-start;
+  inline-size: auto;
+  max-inline-size: 100%;
+  block-size: auto;
+}
+
+.tl-image-field--single > .tl-image-field__stage[data-tl-state~="empty"] {
+  align-self: stretch;
+  inline-size: 100%;
   block-size: var(--tl-size-11);
-  background: none;
+}
+
+.tl-image-field--single .tl-image-field__show {
+  flex: 0 1 auto;
+}
+
+.tl-image-field--single .tl-image-field__image {
+  max-block-size: var(--tl-size-image-stage);
 }
 
 /* Das Bild ist ein Knopf: er öffnet die ganzseitige Ansicht, lesend wie im Bearbeiten. */
@@ -56,6 +78,7 @@
 }
 .tl-image-field__show[hidden] { display: none; }
 
+/* Nie vergrößert: nur Höchstmaße, keine Breite und Höhe. */
 .tl-image-field__image {
   display: block;
   max-inline-size: 100%;
@@ -85,6 +108,31 @@
   color: var(--tl-text-inverse);
 }
 .tl-image-field__counter[hidden] { display: none; }
+
+/* Solange hochgeladen wird und bis die Daten des Bilds da sind: eine durchscheinende Decke über Bühne oder Bild der
+   Kachel, in der Mitte der Spinner (Part Spinner) auf einer kleinen schwebenden Fläche. */
+.tl-image-field__busy,
+.tl-image-editor__busy {
+  display: flex;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--tl-radius-sm);
+  background: var(--tl-surface-scrim);
+  cursor: progress;
+}
+.tl-image-field__busy[hidden],
+.tl-image-editor__busy[hidden] { display: none; }
+
+.tl-image-field__indicator {
+  display: flex;
+  padding: var(--tl-space-sm);
+  border-radius: var(--tl-radius-md);
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  background: var(--tl-surface-overlay);
+}
+.tl-image-field__indicator[hidden] { display: none; }
 
 /* Die Leiste unter der Bühne im Bearbeiten: die Knöpfe nebeneinander, umbrechend. */
 .tl-image-field__bar {
@@ -257,6 +305,7 @@
 /* Das Bild ist ein Knopf: er schließt den Editor und zeigt das Bild auf der Bühne. */
 .tl-image-editor__show {
   display: flex;
+  position: relative;
   align-items: center;
   justify-content: center;
   block-size: var(--tl-size-11);

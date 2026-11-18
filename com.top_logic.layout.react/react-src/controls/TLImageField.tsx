@@ -72,29 +72,41 @@ function format(text: string, ...values: (string | number)[]): string {
  * the data endpoint of the server control by the key of its tile. The form never shows more than
  * the stage; several images are arranged in an editor covering the page.
  *
+ * The stage of several images has a fixed height, so stepping never moves the layout; without an
+ * image, an edited field shows the dashed area filling it. The stage of a single image is exactly as
+ * large as the image, at most the height of the theme or of the dimensions; without an image, an
+ * edited field shows a small dashed area. An image is never enlarged; a smaller one stands centered.
+ *
  * Several images are stepped through with the buttons over the stage or the arrow keys, a counter
  * tells where the field is. A click on the image opens it in a view covering the page opaquely, with
  * the same stepping; Escape closes it. This holds for a displayed, a disabled and an edited field alike.
  *
- * An edited field holding an image has a bar of buttons below the stage: "Add image" (several
- * images only) picks files inserted after the image shown, "Replace" picks a file replacing the image
+ * An edited field holding an image has a bar of buttons below the stage: "Add image" (several images
+ * only) picks files inserted after the image shown, "Replace" picks a file replacing the image
  * shown, "Remove" removes it, and "Manage images" (several images only) opens the editor: a tile per
  * image with a button picking a file that replaces it (a file dropped on the tile replaces it as well),
  * a button removing it and, where the order of the images is part of the value, a handle moving it
  * by dragging or with Alt + arrow key; a dashed tile after the others takes further images. "Done"
  * or Escape closes the editor, a click on the image of a tile closes it and shows that image on the
- * stage.
+ * stage. An edited field of several images keeps the bar with "Add image" alone while it is empty,
+ * so that the first image does not move the layout.
  *
  * A file dropped on the stage of an edited field replaces a single image and is inserted after the
  * image shown among several; the stage then shows the first image added. Without an image, the stage
  * of an edited field is the dashed area, of a displayed field nothing.
+ *
+ * From the files picked or dropped until the image they become is visible, the stage shows a spinner
+ * over the image, the dashed areas a spinner and "Uploading…", and the buttons of the bar are
+ * disabled; in the editor, the tile whose image is replaced shows the spinner. An image whose data
+ * has not arrived yet, e.g. after stepping, shows the spinner as well.
  *
  * State:
  * - images: [{ key, name }]
  * - multiple: boolean, whether the field holds several images
  * - ordered: boolean, whether the user arranges the order of several images
  * - width: string, the CSS width the stage shows an image at most; absent: the width of the field
- * - height: string, the CSS height of the stage; absent: the height of the theme
+ * - height: string, the CSS height of the stage of several images, the largest height of a single
+ *   image; absent: the height of the theme
  * - accept: string, the file types the file picker offers (HTML accept attribute); absent: all
  * - maxUploadSize: number, the size limit of each single file in bytes (0: none)
  * - error: string, the message of the last failed upload; absent after a successful one
@@ -107,6 +119,7 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
   const dataUrl = useTLDataUrl();
   const t = useI18N(I18N_KEYS);
   const Button = usePart('Button');
+  const Spinner = usePart('Spinner');
   const editorTitleId = React.useId();
 
   const images = (state.images as ImageTile[] | null) ?? [];
@@ -137,6 +150,21 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
     lastIndexRef.current = Math.max(currentIndex, 0);
   }, [currentIndex]);
 
+  // The keys of the images whose data has arrived (or failed to), at the stage or at a tile.
+  const [loadedKeys, setLoadedKeys] = React.useState<ReadonlySet<string>>(() => new Set());
+  // The key of the image an upload added (or replaced an image by), until its data has arrived.
+  const [arrivedKey, setArrivedKey] = React.useState<string | null>(null);
+  // The key of the image an upload replaces, while the upload runs.
+  const [replacingKey, setReplacingKey] = React.useState<string | null>(null);
+
+  /** Notes that the data of the image of the given key has arrived (or failed to). */
+  const loaded = React.useCallback((key: string) => {
+    setLoadedKeys(keys => (keys.has(key) ? keys : new Set(keys).add(key)));
+  }, []);
+
+  // From the files picked or dropped until the image they become is visible.
+  const working = uploading || (arrivedKey != null && !loadedKeys.has(arrivedKey));
+
   React.useEffect(() => {
     const before = keysBeforeAddRef.current;
     if (before == null) {
@@ -146,8 +174,13 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
     if (added) {
       keysBeforeAddRef.current = null;
       setCurrentKey(added.key);
+      setArrivedKey(added.key);
     }
   }, [images]);
+
+  React.useEffect(() => {
+    if (!uploading) setReplacingKey(null);
+  }, [uploading]);
 
   React.useEffect(() => {
     // A failed upload adds nothing to move to.
@@ -188,6 +221,7 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
       parts.push({ name: PART_AFTER, file: new Blob([afterKey]), fileName: PART_AFTER });
     }
     keysBeforeAddRef.current = new Set(images.map(tile => tile.key));
+    setReplacingKey(replacedKey);
     upload(parts);
   }, [upload, images]);
 
@@ -231,7 +265,7 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
    */
   const fileDropProps = (target: string, onFiles: (files: FileList) => void) => ({
     onDragOver: (event: React.DragEvent) => {
-      if (!editing || uploading || !isFileDrag(event)) {
+      if (!editing || working || !isFileDrag(event)) {
         return;
       }
       event.preventDefault();
@@ -247,7 +281,7 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
       setDropTarget(current => (current === target ? null : current));
     },
     onDrop: (event: React.DragEvent) => {
-      if (!editing || uploading || !isFileDrag(event)) {
+      if (!editing || working || !isFileDrag(event)) {
         return;
       }
       event.preventDefault();
@@ -272,7 +306,7 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
 
   /** Opens the file picker for a file replacing the image of the given tile. */
   const pickReplacement = (tile: ImageTile) => {
-    if (uploading) return;
+    if (working) return;
     replacedKeyRef.current = tile.key;
     replaceInputRef.current?.click();
   };
@@ -282,18 +316,18 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
     <label className="tl-image-field__drop"
       data-tl-state={stateAttr(dropTarget === DROP_AREA && 'dragover')}
       aria-disabled={disabled ? true : undefined}
-      aria-busy={uploading ? true : undefined}
+      aria-busy={working ? true : undefined}
       {...fileDropProps(DROP_AREA, onFiles)}>
       <input
         type="file"
         className="tl-visually-hidden"
         multiple={multiple}
         accept={accept || undefined}
-        disabled={disabled || uploading}
+        disabled={disabled || working}
         onChange={picked(onFiles)}
       />
-      <ThemeIcon encoded={ICON_UPLOAD} className="tl-icon-md" />
-      <span className="tl-image-field__label">{uploading ? t['js.uploading'] : t['js.imageField.upload']}</span>
+      {working ? <Spinner /> : <ThemeIcon encoded={ICON_UPLOAD} className="tl-icon-md" />}
+      <span className="tl-image-field__label">{working ? t['js.uploading'] : t['js.imageField.upload']}</span>
     </label>
   );
 
@@ -326,9 +360,18 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
     role: 'group' as const,
   };
 
+  // The stage of several images has the height of the dimensions; a single image is at most that high.
   const style: React.CSSProperties = {};
   if (state.width) style.maxInlineSize = state.width as string;
-  if (state.height) style.blockSize = state.height as string;
+  const imageStyle: React.CSSProperties = {};
+  if (state.height) {
+    if (multiple || images.length === 0) {
+      style.blockSize = state.height as string;
+    } else {
+      imageStyle.maxBlockSize = state.height as string;
+    }
+  }
+  const rootClass = rootClassName(state, 'tl-image-field', !multiple && 'tl-image-field--single');
 
   /** The hidden input picking the file that replaces the image {@link pickReplacement} was called for. */
   const replaceInput = () => editing && (
@@ -378,7 +421,9 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
                     aria-label={format(t['js.imageField.show'], altOf(tile))}
                     aria-current={index === currentIndex ? true : undefined}
                     onClick={() => show(tile)}>
-                    <img className="tl-image-editor__image" src={imageUrl(tile)} alt={altOf(tile)} />
+                    <img className="tl-image-editor__image" src={imageUrl(tile)} alt={altOf(tile)}
+                      onLoad={() => loaded(tile.key)} onError={() => loaded(tile.key)} />
+                    {(tile.key === replacingKey || !loadedKeys.has(tile.key)) && busyLayer('tl-image-editor__busy')}
                   </button>
                   <div className="tl-image-editor__actions">
                     {arrangeable && (
@@ -397,7 +442,7 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
                       display="icon-only"
                       appearance="ghost"
                       small
-                      disabled={uploading}
+                      disabled={working}
                       onClick={() => pickReplacement(tile)}
                     />
                     <Button
@@ -422,13 +467,38 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
     );
   };
 
+  /** The layer over an image whose data is on its way: a translucent cover with the spinner. */
+  const busyLayer = (className: string) => (
+    <span className={className}>
+      <span className="tl-image-field__indicator"><Spinner /></span>
+    </span>
+  );
+
+  /**
+   * The button of the bar picking images that are added after the image of the given key, at the end
+   * where none is given, with its hidden file input.
+   */
+  const addButton = (afterKey: string | null) => (
+    <>
+      <Button label={t['js.imageField.add']} image={ICON_ADD} display="icon-label"
+        appearance="secondary" disabled={working}
+        onClick={() => addInputRef.current?.click()} />
+      <input ref={addInputRef} type="file" multiple accept={accept || undefined} hidden
+        onChange={picked(files => doUpload(files, null, afterKey))} />
+    </>
+  );
+
   if (current == null) {
     return (
-      <div {...rootProps} className={rootClassName(state, 'tl-image-field')}>
+      <div {...rootProps} className={rootClass}>
         {!valueOnly && (
           <div className="tl-image-field__stage" data-tl-state="empty" style={style}>
             {dropArea(files => doUpload(files, null, null))}
           </div>
+        )}
+        {editing && multiple && (
+          // The bar of several images stays while the field is empty, so the first image does not move the layout.
+          <div className="tl-image-field__bar">{addButton(null)}</div>
         )}
         {!managing && errorMessage}
         {replaceInput()}
@@ -445,42 +515,39 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
     }
   });
 
+  // The stage works while an upload runs and until the data of the image it shows has arrived.
+  const stageBusy = working || !loadedKeys.has(current.key);
+
   return (
-    <div {...rootProps} className={rootClassName(state, 'tl-image-field')}>
+    <div {...rootProps} className={rootClass}>
       <div className="tl-image-field__stage" style={style}
         data-tl-state={stateAttr(dropTarget === DROP_AREA && 'dragover')}
-        aria-busy={uploading ? true : undefined}
+        aria-busy={stageBusy ? true : undefined}
         onKeyDown={stepKeys}
         {...stageDrop}>
         <button type="button" className="tl-image-field__show"
           aria-label={format(t['js.imageField.open'], altOf(current))}
           onClick={() => setFullPage(true)}>
-          <img className="tl-image-field__image" src={imageUrl(current)} alt={altOf(current)} />
+          <img className="tl-image-field__image" src={imageUrl(current)} alt={altOf(current)} style={imageStyle}
+            onLoad={() => loaded(current.key)} onError={() => loaded(current.key)} />
         </button>
+        {stageBusy && busyLayer('tl-image-field__busy')}
         {stepButtons('tl-image-field__step')}
         {images.length > 1 && counter(currentIndex, 'tl-image-field__counter')}
       </div>
       {editing && (
         <div className="tl-image-field__bar">
-          {multiple && (
-            <Button label={t['js.imageField.add']} image={ICON_ADD} display="icon-label"
-              appearance="secondary" disabled={uploading}
-              onClick={() => addInputRef.current?.click()} />
-          )}
+          {multiple && addButton(current.key)}
           <Button label={t['js.imageField.replaceShown']} image={ICON_UPLOAD} display="icon-label"
-            appearance="secondary" disabled={uploading}
+            appearance="secondary" disabled={working}
             onClick={() => pickReplacement(current)} />
           <Button label={t['js.imageField.removeShown']} image={ICON_REMOVE} display="icon-label"
-            appearance="secondary"
+            appearance="secondary" disabled={working}
             onClick={() => remove(current)} />
           {multiple && (
             <Button label={t['js.imageField.manage']} image={ICON_MANAGE_IMAGES} display="icon-label"
-              appearance="secondary"
+              appearance="secondary" disabled={working}
               onClick={() => setManaging(true)} />
-          )}
-          {multiple && (
-            <input ref={addInputRef} type="file" multiple accept={accept || undefined} hidden
-              onChange={picked(files => doUpload(files, null, current.key))} />
           )}
         </div>
       )}

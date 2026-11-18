@@ -19,6 +19,7 @@ import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-re
 import { register, registerPart } from 'tl-react-bridge';
 import TLImageField from './TLImageField';
 import ButtonPart from './button/ButtonPart';
+import SpinnerPart from './progress/SpinnerPart';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -38,6 +39,7 @@ let uploads: FormData[] = [];
 beforeAll(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   registerPart('Button', ButtonPart);
+  registerPart('Spinner', SpinnerPart);
   register('TLImageField', TLImageField);
 });
 
@@ -131,6 +133,27 @@ function pick(input: HTMLInputElement, files: File[]): void {
   act(() => { input.dispatchEvent(new Event('change', { bubbles: true })); });
 }
 
+/** Lets the given image report that its data has arrived. */
+function load(img: Element): void {
+  act(() => { img.dispatchEvent(new Event('load')); });
+}
+
+/** Holds back the answer to the next upload until the answered function is called. */
+function holdUpload(): () => Promise<void> {
+  let answer: () => void = () => {};
+  const held = new Promise<void>(resolve => { answer = resolve; });
+  const original = globalThis.fetch;
+  vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+    if (init?.body instanceof FormData) {
+      uploads.push(init.body);
+      await held;
+      return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    return original(url, init);
+  }));
+  return async () => { answer(); await settle(); };
+}
+
 /** Drops the given files on the given element. */
 function dropFiles(element: Element, files: File[]): void {
   const dataTransfer = { types: ['Files'], files, dropEffect: 'none' };
@@ -163,6 +186,20 @@ describe('image field', () => {
     expect(input.accept).toBe('image/*');
     expect(input.multiple).toBe(false);
     expect(previewKeys(field)).toEqual([]);
+    // A single image has no bar while the field is empty.
+    expect(field.querySelector('.tl-image-field__bar')).toBeNull();
+  });
+
+  it('keeps the bar with the add button alone while an edited field of several images is empty', async () => {
+    const field = mountField({ editable: true, multiple: true, images: [] });
+
+    const bar = field.querySelector('.tl-image-field__bar')!;
+    expect(Array.from(bar.querySelectorAll('button')).map(b => b.getAttribute('aria-label'))).toEqual(['Add image']);
+    pick(bar.querySelector('input[type="file"]') as HTMLInputElement, [new File(['x'], 'new.png')]);
+    await settle();
+    expect(uploads).toHaveLength(1);
+    expect(uploads[0].get('after')).toBeNull();
+    expect(uploads[0].get('replace')).toBeNull();
   });
 
   it('shows nothing where a displayed field holds no image', () => {
@@ -180,7 +217,22 @@ describe('image field', () => {
     expect(field.querySelector('.tl-image-field__drop')).toBeNull();
     expect(field.querySelector('.tl-image-field__step')).toBeNull();
     expect(field.querySelector('.tl-image-field__counter')).toBeNull();
+    // The stage of a single image is as large as the image; the height of the dimensions limits the image.
+    expect(field.classList.contains('tl-image-field--single')).toBe(true);
+    expect((field.querySelector('.tl-image-field__stage') as HTMLElement).style.blockSize).toBe('');
+    expect((field.querySelector('img') as HTMLElement).style.maxBlockSize).toBe('300px');
+  });
+
+  it('gives the stage of several images the height of the dimensions, also without an image', () => {
+    const field = mountField({ editable: true, multiple: true, images: [A, B], height: '300px' });
+
+    expect(field.classList.contains('tl-image-field--single')).toBe(false);
     expect((field.querySelector('.tl-image-field__stage') as HTMLElement).style.blockSize).toBe('300px');
+
+    update({ images: [] });
+    const stage = currentField().querySelector('.tl-image-field__stage') as HTMLElement;
+    expect(stage.getAttribute('data-tl-state')).toBe('empty');
+    expect(stage.style.blockSize).toBe('300px');
   });
 
   it('steps through several images with its buttons and the arrow keys, wrapping around', () => {
@@ -349,6 +401,61 @@ describe('image field', () => {
 
     expect(uploads).toHaveLength(1);
     expect(await partText(uploads[0], 'replace')).toBe('0');
+  });
+
+  it('shows that it is working from the upload until the image it becomes is visible', async () => {
+    const field = mountField({ editable: true, multiple: true, ordered: true, images: [A, B] });
+    load(field.querySelector('img.tl-image-field__image')!);
+    expect(field.querySelector('.tl-image-field__busy')).toBeNull();
+
+    const answer = holdUpload();
+    dropFiles(currentField().querySelector('.tl-image-field__stage')!, [new File(['x'], 'new.png')]);
+    await settle();
+    const stage = currentField().querySelector('.tl-image-field__stage')!;
+    expect(stage.querySelector('.tl-image-field__busy [class*="spinner"]')).not.toBeNull();
+    expect(stage.getAttribute('aria-busy')).toBe('true');
+    const barButtons = () => Array.from(currentField().querySelectorAll('.tl-image-field__bar button')) as HTMLButtonElement[];
+    expect(barButtons().every(button => button.disabled)).toBe(true);
+
+    await answer();
+    update({ images: [A, C, B] });
+    // The stage moved to the image added, whose data has not arrived yet.
+    expect(previewKeys(currentField())).toEqual(['2']);
+    expect(currentField().querySelector('.tl-image-field__busy')).not.toBeNull();
+    expect(barButtons().every(button => button.disabled)).toBe(true);
+
+    load(currentField().querySelector('img.tl-image-field__image')!);
+    expect(currentField().querySelector('.tl-image-field__busy')).toBeNull();
+    expect(currentField().querySelector('.tl-image-field__stage')!.getAttribute('aria-busy')).toBeNull();
+    expect(barButtons().some(button => button.disabled)).toBe(false);
+  });
+
+  it('shows the spinner in the dashed area while the first image is uploaded', async () => {
+    const field = mountField({ editable: true, multiple: false, images: [] });
+
+    const answer = holdUpload();
+    const input = field.querySelector('.tl-image-field__drop input[type="file"]') as HTMLInputElement;
+    pick(input, [new File(['x'], 'new.png')]);
+    await settle();
+    const drop = currentField().querySelector('.tl-image-field__drop')!;
+    expect(drop.querySelector('[class*="spinner"]')).not.toBeNull();
+    expect(drop.textContent).toContain('Uploading…');
+    await answer();
+  });
+
+  it('covers the tile whose image is replaced in the editor', async () => {
+    mountField({ editable: true, multiple: true, ordered: true, images: [A, B] });
+    click(currentField(), 'Manage images');
+    for (const img of Array.from(editor()!.querySelectorAll('img'))) load(img);
+    expect(editor()!.querySelector('.tl-image-editor__busy')).toBeNull();
+
+    const answer = holdUpload();
+    dropFiles(editor()!.querySelectorAll('.tl-image-editor__tile')[1], [new File(['x'], 'new.png')]);
+    await settle();
+    const tiles = editor()!.querySelectorAll('.tl-image-editor__tile');
+    expect(tiles[0].querySelector('.tl-image-editor__busy')).toBeNull();
+    expect(tiles[1].querySelector('.tl-image-editor__busy')).not.toBeNull();
+    await answer();
   });
 
   it('keeps its place when the image shown is removed', () => {

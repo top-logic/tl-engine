@@ -159,7 +159,7 @@ const MODIFIERS = {
   'tl-media': new Set(['cover', 'contain', 'document', 'preview']), // Einpassung, Papier, Vorschau; gespiegelt: data-tl-state.
   'tl-prose': new Set([]),
   'tl-file': new Set([]), // Leer: data-tl-state.
-  'tl-image-field': new Set([]), // Bühne und Leiste; Ziehen, Ablegen: data-tl-state.
+  'tl-image-field': new Set(['single']), // Bühne und Leiste; single: ein einzelnes Bild (eine Form); Ziehen, Ablegen: data-tl-state.
   'tl-image-overlay': new Set(['view']), // Ebene über der Seite: Editor eines Bildfelds, mit view die ganzseitige Ansicht (eine Form).
   'tl-image-editor': new Set([]), // Kacheln eines Bildfelds; Ziehen, Ablegen: data-tl-state.
   'tl-steps': new Set(['vertical']), // Erledigt: data-tl-state; aktuell: aria-current.

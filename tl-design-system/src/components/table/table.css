@@ -186,7 +186,7 @@
   white-space: nowrap;
 }
 
-/* Pflicht (#30383): ein Stern hinter dem Titel, solange die Tabelle bearbeitet wird — wie im Formular
+/* Pflicht (#30391): ein Stern hinter dem Titel, solange die Tabelle bearbeitet wird — wie im Formular
    (tl-form-field__required). Er gibt nie nach: nur der Titel endet mit Ellipse. Symbol, darum 3:1 (pairs.mjs). */
 .tl-table__required {
   flex: none;
@@ -756,7 +756,7 @@
   box-shadow: inset 0 0 0 var(--tl-border-width-sm) var(--tl-border-control);
 }
 
-/* Pflicht in der Zelle (#30383): eine Ecke in status-error-text oben rechts im Feld, an jedem Feld, das in dieser
+/* Pflicht in der Zelle (#30391): eine Ecke in status-error-text oben rechts im Feld, an jedem Feld, das in dieser
    Zeile Pflicht ist — auch bedingt (das Feld trägt aria-required pro Zeile). Ein Hintergrundbild statt ::after:
    ein input hat kein Pseudo-Element, und die Zelle bleibt ohne position (fixierte Zellen sind sticky). Der
    Radius des Felds rundet die Ecke mit. Symbol, darum 3:1 gegen surface-field (pairs.mjs). */

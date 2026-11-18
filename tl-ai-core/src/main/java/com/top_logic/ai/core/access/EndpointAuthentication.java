@@ -25,6 +25,7 @@ import com.top_logic.service.openapi.common.authentication.oauth.CredentialSecre
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.apikey.ServerAPIKeySecret;
+import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.impl.NeverAuthenticated;
 import com.top_logic.service.openapi.server.authentication.oauth.ServerCredentialSecret;
@@ -95,6 +96,37 @@ public final class EndpointAuthentication {
 		for (Map.Entry<String, ServerAuthentication.Config<?>> entry : authentications.entrySet()) {
 			Authenticator next = create(endpoint, entry.getKey(), entry.getValue(), serverSecrets);
 			result = result == null ? next : result.or(next);
+		}
+		return result;
+	}
+
+	/**
+	 * How a client presents the credentials the given authentications accept.
+	 *
+	 * <p>
+	 * An authentication that cannot be created, or that does not tell how its credential is sent,
+	 * is left out; {@link #build(String, Map, List)} reports an authentication that cannot be
+	 * created.
+	 * </p>
+	 *
+	 * @param authentications
+	 *        The configured authentication schemes by name. May be empty.
+	 * @return The descriptions in the order of the authentications.
+	 */
+	public static List<EndpointCredential> credentials(Map<String, ServerAuthentication.Config<?>> authentications) {
+		List<EndpointCredential> result = new ArrayList<>(authentications.size());
+		for (Map.Entry<String, ServerAuthentication.Config<?>> entry : authentications.entrySet()) {
+			EndpointCredential credential;
+			try {
+				credential = EndpointCredential.of(TypedConfigUtil.createInstance(entry.getValue()), entry.getKey());
+			} catch (RuntimeException ex) {
+				Logger.warn("Cannot describe the credential of the authentication '" + entry.getKey() + "'.", ex,
+					EndpointAuthentication.class);
+				continue;
+			}
+			if (credential != null) {
+				result.add(credential);
+			}
 		}
 		return result;
 	}

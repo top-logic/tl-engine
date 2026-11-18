@@ -72,6 +72,11 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-service-openapi-server</artifactId>
     </dependency>
+    <!-- OAuth authorization server with the consent page of the React UI: MCP clients sign the user in through the browser. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-oauth-server-view</artifactId>
+    </dependency>
 
     <!-- Tests -->
     <!--

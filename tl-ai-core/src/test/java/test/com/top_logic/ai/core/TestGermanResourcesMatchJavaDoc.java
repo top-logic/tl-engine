@@ -536,9 +536,13 @@ public class TestGermanResourcesMatchJavaDoc extends TestCase {
 		return declaration.find() ? declaration.group(1) : null;
 	}
 
+	/** A {@code literal} tag, whose content the doclet exports as it stands. */
+	private static final Pattern LITERAL = Pattern.compile("\\{@literal ([^}]*)\\}");
+
 	/**
 	 * The text of a JavaDoc tag as a resource value: one line, without the comment decoration a
-	 * continuation line carries.
+	 * continuation line carries, and with the content of a {@link #LITERAL} tag as the doclet
+	 * exports it.
 	 */
 	private static String unwrap(String tag) {
 		List<String> parts = new ArrayList<>();
@@ -548,7 +552,7 @@ public class TestGermanResourcesMatchJavaDoc extends TestCase {
 				parts.add(part);
 			}
 		}
-		return String.join(" ", parts);
+		return LITERAL.matcher(String.join(" ", parts)).replaceAll("$1");
 	}
 
 	private static int count(Pattern pattern, String text) {

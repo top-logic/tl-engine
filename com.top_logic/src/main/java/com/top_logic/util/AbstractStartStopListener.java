@@ -33,8 +33,6 @@ import com.top_logic.basic.MultiFileManager;
 import com.top_logic.basic.WebappFileManager;
 import com.top_logic.basic.XMLProperties;
 import com.top_logic.basic.XMLProperties.XMLPropertiesConfig;
-import com.top_logic.basic.col.TypedAnnotatable;
-import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ModuleException;
@@ -67,12 +65,6 @@ import com.top_logic.util.license.LicenseTool;
  * @author    <a href=mailto:kha@top-logic.com>Klaus Halfmann</a>
  */
 public abstract class AbstractStartStopListener implements ServletContextListener {
-
-	/**
-	 * Message to dump when password was set up.
-	 */
-	public static final Property<String> PASSWORD_INITIALIZATION_MESSAGE =
-		TypedAnnotatable.property(String.class, "passwordInitializationMessage");
 
 	private static Date STARTUP_DATE = null;
 
@@ -162,12 +154,6 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 				}
     		}
 
-        	if (!isTest) {
-				LicenseTool.getInstance().printHeader();
-
-        		System.out.println("**** Starting ****");
-        	}
-
 			long startTime = now();
         	
 			XMLProperties.restartXMLProperties(initXMLProperties(context));
@@ -177,6 +163,10 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 
         	if (!isTest) { // Leave logging as configured by test ...
         		ModuleUtil.INSTANCE.startUp(LoggerAdminBean.Module.INSTANCE);
+
+				LicenseTool.getInstance().printHeader();
+
+				Logger.info("**** Starting ****", AbstractStartStopListener.class);
         	}
 			/* Set the UncaughtExceptionHandler as soon as the logger is configured: The
 			 * UncaughtExceptionHandler should be initialized as soon as possible to catch as many
@@ -186,7 +176,7 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 			this.checkJavaTmpDir();
 
 			if (!isTest) {
-				Version.getApplicationVersion().printVersions(System.out);
+				Logger.info(Version.getApplicationVersion().toString(), AbstractStartStopListener.class);
 			}
 
 			this.configure();
@@ -213,14 +203,13 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 			STARTUP_DATE = new Date();
 
             if (!isTest) {
-                System.out.println("***** up and running (" + this.getCurrentTime() + ") *****");
+				Logger.info("***** up and running (" + this.getCurrentTime() + ") *****",
+					AbstractStartStopListener.class);
             }
 
         }
 		catch (InvalidLicenceException ex) {
-			System.err.println();
-			System.err.println(ex.getMessage());
-			System.err.println();
+			Logger.error(ex.getMessage(), ex, AbstractStartStopListener.class);
 			errorOnStartup = true;
 			shutdownApplication(context);
 			throw new RuntimeException(ex);
@@ -254,7 +243,7 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 		    	@Override
 				public Exception run() {
 		    		try {
-						System.out.println("Starting module system ...");
+						Logger.info("Starting module system ...", AbstractStartStopListener.class);
 						// The module system is not running before the application has
 						// completely started.
 						try (StartupPhase startup = ModuleUtil.INSTANCE.beginStartup()) {
@@ -264,7 +253,7 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 							startTokenSystem(clusterManagerInstance);
 							try {
 								startupModuleSystem(Version.getApplicationVersion());
-								System.out.println("Module system started successfully");
+								Logger.info("Module system started successfully", AbstractStartStopListener.class);
 
 								initApplication(ServletContextService.getInstance().getServletContext());
 
@@ -278,20 +267,9 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 							}
 						}
 
-						String message = TLContext.getContext().get(PASSWORD_INITIALIZATION_MESSAGE);
-						if (message != null) {
-							System.out.println();
-							System.out.println("*****" + "*".repeat(message.length()) + "*****");
-							System.out.println("***  " + " ".repeat(message.length()) + "  ***");
-							System.out.println("***  " + message + "  ***");
-							System.out.println("***  " + " ".repeat(message.length()) + "  ***");
-							System.out.println("*****" + "*".repeat(message.length()) + "*****");
-							System.out.println();
-						}
-
 						return null;
 					} catch (Exception e) {
-						System.out.println("System startup failed.");
+						Logger.error("System startup failed.", AbstractStartStopListener.class);
 						return e;
 					}
 		    	}
@@ -303,15 +281,12 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 		}
 	}
 
-    /**
-	 * Dump the given problem to {@link System#err} since this is the only
-	 * destination that is save to write to at this early setup stage.
+	/**
+	 * Logs the given problem that prevented the application from starting.
 	 */
 	private void reportProblem(Throwable problem) {
-		System.err.println();
-		System.err.println("Failed to start due to the following reason:");
-		problem.printStackTrace();
-		System.err.println();
+		Logger.error("Failed to start due to the following reason: " + problem.getMessage(), problem,
+			AbstractStartStopListener.class);
 	}
 
     /**
@@ -385,7 +360,6 @@ public abstract class AbstractStartStopListener implements ServletContextListene
         File   ioTmpDir     = new File(ioTmpDirPath);
         if (!ioTmpDir.exists()) {
             String msg = "java.io.tmpdir='" + ioTmpDirPath + "' does not exists";
-            System.err.println(msg);
 			Logger.fatal(msg, AbstractStartStopListener.class);
             throw new FileNotFoundException(msg);
         }
@@ -419,24 +393,26 @@ public abstract class AbstractStartStopListener implements ServletContextListene
         return theName;
     }
 
-    /**
-     * Display startup info for the System on standard out.
-     */
+	/**
+	 * Logs startup info for the system as one message.
+	 */
 	void infoAndStarter(Version aVers) {
-        System.out.println ();
-        System.out.println ("    Application: " + aVers.toString());
-        System.out.println ("  Knowledgebase: " + this.getKBase ());
-        System.out.println ("User management: " + getDataAccessDeviceIDs());
-        System.out.println (" Authentication: " + getAuthenticationDeviceIDs());
-       
-        /*
-         * DebugHelper.infoAndStarter provide information that doesn't
-         * depend on a WebApplication such as OS, User and Java. 
-         */
-        DebugHelper.infoAndStarter();
+		StringBuilder info = new StringBuilder();
+		info.append('\n');
+		info.append("    Application: ").append(aVers).append('\n');
+		info.append("  Knowledgebase: ").append(this.getKBase()).append('\n');
+		info.append("User management: ").append(getDataAccessDeviceIDs()).append('\n');
+		info.append(" Authentication: ").append(getAuthenticationDeviceIDs()).append('\n');
 
-		System.out.println("       Web Path: " + ServletContextService.getInstance().getApplication().getPath());
-    }
+		/*
+		 * DebugHelper.appendSystemInfo provides information that doesn't depend on a
+		 * WebApplication such as OS, User and Java.
+		 */
+		DebugHelper.appendSystemInfo(info);
+
+		info.append("       Web Path: ").append(ServletContextService.getInstance().getApplication().getPath());
+		Logger.info(info.toString(), AbstractStartStopListener.class);
+	}
 
     /**
      * the configured AuthenticationDeviceIDs as formatted String
@@ -480,7 +456,7 @@ public abstract class AbstractStartStopListener implements ServletContextListene
      * Is called from {@link #contextDestroyed(jakarta.servlet.ServletContextEvent)} before basic
      * features are shut down.
      *
-     * You can still use System.out and err here.
+     * The logging is still active here.
      */
     protected abstract void exitSubClassHook(ServletContext context);
 
@@ -500,7 +476,7 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 	 * Shuts the application down.
 	 */
 	protected void shutdownApplication(ServletContext servletContext) throws Error {
-		System.out.println("***** " + getVersion().getName() + " is going down! *****");
+		Logger.info("***** " + getVersion().getName() + " is going down! *****", AbstractStartStopListener.class);
 
         try {
             clusterShutdown();
@@ -541,8 +517,8 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 						ClusterManager.getInstance().setNodeState(NodeState.SHUTDOWN);
 					}
 					catch (ClusterManagerException cmx) {
-						System.err.println("Failed to set SHUTDOWN in Cluster Manager, still shuttind down");
-						cmx.printStackTrace();
+						Logger.error("Failed to set SHUTDOWN in Cluster Manager, still shutting down.", cmx,
+							AbstractStartStopListener.class);
 					}
 					return null;
 				}

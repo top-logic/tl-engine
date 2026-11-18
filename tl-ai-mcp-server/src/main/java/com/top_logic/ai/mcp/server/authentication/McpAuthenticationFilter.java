@@ -6,6 +6,7 @@
 package com.top_logic.ai.mcp.server.authentication;
 
 import java.io.IOException;
+import java.util.List;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -17,12 +18,16 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.ai.mcp.server.MCPServerService;
+import com.top_logic.ai.mcp.server.discovery.McpConnectionGuide;
+import com.top_logic.ai.mcp.server.discovery.ServerCardResource;
+import com.top_logic.base.discovery.DiscoveryContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.ai.core.access.EndpointAuthentication;
+import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 
@@ -37,7 +42,15 @@ import io.modelcontextprotocol.spec.HttpHeaders;
  * mechanism is whatever the deployment configured - see {@link EndpointAuthentication}; the challenge and
  * the status code on a failure come from the framework's own {@code ResponseEnhancer}, so a basic
  * scheme answers {@code 401} with {@code WWW-Authenticate: Basic} and a bearer scheme with
- * {@code WWW-Authenticate: Bearer ... error="invalid_token"}.
+ * {@code WWW-Authenticate: Bearer ... error="invalid_token"}. The body of such an answer is plain
+ * text ({@link PlainTextErrorResponse}): the scheme's message and, for a {@code 401}, where the
+ * client reads how to connect and which credentials are accepted ({@link McpConnectionGuide}).
+ * </p>
+ *
+ * <p>
+ * The one request served without a credential is the server card
+ * ({@link ServerCardResource#isPublicRequest(HttpServletRequest)}), which a client reads to learn
+ * how to connect.
  * </p>
  *
  * <p>
@@ -95,8 +108,15 @@ public class McpAuthenticationFilter implements Filter {
 			return;
 		}
 
-		guard(service.getAuthenticator(), service.getSessionPrincipals(),
-			(HttpServletRequest) request, (HttpServletResponse) response, chain);
+		HttpServletRequest req = (HttpServletRequest) request;
+		if (ServerCardResource.isPublicRequest(req)) {
+			// The server card is what a client reads before it has a credential.
+			chain.doFilter(request, response);
+			return;
+		}
+
+		guard(service.getAuthenticator(), service.getCredentials(), service.getSessionPrincipals(),
+			req, (HttpServletResponse) response, chain);
 	}
 
 	/**
@@ -109,8 +129,13 @@ public class McpAuthenticationFilter implements Filter {
 	 * real {@code Person} - and therefore a booted application - live in {@code tl-ai-demo}'s
 	 * security test bed.
 	 * </p>
+	 *
+	 * @param credentials
+	 *        How a client presents the credentials the authenticator accepts; named in the answer to
+	 *        a request without a valid credential.
 	 */
-	public static void guard(Authenticator authenticator, McpSessionPrincipals sessions,
+	public static void guard(Authenticator authenticator, List<EndpointCredential> credentials,
+			McpSessionPrincipals sessions,
 			HttpServletRequest req, HttpServletResponse resp, FilterChain chain)
 			throws IOException, ServletException {
 		if (ThreadContextManager.getInteraction() != null) {
@@ -124,8 +149,14 @@ public class McpAuthenticationFilter implements Filter {
 		try {
 			caller = EndpointAuthentication.resolve(authenticator, req, resp, McpAuthenticationFilter.class);
 		} catch (AuthenticationFailure ex) {
-			// The failure carries the scheme's own challenge and status code.
-			ex.enhanceResponse(resp, req.getRequestURI());
+			// The failure carries the scheme's own challenge and status code. Its message is resolved
+			// in the log locale, and so is the guidance, so that the answer is in one language.
+			PlainTextErrorResponse answer = new PlainTextErrorResponse(resp);
+			ex.enhanceResponse(answer, req.getRequestURI());
+			answer.complete(status -> status == HttpServletResponse.SC_UNAUTHORIZED
+				? McpConnectionGuide.unauthorizedGuidance(credentials, DiscoveryContext.fromRequest(req),
+					Resources.getLogInstance())
+				: null);
 			return;
 		}
 

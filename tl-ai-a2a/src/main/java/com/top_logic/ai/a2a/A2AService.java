@@ -42,6 +42,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.services.ServletContextService;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentications;
 import com.top_logic.ai.core.access.EndpointAuthentication;
@@ -181,24 +182,33 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 		@Mandatory
 		String getPath();
 
+		/** @see #getAgent() */
+		String AGENT = "agent";
+
+		/** @see #getDisplayName() */
+		String DISPLAY_NAME = "display-name";
+
+		/** @see #getDescription() */
+		String DESCRIPTION = "description";
+
 		/**
 		 * The tl-ai agent that serves it.
 		 */
-		@Name("agent")
+		@Name(AGENT)
 		@Mandatory
 		String getAgent();
 
 		/**
 		 * The name on the agent card. Empty: the path.
 		 */
-		@Name("display-name")
+		@Name(DISPLAY_NAME)
 		@Nullable
 		String getDisplayName();
 
 		/**
 		 * What the agent does, for the agent card.
 		 */
-		@Name("description")
+		@Name(DESCRIPTION)
 		@Nullable
 		String getDescription();
 
@@ -301,6 +311,11 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 	 */
 	public static final String ARTIFACTS_EXTENSION = "https://top-logic.com/a2a/extensions/artifacts/v1";
 
+	/**
+	 * The version on the card of an exposed agent.
+	 */
+	public static final String AGENT_VERSION = "1.0";
+
 	private static volatile A2AService _instance;
 
 	private final List<A2ASubjectResolver> _subjectResolvers;
@@ -320,6 +335,8 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 	private final ContextBook _contexts = new ContextBook();
 
 	private Authenticator _authenticator;
+
+	private List<EndpointCredential> _credentials = List.of();
 
 	private AgentRunBackend _backend;
 
@@ -361,7 +378,8 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 		super.startUp();
 		Config<?> config = getConfig();
 		_authenticator =
-			EndpointAuthentication.build("/a2a/*", config.getAuthentications(), config.getSecrets());
+			EndpointAuthentication.build(A2AServlet.ENDPOINT + "/*", config.getAuthentications(), config.getSecrets());
+		_credentials = EndpointAuthentication.credentials(config.getAuthentications());
 		if (!_observers.isEmpty()) {
 			ObserverQueue queue = new ObserverQueue("a2a-observers");
 			_observerQueue = queue;
@@ -444,6 +462,16 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 	/** What checks the credential of a caller. */
 	public Authenticator authenticator() {
 		return _authenticator;
+	}
+
+	/**
+	 * How a client presents the credentials the configured {@link Config#getAuthentications()
+	 * authentications} accept.
+	 *
+	 * @see EndpointAuthentication#credentials(Map)
+	 */
+	public List<EndpointCredential> getCredentials() {
+		return _credentials;
 	}
 
 	/**
@@ -572,10 +600,10 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 			"name", displayName(agent),
 			"description", description == null || description.isBlank()
 				? "TopLogic agent " + displayName(agent) + "." : description,
-			"supportedInterfaces", List.of(Json.map("url", base + "/a2a/" + agent.getPath(),
+			"supportedInterfaces", List.of(Json.map("url", base + A2AServlet.agentPath(agent.getPath()),
 				"protocolBinding", "JSONRPC", "protocolVersion", "1.0")),
 			"provider", Json.map("url", base, "organization", appName()),
-			"version", "1.0",
+			"version", AGENT_VERSION,
 			"capabilities", Json.map("streaming", Boolean.TRUE, "pushNotifications", Boolean.FALSE,
 				"extensions", List.of(Json.map("uri", ARTIFACTS_EXTENSION,
 					"description", "Artifacts by reference: GET <url>?ref=tl-artifact://<app>/<kind>/<id>&section=..."

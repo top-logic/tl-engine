@@ -49,7 +49,7 @@ public class AccessTokenAuthenticator implements Authenticator {
 	 */
 	public static final String AGENT_ENDPOINTS_PERMISSION = "agent-endpoints";
 
-	private static final String BEARER = "Bearer ";
+	private static final String BEARER = AccessTokenAuthentication.BEARER_SCHEME + ' ';
 
 	@Override
 	public Person authenticate(HttpServletRequest req, HttpServletResponse resp) throws AuthenticationFailure {

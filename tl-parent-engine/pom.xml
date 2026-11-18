@@ -119,6 +119,8 @@
 		<module>../com.top_logic.model.wysiwyg</module>
 		<module>../tl-monitoring-core</module>
 		<module>../com.top_logic.monitoring</module>
+		<module>../com.top_logic.oauth.server</module>
+		<module>../com.top_logic.oauth.server.view</module>
 		<module>../com.top_logic.office</module>
 		<module>../com.top_logic.presentation</module>
 		<module>../com.top_logic.reporting</module>

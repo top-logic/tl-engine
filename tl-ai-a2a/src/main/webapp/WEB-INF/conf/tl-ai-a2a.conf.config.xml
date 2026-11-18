@@ -26,6 +26,15 @@
 			<instance class="com.top_logic.ai.a2a.A2AService"/>
 		</config>
 
+		<!-- Names the exposed agents and their cards in llms.txt and the AI Catalog while A2AService runs. -->
+		<config service-class="com.top_logic.base.discovery.AgentDiscoveryService">
+			<instance>
+				<contributions>
+					<contribution class="com.top_logic.ai.a2a.discovery.A2ADiscoveryContribution"/>
+				</contributions>
+			</instance>
+		</config>
+
 		<!-- The client tools a2a.*, see A2AClientTools. -->
 		<config service-class="com.top_logic.ai.tool.api.registry.ToolRegistryService">
 			<instance>

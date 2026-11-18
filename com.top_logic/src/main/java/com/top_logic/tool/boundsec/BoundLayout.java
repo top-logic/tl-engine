@@ -154,6 +154,13 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 		}
 		_securityMaster = masterComponent;
 
+		if (hasOwnSecurityObjectProvider()) {
+			Logger.warn("The security object configured at layout '" + getName()
+				+ "' is not used, because '" + masterComponent.getName()
+				+ "' is the security master of this layout. Configure the security object at the security master instead.",
+				BoundLayout.class);
+		}
+
 		// Forward to ancestors.
 		if (getParent() instanceof BoundLayout layout) {
 			layout.initSecurityMaster(masterComponent);

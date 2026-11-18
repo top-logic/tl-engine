@@ -543,6 +543,8 @@
 				<entry value="com.top_logic.basic.version.model" />
 				<entry value="com.top_logic.html.template.parser" />
 				<entry value="com.top_logic.mig.util.HSLColor" />
+				<entry value="com.top_logic.base.discovery.catalog" />
+				<entry value="com.top_logic.html.template.entities" />
 			</ignore>
 		</config>
 		

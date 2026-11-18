@@ -41,6 +41,15 @@
 				keep-alive-interval="30"
 			/>
 		</config>
+
+		<!-- Names the MCP endpoint and its server card in llms.txt and the AI Catalog while MCPServerService runs. -->
+		<config service-class="com.top_logic.base.discovery.AgentDiscoveryService">
+			<instance>
+				<contributions>
+					<contribution class="com.top_logic.ai.mcp.server.discovery.McpDiscoveryContribution"/>
+				</contributions>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

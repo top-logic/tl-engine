@@ -9,6 +9,7 @@ import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 
 /**
  * Messages about personal access tokens: to the person creating or revoking one, and to a client
@@ -72,6 +73,34 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     authentifiziert daher niemanden. Prüfen Sie deren Konfiguration und deren Secret.
 	 */
 	public static ResKey2 ERROR_AUTHENTICATION_UNAVAILABLE__DOMAIN_ENDPOINT;
+
+	/**
+	 * {@link EndpointCredential#credential() Credential} of a personal access token.
+	 *
+	 * @en A personal access token
+	 * @de Ein persönliches Zugriffstoken
+	 */
+	public static ResKey CREDENTIAL_PERSONAL_ACCESS_TOKEN;
+
+	/**
+	 * {@link EndpointCredential#headerValue() Header value} of a personal access token.
+	 *
+	 * @en Bearer {@literal <personal access token>}
+	 * @de Bearer {@literal <persönliches Zugriffstoken>}
+	 */
+	public static ResKey CREDENTIAL_PERSONAL_ACCESS_TOKEN_VALUE;
+
+	/**
+	 * {@link EndpointCredential#obtain() Where} a person creates a personal access token.
+	 *
+	 * @en Every person creates their own personal access token in the application at {0}: Settings
+	 *     → Access tokens → New token, with the permission "Agent interfaces (MCP/A2A)". The token is
+	 *     shown only once.
+	 * @de Jede Person erstellt ihr eigenes persönliches Zugriffstoken in der Anwendung unter {0}:
+	 *     Einstellungen → Zugriffstokens → Neues Token, mit der Berechtigung
+	 *     "Agenten-Schnittstellen (MCP/A2A)". Das Token wird nur einmal angezeigt.
+	 */
+	public static ResKey1 CREDENTIAL_PERSONAL_ACCESS_TOKEN_OBTAIN__URL;
 
 	/**
 	 * Label of the access token permission {@link AccessTokenAuthenticator#AGENT_ENDPOINTS_PERMISSION}.

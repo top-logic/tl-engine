@@ -14,9 +14,6 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -43,7 +40,6 @@ import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
-import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
@@ -55,11 +51,10 @@ import com.top_logic.model.search.expr.interpreter.SearchExpressionPart;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.ToString;
 import com.top_logic.model.search.expr.visit.Visitor;
+import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
-
-import de.haumacher.msgbuf.data.ReflectiveDataObject;
 
 /**
  * Part of an executable search model.
@@ -310,19 +305,8 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 * allowed to discover.
 	 *
 	 * <p>
-	 * Only <em>business objects</em> are filtered. A {@link TLModelPart model element} (a type, an
-	 * attribute, a module, a classifier) is discoverable for every user and therefore kept, see
-	 * {@link ModelAccessRights#isDiscoverAllowed(Person, TLObject)}.
-	 * </p>
-	 *
-	 * <p>
-	 * A {@link ReflectiveDataObject} (e.g. a diagram assembled by a script) is kept for the same
-	 * reason. It is a <em>structured value</em>, not a container of business objects: its properties
-	 * form an object graph that may be cyclic, and a filtered copy would be a plain {@link Map} that
-	 * cannot take the place of the original - filtering it would destroy the value instead of
-	 * protecting data. A business object that a script stores in such a value is therefore
-	 * <em>not</em> filtered: whoever passes that object on to the user is responsible for checking
-	 * the discover right, see {@link ModelAccessRights#isDiscoverAllowed(Person, TLObject)}.
+	 * Which values are filtered and which are kept is described at
+	 * {@link DiscoverRight#filter(Person, Object, java.util.function.Consumer)}.
 	 * </p>
 	 *
 	 * @param value
@@ -341,7 +325,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 *
 	 * <p>
 	 * Which values are filtered and which are kept is described at
-	 * {@link #filterSecurity(Person, Object)}.
+	 * {@link DiscoverRight#filter(Person, Object, java.util.function.Consumer)}.
 	 * </p>
 	 *
 	 * @param user
@@ -356,142 +340,7 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 	 *         the given value is returned.
 	 */
 	public static Object filterSecurity(Person user, Object value, SecurityFilterReport report) {
-		if (value == null) {
-			return null;
-		}
-		if (value instanceof TLObject object) {
-			return filterSecurityTLObject(user, object, report);
-		}
-		if (value instanceof ReflectiveDataObject) {
-			// A structured value, not a container of business objects, see above.
-			return value;
-		}
-		if (value instanceof Collection collectionValue) {
-			return filterSecurityCollection(user, collectionValue, report);
-		}
-		if (value instanceof Map<?, ?> mapValue) {
-			return filterSecurityMap(user, mapValue, report);
-		}
-		return value;
-	}
-
-	private static Object filterSecurityTLObject(Person user, TLObject value, SecurityFilterReport report) {
-		if (ModelAccessRights.getInstance().isDiscoverAllowed(user, value)) {
-			return value;
-		} else {
-			if (report != null) {
-				report.dropped(value);
-			}
-			return null;
-		}
-	}
-
-	private static Object filterSecurityCollection(Person user, Collection<?> value, SecurityFilterReport report) {
-		if (value.isEmpty()) {
-			return value;
-		}
-		Collection<Object> filtered;
-		boolean anyChanges = false;
-		if (value instanceof RandomAccess) {
-			List<?> list = (List<?>) value;
-			filtered = new ArrayList<>();
-			for (int i = 0, size = list.size(); i < size; i++) {
-				Object elt = list.get(i);
-				Object filteredValue = filterSecurity(user, elt, report);
-				if (filteredValue == elt) {
-					// elt (recursively) allowed
-					filtered.add(elt);
-				} else {
-					if (filteredValue != null) {
-						// Some content in elt not allowed.
-						filtered.add(filteredValue);
-					} else {
-						// Skip null value. Original was not null.
-					}
-					anyChanges = true;
-				}
-			}
-		} else {
-			if (value instanceof LinkedHashSet) {
-				filtered = new LinkedHashSet<>();
-			} else if (value instanceof Set) {
-				filtered = new HashSet<>();
-			} else {
-				filtered = new ArrayList<>();
-			}
-			for (Object elt : value) {
-				Object filteredValue = filterSecurity(user, elt, report);
-				if (filteredValue == elt) {
-					// elt (recursively) allowed
-					filtered.add(elt);
-				} else {
-					if (filteredValue != null) {
-						// Some content in elt not allowed.
-						filtered.add(filteredValue);
-					} else {
-						// Skip null value. Original was not null.
-					}
-					anyChanges = true;
-				}
-			}
-		}
-		if (anyChanges) {
-			return filtered;
-		} else {
-			// Return original value to indicate that no elements had to be filtered.
-			return value;
-		}
-	}
-
-	private static Object filterSecurityMap(Person user, Map<?, ?> value, SecurityFilterReport report) {
-		if (value.isEmpty()) {
-			return value;
-		}
-		Map<Object, Object> filtered;
-		boolean anyChanges = false;
-		if (value instanceof LinkedHashMap) {
-			filtered = new LinkedHashMap<>();
-		} else {
-			filtered = new HashMap<>();
-		}
-		for (Entry<?, ?> entry : value.entrySet()) {
-			Object key = entry.getKey();
-			Object filteredKey = filterSecurity(user, key, report);
-			Object elt = entry.getValue();
-			Object filteredValue = filterSecurity(user, elt, report);
-			if (filteredKey == key) {
-				if (filteredValue == elt) {
-					// key and elt (recursively) allowed
-					filtered.put(key, elt);
-				} else {
-					if (filteredValue != null) {
-						// Some content in elt not allowed.
-						filtered.put(key, filteredValue);
-					} else {
-						// Skip null value. Original was not null.
-					}
-					anyChanges = true;
-				}
-			} else {
-				if (filteredKey != null) {
-					// Some content in key not allowed.
-					if (elt == null || filteredValue != null) {
-						filtered.put(filteredKey, filteredValue);
-					} else {
-						// elt is not allowed. Skip entry.
-					}
-				} else {
-					// key is not allowed. Skip entry.
-				}
-				anyChanges = true;
-			}
-		}
-		if (anyChanges) {
-			return filtered;
-		} else {
-			// Return original value to indicate that no elements had to be filtered.
-			return value;
-		}
+		return DiscoverRight.filter(user, value, report == null ? null : report::dropped);
 	}
 
 	/**

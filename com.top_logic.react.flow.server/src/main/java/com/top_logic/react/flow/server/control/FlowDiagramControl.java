@@ -69,6 +69,12 @@ public class FlowDiagramControl extends ReactControl implements FlowControlCommo
 	private static final String DIAGRAM_PATCH_STATE = "diagramPatch";
 
 	/**
+	 * State key holding whether the client shows the diagram of the {@link #DIAGRAM_STATE} in the
+	 * section (position and scale) it has shown so far, see {@link #setModel(Diagram, boolean)}.
+	 */
+	protected static final String KEEP_VIEW_STATE = "keepView";
+
+	/**
 	 * Notified when the user objects of the selected diagram elements change.
 	 */
 	public interface SelectionListener {
@@ -102,7 +108,7 @@ public class FlowDiagramControl extends ReactControl implements FlowControlCommo
 	public interface ModelListener {
 
 		/**
-		 * Called after {@link FlowDiagramControl#setModel(Diagram)} carried the selection over to
+		 * Called after {@link FlowDiagramControl#setModel(Diagram, boolean)} carried the selection over to
 		 * the new diagram, and before that diagram is serialized for the client.
 		 *
 		 * <p>
@@ -116,6 +122,12 @@ public class FlowDiagramControl extends ReactControl implements FlowControlCommo
 	}
 
 	private Diagram _diagram;
+
+	/**
+	 * Whether the client shows the current {@link #_diagram} in the section shown before it was
+	 * set, see {@link #setModel(Diagram, boolean)}.
+	 */
+	private boolean _keepView;
 
 	private GraphScope _graphScope;
 
@@ -174,13 +186,41 @@ public class FlowDiagramControl extends ReactControl implements FlowControlCommo
 	 * that diagram rather than as a patch racing the remount it triggers.
 	 * </p>
 	 *
+	 * <p>
+	 * The client fits the new diagram into the control, as when it is shown the first time. Use
+	 * {@link #setModel(Diagram, boolean)} to keep the section the user has panned and zoomed to.
+	 * </p>
+	 *
 	 * @param diagram
 	 *        The diagram to display, may be <code>null</code> to display nothing.
 	 */
 	public void setModel(Diagram diagram) {
+		setModel(diagram, false);
+	}
+
+	/**
+	 * Displays the given {@link Diagram} instead of the one displayed so far, optionally in the
+	 * section the user has panned and zoomed to.
+	 *
+	 * <p>
+	 * The selection is carried over as described for {@link #setModel(Diagram)}.
+	 * </p>
+	 *
+	 * @param diagram
+	 *        The diagram to display, may be <code>null</code> to display nothing.
+	 * @param keepView
+	 *        Whether the client shows the new diagram in the section (position and scale) it has
+	 *        shown so far, e.g. when the diagram is rebuilt for a change of the displayed objects.
+	 *        The section is not adapted to the new content: an element outside of it stays
+	 *        outside, also when it is selected. <code>false</code> fits the new diagram into the
+	 *        control, e.g. when it displays another object. A diagram with a
+	 *        {@link Diagram#isFixedView() fixed view} ignores the flag.
+	 */
+	public void setModel(Diagram diagram, boolean keepView) {
 		Set<Object> selectedUserObjects = getSelectedUserObjects();
 
 		_diagram = diagram;
+		_keepView = keepView;
 		// The scope belongs to the diagram it serialized, which nothing displays any more: the
 		// markings below are part of the new diagram's serialization, not of a patch to the old
 		// one.
@@ -388,9 +428,20 @@ public class FlowDiagramControl extends ReactControl implements FlowControlCommo
 	}
 
 	/**
-	 * Serializes the current diagram model and stores it as initial React state.
+	 * Serializes the current diagram model and stores it as initial React state, together with the
+	 * {@link #KEEP_VIEW_STATE}, so that the client receives both in the same update.
 	 */
 	private void initDiagramState() {
+		Object token = beginUpdate();
+		try {
+			putState(KEEP_VIEW_STATE, Boolean.valueOf(_keepView));
+			putDiagramState();
+		} finally {
+			commitUpdate(token);
+		}
+	}
+
+	private void putDiagramState() {
 		_serializationStale = false;
 		if (_diagram == null) {
 			putState(DIAGRAM_STATE, "");

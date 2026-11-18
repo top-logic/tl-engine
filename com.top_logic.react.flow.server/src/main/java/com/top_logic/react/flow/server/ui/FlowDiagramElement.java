@@ -258,17 +258,20 @@ public class FlowDiagramElement implements UIElement {
 		FlowDiagramControl control = new FlowDiagramControl(context, diagram);
 		control.setCssClass(_config.getCssClass());
 
-		// 4. Listen for input channel changes and rebuild diagram.
-		Runnable rebuild = () -> control.setModel(buildDiagram(inputChannels));
-		ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> rebuild.run();
+		// 4. Listen for input channel changes and rebuild diagram. Another object is displayed, so
+		// the diagram is fitted into the control again.
+		ViewChannel.ChannelListener listener =
+			(sender, oldValue, newValue) -> control.setModel(buildDiagram(inputChannels), false);
 		for (ViewChannel channel : inputChannels) {
 			channel.addListener(listener);
 		}
 
 		// Rebuild as well when the objects on the input channels or objects of the observed types
-		// change.
+		// change. The same objects are displayed, so the section the user has panned and zoomed to
+		// is kept.
 		ChannelObjectObserver observer = new ChannelObjectObserver(inputChannels,
-			ObservedTypes.resolve(_config.getObservedTypes()), rebuild);
+			ObservedTypes.resolve(_config.getObservedTypes()),
+			() -> control.setModel(buildDiagram(inputChannels), true));
 		control.addAttachListener(() -> observer.attach(context.getModelScope()));
 		control.addDetachListener(observer::detach);
 

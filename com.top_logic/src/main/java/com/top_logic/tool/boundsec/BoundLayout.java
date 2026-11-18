@@ -110,11 +110,11 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 			return _securityMaster;
 		}
 
-		if (getChildCount() == 1 && !hasOwnSecurityObjectProvider()) {
+		if (getChildCount() == 1 && !hasOwnSecurityObjectProvider() && !_isSecurityMaster) {
 			/* When there is only one child, treat it as security master - unless this layout
-			 * configures a security object of its own. A dialog always has exactly one child (its
-			 * content layout), so otherwise a security object configured at the dialog would be
-			 * ignored. */
+			 * configures a security object of its own or is itself security master. A dialog
+			 * always has exactly one child (its content layout), so otherwise a security object
+			 * configured at the dialog would be ignored. */
 			LayoutComponent child = getChild(0);
 			if (child instanceof BoundCheckerComponent childChecker) {
 				// Only BoundCheckerComponent can be "security master".
@@ -145,8 +145,17 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 	 * This method must be called from components with a {@link WithSecurityMaster} configuration on
 	 * their parent component.
 	 * </p>
+	 * 
+	 * <p>
+	 * A layout that is itself {@link Config#getIsSecurityMaster() security master} ignores a
+	 * security master from its inside: It always checks access on its own security object and
+	 * reports itself (not the inner security master) to its parent.
+	 * </p>
 	 */
 	public void initSecurityMaster(BoundCheckerComponent masterComponent) {
+		if (_isSecurityMaster) {
+			return;
+		}
 		if (_securityMaster != null && !_securityMaster.getName().equals(masterComponent.getName())) {
 			Logger.warn("Non-unique security master components in layout '" + getName() + "': "
 					+ _securityMaster.getName() + " and " + masterComponent.getName(),

@@ -70,6 +70,19 @@ public class TestBoundLayoutSecurityMaster extends BasicTestCase {
 	}
 
 	/**
+	 * A layout marked as security master checks access on its own security object (here the
+	 * default security root), neither on an inner security master nor on its single child. The
+	 * inner security master is not reported beyond the layout.
+	 */
+	public void testSecurityMasterLayoutUsesOwnSecurityObject() throws IOException, ConfigurationException {
+		BoundLayout outer = (BoundLayout) createLayout("testSecurityMasterLayoutUsesOwnSecurityObject.xml");
+		BoundLayout master = (BoundLayout) outer.getChild(0);
+
+		assertProvider(SecurityRootObjectProvider.class, master);
+		assertSame(master.getSecurityObjectProvider(), outer.getSecurityObjectProvider());
+	}
+
+	/**
 	 * A security object configured at a dialog is used, although the dialog template always
 	 * creates exactly one child (the content layout).
 	 */

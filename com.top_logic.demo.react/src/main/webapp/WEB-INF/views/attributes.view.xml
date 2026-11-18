@@ -666,6 +666,8 @@
 										<field attribute="contactEmail"/>
 										<field attribute="json"/>
 										<field attribute="image"/>
+										<field attribute="pictures"/>
+										<field attribute="gallery"/>
 										<field attribute="attachments"/>
 										<field attribute="documents"/>
 									</group>

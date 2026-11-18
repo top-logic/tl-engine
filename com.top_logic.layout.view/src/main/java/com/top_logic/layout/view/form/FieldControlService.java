@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
@@ -41,6 +42,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.config.annotation.TLOptions;
 import com.top_logic.element.meta.OptionProvider;
 import com.top_logic.element.meta.SimpleEditContext;
+import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
@@ -82,6 +84,7 @@ import com.top_logic.model.annotate.ui.ReferenceDisplay;
 import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.ui.MultiLine;
 import com.top_logic.model.annotate.ui.TLAcceptedTypes;
+import com.top_logic.model.annotate.ui.TLDimensions;
 import com.top_logic.model.annotate.util.ValueNormalizer;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.TracingScope;
@@ -108,8 +111,9 @@ import com.top_logic.util.model.ModelService;
  * attribute holds - or on its type (via
  * {@link com.top_logic.model.annotate.DefaultStrategy.Strategy#VALUE_TYPE}).</li>
  * <li>Global type-to-provider map configured in this service.</li>
- * <li>A multi-valued binary value whose {@link BinaryDisplay} asks for a list is edited as a list
- * with one file field per value.</li>
+ * <li>A binary value whose {@link BinaryDisplay} asks for an image drop field is edited as images
+ * with a preview each, single- and multi-valued alike; a multi-valued binary value whose
+ * {@link BinaryDisplay} asks for a list is edited as a list with one file field per value.</li>
  * <li>Built-in fallback based on {@link com.top_logic.model.TLPrimitive.Kind}: e.g. the files of a
  * multi-valued binary value as file chips.</li>
  * </ol>
@@ -133,8 +137,10 @@ import com.top_logic.util.model.ModelService;
  *           {@link FieldControlRegistry#createControl(ReactContext, FieldSpec, FieldModel, ReactFieldControlProvider)},
  *           never in {@link ReactFieldControlProvider#createControl(ReactContext, FieldSpec, FieldModel)}
  *           itself, which is what keeps type and multiplicity decided in one place.
- *           A binary value asking for a list is edited by {@link FieldControlRegistry#BINARY}, the
- *           built-in fallback of a binary value is {@link FieldControlRegistry#FILE_CHIPS}.
+ *           A binary value asking for an image drop field is edited by
+ *           {@link FieldControlRegistry#IMAGE}, a binary value asking for a list by
+ *           {@link FieldControlRegistry#BINARY}, the built-in fallback of a binary value is
+ *           {@link FieldControlRegistry#FILE_CHIPS}.
  */
 @Label("Form field controls")
 @ServiceDependencies({
@@ -294,10 +300,28 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	}
 
 	/**
-	 * The configured {@link ReactFieldControlProvider} for the given type, or {@code null}.
+	 * The {@link ReactFieldControlProvider} configured for the given type, or {@code null} if none is
+	 * configured or the configured one does not {@link ReactFieldControlProvider#appliesTo(FieldSpec)
+	 * apply} to the given field.
+	 *
+	 * @param field
+	 *        The field holding values of the given type; its multiplicity and order decide whether
+	 *        the configured provider applies.
 	 */
-	private ReactFieldControlProvider byType(TLType type) {
-		return _providerByQualifiedType.get(TLModelUtil.qualifiedName(type));
+	private ReactFieldControlProvider byType(TLType type, FieldSpec field) {
+		ReactFieldControlProvider provider = _providerByQualifiedType.get(TLModelUtil.qualifiedName(type));
+		return provider != null && provider.appliesTo(field) ? provider : null;
+	}
+
+	/**
+	 * The shape of the values of the given attribute - their type, their multiplicity and their
+	 * order -, enough to tell whether a provider {@link ReactFieldControlProvider#appliesTo(FieldSpec)
+	 * applies} to a field of the attribute.
+	 */
+	private static FieldSpec shapeOf(TLStructuredTypePart part) {
+		return FieldSpec.of(valueType(part.getType()), null)
+			.setMultiple(part.isMultiple())
+			.setOrdered(part.isOrdered());
 	}
 
 	/**
@@ -558,15 +582,21 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		}
 
 		// 3. Configured control by type.
-		ReactFieldControlProvider mapped = byType(type);
+		ReactFieldControlProvider mapped = byType(type, field);
 		if (mapped != null) {
 			return createControl(context, field, model, mapped);
 		}
 
-		// 4. Files displayed as a list of one file field per value.
-		if (field.isMultiple() && isBinary(type)
-			&& binaryPresentation(annotations, type) == BinaryPresentation.LIST) {
-			return createControl(context, field, model, FieldControlRegistry.BINARY);
+		// 4. Files displayed as the binary display asks: images as previews, a list of one file field
+		// per value.
+		if (isBinary(type)) {
+			BinaryPresentation presentation = binaryPresentation(annotations, type);
+			if (presentation == BinaryPresentation.IMAGE_UPLOAD) {
+				return createControl(context, field, model, FieldControlRegistry.IMAGE);
+			}
+			if (field.isMultiple() && presentation == BinaryPresentation.LIST) {
+				return createControl(context, field, model, FieldControlRegistry.BINARY);
+			}
 		}
 
 		// 5. The control registered for the kind of value the type holds. The same registry
@@ -628,6 +658,20 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		}
 		TLMaxUploadSize annotation = annotation(annotations, type, TLMaxUploadSize.class);
 		return annotation == null ? 0 : annotation.getValue();
+	}
+
+	/**
+	 * One size of the {@link TLDimensions} annotation of the value as CSS value, {@code null} where
+	 * the value has no such annotation or the annotation leaves that size open.
+	 */
+	private static String dimension(AnnotationLookup annotations,
+			Function<TLDimensions, DisplayDimension> size) {
+		TLDimensions annotation = annotations == null ? null : annotations.getAnnotation(TLDimensions.class);
+		if (annotation == null) {
+			return null;
+		}
+		DisplayDimension value = size.apply(annotation);
+		return value == null ? null : value.toString();
 	}
 
 	/**
@@ -778,6 +822,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			.setUnit(unit(annotations, type, ownerOf(model)))
 			.setAcceptedTypes(acceptedTypes(annotations, type))
 			.setMaxUploadSize(maxUploadSize(annotations, type))
+			.setWidth(dimension(annotations, TLDimensions::getWidth))
+			.setHeight(dimension(annotations, TLDimensions::getHeight))
 			.setSendValueOnBlur(ValueNormalizer.isAnnotated(annotations));
 	}
 
@@ -1359,7 +1405,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        Whether the field holds a collection of values rather than a single one.
 	 */
 	private AbstractFieldModel displayModel(TLType type, boolean multiple, Object value) {
-		return displayModel(isSelectType(type), multiple, value);
+		return displayModel(isSelectType(type, FieldSpec.of(valueType(type), null).setMultiple(multiple)), multiple,
+			value);
 	}
 
 	/**
@@ -1389,15 +1436,19 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	private boolean displaysPartsAsSelection(TLStructuredTypePart part) {
 		return AttributeOptions.isComposition(part)
 			&& part.getAnnotation(TLInputControl.class) == null
-			&& isSelectType(part.getType());
+			&& isSelectType(part.getType(), shapeOf(part));
 	}
 
 	/**
 	 * Whether values of the given type are chosen from options: the control configured for the type
 	 * is a select, or, where none is configured, the type's structure says so.
+	 *
+	 * @param field
+	 *        The field holding values of the given type, see
+	 *        {@link #byType(TLType, FieldSpec)}.
 	 */
-	private boolean isSelectType(TLType type) {
-		ReactFieldControlProvider mapped = byType(type);
+	private boolean isSelectType(TLType type, FieldSpec field) {
+		ReactFieldControlProvider mapped = byType(type, field);
 		return mapped != null ? mapped instanceof SelectControlProvider : AttributeOptions.isStructuralSelect(type);
 	}
 
@@ -1618,7 +1669,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		if (hasFreeEntry(part)) {
 			return _selectProvider;
 		}
-		return byType(part.getType());
+		return byType(part.getType(), shapeOf(part));
 	}
 
 	/**

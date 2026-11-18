@@ -8,6 +8,7 @@
   --tl-surface-layer-muted: #F7F3EE;
   --tl-surface-overlay: #FFFFFF;
   --tl-surface-field: #F7F3EE;
+  --tl-surface-lightbox: #1A1714;
   --tl-surface-interactive-hover: #F6F1EC;
   --tl-surface-interactive-strong: #EBE7E2;
   --tl-surface-interactive-active: #E0DCD7;
@@ -98,6 +99,7 @@
   --tl-surface-layer-muted: #2C2825;
   --tl-surface-overlay: #312E2A;
   --tl-surface-field: #2C2825;
+  --tl-surface-lightbox: #1A1714;
   --tl-surface-interactive-hover: #3C3835;
   --tl-surface-interactive-strong: #403D39;
   --tl-surface-interactive-active: #4A4743;

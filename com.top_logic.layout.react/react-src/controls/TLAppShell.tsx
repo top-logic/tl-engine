@@ -27,8 +27,9 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
 
   // Report the display class to the server once on mount and whenever the breakpoint is crossed.
   React.useEffect(() => {
-    sendCommand('reportDisplayClass', { displayClass: displayClass === 'compact' ? 'COMPACT' : 'REGULAR' }, BACKGROUND_COMMAND);
-  }, [sendCommand, displayClass]);
+    sendCommand('reportDisplayClass', { displayClass: displayClass === 'compact' ? 'COMPACT' : 'REGULAR' },
+      BACKGROUND_COMMAND);
+  }, [displayClass, sendCommand]);
 
   const header = state.header as unknown;
   const notices = state.notices as unknown;

@@ -1,3 +1,5 @@
+// The table in a small window: the columns it leaves out in the compact display, and the body as a tab stop of its
+// own while it scrolls. A file of its own beside TLTableView.test.tsx, which sets the table up with other stand-ins.
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { act } from 'react';
 

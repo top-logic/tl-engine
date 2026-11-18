@@ -71,6 +71,8 @@ public class ComparableFilterEditor<V> implements FilterEditor {
 		ComparisonOperator operator =
 			current != null && current.operator() != null ? current.operator() : ComparisonOperator.EQ;
 		_operator = new SimpleSelectFieldModel(operator, List.of(ComparisonOperator.values()), false);
+		// A comparison always has an operator.
+		_operator.setNullable(false);
 		_primary = new AbstractFieldModel(current != null ? current.primary() : null);
 		_secondary = new AbstractFieldModel(current != null ? current.secondary() : null);
 	}

@@ -49,6 +49,8 @@ public class TextFilterEditor implements FilterEditor {
 		_pattern = new AbstractFieldModel(current != null ? current.pattern() : "");
 		_mode = new SimpleSelectFieldModel(current != null ? current.mode() : TextMatchMode.CONTAINS,
 			List.of(TextMatchMode.values()), false);
+		// A search always has a mode.
+		_mode.setNullable(false);
 		_caseSensitive = new AbstractFieldModel(current != null && current.caseSensitive());
 		_wholeField = current != null && current.wholeField();
 	}

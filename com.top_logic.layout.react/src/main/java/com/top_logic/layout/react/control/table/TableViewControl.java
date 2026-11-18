@@ -23,13 +23,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayDimension;
-import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.react.control.identity.ObjectIdIndex;
 import com.top_logic.layout.react.control.identity.ObjectIdentities;
 import com.top_logic.layout.react.control.identity.ProjectionMode;
-import com.top_logic.layout.form.model.AbstractFieldModel;
-import com.top_logic.layout.form.model.FieldModel;
-import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.LabelDescription;
@@ -53,12 +49,6 @@ import com.top_logic.layout.react.control.dnd.DropZone;
 import com.top_logic.layout.react.control.dnd.TreeDropPlace;
 import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
-import com.top_logic.layout.react.control.form.ReactCheckboxControl;
-import com.top_logic.layout.react.control.form.ReactFormBuilder;
-import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
-import com.top_logic.layout.react.control.form.ReactTextInputControl;
-import com.top_logic.layout.react.control.layout.LabelPosition;
-import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactInsetControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
@@ -85,10 +75,8 @@ import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableView;
 import com.top_logic.table.TableViewState;
-import com.top_logic.table.filter.BoundCodec;
-import com.top_logic.table.filter.FilterEditor;
+import com.top_logic.table.filter.ColumnFilterEditor;
 import com.top_logic.table.filter.FilterEditors;
-import com.top_logic.table.filter.FilterField;
 import com.top_logic.table.filter.TextFilterState;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
@@ -704,6 +692,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** View-supplied custom filter UIs, keyed by column name. */
 	private final Map<String, ColumnFilterUI> _filterUIs = new LinkedHashMap<>();
 
+	private FilterFieldFactory _filterFieldFactory = FilterFieldFactory.NONE;
+
 	/** Whether the user may choose which columns are displayed, and in which order. */
 	private boolean _columnSelect = true;
 
@@ -1116,6 +1106,17 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			_view.setExpanded(key, true);
 		}
 		rebuildAfterRowChange();
+	}
+
+	/**
+	 * Sets the factory creating the inputs of values and the displays of options in the filter
+	 * dialog of a column, see {@link ColumnFilterDialog}.
+	 *
+	 * @param factory
+	 *        The factory, {@code null} for {@link FilterFieldFactory#NONE}.
+	 */
+	public void setFilterFieldFactory(FilterFieldFactory factory) {
+		_filterFieldFactory = factory == null ? FilterFieldFactory.NONE : factory;
 	}
 
 	/**
@@ -1775,11 +1776,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * Opens the filter dialog for a column.
 	 *
 	 * <p>
-	 * The dialog is composed entirely from standard React controls: the column's
-	 * {@link FilterEditor} fields are laid out by {@link ReactFormBuilder} (labels + chrome),
-	 * inset by a {@link ReactInsetControl} and wrapped in a {@link ReactWindowControl} with reset /
-	 * cancel / apply {@link MessageButtons}, and shown through the {@link DialogManager}. The input control
-	 * per field is chosen from the field model itself ({@link #fieldControl}).
+	 * The dialog is composed entirely from standard React controls: the body of the column's
+	 * {@link ColumnFilterDialog} - the switch between the kinds of filter of the column and the
+	 * fields of the active kind -, inset by a {@link ReactInsetControl} and wrapped in a
+	 * {@link ReactWindowControl} with reset / cancel / apply {@link MessageButtons}, and shown through
+	 * the {@link DialogManager}. The inputs of values and the displays of options depending on the
+	 * type of the column come from the {@link #setFilterFieldFactory(FilterFieldFactory) filter field
+	 * factory}.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_OPEN_FILTER)
@@ -1807,23 +1810,11 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		} else {
 			// Facet counts are value-based, so only meaningful for filters that opt in (e.g. options);
 			// a predicate-based options filter (regexp) declines them to avoid misleading "(0)" labels.
-			FilterEditor editor = FilterEditors.create(filters, _view.state().getFilters().get(column),
+			ColumnFilterEditor editor = FilterEditors.create(filters, _view.state().getFilters().get(column),
 				kind -> countsMatches(filters, kind) ? _view.columnMatchCounts(column, kind) : MatchCounts.NONE);
-			// Build through the shared form pipeline with the same defaults as a model-bound form
-			// (responsive columns + automatic label position), so the dialog form renders and reflows
-			// exactly like every other form.
-			ReactFormBuilder form = new ReactFormBuilder(context);
-			for (FilterField field : editor.fields()) {
-				ReactControl input = fieldControl(context, field);
-				ReactFormFieldChromeControl chrome = form.addField(label(resources, field.label()), input);
-				if (input instanceof ReactCheckboxControl) {
-					// A checkbox reads as its own statement ("Yes", "case sensitive"), so the label
-					// belongs next to the box - above it, the two look like unrelated lines.
-					chrome.setLabelPosition(LabelPosition.AFTER);
-				}
-			}
-			body = form.build();
-			readState = editor::read;
+			ColumnFilterDialog dialog = new ColumnFilterDialog(context, column, editor, _filterFieldFactory);
+			body = dialog.body();
+			readState = dialog::read;
 		}
 
 		ResKey customTitle = customUI != null ? customUI.title() : null;
@@ -2027,41 +2018,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			result.add(displayed.get(n).name());
 		}
 		return result;
-	}
-
-	/**
-	 * Chooses the input control for a filter field from its model: a dropdown for a
-	 * {@link SelectFieldModel}, a checkbox for a boolean value, a text input otherwise.
-	 */
-	private static ReactControl fieldControl(ReactContext context, FilterField field) {
-		FieldModel model = field.model();
-		if (field.valueCodec() != null) {
-			return new ReactTextInputControl(context, textModel(model, field.valueCodec()));
-		}
-		if (model instanceof SelectFieldModel selectModel) {
-			LabelProvider labels = field.optionLabels() != null ? field.optionLabels() : String::valueOf;
-			return new ReactSelectFormFieldControl(context, selectModel, labels);
-		}
-		if (model.getValue() instanceof Boolean) {
-			return new ReactCheckboxControl(context, model);
-		}
-		return new ReactTextInputControl(context, model);
-	}
-
-	/**
-	 * A text field model editing the typed value of the given model as the text the given codec
-	 * writes and reads; a text the codec cannot read clears the value.
-	 */
-	private static <V> FieldModel textModel(FieldModel typed, BoundCodec<V> codec) {
-		@SuppressWarnings("unchecked")
-		String text = codec.format((V) typed.getValue());
-		return new AbstractFieldModel(text == null ? "" : text) {
-			@Override
-			public void setValue(Object newValue) {
-				super.setValue(newValue);
-				typed.setValue(codec.parse(newValue == null ? null : newValue.toString()));
-			}
-		};
 	}
 
 	/**

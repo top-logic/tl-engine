@@ -20,7 +20,8 @@
 	"Display label" shows objects by a label their display computes: the columns filter, sort and
 	export by that label. "Header roles" tints column headings in color roles and marks one with a
 	class of the application's stylesheet, beside a cell role and a row role; the Excel export fills
-	headings and cells in these roles.
+	headings and cells in these roles. "Column filters" shows the kinds of filter each type of value
+	offers: a list of the values occurring in the column, a text, a range.
 	
 	A column declared with visible="false" ("Share" in "Map rows", "Due date" in "Transient rows"),
 	and a dynamic column its column-visible function rejects ("M3" in "Dynamic columns"), starts out
@@ -868,6 +869,129 @@
 						<row-role><![CDATA[$row.get(`tl.demo.projectManagement:Ticket#milestone`).get(`tl.demo.projectManagement:Milestone#approved`) ? null : 'info']]></row-role>
 						<export/>
 						<rows><![CDATA[all(`tl.demo.projectManagement:Ticket`)]]></rows>
+					</table>
+				</panel>
+			</tab>
+			<tab id="column-filters"
+				icon="css:bi bi-funnel"
+			>
+				<label>
+					<en>Column filters</en>
+					<de>Spaltenfilter</de>
+				</label>
+				<panel>
+					<title>
+						<en>Kinds of filter per type of the values</en>
+						<de>Filterarten je Typ der Werte</de>
+					</title>
+					<!--
+						Sixty generated map rows with a column per type of value: each column offers the kinds
+						of filter of its type. The texts, numbers, days, points in time, classifiers and
+						milestones occurring in a column are offered as a list of values; the entry names and
+						the counts hold more distinct values than such a list offers, so they are filtered by
+						text respectively range only.
+					-->
+					<table personalization-key="table-columns-filters">
+						<columns>
+							<computed-column name="name"
+								type="tl.core:String"
+							>
+								<label>
+									<en>Entry</en>
+									<de>Eintrag</de>
+								</label>
+								<value><![CDATA[$row["name"]]]></value>
+							</computed-column>
+							<computed-column name="city"
+								type="tl.core:String"
+							>
+								<label>
+									<en>Place</en>
+									<de>Ort</de>
+								</label>
+								<value><![CDATA[$row["city"]]]></value>
+							</computed-column>
+							<computed-column name="count"
+								type="tl.core:Integer"
+							>
+								<label>
+									<en>Number</en>
+									<de>Nummer</de>
+								</label>
+								<value><![CDATA[$row["count"]]]></value>
+							</computed-column>
+							<computed-column name="score"
+								type="tl.core:Integer"
+							>
+								<label>
+									<en>Score</en>
+									<de>Punkte</de>
+								</label>
+								<value><![CDATA[$row["score"]]]></value>
+							</computed-column>
+							<computed-column name="day"
+								type="tl.core:Date"
+							>
+								<label>
+									<en>Day</en>
+									<de>Tag</de>
+								</label>
+								<value><![CDATA[$row["day"]]]></value>
+							</computed-column>
+							<computed-column name="timestamp"
+								type="tl.core:DateTime"
+							>
+								<label>
+									<en>Point in time</en>
+									<de>Zeitpunkt</de>
+								</label>
+								<value><![CDATA[$row["timestamp"]]]></value>
+							</computed-column>
+							<computed-column name="status"
+								type="demo.tickets:TicketStatus"
+							>
+								<label>
+									<en>Status</en>
+									<de>Status</de>
+								</label>
+								<value><![CDATA[$row["status"]]]></value>
+							</computed-column>
+							<computed-column name="milestone"
+								type="tl.demo.projectManagement:Milestone"
+							>
+								<label>
+									<en>Milestone</en>
+									<de>Meilenstein</de>
+								</label>
+								<value><![CDATA[$row["milestone"]]]></value>
+							</computed-column>
+							<computed-column name="tags"
+								multiple="true"
+								type="tl.core:String"
+							>
+								<label>
+									<en>Tags</en>
+									<de>Schlagworte</de>
+								</label>
+								<value><![CDATA[$row["tags"]]]></value>
+							</computed-column>
+						</columns>
+						<rows><![CDATA[{
+	cities = list("Bern", "Hamburg", "Berner Oberland", "Max Berger", "Oberhausen");
+	statuses = list(`demo.tickets:TicketStatus#open`, `demo.tickets:TicketStatus#inProgress`, `demo.tickets:TicketStatus#closed`);
+	milestones = all(`tl.demo.projectManagement:Milestone`);
+	count(60).map(n -> {
+		"name": "Entry " + ($n + 1),
+		"city": $cities.elementAt($n % 5),
+		"count": $n + 1,
+		"score": $n % 7,
+		"day": date(2026, 2, 1 + $n % 4),
+		"timestamp": dateTime(2026, 2, 1 + $n % 4, $n % 24, $n * 7 % 60, 0, 0),
+		"status": $statuses.elementAt($n % 3),
+		"milestone": $milestones.elementAt($n % $milestones.size()),
+		"tags": list("tag" + $n % 3, "tag" + (3 + $n % 2))
+	});
+}]]></rows>
 					</table>
 				</panel>
 			</tab>

@@ -52,7 +52,9 @@ public class OptionsFilterEditor implements FilterEditor {
 	public List<FilterField> fields() {
 		List<FilterField> fields = new ArrayList<>(_options.size());
 		for (int n = 0; n < _options.size(); n++) {
-			fields.add(new FilterField(label(_options.get(n)), _checks.get(n)));
+			Option option = _options.get(n);
+			Integer count = _counts.isAvailable() ? Integer.valueOf(_counts.count(option.value())) : null;
+			fields.add(FilterField.option(label(option), _checks.get(n), option, count));
 		}
 		return fields;
 	}

@@ -8,6 +8,7 @@ package com.top_logic.table.filter;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.table.Option;
 
 /**
  * One input of a {@link FilterEditor}: a labelled {@link FieldModel}.
@@ -35,6 +36,10 @@ public final class FilterField {
 	private final LabelProvider _optionLabels;
 
 	private final BoundCodec<?> _valueCodec;
+
+	private final Option _option;
+
+	private final Integer _count;
 
 	/**
 	 * Creates a {@link FilterField} rendered by the field model's natural control.
@@ -68,14 +73,37 @@ public final class FilterField {
 	 *        Writes and reads the value as text, for a UI tier entering it as text.
 	 */
 	public FilterField(ResKey label, FieldModel model, BoundCodec<?> valueCodec) {
-		this(label, model, null, valueCodec);
+		this(label, model, null, valueCodec, null, null);
 	}
 
 	private FilterField(ResKey label, FieldModel model, LabelProvider optionLabels, BoundCodec<?> valueCodec) {
+		this(label, model, optionLabels, valueCodec, null, null);
+	}
+
+	private FilterField(ResKey label, FieldModel model, LabelProvider optionLabels, BoundCodec<?> valueCodec,
+			Option option, Integer count) {
 		_label = label;
 		_model = model;
 		_optionLabels = optionLabels;
 		_valueCodec = valueCodec;
+		_option = option;
+		_count = count;
+	}
+
+	/**
+	 * A checkbox field selecting the given option of the filtered column.
+	 *
+	 * @param label
+	 *        The field label: the label of the option, with its count where there is one.
+	 * @param model
+	 *        The boolean field model holding whether the option is selected.
+	 * @param option
+	 *        The option the field selects.
+	 * @param count
+	 *        The number of rows matching the option, {@code null} if not counted.
+	 */
+	public static FilterField option(ResKey label, FieldModel model, Option option, Integer count) {
+		return new FilterField(label, model, null, null, option, count);
 	}
 
 	/** The field label. */
@@ -99,6 +127,26 @@ public final class FilterField {
 	 */
 	public BoundCodec<?> valueCodec() {
 		return _valueCodec;
+	}
+
+	/**
+	 * The option of the filtered column a checkbox field selects, or {@code null} if the field
+	 * selects none.
+	 *
+	 * <p>
+	 * A UI tier knowing the type of the column shows the {@link Option#value() value} of the option
+	 * as a cell of the column shows it, naming the checkbox by the {@link #label()}.
+	 * </p>
+	 */
+	public Option option() {
+		return _option;
+	}
+
+	/**
+	 * The number of rows matching the {@link #option() option}, or {@code null} if not counted.
+	 */
+	public Integer count() {
+		return _count;
 	}
 
 }

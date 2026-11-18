@@ -11,10 +11,13 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -42,6 +45,7 @@ import com.nimbusds.oauth2.sdk.id.Issuer;
 import com.nimbusds.oauth2.sdk.token.AccessTokenType;
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken;
 import com.nimbusds.oauth2.sdk.token.Tokens;
+import com.nimbusds.oauth2.sdk.util.URLUtils;
 import com.nimbusds.openid.connect.sdk.SubjectType;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
 import com.sun.net.httpserver.HttpExchange;
@@ -152,6 +156,10 @@ public class TestOIDCProvider {
 
 	private final AtomicInteger _tokenCount = new AtomicInteger();
 
+	private final AtomicInteger _discoveryRequests = new AtomicInteger();
+
+	private final List<Map<String, String>> _tokenRequests = new CopyOnWriteArrayList<>();
+
 	private volatile long _tokenLifetime = DEFAULT_TOKEN_LIFETIME;
 
 	private HttpServer _server;
@@ -255,7 +263,27 @@ public class TestOIDCProvider {
 		return _issuerUrl + INTROSPECTION_PATH;
 	}
 
+	/**
+	 * The number of requests of the discovery document received so far.
+	 */
+	public int getDiscoveryRequestCount() {
+		return _discoveryRequests.get();
+	}
+
+	/**
+	 * The form parameters of all requests the token endpoint received so far, in the order of
+	 * their arrival.
+	 * 
+	 * <p>
+	 * Of a parameter given several times, the first value is reported.
+	 * </p>
+	 */
+	public List<Map<String, String>> getTokenRequests() {
+		return Collections.unmodifiableList(_tokenRequests);
+	}
+
 	private HTTPResponse discovery(HTTPRequest request) {
+		_discoveryRequests.incrementAndGet();
 		OIDCProviderMetadata metadata = new OIDCProviderMetadata(new Issuer(_issuerUrl),
 			List.of(SubjectType.PUBLIC), URI.create(_issuerUrl + JWKS_PATH));
 		metadata.setTokenEndpointURI(URI.create(getTokenEndpointUrl()));
@@ -273,6 +301,7 @@ public class TestOIDCProvider {
 	}
 
 	private HTTPResponse token(HTTPRequest request) {
+		_tokenRequests.add(formParameters(request));
 		TokenRequest tokenRequest;
 		try {
 			tokenRequest = TokenRequest.parse(request);
@@ -341,6 +370,13 @@ public class TestOIDCProvider {
 			return null;
 		}
 		return client;
+	}
+
+	private static Map<String, String> formParameters(HTTPRequest request) {
+		Map<String, String> result = new LinkedHashMap<>();
+		URLUtils.parseParameters(request.getBody())
+			.forEach((name, values) -> result.put(name, values.isEmpty() ? null : values.get(0)));
+		return Collections.unmodifiableMap(result);
 	}
 
 	private static ErrorObject error(ParseException ex) {

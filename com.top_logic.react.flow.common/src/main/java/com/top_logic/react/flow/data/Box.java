@@ -131,7 +131,6 @@ public interface Box extends com.top_logic.react.flow.data.Widget, com.top_logic
 			case LOD.LOD__TYPE: result = com.top_logic.react.flow.data.LOD.create(); break;
 			case SelectableBox.SELECTABLE_BOX__TYPE: result = com.top_logic.react.flow.data.SelectableBox.create(); break;
 			case ClickTarget.CLICK_TARGET__TYPE: result = com.top_logic.react.flow.data.ClickTarget.create(); break;
-			case ContextMenu.CONTEXT_MENU__TYPE: result = com.top_logic.react.flow.data.ContextMenu.create(); break;
 			case DropRegion.DROP_REGION__TYPE: result = com.top_logic.react.flow.data.DropRegion.create(); break;
 			case Tooltip.TOOLTIP__TYPE: result = com.top_logic.react.flow.data.Tooltip.create(); break;
 			case Align.ALIGN__TYPE: result = com.top_logic.react.flow.data.Align.create(); break;

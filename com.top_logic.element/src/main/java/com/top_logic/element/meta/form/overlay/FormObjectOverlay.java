@@ -23,6 +23,7 @@ import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.ChangeAware;
 import com.top_logic.element.meta.form.AttributeFormFactory;
+import com.top_logic.element.meta.form.FallbackFieldDisplay;
 import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
@@ -212,20 +213,54 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 			}
 
 			AttributeUpdate update = getUpdate(part);
-			Object uiValue = update.convertValue(update.fieldToAttributeValue(field));
-			TLType type = part.getType();
-			if (type.getModelKind() == ModelKind.DATATYPE) {
-				StorageMapping<?> storageMapping = ((TLPrimitive) type).getStorageMapping();
-				if (part.isMultiple()) {
-					return toDBValues(part, storageMapping, uiValue);
-				} else {
-					return toDBValue(storageMapping, uiValue);
+			return toModelValue(part, update, update.fieldToAttributeValue(field));
+		} else if (member == null) {
+			AttributeUpdate fallbackUpdate = fallbackUpdateStoringIn(part);
+			if (fallbackUpdate != null) {
+				// The explicit value of an attribute with fallback is edited in the field of that
+				// attribute, the storage attribute has no field of its own.
+				FormField fallbackField = (FormField) fallbackUpdate.getField();
+				Object explicitValue = FallbackFieldDisplay.get(fallbackField).getExplicitValue();
+				return toModelValue(part, fallbackUpdate,
+					fallbackUpdate.fieldToAttributeValue(fallbackField, explicitValue));
+			}
+		}
+		return getBaseValue(part);
+	}
+
+	/**
+	 * The {@link AttributeUpdate} of an attribute with fallback whose field edits the explicit
+	 * value stored in the given storage attribute, or <code>null</code> if there is none.
+	 */
+	private AttributeUpdate fallbackUpdateStoringIn(TLStructuredTypePart storageAttribute) {
+		TLStructuredTypePart storageDefinition = storageAttribute.getDefinition();
+		for (AttributeUpdate update : getUpdates()) {
+			if (update.getField() instanceof FormField field) {
+				FallbackFieldDisplay display = FallbackFieldDisplay.get(field);
+				if (display != null && display.getStorageAttribute().getDefinition() == storageDefinition) {
+					return update;
 				}
 			}
-			return uiValue;
-		} else {
-			return getBaseValue(part);
 		}
+		return null;
+	}
+
+	/**
+	 * Converts the value of an {@link AttributeUpdate} to the value of the given attribute in the
+	 * model.
+	 */
+	private Object toModelValue(TLStructuredTypePart part, AttributeUpdate update, Object attributeValue) {
+		Object uiValue = update.convertValue(attributeValue);
+		TLType type = part.getType();
+		if (type.getModelKind() == ModelKind.DATATYPE) {
+			StorageMapping<?> storageMapping = ((TLPrimitive) type).getStorageMapping();
+			if (part.isMultiple()) {
+				return toDBValues(part, storageMapping, uiValue);
+			} else {
+				return toDBValue(storageMapping, uiValue);
+			}
+		}
+		return uiValue;
 	}
 
 	private Object toDBValues(TLStructuredTypePart part, StorageMapping<?> storageMapping, Object uiValues) {

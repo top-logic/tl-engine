@@ -5,26 +5,47 @@
  */
 package com.top_logic.layout.view.agent;
 
+import java.time.Instant;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.element.accesstoken.AccessToken;
+import com.top_logic.element.accesstoken.AccessTokens;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.model.TLObject;
 import com.top_logic.util.TLContext;
 
 /**
- * Admits an agent that presents an {@link AccessTokens access token} its owner issued.
+ * Admits an agent that presents an {@link AccessToken access token} with a permission for the user
+ * interface.
  *
  * <p>
- * The presented secret is matched against the stored hash; a revoked or expired token admits
- * nobody. Every admission is recorded on the token, so its owner sees that an agent is using it.
+ * A token with {@value #UI_OBSERVE_PERMISSION} lets the agent read the session the token was issued
+ * from, a token with {@value #UI_ACT_PERMISSION} (which includes the former) lets it act in that
+ * session as well. Both permissions bind to that session. A token without one of them, an
+ * unknown, revoked or expired token, and a token of a deleted account admit nobody. Every admission
+ * is recorded on the token, so its owner sees that an agent is using it.
  * </p>
+ *
+ * @see AccessToken#getSessionKey()
  */
 public class AccessTokenAuthenticator extends AbstractConfiguredInstance<AccessTokenAuthenticator.Config>
 		implements AgentAuthenticator {
+
+	/**
+	 * Name of the {@link com.top_logic.element.accesstoken.AccessTokenPermissions access token
+	 * permission} to read the user interface of the session the token was issued from.
+	 */
+	public static final String UI_OBSERVE_PERMISSION = "ui-observe";
+
+	/**
+	 * Name of the {@link com.top_logic.element.accesstoken.AccessTokenPermissions access token
+	 * permission} to act in the session the token was issued from. Implies
+	 * {@link #UI_OBSERVE_PERMISSION}.
+	 */
+	public static final String UI_ACT_PERMISSION = "ui-act";
 
 	/**
 	 * Configuration of {@link AccessTokenAuthenticator}.
@@ -44,29 +65,33 @@ public class AccessTokenAuthenticator extends AbstractConfiguredInstance<AccessT
 
 	@Override
 	public AgentCredential authenticate(String credential) {
+		if (!AccessTokens.hasFormat(credential)) {
+			return null;
+		}
 		return TLContext.inSystemContext(AccessTokenAuthenticator.class, () -> {
-			TLObject token = AccessTokens.resolve(credential);
-			if (token == null || !AccessTokens.isValid(token)) {
+			AccessToken token = AccessTokens.find(credential);
+			if (token == null || !AccessTokens.hasPermission(token, UI_OBSERVE_PERMISSION)) {
 				return null;
 			}
-			Person owner = (Person) token.tValue(AccessTokens.part(AccessTokens.OWNER));
+			Instant now = Instant.now();
+			if (AccessTokens.isExpired(token, now)) {
+				return null;
+			}
+			Person owner = token.getOwner();
 			if (owner == null || !owner.tValid()) {
 				return null;
 			}
 
-			try (Transaction tx = token.tKnowledgeBase()
-				.beginTransaction(AccessTokens.commitMessage(I18NConstants.ACCESS_TOKEN_USED__LABEL_ACCOUNT, token))) {
-				AccessTokens.markUsed(token);
-				tx.commit();
+			try {
+				AccessTokens.touch(token, now);
 			} catch (RuntimeException ex) {
 				// Recording the use is bookkeeping for the owner; a token that is valid stays valid
 				// even when the note cannot be written.
 				Logger.warn("Cannot record the use of an access token.", ex, AccessTokenAuthenticator.class);
 			}
 
-			boolean mayAct = Boolean.TRUE.equals(token.tValue(AccessTokens.part(AccessTokens.MAY_ACT)));
-			String sessionKey = (String) token.tValue(AccessTokens.part(AccessTokens.SESSION_KEY));
-			return new AgentCredential(owner, mayAct, sessionKey);
+			boolean mayAct = AccessTokens.hasPermission(token, UI_ACT_PERMISSION);
+			return new AgentCredential(owner, mayAct, token.getSessionKey());
 		});
 	}
 

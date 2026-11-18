@@ -10,6 +10,7 @@ import java.util.List;
 
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.form.StateHandler;
+import com.top_logic.model.TLClass;
 
 /**
  * A named reactive value within a view.
@@ -50,6 +51,19 @@ public interface ViewChannel {
 	 * @return {@code true} if the value actually changed (was different from the previous value).
 	 */
 	boolean set(Object newValue);
+
+	/**
+	 * The declared model class of the values of this channel, {@code null} if none is declared.
+	 *
+	 * <p>
+	 * The type is a declaration only, the values of the channel are not checked against it.
+	 * </p>
+	 *
+	 * @see ChannelConfig#getType()
+	 */
+	default TLClass getValueType() {
+		return null;
+	}
 
 	/**
 	 * Whether this channel accepts a value written by {@link #set(Object)}.

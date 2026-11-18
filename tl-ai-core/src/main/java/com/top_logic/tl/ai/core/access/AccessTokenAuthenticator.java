@@ -13,10 +13,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import com.top_logic.base.accesscontrol.AuthorizationUtil;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.accesstoken.AccessToken;
+import com.top_logic.element.accesstoken.AccessTokens;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
-import com.top_logic.tl.ai.core.access.model.AccessToken;
 
 /**
  * Resolves {@code Authorization: Bearer <token>} to the person who created the token.
@@ -33,8 +34,20 @@ import com.top_logic.tl.ai.core.access.model.AccessToken;
  * database lookup, which is also what lets an OAuth bearer authentication configured next to this
  * one take a request this one does not recognise.
  * </p>
+ *
+ * <p>
+ * Only a token with the permission {@value #AGENT_ENDPOINTS_PERMISSION} is accepted. A token
+ * created for other endpoints only - to drive the user interface, say - is refused exactly like
+ * an unknown one, so a client learns nothing about tokens it may not use here.
+ * </p>
  */
 public class AccessTokenAuthenticator implements Authenticator {
+
+	/**
+	 * Name of the {@link com.top_logic.element.accesstoken.AccessTokenPermissions access token
+	 * permission} for the agent endpoints, MCP and A2A, which this module contributes.
+	 */
+	public static final String AGENT_ENDPOINTS_PERMISSION = "agent-endpoints";
 
 	private static final String BEARER = "Bearer ";
 
@@ -50,7 +63,7 @@ public class AccessTokenAuthenticator implements Authenticator {
 		}
 
 		AccessToken token = AccessTokens.find(presented);
-		if (token == null) {
+		if (token == null || !AccessTokens.hasPermission(token, AGENT_ENDPOINTS_PERMISSION)) {
 			throw failure(I18NConstants.ERROR_ACCESS_TOKEN_UNKNOWN, "invalid_token");
 		}
 		Instant now = Instant.now();

@@ -16,6 +16,7 @@ import MuiFieldValueAdapter from './adapters/MuiFieldValueAdapter';
 import MuiChipAdapter from './adapters/MuiChipAdapter';
 import MuiBadgeAdapter from './adapters/MuiBadgeAdapter';
 import MuiDividerAdapter from './adapters/MuiDividerAdapter';
+import MuiSkeletonAdapter from './adapters/MuiSkeletonAdapter';
 import MuiProgressBarAdapter from './adapters/MuiProgressBarAdapter';
 import MuiSpinnerAdapter from './adapters/MuiSpinnerAdapter';
 import MuiListboxAdapter from './adapters/MuiListboxAdapter';
@@ -55,7 +56,8 @@ import MuiFloatingActionAdapter from './adapters/MuiFloatingActionAdapter';
  * dropdown, the named filters of a table, the files of a file chip field, every value with a color
  * role and every text drawn as a pill, the part `Badge` the counts of the sidebar and of the bottom
  * bar, the part `Divider` the lines between the groups of a toolbar, between the sections of a
- * toolbar menu and between the items of the sidebar, the part `ProgressBar` the progress controls
+ * toolbar menu and between the items of the sidebar, the part `Skeleton` the rows of a table not
+ * sent yet and a picture of known height or proportions still loading, the part `ProgressBar` the progress controls
  * (TLProgress), the bar of a job status and the loading options of a dropdown, the part `Spinner`
  * the busy indicator of a disclosure toggle whose content is being loaded and of the icon popup
  * loading its icons, the part `Listbox` the suggestions offered under a text field (TLTextInput).
@@ -70,6 +72,7 @@ const PART_ADAPTERS = {
   Chip: MuiChipAdapter,
   Badge: MuiBadgeAdapter,
   Divider: MuiDividerAdapter,
+  Skeleton: MuiSkeletonAdapter,
   ProgressBar: MuiProgressBarAdapter,
   Spinner: MuiSpinnerAdapter,
   Listbox: MuiListboxAdapter,

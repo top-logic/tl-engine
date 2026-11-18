@@ -114,7 +114,7 @@ public class TypeProviderSetup extends RearrangableTestSetup {
 	protected void doTearDown() throws Exception {
 		PooledConnection connection = _connectionPool.borrowWriteConnection();
 		try {
-			DBSchemaUtils.resetTables(connection, _schema, false);
+			DBSchemaUtils.dropTables(connection, _schema);
 			connection.commit();
 		} finally {
 			_connectionPool.releaseWriteConnection(connection);

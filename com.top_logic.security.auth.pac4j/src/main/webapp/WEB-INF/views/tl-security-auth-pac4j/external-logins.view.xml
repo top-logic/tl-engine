@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The logins at external identity providers connected with the account of the session, in the tab
+	"External logins" of the settings dialog (settings-tabs.view.xml of this module).
+	
+	Two sections built like the sections of the security tab: the connected logins, one entry each
+	with the button removing it (external-login-item.view.xml), and the providers a further login can
+	be connected from, one entry each with the button connecting it (external-login-client.view.xml).
+	A provider the account already has a login of is not offered again: a second login of the same
+	provider is refused.
+	
+	Everything acts on the session's own account: the functions oidcIdentities() and oidcClients()
+	take no account.
+-->
+<view>
+	<inset>
+		<stack
+			align="stretch"
+			direction="column"
+			gap="loose"
+		>
+			<stack
+				align="stretch"
+				direction="column"
+				gap="compact"
+			>
+				<text variant="title">
+					<label>
+						<en>Connected logins</en>
+						<de>Verbundene Anmeldungen</de>
+					</label>
+				</text>
+				<text>
+					<label>
+						<en>You can sign in to your account with each of these logins.</en>
+						<de>Mit jeder dieser Anmeldungen können Sie sich an Ihrem Konto anmelden.</de>
+					</label>
+				</text>
+				<object-list
+					element-channel="identity"
+					gap="compact"
+					observed-types="tl.security.pac4j:OidcIdentity"
+				>
+					<items><![CDATA[oidcIdentities()]]></items>
+					<item>
+						<view-ref view="tl-security-auth-pac4j/external-login-item.view.xml">
+							<bind
+								channel="identity"
+								to="identity"
+							/>
+						</view-ref>
+					</item>
+					<empty-text>
+						<en>No external login is connected.</en>
+						<de>Keine externe Anmeldung ist verbunden.</de>
+					</empty-text>
+				</object-list>
+			</stack>
+			<stack
+				align="stretch"
+				direction="column"
+				gap="compact"
+			>
+				<text variant="title">
+					<label>
+						<en>Connect a further login</en>
+						<de>Weitere Anmeldung verbinden</de>
+					</label>
+				</text>
+				<text>
+					<label>
+						<en>Confirm your identity first, then sign in at the provider. The login you sign in with there is connected with your account.</en>
+						<de>Bestätigen Sie zuerst Ihre Identität und melden Sie sich dann beim Anbieter an. Die Anmeldung, mit der Sie sich dort anmelden, wird mit Ihrem Konto verbunden.</de>
+					</label>
+				</text>
+				<object-list
+					element-channel="client"
+					gap="compact"
+					observed-types="tl.security.pac4j:OidcIdentity"
+				>
+					<items><![CDATA[oidcClients().filter(c -> !oidcIdentities().map(i -> $i.get(`tl.security.pac4j:OidcIdentity#client`)).containsElement($c))]]></items>
+					<item>
+						<view-ref view="tl-security-auth-pac4j/external-login-client.view.xml">
+							<bind
+								channel="client"
+								to="client"
+							/>
+						</view-ref>
+					</item>
+					<empty-text>
+						<en>A login of every provider is connected.</en>
+						<de>Eine Anmeldung jedes Anbieters ist verbunden.</de>
+					</empty-text>
+				</object-list>
+			</stack>
+		</stack>
+	</inset>
+</view>

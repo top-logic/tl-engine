@@ -8,7 +8,6 @@ package com.top_logic.basic.sql;
 import java.io.IOException;
 import java.sql.Blob;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -31,7 +30,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.copy.ConfigCopier;
-import com.top_logic.basic.sql.MySQL55Helper.MySQL55WithBackslashEscape;
 
 /** 
  * This class helps using <i>MySQL</i>
@@ -53,8 +51,6 @@ public class MySQLHelper extends DBHelper {
 
 	/**
 	 * {@link MySQLHelper} with backslash as escape symbol.
-	 * 
-	 * @see MySQL55Helper.MySQL55WithBackslashEscape Version for <i>MySQL</i> 5.5
 	 */
 	public final static class MySQLWithBackslashEscape extends MySQLHelper {
 
@@ -604,13 +600,6 @@ public class MySQLHelper extends DBHelper {
 	 * Chooses the {@link MySQLHelper} according to the current settings of the server.
 	 */
 	public static Class<? extends MySQLHelper> getInstance(Connection connection) throws SQLException {
-		DatabaseMetaData meta = connection.getMetaData();
-		int major = meta.getDatabaseMajorVersion();
-		int minor = meta.getDatabaseMinorVersion();
-		boolean need55 = false;
-		if (major == 5 && minor <= 5) {
-			need55 = true;
-		}
 		Statement stmt = connection.createStatement();
 		try {
 			String modeString = "";
@@ -625,17 +614,9 @@ public class MySQLHelper extends DBHelper {
 
 			Set<String> modeSet = new HashSet<>(Arrays.asList(modeString.split("\\s*,\\s*")));
 			if (modeSet.contains("NO_BACKSLASH_ESCAPES")) {
-				if (need55) {
-					return MySQL55Helper.class;
-				} else {
-					return MySQLHelper.class;
-				}
+				return MySQLHelper.class;
 			} else {
-				if (need55) {
-					return MySQL55WithBackslashEscape.class;
-				} else {
-					return MySQLWithBackslashEscape.class;
-				}
+				return MySQLWithBackslashEscape.class;
 			}
 		} finally {
 			stmt.close();

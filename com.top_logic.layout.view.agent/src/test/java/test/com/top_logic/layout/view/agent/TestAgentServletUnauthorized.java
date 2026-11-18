@@ -45,7 +45,7 @@ public class TestAgentServletUnauthorized extends BasicTestCase {
 	/**
 	 * The one credential {@link EndedSessionAuthenticator} recognizes.
 	 */
-	static final String ENDED_SESSION_CREDENTIAL = "tlagt_ended_session";
+	static final String ENDED_SESSION_CREDENTIAL = "ended-session-credential";
 
 	/**
 	 * The session key of the credential {@link EndedSessionAuthenticator} recognizes, bound to no
@@ -129,8 +129,8 @@ public class TestAgentServletUnauthorized extends BasicTestCase {
 	 * A request with a credential no authenticator recognizes is unauthorized.
 	 */
 	public void testForgedCredential() throws Exception {
-		assertUnauthorized(withCredential(get(PATH_WINDOWS), "tlagt_x_forged"));
-		assertUnauthorized(withCredential(post(PATH_ACT), "tlagt_x_forged"));
+		assertUnauthorized(withCredential(get(PATH_WINDOWS), "forged-credential"));
+		assertUnauthorized(withCredential(post(PATH_ACT), "forged-credential"));
 	}
 
 	/**

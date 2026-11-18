@@ -118,7 +118,7 @@ const MODIFIERS = {
   'tl-toolbar': new Set(['wrap']), // Bricht um statt zu kollabieren (Wysiwyg, 5d): eine Form, kein Zustand.
   'tl-tabs': new Set([]),
   'tl-breadcrumb': new Set([]),
-  'tl-skeleton': new Set([]),
+  'tl-skeleton': new Set(['text', 'circle']), // Die Form; das Rechteck ist die Grundform.
   'tl-status': new Set([]),
   'tl-login-alternatives': new Set([]), // Gruppe der Anmelde-Alternativen (#30296): eine Form, kein Zustand.
   'tl-login-card': new Set([]), // Karte der Anmeldeseite (#30296): eine Form, kein Zustand.

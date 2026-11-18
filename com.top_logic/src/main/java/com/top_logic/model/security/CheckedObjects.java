@@ -270,9 +270,9 @@ public final class CheckedObjects {
 	 * Whether the given object is a stored object whose roles are computed.
 	 *
 	 * <p>
-	 * The access check allows everything on an object that is no {@link BoundObject}, is
-	 * transient, or was created in the current transaction. A create overlay of a form is
-	 * transient.
+	 * The access check allows everything on an object that is transient or was created in the
+	 * current transaction, and refuses everything on a persistent object that is no
+	 * {@link BoundObject} (it holds no roles). A create overlay of a form is transient.
 	 * </p>
 	 */
 	public static boolean isStored(TLObject object) {

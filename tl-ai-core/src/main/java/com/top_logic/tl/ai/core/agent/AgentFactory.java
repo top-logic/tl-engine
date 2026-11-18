@@ -38,7 +38,9 @@ import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
+import com.top_logic.tl.ai.core.provider.ApiFamilies;
 import com.top_logic.tl.ai.core.provider.EffortLevels;
+import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.tl.ai.core.security.RunAuthorization;
@@ -574,16 +576,16 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	private static AgentModelAssignment applyEffort(AgentModelAssignment assignment, String effort) {
 		String model = assignment.model();
 		LLMProviderService llm = LLMProviderService.getInstance();
-		String providerId = llm.getProviderId(model, assignment.provider());
+		String family = llm.getApiFamily(model, assignment.provider());
 		ModelInfo info = llm.getModel(model);
 		String level = effort.trim().toLowerCase(Locale.ROOT);
 
-		if (!EffortLevels.isValid(providerId, info, level)) {
+		if (!EffortLevels.isValid(family, info, level)) {
 			Logger.warn("Ignoring effort '" + effort + "' for model '" + model
-				+ "': it offers " + EffortLevels.forModel(providerId, info) + ".", AgentFactory.class);
+				+ "': it offers " + EffortLevels.forModel(family, info) + ".", AgentFactory.class);
 			return assignment;
 		}
-		return switch (EffortLevels.kindOf(providerId, info)) {
+		return switch (EffortLevels.kindOf(family, info)) {
 			case THINKING_EFFORT -> assignment.withThinkingEffort(level);
 			case REASONING_EFFORT -> assignment.withReasoningEffort(level);
 			case NONE -> assignment;
@@ -775,7 +777,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			modelInfo = defaultModelInfo(model);
 		}
 
-		String providerId = llmRegistry.getProviderId(model, assignment.provider());
+		String family = llmRegistry.getApiFamily(model, assignment.provider());
 
 		String systemPrompt = agent.systemPrompt();
 		systemPrompt = injectSkills(agent, systemPrompt, capabilities);
@@ -822,7 +824,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		// toolChoice: assignment override > null (provider default)
 		ToolChoice toolChoice = resolveToolChoice(assignment.toolChoice());
 
-		Map<String, Object> modelOptions = buildModelOptions(assignment, modelInfo, providerId);
+		Map<String, Object> modelOptions = buildModelOptions(assignment, modelInfo, family);
 
 		return new AgentParams(model, systemPrompt, maxTurns,
 			maxOutputTokens, modelOptions, contextWindowTokens,
@@ -914,10 +916,11 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	}
 
 	/**
-	 * Builds provider-specific model options from the model assignment, gated on model capabilities.
+	 * Builds vendor-specific model options from the model assignment, gated on the model's
+	 * {@link ApiFamilies API family} and capabilities.
 	 */
 	private Map<String, Object> buildModelOptions(AgentModelAssignment assignment,
-			ModelInfo modelInfo, String providerId) {
+			ModelInfo modelInfo, String family) {
 		Map<String, Object> options = new HashMap<>();
 
 		if (modelInfo.capabilities().temperature()) {
@@ -933,21 +936,21 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		}
 
 		// Anthropic-specific options
-		if ("anthropic".equals(providerId)) {
+		if (ApiFamilies.ANTHROPIC.equals(family)) {
 			if (modelInfo.capabilities().reasoning()) {
 				String thinkingEffort = assignment.thinkingEffort();
 				if (thinkingEffort != null) {
-					options.put("thinking_effort", thinkingEffort.toLowerCase());
+					options.put(ProviderRequest.THINKING_EFFORT, thinkingEffort.toLowerCase());
 				}
 			}
 			Integer topK = assignment.topK();
 			if (topK != null) {
-				options.put("top_k", topK);
+				options.put(ProviderRequest.TOP_K, topK);
 			}
 		}
 
 		// OpenAI/xAI-specific options
-		if ("openai".equals(providerId) || "xai".equals(providerId)) {
+		if (ApiFamilies.OPENAI.equals(family) || ApiFamilies.XAI.equals(family)) {
 			if (modelInfo.capabilities().reasoning()) {
 				String reasoningEffort = assignment.reasoningEffort();
 				if (reasoningEffort != null) {

@@ -6,6 +6,7 @@
 package com.top_logic.tl.ai.core.provider.bedrock;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
@@ -17,10 +18,12 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.credential.SecretSourceFormat;
+import com.top_logic.tl.ai.core.provider.ApiFamilies;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
 
@@ -86,7 +89,20 @@ public class BedrockConverseProviderConfig implements LLMProviderConfig {
 
 		/** @see #getModels() */
 		void setModels(List<String> value);
+
+		@Override
+		@StringDefault(DEFAULT_CATALOG_PROVIDER_ID)
+		String getCatalogProviderId();
 	}
+
+	/**
+	 * Default of {@link Config#getCatalogProviderId()}: the models.dev ID of AWS Bedrock, under which
+	 * the catalog lists the Bedrock model IDs, e.g. {@code eu.anthropic.claude-opus-5-5}.
+	 */
+	public static final String DEFAULT_CATALOG_PROVIDER_ID = "amazon-bedrock";
+
+	/** The part of a Bedrock model ID that marks a model of Anthropic. */
+	private static final String CLAUDE = "claude";
 
 	private final Config _config;
 
@@ -113,7 +129,8 @@ public class BedrockConverseProviderConfig implements LLMProviderConfig {
 		int requestTimeout = _config.getRequestTimeout();
 		Map<String, String> customHeaders = _config.getCustomHeaders();
 
-		return new BedrockConverseProvider(_credentials, baseUrl, connectTimeout, requestTimeout, customHeaders);
+		return new BedrockConverseProvider(_credentials, baseUrl, connectTimeout, requestTimeout, customHeaders,
+			_config.getCatalogProviderId());
 	}
 
 	@Override
@@ -131,5 +148,28 @@ public class BedrockConverseProviderConfig implements LLMProviderConfig {
 	@Override
 	public String getCatalogProviderId() {
 		return _config.getCatalogProviderId();
+	}
+
+	/**
+	 * {@link ApiFamilies#ANTHROPIC} for a Claude model, otherwise the catalog provider ID.
+	 *
+	 * @see #isClaude(String)
+	 */
+	@Override
+	public String getApiFamily(String model) {
+		return isClaude(model) ? ApiFamilies.ANTHROPIC : getCatalogProviderId();
+	}
+
+	/**
+	 * Whether the given Bedrock model ID names a Claude model.
+	 *
+	 * <p>
+	 * Bedrock spells the model of a vendor with the vendor's prefix and, for a cross-region inference
+	 * profile, a region prefix in front of it (e.g. {@code eu.anthropic.claude-opus-5-5}); a gateway
+	 * may also expose the plain model name. Each of them names Claude.
+	 * </p>
+	 */
+	public static boolean isClaude(String model) {
+		return model != null && model.toLowerCase(Locale.ROOT).contains(CLAUDE);
 	}
 }

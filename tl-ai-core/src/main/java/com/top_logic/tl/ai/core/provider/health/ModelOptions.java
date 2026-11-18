@@ -8,6 +8,8 @@ package com.top_logic.tl.ai.core.provider.health;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.top_logic.tl.ai.core.provider.ApiFamilies;
+import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
 
 /**
@@ -36,17 +38,17 @@ public final class ModelOptions {
 	 *
 	 * @param options
 	 *        What the run was using; must not be <code>null</code>.
-	 * @param catalogProviderId
-	 *        The target's catalog provider ID ({@code "anthropic"}, {@code "openai"}, ...), or
-	 *        <code>null</code> when it could not be determined - then only the vendor-neutral keys
-	 *        survive.
+	 * @param family
+	 *        The {@link ApiFamilies API family} of the target model ({@link ApiFamilies#ANTHROPIC},
+	 *        {@link ApiFamilies#OPENAI}, ...), or <code>null</code> when it could not be determined -
+	 *        then only the vendor-neutral keys survive.
 	 * @param target
 	 *        The target model's catalog metadata, or <code>null</code> when the catalog does not
 	 *        know it. An unknown model is given the vendor-neutral keys, which is what the
 	 *        {@code AgentFactory} does with an unknown model too.
 	 * @return An immutable map; never <code>null</code>.
 	 */
-	public static Map<String, Object> forTarget(Map<String, Object> options, String catalogProviderId,
+	public static Map<String, Object> forTarget(Map<String, Object> options, String family,
 			ModelInfo target) {
 		Map<String, Object> result = new LinkedHashMap<>();
 		boolean temperature = target == null || target.capabilities().temperature();
@@ -55,13 +57,13 @@ public final class ModelOptions {
 			copy(options, result, "topP");
 		}
 		boolean reasoning = target == null || target.capabilities().reasoning();
-		if ("anthropic".equals(catalogProviderId)) {
-			copy(options, result, "cacheTtl");
-			copy(options, result, "top_k");
+		if (ApiFamilies.ANTHROPIC.equals(family)) {
+			copy(options, result, ProviderRequest.CACHE_TTL);
+			copy(options, result, ProviderRequest.TOP_K);
 			if (reasoning) {
-				copy(options, result, "thinking_effort");
+				copy(options, result, ProviderRequest.THINKING_EFFORT);
 			}
-		} else if ("openai".equals(catalogProviderId) && reasoning) {
+		} else if (ApiFamilies.OPENAI.equals(family) && reasoning) {
 			copy(options, result, "reasoning_effort");
 			copy(options, result, "reasoning_summary");
 		}

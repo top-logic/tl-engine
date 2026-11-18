@@ -262,4 +262,22 @@ public interface LLMProviderConfig {
 	 * Returns the catalog provider ID from configuration.
 	 */
 	String getCatalogProviderId();
+
+	/**
+	 * The API family of the given model when this provider serves it.
+	 *
+	 * <p>
+	 * Decides which vendor-specific options the model is given, see {@link ApiFamilies}. A provider
+	 * that serves the models of one vendor only answers its {@link #getCatalogProviderId() catalog
+	 * provider ID}; a provider that serves the models of several vendors (e.g. AWS Bedrock) answers
+	 * the family of the model's vendor.
+	 * </p>
+	 *
+	 * @param model
+	 *        A model of this provider.
+	 * @return The family, <code>null</code> if it is not known.
+	 */
+	default String getApiFamily(String model) {
+		return getCatalogProviderId();
+	}
 }

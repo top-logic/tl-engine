@@ -120,7 +120,7 @@ public final class ChatCapabilities {
 				}
 				// Empty for a model that cannot reason, or whose provider has no such setting: a
 				// UI must not offer a level the provider would reject.
-				List<String> levels = EffortLevels.forModel(provider, info);
+				List<String> levels = EffortLevels.forModel(llm.getApiFamily(modelId), info);
 				dto.getEffortLevels().addAll(levels);
 				if (!levels.isEmpty()) {
 					String assigned = assignedEffort(llm, modelId);

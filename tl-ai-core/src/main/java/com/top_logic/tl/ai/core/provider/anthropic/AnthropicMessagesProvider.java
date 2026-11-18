@@ -47,16 +47,6 @@ import de.haumacher.msgbuf.json.JsonReader;
  * Thread-safe: a single instance handles concurrent streams.</p>
  */
 public class AnthropicMessagesProvider extends AbstractStreamingProvider {
-	/**
-	 * Catalog ID stamped onto the thinking blocks this provider produces.
-	 *
-	 * <p>
-	 * Their continuity tokens only mean something here, so the origin has to travel with them:
-	 * it is what lets a later request to another provider drop them instead of being rejected.
-	 * </p>
-	 */
-	private static final String PROVIDER_ID = "anthropic";
-
 
 	/**
 	 * Request header carrying the API key of the Anthropic Messages API.
@@ -74,6 +64,16 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 
 	private final String _apiVersion;
 
+	/**
+	 * Catalog ID stamped onto the thinking blocks this provider produces.
+	 *
+	 * <p>
+	 * Their continuity tokens only mean something here, so the origin has to travel with them:
+	 * it is what lets a later request to another provider drop them instead of being rejected.
+	 * </p>
+	 */
+	private final String _catalogProviderId;
+
 	/** Creates an {@link AnthropicMessagesProvider}. */
 	public AnthropicMessagesProvider(CredentialProvider credentials) {
 		this(credentials, DEFAULT_BASE_URL, DEFAULT_API_VERSION);
@@ -88,14 +88,24 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 	public AnthropicMessagesProvider(CredentialProvider credentials, String baseUrl, String apiVersion, HttpClient httpClient) {
 		super(credentials, baseUrl, httpClient);
 		_apiVersion = Objects.requireNonNull(apiVersion, "API version must not be null.");
+		_catalogProviderId = AnthropicProviderConfig.DEFAULT_CATALOG_PROVIDER_ID;
 	}
 
-	/** Creates an {@link AnthropicMessagesProvider} with configurable timeouts and headers. */
+	/**
+	 * Creates an {@link AnthropicMessagesProvider} with configurable timeouts and headers.
+	 *
+	 * @param catalogProviderId
+	 *        The {@link com.top_logic.tl.ai.core.provider.LLMProviderConfig#getCatalogProviderId()
+	 *        catalog provider ID} of the configured provider, stamped onto the thinking blocks it
+	 *        produces; <code>null</code> if none is configured.
+	 */
 	public AnthropicMessagesProvider(CredentialProvider credentials, String baseUrl, String apiVersion,
-			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders) {
+			int connectTimeoutSeconds, int requestTimeoutSeconds, Map<String, String> customHeaders,
+			String catalogProviderId) {
 		super(credentials, baseUrl, defaultHttpClient(connectTimeoutSeconds),
 			Duration.ofSeconds(requestTimeoutSeconds), customHeaders);
 		_apiVersion = Objects.requireNonNull(apiVersion, "API version must not be null.");
+		_catalogProviderId = catalogProviderId;
 	}
 
 	@Override
@@ -227,7 +237,7 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 						messageId, model,
 						finishReason != null ? finishReason : "end_turn",
 						new TokenUsage(inputTokens, outputTokens, 0, cacheReadTokens, cacheWriteTokens),
-						accumulator.buildContentParts(PROVIDER_ID)));
+						accumulator.buildContentParts(_catalogProviderId)));
 				}
 
 				case "error" -> {

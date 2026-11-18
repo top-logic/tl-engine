@@ -45,10 +45,23 @@ import de.haumacher.msgbuf.json.JsonToken;
  * the JSON catalog - or reads the bundled snapshot of it - and extracts only the requested entries
  * into {@link ModelInfo} records.
  * </p>
+ *
+ * <p>
+ * A requested model is looked up under its name, then under its name with the suffix
+ * {@link #DEFAULT_VERSION_SUFFIX}: the catalog lists the models of some providers only in that form
+ * (e.g. {@code claude-sonnet-5-5@default} on Google Vertex AI), while the provider is configured with
+ * the plain name. An entry under the plain name takes precedence. Either way the result is keyed by
+ * the requested name.
+ * </p>
  */
 public final class ModelsDevFetcher {
 
 	private static final String SNAPSHOT_RESOURCE = "models-dev-snapshot.json";
+
+	/**
+	 * Suffix of a catalog key naming the default version of a model, see the class comment.
+	 */
+	public static final String DEFAULT_VERSION_SUFFIX = "@default";
 
 	/**
 	 * The prompt size above which the {@code context_over_200k} price list of the catalog applies.
@@ -202,19 +215,48 @@ public final class ModelsDevFetcher {
 
 	private static void parseModelsObject(JsonReader reader, Set<String> wantedModels, Map<String, ModelInfo> result)
 			throws Exception {
+		Map<String, ModelInfo> exact = new HashMap<>();
+		Map<String, ModelInfo> defaultVersions = new HashMap<>();
 		reader.beginObject();
 		while (reader.hasNext()) {
 			String modelKey = reader.nextName();
 			if (wantedModels.contains(modelKey)) {
 				ModelInfo info = parseModelEntry(reader);
 				if (info != null) {
-					result.put(info.id(), info);
+					exact.put(modelKey, info);
+				}
+			} else if (modelKey.endsWith(DEFAULT_VERSION_SUFFIX)
+				&& wantedModels.contains(modelName(modelKey))) {
+				ModelInfo info = parseModelEntry(reader);
+				if (info != null) {
+					defaultVersions.put(modelName(modelKey), info);
 				}
 			} else {
 				reader.skipValue();
 			}
 		}
 		reader.endObject();
+
+		for (Map.Entry<String, ModelInfo> entry : defaultVersions.entrySet()) {
+			if (!exact.containsKey(entry.getKey())) {
+				result.put(entry.getKey(), withId(entry.getValue(), entry.getKey()));
+			}
+		}
+		for (ModelInfo info : exact.values()) {
+			result.put(info.id(), info);
+		}
+	}
+
+	/**
+	 * The model name of a catalog key with the {@link #DEFAULT_VERSION_SUFFIX}.
+	 */
+	private static String modelName(String defaultVersionKey) {
+		return defaultVersionKey.substring(0, defaultVersionKey.length() - DEFAULT_VERSION_SUFFIX.length());
+	}
+
+	private static ModelInfo withId(ModelInfo info, String id) {
+		return new ModelInfo(id, info.family(), info.limits(), info.capabilities(), info.cost(), info.dates(),
+			info.openWeights(), info.status());
 	}
 
 	private static ModelInfo parseModelEntry(JsonReader reader) throws Exception {

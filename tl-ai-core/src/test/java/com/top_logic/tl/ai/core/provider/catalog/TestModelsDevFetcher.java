@@ -508,4 +508,74 @@ public class TestModelsDevFetcher extends TestCase {
 
 		assertTrue(result.isEmpty());
 	}
+
+	/**
+	 * A model the catalog lists only as {@code <name>@default} is found under its plain name.
+	 */
+	public void testDefaultVersionFound() {
+		String json = """
+			{
+			  "google-vertex": {
+			    "models": {
+			      "claude-sonnet-5-5@default": {
+			        "id": "claude-sonnet-5-5@default",
+			        "limit": { "context": 1000000, "output": 128000 }
+			      }
+			    }
+			  }
+			}
+			""";
+
+		Map<String, ModelInfo> result =
+			ModelsDevFetcher.parseJson(json, Map.of("google-vertex", Set.of("claude-sonnet-5-5")));
+
+		ModelInfo info = result.get("claude-sonnet-5-5");
+		assertNotNull(info);
+		assertEquals("claude-sonnet-5-5", info.id());
+		assertEquals(1000000, info.limits().contextWindow());
+		assertEquals(1, result.size());
+	}
+
+	/**
+	 * An entry under the plain name takes precedence over the default version, in either order.
+	 */
+	public void testExactEntryTakesPrecedence() {
+		String exactFirst = """
+			{
+			  "p": {
+			    "models": {
+			      "m": { "id": "m", "limit": { "context": 1000, "output": 10 } },
+			      "m@default": { "id": "m@default", "limit": { "context": 2000, "output": 10 } }
+			    }
+			  }
+			}
+			""";
+		String defaultFirst = """
+			{
+			  "p": {
+			    "models": {
+			      "m@default": { "id": "m@default", "limit": { "context": 2000, "output": 10 } },
+			      "m": { "id": "m", "limit": { "context": 1000, "output": 10 } }
+			    }
+			  }
+			}
+			""";
+
+		for (String json : List.of(exactFirst, defaultFirst)) {
+			Map<String, ModelInfo> result = ModelsDevFetcher.parseJson(json, Map.of("p", Set.of("m")));
+			assertEquals(1000, result.get("m").limits().contextWindow());
+			assertEquals(1, result.size());
+		}
+	}
+
+	/**
+	 * The bundled catalog gives Claude on Google Vertex AI its 1M context under the plain name.
+	 */
+	public void testBundledVertexClaude() {
+		ModelInfo info = ModelsDevFetcher.loadSnapshot(Map.of("google-vertex", Set.of("claude-sonnet-5-5")))
+			.get("claude-sonnet-5-5");
+
+		assertNotNull(info);
+		assertEquals(1_000_000, info.limits().contextWindow());
+	}
 }

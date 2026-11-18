@@ -1189,6 +1189,55 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	}
 
 	/**
+	 * The {@link LLMProviderConfig#getApiFamily(String) API family} of an unqualified model
+	 * reference, or {@code null} if it cannot be determined.
+	 *
+	 * <p>
+	 * Like {@link #getProviderId(String)}, the answer is unambiguous as long as all providers
+	 * exposing the model agree on it.
+	 * </p>
+	 *
+	 * @param modelName
+	 *        The model name to look up.
+	 * @return The API family (e.g. {@link ApiFamilies#ANTHROPIC}), or {@code null}.
+	 */
+	public String getApiFamily(String modelName) {
+		if (_providerConfigs == null) {
+			return null;
+		}
+		String result = null;
+		boolean first = true;
+		for (String providerName : getProvidersOf(modelName)) {
+			String family = _providerConfigs.get(providerName).getApiFamily(modelName);
+			if (first) {
+				result = family;
+				first = false;
+			} else if (!Objects.equals(result, family)) {
+				return null;
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The {@link LLMProviderConfig#getApiFamily(String) API family} of the given model reference,
+	 * or {@code null} if the reference does not resolve to exactly one provider.
+	 *
+	 * @param modelName
+	 *        The model name to look up.
+	 * @param providerName
+	 *        The provider qualifying the model, or {@code null} for an unqualified reference.
+	 * @return The API family (e.g. {@link ApiFamilies#ANTHROPIC}), or {@code null}.
+	 */
+	public String getApiFamily(String modelName, String providerName) {
+		if (providerName == null || providerName.isBlank()) {
+			return getApiFamily(modelName);
+		}
+		LLMProviderConfig providerConfig = lookupProvider(modelName, providerName);
+		return providerConfig == null ? null : providerConfig.getApiFamily(modelName);
+	}
+
+	/**
 	 * How long, in seconds, a run on its last model waits in total for a model that is rate limited.
 	 *
 	 * @see FailoverConfig#getRateLimitWaitSeconds()

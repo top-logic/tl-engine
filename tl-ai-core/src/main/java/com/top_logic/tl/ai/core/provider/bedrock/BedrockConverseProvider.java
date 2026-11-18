@@ -12,9 +12,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -41,6 +39,16 @@ import de.haumacher.msgbuf.json.JsonReader;
  * <p>Thread-safe: a single instance handles concurrent streams.</p>
  */
 public class BedrockConverseProvider extends AbstractStreamingProvider {
+
+	/** Block type of the {@link ContentBlockAccumulator} for a text block. */
+	private static final String TEXT_BLOCK = "text";
+
+	/** Block type of the {@link ContentBlockAccumulator} for a thinking block. */
+	private static final String THINKING_BLOCK = "thinking";
+
+	/** Block type of the {@link ContentBlockAccumulator} for a tool call. */
+	private static final String TOOL_USE_BLOCK = "tool_use";
+
 	/**
 	 * Catalog ID stamped onto the thinking blocks this provider produces.
 	 *
@@ -49,8 +57,7 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 	 * it is what lets a later request to another provider drop them instead of being rejected.
 	 * </p>
 	 */
-	private static final String PROVIDER_ID = "bedrock";
-
+	private final String _catalogProviderId;
 
 	/**
 	 * Creates a {@link BedrockConverseProvider} with a shared default {@link HttpClient}.
@@ -77,6 +84,7 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 	 */
 	public BedrockConverseProvider(CredentialProvider credentials, String baseUrl, HttpClient httpClient) {
 		super(credentials, baseUrl, httpClient);
+		_catalogProviderId = BedrockConverseProviderConfig.DEFAULT_CATALOG_PROVIDER_ID;
 	}
 
 	/**
@@ -92,12 +100,17 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 	 *        Per-request timeout in seconds.
 	 * @param customHeaders
 	 *        Additional HTTP headers applied after all provider-specific headers.
+	 * @param catalogProviderId
+	 *        The {@link com.top_logic.tl.ai.core.provider.LLMProviderConfig#getCatalogProviderId()
+	 *        catalog provider ID} of the configured provider, stamped onto the thinking blocks it
+	 *        produces; <code>null</code> if none is configured.
 	 */
 	public BedrockConverseProvider(CredentialProvider credentials, String baseUrl,
 			int connectTimeoutSeconds, int requestTimeoutSeconds,
-			Map<String, String> customHeaders) {
+			Map<String, String> customHeaders, String catalogProviderId) {
 		super(credentials, baseUrl, defaultHttpClient(connectTimeoutSeconds),
 			Duration.ofSeconds(requestTimeoutSeconds), customHeaders);
+		_catalogProviderId = catalogProviderId;
 	}
 
 	@Override
@@ -129,8 +142,6 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 		int cacheWriteTokens = 0;
 		boolean metadataReceived = false;
 		ContentBlockAccumulator accumulator = new ContentBlockAccumulator();
-		// Tracks which text-block indices have already received a TextStart event.
-		Set<Integer> openedTextBlocks = new HashSet<>();
 
 		handler.onEvent(new StreamEvent.StreamStart());
 
@@ -163,32 +174,41 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 						int blockIndex = parseContentBlockIndex(payload);
 						String[] toolUseIdAndName = parseToolUseStartBlock(payload);
 						if (toolUseIdAndName != null) {
-							accumulator.addBlock(blockIndex, "tool_use",
+							accumulator.addBlock(blockIndex, TOOL_USE_BLOCK,
 								toolUseIdAndName[0], toolUseIdAndName[1]);
 							handler.onEvent(new StreamEvent.ToolCallStart(
 								blockIndex, toolUseIdAndName[0], toolUseIdAndName[1]));
 						}
-						// Text blocks have no contentBlockStart — they open lazily in contentBlockDelta.
+						// Text and reasoning blocks have no contentBlockStart — they open lazily in
+						// contentBlockDelta.
 					}
 
 					case "contentBlockDelta" -> {
 						String payload = message.payloadString();
 						int blockIndex = parseContentBlockIndex(payload);
-						String text = parseTextDelta(payload);
-						if (text != null && !text.isEmpty()) {
-							// Lazily open a text block on the first text delta for this index.
-							if (!openedTextBlocks.contains(blockIndex)) {
-								accumulator.addBlock(blockIndex, "text", null, null);
+						Delta delta = parseDelta(payload);
+						if (delta.text() != null && !delta.text().isEmpty()) {
+							if (accumulator.getBlockType(blockIndex) == null) {
+								accumulator.addBlock(blockIndex, TEXT_BLOCK, null, null);
 								handler.onEvent(new StreamEvent.TextStart(blockIndex));
-								openedTextBlocks.add(blockIndex);
 							}
-							accumulator.appendText(blockIndex, text);
-							handler.onEvent(new StreamEvent.TextDelta(blockIndex, text));
-						} else {
-							String toolInput = parseToolUseDelta(payload);
-							if (toolInput != null) {
-								accumulator.appendArguments(blockIndex, toolInput);
-								handler.onEvent(new StreamEvent.ToolCallDelta(blockIndex, toolInput));
+							accumulator.appendText(blockIndex, delta.text());
+							handler.onEvent(new StreamEvent.TextDelta(blockIndex, delta.text()));
+						} else if (delta.toolInput() != null) {
+							accumulator.appendArguments(blockIndex, delta.toolInput());
+							handler.onEvent(new StreamEvent.ToolCallDelta(blockIndex, delta.toolInput()));
+						} else if (delta.reasoningText() != null || delta.signature() != null) {
+							if (accumulator.getBlockType(blockIndex) == null) {
+								accumulator.addBlock(blockIndex, THINKING_BLOCK, null, null);
+								handler.onEvent(new StreamEvent.ThinkingStart(blockIndex));
+							}
+							String reasoning = delta.reasoningText();
+							if (reasoning != null && !reasoning.isEmpty()) {
+								accumulator.appendText(blockIndex, reasoning);
+								handler.onEvent(new StreamEvent.ThinkingDelta(blockIndex, reasoning));
+							}
+							if (delta.signature() != null && !delta.signature().isEmpty()) {
+								accumulator.setContinuityToken(blockIndex, delta.signature());
 							}
 						}
 					}
@@ -199,8 +219,9 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 						String blockType = accumulator.getBlockType(blockIndex);
 						if (blockType != null) {
 							switch (blockType) {
-								case "text" -> handler.onEvent(new StreamEvent.TextEnd(blockIndex));
-								case "tool_use" -> handler.onEvent(new StreamEvent.ToolCallEnd(blockIndex));
+								case TEXT_BLOCK -> handler.onEvent(new StreamEvent.TextEnd(blockIndex));
+								case THINKING_BLOCK -> handler.onEvent(new StreamEvent.ThinkingEnd(blockIndex));
+								case TOOL_USE_BLOCK -> handler.onEvent(new StreamEvent.ToolCallEnd(blockIndex));
 								default -> { /* Unknown block type — ignore. */ }
 							}
 						}
@@ -224,7 +245,7 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 								finishReason,
 								new TokenUsage(inputTokens, outputTokens, 0, cacheReadTokens,
 									cacheWriteTokens),
-								accumulator.buildContentParts(PROVIDER_ID)));
+								accumulator.buildContentParts(_catalogProviderId)));
 						}
 					}
 
@@ -239,7 +260,7 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 				"", "",
 				finishReason,
 				new TokenUsage(inputTokens, outputTokens, 0, cacheReadTokens, cacheWriteTokens),
-				accumulator.buildContentParts(PROVIDER_ID)));
+				accumulator.buildContentParts(_catalogProviderId)));
 		}
 	}
 
@@ -335,71 +356,82 @@ public class BedrockConverseProvider extends AbstractStreamingProvider {
 	}
 
 	/**
-	 * Extracts the {@code delta.text} field from a {@code contentBlockDelta} payload.
+	 * The content of a {@code contentBlockDelta}.
 	 *
-	 * @return the text string, or {@code null} if the delta has no text field.
+	 * @param text
+	 *        The {@code delta.text} of a text block, <code>null</code> if absent.
+	 * @param toolInput
+	 *        The partial JSON arguments {@code delta.toolUse.input} of a tool call,
+	 *        <code>null</code> if absent.
+	 * @param reasoningText
+	 *        The {@code delta.reasoningContent.text} of a reasoning block, <code>null</code> if
+	 *        absent.
+	 * @param signature
+	 *        The {@code delta.reasoningContent.signature} of a reasoning block, <code>null</code>
+	 *        if absent.
 	 */
-	private static String parseTextDelta(String payload) {
-		// payload: {"contentBlockIndex":N,"delta":{"text":"..."}}
-		try (JsonReader json = jsonReader(payload)) {
-			json.beginObject();
-			while (json.hasNext()) {
-				String key = json.nextName();
-				if ("delta".equals(key)) {
-					json.beginObject();
-					while (json.hasNext()) {
-						if ("text".equals(json.nextName())) {
-							return json.nextString();
-						}
-						json.skipValue();
-					}
-					json.endObject();
-				} else {
-					json.skipValue();
-				}
-			}
-		} catch (Exception e) {
-			// Fall through.
-		}
-		return null;
+	private record Delta(String text, String toolInput, String reasoningText, String signature) {
+		// Values only.
 	}
 
 	/**
-	 * Extracts the {@code delta.toolUse.input} field from a {@code contentBlockDelta} payload.
+	 * Reads the {@code delta} of a {@code contentBlockDelta} payload.
 	 *
-	 * @return the partial JSON argument string, or {@code null} if absent.
+	 * <p>
+	 * A {@code redactedContent} of a reasoning block is skipped, as the Anthropic provider skips a
+	 * {@code redacted_thinking} block.
+	 * </p>
 	 */
-	private static String parseToolUseDelta(String payload) {
-		// payload: {"contentBlockIndex":N,"delta":{"toolUse":{"input":"..."}}}
+	private static Delta parseDelta(String payload) {
+		// payload: {"contentBlockIndex":N,"delta":{"text":"..."}}
+		//      or  {"contentBlockIndex":N,"delta":{"toolUse":{"input":"..."}}}
+		//      or  {"contentBlockIndex":N,"delta":{"reasoningContent":{"text":"..."|"signature":"..."}}}
+		String text = null;
+		String toolInput = null;
+		String reasoningText = null;
+		String signature = null;
 		try (JsonReader json = jsonReader(payload)) {
 			json.beginObject();
 			while (json.hasNext()) {
-				String key = json.nextName();
-				if ("delta".equals(key)) {
-					json.beginObject();
-					while (json.hasNext()) {
-						if ("toolUse".equals(json.nextName())) {
+				if (!"delta".equals(json.nextName())) {
+					json.skipValue();
+					continue;
+				}
+				json.beginObject();
+				while (json.hasNext()) {
+					switch (json.nextName()) {
+						case "text" -> text = json.nextString();
+						case "toolUse" -> {
 							json.beginObject();
 							while (json.hasNext()) {
 								if ("input".equals(json.nextName())) {
-									return json.nextString();
+									toolInput = json.nextString();
+								} else {
+									json.skipValue();
 								}
-								json.skipValue();
 							}
 							json.endObject();
-						} else {
-							json.skipValue();
 						}
+						case "reasoningContent" -> {
+							json.beginObject();
+							while (json.hasNext()) {
+								switch (json.nextName()) {
+									case "text" -> reasoningText = json.nextString();
+									case "signature" -> signature = json.nextString();
+									default -> json.skipValue();
+								}
+							}
+							json.endObject();
+						}
+						default -> json.skipValue();
 					}
-					json.endObject();
-				} else {
-					json.skipValue();
 				}
+				json.endObject();
 			}
 		} catch (Exception e) {
-			// Fall through.
+			// Return whatever was parsed so far.
 		}
-		return null;
+		return new Delta(text, toolInput, reasoningText, signature);
 	}
 
 	/**

@@ -11,21 +11,21 @@ import com.top_logic.basic.func.GenericFunction;
 import com.top_logic.layout.form.model.FieldMode;
 
 /**
- * Base class for {@link GenericFunction}s that show/hide config fields based on the selected
- * model's provider.
+ * Base class for {@link GenericFunction}s that show/hide config fields based on the
+ * {@link ApiFamilies API family} of the selected model.
  *
  * <p>
  * Receives the model name and the provider serving it (via {@code @Ref(MODEL)} and
- * {@code @Ref(PROVIDER)}), resolves the catalog provider ID via {@link LLMProviderService}, and returns
- * {@link FieldMode#ACTIVE} if the provider matches, {@link FieldMode#INVISIBLE} otherwise.
+ * {@code @Ref(PROVIDER)}), resolves the model's API family via {@link LLMProviderService}, and
+ * returns {@link FieldMode#ACTIVE} if the family matches, {@link FieldMode#INVISIBLE} otherwise.
  * </p>
  */
 public abstract class ProviderFieldMode extends GenericFunction<FieldMode> {
 
 	/**
-	 * The provider IDs for which the field should be visible.
+	 * The {@link ApiFamilies API families} for which the field should be visible.
 	 */
-	protected abstract Set<String> providers();
+	protected abstract Set<String> families();
 
 	@Override
 	public FieldMode invoke(Object... args) {
@@ -38,8 +38,8 @@ public abstract class ProviderFieldMode extends GenericFunction<FieldMode> {
 		if (registry == null) {
 			return FieldMode.INVISIBLE;
 		}
-		String providerId = registry.getProviderId(model, provider);
-		if (providerId != null && providers().contains(providerId)) {
+		String family = registry.getApiFamily(model, provider);
+		if (family != null && families().contains(family)) {
 			return FieldMode.ACTIVE;
 		}
 		return FieldMode.INVISIBLE;
@@ -56,22 +56,24 @@ public abstract class ProviderFieldMode extends GenericFunction<FieldMode> {
 	}
 
 	/**
-	 * Shows field when the model is from an Anthropic provider.
+	 * Shows field when the model is of the family {@link ApiFamilies#ANTHROPIC}, whichever provider
+	 * serves it.
 	 */
 	public static class AnthropicFieldMode extends ProviderFieldMode {
 		@Override
-		protected Set<String> providers() {
-			return Set.of("anthropic");
+		protected Set<String> families() {
+			return Set.of(ApiFamilies.ANTHROPIC);
 		}
 	}
 
 	/**
-	 * Shows field when the model is from an <code>OpenAI</code> or <code>xAI</code> provider.
+	 * Shows field when the model is of the family {@link ApiFamilies#OPENAI} or
+	 * {@link ApiFamilies#XAI}.
 	 */
 	public static class OpenAIFieldMode extends ProviderFieldMode {
 		@Override
-		protected Set<String> providers() {
-			return Set.of("openai", "xai");
+		protected Set<String> families() {
+			return Set.of(ApiFamilies.OPENAI, ApiFamilies.XAI);
 		}
 	}
 

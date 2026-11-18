@@ -19,6 +19,7 @@ import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.TextContent;
+import com.top_logic.tl.ai.core.message.ThinkingContent;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
@@ -28,6 +29,9 @@ import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.ResponseFormat;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
+import com.top_logic.tl.ai.core.provider.anthropic.AnthropicRequestBuilder;
+import com.top_logic.tl.ai.core.provider.anthropic.AnthropicRequestBuilder.ThinkingParams;
+import com.top_logic.tl.ai.core.provider.anthropic.messages.AnthropicRequest;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 import de.haumacher.msgbuf.io.StringW;
@@ -53,6 +57,36 @@ public final class BedrockConverseRequestBuilder {
 	 */
 	private static final String DOCUMENT_NAME = "attachment";
 
+	/**
+	 * Request field carrying the model-specific fields the Converse API passes on to the model
+	 * unchanged.
+	 */
+	static final String ADDITIONAL_MODEL_REQUEST_FIELDS = "additionalModelRequestFields";
+
+	/** Content block marking a prompt-cache breakpoint. */
+	static final String CACHE_POINT = "cachePoint";
+
+	/** Field of a {@link #CACHE_POINT} with its type. */
+	static final String CACHE_POINT_TYPE = "type";
+
+	/** The only {@link #CACHE_POINT_TYPE}. */
+	static final String CACHE_POINT_TYPE_DEFAULT = "default";
+
+	/** Field of a {@link #CACHE_POINT} with the lifetime of the cache entry. */
+	static final String CACHE_POINT_TTL = "ttl";
+
+	/** Content block of the model's reasoning. */
+	static final String REASONING_CONTENT = "reasoningContent";
+
+	/** Field of a {@link #REASONING_CONTENT} with the reasoning text and its signature. */
+	static final String REASONING_TEXT = "reasoningText";
+
+	/** Field of a {@link #REASONING_TEXT} with the text. */
+	static final String REASONING_TEXT_TEXT = "text";
+
+	/** Field of a {@link #REASONING_TEXT} with the signature. */
+	static final String REASONING_TEXT_SIGNATURE = "signature";
+
 	private BedrockConverseRequestBuilder() {
 		// Static utility class.
 	}
@@ -67,6 +101,9 @@ public final class BedrockConverseRequestBuilder {
 	public static String buildRequestJson(ProviderRequest request) throws ProviderException {
 		refuseResponseFormat(request.responseFormat());
 
+		boolean claude = BedrockConverseProviderConfig.isClaude(request.model());
+		String cacheTtl = claude ? AnthropicRequestBuilder.cacheTtl(request.modelOptions()) : null;
+
 		Map<String, Object> body = new LinkedHashMap<>();
 
 		// system: array of text blocks (omitted when empty/null)
@@ -78,13 +115,13 @@ public final class BedrockConverseRequestBuilder {
 			// Cache breakpoint after the system prompt. A cachePoint in the system field caches the
 			// preceding tools and system prefix — the large static portion of an agent request that
 			// is resent unchanged every turn. Mirrors the Anthropic builder's system cache_control.
-			system.add(cachePoint());
+			system.add(cachePoint(cacheTtl));
 			body.put("system", system);
 		}
 
 		// messages (with cache breakpoints on the most recent turns)
 		List<Object> messages = buildMessages(request.messages());
-		addConversationCachePoints(messages);
+		addConversationCachePoints(messages, cacheTtl);
 		body.put("messages", messages);
 
 		// inferenceConfig: maxTokens always; temperature/topP only if present
@@ -92,7 +129,14 @@ public final class BedrockConverseRequestBuilder {
 
 		// toolConfig: only when tools are defined
 		if (!request.tools().isEmpty()) {
-			body.put("toolConfig", buildToolConfig(request));
+			body.put("toolConfig", buildToolConfig(request, cacheTtl));
+		}
+
+		if (claude) {
+			Map<String, Object> additional = buildClaudeFields(request);
+			if (!additional.isEmpty()) {
+				body.put(ADDITIONAL_MODEL_REQUEST_FIELDS, additional);
+			}
 		}
 
 		StringW buffer = new StringW();
@@ -127,27 +171,65 @@ public final class BedrockConverseRequestBuilder {
 	}
 
 	/**
-	 * A Bedrock Converse {@code cachePoint} block: {@code {"cachePoint": {"type": "default"}}}.
+	 * The fields of a Claude request that the Converse API has no field of its own for, sent in
+	 * {@link #ADDITIONAL_MODEL_REQUEST_FIELDS} in the Anthropic Messages API's spelling.
+	 *
+	 * <p>
+	 * The thinking configuration, the thinking effort and {@code top_k} are decided by the
+	 * {@link AnthropicRequestBuilder}, so that Claude gets the same request on Bedrock as on the
+	 * Anthropic API.
+	 * </p>
+	 */
+	private static Map<String, Object> buildClaudeFields(ProviderRequest request) {
+		Map<String, Object> fields = new LinkedHashMap<>();
+		ThinkingParams thinking = AnthropicRequestBuilder.thinkingParams(request.model(),
+			request.maxOutputTokens(), request.modelOptions());
+		if (thinking != null) {
+			fields.put(AnthropicRequest.THINKING__PROP, thinking.thinking());
+			if (thinking.effort() != null) {
+				fields.put(AnthropicRequest.OUTPUT_CONFIG__PROP,
+					Map.of(AnthropicRequestBuilder.OUTPUT_CONFIG_EFFORT, thinking.effort()));
+			}
+		}
+		Long topK = AnthropicRequestBuilder.topK(request.modelOptions());
+		if (topK != null) {
+			fields.put(AnthropicRequest.TOP_K__PROP, topK);
+		}
+		return fields;
+	}
+
+	/**
+	 * A Bedrock Converse {@code cachePoint} block: {@code {"cachePoint": {"type": "default"}}},
+	 * with a {@code ttl} if one is given.
 	 *
 	 * <p>Marks a prompt-cache breakpoint; everything from the start of the cacheable prefix up to
 	 * this point is cached for reuse on subsequent requests. Segments below the model's minimum
 	 * cacheable token count are silently ignored by Bedrock, so adding the marker unconditionally
 	 * is safe for short prompts.</p>
+	 *
+	 * @param ttl
+	 *        The lifetime of the cache entry ({@code 5m} or {@code 1h}), <code>null</code> for the
+	 *        default.
 	 */
-	private static Map<String, Object> cachePoint() {
+	private static Map<String, Object> cachePoint(String ttl) {
+		Map<String, Object> cachePoint = new LinkedHashMap<>();
+		cachePoint.put(CACHE_POINT_TYPE, CACHE_POINT_TYPE_DEFAULT);
+		if (ttl != null) {
+			cachePoint.put(CACHE_POINT_TTL, ttl);
+		}
 		Map<String, Object> block = new LinkedHashMap<>();
-		block.put("cachePoint", Map.of("type", "default"));
+		block.put(CACHE_POINT, cachePoint);
 		return block;
 	}
 
 	/**
-	 * Appends a {@link #cachePoint()} to the content of the last up to two user-role messages.
+	 * Appends a {@link #cachePoint(String)} to the content of the last up to two user-role messages.
 	 *
 	 * <p>Mirrors the Anthropic builder, which caches the two most recent user turns so that a
 	 * growing agent loop gets cache hits on the conversation prefix turn after turn. Combined with
 	 * the system cache point this stays within Bedrock's four-breakpoint limit.</p>
 	 */
-	private static void addConversationCachePoints(List<Object> messages) {
+	private static void addConversationCachePoints(List<Object> messages, String cacheTtl) {
 		List<Map<String, Object>> userTurns = new ArrayList<>();
 		for (Object entry : messages) {
 			@SuppressWarnings("unchecked")
@@ -161,7 +243,7 @@ public final class BedrockConverseRequestBuilder {
 			@SuppressWarnings("unchecked")
 			List<Object> content = (List<Object>) userTurns.get(i).get("content");
 			if (content != null && !content.isEmpty()) {
-				content.add(cachePoint());
+				content.add(cachePoint(cacheTtl));
 			}
 		}
 	}
@@ -319,13 +401,35 @@ public final class BedrockConverseRequestBuilder {
 				Map<String, Object> block = new LinkedHashMap<>();
 				block.put("toolUse", toolUse);
 				content.add(block);
+			} else if (part instanceof ThinkingContent thinking) {
+				content.add(buildReasoningBlock(thinking));
 			}
-			// ThinkingContent has no Bedrock Converse equivalent — skip.
 		}
 		Map<String, Object> entry = new LinkedHashMap<>();
 		entry.put("role", "assistant");
 		entry.put("content", content);
 		return entry;
+	}
+
+	/**
+	 * Builds a {@code reasoningContent} block from a thinking block of an earlier response.
+	 *
+	 * <p>
+	 * {@code {"reasoningContent": {"reasoningText": {"text": "...", "signature": "..."}}}}. Only
+	 * thinking this provider produced reaches here, see
+	 * {@link com.top_logic.tl.ai.core.provider.MessageHistorySanitizer}; its signature lets the model
+	 * continue its reasoning across a tool call.
+	 * </p>
+	 */
+	private static Map<String, Object> buildReasoningBlock(ThinkingContent thinking) {
+		Map<String, Object> reasoningText = new LinkedHashMap<>();
+		reasoningText.put(REASONING_TEXT_TEXT, thinking.text());
+		if (thinking.continuityToken() != null) {
+			reasoningText.put(REASONING_TEXT_SIGNATURE, thinking.continuityToken());
+		}
+		Map<String, Object> block = new LinkedHashMap<>();
+		block.put(REASONING_CONTENT, Map.of(REASONING_TEXT, reasoningText));
+		return block;
 	}
 
 	/**
@@ -401,7 +505,7 @@ public final class BedrockConverseRequestBuilder {
 	 * part readable across that load. Only placed when there is something behind it - see #346.
 	 * </p>
 	 */
-	private static Map<String, Object> buildToolConfig(ProviderRequest request) {
+	private static Map<String, Object> buildToolConfig(ProviderRequest request, String cacheTtl) {
 		List<ToolSchema> schemas = request.tools();
 		int stable = request.stableToolCount();
 		boolean breakAfterStable = stable > 0 && stable < schemas.size();
@@ -421,7 +525,7 @@ public final class BedrockConverseRequestBuilder {
 			toolEntry.put("toolSpec", toolSpec);
 			tools.add(toolEntry);
 			if (breakAfterStable && i == stable - 1) {
-				tools.add(cachePoint());
+				tools.add(cachePoint(cacheTtl));
 			}
 		}
 

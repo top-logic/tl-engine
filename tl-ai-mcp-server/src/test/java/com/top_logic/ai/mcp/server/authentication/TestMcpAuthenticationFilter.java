@@ -150,10 +150,10 @@ public class TestMcpAuthenticationFilter extends TestCase {
 		assertTrue(body, body.contains(HttpDoubles.APPLICATION_URL + McpServerCard.PATH));
 		Resources resources = Resources.getLogInstance();
 		assertTrue(body, body.contains(resources.getString(
-			com.top_logic.tl.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_OBTAIN__URL
+			com.top_logic.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_OBTAIN__URL
 				.fill(HttpDoubles.APPLICATION_URL + ViewServlet.ROOT_PATH))));
 		assertTrue(body, body.contains("Authorization: " + resources.getString(
-			com.top_logic.tl.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_VALUE)));
+			com.top_logic.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_VALUE)));
 	}
 
 	/**

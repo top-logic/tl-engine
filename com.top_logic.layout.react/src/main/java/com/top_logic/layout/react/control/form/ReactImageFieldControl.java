@@ -40,12 +40,13 @@ import de.haumacher.msgbuf.data.DataObject;
  * The field shows the image it is at on a stage as wide as the field, at most as high as the theme
  * or the {@link #setDimensions(String, String) dimensions} of the field allow; with
  * {@link #isMultiple() several images}, buttons and the arrow keys step through them and a counter
- * tells where the field is. A field that is only displayed opens the image in a view filling the
- * page when it is clicked. A field that is {@link FieldModel#isEditable() edited} opens the arrange
- * view instead: a tile per image that replaces its image by a file dropped on it or picked through
- * its button, removes it, and moves it among the others where the {@link #isOrdered() order} is
- * part of the value, followed by an area adding further images. A file dropped on the stage of a
- * field holding a single image replaces it; dropped on the stage of a field holding several, it is
+ * tells where the field is. A click on the image opens it in a view filling the page. A field that
+ * is {@link FieldModel#isEditable() edited} has buttons below the stage adding images after the
+ * image shown, replacing it, removing it and, with several images, opening an editor covering the
+ * page: a tile per image that replaces its image by a file dropped on it or picked through its
+ * button, removes it, and moves it among the others where the {@link #isOrdered() order} is part of
+ * the value, followed by an area adding further images. A file dropped on the stage of a field
+ * holding a single image replaces it; dropped on the stage of a field holding several, it is
  * inserted after the image shown. Without an image, the stage is an area an image is dropped on or
  * that opens the file picker. The control takes a {@link #prefersWholeLine() whole row} of a form.
  * </p>

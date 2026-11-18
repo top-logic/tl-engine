@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useUpload, useTLDataUrl, useI18N, useListReorder, reorderState, rootClassName, stateAttr, useFieldLabelProps, usePart, useFocusTrap, createPortal, ThemeIcon, ICON_UPLOAD, ICON_CLOSE, ICON_HANDLE, ICON_PREVIOUS, ICON_NEXT } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useUpload, useTLDataUrl, useI18N, useListReorder, reorderState, rootClassName, stateAttr, useFieldLabelProps, usePart, useFocusTrap, createPortal, ThemeIcon, ICON_ADD, ICON_UPLOAD, ICON_REMOVE, ICON_CLOSE, ICON_HANDLE, ICON_PREVIOUS, ICON_NEXT, ICON_MANAGE_IMAGES } from 'tl-react-bridge';
 import type { TLCellProps, UploadPart } from 'tl-react-bridge';
 import { showsValueOnly } from './form/fieldState';
 
@@ -38,13 +38,17 @@ const KEY_NEXT = 'ArrowRight';
 
 const I18N_KEYS = {
   'js.imageField.upload': 'Upload image',
+  'js.imageField.add': 'Add image',
+  'js.imageField.replaceShown': 'Replace',
+  'js.imageField.removeShown': 'Remove',
+  'js.imageField.manage': 'Manage images',
+  'js.imageField.editorTitle': 'Images ({0})',
   'js.imageField.replace': 'Replace {0}',
   'js.imageField.remove': 'Remove {0}',
   'js.imageField.previous': 'Previous image',
   'js.imageField.next': 'Next image',
   'js.imageField.counter': '{0} of {1}',
   'js.imageField.open': 'Show {0} full page',
-  'js.imageField.edit': 'Edit {0}',
   'js.imageField.show': 'Show {0}',
   'js.imageField.done': 'Done',
   'js.imageField.close': 'Close',
@@ -65,15 +69,21 @@ function format(text: string, ...values: (string | number)[]): string {
 
 /**
  * Form-field control for images: one image at a time on a stage as wide as the field, fetched from
- * the data endpoint of the server control by the key of its tile.
+ * the data endpoint of the server control by the key of its tile. The form never shows more than
+ * the stage; several images are arranged in an editor covering the page.
  *
  * Several images are stepped through with the buttons over the stage or the arrow keys, a counter
- * tells where the field is. A click on the image of a field that is only displayed (or disabled)
- * opens it in a view covering the page, with the same stepping; Escape closes it. A click on the image
- * of an edited field opens the arrange view: a tile per image with a button picking a file that
- * replaces it, a button removing it and, where the order of the images is part of the value, a handle
- * moving it by dragging or with Alt + arrow key; a dashed area after the tiles takes further images.
- * "Done", Escape, or a click on the image of a tile goes back to the stage, at that image.
+ * tells where the field is. A click on the image opens it in a view covering the page opaquely, with
+ * the same stepping; Escape closes it. This holds for a displayed, a disabled and an edited field alike.
+ *
+ * An edited field holding an image has a bar of buttons below the stage: "Add image" (several
+ * images only) picks files inserted after the image shown, "Replace" picks a file replacing the image
+ * shown, "Remove" removes it, and "Manage images" (several images only) opens the editor: a tile per
+ * image with a button picking a file that replaces it (a file dropped on the tile replaces it as well),
+ * a button removing it and, where the order of the images is part of the value, a handle moving it
+ * by dragging or with Alt + arrow key; a dashed tile after the others takes further images. "Done"
+ * or Escape closes the editor, a click on the image of a tile closes it and shows that image on the
+ * stage.
  *
  * A file dropped on the stage of an edited field replaces a single image and is inserted after the
  * image shown among several; the stage then shows the first image added. Without an image, the stage
@@ -97,6 +107,7 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
   const dataUrl = useTLDataUrl();
   const t = useI18N(I18N_KEYS);
   const Button = usePart('Button');
+  const editorTitleId = React.useId();
 
   const images = (state.images as ImageTile[] | null) ?? [];
   const multiple = state.multiple === true;
@@ -113,7 +124,7 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
   const lastIndexRef = React.useRef(0);
   // The keys of the images before an upload adding images, so that the stage moves to the first added.
   const keysBeforeAddRef = React.useRef<Set<string> | null>(null);
-  const [arranging, setArranging] = React.useState(false);
+  const [managing, setManaging] = React.useState(false);
   const [fullPage, setFullPage] = React.useState(false);
 
   let currentIndex = images.findIndex(tile => tile.key === currentKey);
@@ -144,8 +155,8 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
   }, [error]);
 
   React.useEffect(() => {
-    // The arrange view belongs to editing; the field that stops being edited goes back to its stage.
-    if (!editing) setArranging(false);
+    // The editor belongs to editing; it closes when the field stops being edited.
+    if (!editing) setManaging(false);
   }, [editing]);
 
   React.useEffect(() => {
@@ -155,10 +166,10 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
   // The key of the tile a file is dropped on, DROP_AREA for the stage and for the area adding images,
   // null while no file is dragged over the field.
   const [dropTarget, setDropTarget] = React.useState<string | null>(null);
+  const addInputRef = React.useRef<HTMLInputElement | null>(null);
   const replaceInputRef = React.useRef<HTMLInputElement | null>(null);
-  // The key of the tile whose image the file picked in the replace input replaces.
+  // The key of the image the file picked in the replace input replaces.
   const replacedKeyRef = React.useRef<string | null>(null);
-  const stageButtonRef = React.useRef<HTMLButtonElement | null>(null);
 
   /**
    * Uploads the given files: replacing the image of the given key, or else adding them after the
@@ -184,10 +195,12 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand(CMD_MOVE_IMAGE, { [ARG_INDEX]: index, [ARG_TARGET_INDEX]: targetIndex });
   }, [sendCommand]);
 
+  const remove = (tile: ImageTile) => sendCommand(CMD_REMOVE_IMAGE, { [ARG_KEY]: tile.key });
+
   const reorder = useListReorder({
     axis: 'horizontal',
     onMove: move,
-    enabled: arranging && arrangeable,
+    enabled: managing && arrangeable,
     handle: true,
     count: images.length,
     labelOf: index => images[index].name,
@@ -248,12 +261,20 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
 
   const altOf = (tile: ImageTile) => tile.name || t['js.image.alt'];
 
-  const handleAddChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  /** Runs the given upload with the files picked in an input, and resets the input for the next pick. */
+  const picked = (onFiles: (files: FileList) => void) => (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
-      doUpload(event.target.files, null, null);
+      onFiles(event.target.files);
     }
     // Reset, so that the same file can be picked again.
     event.target.value = '';
+  };
+
+  /** Opens the file picker for a file replacing the image of the given tile. */
+  const pickReplacement = (tile: ImageTile) => {
+    if (uploading) return;
+    replacedKeyRef.current = tile.key;
+    replaceInputRef.current?.click();
   };
 
   /** The dashed area taking images by a click opening the file picker or by dropping files. */
@@ -269,7 +290,7 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
         multiple={multiple}
         accept={accept || undefined}
         disabled={disabled || uploading}
-        onChange={handleAddChange}
+        onChange={picked(onFiles)}
       />
       <ThemeIcon encoded={ICON_UPLOAD} className="tl-icon-md" />
       <span className="tl-image-field__label">{uploading ? t['js.uploading'] : t['js.imageField.upload']}</span>
@@ -305,115 +326,101 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
     role: 'group' as const,
   };
 
-  if (arranging && editing) {
-    const handleReplaceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-      if (event.target.files) {
-        doUpload(event.target.files, replacedKeyRef.current, null);
-      }
-      replacedKeyRef.current = null;
-      event.target.value = '';
-    };
-
-    const pickReplacement = (tile: ImageTile) => {
-      if (uploading) return;
-      replacedKeyRef.current = tile.key;
-      replaceInputRef.current?.click();
-    };
-
-    const show = (tile: ImageTile) => {
-      setCurrentKey(tile.key);
-      setArranging(false);
-    };
-
-    // A single image is replaced by dropping a file on it; several images get an area adding further ones.
-    const showsDropArea = multiple || images.length === 0;
-
-    return (
-      <div {...rootProps}
-        className={rootClassName(state, 'tl-image-field', 'tl-image-field--arrange')}
-        onKeyDown={event => {
-          if (event.key === KEY_ESCAPE && !event.defaultPrevented) {
-            event.preventDefault();
-            setArranging(false);
-          }
-        }}>
-        <div className="tl-image-field__tiles" data-tl-axis="horizontal" {...reorder.containerProps}>
-          {images.map((tile, index) => {
-            const dropProps = fileDropProps(tile.key, files => doUpload(files, tile.key, null));
-            const reorderProps = reorder.itemProps(index);
-            return (
-              <div key={tile.key} className="tl-image-field__tile"
-                data-tl-state={stateAttr(reorderState(reorder.itemState(index)), dropTarget === tile.key && 'dragover')}
-                {...reorderProps}
-                onDragOver={event => {
-                  dropProps.onDragOver(event);
-                  if (!event.defaultPrevented) reorderProps.onDragOver?.(event);
-                }}
-                onDragLeave={dropProps.onDragLeave}
-                onDrop={event => {
-                  dropProps.onDrop(event);
-                  if (!event.defaultPrevented) reorderProps.onDrop?.(event);
-                }}>
-                <button type="button" className="tl-image-field__show"
-                  aria-label={format(t['js.imageField.show'], altOf(tile))}
-                  aria-current={index === currentIndex ? true : undefined}
-                  onClick={() => show(tile)}>
-                  <img className="tl-image-field__image" src={imageUrl(tile)} alt={altOf(tile)} />
-                </button>
-                <div className="tl-image-field__actions">
-                  {arrangeable && (
-                    <Button
-                      label={format(t['js.reorder.handle'], tile.name)}
-                      image={ICON_HANDLE}
-                      display="icon-only"
-                      appearance="secondary"
-                      small
-                      {...reorder.handleProps(index)}
-                    />
-                  )}
-                  <Button
-                    label={format(t['js.imageField.replace'], tile.name)}
-                    image={ICON_UPLOAD}
-                    display="icon-only"
-                    appearance="secondary"
-                    small
-                    disabled={uploading}
-                    onClick={() => pickReplacement(tile)}
-                  />
-                  <Button
-                    label={format(t['js.imageField.remove'], tile.name)}
-                    image={ICON_CLOSE}
-                    display="icon-only"
-                    appearance="secondary"
-                    small
-                    onClick={() => sendCommand(CMD_REMOVE_IMAGE, { [ARG_KEY]: tile.key })}
-                  />
-                </div>
-              </div>
-            );
-          })}
-          <input
-            ref={replaceInputRef}
-            type="file"
-            accept={accept || undefined}
-            onChange={handleReplaceChange}
-            hidden
-          />
-          {showsDropArea && dropArea(files => doUpload(files, null, null))}
-        </div>
-        <div className="tl-image-field__bar">
-          <Button label={t['js.imageField.done']} display="label-only" appearance="secondary"
-            onClick={() => setArranging(false)} />
-        </div>
-        {arrangeable && reorder.announcer}
-        {errorMessage}
-      </div>
-    );
-  }
-
   const style: React.CSSProperties = {};
   if (state.width) style.maxInlineSize = state.width as string;
   if (state.height) style.blockSize = state.height as string;
+
+  /** The hidden input picking the file that replaces the image {@link pickReplacement} was called for. */
+  const replaceInput = () => editing && (
+    <input ref={replaceInputRef} type="file" accept={accept || undefined} hidden
+      onChange={picked(files => {
+        const replacedKey = replacedKeyRef.current;
+        replacedKeyRef.current = null;
+        if (replacedKey != null) doUpload(files, replacedKey, null);
+      })} />
+  );
+
+  /** The editor covering the page: a tile per image and a tile adding further images. */
+  const editor = () => {
+    const show = (tile: ImageTile) => {
+      setCurrentKey(tile.key);
+      setManaging(false);
+    };
+
+    return createPortal(
+      <ImageOverlay labelledBy={editorTitleId} onClose={() => setManaging(false)}>
+        <div className="tl-image-editor">
+          <div className="tl-titlebar">
+            <h2 className="tl-titlebar__title tl-type-heading-sm" id={editorTitleId}>
+              {format(t['js.imageField.editorTitle'], images.length)}
+            </h2>
+            <Button label={t['js.imageField.done']} display="label-only" appearance="primary"
+              onClick={() => setManaging(false)} />
+          </div>
+          <div className="tl-image-editor__tiles" data-tl-axis="horizontal" {...reorder.containerProps}>
+            {images.map((tile, index) => {
+              const dropProps = fileDropProps(tile.key, files => doUpload(files, tile.key, null));
+              const reorderProps = reorder.itemProps(index);
+              return (
+                <div key={tile.key} className="tl-image-editor__tile"
+                  data-tl-state={stateAttr(reorderState(reorder.itemState(index)), dropTarget === tile.key && 'dragover')}
+                  {...reorderProps}
+                  onDragOver={event => {
+                    dropProps.onDragOver(event);
+                    if (!event.defaultPrevented) reorderProps.onDragOver?.(event);
+                  }}
+                  onDragLeave={dropProps.onDragLeave}
+                  onDrop={event => {
+                    dropProps.onDrop(event);
+                    if (!event.defaultPrevented) reorderProps.onDrop?.(event);
+                  }}>
+                  <button type="button" className="tl-image-editor__show"
+                    aria-label={format(t['js.imageField.show'], altOf(tile))}
+                    aria-current={index === currentIndex ? true : undefined}
+                    onClick={() => show(tile)}>
+                    <img className="tl-image-editor__image" src={imageUrl(tile)} alt={altOf(tile)} />
+                  </button>
+                  <div className="tl-image-editor__actions">
+                    {arrangeable && (
+                      <Button
+                        label={format(t['js.reorder.handle'], tile.name)}
+                        image={ICON_HANDLE}
+                        display="icon-only"
+                        appearance="ghost"
+                        small
+                        {...reorder.handleProps(index)}
+                      />
+                    )}
+                    <Button
+                      label={format(t['js.imageField.replace'], tile.name)}
+                      image={ICON_UPLOAD}
+                      display="icon-only"
+                      appearance="ghost"
+                      small
+                      disabled={uploading}
+                      onClick={() => pickReplacement(tile)}
+                    />
+                    <Button
+                      label={format(t['js.imageField.remove'], tile.name)}
+                      image={ICON_REMOVE}
+                      display="icon-only"
+                      appearance="ghost"
+                      small
+                      onClick={() => remove(tile)}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+            {dropArea(files => doUpload(files, null, null))}
+          </div>
+          {arrangeable && reorder.announcer}
+          {errorMessage}
+        </div>
+      </ImageOverlay>,
+      document.body,
+    );
+  };
 
   if (current == null) {
     return (
@@ -423,18 +430,12 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
             {dropArea(files => doUpload(files, null, null))}
           </div>
         )}
-        {errorMessage}
+        {!managing && errorMessage}
+        {replaceInput()}
+        {managing && editor()}
       </div>
     );
   }
-
-  const openCurrent = () => {
-    if (editing) {
-      setArranging(true);
-    } else {
-      setFullPage(true);
-    }
-  };
 
   const stageDrop = fileDropProps(DROP_AREA, files => {
     if (multiple) {
@@ -451,75 +452,114 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
         aria-busy={uploading ? true : undefined}
         onKeyDown={stepKeys}
         {...stageDrop}>
-        <button type="button" ref={stageButtonRef} className="tl-image-field__show"
-          aria-label={editing
-            ? format(t['js.imageField.edit'], altOf(current))
-            : format(t['js.imageField.open'], altOf(current))}
-          onClick={openCurrent}>
+        <button type="button" className="tl-image-field__show"
+          aria-label={format(t['js.imageField.open'], altOf(current))}
+          onClick={() => setFullPage(true)}>
           <img className="tl-image-field__image" src={imageUrl(current)} alt={altOf(current)} />
         </button>
         {stepButtons('tl-image-field__step')}
         {images.length > 1 && counter(currentIndex, 'tl-image-field__counter')}
       </div>
-      {errorMessage}
+      {editing && (
+        <div className="tl-image-field__bar">
+          {multiple && (
+            <Button label={t['js.imageField.add']} image={ICON_ADD} display="icon-label"
+              appearance="secondary" disabled={uploading}
+              onClick={() => addInputRef.current?.click()} />
+          )}
+          <Button label={t['js.imageField.replaceShown']} image={ICON_UPLOAD} display="icon-label"
+            appearance="secondary" disabled={uploading}
+            onClick={() => pickReplacement(current)} />
+          <Button label={t['js.imageField.removeShown']} image={ICON_REMOVE} display="icon-label"
+            appearance="secondary"
+            onClick={() => remove(current)} />
+          {multiple && (
+            <Button label={t['js.imageField.manage']} image={ICON_MANAGE_IMAGES} display="icon-label"
+              appearance="secondary"
+              onClick={() => setManaging(true)} />
+          )}
+          {multiple && (
+            <input ref={addInputRef} type="file" multiple accept={accept || undefined} hidden
+              onChange={picked(files => doUpload(files, null, current.key))} />
+          )}
+        </div>
+      )}
+      {!managing && errorMessage}
+      {replaceInput()}
+      {managing && editor()}
       {fullPage && createPortal(
-        <ImageViewer
-          tile={current}
-          url={imageUrl(current)}
-          alt={altOf(current)}
-          counter={images.length > 1 ? counter(currentIndex, 'tl-image-viewer__counter') : null}
-          stepButtons={stepButtons('tl-image-viewer__step')}
+        <ImageOverlay
+          view
+          label={altOf(current)}
           closeLabel={t['js.imageField.close']}
-          onStep={stepKeys}
-          onClose={() => setFullPage(false)}
-        />,
+          stepButtons={stepButtons('tl-image-overlay__step')}
+          counter={images.length > 1 ? counter(currentIndex, 'tl-image-overlay__counter') : null}
+          onKeyDown={stepKeys}
+          onClose={() => setFullPage(false)}>
+          <img key={current.key} className="tl-image-overlay__image" src={imageUrl(current)} alt={altOf(current)} />
+        </ImageOverlay>,
         document.body,
       )}
     </div>
   );
+
 };
 
-interface ImageViewerProps {
-  tile: ImageTile;
-  url: string;
-  alt: string;
-  counter: React.ReactNode;
-  stepButtons: React.ReactNode;
-  closeLabel: string;
-  onStep: (event: React.KeyboardEvent) => boolean;
+interface ImageOverlayProps {
+  /** Whether the overlay shows an image covering the page opaquely, rather than content on the scrim. */
+  view?: boolean;
+  /** The accessible name of the overlay; absent where {@link labelledBy} names it. */
+  label?: string;
+  /** The ID of the element naming the overlay. */
+  labelledBy?: string;
+  /** The label of the button closing the overlay; absent: no such button. */
+  closeLabel?: string;
+  /** The buttons stepping through the images, placed at the start and end margins. */
+  stepButtons?: React.ReactNode;
+  /** The counter, placed in the bottom margin. */
+  counter?: React.ReactNode;
+  /** Takes the keys the overlay does not handle itself; answers whether it took the key. */
+  onKeyDown?: (event: React.KeyboardEvent) => boolean;
   onClose: () => void;
+  children: React.ReactNode;
 }
 
 /**
- * The view showing an image filling the page, covering it: the buttons stepping through the images,
- * the counter, and a button closing the view. Escape and a click on its margin close it as well; the
- * focus goes back to where it was.
+ * A modal layer covering the page, opaquely for a {@link ImageOverlayProps.view view} of an image, on
+ * the scrim otherwise: its content in the middle, the buttons in the margins around it, never over
+ * the content. Escape, the close button and a click on the margin or
+ * beside the content close it; the focus stays inside while it is open and goes back to where it was.
  */
-const ImageViewer: React.FC<ImageViewerProps> = ({ tile, url, alt, counter, stepButtons, closeLabel, onStep, onClose }) => {
+const ImageOverlay: React.FC<ImageOverlayProps> = ({ view, label, labelledBy, closeLabel, stepButtons, counter, onKeyDown, onClose, children }) => {
   const ref = React.useRef<HTMLDivElement | null>(null);
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
   const Button = usePart('Button');
   useFocusTrap(true, ref, 'container');
 
   return (
-    <div ref={ref} className="tl-image-viewer" role="dialog" aria-modal="true" aria-label={alt} tabIndex={-1}
+    <div ref={ref} className={view ? 'tl-image-overlay tl-image-overlay--view' : 'tl-image-overlay'} role="dialog" aria-modal="true"
+      aria-label={labelledBy ? undefined : label} aria-labelledby={labelledBy} tabIndex={-1}
       onKeyDown={event => {
+        if (event.defaultPrevented) return;
         if (event.key === KEY_ESCAPE) {
           event.preventDefault();
           event.stopPropagation();
           onClose();
           return;
         }
-        onStep(event);
+        onKeyDown?.(event);
       }}
       onClick={event => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget || event.target === contentRef.current) onClose();
       }}>
-      <img key={tile.key} className="tl-image-viewer__image" src={url} alt={alt} />
+      <div ref={contentRef} className="tl-image-overlay__content">{children}</div>
       {stepButtons}
       {counter}
-      <span className="tl-image-viewer__close">
-        <Button label={closeLabel} image={ICON_CLOSE} display="icon-only" appearance="secondary" onClick={onClose} />
-      </span>
+      {closeLabel && (
+        <span className="tl-image-overlay__close">
+          <Button label={closeLabel} image={ICON_CLOSE} display="icon-only" appearance="secondary" onClick={onClose} />
+        </span>
+      )}
     </div>
   );
 };

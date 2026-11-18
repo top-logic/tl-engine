@@ -473,14 +473,19 @@ stage as wide as the field and of a fixed height, the theme token `--tl-size-ima
 height of the stage instead. Several images are stepped through with the buttons at the edges of the
 stage or the arrow keys, wrapping around, and a counter "2 of 5" tells where the field is.
 
-- **Displayed** (also disabled): a click on the image opens it in a view covering the page, scaled
-  to fill it, with the same stepping; Escape or "Close" closes it.
-- **Edited**: a click on the image opens the *arrange view*: a tile per image, all of one size, each
-  with a button replacing its image by a picked file - a file dropped on the tile replaces it as
-  well - and a button "✕" removing it; the images of an ordered attribute are moved by the handle of
-  their tile, by dragging or with Alt + arrow key. A multi-valued field keeps a dashed area
-  "Upload image" after the last tile that adds every file dropped or picked there. "Done", Escape or
-  a click on the image of a tile goes back to the stage, at that image.
+- **Displayed, disabled and edited** alike: a click on the image opens it in a view covering the
+  page opaquely on a dark ground (the token `--tl-surface-lightbox`, dark in both modes), scaled to
+  fill it, with the same stepping; its buttons and the counter stand in the margins around the
+  image, never over it. Escape or "Close" closes it.
+- **Edited**: a bar of buttons below the stage acts on the image shown - "Add image" (multi-valued
+  fields) inserts the picked files after it, "Replace" replaces it by a picked file, "Remove"
+  removes it - and "Manage images" (multi-valued fields) opens the *editor* on the scrim over the page. The
+  form never shows more than the stage and this bar. The editor shows a tile per image, all of one
+  width, each with a bar below the image: a button replacing its image by a picked file - a file
+  dropped on the tile replaces it as well - and a button "✕" removing it; the images of an ordered
+  attribute are moved by the handle of their tile, by dragging or with Alt + arrow key. A dashed
+  tile "Upload image" after the last one adds every file dropped or picked there. "Done" or Escape
+  closes the editor; a click on the image of a tile closes it and shows that image on the stage.
 - **Dropping on the stage** of an edited field replaces a single image; among several images, the
   files are inserted after the image shown, and the stage moves to the first one added.
 - **Without an image**, the stage of an edited field is the dashed area that takes a dropped file or

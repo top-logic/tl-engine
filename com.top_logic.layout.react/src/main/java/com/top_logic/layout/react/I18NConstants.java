@@ -318,6 +318,36 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_IMAGE_FIELD_UPLOAD;
 
 	/**
+	 * @en Add image
+	 */
+	@CustomKey("js.imageField.add")
+	public static ResKey JS_IMAGE_FIELD_ADD;
+
+	/**
+	 * @en Replace
+	 */
+	@CustomKey("js.imageField.replaceShown")
+	public static ResKey JS_IMAGE_FIELD_REPLACE_SHOWN;
+
+	/**
+	 * @en Remove
+	 */
+	@CustomKey("js.imageField.removeShown")
+	public static ResKey JS_IMAGE_FIELD_REMOVE_SHOWN;
+
+	/**
+	 * @en Manage images
+	 */
+	@CustomKey("js.imageField.manage")
+	public static ResKey JS_IMAGE_FIELD_MANAGE;
+
+	/**
+	 * @en Images ({0})
+	 */
+	@CustomKey("js.imageField.editorTitle")
+	public static ResKey JS_IMAGE_FIELD_EDITOR_TITLE;
+
+	/**
 	 * @en Replace {0}
 	 */
 	@CustomKey("js.imageField.replace")
@@ -352,12 +382,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.imageField.open")
 	public static ResKey JS_IMAGE_FIELD_OPEN;
-
-	/**
-	 * @en Edit {0}
-	 */
-	@CustomKey("js.imageField.edit")
-	public static ResKey JS_IMAGE_FIELD_EDIT;
 
 	/**
 	 * @en Show {0}

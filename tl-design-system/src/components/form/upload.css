@@ -28,7 +28,7 @@
 .tl-chip-group[data-tl-state~="dragover"],
 .tl-value-list[data-tl-state~="dragover"],
 .tl-image-field__stage[data-tl-state~="dragover"],
-.tl-image-field__tile[data-tl-state~="dragover"],
+.tl-image-editor__tile[data-tl-state~="dragover"],
 .tl-image-field__drop[data-tl-state~="dragover"] {
   outline: var(--tl-border-width-md) dashed var(--tl-border-interactive);
   outline-offset: var(--tl-focus-offset);

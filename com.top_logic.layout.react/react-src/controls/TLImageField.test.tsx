@@ -1,8 +1,8 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { act } from 'react';
 
-// The image field: the stage showing one image at a time, the arrange view while edited, the view
-// filling the page while displayed, the area taking an image.
+// The image field: the stage showing one image at a time, the bar of buttons below it while edited,
+// the view and the editor covering the page, the area taking an image.
 
 /** The listener of each mounted control, through which a test sends it an update of its state. */
 const listeners = vi.hoisted(() => new Map<string, (state: Record<string, unknown>) => void>());
@@ -113,6 +113,24 @@ function press(element: Element, key: string): void {
   });
 }
 
+/** The editor covering the page, null while it is closed. */
+function editor(): HTMLElement | null {
+  return document.body.querySelector('.tl-image-overlay .tl-image-editor');
+}
+
+/** Clicks the button showing the given text within the given element. */
+function clickText(element: ParentNode, text: string): void {
+  const button = Array.from(element.querySelectorAll('button')).find(b => b.textContent === text);
+  expect(button, text).toBeDefined();
+  act(() => button!.click());
+}
+
+/** Picks the given files in the given file input. */
+function pick(input: HTMLInputElement, files: File[]): void {
+  Object.defineProperty(input, 'files', { value: files, configurable: true });
+  act(() => { input.dispatchEvent(new Event('change', { bubbles: true })); });
+}
+
 /** Drops the given files on the given element. */
 function dropFiles(element: Element, files: File[]): void {
   const dataTransfer = { types: ['Files'], files, dropEffect: 'none' };
@@ -188,51 +206,124 @@ describe('image field', () => {
     const field = mountField({ editable: false, multiple: true, images: [A, B] });
 
     click(field, 'Show a.png full page');
-    const viewer = document.body.querySelector('.tl-image-viewer')!;
+    const viewer = document.body.querySelector('.tl-image-overlay')!;
     expect(viewer.getAttribute('role')).toBe('dialog');
-    expect(previewKeys(viewer, 'img.tl-image-viewer__image')).toEqual(['0']);
+    // The view covers the page opaquely, the editor lies on the scrim.
+    expect(viewer.classList.contains('tl-image-overlay--view')).toBe(true);
+    expect(previewKeys(viewer, 'img.tl-image-overlay__image')).toEqual(['0']);
 
     press(viewer, 'ArrowRight');
-    expect(previewKeys(document.body, 'img.tl-image-viewer__image')).toEqual(['1']);
+    expect(previewKeys(document.body, 'img.tl-image-overlay__image')).toEqual(['1']);
     // The stage follows the view.
     expect(previewKeys(currentField())).toEqual(['1']);
 
-    press(document.body.querySelector('.tl-image-viewer')!, 'Escape');
-    expect(document.body.querySelector('.tl-image-viewer')).toBeNull();
+    press(document.body.querySelector('.tl-image-overlay')!, 'Escape');
+    expect(document.body.querySelector('.tl-image-overlay')).toBeNull();
   });
 
-  it('opens the arrange view of an edited field, and goes back to the stage at the tile clicked', () => {
+  it('shows the bar below the stage of an edited field, never tiles in the form', () => {
     const field = mountField({ editable: true, multiple: true, ordered: true, images: [A, B] });
 
-    click(field, 'Edit a.png');
-    const arrange = currentField();
-    expect(arrange.classList.contains('tl-image-field--arrange')).toBe(true);
-    expect(previewKeys(arrange)).toEqual(['0', '1']);
+    const bar = field.querySelector('.tl-image-field__bar')!;
+    expect(bar).not.toBeNull();
+    const labels = Array.from(bar.querySelectorAll('button')).map(b => b.getAttribute('aria-label'));
+    expect(labels).toEqual(['Add image', 'Replace', 'Remove', 'Manage images']);
+    expect(field.querySelector('.tl-image-editor__tile')).toBeNull();
+    expect(previewKeys(field)).toEqual(['0']);
+  });
+
+  it('shows no bar in a displayed field', () => {
+    const field = mountField({ editable: false, multiple: true, images: [A, B] });
+
+    expect(field.querySelector('.tl-image-field__bar')).toBeNull();
+  });
+
+  it('shows no add or manage button for a single image', () => {
+    const single = mountField({ editable: true, multiple: false, images: [A] });
+
+    const labels = Array.from(single.querySelectorAll('.tl-image-field__bar button')).map(b => b.getAttribute('aria-label'));
+    expect(labels).toEqual(['Replace', 'Remove']);
+  });
+
+  it('opens the image of an edited field in the view filling the page', () => {
+    const field = mountField({ editable: true, multiple: true, images: [A, B] });
+
+    click(field, 'Show a.png full page');
+    expect(document.body.querySelector('.tl-image-overlay .tl-image-overlay__image')).not.toBeNull();
+    expect(editor()).toBeNull();
+  });
+
+  it('adds the picked files after the image shown, replaces and removes it from the bar', async () => {
+    const field = mountField({ editable: true, multiple: true, ordered: true, images: [A, B, C] });
+    click(field, 'Next image');
+
+    const inputs = currentField().querySelectorAll('input[type="file"]');
+    const addInput = Array.from(inputs).find(input => (input as HTMLInputElement).multiple) as HTMLInputElement;
+    const replaceInput = Array.from(inputs).find(input => !(input as HTMLInputElement).multiple) as HTMLInputElement;
+
+    pick(addInput, [new File(['x'], 'new.png'), new File(['y'], 'other.png')]);
+    await settle();
+    expect(uploads).toHaveLength(1);
+    expect(uploads[0].getAll('file')).toHaveLength(2);
+    expect(await partText(uploads[0], 'after')).toBe('1');
+
+    click(currentField(), 'Replace');
+    pick(replaceInput, [new File(['x'], 'new.png')]);
+    await settle();
+    expect(uploads).toHaveLength(2);
+    expect(await partText(uploads[1], 'replace')).toBe('1');
+
+    click(currentField(), 'Remove');
+    await settle();
+    expect(sent).toEqual([{ command: 'removeImage', args: { key: '1' } }]);
+  });
+
+  it('opens the editor covering the page, and shows the image of the tile clicked on the stage', () => {
+    const field = mountField({ editable: true, multiple: true, ordered: true, images: [A, B] });
+
+    click(field, 'Manage images');
+    const opened = editor()!;
+    expect(opened).not.toBeNull();
+    expect(field.contains(opened)).toBe(false);
+    expect(opened.closest('.tl-image-overlay')!.getAttribute('role')).toBe('dialog');
+    expect(opened.closest('.tl-image-overlay')!.classList.contains('tl-image-overlay--view')).toBe(false);
+    expect(previewKeys(opened, 'img.tl-image-editor__image')).toEqual(['0', '1']);
     // A handle moving each image, since the order is part of the value.
-    expect(arrange.querySelectorAll('.tl-image-field__actions button[aria-describedby]')).toHaveLength(2);
-    const input = arrange.querySelector('.tl-image-field__drop input[type="file"]') as HTMLInputElement;
+    expect(opened.querySelectorAll('.tl-image-editor__actions button[aria-describedby]')).toHaveLength(2);
+    const input = opened.querySelector('.tl-image-field__drop input[type="file"]') as HTMLInputElement;
     expect(input.multiple).toBe(true);
 
-    click(arrange, 'Show b.png');
-    expect(currentField().classList.contains('tl-image-field--arrange')).toBe(false);
+    click(opened, 'Show b.png');
+    expect(editor()).toBeNull();
     expect(previewKeys(currentField())).toEqual(['1']);
   });
 
-  it('removes an image in the arrange view, and leaves it by Done', async () => {
-    const field = mountField({ editable: true, multiple: false, images: [A] });
+  it('removes, replaces and moves images in the editor, and closes it by Done and Escape', async () => {
+    mountField({ editable: true, multiple: true, ordered: true, images: [A, B] });
 
-    click(field, 'Edit a.png');
-    // A single image has no area adding further ones and nothing to move.
-    expect(currentField().querySelector('.tl-image-field__drop')).toBeNull();
-    expect(currentField().querySelector('button[aria-label="Move a.png"]')).toBeNull();
-
-    click(currentField(), 'Remove a.png');
+    click(currentField(), 'Manage images');
+    click(editor()!, 'Remove a.png');
     await settle();
     expect(sent).toEqual([{ command: 'removeImage', args: { key: '0' } }]);
 
-    const done = Array.from(currentField().querySelectorAll('button')).find(b => b.textContent === 'Done')!;
-    act(() => done.click());
-    expect(currentField().classList.contains('tl-image-field--arrange')).toBe(false);
+    dropFiles(editor()!.querySelectorAll('.tl-image-editor__tile')[1], [new File(['x'], 'new.png')]);
+    await settle();
+    expect(uploads).toHaveLength(1);
+    expect(await partText(uploads[0], 'replace')).toBe('1');
+
+    const handle = editor()!.querySelector('button[aria-label="Move a.png"]')!;
+    act(() => {
+      handle.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true, bubbles: true, cancelable: true }));
+    });
+    await settle();
+    expect(sent[1]).toEqual({ command: 'moveImage', args: { index: 0, targetIndex: 1 } });
+
+    clickText(editor()!, 'Done');
+    expect(editor()).toBeNull();
+
+    click(currentField(), 'Manage images');
+    press(document.body.querySelector('.tl-image-overlay')!, 'Escape');
+    expect(editor()).toBeNull();
   });
 
   it('inserts files dropped on the stage after the image shown, and shows the first one added', async () => {
@@ -277,6 +368,6 @@ describe('image field', () => {
 
     update({ images: [A] });
     click(currentField(), 'Show a.png full page');
-    expect(document.body.querySelector('.tl-image-viewer')).not.toBeNull();
+    expect(document.body.querySelector('.tl-image-overlay')).not.toBeNull();
   });
 });

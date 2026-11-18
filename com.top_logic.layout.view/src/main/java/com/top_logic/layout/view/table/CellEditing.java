@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.table;
 
+import java.util.function.Predicate;
+
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.form.AttributeChanges;
@@ -90,6 +92,22 @@ public interface CellEditing {
 	 */
 	default void followRow(Object row, BoundFieldModel model, AttributeChanges rowChanges) {
 		// Nothing to follow.
+	}
+
+	/**
+	 * This editing, offered only on the rows the given condition accepts as well.
+	 *
+	 * <p>
+	 * The condition only restricts: a row this editing does not {@link #canEdit(Object) offer} the
+	 * edit on is not edited, whatever the condition says. Everything else about the edit stays as
+	 * this editing describes it.
+	 * </p>
+	 *
+	 * @param rows
+	 *        Whether a row offers the edit, asked only for a row this editing offers it on.
+	 */
+	default CellEditing restrictedTo(Predicate<Object> rows) {
+		return new RestrictedCellEditing(this, rows);
 	}
 
 }

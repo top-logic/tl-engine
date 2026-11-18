@@ -498,6 +498,13 @@ public class ValueInputElement implements UIElement {
 		 * label-less input.
 		 *
 		 * <p>
+		 * With {@code placeholder}, the label is not shown beside the input but as placeholder in
+		 * the empty input, and remains the accessible name of the input. An explicit
+		 * {@link #getPlaceholder() placeholder} takes precedence over the label. An input that
+		 * shows no placeholder shows no label, as with {@code hide-label}.
+		 * </p>
+		 *
+		 * <p>
 		 * If not set, the position falls back to the responsive default of the enclosing layout.
 		 * </p>
 		 */
@@ -723,6 +730,8 @@ public class ValueInputElement implements UIElement {
 		}
 		if (_placeholder != null) {
 			spec.setPlaceholder(resources.getString(_placeholder));
+		} else if (spec.getPlaceholder() == null) {
+			spec.setPlaceholder(AttributeFieldControl.labelPlaceholder(_labelPosition, label));
 		}
 		spec.setIcon(_icon).setClearable(_clearable).setDebounce(_debounce);
 		ReactControl input = FieldControlService.getInstance().createFieldControl(context, type, _annotations,

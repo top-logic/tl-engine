@@ -11,6 +11,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.model.TLClass;
+
 /**
  * The named values an action chain runs with.
  *
@@ -24,6 +27,12 @@ import java.util.Map;
  * </p>
  *
  * <p>
+ * An argument filled from a channel may carry the {@link ViewChannel#getValueType() declared type}
+ * of the channel's values, see {@link #withValueType(TLClass)}. A rule deciding over an argument
+ * whose value is missing can then still decide by the type, see {@link #valueType()}.
+ * </p>
+ *
+ * <p>
  * Instances are immutable; every extension creates new arguments.
  * </p>
  *
@@ -34,15 +43,22 @@ public final class ActionArguments {
 	/**
 	 * Arguments without any value, for a trigger that supplies nothing.
 	 */
-	public static final ActionArguments NONE = new ActionArguments(Collections.emptyMap(), null);
+	public static final ActionArguments NONE = new ActionArguments(Collections.emptyMap(), null, Collections.emptyMap());
 
 	private final Map<String, Object> _values;
 
 	private final String _defaultName;
 
-	private ActionArguments(Map<String, Object> values, String defaultName) {
+	/**
+	 * The declared types of the values of the arguments, by argument name; an argument without
+	 * declared type has no entry.
+	 */
+	private final Map<String, TLClass> _valueTypes;
+
+	private ActionArguments(Map<String, Object> values, String defaultName, Map<String, TLClass> valueTypes) {
 		_values = values;
 		_defaultName = defaultName;
+		_valueTypes = valueTypes;
 	}
 
 	/**
@@ -88,7 +104,7 @@ public final class ActionArguments {
 		if (!map.containsKey(defaultName)) {
 			throw new IllegalArgumentException("Default '" + defaultName + "' is not among " + names + ".");
 		}
-		return new ActionArguments(Collections.unmodifiableMap(map), defaultName);
+		return new ActionArguments(Collections.unmodifiableMap(map), defaultName, Collections.emptyMap());
 	}
 
 	/**
@@ -96,7 +112,9 @@ public final class ActionArguments {
 	 *
 	 * <p>
 	 * A value of the same name in these arguments is shadowed: it is no longer accessible in the
-	 * result, and the name moves to the end of the {@link #names() order}.
+	 * result, and the name moves to the end of the {@link #names() order}. The
+	 * {@link #valueType() declared types} of the other arguments are kept, the shadowed value's type
+	 * is dropped.
 	 * </p>
 	 *
 	 * @param name
@@ -108,11 +126,51 @@ public final class ActionArguments {
 		LinkedHashMap<String, Object> values = new LinkedHashMap<>(_values);
 		values.remove(name);
 		values.put(name, value);
-		return new ActionArguments(Collections.unmodifiableMap(values), name);
+		Map<String, TLClass> valueTypes = _valueTypes;
+		if (valueTypes.containsKey(name)) {
+			valueTypes = new LinkedHashMap<>(valueTypes);
+			valueTypes.remove(name);
+			valueTypes = Collections.unmodifiableMap(valueTypes);
+		}
+		return new ActionArguments(Collections.unmodifiableMap(values), name, valueTypes);
+	}
+
+	/**
+	 * These arguments with the given type declared for the values of the
+	 * {@link #defaultName() default argument}.
+	 *
+	 * <p>
+	 * The type is a declaration only, e.g. the {@link ViewChannel#getValueType() value type} of the
+	 * channel the argument is read from; the value is not checked against it.
+	 * </p>
+	 *
+	 * @param type
+	 *        The declared type, {@code null} for none.
+	 * @throws IllegalStateException
+	 *         If these arguments have no default argument.
+	 */
+	public ActionArguments withValueType(TLClass type) {
+		if (_defaultName == null) {
+			throw new IllegalStateException("Arguments without default argument declare no value type.");
+		}
+		if (type == _valueTypes.get(_defaultName)) {
+			return this;
+		}
+		LinkedHashMap<String, TLClass> valueTypes = new LinkedHashMap<>(_valueTypes);
+		if (type == null) {
+			valueTypes.remove(_defaultName);
+		} else {
+			valueTypes.put(_defaultName, type);
+		}
+		return new ActionArguments(_values, _defaultName, Collections.unmodifiableMap(valueTypes));
 	}
 
 	/**
 	 * These arguments with the given argument as default.
+	 *
+	 * <p>
+	 * The {@link #valueType() declared types} of the arguments are kept.
+	 * </p>
 	 *
 	 * @param name
 	 *        The name of an argument of these arguments.
@@ -124,7 +182,7 @@ public final class ActionArguments {
 		if (name.equals(_defaultName)) {
 			return this;
 		}
-		return new ActionArguments(_values, name);
+		return new ActionArguments(_values, name, _valueTypes);
 	}
 
 	/**
@@ -150,6 +208,21 @@ public final class ActionArguments {
 	 */
 	public Object value() {
 		return _defaultName == null ? null : _values.get(_defaultName);
+	}
+
+	/**
+	 * The declared type of the values of the {@link #defaultName() default argument},
+	 * {@code null} if unknown.
+	 *
+	 * <p>
+	 * The type is known also while the value is missing, so that a rule can decide by the type
+	 * what it decides by the object otherwise.
+	 * </p>
+	 *
+	 * @see #withValueType(TLClass)
+	 */
+	public TLClass valueType() {
+		return _defaultName == null ? null : _valueTypes.get(_defaultName);
 	}
 
 	/**

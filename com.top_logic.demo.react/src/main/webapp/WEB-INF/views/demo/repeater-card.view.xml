@@ -40,8 +40,8 @@
 			</layer>
 		</overlay>
 		<text
-			css-class="tl-type-body-strong"
 			input="element"
+			variant="body-strong"
 		/>
 		<button>
 			<action class="com.top_logic.layout.view.command.GenericViewCommand"

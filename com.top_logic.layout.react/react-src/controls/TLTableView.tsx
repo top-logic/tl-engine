@@ -1,4 +1,4 @@
-import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, BACKGROUND_REPORT, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
 import { FOCUSABLE_SELECTOR, editableInRow, focusTargetInRow, focusablesIn, rowCells } from './tableRowFocus';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
@@ -6,6 +6,7 @@ import type { HintAnchor, DropVerdict } from './DropHint';
 import { Menu, MenuItem } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
 import { chipFocusTargets } from './chip/chipFocus';
+import { FilterPresets } from './table/FilterPresets';
 
 /**
  * Registers the table's keyboard row-navigation bindings into the enclosing (focus-gated) scope.
@@ -89,6 +90,7 @@ const I18N_KEYS = {
   'js.table.saveFilter': 'Save this filter',
   'js.table.filterName': 'Filter name',
   'js.table.deleteFilter': 'Delete this filter',
+  'js.table.morePresets': '+ {0} more',
   'js.table.cancelSave': 'Do not save',
 };
 
@@ -201,6 +203,12 @@ interface ColumnState {
    * then aligns at the end so that their digits line up. Absent for the start, the default.
    */
   align?: 'end';
+  /**
+   * Set when the column aggregates the rows of a group, so that the header row of a group shows
+   * that aggregate in it. A group's value runs into the columns in front of the first such column
+   * and no further. Absent for a column without one.
+   */
+  aggregate?: true;
 }
 
 /** One of the filter criteria the table offers under a name, displayed as a chip in the filter bar. */
@@ -329,7 +337,8 @@ const MIN_COL_WIDTH = 50;
 const measureColumnContentWidth = (root: HTMLElement, columnName: string): number => {
   const cells = Array.from(
     root.querySelectorAll<HTMLElement>('.tl-table__header-cell, .tl-table__cell'))
-    .filter((cell) => cell.dataset.col === columnName);
+    // A cell spanning several columns (the value of a group) belongs to no one of them.
+    .filter((cell) => cell.dataset.col === columnName && !cell.hasAttribute('aria-colspan'));
   if (cells.length === 0) {
     return 0;
   }
@@ -419,7 +428,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const DisclosureToggle = usePart('DisclosureToggle');
   const Checkbox = usePart('Checkbox');
   const TextInput = usePart('TextInput');
-  const Chip = usePart('Chip');
+  const Skeleton = usePart('Skeleton');
   const rootRef = React.useRef<HTMLDivElement>(null);
   // The grid (role=grid) holds the keyboard focus and points at the cursor row with
   // aria-activedescendant; the body inside it only scrolls.
@@ -883,9 +892,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       if (!forced && reported && reported.start === viewport.start && reported.count === viewport.count) return;
       reportedViewportRef.current = viewport;
       // Asks for the rows the user scrolled to, in the background: the table shows skeleton rows until they arrive.
-      sendCommand('scroll', viewport, BACKGROUND_COMMAND);
+      sendCommand('scroll', viewport, BACKGROUND_REPORT);
     }, 80);
   }, [sendCommand, viewportOf]);
+
+  // A table that is removed reports no viewport any more.
+  React.useEffect(() => () => {
+    if (scrollTimeoutRef.current !== null) {
+      clearTimeout(scrollTimeoutRef.current);
+      scrollTimeoutRef.current = null;
+    }
+  }, []);
 
   // The header scrolls by itself only when the browser brings a focused header control into view (Tab to
   // a sort or filter button beyond the edge); the body follows, and its scroll event aligns both again.
@@ -1756,6 +1773,27 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const widthStyle = (colIdx: number, w: number, isFrozen: boolean): React.CSSProperties =>
     colIdx === lastUnpinnedIdx && !isFrozen ? { flex: `1 0 ${w}px`, minWidth: w } : { width: w, minWidth: w };
 
+  // How far the value of a group runs along its header row, as the end (exclusive) of the columns
+  // its cell covers, and their width together. The cell of the first column spans itself and the
+  // columns after it that are not pinned and aggregate nothing - it stops in front of the first
+  // column that shows an aggregate in the group row, as text runs on into empty cells of a
+  // spreadsheet. The same for every group row, so it is computed from the columns, not per row.
+  // With frozen columns the cell ends with them: it sticks to the start with them, and a sticky cell
+  // nearly as wide as the row scrolls away with it instead (the group value vanished), while an
+  // aggregate behind it would slide underneath.
+  const groupSpan = (() => {
+    let end = Math.min(1, columns.length);
+    const limit = frozenColumnCount > 0 ? Math.min(frozenColumnCount, columns.length) : columns.length;
+    while (end > 0 && end < limit && !columns[end].pinnedEnd && !columns[end].aggregate) {
+      end++;
+    }
+    let width = 0;
+    for (let i = 0; i < end; i++) {
+      width += getColWidth(columns[i]);
+    }
+    return { end, width };
+  })();
+
   // The sort order as the heading announces it. WAI-ARIA knows no levels: aria-sort names the first
   // level only, and only there (APG sortable table); every other heading leaves it out.
   const ariaSort = (col: ColumnState): 'ascending' | 'descending' | undefined => {
@@ -1805,27 +1843,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       {filterBar && (
         <div ref={filterBarRef} className="tl-table__filter-bar">
           {namedFilters.length > 0 && (
-            <span className="tl-chip-group">
-              {namedFilters.map((named) => {
-                const isActive = named.id === activeNamedFilter;
-                // Only a filter of the user's own can be deleted; a declared one is part of the
-                // table and offers no remove affordance.
-                return (
-                  <Chip
-                    key={named.id}
-                    label={named.label}
-                    detail={named.count !== undefined ? String(named.count) : undefined}
-                    className={named.cssClass}
-                    pressed={isActive}
-                    tooltip={isActive ? i18n['js.table.clearFilter'] : named.label}
-                    onClick={() => handleNamedFilter(named.id)}
-                    onRemove={named.deletable ? (e) => handleDeleteNamedFilter(named.id, e) : undefined}
-                    removeLabel={i18n['js.table.deleteFilter']}
-                    {...(named.deletable ? { [FILTER_CHIP_ATTR]: true } : {})}
-                  />
-                );
-              })}
-            </span>
+            <FilterPresets
+              presets={namedFilters}
+              activeId={activeNamedFilter}
+              densityKey={String(rowHeight)}
+              chipAttr={FILTER_CHIP_ATTR}
+              moreText={i18n['js.table.morePresets']}
+              clearLabel={i18n['js.table.clearFilter']}
+              deleteLabel={i18n['js.table.deleteFilter']}
+              onToggle={handleNamedFilter}
+              onDelete={handleDeleteNamedFilter}
+            />
           )}
           <SearchField
             className="tl-table__search"
@@ -2051,7 +2079,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           {missing.map((index) => (
             <div key={'skeleton-' + index} className="tl-table__placeholder" aria-hidden="true"
               style={{ position: 'absolute', top: index * rowHeight, height: rowHeight, left: 0, right: 0 }}>
-              <span className="tl-skeleton" />
+              <Skeleton shape="text" />
             </div>
           ))}
           {rows.map((row) => (
@@ -2115,7 +2143,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 </div>
               )}
               {columns.map((col, colIdx) => {
-                const w = getColWidth(col);
+                // The value of a group runs into the cells its first cell spans; they are not drawn.
+                const spans = row.groupCount != null && groupSpan.end > 1;
+                if (spans && colIdx > 0 && colIdx < groupSpan.end) {
+                  return null;
+                }
+                const spanning = spans && colIdx === 0;
+                const w = spanning ? groupSpan.width : getColWidth(col);
                 const { isFrozen, isPinned, words } = placeOf(colIdx);
                 const rowCellClass = row.cellClasses?.[col.name];
                 const isTreeColumn = treeMode && colIdx === 0;
@@ -2130,6 +2164,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                   <div
                     key={col.name}
                     role="gridcell"
+                    aria-colspan={spanning ? groupSpan.end : undefined}
                     className={'tl-table__cell' + (row.groupCount != null ? ' tl-type-body-strong' : '') + (col.cssClass ? ' ' + col.cssClass : '')
                       + (rowCellClass ? ' ' + rowCellClass : '')}
                     data-row={row.id}
@@ -2139,7 +2174,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     data-tl-role={isSelected(row) ? undefined : row.cellRoles?.[col.name]}
                     {...(isTreeColumn ? {} : cellTooltipProps)}
                     style={{
-                      ...widthStyle(colIdx, w, isFrozen),
+                      // A cell spanning up to the last column the user arranges takes the space left
+                      // over, frozen or not.
+                      ...(spanning && groupSpan.end - 1 === lastUnpinnedIdx
+                        ? { flex: `1 0 ${w}px`, minWidth: w }
+                        : widthStyle(colIdx, w, isFrozen)),
                       ...(isFrozen ? { left: frozenOffsets[colIdx] } : {}),
                       ...(isPinned ? { right: pinnedOffsets[colIdx] + buttonReserve } : {}),
                     }}

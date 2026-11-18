@@ -57,7 +57,7 @@ public class Ticket23376UpdateReferenceIdColumns implements MigrationProcessor {
 					continue;
 				}
 			} catch (SQLException exception) {
-				exception.printStackTrace();
+				log.error("Failed to check existence of table '" + tableName + "'.", exception);
 			}
 
 			List<? extends MOReference> references = MetaObjectUtils.getReferences(metaObject);

@@ -39,7 +39,10 @@ import com.top_logic.model.form.TracingScope;
  *
  * <p>
  * An editable field of an attribute with a {@link com.top_logic.model.fallback.StorageWithFallback}
- * holds the explicit value of the attribute only, see {@link FallbackPlaceholder}.
+ * holds the explicit value of the attribute only, see {@link FallbackPlaceholder}. A field of such
+ * an attribute that is not editable displays the value of the attribute, which is the fallback
+ * while there is no explicit value. Like a derived attribute, it is read in a {@link TracingScope}
+ * while the form is edited, so that the field follows a changed fallback.
  * </p>
  *
  * <p>
@@ -200,6 +203,7 @@ public class AttributeFieldModel extends BoundFieldModel {
 	 * </p>
 	 */
 	private void followEditability() {
+		updateDependencyListener();
 		if (FallbackPlaceholder.storage(_part) == null || isObjectDeleted() || isDirty()) {
 			return;
 		}
@@ -209,11 +213,17 @@ public class AttributeFieldModel extends BoundFieldModel {
 	}
 
 	/**
-	 * Whether the value of the attribute is computed and the attributes the computation reads are
-	 * traced, which is the case for a {@link TLStructuredTypePart#isDerived() derived} attribute.
+	 * Whether the attributes read for the value of the field are traced, so that the field follows
+	 * their changes.
+	 *
+	 * <p>
+	 * This is the case for a {@link TLStructuredTypePart#isDerived() derived} attribute, and for an
+	 * attribute with a {@link com.top_logic.model.fallback.StorageWithFallback} whose field is not
+	 * editable and therefore displays the fallback while there is no explicit value.
+	 * </p>
 	 */
 	private boolean isTraced() {
-		return _part.isDerived();
+		return _part.isDerived() || (!isEditable() && FallbackPlaceholder.storage(_part) != null);
 	}
 
 	/**
@@ -258,10 +268,15 @@ public class AttributeFieldModel extends BoundFieldModel {
 
 	/**
 	 * Shows a value written to the attribute of the bound overlay by someone else than this model.
+	 *
+	 * <p>
+	 * A value written through an override of the attribute or the attribute it overrides is the
+	 * value of the attribute as well.
+	 * </p>
 	 */
 	private void onOverlayValueChanged(TLObjectOverlay overlay, TLStructuredTypePart part, Object oldValue,
 			Object newValue) {
-		if (overlay != _observedOverlay || part != _part) {
+		if (overlay != _observedOverlay || part.getDefinition() != _part.getDefinition()) {
 			return;
 		}
 		if (_writing) {
@@ -303,7 +318,33 @@ public class AttributeFieldModel extends BoundFieldModel {
 			return;
 		}
 		if (_dependencies.contains(changedPart)) {
-			followObject();
+			if (_part.isDerived()) {
+				followObject();
+			} else {
+				followFallback();
+			}
+		}
+	}
+
+	/**
+	 * Takes the value of an attribute with a fallback that the field displays after a change of a
+	 * value it depends on as the value of the field and the value it is dirty against.
+	 *
+	 * <p>
+	 * In contrast to {@link #followObject()}, a value written to the attribute of the bound overlay
+	 * is kept, since it may be the explicit value set by someone else.
+	 * </p>
+	 */
+	private void followFallback() {
+		if (isObjectDeleted()) {
+			return;
+		}
+		Object shownValue = getCachedValue();
+		Object value = readValue();
+		setDefaultValue(value);
+		if (!Objects.equals(shownValue, value)) {
+			setValueInternal(value);
+			fireValueChanged(shownValue, value);
 		}
 	}
 

@@ -29,6 +29,7 @@ import com.top_logic.layout.view.form.TLObjectOverlay;
 import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.form.TracingScope;
@@ -350,6 +351,98 @@ public class TestTLObjectOverlay extends TestCase {
 	}
 
 	/**
+	 * Tests that an attribute and its override share one value in the overlay, whichever of them it
+	 * is written or read through.
+	 */
+	public void testOverrideSharesValue() {
+		TLStructuredTypePart baseValue = mockPart("value");
+		TLStructuredTypePart derivedValue = mockOverride("value", baseValue);
+		MockTLObject base = new MockTLObject();
+		base.addPart(derivedValue);
+
+		TLObjectOverlay overlay = new TLObjectOverlay(base);
+		overlay.tUpdate(derivedValue, "v1");
+
+		assertEquals("v1", overlay.tValue(baseValue));
+		assertEquals("v1", overlay.getFieldValue(baseValue));
+		assertTrue(overlay.isChanged(baseValue));
+		assertTrue(overlay.isChanged(derivedValue));
+		assertTrue(overlay.isModified(baseValue));
+
+		overlay.tUpdate(baseValue, "v2");
+
+		assertEquals("v2", overlay.tValue(derivedValue));
+		assertEquals("One value for the attribute and its override, reported as attribute of the type.",
+			List.of(derivedValue), overlay.getChangedParts());
+
+		overlay.revert(baseValue);
+
+		assertFalse(overlay.isChanged(derivedValue));
+		assertNull(overlay.tValue(derivedValue));
+	}
+
+	/**
+	 * Tests that a write through an overridden attribute is transferred through the override of the
+	 * type of the object.
+	 */
+	public void testApplyThroughOverride() {
+		TLStructuredTypePart baseValue = mockPart("value");
+		TLStructuredTypePart derivedValue = mockOverride("value", baseValue);
+		MockTLObject base = new MockTLObject();
+		base.addPart(derivedValue);
+
+		TLObjectOverlay overlay = new TLObjectOverlay(base);
+		overlay.tUpdate(baseValue, "v1");
+
+		ThreadContext.withoutSecurityChecks(overlay::apply);
+
+		assertEquals("v1", base.tValue(derivedValue));
+	}
+
+	/**
+	 * Tests that a listener following the overridden attribute learns about a write through the
+	 * override.
+	 */
+	public void testListenerOnDefinitionInformedOfOverrideWrite() {
+		TLStructuredTypePart baseValue = mockPart("value");
+		TLStructuredTypePart derivedValue = mockOverride("value", baseValue);
+		MockTLObject base = new MockTLObject();
+		base.addPart(derivedValue);
+
+		TLObjectOverlay overlay = new TLObjectOverlay(base);
+		List<String> events = new ArrayList<>();
+		overlay.addValueChangeListener((changed, part, oldValue, newValue) -> {
+			if (part.getDefinition() == baseValue.getDefinition()) {
+				events.add(part.getName() + ": " + oldValue + " -> " + newValue + " = " + changed.tValue(baseValue));
+			}
+		});
+
+		overlay.tUpdate(derivedValue, "v1");
+
+		assertEquals(List.of("value: null -> v1 = v1"), events);
+	}
+
+	/**
+	 * Tests that an attribute of the same name from a foreign type is not affected by a write
+	 * through an override.
+	 */
+	public void testForeignAttributeOfSameNameUnaffected() {
+		TLStructuredTypePart baseValue = mockPart("value");
+		TLStructuredTypePart derivedValue = mockOverride("value", baseValue);
+		TLStructuredTypePart foreignValue = mockPart("value");
+		MockTLObject base = new MockTLObject();
+		base.addPart(derivedValue);
+		base.set(foreignValue, "foreign");
+
+		TLObjectOverlay overlay = new TLObjectOverlay(base);
+		overlay.tUpdate(derivedValue, "v1");
+
+		assertEquals("foreign", overlay.tValue(foreignValue));
+		assertFalse(overlay.isChanged(foreignValue));
+		assertEquals("v1", overlay.tValue(baseValue));
+	}
+
+	/**
 	 * Creates an {@link ObjectKey} identifying a mock object.
 	 */
 	private static ObjectKey objectKey(String id) {
@@ -377,11 +470,23 @@ public class TestTLObjectOverlay extends TestCase {
 		return mockPart(name, true);
 	}
 
+	/**
+	 * Creates a mock {@link TLStructuredTypePart} overriding the given attribute, see
+	 * {@link TLStructuredTypePart#getDefinition()}.
+	 */
+	private static TLStructuredTypePart mockOverride(String name, TLStructuredTypePart overridden) {
+		return mockPart(name, false, overridden.getDefinition());
+	}
+
 	private static TLStructuredTypePart mockPart(String name, boolean derived) {
+		return mockPart(name, derived, null);
+	}
+
+	private static TLStructuredTypePart mockPart(String name, boolean derived, TLStructuredTypePart definition) {
 		return (TLStructuredTypePart) Proxy.newProxyInstance(
 			TLStructuredTypePart.class.getClassLoader(),
 			new Class<?>[] { TLStructuredTypePart.class },
-			new PartHandler(name, derived));
+			new PartHandler(name, derived, definition));
 	}
 
 	/**
@@ -393,9 +498,17 @@ public class TestTLObjectOverlay extends TestCase {
 
 		private final boolean _derived;
 
-		PartHandler(String name, boolean derived) {
+		private final TLStructuredTypePart _definition;
+
+		/**
+		 * @param definition
+		 *        The overridden attribute, <code>null</code> for an attribute that is its own
+		 *        definition.
+		 */
+		PartHandler(String name, boolean derived, TLStructuredTypePart definition) {
 			_name = name;
 			_derived = derived;
+			_definition = definition;
 		}
 
 		@Override
@@ -411,6 +524,40 @@ public class TestTLObjectOverlay extends TestCase {
 					return proxy == args[0];
 				case "isDerived":
 					return Boolean.valueOf(_derived);
+				case "getDefinition":
+					return _definition == null ? proxy : _definition;
+				default:
+					return null;
+			}
+		}
+	}
+
+	/**
+	 * Minimal {@link InvocationHandler} for the mock {@link TLStructuredType} of a
+	 * {@link MockTLObject}, which supports {@link TLStructuredType#getPart(String)} and
+	 * {@link TLStructuredType#getAllParts()}.
+	 */
+	private static class TypeHandler implements InvocationHandler {
+
+		private final Map<String, TLStructuredTypePart> _parts;
+
+		TypeHandler(Map<String, TLStructuredTypePart> parts) {
+			_parts = parts;
+		}
+
+		@Override
+		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+			switch (method.getName()) {
+				case "getPart":
+					return _parts.get(args[0]);
+				case "getAllParts":
+					return new ArrayList<>(_parts.values());
+				case "toString":
+					return "MockType" + _parts.keySet();
+				case "hashCode":
+					return System.identityHashCode(proxy);
+				case "equals":
+					return proxy == args[0];
 				default:
 					return null;
 			}
@@ -434,6 +581,13 @@ public class TestTLObjectOverlay extends TestCase {
 	private static class MockTLObject extends TransientObject {
 
 		private final ObjectKey _id;
+
+		private final Map<String, TLStructuredTypePart> _parts = new LinkedHashMap<>();
+
+		private final TLStructuredType _type = (TLStructuredType) Proxy.newProxyInstance(
+			TLStructuredType.class.getClassLoader(),
+			new Class<?>[] { TLStructuredType.class },
+			new TypeHandler(_parts));
 
 		private final Map<TLStructuredTypePart, Object> _values = new LinkedHashMap<>();
 
@@ -461,6 +615,18 @@ public class TestTLObjectOverlay extends TestCase {
 		@Override
 		public ObjectKey tId() {
 			return _id;
+		}
+
+		@Override
+		public TLStructuredType tType() {
+			return _type;
+		}
+
+		/**
+		 * Adds the given attribute to the type of this object.
+		 */
+		void addPart(TLStructuredTypePart part) {
+			_parts.put(part.getName(), part);
 		}
 
 		@Override

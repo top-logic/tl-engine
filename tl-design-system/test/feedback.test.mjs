@@ -38,13 +38,24 @@ test('Skeleton: vertiefte Fläche, Puls über duration-loop, keine eigene Reduce
   assert.doesNotMatch(css, /prefers-reduced-motion/);
 });
 
+test('Skeleton: Textzeile in Zeilenhöhe des Fließtexts, mehrere Zeilen mit Abstand und kürzerer letzter, Kreis', () => {
+  const css = readComponent('skeleton', 'skeleton.css');
+  assert.match(declarationsOf(css, '.tl-skeleton--text') ?? '', /height:\s*calc\(var\(--tl-font-size-body\) \* var\(--tl-font-line-height-body\)\)/);
+  assert.match(declarationsOf(css, '.tl-skeleton--text + .tl-skeleton--text') ?? '', /margin-block-start:\s*var\(--tl-space-/);
+  assert.match(declarationsOf(css, '.tl-skeleton--text + .tl-skeleton--text:last-child') ?? '', /width:/);
+  assert.match(declarationsOf(css, '.tl-skeleton--circle') ?? '', /border-radius:\s*50%/);
+  const md = readComponent('skeleton', 'skeleton.contract.md');
+  assert.deepEqual(missingInContract(md, ['tl-skeleton--text', 'tl-skeleton--circle', 'shape', 'lines', 'Skeleton', 'aria-hidden="true"', 'aria-busy="true"']), []);
+  assert.doesNotMatch(md, /keine Modifier/);
+});
+
 for (const name of ['alert', 'badge', 'divider', 'skeleton']) {
   test(`${name}: Specimen und Vertrag`, () => {
     assert.deepEqual(specimenProblems(readComponent(name, `${name}.spec.html`)), []);
     if (name === 'badge') assert.ok(readComponent(name, 'badge.spec.html').includes('role="img"'), 'Badge mit aria-label braucht role="img"');
     const md = readComponent(name, `${name}.contract.md`);
     assert.deepEqual(missingInContract(md, [`tl-${name}`]), []);
-    // Der Alert hat seit master #29652 ein Control (TLAlert), der Skeleton seinen ersten Aufrufer (die Tabelle); Badge und Divider noch nicht.
+    // Der Alert hat seit master #29652 ein Control (TLAlert), der Skeleton den Part Skeleton (Tabelle, Bild); Badge und Divider noch nicht.
     if (name === 'alert') assert.match(md, /TLAlert/, 'alert: Vertrag nennt sein Control nicht');
     else if (name !== 'skeleton') assert.match(md, /kein Control/i, `${name}: Vertrag sagt nicht, dass es noch kein Control gibt`);
   });

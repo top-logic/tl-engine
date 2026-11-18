@@ -26,6 +26,7 @@ import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.TLObjectOverlay;
 import com.top_logic.layout.view.form.ValueListenerDispatch;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLPrimitive;
@@ -56,6 +57,8 @@ public class TestFormValueListeners extends AbstractTicketFormTest {
 
 	private static final String LOG = "log";
 
+	private static final String NOTE = "note";
+
 	private static final String REOPENED = "reopened";
 
 	private static final String NO_MODULE = "none";
@@ -69,6 +72,14 @@ public class TestFormValueListeners extends AbstractTicketFormTest {
 	 */
 	static final List<String> CALLS = new ArrayList<>();
 
+	/**
+	 * The attributes the {@link AssignValue} listeners were called with, in the order of the
+	 * {@link #CALLS}.
+	 */
+	static final List<TLStructuredTypePart> CALLED_WITH = new ArrayList<>();
+
+	private TLClass _noted;
+
 	private AttributeFieldControl _branch;
 
 	private AttributeFieldControl _module;
@@ -76,6 +87,7 @@ public class TestFormValueListeners extends AbstractTicketFormTest {
 	@Override
 	protected void setUp() throws Exception {
 		CALLS.clear();
+		CALLED_WITH.clear();
 		super.setUp();
 		_branch = field(BRANCH);
 		_module = field(MODULE);
@@ -85,7 +97,9 @@ public class TestFormValueListeners extends AbstractTicketFormTest {
 	protected void tearDown() throws Exception {
 		_branch = null;
 		_module = null;
+		_noted = null;
 		CALLS.clear();
+		CALLED_WITH.clear();
 		super.tearDown();
 	}
 
@@ -95,10 +109,17 @@ public class TestFormValueListeners extends AbstractTicketFormTest {
 		TLModelUtil.addProperty(_ticketType, MODULE, text);
 		TLModelUtil.addProperty(_ticketType, LOG, text);
 
+		_noted = TLModelUtil.addClass(module, "Noted");
+		_noted.setAbstract(true);
+		TLModelUtil.addProperty(_noted, NOTE, text);
+		_ticketType.getGeneralizations().add(_noted);
+		TLModelUtil.addProperty(_ticketType, NOTE, text);
+
 		part(STATUS).setAnnotation(listeners(assign(BRANCH, null)));
 		part(BRANCH).setAnnotation(listeners(assign(MODULE, NO_MODULE)));
 		part(MODULE).setAnnotation(listeners(assign(STATUS, REOPENED)));
 		part(TITLE).setAnnotation(listeners(assign(TITLE, FIXED_TITLE), assign(LOG, LOGGED)));
+		part(NOTE).setAnnotation(listeners(assign(LOG, LOGGED)));
 	}
 
 	@Override
@@ -230,6 +251,31 @@ public class TestFormValueListeners extends AbstractTicketFormTest {
 	}
 
 	/**
+	 * The listeners annotated to an override run for a value written through the overridden
+	 * attribute, and once for a value written through the override. They are called with the
+	 * override.
+	 */
+	public void testOverrideListener() {
+		TLStructuredTypePart definition = _noted.getPart(NOTE);
+		assertSame(definition, part(NOTE).getDefinition());
+		_form.enterEditMode();
+		TLObjectOverlay overlay = _form.getOverlay();
+
+		overlay.tUpdate(definition, "n1");
+
+		assertEquals(List.of("note:null->n1=>log"), CALLS);
+		assertEquals(List.of(part(NOTE)), CALLED_WITH);
+		assertEquals(LOGGED, overlay.tValue(part(LOG)));
+		CALLS.clear();
+		CALLED_WITH.clear();
+
+		overlay.tUpdate(part(NOTE), "n2");
+
+		assertEquals(List.of("note:n1->n2=>log"), CALLS);
+		assertEquals(List.of(part(NOTE)), CALLED_WITH);
+	}
+
+	/**
 	 * Storing the changes calls no listener.
 	 */
 	public void testSaveCallsNoListener() {
@@ -316,6 +362,7 @@ public class TestFormValueListeners extends AbstractTicketFormTest {
 				Object newValue) {
 			String target = getConfig().getTarget();
 			CALLS.add(attribute.getName() + ":" + oldValue + "->" + newValue + "=>" + target);
+			CALLED_WITH.add(attribute);
 			object.tUpdate(object.tType().getPart(target), getConfig().getValue());
 		}
 	}

@@ -7,7 +7,7 @@
 			appearance="pill"
 			label="Styled"
 			tone="on-color"
-			variant="headline"
+			variant="heading-lg"
 		/>
 		<text
 			label="Truncated"

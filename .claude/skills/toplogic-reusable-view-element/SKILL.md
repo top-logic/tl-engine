@@ -187,8 +187,8 @@ The engine release cycle is slow; iterate in the app module and upstream once pr
 
 ## Worked example
 
-The chat session rail as a generic element lives in `tl-chat`:
-`com.top_logic.ai.chat.view.list.DataListElement` / `DataListControl` +
-`tl-chat/ui/src/data-list.tsx`, composed in
+The chat session rail as a generic element, built fork-first in `tl-chat` and upstreamed with #29655:
+`com.top_logic.layout.view.list.DataListElement` / `DataListControl` +
+`com.top_logic.layout.react/react-src/controls/TLDataList.tsx` (design system: `tl-list`), composed in
 `tl-chat/src/main/webapp/WEB-INF/views/tl-chat/albert.view.xml`. Read those alongside this playbook to see
 each section applied. `references/mechanics.md` has the copy-paste Java↔React skeleton.

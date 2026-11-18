@@ -639,9 +639,8 @@
 
 			<!--
 				The agent todo plan. Session-scoped: cumulative across every execution in the
-				conversation, a sibling of AgentSession.memory. (TaskStore lives in the session
-				state today and persists in the session metadata.) lastTouchedByExecution is
-				attribution only.
+				conversation. (TaskStore lives in the session state today and persists in the
+				session metadata.) lastTouchedByExecution is attribution only.
 			-->
 			<class name="AgentTask">
 				<annotations>

@@ -177,6 +177,7 @@ Körper scrollen waagerecht gemeinsam: das TSX überträgt `scrollLeft` des Kör
 | Zelle | Innenabstand `--tl-space-control-x`; ohne Trennlinie (die Kante von `frozen-last` bleibt `--tl-border-emphasis`). Zahlenspalte (`data-tl-align="end"`): rechtsbündig, `justify-content: flex-end`, `font-variant-numeric: tabular-nums`; der Kopf einer solchen Spalte behält die Folge Titel, Sortiermarke, Gruppenmarke, Trichter wie jede Spalte, nur sein Inhalt rückt ans Ende der Zelle; der Titel endet bündig mit den Ziffern, weil der verborgene Trichter keine Breite hält (`test/table-align.test.mjs`) |
 | Kante zur scrollenden Fläche | `frozen-last` rechts, `pinned-first` links: `--tl-border-width-sm` in `--tl-border-emphasis` |
 | Feld in der Zelle | wie im Formular, eine Stufe niedriger (#30383): Fläche `--tl-surface-field`, voller Rahmen `--tl-border-width-sm` in `--tl-border-control`, auf gezeigter und ausgewählter Zeile `--tl-border-emphasis`, Radius `--tl-radius-sm`; Höhe `--tl-size-control` − `--tl-space-2xs` (die Zeile behält ihre Höhe), oben `--tl-space-2xs` − `--tl-border-width-sm`, seitlich `--tl-space-2xs`, Innenabstand `--tl-space-control-x` − `--tl-space-2xs` (der Text steht wie beim Lesen); `disabled`, `readonly` und `aria-disabled` ohne Fläche und Rahmen; Knöpfe im Feld (Leeren, Pfeil, Öffner des kompakten Felds) eine Rahmenbreite kürzer als das Feld; Fokusring innen (`outline-offset` −`--tl-focus-offset`); Warnung innere Linie `--tl-border-width-md` in `--tl-status-warning-border`, Fehler in `--tl-status-error-border` |
+| Pflicht in der bearbeiteten Zeile | Stern im Kopf: `--tl-status-error-text` hinter dem Titel (Symbol, 3:1 gegen `--tl-surface-layer-muted` und `--tl-surface-interactive-strong`, in `pairs.mjs`); Pflichtfeld in der bearbeiteten Zeile: Ecke `--tl-status-error-text`, `--tl-space-xs` breit, oben rechts im Feld, an `[aria-required="true"]` (3:1 gegen `--tl-surface-field`); nicht an read-only oder inaktiven Feldern |
 | Baum | Toggle und Einzug je Ebene `--tl-size-control-sm` (Platzhalter `tl-table__spacer`); Abstand der Anzahl `--tl-space-xs` |
 | Zelle mit Feldmarke | am Ende eine halbe Markenbreite frei: `--tl-size-icon-sm` / 2; der Fokusring der Marke liegt innen (`outline-offset` −`--tl-focus-offset`) |
 | Platzhalter | Innenabstand `--tl-space-control-x`, Linie darunter wie die Zeile |
@@ -240,6 +241,7 @@ Klassen:
 | `tl-table__header-cell` | jede Kopfzelle |
 | `tl-table__sort` | der Sortierknopf, ein `button` |
 | `tl-table__label` | die Überschrift, Großbuchstaben in `--tl-text-secondary`; endet mit Ellipse. Das TSX setzt `tl-type-overline` daran (Sperrung `0.04em`) |
+| `tl-table__required` | der Pflichtstern hinter dem Titel, solange die Tabelle bearbeitet wird: `--tl-status-error-text`, `aria-hidden`, ohne eigene Typo-Klasse (erbt die Schrift der Kopfzelle); gibt nie nach; in einer Zahlenspalte vor dem Titel |
 | `tl-table__mark` | Sortierpfeil, Gruppierungsmarke: `tl-icon-sm`, `aria-hidden` |
 | `tl-table__filter` | der Trichter |
 | `tl-table__columns` | die Spaltenwahl (Zahnrad) |

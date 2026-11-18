@@ -92,6 +92,10 @@ export function kontrastPaare(T) {
   // Die Icons der Kopfzeile (Trichter, Sortierpfeil, Zahnrad) stehen auf surface-layer-muted.
   paar('icon-primary', 'surface-layer-muted', 3.0); paar('icon-secondary', 'surface-layer-muted', 3.0);
   paar('text-link', 'surface-layer-muted', 3.0); // der Trichter einer gefilterten Spalte ist Markenblau (#29999)
+  // Pflichtstern im Kopf (#30383): Symbol, 3:1 wie der Trichter; auch beim Zeigen auf die Kopfzelle.
+  for (const bg of ['surface-layer-muted', 'surface-interactive-strong']) paar('status-error-text', bg, 3.0);
+  // Pflichtecke im Feld der Tabellenzeile (#30383): Symbol, 3:1 gegen die Feldfläche (gemessen hell 4,29, dunkel 4,89).
+  paar('status-error-text', 'surface-field', 3.0);
   // icon-secondary auf surface-interactive-strong steht seit Bernhards Knöpfen im Feld schon in der Liste (b985047).
   paar('icon-secondary', 'surface-layer', 3.0);
   paar('border-emphasis', 'surface-layer', 3.0);

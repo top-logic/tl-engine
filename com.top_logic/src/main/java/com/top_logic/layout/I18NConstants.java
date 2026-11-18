@@ -27,8 +27,8 @@ public class I18NConstants extends I18NConstantsBase {
 	 * </p>
 	 * 
 	 * <p>
-	 * Every application sets it in its own resource bundle; the framework and its feature modules
-	 * do not.
+	 * The framework defines the neutral title "TopLogic"; every application sets its own title in
+	 * its resource bundle.
 	 * </p>
 	 * 
 	 * <p>

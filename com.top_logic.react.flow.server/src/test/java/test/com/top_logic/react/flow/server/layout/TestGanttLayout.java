@@ -318,12 +318,34 @@ public class TestGanttLayout extends TestCase {
 		return renderToSvg(d);
 	}
 
-	/** The content of the group holding the edges of a chart. */
+	/** The content of the group holding the edges of a chart (up to its end tag). */
 	private static String edgeGroup(String svg) {
 		int start = svg.indexOf("tl-gantt-edges");
 		assertTrue("edge group present", start >= 0);
-		int end = svg.indexOf("</g>", start);
-		return svg.substring(start, end);
+		return svg.substring(start, groupEnd(svg, start));
+	}
+
+	/** The position of the end tag of the group whose start tag contains the given position. */
+	private static int groupEnd(String svg, int pos) {
+		int depth = 1;
+		int next = svg.indexOf('>', pos) + 1;
+		while (true) {
+			int open = svg.indexOf("<g", next);
+			int close = svg.indexOf("</g>", next);
+			assertTrue("group closed", close >= 0);
+			if (open >= 0 && open < close) {
+				if (svg.charAt(svg.indexOf('>', open) - 1) != '/') {
+					depth++;
+				}
+				next = open + 2;
+			} else {
+				depth--;
+				if (depth == 0) {
+					return close;
+				}
+				next = close + 4;
+			}
+		}
 	}
 
 	private static int countPaths(String svg) {
@@ -2302,6 +2324,77 @@ public class TestGanttLayout extends TestCase {
 		recorder._key.onKeyDown(space);
 		assertTrue("collapsed by Space", parent.isCollapsed());
 		assertTrue("Space does not scroll the page", space._prevented);
+	}
+
+	/**
+	 * An edge is drawn as a group naming the items it connects, and the box of an item as a group
+	 * naming the item, so that the diagram control can emphasise the edges of an item. Only a
+	 * violated edge is marked as violated.
+	 */
+	public void testEdgesNameTheirItems() throws Exception {
+		GanttLayout layout = collapsibleChart();
+		// Move "C2 task" before "C1 task" ends: the edge from c1a to c2a is violated.
+		((GanttSpan) layout.getItems().get(2)).setStart(15).setEnd(25);
+
+		String svg = layoutAndRender(layout);
+		String edges = edgeGroup(svg);
+
+		String violated = edgeStartTag(edges, "c1a", "c2a");
+		assertTrue(violated, violated.contains("class=\"" + GanttLayoutOperations.EDGE_CSS_CLASS + " "
+			+ GanttLayoutOperations.EDGE_VIOLATED_CSS_CLASS + "\""));
+		String satisfied = edgeStartTag(edges, "pa", "qa");
+		assertTrue(satisfied, satisfied.contains("class=\"" + GanttLayoutOperations.EDGE_CSS_CLASS + "\""));
+		assertFalse("no opacity in the drawing: " + edges, edges.contains("opacity"));
+
+		for (String item : Arrays.asList("pa", "c1a", "c2a", "qa")) {
+			int pos = svg.indexOf(GanttLayoutOperations.ITEM_ID_ATTR + "=\"" + item + "\"");
+			assertTrue("item group present: " + item, pos >= 0);
+		}
+		int qaGroup = svg.lastIndexOf("<g", svg.indexOf(GanttLayoutOperations.ITEM_ID_ATTR + "=\"qa\""));
+		assertTrue("item group holds the item box",
+			svg.substring(qaGroup, groupEnd(svg, qaGroup)).contains(">Q task<"));
+	}
+
+	/**
+	 * In a chart with a viewport, the item boxes are drawn in groups naming their items as well.
+	 */
+	public void testViewportItemsNameTheirItems() throws Exception {
+		GanttLayout layout = manyRows(0);
+		GanttSpan task = span("t", "r5", 10, 20, "Task");
+		layout.addItem(task);
+		layout.addContent(task.getBox());
+
+		String svg = renderViewport(layout);
+
+		String content = contentSection(svg);
+		int pos = content.indexOf(GanttLayoutOperations.ITEM_ID_ATTR + "=\"t\"");
+		assertTrue("item group in the content group", pos >= 0);
+	}
+
+	/**
+	 * The stylesheet of an exported diagram does not subdue edges: an exported chart shows all
+	 * edges in full.
+	 */
+	public void testExportDoesNotSubdueEdges() throws Exception {
+		GanttLayout layout = collapsibleChart();
+		Diagram d = Diagram.create().setRoot(layout);
+
+		String svg;
+		try (java.io.InputStream in = FlowFactory.toSvg(d, "gantt.svg", 12.0, null, null).getStream()) {
+			svg = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+		}
+
+		assertTrue("edges exported", svg.contains("class=\"" + GanttLayoutOperations.EDGE_CSS_CLASS));
+		assertFalse("export styles do not address edges", svg.contains("." + GanttLayoutOperations.EDGE_CSS_CLASS));
+		assertFalse("no opacity on edges", edgeGroup(svg).contains("opacity"));
+	}
+
+	/** The start tag of the group of the edge between the given items. */
+	private static String edgeStartTag(String edges, String source, String target) {
+		int pos = edges.indexOf(GanttLayoutOperations.EDGE_SOURCE_ATTR + "=\"" + source + "\" "
+			+ GanttLayoutOperations.EDGE_TARGET_ATTR + "=\"" + target + "\"");
+		assertTrue("edge " + source + " -> " + target + " present: " + edges, pos >= 0);
+		return startTag(edges, edges.lastIndexOf("<g", pos));
 	}
 
 	/** {@link SvgTagWriter} recording the handlers of the collapse toggle. */

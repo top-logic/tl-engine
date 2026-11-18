@@ -208,6 +208,39 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	/** Purpose of the collapse toggle of a row with children. */
 	String ROW_TOGGLE_PURPOSE = "row-toggle";
 
+	/**
+	 * CSS class of the group drawing a dependency edge (its line and symbols).
+	 *
+	 * <p>
+	 * On the screen, an edge is subdued unless it is {@link #EDGE_RELATED_CSS_CLASS related} to
+	 * the item under the pointer or a selected item, or {@link #EDGE_VIOLATED_CSS_CLASS
+	 * violated}. The group names the items it connects in {@link #EDGE_SOURCE_ATTR} and
+	 * {@link #EDGE_TARGET_ATTR}.
+	 * </p>
+	 */
+	String EDGE_CSS_CLASS = "tl-gantt-edge";
+
+	/**
+	 * CSS class the diagram control adds to an {@link #EDGE_CSS_CLASS edge} of the item under the
+	 * pointer or of a selected item.
+	 */
+	String EDGE_RELATED_CSS_CLASS = "tl-gantt-edge--related";
+
+	/**
+	 * CSS class of an {@link #EDGE_CSS_CLASS edge} whose dependency is violated. It is never
+	 * subdued.
+	 */
+	String EDGE_VIOLATED_CSS_CLASS = "tl-gantt-edge--violated";
+
+	/** Attribute of an {@link #EDGE_CSS_CLASS edge} holding the ID of its source item. */
+	String EDGE_SOURCE_ATTR = "data-tl-source";
+
+	/** Attribute of an {@link #EDGE_CSS_CLASS edge} holding the ID of its target item. */
+	String EDGE_TARGET_ATTR = "data-tl-target";
+
+	/** Attribute of the group around the box of an item holding the ID of the item. */
+	String ITEM_ID_ATTR = "data-tl-item";
+
 	/** CSS class of the collapse toggle of a row with children. */
 	String ROW_TOGGLE_CSS_CLASS = "tl-gantt-row-toggle";
 
@@ -621,6 +654,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			drawDecorations(self, rows, out);
 			java.util.Set<Box> decorationLabels = buildDecorationLabels(self, rows);
 			java.util.Set<Box> notInContents = buildNotInContents(self, rows);
+			drawItemBoxes(self, rows, out, true);
+			drawItemBoxes(self, rows, out, false);
 			for (Box content : self.getContents()) {
 				if (notInContents.contains(content)) {
 					continue;
@@ -924,12 +959,24 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			}
 			boolean isFrozen = rows.isFrozen(item.getRowId());
 			if (isFrozen == drawFrozen) {
-				Box box = item.getBox();
-				if (box != null) {
-					out.write(box);
-				}
+				drawItemBox(item, out);
 			}
 		}
+	}
+
+	/**
+	 * Draws the box of the given item in a group naming the item in {@link #ITEM_ID_ATTR}, so that
+	 * the diagram control finds the edges of the item under the pointer.
+	 */
+	private static void drawItemBox(GanttItem item, SvgWriter out) {
+		Box box = item.getBox();
+		if (box == null) {
+			return;
+		}
+		out.beginGroup();
+		out.writeAttribute(ITEM_ID_ATTR, item.getId());
+		out.write(box);
+		out.endGroup();
 	}
 
 	/**
@@ -999,8 +1046,10 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	/**
 	 * The {@link GanttLayout#getContents() contents} that a chart without viewport does not draw
 	 * in the order of its contents: the row labels, which are drawn together with the collapse
-	 * toggles (see {@link #drawRowLabels(GanttLayout, GanttRowLayout, SvgWriter, boolean)}), and
-	 * the boxes of hidden rows and decorations.
+	 * toggles (see {@link #drawRowLabels(GanttLayout, GanttRowLayout, SvgWriter, boolean)}), the
+	 * item boxes, which are drawn in groups naming their items (see
+	 * {@link #drawItemBoxes(GanttLayout, GanttRowLayout, SvgWriter, boolean)}), and the labels of
+	 * hidden decorations.
 	 */
 	private static java.util.Set<Box> buildNotInContents(GanttLayout self, GanttRowLayout rows) {
 		java.util.Set<Box> result = new java.util.HashSet<>();
@@ -1011,9 +1060,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			addIfPresent(result, row.getLabel());
 		}
 		for (GanttItem item : self.getItems()) {
-			if (rows.isHidden(item.getRowId())) {
-				addIfPresent(result, item.getBox());
-			}
+			addIfPresent(result, item.getBox());
 		}
 		List<GanttDecoration> decos = self.getDecorations();
 		if (decos != null) {
@@ -1393,12 +1440,14 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	 *        The fixed color of the edge, or the substitute color of its role.
 	 * @param role
 	 *        The color role of the edge, {@code null} for an edge in a fixed color.
+	 * @param violated
+	 *        Whether the dependency of the edge is violated.
 	 * @param horizontal
 	 *        The horizontal segment between the stubs.
 	 */
 	record EdgeRoute(GanttEdge edge, double sx, double sy, double tx, double ty, double sDir, double tDir,
 			double sInset, double tInset, String strokeColor, String role, double strokeWidth, List<Double> dashes,
-			GanttEdgeRouting.Segment horizontal) {
+			boolean violated, GanttEdgeRouting.Segment horizontal) {
 
 		/**
 		 * Computes the route of the given edge and adds its horizontal segment to the given
@@ -1463,7 +1512,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 				sx + sDir * (EDGE_HORIZONTAL_STUB + sInset), tx + tDir * (EDGE_HORIZONTAL_STUB + tInset),
 				sy, ty);
 			return new EdgeRoute(edge, sx, sy, tx, ty, sDir, tDir, sInset, tInset, strokeColor, role, strokeWidth,
-				dashes, horizontal);
+				dashes, violated, horizontal);
 		}
 
 		/** Writes the edge, after its horizontal segment has been routed. */
@@ -1471,6 +1520,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			double sStubX = sx + sDir * (EDGE_HORIZONTAL_STUB + sInset);
 			double tStubX = tx + tDir * (EDGE_HORIZONTAL_STUB + tInset);
 			double midY = horizontal.y();
+
+			out.beginGroup();
+			out.writeCssClass(violated ? EDGE_CSS_CLASS + " " + EDGE_VIOLATED_CSS_CLASS : EDGE_CSS_CLASS);
+			out.writeAttribute(EDGE_SOURCE_ATTR, edge.getSourceItemId());
+			out.writeAttribute(EDGE_TARGET_ATTR, edge.getTargetItemId());
 
 			out.beginPath();
 			ColorRoles.writeRole(out, role);
@@ -1496,6 +1550,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 				strokeWidth, role);
 			ConnectorSymbolRenderer.drawSymbol(out, tx, ty, -tDir, 0, edge.getTargetSymbol(), strokeColor,
 				strokeWidth, role);
+			out.endGroup();
 		}
 	}
 

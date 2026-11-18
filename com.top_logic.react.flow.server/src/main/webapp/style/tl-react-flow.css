@@ -123,6 +123,21 @@ g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--tl-borde
 }
 
 /*
+ * The dependency edges of a Gantt chart are subdued on the screen, so that the edges of the item
+ * under the pointer and of the selected items stand out (marked "related" by the diagram control).
+ * A violated dependency is never subdued. Only the opacity changes: the color (and its role) and
+ * the stroke width of each edge stay as drawn. An exported PDF does not read this stylesheet and
+ * shows all edges in full.
+ */
+.tl-gantt-edge {
+	opacity: 0.35;
+}
+.tl-gantt-edge--related,
+.tl-gantt-edge--violated {
+	opacity: 1;
+}
+
+/*
  * The toggle collapsing the children of a row of a Gantt chart, in the row label column. The model
  * paints the chevron in a fixed gray, which an exported PDF keeps; on the screen it takes the
  * secondary text color, and the toggle shows the focus ring while it has the keyboard focus.

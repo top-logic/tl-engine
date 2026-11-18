@@ -1,0 +1,595 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.ai.core.provider.anthropic;
+
+import static com.top_logic.ai.core.provider.chatcompletions.ChatCompletionsRequestBuilder.*;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.top_logic.ai.tool.api.ToolSchema;
+import com.top_logic.ai.core.message.AssistantMessage;
+import com.top_logic.ai.core.message.CompactionMarker;
+import com.top_logic.ai.core.message.ContentPart;
+import com.top_logic.ai.core.message.ImageContent;
+import com.top_logic.ai.core.message.Message;
+import com.top_logic.ai.core.message.PdfContent;
+import com.top_logic.ai.core.message.SystemMessage;
+import com.top_logic.ai.core.message.TextContent;
+import com.top_logic.ai.core.message.ThinkingContent;
+import com.top_logic.ai.core.message.ToolCall;
+import com.top_logic.ai.core.message.ToolResultMessage;
+import com.top_logic.ai.core.message.ToolState;
+import com.top_logic.ai.core.message.UserMessage;
+import com.top_logic.ai.core.provider.DataUris;
+import com.top_logic.ai.core.provider.ProviderException;
+import com.top_logic.ai.core.provider.ProviderRequest;
+import com.top_logic.ai.core.provider.ResponseFormat;
+import com.top_logic.ai.core.provider.ToolChoice;
+import com.top_logic.ai.core.provider.anthropic.messages.AnthropicRequest;
+
+import de.haumacher.msgbuf.io.StringW;
+import de.haumacher.msgbuf.json.JsonWriter;
+
+/**
+ * Maps a {@link ProviderRequest} to an {@link AnthropicRequest} proto DTO and serializes it.
+ */
+public final class AnthropicRequestBuilder {
+
+	private AnthropicRequestBuilder() {
+		// Static utility class.
+	}
+
+	/**
+	 * Builds the Anthropic Messages API request JSON from a {@link ProviderRequest}.
+	 */
+	public static String buildRequestJson(ProviderRequest request) throws ProviderException {
+		return buildRequestJson(request, null);
+	}
+
+	/**
+	 * Builds the request JSON of the Messages API from a {@link ProviderRequest}, for the Anthropic
+	 * API or for an endpoint that names the model in its path.
+	 *
+	 * @param request
+	 *        The request to send.
+	 * @param anthropicVersion
+	 *        <code>null</code> for the Anthropic API, which takes the model in the body and the API
+	 *        version as a header. Otherwise the API version written into the body instead of the
+	 *        model, for an endpoint that names the model in its path (Google Vertex AI, e.g.
+	 *        {@code vertex-2023-10-16}).
+	 */
+	public static String buildRequestJson(ProviderRequest request, String anthropicVersion)
+			throws ProviderException {
+		String cacheTtl = cacheTtl(request.modelOptions());
+
+		List<Message> messages = request.messages();
+		int userRoleCount = countUserRolePositions(messages);
+		int cacheFrom = userRoleCount - Math.min(2, userRoleCount);
+
+		AnthropicRequest req = AnthropicRequest.create()
+			.setMaxTokens(request.maxOutputTokens())
+			.setStream(true);
+		if (anthropicVersion == null) {
+			req.setModel(request.model());
+		} else {
+			req.setAnthropicVersion(anthropicVersion);
+		}
+
+		writeSamplingParams(req, request.modelOptions());
+		writeThinkingParams(req, request.model(), request.maxOutputTokens(), request.modelOptions());
+
+		if (request.systemPrompt() != null && !request.systemPrompt().isEmpty()) {
+			req.setSystem(List.of(buildSystemBlock(request.systemPrompt(), cacheTtl)));
+		}
+
+		req.setMessages(buildMessages(messages, cacheFrom, cacheTtl));
+
+		if (!request.tools().isEmpty()) {
+			req.setTools(buildTools(request, cacheTtl));
+		}
+
+		writeResponseFormat(req, request.responseFormat());
+
+		if (request.toolChoice() != null && request.toolChoice() != ToolChoice.AUTO) {
+			String choiceType = request.toolChoice() == ToolChoice.REQUIRED ? "any" : "none";
+			req.setToolChoice(Map.of("type", choiceType));
+		}
+
+		StringW buffer = new StringW();
+		try (JsonWriter json = new JsonWriter(buffer)) {
+			req.writeTo(json);
+		} catch (IOException e) {
+			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0,
+				"Failed to serialize Anthropic request JSON", e);
+		}
+		return buffer.toString();
+	}
+
+	// ---- Private helpers ----
+
+	/**
+	 * The tool definitions, with a cache breakpoint where the array stops being the same bytes.
+	 *
+	 * <p>
+	 * Anthropic renders a request as tools, then system, then messages, and a breakpoint caches
+	 * everything in front of it. The breakpoint on the system block therefore covers the whole tool
+	 * array, which is right until a run loads a skill: one appended tool moves the system block and
+	 * the entire prefix is written again (Gitea #346).
+	 * </p>
+	 *
+	 * <p>
+	 * A second breakpoint on the last tool that <em>cannot</em> move keeps that part readable across
+	 * the load. It is only worth a breakpoint when there is something behind it - with no loaded
+	 * skill the system breakpoint already covers the array, and the four we may place are better
+	 * spent on the conversation.
+	 * </p>
+	 */
+	private static List<Object> buildTools(ProviderRequest request, String cacheTtl) {
+		List<ToolSchema> schemas = request.tools();
+		int stable = request.stableToolCount();
+		boolean breakAfterStable = stable > 0 && stable < schemas.size();
+
+		List<Object> tools = new ArrayList<>();
+		for (int i = 0; i < schemas.size(); i++) {
+			ToolSchema tool = schemas.get(i);
+			Map<String, Object> entry = new LinkedHashMap<>();
+			entry.put("name", tool.name());
+			entry.put("description", tool.description());
+			entry.put("input_schema", parseJson(tool.inputSchemaJson()));
+			if (breakAfterStable && i == stable - 1) {
+				entry.put("cache_control", buildCacheControl(cacheTtl));
+			}
+			tools.add(entry);
+		}
+		return tools;
+	}
+
+	private static int countUserRolePositions(List<Message> messages) {
+		int count = 0;
+		for (int i = 0; i < messages.size(); i++) {
+			Message msg = messages.get(i);
+			if (msg instanceof UserMessage) {
+				count++;
+			} else if (msg instanceof ToolResultMessage) {
+				if (i == 0 || !(messages.get(i - 1) instanceof ToolResultMessage)) {
+					count++;
+				}
+			}
+		}
+		return count;
+	}
+
+	private static List<Object> buildMessages(List<Message> messages, int cacheFrom,
+			String cacheTtl) {
+		List<Object> result = new ArrayList<>();
+		int userRoleOrdinal = 0;
+		int i = 0;
+		while (i < messages.size()) {
+			Message msg = messages.get(i);
+
+			if (msg instanceof SystemMessage || msg instanceof CompactionMarker) {
+				i++;
+			} else if (msg instanceof UserMessage user) {
+				boolean cache = userRoleOrdinal >= cacheFrom;
+				userRoleOrdinal++;
+				Map<String, Object> entry = new LinkedHashMap<>();
+				entry.put("role", "user");
+				entry.put("content", buildUserContent(user.content(), cache, cacheTtl));
+				result.add(entry);
+				i++;
+			} else if (msg instanceof AssistantMessage assistant) {
+				Map<String, Object> entry = new LinkedHashMap<>();
+				entry.put("role", "assistant");
+				entry.put("content", buildAssistantContent(assistant.content()));
+				result.add(entry);
+				i++;
+			} else if (msg instanceof ToolResultMessage) {
+				boolean cache = userRoleOrdinal >= cacheFrom;
+				userRoleOrdinal++;
+				List<Object> content = new ArrayList<>();
+				while (i < messages.size() && messages.get(i) instanceof ToolResultMessage tr) {
+					boolean lastInGroup = (i + 1 >= messages.size()
+						|| !(messages.get(i + 1) instanceof ToolResultMessage));
+					content.add(buildToolResult(tr, cache && lastInGroup, cacheTtl));
+					i++;
+				}
+				Map<String, Object> entry = new LinkedHashMap<>();
+				entry.put("role", "user");
+				entry.put("content", content);
+				result.add(entry);
+			}
+		}
+		return result;
+	}
+
+	private static List<Object> buildUserContent(List<ContentPart> parts, boolean cache,
+			String cacheTtl) {
+		List<Object> content = new ArrayList<>();
+		for (int i = 0; i < parts.size(); i++) {
+			boolean cacheOnThis = cache && (i == parts.size() - 1);
+			content.add(buildContentBlock(parts.get(i), cacheOnThis, cacheTtl));
+		}
+		return content;
+	}
+
+	private static List<Object> buildAssistantContent(List<ContentPart> parts) {
+		List<Object> content = new ArrayList<>();
+		for (ContentPart part : parts) {
+			if (part instanceof TextContent text) {
+				content.add(Map.of("type", "text", "text", text.text()));
+			} else if (part instanceof ToolCall toolCall) {
+				String args = toolCall.arguments();
+				Map<String, Object> block = new LinkedHashMap<>();
+				block.put("type", "tool_use");
+				block.put("id", toolCall.id());
+				block.put("name", toolCall.name());
+				block.put("input", parseJson(args.isEmpty() ? "{}" : args));
+				content.add(block);
+			} else if (part instanceof ThinkingContent thinking) {
+				Map<String, Object> block = new LinkedHashMap<>();
+				block.put("type", "thinking");
+				block.put("thinking", thinking.text());
+				if (thinking.continuityToken() != null) {
+					block.put("signature", thinking.continuityToken());
+				}
+				content.add(block);
+			}
+		}
+		return content;
+	}
+
+	/**
+	 * Builds a {@code tool_result} block.
+	 *
+	 * <p>Its {@code content} is a plain string for a text-only result, and a list of
+	 * {@code text}/{@code image}/{@code document} blocks for a result the tool filled with content
+	 * parts — the Messages API permits exactly those types inside a tool result, so an image needs no
+	 * detour through a user message.</p>
+	 */
+	private static Map<String, Object> buildToolResult(ToolResultMessage result, boolean cache,
+			String cacheTtl) {
+		ToolState state = result.state();
+		Object content;
+		boolean isError = false;
+		if (state instanceof ToolState.Completed c) {
+			content = c.content().isEmpty()
+				? c.result()
+				: buildToolResultContent(c.content(), cacheTtl);
+		} else if (state instanceof ToolState.Failed f) {
+			content = f.error();
+			isError = true;
+		} else {
+			content = "";
+		}
+
+		Map<String, Object> block = new LinkedHashMap<>();
+		block.put("type", "tool_result");
+		block.put("tool_use_id", result.toolCallId());
+		block.put("content", content);
+		if (isError) {
+			block.put("is_error", true);
+		}
+		if (cache) {
+			block.put("cache_control", buildCacheControl(cacheTtl));
+		}
+		return block;
+	}
+
+	/**
+	 * The nested content blocks of a multimodal {@code tool_result}.
+	 *
+	 * <p>The cache breakpoint stays on the enclosing {@code tool_result} block, so none of the nested
+	 * blocks carries one.</p>
+	 */
+	private static List<Object> buildToolResultContent(List<ContentPart> parts, String cacheTtl) {
+		List<Object> content = new ArrayList<>(parts.size());
+		for (ContentPart part : parts) {
+			content.add(buildContentBlock(part, false, cacheTtl));
+		}
+		return content;
+	}
+
+	private static Map<String, Object> buildContentBlock(ContentPart part, boolean cacheOnThis,
+			String cacheTtl) {
+		Map<String, Object> block = new LinkedHashMap<>();
+		if (part instanceof TextContent text) {
+			block.put("type", "text");
+			block.put("text", text.text());
+		} else if (part instanceof ImageContent image) {
+			block.put("type", "image");
+			block.put("source", buildImageSource(image));
+		} else if (part instanceof PdfContent pdf) {
+			block.put("type", "document");
+			Map<String, Object> source = new LinkedHashMap<>();
+			source.put("type", "base64");
+			source.put("media_type", pdf.mediaType());
+			source.put("data", pdf.data());
+			block.put("source", source);
+		}
+		if (cacheOnThis) {
+			block.put("cache_control", buildCacheControl(cacheTtl));
+		}
+		return block;
+	}
+
+	private static Map<String, Object> buildImageSource(ImageContent image) {
+		Map<String, Object> source = new LinkedHashMap<>();
+		if (image.url().startsWith("data:")) {
+			source.put("type", "base64");
+			source.put("media_type", image.mediaType());
+			source.put("data", DataUris.base64Payload(image.url()));
+		} else {
+			source.put("type", "url");
+			source.put("url", image.url());
+		}
+		return source;
+	}
+
+	private static Map<String, Object> buildSystemBlock(String systemPrompt, String cacheTtl) {
+		Map<String, Object> block = new LinkedHashMap<>();
+		block.put("type", "text");
+		block.put("text", systemPrompt);
+		block.put("cache_control", buildCacheControl(cacheTtl));
+		return block;
+	}
+
+	private static Map<String, Object> buildCacheControl(String cacheTtl) {
+		Map<String, Object> cc = new LinkedHashMap<>();
+		cc.put("type", "ephemeral");
+		if (cacheTtl != null) {
+			cc.put("ttl", cacheTtl);
+		}
+		return cc;
+	}
+
+	/**
+	 * The lifetime of the prompt cache entries the given model options ask for.
+	 *
+	 * @return The value of {@link ProviderRequest#CACHE_TTL}, <code>null</code> if none is set and
+	 *         the endpoint's default applies.
+	 */
+	public static String cacheTtl(Map<String, Object> modelOptions) {
+		Object value = modelOptions.get(ProviderRequest.CACHE_TTL);
+		if (value == null) {
+			return null;
+		}
+		String ttl = value.toString();
+		return ttl.isEmpty() ? null : ttl;
+	}
+
+	/**
+	 * Writes the requested {@link ResponseFormat} as Anthropic's structured output.
+	 *
+	 * <p>
+	 * Anthropic states the constraint as {@code output_config.format} with a {@code json_schema}.
+	 * There is no untyped JSON mode - a schema is what the API takes - so a request that asks for
+	 * JSON without saying which JSON is refused here rather than sent and rejected, or worse, sent
+	 * and answered in prose.
+	 * </p>
+	 */
+	private static void writeResponseFormat(AnthropicRequest req, ResponseFormat format)
+			throws ProviderException {
+		if (format == null || format.kind() == ResponseFormat.Kind.TEXT) {
+			return;
+		}
+		if (format.kind() == ResponseFormat.Kind.JSON) {
+			throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 0,
+				"Anthropic has no untyped JSON mode. Pass a JSON schema as the response format"
+					+ " (a map with a 'schema') to get a structured answer.");
+		}
+		Map<String, Object> jsonSchema = new LinkedHashMap<>();
+		jsonSchema.put("type", "json_schema");
+		jsonSchema.put("schema", format.schema());
+		putOutputConfig(req, "format", jsonSchema);
+	}
+
+	/**
+	 * Adds one entry to the request's {@code output_config}, keeping what is already there.
+	 *
+	 * <p>
+	 * Both the thinking effort and the structured output live in that one object, and they are
+	 * written by different code paths.
+	 * </p>
+	 */
+	private static void putOutputConfig(AnthropicRequest req, String key, Object value) {
+		Map<String, Object> outputConfig = new LinkedHashMap<>();
+		if (req.getOutputConfig() instanceof Map<?, ?> existing) {
+			existing.forEach((k, v) -> outputConfig.put(String.valueOf(k), v));
+		}
+		outputConfig.put(key, value);
+		req.setOutputConfig(outputConfig);
+	}
+
+	/**
+	 * Writes the thinking configuration for the requested effort.
+	 *
+	 * <p>
+	 * Adaptive thinking asks for the {@code summarized} display. On the models since Opus 4.7 the
+	 * API default is {@code omitted}: the thinking blocks stream with empty text, so a model that
+	 * thinks for minutes shows nothing at all until its first tool call (Gitea #602 measured 234 s
+	 * of silence on Opus 5.5). The summary costs nothing extra - thinking is billed the same under
+	 * either display - and it is what the chat shows while the model works.
+	 * </p>
+	 *
+	 * <p>
+	 * With an effort, a model that {@link #requiresBudgetTokens(String) requires a token budget} gets
+	 * thinking enabled with a budget derived from the effort and the output limit; every other model
+	 * gets adaptive thinking and the effort in the output configuration.
+	 * </p>
+	 *
+	 * <p>
+	 * Without an effort, a model that {@link #thinksUnasked(String) thinks unasked} still gets the
+	 * adaptive configuration: for it, adaptive is what omitting the parameter means anyway, so the
+	 * request only changes what is shown. Every other model is left without thinking.
+	 * </p>
+	 */
+	private static void writeThinkingParams(AnthropicRequest req, String model, int maxOutputTokens,
+			Map<String, Object> modelOptions) {
+		ThinkingParams params = thinkingParams(model, maxOutputTokens, modelOptions);
+		if (params == null) {
+			return;
+		}
+		req.setThinking(params.thinking());
+		if (params.effort() != null) {
+			putOutputConfig(req, OUTPUT_CONFIG_EFFORT, params.effort());
+		}
+	}
+
+	/**
+	 * The thinking configuration of a Claude model for the requested effort.
+	 *
+	 * <p>
+	 * With an effort, a Haiku model before generation 5 gets thinking enabled with a token budget
+	 * derived from the effort and the output limit; every other model gets adaptive thinking with
+	 * the summarized display and the effort in the output configuration. Without an effort, only a
+	 * model that thinks unasked gets the adaptive configuration.
+	 * </p>
+	 *
+	 * <p>
+	 * Shared by every endpoint that serves Claude in the Messages API's dialect, so that Claude
+	 * thinks the same whichever provider serves it.
+	 * </p>
+	 *
+	 * @param model
+	 *        The model ID; the rules look for the Claude family and generation in it, so a
+	 *        provider-specific spelling such as {@code eu.anthropic.claude-opus-5-5} works as well.
+	 * @param maxOutputTokens
+	 *        The output limit of the request, from which a token budget is derived.
+	 * @param modelOptions
+	 *        The request's model options, read for {@link ProviderRequest#THINKING_EFFORT}.
+	 * @return The configuration, <code>null</code> if the request leaves thinking to the model.
+	 */
+	public static ThinkingParams thinkingParams(String model, int maxOutputTokens,
+			Map<String, Object> modelOptions) {
+		Object thinkingEffort = modelOptions.get(ProviderRequest.THINKING_EFFORT);
+		if (thinkingEffort == null) {
+			return thinksUnasked(model) ? new ThinkingParams(adaptiveThinking(), null) : null;
+		}
+		if (requiresBudgetTokens(model)) {
+			int budgetTokens = effortToBudgetTokens(thinkingEffort.toString(), maxOutputTokens);
+			return new ThinkingParams(Map.<String, Object> of("type", "enabled", "budget_tokens", budgetTokens), null);
+		}
+		return new ThinkingParams(adaptiveThinking(), thinkingEffort.toString());
+	}
+
+	/**
+	 * The thinking configuration of a request.
+	 *
+	 * @param thinking
+	 *        The value of the request's {@code thinking} field.
+	 * @param effort
+	 *        The value of {@link #OUTPUT_CONFIG_EFFORT} in the request's {@code output_config},
+	 *        <code>null</code> for none.
+	 */
+	public record ThinkingParams(Map<String, Object> thinking, String effort) {
+		// Pair of values.
+	}
+
+	/** Field of the request's {@code output_config} that carries the thinking effort. */
+	public static final String OUTPUT_CONFIG_EFFORT = "effort";
+
+	/**
+	 * The {@code top_k} sampling parameter of the given model options.
+	 *
+	 * @return The value of {@link ProviderRequest#TOP_K}, <code>null</code> if none is set.
+	 */
+	public static Long topK(Map<String, Object> modelOptions) {
+		Object topK = modelOptions.get(ProviderRequest.TOP_K);
+		return topK == null ? null : Long.valueOf(topK.toString());
+	}
+
+	private static Map<String, Object> adaptiveThinking() {
+		Map<String, Object> thinking = new LinkedHashMap<>();
+		thinking.put("type", "adaptive");
+		thinking.put("display", "summarized");
+		return thinking;
+	}
+
+	/**
+	 * Whether the model thinks adaptively when the request says nothing about thinking.
+	 *
+	 * <p>
+	 * True for the Opus and Sonnet models of {@link #modelGeneration(String) generation} 5 and later
+	 * and for Fable and Mythos; on Opus 5.5 and Fable thinking cannot even be switched off. The 4.x
+	 * models and all Haiku models do not think unless asked.
+	 * </p>
+	 */
+	static boolean thinksUnasked(String model) {
+		if (model.contains("fable") || model.contains("mythos")) {
+			return true;
+		}
+		return !model.contains(HAIKU) && modelGeneration(model) >= 5;
+	}
+
+	/**
+	 * Whether thinking of the model is switched on with an explicit token budget instead of an
+	 * adaptive configuration with an effort.
+	 *
+	 * <p>
+	 * True for the Haiku models before {@link #modelGeneration(String) generation} 5, including the
+	 * ones whose name does not state a generation in the {@code haiku-<n>} form (e.g.
+	 * {@code claude-3-5-haiku-20241022}). Haiku 5.x and all other models think adaptively.
+	 * </p>
+	 */
+	static boolean requiresBudgetTokens(String model) {
+		return model.contains(HAIKU) && modelGeneration(model) < 5;
+	}
+
+	/**
+	 * The major generation of an Opus, Sonnet or Haiku model name, e.g. {@code 5} for
+	 * {@code claude-haiku-5-5} and {@code 4} for {@code claude-opus-4-5-20251101}.
+	 *
+	 * <p>
+	 * The generation follows the family name directly. In the names of the 3.x models a release date
+	 * follows the family name instead ({@code claude-3-5-haiku-20241022}); such a date does not count
+	 * as a generation.
+	 * </p>
+	 *
+	 * @return The generation, or {@code 0} if the name does not state it in the
+	 *         {@code <family>-<n>} form.
+	 */
+	static int modelGeneration(String model) {
+		Matcher generation = MODEL_GENERATION.matcher(model);
+		return generation.find() ? Integer.parseInt(generation.group(1)) : 0;
+	}
+
+	private static final String HAIKU = "haiku";
+
+	/** The major version of an Opus, Sonnet or Haiku model name, see {@link #modelGeneration(String)}. */
+	private static final Pattern MODEL_GENERATION = Pattern.compile("(?:opus|sonnet|haiku)-(\\d{1,2})(?:\\D|$)");
+
+	private static int effortToBudgetTokens(String effort, int maxOutputTokens) {
+		double fraction = switch (effort) {
+			case "low" -> 0.25;
+			case "medium" -> 0.5;
+			case "high" -> 0.75;
+			case "max" -> 1.0;
+			default -> 0.5;
+		};
+		return Math.max(1024, (int) (maxOutputTokens * fraction));
+	}
+
+	private static void writeSamplingParams(AnthropicRequest req, Map<String, Object> modelOptions) {
+		Object temperature = modelOptions.get("temperature");
+		if (temperature != null) {
+			req.setTemperature(Double.parseDouble(temperature.toString()));
+		}
+		Object topP = modelOptions.get("topP");
+		if (topP != null) {
+			req.setTopP(Double.parseDouble(topP.toString()));
+		}
+		Long topK = topK(modelOptions);
+		if (topK != null) {
+			req.setTopK(topK.longValue());
+		}
+	}
+}

@@ -323,6 +323,12 @@ public class CompassLayout_Impl extends com.top_logic.react.flow.data.impl.Box_I
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.CompassLayout setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return COMPASS_LAYOUT__TYPE;
 	}

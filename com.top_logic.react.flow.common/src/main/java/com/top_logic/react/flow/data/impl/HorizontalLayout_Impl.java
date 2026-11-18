@@ -92,6 +92,12 @@ public class HorizontalLayout_Impl extends com.top_logic.react.flow.data.impl.Ro
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.HorizontalLayout setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return HORIZONTAL_LAYOUT__TYPE;
 	}

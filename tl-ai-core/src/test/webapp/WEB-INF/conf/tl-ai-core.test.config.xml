@@ -33,8 +33,8 @@
 			TestInteractionTimeoutService proves the configuration is really what the agent loop and
 			the askUser tool read.
 		-->
-		<config service-class="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService">
-			<instance class="com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService"
+		<config service-class="com.top_logic.ai.core.agent.approval.InteractionTimeoutService">
+			<instance class="com.top_logic.ai.core.agent.approval.InteractionTimeoutService"
 				approval-timeout-minutes="7"
 				question-timeout-minutes="11"
 			/>
@@ -59,45 +59,45 @@
 
 		<config config:interface="test.com.top_logic.basic.TestComment$Config">
 			<ignore>
-				<entry value="com.top_logic.tl.ai.core.jsonschema.model"/>
-				<entry value="com.top_logic.tl.ai.core.tools.model.messages" />
-				<entry value="com.top_logic.tl.ai.core.tools.refusal.messages" />
-				<entry value="com.top_logic.tl.ai.core.tools.script.messages" />
-				<entry value="com.top_logic.tl.ai.core.tools.script.messages" />
-				<entry value="com.top_logic.tl.ai.core.agent.handoff" />
-				<entry value="com.top_logic.tl.ai.core.tools.config.messages" />
-				<entry value="com.top_logic.tl.ai.core.tools.interaction.messages" />
-				<entry value="com.top_logic.tl.ai.core.tools.integration.messages" />
-				<entry value="com.top_logic.tl.ai.core.tools.web.messages" />
-				<entry value="com.top_logic.tl.ai.core.session.persist.messages" />
-				<entry value="com.top_logic.tl.ai.core.tools.web.WebSearchHit" />
-				<entry value="com.top_logic.tl.ai.core.tools.web.WebSearchResults" />
-				<entry value="com.top_logic.tl.ai.core.agent.skills.Skill" />
-				<entry value="com.top_logic.tl.ai.core.memory.CompactionResult" />
-				<entry value="com.top_logic.tl.ai.core.agent.subagent.SubagentResult" />
-				<entry value="com.top_logic.tl.ai.core.message.SystemMessage" />
-				<entry value="com.top_logic.tl.ai.core.message.TextContent" />
-				<entry value="com.top_logic.tl.ai.core.message.ToolResultMessage" />
-				<entry value="com.top_logic.tl.ai.core.message.ToolCall" />
-				<entry value="com.top_logic.tl.ai.core.message.CompactionMarker" />
-				<entry value="com.top_logic.tl.ai.core.message.TokenUsage" />
-				<entry value="com.top_logic.tl.ai.core.message.AssistantMessage" />
-				<entry value="com.top_logic.tl.ai.core.message.ThinkingContent" />
-				<entry value="com.top_logic.tl.ai.core.message.ImageContent" />
-				<entry value="com.top_logic.tl.ai.core.message.UserMessage" />
-				<entry value="com.top_logic.tl.ai.core.message.PdfContent" />
-				<entry value="com.top_logic.tl.ai.core.provider.ProviderRequest" />
-				<entry value="com.top_logic.tl.ai.core.agent.AgentParams" />
-				<entry value="com.top_logic.tl.ai.core.agent.AgentResult" />
-				<entry value="com.top_logic.tl.ai.core.agent.approval.ApprovalRequest" />
-				<entry value="com.top_logic.tl.ai.core.provider.anthropic.messages" />
-				<entry value="com.top_logic.tl.ai.core.provider.openai.messages" />
-				<entry value="com.top_logic.tl.ai.core.provider.chatcompletions.messages" />
-				<entry value="com.top_logic.tl.ai.core.provider.catalog.ModelInfo" />
-				<entry value="com.top_logic.tl.ai.core.provider.AgentModelAssignment" />
-				<entry value="com.top_logic.tl.ai.core.agent.AgentDefinition" />
-				<entry value="com.top_logic.tl.ai.core.agent.SkillDefinition" />
-				<entry value="com.top_logic.tl.ai.core.tools.authoring.messages" />
+				<entry value="com.top_logic.ai.core.jsonschema.model"/>
+				<entry value="com.top_logic.ai.core.tools.model.messages" />
+				<entry value="com.top_logic.ai.core.tools.refusal.messages" />
+				<entry value="com.top_logic.ai.core.tools.script.messages" />
+				<entry value="com.top_logic.ai.core.tools.script.messages" />
+				<entry value="com.top_logic.ai.core.agent.handoff" />
+				<entry value="com.top_logic.ai.core.tools.config.messages" />
+				<entry value="com.top_logic.ai.core.tools.interaction.messages" />
+				<entry value="com.top_logic.ai.core.tools.integration.messages" />
+				<entry value="com.top_logic.ai.core.tools.web.messages" />
+				<entry value="com.top_logic.ai.core.session.persist.messages" />
+				<entry value="com.top_logic.ai.core.tools.web.WebSearchHit" />
+				<entry value="com.top_logic.ai.core.tools.web.WebSearchResults" />
+				<entry value="com.top_logic.ai.core.agent.skills.Skill" />
+				<entry value="com.top_logic.ai.core.memory.CompactionResult" />
+				<entry value="com.top_logic.ai.core.agent.subagent.SubagentResult" />
+				<entry value="com.top_logic.ai.core.message.SystemMessage" />
+				<entry value="com.top_logic.ai.core.message.TextContent" />
+				<entry value="com.top_logic.ai.core.message.ToolResultMessage" />
+				<entry value="com.top_logic.ai.core.message.ToolCall" />
+				<entry value="com.top_logic.ai.core.message.CompactionMarker" />
+				<entry value="com.top_logic.ai.core.message.TokenUsage" />
+				<entry value="com.top_logic.ai.core.message.AssistantMessage" />
+				<entry value="com.top_logic.ai.core.message.ThinkingContent" />
+				<entry value="com.top_logic.ai.core.message.ImageContent" />
+				<entry value="com.top_logic.ai.core.message.UserMessage" />
+				<entry value="com.top_logic.ai.core.message.PdfContent" />
+				<entry value="com.top_logic.ai.core.provider.ProviderRequest" />
+				<entry value="com.top_logic.ai.core.agent.AgentParams" />
+				<entry value="com.top_logic.ai.core.agent.AgentResult" />
+				<entry value="com.top_logic.ai.core.agent.approval.ApprovalRequest" />
+				<entry value="com.top_logic.ai.core.provider.anthropic.messages" />
+				<entry value="com.top_logic.ai.core.provider.openai.messages" />
+				<entry value="com.top_logic.ai.core.provider.chatcompletions.messages" />
+				<entry value="com.top_logic.ai.core.provider.catalog.ModelInfo" />
+				<entry value="com.top_logic.ai.core.provider.AgentModelAssignment" />
+				<entry value="com.top_logic.ai.core.agent.AgentDefinition" />
+				<entry value="com.top_logic.ai.core.agent.SkillDefinition" />
+				<entry value="com.top_logic.ai.core.tools.authoring.messages" />
 			</ignore>
 		</config>
 	</configs>

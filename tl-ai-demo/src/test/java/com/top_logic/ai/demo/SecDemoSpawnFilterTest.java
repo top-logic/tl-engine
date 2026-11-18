@@ -10,17 +10,17 @@ import java.util.Map;
 
 import junit.framework.Test;
 
-import com.top_logic.tl.ai.core.agent.AgentCapabilities;
-import com.top_logic.tl.ai.core.agent.AgentDefinition;
-import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
-import com.top_logic.tl.ai.core.agent.SecurityContext;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
-import com.top_logic.tl.ai.core.agent.TransactionScope;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
-import com.top_logic.tl.ai.core.tools.interaction.SubagentSpawner;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.core.agent.AgentCapabilities;
+import com.top_logic.ai.core.agent.AgentDefinition;
+import com.top_logic.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.ai.core.agent.SecurityContext;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
+import com.top_logic.ai.core.agent.TransactionScope;
+import com.top_logic.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.ai.core.tools.interaction.DelegationTool;
+import com.top_logic.ai.core.tools.interaction.SubagentSpawner;
 
 /**
  * What {@code spawn_subagent} does when nothing could come of the agent a persona asks for, on the

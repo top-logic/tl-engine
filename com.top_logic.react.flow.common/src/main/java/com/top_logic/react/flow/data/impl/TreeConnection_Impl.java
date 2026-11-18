@@ -323,6 +323,12 @@ public class TreeConnection_Impl extends com.top_logic.react.flow.data.impl.Widg
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.TreeConnection setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return TREE_CONNECTION__TYPE;
 	}

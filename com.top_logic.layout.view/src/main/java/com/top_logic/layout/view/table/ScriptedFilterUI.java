@@ -64,7 +64,7 @@ public class ScriptedFilterUI implements ColumnFilterUI {
 			}
 			AttributeFieldModel model = new AttributeFieldModel(_instance, part);
 			ReactControl input = controls.createFieldControl(context, part, model);
-			form.addField(resources.getString(TLModelNamingConvention.resourceKey(part)), input);
+			form.addField(resources.getString(TLModelNamingConvention.getTypePartLabelKey(part)), input);
 		}
 		return form.build();
 	}

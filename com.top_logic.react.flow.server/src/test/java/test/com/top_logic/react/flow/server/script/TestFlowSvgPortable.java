@@ -148,9 +148,9 @@ public class TestFlowSvgPortable extends AbstractSearchExpressionTest {
 		String row = "row";
 		GanttRow ganttRow = FlowFactory.ganttRow(row, text("Row"), null, null, null, null, null, null);
 		GanttDecoration defaultColor =
-			FlowFactory.ganttRangeDeco("default", 10, 30, null, text("Default"), null, null, null);
+			FlowFactory.ganttRangeDeco("default", 10, 30, null, text("Default"), null, null, null, null);
 		GanttDecoration scriptColor =
-			FlowFactory.ganttRangeDeco("script", 50, 70, "rgba(255, 0, 0, 0.6)", text("Script"), null, null, null);
+			FlowFactory.ganttRangeDeco("script", 50, 70, "rgba(255, 0, 0, 0.6)", text("Script"), null, null, null, null);
 		GanttItem span = FlowFactory.ganttSpan("span", row, text("Span"), 20, 60,
 			null, null, null, null, null, null, null, null, null, null);
 		Box gantt = FlowFactory.gantt(List.of(ganttRow), List.of(span), null,

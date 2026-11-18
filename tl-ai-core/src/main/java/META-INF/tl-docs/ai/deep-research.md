@@ -37,8 +37,8 @@ The effort is guidance in the prompts; no code counts the tool calls of a worker
 The workers spend most of the tokens of a research run, so an installation can put them on another model than the lead - an entry of `<agent-overrides>` on `AgentRuntimeService`, which merges with the shipped entry that sets `max-tokens`:
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
-	<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+<config service-class="com.top_logic.ai.core.agent.AgentRuntimeService">
+	<instance class="com.top_logic.ai.core.agent.AgentRuntimeService">
 		<agent-overrides>
 			<agent name="TL_ResearchWorker" model="gpt-5.4-mini" provider="openai"/>
 		</agent-overrides>
@@ -49,10 +49,10 @@ The workers spend most of the tokens of a research run, so an installation can p
 A local model behind an OpenAI-compatible server is declared as a provider of `LLMProviderService`, with its context window in the model catalog, because no public catalog knows it:
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService">
-	<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
+<config service-class="com.top_logic.ai.core.provider.LLMProviderService">
+	<instance class="com.top_logic.ai.core.provider.LLMProviderService">
 		<providers>
-			<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAICompatibleProviderConfig"
+			<provider class="com.top_logic.ai.core.provider.openai.OpenAICompatibleProviderConfig"
 				base-url="http://localhost:8000"
 				catalog-provider-id=""
 				models="qwen3-32b"
@@ -74,8 +74,8 @@ A local model behind an OpenAI-compatible server is declared as a provider of `L
 and assigned to the worker. A server that answers one request at a time gets one background subagent at a time; the other workers wait in the queue. `subagent-workers` bounds every background subagent of the installation, not only research workers ([run limits](doc:ai/limits-and-caching#run-limits)):
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
-	<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+<config service-class="com.top_logic.ai.core.agent.AgentRuntimeService">
+	<instance class="com.top_logic.ai.core.agent.AgentRuntimeService">
 		<capacity subagent-workers="1"/>
 		<agent-overrides>
 			<agent name="TL_ResearchWorker" model="qwen3-32b" provider="local"/>

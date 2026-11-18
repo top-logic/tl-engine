@@ -10,6 +10,9 @@ import static com.top_logic.basic.shared.string.StringServicesShared.*;
 import java.io.File;
 import java.util.ServiceLoader;
 
+import org.junit.Assume;
+import org.junit.runner.RunWith;
+
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -24,6 +27,7 @@ import test.com.top_logic.basic.TestLayoutsNormalized;
 import test.com.top_logic.basic.TestPolymorphicConfigurationWildcards;
 import test.com.top_logic.basic.TestUtils;
 import test.com.top_logic.basic.jsp.TestJSPContent;
+import test.com.top_logic.basic.junit.AssumptionAwareRunner;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -39,6 +43,14 @@ import com.top_logic.basic.tooling.ModuleLayoutConstants;
  * <p>
  * Use this class only for modules not depending on the "com.top_logic" module. For those, use
  * <code>AbstractTestAll</code>.
+ * </p>
+ * 
+ * <p>
+ * The tests of the module are collected from its whole test source tree
+ * {@link ModuleLayout#getTestSourceDir()}: a test class may live in the package of the class it
+ * tests (and access its package-private members) or below the package prefix <code>test</code>.
+ * A test whose {@link Assume assumption} is violated counts as skipped, see
+ * {@link AssumptionAwareRunner}.
  * </p>
  * 
  * <p>
@@ -72,6 +84,7 @@ import com.top_logic.basic.tooling.ModuleLayoutConstants;
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
+@RunWith(AssumptionAwareRunner.class)
 public abstract class AbstractBasicTestAll {
 	
 	/**
@@ -297,8 +310,8 @@ public abstract class AbstractBasicTestAll {
 	}
 
 	private RuntimeException errorInvalidDirectory(File targetDirectory) {
-		throw new IllegalArgumentException("The given directory represent neither a <i>TopLogic</i> module"
-			+ " nor a source-directory with in one nor a test package. Directory: " + targetDirectory.getPath());
+		throw new IllegalArgumentException("The given directory is neither the module directory"
+			+ " nor a directory in its test source directory. Directory: " + targetDirectory.getPath());
 	}
 
 	private boolean shouldCollectRecursively() {
@@ -313,17 +326,10 @@ public abstract class AbstractBasicTestAll {
 		if (isProjectDirectory(result)) {
 			result = MODULE_LAYOUT.getTestSourceDir();
 		}
-		if (isTestSourceDirectory(result)) {
-			result = testDir();
-		}
-		if (!isInTestDirectory(result)) {
+		if (!isInTestSourceDirectory(result)) {
 			return null;
 		}
 		return result;
-	}
-
-	private File testDir() {
-		return new File(MODULE_LAYOUT.getTestSourceDir(), "test");
 	}
 
 	private boolean isInProjectDirectory(File targetFile) {
@@ -334,12 +340,8 @@ public abstract class AbstractBasicTestAll {
 		return MODULE_LAYOUT.getModuleDir().equals(file);
 	}
 
-	private boolean isTestSourceDirectory(File file) {
-		return MODULE_LAYOUT.getTestSourceDir().equals(file);
-	}
-
-	private boolean isInTestDirectory(File targetFile) {
-		return isInDirectory(targetFile, testDir());
+	private boolean isInTestSourceDirectory(File targetFile) {
+		return isInDirectory(targetFile, MODULE_LAYOUT.getTestSourceDir());
 	}
 
 	private boolean isInDirectory(File targetFile, File directory) {

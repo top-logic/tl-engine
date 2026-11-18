@@ -2,6 +2,9 @@
 // WebSocket mit. Gebraucht von Tests, die das Specimen messen statt sein CSS zu lesen (focus-clip.test.mjs).
 // Der Browser ist Teil des Gates: fehlt er, scheitert der Test, statt still zu bestehen. TL_CHROME nennt ihn,
 // wo er nicht an einer der üblichen Stellen liegt.
+//
+// Der Browser gibt sich als Desktop mit Maus aus: Chrome ohne Fenster meldet sonst weder (hover: hover) noch
+// (pointer: fine), und das CSS zeigte, was es für Touch vorsieht. Den Gegenfall schaltet emulateTouch() ein.
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -14,17 +17,20 @@ const CANDIDATES = [
   '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium', '/usr/bin/chromium-browser',
 ];
 
+// Zeigegerät Maus (Pointer- und Hover-Typ als Bitmasken von Blink: pointer 4 = fine, hover 2 = hover).
+const DESKTOP_MOUSE = '--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4';
+
 export function findChrome() {
   const found = [process.env.TL_CHROME, ...CANDIDATES].find((p) => p && existsSync(p));
   if (!found) throw new Error(`Kein Chrome gefunden — TL_CHROME setzen (gesucht: ${CANDIDATES.join(', ')})`);
   return found;
 }
 
-/** Startet Chrome und öffnet eine Seite. Liefert { goto(url), evaluate(ausdruck), close() }. */
+/** Startet Chrome und öffnet eine Seite. Liefert { goto(url), evaluate(ausdruck), emulateTouch(an), close() }. */
 export async function launch() {
   const profile = mkdtempSync(join(tmpdir(), 'tl-chrome-'));
   const proc = spawn(findChrome(), ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${profile}`,
-    '--no-first-run', '--no-default-browser-check', 'about:blank'],
+    '--no-first-run', '--no-default-browser-check', DESKTOP_MOUSE, 'about:blank'],
     // Eigene Prozessgruppe: close() wartet auf sie, nicht nur auf den Hauptprozess.
     { stdio: 'ignore', detached: process.platform !== 'win32' });
   // Chrome schreibt Port und Pfad des Browser-Sockets in DevToolsActivePort, sobald er lauscht.
@@ -58,7 +64,10 @@ export async function launch() {
     ws.send(JSON.stringify({ id, method, params, sessionId }));
   });
 
-  const { targetId } = await send('Target.createTarget', { url: 'about:blank' });
+  // Ein eigenes Fenster für die Testseite: das Startfenster gibt den Tastaturfokus rund zwei Sekunden nach dem
+  // Start an Chrome selbst ab, auch einem Tab, der danach in ihm geöffnet wurde. Ohne Fokus hat das Dokument
+  // keinen (document.hasFocus() falsch), und kein Element trifft :focus oder :focus-visible.
+  const { targetId } = await send('Target.createTarget', { url: 'about:blank', newWindow: true });
   const { sessionId } = await send('Target.attachToTarget', { targetId, flatten: true });
   await send('Page.enable', {}, sessionId);
 
@@ -77,6 +86,10 @@ export async function launch() {
       const { result, exceptionDetails } = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true }, sessionId);
       if (exceptionDetails) throw new Error(exceptionDetails.exception?.description ?? exceptionDetails.text);
       return result.value;
+    },
+    /** Schaltet Touch statt Maus ein (an = true) oder zurück: (hover: none), (pointer: coarse), Touch-Ereignisse. */
+    async emulateTouch(on) {
+      await send('Emulation.setTouchEmulationEnabled', { enabled: on }, sessionId);
     },
     async close() {
       ws.close();

@@ -17,27 +17,27 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import com.top_logic.ai.chat.layout.TaskProgressTracker.PromptImprovementState;
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.TransactionScope;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.execution.AgentEnvironment;
-import com.top_logic.tl.ai.core.execution.AgentRunner;
-import com.top_logic.tl.ai.core.message.Conversation;
-import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.security.RunEntryPoint;
-import com.top_logic.tl.ai.core.security.RunPrincipal;
-import com.top_logic.tl.ai.core.security.RunSecurity;
-import com.top_logic.tl.ai.core.security.ToolSecurityException;
-import com.top_logic.tl.ai.core.session.ConversationLog;
-import com.top_logic.tl.ai.core.session.ConversationLogListener;
-import com.top_logic.tl.ai.core.tools.task.TaskStore;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
+import com.top_logic.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.agent.TransactionScope;
+import com.top_logic.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.ai.core.execution.AgentEnvironment;
+import com.top_logic.ai.core.execution.AgentRunner;
+import com.top_logic.ai.core.message.Conversation;
+import com.top_logic.ai.core.message.TextContent;
+import com.top_logic.ai.core.message.UserMessage;
+import com.top_logic.ai.core.security.RunEntryPoint;
+import com.top_logic.ai.core.security.RunPrincipal;
+import com.top_logic.ai.core.security.RunSecurity;
+import com.top_logic.ai.core.security.ToolSecurityException;
+import com.top_logic.ai.core.session.ConversationLog;
+import com.top_logic.ai.core.session.ConversationLogListener;
+import com.top_logic.ai.core.tools.task.TaskStore;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
@@ -190,7 +190,7 @@ public final class PromptImprovementProcessor {
 	 *
 	 * <p>
 	 * The run gets a fresh {@link Conversation}, ephemeral environment state and no
-	 * {@link com.top_logic.tl.ai.core.execution.model.AgentSession}. It therefore cannot append to
+	 * {@link com.top_logic.ai.core.execution.model.AgentSession}. It therefore cannot append to
 	 * the chat transcript or memory, emit chat SSE events, register a main processing state, or
 	 * create an agent execution.
 	 * </p>

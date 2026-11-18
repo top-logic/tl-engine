@@ -18,11 +18,11 @@ An agent run reads its configuration from four services, cut by who sets them, s
 
 `AgentRuntimeService` depends on `LLMProviderService`, and its start refuses a default or override model that no provider exposes, that more than one provider exposes, or that the provider named for it does not expose. Restarting `LLMProviderService` restarts `AgentRuntimeService`; restarting any of the other three touches nothing else. `chat-workers` and `chat-queue` take effect only at an application restart.
 
-A configuration that names the service `com.top_logic.tl.ai.core.provider.LLMService`, which these four services split up, stops the application at the start of `LLMProviderService`, with a message naming the file and where each section it sets belongs; [migrating from `LLMService`](#migrating-from-llmservice) lists where every property went. Code reaches the providers through `LLMProviderService.getInstance()`; `resolveModelAssignment` and `getDefaultModel` are on `AgentRuntimeService`. `TestAgentRuntimeService`, `TestAgentApplicationService`, `TestAgentPolicyService` and `TestOldLLMServiceConfiguration` pin it.
+A configuration that names the service `com.top_logic.ai.core.provider.LLMService`, which these four services split up, stops the application at the start of `LLMProviderService`, with a message naming the file and where each section it sets belongs; [migrating from `LLMService`](#migrating-from-llmservice) lists where every property went. Code reaches the providers through `LLMProviderService.getInstance()`; `resolveModelAssignment` and `getDefaultModel` are on `AgentRuntimeService`. `TestAgentRuntimeService`, `TestAgentApplicationService`, `TestAgentPolicyService` and `TestOldLLMServiceConfiguration` pin it.
 
 ## The provider system
 
-`LLMProvider` (package `com.top_logic.tl.ai.core.provider`) is a streaming-first interface: every provider streams, there are no blocking request/response calls. Implementations, each with a `...ProviderConfig` that is a `<provider>` of `LLMProviderService`:
+`LLMProvider` (package `com.top_logic.ai.core.provider`) is a streaming-first interface: every provider streams, there are no blocking request/response calls. Implementations, each with a `...ProviderConfig` that is a `<provider>` of `LLMProviderService`:
 
 - `anthropic/` - the Anthropic Messages API,
 - `openai/` - OpenAI,
@@ -53,7 +53,7 @@ A provider stamps the thinking blocks it produces with its configured `catalog-p
 `VertexProviderConfig` reaches the models of Google Vertex AI, directly or through a gateway, and speaks the dialect of each model's publisher; the publisher `anthropic` (Claude) is supported. `tl-ai-core` ships no `vertex` provider; an application adds one:
 
 ```xml
-<provider class="com.top_logic.tl.ai.core.provider.vertex.VertexProviderConfig"
+<provider class="com.top_logic.ai.core.provider.vertex.VertexProviderConfig"
 	name="vertex"
 	base-url="https://gateway.example.com/v1"
 	project="my-project"
@@ -157,7 +157,7 @@ A malformed request would fail on the next model too, and a context overflow is 
 
 ## Migrating from `LLMService`
 
-Releases of `tl-ai` before its split configured everything an agent run reads on one service, `com.top_logic.tl.ai.core.provider.LLMService`. The engine has no alias for a renamed service, so a configuration that still names it is read only to be refused: `LLMProviderService` and with it the application do not start, with a message naming the file and, for every section the file sets, where it belongs now (`LLMService.refusal`). A file that sets nothing (only empty elements such as `<model-catalog/>`) is not refused but read by nobody: delete it. An application that lists the module key in `ModuleSystem` renames `com.top_logic.tl.ai.core.provider.LLMService$Module` to `com.top_logic.tl.ai.core.provider.LLMProviderService$Module`.
+Releases of `tl-ai` before its split configured everything an agent run reads on one service, `com.top_logic.ai.core.provider.LLMService`. The engine has no alias for a renamed service, so a configuration that still names it is read only to be refused: `LLMProviderService` and with it the application do not start, with a message naming the file and, for every section the file sets, where it belongs now (`LLMService.refusal`). A file that sets nothing (only empty elements such as `<model-catalog/>`) is not refused but read by nobody: delete it. An application that lists the module key in `ModuleSystem` renames `com.top_logic.ai.core.provider.LLMService$Module` to `com.top_logic.ai.core.provider.LLMProviderService$Module`.
 
 | `LLMService` | now |
 |---|---|

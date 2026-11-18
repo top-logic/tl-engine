@@ -117,6 +117,9 @@ public interface Image extends com.top_logic.react.flow.data.Box, com.top_logic.
 	@Override
 	com.top_logic.react.flow.data.Image setRenderInfo(java.lang.Object value);
 
+	@Override
+	com.top_logic.react.flow.data.Image setDropTarget(boolean value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.Image readImage(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

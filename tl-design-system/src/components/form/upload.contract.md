@@ -36,6 +36,7 @@ Alle Leser laden über denselben Upload-Kanal hoch; der Name des Teils im `multi
 | `TLFileUpload`, `TLBinaryField`, `TLUploadButton` | `file` | Knopf in `tl-upload` oder Drop-Zone `tl-file-upload` |
 | `TLFileChips` (`ReactFileChipsControl`) | `file` | die Chip-Gruppe `tl-chip-group` ist die Drop-Zone (`choice.contract.md`); die Chips stehen in `tl-chip-group__chips`, danach der Knopf; Fehler in `tl-file-upload__status` als letztes Kind der Gruppe, das unter die Chips bricht |
 | `TLValueList` (`ReactValueListControl`) bei `upload` | `file` | die Werteliste ist die Drop-Zone (`value-list.contract.md`) |
+| `TLImageField` (`ReactImageFieldControl`) | `file`, zum Ersetzen dazu `replace`, zum Einfügen hinter einem Bild `after` | die Bühne `tl-image-field__stage`, die Fläche `tl-image-field__drop` und jede Kachel `tl-image-editor__tile` des Editors sind Drop-Zonen (`image-field.contract.md`) |
 | `TLAudioRecorder` (`ReactAudioRecorderControl`) | `audio` | Knopf (`button.contract.md`) in `tl-upload`; Fehler in `tl-file-upload__status` |
 | `TLPhotoCapture` (`ReactPhotoCaptureControl`) | `photo` | Knopf in `tl-upload`; Fehler in `tl-file-upload__status` |
 
@@ -54,7 +55,7 @@ Alle Leser laden über denselben Upload-Kanal hoch; der Name des Teils im `multi
 |---|---|
 | Hülle `tl-upload` | Abstand `--tl-space-control-gap` |
 | Drop-Zone `tl-file-upload` | Abstand `--tl-space-xs`, Ecke `--tl-radius-sm` |
-| `dragover` (`tl-file-upload`, `tl-chip-group`, `tl-value-list`, eine Regel) | Linie `--tl-border-width-md`, gestrichelt, Farbe `--tl-border-interactive`, Abstand `--tl-focus-offset`; kein Fokusring |
+| `dragover` (`tl-file-upload`, `tl-chip-group`, `tl-value-list`, `tl-image-field__stage`, `tl-image-editor__tile`, `tl-image-field__drop`, eine Regel) | Linie `--tl-border-width-md`, gestrichelt, Farbe `--tl-border-interactive`, Abstand `--tl-focus-offset`; kein Fokusring |
 | Status | Text `--tl-text-secondary`; als `role="alert"` `--tl-status-error-text` |
 | kompakte Chip-Gruppe | Abstand `--tl-space-2xs`; Fokusringe innen (`outline-offset` −`--tl-focus-offset`): Reihe und Tabellenzelle schneiden, was hinausragt |
 

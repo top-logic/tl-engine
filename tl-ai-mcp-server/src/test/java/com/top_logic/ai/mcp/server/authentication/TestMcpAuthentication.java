@@ -25,7 +25,7 @@ import com.top_logic.service.openapi.server.authentication.Authenticator;
 import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthentication;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.http.basic.BasicAuthentication;
-import com.top_logic.tl.ai.core.access.EndpointAuthentication;
+import com.top_logic.ai.core.access.EndpointAuthentication;
 
 /**
  * Tests what {@link EndpointAuthentication} builds from a configuration, and what it refuses.

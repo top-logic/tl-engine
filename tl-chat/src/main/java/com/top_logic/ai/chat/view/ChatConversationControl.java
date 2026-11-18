@@ -46,9 +46,9 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
-import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
-import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.agent.environment.EnvironmentFact;
+import com.top_logic.ai.core.execution.model.TlAiExecutionFactory;
+import com.top_logic.ai.core.security.ReadFilter;
 import com.top_logic.util.TLContext;
 
 /**

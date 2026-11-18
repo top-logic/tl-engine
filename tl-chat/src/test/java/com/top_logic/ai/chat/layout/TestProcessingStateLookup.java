@@ -8,7 +8,7 @@ package com.top_logic.ai.chat.layout;
 import junit.framework.TestCase;
 
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.ai.core.agent.approval.UserInteractionStore;
 
 /**
  * Regression test for the "second run's askUser hangs" bug: a completed run's dead processing

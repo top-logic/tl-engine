@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.top_logic.tl.ai.core.tools.present.ChartData;
-import com.top_logic.tl.ai.core.tools.present.Presentation;
+import com.top_logic.ai.core.tools.present.ChartData;
+import com.top_logic.ai.core.tools.present.Presentation;
 
 /**
  * The Chart.js configuration the pane's {@code <chart>} draws for a chart {@link Presentation}.

@@ -132,7 +132,7 @@ public class ChatSessionDetailResponse extends de.haumacher.msgbuf.data.Abstract
 
 	/**
 	 * Turn-based entries (V2 format) as a JSON array of <code>PersistedTurn</code> objects
-	 * (see <code>com.top_logic.tl.ai.core.session.persist</code>). When present, takes
+	 * (see <code>com.top_logic.ai.core.session.persist</code>). When present, takes
 	 * precedence over entries.
 	 */
 	public final String getTurnsJson() {

@@ -259,6 +259,12 @@ public class PolygonalChain_Impl extends com.top_logic.react.flow.data.impl.Box_
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.PolygonalChain setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return POLYGONAL_CHAIN__TYPE;
 	}

@@ -195,6 +195,12 @@ public class ClickTarget_Impl extends com.top_logic.react.flow.data.impl.Decorat
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.ClickTarget setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return CLICK_TARGET__TYPE;
 	}

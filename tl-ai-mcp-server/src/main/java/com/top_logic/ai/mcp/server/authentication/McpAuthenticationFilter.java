@@ -26,8 +26,8 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.ai.core.access.EndpointAuthentication;
 import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
-import com.top_logic.tl.ai.core.access.EndpointAuthentication;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 

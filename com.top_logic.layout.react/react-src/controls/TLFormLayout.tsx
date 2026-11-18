@@ -1,4 +1,4 @@
-import { React, useTLState, TLChild, rootClassName, useFillHost, FillProvider, FormLayoutContext } from 'tl-react-bridge';
+import { React, useTLState, TLChild, rootClassName, useFillHost, FillProvider, FormLayoutContext, useChildContexts } from 'tl-react-bridge';
 import type { TLCellProps, FormLayout } from 'tl-react-bridge';
 
 const { useContext, useMemo, useRef, useState, useEffect } = React;
@@ -18,6 +18,8 @@ const LABEL_SIDE_MIN_WIDTH = 320;
  * - readOnly: boolean
  * - inline: boolean
  * - children: ChildDescriptor[]
+ * - noModelMessage: string, shown instead of the children while the form has no model; the children
+ *   are held meanwhile and keep following their patches (useChildContexts)
  *
  * Takes part in the fill contract as a container: a form hosting a filling child - a split panel, a
  * panel that fills - fills its own container in turn, so that the child's height resolves against
@@ -51,6 +53,13 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
   const inline = insideForm && state.inline === true;
   const hidden = state.hidden === true;
   const children = (state.children as unknown[]) ?? [];
+
+  // The children stay held while the form shows its message instead of them: they keep following
+  // the server's patches, so that the fields shown again for the next model show their live state,
+  // not the one their descriptors carried when the form was last serialized - a field of an object
+  // deleted meanwhile would otherwise briefly reappear, an image field fetching images that no
+  // longer exist.
+  useChildContexts(children);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [resolvedPosition, setResolvedPosition] = useState<'side' | 'top'>(

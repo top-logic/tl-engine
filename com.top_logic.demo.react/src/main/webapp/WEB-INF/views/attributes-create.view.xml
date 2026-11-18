@@ -70,6 +70,8 @@
 			<field attribute="contactEmail"/>
 			<field attribute="json"/>
 			<field attribute="image"/>
+			<field attribute="pictures"/>
+			<field attribute="gallery"/>
 			<field attribute="attachments"/>
 			<field attribute="documents"/>
 			<!-- The label stands in the empty input as its placeholder. -->

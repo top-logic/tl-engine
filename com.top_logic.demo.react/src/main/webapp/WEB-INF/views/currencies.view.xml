@@ -8,6 +8,9 @@
 	on tl.units to every member of the "user" group: such a user sees the currencies, but the form
 	offers no editing and the commands "New Currency" and "Delete" are not offered. An administrator
 	creates, edits and deletes currencies.
+	
+	The format column is declared with hide-when-compact="true": on a phone the list leaves out the
+	number format of a currency, a detail the form of the selected currency shows as well.
 -->
 <view>
 	<channels>
@@ -88,7 +91,9 @@
 							/>
 							<column attribute="factor"/>
 							<column attribute="baseUnit"/>
-							<column attribute="format"/>
+							<column attribute="format"
+								hide-when-compact="true"
+							/>
 						</columns>
 						<rows>all(`tl.units:Currency`)</rows>
 					</table>

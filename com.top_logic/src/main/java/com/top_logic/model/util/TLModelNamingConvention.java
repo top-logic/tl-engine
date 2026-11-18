@@ -422,6 +422,15 @@ public class TLModelNamingConvention {
 	}
 
 	/**
+	 * The {@link ResKey} for displaying the given {@link TLTypePart}: its {@link #resourceKey(TLTypePart)
+	 * resource key}, falling back to a label derived from its name where the key has no
+	 * translation.
+	 */
+	public static ResKey getTypePartLabelKey(TLTypePart part) {
+		return ResKey.fallback(resourceKey(part), nameKey(part.getName()));
+	}
+
+	/**
 	 * Construct a resource key for the internationalized display of the given type name.
 	 */
 	public static ResKey getTypeNameResourceKey(String moduleName, String typeName) {

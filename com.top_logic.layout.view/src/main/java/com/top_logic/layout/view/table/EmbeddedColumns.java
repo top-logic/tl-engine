@@ -547,7 +547,7 @@ public class EmbeddedColumns implements ColumnDeclaration {
 				}
 				multiple |= reference.isMultiple();
 				type = referencedType;
-				stepLabel = TLModelNamingConvention.resourceKey(reference);
+				stepLabel = TLModelNamingConvention.getTypePartLabelKey(reference);
 			}
 			prefix = prefix == null ? stepLabel
 				: I18NConstants.EMBEDDED_COLUMN_LABEL__PREFIX_COLUMN.fill(prefix, stepLabel);

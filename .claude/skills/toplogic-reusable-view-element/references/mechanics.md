@@ -3,7 +3,8 @@
 Public API signatures and a minimal skeleton for the Java↔React spine of a reusable, data-bound view
 element. All of this is public API usable from an application module (e.g. `tl-chat`); none requires
 editing the engine. The canonical live example is `DataListElement`/`DataListControl` +
-`data-list.tsx` in `tl-chat`.
+`TLDataList.tsx`, built that way in `tl-chat` and since moved to `com.top_logic.layout.view` /
+`com.top_logic.layout.react`.
 
 ## Table of contents
 - [Key public API](#key-public-api)

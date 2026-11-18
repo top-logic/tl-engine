@@ -25,7 +25,7 @@
 				direction="column"
 				gap="compact"
 			>
-				<text variant="title">
+				<text variant="heading-sm">
 					<label>
 						<en>Connected logins</en>
 						<de>Verbundene Anmeldungen</de>
@@ -62,7 +62,7 @@
 				direction="column"
 				gap="compact"
 			>
-				<text variant="title">
+				<text variant="heading-sm">
 					<label>
 						<en>Connect a further login</en>
 						<de>Weitere Anmeldung verbinden</de>

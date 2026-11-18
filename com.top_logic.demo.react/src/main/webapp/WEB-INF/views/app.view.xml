@@ -503,6 +503,15 @@
 							<de>Temperaturen</de>
 						</label>
 					</nav-item>
+					<nav-item id="data-list-demo"
+						icon="css:bi bi-person-lines-fill"
+					>
+						<view-ref view="demo/data-list-demo.view.xml"/>
+						<label>
+							<en>List</en>
+							<de>Liste</de>
+						</label>
+					</nav-item>
 					<nav-item id="sensor-locking"
 						icon="css:bi bi-lock"
 					>

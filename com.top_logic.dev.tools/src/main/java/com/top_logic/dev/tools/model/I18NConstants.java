@@ -7,6 +7,7 @@ package com.top_logic.dev.tools.model;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -40,6 +41,32 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en The type "{0}" cannot hold references; only classes can refer to classes and enumerations.
 	 */
 	public static ResKey1 ERROR_REFERENCE_NOT_SUPPORTED__OWNER;
+
+	/**
+	 * @en Only a reference to a class can be a composition or an aggregation; "{0}" is no class.
+	 */
+	public static ResKey1 ERROR_KIND_REQUIRES_CLASS__TYPE;
+
+	/**
+	 * @en The type "{0}" already has an attribute named "{1}".
+	 */
+	public static ResKey2 ERROR_PART_EXISTS__TYPE_NAME;
+
+	/**
+	 * @en Please select the class to add as generalization.
+	 */
+	public static ResKey ERROR_MISSING_GENERALIZATION;
+
+	/**
+	 * @en The class "{0}" is final and cannot be specialized.
+	 */
+	public static ResKey1 ERROR_FINAL_GENERALIZATION__CLASS;
+
+	/**
+	 * @en The class "{1}" cannot become a generalization of "{0}", because "{0}" already is a
+	 *     generalization of "{1}".
+	 */
+	public static ResKey2 ERROR_CYCLIC_GENERALIZATION__CLASS_GENERALIZATION;
 
 	static {
 		initConstants(I18NConstants.class);

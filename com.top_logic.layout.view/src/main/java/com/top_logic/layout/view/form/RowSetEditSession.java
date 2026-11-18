@@ -894,7 +894,7 @@ public class RowSetEditSession implements FormParticipant {
 		}
 		for (BoundFieldModel cell : row.getColumnModels().values()) {
 			if (cell instanceof AttributeFieldModel attributeCell && attributeCell.getObject() == object
-				&& attributeCell.getPart() == part) {
+				&& attributeCell.getPart().getDefinition() == part.getDefinition()) {
 				return true;
 			}
 		}

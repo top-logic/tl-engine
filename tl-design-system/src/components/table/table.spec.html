@@ -137,7 +137,7 @@
                   <div class="tl-table__cell" role="gridcell" data-tl-state="pinned pinned-first"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" tabindex="-1" aria-label="Öffnen" title="Öffnen"><i class="tl-icon-sm bi bi-box-arrow-up-right tl-button__icon" aria-hidden="true"></i></button></div>
                 </div>
                 <!-- noch nicht geschickt: Skeleton in Zeilenhöhe -->
-                <div class="tl-table__placeholder" aria-hidden="true"><span class="tl-skeleton"></span></div>
+                <div class="tl-table__placeholder" aria-hidden="true"><span class="tl-skeleton tl-skeleton--text"></span></div>
               </div>
             </div>
           </div>
@@ -278,6 +278,75 @@
             </div>
           </div>
           <button type="button" class="tl-button tl-button--ghost tl-button--icon tl-table__columns" aria-label="Spalten" title="Spalten"><i class="tl-icon-sm bi bi-gear tl-button__icon" aria-hidden="true"></i></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="specimen__panel" id="ed-panel">
+    <p class="tl-type-heading-sm">Bearbeitete Zeilen (#30383)</p>
+    <p class="tl-type-label">Ein Feld in der bearbeiteten Zeile sieht aus wie im Formular, eine Stufe niedriger: Fläche und
+      voller Rahmen, size-control − space-2xs hoch, die Zeile behält ihre Höhe, der Text steht wie beim Lesen. Zeilen: Lesezeile
+      zum Vergleich, gewählte Zeile (Rahmen in border-emphasis), Zeile mit Fehler (leerer Name), Zeile mit
+      <code>readonly</code> (ohne Fläche und Rahmen, wie gelesen) und eine Zeile mit dem Feld als direktem Kind der Zelle.
+      Die Fehlerzeile trägt die Marke am Namen (Fokusring innen), die letzte Zeile ein kompaktes Feld mit Öffner (großer
+      Wert, z. B. mehrsprachiges HTML).
+      Datum und Status tragen den Löschknopf. Die Zellen tragen das DOM des Produkts (TLFormField, TLDatePicker,
+      TLDropdownSelect).</p>
+
+    <div class="specimen__table specimen__table--short">
+      <div class="tl-table tl-type-body">
+        <div class="tl-table__frame">
+          <div class="tl-table__grid" role="grid" aria-label="Aufträge, bearbeitet" tabindex="0" aria-rowcount="6" aria-colcount="5">
+            <div class="tl-table__header" role="rowgroup">
+              <div class="tl-table__header-row" role="row" aria-rowindex="1" data-tl-axis="horizontal">
+                <div class="tl-table__header-cell" role="columnheader"><button type="button" class="tl-table__sort"><span class="tl-table__label tl-type-overline">Name</span></button></div>
+                <div class="tl-table__header-cell" role="columnheader"><button type="button" class="tl-table__sort"><span class="tl-table__label tl-type-overline">Lieferdatum</span></button></div>
+                <div class="tl-table__header-cell" role="columnheader"><button type="button" class="tl-table__sort"><span class="tl-table__label tl-type-overline">Status</span></button></div>
+                <div class="tl-table__header-cell" role="columnheader" data-tl-align="end"><button type="button" class="tl-table__sort"><span class="tl-table__label tl-type-overline">Menge</span></button></div>
+                <div class="tl-table__header-cell" role="columnheader" data-tl-align="end"><button type="button" class="tl-table__sort"><span class="tl-table__label tl-type-overline">Summe</span></button></div>
+              </div>
+            </div>
+            <div class="tl-table__body" role="rowgroup" tabindex="-1">
+              <div class="tl-table__canvas">
+                <div class="tl-table__row" role="row" id="ed-read" aria-rowindex="2" aria-selected="false">
+                  <div class="tl-table__cell" role="gridcell" data-test="ed-read-name" data-kind="lese"><span>Auftrag 1041</span></div>
+                  <div class="tl-table__cell" role="gridcell" data-test="ed-read-datum" data-kind="lese"><span>17.11.2026</span></div>
+                  <div class="tl-table__cell" role="gridcell" data-test="ed-read-status" data-kind="lese"><span>In Arbeit</span></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-align="end" data-test="ed-read-menge" data-kind="lese"><span class="tl-text tl-nums">12</span></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-align="end" data-test="ed-read-summe" data-kind="lese"><span class="tl-text tl-nums">1.250,00</span></div>
+                </div>
+                <div class="tl-table__row" role="row" id="ed-sel" aria-rowindex="3" aria-selected="true">
+                  <div class="tl-table__cell" role="gridcell" data-test="ed-sel-name" data-kind="feld"><div class="tl-form-field tl-form-field--hidden tl-form-field--compact"><div class="tl-form-field__input tl-type-body"><input class="tl-field tl-type-body" tabindex="-1" value="Auftrag 1042" aria-label="Name"></div></div></div>
+                  <div class="tl-table__cell" role="gridcell" data-test="ed-sel-datum" data-kind="feld"><div class="tl-form-field tl-form-field--hidden tl-form-field--compact"><div class="tl-form-field__input tl-type-body"><span class="tl-field-group"><input class="tl-field tl-type-body" type="date" tabindex="-1" value="2026-11-17" aria-label="Lieferdatum"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" tabindex="-1" aria-label="Eingabe löschen" title="Eingabe löschen"><i class="tl-icon-sm bi bi-x-lg tl-button__icon" aria-hidden="true"></i></button></span></div></div></div>
+                  <div class="tl-table__cell" role="gridcell" data-test="ed-sel-status" data-kind="feld"><div class="tl-form-field tl-form-field--hidden tl-form-field--compact"><div class="tl-form-field__input tl-type-body"><div class="tl-field tl-select tl-type-body" role="combobox" tabindex="-1" aria-expanded="false" aria-haspopup="listbox" aria-label="Status"><span class="tl-select__values"><span class="tl-select__value"><span class="tl-field-value__text">In Arbeit</span></span></span><span class="tl-select__controls"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" tabindex="-1" aria-label="Auswahl löschen" title="Auswahl löschen"><i class="tl-icon-sm bi bi-x-lg tl-button__icon" aria-hidden="true"></i></button><span class="tl-select__arrow" aria-hidden="true"><i class="tl-icon-sm bi bi-chevron-down"></i></span></span></div></div></div></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-align="end" data-test="ed-sel-menge" data-kind="feld"><div class="tl-form-field tl-form-field--hidden tl-form-field--compact"><div class="tl-form-field__input tl-type-body"><input class="tl-field tl-type-body tl-nums" tabindex="-1" value="12" aria-label="Menge"></div></div></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-align="end" data-test="ed-sel-summe" data-kind="lese"><span class="tl-text tl-nums">1.250,00</span></div>
+                </div>
+                <div class="tl-table__row" role="row" id="ed-err" aria-rowindex="4" aria-selected="false">
+                  <div class="tl-table__cell" role="gridcell" data-test="ed-err-name" data-kind="feld"><div class="tl-form-field tl-form-field--hidden tl-form-field--compact"><div class="tl-form-field__input tl-type-body"><input class="tl-field tl-type-body" tabindex="-1" value="" aria-label="Name" aria-invalid="true"></div><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-form-field__marker" data-tl-state="error" aria-label="Fehler anzeigen" aria-expanded="false"><i class="tl-button__icon tl-icon-sm bi bi-exclamation-circle" aria-hidden="true"></i></button></div></div>
+                  <div class="tl-table__cell" role="gridcell" data-test="ed-err-datum" data-kind="feld"><div class="tl-form-field tl-form-field--hidden tl-form-field--compact"><div class="tl-form-field__input tl-type-body"><span class="tl-field-group"><input class="tl-field tl-type-body" type="date" tabindex="-1" value="2026-11-17" aria-label="Lieferdatum"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" tabindex="-1" aria-label="Eingabe löschen" title="Eingabe löschen"><i class="tl-icon-sm bi bi-x-lg tl-button__icon" aria-hidden="true"></i></button></span></div></div></div>
+                  <div class="tl-table__cell" role="gridcell" data-test="ed-err-status" data-kind="feld"><div class="tl-form-field tl-form-field--hidden tl-form-field--compact"><div class="tl-form-field__input tl-type-body"><div class="tl-field tl-select tl-type-body" role="combobox" tabindex="-1" aria-expanded="false" aria-haspopup="listbox" aria-label="Status"><span class="tl-select__values"><span class="tl-select__value"><span class="tl-field-value__text">In Arbeit</span></span></span><span class="tl-select__controls"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" tabindex="-1" aria-label="Auswahl löschen" title="Auswahl löschen"><i class="tl-icon-sm bi bi-x-lg tl-button__icon" aria-hidden="true"></i></button><span class="tl-select__arrow" aria-hidden="true"><i class="tl-icon-sm bi bi-chevron-down"></i></span></span></div></div></div></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-align="end" data-test="ed-err-menge" data-kind="feld"><div class="tl-form-field tl-form-field--hidden tl-form-field--compact"><div class="tl-form-field__input tl-type-body"><input class="tl-field tl-type-body tl-nums" tabindex="-1" value="12" aria-label="Menge"></div></div></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-align="end" data-test="ed-err-summe" data-kind="lese"><span class="tl-text tl-nums">1.250,00</span></div>
+                </div>
+                <div class="tl-table__row" role="row" id="ed-ro" aria-rowindex="5" aria-selected="false">
+                  <div class="tl-table__cell" role="gridcell" data-test="ed-ro-name" data-kind="feld"><div class="tl-form-field tl-form-field--hidden tl-form-field--compact"><div class="tl-form-field__input tl-type-body"><input class="tl-field tl-type-body" tabindex="-1" value="Auftrag 1044" aria-label="Name" readonly></div></div></div>
+                  <div class="tl-table__cell" role="gridcell" data-test="ed-ro-datum" data-kind="feld"><div class="tl-form-field tl-form-field--hidden tl-form-field--compact"><div class="tl-form-field__input tl-type-body"><span class="tl-field-group"><input class="tl-field tl-type-body" type="date" tabindex="-1" value="2026-11-17" aria-label="Lieferdatum" readonly></span></div></div></div>
+                  <div class="tl-table__cell" role="gridcell" data-test="ed-ro-status" data-kind="feld"><div class="tl-form-field tl-form-field--hidden tl-form-field--compact"><div class="tl-form-field__input tl-type-body"><div class="tl-field tl-select tl-type-body" role="combobox" tabindex="-1" aria-expanded="false" aria-haspopup="listbox" aria-label="Status" aria-disabled="true"><span class="tl-select__values"><span class="tl-select__value"><span class="tl-field-value__text">In Arbeit</span></span></span><span class="tl-select__controls"><span class="tl-select__arrow" aria-hidden="true"><i class="tl-icon-sm bi bi-chevron-down"></i></span></span></div></div></div></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-align="end" data-test="ed-ro-menge" data-kind="feld"><div class="tl-form-field tl-form-field--hidden tl-form-field--compact"><div class="tl-form-field__input tl-type-body"><input class="tl-field tl-type-body tl-nums" tabindex="-1" value="12" aria-label="Menge" readonly></div></div></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-align="end" data-test="ed-ro-summe" data-kind="lese"><span class="tl-text tl-nums">1.250,00</span></div>
+                </div>
+                <div class="tl-table__row" role="row" id="ed-direct" aria-rowindex="6" aria-selected="false">
+                  <div class="tl-table__cell" role="gridcell" data-test="ed-direct-name" data-kind="feld"><input class="tl-field tl-type-body" tabindex="-1" value="Feld direkt in der Zelle" aria-label="Name"></div>
+                  <div class="tl-table__cell" role="gridcell" data-test="ed-direct-datum" data-kind="lese"><span>17.11.2026</span></div>
+                  <div class="tl-table__cell" role="gridcell" data-test="ed-direct-status" data-kind="feld"><div class="tl-form-field tl-form-field--hidden tl-form-field--compact"><div class="tl-form-field__input tl-type-body"><div class="tl-stack tl-stack--row tl-stack--gap-compact tl-stack--align-center tl-stack--justify-start tl-stack--grow-first tl-compact-field tl-field" role="group" aria-label="Status"><span class="tl-text tl-type-body tl-text--truncate tl-compact-field__preview">In Arbeit</span><button type="button" class="tl-button tl-button--ghost tl-type-body tl-button--sm tl-button--icon tl-compact-field__opener" aria-label="Wert bearbeiten"><i class="tl-button__icon tl-icon-sm bi bi-pencil-square" aria-hidden="true"></i></button></div></div></div></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-align="end" data-test="ed-direct-menge" data-kind="lese"><span class="tl-text tl-nums">12</span></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-align="end" data-test="ed-direct-summe" data-kind="lese"><span class="tl-text tl-nums">1.250,00</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

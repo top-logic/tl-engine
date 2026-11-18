@@ -11,6 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.form.StateHandler;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.listen.ObservedObjects;
@@ -61,6 +62,8 @@ public class DefaultViewChannel implements ObservingChannel {
 
 	private final String _name;
 
+	private final TLClass _valueType;
+
 	private Object _value;
 
 	private final ChannelListeners _listeners = new ChannelListeners(this);
@@ -82,7 +85,25 @@ public class DefaultViewChannel implements ObservingChannel {
 	 *        The channel name (for debugging).
 	 */
 	public DefaultViewChannel(String name) {
+		this(name, null);
+	}
+
+	/**
+	 * Creates a {@link DefaultViewChannel} with a declared value type.
+	 *
+	 * @param name
+	 *        The channel name (for debugging).
+	 * @param valueType
+	 *        See {@link #getValueType()}, {@code null} for none.
+	 */
+	public DefaultViewChannel(String name, TLClass valueType) {
 		_name = name;
+		_valueType = valueType;
+	}
+
+	@Override
+	public TLClass getValueType() {
+		return _valueType;
 	}
 
 	@Override

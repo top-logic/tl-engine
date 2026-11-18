@@ -83,7 +83,7 @@ public class DropTablesProcessor extends AbstractConfiguredInstance<DropTablesPr
 			}
 
 			String tableNames = schema.getTables().stream().map(DBTable::getDBName).collect(Collectors.joining(", "));
-			if (DBSchemaUtils.resetTables(connection, schema, false)) {
+			if (DBSchemaUtils.dropTables(connection, schema)) {
 				log.info("Dropped tables: " + tableNames);
 			} else {
 				log.error("Failed to drop tables: " + tableNames);

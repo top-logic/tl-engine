@@ -74,29 +74,49 @@ public interface TextState extends com.top_logic.layout.react.state.ControlState
 		BODY("body"),
 
 		/**
-		 * The heading of a section within a page.
-		 */
-		TITLE("title"),
-
-		/**
-		 * The heading a page is introduced with.
-		 */
-		HEADLINE("headline"),
-
-		/**
-		 * The largest text on a page, for the one statement a landing page is built around.
+		 * The largest text on a page, for the one statement a page is built around, e.g. a key figure.
 		 */
 		DISPLAY("display"),
 
 		/**
-		 * The name of a value, shown above or beside what it names.
+		 * The heading a page is introduced with, the largest of the three heading levels.
+		 */
+		HEADING_LG("heading-lg"),
+
+		/**
+		 * The heading of a section within a page, the middle of the three heading levels.
+		 */
+		HEADING_MD("heading-md"),
+
+		/**
+		 * The heading of a group within a section, the smallest of the three heading levels.
+		 */
+		HEADING_SM("heading-sm"),
+
+		/**
+		 * Running text that stands out from the text around it.
+		 */
+		BODY_STRONG("body-strong"),
+
+		/**
+		 * Small text: the name of a value, a hint, a date, an attribution.
 		 */
 		LABEL("label"),
 
 		/**
-		 * A remark accompanying another text: a hint, a date, an attribution.
+		 * Small text that stands out from the text around it.
 		 */
-		CAPTION("caption"),
+		LABEL_STRONG("label-strong"),
+
+		/**
+		 * A small line above a heading, set with wide letter spacing.
+		 */
+		OVERLINE("overline"),
+
+		/**
+		 * Program code or other text set in a fixed-width font.
+		 */
+		CODE("code"),
 
 		;
 
@@ -121,11 +141,15 @@ public interface TextState extends com.top_logic.layout.react.state.ControlState
 			if (protocolName == null) { return null; }
 			switch (protocolName) {
 				case "body": return BODY;
-				case "title": return TITLE;
-				case "headline": return HEADLINE;
 				case "display": return DISPLAY;
+				case "heading-lg": return HEADING_LG;
+				case "heading-md": return HEADING_MD;
+				case "heading-sm": return HEADING_SM;
+				case "body-strong": return BODY_STRONG;
 				case "label": return LABEL;
-				case "caption": return CAPTION;
+				case "label-strong": return LABEL_STRONG;
+				case "overline": return OVERLINE;
+				case "code": return CODE;
 			}
 			return BODY;
 		}

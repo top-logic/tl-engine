@@ -77,10 +77,6 @@ public class DatabaseTestSetup extends RearrangableThreadContextSetup implements
 		MYSQL_DB("mysql"),
 		/** Representation of a H2 database */
 		H2_DB("h2"),
-		/** Representation of an ORACLE database */
-		ORACLE_DB("oracle"),
-		/** Representation of an ORACLE12 database */
-		ORACLE12_DB("oracle12"),
 		/** Representation of an ORACLE19 database */
 		ORACLE19_DB("oracle19"),
 		/** Representation of a Microsoft MSSQL database */
@@ -143,8 +139,6 @@ public class DatabaseTestSetup extends RearrangableThreadContextSetup implements
 		DBType.MYSQL_DB,
 		DBType.MSSQL_DB,
 		DBType.H2_DB,
-		DBType.ORACLE_DB,
-		DBType.ORACLE12_DB,
 		DBType.ORACLE19_DB,
 		DBType.POSTGRESQL_DB);
     
@@ -312,16 +306,8 @@ public class DatabaseTestSetup extends RearrangableThreadContextSetup implements
 				poolName = "testUnitMssql";
 				break;
 			}
-			case ORACLE_DB: {
-				poolName = "testUnitOracle";
-				break;
-			}
 			case H2_DB: {
 				poolName = "testUnitH2";
-				break;
-			}
-			case ORACLE12_DB: {
-				poolName = "testUnitOracle12";
 				break;
 			}
 			case ORACLE19_DB: {
@@ -354,16 +340,8 @@ public class DatabaseTestSetup extends RearrangableThreadContextSetup implements
 				poolName = "testMigrationMssql";
 				break;
 			}
-			case ORACLE_DB: {
-				poolName = "testMigrationOracle";
-				break;
-			}
 			case H2_DB: {
 				poolName = "testMigrationH2";
-				break;
-			}
-			case ORACLE12_DB: {
-				poolName = "testMigrationOracle12";
 				break;
 			}
 			case ORACLE19_DB: {

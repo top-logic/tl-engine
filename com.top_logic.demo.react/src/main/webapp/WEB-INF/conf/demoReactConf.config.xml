@@ -351,9 +351,9 @@
 						The views follow these rights: for an account that is a member of P1 but not
 						of P2 and no project manager, the project list shows P1 only; "New Project" is
 						not offered at all;
-						"Delete" of P1 is not offered once P1 is selected, since the account administers
-						no project at all, whereas for an account administering another project it is
-						offered but disabled with the reason; "New Milestone", "New
+						"Delete" is not offered, neither without a selection nor once P1 is selected,
+						since the account administers no project at all, whereas for an account
+						administering another project it is offered but disabled; "New Milestone", "New
 						Note" and the deletion of a milestone work in P1; a save that changes the
 						members or the administrators of P1 is refused. In the cockpit of P1, the
 						budget field is missing, and editing the project offers the name and the

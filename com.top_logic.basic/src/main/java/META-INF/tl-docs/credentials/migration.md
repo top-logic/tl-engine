@@ -152,7 +152,7 @@ The configurations shipped with the engine reference their secrets by name and c
 | Configuration | Property | Secret | Removed alias |
 |---|---|---|---|
 | `db-h2.config.xml`, `db-mysql.config.xml`, `db-postgresql.config.xml`, `db-oracle.config.xml`, `db-mssql.config.xml`, `db-db2.config.xml` | `<encrypted-option name="password">` of the pool `default` | `h2_passwd`, `mysql_passwd`, `postgresql_passwd`, `oracle_passwd`, `mssql_passwd`, `db2_passwd` | `%H2_PASSWD%`, `%MYSQL_PASSWD%`, `%POSTGRESQL_PASSWD%`, `%ORACLE_PASSWD%`, `%MSSQL_PASSWD%`, `%DB2_PASSWD%` |
-| `devel-oracle.config.xml`, `devel-oracle-12.config.xml`, `devel-oracle-19.config.xml` | the same | `oracle_passwd`, `oracle12_passwd`, `oracle19_passwd` | `%ORACLE_PASSWD%`, `%ORACLE12_PASSWD%`, `%ORACLE19_PASSWD%` |
+| `devel-oracle.config.xml`, `devel-oracle-19.config.xml` | the same | `oracle_passwd`, `oracle19_passwd` | `%ORACLE_PASSWD%`, `%ORACLE19_PASSWD%` |
 | `db-mssql.config.xml` | `<encrypted-option name="trustStorePassword">` | `mssql_trust_store_passwd` | `%MSSQL_TRUST_STORE_PASSWD%` |
 | `db-mysql.config.xml` | `<encrypted-option name="clientCertificateKeyStorePassword">`, `<encrypted-option name="trustCertificateKeyStorePassword">` | `mysql_client_certificate_key_store_password`, `mysql_trust_certificate_key_store_password` | `%MYSQL_CLIENT_CERTIFICATE_KEY_STORE_PASSWORD%`, `%MYSQL_TRUST_CERTIFICATE_KEY_STORE_PASSWORD%` |
 | `ldapConf.config.xml` | `master-credential` | `ldap_credential` | `%LDAP_CREDENTIAL%` |

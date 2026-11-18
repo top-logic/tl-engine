@@ -57,6 +57,7 @@ Feldes (`field.contract.md`, Abschnitt Zustand) und gelten hier unverändert. Zu
 | Gewählter Chip | wie angekreuzt: Fläche und Rand `--tl-surface-brand`, Text `--tl-text-on-brand`; beim Zeigen Fläche `--tl-surface-brand-hover`, Text `--tl-text-on-brand-hover` |
 | Fehler | Rand `--tl-status-error-border` |
 | Warnung | Rand `--tl-status-warning-border` |
+| schreibgeschütztes Kästchen und schreibgeschützter Schalter (`aria-readonly="true"`) | ein Wert, kein Bedienelement: kein Rand, keine Fläche, keine Spur, kein Knopf; Maß `--tl-size-choice` wie das Kästchen. Angekreuzt bzw. an: der Haken des Kästchens in `--tl-text-primary`; nicht angekreuzt bzw. aus: Gedankenstrich (½ `--tl-size-choice` × `--tl-border-width-md`) in `--tl-text-secondary`; ohne Wert (gemischt, `triState`): nichts, wie ein leerer Lesewert. Haken und Strich halten auf jedem Grund eines Lesewerts in beiden Modi den Kontrast (`choice.test.mjs`) |
 | deaktiviert (vom Kontrast-Gate ausgenommen) | Fläche `--tl-surface-disabled`, Text `--tl-text-disabled`, Rand `--tl-border-disabled`; angekreuzt deaktiviert und gewählter Chip deaktiviert: Fläche `--tl-border-disabled` |
 
 Schrift: Klasse `.tl-type-body` am `tl-choice`, `.tl-type-label` an Segment und Chip, von außen
@@ -80,7 +81,7 @@ gesetzt; die Auswahl hat keine Schriftregel.
 | `data-tl-state~="compact"` | an der `tl-chip-group` von `TLFileChips`, wenn das Feld wenig Platz hat (Feldzustand `compact`, etwa in der Tabellenzelle): eine Zeile, die Chips rollen seitwärts in `tl-chip-group__chips` (`upload.contract.md`). |
 | `aria-required="true"` | `mandatory`, am Kästchen, am Schalter, an der `role="radiogroup"`. Eine `role="group"` (Chips, Segmente mit Mehrfachwahl) trägt es nicht — ARIA erlaubt es dort so wenig wie `aria-invalid`. An `role="group"` gibt es kein `aria-required`; die Pflicht zeigt der Stern im Feld-Label an, das die Gruppe über `aria-labelledby` benennt. |
 | `tabIndex` | roving in Segmenten mit Einfachwahl: nur das gewählte (ohne Wahl das erste) hat `0`, die übrigen `-1`; Pfeiltasten wechseln die Wahl. Bei Mehrfachwahl und an Chips ist jedes Element erreichbar. |
-| `aria-readonly="true"` | `editable: false` an `TLCheckbox`: das Kästchen bzw. der Schalter rendert **ohne** `disabled`, mit `aria-readonly="true"` und einem Änderungs-Handler, der nichts tut — die Angekreuzt-Füllung behält den Kontrast der Marke. Kein Zeigen, Zeiger `default`. |
+| `aria-readonly="true"` | `editable: false` an `TLCheckbox`: das Kästchen bzw. der Schalter rendert **ohne** `disabled`, mit `aria-readonly="true"` und einem Änderungs-Handler, der nichts tut. Schreibgeschützt ist nicht deaktiviert: der Wert liegt nicht im Deaktiviert-Grau. Das Boolean-Feld erscheint als Wert wie `tl-field-value`, nicht als Bedienelement: ohne Rahmen und Fläche, angekreuzt ein Haken in `--tl-text-primary`, nicht angekreuzt ein Gedankenstrich in `--tl-text-secondary`, ohne Wert (gemischt) nichts. `checked`, das gemischte Kästchen und `aria-readonly` bleiben am `input`: der Screenreader liest den Wert unverändert. Kein Zeigen, Zeiger `default`. `aria-readonly` und `disabled` stehen nie zusammen. An `tl-radio` nur der Zeiger: Auswahlfelder zeigen ihren Lesewert als Text (unten). |
 | `disabled` | der inaktive Zustand, nicht der schreibgeschützte: der Client liest `state.disabled`, wie beim Button (`button.contract.md`), und setzt `disabled` an Kästchen, Schalter, Radio, Segment und Chip. |
 | `:focus-visible` | den Ring liefert `base.css`; die Auswahl setzt und entfernt keinen Fokusstil. Fokus allein zeigt keinen halo; wird eine fokussierte Marke gezeigt oder gedrückt, liegt der Ring auf dem halo. |
 | `:hover`, `:active` | an der Marke oder am `tl-choice` um sie: der halo. Nicht bei `disabled` und nicht bei `aria-readonly="true"`. |
@@ -100,7 +101,7 @@ Bei `editable: false` rendert `TLChoiceGroup` die Beschriftung seines Werts als 
 DropdownSelect (`select.contract.md`) eine Liste von `tl-field-value`-Einträgen in `tl-select__values`:
 je gewählter Wert Text oder `tl-pill` mit `data-tl-role` seiner `colorRole`, mit Bild, Werte mit `link` als `a`, das
 `goto` sendet. `TLCheckbox` zeigt das Kästchen schreibgeschützt: `aria-readonly="true"`, nicht
-`disabled` (siehe Attribute).
+`disabled`, gezeichnet als Wert — Haken, Gedankenstrich oder nichts (siehe Attribute).
 
 Klassen:
 

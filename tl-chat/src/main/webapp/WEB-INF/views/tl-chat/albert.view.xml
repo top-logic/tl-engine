@@ -123,6 +123,8 @@
 		-->
 		<data-list id="chats"
 			collapsible="true"
+			css-class="tl-chat-sessions"
+			drawer-below="44"
 			observed-types="tl.ai.execution:AgentSession, tl.ai.execution:AgentExecution, tl.ai.execution:InteractionRequest"
 			row-actions="hover"
 			row-channel="session"

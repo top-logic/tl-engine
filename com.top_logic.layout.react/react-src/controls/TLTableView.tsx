@@ -1,4 +1,4 @@
-import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, BACKGROUND_REPORT, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
 import { FOCUSABLE_SELECTOR, editableInRow, focusTargetInRow, focusablesIn, rowCells } from './tableRowFocus';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
@@ -428,6 +428,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const DisclosureToggle = usePart('DisclosureToggle');
   const Checkbox = usePart('Checkbox');
   const TextInput = usePart('TextInput');
+  const Skeleton = usePart('Skeleton');
   const rootRef = React.useRef<HTMLDivElement>(null);
   // The grid (role=grid) holds the keyboard focus and points at the cursor row with
   // aria-activedescendant; the body inside it only scrolls.
@@ -891,9 +892,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       if (!forced && reported && reported.start === viewport.start && reported.count === viewport.count) return;
       reportedViewportRef.current = viewport;
       // Asks for the rows the user scrolled to, in the background: the table shows skeleton rows until they arrive.
-      sendCommand('scroll', viewport, BACKGROUND_COMMAND);
+      sendCommand('scroll', viewport, BACKGROUND_REPORT);
     }, 80);
   }, [sendCommand, viewportOf]);
+
+  // A table that is removed reports no viewport any more.
+  React.useEffect(() => () => {
+    if (scrollTimeoutRef.current !== null) {
+      clearTimeout(scrollTimeoutRef.current);
+      scrollTimeoutRef.current = null;
+    }
+  }, []);
 
   // The header scrolls by itself only when the browser brings a focused header control into view (Tab to
   // a sort or filter button beyond the edge); the body follows, and its scroll event aligns both again.
@@ -2070,7 +2079,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           {missing.map((index) => (
             <div key={'skeleton-' + index} className="tl-table__placeholder" aria-hidden="true"
               style={{ position: 'absolute', top: index * rowHeight, height: rowHeight, left: 0, right: 0 }}>
-              <span className="tl-skeleton" />
+              <Skeleton shape="text" />
             </div>
           ))}
           {rows.map((row) => (

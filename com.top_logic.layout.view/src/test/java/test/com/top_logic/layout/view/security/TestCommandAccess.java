@@ -13,6 +13,7 @@ import java.util.Map;
 
 import junit.framework.Test;
 
+import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationException;
@@ -29,7 +30,10 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelConfig;
+import com.top_logic.layout.view.channel.ChannelFactory;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.ValueChannelConfig;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.command.GenericViewCommand;
@@ -64,8 +68,14 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 	/** The channel the command and the unit read their object from. */
 	private static final String OBJECT_CHANNEL = "object";
 
+	/** The tag of a value channel. */
+	private static final String VALUE_CHANNEL = "channel";
+
 	/** The tag of a generic command. */
 	private static final String GENERIC_COMMAND = "generic-command";
+
+	/** The channel declaring the type of its values, see {@link #typedChannel(String)}. */
+	private static final String TYPED_CHANNEL = "typed";
 
 	/** The abstract type of the composition {@link #DELIVERABLES} of a project. */
 	private static final String DELIVERABLE = "Deliverable";
@@ -450,6 +460,81 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 
 		becomeUser(_responsible);
 		assertSame(ExecutableState.EXECUTABLE, attachedState(showing));
+	}
+
+	/**
+	 * A command deleting the object of an empty channel declaring the type of its values is hidden
+	 * for a user who may delete no object of the type, and disabled for a user who may delete some.
+	 * Without declared type, the command on an empty channel is disabled. With an object, the
+	 * object decides.
+	 */
+	public void testDeleteOnEmptyTypedChannel() throws ConfigurationException {
+		ViewChannel typed = typedChannel(qualified(PROJECT));
+		assertSame(type(PROJECT), typed.getValueType());
+		_context.registerChannel(TYPED_CHANNEL, typed);
+		ViewCommandModel withType = model(deleteCommand(TYPED_CHANNEL), _context);
+		ViewCommandModel withoutType = model(deleteCommand(OBJECT_CHANNEL), _context);
+
+		becomeUser(_roleless);
+		assertSame("No object may be deleted.", ExecutableState.NOT_EXEC_HIDDEN, attachedState(withType));
+		assertSame("Without type, the empty channel disables.", ExecutableState.NO_EXEC_NO_MODEL,
+			attachedState(withoutType));
+
+		becomeUser(_outsider);
+		assertSame("Other projects may be deleted.", ExecutableState.NO_EXEC_NO_MODEL, attachedState(withType));
+
+		becomeUser(_responsible);
+		assertSame(ExecutableState.NO_EXEC_NO_MODEL, attachedState(withType));
+
+		becomeUser(_root);
+		assertSame(ExecutableState.NO_EXEC_NO_MODEL, attachedState(withType));
+
+		typed.set(_project);
+		assertSame(ExecutableState.EXECUTABLE, attachedState(withType));
+
+		becomeUser(_responsible);
+		assertSame(ExecutableState.EXECUTABLE, attachedState(withType));
+
+		becomeUser(_outsider);
+		assertDisabled("The object decides.", I18NConstants.ERROR_DELETE_DENIED, attachedState(withType));
+	}
+
+	/**
+	 * A channel without declared type has none, a type that is no class is a configuration error.
+	 */
+	public void testChannelValueTypeDeclaration() throws ConfigurationException {
+		assertNull(typedChannel(null).getValueType());
+		try {
+			typedChannel("tl.core:String");
+			fail("A type that is no class must be rejected.");
+		} catch (ConfigurationException | AbortExecutionException ex) {
+			// Expected.
+		}
+	}
+
+	/**
+	 * A {@link #TYPED_CHANNEL} declared in a view, with the given type of its values.
+	 */
+	private ViewChannel typedChannel(String typeName) throws ConfigurationException {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestCommandAccess.class);
+		Map<String, ConfigurationDescriptor> descriptors = new HashMap<>();
+		descriptors.put(VALUE_CHANNEL, TypedConfiguration.getConfigurationDescriptor(ValueChannelConfig.class));
+		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
+		reader.setSource(CharacterContents.newContent("<" + VALUE_CHANNEL + " " + ChannelConfig.NAME + "='"
+			+ TYPED_CHANNEL + "'" + (typeName == null ? "" : " " + ChannelConfig.TYPE + "='" + typeName + "'")
+			+ "/>"));
+		ValueChannelConfig config = (ValueChannelConfig) reader.read();
+		context.checkErrors();
+		ChannelFactory factory = context.getInstance(config);
+		context.checkErrors();
+		return factory.createChannel(_context);
+	}
+
+	/**
+	 * A command deleting the object in the given channel.
+	 */
+	private static String deleteCommand(String inputs) {
+		return "<generic-command inputs='" + inputs + "'><delete-object/></generic-command>";
 	}
 
 	private static ExecutableState attachedState(ViewCommandModel model) {

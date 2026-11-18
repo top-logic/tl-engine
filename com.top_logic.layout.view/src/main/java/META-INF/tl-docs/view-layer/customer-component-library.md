@@ -91,7 +91,7 @@ There are two levels of replacement:
   draws them; it holds no server state and sends no command. The part appears as a control of its
   own and inline in toolbars, menus, tables, trees, form groups and the sidebar, so one replacement
   reaches all of them. The parts are `Button`, `MenuTrigger`, `DisclosureToggle`, `Checkbox`,
-  `TextInput`, `FieldValue`, `Chip`, `Badge`, `Divider`, `ProgressBar`, `Spinner` and `Listbox`; the list
+  `TextInput`, `FieldValue`, `Chip`, `Badge`, `Divider`, `Skeleton`, `ProgressBar`, `Spinner` and `Listbox`; the list
   with the places each is drawn, the registry and a part adapter are in
   [Parts: the atoms of the React UI](doc:view-layer/parts).
 - **A control, with `replace`.** The adapter renders the complete state of a control under its
@@ -357,6 +357,13 @@ the commands the component sends. The controls a library replaces as a whole:
 | `TLSlider` | `SliderState` |
 | `TLFloatingAction` | `FloatingActionState` |
 | `TLDataList` | `DataListState` |
+
+The typographic role of a `TLText` (`TextState.variant`) is a role of the type scale of the design
+system - `display`, `heading-lg`, `heading-md`, `heading-sm`, `body`, `body-strong`, `label`,
+`label-strong`, `overline`, `code` - not a style of the library. An adapter of `TLText` draws each
+role in the style of its library that serves the same purpose; the theme maps the library's
+typography onto the tokens of these roles
+([Typography tokens](doc:view-layer/theme-tokens#typography-tokens)).
 
 The header also lists the atomic controls `TLButton`, `TLToggleButton`, `TLCheckbox`,
 `TLTextInput`, `TLPasswordInput`, `TLNumberInput`, `TLOptionChips`, `TLProgress` and `TLAvatar`. Their look is

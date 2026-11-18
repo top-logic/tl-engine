@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-fragment
+	xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee/web-fragment_3_0.xsd"
+	id="tl-oauth-server"
+	version="3.0"
+	metadata-complete="true"
+>
+	<name>tl-oauth-server</name>
+
+	<!-- The public endpoints of the OAuth authorization server: metadata, protected resource
+	     metadata of the endpoints accepting its tokens, authorization endpoint,
+	     token endpoint and dynamic client registration. They need no login; the authorization
+	     endpoint hands the request to the consent page, where the person logs in, and the token
+	     endpoint authenticates by the code or refresh token it is given. -->
+	<servlet>
+		<servlet-name>OAuthServerServlet</servlet-name>
+		<servlet-class>com.top_logic.oauth.server.OAuthServerServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>OAuthServerServlet</servlet-name>
+		<url-pattern>/.well-known/oauth-authorization-server</url-pattern>
+		<url-pattern>/.well-known/openid-configuration</url-pattern>
+		<url-pattern>/.well-known/oauth-protected-resource/*</url-pattern>
+		<url-pattern>/oauth/token</url-pattern>
+		<url-pattern>/oauth/authorize</url-pattern>
+		<url-pattern>/oauth/register</url-pattern>
+	</servlet-mapping>
+
+</web-fragment>

@@ -18,6 +18,7 @@ import com.top_logic.layout.view.channel.DeletedObjects;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.model.ObservedTypes;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelScope;
@@ -42,6 +43,12 @@ import com.top_logic.tool.execution.ExecutableState;
  * a view drops a deleted object itself while the view is displayed, but an input supplied by the
  * caller, or a channel nobody attached, may still hold one - and nothing can be decided over an
  * object that is gone.
+ * </p>
+ *
+ * <p>
+ * The main argument read from the first input carries the {@link ViewChannel#getValueType()
+ * declared value type} of its channel (see {@link ActionArguments#valueType()}), so that a rule can
+ * decide by the type while the channel is empty.
  * </p>
  *
  * <p>
@@ -200,7 +207,20 @@ public class LiveExecutability {
 	 *        The values of the {@link CommandArguments#getParameters() parameters} by name.
 	 */
 	public ActionArguments arguments(Object main, Map<String, ?> parameterValues) {
-		return _arguments.arguments(main, inputValues(), parameterValues);
+		ActionArguments arguments = _arguments.arguments(main, inputValues(), parameterValues);
+		TLClass mainType = mainValueType();
+		return mainType == null ? arguments : arguments.withValueType(mainType);
+	}
+
+	/**
+	 * The declared value type of the channel the main argument is read from, {@code null} for a
+	 * trigger supplying the main argument, without inputs, or for a channel without declared type.
+	 */
+	private TLClass mainValueType() {
+		if (_arguments.getTrigger() != null || _inputChannels.isEmpty()) {
+			return null;
+		}
+		return _inputChannels.get(0).getValueType();
 	}
 
 	/**

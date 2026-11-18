@@ -423,6 +423,7 @@ anything.
 | `Badge` | the part: the badges of buttons, tabs, avatars, the sidebar, the bottom bar and of data lists | `Badge` standing on its own: `content` → `badgeContent`, `dot` → `variant="dot"`, `colorRole` → `color` (`brand` → `primary`, the status roles → the MUI color of the same name); a `label` names the root (`role="img"`, `aria-label`), without one the content MUI hides from assistive technology is read as text |
 | `Avatar` | the part: avatar controls (`TLAvatar`), the avatars of data lists | `Avatar` |
 | `Divider` | the part: the lines of toolbars, toolbar menus and the sidebar | `Divider` |
+| `Skeleton` | the part: the rows of a table not sent yet, a picture of known height or proportions still loading | `Skeleton` (`text`, `rectangular`, `circular`; standing still for reduced motion) |
 | `ProgressBar` | the part: progress controls, job status, loading options | `LinearProgress` |
 | `Spinner` | the part: busy indicators | `CircularProgress` |
 | `Listbox` | the part: the suggestions under a text field | `Paper`, `List`, `ListItemButton` |
@@ -450,6 +451,25 @@ the typography (font families, the sizes and line heights of `body2`, `caption`,
 controls. The complete mapping is the table in
 [Following the MUI theme](doc:view-layer/customer-component-library#following-the-mui-theme); the
 computation is `com.top_logic.layout.react.mui/react-src/themeProperties.ts`.
+
+A `<text>` takes one of the ten roles of the type scale of the design system as its variant, and
+`MuiTextAdapter` draws each role with the nearest MUI variant:
+
+| Role | MUI variant |
+| --- | --- |
+| `display` | `h4` |
+| `heading-lg` | `h5` |
+| `heading-md` | `h6` |
+| `heading-sm` | `subtitle1` |
+| `body` | `body2` |
+| `body-strong` | `body2` in the theme's `fontWeightMedium` |
+| `label` | `caption` |
+| `label-strong` | `subtitle2` |
+| `overline` | `overline` |
+| `code` | `body2` in the fixed-width font of the design system (`--tl-font-family-mono`) |
+
+The remaining MUI variants (`h1`–`h3`, `body1`, `button`) have no role
+of their own; a `<text>` does not reach them.
 
 #### Limits
 

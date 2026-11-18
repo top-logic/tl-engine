@@ -32,7 +32,7 @@ export { useUncontrolledFieldSync } from './bridge/uncontrolled-field';
 export type { UncontrolledFieldSync, UncontrolledFieldSyncOptions } from './bridge/uncontrolled-field';
 export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, anchoredOverlayOf, firstFocusable } from './bridge/focus-trap';
 export { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, TOOLTIP_WHEN_CLIPPED, tooltipProps } from './bridge/tooltip-host';
-export { BACKGROUND_COMMAND, CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
+export { BACKGROUND_COMMAND, BACKGROUND_REPORT, CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
 export type { CommandOptions, CommandResponse } from './bridge/command-channel';
 export { pushLocalStep } from './bridge/route-sync';
 export { isPageLeaving, leavePage, onPageLeave, reloadForStaleUi } from './bridge/page-leave';
@@ -81,6 +81,8 @@ export type {
   AvatarSize,
   DividerPartProps,
   DividerOrientation,
+  SkeletonPartProps,
+  SkeletonShape,
   ProgressBarPartProps,
   SpinnerPartProps,
   SpinnerSize,
@@ -194,7 +196,7 @@ export type { FillHost } from './bridge/fill';
 export { default as TLChild } from './bridge/TLChild';
 export { ThemeIcon } from './bridge/ThemeIcon';
 export type { ChildDescriptor } from './bridge/TLChild';
-export { useChildStates, useChildCommand } from './bridge/child-states';
+export { useChildContexts, useChildStates, useChildCommand } from './bridge/child-states';
 export { useFloatingFrame, FloatingFrame, FloatingRail, useFloatingAnchor, FLOATING_RAIL_CLASS } from './bridge/floating-anchor';
 export type { FloatingEdge, FloatingFrameHost, FloatingAnchor } from './bridge/floating-anchor';
 export { registerTransientOverlay, useTransientOverlay, useTransientOverlayRects, clearance, useOverlayClearance } from './bridge/transient-overlay';

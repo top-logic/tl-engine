@@ -187,7 +187,8 @@ public class TestFallbackPlaceholder extends AbstractTicketFormTest {
 	}
 
 	/**
-	 * A field that is not editable shows the value of the attribute also while the form is edited.
+	 * A field that is not editable shows the value of the attribute also while the form is edited,
+	 * and follows a changed fallback.
 	 */
 	public void testReadOnlyFieldShowsFallbackAsValue() {
 		AttributeFieldControl readOnly = new AttributeFieldControl(_context, _form, _form, BRANCH, null, true, null);
@@ -199,7 +200,107 @@ public class TestFallbackPlaceholder extends AbstractTicketFormTest {
 		assertEquals(CSS_FALLBACK, readOnly.getChromeControl().getCssClass());
 
 		model(_status).setValue("closed");
-		assertEquals("open", shown(readOnly));
+		assertEquals("The displayed fallback follows the edit.", "closed", shown(readOnly));
+		assertFalse(readOnly.isDirty());
+	}
+
+	/**
+	 * A field that became not editable while the form is edited (e.g. dynamically read-only)
+	 * follows a changed fallback.
+	 *
+	 * @see "Ticket #29329"
+	 */
+	public void testFallbackChangeInNonEditableField() {
+		_form.enterEditMode();
+		model(_branch).setEditable(false);
+		assertEquals("open", shown(_branch));
+
+		model(_status).setValue("closed");
+
+		assertEquals("Non-editable field follows the changed fallback.", "closed", shown(_branch));
+	}
+
+	/**
+	 * A change of the storage attribute in its own field is shown as explicit value.
+	 *
+	 * @see "Ticket #29329"
+	 */
+	public void testStorageAttributeChange() {
+		AttributeFieldControl custom = field(CUSTOM_BRANCH);
+		_form.enterEditMode();
+		assertNull(shown(_branch));
+
+		model(custom).setValue("dev");
+
+		assertEquals("Field of the attribute with fallback shows the new explicit value.", "dev",
+			shown(_branch));
+	}
+
+	/**
+	 * A change of the storage attribute in its own field is shown as explicit value also by a field
+	 * that is not editable.
+	 *
+	 * @see "Ticket #29329"
+	 */
+	public void testStorageAttributeChangeNonEditable() {
+		AttributeFieldControl custom = field(CUSTOM_BRANCH);
+		_form.enterEditMode();
+		model(_branch).setEditable(false);
+		assertEquals("open", shown(_branch));
+
+		model(custom).setValue("dev");
+
+		assertEquals("Non-editable field shows the new explicit value.", "dev", shown(_branch));
+	}
+
+	/**
+	 * Fallback, explicit value, changed fallback and reset of the explicit value in an editable
+	 * field: an explicit value hides a changed fallback, after the reset the new fallback shows.
+	 *
+	 * @see "Ticket #29329"
+	 */
+	public void testExplicitValueAndChangedFallback() {
+		_form.enterEditMode();
+		assertNull(shown(_branch));
+		assertEquals("open", placeholder(_branch));
+
+		model(_branch).setValue("dev");
+		assertEquals("dev", shown(_branch));
+		assertEquals(CSS_EXPLICIT, _branch.getChromeControl().getCssClass());
+
+		model(_status).setValue("closed");
+		assertEquals("The explicit value is kept.", "dev", shown(_branch));
+		assertEquals("closed", placeholder(_branch));
+
+		model(_branch).setValue(null);
+		assertNull(shown(_branch));
+		assertEquals("The new fallback shows.", "closed", placeholder(_branch));
+		assertEquals(CSS_FALLBACK, _branch.getChromeControl().getCssClass());
+	}
+
+	/**
+	 * Fallback, explicit value, changed fallback and reset of the explicit value in a field that is
+	 * not editable, with the explicit value set in the field of the storage attribute.
+	 *
+	 * @see "Ticket #29329"
+	 */
+	public void testExplicitValueAndChangedFallbackNonEditable() {
+		AttributeFieldControl custom = field(CUSTOM_BRANCH);
+		_form.enterEditMode();
+		model(_branch).setEditable(false);
+		assertEquals("open", shown(_branch));
+		assertEquals(CSS_FALLBACK, _branch.getChromeControl().getCssClass());
+
+		model(custom).setValue("dev");
+		assertEquals("dev", shown(_branch));
+		assertEquals(CSS_EXPLICIT, _branch.getChromeControl().getCssClass());
+
+		model(_status).setValue("closed");
+		assertEquals("The explicit value is kept.", "dev", shown(_branch));
+
+		model(custom).setValue(null);
+		assertEquals("The new fallback shows.", "closed", shown(_branch));
+		assertEquals(CSS_FALLBACK, _branch.getChromeControl().getCssClass());
 	}
 
 	/**

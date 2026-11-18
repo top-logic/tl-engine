@@ -39,6 +39,7 @@ import com.top_logic.basic.type.PrimitiveTypeUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.list.FastListElementComparator;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.form.model.utility.MaskedValues;
 import com.top_logic.layout.provider.CollectionLabelProvider;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
@@ -72,7 +73,6 @@ import com.top_logic.table.FilterPushdown;
 import com.top_logic.table.FilterState;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.util.Resources;
 import com.top_logic.table.Option;
 import com.top_logic.table.Sort;
 import com.top_logic.table.filter.BooleanColumnFilter;
@@ -1129,7 +1129,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 *
 	 * <p>
 	 * Stands in for the attribute's value, which is never read: the cell shows the placeholder
-	 * {@link com.top_logic.layout.react.I18NConstants#MASKED_VALUE} instead of the empty value of
+	 * {@link com.top_logic.model.security.I18NConstants#MASKED_VALUE} instead of the empty value of
 	 * the attribute, so that a value that may not be read is told apart from no value - an
 	 * unchecked checkbox, an empty text. The cell is not edited, and sorting, filtering and
 	 * exporting the column see only the placeholder, see {@link #attributeValue(Object, String)}.
@@ -1169,7 +1169,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * The value function of a column over a model attribute. A value the current user may not read
 	 * on the row (see {@link ModelAccessPolicy#onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)})
 	 * is not read at all: the cell holds the {@link #UNREADABLE} marker, which every type of column
-	 * displays by the placeholder {@link com.top_logic.layout.react.I18NConstants#MASKED_VALUE} - so
+	 * displays by the placeholder {@link com.top_logic.model.security.I18NConstants#MASKED_VALUE} - so
 	 * that a value the user may not read is told apart from no value. Such a cell is not edited,
 	 * and sorting, filtering and exporting the column see only the placeholder.
 	 * </p>
@@ -1236,7 +1236,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			return "";
 		}
 		if (isPlaceholder(value)) {
-			return Resources.getInstance().getString(com.top_logic.layout.react.I18NConstants.MASKED_VALUE);
+			return MaskedValues.placeholder();
 		}
 		if (value instanceof Collection<?> collection
 			&& collection.stream().anyMatch(ColumnProviderService::isPlaceholder)) {
@@ -1247,7 +1247,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 
 	/**
 	 * Whether the given value is shown by the placeholder
-	 * {@link com.top_logic.layout.react.I18NConstants#MASKED_VALUE}: a value the user may not read
+	 * {@link com.top_logic.model.security.I18NConstants#MASKED_VALUE}: a value the user may not read
 	 * ({@link #UNREADABLE}) or an object the user may not discover
 	 * ({@link ReactDropdownSelectControl#isMasked(Object) masked}).
 	 */

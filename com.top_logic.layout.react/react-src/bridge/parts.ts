@@ -8,7 +8,7 @@ import { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED } from './tooltip-host'
 
 // The parts (atoms) of the React UI: the presentational elements the controls draw themselves with
 // - a button, the trigger of a menu, the toggle disclosing content, a checkbox, a text box, the value
-// of a field, a chip, a badge, a divider, a progress bar, a spinner, a list to pick from, a button copying a text. A part has a typed props contract and no server state: the control
+// of a field, a chip, a badge, a divider, a placeholder for loading content, a progress bar, a spinner, a list to pick from, a button copying a text. A part has a typed props contract and no server state: the control
 // maps its state to the props of the part, sends its commands and handles keyboard bindings and
 // navigation, and the part only draws. The controls bundle registers a default for every part (registerPart); a customer
 // component library replaces a part (replacePart) and so changes how the part looks wherever a
@@ -932,6 +932,45 @@ export interface DividerPartProps extends PartAttributes {
 }
 
 /**
+ * The shape of a {@link SkeletonPartProps skeleton}:
+ *
+ * <ul>
+ * <li>`text`: lines of body text, as high as a line of it - the rows of a table not sent yet.</li>
+ * <li>`rect`: a rectangle - an image of known size not loaded yet.</li>
+ * <li>`circle`: a circle - an avatar or a symbol.</li>
+ * </ul>
+ */
+export type SkeletonShape = 'text' | 'rect' | 'circle';
+
+/**
+ * The props of the part {@link PartProps.Skeleton}: a placeholder in the rough shape of content that
+ * is still loading, instead of an empty area or a jump of the layout.
+ *
+ * <p>A skeleton says nothing: every implementation hides it from assistive technology
+ * (`aria-hidden="true"`, for several lines on the element holding them), and the element around it,
+ * which waits for the content, states that it is busy by `aria-busy`. Its size is up to the site:
+ * the element around it gives it its track, or the {@link style} sets the size the site knows, e.g.
+ * of a circle. Every implementation puts {@link className}, {@link style} and the passed-through
+ * attributes on its outermost element.</p>
+ */
+export interface SkeletonPartProps extends PartAttributes {
+  /** The shape of the placeholder; absent: `rect`. */
+  shape?: SkeletonShape;
+
+  /** For the shape `text`: the number of lines, one under the other; absent: one. */
+  lines?: number;
+
+  /**
+   * Classes added to the outermost drawn element. They mark the part and carry no layout: the
+   * element around the part places it.
+   */
+  className?: string;
+
+  /** Inline style of the outermost drawn element: the size the site knows of the content. */
+  style?: React.CSSProperties;
+}
+
+/**
  * The props of the part {@link PartProps.ProgressBar}: a bar showing how much of a task is done,
  * with an optional label beside it - the progress of a job, the loading of the options of a field.
  *
@@ -1136,6 +1175,9 @@ export interface PartProps {
 
   /** A thin line separating content: {@link DividerPartProps}. */
   Divider: DividerPartProps;
+
+  /** A placeholder for content that is still loading: {@link SkeletonPartProps}. */
+  Skeleton: SkeletonPartProps;
 
   /** A bar showing how much of a task is done: {@link ProgressBarPartProps}. */
   ProgressBar: ProgressBarPartProps;

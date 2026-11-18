@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!-- typed configuration for TestAccessTokenReadRights -->
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+
+	<services>
+
+		<config service-class="com.top_logic.element.accesstoken.AccessTokenPermissions">
+			<instance>
+				<permissions>
+					<permission name="test-plain"
+						label="test.accesstoken.permission.plain"
+					/>
+				</permissions>
+			</instance>
+		</config>
+
+	</services>
+
+</application>

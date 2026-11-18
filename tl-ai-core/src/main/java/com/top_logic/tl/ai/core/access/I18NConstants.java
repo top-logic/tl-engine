@@ -9,54 +9,13 @@ import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 
 /**
  * Messages about personal access tokens: to the person creating or revoking one, and to a client
  * whose token is refused.
  */
 public class I18NConstants extends I18NConstantsBase {
-
-	/**
-	 * A token was to be created without a name.
-	 *
-	 * @en Give the token a name, for example the client you are going to use it in.
-	 * @de Geben Sie dem Token einen Namen, zum Beispiel den des Clients, in dem Sie es verwenden.
-	 */
-	public static ResKey ERROR_TOKEN_NAME_MISSING;
-
-	/**
-	 * A token was to be created with a validity of zero or fewer days.
-	 *
-	 * @en A token is valid for at least one day. Leave the field empty for a token that does not
-	 *     expire.
-	 * @de Ein Token ist mindestens einen Tag gültig. Lassen Sie das Feld leer für ein Token, das
-	 *     nicht abläuft.
-	 */
-	public static ResKey ERROR_TOKEN_VALIDITY_NOT_POSITIVE;
-
-	/**
-	 * Something that is not an access token was to be revoked.
-	 *
-	 * @en This is not an access token.
-	 * @de Dies ist kein Zugriffstoken.
-	 */
-	public static ResKey ERROR_NOT_A_TOKEN;
-
-	/**
-	 * Somebody tried to revoke a token of another account without being an administrator.
-	 *
-	 * @en You can only revoke your own access tokens.
-	 * @de Sie können nur Ihre eigenen Zugriffstokens widerrufen.
-	 */
-	public static ResKey ERROR_TOKEN_NOT_OWNED;
-
-	/**
-	 * A token was to be created without a logged-in account to create it for.
-	 *
-	 * @en An access token belongs to an account. Log in to create one.
-	 * @de Ein Zugriffstoken gehört zu einem Konto. Melden Sie sich an, um eines zu erstellen.
-	 */
-	public static ResKey ERROR_NO_ACCOUNT;
 
 	/**
 	 * A request to an agent endpoint carried no bearer token.
@@ -75,7 +34,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NOT_AN_ACCESS_TOKEN;
 
 	/**
-	 * The personal access token is not known: it was never created, or it was revoked.
+	 * The personal access token is not known: it was never created, it was revoked, or it lacks the
+	 * permission for the agent endpoints.
 	 *
 	 * @en The personal access token is not valid. It may have been revoked; create a new one in the
 	 *     application.
@@ -113,6 +73,42 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     authentifiziert daher niemanden. Prüfen Sie deren Konfiguration und deren Secret.
 	 */
 	public static ResKey2 ERROR_AUTHENTICATION_UNAVAILABLE__DOMAIN_ENDPOINT;
+
+	/**
+	 * {@link EndpointCredential#credential() Credential} of a personal access token.
+	 *
+	 * @en A personal access token
+	 * @de Ein persönliches Zugriffstoken
+	 */
+	public static ResKey CREDENTIAL_PERSONAL_ACCESS_TOKEN;
+
+	/**
+	 * {@link EndpointCredential#headerValue() Header value} of a personal access token.
+	 *
+	 * @en Bearer {@literal <personal access token>}
+	 * @de Bearer {@literal <persönliches Zugriffstoken>}
+	 */
+	public static ResKey CREDENTIAL_PERSONAL_ACCESS_TOKEN_VALUE;
+
+	/**
+	 * {@link EndpointCredential#obtain() Where} a person creates a personal access token.
+	 *
+	 * @en Every person creates their own personal access token in the application at {0}: Settings
+	 *     → Access tokens → New token, with the permission "Agent interfaces (MCP/A2A)". The token is
+	 *     shown only once.
+	 * @de Jede Person erstellt ihr eigenes persönliches Zugriffstoken in der Anwendung unter {0}:
+	 *     Einstellungen → Zugriffstokens → Neues Token, mit der Berechtigung
+	 *     "Agenten-Schnittstellen (MCP/A2A)". Das Token wird nur einmal angezeigt.
+	 */
+	public static ResKey1 CREDENTIAL_PERSONAL_ACCESS_TOKEN_OBTAIN__URL;
+
+	/**
+	 * Label of the access token permission {@link AccessTokenAuthenticator#AGENT_ENDPOINTS_PERMISSION}.
+	 *
+	 * @en Agent interfaces (MCP/A2A)
+	 * @de Agenten-Schnittstellen (MCP/A2A)
+	 */
+	public static ResKey PERMISSION_AGENT_ENDPOINTS;
 
 	static {
 		initConstants(I18NConstants.class);

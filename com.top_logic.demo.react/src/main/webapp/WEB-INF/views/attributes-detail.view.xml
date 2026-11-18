@@ -94,6 +94,7 @@
 				<field attribute="tri"/>
 				<field attribute="activeRadio"/>
 				<field attribute="activeSelect"/>
+				<field attribute="activeSwitch"/>
 				<field attribute="priorityRadio"/>
 				<!-- The label stands in the empty input as its placeholder. -->
 				<field
@@ -155,6 +156,8 @@
 				<field attribute="contactEmail"/>
 				<field attribute="json"/>
 				<field attribute="image"/>
+				<field attribute="pictures"/>
+				<field attribute="gallery"/>
 				<field attribute="attachments"/>
 				<field attribute="documents"/>
 			</group>

@@ -409,7 +409,7 @@ public class TestAddColumnProcessors extends AbstractDBKnowledgeBaseTest {
 	 * </p>
 	 */
 	public static Test suite() {
-		return suiteDefaultDB(TestAddColumnProcessors.class);
+		return suite(TestAddColumnProcessors.class);
 	}
 
 }

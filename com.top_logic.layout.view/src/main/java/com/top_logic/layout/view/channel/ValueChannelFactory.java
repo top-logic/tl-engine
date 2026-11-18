@@ -14,6 +14,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.model.ObservedTypes;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.JsonValueCodec;
 import com.top_logic.model.util.TLModelPartRef;
@@ -48,6 +49,8 @@ public class ValueChannelFactory implements ChannelFactory {
 
 	private final String _name;
 
+	private final TLClass _valueType;
+
 	private final List<InputRef> _inputRefs;
 
 	/**
@@ -67,6 +70,7 @@ public class ValueChannelFactory implements ChannelFactory {
 	@CalledByReflection
 	public ValueChannelFactory(InstantiationContext context, ValueChannelConfig config) {
 		_name = config.getName();
+		_valueType = ChannelFactory.resolveValueType(context, config);
 		_inputRefs = config.getInputs();
 		_observedTypeRefs = config.getObservedTypes();
 		_init = InputScript.compile(config, ValueChannelConfig.INIT);
@@ -87,9 +91,9 @@ public class ValueChannelFactory implements ChannelFactory {
 	public ViewChannel createChannel(ViewContext context) {
 		DefaultViewChannel channel;
 		if (_init == null) {
-			channel = new DefaultViewChannel(_name);
+			channel = new DefaultViewChannel(_name, _valueType);
 		} else {
-			InitializedViewChannel initialized = new InitializedViewChannel(_name);
+			InitializedViewChannel initialized = new InitializedViewChannel(_name, _valueType);
 			initialized.bind(ChannelInputs.resolve(context, _inputRefs), _init::execute,
 				ObservedTypes.resolve(_observedTypeRefs));
 			channel = initialized;

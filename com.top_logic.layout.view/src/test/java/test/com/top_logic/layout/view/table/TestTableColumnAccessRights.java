@@ -72,7 +72,7 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * A cell whose value the user may not read on its row shows the placeholder
- * {@link com.top_logic.layout.react.I18NConstants#MASKED_VALUE} instead of its value, a column whose attribute the user
+ * {@link com.top_logic.model.security.I18NConstants#MASKED_VALUE} instead of its value, a column whose attribute the user
  * may read on no row is withheld, and a cell is edited only where the user may write it - the
  * condition the edited tables (row edit and composition table) ask through
  * {@link AttributeCellEditing#canEdit(Object)}.
@@ -569,7 +569,7 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 	private static void assertMasked(CellContent content) {
 		assertTrue("Not a plain text: " + content, content instanceof CellContent.Text);
 		assertEquals(MASKED, ((CellContent.Text) content).text());
-		assertEquals(MASKED, Resources.getInstance().getString(com.top_logic.layout.react.I18NConstants.MASKED_VALUE));
+		assertEquals(MASKED, Resources.getInstance().getString(com.top_logic.model.security.I18NConstants.MASKED_VALUE));
 	}
 
 	/**

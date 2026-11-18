@@ -17,6 +17,7 @@ import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
 import type { MountOptions } from './wire-test-support';
 import MuiChipAdapter from './MuiChipAdapter';
+import MuiSkeletonAdapter from './MuiSkeletonAdapter';
 
 replacePart('Checkbox', MuiCheckboxAdapter);
 // The table and the column selection look up their buttons and toggles as well.
@@ -26,6 +27,7 @@ replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
 // The table draws its named filters as chips.
 replacePart('Chip', MuiChipAdapter);
+replacePart('Skeleton', MuiSkeletonAdapter);
 
 /** The argument of {@link CMD_VALUE_CHANGED} holding the new value. */
 const ARG_VALUE = 'value';

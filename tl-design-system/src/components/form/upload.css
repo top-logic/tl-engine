@@ -21,11 +21,15 @@
 }
 .tl-file-upload[hidden] { display: none; }
 
-/* Eine Regel für alle Drop-Zonen (Welle 5b §6): das Datei-Feld, die Chip-Gruppe von TLFileChips und die
-   Werteliste, die ihre Werte durch Hochladen anfügt (#29852). */
+/* Eine Regel für alle Drop-Zonen (Welle 5b §6): das Datei-Feld, die Chip-Gruppe von TLFileChips, die
+   Werteliste, die ihre Werte durch Hochladen anfügt (#29852), und im Bildfeld die Kachel eines Bilds, das die Datei
+   ersetzt, und die Fläche, die ein Bild aufnimmt. */
 .tl-file-upload[data-tl-state~="dragover"],
 .tl-chip-group[data-tl-state~="dragover"],
-.tl-value-list[data-tl-state~="dragover"] {
+.tl-value-list[data-tl-state~="dragover"],
+.tl-image-field__stage[data-tl-state~="dragover"],
+.tl-image-editor__tile[data-tl-state~="dragover"],
+.tl-image-field__drop[data-tl-state~="dragover"] {
   outline: var(--tl-border-width-md) dashed var(--tl-border-interactive);
   outline-offset: var(--tl-focus-offset);
 }

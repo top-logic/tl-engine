@@ -1662,6 +1662,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		if (content instanceof CellContent.Labeled labeled) {
 			return labeled.text();
 		}
+		if (content instanceof CellContent.Placeholder placeholder) {
+			return placeholder.text();
+		}
 		if (content instanceof CellContent.Editable editable) {
 			Object value = editable.field().getValue();
 			return value == null ? "" : String.valueOf(value);

@@ -47,6 +47,7 @@ import com.top_logic.table.TableViewListener;
 import com.top_logic.table.TableViewState;
 import com.top_logic.table.ViewStateStore;
 import com.top_logic.table.filter.TextFilterState;
+import com.top_logic.util.Resources;
 
 /**
  * Default {@link TableView}: composes a column model, a {@link RowSource} and a
@@ -822,7 +823,10 @@ public class DefaultTableView<R> implements TableView<R> {
 	/**
 	 * The content displaying what a group stands for: its value, rendered by the column the rows
 	 * are grouped by, so that the header shows the value exactly as that column's cells show it -
-	 * a classifier by its label, a date by its format.
+	 * a classifier by its label, a date by its format. A group of the rows that have
+	 * {@link Column#isNoValue(Object) no value} in the grouping column shows the column's
+	 * {@link Column#emptyGroupLabel() label of an empty group} as a {@link CellContent.Placeholder
+	 * placeholder}.
 	 */
 	private CellContent groupValue(Group<R> group) {
 		List<Object> values = group.key().values();
@@ -837,7 +841,11 @@ public class DefaultTableView<R> implements TableView<R> {
 		if (groupColumn == null) {
 			return CellContent.empty();
 		}
-		return renderValue(groupColumn, values.get(level));
+		Object value = values.get(level);
+		if (Column.isNoValue(value)) {
+			return CellContent.placeholder(Resources.getInstance().getString(groupColumn.emptyGroupLabel()));
+		}
+		return renderValue(groupColumn, value);
 	}
 
 	/**

@@ -281,6 +281,23 @@ public class TestColumnDeclarations extends TestCase {
 	}
 
 	/**
+	 * The label a column declares for the group of the rows without a value reaches the built
+	 * column; a column declaring none keeps the neutral label.
+	 */
+	public void testEmptyGroupLabel() {
+		AttributeColumn.Config labeled = attributeColumn("count", null);
+		set(labeled, AttributeColumn.Config.EMPTY_GROUP_LABEL, ResKey.text("Not counted"));
+
+		ColumnSetup setup = single(labeled);
+		assertEquals(ResKey.text("Not counted"), setup.emptyGroupLabel());
+		assertEquals(ResKey.text("Not counted"), setup.buildColumn().emptyGroupLabel());
+
+		ColumnSetup plain = single(attributeColumn("count", null));
+		assertNull(plain.emptyGroupLabel());
+		assertEquals(com.top_logic.table.I18NConstants.EMPTY_GROUP, plain.buildColumn().emptyGroupLabel());
+	}
+
+	/**
 	 * A column declared not to be sortable can neither sort the table in a direction nor order its
 	 * values by a comparator.
 	 */

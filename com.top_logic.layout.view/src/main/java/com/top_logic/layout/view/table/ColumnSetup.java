@@ -139,6 +139,10 @@ import com.top_logic.util.Resources;
  *        {@link #exists()} condition did not hold, and nothing the table offers may refer to it -
  *        a declared filter with a criterion on it is not offered, see {@link ColumnExistence}.
  *        Never {@code null}.
+ * @param emptyGroupLabel
+ *        What the header row of a group formed by the column shows when the rows of the group have
+ *        no value in it, or {@code null} for the {@link Column#emptyGroupLabel() label the column
+ *        brings itself}.
  */
 public record ColumnSetup(
 		String name,
@@ -162,7 +166,26 @@ public record ColumnSetup(
 		ChannelCondition exists,
 		CellExistence<Object> cellExists,
 		ColumnHeader header,
-		ChannelCondition released) {
+		ChannelCondition released,
+		ResKey emptyGroupLabel) {
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column whose empty group is labeled as the column labels
+	 * it itself.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip,
+			BiFunction<Object, Object, String> cellClass, BiFunction<Object, Object, ValueColor> cellRole,
+			ReactControlProvider display, boolean sortable, ColumnAlignment align, ChannelCondition exists,
+			CellExistence<Object> cellExists, ColumnHeader header, ChannelCondition released) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, cellClass, cellRole, display, sortable, align, exists, cellExists, header, released,
+			null);
+	}
 
 	/**
 	 * Creates a {@link ColumnSetup} of a column no access right withholds.
@@ -318,7 +341,7 @@ public record ColumnSetup(
 		}
 		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
 			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, align,
-			exists.and(condition), cellExists, header, released);
+			exists.and(condition), cellExists, header, released, emptyGroupLabel);
 	}
 
 	/**
@@ -331,7 +354,7 @@ public record ColumnSetup(
 		}
 		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
 			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, align, exists, cellExists,
-			header, released.and(condition));
+			header, released.and(condition), emptyGroupLabel);
 	}
 
 	/**
@@ -342,7 +365,9 @@ public record ColumnSetup(
 	 * displaying its values through the {@link #display()} when it declares one, with the
 	 * {@link #tooltip()} on its cells and on the header rows of the groups it forms when it
 	 * computes one, with the {@link #cellClass()} and the {@link #cellRole()} on its cells when it
-	 * computes them, with the {@link #header()} on its heading, and left out of exports when its
+	 * computes them, with the {@link #header()} on its heading, with the {@link #emptyGroupLabel()}
+	 * on the header row of a group of rows without a value when it declares one, and left out of
+	 * exports when its
 	 * {@link #export()} says so. It puts its content on the side its {@link #alignment() alignment}
 	 * names.
 	 */
@@ -494,6 +519,9 @@ public record ColumnSetup(
 		}
 		if (cellExists != null) {
 			result = withCellExistence(result, cellExists);
+		}
+		if (emptyGroupLabel != null) {
+			result = DelegatingColumn.withEmptyGroupLabel(result, emptyGroupLabel);
 		}
 		return header.decorate(result);
 	}

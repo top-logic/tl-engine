@@ -787,6 +787,14 @@
   color: var(--tl-text-primary);
 }
 
+/* Ein Platzhalter für einen fehlenden Wert (CellContent.Placeholder), z. B. der Wert der Gruppe der Zeilen ohne Wert in der
+   Gruppierungsspalte: leise gesetzt, damit er nicht als Wert gelesen wird — text-secondary in normaler Stärke (das TSX
+   setzt tl-type-body statt der starken Schrift der Gruppenzeile). text-secondary hält 4,5 auf surface-layer-muted, gezeigt
+   und auf den gewählten Flächen (pairs.mjs). */
+.tl-table__no-value {
+  color: var(--tl-text-secondary);
+}
+
 /* --- Zeilenzahl (#29757) ---------------------------------------------------------- */
 
 /* Unter den Zeilen, außerhalb des Rollbehälters wie die Filterleiste: wie viele Zeilen die Tabelle hat

@@ -1,5 +1,5 @@
 ---
-description: Read before pushing an engine branch that adds or edits source or layouts - the CI gates a local mvn install misses - SPDX header and class comment (TestComment), XMLPrettyPrinter-normalized layouts (TestLayoutsNormalized), and -DskipTests=true skipping test compilation.
+description: Read before pushing an engine branch that adds or edits source or layouts - the CI gates a local mvn install misses - SPDX header and class comment (TestComment), XMLPrettyPrinter-normalized layouts (TestLayoutsNormalized), which tests the TestAll collects (whole src/test/java, package of the tested class, Assume counts as skipped, TestAll.target), and -DskipTests=true skipping test compilation.
 order: 20
 ---
 
@@ -38,6 +38,15 @@ articles the module ships below `src/main/java/META-INF/tl-docs/` against the mo
 - no Markdown file is left in the workspace folder `docs/faq/`.
 
 A link in code (a code span or block) is text and is not checked.
+
+## Tests run only through `TestAll`
+
+Surefire runs a single class in every module: the engine's generic suite `test/TestAll.java` (include in `tl-parent-core`). It collects the tests of the module's whole test source tree `src/test/java` - every public `TestCase` or class with a static `suite()` method whose simple name is `Test<Something>` or `<Something>Test` - and adds the module-independent checks of this article. A test that the `TestAll` does not collect is never run by CI, so check name and visibility of a new test class; a module needs no surefire includes of its own.
+
+- A new test lives in the package of the class it tests (`com.top_logic.foo.TestBar` in `src/test/java`), so it can reach package-private members. The package prefix `test` of most existing tests (`test.com.top_logic.foo.TestBar`) stays allowed; a test helper that could be mistaken for a production class of the same package (e.g. an `I18NConstants` with the keys of a test model) belongs below it.
+- A test whose precondition the build may lack (a key, a browser, a network) calls `org.junit.Assume`. The `TestAll` runs with `AssumptionAwareRunner` and reports a violated assumption as skipped, not as an error.
+- The test classes of a module share one JVM and, when their setups are equal, one knowledge base. A test must not expect that the knowledge base holds only its own objects - count or filter its own objects instead of all instances of a type.
+- `-DTestAll.target=<path>` (a test file or directory relative to the module, with `-DTestAll.recursive=true` for subdirectories) runs a part of the tests through the `TestAll`.
 
 ## `-DskipTests=true` also skips test *compilation*
 

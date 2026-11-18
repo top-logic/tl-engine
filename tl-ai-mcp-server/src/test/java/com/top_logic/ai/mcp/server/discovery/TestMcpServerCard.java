@@ -37,8 +37,8 @@ import com.top_logic.service.openapi.server.authentication.apikey.APIKeyAuthenti
 import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
 import com.top_logic.service.openapi.server.authentication.http.basic.BasicAuthentication;
-import com.top_logic.tl.ai.core.access.AccessTokenAuthentication;
-import com.top_logic.tl.ai.core.access.EndpointAuthentication;
+import com.top_logic.ai.core.access.AccessTokenAuthentication;
+import com.top_logic.ai.core.access.EndpointAuthentication;
 import com.top_logic.util.Resources;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
@@ -116,7 +116,7 @@ public class TestMcpServerCard extends TestCase {
 		assertEquals(Boolean.TRUE, header.get("isSecret"));
 		String description = (String) header.get("description");
 		assertTrue(description, description.contains(Resources.getLogInstance()
-			.getString(com.top_logic.tl.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_VALUE)));
+			.getString(com.top_logic.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_VALUE)));
 	}
 
 	/** A configured description is used, cut to the length the schema allows. */
@@ -241,11 +241,11 @@ public class TestMcpServerCard extends TestCase {
 		assertTrue(text, text.contains(APP + "/mcp/,"));
 		assertTrue(text, text.contains(APP + "/mcp/server-card"));
 		assertTrue(text, text.contains(resources.getString(
-			com.top_logic.tl.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_OBTAIN__URL
+			com.top_logic.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_OBTAIN__URL
 				.fill(APP + ViewServlet.ROOT_PATH))));
 		assertTrue(text, text.contains("claude mcp add --transport http --scope user ehome " + APP + "/mcp"));
 		assertTrue(text, text.contains("--header \"Authorization: " + resources.getString(
-			com.top_logic.tl.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_VALUE) + "\""));
+			com.top_logic.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_VALUE) + "\""));
 		assertTrue(text, text.contains(McpConnectionGuide.TOKEN_VARIABLE));
 		assertTrue(text, text.contains("Identifiers are written Type:id."));
 		assertFalse("No link to itself.", text.contains(AgentDiscoveryServlet.LLMS_TXT_PATH));
@@ -313,7 +313,7 @@ public class TestMcpServerCard extends TestCase {
 			credentials(personalAccessTokens(), basic(), apiKey(APIKeyPosition.HEADER), apiKey(APIKeyPosition.QUERY));
 
 		assertEquals(4, credentials.size());
-		assertEquals(com.top_logic.tl.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN,
+		assertEquals(com.top_logic.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN,
 			credentials.get(0).credential());
 		assertNotNull(credentials.get(0).obtain());
 		assertEquals("Authorization", credentials.get(1).header());

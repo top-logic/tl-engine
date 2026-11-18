@@ -59,13 +59,13 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
-import com.top_logic.tl.ai.core.limits.RunLimits;
-import com.top_logic.tl.ai.core.memory.ConversationMemory;
-import com.top_logic.tl.ai.core.session.ConversationLog;
-import com.top_logic.tl.ai.core.session.ConversationLogReplay;
-import com.top_logic.tl.ai.core.session.Part;
-import com.top_logic.tl.ai.core.session.Turn;
+import com.top_logic.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.ai.core.limits.RunLimits;
+import com.top_logic.ai.core.memory.ConversationMemory;
+import com.top_logic.ai.core.session.ConversationLog;
+import com.top_logic.ai.core.session.ConversationLogReplay;
+import com.top_logic.ai.core.session.Part;
+import com.top_logic.ai.core.session.Turn;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
@@ -1043,7 +1043,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 				Logger.info("Prompt improvement refused: " + ex.getMessage(), ChatControl.class);
 				return statusReply(STATUS_REJECTED)
 					.setReason(
-						Resources.getInstance().getString(com.top_logic.tl.ai.core.limits.I18NConstants.TOO_MANY_RUNS_IN_PROGRESS))
+						Resources.getInstance().getString(com.top_logic.ai.core.limits.I18NConstants.TOO_MANY_RUNS_IN_PROGRESS))
 					;
 			}
 			Logger.info("Prompt improvement not started: " + ex.getMessage(), ChatControl.class);

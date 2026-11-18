@@ -10,8 +10,8 @@ import java.util.Objects;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity;
-import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
+import com.top_logic.ai.core.security.ReadFilter;
 import com.top_logic.util.TLContextManager;
 
 /**

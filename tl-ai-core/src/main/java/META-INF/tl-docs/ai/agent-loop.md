@@ -7,7 +7,7 @@ order: 60
 
 ## The loop
 
-`AgentLoop` (package `com.top_logic.tl.ai.core.agent`) is the execution engine of a run: it builds a `ProviderRequest`, streams the model's answer, extracts the `ToolCall`s, executes the tools and loops until a stop condition holds. `AgentFactory` builds agents from their definitions - configured ones (`TopLogicAgentDefinitions`) and records in the knowledge base - and wires provider, tools, MCP servers and skills.
+`AgentLoop` (package `com.top_logic.ai.core.agent`) is the execution engine of a run: it builds a `ProviderRequest`, streams the model's answer, extracts the `ToolCall`s, executes the tools and loops until a stop condition holds. `AgentFactory` builds agents from their definitions - configured ones (`TopLogicAgentDefinitions`) and records in the knowledge base - and wires provider, tools, MCP servers and skills.
 
 The flow of a run is `AgentFactory.runAgent()` → `AgentLoop` → `LLMProvider.stream()` → `StreamHandler` → `ToolCatalog.execute()` → repeat. `AgentFactory.runAgent(..., RunOverrides)` is the choke point every entry point passes - the chat, `AgentRunner`, the scheduler, TL-Script, MCP and A2A - so the run authorization ([run access](doc:ai/security/run-access)) and the run limits ([run limits](doc:ai/limits-and-caching)) are applied there, before a provider is called. It refuses a run while `AgentRuntimeService`, `AgentApplicationService` or `AgentPolicyService` is not running, so no run starts with the default security context, without limits, without a budget or without the application's standing instructions; a test that starts agent runs starts all three modules.
 

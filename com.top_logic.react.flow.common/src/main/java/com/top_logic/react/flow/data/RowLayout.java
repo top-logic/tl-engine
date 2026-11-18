@@ -72,6 +72,9 @@ public interface RowLayout extends com.top_logic.react.flow.data.Layout {
 	@Override
 	com.top_logic.react.flow.data.RowLayout setRenderInfo(java.lang.Object value);
 
+	@Override
+	com.top_logic.react.flow.data.RowLayout setDropTarget(boolean value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.RowLayout readRowLayout(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

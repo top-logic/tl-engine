@@ -108,6 +108,12 @@ public class Empty_Impl extends com.top_logic.react.flow.data.impl.Box_Impl impl
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.Empty setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return EMPTY__TYPE;
 	}

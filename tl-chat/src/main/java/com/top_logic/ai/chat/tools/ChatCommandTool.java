@@ -13,6 +13,12 @@ import com.top_logic.ai.chat.view.ChatConversationElement;
 import com.top_logic.ai.chat.view.ChatViewBinding;
 import com.top_logic.ai.chat.view.ChatWindowService;
 import com.top_logic.ai.chat.view.PageCommand;
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.json.JSON;
@@ -20,18 +26,12 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.scripting.WindowAccess;
-import com.top_logic.tl.ai.core.security.ReadFilter;
-import com.top_logic.tl.ai.core.tools.model.AgentObjectFormat;
-import com.top_logic.tl.ai.core.tools.parameters.DeclaredParameters;
-import com.top_logic.tl.ai.core.tools.parameters.DeclaredParameters.InvalidArguments;
-import com.top_logic.tl.ai.core.tools.refusal.ApplicationRefusals;
-import com.top_logic.tl.ai.core.tools.refusal.messages.ApplicationRefusal;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.tools.model.AgentObjectFormat;
+import com.top_logic.ai.core.tools.parameters.DeclaredParameters;
+import com.top_logic.ai.core.tools.parameters.DeclaredParameters.InvalidArguments;
+import com.top_logic.ai.core.tools.refusal.ApplicationRefusals;
+import com.top_logic.ai.core.tools.refusal.messages.ApplicationRefusal;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.error.TopLogicException;
@@ -63,7 +63,7 @@ import com.top_logic.util.error.TopLogicException;
  * page does not list is refused with the names it does. See
  * {@link ChatViewBinding#command(com.top_logic.basic.col.TypedAnnotatable, String, Person)}.</li>
  * <li><b>The arguments.</b> Deny by default as well: the values are checked against the declared
- * parameters ({@link DeclaredParameters#bind(Map, com.top_logic.tl.ai.core.security.ModelSecurity)}) - an unknown or missing parameter, a value of
+ * parameters ({@link DeclaredParameters#bind(Map, com.top_logic.ai.core.security.ModelSecurity)}) - an unknown or missing parameter, a value of
  * the wrong type, a value not among the allowed ones, a violated constraint - and refused with what
  * does not fit; the command does not run. An object is passed by its id and resolved with the
  * rights of the run ({@link AgentObjectFormat}): an object the user cannot read is refused exactly

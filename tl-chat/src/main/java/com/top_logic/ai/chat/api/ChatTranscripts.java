@@ -30,23 +30,23 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
-import com.top_logic.tl.ai.core.cost.CostConversion;
-import com.top_logic.tl.ai.core.cost.Money;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.execution.model.AgentExecution;
-import com.top_logic.tl.ai.core.execution.model.AgentSession;
-import com.top_logic.tl.ai.core.provider.LLMProviderService;
-import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
-import com.top_logic.tl.ai.core.scripting.Converters;
-import com.top_logic.tl.ai.core.session.ConversationLog;
-import com.top_logic.tl.ai.core.session.ConversationLogListener;
-import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
-import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
-import com.top_logic.tl.ai.core.session.persist.messages.PersistedPart;
-import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
-import com.top_logic.tl.ai.core.session.persist.messages.TextPartDto;
+import com.top_logic.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.ai.core.cost.CostConversion;
+import com.top_logic.ai.core.cost.Money;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.execution.model.AgentExecution;
+import com.top_logic.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.provider.LLMProviderService;
+import com.top_logic.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.ai.core.scripting.Converters;
+import com.top_logic.ai.core.session.ConversationLog;
+import com.top_logic.ai.core.session.ConversationLogListener;
+import com.top_logic.ai.core.session.persist.ConversationLogSerializer;
+import com.top_logic.ai.core.session.persist.messages.PersistedConversationV2;
+import com.top_logic.ai.core.session.persist.messages.PersistedPart;
+import com.top_logic.ai.core.session.persist.messages.PersistedTurn;
+import com.top_logic.ai.core.session.persist.messages.TextPartDto;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
@@ -299,7 +299,7 @@ public final class ChatTranscripts {
 			if (!turn.hasLastIterationUsage()) {
 				continue;
 			}
-			com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto usage = turn.getLastIterationUsage();
+			com.top_logic.ai.core.session.persist.messages.TokenUsageDto usage = turn.getLastIterationUsage();
 			if (promptTokens(usage) <= 0) {
 				continue;
 			}
@@ -357,7 +357,7 @@ public final class ChatTranscripts {
 	}
 
 	private static int promptTokens(
-			com.top_logic.tl.ai.core.session.persist.messages.TokenUsageDto usage) {
+			com.top_logic.ai.core.session.persist.messages.TokenUsageDto usage) {
 		return usage.getInputTokens() + usage.getCacheReadTokens() + usage.getCacheWriteTokens();
 	}
 

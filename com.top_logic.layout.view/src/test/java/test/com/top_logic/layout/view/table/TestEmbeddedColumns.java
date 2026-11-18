@@ -100,8 +100,8 @@ public class TestEmbeddedColumns extends TestCase {
 		assertEquals("The embedded column keeps the type of the attribute it shows.",
 			_personType.getPart("name"), setup.type().part());
 		assertEquals("The label of the embedded column starts with the label of the reference.",
-			prefixed(TLModelNamingConvention.resourceKey(reference(_rowType, "assignee")),
-				TLModelNamingConvention.resourceKey(_personType.getPart("name"))),
+			prefixed(TLModelNamingConvention.getTypePartLabelKey(reference(_rowType, "assignee")),
+				TLModelNamingConvention.getTypePartLabelKey(_personType.getPart("name"))),
 			setup.label());
 		assertEquals("The value is read from the object the row points to.", "Alice",
 			setup.value().apply(row(person("Alice", null))));
@@ -116,9 +116,9 @@ public class TestEmbeddedColumns extends TestCase {
 			column(embedded("assignee.contact", attributeColumn("email")), "assignee.contact.email");
 
 		assertEquals(prefixed(
-			prefixed(TLModelNamingConvention.resourceKey(reference(_rowType, "assignee")),
-				TLModelNamingConvention.resourceKey(reference(_personType, "contact"))),
-			TLModelNamingConvention.resourceKey(_contactType.getPart("email"))), setup.label());
+			prefixed(TLModelNamingConvention.getTypePartLabelKey(reference(_rowType, "assignee")),
+				TLModelNamingConvention.getTypePartLabelKey(reference(_personType, "contact"))),
+			TLModelNamingConvention.getTypePartLabelKey(_contactType.getPart("email"))), setup.label());
 		assertEquals("alice@example.com",
 			setup.value().apply(row(person("Alice", contact("alice@example.com")))));
 	}
@@ -240,7 +240,7 @@ public class TestEmbeddedColumns extends TestCase {
 		ColumnSetup setup = column(embedding, "assignee.name");
 
 		assertEquals("The declared label is prefixed like any other.",
-			prefixed(TLModelNamingConvention.resourceKey(reference(_rowType, "assignee")),
+			prefixed(TLModelNamingConvention.getTypePartLabelKey(reference(_rowType, "assignee")),
 				ResKey.text("Assignee")),
 			setup.label());
 		assertEquals(180, setup.width());
@@ -257,7 +257,7 @@ public class TestEmbeddedColumns extends TestCase {
 		set(embedding, EmbeddedColumns.Config.LABEL, ResKey.text("Contact"));
 
 		assertEquals(prefixed(ResKey.text("Contact"),
-			TLModelNamingConvention.resourceKey(_contactType.getPart("email"))),
+			TLModelNamingConvention.getTypePartLabelKey(_contactType.getPart("email"))),
 			column(embedding, "assignee.contact.email").label());
 	}
 
@@ -273,7 +273,7 @@ public class TestEmbeddedColumns extends TestCase {
 		assertEquals("The declared type says which columns are embedded.",
 			_contactType.getPart("email"), setup.type().part());
 		assertEquals(prefixed(ResKey.text("Contact"),
-			TLModelNamingConvention.resourceKey(_contactType.getPart("email"))), setup.label());
+			TLModelNamingConvention.getTypePartLabelKey(_contactType.getPart("email"))), setup.label());
 		assertEquals("The columns are named after the declared name.",
 			List.of("contact.email"), declaredNames(embedding));
 	}

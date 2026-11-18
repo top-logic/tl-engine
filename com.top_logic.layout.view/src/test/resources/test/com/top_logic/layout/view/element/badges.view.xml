@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="count"/>
+		<channel name="person"/>
+	</channels>
+
+	<stack>
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				badge="count"
+				badge-role="warning"
+				label="Inbox"
+			/>
+		</button>
+		<tab-bar>
+			<tabs>
+				<tab id="open"
+					badge="count"
+					label="Open"
+				>
+					<badge-label>
+						<en>New entries</en>
+					</badge-label>
+					<panel/>
+				</tab>
+				<tab id="done"
+					label="Done"
+				>
+					<panel/>
+				</tab>
+			</tabs>
+		</tab-bar>
+		<avatar
+			badge="count"
+			badge-role="success"
+			input="person"
+		/>
+		<bottom-bar>
+			<items>
+				<item id="inbox"
+					badge="count"
+					badge-role="info"
+					icon="css:bi bi-inbox"
+					label="Inbox"
+				/>
+				<item id="home"
+					icon="css:bi bi-house"
+					label="Home"
+				/>
+			</items>
+		</bottom-bar>
+	</stack>
+</view>

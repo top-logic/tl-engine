@@ -20,6 +20,7 @@ import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.table.Column;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortSpec;
@@ -38,6 +39,11 @@ import com.top_logic.tool.export.ExcelCellRenderer;
  * </p>
  */
 public class ColumnDeclarations {
+
+	/**
+	 * The name of the {@link #objectColumn(TLStructuredType) column showing the rows themselves}.
+	 */
+	public static final String OBJECT_COLUMN = "object";
 
 	/**
 	 * This class holds what a list of {@link ColumnDeclaration}s amounts to; it has no state of its
@@ -229,6 +235,22 @@ public class ColumnDeclarations {
 			result.add(AttributeColumn.derived(part));
 		}
 		return result;
+	}
+
+	/**
+	 * The column showing objects of the given type by their display labels, headed by the label of
+	 * the type.
+	 *
+	 * <p>
+	 * It is what a table shows whose rows hold nothing it could show in a column of its own - a
+	 * table declaring no columns over objects of a type without attributes.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type of the objects the column shows.
+	 */
+	public static ColumnDeclaration objectColumn(TLStructuredType type) {
+		return ComputedColumn.rows(OBJECT_COLUMN, TLModelNamingConvention.getTypeLabelKey(type));
 	}
 
 	/**

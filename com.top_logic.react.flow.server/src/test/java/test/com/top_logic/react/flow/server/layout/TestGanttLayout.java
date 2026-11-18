@@ -12,6 +12,7 @@ import java.util.List;
 import junit.framework.TestCase;
 
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.react.flow.data.Border;
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.ConnectorSymbol;
@@ -37,9 +38,12 @@ import com.top_logic.react.flow.data.Sticky;
 import com.top_logic.react.flow.data.Text;
 import com.top_logic.react.flow.data.VerticalLayout;
 import com.top_logic.react.flow.data.Widget;
+import com.top_logic.react.flow.operations.ColorRoles;
 import com.top_logic.react.flow.operations.StickyOperations;
 import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.operations.layout.GanttLayoutOperations;
+import com.top_logic.react.flow.server.script.FlowFactory;
+import com.top_logic.react.flow.server.script.ToColorRole;
 import com.top_logic.react.flow.server.svg.SvgTagWriter;
 import com.top_logic.react.flow.server.ui.AWTContext;
 import com.top_logic.react.flow.svg.RenderContext;
@@ -49,6 +53,7 @@ import com.top_logic.react.flow.svg.event.SVGClickEvent;
 import com.top_logic.react.flow.svg.event.SVGClickHandler;
 import com.top_logic.react.flow.svg.event.SVGWheelEvent;
 import com.top_logic.react.flow.svg.event.SVGWheelHandler;
+import com.top_logic.util.error.TopLogicException;
 
 /** Tests for {@link com.top_logic.react.flow.operations.layout.GanttLayoutOperations}. */
 public class TestGanttLayout extends TestCase {
@@ -1971,6 +1976,319 @@ public class TestGanttLayout extends TestCase {
 			setY(y);
 			setWidth(width);
 			setHeight(height);
+		}
+	}
+
+	// -----------------------------------------------------------------------
+	// Edge routing through the gaps between rows
+	// -----------------------------------------------------------------------
+
+	/**
+	 * An edge from the first to the third row runs horizontally in the gap below the first row,
+	 * not through the item filling the second row.
+	 */
+	public void testEdgeToRowBelowRunsInGapBelowSource() throws Exception {
+		GanttSpan a = span("a", "r1", 10.0, 30.0, "A");
+		GanttSpan middle = span("m", "r2", 0.0, 100.0, "M");
+		GanttSpan b = span("b", "r3", 40.0, 60.0, "B");
+		GanttLayout layout = threeRowChart(Arrays.asList(a, middle, b), edge("e1", "a", "b"));
+
+		double y = horizontalY(edgeGroup(render(layout)), 0);
+		assertTrue("above the middle item: " + y, y < middle.getBox().getY());
+		assertTrue("below the source item: " + y, y > a.getBox().getY() + a.getBox().getHeight());
+		assertEquals("centered in the gap", DEFAULT_ROW_TOTAL_HEIGHT, y, 1e-9);
+	}
+
+	/**
+	 * An edge from the third to the first row runs horizontally in the gap above the third row.
+	 */
+	public void testEdgeToRowAboveRunsInGapAboveSource() throws Exception {
+		GanttSpan a = span("a", "r1", 10.0, 30.0, "A");
+		GanttSpan middle = span("m", "r2", 0.0, 100.0, "M");
+		GanttSpan b = span("b", "r3", 40.0, 60.0, "B");
+		GanttLayout layout = threeRowChart(Arrays.asList(a, middle, b), edge("e1", "b", "a"));
+
+		double y = horizontalY(edgeGroup(render(layout)), 0);
+		assertTrue("below the middle item: " + y, y > middle.getBox().getY() + middle.getBox().getHeight());
+		assertTrue("above the source item: " + y, y < b.getBox().getY());
+		assertEquals("centered in the gap", 2 * DEFAULT_ROW_TOTAL_HEIGHT, y, 1e-9);
+	}
+
+	/**
+	 * Edges passing through the same gap with overlapping horizontal ranges run on separate lanes
+	 * within the gap.
+	 */
+	public void testOverlappingEdgesInSameGapUseSeparateLanes() throws Exception {
+		GanttSpan a1 = span("a1", "r1", 10.0, 30.0, "A1");
+		GanttSpan a2 = span("a2", "r1", 12.0, 32.0, "A2");
+		GanttSpan b = span("b", "r3", 40.0, 60.0, "B");
+		GanttLayout layout = threeRowChart(Arrays.asList(a1, a2, b), edge("e1", "a1", "b"), edge("e2", "a2", "b"));
+
+		String edges = edgeGroup(render(layout));
+		double y1 = horizontalY(edges, 0);
+		double y2 = horizontalY(edges, 1);
+		assertTrue("separate lanes: " + y1 + ", " + y2, Math.abs(y1 - y2) > 1.0);
+		double gapTop = DEFAULT_ROW_TOTAL_HEIGHT - ROW_PADDING;
+		double gapBottom = DEFAULT_ROW_TOTAL_HEIGHT + ROW_PADDING;
+		for (double y : new double[] { y1, y2 }) {
+			assertTrue("within the gap: " + y, y > gapTop && y < gapBottom);
+		}
+	}
+
+	/**
+	 * Edges passing through the same gap without overlapping horizontal ranges share a lane.
+	 */
+	public void testDisjointEdgesInSameGapShareLane() throws Exception {
+		GanttSpan a1 = span("a1", "r1", 10.0, 20.0, "A1");
+		GanttSpan b1 = span("b1", "r3", 25.0, 30.0, "B1");
+		GanttSpan a2 = span("a2", "r1", 50.0, 60.0, "A2");
+		GanttSpan b2 = span("b2", "r3", 70.0, 80.0, "B2");
+		GanttLayout layout =
+			threeRowChart(Arrays.asList(a1, b1, a2, b2), edge("e1", "a1", "b1"), edge("e2", "a2", "b2"));
+
+		String edges = edgeGroup(render(layout));
+		assertEquals("same lane", horizontalY(edges, 0), horizontalY(edges, 1), 1e-9);
+		assertEquals("centered in the gap", DEFAULT_ROW_TOTAL_HEIGHT, horizontalY(edges, 0), 1e-9);
+	}
+
+	/**
+	 * An edge between adjacent rows runs halfway between its endpoints, as before.
+	 */
+	public void testEdgeBetweenAdjacentRowsUnchanged() throws Exception {
+		String edges = edgeGroup(renderEdge(GanttEdge.create(), 10.0, 30.0, 40.0, 60.0));
+		double[] line = pathCoordinates(pathElement(edges, 0));
+		double sy = line[1];
+		double ty = line[line.length - 1];
+		assertEquals("halfway between the endpoints", (sy + ty) / 2, horizontalY(edges, 0), 1e-9);
+	}
+
+	/**
+	 * The drop areas follow the rows of the last layout pass, and dropping an item into another
+	 * row discards the rows of the last layout pass.
+	 */
+	public void testDragUsesRowsOfLastLayout() {
+		GanttSpan span = span("s1", "r1", 10.0, 30.0, "Task");
+		GanttLayout layout = buildLayoutWithSpan(span, "r1", "r2");
+		Diagram d = Diagram.create().setRoot(layout);
+		RenderContext context = new AWTContext(12f);
+		d.layout(context);
+		DragController drag = layout;
+		assertEquals("second row", DEFAULT_ROW_TOTAL_HEIGHT, drag.getDropAreas(span.getBox()).get(1).getY(), 1e-9);
+
+		layout.getRootRows().get(0).setMinContentHeight(100);
+		d.layout(context);
+		double grownRow = 100 + 2 * ROW_PADDING;
+		assertEquals("second row below the grown row", grownRow, drag.getDropAreas(span.getBox()).get(1).getY(),
+			1e-9);
+		double[] moved = drag.constrainMove(span.getBox(), span.getBox().getX(), grownRow + 10);
+		assertEquals("snapped into the second row", grownRow + ROW_PADDING, moved[1], 1e-9);
+
+		drag.commitDrag(span.getBox(), span.getBox().getX(), moved[1], span.getBox().getWidth(),
+			span.getBox().getHeight());
+		assertEquals("dropped into the second row", "r2", span.getRowId());
+		assertNull("rows of the last layout discarded", layout.getRowLayout());
+
+		d.layout(context);
+		assertNotNull("rows placed by the layout", layout.getRowLayout());
+		assertEquals("span moved to the second row", grownRow + ROW_PADDING, span.getBox().getY(), 1e-9);
+	}
+
+	/** Builds a chart with three rows r1, r2, r3, the given items and edges. */
+	private static GanttLayout threeRowChart(List<? extends com.top_logic.react.flow.data.GanttItem> items,
+			GanttEdge... edges) {
+		GanttLayout layout = GanttLayout.create()
+			.setRowLabelMinWidth(200.0)
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0)
+			.setEdges(Arrays.asList(edges));
+		for (com.top_logic.react.flow.data.GanttItem item : items) {
+			layout.addItem(item);
+		}
+		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1"), row("r2", "Row 2"), row("r3", "Row 3")));
+		for (com.top_logic.react.flow.data.GanttItem item : items) {
+			layout.addContent(item.getBox());
+		}
+		return layout;
+	}
+
+	/** An edge without symbols from the end of the given source to the start of the given target. */
+	private static GanttEdge edge(String id, String source, String target) {
+		return GanttEdge.create()
+			.setId(id)
+			.setSourceItemId(source)
+			.setSourceEndpoint(GanttEndpoint.END)
+			.setTargetItemId(target)
+			.setTargetEndpoint(GanttEndpoint.START);
+	}
+
+	private static String render(GanttLayout layout) throws Exception {
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+		return renderToSvg(d);
+	}
+
+	/**
+	 * The Y coordinate of the horizontal segment of the edge whose line is the path with the given
+	 * index in the edge group.
+	 */
+	private static double horizontalY(String edges, int index) {
+		double[] line = pathCoordinates(pathElement(edges, index));
+		// Points: start, source stub, source corner, target corner, target stub, end.
+		assertEquals("horizontal segment", line[5], line[7], 1e-9);
+		return line[5];
+	}
+
+	// -----------------------------------------------------------------------
+	// Color roles of edges and decorations
+	// -----------------------------------------------------------------------
+
+	/** An edge without color and role is drawn in the neutral role. */
+	public void testEdgeWithoutColorIsNeutral() throws Exception {
+		String line = pathElement(edgeGroup(renderEdge(GanttEdge.create(), 10.0, 30.0, 40.0, 60.0)), 0);
+		assertTrue("neutral role: " + line, line.contains("data-tl-role=\"neutral\""));
+		assertTrue("neutral substitute color: " + line,
+			line.contains("stroke=\"" + ColorRoles.NEUTRAL_LINE_FALLBACK + "\""));
+	}
+
+	/** A violated edge without color and role is drawn in the error role, its symbol as well. */
+	public void testViolatedEdgeWithoutColorIsError() throws Exception {
+		GanttEdge edge = GanttEdge.create().setTargetSymbol(ConnectorSymbol.FILLED_ARROW);
+		// Source ends at 50, target starts at 40: the dependency is violated.
+		String edges = edgeGroup(renderEdge(edge, 10.0, 50.0, 40.0, 60.0));
+		for (int n = 0; n <= 1; n++) {
+			String path = pathElement(edges, n);
+			assertTrue("error role: " + path, path.contains("data-tl-role=\"error\""));
+			assertTrue("error substitute color: " + path,
+				path.contains("stroke=\"" + ColorRoles.lineFallback(ColorRoles.ERROR) + "\""));
+		}
+	}
+
+	/** A violated edge is drawn in its violated role, whatever its enforcement mode. */
+	public void testViolatedEdgeIndependentOfEnforcement() throws Exception {
+		GanttSpan a = span("a", "r1", 10.0, 50.0, "A");
+		GanttSpan b = span("b", "r2", 40.0, 60.0, "B");
+		GanttEdge edge = edge("e1", "a", "b").setEnforce(GanttEnforce.NONE).setViolatedStrokeRole("warning");
+		String line = pathElement(edgeGroup(render(threeRowChart(Arrays.asList(a, b), edge))), 0);
+		assertTrue("violated role: " + line, line.contains("data-tl-role=\"warning\""));
+	}
+
+	/** A fixed color takes precedence over the role: the edge carries no role. */
+	public void testEdgeWithColorHasNoRole() throws Exception {
+		GanttEdge edge = GanttEdge.create().setStrokeColor("#123456").setStrokeRole("brand");
+		String line = pathElement(edgeGroup(renderEdge(edge, 10.0, 30.0, 40.0, 60.0)), 0);
+		assertFalse("no role: " + line, line.contains("data-tl-role"));
+		assertTrue("fixed color: " + line, line.contains("stroke=\"#123456\""));
+	}
+
+	/** A range decoration in a role carries the role and is filled in its substitute color. */
+	public void testRangeDecorationWithRole() throws Exception {
+		GanttRangeDecoration range = GanttRangeDecoration.create()
+			.setId("range")
+			.setFrom(60.0).setTo(80.0)
+			.setColorRole("category-3");
+		String rect = decorationElement(renderDecoration(range), "<rect");
+		assertTrue("role: " + rect, rect.contains("data-tl-role=\"category-3\""));
+		assertTrue("substitute color: " + rect,
+			rect.contains("fill=\"" + ColorRoles.areaFallback("category-3") + "\""));
+	}
+
+	/** A line decoration without color and role is drawn in the neutral role. */
+	public void testLineDecorationWithoutColorIsNeutral() throws Exception {
+		GanttLineDecoration line = GanttLineDecoration.create().setId("line").setAt(50.0);
+		String path = decorationElement(renderDecoration(line), "<path");
+		assertTrue("neutral role: " + path, path.contains("data-tl-role=\"neutral\""));
+	}
+
+	/** A line decoration with a fixed color carries no role. */
+	public void testLineDecorationWithColorHasNoRole() throws Exception {
+		GanttLineDecoration line =
+			GanttLineDecoration.create().setId("line").setAt(50.0).setColor("#3070d0").setColorRole("error");
+		String path = decorationElement(renderDecoration(line), "<path");
+		assertFalse("no role: " + path, path.contains("data-tl-role"));
+	}
+
+	/**
+	 * The script function of a decoration sets its default color only if neither color nor role
+	 * is given.
+	 */
+	public void testDecorationFactoryDefaultColorOnlyWithoutRole() {
+		GanttRangeDecoration plain = FlowFactory.ganttRangeDeco("plain", 0, 10, null, null, null, null, null, null);
+		assertFalse("default color", ColorRoles.isEmpty(plain.getColor()));
+		assertNull("no role", plain.getColorRole());
+
+		GanttRangeDecoration withRole =
+			FlowFactory.ganttRangeDeco("role", 0, 10, null, null, null, null, null, "category-3");
+		assertTrue("no color", ColorRoles.isEmpty(withRole.getColor()));
+		assertEquals("role", "category-3", withRole.getColorRole());
+
+		GanttLineDecoration lineWithRole =
+			FlowFactory.ganttLineDeco("line", 5, null, null, null, null, null, null, "error");
+		assertTrue("no color", ColorRoles.isEmpty(lineWithRole.getColor()));
+		assertEquals("role", "error", lineWithRole.getColorRole());
+	}
+
+	/** Renders a chart with a single row and the given decoration. */
+	private static String renderDecoration(GanttDecoration decoration) throws Exception {
+		GanttLayout layout = GanttLayout.create()
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0)
+			.setDecorations(Arrays.asList(decoration));
+		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1")));
+		return render(layout);
+	}
+
+	/** The start tag of the first element with the given tag start in the decoration group. */
+	private static String decorationElement(String svg, String tagStart) {
+		int group = svg.indexOf("tl-gantt-decorations");
+		assertTrue("decoration group present", group >= 0);
+		int pos = svg.indexOf(tagStart, group);
+		assertTrue(tagStart + " present", pos >= 0);
+		return svg.substring(pos, svg.indexOf(">", pos) + 1);
+	}
+
+	/**
+	 * Dragging the target of an edge before its source turns the edge into its violated style
+	 * after the next layout: the role of the violated state, also for its symbol.
+	 */
+	public void testDragIntoViolationRedrawsInViolatedRole() throws Exception {
+		GanttRow r1 = FlowFactory.ganttRow("r1", cell("Row 1"), null, null, null, null, null, null);
+		GanttRow r2 = FlowFactory.ganttRow("r2", cell("Row 2"), null, null, null, null, null, null);
+		GanttSpan build = FlowFactory.ganttSpan("build", "r1", cell("Build"), 10, 30,
+			null, null, null, null, null, null, null, null, null, null);
+		GanttPoint beta = FlowFactory.ganttPoint("beta", "r2", cell("Beta"), 50, null, null, null, null, null, null);
+		GanttEdge edge = FlowFactory.ganttEdge("e", "build", GanttEndpoint.END, "beta", GanttEndpoint.START, null,
+			null, null, null, null, 2.0, null, null, ConnectorSymbol.FILLED_ARROW, null, null);
+		GanttLayout layout = FlowFactory.gantt(Arrays.asList(r1, r2), Arrays.asList(build, beta),
+			Arrays.asList(edge), null, 0, 100, 1.0, null, null);
+		Diagram d = Diagram.create().setRoot(layout);
+		RenderContext context = new AWTContext(12f);
+		d.layout(context);
+		String before = edgeGroup(renderToSvg(d));
+		assertTrue("not violated: " + before, pathElement(before, 0).contains("data-tl-role=\"neutral\""));
+
+		Box box = beta.getBox();
+		((DragController) layout).commitDrag(box, box.getX() - 40, box.getY(), box.getWidth(), box.getHeight());
+		d.layout(context);
+		String after = edgeGroup(renderToSvg(d));
+		for (int n = 0; n <= 1; n++) {
+			String path = pathElement(after, n);
+			assertTrue("violated role: " + path, path.contains("data-tl-role=\"error\""));
+			assertTrue("violated width: " + path, path.contains("stroke-width=\"2"));
+		}
+	}
+
+	/**
+	 * A color role given to a TL-Script function: a missing argument stays "no role", so that the
+	 * default of the element applies (and not the first role of {@link ValueColor}).
+	 */
+	public void testColorRoleConversion() {
+		ToColorRole conversion = new ToColorRole();
+		assertNull("no role", conversion.fromScript(null));
+		assertEquals("error", conversion.fromScript(ValueColor.ERROR));
+		assertEquals("category-3", conversion.fromScript("category-3"));
+		try {
+			conversion.fromScript("no-such-role");
+			fail("Unknown role must be rejected.");
+		} catch (TopLogicException ex) {
+			// expected
 		}
 	}
 }

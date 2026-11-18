@@ -24,8 +24,8 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.view.ViewServlet;
 import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
 import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentication;
-import com.top_logic.tl.ai.core.access.AccessTokenAuthentication;
-import com.top_logic.tl.ai.core.access.EndpointAuthentication;
+import com.top_logic.ai.core.access.AccessTokenAuthentication;
+import com.top_logic.ai.core.access.EndpointAuthentication;
 import com.top_logic.util.Resources;
 
 /**
@@ -99,9 +99,9 @@ public class TestA2ADiscoveryContribution extends TestCase {
 		assertTrue(text, text.contains(APP + "/a2a/plain\n"));
 		assertTrue(text, text.contains(resources.getString(I18NConstants.CREDENTIALS_INTRO)));
 		assertTrue(text, text.contains("\"Authorization: " + resources.getString(
-			com.top_logic.tl.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_VALUE) + "\""));
+			com.top_logic.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_VALUE) + "\""));
 		assertTrue(text, text.contains(resources.getString(
-			com.top_logic.tl.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_OBTAIN__URL
+			com.top_logic.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_OBTAIN__URL
 				.fill(APP + ViewServlet.ROOT_PATH))));
 	}
 

@@ -23,12 +23,12 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.sched.SchedulerService;
 
-import com.top_logic.tl.ai.core.agent.StopReason;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
-import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.core.agent.StopReason;
+import com.top_logic.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.ai.core.agent.subagent.SubagentResult;
+import com.top_logic.ai.core.message.TokenUsage;
 
 /**
  * When the news of a chat's subagents starts a turn of the lead.

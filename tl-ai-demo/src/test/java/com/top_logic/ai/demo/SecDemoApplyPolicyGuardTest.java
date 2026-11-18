@@ -16,19 +16,19 @@ import junit.framework.Test;
 
 import test.com.top_logic.basic.AssertProtocol;
 
+import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
-import com.top_logic.tl.ai.core.security.layout.MatrixDimension;
-import com.top_logic.tl.ai.core.security.layout.PolicyChecks;
-import com.top_logic.tl.ai.core.security.layout.PolicyDraft;
-import com.top_logic.tl.ai.core.security.layout.PolicyDraft.CellState;
-import com.top_logic.tl.ai.core.security.layout.PolicyEditSession;
-import com.top_logic.tl.ai.core.security.layout.PolicyMatrix;
-import com.top_logic.tl.ai.core.security.layout.PolicyStore;
-import com.top_logic.tl.ai.core.security.layout.ToolAccessPolicyComponent;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
+import com.top_logic.ai.classic.security.layout.MatrixDimension;
+import com.top_logic.ai.classic.security.layout.PolicyChecks;
+import com.top_logic.ai.classic.security.layout.PolicyDraft;
+import com.top_logic.ai.classic.security.layout.PolicyDraft.CellState;
+import com.top_logic.ai.classic.security.layout.PolicyEditSession;
+import com.top_logic.ai.classic.security.layout.PolicyMatrix;
+import com.top_logic.ai.classic.security.layout.PolicyStore;
+import com.top_logic.ai.classic.security.layout.ToolAccessPolicyComponent;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**

@@ -108,7 +108,7 @@ const MODIFIERS = {
   'tl-upload': new Set([]),
   'tl-file-upload': new Set([]),
   'tl-alert': new Set([]), // Die Bedeutung ist Pflicht und ein Attribut (data-tl-role).
-  'tl-badge': new Set([]),
+  'tl-badge': new Set(['dot']), // Punkt ohne Ziffern: eine Form; die Bedeutung ist ein Attribut (data-tl-role).
   'tl-divider': new Set(['vertical']),
   'tl-toggle': new Set(['end']), // Öffnet zum Zeilenende (Seitenleiste, #29787): eine Form, kein Zustand.
   'tl-spinner': new Set(['sm']),
@@ -119,6 +119,7 @@ const MODIFIERS = {
   'tl-tabs': new Set([]),
   'tl-breadcrumb': new Set([]),
   'tl-skeleton': new Set(['text', 'circle']), // Die Form; das Rechteck ist die Grundform.
+  'tl-login-backdrop': new Set([]),
   'tl-status': new Set([]),
   'tl-login-alternatives': new Set([]), // Gruppe der Anmelde-Alternativen (#30296): eine Form, kein Zustand.
   'tl-login-card': new Set([]), // Karte der Anmeldeseite (#30296): eine Form, kein Zustand.

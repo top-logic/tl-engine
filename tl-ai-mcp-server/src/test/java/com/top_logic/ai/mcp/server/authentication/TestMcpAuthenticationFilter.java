@@ -30,9 +30,9 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.view.ViewServlet;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.ai.core.access.EndpointAuthentication;
 import com.top_logic.service.openapi.server.authentication.conf.EndpointCredential;
-import com.top_logic.tl.ai.core.access.AccessTokenAuthentication;
-import com.top_logic.tl.ai.core.access.EndpointAuthentication;
+import com.top_logic.ai.core.access.AccessTokenAuthentication;
 import com.top_logic.util.Resources;
 
 /**
@@ -150,10 +150,10 @@ public class TestMcpAuthenticationFilter extends TestCase {
 		assertTrue(body, body.contains(HttpDoubles.APPLICATION_URL + McpServerCard.PATH));
 		Resources resources = Resources.getLogInstance();
 		assertTrue(body, body.contains(resources.getString(
-			com.top_logic.tl.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_OBTAIN__URL
+			com.top_logic.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_OBTAIN__URL
 				.fill(HttpDoubles.APPLICATION_URL + ViewServlet.ROOT_PATH))));
 		assertTrue(body, body.contains("Authorization: " + resources.getString(
-			com.top_logic.tl.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_VALUE)));
+			com.top_logic.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_VALUE)));
 	}
 
 	/**

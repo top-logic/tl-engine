@@ -23,7 +23,7 @@ and see the page the user has open.
 Depend on `tl-ai-views` and give an agent the skill:
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
+<config service-class="com.top_logic.ai.core.agent.TopLogicAgentDefinitions">
 	<instance>
 		<agents>
 			<agent name="TL_SingleAgent">

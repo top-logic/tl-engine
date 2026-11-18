@@ -1747,4 +1747,162 @@ public class TestGanttLayout extends TestCase {
 			setHeight(height);
 		}
 	}
+
+	// -----------------------------------------------------------------------
+	// Edge routing through the gaps between rows
+	// -----------------------------------------------------------------------
+
+	/**
+	 * An edge from the first to the third row runs horizontally in the gap below the first row,
+	 * not through the item filling the second row.
+	 */
+	public void testEdgeToRowBelowRunsInGapBelowSource() throws Exception {
+		GanttSpan a = span("a", "r1", 10.0, 30.0, "A");
+		GanttSpan middle = span("m", "r2", 0.0, 100.0, "M");
+		GanttSpan b = span("b", "r3", 40.0, 60.0, "B");
+		GanttLayout layout = threeRowChart(Arrays.asList(a, middle, b), edge("e1", "a", "b"));
+
+		double y = horizontalY(edgeGroup(render(layout)), 0);
+		assertTrue("above the middle item: " + y, y < middle.getBox().getY());
+		assertTrue("below the source item: " + y, y > a.getBox().getY() + a.getBox().getHeight());
+		assertEquals("centered in the gap", DEFAULT_ROW_TOTAL_HEIGHT, y, 1e-9);
+	}
+
+	/**
+	 * An edge from the third to the first row runs horizontally in the gap above the third row.
+	 */
+	public void testEdgeToRowAboveRunsInGapAboveSource() throws Exception {
+		GanttSpan a = span("a", "r1", 10.0, 30.0, "A");
+		GanttSpan middle = span("m", "r2", 0.0, 100.0, "M");
+		GanttSpan b = span("b", "r3", 40.0, 60.0, "B");
+		GanttLayout layout = threeRowChart(Arrays.asList(a, middle, b), edge("e1", "b", "a"));
+
+		double y = horizontalY(edgeGroup(render(layout)), 0);
+		assertTrue("below the middle item: " + y, y > middle.getBox().getY() + middle.getBox().getHeight());
+		assertTrue("above the source item: " + y, y < b.getBox().getY());
+		assertEquals("centered in the gap", 2 * DEFAULT_ROW_TOTAL_HEIGHT, y, 1e-9);
+	}
+
+	/**
+	 * Edges passing through the same gap with overlapping horizontal ranges run on separate lanes
+	 * within the gap.
+	 */
+	public void testOverlappingEdgesInSameGapUseSeparateLanes() throws Exception {
+		GanttSpan a1 = span("a1", "r1", 10.0, 30.0, "A1");
+		GanttSpan a2 = span("a2", "r1", 12.0, 32.0, "A2");
+		GanttSpan b = span("b", "r3", 40.0, 60.0, "B");
+		GanttLayout layout = threeRowChart(Arrays.asList(a1, a2, b), edge("e1", "a1", "b"), edge("e2", "a2", "b"));
+
+		String edges = edgeGroup(render(layout));
+		double y1 = horizontalY(edges, 0);
+		double y2 = horizontalY(edges, 1);
+		assertTrue("separate lanes: " + y1 + ", " + y2, Math.abs(y1 - y2) > 1.0);
+		double gapTop = DEFAULT_ROW_TOTAL_HEIGHT - ROW_PADDING;
+		double gapBottom = DEFAULT_ROW_TOTAL_HEIGHT + ROW_PADDING;
+		for (double y : new double[] { y1, y2 }) {
+			assertTrue("within the gap: " + y, y > gapTop && y < gapBottom);
+		}
+	}
+
+	/**
+	 * Edges passing through the same gap without overlapping horizontal ranges share a lane.
+	 */
+	public void testDisjointEdgesInSameGapShareLane() throws Exception {
+		GanttSpan a1 = span("a1", "r1", 10.0, 20.0, "A1");
+		GanttSpan b1 = span("b1", "r3", 25.0, 30.0, "B1");
+		GanttSpan a2 = span("a2", "r1", 50.0, 60.0, "A2");
+		GanttSpan b2 = span("b2", "r3", 70.0, 80.0, "B2");
+		GanttLayout layout =
+			threeRowChart(Arrays.asList(a1, b1, a2, b2), edge("e1", "a1", "b1"), edge("e2", "a2", "b2"));
+
+		String edges = edgeGroup(render(layout));
+		assertEquals("same lane", horizontalY(edges, 0), horizontalY(edges, 1), 1e-9);
+		assertEquals("centered in the gap", DEFAULT_ROW_TOTAL_HEIGHT, horizontalY(edges, 0), 1e-9);
+	}
+
+	/**
+	 * An edge between adjacent rows runs halfway between its endpoints, as before.
+	 */
+	public void testEdgeBetweenAdjacentRowsUnchanged() throws Exception {
+		String edges = edgeGroup(renderEdge(GanttEdge.create(), 10.0, 30.0, 40.0, 60.0));
+		double[] line = pathCoordinates(pathElement(edges, 0));
+		double sy = line[1];
+		double ty = line[line.length - 1];
+		assertEquals("halfway between the endpoints", (sy + ty) / 2, horizontalY(edges, 0), 1e-9);
+	}
+
+	/**
+	 * The drop areas follow the rows of the last layout pass, and dropping an item into another
+	 * row discards the rows of the last layout pass.
+	 */
+	public void testDragUsesRowsOfLastLayout() {
+		GanttSpan span = span("s1", "r1", 10.0, 30.0, "Task");
+		GanttLayout layout = buildLayoutWithSpan(span, "r1", "r2");
+		Diagram d = Diagram.create().setRoot(layout);
+		RenderContext context = new AWTContext(12f);
+		d.layout(context);
+		DragController drag = layout;
+		assertEquals("second row", DEFAULT_ROW_TOTAL_HEIGHT, drag.getDropAreas(span.getBox()).get(1).getY(), 1e-9);
+
+		layout.getRootRows().get(0).setMinContentHeight(100);
+		d.layout(context);
+		double grownRow = 100 + 2 * ROW_PADDING;
+		assertEquals("second row below the grown row", grownRow, drag.getDropAreas(span.getBox()).get(1).getY(),
+			1e-9);
+		double[] moved = drag.constrainMove(span.getBox(), span.getBox().getX(), grownRow + 10);
+		assertEquals("snapped into the second row", grownRow + ROW_PADDING, moved[1], 1e-9);
+
+		drag.commitDrag(span.getBox(), span.getBox().getX(), moved[1], span.getBox().getWidth(),
+			span.getBox().getHeight());
+		assertEquals("dropped into the second row", "r2", span.getRowId());
+		assertNull("rows of the last layout discarded", layout.getRowLayout());
+
+		d.layout(context);
+		assertNotNull("rows placed by the layout", layout.getRowLayout());
+		assertEquals("span moved to the second row", grownRow + ROW_PADDING, span.getBox().getY(), 1e-9);
+	}
+
+	/** Builds a chart with three rows r1, r2, r3, the given items and edges. */
+	private static GanttLayout threeRowChart(List<? extends com.top_logic.react.flow.data.GanttItem> items,
+			GanttEdge... edges) {
+		GanttLayout layout = GanttLayout.create()
+			.setRowLabelMinWidth(200.0)
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0)
+			.setEdges(Arrays.asList(edges));
+		for (com.top_logic.react.flow.data.GanttItem item : items) {
+			layout.addItem(item);
+		}
+		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1"), row("r2", "Row 2"), row("r3", "Row 3")));
+		for (com.top_logic.react.flow.data.GanttItem item : items) {
+			layout.addContent(item.getBox());
+		}
+		return layout;
+	}
+
+	/** An edge without symbols from the end of the given source to the start of the given target. */
+	private static GanttEdge edge(String id, String source, String target) {
+		return GanttEdge.create()
+			.setId(id)
+			.setSourceItemId(source)
+			.setSourceEndpoint(GanttEndpoint.END)
+			.setTargetItemId(target)
+			.setTargetEndpoint(GanttEndpoint.START);
+	}
+
+	private static String render(GanttLayout layout) throws Exception {
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+		return renderToSvg(d);
+	}
+
+	/**
+	 * The Y coordinate of the horizontal segment of the edge whose line is the path with the given
+	 * index in the edge group.
+	 */
+	private static double horizontalY(String edges, int index) {
+		double[] line = pathCoordinates(pathElement(edges, index));
+		// Points: start, source stub, source corner, target corner, target stub, end.
+		assertEquals("horizontal segment", line[5], line[7], 1e-9);
+		return line[5];
+	}
 }

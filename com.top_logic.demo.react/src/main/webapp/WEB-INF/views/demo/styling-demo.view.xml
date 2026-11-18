@@ -640,7 +640,7 @@
 			</card>
 		</stack>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>A search field</en>
 				<de>Ein Suchfeld</de>

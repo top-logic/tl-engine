@@ -16,7 +16,52 @@ services.form = {
 		INVISIBLE_CLASS : "invisible",
 		CAN_EDIT_CLASS : "can-edit",
 		CANNOT_EDIT_CLASS : "cannot-edit",
-		DISABLED_CLASS : "disabled"
+		DISABLED_CLASS : "disabled",
+
+		// See com.top_logic.mig.html.HTMLConstants.TL_CONTENT_CONTROL_ATTR
+		CONTENT_CONTROL_ATTR : "data-content-control",
+
+		// See com.top_logic.layout.basic.KeyCodeHandler.CONTENT_CONTROL_PARAMETER
+		CONTENT_CONTROL_PARAMETER : "contentControl",
+
+		// See com.top_logic.mig.html.HTMLConstants.TL_WINDOW_CONTROL_ATTR
+		WINDOW_CONTROL_ATTR : "data-window-control"
+	},
+
+	/**
+	 * Creates the arguments of the control command "keypress".
+	 *
+	 * The arguments contain the ID of the content control enclosing the given element, so that
+	 * the server can find the component in which the key was pressed.
+	 */
+	createKeyPressArguments: function(controlID, source, keycode, shift, ctrl, alt) {
+		var args = {
+			controlCommand : "keypress",
+			controlID : controlID,
+			scancode : keycode,
+			shift : shift,
+			ctrl : ctrl,
+			alt : alt
+		};
+		var contentControlId = services.form.findContentControlId(source);
+		if (contentControlId != null) {
+			args[services.form.Constants.CONTENT_CONTROL_PARAMETER] = contentControlId;
+		}
+		return args;
+	},
+
+	/**
+	 * The ID of the content control enclosing the given element, or null, if there is none.
+	 */
+	findContentControlId: function(element) {
+		while (element != null && BAL.DOM.isElementNode(element)) {
+			var contentControlId = BAL.DOM.getNonStandardAttribute(element, services.form.Constants.CONTENT_CONTROL_ATTR);
+			if (contentControlId != null) {
+				return contentControlId;
+			}
+			element = element.parentNode;
+		}
+		return null;
 	},
 
 	
@@ -98,14 +143,9 @@ services.form = {
 							}
 							
 							BAL.eventStopPropagation(event);
-							services.ajax.execute("dispatchControlCommand", {
-								controlCommand : "keypress",
-								controlID : controlID,
-								scancode : keycode,
-								shift : shift,
-								ctrl : ctrl,
-								alt : alt
-							}, showWait);
+							services.ajax.execute("dispatchControlCommand",
+								services.form.createKeyPressArguments(controlID, source, keycode, shift, ctrl, alt),
+								showWait);
 							return BAL.cancelEvent(event);
 						}
 					}
@@ -5351,7 +5391,15 @@ services.form = {
 	
 	BrowserWindowControl : {
 
-		handleKeyDown : function(event, controlID) {
+		/**
+		 * Sends escape and return to the window control.
+		 *
+		 * The window control is looked up in the document of this (top) window, because its ID
+		 * changes whenever the window is rendered anew. The given ID, which was current when the
+		 * key handler was installed, is only used if the window control is not found.
+		 */
+		handleKeyDown : function(event, installedWindowID) {
+			var controlID = services.form.BrowserWindowControl.getWindowControlID(installedWindowID);
 			event = BAL.getEvent(event);
 			BAL.eventStopPropagation(event);
 			if (event != null) {
@@ -5365,14 +5413,9 @@ services.form = {
 					var ctrl = BAL.hasCtrlModifier(event);
 					var alt = BAL.hasAltModifier(event);
 
-					services.ajax.execute("dispatchControlCommand", {
-						controlCommand : "keypress",
-						controlID : controlID,
-						scancode : keycode,
-						shift : shift,
-						ctrl : ctrl,
-						alt : alt
-					}, /*useWaitPane*/ true);
+					services.ajax.execute("dispatchControlCommand",
+						services.form.createKeyPressArguments(controlID, BAL.getEventSource(event), keycode, shift, ctrl, alt),
+						/*useWaitPane*/ true);
 					return BAL.cancelEvent(event);
 				}
 				
@@ -5382,6 +5425,19 @@ services.form = {
 			return true;
 		},
 		
+		/**
+		 * The current ID of the window control of this (top) window, or the given fallback, if
+		 * the document contains no window control.
+		 */
+		getWindowControlID: function(fallbackID) {
+			var attr = services.form.Constants.WINDOW_CONTROL_ATTR;
+			var windowControl = document.querySelector("[" + attr + "]");
+			if (windowControl == null) {
+				return fallbackID;
+			}
+			return BAL.DOM.getNonStandardAttribute(windowControl, attr);
+		},
+
 		handlesActivation: function(source) {
 			var tagName = BAL.DOM.getTagName(source);
 			if (tagName == "textarea") return true;

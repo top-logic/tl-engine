@@ -38,6 +38,20 @@ public class KeyCodeHandler extends ControlCommand {
 
 	private static final String ALT_PARAMETER = "alt";
 
+	/**
+	 * Optional argument with the ID of the {@link com.top_logic.layout.structure.ContentControl}
+	 * enclosing the element in which the key was pressed.
+	 * 
+	 * <p>
+	 * The client takes the value from the attribute
+	 * {@link com.top_logic.mig.html.HTMLConstants#TL_CONTENT_CONTROL_ATTR} of the nearest
+	 * enclosing element.
+	 * </p>
+	 * 
+	 * @see KeyEvent#getContentControlId()
+	 */
+	public static final String CONTENT_CONTROL_PARAMETER = "contentControl";
+
 	private KeyCodeHandler() {
 		super(COMMAND_ID);
 	}
@@ -57,7 +71,9 @@ public class KeyCodeHandler extends ControlCommand {
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
-		KeyEvent event = new KeyEvent(dispatcher, keyCode, modifiers);
+		String contentControlId = (String) arguments.get(CONTENT_CONTROL_PARAMETER);
+
+		KeyEvent event = new KeyEvent(dispatcher, keyCode, modifiers, contentControlId);
 		return dispatcher.dispatchKeyEvent(commandContext, event);
 	}
 

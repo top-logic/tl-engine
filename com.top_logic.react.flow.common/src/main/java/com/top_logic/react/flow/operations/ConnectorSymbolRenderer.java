@@ -67,6 +67,23 @@ public class ConnectorSymbolRenderer {
 	 */
 	public static void drawSymbol(SvgWriter out, double x, double y, double dx, double dy,
 			ConnectorSymbol symbol, String strokeStyle, double thickness) {
+		drawSymbol(out, x, y, dx, dy, symbol, strokeStyle, thickness, null);
+	}
+
+	/**
+	 * Draws a connector symbol in a color role.
+	 *
+	 * @param strokeStyle
+	 *        Stroke color, also the fill color of a filled symbol: the substitute color of the
+	 *        role, see {@link ColorRoles}.
+	 * @param role
+	 *        The color role of the symbol, or {@code null} for a symbol in the fixed
+	 *        stroke color.
+	 *
+	 * @see #drawSymbol(SvgWriter, double, double, double, double, ConnectorSymbol, String, double)
+	 */
+	public static void drawSymbol(SvgWriter out, double x, double y, double dx, double dy,
+			ConnectorSymbol symbol, String strokeStyle, double thickness, String role) {
 
 		if (symbol == null || symbol == ConnectorSymbol.NONE) {
 			return;
@@ -77,6 +94,7 @@ public class ConnectorSymbolRenderer {
 		boolean hasStrokeStyle = strokeStyle != null && !strokeStyle.isEmpty();
 
 		out.beginPath();
+		ColorRoles.writeRole(out, role);
 		out.setStrokeWidth(thickness);
 		if (hasStrokeStyle) {
 			out.setStroke(strokeStyle);

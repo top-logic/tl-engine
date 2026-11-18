@@ -9,8 +9,10 @@
 	offers no editing and the commands "New Currency" and "Delete" are not offered. An administrator
 	creates, edits and deletes currencies.
 	
-	The format column is declared with hide-when-compact="true": on a phone the list leaves out the
-	number format of a currency, a detail the form of the selected currency shows as well.
+	On a phone the list shows the names of the currencies only, so that it fits the narrow screen
+	without scrolling sideways: every other column is declared with hide-when-compact="true". The
+	form of the selected currency shows these details as well. The list stays sorted by the sort
+	order while that column is left out.
 -->
 <view>
 	<channels>
@@ -83,15 +85,23 @@
 						<columns>
 							<column
 								attribute="sortOrder"
+								hide-when-compact="true"
 								sort="ASC"
 							/>
 							<column
 								attribute="name"
 								sort="ASC"
 							/>
-							<column attribute="factor"/>
-							<column attribute="baseUnit"/>
-							<column attribute="format"
+							<column
+								attribute="factor"
+								hide-when-compact="true"
+							/>
+							<column
+								attribute="baseUnit"
+								hide-when-compact="true"
+							/>
+							<column
+								attribute="format"
 								hide-when-compact="true"
 							/>
 						</columns>

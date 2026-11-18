@@ -1320,17 +1320,17 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NO_FREE_ENTRY;
 
 	/**
-	 * @en Cannot drop here: this table does not accept the dragged objects.
+	 * @en The dragged objects cannot be dropped here.
 	 */
 	public static ResKey ERROR_DROP_NOT_ACCEPTED;
 
 	/**
-	 * @en Cannot drop: the dragged objects or the target row are no longer present: {0}
+	 * @en Cannot drop: the dragged objects or the target are no longer present: {0}
 	 */
 	public static ResKey1 ERROR_DROP_UNRESOLVED__OBJECTS;
 
 	/**
-	 * @en Cannot drop: the dragged rows include one that cannot be dragged.
+	 * @en Cannot drop: the dragged objects include one that cannot be dragged.
 	 */
 	public static ResKey ERROR_DROP_NOT_DRAGGABLE;
 

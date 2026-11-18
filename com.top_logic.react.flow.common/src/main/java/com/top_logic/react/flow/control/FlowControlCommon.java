@@ -44,12 +44,6 @@ public interface FlowControlCommon {
 	/** Name of the {@link #CMD_DISPATCH_CLICK} argument holding the names of the pressed buttons. */
 	String ARG_MOUSE_BUTTONS = "mouseButtons";
 
-	/** Name of the command the client reports a drop on a drop region with. */
-	String CMD_DISPATCH_DROP = "dispatchDrop";
-
-	/** Name of the {@link #CMD_DISPATCH_DROP} argument holding the dropped data. */
-	String ARG_DATA = "data";
-
 	/**
 	 * Name of the command the client sends before the context menu of the diagram opens, so that
 	 * the menu targets the selection the context menu was opened on.
@@ -63,7 +57,7 @@ public interface FlowControlCommon {
 
 	/**
 	 * Name of the argument holding the ID of the diagram element a command of the client refers
-	 * to, see {@link #CMD_DISPATCH_CLICK}, {@link #CMD_DISPATCH_DROP} and
+	 * to, see {@link #CMD_DISPATCH_CLICK} and
 	 * {@link #CMD_CONTEXT_MENU}.
 	 */
 	String ARG_NODE_ID = "nodeId";

@@ -119,6 +119,12 @@ public abstract class Layout_Impl extends com.top_logic.react.flow.data.impl.Box
 		return this;
 	}
 
+	@Override
+	public com.top_logic.react.flow.data.Layout setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
 	@SuppressWarnings("hiding")
 	static final java.util.List<String> PROPERTIES;
 	static {

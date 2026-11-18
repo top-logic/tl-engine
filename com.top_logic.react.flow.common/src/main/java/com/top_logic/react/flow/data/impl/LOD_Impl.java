@@ -159,6 +159,12 @@ public class LOD_Impl extends com.top_logic.react.flow.data.impl.Box_Impl implem
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.LOD setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return LOD__TYPE;
 	}

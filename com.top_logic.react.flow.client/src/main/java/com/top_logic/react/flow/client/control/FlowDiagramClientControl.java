@@ -112,6 +112,12 @@ public class FlowDiagramClientControl implements DiagramContext {
 	private static final String DIAGRAM_PATCH_STATE = "diagramPatch";
 
 	/**
+	 * State key the server sends together with the {@link #DIAGRAM_STATE} to tell whether the
+	 * diagram replaces the displayed one in the section shown so far.
+	 */
+	private static final String KEEP_VIEW_STATE = "keepView";
+
+	/**
 	 * Event the browser fires on {@link elemental2.dom.Document#fonts} when the fonts requested so
 	 * far have been loaded.
 	 */
@@ -365,7 +371,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 			}
 		};
 
-		showDiagram(diagramJson);
+		showDiagram(diagramJson, false);
 
 		_draggingToPan = false;
 
@@ -385,10 +391,19 @@ public class FlowDiagramClientControl implements DiagramContext {
 	 * were sent.
 	 * </p>
 	 *
+	 * <p>
+	 * When the server asks to keep the view, the section shown so far, its position and scale,
+	 * stays as it is, even if the new diagram has no content there, and a selected element outside
+	 * of it is not panned into view.
+	 * </p>
+	 *
 	 * @param diagramJson
 	 *        The serialized diagram, empty or <code>null</code> to display nothing.
+	 * @param keepView
+	 *        Whether to show the diagram in the section shown so far instead of choosing the
+	 *        section as for a diagram shown the first time, see {@link #KEEP_VIEW_STATE}.
 	 */
-	private void showDiagram(String diagramJson) {
+	private void showDiagram(String diagramJson, boolean keepView) {
 		_diagramJson = diagramJson;
 
 		if (_dragHandler != null && _dragHandler.isActive()) {
@@ -401,6 +416,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 		// change of the control is not sent to the server.
 		double[] shownViewBox = _viewbox == null ? null
 			: new double[] { _viewbox.getX(), _viewbox.getY(), _viewbox.getWidth(), _viewbox.getHeight() };
+		boolean keepShown = keepView && shownViewBox != null && shownViewBox[2] > 0;
 
 		clearSvg();
 		_dirtyNodes.clear();
@@ -422,7 +438,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 				_resizePending = false;
 
 				layoutDiagram(diagram);
-				double[] viewBox = chooseViewBox(diagram, shownViewBox);
+				double[] viewBox = chooseViewBox(diagram, shownViewBox, keepShown);
 				diagram.setViewBoxX(viewBox[0]);
 				diagram.setViewBoxY(viewBox[1]);
 				diagram.setViewBoxWidth(viewBox[2]);
@@ -441,7 +457,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 				calcZoomLevel(false);
 
 				Element selectedPart = _control.querySelector(".tlSelected");
-				if (selectedPart != null && !diagram.isFixedView()) {
+				if (selectedPart != null && !diagram.isFixedView() && !keepShown) {
 					panIntoView(selectedPart);
 				}
 			} catch (IOException ex) {
@@ -477,7 +493,8 @@ public class FlowDiagramClientControl implements DiagramContext {
 	 * server sends without a view box is fitted into the control, never scaled above 100 % (a
 	 * diagram that fits is shown unscaled). A diagram with a view box, a diagram the user has
 	 * panned or zoomed, keeps the position and scale shown so far, or, when shown the first time,
-	 * the stored ones. Its height is adapted to the aspect ratio of the control, since the browser
+	 * the stored ones. So does a diagram replacing the displayed one in the section shown so far.
+	 * The height of a kept view box is adapted to the aspect ratio of the control, since the browser
 	 * would otherwise shrink the drawing to fit a different aspect ratio.
 	 * </p>
 	 *
@@ -486,9 +503,11 @@ public class FlowDiagramClientControl implements DiagramContext {
 	 * @param shownViewBox
 	 *        The view box (x, y, width, height) shown before the diagram was read, or
 	 *        <code>null</code> if nothing was shown.
+	 * @param keepShown
+	 *        Whether to keep the given shown view box, which then is not <code>null</code>.
 	 * @return The view box to show: x, y, width, height.
 	 */
-	private double[] chooseViewBox(Diagram diagram, double[] shownViewBox) {
+	private double[] chooseViewBox(Diagram diagram, double[] shownViewBox, boolean keepShown) {
 		double containerW = _controlW;
 		double containerH = _controlH;
 		double contentW = diagram.getRoot().getWidth();
@@ -502,7 +521,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 			return viewBox(0, 0, containerW, containerH);
 		}
 
-		if (diagram.getViewBoxWidth() > 0 && diagram.getViewBoxHeight() > 0) {
+		if (keepShown || (diagram.getViewBoxWidth() > 0 && diagram.getViewBoxHeight() > 0)) {
 			double vbX, vbY, vbW;
 			if (shownViewBox != null && shownViewBox[2] > 0) {
 				vbX = shownViewBox[0];
@@ -1062,7 +1081,8 @@ public class FlowDiagramClientControl implements DiagramContext {
 	 * Applies a server state update received via SSE.
 	 *
 	 * <p>
-	 * A new serialization in the {@link #DIAGRAM_STATE} state replaces the displayed diagram, a
+	 * A new serialization in the {@link #DIAGRAM_STATE} state replaces the displayed diagram (in
+	 * the section shown so far, if the {@link #KEEP_VIEW_STATE} says so), a
 	 * {@link #DIAGRAM_PATCH_STATE} patch changes it. A full state carries the serialization the
 	 * displayed diagram was read from as long as the server did not replace the diagram: it is not
 	 * read again then, since the patches applied after reading it are part of the displayed diagram.
@@ -1075,7 +1095,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 	public void onServerState(Object state) {
 		String diagramJson = extractString(state, DIAGRAM_STATE);
 		if (diagramJson != null && !diagramJson.equals(_diagramJson)) {
-			showDiagram(diagramJson);
+			showDiagram(diagramJson, extractBoolean(state, KEEP_VIEW_STATE));
 		}
 
 		String patch = extractString(state, DIAGRAM_PATCH_STATE);
@@ -1116,6 +1136,14 @@ public class FlowDiagramClientControl implements DiagramContext {
 			return state[key];
 		}
 		return null;
+	}-*/;
+
+	/**
+	 * The boolean value of the given key in the given SSE state object, <code>false</code> if it
+	 * has none.
+	 */
+	private static native boolean extractBoolean(Object state, String key) /*-{
+		return !!(state && state[key] === true);
 	}-*/;
 
 	/**

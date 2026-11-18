@@ -215,10 +215,15 @@ public class TestOIDCProvider {
 
 	/**
 	 * Starts the server on a free port of the loopback interface.
+	 *
+	 * <p>
+	 * All threads of the server are daemon threads, so a running provider does not keep the JVM
+	 * alive.
+	 * </p>
 	 */
 	public void start() throws IOException {
 		_server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
-		_executor = Executors.newCachedThreadPool();
+		_executor = Executors.newCachedThreadPool(TestOIDCProvider::daemonThread);
 		_server.setExecutor(_executor);
 		_issuerUrl = "http://" + InetAddress.getLoopbackAddress().getHostAddress() + ":"
 			+ _server.getAddress().getPort() + _issuerPath;
@@ -226,7 +231,22 @@ public class TestOIDCProvider {
 		_server.createContext(_issuerPath + TOKEN_PATH, handler(this::token));
 		_server.createContext(_issuerPath + INTROSPECTION_PATH, handler(this::introspection));
 		_server.createContext(_issuerPath + JWKS_PATH, handler(this::jwks));
-		_server.start();
+
+		// The dispatcher thread of the server inherits the daemon flag of the thread starting it.
+		Thread starter = daemonThread(_server::start);
+		starter.start();
+		try {
+			starter.join();
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+			throw new IOException("Interrupted while starting the OpenID provider.", ex);
+		}
+	}
+
+	private static Thread daemonThread(Runnable task) {
+		Thread thread = new Thread(task, TestOIDCProvider.class.getSimpleName());
+		thread.setDaemon(true);
+		return thread;
 	}
 
 	/**
@@ -239,6 +259,13 @@ public class TestOIDCProvider {
 			_server = null;
 			_executor = null;
 		}
+	}
+
+	/**
+	 * Whether the server is {@link #start() started} and not yet {@link #stop() stopped}.
+	 */
+	public boolean isRunning() {
+		return _server != null;
 	}
 
 	/**

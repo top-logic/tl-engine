@@ -124,6 +124,17 @@ public class TestTestOIDCProvider extends TestCase {
 		assertEquals(OAuth2Error.INVALID_CLIENT, ((TokenIntrospectionErrorResponse) response).getErrorObject());
 	}
 
+	public void testDoesNotKeepJVMAlive() throws Exception {
+		requestToken(clientPost(CLIENT_ID, CLIENT_SECRET));
+
+		for (Thread thread : Thread.getAllStackTraces().keySet()) {
+			String name = thread.getName();
+			if (name.startsWith("HTTP-Dispatcher") || name.equals(TestOIDCProvider.class.getSimpleName())) {
+				assertTrue("Not a daemon thread: " + name, thread.isDaemon());
+			}
+		}
+	}
+
 	private OIDCProviderMetadata discover() throws Exception {
 		return OIDCProviderMetadata.resolve(new Issuer(_provider.getIssuerUrl()));
 	}

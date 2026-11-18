@@ -157,7 +157,7 @@ public class TestReactColumnSelect extends TestCase {
 
 	public void testTheLastVisibleColumnStays() {
 		ReactColumnSelectControl control = new ReactColumnSelectControl(context(),
-			List.of(option("a", true), option("b", false)), Set.of("a"), null, true);
+			List.of(option("a", true), option("b", false)), Set.of("a"), List.of(), true);
 
 		visible(control, "a", false);
 
@@ -175,57 +175,74 @@ public class TestReactColumnSelect extends TestCase {
 	}
 
 	public void testOpensWithTheGrouping() {
-		ReactColumnSelectControl control = control(Set.of(), "b", true);
+		ReactColumnSelectControl control = control(Set.of(), List.of("b"), true);
 
-		assertEquals("b", control.groupedColumn());
+		assertEquals(List.of("b"), control.groupedColumns());
 		assertEquals(Boolean.TRUE, control.scriptingScalarState().get(ReactColumnSelectControl.GROUPABLE));
 	}
 
-	public void testGroupingMovesToTheChosenColumn() {
-		ReactColumnSelectControl control = control(Set.of(), "b", true);
+	public void testAFurtherColumnBecomesTheInnermostLevel() {
+		ReactColumnSelectControl control = control(Set.of(), List.of("b"), true);
 
-		assertTrue(group(control, "c"));
+		assertTrue(group(control, "b", "c"));
 
-		assertEquals("c", control.groupedColumn());
+		assertEquals(List.of("b", "c"), control.groupedColumns());
+		assertEquals(List.of("b", "c"), control.scriptingScalarState().get(ReactColumnSelectControl.GROUPING));
+	}
+
+	public void testRemovingOneLevelKeepsTheOthers() {
+		ReactColumnSelectControl control = control(Set.of(), List.of("b", "c", "d"), true);
+
+		assertTrue(group(control, "b", "d"));
+
+		assertEquals(List.of("b", "d"), control.groupedColumns());
+	}
+
+	public void testGroupingByAColumnTwiceChangesNothing() {
+		ReactColumnSelectControl control = control(Set.of(), List.of("b"), true);
+
+		group(control, "b", "b");
+
+		assertEquals(List.of("b"), control.groupedColumns());
 	}
 
 	public void testChoosingNoColumnRemovesTheGrouping() {
-		ReactColumnSelectControl control = control(Set.of(), "b", true);
+		ReactColumnSelectControl control = control(Set.of(), List.of("b"), true);
 
-		assertTrue(group(control, ""));
+		assertTrue(group(control));
 
-		assertNull(control.groupedColumn());
+		assertEquals(List.of(), control.groupedColumns());
 	}
 
 	public void testAHiddenColumnCanBeGroupedBy() {
-		ReactColumnSelectControl control = control(Set.of(), null, true);
+		ReactColumnSelectControl control = control(Set.of(), List.of(), true);
 		assertTrue(visible(control, "d", false));
 
 		assertTrue(group(control, "d"));
 
-		assertEquals("d", control.groupedColumn());
+		assertEquals(List.of("d"), control.groupedColumns());
 		assertFalse("Grouping does not display the column.", control.visibleColumns().contains("d"));
 	}
 
 	public void testGroupingByAnUnknownColumnChangesNothing() {
-		ReactColumnSelectControl control = control(Set.of(), "b", true);
+		ReactColumnSelectControl control = control(Set.of(), List.of("b"), true);
 
 		group(control, "x");
 
-		assertEquals("b", control.groupedColumn());
+		assertEquals(List.of("b"), control.groupedColumns());
 	}
 
 	public void testATreeOffersNoGrouping() {
-		ReactColumnSelectControl control = control(Set.of(), null, false);
+		ReactColumnSelectControl control = control(Set.of(), List.of(), false);
 		assertEquals(Boolean.FALSE, control.scriptingScalarState().get(ReactColumnSelectControl.GROUPABLE));
 
 		group(control, "a");
 
-		assertNull("A tree cannot be grouped.", control.groupedColumn());
+		assertEquals("A tree cannot be grouped.", List.of(), control.groupedColumns());
 	}
 
-	private static boolean group(ReactColumnSelectControl control, String column) {
-		return CommandFailures.outcome(() -> control.executeCommand(ReactColumnSelectControl.CMD_GROUP, Map.of(GroupArguments.COLUMN, column))) == null;
+	private static boolean group(ReactColumnSelectControl control, String... columns) {
+		return CommandFailures.outcome(() -> control.executeCommand(ReactColumnSelectControl.CMD_GROUP, Map.of(GroupArguments.COLUMNS, List.of(columns)))) == null;
 	}
 
 	private static boolean lock(ReactColumnSelectControl control, String column, boolean locked) {
@@ -245,11 +262,11 @@ public class TestReactColumnSelect extends TestCase {
 
 	/** Five visible columns a to e, the rows not grouped. */
 	private static ReactColumnSelectControl control(Set<String> locked) {
-		return control(locked, null, true);
+		return control(locked, List.of(), true);
 	}
 
-	/** Five visible columns a to e, grouped by the given column. */
-	private static ReactColumnSelectControl control(Set<String> locked, String grouped, boolean groupable) {
+	/** Five visible columns a to e, grouped by the given columns. */
+	private static ReactColumnSelectControl control(Set<String> locked, List<String> grouped, boolean groupable) {
 		return new ReactColumnSelectControl(context(),
 			List.of(option("a", true), option("b", true), option("c", true), option("d", true), option("e", true)),
 			locked, grouped, groupable);

@@ -220,7 +220,7 @@ public class TestTableRecording extends TestCase {
 	public void testKeyOfRowInCollapsedGroupFails() {
 		ReactCommand select = gesture(_recording, TableViewControl.CMD_SELECT, click(_recording, "b", false, false));
 
-		_replay.executeClientCommand(TableViewControl.CMD_GROUP, Map.of(GroupArguments.COLUMN, NAME));
+		_replay.executeClientCommand(TableViewControl.CMD_GROUP, Map.of(GroupArguments.COLUMNS, List.of(NAME)));
 		int headerOfB = indexOf(_replay, "b") - 1;
 		assertEquals(RowKind.GROUP_HEADER, row(_replay, headerOfB).kind());
 		_replay.executeClientCommand(TableViewControl.CMD_EXPAND,

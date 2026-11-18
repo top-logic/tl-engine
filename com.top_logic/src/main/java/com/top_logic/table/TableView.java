@@ -14,6 +14,7 @@ import java.util.Set;
 
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.annotate.ui.ValueColor;
+import com.top_logic.util.Resources;
 import com.top_logic.table.filter.TextFilterState;
 
 /**
@@ -238,13 +239,15 @@ public interface TableView<R> {
 	 * <p>
 	 * The value is written as the column the rows are grouped by at the group's level displays it.
 	 * A column that displays its values by a control rather than a text writes the value by its
-	 * label. The number of rows in the group, which the header shows next to the value, is not part
-	 * of the text.
+	 * label. A group of the rows that have {@link Column#isNoValue(Object) no value} in the grouping
+	 * column is written by the column's {@link Column#emptyGroupLabel() label of an empty group}.
+	 * The number of rows in the group, which the header shows next to the value, is not part of the
+	 * text.
 	 * </p>
 	 *
 	 * @param group
 	 *        The group of a {@link RowKind#GROUP_HEADER group header} row.
-	 * @return The text, empty if the group stands for no value.
+	 * @return The text, empty if the group stands for no value of a grouping column.
 	 */
 	default String groupText(Group<R> group) {
 		List<Object> values = group.key().values();
@@ -258,6 +261,9 @@ public interface TableView<R> {
 			return "";
 		}
 		Object value = values.get(level);
+		if (Column.isNoValue(value)) {
+			return Resources.getInstance().getString(groupColumn.emptyGroupLabel());
+		}
 		CellContent content = renderGroupValue(groupColumn, value);
 		String text = "";
 		if (content instanceof CellContent.Text plain) {

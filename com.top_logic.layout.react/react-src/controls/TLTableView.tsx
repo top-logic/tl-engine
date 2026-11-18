@@ -76,6 +76,8 @@ const I18N_KEYS = {
   'js.table.freezeUpTo': 'Freeze up to here',
   'js.table.unfreezeAll': 'Unfreeze all',
   'js.table.groupBy': 'Group by this column',
+  'js.table.groupByAlso': 'Additionally group by this column',
+  'js.table.ungroupColumn': 'Remove grouping by this column',
   'js.table.ungroup': 'Remove grouping',
   'js.table.fitColumn': 'Fit width to content',
   'js.table.grouped': 'The rows are grouped by this column',
@@ -295,6 +297,21 @@ const ARG_CTRL_KEY = 'ctrlKey';
 /** Argument of a {@link CMD_SELECT} telling whether the selection is extended up to the row. */
 const ARG_SHIFT_KEY = 'shiftKey';
 
+/** Command grouping the rows (TableViewControl.CMD_GROUP) by the columns {@link ARG_COLUMNS} names. */
+const CMD_GROUP = 'group';
+
+/** Argument of a {@link CMD_GROUP}: the grouping columns, outermost group level first, empty for none. */
+const ARG_COLUMNS = 'columns';
+
+/**
+ * State key (TableViewControl.GROUPING) holding the columns the rows are grouped by, outermost
+ * group level first, empty when they are not grouped.
+ */
+const STATE_GROUPING = 'grouping';
+
+/** The grouping of a table whose rows are not grouped, shared so that it keeps its identity. */
+const NO_GROUPING: string[] = [];
+
 /**
  * State key (TableViewControl.SELECT_ON_EDITOR_FOCUS) telling whether the focus of a control in a
  * cell selects the row the control stands in.
@@ -472,8 +489,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const isSelected = (row: RowState) => selectedIndexes.has(row.index);
   const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
   const treeMode = (state.treeMode as boolean) ?? false;
-  /** The column the rows are grouped by, empty when they are not grouped. */
-  const grouping = (state.grouping as string) ?? '';
+  /** The columns the rows are grouped by, outermost group level first, empty when they are not grouped. */
+  const grouping = (state[STATE_GROUPING] as string[] | undefined) ?? NO_GROUPING;
   const columnSelect = (state.columnSelect as boolean) ?? false;
   const filterBar = (state.filterBar as boolean) ?? false;
   const namedFilters = (state.namedFilters as NamedFilterState[]) ?? [];
@@ -507,7 +524,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const checkboxWidth = useTokenPx(gridRef, '--tl-size-bar', 40);
   const treeIndentWidth = useTokenPx(gridRef, '--tl-size-control-sm', 24);
   const columnsButtonWidth = useTokenPx(gridRef, '--tl-size-control', 32);
-  const treegrid = treeMode || grouping !== '';
+  const treegrid = treeMode || grouping.length > 0;
   const rowId = (index: number) => `${controlId}-row-${index}`;
 
   const headerRef = React.useRef<HTMLDivElement>(null);
@@ -1409,13 +1426,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     setContextMenu(null);
   }, [sendCommand]);
 
-  const handleGroupBy = React.useCallback((column: string) => {
-    sendCommand('group', { column });
-    setContextMenu(null);
-  }, [sendCommand]);
-
-  const handleUngroup = React.useCallback(() => {
-    sendCommand('group', { column: '' });
+  /** Groups the rows by the given columns, outermost group level first, or shows them ungrouped. */
+  const handleGroup = React.useCallback((columns: string[]) => {
+    sendCommand(CMD_GROUP, { [ARG_COLUMNS]: columns });
     setContextMenu(null);
   }, [sendCommand]);
 
@@ -2001,7 +2014,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     )}
                   </button>
                 ) : label}
-                {col.name === grouping && (
+                {grouping.includes(col.name) && (
                   <span className="tl-table__mark" {...tooltipProps(i18n['js.table.grouped'])}>
                     <ThemeIcon encoded={ICON_GROUP} className="tl-icon-sm" />
                   </span>
@@ -2257,9 +2270,15 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         {contextMenu && frozenColumnCount > 0 && <MenuItem label={i18n['js.table.unfreezeAll']} onSelect={handleUnfreezeAll} />}
         {contextMenu && !columns[contextMenu.colIdx]?.pinnedEnd && (
           <MenuItem label={i18n['js.table.fitColumn']} onSelect={() => { fitColumnToContent(columns[contextMenu.colIdx].name); setContextMenu(null); }} />)}
-        {contextMenu && columns[contextMenu.colIdx]?.groupable && columns[contextMenu.colIdx].name !== grouping && (
-          <MenuItem label={i18n['js.table.groupBy']} onSelect={() => handleGroupBy(columns[contextMenu.colIdx].name)} />)}
-        {contextMenu && grouping !== '' && <MenuItem label={i18n['js.table.ungroup']} onSelect={handleUngroup} />}
+        {/* Grouping by a further column adds it as the innermost group level; removing the grouping by
+            a column removes its level alone, the other levels stay. */}
+        {contextMenu && columns[contextMenu.colIdx]?.groupable && !grouping.includes(columns[contextMenu.colIdx].name) && (
+          <MenuItem label={i18n[grouping.length > 0 ? 'js.table.groupByAlso' : 'js.table.groupBy']}
+            onSelect={() => handleGroup([...grouping, columns[contextMenu.colIdx].name])} />)}
+        {contextMenu && grouping.includes(columns[contextMenu.colIdx]?.name ?? '') && (
+          <MenuItem label={i18n['js.table.ungroupColumn']}
+            onSelect={() => handleGroup(grouping.filter((column) => column !== columns[contextMenu.colIdx].name))} />)}
+        {contextMenu && grouping.length > 0 && <MenuItem label={i18n['js.table.ungroup']} onSelect={() => handleGroup(NO_GROUPING)} />}
       </Menu>
     </div>
     </KeyboardScopeProvider>

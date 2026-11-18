@@ -18,8 +18,8 @@ import com.top_logic.layout.view.dnd.DropArguments;
 import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.annotation.InApp;
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -27,7 +27,6 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
-import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
@@ -138,20 +137,25 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		Expr getRows();
 
 		/**
-		 * The name of the column whose value the rows are initially grouped by: one collapsible
-		 * header row per value, showing that value, how many rows it holds and what the other
-		 * columns aggregate over them.
+		 * The names of the columns whose values the rows are initially grouped by, outermost group
+		 * level first, e.g. {@code group-by="status, assignee"}.
+		 *
+		 * <p>
+		 * The first column forms one collapsible header row per value, showing that value, how many
+		 * rows it holds and what the other columns aggregate over them. Each further column nests a
+		 * level of such headers into the groups of the level above, indented by its level; the rows
+		 * follow the headers of the innermost level.
+		 * </p>
 		 *
 		 * <p>
 		 * The user regroups the table from a column header or from the column selection, and that
 		 * choice is kept under the table's personalization key, so this is the grouping a table
-		 * starts with until a personalization of its own exists. Unset (default) starts ungrouped.
-		 * Rows are grouped by one column at a time.
+		 * starts with until a personalization of its own exists. Empty (default) starts ungrouped.
 		 * </p>
 		 */
 		@Name(GROUP_BY)
-		@Nullable
-		String getGroupBy();
+		@Format(CommaSeparatedStrings.class)
+		List<String> getGroupBy();
 
 		/**
 		 * Types whose object changes (create / update / delete) trigger a re-evaluation of the
@@ -262,8 +266,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	 * </p>
 	 */
 	public GroupSpec initialGrouping() {
-		String column = _config.getGroupBy();
-		return StringServices.isEmpty(column) ? GroupSpec.NONE : new GroupSpec(List.of(column));
+		return new GroupSpec(_config.getGroupBy());
 	}
 
 	private final QueryExecutor _rowsExecutor;

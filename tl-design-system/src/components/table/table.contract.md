@@ -127,7 +127,7 @@ oder Kästchen im Raster gehören sie dem Bedienelement.
 | `tl-table__header` | `role="rowgroup"` |
 | `tl-table__header-row` | `role="row"`, `aria-rowindex="1"`, `data-tl-axis="horizontal"` (Einfügemarke links/rechts) |
 | `tl-table__header-cell` | `role="columnheader"`; `aria-sort` (`ascending` / `descending`) nur an der ersten Sortierstufe |
-| `tl-table__body` | `role="rowgroup"`, `tabindex="-1"`: er scrollt nur und ist kein eigener Tab-Halt |
+| `tl-table__body` | `role="rowgroup"`; `tabindex="-1"`, solange alles hineinpasst; solange er scrollt, `tabindex="0"` und `aria-label` „Zeilen der Tabelle“: ein eigener Tab-Halt, die Pfeiltasten scrollen ihn (#30129) |
 | `tl-table__row` | `role="row"` mit `id="<controlId>-row-<index>"`, `aria-rowindex`, `aria-selected`; im Baum `aria-level` und an aufklappbaren Zeilen `aria-expanded` |
 | `tl-table__cell` | `role="gridcell"` |
 | `tl-table__footer` | `role="status"`, `aria-live="polite"`: ein Screenreader hört die Zahl, die ein Filter übrig lässt |
@@ -248,6 +248,7 @@ Klassen:
 | `tl-table__resize` | Griff der Spaltenbreite |
 | `tl-table__freeze` | Griff der Fixiergrenze |
 | `tl-table__freeze-preview` | wo die Fixiergrenze beim Loslassen landet |
+| `tl-table__viewport` | die Hülle des Körpers, scrollt nicht; hat der Körper den Tastaturfokus, trägt ihr `::after` seinen Ring über den Zeilen (Regel in `base.css`, Alternative der einen Ring-Regel) |
 | `tl-table__body` | der rollende Körper (`role="rowgroup"`) |
 | `tl-table__canvas` | trägt die volle Höhe aller Zeilen; die Zeilen stehen absolut darin |
 | `tl-table__row` | jede Zeile |

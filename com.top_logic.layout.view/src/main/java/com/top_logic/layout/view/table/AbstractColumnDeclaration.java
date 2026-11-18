@@ -121,6 +121,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		/** Configuration name for {@link #getVisible()}. */
 		String VISIBLE = "visible";
 
+		/** Configuration name for {@link #isHiddenWhenCompact()}. */
+		String HIDE_WHEN_COMPACT = "hide-when-compact";
+
 		/** Configuration name for {@link #getComparator()}. */
 		String COMPARATOR = "comparator";
 
@@ -276,6 +279,24 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		@Name(VISIBLE)
 		@BooleanDefault(true)
 		boolean getVisible();
+
+		/**
+		 * Whether the table leaves the column out while the window is compact, on a phone.
+		 *
+		 * <p>
+		 * A table whose columns do not fit a phone would scroll sideways, and a column the reader
+		 * needs could end up out of sight. Marking the columns a phone can do without lets the
+		 * table show the ones it cannot do without instead.
+		 * </p>
+		 *
+		 * <p>
+		 * The column comes back as soon as the window is wide enough again. The user's own
+		 * arrangement of the table - the columns displayed, their order, the frozen columns - stays
+		 * as it is; the column only takes no room while the window is compact.
+		 * </p>
+		 */
+		@Name(HIDE_WHEN_COMPACT)
+		boolean isHiddenWhenCompact();
 
 		/**
 		 * The order of this column's values: an expression comparing two cell values, by which the
@@ -578,6 +599,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 	private final boolean _hiddenByDefault;
 
+	/** See {@link Config#isHiddenWhenCompact()}. */
+	private final boolean _hiddenWhenCompact;
+
 	private final boolean _sortable;
 
 	private final ColumnExport _export;
@@ -620,6 +644,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_headerInputs = _headerRole != null || _headerClass != null
 			? InputScript.inputs(config, config.descriptor().getProperty(Config.HEADER_ROLE)) : List.of();
 		_hiddenByDefault = !config.getVisible();
+		_hiddenWhenCompact = config.isHiddenWhenCompact();
 		_sortable = config.getSortable();
 		_export = ColumnExport.of(context, config);
 		_annotations = config.getAnnotations().isEmpty() ? null : config;
@@ -693,6 +718,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_headerClass = null;
 		_headerInputs = List.of();
 		_hiddenByDefault = hiddenByDefault;
+		_hiddenWhenCompact = false;
 		_sortable = true;
 		_export = ColumnExport.DEFAULT;
 		_annotations = null;
@@ -703,6 +729,11 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 */
 	protected final ResKey label() {
 		return _label;
+	}
+
+	@Override
+	public List<String> hiddenWhenCompact() {
+		return _hiddenWhenCompact ? declaredNames() : List.of();
 	}
 
 	@Override

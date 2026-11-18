@@ -39,6 +39,12 @@ import com.top_logic.model.annotate.TLValueListeners;
  * </p>
  *
  * <p>
+ * An attribute and its overrides share one value. The listeners of a change are the ones of the
+ * attribute of the type of the overlay, see {@link TLObjectOverlay#getOwnPart(TLStructuredTypePart)},
+ * whichever attribute the value was written through, and they are called with that attribute.
+ * </p>
+ *
+ * <p>
  * Within the dispatch started by one change, the listeners of an attribute of an object run at
  * most once: a listener writing the attribute it listens to, directly or through a cycle of
  * listeners, records the value without calling the listeners of that attribute again.
@@ -74,7 +80,7 @@ public class ValueListenerDispatch {
 	 * @param overlay
 	 *        The overlay whose value changed.
 	 * @param part
-	 *        The changed attribute.
+	 *        The attribute the value was written through.
 	 * @param oldValue
 	 *        The value before the change.
 	 * @param newValue
@@ -84,18 +90,19 @@ public class ValueListenerDispatch {
 		if (_suspended || overlay.isReceivingTransfer() || !overlay.isChanged(part)) {
 			return;
 		}
+		TLStructuredTypePart ownPart = overlay.getOwnPart(part);
 		List<? extends AttributeValueListener> listeners =
-			_listeners.computeIfAbsent(part, AttributeOperations::getValueListeners);
+			_listeners.computeIfAbsent(ownPart, AttributeOperations::getValueListeners);
 		if (listeners.isEmpty()) {
 			return;
 		}
-		if (!_run.computeIfAbsent(overlay, x -> new HashSet<>()).add(part)) {
+		if (!_run.computeIfAbsent(overlay, x -> new HashSet<>()).add(ownPart)) {
 			return;
 		}
 		_depth++;
 		try {
 			for (AttributeValueListener listener : listeners) {
-				listener.valueChanged(overlay, part, oldValue, newValue);
+				listener.valueChanged(overlay, ownPart, oldValue, newValue);
 			}
 		} finally {
 			if (--_depth == 0) {

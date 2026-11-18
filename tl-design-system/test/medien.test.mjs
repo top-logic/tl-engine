@@ -36,6 +36,13 @@ test('media: Bild so breit wie das Bild, Dokument füllt', () => {
   assert.doesNotMatch(dokument.map(([, d]) => d).join(''), /fit-content/);
 });
 
+test('media: die Ladeebene deckt die Wurzel und streckt den Skeleton als Raster', () => {
+  const d = decl('media', '.tl-media__loading');
+  assert.match(d, /position:\s*absolute/);
+  assert.match(d, /inset:\s*0/);
+  assert.match(d, /display:\s*grid/);
+});
+
 test('media: Vorschau schneidet ab, Seite außerhalb des Flusses, ohne Zeiger', () => {
   assert.match(decl('media', '.tl-media--preview'), /overflow:\s*hidden/);
   const frame = decl('media', '.tl-media--preview > .tl-media__frame');

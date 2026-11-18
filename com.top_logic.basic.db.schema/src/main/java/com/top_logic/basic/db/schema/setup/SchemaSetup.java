@@ -205,6 +205,7 @@ public class SchemaSetup implements ConfiguredInstance<SchemaConfiguration> {
 		PooledConnection connection = pool.borrowWriteConnection();
 		try {
 			DBSchemaUtils.createTables(connection, schema, checkExistence);
+			connection.commit();
 		} finally {
 			pool.releaseWriteConnection(connection);
 		}
@@ -219,13 +220,27 @@ public class SchemaSetup implements ConfiguredInstance<SchemaConfiguration> {
 	}
 
 	/**
-	 * Resets the tables.
+	 * Drops the tables.
 	 * 
-	 * @see DBSchemaUtils#resetTables(ConnectionPool, DBSchema, boolean)
+	 * @return Whether all tables have been dropped successfully.
+	 * 
+	 * @see DBSchemaUtils#dropTables(ConnectionPool, DBSchema)
 	 */
-	public void resetTables(ConnectionPool pool, MORepository typeRepository, boolean truncate) {
+	public boolean dropTables(ConnectionPool pool, MORepository typeRepository) {
 		DBSchema schema = buildSchema(typeRepository);
-		DBSchemaUtils.resetTables(pool, schema, truncate);
+		return DBSchemaUtils.dropTables(pool, schema);
+	}
+
+	/**
+	 * Deletes all rows from the tables.
+	 * 
+	 * @return Whether all existing tables have been cleared successfully.
+	 * 
+	 * @see DBSchemaUtils#clearTables(ConnectionPool, DBSchema)
+	 */
+	public boolean clearTables(ConnectionPool pool, MORepository typeRepository) {
+		DBSchema schema = buildSchema(typeRepository);
+		return DBSchemaUtils.clearTables(pool, schema);
 	}
 
 	/**

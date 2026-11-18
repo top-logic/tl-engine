@@ -370,7 +370,8 @@ test('die vier Icon-Stufen stehen als Klassen in base.css, font-size nur dort, u
   }
   assert.ok(/\.tl-icon-glyph, \.tl-icon-sm, \.tl-icon-md, \.tl-icon-lg \{[^}]*line-height: 1;[^}]*width: 1em;[^}]*height: 1em;/.test(base), 'line-height 1 und 1-em-Quadrat fehlen');
   const comps = readFileSync(new URL('../dist/components.css', import.meta.url), 'utf8');
-  assert.ok(!/font-size/.test(comps), 'font-size in components.css — Icon- und Typo-Größen kommen aus base.css');
+  // Die Eigenschaft, nicht das Token: eine Textzeile des Skeleton rechnet ihre Höhe aus --tl-font-size-body.
+  assert.ok(!/(^|[\s;{])font-size\s*:/.test(comps), 'font-size in components.css — Icon- und Typo-Größen kommen aus base.css');
 });
 
 test('das Icon-Specimen zeigt jede Stufe, das Quadrat in einer Spalte und ein Bild-Icon ohne Inline-Breite', () => {

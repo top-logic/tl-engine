@@ -79,9 +79,6 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 		/** Configuration name for {@link #getUpdate()}. */
 		String UPDATE = "update";
 
-		/** Configuration name for {@link #getCanUpdate()}. */
-		String CAN_UPDATE = "can-update";
-
 		/** Configuration name for {@link #getOptions()}. */
 		String OPTIONS = "options";
 
@@ -162,21 +159,6 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 		Expr getUpdate();
 
 		/**
-		 * Whether the cell of a row can be edited: an expression yielding whether the edit is
-		 * offered for the row.
-		 *
-		 * <p>
-		 * The expression sees the variables of the {@link #getValue() value}. Unset, every row of a
-		 * column that declares an update is edited.
-		 * </p>
-		 */
-		@Name(CAN_UPDATE)
-		@Nullable
-		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
-		@ScriptContextVariables(InputScript.Variables.class)
-		Expr getCanUpdate();
-
-		/**
 		 * The values an edited cell value of a row is chosen from.
 		 *
 		 * <p>
@@ -217,7 +199,7 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 		_typeRef = config.getType();
 		_multiple = config.getMultiple();
 		_functions =
-			ColumnFunctions.compile(config, Config.VALUE, Config.UPDATE, Config.CAN_UPDATE, Config.OPTIONS);
+			ColumnFunctions.compile(config, Config.VALUE, Config.UPDATE, null, Config.OPTIONS);
 
 		if (_functions.updates() && _typeRef == null) {
 			context.error("An edited column must declare the type of its values, so that it is known"

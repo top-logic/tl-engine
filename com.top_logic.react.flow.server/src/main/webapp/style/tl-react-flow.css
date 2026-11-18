@@ -23,6 +23,14 @@
 	left: 0;
 	display: block;
 }
+/*
+ * The client measures texts without spacing between letters and words, so diagram text must not
+ * inherit it from the theme.
+ */
+.tl-flow-diagram text {
+	letter-spacing: normal;
+	word-spacing: normal;
+}
 
 .tlSelectionMarker {
 	display: none;

@@ -27,7 +27,6 @@ import com.top_logic.react.flow.data.Border;
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.ClickTarget;
 import com.top_logic.react.flow.data.ConnectorSymbol;
-import com.top_logic.react.flow.data.ContextMenu;
 import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.EdgeDecoration;
 import com.top_logic.react.flow.data.GanttEdge;
@@ -61,7 +60,6 @@ public class TestInteractivity extends TestCase {
 	private static final List<Function<Box, Box>> INTERACTIVE_WRAPPERS = Arrays.asList(
 		content -> SelectableBox.create().setContent(content),
 		content -> ClickTarget.create().setContent(content),
-		content -> ContextMenu.create().setContent(content),
 		content -> Tooltip.create().setText("Info").setContent(content));
 
 	/**

@@ -38,7 +38,39 @@ import com.top_logic.util.TLContextManager;
  */
 public class A2AServlet extends HttpServlet {
 
-	private static final Pattern CARD = Pattern.compile("/a2a/([^/]+)/(?:\\.well-known/)?agent-card\\.json");
+	/**
+	 * The context-relative path below which the agents are served: {@link #agentPath(String)}.
+	 */
+	public static final String ENDPOINT = "/a2a";
+
+	/**
+	 * The file name of an agent card, see {@link #agentCardPath(String)}.
+	 */
+	public static final String AGENT_CARD = "agent-card.json";
+
+	/**
+	 * The directory of well-known resources, that also holds the card of the first exposed agent.
+	 */
+	public static final String WELL_KNOWN = ".well-known";
+
+	private static final Pattern CARD = Pattern.compile(Pattern.quote(ENDPOINT + '/') + "([^/]+)/(?:"
+		+ Pattern.quote(WELL_KNOWN + '/') + ")?" + Pattern.quote(AGENT_CARD));
+
+	/**
+	 * The context-relative path of the JSON-RPC endpoint of the exposed agent with the given
+	 * {@link A2AService.ExposedAgentConfig#getPath() path}.
+	 */
+	public static String agentPath(String agent) {
+		return ENDPOINT + '/' + agent;
+	}
+
+	/**
+	 * The context-relative path of the card of the exposed agent with the given
+	 * {@link A2AService.ExposedAgentConfig#getPath() path}.
+	 */
+	public static String agentCardPath(String agent) {
+		return agentPath(agent) + '/' + AGENT_CARD;
+	}
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -53,7 +85,7 @@ public class A2AServlet extends HttpServlet {
 		}
 		Matcher card = CARD.matcher(path);
 		ExposedAgentConfig agent = card.matches() ? service.exposedAgent(card.group(1))
-			: path.equals("/.well-known/agent-card.json") ? service.getConfig().getAgents().stream().findFirst().orElse(null)
+			: path.equals('/' + WELL_KNOWN + '/' + AGENT_CARD) ? service.getConfig().getAgents().stream().findFirst().orElse(null)
 			: null;
 		if (agent == null) {
 			error(resp, HttpServletResponse.SC_NOT_FOUND, "No such A2A agent.");
@@ -72,7 +104,8 @@ public class A2AServlet extends HttpServlet {
 			return;
 		}
 		String path = path(req);
-		String agent = path.startsWith("/a2a/") ? path.substring("/a2a/".length()) : "";
+		String prefix = ENDPOINT + '/';
+		String agent = path.startsWith(prefix) ? path.substring(prefix.length()) : "";
 		if (agent.isEmpty() || agent.contains("/")) {
 			error(resp, HttpServletResponse.SC_NOT_FOUND, "POST to /a2a/{agent}.");
 			return;

@@ -362,9 +362,26 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 */
 	public ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, FieldModel model,
 			PolymorphicConfiguration<? extends ReactFieldControlProvider> control) {
+		return createFieldControl(context, part, model, control, null);
+	}
+
+	/**
+	 * Creates the input control for the given attribute like
+	 * {@link #createFieldControl(ReactContext, TLStructuredTypePart, FieldModel, PolymorphicConfiguration)},
+	 * showing the given text in the empty input.
+	 *
+	 * @param placeholder
+	 *        The {@link FieldSpec#getPlaceholder() placeholder} of the input, or {@code null} for
+	 *        none. A placeholder the description of the attribute already has takes precedence.
+	 */
+	public ReactControl createFieldControl(ReactContext context, TLStructuredTypePart part, FieldModel model,
+			PolymorphicConfiguration<? extends ReactFieldControlProvider> control, String placeholder) {
 		ReactFieldControlProvider fieldControl = instance(control);
-		return createFieldControl(context, part, fieldSpec(part, part, part.isMultiple(), model, fieldControl), model,
-			fieldControl);
+		FieldSpec field = fieldSpec(part, part, part.isMultiple(), model, fieldControl);
+		if (placeholder != null && field.getPlaceholder() == null) {
+			field.setPlaceholder(placeholder);
+		}
+		return createFieldControl(context, part, field, model, fieldControl);
 	}
 
 	/**

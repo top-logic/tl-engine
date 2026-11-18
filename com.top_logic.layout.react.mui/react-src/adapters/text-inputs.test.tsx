@@ -28,6 +28,7 @@ import { CONTROL_ID, childControl, fakeDebounceTimers, mountAdapter, patchState,
 import MuiListboxAdapter from './MuiListboxAdapter';
 import type { MountOptions } from './wire-test-support';
 import MuiChipAdapter from './MuiChipAdapter';
+import MuiSkeletonAdapter from './MuiSkeletonAdapter';
 import MuiProgressBarAdapter from './MuiProgressBarAdapter';
 import MuiSpinnerAdapter from './MuiSpinnerAdapter';
 
@@ -39,6 +40,7 @@ replacePart('Checkbox', MuiCheckboxAdapter);
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 // The table and the dropdown draw chips as well.
 replacePart('Chip', MuiChipAdapter);
+replacePart('Skeleton', MuiSkeletonAdapter);
 // The dropdown shows a bar while its options are being loaded, the icon popup a spinner.
 replacePart('ProgressBar', MuiProgressBarAdapter);
 replacePart('Spinner', MuiSpinnerAdapter);

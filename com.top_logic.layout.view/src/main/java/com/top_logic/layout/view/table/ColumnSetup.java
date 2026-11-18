@@ -14,7 +14,9 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
+import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.LabelProvider;
@@ -132,6 +134,13 @@ import com.top_logic.util.Resources;
  *        The color role and the CSS class of the heading of the column, {@link ColumnHeader#NONE}
  *        for a heading without either. They are put on the heading only, not on the data cells, see
  *        {@link Column#headerRole()} and {@link Column#headerClass()}. Never {@code null}.
+ * @param released
+ *        Whether the access rights of the current user release the column,
+ *        {@link ChannelCondition#ALWAYS} for a column no right withholds. While the condition does
+ *        not hold, the column is withheld from the user: it does not exist, as if its
+ *        {@link #exists()} condition did not hold, and nothing the table offers may refer to it -
+ *        a declared filter with a criterion on it is not offered, see {@link ColumnExistence}.
+ *        Never {@code null}.
  */
 public record ColumnSetup(
 		String name,
@@ -154,7 +163,25 @@ public record ColumnSetup(
 		ColumnAlignment align,
 		ChannelCondition exists,
 		CellExistence<Object> cellExists,
-		ColumnHeader header) {
+		ColumnHeader header,
+		ChannelCondition released) {
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column no access right withholds.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip,
+			BiFunction<Object, Object, String> cellClass, BiFunction<Object, Object, ValueColor> cellRole,
+			ReactControlProvider display, boolean sortable, ColumnAlignment align, ChannelCondition exists,
+			CellExistence<Object> cellExists, ColumnHeader header) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, cellClass, cellRole, display, sortable, align, exists, cellExists, header,
+			ChannelCondition.ALWAYS);
+	}
 
 	/**
 	 * Creates a {@link ColumnSetup} of a column whose heading has neither a color role nor a CSS
@@ -170,7 +197,8 @@ public record ColumnSetup(
 			ReactControlProvider display, boolean sortable, ColumnAlignment align, ChannelCondition exists,
 			CellExistence<Object> cellExists) {
 		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
-			export, tooltip, cellClass, cellRole, display, sortable, align, exists, cellExists, ColumnHeader.NONE);
+			export, tooltip, cellClass, cellRole, display, sortable, align, exists, cellExists, ColumnHeader.NONE,
+			ChannelCondition.ALWAYS);
 	}
 
 	/**
@@ -292,7 +320,36 @@ public record ColumnSetup(
 		}
 		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
 			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, align,
-			exists.and(condition), cellExists, header);
+			exists.and(condition), cellExists, header, released);
+	}
+
+	/**
+	 * This descriptor for a column whose cells are edited only on the rows the given condition
+	 * accepts in addition, see {@link CellEditing#restrictedTo(Predicate)}.
+	 *
+	 * @param rows
+	 *        Whether a row can be edited.
+	 */
+	public ColumnSetup restrictedTo(Predicate<Object> rows) {
+		if (editing == null) {
+			return this;
+		}
+		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing.restrictedTo(rows),
+			aggregate, comparator, hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, align,
+			exists, cellExists, header, released);
+	}
+
+	/**
+	 * This descriptor for a column the access rights of the user release only where the given
+	 * condition holds in addition to its own {@link #released()} condition.
+	 */
+	public ColumnSetup releasedIf(ChannelCondition condition) {
+		if (condition == ChannelCondition.ALWAYS) {
+			return this;
+		}
+		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
+			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, align, exists, cellExists,
+			header, released.and(condition));
 	}
 
 	/**
@@ -338,17 +395,20 @@ public record ColumnSetup(
 	 * @param written
 	 *        Called with the row after a value of its cell was written, e.g. to build the cells
 	 *        whose values may follow the written one again.
+	 * @param lockHandler
+	 *        Locks the object of a row while a value of its cell is written, see
+	 *        {@link ValueCellEditing#createInPlaceModel(ReactContext, Object, LockHandler, Runnable)}.
 	 */
-	public Column<Object, ?> buildInPlaceColumn(Consumer<Object> written) {
+	public Column<Object, ?> buildInPlaceColumn(Consumer<Object> written, LockHandler lockHandler) {
 		Column<Object, ?> column = buildColumn();
 		if (!(editing instanceof ValueCellEditing valueEditing)) {
 			return column;
 		}
-		return inPlace(column, valueEditing, written);
+		return inPlace(column, valueEditing, written, lockHandler);
 	}
 
 	private <V> Column<Object, V> inPlace(Column<Object, V> column, ValueCellEditing editing,
-			Consumer<Object> written) {
+			Consumer<Object> written, LockHandler lockHandler) {
 		return new DelegatingColumn<>(column) {
 			@Override
 			public CellContent renderCell(Object row) {
@@ -356,7 +416,7 @@ public record ColumnSetup(
 				CellControlFactory factory;
 				if (editing.canEdit(row)) {
 					factory = context -> createEditControl(context, row,
-						editing.createInPlaceModel(row, () -> written.accept(row)));
+						editing.createInPlaceModel(context, row, lockHandler, () -> written.accept(row)));
 				} else if (editing.value(row) != null) {
 					// A value the row does not offer to edit is shown by the same control, disabled.
 					factory = context -> editing.createControl(context, row, editing.createReadOnlyModel(row));

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<data-list observed-types="tl.model:TLModule, tl.model:TLClass">
+		<rows><![CDATA[all(`tl.model:TLModule`).filter(m -> $m.get(`tl.model:TLNamedPart#name`).stringStartsWith('test.datalist.'))
+	.sort(comparator(m -> $m.get(`tl.model:TLNamedPart#name`)))]]></rows>
+		<trailing
+			display="badge"
+			value="m -> $m.get(`tl.model:TLScope#types`).size()"
+		/>
+	</data-list>
+</view>

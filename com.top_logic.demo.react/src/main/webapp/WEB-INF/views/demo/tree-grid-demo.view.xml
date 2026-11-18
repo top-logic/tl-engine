@@ -12,6 +12,12 @@
 	is edited with the attribute of its row's type; a row whose type lacks the attribute shows an empty
 	cell without input - a ticket has no name, a scope no due date.
 	
+	A scope only groups the rows below it and is not edited itself: <row-editable> on the tree table
+	accepts milestones, tickets and deliverables only, so a scope shows its "Name" read-only and has
+	no trash button, while "Add" still adds rows below it. The "Due date" of a milestone is edited only
+	until the milestone is approved: the column restricts its edit with <can-update>, on top of what
+	the model and the access rights allow.
+	
 	A row joins the edit when it is displayed: in edit mode, opening a milestone makes its tickets
 	editable. While the form is edited, the tree shows the edited state - an added row appears under
 	its parent, a removed row disappears -, a change made elsewhere shows only after "Save" or
@@ -20,10 +26,9 @@
 	
 	- "All rows" (row-edit="ALL") edits every displayed row. "Add" in the toolbar adds a milestone to
 	the selected scope (<add-child>: a concrete type, created directly), inserted into the scope's
-	milestones; the trash button of a row deletes it on "Save" (on-remove="DELETE"), the milestones,
-	deliverables and tickets of a deleted scope with it, as they are parts of it. The tickets of a
-	milestone are shown through a backwards reference and composed by the scope, so a ticket is not
-	added here.
+	milestones; the trash button of a milestone, ticket or deliverable deletes it on "Save"
+	(on-remove="DELETE"). The tickets of a milestone are shown through a backwards reference and
+	composed by the scope, so a ticket is not added here.
 	- "Selected row" (row-edit="SELECTED") edits the selected row only; the selection is bound to a
 	channel, so the selected row stays selected across the switches between view and edit mode. "Add"
 	adds a deliverable to the selected scope: the type is the abstract "Deliverable", so the menu of
@@ -60,6 +65,8 @@
 						>
 							<root>`tl.demo.projectManagement:ProjectScope`</root>
 							<children>if($node == `tl.demo.projectManagement:ProjectScope`, all(`tl.demo.projectManagement:ProjectScope`), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), concat($node.get(`tl.demo.projectManagement:ProjectScope#milestones`), $node.get(`tl.demo.projectManagement:ProjectScope#deliverables`)), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.get(`tl.demo.projectManagement:Milestone#tickets`), [])))</children>
+							<!-- A scope only groups its rows and is neither edited nor removed. -->
+							<row-editable>$row.instanceOf(`tl.demo.projectManagement:Milestone`) || $row.instanceOf(`tl.demo.projectManagement:Ticket`) || $row.instanceOf(`tl.demo.projectManagement:Deliverable`)</row-editable>
 							<!-- A scope gets a milestone, inserted into its buffered milestones. -->
 							<add-child
 								create-type="if($parent.instanceOf(`tl.demo.projectManagement:ProjectScope`), `tl.demo.projectManagement:Milestone`, null)"
@@ -67,7 +74,9 @@
 							/>
 							<columns>
 								<column attribute="name"/>
-								<column attribute="dueDate"/>
+								<column attribute="dueDate">
+									<can-update>!$row.get(`tl.demo.projectManagement:Milestone#approved`)</can-update>
+								</column>
 								<column attribute="approved"/>
 								<column attribute="title"/>
 								<column attribute="assignee"/>
@@ -99,6 +108,8 @@
 							<root>`tl.demo.projectManagement:ProjectScope`</root>
 							<children>if($node == `tl.demo.projectManagement:ProjectScope`, all(`tl.demo.projectManagement:ProjectScope`), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), concat($node.get(`tl.demo.projectManagement:ProjectScope#milestones`), $node.get(`tl.demo.projectManagement:ProjectScope#deliverables`)), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.get(`tl.demo.projectManagement:Milestone#tickets`), [])))</children>
 							<parents>if($node.instanceOf(`tl.demo.projectManagement:Ticket`), $node.get(`tl.demo.projectManagement:Ticket#milestone`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`) || $node.instanceOf(`tl.demo.projectManagement:Deliverable`), $node.container(), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), `tl.demo.projectManagement:ProjectScope`, null)))</parents>
+							<!-- A scope only groups its rows and is not edited. -->
+							<row-editable>$row.instanceOf(`tl.demo.projectManagement:Milestone`) || $row.instanceOf(`tl.demo.projectManagement:Ticket`) || $row.instanceOf(`tl.demo.projectManagement:Deliverable`)</row-editable>
 							<!-- A scope gets a deliverable of a type the user chooses. -->
 							<add-child
 								create-type="if($parent.instanceOf(`tl.demo.projectManagement:ProjectScope`), `tl.demo.projectManagement:Deliverable`, null)"
@@ -106,7 +117,9 @@
 							/>
 							<columns>
 								<column attribute="name"/>
-								<column attribute="dueDate"/>
+								<column attribute="dueDate">
+									<can-update>!$row.get(`tl.demo.projectManagement:Milestone#approved`)</can-update>
+								</column>
 								<column attribute="approved"/>
 								<column attribute="title"/>
 								<column attribute="assignee"/>

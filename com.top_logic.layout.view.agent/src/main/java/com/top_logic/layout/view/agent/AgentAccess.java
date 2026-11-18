@@ -22,8 +22,10 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
+import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.DevelopmentCategory;
+import com.top_logic.element.accesstoken.AccessTokenPermissions;
 
 /**
  * Admission of non-browser callers to the {@link AgentServlet}.
@@ -47,6 +49,10 @@ import com.top_logic.basic.module.category.DevelopmentCategory;
  */
 @Label("Agent access")
 @ServiceCategory.Of(DevelopmentCategory.class)
+@ServiceDependencies({
+	// For the AccessTokenAuthenticator.
+	AccessTokenPermissions.Module.class,
+})
 public class AgentAccess extends ConfiguredManagedClass<AgentAccess.Config> {
 
 	/**

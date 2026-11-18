@@ -10,6 +10,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelScope;
 
@@ -66,7 +67,19 @@ public class InitializedViewChannel extends DefaultViewChannel {
 	 *        The channel name (for debugging).
 	 */
 	public InitializedViewChannel(String name) {
-		super(name);
+		this(name, null);
+	}
+
+	/**
+	 * Creates an {@link InitializedViewChannel} with a declared value type.
+	 *
+	 * @param name
+	 *        The channel name (for debugging).
+	 * @param valueType
+	 *        See {@link #getValueType()}, {@code null} for none.
+	 */
+	public InitializedViewChannel(String name, TLClass valueType) {
+		super(name, valueType);
 	}
 
 	/**

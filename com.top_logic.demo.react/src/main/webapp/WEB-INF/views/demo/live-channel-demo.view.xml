@@ -51,7 +51,7 @@
 
 		<text
 			input="tick"
-			variant="title"
+			variant="heading-sm"
 		/>
 
 		<text

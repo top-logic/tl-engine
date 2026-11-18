@@ -28,6 +28,8 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.export.PreloadContext;
 import com.top_logic.model.fallback.StorageWithFallback;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.model.util.TLModelUtil;
 
 class InitialOperation extends CopyOperationImpl {
 
@@ -257,7 +259,7 @@ class InitialOperation extends CopyOperationImpl {
 				continue;
 			}
 
-			Object value = readValue(orig, part);
+			Object value = readCopiedValue(orig, part);
 			if (!_filter.accept(part, value, orig)) {
 				continue;
 			}
@@ -271,6 +273,27 @@ class InitialOperation extends CopyOperationImpl {
 			}
 			copy.tUpdate(part, copyValue);
 		}
+	}
+
+	/**
+	 * Reads the value of the given attribute to copy from the original.
+	 *
+	 * <p>
+	 * Of an attribute with a {@link StorageWithFallback}, only the explicit value is copied. The
+	 * copy computes its own fallback value. Copying the value of the attribute would make the
+	 * fallback value of the original an explicit value of the copy, if the storage attribute is not
+	 * copied as well, or if the value of the storage attribute is not up to date, e.g. while the
+	 * original is edited in a form.
+	 * </p>
+	 */
+	private Object readCopiedValue(TLObject orig, TLStructuredTypePart part) {
+		if (part.getStorageImplementation() instanceof StorageWithFallback fallback) {
+			if (useSecurity() && !ModelAccessRights.getInstance().isReadAllowed(orig, part)) {
+				return TLModelUtil.getEmptyValue(part);
+			}
+			return fallback.getExplicitValue(orig, part);
+		}
+		return readValue(orig, part);
 	}
 
 	private Object rewriteReferences(HistoryType historyType, Object value) {

@@ -466,7 +466,8 @@ public class DataMigration {
 	 *
 	 * <p>
 	 * All tables of the schema are dropped and created again before the script is executed, except
-	 * the given ones, which keep their content.
+	 * the given ones, which keep their content. The re-created tables and each statement of the
+	 * script are committed.
 	 * </p>
 	 *
 	 * @param in
@@ -486,6 +487,10 @@ public class DataMigration {
 		DBSchema schema = schemaSetup.buildSchema(newRepository);
 		schema.getTables().removeIf(table -> keepTables.contains(table.getName()));
 		DBSchemaUtils.recreateTables(connection, schema);
+
+		// The script is loaded with a commit after each statement, the empty schema is committed
+		// before.
+		connection.commit();
 
 		new SQLLoader(connection)
 			.setAutoCommit(true)

@@ -184,3 +184,6 @@ export const ICON_REDO = 'css:fa-solid fa-arrow-rotate-right';
 
 /** Shows the HTML source in place of the formatted text (the toolbar of the rich text editor). */
 export const ICON_SOURCE = 'css:fa-solid fa-file-code';
+
+/** Opens the commands of one entry of a list (the trigger of the row commands of a data list). */
+export const ICON_ROW_MENU = 'css:fa-solid fa-ellipsis-vertical';

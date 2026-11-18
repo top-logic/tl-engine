@@ -6,7 +6,6 @@
 package com.top_logic.react.flow.operations;
 
 import com.top_logic.react.flow.data.ClickTarget;
-import com.top_logic.react.flow.data.ContextMenu;
 import com.top_logic.react.flow.data.Tooltip;
 import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.svg.SvgWriter;
@@ -52,7 +51,7 @@ public class Interactivity {
 	 *
 	 * <p>
 	 * This is the case for a widget the user can {@link SelectionUtil#isSelectable(Widget)
-	 * select}, a {@link ClickTarget}, a {@link ContextMenu}, and a {@link Tooltip}.
+	 * select}, a {@link ClickTarget}, and a {@link Tooltip}.
 	 * </p>
 	 *
 	 * @see #containsInteractive(Widget)
@@ -60,7 +59,6 @@ public class Interactivity {
 	public static boolean isInteractive(Widget widget) {
 		return SelectionUtil.isSelectable(widget)
 			|| widget instanceof ClickTarget
-			|| widget instanceof ContextMenu
 			|| widget instanceof Tooltip;
 	}
 

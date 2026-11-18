@@ -92,6 +92,15 @@
 							<de>Schlagwörter</de>
 						</label>
 					</nav-item>
+					<nav-item id="currencies"
+						icon="css:bi bi-currency-exchange"
+					>
+						<view-ref view="currencies.view.xml"/>
+						<label>
+							<en>Currencies</en>
+							<de>Währungen</de>
+						</label>
+					</nav-item>
 					<nav-item id="projects"
 						icon="css:bi bi-kanban"
 					>
@@ -492,6 +501,24 @@
 						<label>
 							<en>Temperatures</en>
 							<de>Temperaturen</de>
+						</label>
+					</nav-item>
+					<nav-item id="data-list-demo"
+						icon="css:bi bi-person-lines-fill"
+					>
+						<view-ref view="demo/data-list-demo.view.xml"/>
+						<label>
+							<en>List</en>
+							<de>Liste</de>
+						</label>
+					</nav-item>
+					<nav-item id="sensor-locking"
+						icon="css:bi bi-lock"
+					>
+						<view-ref view="demo/sensor-locking.view.xml"/>
+						<label>
+							<en>Sensor locking</en>
+							<de>Sperren von Sensoren</de>
 						</label>
 					</nav-item>
 					<nav-item id="styling-demo"

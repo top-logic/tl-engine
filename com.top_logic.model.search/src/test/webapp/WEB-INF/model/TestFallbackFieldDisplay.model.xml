@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestFallbackFieldDisplay">
+			<types>
+				<class name="Item">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<property name="value"
+							type="tl.core:String"
+						>
+							<annotations>
+								<storage-algorithm>
+									<fallback-storage
+										fallback-attribute="valueFallback"
+										storage-attribute="valueStorage"
+									/>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="valueStorage"
+							type="tl.core:String"
+						/>
+						<property name="valueFallback"
+							type="tl.core:String"
+						>
+							<annotations>
+								<storage-algorithm>
+									<query>
+										<expr><![CDATA[x -> $x.get(`TestFallbackFieldDisplay:Item#name`)]]></expr>
+									</query>
+								</storage-algorithm>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

@@ -236,6 +236,15 @@ export interface CommandOptions {
 export const BACKGROUND_COMMAND: Readonly<CommandOptions> = Object.freeze({ background: true });
 
 /**
+ * The {@link CommandOptions} of a report a control sends on its own about its own state - the part
+ * of the rows a table shows, the sizes of the panes of a split panel, the size of a window. Such a
+ * report means nothing once the control is no longer displayed: it runs in the
+ * {@link CommandOptions.background background} and {@link CommandOptions.ignoreStaleUi ignores} a
+ * control the server has disposed already.
+ */
+export const BACKGROUND_REPORT: Readonly<CommandOptions> = Object.freeze({ background: true, ignoreStaleUi: true });
+
+/**
  * Enqueues a command into the strict FIFO chain.
  *
  * <p>For an action command (anything but {@link CMD_VALUE_CHANGED}), all pending debounced field

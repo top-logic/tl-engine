@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.oauth.server">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.oauth.server.model.impl"
+				interface-package="com.top_logic.oauth.server.model"
+			/>
+		</annotations>
+		<types>
+
+			<!--
+				A client registered through dynamic client registration (RFC 7591). A client
+				identified by the URL of its client ID metadata document is not stored here: its
+				metadata is fetched from that URL.
+			-->
+			<class name="OAuthClient">
+				<annotations>
+					<table name="OAuthClient"/>
+					<main-properties properties="clientName,clientId,registeredAt,lastUsed"/>
+				</annotations>
+				<attributes>
+					<property name="clientId"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<property name="clientName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<!-- The registered client metadata as JSON object (RFC 7591, section 2). -->
+					<property name="metadata"
+						mandatory="true"
+						type="tl.core:Text"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</property>
+					<property name="registeredAt"
+						mandatory="true"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<!--
+						When a person last authorized the client or the client last refreshed a token, at
+						most once a minute; empty while it was never authorized. Decides when the
+						clean-up removes a client without authorizations, see
+						OAuthAuthorizationServer.cleanUp().
+					-->
+					<property name="lastUsed"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+				</attributes>
+			</class>
+
+			<!--
+				The permission a person gave a client to act as them at one resource. Its tokens
+				belong to it: revoking the grant deletes them, and deleting the person deletes the
+				grant.
+			-->
+			<class name="OAuthGrant">
+				<annotations>
+					<table name="OAuthGrant"/>
+					<main-properties properties="clientName,owner,resource,createdAt,lastUsed"/>
+				</annotations>
+				<attributes>
+					<reference name="owner"
+						deletion-policy="delete-referer"
+						mandatory="true"
+						type="tl.accounts:Person"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</reference>
+					<property name="clientId"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<property name="clientName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<!-- The URI of the resource (RFC 8707) the tokens of the grant are accepted at. -->
+					<property name="resource"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<!-- The granted scope, space-separated. -->
+					<property name="scope"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<property name="createdAt"
+						mandatory="true"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<!-- Written at most once a minute, see OAuthAuthorizationServer.LAST_USED_GRANULARITY. -->
+					<property name="lastUsed"
+						type="tl.core:DateTime"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<!--
+						Lower-case hex SHA-256 of the authorization code whose exchange created the grant.
+						Unique: of two exchanges of one code, the database lets only the first commit, and a
+						later exchange of the same code finds the grant to revoke.
+					-->
+					<property name="codeHash"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</property>
+					<reference name="tokens"
+						inverse-reference="grant"
+						kind="backwards"
+						multiple="true"
+						navigate="true"
+						type="OAuthToken"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+
+			<!--
+				An access or refresh token issued for a grant. The token itself is never stored, only
+				the SHA-256 of it.
+
+				A refresh token is retired, not deleted, when it is exchanged for a new one, so that
+				its reuse is recognised and revokes the grant.
+			-->
+			<class name="OAuthToken">
+				<annotations>
+					<table name="OAuthToken"/>
+				</annotations>
+				<attributes>
+					<reference name="grant"
+						deletion-policy="delete-referer"
+						mandatory="true"
+						type="OAuthGrant"
+					/>
+					<!-- Lower-case hex SHA-256 of the token. -->
+					<property name="tokenHash"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<!--
+						Lower-case hex SHA-256 of the refresh token this refresh token replaced; for every other
+						token the hash of a random value. Unique: of two exchanges of one refresh token, the database lets
+						only the first commit.
+					-->
+					<property name="predecessorHash"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<!-- Whether this is a refresh token rather than an access token. -->
+					<property name="refresh"
+						mandatory="true"
+						type="tl.core:Boolean"
+					/>
+					<!-- Whether this refresh token has been exchanged for a new one. -->
+					<property name="retired"
+						mandatory="true"
+						type="tl.core:Boolean"
+					/>
+					<property name="expiresAt"
+						mandatory="true"
+						type="tl.core:DateTime"
+					/>
+				</attributes>
+			</class>
+
+			<!--
+				An authorization code issued to a client after a person agreed to its request. Its
+				exchange deletes it; the grant it created keeps its hash, so that a second exchange
+				revokes that grant.
+			-->
+			<class name="OAuthAuthorizationCode">
+				<annotations>
+					<table name="OAuthAuthorizationCode"/>
+				</annotations>
+				<attributes>
+					<!-- Lower-case hex SHA-256 of the code. -->
+					<property name="codeHash"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<reference name="owner"
+						deletion-policy="delete-referer"
+						mandatory="true"
+						type="tl.accounts:Person"
+					/>
+					<property name="clientId"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="clientName"
+						type="tl.core:String"
+					/>
+					<!-- The redirect URI of the authorization request, as the client sent it. -->
+					<property name="redirectUri"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<!-- The PKCE code challenge (method S256). -->
+					<property name="codeChallenge"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="resource"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="scope"
+						type="tl.core:String"
+					/>
+					<property name="expiresAt"
+						mandatory="true"
+						type="tl.core:DateTime"
+					/>
+				</attributes>
+			</class>
+
+			<!--
+				An authorization request the server accepted and that waits for the decision of a
+				person on the consent page, which names it by an identifier of its own. It belongs to
+				nobody until a person allows or denies it; either deletes it, so that it is answered
+				once.
+			-->
+			<class name="OAuthPendingAuthorization">
+				<annotations>
+					<table name="OAuthPendingAuthorization"/>
+				</annotations>
+				<attributes>
+					<!-- Lower-case hex SHA-256 of the identifier the consent page is called with. -->
+					<property name="idHash"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="clientId"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="clientName"
+						type="tl.core:String"
+					/>
+					<!-- The validated redirect URI of the request. -->
+					<property name="redirectUri"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<!-- The PKCE code challenge (method S256). -->
+					<property name="codeChallenge"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="resource"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="scope"
+						type="tl.core:String"
+					/>
+					<!-- The state of the client, returned unchanged with the answer. -->
+					<property name="state"
+						type="tl.core:Text"
+					/>
+					<property name="expiresAt"
+						mandatory="true"
+						type="tl.core:DateTime"
+					/>
+				</attributes>
+			</class>
+
+		</types>
+	</module>
+</model>

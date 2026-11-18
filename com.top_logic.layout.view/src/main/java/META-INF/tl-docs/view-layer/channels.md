@@ -1,5 +1,5 @@
 ---
-description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally initialized from other channels with inputs, init, observed-types, and remembered per user with personalize, personalization-key), <derived-channel> (inputs, expr, reverse, observed-types), how channel scripts see their inputs as named variables (`as`, no lambda header), the overview of which variables every script of the view layer sees and which attribute renames them (row, node, element, column, value, entry, step, objects, target, result, job, …) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer, and a source that keeps recording while its view is hidden, bound to the window's sub-session), how elements read and write channels, how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>, and <dynamic-view> embedding a view configuration stored in a model attribute of the datatype tl.view:ViewDefinition, edited with <open-view-designer> and written by a script with viewParse.
+description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally declaring the class of its values with type for the access check of commands on an empty channel, optionally initialized from other channels with inputs, init, observed-types, and remembered per user with personalize, personalization-key), <derived-channel> (inputs, expr, reverse, observed-types), how channel scripts see their inputs as named variables (`as`, no lambda header), the overview of which variables every script of the view layer sees and which attribute renames them (row, node, element, column, value, entry, step, objects, target, result, job, …) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer, and a source that keeps recording while its view is hidden, bound to the window's sub-session), how elements read and write channels, how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>, and <dynamic-view> embedding a view configuration stored in a model attribute of the datatype tl.view:ViewDefinition, edited with <open-view-designer> and written by a script with viewParse.
 order: 15
 ---
 
@@ -135,6 +135,16 @@ A `<channel>` with `personalize="true"` remembers the value last written into it
 - **Stored values.** A value is stored in a form that names it stably across sessions (`JsonValueCodec`): texts, booleans and numbers as they are, model parts (types, attributes, classifiers) by their qualified name, other persistent objects by their object key, dates as ISO-8601 instant, and lists, sets and maps with text keys of such values.
 - **No longer resolvable.** A remembered value that does not resolve when the channel is created - a deleted object, a removed classifier - is forgotten, and the channel starts with the value of `init`. Inside a list, set or map, only the elements that no longer resolve are dropped.
 - **Not storable.** A value that cannot be named stably - a transient object, any other Java object, a collection holding one - is not remembered: writing it removes the entry, and a warning naming the channel and the value's class is logged once per channel.
+
+### Declaring the class of the values: `type`
+
+Every channel kind - `<channel>`, `<derived-channel>`, `<source-channel>` - may declare the model class of its values (`ChannelConfig#getType()`):
+
+```xml
+<channel name="project" type="tl.demo.projectManagement:ProjectScope"/>
+```
+
+The declaration is used for the access check of a command working on the channel: while the channel is empty, a command whose action checks the access on its input itself (e.g. `<delete-object/>`) is hidden when the user may perform the operation on no object of this type, and disabled otherwise. With an object in the channel, the object decides (see [the checks actions bring](doc:view-layer/access-control#checks-the-actions-bring)). The values of the channel are not checked against the type. Without `type` nothing changes; a type that is no class is a configuration error. The configured `<executability>` rules of a command decide before the check of its action: a `<null-input-disabled/>` on such a command disables it on the empty channel before the type is asked, so leave it out - the action's check already disables the command without an object. A table does not derive the type of its `selection` channel from its `types`: the type is declared on the channel only.
 
 ### Writing through a derived channel: `reverse`
 

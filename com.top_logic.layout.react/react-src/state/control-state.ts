@@ -1708,25 +1708,41 @@ export namespace TextStateJson {
 		 */
 		| 'body'
 		/**
-		 * The heading of a section within a page.
-		 */
-		| 'title'
-		/**
-		 * The heading a page is introduced with.
-		 */
-		| 'headline'
-		/**
-		 * The largest text on a page, for the one statement a landing page is built around.
+		 * The largest text on a page, for the one statement a page is built around, e.g. a key figure.
 		 */
 		| 'display'
 		/**
-		 * The name of a value, shown above or beside what it names.
+		 * The heading a page is introduced with, the largest of the three heading levels.
+		 */
+		| 'heading-lg'
+		/**
+		 * The heading of a section within a page, the middle of the three heading levels.
+		 */
+		| 'heading-md'
+		/**
+		 * The heading of a group within a section, the smallest of the three heading levels.
+		 */
+		| 'heading-sm'
+		/**
+		 * Running text that stands out from the text around it.
+		 */
+		| 'body-strong'
+		/**
+		 * Small text: the name of a value, a hint, a date, an attribution.
 		 */
 		| 'label'
 		/**
-		 * A remark accompanying another text: a hint, a date, an attribution.
+		 * Small text that stands out from the text around it.
 		 */
-		| 'caption';
+		| 'label-strong'
+		/**
+		 * A small line above a heading, set with wide letter spacing.
+		 */
+		| 'overline'
+		/**
+		 * Program code or other text set in a fixed-width font.
+		 */
+		| 'code';
 
 	/**
 	 * What the color of a text means, its color role.

@@ -151,7 +151,7 @@
 							direction="column"
 							gap="compact"
 						>
-							<text variant="title">
+							<text variant="heading-sm">
 								<label>
 									<en>Password</en>
 									<de>Passwort</de>
@@ -202,7 +202,7 @@
 							direction="column"
 							gap="compact"
 						>
-							<text variant="title">
+							<text variant="heading-sm">
 								<label>
 									<en>Deputies</en>
 									<de>Stellvertreter</de>
@@ -249,7 +249,7 @@
 							direction="column"
 							gap="compact"
 						>
-							<text variant="title">
+							<text variant="heading-sm">
 								<label>
 									<en>Two-factor authentication</en>
 									<de>Zwei-Faktor-Authentifizierung</de>

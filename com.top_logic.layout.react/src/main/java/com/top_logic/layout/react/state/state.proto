@@ -1661,25 +1661,41 @@ message TextState extends ControlState {
 		@Name("body")
 		BODY;
 
-		/** The heading of a section within a page. */
-		@Name("title")
-		TITLE;
-
-		/** The heading a page is introduced with. */
-		@Name("headline")
-		HEADLINE;
-
-		/** The largest text on a page, for the one statement a landing page is built around. */
+		/** The largest text on a page, for the one statement a page is built around, e.g. a key figure. */
 		@Name("display")
 		DISPLAY;
 
-		/** The name of a value, shown above or beside what it names. */
+		/** The heading a page is introduced with, the largest of the three heading levels. */
+		@Name("heading-lg")
+		HEADING_LG;
+
+		/** The heading of a section within a page, the middle of the three heading levels. */
+		@Name("heading-md")
+		HEADING_MD;
+
+		/** The heading of a group within a section, the smallest of the three heading levels. */
+		@Name("heading-sm")
+		HEADING_SM;
+
+		/** Running text that stands out from the text around it. */
+		@Name("body-strong")
+		BODY_STRONG;
+
+		/** Small text: the name of a value, a hint, a date, an attribution. */
 		@Name("label")
 		LABEL;
 
-		/** A remark accompanying another text: a hint, a date, an attribution. */
-		@Name("caption")
-		CAPTION;
+		/** Small text that stands out from the text around it. */
+		@Name("label-strong")
+		LABEL_STRONG;
+
+		/** A small line above a heading, set with wide letter spacing. */
+		@Name("overline")
+		OVERLINE;
+
+		/** Program code or other text set in a fixed-width font. */
+		@Name("code")
+		CODE;
 	}
 
 	/**

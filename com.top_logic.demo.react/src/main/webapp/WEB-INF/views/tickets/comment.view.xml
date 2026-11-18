@@ -46,8 +46,8 @@
 			<title-content>
 				<avatar input="author"/>
 				<text
-					css-class="tl-type-body-strong"
 					input="author"
+					variant="body-strong"
 				/>
 				<relative-time input="date"/>
 				<scroll-link

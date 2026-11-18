@@ -7,8 +7,9 @@
 	
 	The toolbar creates a project, deletes the selected one and creates a PowerPoint status report of
 	the selected one; the table observes projects, so creation and deletion are reflected in the rows
-	without a reload. A project being created has its creator as administrator, so the creator sees
-	and administers it once it is created.
+	without a reload. The project channel declares the type of its values, so that "Delete" is hidden
+	without a selection for an account that may delete no project at all. A project being created has
+	its creator as administrator, so the creator sees and administers it once it is created.
 	
 	Above the table, a new budget for the selected project is applied in place. The budget channel is
 	initialized from the selected project (init over the input project): the field shows the stored
@@ -19,7 +20,9 @@
 -->
 <view>
 	<channels>
-		<channel name="project"/>
+		<channel name="project"
+			type="tl.demo.projectManagement:ProjectScope"
+		/>
 		<channel name="budget"
 			init="if($project == null, null, $project.get(`tl.demo.projectManagement:ProjectScope#budget`))"
 			inputs="project"
@@ -64,9 +67,6 @@
 					<en>Delete</en>
 					<de>Löschen</de>
 				</label>
-				<executability>
-					<null-input-disabled/>
-				</executability>
 				<confirm expr="#('Delete project {0}?'@en, 'Projekt {0} löschen?'@de).fill($project.get(`tl.demo.projectManagement:ProjectScope#name`))"/>
 				<delete-object/>
 				<write-channel name="project"

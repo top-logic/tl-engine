@@ -26,6 +26,7 @@ import org.vectomatic.dom.svg.utils.OMSVGParser;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Timer;
 import com.top_logic.react.flow.callback.DiagramContext;
+import com.top_logic.react.flow.client.bridge.CommandSender;
 import com.top_logic.react.flow.client.bridge.ReactBridge;
 import com.top_logic.react.flow.client.bridge.StateListener;
 import com.top_logic.react.flow.control.FlowControlCommon;
@@ -34,6 +35,7 @@ import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.DropRegion;
 import com.top_logic.react.flow.data.MouseButton;
 import com.top_logic.react.flow.data.Widget;
+import com.top_logic.react.flow.operations.SelectionUtil;
 import com.top_logic.react.flow.model.Drawable;
 import com.top_logic.react.flow.svg.SvgWriter;
 import com.top_logic.react.flow.svg.event.SVGDropEvent;
@@ -75,7 +77,7 @@ import jsinterop.base.Js;
  * <ul>
  * <li>Is mounted from a global JS function ({@code GWT_FlowDiagram.mount(...)})</li>
  * <li>Receives server updates via {@link ReactBridge#subscribe(String, StateListener)}</li>
- * <li>Sends commands to server via {@link ReactBridge#sendCommand}</li>
+ * <li>Sends commands to server via the {@link CommandSender} of the React component mounting it</li>
  * </ul>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -96,6 +98,9 @@ public class FlowDiagramClientControl implements DiagramContext {
 	 * </p>
 	 */
 	static final double DRAG_THRESHOLD = 4.0;
+
+	/** DOM event fired when the user asks for a context menu. */
+	private static final String CONTEXT_MENU_EVENT = "contextmenu";
 
 	/** State key the server sends the serialized diagram with. */
 	private static final String DIAGRAM_STATE = "diagram";
@@ -181,9 +186,11 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	private final String _controlId;
 
-	private final String _windowName;
-
-	private final String _contextPath;
+	/**
+	 * The function sending commands to the server, <code>null</code> once the control is
+	 * {@link #destroy() destroyed}.
+	 */
+	private CommandSender _sender;
 
 	final SubIdGenerator _nextId;
 
@@ -249,12 +256,18 @@ public class FlowDiagramClientControl implements DiagramContext {
 	private EventListener _keyDownEsc;
 
 	/**
+	 * Reports the element a context menu is opened on to the server.
+	 *
+	 * @see FlowControlCommon#CMD_CONTEXT_MENU
+	 */
+	private EventListener _contextMenu;
+
+	/**
 	 * Creates a {@link FlowDiagramClientControl}.
 	 */
-	private FlowDiagramClientControl(String controlId, String windowName, String contextPath) {
+	private FlowDiagramClientControl(String controlId, CommandSender sender) {
 		_controlId = controlId;
-		_windowName = windowName;
-		_contextPath = contextPath;
+		_sender = sender;
 		_nextId = new SubIdGenerator(controlId);
 	}
 
@@ -265,17 +278,15 @@ public class FlowDiagramClientControl implements DiagramContext {
 	 *        The DOM element to render into.
 	 * @param controlId
 	 *        The server-side control ID.
-	 * @param windowName
-	 *        Browser window identifier.
-	 * @param contextPath
-	 *        Base path (e.g. "/demo").
+	 * @param sender
+	 *        The function sending the commands of the control to the server.
 	 * @param diagramJson
 	 *        The diagram model as JSON string.
 	 * @return The control instance (exposes {@link #destroy()} to JavaScript).
 	 */
-	public static FlowDiagramClientControl mount(HTMLDivElement container, String controlId, String windowName,
-			String contextPath, String diagramJson) {
-		FlowDiagramClientControl instance = new FlowDiagramClientControl(controlId, windowName, contextPath);
+	public static FlowDiagramClientControl mount(HTMLDivElement container, String controlId, CommandSender sender,
+			String diagramJson) {
+		FlowDiagramClientControl instance = new FlowDiagramClientControl(controlId, sender);
 		instance.init(container, diagramJson);
 		return instance;
 	}
@@ -764,10 +775,35 @@ public class FlowDiagramClientControl implements DiagramContext {
 			}
 		};
 
+		_contextMenu = new EventListener() {
+			@Override
+			public void handleEvent(Event evt) {
+				// The event is left to the menu region around the diagram, which opens the menu
+				// after this command has adjusted the selection the menu targets.
+				sendContextMenu(findSelectable((Element) evt.target));
+			}
+		};
+
 		svgElement.addEventListener("pointerdown", _pointerDown);
 		svgElement.addEventListener("pointermove", _pointerMove);
 		svgElement.addEventListener("pointerup", _pointerUp);
+		svgElement.addEventListener(CONTEXT_MENU_EVENT, _contextMenu);
 		DomGlobal.window.addEventListener("keydown", _keyDownEsc);
+	}
+
+	/**
+	 * The element the user can select that is drawn by the given DOM element or by one of its
+	 * ancestors within the diagram, <code>null</code> if there is none.
+	 */
+	private Widget findSelectable(Element target) {
+		Element svgElement = Js.cast(_svg.getElement());
+		for (Element element = target; element != null && element != svgElement; element = element.parentElement) {
+			Object widget = getAttachedWidget(element);
+			if (widget instanceof Widget && SelectionUtil.isSelectable((Widget) widget)) {
+				return (Widget) widget;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -1503,8 +1539,9 @@ public class FlowDiagramClientControl implements DiagramContext {
 	public void processClick(ClickTarget node, List<MouseButton> pressedButtons) {
 		int nodeId = _scope.id(node);
 		List<String> buttons = pressedButtons.stream().map(x -> x.name()).collect(Collectors.toList());
-		JavaScriptObject args = createClickArgs(nodeId, toJsStringArray(buttons));
-		ReactBridge.sendCommand(_contextPath, _controlId, "dispatchClick", _windowName, args);
+		JavaScriptObject args = createClickArgs(FlowControlCommon.ARG_NODE_ID, nodeId,
+			FlowControlCommon.ARG_MOUSE_BUTTONS, toJsStringArray(buttons));
+		send(FlowControlCommon.CMD_DISPATCH_CLICK, args, false);
 	}
 
 	@SuppressWarnings("unusable-by-js")
@@ -1512,31 +1549,68 @@ public class FlowDiagramClientControl implements DiagramContext {
 	public void processDrop(DropRegion node, SVGDropEvent event) {
 		int nodeId = _scope.id(node);
 		if (hasWindowTlDnD()) {
-			JavaScriptObject args = createDropArgs(nodeId);
-			ReactBridge.sendCommand(_contextPath, _controlId, "dispatchDrop", _windowName, args);
+			JavaScriptObject args = createDropArgs(FlowControlCommon.ARG_NODE_ID, nodeId, FlowControlCommon.ARG_DATA);
+			send(FlowControlCommon.CMD_DISPATCH_DROP, args, false);
 		}
 	}
 
-	private void sendUpdateCommand(String patch) {
-		JavaScriptObject args = createUpdateArgs(patch);
-		ReactBridge.sendCommand(_contextPath, _controlId, "update", _windowName, args);
+	/**
+	 * Reports the element a context menu is opened on.
+	 *
+	 * @param node
+	 *        The selectable element under the pointer, <code>null</code> for the empty area of the
+	 *        diagram.
+	 */
+	private void sendContextMenu(Widget node) {
+		JavaScriptObject args = JavaScriptObject.createObject();
+		if (node != null) {
+			setNumber(args, FlowControlCommon.ARG_NODE_ID, _scope.id(node));
+		}
+		send(FlowControlCommon.CMD_CONTEXT_MENU, args, false);
 	}
 
-	private static native JavaScriptObject createClickArgs(int nodeId, JavaScriptObject mouseButtons) /*-{
-		return { nodeId: nodeId, mouseButtons: mouseButtons };
+	private void sendUpdateCommand(String patch) {
+		JavaScriptObject args = JavaScriptObject.createObject();
+		setString(args, FlowControlCommon.ARG_PATCH, patch);
+		// Pan, zoom and selection changes are no action the user waits for.
+		send(FlowControlCommon.CMD_UPDATE, args, true);
+	}
+
+	/**
+	 * Sends a command to the server-side control, unless this control is destroyed.
+	 */
+	private void send(String command, JavaScriptObject args, boolean background) {
+		if (_sender != null) {
+			_sender.send(command, args, background);
+		}
+	}
+
+	private static native JavaScriptObject createClickArgs(String nodeIdKey, int nodeId, String buttonsKey,
+			JavaScriptObject mouseButtons) /*-{
+		var args = {};
+		args[nodeIdKey] = nodeId;
+		args[buttonsKey] = mouseButtons;
+		return args;
 	}-*/;
 
-	private static native JavaScriptObject createDropArgs(int nodeId) /*-{
+	private static native JavaScriptObject createDropArgs(String nodeIdKey, int nodeId, String dataKey) /*-{
 		var data = null;
 		if ($wnd.services && $wnd.services.ajax && $wnd.services.ajax.mainLayout
 				&& $wnd.services.ajax.mainLayout.tlDnD) {
 			data = $wnd.services.ajax.mainLayout.tlDnD.data;
 		}
-		return { nodeId: nodeId, data: data };
+		var args = {};
+		args[nodeIdKey] = nodeId;
+		args[dataKey] = data;
+		return args;
 	}-*/;
 
-	private static native JavaScriptObject createUpdateArgs(String patch) /*-{
-		return { patch: patch };
+	private static native void setNumber(JavaScriptObject obj, String key, int value) /*-{
+		obj[key] = value;
+	}-*/;
+
+	private static native void setString(JavaScriptObject obj, String key, String value) /*-{
+		obj[key] = value;
 	}-*/;
 
 	private static native JavaScriptObject toJsStringArray(List<String> input) /*-{
@@ -1559,6 +1633,9 @@ public class FlowDiagramClientControl implements DiagramContext {
 	@JsMethod
 	public void destroy() {
 		ReactBridge.unsubscribe(_controlId, _stateListener);
+
+		// A command of an unmounted control has no control to reach any more.
+		_sender = null;
 
 		if (_observer != null) {
 			_observer.disconnect();
@@ -1586,6 +1663,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 			svgElement.removeEventListener("pointerdown", _pointerDown);
 			svgElement.removeEventListener("pointermove", _pointerMove);
 			svgElement.removeEventListener("pointerup", _pointerUp);
+			svgElement.removeEventListener(CONTEXT_MENU_EVENT, _contextMenu);
 		}
 		DomGlobal.window.removeEventListener("keydown", _keyDownEsc);
 

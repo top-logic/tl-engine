@@ -417,6 +417,44 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.breadcrumb.label")
 	public static ResKey JS_BREADCRUMB_LABEL;
 
+	// -- Data list client-side i18n keys --
+
+	/**
+	 * @en Collapse list
+	 */
+	@CustomKey("js.dataList.collapse")
+	public static ResKey JS_DATA_LIST_COLLAPSE;
+
+	/**
+	 * @en Expand list
+	 */
+	@CustomKey("js.dataList.expand")
+	public static ResKey JS_DATA_LIST_EXPAND;
+
+	/**
+	 * @en Search
+	 */
+	@CustomKey("js.dataList.search")
+	public static ResKey JS_DATA_LIST_SEARCH;
+
+	/**
+	 * @en Nothing to show.
+	 */
+	@CustomKey("js.dataList.empty")
+	public static ResKey JS_DATA_LIST_EMPTY;
+
+	/**
+	 * @en No matching entries.
+	 */
+	@CustomKey("js.dataList.noMatch")
+	public static ResKey JS_DATA_LIST_NO_MATCH;
+
+	/**
+	 * @en Actions
+	 */
+	@CustomKey("js.dataList.rowActions")
+	public static ResKey JS_DATA_LIST_ROW_ACTIONS;
+
 	// -- Toolbar client-side i18n keys --
 
 	/**
@@ -937,6 +975,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_DELETE_FILTER;
 
 	/**
+	 * @en + {0} more
+	 */
+	@CustomKey("js.table.morePresets")
+	public static ResKey JS_TABLE_MORE_PRESETS;
+
+	/**
 	 * @en Do not save
 	 */
 	@CustomKey("js.table.cancelSave")
@@ -966,6 +1010,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en {0} selected, {1} of them filtered out
 	 */
 	public static ResKey2 TABLE_ROW_COUNT_SELECTED_FILTERED__COUNT_FILTERED;
+
+	/**
+	 * @en Filter: {0}
+	 */
+	public static ResKey1 TABLE_FILTER_PRESET__NAME;
+
+	/**
+	 * @en {0,choice,1#1 filter active|2#{0} filters active}
+	 */
+	public static ResKey1 TABLE_FILTERS_ACTIVE__COUNT;
 
 	/**
 	 * @en Selection changed.

@@ -16,6 +16,8 @@ import com.nimbusds.oauth2.sdk.token.RefreshToken;
 
 import com.top_logic.base.accesscontrol.ExternalIdentity;
 import com.top_logic.base.accesscontrol.ExternalUserMapping;
+import com.top_logic.base.accesscontrol.VerifiedIdentity;
+import com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory;
 import com.top_logic.security.auth.pac4j.servlet.Pac4jAuthenticationServlet;
 
 /**
@@ -50,6 +52,20 @@ public class TestPac4jAuthenticationServlet extends TestCase {
 		assertEquals(NAME, identity.getName());
 		assertEquals(EMAIL, identity.getClaim(CommonProfileDefinition.EMAIL));
 		assertEquals(Boolean.TRUE, identity.getClaim(OidcProfileDefinition.EMAIL_VERIFIED));
+	}
+
+	/**
+	 * A fresh authentication through the re-authentication client of a client yields the identity
+	 * of the client it is derived from.
+	 */
+	public void testIdentityOfReauthentication() {
+		OidcProfile profile = oidcProfile();
+		profile.setClientName(Pac4jConfigFactory.getReauthenticationName(CLIENT));
+
+		assertEquals(CLIENT, Pac4jAuthenticationServlet.createIdentity(profile, NAME).getClientName());
+		VerifiedIdentity verified = Pac4jAuthenticationServlet.createVerifiedIdentity(profile, () -> null);
+		assertEquals(CLIENT, verified.getClientName());
+		assertEquals(SUBJECT, verified.getSubject());
 	}
 
 	/**

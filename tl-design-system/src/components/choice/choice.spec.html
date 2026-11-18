@@ -56,10 +56,23 @@
       </span>
     </div>
     <div class="specimen__row specimen__row--wide">
-      <span class="tl-type-label">schreibgeschützt, aria-readonly</span>
+      <span class="tl-type-label">schreibgeschützt, aria-readonly: ein Wert — Haken, Strich, ohne Wert nichts</span>
       <span class="tl-choice-group">
-        <label class="tl-choice tl-type-body"><input type="checkbox" class="tl-checkbox" checked aria-readonly="true"> angekreuzt, schreibgeschützt</label>
-        <label class="tl-choice tl-type-body"><input type="checkbox" role="switch" class="tl-checkbox tl-checkbox--switch" checked aria-readonly="true"> Schalter an, schreibgeschützt</label>
+        <label class="tl-choice tl-type-body"><input type="checkbox" class="tl-checkbox" checked aria-readonly="true"> angekreuzt</label>
+        <label class="tl-choice tl-type-body"><input type="checkbox" class="tl-checkbox" aria-readonly="true"> nicht angekreuzt</label>
+        <label class="tl-choice tl-type-body"><input type="checkbox" class="tl-checkbox" data-indeterminate aria-readonly="true"> ohne Wert</label>
+        <label class="tl-choice tl-type-body"><input type="checkbox" role="switch" class="tl-checkbox tl-checkbox--switch" checked aria-readonly="true"> Schalter an</label>
+        <label class="tl-choice tl-type-body"><input type="checkbox" role="switch" class="tl-checkbox tl-checkbox--switch" aria-readonly="true"> Schalter aus</label>
+      </span>
+    </div>
+    <div class="specimen__row specimen__row--wide">
+      <span class="tl-type-label">schreibgeschützt neben Lesewerten (tl-field-value), ohne Label wie im Formularfeld</span>
+      <span class="tl-type-body">
+        <span class="tl-field-value"><span class="tl-field-value__text">Ein Wert</span></span>
+        <input type="checkbox" class="tl-checkbox" checked aria-readonly="true" aria-label="angekreuzt">
+        <input type="checkbox" class="tl-checkbox" aria-readonly="true" aria-label="nicht angekreuzt">
+        <input type="checkbox" role="switch" class="tl-checkbox tl-checkbox--switch" checked aria-readonly="true" aria-label="Schalter an">
+        <span class="tl-field-value"><span class="tl-field-value__text">noch ein Wert</span></span>
       </span>
     </div>
     <div class="specimen__row specimen__row--wide">

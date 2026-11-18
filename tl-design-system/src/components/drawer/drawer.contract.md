@@ -29,6 +29,8 @@ Das Control ist `TLDrawer` (`ReactDrawerControl`).
   `inert`.
 - **Mit Scrim (modal):** sie steht in einem `tl-dialog`, trägt `role="dialog"` und `aria-modal="true"`, der Fokus ist
   gefangen, ein Klick auf den Scrim schließt.
+- **Mit Scrim im Behälter (modal):** vor der Schublade steht `tl-drawer__scrim`, der nur den Behälter deckt; sonst wie
+  mit Scrim. Leser ist `TLDataList` unter seiner Schwelle (`list.contract.md`).
 - Escape schließt.
 
 ## Tokens
@@ -37,6 +39,7 @@ Das Control ist `TLDrawer` (`ReactDrawerControl`).
 |---|---|
 | Fläche | `--tl-surface-overlay`, Schrift `--tl-text-primary`; Schatten `--tl-shadow-dialog` nur offen |
 | Ebene | `--tl-layer-overlay`; im Behälter `--tl-layer-raised` |
+| Scrim im Behälter | `--tl-surface-scrim`, Ebene `--tl-layer-raised` |
 | Maße | `--tl-size-drawer-narrow`, `--tl-size-drawer-medium`, `--tl-size-drawer-wide` |
 | Bewegung | `transform` über `--tl-duration-base`, kommend `--tl-easing-entrance`, gehend `--tl-easing-exit` |
 | Kopf | `tl-titlebar` |
@@ -54,6 +57,7 @@ Das Control ist `TLDrawer` (`ReactDrawerControl`).
 | `aria-labelledby` | mit Titel, auf `tl-titlebar__title` |
 | `role="dialog"` + `aria-modal="true"` | nur mit Scrim |
 | `tl-drawer__body` | Inhalt |
+| `tl-drawer__scrim` | Scrim einer modalen Schublade im Behälter, vor ihr im DOM |
 
 ## Konformität
 

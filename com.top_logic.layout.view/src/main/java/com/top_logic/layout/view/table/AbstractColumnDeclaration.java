@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,6 +42,7 @@ import com.top_logic.model.annotate.TLAttributeAnnotation;
 import com.top_logic.model.annotate.ui.AnnotationValueColorProvider;
 import com.top_logic.model.annotate.ui.TLColor;
 import com.top_logic.model.annotate.ui.ValueColor;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.providers.CellClassProviderByExpression;
@@ -103,6 +105,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getReadonly()}. */
 		String READONLY = "readonly";
+
+		/** Configuration name for {@link #getCanUpdate()}. */
+		String CAN_UPDATE = "can-update";
 
 		/** Configuration name for {@link #getSort()}. */
 		String SORT = "sort";
@@ -177,6 +182,31 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		 */
 		@Name(READONLY)
 		boolean getReadonly();
+
+		/**
+		 * Whether the cell of a row can be edited: an expression over the row yielding whether the
+		 * cell offers the edit.
+		 *
+		 * <p>
+		 * The expression sees the row as the variable {@value RowAsConfig#DEFAULT_ROW_AS}, or by the
+		 * name the table gives it with {@value RowAsConfig#ROW_AS}, and the values of the inputs of
+		 * the column, of the table for a column without inputs of its own. A row the expression
+		 * refuses shows its cell read-only.
+		 * </p>
+		 *
+		 * <p>
+		 * The condition only restricts the edit: a cell the column does not edit on a row anyway is
+		 * not edited, whatever the condition says - an attribute the model or the access rights of
+		 * the user do not let be changed on the row, a computed column without an
+		 * <code>update</code>, a column that is {@link #getReadonly() read-only}. Unset (the
+		 * default), every cell the column can edit is edited.
+		 * </p>
+		 */
+		@Name(CAN_UPDATE)
+		@Nullable
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getCanUpdate();
 
 		/**
 		 * The direction this column is sorted in when the table is first shown, or unset to leave
@@ -500,6 +530,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 	private final boolean _readonly;
 
+	/** The compiled {@link Config#getCanUpdate() edit condition}, {@code null} for none. */
+	private final QueryExecutor _canUpdate;
+
 	private final SortDirection _sort;
 
 	private final int _width;
@@ -531,9 +564,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	private final ReactControlProvider _display;
 
 	/**
-	 * The inputs whose values the {@link #_aggregate}, the {@link #_comparator}, the
-	 * {@link #_tooltip}, the {@link #_cellClass} and the {@link #_cellRole} see, empty for a
-	 * declaration setting none of them.
+	 * The inputs whose values the {@link #_canUpdate}, the {@link #_aggregate}, the
+	 * {@link #_comparator}, the {@link #_tooltip}, the {@link #_cellClass} and the
+	 * {@link #_cellRole} see, empty for a declaration setting none of them.
 	 */
 	private final List<InputRef> _scriptInputs;
 
@@ -565,6 +598,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_emptyGroupLabel = config.getEmptyGroupLabel();
 		_binding = binding(context, config.getFilter());
 		_readonly = config.getReadonly();
+		_canUpdate = InputScript.compile(config, Config.CAN_UPDATE);
 		_sort = config.getSort();
 		_width = config.getWidth();
 		_aggregate = InputScript.compile(config, Config.AGGREGATE);
@@ -574,8 +608,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_cellClass = InputScript.compile(config, Config.CELL_CLASS);
 		_cellRole = InputScript.compile(config, Config.CELL_ROLE);
 		_display = context.getInstance(config.getDisplay());
-		boolean scripted = _aggregate != null || _comparator != null || _tooltip != null || _cellClass != null
-			|| _cellRole != null;
+		boolean scripted = _canUpdate != null || _aggregate != null || _comparator != null || _tooltip != null
+			|| _cellClass != null || _cellRole != null;
 		_scriptInputs =
 			scripted ? InputScript.inputs(config, config.descriptor().getProperty(Config.AGGREGATE)) : List.of();
 		_existsIf = InputScript.compile(config, Config.EXISTS_IF);
@@ -602,9 +636,10 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 * <p>
 	 * The channels the declared filter reads, and the inputs of the column - of the table, for a
 	 * column without inputs of its own - where the column computes its
-	 * {@link Config#getAggregate() aggregate}, its {@link Config#getComparator() order}, its
-	 * {@link Config#getTooltip() tooltips}, its {@link Config#getCellClass() cell classes} or its
-	 * {@link Config#getCellRole() cell roles} with a script: the script sees their values, so the
+	 * {@link Config#getCanUpdate() edit condition}, its {@link Config#getAggregate() aggregate}, its
+	 * {@link Config#getComparator() order}, its {@link Config#getTooltip() tooltips}, its
+	 * {@link Config#getCellClass() cell classes} or its {@link Config#getCellRole() cell roles} with a
+	 * script: the script sees their values, so the
 	 * cells follow them. Likewise the inputs its {@link Config#getExistsIf() existence condition}
 	 * and its {@link Config#getHeaderRole() header role} and {@link Config#getHeaderClass() header
 	 * class} see.
@@ -641,6 +676,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_emptyGroupLabel = null;
 		_binding = ColumnBinding.TYPE_DERIVED;
 		_readonly = false;
+		_canUpdate = null;
 		_sort = null;
 		_width = 0;
 		_aggregate = null;
@@ -697,7 +733,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 *        Reads the cell value from a row.
 	 * @param editing
 	 *        How a cell of the column is edited, or {@code null} for a column offering no edit. A
-	 *        column declared read-only is not edited, whatever its kind could offer.
+	 *        column declared read-only is not edited, whatever its kind could offer, and a column
+	 *        declaring an {@link Config#getCanUpdate() edit condition} only on the rows it accepts.
 	 * @param scope
 	 *        What the column is resolved against.
 	 */
@@ -720,10 +757,33 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		List<ViewChannel> inputs =
 			_scriptInputs.isEmpty() ? List.of() : ChannelInputs.resolve(scope.context(), _scriptInputs);
 		return new ColumnSetup(name, _label != null ? _label : label, annotatedType, value, scope.context(), _binding,
-			_width, _readonly ? null : editing, aggregate(_aggregate, inputs), comparator(_comparator, inputs),
+			_width, editing(editing, inputs), aggregate(_aggregate, inputs), comparator(_comparator, inputs),
 			_hiddenByDefault, _export, tooltip(_tooltip, inputs), cellClass(_cellClass, inputs),
 			cellRole(_cellRole, inputs), _display, _sortable, _align, exists(_existsIf, _existsInputs, scope),
 			cellExists, header(scope), ChannelCondition.ALWAYS, _emptyGroupLabel);
+	}
+
+	/**
+	 * How a cell of a column of this declaration is edited: as its kind offers, restricted to the
+	 * rows the {@link Config#getCanUpdate() edit condition} accepts, and not at all for a column
+	 * declared {@link Config#getReadonly() read-only}.
+	 *
+	 * @param editing
+	 *        How the kind of the column edits a cell, {@code null} for no edit.
+	 * @param inputs
+	 *        The channels of the inputs of the condition.
+	 */
+	private CellEditing editing(CellEditing editing, List<ViewChannel> inputs) {
+		if (_readonly || editing == null) {
+			return null;
+		}
+		QueryExecutor canUpdate = _canUpdate;
+		if (canUpdate == null) {
+			return editing;
+		}
+		Predicate<Object> rows =
+			row -> SearchExpression.isTrue(canUpdate.execute(ChannelInputs.arguments(inputs, row)));
+		return editing.restrictedTo(rows);
 	}
 
 	/**

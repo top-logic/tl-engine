@@ -461,7 +461,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 	@Override
 	public boolean displays(TLObject object, TLStructuredTypePart part) {
-		return _model != null && _model.getObject() == object && _model.getPart() == part;
+		return _model != null && _model.getObject() == object
+			&& _model.getPart().getDefinition() == part.getDefinition();
 	}
 
 	private void clearModel() {

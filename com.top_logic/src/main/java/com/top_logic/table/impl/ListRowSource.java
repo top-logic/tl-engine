@@ -22,7 +22,9 @@ import java.util.function.Predicate;
 
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.ColumnFilterState;
 import com.top_logic.table.FilterSpec;
+import com.top_logic.table.FilterState;
 import com.top_logic.table.Group;
 import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
@@ -309,6 +311,12 @@ public class ListRowSource<R> implements RowSource<R> {
 
 	@Override
 	public MatchCounts matchCounts(String column) {
+		FilterState state = _filter.byColumn().get(column);
+		return matchCounts(column, state == null ? null : ColumnFilterState.kindOf(state));
+	}
+
+	@Override
+	public MatchCounts matchCounts(String column, String kind) {
 		Column<R, ?> definition = _byName.get(column);
 		if (definition == null) {
 			return MatchCounts.NONE;
@@ -320,7 +328,7 @@ public class ListRowSource<R> implements RowSource<R> {
 		Map<Object, Integer> counts = new HashMap<>();
 		for (R element : _elements) {
 			if (others == null || others.test(element)) {
-				addFacetCounts(definition, element, counts);
+				addFacetCounts(definition, kind, element, counts);
 			}
 		}
 		return new MatchCounts() {
@@ -337,9 +345,10 @@ public class ListRowSource<R> implements RowSource<R> {
 		};
 	}
 
-	private static <R, V> void addFacetCounts(Column<R, V> column, R element, Map<Object, Integer> counts) {
+	private static <R, V> void addFacetCounts(Column<R, V> column, String kind, R element,
+			Map<Object, Integer> counts) {
 		V value = column.value(element);
-		Optional<ColumnFilter<V>> filter = column.filter();
+		Optional<ColumnFilter<V>> filter = column.filter(kind);
 		if (filter.isPresent()) {
 			for (Object key : filter.get().facetKeys(value)) {
 				counts.merge(key, Integer.valueOf(1), Integer::sum);

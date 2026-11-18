@@ -5,6 +5,7 @@
  */
 package com.top_logic.table.impl;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.top_logic.basic.util.ResKey;
@@ -92,6 +93,11 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 	@Override
 	public Optional<Sort<V>> sort() {
 		return _inner.sort();
+	}
+
+	@Override
+	public List<ColumnFilter<V>> filters() {
+		return _inner.filters();
 	}
 
 	@Override

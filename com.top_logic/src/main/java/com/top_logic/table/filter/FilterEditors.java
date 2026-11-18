@@ -5,11 +5,13 @@
  */
 package com.top_logic.table.filter;
 
+import java.util.List;
+import java.util.function.Function;
+
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.MatchCounts;
-import com.top_logic.table.NegatedFilterState;
 
 /**
  * Builds the {@link FilterEditor} for a {@link ColumnFilter}, seeded from the column's current
@@ -33,7 +35,7 @@ public final class FilterEditors {
 	}
 
 	/**
-	 * Creates the editor for the given filter and current state.
+	 * Creates the editor for a column with the given only filter and current state.
 	 *
 	 * @param filter
 	 *        The column filter.
@@ -41,20 +43,39 @@ public final class FilterEditors {
 	 *        The current filter state, or {@code null} if the column is not filtered.
 	 * @param counts
 	 *        Facet counts for option filters, or {@link MatchCounts#NONE}.
+	 *
+	 * @see #create(List, FilterState, Function)
 	 */
-	public static FilterEditor create(ColumnFilter<?> filter, FilterState current, MatchCounts counts) {
-		// Inversion is a generic wrapper around any inner state; unwrap it to seed the inner editor
-		// and re-offer the invert checkbox in its previous state.
-		boolean inverted = current instanceof NegatedFilterState;
-		FilterState inner = inverted ? ((NegatedFilterState) current).inner() : current;
-		FilterEditor editor = innerEditor(filter, inner, counts);
-		if (filter.supportsInversion()) {
-			return new InvertingFilterEditor(editor, inverted);
-		}
-		return editor;
+	public static ColumnFilterEditor create(ColumnFilter<?> filter, FilterState current, MatchCounts counts) {
+		return create(List.of(filter), current, kind -> counts);
 	}
 
-	private static FilterEditor innerEditor(ColumnFilter<?> filter, FilterState current, MatchCounts counts) {
+	/**
+	 * Creates the editor for a column with the given kinds of filter and current state.
+	 *
+	 * @param kinds
+	 *        The {@link com.top_logic.table.Column#filters() kinds of filter} of the column.
+	 * @param current
+	 *        The current filter state, or {@code null} if the column is not filtered.
+	 * @param counts
+	 *        Facet counts per {@link ColumnFilter#kind()}, or {@link MatchCounts#NONE}.
+	 */
+	public static ColumnFilterEditor create(List<? extends ColumnFilter<?>> kinds, FilterState current,
+			Function<String, MatchCounts> counts) {
+		return new ColumnFilterEditor(kinds, current, counts);
+	}
+
+	/**
+	 * Creates the editor of a single kind of filter, without the column's kind and inversion.
+	 *
+	 * @param filter
+	 *        The kind of filter.
+	 * @param current
+	 *        The state of that filter, or {@code null} for an empty editor.
+	 * @param counts
+	 *        Facet counts for option filters, or {@link MatchCounts#NONE}.
+	 */
+	public static FilterEditor kindEditor(ColumnFilter<?> filter, FilterState current, MatchCounts counts) {
 		FilterInput input = filter.input();
 		if (input instanceof FilterInput.Options options) {
 			return new OptionsFilterEditor(options.values(), (OptionsFilterState) current, counts);

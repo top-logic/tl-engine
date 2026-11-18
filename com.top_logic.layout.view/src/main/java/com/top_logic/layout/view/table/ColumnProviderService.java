@@ -457,8 +457,13 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			}
 
 			@Override
-			public boolean supportsInversion() {
-				return filter.supportsInversion();
+			public String kind() {
+				return filter.kind();
+			}
+
+			@Override
+			public ResKey kindLabel() {
+				return filter.kindLabel();
 			}
 
 			@Override

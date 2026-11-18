@@ -12,9 +12,10 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.ColumnFilterState;
 import com.top_logic.table.FilterSpec;
 import com.top_logic.table.FilterState;
-import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.SearchSpec;
 import com.top_logic.table.Sort;
 import com.top_logic.table.SortColumn;
@@ -115,18 +116,25 @@ final class ColumnLogic {
 	}
 
 	private static <R, V> Predicate<R> columnPredicate(Column<R, V> column, FilterState state) {
-		// Inversion is generic: unwrap it here so every concrete filter sees only its own state,
-		// and negate the resulting value predicate.
-		boolean inverted = false;
-		if (state instanceof NegatedFilterState negated) {
-			inverted = true;
-			state = negated.inner();
-		}
-		Predicate<V> valuePredicate = column.filter()
-			.orElseThrow(() -> new IllegalStateException("Column '" + column.name() + "' is not filterable."))
-			.predicate(state);
-		Predicate<V> effective = inverted ? valuePredicate.negate() : valuePredicate;
+		// The kind and the inversion are the column's: unwrap them here so every concrete filter
+		// sees only its own state, and negate the resulting value predicate.
+		Predicate<V> valuePredicate = activeFilter(column, state).predicate(ColumnFilterState.innerOf(state));
+		Predicate<V> effective =
+			ColumnFilterState.isInverted(state) ? valuePredicate.negate() : valuePredicate;
 		return row -> effective.test(column.value(row));
+	}
+
+	/**
+	 * The filter of the given column the given state of it is a state of.
+	 *
+	 * @see ColumnFilterState#kindOf(FilterState)
+	 */
+	private static <R, V> ColumnFilter<V> activeFilter(Column<R, V> column, FilterState state) {
+		String kind = ColumnFilterState.kindOf(state);
+		return column.filter(kind)
+			.orElseThrow(() -> new IllegalStateException(kind == null
+				? "Column '" + column.name() + "' is not filterable."
+				: "Column '" + column.name() + "' has no filter of kind '" + kind + "'."));
 	}
 
 	/**

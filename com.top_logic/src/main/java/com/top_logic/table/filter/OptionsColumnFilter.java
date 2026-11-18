@@ -50,16 +50,12 @@ public class OptionsColumnFilter<V> implements ColumnFilter<V> {
 	@Override
 	public Predicate<V> predicate(FilterState state) {
 		OptionsFilterState options = (OptionsFilterState) state;
-		return value -> options.selected().contains(value);
+		// No option stands for an empty cell, and the immutable selection rejects a null lookup.
+		return value -> value != null && options.selected().contains(value);
 	}
 
 	@Override
 	public boolean countsMatches() {
-		return true;
-	}
-
-	@Override
-	public boolean supportsInversion() {
 		return true;
 	}
 

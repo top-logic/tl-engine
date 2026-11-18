@@ -1783,8 +1783,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	@ReactCommandHandler(CMD_OPEN_FILTER)
 	void handleOpenFilter(OpenFilterArguments args) {
 		String column = args.getColumn();
-		ColumnFilter<?> filter = _view.columnFilter(column);
-		if (filter == null) {
+		List<? extends ColumnFilter<?>> filters = _view.columnFilters(column);
+		if (filters.isEmpty()) {
 			return;
 		}
 		ReactContext context = getReactContext();
@@ -1805,8 +1805,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		} else {
 			// Facet counts are value-based, so only meaningful for filters that opt in (e.g. options);
 			// a predicate-based options filter (regexp) declines them to avoid misleading "(0)" labels.
-			MatchCounts counts = filter.countsMatches() ? _view.columnMatchCounts(column) : MatchCounts.NONE;
-			FilterEditor editor = FilterEditors.create(filter, _view.state().getFilters().get(column), counts);
+			FilterEditor editor = FilterEditors.create(filters, _view.state().getFilters().get(column),
+				kind -> countsMatches(filters, kind) ? _view.columnMatchCounts(column, kind) : MatchCounts.NONE);
 			// Build through the shared form pipeline with the same defaults as a model-bound form
 			// (responsive columns + automatic label position), so the dialog form renders and reflows
 			// exactly like every other form.
@@ -1853,6 +1853,18 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		dialogs.openDialog(true, window, result -> {
 			// Reset / Apply already acted; Cancel discards.
 		});
+	}
+
+	/**
+	 * Whether the filter of the given kind among the given ones wants facet counts.
+	 */
+	private static boolean countsMatches(List<? extends ColumnFilter<?>> filters, String kind) {
+		for (ColumnFilter<?> filter : filters) {
+			if (filter.kind().equals(kind)) {
+				return filter.countsMatches();
+			}
+		}
+		return false;
 	}
 
 	// -- Column selection dialog --

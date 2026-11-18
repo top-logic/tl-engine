@@ -14,9 +14,9 @@ import junit.framework.TestCase;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.table.ColumnFilterState;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.MatchCounts;
-import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Option;
 import com.top_logic.table.filter.BooleanColumnFilter;
 import com.top_logic.table.filter.BooleanFilterState;
@@ -30,6 +30,7 @@ import com.top_logic.table.filter.OptionsFilterState;
 import com.top_logic.table.filter.RangeFilterState;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.filter.TextFilterState;
+import com.top_logic.table.filter.TextMatchMode;
 
 /**
  * Test for {@link FilterEditors}: each editor seeds from the current state and reads the
@@ -46,21 +47,23 @@ public class TestFilterEditors extends TestCase {
 		assertTrue(((TextFilterState) editor.read()).isEmpty());
 
 		field(editor, 0).setValue("abc");   // pattern
-		field(editor, 1).setValue(Boolean.TRUE);   // case sensitive
-		field(editor, 3).setValue(Boolean.TRUE);   // whole field
+		field(editor, 1).setValue(TextMatchMode.WHOLE_WORD);   // search mode
+		field(editor, 2).setValue(Boolean.TRUE);   // case sensitive
 		TextFilterState state = (TextFilterState) editor.read();
 		assertEquals("abc", state.pattern());
 		assertTrue(state.caseSensitive());
-		assertFalse(state.regexp());
-		assertTrue(state.wholeField());
+		assertEquals(TextMatchMode.WHOLE_WORD, state.mode());
+		assertFalse(state.wholeField());
 	}
 
 	public void testTextEditorSeededFromState() {
 		FilterEditor editor =
-			FilterEditors.create(TextColumnFilter.forStrings(), new TextFilterState("x", true, false, false),
-				MatchCounts.NONE);
+			FilterEditors.create(TextColumnFilter.forStrings(),
+				new TextFilterState("x", true, TextMatchMode.WORD_START, true), MatchCounts.NONE);
 		assertEquals("x", field(editor, 0).getValue());
-		assertEquals(Boolean.TRUE, field(editor, 1).getValue());
+		assertEquals(TextMatchMode.WORD_START, field(editor, 1).getValue());
+		assertEquals(Boolean.TRUE, field(editor, 2).getValue());
+		assertTrue("The whole-field flag is kept.", ((TextFilterState) editor.read()).wholeField());
 	}
 
 	public void testBooleanEditorReadBack() {
@@ -77,7 +80,7 @@ public class TestFilterEditors extends TestCase {
 		BooleanColumnFilter filter =
 			new BooleanColumnFilter(ResKey.text("Yes"), ResKey.text("No"), false);
 		FilterEditor editor = FilterEditors.create(filter, null, MatchCounts.NONE);
-		assertEquals("A column without empty cells offers just the two value options.", 2,
+		assertEquals("A column without empty cells offers just the two value options, plus invert.", 3,
 			editor.fields().size());
 
 		field(editor, 0).setValue(Boolean.TRUE);    // accept true
@@ -105,28 +108,27 @@ public class TestFilterEditors extends TestCase {
 	public void testInvertCheckboxWrapsStateOnRead() {
 		FilterEditor editor = FilterEditors.create(TextColumnFilter.forStrings(), null, MatchCounts.NONE);
 		List<?> fields = editor.fields();
-		// Pattern + 3 text options + the invert checkbox last.
-		assertEquals(5, fields.size());
+		// Pattern, search mode, case sensitive + the invert checkbox last.
+		assertEquals(4, fields.size());
 
 		field(editor, 0).setValue("abc");        // pattern
-		field(editor, 4).setValue(Boolean.TRUE); // invert
+		field(editor, 3).setValue(Boolean.TRUE); // invert
 		FilterState state = editor.read();
-		assertTrue(state instanceof NegatedFilterState);
-		assertEquals("abc", ((TextFilterState) ((NegatedFilterState) state).inner()).pattern());
+		assertEquals(ColumnFilterState.invert(TextFilterState.contains("abc")), state);
 	}
 
 	public void testInvertEditorSeededFromNegatedState() {
 		FilterEditor editor = FilterEditors.create(TextColumnFilter.forStrings(),
-			new NegatedFilterState(TextFilterState.contains("x")), MatchCounts.NONE);
+			ColumnFilterState.invert(TextFilterState.contains("x")), MatchCounts.NONE);
 		assertEquals("x", field(editor, 0).getValue());
-		assertEquals("Invert checkbox reflects the persisted inversion.", Boolean.TRUE, field(editor, 4).getValue());
+		assertEquals("Invert checkbox reflects the persisted inversion.", Boolean.TRUE, field(editor, 3).getValue());
 	}
 
 	public void testInvertCheckboxIgnoredWhenSelectionEmpty() {
 		FilterEditor editor = FilterEditors.create(TextColumnFilter.forStrings(), null, MatchCounts.NONE);
-		field(editor, 4).setValue(Boolean.TRUE); // invert, but no pattern
+		field(editor, 3).setValue(Boolean.TRUE); // invert, but no pattern
 		FilterState state = editor.read();
-		assertFalse("Inverting an empty selection stays inactive.", state instanceof NegatedFilterState);
+		assertFalse("Inverting an empty selection stays inactive.", state instanceof ColumnFilterState);
 		assertTrue(state.isEmpty());
 	}
 

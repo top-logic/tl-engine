@@ -1871,6 +1871,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 
 		@Override
+		public List<ColumnFilter<V>> filters() {
+			return _inner.filters();
+		}
+
+		@Override
 		public Optional<ColumnFilter<V>> filter() {
 			return _inner.filter();
 		}

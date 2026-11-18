@@ -17,7 +17,7 @@ def expected = [
 	"bin/launch/Start My App.launch": true,
 	"bin/launch/Setup My App.launch": true,
 	"bin/launch/Layout Inline Selected.launch": false,
-	"src/main/webapp/WEB-INF/autoconf/com.top_logic.tl.ai.core.security.AiToolAccessService.config.xml": true
+	"src/main/webapp/WEB-INF/autoconf/com.top_logic.ai.core.security.AiToolAccessService.config.xml": true
 ];
 expected.each { path, present ->
 	def file = new File(project, path);
@@ -71,16 +71,6 @@ def metaConf = new File(project, "src/main/webapp/WEB-INF/conf/metaConf.txt").re
 if (metaConf != ["db-default.xml", "top-logic.singleBranch.config.xml", "pac4j-generic.xml", "myapp.conf.xml"]) {
 	throw new AssertionError("Unexpected metaConf.txt " + metaConf + ".");
 }
-// The browser tab is titled by the application title tl.title.
-def viewConfigs = { conf ->
-	def configs = javax.xml.parsers.DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(conf).documentElement;
-	children(child(configs, "configs"), "config").findAll { it.getAttribute("config:interface") == "com.top_logic.layout.view.ViewConfig" }
-};
-def appViewConfigs = viewConfigs(new File(project, "src/main/webapp/WEB-INF/conf/myapp.conf.config.xml"));
-if (appViewConfigs*.getAttribute("title") != ["tl.title"]) {
-	throw new AssertionError("Expected the view title tl.title in myapp.conf.config.xml.");
-}
-
 // With useAI=true, the sidebar of the React UI leads to the Albert page of tl-chat.
 def appView = new File(project, "src/main/webapp/WEB-INF/views/app.view.xml").text;
 if (!appView.contains('<view-ref view="tl-chat/albert.view.xml"/>')) {

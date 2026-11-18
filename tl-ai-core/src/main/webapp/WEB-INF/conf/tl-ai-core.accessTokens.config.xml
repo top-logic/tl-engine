@@ -9,7 +9,7 @@
 			<instance>
 				<permissions>
 					<permission name="agent-endpoints"
-						label="class.com.top_logic.tl.ai.core.access.I18NConstants.PERMISSION_AGENT_ENDPOINTS"
+						label="class.com.top_logic.ai.core.access.I18NConstants.PERMISSION_AGENT_ENDPOINTS"
 					/>
 				</permissions>
 			</instance>

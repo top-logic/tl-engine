@@ -1048,7 +1048,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	private static List<Option> classifierOptions(TLEnumeration enumeration) {
 		List<Option> options = new ArrayList<>();
 		for (TLClassifier classifier : enumeration.getClassifiers()) {
-			options.add(new Option(classifier, TLModelNamingConvention.resourceKey(classifier)));
+			options.add(new Option(classifier, TLModelNamingConvention.getTypePartLabelKey(classifier)));
 		}
 		return options;
 	}

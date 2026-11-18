@@ -53,7 +53,7 @@ Code *beneath* a tool - application code, a listener, a TL-Script function - get
 parameter. It reads the same record from the thread instead:
 
 ```java
-RunInfo run = RunInfoBinding.current();   // com.top_logic.tl.ai.core.execution
+RunInfo run = RunInfoBinding.current();   // com.top_logic.ai.core.execution
 ```
 
 `ToolExecutions.execute` binds it around every tool call, on the thread the tool actually runs on
@@ -158,7 +158,7 @@ the whole new value as a parameter. The model then has to emit the entire text t
 of it, which costs the whole value in output tokens and lets the untouched parts drift.
 
 Take an anchor and a replacement instead, and apply them with
-`com.top_logic.tl.ai.core.text.TextEdits`, which is `String` in and a structured result out:
+`com.top_logic.ai.core.text.TextEdits`, which is `String` in and a structured result out:
 
 ```java
 TextEdits.Result edit = TextEdits.replace(current, oldText, newText);
@@ -344,7 +344,7 @@ answer are configured beside the implementation, as is the message a writing cal
 
 ```xml
 <factory name="script-tools">
-  <implementation class="com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory">
+  <implementation class="com.top_logic.ai.core.tools.registry.ScriptToolFactory">
     <tools>
       <tool name="findOverdueInvoices" mode="READ" truncation-hint="4000">
         <parameters>...</parameters>

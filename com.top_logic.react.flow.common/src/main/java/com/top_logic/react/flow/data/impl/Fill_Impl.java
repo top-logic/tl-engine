@@ -94,6 +94,12 @@ public class Fill_Impl extends com.top_logic.react.flow.data.impl.Decoration_Imp
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.Fill setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return FILL__TYPE;
 	}

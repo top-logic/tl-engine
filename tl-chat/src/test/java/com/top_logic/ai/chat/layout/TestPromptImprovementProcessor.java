@@ -15,7 +15,7 @@ import junit.framework.TestCase;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor.Failure;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor.PromptImprovementException;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor.Result;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.CancellationToken;
 
 /**
  * Isolated prompt-improvement processor tests. The agent invocation is injected so these cases

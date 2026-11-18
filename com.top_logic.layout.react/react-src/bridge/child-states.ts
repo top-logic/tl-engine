@@ -2,35 +2,41 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalSto
 import { acquireChildContext } from './TLChild';
 import type { ChildDescriptor } from './TLChild';
 import { getApiBase, TLControlContext, unmount } from './tl-react-bridge';
+import type { TLControlContextValue } from './tl-react-bridge';
 import { enqueueCommand, type CommandResponse } from './command-channel';
 import type { CommandOptions } from './command-channel';
 
 /** The states of no children: one array, so that it is the same in every render. */
 const NO_STATES: readonly Record<string, unknown>[] = [];
 
+/** The contexts of no children: one array, so that it is the same in every render. */
+const NO_CONTEXTS: readonly TLControlContextValue[] = [];
+
 /**
- * The live states of the given child controls, in their order.
+ * Holds the stores of the given child controls while the calling component is mounted, whether or
+ * not the children are rendered meanwhile.
  *
- * <p>A container decides by it on what its children currently say about themselves - e.g. a
- * toolbar leaving out a menu whose entries are all {@code hidden} - without rendering them. The
- * states are the ones {@link TLChild} renders the children with: each child's store, which follows
- * the server's patches of that child. The hook holds the stores (and their SSE subscriptions) of
- * the children while it is mounted, whether or not the children are rendered meanwhile.</p>
- *
- * <p>The returned array keeps its identity until a child's state or the set of children changes.</p>
+ * <p>A child's store follows the server's patches of that child as long as someone holds it. A
+ * container that stops rendering its children for a while - a form showing a message instead of its
+ * fields - holds them by this hook, so that a child rendered again shows its live state instead of
+ * the state its descriptor carried when the container was last serialized. The stores are the ones
+ * {@link TLChild} renders the children with: the stores of children already rendered are shared, the
+ * others are created and subscribed.</p>
  *
  * @param controls the child controls, as the container's state holds them (child descriptors);
  *        {@code null} entries are skipped
+ * @return the contexts of the children, in their order; the array keeps its identity until the set
+ *         of children changes
  */
-export function useChildStates(controls: readonly unknown[]): readonly Record<string, unknown>[] {
+export function useChildContexts(controls: readonly unknown[]): readonly TLControlContextValue[] {
   const descriptors = (controls as (ChildDescriptor | null | undefined)[])
     .filter((d): d is ChildDescriptor => d != null && typeof d.controlId === 'string');
   const key = descriptors.map(d => d.controlId).join('\u0000');
 
-  // Acquired as TLChild acquires a child's context: the stores of children already rendered are
-  // shared, the others are created and subscribed.
+  // Acquired as TLChild acquires a child's context, during the render, so that a child unmounted in
+  // the same commit does not tear its store down before this hook holds it.
   const contexts = useMemo(
-    () => descriptors.map(d => acquireChildContext(d)),
+    () => descriptors.length === 0 ? NO_CONTEXTS : descriptors.map(d => acquireChildContext(d)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [key]
   );
@@ -40,6 +46,26 @@ export function useChildStates(controls: readonly unknown[]): readonly Record<st
       unmount(context.controlId);
     }
   }, [contexts]);
+
+  return contexts;
+}
+
+/**
+ * The live states of the given child controls, in their order.
+ *
+ * <p>A container decides by it on what its children currently say about themselves - e.g. a
+ * toolbar leaving out a menu whose entries are all {@code hidden} - without rendering them. The
+ * states are the ones {@link TLChild} renders the children with: each child's store, which follows
+ * the server's patches of that child. The hook holds the stores (and their SSE subscriptions) of
+ * the children while it is mounted, see {@link useChildContexts}.</p>
+ *
+ * <p>The returned array keeps its identity until a child's state or the set of children changes.</p>
+ *
+ * @param controls the child controls, as the container's state holds them (child descriptors);
+ *        {@code null} entries are skipped
+ */
+export function useChildStates(controls: readonly unknown[]): readonly Record<string, unknown>[] {
+  const contexts = useChildContexts(controls);
 
   const snapshotRef = useRef<readonly Record<string, unknown>[]>(NO_STATES);
 

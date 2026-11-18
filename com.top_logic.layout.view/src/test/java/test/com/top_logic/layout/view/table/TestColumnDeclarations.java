@@ -97,7 +97,7 @@ public class TestColumnDeclarations extends TestCase {
 
 		assertEquals("count", setup.name());
 		assertEquals("The column is labelled as the attribute is.",
-			TLModelNamingConvention.resourceKey(_rowType.getPart("count")), setup.label());
+			TLModelNamingConvention.getTypePartLabelKey(_rowType.getPart("count")), setup.label());
 		assertEquals("The column shows the attribute's values.", _rowType.getPart("count"),
 			setup.type().part());
 		assertNotNull("A column over an attribute is edited by writing that attribute.", setup.editing());
@@ -471,7 +471,7 @@ public class TestColumnDeclarations extends TestCase {
 			single(attributeColumn("level", null), new ColumnResolution(List.of(_rowType, task), null));
 
 		assertEquals("The column is labelled as the attribute of the type holding it.",
-			TLModelNamingConvention.resourceKey(taskLevel), setup.label());
+			TLModelNamingConvention.getTypePartLabelKey(taskLevel), setup.label());
 		assertEquals("The column shows the attribute of the type holding it.", taskLevel, setup.type().part());
 
 		@SuppressWarnings("unchecked")
@@ -515,7 +515,7 @@ public class TestColumnDeclarations extends TestCase {
 		ColumnSetup otherFirst =
 			single(attributeColumn("count", null), new ColumnResolution(List.of(other, _rowType), null));
 		assertEquals(other.getPart("count"), otherFirst.type().part());
-		assertEquals(TLModelNamingConvention.resourceKey(other.getPart("count")), otherFirst.label());
+		assertEquals(TLModelNamingConvention.getTypePartLabelKey(other.getPart("count")), otherFirst.label());
 
 		ColumnSetup rowFirst =
 			single(attributeColumn("count", null), new ColumnResolution(List.of(_rowType, other), null));

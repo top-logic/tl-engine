@@ -127,6 +127,12 @@ public class FloatingLayout_Impl extends com.top_logic.react.flow.data.impl.Box_
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.FloatingLayout setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return FLOATING_LAYOUT__TYPE;
 	}

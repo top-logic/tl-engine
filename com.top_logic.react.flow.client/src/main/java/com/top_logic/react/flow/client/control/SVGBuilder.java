@@ -31,10 +31,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
-import com.google.gwt.event.dom.client.DragOverEvent;
-import com.google.gwt.event.dom.client.DragOverHandler;
-import com.google.gwt.event.dom.client.DropEvent;
-import com.google.gwt.event.dom.client.DropHandler;
 import com.google.gwt.event.dom.client.MouseEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 
@@ -45,8 +41,6 @@ import com.top_logic.react.flow.svg.event.MouseButton;
 import com.top_logic.react.flow.svg.event.Registration;
 import com.top_logic.react.flow.svg.event.SVGClickEvent;
 import com.top_logic.react.flow.svg.event.SVGClickHandler;
-import com.top_logic.react.flow.svg.event.SVGDropEvent;
-import com.top_logic.react.flow.svg.event.SVGDropHandler;
 import com.top_logic.react.flow.svg.event.SVGPanEvent;
 import com.top_logic.react.flow.svg.event.SVGPanHandler;
 import com.top_logic.react.flow.svg.event.SVGWheelEvent;
@@ -583,50 +577,6 @@ public class SVGBuilder implements SvgWriter {
 			public void preventDefault() {
 				event.getNativeEvent().preventDefault();
 			}
-		};
-	}
-
-	@Override
-	public Registration attachOnDrop(SVGDropHandler handler, Object sender) {
-		if (_current == null) {
-			throw new IllegalStateException(
-				"The last built SVG element is closed. In this state it is not possible to add a "
-					+ SVGDropHandler.class.getName()
-					+ "! Please make sure the handler is added within the desired element before its content.");
-		}
-		HandlerRegistration registration = _current.addDomHandler(new DropHandler() {
-			@Override
-			public void onDrop(DropEvent event) {
-				handler.onDrop(new SVGDropEvent() {
-					@Override
-					public Object getSender() {
-						return sender;
-					}
-
-					@Override
-					public void stopPropagation() {
-						event.getNativeEvent().stopPropagation();
-					}
-
-					@Override
-					public void preventDefault() {
-						event.getNativeEvent().preventDefault();
-					}
-				});
-			}
-		}, DropEvent.getType());
-
-		// Make sure, the drop can be accepted.
-		HandlerRegistration dragOver = _current.addDomHandler(new DragOverHandler() {
-			@Override
-			public void onDragOver(DragOverEvent event) {
-				event.preventDefault();
-			}
-		}, DragOverEvent.getType());
-
-		return () -> {
-			registration.removeHandler();
-			dragOver.removeHandler();
 		};
 	}
 

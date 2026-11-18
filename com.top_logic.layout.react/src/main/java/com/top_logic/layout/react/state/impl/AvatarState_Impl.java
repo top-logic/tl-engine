@@ -9,6 +9,8 @@ public class AvatarState_Impl extends com.top_logic.layout.react.state.impl.Imag
 
 	private com.top_logic.layout.react.state.AvatarState.Size _size = com.top_logic.layout.react.state.AvatarState.Size.SMALL;
 
+	private com.top_logic.layout.react.state.Badge _badge = null;
+
 	/**
 	 * Creates a {@link AvatarState_Impl} instance.
 	 *
@@ -49,6 +51,27 @@ public class AvatarState_Impl extends com.top_logic.layout.react.state.impl.Imag
 	protected final void internalSetSize(com.top_logic.layout.react.state.AvatarState.Size value) {
 		if (value == null) throw new IllegalArgumentException("Property 'size' cannot be null.");
 		_size = value;
+	}
+
+	@Override
+	public final com.top_logic.layout.react.state.Badge getBadge() {
+		return _badge;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.AvatarState setBadge(com.top_logic.layout.react.state.Badge value) {
+		internalSetBadge(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getBadge()} without chain call utility. */
+	protected final void internalSetBadge(com.top_logic.layout.react.state.Badge value) {
+		_badge = value;
+	}
+
+	@Override
+	public final boolean hasBadge() {
+		return _badge != null;
 	}
 
 	@Override
@@ -93,6 +116,10 @@ public class AvatarState_Impl extends com.top_logic.layout.react.state.impl.Imag
 		out.value(getName());
 		out.name(SIZE__PROP);
 		getSize().writeTo(out);
+		if (hasBadge()) {
+			out.name(BADGE__PROP);
+			getBadge().writeTo(out);
+		}
 	}
 
 	@Override
@@ -100,6 +127,7 @@ public class AvatarState_Impl extends com.top_logic.layout.react.state.impl.Imag
 		switch (field) {
 			case NAME__PROP: setName(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case SIZE__PROP: setSize(com.top_logic.layout.react.state.AvatarState.Size.readSize(in)); break;
+			case BADGE__PROP: setBadge(com.top_logic.layout.react.state.Badge.readBadge(in)); break;
 			default: super.readField(in, field);
 		}
 	}

@@ -55,6 +55,9 @@ public interface Fill extends com.top_logic.react.flow.data.Decoration, com.top_
 	@Override
 	com.top_logic.react.flow.data.Fill setRenderInfo(java.lang.Object value);
 
+	@Override
+	com.top_logic.react.flow.data.Fill setDropTarget(boolean value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.Fill readFill(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

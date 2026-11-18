@@ -21,11 +21,13 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.provider.LabelProviderService;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -35,10 +37,11 @@ import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.security.ReadFilter;
-import com.top_logic.tl.ai.core.tools.model.InstanceBrowserTool;
-import com.top_logic.tl.ai.core.tools.script.QueryTool;
+import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.tools.model.InstanceBrowserTool;
+import com.top_logic.ai.core.tools.script.QueryTool;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
@@ -498,10 +501,15 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			assertNotNull("Events result should not be null", eventsResult);
 			assertTrue("Should have events", eventsResult.contains("\"totalCount\":3"));
 
-			// List rooms
-			String roomsResult = tool.listInstances(EVENTS_MODULE, ROOM_CLASS, null, null, null, ToolContext.EMPTY);
+			// List rooms: the knowledge base may hold rooms of other tests besides the two of this one.
+			String roomsResult =
+				tool.listInstances(EVENTS_MODULE, ROOM_CLASS, List.of("name"), 200, null, ToolContext.EMPTY);
 			assertNotNull("Rooms result should not be null", roomsResult);
-			assertTrue("Should have rooms", roomsResult.contains("\"totalCount\":2"));
+			int rooms = MetaElementUtil.getAllInstancesOf(
+				(TLClass) TLModelUtil.findType(EVENTS_MODULE + ":" + ROOM_CLASS), TLObject.class).size();
+			assertTrue("Should count all rooms", roomsResult.contains("\"totalCount\":" + rooms));
+			assertTrue("Should list the rooms of the test",
+				roomsResult.contains("Saal Rhein") && roomsResult.contains("Raum Dom"));
 		});
 	}
 

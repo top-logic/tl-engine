@@ -14,15 +14,15 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.model.search.expr.config.SearchBuilder;
-import com.top_logic.tl.ai.core.tools.authoring.ScriptToolAuthoringTool;
-import com.top_logic.tl.ai.core.tools.authoring.ScriptToolStore;
-import com.top_logic.tl.ai.core.tools.authoring.ScriptToolStore.ParamSpec;
-import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
+import com.top_logic.ai.core.tools.authoring.ScriptToolAuthoringTool;
+import com.top_logic.ai.core.tools.authoring.ScriptToolStore;
+import com.top_logic.ai.core.tools.authoring.ScriptToolStore.ParamSpec;
+import com.top_logic.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -118,7 +118,7 @@ public class TestScriptToolAuthoringTool extends BasicTestCase {
 		assertEquals("2", com.top_logic.model.search.expr.config.ExprFormat.INSTANCE
 			.getSpecification(updated.getImplementation()));
 		assertEquals("label preserved", "Calc",
-			com.top_logic.tl.ai.core.tools.registry.ToolDescriptions.englishPlainText(updated.getLabel()));
+			com.top_logic.ai.core.tools.registry.ToolDescriptions.englishPlainText(updated.getLabel()));
 		assertNull("parameters preserved (still none)", updated.getParameters());
 		assertEquals("mode preserved", "READ", updated.getMode().name());
 	}

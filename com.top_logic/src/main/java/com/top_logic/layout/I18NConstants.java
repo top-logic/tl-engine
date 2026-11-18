@@ -27,6 +27,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * </p>
 	 * 
 	 * <p>
+	 * The framework defines the neutral title "TopLogic"; every application sets its own title in
+	 * its resource bundle.
+	 * </p>
+	 * 
+	 * <p>
 	 * To prevent the display on the log-in page, see theme variable
 	 * {@link Icons#HIDE_APP_TITLE_ON_LOGIN_PAGE}.
 	 * </p>

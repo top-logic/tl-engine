@@ -12,9 +12,9 @@ import com.top_logic.ai.chat.api.messages.RunWaitingEvent;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
-import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
+import com.top_logic.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.ai.core.agent.event.AgentEvent;
+import com.top_logic.ai.core.agent.event.AgentEventListener;
 
 /**
  * A chat UI that observes a running agent, bound to one {@link TaskProgressTracker}.
@@ -91,7 +91,7 @@ public interface ChatEventHandler extends AgentEventListener {
 
 	/**
 	 * Delivers an error that aborted the run before the agent loop could report it as an
-	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.ProviderError}.
+	 * {@link com.top_logic.ai.core.agent.event.AgentEvent.ProviderError}.
 	 */
 	void sendProviderError(ProviderErrorEvent event);
 
@@ -120,7 +120,7 @@ public interface ChatEventHandler extends AgentEventListener {
 	 * <p>
 	 * A pending request belongs to the account, so every window of that account may list it and
 	 * answer it. The window whose run is parked on it learns the outcome from the run's own
-	 * {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.ApprovalResolved}; a window that only
+	 * {@link com.top_logic.ai.core.agent.event.AgentEvent.ApprovalResolved}; a window that only
 	 * listed the request has no run to hear that from, and this is what stops it from showing a
 	 * card nobody is waiting on any more.
 	 * </p>

@@ -10,11 +10,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.annotation.InApp;
@@ -22,11 +20,9 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
-import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.GlobalKey;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TypeIcon;
@@ -34,7 +30,6 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
-import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.view.ChildGroup;
@@ -47,11 +42,6 @@ import com.top_logic.layout.structure.PersonalizingExpandable;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelCondition;
-import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ChannelRefFormat;
-import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
-import com.top_logic.layout.view.model.ChannelObjectObserver;
 import com.top_logic.layout.view.navigation.RevealPath;
 import com.top_logic.layout.view.navigation.RevealRegistry;
 import com.top_logic.layout.view.routing.WithFinalTitle;
@@ -403,7 +393,8 @@ public class SidebarElement implements UIElement {
 	 */
 	@TagName("nav-item")
 	@TypeIcon("css:bi bi-link-45deg")
-	public interface NavItemConfig extends SidebarItemConfig, WithAccessControl, WithVisibility, WithFinalTitle {
+	public interface NavItemConfig
+			extends SidebarItemConfig, WithAccessControl, WithVisibility, WithFinalTitle, WithBadge {
 
 		@Override
 		@ClassDefault(NavItemElement.class)
@@ -420,9 +411,6 @@ public class SidebarElement implements UIElement {
 
 		/** Configuration name for {@link #getRoute()}. */
 		String ROUTE = "route";
-
-		/** Configuration name for {@link #getBadge()}. */
-		String BADGE = "badge";
 
 		/** Configuration name for {@link #getHidden()}. */
 		String HIDDEN = "hidden";
@@ -451,22 +439,6 @@ public class SidebarElement implements UIElement {
 		 */
 		@Name(ROUTE)
 		String getRoute();
-
-		/**
-		 * Channel whose value is displayed as a badge beside the item's label - the number of
-		 * things waiting in the page the item leads to, say.
-		 *
-		 * <p>
-		 * The value is named as the model names it, through the {@link MetaLabelProvider}; no value
-		 * and an empty text show no badge at all. The badge follows both a new value on the channel
-		 * and a change of the object that value points to, so a count computed from an edited object
-		 * is up to date without the channel being written anew.
-		 * </p>
-		 */
-		@Name(BADGE)
-		@Nullable
-		@Format(ChannelRefFormat.class)
-		ChannelRef getBadge();
 
 		/**
 		 * Whether the item is withheld from the sidebar.
@@ -507,7 +479,7 @@ public class SidebarElement implements UIElement {
 
 		private final String _route;
 
-		private final ChannelRef _badgeRef;
+		private final WithBadge _badge;
 
 		private final boolean _hidden;
 
@@ -528,7 +500,7 @@ public class SidebarElement implements UIElement {
 			_label = config.getLabel();
 			_icon = config.getIcon();
 			_route = config.getRoute();
-			_badgeRef = config.getBadge();
+			_badge = config;
 			_hidden = config.getHidden();
 			_finalTitle = config.getFinalTitle();
 			_access = UnitAccess.create(context, config.getAccessControl());
@@ -568,39 +540,12 @@ public class SidebarElement implements UIElement {
 			}
 			item.withHidden(_hidden);
 			withholdWhileHidden(item, _access, visible, context, site);
-			if (_badgeRef != null) {
-				bindBadge(context, site, item);
+			BadgeBinding badge = BadgeBinding.create(context, _badge);
+			if (badge != null) {
+				item.setBadge(badge.current());
+				site.addBinding(sidebar -> badge.bind(sidebar, display -> sidebar.updateBadge(_id, display)));
 			}
 			return item;
-		}
-
-		/**
-		 * Displays the value of the configured badge channel on the given item, and keeps it up to
-		 * date for as long as the sidebar is on screen.
-		 */
-		private void bindBadge(ViewContext context, ItemSite site, NavigationItem item) {
-			ViewChannel channel = context.resolveChannel(_badgeRef);
-			item.setBadge(badge(channel.get()));
-
-			site.addBinding(sidebar -> {
-				Runnable update = () -> sidebar.updateBadge(_id, badge(channel.get()));
-
-				ChannelListener listener = (sender, oldValue, newValue) -> update.run();
-				Registration registration = channel.addListener(listener);
-				sidebar.addCleanupAction(registration::dispose);
-
-				ChannelObjectObserver observer = new ChannelObjectObserver(List.of(channel), Set.of(), update);
-				sidebar.addAttachListener(() -> observer.attach(context.getModelScope()));
-				sidebar.addDetachListener(observer::detach);
-			});
-		}
-
-		/**
-		 * The badge text naming the given value, {@code null} for a value that is not worth a badge.
-		 */
-		private static String badge(Object value) {
-			String text = ValueLabel.label(value);
-			return text == null || text.isEmpty() ? null : text;
 		}
 	}
 

@@ -15,30 +15,30 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
-import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
-import com.top_logic.tl.ai.core.session.persist.InterruptedTranscript;
+import com.top_logic.ai.core.agent.AgentRuntimeService;
+import com.top_logic.ai.core.session.persist.ConversationLogSerializer;
+import com.top_logic.ai.core.session.persist.InterruptedTranscript;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.memory.CompactionStrategies;
-import com.top_logic.tl.ai.core.memory.CompactionStrategy;
-import com.top_logic.tl.ai.core.memory.ConversationMemory;
-import com.top_logic.tl.ai.core.provider.LLMProviderService;
-import com.top_logic.tl.ai.core.provider.health.ModelTarget;
+import com.top_logic.ai.core.memory.CompactionStrategies;
+import com.top_logic.ai.core.memory.CompactionStrategy;
+import com.top_logic.ai.core.memory.ConversationMemory;
+import com.top_logic.ai.core.provider.LLMProviderService;
+import com.top_logic.ai.core.provider.health.ModelTarget;
 import com.top_logic.util.error.TopLogicException;
-import com.top_logic.tl.ai.core.provider.catalog.ModelInfo;
-import com.top_logic.tl.ai.core.session.ConversationLog;
-import com.top_logic.tl.ai.core.session.ConversationLogReplay;
-import com.top_logic.tl.ai.core.agent.environment.UserMemories;
-import com.top_logic.tl.ai.core.agent.environment.UserMemoryBinding;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistries;
-import com.top_logic.tl.ai.core.tools.ToolRegistry;
-import com.top_logic.tl.ai.core.tools.task.TaskStore;
+import com.top_logic.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.ai.core.session.ConversationLog;
+import com.top_logic.ai.core.session.ConversationLogReplay;
+import com.top_logic.ai.core.agent.environment.UserMemories;
+import com.top_logic.ai.core.agent.environment.UserMemoryBinding;
+import com.top_logic.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.ai.core.agent.subagent.SubagentRegistries;
+import com.top_logic.ai.core.tools.ToolRegistry;
+import com.top_logic.ai.core.tools.task.TaskStore;
 
 /**
  * Manages per-session in-memory state ({@link Chat} + {@link ConversationMemory}) with LRU caching.

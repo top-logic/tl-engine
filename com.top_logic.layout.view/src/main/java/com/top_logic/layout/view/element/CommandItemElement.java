@@ -20,6 +20,7 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.ReactImages;
+import com.top_logic.layout.react.control.common.BadgeDisplay;
 import com.top_logic.layout.react.control.sidebar.CommandItem;
 import com.top_logic.layout.react.control.sidebar.SidebarItem;
 import com.top_logic.layout.view.ViewContext;
@@ -34,8 +35,8 @@ import com.top_logic.layout.view.element.SidebarElement.SidebarItemElement;
  *
  * <p>
  * Logging out, switching the language, opening a dialog: an action that belongs into the navigation
- * although it displays no page of its own. Label and icon are the ones the command carries, so the
- * item reads like the button of the same command elsewhere.
+ * although it displays no page of its own. Label, icon and badge are the ones the command carries, so
+ * the item reads like the button of the same command elsewhere.
  * </p>
  *
  * <p>
@@ -110,6 +111,7 @@ public class CommandItemElement implements SidebarItemElement {
 			model::executeCommand);
 		item.setExecutableState(model.getExecutableState());
 		item.setTooltip(model.getTooltip());
+		item.setBadge(model.getBadge());
 
 		site.addBinding(sidebar -> {
 			sidebar.addAttachListener(() -> model.attach(context.getModelScope()));
@@ -121,13 +123,15 @@ public class CommandItemElement implements SidebarItemElement {
 				String tooltip = item.getTooltip();
 				String label = item.getLabel();
 				String icon = item.getIcon();
+				BadgeDisplay badge = item.getBadge();
 				item.setExecutableState(model.getExecutableState());
 				item.setTooltip(model.getTooltip());
 				item.setLabel(model.getLabel());
 				item.setIcon(ReactImages.encode(context, model.getImage()));
+				item.setBadge(model.getBadge());
 				if (hidden != item.isHidden() || disabled != item.isDisabled()
 					|| !Objects.equals(tooltip, item.getTooltip()) || !Objects.equals(label, item.getLabel())
-					|| !Objects.equals(icon, item.getIcon())) {
+					|| !Objects.equals(icon, item.getIcon()) || !Objects.equals(badge, item.getBadge())) {
 					// Only what the client displays needs to be sent again; the reason of a refusal
 					// stays on the server.
 					sidebar.refreshItems();

@@ -53,6 +53,8 @@ export type { MenuProps } from './bridge/menu';
 export { ButtonDefaults, useButtonDefaults, menuItemProps } from './bridge/button-defaults';
 export type { ButtonAppearance, ButtonDefaultsValue } from './bridge/button-defaults';
 export { registerPart, replacePart, usePart, buttonPartAttributes, buttonLinkAttributes } from './bridge/parts';
+export { badgePartProps, badgeName, labelWithBadge } from './bridge/parts';
+export { StateBadge } from './bridge/StateBadge';
 export type {
   PartProps,
   PartName,
@@ -94,8 +96,10 @@ export {
 export type { Suggestions, SuggestionsOptions, SuggestionsAnswer, ComboboxAttributes } from './bridge/suggestions';
 export { OptionValues, OPTION_TOOLTIP_PREFIX, optionTooltipProps } from './bridge/option-values';
 export type { OptionDescriptor } from './bridge/option-values';
-export { writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, kindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, boundaryAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
-export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDrag, TLDragStart } from './bridge/drag-drop';
+export { writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, kindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, boundaryAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL, DROP_ARG_X, DROP_ARG_Y, putDropPoint } from './bridge/drag-drop';
+export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDrag, TLDragStart, TLDropPoint } from './bridge/drag-drop';
+export { DropHint, NO_DRAG_IMAGE } from './bridge/drop-hint';
+export type { DropVerdict, HintAnchor } from './bridge/drop-hint';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
 export { INTERACTIVE_SELECTOR, isInteractiveWithin, isInteractiveTarget, isOperableTarget, operableSelector } from './bridge/interactive';
 export { ATTR_LONG_PRESS, LONG_PRESS_EVENT } from './bridge/touch-drag';
@@ -140,6 +144,7 @@ export type {
   FieldStateJson,
   TypingFieldStateJson,
   ChildControlJson,
+  BadgeJson,
   ButtonStateJson,
   ToggleButtonStateJson,
   CheckboxStateJson,
@@ -193,7 +198,7 @@ export type { FillHost } from './bridge/fill';
 export { default as TLChild } from './bridge/TLChild';
 export { ThemeIcon } from './bridge/ThemeIcon';
 export type { ChildDescriptor } from './bridge/TLChild';
-export { useChildStates, useChildCommand } from './bridge/child-states';
+export { useChildContexts, useChildStates, useChildCommand } from './bridge/child-states';
 export { useFloatingFrame, FloatingFrame, FloatingRail, useFloatingAnchor, FLOATING_RAIL_CLASS } from './bridge/floating-anchor';
 export type { FloatingEdge, FloatingFrameHost, FloatingAnchor } from './bridge/floating-anchor';
 export { registerTransientOverlay, useTransientOverlay, useTransientOverlayRects, clearance, useOverlayClearance } from './bridge/transient-overlay';

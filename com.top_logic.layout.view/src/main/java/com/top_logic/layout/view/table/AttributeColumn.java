@@ -186,7 +186,7 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 	 * holds no such attribute - or could not be resolved at all.
 	 */
 	private ResKey derivedLabel(TLStructuredTypePart part) {
-		return part != null ? TLModelNamingConvention.resourceKey(part) : ResKey.text(_attribute);
+		return part != null ? TLModelNamingConvention.getTypePartLabelKey(part) : ResKey.text(_attribute);
 	}
 
 }

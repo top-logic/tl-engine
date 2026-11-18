@@ -140,6 +140,12 @@ public class TreeConnector_Impl extends com.top_logic.react.flow.data.impl.Widge
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.TreeConnector setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return TREE_CONNECTOR__TYPE;
 	}

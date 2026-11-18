@@ -440,7 +440,7 @@ public class TestTypeGrants extends BasicTestCase {
 		TypeGrants delegating = grants(EXPLICIT_PART);
 		String label = Resources.getInstance().getString(delegating.getAccessParent().getLabel());
 		assertFalse(label, label.contains(EXPLICIT_PARTS));
-		assertTrue("A part without a label is named by its name: " + label, label.contains("#explicitParts"));
+		assertTrue("A part without a label is named by its name: " + label, label.contains("#Explicit parts"));
 	}
 
 	public void testTypesWithoutGrants() throws Exception {

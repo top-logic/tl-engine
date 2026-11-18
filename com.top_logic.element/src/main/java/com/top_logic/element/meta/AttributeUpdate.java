@@ -39,6 +39,7 @@ import com.top_logic.model.annotate.AnnotationContainer;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Utils;
 
@@ -674,6 +675,11 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 
 	/**
 	 * Forces this update to check its value.
+	 *
+	 * <p>
+	 * Independent of the configured {@link UpdateCheck}, a reference must not get a new target the
+	 * current user may not discover, see {@link #checkNewTargets()}.
+	 * </p>
 	 */
 	@FrameworkInternal
 	public void checkUpdate() throws I18NRuntimeException {
@@ -685,7 +691,29 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 			return;
 		}
 
+		checkNewTargets();
 		_updateCheck.checkUpdate(this);
+	}
+
+	/**
+	 * Checks that the value of this update adds no target to a reference that the current user may
+	 * not discover.
+	 *
+	 * <p>
+	 * Targets the reference already holds may stay, also when the user cannot discover them. The
+	 * reference of an object that is not yet created holds nothing, so all its targets are checked.
+	 * </p>
+	 *
+	 * @see DiscoverRight#checkNewTargets(TLObject, TLStructuredTypePart, Object, Object)
+	 */
+	private void checkNewTargets() {
+		TLObject object = getObject();
+		TLStructuredTypePart attribute = getAttribute();
+		if (object == null) {
+			DiscoverRight.checkNewTargets(getOverlay(), attribute, null, getCorrectValues());
+		} else {
+			DiscoverRight.checkNewTargets(object, attribute, getCorrectValues());
+		}
 	}
 
 	/**

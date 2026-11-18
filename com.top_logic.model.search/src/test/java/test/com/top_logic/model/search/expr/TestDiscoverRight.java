@@ -5,6 +5,9 @@
  */
 package test.com.top_logic.model.search.expr;
 
+import static com.top_logic.model.security.I18NConstants.ERROR_TARGET_NOT_DISCOVERABLE__OBJECT_ATTRIBUTE;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -45,6 +48,7 @@ import com.top_logic.model.search.providers.LabelByExpression;
 import com.top_logic.model.search.providers.LabelProviderByExpression;
 import com.top_logic.model.search.providers.TitleByExpression;
 import com.top_logic.model.search.providers.TooltipProviderByExpression;
+import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
@@ -585,6 +589,55 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		eval("b -> c -> $b.add(`TestTLScriptSecurity:PathB#cs`, 0, $c)", _b1, c3);
 		becomeUser(PersonManager.getManager().getRoot());
 		assertEquals(Arrays.asList(c3, _c1, _c2), _b1.tValueByName("cs"));
+	}
+
+	/**
+	 * The core filter drops undiscoverable objects and keeps discoverable objects and model
+	 * elements, reporting what it dropped.
+	 */
+	public void testCoreFilterDropsUndiscoverable() {
+		TLObject high = classifier("HIGH");
+		List<TLObject> dropped = new ArrayList<>();
+		Object filtered = DiscoverRight.filter(_pathUser, Arrays.asList(_a1, _a2, high, _c1, _c2), dropped::add);
+		assertEquals(Arrays.asList(_a1, high, _c1), filtered);
+		assertEquals(Arrays.asList(_a2, _c2), dropped);
+	}
+
+	/**
+	 * A value without undiscoverable objects is returned as it is, also when it contains a model
+	 * element.
+	 */
+	public void testCoreFilterKeepsDiscoverableValue() {
+		List<TLObject> value = Arrays.asList(_a1, classifier("HIGH"));
+		assertSame(value, DiscoverRight.filter(_pathUser, value, null));
+		assertSame(_c1, DiscoverRight.filter(_pathUser, _c1, null));
+		assertNull(DiscoverRight.filter(_pathUser, _c2, null));
+	}
+
+	/**
+	 * The core check of new reference targets denies a target the user may not discover.
+	 */
+	public void testCoreCheckDeniesNewUndiscoverableTarget() throws Exception {
+		TLObject hidden = createHiddenC("hidden");
+		becomeUser(_pathUser);
+		try {
+			DiscoverRight.checkNewTargets(_b1, part("PathB", "cs"), Arrays.asList(_c1, hidden));
+			fail("An undiscoverable new target must be denied.");
+		} catch (TopLogicException ex) {
+			assertEquals(ERROR_TARGET_NOT_DISCOVERABLE__OBJECT_ATTRIBUTE.getKey(), ex.getErrorKey().getKey());
+		}
+	}
+
+	/**
+	 * A target the reference already holds passes the check, also if the user may not discover it;
+	 * a discoverable new target and a classifier pass as well.
+	 */
+	public void testCoreCheckAllowsStoredAndDiscoverableTargets() throws Exception {
+		TLObject c3 = createReadableC("c3");
+		becomeUser(_pathUser);
+		assertFalse(rights().isDiscoverAllowed(_c2));
+		DiscoverRight.checkNewTargets(_b1, part("PathB", "cs"), Arrays.asList(_c2, c3));
+		DiscoverRight.checkNewTargets(_b1, part("PathB", "priority"), classifier("HIGH"));
 	}
 
 	/**

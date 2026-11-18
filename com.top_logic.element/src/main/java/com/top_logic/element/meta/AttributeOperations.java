@@ -82,6 +82,7 @@ import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.utility.DefaultListOptionModel;
+import com.top_logic.layout.form.model.utility.DiscoverableOptions;
 import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
@@ -380,11 +381,16 @@ public class AttributeOperations {
 
 	/**
 	 * Adjusts the given options to the concrete attribute.
+	 *
+	 * <p>
+	 * The result contains only options the current user may discover, see
+	 * {@link DiscoverableOptions#discoverable(List)}.
+	 * </p>
 	 */
 	public static List<?> adjustOptions(EditContext editContext, List<?> allOptions) {
 
 		Filter<Object> filter = createOptionsFilter(editContext);
-		return FilterUtil.filterList(filter, allOptions);
+		return DiscoverableOptions.discoverable(FilterUtil.filterList(filter, allOptions));
 	}
 
 	private static Filter<Object> createOptionsFilter(EditContext context) {
@@ -406,6 +412,12 @@ public class AttributeOperations {
 
 	/**
 	 * Potential values that can be set in the given context.
+	 *
+	 * <p>
+	 * The options contain only objects the current user may discover, see
+	 * {@link DiscoverableOptions#discoverable(OptionModel)}. This holds for the instances of a class
+	 * as well as for the options of a configured {@link Generator}.
+	 * </p>
 	 * 
 	 * @param editContext
 	 *        The current update context.
@@ -413,6 +425,10 @@ public class AttributeOperations {
 	 * @return All available options.
 	 */
 	public static OptionModel<?> allOptions(EditContext editContext) {
+		return DiscoverableOptions.discoverable(allOptionsUnfiltered(editContext));
+	}
+
+	private static OptionModel<?> allOptionsUnfiltered(EditContext editContext) {
 		Filter<Object> optionsFilter = createOptionsFilter(editContext);
 		Generator generator = editContext.getOptions();
 		if (generator == null) {

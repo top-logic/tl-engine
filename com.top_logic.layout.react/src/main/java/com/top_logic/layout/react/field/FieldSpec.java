@@ -92,6 +92,8 @@ public final class FieldSpec {
 
 	private long _maxUploadSize;
 
+	private int _maxCount;
+
 	private String _width;
 
 	private String _height;
@@ -712,6 +714,31 @@ public final class FieldSpec {
 	}
 
 	/**
+	 * The maximum number of values a {@link #isMultiple() multi-valued} field may hold, or
+	 * {@code 0} if the number is not limited.
+	 *
+	 * <p>
+	 * The maximum of the value count annotation of a multi-valued attribute
+	 * ({@link com.top_logic.model.annotate.TLValueCount}). A control adding values offers no further
+	 * value once the field holds this many, and refuses an upload of more files than there is room
+	 * for.
+	 * </p>
+	 */
+	public int getMaxCount() {
+		return _maxCount;
+	}
+
+	/**
+	 * Sets the {@link #getMaxCount() maximum number of values}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setMaxCount(int maxCount) {
+		_maxCount = maxCount;
+		return this;
+	}
+
+	/**
 	 * The CSS width the content of the field is displayed at most, or {@code null} for the width the
 	 * field has.
 	 *
@@ -773,9 +800,11 @@ public final class FieldSpec {
 	 */
 	public FieldSpec elementSpec() {
 		FieldSpec result = copy();
-		// The element is one value: it is not several, and a single value has no order to arrange.
+		// The element is one value: it is not several, a single value has no order to arrange, and
+		// the number of values does not concern it.
 		result._multiple = false;
 		result._ordered = false;
+		result._maxCount = 0;
 		return result;
 	}
 
@@ -817,6 +846,7 @@ public final class FieldSpec {
 		result._optionLabels = _optionLabels;
 		result._acceptedTypes = _acceptedTypes;
 		result._maxUploadSize = _maxUploadSize;
+		result._maxCount = _maxCount;
 		result._width = _width;
 		result._height = _height;
 		return result;

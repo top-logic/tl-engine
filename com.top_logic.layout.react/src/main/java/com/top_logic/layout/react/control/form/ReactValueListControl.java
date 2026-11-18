@@ -14,6 +14,7 @@ import jakarta.servlet.http.Part;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
@@ -26,6 +27,7 @@ import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.field.UploadValueFactory;
 import com.top_logic.layout.react.state.FieldState;
+import com.top_logic.util.error.TopLogicException;
 
 import de.haumacher.msgbuf.data.DataObject;
 
@@ -53,6 +55,13 @@ import de.haumacher.msgbuf.data.DataObject;
  * values from files}, values are not added empty but uploaded: the add button opens a file picker
  * selecting several files, files can be dropped onto the list, and the control serves the upload
  * endpoint as an {@link UploadHandler}, appending the values created from the uploaded files.
+ * </p>
+ *
+ * <p>
+ * Where the field states a {@link FieldSpec#getMaxCount() maximum number of values}, the control
+ * publishes it under {@link ValueCountLimit#MAX_COUNT}: once the field holds that many values, the
+ * client offers no further one and an added value is refused. An upload of more files than there is
+ * room for is refused as a whole with the problem of {@link ValueCountLimit#checkAdd(int, int)}.
  * </p>
  *
  * <p>
@@ -118,6 +127,9 @@ public class ReactValueListControl extends ReactFormFieldControl implements Uplo
 	/** The size limit of one uploaded file, see {@link #maxUploadSize()}. */
 	private final long _maxUploadSize;
 
+	/** The maximum number of values, see {@link FieldSpec#getMaxCount()}. */
+	private final ValueCountLimit _maxCount;
+
 	private final List<ListElementFieldModel> _elementModels = new ArrayList<>();
 
 	private final List<ReactControl> _elementControls = new ArrayList<>();
@@ -143,6 +155,8 @@ public class ReactValueListControl extends ReactFormFieldControl implements Uplo
 		_elementProvider = elementProvider;
 		_uploadValues = elementProvider.uploadValues(_elementSpec);
 		_maxUploadSize = UploadSupport.effectiveMaxUploadSize(_elementSpec.getMaxUploadSize());
+		_maxCount = ValueCountLimit.of(fieldSpec.getMaxCount());
+		putState(ValueCountLimit.MAX_COUNT, Integer.valueOf(_maxCount.getMax()));
 		putState(UPLOAD, Boolean.valueOf(_uploadValues != null));
 		if (_uploadValues != null) {
 			putState(UploadSupport.ACCEPT, UploadSupport.acceptAttribute(_elementSpec.getAcceptedTypes()));
@@ -264,6 +278,11 @@ public class ReactValueListControl extends ReactFormFieldControl implements Uplo
 
 	/**
 	 * Appends an empty value, which the user then enters into the control that appears for it.
+	 *
+	 * <p>
+	 * Refused where the field already holds the {@link FieldSpec#getMaxCount() maximum number of
+	 * values}.
+	 * </p>
 	 */
 	@ReactCommandHandler(CMD_ADD_ELEMENT)
 	final void handleAddElement() {
@@ -271,6 +290,7 @@ public class ReactValueListControl extends ReactFormFieldControl implements Uplo
 			return;
 		}
 		List<Object> values = ListElementFieldModel.elementsOf(getFieldModel());
+		checkAdd(values.size(), 1);
 		values.add(null);
 		getFieldModel().setValue(values);
 	}
@@ -280,6 +300,8 @@ public class ReactValueListControl extends ReactFormFieldControl implements Uplo
 	 *
 	 * <p>
 	 * Ignored where the element provider does not create values from files, see {@link #UPLOAD}.
+	 * Refused as a whole where the files are more than the
+	 * {@link FieldSpec#getMaxCount() maximum number of values} leaves room for.
 	 * </p>
 	 */
 	@Override
@@ -302,9 +324,25 @@ public class ReactValueListControl extends ReactFormFieldControl implements Uplo
 			return null;
 		}
 		List<Object> values = ListElementFieldModel.elementsOf(getFieldModel());
+		checkAdd(values.size(), created.size());
 		values.addAll(created);
 		getFieldModel().setValue(values);
 		return null;
+	}
+
+	/**
+	 * Refuses adding the given number of values to the given number of values the field holds,
+	 * where they exceed the {@link FieldSpec#getMaxCount() maximum number of values}.
+	 *
+	 * @throws TopLogicException
+	 *         The problem of {@link ValueCountLimit#checkAdd(int, int)}, shown in the window of the
+	 *         control.
+	 */
+	private void checkAdd(int count, int added) {
+		ResKey tooMany = _maxCount.checkAdd(count, added);
+		if (tooMany != null) {
+			throw new TopLogicException(tooMany);
+		}
 	}
 
 	/**

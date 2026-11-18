@@ -1,6 +1,7 @@
 import { React, useTLState, useTLCommand, useUpload, useTLDataUrl, useI18N, useListReorder, reorderState, rootClassName, stateAttr, useFieldLabelProps, usePart, useFocusTrap, createPortal, ThemeIcon, ICON_ADD, ICON_UPLOAD, ICON_REMOVE, ICON_CLOSE, ICON_HANDLE, ICON_PREVIOUS, ICON_NEXT, ICON_MANAGE_IMAGES } from 'tl-react-bridge';
 import type { TLCellProps, UploadPart } from 'tl-react-bridge';
 import { showsValueOnly } from './form/fieldState';
+import { isFull } from './form/valueCount';
 
 /** Command removing an image, see ReactImageFieldControl.CMD_REMOVE_IMAGE. */
 const CMD_REMOVE_IMAGE = 'removeImage';
@@ -95,6 +96,9 @@ function format(text: string, ...values: (string | number)[]): string {
  * image shown among several; the stage then shows the first image added. Without an image, the stage
  * of an edited field is the dashed area, of a displayed field nothing.
  *
+ * Several images at their maximum number take no further one: "Add image", the dashed tile of the
+ * editor and the stage taking dropped files are left out, the images are still replaced and removed.
+ *
  * From the files picked or dropped until the image they become is visible, the stage shows a spinner
  * over the image, the dashed areas a spinner and "Uploading…", and the buttons of the bar are
  * disabled; in the editor, the tile whose image is replaced shows the spinner. An image whose data
@@ -109,6 +113,9 @@ function format(text: string, ...values: (string | number)[]): string {
  *   image; absent: the height of the theme
  * - accept: string, the file types the file picker offers (HTML accept attribute); absent: all
  * - maxUploadSize: number, the size limit of each single file in bytes (0: none)
+ * - maxCount: number, the maximum number of several images (0: none); at the maximum, the add
+ *   button, the area adding images in the editor and the stage taking dropped files are left out,
+ *   the images can still be replaced and removed
  * - error: string, the message of the last failed upload; absent after a successful one
  */
 const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
@@ -130,6 +137,8 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
   const editing = !valueOnly && !disabled;
   // A single image has nowhere to move to.
   const arrangeable = editing && multiple && state.ordered === true && images.length > 1;
+  // Several images up to their maximum take further ones.
+  const addable = multiple && !isFull(images.length, state.maxCount);
 
   // The key of the image the stage shows; the first one where it shows none of the images.
   const [currentKey, setCurrentKey] = React.useState<string | null>(null);
@@ -457,7 +466,7 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
                 </div>
               );
             })}
-            {dropArea(files => doUpload(files, null, null))}
+            {addable && dropArea(files => doUpload(files, null, null))}
           </div>
           {arrangeable && reorder.announcer}
           {errorMessage}
@@ -498,7 +507,7 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
         )}
         {editing && multiple && (
           // The bar of several images stays while the field is empty, so the first image does not move the layout.
-          <div className="tl-image-field__bar">{addButton(null)}</div>
+          <div className="tl-image-field__bar">{addable && addButton(null)}</div>
         )}
         {!managing && errorMessage}
         {replaceInput()}
@@ -507,13 +516,10 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
     );
   }
 
-  const stageDrop = fileDropProps(DROP_AREA, files => {
-    if (multiple) {
-      doUpload(files, null, current.key);
-    } else {
-      doUpload(files, current.key, null);
-    }
-  });
+  // A file dropped on the stage replaces a single image, and is added to several images up to their maximum.
+  const stageDrop = !multiple
+    ? fileDropProps(DROP_AREA, files => doUpload(files, current.key, null))
+    : addable ? fileDropProps(DROP_AREA, files => doUpload(files, null, current.key)) : {};
 
   // The stage works while an upload runs and until the data of the image it shows has arrived.
   const stageBusy = working || !loadedKeys.has(current.key);
@@ -537,7 +543,7 @@ const TLImageField: React.FC<TLCellProps> = ({ controlId }) => {
       </div>
       {editing && (
         <div className="tl-image-field__bar">
-          {multiple && addButton(current.key)}
+          {addable && addButton(current.key)}
           <Button label={t['js.imageField.replaceShown']} image={ICON_UPLOAD} display="icon-label"
             appearance="secondary" disabled={working}
             onClick={() => pickReplacement(current)} />

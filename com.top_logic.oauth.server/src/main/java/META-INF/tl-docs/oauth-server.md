@@ -121,7 +121,7 @@ from them:
 
 Tokens and codes are opaque random strings with a prefix that names their kind (`tloat_` access
 token, `tlort_` refresh token, `tloac_` authorization code), see
-`com.top_logic.basic.encryption.SecretTokens`. Only their SHA-256 is stored, so a copy of the
+`com.top_logic.element.accesstoken.SecretTokens` (`tl-element`). Only their SHA-256 is stored, so a copy of the
 database yields no usable token; nothing writes a token to a log.
 
 ## Accepting the tokens at an endpoint

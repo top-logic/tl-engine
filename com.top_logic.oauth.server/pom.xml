@@ -18,6 +18,11 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-core</artifactId>
     </dependency>
+    <!-- The random bearer secrets and their hashes (SecretTokens). -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-element</artifactId>
+    </dependency>
     <!-- The pluggable authentication of HTTP endpoints, which the OAuth access token authentication plugs into. -->
     <dependency>
       <groupId>com.top-logic</groupId>

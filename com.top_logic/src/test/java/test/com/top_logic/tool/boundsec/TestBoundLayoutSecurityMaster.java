@@ -57,6 +57,19 @@ public class TestBoundLayoutSecurityMaster extends BasicTestCase {
 	}
 
 	/**
+	 * A layout marked as security master provides the security object of its parent, although the
+	 * parent has more than one child.
+	 */
+	public void testLayoutAsSecurityMaster() throws IOException, ConfigurationException {
+		BoundLayout outer = (BoundLayout) createLayout("testLayoutAsSecurityMaster.xml");
+		assertEquals(2, outer.getChildCount());
+		BoundLayout master = (BoundLayout) outer.getChild(0);
+
+		assertSame(master.getSecurityObjectProvider(), outer.getSecurityObjectProvider());
+		assertProvider(ModelSecurityObjectProvider.class, outer);
+	}
+
+	/**
 	 * A security object configured at a dialog is used, although the dialog template always
 	 * creates exactly one child (the content layout).
 	 */

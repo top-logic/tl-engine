@@ -27,7 +27,7 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 	 * Configuration options for {@link BoundLayout}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends Layout.Config, BoundCheckerLayoutConfig, SecurityObjectProviderConfig {
+	public interface Config extends Layout.Config, BoundCheckerLayoutConfig, WithSecurityMaster {
 
 		/**
 		 * Short-cut name for {@link BoundLayout} in XML configuration.
@@ -45,12 +45,27 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 
 	private SecurityObjectProvider _securityObjectProvider;
 
+	/** @see Config#getIsSecurityMaster() */
+	private final boolean _isSecurityMaster;
+
     /** Construct a {@link BoundLayout} from (XML-)Attributes. */
 	public BoundLayout(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
 
 		_securityObjectProvider = atts.resolveSecurityObject(context);
+		_isSecurityMaster = atts.getIsSecurityMaster();
     }
+
+	@Override
+	protected void componentsResolved(InstantiationContext context) {
+		super.componentsResolved(context);
+
+		if (_isSecurityMaster) {
+			if (getParent() instanceof BoundLayout layout) {
+				layout.initSecurityMaster(this);
+			}
+		}
+	}
 
 	@Override
 	public SecurityObjectProvider getSecurityObjectProvider() {

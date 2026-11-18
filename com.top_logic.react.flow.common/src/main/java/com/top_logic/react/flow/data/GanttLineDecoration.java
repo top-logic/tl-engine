@@ -80,6 +80,9 @@ public interface GanttLineDecoration extends com.top_logic.react.flow.data.Gantt
 	com.top_logic.react.flow.data.GanttLineDecoration setColor(String value);
 
 	@Override
+	com.top_logic.react.flow.data.GanttLineDecoration setColorRole(String value);
+
+	@Override
 	com.top_logic.react.flow.data.GanttLineDecoration setLabel(com.top_logic.react.flow.data.Box value);
 
 	@Override

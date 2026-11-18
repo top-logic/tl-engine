@@ -110,6 +110,12 @@ public class GanttRangeDecoration_Impl extends com.top_logic.react.flow.data.imp
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.GanttRangeDecoration setColorRole(String value) {
+		internalSetColorRole(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.react.flow.data.GanttRangeDecoration setLabel(com.top_logic.react.flow.data.Box value) {
 		internalSetLabel(value);
 		return this;

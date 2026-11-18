@@ -51,6 +51,9 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/** @see #getStrokeColor() */
 	String STROKE_COLOR__PROP = "strokeColor";
 
+	/** @see #getStrokeRole() */
+	String STROKE_ROLE__PROP = "strokeRole";
+
 	/** @see #getStrokeWidth() */
 	String STROKE_WIDTH__PROP = "strokeWidth";
 
@@ -59,6 +62,9 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 
 	/** @see #getViolatedStrokeColor() */
 	String VIOLATED_STROKE_COLOR__PROP = "violatedStrokeColor";
+
+	/** @see #getViolatedStrokeRole() */
+	String VIOLATED_STROKE_ROLE__PROP = "violatedStrokeRole";
 
 	/** @see #getViolatedStrokeWidth() */
 	String VIOLATED_STROKE_WIDTH__PROP = "violatedStrokeWidth";
@@ -209,7 +215,12 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	com.top_logic.react.flow.data.GanttEdge setTargetSymbol(com.top_logic.react.flow.data.ConnectorSymbol value);
 
 	/**
-	 * Stroke color for the normal (non-violated) state.
+	 * Fixed stroke color for the normal (non-violated) state.
+	 *
+	 * <p>
+	 * Takes precedence over {@link #getStrokeRole()}. Empty = draw in the color of the
+	 * {@link #getStrokeRole()}.
+	 * </p>
 	 */
 	String getStrokeColor();
 
@@ -217,6 +228,29 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 * @see #getStrokeColor()
 	 */
 	com.top_logic.react.flow.data.GanttEdge setStrokeColor(String value);
+
+	/**
+	 * Checks, whether {@link #getStrokeColor()} has a value.
+	 */
+	boolean hasStrokeColor();
+
+	/**
+	 * Color role of the stroke for the normal (non-violated) state, unless a fixed
+	 * {@link #getStrokeColor()} is given.
+	 *
+	 * <p>
+	 * The external name of a color role of the user interface ({@code neutral}, {@code brand},
+		 * {@code error}, {@code warning}, {@code success}, {@code info}, {@code category-1} ...
+		 * {@code category-8}). On the screen the role follows the theme and the dark mode, an export
+	 * shows it in a fixed substitute color.
+	 * </p>
+	 */
+	String getStrokeRole();
+
+	/**
+	 * @see #getStrokeRole()
+	 */
+	com.top_logic.react.flow.data.GanttEdge setStrokeRole(String value);
 
 	/**
 	 * Line thickness in pixels for the normal state.
@@ -249,8 +283,14 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	void removeDash(double value);
 
 	/**
-	 * Stroke color applied when the constraint is violated (enforce != NONE and
-	 * source endpoint position > target endpoint position). Empty = use normal {@link #getStrokeColor()}.
+	 * Fixed stroke color applied when the dependency is violated: the source endpoint lies after
+	 * the target endpoint on the time axis. This holds independently of {@link #getEnforce()}, which
+	 * only decides whether dragging is limited.
+	 *
+	 * <p>
+	 * Takes precedence over {@link #getViolatedStrokeRole()}. Empty = draw in the color of the
+	 * {@link #getViolatedStrokeRole()}.
+	 * </p>
 	 */
 	String getViolatedStrokeColor();
 
@@ -263,6 +303,21 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 * Checks, whether {@link #getViolatedStrokeColor()} has a value.
 	 */
 	boolean hasViolatedStrokeColor();
+
+	/**
+	 * Color role of the stroke applied when the dependency is violated (see
+		 * {@link #getViolatedStrokeColor()}), unless a fixed {@link #getViolatedStrokeColor()} is given.
+	 *
+	 * <p>
+	 * The external name of a color role, see {@link #getStrokeRole()}.
+	 * </p>
+	 */
+	String getViolatedStrokeRole();
+
+	/**
+	 * @see #getViolatedStrokeRole()
+	 */
+	com.top_logic.react.flow.data.GanttEdge setViolatedStrokeRole(String value);
 
 	/**
 	 * Line thickness when violated. Zero = use normal {@link #getStrokeWidth()}.

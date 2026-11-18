@@ -91,6 +91,38 @@ g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--tl-borde
 }
 
 /*
+ * The color roles of the edges and decorations of a Gantt chart (data-tl-role, as on a pill): a
+ * line in the line color of its role, a filled symbol of an edge and a range in the area color.
+ * The model draws them in a fixed substitute color of the role, which an exported PDF keeps; on
+ * the screen the role follows the theme and the dark mode. An element in a fixed color of the
+ * application carries no role.
+ */
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="neutral"] { --tl-gantt-role-line: var(--tl-border-emphasis); --tl-gantt-role-area: var(--tl-surface-interactive-strong); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="brand"] { --tl-gantt-role-line: var(--tl-border-interactive); --tl-gantt-role-area: var(--tl-surface-brand-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="error"] { --tl-gantt-role-line: var(--tl-status-error-border); --tl-gantt-role-area: var(--tl-status-error-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="warning"] { --tl-gantt-role-line: var(--tl-status-warning-border); --tl-gantt-role-area: var(--tl-status-warning-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="success"] { --tl-gantt-role-line: var(--tl-status-success-border); --tl-gantt-role-area: var(--tl-status-success-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="info"] { --tl-gantt-role-line: var(--tl-status-info-border); --tl-gantt-role-area: var(--tl-status-info-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="category-1"] { --tl-gantt-role-line: var(--tl-category-1-border); --tl-gantt-role-area: var(--tl-category-1-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="category-2"] { --tl-gantt-role-line: var(--tl-category-2-border); --tl-gantt-role-area: var(--tl-category-2-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="category-3"] { --tl-gantt-role-line: var(--tl-category-3-border); --tl-gantt-role-area: var(--tl-category-3-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="category-4"] { --tl-gantt-role-line: var(--tl-category-4-border); --tl-gantt-role-area: var(--tl-category-4-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="category-5"] { --tl-gantt-role-line: var(--tl-category-5-border); --tl-gantt-role-area: var(--tl-category-5-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="category-6"] { --tl-gantt-role-line: var(--tl-category-6-border); --tl-gantt-role-area: var(--tl-category-6-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="category-7"] { --tl-gantt-role-line: var(--tl-category-7-border); --tl-gantt-role-area: var(--tl-category-7-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="category-8"] { --tl-gantt-role-line: var(--tl-category-8-border); --tl-gantt-role-area: var(--tl-category-8-subtle); }
+.tl-gantt-edges path[data-tl-role],
+.tl-gantt-decorations path[data-tl-role] {
+	stroke: var(--tl-gantt-role-line);
+}
+.tl-gantt-edges path[data-tl-role]:not([fill="none"]) {
+	fill: var(--tl-gantt-role-line);
+}
+.tl-gantt-decorations rect[data-tl-role] {
+	fill: var(--tl-gantt-role-area);
+}
+
+/*
  * The scrollbars a Gantt chart draws while its content is larger than its box: a track along the
  * edge of the scrolling area and a thumb showing the visible part. Only drawn on the screen, an
  * export shows the whole chart.

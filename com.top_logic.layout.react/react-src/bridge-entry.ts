@@ -77,6 +77,8 @@ export type {
   BadgePartProps,
   DividerPartProps,
   DividerOrientation,
+  SkeletonPartProps,
+  SkeletonShape,
   ProgressBarPartProps,
   SpinnerPartProps,
   SpinnerSize,

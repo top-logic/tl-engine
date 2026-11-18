@@ -884,19 +884,17 @@
 
 /* --- Leer und lädt nach ---------------------------------------------------------- */
 
-/* Zeilen im sichtbaren Fenster, die der Server noch nicht geschickt hat: ein tl-skeleton in
-   Zeilenhöhe. Ohne Zeilen steht im Körper eine tl-status-Zeile. */
+/* Zeilen im sichtbaren Fenster, die der Server noch nicht geschickt hat: ein tl-skeleton als
+   Textzeile. Ohne Zeilen steht im Körper eine tl-status-Zeile. Das Raster gibt dem Platzhalter die
+   ganze Breite, auch wenn eine Komponentenbibliothek ihn zeichnet (Part Skeleton). */
 .tl-table__placeholder {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   padding: 0 var(--tl-space-control-x);
   border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
 }
 .tl-table__placeholder[hidden] { display: none; }
-
-.tl-table__placeholder > .tl-skeleton {
-  flex: 1 1 auto;
-}
 
 /* Die Leerzeile bleibt am linken Rand des Körpers, auch wenn er waagerecht gescrollt ist: sonst stünde
    „Keine Einträge" außerhalb des Bildes, sobald ein Filter die letzte Zeile nimmt (Sichtprüfung 12.10.). */

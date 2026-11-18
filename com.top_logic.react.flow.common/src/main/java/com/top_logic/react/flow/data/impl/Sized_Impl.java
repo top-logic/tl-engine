@@ -244,6 +244,12 @@ public class Sized_Impl extends com.top_logic.react.flow.data.impl.Decoration_Im
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.Sized setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return SIZED__TYPE;
 	}

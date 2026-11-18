@@ -22,13 +22,55 @@ public sealed interface DropLocation {
 	DropMode mode();
 
 	/**
-	 * The location of a {@link DropMode#CONTROL} drop: the control as a whole.
+	 * The point the drop is made at, in the coordinate system of the location, {@code null} if the
+	 * control reports none.
+	 *
+	 * <p>
+	 * Only a {@link Control} or {@link Onto} location of a control displaying its items on a surface
+	 * has a point. An {@link Insert insertion} has none.
+	 * </p>
 	 */
-	record Control() implements DropLocation {
+	default DropPoint point() {
+		return null;
+	}
+
+	/**
+	 * This location at the given point.
+	 *
+	 * @param point
+	 *        The point the drop is made at, in the coordinate system of this location, {@code null}
+	 *        for none.
+	 * @return The location of this one's mode and objects at the given point, this location itself
+	 *         if it has no point.
+	 */
+	default DropLocation at(DropPoint point) {
+		return this;
+	}
+
+	/**
+	 * The location of a {@link DropMode#CONTROL} drop: the control as a whole.
+	 *
+	 * @param point
+	 *        The point on the control's surface the drop is made at, relative to its origin,
+	 *        {@code null} if the control reports none.
+	 */
+	record Control(DropPoint point) implements DropLocation {
+
+		/**
+		 * The location of a drop on the control as a whole, at no particular point.
+		 */
+		public Control() {
+			this(null);
+		}
 
 		@Override
 		public DropMode mode() {
 			return DropMode.CONTROL;
+		}
+
+		@Override
+		public DropLocation at(DropPoint newPoint) {
+			return new Control(newPoint);
 		}
 
 	}
@@ -38,12 +80,27 @@ public sealed interface DropLocation {
 	 *
 	 * @param target
 	 *        The business object of the item the drop is made onto.
+	 * @param point
+	 *        The point the drop is made at, relative to the upper left corner of the item,
+	 *        {@code null} if the control reports none.
 	 */
-	record Onto(Object target) implements DropLocation {
+	record Onto(Object target, DropPoint point) implements DropLocation {
+
+		/**
+		 * The location of a drop onto the given item, at no particular point of it.
+		 */
+		public Onto(Object target) {
+			this(target, null);
+		}
 
 		@Override
 		public DropMode mode() {
 			return DropMode.ONTO;
+		}
+
+		@Override
+		public DropLocation at(DropPoint newPoint) {
+			return new Onto(target, newPoint);
 		}
 
 	}

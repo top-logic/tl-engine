@@ -18,8 +18,8 @@
 				</declarations>
 			</instance>
 		</config>
-		<config service-class="com.top_logic.tl.ai.browser.cookiepool.CookiePoolService">
-			<instance class="com.top_logic.tl.ai.browser.cookiepool.CookiePoolService"/>
+		<config service-class="com.top_logic.ai.browser.cookiepool.CookiePoolService">
+			<instance class="com.top_logic.ai.browser.cookiepool.CookiePoolService"/>
 		</config>
 	</services>
 </application>

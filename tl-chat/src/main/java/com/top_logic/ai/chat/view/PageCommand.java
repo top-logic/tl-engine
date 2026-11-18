@@ -11,7 +11,7 @@ import com.top_logic.ai.chat.view.ChatConversationElement.AgentCommand;
 import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.ViewCommandModel;
-import com.top_logic.tl.ai.core.tools.parameters.DeclaredParameters;
+import com.top_logic.ai.core.tools.parameters.DeclaredParameters;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -87,7 +87,7 @@ public final class PageCommand {
 	 *
 	 * <p>
 	 * The values must have been
-	 * {@link DeclaredParameters#bind(Map, com.top_logic.tl.ai.core.security.ModelSecurity) checked
+	 * {@link DeclaredParameters#bind(Map, com.top_logic.ai.core.security.ModelSecurity) checked
 	 * against the parameters}. Must be called within the interaction of the window the command is displayed in,
 	 * see
 	 * {@link ChatWindowService#inWindow(com.top_logic.base.context.TLSubSessionContext, Runnable)}.

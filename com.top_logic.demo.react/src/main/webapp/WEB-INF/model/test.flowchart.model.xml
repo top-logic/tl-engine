@@ -66,6 +66,12 @@
 				<property name="marker"
 					type="tl.core:String"
 				/>
+				<property name="x"
+					type="tl.core:Double"
+				/>
+				<property name="y"
+					type="tl.core:Double"
+				/>
 			</attributes>
 		</class>
 		<class name="Location">

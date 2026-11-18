@@ -5,9 +5,9 @@
  */
 package com.top_logic.ai.mcp.server.tools;
 
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMode;
 
 import io.modelcontextprotocol.spec.McpSchema;
 

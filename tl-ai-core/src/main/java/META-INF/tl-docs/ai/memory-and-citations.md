@@ -7,7 +7,7 @@ order: 66
 
 ## Conversation memory and compaction
 
-`ConversationMemory` (package `com.top_logic.tl.ai.core.memory`) wraps a conversation with a hybrid token estimate: the token count the provider reported last as the baseline, plus a byte heuristic for what was added since. The `CompactionStrategy` interface has two implementations, `SummarizingStrategy` (the model summarizes older turns) and `TruncatingStrategy`.
+`ConversationMemory` (package `com.top_logic.ai.core.memory`) wraps a conversation with a hybrid token estimate: the token count the provider reported last as the baseline, plus a byte heuristic for what was added since. The `CompactionStrategy` interface has two implementations, `SummarizingStrategy` (the model summarizes older turns) and `TruncatingStrategy`.
 
 **When the budget is checked.** `AgentLoop` checks it at the **start of every turn** - after the injections between turns and *before* the turn's request is built - so a conversation that is already over budget is compacted rather than sent, refused and compacted. The same position covers the other direction: a turn's tool results are measured at the start of the next turn, the next moment that history is used. Consequences:
 
@@ -56,7 +56,7 @@ Images, relative links and links of other schemes are no markers. `CitationExcer
 `kind` is a vocabulary the application owns, in the `CitationKinds` service; the tool that read a source decides its kind, not the model. The framework declares `web` (a page `webFetch` or the browser read) and `object` (an object of a type no other kind claims):
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.citation.CitationKinds">
+<config service-class="com.top_logic.ai.core.citation.CitationKinds">
 	<instance>
 		<kinds>
 			<kind name="invoice" description="an invoice of this application" types="billing:Invoice" passage="false">

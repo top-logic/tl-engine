@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.layout.view.element.WithBadge;
 import com.top_logic.layout.view.channel.NamedInputs;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
@@ -49,7 +50,7 @@ public interface ViewCommand {
 	@Id(ViewCommand.class)
 	@TypeIcon("css:bi bi-lightning")
 	interface Config extends PolymorphicConfiguration<ViewCommand>, ExecutabilityConfig, NamedInputs,
-			ActionScopeDefinition {
+			ActionScopeDefinition, WithBadge {
 
 		/** Access to the default methods of this interface for the configuration proxy. */
 		Lookup LOOKUP = MethodHandles.lookup();

@@ -22,7 +22,7 @@ The three compose, and **each of them can only refuse**. An origin has to pass a
 ## The five-line version
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
+<config service-class="com.top_logic.ai.core.tools.web.WebToolsService">
     <instance>
         <browsing default="research">
             <policies>

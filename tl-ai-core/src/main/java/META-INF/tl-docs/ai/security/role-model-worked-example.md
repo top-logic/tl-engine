@@ -235,7 +235,7 @@ Administrators and engine super-users bypass all of it, and so does any code run
 ### Agent tool access: which tools a role may call
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+<config service-class="com.top_logic.ai.core.security.AiToolAccessService">
   <instance>
     <tool-access>
       <role name="projectPartner">

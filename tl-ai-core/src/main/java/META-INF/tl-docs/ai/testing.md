@@ -1,5 +1,5 @@
 ---
-description: Read before adding or running tests of the AI modules (tl-ai-core, tl-ai-browser, tl-chat, tl-ai-mcp-server, tl-ai-eval, ...) - where the tests live (packages mirroring the production code), the two surefire %regex[] includes in each module POM, TestSuiteReachability, the command forms (mvn test -DskipTests=false -pl tl-ai-core, -Dtest with a fully qualified class name), and the opt-in gates tl.ai.browser.e2e, tl.ai.visual, tl.ai.injection.e2e, tl.ai.vector.e2e, tl.ai.index.model.e2e, tl.ai.eval and tl.ai.research.e2e.
+description: Read before adding or running tests of the AI modules (tl-ai-core, tl-ai-browser, tl-chat, tl-ai-mcp-server, tl-ai-eval, ...) - where the tests live (in the package of the tested class, collected by the engine's TestAll), the command forms (mvn test -DskipTests=false -pl tl-ai-core, -DTestAll.target, -Dtest with a fully qualified class name), and the opt-in gates tl.ai.browser.e2e, tl.ai.visual, tl.ai.injection.e2e, tl.ai.vector.e2e, tl.ai.index.model.e2e, tl.ai.eval and tl.ai.research.e2e.
 order: 80
 ---
 
@@ -16,26 +16,26 @@ mvn test -DskipTests=false -pl tl-ai-core
 mvn test -DskipTests=false -pl tl-ai-core,tl-chat,tl-ai-mcp-server
 ```
 
-A single test class is selected with `-Dtest`, which must name the **fully qualified** class name (several are separated by commas):
+A single test class or a package directory is selected with `-DTestAll.target`, a path relative to the module directory. The test then runs inside the engine's `TestAll` like in the full run, so a gated test without its switch reports as skipped:
 
 ```bash
-mvn test -DskipTests=false -pl tl-ai-core -Dtest=com.top_logic.tl.ai.core.agent.TestAgentLoop
+mvn test -DskipTests=false -pl tl-ai-core -DTestAll.target=src/test/java/com/top_logic/ai/core/agent/TestAgentLoop.java
+mvn test -DskipTests=false -pl tl-ai-core -DTestAll.target=src/test/java/com/top_logic/ai/core/agent -DTestAll.recursive=true
+```
+
+`-Dtest` with the **fully qualified** class name (several are separated by commas) runs the class directly instead, outside the `TestAll`. There a violated assumption is reported as an error, so use it for a gated test only together with its switch:
+
+```bash
+mvn test -DskipTests=false -pl tl-ai-core -Dtest=com.top_logic.ai.core.agent.TestAgentLoop
 ```
 
 ## Where the tests are and how they are found
 
-The engine's `tl-parent-core` configures surefire with the single include `test/TestAll.java`, the engine's generic suite, which collects everything below `src/test/java/test`. The AI modules keep most of their tests in packages that **mirror the production code** instead - a test of `com.top_logic.tl.ai.core.agent` sits in `com.top_logic.tl.ai.core.agent`, not in `test.com.top_logic.tl.ai.core.agent`. So every AI module repeats two includes in its own POM (see the comment in `tl-ai-core/pom.xml`):
+The AI modules have no test configuration of their own. Surefire runs the engine's generic suite `test/TestAll.java` in every module (configured in `tl-parent-core`), and it collects the tests of the whole test source tree `src/test/java`: every public `TestCase` or class with a static `suite()` method whose name is `Test<Something>` or `<Something>Test`. Besides the module's tests it runs the module-independent checks (file names, layout normalization, JSP content, I18N constants, migration-script consistency, the developer documentation).
 
-| Include | Runs |
-|---|---|
-| `%regex[test[/.]TestAll(\.class)?]` | the engine's generic suite `test/TestAll.java` (file names, layout normalization, JSP content, I18N constants, migration-script consistency, the developer documentation) **plus** everything below `src/test/java/test/`, recursively |
-| `%regex[com[/.]top_logic[/.](ai\|tl[/.]ai)[/.](.*[/.])?(Test[A-Z0-9][^/.$]*\|[^/.$]*Test)(\.class)?]` | the module's own tests in the mirrored packages, named `Test<Something>` or `<Something>Test` |
+**Adding a test.** Put it into the package of the class it tests - a test of `com.top_logic.ai.core.agent.AgentLoop` is `com.top_logic.ai.core.agent.TestAgentLoop` in `src/test/java` - so that it can reach package-private members, and name it `Test<Something>` or `<Something>Test`. Nothing else is needed: no suite to register it in, no include to extend. Only a test helper that could be mistaken for a production class of the same package, such as an `I18NConstants` with the resource keys of a test model, goes below the package prefix `test` (`test.com.top_logic.ai.core.tools.model.I18NConstants`).
 
-Both are regular expressions, and each accepts a class in two spellings: as the class file path and as the class name. Surefire selects the classes by their path and then filters that selection again in the test JVM, where it matches a `%regex[]` include against the class name; with the path spelling alone, or with `test/TestAll.java` next to a regex, the build runs no test at all and passes with "Tests run: 0". A path pattern like `com/**/Test*.java` would not do either: surefire prefixes it with `**/`, so it would match the engine's own test classes in the `tl-basic` test jar and this module's `test/com/...` classes a second time. A `%regex[]` include is anchored at the start of the path and matches exactly the two package roots the AI modules own.
-
-**Adding a test.** Put it next to the code it tests, in the mirrored package, and name it `Test<Something>` or `<Something>Test`. Nothing else is needed - no suite to register it in, no include to extend. `TestSuiteReachability` (in `tl-ai-core`) fails the build if a test class is somewhere no include reaches, or is named so that no collector recognises it, so a test that would silently never run says so instead. Do not write a stub in the `test` package that forwards to it: the class would run twice, which the same test rejects.
-
-A test that needs a knowledge base is still a unit test: wrap it in the H2 setups (`KBSetup.getSingleKBTest`, `ServiceTestSetup`) as the existing ones do, and it runs with the rest. A test that starts agent runs starts the modules `AgentRuntimeService`, `AgentApplicationService` and `AgentPolicyService`. A test that needs something the build may not have - a key, a browser, an external service - belongs behind one of the opt-in gates below, so that it reports as **skipped** rather than failing or, worse, passing without having done anything. The gates are classes next to `AssumptionAwareRunner` in `tl-ai-core/src/test/java/com/top_logic/tl/ai/core/junit` (and beside the tests in `tl-ai-eval` and `tl-ai-index-onnx`); a gate is also asked by a class's `suite()` where the setup would boot the very service the key is missing for.
+A test that needs a knowledge base is still a unit test: wrap it in the H2 setups (`KBSetup.getSingleKBTest`, `ServiceTestSetup`) as the existing ones do, and it runs with the rest. The test classes of a module run in one JVM and share a knowledge base where their setups are equal, so a test must not expect the knowledge base to hold only its own objects: it filters for or counts its own objects instead of all instances of a type. A test that starts agent runs starts the modules `AgentRuntimeService`, `AgentApplicationService` and `AgentPolicyService`. A test that needs something the build may not have - a key, a browser, an external service - belongs behind one of the opt-in gates below, so that it reports as **skipped** rather than failing or, worse, passing without having done anything. A gate throws a violated `Assume` assumption, which the `TestAll` reports as a skipped test. The gates are classes in `tl-ai-core/src/test/java/com/top_logic/ai/core/junit` (and beside the tests in `tl-ai-browser`, `tl-ai-eval` and `tl-ai-index-onnx`); a gate is also asked by a class's `suite()` where the setup would boot the very service the key is missing for.
 
 ## Opt-in gates
 
@@ -49,14 +49,14 @@ A test that needs a knowledge base is still a unit test: wrap it in the H2 setup
 | `tl.ai.eval=true` | `EvalE2e` | `TestEvalPmMatrix` - the model eval with real models | provider keys (`tl_anthropic_api_key` or `ANTHROPIC_API_KEY`, ...) and money |
 | `tl.ai.research.e2e=true` | `ResearchE2e` | `TestResearchEval` - the research questions with real models and the real web | `tl_openai_api_key`, `tl_anthropic_api_key` and `tl_brave_api_key` with the plain key |
 
-Without its property, a gated test reports as skipped, never as passed. Examples:
+Without its property, a gated test reports as skipped in the `TestAll`, never as passed. Examples:
 
 ```bash
 mvn test -DskipTests=false -pl tl-ai-browser -Dtl.ai.browser.e2e=true \
-    -Dtest=com.top_logic.tl.ai.browser.TestBrowserTool,com.top_logic.tl.ai.browser.TestBrowserUrlProvenance
+    -Dtest=com.top_logic.ai.browser.TestBrowserTool,com.top_logic.ai.browser.TestBrowserUrlProvenance
 
 mvn test -DskipTests=false -pl tl-ai-core -Dtl.ai.injection.e2e=true \
-    -Dtest=com.top_logic.tl.ai.core.tools.web.TestPromptInjectionBarrier
+    -Dtest=com.top_logic.ai.core.tools.web.TestPromptInjectionBarrier
 
 mvn test -DskipTests=false -pl tl-ai-demo -Dtl.ai.vector.e2e=true \
     -Dtest=com.top_logic.ai.demo.VectorIndexIntegrationTest
@@ -76,7 +76,7 @@ mvn test -DskipTests=false -pl tl-ai-eval
 The **real models** spend real money and are behind `-Dtl.ai.eval=true`. Without it `TestEvalPmMatrix` reports as skipped; the gate is asked by the class's `suite()` as well, so a build that does not run the eval does not boot the agent stack to report a skip.
 
 ```bash
-mvn test -DskipTests=false -pl tl-ai-eval -Dtl.ai.eval=true -Dtest=com.top_logic.tl.ai.eval.TestEvalPmMatrix
+mvn test -DskipTests=false -pl tl-ai-eval -Dtl.ai.eval=true -Dtest=com.top_logic.ai.eval.TestEvalPmMatrix
 ```
 
 The CSV lands in `tl-ai-eval/target/eval/`. How to add a scenario, how to read the CSV and - most importantly - what the numbers may not be used for is in `tl-ai-eval/README.md`. The short version: with a handful of scenarios this shows that a model is unusable with this harness, never that one good model is three points better than another.
@@ -88,7 +88,7 @@ The CSV lands in `tl-ai-eval/target/eval/`. How to add a scenario, how to read t
 ```bash
 export tl_openai_api_key=... tl_anthropic_api_key=... tl_brave_api_key=...
 mvn test -DskipTests=false -pl tl-ai-eval -Dtl.ai.research.e2e=true \
-    -Dtest=com.top_logic.tl.ai.eval.TestResearchEval \
+    -Dtest=com.top_logic.ai.eval.TestResearchEval \
     -Dtl.ai.research.scenarios=fact-nobel-phd -Dtl.ai.research.repeats=1
 ```
 

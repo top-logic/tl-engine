@@ -7,7 +7,7 @@ package com.top_logic.ai.mcp.server.tools;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.tool.api.ToolResult;
+import com.top_logic.ai.tool.api.ToolResult;
 
 import io.modelcontextprotocol.spec.McpSchema;
 

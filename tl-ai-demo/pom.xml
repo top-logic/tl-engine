@@ -80,8 +80,7 @@
 
     <!-- Tests -->
     <!--
-      The junit gates of tl-ai-core - AssumptionAwareRunner and the switches beside it - so that
-      a test here which needs something the build may not have (an embedding key) reports as
+      The junit gates of tl-ai-core - the switches such as VectorIndexE2e - so that a test here which needs something the build may not have (an embedding key) reports as
       skipped rather than failing in its setup. Test scope, and surefire's dependenciesToScan
       names tl-basic only, so nothing of tl-ai-core's own test suite runs here.
     -->
@@ -114,17 +113,6 @@
 
   <build>
     <plugins>
-      <!-- The tests live in packages mirroring the production code, see the comment in tl-ai-core/pom.xml. -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <includes>
-            <include>%regex[test[/.]TestAll(\.class)?]</include>
-            <include>%regex[com[/.]top_logic[/.](ai|tl[/.]ai)[/.](.*[/.])?(Test[A-Z0-9][^/.$]*|[^/.$]*Test)(\.class)?]</include>
-          </includes>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>de.haumacher.msgbuf</groupId>
         <artifactId>msgbuf-generator-maven-plugin</artifactId>

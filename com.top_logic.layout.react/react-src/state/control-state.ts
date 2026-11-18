@@ -226,6 +226,12 @@ export interface ButtonStateJson extends ControlStateJson {
 	 * The keyboard gesture that triggers the button (e.g. `ENTER`, `Ctrl+S`).
 	 */
 	keyGesture: string;
+
+	/**
+	 * The badge of the button. Absent: none. Beside a visible label it is visible text of the
+	 * button; at a button showing its icon alone it is part of the accessible name.
+	 */
+	badge?: BadgeJson;
 }
 
 export namespace ButtonStateJson {
@@ -379,6 +385,73 @@ export interface ChildControlJson {
 	 * control that is no view root.
 	 */
 	viewSource: string;
+}
+
+/**
+ * A small marker at the corner of an element - a button, a tab, a navigation entry, an avatar - that
+ * counts or marks something waiting there, drawn through the part `Badge` of
+ * 'tl-react-bridge'.
+ *
+ * A state property holding a badge is absent where the element shows none; an update removing the
+ * badge of an element sends it as `null`, which means the same. A badge shows either
+ * the {@link BadgeJson.content}, or - where {@link BadgeJson.dot} is set - a dot without content.
+ *
+ * The badge belongs to the accessible name of its element. Its own name is the {@link BadgeJson.label} of a
+ * dot, and the {@link BadgeJson.content} of a count, after the {@link BadgeJson.label} where there is one ("New
+ * entries: 3"). Beside a visible label (a button, a tab) a plain count is visible text read with
+ * the label, a dot or a count with a label an image of that name; an element without visible text
+ * (an icon-only button, an avatar) is named by its label followed by the name of its badge
+ * ("Inbox, 3"), and the badge itself is hidden from assistive technology.
+ */
+export interface BadgeJson {
+	/**
+	 * What the badge shows: a count of at most two digits, the overflow `99+`, or a short
+	 * text. Absent for a {@link BadgeJson.dot}.
+	 */
+	content: string;
+
+	/**
+	 * Whether the badge is a dot marking the element without counting.
+	 */
+	dot: boolean;
+
+	/**
+	 * The color role. Absent means `'brand'`.
+	 */
+	role: BadgeJson.Role;
+
+	/**
+	 * The accessible name of a dot, or what a count counts, read before the count ("New entries:
+	 * 3"). Absent: the content alone names a count; a dot stays unnamed.
+	 */
+	label: string;
+}
+
+export namespace BadgeJson {
+	/**
+	 * The color role of a badge.
+	 */
+	export type Role =
+		/**
+		 * The color of the brand.
+		 */
+		| 'brand'
+		/**
+		 * Something failed.
+		 */
+		| 'error'
+		/**
+		 * Something calls for attention before it fails.
+		 */
+		| 'warning'
+		/**
+		 * Something went well.
+		 */
+		| 'success'
+		/**
+		 * Something to know.
+		 */
+		| 'info';
 }
 
 /**
@@ -895,6 +968,11 @@ export namespace TabBarStateJson {
 		 * while another tab is visible.
 		 */
 		hidden: boolean;
+
+		/**
+		 * The badge of the tab, standing after its label as visible text of the tab. Absent: none.
+		 */
+		badge?: BadgeJson;
 	}
 }
 
@@ -2076,6 +2154,12 @@ export interface AvatarStateJson extends ImageSourceStateJson {
 	 * The diameter of the circle. Absent means `'medium'`.
 	 */
 	size: AvatarStateJson.Size;
+
+	/**
+	 * The badge at the corner of the avatar. The avatar with its badge is one image named by the
+	 * {@link AvatarStateJson.name} and the badge ("Anna Meier, Open tickets: 3"). Absent: none.
+	 */
+	badge?: BadgeJson;
 }
 
 export namespace AvatarStateJson {

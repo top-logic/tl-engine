@@ -1,5 +1,5 @@
 ---
-description: Read before putting a <flow-diagram> into a .view.xml or adding a diagram element type - the createChart script and its inputs, the reactFlow* functions, the size of a diagram and its view (layout to the offered space, Gantt viewport, reactFlowChart fixedView), the selection channel shared with tables and forms (reactFlowSelection, selectable reactFlowGraphEdge, selection-mode for multiple selection, the ctrl+drag selection rectangle), the context menu of a diagram through <context-menu input="..."> on the selection channel, and the drawing rule for widgets (one top-level SVG element carrying the widget's id).
+description: Read before putting a <flow-diagram> into a .view.xml or adding a diagram element type - the createChart script and its inputs, the reactFlow* functions, the size of a diagram and its view (layout to the offered space, Gantt viewport, reactFlowChart fixedView), the selection channel shared with tables and forms (reactFlowSelection, selectable reactFlowGraphEdge, selection-mode for multiple selection, the ctrl+drag selection rectangle), the context menu of a diagram through <context-menu input="..."> on the selection channel, dropping table rows or tree nodes onto a diagram (<drop target="node|diagram"> with x / y / x-as / y-as, reactFlowDropRegion, FlowDiagramControl.setDropTarget, Widget.dropTarget, nodeAt), and the drawing rule for widgets (one top-level SVG element carrying the widget's id).
 order: 75
 ---
 
@@ -58,7 +58,11 @@ A diagram always fills the space its container offers (it takes part in the fill
 
 A label that should stay readable while a long span is scrolled partly out of view goes into `reactFlowSticky`: like `position: sticky` in CSS, the box takes the whole width of the span and keeps its content at the left edge of the visible time range, at most until the content ends at the end of the span. Borders and backgrounds around it stay in place, e.g. the year cell of a frozen calendar row `reactFlowGanttSpan(…, box: reactFlowBorder(reactFlowSticky(reactFlowText("2026"))))`. It works in the header and data rows of a Gantt chart; a `reactFlowLod` in its content chooses its variant by the width of the whole span. A text that may be longer than its span is given `reactFlowText(…, ellipsis: true)`: it is then cut to the width of the span and ends with "…", and the full text shows as tooltip, like `text-overflow: ellipsis` in CSS; this works for every text that gets less width than it needs, inside `reactFlowSticky` or not. To center a label vertically in a bar that is higher than the text, wrap it in `reactFlowAlign(…, hAlign: "strech", vAlign: "middle")`.
 
-A Gantt dependency (`reactFlowGanttEdge`) is a plain line unless it names connector symbols: `sourceSymbol` and `targetSymbol` take the values of `reactFlowGraphEdge` (`arrow`, `closedArrow`, `filledArrow`, `diamond`, `filledDiamond`) and are drawn pointing into the source and target item, in the stroke color and width the edge currently shows (the violated style while its constraint is violated), solid also for a dashed edge.
+A Gantt dependency (`reactFlowGanttEdge`) is a plain line unless it names connector symbols: `sourceSymbol` and `targetSymbol` take the values of `reactFlowGraphEdge` (`arrow`, `closedArrow`, `filledArrow`, `diamond`, `filledDiamond`) and are drawn pointing into the source and target item, in the stroke color and width the edge currently shows (the violated style while its dependency is violated), solid also for a dashed edge.
+
+A dependency is violated while its source endpoint lies after its target endpoint, whatever its `enforce` mode; the mode only decides whether dragging is limited. Between non-adjacent rows, the horizontal segment of an edge runs in the gap next to the source row, on the side of the target row, so it does not cross the items of the rows in between; edges passing through the same gap with overlapping horizontal ranges run on separate lanes.
+
+Edges and decorations are colored by a color role of the user interface (`neutral`, `brand`, `error`, `warning`, `success`, `info`, `category-1` … `category-8`, the values of `ValueColor`, as for the colors of enumeration values): `strokeRole` and `violatedStrokeRole` of `reactFlowGanttEdge`, `colorRole` of `reactFlowGanttLineDeco` and `reactFlowGanttRangeDeco`. A role follows the theme and the dark mode; an exported SVG or PDF shows it in a fixed substitute color. Without any specification an edge is `neutral` and a violated edge `error`. A fixed color (`strokeColor`, `violatedStrokeColor`, `color`) takes precedence over the role. A decoration created without color and role keeps the default color of its function.
 
 A diagram larger than its space is scaled down to fit, never above 100 %, and the user pans it with the wheel or by dragging and zooms it with ctrl+wheel (ctrl+0 resets the zoom). `reactFlowChart(fixedView: true, …)` switches this off: the diagram stays unscaled at its origin, while an element with its own viewport keeps scrolling and zooming. Ctrl+wheel over a diagram never zooms the browser page, whether it is fixed or not. Use it for a diagram that is laid out to its space anyway, e.g. one showing only a Gantt chart below a title, as the Gantt schedule of `com.top_logic.demo.react` does (`WEB-INF/views/demo/gantt-schedule-demo.view.xml`).
 
@@ -96,6 +100,33 @@ Before the menu opens, the right-click adjusts the selection the menu acts on (`
 - On the empty area, the selection is cleared: commands that need an object are not executable, commands without one are.
 
 A modifier key does not change this: a right-click never adds to the selection. A form with unsaved input bound to the selection channel is asked about its changes before the selection changes, as for a click. The client reports the right-click before the menu region asks for the menu, both through the command channel of the page, so the menu always opens on the adjusted selection.
+
+## Drag and drop onto a diagram
+
+A `<flow-diagram>` declares `<drop>` exactly as a [table](doc:view-layer/tables#drag-and-drop-of-table-rows) does and takes part in the same protocol: rows of a table, nodes of a tree or cards of a board are dropped onto it (`FlowDropConfig`, the shared `DropConfig`). `target` is `diagram` (default) or `node`:
+
+| `target` | applies | arguments | renamed by |
+|---|---|---|---|
+| `diagram` | on the free area of the diagram | `objects`, `target` (always `null`), `x`, `y`: the point relative to the origin of the diagram | `as`, `target-as`, `x-as`, `y-as` |
+| `node` | onto the node under the pointer | `objects`, `target`: the user object of the node, `x`, `y`: the point relative to its upper left corner | `as`, `target-as`, `x-as`, `y-as` |
+
+- **The node** a drop is made onto is the innermost box under the pointer that is a drop region (`reactFlowDropRegion`) or has a user object; its user object is the `target`. A drop region without a user object stands for the diagram as a whole - a way to keep a part of a diagram from being dropped onto. Beside such boxes, the drop is made on the diagram.
+- **The point** is in diagram units, independent of zoom and scrolling, so an action can create a node exactly where the drop was made, e.g. a `reactFlowPosition(x: ..., y: ...)` inside a `reactFlowFloating` root, whose origin is the diagram's origin. `refuse-if` sees the point as well.
+- A `diagram` drop applies only on the free area where a `node` drop is declared for the dragged kind; without one, it applies anywhere on the diagram, the point then relative to the diagram's origin also over a node. A `node` drop refusing a drop does not hand it to the `diagram` drop: the place is one or the other.
+- While a drag hovers the diagram, the node under the pointer is framed, or the diagram as a whole, and a refusal is shown at the pointer with its reason (`dropProbe`, asked once per drag, node and square of 10 diagram units).
+
+```xml
+<flow-diagram observed-types="test.flowchart:FlowNode">
+  <createChart>reactFlowChart(root: reactFlowFloating(contents: ... reactFlowPosition(x: ..., y: ..., userObject: $s, content: ...)))</createChart>
+  <drop accept="flowStep" as="steps" target="diagram">
+    <with-transaction>
+      <execute-script function="$steps.foreach(s -> { $s.set(`test.flowchart:FlowNode#x`, $x); $s.set(`test.flowchart:FlowNode#y`, $y); })"/>
+    </with-transaction>
+  </drop>
+</flow-diagram>
+```
+
+**Underneath**: the user object of a widget never reaches the client, so the server tells it which widgets have one - the derived flag `Widget.dropTarget`, which `FlowDiagramControl` brings up to date before it serializes the diagram and before it sends a patch, so a user object set later reaches the client. The GWT control answers `nodeAt(clientX, clientY, findNode)` - the client-side ID of the node, the point through the inverse `getScreenCTM()` of the SVG minus the origin of the node, and the node's place on the screen - and knows no drag and drop otherwise; `TLFlowDiagram.tsx` handles `dragover` and `drop` with the helpers of `tl-react-bridge` (`dragKindAccepted`, `dragModes`, `putDropPoint`, `DropHint`) and sends `drop` / `dropProbe` with the node as `targetKey` and the point as `x` / `y`. `FlowDiagramControl.setDropTarget(…)` takes any `DropTarget`; a recorded drop names its node by the key of the node's user object.
 
 ## Drawing rule for diagram elements
 

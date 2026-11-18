@@ -12,7 +12,7 @@ This article is the precise reference of the configuration; the [tool access con
 `AiToolAccessService` is a `ConfiguredManagedClass` holding the role-to-tool policy, shaped like the engine's `SecurityConfigurationService` so administrators meet one idiom. Its configuration interface is `ToolAccessPolicy`. The service is active by default and cannot be switched off: a policy present while the module was off would be silently ignored, which is the one failure mode this layer must not have.
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+<config service-class="com.top_logic.ai.core.security.AiToolAccessService">
     <instance>
 
         <!-- Group membership is declared on the tool (@ToolMethod(group=...)).
@@ -130,8 +130,8 @@ Approval stays a property of the tool's `ToolMode` for every role: a tool that c
 The seam is the factory that builds the context of a run, configured on `AgentRuntimeService`:
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
-    <instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+<config service-class="com.top_logic.ai.core.agent.AgentRuntimeService">
+    <instance class="com.top_logic.ai.core.agent.AgentRuntimeService">
         <security-context class="com.acme.agent.SectionApproval"/>
     </instance>
 </config>

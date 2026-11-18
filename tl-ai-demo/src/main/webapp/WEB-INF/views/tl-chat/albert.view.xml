@@ -180,7 +180,7 @@
 									<en>The event the new invoice is filed under. Omit it to let the user choose the event in the dialog.</en>
 								</tooltip>
 							</label>
-							<format value="com.top_logic.tl.ai.core.tools.model.AgentObjectFormat"/>
+							<format value="com.top_logic.ai.core.tools.model.AgentObjectFormat"/>
 							<object-type value="demo.events:Event"/>
 						</property>
 					</parameters>
@@ -242,7 +242,7 @@
 									<en>The event whose tab to open. Omit it to open the tab of the event selected on the page.</en>
 								</tooltip>
 							</label>
-							<format value="com.top_logic.tl.ai.core.tools.model.AgentObjectFormat"/>
+							<format value="com.top_logic.ai.core.tools.model.AgentObjectFormat"/>
 							<object-type value="demo.events:Event"/>
 						</property>
 					</parameters>

@@ -233,7 +233,7 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 			assertEquals(2, messages.size());
 			Resources resources = Resources.getInstance();
 			String prefix = resources.getString(com.top_logic.layout.view.command.I18NConstants.FORM_ROW__POSITION.fill(2))
-				+ ", " + resources.getString(TLModelNamingConvention.resourceKey(added.tType().getPartOrFail(NAME))) + ": ";
+				+ ", " + resources.getString(TLModelNamingConvention.getTypePartLabelKey(added.tType().getPartOrFail(NAME))) + ": ";
 			String detail = resources.getString(messages.get(1));
 			assertTrue("The part is named by its position and the column: " + detail, detail.startsWith(prefix));
 		}

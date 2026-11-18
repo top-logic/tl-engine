@@ -324,6 +324,12 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.Diagram setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return DIAGRAM__TYPE;
 	}

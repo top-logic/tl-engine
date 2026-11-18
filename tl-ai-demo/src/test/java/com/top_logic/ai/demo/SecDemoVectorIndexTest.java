@@ -12,7 +12,7 @@ import junit.framework.Test;
 
 import com.top_logic.ai.vector.index.VectorReadFilter;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.security.ReadFilter;
 
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.segment.TextSegment;

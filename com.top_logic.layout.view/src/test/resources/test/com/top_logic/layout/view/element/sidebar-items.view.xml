@@ -50,6 +50,8 @@
 		</command-item>
 		<command-item id="cmdDisabled">
 			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				badge="count"
+				badge-role="error"
 				inputs="count"
 				label="Without input out of reach"
 			>

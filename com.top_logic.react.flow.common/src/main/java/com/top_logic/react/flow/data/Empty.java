@@ -65,6 +65,9 @@ public interface Empty extends com.top_logic.react.flow.data.Box, com.top_logic.
 	@Override
 	com.top_logic.react.flow.data.Empty setRenderInfo(java.lang.Object value);
 
+	@Override
+	com.top_logic.react.flow.data.Empty setDropTarget(boolean value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.Empty readEmpty(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

@@ -86,6 +86,9 @@ public interface LODVariant extends com.top_logic.react.flow.data.Widget, com.to
 	@Override
 	com.top_logic.react.flow.data.LODVariant setRenderInfo(java.lang.Object value);
 
+	@Override
+	com.top_logic.react.flow.data.LODVariant setDropTarget(boolean value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.LODVariant readLODVariant(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

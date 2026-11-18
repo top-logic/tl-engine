@@ -21,17 +21,25 @@ import com.top_logic.basic.Logger;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.dnd.DropArguments;
+import com.top_logic.layout.react.control.dnd.DropLocation;
+import com.top_logic.layout.react.control.dnd.DropMarker;
+import com.top_logic.layout.react.control.dnd.DropMode;
+import com.top_logic.layout.react.control.dnd.DropPlace;
+import com.top_logic.layout.react.control.dnd.DropProbeArguments;
+import com.top_logic.layout.react.control.dnd.DropSupport;
+import com.top_logic.layout.react.control.dnd.DropTarget;
+import com.top_logic.layout.react.control.dnd.DropZone;
+import com.top_logic.layout.react.control.identity.ObjectIdentities;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.react.flow.callback.ClickHandler;
 import com.top_logic.react.flow.control.FlowControlCommon;
 import com.top_logic.react.flow.data.ClickTarget;
 import com.top_logic.react.flow.data.Diagram;
-import com.top_logic.react.flow.data.DropRegion;
 import com.top_logic.react.flow.data.MouseButton;
 import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.operations.SelectionUtil;
 import com.top_logic.react.flow.operations.WidgetTraversal;
-import com.top_logic.react.flow.server.handler.ServerDropHandler;
 
 import de.haumacher.msgbuf.graph.DefaultScope;
 import de.haumacher.msgbuf.graph.SharedGraphNode;
@@ -46,8 +54,20 @@ import de.haumacher.msgbuf.observer.Listener;
  *
  * <p>
  * This control serializes a {@link Diagram} model as initial React state and uses SSE to push
- * incremental msgbuf patches to the client. Client commands (click, drop, update, context menu) are
+ * incremental msgbuf patches to the client. Client commands (click, update, context menu, drop) are
  * received via {@link ReactCommandHandler @ReactCommandHandler}-annotated methods.
+ * </p>
+ *
+ * <p>
+ * A {@link #setDropTarget(DropTarget) drop target} makes the diagram accept drops of the view
+ * layer's drag and drop. The client picks the innermost element under the pointer that is a
+ * {@link com.top_logic.react.flow.data.DropRegion} or has a {@link Widget#getUserObject() user
+ * object} (told by {@link Widget#isDropTarget()}). An element with a user object it names by its
+ * ID: its user object is the target of a {@link DropMode#ONTO} drop. A drop beside such elements,
+ * or on a drop region without a user object, is a {@link DropMode#CONTROL} drop on the diagram as a
+ * whole. The client reports the point of the drop in the coordinate system of the target: relative
+ * to the upper left corner of the element dropped onto, or to the origin of the diagram, in diagram
+ * units.
  * </p>
  *
  * <p>
@@ -67,6 +87,21 @@ public class FlowDiagramControl extends ReactControl implements FlowControlCommo
 
 	/** State key holding a msgbuf patch of the server-side changes to the displayed diagram. */
 	private static final String DIAGRAM_PATCH_STATE = "diagramPatch";
+
+	/** @see DropSupport#CMD_DROP */
+	public static final String CMD_DROP = DropSupport.CMD_DROP;
+
+	/** @see DropSupport#CMD_DROP_PROBE */
+	public static final String CMD_DROP_PROBE = DropSupport.CMD_DROP_PROBE;
+
+	/** @see DropSupport#DROP_VERDICTS */
+	public static final String DROP_VERDICTS = DropSupport.DROP_VERDICTS;
+
+	/**
+	 * State key holding whether the client shows the diagram of the {@link #DIAGRAM_STATE} in the
+	 * section (position and scale) it has shown so far, see {@link #setModel(Diagram, boolean)}.
+	 */
+	protected static final String KEEP_VIEW_STATE = "keepView";
 
 	/**
 	 * Notified when the user objects of the selected diagram elements change.
@@ -102,7 +137,7 @@ public class FlowDiagramControl extends ReactControl implements FlowControlCommo
 	public interface ModelListener {
 
 		/**
-		 * Called after {@link FlowDiagramControl#setModel(Diagram)} carried the selection over to
+		 * Called after {@link FlowDiagramControl#setModel(Diagram, boolean)} carried the selection over to
 		 * the new diagram, and before that diagram is serialized for the client.
 		 *
 		 * <p>
@@ -116,6 +151,12 @@ public class FlowDiagramControl extends ReactControl implements FlowControlCommo
 	}
 
 	private Diagram _diagram;
+
+	/**
+	 * Whether the client shows the current {@link #_diagram} in the section shown before it was
+	 * set, see {@link #setModel(Diagram, boolean)}.
+	 */
+	private boolean _keepView;
 
 	private GraphScope _graphScope;
 
@@ -134,6 +175,8 @@ public class FlowDiagramControl extends ReactControl implements FlowControlCommo
 
 	private final List<ModelListener> _modelListeners = new CopyOnWriteArrayList<>();
 
+	private final DropSupport _dropSupport = new DropSupport(this);
+
 	/**
 	 * Creates a {@link FlowDiagramControl}.
 	 *
@@ -146,6 +189,33 @@ public class FlowDiagramControl extends ReactControl implements FlowControlCommo
 		super(context, diagram, REACT_MODULE);
 
 		_diagram = diagram;
+		refreshDropTarget();
+	}
+
+	/**
+	 * Makes the diagram accept a drop of the objects the given target accepts, and applies such a
+	 * drop through it.
+	 *
+	 * @param dropTarget
+	 *        What dropped objects are done with, or {@code null} to accept no drop again.
+	 */
+	public void setDropTarget(DropTarget dropTarget) {
+		_dropSupport.setTarget(dropTarget);
+		refreshDropTarget();
+	}
+
+	/**
+	 * Announces the {@link DropTarget#acceptedKinds() accepted kinds} and the
+	 * {@link DropTarget#dropModes() modes} of the drop operations to the client again, after the
+	 * {@link #setDropTarget(DropTarget) drop target's} answers changed.
+	 */
+	public void refreshDropTarget() {
+		Object update = beginUpdate();
+		try {
+			_dropSupport.targetState().forEach(this::putState);
+		} finally {
+			commitUpdate(update);
+		}
 	}
 
 	@Override
@@ -174,13 +244,41 @@ public class FlowDiagramControl extends ReactControl implements FlowControlCommo
 	 * that diagram rather than as a patch racing the remount it triggers.
 	 * </p>
 	 *
+	 * <p>
+	 * The client fits the new diagram into the control, as when it is shown the first time. Use
+	 * {@link #setModel(Diagram, boolean)} to keep the section the user has panned and zoomed to.
+	 * </p>
+	 *
 	 * @param diagram
 	 *        The diagram to display, may be <code>null</code> to display nothing.
 	 */
 	public void setModel(Diagram diagram) {
+		setModel(diagram, false);
+	}
+
+	/**
+	 * Displays the given {@link Diagram} instead of the one displayed so far, optionally in the
+	 * section the user has panned and zoomed to.
+	 *
+	 * <p>
+	 * The selection is carried over as described for {@link #setModel(Diagram)}.
+	 * </p>
+	 *
+	 * @param diagram
+	 *        The diagram to display, may be <code>null</code> to display nothing.
+	 * @param keepView
+	 *        Whether the client shows the new diagram in the section (position and scale) it has
+	 *        shown so far, e.g. when the diagram is rebuilt for a change of the displayed objects.
+	 *        The section is not adapted to the new content: an element outside of it stays
+	 *        outside, also when it is selected. <code>false</code> fits the new diagram into the
+	 *        control, e.g. when it displays another object. A diagram with a
+	 *        {@link Diagram#isFixedView() fixed view} ignores the flag.
+	 */
+	public void setModel(Diagram diagram, boolean keepView) {
 		Set<Object> selectedUserObjects = getSelectedUserObjects();
 
 		_diagram = diagram;
+		_keepView = keepView;
 		// The scope belongs to the diagram it serialized, which nothing displays any more: the
 		// markings below are part of the new diagram's serialization, not of a patch to the old
 		// one.
@@ -388,14 +486,27 @@ public class FlowDiagramControl extends ReactControl implements FlowControlCommo
 	}
 
 	/**
-	 * Serializes the current diagram model and stores it as initial React state.
+	 * Serializes the current diagram model and stores it as initial React state, together with the
+	 * {@link #KEEP_VIEW_STATE}, so that the client receives both in the same update.
 	 */
 	private void initDiagramState() {
+		Object token = beginUpdate();
+		try {
+			putState(KEEP_VIEW_STATE, Boolean.valueOf(_keepView));
+			putDiagramState();
+		} finally {
+			commitUpdate(token);
+		}
+	}
+
+	private void putDiagramState() {
 		_serializationStale = false;
 		if (_diagram == null) {
 			putState(DIAGRAM_STATE, "");
 			return;
 		}
+
+		syncDropTargets();
 
 		// Serializing the displayed diagram again keeps the IDs its elements have: the client holds
 		// them already, and an update it sent before receiving this serialization names the same
@@ -431,9 +542,18 @@ public class FlowDiagramControl extends ReactControl implements FlowControlCommo
 	 * containing it. The changed diagram is serialized again instead, see
 	 * {@link #refreshDiagramState()}.
 	 * </p>
+	 *
+	 * <p>
+	 * The {@link Widget#isDropTarget() drop target} flags of the elements are brought up to date
+	 * first, so that a user object set or cleared since is part of the patch.
+	 * </p>
 	 */
 	public void pushDiagramChanges() {
-		if (_graphScope != null && _graphScope.hasChanges()) {
+		if (_graphScope == null) {
+			return;
+		}
+		syncDropTargets();
+		if (_graphScope.hasChanges()) {
 			StringW out = new StringW();
 			try {
 				_graphScope.createPatch(new JsonWriter(out));
@@ -495,13 +615,91 @@ public class FlowDiagramControl extends ReactControl implements FlowControlCommo
 	}
 
 	/**
-	 * Handles drop events sent from the client.
+	 * Applies a drop the client made on the diagram.
+	 *
+	 * <p>
+	 * The element the drop names is resolved into the place the drop was made at (see
+	 * {@link #dropPlace(String, DropZone)}), everything else is
+	 * {@link DropSupport#drop(DropArguments, DropPlace.Resolver) shared} with every control accepting
+	 * drops.
+	 * </p>
 	 */
-	@ReactCommandHandler(CMD_DISPATCH_DROP)
-	public void handleDrop(ReactContext context, Map<String, Object> args) {
-		int nodeId = ((Number) args.get(ARG_NODE_ID)).intValue();
-		// Note: Drop data must be provided by the client in the args map.
-		// Full DnD integration is deferred to a later task.
+	@ReactCommandHandler(CMD_DROP)
+	void handleDrop(DropArguments args) {
+		_dropSupport.drop(args, this::dropPlace);
+	}
+
+	/**
+	 * Answers whether a drop right where a drag hovers would be accepted, without applying it.
+	 *
+	 * <p>
+	 * The verdict is added to {@link #DROP_VERDICTS} under the {@link DropProbeArguments#getProbe()
+	 * probe's identifier}, see {@link DropSupport#probe(DropProbeArguments, DropPlace.Resolver)}. The
+	 * probe is technical: it is neither recorded nor offered as an action.
+	 * </p>
+	 */
+	@ReactCommandHandler(value = CMD_DROP_PROBE, technical = true)
+	void handleDropProbe(DropProbeArguments args) {
+		putState(DROP_VERDICTS, _dropSupport.probe(args, this::dropPlace));
+	}
+
+	/**
+	 * The place of a drop made onto the element with the given client-side ID, or on the diagram as
+	 * a whole.
+	 *
+	 * @return The place, {@code null} if the ID names no {@link Widget#isDropTarget() drop target}
+	 *         of the displayed diagram.
+	 *
+	 * @see DropPlace.Resolver#place(String, DropZone)
+	 */
+	private DropPlace dropPlace(String key, DropZone zone) {
+		if (key == null) {
+			return new DiagramDropPlace(null, null);
+		}
+		Widget element = dropTargetElement(key);
+		if (element == null) {
+			return null;
+		}
+		return new DiagramDropPlace(element.getUserObject(), key);
+	}
+
+	/**
+	 * The {@link Widget#isDropTarget() drop target} of the displayed diagram with the given
+	 * client-side ID, {@code null} if there is none.
+	 */
+	private Widget dropTargetElement(String key) {
+		int id;
+		try {
+			id = Integer.parseInt(key);
+		} catch (NumberFormatException ex) {
+			return null;
+		}
+		if (!(resolve(id) instanceof Widget element) || !element.isDropTargetByDefinition()) {
+			return null;
+		}
+		return element;
+	}
+
+	/**
+	 * Sets the {@link Widget#isDropTarget() drop target} flag of every element of the diagram to
+	 * what its {@link Widget#isDropTargetByDefinition() definition} says.
+	 *
+	 * <p>
+	 * The flag tells the client the elements a drop is made onto. It is derived from the user object
+	 * and the type of an element, and brought up to date before the diagram is serialized and before
+	 * the changes to it are sent as a patch - the two ways the diagram reaches the client.
+	 * </p>
+	 */
+	private void syncDropTargets() {
+		if (_diagram == null) {
+			return;
+		}
+		WidgetTraversal.visitAll(_diagram, widget -> {
+			boolean dropTarget = widget.isDropTargetByDefinition();
+			if (widget.isDropTarget() != dropTarget) {
+				widget.setDropTarget(dropTarget);
+			}
+		});
 	}
 
 	/**
@@ -635,19 +833,21 @@ public class FlowDiagramControl extends ReactControl implements FlowControlCommo
 	}
 
 	/**
-	 * Processing drop events sent from the client-side.
+	 * The user objects of the {@link Widget#isDropTarget() drop targets} of the diagram, by the
+	 * client-side IDs a drop names them with.
 	 */
-	public void processDrop(int nodeId, Object data) {
-		if (!(resolve(nodeId) instanceof DropRegion node)) {
-			// A drop into a diagram the control no longer displays.
-			return;
-		}
-		com.top_logic.react.flow.callback.DropHandler dropHandler = node.getDropHandler();
-		if (dropHandler instanceof ServerDropHandler serverDrop) {
-			// ServerDropHandler.onDrop requires DndData; full integration deferred.
-			Logger.info("Drop on node " + nodeId + " deferred (DnD integration pending).",
-				FlowDiagramControl.class);
-		}
+	@Override
+	public ObjectIdentities objectIdentities() {
+		return new DropTargetIdentities();
+	}
+
+	/**
+	 * The answer to a drop probe names an element by its client-side ID and is only of use to the
+	 * client rendering the drag, so it is left out of the headless projection.
+	 */
+	@Override
+	protected Set<String> scriptingPresentationKeys() {
+		return presentationKeys(super.scriptingPresentationKeys(), DROP_VERDICTS);
 	}
 
 	/**
@@ -665,6 +865,77 @@ public class FlowDiagramControl extends ReactControl implements FlowControlCommo
 	 */
 	private SharedGraphNode resolve(int id) {
 		return _graphScope == null ? null : _graphScope.resolve(id);
+	}
+
+	/**
+	 * The place of a drop on the diagram: onto the user object of a drop target, or on the diagram
+	 * as a whole.
+	 *
+	 * @param target
+	 *        The user object dropped onto, {@code null} for a drop on the diagram as a whole.
+	 * @param key
+	 *        The client-side ID of the element dropped onto, {@code null} for a drop on the diagram
+	 *        as a whole.
+	 */
+	private record DiagramDropPlace(Object target, String key) implements DropPlace {
+
+		@Override
+		public DropLocation location(DropMode mode) {
+			switch (mode) {
+				case CONTROL:
+					return target == null ? new DropLocation.Control() : null;
+				case ONTO:
+					return target == null ? null : new DropLocation.Onto(target);
+				case ORDERED:
+					return null;
+			}
+			throw new IllegalArgumentException("Unknown drop mode: " + mode);
+		}
+
+		@Override
+		public DropMarker marker(DropLocation location) {
+			return location instanceof DropLocation.Onto ? DropMarker.INTO : DropMarker.CONTROL;
+		}
+
+		@Override
+		public String markerKey(DropMarker marker) {
+			return marker == DropMarker.CONTROL ? null : key;
+		}
+
+	}
+
+	/**
+	 * {@link ObjectIdentities} of the {@link Widget#isDropTarget() drop targets} of the displayed
+	 * diagram, identified by their IDs in the {@link GraphScope}.
+	 */
+	private final class DropTargetIdentities implements ObjectIdentities {
+
+		@Override
+		public Object objectOf(String id) {
+			Widget element = dropTargetElement(id);
+			return element == null ? null : element.getUserObject();
+		}
+
+		/**
+		 * The ID of the first drop target of the diagram carrying the given user object.
+		 */
+		@Override
+		public String idOf(Object object) {
+			if (object == null || _diagram == null || _graphScope == null) {
+				return null;
+			}
+			String[] result = { null };
+			WidgetTraversal.visitAll(_diagram, widget -> {
+				if (result[0] == null && widget.isDropTargetByDefinition() && object.equals(widget.getUserObject())) {
+					int id = _graphScope.id(widget);
+					if (id != 0) {
+						result[0] = Integer.toString(id);
+					}
+				}
+			});
+			return result[0];
+		}
+
 	}
 
 	/**

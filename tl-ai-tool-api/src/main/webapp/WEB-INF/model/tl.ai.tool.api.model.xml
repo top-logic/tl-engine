@@ -3,8 +3,8 @@
 	<module name="tl.ai.tool.api">
 		<annotations>
 			<package-binding
-				implementation-package="com.top_logic.tl.ai.tool.api.model.impl"
-				interface-package="com.top_logic.tl.ai.tool.api.model"
+				implementation-package="com.top_logic.ai.tool.api.model.impl"
+				interface-package="com.top_logic.ai.tool.api.model"
 			/>
 		</annotations>
 	</module>

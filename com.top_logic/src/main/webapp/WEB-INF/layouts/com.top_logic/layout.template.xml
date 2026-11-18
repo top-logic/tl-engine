@@ -4,7 +4,7 @@
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 	groups="commons"
 >
-	<properties extends="com.top_logic.layout.editor.config.LayoutTemplateParameters, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.structure.ButtonbarOptions">
+	<properties extends="com.top_logic.layout.editor.config.LayoutTemplateParameters, com.top_logic.layout.structure.OptionalToolbarOptions, com.top_logic.layout.structure.ButtonbarOptions, com.top_logic.tool.boundsec.InAppSecurityObjectProviderConfig, com.top_logic.tool.boundsec.WithSecurityMaster">
 		<annotations>
 			<display-inherited value="APPEND"/>
 		</annotations>
@@ -50,8 +50,10 @@
 		buttonbar="${buttonbar}"
 		components="${components}"
 		horizontal="${horizontal}"
+		isSecurityMaster="${isSecurityMaster}"
 		resizable="${resizable}"
 		resizeMode="instant"
+		securityObject="${securityObject}"
 		showMaximize="${showMaximize}"
 		showMinimize="${showMinimize}"
 		showPopOut="${showPopOut}"

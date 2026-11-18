@@ -1,0 +1,95 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.base.discovery.catalog;
+
+option NoReflection;
+option NoXml;
+option NoBinary;
+option NoInterfaces;
+option NoListener;
+
+/**
+ * An AI Catalog: the machine-readable list of the agent-facing artifacts (MCP server cards, A2A
+ * agent cards, ...) an application publishes, served at <code>/.well-known/ai-catalog.json</code>
+ * with the media type <code>application/ai-catalog+json</code>.
+ */
+message AiCatalog {
+	/** The version of the AI Catalog specification this document follows. */
+	string specVersion;
+
+	/** The publisher of the catalog. */
+	CatalogHost host;
+
+	/** The published artifacts. */
+	repeated CatalogEntry entries;
+}
+
+/**
+ * The publisher of an {@link AiCatalog}.
+ */
+message CatalogHost {
+	/** The human-readable name of the publisher. */
+	string displayName;
+
+	/** A stable identifier of the publisher. */
+	@Nullable
+	string identifier;
+
+	/** A URL of human- or model-readable documentation of the publisher. */
+	@Nullable
+	string documentationUrl;
+
+	/** A URL of the publisher's logo. */
+	@Nullable
+	string logoUrl;
+}
+
+/**
+ * One artifact listed in an {@link AiCatalog}.
+ *
+ * <p>
+ * Exactly one of {@link #url} and {@link #data} is set.
+ * </p>
+ */
+message CatalogEntry {
+	/**
+	 * The stable identifier of the artifact, recommended in the form
+	 * <code>urn:air:{publisher}:{namespace}:{name}</code>.
+	 */
+	string identifier;
+
+	/**
+	 * The media type of the artifact, e.g. <code>application/mcp-server-card+json</code>.
+	 */
+	string type;
+
+	/** The absolute URL the artifact is fetched from. */
+	@Nullable
+	string url;
+
+	/** The artifact itself, inlined into the catalog. */
+	@Nullable
+	json data;
+
+	/** A human-readable name of the artifact. */
+	@Nullable
+	string displayName;
+
+	/** A short description of the artifact. */
+	@Nullable
+	string description;
+
+	/** Keywords classifying the artifact. */
+	repeated string tags;
+
+	/** The version of the artifact. */
+	@Nullable
+	string version;
+
+	/** The time of the last change of the artifact as ISO 8601 date-time. */
+	@Nullable
+	string updatedAt;
+}

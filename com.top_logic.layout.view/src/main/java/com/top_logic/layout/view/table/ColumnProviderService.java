@@ -55,6 +55,8 @@ import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.layout.view.form.DatePickerControlProvider;
 import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.layout.view.form.PasswordInputControlProvider;
+import com.top_logic.layout.view.form.TLInputControl;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
@@ -641,7 +643,9 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			}
 			case STRING: {
 				List<ColumnFilter<String>> filters = new ArrayList<>(2);
-				filters.add(stringFilter());
+				if (labelFilters.text()) {
+					filters.add(stringFilter());
+				}
 				if (labelFilters.values()) {
 					filters.add(OptionsColumnFilter.<String, String> occurring(
 						string -> string instanceof String && !string.isEmpty() ? List.of(string) : List.of(),
@@ -681,8 +685,16 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * {@link Config#getGraphicTypes() the graphic types} - is filtered by the list of its values
 	 * only. Every other value offers both.
 	 * </p>
+	 *
+	 * <p>
+	 * A secret - a value entered in a password field - offers no filter at all: a list of values
+	 * would name or at least compare the secrets, a text would let a user probe them.
+	 * </p>
 	 */
 	private LabelFilters labelFilters(ColumnType type) {
+		if (isSecret(type)) {
+			return new LabelFilters(false, false);
+		}
 		TLType valueType = type.type();
 		if (valueType == null) {
 			return new LabelFilters(true, true);
@@ -694,6 +706,20 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 		boolean content = _contentTypes.contains(qualifiedName) || isMultiLine(type)
 			|| valueType instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.BINARY;
 		return new LabelFilters(!content, true);
+	}
+
+	/**
+	 * Whether the described values are secrets: values entered in a password field, which a cell
+	 * shows masked.
+	 */
+	static boolean isSecret(ColumnType type) {
+		AnnotationLookup annotations = type.annotations();
+		TLInputControl control = annotations == null ? null : annotations.getAnnotation(TLInputControl.class);
+		if (control == null || control.getImpl() == null) {
+			return false;
+		}
+		Class<?> impl = control.getImpl().getImplementationClass();
+		return impl != null && PasswordInputControlProvider.class.isAssignableFrom(impl);
 	}
 
 	/**
@@ -1185,15 +1211,41 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 		if (offered.values()) {
 			filters.add(OptionsColumnFilter.<Object, Object> occurring(ColumnProviderService::elementKeys,
 				new ObjectValueCodec(element -> elementText.apply(null, element), storageMapping(type)),
-				maxValues));
+				maxValues, elementOrder(type)));
 		}
-		if (offered.text() || filters.isEmpty()) {
+		if (offered.text()) {
 			filters.add(new TextColumnFilter<>(text));
 		}
 		return valueColumn(name, label, type, width, value)
 			.sort(cellSort(() -> Comparator.comparing(text)))
 			.filters(filters)
 			.build();
+	}
+
+	/**
+	 * The order of single values of the described type in a list of values, {@code null} to list
+	 * them in the order of the column, by their text.
+	 *
+	 * <p>
+	 * A column holding several numbers or points in time in a cell sorts the cells by their text,
+	 * but a list of its values orders them by size respectively in time.
+	 * </p>
+	 */
+	private static Comparator<Object> elementOrder(ColumnType type) {
+		if (type.type() == null) {
+			return null;
+		}
+		switch (columnKind(ColumnType.of(type.type(), false))) {
+			case NUMBER:
+				return (left, right) -> left instanceof Number l && right instanceof Number r
+					? Double.compare(l.doubleValue(), r.doubleValue())
+					: String.valueOf(left).compareTo(String.valueOf(right));
+			case DATE:
+				return (left, right) -> left instanceof Date l && right instanceof Date r ? l.compareTo(r)
+					: String.valueOf(left).compareTo(String.valueOf(right));
+			default:
+				return null;
+		}
 	}
 
 	/**
@@ -1318,12 +1370,21 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * </p>
 	 *
 	 * <p>
+	 * A {@link #isSecret(ColumnType) secret} is written masked, as its cell shows it.
+	 * </p>
+	 *
+	 * <p>
 	 * A value of an attribute whose options state labels of their own (see
 	 * {@link AttributeOptions#labelsFor(TLStructuredTypePart)}) is written by that label, as the
 	 * cell's display control shows it, whatever its type.
 	 * </p>
 	 */
 	private static BiFunction<Object, Object, String> elementText(ColumnType type) {
+		if (isSecret(type)) {
+			// A secret is written as its cell shows it: masked, so that searching, sorting and
+			// exporting the column reveal nothing of it.
+			return (owner, value) -> isNoValue(value) || "".equals(value) ? "" : PasswordInputControlProvider.MASK;
+		}
 		LabelProvider optionLabels = AttributeOptions.labelsFor(type.part());
 		if (optionLabels != null) {
 			return (owner, value) -> value == null || isPlaceholder(value) ? label(value)

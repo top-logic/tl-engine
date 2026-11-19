@@ -362,8 +362,9 @@ public class ListRowSource<R> implements RowSource<R> {
 	}
 
 	/**
-	 * The distinct facet keys of the given column over the given rows, in the column's ascending
-	 * sort order, or in the order of their first occurrence for a column that cannot be sorted,
+	 * The distinct facet keys of the given column over the given rows, in the
+	 * {@link ColumnFilter#facetOrder() order of the filter}, the column's ascending sort order, or
+	 * in the order of their first occurrence for a column that cannot be sorted,
 	 * followed by {@link Option#NO_VALUE} if a cell holds no value.
 	 */
 	private static <R, V> List<Object> facetValues(Column<R, V> column, String kind, List<? extends R> elements) {
@@ -381,7 +382,8 @@ public class ListRowSource<R> implements RowSource<R> {
 		// but follows them.
 		boolean noValue = keys.remove(Option.NO_VALUE);
 		List<Object> result = new ArrayList<>(keys);
-		Comparator<Object> order = ColumnLogic.valueOrder(column);
+		Comparator<Object> facetOrder = filter.isPresent() ? filter.get().facetOrder() : null;
+		Comparator<Object> order = facetOrder != null ? facetOrder : ColumnLogic.valueOrder(column);
 		if (order != null) {
 			result.sort(order);
 		}
@@ -396,7 +398,8 @@ public class ListRowSource<R> implements RowSource<R> {
 		V value = column.value(element);
 		Optional<ColumnFilter<V>> filter = column.filter(kind);
 		if (filter.isPresent()) {
-			for (Object key : filter.get().facetKeys(value)) {
+			// A count is a number of rows: a cell holding a value twice counts once for it.
+			for (Object key : new LinkedHashSet<>(filter.get().facetKeys(value))) {
 				counts.merge(key, Integer.valueOf(1), Integer::sum);
 			}
 		} else if (value != null) {

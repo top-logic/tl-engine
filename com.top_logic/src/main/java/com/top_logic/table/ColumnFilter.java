@@ -6,6 +6,7 @@
 package com.top_logic.table;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -212,6 +213,19 @@ public interface ColumnFilter<V> {
 	 */
 	default Collection<Object> facetKeys(V value) {
 		return value == null ? List.of() : List.of(value);
+	}
+
+	/**
+	 * The order of the {@link #facetKeys(Object) facet keys} in a list of the values occurring in
+	 * the column, {@code null} for the column's own sort order.
+	 *
+	 * <p>
+	 * A column sorting cells holding several values sorts them by their text; a facet key is one
+	 * of the values, which this order compares by its type, e.g. numbers by their size.
+	 * </p>
+	 */
+	default Comparator<Object> facetOrder() {
+		return null;
 	}
 
 }

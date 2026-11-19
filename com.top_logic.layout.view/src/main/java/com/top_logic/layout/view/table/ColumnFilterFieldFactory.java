@@ -15,6 +15,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.table.FilterFieldFactory;
 import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.model.TLReference;
 
 /**
  * {@link FilterFieldFactory} of a table built from {@link ColumnSetup}s: enters a value of a column
@@ -66,13 +67,20 @@ public class ColumnFilterFieldFactory implements FilterFieldFactory {
 	@Override
 	public ReactControl valueDisplay(ReactContext context, String column, Object value) {
 		ColumnType type = resolved(column);
-		if (type == null || value instanceof Date) {
+		if (type == null || value instanceof Date || value instanceof Boolean || isComposition(type)) {
+			// A point in time is listed as the day it falls on, which the label states; a truth
+			// value would be drawn as a checkbox next to the checkbox selecting it, and a part of a
+			// composition with a button opening it: the label says all of them better.
 			return null;
 		}
 		// An option is a single value, also of a column whose cells hold several of them, and no
 		// single object owns it.
 		ColumnType single = new ColumnType(type.type(), false, type.annotations(), type.part(), null);
 		return FieldControlService.getInstance().createDisplayControl(context, single, value);
+	}
+
+	private static boolean isComposition(ColumnType type) {
+		return type.part() instanceof TLReference reference && reference.isComposite();
 	}
 
 	private ColumnType resolved(String column) {

@@ -7,6 +7,7 @@ package com.top_logic.table.filter;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -52,6 +53,8 @@ public class OptionsColumnFilter<V> implements ColumnFilter<V> {
 
 	private final int _maxValues;
 
+	private final Comparator<Object> _order;
+
 	/**
 	 * Creates an {@link OptionsColumnFilter} over the given options, a cell value standing for
 	 * itself.
@@ -69,15 +72,16 @@ public class OptionsColumnFilter<V> implements ColumnFilter<V> {
 	 *        The option values a cell value stands for, see {@link #keys(Object)}.
 	 */
 	public OptionsColumnFilter(List<Option> options, Function<? super V, ? extends Collection<?>> keys) {
-		this(List.copyOf(options), keys, null, 0);
+		this(List.copyOf(options), keys, null, 0, null);
 	}
 
 	private OptionsColumnFilter(List<Option> options, Function<? super V, ? extends Collection<?>> keys,
-			BoundCodec<Object> codec, int maxValues) {
+			BoundCodec<Object> codec, int maxValues, Comparator<Object> order) {
 		_options = options;
 		_keys = keys;
 		_codec = codec;
 		_maxValues = maxValues;
+		_order = order;
 	}
 
 	/**
@@ -100,10 +104,29 @@ public class OptionsColumnFilter<V> implements ColumnFilter<V> {
 	 * @param maxValues
 	 *        The maximum number of distinct values the filter is offered for.
 	 */
-	@SuppressWarnings("unchecked")
 	public static <V, K> OptionsColumnFilter<V> occurring(Function<? super V, ? extends Collection<? extends K>> keys,
 			BoundCodec<K> codec, int maxValues) {
-		return new OptionsColumnFilter<>(null, keys, (BoundCodec<Object>) codec, maxValues);
+		return occurring(keys, codec, maxValues, null);
+	}
+
+	/**
+	 * An {@link OptionsColumnFilter} whose options are the values occurring in the rows of the
+	 * table, as {@link #occurring(Function, BoundCodec, int)}, listed in the given order.
+	 *
+	 * @param order
+	 *        The order of the values, see {@link #facetOrder()}; {@code null} for the order of the
+	 *        column.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <V, K> OptionsColumnFilter<V> occurring(Function<? super V, ? extends Collection<? extends K>> keys,
+			BoundCodec<K> codec, int maxValues, Comparator<? super K> order) {
+		return new OptionsColumnFilter<>(null, keys, (BoundCodec<Object>) codec, maxValues,
+			(Comparator<Object>) order);
+	}
+
+	@Override
+	public Comparator<Object> facetOrder() {
+		return _order;
 	}
 
 	private static Collection<Object> self(Object value) {

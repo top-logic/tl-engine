@@ -29,6 +29,8 @@ import com.top_logic.element.meta.complex.ColorValueProvider;
 import com.top_logic.element.meta.kbbased.storage.mappings.BooleanMapping;
 import com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping;
 import com.top_logic.element.meta.kbbased.storage.mappings.IntMapping;
+import com.top_logic.layout.view.form.PasswordInputControlProvider;
+import com.top_logic.layout.view.form.TLInputControl;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.model.TLClass;
@@ -176,6 +178,31 @@ public class TestColumnFilterDefaults extends TestCase {
 		OptionsFilterState selection = new OptionsFilterState(Set.of(Color.RED, Option.NO_VALUE));
 		assertEquals("A value of a datatype is stored as its storage mapping stores it.", selection,
 			values.fromJson(values.toJson(selection)));
+	}
+
+	/**
+	 * A secret, entered in a password field, offers no filter, and its text - searched, sorted,
+	 * exported - is masked.
+	 */
+	public void testSecretNotFiltered() throws ConfigurationException {
+		TLProperty password = TLModelUtil.addProperty(_rowType, "password", _string);
+		TLInputControl control = TypedConfiguration.newConfigItem(TLInputControl.class);
+		control.setImpl(TypedConfiguration.createConfigItemForImplementationClass(PasswordInputControlProvider.class));
+		password.setAnnotation(control);
+		Column<Object, ?> column = ColumnProviderService.getInstance().createColumn(VALUE, ResKey.text(VALUE),
+			ColumnType.of(password), row -> ((Map<?, ?>) row).get(VALUE));
+		assertEquals(List.of(), column.filters());
+		@SuppressWarnings("unchecked")
+		Column<Object, Object> secret = (Column<Object, Object>) column;
+		assertEquals(PasswordInputControlProvider.MASK, secret.searchText(Map.of(VALUE, "secret")));
+	}
+
+	/** Several numbers in a cell are listed by size, not by their text. */
+	public void testMultipleNumbersBySize() {
+		Column<Object, ?> column = column(_integer, true);
+		MatchCounts counts = source(column, List.of(Long.valueOf(10), Long.valueOf(2)), List.of(Long.valueOf(1)))
+			.matchCounts(VALUE, ColumnFilter.KIND_VALUES);
+		assertEquals(List.of(Long.valueOf(1), Long.valueOf(2), Long.valueOf(10)), counts.values());
 	}
 
 	/** The types listed as content and as graphics are configured in the service. */

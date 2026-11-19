@@ -70,11 +70,16 @@ public class TestColumnFilterFieldFactory extends AbstractModelAccessTest {
 		assertTrue("Got: " + day, day instanceof ReactDatePickerControl);
 	}
 
-	/** An object is displayed as a cell shows it; a point in time and an unknown column by label. */
+	/**
+	 * An object is displayed as a cell shows it; a point in time, a truth value and an unknown column
+	 * by label.
+	 */
 	public void testValueDisplays() {
 		ColumnFilterFieldFactory factory = factory();
 		assertNotNull(factory.valueDisplay(context(), PROJECTS, _project));
 		assertNull("A day is shown by its label.", factory.valueDisplay(context(), DAY, new Date()));
+		assertNull("A truth value is shown by its label, not as a second checkbox.",
+			factory.valueDisplay(context(), PROJECTS, Boolean.TRUE));
 		assertNull(factory.valueDisplay(context(), UNKNOWN, "x"));
 		assertNull(factory.valueInput(context(), UNKNOWN, new AbstractFieldModel("x")));
 		assertNull("A column the factory does not know.", factory.valueDisplay(context(), "other", "x"));

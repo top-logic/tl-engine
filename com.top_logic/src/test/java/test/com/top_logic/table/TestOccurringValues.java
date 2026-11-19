@@ -221,6 +221,26 @@ public class TestOccurringValues extends TestCase {
 		assertTrue("A value is shown as the cells show it.", fields.get(0).isColumnValue());
 	}
 
+	/** A count is a number of rows: a cell holding a value twice counts once for it. */
+	public void testCountsRows() {
+		List<Person> twice =
+			List.of(new Person("Anna", "Bern", List.of("x", "x")), new Person("Ben", "Bern", List.of("x")));
+		MatchCounts counts = new ListRowSource<>(twice, columns(MAX_VALUES)).matchCounts(TAGS);
+		assertEquals(2, counts.count("x"));
+	}
+
+	/** A filter ordering its values lists them in its order, not in the column's. */
+	public void testFacetOrder() {
+		OptionsColumnFilter<Object> reversed = OptionsColumnFilter.<Object, String> occurring(
+			TestOccurringValues::elements, TEXT, MAX_VALUES, Comparator.<String> reverseOrder());
+		Column<Person, Object> city = DefaultColumn.<Person, Object> builder(CITY, Person::city)
+			.sort(() -> Comparator.comparing(Object::toString))
+			.filter(reversed)
+			.build();
+		MatchCounts counts = new ListRowSource<>(people(), List.of(city)).matchCounts(CITY);
+		assertEquals(List.of("Hamburg", "Bern", "Aachen", Option.NO_VALUE), counts.values());
+	}
+
 	/** A column without empty cells offers no "no value" option. */
 	public void testNoValueOptionOnlyForEmptyCells() {
 		List<Person> full = List.of(new Person("Anna", "Bern", List.of("x")));

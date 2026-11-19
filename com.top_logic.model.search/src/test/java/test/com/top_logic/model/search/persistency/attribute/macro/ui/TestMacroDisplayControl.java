@@ -83,13 +83,15 @@ public class TestMacroDisplayControl extends TestControl {
 			}
 		});
 
+		// Model elements and their attribute values are readable for every user (ticket #30437).
 		TLContextManager.inPersonContext(_user, () -> {
 			for (TLModule module : modules) {
 				MacroDisplayControl control = createControl(module, macro);
 
 				String output = writeControl(control);
 
-				assertContains("User has no right to see name of module.", "<b>name: " + "" + "</b>", output);
+				assertContains("Every user may see the name of a module.", "<b>name: " + module.getName() + "</b>",
+					output);
 			}
 		});
 	}

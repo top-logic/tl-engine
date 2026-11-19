@@ -131,22 +131,21 @@ export function leavePage(url?: string): void {
  * @param options.waitForGuard what happens within {@link STALE_UI_RELOAD_GUARD_MS} after the last
  *        such reload: `false` (the default) does not reload, so a page the server still does not
  *        know after being loaded again stops there; `true` reloads once the interval has passed,
- *        for a server that is expected to come back (a restart).
+ *        for a server that is expected to come back (a restart). A tab without session storage
+ *        cannot remember its last reload and always waits for the interval.
  * @returns whether the page is being or will be loaded again.
  */
 export function reloadForStaleUi(options?: { waitForGuard?: boolean }): boolean {
   if (_leaving) return false;
   const stored = readStorage(STALE_UI_RELOAD_TIME_KEY);
-  if (stored === undefined) {
-    // Without storage there is no guard, and a page that cannot remember its last reload must not
-    // risk a loop: it stays as it is.
-    console.error('[TLReact] The server no longer knows this page; no storage to guard a reload, not reloading.');
-    return false;
-  }
-  const last = Number(stored) || 0;
+  // Without storage, the page cannot remember its last reload: it counts as just reloaded, so that
+  // the guard delays the reload - a page the server never knows reloads in the guard's rhythm
+  // instead of a loop - but never prevents it.
+  const last = stored === undefined ? Date.now() : Number(stored) || 0;
+  const waitForGuard = options?.waitForGuard || stored === undefined;
   const elapsed = Date.now() - last;
   if (elapsed < STALE_UI_RELOAD_GUARD_MS) {
-    if (!options?.waitForGuard) {
+    if (!waitForGuard) {
       console.error('[TLReact] The server still does not know this page right after a reload; not reloading again.');
       return false;
     }

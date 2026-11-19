@@ -99,11 +99,13 @@ export function reportReachable(): void {
 
 /**
  * Reports that the application did not answer: the page is disconnected and checks the server
- * until it answers again. Not while the page is leaving or a navigation may be starting.
+ * until it answers again. Not while the page is leaving or a navigation may be starting, and not
+ * on a page without an address to check the server with ({@link setCheckUrl}).
  */
 export function reportUnreachable(): void {
-  // A navigation aborts the requests of the page; that says nothing about the server.
-  if (isPageLeaving() || mayBeNavigating()) return;
+  // A navigation aborts the requests of the page; that says nothing about the server. A page
+  // without an address to check the server with could not find out that it answers again.
+  if (isPageLeaving() || mayBeNavigating() || !_checkUrl) return;
   setConnected(false);
   void recover();
 }

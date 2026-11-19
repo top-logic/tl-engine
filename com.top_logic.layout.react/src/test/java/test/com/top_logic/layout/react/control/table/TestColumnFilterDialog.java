@@ -352,6 +352,16 @@ public class TestColumnFilterDialog extends TestCase {
 		assertFalse(bounds.get(1).isVisible());
 	}
 
+	/** An unfiltered range column starts with the range operator. */
+	public void testRangeStartsAsBetween() {
+		ColumnFilterDialog dialog = dialog(view(10), AMOUNT, null);
+		FieldModel operator = (FieldModel) single(dialog.body(), ReactSelectFormFieldControl.class).getModel();
+		assertEquals(ComparisonOperator.BETWEEN, operator.getValue());
+		for (ReactFormFieldChromeControl bound : boundFields(dialog.body())) {
+			assertTrue(bound.isVisible());
+		}
+	}
+
 	/** The fields entering a value of the column. */
 	private static List<ReactFormFieldChromeControl> boundFields(ReactControl root) {
 		List<ReactFormFieldChromeControl> result = new ArrayList<>();

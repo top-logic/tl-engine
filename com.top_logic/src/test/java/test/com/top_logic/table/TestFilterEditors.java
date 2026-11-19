@@ -225,6 +225,15 @@ public class TestFilterEditors extends TestCase {
 		assertEquals(Integer.valueOf(10), state.secondary());
 	}
 
+	/** A new range filter starts as a range, not as a comparison with a single value. */
+	public void testComparableEditorStartsAsRange() {
+		FilterEditor editor = FilterEditors.create(ComparableColumnFilter.integers(), null, MatchCounts.NONE);
+		assertEquals(ComparisonOperator.BETWEEN, field(editor, 0).getValue());
+		assertEquals(I18NConstants.LOWER_BOUND, editor.fields().get(1).label());
+		assertEquals(I18NConstants.UPPER_BOUND, editor.fields().get(2).label());
+		assertTrue(editor.fields().get(2).isVisible());
+	}
+
 	/**
 	 * The bound fields follow the operator: a comparison with a single value has one field, the
 	 * value; a value left in the upper bound of a range is no part of it.

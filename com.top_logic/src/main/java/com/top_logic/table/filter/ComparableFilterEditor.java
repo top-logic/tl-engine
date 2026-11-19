@@ -21,7 +21,7 @@ import com.top_logic.util.Resources;
  * The bound fields {@link FilterField#following(com.top_logic.layout.form.model.FieldModel,
  * java.util.function.Function, java.util.function.Predicate) follow} the operator: a comparison
  * with a single value shows one field, the value; {@link ComparisonOperator#BETWEEN} shows the
- * lower and the upper bound of the range.
+ * lower and the upper bound of the range. A new filter starts as a range.
  * </p>
  *
  * <p>
@@ -73,7 +73,7 @@ public class ComparableFilterEditor<V> implements FilterEditor {
 	public ComparableFilterEditor(ComparableColumnFilter<V> filter, RangeFilterState<V> current) {
 		_codec = filter.codec();
 		ComparisonOperator operator =
-			current != null && current.operator() != null ? current.operator() : ComparisonOperator.EQ;
+			current != null && current.operator() != null ? current.operator() : ComparisonOperator.BETWEEN;
 		_operator = new SimpleSelectFieldModel(operator, List.of(ComparisonOperator.values()), false);
 		// A comparison always has an operator.
 		_operator.setNullable(false);

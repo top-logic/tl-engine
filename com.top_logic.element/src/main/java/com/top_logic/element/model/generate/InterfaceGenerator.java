@@ -26,6 +26,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.util.TLAnnotations;
+import com.top_logic.model.config.JavaName;
 import com.top_logic.model.util.TLModelNamingConvention;
 
 /**
@@ -135,7 +136,7 @@ public class InterfaceGenerator extends BaseClassGenerator {
 
 	private void writePart(TLStructuredTypePart part) {
 		String partNameConstant = partNameConstant(part);
-		String accessorSuffix = CodeUtil.toUpperCaseStart(part.getName());
+		String accessorSuffix = accessorSuffix(part);
 
 		if (!noGetter()) {
 			writeGetter(part);
@@ -214,7 +215,7 @@ public class InterfaceGenerator extends BaseClassGenerator {
 	private void writeGetter(TLStructuredTypePart part) {
 		String javaType = getJavaReturnType(part);
 		String partNameConstant = partNameConstant(part);
-		String accessorSuffix = CodeUtil.toUpperCaseStart(part.getName());
+		String accessorSuffix = accessorSuffix(part);
 
 		javadocStart();
 		commentLine("Getter for part {@link #" + partNameConstant + "}.");
@@ -240,6 +241,20 @@ public class InterfaceGenerator extends BaseClassGenerator {
 		}
 		line("}");
 		nl();
+	}
+
+	/**
+	 * The suffix of all Java access methods of the given part.
+	 * 
+	 * <p>
+	 * The suffix is built from the {@link JavaName} annotation of the part, if present, and from
+	 * the part name otherwise.
+	 * </p>
+	 */
+	private static String accessorSuffix(TLStructuredTypePart part) {
+		JavaName javaName = part.getAnnotation(JavaName.class);
+		String name = javaName != null ? javaName.getValue() : part.getName();
+		return CodeUtil.toUpperCaseStart(name);
 	}
 
 	private String typeCast(TLStructuredTypePart part, String javaType) {

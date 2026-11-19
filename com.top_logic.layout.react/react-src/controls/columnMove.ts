@@ -13,7 +13,7 @@ export interface ColumnEntry {
   visible: boolean;
   /** Whether the table freezes this column; the locked entries stand as a block at the start. */
   locked: boolean;
-  /** Whether the rows are grouped by this column; at most one entry is. */
+  /** Whether the rows are grouped by this column. */
   grouped: boolean;
 }
 

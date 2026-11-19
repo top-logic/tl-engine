@@ -94,6 +94,8 @@
 		<altcha.version>2.1.1</altcha.version>
 		<batik.version>1.20</batik.version>
 		<commonmark.version>0.32.0</commonmark.version>
+		<!-- Runtime class generation, see TypedObjectClasses in tl-core. -->
+		<bytebuddy.version>1.18.17</bytebuddy.version>
 		<tl.license.version>7.8.2</tl.license.version>
 	</properties>
 
@@ -1738,6 +1740,11 @@
 				<groupId>org.commonmark</groupId>
 				<artifactId>commonmark-ext-heading-anchor</artifactId>
 				<version>${commonmark.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>net.bytebuddy</groupId>
+				<artifactId>byte-buddy</artifactId>
+				<version>${bytebuddy.version}</version>
 			</dependency>
 			
 			<!-- Test modules -->

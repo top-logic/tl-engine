@@ -530,6 +530,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String FILTER_POPOVER_CONTENT = "content";
 
 	/**
+	 * Entry key of {@link #FILTER_POPOVER}: the name of the popover where the filter editor of the
+	 * column states a {@link ColumnFilterUI#title() title}, absent otherwise.
+	 */
+	private static final String FILTER_POPOVER_TITLE = "title";
+
+	/**
 	 * The pause after the last keystroke in a field of a filter popover before what is typed filters
 	 * the table, in milliseconds. Enter filters at once.
 	 *
@@ -1888,6 +1894,11 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		Map<String, Object> popover = new LinkedHashMap<>();
 		popover.put(FILTER_POPOVER_COLUMN, column);
 		popover.put(FILTER_POPOVER_CONTENT, filterContent(column, filter));
+		ColumnFilterUI customUI = _filterUIs.get(column);
+		ResKey title = customUI == null ? null : customUI.title();
+		if (title != null) {
+			popover.put(FILTER_POPOVER_TITLE, Resources.getInstance().getString(title));
+		}
 		showFilterPopover(popover);
 	}
 

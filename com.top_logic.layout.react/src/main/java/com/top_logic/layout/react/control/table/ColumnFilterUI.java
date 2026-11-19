@@ -44,8 +44,8 @@ public interface ColumnFilterUI {
 	FilterState read();
 
 	/**
-	 * The title of the filter dialog, {@code null} for the title every filter dialog has
-	 * ({@link com.top_logic.layout.react.I18NConstants#JS_TABLE_FILTER}).
+	 * The name of the filter popover, {@code null} for the name every filter popover has: the
+	 * {@link com.top_logic.layout.react.I18NConstants#JS_TABLE_FILTER filter} of the column.
 	 */
 	default ResKey title() {
 		return null;

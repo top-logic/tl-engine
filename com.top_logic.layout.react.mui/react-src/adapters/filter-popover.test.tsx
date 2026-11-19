@@ -411,6 +411,13 @@ describe('the funnel of a column and its filter popover', () => {
     expect(document.activeElement).toBe(within(dialog).getByRole('textbox', { name: 'Inhalt' }));
   });
 
+  it('is named by the title its filter editor states, where it states one', async () => {
+    mountTable({ ...OPEN_STATUS, title: 'Projekte mit Namen' });
+    await settle();
+
+    expect(popover()!.getAttribute('aria-label')).toBe('Projekte mit Namen');
+  });
+
   it('starts the focus in the first field of a form, not on a help button before it', async () => {
     mountTable({ column: 'title', content: helpForm('fh') });
     await settle();

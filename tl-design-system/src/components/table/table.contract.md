@@ -59,7 +59,7 @@ rechnet sie aus `--tl-size-row` (`useTokenPx`).
 | `activeNamedFilter` | string | Id des wirkenden benannten Filters; sein `tl-chip__toggle` trägt `aria-pressed="true"`. |
 | `search` | string | Suchtext über die angezeigten Spalten. |
 | `filterSaving` | boolean | Die aktuellen Kriterien lassen sich speichern (`tl-table__save`). |
-| `filterPopover` | Objekt \| `null` | Das offene Filter-Popover, höchstens eines: `column` (Name der Spalte, an deren Trichter es steht) und `content` (der Inhalt als eigenes Control: die Werteliste `TLFilterList` oder das Formular `TLFilterForm`, `filter-list.contract.md`) `null`: keines offen. |
+| `filterPopover` | Objekt \| `null` | Das offene Filter-Popover, höchstens eines: `column` (Name der Spalte, an deren Trichter es steht) und `content` (der Inhalt als eigenes Control: die Werteliste `TLFilterList` oder das Formular `TLFilterForm`, `filter-list.contract.md`) und, wo der Filter der Spalte einen eigenen Titel nennt, `title` (der Name des Popovers statt „Filter <Spalte>“). `null`: keines offen. |
 | `columnSelection` | Control \| `null` | Die Spaltenwahl der ersten Seite „Spalten“ des Popovers am Zahnrad (`TLColumnSelect`, `reorder-list.contract.md`) als Kind der Tabelle, solange das Popover offen ist — auch während es die Seite „Ansicht“ zeigt; `null`: das Popover ist nicht offen. Jede Handlung darin ändert die Tabelle sofort, es gibt nichts zu bestätigen. |
 | `dragEnabled` | boolean | Zeilen lassen sich ziehen. |
 | `dragKind` | string | Art der gezogenen Daten (#29776). |

@@ -116,9 +116,13 @@ const FilterFunnel: React.FC<{
   );
 };
 
-/** The filter popover the server holds open: the column whose filter it edits, and its content, a child control. */
+/**
+ * The filter popover the server holds open: the column whose filter it edits, its content, a child control, and the
+ * name of the popover where the filter editor of the column states one.
+ */
 interface FilterPopoverState {
   column: string;
+  title?: string;
   content: unknown;
 }
 
@@ -1755,7 +1759,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     ? filterAnchor.element
     : null;
   const filterAnchorRef = React.useMemo(() => ({ current: filterAnchorElement }), [filterAnchorElement]);
-  const filterPopoverLabel = i18n['js.table.filter'] + ' '
+  const filterPopoverLabel = filterPopover?.title ?? i18n['js.table.filter'] + ' '
     + (columns.find((col) => col.name === shownFilterColumn)?.label ?? '');
 
   // -- View: the gear opens the popover of the view of this table; its entries are these commands. --

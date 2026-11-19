@@ -29,6 +29,7 @@ import com.top_logic.table.FilterState;
 import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.MatchCounts;
+import com.top_logic.table.Option;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowSource;
 import com.top_logic.table.RowSourceListener;
@@ -362,7 +363,8 @@ public class ListRowSource<R> implements RowSource<R> {
 
 	/**
 	 * The distinct facet keys of the given column over the given rows, in the column's ascending
-	 * sort order, or in the order of their first occurrence for a column that cannot be sorted.
+	 * sort order, or in the order of their first occurrence for a column that cannot be sorted,
+	 * followed by {@link Option#NO_VALUE} if a cell holds no value.
 	 */
 	private static <R, V> List<Object> facetValues(Column<R, V> column, String kind, List<? extends R> elements) {
 		Set<Object> keys = new LinkedHashSet<>();
@@ -375,10 +377,16 @@ public class ListRowSource<R> implements RowSource<R> {
 				keys.add(value);
 			}
 		}
+		// The option standing for no value is no value of the column: it is not sorted with them,
+		// but follows them.
+		boolean noValue = keys.remove(Option.NO_VALUE);
 		List<Object> result = new ArrayList<>(keys);
 		Comparator<Object> order = ColumnLogic.valueOrder(column);
 		if (order != null) {
 			result.sort(order);
+		}
+		if (noValue) {
+			result.add(Option.NO_VALUE);
 		}
 		return Collections.unmodifiableList(result);
 	}

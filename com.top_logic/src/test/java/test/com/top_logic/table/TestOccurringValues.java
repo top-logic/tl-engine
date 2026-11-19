@@ -17,6 +17,7 @@ import java.util.function.Function;
 
 import junit.framework.TestCase;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnFilterState;
@@ -37,6 +38,8 @@ import com.top_logic.table.filter.BoundCodec;
 import com.top_logic.table.filter.ColumnFilterEditor;
 import com.top_logic.table.filter.FilterEditor;
 import com.top_logic.table.filter.FilterEditors;
+import com.top_logic.table.filter.FilterField;
+import com.top_logic.table.filter.I18NConstants;
 import com.top_logic.table.filter.OptionsColumnFilter;
 import com.top_logic.table.filter.OptionsFilterState;
 import com.top_logic.table.filter.TextColumnFilter;
@@ -115,8 +118,10 @@ public class TestOccurringValues extends TestCase {
 	public void testValuesInColumnOrder() {
 		ListRowSource<Person> source = new ListRowSource<>(people(), columns(MAX_VALUES));
 		MatchCounts counts = source.matchCounts(CITY, ColumnFilter.KIND_VALUES);
-		assertEquals(List.of("Aachen", "Bern", "Hamburg"), counts.values());
+		assertEquals("The cells without a value follow the values.",
+			List.of("Aachen", "Bern", "Hamburg", Option.NO_VALUE), counts.values());
 		assertEquals(2, counts.count("Bern"));
+		assertEquals(1, counts.count(Option.NO_VALUE));
 	}
 
 	/** The values stay offered while other filters narrow the rows; their counts follow. */
@@ -124,7 +129,7 @@ public class TestOccurringValues extends TestCase {
 		ListRowSource<Person> source = new ListRowSource<>(people(), columns(MAX_VALUES));
 		source.withFilter(new FilterSpec(Map.of(TAGS, new OptionsFilterState(Set.of("z")))));
 		MatchCounts counts = source.matchCounts(CITY, ColumnFilter.KIND_VALUES);
-		assertEquals(List.of("Aachen", "Bern", "Hamburg"), counts.values());
+		assertEquals(List.of("Aachen", "Bern", "Hamburg", Option.NO_VALUE), counts.values());
 		assertEquals(1, counts.count("Bern"));
 		assertEquals(0, counts.count("Hamburg"));
 	}
@@ -133,7 +138,8 @@ public class TestOccurringValues extends TestCase {
 	public void testMaximum() {
 		ListRowSource<Person> source = new ListRowSource<>(people(), columns(MAX_VALUES));
 		OptionsColumnFilter<Object> atMaximum = values(3);
-		assertTrue(atMaximum.offered(source.matchCounts(CITY, ColumnFilter.KIND_VALUES)));
+		assertTrue("The cells without a value are no value of their own.",
+			atMaximum.offered(source.matchCounts(CITY, ColumnFilter.KIND_VALUES)));
 		assertFalse(values(2).offered(source.matchCounts(CITY, ColumnFilter.KIND_VALUES)));
 		assertFalse("Without counts, there are no values to offer.", atMaximum.offered(MatchCounts.NONE));
 		assertTrue("Fixed options are always offered.",
@@ -150,7 +156,7 @@ public class TestOccurringValues extends TestCase {
 		assertEquals(List.of("Ben", "Carl", "Dora"), names(view));
 
 		MatchCounts counts = new ListRowSource<>(people(), columns(MAX_VALUES)).matchCounts(TAGS);
-		assertEquals(List.of("x", "y", "z"), counts.values());
+		assertEquals(List.of("x", "y", "z", Option.NO_VALUE), counts.values());
 		assertEquals(2, counts.count("x"));
 	}
 
@@ -162,11 +168,12 @@ public class TestOccurringValues extends TestCase {
 		assertTrue(((FilterInput.Options) filter.input()).occurring());
 
 		List<Option> options = filter.options(counts, new OptionsFilterState(Set.of("Paris")));
-		assertEquals(List.of("Aachen", "Bern", "Hamburg", "Paris"), options.stream().map(Option::value).toList());
+		assertEquals(List.of("Aachen", "Bern", "Hamburg", "Paris", Option.NO_VALUE),
+			options.stream().map(Option::value).toList());
 
 		FilterEditor editor = FilterEditors.kindEditor(filter, null, counts);
-		// One checkbox per value.
-		assertEquals(3, editor.fields().size());
+		// One checkbox per value, and one for no value.
+		assertEquals(4, editor.fields().size());
 		editor.fields().get(1).model().setValue(Boolean.TRUE);
 		assertEquals(new OptionsFilterState(Set.of("Bern")), editor.read());
 	}
@@ -185,6 +192,70 @@ public class TestOccurringValues extends TestCase {
 			new OptionsFilterState(Set.of("Bern")), kind -> source.matchCounts(CITY, kind));
 		assertEquals("A state of a kind not offered is still edited.", ColumnFilter.KIND_VALUES,
 			current.activeKind());
+	}
+
+	/**
+	 * The values filter offers the cells without a value - nothing, an empty collection - as an
+	 * option of its own, labelled "no value" and not drawn as a value of the column.
+	 */
+	public void testNoValueOption() {
+		TableView<Person> view = newView(MAX_VALUES);
+		view.filter(CITY, new OptionsFilterState(Set.of(Option.NO_VALUE)));
+		assertEquals(List.of("Emil"), names(view));
+
+		view.filter(CITY, new OptionsFilterState(Set.of("Hamburg", Option.NO_VALUE)));
+		assertEquals(List.of("Ben", "Emil"), names(view));
+
+		view.filter(CITY, new OptionsFilterState(Set.of()));
+		view.filter(TAGS, new OptionsFilterState(Set.of(Option.NO_VALUE)));
+		assertEquals("An empty collection is no value.", List.of("Carl"), names(view));
+
+		MatchCounts counts = new ListRowSource<>(people(), columns(MAX_VALUES)).matchCounts(CITY,
+			ColumnFilter.KIND_VALUES);
+		List<FilterField> fields = FilterEditors.kindEditor(values(MAX_VALUES), null, counts).fields();
+		FilterField noValue = fields.get(fields.size() - 1);
+		assertSame(Option.NO_VALUE, noValue.option().value());
+		assertEquals(I18NConstants.VALUE_NONE, noValue.option().label());
+		assertEquals(Integer.valueOf(1), noValue.count());
+		assertFalse("No value is shown by its label.", noValue.isColumnValue());
+		assertTrue("A value is shown as the cells show it.", fields.get(0).isColumnValue());
+	}
+
+	/** A column without empty cells offers no "no value" option. */
+	public void testNoValueOptionOnlyForEmptyCells() {
+		List<Person> full = List.of(new Person("Anna", "Bern", List.of("x")));
+		List<Column<Person, ?>> columns = columns(MAX_VALUES);
+		MatchCounts counts = new ListRowSource<>(full, columns).matchCounts(CITY, ColumnFilter.KIND_VALUES);
+		assertEquals(List.of("Bern"), counts.values());
+		assertEquals(List.of("Bern"),
+			values(MAX_VALUES).options(counts, null).stream().map(Option::value).toList());
+	}
+
+	/** A filter over fixed options offers "no value" after its options while a cell is empty. */
+	public void testNoValueOptionOfFixedOptions() {
+		OptionsColumnFilter<Object> fixed = new OptionsColumnFilter<>(
+			List.of(new Option("Bern", ResKey.text("Bern")), new Option("Hamburg", ResKey.text("Hamburg"))));
+		Column<Person, Object> city = DefaultColumn.<Person, Object> builder(CITY, Person::city).filter(fixed).build();
+		ListRowSource<Person> source = new ListRowSource<>(people(), List.of(city));
+		MatchCounts counts = source.matchCounts(CITY);
+		assertEquals(List.of("Bern", "Hamburg", Option.NO_VALUE),
+			fixed.options(counts, null).stream().map(Option::value).toList());
+		assertEquals(List.of("Bern", "Hamburg"),
+			fixed.options(MatchCounts.NONE, null).stream().map(Option::value).toList());
+
+		TableView<Person> view = DefaultTableView.create(List.of(city), source);
+		view.filter(CITY, new OptionsFilterState(Set.of(Option.NO_VALUE)));
+		assertEquals(List.of("Emil"), names(view));
+	}
+
+	/** A selection holding "no value" is stored and read back, of occurring and of fixed options. */
+	public void testNoValuePersisted() {
+		OptionsColumnFilter<Object> occurring = values(MAX_VALUES);
+		OptionsFilterState state = new OptionsFilterState(Set.of("Bern", Option.NO_VALUE));
+		assertEquals(state, occurring.fromJson(occurring.toJson(state)));
+
+		OptionsColumnFilter<Object> fixed = new OptionsColumnFilter<>(List.of(new Option("Bern", null)));
+		assertEquals(state, fixed.fromJson(fixed.toJson(state)));
 	}
 
 	/** A selection of occurring values is stored as the values themselves. */

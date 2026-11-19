@@ -22,6 +22,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.form.model.FieldModel;
@@ -59,6 +60,7 @@ import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnFilterState;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.MatchCounts;
+import com.top_logic.table.Option;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableView;
 import com.top_logic.table.filter.BooleanColumnFilter;
@@ -71,6 +73,7 @@ import com.top_logic.table.filter.FilterEditors;
 import com.top_logic.table.filter.OptionsColumnFilter;
 import com.top_logic.table.filter.OptionsFilterState;
 import com.top_logic.table.filter.RangeFilterState;
+import com.top_logic.table.filter.RegexpOptionsFilter;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.filter.TextFilterState;
 import com.top_logic.table.impl.DefaultColumn;
@@ -93,6 +96,9 @@ public class TestColumnFilterDialog extends TestCase {
 
 	/** Prefix of the text the {@link Factory} displays a value with. */
 	private static final String DISPLAYED = "displayed:";
+
+	/** A column filtered by patterns of its text. */
+	private static final String PATTERN = "pattern";
 
 	private record Row(String city, Integer amount, Boolean flag) {
 		// Test fixture.
@@ -226,8 +232,11 @@ public class TestColumnFilterDialog extends TestCase {
 		assertEquals(Boolean.FALSE, state(operator).get(FieldState.NULLABLE__PROP));
 	}
 
-	/** Every kind of filter offers to invert it, the boolean one included. */
-	public void testInvertOnEveryKind() {
+	/**
+	 * Every kind of filter offers to invert it but the boolean one, whose options already cover
+	 * every selection.
+	 */
+	public void testInvert() {
 		String invert = Resources.getInstance().getString(com.top_logic.table.filter.I18NConstants.FILTER_INVERT);
 		TableView<Row> view = view(10);
 		ColumnFilterDialog values = dialog(view, CITY, null);
@@ -237,19 +246,53 @@ public class TestColumnFilterDialog extends TestCase {
 		assertTrue(labels(dialog(view, AMOUNT, null).body()).contains(invert));
 
 		ColumnFilterDialog flag = dialog(view, FLAG, null);
-		String accept = Resources.getInstance().getString(com.top_logic.table.filter.I18NConstants.VALUE_TRUE);
-		assertTrue(labels(flag.body()).contains(invert));
-		for (ReactFormFieldChromeControl chrome : all(flag.body(), ReactFormFieldChromeControl.class)) {
-			if (chrome.getField() instanceof ReactDropdownSelectControl) {
-				continue;
-			}
-			Object label = state(chrome).get(FormFieldState.LABEL__PROP);
-			FieldModel model = (FieldModel) chrome.getField().getModel();
-			if (invert.equals(label) || accept.equals(label)) {
-				model.setValue(Boolean.TRUE);
-			}
-		}
-		assertEquals(ColumnFilterState.invert(new BooleanFilterState(true, false, false)), flag.read());
+		assertFalse(labels(flag.body()).contains(invert));
+		ColumnFilterDialog inverted =
+			dialog(view, FLAG, ColumnFilterState.invert(new BooleanFilterState(true, false, false)));
+		assertTrue("An inverted state keeps the checkbox, to undo it.", labels(inverted.body()).contains(invert));
+	}
+
+	/**
+	 * The cells without a value are a row of the list of values of their own, shown by its label,
+	 * after the values.
+	 */
+	public void testNoValueRow() {
+		List<Row> rows = new ArrayList<>(rows());
+		rows.add(new Row(null, Integer.valueOf(1), Boolean.TRUE));
+		List<Column<Row, ?>> columns = columns(10);
+		TableView<Row> view = DefaultTableView.create(columns, new ListRowSource<>(rows, columns), null, null,
+			SortSpec.NONE, List.of(), List.of(), null);
+		ColumnFilterDialog dialog = dialog(view, CITY, null);
+		List<ReactFormFieldChromeControl> checks = checkFields(dialog.body());
+		String noValue = Resources.getInstance().getString(com.top_logic.table.filter.I18NConstants.VALUE_NONE);
+		assertEquals(List.of("Bern (2)", "Hamburg (1)", noValue + " (1)"),
+			checks.stream().map(c -> state(c).get(FormFieldState.LABEL__PROP)).toList());
+		List<String> texts = texts(dialog.body());
+		assertTrue(texts.toString(), texts.contains(noValue));
+		assertFalse(texts.toString(), texts.contains(DISPLAYED + Option.NO_VALUE));
+
+		((FieldModel) checks.get(2).getField().getModel()).setValue(Boolean.TRUE);
+		assertEquals(new OptionsFilterState(Set.of(Option.NO_VALUE)), dialog.read());
+	}
+
+	/**
+	 * An option standing for a condition - a pattern of an application filter - is shown by its
+	 * label, not as a value of the column.
+	 */
+	public void testPatternOptionsShowLabels() {
+		Column<Row, String> pattern = DefaultColumn.<Row, String> builder(PATTERN, Row::city)
+			.renderer(value -> CellContent.text(String.valueOf(value)))
+			.filter(new RegexpOptionsFilter(List.of(new Option("^B", ResKey.text("B places")))))
+			.build();
+		List<Column<Row, ?>> columns = List.of(pattern);
+		TableView<Row> view = DefaultTableView.create(columns, new ListRowSource<>(rows(), columns), null, null,
+			SortSpec.NONE, List.of(), List.of(), null);
+		ColumnFilterDialog dialog = dialog(view, PATTERN, null);
+		assertEquals(List.of("B places (2)"),
+			checkFields(dialog.body()).stream().map(c -> state(c).get(FormFieldState.LABEL__PROP)).toList());
+		List<String> texts = texts(dialog.body());
+		assertTrue(texts.toString(), texts.contains("B places"));
+		assertFalse(texts.toString(), texts.contains(DISPLAYED + "^B"));
 	}
 
 	/** A kind the column does not offer for its values is shown as not available while it is active. */

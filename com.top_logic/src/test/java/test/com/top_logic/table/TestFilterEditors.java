@@ -21,11 +21,13 @@ import com.top_logic.table.Option;
 import com.top_logic.table.filter.BooleanColumnFilter;
 import com.top_logic.table.filter.BooleanFilterState;
 import com.top_logic.table.filter.BoundCodec;
+import com.top_logic.table.filter.ColumnFilterEditor;
 import com.top_logic.table.filter.ComparableColumnFilter;
 import com.top_logic.table.filter.ComparisonOperator;
 import com.top_logic.table.filter.FilterEditor;
 import com.top_logic.table.filter.FilterEditors;
 import com.top_logic.table.filter.FilterField;
+import com.top_logic.table.filter.I18NConstants;
 import com.top_logic.table.filter.OptionsColumnFilter;
 import com.top_logic.table.filter.OptionsFilterState;
 import com.top_logic.table.filter.RangeFilterState;
@@ -81,7 +83,7 @@ public class TestFilterEditors extends TestCase {
 		BooleanColumnFilter filter =
 			new BooleanColumnFilter(ResKey.text("Yes"), ResKey.text("No"), false);
 		FilterEditor editor = FilterEditors.create(filter, null, MatchCounts.NONE);
-		assertEquals("A column without empty cells offers just the two value options, plus invert.", 3,
+		assertEquals("A column without empty cells offers just the two value options, and no invert.", 2,
 			editor.fields().size());
 
 		field(editor, 0).setValue(Boolean.TRUE);    // accept true
@@ -89,6 +91,41 @@ public class TestFilterEditors extends TestCase {
 		assertTrue(state.acceptTrue());
 		assertFalse(state.acceptFalse());
 		assertFalse(state.acceptNull());
+	}
+
+	/**
+	 * A yes / no filter offers no inversion: each of its values is an option of its own, so the
+	 * inverse of a selection is the selection of the other options. Every other kind offers it.
+	 */
+	public void testInvertNotOfferedForBoolean() {
+		ColumnFilterEditor bool =
+			FilterEditors.create(List.of(BooleanColumnFilter.INSTANCE), null, kind -> MatchCounts.NONE);
+		assertFalse(bool.invertOffered());
+		assertEquals("True, false, no value.", 3, bool.fields().size());
+		for (FilterField field : bool.fields()) {
+			assertNotSame(I18NConstants.FILTER_INVERT, field.label());
+		}
+
+		ColumnFilterEditor text =
+			FilterEditors.create(List.of(TextColumnFilter.forStrings()), null, kind -> MatchCounts.NONE);
+		assertTrue(text.invertOffered());
+		assertEquals(I18NConstants.FILTER_INVERT, text.fields().get(text.fields().size() - 1).label());
+	}
+
+	/**
+	 * An inverted yes / no state, e.g. of a declared filter, keeps the checkbox, so that it can be
+	 * undone.
+	 */
+	public void testInvertKeptForInvertedBoolean() {
+		ColumnFilterEditor bool = FilterEditors.create(List.of(BooleanColumnFilter.INSTANCE),
+			ColumnFilterState.invert(new BooleanFilterState(true, false, false)), kind -> MatchCounts.NONE);
+		assertTrue(bool.invertOffered());
+		FieldModel invert = bool.fields().get(bool.fields().size() - 1).model();
+		assertEquals(Boolean.TRUE, invert.getValue());
+
+		invert.setValue(Boolean.FALSE);
+		assertEquals(new BooleanFilterState(true, false, false), ColumnFilterState.innerOf(bool.read()));
+		assertFalse(ColumnFilterState.isInverted(bool.read()));
 	}
 
 	public void testOptionsEditorReadBack() {

@@ -12,7 +12,6 @@ import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.MatchCounts;
-import com.top_logic.table.Option;
 
 /**
  * Builds the {@link FilterEditor} for a {@link ColumnFilter}, seeded from the column's current
@@ -80,10 +79,12 @@ public final class FilterEditors {
 		FilterInput input = filter.input();
 		if (input instanceof FilterInput.Options options) {
 			OptionsFilterState selection = (OptionsFilterState) current;
-			List<Option> offered = filter instanceof OptionsColumnFilter<?> optionsFilter
-				? optionsFilter.options(counts, selection)
-				: options.values();
-			return new OptionsFilterEditor(offered, selection, counts);
+			if (filter instanceof OptionsColumnFilter<?> optionsFilter) {
+				// The options of an options filter are values of the column (or no value).
+				return new OptionsFilterEditor(optionsFilter.options(counts, selection), selection, counts, true);
+			}
+			// Other filters offer options standing for conditions on a cell, e.g. patterns.
+			return new OptionsFilterEditor(options.values(), selection, counts, false);
 		}
 		if (input instanceof FilterInput.Bool bool) {
 			return booleanEditor(filter, (BooleanFilterState) current, bool.nullable());

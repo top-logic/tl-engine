@@ -38,6 +38,12 @@ import com.top_logic.table.Option;
  */
 public class OptionsColumnFilter<V> implements ColumnFilter<V> {
 
+	/** The option standing for the cells holding no value, see {@link Option#NO_VALUE}. */
+	private static final Option NO_VALUE_OPTION = new Option(Option.NO_VALUE, I18NConstants.VALUE_NONE);
+
+	/** The {@link #keys(Object) keys} of a cell holding no value. */
+	private static final List<Object> NO_VALUE_KEYS = List.of(Option.NO_VALUE);
+
 	private final List<Option> _options;
 
 	private final Function<? super V, ? extends Collection<?>> _keys;
@@ -137,15 +143,27 @@ public class OptionsColumnFilter<V> implements ColumnFilter<V> {
 	 */
 	public List<Option> options(MatchCounts counts, OptionsFilterState current) {
 		if (!isOccurring()) {
-			return _options;
+			boolean noValue = counts.isAvailable() && counts.count(Option.NO_VALUE) > 0
+				|| current != null && current.selected().contains(Option.NO_VALUE);
+			if (!noValue) {
+				return _options;
+			}
+			List<Option> result = new ArrayList<>(_options);
+			result.add(NO_VALUE_OPTION);
+			return result;
 		}
 		Set<Object> values = new LinkedHashSet<>(counts.values());
 		if (current != null) {
 			values.addAll(current.selected());
 		}
-		List<Option> result = new ArrayList<>(values.size());
+		// The option for no value follows the values, also when only the selection holds it.
+		boolean noValue = values.remove(Option.NO_VALUE);
+		List<Option> result = new ArrayList<>(values.size() + 1);
 		for (Object value : values) {
 			result.add(new Option(value, ResKey.text(label(value))));
+		}
+		if (noValue) {
+			result.add(NO_VALUE_OPTION);
 		}
 		return result;
 	}
@@ -158,10 +176,27 @@ public class OptionsColumnFilter<V> implements ColumnFilter<V> {
 	/**
 	 * The option values the given cell value stands for: the cell matches if one of them is
 	 * selected.
+	 *
+	 * <p>
+	 * A cell holding no value - nothing, an empty text, an empty collection - stands for
+	 * {@link Option#NO_VALUE}.
+	 * </p>
 	 */
 	public Collection<?> keys(V value) {
+		if (isNoValue(value)) {
+			return NO_VALUE_KEYS;
+		}
 		Collection<?> keys = _keys.apply(value);
 		return keys == null ? List.of() : keys;
+	}
+
+	/**
+	 * Whether the given cell value is no value: nothing, an empty text, or an empty collection of
+	 * values.
+	 */
+	public static boolean isNoValue(Object value) {
+		return value == null || value instanceof CharSequence text && text.isEmpty()
+			|| value instanceof Collection<?> collection && collection.isEmpty();
 	}
 
 	@Override
@@ -171,14 +206,20 @@ public class OptionsColumnFilter<V> implements ColumnFilter<V> {
 
 	/**
 	 * A filter over fixed options is always offered, one over the occurring values while the
-	 * column holds at most the maximum number of distinct values.
+	 * column holds at most the maximum number of distinct values; the cells holding
+	 * {@link Option#NO_VALUE no value} do not count as a value of their own.
 	 */
 	@Override
 	public boolean offered(MatchCounts counts) {
 		if (!isOccurring()) {
 			return true;
 		}
-		return counts.isAvailable() && counts.values().size() <= _maxValues;
+		if (!counts.isAvailable()) {
+			return false;
+		}
+		List<Object> values = counts.values();
+		int distinct = values.contains(Option.NO_VALUE) ? values.size() - 1 : values.size();
+		return distinct <= _maxValues;
 	}
 
 	@Override
@@ -252,6 +293,11 @@ public class OptionsColumnFilter<V> implements ColumnFilter<V> {
 	 * serialized as the list of the persistent forms of its values, see
 	 * {@link BoundCodec#toJson(Object)}, or not at all if one of them has none.
 	 * </p>
+	 *
+	 * <p>
+	 * The option standing for no value, {@link Option#NO_VALUE}, is written as {@code null} in
+	 * either list.
+	 * </p>
 	 */
 	@Override
 	public Object toJson(FilterState state) {
@@ -259,6 +305,10 @@ public class OptionsColumnFilter<V> implements ColumnFilter<V> {
 		if (isOccurring()) {
 			List<Object> values = new ArrayList<>(selected.size());
 			for (Object value : selected) {
+				if (value == Option.NO_VALUE) {
+					values.add(null);
+					continue;
+				}
 				Object json = _codec.toJson(value);
 				if (json == null) {
 					return null;
@@ -272,6 +322,9 @@ public class OptionsColumnFilter<V> implements ColumnFilter<V> {
 			if (selected.contains(_options.get(n).value())) {
 				indices.add(Integer.valueOf(n));
 			}
+		}
+		if (selected.contains(Option.NO_VALUE)) {
+			indices.add(null);
 		}
 		return indices;
 	}
@@ -292,6 +345,10 @@ public class OptionsColumnFilter<V> implements ColumnFilter<V> {
 		if (isOccurring()) {
 			Set<Object> values = new LinkedHashSet<>();
 			for (Object stored : indices) {
+				if (stored == null) {
+					values.add(Option.NO_VALUE);
+					continue;
+				}
 				Object value = _codec.fromJson(stored);
 				if (value != null) {
 					values.add(value);
@@ -301,7 +358,9 @@ public class OptionsColumnFilter<V> implements ColumnFilter<V> {
 		}
 		Set<Object> selected = new LinkedHashSet<>();
 		for (Object index : indices) {
-			if (index instanceof Number number) {
+			if (index == null) {
+				selected.add(Option.NO_VALUE);
+			} else if (index instanceof Number number) {
 				int n = number.intValue();
 				if (n >= 0 && n < _options.size()) {
 					selected.add(_options.get(n).value());

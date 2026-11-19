@@ -258,14 +258,16 @@ public class ColumnFilterDialog {
 
 	/**
 	 * A row selecting an option: the checkbox, named by the label of the option, the value shown as
-	 * a cell of the column shows it, and the number of rows matching it.
+	 * a cell of the column shows it - or the label of an option that
+	 * {@link FilterField#isColumnValue() is no value of the column} -, and the number of rows
+	 * matching it.
 	 */
 	private ReactControl optionRow(FilterField field) {
 		Option option = field.option();
 		ReactFormFieldChromeControl check = new ReactFormFieldChromeControl(_context, label(field.label()),
 			new ReactCheckboxControl(_context, field.model()));
 		check.setLabelPosition(LabelPosition.HIDDEN);
-		ReactControl display = _factory.valueDisplay(_context, _column, option.value());
+		ReactControl display = field.isColumnValue() ? _factory.valueDisplay(_context, _column, option.value()) : null;
 		if (display == null) {
 			display = new ReactTextControl(_context, label(option.label()));
 		}

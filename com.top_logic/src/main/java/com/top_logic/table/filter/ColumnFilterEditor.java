@@ -15,6 +15,7 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnFilterState;
+import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.MatchCounts;
 
@@ -146,13 +147,30 @@ public class ColumnFilterEditor implements FilterEditor {
 	}
 
 	/**
-	 * The fields of the {@link #activeEditor() active editor}, followed by the "invert" checkbox.
+	 * The fields of the {@link #activeEditor() active editor}, followed by the "invert" checkbox
+	 * where {@link #invertOffered() inverting is offered}.
 	 */
 	@Override
 	public List<FilterField> fields() {
 		List<FilterField> fields = new ArrayList<>(activeEditor().fields());
-		fields.add(new FilterField(I18NConstants.FILTER_INVERT, _invert));
+		if (invertOffered()) {
+			fields.add(new FilterField(I18NConstants.FILTER_INVERT, _invert));
+		}
 		return fields;
+	}
+
+	/**
+	 * Whether the "invert" checkbox is offered for the {@link #activeKind() active kind of filter}.
+	 *
+	 * <p>
+	 * A {@link FilterInput.Bool boolean} filter offers each of its few values as an option of its
+	 * own, so inverting a selection is the same as selecting the other options: it offers no
+	 * inversion - unless the current state is inverted, e.g. by a declared filter, so that the
+	 * user can undo it.
+	 * </p>
+	 */
+	public boolean invertOffered() {
+		return !(find(_activeKind).input() instanceof FilterInput.Bool) || TextFilterEditor.bool(_invert);
 	}
 
 	@Override

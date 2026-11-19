@@ -41,6 +41,8 @@ public final class FilterField {
 
 	private final Integer _count;
 
+	private final boolean _columnValue;
+
 	/**
 	 * Creates a {@link FilterField} rendered by the field model's natural control.
 	 */
@@ -73,21 +75,22 @@ public final class FilterField {
 	 *        Writes and reads the value as text, for a UI tier entering it as text.
 	 */
 	public FilterField(ResKey label, FieldModel model, BoundCodec<?> valueCodec) {
-		this(label, model, null, valueCodec, null, null);
+		this(label, model, null, valueCodec, null, null, false);
 	}
 
 	private FilterField(ResKey label, FieldModel model, LabelProvider optionLabels, BoundCodec<?> valueCodec) {
-		this(label, model, optionLabels, valueCodec, null, null);
+		this(label, model, optionLabels, valueCodec, null, null, false);
 	}
 
 	private FilterField(ResKey label, FieldModel model, LabelProvider optionLabels, BoundCodec<?> valueCodec,
-			Option option, Integer count) {
+			Option option, Integer count, boolean columnValue) {
 		_label = label;
 		_model = model;
 		_optionLabels = optionLabels;
 		_valueCodec = valueCodec;
 		_option = option;
 		_count = count;
+		_columnValue = columnValue;
 	}
 
 	/**
@@ -101,9 +104,13 @@ public final class FilterField {
 	 *        The option the field selects.
 	 * @param count
 	 *        The number of rows matching the option, {@code null} if not counted.
+	 * @param columnValue
+	 *        Whether the {@link Option#value() value} of the option is a value of the column, see
+	 *        {@link #isColumnValue()}.
 	 */
-	public static FilterField option(ResKey label, FieldModel model, Option option, Integer count) {
-		return new FilterField(label, model, null, null, option, count);
+	public static FilterField option(ResKey label, FieldModel model, Option option, Integer count,
+			boolean columnValue) {
+		return new FilterField(label, model, null, null, option, count, columnValue);
 	}
 
 	/** The field label. */
@@ -134,12 +141,26 @@ public final class FilterField {
 	 * selects none.
 	 *
 	 * <p>
-	 * A UI tier knowing the type of the column shows the {@link Option#value() value} of the option
-	 * as a cell of the column shows it, naming the checkbox by the {@link #label()}.
+	 * A UI tier knowing the type of the column shows the {@link Option#value() value} of an option
+	 * that {@link #isColumnValue() is a value of the column} as a cell of the column shows it,
+	 * naming the checkbox by the {@link #label()}.
 	 * </p>
 	 */
 	public Option option() {
 		return _option;
+	}
+
+	/**
+	 * Whether the value of the {@link #option() option} is a value of the column, which a UI tier
+	 * shows as a cell of the column shows it.
+	 *
+	 * <p>
+	 * An option standing for something else - a condition such as a pattern the text of a cell
+	 * matches, or {@link Option#NO_VALUE no value} - is shown by its label.
+	 * </p>
+	 */
+	public boolean isColumnValue() {
+		return _columnValue;
 	}
 
 	/**

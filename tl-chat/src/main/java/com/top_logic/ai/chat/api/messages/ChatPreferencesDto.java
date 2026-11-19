@@ -37,7 +37,7 @@ public class ChatPreferencesDto extends de.haumacher.msgbuf.data.AbstractDataObj
 
 	private int _paneWidth = 0;
 
-	private int _badgeSeen = 0;
+	private final java.util.Map<String, Integer> _badgeSeen = new java.util.LinkedHashMap<>();
 
 	private final java.util.Map<String, Boolean> _sections = new java.util.LinkedHashMap<>();
 
@@ -98,23 +98,49 @@ public class ChatPreferencesDto extends de.haumacher.msgbuf.data.AbstractDataObj
 	}
 
 	/**
-	 * Sum of section badges last stored when the rail was opened.
+	 * Per section name, the count of its badge the user has seen: what the section counted while
+	 * the rail was last open on screen. A section that is absent has had nothing seen.
 	 */
-	public final int getBadgeSeen() {
+	public final java.util.Map<String, Integer> getBadgeSeen() {
 		return _badgeSeen;
 	}
 
 	/**
 	 * @see #getBadgeSeen()
 	 */
-	public com.top_logic.ai.chat.api.messages.ChatPreferencesDto setBadgeSeen(int value) {
+	public com.top_logic.ai.chat.api.messages.ChatPreferencesDto setBadgeSeen(java.util.Map<String, Integer> value) {
 		internalSetBadgeSeen(value);
 		return this;
 	}
 
 	/** Internal setter for {@link #getBadgeSeen()} without chain call utility. */
-	protected final void internalSetBadgeSeen(int value) {
-		_badgeSeen = value;
+	protected final void internalSetBadgeSeen(java.util.Map<String, Integer> value) {
+		if (value == null) throw new IllegalArgumentException("Property 'badgeSeen' cannot be null.");
+		_badgeSeen.clear();
+		_badgeSeen.putAll(value);
+	}
+
+	/**
+	 * Adds a key value pair to the {@link #getBadgeSeen()} map.
+	 */
+	public com.top_logic.ai.chat.api.messages.ChatPreferencesDto putBadgeSeen(String key, int value) {
+		internalPutBadgeSeen(key, value);
+		return this;
+	}
+
+	/** Implementation of {@link #putBadgeSeen(String, int)} without chain call utility. */
+	protected final void  internalPutBadgeSeen(String key, int value) {
+		if (_badgeSeen.containsKey(key)) {
+			throw new IllegalArgumentException("Property 'badgeSeen' already contains a value for key '" + key + "'.");
+		}
+		_badgeSeen.put(key, value);
+	}
+
+	/**
+	 * Removes a key from the {@link #getBadgeSeen()} map.
+	 */
+	public final void removeBadgeSeen(String key) {
+		_badgeSeen.remove(key);
 	}
 
 	/**
@@ -216,7 +242,7 @@ public class ChatPreferencesDto extends de.haumacher.msgbuf.data.AbstractDataObj
 		switch (field) {
 			case RAIL_OPEN__PROP: internalSetRailOpen((Boolean) value); break;
 			case PANE_WIDTH__PROP: internalSetPaneWidth((int) value); break;
-			case BADGE_SEEN__PROP: internalSetBadgeSeen((int) value); break;
+			case BADGE_SEEN__PROP: internalSetBadgeSeen((java.util.Map<String, Integer>) value); break;
 			case SECTIONS__PROP: internalSetSections((java.util.Map<String, Boolean>) value); break;
 		}
 	}
@@ -243,7 +269,12 @@ public class ChatPreferencesDto extends de.haumacher.msgbuf.data.AbstractDataObj
 		out.name(PANE_WIDTH__PROP);
 		out.value(getPaneWidth());
 		out.name(BADGE_SEEN__PROP);
-		out.value(getBadgeSeen());
+		out.beginObject();
+		for (java.util.Map.Entry<String,Integer> entry : getBadgeSeen().entrySet()) {
+			out.name(entry.getKey());
+			out.value(entry.getValue());
+		}
+		out.endObject();
 		out.name(SECTIONS__PROP);
 		out.beginObject();
 		for (java.util.Map.Entry<String,Boolean> entry : getSections().entrySet()) {
@@ -258,7 +289,16 @@ public class ChatPreferencesDto extends de.haumacher.msgbuf.data.AbstractDataObj
 		switch (field) {
 			case RAIL_OPEN__PROP: setRailOpen(in.nextBoolean()); break;
 			case PANE_WIDTH__PROP: setPaneWidth(in.nextInt()); break;
-			case BADGE_SEEN__PROP: setBadgeSeen(in.nextInt()); break;
+			case BADGE_SEEN__PROP: {
+				java.util.Map<String, Integer> newValue = new java.util.LinkedHashMap<>();
+				in.beginObject();
+				while (in.hasNext()) {
+					newValue.put(in.nextName(), in.nextInt());
+				}
+				in.endObject();
+				setBadgeSeen(newValue);
+				break;
+			}
 			case SECTIONS__PROP: {
 				java.util.Map<String, Boolean> newValue = new java.util.LinkedHashMap<>();
 				in.beginObject();

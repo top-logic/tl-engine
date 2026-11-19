@@ -10,6 +10,8 @@ import static java.util.Arrays.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
@@ -377,6 +379,49 @@ public class TestAlterTable extends BasicTestCase {
 
 		assertTestIndex("Index lost by type change.");
 		assertValues("b", n -> Long.toString(rowValue(n)), ROW_COUNT);
+
+		try {
+			insertRow(rowName(0), literalString(Long.toString(rowValue(0))));
+			fail("Unique index violation!");
+		} catch (SQLException ex) {
+			// expected
+		}
+	}
+
+	/**
+	 * Tests changing the type of a column in a table with content, when the column is part of a
+	 * unique index and the rows only differ in this column.
+	 *
+	 * <p>
+	 * Clearing the column during the type change (as done for Oracle) must not violate the index.
+	 * </p>
+	 */
+	public void testModifyColumnTypeInUniqueIndex() throws SQLException {
+		executeAlter(addIndex(table(_table.getDBName()), "testIndex", true, "b", "a"));
+		for (int n = 0; n < ROW_COUNT; n++) {
+			insertRow(rowName(0), literalLong(rowValue(n)));
+		}
+
+		executeAlter(modifyColumnType(table(_table.getDBName()), "b", DBType.STRING, false, false, 60, 0));
+
+		assertTestIndex("Index lost by type change.");
+		Set<String> expected = new HashSet<>();
+		for (int n = 0; n < ROW_COUNT; n++) {
+			expected.add(Long.toString(rowValue(n)));
+		}
+		Set<String> found = new HashSet<>();
+		PooledConnection connection = _pool.borrowReadConnection();
+		try {
+			try (ResultSet result = executeQuery(connection, selectRows("b"))) {
+				while (result.next()) {
+					assertEquals(rowName(0), result.getString("a"));
+					assertTrue("Duplicate value.", found.add(result.getString("b")));
+				}
+			}
+		} finally {
+			_pool.releaseReadConnection(connection);
+		}
+		assertEquals(expected, found);
 
 		try {
 			insertRow(rowName(0), literalString(Long.toString(rowValue(0))));

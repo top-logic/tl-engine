@@ -45,24 +45,6 @@ public record ProviderRequest(
 		Duration timeout,
 		int stableToolCount) {
 
-	/**
-	 * Key of the {@link #modelOptions() model option} with the thinking effort of a model of the
-	 * family {@link ApiFamilies#ANTHROPIC} ({@code low}, {@code medium}, {@code high}, {@code max}).
-	 */
-	public static final String THINKING_EFFORT = "thinking_effort";
-
-	/**
-	 * Key of the {@link #modelOptions() model option} with the {@code top_k} sampling parameter of a
-	 * model of the family {@link ApiFamilies#ANTHROPIC}.
-	 */
-	public static final String TOP_K = "top_k";
-
-	/**
-	 * Key of the {@link #modelOptions() model option} with the lifetime of the prompt cache entries
-	 * of a model of the family {@link ApiFamilies#ANTHROPIC} ({@code 5m} or {@code 1h}).
-	 */
-	public static final String CACHE_TTL = "cacheTtl";
-
 	/** */
 	public ProviderRequest {
 		Objects.requireNonNull(model, "Model must not be null.");

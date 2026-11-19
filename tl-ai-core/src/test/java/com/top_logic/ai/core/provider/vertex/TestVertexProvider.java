@@ -182,8 +182,8 @@ public class TestVertexProvider extends TestCase {
 	 * API version in the body, and with Claude's options.
 	 */
 	public void testRequest() throws Exception {
-		stream(provider(""), request(null, Map.of(ProviderRequest.THINKING_EFFORT, "high",
-			ProviderRequest.TOP_K, Integer.valueOf(40), ProviderRequest.CACHE_TTL, "1h")));
+		stream(provider(""), request(null, Map.of("thinking_effort", "high",
+			"top_k", Integer.valueOf(40), "cacheTtl", "1h")));
 
 		Received received = _requests.get(0);
 		assertEquals("POST", received.method());

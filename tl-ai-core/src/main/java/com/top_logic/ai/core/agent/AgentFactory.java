@@ -43,7 +43,6 @@ import com.top_logic.ai.core.provider.LLMProviderService;
 import com.top_logic.ai.core.provider.ToolChoice;
 import com.top_logic.ai.core.provider.ApiFamilies;
 import com.top_logic.ai.core.provider.EffortLevels;
-import com.top_logic.ai.core.provider.ProviderRequest;
 import com.top_logic.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.ai.core.security.RunAuthorization;
@@ -940,12 +939,12 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			if (modelInfo.capabilities().reasoning()) {
 				String thinkingEffort = assignment.thinkingEffort();
 				if (thinkingEffort != null) {
-					options.put(ProviderRequest.THINKING_EFFORT, thinkingEffort.toLowerCase());
+					options.put("thinking_effort", thinkingEffort.toLowerCase());
 				}
 			}
 			Integer topK = assignment.topK();
 			if (topK != null) {
-				options.put(ProviderRequest.TOP_K, topK);
+				options.put("top_k", topK);
 			}
 		}
 

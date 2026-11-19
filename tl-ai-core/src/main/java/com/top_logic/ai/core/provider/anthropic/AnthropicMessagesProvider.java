@@ -329,13 +329,13 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 		try (JsonReader json = jsonReader(jsonBody)) {
 			json.beginObject();
 			while (json.hasNext()) {
-				if (ERROR_FIELD.equals(json.nextName())) {
+				if ("error".equals(json.nextName())) {
 					json.beginObject();
 					while (json.hasNext()) {
 						switch (json.nextName()) {
-							case ERROR_TYPE_FIELD -> type = json.nextString();
-							case ERROR_MESSAGE_FIELD -> message = json.nextString();
-							case ERROR_STATUS_FIELD -> status = json.nextString();
+							case "type" -> type = json.nextString();
+							case "message" -> message = json.nextString();
+							case "status" -> status = json.nextString();
 							default -> json.skipValue();
 						}
 					}
@@ -352,18 +352,6 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 		}
 		return new ErrorBody(type, message, status);
 	}
-
-	/** Field of an error response body with the error object. */
-	private static final String ERROR_FIELD = "error";
-
-	/** Field of the error object with the Anthropic error type. */
-	private static final String ERROR_TYPE_FIELD = "type";
-
-	/** Field of the error object with the message. */
-	private static final String ERROR_MESSAGE_FIELD = "message";
-
-	/** Field of the error object with the Google status. */
-	private static final String ERROR_STATUS_FIELD = "status";
 
 	/**
 	 * Maps Anthropic {@code error.type} strings to a

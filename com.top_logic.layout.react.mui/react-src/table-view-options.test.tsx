@@ -259,6 +259,16 @@ describe('the column selection and the reset', () => {
     expect(screen.getByRole('button', { name: RESET })).toBeTruthy();
   });
 
+  it('puts the column selection first, before the density, and starts the focus there', async () => {
+    mountTable({ columnSelect: true });
+    await settle();
+    const dialog = await openView();
+    const columns = screen.getByRole('button', { name: CHOOSE_COLUMNS });
+    expect(document.activeElement).toBe(columns);
+    const firstEntry = dialog.querySelector('button, [role="radiogroup"], [role="switch"]');
+    expect(firstEntry).toBe(columns);
+  });
+
   it('opens the column selection and closes the view', async () => {
     const sent = mountTable({ columnSelect: true });
     await settle();

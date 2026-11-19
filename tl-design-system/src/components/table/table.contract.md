@@ -146,13 +146,18 @@ Id, die es nicht gibt, ließe den Fokus unsichtbar.
 Das Zahnrad (`tl-table__columns`) öffnet ein Popover `tl-popover tl-picker tl-menu tl-table-view-options` mit
 `role="dialog"`. Die Einträge, die Anatomie und das Verhalten des Menüs gelten (`menu.contract.md`); was dazukommt:
 
+Reihenfolge: Titel, „Spalten …“, Dichte, Streifen, Spaltenlinien, „Zurücksetzen“. Die Spaltenwahl steht zuerst und
+trägt den Startfokus, denn sie ist, was man an einer Tabelle am häufigsten einstellt (Review !2226); ohne sie startet
+der Fokus auf dem geltenden Segment der Dichte.
+
+
 | Element | Aufbau |
 |---|---|
 | `tl-table-view-options__title` | Titel „Ansicht“: `tl-type-label-strong` in Primärtext, kein Abschnittskopf |
 | `tl-menu__header` | Abschnittskopf „Dichte“ (`tl-type-label`, leiser Sekundärtext); er benennt die Gruppe der Segmente (`aria-labelledby`) |
 | `tl-segmented tl-table-view-options__segments` | die drei Dichten als Radiogruppe (`choice.contract.md`), von den Rändern um `--tl-space-control-x` eingerückt wie der Text der Einträge |
 | `tl-table-view-options__switch` | Schalter (`tl-choice` mit `tl-checkbox--switch`) für Streifen und Spaltenlinien, mit derselben Einrückung |
-| `tl-divider` | die Trennlinie vor den Einträgen („Spalten …“, „Zurücksetzen“): eine Linie in `--tl-border-separator` |
+| `tl-divider` | Trennlinien in `--tl-border-separator`: zwischen „Spalten …“ und „Dichte“ und vor „Zurücksetzen“ |
 
 Die Ansichtsoptionen (Dichte, Streifen, Spaltenlinien) gibt es nur, wo sie bleiben: Der Server schickt `viewOptions`
 nur für eine Tabelle, die ihre Ansicht speichert (`TableView.isPersonalized()`). Ohne sie zeigt das Popover nur

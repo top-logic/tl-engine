@@ -45,9 +45,8 @@ const LABEL_MINIMIZE = 'js.panel.minimize';
 const LABEL_MAXIMIZE = 'js.panel.maximize';
 const LABEL_POP_OUT = 'js.panel.popOut';
 const LABEL_DRAWER_CLOSE = 'js.drawer.close';
-const LABEL_VIEW = 'js.table.view';
-// The entry is the label and the value "n of m" together: a pattern.
-const LABEL_COLUMNS_ENTRY = /^js\.table\.viewColumns\b/;
+// The gear of a table offering the column selection, named after the page it opens first.
+const LABEL_COLUMNS = 'js.table.columns';
 const LABEL_FILTER = 'js.table.filter';
 const LABEL_FILTER_ACTIVE = 'js.table.filterActive';
 const LABEL_ADD = 'js.valueList.add';
@@ -155,15 +154,13 @@ describe('the column buttons of a table as MUI icon buttons', () => {
     });
   }
 
-  it('opens the column selection from the view of the gear', async () => {
+  it('opens the column selection with the gear', async () => {
     const sent = mountTable(false);
     await settle();
 
-    const gear = screen.getByRole('button', { name: LABEL_VIEW });
+    const gear = screen.getByRole('button', { name: LABEL_COLUMNS });
     expectMuiIconButton(gear);
     await userEvent.click(gear);
-    await settle();
-    await userEvent.click(screen.getByRole('menuitem', { name: LABEL_COLUMNS_ENTRY }));
     await settle();
 
     expect(sent).toHaveBeenCalledWith(CMD_OPEN_COLUMNS, expect.anything());
@@ -211,11 +208,12 @@ describe('the gear of a table as the trigger of its view', () => {
   }
 
   function gear(): HTMLElement {
-    return screen.getByRole('button', { name: LABEL_VIEW });
+    return screen.getByRole('button', { name: LABEL_COLUMNS });
   }
 
+  /** The popover of the gear, on its first page "Columns". */
   function view(): HTMLElement | null {
-    return screen.queryByRole('dialog', { name: LABEL_VIEW });
+    return screen.queryByRole('dialog', { name: LABEL_COLUMNS });
   }
 
   afterEach(() => vi.restoreAllMocks());

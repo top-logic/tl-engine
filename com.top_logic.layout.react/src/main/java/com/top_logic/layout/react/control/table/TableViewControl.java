@@ -455,16 +455,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String COLUMN_SELECT = "columnSelect";
 
 	/**
-	 * State key of the column selection the view popover shows on its page "Columns", a
-	 * {@link ReactColumnSelectControl}; {@code null} while the page is not open.
+	 * State key of the column selection the view popover shows on its first page "Columns", a
+	 * {@link ReactColumnSelectControl}; {@code null} while the popover is not open.
 	 */
 	private static final String COLUMN_SELECTION = "columnSelection";
-
-	/** State key of the number of the columns the user can choose that the table displays. */
-	private static final String COLUMNS_SHOWN = "columnsShown";
-
-	/** State key of the number of the columns the user can choose, displayed or not. */
-	private static final String COLUMNS_TOTAL = "columnsTotal";
 
 	/**
 	 * State key telling the client whether to offer the view options (density, stripes, column
@@ -594,10 +588,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** The command opening the filter dialog of a column, see {@link OpenFilterArguments}. */
 	public static final String CMD_OPEN_FILTER = "openFilter";
 
-	/** The command the client sends when the view popover shows its page of the column selection. */
+	/** The command the client sends when the view popover opens on its page of the column selection. */
 	private static final String CMD_OPEN_COLUMNS = "openColumns";
 
-	/** The command the client sends when that page is left, and when the popover closes while it shows it. */
+	/** The command the client sends when that popover closes, on whichever of its pages. */
 	private static final String CMD_CLOSE_COLUMNS = "closeColumns";
 
 	private static final String CMD_SCROLL = "scroll";
@@ -1240,10 +1234,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	private void refreshColumns() {
 		putState(COLUMNS, columnsState());
-		// What the entry "Columns" of the view popover tells: "n of m".
-		List<ColumnOption> options = _view.columnOptions();
-		putState(COLUMNS_SHOWN, Integer.valueOf((int) options.stream().filter(ColumnOption::visible).count()));
-		putState(COLUMNS_TOTAL, Integer.valueOf(options.size()));
 		putState(FROZEN_COLUMN_COUNT, Integer.valueOf(_view.frozenColumnCount()));
 	}
 
@@ -1973,10 +1963,11 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * it freezes, and which columns the rows are grouped by.
 	 *
 	 * <p>
-	 * The selection is the page "Columns" of the view popover. It is held in the state, as a child
-	 * of the table, while the page is open, and every gesture in it changes the table at once - the
-	 * selection tells {@link #applyColumns(List, List, List)} the arrangement it now has -, so
-	 * there is nothing to confirm and nothing to cancel.
+	 * The selection is the first page "Columns" of the view popover. It is held in the state, as a
+	 * child of the table, while the popover is open - also while it shows its second page, the view
+	 * -, and every gesture in it changes the table at once - the selection tells
+	 * {@link #applyColumns(List, List, List)} the arrangement it now has -, so there is nothing to
+	 * confirm and nothing to cancel.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_OPEN_COLUMNS)
@@ -1993,8 +1984,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Closes the page of the column selection. The table stays as it is: every change has taken
-	 * effect already.
+	 * Releases the column selection when the view popover closes. The table stays as it is: every
+	 * change has taken effect already.
 	 */
 	@ReactCommandHandler(CMD_CLOSE_COLUMNS)
 	void handleCloseColumns() {
@@ -2017,7 +2008,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		}
 	}
 
-	/** The column selection of the open page, {@code null} while it is not open. */
+	/** The column selection of the open view popover, {@code null} while it is not open. */
 	private ReactColumnSelectControl columnSelection() {
 		return getState(COLUMN_SELECTION) instanceof ReactColumnSelectControl selection ? selection : null;
 	}

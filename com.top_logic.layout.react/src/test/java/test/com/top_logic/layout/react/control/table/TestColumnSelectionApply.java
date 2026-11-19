@@ -61,11 +61,6 @@ public class TestColumnSelectionApply extends TestCase {
 	/** The state key of the column selection the popover shows. */
 	private static final String STATE_COLUMN_SELECTION = "columnSelection";
 
-	/** The state keys telling how many of the offered columns are displayed. */
-	private static final String STATE_COLUMNS_SHOWN = "columnsShown";
-
-	private static final String STATE_COLUMNS_TOTAL = "columnsTotal";
-
 	private static final String CMD_OPEN_COLUMNS = "openColumns";
 
 	private static final String CMD_CLOSE_COLUMNS = "closeColumns";
@@ -113,13 +108,11 @@ public class TestColumnSelectionApply extends TestCase {
 
 	/**
 	 * Tests that opening the page puts the selection into the state, offering the columns as the table displays
-	 * them, and that the table tells how many of them it displays.
+	 * them.
 	 */
 	public void testOpenColumnsPutsTheSelectionIntoTheState() {
 		TestTable table = control();
 		assertNull(table.selection());
-		assertEquals(Integer.valueOf(3), table.clientState(STATE_COLUMNS_SHOWN));
-		assertEquals(Integer.valueOf(3), table.clientState(STATE_COLUMNS_TOTAL));
 
 		ReactColumnSelectControl selection = table.open();
 
@@ -127,26 +120,6 @@ public class TestColumnSelectionApply extends TestCase {
 		assertEquals(initialOrder(), selection.order());
 		assertEquals(initialOrder(), selection.visibleColumns());
 		assertEquals(List.of(), selection.lockedColumns());
-	}
-
-	/** Tests that the entry of the page can tell n of m: hiding a column changes n, the total stays. */
-	public void testTheTableTellsHowManyColumnsItDisplays() {
-		TestTable table = control();
-		ReactColumnSelectControl selection = table.open();
-
-		visible(selection, COLUMN_AMOUNT, false);
-
-		assertEquals(Integer.valueOf(2), table.clientState(STATE_COLUMNS_SHOWN));
-		assertEquals(Integer.valueOf(3), table.clientState(STATE_COLUMNS_TOTAL));
-	}
-
-	/** Tests that a leading action column, which the selection does not offer, is none of the counted columns. */
-	public void testTheActionColumnIsNotCounted() {
-		TestTable table =
-			control(withActions(columns()), List.of(COLUMN_ACTIONS, COLUMN_NAME, COLUMN_AMOUNT, COLUMN_STATE));
-
-		assertEquals(Integer.valueOf(3), table.clientState(STATE_COLUMNS_SHOWN));
-		assertEquals(Integer.valueOf(3), table.clientState(STATE_COLUMNS_TOTAL));
 	}
 
 	/** Tests that a table that does not offer the column selection opens none. */

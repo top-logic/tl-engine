@@ -2,7 +2,9 @@ import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { EDGE_END, EDGE_START, PAGE_FRACTION, pageScrollLeft, revealScrollLeft, stripOverflow } from './scroll-strip';
+import {
+  EDGE_END, EDGE_START, PAGE_FRACTION, WHEEL_LINE_WIDTH, pageScrollLeft, revealScrollLeft, stripOverflow, wheelScrollDelta,
+} from './scroll-strip';
 import { TabStrip } from './TabStrip';
 
 // The labels as given: no server to translate them.
@@ -81,6 +83,35 @@ describe('pageScrollLeft', () => {
   it('stops at the ends', () => {
     expect(pageScrollLeft({ ...g, scrollLeft: 50 }, EDGE_START)).toBe(0);
     expect(pageScrollLeft({ ...g, scrollLeft: 1000 }, EDGE_END)).toBe(1100);
+  });
+});
+
+describe('wheelScrollDelta', () => {
+  const overflowing = { scrollLeft: 100, clientWidth: 300, scrollWidth: 800 };
+  const turn = (deltaY: number, more: Partial<WheelEvent> = {}) =>
+    ({ deltaX: 0, deltaY, deltaMode: WheelEvent.DOM_DELTA_PIXEL, ctrlKey: false, ...more });
+
+  it('scrolls by the vertical turn in pixels', () => {
+    expect(wheelScrollDelta(turn(53), overflowing)).toBe(53);
+    expect(wheelScrollDelta(turn(-120), overflowing)).toBe(-120);
+  });
+
+  it('converts lines and pages to pixels', () => {
+    expect(wheelScrollDelta(turn(3, { deltaMode: WheelEvent.DOM_DELTA_LINE }), overflowing)).toBe(3 * WHEEL_LINE_WIDTH);
+    expect(wheelScrollDelta(turn(-1, { deltaMode: WheelEvent.DOM_DELTA_PAGE }), overflowing)).toBe(-300);
+  });
+
+  it('takes a turn at an end as well', () => {
+    expect(wheelScrollDelta(turn(50), { ...overflowing, scrollLeft: 500 })).toBe(50);
+    expect(wheelScrollDelta(turn(-50), { ...overflowing, scrollLeft: 0 })).toBe(-50);
+  });
+
+  it('leaves zoom, horizontal movements and fitting content to the browser', () => {
+    expect(wheelScrollDelta(turn(50, { ctrlKey: true }), overflowing)).toBeNull();
+    expect(wheelScrollDelta(turn(50, { deltaX: 60 }), overflowing)).toBeNull();
+    expect(wheelScrollDelta(turn(50, { deltaX: -50 }), overflowing)).toBeNull();
+    expect(wheelScrollDelta(turn(0), overflowing)).toBeNull();
+    expect(wheelScrollDelta(turn(50), { scrollLeft: 0, clientWidth: 300, scrollWidth: 300 })).toBeNull();
   });
 });
 
@@ -338,6 +369,57 @@ describe('TabStrip', () => {
     expect(present()).toEqual([]);
     resized(list());
     expect(present()).toEqual([]);
+    expect(list().scrollLeft).toBe(0);
+  });
+
+  /** Turns the mouse wheel over the tab list; whether the list took the event (cancelled it). */
+  function wheel(init: WheelEventInit): boolean {
+    const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, ...init });
+    act(() => { list().dispatchEvent(event); });
+    return event.defaultPrevented;
+  }
+
+  it('scrolls the overflowing tabs sideways by the turn of the wheel', () => {
+    mount();
+    render(6, 't0');
+    expect(wheel({ deltaY: 50 })).toBe(true);
+    expect(list().scrollLeft).toBe(50);
+    expect(enabled()).toEqual([EDGE_START, EDGE_END]);
+
+    expect(wheel({ deltaY: 2, deltaMode: WheelEvent.DOM_DELTA_LINE })).toBe(true);
+    expect(list().scrollLeft).toBe(50 + 2 * WHEEL_LINE_WIDTH);
+
+    expect(wheel({ deltaY: -1, deltaMode: WheelEvent.DOM_DELTA_PAGE })).toBe(true);
+    expect(list().scrollLeft).toBe(0);
+    expect(enabled()).toEqual([EDGE_END]);
+  });
+
+  it('takes the wheel at the ends of overflowing tabs, without scrolling past them', () => {
+    mount();
+    render(6, 't0');
+    const max = 600 - (STRIP_WIDTH - 2 * BUTTON_WIDTH);
+    expect(wheel({ deltaY: -40 })).toBe(true);
+    expect(list().scrollLeft).toBe(0);
+
+    expect(wheel({ deltaY: 1000 })).toBe(true);
+    expect(list().scrollLeft).toBe(max);
+    expect(wheel({ deltaY: 40 })).toBe(true);
+    expect(list().scrollLeft).toBe(max);
+    expect(enabled()).toEqual([EDGE_START]);
+  });
+
+  it('leaves the wheel to the browser while the tabs fit', () => {
+    mount();
+    render(2, 't0');
+    expect(wheel({ deltaY: 50 })).toBe(false);
+    expect(list().scrollLeft).toBe(0);
+  });
+
+  it('leaves zoom and horizontal movements to the browser', () => {
+    mount();
+    render(6, 't0');
+    expect(wheel({ deltaY: 50, ctrlKey: true })).toBe(false);
+    expect(wheel({ deltaX: 50, deltaY: 20 })).toBe(false);
     expect(list().scrollLeft).toBe(0);
   });
 

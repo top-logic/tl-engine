@@ -20,6 +20,7 @@ import MuiTextInputAdapter from './MuiTextInputAdapter';
 import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
 import MuiChipAdapter from './MuiChipAdapter';
 import MuiSkeletonAdapter from './MuiSkeletonAdapter';
+import MuiBadgeAdapter from './MuiBadgeAdapter';
 
 replacePart('Button', MuiButtonAdapter);
 // The gear of the table is the trigger of its view.
@@ -33,6 +34,8 @@ replacePart('TextInput', MuiTextInputAdapter);
 // The table draws its named filters as chips.
 replacePart('Chip', MuiChipAdapter);
 replacePart('Skeleton', MuiSkeletonAdapter);
+// The group toggle of a grouping column carries its group level as a badge.
+replacePart('Badge', MuiBadgeAdapter);
 
 /** The labels of the buttons: the keys, as the test stub translates each key to itself. */
 const LABEL_MINIMIZE = 'js.panel.minimize';
@@ -48,6 +51,7 @@ const LABEL_REMOVE = 'js.valueList.remove';
 const LABEL_GROUP_BY = 'js.table.groupBy';
 const LABEL_GROUP_BY_ALSO = 'js.table.groupByAlso';
 const LABEL_UNGROUP_COLUMN = 'js.table.ungroupColumn';
+const LABEL_GROUP_LEVEL = 'js.table.groupLevel';
 const LABEL_OPEN_DRAWER = 'js.sidebar.openDrawer';
 const LABEL_COLUMN_HIDE = 'js.table.columnHide';
 const LABEL_COLUMN_SHOW_LOCK = 'js.table.columnShowLock';
@@ -291,8 +295,13 @@ describe('the group toggle of the column selection', () => {
     });
     await settle();
 
-    const ungroup = screen.getAllByRole('button', { name: LABEL_UNGROUP_COLUMN });
-    expect(ungroup).toHaveLength(2);
+    // Grouped by two columns, each toggle names the group level of its column, c the outermost.
+    const ungroup = [
+      screen.getByRole('button', { name: LABEL_UNGROUP_COLUMN + ', ' + LABEL_GROUP_LEVEL + ': 2' }),
+      screen.getByRole('button', { name: LABEL_UNGROUP_COLUMN + ', ' + LABEL_GROUP_LEVEL + ': 1' }),
+    ];
+    expect(ungroup[0].closest('.tl-reorder-list__item')!.textContent).toContain('Spalte a');
+    expect(ungroup[0].querySelector('.MuiBadge-badge')!.textContent).toBe('2');
     for (const button of ungroup) {
       expect(button.getAttribute('aria-pressed')).toBe('true');
       expect(button.classList.contains('tl-reveal-on-hover')).toBe(false);

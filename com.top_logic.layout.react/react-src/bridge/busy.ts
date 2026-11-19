@@ -1,5 +1,6 @@
 /**
- * Whether the page is busy with a command: the state of the busy lock.
+ * Whether the page is busy with a command or waits for the server to answer again: the state of
+ * the busy lock.
  *
  * <p>The command channel ({@link enqueueCommand}) reports every command the user waits for when it
  * is enqueued ({@link busyCommandEnqueued}) and when its answer has arrived
@@ -9,9 +10,16 @@
  * is lifted as soon as no such command is outstanding any more. A command answered within the delay
  * shows nothing at all.</p>
  *
+ * <p>The page is locked as well once it has been disconnected from the server (see
+ * {@link isConnected}) for longer than {@link DISCONNECTED_LOCK_DELAY_MS}, until it is connected
+ * again ({@link isDisconnectedLocked}): the input would only get lost. A short interruption shows
+ * nothing. The lock is lifted only when neither a command nor the disconnection holds it.</p>
+ *
  * <p>A page without the attribute is never locked: React controls embedded in a page that shows a
  * busy state of its own.</p>
  */
+
+import { isConnected, subscribeConnection } from './connection';
 
 /**
  * Attribute of the page's {@code <body>} naming the delay, in milliseconds, after which a command
@@ -19,14 +27,26 @@
  */
 export const BUSY_DELAY_ATTR = 'data-busy-delay';
 
+/**
+ * How long the page has to be disconnected from the server before it is locked, so that a short
+ * interruption does not flicker.
+ */
+export const DISCONNECTED_LOCK_DELAY_MS = 2_000;
+
 /** The number of commands outstanding that the user waits for. */
 let _outstanding = 0;
 
 /** The timer locking the page once the delay has passed, while commands are outstanding. */
 let _timer: ReturnType<typeof setTimeout> | null = null;
 
-/** Whether the page is locked. */
-let _locked = false;
+/** Whether commands the user waits for lock the page. */
+let _commandLocked = false;
+
+/** The timer locking the page once it has been disconnected for {@link DISCONNECTED_LOCK_DELAY_MS}. */
+let _disconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Whether the disconnection from the server locks the page. */
+let _disconnectedLocked = false;
 
 /** Called when the page is locked or unlocked. */
 const _listeners = new Set<() => void>();
@@ -42,13 +62,43 @@ function busyDelay(): number | null {
   return Number.isFinite(delay) && delay >= 0 ? delay : null;
 }
 
-function setLocked(locked: boolean): void {
-  if (_locked === locked) return;
-  _locked = locked;
+function setCommandLocked(locked: boolean): void {
+  if (_commandLocked === locked) return;
+  _commandLocked = locked;
+  notify();
+}
+
+function setDisconnectedLocked(locked: boolean): void {
+  if (_disconnectedLocked === locked) return;
+  _disconnectedLocked = locked;
+  notify();
+}
+
+function notify(): void {
   for (const listener of [..._listeners]) {
     listener();
   }
 }
+
+/** Starts or ends the lock for a disconnection, as the connection state changes. */
+function onConnectionChange(): void {
+  if (isConnected()) {
+    if (_disconnectTimer !== null) {
+      clearTimeout(_disconnectTimer);
+      _disconnectTimer = null;
+    }
+    setDisconnectedLocked(false);
+    return;
+  }
+  if (_disconnectTimer !== null || _disconnectedLocked) return;
+  if (busyDelay() === null) return;
+  _disconnectTimer = setTimeout(() => {
+    _disconnectTimer = null;
+    setDisconnectedLocked(true);
+  }, DISCONNECTED_LOCK_DELAY_MS);
+}
+
+subscribeConnection(onConnectionChange);
 
 /**
  * Reports a command the user waits for as enqueued. The first one outstanding starts the delay.
@@ -60,7 +110,7 @@ export function busyCommandEnqueued(): void {
   if (delay === null) return;
   _timer = setTimeout(() => {
     _timer = null;
-    setLocked(true);
+    setCommandLocked(true);
   }, delay);
 }
 
@@ -76,12 +126,20 @@ export function busyCommandAnswered(): void {
     clearTimeout(_timer);
     _timer = null;
   }
-  setLocked(false);
+  setCommandLocked(false);
 }
 
-/** Whether the page is locked, because commands the user waits for take longer than the delay. */
+/**
+ * Whether the page is locked, because commands the user waits for take longer than the delay, or
+ * because the server does not answer.
+ */
 export function isBusyLocked(): boolean {
-  return _locked;
+  return _commandLocked || _disconnectedLocked;
+}
+
+/** Whether the page is locked because the server has not answered for a while. */
+export function isDisconnectedLocked(): boolean {
+  return _disconnectedLocked;
 }
 
 /**

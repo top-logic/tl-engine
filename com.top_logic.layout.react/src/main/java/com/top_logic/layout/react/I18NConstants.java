@@ -258,6 +258,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_UPLOADING;
 
 	/**
+	 * @en Connection to the server lost. Reconnecting\u2026
+	 */
+	@CustomKey("js.connection.reconnecting")
+	public static ResKey JS_CONNECTION_RECONNECTING;
+
+	/**
 	 * @en Record audio
 	 */
 	@CustomKey("js.audioRecorder.record")
@@ -1088,6 +1094,24 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.table.grouped")
 	public static ResKey JS_TABLE_GROUPED;
+
+	/**
+	 * @en The rows are grouped by this column, level {0}
+	 */
+	@CustomKey("js.table.groupedLevel")
+	public static ResKey JS_TABLE_GROUPED_LEVEL;
+
+	/**
+	 * @en Grouping level
+	 */
+	@CustomKey("js.table.groupLevel")
+	public static ResKey JS_TABLE_GROUP_LEVEL;
+
+	/**
+	 * @en Sort priority
+	 */
+	@CustomKey("js.table.sortPriority")
+	public static ResKey JS_TABLE_SORT_PRIORITY;
 
 	/**
 	 * @en Fit width to content

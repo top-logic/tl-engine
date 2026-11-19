@@ -145,6 +145,21 @@
 					</nav-item>
 
 					<!--
+						The badges of a <chat-rail>: sections counting the demo's events and venues,
+						a number to try the rules of a badge and a dot, beside a conversation whose
+						rail button shows what the sections count together.
+					-->
+					<nav-item id="rail-badges"
+						icon="css:bi bi-layout-sidebar-inset-reverse"
+					>
+						<label>
+							<en>Rail badges</en>
+							<de>Badges der Leiste</de>
+						</label>
+						<view-ref view="tl-ai-demo/rail-badges.view.xml"/>
+					</nav-item>
+
+					<!--
 						What this account tells every agent about itself (Issue #437): one free-text
 						field on tl.accounts:Person, which the harness renders into the environment block
 						of every run this user triggers.

@@ -533,7 +533,9 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 		}
 
 		if (getConfig().getLinkByEmail() && isEmailVerified(identity)) {
-			Person byEmail = ExternalUserMapping.checkAlive(findByEmail(getEmail(identity)), loginName);
+			List<Person> withEmail = Person.allByEMail(getEmail(identity));
+			Person single = withEmail.size() == 1 ? withEmail.get(0) : null;
+			Person byEmail = ExternalUserMapping.checkAlive(single, loginName);
 			if (byEmail != null) {
 				return link(byEmail, identity);
 			}
@@ -679,29 +681,6 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 			throw new IllegalStateException("No authentication device '" + deviceId + "' configured.");
 		}
 		return device;
-	}
-
-	/**
-	 * The single account with the given e-mail address, compared ignoring case.
-	 *
-	 * @return The account, <code>null</code> if no account or more than one account has the
-	 *         address.
-	 */
-	private static Person findByEmail(String email) {
-		if (email == null) {
-			return null;
-		}
-		Person result = null;
-		for (Person account : Person.all()) {
-			UserInterface user = account.getUser();
-			if (user != null && user.getEMail() != null && email.equalsIgnoreCase(user.getEMail().strip())) {
-				if (result != null) {
-					return null;
-				}
-				result = account;
-			}
-		}
-		return result;
 	}
 
 	/**

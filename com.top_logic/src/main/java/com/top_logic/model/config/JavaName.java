@@ -29,13 +29,17 @@ import com.top_logic.model.annotate.TLAttributeAnnotation;
  * <p>
  * Use this annotation, if the access methods built from the attribute name clash with a method
  * the generated interface or implementation class inherits, e.g. an attribute
- * <code>lastModified</code> with {@link com.top_logic.knowledge.wrap.Wrapper#getLastModified()}.
+ * <code>lastModified</code>, whose getter clashes with the getter of the modification date every
+ * {@link com.top_logic.knowledge.wrap.Wrapper} provides.
  * </p>
  *
  * <p>
  * An attribute overriding the annotated attribute inherits the annotation, since its generated
  * getter overrides the getter of the overridden attribute.
  * </p>
+ * 
+ * @implNote The clashing getter of the example is
+ *           {@link com.top_logic.knowledge.wrap.Wrapper#getLastModified()}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

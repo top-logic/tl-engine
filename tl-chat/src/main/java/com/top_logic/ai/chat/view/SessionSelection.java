@@ -18,7 +18,7 @@ import com.top_logic.model.TLObject;
  *
  * <p>
  * <b>The channel is the selection.</b> The browser shows what the channel holds, and a session it
- * reports - one it created on a first send, or restored after a reload - is only a proposal. A host
+ * reports - one it created on a first send, or one the user opened in it - is only a proposal. A host
  * that binds a conversation to something else on the page (one per project, say) answers the write
  * from its own channel listener: it refuses the reported session and writes its own, or none. That
  * answer has to win, so what is pushed to the browser afterwards is read from the channel, never
@@ -34,7 +34,7 @@ import com.top_logic.model.TLObject;
  * <p>
  * <b>A refusal is a write the browser must follow even when nothing changes.</b> A host that writes
  * back the empty channel it had leaves {@code selected} at {@code ""} - the value it had before the
- * browser reported its restored session. Unchanged state is no news to the browser, so every
+ * browser reported its session. Unchanged state is no news to the browser, so every
  * refusal also counts up {@code selectedCorrections}, and the browser follows the channel whenever
  * that count moves.
  * </p>

@@ -519,8 +519,8 @@ public class ChatConversationControl extends ChatControl {
 	 *
 	 * <p>
 	 * This makes the {@code input} channel two-way: the conversation follows a selection and writes its
-	 * own session back when the store creates one (first send) or restores one (reload). It replaces the
-	 * former separate {@code <chat-session-binding/>}. Empty id clears the channel - a fresh conversation
+	 * own session back when the store creates one (first send) or opens one (a pick from its rail).
+	 * Empty id clears the channel - a fresh conversation
 	 * that has not persisted a session yet.
 	 * </p>
 	 *

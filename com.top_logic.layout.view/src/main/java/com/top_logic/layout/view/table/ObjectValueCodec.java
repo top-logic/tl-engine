@@ -14,6 +14,7 @@ import com.top_logic.basic.TLID;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.access.StorageMapping;
 import com.top_logic.table.filter.BoundCodec;
 
 /**
@@ -23,8 +24,11 @@ import com.top_logic.table.filter.BoundCodec;
  * <p>
  * A value is written as its label. A business object is stored by its identity, the name of its
  * table ({@link #TYPE}) and its identifier ({@link #ID}), and read back from the knowledge base; an
- * object that no longer exists is read as {@code null}. A text is stored as itself. Any other value
- * has no persistent form. A value is not entered as text, so {@link #parse(String)} reads none.
+ * object that no longer exists is read as {@code null}. A value of a datatype is stored in the form
+ * its {@link StorageMapping} stores it in the database, where that is a text (e.g. a color as its
+ * hexadecimal code, an icon as its name), and a text without a storage mapping as itself. Any other
+ * value has no persistent form. A value is not entered as text, so {@link #parse(String)} reads
+ * none.
  * </p>
  */
 final class ObjectValueCodec implements BoundCodec<Object> {
@@ -37,14 +41,20 @@ final class ObjectValueCodec implements BoundCodec<Object> {
 
 	private final Function<Object, String> _label;
 
+	private final StorageMapping<?> _mapping;
+
 	/**
 	 * Creates an {@link ObjectValueCodec}.
 	 *
 	 * @param label
 	 *        The label a value is written as.
+	 * @param mapping
+	 *        The storage mapping of the datatype of the values, {@code null} for values of no
+	 *        datatype (e.g. business objects).
 	 */
-	ObjectValueCodec(Function<Object, String> label) {
+	ObjectValueCodec(Function<Object, String> label, StorageMapping<?> mapping) {
 		_label = label;
+		_mapping = mapping;
 	}
 
 	@Override
@@ -65,16 +75,44 @@ final class ObjectValueCodec implements BoundCodec<Object> {
 			json.put(ID, IdentifierUtil.toExternalForm(object.tIdLocal()));
 			return json;
 		}
+		if (_mapping != null) {
+			return storedText(value);
+		}
 		if (value instanceof String) {
 			return value;
 		}
 		return null;
 	}
 
+	/**
+	 * The text the {@link StorageMapping} stores the given value as, {@code null} if it stores it
+	 * otherwise or cannot store it.
+	 */
+	private Object storedText(Object value) {
+		try {
+			if (!_mapping.isCompatible(value)) {
+				return null;
+			}
+			Object stored = _mapping.getStorageObject(value);
+			return stored instanceof String ? stored : null;
+		} catch (RuntimeException ex) {
+			// A value the mapping cannot store has no persistent form.
+			return null;
+		}
+	}
+
 	@Override
 	public Object fromJson(Object json) {
-		if (json instanceof String) {
-			return json;
+		if (json instanceof String text) {
+			if (_mapping == null) {
+				return text;
+			}
+			try {
+				return _mapping.getBusinessObject(text);
+			} catch (RuntimeException ex) {
+				// A text the mapping cannot read (any longer) is no value.
+				return null;
+			}
 		}
 		if (!(json instanceof Map<?, ?> map)) {
 			return null;

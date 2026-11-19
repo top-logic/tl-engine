@@ -49,6 +49,7 @@ import com.top_logic.table.FilterState;
 import com.top_logic.table.MatchCounts;
 import com.top_logic.table.NamedFilter;
 import com.top_logic.table.NamedFilterStore;
+import com.top_logic.table.Option;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.TableId;
 import com.top_logic.table.TableView;
@@ -123,8 +124,12 @@ public class TestObjectValueFilter extends AbstractModelAccessTest {
 		TableView<Object> view = DefaultTableView.create(columns, new ListRowSource<>(rows, columns));
 		view.filter(PROJECTS, new OptionsFilterState(Set.of(_otherProject)));
 		assertEquals(1, view.rowCount());
-		assertEquals(List.of(_otherProject, _project),
+		assertEquals("The cell without an object is offered as no value.",
+			List.of(_otherProject, _project, Option.NO_VALUE),
 			view.columnMatchCounts(PROJECTS, ColumnFilter.KIND_VALUES).values());
+
+		view.filter(PROJECTS, new OptionsFilterState(Set.of(Option.NO_VALUE)));
+		assertEquals(List.of(List.of()), data(view));
 	}
 
 	/**

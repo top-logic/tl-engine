@@ -13,9 +13,11 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -30,6 +32,7 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.Positive;
@@ -61,9 +64,11 @@ import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.DynamicVisibility;
 import com.top_logic.model.annotate.ModeSelector;
+import com.top_logic.model.annotate.ui.MultiLine;
 import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelPartRef;
@@ -117,6 +122,14 @@ import com.top_logic.util.TLCollator;
  * {@code STRING} → text, values; anything else (custom primitives, references, multi-valued or
  * unresolved descriptors) → values, a display-label text filter.</li>
  * </ol>
+ *
+ * <p>
+ * Whether a list of values and a text filter make sense depends on the type of the values, not on
+ * how many of them there are: content - a rich text, a script, a text of several lines, a file -
+ * is filtered by its text only, and a value shown as a graphic - a color, an icon - by the list of
+ * its values only, see {@link Config#getContentTypes() the content types} and
+ * {@link Config#getGraphicTypes() the graphic types}.
+ * </p>
  *
  * <p>
  * A list of values offers the values occurring in the rows, as long as there are at most
@@ -185,6 +198,12 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 
 		/** Property name of {@link #getMaxValueOptions()}. */
 		String MAX_VALUE_OPTIONS = "max-value-options";
+
+		/** Property name of {@link #getContentTypes()}. */
+		String CONTENT_TYPES = "content-types";
+
+		/** Property name of {@link #getGraphicTypes()}. */
+		String GRAPHIC_TYPES = "graphic-types";
 
 		/**
 		 * Provider mappings keyed by model type reference.
@@ -287,6 +306,39 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 		@Constraint(Positive.class)
 		int getMaxValueOptions();
 
+		/**
+		 * The types whose values are content - a rich text, a script, a structured document -
+		 * rather than a choice.
+		 *
+		 * <p>
+		 * Two such values are hardly ever equal, and a list of them shows whole documents, so a
+		 * column over them offers no list of values to choose from: it is filtered by the text it
+		 * shows. The same holds without being listed here for a text written on several lines (a
+		 * type or an attribute annotated as multi-line) and for binary data.
+		 * </p>
+		 */
+		@Name(CONTENT_TYPES)
+		@com.top_logic.basic.config.annotation.Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
+		@FormattedDefault("tl.model.wysiwyg:Html, tl.model.i18n:I18NHtml, tl.model.search:Expr, "
+			+ "tl.model.search:Code, tl.model.search:Template, tl.model.search:Report, tl.model.search:Macro, "
+			+ "tl.util:JSON")
+		List<TLModelPartRef> getContentTypes();
+
+		/**
+		 * The types whose values are shown as a graphic rather than as a text, e.g. a color swatch
+		 * or an icon.
+		 *
+		 * <p>
+		 * Their text is no more than a technical name the user never sees, so a column over them
+		 * offers no text filter: it is filtered by the list of the values occurring in it, shown
+		 * as the cells show them.
+		 * </p>
+		 */
+		@Name(GRAPHIC_TYPES)
+		@com.top_logic.basic.config.annotation.Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
+		@FormattedDefault("tl.util:Color, tl.core:Icon")
+		List<TLModelPartRef> getGraphicTypes();
+
 	}
 
 	/**
@@ -315,6 +367,10 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 
 	private Map<String, ColumnProvider> _providerByQualifiedType;
 
+	private Set<String> _contentTypes;
+
+	private Set<String> _graphicTypes;
+
 	/**
 	 * Creates a {@link ColumnProviderService} from configuration.
 	 */
@@ -328,6 +384,8 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	protected void startUp() {
 		super.startUp();
 		_providerByQualifiedType = new HashMap<>();
+		_contentTypes = qualifiedNames(getConfig().getContentTypes());
+		_graphicTypes = qualifiedNames(getConfig().getGraphicTypes());
 		for (ProviderMapping mapping : getConfig().getProviders().values()) {
 			TLModelPartRef typeRef = mapping.getType();
 			if (typeRef != null) {
@@ -337,6 +395,14 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 				}
 			}
 		}
+	}
+
+	private static Set<String> qualifiedNames(List<TLModelPartRef> types) {
+		Set<String> result = new HashSet<>();
+		for (TLModelPartRef type : types) {
+			result.add(type.qualifiedName());
+		}
+		return result;
 	}
 
 	/**
@@ -532,10 +598,11 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			Function<Object, Object> value, Function<Object, String> text) {
 		int width = defaultWidth(type);
 		int maxValues = getConfig().getMaxValueOptions();
+		LabelFilters labelFilters = labelFilters(type);
 		if (AttributeOptions.labelsFor(type.part()) != null) {
 			// Options displayed by labels of their own are sorted and searched by these labels,
 			// not by the values the labels stand for.
-			return labelColumn(name, label, type, width, value, text, maxValues);
+			return labelColumn(name, label, type, width, value, text, maxValues, labelFilters);
 		}
 		if (type.multiple() && type.type() instanceof TLEnumeration enumeration) {
 			return multipleOptionsColumn(name, label, type, width, value, text, enumeration);
@@ -572,19 +639,70 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 						comparableFilter(Comparator.<Date> naturalOrder(), codec),
 						dateValuesFilter(temporalKind, codec, maxValues)));
 			}
-			case STRING:
+			case STRING: {
+				List<ColumnFilter<String>> filters = new ArrayList<>(2);
+				filters.add(stringFilter());
+				if (labelFilters.values()) {
+					filters.add(OptionsColumnFilter.<String, String> occurring(
+						string -> string instanceof String && !string.isEmpty() ? List.of(string) : List.of(),
+						BoundCodec.text(Function.identity()), maxValues));
+				}
 				return typedColumn(name, label, type, width, value, String.class,
-					Comparator.<String> naturalOrder(),
-					List.of(
-						stringFilter(),
-						OptionsColumnFilter.<String, String> occurring(
-							string -> string instanceof String && !string.isEmpty() ? List.of(string) : List.of(),
-							BoundCodec.text(Function.identity()), maxValues)));
+					Comparator.<String> naturalOrder(), filters);
+			}
 			case ENUMERATION:
 				return optionsColumn(name, label, type, width, value, (TLEnumeration) type.type());
 			default:
-				return labelColumn(name, label, type, width, value, text, maxValues);
+				return labelColumn(name, label, type, width, value, text, maxValues, labelFilters);
 		}
+	}
+
+	/**
+	 * Which of the filters of a column over values known by their label or text the column offers:
+	 * the list of the values occurring in it, the text filter, or both.
+	 *
+	 * @param values
+	 *        Whether the column offers the list of its values.
+	 * @param text
+	 *        Whether the column offers the text filter.
+	 */
+	private record LabelFilters(boolean values, boolean text) {
+		// Pure value type.
+	}
+
+	/**
+	 * The filters a column over values known by their label or text offers, by the type of its
+	 * values.
+	 *
+	 * <p>
+	 * A value that is content rather than a choice - a type listed in
+	 * {@link Config#getContentTypes() the content types}, a text written on several lines, binary
+	 * data - is filtered by text only. A value shown as a graphic - a type listed in
+	 * {@link Config#getGraphicTypes() the graphic types} - is filtered by the list of its values
+	 * only. Every other value offers both.
+	 * </p>
+	 */
+	private LabelFilters labelFilters(ColumnType type) {
+		TLType valueType = type.type();
+		if (valueType == null) {
+			return new LabelFilters(true, true);
+		}
+		String qualifiedName = TLModelUtil.qualifiedName(valueType);
+		if (_graphicTypes.contains(qualifiedName)) {
+			return new LabelFilters(true, false);
+		}
+		boolean content = _contentTypes.contains(qualifiedName) || isMultiLine(type)
+			|| valueType instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.BINARY;
+		return new LabelFilters(!content, true);
+	}
+
+	/**
+	 * Whether the described values are texts written on several lines.
+	 */
+	private static boolean isMultiLine(ColumnType type) {
+		AnnotationLookup annotations = type.annotations();
+		MultiLine multiLine = annotations == null ? null : annotations.getAnnotation(MultiLine.class);
+		return multiLine != null && multiLine.getValue();
 	}
 
 	/**
@@ -1056,19 +1174,34 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	/**
 	 * The fallback column: offers the values occurring in it and sorts and text-filters by the given
 	 * text of the cell value, the text the cell shows, which for a cell holding several values is
-	 * the text of all of them.
+	 * the text of all of them. Which of the two filters it offers is decided by the type of its
+	 * values, see {@link #labelFilters(ColumnType)}.
 	 */
 	private static Column<Object, Object> labelColumn(String name, ResKey label, ColumnType type, int width,
-			Function<Object, Object> value, Function<Object, String> text, int maxValues) {
+			Function<Object, Object> value, Function<Object, String> text, int maxValues, LabelFilters offered) {
 		// An unreadable cell is searched by the placeholder it shows, which reveals nothing.
 		BiFunction<Object, Object, String> elementText = elementText(type);
+		List<ColumnFilter<Object>> filters = new ArrayList<>(2);
+		if (offered.values()) {
+			filters.add(OptionsColumnFilter.<Object, Object> occurring(ColumnProviderService::elementKeys,
+				new ObjectValueCodec(element -> elementText.apply(null, element), storageMapping(type)),
+				maxValues));
+		}
+		if (offered.text() || filters.isEmpty()) {
+			filters.add(new TextColumnFilter<>(text));
+		}
 		return valueColumn(name, label, type, width, value)
 			.sort(cellSort(() -> Comparator.comparing(text)))
-			.filters(List.of(
-				OptionsColumnFilter.<Object, Object> occurring(ColumnProviderService::elementKeys,
-					new ObjectValueCodec(element -> elementText.apply(null, element)), maxValues),
-				new TextColumnFilter<>(text)))
+			.filters(filters)
 			.build();
+	}
+
+	/**
+	 * The storage mapping of the datatype of the described values, {@code null} for values of no
+	 * datatype.
+	 */
+	private static StorageMapping<?> storageMapping(ColumnType type) {
+		return type.type() instanceof TLPrimitive primitive ? primitive.getStorageMapping() : null;
 	}
 
 	/**

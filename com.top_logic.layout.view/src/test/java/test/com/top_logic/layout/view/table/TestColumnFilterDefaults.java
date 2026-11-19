@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.table;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -24,6 +25,7 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.config.annotation.ConfigType;
+import com.top_logic.element.meta.complex.ColorValueProvider;
 import com.top_logic.element.meta.kbbased.storage.mappings.BooleanMapping;
 import com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping;
 import com.top_logic.element.meta.kbbased.storage.mappings.IntMapping;
@@ -34,15 +36,19 @@ import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLPrimitive.Kind;
+import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
+import com.top_logic.model.annotate.ui.MultiLine;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
+import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnFilterState;
 import com.top_logic.table.MatchCounts;
+import com.top_logic.table.Option;
 import com.top_logic.table.TableView;
 import com.top_logic.table.filter.BoundCodec;
 import com.top_logic.table.filter.ComparisonOperator;
@@ -118,6 +124,95 @@ public class TestColumnFilterDefaults extends TestCase {
 		assertKinds("Unresolved", List.of(ColumnFilter.KIND_VALUES, ColumnFilter.KIND_TEXT), null, false);
 	}
 
+	/**
+	 * Content - a rich text, a script, a text of several lines, a file - is filtered by its text
+	 * only, however few distinct values occur: two documents are hardly ever equal.
+	 */
+	public void testContentFilteredByTextOnly() throws ConfigurationException {
+		TLModule wysiwyg = TLModelUtil.addModule(_module.getModel(), "tl.model.wysiwyg");
+		TLPrimitive html =
+			TLModelUtil.addDatatype(wysiwyg, wysiwyg, "Html", Kind.STRING, directMapping(StringBuilder.class));
+		assertKinds("Rich text, a listed content type", List.of(ColumnFilter.KIND_TEXT), html, false);
+		assertKinds("Several rich texts", List.of(ColumnFilter.KIND_TEXT), html, true);
+
+		TLModule search = TLModelUtil.addModule(_module.getModel(), "tl.model.search");
+		TLPrimitive expr = TLModelUtil.addDatatype(search, search, "Expr", Kind.CUSTOM, directMapping(Object.class));
+		assertKinds("Script, a listed content type", List.of(ColumnFilter.KIND_TEXT), expr, false);
+
+		TLPrimitive text = datatype("Text", Kind.STRING, directMapping(String.class));
+		text.setAnnotation(TypedConfiguration.newConfigItem(MultiLine.class));
+		assertKinds("Text of several lines, by the annotation of its type", List.of(ColumnFilter.KIND_TEXT), text,
+			false);
+
+		TLProperty notes = TLModelUtil.addProperty(_rowType, "notes", _string);
+		notes.setAnnotation(TypedConfiguration.newConfigItem(MultiLine.class));
+		assertKindsOf("Text of several lines, by the annotation of its attribute", List.of(ColumnFilter.KIND_TEXT),
+			ColumnType.of(notes));
+
+		TLPrimitive binary = datatype("Binary", Kind.BINARY, directMapping(Object.class));
+		assertKinds("File", List.of(ColumnFilter.KIND_TEXT), binary, false);
+	}
+
+	/**
+	 * A value shown as a graphic - a color, an icon - is filtered by the list of its values only:
+	 * its text is a technical name the user never sees.
+	 */
+	public void testGraphicFilteredByValuesOnly() throws ConfigurationException {
+		TLModule util = TLModelUtil.addModule(_module.getModel(), "tl.util");
+		TLPrimitive color = TLModelUtil.addDatatype(util, util, "Color", Kind.CUSTOM, ColorValueProvider.INSTANCE);
+		assertKinds("Color", List.of(ColumnFilter.KIND_VALUES), color, false);
+
+		TLModule core = TLModelUtil.addModule(_module.getModel(), "tl.core");
+		TLPrimitive icon = TLModelUtil.addDatatype(core, core, "Icon", Kind.CUSTOM, directMapping(Object.class));
+		assertKinds("Icon", List.of(ColumnFilter.KIND_VALUES), icon, false);
+
+		Column<Object, ?> column = column(color, false);
+		MatchCounts counts = source(column, Color.RED, Color.BLUE, null, Color.RED)
+			.matchCounts(VALUE, ColumnFilter.KIND_VALUES);
+		assertEquals(2, counts.count(Color.RED));
+		assertEquals("An empty cell is offered as no value.", 1, counts.count(Option.NO_VALUE));
+
+		ColumnFilter<?> values = column.filter(ColumnFilter.KIND_VALUES).get();
+		OptionsFilterState selection = new OptionsFilterState(Set.of(Color.RED, Option.NO_VALUE));
+		assertEquals("A value of a datatype is stored as its storage mapping stores it.", selection,
+			values.fromJson(values.toJson(selection)));
+	}
+
+	/** The types listed as content and as graphics are configured in the service. */
+	public void testShippedTypeLists() {
+		ColumnProviderService.Config config = ColumnProviderService.getInstance().getConfig();
+		List<String> content = config.getContentTypes().stream().map(TLModelPartRef::qualifiedName).toList();
+		assertTrue(content.containsAll(List.of("tl.model.wysiwyg:Html", "tl.model.i18n:I18NHtml",
+			"tl.model.search:Expr", "tl.util:JSON")));
+		assertEquals(List.of("tl.util:Color", "tl.core:Icon"),
+			config.getGraphicTypes().stream().map(TLModelPartRef::qualifiedName).toList());
+	}
+
+	/** A values filter offers the cells without a value, of a typed column as well. */
+	public void testNoValueOfTypedColumn() {
+		Column<Object, ?> column = column(_integer, false);
+		ListRowSource<Object> source = source(column, Long.valueOf(1), null, Long.valueOf(2), null);
+		MatchCounts counts = source.matchCounts(VALUE, ColumnFilter.KIND_VALUES);
+		assertEquals(List.of(Long.valueOf(1), Long.valueOf(2), Option.NO_VALUE), counts.values());
+		assertEquals(2, counts.count(Option.NO_VALUE));
+
+		TableView<Object> view = DefaultTableView.create(List.<Column<Object, ?>> of(column), source);
+		view.filter(VALUE, new ColumnFilterState(ColumnFilter.KIND_VALUES,
+			new OptionsFilterState(Set.of(Option.NO_VALUE)), false));
+		assertEquals(2, view.rowCount());
+
+		Column<Object, ?> level = column(_level, false);
+		MatchCounts levels = source(level, _level.getClassifier("high"), null).matchCounts(VALUE);
+		List<Object> options = new ArrayList<>();
+		for (Option option : ((OptionsColumnFilter<?>) level.filter().get()).options(levels, null)) {
+			options.add(option.value());
+		}
+		assertEquals("An enumeration offers no value after its classifiers.",
+			List.of(_level.getClassifier("medium"), _level.getClassifier("high"), _level.getClassifier("low"),
+				Option.NO_VALUE),
+			options);
+	}
+
 	/** The classifiers of an enumeration are all offered, however many values occur. */
 	public void testEnumerationOffersAllClassifiers() {
 		Column<Object, ?> column = column(_level, false);
@@ -133,7 +228,8 @@ public class TestColumnFilterDefaults extends TestCase {
 		TableView<Object> view = view(column, List.of("x", "y"), List.of("y"), List.of());
 		view.filter(VALUE, new OptionsFilterState(Set.of("x")));
 		assertEquals(1, view.rowCount());
-		assertEquals(List.of("x", "y"), view.columnMatchCounts(VALUE, ColumnFilter.KIND_VALUES).values());
+		assertEquals("No text is no value.", List.of("x", "y", Option.NO_VALUE),
+			view.columnMatchCounts(VALUE, ColumnFilter.KIND_VALUES).values());
 
 		view.filter(VALUE, new ColumnFilterState(ColumnFilter.KIND_TEXT, TextFilterState.contains("y"), false));
 		assertEquals("The text kind matches the text of the cell.", 2, view.rowCount());
@@ -179,8 +275,9 @@ public class TestColumnFilterDefaults extends TestCase {
 	public void testTextValuesExact() {
 		Column<Object, ?> column = column(_string, false);
 		MatchCounts counts = source(column, "b", "B", "a", "b", "").matchCounts(VALUE, ColumnFilter.KIND_VALUES);
-		assertEquals(List.of("B", "a", "b"), counts.values());
+		assertEquals("The empty text is no value.", List.of("B", "a", "b", Option.NO_VALUE), counts.values());
 		assertEquals(2, counts.count("b"));
+		assertEquals(1, counts.count(Option.NO_VALUE));
 	}
 
 	/** The bounds of a range are edited as typed values, with the column's codec as text fallback. */
@@ -219,8 +316,13 @@ public class TestColumnFilterDefaults extends TestCase {
 	}
 
 	private void assertKinds(String message, List<String> expected, TLType type, boolean multiple) {
+		assertKindsOf(message, expected, type == null ? ColumnType.UNRESOLVED : ColumnType.of(type, multiple));
+	}
+
+	private void assertKindsOf(String message, List<String> expected, ColumnType type) {
 		List<String> kinds = new ArrayList<>();
-		for (ColumnFilter<?> filter : column(type, multiple).filters()) {
+		for (ColumnFilter<?> filter : ColumnProviderService.getInstance()
+			.createColumn(VALUE, ResKey.text(VALUE), type, row -> ((Map<?, ?>) row).get(VALUE)).filters()) {
 			kinds.add(filter.kind());
 		}
 		assertEquals(message, expected, kinds);

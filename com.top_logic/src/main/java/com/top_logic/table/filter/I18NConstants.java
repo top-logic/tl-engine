@@ -50,7 +50,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey VALUE;
 
 	/**
-	 * @en Upper bound
+	 * @en From
+	 */
+	public static ResKey LOWER_BOUND;
+
+	/**
+	 * @en To
 	 */
 	public static ResKey UPPER_BOUND;
 

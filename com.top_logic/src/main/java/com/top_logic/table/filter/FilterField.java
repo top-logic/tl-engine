@@ -5,6 +5,9 @@
  */
 package com.top_logic.table.filter;
 
+import java.util.function.Function;
+import java.util.function.Predicate;
+
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.FieldModel;
@@ -26,6 +29,14 @@ import com.top_logic.table.Option;
  * knowing the type of the column enters it as a form does (a number field, a date picker). A UI
  * tier without such an input enters it as text, written and read by the codec.
  * </p>
+ *
+ * <p>
+ * A field whose meaning depends on the value of another field of the same editor - a second bound
+ * that exists only for a range, a bound whose label names its role - {@link #following(FieldModel,
+ * Function, Predicate) follows} that field: a UI tier observes the {@link #source() source} and
+ * updates the {@link #label()} and the {@link #isVisible() visibility} of the field when its value
+ * changes.
+ * </p>
  */
 public final class FilterField {
 
@@ -42,6 +53,12 @@ public final class FilterField {
 	private final Integer _count;
 
 	private final boolean _columnValue;
+
+	private final FieldModel _source;
+
+	private final Function<Object, ResKey> _labelFor;
+
+	private final Predicate<Object> _visibleFor;
 
 	/**
 	 * Creates a {@link FilterField} rendered by the field model's natural control.
@@ -84,6 +101,12 @@ public final class FilterField {
 
 	private FilterField(ResKey label, FieldModel model, LabelProvider optionLabels, BoundCodec<?> valueCodec,
 			Option option, Integer count, boolean columnValue) {
+		this(label, model, optionLabels, valueCodec, option, count, columnValue, null, null, null);
+	}
+
+	private FilterField(ResKey label, FieldModel model, LabelProvider optionLabels, BoundCodec<?> valueCodec,
+			Option option, Integer count, boolean columnValue, FieldModel source, Function<Object, ResKey> labelFor,
+			Predicate<Object> visibleFor) {
 		_label = label;
 		_model = model;
 		_optionLabels = optionLabels;
@@ -91,6 +114,27 @@ public final class FilterField {
 		_option = option;
 		_count = count;
 		_columnValue = columnValue;
+		_source = source;
+		_labelFor = labelFor;
+		_visibleFor = visibleFor;
+	}
+
+	/**
+	 * This field with a label and a visibility following the value of another field.
+	 *
+	 * @param source
+	 *        The model of the field whose value the label and the visibility depend on.
+	 * @param labelFor
+	 *        The label of this field for a value of the source.
+	 * @param visibleFor
+	 *        Whether this field is shown for a value of the source; a field not shown takes no
+	 *        part in the filter.
+	 * @return A copy of this field following the source.
+	 */
+	public FilterField following(FieldModel source, Function<Object, ResKey> labelFor,
+			Predicate<Object> visibleFor) {
+		return new FilterField(_label, _model, _optionLabels, _valueCodec, _option, _count, _columnValue, source,
+			labelFor, visibleFor);
 	}
 
 	/**
@@ -113,9 +157,30 @@ public final class FilterField {
 		return new FilterField(label, model, null, null, option, count, columnValue);
 	}
 
-	/** The field label. */
+	/**
+	 * The field label, for the current value of the {@link #source() source} where the field
+	 * follows one.
+	 */
 	public ResKey label() {
-		return _label;
+		return _source == null ? _label : _labelFor.apply(_source.getValue());
+	}
+
+	/**
+	 * Whether the field is shown, for the current value of the {@link #source() source} where the
+	 * field follows one.
+	 */
+	public boolean isVisible() {
+		return _source == null || _visibleFor.test(_source.getValue());
+	}
+
+	/**
+	 * The model of the field whose value the {@link #label()} and the {@link #isVisible()
+	 * visibility} of this field follow, or {@code null} if they are fixed.
+	 *
+	 * @see #following(FieldModel, Function, Predicate)
+	 */
+	public FieldModel source() {
+		return _source;
 	}
 
 	/** The field model holding the input value. */

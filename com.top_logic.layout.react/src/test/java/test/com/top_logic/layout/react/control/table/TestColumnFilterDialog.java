@@ -325,6 +325,44 @@ public class TestColumnFilterDialog extends TestCase {
 		assertEquals(RangeFilterState.of(ComparisonOperator.GE, Integer.valueOf(6)), dialog.read());
 	}
 
+	/**
+	 * The bounds follow the operator: a comparison with a single value shows the value alone, a
+	 * range its lower and upper bound.
+	 */
+	public void testBoundsFollowOperator() {
+		ColumnFilterDialog dialog = dialog(view(10), AMOUNT, RangeFilterState.of(ComparisonOperator.GE,
+			Integer.valueOf(4)));
+		List<ReactFormFieldChromeControl> bounds = boundFields(dialog.body());
+		assertEquals(2, bounds.size());
+		Resources resources = Resources.getInstance();
+		assertEquals(resources.getString(com.top_logic.table.filter.I18NConstants.VALUE),
+			state(bounds.get(0)).get(FormFieldState.LABEL__PROP));
+		assertTrue(bounds.get(0).isVisible());
+		assertFalse("A comparison with a single value has no upper bound.", bounds.get(1).isVisible());
+
+		FieldModel operator = (FieldModel) single(dialog.body(), ReactSelectFormFieldControl.class).getModel();
+		operator.setValue(ComparisonOperator.BETWEEN);
+		assertEquals(resources.getString(com.top_logic.table.filter.I18NConstants.LOWER_BOUND),
+			state(bounds.get(0)).get(FormFieldState.LABEL__PROP));
+		assertEquals(resources.getString(com.top_logic.table.filter.I18NConstants.UPPER_BOUND),
+			state(bounds.get(1)).get(FormFieldState.LABEL__PROP));
+		assertTrue(bounds.get(1).isVisible());
+
+		operator.setValue(ComparisonOperator.LT);
+		assertFalse(bounds.get(1).isVisible());
+	}
+
+	/** The fields entering a value of the column. */
+	private static List<ReactFormFieldChromeControl> boundFields(ReactControl root) {
+		List<ReactFormFieldChromeControl> result = new ArrayList<>();
+		for (ReactFormFieldChromeControl chrome : all(root, ReactFormFieldChromeControl.class)) {
+			if (chrome.getField() instanceof ValueInput) {
+				result.add(chrome);
+			}
+		}
+		return result;
+	}
+
 	/** Without a factory, a bound is entered as text, written and read by the codec of the filter. */
 	public void testTextBoundsWithoutFactory() {
 		TableView<Row> view = view(10);

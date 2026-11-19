@@ -225,4 +225,28 @@ public class TestFilterEditors extends TestCase {
 		assertEquals(Integer.valueOf(10), state.secondary());
 	}
 
+	/**
+	 * The bound fields follow the operator: a comparison with a single value has one field, the
+	 * value; a value left in the upper bound of a range is no part of it.
+	 */
+	public void testComparableEditorFieldsFollowOperator() {
+		FilterEditor editor = FilterEditors.create(ComparableColumnFilter.integers(),
+			RangeFilterState.between(5, 10), MatchCounts.NONE);
+		FilterField primary = editor.fields().get(1);
+		FilterField secondary = editor.fields().get(2);
+		assertSame(field(editor, 0), primary.source());
+		assertSame(field(editor, 0), secondary.source());
+
+		field(editor, 0).setValue(ComparisonOperator.LT);
+		assertEquals(I18NConstants.VALUE, primary.label());
+		assertTrue(primary.isVisible());
+		assertFalse("A comparison with a single value has no upper bound.", secondary.isVisible());
+		assertEquals(RangeFilterState.of(ComparisonOperator.LT, Integer.valueOf(5)), editor.read());
+
+		field(editor, 0).setValue(ComparisonOperator.BETWEEN);
+		assertEquals(I18NConstants.LOWER_BOUND, primary.label());
+		assertTrue(secondary.isVisible());
+		assertEquals(RangeFilterState.between(5, 10), editor.read());
+	}
+
 }

@@ -14,8 +14,15 @@ import com.top_logic.table.FilterState;
 import com.top_logic.util.Resources;
 
 /**
- * {@link FilterEditor} for a {@link ComparableColumnFilter}: an operator dropdown plus one
- * or two bound-value fields (the second used only for {@link ComparisonOperator#BETWEEN}).
+ * {@link FilterEditor} for a {@link ComparableColumnFilter}: an operator dropdown plus the bounds
+ * the operator compares with.
+ *
+ * <p>
+ * The bound fields {@link FilterField#following(com.top_logic.layout.form.model.FieldModel,
+ * java.util.function.Function, java.util.function.Predicate) follow} the operator: a comparison
+ * with a single value shows one field, the value; {@link ComparisonOperator#BETWEEN} shows the
+ * lower and the upper bound of the range.
+ * </p>
  *
  * <p>
  * The bound fields hold the typed bounds and are marked with the filter's
@@ -32,10 +39,7 @@ public class ComparableFilterEditor<V> implements FilterEditor {
 	 * the current user.
 	 */
 	private static final LabelProvider OPERATOR_LABELS = value -> {
-		ComparisonOperator operator = value instanceof ComparisonOperator op
-			? op
-			: ComparisonOperator.valueOf(String.valueOf(value));
-		switch (operator) {
+		switch (operator(value)) {
 			case EQ:
 				return "=";
 			case NE:
@@ -51,7 +55,7 @@ public class ComparableFilterEditor<V> implements FilterEditor {
 			case BETWEEN:
 				return Resources.getInstance().getString(I18NConstants.OPERATOR_BETWEEN);
 			default:
-				return operator.name();
+				return String.valueOf(value);
 		}
 	};
 
@@ -81,17 +85,29 @@ public class ComparableFilterEditor<V> implements FilterEditor {
 	public List<FilterField> fields() {
 		return List.of(
 			new FilterField(I18NConstants.OPERATOR, _operator, OPERATOR_LABELS),
-			new FilterField(I18NConstants.VALUE, _primary, _codec),
-			new FilterField(I18NConstants.UPPER_BOUND, _secondary, _codec));
+			new FilterField(I18NConstants.VALUE, _primary, _codec)
+				.following(_operator, op -> isRange(op) ? I18NConstants.LOWER_BOUND : I18NConstants.VALUE, op -> true),
+			new FilterField(I18NConstants.UPPER_BOUND, _secondary, _codec)
+				.following(_operator, op -> I18NConstants.UPPER_BOUND, ComparableFilterEditor::isRange));
+	}
+
+	private static boolean isRange(Object operatorValue) {
+		return operator(operatorValue) == ComparisonOperator.BETWEEN;
+	}
+
+	private static ComparisonOperator operator(Object operatorValue) {
+		return operatorValue instanceof ComparisonOperator op
+			? op
+			: ComparisonOperator.valueOf(String.valueOf(operatorValue));
 	}
 
 	@Override
 	public FilterState read() {
-		Object operatorValue = _operator.getValue();
-		ComparisonOperator operator = operatorValue instanceof ComparisonOperator op
-			? op
-			: ComparisonOperator.valueOf(String.valueOf(operatorValue));
-		return new RangeFilterState<>(operator, bound(_primary), bound(_secondary));
+		ComparisonOperator operator = operator(_operator.getValue());
+		// The upper bound is shown only for a range; a value left in it from a range is no part of
+		// a comparison with a single value.
+		V secondary = operator == ComparisonOperator.BETWEEN ? bound(_secondary) : null;
+		return new RangeFilterState<>(operator, bound(_primary), secondary);
 	}
 
 	/**

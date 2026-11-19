@@ -57,7 +57,9 @@ import com.top_logic.util.Resources;
  * bound of a range) is entered with the input the {@link FilterFieldFactory} creates for the
  * column - a date picker, a number field -, as text otherwise. A field selecting an option is a
  * row of a checkbox, the value shown as the factory shows a cell of the column, and the number of
- * rows matching it; the checkbox is named by the label of the option.
+ * rows matching it; the checkbox is named by the label of the option. A field
+ * {@link FilterField#source() following} another one changes its label and is shown or hidden as
+ * the value of that field changes, e.g. the bounds of a range as the comparison operator changes.
  * </p>
  */
 public class ColumnFilterDialog {
@@ -254,6 +256,37 @@ public class ColumnFilterDialog {
 			// next to the box - above it, the two look like unrelated lines.
 			chrome.setLabelPosition(LabelPosition.AFTER);
 		}
+		chrome.setVisible(field.isVisible());
+		FieldModel source = field.source();
+		if (source != null) {
+			follow(chrome, field, source);
+		}
+	}
+
+	/**
+	 * Updates the label and the visibility of the given field whenever the value of the field it
+	 * {@link FilterField#source() follows} changes.
+	 */
+	private void follow(ReactFormFieldChromeControl chrome, FilterField field, FieldModel source) {
+		FieldModelListener listener = new FieldModelListener() {
+			@Override
+			public void onValueChanged(FieldModel model, Object oldValue, Object newValue) {
+				chrome.setLabel(label(field.label()));
+				chrome.setVisible(field.isVisible());
+			}
+
+			@Override
+			public void onEditabilityChanged(FieldModel model, boolean editable) {
+				// Only the value of the source shapes the field.
+			}
+
+			@Override
+			public void onValidationChanged(FieldModel model) {
+				// Only the value of the source shapes the field.
+			}
+		};
+		source.addListener(listener);
+		chrome.addCleanupAction(() -> source.removeListener(listener));
 	}
 
 	/**

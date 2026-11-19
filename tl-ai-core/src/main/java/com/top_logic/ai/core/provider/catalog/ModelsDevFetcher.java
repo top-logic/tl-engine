@@ -24,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.ai.core.provider.catalog.ModelInfo.InterleavedConfig;
@@ -79,7 +80,12 @@ public final class ModelsDevFetcher {
 	 * The whole exchange - name resolution, connect, headers and body - must complete within the
 	 * given deadline. The JDK's request timeout ends when the headers arrive, so a server that
 	 * answers at once and then sends its body slowly would otherwise hold the caller for as long as
-	 * it likes. When the deadline passes, the request is cancelled.
+	 * it likes. When the deadline passes, the request is cancelled or, once the headers have
+	 * arrived, the body stream is closed.
+	 * </p>
+	 *
+	 * <p>
+	 * The body is parsed while it arrives; the catalog as a whole is never held in memory.
 	 * </p>
 	 *
 	 * @param catalogUrl
@@ -96,6 +102,7 @@ public final class ModelsDevFetcher {
 	 */
 	public static Map<String, ModelInfo> fetch(String catalogUrl, Map<String, Set<String>> requestedModels,
 			Duration deadline) throws IOException, InterruptedException {
+		long end = System.nanoTime() + deadline.toNanos();
 		HttpRequest request;
 		try {
 			request = HttpRequest.newBuilder()
@@ -109,32 +116,70 @@ public final class ModelsDevFetcher {
 		HttpClient client = HttpClient.newBuilder()
 			.connectTimeout(deadline)
 			.build();
-		CompletableFuture<HttpResponse<String>> exchange =
-			client.sendAsync(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-		HttpResponse<String> response;
+		CompletableFuture<HttpResponse<InputStream>> exchange =
+			client.sendAsync(request, HttpResponse.BodyHandlers.ofInputStream());
+		HttpResponse<InputStream> response;
 		try {
 			response = exchange.get(deadline.toMillis(), TimeUnit.MILLISECONDS);
 		} catch (TimeoutException ex) {
-			throw new IOException("no complete answer within " + deadline.toSeconds() + " s", ex);
+			throw new IOException(noAnswerWithin(deadline), ex);
 		} catch (ExecutionException ex) {
 			Throwable cause = ex.getCause();
 			throw new IOException(cause.getMessage() != null ? cause.getMessage() : cause.toString(), cause);
 		} finally {
-			// Aborts the exchange when it did not complete - also its body read.
+			// Aborts the exchange when its headers did not arrive.
 			exchange.cancel(true);
 		}
-		if (response.statusCode() != 200) {
-			throw new IOException("HTTP " + response.statusCode());
+		try (InputStream body = response.body()) {
+			if (response.statusCode() != 200) {
+				throw new IOException("HTTP " + response.statusCode());
+			}
+			return readBody(body, requestedModels, deadline, end - System.nanoTime());
 		}
+	}
+
+	/**
+	 * Parses the body of a catalog answer, closing it when the deadline passes.
+	 *
+	 * @param remainingNanos
+	 *        The time left until the deadline of the whole fetch.
+	 */
+	private static Map<String, ModelInfo> readBody(InputStream body, Map<String, Set<String>> requestedModels,
+			Duration deadline, long remainingNanos) throws IOException, InterruptedException {
+		AtomicBoolean expired = new AtomicBoolean();
+		CompletableFuture<Void> closer = CompletableFuture.runAsync(() -> {
+			expired.set(true);
+			try {
+				// Ends a read that waits for the next part of the body.
+				body.close();
+			} catch (IOException ex) {
+				Logger.info("Closing the catalog stream at its deadline failed: " + ex.getMessage(),
+					ModelsDevFetcher.class);
+			}
+		}, CompletableFuture.delayedExecutor(Math.max(0, remainingNanos), TimeUnit.NANOSECONDS));
 		Map<String, ModelInfo> result = new HashMap<>();
 		try {
-			parse(new StringR(response.body()), requestedModels, result);
+			parse(new ReaderAdapter(new InputStreamReader(body, StandardCharsets.UTF_8)), requestedModels, result);
 			return result;
-		} catch (Exception ex) {
+		} catch (IOException | RuntimeException ex) {
+			if (expired.get()) {
+				throw new IOException(noAnswerWithin(deadline), ex);
+			}
+			if (Thread.interrupted()) {
+				InterruptedException interrupted = new InterruptedException("catalog read interrupted");
+				interrupted.initCause(ex);
+				throw interrupted;
+			}
 			// Not swallowed as in parseJson(): an unreadable answer - a proxy's login page served
 			// with 200 - must not replace a catalog that is known to be good.
 			throw new IOException("unreadable catalog: " + ex.getMessage(), ex);
+		} finally {
+			closer.cancel(false);
 		}
+	}
+
+	private static String noAnswerWithin(Duration deadline) {
+		return "no complete answer within " + deadline.toSeconds() + " s";
 	}
 
 	/**

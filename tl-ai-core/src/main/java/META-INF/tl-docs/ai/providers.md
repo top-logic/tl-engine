@@ -69,15 +69,14 @@ A provider stamps the thinking blocks it produces with its configured `catalog-p
 |---|---|---|
 | `project` | - (mandatory) | the Google Cloud project |
 | `location` | `global` | `global`, a multi-region (`us`, `eu`) or a region (`europe-west4`) |
-| `base-url` | - | a gateway in front of Vertex AI; a trailing `/v1` (the `api-version`) may be included. Without it, the host follows from `location`: `aiplatform.googleapis.com` for `global`, `aiplatform.{location}.rep.googleapis.com` for `us` and `eu`, `{location}-aiplatform.googleapis.com` for a region |
-| `api-version` | `v1` | first segment of the path |
+| `base-url` | - | everything before `/projects/...`, including the API version, e.g. `https://gw.example.com/v1` for a gateway in front of Vertex AI. Without it, it follows from `location` with `/v1`: `https://aiplatform.googleapis.com/v1` for `global`, `https://aiplatform.{location}.rep.googleapis.com/v1` for `us` and `eu`, `https://{location}-aiplatform.googleapis.com/v1` for a region |
 | `api-key` / `credentials` | - | the key as `Authorization: Bearer`, or a `CredentialProvider`; a Google sign-in (service account, application default credentials) is not built in |
 | `models` | - | the model names |
 | `catalog-provider-id` | `google-vertex` | where the catalog looks the models up |
 | `anthropic-version` | `vertex-2023-10-16` | the `anthropic_version` in the body of a Claude request |
 | `tool-choice` | `auto,required,none` | the tool choices the endpoint accepts, see [restricted tool choice](#restricted-tool-choice) |
 
-A model is called at `{base}/{api-version}/projects/{project}/locations/{location}/publishers/{publisher}/models/{model}:streamRawPredict`. For a Claude model the body is the Anthropic Messages body without `model` and with `anthropic_version`; the stream is the Anthropic API's (`VertexAnthropicProvider` extends `AnthropicMessagesProvider`). An error is classified in Anthropic's form (`error.type`) and in Google's (`error.status`, e.g. `RESOURCE_EXHAUSTED` as `RATE_LIMITED`).
+A model is called at `{base-url}/projects/{project}/locations/{location}/publishers/{publisher}/models/{model}:streamRawPredict`. For a Claude model the body is the Anthropic Messages body without `model` and with `anthropic_version`; the stream is the Anthropic API's (`VertexAnthropicProvider` extends `AnthropicMessagesProvider`). An error is classified in Anthropic's form (`error.type`) and in Google's (`error.status`, e.g. `RESOURCE_EXHAUSTED` as `RATE_LIMITED`).
 
 The publisher of a model whose name starts with `claude-` is `anthropic`; another model names its publisher in `<model-settings><model name="my-model" publisher="anthropic"/></model-settings>`. A model whose publisher is unknown or not supported refuses the start.
 

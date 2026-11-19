@@ -66,8 +66,10 @@ public class TestVertexProvider extends TestCase {
 
 	private static final String MODEL = "claude-sonnet-5-5";
 
-	private static final String MODEL_PATH =
-		"/v1/projects/my-project/locations/eu/publishers/anthropic/models/claude-sonnet-5-5:streamRawPredict";
+	private static final String PROJECT_PATH =
+		"/projects/my-project/locations/eu/publishers/anthropic/models/claude-sonnet-5-5:streamRawPredict";
+
+	private static final String MODEL_PATH = "/v1" + PROJECT_PATH;
 
 	private static final String AUTHORIZATION = "authorization";
 
@@ -299,33 +301,37 @@ public class TestVertexProvider extends TestCase {
 	}
 
 	/**
-	 * Without a base URL, the host is derived from the location.
+	 * Without a base URL, it is derived from the location, with the API version.
 	 */
-	public void testHostOfLocation() {
-		assertEquals("aiplatform.googleapis.com", VertexProviderConfig.host("global"));
-		assertEquals("aiplatform.eu.rep.googleapis.com", VertexProviderConfig.host("eu"));
-		assertEquals("europe-west4-aiplatform.googleapis.com", VertexProviderConfig.host("europe-west4"));
+	public void testDefaultBaseUrl() {
+		assertEquals("https://aiplatform.googleapis.com/v1", VertexProviderConfig.defaultBaseUrl("global"));
+		assertEquals("https://aiplatform.eu.rep.googleapis.com/v1", VertexProviderConfig.defaultBaseUrl("eu"));
+		assertEquals("https://europe-west4-aiplatform.googleapis.com/v1",
+			VertexProviderConfig.defaultBaseUrl("europe-west4"));
 	}
 
 	/**
-	 * A base URL with or without trailing API version addresses the same endpoint.
+	 * The configured base URL, including its version, is the whole prefix of the path of a model; a
+	 * trailing slash is ignored.
 	 */
-	public void testBaseUrlWithAndWithoutVersion() throws Exception {
-		stream(provider(""), request(null, Map.of()));
-		stream(provider(baseUrl(), "", ""), request(null, Map.of()));
+	public void testBaseUrlWithVersion() throws Exception {
+		stream(provider(baseUrl() + "/v1", "", ""), request(null, Map.of()));
 		stream(provider(baseUrl() + "/v1/", "", ""), request(null, Map.of()));
+		stream(provider(baseUrl() + "/v1beta1", "", ""), request(null, Map.of()));
+		stream(provider(baseUrl(), "", ""), request(null, Map.of()));
 
-		assertEquals(3, _requests.size());
-		for (Received received : _requests) {
-			assertEquals(MODEL_PATH, received.path());
-		}
+		assertEquals(4, _requests.size());
+		assertEquals(MODEL_PATH, _requests.get(0).path());
+		assertEquals(MODEL_PATH, _requests.get(1).path());
+		assertEquals("/v1beta1" + PROJECT_PATH, _requests.get(2).path());
+		assertEquals(PROJECT_PATH, _requests.get(3).path());
 	}
 
 	/**
 	 * The settings of a model decide its publisher.
 	 */
 	public void testPublisherSetting() throws Exception {
-		VertexProviderConfig provider = provider(baseUrl(), "models='my-model'",
+		VertexProviderConfig provider = provider(baseUrl() + "/v1", "models='my-model'",
 			"<model-settings><model name='my-model' publisher='anthropic'/></model-settings>");
 
 		stream(provider, new ProviderRequest("my-model", null, List.of(user("Hello.")), List.of(), 1000));

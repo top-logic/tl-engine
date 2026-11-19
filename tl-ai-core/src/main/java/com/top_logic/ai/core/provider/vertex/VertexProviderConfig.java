@@ -41,7 +41,7 @@ import com.top_logic.ai.core.provider.ToolChoice;
  *
  * <p>
  * Vertex AI serves the models of several publishers. A model is addressed as
- * {@code {base}/{api-version}/projects/{project}/locations/{location}/publishers/{publisher}/models/{model}:streamRawPredict}
+ * {@code {base-url}/projects/{project}/locations/{location}/publishers/{publisher}/models/{model}:streamRawPredict}
  * and answers in the dialect of its publisher. The publisher of a model is configured in its
  * {@link Config#getModelSettings() model settings}; a model whose name starts with
  * {@link #CLAUDE_PREFIX} is of the publisher {@link #PUBLISHER_ANTHROPIC} without that. A model
@@ -49,10 +49,11 @@ import com.top_logic.ai.core.provider.ToolChoice;
  * </p>
  *
  * <p>
- * Without a {@link Config#getBaseUrl() base URL}, the host is derived from the location: the
- * location {@link #DEFAULT_LOCATION} is served by {@link #GLOBAL_HOST}, the multi-regions
- * {@code us} and {@code eu} by {@code aiplatform.{location}.rep.googleapis.com}, every other
- * region by {@code {location}-aiplatform.googleapis.com}.
+ * Without a {@link Config#getBaseUrl() base URL}, it is derived from the location as the host
+ * followed by {@link #API_VERSION_PATH}: the location {@link #DEFAULT_LOCATION} is served by
+ * {@link #GLOBAL_HOST}, the multi-regions {@code us} and {@code eu} by
+ * {@code aiplatform.{location}.rep.googleapis.com}, every other region by
+ * {@code {location}-aiplatform.googleapis.com}.
  * </p>
  *
  * <p>
@@ -70,8 +71,8 @@ public class VertexProviderConfig implements LLMProviderConfig {
 	/** Default of {@link Config#getLocation()}: the global endpoint. */
 	public static final String DEFAULT_LOCATION = "global";
 
-	/** Default of {@link Config#getApiVersion()}. */
-	public static final String DEFAULT_API_VERSION = "v1";
+	/** The version of the Vertex AI API, the end of a base URL derived from the location. */
+	public static final String API_VERSION_PATH = "/v1";
 
 	/** Default of {@link Config#getAnthropicVersion()}. */
 	public static final String DEFAULT_ANTHROPIC_VERSION = "vertex-2023-10-16";
@@ -104,7 +105,6 @@ public class VertexProviderConfig implements LLMProviderConfig {
 		Config.PROJECT,
 		Config.LOCATION,
 		LLMProviderConfig.Config.BASE_URL,
-		Config.API_VERSION,
 		Config.API_KEY,
 		LLMProviderConfig.Config.CREDENTIALS,
 		LLMProviderConfig.Config.MODELS,
@@ -122,9 +122,6 @@ public class VertexProviderConfig implements LLMProviderConfig {
 
 		/** Configuration property name for {@link #getLocation()}. */
 		String LOCATION = "location";
-
-		/** Configuration property name for {@link #getApiVersion()}. */
-		String API_VERSION = "api-version";
 
 		/** Configuration property name for {@link #getApiKey()}. */
 		String API_KEY = "api-key";
@@ -158,22 +155,16 @@ public class VertexProviderConfig implements LLMProviderConfig {
 		String getLocation();
 
 		/**
-		 * The URL of a gateway in front of Vertex AI, e.g. {@code https://gateway.example.com/v1}.
+		 * The URL in front of the path {@code /projects/...} of a model, including the version of
+		 * the API, e.g. {@code https://gateway.example.com/v1} for a gateway in front of Vertex AI.
 		 *
 		 * <p>
-		 * A trailing {@link #getApiVersion() API version} may be included. If not set, Vertex AI is
-		 * called directly, on the host of the {@link #getLocation() location}.
+		 * If not set, Vertex AI is called directly, on the host of the {@link #getLocation()
+		 * location} with the version {@link VertexProviderConfig#API_VERSION_PATH}.
 		 * </p>
 		 */
 		@Override
 		String getBaseUrl();
-
-		/**
-		 * The version of the Vertex AI API, the first segment of the path of a model.
-		 */
-		@Name(API_VERSION)
-		@StringDefault(DEFAULT_API_VERSION)
-		String getApiVersion();
 
 		/**
 		 * The API key forwarded as {@code Authorization: Bearer}.
@@ -298,20 +289,21 @@ public class VertexProviderConfig implements LLMProviderConfig {
 	}
 
 	/**
-	 * The URL the paths of the models are appended to: the gateway, or the host of the
-	 * {@link Config#getLocation() location}.
+	 * The URL the paths of the models are appended to: the configured one without trailing slash,
+	 * or the one {@link #defaultBaseUrl(String) derived} from the {@link Config#getLocation()
+	 * location}.
 	 */
 	private String baseUrl() {
 		return isBlank(_config.getBaseUrl())
-			? HTTPS + host(_config.getLocation())
-			: gatewayUrl(_config.getBaseUrl(), _config.getApiVersion());
+			? defaultBaseUrl(_config.getLocation())
+			: stripTrailingSlashes(_config.getBaseUrl().trim());
 	}
 
 	/**
 	 * The path of the models of the given publisher, to which the model name is appended.
 	 */
 	private String modelsPath(String publisher) {
-		return "/" + _config.getApiVersion() + "/projects/" + _config.getProject() + "/locations/"
+		return "/projects/" + _config.getProject() + "/locations/"
 			+ _config.getLocation() + "/publishers/" + publisher + "/models/";
 	}
 
@@ -330,9 +322,17 @@ public class VertexProviderConfig implements LLMProviderConfig {
 	}
 
 	/**
+	 * The base URL of Vertex AI for the given location: its host with the version
+	 * {@link #API_VERSION_PATH}.
+	 */
+	public static String defaultBaseUrl(String location) {
+		return HTTPS + host(location) + API_VERSION_PATH;
+	}
+
+	/**
 	 * The host of Vertex AI for the given location.
 	 */
-	public static String host(String location) {
+	private static String host(String location) {
 		if (DEFAULT_LOCATION.equals(location)) {
 			return GLOBAL_HOST;
 		}
@@ -340,19 +340,6 @@ public class VertexProviderConfig implements LLMProviderConfig {
 			return "aiplatform." + location + ".rep.googleapis.com";
 		}
 		return location + "-aiplatform.googleapis.com";
-	}
-
-	/**
-	 * The configured gateway URL without trailing slash and without a trailing API version, which
-	 * is part of the path of a model.
-	 */
-	private static String gatewayUrl(String baseUrl, String apiVersion) {
-		String result = stripTrailingSlashes(baseUrl.trim());
-		String versionSuffix = "/" + apiVersion;
-		if (result.endsWith(versionSuffix)) {
-			result = stripTrailingSlashes(result.substring(0, result.length() - versionSuffix.length()));
-		}
-		return result;
 	}
 
 	private static String stripTrailingSlashes(String url) {

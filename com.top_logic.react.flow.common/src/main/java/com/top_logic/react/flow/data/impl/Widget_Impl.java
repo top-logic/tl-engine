@@ -13,6 +13,8 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 
 	private transient java.lang.Object _renderInfo = null;
 
+	private boolean _dropTarget = false;
+
 	/**
 	 * Creates a {@link Widget_Impl} instance.
 	 */
@@ -112,13 +114,32 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 		return _renderInfo != null;
 	}
 
+	@Override
+	public final boolean isDropTarget() {
+		return _dropTarget;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.Widget setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isDropTarget()} without chain call utility. */
+	protected final void internalSetDropTarget(boolean value) {
+		_listener.beforeSet(this, DROP_TARGET__PROP, value);
+		_dropTarget = value;
+		_listener.afterChanged(this, DROP_TARGET__PROP);
+	}
+
 	static final java.util.List<String> PROPERTIES;
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			CSS_CLASS__PROP, 
 			USER_OBJECT__PROP, 
 			CLIENT_ID__PROP, 
-			RENDER_INFO__PROP);
+			RENDER_INFO__PROP, 
+			DROP_TARGET__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -149,6 +170,7 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 			case USER_OBJECT__PROP: return getUserObject();
 			case CLIENT_ID__PROP: return getClientId();
 			case RENDER_INFO__PROP: return getRenderInfo();
+			case DROP_TARGET__PROP: return isDropTarget();
 			default: return super.get(field);
 		}
 	}
@@ -160,6 +182,7 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 			case USER_OBJECT__PROP: internalSetUserObject((java.lang.Object) value); break;
 			case CLIENT_ID__PROP: internalSetClientId((String) value); break;
 			case RENDER_INFO__PROP: internalSetRenderInfo((java.lang.Object) value); break;
+			case DROP_TARGET__PROP: internalSetDropTarget((boolean) value); break;
 		}
 	}
 
@@ -170,6 +193,8 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 			out.name(CSS_CLASS__PROP);
 			out.value(getCssClass());
 		}
+		out.name(DROP_TARGET__PROP);
+		out.value(isDropTarget());
 	}
 
 	@Override
@@ -205,6 +230,10 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 				}
 				break;
 			}
+			case DROP_TARGET__PROP: {
+				out.value(isDropTarget());
+				break;
+			}
 			default: super.writeFieldValue(scope, out, field);
 		}
 	}
@@ -213,6 +242,7 @@ public abstract class Widget_Impl extends de.haumacher.msgbuf.graph.AbstractShar
 	public void readField(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case CSS_CLASS__PROP: setCssClass(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case DROP_TARGET__PROP: setDropTarget(in.nextBoolean()); break;
 			default: super.readField(scope, in, field);
 		}
 	}

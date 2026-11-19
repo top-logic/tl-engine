@@ -16,7 +16,7 @@
 >
 	<tabInfo label="admin.ai.agentSecurity.effective.tabber"/>
 	<components>
-		<component class="com.top_logic.tl.ai.core.security.layout.EffectiveToolAccessComponent"
+		<component class="com.top_logic.ai.classic.security.layout.EffectiveToolAccessComponent"
 			name="aiEffectiveAccessComponent"
 			resPrefix="admin.ai.agentSecurity.effective."
 			securityObject="securityRoot"
@@ -29,7 +29,7 @@
 					resPrefix="admin.ai.agentSecurity.effective.rows."
 				>
 					<column-default
-						accessor="com.top_logic.tl.ai.core.security.layout.EffectiveAccessAccessor"
+						accessor="com.top_logic.ai.classic.security.layout.EffectiveAccessAccessor"
 						columnWidth="200px"
 					/>
 					<columns>

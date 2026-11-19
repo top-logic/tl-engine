@@ -59,6 +59,9 @@ export interface TLButtonProps {
  * this control resolves what the part shows from its state and its container, and handles the
  * click, the keyboard gesture and the navigation.</p>
  *
+ * <p>The badge of the command ({@code state.badge}) is drawn by the part: after the label, at the
+ * corner of the icon of a button showing its icon alone, and part of the accessible name.</p>
+ *
  * <p>The button sends its command through {@link useGuardedCommand}: a click (or keyboard gesture)
  * while the command of an earlier one still awaits its answer is ignored.</p>
  */
@@ -140,6 +143,7 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
       active={resolvedActive}
       disabled={resolvedDisabled}
       tooltip={tooltip}
+      badge={state.badge}
       className={rootClassName(state, cssClasses)}
       onClick={handleClick}
     />

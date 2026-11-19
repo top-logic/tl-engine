@@ -90,6 +90,8 @@ export function kontrastPaare(T) {
   // auf Panels und im Dialog.
   for (const bg of ['surface-base', 'surface-layer', 'surface-layer-nested', 'surface-overlay', 'surface-interactive-hover']) paar('border-selected', bg, 3.0);
   paar('text-primary', 'surface-layer-muted', 4.5); paar('text-secondary', 'surface-layer-muted', 4.5);
+  // Der Platzhalter eines fehlenden Werts (tl-table__no-value) steht in der Gruppenzeile, auch gezeigt.
+  paar('text-secondary', 'surface-interactive-hover', 4.5);
   // Die Icons der Kopfzeile (Trichter, Sortierpfeil, Zahnrad) stehen auf surface-layer-muted.
   paar('icon-primary', 'surface-layer-muted', 3.0); paar('icon-secondary', 'surface-layer-muted', 3.0);
   paar('text-link', 'surface-layer-muted', 3.0); // der Trichter einer gefilterten Spalte ist Markenblau (#29999)
@@ -115,6 +117,11 @@ export function kontrastPaare(T) {
     // Diagrammmarke (Spec Diagrammfarben §2): nicht-textliche Grafik, 3:1 auf Grund und Layer.
     for (const bg of ['surface-base', 'surface-layer']) paar(`category-${k}-mark`, bg, 3.0);
   }
+  // Punkt des Badges (#29653): ohne Schrift, seine Fläche braucht 3:1 zum Grund — die Linie der Marke und der Text
+  // jeder Bedeutung, auf jedem Grund, an dem ein Badge steht (Panel, Dialog, gezeigter und gewählter Eintrag, Reiter).
+  for (const fill of ['border-interactive', ...STATUS.map((s) => `status-${s}-text`)])
+    for (const bg of ['surface-base', 'surface-layer', 'surface-layer-nested', 'surface-overlay',
+      'surface-interactive-hover', 'surface-selected', 'surface-brand-subtle']) paar(fill, bg, 3.0);
   // Tooltip: Text auf der inversen Fläche (Welle 5d).
   paar('text-inverse', 'surface-inverse', 4.5);
   for (const [name, { surface }] of Object.entries(T.derived.light))

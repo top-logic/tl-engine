@@ -1,0 +1,397 @@
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act } from 'react';
+
+vi.mock('../bridge/sse-client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../bridge/sse-client')>()),
+  connect: () => {},
+  subscribe: () => {},
+  unsubscribe: () => {},
+}));
+
+// The bridge first, as the page loads it, so that the modules it imports see the mocked SSE client.
+import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
+import { register } from 'tl-react-bridge';
+import TLLoginBackdrop from './TLLoginBackdrop';
+
+declare global {
+  // eslint-disable-next-line no-var
+  var IS_REACT_ACT_ENVIRONMENT: boolean;
+}
+
+const CONTROL_ID = 'backdrop';
+
+/** A resize observer for jsdom, which has none; it reports nothing. */
+class FakeResizeObserver {
+  constructor(callback: () => void) { resized = callback; }
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+}
+
+/** The calls drawn on a fake 2d context, and the animation frames asked for and not yet run. */
+let drawn: string[];
+/** The fill style in force at each fill. */
+let fills: string[];
+let frames: FrameRequestCallback[];
+/** The name of the drawing call of the fake context that throws, if any. */
+let failOn: string | null;
+/** The callback the backdrop gave the resize observer. */
+let resized: (() => void) | null;
+let style: HTMLStyleElement;
+
+/** A 2d context that records what is drawn. */
+function fakeContext() {
+  const check = (name: string) => {
+    if (failOn === name) {
+      throw new Error('The canvas failed in ' + name);
+    }
+  };
+  const record = (name: string) => () => { check(name); drawn.push(name); };
+  const filled = (name: string) => function (this: { fillStyle: string }) {
+    check(name);
+    drawn.push(name);
+    fills.push(this.fillStyle);
+  };
+  return {
+    setTransform: record('setTransform'), clearRect: record('clearRect'), beginPath: record('beginPath'),
+    arc: record('arc'), fill: filled('fill'),
+    globalAlpha: 1, fillStyle: '',
+  };
+}
+
+beforeAll(() => {
+  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  register('TLLoginBackdrop', TLLoginBackdrop);
+});
+
+beforeEach(() => {
+  drawn = [];
+  fills = [];
+  frames = [];
+  failOn = null;
+  resized = null;
+  vi.stubGlobal('ResizeObserver', FakeResizeObserver);
+  vi.stubGlobal('matchMedia', () => ({ matches: false }));
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => frames.push(callback));
+  vi.stubGlobal('cancelAnimationFrame', () => {});
+  style = document.createElement('style');
+  style.textContent = `:root { --tl-surface-halftone: #112233; --tl-surface-halftone-strong: #445566;
+    --tl-size-halftone-step: 16px; --tl-size-halftone-glow: 40px; --tl-duration-ripple: 1800ms; }
+    :root[data-tl-mode="dark"] { --tl-surface-halftone: #eeeeee; --tl-surface-halftone-strong: #ffffff; }`;
+  document.head.appendChild(style);
+});
+
+afterEach(() => {
+  act(() => unmount(CONTROL_ID));
+  findMountPoint(CONTROL_ID)?.remove();
+  style.remove();
+  document.documentElement.removeAttribute('data-tl-mode');
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+afterAll(() => {
+  document.body.replaceChildren();
+});
+
+/** Mounts a backdrop with the given state and answers the element it is drawn into. */
+function mountBackdrop(state: Record<string, unknown>): HTMLElement {
+  const element = document.createElement('div');
+  element.setAttribute(MOUNT_ATTRIBUTE, CONTROL_ID);
+  document.body.appendChild(element);
+  act(() => mount(CONTROL_ID, 'TLLoginBackdrop', state, 'w', '/ctx'));
+  return element;
+}
+
+/** Lets the root of the backdrop be 320 by 240 px large and the canvas draw on a fake context. */
+function sizeAndContext() {
+  vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(320);
+  vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(240);
+  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(fakeContext() as unknown as CanvasRenderingContext2D);
+}
+
+describe('the structure', () => {
+  it('draws a canvas hidden from assistive technology behind the content', () => {
+    const root = mountBackdrop({});
+    expect(root.querySelector('.tl-login-backdrop')).not.toBeNull();
+    const canvas = root.querySelector('canvas.tl-login-backdrop__canvas')!;
+    expect(canvas.getAttribute('aria-hidden')).toBe('true');
+    expect(root.querySelector('.tl-login-backdrop__content')).not.toBeNull();
+  });
+
+  it('renders no brand without a logo', () => {
+    const root = mountBackdrop({ logo: null, logoDark: '/dark.svg' });
+    expect(root.querySelector('.tl-login-backdrop__brand')).toBeNull();
+    expect(root.querySelector('img')).toBeNull();
+  });
+
+  it('puts the logo in the brand, with the alternative text, and none when there is none', () => {
+    const root = mountBackdrop({ logo: '/light.svg', logoAlt: 'Acme' });
+    const img = root.querySelector('.tl-login-backdrop__brand > img.tl-login-backdrop__logo')!;
+    expect(img.getAttribute('src')).toBe('/light.svg');
+    expect(img.getAttribute('alt')).toBe('Acme');
+  });
+
+  it('leaves the alternative text empty without one', () => {
+    const root = mountBackdrop({ logo: '/light.svg' });
+    expect(root.querySelector('img')!.getAttribute('alt')).toBe('');
+  });
+
+  it('describes a logo without a text of its own by the application title', () => {
+    const root = mountBackdrop({ logo: '/light.svg', appTitle: 'Acme App' });
+    expect(root.querySelector('img')!.getAttribute('alt')).toBe('Acme App');
+    expect(root.querySelector('h1')).toBeNull();
+  });
+
+  it('shows an icon logo as glyph, named by the alternative text', () => {
+    const root = mountBackdrop({ logo: 'css:bi bi-building', appTitle: 'Acme App' });
+    const logo = root.querySelector('.tl-login-backdrop__brand > span.tl-login-backdrop__logo')!;
+    expect(logo.getAttribute('role')).toBe('img');
+    expect(logo.getAttribute('aria-label')).toBe('Acme App');
+    expect(logo.querySelector('i.bi.bi-building.tl-icon-lg')).not.toBeNull();
+    expect(root.querySelector('img')).toBeNull();
+  });
+
+  it('hides an icon logo without a text from assistive technology', () => {
+    const root = mountBackdrop({ logo: 'css:bi bi-building' });
+    const logo = root.querySelector('span.tl-login-backdrop__logo')!;
+    expect(logo.getAttribute('aria-hidden')).toBe('true');
+    expect(logo.getAttribute('role')).toBeNull();
+  });
+
+  it('shows the application title as heading in the brand where there is no logo', () => {
+    const root = mountBackdrop({ appTitle: 'Acme App' });
+    const title = root.querySelector('.tl-login-backdrop__brand > h1.tl-login-backdrop__title')!;
+    expect(title.textContent).toBe('Acme App');
+    expect(root.querySelector('img')).toBeNull();
+  });
+
+  it('says it is powered by TopLogic, with the word mark named for assistive technology, below the content', () => {
+    const root = mountBackdrop({});
+    const footer = root.querySelector('.tl-login-backdrop > p.tl-login-backdrop__footer')!;
+    expect(footer.textContent).toBe('Powered by');
+    const mark = footer.querySelector('svg.tl-login-backdrop__wordmark')!;
+    expect(mark.getAttribute('role')).toBe('img');
+    expect(mark.getAttribute('aria-label')).toBe('TopLogic');
+    expect(mark.querySelectorAll('path[fill="currentColor"]').length).toBe(6);
+    expect(root.querySelector('.tl-login-backdrop__content')!.contains(footer)).toBe(false);
+  });
+
+  it('follows the mode with the one logo, falling back to the light one', async () => {
+    const root = mountBackdrop({ logo: '/light.svg', logoDark: '/dark.svg' });
+    expect(root.querySelectorAll('img')).toHaveLength(1);
+    expect(root.querySelector('img')!.getAttribute('src')).toBe('/light.svg');
+    await act(async () => document.documentElement.setAttribute('data-tl-mode', 'dark'));
+    expect(root.querySelector('img')!.getAttribute('src')).toBe('/dark.svg');
+    await act(async () => document.documentElement.setAttribute('data-tl-mode', 'light'));
+    expect(root.querySelector('img')!.getAttribute('src')).toBe('/light.svg');
+  });
+
+  it('uses the light logo in dark mode when there is no dark one', () => {
+    document.documentElement.setAttribute('data-tl-mode', 'dark');
+    const root = mountBackdrop({ logo: '/light.svg' });
+    expect(root.querySelector('img')!.getAttribute('src')).toBe('/light.svg');
+  });
+});
+
+describe('the grid', () => {
+  it('draws nothing and does not throw where the canvas has no 2d context', () => {
+    // jsdom has none: getContext answers nothing.
+    const root = mountBackdrop({});
+    const canvas = root.querySelector('canvas')!;
+    expect(canvas.getContext('2d')).toBeNull();
+    act(() => { root.querySelector('.tl-login-backdrop')!.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+    expect(frames).toHaveLength(0);
+  });
+
+  it('draws nothing without the halftone tokens', () => {
+    style.textContent = '';
+    sizeAndContext();
+    mountBackdrop({});
+    expect(drawn).toEqual([]);
+  });
+
+  it('draws the grid once when mounted, and asks for no animation frame at rest', () => {
+    sizeAndContext();
+    mountBackdrop({});
+    expect(drawn).toContain('arc');
+    expect(frames).toHaveLength(0);
+  });
+
+  it('sends a ripple through the grid on a click on the background, and stops when it has ended', () => {
+    sizeAndContext();
+    const root = mountBackdrop({});
+    const backdrop = root.querySelector('.tl-login-backdrop')!;
+    act(() => { backdrop.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 10, clientY: 10 })); });
+    expect(frames).toHaveLength(1);
+    const now = performance.now();
+    drawn.length = 0;
+    act(() => { frames.shift()!(now + 100); });
+    expect(drawn).toContain('arc');
+    expect(frames).toHaveLength(1);
+    act(() => { frames.shift()!(now + 5000); });
+    expect(frames).toHaveLength(0);
+  });
+
+  it('ignores a click inside the content', () => {
+    sizeAndContext();
+    const root = mountBackdrop({ logo: '/light.svg' });
+    act(() => { root.querySelector('img')!.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+    expect(frames).toHaveLength(0);
+  });
+
+  it('makes no ripple and no frame with reduced motion', () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    sizeAndContext();
+    const root = mountBackdrop({});
+    act(() => { root.querySelector('.tl-login-backdrop')!.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+    expect(frames).toHaveLength(0);
+    const pointer = new Event('pointermove', { bubbles: true }) as Event & { pointerType: string };
+    Object.assign(pointer, { pointerType: 'mouse', clientX: 5, clientY: 5 });
+    act(() => { root.querySelector('.tl-login-backdrop')!.dispatchEvent(pointer); });
+    expect(frames).toHaveLength(0);
+  });
+
+  it('takes a visible highlight away at once when the pointer moves under reduced motion', () => {
+    sizeAndContext();
+    const backdrop = mountBackdrop({}).querySelector('.tl-login-backdrop')!;
+    pointerEvent(backdrop, 'pointermove');
+    runToRest();
+    // The highlight stands at full strength, the pointer inside.
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    fills.length = 0;
+    drawn.length = 0;
+    pointerEvent(backdrop, 'pointermove');
+    // One drawing without the highlight, and no animation frame that would fade it.
+    expect(drawn).toContain('clearRect');
+    expect(fills).not.toContain('#445566');
+    expect(frames).toHaveLength(0);
+  });
+
+  it('ends a fading highlight with the next frame when reduced motion was asked for meanwhile', () => {
+    sizeAndContext();
+    const backdrop = mountBackdrop({}).querySelector('.tl-login-backdrop')!;
+    pointerEvent(backdrop, 'pointermove');
+    runToRest();
+    pointerEvent(backdrop, 'pointerleave');
+    expect(frames).toHaveLength(1);
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    fills.length = 0;
+    drawn.length = 0;
+    act(() => { frames.shift()!(performance.now() + 16); });
+    expect(drawn).toContain('clearRect');
+    expect(fills).not.toContain('#445566');
+    expect(frames).toHaveLength(0);
+  });
+
+  it.each(['setTransform', 'clearRect', 'arc'])('turns the grid off, without a throw, when %s fails at mount', (name) => {
+    failOn = name;
+    sizeAndContext();
+    const root = mountBackdrop({});
+    const backdrop = root.querySelector('.tl-login-backdrop')!;
+    failOn = null;
+    drawn.length = 0;
+    act(() => { backdrop.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 10, clientY: 10 })); });
+    pointerEvent(backdrop, 'pointermove');
+    // Off for good: no frame is asked for, nothing is drawn again, the content is still there.
+    expect(frames).toHaveLength(0);
+    expect(drawn).toEqual([]);
+    expect(root.querySelector('.tl-login-backdrop__content')).not.toBeNull();
+  });
+
+  it('turns the grid off, and clears it, when a drawing in an animation frame fails', () => {
+    sizeAndContext();
+    const backdrop = mountBackdrop({}).querySelector('.tl-login-backdrop')!;
+    act(() => { backdrop.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 10, clientY: 10 })); });
+    expect(frames).toHaveLength(1);
+    failOn = 'arc';
+    drawn.length = 0;
+    expect(() => act(() => { frames.shift()!(performance.now() + 16); })).not.toThrow();
+    failOn = null;
+    expect(drawn).toContain('clearRect');
+    expect(frames).toHaveLength(0);
+    drawn.length = 0;
+    act(() => { backdrop.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+    expect(frames).toHaveLength(0);
+    expect(drawn).toEqual([]);
+  });
+
+  it('turns the grid off when a drawing after a resize fails', () => {
+    sizeAndContext();
+    mountBackdrop({});
+    expect(resized).not.toBeNull();
+    failOn = 'arc';
+    expect(() => act(() => { resized!(); })).not.toThrow();
+    failOn = null;
+    drawn.length = 0;
+    act(() => { resized!(); });
+    expect(drawn).toEqual([]);
+  });
+
+  /** Runs the pending animation frames, one after the other 16 ms apart, until none is asked for; answers how many ran. */
+  function runToRest(): number {
+    let count = 0;
+    let now = performance.now();
+    while (frames.length > 0 && count < 500) {
+      now += 16;
+      act(() => { frames.shift()!(now); });
+      count++;
+    }
+    return count;
+  }
+
+  /** Dispatches a pointer event of the given type and kind of pointer at the element. */
+  function pointerEvent(target: Element, type: string, pointerType = 'mouse') {
+    const event = new Event(type, { bubbles: false });
+    Object.assign(event, { pointerType, clientX: 5, clientY: 5 });
+    act(() => { target.dispatchEvent(event); });
+  }
+
+  it('lets the highlight fade out where the pointer left, instead of ending it at once', () => {
+    sizeAndContext();
+    const backdrop = mountBackdrop({}).querySelector('.tl-login-backdrop')!;
+    pointerEvent(backdrop, 'pointermove');
+    expect(runToRest()).toBeGreaterThan(1);
+    // At rest with the pointer inside, the highlight is at full strength and no frame is asked for.
+    expect(frames).toHaveLength(0);
+    pointerEvent(backdrop, 'pointerleave');
+    expect(frames).toHaveLength(1);
+    fills.length = 0;
+    act(() => { const f = frames.shift()!; f(performance.now() + 16); });
+    // The next frame still draws the highlight in the strong colour, over the base dots.
+    expect(fills).toContain('#445566');
+    expect(frames).toHaveLength(1);
+    expect(runToRest()).toBeGreaterThan(5);
+    expect(frames).toHaveLength(0);
+    // A second leave changes nothing.
+    pointerEvent(backdrop, 'pointerleave');
+    expect(frames).toHaveLength(0);
+  });
+
+  it('goes on with a ripple that was running when the tokens switched', async () => {
+    sizeAndContext();
+    const clock = vi.spyOn(performance, 'now').mockReturnValue(1000);
+    const backdrop = mountBackdrop({}).querySelector('.tl-login-backdrop')!;
+    act(() => { backdrop.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 10, clientY: 10 })); });
+    expect(frames).toHaveLength(1);
+    frames.length = 0;
+    clock.mockReturnValue(1300);
+    await act(async () => document.documentElement.setAttribute('data-tl-mode', 'dark'));
+    expect(frames).toHaveLength(1);
+  });
+
+  it('highlights for a mouse only', () => {
+    sizeAndContext();
+    const root = mountBackdrop({});
+    const backdrop = root.querySelector('.tl-login-backdrop')!;
+    const move = (pointerType: string) => {
+      const event = new Event('pointermove', { bubbles: true });
+      Object.assign(event, { pointerType, clientX: 5, clientY: 5 });
+      act(() => { backdrop.dispatchEvent(event); });
+    };
+    move('touch');
+    expect(frames).toHaveLength(0);
+    move('mouse');
+    expect(frames).toHaveLength(1);
+  });
+});

@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.I18NConstants;
@@ -299,7 +300,8 @@ public final class DropSupport {
 	 * {@link #dragged(AcceptedKinds, DropArguments)}), the place by the owner. A drop on an owner
 	 * without a {@link #setTarget(DropTarget) target}, naming an unknown zone, or naming an item
 	 * the owner no longer displays is refused. A target offering only drops on the control as a
-	 * whole ignores the item: the place is then the one beside the items.
+	 * whole ignores the item: the place is then the one beside the items. A point the client
+	 * reports is {@link DropLocation#at(DropPoint) attached} to the location of each mode.
 	 * </p>
 	 */
 	private Resolved resolve(DropArguments args, DropPlace.Resolver places) {
@@ -330,8 +332,27 @@ public final class DropSupport {
 		if (place == null) {
 			return Resolved.refused(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(itemKey));
 		}
-		return new Resolved(new DropRequest(dragged.source(), dragged.kind(), dragged.objects(), place::location),
+		DropPoint point = point(args);
+		Function<DropMode, DropLocation> locations = point == null ? place::location : mode -> {
+			DropLocation location = place.location(mode);
+			return location == null ? null : location.at(point);
+		};
+		return new Resolved(new DropRequest(dragged.source(), dragged.kind(), dragged.objects(), locations),
 			place, null);
+	}
+
+	/**
+	 * The point a drop is made at, {@code null} if the client reports none.
+	 *
+	 * @see DropArguments#getX()
+	 */
+	private static DropPoint point(DropArguments args) {
+		Double x = args.getX();
+		Double y = args.getY();
+		if (x == null || y == null) {
+			return null;
+		}
+		return new DropPoint(x.doubleValue(), y.doubleValue());
 	}
 
 	/**

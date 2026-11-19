@@ -32,17 +32,18 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.ai.mcp.server.authentication.McpSessionPrincipals;
+import com.top_logic.ai.mcp.server.discovery.McpServerCard;
 import com.top_logic.ai.mcp.server.tools.ExposedTool;
 import com.top_logic.ai.mcp.server.tools.McpExposure;
 import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.ToolResult;
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.json.McpJsonMapper;
@@ -260,6 +261,17 @@ public class TestMcpServerProtocol extends TestCase {
 	/** A path below the endpoint other than the trailing slash is not the endpoint. */
 	public void testAPathBelowTheEndpointIsNotServed() throws IOException {
 		Exchange init = initialize(ENDPOINT_URI + "/other", null);
+
+		assertEquals(HttpServletResponse.SC_NOT_FOUND, init.status);
+		assertNull("No session was opened for it.", init.sessionId);
+	}
+
+	/**
+	 * The server card is answered only to a read: a POST to its path reaches the transport, which
+	 * does not serve it.
+	 */
+	public void testAPostToTheServerCardIsNotServed() throws IOException {
+		Exchange init = initialize(CONTEXT + McpServerCard.PATH, null);
 
 		assertEquals(HttpServletResponse.SC_NOT_FOUND, init.status);
 		assertNull("No session was opened for it.", init.sessionId);

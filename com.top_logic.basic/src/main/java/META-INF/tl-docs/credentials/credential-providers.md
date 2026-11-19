@@ -54,7 +54,7 @@ A consumer with neither `credentials` nor an `api-key` uses `NoCredentials`.
 Consumers whose service expects a static key in a known header accept an `api-key` next to `credentials`: the LLM providers, the search engines, the embedder of `tl-ai-index` and DeepL. The key is sent in the header the service expects (`x-api-key` for Anthropic, `api-key` for Azure OpenAI with `auth-scheme="API_KEY"`, `DeepL-Auth-Key` for DeepL, `Authorization: Bearer` otherwise):
 
 ```xml
-<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig" name="anthropic">
+<provider class="com.top_logic.ai.core.provider.anthropic.AnthropicProviderConfig" name="anthropic">
 	<api-key name="tl_anthropic_api_key"/>
 </provider>
 ```
@@ -62,7 +62,7 @@ Consumers whose service expects a static key in a known header accept an `api-ke
 is the same as
 
 ```xml
-<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig" name="anthropic">
+<provider class="com.top_logic.ai.core.provider.anthropic.AnthropicProviderConfig" name="anthropic">
 	<credentials class="com.top_logic.basic.credential.HeaderCredentials" header="x-api-key">
 		<secret name="tl_anthropic_api_key"/>
 	</credentials>

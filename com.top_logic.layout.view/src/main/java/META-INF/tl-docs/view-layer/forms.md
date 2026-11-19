@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, fields of attributes with a <fallback-storage> showing the inherited value, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form, resetting or recomputing dependent fields when a field changes with <value-listeners> and <script>, also in the rows of a <composition-table>), the fields of the object a reference of the form's object points to, edited and saved with it (<object-fields attribute="...">), when the object of a form is locked in edit mode (<lockHandler>, DefaultLockHandler, NoTokenHandling), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, images in an image field stepping through them, arranging them and showing them full page (<binary-display presentation="image-upload">, its size with <dimensions>, an image gallery of tl.imagegallery:GalleryImage), the maximum number of values of a multi-valued attribute with <value-count max="...">, normalizing an entered value with <value-normalizer>, fields of derived attributes, fields of attributes with a <fallback-storage> showing the inherited value, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form, resetting or recomputing dependent fields when a field changes with <value-listeners> and <script>, also in the rows of a <composition-table>), the fields of the object a reference of the form's object points to, edited and saved with it (<object-fields attribute="...">), when the object of a form is locked in edit mode (<lockHandler>, DefaultLockHandler, NoTokenHandling), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -434,14 +434,15 @@ chips by default (`FieldControlRegistry.FILE_CHIPS`, `ReactFileChipsControl`, cl
 one chip per file, a button and a drop area adding several files at once. The model annotation
 `<binary-display presentation="list"/>` (`BinaryDisplay.BinaryPresentation.LIST`) shows them as a
 list with one file field per file instead (`ReactValueListControl` over `FieldControlRegistry.BINARY`),
-whose add button uploads several files at once, one value per file. `data-item` (the default) and
-`image-upload` both give the chips. The annotation `<accepted-types value="image/*, *.pdf"/>`
+whose add button uploads several files at once, one value per file. `data-item` (the default)
+gives the chips; `image-upload` gives the image field described below. The annotation `<accepted-types value="image/*, *.pdf"/>`
 (`TLAcceptedTypes`, MIME types or file patterns) limits the files the file picker offers, for a
 single and a multi-valued value alike. The annotation `<max-upload-size value="5m"/>`
 (`TLMaxUploadSize`) limits the size of each file uploaded to the attribute; the application-wide
 `max-upload-size` of the upload configuration still caps it, so the smaller of both applies. These
 annotations are read at the attribute, else at its type, and act on a `<value-input>` of type
-`tl.core:Binary` through its `<annotations>` as well. A
+`tl.core:Binary` through its `<annotations>` as well. The annotation `<value-count max="3"/>` limits
+the number of files, see [the maximum number of values](#the-maximum-number-of-values). A
 mandatory multi-valued binary value shows the required marker at the chips and, after a refused
 save, the message of the mandatory check under them. In a table cell the chips render inline, while
 the list presentation shows the file names and opens its file fields in a dialog. A multi-valued
@@ -458,9 +459,97 @@ multi-valued `tl.core:Binary` property.
 	<annotations>
 		<accepted-types value="*.pdf"/>
 		<binary-display presentation="list"/>
+		<value-count max="5"/>
 	</annotations>
 </property>
 ```
+
+**Images** — `<binary-display presentation="image-upload"/>`
+(`BinaryDisplay.BinaryPresentation.IMAGE_UPLOAD`) shows a binary value as images
+(`FieldControlRegistry.IMAGE`, `ReactImageFieldControl`, client `TLImageField`), a single and a
+multi-valued value alike. The field takes a whole row of the form
+(`ReactFormFieldControl.prefersWholeLine()`; a `<render-whole-line value="false"/>` at the attribute
+or `full-line="false"` at the `<field>` keeps it in its column). It shows one image at a time on a
+stage as wide as the field and of a fixed height, the theme token `--tl-size-image-stage`;
+`<dimensions width="..." height="..."/>` at the attribute sets the largest width of the image and the
+height of the stage instead. The stage has no background of its own: an image smaller than the stage
+stands centered at its own size, never enlarged, a larger one is fitted into it. The stage of a
+single-valued field has no fixed height: it is exactly as large as its image, at most as wide as the
+field and as high as the theme token or the `<dimensions>` allow. Several images are stepped through with the buttons at the edges of the
+stage or the arrow keys, wrapping around, and a counter "2 of 5" tells where the field is.
+
+- **Displayed, disabled and edited** alike: a click on the image opens it in a view covering the
+  page opaquely on a dark ground (the token `--tl-surface-lightbox`, dark in both modes), scaled to
+  fill it, with the same stepping; its buttons and the counter stand in the margins around the
+  image, never over it. Escape or "Close" closes it.
+- **Edited**: a bar of buttons below the stage acts on the image shown - "Add image" (multi-valued
+  fields) inserts the picked files after it, "Replace" replaces it by a picked file, "Remove"
+  removes it - and "Manage images" (multi-valued fields) opens the *editor* on the scrim over the page. The
+  form never shows more than the stage and this bar. The editor shows a tile per image, all of one
+  width, each with a bar below the image: a button replacing its image by a picked file - a file
+  dropped on the tile replaces it as well - and a button "✕" removing it; the images of an ordered
+  attribute are moved by the handle of their tile, by dragging or with Alt + arrow key. A dashed
+  tile "Upload image" after the last one adds every file dropped or picked there. "Done" or Escape
+  closes the editor; a click on the image of a tile closes it and shows that image on the stage.
+- **Dropping on the stage** of an edited field replaces a single image; among several images, the
+  files are inserted after the image shown, and the stage moves to the first one added.
+- **While uploading**, from the files picked or dropped until the image they become is visible, the
+  stage (or the tile whose image is replaced) shows a spinner over the image and the buttons are
+  disabled; the dashed area shows the spinner and "Uploading…". An image whose data has not arrived
+  yet, e.g. after stepping, shows the spinner as well.
+- **Without an image**, the dashed area fills the whole stage of an edited multi-valued field, as
+  large as the stage with an image, and the bar below it keeps "Add image" alone, so the first upload
+  does not make the field grow; a single-valued
+  field shows a small dashed area. It takes a dropped file or opens the file picker on click. A displayed field shows nothing.
+
+The images are fetched from the data endpoint of the control, they never enter the client state. The
+image field is chosen by the annotation only: `<accepted-types value="image/*"/>` alone keeps the
+chips. `<accepted-types>`, `<max-upload-size>` and `<value-count>` act as for every binary value -
+at the maximum number of images, "Add image", the dashed tile of the editor and dropping on the stage
+are left out, while the images can still be replaced and removed - and the annotations act on a
+`<value-input>` of type `tl.core:Binary` as well. In a table cell the names of the images
+stand for the field, with a button opening it in a dialog.
+
+```xml
+<property name="pictures"
+	multiple="true"
+	ordered="true"
+	type="tl.core:Binary"
+>
+	<annotations>
+		<accepted-types value="image/*"/>
+		<binary-display presentation="image-upload"/>
+		<value-count max="3"/>
+		<dimensions height="400px"/>
+	</annotations>
+</property>
+```
+
+**Image galleries** — a gallery is a multi-valued, ordered reference to `tl.imagegallery:GalleryImage`;
+each image is an object of its own, stored and deleted by the storage of the gallery
+(`ImageGalleryStorage`, chosen automatically for such a reference). It is edited in the same image
+field, `<dimensions>` included, without any other annotation: `FieldControlService` maps the type `tl.imagegallery:GalleryImage` to
+`GalleryFieldControlProvider`, which shows the image of each gallery image and turns an uploaded file
+into a new gallery image (`TransientGalleryImage`) that the storage makes persistent on save - in an
+edited object and in a new one alike. The file picker offers images (`image/*`). Only a gallery is
+edited this way (`GalleryImage.isGallery(multiple, ordered)`): a single reference to a gallery image,
+or a set of them without order, is a plain reference, chosen from the existing gallery images. A
+`<value-input>` of the gallery type that is `multiple="true" ordered="true"` gets the image field as
+well.
+
+```xml
+<reference name="gallery"
+	bag="true"
+	kind="forwards"
+	multiple="true"
+	ordered="true"
+	type="tl.imagegallery:GalleryImage"
+/>
+```
+
+A provider configured for a type may apply to some fields of that type only: where its
+`ReactFieldControlProvider.appliesTo(FieldSpec)` refuses a field - by its multiplicity or its order -,
+the field is resolved as if no provider were configured for the type.
 
 
 The display is how the field looks, not what it says: it is a rendering-only state key, kept out of
@@ -495,6 +584,7 @@ A `<form>` in edit mode checks the constraints of the model on the server: it cr
 
 - `mandatory="true"` of the attribute (`MandatoryConstraintCheck`),
 - `<size-constraint lower-bound upper-bound/>` (`SizeConstraintCheck`) and `<value-range min max/>` (`RangeConstraintCheck`),
+- `<value-count max/>` of a multi-valued attribute (`ValueCountConstraintCheck`), see [the maximum number of values](#the-maximum-number-of-values),
 - every `ConstraintCheck` of the attribute's `<constraints>` annotation, e.g. `<unique/>` or a `<constraint-by-expression>`.
 
 ```xml
@@ -555,11 +645,46 @@ No command gets the rule implicitly; a command states it in its `<executability>
 
 The rule counts only errors on display: an error the user cannot see yet leaves the command enabled, and the attempt to execute it is what reveals the error.
 
-**A value without an object.** A `<value-input mandatory="true">` reports a missing value without a form: its field is marked mandatory and shows the message of the mandatory check (`MandatoryConstraintCheck`) once the user empties it, and its `<on-submit>` command does not run on the empty value (see [view-owned values](doc:view-layer/basics)). The other constraints - `<constraints>`, `<size-constraint>`, `<value-range>` - are checks over an object and need a `<form>` over one.
+**A value without an object.** A `<value-input mandatory="true">` reports a missing value without a form: its field is marked mandatory and shows the message of the mandatory check (`MandatoryConstraintCheck`) once the user empties it, and its `<on-submit>` command does not run on the empty value (see [view-owned values](doc:view-layer/basics)). A `<value-count max="..."/>` among the `<annotations>` of a `<value-input multiple="true">` is checked the same way: more values than the maximum make the field invalid, with the message of the value count check, and its `<on-submit>` command does not run on them. The other constraints - `<constraints>`, `<size-constraint>`, `<value-range>` - are checks over an object and need a `<form>` over one.
 
 **A field the object does not have is hidden.** A `<field attribute="x"/>` whose attribute the type of the displayed object lacks - a form over a selection that may hold objects of several types - is not displayed, label included, and appears again when an object with that attribute is displayed. A field is equally hidden while the form displays no object or a deleted one, and when the attribute is hidden by its visibility annotation.
 
 **A new object shows its create visibility.** While the form displays a new object that is not stored yet - the transient draft of a create dialog (`<create-transient>`) or an edit overlay of it - a field follows the `<create-visibility>` of its attribute instead of its `<visibility>` (hidden, read-only, editable, mandatory; without a create visibility the visibility applies), as in the classic user interface: an attribute that is `read-only` but `<create-visibility value="editable"/>` is entered in the create dialog and read-only once stored. A `<dynamic-visibility>` of the attribute takes precedence over both (`AttributeFieldControl`).
+
+### The maximum number of values
+
+The model annotation `<value-count max="3"/>` (`TLValueCount`) limits the number of values of a
+multi-valued attribute of any type - files, references, a list of texts. Without `max`, the number
+is not limited. It is enforced three times:
+
+- **When saving.** The `ModelService` checks it on every commit, whatever user interface or script
+  changes the object: an object whose attribute holds more values is refused with "Too many values.
+  At most 3 values are allowed, actual: 4." (`ValueCountConstraintCheck`,
+  `ModelService.addChecks(...)`).
+- **At the field.** In a `<form>`, the field holding more values is invalid with the same message
+  (see [validation](#validation)), as is a `<value-input multiple="true">` stating the annotation
+  among its `<annotations>`.
+- **When adding.** The field description carries the maximum (`FieldSpec.getMaxCount()`), and every
+  control adding values offers no further value once the field holds the maximum: the file chips
+  hide their add button, the list of values its add button, the image field its button "Add image",
+  the dashed tile of its editor and dropping on its stage; removing a value offers adding again. Values added at once - the files of one upload or one drop -
+  are taken all or none (`ValueCountLimit`): an addition beyond the room left is refused as a whole
+  with a message naming the maximum, the number of added values and the room left ("Nothing was
+  added: at most 3 values are allowed. 2 selected, room for 1."). The file chips and the image field
+  show it under the field, where they report a failed upload; the list of values shows it as a
+  message of the window.
+
+```xml
+<reference name="reviewers"
+	kind="forwards"
+	multiple="true"
+	type="tl.accounts:Person"
+>
+	<annotations>
+		<value-count max="3"/>
+	</annotations>
+</reference>
+```
 
 ## Normalizing an entered value
 

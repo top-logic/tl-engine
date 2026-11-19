@@ -24,7 +24,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
-import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.execution.model.AgentSession;
 
 /**
  * Keeps the acting account's chat list in the browser's state, and follows its changes.

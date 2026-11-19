@@ -24,13 +24,17 @@
 	same way. The buttons write the search term of the last section, which is where a value bounded
 	to no object goes.
 	
-	The fourth section is a search field: the magnifier ahead of what is typed, the button that
+	The fourth section separates: a plain line, a line with a text at its start, in its middle
+	and at its end, inset lines between the entries of a list, and a vertical line between two
+	cards of a row, stretching to their height.
+	
+	The fifth section is a search field: the magnifier ahead of what is typed, the button that
 	empties it, and the delay the typed value is held back for before it reaches the channel the
 	text below reads. Below it, the button that empties an input on every kind of input: a text
 	area, a number and a password ask for it with clearable, a date offers it on its own as long as
 	it is not mandatory.
 	
-	The fifth section shows the display variants of an input: a selection as a cloud of toggle
+	The sixth section shows the display variants of an input: a selection as a cloud of toggle
 	chips, as a bar of segments, as a group of radio buttons stacked or side by side, as a group of
 	checkboxes where more than one value is chosen, or as a dropdown without a filter input that
 	jumps to an option by its first letters; a number as a handle dragged along a track, a truth
@@ -536,6 +540,105 @@
 				</text>
 			</card>
 		</grid>
+
+		<text variant="heading-sm">
+			<label>
+				<en>Dividers</en>
+				<de>Trennlinien</de>
+			</label>
+		</text>
+		<text>
+			<label>
+				<en>A line separates the content before it from the content after it. Its colour and its width come from the tokens of the theme.</en>
+				<de>Eine Linie trennt den Inhalt davor vom Inhalt danach. Farbe und Stärke kommen aus den Token des Themes.</de>
+			</label>
+		</text>
+		<divider/>
+		<text>
+			<label>
+				<en>A line may carry a short text, at its start, in its middle or at its end.</en>
+				<de>Eine Linie kann einen kurzen Text tragen, am Anfang, in der Mitte oder am Ende.</de>
+			</label>
+		</text>
+		<divider label-position="start">
+			<label>
+				<en>Start</en>
+				<de>Anfang</de>
+			</label>
+		</divider>
+		<divider>
+			<label>
+				<en>Center</en>
+				<de>Mitte</de>
+			</label>
+		</divider>
+		<divider label-position="end">
+			<label>
+				<en>End</en>
+				<de>Ende</de>
+			</label>
+		</divider>
+		<text>
+			<label>
+				<en>An inset line begins at the indent of an entry of a list, so it separates the entries without cutting through their leading edge.</en>
+				<de>Eine eingerückte Linie beginnt beim Einzug eines Listeneintrags; sie trennt die Einträge, ohne deren vorderen Rand zu durchschneiden.</de>
+			</label>
+		</text>
+		<stack gap="compact">
+			<text>
+				<label>
+					<en>First entry</en>
+					<de>Erster Eintrag</de>
+				</label>
+			</text>
+			<divider inset="start"/>
+			<text>
+				<label>
+					<en>Second entry</en>
+					<de>Zweiter Eintrag</de>
+				</label>
+			</text>
+			<divider inset="start"/>
+			<text>
+				<label>
+					<en>Third entry</en>
+					<de>Dritter Eintrag</de>
+				</label>
+			</text>
+		</stack>
+		<text>
+			<label>
+				<en>A vertical line stands in a row and stretches to the height of its neighbours.</en>
+				<de>Eine senkrechte Linie steht in einer Zeile und streckt sich auf die Höhe ihrer Nachbarn.</de>
+			</label>
+		</text>
+		<stack direction="row">
+			<card>
+				<title>
+					<en>Before</en>
+					<de>Davor</de>
+				</title>
+				<text tone="secondary">
+					<label>
+						<en>The content before the line.</en>
+						<de>Der Inhalt vor der Linie.</de>
+					</label>
+				</text>
+			</card>
+			<divider orientation="vertical"/>
+			<card>
+				<title>
+					<en>After</en>
+					<de>Danach</de>
+				</title>
+				<text tone="secondary">
+					<label>
+						<en>The content after the line.</en>
+						<de>Der Inhalt nach der Linie.</de>
+					</label>
+				</text>
+			</card>
+		</stack>
 
 		<text variant="heading-sm">
 			<label>

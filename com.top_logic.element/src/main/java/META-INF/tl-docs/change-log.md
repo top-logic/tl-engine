@@ -82,7 +82,10 @@ model and can also be edited in the in-app model editor:
 - An **update of a qualifying reference** (or of its opposite end) is checked in the revision of
   the change *and* in the revision before. Moving an object from one root to another therefore
   shows up in the change log of both roots: as moving out in the old one, as moving in in the new
-  one.
+  one. This holds for every storage of the reference: when the values are stored in the rows of
+  the referenced objects (e.g. `inline-set-storage`), the move is reported as an update of the
+  reference at the old and at the new container and as an update of the opposite end (if
+  modelled) at the moved object.
 - An update that only modifies references opted out by `include="false"` is not shown, even on
   the root itself: adding a note to `Ticket#notes` in the example is no change of the ticket.
   An update modifying such a reference together with another attribute stays visible.

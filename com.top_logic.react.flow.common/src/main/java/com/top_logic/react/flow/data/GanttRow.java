@@ -27,6 +27,9 @@ public interface GanttRow extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/** @see #getChildren() */
 	String CHILDREN__PROP = "children";
 
+	/** @see #isCollapsed() */
+	String COLLAPSED__PROP = "collapsed";
+
 	/** @see #isAcceptsDrop() */
 	String ACCEPTS_DROP__PROP = "acceptsDrop";
 
@@ -97,7 +100,13 @@ public interface GanttRow extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	boolean hasLabel();
 
 	/**
-	 * Child rows forming a hierarchy. Phase 1 renders the tree flat with indentation.
+	 * Child rows forming a hierarchy.
+	 *
+	 * <p>
+	 * The children are shown below their parent row, indented by {@link GanttLayout#getIndentWidth()}
+	 * per level. A row with children shows a toggle in the label column that hides the children
+	 * (see {@link #isCollapsed()}).
+	 * </p>
 	 */
 	java.util.List<com.top_logic.react.flow.data.GanttRow> getChildren();
 
@@ -115,6 +124,22 @@ public interface GanttRow extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 * Removes a value from the {@link #getChildren()} list.
 	 */
 	void removeChildren(com.top_logic.react.flow.data.GanttRow value);
+
+	/**
+	 * Whether the {@link #getChildren()} of this row are hidden together with their items and the
+	 * edges of these items, so that the rows below move up.
+	 *
+	 * <p>
+	 * Client-only (transient) view state, switched by the toggle in the label column. It is not
+	 * sent to the server and does not change the model, all rows start expanded.
+	 * </p>
+	 */
+	boolean isCollapsed();
+
+	/**
+	 * @see #isCollapsed()
+	 */
+	com.top_logic.react.flow.data.GanttRow setCollapsed(boolean value);
 
 	/**
 	 * Whether items may be dropped into this row during drag. Default true.

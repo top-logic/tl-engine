@@ -73,20 +73,20 @@ public class TestColumnSelectionApply extends TestCase {
 			super(context, view, false);
 		}
 
-		/** Opens the protected {@link #applyColumns(List, List, String)} to the test, keeping the grouping. */
+		/** Opens the protected {@link #applyColumns(List, List, List)} to the test, keeping the grouping. */
 		void apply(List<String> columns, List<String> lockedColumns) {
-			applyColumns(columns, lockedColumns, getGroupedColumn());
+			applyColumns(columns, lockedColumns, getGroupedColumns());
 		}
 
 		/** Applies the result of the given column selection, as its OK button does. */
 		void apply(ReactColumnSelectControl selection) {
-			applyColumns(selection.visibleColumns(), selection.lockedColumns(), selection.groupedColumn());
+			applyColumns(selection.visibleColumns(), selection.lockedColumns(), selection.groupedColumns());
 		}
 
 		/** The column selection as the {@link TableViewControl} creates it when it opens the dialog. */
 		ReactColumnSelectControl openSelection() {
 			return new ReactColumnSelectControl(getReactContext(), getView().columnOptions(), lockedColumnNames(),
-				getGroupedColumn(), true);
+				getGroupedColumns(), true);
 		}
 
 	}
@@ -157,16 +157,16 @@ public class TestColumnSelectionApply extends TestCase {
 	 */
 	public void testGroupingIsAppliedWithTheColumns() {
 		TestTable table = control();
-		table.setGroupedColumn(COLUMN_NAME);
+		table.setGroupedColumns(List.of(COLUMN_NAME));
 
 		ReactColumnSelectControl selection = table.openSelection();
-		assertEquals(COLUMN_NAME, selection.groupedColumn());
+		assertEquals(List.of(COLUMN_NAME), selection.groupedColumns());
 
 		group(selection, COLUMN_AMOUNT);
-		assertEquals("The grouping waits for the dialog to be applied.", COLUMN_NAME, table.getGroupedColumn());
+		assertEquals("The grouping waits for the dialog to be applied.", List.of(COLUMN_NAME), table.getGroupedColumns());
 
 		table.apply(selection);
-		assertEquals(COLUMN_AMOUNT, table.getGroupedColumn());
+		assertEquals(List.of(COLUMN_AMOUNT), table.getGroupedColumns());
 	}
 
 	/**
@@ -174,13 +174,13 @@ public class TestColumnSelectionApply extends TestCase {
 	 */
 	public void testRemovingTheGroupingIsApplied() {
 		TestTable table = control();
-		table.setGroupedColumn(COLUMN_NAME);
+		table.setGroupedColumns(List.of(COLUMN_NAME));
 
 		ReactColumnSelectControl selection = table.openSelection();
-		group(selection, "");
+		group(selection);
 		table.apply(selection);
 
-		assertNull(table.getGroupedColumn());
+		assertEquals(List.of(), table.getGroupedColumns());
 	}
 
 	/**
@@ -194,12 +194,32 @@ public class TestColumnSelectionApply extends TestCase {
 		group(selection, COLUMN_STATE);
 		table.apply(selection);
 
-		assertEquals(COLUMN_STATE, table.getGroupedColumn());
+		assertEquals(List.of(COLUMN_STATE), table.getGroupedColumns());
 		assertEquals(List.of(COLUMN_NAME, COLUMN_AMOUNT), displayedColumns(table));
 	}
 
-	private static void group(ReactColumnSelectControl selection, String column) {
-		selection.executeCommand(ReactColumnSelectControl.CMD_GROUP, Map.of(GroupArguments.COLUMN, column));
+	/**
+	 * Tests that a further grouping level chosen in the selection is applied as the innermost level, and that removing
+	 * the level of one column keeps the others.
+	 */
+	public void testGroupingLevelsAreApplied() {
+		TestTable table = control();
+		table.setGroupedColumns(List.of(COLUMN_NAME));
+
+		ReactColumnSelectControl selection = table.openSelection();
+		group(selection, COLUMN_NAME, COLUMN_STATE);
+		table.apply(selection);
+		assertEquals(List.of(COLUMN_NAME, COLUMN_STATE), table.getGroupedColumns());
+
+		selection = table.openSelection();
+		assertEquals(List.of(COLUMN_NAME, COLUMN_STATE), selection.groupedColumns());
+		group(selection, COLUMN_STATE);
+		table.apply(selection);
+		assertEquals(List.of(COLUMN_STATE), table.getGroupedColumns());
+	}
+
+	private static void group(ReactColumnSelectControl selection, String... columns) {
+		selection.executeCommand(ReactColumnSelectControl.CMD_GROUP, Map.of(GroupArguments.COLUMNS, List.of(columns)));
 	}
 
 	/** The names of the displayed columns of the given table, in display order. */

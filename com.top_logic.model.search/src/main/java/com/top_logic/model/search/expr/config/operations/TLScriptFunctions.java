@@ -8,7 +8,9 @@ package com.top_logic.model.search.expr.config.operations;
 
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
@@ -36,6 +38,10 @@ import com.top_logic.model.search.expr.trace.ScriptTracer;
  * <li>It is possible to define a default value for a primitive parameter type using the
  * corresponding default annotation. For example, use {@link StringDefault} for strings and
  * {@link LongDefault} for long values.</li>
+ * <li>An enum parameter defaults to its first constant. {@link FormattedDefault} selects another
+ * constant by its name (the external name or the Java name of the constant), {@link NullDefault}
+ * makes the parameter default to <code>null</code>. An explicitly passed <code>null</code> is
+ * passed on as <code>null</code>.</li>
  * <li>When a parameter cannot be natively be converted from TL-Script values (e.g., long to
  * String), it is possible to annotate a {@link ValueConverter} using the annotation
  * {@link ScriptConversion}.</li>

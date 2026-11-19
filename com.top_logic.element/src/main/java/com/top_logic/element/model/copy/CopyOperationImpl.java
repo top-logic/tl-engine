@@ -243,19 +243,33 @@ abstract class CopyOperationImpl extends CopyOperation implements CopyFilter, Co
 	private Object copyValue(TLObject orig, TLReference reference, Object value) {
 		if (value instanceof Collection) {
 			return copyCollection(orig, reference, (Collection<?>) value);
-		} else if (value == null) {
-			return null;
 		} else {
-			return copyObject(orig, reference, (TLObject) value);
+			return copyPart(orig, reference, value);
 		}
 	}
 
 	private Object copyCollection(TLObject orig, TLReference reference, Collection<?> collection) {
 		Collection<Object> result = allocateCopy(collection);
 		for (Object element : collection) {
-			result.add(copyObject(orig, reference, (TLObject) element));
+			result.add(copyPart(orig, reference, element));
 		}
 		return result;
+	}
+
+	/**
+	 * The copy of the given part of a composition.
+	 *
+	 * <p>
+	 * A model object is copied. A value that is no model object - an image a gallery has not stored
+	 * yet, for instance - is passed on as it is: the storage of the composition makes of it what it
+	 * stores.
+	 * </p>
+	 */
+	private Object copyPart(TLObject orig, TLReference reference, Object value) {
+		if (!(value instanceof TLObject part)) {
+			return value;
+		}
+		return copyObject(orig, reference, part);
 	}
 
 	private Object copyObject(TLObject orig, TLReference reference, TLObject value) {

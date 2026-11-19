@@ -24,16 +24,20 @@ export function componentSources(dirUrl) {
 // Linie. Statt sie in jeder Datei auszuschreiben, steht dort ein Marker-Kommentar
 // `/* @tl-roles: <art> <.tl-ziel> */`, und hier entsteht je Rolle aus src/tokens.json eine Regel
 // `<ziel>[data-tl-role="<rolle>"]` — die Tönung ist ein Attribut, kein Modifier (3b §11, W7); eine neue
-// Kategorie ist eine Zeile in tokens.json, nicht fünf. Ziel ist ein Block (tl-chip) oder ein Element
-// (tl-segmented__segment), nie ein Modifier. Kommentar, damit Klassen-Gate und Tests auf src/ ihn
-// überlesen. docs/skalen.md „Gleiches wird zusammengelegt“. In `:where(<ziel>)` gesetzt, erzeugt der Marker
+// Kategorie ist eine Zeile in tokens.json, nicht fünf. Ziel ist ein Block (tl-chip), ein Element
+// (tl-segmented__segment) oder ein Modifier, der eine Form ist (tl-badge--dot); die Rolle ist nie ein Modifier.
+// Kommentar, damit Klassen-Gate und Tests auf src/ ihn überlesen. docs/skalen.md „Gleiches wird zusammengelegt“. In `:where(<ziel>)` gesetzt, erzeugt der Marker
 // die Regeln ohne Spezifität: für ein Ablage-Ziel, dessen Fläche das Ablegen übermalt (Tabellenzeile, #29815).
 // Je Rolle eine Deklarationsliste: Fläche und Linie für die getönten Arten; die gefüllte Kategorie (5c §4) liest
 // ihre Fläche und die gerechnete Schrift darauf (category-surface, gefüllter Termin) oder nur die Fläche
-// (category-fill, Punkt ohne Text).
+// (category-fill, Punkt ohne Text). Das Badge füllt sich je Bedeutung ebenso: Fläche und gerechnete Schrift
+// (status-surface, Zähler); sein Punkt hat keine Schrift und braucht 3:1 zum Grund, er liest den Text der Bedeutung
+// (status-mark).
 const flaecheLinie = (flaeche, linie) => `background: var(--tl-${flaeche}); border-color: var(--tl-${linie});`;
 const gefuellt = (T) => Object.keys(T.color.light).map((n) => /^(category-\d+)-surface$/.exec(n)?.[1])
   .filter((r) => r && `text-on-${r}` in T.derived.light);
+// Die Bedeutungen: je eine gefüllte Fläche status-<s>-surface.
+const STATUS = (T) => Object.keys(T.color.light).map((n) => /^status-([a-z]+)-surface$/.exec(n)?.[1]).filter(Boolean);
 // Die getönten Arten: je Rolle die Namen ihrer Fläche und ihrer Linie.
 const GETOENT = {
   brand: () => [['brand', 'surface-brand-subtle', 'border-interactive']],
@@ -47,9 +51,13 @@ const ROLLEN = {
     [art, (T) => rollen(T).map(([rolle, flaeche, linie]) => [rolle, flaecheLinie(flaeche, linie)])])),
   'category-surface': (T) => gefuellt(T).map((r) => [r, `background: var(--tl-${r}-surface); color: var(--tl-text-on-${r});`]),
   'category-fill': (T) => gefuellt(T).map((r) => [r, `background: var(--tl-${r}-surface);`]),
+  'status-surface': (T) => STATUS(T).filter((s) => `text-on-status-${s}` in T.derived.light)
+    .map((s) => [s, `background: var(--tl-status-${s}-surface); color: var(--tl-text-on-status-${s});`]),
+  'status-mark': (T) => STATUS(T).filter((s) => `status-${s}-text` in T.color.light)
+    .map((s) => [s, `background: var(--tl-status-${s}-text);`]),
 };
 const MARKER = /\/\*\s*@tl-roles:\s*(\S+)\s+(\S+)\s*\*\//g;
-const ZIEL = /^\.tl-[a-z0-9]+(-[a-z0-9]+)*(__[a-z0-9]+(-[a-z0-9]+)*)?$/;
+const ZIEL = /^\.tl-[a-z0-9]+(-[a-z0-9]+)*(__[a-z0-9]+(-[a-z0-9]+)*)?(--[a-z0-9]+(-[a-z0-9]+)*)?$/;
 
 /** Ersetzt jeden Marker `/* @tl-roles: <art> <.tl-ziel> *\/` durch die Rollenregeln aus T. */
 export function expandRoles(css, T) {
@@ -57,7 +65,7 @@ export function expandRoles(css, T) {
     if (!ROLLEN[art]) throw new Error(`@tl-roles: unbekannte Rollenart ${art} (bekannt: ${Object.keys(ROLLEN).join(', ')})`);
     const ohne = /^:where\((.*)\)$/.exec(sel);
     const ziel = ohne ? ohne[1] : sel;
-    if (!ZIEL.test(ziel)) throw new Error(`@tl-roles: ${sel} ist weder Block- noch Elementklasse`);
+    if (!ZIEL.test(ziel)) throw new Error(`@tl-roles: ${sel} ist weder Block-, Element- noch Modifierklasse`);
     return ROLLEN[art](T).map(([rolle, deklarationen]) => {
       const auswahl = `${ziel}[data-tl-role="${rolle}"]`;
       return `${ohne ? `:where(${auswahl})` : auswahl} { ${deklarationen} }`;
@@ -217,12 +225,17 @@ ${type}
    Zeile. Ein Feld mit aria-activedescendant ist kein Behälter und behält den Ring: das Suchfeld eines
    Select (input) und das Select ohne Suchfeld (role=combobox) — ihr Cursor steht im Popup.
    Eine Dashboard-Kachel mit Aktion trägt den Ring, wenn ihr verborgener Knopf (tl-visually-hidden) den Tastaturfokus
-   hat: der Knopf ist unsichtbar, die Kachel ist, was der Nutzer drückt (Spec 5c §6).
+   hat: der Knopf ist unsichtbar, die Kachel ist, was der Nutzer drückt (Spec 5c §6). Ebenso die Fläche eines Bildfelds,
+   die ein Bild aufnimmt (tl-image-field__drop): ihr verborgenes Dateifeld hat den Fokus, die Fläche wird gedrückt.
    Die hervorgehobene Option einer Select-Liste ist die Tastaturposition (der Fokus bleibt im Feld, aria-activedescendant):
-   ihr ::after trägt den Ring, innen, wie das Cursor-Element — kein zweiter Ring in der Komponente. */
+   ihr ::after trägt den Ring, innen, wie das Cursor-Element — kein zweiter Ring in der Komponente.
+   Der Körper einer Tabelle, solange er scrollt und selbst den Tastaturfokus hat: seine positionierten Zeilen decken
+   seinen eigenen Ring, darum trägt ihn das ::after seiner Hülle (tl-table__viewport), eine Fläche über den Zeilen. */
 :where(a, button, input, select, textarea, summary, [tabindex], [contenteditable]):where(:not(:not(input, textarea, [role="combobox"])[aria-activedescendant])):focus-visible,
 :where(:not(input, textarea, [role="combobox"])[aria-activedescendant]:focus-visible [data-tl-state~="cursor"])::after,
 .tl-dashboard__tile:has(> .tl-dashboard__action:focus-visible),
+.tl-image-field__drop:has(> input:focus-visible),
+.tl-table__viewport:has(> .tl-table__body:focus-visible)::after,
 .tl-select__option[data-tl-state~="highlighted"]::after {
   outline: var(--tl-focus-width) solid var(--tl-focus-ring);
   outline-offset: var(--tl-focus-offset);

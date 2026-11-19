@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.button;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.CommandErrors;
+import com.top_logic.layout.react.control.common.BadgeDisplay;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
 
@@ -58,6 +59,19 @@ public interface CommandModel {
 	 * The resolved tooltip text for the command button, or {@code null} if no tooltip is set.
 	 */
 	default String getTooltip() {
+		return null;
+	}
+
+	/**
+	 * The badge at the command's button - a count or a dot saying that something waits for the
+	 * command -, or {@code null} for none.
+	 *
+	 * <p>
+	 * A change of the badge is reported like any other change of the model's state. Returns
+	 * {@code null} by default.
+	 * </p>
+	 */
+	default BadgeDisplay getBadge() {
 		return null;
 	}
 

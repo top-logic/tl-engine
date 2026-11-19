@@ -124,6 +124,12 @@ public class EdgeDecoration_Impl extends com.top_logic.react.flow.data.impl.Widg
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.EdgeDecoration setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return EDGE_DECORATION__TYPE;
 	}

@@ -139,6 +139,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 	/** @see #getRenderInfo() */
 	String RENDER_INFO__PROP = "renderInfo";
 
+	/** @see #isDropTarget() */
+	String DROP_TARGET__PROP = "dropTarget";
+
 	/** The type code of this instance. */
 	TypeKind kind();
 
@@ -201,6 +204,26 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 	 * Checks, whether {@link #getRenderInfo()} has a value.
 	 */
 	boolean hasRenderInfo();
+
+	/**
+	 * Whether a drop on the diagram is made onto this element.
+	 *
+	 * <p>
+	 * Derived state the server keeps in sync with the element: set for an element with a
+	 * {@link #getUserObject()}, see
+	 * {@link com.top_logic.react.flow.operations.WidgetOperations#isDropTargetByDefinition()}. The
+	 * {@link #getUserObject()} itself is not transmitted, so this flag tells the client the elements a
+	 * drop is made onto. The target of a drop is the innermost element under the pointer that has
+	 * this flag or is a {@link DropRegion}; a drop region without the flag stands for the diagram as
+	 * a whole.
+	 * </p>
+	 */
+	boolean isDropTarget();
+
+	/**
+	 * @see #isDropTarget()
+	 */
+	com.top_logic.react.flow.data.Widget setDropTarget(boolean value);
 
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.Widget readWidget(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {

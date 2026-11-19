@@ -171,6 +171,12 @@ public class GraphLayout_Impl extends com.top_logic.react.flow.data.impl.Floatin
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.GraphLayout setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return GRAPH_LAYOUT__TYPE;
 	}

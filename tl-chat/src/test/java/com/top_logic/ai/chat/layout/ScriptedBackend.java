@@ -11,7 +11,7 @@ import com.top_logic.ai.chat.backend.ConversationBackend;
 import com.top_logic.ai.chat.backend.ConversationBackendResolver;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.execution.model.AgentSession;
 
 /**
  * A {@link ConversationBackendResolver} whose answer a test installs, registered in the test

@@ -13,8 +13,8 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.security.ReadFilter;
-import com.top_logic.tl.ai.core.tools.model.TidResolver;
+import com.top_logic.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.tools.model.TidResolver;
 
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
@@ -38,7 +38,7 @@ import dev.langchain4j.store.embedding.EmbeddingMatch;
  * <em>dropped</em>, not passed through: an unattributable chunk is one no read check can be made
  * about.</li>
  * <li><b>The same chokepoint as everything else.</b> The resolution goes through
- * {@link TidResolver#resolve(String, com.top_logic.tl.ai.core.security.ModelSecurity)}, which is
+ * {@link TidResolver#resolve(String, com.top_logic.ai.core.security.ModelSecurity)}, which is
  * itself the read check - so "does not exist" and "not yours" are one answer here too, and no second
  * read policy is written in this module.</li>
  * <li><b>Over-fetch, then truncate.</b> Filtering happens over a larger candidate pool than the caller

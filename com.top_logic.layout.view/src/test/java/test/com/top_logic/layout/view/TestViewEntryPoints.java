@@ -132,8 +132,27 @@ public class TestViewEntryPoints extends TestCase {
 
 		ViewResolution resolution = ViewServlet.resolveView(config, "/w1/" + VISITOR_VIEW, ANONYMOUS);
 		assertEquals(VISITOR_VIEW_PATH, resolution.viewPath());
-		// The page is the one the URL names, so its address is taken up rather than held.
 		assertFalse(resolution.loginView());
+	}
+
+	/**
+	 * An entry point declared to hold its URL keeps the view file and the query it was called
+	 * with, so that a reload shows the page again. Every other entry point, a route of the
+	 * application and the default view named by its file take the URL up; the login view holds it.
+	 */
+	public void testAnEntryPointHoldingItsUrlKeepsItsAddress() {
+		ViewConfig config = withLoginView(newConfig("demo/x.view.xml"));
+		addEntryPoint(config, VISITOR_VIEW, true, true);
+
+		assertTrue(ViewServlet.resolveView(config, "/w1/" + VISITOR_VIEW, ANONYMOUS).holdsUrl());
+		assertTrue(ViewServlet.resolveView(config, "/w1/" + VISITOR_VIEW, NAMED).holdsUrl());
+		assertTrue("The login view holds the URL it stands in for.",
+			ViewServlet.resolveView(config, "/w1/demo/x.view.xml", ANONYMOUS).holdsUrl());
+		assertFalse("An entry point takes its URL up unless it says otherwise.",
+			ViewServlet.resolveView(config, "/w1/demo/x.view.xml", NAMED).holdsUrl());
+		assertFalse(ViewServlet.resolveView(config, "/w1/some/route", NAMED).holdsUrl());
+		assertFalse(ViewServlet.resolveView(config, "/w1/", NAMED).holdsUrl());
+		assertFalse(ViewServlet.resolveView(config, "/w1/app.view.xml", NAMED).holdsUrl());
 	}
 
 	/**
@@ -254,6 +273,10 @@ public class TestViewEntryPoints extends TestCase {
 	}
 
 	private void addEntryPoint(ViewConfig config, String view, boolean anonymous) {
+		addEntryPoint(config, view, anonymous, false);
+	}
+
+	private void addEntryPoint(ViewConfig config, String view, boolean anonymous, boolean holdUrl) {
 		ViewConfig.EntryPoint entryPoint = TypedConfiguration.newConfigItem(ViewConfig.EntryPoint.class);
 		entryPoint.update(
 			TypedConfiguration.getConfigurationDescriptor(ViewConfig.EntryPoint.class)
@@ -263,6 +286,10 @@ public class TestViewEntryPoints extends TestCase {
 			TypedConfiguration.getConfigurationDescriptor(ViewConfig.EntryPoint.class)
 				.getProperty(ViewConfig.EntryPoint.ANONYMOUS),
 			Boolean.valueOf(anonymous));
+		entryPoint.update(
+			TypedConfiguration.getConfigurationDescriptor(ViewConfig.EntryPoint.class)
+				.getProperty(ViewConfig.EntryPoint.HOLD_URL),
+			Boolean.valueOf(holdUrl));
 		config.getEntryPoints().add(entryPoint);
 	}
 

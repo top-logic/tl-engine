@@ -10,14 +10,14 @@ order: 63
 The ceilings an administrator may put on what this installation carries and what one account may spend (package `limits/`) are configured in `<capacity>` on `AgentRuntimeService` (*Agent runtime* in the service editor) and in `<budget>` on `AgentPolicyService` (*Agent policy*). **All of them are off by default**: the modules run in applications with a thousand users on hardware they know nothing about, and any figure they picked would refuse work the installation allowed before.
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
-	<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+<config service-class="com.top_logic.ai.core.agent.AgentRuntimeService">
+	<instance class="com.top_logic.ai.core.agent.AgentRuntimeService">
 		<capacity chat-workers="0" chat-queue="0" concurrent-runs-per-account="0" subagent-workers="0" tool-workers="0"/>
 	</instance>
 </config>
 
-<config service-class="com.top_logic.tl.ai.core.agent.AgentPolicyService">
-	<instance class="com.top_logic.tl.ai.core.agent.AgentPolicyService">
+<config service-class="com.top_logic.ai.core.agent.AgentPolicyService">
+	<instance class="com.top_logic.ai.core.agent.AgentPolicyService">
 		<budget token-budget="0" money-budget="0" budget-window-hours="24">
 			<role-budgets>
 				<role-budget name="tl.admin" tokens="0" money="0"/>
@@ -108,7 +108,7 @@ Permission to run denied: account 'jdoe' spent 2145300 tokens in the last 24h, w
 Chat run refused: all 32 chat workers are busy and the queue of 10 is full.
 ```
 
-The user reads one of six sentences (`com.top_logic.tl.ai.core.limits.I18NConstants`): the pool is full, the account is at its cap, the token budget is spent at run start or ran out mid-run, the money budget is spent at run start or ran out mid-run. The token and run sentences do not name the configured figure; the money sentences name the spent amount and the budget, in the account's number format ("Budget used up: €12.40 of €15.00 in the last 24 hours."). After a stopped run the chat asks `RunLimits.budgetStopNotice` which budget ran out.
+The user reads one of six sentences (`com.top_logic.ai.core.limits.I18NConstants`): the pool is full, the account is at its cap, the token budget is spent at run start or ran out mid-run, the money budget is spent at run start or ran out mid-run. The token and run sentences do not name the configured figure; the money sentences name the spent amount and the budget, in the account's number format ("Budget used up: €12.40 of €15.00 in the last 24 hours."). After a stopped run the chat asks `RunLimits.budgetStopNotice` which budget ran out.
 
 ### Boundaries
 

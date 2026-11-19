@@ -12,11 +12,11 @@ import java.util.Map;
 import junit.framework.Test;
 
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.SecurityContext;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.security.ReadFilter;
-import com.top_logic.tl.ai.core.tools.ToolExecutions;
+import com.top_logic.ai.core.agent.SecurityContext;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.tools.ToolExecutions;
 
 /**
  * End-to-end test that the data tools disclose only what the acting persona may read (issue #289).

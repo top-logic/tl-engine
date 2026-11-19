@@ -191,6 +191,12 @@ public class Image_Impl extends com.top_logic.react.flow.data.impl.Box_Impl impl
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.Image setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return IMAGE__TYPE;
 	}

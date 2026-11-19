@@ -392,11 +392,18 @@ as the value of a reference (R7).
 
 ## Consequences
 
-- **Scope: the React view layer.** The user interface part of this specification (R4, R8, R11, R11a) is
-  implemented for the React view layer. The classic layout UI does not check attribute rights; its
-  script based providers deliver the discoverable (not only the readable) objects, so a table there
-  shows all column values of a row the user may only discover. An application using model based
-  security with `Discover`-only roles must use the React view layer for such types.
+- **Scope: forms of both user interfaces, tables of the React view layer.** The forms of the React
+  view layer and of the classic layout UI implement R4, R7 and R11 with the same layer (R8):
+  `DiscoverRight` restricts values and checks the new targets of a reference on save,
+  `DiscoverableOptions` restricts the option lists (also those of a Java option generator), and in
+  the classic UI a reference field shows undiscoverable elements by the placeholder
+  (`SelectFieldUtils.setMaskUndiscoverable`, `MaskedValues`) in every presentation: selection,
+  dropdown, select dialogs, read-only display and text input. In a tree of options, an
+  undiscoverable node hides its subtree. The table cells of R11a are implemented for the React view
+  layer. The classic layout UI does not check attribute rights in tables; its script based providers
+  deliver the discoverable (not only the readable) objects, so a table there shows all column values
+  of a row the user may only discover. An application using model based security with
+  `Discover`-only roles must use the React view layer for such tables.
 
 - **The guarantee depends on every object source filtering.** Every source - including script
   functions of applications - must use the common layer (R8). The input checks (R5) stay as a second

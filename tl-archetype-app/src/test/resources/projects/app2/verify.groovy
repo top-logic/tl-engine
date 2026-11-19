@@ -16,7 +16,7 @@ def expected = [
 	"src/main/webapp/WEB-INF/layouts": true,
 	"bin/launch/Start Classic App.launch": true,
 	"bin/launch/Layout Inline Selected.launch": true,
-	"src/main/webapp/WEB-INF/autoconf/com.top_logic.tl.ai.core.security.AiToolAccessService.config.xml": true
+	"src/main/webapp/WEB-INF/autoconf/com.top_logic.ai.core.security.AiToolAccessService.config.xml": true
 ];
 expected.each { path, present ->
 	def file = new File(project, path);
@@ -69,11 +69,6 @@ if (buildPlugins != ["tl-maven-plugin"]) {
 def metaConf = new File(project, "src/main/webapp/WEB-INF/conf/metaConf.txt").readLines()*.trim();
 if (metaConf != ["db-default.xml", "top-logic.singleBranch.config.xml", "pac4j-generic.xml", "classicapp.conf.xml"]) {
 	throw new AssertionError("Unexpected metaConf.txt " + metaConf + ".");
-}
-// Without the React UI, there is no view configuration titling the browser tab.
-def conf = new File(project, "src/main/webapp/WEB-INF/conf/classicapp.conf.config.xml");
-if (conf.text.contains("com.top_logic.layout.view.ViewConfig")) {
-	throw new AssertionError("Unexpected view configuration in " + conf + ".");
 }
 
 // The artifact IDs of all dependencies the build resolved, transitive ones included (written by

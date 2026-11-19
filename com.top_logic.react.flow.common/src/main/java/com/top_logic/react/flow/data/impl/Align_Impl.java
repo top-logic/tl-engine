@@ -116,6 +116,12 @@ public class Align_Impl extends com.top_logic.react.flow.data.impl.Decoration_Im
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.Align setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return ALIGN__TYPE;
 	}

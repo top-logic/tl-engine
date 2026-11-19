@@ -1,0 +1,350 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.ai.core.tools.authoring;
+
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.registry.ToolFactory;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.ApplicationConfig;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.search.expr.config.ExprFormat;
+import com.top_logic.ai.core.tools.I18NConstants;
+import com.top_logic.ai.core.tools.authoring.messages.OperationResult;
+import com.top_logic.ai.core.tools.authoring.messages.ScriptToolDetail;
+import com.top_logic.ai.core.tools.authoring.messages.ScriptToolFactoryListResult;
+import com.top_logic.ai.core.tools.authoring.messages.ScriptToolListResult;
+import com.top_logic.ai.core.tools.authoring.messages.ScriptToolParamInfo;
+import com.top_logic.ai.core.tools.authoring.messages.ScriptToolSummary;
+import com.top_logic.ai.core.tools.registry.ScriptToolFactory;
+import com.top_logic.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
+import com.top_logic.ai.core.tools.registry.ToolDescriptions;
+import com.top_logic.ai.core.tools.util.DataClassSerializer;
+
+/**
+ * Tool for creating, inspecting, updating, and deleting TL-Script tools in the {@code custom}
+ * factory of the {@link ToolRegistryService} configuration.
+ *
+ * <p>
+ * Mutating methods persist a configuration overlay and restart the {@link ToolRegistryService}
+ * so that changes take effect immediately; they inherit {@link ToolMode#STRUCTURAL} (approval
+ * required, blocked in production). Query methods are {@link ToolMode#READ} and read the
+ * persisted configuration.
+ * </p>
+ */
+public class ScriptToolAuthoringTool {
+
+	/**
+	 * Configuration for {@link ScriptToolAuthoringTool}.
+	 */
+	public interface Config extends PolymorphicConfiguration<ScriptToolAuthoringTool> {
+		// no additional properties
+	}
+
+	/** How the model is told what the {@code commitMessage} argument of a script tool is. */
+	private static final String COMMIT_MESSAGE_DESCRIPTION = "TL-Script saying what a call changed, for the"
+		+ " revision log; parameters are bound as $name like in the body (e.g. \"Contact \" + $name +"
+		+ " \" created\"). Without it, a call is logged with the tool's label.";
+
+	private final Supplier<ToolRegistryService.Config<?>> _source;
+
+	private final Consumer<ToolRegistryService.Config<?>> _persister;
+
+	/**
+	 * Creates a {@link ScriptToolAuthoringTool} wired to the live application configuration.
+	 */
+	public ScriptToolAuthoringTool() {
+		this(ScriptToolAuthoringTool::liveConfig, ScriptToolConfigPersistence::persist);
+	}
+
+	/**
+	 * Creates a {@link ScriptToolAuthoringTool} from configuration.
+	 */
+	@SuppressWarnings("unused")
+	@CalledByReflection
+	public ScriptToolAuthoringTool(InstantiationContext context, Config config) {
+		this();
+	}
+
+	/**
+	 * Creates a {@link ScriptToolAuthoringTool} with an injected configuration source and
+	 * persister (used by tests).
+	 */
+	public ScriptToolAuthoringTool(Supplier<ToolRegistryService.Config<?>> source,
+			Consumer<ToolRegistryService.Config<?>> persister) {
+		_source = source;
+		_persister = persister;
+	}
+
+	/**
+	 * The commit message of
+	 * {@link #createScriptTool(String, String, String, List, String, String, Boolean, String, String)}.
+	 */
+	@CalledByReflection
+	ResKey createScriptToolMessage(String name, String label, String description,
+			List<ScriptToolStore.ParamSpec> parameters, String implementation, String mode,
+			Boolean concurrencySafe, String factory, String commitMessage) {
+		return I18NConstants.SCRIPT_TOOL_CREATED__NAME.fill(name);
+	}
+
+	/**
+	 * Creates a new TL-Script tool.
+	 *
+	 * @return JSON-serialized {@link OperationResult}.
+	 */
+	@ToolMethod(description = "Create a TL-Script tool (a tool whose body is a TL-Script expression). "
+		+ "Persists to the named factory (default 'custom') and restarts the tool registry; "
+		+ "the tool is immediately usable as {factory}.{name}.", group = ToolGroups.AGENT_AUTHORING,
+		marking = AnswerMarking.NONE, commitMessage = "createScriptToolMessage")
+	public String createScriptTool(
+			@P("Unique tool name; letters, digits, _ and -") String name,
+			@P(value = "Human-readable label", required = false) String label,
+			@P("Description telling the model when and how to call the tool") String description,
+			@P(value = ScriptToolStore.ParamSpec.SCHEMA_DESCRIPTION,
+				required = false) List<ScriptToolStore.ParamSpec> parameters,
+			@P("TL-Script body; parameters are bound as $name (e.g. \"Hello \" + $name)") String implementation,
+			@P(value = "Tool mode: READ (only reads data, no side effects), USER_SCOPED (reads user-specific state), DATA_WRITE (modifies data, default), STRUCTURAL (changes system config, requires approval), EXTERNAL (calls a system outside this application, requires approval)",
+				required = false) String mode,
+			@P(value = "Whether the tool may run in parallel with other concurrency-safe tools (default true)",
+				required = false) Boolean concurrencySafe,
+			@P(value = "Factory name to group the tool under (default 'custom'); the tool is referenced as {factory}.{name}",
+				required = false) String factory,
+			@P(value = COMMIT_MESSAGE_DESCRIPTION, required = false) String commitMessage) {
+		String factoryName = resolveFactory(factory);
+		try {
+			ToolRegistryService.Config<?> config = copyOfSource();
+			ScriptToolStore store = new ScriptToolStore(config, factoryName);
+			store.create(name, label, description, parameters, implementation, mode,
+				concurrencySafe == null || concurrencySafe.booleanValue(), commitMessage);
+			_persister.accept(config);
+			return ok("Script tool '" + factoryName + "." + name + "' created and activated.",
+				"createScriptTool()");
+		} catch (Exception ex) {
+			return error("Failed to create script tool: " + ex.getMessage(), "createScriptTool()", ex);
+		}
+	}
+
+	/**
+	 * The commit message of
+	 * {@link #updateScriptTool(String, String, String, List, String, String, Boolean, String, String)}.
+	 */
+	@CalledByReflection
+	ResKey updateScriptToolMessage(String name, String label, String description,
+			List<ScriptToolStore.ParamSpec> parameters, String implementation, String mode,
+			Boolean concurrencySafe, String factory, String commitMessage) {
+		return I18NConstants.SCRIPT_TOOL_UPDATED__NAME.fill(name);
+	}
+
+	/**
+	 * Updates an existing TL-Script tool; omitted fields are left unchanged.
+	 *
+	 * @return JSON-serialized {@link OperationResult}.
+	 */
+	@ToolMethod(description = "Update an existing TL-Script tool. "
+		+ "Omitted fields are left unchanged. Changes take effect immediately.", group = ToolGroups.AGENT_AUTHORING,
+		marking = AnswerMarking.NONE, commitMessage = "updateScriptToolMessage")
+	public String updateScriptTool(
+			@P("Name of the tool to update") String name,
+			@P(value = "New label (omit to leave unchanged)", required = false) String label,
+			@P(value = "New description (omit to leave unchanged)", required = false) String description,
+			@P(value = ScriptToolStore.ParamSpec.SCHEMA_DESCRIPTION,
+				required = false) List<ScriptToolStore.ParamSpec> parameters,
+			@P(value = "New TL-Script body (omit to leave unchanged)", required = false) String implementation,
+			@P(value = "New mode (omit to leave unchanged)", required = false) String mode,
+			@P(value = "New concurrency-safe flag (omit to leave unchanged)",
+				required = false) Boolean concurrencySafe,
+			@P(value = "Factory name (default 'custom')", required = false) String factory,
+			@P(value = COMMIT_MESSAGE_DESCRIPTION + " Omit to leave unchanged, empty to remove it.",
+				required = false) String commitMessage) {
+		String factoryName = resolveFactory(factory);
+		try {
+			ToolRegistryService.Config<?> config = copyOfSource();
+			ScriptToolStore store = new ScriptToolStore(config, factoryName);
+			store.update(name, label, description, parameters, implementation, mode, concurrencySafe,
+				commitMessage);
+			_persister.accept(config);
+			return ok("Script tool '" + factoryName + "." + name + "' updated and activated.",
+				"updateScriptTool()");
+		} catch (Exception ex) {
+			return error("Failed to update script tool: " + ex.getMessage(), "updateScriptTool()", ex);
+		}
+	}
+
+	/**
+	 * The commit message of {@link #deleteScriptTool(String, String)}.
+	 */
+	@CalledByReflection
+	ResKey deleteScriptToolMessage(String name, String factory) {
+		return I18NConstants.SCRIPT_TOOL_DELETED__NAME.fill(name);
+	}
+
+	/**
+	 * Deletes a TL-Script tool.
+	 *
+	 * @return JSON-serialized {@link OperationResult}.
+	 */
+	@ToolMethod(description = "Delete a TL-Script tool. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "deleteScriptToolMessage")
+	public String deleteScriptTool(
+			@P("Name of the tool to delete") String name,
+			@P(value = "Factory name (default 'custom')", required = false) String factory) {
+		String factoryName = resolveFactory(factory);
+		try {
+			ToolRegistryService.Config<?> config = copyOfSource();
+			ScriptToolStore store = new ScriptToolStore(config, factoryName);
+			store.delete(name);
+			_persister.accept(config);
+			return ok("Script tool '" + factoryName + "." + name + "' deleted.",
+				"deleteScriptTool()");
+		} catch (Exception ex) {
+			return error("Failed to delete script tool: " + ex.getMessage(), "deleteScriptTool()", ex);
+		}
+	}
+
+	/**
+	 * Gets the full definition of a TL-Script tool.
+	 *
+	 * @return JSON-serialized {@link ScriptToolDetail}; {@code exists} is {@code false} if absent.
+	 */
+	@ToolMethod(description = "Get the full definition of a TL-Script tool",
+		mode = ToolMode.READ, group = ToolGroups.AGENT_META)
+	public String getScriptTool(
+			@P("Tool name") String name,
+			@P(value = "Factory name (default 'custom')", required = false) String factory) {
+		String factoryName = resolveFactory(factory);
+		ScriptToolDetail detail = ScriptToolDetail.create();
+		detail.setName(name);
+		try {
+			ScriptToolConfig cfg = new ScriptToolStore(copyOfSource(), factoryName).get(name);
+			if (cfg == null) {
+				detail.setExists(false);
+			} else {
+				detail.setExists(true);
+				detail.setLabel(cfg.getLabel() == null ? "" : ToolDescriptions.englishPlainText(cfg.getLabel()));
+				detail.setDescription(cfg.getDescription() == null ? ""
+					: ToolDescriptions.englishPlainText(cfg.getDescription()));
+				detail.setImplementation(ExprFormat.INSTANCE.getSpecification(cfg.getImplementation()));
+				detail.setMode(cfg.getMode().name());
+				detail.setConcurrencySafe(cfg.isConcurrencySafe());
+				String commitMessage = ScriptToolStore.commitMessageOf(cfg);
+				detail.setCommitMessage(commitMessage == null ? "" : commitMessage);
+				for (ScriptToolStore.ParamSpec p : ScriptToolParameters.specs(cfg.getParameters())) {
+					ScriptToolParamInfo info = ScriptToolParamInfo.create();
+					info.setName(p.name());
+					info.setType(p.type());
+					info.setObjectType(p.objectType());
+					info.setDescription(p.description());
+					info.setMandatory(p.mandatory());
+					info.setMultiple(p.multiple());
+					info.setDefaultValue(p.defaultValue());
+					info.setOptions(p.options());
+					detail.addParameter(info);
+				}
+			}
+			return DataClassSerializer.toJson(detail, ScriptToolAuthoringTool.class, "getScriptTool()");
+		} catch (Exception ex) {
+			return error("Failed to read script tool: " + ex.getMessage(), "getScriptTool()", ex);
+		}
+	}
+
+	/**
+	 * Lists all TL-Script tools in the given factory.
+	 *
+	 * @return JSON-serialized {@link ScriptToolListResult}.
+	 */
+	@ToolMethod(description = "List all TL-Script tools in a factory. Tools are referenced as "
+		+ "{factory}__{name} (double underscore); parse the factory prefix from any known tool name "
+		+ "to call this correctly. If the factory is unknown, call listScriptToolFactories first.",
+		mode = ToolMode.READ, group = ToolGroups.AGENT_META)
+	public String listScriptTools(
+			@P(value = "Factory name (default 'custom')", required = false) String factory) {
+		String factoryName = resolveFactory(factory);
+		try {
+			ScriptToolListResult result = ScriptToolListResult.create();
+			for (ScriptToolConfig cfg : new ScriptToolStore(copyOfSource(), factoryName).list()) {
+				ScriptToolSummary summary = ScriptToolSummary.create();
+				summary.setName(cfg.getName());
+				summary.setDescription(cfg.getDescription() == null ? ""
+					: ToolDescriptions.englishPlainText(cfg.getDescription()));
+				summary.setMode(cfg.getMode().name());
+				result.addTool(summary);
+			}
+			return DataClassSerializer.toJson(result, ScriptToolAuthoringTool.class, "listScriptTools()");
+		} catch (Exception ex) {
+			return error("Failed to list script tools: " + ex.getMessage(), "listScriptTools()", ex);
+		}
+	}
+
+	/**
+	 * Lists the factory names that hold at least one registered TL-Script tool.
+	 *
+	 * @return JSON-serialized {@link ScriptToolFactoryListResult}.
+	 */
+	@ToolMethod(
+		description = "Returns all distinct factory names that have registered TL-Script tools. "
+			+ "Call this before listScriptTools when the factory name is unknown.",
+		mode = ToolMode.READ, group = ToolGroups.AGENT_META,
+		marking = AnswerMarking.NONE)
+	public String listScriptToolFactories() {
+		try {
+			ScriptToolFactoryListResult result = ScriptToolFactoryListResult.create();
+			for (Map.Entry<String, ToolRegistryService.ToolFactoryConfig> entry : copyOfSource()
+				.getToolFactories().entrySet()) {
+				PolymorphicConfiguration<? extends ToolFactory> impl = entry.getValue().getImplementation();
+				if (impl instanceof ScriptToolFactory.Config scriptConfig && !scriptConfig.getTools().isEmpty()) {
+					result.addFactoryName(entry.getKey());
+				}
+			}
+			return DataClassSerializer.toJson(result, ScriptToolAuthoringTool.class, "listScriptToolFactories()");
+		} catch (Exception ex) {
+			return error("Failed to list script tool factories: " + ex.getMessage(),
+				"listScriptToolFactories()", ex);
+		}
+	}
+
+	private ToolRegistryService.Config<?> copyOfSource() {
+		return TypedConfiguration.copy(_source.get());
+	}
+
+	@SuppressWarnings("unchecked")
+	private static ToolRegistryService.Config<?> liveConfig() {
+		try {
+			return (ToolRegistryService.Config<?>) ApplicationConfig.getInstance()
+				.getServiceConfiguration(ToolRegistryService.class);
+		} catch (ConfigurationException ex) {
+			throw new RuntimeException("Failed to read ToolRegistryService configuration: " + ex.getMessage(), ex);
+		}
+	}
+
+	private static String resolveFactory(String factory) {
+		return (factory == null || factory.isBlank()) ? ScriptToolStore.DEFAULT_FACTORY : factory.trim();
+	}
+
+	private static String ok(String message, String operation) {
+		OperationResult result = OperationResult.create();
+		result.setSuccess(true);
+		result.setResultMessage(message);
+		return DataClassSerializer.toJson(result, ScriptToolAuthoringTool.class, operation);
+	}
+
+	private static String error(String message, String operation, Exception ex) {
+		Logger.error(operation + " error: " + ex.getMessage(), ex, ScriptToolAuthoringTool.class);
+		return DataClassSerializer.errorToJson(message, ScriptToolAuthoringTool.class, operation);
+	}
+}

@@ -34,8 +34,8 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.scripting.WindowAccess;
 import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.RunWindow;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.agent.RunWindow;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 

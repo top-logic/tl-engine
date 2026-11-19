@@ -1189,6 +1189,33 @@ public interface HTMLConstants {
 	public static final String TL_CONTEXT_MENU_ATTR = DATA_ATTRIBUTE_PREFIX + "context-menu";
 
 	/**
+	 * Custom attribute marking the element of a
+	 * {@link com.top_logic.layout.structure.ContentControl}.
+	 *
+	 * <p>
+	 * The value of this attribute is the ID of the
+	 * {@link com.top_logic.layout.structure.ContentControl}. The client sends the value of the
+	 * nearest element with this attribute along with a key event, so that the server can find the
+	 * component in which the key was pressed.
+	 * </p>
+	 *
+	 * @see com.top_logic.layout.basic.KeyCodeHandler#CONTENT_CONTROL_PARAMETER
+	 */
+	public static final String TL_CONTENT_CONTROL_ATTR = DATA_ATTRIBUTE_PREFIX + "content-control";
+
+	/**
+	 * Custom attribute marking the element of a
+	 * {@link com.top_logic.layout.structure.BrowserWindowControl}.
+	 * 
+	 * <p>
+	 * The value of this attribute is the current ID of the
+	 * {@link com.top_logic.layout.structure.BrowserWindowControl}. The client sends key events that
+	 * are not handled by a control of the window to the control with this ID.
+	 * </p>
+	 */
+	public static final String TL_WINDOW_CONTROL_ATTR = DATA_ATTRIBUTE_PREFIX + "window-control";
+
+	/**
 	 * Custom attribute to open a browser context menu instead of a TL context menu.
 	 * 
 	 * <p>

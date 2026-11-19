@@ -118,11 +118,13 @@ test('U66: eine unbekannte Rolle in type oder print bricht die Erzeugung ab und 
 test('base.css: Zahlenklasse, Fokusring, Reduced Motion, Druckklassen', () => {
   assert.ok(base.includes('.tl-nums {'));
   assert.ok(base.includes('font-variant-numeric: tabular-nums slashed-zero'));
-  // Drei Selektoren, eine Regel: der Ring am fokussierten Element, am Cursor-Element eines Behälters
-  // mit aria-activedescendant (3b §3) und an der Dashboard-Kachel, deren verborgener Knopf den Fokus hat (5c §6).
+  // Fünf Selektoren, eine Regel: der Ring am fokussierten Element, am Cursor-Element eines Behälters
+  // mit aria-activedescendant (3b §3), an der Dashboard-Kachel, deren verborgener Knopf den Fokus hat (5c §6), an
+  // der Fläche eines Bildfelds, deren verborgenes Dateifeld den Fokus hat, und an der Hülle des scrollenden
+  // Tabellenkörpers, der den Fokus hat (#30129).
   // Die Deklaration steht genau einmal (focus.test.mjs). Dazu die eine Ausnahme: der Behälter mit Cursor zeichnet
   // kein Browser-Outline.
-  assert.equal((base.match(/:focus-visible/g) ?? []).length, 4, 'ein Fokusring, drei Selektoren, eine Ausnahme');
+  assert.equal((base.match(/:focus-visible/g) ?? []).length, 6, 'ein Fokusring, fünf Selektoren, eine Ausnahme');
   assert.ok(base.includes('outline: var(--tl-focus-width) solid var(--tl-focus-ring)'));
   assert.ok(base.includes('outline-offset: var(--tl-focus-offset)'));
   assert.ok(!/:focus\b(?!-visible)/.test(base), 'kein :focus ohne -visible');

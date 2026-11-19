@@ -360,11 +360,12 @@ public class AttributeSettings extends com.top_logic.model.annotate.util.Attribu
 			if (composite) {
 				return LegacyTypeCodes.IMPLEMENTATION_COMPOSITION;
 			}
+			if (type.getName().equals(GalleryImage.GALLERY_IMAGE_TYPE)
+				&& com.top_logic.layout.image.gallery.GalleryImage.isGallery(multiple, ordered)) {
+				return LegacyTypeCodes.IMPLEMENTATION_GALLERY;
+			}
 			if (multiple) {
 				if (ordered) {
-					if (type.getName().equals(GalleryImage.GALLERY_IMAGE_TYPE)) {
-						return LegacyTypeCodes.IMPLEMENTATION_GALLERY;
-					}
 					if (bag) {
 						return LegacyTypeCodes.IMPLEMENTATION_LIST;
 					} else {

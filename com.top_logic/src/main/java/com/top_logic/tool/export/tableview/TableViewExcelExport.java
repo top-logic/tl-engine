@@ -307,6 +307,9 @@ public class TableViewExcelExport {
 		if (content instanceof CellContent.Labeled labeled) {
 			return labeled.text();
 		}
+		if (content instanceof CellContent.Placeholder placeholder) {
+			return placeholder.text();
+		}
 		return "";
 	}
 

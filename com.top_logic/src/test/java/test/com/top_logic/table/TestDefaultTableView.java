@@ -1671,4 +1671,85 @@ public class TestDefaultTableView extends TestCase {
 		return List.of(name, age);
 	}
 
+	/** A sale of a product in a region, the fixture of the nested grouping tests. */
+	private record Sale(String region, String product, int amount) {
+		// Test fixture.
+	}
+
+	/**
+	 * A view over sales grouped by region and product, displaying a sortable label first and the
+	 * amount summed up per group.
+	 */
+	private static TableView<Sale> nestedGroupingView() {
+		List<Column<Sale, ?>> columns = List.of(
+			DefaultColumn.<Sale, String> builder("label", sale -> sale.region() + " " + sale.product() + " " + sale.amount())
+				.sort(() -> Comparator.<String> naturalOrder())
+				.build(),
+			DefaultColumn.<Sale, Integer> builder("amount", Sale::amount)
+				.aggregate(group -> CellContent.text(
+					String.valueOf(group.members().stream().mapToInt(Sale::amount).sum())))
+				.build(),
+			DefaultColumn.<Sale, String> builder("region", Sale::region)
+				.sort(() -> Comparator.<String> naturalOrder())
+				.build(),
+			DefaultColumn.<Sale, String> builder("product", Sale::product)
+				.sort(() -> Comparator.<String> naturalOrder())
+				.build());
+		List<Sale> sales = List.of(
+			new Sale("North", "B", 1),
+			new Sale("South", "A", 2),
+			new Sale("North", "A", 3),
+			new Sale("North", "B", 4),
+			new Sale("South", "A", 5),
+			new Sale("South", "C", 6));
+		TableView<Sale> view = DefaultTableView.create(columns, new ListRowSource<>(sales, columns));
+		view.group(new GroupSpec(List.of("region", "product")));
+		return view;
+	}
+
+	/**
+	 * The group headers of the given view as text: depth, the value shown in the first column and
+	 * the aggregate of the amount column.
+	 */
+	private static List<String> groupHeaders(TableView<Sale> view) {
+		List<String> result = new ArrayList<>();
+		for (Row<Sale> row : view.rows(0, view.rowCount())) {
+			if (row.kind() == RowKind.GROUP_HEADER) {
+				result.add(row.depth() + ":" + ((CellContent.Text) view.cell(row, "label")).text() + "="
+					+ ((CellContent.Text) view.cell(row, "amount")).text());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Tests that the header of a nested group shows the value of its own level's grouping column
+	 * in the first column and the aggregates over its own rows.
+	 */
+	public void testNestedGroupHeadersShowTheirLevelsValueAndAggregates() {
+		TableView<Sale> view = nestedGroupingView();
+		assertEquals(List.of("0:North=8", "1:A=3", "1:B=5", "0:South=13", "1:A=7", "1:C=6"),
+			groupHeaders(view));
+		assertEquals("All levels are kept in the state.", new GroupSpec(List.of("region", "product")),
+			view.state().getGrouping());
+	}
+
+	/**
+	 * Tests that sorting the first displayed column orders the groups of every level in that
+	 * direction, unless the grouping column of a level is sorted itself.
+	 */
+	public void testFirstColumnSortDecidesDirectionOfAllGroupLevels() {
+		TableView<Sale> view = nestedGroupingView();
+		view.sort(new SortSpec(List.of(new SortColumn("label", false))));
+		assertEquals(List.of("0:South=13", "1:C=6", "1:A=7", "0:North=8", "1:B=5", "1:A=3"),
+			groupHeaders(view));
+
+		view.sort(new SortSpec(List.of(new SortColumn("label", false), new SortColumn("product", true))));
+		assertEquals("The product level keeps its own direction.",
+			List.of("0:South=13", "1:A=7", "1:C=6", "0:North=8", "1:A=3", "1:B=5"),
+			groupHeaders(view));
+		assertEquals(List.of(new SortColumn("label", false), new SortColumn("product", true)),
+			view.state().getSort());
+	}
+
 }

@@ -88,7 +88,7 @@ public class TabBarElement implements UIElement {
 	 * Configuration for a single tab.
 	 */
 	@TagName("tab")
-	public interface TabConfig extends ContentSectionConfig, WithFinalTitle {
+	public interface TabConfig extends ContentSectionConfig, WithFinalTitle, WithBadge {
 
 		/** Configuration name for {@link #getRoute()}. */
 		String ROUTE = "route";
@@ -124,7 +124,7 @@ public class TabBarElement implements UIElement {
 		_tabs = new ArrayList<>();
 		for (TabConfig tabConfig : config.getTabs()) {
 			_tabs.add(new TabEntry(ContentSection.of(context, tabConfig), tabConfig.getRoute(),
-				tabConfig.getFinalTitle()));
+				tabConfig.getFinalTitle(), tabConfig));
 		}
 		_activeTab = config.getActiveTab();
 		_cssClass = config.getCssClass();
@@ -142,6 +142,7 @@ public class TabBarElement implements UIElement {
 		RevealPath here = RevealPath.of(context);
 		List<TabDefinition> tabDefs = new ArrayList<>();
 		Map<String, UnitHiding> hidings = new LinkedHashMap<>();
+		Map<String, BadgeBinding> badges = new LinkedHashMap<>();
 		for (TabEntry entry : _tabs) {
 			ContentSection section = entry._section();
 			if (!section.isAccessible()) {
@@ -164,6 +165,11 @@ public class TabBarElement implements UIElement {
 				tabDef.withHidden(hiding.isHidden());
 				hidings.put(section.getId(), hiding);
 			}
+			BadgeBinding badge = BadgeBinding.create(context, entry._badge());
+			if (badge != null) {
+				tabDef.withBadge(badge.current());
+				badges.put(section.getId(), badge);
+			}
 			String effectiveRoute = SidebarElement.resolveRoute(entry._route(), section.getId());
 			if (effectiveRoute != null) {
 				tabDef.withRoute(effectiveRoute);
@@ -175,6 +181,7 @@ public class TabBarElement implements UIElement {
 		ReactTabBarControl tabBar = new ReactTabBarControl(context, null, tabDefs, activeTab);
 		tabBar.setCssClass(_cssClass);
 		hidings.forEach((id, hiding) -> hiding.bind(tabBar, hidden -> tabBar.setTabHidden(id, hidden)));
+		badges.forEach((id, badge) -> badge.bind(tabBar, display -> tabBar.setTabBadge(id, display)));
 
 		RevealRegistry registry = context.getRevealRegistry();
 		if (registry != null) {
@@ -194,6 +201,6 @@ public class TabBarElement implements UIElement {
 	/**
 	 * A configured tab, as far as it is the same for every session.
 	 */
-	private record TabEntry(ContentSection _section, String _route, boolean _finalTitle) {
+	private record TabEntry(ContentSection _section, String _route, boolean _finalTitle, WithBadge _badge) {
 	}
 }

@@ -7,6 +7,7 @@ package com.top_logic.ai.core.provider.catalog;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -33,9 +34,11 @@ import com.top_logic.ai.core.provider.catalog.ModelInfo.ModelLimits;
 import com.top_logic.ai.core.provider.catalog.ModelInfo.ModelModalities;
 import com.top_logic.ai.core.provider.catalog.ModelInfo.TieredCost;
 
+import de.haumacher.msgbuf.io.Reader;
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonToken;
+import de.haumacher.msgbuf.server.io.ReaderAdapter;
 
 /**
  * Fetches and parses model metadata from the models.dev catalog API.
@@ -44,6 +47,11 @@ import de.haumacher.msgbuf.json.JsonToken;
  * Given a map of catalog provider IDs to requested model IDs, this class fetches
  * the JSON catalog - or reads the bundled snapshot of it - and extracts only the requested entries
  * into {@link ModelInfo} records.
+ * </p>
+ *
+ * <p>
+ * The catalog is read as a stream: providers and models that were not requested are skipped while
+ * reading, so the catalog as a whole is never held in memory.
  * </p>
  */
 public final class ModelsDevFetcher {
@@ -120,7 +128,7 @@ public final class ModelsDevFetcher {
 		}
 		Map<String, ModelInfo> result = new HashMap<>();
 		try {
-			parse(response.body(), requestedModels, result);
+			parse(new StringR(response.body()), requestedModels, result);
 			return result;
 		} catch (Exception ex) {
 			// Not swallowed as in parseJson(): an unreadable answer - a proxy's login page served
@@ -132,6 +140,11 @@ public final class ModelsDevFetcher {
 	/**
 	 * Loads model metadata from the bundled snapshot resource.
 	 *
+	 * <p>
+	 * A snapshot that cannot be read is reported as error and results in an empty catalog: the
+	 * catalog is metadata, its absence must not prevent the start of the application.
+	 * </p>
+	 *
 	 * @param requestedModels
 	 *        Map of catalog provider ID to the set of model IDs to extract.
 	 * @return Map of model ID to parsed {@link ModelInfo}, for all models the snapshot knows.
@@ -142,10 +155,36 @@ public final class ModelsDevFetcher {
 				Logger.error("Bundled models.dev snapshot not found on classpath.", ModelsDevFetcher.class);
 				return Map.of();
 			}
-			String json = new String(in.readAllBytes(), StandardCharsets.UTF_8);
-			return parseJson(json, requestedModels);
+			return loadSnapshot(in, requestedModels);
 		} catch (IOException ex) {
-			Logger.error("Failed to load bundled models.dev snapshot: " + ex.getMessage(), ModelsDevFetcher.class);
+			Logger.error("Failed to load bundled models.dev snapshot: " + ex.getMessage(), ex,
+				ModelsDevFetcher.class);
+			return Map.of();
+		}
+	}
+
+	/**
+	 * Reads model metadata from the given snapshot stream.
+	 *
+	 * <p>
+	 * A snapshot that cannot be read is reported as error and results in an empty catalog.
+	 * </p>
+	 *
+	 * @param in
+	 *        The UTF-8 encoded models.dev JSON catalog. The stream is not closed.
+	 * @param requestedModels
+	 *        Map of catalog provider ID to the set of model IDs to extract.
+	 * @return Map of model ID to parsed {@link ModelInfo}, or an empty map if the catalog could not
+	 *         be read.
+	 */
+	static Map<String, ModelInfo> loadSnapshot(InputStream in, Map<String, Set<String>> requestedModels) {
+		Map<String, ModelInfo> result = new HashMap<>();
+		try {
+			parse(new ReaderAdapter(new InputStreamReader(in, StandardCharsets.UTF_8)), requestedModels, result);
+			return result;
+		} catch (IOException | RuntimeException ex) {
+			Logger.error("Failed to read the bundled models.dev snapshot: " + ex.getMessage(), ex,
+				ModelsDevFetcher.class);
 			return Map.of();
 		}
 	}
@@ -162,32 +201,41 @@ public final class ModelsDevFetcher {
 	public static Map<String, ModelInfo> parseJson(String json, Map<String, Set<String>> requestedModels) {
 		Map<String, ModelInfo> result = new HashMap<>();
 		try {
-			parse(json, requestedModels, result);
+			parse(new StringR(json), requestedModels, result);
 		} catch (Exception ex) {
 			Logger.warn("Failed to parse models.dev JSON: " + ex.getMessage(), ModelsDevFetcher.class);
 		}
 		return result;
 	}
 
-	private static void parse(String json, Map<String, Set<String>> requestedModels, Map<String, ModelInfo> result)
-			throws Exception {
-		try (JsonReader reader = new JsonReader(new StringR(json))) {
-			reader.beginObject();
-			while (reader.hasNext()) {
-				String providerId = reader.nextName();
-				Set<String> wantedModels = requestedModels.get(providerId);
-				if (wantedModels == null) {
-					reader.skipValue();
-					continue;
-				}
-				parseProvider(reader, wantedModels, result);
+	/**
+	 * Parses the catalog read from the given reader into the given result map.
+	 *
+	 * <p>
+	 * Providers and models that are not requested are skipped without building their values.
+	 * </p>
+	 *
+	 * @param in
+	 *        The JSON catalog. Not closed, the caller owns it.
+	 */
+	private static void parse(Reader in, Map<String, Set<String>> requestedModels, Map<String, ModelInfo> result)
+			throws IOException {
+		JsonReader reader = new JsonReader(in);
+		reader.beginObject();
+		while (reader.hasNext()) {
+			String providerId = reader.nextName();
+			Set<String> wantedModels = requestedModels.get(providerId);
+			if (wantedModels == null) {
+				reader.skipValue();
+				continue;
 			}
-			reader.endObject();
+			parseProvider(reader, wantedModels, result);
 		}
+		reader.endObject();
 	}
 
 	private static void parseProvider(JsonReader reader, Set<String> wantedModels, Map<String, ModelInfo> result)
-			throws Exception {
+			throws IOException {
 		reader.beginObject();
 		while (reader.hasNext()) {
 			String field = reader.nextName();
@@ -201,7 +249,7 @@ public final class ModelsDevFetcher {
 	}
 
 	private static void parseModelsObject(JsonReader reader, Set<String> wantedModels, Map<String, ModelInfo> result)
-			throws Exception {
+			throws IOException {
 		reader.beginObject();
 		while (reader.hasNext()) {
 			String modelKey = reader.nextName();
@@ -217,7 +265,7 @@ public final class ModelsDevFetcher {
 		reader.endObject();
 	}
 
-	private static ModelInfo parseModelEntry(JsonReader reader) throws Exception {
+	private static ModelInfo parseModelEntry(JsonReader reader) throws IOException {
 		String id = null;
 		String family = null;
 		String status = null;
@@ -347,7 +395,7 @@ public final class ModelsDevFetcher {
 			Double outputAudio,
 			List<TieredCost> tiers) {}
 
-	private static CostResult parseCost(JsonReader reader) throws Exception {
+	private static CostResult parseCost(JsonReader reader) throws IOException {
 		double input = 0;
 		double output = 0;
 		Double cacheRead = null;
@@ -416,7 +464,7 @@ public final class ModelsDevFetcher {
 	 * which they apply. A tier of another type has no known meaning and is skipped.
 	 * </p>
 	 */
-	private static List<TieredCost> parseTiers(JsonReader reader) throws Exception {
+	private static List<TieredCost> parseTiers(JsonReader reader) throws IOException {
 		List<TieredCost> result = new ArrayList<>();
 		reader.beginArray();
 		while (reader.hasNext()) {
@@ -437,7 +485,7 @@ public final class ModelsDevFetcher {
 	 *        entry's {@code tier} object.
 	 * @return The tier, or {@code null} when the entry names no threshold of a known tier type.
 	 */
-	private static TieredCost parseTierPrices(JsonReader reader, Integer threshold) throws Exception {
+	private static TieredCost parseTierPrices(JsonReader reader, Integer threshold) throws IOException {
 		double input = 0;
 		double output = 0;
 		Double cacheRead = null;
@@ -485,7 +533,7 @@ public final class ModelsDevFetcher {
 	 * @return The prompt size from which the tier applies, or {@code null} when the tier is not of
 	 *         the type {@link #CONTEXT_TIER_TYPE} or names no size.
 	 */
-	private static Integer parseContextTierSize(JsonReader reader) throws Exception {
+	private static Integer parseContextTierSize(JsonReader reader) throws IOException {
 		String type = null;
 		Integer size = null;
 		reader.beginObject();
@@ -507,7 +555,7 @@ public final class ModelsDevFetcher {
 		return CONTEXT_TIER_TYPE.equals(type) ? size : null;
 	}
 
-	private static ModelLimits parseLimits(JsonReader reader) throws Exception {
+	private static ModelLimits parseLimits(JsonReader reader) throws IOException {
 		int context = 0;
 		int output = 0;
 		int input = 0;
@@ -538,7 +586,7 @@ public final class ModelsDevFetcher {
 	 * Parses the {@code "interleaved"} field which can be either a boolean {@code true} or an
 	 * object like {@code {"field": "reasoning_content"}}.
 	 */
-	private static InterleavedConfig parseInterleaved(JsonReader reader) throws Exception {
+	private static InterleavedConfig parseInterleaved(JsonReader reader) throws IOException {
 		if (reader.peek() == JsonToken.BOOLEAN) {
 			return reader.nextBoolean() ? new InterleavedConfig(null) : null;
 		}
@@ -557,7 +605,7 @@ public final class ModelsDevFetcher {
 		return new InterleavedConfig(field);
 	}
 
-	private static ModelModalities parseModalities(JsonReader reader) throws Exception {
+	private static ModelModalities parseModalities(JsonReader reader) throws IOException {
 		List<String> input = List.of();
 		List<String> output = List.of();
 
@@ -580,7 +628,7 @@ public final class ModelsDevFetcher {
 		return new ModelModalities(input, output);
 	}
 
-	private static List<String> parseStringArray(JsonReader reader) throws Exception {
+	private static List<String> parseStringArray(JsonReader reader) throws IOException {
 		List<String> items = new ArrayList<>();
 		reader.beginArray();
 		while (reader.hasNext()) {

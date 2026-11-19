@@ -5,6 +5,10 @@
  */
 package com.top_logic.ai.core.provider.catalog;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -507,5 +511,158 @@ public class TestModelsDevFetcher extends TestCase {
 		Map<String, ModelInfo> result = ModelsDevFetcher.parseJson(json, requested);
 
 		assertTrue(result.isEmpty());
+	}
+
+	/**
+	 * The size of the byte buffer through which the catalog stream is decoded.
+	 *
+	 * <p>
+	 * No single read from the catalog stream requests more than this: the catalog is decoded piece
+	 * by piece and never read as a whole.
+	 * </p>
+	 */
+	private static final int DECODER_BUFFER_SIZE = 8192;
+
+	/**
+	 * A catalog stream with many providers that are not requested and one requested model is read
+	 * piece by piece and results in exactly the requested model.
+	 */
+	public void testSnapshotIsReadAsStream() {
+		int skippedProviders = 20_000;
+		CatalogStream in = new CatalogStream(skippedProviders, "anthropic", "claude-wanted");
+
+		Map<String, ModelInfo> result =
+			ModelsDevFetcher.loadSnapshot(in, Map.of("anthropic", Set.of("claude-wanted")));
+
+		assertEquals(Set.of("claude-wanted"), result.keySet());
+		assertEquals(4096, result.get("claude-wanted").limits().contextWindow());
+		assertTrue("Catalog not read up to the requested provider.", in.isGeneratedCompletely());
+		assertTrue("Catalog must be larger than one read: " + in.getBytesRead(),
+			in.getBytesRead() > 100 * DECODER_BUFFER_SIZE);
+		assertTrue("Largest read: " + in.getMaxRequest(), in.getMaxRequest() <= DECODER_BUFFER_SIZE);
+	}
+
+	/**
+	 * A snapshot that is no valid JSON results in an empty catalog, not in an exception.
+	 */
+	public void testBrokenSnapshotIsEmpty() {
+		Map<String, Set<String>> requested = Map.of("anthropic", Set.of("claude-wanted"));
+
+		assertEquals(Map.of(), ModelsDevFetcher.loadSnapshot(stream("{\"anthropic\": {\"models\": "), requested));
+		assertEquals(Map.of(), ModelsDevFetcher.loadSnapshot(stream("<html>login</html>"), requested));
+		assertEquals(Map.of(), ModelsDevFetcher.loadSnapshot(stream(
+			"{\"anthropic\": {\"models\": {\"claude-wanted\": "
+				+ "{\"id\": \"claude-wanted\", \"limit\": {\"context\": \"many\"}}}}}"),
+			requested));
+	}
+
+	private static InputStream stream(String json) {
+		return new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+	}
+
+	/**
+	 * Catalog generated while it is read, with a number of providers that are not requested before
+	 * one provider with the requested model.
+	 *
+	 * <p>
+	 * Records the largest number of bytes requested by a single read and refuses to be read as a
+	 * whole.
+	 * </p>
+	 */
+	private static final class CatalogStream extends InputStream {
+
+		private final int _skippedProviders;
+
+		private final String _provider;
+
+		private final String _model;
+
+		/** Number of the next part to generate: 0 is the opening, then the providers. */
+		private int _nextPart;
+
+		private byte[] _part = new byte[0];
+
+		private int _pos;
+
+		private long _bytesRead;
+
+		private int _maxRequest;
+
+		CatalogStream(int skippedProviders, String provider, String model) {
+			_skippedProviders = skippedProviders;
+			_provider = provider;
+			_model = model;
+		}
+
+		/**
+		 * Whether all parts up to the requested provider at the end were handed out.
+		 */
+		boolean isGeneratedCompletely() {
+			return _nextPart > _skippedProviders + 1;
+		}
+
+		long getBytesRead() {
+			return _bytesRead;
+		}
+
+		int getMaxRequest() {
+			return _maxRequest;
+		}
+
+		@Override
+		public int read() {
+			byte[] buffer = new byte[1];
+			int n = read(buffer, 0, 1);
+			return n < 0 ? -1 : buffer[0] & 0xFF;
+		}
+
+		@Override
+		public int read(byte[] buffer, int off, int len) {
+			_maxRequest = Math.max(_maxRequest, len);
+			if (len == 0) {
+				return 0;
+			}
+			while (_pos == _part.length) {
+				if (!nextPart()) {
+					return -1;
+				}
+			}
+			int n = Math.min(len, _part.length - _pos);
+			System.arraycopy(_part, _pos, buffer, off, n);
+			_pos += n;
+			_bytesRead += n;
+			return n;
+		}
+
+		@Override
+		public byte[] readAllBytes() throws IOException {
+			throw new AssertionError("Catalog must not be read as a whole.");
+		}
+
+		@Override
+		public byte[] readNBytes(int len) throws IOException {
+			throw new AssertionError("Catalog must not be read as a whole.");
+		}
+
+		private boolean nextPart() {
+			int part = _nextPart++;
+			String text;
+			if (part == 0) {
+				text = "{";
+			} else if (part <= _skippedProviders) {
+				String id = "provider-" + part;
+				text = "\"" + id + "\": {\"id\": \"" + id + "\", \"name\": \"Provider \u00e4\u00f6\u00fc " + part
+					+ "\", \"models\": {\"model-" + part + "\": {\"id\": \"model-" + part
+					+ "\", \"limit\": {\"context\": 1000, \"output\": 100}}}},";
+			} else if (part == _skippedProviders + 1) {
+				text = "\"" + _provider + "\": {\"models\": {\"" + _model + "\": {\"id\": \"" + _model
+					+ "\", \"limit\": {\"context\": 4096, \"output\": 1024}}}}}";
+			} else {
+				return false;
+			}
+			_part = text.getBytes(StandardCharsets.UTF_8);
+			_pos = 0;
+			return true;
+		}
 	}
 }

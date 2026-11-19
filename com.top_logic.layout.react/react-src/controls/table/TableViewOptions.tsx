@@ -260,7 +260,7 @@ export interface TableViewButtonProps extends TableViewValues {
    */
   onColumnsClose(): void;
 
-  /** Called when the entry resetting the columns is pressed, on the page "Columns" or on the page "View" standing alone. */
+  /** Called when the entry resetting the columns is pressed: on the page "Columns", or on the page "View" alone. */
   onReset(): void;
 }
 
@@ -278,8 +278,8 @@ type ViewPage = 'columns' | 'view';
  * columns, the setting a table is adjusted by most: the column selection the server holds as a child control, at the
  * foot the reset of the columns, where the table keeps its state, and the row "View" leading to the second page, the
  * person's view ({@link TableViewOptions}) under a head with the way back. A table without column selection has the
- * view alone, with the reset as its last entry. The gear is named after the page it opens. The pages are the popover's own, every gesture takes effect at
- * once, and there is no dialog.
+ * view alone, with the reset as its last entry. The gear is named after the page it opens. The pages are the popover's
+ * own, every gesture takes effect at once, and there is no dialog.
  *
  * <p>The column selection lives while the popover is open: the server is asked for it when the popover opens and told
  * to release it when the popover closes, not when the pages change. Escape and a press outside close the popover from
@@ -364,8 +364,8 @@ export const TableViewButton: React.FC<TableViewButtonProps> = ({
   }, [page]);
 
   // The focus follows the selection on the columns, once per selection. A selection going away with the focus leaves
-  // it on the row "View"; a selection arriving while the focus waits there takes it into its search - and has none for it
-  // without a search (ten columns or fewer).
+  // it on the row "View"; a selection arriving while the focus waits there takes it into its search - and has none for
+  // it without a search (ten columns or fewer).
   useLayoutEffect(() => {
     if (!open || page !== 'columns') {
       return;

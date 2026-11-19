@@ -8,6 +8,7 @@ package com.top_logic.security.selfservice.invitation.script;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
@@ -105,5 +106,27 @@ public class InvitationFunctions extends TLScriptFunctions {
 	@SideEffectFree
 	public static ResKey emailRefusal(String email) {
 		return InvitationModule.emailRefusal(email);
+	}
+
+	/**
+	 * The account that has taken an e-mail address.
+	 *
+	 * <p>
+	 * An address is taken by an account that has it as user name, compared ignoring case, or as
+	 * e-mail address, compared ignoring case and leading and trailing whitespace. An account
+	 * synchronized from a directory or provisioned by an external login has e.g. a user name that
+	 * is not its e-mail address.
+	 * </p>
+	 *
+	 * @param email
+	 *        The address to check.
+	 * @return The account that has taken the address; <code>null</code> if the address is free.
+	 *
+	 * @implNote Calls {@link InvitationModule#existingAccount(String)}.
+	 */
+	@Label("Account of an e-mail address")
+	@SideEffectFree
+	public static Person existingAccount(String email) {
+		return InvitationModule.existingAccount(email);
 	}
 }

@@ -300,6 +300,7 @@ describe('the menu group of a toolbar as popup surface', () => {
   it('closes only the menu on Escape inside a window', async () => {
     register('InlineButtonsToolbar', TLToolbar);
     const toolbar = { controlId: 'tb', module: 'InlineButtonsToolbar', state: TOOLBAR } as ReturnType<typeof childControl>;
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
     const sent = mountAdapter(TLWindow, { title: 'Fenster', child: toolbar, closable: true });
     await settle();
     await userEvent.click(trigger());

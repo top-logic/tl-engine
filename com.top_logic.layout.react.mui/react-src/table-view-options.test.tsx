@@ -545,6 +545,34 @@ describe('the column menu by keyboard', () => {
     expect(screen.getByRole('menuitem', { name: 'js.table.groupBy' })).toBeTruthy();
   });
 
+  it('offers the grouping by several columns: "group by also" a further column, "ungroup this column" a grouping one', async () => {
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    const sent = mountAdapter(TLTableView, {
+      columns: [
+        { name: 'name', label: 'Name', width: 120, sortable: true, filterable: false, groupable: true },
+        { name: 'region', label: 'Region', width: 120, sortable: true, filterable: false, groupable: true },
+      ],
+      rows: [],
+      totalRowCount: 0,
+      grouping: ['region'],
+    });
+    await settle();
+    fireEvent.contextMenu(screen.getByRole('columnheader', { name: /Name/ }));
+    await settle();
+    expect(screen.queryByRole('menuitem', { name: 'js.table.groupBy' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'js.table.ungroupColumn' })).toBeNull();
+    expect(screen.getByRole('menuitem', { name: 'js.table.ungroup' })).toBeTruthy();
+    await userEvent.click(screen.getByRole('menuitem', { name: 'js.table.groupByAlso' }));
+    await settle();
+    expect(sent).toHaveBeenCalledWith('group', { columns: ['region', 'name'] });
+    fireEvent.contextMenu(screen.getByRole('columnheader', { name: /Region/ }));
+    await settle();
+    expect(screen.queryByRole('menuitem', { name: 'js.table.groupByAlso' })).toBeNull();
+    await userEvent.click(screen.getByRole('menuitem', { name: 'js.table.ungroupColumn' }));
+    await settle();
+    expect(sent).toHaveBeenCalledWith('group', { columns: [] });
+  });
+
   it('leaves other keys alone', async () => {
     mountColumn({});
     await settle();

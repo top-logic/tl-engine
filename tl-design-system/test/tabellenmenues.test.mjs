@@ -42,6 +42,7 @@ test('tl-menu__item--check: die ganze Zeile klickt — Fläche und Hover vom Ein
 // Die gezeichnete Marke ohne Eingabe liest dieselben Regeln wie die Eingabe: jede Regel, die :checked / :indeterminate
 // zeichnet, trägt auch die Zeilenfassung in ihrer Selektorliste — gleiche Liste, gleicher Block, gleiches Bild.
 const ZEILE = '.tl-menu__item--check';
+const BEDIENBAR = ':where(:not([aria-readonly="true"]))';
 test('Auswahl: Schalter und Kästchen ohne Eingabe in tl-menu__item--check zeichnen dasselbe wie mit :checked', () => {
   const PAARE = [
     ['.tl-checkbox:checked', `${ZEILE}[aria-checked="true"] .tl-checkbox`],
@@ -49,8 +50,9 @@ test('Auswahl: Schalter und Kästchen ohne Eingabe in tl-menu__item--check zeich
     ['.tl-checkbox:checked::after', `${ZEILE}[aria-checked="true"] .tl-checkbox::after`],
     ['.tl-checkbox:indeterminate::after', `${ZEILE}[aria-checked="mixed"] .tl-checkbox::after`],
     // Beim Schalter gilt dasselbe für beide Zustände: aus und an.
-    ['.tl-checkbox--switch::after', `${ZEILE} .tl-checkbox--switch::after`],
-    ['.tl-checkbox--switch:checked::after', `${ZEILE}[aria-checked="true"] .tl-checkbox--switch::after`],
+    // Den Schalter mit Eingabe zeichnet nur der bedienbare (:where(:not([aria-readonly="true"])), choice.css).
+    [`.tl-checkbox--switch${BEDIENBAR}::after`, `${ZEILE} .tl-checkbox--switch::after`],
+    [`.tl-checkbox--switch${BEDIENBAR}:checked::after`, `${ZEILE}[aria-checked="true"] .tl-checkbox--switch::after`],
   ];
   for (const [eingabe, gezeichnet] of PAARE) {
     const regeln = rulesWith(choice, eingabe);

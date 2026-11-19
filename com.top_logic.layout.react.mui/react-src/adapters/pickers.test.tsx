@@ -479,6 +479,7 @@ describe('the menu of the bridge', () => {
     const onClose = vi.fn();
     register('PickersInnerMenu', () => <MenuHost onClose={onClose} />);
     const inner = { controlId: 'im', module: 'PickersInnerMenu', state: {} } as ReturnType<typeof childControl>;
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
     const sent = mountAdapter(TLWindow, { title: 'Fenster', child: inner, closable: true });
     await settle();
     await userEvent.click(trigger());

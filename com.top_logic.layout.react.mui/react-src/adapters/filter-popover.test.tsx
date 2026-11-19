@@ -15,6 +15,7 @@ import MuiMenuTriggerAdapter from './MuiMenuTriggerAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
+import MuiSkeletonAdapter from './MuiSkeletonAdapter';
 import { childControl, mountAdapter, patchState, settle, resetTableView } from './wire-test-support';
 
 replacePart('Button', MuiButtonAdapter);
@@ -23,6 +24,8 @@ replacePart('Checkbox', MuiCheckboxAdapter);
 // The table looks up the toggle of its tree rows as well.
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
+// The table draws its loading rows with skeletons.
+replacePart('Skeleton', MuiSkeletonAdapter);
 
 /**
  * A form as a filter form builds it: a field whose label carries a help button before the input, a text area, and a

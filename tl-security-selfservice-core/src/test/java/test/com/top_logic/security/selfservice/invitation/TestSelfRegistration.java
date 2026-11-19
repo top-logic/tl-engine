@@ -8,6 +8,7 @@ package test.com.top_logic.security.selfservice.invitation;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Callable;
@@ -54,6 +55,7 @@ import com.top_logic.security.selfservice.invitation.InvitationModule;
 import com.top_logic.security.selfservice.invitation.SelfRegistration;
 import com.top_logic.security.selfservice.invitation.SelfRegistrationMode;
 import com.top_logic.security.selfservice.invitation.VerificationCode;
+import com.top_logic.security.selfservice.model.Invitation;
 import com.top_logic.security.selfservice.model.Registration;
 import com.top_logic.security.selfservice.model.RegistrationState;
 import com.top_logic.util.Resources;
@@ -89,6 +91,8 @@ public class TestSelfRegistration extends BasicTestCase {
 
 	private final List<String> _accounts = new ArrayList<>();
 
+	private final List<Invitation> _invitations = new ArrayList<>();
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -109,9 +113,15 @@ public class TestSelfRegistration extends BasicTestCase {
 				}
 				TestPerson.deletePersonAndUser(account);
 			}
+			for (Invitation invitation : _invitations) {
+				if (invitation.tValid()) {
+					invitation.tDelete();
+				}
+			}
 			tx.commit();
 		}
 		_accounts.clear();
+		_invitations.clear();
 		configure(SelfRegistrationMode.OFF, false, null);
 		RecordedMails.take();
 		super.tearDown();
@@ -310,6 +320,78 @@ public class TestSelfRegistration extends BasicTestCase {
 		assertEquals(List.of(new Mail(EXISTS_MAIL, email, null,
 			subject(config().getRegistrationExistsText(), InvitationModule.accountLanguage(account)))),
 			RecordedMails.take());
+	}
+
+	/**
+	 * An address that an account with another name carries as e-mail address, e.g. an account
+	 * synchronized from a directory, gets the mail telling so instead of the code and cannot be
+	 * registered.
+	 */
+	public void testAccountWithOtherName() throws Exception {
+		configure(SelfRegistrationMode.DIRECT, false, null);
+		String name = "regJdoe";
+		_accounts.add(name);
+		Person account = TestPerson.createPerson(name);
+		try (Transaction tx = kb().beginTransaction(ResKey.text("Set e-mail address"))) {
+			account.getUser().setEMail("John.Doe@example.com");
+			tx.commit();
+		}
+
+		String email = "john.doe@example.com";
+		VerificationCode code = registration().requestCode(email, null, newClient());
+		assertNotNull(code);
+		assertEquals(List.of(new Mail(EXISTS_MAIL, email, null,
+			subject(config().getRegistrationExistsText(), InvitationModule.accountLanguage(account)))),
+			RecordedMails.take());
+
+		assertRefused(I18NConstants.ERROR_ACCOUNT_EXISTS__EMAIL,
+			() -> registration().register(email, "Doe", "John", PASSWORD.toCharArray()));
+		assertNull(Person.byName(kb(), email));
+		assertEquals(List.of(account), Person.allByEMail(email));
+		assertTrue(registrations(email).isEmpty());
+	}
+
+	/**
+	 * An address with an open invitation gets the mail telling that there is an access instead of
+	 * the code, in the language of the invitation.
+	 */
+	public void testOpenInvitation() throws Exception {
+		configure(SelfRegistrationMode.DIRECT, false, null);
+		Locale language = otherLanguage(defaultLanguage());
+		Invitation invitation = InvitationModule.getInstance().createInvitation("Invited@example.com", null);
+		_invitations.add(invitation);
+		try (Transaction tx = kb().beginTransaction(ResKey.text("Set invitation language"))) {
+			invitation.setLanguage(language);
+			tx.commit();
+		}
+
+		String email = "invited@example.com";
+		VerificationCode code = registration().requestCode(email, null, newClient());
+		assertNotNull(code);
+		assertEquals(List.of(new Mail(EXISTS_MAIL, email, null,
+			subject(config().getRegistrationExistsText(), language))), RecordedMails.take());
+	}
+
+	/**
+	 * An address of neither an account nor an open invitation gets the code and can be registered,
+	 * also if an expired invitation exists for it.
+	 */
+	public void testFreeAddress() throws Exception {
+		configure(SelfRegistrationMode.DIRECT, false, null);
+		String email = "free@example.com";
+		Invitation expired = InvitationModule.getInstance().createInvitation(email, null);
+		_invitations.add(expired);
+		try (Transaction tx = kb().beginTransaction(ResKey.text("Expire invitation"))) {
+			expired.setExpires(new Date(System.currentTimeMillis() - 1000));
+			tx.commit();
+		}
+
+		VerificationCode code = registration().requestCode(email, null, newClient());
+		assertEquals(List.of(new Mail(REGISTRATION_MAIL, email, code.getCode(),
+			subject(config().getRegistrationText(), defaultLanguage()))), RecordedMails.take());
+
+		Person account = register(email);
+		assertSame(account, Person.byName(kb(), email));
 	}
 
 	/** An invalid address is refused before anything is sent. */

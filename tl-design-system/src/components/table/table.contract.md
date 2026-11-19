@@ -244,7 +244,7 @@ Klassen:
 | `tl-table__sort` | der Sortierknopf, ein `button` |
 | `tl-table__label` | die Überschrift, Großbuchstaben in `--tl-text-secondary`; endet mit Ellipse. Das TSX setzt `tl-type-overline` daran (Sperrung `0.04em`) |
 | `tl-table__required` | der Pflichtstern hinter dem Titel, solange die Tabelle bearbeitet wird: `--tl-status-error-text`, `aria-hidden`, ohne eigene Typo-Klasse (erbt die Schrift der Kopfzelle); gibt nie nach; in einer Zahlenspalte vor dem Titel |
-| `tl-table__mark` | Sortierpfeil, Gruppierungsmarke: `tl-icon-sm`, `aria-hidden` |
+| `tl-table__mark` | Sortierpfeil, Gruppierungsmarke: `tl-icon-sm`, `aria-hidden`; die Gruppierungsmarke trägt bei einer Gruppierung nach mehreren Spalten hinter dem Symbol die Ebene als `tl-badge` (Part Badge, `aria-hidden`), Symbol und Ebene tragen zusammen ihren Tooltip |
 | `tl-table__filter` | der Trichter |
 | `tl-table__columns` | die Spaltenwahl (Zahnrad) |
 | `tl-table__resize` | Griff der Spaltenbreite |

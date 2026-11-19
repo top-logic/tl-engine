@@ -46,7 +46,8 @@ const TOGGLE_VALUE = 'on';
  * (`component` `a`) with the attributes {@link buttonLinkAttributes} gives.</p>
  *
  * <p>A badge ({@link ButtonPartProps.badge}) is drawn through the part `Badge`: after the label, as
- * `endIcon` of a `Button`; over the corner of the icon of an `IconButton` (tl-icon-badge).</p>
+ * `endIcon` of a `Button`; over the corner of the icon of an `IconButton` and of a `ToggleButton` showing its
+ * icon alone (tl-icon-badge).</p>
  *
  * <p>small → size `small`; active → the selected background of the MUI theme. The accessible name,
  * the pressed, current or checked state, the role of a menu entry and the tooltip are the ones
@@ -58,6 +59,14 @@ const MuiButtonAdapter: React.FC<ButtonPartProps> = (props) => {
     disabled, tabIndex, tooltip: _tooltip, badge, className, onClick, onMouseDown, onPointerDown, onKeyDown, ...attributes
   } = props;
   const badgeAfterLabel = badge && <StateBadge badge={badge} alone={false} />;
+  // The icon of a button showing its icon alone, with the badge over its corner: the element around the part
+  // places it.
+  const iconAlone = badge ? (
+    <span className="tl-icon-badge">
+      <ThemeIcon encoded={image} className={ICON_ALONE_CLASS} />
+      <span className="tl-icon-badge__count"><StateBadge badge={badge} alone={true} /></span>
+    </span>
+  ) : <ThemeIcon encoded={image} className={ICON_ALONE_CLASS} />;
   const isLink = appearance === 'link';
   const danger = dangerTone === true && !isLink;
   const showIcon = !!image && display !== 'label-only';
@@ -94,7 +103,7 @@ const MuiButtonAdapter: React.FC<ButtonPartProps> = (props) => {
     const { 'aria-pressed': _pressed, ...toggleAttributes } = accessibility;
     return (
       <ToggleButton {...common} value={TOGGLE_VALUE} selected={checked} size={size} {...toggleAttributes}>
-        {showIcon && <ThemeIcon encoded={image} className={display === 'icon-only' ? ICON_ALONE_CLASS : ICON_WITH_LABEL_CLASS} />}
+        {showIcon && (display === 'icon-only' ? iconAlone : <ThemeIcon encoded={image} className={ICON_WITH_LABEL_CLASS} />)}
         {(!showIcon || display !== 'icon-only') && label}
         {(!showIcon || display !== 'icon-only') && badge && <>{' '}{badgeAfterLabel}</>}
       </ToggleButton>
@@ -111,13 +120,7 @@ const MuiButtonAdapter: React.FC<ButtonPartProps> = (props) => {
         {...link}
         {...accessibility}
       >
-        {badge ? (
-          // The badge over the corner of the icon: the element around the part places it.
-          <span className="tl-icon-badge">
-            <ThemeIcon encoded={image} className={ICON_ALONE_CLASS} />
-            <span className="tl-icon-badge__count"><StateBadge badge={badge} alone={true} /></span>
-          </span>
-        ) : <ThemeIcon encoded={image} className={ICON_ALONE_CLASS} />}
+        {iconAlone}
       </IconButton>
     );
   }

@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -37,6 +36,7 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
+import com.top_logic.layout.view.element.WithBadge;
 
 /**
  * Declarative {@code <chat-rail/>} element: the side rail beside a conversation, as a shell whose
@@ -312,9 +312,18 @@ public class ChatRailElement implements UIElement {
 		String getReactElement();
 	}
 
-	/** One collapsible block of the rail, holding one view element. */
+	/**
+	 * One collapsible block of the rail, holding one view element.
+	 *
+	 * <p>
+	 * Its {@link #getBadge() badge} appears beside the section's title and on its strip icon, and
+	 * the rail sums the counts of the sections into the badge of the transcript's rail button. The
+	 * content element writes it - a {@code <data-list count="…"/>} does - or a derived channel
+	 * computes it.
+	 * </p>
+	 */
 	@TagName("section")
-	public interface SectionConfig extends ConfigurationItem {
+	public interface SectionConfig extends WithBadge {
 
 		/**
 		 * Configuration property name for {@link #getName()}.
@@ -343,13 +352,6 @@ public class ChatRailElement implements UIElement {
 		 * @see #getOpen()
 		 */
 		String OPEN = "open";
-
-		/**
-		 * Configuration property name for {@link #getBadge()}.
-		 *
-		 * @see #getBadge()
-		 */
-		String BADGE = "badge";
 
 		/**
 		 * Configuration property name for {@link #getContent()}.
@@ -404,19 +406,6 @@ public class ChatRailElement implements UIElement {
 		boolean getOpen();
 
 		/**
-		 * Optional channel carrying how many things this section is showing.
-		 *
-		 * The number appears beside the section's title and on its strip icon, and the rail sums the
-		 * sections into the total the transcript's rail button shows. The content element writes it
-		 * - a {@code <data-list count="…"/>} does - or a derived channel computes it.
-		 */
-		@Name(BADGE)
-		@Label("Badge")
-		@Format(ChannelRefFormat.class)
-		@Nullable
-		ChannelRef getBadge();
-
-		/**
 		 * What this section shows: one view element, written as the {@code <section>}'s child.
 		 *
 		 * Several elements are stacked, as in a {@code <tab>}.
@@ -440,11 +429,11 @@ public class ChatRailElement implements UIElement {
 	 * @param open
 	 *        {@link SectionConfig#getOpen()}.
 	 * @param badge
-	 *        {@link SectionConfig#getBadge()}, or {@code null}.
+	 *        The declaration of the section's badge, see {@link SectionConfig#getBadge()}.
 	 * @param content
 	 *        The instantiated {@link SectionConfig#getContent()} elements.
 	 */
-	public record Section(String name, ResKey label, ThemeImage icon, boolean open, ChannelRef badge,
+	public record Section(String name, ResKey label, ThemeImage icon, boolean open, WithBadge badge,
 			List<UIElement> content) {
 		// Sole record.
 	}
@@ -463,7 +452,7 @@ public class ChatRailElement implements UIElement {
 				.map(context::getInstance)
 				.collect(Collectors.toList());
 			_sections.add(new Section(section.getName(), section.getLabel(), section.getIcon(),
-				section.getOpen(), section.getBadge(), content));
+				section.getOpen(), section, content));
 		}
 	}
 

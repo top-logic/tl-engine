@@ -359,3 +359,28 @@ describe('the re-entry address', () => {
     expect(withoutWindowName('/ctx/view/v0a1b2c3d/')).toBe('/ctx/view/');
   });
 });
+
+describe('a tab without session storage', () => {
+  it('still enters a page the server no longer knows again, after the guard interval', async () => {
+    vi.useFakeTimers();
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const storage = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('Storage disabled', 'SecurityError');
+    });
+    try {
+      const { reloadForStaleUi, STALE_UI_RELOAD_GUARD_MS } = await load();
+
+      expect(reloadForStaleUi()).toBe(true);
+      vi.advanceTimersByTime(STALE_UI_RELOAD_GUARD_MS - 1);
+      expect(nav.replace).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(1);
+
+      expect(nav.replace).toHaveBeenCalledWith('/ctx/view/property/42?tab=2');
+    } finally {
+      storage.mockRestore();
+      vi.useRealTimers();
+      vi.restoreAllMocks();
+    }
+  });
+});

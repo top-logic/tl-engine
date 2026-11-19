@@ -6,6 +6,7 @@ import { createRoot, type Root } from 'react-dom/client'
 import { resetTLBridge, setTLState, tlCommands } from '../test/tl-react-bridge'
 import { TLChatRail } from './chat-rail'
 import { chatStore, readBootstrap } from './chat-store'
+import { seenCounts, unseenRailBadge } from './rail-model'
 
 /**
  * `<chat-rail/>` in a host too narrow for its column (#565).
@@ -242,10 +243,10 @@ describe('the rail in a narrow host', () => {
 
   it('opens and closes from the conversation rail button, which reports the drawer', () => {
     mount(400)
-    act(() => store().actions.toggleSide(0))
+    act(() => store().actions.toggleSide({}))
     expect(rail().classList.contains('is-drawer-open')).toBe(true)
     expect(store().getState().railDrawerOpen).toBe(true)
-    act(() => store().actions.toggleSide(0))
+    act(() => store().actions.toggleSide({}))
     expect(rail().classList.contains('is-drawer-open')).toBe(false)
     expect(store().getState().sideOpen).toBe(true)
   })
@@ -342,3 +343,38 @@ describe('the pane history (#616)', () => {
   })
 })
 
+describe('the seen watermark', () => {
+  const counted = (n: number) => ({ progress: { content: String(n) } })
+
+  /** What the user sees on an open rail is not news once the rail is closed. */
+  it('follows the counts while the rail is open, from the first render on', () => {
+    mount(1200, { sectionBadges: counted(3) })
+    expect(store().getState().badgeSeen).toEqual({ progress: 3 })
+
+    render({ sectionBadges: counted(5) })
+    expect(store().getState().badgeSeen).toEqual({ progress: 5 })
+
+    act(() => store().actions.toggleSide(seenCounts(store().getState().railBadge)))
+    expect(store().getState().sideOpen).toBe(false)
+    render({ sectionBadges: counted(7) })
+    expect(store().getState().badgeSeen).toEqual({ progress: 5 })
+    expect(unseenRailBadge(store().getState().railBadge, store().getState().badgeSeen, 'New')).toEqual({
+      content: '2',
+      label: 'New',
+    })
+  })
+
+  it('stays where it is while the rail is closed', () => {
+    mount(1200, { railOpen: false, sectionBadges: counted(3) })
+    expect(store().getState().sideOpen).toBe(false)
+    expect(store().getState().badgeSeen).toEqual({})
+  })
+
+  /** A rail in a closed dock or a hidden tab is open, but nobody sees it. */
+  it('stays where it is while the open rail is not on screen', () => {
+    host.hidden = true
+    mount(1200, { sectionBadges: counted(3) })
+    expect(store().getState().sideOpen).toBe(true)
+    expect(store().getState().badgeSeen).toEqual({})
+  })
+})

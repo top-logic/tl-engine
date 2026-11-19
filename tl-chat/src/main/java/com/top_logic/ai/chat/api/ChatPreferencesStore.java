@@ -55,30 +55,49 @@ public final class ChatPreferencesStore {
 	 *        The {@code chat-id} of the chat, as configured. {@code null} and blank share one key.
 	 */
 	public static ChatPreferencesDto load(String chatId) {
-		ChatPreferencesDto prefs = ChatPreferencesDto.create();
 		try {
 			Map<?, ?> stored = storedLayout(chatId);
 			if (stored == null) {
-				return prefs;
+				return ChatPreferencesDto.create();
 			}
-			Object railOpen = stored.get("railOpen");
-			if (railOpen instanceof Boolean flag) {
-				prefs.setRailOpen(flag);
-			}
-			prefs.setPaneWidth(intOf(stored.get("paneWidth")));
-			prefs.setBadgeSeen(intOf(stored.get("badgeSeen")));
-			if (stored.get("sections") instanceof Map<?, ?> sections) {
-				for (Map.Entry<?, ?> entry : sections.entrySet()) {
-					if (entry.getValue() instanceof Boolean open) {
-						prefs.putSection(String.valueOf(entry.getKey()), open.booleanValue());
-					}
-				}
-			}
-			return prefs;
+			return read(stored);
 		} catch (RuntimeException ex) {
 			Logger.debug("Chat preferences could not be read: " + ex.getMessage(), ChatPreferencesStore.class);
 			return ChatPreferencesDto.create();
 		}
+	}
+
+	/**
+	 * The layout of one chat, read from the value stored for it.
+	 *
+	 * <p>
+	 * A field of an unexpected form is left as if the user had decided nothing about it: a
+	 * {@link ChatPreferencesDto#getBadgeSeen() seen count} that is not a map of section names to
+	 * numbers is nothing seen.
+	 * </p>
+	 */
+	static ChatPreferencesDto read(Map<?, ?> stored) {
+		ChatPreferencesDto prefs = ChatPreferencesDto.create();
+		Object railOpen = stored.get("railOpen");
+		if (railOpen instanceof Boolean flag) {
+			prefs.setRailOpen(flag);
+		}
+		prefs.setPaneWidth(intOf(stored.get("paneWidth")));
+		if (stored.get("badgeSeen") instanceof Map<?, ?> seen) {
+			for (Map.Entry<?, ?> entry : seen.entrySet()) {
+				if (entry.getValue() instanceof Number count) {
+					prefs.putBadgeSeen(String.valueOf(entry.getKey()), count.intValue());
+				}
+			}
+		}
+		if (stored.get("sections") instanceof Map<?, ?> sections) {
+			for (Map.Entry<?, ?> entry : sections.entrySet()) {
+				if (entry.getValue() instanceof Boolean open) {
+					prefs.putSection(String.valueOf(entry.getKey()), open.booleanValue());
+				}
+			}
+		}
+		return prefs;
 	}
 
 	/**
@@ -96,7 +115,7 @@ public final class ChatPreferencesStore {
 				layout.put("railOpen", prefs.getRailOpen());
 			}
 			layout.put("paneWidth", Integer.valueOf(prefs.getPaneWidth()));
-			layout.put("badgeSeen", Integer.valueOf(prefs.getBadgeSeen()));
+			layout.put("badgeSeen", new LinkedHashMap<>(prefs.getBadgeSeen()));
 			layout.put("sections", new LinkedHashMap<>(prefs.getSections()));
 
 			Map<String, Object> byChat = new LinkedHashMap<>();

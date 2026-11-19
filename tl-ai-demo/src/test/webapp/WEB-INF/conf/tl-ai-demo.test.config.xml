@@ -35,8 +35,8 @@
 			The providers tl-ai-core ships, as the demo runs on them; no test calls a provider. The
 			bundled catalog only: a test must not depend on reaching the internet.
 		-->
-		<config service-class="com.top_logic.tl.ai.core.provider.LLMProviderService">
-			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
+		<config service-class="com.top_logic.ai.core.provider.LLMProviderService">
+			<instance class="com.top_logic.ai.core.provider.LLMProviderService">
 				<model-catalog fetch-remote-catalog="false"/>
 			</instance>
 		</config>

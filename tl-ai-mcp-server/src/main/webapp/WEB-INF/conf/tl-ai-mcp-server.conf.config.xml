@@ -2,14 +2,6 @@
 
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
-		<config service-class="com.top_logic.basic.util.ResourcesModule">
-			<instance>
-				<bundles>
-					<bundle name="tl-ai-mcp-server.app-messages" />
-				</bundles>
-			</instance>
-		</config>
-
 		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
 			<instance>
 				<modules>
@@ -40,6 +32,15 @@
 				server-version="1.0.0"
 				keep-alive-interval="30"
 			/>
+		</config>
+
+		<!-- Names the MCP endpoint and its server card in llms.txt and the AI Catalog while MCPServerService runs. -->
+		<config service-class="com.top_logic.base.discovery.AgentDiscoveryService">
+			<instance>
+				<contributions>
+					<contribution class="com.top_logic.ai.mcp.server.discovery.McpDiscoveryContribution"/>
+				</contributions>
+			</instance>
 		</config>
 	</services>
 

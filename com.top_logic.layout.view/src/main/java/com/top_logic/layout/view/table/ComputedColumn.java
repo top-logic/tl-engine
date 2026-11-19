@@ -12,6 +12,8 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
@@ -207,6 +209,24 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 		}
 		ColumnFunctions.checkOptions(context, config, Config.UPDATE, Config.OPTIONS, _typeRef,
 			"column '" + _name + "'");
+	}
+
+	/**
+	 * The {@link ComputedColumn} showing the rows themselves, by their display labels.
+	 *
+	 * @param name
+	 *        The name of the column.
+	 * @param label
+	 *        The header label of the column.
+	 */
+	public static ComputedColumn rows(String name, ResKey label) {
+		Config config = TypedConfiguration.newConfigItem(Config.class);
+		Expr.Var row = TypedConfiguration.newConfigItem(Expr.Var.class);
+		row.setName(RowAsConfig.DEFAULT_ROW_AS);
+		config.update(config.descriptor().getProperty(Config.NAME), name);
+		config.update(config.descriptor().getProperty(Config.VALUE), row);
+		config.update(config.descriptor().getProperty(AbstractColumnDeclaration.Config.LABEL), label);
+		return new ComputedColumn(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
 	}
 
 	@Override

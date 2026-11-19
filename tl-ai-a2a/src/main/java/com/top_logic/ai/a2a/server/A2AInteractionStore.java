@@ -11,8 +11,8 @@ import java.util.Map;
 
 import com.top_logic.ai.a2a.protocol.A2AJson;
 import com.top_logic.ai.a2a.protocol.Json;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.ai.core.agent.approval.UserInteractionRequest;
+import com.top_logic.ai.core.agent.approval.UserInteractionStore;
 
 /**
  * The "user" of an A2A run is the remote agent: a question the local agent asks with its

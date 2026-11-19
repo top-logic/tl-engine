@@ -14,6 +14,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 
+import com.top_logic.ai.mcp.server.discovery.McpServerCard;
+import com.top_logic.ai.mcp.server.discovery.ServerCardResource;
+
 import io.modelcontextprotocol.spec.HttpHeaders;
 
 /**
@@ -25,6 +28,11 @@ import io.modelcontextprotocol.spec.HttpHeaders;
  * application lifecycle. It dynamically dispatches requests to the transport provider of the
  * currently active {@link MCPServerService} instance, allowing the service to be restarted
  * without servlet re-registration issues.
+ * </p>
+ *
+ * <p>
+ * Besides the endpoint it serves the server card at {@link McpServerCard#PATH}, see
+ * {@link ServerCardResource}.
  * </p>
  *
  * @author Bernhard Haumacher
@@ -68,6 +76,11 @@ public class MCPTransportServlet extends HttpServlet {
 			return;
 		}
 
+		if (ServerCardResource.isPublicRequest(req)) {
+			ServerCardResource.serve(service, req, resp);
+			return;
+		}
+
 		// Delegate to the transport provider from the current service instance
 		service.noteSessionRequest(req.getHeader(HttpHeaders.MCP_SESSION_ID));
 		service.getTransportProvider().service(endpointRequest(req), resp);
@@ -95,7 +108,7 @@ public class MCPTransportServlet extends HttpServlet {
 	 *
 	 * <p>
 	 * Any other path below the endpoint ({@code <context>/mcp/other}) is passed on unchanged and
-	 * stays unserved.
+	 * stays unserved; the server card ({@link McpServerCard#PATH}) is answered before this.
 	 * </p>
 	 *
 	 * @param req

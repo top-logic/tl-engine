@@ -16,4 +16,17 @@ public interface WidgetOperations extends Drawable, MapLike {
 	@Override
 	Widget self();
 
+	/**
+	 * Whether a drop on the diagram is made onto this element, as its definition says: whether it
+	 * has a {@link Widget#getUserObject() user object}, which is then the object the drop is made
+	 * onto.
+	 *
+	 * <p>
+	 * The value the element transmits to the client as {@link Widget#isDropTarget()}.
+	 * </p>
+	 */
+	default boolean isDropTargetByDefinition() {
+		return self().getUserObject() != null;
+	}
+
 }

@@ -17,7 +17,8 @@ const I18N_KEYS = {
   'js.table.columnsLocked': 'Frozen',
   'js.table.columnLastVisible': 'At least one column stays visible',
   'js.table.groupBy': 'Group by this column',
-  'js.table.ungroup': 'Remove grouping',
+  'js.table.groupByAlso': 'Additionally group by this column',
+  'js.table.ungroupColumn': 'Remove grouping by this column',
 };
 
 /** Shows or hides one of the columns. */
@@ -29,8 +30,14 @@ const CMD_COLUMN_REORDER = 'columnReorder';
 /** Freezes or releases one of the columns. */
 const CMD_COLUMN_LOCK = 'columnLock';
 
-/** Groups the rows by the column the `column` argument names, or by none when it is empty. */
+/** Groups the rows by the columns the {@link ARG_COLUMNS} argument names, or by none when it is empty. */
 const CMD_GROUP = 'group';
+
+/** Argument of {@link CMD_GROUP}: the grouping columns, outermost group level first. */
+const ARG_COLUMNS = 'columns';
+
+/** State key of the edited grouping: the names of the grouping columns, outermost group level first. */
+const STATE_GROUPING = 'grouping';
 
 /** Argument of every command: which column it applies to. */
 const ARG_COLUMN = 'column';
@@ -50,7 +57,7 @@ interface ColumnEntry {
   visible: boolean;
   /** Whether the table freezes this column; the locked entries stand as a block at the start. */
   locked: boolean;
-  /** Whether the rows are grouped by this column; at most one entry is. */
+  /** Whether the rows are grouped by this column. */
   grouped: boolean;
 }
 
@@ -67,8 +74,9 @@ function format(template: string, arg: string): string {
  * column also releases it, the lock of a hidden one also shows it, and both say so in their names.
  *
  * Unless the table is a tree (state `groupable` false), each row also offers a toggle grouping the rows by its column,
- * hidden or shown; choosing another column moves the grouping there, choosing the grouped one removes it. Like lock and
- * eye it appears on hover or focus, but on the grouped row it always stands, so the current grouping is in sight.
+ * hidden or shown; the toggle of a column the rows are not grouped by groups them by it, as the innermost group level
+ * if they are grouped already, the toggle of a grouping column removes the level of that column alone. Like lock and
+ * eye it appears on hover or focus, but on a grouped row it always stands, so the current grouping is in sight.
  *
  * Order, visibility and lock live on the server (see ReactColumnSelectControl), so a gesture sends a command and the
  * re-pushed list is what renders.
@@ -82,6 +90,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const entries = (state.entries as ColumnEntry[] | undefined) ?? [];
   const visibleCount = entries.filter((entry) => entry.visible).length;
   const groupable = state.groupable !== false;
+  const grouping = (state[STATE_GROUPING] as string[] | undefined) ?? [];
 
   // A table over a large type offers a column per attribute, which is a long list to scroll. The search narrows what
   // is rendered; the full list stays the reference for the drop position, so a row can be dropped next to a row the
@@ -136,8 +145,9 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand]);
 
   const handleGroup = React.useCallback((name: string, grouped: boolean) => {
-    sendCommand(CMD_GROUP, { [ARG_COLUMN]: grouped ? '' : name });
-  }, [sendCommand]);
+    const columns = grouped ? grouping.filter((column) => column !== name) : [...grouping, name];
+    sendCommand(CMD_GROUP, { [ARG_COLUMNS]: columns });
+  }, [sendCommand, grouping]);
 
   // The moved column is named rather than counted: the server resolves it against its own working copy, which the
   // client's list is only a picture of. The server also decides the lock from where the column lands.
@@ -216,13 +226,14 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
               <span className="tl-reorder-list__actions">
                 {groupable && (
                   <Button
-                    label={i18n[grouped ? 'js.table.ungroup' : 'js.table.groupBy']}
+                    label={i18n[grouped ? 'js.table.ungroupColumn'
+                      : grouping.length > 0 ? 'js.table.groupByAlso' : 'js.table.groupBy']}
                     image={ICON_GROUP}
                     display="icon-only"
                     appearance="ghost"
                     small
                     checked={grouped}
-                    // The grouped row keeps its toggle in sight; the others show it on hover or focus.
+                    // A grouped row keeps its toggle in sight; the others show it on hover or focus.
                     className={grouped ? undefined : 'tl-reveal-on-hover'}
                     onClick={() => handleGroup(entry.name, grouped)}
                   />

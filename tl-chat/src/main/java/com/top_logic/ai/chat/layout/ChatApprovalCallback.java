@@ -12,13 +12,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
+import com.top_logic.ai.core.agent.RunCancellationBinding;
+import com.top_logic.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.ai.core.agent.approval.ApprovalRequest;
+import com.top_logic.ai.core.agent.approval.ApprovalResult;
+import com.top_logic.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.ai.core.agent.approval.UserInteractionStoreBinding;
 
 /**
  * The approval callback of a chat run: asks the person in the chat, or approves by itself while the

@@ -127,7 +127,7 @@ oder Kästchen im Raster gehören sie dem Bedienelement.
 | `tl-table__header` | `role="rowgroup"` |
 | `tl-table__header-row` | `role="row"`, `aria-rowindex="1"`, `data-tl-axis="horizontal"` (Einfügemarke links/rechts) |
 | `tl-table__header-cell` | `role="columnheader"`; `aria-sort` (`ascending` / `descending`) nur an der ersten Sortierstufe |
-| `tl-table__body` | `role="rowgroup"`, `tabindex="-1"`: er scrollt nur und ist kein eigener Tab-Halt |
+| `tl-table__body` | `role="rowgroup"`; `tabindex="-1"`, solange alles hineinpasst; solange er scrollt, `tabindex="0"` und `aria-label` „Zeilen der Tabelle“: ein eigener Tab-Halt, die Pfeiltasten scrollen ihn (#30129) |
 | `tl-table__row` | `role="row"` mit `id="<controlId>-row-<index>"`, `aria-rowindex`, `aria-selected`; im Baum `aria-level` und an aufklappbaren Zeilen `aria-expanded` |
 | `tl-table__cell` | `role="gridcell"` |
 | `tl-table__footer` | `role="status"`, `aria-live="polite"`: ein Screenreader hört die Zahl, die ein Filter übrig lässt |
@@ -250,6 +250,7 @@ Klassen:
 | `tl-table__resize` | Griff der Spaltenbreite |
 | `tl-table__freeze` | Griff der Fixiergrenze |
 | `tl-table__freeze-preview` | wo die Fixiergrenze beim Loslassen landet |
+| `tl-table__viewport` | die Hülle des Körpers, scrollt nicht; hat der Körper den Tastaturfokus, trägt ihr `::after` seinen Ring über den Zeilen (Regel in `base.css`, Alternative der einen Ring-Regel) |
 | `tl-table__body` | der rollende Körper (`role="rowgroup"`) |
 | `tl-table__canvas` | trägt die volle Höhe aller Zeilen; die Zeilen stehen absolut darin |
 | `tl-table__row` | jede Zeile |
@@ -260,6 +261,7 @@ Klassen:
 | `tl-table__spacer` | Platzhalter eines Blatts an der Stelle des Toggles |
 | `tl-table__value` | der Wert neben dem Toggle; endet mit Ellipse |
 | `tl-table__count` | Anzahl der Gruppenzeile, eine Kapsel |
+| `tl-table__no-value` | Text an Stelle eines fehlenden Werts, z. B. der Wert der Gruppe der Zeilen ohne Wert in der Gruppierungsspalte („(leer)“ oder die Bezeichnung der Spalte, `empty-group-label`): `--tl-text-secondary` in `tl-type-body`, nicht halbfett wie die übrige Gruppenzeile |
 | `tl-table__placeholder` | Zeile im Fenster, die der Server noch nicht geschickt hat: `aria-hidden`, trägt ein `tl-skeleton`; keine Ladezeile mit `tl-progress` |
 | `tl-table__footer` | die Zeilenzahl unter dem Rahmen, `tl-type-label`; steht nur, solange `rowCount` nicht leer ist |
 | `tl-table__row-count` | wie viele Zeilen (von wie vielen) |

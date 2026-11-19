@@ -35,7 +35,7 @@
 			<text
 				input="usage"
 				tone="secondary"
-				variant="caption"
+				variant="label"
 			/>
 		</stack>
 		<stack

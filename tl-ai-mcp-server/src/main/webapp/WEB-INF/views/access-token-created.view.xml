@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay of the dialog of tl-layout-view that shows a new access token once: for a token with the
+	permission agent-endpoints, while the MCP server runs and accepts access tokens, the dialog also
+	shows the address of the MCP endpoint and the command that connects Claude Code with the token,
+	each ready to copy.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<channels>
+		<derived-channel name="mcpEndpoint"
+			expr="mcpEndpointUrl()"
+		/>
+		<derived-channel name="mcpCommand"
+			expr="mcpClaudeCommand($model.get(`tl.accounts:AccessTokenRequest#token`))"
+			inputs="model"
+		/>
+	</channels>
+	<window>
+		<switch id="mcp-connection"
+			input="model"
+		>
+			<case test="mcpAcceptsAccessToken($model.get(`tl.accounts:AccessTokenRequest#token`))">
+				<form
+					input="model"
+					mode-switch="false"
+					with-inset="true"
+				>
+					<value-input
+						readonly="true"
+						value="mcpEndpoint"
+					>
+						<label>
+							<en>MCP endpoint</en>
+							<de>MCP-Endpunkt</de>
+						</label>
+						<annotations>
+							<multi-line
+								preformatted="true"
+								rows="1"
+							/>
+						</annotations>
+					</value-input>
+					<value-input
+						readonly="true"
+						value="mcpCommand"
+					>
+						<label>
+							<en>Connect Claude Code</en>
+							<de>Claude Code verbinden</de>
+						</label>
+						<annotations>
+							<multi-line
+								preformatted="true"
+								rows="1"
+							/>
+						</annotations>
+					</value-input>
+				</form>
+			</case>
+		</switch>
+	</window>
+</view>

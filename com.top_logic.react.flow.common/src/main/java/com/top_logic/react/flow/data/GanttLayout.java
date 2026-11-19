@@ -100,6 +100,9 @@ public interface GanttLayout extends com.top_logic.react.flow.data.Layout, com.t
 	/** @see #getPanTarget() */
 	String PAN_TARGET__PROP = "panTarget";
 
+	/** @see #getRowLayout() */
+	String ROW_LAYOUT__PROP = "rowLayout";
+
 	/**
 	 * Root rows of the forest.
 	 */
@@ -436,6 +439,26 @@ public interface GanttLayout extends com.top_logic.react.flow.data.Layout, com.t
 	 */
 	com.top_logic.react.flow.data.GanttLayout setPanTarget(com.top_logic.react.flow.data.GanttPanTarget value);
 
+	/**
+	 * The rows in display order with their geometry, as placed by the last layout pass.
+	 *
+	 * <p>
+	 * Set by each layout pass and cleared when an item is dropped into another row. Drawing and
+	 * dragging read the rows from here instead of traversing {@link #getRootRows()} again.
+	 * </p>
+	 */
+	com.top_logic.react.flow.operations.layout.GanttRowLayout getRowLayout();
+
+	/**
+	 * @see #getRowLayout()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setRowLayout(com.top_logic.react.flow.operations.layout.GanttRowLayout value);
+
+	/**
+	 * Checks, whether {@link #getRowLayout()} has a value.
+	 */
+	boolean hasRowLayout();
+
 	@Override
 	com.top_logic.react.flow.data.GanttLayout setContents(java.util.List<? extends com.top_logic.react.flow.data.Box> value);
 
@@ -465,6 +488,9 @@ public interface GanttLayout extends com.top_logic.react.flow.data.Layout, com.t
 
 	@Override
 	com.top_logic.react.flow.data.GanttLayout setRenderInfo(java.lang.Object value);
+
+	@Override
+	com.top_logic.react.flow.data.GanttLayout setDropTarget(boolean value);
 
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.GanttLayout readGanttLayout(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {

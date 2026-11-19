@@ -153,7 +153,7 @@ public class TestTableSelectionRetention extends TestCase {
 	 * data that keeps its object.
 	 */
 	public void testSelectionInCollapsedGroupSurvivesRefresh() {
-		_table.setGroupedColumn(COLUMN_GROUP);
+		_table.setGroupedColumns(List.of(COLUMN_GROUP));
 		_notified.clear();
 		_table.selectRow(A1);
 		collapse(0);
@@ -173,12 +173,12 @@ public class TestTableSelectionRetention extends TestCase {
 		_table.selectRow(A1);
 		search(B1);
 
-		_table.setGroupedColumn(COLUMN_GROUP);
+		_table.setGroupedColumns(List.of(COLUMN_GROUP));
 
 		assertEquals(Set.of(A1), _table.getSelectedKeys());
 		assertFalse("The listeners were never told about a deselection.", _notified.contains(Set.of()));
 
-		_table.setGroupedColumn(null);
+		_table.setGroupedColumns(List.of());
 
 		assertEquals(Set.of(A1), _table.getSelectedKeys());
 	}

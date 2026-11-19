@@ -149,6 +149,34 @@ public class TestGenerateJavaIntegration {
 	private static final String SKIPPED_FRAGMENT = "Skipping web fragment";
 
 	/**
+	 * Marker of an error line in the log of the application build.
+	 */
+	private static final String ERROR_MARKER = "[ERROR]";
+
+	/**
+	 * Maximum number of {@link #ERROR_MARKER} lines in the {@link #logExcerpt(String) excerpt} of
+	 * the build log.
+	 */
+	private static final int MAX_ERROR_LINES = 50;
+
+	/**
+	 * Number of last lines of the build log in its {@link #logExcerpt(String) excerpt}.
+	 */
+	private static final int TAIL_LINES = 100;
+
+	/**
+	 * Heading of the {@link #ERROR_MARKER} lines in the {@link #logExcerpt(String) excerpt}, a
+	 * format with the maximum number of lines as argument.
+	 */
+	private static final String ERROR_LINES_HEADING = "--- Error lines of the build log (at most %d) ---";
+
+	/**
+	 * Heading of the last lines in the {@link #logExcerpt(String) excerpt}, a format with the
+	 * number of lines as argument.
+	 */
+	private static final String TAIL_HEADING = "--- Last %d lines of the build log ---";
+
+	/**
 	 * Global settings of the application build, a format with the {@link #REPOSITORY} entries of
 	 * the repositories, the entries of the plugin repositories, and {@link #REPOSITORY_PROFILE} as
 	 * arguments.
@@ -230,21 +258,43 @@ public class TestGenerateJavaIntegration {
 		int exitCode = build(project, repository, settings, log);
 		String output = Files.readString(log, StandardCharsets.UTF_8);
 
-		assertEquals("Build of the application failed, see " + log, 0, exitCode);
+		if (exitCode != 0) {
+			fail("Build of the application failed with exit code " + exitCode + ", see " + log + logExcerpt(output));
+		}
 		for (String name : GENERATED_CLASSES) {
 			Path source = project.resolve("src/main/java/" + name + ".java");
 			assertTrue("Not generated: " + source, Files.isRegularFile(source));
 			Path compiled = project.resolve("target/classes/" + name + ".class");
 			assertTrue("Not compiled: " + compiled, Files.isRegularFile(compiled));
 		}
-		assertFalse("A web fragment of an engine module was not resolved, see " + log,
-			output.contains(SKIPPED_FRAGMENT));
+		if (output.contains(SKIPPED_FRAGMENT)) {
+			fail("A web fragment of an engine module was not resolved, see " + log + logExcerpt(output));
+		}
 		Path coreFragment = repository.resolve(TL_GROUP_PATH + "/tl-core/" + version + "/tl-core-" + version
 			+ "-web-fragment.war");
 		assertTrue("Web fragment of tl-core not resolved: " + coreFragment, Files.isRegularFile(coreFragment));
 		Path compilerPlugin = repository.resolve(COMPILER_PLUGIN_PATH);
 		assertTrue("The build did not resolve into its own local repository: " + compilerPlugin + " missing.",
 			Files.isDirectory(compilerPlugin));
+	}
+
+	/**
+	 * Excerpt of the build log for a failure message: its {@link #ERROR_MARKER} lines (at most
+	 * {@link #MAX_ERROR_LINES}) and its last {@link #TAIL_LINES} lines, each part with a heading.
+	 */
+	private static String logExcerpt(String output) {
+		List<String> lines = output.lines().toList();
+		StringBuilder result = new StringBuilder();
+		result.append('\n').append(ERROR_LINES_HEADING.formatted(MAX_ERROR_LINES)).append('\n');
+		lines.stream()
+			.filter(line -> line.contains(ERROR_MARKER))
+			.limit(MAX_ERROR_LINES)
+			.forEach(line -> result.append(line).append('\n'));
+		result.append(TAIL_HEADING.formatted(TAIL_LINES)).append('\n');
+		for (String line : lines.subList(Math.max(0, lines.size() - TAIL_LINES), lines.size())) {
+			result.append(line).append('\n');
+		}
+		return result.toString();
 	}
 
 	/**

@@ -1,5 +1,6 @@
 import { React, useTLState, useTLCommand, useUpload, useTLDataUrl, useI18N, rootClassName, stateAttr, useFieldLabelProps, usePart, downloadBlob, ICON_FILE, ICON_ATTACH } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { isFull } from './form/valueCount';
 
 /** Command removing a file from the collection. */
 const CMD_REMOVE_CHIP = 'removeChip';
@@ -51,6 +52,8 @@ function formatSize(size: number): string {
  * - accept: string, the file types the file picker offers (HTML accept attribute); absent: all
  * - maxUploadSize: number, the size limit of each single file in bytes (0: none); the upload channel
  *   refuses a selection holding a larger file before transmitting it
+ * - maxCount: number, the maximum number of files (0: none); at the maximum, neither the add button
+ *   nor dropping offers a further file
  * - error: string, the message of the last failed upload; absent after a successful one. Hidden
  *   from the moment the next upload starts until the server reports its outcome.
  * - compact: boolean, whether the field is displayed in little room (see FieldState)
@@ -69,6 +72,9 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
   const editable = state.editable === true;
   const accept = (state.accept as string | null) ?? '';
   const compact = state.compact === true;
+  const full = isFull(chips.length, state.maxCount);
+  // Files are added while the field is edited and holds fewer than its maximum.
+  const adds = editable && !full;
 
   const [isDragOver, setIsDragOver] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -106,21 +112,21 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
   }, [uploading]);
 
   const handleDragOver = React.useCallback((e: React.DragEvent) => {
-    if (!editable) return;
+    if (!adds) return;
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(true);
-  }, [editable]);
+  }, [adds]);
 
   const handleDragLeave = React.useCallback((e: React.DragEvent) => {
-    if (!editable) return;
+    if (!adds) return;
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
-  }, [editable]);
+  }, [adds]);
 
   const handleDrop = React.useCallback((e: React.DragEvent) => {
-    if (!editable) return;
+    if (!adds) return;
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
@@ -128,7 +134,7 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
     if (e.dataTransfer.files) {
       doUpload(e.dataTransfer.files);
     }
-  }, [editable, uploading, doUpload]);
+  }, [adds, uploading, doUpload]);
 
   return (
     <div
@@ -155,7 +161,7 @@ const TLFileChips: React.FC<TLCellProps> = ({ controlId }) => {
           />
         ))}
       </div>
-      {editable && (
+      {adds && (
         <>
           <input
             ref={fileInputRef}

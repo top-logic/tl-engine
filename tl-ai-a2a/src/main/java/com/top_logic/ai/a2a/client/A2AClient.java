@@ -28,8 +28,8 @@ import com.top_logic.ai.a2a.protocol.A2AError;
 import com.top_logic.ai.a2a.protocol.Json;
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.RequestAuthentication;
-import com.top_logic.tl.ai.core.agent.RunCancellationBinding;
-import com.top_logic.tl.ai.core.provider.SSEReader;
+import com.top_logic.ai.core.agent.RunCancellationBinding;
+import com.top_logic.ai.core.provider.SSEReader;
 
 /**
  * A minimal A2A v1.0 JSON-RPC client: agent cards, unary calls, and streaming calls read as

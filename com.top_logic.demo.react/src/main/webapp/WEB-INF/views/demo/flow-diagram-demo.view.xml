@@ -45,6 +45,13 @@
 	built from are its inputs, which the diagram draws as its connections - an input of another
 	product has no node in the diagram and is left out. The tables and the diagram observe the types
 	they display, so an object created, edited or deleted shows everywhere right away.
+	
+	Build steps are dragged out of the Build steps table (drag kind flowStep). Dropped onto a node
+	of the Construction Plan, they become inputs of that node's step; the drop is refused, with
+	the reason shown at the pointer, for the step itself, a step of another product, a step the
+	node's step is already built into, and a step built in elsewhere. Dropped onto the Layout
+	board, a step is placed exactly at the point of the drop: the drop's x and y are
+	diagram units, independent of zoom and scrolling, and stored in the step's x and y.
 -->
 <view>
 	<channels>
@@ -269,6 +276,35 @@ $parts.isEmpty()
         )
     )
 }]]></createChart>
+						<!--
+							A build step dragged out of Build steps onto a node of the plan is built into the
+							step of that node: it becomes one of its inputs, drawn as a connection.
+						-->
+						<drop
+							accept="flowStep"
+							as="steps"
+							target="node"
+							target-as="step"
+						>
+							<refuse-if><![CDATA[{
+consumers = $step.recursion(n -> $n.get(`test.flowchart:FlowNode#usedIn`));
+cyclic = $steps.filter(s -> $consumers.containsElement($s)).firstElement();
+builtIn = $steps.filter(s -> $s.get(`test.flowchart:FlowNode#usedIn`) != null).firstElement();
+if($steps.containsElement($step),
+    #("A build step cannot be built into itself."@en, "Ein Bauschritt kann nicht in sich selbst verbaut werden."@de),
+    if(!$steps.filter(s -> $s.container() != $step.container()).isEmpty(),
+        #("Only build steps of the same product can be built in."@en, "Nur Bauschritte desselben Produkts können verbaut werden."@de),
+        if($cyclic != null,
+            #("''{0}'' already consumes ''{1}''."@en, "''{0}'' verbraucht bereits ''{1}''."@de).fill($cyclic, $step),
+            if($builtIn != null,
+                #("''{0}'' is already built into ''{1}''."@en, "''{0}'' ist bereits in ''{1}'' verbaut."@de)
+                    .fill($builtIn, $builtIn.get(`test.flowchart:FlowNode#usedIn`)),
+                null))))
+}]]></refuse-if>
+							<with-transaction>
+								<execute-script function="$steps.foreach(s -> $step.add(`test.flowchart:FlowNode#inputs`, $s))"/>
+							</with-transaction>
+						</drop>
 					</flow-diagram>
 					<commands>
 						<generic-command
@@ -413,6 +449,7 @@ $parts.isEmpty()
 					selection-mode="multi"
 					types="test.flowchart:FlowNode"
 				>
+					<drag kind="flowStep"/>
 					<columns>
 						<column attribute="name"/>
 						<column attribute="marker"/>
@@ -434,6 +471,52 @@ $parts.isEmpty()
 						/>
 					</on-activate>
 				</table>
+			</panel>
+		</tile>
+		<tile id="board"
+			width="full"
+		>
+			<panel fill="true">
+				<title>
+					<en>Layout board</en>
+					<de>Lageplan</de>
+				</title>
+				<flow-diagram observed-types="test.flowchart:FlowNode">
+					<createChart><![CDATA[reactFlowChart(
+    root: reactFlowFloating(
+        contents: all(`test.flowchart:FlowNode`)
+            .filter(s -> $s.get(`test.flowchart:FlowNode#x`) != null)
+            .map(s -> reactFlowPosition(
+                x: $s.get(`test.flowchart:FlowNode#x`),
+                y: $s.get(`test.flowchart:FlowNode#y`),
+                userObject: $s,
+                content: reactFlowBorder(stroke: "#4a7ab5", thickness: 1,
+                    content: reactFlowFill(fill: "#e3edf9",
+                    content: reactFlowPadding(all: 6,
+                    content: reactFlowText($s.get(`test.flowchart:FlowNode#name`)))))))
+    )
+)]]></createChart>
+					<!--
+						A build step dragged out of Build steps onto the board is placed there - the board
+						declares no node drop, so a drop anywhere on it is a drop on the board as a whole: its
+						position is the point of the drop in diagram units, so it stays at that place when the
+						board is zoomed, scrolled or reloaded. Several steps are placed one below the other.
+					-->
+					<drop
+						accept="flowStep"
+						as="steps"
+						target="diagram"
+					>
+						<with-transaction>
+							<execute-script>
+								<function><![CDATA[$steps.foreach(s -> {
+    $s.set(`test.flowchart:FlowNode#x`, $x);
+    $s.set(`test.flowchart:FlowNode#y`, $y + 40 * $steps.elementIndex($s));
+})]]></function>
+							</execute-script>
+						</with-transaction>
+					</drop>
+				</flow-diagram>
 			</panel>
 		</tile>
 		<tile id="details"

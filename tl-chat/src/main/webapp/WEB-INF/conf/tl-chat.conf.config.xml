@@ -62,11 +62,11 @@
 			has the tool; which channel it may write is still the page's own decision
 			(<chat-conversation present="..."/>), and a page that names none allows nothing.
 		-->
-		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+		<config service-class="com.top_logic.ai.tool.api.registry.ToolRegistryService">
 			<instance>
 				<tool-factories>
 					<factory name="present">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.ai.chat.tools.ChatPresentTool"
 						/>
 					</factory>
@@ -76,7 +76,7 @@
 						allows nothing.
 					-->
 					<factory name="page-commands">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.ai.chat.tools.ChatCommandTool"
 						/>
 					</factory>
@@ -89,7 +89,7 @@
 			its own agents names "present.present", "page-commands.pageCommands" and
 			"page-commands.runPageCommand" in their <tools> the same way.
 		-->
-		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
+		<config service-class="com.top_logic.ai.core.agent.TopLogicAgentDefinitions">
 			<instance>
 				<agents>
 					<agent name="TL_SingleAgent">

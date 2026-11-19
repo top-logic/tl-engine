@@ -50,8 +50,8 @@
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>
-    <!-- AssumptionAwareRunner and the test fixtures of the web tools (RecordingServer, the
-         screenshot fixtures) live in tl-ai-core's test sources. -->
+    <!-- The test fixtures of the web tools (RecordingServer, the screenshot fixtures) live in
+         tl-ai-core's test sources. -->
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-ai-core</artifactId>
@@ -62,17 +62,6 @@
 
   <build>
     <plugins>
-      <!-- The tests live in packages mirroring the production code, see the comment in tl-ai-core/pom.xml. -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <includes>
-            <include>%regex[test[/.]TestAll(\.class)?]</include>
-            <include>%regex[com[/.]top_logic[/.](ai|tl[/.]ai)[/.](.*[/.])?(Test[A-Z0-9][^/.$]*|[^/.$]*Test)(\.class)?]</include>
-          </includes>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>com.top-logic</groupId>
         <artifactId>tl-maven-plugin</artifactId>

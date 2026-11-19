@@ -42,8 +42,11 @@ import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ButtonSize;
 import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.KeyStroke;
+import com.top_logic.layout.react.control.common.BadgeDisplay;
+import com.top_logic.layout.react.control.common.BadgeRole;
 import com.top_logic.layout.react.control.common.LinkKind;
 import com.top_logic.layout.react.control.common.ReactAlertControl;
+import com.top_logic.layout.react.control.common.ReactAvatarControl;
 import com.top_logic.layout.react.control.common.ReactLinkControl;
 import com.top_logic.layout.react.control.common.ReactProgressControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
@@ -89,6 +92,8 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.AccordionState;
 import com.top_logic.layout.react.state.AlertState;
 import com.top_logic.layout.react.state.AppBarState;
+import com.top_logic.layout.react.state.AvatarState;
+import com.top_logic.layout.react.state.Badge;
 import com.top_logic.layout.react.state.BreadcrumbState;
 import com.top_logic.layout.react.state.ButtonState;
 import com.top_logic.layout.react.state.CardState;
@@ -207,6 +212,7 @@ public class TestControlStateSchema extends TestCase {
 		button.setNavigateNewWindow(true);
 		button.setHidden(true);
 		button.setCssClass("css");
+		button.setBadge(new BadgeDisplay("3", false, BadgeRole.ERROR, "3 new"));
 
 		assertEquals(properties(ButtonState.class), KEYS);
 	}
@@ -230,6 +236,43 @@ public class TestControlStateSchema extends TestCase {
 	 */
 	public void testButtonDisplayMode() {
 		assertSameNames(ButtonDisplayMode.values(), ButtonState.DisplayMode.values(), ButtonState.DisplayMode::valueOf);
+	}
+
+	/**
+	 * A button and an avatar without a badge send no badge at all; one whose badge is removed
+	 * sends {@code null}, which the client reads as absent.
+	 */
+	public void testNoBadgeIsAbsent() {
+		ReactButtonControl button = new ReactButtonControl(createContext(), "label", context -> {
+			// No action.
+		});
+		button.setBadge(null);
+		assertFalse(state(button).containsKey(ButtonState.BADGE__PROP));
+		button.setBadge(new BadgeDisplay("3", false, BadgeRole.BRAND, null));
+		assertEquals(Map.of(Badge.CONTENT__PROP, "3"), state(button).get(ButtonState.BADGE__PROP));
+		button.setBadge(null);
+		assertNull(state(button).get(ButtonState.BADGE__PROP));
+
+		ReactAvatarControl avatar = new ReactAvatarControl(createContext(), "Anna Meier");
+		avatar.setBadge(null);
+		assertFalse(state(avatar).containsKey(AvatarState.BADGE__PROP));
+	}
+
+	/**
+	 * The color roles of a badge are spelled as the schema spells them.
+	 */
+	public void testBadgeRole() {
+		assertSameNames(BadgeRole.values(), Badge.Role.values(), Badge.Role::valueOf);
+	}
+
+	/**
+	 * Every key of the state of a badge is declared in {@link Badge}.
+	 */
+	public void testBadgeKeys() {
+		Map<String, Object> dot = new BadgeDisplay(null, true, BadgeRole.WARNING, "New entries").toState();
+		assertDeclared(dot, Badge.class);
+		assertEquals(Set.of(Badge.DOT__PROP, Badge.ROLE__PROP, Badge.LABEL__PROP), dot.keySet());
+		assertEquals(Map.of(Badge.CONTENT__PROP, "7"), new BadgeDisplay("7", false, BadgeRole.BRAND, null).toState());
 	}
 
 	/**
@@ -447,13 +490,16 @@ public class TestControlStateSchema extends TestCase {
 	public void testTabBarKeys() {
 		ReactTabBarControl control = new ReactTabBarControl(createContext(), null, List.of(
 			new TabDefinition("a", "A", this::toggle, null).withIcon("css:fas fa-home"),
-			new TabDefinition("b", "B", this::toggle, null)));
+			new TabDefinition("b", "B", this::toggle, null)
+				.withBadge(new BadgeDisplay("2", false, BadgeRole.INFO, null))));
 		// Creates the content of the active tab.
 		control.attach();
 
 		Map<?, ?> state = state(control);
 		assertDeclared(state, TabBarState.class);
 		assertEachDeclared(state.get(TabBarState.TABS__PROP), TabBarState.Tab.class);
+		assertDeclared((Map<?, ?>) ((Map<?, ?>) ((List<?>) state.get(TabBarState.TABS__PROP)).get(1))
+			.get(TabBarState.Tab.BADGE__PROP), Badge.class);
 		assertChild(state.get(TabBarState.ACTIVE_CONTENT__PROP));
 	}
 
@@ -677,7 +723,7 @@ public class TestControlStateSchema extends TestCase {
 		ReactTextControl control = new ReactTextControl(createContext(), "Text", "css");
 		control.setText("Text", "error");
 		control.setOverflow(TextOverflow.ELLIPSIS);
-		control.setVariant(TextVariant.TITLE);
+		control.setVariant(TextVariant.HEADING_SM);
 		control.setTone(TextTone.SECONDARY);
 		control.setAppearance(TextAppearance.PILL);
 		control.setRole("alert");

@@ -12,7 +12,7 @@ import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.ai.core.agent.approval.ApprovalMode;
 
 /**
  * The last position a person gave the auto-approve switch, stored on their

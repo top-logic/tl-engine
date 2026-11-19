@@ -33,7 +33,7 @@
 				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation"/>
 			</button>
 			<button id="exportToDevEnv"
-				class="com.top_logic.tl.ai.core.agent.ExportToDataFolderCommand"
+				class="com.top_logic.ai.classic.agent.ExportToDataFolderCommand"
 				clique="exportButtons"
 				disabledImage="css:fa-solid fa-terminal"
 				file-name="agents.objects.xml"
@@ -47,7 +47,7 @@
 				</resourceKey>
 			</button>
 			<button id="importFromDevEnv"
-				class="com.top_logic.tl.ai.core.agent.ImportFromDataFolderCommand"
+				class="com.top_logic.ai.classic.agent.ImportFromDataFolderCommand"
 				clique="exportButtons"
 				disabledImage="css:fa-solid fa-rotate-left"
 				file-name="agents.objects.xml"

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The page telling the person why the authorization request of an OAuth client is refused, e.g.
+	Claude Code asking to call the MCP endpoint of the application as the person.
+	
+	The authorization endpoint (/oauth/authorize) sends the browser here when it cannot send the
+	refusal back to the client: the application is reached over an unencrypted connection, the
+	client is not known, its redirect URI is not registered, or the request is malformed. The URL
+	carries the reason in the "reason" query parameter and the value its message names - the
+	address of the application, the client ID or the redirect URI - in the "detail" query
+	parameter; oauthRefusalMessage() and oauthRefusalHint() turn both into the text of the page.
+	
+	The page is an entry point marked anonymous, so it is shown without a login.
+-->
+<view>
+	<channels>
+		<!-- The reason of the refusal, from the URL. -->
+		<channel name="reason"/>
+		<!-- The value the message of the refusal names, from the URL. -->
+		<channel name="detail"/>
+		<derived-channel name="message"
+			inputs="reason, detail"
+		>
+			<expr><![CDATA[oauthRefusalMessage($reason, $detail)]]></expr>
+		</derived-channel>
+		<derived-channel name="hint"
+			inputs="reason, detail"
+		>
+			<expr><![CDATA[oauthRefusalHint($reason, $detail)]]></expr>
+		</derived-channel>
+	</channels>
+	<query-bindings>
+		<bind
+			channel="reason"
+			query-param="reason"
+		/>
+		<bind
+			channel="detail"
+			query-param="detail"
+		/>
+	</query-bindings>
+	<inset>
+		<stack align="center">
+			<panel
+				appearance="card"
+				width="480px"
+				with-inset="true"
+			>
+				<title>
+					<en>Sign-in not possible</en>
+					<de>Anmeldung nicht möglich</de>
+				</title>
+				<stack
+					align="stretch"
+					direction="column"
+					gap="compact"
+				>
+					<text
+						input="message"
+						tone="error"
+					/>
+					<text
+						input="hint"
+						tone="secondary"
+					/>
+				</stack>
+			</panel>
+		</stack>
+	</inset>
+</view>

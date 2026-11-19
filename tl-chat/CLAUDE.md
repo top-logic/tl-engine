@@ -389,10 +389,11 @@ own element against it. New chat pieces live in `ui/src` and are registered next
 
 ### Configuring `<data-list>`
 
-`com.top_logic.ai.chat.view.list.DataListElement` / `DataListControl` + `ui/src/data-list.tsx`.
-A **declared temporary fork**: the engine has no data-bound list that renders like the navbar with
-selection, grouping and search, so the element lives here and is built on public engine API only, to
-upstream as one clean diff.
+The engine's element (`com.top_logic.layout.view.list.DataListElement` / `DataListControl`, client
+`TLDataList` in `com.top_logic.layout.react`, design system `tl-list`); the view-layer articles
+describe it. What the chat adds is its own look of the session list: the views mark it
+`css-class="tl-chat-sessions"`, which gives it the rail's width and surface (`ui/src/styles.css`), and
+the row-state classes below.
 
 | Option | What it is |
 |--|--|
@@ -401,13 +402,14 @@ upstream as one clean diff.
 | `observed-types` | Types whose create/update/delete re-runs `rows`, so the list follows the model. |
 | `<lines><line attribute=…\|<value>…` | What a row shows, top to bottom - a table's columns, stacked. An attribute holding a point in time is written in the format a form field and a table cell show it in (`FieldControlService.dateFormat`), so a `tl.core:DateTime` shows its time of day. `emphasis` is `primary` / `secondary`. |
 | `group-by` | TL-Script of one row giving its group header; unset means a flat list. |
-| `row-css-class` | TL-Script of one row giving extra classes on the row element - its *state* (`is-done`, `is-running`, `is-pending` are the ones the stylesheet defines). Called `css-class` up to 2.0.5; that name is now the engine's class of the list itself, and a row function written under it is refused at startup. |
+| `row-css-class` | TL-Script of one row giving extra classes on the row element (`tl-list__item`) - its *state* (`is-done`, `is-running`, `is-pending`, `is-working`, `is-waiting`, `has-news` are the ones this module's stylesheet defines). A row function written as `css-class` is refused at startup. |
 | `css-class` | A class on the list's root element, as on every view element of the engine. |
 | `selection` | Two-way channel holding the picked row object. |
 | `count` | Channel receiving the number of rows, written with every serialisation - what a rail section's badge reads without asking the browser. |
 | `search` / `collapsible` / `title` / `empty-text` | The list's own chrome. |
 | `collapsed` | First-load state of a collapsible list; not remembered across page loads. |
-| `drawer-below` | Host width in rem (default 44) below which a collapsible list becomes a drawer - see below. 0 keeps a column at every width. |
+| `drawer-below` | Host width in rem below which a collapsible list becomes a drawer - see below. Default 0: a column at every width; the chat's session lists set 44. |
+| `<leading name image>` / `<trailing attribute\|value display>` | An avatar or icon in front of the lines, metadata text or a badge after them. |
 | `<commands><command>` | Header buttons above the list. Ordinary `<generic-command>`s, each rendered as the engine's command button (`ReactButtonControl`, a child control in the `buttons` state): hidden while its rules hide it (`<access>`, `<visible-if>`), disabled with the reason as tooltip while they disable it (`<disabled-if>`), and following every change of its state. |
 | `<row-commands><command>` | Commands offered on a single row - see below. |
 | `row-channel` | Name of the local channel a row command reads its row from. Default `row`. |
@@ -454,10 +456,8 @@ arrow keys, Enter and Escape already work. Two consequences worth knowing:
   before every open.
 
 `row-actions` has the same meaning and the same touch caveat as `<panel hover-actions>`: `hover`
-reveals the trigger on `.rail-item:hover` and on `:focus-within` (so the keyboard reaches it), and
-under `@media (hover: none)` it is permanently visible at a 44 px target, because a finger cannot
-hover. The trigger sits in space the row already reserves and `.rail-open` keeps `flex: 1;
-min-width: 0`, so the title shortens rather than the row reflowing.
+reveals the trigger through `tl-reveal-on-hover` of the design system, on hovering the row and on
+keyboard focus in it, and permanently where there is no hover.
 
 When the row whose menu was open disappears - what a Delete in that menu does - focus moves to the
 neighbouring row's trigger (previous, else next, else the list), not to `<body>`.
@@ -470,28 +470,25 @@ width they need together (688 px in the demo) the row overflowed into the engine
 `.tlSidebar__content`: the composer started off-screen and the chat scrolled in two dimensions.
 
 So below `drawer-below` rem of **host** width - the list's parent element, measured by a
-`ResizeObserver`, never the window - a collapsible list is a **drawer** (`.is-drawer`): its strip
-stays in the flow, and the existing expand arrow opens the list over its neighbour with a scrim.
+`ResizeObserver`, never the window - a collapsible list is a **drawer**: its strip
+(`data-tl-state~="collapsed"`) stays in the flow, and its expand arrow opens the list over its
+neighbour as the design system's `tl-drawer tl-drawer--container` with `tl-drawer__scrim`.
 
 - A row pick, a header command ("Neuer Chat"), a click on the scrim or Escape closes it. Focus moves
   to the open row (else the first) on open, back to the arrow on close, and Tab wraps inside.
-- The scrim covers the host, not the page: the host becomes the containing block (`:has(> .tl-data-list.is-drawer)`),
-  so the app bar and the page around a dock stay undimmed, and `isolation` keeps the application's
-  menus above an open drawer.
+- The scrim covers the host, not the page: the host becomes the containing block (`list.css` of the
+  design system), so the app bar and the page around a dock stay undimmed, and `isolation` keeps the
+  application's menus above an open drawer.
 - The user's column choice (`collapsed`) is not touched while the list is a drawer; a host that
   grows wide again gets the column back as the user left it.
 - The conversation's floor gives way by `--chat-conversation-floor-reserve` (two strips and two
-  gaps, 10 rem) while a list beside it is a drawer, so a 320 px window reflows instead of
-  scrolling. Beside a list that is a column the #511 floor holds unchanged.
+  gaps, 10 rem) while the session list (`tl-chat-sessions`) beside it is a strip, so a 320 px window
+  reflows instead of scrolling. Beside a list that is a column the #511 floor holds unchanged.
 - `collapsible="false"` (every list inside a rail section) and `drawer-below="0"` are never drawers.
 
-The default 44 rem is the demo row: list 16.5 + floor 20 + rail strip 3.5 + two gaps 3 = 43 rem.
+The chat's 44 rem is the demo row: list 16.5 + floor 20 + rail strip 3.5 + two gaps 3 = 43 rem.
 It is an attribute rather than a constant because only the view knows what else stands in the row;
 a host with less beside the list sets less.
-
-**Tokens.** Anything the element's CSS uses must be declared under **both** roots: `.tl-cockpit …`
-and `.tl-data-list`. A token declared only on the first is silently missing in a standalone list.
-The same holds for the button reset, the focus ring and `box-sizing`.
 
 Writing a session: a row command calls `aiSessionRename(session, title)` / `aiSessionDelete(session)`
 (tl-ai-core `AIScriptFunctions`), never the `title` attribute. Those go through
@@ -558,7 +555,7 @@ Rules to know when touching this:
   label) - and neither ever reached a composed `<chat-conversation/>`, which has no cockpit at all.
   Both are gone; `has-document` survives only for the one rule that is about a document being open
   rather than about a width.
-- **`.tl-chat-rail`, `.tl-data-list` and `.tl-chat-dock__body` are deliberately not containers.** The
+- **`.tl-chat-rail`, the session list and `.tl-chat-dock__body` are deliberately not containers.** The
   rail is as wide as its own strip plus column, so inline-size containment - which is what
   `container-type` applies - would leave its contents contributing nothing and collapse it to 0 px.
   The other two have nothing to ask: a list is as wide as the column it was placed in, and what the
@@ -617,7 +614,7 @@ setting. Two things about the mechanism are worth knowing before using it. A sav
 users only when the service is restarted - *Administration → System → Services → Restart*, or the
 next application start; saving alone changes nothing a running agent does. And the editor saves the
 configuration of **every** agent as it currently reads, into
-`WEB-INF/autoconf/com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions.config.xml`, so from then
+`WEB-INF/autoconf/com.top_logic.ai.core.agent.TopLogicAgentDefinitions.config.xml`, so from then
 on the installation carries its own copy of the shipped prompts and tool lists too; *Reset
 configuration* in the same editor deletes that file and gives the shipped texts back at the next
 restart. An installation that wants to change two texts and keep receiving the rest of every release
@@ -647,7 +644,6 @@ it rewrites a draft and never answers as a persona.
 | `chat-dock.tsx` | `<chat-dock/>` as `TLChatDock`: the floating launcher and the panel it opens over the page |
 | `chat-rail.tsx` / `rail-model.ts` | `<chat-rail/>` as `TLChatRail`: the side-rail shell - strip, section headers, pane chrome - and how it reads its state |
 | `chat-sources.tsx` | `<chat-sources/>`: the one rail section the chat still contributes as an element of its own |
-| `data-list.tsx` | `<data-list>` as `TLDataList`: the generic list - rows, lines, groups, search, selection, per-row state class |
 | `chat-store.ts` | The chat's state, one store per `chat-id`: bootstrap, capabilities, sessions, turn settings, transcript, run, layout preferences and the attach to the window's event stream |
 | `composer.tsx` | Input, plus menu, model picker, attachments, drag and drop, improve-prompt |
 | `thread.tsx` | Transcript: user bubbles, answers, run meta line, trace panels |

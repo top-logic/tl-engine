@@ -13,10 +13,10 @@ import java.util.Map;
 import junit.framework.TestCase;
 
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.security.ModelSecurity;
-import com.top_logic.tl.ai.core.security.ReadFilter;
-import com.top_logic.tl.ai.core.tools.present.ChartData;
-import com.top_logic.tl.ai.core.tools.present.ChartKind;
+import com.top_logic.ai.core.security.ModelSecurity;
+import com.top_logic.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.tools.present.ChartData;
+import com.top_logic.ai.core.tools.present.ChartKind;
 
 /**
  * What the pane adds to the configuration it draws - and, as much, what it leaves alone.

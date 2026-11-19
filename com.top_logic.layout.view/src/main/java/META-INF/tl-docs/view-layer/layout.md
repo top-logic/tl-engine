@@ -1,5 +1,5 @@
 ---
-description: Read before arranging content in a .view.xml with <stack>, <grid>, <columns>, <split-panel> (pane sizes, stacking when too narrow), <object-list> (with <link-access> / <remove-access>), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>), sizing a dialog with <window width height>, or displaying content of a view in an enclosing region with <slot> / <slot-content> (SlotRegistry routing by tree distance, the <empty> fallback of a slot, the app bar slots appbar-content and appbar-leading).
+description: Read before arranging content in a .view.xml with <stack>, <grid>, <divider> (a horizontal or vertical line, with a text in the line or inset), <columns>, <split-panel> (pane sizes, stacking when too narrow), <object-list> (with <link-access> / <remove-access>), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>), sizing a dialog with <window width height>, or displaying content of a view in an enclosing region with <slot> / <slot-content> (SlotRegistry routing by tree distance, the <empty> fallback of a slot, the app bar slots appbar-content and appbar-leading).
 order: 20
 ---
 
@@ -43,7 +43,7 @@ A content column that stays readable on a wide screen is a bounded stack:
 >
 	<text
 		label="Quarterly report"
-		variant="headline"
+		variant="heading-lg"
 	/>
 	<text label="Figures as of yesterday."/>
 </stack>
@@ -61,7 +61,7 @@ further lines where the screen is too narrow for them:
 >
 	<text
 		label="Open tickets"
-		variant="title"
+		variant="heading-sm"
 	/>
 	<button .../>
 </stack>
@@ -79,6 +79,44 @@ Bounding the width leaves the **fill contract** (see below) alone: `max-width` a
 work across the direction of a column, while filling is about the height a container takes from its
 own container. A bounded stack that hosts a filling child still carries `tl-fill` and still reports
 filling upwards, so a table inside a centered content column keeps bounding its own scroll viewport.
+
+## A line between content: `<divider>`
+
+`<divider>` (`DividerElement`, `ReactDividerControl`, `TLDivider`) draws a line that separates the
+content before it from the content after it - in a stack, between the children of a row, in a card.
+It is drawn by the part `Divider` (see [Parts](doc:view-layer/parts)), so a customer component
+library that replaces the part draws it as well; colour and width come from the tokens of the theme
+(`--tl-border-separator`, `--tl-border-width-sm`), and the line carries the role `separator`.
+
+- **`orientation`** - `horizontal` (the default): a line across, between content stacked one above
+  the other; `vertical`: a line standing in a row (`<stack direction="row">`), stretched to the
+  height of the row. The direction is always the written one; it is not derived from the element
+  around the line.
+- **`label`** - a short, translatable text shown in the line, e.g. the name of the section below
+  it. Only a horizontal line carries one; a `label` on a vertical line is a configuration error.
+- **`label-position`** - where the text stands: `start`, `center` (the default) or `end`.
+- **`inset`** - `none` (the default): the whole width; `start`: shortened at its start by the indent
+  of an entry of a list (one level of a tree, `--tl-size-control-sm`), for the lines between the
+  entries of a list.
+
+```xml
+<divider/>
+
+<divider label-position="start">
+	<label>
+		<en>Address</en>
+		<de>Adresse</de>
+	</label>
+</divider>
+
+<stack direction="row">
+	<card>...</card>
+	<divider orientation="vertical"/>
+	<card>...</card>
+</stack>
+```
+
+The space around the line is the gap of the container it stands in, as for every other child.
 
 ## A page of weighted columns: `<columns>`
 
@@ -199,7 +237,7 @@ The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/repeater-demo.view.
 
 The `<card>` content is instantiated per object with the object on `element-channel` (`element` by default, as for `<object-list>`), by the same keyed `TemplateInstances` the items of `<object-list>` use: a card of an object that stays keeps its controls, also when the object moves to another column. `selection` names the channel a clicked card writes its object to; the card of the object the channel holds is highlighted (`ItemSelectionBinding`, a `SelectionChannelBinding`). The board follows its displayed objects and the `observed-types`, so changing the attribute the column is computed from moves the card. A card selection is recorded as `selectCard` with the key of the object in place of the client card key, which is allocated per session, see [object ids and keys](doc:view-layer/headless-interface#object-ids-and-keys).
 
-**Drag and drop.** `<drag kind=…/>` (`KanbanDragConfig`: the optional `kind` of the drag; board-wide `executability`; per-card `card-executability`) makes the cards drag sources exactly like table rows - same payload, so a card can be dropped on a `<table>` accepting its kind and table rows on the board. Each `<drop accept=… as=… target-as=… refuse-if=…>` (`accept` lists the kinds taken, none for every drag; see [tables](doc:view-layer/tables#drag-and-drop-of-table-rows); the shared `DropConfig`, compiled with `DropSignature.ONTO`) makes the columns drop targets: the **column value** is the target - the argument `target` (renamed by `target-as`) beside the dragged `objects` (renamed by `as`), which `refuse-if` and the action chain use as variables, and the input of `target-executability`, whose script rules see it under the same name; `card-executability` rules see the card's object as `element` (renamed by `element-as`); `target-channel` additionally writes it to a channel before the chain runs. ``<drop accept="ticket" as="tickets" target-as="column" refuse-if="…"><with-transaction><execute-script function="$tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, $column))"/></with-transaction></drop>`` moves the dropped tickets into the column's status. While a drag hovers a column, the client probes the server (`dropProbe`), and a refusal is shown at the column with its reason next to the pointer. A recorded drop names the card or the column it was made on by the key of its object or column value, see [object ids and keys](doc:view-layer/headless-interface#object-ids-and-keys). On the wire, a drop beside a card is reported as its `upper` or `lower` zone, a drop on the column beside the cards as `none`.
+**Drag and drop.** `<drag kind=…/>` (`KanbanDragConfig`: the optional `kind` of the drag; board-wide `executability`; per-card `card-executability`) makes the cards drag sources exactly like table rows - same payload, so a card can be dropped on a `<table>` accepting its kind and table rows on the board. Each `<drop accept=… as=… target-as=… refuse-if=…>` (`accept` lists the kinds taken, none for every drag; see [tables](doc:view-layer/tables#drag-and-drop-of-table-rows); the shared `DropConfig`, compiled with `DropSignature.ONTO`) makes the columns drop targets: the **column value** is the target - the argument `target` (renamed by `target-as`) beside the dragged `objects` (renamed by `as`) - and the point coordinates `x` / `y`, always `null` on a board (see [the arguments of a drop](doc:view-layer/tables#drag-and-drop-of-table-rows)) -, which `refuse-if` and the action chain use as variables, and the input of `target-executability`, whose script rules see it under the same name; `card-executability` rules see the card's object as `element` (renamed by `element-as`); `target-channel` additionally writes it to a channel before the chain runs. ``<drop accept="ticket" as="tickets" target-as="column" refuse-if="…"><with-transaction><execute-script function="$tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, $column))"/></with-transaction></drop>`` moves the dropped tickets into the column's status. While a drag hovers a column, the client probes the server (`dropProbe`), and a refusal is shown at the column with its reason next to the pointer. A recorded drop names the card or the column it was made on by the key of its object or column value, see [object ids and keys](doc:view-layer/headless-interface#object-ids-and-keys). On the wire, a drop beside a card is reported as its `upper` or `lower` zone, a drop on the column beside the cards as `none`.
 
 **Order within a column: `on-reorder`.** Run in a transaction, it sees the column value as `$column` (renamed by `column-as`) and the objects of that column in their new order as `$objects`: those displayed when the drop was made, with the dropped objects placed where they were dropped. It typically numbers the objects in an attribute `items` sorts by. Order of execution:
 
@@ -335,7 +373,7 @@ The app bar of `com.top_logic.demo.react` shows both this and the two ways an un
 
 - **Size.** `width` (default `500px`) and `height` are given in pixels (`600px`) or in percent of the browser window (`80%`, `75%`) - not of the box the window happens to be placed in. Any other value is an error of the view, reported when it is loaded. Without `height` the window opens at the height of its content and grows with it, but does not shrink while it is open: the tallest height it had stays its minimum, so neither its footer nor - centered - the window itself moves when the content gets shorter (another tab, an emptied selection). The next opening starts at the height of the content again. A list with a detail whose height changes with the selection is the typical case; give such a dialog a `height` where it should have its full size from the start.
 - **Limits and the user's size.** A window never grows larger than the browser window minus its margin (`--tl-space-lg`) and scrolls its body instead. With `resizable="true"` (the default) the user drags the edges to another size, which takes precedence over `width` and `height` and is remembered per dialog for its next opening while it fits into the browser window; a double click on an edge returns to the configured size.
-- **Small screens.** In the compact display class - the breakpoint of the app shell, a browser window up to 768 px wide - every window fills the browser window without margin, like a maximized one: `width`, `height` and the grown height do not apply, the window can be neither moved nor resized, and title bar and footer stay while the body scrolls. Back above the breakpoint, the window is displayed as before.
+- **Small screens.** In the compact display class - a browser window up to 768 px wide, the same breakpoint the app shell uses - every window fills the browser window without margin, like a maximized one: `width`, `height` and the grown height do not apply, the window can be neither moved nor resized, and title bar and footer stay while the body scrolls. Back above the breakpoint, the window is displayed as before.
 
 ## Content shown in an enclosing region: `<slot>` and `<slot-content>`
 

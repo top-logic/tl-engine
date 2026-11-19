@@ -185,6 +185,12 @@ public class SelectField extends AbstractFormField implements TableDataOwner, Op
 		TypedAnnotatable.property(ContextMenuProvider.class, "optionContextMenu");
 
 	/**
+	 * @see SelectFieldUtils#setMaskUndiscoverable(FormField, boolean)
+	 */
+	public static final Property<Boolean> MASK_UNDISCOVERABLE =
+		TypedAnnotatable.property(Boolean.class, "maskUndiscoverable", Boolean.FALSE);
+
+	/**
 	 * @see SelectFieldUtils#setMultiSelectionTextInputEnabled(FormField, boolean)
 	 */
 	public static final Property<Boolean> MULTI_SELECTION_TEXT_INPUT_PROPERTY =
@@ -902,13 +908,67 @@ public class SelectField extends AbstractFormField implements TableDataOwner, Op
 		for (String rawOption : rawOptions) {
 			String trimmedRawOption = rawOption.trim();
 			if (!StringServices.isEmpty(trimmedRawOption)) {
-				List singleSelection = parseSingleSelection(trimmedRawOption);
-				if (!selection.contains(singleSelection.get(0))) {
-					selection.addAll(singleSelection);
+				Object option = parseSelectionEntry(trimmedRawOption, selection);
+				if (!selection.contains(option)) {
+					selection.add(option);
 				}
 			}
 		}
 		return selection;
+	}
+
+	/**
+	 * Parses one entry of a textual multiple selection.
+	 *
+	 * <p>
+	 * Several selected elements may have the same label, e.g. two persons of the same name, or
+	 * several objects the user may not discover, which are all shown by the same placeholder (see
+	 * {@link SelectFieldUtils#setMaskUndiscoverable(FormField, boolean)}). Each entry with such a
+	 * label stands for the next of these elements that is not yet part of the parsed selection, so
+	 * that writing the selection as text and parsing it back keeps all of them.
+	 * </p>
+	 *
+	 * @param entry
+	 *        The text of the entry.
+	 * @param parsed
+	 *        The elements parsed from the previous entries.
+	 * @return The element the entry stands for.
+	 */
+	private Object parseSelectionEntry(String entry, List<?> parsed) throws CheckException {
+		List<?> matches = getMatchingOptions(entry, true);
+		if (matches.size() > 1) {
+			Object next = nextSelectedWithLabel(entry, matches, parsed);
+			if (next != null) {
+				return next;
+			}
+		}
+		return parseSingleSelection(entry).get(0);
+	}
+
+	/**
+	 * The first of the given matches that is currently selected, is not yet parsed, and has
+	 * exactly the given label, if all matches are selected elements with this label.
+	 */
+	private Object nextSelectedWithLabel(String label, List<?> matches, List<?> parsed) {
+		Set<?> currentSelection = getSelectionSet();
+		LabelProvider optionLabels = getOptionLabelProvider();
+		String normalizedLabel = normalizeForMatch(label);
+		Object result = null;
+		for (Object match : matches) {
+			if (!currentSelection.contains(match)
+				|| !normalizedLabel.equals(normalizeForMatch(StringServices.nonNull(optionLabels.getLabel(match))))) {
+				// A real ambiguity between different options.
+				return null;
+			}
+			if (result == null && !parsed.contains(match)) {
+				result = match;
+			}
+		}
+		if (result == null) {
+			// The entry repeats an element that is already parsed.
+			return matches.get(0);
+		}
+		return result;
 	}
 
 	private List parseSingleSelection(String toMatch) throws CheckException {

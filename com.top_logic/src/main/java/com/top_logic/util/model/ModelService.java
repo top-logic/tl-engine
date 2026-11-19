@@ -85,10 +85,12 @@ import com.top_logic.model.annotate.TLConstraints;
 import com.top_logic.model.annotate.TLLifecycleHandler;
 import com.top_logic.model.annotate.TLRange;
 import com.top_logic.model.annotate.TLSize;
+import com.top_logic.model.annotate.TLValueCount;
 import com.top_logic.model.annotate.TLUpdateMode;
 import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.annotate.util.ConstraintCheck;
 import com.top_logic.model.annotate.util.ConstraintCheck.ConstraintType;
+import com.top_logic.model.annotate.util.ValueCountConstraintCheck;
 import com.top_logic.model.cache.TLModelCacheService;
 import com.top_logic.model.cache.TLModelOperations;
 import com.top_logic.model.config.EnumConfig;
@@ -671,33 +673,52 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 				// nobody can do anything about it.
 				continue;
 			}
-			attribute.getStorageImplementation().addConstraints(attribute, checks);
+			addChecks(checks, attribute);
+		}
+		return CombinedChecker.combine(checks);
+	}
 
-			TLSize sizeAnnotation = attribute.getAnnotation(TLSize.class);
-			if (sizeAnnotation != null) {
-				checks.add(
-					new StringSizeCheck(attribute, sizeAnnotation.getLowerBound(), sizeAnnotation.getUpperBound()));
-			}
+	/**
+	 * Adds the checks a commit performs for the given attribute of every object: the constraints
+	 * of its storage, the constraint annotations ({@link TLSize}, {@link TLRange},
+	 * {@link TLValueCount}) and the error-level {@link TLConstraints} checks.
+	 *
+	 * @param checks
+	 *        The list to add the checks to.
+	 * @param attribute
+	 *        The attribute to check.
+	 */
+	public static void addChecks(List<InstanceCheck> checks, TLStructuredTypePart attribute) {
+		attribute.getStorageImplementation().addConstraints(attribute, checks);
 
-			TLRange rangeAnnotation = attribute.getAnnotation(TLRange.class);
-			if (rangeAnnotation != null) {
-				checks.add(
-					new NumberRangeCheck(attribute, rangeAnnotation.getMinimum(), rangeAnnotation.getMaximum()));
-			}
+		TLSize sizeAnnotation = attribute.getAnnotation(TLSize.class);
+		if (sizeAnnotation != null) {
+			checks.add(
+				new StringSizeCheck(attribute, sizeAnnotation.getLowerBound(), sizeAnnotation.getUpperBound()));
+		}
 
-			TLConstraints constraintAnnotation = attribute.getAnnotation(TLConstraints.class);
-			if (constraintAnnotation != null) {
-				for (PolymorphicConfiguration<? extends ConstraintCheck> checkConfig : constraintAnnotation
-					.getConstraints()) {
-					ConstraintCheck check =
-						SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(checkConfig);
-					if (check.type() == ConstraintType.ERROR) {
-						checks.add(new AttributeChecker(check, attribute));
-					}
+		TLRange rangeAnnotation = attribute.getAnnotation(TLRange.class);
+		if (rangeAnnotation != null) {
+			checks.add(
+				new NumberRangeCheck(attribute, rangeAnnotation.getMinimum(), rangeAnnotation.getMaximum()));
+		}
+
+		ValueCountConstraintCheck valueCountCheck = ValueCountConstraintCheck.forAttribute(attribute);
+		if (valueCountCheck != null) {
+			checks.add(new AttributeChecker(valueCountCheck, attribute));
+		}
+
+		TLConstraints constraintAnnotation = attribute.getAnnotation(TLConstraints.class);
+		if (constraintAnnotation != null) {
+			for (PolymorphicConfiguration<? extends ConstraintCheck> checkConfig : constraintAnnotation
+				.getConstraints()) {
+				ConstraintCheck check =
+					SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(checkConfig);
+				if (check.type() == ConstraintType.ERROR) {
+					checks.add(new AttributeChecker(check, attribute));
 				}
 			}
 		}
-		return CombinedChecker.combine(checks);
 	}
 
 	/**

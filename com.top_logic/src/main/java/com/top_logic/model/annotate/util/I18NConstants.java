@@ -16,6 +16,11 @@ public class I18NConstants extends I18NConstantsBase {
 
 	public static ResKey2 TL_ANNOTATION_PROPAGATION_UNRESOLVED_CONFLICT;
 
+	/**
+	 * @en Too many values. At most {0} values are allowed, actual: {1}.
+	 */
+	public static ResKey2 ERROR_TOO_MANY_VALUES__MAX_ACTUAL;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

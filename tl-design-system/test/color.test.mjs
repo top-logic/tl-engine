@@ -141,11 +141,12 @@ test('markenRollen: subtle liegt auf den Helligkeiten der TopLogic-Tönung', () 
   assert.ok(Math.abs(hexZuOklch(r.dark['surface-brand-subtle']).L - 0.255) < 0.01);
 });
 
-test('markenRollen: alle zwölf Rollen sind in beiden Modi vorhanden', () => {
+test('markenRollen: alle vierzehn Rollen sind in beiden Modi vorhanden', () => {
   const r = markenRollen('#0B5ED7', GRUENDE);
   const rollen = ['surface-brand', 'surface-brand-hover', 'surface-brand-active',
     'surface-brand-subtle', 'surface-brand-subtle-hover', 'text-link', 'text-link-hover',
-    'border-interactive', 'focus-ring', 'surface-selected', 'surface-selected-hover', 'border-selected'];
+    'border-interactive', 'focus-ring', 'surface-selected', 'surface-selected-hover', 'border-selected',
+    'surface-halftone', 'surface-halftone-strong'];
   for (const mode of ['light', 'dark']) for (const rolle of rollen) assert.ok(r[mode][rolle], `${mode}.${rolle}`);
 });
 
@@ -194,6 +195,40 @@ test('derive: surface-selected und surface-layer-muted heben sich über mehrere 
     for (const m of ['light', 'dark']) for (const rolle of ['surface-selected', 'surface-layer-muted']) {
       const ist = ratio(ergebnis.color[m][rolle], ergebnis.color[m]['surface-layer']);
       assert.ok(ist >= 1.1, `${brand}/${gray ?? 'ohne Grau'} ${m}: ${rolle} auf surface-layer = ${ist.toFixed(3)}`);
+    }
+  }
+});
+
+// Halbton-Punkte des Login-Hintergrunds: Dekoration, kein Textpaar (nicht in pairs.mjs).
+test('markenRollen rechnet die Halbton-Rollen aus dem Farbton der Saat', () => {
+  const saat = P.color['blue-49'];
+  const r = markenRollen(saat, GRUENDE);
+  const H = hexZuOklch(saat).H;
+  const dH = (h) => Math.abs(((h - H + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI) * 180 / Math.PI;
+  const soll = [
+    ['light', 'surface-halftone', 0.921], ['light', 'surface-halftone-strong', 0.735],
+    ['dark', 'surface-halftone', 0.280], ['dark', 'surface-halftone-strong', 0.454],
+  ];
+  for (const [mode, rolle, L] of soll) {
+    const o = hexZuOklch(r[mode][rolle]);
+    assert.ok(Math.abs(o.L - L) < 0.01, `${mode}.${rolle}: L ${o.L}`);
+    assert.ok(dH(o.H) < 2, `${mode}.${rolle}: Farbtonabstand ${dH(o.H)}°`);
+  }
+});
+
+test('markenRollen: eine unbunte Saat lässt die Halbton-Rollen grau', () => {
+  const r = markenRollen('#808080', GRUENDE);
+  for (const mode of ['light', 'dark']) for (const rolle of ['surface-halftone', 'surface-halftone-strong'])
+    assert.ok(hexZuOklch(r[mode][rolle]).C < 0.002, `${mode}.${rolle}`);
+});
+
+test('die TopLogic-Halbton-Rollen liegen auf den Werten, die derive aus der Saat rechnet', () => {
+  const r = markenRollen(P.color['blue-49'], GRUENDE);
+  for (const mode of ['light', 'dark']) {
+    const roh = mode === 'light' ? T.color.light : T.color.dark;
+    for (const rolle of ['surface-halftone', 'surface-halftone-strong']) {
+      const hex = P.color[roh[rolle].slice(1, -1)];
+      assert.ok(Math.abs(hexZuOklch(hex).L - hexZuOklch(r[mode][rolle]).L) < 0.01, `${mode}.${rolle}`);
     }
   }
 });

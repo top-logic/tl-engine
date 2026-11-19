@@ -7,18 +7,17 @@ package com.top_logic.react.flow.operations.layout;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
 import com.top_logic.react.flow.data.Box;
-import com.top_logic.react.flow.data.ConnectorSymbol;
 import com.top_logic.react.flow.data.DragEdge;
 import com.top_logic.react.flow.data.DropArea;
 import com.top_logic.react.flow.data.GanttDecoration;
 import com.top_logic.react.flow.data.GanttEdge;
 import com.top_logic.react.flow.data.GanttEndpoint;
+import com.top_logic.react.flow.data.GanttEnforce;
 import com.top_logic.react.flow.data.GanttItem;
 import com.top_logic.react.flow.data.GanttLayout;
 import com.top_logic.react.flow.data.GanttLineDecoration;
@@ -30,6 +29,7 @@ import com.top_logic.react.flow.data.GanttSpan;
 import com.top_logic.react.flow.data.Sticky;
 import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.operations.BoxOperations;
+import com.top_logic.react.flow.operations.ColorRoles;
 import com.top_logic.react.flow.operations.ConnectorSymbolRenderer;
 import com.top_logic.react.flow.operations.Interactivity;
 import com.top_logic.react.flow.operations.StickyOperations;
@@ -37,9 +37,12 @@ import com.top_logic.react.flow.operations.WidgetTraversal;
 import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.operations.util.DiagramUtil;
 import com.top_logic.react.flow.svg.RenderContext;
+import com.top_logic.react.flow.svg.SvgConstants;
 import com.top_logic.react.flow.svg.SvgWriter;
 import com.top_logic.react.flow.svg.event.MouseButton;
 import com.top_logic.react.flow.svg.event.SVGClickEvent;
+import com.top_logic.react.flow.svg.event.SVGEvent;
+import com.top_logic.react.flow.svg.event.SVGKeyEvent;
 import com.top_logic.react.flow.svg.event.SVGWheelEvent;
 import com.top_logic.react.flow.svg.event.SVGWheelHandler;
 
@@ -79,6 +82,13 @@ import com.top_logic.react.flow.svg.event.SVGWheelHandler;
  * </p>
  *
  * <p>
+ * A row with children has a collapse toggle in the label column. A
+ * {@link GanttRow#isCollapsed() collapsed} row hides its descendants together with their items,
+ * the edges of these items and the decorations relevant only for them; the rows below move up,
+ * see {@link GanttRowLayout}.
+ * </p>
+ *
+ * <p>
  * A {@link Sticky} box within the box of an item keeps its content at the left edge of the
  * visible time range while the chart scrolls horizontally, see {@link #stickToViewport(GanttLayout)}.
  * </p>
@@ -93,6 +103,17 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 	/** Stroke width for informational (NONE) dependency edges. */
 	double EDGE_STROKE_WIDTH_THIN = 0.8;
+
+	/**
+	 * Largest vertical distance between the horizontal segments of edges passing through the same
+	 * gap between two rows, in pixels.
+	 *
+	 * @see GanttEdgeRouting
+	 */
+	double EDGE_LANE_SPACING = 4.0;
+
+	/** Row padding assumed for a drop area that starts at no row, in pixels. */
+	double DEFAULT_ROW_PADDING = 4.0;
 
 	/** Smallest zoom factor reachable by a Ctrl-wheel gesture (unless the fitted zoom is smaller). */
 	double MIN_ZOOM = 0.5;
@@ -180,6 +201,72 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	String CLIP_DECORATIONS_PURPOSE = "clip-deco";
 
 	/**
+	 * Purpose of the group around the label of a row, whose text names the collapse toggle of the
+	 * row.
+	 */
+	String ROW_LABEL_PURPOSE = "row-label";
+
+	/** Purpose of the collapse toggle of a row with children. */
+	String ROW_TOGGLE_PURPOSE = "row-toggle";
+
+	/**
+	 * CSS class of the group drawing a dependency edge (its line and symbols).
+	 *
+	 * <p>
+	 * On the screen, an edge is subdued unless it is {@link #EDGE_RELATED_CSS_CLASS related} to
+	 * the item under the pointer or a selected item, or {@link #EDGE_VIOLATED_CSS_CLASS
+	 * violated}. The group names the items it connects in {@link #EDGE_SOURCE_ATTR} and
+	 * {@link #EDGE_TARGET_ATTR}.
+	 * </p>
+	 */
+	String EDGE_CSS_CLASS = "tl-gantt-edge";
+
+	/**
+	 * CSS class the diagram control adds to an {@link #EDGE_CSS_CLASS edge} of the item under the
+	 * pointer or of a selected item.
+	 */
+	String EDGE_RELATED_CSS_CLASS = "tl-gantt-edge--related";
+
+	/**
+	 * CSS class of an {@link #EDGE_CSS_CLASS edge} whose dependency is violated. It is never
+	 * subdued.
+	 */
+	String EDGE_VIOLATED_CSS_CLASS = "tl-gantt-edge--violated";
+
+	/** Attribute of an {@link #EDGE_CSS_CLASS edge} holding the ID of its source item. */
+	String EDGE_SOURCE_ATTR = "data-tl-source";
+
+	/** Attribute of an {@link #EDGE_CSS_CLASS edge} holding the ID of its target item. */
+	String EDGE_TARGET_ATTR = "data-tl-target";
+
+	/** Attribute of the group around the box of an item holding the ID of the item. */
+	String ITEM_ID_ATTR = "data-tl-item";
+
+	/** CSS class of the collapse toggle of a row with children. */
+	String ROW_TOGGLE_CSS_CLASS = "tl-gantt-row-toggle";
+
+	/** CSS class of the chevron in the collapse toggle of a row. */
+	String ROW_TOGGLE_CHEVRON_CSS_CLASS = "tl-gantt-row-toggle-chevron";
+
+	/** Largest extent of the chevron of a collapse toggle, in pixels. */
+	double ROW_TOGGLE_CHEVRON_SIZE = 8.0;
+
+	/** Space between the chevron of a collapse toggle and the edge of the toggle, in pixels. */
+	double ROW_TOGGLE_INSET = 2.0;
+
+	/** Stroke width of the chevron of a collapse toggle, in pixels. */
+	double ROW_TOGGLE_STROKE_WIDTH = 1.5;
+
+	/**
+	 * Stroke color of the chevron of a collapse toggle.
+	 *
+	 * <p>
+	 * Written as attribute, so that an export without stylesheet shows the chevron as well.
+	 * </p>
+	 */
+	String ROW_TOGGLE_COLOR = "#555555";
+
+	/**
 	 * Geometry of a single row: its Y start (inclusive), Y end (exclusive), and total height.
 	 *
 	 * @param yStart
@@ -199,32 +286,31 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
 			double availableWidth, double availableHeight) {
 		GanttLayout self = (GanttLayout) this;
-		layoutContent(self, context, offsetX, offsetY, availableWidth, availableHeight, availableWidth);
+		GanttRowLayout rows = GanttRowLayout.index(self);
+		layoutContent(self, rows, context, offsetX, offsetY, availableWidth, availableHeight, availableWidth);
 		if (self.isFitWidth() && availableWidth < Double.POSITIVE_INFINITY
 			&& GanttScrollGeometry.of(self).vertical()) {
 			// The vertical scrollbar takes its space from the fitted time axis.
-			layoutContent(self, context, offsetX, offsetY, availableWidth, availableHeight,
+			layoutContent(self, rows, context, offsetX, offsetY, availableWidth, availableHeight,
 				availableWidth - SCROLLBAR_SIZE);
 		}
+		self.setRowLayout(rows);
 	}
 
 	/**
 	 * Lays out the chart within the given space.
 	 *
+	 * @param rows
+	 *        The {@link GanttRowLayout#index(GanttLayout) index} of the rows, placed by this
+	 *        method.
 	 * @param fitWidth
 	 *        The width a {@link GanttLayout#isFitWidth() fitted} time axis fills together with the
 	 *        label column.
 	 */
-	private static void layoutContent(GanttLayout self, RenderContext context, double offsetX, double offsetY,
-			double availableWidth, double availableHeight, double fitWidth) {
-		// Build depth-first row index map (rowId -> 0-based index) and row list for depth lookup.
-		Map<String, Integer> rowIndex = new LinkedHashMap<>();
-		List<GanttRow> rowList = new java.util.ArrayList<>();
-		int[] counter = new int[] { 0 };
-		for (GanttRow root : self.getRootRows()) {
-			indexRows(root, rowIndex, counter, rowList);
-		}
-		int totalRows = counter[0];
+	private static void layoutContent(GanttLayout self, GanttRowLayout rows, RenderContext context,
+			double offsetX, double offsetY, double availableWidth, double availableHeight, double fitWidth) {
+		List<GanttRow> rowList = rows.rows();
+		int totalRows = rows.size();
 
 		double rangeMin = self.getRangeMin();
 		double rowLabelMinWidth = self.getRowLabelMinWidth();
@@ -233,25 +319,18 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 		// --- Pass 0: measure the widest variant of each row label; record max label width ---
 		// The label column does not depend on the zoom: it is as wide as the widest variant of
-		// each row label, whichever variant the zoom selects later.
+		// each row label, whichever variant the zoom selects later. It does not depend on the
+		// collapsed rows either: the labels of hidden rows are measured as well.
 		RenderContext labelColumnContext = context.withWidestVariants();
 		double maxLabelIntrinsicWidth = 0.0;
 		for (int i = 0; i < totalRows; i++) {
-			GanttRow row = rowList.get(i);
-			Box label = row.getLabel();
-			if (label == null) {
-				continue;
-			}
-			int depth = rowDepth(row, self.getRootRows());
-			// Label x is rough; what matters here is the intrinsic width.
-			double tmpX = offsetX + rowLabelPadding + depth * indentWidth;
-			double tmpY = offsetY + row.getRowPadding();
-			label.computeIntrinsicSize(labelColumnContext, tmpX, tmpY,
-					Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
-			double labelW = label.getWidth() + depth * indentWidth;
-			if (labelW > maxLabelIntrinsicWidth) {
-				maxLabelIntrinsicWidth = labelW;
-			}
+			maxLabelIntrinsicWidth = Math.max(maxLabelIntrinsicWidth, measureLabel(self, rows,
+				rowList.get(i), rows.depth(i), labelColumnContext, offsetX, offsetY));
+		}
+		List<GanttRow> hiddenRows = rows.hiddenRows();
+		for (int i = 0, cnt = hiddenRows.size(); i < cnt; i++) {
+			maxLabelIntrinsicWidth = Math.max(maxLabelIntrinsicWidth, measureLabel(self, rows,
+				hiddenRows.get(i), rows.hiddenDepth(i), labelColumnContext, offsetX, offsetY));
 		}
 
 		// The label column does not depend on the zoom, the zoom fitting the time axis into the
@@ -273,8 +352,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		}
 
 		for (GanttItem item : self.getItems()) {
-			Integer idx = rowIndex.get(item.getRowId());
-			if (idx == null) {
+			int idx = rows.indexOf(item.getRowId());
+			if (idx < 0) {
 				continue;
 			}
 			Box box = item.getBox();
@@ -320,20 +399,17 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 		// --- Aggregate: compute per-row total heights ---
 		double[] rowTotalHeight = new double[totalRows];
-		double[] rowYStart = new double[totalRows];
-		double cumulativeY = offsetY;
 		for (int i = 0; i < totalRows; i++) {
 			double rp = rowList.get(i).getRowPadding();
 			rowTotalHeight[i] = rowMaxContentHeight[i] + 2 * rp;
-			rowYStart[i] = cumulativeY;
-			cumulativeY += rowTotalHeight[i];
 		}
-		double totalHeight = cumulativeY - offsetY;
+		rows.place(offsetY, rowTotalHeight);
+		double totalHeight = rows.bottom(offsetY) - offsetY;
 
 		// --- Pass 2: distribute final positions and sizes for item boxes ---
 		for (GanttItem item : self.getItems()) {
-			Integer idx = rowIndex.get(item.getRowId());
-			if (idx == null) {
+			int idx = rows.indexOf(item.getRowId());
+			if (idx < 0) {
 				continue;
 			}
 			Box box = item.getBox();
@@ -342,7 +418,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			}
 			double rp = rowList.get(idx).getRowPadding();
 			double contentHeight = rowTotalHeight[idx] - 2 * rp;
-			double itemY = rowYStart[idx] + rp;
+			double itemY = rows.yStart(idx) + rp;
 
 			if (item instanceof GanttSpan span) {
 				double x = offsetX + columnWidth + (span.getStart() - rangeMin) * zoom;
@@ -363,11 +439,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			if (label == null) {
 				continue;
 			}
-			int depth = rowDepth(row, self.getRootRows());
+			double indent = rows.labelIndent(rows.depth(i)) * indentWidth;
 			double rp = row.getRowPadding();
-			double labelX = offsetX + rowLabelPadding + depth * indentWidth;
-			double labelY = rowYStart[i] + rp;
-			double labelW = columnWidth - 2 * rowLabelPadding - depth * indentWidth;
+			double labelX = offsetX + rowLabelPadding + indent;
+			double labelY = rows.yStart(i) + rp;
+			double labelW = columnWidth - 2 * rowLabelPadding - indent;
 			double labelH = rowTotalHeight[i] - 2 * rp;
 			// Select the variant for the zoom of the time axis within the reserved column.
 			label.computeIntrinsicSize(itemContext, labelX, labelY,
@@ -379,8 +455,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		int frozenRows = self.getFrozenRows();
 		double headerH = 0;
 		if (frozenRows > 0 && frozenRows <= self.getRootRows().size()) {
-			int frozenFlatCount = countFrozenFlatRows(self.getRootRows(), frozenRows);
-			for (int i = 0; i < frozenFlatCount && i < totalRows; i++) {
+			for (int i = 0; i < rows.frozenCount(); i++) {
 				headerH += rowTotalHeight[i];
 			}
 		}
@@ -390,24 +465,23 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		// --- Pass 2c: distribute final positions and sizes for decoration label boxes ---
 		if (decos != null && !decos.isEmpty()) {
 			double chartX0 = offsetX + columnWidth;
-			java.util.Set<String> frozenRowIds = buildFrozenRowIds(self);
 			for (GanttDecoration deco : decos) {
 				Box decoLabel = deco.getLabel();
-				if (decoLabel == null) {
+				if (decoLabel == null || isHiddenDecoration(deco, rows)) {
 					continue;
 				}
 				// Determine y0 for this decoration label: the top of the data rows for a label above
 				// the frozen rows, otherwise the top of the first relevant row.
 				double decoY0;
-				if (isPinnedLabel(deco, rowIndex.keySet(), frozenRowIds)) {
+				if (isPinnedLabel(deco, rows)) {
 					decoY0 = offsetY + headerH;
 				} else {
 					List<String> relevantFor = deco.getRelevantFor();
 					double minY = Double.MAX_VALUE;
 					for (String rowId : relevantFor) {
-						Integer rowIdx = rowIndex.get(rowId);
-						if (rowIdx != null && rowYStart[rowIdx] < minY) {
-							minY = rowYStart[rowIdx];
+						int rowIdx = rows.indexOf(rowId);
+						if (rowIdx >= 0 && rows.yStart(rowIdx) < minY) {
+							minY = rows.yStart(rowIdx);
 						}
 					}
 					decoY0 = minY;
@@ -443,36 +517,42 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	}
 
 	/**
-	 * Returns the depth of the given row within the row forest.
-	 * Root rows have depth 0.
+	 * Computes the intrinsic size of the label of the given row.
+	 *
+	 * @return The width the label takes in the label column, including its indentation.
 	 */
-	private static int rowDepth(GanttRow target, List<GanttRow> roots) {
-		for (GanttRow root : roots) {
-			int d = rowDepthSearch(target, root, 0);
-			if (d >= 0) {
-				return d;
-			}
+	private static double measureLabel(GanttLayout self, GanttRowLayout rows, GanttRow row, int depth,
+			RenderContext context, double offsetX, double offsetY) {
+		Box label = row.getLabel();
+		if (label == null) {
+			return 0.0;
 		}
-		return 0;
+		double indent = rows.labelIndent(depth) * self.getIndentWidth();
+		// Label x is rough; what matters here is the intrinsic width.
+		double tmpX = offsetX + self.getRowLabelPadding() + indent;
+		double tmpY = offsetY + row.getRowPadding();
+		label.computeIntrinsicSize(context, tmpX, tmpY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+		return label.getWidth() + indent;
 	}
 
-	private static int rowDepthSearch(GanttRow target, GanttRow current, int depth) {
-		if (current == target) {
-			return depth;
-		}
-		for (GanttRow child : current.getChildren()) {
-			int d = rowDepthSearch(target, child, depth + 1);
-			if (d >= 0) {
-				return d;
-			}
-		}
-		return -1;
-	}
-
+	/**
+	 * Places the chart into the given box.
+	 *
+	 * <p>
+	 * If the box is the one the chart took in {@link #computeIntrinsicSize(RenderContext, double,
+	 * double, double, double)}, the result of that layout is kept. Otherwise the chart is laid out
+	 * again within the given box.
+	 * </p>
+	 */
 	@Override
 	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
 		GanttLayout self = (GanttLayout) this;
-		computeIntrinsicSize(context, offsetX, offsetY, width, height);
+		boolean laidOut = self.getRowLayout() != null
+			&& offsetX == self.getX() && offsetY == self.getY()
+			&& width == self.getWidth() && height == self.getHeight();
+		if (!laidOut) {
+			computeIntrinsicSize(context, offsetX, offsetY, width, height);
+		}
 		if (width > self.getWidth()) {
 			self.setWidth(width);
 		}
@@ -566,24 +646,30 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 		stickToViewport(self);
 
-		// Determine frozen row IDs.
-		java.util.Set<String> frozenRowIds = buildFrozenRowIds(self);
-		java.util.Set<String> rowIds = buildRowIds(self);
+		GanttRowLayout rows = GanttRowLayout.of(self);
 
 		GanttScrollGeometry geometry = GanttScrollGeometry.of(self);
 		if (!geometry.active()) {
 			// The whole content fits into the box: no clipping and scrolling.
-			drawRowLanes(self, out, null, true, true);
-			drawDecorations(self, out);
-			java.util.Set<Box> decorationLabels = buildDecorationLabels(self);
+			drawRowLanes(self, rows, out, true, true);
+			drawDecorations(self, rows, out);
+			java.util.Set<Box> decorationLabels = buildDecorationLabels(self, rows);
+			java.util.Set<Box> notInContents = buildNotInContents(self, rows);
+			drawItemBoxes(self, rows, out, true);
+			drawItemBoxes(self, rows, out, false);
 			for (Box content : self.getContents()) {
+				if (notInContents.contains(content)) {
+					continue;
+				}
 				if (decorationLabels.contains(content)) {
 					drawDecorationLabel(out, content, false);
 				} else {
 					out.write(content);
 				}
 			}
-			drawEdges(self, out);
+			drawRowLabels(self, rows, out, true);
+			drawRowLabels(self, rows, out, false);
+			drawEdges(self, rows, out);
 			out.endGroup();
 			return;
 		}
@@ -610,7 +696,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		out.beginGroup();
 		out.writeId(out.uniqueId(self, SCROLL_DECORATIONS_PURPOSE));
 		out.translate(-scrollXPx, 0);
-		drawDecorations(self, out);
+		drawDecorations(self, rows, out);
 		out.endGroup();
 		out.endGroup();
 
@@ -621,10 +707,10 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		out.beginGroup();
 		out.writeId(out.uniqueId(self, SCROLL_CONTENT_PURPOSE));
 		out.translate(-scrollXPx, -scrollY);
-		drawRowLanes(self, out, frozenRowIds, false, true);
-		drawItemBoxes(self, out, frozenRowIds, false);
-		drawDecorationLabels(self, out, frozenRowIds, rowIds, false);
-		drawEdges(self, out);
+		drawRowLanes(self, rows, out, false, true);
+		drawItemBoxes(self, rows, out, false);
+		drawDecorationLabels(self, rows, out, false);
+		drawEdges(self, rows, out);
 		out.endGroup();
 		out.endGroup();
 
@@ -639,7 +725,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		out.beginGroup();
 		out.writeId(out.uniqueId(self, SCROLL_SIDEBAR_PURPOSE));
 		out.translate(0, -scrollY);
-		drawRowLabels(self, out, frozenRowIds, false);
+		drawRowLabels(self, rows, out, false);
 		out.endGroup();
 		out.endGroup();
 
@@ -654,8 +740,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		out.beginGroup();
 		out.writeId(out.uniqueId(self, SCROLL_HEADER_PURPOSE));
 		out.translate(-scrollXPx, 0);
-		drawRowLanes(self, out, frozenRowIds, true, false);
-		drawItemBoxes(self, out, frozenRowIds, true);
+		drawRowLanes(self, rows, out, true, false);
+		drawItemBoxes(self, rows, out, true);
 		out.endGroup();
 		out.endGroup();
 
@@ -667,8 +753,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		out.setFill("#ffffff");
 		out.setStroke("none");
 		out.endRect();
-		drawRowLanes(self, out, frozenRowIds, true, false);
-		drawRowLabels(self, out, frozenRowIds, true);
+		drawRowLanes(self, rows, out, true, false);
+		drawRowLabels(self, rows, out, true);
 		out.endGroup();
 
 		// --- 6. Labels of decorations above the frozen rows (scroll X only) ---
@@ -680,7 +766,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		out.beginGroup();
 		out.writeId(out.uniqueId(self, SCROLL_DECORATION_LABELS_PURPOSE));
 		out.translate(-scrollXPx, 0);
-		drawDecorationLabels(self, out, frozenRowIds, rowIds, true);
+		drawDecorationLabels(self, rows, out, true);
 		out.endGroup();
 		out.endGroup();
 
@@ -792,13 +878,6 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	}
 
 	/**
-	 * Draws row lane backgrounds and borders.
-	 *
-	 * @param frozenRowIds set of frozen row IDs (null = no viewport, draw all)
-	 * @param drawFrozen if true, draw lanes for rows IN frozenRowIds
-	 * @param drawData if true, draw lanes for rows NOT IN frozenRowIds
-	 */
-	/**
 	 * Computes the full virtual content width (column + time range at current zoom).
 	 * This may be larger than the viewport width ({@code self.getWidth()}) when zoomed in.
 	 */
@@ -806,74 +885,57 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		return self.getColumnWidth() + (self.getRangeMax() - self.getRangeMin()) * self.getZoom();
 	}
 
-	private static void drawRowLanes(GanttLayout self, SvgWriter out,
-			java.util.Set<String> frozenRowIds, boolean drawFrozen, boolean drawData) {
+	/**
+	 * Draws row lane backgrounds and borders.
+	 *
+	 * @param drawFrozen if true, draw lanes of the frozen header rows
+	 * @param drawData if true, draw lanes of the data rows
+	 */
+	private static void drawRowLanes(GanttLayout self, GanttRowLayout rows, SvgWriter out,
+			boolean drawFrozen, boolean drawData) {
 		double x0 = self.getX();
 		double totalWidth = Math.max(self.getWidth(), virtualTotalWidth(self));
 		double columnWidth = self.getColumnWidth();
 
-		Map<String, RowGeometry> rowGeometry = buildRowGeometry(self, self.getY());
-
 		out.beginGroup();
 		out.writeCssClass("tl-gantt-lanes");
 
-		int[] rowIndex = new int[] { 0 };
-		for (GanttRow root : self.getRootRows()) {
-			drawRowLane(root, x0, totalWidth, columnWidth,
-				rowGeometry, out, rowIndex, frozenRowIds, drawFrozen, drawData);
+		for (int i = 0, cnt = rows.size(); i < cnt; i++) {
+			if (rows.isFrozen(i) ? drawFrozen : drawData) {
+				drawRowLane(rows.row(i), x0, totalWidth, columnWidth, rows.yStart(i), rows.height(i), out);
+			}
 		}
 
 		out.endGroup();
 	}
 
-	private static void drawRowLane(GanttRow row,
-			double x0, double totalWidth, double columnWidth,
-			Map<String, RowGeometry> rowGeometry, SvgWriter out, int[] rowIndex,
-			java.util.Set<String> frozenRowIds, boolean drawFrozen, boolean drawData) {
-		int idx = rowIndex[0]++;
-
-		boolean isFrozen = frozenRowIds != null && frozenRowIds.contains(row.getId());
-		boolean shouldDraw = (isFrozen && drawFrozen) || (!isFrozen && drawData)
-			|| frozenRowIds == null;
-
-		if (shouldDraw) {
-			RowGeometry geom = rowGeometry.get(row.getId());
-			if (geom != null) {
-				double rowY = geom.yStart();
-				double rowHeight = geom.height();
-
-				String bgColor = row.getBackgroundColor();
-				String bdColor = row.getBorderColor();
-				if (bgColor != null && !bgColor.isEmpty() || bdColor != null && !bdColor.isEmpty()) {
-					out.beginRect(x0, rowY, totalWidth, rowHeight);
-					out.setFill(bgColor != null && !bgColor.isEmpty() ? bgColor : "none");
-					if (bdColor != null && !bdColor.isEmpty()) {
-						out.setStroke(bdColor);
-						out.setStrokeWidth(1.0);
-					} else {
-						out.setStroke("none");
-					}
-					out.endRect();
-				}
-
-				if (bdColor != null && !bdColor.isEmpty()) {
-					double sepX = x0 + columnWidth;
-					out.beginPath();
-					out.setStroke(bdColor);
-					out.setStrokeWidth(1.0);
-					out.setFill("none");
-					out.beginData();
-					out.moveToAbs(sepX, rowY);
-					out.lineToAbs(sepX, rowY + rowHeight);
-					out.endData();
-					out.endPath();
-				}
+	private static void drawRowLane(GanttRow row, double x0, double totalWidth, double columnWidth,
+			double rowY, double rowHeight, SvgWriter out) {
+		String bgColor = row.getBackgroundColor();
+		String bdColor = row.getBorderColor();
+		if (bgColor != null && !bgColor.isEmpty() || bdColor != null && !bdColor.isEmpty()) {
+			out.beginRect(x0, rowY, totalWidth, rowHeight);
+			out.setFill(bgColor != null && !bgColor.isEmpty() ? bgColor : "none");
+			if (bdColor != null && !bdColor.isEmpty()) {
+				out.setStroke(bdColor);
+				out.setStrokeWidth(1.0);
+			} else {
+				out.setStroke("none");
 			}
+			out.endRect();
 		}
 
-		for (GanttRow child : row.getChildren()) {
-			drawRowLane(child, x0, totalWidth, columnWidth,
-				rowGeometry, out, rowIndex, frozenRowIds, drawFrozen, drawData);
+		if (bdColor != null && !bdColor.isEmpty()) {
+			double sepX = x0 + columnWidth;
+			out.beginPath();
+			out.setStroke(bdColor);
+			out.setStrokeWidth(1.0);
+			out.setFill("none");
+			out.beginData();
+			out.moveToAbs(sepX, rowY);
+			out.lineToAbs(sepX, rowY + rowHeight);
+			out.endData();
+			out.endPath();
 		}
 	}
 
@@ -886,63 +948,55 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	}
 
 	/**
-	 * Returns the set of row IDs that belong to frozen (header) rows.
+	 * Draws item boxes for either frozen or data rows.
+	 *
+	 * @param drawFrozen if true, draw items in frozen rows; if false, draw items in data rows
 	 */
-	private static java.util.Set<String> buildFrozenRowIds(GanttLayout self) {
-		java.util.Set<String> frozen = new java.util.HashSet<>();
-		int frozenCount = self.getFrozenRows();
-		List<GanttRow> roots = self.getRootRows();
-		for (int i = 0; i < Math.min(frozenCount, roots.size()); i++) {
-			collectRowIds(roots.get(i), frozen);
-		}
-		return frozen;
-	}
-
-	private static void collectRowIds(GanttRow row, java.util.Set<String> ids) {
-		ids.add(row.getId());
-		for (GanttRow child : row.getChildren()) {
-			collectRowIds(child, ids);
+	private static void drawItemBoxes(GanttLayout self, GanttRowLayout rows, SvgWriter out,
+			boolean drawFrozen) {
+		for (GanttItem item : self.getItems()) {
+			if (rows.isHidden(item.getRowId())) {
+				continue;
+			}
+			boolean isFrozen = rows.isFrozen(item.getRowId());
+			if (isFrozen == drawFrozen) {
+				drawItemBox(item, out);
+			}
 		}
 	}
 
 	/**
-	 * Draws item boxes for either frozen or data rows.
-	 *
-	 * @param frozenRowIds set of frozen row IDs
-	 * @param drawFrozen if true, draw items in frozen rows; if false, draw items in data rows
+	 * Draws the box of the given item in a group naming the item in {@link #ITEM_ID_ATTR}, so that
+	 * the diagram control finds the edges of the item under the pointer.
 	 */
-	private static void drawItemBoxes(GanttLayout self, SvgWriter out,
-			java.util.Set<String> frozenRowIds, boolean drawFrozen) {
-		for (GanttItem item : self.getItems()) {
-			boolean isFrozen = frozenRowIds.contains(item.getRowId());
-			if (isFrozen == drawFrozen) {
-				Box box = item.getBox();
-				if (box != null) {
-					out.write(box);
-				}
-			}
+	private static void drawItemBox(GanttItem item, SvgWriter out) {
+		Box box = item.getBox();
+		if (box == null) {
+			return;
 		}
+		out.beginGroup();
+		out.writeAttribute(ITEM_ID_ATTR, item.getId());
+		out.write(box);
+		out.endGroup();
 	}
 
 	/**
 	 * Draws the labels of either the decorations above the frozen rows or the decorations bound
 	 * to data rows.
 	 *
-	 * @param frozenRowIds set of frozen row IDs
-	 * @param rowIds set of the IDs of all rows
 	 * @param drawPinned if true, draw the labels drawn above the frozen rows (see
-	 *        {@link #isPinnedLabel(GanttDecoration, java.util.Set, java.util.Set)}), otherwise
-	 *        the labels moving with their data rows
+	 *        {@link #isPinnedLabel(GanttDecoration, GanttRowLayout)}), otherwise the labels
+	 *        moving with their data rows
 	 */
-	private static void drawDecorationLabels(GanttLayout self, SvgWriter out,
-			java.util.Set<String> frozenRowIds, java.util.Set<String> rowIds, boolean drawPinned) {
+	private static void drawDecorationLabels(GanttLayout self, GanttRowLayout rows, SvgWriter out,
+			boolean drawPinned) {
 		List<GanttDecoration> decos = self.getDecorations();
 		if (decos == null) {
 			return;
 		}
 		for (GanttDecoration deco : decos) {
 			Box label = deco.getLabel();
-			if (label != null && isPinnedLabel(deco, rowIds, frozenRowIds) == drawPinned) {
+			if (label != null && !isHiddenDecoration(deco, rows) && isPinnedLabel(deco, rows) == drawPinned) {
 				drawDecorationLabel(out, label, drawPinned);
 			}
 		}
@@ -973,20 +1027,80 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	}
 
 	/**
-	 * Returns the labels of all decorations.
+	 * Returns the labels of all decorations that are not {@link #isHiddenDecoration(GanttDecoration,
+	 * GanttRowLayout) hidden}.
 	 */
-	private static java.util.Set<Box> buildDecorationLabels(GanttLayout self) {
+	private static java.util.Set<Box> buildDecorationLabels(GanttLayout self, GanttRowLayout rows) {
 		java.util.Set<Box> labels = new java.util.HashSet<>();
 		List<GanttDecoration> decos = self.getDecorations();
 		if (decos != null) {
 			for (GanttDecoration deco : decos) {
 				Box label = deco.getLabel();
-				if (label != null) {
+				if (label != null && !isHiddenDecoration(deco, rows)) {
 					labels.add(label);
 				}
 			}
 		}
 		return labels;
+	}
+
+	/**
+	 * The {@link GanttLayout#getContents() contents} that a chart without viewport does not draw
+	 * in the order of its contents: the row labels, which are drawn together with the collapse
+	 * toggles (see {@link #drawRowLabels(GanttLayout, GanttRowLayout, SvgWriter, boolean)}), the
+	 * item boxes, which are drawn in groups naming their items (see
+	 * {@link #drawItemBoxes(GanttLayout, GanttRowLayout, SvgWriter, boolean)}), and the labels of
+	 * hidden decorations.
+	 */
+	private static java.util.Set<Box> buildNotInContents(GanttLayout self, GanttRowLayout rows) {
+		java.util.Set<Box> result = new java.util.HashSet<>();
+		for (GanttRow row : rows.rows()) {
+			addIfPresent(result, row.getLabel());
+		}
+		for (GanttRow row : rows.hiddenRows()) {
+			addIfPresent(result, row.getLabel());
+		}
+		for (GanttItem item : self.getItems()) {
+			addIfPresent(result, item.getBox());
+		}
+		List<GanttDecoration> decos = self.getDecorations();
+		if (decos != null) {
+			for (GanttDecoration deco : decos) {
+				if (isHiddenDecoration(deco, rows)) {
+					addIfPresent(result, deco.getLabel());
+				}
+			}
+		}
+		return result;
+	}
+
+	private static void addIfPresent(java.util.Set<Box> boxes, Box box) {
+		if (box != null) {
+			boxes.add(box);
+		}
+	}
+
+	/**
+	 * Whether the given decoration is hidden, because all rows it is relevant for are
+	 * {@link GanttRowLayout#isHidden(String) hidden} below collapsed rows.
+	 *
+	 * <p>
+	 * A decoration with at least one visible relevant row spans its visible relevant rows only.
+	 * </p>
+	 */
+	private static boolean isHiddenDecoration(GanttDecoration deco, GanttRowLayout rows) {
+		List<String> relevantFor = deco.getRelevantFor();
+		if (relevantFor == null) {
+			return false;
+		}
+		boolean hidden = false;
+		for (String rowId : relevantFor) {
+			if (rows.contains(rowId)) {
+				return false;
+			}
+			hidden |= rows.isHidden(rowId);
+		}
+		return hidden;
 	}
 
 	/**
@@ -1020,91 +1134,144 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	 * The label of every other decoration moves with its first relevant row.
 	 * </p>
 	 *
-	 * @param rowIds set of the IDs of all rows
-	 * @param frozenRowIds set of frozen row IDs
 	 */
-	private static boolean isPinnedLabel(GanttDecoration deco, java.util.Set<String> rowIds,
-			java.util.Set<String> frozenRowIds) {
+	private static boolean isPinnedLabel(GanttDecoration deco, GanttRowLayout rows) {
 		List<String> relevantFor = deco.getRelevantFor();
 		if (relevantFor == null) {
 			return true;
 		}
 		boolean resolved = false;
 		for (String rowId : relevantFor) {
-			if (frozenRowIds.contains(rowId)) {
+			if (rows.isFrozen(rowId)) {
 				return true;
 			}
-			resolved |= rowIds.contains(rowId);
+			resolved |= rows.contains(rowId);
 		}
 		return !resolved;
 	}
 
 	/**
-	 * Returns the set of the IDs of all rows.
+	 * Draws row label boxes and the collapse toggles of the rows with children, for either frozen
+	 * or data rows.
+	 *
+	 * @param drawFrozen if true, draw labels for frozen rows; if false, draw labels for data rows
 	 */
-	private static java.util.Set<String> buildRowIds(GanttLayout self) {
-		java.util.Set<String> ids = new java.util.HashSet<>();
-		for (GanttRow root : self.getRootRows()) {
-			collectRowIds(root, ids);
+	private static void drawRowLabels(GanttLayout self, GanttRowLayout rows, SvgWriter out, boolean drawFrozen) {
+		for (int i = 0, cnt = rows.size(); i < cnt; i++) {
+			if (rows.isFrozen(i) == drawFrozen) {
+				GanttRow row = rows.row(i);
+				Box label = row.getLabel();
+				if (label != null) {
+					out.beginGroup();
+					out.writeId(out.uniqueId(label, ROW_LABEL_PURPOSE));
+					out.write(label);
+					out.endGroup();
+				}
+				if (!row.getChildren().isEmpty()) {
+					drawRowToggle(self, rows, i, out);
+				}
+			}
 		}
-		return ids;
 	}
 
 	/**
-	 * Draws row label boxes for either frozen or data rows.
+	 * Draws the collapse toggle of the row with children at the given display index.
 	 *
-	 * @param frozenRowIds set of frozen row IDs
-	 * @param drawFrozen if true, draw labels for frozen rows; if false, draw labels for data rows
+	 * <p>
+	 * The toggle takes the indentation step before the label of the row, see
+	 * {@link GanttRowLayout#labelIndent(int)}. It is a focusable button named by the label of the
+	 * row. A click, Enter, or Space switches {@link GanttRow#isCollapsed()} and lays out the chart
+	 * again.
+	 * </p>
 	 */
-	private static void drawRowLabels(GanttLayout self, SvgWriter out,
-			java.util.Set<String> frozenRowIds, boolean drawFrozen) {
-		for (GanttRow root : self.getRootRows()) {
-			drawRowLabel(root, out, frozenRowIds, drawFrozen);
-		}
-	}
+	private static void drawRowToggle(GanttLayout self, GanttRowLayout rows, int index, SvgWriter out) {
+		GanttRow row = rows.row(index);
+		Box label = row.getLabel();
+		boolean collapsed = row.isCollapsed();
 
-	private static void drawRowLabel(GanttRow row, SvgWriter out,
-			java.util.Set<String> frozenRowIds, boolean drawFrozen) {
-		boolean isFrozen = frozenRowIds.contains(row.getId());
-		if (isFrozen == drawFrozen) {
-			Box label = row.getLabel();
-			if (label != null) {
-				out.write(label);
+		double width = self.getIndentWidth();
+		double x = self.getX() + self.getRowLabelPadding() + rows.depth(index) * width;
+		double padding = row.getRowPadding();
+		double y = rows.yStart(index) + padding;
+		double height = Math.max(0, rows.height(index) - 2 * padding);
+
+		out.beginGroup();
+		// The ID is stable over a new layout, so that the toggle keeps the keyboard focus.
+		out.writeId(label != null ? out.uniqueId(label, ROW_TOGGLE_PURPOSE)
+			: out.uniqueId(self, ROW_TOGGLE_PURPOSE + "-" + index));
+		out.writeCssClass(ROW_TOGGLE_CSS_CLASS);
+		out.writeAttribute(SvgConstants.TABINDEX_ATTR, SvgConstants.TABINDEX_FOCUSABLE);
+		out.writeAttribute(SvgConstants.ROLE_ATTR, SvgConstants.ROLE_BUTTON);
+		out.writeAttribute(SvgConstants.ARIA_EXPANDED_ATTR, Boolean.toString(!collapsed));
+		if (label != null) {
+			out.writeAttribute(SvgConstants.ARIA_LABELLEDBY_ATTR, out.uniqueId(label, ROW_LABEL_PURPOSE));
+		}
+		out.writeAttribute(Interactivity.POINTER_EVENTS_ATTR, Interactivity.POINTER_EVENTS_ALL);
+		out.attachOnClick(event -> {
+			// The click belongs to the toggle, not to the elements or the diagram below it.
+			event.stopPropagation();
+			if (event.getButton(MouseButton.LEFT)) {
+				toggleRow(row, event);
 			}
+		}, row);
+		out.attachOnKeyDown(event -> {
+			String key = event.getKey();
+			if (SVGKeyEvent.KEY_ENTER.equals(key) || SVGKeyEvent.KEY_SPACE.equals(key)) {
+				event.stopPropagation();
+				event.preventDefault();
+				toggleRow(row, event);
+			}
+		}, row);
+
+		// Hit area of the toggle.
+		out.beginRect(x, y, width, height);
+		out.setFill("transparent");
+		out.setStroke("none");
+		out.endRect();
+
+		double size = Math.max(0, Math.min(ROW_TOGGLE_CHEVRON_SIZE, Math.min(width, height) - 2 * ROW_TOGGLE_INSET));
+		double cx = x + width / 2;
+		double cy = y + height / 2;
+		out.beginPath();
+		out.writeCssClass(ROW_TOGGLE_CHEVRON_CSS_CLASS);
+		out.setStroke(ROW_TOGGLE_COLOR);
+		out.setStrokeWidth(ROW_TOGGLE_STROKE_WIDTH);
+		out.setFill("none");
+		out.beginData();
+		if (collapsed) {
+			// Pointing right: the children are hidden.
+			out.moveToAbs(cx - size / 4, cy - size / 2);
+			out.lineToAbs(cx + size / 4, cy);
+			out.lineToAbs(cx - size / 4, cy + size / 2);
+		} else {
+			// Pointing down: the children are shown.
+			out.moveToAbs(cx - size / 2, cy - size / 4);
+			out.lineToAbs(cx, cy + size / 4);
+			out.lineToAbs(cx + size / 2, cy - size / 4);
 		}
-		for (GanttRow child : row.getChildren()) {
-			drawRowLabel(child, out, frozenRowIds, drawFrozen);
-		}
+		out.endData();
+		out.endPath();
+
+		out.endGroup();
 	}
 
-	private static void drawDecorations(GanttLayout self, SvgWriter out) {
+	/**
+	 * Switches whether the children of the given row are hidden and requests a new layout.
+	 */
+	private static void toggleRow(GanttRow row, SVGEvent event) {
+		row.setCollapsed(!row.isCollapsed());
+		event.requestRelayout();
+	}
+
+	private static void drawDecorations(GanttLayout self, GanttRowLayout rows, SvgWriter out) {
 		List<GanttDecoration> decorations = self.getDecorations();
 		if (decorations == null || decorations.isEmpty()) {
 			return;
 		}
 
-		// Build row geometry (uses already-laid-out item boxes after computeIntrinsicSize).
-		double lanesTop = self.getY();
-		Map<String, RowGeometry> rowGeometry = buildRowGeometry(self, lanesTop);
-
-		// Compute total chart height (from first row start to last row end).
-		int totalRows = rowGeometry.size();
-		double chartY0 = lanesTop;
-		double chartY1 = lanesTop; // will be updated to the bottom of the last row
-		if (!rowGeometry.isEmpty()) {
-			for (RowGeometry g : rowGeometry.values()) {
-				if (g.yEnd() > chartY1) {
-					chartY1 = g.yEnd();
-				}
-			}
-		} else {
-			// Fallback: sum up per-row min content heights (no padding in this rough estimate).
-			double fallbackHeight = 0;
-			for (GanttRow root : self.getRootRows()) {
-				fallbackHeight += sumMinContentHeight(root);
-			}
-			chartY1 = chartY0 + fallbackHeight;
-		}
+		// Vertical extent of the whole chart (from first row start to last row end).
+		double chartY0 = self.getY();
+		double chartY1 = rows.bottom(chartY0);
 
 		double zoom = self.getZoom();
 		double rangeMin = self.getRangeMin();
@@ -1116,6 +1283,10 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		Interactivity.writePassThrough(out);
 
 		for (GanttDecoration decoration : decorations) {
+			if (isHiddenDecoration(decoration, rows)) {
+				continue;
+			}
+
 			// Compute vertical extent.
 			List<String> relevantFor = decoration.getRelevantFor();
 			double y0;
@@ -1127,7 +1298,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 				double minY = Double.MAX_VALUE;
 				double maxY = Double.MIN_VALUE;
 				for (String rowId : relevantFor) {
-					RowGeometry geom = rowGeometry.get(rowId);
+					RowGeometry geom = rows.geometry(rowId);
 					if (geom != null) {
 						if (geom.yStart() < minY) {
 							minY = geom.yStart();
@@ -1149,10 +1320,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 			if (decoration instanceof GanttLineDecoration line) {
 				double x = chartX0 + (line.getAt() - rangeMin) * zoom;
-				String color = line.getColor();
-				if (color == null || color.isEmpty()) {
-					color = "#606060";
-				}
+				String role = decorationRole(line);
+				String color = role == null ? line.getColor() : ColorRoles.lineFallback(role);
 
 				double sw = line.getStrokeWidth();
 				if (sw <= 0.0) {
@@ -1160,6 +1329,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 				}
 
 				out.beginPath();
+				ColorRoles.writeRole(out, role);
 				out.setStroke(color);
 				out.setStrokeWidth(sw);
 				out.setFill("none");
@@ -1177,12 +1347,11 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			} else if (decoration instanceof GanttRangeDecoration range) {
 				double xFrom = chartX0 + (range.getFrom() - rangeMin) * zoom;
 				double xTo = chartX0 + (range.getTo() - rangeMin) * zoom;
-				String color = range.getColor();
-				if (color == null || color.isEmpty()) {
-					color = "rgba(100,100,100,0.2)";
-				}
+				String role = decorationRole(range);
+				String color = role == null ? range.getColor() : ColorRoles.areaFallback(role);
 
 				out.beginRect(xFrom, y0, xTo - xFrom, y1 - y0);
+				ColorRoles.writeRole(out, role);
 				out.setFill(color);
 				out.setStroke("none");
 				out.endRect();
@@ -1194,7 +1363,22 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		out.endGroup();
 	}
 
-	private static void drawEdges(GanttLayout self, SvgWriter out) {
+	/**
+	 * The color role of the given decoration: {@code null} if it has a fixed color, otherwise its
+	 * {@link GanttDecoration#getColorRole() role} or {@link ColorRoles#NEUTRAL}.
+	 */
+	private static String decorationRole(GanttDecoration decoration) {
+		if (!ColorRoles.isEmpty(decoration.getColor())) {
+			return null;
+		}
+		String role = decoration.getColorRole();
+		return ColorRoles.isEmpty(role) ? ColorRoles.NEUTRAL : role;
+	}
+
+	/**
+	 * Draws the dependency edges with their horizontal segments placed by {@link GanttEdgeRouting}.
+	 */
+	private static void drawEdges(GanttLayout self, GanttRowLayout rows, SvgWriter out) {
 		List<GanttEdge> edges = self.getEdges();
 		if (edges == null || edges.isEmpty()) {
 			return;
@@ -1206,18 +1390,79 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			itemById.put(item.getId(), item);
 		}
 
-		out.beginGroup();
-		out.writeCssClass("tl-gantt-edges");
-		// A Gantt edge has no interactive part, clicks reach the items below it.
-		Interactivity.writePassThrough(out);
-
+		// The horizontal segments of all edges are placed together, so that edges passing through
+		// the same gap between rows get separate lanes.
+		GanttEdgeRouting routing = new GanttEdgeRouting(rows);
+		List<EdgeRoute> routes = new ArrayList<>();
 		for (GanttEdge edge : edges) {
 			GanttItem sourceItem = itemById.get(edge.getSourceItemId());
 			GanttItem targetItem = itemById.get(edge.getTargetItemId());
 			if (sourceItem == null || targetItem == null) {
 				continue;
 			}
+			if (rows.isHidden(sourceItem.getRowId()) || rows.isHidden(targetItem.getRowId())) {
+				// An item below a collapsed row is not drawn, nor are its edges.
+				continue;
+			}
+			routes.add(EdgeRoute.create(edge, sourceItem, targetItem, rows, routing));
+		}
+		routing.route();
 
+		out.beginGroup();
+		out.writeCssClass("tl-gantt-edges");
+		// A Gantt edge has no interactive part, clicks reach the items below it.
+		Interactivity.writePassThrough(out);
+		for (EdgeRoute route : routes) {
+			route.draw(out);
+		}
+		out.endGroup();
+	}
+
+	/**
+	 * The path and style of a dependency edge.
+	 *
+	 * @param edge
+	 *        The dependency edge this route draws.
+	 * @param sx
+	 *        X coordinate of the source endpoint.
+	 * @param sy
+	 *        Y coordinate of the source endpoint.
+	 * @param tx
+	 *        X coordinate of the target endpoint.
+	 * @param ty
+	 *        Y coordinate of the target endpoint.
+	 * @param sDir
+	 *        Direction of the source stub, -1 to the left, 1 to the right.
+	 * @param tDir
+	 *        Direction of the target stub.
+	 * @param sInset
+	 *        Space taken by the source symbol at the start of the source stub.
+	 * @param tInset
+	 *        Space taken by the target symbol at the start of the target stub.
+	 * @param strokeColor
+	 *        The fixed color of the edge, or the substitute color of its role.
+	 * @param role
+	 *        The color role of the edge, {@code null} for an edge in a fixed color.
+	 * @param strokeWidth
+	 *        The width of the line, the width for a violated dependency while it is violated.
+	 * @param dashes
+	 *        The dash pattern of the line, the pattern for a violated dependency while it is
+	 *        violated; empty or {@code null} for a solid line.
+	 * @param violated
+	 *        Whether the dependency of the edge is violated.
+	 * @param horizontal
+	 *        The horizontal segment between the stubs.
+	 */
+	record EdgeRoute(GanttEdge edge, double sx, double sy, double tx, double ty, double sDir, double tDir,
+			double sInset, double tInset, String strokeColor, String role, double strokeWidth, List<Double> dashes,
+			boolean violated, GanttEdgeRouting.Segment horizontal) {
+
+		/**
+		 * Computes the route of the given edge and adds its horizontal segment to the given
+		 * routing.
+		 */
+		static EdgeRoute create(GanttEdge edge, GanttItem sourceItem, GanttItem targetItem, GanttRowLayout rows,
+				GanttEdgeRouting routing) {
 			GanttEndpoint sourceEndpoint = edge.getSourceEndpoint();
 			GanttEndpoint targetEndpoint = edge.getTargetEndpoint();
 
@@ -1226,29 +1471,37 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			double tx = endpointX(targetItem, targetEndpoint);
 			double ty = centerY(targetItem);
 
-			double midY = (sy + ty) / 2.0;
+			// Visual properties from the edge (application-defined), in the violated style while
+			// the dependency is violated.
+			boolean violated = isConstraintViolated(sourceItem, sourceEndpoint, targetItem, targetEndpoint);
 
-			// Visual properties from the edge (application-defined).
-			// Switch to violated style if constraint is violated and a violated style is defined.
-			boolean hasViolatedStyle = edge.getViolatedStrokeColor() != null
-				&& !edge.getViolatedStrokeColor().isEmpty();
-			boolean violated = hasViolatedStyle
-				&& isConstraintViolated(sourceItem, sourceEndpoint, targetItem, targetEndpoint);
-
-			String strokeColor;
+			String color;
+			String role;
 			double strokeWidth;
 			List<Double> dashes;
-			if (violated && edge.getViolatedStrokeColor() != null && !edge.getViolatedStrokeColor().isEmpty()) {
-				strokeColor = edge.getViolatedStrokeColor();
+			if (violated) {
+				color = edge.getViolatedStrokeColor();
+				role = edge.getViolatedStrokeRole();
 				strokeWidth = edge.getViolatedStrokeWidth() > 0 ? edge.getViolatedStrokeWidth() : edge.getStrokeWidth();
 				List<Double> vd = edge.getViolatedDashes();
 				dashes = (vd != null && !vd.isEmpty()) ? vd : edge.getDashes();
 			} else {
-				strokeColor = edge.getStrokeColor();
+				color = edge.getStrokeColor();
+				role = edge.getStrokeRole();
 				strokeWidth = edge.getStrokeWidth();
 				dashes = edge.getDashes();
 			}
-			if (strokeColor == null || strokeColor.isEmpty()) strokeColor = "#606060";
+			// A fixed color takes precedence over the role, an edge without either is neutral.
+			String strokeColor;
+			if (ColorRoles.isEmpty(color)) {
+				if (ColorRoles.isEmpty(role)) {
+					role = violated ? ColorRoles.ERROR : ColorRoles.NEUTRAL;
+				}
+				strokeColor = ColorRoles.lineFallback(role);
+			} else {
+				strokeColor = color;
+				role = null;
+			}
 			if (strokeWidth <= 0) strokeWidth = EDGE_STROKE_WIDTH_NORMAL;
 
 			// The first and last segments are horizontal stubs out of the item boxes, to the left
@@ -1256,95 +1509,57 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			// stub: the line starts behind it, so it does not show through a closed or filled
 			// symbol, and the stub is longer by the symbol inset, so the line runs
 			// EDGE_HORIZONTAL_STUB beyond the symbol for every stroke width.
-			ConnectorSymbol sourceSymbol = edge.getSourceSymbol();
-			ConnectorSymbol targetSymbol = edge.getTargetSymbol();
 			double symbolScale = strokeWidth / 2;
-			double sInset = ConnectorSymbolRenderer.inset(sourceSymbol, symbolScale);
-			double tInset = ConnectorSymbolRenderer.inset(targetSymbol, symbolScale);
+			double sInset = ConnectorSymbolRenderer.inset(edge.getSourceSymbol(), symbolScale);
+			double tInset = ConnectorSymbolRenderer.inset(edge.getTargetSymbol(), symbolScale);
 			double sDir = (sourceEndpoint == GanttEndpoint.START) ? -1 : 1;
 			double tDir = (targetEndpoint == GanttEndpoint.START) ? -1 : 1;
-			double sOffset = sDir * (EDGE_HORIZONTAL_STUB + sInset);
-			double tOffset = tDir * (EDGE_HORIZONTAL_STUB + tInset);
+
+			GanttEdgeRouting.Segment horizontal = routing.add(
+				rows.indexOf(sourceItem.getRowId()), rows.indexOf(targetItem.getRowId()),
+				sx + sDir * (EDGE_HORIZONTAL_STUB + sInset), tx + tDir * (EDGE_HORIZONTAL_STUB + tInset),
+				sy, ty);
+			return new EdgeRoute(edge, sx, sy, tx, ty, sDir, tDir, sInset, tInset, strokeColor, role, strokeWidth,
+				dashes, violated, horizontal);
+		}
+
+		/** Writes the edge, after its horizontal segment has been routed. */
+		void draw(SvgWriter out) {
+			double sStubX = sx + sDir * (EDGE_HORIZONTAL_STUB + sInset);
+			double tStubX = tx + tDir * (EDGE_HORIZONTAL_STUB + tInset);
+			double midY = horizontal.y();
+
+			out.beginGroup();
+			out.writeCssClass(violated ? EDGE_CSS_CLASS + " " + EDGE_VIOLATED_CSS_CLASS : EDGE_CSS_CLASS);
+			out.writeAttribute(EDGE_SOURCE_ATTR, edge.getSourceItemId());
+			out.writeAttribute(EDGE_TARGET_ATTR, edge.getTargetItemId());
 
 			out.beginPath();
+			ColorRoles.writeRole(out, role);
 			out.setStroke(strokeColor);
 			out.setStrokeWidth(strokeWidth);
 			out.setFill("none");
 			if (dashes != null && !dashes.isEmpty()) {
-				double[] dashArray = new double[dashes.size()];
-				for (int i = 0; i < dashes.size(); i++) dashArray[i] = dashes.get(i);
-				out.setStrokeDasharray(dashArray);
+				out.setStrokeDasharray(DiagramUtil.doubleArray(dashes));
 			}
 			out.beginData();
 			out.moveToAbs(sx + sDir * sInset, sy);
-			out.lineToAbs(sx + sOffset, sy);
-			out.lineToAbs(sx + sOffset, midY);
-			out.lineToAbs(tx + tOffset, midY);
-			out.lineToAbs(tx + tOffset, ty);
+			out.lineToAbs(sStubX, sy);
+			out.lineToAbs(sStubX, midY);
+			out.lineToAbs(tStubX, midY);
+			out.lineToAbs(tStubX, ty);
 			out.lineToAbs(tx + tDir * tInset, ty);
 			out.endData();
 			out.endPath();
 
 			// Symbols point from the stub into the item box. Each symbol is a path of its own
 			// without dash array, so it is drawn solid also for a dashed edge.
-			ConnectorSymbolRenderer.drawSymbol(out, sx, sy, -sDir, 0, sourceSymbol, strokeColor, strokeWidth);
-			ConnectorSymbolRenderer.drawSymbol(out, tx, ty, -tDir, 0, targetSymbol, strokeColor, strokeWidth);
+			ConnectorSymbolRenderer.drawSymbol(out, sx, sy, -sDir, 0, edge.getSourceSymbol(), strokeColor,
+				strokeWidth, role);
+			ConnectorSymbolRenderer.drawSymbol(out, tx, ty, -tDir, 0, edge.getTargetSymbol(), strokeColor,
+				strokeWidth, role);
+			out.endGroup();
 		}
-
-		out.endGroup();
-	}
-
-	/**
-	 * Builds a map from row ID to {@link RowGeometry} using the same two-pass height computation
-	 * as {@link #computeIntrinsicSize}, based on the already-laid-out item boxes.
-	 *
-	 * <p>
-	 * This is called during drawing, after {@code computeIntrinsicSize} has already populated
-	 * every item box's {@code height} field.
-	 * </p>
-	 */
-	private static Map<String, RowGeometry> buildRowGeometry(GanttLayout self, double lanesTop) {
-		// Build ordered row index map and row list (to look up per-row padding).
-		LinkedHashMap<String, Integer> rowIndex = new LinkedHashMap<>();
-		List<GanttRow> rowList = new java.util.ArrayList<>();
-		int[] counter = new int[] { 0 };
-		for (GanttRow root : self.getRootRows()) {
-			indexRows(root, rowIndex, counter, rowList);
-		}
-		int totalRows = counter[0];
-
-		// Compute per-row max content height from already-distributed item boxes.
-		double[] rowMaxContentHeight = new double[totalRows];
-		for (int i = 0; i < totalRows; i++) {
-			rowMaxContentHeight[i] = rowList.get(i).getMinContentHeight();
-		}
-		for (GanttItem item : self.getItems()) {
-			Integer idx = rowIndex.get(item.getRowId());
-			if (idx == null) {
-				continue;
-			}
-			Box box = item.getBox();
-			if (box == null) {
-				continue;
-			}
-			double h = box.getHeight();
-			if (h > rowMaxContentHeight[idx]) {
-				rowMaxContentHeight[idx] = h;
-			}
-		}
-
-		// Build geometry map in row-definition order.
-		Map<String, RowGeometry> result = new LinkedHashMap<>();
-		double y = lanesTop;
-		int i = 0;
-		for (Map.Entry<String, Integer> entry : rowIndex.entrySet()) {
-			double rp = rowList.get(i).getRowPadding();
-			double rowHeight = rowMaxContentHeight[i] + 2 * rp;
-			result.put(entry.getKey(), new RowGeometry(y, y + rowHeight));
-			y += rowHeight;
-			i++;
-		}
-		return result;
 	}
 
 	private static double endpointX(GanttItem item, GanttEndpoint endpoint) {
@@ -1368,35 +1583,90 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	 */
 	private static boolean isConstraintViolated(GanttItem source, GanttEndpoint sourceEnd,
 			GanttItem target, GanttEndpoint targetEnd) {
-		double sourcePos = endpointX(source, sourceEnd);
-		double targetPos = endpointX(target, targetEnd);
-		return sourcePos > targetPos;
+		return endpointPosition(source, sourceEnd) > endpointPosition(target, targetEnd);
 	}
 
-	private static void indexRows(GanttRow row, Map<String, Integer> idx, int[] counter) {
-		idx.put(row.getId(), counter[0]);
-		counter[0]++;
-		for (GanttRow child : row.getChildren()) {
-			indexRows(child, idx, counter);
+	/**
+	 * The position (in the time dimension, in position units) of the given endpoint of an item.
+	 *
+	 * <p>
+	 * A {@link GanttSpan} starts at {@link GanttSpan#getStart()} and ends at
+	 * {@link GanttSpan#getEnd()}, both endpoints of a {@link GanttPoint} are at
+	 * {@link GanttPoint#getAt()}.
+	 * </p>
+	 */
+	private static double endpointPosition(GanttItem item, GanttEndpoint endpoint) {
+		if (item instanceof GanttSpan span) {
+			return endpoint == GanttEndpoint.START ? span.getStart() : span.getEnd();
+		} else if (item instanceof GanttPoint pt) {
+			return pt.getAt();
 		}
+		throw new IllegalArgumentException("Unsupported Gantt item: " + item);
 	}
 
-	private static void indexRows(GanttRow row, Map<String, Integer> idx, int[] counter, List<GanttRow> rowList) {
-		idx.put(row.getId(), counter[0]);
-		rowList.add(row);
-		counter[0]++;
-		for (GanttRow child : row.getChildren()) {
-			indexRows(child, idx, counter, rowList);
+	/**
+	 * The range of shifts of endpoints of the given item that violate none of its
+	 * {@link GanttEnforce#STRICT} dependencies.
+	 *
+	 * <p>
+	 * Each {@link GanttEdge} with {@link GanttEnforce#STRICT} enforcement requires the position of
+	 * its source endpoint to be less than or equal to the position of its target endpoint (see
+	 * {@link #endpointPosition(GanttItem, GanttEndpoint)}). The endpoints of the other items stay
+	 * where they are. An edge between two endpoints of the same item does not limit a shift.
+	 * </p>
+	 *
+	 * @param item
+	 *        The dragged item.
+	 * @param shifted
+	 *        The endpoint that is shifted, or {@code null} if both endpoints are shifted (a
+	 *        move).
+	 * @return The smallest and the largest allowed shift in position units, unbounded sides are
+	 *         infinite. If the smallest is greater than the largest, the strict dependencies of the
+	 *         item contradict each other (the current positions already violate one of them).
+	 */
+	private static double[] strictShiftRange(GanttLayout self, GanttItem item, GanttEndpoint shifted) {
+		double minShift = Double.NEGATIVE_INFINITY;
+		double maxShift = Double.POSITIVE_INFINITY;
+		List<GanttEdge> edges = self.getEdges();
+		if (edges != null && !edges.isEmpty()) {
+			String itemId = item.getId();
+			Map<String, GanttItem> itemById = null;
+			for (GanttEdge edge : edges) {
+				if (edge.getEnforce() != GanttEnforce.STRICT) {
+					continue;
+				}
+				boolean isSource = itemId.equals(edge.getSourceItemId());
+				boolean isTarget = itemId.equals(edge.getTargetItemId());
+				if (isSource == isTarget) {
+					// Not involved, or an edge between two endpoints of the item itself.
+					continue;
+				}
+				GanttEndpoint ownEndpoint = isSource ? edge.getSourceEndpoint() : edge.getTargetEndpoint();
+				if (shifted != null && ownEndpoint != shifted) {
+					continue;
+				}
+				if (itemById == null) {
+					itemById = new HashMap<>();
+					for (GanttItem other : self.getItems()) {
+						itemById.put(other.getId(), other);
+					}
+				}
+				GanttItem other = itemById.get(isSource ? edge.getTargetItemId() : edge.getSourceItemId());
+				if (other == null) {
+					continue;
+				}
+				GanttEndpoint otherEndpoint = isSource ? edge.getTargetEndpoint() : edge.getSourceEndpoint();
+				double distance = endpointPosition(other, otherEndpoint) - endpointPosition(item, ownEndpoint);
+				if (isSource) {
+					// The own endpoint must not pass the successor's endpoint.
+					maxShift = Math.min(maxShift, distance);
+				} else {
+					// The own endpoint must not pass the predecessor's endpoint.
+					minShift = Math.max(minShift, distance);
+				}
+			}
 		}
-	}
-
-	/** Sums the {@link GanttRow#getMinContentHeight()} of a row and all its descendants. */
-	private static double sumMinContentHeight(GanttRow row) {
-		double sum = row.getMinContentHeight();
-		for (GanttRow child : row.getChildren()) {
-			sum += sumMinContentHeight(child);
-		}
-		return sum;
+		return new double[] { minShift, maxShift };
 	}
 
 	// -----------------------------------------------------------------------
@@ -1460,12 +1730,12 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		double columnWidth = self.getColumnWidth();
 		double chartWidth = (self.getRangeMax() - self.getRangeMin()) * self.getZoom();
 
-		Map<String, RowGeometry> rowGeometry = buildRowGeometry(self, self.getY());
-		Map<String, GanttRow> rowsById = buildRowIndex(self);
+		GanttRowLayout rows = GanttRowLayout.of(self);
 
 		List<DropArea> areas = new ArrayList<>();
-		for (Map.Entry<String, RowGeometry> entry : rowGeometry.entrySet()) {
-			String rowId = entry.getKey();
+		for (int i = 0, cnt = rows.size(); i < cnt; i++) {
+			GanttRow row = rows.row(i);
+			String rowId = row.getId();
 
 			// 1. canMoveRow=false → only current row.
 			if (!canMoveRow && !rowId.equals(currentRowId)) {
@@ -1473,8 +1743,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			}
 
 			// 2. Row.acceptsDrop=false → skip (e.g. axis rows).
-			GanttRow row = rowsById.get(rowId);
-			if (row != null && !row.isAcceptsDrop()) {
+			if (!row.isAcceptsDrop()) {
 				// Always include the item's current row even if acceptsDrop is false,
 				// so the item doesn't "jump" out of an axis row it was placed in.
 				if (!rowId.equals(currentRowId)) {
@@ -1489,8 +1758,6 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 				}
 			}
 
-			RowGeometry geom = entry.getValue();
-
 			double areaX;
 			double areaWidth;
 			if (canMoveTime) {
@@ -1503,30 +1770,32 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 			DropArea area = DropArea.create()
 				.setX(areaX)
-				.setY(geom.yStart())
+				.setY(rows.yStart(i))
 				.setWidth(areaWidth)
-				.setHeight(geom.height());
+				.setHeight(rows.height(i));
 			areas.add(area);
 		}
 		return areas;
 	}
 
-	/** Builds a map from row ID to GanttRow for the full row forest. */
-	private static Map<String, GanttRow> buildRowIndex(GanttLayout layout) {
-		Map<String, GanttRow> result = new LinkedHashMap<>();
-		for (GanttRow root : layout.getRootRows()) {
-			collectRows(root, result);
-		}
-		return result;
-	}
-
-	private static void collectRows(GanttRow row, Map<String, GanttRow> index) {
-		index.put(row.getId(), row);
-		for (GanttRow child : row.getChildren()) {
-			collectRows(child, index);
-		}
-	}
-
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * An item that may move in time snaps to {@link GanttLayout#getSnapTo()} and stays within the
+	 * chart. Afterwards, it stops exactly at the endpoint of each {@link GanttEnforce#STRICT}
+	 * dependency it takes part in: as successor not before the endpoint of its predecessor, as
+	 * predecessor not after the endpoint of its successor (the stop position may lie off the snap
+	 * grid). With several strict dependencies, the strictest limit applies. Dependencies with
+	 * {@link GanttEnforce#NONE} do not limit the move. If the limits contradict each other (the
+	 * current positions already violate a strict dependency), the item keeps its position in time
+	 * and only the change of the row applies.
+	 * </p>
+	 *
+	 * <p>
+	 * The vertical position snaps to the nearest row the item may be dropped into.
+	 * </p>
+	 */
 	@Override
 	default double[] constrainMove(Box box, double proposedX, double proposedY) {
 		GanttLayout self = (GanttLayout) this;
@@ -1552,6 +1821,19 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			}
 			// Clamp to chart boundaries.
 			resultX = Math.max(chartX0, Math.min(chartX1 - box.getWidth(), resultX));
+
+			// Stop at the endpoints of strict dependencies.
+			if (item != null && zoom > 0) {
+				double[] range = strictShiftRange(self, item, null);
+				double minX = box.getX() + range[0] * zoom;
+				double maxX = box.getX() + range[1] * zoom;
+				if (minX > maxX) {
+					// Contradicting dependencies block the move in time.
+					resultX = box.getX();
+				} else {
+					resultX = Math.max(minX, Math.min(maxX, resultX));
+				}
+			}
 		}
 
 		// Compute snapped Y: snap to nearest valid row.
@@ -1561,22 +1843,12 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		} else {
 			// Find the nearest drop area Y.
 			List<DropArea> areas = getDropAreas(box);
-			Map<String, RowGeometry> rowGeometry = buildRowGeometry(self, self.getY());
-			Map<String, GanttRow> rowsById = buildRowIndex(self);
+			GanttRowLayout rows = GanttRowLayout.of(self);
 			double bestY = proposedY;
 			double bestDist = Double.MAX_VALUE;
 			for (DropArea area : areas) {
-				// Find the row that starts at area.getY() to get its padding.
-				double areaRowPadding = 4.0; // default fallback
-				for (Map.Entry<String, RowGeometry> entry : rowGeometry.entrySet()) {
-					if (Math.abs(entry.getValue().yStart() - area.getY()) < 0.5) {
-						GanttRow areaRow = rowsById.get(entry.getKey());
-						if (areaRow != null) {
-							areaRowPadding = areaRow.getRowPadding();
-						}
-						break;
-					}
-				}
+				// The padding of the row that starts at the top of the area.
+				double areaRowPadding = rowPaddingAt(rows, area.getY());
 				double candidateY = area.getY() + areaRowPadding;
 				double dist = Math.abs(proposedY - candidateY);
 				if (dist < bestDist) {
@@ -1590,9 +1862,35 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		return new double[] { resultX, resultY };
 	}
 
+	/**
+	 * The padding of the row starting at the given Y coordinate, or a default for none.
+	 */
+	private static double rowPaddingAt(GanttRowLayout rows, double yStart) {
+		for (int i = 0, cnt = rows.size(); i < cnt; i++) {
+			if (Math.abs(rows.yStart(i) - yStart) < 0.5) {
+				return rows.row(i).getRowPadding();
+			}
+		}
+		return DEFAULT_ROW_PADDING;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The dragged edge snaps to {@link GanttLayout#getSnapTo()} and keeps a minimum width (one snap
+	 * unit, or one pixel without snapping). The moved endpoint stops exactly at the endpoint of each
+	 * {@link GanttEnforce#STRICT} dependency attached to it: as successor not before the endpoint of
+	 * its predecessor, as predecessor not after the endpoint of its successor. With several strict
+	 * dependencies, the strictest limit applies. Dependencies with {@link GanttEnforce#NONE} do not
+	 * limit the resize. If the limits (including the minimum width) contradict each other, the
+	 * resize is blocked and the edge keeps its current position.
+	 * </p>
+	 */
 	@Override
 	default double constrainResize(Box box, DragEdge edge, double proposedEdgePos) {
 		GanttLayout self = (GanttLayout) this;
+		GanttItem item = findItemByBox(self, box);
 		double zoom = self.getZoom();
 		double snap = self.getSnapTo();
 		double columnWidth = self.getColumnWidth();
@@ -1609,16 +1907,40 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 		double minWidth = snapPixels > 0 ? snapPixels : 1.0;
 
+		double edgeX;
+		double minX;
+		double maxX;
+		GanttEndpoint shifted;
 		switch (edge) {
 			case W:
 				// West edge: constrain so width >= minWidth.
-				return Math.min(snapped, box.getX() + box.getWidth() - minWidth);
+				edgeX = box.getX();
+				minX = Double.NEGATIVE_INFINITY;
+				maxX = box.getX() + box.getWidth() - minWidth;
+				shifted = GanttEndpoint.START;
+				break;
 			case E:
 				// East edge: constrain so width >= minWidth.
-				return Math.max(snapped, box.getX() + minWidth);
+				edgeX = box.getX() + box.getWidth();
+				minX = box.getX() + minWidth;
+				maxX = Double.POSITIVE_INFINITY;
+				shifted = GanttEndpoint.END;
+				break;
 			default:
 				return proposedEdgePos;
 		}
+
+		// Stop at the endpoints of strict dependencies.
+		if (item != null && zoom > 0) {
+			double[] range = strictShiftRange(self, item, shifted);
+			minX = Math.max(minX, edgeX + range[0] * zoom);
+			maxX = Math.min(maxX, edgeX + range[1] * zoom);
+		}
+		if (minX > maxX) {
+			// Contradicting limits block the resize.
+			return edgeX;
+		}
+		return Math.max(minX, Math.min(maxX, snapped));
 	}
 
 	@Override
@@ -1638,25 +1960,22 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		boolean rowChanged = Math.abs(finalY - box.getY()) > 0.5;
 		if (rowChanged) {
 			// Find target row from Y position using row geometry.
-			Map<String, RowGeometry> rowGeometry = buildRowGeometry(self, self.getY());
-			Map<String, GanttRow> rowsById = buildRowIndex(self);
+			GanttRowLayout rows = GanttRowLayout.of(self);
 			String targetRowId = item.getRowId(); // default to current
-			for (Map.Entry<String, RowGeometry> entry : rowGeometry.entrySet()) {
-				RowGeometry geom = entry.getValue();
-				GanttRow entryRow = rowsById.get(entry.getKey());
-				double rp = entryRow != null ? entryRow.getRowPadding() : 4.0;
-				double rowContentY = geom.yStart() + rp;
-				if (Math.abs(finalY - rowContentY) < 0.5) {
-					targetRowId = entry.getKey();
-					break;
-				}
-				// Also match if finalY is within the row bounds.
-				if (finalY >= geom.yStart() && finalY < geom.yEnd()) {
-					targetRowId = entry.getKey();
+			for (int i = 0, cnt = rows.size(); i < cnt; i++) {
+				double yStart = rows.yStart(i);
+				double rowContentY = yStart + rows.row(i).getRowPadding();
+				// Match the content top of the row, or any position within the row bounds.
+				if (Math.abs(finalY - rowContentY) < 0.5 || (finalY >= yStart && finalY < rows.yEnd(i))) {
+					targetRowId = rows.row(i).getId();
 					break;
 				}
 			}
-			item.setRowId(targetRowId);
+			if (!targetRowId.equals(item.getRowId())) {
+				item.setRowId(targetRowId);
+				// The rows are placed anew by the next layout pass.
+				self.setRowLayout(null);
+			}
 		}
 
 		// Update item time position.
@@ -1942,25 +2261,5 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 				}
 			});
 		}
-	}
-
-	/**
-	 * Counts the total number of rows (including descendants) in the first
-	 * {@code frozenCount} root rows.
-	 */
-	private static int countFrozenFlatRows(List<GanttRow> rootRows, int frozenCount) {
-		int count = 0;
-		for (int i = 0; i < Math.min(frozenCount, rootRows.size()); i++) {
-			count += countRowAndDescendants(rootRows.get(i));
-		}
-		return count;
-	}
-
-	private static int countRowAndDescendants(GanttRow row) {
-		int count = 1;
-		for (GanttRow child : row.getChildren()) {
-			count += countRowAndDescendants(child);
-		}
-		return count;
 	}
 }

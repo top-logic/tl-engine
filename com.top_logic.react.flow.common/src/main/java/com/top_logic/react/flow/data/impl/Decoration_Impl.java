@@ -99,6 +99,12 @@ public abstract class Decoration_Impl extends com.top_logic.react.flow.data.impl
 		return this;
 	}
 
+	@Override
+	public com.top_logic.react.flow.data.Decoration setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
 	@SuppressWarnings("hiding")
 	static final java.util.List<String> PROPERTIES;
 	static {

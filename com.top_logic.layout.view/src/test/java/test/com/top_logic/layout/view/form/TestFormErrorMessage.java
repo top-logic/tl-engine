@@ -302,7 +302,7 @@ public class TestFormErrorMessage extends AbstractModelAccessTest {
 
 		ResKey expected = com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_CELL__ROW_COLUMN_MESSAGE.fill(
 			com.top_logic.layout.view.command.I18NConstants.FORM_ROW__POSITION.fill(1),
-			TLModelNamingConvention.resourceKey(part(ITEM, NAME)), error);
+			TLModelNamingConvention.getTypePartLabelKey(part(ITEM, NAME)), error);
 		assertEquals(List.of(text(expected)), texts(form.visibleErrorDetails()));
 		assertRefusedWith(form, List.of(expected));
 	}
@@ -322,7 +322,7 @@ public class TestFormErrorMessage extends AbstractModelAccessTest {
 		name.setError(error);
 
 		ResKey expected = com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_CELL__ROW_COLUMN_MESSAGE.fill(
-			ITEM_NAME, TLModelNamingConvention.resourceKey(part(ITEM, NAME)), error);
+			ITEM_NAME, TLModelNamingConvention.getTypePartLabelKey(part(ITEM, NAME)), error);
 		assertEquals(List.of(text(expected)), texts(form.visibleErrorDetails()));
 	}
 

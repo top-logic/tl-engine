@@ -20,7 +20,7 @@
 			tl-ai ships all carry one, so without this there would be nothing to test the empty case
 			against.
 		-->
-		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
+		<config service-class="com.top_logic.ai.core.agent.TopLogicAgentDefinitions">
 			<instance>
 				<agents>
 					<agent name="TestAgentWithoutSummary"

@@ -151,7 +151,7 @@ The decisive property: **everything that enters the context window is untrusted 
                        └─────────────────────────────────────────────┘
 ```
 
-The layers are **independent**: L1 does not assume L2 ran, and L3 filters what a tool hands back whatever the tool checked. All types live in `com.top_logic.tl.ai.core.security` unless named otherwise.
+The layers are **independent**: L1 does not assume L2 ran, and L3 filters what a tool hands back whatever the tool checked. All types live in `com.top_logic.ai.core.security` unless named otherwise.
 
 **A write is checked by the tool that makes it**, under the run's account, and the turn commits what its tools wrote ([the agent loop](doc:ai/agent-loop)). A Java tool asks the run's `ModelSecurity` before it writes - the [object tools](doc:ai/security/object-tools) do so per object and per attribute, the initial values of a new object included; asking is the obligation of every Java tool that writes. TL-Script - `changeData` and every script tool - writes through `new`, `set`, `add`, `remove` and `delete`, which check the user's rights themselves; for an object created in the same transaction `set` asks the right to give it an initial value. A remote MCP tool writes in its own system, outside this application's transaction.
 

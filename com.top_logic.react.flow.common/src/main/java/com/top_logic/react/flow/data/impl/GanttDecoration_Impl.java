@@ -26,7 +26,9 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 		}
 	};
 
-	private String _color = "";
+	private String _color = null;
+
+	private String _colorRole = null;
 
 	private com.top_logic.react.flow.data.Box _label = null;
 
@@ -150,6 +152,34 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 	}
 
 	@Override
+	public final boolean hasColor() {
+		return _color != null;
+	}
+
+	@Override
+	public final String getColorRole() {
+		return _colorRole;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttDecoration setColorRole(String value) {
+		internalSetColorRole(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getColorRole()} without chain call utility. */
+	protected final void internalSetColorRole(String value) {
+		_listener.beforeSet(this, COLOR_ROLE__PROP, value);
+		_colorRole = value;
+		_listener.afterChanged(this, COLOR_ROLE__PROP);
+	}
+
+	@Override
+	public final boolean hasColorRole() {
+		return _colorRole != null;
+	}
+
+	@Override
 	public final com.top_logic.react.flow.data.Box getLabel() {
 		return _label;
 	}
@@ -230,6 +260,7 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 			USER_OBJECT__PROP, 
 			RELEVANT_FOR_MODELS__PROP, 
 			COLOR__PROP, 
+			COLOR_ROLE__PROP, 
 			LABEL__PROP, 
 			CAN_MOVE__PROP, 
 			RELEVANT_FOR__PROP);
@@ -262,6 +293,7 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 			case USER_OBJECT__PROP: return getUserObject();
 			case RELEVANT_FOR_MODELS__PROP: return getRelevantForModels();
 			case COLOR__PROP: return getColor();
+			case COLOR_ROLE__PROP: return getColorRole();
 			case LABEL__PROP: return getLabel();
 			case CAN_MOVE__PROP: return isCanMove();
 			case RELEVANT_FOR__PROP: return getRelevantFor();
@@ -276,6 +308,7 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 			case USER_OBJECT__PROP: internalSetUserObject((java.lang.Object) value); break;
 			case RELEVANT_FOR_MODELS__PROP: internalSetRelevantForModels(de.haumacher.msgbuf.util.Conversions.asList(java.lang.Object.class, value)); break;
 			case COLOR__PROP: internalSetColor((String) value); break;
+			case COLOR_ROLE__PROP: internalSetColorRole((String) value); break;
 			case LABEL__PROP: internalSetLabel((com.top_logic.react.flow.data.Box) value); break;
 			case CAN_MOVE__PROP: internalSetCanMove((boolean) value); break;
 			case RELEVANT_FOR__PROP: internalSetRelevantFor(de.haumacher.msgbuf.util.Conversions.asList(String.class, value)); break;
@@ -287,8 +320,14 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 		super.writeFields(scope, out);
 		out.name(ID__PROP);
 		out.value(getId());
-		out.name(COLOR__PROP);
-		out.value(getColor());
+		if (hasColor()) {
+			out.name(COLOR__PROP);
+			out.value(getColor());
+		}
+		if (hasColorRole()) {
+			out.name(COLOR_ROLE__PROP);
+			out.value(getColorRole());
+		}
 		if (hasLabel()) {
 			out.name(LABEL__PROP);
 			getLabel().writeTo(scope, out);
@@ -325,7 +364,19 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 				break;
 			}
 			case COLOR__PROP: {
-				out.value(getColor());
+				if (hasColor()) {
+					out.value(getColor());
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case COLOR_ROLE__PROP: {
+				if (hasColorRole()) {
+					out.value(getColorRole());
+				} else {
+					out.nullValue();
+				}
 				break;
 			}
 			case LABEL__PROP: {
@@ -357,6 +408,7 @@ public abstract class GanttDecoration_Impl extends de.haumacher.msgbuf.graph.Abs
 		switch (field) {
 			case ID__PROP: setId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case COLOR__PROP: setColor(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case COLOR_ROLE__PROP: setColorRole(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case LABEL__PROP: setLabel(com.top_logic.react.flow.data.Box.readBox(scope, in)); break;
 			case CAN_MOVE__PROP: setCanMove(in.nextBoolean()); break;
 			case RELEVANT_FOR__PROP: {

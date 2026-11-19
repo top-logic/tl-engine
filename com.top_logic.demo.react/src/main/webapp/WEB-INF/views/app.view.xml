@@ -20,6 +20,14 @@
 			expr="{ tickets = all(`demo.tickets:Ticket`).size(); if($tickets == 0, null, $tickets); }"
 			observed-types="demo.tickets:Ticket"
 		/>
+		<!--
+			The number of open tickets: the badge of the "badge-demo" item, in the role error. A zero
+			shows no badge.
+		-->
+		<derived-channel name="openTicketCount"
+			expr="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#open`).size()"
+			observed-types="demo.tickets:Ticket"
+		/>
 	</channels>
 
 	<sidebar
@@ -341,6 +349,17 @@
 							<de>Akkordeon</de>
 						</label>
 					</nav-item>
+					<nav-item id="badge-demo"
+						badge="openTicketCount"
+						badge-role="error"
+						icon="css:bi bi-app-indicator"
+					>
+						<view-ref view="demo/badge-demo.view.xml"/>
+						<label>
+							<en>Badges</en>
+							<de>Badges</de>
+						</label>
+					</nav-item>
 					<nav-item id="tabs-overflow-demo"
 						icon="css:bi bi-segmented-nav"
 					>
@@ -501,6 +520,15 @@
 						<label>
 							<en>Temperatures</en>
 							<de>Temperaturen</de>
+						</label>
+					</nav-item>
+					<nav-item id="data-list-demo"
+						icon="css:bi bi-person-lines-fill"
+					>
+						<view-ref view="demo/data-list-demo.view.xml"/>
+						<label>
+							<en>List</en>
+							<de>Liste</de>
 						</label>
 					</nav-item>
 					<nav-item id="sensor-locking"

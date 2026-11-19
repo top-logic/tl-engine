@@ -50,7 +50,7 @@ import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.FlexData;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.security.ReadFilter;
 import com.top_logic.util.error.TopLogicException;
 
 import dev.langchain4j.community.store.embedding.jvector.JVectorEmbeddingStore;

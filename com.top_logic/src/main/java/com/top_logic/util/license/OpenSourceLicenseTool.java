@@ -5,6 +5,7 @@
  */
 package com.top_logic.util.license;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.util.ResKey;
@@ -54,14 +55,9 @@ public class OpenSourceLicenseTool extends LicenseTool {
 			+ " | |_| | |_) |  __/ | | |___) | (_) | |_| | | | (_|  __/\n"
 			+ "  \\___/| .__/ \\___|_| |_|____/ \\___/ \\__,_|_|  \\___\\___|\n"
 			+ "       |_|                                              ";
-		System.out.println();
-		System.out.println(text);
-		System.out.println();
-		System.out.println(
-			" Licensed under GNU Affero General Public License - AGPL");
-		System.out.println(
-			" https://www.gnu.org/licenses/agpl-3.0.en.html          ");
-		System.out.println();
+		Logger.info("\n" + text + "\n\n"
+			+ " Licensed under GNU Affero General Public License - AGPL\n"
+			+ " https://www.gnu.org/licenses/agpl-3.0.en.html", OpenSourceLicenseTool.class);
 	}
 
 	@Override

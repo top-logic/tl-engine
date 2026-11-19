@@ -197,12 +197,13 @@ test('der gelieferte Wert unter AA steht in der Datei und im Bericht, als gelief
   assert.ok(b && b.geliefert && b.ist < 4.5 && /^#[0-9A-F]{6}$/.test(b.vorschlag));
   assert.ok(ergebnis.css.includes('--tl-status-error-text: #F07070;'));
   // red-42 trägt status-error-text, und die Paarliste stellt jede Bedeutungsschrift gegen
-  // surface-base, surface-layer, surface-layer-nested und surface-overlay: ein gelieferter Wert
-  // unter AA erzeugt damit vier Befunde, dazu die drei Symbolpaare (3:1) des Pflichtzeichens der Tabelle,
-  // #30383: surface-layer-muted, surface-interactive-strong, surface-field.
-  assert.equal(ergebnis.befunde.length, 7);
+  // surface-base, surface-layer, surface-layer-nested und surface-overlay (4,5), als Punkt des Badges
+  // gegen surface-interactive-hover, surface-selected und surface-brand-subtle (3:1) und als Pflichtzeichen
+  // der Tabelle (#30391) gegen surface-layer-muted, surface-interactive-strong und surface-field (3:1):
+  // ein gelieferter Wert unter AA erzeugt damit zehn Befunde.
+  assert.equal(ergebnis.befunde.length, 10);
   assert.ok(ergebnis.befunde.every((x) => x.fg === 'status-error-text' && x.geliefert));
-  assert.ok(ergebnis.css.includes('Findings: 7 pairs below its threshold'));
+  assert.ok(ergebnis.css.includes('Findings: 10 pairs below its threshold'));
 });
 
 // Welle 5c (Spec 2026-10-19 Planen und Ziehen §4): gefüllte Kategorie-Flächen und die Kandidaten als Rollen.

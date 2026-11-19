@@ -362,18 +362,18 @@ public class TestAbsentColumns extends TestCase {
 		DefaultTableView<Item> view = view();
 		view.group(new GroupSpec(List.of(COLUMN_OPEN)));
 		TableViewControl<Item> control = control(view);
-		assertEquals(COLUMN_OPEN, control.getGroupedColumn());
+		assertEquals(List.of(COLUMN_OPEN), control.getGroupedColumns());
 
 		control.setAbsentColumns(Set.of(COLUMN_OPEN));
 
-		assertNull(control.getGroupedColumn());
-		assertEquals("", sentState(control).get(GROUPING));
+		assertEquals(List.of(), control.getGroupedColumns());
+		assertEquals(List.of(), sentState(control).get(GROUPING));
 		assertEquals(List.of(COLUMN_OPEN), view.state().getGrouping().columns());
 
 		control.setAbsentColumns(Set.of());
 
-		assertEquals(COLUMN_OPEN, control.getGroupedColumn());
-		assertEquals(COLUMN_OPEN, sentState(control).get(GROUPING));
+		assertEquals(List.of(COLUMN_OPEN), control.getGroupedColumns());
+		assertEquals(List.of(COLUMN_OPEN), sentState(control).get(GROUPING));
 	}
 
 	/** A control displaying the given table. */

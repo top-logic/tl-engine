@@ -12,12 +12,12 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolGroups;
+import com.top_logic.ai.tool.api.ToolResult;
+import com.top_logic.ai.tool.api.ToolSchema;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
-import com.top_logic.tl.ai.tool.api.ToolGroups;
-import com.top_logic.tl.ai.tool.api.ToolResult;
-import com.top_logic.tl.ai.tool.api.ToolSchema;
 
 /**
  * Which tools {@code <exposed-tools>} publishes, and under which name, title and description.

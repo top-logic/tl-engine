@@ -17,7 +17,7 @@ import com.top_logic.ai.chat.view.ChatRailElement.Config;
 import com.top_logic.ai.chat.view.ChatRailElement.PaneMode;
 import com.top_logic.ai.chat.view.ChatRailElement.SectionConfig;
 import com.top_logic.ai.chat.view.ChatSourcesElement;
-import com.top_logic.ai.chat.view.list.DataListElement;
+import com.top_logic.layout.view.list.DataListElement;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 

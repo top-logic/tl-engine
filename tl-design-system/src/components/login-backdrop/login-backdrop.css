@@ -1,0 +1,74 @@
+/* Login-Backdrop — der Hintergrund der Anmeldeseite.
+   Eine Zeichenfläche (canvas) füllt die Wurzel und liegt hinter dem Inhalt; der Client zeichnet darauf ein
+   Halbton-Raster. Das Stylesheet kennt nur Fläche, Rand und Anordnung. Die Zeichenfläche fängt keine Zeiger,
+   der Inhalt (Karte, Logo oder Name der Anwendung, Link) liegt darüber. Ist das Fenster niedriger als Inhalt und
+   Fußzeile, scrollt die ganze Seite, kein Kasten in ihr. Logo oder Name stehen auf einer eigenen Unterlage, weil die Punkte dahinter keinen Kontrast zu
+   ihnen garantieren. Am unteren Rand steht „Powered by“ mit der TopLogic-Wortmarke in der Textfarbe. */
+
+.tl-login-backdrop {
+  position: relative;
+  display: grid;
+  /* Oben der Inhalt, mittig im freien Platz; unten die Fußzeile. Reicht die Höhe nicht, wächst die erste Zeile
+     über das Fenster hinaus und die Wurzel scrollt, die Fußzeile steht dann am Ende. */
+  grid-template-rows: 1fr auto;
+  place-items: center;
+  overflow: hidden auto;
+  padding: var(--tl-space-lg);
+  background: var(--tl-surface-base);
+}
+.tl-login-backdrop[hidden] { display: none; }
+
+.tl-login-backdrop__canvas {
+  position: absolute;
+  inset: 0;
+  /* Canvas ist ein ersetztes Element; inset dehnt es nicht, daher Größe explizit. */
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.tl-login-backdrop__content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tl-space-md);
+  /* Die Wurzel scrollt und schneidet auch seitlich: der Innenabstand lässt dem Fokusring Platz (focus-clip). */
+  padding: calc(var(--tl-focus-width) + var(--tl-focus-offset));
+}
+
+.tl-login-backdrop__brand {
+  padding: var(--tl-space-sm) var(--tl-space-md);
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+  background: var(--tl-surface-layer);
+}
+
+.tl-login-backdrop__logo {
+  display: block;
+  max-width: 100%;
+  max-height: var(--tl-size-login-logo);
+}
+
+.tl-login-backdrop__title {
+  margin: 0;
+  color: var(--tl-text-primary);
+}
+
+.tl-login-backdrop__footer {
+  /* Positioniert, damit sie über der Zeichenfläche liegt. */
+  position: relative;
+  margin: 0;
+  padding-top: var(--tl-space-md);
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  color: var(--tl-text-secondary);
+}
+
+/* Die Wortmarke zeichnet in der Farbe der Fußzeile (currentColor), Breite aus dem Seitenverhältnis. */
+.tl-login-backdrop__wordmark {
+  display: block;
+  height: var(--tl-size-login-wordmark);
+  width: auto;
+}

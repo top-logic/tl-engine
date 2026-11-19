@@ -1,12 +1,20 @@
-// The wire contract of TLAvatar, checked against the MUI adapter.
+// The wire contract of TLAvatar, checked with its part Avatar drawn by the MUI adapter: the control maps
+// its state to the part, the adapter draws it.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, cleanup } from '@testing-library/react';
-import { categoryOf, tooltipProps } from 'tl-react-bridge';
+import { screen, cleanup, render } from '@testing-library/react';
+import { categoryOf, tooltipProps, replacePart } from 'tl-react-bridge';
 import type { AvatarStateJson } from 'tl-react-bridge';
 import type { ThemeOptions } from '@mui/material/styles';
+import TLAvatar from '../../../com.top_logic.layout.react/react-src/controls/TLAvatar';
 import MuiAvatarAdapter, { CATEGORY_ATTRIBUTE, SIZE_ATTRIBUTE } from './MuiAvatarAdapter';
+import MuiBadgeAdapter from './MuiBadgeAdapter';
 import { CONTROL_ID, mountAdapter, styleRules } from './wire-test-support';
+import { createMuiRoot, createPageThemes } from '../MuiRoot';
+
+replacePart('Avatar', MuiAvatarAdapter);
+
+replacePart('Badge', MuiBadgeAdapter);
 
 /** A display name and the category it maps to. */
 const NAME = 'Ada Lovelace';
@@ -16,7 +24,7 @@ const CATEGORY = categoryOf(NAME);
 const [TOOLTIP_ATTR, TOOLTIP] = Object.entries(tooltipProps(NAME))[0];
 
 function mountAvatar(state: Partial<AvatarStateJson>, theme?: ThemeOptions) {
-  return mountAdapter(MuiAvatarAdapter, state, { theme });
+  return mountAdapter(TLAvatar, state, { theme });
 }
 
 function root(): HTMLElement {
@@ -37,6 +45,22 @@ afterEach(() => {
 });
 
 describe('TLAvatar as MUI Avatar', () => {
+  it('is one image named by the name and the badge, a label combined with the count', () => {
+    mountAvatar({ name: NAME, badge: { content: '3', label: 'Open tickets' } as AvatarStateJson['badge'] });
+
+    const image = screen.getByRole('img', { name: NAME + ', Open tickets: 3' });
+    expect(image.id).toBe(CONTROL_ID);
+    expect(image.querySelector('.MuiAvatar-root')!.getAttribute('aria-hidden')).toBe('true');
+    expect(image.querySelector('.tl-icon-badge__count .MuiBadge-root')!.getAttribute('aria-hidden')).toBe('true');
+  });
+
+  it('reads a badge of null as none', () => {
+    mountAvatar({ name: NAME, badge: null as unknown as AvatarStateJson['badge'] });
+
+    expect(root().classList).toContain('MuiAvatar-root');
+    expect(document.querySelector('.tl-icon-badge')).toBeNull();
+  });
+
   it('shows the picture with the name as its text alternative', () => {
     mountAvatar({ url: '/images/ada.png', name: NAME });
 
@@ -106,5 +130,30 @@ describe('TLAvatar as MUI Avatar', () => {
     expect(values).toContain(`var(--tl-category-${CATEGORY}-subtle)`);
     expect(values[values.length - 1]).toBe('rgb(1, 2, 3)');
     expect(getComputedStyle(root()).backgroundColor).toBe('rgb(1, 2, 3)');
+  });
+});
+
+describe('the part Avatar as decoration', () => {
+  /** The root wrapper the part is drawn below: the one of the MUI default theme. */
+  const Root = createMuiRoot(createPageThemes({}));
+
+  it('shows the initials on the category, hidden from assistive technology and without a tooltip', () => {
+    render(<Root><MuiAvatarAdapter id="a1" name={NAME} decorative /></Root>);
+
+    const avatar = document.getElementById('a1')!;
+    expect(avatar.textContent).toBe('AL');
+    expect(avatar.getAttribute(CATEGORY_ATTRIBUTE)).toBe(String(CATEGORY));
+    expect(avatar.getAttribute('aria-hidden')).toBe('true');
+    expect(avatar.hasAttribute('role')).toBe(false);
+    expect(avatar.hasAttribute('aria-label')).toBe(false);
+    expect(avatar.hasAttribute(TOOLTIP_ATTR)).toBe(false);
+  });
+
+  it('shows the picture with an empty text alternative', () => {
+    render(<Root><MuiAvatarAdapter id="a1" name={NAME} src="/images/ada.png" decorative /></Root>);
+
+    const avatar = document.getElementById('a1')!;
+    expect(avatar.getAttribute('aria-hidden')).toBe('true');
+    expect(avatar.querySelector('img')!.getAttribute('alt')).toBe('');
   });
 });

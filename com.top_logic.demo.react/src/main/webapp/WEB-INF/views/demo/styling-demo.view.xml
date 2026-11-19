@@ -24,13 +24,17 @@
 	same way. The buttons write the search term of the last section, which is where a value bounded
 	to no object goes.
 	
-	The fourth section is a search field: the magnifier ahead of what is typed, the button that
+	The fourth section separates: a plain line, a line with a text at its start, in its middle
+	and at its end, inset lines between the entries of a list, and a vertical line between two
+	cards of a row, stretching to their height.
+	
+	The fifth section is a search field: the magnifier ahead of what is typed, the button that
 	empties it, and the delay the typed value is held back for before it reaches the channel the
 	text below reads. Below it, the button that empties an input on every kind of input: a text
 	area, a number and a password ask for it with clearable, a date offers it on its own as long as
 	it is not mandatory.
 	
-	The fifth section shows the display variants of an input: a selection as a cloud of toggle
+	The sixth section shows the display variants of an input: a selection as a cloud of toggle
 	chips, as a bar of segments, as a group of radio buttons stacked or side by side, as a group of
 	checkboxes where more than one value is chosen, or as a dropdown without a filter input that
 	jumps to an option by its first letters; a number as a handle dragged along a track, a truth
@@ -116,7 +120,7 @@
 			<de>Gestaltung</de>
 		</title>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>Typography</en>
 				<de>Typografie</de>
@@ -124,8 +128,8 @@
 		</text>
 		<text>
 			<label>
-				<en>A text says what it is for, not which font it is drawn in: the variant names the role, and the family, size, line height and weight of that role come from the tokens of the active theme.</en>
-				<de>Ein Text sagt, wofür er da ist, nicht in welcher Schrift er gesetzt wird: Die Variante benennt die Rolle, und Familie, Größe, Zeilenhöhe und Schnitt dieser Rolle kommen aus den Token des aktiven Themes.</de>
+				<en>A text says what it is for, not which font it is drawn in: the variant names the role, and the family, size, weight, line height and letter spacing of that role come from the tokens of the active theme. The roles are the type scale of the design system.</en>
+				<de>Ein Text sagt, wofür er da ist, nicht in welcher Schrift er gesetzt wird: Die Variante benennt die Rolle, und Familie, Größe, Schnitt, Zeilenhöhe und Laufweite dieser Rolle kommen aus den Token des aktiven Themes. Die Rollen sind die Typo-Skala des Design-Systems.</de>
 			</label>
 		</text>
 		<stack gap="compact">
@@ -135,16 +139,22 @@
 					<de>display</de>
 				</label>
 			</text>
-			<text variant="headline">
+			<text variant="heading-lg">
 				<label>
-					<en>headline</en>
-					<de>headline</de>
+					<en>heading-lg</en>
+					<de>heading-lg</de>
 				</label>
 			</text>
-			<text variant="title">
+			<text variant="heading-md">
 				<label>
-					<en>title</en>
-					<de>title</de>
+					<en>heading-md</en>
+					<de>heading-md</de>
+				</label>
+			</text>
+			<text variant="heading-sm">
+				<label>
+					<en>heading-sm</en>
+					<de>heading-sm</de>
 				</label>
 			</text>
 			<text variant="body">
@@ -153,16 +163,34 @@
 					<de>body</de>
 				</label>
 			</text>
+			<text variant="body-strong">
+				<label>
+					<en>body-strong</en>
+					<de>body-strong</de>
+				</label>
+			</text>
 			<text variant="label">
 				<label>
 					<en>label</en>
 					<de>label</de>
 				</label>
 			</text>
-			<text variant="caption">
+			<text variant="label-strong">
 				<label>
-					<en>caption</en>
-					<de>caption</de>
+					<en>label-strong</en>
+					<de>label-strong</de>
+				</label>
+			</text>
+			<text variant="overline">
+				<label>
+					<en>overline</en>
+					<de>overline</de>
+				</label>
+			</text>
+			<text variant="code">
+				<label>
+					<en>code</en>
+					<de>code</de>
 				</label>
 			</text>
 		</stack>
@@ -196,7 +224,7 @@
 					<de>helper</de>
 				</label>
 			</text>
-			<text css-class="tl-type-body-strong">
+			<text variant="body-strong">
 				<label>
 					<en>strong</en>
 					<de>strong</de>
@@ -288,7 +316,7 @@
 			</value-input>
 		</fields>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>A stylesheet of the application: css-class</en>
 				<de>Ein Stylesheet der Anwendung: css-class</de>
@@ -308,7 +336,7 @@
 				<stack gap="compact">
 					<text
 						tone="on-color"
-						variant="headline"
+						variant="heading-lg"
 					>
 						<label>
 							<en>Everything from a token</en>
@@ -325,7 +353,7 @@
 			</card>
 		</stack>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>Arrangement: stack and grid</en>
 				<de>Anordnung: Stack und Grid</de>
@@ -437,7 +465,7 @@
 			gap="default"
 			max-width="40rem"
 		>
-			<text variant="headline">
+			<text variant="heading-lg">
 				<label>
 					<en>A readable column</en>
 					<de>Eine lesbare Spalte</de>
@@ -513,7 +541,106 @@
 			</card>
 		</grid>
 
-		<text variant="title">
+		<text variant="heading-sm">
+			<label>
+				<en>Dividers</en>
+				<de>Trennlinien</de>
+			</label>
+		</text>
+		<text>
+			<label>
+				<en>A line separates the content before it from the content after it. Its colour and its width come from the tokens of the theme.</en>
+				<de>Eine Linie trennt den Inhalt davor vom Inhalt danach. Farbe und Stärke kommen aus den Token des Themes.</de>
+			</label>
+		</text>
+		<divider/>
+		<text>
+			<label>
+				<en>A line may carry a short text, at its start, in its middle or at its end.</en>
+				<de>Eine Linie kann einen kurzen Text tragen, am Anfang, in der Mitte oder am Ende.</de>
+			</label>
+		</text>
+		<divider label-position="start">
+			<label>
+				<en>Start</en>
+				<de>Anfang</de>
+			</label>
+		</divider>
+		<divider>
+			<label>
+				<en>Center</en>
+				<de>Mitte</de>
+			</label>
+		</divider>
+		<divider label-position="end">
+			<label>
+				<en>End</en>
+				<de>Ende</de>
+			</label>
+		</divider>
+		<text>
+			<label>
+				<en>An inset line begins at the indent of an entry of a list, so it separates the entries without cutting through their leading edge.</en>
+				<de>Eine eingerückte Linie beginnt beim Einzug eines Listeneintrags; sie trennt die Einträge, ohne deren vorderen Rand zu durchschneiden.</de>
+			</label>
+		</text>
+		<stack gap="compact">
+			<text>
+				<label>
+					<en>First entry</en>
+					<de>Erster Eintrag</de>
+				</label>
+			</text>
+			<divider inset="start"/>
+			<text>
+				<label>
+					<en>Second entry</en>
+					<de>Zweiter Eintrag</de>
+				</label>
+			</text>
+			<divider inset="start"/>
+			<text>
+				<label>
+					<en>Third entry</en>
+					<de>Dritter Eintrag</de>
+				</label>
+			</text>
+		</stack>
+		<text>
+			<label>
+				<en>A vertical line stands in a row and stretches to the height of its neighbours.</en>
+				<de>Eine senkrechte Linie steht in einer Zeile und streckt sich auf die Höhe ihrer Nachbarn.</de>
+			</label>
+		</text>
+		<stack direction="row">
+			<card>
+				<title>
+					<en>Before</en>
+					<de>Davor</de>
+				</title>
+				<text tone="secondary">
+					<label>
+						<en>The content before the line.</en>
+						<de>Der Inhalt vor der Linie.</de>
+					</label>
+				</text>
+			</card>
+			<divider orientation="vertical"/>
+			<card>
+				<title>
+					<en>After</en>
+					<de>Danach</de>
+				</title>
+				<text tone="secondary">
+					<label>
+						<en>The content after the line.</en>
+						<de>Der Inhalt nach der Linie.</de>
+					</label>
+				</text>
+			</card>
+		</stack>
+
+		<text variant="heading-sm">
 			<label>
 				<en>A search field</en>
 				<de>Ein Suchfeld</de>
@@ -561,7 +688,7 @@
 			/>
 		</stack>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>Emptying an input</en>
 				<de>Eine Eingabe leeren</de>
@@ -633,7 +760,7 @@
 			</value-input>
 		</fields>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>Display variants of an input</en>
 				<de>Darstellungsvarianten einer Eingabe</de>
@@ -926,7 +1053,7 @@
 			/>
 		</stack>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>A value declared like an attribute</en>
 				<de>Ein Wert, deklariert wie ein Attribut</de>

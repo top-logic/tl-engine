@@ -13,3 +13,36 @@
   border-top: 0;
   border-inline-start: var(--tl-border-width-sm) solid var(--tl-border-separator);
 }
+
+/* Mit Text (nur waagrecht): Linie, Text, Linie. Der Text steht in tl-type-label (Klasse am Element, von außen)
+   und in der Sekundärtextfarbe; die beiden Linien sind Pseudo-Elemente und teilen sich die übrige Breite. */
+.tl-divider--labeled {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-sm);
+  border-top: 0;
+  color: var(--tl-text-secondary);
+}
+
+.tl-divider--labeled::before,
+.tl-divider--labeled::after {
+  content: "";
+  flex: 1;
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-divider__label {
+  flex: none;
+  min-width: 0;
+}
+
+/* Lage des Texts: ohne Modifier in der Mitte; am Anfang bzw. Ende entfällt die Linie davor bzw. danach. */
+.tl-divider--label-start::before,
+.tl-divider--label-end::after {
+  display: none;
+}
+
+/* Eingerückt (für Listen): vorn um eine Ebene verkürzt, so weit wie der Einzug je Ebene in Baum und Tabelle. */
+.tl-divider--inset {
+  margin-inline-start: var(--tl-size-control-sm);
+}

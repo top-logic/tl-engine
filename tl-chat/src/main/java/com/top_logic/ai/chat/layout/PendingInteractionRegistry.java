@@ -17,10 +17,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
-import com.top_logic.tl.ai.core.session.ConversationLogListener;
+import com.top_logic.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.ai.core.session.ConversationLogListener;
 
 /**
  * The chat runs currently in flight, so that any window of the owning account can reach one - not

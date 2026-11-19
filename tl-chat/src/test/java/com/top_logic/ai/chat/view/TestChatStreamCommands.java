@@ -28,7 +28,7 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 

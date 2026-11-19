@@ -44,7 +44,6 @@ import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.operations.layout.GanttLayoutOperations;
 import com.top_logic.react.flow.operations.layout.GanttRowLayout;
 import com.top_logic.react.flow.server.script.FlowFactory;
-import com.top_logic.react.flow.server.script.ToColorRole;
 import com.top_logic.react.flow.server.svg.SvgTagWriter;
 import com.top_logic.react.flow.server.ui.AWTContext;
 import com.top_logic.react.flow.svg.RenderContext;
@@ -56,7 +55,6 @@ import com.top_logic.react.flow.svg.event.SVGKeyEvent;
 import com.top_logic.react.flow.svg.event.SVGKeyHandler;
 import com.top_logic.react.flow.svg.event.SVGWheelEvent;
 import com.top_logic.react.flow.svg.event.SVGWheelHandler;
-import com.top_logic.util.error.TopLogicException;
 
 /** Tests for {@link com.top_logic.react.flow.operations.layout.GanttLayoutOperations}. */
 public class TestGanttLayout extends TestCase {
@@ -2248,12 +2246,12 @@ public class TestGanttLayout extends TestCase {
 		assertNull("no role", plain.getColorRole());
 
 		GanttRangeDecoration withRole =
-			FlowFactory.ganttRangeDeco("role", 0, 10, null, null, null, null, null, "category-3");
+			FlowFactory.ganttRangeDeco("role", 0, 10, null, null, null, null, null, ValueColor.CATEGORY_3);
 		assertTrue("no color", ColorRoles.isEmpty(withRole.getColor()));
 		assertEquals("role", "category-3", withRole.getColorRole());
 
 		GanttLineDecoration lineWithRole =
-			FlowFactory.ganttLineDeco("line", 5, null, null, null, null, null, null, "error");
+			FlowFactory.ganttLineDeco("line", 5, null, null, null, null, null, null, ValueColor.ERROR);
 		assertTrue("no color", ColorRoles.isEmpty(lineWithRole.getColor()));
 		assertEquals("role", "error", lineWithRole.getColorRole());
 	}
@@ -2686,23 +2684,6 @@ public class TestGanttLayout extends TestCase {
 		@Override
 		public void requestRelayout() {
 			_relayout = true;
-		}
-	}
-
-	/**
-	 * A color role given to a TL-Script function: a missing argument stays "no role", so that the
-	 * default of the element applies (and not the first role of {@link ValueColor}).
-	 */
-	public void testColorRoleConversion() {
-		ToColorRole conversion = new ToColorRole();
-		assertNull("no role", conversion.fromScript(null));
-		assertEquals("error", conversion.fromScript(ValueColor.ERROR));
-		assertEquals("category-3", conversion.fromScript("category-3"));
-		try {
-			conversion.fromScript("no-such-role");
-			fail("Unknown role must be rejected.");
-		} catch (TopLogicException ex) {
-			// expected
 		}
 	}
 }

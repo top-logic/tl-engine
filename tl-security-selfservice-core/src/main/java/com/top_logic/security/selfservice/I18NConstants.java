@@ -47,6 +47,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_ACCOUNT_CREATION_DENIED;
 
 	/**
+	 * @en There is already an account for the address {0}.
+	 */
+	public static ResKey1 ERROR_ACCOUNT_EXISTS__EMAIL;
+
+	/**
 	 * @en The public address of the application is not configured and there is no current request,
 	 *     so no link into the application can be built. Set it with the variable "tl_host" (alias %HOST%), e.g.
 	 *     "https://app.example.com".

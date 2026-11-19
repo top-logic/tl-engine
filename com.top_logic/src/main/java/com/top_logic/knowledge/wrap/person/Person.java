@@ -773,6 +773,43 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	}
 
 	/**
+	 * All {@link #isAlive() alive} accounts whose {@link #getUser() user data} carry the given
+	 * e-mail address.
+	 *
+	 * <p>
+	 * Addresses are compared ignoring case and leading and trailing whitespace.
+	 * </p>
+	 *
+	 * @param email
+	 *        The e-mail address to look for, may be {@code null}.
+	 * @return The accounts with the given address, an empty list if the address is {@code null}
+	 *         or empty.
+	 *
+	 * @see UserInterface#getEMail()
+	 */
+	public static List<Person> allByEMail(String email) {
+		String expected = StringServices.nonEmpty(email == null ? null : email.strip());
+		if (expected == null) {
+			return new ArrayList<>();
+		}
+		List<Person> result = new ArrayList<>();
+		for (Person account : all()) {
+			if (!account.isAlive()) {
+				continue;
+			}
+			UserInterface user = account.getUser();
+			if (user == null) {
+				continue;
+			}
+			String accountEMail = user.getEMail();
+			if (accountEMail != null && expected.equalsIgnoreCase(accountEMail.strip())) {
+				result.add(account);
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * Normalizes an account (login) name for storage and lookup: strips leading and trailing
 	 * whitespace while preserving the case (Ticket #29423). {@code null} is passed through.
 	 *

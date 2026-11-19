@@ -42,7 +42,8 @@ import com.top_logic.util.TLContextManager;
  *
  * <p>
  * Answers: {@code 401} without a session, {@code 410} for a window or token the server no longer
- * knows - the page has to be loaded again -, {@code 409} for a token poll that needs the full state,
+ * knows - the page has to be loaded again -, both with the error code
+ * {@link ReactServlet#ERROR_CODE_STALE_UI}, {@code 409} for a token poll that needs the full state,
  * which the client then asks for with the cookie.
  * </p>
  */
@@ -65,7 +66,8 @@ public class PollServlet extends HttpServlet {
 		if (token != null && !token.isEmpty()) {
 			SSEUpdateQueue queue = SSEUpdateQueue.forPollToken(token);
 			if (queue == null) {
-				response.sendError(HttpServletResponse.SC_GONE, "Unknown window.");
+				ReactServlet.sendError(response, HttpServletResponse.SC_GONE, ReactServlet.ERROR_CODE_STALE_UI,
+					"Unknown window.");
 				return;
 			}
 			if (queue.needsFullState(after)) {
@@ -78,7 +80,8 @@ public class PollServlet extends HttpServlet {
 
 		HttpSession session = request.getSession(false);
 		if (session == null) {
-			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No session.");
+			ReactServlet.sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ReactServlet.ERROR_CODE_STALE_UI,
+				"No session.");
 			return;
 		}
 		String windowName = request.getParameter("windowName");
@@ -90,7 +93,8 @@ public class PollServlet extends HttpServlet {
 		SSEUpdateQueue queue = registry.getQueue(windowName);
 		if (queue == null) {
 			registry.reportStaleWindow(windowName, POLL_REQUEST);
-			response.sendError(HttpServletResponse.SC_GONE, "Unknown window.");
+			ReactServlet.sendError(response, HttpServletResponse.SC_GONE, ReactServlet.ERROR_CODE_STALE_UI,
+				"Unknown window.");
 			return;
 		}
 		if ("true".equals(request.getParameter("peek"))) {

@@ -178,6 +178,12 @@
 					</label>
 					<value>$row.get(`Contacts:PersonContact#account`) != null</value>
 				</computed-column>
+				<computed-column name="locked"
+					type="tl.core:Boolean"
+				>
+					<label key="model.tl.accounts.Person.locked"/>
+					<value>$row.get(`Contacts:PersonContact#account`).get(`tl.accounts:Person#locked`)</value>
+				</computed-column>
 			</columns>
 			<rows>all(`Contacts:PersonContact`)</rows>
 			<export download-name="#('People'@en, 'Personen'@de)">
@@ -241,6 +247,7 @@
 					/>
 					<field attribute="admin"/>
 					<field attribute="restrictedUser"/>
+					<field attribute="locked"/>
 					<field attribute="mfaRequirement"/>
 					<value-input
 						readonly="true"

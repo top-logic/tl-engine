@@ -22,7 +22,7 @@ const SOLL = {
   'alert/alert.contract.md': ['data-tl-role'],
   'select/select.contract.md': ['tl-status', 'data-tl-axis', 'useListReorder', 'filterOptions'],
   'field/field.contract.md': ['onGoto', 'href', 'data-tl-role', 'ThemeIcon'],
-  'skeleton/skeleton.contract.md': ['tl-table__placeholder'],
+  'skeleton/skeleton.contract.md': ['tl-table__placeholder', 'tl-media', 'tl-skeleton--text', 'tl-skeleton--circle'],
 };
 for (const [file, names] of Object.entries(SOLL)) test(`${file} nennt ${names.length} Pflichtbegriffe`, () => {
   const [d, f] = file.split('/');

@@ -61,7 +61,10 @@
 				</operation-uses>
 			</instance>
 		</config>
-		<!-- The entries of the developer documentation, shown in its documentation window. -->
+		<!--
+			The entries of the developer documentation, shown in its documentation window, and the
+			permissions offered for a new access token.
+		-->
 		<config service-class="com.top_logic.layout.provider.LabelProviderService">
 			<instance>
 				<label-providers>
@@ -69,6 +72,11 @@
 						implementation="com.top_logic.layout.view.docs.DevDocResourceProvider"
 						kind="CODE"
 						type="com.top_logic.basic.docs.DevDoc"
+					/>
+					<provider
+						implementation="com.top_logic.layout.view.accesstoken.AccessTokenPermissionResourceProvider"
+						kind="CODE"
+						type="com.top_logic.element.accesstoken.AccessTokenPermissions$PermissionConfig"
 					/>
 				</label-providers>
 			</instance>
@@ -164,6 +172,9 @@
 					</provider>
 					<provider type="tl.model.i18n:I18NString">
 						<impl class="com.top_logic.layout.view.form.I18NStringControlProvider"/>
+					</provider>
+					<provider type="tl.imagegallery:GalleryImage">
+						<impl class="com.top_logic.layout.react.field.GalleryFieldControlProvider"/>
 					</provider>
 					<provider type="tl.util:Color">
 						<impl class="com.top_logic.layout.view.form.ColorInputControlProvider"/>

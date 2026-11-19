@@ -69,6 +69,10 @@
 	
 	The details form edits the single selected object: the name, due date and approval of a
 	milestone, the title of a ticket, the name of a scope.
+	
+	Beside the details form, the tab "Tickets" lists the tickets of the selected milestone. Its
+	<visibility> condition offers the tab only while the single selected node is a milestone: selecting
+	a scope or a ticket leaves the tab out, and the tab bar shows another tab in its place.
 -->
 <view>
 	<channels>
@@ -401,47 +405,85 @@
 						<en>Details</en>
 						<de>Details</de>
 					</title>
-					<switch input="selectedSingle as object">
-						<case test="$object.instanceOf(`tl.demo.projectManagement:Milestone`)">
-							<form
-								input="selectedMilestone"
-								with-inset="true"
-								withEditMode="true"
+					<tab-bar active-tab="details">
+						<tabs>
+							<tab id="details"
+								icon="css:bi bi-pencil-square"
 							>
-								<field attribute="name"/>
-								<field attribute="dueDate"/>
-								<field attribute="approved"/>
-							</form>
-						</case>
-						<case test="$object.instanceOf(`tl.demo.projectManagement:Ticket`)">
-							<form
-								input="selectedTicket"
-								with-inset="true"
-								withEditMode="true"
+								<label>
+									<en>Details</en>
+									<de>Details</de>
+								</label>
+								<switch input="selectedSingle as object">
+									<case test="$object.instanceOf(`tl.demo.projectManagement:Milestone`)">
+										<form
+											input="selectedMilestone"
+											with-inset="true"
+											withEditMode="true"
+										>
+											<field attribute="name"/>
+											<field attribute="dueDate"/>
+											<field attribute="approved"/>
+										</form>
+									</case>
+									<case test="$object.instanceOf(`tl.demo.projectManagement:Ticket`)">
+										<form
+											input="selectedTicket"
+											with-inset="true"
+											withEditMode="true"
+										>
+											<field attribute="title"/>
+										</form>
+									</case>
+									<case test="$object.instanceOf(`tl.demo.projectManagement:ProjectScope`)">
+										<form
+											input="selectedScope"
+											with-inset="true"
+											withEditMode="true"
+										>
+											<field attribute="name"/>
+										</form>
+									</case>
+									<default>
+										<inset>
+											<text>
+												<label>
+													<en>Select a single node to edit it.</en>
+													<de>Einen einzelnen Knoten auswählen, um ihn zu bearbeiten.</de>
+												</label>
+											</text>
+										</inset>
+									</default>
+								</switch>
+							</tab>
+							<!-- Offered only while the single selected node is a milestone. -->
+							<tab id="tickets"
+								icon="css:bi bi-ticket-perforated"
 							>
-								<field attribute="title"/>
-							</form>
-						</case>
-						<case test="$object.instanceOf(`tl.demo.projectManagement:ProjectScope`)">
-							<form
-								input="selectedScope"
-								with-inset="true"
-								withEditMode="true"
-							>
-								<field attribute="name"/>
-							</form>
-						</case>
-						<default>
-							<inset>
-								<text>
-									<label>
-										<en>Select a single node to edit it.</en>
-										<de>Einen einzelnen Knoten auswählen, um ihn zu bearbeiten.</de>
-									</label>
-								</text>
-							</inset>
-						</default>
-					</switch>
+								<label>
+									<en>Tickets</en>
+									<de>Tickets</de>
+								</label>
+								<visibility
+									expr="$selectedSingle.instanceOf(`tl.demo.projectManagement:Milestone`)"
+									inputs="selectedSingle"
+								/>
+								<table
+									observed-types="tl.demo.projectManagement:Ticket"
+									types="tl.demo.projectManagement:Ticket"
+								>
+									<inputs>
+										<input channel="selectedMilestone"/>
+									</inputs>
+									<columns>
+										<column attribute="number"/>
+										<column attribute="title"/>
+									</columns>
+									<rows>$selectedMilestone.get(`tl.demo.projectManagement:Milestone#tickets`)</rows>
+								</table>
+							</tab>
+						</tabs>
+					</tab-bar>
 				</panel>
 			</pane>
 		</panes>

@@ -35,6 +35,17 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_CAN_NOT_PARSE_REFERENCE__REFERENCE;
 
+	/**
+	 * @en There is no model type ''{0}''.
+	 */
+	public static ResKey1 ERROR_NO_SUCH_OBJECT_TYPE__TYPE;
+
+	/**
+	 * @en An object of type ''{0}'' or one of its specializations is expected, but the given object is
+	 *     of type ''{1}''.
+	 */
+	public static ResKey2 ERROR_OBJECT_TYPE_MISMATCH__EXPECTED_ACTUAL;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

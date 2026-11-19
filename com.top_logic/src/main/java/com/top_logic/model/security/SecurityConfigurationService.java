@@ -12,10 +12,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.WeakHashMap;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -340,6 +343,14 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	/**
 	 * Configuration of access rights to values for a {@link TLStructuredTypePart}. The part is
 	 * identified by its qualified name.
+	 *
+	 * <p>
+	 * The rights apply to the attribute of the named type and of all its specializations, no matter
+	 * whether the named type defines, overrides or inherits the attribute. For an object, the most
+	 * specific entry on the way from its type to its generalizations decides. Entries of two
+	 * independent generalizations of a type that grant different rights for the same attribute
+	 * are a configuration error, unless the type has an entry of its own for the attribute.
+	 * </p>
 	 */
 	@TagName("part")
 	@DisplayOrder({
@@ -378,81 +389,62 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	private Map<TLObject, Map<BoundCommandGroup, Set<BoundedRole>>> _singletonRights = new HashMap<>();
 
-	private Map<TLStructuredTypePart, Map<BoundCommandGroup, Set<BoundedRole>>> _typePartRights = new HashMap<>();
-
-	private Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> _expandedClassRights = new HashMap<>();
-
 	/**
-	 * The rights of every type before the rules of its own entry are applied.
-	 *
-	 * @see #getInheritedRoles(TLClass, BoundCommandGroup)
-	 */
-	private final Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> _inheritedClassRights = new HashMap<>();
-
-	/**
-	 * The roles holding {@link SimpleBoundCommandGroup#DISCOVER} on the instances of a class: the
-	 * union of all roles of its class rights, of the rights of its attributes, and of the
-	 * {@link SimpleBoundCommandGroup#CREATE} rights of the types creatable in its compositions.
-	 */
-	private final Map<TLClass, Set<BoundedRole>> _discoverRoles = new HashMap<>();
-
-	/**
-	 * The part of the {@link #_discoverRoles} of a class that does not stem from its class rights:
-	 * the roles of the rights of its attributes and the {@link SimpleBoundCommandGroup#CREATE}
-	 * rights of the types creatable in its compositions.
+	 * The attribute rights of the {@link TLPartAccessRights part entries}, by the type named in the
+	 * entry and the attribute name.
 	 *
 	 * <p>
-	 * A singleton with rights of its own replaces the class rights by its own rights, but is
-	 * discoverable by the rights on its attributes and compositions as well.
+	 * The type named in an entry is the type the rights are configured for, no matter whether it
+	 * defines, overrides or inherits the attribute.
 	 * </p>
+	 *
+	 * @see TypeEntry#_partRights
 	 */
-	private final Map<TLClass, Set<BoundedRole>> _discoverRolesWithoutClassRights = new HashMap<>();
+	private final Map<TLStructuredType, Map<String, Map<BoundCommandGroup, Set<BoundedRole>>>> _declaredPartRights =
+		new HashMap<>();
 
 	/**
-	 * The types without security, each mapped to the part whose definition declares the mark.
-	 *
-	 * @see #getWithoutSecurityOrigin(TLClass)
+	 * The rules of the {@link TLModuleAccessRights module entries}, by module.
 	 */
-	private Map<TLClass, TLModelPart> _typesWithoutSecurity = new HashMap<>();
-
-	/**
-	 * The internal types, each mapped to the part whose definition declares the mark.
-	 *
-	 * @see #getInternalOrigin(TLClass)
-	 */
-	private Map<TLClass, TLModelPart> _internalTypes = new HashMap<>();
+	private final Map<TLModule, List<ResolvedRule>> _moduleRules = new HashMap<>();
 
 	/**
 	 * The types and modules whose definition excludes them from access control, collected while
-	 * the configuration is read, see {@link #origins(Set)}.
+	 * the configuration is read, see {@link #markOrigin(TLClass, TypeEntry, Mark)}.
 	 */
 	private final Set<TLModelPart> _declaredWithoutSecurity = new HashSet<>();
 
 	/**
 	 * The types and modules whose definition declares them internal, collected while the
-	 * configuration is read, see {@link #origins(Set)}.
+	 * configuration is read, see {@link #markOrigin(TLClass, TypeEntry, Mark)}.
 	 */
 	private final Set<TLModelPart> _declaredInternal = new HashSet<>();
 
 	/**
-	 * The explicitly configured access parents, inherited by the specializations of a type.
-	 * <p>
-	 * A type {@link SelfAccessParent deciding for itself} is mapped to <code>null</code>, which
-	 * also switches off the default of a composition part.
-	 * </p>
+	 * The access control settings of the classes indexed at startup: the global classes and the
+	 * classes named in the configuration.
+	 *
+	 * @see #entry(TLClass)
 	 */
-	private Map<TLClass, AccessParentFunction> _accessParents = new HashMap<>();
-
-	/** The types whose objects are held in a composition, indexed to the types of the containers. */
-	private Map<TLClass, Set<TLClass>> _containerTypes = new HashMap<>();
+	private final Map<TLClass, TypeEntry> _globalEntries = new HashMap<>();
 
 	/**
-	 * The operations applying to the classes with declarations of their own, of a generalization
-	 * or of their module.
+	 * The access control settings of the classes not indexed at startup, computed on first access.
 	 *
-	 * @see #getOperations(TLClass)
+	 * <p>
+	 * Such a class is a class declared locally in an object, which comes into existence with the
+	 * object, see {@link #entry(TLClass)}. The keys are held weakly, so that the settings of a
+	 * deleted local class are dropped with it. The settings depend on nothing but the configuration
+	 * of this service and the model, so they live as long as this service.
+	 * </p>
 	 */
-	private final Map<TLClass, ApplicableOperations> _classOperations = new HashMap<>();
+	private final Map<TLClass, TypeEntry> _localEntries = Collections.synchronizedMap(new WeakHashMap<>());
+
+	/**
+	 * Whether the settings of the classes indexed at startup are complete, so that the settings of
+	 * another class may be computed from them.
+	 */
+	private boolean _started;
 
 	/**
 	 * The operations applying to the singletons with declarations of their own.
@@ -490,6 +482,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		_commandGroups = CommandGroupRegistry.getInstance();
 		_applicationModel = ModelService.getApplicationModel();
 
+		for (TLClass type : TLModelUtil.getAllGlobalClasses(_applicationModel)) {
+			_globalEntries.put(type, new TypeEntry());
+		}
 		indexContainerTypes();
 
 		Map<ModelAccessRights, TLObject> modelParts = new LinkedHashMap<>();
@@ -499,6 +494,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			TLObject modelPart = TLModelUtil.resolveQualifiedName(_applicationModel, modelConf.getName());
 			modelParts.put(modelConf, modelPart);
 			if (modelConf instanceof TLClassAccessRights conf && modelPart instanceof TLClass clazz) {
+				indexEntry(clazz);
 				declareOperations(context, conf, classDeclarations.computeIfAbsent(clazz, unused -> new HashMap<>()));
 			} else if (modelConf instanceof TLModuleAccessRights conf && modelPart instanceof TLModule module) {
 				declareOperations(context, conf, _moduleDeclarations.computeIfAbsent(module, unused -> new HashMap<>()));
@@ -511,7 +507,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		checkImplications(context, classDeclarations, singletonDeclarations);
 
 		Map<TLClass, List<ResolvedRule>> classRules = new HashMap<>();
-		Map<TLModule, List<ResolvedRule>> moduleRules = new HashMap<>();
 		Map<TLClass, AccessParentFunction> explicitParents = new HashMap<>();
 		for (Map.Entry<ModelAccessRights, TLObject> entry : modelParts.entrySet()) {
 			ModelAccessRights modelConf = entry.getKey();
@@ -523,16 +518,110 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			} else if (modelConf instanceof TLPartAccessRights conf) {
 				handleTLPart(context, modelPart, conf);
 			} else if (modelConf instanceof TLModuleAccessRights conf) {
-				handleTLModule(context, modelPart, conf, moduleRules);
+				handleTLModule(context, modelPart, conf);
 			}
 		}
 
-		_typesWithoutSecurity = origins(_declaredWithoutSecurity);
-		_internalTypes = origins(_declaredInternal);
-		computeClassRights(classRules, moduleRules);
-		computeDiscoverRoles();
-		applyImplications();
-		inheritAccessParents(explicitParents);
+		Set<TLClass> types = startupTypes();
+		for (TLClass type : types) {
+			TypeEntry entry = entry(type);
+			markOrigin(type, entry, Mark.WITHOUT_SECURITY);
+			markOrigin(type, entry, Mark.INTERNAL);
+		}
+		for (TLClass type : types) {
+			computeClassRights(type, entry(type), classRules);
+		}
+		for (TLClass type : types) {
+			computePartRights(type, entry(type), context::error);
+		}
+		for (TLClass type : types) {
+			computeDiscoverRoles(type, entry(type));
+		}
+		for (TLClass type : types) {
+			applyImplications(entry(type));
+		}
+		applySingletonImplications();
+		for (TLClass type : types) {
+			inheritAccessParent(type, entry(type), explicitParents);
+		}
+		_started = true;
+	}
+
+	/**
+	 * Indexes the given class at startup, see {@link #_globalEntries}.
+	 */
+	private void indexEntry(TLClass type) {
+		_globalEntries.computeIfAbsent(type, unused -> new TypeEntry());
+	}
+
+	/**
+	 * The classes indexed at startup, the global classes first.
+	 */
+	private Set<TLClass> startupTypes() {
+		Set<TLClass> result = new LinkedHashSet<>(TLModelUtil.getAllGlobalClasses(_applicationModel));
+		result.addAll(_globalEntries.keySet());
+		return result;
+	}
+
+	/**
+	 * The access control settings of the given class.
+	 *
+	 * <p>
+	 * This is the one place resolving a class to its settings. A class indexed at startup has the
+	 * settings computed there. A class declared locally in an object has no entry of its own in the
+	 * configuration, since it has no qualified name to be named by. It is treated as a global
+	 * specialization of its generalizations without a configuration of its own: its settings are
+	 * computed on first access by the same computation as the settings of such a class at startup,
+	 * and kept in {@link #_localEntries}. A global class created after startup has no settings,
+	 * until this service is started again.
+	 * </p>
+	 */
+	private TypeEntry entry(TLClass type) {
+		TypeEntry result = _globalEntries.get(type);
+		if (result != null) {
+			return result;
+		}
+		result = _localEntries.get(type);
+		if (result != null) {
+			return result;
+		}
+		if (!_started) {
+			// The settings of a local class are computed from the complete settings of the classes
+			// indexed at startup.
+			return TypeEntry.none();
+		}
+		// Computed without holding a lock, since the computation resolves the generalizations of the
+		// class, which may be local classes as well. Two threads computing the settings of the same
+		// class compute the same settings.
+		TypeEntry computed = TLModelUtil.isGlobal(type) ? TypeEntry.none() : computeLocalEntry(type);
+		result = _localEntries.putIfAbsent(type, computed);
+		return result != null ? result : computed;
+	}
+
+	/**
+	 * Computes the settings of a class not indexed at startup, see {@link #entry(TLClass)}.
+	 *
+	 * <p>
+	 * The steps are those of the startup in the same order, applied to the given class alone. The
+	 * class has no configuration of its own: no operations, no grants, no attribute rights, no marks
+	 * and no access parent are declared for it. A composition holding one of its generalizations
+	 * holds it as well, so its containers are the containers of its generalizations.
+	 * </p>
+	 */
+	private TypeEntry computeLocalEntry(TLClass type) {
+		TypeEntry entry = new TypeEntry();
+		mergeOperations(type, entry, Collections.emptyMap());
+		markOrigin(type, entry, Mark.WITHOUT_SECURITY);
+		markOrigin(type, entry, Mark.INTERNAL);
+		computeClassRights(type, entry, Collections.emptyMap());
+		computePartRights(type, entry, message -> Logger.error(message, SecurityConfigurationService.class));
+		computeDiscoverRoles(type, entry);
+		applyImplications(entry);
+		inheritAccessParent(type, entry, Collections.emptyMap());
+		for (TLClass generalization : type.getGeneralizations()) {
+			entry._containerTypes.addAll(entry(generalization)._containerTypes);
+		}
+		return entry;
 	}
 
 	/**
@@ -573,26 +662,20 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	/**
-	 * Computes the operations applying to every class and to every singleton with declarations of
-	 * its own.
+	 * Computes the operations applying to every class indexed at startup and to every singleton with
+	 * declarations of its own.
 	 */
 	private void computeOperations(Map<TLClass, Map<BoundCommandGroup, Set<BoundCommandGroup>>> classDeclarations,
 			Map<TLObject, Map<BoundCommandGroup, Set<BoundCommandGroup>>> singletonDeclarations) {
-		Map<TLClass, Map<BoundCommandGroup, Set<BoundCommandGroup>>> merged = new HashMap<>();
-		Set<TLClass> types = new HashSet<>(TLModelUtil.getAllGlobalClasses(_applicationModel));
-		types.addAll(classDeclarations.keySet());
-		for (TLClass type : types) {
-			Map<BoundCommandGroup, Set<BoundCommandGroup>> declared = mergeOperations(type, classDeclarations, merged);
-			if (!declared.isEmpty()) {
-				_classOperations.put(type, new ApplicableOperations(declared));
-			}
+		for (TLClass type : startupTypes()) {
+			mergeOperations(type, entry(type), classDeclarations);
 		}
 		for (Map.Entry<TLObject, Map<BoundCommandGroup, Set<BoundCommandGroup>>> entry : singletonDeclarations
 			.entrySet()) {
 			TLObject singleton = entry.getKey();
 			Map<BoundCommandGroup, Set<BoundCommandGroup>> declared = new HashMap<>();
 			if (singleton.tType() instanceof TLClass type) {
-				addDeclarations(declared, mergeOperations(type, classDeclarations, merged));
+				addDeclarations(declared, mergeOperations(type, entry(type), classDeclarations));
 			}
 			addDeclarations(declared, entry.getValue());
 			_singletonOperations.put(singleton, new ApplicableOperations(declared));
@@ -601,22 +684,29 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	/**
 	 * The operations declared for the given type, its generalizations and their modules.
+	 *
+	 * <p>
+	 * Enters the result and the {@link ApplicableOperations} built from it into the given entry of
+	 * the type.
+	 * </p>
 	 */
-	private Map<BoundCommandGroup, Set<BoundCommandGroup>> mergeOperations(TLClass type,
-			Map<TLClass, Map<BoundCommandGroup, Set<BoundCommandGroup>>> classDeclarations,
-			Map<TLClass, Map<BoundCommandGroup, Set<BoundCommandGroup>>> merged) {
-		Map<BoundCommandGroup, Set<BoundCommandGroup>> result = merged.get(type);
+	private Map<BoundCommandGroup, Set<BoundCommandGroup>> mergeOperations(TLClass type, TypeEntry entry,
+			Map<TLClass, Map<BoundCommandGroup, Set<BoundCommandGroup>>> classDeclarations) {
+		Map<BoundCommandGroup, Set<BoundCommandGroup>> result = entry._declaredOperations;
 		if (result != null) {
 			return result;
 		}
 		result = new HashMap<>();
 		// Guards against a cyclic generalization hierarchy.
-		merged.put(type, result);
+		entry._declaredOperations = result;
 		for (TLClass generalization : type.getGeneralizations()) {
-			addDeclarations(result, mergeOperations(generalization, classDeclarations, merged));
+			addDeclarations(result, mergeOperations(generalization, entry(generalization), classDeclarations));
 		}
 		addDeclarations(result, _moduleDeclarations.getOrDefault(type.getModule(), Collections.emptyMap()));
 		addDeclarations(result, classDeclarations.getOrDefault(type, Collections.emptyMap()));
+		if (!result.isEmpty()) {
+			entry._operations = new ApplicableOperations(result);
+		}
 		return result;
 	}
 
@@ -650,7 +740,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		}
 
 		Set<BoundCommandGroup> reported = new HashSet<>();
-		checkCycles(context, _classOperations, reported);
+		Map<TLClass, ApplicableOperations> classOperations = new LinkedHashMap<>();
+		for (TLClass type : startupTypes()) {
+			classOperations.put(type, getOperations(type));
+		}
+		checkCycles(context, classOperations, reported);
 		checkCycles(context, _singletonOperations, reported);
 	}
 
@@ -694,18 +788,24 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	/**
-	 * Adds to the rights of every type and singleton the roles holding an operation because they
-	 * are granted an operation implying it.
+	 * Adds to the rights of the given type the roles holding an operation because they are granted
+	 * an operation implying it.
 	 */
-	private void applyImplications() {
-		for (Map.Entry<TLClass, ApplicableOperations> entry : _classOperations.entrySet()) {
-			TLClass type = entry.getKey();
-			Map<BoundCommandGroup, Set<BoundedRole>> implied =
-				impliedRights(entry.getValue(), operation -> getAllowedRoles(type, operation));
-			if (!implied.isEmpty()) {
-				addRights(_expandedClassRights.computeIfAbsent(type, unused -> new HashMap<>()), implied);
-			}
+	private static void applyImplications(TypeEntry entry) {
+		Map<BoundCommandGroup, Set<BoundedRole>> implied =
+			impliedRights(entry._operations, operation -> entry.roles(operation));
+		if (!implied.isEmpty()) {
+			Map<BoundCommandGroup, Set<BoundedRole>> rights = new HashMap<>(entry._rights);
+			addRights(rights, implied);
+			entry._rights = rights;
 		}
+	}
+
+	/**
+	 * Adds to the rights of every singleton with operations of its own the roles holding an
+	 * operation because they are granted an operation implying it.
+	 */
+	private void applySingletonImplications() {
 		for (Map.Entry<TLObject, ApplicableOperations> entry : _singletonOperations.entrySet()) {
 			TLObject singleton = entry.getKey();
 			Map<BoundCommandGroup, Set<BoundedRole>> implied =
@@ -739,31 +839,46 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		return result;
 	}
 
-	private void computeDiscoverRoles() {
-		for (TLClass type : TLModelUtil.getAllGlobalClasses(_applicationModel)) {
-			Set<BoundedRole> roles = new HashSet<>();
-			for (TLStructuredTypePart part : type.getAllParts()) {
-				_typePartRights.getOrDefault(part.getDefinition(), Collections.emptyMap()).values()
-					.forEach(roles::addAll);
-				if (part instanceof TLReference reference && reference.isComposite()
-					&& reference.getType() instanceof TLClass target) {
-					for (TLClass created : TLModelUtil.getConcreteSpecializations(target)) {
-						roles.addAll(getAllowedRoles(created, SimpleBoundCommandGroup.CREATE));
+	/**
+	 * Computes the roles holding {@link SimpleBoundCommandGroup#DISCOVER} on the instances of the
+	 * given class: the union of all roles of its class rights, of the rights of its attributes, and
+	 * of the {@link SimpleBoundCommandGroup#CREATE} rights of the types creatable in its
+	 * compositions.
+	 *
+	 * <p>
+	 * Of the types creatable in a composition, the classes indexed at startup count. A class
+	 * declared locally in an object holds the {@link SimpleBoundCommandGroup#CREATE} rights it
+	 * inherits, which enter the union through its concrete global generalizations.
+	 * </p>
+	 */
+	private void computeDiscoverRoles(TLClass type, TypeEntry entry) {
+		Set<BoundedRole> roles = new HashSet<>();
+		for (Map<BoundCommandGroup, Set<BoundedRole>> partRights : entry._partRights.values()) {
+			partRights.values().forEach(roles::addAll);
+		}
+		for (TLStructuredTypePart part : type.getAllParts()) {
+			if (part instanceof TLReference reference && reference.isComposite()
+				&& reference.getType() instanceof TLClass target) {
+				for (TLClass created : TLModelUtil.getConcreteSpecializations(target)) {
+					TypeEntry createdEntry = _globalEntries.get(created);
+					if (createdEntry != null) {
+						roles.addAll(createdEntry.roles(SimpleBoundCommandGroup.CREATE));
 					}
 				}
 			}
-			if (!roles.isEmpty()) {
-				_discoverRolesWithoutClassRights.put(type, new HashSet<>(roles));
-			}
-			_expandedClassRights.getOrDefault(type, Collections.emptyMap()).values().forEach(roles::addAll);
-			if (!roles.isEmpty()) {
-				_discoverRoles.put(type, roles);
-			}
+		}
+		if (!roles.isEmpty()) {
+			entry._discoverRolesWithoutClassRights = new HashSet<>(roles);
+		}
+		entry._rights.values().forEach(roles::addAll);
+		if (!roles.isEmpty()) {
+			entry._discoverRoles = roles;
 		}
 	}
 
 	/**
-	 * Indexes every type whose objects a composition holds to the types owning such a composition.
+	 * Indexes every class indexed at startup whose objects a composition holds to the global classes
+	 * owning such a composition.
 	 * <p>
 	 * A composition holding a type holds its specializations as well, so each of them is indexed.
 	 * </p>
@@ -774,7 +889,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 				if (part instanceof TLReference reference && reference.isComposite()
 					&& reference.getType() instanceof TLClass target) {
 					for (TLClass contained : TLModelUtil.getReflexiveTransitiveSpecializations(target)) {
-						_containerTypes.computeIfAbsent(contained, unused -> new HashSet<>()).add(owner);
+						TypeEntry entry = _globalEntries.get(contained);
+						if (entry != null) {
+							entry._containerTypes.add(owner);
+						}
 					}
 				}
 			}
@@ -782,40 +900,34 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	/**
-	 * Resolves the access parent of every type: the one configured for it, or else the one its
-	 * generalizations pass on.
-	 */
-	private void inheritAccessParents(Map<TLClass, AccessParentFunction> explicitParents) {
-		for (TLClass type : TLModelUtil.getAllGlobalClasses(_applicationModel)) {
-			inheritAccessParent(type, explicitParents);
-		}
-	}
-
-	/**
-	 * Enters the access parent of the given type into {@link #_accessParents}, see
-	 * {@link #inheritAccessParents(Map)}.
+	 * Resolves the access parent of the given type into its entry: the one configured for it, or
+	 * else the one its generalizations pass on.
 	 * 
 	 * @return Whether the type or one of its generalizations has a setting.
 	 */
-	private boolean inheritAccessParent(TLClass type, Map<TLClass, AccessParentFunction> explicitParents) {
-		if (_accessParents.containsKey(type)) {
-			return true;
+	private boolean inheritAccessParent(TLClass type, TypeEntry entry,
+			Map<TLClass, AccessParentFunction> explicitParents) {
+		if (entry._accessParentResolved) {
+			return entry._hasAccessParent;
 		}
+		entry._accessParentResolved = true;
 		if (explicitParents.containsKey(type)) {
-			_accessParents.put(type, explicitParents.get(type));
+			entry._hasAccessParent = true;
+			entry._accessParent = explicitParents.get(type);
 			return true;
 		}
 		for (TLClass generalization : type.getGeneralizations()) {
-			if (inheritAccessParent(generalization, explicitParents)) {
-				_accessParents.put(type, _accessParents.get(generalization));
+			TypeEntry generalizationEntry = entry(generalization);
+			if (inheritAccessParent(generalization, generalizationEntry, explicitParents)) {
+				entry._hasAccessParent = true;
+				entry._accessParent = generalizationEntry._accessParent;
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private void handleTLModule(InstantiationContext context, TLObject part, TLModuleAccessRights config,
-			Map<TLModule, List<ResolvedRule>> moduleRules) {
+	private void handleTLModule(InstantiationContext context, TLObject part, TLModuleAccessRights config) {
 		if (!(part instanceof TLModule module)) {
 			context.error("The configured part " + part + " is not a module.");
 			return;
@@ -826,20 +938,151 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (config.isInternal()) {
 			_declaredInternal.add(module);
 		}
-		moduleRules.computeIfAbsent(module, unused -> new ArrayList<>())
+		_moduleRules.computeIfAbsent(module, unused -> new ArrayList<>())
 			.addAll(resolveRules(context, config, moduleOperations(module)));
 	}
 
+	/**
+	 * Enters the rights of a {@link TLPartAccessRights part entry} into {@link #_declaredPartRights}
+	 * under the type named in the entry, which may define, override or only inherit the attribute.
+	 */
 	private void handleTLPart(InstantiationContext context, TLObject part, TLPartAccessRights config) {
 		if (!(part instanceof TLStructuredTypePart typePart)) {
 			context.error("The configured part " + part + " is not a structured type part.");
 			return;
 		}
-		Predicate<BoundCommandGroup> applies = typePart.getOwner() instanceof TLClass owner
-			? getOperations(owner)::appliesTo
+		String qualifiedName = config.getName();
+		String typeName =
+			qualifiedName.substring(0, qualifiedName.lastIndexOf(TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR));
+		// The part was resolved in this type, which is therefore a structured type.
+		TLStructuredType type = (TLStructuredType) TLModelUtil.findType(_applicationModel, typeName);
+		Predicate<BoundCommandGroup> applies = type instanceof TLClass clazz
+			? getOperations(clazz)::appliesTo
 			: ApplicableOperations::isBuiltIn;
 		applyRules(resolveRules(context, config, applies),
-			_typePartRights.computeIfAbsent(typePart.getDefinition(), unused -> new HashMap<>()));
+			_declaredPartRights.computeIfAbsent(type, unused -> new HashMap<>())
+				.computeIfAbsent(typePart.getName(), unused -> new HashMap<>()));
+	}
+
+	/**
+	 * Computes the attribute rights in effect for the given class, see {@link TypeEntry#_partRights}.
+	 *
+	 * <p>
+	 * Attribute rights that contradict each other, because two independent generalizations of a
+	 * class pass on different rights for the same attribute and the class has no rights of its own
+	 * for it, are reported as configuration error. The attribute then has no attribute rights.
+	 * </p>
+	 *
+	 * @param error
+	 *        Reports a configuration error.
+	 */
+	private void computePartRights(TLClass type, TypeEntry entry, Consumer<String> error) {
+		if (_declaredPartRights.isEmpty()) {
+			return;
+		}
+		Map<String, Map<BoundCommandGroup, Set<BoundedRole>>> rights = new HashMap<>();
+		for (Map.Entry<String, Set<TLClass>> origin : partRightOrigins(type, entry).entrySet()) {
+			String name = origin.getKey();
+			Set<TLClass> sources = origin.getValue();
+			if (contradicts(sources, name)) {
+				if (!inheritsContradiction(type, name)) {
+					error.accept("The attribute rights of " + TLModelUtil.qualifiedName(type)
+						+ TLModelUtil.QUALIFIED_NAME_PART_SEPARATOR + name
+						+ " are ambiguous: its generalizations "
+						+ sources.stream().map(TLModelUtil::qualifiedName).sorted().toList()
+						+ " define different rights for the attribute. Configure the attribute rights for "
+						+ TLModelUtil.qualifiedName(type) + " itself.");
+				}
+				continue;
+			}
+			rights.put(name, _declaredPartRights.get(sources.iterator().next()).get(name));
+		}
+		entry._partRights = rights;
+	}
+
+	/**
+	 * Whether the given types configure different attribute rights for the attribute with the given
+	 * name.
+	 */
+	private boolean contradicts(Set<TLClass> sources, String name) {
+		Map<BoundCommandGroup, Set<BoundedRole>> rights = null;
+		for (TLClass source : sources) {
+			Map<BoundCommandGroup, Set<BoundedRole>> sourceRights = _declaredPartRights.get(source).get(name);
+			if (rights == null) {
+				rights = sourceRights;
+			} else if (!rights.equals(sourceRights)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Whether a generalization of the given type already has contradicting attribute rights for
+	 * the given attribute, so that the contradiction is reported there.
+	 */
+	private boolean inheritsContradiction(TLClass type, String name) {
+		for (TLClass generalization : type.getGeneralizations()) {
+			TypeEntry generalizationEntry = entry(generalization);
+			Set<TLClass> sources = partRightOrigins(generalization, generalizationEntry).get(name);
+			if (sources != null && contradicts(sources, name)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * The types whose {@link #_declaredPartRights} are in effect for the given type, by attribute
+	 * name, entered into the given entry of the type.
+	 *
+	 * <p>
+	 * For an attribute the type has rights for itself, this is the type alone. Otherwise, the types
+	 * the generalizations of the type pass on, without those that are a generalization of another
+	 * one of them, since the rights of the more specific type win. More than one type remains only
+	 * if independent generalizations configure rights for the attribute.
+	 * </p>
+	 */
+	private Map<String, Set<TLClass>> partRightOrigins(TLClass type, TypeEntry typeEntry) {
+		Map<String, Set<TLClass>> result = typeEntry._partRightOrigins;
+		if (result != null) {
+			return result;
+		}
+		result = new HashMap<>();
+		for (TLClass generalization : type.getGeneralizations()) {
+			for (Map.Entry<String, Set<TLClass>> entry : partRightOrigins(generalization, entry(generalization))
+				.entrySet()) {
+				result.computeIfAbsent(entry.getKey(), unused -> new LinkedHashSet<>()).addAll(entry.getValue());
+			}
+		}
+		for (Set<TLClass> sources : result.values()) {
+			if (sources.size() > 1) {
+				List<TLClass> candidates = new ArrayList<>(sources);
+				sources.removeIf(source -> candidates.stream()
+					.anyMatch(other -> other != source && TLModelUtil.isGeneralization(source, other)));
+			}
+		}
+		for (String name : _declaredPartRights.getOrDefault(type, Collections.emptyMap()).keySet()) {
+			result.put(name, Collections.singleton(type));
+		}
+		typeEntry._partRightOrigins = result;
+		return result;
+	}
+
+	/**
+	 * The attribute rights in effect for the attribute with the given name on objects of the given
+	 * type, see {@link TypeEntry#_partRights}.
+	 *
+	 * @return The roles granted each operation; empty when no attribute rights apply.
+	 */
+	private Map<BoundCommandGroup, Set<BoundedRole>> partRights(TLStructuredType type, String name) {
+		Map<String, Map<BoundCommandGroup, Set<BoundedRole>>> rights = type instanceof TLClass clazz
+			? entry(clazz)._partRights
+			: _declaredPartRights.get(type);
+		if (rights == null) {
+			return Collections.emptyMap();
+		}
+		return rights.getOrDefault(name, Collections.emptyMap());
 	}
 
 	private void handleTLSingleton(InstantiationContext context, TLObject singleton, TLSingletonAccessRights config) {
@@ -903,7 +1146,8 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	/**
-	 * The types carrying a mark, each mapped to the part whose definition declares it.
+	 * The part whose definition declares the given mark of the given type, entered into the given
+	 * entry of the type.
 	 *
 	 * <p>
 	 * A type is marked when its own definition declares the mark, when one of its generalizations
@@ -913,39 +1157,21 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * the generalizations taken in their declared order; the module of the type.
 	 * </p>
 	 *
-	 * @param declared
-	 *        The types and modules whose definition declares the mark.
-	 *
 	 * @see TypeBasedAccessRights#isWithoutSecurity()
 	 * @see TypeBasedAccessRights#isInternal()
 	 */
-	private Map<TLClass, TLModelPart> origins(Set<TLModelPart> declared) {
-		Map<TLClass, TLModelPart> result = new HashMap<>();
-		if (declared.isEmpty()) {
-			return result;
-		}
-		Map<TLClass, Optional<TLModelPart>> cache = new HashMap<>();
-		for (TLClass type : TLModelUtil.getAllGlobalClasses(_applicationModel)) {
-			origin(type, declared, cache).ifPresent(origin -> result.put(type, origin));
-		}
-		return result;
-	}
-
-	/**
-	 * The part declaring the mark of the given type, see {@link #origins(Set)}.
-	 */
-	private static Optional<TLModelPart> origin(TLClass type, Set<TLModelPart> declared,
-			Map<TLClass, Optional<TLModelPart>> cache) {
-		Optional<TLModelPart> known = cache.get(type);
+	private Optional<TLModelPart> markOrigin(TLClass type, TypeEntry entry, Mark mark) {
+		Optional<TLModelPart> known = mark.get(entry);
 		if (known != null) {
 			return known;
 		}
+		Set<TLModelPart> declared = mark == Mark.WITHOUT_SECURITY ? _declaredWithoutSecurity : _declaredInternal;
 		Optional<TLModelPart> result = Optional.empty();
 		if (declared.contains(type)) {
 			result = Optional.of(type);
 		} else {
 			for (TLClass generalization : type.getGeneralizations()) {
-				result = origin(generalization, declared, cache);
+				result = markOrigin(generalization, entry(generalization), mark);
 				if (result.isPresent()) {
 					break;
 				}
@@ -954,18 +1180,18 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 				result = Optional.of(type.getModule());
 			}
 		}
-		cache.put(type, result);
+		mark.set(entry, result);
 		return result;
 	}
 
 	@Override
 	public boolean isInternal(TLClass type) {
-		return _internalTypes.containsKey(type);
+		return entry(type)._internal.isPresent();
 	}
 
 	@Override
 	public TLModelPart getInternalOrigin(TLClass type) {
-		return _internalTypes.get(type);
+		return entry(type)._internal.orElse(null);
 	}
 
 	/**
@@ -986,12 +1212,12 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 */
 	@Override
 	public boolean isWithoutSecurity(TLClass type) {
-		return _typesWithoutSecurity.containsKey(type);
+		return entry(type)._withoutSecurity.isPresent();
 	}
 
 	@Override
 	public TLModelPart getWithoutSecurityOrigin(TLClass type) {
-		return _typesWithoutSecurity.get(type);
+		return entry(type)._withoutSecurity.orElse(null);
 	}
 
 	/**
@@ -1002,10 +1228,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 */
 	@Override
 	public AccessParentFunction getAccessParent(TLClass type) {
-		if (_accessParents.containsKey(type)) {
-			return _accessParents.get(type);
+		TypeEntry entry = entry(type);
+		if (entry._hasAccessParent) {
+			return entry._accessParent;
 		}
-		if (_containerTypes.containsKey(type) && !isWithoutSecurity(type) && !isInternal(type)
+		if (!entry._containerTypes.isEmpty() && entry._withoutSecurity.isEmpty() && entry._internal.isEmpty()
 			&& !accessManager().hasRoleSource(type)) {
 			return ContainerRelation.DEFAULT;
 		}
@@ -1025,7 +1252,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return Collections.emptySet();
 		}
 		if (parent instanceof ContainerRelation container && container.composition() == null) {
-			return _containerTypes.getOrDefault(type, Collections.emptySet());
+			return Collections.unmodifiableSet(entry(type)._containerTypes);
 		}
 		return parent.getParentTypes(type);
 	}
@@ -1116,33 +1343,17 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	/**
-	 * Computes the rights of all types, processing each type after its generalizations, so that a
-	 * type sees the rights its generalizations pass on.
-	 */
-	private void computeClassRights(Map<TLClass, List<ResolvedRule>> classRules,
-			Map<TLModule, List<ResolvedRule>> moduleRules) {
-		Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> passedOn = new HashMap<>();
-		for (TLClass type : TLModelUtil.getAllGlobalClasses(_applicationModel)) {
-			computeClassRights(type, classRules, moduleRules, passedOn);
-		}
-		for (TLClass type : classRules.keySet()) {
-			computeClassRights(type, classRules, moduleRules, passedOn);
-		}
-	}
-
-	/**
-	 * Computes the rights of the given type and returns the rights it passes on to its
-	 * specializations.
+	 * Computes the rights of the given type into its entry and returns the rights it passes on to
+	 * its specializations. The rights of its generalizations are computed first.
 	 *
 	 * @implNote The rights a type requires start out as the union of the rights all its
 	 *           generalizations pass on. On top of that, the rules of the type's module are applied
 	 *           as an additive baseline, followed by the rules configured for the type itself. A
 	 *           rule marked as inherited adjusts the passed on rights as well.
 	 */
-	private Map<BoundCommandGroup, Set<BoundedRole>> computeClassRights(TLClass type,
-			Map<TLClass, List<ResolvedRule>> classRules, Map<TLModule, List<ResolvedRule>> moduleRules,
-			Map<TLClass, Map<BoundCommandGroup, Set<BoundedRole>>> passedOn) {
-		Map<BoundCommandGroup, Set<BoundedRole>> inheritable = passedOn.get(type);
+	private Map<BoundCommandGroup, Set<BoundedRole>> computeClassRights(TLClass type, TypeEntry entry,
+			Map<TLClass, List<ResolvedRule>> classRules) {
+		Map<BoundCommandGroup, Set<BoundedRole>> inheritable = entry._passedOnRights;
 		if (inheritable != null) {
 			return inheritable;
 		}
@@ -1151,20 +1362,18 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		inheritable = new HashMap<>();
 		for (TLClass generalization : type.getGeneralizations()) {
 			Map<BoundCommandGroup, Set<BoundedRole>> inherited =
-				computeClassRights(generalization, classRules, moduleRules, passedOn);
+				computeClassRights(generalization, entry(generalization), classRules);
 			addRights(effective, inherited);
 			addRights(inheritable, inherited);
 		}
-		applyRules(moduleRules.getOrDefault(type.getModule(), Collections.emptyList()), effective, inheritable);
+		applyRules(_moduleRules.getOrDefault(type.getModule(), Collections.emptyList()), effective, inheritable);
 		Map<BoundCommandGroup, Set<BoundedRole>> inherited = new HashMap<>();
 		addRights(inherited, effective);
-		_inheritedClassRights.put(type, inherited);
+		entry._inheritedRights = inherited;
 		applyRules(classRules.getOrDefault(type, Collections.emptyList()), effective, inheritable);
 
-		if (!effective.isEmpty()) {
-			_expandedClassRights.put(type, effective);
-		}
-		passedOn.put(type, inheritable);
+		entry._rights = effective;
+		entry._passedOnRights = inheritable;
 		return inheritable;
 	}
 
@@ -1234,7 +1443,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 				Set<BoundedRole> all = new HashSet<>();
 				singletonRights.values().forEach(all::addAll);
 				if (object.tType() instanceof TLClass clazz) {
-					all.addAll(_discoverRolesWithoutClassRights.getOrDefault(clazz, Collections.emptySet()));
+					all.addAll(entry(clazz)._discoverRolesWithoutClassRights);
 				}
 				return all;
 			}
@@ -1251,7 +1460,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	@Override
 	public ApplicableOperations getOperations(TLClass type) {
-		return _classOperations.getOrDefault(type, ApplicableOperations.BUILT_IN_ONLY);
+		return entry(type)._operations;
 	}
 
 	@Override
@@ -1270,26 +1479,28 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 */
 	@Override
 	public Set<BoundedRole> getAllowedRoles(TLClass type, BoundCommandGroup commandGroup) {
-		if (SimpleBoundCommandGroup.DISCOVER.equals(commandGroup)) {
-			return _discoverRoles.getOrDefault(type, Collections.emptySet());
-		}
-		return _expandedClassRights
-			.getOrDefault(type, Collections.emptyMap())
-			.getOrDefault(commandGroup, Collections.emptySet());
+		return entry(type).roles(commandGroup);
 	}
 
 	@Override
 	public Set<BoundedRole> getInheritedRoles(TLClass type, BoundCommandGroup commandGroup) {
-		return _inheritedClassRights
-			.getOrDefault(type, Collections.emptyMap())
-			.getOrDefault(commandGroup, Collections.emptySet());
+		return entry(type)._inheritedRights.getOrDefault(commandGroup, Collections.emptySet());
 	}
 
 	@Override
 	public Set<BoundedRole> getAllowedRoles(TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
-		return _typePartRights
-			.getOrDefault(attribute.getDefinition(), Collections.emptyMap())
-			.getOrDefault(commandGroup, Collections.emptySet());
+		return partRights(attribute.getOwner(), attribute.getName()).getOrDefault(commandGroup, Collections.emptySet());
+	}
+
+	@Override
+	public Set<BoundedRole> getAllowedRoles(TLClass type, TLStructuredTypePart attribute,
+			BoundCommandGroup commandGroup) {
+		return partRights(type, attribute.getName()).getOrDefault(commandGroup, Collections.emptySet());
+	}
+
+	@Override
+	public boolean hasGrant(TLClass type, TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
+		return partRights(type, attribute.getName()).containsKey(commandGroup);
 	}
 
 	@Override
@@ -1309,9 +1520,16 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	@Override
 	public boolean hasGrant(TLStructuredTypePart attribute, BoundCommandGroup commandGroup) {
-		return _typePartRights
-			.getOrDefault(attribute.getDefinition(), Collections.emptyMap())
-			.containsKey(commandGroup);
+		TLStructuredType owner = attribute.getOwner();
+		if (!(owner instanceof TLClass ownerClass)) {
+			return partRights(owner, attribute.getName()).containsKey(commandGroup);
+		}
+		for (TLClass type : TLModelUtil.getReflexiveTransitiveSpecializations(ownerClass)) {
+			if (hasGrant(type, attribute, commandGroup)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
@@ -1322,9 +1540,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// nor on its attribute values.
 			return true;
 		}
-		Map<BoundCommandGroup, Set<BoundedRole>> partRights =
-			_typePartRights.getOrDefault(attribute.getDefinition(), Collections.emptyMap());
-		Set<BoundedRole> requiredPartRoles = partRights.get(commandGroup);
+		Set<BoundedRole> requiredPartRoles = partRights(type, attribute.getName()).get(commandGroup);
 		if (requiredPartRoles == null) {
 			// No attribute-level grant: the attribute is not restricted beyond the object. The right
 			// to create the object covers its initial values, independent of the person (a transient
@@ -1387,14 +1603,14 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 
 	@Override
 	public boolean isAllowed(Person person, TLObject instance, BoundCommandGroup commandGroup) {
-		if (!(instance instanceof BoundObject)) {
+		if (!isPersistent(instance)) {
 			return true;
 		}
 		if (isDeleted(instance)) {
 			// A deleted object is accessible for nobody, and its type must not be read.
 			return false;
 		}
-		if (instance instanceof TLModelPart && SimpleBoundCommandGroup.DISCOVER.equals(commandGroup)) {
+		if (instance instanceof TLModelPart && isMetaDataAccess(commandGroup)) {
 			// A model element is meta-data, not a business object, see
 			// ModelAccessRights#isDiscoverAllowed(Person, TLObject).
 			return true;
@@ -1409,6 +1625,32 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return allowedBypass;
 		}
 		return decide(decisionCache(), person, instance, commandGroup);
+	}
+
+	/**
+	 * Whether the given object is a persistent object, the object a {@link KnowledgeItem} stands
+	 * for.
+	 *
+	 * <p>
+	 * A transient object, a form object editing a persistent object, and <code>null</code> are no
+	 * persistent objects, they are not access controlled.
+	 * </p>
+	 */
+	private static boolean isPersistent(TLObject object) {
+		return object != null && !object.tTransient() && object.tHandle().getWrapper() == object;
+	}
+
+	/**
+	 * Whether the given operation only reads a {@link TLModelPart model element}, which every person
+	 * may do.
+	 *
+	 * <p>
+	 * Modifying, creating and deleting a model element is checked like any other operation.
+	 * </p>
+	 */
+	private static boolean isMetaDataAccess(BoundCommandGroup commandGroup) {
+		return SimpleBoundCommandGroup.DISCOVER.equals(commandGroup)
+			|| SimpleBoundCommandGroup.READ.equals(commandGroup);
 	}
 
 	/**
@@ -1486,8 +1728,12 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			}
 			return false;
 		}
+		if (!(instance instanceof BoundObject holder)) {
+			// A persistent object that cannot hold roles grants no role to anybody.
+			return false;
+		}
 		Set<BoundedRole> roles = getRoles(instance, commandGroup);
-		return accessManager().hasRole(person, (BoundObject) instance, roles);
+		return accessManager().hasRole(person, holder, roles);
 	}
 
 	/**
@@ -1613,7 +1859,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	@Override
 	public boolean isAllowed(Person person, TLObject instance, TLStructuredTypePart attribute,
 			BoundCommandGroup commandGroup) {
-		if (!(instance instanceof BoundObject)) {
+		if (!isPersistent(instance)) {
 			return true;
 		}
 		if (isDeleted(instance)) {
@@ -1633,8 +1879,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// nor on its attribute values.
 			return true;
 		}
-		Map<BoundCommandGroup, Set<BoundedRole>> partRights =
-			_typePartRights.getOrDefault(attribute.getDefinition(), Collections.emptyMap());
+		Map<BoundCommandGroup, Set<BoundedRole>> partRights = partRights(instance.tType(), attribute.getName());
 		if (!partRights.containsKey(commandGroup)) {
 			// No grant of the attribute itself: the class decision applies.
 			return decide(decisionCache(), person, instance, commandGroup);
@@ -1839,6 +2084,186 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		}
 		decisions.put(commandGroup, Boolean.valueOf(result));
 		return result;
+	}
+
+	/**
+	 * The access control settings of a class, computed from the configuration of this service.
+	 *
+	 * <p>
+	 * The settings are written while they are computed, see {@link SecurityConfigurationService#entry(TLClass)},
+	 * and not changed afterwards. A setting computed from the settings of the generalizations is
+	 * <code>null</code> until it is computed.
+	 * </p>
+	 */
+	private static final class TypeEntry {
+
+		/**
+		 * The operations declared for the class, its generalizations and their modules, each mapped
+		 * to the operations declared to imply it.
+		 */
+		Map<BoundCommandGroup, Set<BoundCommandGroup>> _declaredOperations;
+
+		/**
+		 * The operations applying to the class.
+		 *
+		 * @see SecurityConfigurationService#getOperations(TLClass)
+		 */
+		ApplicableOperations _operations = ApplicableOperations.BUILT_IN_ONLY;
+
+		/**
+		 * The rights the class passes on to its specializations.
+		 */
+		Map<BoundCommandGroup, Set<BoundedRole>> _passedOnRights;
+
+		/**
+		 * The rights of the class before the rules of its own entry are applied.
+		 *
+		 * @see SecurityConfigurationService#getInheritedRoles(TLClass, BoundCommandGroup)
+		 */
+		Map<BoundCommandGroup, Set<BoundedRole>> _inheritedRights = Collections.emptyMap();
+
+		/**
+		 * The rights of the class, including the roles granted an operation implying another one.
+		 */
+		Map<BoundCommandGroup, Set<BoundedRole>> _rights = Collections.emptyMap();
+
+		/**
+		 * The types whose attribute rights are in effect for the class, by attribute name.
+		 *
+		 * @see SecurityConfigurationService#partRightOrigins(TLClass, TypeEntry)
+		 */
+		Map<String, Set<TLClass>> _partRightOrigins;
+
+		/**
+		 * The attribute rights in effect for the class, by attribute name: the most specific entry
+		 * of {@link SecurityConfigurationService#_declaredPartRights} on the way from the class to
+		 * its generalizations.
+		 */
+		Map<String, Map<BoundCommandGroup, Set<BoundedRole>>> _partRights = Collections.emptyMap();
+
+		/**
+		 * The roles holding {@link SimpleBoundCommandGroup#DISCOVER} on the instances of the class.
+		 *
+		 * @see SecurityConfigurationService#computeDiscoverRoles(TLClass, TypeEntry)
+		 */
+		Set<BoundedRole> _discoverRoles = Collections.emptySet();
+
+		/**
+		 * The part of the {@link #_discoverRoles} that does not stem from the class rights: the
+		 * roles of the rights of its attributes and the {@link SimpleBoundCommandGroup#CREATE}
+		 * rights of the types creatable in its compositions.
+		 *
+		 * <p>
+		 * A singleton with rights of its own replaces the class rights by its own rights, but is
+		 * discoverable by the rights on its attributes and compositions as well.
+		 * </p>
+		 */
+		Set<BoundedRole> _discoverRolesWithoutClassRights = Collections.emptySet();
+
+		/**
+		 * The part whose definition excludes the class from access control, if any.
+		 *
+		 * @see SecurityConfigurationService#getWithoutSecurityOrigin(TLClass)
+		 */
+		Optional<TLModelPart> _withoutSecurity;
+
+		/**
+		 * The part whose definition declares the class internal, if any.
+		 *
+		 * @see SecurityConfigurationService#getInternalOrigin(TLClass)
+		 */
+		Optional<TLModelPart> _internal;
+
+		/**
+		 * Whether {@link #_hasAccessParent} and {@link #_accessParent} are resolved.
+		 */
+		boolean _accessParentResolved;
+
+		/**
+		 * Whether the class or one of its generalizations has an access parent setting.
+		 */
+		boolean _hasAccessParent;
+
+		/**
+		 * The access parent setting of the class; <code>null</code> for a class deciding for
+		 * itself.
+		 */
+		AccessParentFunction _accessParent;
+
+		/**
+		 * The global classes owning a composition that holds objects of the class.
+		 */
+		Set<TLClass> _containerTypes = new HashSet<>();
+
+		/**
+		 * The settings of a class without any: no operation declared, no right granted, no mark, no
+		 * access parent and no container.
+		 */
+		static TypeEntry none() {
+			TypeEntry result = new TypeEntry();
+			result._declaredOperations = Collections.emptyMap();
+			result._passedOnRights = Collections.emptyMap();
+			result._partRightOrigins = Collections.emptyMap();
+			result._withoutSecurity = Optional.empty();
+			result._internal = Optional.empty();
+			result._accessParentResolved = true;
+			result._containerTypes = Collections.emptySet();
+			return result;
+		}
+
+		/**
+		 * The roles granted the given operation on instances of the class.
+		 */
+		Set<BoundedRole> roles(BoundCommandGroup operation) {
+			if (SimpleBoundCommandGroup.DISCOVER.equals(operation)) {
+				return _discoverRoles;
+			}
+			return _rights.getOrDefault(operation, Collections.emptySet());
+		}
+	}
+
+	/**
+	 * The marks of a {@link TypeBasedAccessRights type based entry}, see
+	 * {@link SecurityConfigurationService#markOrigin(TLClass, TypeEntry, Mark)}.
+	 */
+	private enum Mark {
+
+		/** @see TypeBasedAccessRights#isWithoutSecurity() */
+		WITHOUT_SECURITY {
+			@Override
+			Optional<TLModelPart> get(TypeEntry entry) {
+				return entry._withoutSecurity;
+			}
+
+			@Override
+			void set(TypeEntry entry, Optional<TLModelPart> origin) {
+				entry._withoutSecurity = origin;
+			}
+		},
+
+		/** @see TypeBasedAccessRights#isInternal() */
+		INTERNAL {
+			@Override
+			Optional<TLModelPart> get(TypeEntry entry) {
+				return entry._internal;
+			}
+
+			@Override
+			void set(TypeEntry entry, Optional<TLModelPart> origin) {
+				entry._internal = origin;
+			}
+		};
+
+		/**
+		 * The part declaring this mark of the class of the given entry; <code>null</code> when not
+		 * yet computed.
+		 */
+		abstract Optional<TLModelPart> get(TypeEntry entry);
+
+		/**
+		 * Enters the part declaring this mark into the given entry.
+		 */
+		abstract void set(TypeEntry entry, Optional<TLModelPart> origin);
 	}
 
 	/**

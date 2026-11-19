@@ -17,6 +17,9 @@ interface FocusTrap {
 }
 
 const _traps: FocusTrap[] = [];
+
+/** Told whenever a trap is released, see {@link onTrapReleased}. */
+const _releaseListeners = new Set<() => void>();
 let _nextId = 1;
 let _installed = false;
 
@@ -25,11 +28,24 @@ let _installed = false;
  * inside a modal surface. Such an overlay renders at {@code document.body} (a portal escapes
  * the surface's overflow clipping) but logically belongs to the surface: focus moving into it
  * is not an escape from the surface's trap and must not be pulled back.
+ *
+ * <p>The value is the ID of the control the overlay belongs to (see {@link anchoredOverlayOf}), or
+ * empty where the overlay names none. Whatever looks up the control of an element - the tooltip of
+ * a {@code key:} declaration, answered by that control - continues at the named control when it
+ * reaches the overlay root, since the overlay is not inside the control's element.</p>
  */
 export const ANCHORED_OVERLAY_ATTR = 'data-tl-anchored-overlay';
 
 /** Props to spread onto the root element of a portaled, anchored overlay. */
 export const anchoredOverlayProps = { [ANCHORED_OVERLAY_ATTR]: '' } as const;
+
+/**
+ * Props to spread onto the root element of a portaled, anchored overlay that belongs to the
+ * control of the given ID, see {@link ANCHORED_OVERLAY_ATTR}.
+ */
+export function anchoredOverlayOf(controlId: string): Record<string, string> {
+  return { [ANCHORED_OVERLAY_ATTR]: controlId };
+}
 
 const FOCUSABLE = [
   'a[href]',
@@ -119,7 +135,35 @@ export function pushTrap(
     const i = _traps.indexOf(trap);
     if (i >= 0) {
       _traps.splice(i, 1);
+      for (const listener of Array.from(_releaseListeners)) {
+        listener();
+      }
     }
+  };
+}
+
+/**
+ * Whether the given element lies behind the topmost trap: a focus moved there would be pulled back
+ * into the modal surface.
+ */
+export function isBehindTrap(element: HTMLElement): boolean {
+  const el = topmostTrap()?.getElement();
+  if (!el) {
+    return false;
+  }
+  return !el.contains(element) && !element.closest(`[${ANCHORED_OVERLAY_ATTR}]`);
+}
+
+/**
+ * Registers a listener told whenever a trap is released - e.g. a dialog closes. It is told before
+ * the surface gives the focus back to where it was before it opened.
+ *
+ * @returns a function removing the listener.
+ */
+export function onTrapReleased(listener: () => void): () => void {
+  _releaseListeners.add(listener);
+  return () => {
+    _releaseListeners.delete(listener);
   };
 }
 

@@ -6,13 +6,12 @@
 package com.top_logic.layout.react.control.table;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
@@ -42,15 +41,17 @@ import de.haumacher.msgbuf.data.DataObject;
  * </p>
  *
  * <p>
- * The rows are grouped by one column at a time, which may also be a hidden one: the header menu of the table offers
- * the displayed columns alone, so the list is where the rows are grouped by a column the table does not display. A
- * tree table offers no grouping, its rows are structured by their nodes already.
+ * The rows are grouped by the columns whose toggles are pressed, which may also be hidden ones: the header menu of the
+ * table offers the displayed columns alone, so the list is where the rows are grouped by a column the table does not
+ * display. The toggle of a column the rows are not grouped by groups them by it, as the innermost group level if they
+ * are grouped already; the toggle of a grouping column removes the level of that column alone. A tree table offers no
+ * grouping, its rows are structured by their nodes already.
  * </p>
  *
  * <p>
  * The control holds no working copy of its own to be applied later: whoever shows it learns of every gesture that
  * changed something by {@link #setOnChange(Runnable)} and applies {@link #visibleColumns()}, {@link #lockedColumns()}
- * and {@link #groupedColumn()} then, so the table follows each click. The order, the eyes, the locks and the grouping
+ * and {@link #groupedColumns()} then, so the table follows each click. The order, the eyes, the locks and the grouping
  * all live on the server: every gesture is a command, and the resulting list is pushed back, exactly as dragging a
  * column header is handled by the {@link TableViewControl}.
  * </p>
@@ -79,13 +80,16 @@ public class ReactColumnSelectControl extends ReactControl {
 	public static final String CMD_COLUMN_LOCK = "columnLock";
 
 	/**
-	 * Command choosing the column to group the rows by, or none, with the arguments of the table's own
+	 * Command choosing the columns to group the rows by, or none, with the arguments of the table's own
 	 * {@link TableViewControl#CMD_GROUP}.
 	 */
 	public static final String CMD_GROUP = TableViewControl.CMD_GROUP;
 
 	/** State key of whether the rows can be grouped at all. */
 	public static final String GROUPABLE = "groupable";
+
+	/** State key of the edited grouping: the names of the grouping columns, outermost group level first. */
+	public static final String GROUPING = "grouping";
 
 	/**
 	 * State key of the revision: the number of commands of the column selection handled so far, refused ones included.
@@ -128,8 +132,8 @@ public class ReactColumnSelectControl extends ReactControl {
 	/** Whether the rows can be grouped at all. */
 	private final boolean _groupable;
 
-	/** The edited grouping: the column to group the rows by, {@code null} for none. */
-	private String _groupedColumn;
+	/** The edited grouping: the columns to group the rows by, outermost group level first, empty for none. */
+	private List<String> _groupedColumns;
 
 	/** The number of commands handled, pushed as {@link #REVISION}. */
 	private int _revision;
@@ -150,17 +154,18 @@ public class ReactColumnSelectControl extends ReactControl {
 	 *        {@link com.top_logic.table.TableView#columnOptions()}).
 	 * @param lockedColumns
 	 *        The names of the columns the table freezes when the selection opens.
-	 * @param groupedColumn
-	 *        The column the rows are grouped by when the selection opens, {@code null} for none.
+	 * @param groupedColumns
+	 *        The columns the rows are grouped by when the selection opens, outermost group level first, empty for
+	 *        none.
 	 * @param groupable
 	 *        Whether the rows can be grouped at all. A tree table cannot: its rows are structured by their nodes
 	 *        already, so no column offers grouping then.
 	 */
 	public ReactColumnSelectControl(ReactContext context, List<ColumnOption> options, Set<String> lockedColumns,
-			String groupedColumn, boolean groupable) {
+			List<String> groupedColumns, boolean groupable) {
 		super(context, null, "TLColumnSelect");
 		_groupable = groupable;
-		_groupedColumn = groupedColumn;
+		_groupedColumns = List.copyOf(groupedColumns);
 		putState(GROUPABLE, Boolean.valueOf(groupable));
 		putState(REVISION, Integer.valueOf(_revision));
 		List<Entry> locked = new ArrayList<>();
@@ -213,14 +218,14 @@ public class ReactColumnSelectControl extends ReactControl {
 	}
 
 	/**
-	 * The column to group the rows by, {@code null} for none - the third part of the result.
+	 * The columns to group the rows by, outermost group level first, empty for none - the third part of the result.
 	 *
 	 * <p>
 	 * Unless the rows can be grouped, this is the grouping the selection opened with.
 	 * </p>
 	 */
-	public String groupedColumn() {
-		return _groupedColumn;
+	public List<String> groupedColumns() {
+		return _groupedColumns;
 	}
 
 	/**
@@ -250,7 +255,7 @@ public class ReactColumnSelectControl extends ReactControl {
 			return super.executeCommand(commandName, arguments);
 		} finally {
 			if (!_answered) {
-				afterEdit(_entries, _groupedColumn);
+				afterEdit(_entries, _groupedColumns);
 			}
 		}
 	}
@@ -264,7 +269,7 @@ public class ReactColumnSelectControl extends ReactControl {
 	 * client counts on an answer to every command it sent.
 	 * </p>
 	 */
-	private void afterEdit(List<Entry> before, String groupedBefore) {
+	private void afterEdit(List<Entry> before, List<String> groupedBefore) {
 		// Counted before anything that might fail, so that a failing listener does not have the command counted twice.
 		_answered = true;
 		_revision++;
@@ -272,7 +277,7 @@ public class ReactColumnSelectControl extends ReactControl {
 		pushEntries();
 		putState(REVISION, Integer.valueOf(_revision));
 		commitUpdate(token);
-		boolean changed = !before.equals(_entries) || !Objects.equals(groupedBefore, _groupedColumn);
+		boolean changed = !before.equals(_entries) || !groupedBefore.equals(_groupedColumns);
 		if (changed && _onChange != null) {
 			_onChange.run();
 		}
@@ -287,10 +292,11 @@ public class ReactColumnSelectControl extends ReactControl {
 			state.put(ENTRY_LABEL, resources.getString(entry.label()));
 			state.put(ENTRY_VISIBLE, Boolean.valueOf(entry.visible()));
 			state.put(ENTRY_LOCKED, Boolean.valueOf(entry.locked()));
-			state.put(ENTRY_GROUPED, Boolean.valueOf(entry.name().equals(_groupedColumn)));
+			state.put(ENTRY_GROUPED, Boolean.valueOf(_groupedColumns.contains(entry.name())));
 			entries.add(state);
 		}
 		putState(ENTRIES, entries);
+		putState(GROUPING, new ArrayList<>(_groupedColumns));
 	}
 
 	/**
@@ -336,7 +342,7 @@ public class ReactColumnSelectControl extends ReactControl {
 			_entries.add(args.isLocked() ? Math.min(target, block) : Math.max(target, block),
 				entry.withVisible(true).withLocked(args.isLocked()));
 		}
-		afterEdit(before, _groupedColumn);
+		afterEdit(before, _groupedColumns);
 	}
 
 	/**
@@ -361,7 +367,7 @@ public class ReactColumnSelectControl extends ReactControl {
 		} else {
 			_entries.set(index, entry.withVisible(args.isVisible()));
 		}
-		afterEdit(before, _groupedColumn);
+		afterEdit(before, _groupedColumns);
 	}
 
 	/**
@@ -382,17 +388,16 @@ public class ReactColumnSelectControl extends ReactControl {
 		List<Entry> before = List.copyOf(_entries);
 		Entry entry = _entries.remove(index).withLocked(args.isLocked());
 		_entries.add(lockedCount(), args.isLocked() ? entry.withVisible(true) : entry);
-		afterEdit(before, _groupedColumn);
+		afterEdit(before, _groupedColumns);
 	}
 
 	/**
-	 * Handles a click on the group toggle: the rows are grouped by the given column, or by none when the column is
-	 * empty.
+	 * Handles a click on a group toggle: the rows are grouped by the given columns, by none when there are none.
 	 *
 	 * <p>
-	 * The rows are grouped by one column at a time, so the client moves the grouping by naming another column and
-	 * removes it by naming none. A column the list does not offer, and any grouping of a table that cannot be grouped,
-	 * is ignored.
+	 * The client names the whole resulting grouping: the grouping with the column of the toggle appended as the
+	 * innermost level, or without it. A grouping naming a column the list does not offer or a column twice, and any
+	 * grouping of a table that cannot be grouped, is ignored.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_GROUP)
@@ -400,15 +405,17 @@ public class ReactColumnSelectControl extends ReactControl {
 		if (!_groupable) {
 			return;
 		}
-		String column = args.getColumn();
-		String before = _groupedColumn;
-		if (StringServices.isEmpty(column)) {
-			_groupedColumn = null;
-		} else if (indexOf(column) >= 0) {
-			_groupedColumn = column;
-		} else {
+		List<String> columns = args.getColumns();
+		if (new HashSet<>(columns).size() != columns.size()) {
 			return;
 		}
+		for (String column : columns) {
+			if (indexOf(column) < 0) {
+				return;
+			}
+		}
+		List<String> before = _groupedColumns;
+		_groupedColumns = List.copyOf(columns);
 		afterEdit(_entries, before);
 	}
 

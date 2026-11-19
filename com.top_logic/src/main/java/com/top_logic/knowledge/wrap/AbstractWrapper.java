@@ -40,9 +40,15 @@ import com.top_logic.knowledge.util.ReferenceAccess;
 import com.top_logic.knowledge.wrap.exceptions.InvalidWrapperException;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.model.TLObject;
+import com.top_logic.tool.boundsec.wrap.BoundWrapper;
 
 /**
  * Basic class for all wrappers.
+ * 
+ * <p>
+ * Every persistent object is a {@link com.top_logic.tool.boundsec.BoundObject} that can hold
+ * roles; its security behavior is defined by {@link BoundWrapper}.
+ * </p>
  * 
  * Serializable will only work for valid objects when writing.
  * Reading will not work when using custom wrapper factories,
@@ -50,7 +56,7 @@ import com.top_logic.model.TLObject;
  *
  * @author    <a href="mailto:mer@top-logic.com">Michael Eriksson</a>
  */
-public abstract class AbstractWrapper extends PersistentObject implements Wrapper {
+public abstract class AbstractWrapper extends PersistentObject implements BoundWrapper {
 
     /** Cached access to the {@link DataAccessProxy} */
     protected transient DataAccessProxy   dap;

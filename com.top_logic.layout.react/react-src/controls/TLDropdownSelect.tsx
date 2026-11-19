@@ -1,4 +1,4 @@
-import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, createPortal, useFieldLabelProps, ThemeIcon, useListReorder, reorderState, filterOptions, labelMatches, useFocusAfterRemove, usePart, OptionValues, ICON_HANDLE, ICON_CLEAR, ICON_SEARCH, ICON_LIST_OPEN, ICON_LIST_CLOSED, ICON_CONFIRM } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, useI18N, anchoredOverlayOf, optionTooltipProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, createPortal, useFieldLabelProps, ThemeIcon, useListReorder, reorderState, filterOptions, labelMatches, useFocusAfterRemove, usePart, OptionValues, ICON_HANDLE, ICON_SEARCH, ICON_LIST_OPEN, ICON_LIST_CLOSED, ICON_CONFIRM } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson, ReorderItemProps, ReorderHandleProps, ColorRole } from 'tl-react-bridge';
 import {
   ARG_OPTION,
@@ -10,6 +10,7 @@ import {
 import type { OptionDescriptor } from './selectOptions';
 import { chipFocusTargets } from './chip/chipFocus';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
+import { ClearButton, offersClearByModel } from './form/ClearButton';
 import { findTypeAheadMatch, isTypeAheadKey, useTypeAhead } from './typeAhead';
 
 const { useState, useCallback, useRef, useEffect, useMemo } = React;
@@ -81,6 +82,7 @@ function ValueChip({
       dragSource={itemProps}
       data-tl-state={dragState}
       {...{ [VALUE_CHIP_ATTR]: true }}
+      {...optionTooltipProps(option)}
     />
   );
 }
@@ -138,6 +140,7 @@ function OptionRow({
       className="tl-select__option"
       onClick={handleClick}
       onMouseEnter={onMouseEnter}
+      {...optionTooltipProps(option)}
     >
       <OptionLabel option={option} label={labelContent} />
       {selected && <ThemeIcon encoded={ICON_CONFIRM} className="tl-icon-sm tl-select__option-check" />}
@@ -193,6 +196,11 @@ function EntryRow({
  * an inactive one (`aria-disabled`, out of the tab order) that opens no list and offers neither the
  * clear button nor the removal and reordering of chips (see showsValueOnly).
  *
+ * Every option of the list, every chip of a chosen value and the single chosen value offer the
+ * explanation of their option as tooltip (see optionTooltipProps), which the server answers. The
+ * list is portaled out of the field and names the field as the control it belongs to (see
+ * anchoredOverlayOf), so that its options reach the field with their tooltips.
+ *
  * The list of a single select holds all options, the chosen one checked; opening it puts the
  * keyboard highlight on the chosen option and scrolls it into view, like a native select, and
  * choosing the chosen option again just closes the list. The list of a multi select holds only the
@@ -226,7 +234,6 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const value = (state.value ?? []) as OptionDescriptor[];
   const multiSelect = state.multiSelect === true;
   const customOrder = state.customOrder === true;
-  const mandatory = state.mandatory === true;
   const disabled = state.disabled === true;
   const editable = state.editable !== false;
   const optionsLoaded = state.optionsLoaded === true;
@@ -660,7 +667,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
 
   // -- Editable or disabled rendering --
 
-  const showClearButton = !mandatory && value.length > 0 && !disabled;
+  const showClearButton = offersClearByModel(state, value.length > 0);
   const listboxId = `${controlId}-listbox`;
 
   // The position is usePopover's (see above); layer, surface and shadow are the design system's
@@ -670,7 +677,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
       ref={popupRef}
       className="tl-popover tl-select__popup"
       style={{ ...popoverStyle, width: containerRef.current?.getBoundingClientRect().width }}
-      {...anchoredOverlayProps}
+      {...anchoredOverlayOf(controlId)}
     >
       {/* Search field - shown when options are loaded (with free entry at once), unless the field
           asks for none */}
@@ -778,7 +785,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
             // set it off from, and removing it is what the clear button beside the arrow does. A
             // value with a color role is a pill of that role, as it is in the list, its text in
             // tl-pill__label; a value without one has its text in tl-field-value__text.
-            <span className="tl-select__value">
+            <span className="tl-select__value" {...optionTooltipProps(value[0])}>
               <OptionLabel option={value[0]} labelClassName="tl-field-value__text" />
             </span>
           ) : (
@@ -799,14 +806,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
         </span>
         <span className="tl-select__controls">
           {showClearButton && (
-            <Button
-              label={i18n['js.dropdownSelect.clear']}
-              image={ICON_CLEAR}
-              display="icon-only"
-              appearance="ghost"
-              small
-              onClick={clearAll}
-            />
+            <ClearButton label={i18n['js.dropdownSelect.clear']} onClick={clearAll} />
           )}
           <span className="tl-select__arrow" aria-hidden="true">
             <ThemeIcon

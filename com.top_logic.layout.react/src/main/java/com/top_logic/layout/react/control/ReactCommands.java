@@ -12,6 +12,7 @@ import com.top_logic.basic.json.JSON;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.basic.config.json.JsonConfigurationWriter;
 import com.top_logic.layout.form.values.edit.ConfigLabelProvider;
+import com.top_logic.layout.react.control.identity.ObjectIdTranslation;
 
 /**
  * Derivations from a {@link ReactCommand} item: its dispatch arguments and its human-readable
@@ -51,14 +52,17 @@ public final class ReactCommands {
 	 * {@link ConfigLabelProvider}, whose template (the argument interface's label) interleaves
 	 * descriptive text with the property values — so a recorded step reads as e.g. <em>Navigate to
 	 * 'input-controls'</em> rather than the raw command and JSON. Item-valued properties (e.g. a row's
-	 * {@link com.top_logic.layout.scripting.recorder.ref.ModelName}) render through their own labels.
+	 * {@link com.top_logic.layout.scripting.recorder.ref.ModelName}) render through their own labels,
+	 * as do the keys a recorded step carries in its
+	 * {@link com.top_logic.layout.react.control.identity.DisplayedObjectId object id properties}.
 	 *
 	 * @param command
 	 *        The command item.
 	 * @return The description.
 	 */
 	public static String describe(ReactCommand command) {
-		return new ConfigLabelProvider().getLabel(command);
+		ConfigLabelProvider labels = new ConfigLabelProvider();
+		return labels.getLabel(ObjectIdTranslation.withKeyLabels(command, labels::getLabel));
 	}
 
 	/**

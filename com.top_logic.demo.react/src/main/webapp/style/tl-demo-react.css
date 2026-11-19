@@ -141,3 +141,35 @@
 .tlDemoApproved {
 	color: var(--tl-status-success-text);
 }
+
+/*
+ * The heading of the key column of the header roles demo (header-class="'tlDemoKeyColumn'" in
+ * views/demo/table-columns.view.xml): its title in the link color, a line of the brand below it.
+ * The class is put on the heading only, the cells of the column do not carry it.
+ */
+.tl-table__header-cell.tlDemoKeyColumn {
+	box-shadow: inset 0 calc(-1 * var(--tl-border-width-accent)) 0 var(--tl-border-interactive);
+}
+
+.tl-table__header-cell.tlDemoKeyColumn .tl-table__label {
+	color: var(--tl-text-link);
+}
+
+/*
+ * The list demo: the contact list stands at a fixed width beside the form, which takes the rest of
+ * the row. Collapsed, the list keeps its strip width (tl-list) and the form grows into the space.
+ * The list stands in its context-menu region, which has no box of its own (display: contents), so
+ * it is a flex item of the row although it is no child of it.
+ */
+.tlDemoMasterDetail .tlDemoContactList {
+	flex: none;
+}
+
+.tlDemoMasterDetail .tlDemoContactList:not([data-tl-state~="collapsed"]) {
+	width: 22rem;
+}
+
+.tlDemoMasterDetail > :last-child {
+	flex: 1 1 auto;
+	min-width: 0;
+}

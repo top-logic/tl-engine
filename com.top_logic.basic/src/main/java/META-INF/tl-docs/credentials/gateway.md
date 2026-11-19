@@ -202,7 +202,7 @@ The provider of the application gets the gateway route as `base-url` and credent
 The OAuth credential providers come from the module `tl-credential-oauth`, which the application adds as dependency. An application in Kubernetes authenticates with its service account token (no secret in the application at all):
 
 ```xml
-<provider class="com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig"
+<provider class="com.top_logic.ai.core.provider.anthropic.AnthropicProviderConfig"
 	name="anthropic"
 	base-url="https://llm-gateway.example.com/anthropic"
 	models="claude-sonnet-4-6"
@@ -223,7 +223,7 @@ An application outside Kubernetes uses a client secret instead (`ClientSecretAut
 A developer's application uses the device login; the developer confirms one login in the browser, and every application of the developer shares the refresh token:
 
 ```xml
-<provider class="com.top_logic.tl.ai.core.provider.openai.OpenAIProviderConfig"
+<provider class="com.top_logic.ai.core.provider.openai.OpenAIProviderConfig"
 	name="openai"
 	base-url="https://llm-gateway.example.com/openai"
 >

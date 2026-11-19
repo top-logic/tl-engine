@@ -85,6 +85,22 @@ public final class TreeFunctions {
 	 *        The channels whose values the function sees, besides the node's business object.
 	 */
 	public TreeBuilder<DefaultTreeUINode> builder(List<ViewChannel> inputChannels) {
+		return builder(inputChannels, ChildList.DIRECT);
+	}
+
+	/**
+	 * The builder computing the children of a node with the children function, as the given
+	 * {@link ChildList} applies it.
+	 *
+	 * @param inputChannels
+	 *        The channels whose values the function sees, besides the node's business object.
+	 * @param childList
+	 *        How the function is applied to a node.
+	 */
+	public TreeBuilder<DefaultTreeUINode> builder(List<ViewChannel> inputChannels, ChildList childList) {
+		Function<Object, Collection<?>> function =
+			businessObject -> toCollection(
+				_childrenExecutor.execute(ChannelInputs.arguments(inputChannels, businessObject)));
 		return new TreeBuilder<>() {
 
 			@Override
@@ -95,8 +111,7 @@ public final class TreeFunctions {
 
 			@Override
 			public List<DefaultTreeUINode> createChildList(DefaultTreeUINode node) {
-				Object[] args = ChannelInputs.arguments(inputChannels, node.getBusinessObject());
-				Collection<?> children = toCollection(_childrenExecutor.execute(args));
+				Collection<?> children = childList.children(node, function);
 
 				List<DefaultTreeUINode> childNodes = new ArrayList<>(children.size());
 				for (Object childObj : children) {
@@ -113,6 +128,30 @@ public final class TreeFunctions {
 				return _config.getCanExpandAll();
 			}
 		};
+	}
+
+	/**
+	 * How the {@link TreeStructureConfig#getChildren() children function} is applied to a node.
+	 */
+	@FunctionalInterface
+	public interface ChildList {
+
+		/**
+		 * Applies the function to the business object of the node.
+		 */
+		ChildList DIRECT = (node, function) -> function.apply(node.getBusinessObject());
+
+		/**
+		 * The business objects of the children of the given node.
+		 *
+		 * @param node
+		 *        The node whose children are computed.
+		 * @param function
+		 *        The children function, computing the child objects of the object it is given.
+		 * @return The business objects of the child nodes, in their order.
+		 */
+		Collection<?> children(DefaultTreeUINode node, Function<Object, Collection<?>> function);
+
 	}
 
 	/**

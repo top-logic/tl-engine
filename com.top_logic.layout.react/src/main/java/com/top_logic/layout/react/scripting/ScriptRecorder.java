@@ -14,6 +14,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.control.identity.ObjectIdTranslation;
 
 /**
  * Captures a sequence of user interactions on one window as replayable {@link ReactCommand} items.
@@ -152,7 +153,12 @@ public final class ScriptRecorder {
 	 * <p>
 	 * A command the control does not {@link ReactControl#isRecordable(String) record} is skipped.
 	 * Otherwise the control translates it into its replay-stable form
-	 * ({@link ReactControl#recordCommand(String, Map)}), and the step gets the control's semantic
+	 * ({@link ReactControl#recordCommand(String, Map)}), the ids in its
+	 * {@link com.top_logic.layout.react.control.identity.DisplayedObjectId object id properties}
+	 * are replaced by the keys of their objects and the references of other controls displaying
+	 * them by the addresses of those controls (see
+	 * {@link ObjectIdTranslation#idsToKeys(ReactCommand, ReactControl, com.top_logic.layout.react.control.identity.ControlReferences)}),
+	 * and the step gets the control's semantic
 	 * {@link ScriptingSession#addressOf(ReactControl) address} within the given window tree; a
 	 * control that is not in the visible projection (e.g. a table cell sub-control) is recorded with
 	 * a {@code null} address rather than failing the command.
@@ -175,7 +181,9 @@ public final class ScriptRecorder {
 		// Let the control rewrite session-bound arguments (e.g. option ids -> business keys) into a
 		// replay-stable typed item before capture.
 		RecordedCommand recorded = target.recordCommand(command, arguments);
-		recorded.command().setAddress(ScriptingSession.forRoot(root).addressOf(target));
+		ScriptingSession session = ScriptingSession.forRoot(root);
+		ObjectIdTranslation.idsToKeys(recorded.command(), target, session);
+		recorded.command().setAddress(session.addressOf(target));
 		record(recorded.command(), recorded.coalescing());
 	}
 

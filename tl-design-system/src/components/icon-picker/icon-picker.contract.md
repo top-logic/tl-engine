@@ -37,6 +37,12 @@ und Fehler sind `tl-status`.
 | `tl-icon-picker__advanced` | Reiter „Erweitert“: Klassenfeld und Vorschau |
 | `tl-icon-picker__preview` | Vorschau des Icons |
 
+| Teil | Token |
+|---|---|
+| Raster | Lücke `--tl-space-2xs`, Rollrand `--tl-space-xs` |
+| Zelle | Ecke `--tl-radius-sm`, Schrift `--tl-text-primary`; unter dem Zeiger `--tl-surface-interactive-hover` |
+| Reiter „Erweitert“, Vorschau | Lücke `--tl-space-sm` |
+
 Laden, keine Treffer und Fehler stehen als `tl-status` an der Stelle des Rasters (ohne Treffer gibt es kein `listbox`); der Fehler nennt „Erneut laden“ als Part `Button`.
 
 ## Konformität

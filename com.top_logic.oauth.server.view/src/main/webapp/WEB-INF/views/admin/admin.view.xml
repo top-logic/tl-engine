@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing the view "OAuth authorizations" to the section "Access control" of the
+	administration defined by tl-layout-view (WEB-INF/views/admin/admin.view.xml): every
+	authorization any account gave an OAuth client, which an administrator may revoke. A same-path
+	overlay, merged onto the base in dependency order.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<tab-bar config:ref="access-control-views">
+		<tabs>
+			<tab id="oauth-grants"
+				config:operation="add"
+				config:position="end"
+			>
+				<label>
+					<en>OAuth authorizations</en>
+					<de>OAuth-Autorisierungen</de>
+				</label>
+				<view-ref view="oauth/admin-grants.view.xml"/>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

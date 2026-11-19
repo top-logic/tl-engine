@@ -20,6 +20,7 @@ import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiChipAdapter from './MuiChipAdapter';
+import MuiSkeletonAdapter from './MuiSkeletonAdapter';
 import { childControl, mountAdapter, settle, resetTableView } from './wire-test-support';
 
 // The panel looks up the part Button; the table (Task 7) also the toggle of its tree rows, the selection boxes of its
@@ -31,6 +32,7 @@ replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
 replacePart('Chip', MuiChipAdapter);
+replacePart('Skeleton', MuiSkeletonAdapter);
 
 beforeEach(() => {
   resetTableView();
@@ -299,7 +301,11 @@ describe('a split handle is a separator', () => {
 
   it('keeps the percent scale on the handle after a key', async () => {
     const width = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth');
-    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, get: () => 200 });
+    // Each pane 200 px wide; the split panel itself wide enough for the panes side by side.
+    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+      configurable: true,
+      get(this: HTMLElement) { return this.classList.contains('tl-split') ? 1000 : 200; },
+    });
     try {
       // A minimum size would have moved the bounds to 25 and 75 if they were written in pixel shares.
       mountAdapter(TLSplitPanel, {

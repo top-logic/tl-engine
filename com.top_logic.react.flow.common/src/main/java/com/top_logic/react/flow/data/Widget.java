@@ -41,9 +41,6 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 		/** Type literal for {@link com.top_logic.react.flow.data.ClickTarget}. */
 		CLICK_TARGET,
 
-		/** Type literal for {@link com.top_logic.react.flow.data.ContextMenu}. */
-		CONTEXT_MENU,
-
 		/** Type literal for {@link com.top_logic.react.flow.data.DropRegion}. */
 		DROP_REGION,
 
@@ -61,6 +58,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 
 		/** Type literal for {@link com.top_logic.react.flow.data.Padding}. */
 		PADDING,
+
+		/** Type literal for {@link com.top_logic.react.flow.data.Sticky}. */
+		STICKY,
 
 		/** Type literal for {@link com.top_logic.react.flow.data.Sized}. */
 		SIZED,
@@ -139,6 +139,9 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 	/** @see #getRenderInfo() */
 	String RENDER_INFO__PROP = "renderInfo";
 
+	/** @see #isDropTarget() */
+	String DROP_TARGET__PROP = "dropTarget";
+
 	/** The type code of this instance. */
 	TypeKind kind();
 
@@ -202,6 +205,26 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 	 */
 	boolean hasRenderInfo();
 
+	/**
+	 * Whether a drop on the diagram is made onto this element.
+	 *
+	 * <p>
+	 * Derived state the server keeps in sync with the element: set for an element with a
+	 * {@link #getUserObject()}, see
+	 * {@link com.top_logic.react.flow.operations.WidgetOperations#isDropTargetByDefinition()}. The
+	 * {@link #getUserObject()} itself is not transmitted, so this flag tells the client the elements a
+	 * drop is made onto. The target of a drop is the innermost element under the pointer that has
+	 * this flag or is a {@link DropRegion}; a drop region without the flag stands for the diagram as
+	 * a whole.
+	 * </p>
+	 */
+	boolean isDropTarget();
+
+	/**
+	 * @see #isDropTarget()
+	 */
+	com.top_logic.react.flow.data.Widget setDropTarget(boolean value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.Widget readWidget(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
@@ -223,13 +246,13 @@ public interface Widget extends de.haumacher.msgbuf.graph.SharedGraphNode, com.t
 			case LOD.LOD__TYPE: result = com.top_logic.react.flow.data.LOD.create(); break;
 			case SelectableBox.SELECTABLE_BOX__TYPE: result = com.top_logic.react.flow.data.SelectableBox.create(); break;
 			case ClickTarget.CLICK_TARGET__TYPE: result = com.top_logic.react.flow.data.ClickTarget.create(); break;
-			case ContextMenu.CONTEXT_MENU__TYPE: result = com.top_logic.react.flow.data.ContextMenu.create(); break;
 			case DropRegion.DROP_REGION__TYPE: result = com.top_logic.react.flow.data.DropRegion.create(); break;
 			case Tooltip.TOOLTIP__TYPE: result = com.top_logic.react.flow.data.Tooltip.create(); break;
 			case Align.ALIGN__TYPE: result = com.top_logic.react.flow.data.Align.create(); break;
 			case Border.BORDER__TYPE: result = com.top_logic.react.flow.data.Border.create(); break;
 			case Fill.FILL__TYPE: result = com.top_logic.react.flow.data.Fill.create(); break;
 			case Padding.PADDING__TYPE: result = com.top_logic.react.flow.data.Padding.create(); break;
+			case Sticky.STICKY__TYPE: result = com.top_logic.react.flow.data.Sticky.create(); break;
 			case Sized.SIZED__TYPE: result = com.top_logic.react.flow.data.Sized.create(); break;
 			case ClipBox.CLIP_BOX__TYPE: result = com.top_logic.react.flow.data.ClipBox.create(); break;
 			case CompassLayout.COMPASS_LAYOUT__TYPE: result = com.top_logic.react.flow.data.CompassLayout.create(); break;

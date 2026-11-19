@@ -89,7 +89,7 @@ public class TestSQLLoaderInsertWriter extends AbstractConnectionTest {
 
 	public static Test suite() {
 		return TLTestSetup.createTLTestSetup(ConnectionSetup.createSuite(TestSQLLoaderInsertWriter.class,
-			DBType.ORACLE_DB, DefaultTestFactory.INSTANCE));
+			DBType.ORACLE19_DB, DefaultTestFactory.INSTANCE));
 	}
 }
 

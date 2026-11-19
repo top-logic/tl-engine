@@ -28,6 +28,7 @@ import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.AuthenticationCategory;
+import com.top_logic.basic.util.ResKey;
 
 /**
  * Service deciding where the named secrets of the installation live, from which a
@@ -253,9 +254,97 @@ public class SecretStoreService extends ConfiguredManagedClass<SecretStoreServic
 	 *         {@link #getStore() store}, <code>null</code> if the configured store is not writable.
 	 *
 	 * @see WritableSecretStore
+	 * @see #canStore(String)
 	 */
 	public WritableSecretStore getWritableStore() {
 		return _store.getWritableStore();
+	}
+
+	/**
+	 * Whether a secret with the given name can be written so that this service delivers it.
+	 *
+	 * @param name
+	 *        The name of the secret.
+	 * @return <code>false</code> if an {@link Config#getOverrides() override} is configured for the
+	 *         name, if the installation has no {@link #getWritableStore() writable store}, or if
+	 *         the writable store {@link WritableSecretStore#canStore(String) cannot store} it.
+	 */
+	public boolean canStore(String name) {
+		return storeProblem(name) == null;
+	}
+
+	/**
+	 * Whether the secret with the given name {@link #canStore(String) can be stored} and the
+	 * {@link #getWritableStore() writable store} currently holds it, so that
+	 * {@link #remove(String)} removes the secret this service delivers.
+	 *
+	 * <p>
+	 * A secret delivered by a store behind the writable store, e.g. a value in the configuration,
+	 * cannot be removed.
+	 * </p>
+	 *
+	 * @param name
+	 *        The name of the secret.
+	 */
+	public boolean canRemove(String name) {
+		return canStore(name) && getWritableStore().lookup(name) != null;
+	}
+
+	/**
+	 * Writes the secret with the given name to the {@link #getWritableStore() writable store}.
+	 *
+	 * @param name
+	 *        The name of the secret.
+	 * @param secret
+	 *        The secret, must not be <code>null</code> or empty.
+	 *
+	 * @throws I18NRuntimeException
+	 *         If the secret {@link #canStore(String) cannot be stored} or writing fails. The
+	 *         message of the exception names the secret but never contains it.
+	 */
+	public void store(String name, String secret) {
+		storable(name).store(name, secret);
+	}
+
+	/**
+	 * Removes the secret with the given name from the {@link #getWritableStore() writable store}.
+	 *
+	 * @param name
+	 *        The name of the secret.
+	 * @return Whether the writable store held a secret with the given name.
+	 *
+	 * @throws I18NRuntimeException
+	 *         If the secret {@link #canStore(String) cannot be stored} or removing fails.
+	 */
+	public boolean remove(String name) {
+		return storable(name).remove(name);
+	}
+
+	private WritableSecretStore storable(String name) {
+		ResKey problem = storeProblem(name);
+		if (problem != null) {
+			throw new I18NRuntimeException(problem);
+		}
+		return getWritableStore();
+	}
+
+	/**
+	 * The reason why the secret with the given name cannot be stored.
+	 *
+	 * @return The reason, <code>null</code> if the secret can be stored.
+	 */
+	private ResKey storeProblem(String name) {
+		if (_overrides.containsKey(name)) {
+			return I18NConstants.ERROR_SECRET_OVERRIDDEN__NAME.fill(name);
+		}
+		WritableSecretStore writable = getWritableStore();
+		if (writable == null) {
+			return I18NConstants.ERROR_NO_WRITABLE_SECRET_STORE__NAME.fill(name);
+		}
+		if (!writable.canStore(name)) {
+			return I18NConstants.ERROR_SECRET_NOT_STORABLE__NAME.fill(name);
+		}
+		return null;
 	}
 
 	/**
@@ -268,10 +357,64 @@ public class SecretStoreService extends ConfiguredManagedClass<SecretStoreServic
 	 *         If the {@link SecretStoreService} has not been started.
 	 */
 	public static WritableSecretStore writableSecretStore() {
+		return writer().getWritableStore();
+	}
+
+	/**
+	 * Whether the started {@link SecretStoreService} can store the secret with the given name.
+	 *
+	 * @see #canStore(String)
+	 *
+	 * @throws I18NRuntimeException
+	 *         If the {@link SecretStoreService} has not been started.
+	 */
+	public static boolean canStoreSecret(String name) {
+		return writer().canStore(name);
+	}
+
+	/**
+	 * Whether the started {@link SecretStoreService} can remove the secret with the given name.
+	 *
+	 * @see #canRemove(String)
+	 *
+	 * @throws I18NRuntimeException
+	 *         If the {@link SecretStoreService} has not been started.
+	 */
+	public static boolean canRemoveSecret(String name) {
+		return writer().canRemove(name);
+	}
+
+	/**
+	 * Writes the secret with the given name through the started {@link SecretStoreService}.
+	 *
+	 * @see #store(String, String)
+	 *
+	 * @throws I18NRuntimeException
+	 *         If the secret cannot be stored, or if the {@link SecretStoreService} has not been
+	 *         started.
+	 */
+	public static void storeSecret(String name, String secret) {
+		writer().store(name, secret);
+	}
+
+	/**
+	 * Removes the secret with the given name through the started {@link SecretStoreService}.
+	 *
+	 * @see #remove(String)
+	 *
+	 * @throws I18NRuntimeException
+	 *         If the secret cannot be removed, or if the {@link SecretStoreService} has not been
+	 *         started.
+	 */
+	public static boolean removeSecret(String name) {
+		return writer().remove(name);
+	}
+
+	private static SecretStoreService writer() {
 		if (!Module.INSTANCE.isActive()) {
 			throw new I18NRuntimeException(I18NConstants.ERROR_WRITABLE_SECRET_STORE_NOT_STARTED);
 		}
-		return Module.INSTANCE.getImplementationInstance().getWritableStore();
+		return Module.INSTANCE.getImplementationInstance();
 	}
 
 	/**

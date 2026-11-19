@@ -21,6 +21,10 @@
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
+			<artifactId>tl-security-captcha</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
 			<artifactId>tl-layout-formeditor</artifactId>
 		</dependency>
 		<dependency>

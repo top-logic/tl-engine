@@ -68,12 +68,26 @@ public interface ColumnDeclaration {
 	}
 
 	/**
+	 * The names of the columns this declaration contributes that the table leaves out in the
+	 * compact display, on a phone.
+	 *
+	 * <p>
+	 * Empty (default) for a declaration whose columns are shown on a phone as well.
+	 * </p>
+	 */
+	default List<String> hiddenWhenCompact() {
+		return List.of();
+	}
+
+	/**
 	 * The columns this declaration contributes, in display order.
 	 *
 	 * <p>
-	 * Every {@link #declaredNames() declared name} is resolved to a column, except one the access
-	 * rights of the current user withhold (e.g. a column of an attribute the user may read on no
-	 * row). Which columns are withheld is therefore the difference of both, see
+	 * Every {@link #declaredNames() declared name} is resolved to a column. A column the access
+	 * rights of the current user may withhold (e.g. a column of an attribute the user may read on
+	 * no row) states so by its {@link ColumnSetup#released()} condition, so that it appears once
+	 * the user gains the right. A declaration may also leave out a name it does not resolve for the
+	 * current user at all; that column is withheld for good, see
 	 * {@link ColumnDeclarations#withheld(java.util.Collection, List)}.
 	 * </p>
 	 *

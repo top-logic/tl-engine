@@ -126,6 +126,33 @@ public class TestSecretDriverOptions extends AbstractTypedConfigurationTestCase 
 		assertRotation(dataSource);
 	}
 
+	/** A password encrypted in the authenticated format in the variable is decrypted. */
+	public void testEnvironmentPasswordEncrypted() throws Exception {
+		System.setProperty(VARIABLE, ConfigurationEncryption.encrypt(PASSWORD));
+		assertEquals(PASSWORD, driverOptions(config("", environmentPassword())).getProperty(PASSWORD_OPTION));
+		assertConnects(read(config("", environmentPassword())));
+	}
+
+	/**
+	 * A password in the variable in the authenticated format that cannot be decrypted fails the
+	 * connection with a message naming the variable, not the value.
+	 */
+	public void testEnvironmentPasswordEncryptedInvalid() throws Exception {
+		String invalid = ConfigurationEncryption.AUTHENTICATED_PREFIX + "not-a-cipher-text";
+		System.setProperty(VARIABLE, invalid);
+		try {
+			driverOptions(config("", environmentPassword()));
+			fail("Undecryptable password accepted.");
+		} catch (I18NRuntimeException ex) {
+			assertEquals(com.top_logic.basic.credential.I18NConstants.ERROR_SECRET_VARIABLE_NOT_DECRYPTABLE__NAME
+				.fill(VARIABLE), ex.getErrorKey());
+			for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+				String message = cause.getMessage();
+				assertTrue("Value in message: " + message, message == null || !message.contains(invalid));
+			}
+		}
+	}
+
 	/**
 	 * A variable that is no longer defined leaves the password out: the database refuses the
 	 * login, and the message does not contain the password.

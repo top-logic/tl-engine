@@ -31,6 +31,8 @@ public class ButtonState_Impl extends com.top_logic.layout.react.state.impl.Cont
 
 	private String _keyGesture = "";
 
+	private com.top_logic.layout.react.state.Badge _badge = null;
+
 	/**
 	 * Creates a {@link ButtonState_Impl} instance.
 	 *
@@ -253,6 +255,27 @@ public class ButtonState_Impl extends com.top_logic.layout.react.state.impl.Cont
 	}
 
 	@Override
+	public final com.top_logic.layout.react.state.Badge getBadge() {
+		return _badge;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.ButtonState setBadge(com.top_logic.layout.react.state.Badge value) {
+		internalSetBadge(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getBadge()} without chain call utility. */
+	protected final void internalSetBadge(com.top_logic.layout.react.state.Badge value) {
+		_badge = value;
+	}
+
+	@Override
+	public final boolean hasBadge() {
+		return _badge != null;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.ButtonState setHidden(boolean value) {
 		internalSetHidden(value);
 		return this;
@@ -298,6 +321,10 @@ public class ButtonState_Impl extends com.top_logic.layout.react.state.impl.Cont
 		out.value(isNavigateNewWindow());
 		out.name(KEY_GESTURE__PROP);
 		out.value(getKeyGesture());
+		if (hasBadge()) {
+			out.name(BADGE__PROP);
+			getBadge().writeTo(out);
+		}
 	}
 
 	@Override
@@ -316,6 +343,7 @@ public class ButtonState_Impl extends com.top_logic.layout.react.state.impl.Cont
 			case NAVIGATE_URL__PROP: setNavigateUrl(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case NAVIGATE_NEW_WINDOW__PROP: setNavigateNewWindow(in.nextBoolean()); break;
 			case KEY_GESTURE__PROP: setKeyGesture(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case BADGE__PROP: setBadge(com.top_logic.layout.react.state.Badge.readBadge(in)); break;
 			default: super.readField(in, field);
 		}
 	}

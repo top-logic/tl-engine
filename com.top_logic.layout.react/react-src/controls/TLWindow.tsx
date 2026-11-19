@@ -1,7 +1,8 @@
 import {
-  BACKGROUND_COMMAND, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, EscapeToClose, useFocusTrap,
+  BACKGROUND_REPORT, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, EscapeToClose, useFocusTrap,
   firstFocusable, FillBarrier, startPointerDrag, rootClassName, tooltipProps, ButtonDefaults, ThemeIcon, useTokenPx,
   ICON_CLOSE, ICON_MAXIMIZE, ICON_RESTORE, SurfaceProvider, useFloatingFrame, FloatingFrame, FloatingRail,
+  useDisplayClass,
 } from 'tl-react-bridge';
 import type { TLCellProps, WindowStateJson, Surface } from 'tl-react-bridge';
 import { buttonClassName } from './button/buttonClassName';
@@ -68,6 +69,24 @@ function maxWindowHeight(viewportHeight: number, margin: number): number {
   return Math.max(MIN_HEIGHT, viewportHeight - 2 * margin);
 }
 
+/**
+ * The CSS value of a configured window size: a size in percent is a share of the browser window (the token
+ * `--tl-size-viewport-width` or `--tl-size-viewport-height`), any other size is used as it is. The percentage cannot
+ * be left to CSS, which would relate it to the box the window is placed in.
+ */
+function windowSize(size: string, axis: 'width' | 'height'): string {
+  if (!size.endsWith('%')) {
+    return size;
+  }
+  return `calc(${VIEWPORT_SIZE[axis]} * ${parseFloat(size) / 100})`;
+}
+
+/** The size of the browser window along each axis, as the design tokens give it. */
+const VIEWPORT_SIZE = {
+  width: 'var(--tl-size-viewport-width)',
+  height: 'var(--tl-size-viewport-height)',
+};
+
 /** The size of the browser window, updated when the browser window is resized. */
 function useViewportSize(): { width: number; height: number } {
   const [size, setSize] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }));
@@ -102,8 +121,8 @@ const RESIZE_CURSORS: Record<ResizeDir, string> = {
  *
  * State:
  * - title: string
- * - width: string (CSS value, e.g. "500px")
- * - height: string | null
+ * - width: string (pixels, e.g. "500px", or percent of the browser window's width, e.g. "80%")
+ * - height: string | null (pixels or percent of the browser window's height; null: the height of the content)
  * - customWidth, customHeight: number | absent (the size the user gave the window when last resizing
  *   it; used instead of width and the automatic height only while it fits into the browser window,
  *   so a size remembered on a larger screen never pushes the title bar or footer out of reach)
@@ -117,8 +136,15 @@ const RESIZE_CURSORS: Record<ResizeDir, string> = {
  * footer's and the toolbar gives it up again down to its overflow trigger. A toolbar without a
  * command renders nothing, which leaves the footer strip empty and the stylesheet hides it.
  *
+ * Without a height (and without a size the user gave it), the window grows with its content but never shrinks
+ * while it is open: the tallest height it had stays its minimum, capped by the browser window.
+ *
  * A double click on a resize handle gives the window its configured size back and makes the server
  * forget the remembered one - the way back from a size the user no longer wants.
+ *
+ * On a small screen (the compact display class of the browser window) the window fills the browser window without margin
+ * and is displayed maximized: width, height, the grown height, moving and resizing do not apply, and title bar and
+ * footer stay while the body scrolls.
  *
  * The window is a frame for floating elements (useFloatingFrame): an element floating in its content - a
  * floating action button - is placed against the edges of its body, above the footer.
@@ -129,8 +155,8 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const i18n = useI18N(I18N_KEYS);
 
   const title = state.title ?? '';
-  const serverWidth = state.width ?? '32rem';
-  const serverHeight = state.height ?? null;
+  const serverWidth = windowSize(state.width ?? '32rem', 'width');
+  const serverHeight = state.height != null ? windowSize(state.height, 'height') : null;
   const customWidth = state.customWidth ?? null;
   const customHeight = state.customHeight ?? null;
   const resizable = state.resizable === true;
@@ -151,6 +177,12 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
 
   // Maximize state.
   const [maximized, setMaximized] = useState(false);
+
+  // On a small screen every window fills the browser window, without margin, whatever size it is given; it can be
+  // neither moved nor resized there. The display class is the one of the browser window, the same the app shell
+  // reports. What the user did to the window on a larger screen is kept for when the browser window grows again.
+  const compact = useDisplayClass() === 'compact';
+  const fullscreen = maximized || compact;
   const regularBoundsRef = useRef<{ x: number; y: number; w: number | null; h: number | null } | null>(null);
 
   // Refs to track latest local dimensions inside event handlers (avoids stale closures).
@@ -179,6 +211,27 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
     startPos: { x: number; y: number };
     symmetric: boolean;
   } | null>(null);
+
+  // A window without a height of its own grows with its content but does not shrink back while it is open: the
+  // tallest height it had becomes its minimum, so that a content getting shorter (another tab, no selection) moves
+  // neither its footer nor - centered - the window itself. A size the user gives the window replaces this, and the
+  // next opening is a new window starting at the height of its content.
+  const growing = serverHeight == null && localHeight == null && !customFits && !fullscreen;
+  const [grownHeight, setGrownHeight] = useState(0);
+  useEffect(() => {
+    if (!growing) {
+      setGrownHeight(0);
+      return;
+    }
+    const el = windowRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => {
+      const height = Math.ceil(el.getBoundingClientRect().height);
+      setGrownHeight(current => Math.max(current, height));
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [growing]);
 
   const handleClose = useCallback(() => {
     sendCommand('close');
@@ -278,7 +331,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
           sendCommand('resize', {
             ...(lw != null ? { width: Math.round(lw) } : {}),
             ...(lh != null ? { height: Math.round(lh) } : {}),
-          }, BACKGROUND_COMMAND);
+          }, BACKGROUND_REPORT);
           // Keep local dimensions — server uses putStateSilent() which does not push back.
         }
         dragState.current = null;
@@ -388,7 +441,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [maximized, localWidth, localHeight]);
 
-  const style: React.CSSProperties = maximized
+  const style: React.CSSProperties = fullscreen
     ? {}
     : {
         width: localWidth != null ? localWidth + 'px' : customFits ? customWidth + 'px' : serverWidth,
@@ -400,6 +453,10 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
         // The remembered height is a minimum only, so content that has grown since still fits.
         ...(customFits && localHeight == null
           ? { minHeight: customHeight + 'px' }
+          : {}),
+        // A minimum wins over the maximum of the stylesheet, so the grown height is capped here.
+        ...(growing && grownHeight > 0
+          ? { minHeight: Math.min(grownHeight, maxWindowHeight(viewport.height, margin)) + 'px' }
           : {}),
         ...(position
           ? { position: 'absolute' as const, left: position.x + 'px', top: position.y + 'px' }
@@ -421,12 +478,12 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        data-tl-state={maximized ? 'maximized' : undefined}
+        data-tl-state={fullscreen ? 'maximized' : undefined}
       >
         <div
           className="tl-titlebar"
-          onPointerDown={maximized ? undefined : handleTitlePointerDown}
-          onDoubleClick={resizable ? handleToggleMaximize : undefined}
+          onPointerDown={fullscreen ? undefined : handleTitlePointerDown}
+          onDoubleClick={resizable && !compact ? handleToggleMaximize : undefined}
         >
           <h2 className="tl-titlebar__title tl-type-heading-sm" id={titleId}>{title}</h2>
           {!!toolbar && (
@@ -435,7 +492,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
             </div>
           )}
           {/* Maximizing only makes sense for resizable windows; fixed-size dialogs (e.g. login) omit it. */}
-          {resizable && (
+          {resizable && !compact && (
             <button
               type="button"
               className={buttonClassName({ appearance: 'ghost', small: true, icon: true })}
@@ -475,7 +532,7 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
             </div>
           </ButtonDefaults>
         )}
-        {resizable && !maximized && RESIZE_HANDLES.map(dir => (
+        {resizable && !fullscreen && RESIZE_HANDLES.map(dir => (
           <div
             key={dir}
             className="tl-dialog__resize"

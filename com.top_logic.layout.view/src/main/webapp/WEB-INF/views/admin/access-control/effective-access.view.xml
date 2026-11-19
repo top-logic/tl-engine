@@ -98,6 +98,7 @@
 									</generic-command>
 								</commands>
 								<tree-table id="types-table"
+									initial-expansion-depth="0"
 									personalization-key="effective-access-types"
 									selection="selection"
 								>
@@ -262,7 +263,7 @@
 											</title>
 											<table id="operations-table"
 												personalization-key="effective-access-operations"
-												row-class="if(effectiveAccessAllowed($row), null, 'tl-status-error')"
+												row-role="if(effectiveAccessAllowed($row), null, 'error')"
 											>
 												<inputs>
 													<input channel="explanation"/>

@@ -26,6 +26,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.model.util.TLModelUtil;
 
 
@@ -159,6 +160,11 @@ public abstract class AbstractCreateAttributedCommandHandler extends AbstractCre
     /**
      * Store the changes done to the {@link com.top_logic.knowledge.wrap.Wrapper attributed} values.
      *
+     * <p>
+     * A reference must not get a new target the current user may not discover, see
+     * {@link DiscoverRight#checkNewTargets(TLObject, TLStructuredTypePart, Object)}.
+     * </p>
+     *
      * @return   Flag, if updating has taken place (will not happen, if given context is not instance of
      *           {@link AttributeFormContext}).
      */
@@ -176,6 +182,7 @@ public abstract class AbstractCreateAttributedCommandHandler extends AbstractCre
 				continue;
 			}
 			Object theValue = entry.getValue();
+			DiscoverRight.checkNewTargets(anAttributed, part, theValue);
 			anAttributed.tUpdateByName(key, theValue);
 			hasChanged = true;
         }

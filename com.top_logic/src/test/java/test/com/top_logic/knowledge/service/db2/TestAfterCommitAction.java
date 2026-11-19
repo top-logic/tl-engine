@@ -7,11 +7,9 @@ package test.com.top_logic.knowledge.service.db2;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import junit.framework.Test;
 
-import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.AfterCommitAction;
@@ -23,6 +21,7 @@ import com.top_logic.knowledge.service.event.CommitChecker;
 import com.top_logic.knowledge.service.event.CommitVetoException;
 import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.knowledge.service.event.ModificationListener;
+import com.top_logic.knowledge.service.event.PendingChanges;
 
 /**
  * Test case for {@link AfterCommitAction}s registered through {@link CommitActions}.
@@ -252,10 +251,8 @@ public class TestAfterCommitAction extends AbstractDBKnowledgeBaseTest {
 
 		@Override
 		public Modification createModification(KnowledgeBase kb, CommitActions commitActions,
-				Map<ObjectKey, ? extends KnowledgeItem> createdObjects,
-				Map<ObjectKey, ? extends KnowledgeItem> updatedObjects,
-				Map<ObjectKey, ? extends KnowledgeItem> removedObjects) {
-			if (createdObjects.isEmpty()) {
+				PendingChanges changes) {
+			if (changes.getCreated().isEmpty()) {
 				return Modification.NONE;
 			}
 			_handles.add(commitActions);

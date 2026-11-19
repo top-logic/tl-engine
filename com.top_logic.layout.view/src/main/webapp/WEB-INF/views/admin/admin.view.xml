@@ -44,6 +44,19 @@
 							</label>
 							<view-ref view="admin/access-control/accounts.view.xml"/>
 						</tab>
+						<!--
+							Every access token of every account, to revoke a leaked one or to withdraw
+							all clients of an account at once. Present only where a module offers a
+							permission for a token, since otherwise no token can be created.
+						-->
+						<tab id="access-tokens">
+							<label>
+								<en>Access tokens</en>
+								<de>Zugriffstokens</de>
+							</label>
+							<visibility expr="!accessTokenPermissions().isEmpty()"/>
+							<view-ref view="admin/access-control/access-tokens.view.xml"/>
+						</tab>
 						<tab id="groups">
 							<label>
 								<en>Groups</en>
@@ -179,6 +192,13 @@
 								<de>Geheimnisse</de>
 							</label>
 							<view-ref view="admin/system/secrets.view.xml"/>
+						</tab>
+						<tab id="config-variables">
+							<label>
+								<en>Configuration variables</en>
+								<de>Konfigurationsvariablen</de>
+							</label>
+							<view-ref view="admin/system/config-variables.view.xml"/>
 						</tab>
 						<tab id="locks">
 							<label>

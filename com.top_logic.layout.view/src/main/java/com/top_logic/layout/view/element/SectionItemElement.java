@@ -23,6 +23,7 @@ import com.top_logic.layout.react.control.sidebar.SectionItem;
 import com.top_logic.layout.react.control.sidebar.SidebarItem;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.layout.view.element.SidebarElement.ItemSite;
 import com.top_logic.layout.view.element.SidebarElement.SidebarItemConfig;
 import com.top_logic.layout.view.element.SidebarElement.SidebarItemElement;
@@ -53,7 +54,7 @@ public class SectionItemElement implements SidebarItemElement {
 	 */
 	@TagName("section")
 	@TypeIcon("css:bi bi-distribute-vertical")
-	public interface Config extends SidebarItemConfig, WithAccessControl {
+	public interface Config extends SidebarItemConfig, WithAccessControl, WithVisibility {
 
 		@Override
 		@ClassDefault(SectionItemElement.class)
@@ -108,6 +109,8 @@ public class SectionItemElement implements SidebarItemElement {
 
 	private final UnitAccess _access;
 
+	private final UnitVisibility _visibility;
+
 	private final List<SidebarItemElement> _items;
 
 	/**
@@ -119,6 +122,7 @@ public class SectionItemElement implements SidebarItemElement {
 		_label = config.getLabel();
 		_icon = config.getIcon();
 		_access = UnitAccess.create(context, config.getAccessControl());
+		_visibility = UnitVisibility.create(config.getVisibility());
 		_items = new ArrayList<>();
 		for (SidebarItemConfig itemConfig : config.getItems()) {
 			_items.add(context.getInstance(itemConfig));
@@ -140,11 +144,12 @@ public class SectionItemElement implements SidebarItemElement {
 			// Access denied for the current user: the section and everything in it is omitted.
 			return null;
 		}
-		List<SidebarItem> children = SidebarElement.createItems(_items, context, site.guardedBy(_access));
+		ChannelCondition visible = SidebarElement.both(site.visible(), UnitVisibility.bind(_visibility, context));
+		List<SidebarItem> children = SidebarElement.createItems(_items, context, site.guardedBy(_access, visible));
 		String label = _label == null ? null : Resources.getInstance().getString(_label);
 		String icon = _icon == null || _icon.isEmpty() ? null : _icon;
 		SectionItem result = new SectionItem(_id, label, icon, children);
-		SidebarElement.withholdWhileDenied(result, _access, context, site);
+		SidebarElement.withholdWhileHidden(result, _access, visible, context, site);
 		return result;
 	}
 

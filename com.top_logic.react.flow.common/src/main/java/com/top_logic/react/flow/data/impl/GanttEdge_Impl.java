@@ -27,7 +27,9 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 
 	private com.top_logic.react.flow.data.ConnectorSymbol _targetSymbol = com.top_logic.react.flow.data.ConnectorSymbol.NONE;
 
-	private String _strokeColor = "#606060";
+	private String _strokeColor = null;
+
+	private String _strokeRole = "neutral";
 
 	private double _strokeWidth = 1.0;
 
@@ -49,6 +51,8 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 	};
 
 	private String _violatedStrokeColor = null;
+
+	private String _violatedStrokeRole = "error";
 
 	private double _violatedStrokeWidth = 0.0d;
 
@@ -315,6 +319,29 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 	}
 
 	@Override
+	public final boolean hasStrokeColor() {
+		return _strokeColor != null;
+	}
+
+	@Override
+	public final String getStrokeRole() {
+		return _strokeRole;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttEdge setStrokeRole(String value) {
+		internalSetStrokeRole(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getStrokeRole()} without chain call utility. */
+	protected final void internalSetStrokeRole(String value) {
+		_listener.beforeSet(this, STROKE_ROLE__PROP, value);
+		_strokeRole = value;
+		_listener.afterChanged(this, STROKE_ROLE__PROP);
+	}
+
+	@Override
 	public final double getStrokeWidth() {
 		return _strokeWidth;
 	}
@@ -389,6 +416,24 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 	}
 
 	@Override
+	public final String getViolatedStrokeRole() {
+		return _violatedStrokeRole;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttEdge setViolatedStrokeRole(String value) {
+		internalSetViolatedStrokeRole(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getViolatedStrokeRole()} without chain call utility. */
+	protected final void internalSetViolatedStrokeRole(String value) {
+		_listener.beforeSet(this, VIOLATED_STROKE_ROLE__PROP, value);
+		_violatedStrokeRole = value;
+		_listener.afterChanged(this, VIOLATED_STROKE_ROLE__PROP);
+	}
+
+	@Override
 	public final double getViolatedStrokeWidth() {
 		return _violatedStrokeWidth;
 	}
@@ -459,9 +504,11 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 			SOURCE_SYMBOL__PROP, 
 			TARGET_SYMBOL__PROP, 
 			STROKE_COLOR__PROP, 
+			STROKE_ROLE__PROP, 
 			STROKE_WIDTH__PROP, 
 			DASHES__PROP, 
 			VIOLATED_STROKE_COLOR__PROP, 
+			VIOLATED_STROKE_ROLE__PROP, 
 			VIOLATED_STROKE_WIDTH__PROP, 
 			VIOLATED_DASHES__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
@@ -502,9 +549,11 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 			case SOURCE_SYMBOL__PROP: return getSourceSymbol();
 			case TARGET_SYMBOL__PROP: return getTargetSymbol();
 			case STROKE_COLOR__PROP: return getStrokeColor();
+			case STROKE_ROLE__PROP: return getStrokeRole();
 			case STROKE_WIDTH__PROP: return getStrokeWidth();
 			case DASHES__PROP: return getDashes();
 			case VIOLATED_STROKE_COLOR__PROP: return getViolatedStrokeColor();
+			case VIOLATED_STROKE_ROLE__PROP: return getViolatedStrokeRole();
 			case VIOLATED_STROKE_WIDTH__PROP: return getViolatedStrokeWidth();
 			case VIOLATED_DASHES__PROP: return getViolatedDashes();
 			default: return super.get(field);
@@ -526,9 +575,11 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 			case SOURCE_SYMBOL__PROP: internalSetSourceSymbol((com.top_logic.react.flow.data.ConnectorSymbol) value); break;
 			case TARGET_SYMBOL__PROP: internalSetTargetSymbol((com.top_logic.react.flow.data.ConnectorSymbol) value); break;
 			case STROKE_COLOR__PROP: internalSetStrokeColor((String) value); break;
+			case STROKE_ROLE__PROP: internalSetStrokeRole((String) value); break;
 			case STROKE_WIDTH__PROP: internalSetStrokeWidth((double) value); break;
 			case DASHES__PROP: internalSetDashes(de.haumacher.msgbuf.util.Conversions.asList(Double.class, value)); break;
 			case VIOLATED_STROKE_COLOR__PROP: internalSetViolatedStrokeColor((String) value); break;
+			case VIOLATED_STROKE_ROLE__PROP: internalSetViolatedStrokeRole((String) value); break;
 			case VIOLATED_STROKE_WIDTH__PROP: internalSetViolatedStrokeWidth((double) value); break;
 			case VIOLATED_DASHES__PROP: internalSetViolatedDashes(de.haumacher.msgbuf.util.Conversions.asList(Double.class, value)); break;
 		}
@@ -553,8 +604,12 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 		getSourceSymbol().writeTo(out);
 		out.name(TARGET_SYMBOL__PROP);
 		getTargetSymbol().writeTo(out);
-		out.name(STROKE_COLOR__PROP);
-		out.value(getStrokeColor());
+		if (hasStrokeColor()) {
+			out.name(STROKE_COLOR__PROP);
+			out.value(getStrokeColor());
+		}
+		out.name(STROKE_ROLE__PROP);
+		out.value(getStrokeRole());
 		out.name(STROKE_WIDTH__PROP);
 		out.value(getStrokeWidth());
 		out.name(DASHES__PROP);
@@ -567,6 +622,8 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 			out.name(VIOLATED_STROKE_COLOR__PROP);
 			out.value(getViolatedStrokeColor());
 		}
+		out.name(VIOLATED_STROKE_ROLE__PROP);
+		out.value(getViolatedStrokeRole());
 		out.name(VIOLATED_STROKE_WIDTH__PROP);
 		out.value(getViolatedStrokeWidth());
 		out.name(VIOLATED_DASHES__PROP);
@@ -634,7 +691,15 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 				break;
 			}
 			case STROKE_COLOR__PROP: {
-				out.value(getStrokeColor());
+				if (hasStrokeColor()) {
+					out.value(getStrokeColor());
+				} else {
+					out.nullValue();
+				}
+				break;
+			}
+			case STROKE_ROLE__PROP: {
+				out.value(getStrokeRole());
 				break;
 			}
 			case STROKE_WIDTH__PROP: {
@@ -655,6 +720,10 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 				} else {
 					out.nullValue();
 				}
+				break;
+			}
+			case VIOLATED_STROKE_ROLE__PROP: {
+				out.value(getViolatedStrokeRole());
 				break;
 			}
 			case VIOLATED_STROKE_WIDTH__PROP: {
@@ -685,6 +754,7 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 			case SOURCE_SYMBOL__PROP: setSourceSymbol(com.top_logic.react.flow.data.ConnectorSymbol.readConnectorSymbol(in)); break;
 			case TARGET_SYMBOL__PROP: setTargetSymbol(com.top_logic.react.flow.data.ConnectorSymbol.readConnectorSymbol(in)); break;
 			case STROKE_COLOR__PROP: setStrokeColor(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case STROKE_ROLE__PROP: setStrokeRole(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case STROKE_WIDTH__PROP: setStrokeWidth(in.nextDouble()); break;
 			case DASHES__PROP: {
 				java.util.List<Double> newValue = new java.util.ArrayList<>();
@@ -697,6 +767,7 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 			}
 			break;
 			case VIOLATED_STROKE_COLOR__PROP: setViolatedStrokeColor(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case VIOLATED_STROKE_ROLE__PROP: setViolatedStrokeRole(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case VIOLATED_STROKE_WIDTH__PROP: setViolatedStrokeWidth(in.nextDouble()); break;
 			case VIOLATED_DASHES__PROP: {
 				java.util.List<Double> newValue = new java.util.ArrayList<>();

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Runtime environment: Java system properties, JVM startup arguments and configuration variables as
-	a single sortable, filterable table. The table is an app-specific admin widget, so it is
+	Runtime environment: Java system properties and JVM startup arguments as a single sortable,
+	filterable table; the configuration variables are shown by admin/system/config-variables.view.xml. The table is an app-specific admin widget, so it is
 	referenced by class= rather than a reusable <tag>. A <full-page> hosts it: the enclosing tab
 	already labels the view, so no panel title is rendered and the table fills the whole area.
 -->

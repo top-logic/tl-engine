@@ -7,6 +7,7 @@ package com.top_logic.layout.view.table;
 
 import java.util.List;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactFormBuilder;
@@ -63,9 +64,21 @@ public class ScriptedFilterUI implements ColumnFilterUI {
 			}
 			AttributeFieldModel model = new AttributeFieldModel(_instance, part);
 			ReactControl input = controls.createFieldControl(context, part, model);
-			form.addField(resources.getString(TLModelNamingConvention.resourceKey(part)), input);
+			form.addField(resources.getString(TLModelNamingConvention.getTypePartLabelKey(part)), input);
 		}
 		return form.build();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The {@link ScriptedFilter#label() label} of the filter, where it states one.
+	 * </p>
+	 */
+	@Override
+	public ResKey title() {
+		return _filter.label();
 	}
 
 	@Override

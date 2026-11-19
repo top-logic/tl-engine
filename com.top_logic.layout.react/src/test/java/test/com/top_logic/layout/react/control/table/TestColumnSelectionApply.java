@@ -61,11 +61,6 @@ public class TestColumnSelectionApply extends TestCase {
 	/** The state key of the column selection the popover shows. */
 	private static final String STATE_COLUMN_SELECTION = "columnSelection";
 
-	/** The state keys telling how many of the offered columns are displayed. */
-	private static final String STATE_COLUMNS_SHOWN = "columnsShown";
-
-	private static final String STATE_COLUMNS_TOTAL = "columnsTotal";
-
 	private static final String CMD_OPEN_COLUMNS = "openColumns";
 
 	private static final String CMD_CLOSE_COLUMNS = "closeColumns";
@@ -104,22 +99,20 @@ public class TestColumnSelectionApply extends TestCase {
 			return selection();
 		}
 
-		/** Opens {@link #applyColumns(List, List, String)} to the test, keeping the grouping. */
+		/** Opens {@link #applyColumns(List, List, List)} to the test, keeping the grouping. */
 		void apply(List<String> columns, List<String> lockedColumns) {
-			applyColumns(columns, lockedColumns, getGroupedColumn());
+			applyColumns(columns, lockedColumns, getGroupedColumns());
 		}
 
 	}
 
 	/**
 	 * Tests that opening the page puts the selection into the state, offering the columns as the table displays
-	 * them, and that the table tells how many of them it displays.
+	 * them.
 	 */
 	public void testOpenColumnsPutsTheSelectionIntoTheState() {
 		TestTable table = control();
 		assertNull(table.selection());
-		assertEquals(Integer.valueOf(3), table.clientState(STATE_COLUMNS_SHOWN));
-		assertEquals(Integer.valueOf(3), table.clientState(STATE_COLUMNS_TOTAL));
 
 		ReactColumnSelectControl selection = table.open();
 
@@ -127,26 +120,6 @@ public class TestColumnSelectionApply extends TestCase {
 		assertEquals(initialOrder(), selection.order());
 		assertEquals(initialOrder(), selection.visibleColumns());
 		assertEquals(List.of(), selection.lockedColumns());
-	}
-
-	/** Tests that the entry of the page can tell n of m: hiding a column changes n, the total stays. */
-	public void testTheTableTellsHowManyColumnsItDisplays() {
-		TestTable table = control();
-		ReactColumnSelectControl selection = table.open();
-
-		visible(selection, COLUMN_AMOUNT, false);
-
-		assertEquals(Integer.valueOf(2), table.clientState(STATE_COLUMNS_SHOWN));
-		assertEquals(Integer.valueOf(3), table.clientState(STATE_COLUMNS_TOTAL));
-	}
-
-	/** Tests that a leading action column, which the selection does not offer, is none of the counted columns. */
-	public void testTheActionColumnIsNotCounted() {
-		TestTable table =
-			control(withActions(columns()), List.of(COLUMN_ACTIONS, COLUMN_NAME, COLUMN_AMOUNT, COLUMN_STATE));
-
-		assertEquals(Integer.valueOf(3), table.clientState(STATE_COLUMNS_SHOWN));
-		assertEquals(Integer.valueOf(3), table.clientState(STATE_COLUMNS_TOTAL));
 	}
 
 	/** Tests that a table that does not offer the column selection opens none. */
@@ -271,24 +244,24 @@ public class TestColumnSelectionApply extends TestCase {
 	/** Tests that the table opens the page with its grouping, and that the grouping chosen there applies at once. */
 	public void testGroupingAppliesAtOnce() {
 		TestTable table = control();
-		table.setGroupedColumn(COLUMN_NAME);
+		table.setGroupedColumns(List.of(COLUMN_NAME));
 
 		ReactColumnSelectControl selection = table.open();
-		assertEquals(COLUMN_NAME, selection.groupedColumn());
+		assertEquals(List.of(COLUMN_NAME), selection.groupedColumns());
 
 		group(selection, COLUMN_AMOUNT);
-		assertEquals(COLUMN_AMOUNT, table.getGroupedColumn());
+		assertEquals(List.of(COLUMN_AMOUNT), table.getGroupedColumns());
 	}
 
 	/** Tests that removing the grouping in the selection shows the rows ungrouped at once. */
 	public void testRemovingTheGroupingAppliesAtOnce() {
 		TestTable table = control();
-		table.setGroupedColumn(COLUMN_NAME);
+		table.setGroupedColumns(List.of(COLUMN_NAME));
 
 		ReactColumnSelectControl selection = table.open();
-		group(selection, "");
+		group(selection);
 
-		assertNull(table.getGroupedColumn());
+		assertEquals(List.of(), table.getGroupedColumns());
 	}
 
 	/** Tests that the rows can be grouped by a column the table does not display, which its header menu does not offer. */
@@ -299,8 +272,26 @@ public class TestColumnSelectionApply extends TestCase {
 
 		group(selection, COLUMN_STATE);
 
-		assertEquals(COLUMN_STATE, table.getGroupedColumn());
+		assertEquals(List.of(COLUMN_STATE), table.getGroupedColumns());
 		assertEquals(List.of(COLUMN_NAME, COLUMN_AMOUNT), displayedColumns(table));
+	}
+
+	/**
+	 * Tests that a further grouping level chosen in the selection applies at once as the innermost level, and that
+	 * removing the level of one column keeps the others.
+	 */
+	public void testGroupingLevelsApplyAtOnce() {
+		TestTable table = control();
+		table.setGroupedColumns(List.of(COLUMN_NAME));
+
+		ReactColumnSelectControl selection = table.open();
+		group(selection, COLUMN_NAME, COLUMN_STATE);
+		assertEquals(List.of(COLUMN_NAME, COLUMN_STATE), table.getGroupedColumns());
+
+		selection = table.open();
+		assertEquals(List.of(COLUMN_NAME, COLUMN_STATE), selection.groupedColumns());
+		group(selection, COLUMN_STATE);
+		assertEquals(List.of(COLUMN_STATE), table.getGroupedColumns());
 	}
 
 	/** Tests that closing the page releases the selection and takes it out of the state; the table stays as it is. */
@@ -379,9 +370,9 @@ public class TestColumnSelectionApply extends TestCase {
 		assertEquals(0, table.getView().frozenColumnCount());
 	}
 
-	private static void group(ReactColumnSelectControl selection, String column) {
+	private static void group(ReactColumnSelectControl selection, String... columns) {
 		selection.executeClientCommand(ReactColumnSelectControl.CMD_GROUP,
-			Map.of(GroupArguments.COLUMN, column));
+			Map.of(GroupArguments.COLUMNS, List.of(columns)));
 	}
 
 	private static void visible(ReactColumnSelectControl selection, String column, boolean visible) {

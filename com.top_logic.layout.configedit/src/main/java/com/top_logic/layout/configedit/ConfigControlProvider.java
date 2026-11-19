@@ -35,4 +35,23 @@ public interface ConfigControlProvider {
 	 */
 	ReactControl createControl(ReactContext context, ConfigFieldModel model);
 
+	/**
+	 * Whether the control this provider creates for the given model takes the whole row of a form
+	 * with several columns.
+	 *
+	 * <p>
+	 * A control editing a text that spans several lines needs the width of the row. An explicit
+	 * {@link com.top_logic.layout.form.values.edit.annotation.RenderWholeLine} annotation of the
+	 * property or its value type takes precedence over this decision.
+	 * </p>
+	 *
+	 * @param model
+	 *        The field model the control is created for, see
+	 *        {@link #createControl(ReactContext, ConfigFieldModel)}.
+	 * @return Whether the field takes the whole row; <code>false</code> by default.
+	 */
+	default boolean rendersWholeLine(ConfigFieldModel model) {
+		return false;
+	}
+
 }

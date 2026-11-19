@@ -41,6 +41,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey FORM_NO_MODEL;
 
 	/**
+	 * @en The object is shown read-only.
+	 */
+	public static ResKey FORM_SHOWN_READ_ONLY;
+
+	/**
+	 * @en The value was not saved.
+	 */
+	public static ResKey CELL_VALUE_NOT_SAVED;
+
+	/**
 	 * @en No configuration to edit.
 	 */
 	public static ResKey CONFIG_FORM_NO_MODEL;
@@ -232,6 +242,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en There are no changes to save.
 	 */
 	public static ResKey DESIGNER_NOTHING_TO_SAVE;
+
+	/**
+	 * @en "{0}" is no color role. A script computing a color role yields one of the names {1}, or
+	 *     nothing for no role.
+	 */
+	public static ResKey2 ERROR_UNKNOWN_COLOR_ROLE__VALUE_ROLES;
 
 	static {
 		initConstants(I18NConstants.class);

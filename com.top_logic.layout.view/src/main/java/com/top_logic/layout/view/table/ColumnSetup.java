@@ -14,7 +14,9 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
+import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.LabelProvider;
@@ -30,8 +32,10 @@ import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.layout.view.form.BoundFieldModel;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
+import com.top_logic.table.CellExistence;
 import com.top_logic.table.CellRenderer;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnAlignment;
@@ -93,6 +97,10 @@ import com.top_logic.util.Resources;
  *        column whose cells have none. It is never passed the
  *        {@link ColumnProviderService#UNREADABLE} marker: a cell the user may not read has no class.
  *        An empty class counts as none.
+ * @param cellRole
+ *        The color role of a data cell, computed from its row and its value, or {@code null} for a
+ *        column whose cells have none. It is never passed the
+ *        {@link ColumnProviderService#UNREADABLE} marker: a cell the user may not read has no role.
  * @param display
  *        How a cell displays its value, in place of the display its {@link #type()} derives, or
  *        {@code null} for the type-derived display. It displays a value only: an empty cell, a cell
@@ -100,6 +108,9 @@ import com.top_logic.util.Resources;
  *        {@link #binding()} built. A collection of values is displayed value by value. A display
  *        that is a {@link LabelProvider} gives the cells the text the free-text search finds them
  *        by, the labels of a collection's values joined as for any cell holding several values.
+ *        In a {@link ColumnProviderService#isLabelColumn(ColumnType) label column}, that label is
+ *        also the {@link #text() text} the column sorts and text-filters its values by and, unless
+ *        the {@link #export()} configures a renderer, the value an export writes.
  * @param sortable
  *        Whether the column sorts at all. A column that does not sort offers no sorting and
  *        ignores its {@link #comparator()}; a table grouped by it keeps its groups in the order of
@@ -113,6 +124,27 @@ import com.top_logic.util.Resources;
  *        column that always does. While the condition does not hold, the table neither displays
  *        the column nor offers it in its column selection, see
  *        {@link ColumnExistence}. Never {@code null}.
+ * @param cellExists
+ *        Whether the column has a cell for a row, {@code null} for a column that has one for every
+ *        row: a column over an attribute has none for a row whose type does not hold the
+ *        attribute. A row without a cell shows nothing in the column - neither a value, nor an
+ *        input, nor a tooltip, a class or a color role -, and the built column announces the test as its
+ *        {@link Column#existence()}.
+ * @param header
+ *        The color role and the CSS class of the heading of the column, {@link ColumnHeader#NONE}
+ *        for a heading without either. They are put on the heading only, not on the data cells, see
+ *        {@link Column#headerRole()} and {@link Column#headerClass()}. Never {@code null}.
+ * @param released
+ *        Whether the access rights of the current user release the column,
+ *        {@link ChannelCondition#ALWAYS} for a column no right withholds. While the condition does
+ *        not hold, the column is withheld from the user: it does not exist, as if its
+ *        {@link #exists()} condition did not hold, and nothing the table offers may refer to it -
+ *        a declared filter with a criterion on it is not offered, see {@link ColumnExistence}.
+ *        Never {@code null}.
+ * @param emptyGroupLabel
+ *        What the header row of a group formed by the column shows when the rows of the group have
+ *        no value in it, or {@code null} for the {@link Column#emptyGroupLabel() label the column
+ *        brings itself}.
  */
 public record ColumnSetup(
 		String name,
@@ -129,14 +161,72 @@ public record ColumnSetup(
 		ColumnExport export,
 		BiFunction<Object, Object, String> tooltip,
 		BiFunction<Object, Object, String> cellClass,
+		BiFunction<Object, Object, ValueColor> cellRole,
 		ReactControlProvider display,
 		boolean sortable,
 		ColumnAlignment align,
-		ChannelCondition exists) {
+		ChannelCondition exists,
+		CellExistence<Object> cellExists,
+		ColumnHeader header,
+		ChannelCondition released,
+		ResKey emptyGroupLabel) {
 
 	/**
-	 * Creates a {@link ColumnSetup} of a column that always exists and whose content is aligned as
-	 * its values call for.
+	 * Creates a {@link ColumnSetup} of a column whose empty group is labeled as the column labels
+	 * it itself.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip,
+			BiFunction<Object, Object, String> cellClass, BiFunction<Object, Object, ValueColor> cellRole,
+			ReactControlProvider display, boolean sortable, ColumnAlignment align, ChannelCondition exists,
+			CellExistence<Object> cellExists, ColumnHeader header, ChannelCondition released) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, cellClass, cellRole, display, sortable, align, exists, cellExists, header, released,
+			null);
+	}
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column no access right withholds.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip,
+			BiFunction<Object, Object, String> cellClass, BiFunction<Object, Object, ValueColor> cellRole,
+			ReactControlProvider display, boolean sortable, ColumnAlignment align, ChannelCondition exists,
+			CellExistence<Object> cellExists, ColumnHeader header) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, cellClass, cellRole, display, sortable, align, exists, cellExists, header,
+			ChannelCondition.ALWAYS);
+	}
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column whose heading has neither a color role nor a CSS
+	 * class of its own.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip,
+			BiFunction<Object, Object, String> cellClass, BiFunction<Object, Object, ValueColor> cellRole,
+			ReactControlProvider display, boolean sortable, ColumnAlignment align, ChannelCondition exists,
+			CellExistence<Object> cellExists) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, cellClass, cellRole, display, sortable, align, exists, cellExists, ColumnHeader.NONE,
+			ChannelCondition.ALWAYS);
+	}
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column that always exists, has a cell for every row, whose
+	 * cells have no color role of their own and whose content is aligned as its values call for.
 	 *
 	 * @see ColumnSetup The full descriptor.
 	 */
@@ -146,7 +236,7 @@ public record ColumnSetup(
 			ColumnExport export, BiFunction<Object, Object, String> tooltip,
 			BiFunction<Object, Object, String> cellClass, ReactControlProvider display, boolean sortable) {
 		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
-			export, tooltip, cellClass, display, sortable, null, ChannelCondition.ALWAYS);
+			export, tooltip, cellClass, null, display, sortable, null, ChannelCondition.ALWAYS, null);
 	}
 
 	/**
@@ -252,7 +342,37 @@ public record ColumnSetup(
 			return this;
 		}
 		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
-			hiddenByDefault, export, tooltip, cellClass, display, sortable, align, exists.and(condition));
+			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, align,
+			exists.and(condition), cellExists, header, released, emptyGroupLabel);
+	}
+
+	/**
+	 * This descriptor for a column whose cells are edited only on the rows the given condition
+	 * accepts in addition, see {@link CellEditing#restrictedTo(Predicate)}.
+	 *
+	 * @param rows
+	 *        Whether a row can be edited.
+	 */
+	public ColumnSetup restrictedTo(Predicate<Object> rows) {
+		if (editing == null) {
+			return this;
+		}
+		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing.restrictedTo(rows),
+			aggregate, comparator, hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, align,
+			exists, cellExists, header, released);
+	}
+
+	/**
+	 * This descriptor for a column the access rights of the user release only where the given
+	 * condition holds in addition to its own {@link #released()} condition.
+	 */
+	public ColumnSetup releasedIf(ChannelCondition condition) {
+		if (condition == ChannelCondition.ALWAYS) {
+			return this;
+		}
+		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
+			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, align, exists, cellExists,
+			header, released.and(condition), emptyGroupLabel);
 	}
 
 	/**
@@ -262,9 +382,12 @@ public record ColumnSetup(
 	 * {@link #comparator()} when it declares one and not at all when it is not {@link #sortable()},
 	 * displaying its values through the {@link #display()} when it declares one, with the
 	 * {@link #tooltip()} on its cells and on the header rows of the groups it forms when it
-	 * computes one, with the {@link #cellClass()} on its cells when it computes one, and left out
-	 * of exports when its {@link #export()} says so. It puts its content on the side its
-	 * {@link #alignment() alignment} names.
+	 * computes one, with the {@link #cellClass()} and the {@link #cellRole()} on its cells when it
+	 * computes them, with the {@link #header()} on its heading, with the {@link #emptyGroupLabel()}
+	 * on the header row of a group of rows without a value when it declares one, and left out of
+	 * exports when its
+	 * {@link #export()} says so. It puts its content on the side its {@link #alignment() alignment}
+	 * names.
 	 */
 	public Column<Object, ?> buildColumn() {
 		return decorate(binding().createColumn(this));
@@ -291,23 +414,26 @@ public record ColumnSetup(
 	 * ({@link ValueCellEditing}): an attribute column edits the object itself, which is done in a
 	 * form, where the edit is buffered until it is saved. A cell of a row the edit is not offered
 	 * on shows a value it has with the same control, read-only, and an empty cell as the column
-	 * displays it. The cell keeps the tooltip and the cell class the column computes.
+	 * displays it. The cell keeps the tooltip, the cell class and the cell role the column computes.
 	 * </p>
 	 *
 	 * @param written
 	 *        Called with the row after a value of its cell was written, e.g. to build the cells
 	 *        whose values may follow the written one again.
+	 * @param lockHandler
+	 *        Locks the object of a row while a value of its cell is written, see
+	 *        {@link ValueCellEditing#createInPlaceModel(ReactContext, Object, LockHandler, Runnable)}.
 	 */
-	public Column<Object, ?> buildInPlaceColumn(Consumer<Object> written) {
+	public Column<Object, ?> buildInPlaceColumn(Consumer<Object> written, LockHandler lockHandler) {
 		Column<Object, ?> column = buildColumn();
 		if (!(editing instanceof ValueCellEditing valueEditing)) {
 			return column;
 		}
-		return inPlace(column, valueEditing, written);
+		return inPlace(column, valueEditing, written, lockHandler);
 	}
 
 	private <V> Column<Object, V> inPlace(Column<Object, V> column, ValueCellEditing editing,
-			Consumer<Object> written) {
+			Consumer<Object> written, LockHandler lockHandler) {
 		return new DelegatingColumn<>(column) {
 			@Override
 			public CellContent renderCell(Object row) {
@@ -315,7 +441,7 @@ public record ColumnSetup(
 				CellControlFactory factory;
 				if (editing.canEdit(row)) {
 					factory = context -> createEditControl(context, row,
-						editing.createInPlaceModel(row, () -> written.accept(row)));
+						editing.createInPlaceModel(context, row, lockHandler, () -> written.accept(row)));
 				} else if (editing.value(row) != null) {
 					// A value the row does not offer to edit is shown by the same control, disabled.
 					factory = context -> editing.createControl(context, row, editing.createReadOnlyModel(row));
@@ -396,19 +522,67 @@ public record ColumnSetup(
 				}
 			};
 		}
+		Function<Object, Object> cellValue = binding()::cellValue;
 		if (display != null) {
-			result = withDisplay(result, display);
+			result = withDisplay(result, cellValue, display, exportsLabel() ? displayLabels() : null);
 		}
 		if (tooltip != null) {
-			result = withTooltip(result, tooltip);
+			result = withTooltip(result, cellValue, tooltip);
 		}
 		if (cellClass != null) {
-			result = withCellClass(result, cellClass);
+			result = withCellClass(result, cellValue, cellClass);
+		}
+		if (cellRole != null) {
+			result = withCellRole(result, cellValue, cellRole);
 		}
 		if (!export.exported()) {
 			result = DelegatingColumn.notExportable(result);
 		}
-		return result;
+		if (cellExists != null) {
+			result = withCellExistence(result, cellExists);
+		}
+		if (emptyGroupLabel != null) {
+			result = DelegatingColumn.withEmptyGroupLabel(result, emptyGroupLabel);
+		}
+		return header.decorate(result);
+	}
+
+	/**
+	 * The given column showing nothing for a row it has no cell for: no content, no search text, no
+	 * class, no color role and no exported value.
+	 */
+	private static <V> Column<Object, V> withCellExistence(Column<Object, V> column, CellExistence<Object> exists) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public CellContent renderCell(Object row) {
+				return exists.cellExists(row) ? super.renderCell(row) : CellContent.empty();
+			}
+
+			@Override
+			public String searchText(Object row) {
+				return exists.cellExists(row) ? super.searchText(row) : "";
+			}
+
+			@Override
+			public String cssClass(Object row) {
+				return exists.cellExists(row) ? super.cssClass(row) : null;
+			}
+
+			@Override
+			public ValueColor color(Object row) {
+				return exists.cellExists(row) ? super.color(row) : null;
+			}
+
+			@Override
+			public Object exportValue(Object row) {
+				return exists.cellExists(row) ? super.exportValue(row) : null;
+			}
+
+			@Override
+			public Optional<CellExistence<Object>> existence() {
+				return Optional.of(exists);
+			}
+		};
 	}
 
 	/**
@@ -472,22 +646,78 @@ public record ColumnSetup(
 	}
 
 	/**
+	 * The text a value of this column is written as where the column compares its values as text:
+	 * what a {@link ColumnProviderService#isLabelColumn(ColumnType) label column} sorts its values
+	 * by when it declares no {@link #comparator()}, and what its text filter matches against.
+	 *
+	 * <p>
+	 * In a label column with a {@link #display()} that is a {@link LabelProvider}, a value the
+	 * display {@link #displays(Object) displays} is written as the display labels it, so that the
+	 * column sorts and filters by what it shows; a collection of values by the labels of its values,
+	 * joined as for any cell holding several values. Every other value is written as the
+	 * {@link #type()} of the values derives, see {@link ColumnProviderService#displayText(ColumnType)}.
+	 * </p>
+	 *
+	 * <p>
+	 * It is given the cell values themselves, also {@code null} and the
+	 * {@link ColumnProviderService#UNREADABLE} marker.
+	 * </p>
+	 */
+	public Function<Object, String> text() {
+		Function<Object, String> typeText = ColumnProviderService.displayText(type);
+		LabelProvider labels = displayLabels();
+		if (labels == null) {
+			return typeText;
+		}
+		return cellValue -> displays(cellValue) ? labelText(labels, cellValue) : typeText.apply(cellValue);
+	}
+
+	/**
+	 * The {@link #display()} as the labels of the values of a
+	 * {@link ColumnProviderService#isLabelColumn(ColumnType) label column}, {@code null} for a
+	 * column that is no label column or whose display computes no labels.
+	 */
+	private LabelProvider displayLabels() {
+		if (display instanceof LabelProvider labels && ColumnProviderService.getInstance().isLabelColumn(type)) {
+			return labels;
+		}
+		return null;
+	}
+
+	/**
+	 * Whether an export writes the labels the {@link #display()} shows the values with, rather than
+	 * the values: in a {@link ColumnProviderService#isLabelColumn(ColumnType) label column} whose
+	 * display computes labels, and whose {@link #export()} configures no renderer of its own.
+	 */
+	private boolean exportsLabel() {
+		return export.renderer() == null && displayLabels() != null;
+	}
+
+	/**
 	 * The given column displaying its values through the given display.
 	 *
 	 * <p>
-	 * A data cell and the header row of a group show their value as the given display does, where
-	 * it {@link #displays(Object) displays} the value, and as the given column does otherwise; a
-	 * collection of values value by value. A display that is a {@link LabelProvider} is what the
-	 * free-text search reads a cell by, so that the search finds what the cell shows.
+	 * A data cell and the header row of a group show their cell value as the given display does,
+	 * where it {@link #displays(Object) displays} the value, and as the given column does
+	 * otherwise; a collection of values value by value. A display that is a {@link LabelProvider}
+	 * is what the free-text search reads a cell by, so that the search finds what the cell shows.
 	 * </p>
+	 *
+	 * @param cellValue
+	 *        The cell value a value of the given column stands for, see
+	 *        {@link ColumnBinding#cellValue(Object)}.
+	 * @param exportLabels
+	 *        The labels an export writes a displayed value as, {@code null} for an export writing
+	 *        the value of the given column.
 	 */
-	private static <V> Column<Object, V> withDisplay(Column<Object, V> column, ReactControlProvider display) {
+	private static <V> Column<Object, V> withDisplay(Column<Object, V> column, Function<Object, Object> cellValue,
+			ReactControlProvider display, LabelProvider exportLabels) {
 		return new DelegatingColumn<>(column) {
 			@Override
 			public CellContent renderCell(Object row) {
-				V cellValue = super.value(row);
-				if (displays(cellValue)) {
-					return displayed(display, cellValue);
+				Object value = cellValue.apply(super.value(row));
+				if (displays(value)) {
+					return displayed(display, value);
 				}
 				return super.renderCell(row);
 			}
@@ -495,18 +725,32 @@ public record ColumnSetup(
 			@Override
 			public CellRenderer<V> renderer() {
 				CellRenderer<V> inner = super.renderer();
-				return groupValue -> displays(groupValue) ? displayed(display, groupValue) : inner.render(groupValue);
+				return groupValue -> {
+					Object value = cellValue.apply(groupValue);
+					return displays(value) ? displayed(display, value) : inner.render(groupValue);
+				};
 			}
 
 			@Override
 			public String searchText(Object row) {
 				if (display instanceof LabelProvider labels) {
-					V cellValue = super.value(row);
-					if (displays(cellValue)) {
-						return labelText(labels, cellValue);
+					Object value = cellValue.apply(super.value(row));
+					if (displays(value)) {
+						return labelText(labels, value);
 					}
 				}
 				return super.searchText(row);
+			}
+
+			@Override
+			public Object exportValue(Object row) {
+				if (exportLabels != null) {
+					Object value = cellValue.apply(super.value(row));
+					if (displays(value)) {
+						return labelText(exportLabels, value);
+					}
+				}
+				return super.exportValue(row);
 			}
 		};
 	}
@@ -519,24 +763,29 @@ public record ColumnSetup(
 	 * row - the value of a group in the header row of the group - the one computed from no row and
 	 * that value. A cell the user may not read has no tooltip.
 	 * </p>
+	 *
+	 * @param cellValue
+	 *        The cell value a value of the given column stands for, see
+	 *        {@link ColumnBinding#cellValue(Object)}.
 	 */
-	private static <V> Column<Object, V> withTooltip(Column<Object, V> column,
+	private static <V> Column<Object, V> withTooltip(Column<Object, V> column, Function<Object, Object> cellValue,
 			BiFunction<Object, Object, String> tooltip) {
 		return new DelegatingColumn<>(column) {
 			@Override
 			public CellContent renderCell(Object row) {
-				V cellValue = super.value(row);
+				Object value = cellValue.apply(super.value(row));
 				CellContent content = super.renderCell(row);
-				if (cellValue == ColumnProviderService.UNREADABLE) {
+				if (value == ColumnProviderService.UNREADABLE) {
 					return content;
 				}
-				return CellContent.withTooltip(content, tooltip.apply(row, cellValue));
+				return CellContent.withTooltip(content, tooltip.apply(row, value));
 			}
 
 			@Override
 			public CellRenderer<V> renderer() {
 				CellRenderer<V> inner = super.renderer();
-				return groupValue -> CellContent.withTooltip(inner.render(groupValue), tooltip.apply(null, groupValue));
+				return groupValue -> CellContent.withTooltip(inner.render(groupValue),
+					tooltip.apply(null, cellValue.apply(groupValue)));
 			}
 		};
 	}
@@ -548,18 +797,22 @@ public record ColumnSetup(
 	 * A data cell gets the class computed from its row and its value, in addition to the class the
 	 * given column puts on it. A cell the user may not read gets no class of its own.
 	 * </p>
+	 *
+	 * @param cellValue
+	 *        The cell value a value of the given column stands for, see
+	 *        {@link ColumnBinding#cellValue(Object)}.
 	 */
-	private static <V> Column<Object, V> withCellClass(Column<Object, V> column,
+	private static <V> Column<Object, V> withCellClass(Column<Object, V> column, Function<Object, Object> cellValue,
 			BiFunction<Object, Object, String> cellClass) {
 		return new DelegatingColumn<>(column) {
 			@Override
 			public String cssClass(Object row) {
 				String inner = super.cssClass(row);
-				V cellValue = super.value(row);
-				if (cellValue == ColumnProviderService.UNREADABLE) {
+				Object value = cellValue.apply(super.value(row));
+				if (value == ColumnProviderService.UNREADABLE) {
 					return inner;
 				}
-				String own = cellClass.apply(row, cellValue);
+				String own = cellClass.apply(row, value);
 				if (StringServices.isEmpty(own)) {
 					return inner;
 				}
@@ -569,12 +822,47 @@ public record ColumnSetup(
 	}
 
 	/**
+	 * The given column with the given color role on its data cells.
+	 *
+	 * <p>
+	 * A data cell gets the role computed from its row and its value, the role the given column
+	 * gives it where it computes none. A cell the user may not read gets no role of its own.
+	 * </p>
+	 *
+	 * @param cellValue
+	 *        The cell value a value of the given column stands for, see
+	 *        {@link ColumnBinding#cellValue(Object)}.
+	 */
+	private static <V> Column<Object, V> withCellRole(Column<Object, V> column, Function<Object, Object> cellValue,
+			BiFunction<Object, Object, ValueColor> cellRole) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public ValueColor color(Object row) {
+				Object value = cellValue.apply(super.value(row));
+				if (value == ColumnProviderService.UNREADABLE) {
+					return super.color(row);
+				}
+				ValueColor own = cellRole.apply(row, value);
+				return own != null ? own : super.color(row);
+			}
+		};
+	}
+
+	/**
 	 * The renderer writing a value of this column into a cell of an Excel export, {@code null} for
 	 * the default.
+	 *
+	 * <p>
+	 * A column exporting the labels its {@link #display()} shows its values with writes them as
+	 * texts, by the default renderer: see the {@link #display()} for when it does.
+	 * </p>
 	 *
 	 * @see ColumnExport#rendererFor(ColumnType)
 	 */
 	public ExcelCellRenderer exportRenderer() {
+		if (exportsLabel()) {
+			return null;
+		}
 		return export.rendererFor(type);
 	}
 

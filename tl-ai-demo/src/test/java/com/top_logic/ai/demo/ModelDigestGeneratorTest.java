@@ -15,10 +15,10 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.model.TLModel;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.security.ModelSecurity;
-import com.top_logic.tl.ai.core.tools.model.ModelBrowserTool;
-import com.top_logic.tl.ai.core.tools.model.ModelDigestGenerator;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.security.ModelSecurity;
+import com.top_logic.ai.core.tools.model.ModelBrowserTool;
+import com.top_logic.ai.core.tools.model.ModelDigestGenerator;
 import com.top_logic.util.model.ModelService;
 
 /**

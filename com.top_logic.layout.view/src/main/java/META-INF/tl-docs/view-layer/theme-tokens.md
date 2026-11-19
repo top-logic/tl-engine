@@ -105,6 +105,17 @@ two tokens of the role, its tinted surface and its line (`--tl-status-warning-su
 Which tokens a role reads, and why the text on it is `text-primary`, is decided in `docs/skalen.md` of
 the design-system repository, section "Pill: Rolle statt Farbe".
 
+The heading of a table column takes a role the same way: a column's `header-role` (see
+[header roles and classes](doc:view-layer/tables#column-declarations)) reaches the client as
+`columns[].headerRole` and is put on the header cell as `data-tl-role`,
+`<div class="tl-table__header-cell" data-tl-role="warning">`. The table stylesheet of the design system
+(`tl-design-system/src/components/table/table.css`) draws it from the same two tokens as the pill: the tinted
+surface fills the header cell, a stripe of `border-width-accent` at its bottom takes the line of the role,
+and the heading's label turns from the muted `text-secondary` to `text-primary`, so it stays legible on the
+tint in both modes. Only the header cell is tinted, the data cells of the column are not. A
+`header-class` is put on the header cell beside it, as the application's own hook; the design system reads
+no application class.
+
 Because the roles are a Java enum, a misspelled role is a configuration error where it is written; no
 vocabulary has to be asked at run time, and the tokens of `tl-react-theme.config.xml` are not the place a
 model configuration names a color from.
@@ -157,23 +168,28 @@ the surface it styles, and the default leaves every surface without one.
 ## Typography tokens
 
 The `<text>` element states what a text is for as a
-[variant](doc:view-layer/display#text-variant-tone-and-appearance), and the stylesheet fills the role
-from these tokens:
+[variant](doc:view-layer/display#text-variant-tone-and-appearance). The variants are the type scale
+of the design system: each one is drawn with the type class `tl-type-<variant>` of the design
+system's base sheet, which reads the tokens of its role (`--tl-…`, declared in `tl-design-system`
+`src/tokens.json`, section `type`):
 
-| Variant | Family | Size | Line height | Weight |
-| --- | --- | --- | --- | --- |
-| `display` | `font-family-display` | `display-01-font-size` (`2.5rem`) | `display-01-line-height` (`3rem`) | 600 |
-| `headline` | `font-family-display` | `heading-04-font-size` (`1.75rem`) | `heading-04-line-height` (`2.25rem`) | 600 |
-| `title` | `font-family-display` | `heading-03-font-size` (`1.25rem`) | `heading-03-line-height` (`1.625rem`) | 600 |
-| `body` | `font-family` | `body-compact-01-font-size` (`0.875rem`) | `body-compact-01-line-height` (`1.125rem`) | inherited |
-| `label` | `font-family` | `heading-compact-02-font-size` (`0.875rem`) | `heading-compact-02-line-height` (`1.125rem`) | 600 |
-| `caption` | `font-family` | `label-01-font-size` (`0.75rem`) | `label-01-line-height` (`1rem`) | inherited |
+| Variant | Family | Size | Weight | Line height | Letter spacing |
+| --- | --- | --- | --- | --- | --- |
+| `display` | `font-family-sans` | `font-size-display` | `font-weight-strong` | `font-line-height-display` | `font-letter-spacing-tight` |
+| `heading-lg` | `font-family-sans` | `font-size-heading-lg` | `font-weight-strong` | `font-line-height-heading-lg` | `font-letter-spacing-snug` |
+| `heading-md` | `font-family-sans` | `font-size-heading-md` | `font-weight-strong` | `font-line-height-heading-md` | `font-letter-spacing-normal` |
+| `heading-sm` | `font-family-sans` | `font-size-heading-sm` | `font-weight-strong` | `font-line-height-heading-sm` | `font-letter-spacing-normal` |
+| `body` | `font-family-sans` | `font-size-body` | `font-weight-regular` | `font-line-height-body` | `font-letter-spacing-normal` |
+| `body-strong` | `font-family-sans` | `font-size-body` | `font-weight-strong` | `font-line-height-body` | `font-letter-spacing-normal` |
+| `label` | `font-family-sans` | `font-size-label` | `font-weight-regular` | `font-line-height-label` | `font-letter-spacing-wide` |
+| `label-strong` | `font-family-sans` | `font-size-label` | `font-weight-strong` | `font-line-height-label` | `font-letter-spacing-wide` |
+| `overline` | `font-family-sans` | `font-size-label` | `font-weight-regular` | `font-line-height-label` | `font-letter-spacing-wider` |
+| `code` | `font-family-mono` | `font-size-body` | `font-weight-regular` | `font-line-height-body` | `font-letter-spacing-normal` |
 
-`font-family-display` is a `<ref>` to `font-family`, so the headings read in the body face until a
-theme gives them one of their own — which is the one change a theme needs for a display face.
-
-The weights are literal, as everywhere else in the sheet: a weight is part of what a role *is*, not
-a value a theme retunes.
+A theme that maps the typography of a customer's design system onto TopLogic sets these tokens; it
+maps each style of the customer scale onto the role of the ten that serves the same purpose. The
+component code uses the same classes, so a theme restyles every text of a role at once - a `<text>`
+as well as the header of a table or the title of an alert.
 
 ## The page background
 

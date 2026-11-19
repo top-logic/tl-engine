@@ -5,25 +5,17 @@
  */
 package com.top_logic.security.selfservice.invitation;
 
-import java.io.IOError;
-import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import com.top_logic.base.accesscontrol.ApplicationPages;
 import com.top_logic.basic.AliasManager;
-import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
-import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.mig.html.layout.LayoutUtils;
-import com.top_logic.security.selfservice.I18NConstants;
 import com.top_logic.security.selfservice.model.Invitation;
 import com.top_logic.util.error.TopLogicException;
 
@@ -32,8 +24,9 @@ import com.top_logic.util.error.TopLogicException;
  * it.
  *
  * <p>
- * The link is the public address of the application ({@link AliasManager#HOST}, variable
- * <code>tl_host</code>, or without one the address of the current request), its context path ({@link AliasManager#APP_CONTEXT}), the
+ * The link is the {@link ApplicationAddress address} of the application (the public address
+ * {@link AliasManager#HOST}, variable <code>tl_host</code>, or without one the address of the
+ * current request, and its context path {@link AliasManager#APP_CONTEXT}), the
  * {@link Config#getPage() page} and the {@link Invitation#getId() token} of the invitation in the
  * request parameter {@link #INVITATION_PARAMETER}, e.g.
  * <code>https://app.example.com/app/servlet/LayoutServlet?invitation=0123abcd-...</code>.
@@ -96,7 +89,7 @@ public class InvitationLink<C extends InvitationLink.Config<?>> extends Abstract
 	 *         If the public address of the application is not configured.
 	 */
 	public String url(String token) {
-		return publicAddress() + contextPath() + path(token);
+		return publicAddress() + ApplicationAddress.contextPath() + path(token);
 	}
 
 	/**
@@ -127,48 +120,14 @@ public class InvitationLink<C extends InvitationLink.Config<?>> extends Abstract
 	 * The public address of the application (scheme, host and optional port) without a trailing
 	 * slash.
 	 *
-	 * <p>
-	 * The address is the configured public address of the application ({@link AliasManager#HOST}).
-	 * Without one, it is taken from the current request, if the link is built while a request is
-	 * processed, e.g. in a command of the user interface.
-	 * </p>
-	 *
 	 * @throws TopLogicException
 	 *         If the public address of the application is not configured and there is no current
 	 *         request.
+	 *
+	 * @see ApplicationAddress#publicAddress()
 	 */
 	protected String publicAddress() {
-		String host = StringServices.nonNull(AliasManager.getInstance().getAlias(AliasManager.HOST)).trim();
-		if (host.isEmpty()) {
-			HttpServletRequest request = currentRequest();
-			if (request == null) {
-				throw new TopLogicException(I18NConstants.ERROR_NO_PUBLIC_ADDRESS);
-			}
-			StringBuilder requestHost = new StringBuilder();
-			try {
-				LayoutUtils.appendHostURL(request, requestHost);
-			} catch (IOException ex) {
-				// A StringBuilder does not throw.
-				throw new IOError(ex);
-			}
-			host = requestHost.toString();
-		}
-		while (host.endsWith("/")) {
-			host = host.substring(0, host.length() - 1);
-		}
-		return host;
-	}
-
-	private static HttpServletRequest currentRequest() {
-		InteractionContext interaction = ThreadContextManager.getInteraction();
-		if (interaction == null) {
-			return null;
-		}
-		return interaction.asRequest();
-	}
-
-	private static String contextPath() {
-		return StringServices.nonNull(AliasManager.getInstance().getAlias(AliasManager.APP_CONTEXT));
+		return ApplicationAddress.publicAddress();
 	}
 
 }

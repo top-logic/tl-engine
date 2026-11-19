@@ -237,7 +237,7 @@ public class TestCreateStatementBuilder extends BasicTestCase {
 			// TODO: Test binary attribute be searching a string value with different case.
 
 			// Clean up table.
-			DBSchemaUtils.resetTables(pool, schema, false);
+			DBSchemaUtils.dropTables(pool, schema);
 		}
 
 		private void truncate(PooledConnection connection, DBHelper sqlDialect, DBTable table) throws SQLException {
@@ -362,7 +362,6 @@ public class TestCreateStatementBuilder extends BasicTestCase {
 	 */
 	public static Test suite() {
 		Test t = DatabaseTestSetup.getDBTest(TestCreateStatementBuilder.class,
-			//			test.com.top_logic.basic.DatabaseTestSetup.DBType.ORACLE_DB,
 			new TestFactory() {
 			
 			@Override

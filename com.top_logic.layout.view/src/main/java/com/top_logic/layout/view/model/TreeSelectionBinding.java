@@ -37,7 +37,8 @@ import com.top_logic.model.TLObject;
  * <p>
  * What lands on the channel are the {@link TLTreeNode#getBusinessObject() business objects} of the
  * selected nodes, not the nodes themselves: the channel is read by displays and commands that work
- * with the application's objects and know nothing about the tree showing them. The channel is the
+ * with the application's objects and know nothing about the tree showing them - or the objects
+ * standing for them while they are edited, see {@link ChannelObjects}. The channel is the
  * shared selection - several displays, a detail panel and a command's executability can all be
  * bound to the same one - so the tree is only one of its writers, and it writes it in exactly two
  * situations:
@@ -101,6 +102,46 @@ import com.top_logic.model.TLObject;
  */
 public class TreeSelectionBinding {
 
+	/**
+	 * How the objects of the nodes are represented on the channel of a {@link TreeSelectionBinding}.
+	 *
+	 * <p>
+	 * By default the channel holds the {@link TLTreeNode#getBusinessObject() business objects} of
+	 * the nodes themselves. A tree whose nodes are edited through other objects - the buffers of a
+	 * form editing them - publishes those instead, so that a display bound to the channel works
+	 * with what is edited.
+	 * </p>
+	 */
+	public interface ChannelObjects {
+
+		/**
+		 * Business objects stand for themselves on the channel.
+		 */
+		ChannelObjects IDENTITY = new ChannelObjects() {
+			@Override
+			public Object toChannel(Object businessObject) {
+				return businessObject;
+			}
+
+			@Override
+			public Object fromChannel(Object channelObject) {
+				return channelObject;
+			}
+		};
+
+		/**
+		 * The object written to the channel for the node of the given business object.
+		 */
+		Object toChannel(Object businessObject);
+
+		/**
+		 * The business object the given object read from the channel stands for: an object
+		 * {@link #toChannel(Object) written} for a node, or a business object another writer put
+		 * there.
+		 */
+		Object fromChannel(Object channelObject);
+	}
+
 	private final TreeSelectionDisplay _display;
 
 	private final Supplier<DefaultTreeUINodeModel> _treeModel;
@@ -108,6 +149,8 @@ public class TreeSelectionBinding {
 	private final NodeLocator _locator;
 
 	private final ViewChannel _channel;
+
+	private final ChannelObjects _channelObjects;
 
 	private final Registration _channelRegistration;
 
@@ -143,10 +186,31 @@ public class TreeSelectionBinding {
 	 */
 	public TreeSelectionBinding(TreeSelectionDisplay display, Supplier<DefaultTreeUINodeModel> treeModel,
 			NodeLocator locator, ViewChannel channel) {
+		this(display, treeModel, locator, channel, ChannelObjects.IDENTITY);
+	}
+
+	/**
+	 * Creates a {@link TreeSelectionBinding} representing the business objects on the channel by
+	 * other objects, and applies the channel's current value to the tree.
+	 *
+	 * @param display
+	 *        The display of the tree, showing its selection.
+	 * @param treeModel
+	 *        The tree displayed now, which is another one after the tree was built anew.
+	 * @param locator
+	 *        Finds the node standing for an object of the channel.
+	 * @param channel
+	 *        The channel holding the selection.
+	 * @param channelObjects
+	 *        How the business objects of the nodes are represented on the channel.
+	 */
+	public TreeSelectionBinding(TreeSelectionDisplay display, Supplier<DefaultTreeUINodeModel> treeModel,
+			NodeLocator locator, ViewChannel channel, ChannelObjects channelObjects) {
 		_display = display;
 		_treeModel = treeModel;
 		_locator = locator;
 		_channel = channel;
+		_channelObjects = channelObjects;
 
 		_selectionRegistration = display.addSelectionListener(this::handleSelectionChanged);
 		_channelRegistration = channel.addListener((sender, oldValue, newValue) -> applyChannelValue());
@@ -171,7 +235,7 @@ public class TreeSelectionBinding {
 	public void structureChanged() {
 		// A value that only announced the deletion of displayed objects is answered here, not
 		// applied: applying it would clear the selection this change chooses in their place.
-		boolean deletionAnnounced = DeletedObjects.dropsDeletedOnly(_displayed.keySet(), _channel.get());
+		boolean deletionAnnounced = DeletedObjects.dropsDeletedOnly(_displayed.keySet(), channelValue());
 
 		Set<DefaultTreeUINode> survivors = new LinkedHashSet<>();
 		List<List<Object>> vanishedAncestors = new ArrayList<>();
@@ -294,12 +358,35 @@ public class TreeSelectionBinding {
 	 */
 	private void writeSelection(Collection<Object> objects) {
 		if (objects.size() == 1) {
-			_channel.set(objects.iterator().next());
+			_channel.set(_channelObjects.toChannel(objects.iterator().next()));
 		} else if (objects.isEmpty()) {
 			_channel.set(null);
 		} else {
-			_channel.set(new LinkedHashSet<>(objects));
+			Set<Object> value = new LinkedHashSet<>();
+			for (Object object : objects) {
+				value.add(_channelObjects.toChannel(object));
+			}
+			_channel.set(value);
 		}
+	}
+
+	/**
+	 * The current value of the channel, expressed in the business objects of the nodes, see
+	 * {@link ChannelObjects#fromChannel(Object)}.
+	 */
+	private Object channelValue() {
+		Object value = _channel.get();
+		if (_channelObjects == ChannelObjects.IDENTITY || value == null) {
+			return value;
+		}
+		if (value instanceof Collection<?> objects) {
+			Set<Object> result = new LinkedHashSet<>();
+			for (Object object : objects) {
+				result.add(_channelObjects.fromChannel(object));
+			}
+			return result;
+		}
+		return _channelObjects.fromChannel(value);
 	}
 
 	/**
@@ -307,7 +394,7 @@ public class TreeSelectionBinding {
 	 * is where the tree has no node for the value.
 	 */
 	private void applyChannelValue() {
-		Object value = _channel.get();
+		Object value = channelValue();
 		if (DeletedObjects.dropsDeletedOnly(_displayed.keySet(), value)) {
 			// The channel announces the deletion of displayed objects. The tree answers with its
 			// next selection when its structure change removes their nodes; until then, it keeps

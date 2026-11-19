@@ -5,14 +5,16 @@
  */
 package com.top_logic.model.search.expr;
 
-import java.util.Collection;
 
+import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.visit.Visitor;
+import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
@@ -88,7 +90,7 @@ public class Update extends SearchExpressionWithSecurity {
 
 		if (usesSecurity()) {
 			checkWritePermission(self, part);
-			checkNewTargets(self, part, value);
+			DiscoverRight.checkNewTargets(self, part, value);
 		}
 
 		self.tUpdate(part, value);
@@ -101,8 +103,16 @@ public class Update extends SearchExpressionWithSecurity {
 	 * <p>
 	 * This is the write check of every model operation that modifies an attribute value, in
 	 * <i>TL-Script</i> as well as in an application writing edited values back to an object. The
-	 * decision is made by the {@link ModelAccessRights}.
+	 * decision is made by the {@link ModelAccessRights}:
 	 * </p>
+	 * <ul>
+	 * <li>An object created in the current transaction gets its initial values: the user needs the
+	 * right to set the initial value of the attribute, as a create dialog asks it, see
+	 * {@link ModelAccessRights#isAllowedInitial(Person, TLObject, TLStructuredTypePart, BoundCommandGroup)}.</li>
+	 * <li>Every other object is decided by the right to write the attribute of the object, see
+	 * {@link ModelAccessRights#isAllowed(Person, TLObject, TLStructuredTypePart, BoundCommandGroup)}.
+	 * A transient object is not stored and its attributes are not restricted.</li>
+	 * </ul>
 	 *
 	 * @param self
 	 *        The object to modify.
@@ -113,43 +123,21 @@ public class Update extends SearchExpressionWithSecurity {
 	 */
 	public static void checkWritePermission(TLObject self, TLStructuredTypePart part) {
 		ModelAccessRights accessRights = ModelAccessRights.getInstance();
-		if (!accessRights.isAllowed(TLContext.currentUser(), self, part, SimpleBoundCommandGroup.WRITE)) {
+		Person user = TLContext.currentUser();
+		boolean allowed = isCreatedInTransaction(self)
+			? accessRights.isAllowedInitial(user, self, part, SimpleBoundCommandGroup.WRITE)
+			: accessRights.isAllowed(user, self, part, SimpleBoundCommandGroup.WRITE);
+		if (!allowed) {
 			throw new TopLogicException(I18NConstants.WRITE_PERMISSION_DENIED__OBJECT_ATTRIBUTE.fill(self, part));
 		}
 	}
 
 	/**
-	 * Checks that the current user may discover every object the given new value adds to the
-	 * reference.
-	 *
-	 * <p>
-	 * Objects already contained in the stored value are not checked: they may stay even if the user
-	 * cannot discover them.
-	 * </p>
-	 *
-	 * @param self
-	 *        The object to modify.
-	 * @param part
-	 *        The attribute of the given object to modify. Only references are checked.
-	 * @param newValue
-	 *        The value that is going to be stored.
-	 * @throws TopLogicException
-	 *         If the new value refers to an object that is not already referenced and that the
-	 *         current user cannot discover.
+	 * Whether the given object is a persistent object created in the current, not yet committed
+	 * transaction.
 	 */
-	public static void checkNewTargets(TLObject self, TLStructuredTypePart part, Object newValue) {
-		if (!(part instanceof TLReference)) {
-			return;
-		}
-		Collection<?> stored = SearchExpression.asSet(self.tValue(part));
-		ModelAccessRights accessRights = ModelAccessRights.getInstance();
-		for (Object target : SearchExpression.asList(newValue)) {
-			if (target instanceof TLObject object && !stored.contains(object)
-				&& !accessRights.isDiscoverAllowed(object)) {
-				throw new TopLogicException(
-					I18NConstants.ERROR_TARGET_NOT_DISCOVERABLE__OBJECT_ATTRIBUTE.fill(self, part));
-			}
-		}
+	private static boolean isCreatedInTransaction(TLObject self) {
+		return !self.tTransient() && self.tHandle().getState() == KnowledgeItem.State.NEW;
 	}
 
 	@Override

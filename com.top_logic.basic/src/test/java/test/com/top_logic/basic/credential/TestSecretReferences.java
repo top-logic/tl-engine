@@ -184,16 +184,19 @@ public class TestSecretReferences extends AbstractTypedConfigurationTestCase {
 		assertEquals(Status.AVAILABLE, literal.getStatus());
 		assertEquals(I18NConstants.SECRET_IN_CONFIGURATION, literal.getReference());
 		assertNull(literal.getResolvedBy());
+		assertNull(literal.getSecretName());
 		assertNull(literal.getMessage());
 
 		SecretReference named = byPath.get("nested" + SEP + "password");
 		assertEquals(NamedSecretSource.class, named.getKind());
 		assertEquals(Status.AVAILABLE, named.getStatus());
 		assertEquals(ResKey.text(SECRET), named.getReference());
+		assertEquals(SECRET, named.getSecretName());
 		assertEquals(SecretReferences.kindLabel(EnvironmentSecretStore.class), named.getResolvedBy());
 
 		SecretReference namedMissing = byPath.get("list[0]" + SEP + "password");
 		assertEquals(Status.MISSING, namedMissing.getStatus());
+		assertEquals(UNDEFINED, namedMissing.getSecretName());
 		assertEquals(I18NConstants.ERROR_SECRET_VARIABLE_UNDEFINED__NAME.fill(UNDEFINED), namedMissing.getMessage());
 
 		SecretReference env = byPath.get("entries[env]" + SEP + "secret");
@@ -201,6 +204,7 @@ public class TestSecretReferences extends AbstractTypedConfigurationTestCase {
 		assertEquals(Status.MISSING, env.getStatus());
 		assertEquals(ResKey.text(UNDEFINED), env.getReference());
 		assertNull(env.getResolvedBy());
+		assertNull("A variable is no named secret.", env.getSecretName());
 
 		SecretReference fileMissing = byPath.get("entries[missing]" + SEP + "secret");
 		assertEquals(FileSecretSource.class, fileMissing.getKind());
@@ -260,6 +264,7 @@ public class TestSecretReferences extends AbstractTypedConfigurationTestCase {
 		assertEquals(Status.ERROR, reference.getStatus());
 		assertEquals(I18NConstants.ERROR_SECRET_STORE_NOT_STARTED__NAME.fill(SECRET), reference.getMessage());
 		assertNull(reference.getResolvedBy());
+		assertEquals(SECRET, reference.getSecretName());
 	}
 
 	private static Map<String, SecretReference> byPath(List<SecretReference> references) {

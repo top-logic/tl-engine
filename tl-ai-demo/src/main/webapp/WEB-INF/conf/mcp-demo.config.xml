@@ -1,17 +1,30 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Switches the MCP endpoint /mcp on for a local demo, authenticating callers with HTTP basic
-	against the application's own accounts. Enable it in metaConf.txt.
+	Switches the MCP endpoint /mcp on for a local demo. A caller authenticates with an OAuth access
+	token of the application's own authorization server (tl-oauth-server), with a personal access
+	token (My settings - Access tokens - New token, which also shows the command connecting Claude
+	Code) or with HTTP basic against the application's own accounts. Enable it in metaConf.txt.
 
 	FOR A LOCAL DEMO ONLY. HTTP basic puts a person's password into the client configuration; a real
-	installation uses an API key or a bearer token instead. What the endpoint publishes
+	installation uses OAuth, an API key or a bearer token instead. What the endpoint publishes
 	is configured in autoconf/com.top_logic.ai.mcp.server.MCPServerService.config.xml; see
 	the developer article ai/security/mcp-endpoint.
 
-	Connect Claude Code to a running demo with:
+	Connect Claude Code to a running demo with OAuth - no credential in the command; Claude Code
+	finds the authorization server in the answer of the endpoint, opens the browser for the login
+	and the consent page, and keeps the tokens itself (My settings - Authorized clients lists and
+	revokes the authorization):
+
+	    claude mcp add -t http tl-ai-demo http://localhost:8080/tl-ai-demo/mcp
+
+	Or with HTTP basic:
 
 	    claude mcp add -t http -H "Authorization: Basic $(printf root:<password> | base64)" tl-ai-demo http://localhost:8080/tl-ai-demo/mcp
+
+	A refusal carries the WWW-Authenticate challenge of every configured authentication, in this
+	order. The MCP client of Claude Code looks for the resource_metadata of the OAuth challenge only
+	if the first challenge is a Bearer one, so HTTP basic stays last.
 -->
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
@@ -26,6 +39,10 @@
 		<config service-class="com.top_logic.ai.mcp.server.MCPServerService">
 			<instance>
 				<authentications>
+					<oauth-access-token-authentication domain="oauth"
+						resource="/mcp"
+					/>
+					<personal-access-token-authentication domain="tokens"/>
 					<basic-authentication domain="mcp-demo" in-user-context="true"/>
 				</authentications>
 			</instance>
@@ -37,7 +54,7 @@
 			the published tools read the model, so model.read is opened for them here. This also
 			applies to every other unattended run of the demo while this aspect is on.
 		-->
-		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+		<config service-class="com.top_logic.ai.core.security.AiToolAccessService">
 			<instance>
 				<background-allowlist>
 					<grant group="model.read"/>

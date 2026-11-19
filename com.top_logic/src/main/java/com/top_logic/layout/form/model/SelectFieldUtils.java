@@ -43,6 +43,7 @@ import com.top_logic.layout.form.control.MegaMenuControl;
 import com.top_logic.layout.form.control.SelectionControl;
 import com.top_logic.layout.form.model.SelectField.Config;
 import com.top_logic.layout.form.model.utility.DefaultListOptionModel;
+import com.top_logic.layout.form.model.utility.MaskedValues;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.tree.model.TLTreeModel;
@@ -149,16 +150,57 @@ public class SelectFieldUtils {
 	}
 
 	/**
+	 * Whether the given field shows the objects of its value the current user may not discover as
+	 * placeholder.
+	 *
+	 * @see #setMaskUndiscoverable(FormField, boolean)
+	 */
+	public static boolean isMaskUndiscoverable(FormField field) {
+		return field.get(SelectField.MASK_UNDISCOVERABLE).booleanValue();
+	}
+
+	/**
+	 * Sets whether the given field shows the objects of its value the current user may not discover
+	 * as placeholder.
+	 *
+	 * <p>
+	 * A field showing the stored value of a reference holds objects the user may not discover. With
+	 * masking, the {@link #getOptionLabelProvider(FormField) labels}, the
+	 * {@link #getOptionContextMenu(FormField) context menus}, the
+	 * {@link #getOptionComparator(FormField) order} and the {@link #getOptionRenderer(FormField)
+	 * presentation} of the field show such an object as placeholder, see {@link MaskedValues}. This
+	 * holds for every presentation set to the field, also for one set later.
+	 * </p>
+	 */
+	public static void setMaskUndiscoverable(FormField field, boolean value) {
+		field.set(SelectField.MASK_UNDISCOVERABLE, Boolean.valueOf(value));
+	}
+
+	/**
+	 * The given renderer of the values of the given field, masking undiscoverable objects if the
+	 * field {@link #isMaskUndiscoverable(FormField) masks} them.
+	 *
+	 * @param field
+	 *        The field whose values are rendered.
+	 * @param renderer
+	 *        The renderer for the values of the field.
+	 */
+	public static Renderer<Object> maskedRenderer(FormField field, Renderer<Object> renderer) {
+		return isMaskUndiscoverable(field) ? MaskedValues.renderer(renderer) : renderer;
+	}
+
+	/**
 	 * The {@link LabelProvider} for {@link #getOptions(FormField)} of an arbitrary
 	 * {@link FormField} in selection context.
+	 *
+	 * @see #isMaskUndiscoverable(FormField)
 	 */
 	public static LabelProvider getOptionLabelProvider(FormField field) {
 		LabelProvider result = field.get(SelectField.OPTION_LABEL_PROVIDER);
-		if (result != null) {
-			return result;
+		if (result == null) {
+			result = MetaResourceProvider.INSTANCE;
 		}
-		
-		return MetaResourceProvider.INSTANCE;
+		return isMaskUndiscoverable(field) ? MaskedValues.labels(result) : result;
 	}
 
 	/**
@@ -178,11 +220,10 @@ public class SelectFieldUtils {
 	 */
 	public static ContextMenuProvider getOptionContextMenu(FormField field) {
 		ContextMenuProvider result = field.get(SelectField.OPTION_CONTEXT_MENU);
-		if (result != null) {
-			return result;
+		if (result == null) {
+			return NoContextMenuProvider.INSTANCE;
 		}
-
-		return NoContextMenuProvider.INSTANCE;
+		return isMaskUndiscoverable(field) ? MaskedValues.contextMenu(result) : result;
 	}
 
 	/**
@@ -199,9 +240,17 @@ public class SelectFieldUtils {
 	/**
 	 * The {@link Comparator} for options of an arbitrary {@link FormField} in selection context.
 	 */
+	@SuppressWarnings("unchecked")
 	public static Comparator getOptionComparator(FormField field) {
 		Comparator comparator = field.get(SelectField.COMPARATOR_PROPERTY);
-		return comparator == null ? ComparableComparator.INSTANCE : comparator;
+		if (comparator == null) {
+			comparator = ComparableComparator.INSTANCE;
+		}
+		if (isMaskUndiscoverable(field) && !hasCustomOrder(field)) {
+			// The position of a masked value must not disclose its label.
+			return MaskedValues.maskedLast(comparator);
+		}
+		return comparator;
 	}
 
 	/**
@@ -605,7 +654,8 @@ public class SelectFieldUtils {
 	 */
 	public static void writeSelectionImmutable(DisplayContext context, TagWriter out, FormField field,
 			Renderer<Object> optionRenderer, String entriesCssClass) throws IOException {
-		Renderer<Object> nonNullRenderer = optionRenderer != null ? optionRenderer : getOptionRenderer(field);
+		Renderer<Object> nonNullRenderer =
+			optionRenderer != null ? maskedRenderer(field, optionRenderer) : getOptionRenderer(field);
 		String separator = SelectFieldUtils.getCollectionSeparator(field);
 		List<?> selection = getSelectionList(field);
 		if (selection.isEmpty()) {

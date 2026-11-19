@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Badge demo: a count from the model at a button, an avatar, a tab of a tab bar and - in the sidebar
+	of the application - at the navigation item leading here.
+
+	The openTickets channel counts the open tickets. It reads no channel, so the type it counts is
+	named as an observed type: a ticket created, closed or deleted - here, on the page of the tickets
+	or in another session - recomputes the count, and every badge follows it. The "Open tickets" tab
+	lists the open tickets: "New ticket" (the button above and the toolbar of the list) creates one,
+	the form below the list changes its status, and "Delete" removes it.
+
+	The number field overrides the count for trying the rules of a badge: 0 shows no badge, a number
+	above 99 shows "99+", an empty field shows the count of the open tickets again. The checkbox
+	writes true or false to the marked channel, which shows a dot - a mark without a count, named by
+	its badge-label ("New entries") for a screen reader - or nothing.
+
+	The roles: the button counts in the role error, the avatar in the role of the brand, the tab of the
+	open tickets in the role warning, and the dot is a success.
+-->
+<view>
+	<channels>
+		<channel name="ticket"/>
+		<derived-channel name="openTickets"
+			expr="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#open`).size()"
+			observed-types="demo.tickets:Ticket"
+		/>
+		<channel name="trialCount"/>
+		<derived-channel name="badgeCount"
+			expr="if($trial == null, $open, $trial)"
+			inputs="openTickets as open, trialCount as trial"
+		/>
+		<channel name="marked"/>
+		<derived-channel name="person"
+			expr="currentUser()"
+		/>
+	</channels>
+
+	<panel with-inset="true">
+		<title>
+			<en>Badges</en>
+			<de>Badges</de>
+		</title>
+
+		<stack gap="default">
+			<text>
+				<label>
+					<en>The badges below count the open tickets: create a ticket, close one in the form of the list or delete it, and every badge follows - also the one at the "Badges" item in the sidebar. To try the rules of a badge, enter a number: 0 shows no badge, a number above 99 shows "99+". An empty field shows the count of the open tickets again. The checkbox marks the page with a dot.</en>
+					<de>Die Badges unten zählen die offenen Tickets: Legen Sie ein Ticket an, schließen Sie eines im Formular der Liste oder löschen Sie es, und jedes Badge folgt - auch das am Eintrag „Badges“ in der Seitenleiste. Um die Regeln eines Badges auszuprobieren, geben Sie eine Zahl ein: 0 zeigt kein Badge, eine Zahl über 99 zeigt „99+“. Ein leeres Feld zeigt wieder die Zahl der offenen Tickets. Das Kontrollkästchen markiert die Seite mit einem Punkt.</de>
+				</label>
+			</text>
+
+			<stack
+				align="end"
+				direction="row"
+				gap="default"
+			>
+				<value-input
+					type="tl.core:Integer"
+					value="trialCount"
+				>
+					<label>
+						<en>Count to show</en>
+						<de>Angezeigte Zahl</de>
+					</label>
+					<placeholder>
+						<en>Open tickets</en>
+						<de>Offene Tickets</de>
+					</placeholder>
+				</value-input>
+				<value-input
+					type="tl.core:Boolean"
+					value="marked"
+				>
+					<label>
+						<en>Mark with a dot</en>
+						<de>Mit Punkt markieren</de>
+					</label>
+				</value-input>
+			</stack>
+
+			<stack
+				align="center"
+				direction="row"
+				gap="default"
+			>
+				<button>
+					<action class="com.top_logic.layout.view.command.GenericViewCommand"
+						badge="badgeCount"
+						badge-role="error"
+						image="css:bi bi-plus-lg"
+					>
+						<label>
+							<en>New ticket</en>
+							<de>Neues Ticket</de>
+						</label>
+						<create-transient type="demo.tickets:Ticket">
+							<with-result>
+								<open-dialog
+									bind-input-to="model"
+									dialog-view="tickets-create.view.xml"
+								/>
+							</with-result>
+						</create-transient>
+					</action>
+				</button>
+				<button>
+					<action class="com.top_logic.layout.view.command.GenericViewCommand"
+						badge="marked"
+						badge-role="success"
+						display="icon-only"
+						image="css:bi bi-bell"
+					>
+						<label>
+							<en>Notifications</en>
+							<de>Benachrichtigungen</de>
+						</label>
+						<badge-label>
+							<en>New entries</en>
+							<de>Neue Einträge</de>
+						</badge-label>
+					</action>
+				</button>
+				<avatar
+					badge="badgeCount"
+					input="person"
+				>
+					<badge-label>
+						<en>Open tickets</en>
+						<de>Offene Tickets</de>
+					</badge-label>
+				</avatar>
+			</stack>
+
+			<tab-bar active-tab="open">
+				<tab id="open"
+					badge="badgeCount"
+					badge-role="warning"
+				>
+					<label>
+						<en>Open tickets</en>
+						<de>Offene Tickets</de>
+					</label>
+					<stack gap="default">
+						<panel>
+							<title>
+								<en>Open tickets</en>
+								<de>Offene Tickets</de>
+							</title>
+							<commands>
+								<generic-command
+									image="css:bi bi-plus-lg"
+									placement="TOOLBAR"
+								>
+									<label>
+										<en>New ticket</en>
+										<de>Neues Ticket</de>
+									</label>
+									<create-transient type="demo.tickets:Ticket">
+										<with-result>
+											<open-dialog
+												bind-input-to="model"
+												dialog-view="tickets-create.view.xml"
+											/>
+										</with-result>
+									</create-transient>
+								</generic-command>
+								<generic-command
+									image="css:bi bi-trash"
+									inputs="ticket"
+									placement="TOOLBAR"
+								>
+									<label>
+										<en>Delete</en>
+										<de>Löschen</de>
+									</label>
+									<executability>
+										<null-input-disabled/>
+									</executability>
+									<delete-object/>
+									<write-channel name="ticket"
+										clear="true"
+									/>
+								</generic-command>
+							</commands>
+							<table
+								observed-types="demo.tickets:Ticket"
+								selection="ticket"
+								types="demo.tickets:Ticket"
+							>
+								<columns>
+									<column attribute="name"/>
+									<column attribute="status"/>
+								</columns>
+								<rows>all(`demo.tickets:Ticket`).filter(t -&gt; $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#open`)</rows>
+							</table>
+						</panel>
+						<form input="ticket">
+							<field attribute="name"/>
+							<field attribute="status"/>
+						</form>
+					</stack>
+				</tab>
+				<tab id="marked"
+					badge="marked"
+					badge-role="success"
+				>
+					<label>
+						<en>Marked</en>
+						<de>Markiert</de>
+					</label>
+					<badge-label>
+						<en>New entries</en>
+						<de>Neue Einträge</de>
+					</badge-label>
+					<inset>
+						<text>
+							<label>
+								<en>The dot at this tab shows while the checkbox above is checked.</en>
+								<de>Der Punkt an diesem Reiter erscheint, solange das Kontrollkästchen oben angehakt ist.</de>
+							</label>
+						</text>
+					</inset>
+				</tab>
+			</tab-bar>
+		</stack>
+	</panel>
+</view>

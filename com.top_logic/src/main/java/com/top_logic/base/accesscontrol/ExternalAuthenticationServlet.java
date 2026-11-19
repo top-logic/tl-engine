@@ -13,7 +13,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-import com.top_logic.base.accesscontrol.IdentityVerifications.Outcome;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.base.accesscontrol.Login.LoginFailedException;
@@ -25,7 +24,6 @@ import com.top_logic.basic.DebugHelper;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -92,13 +90,15 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 	 * completes.
 	 *
 	 * <p>
-	 * A request carrying it is not a login: it brings back the proof that the user of the running
-	 * session has authenticated again, and the session it arrives in is the one it confirms. The
-	 * token is issued by {@link IdentityVerifications#register(Person, Runnable)} and travels to the
+	 * A request carrying it is not a login: it brings back the identity the external authentication
+	 * has just confirmed for the user of the running session, and the session it arrives in is the
+	 * one that asked. The token is issued by
+	 * {@link IdentityVerifications#register(Person, IdentityVerificationHandler)} and travels to the
 	 * external authentication and back.
 	 * </p>
 	 *
 	 * @see LoginMethod#getReauthenticationUrl(String)
+	 * @see LoginMethod#getIdentificationUrl(String)
 	 */
 	public static final String VERIFICATION_PARAM = "verification";
 
@@ -233,12 +233,12 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 			Logger.warn(message, ExternalAuthenticationServlet.class);
 			throw new LoginDeniedException(message);
 		}
-		LoginCredentials credentials = retrieveLoginCredentials(request, response);
 		String verificationToken = getVerificationToken(request);
 		if (verificationToken != null) {
-			completeIdentityVerification(verificationToken, credentials, request, response);
+			completeIdentityVerification(verificationToken, request, response);
 			return;
 		}
+		LoginCredentials credentials = retrieveLoginCredentials(request, response);
 		checkLoginCredentials(credentials, request, response);
 		if (reuseSession) {
 			HttpSession existingSession = SessionService.getInstance().getSession(request);
@@ -334,28 +334,43 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 	 * <p>
 	 * Deliberately none of the login steps: the session is already established and stays as it is.
 	 * Logging in here would replace the HTTP session, which is right for a login and wrong for a
-	 * confirmation - every window of the session would lose its ground.
+	 * confirmation - every window of the session would lose its ground. The identity is handed to
+	 * the handler of the verification as {@link #retrieveVerifiedIdentity(HttpServletRequest,
+	 * HttpServletResponse) the authentication confirmed it}; an account is resolved only if that
+	 * handler asks for it.
 	 * </p>
 	 *
 	 * @param token
 	 *        The token from {@link #getVerificationToken(HttpServletRequest)}.
-	 * @param credentials
-	 *        What the external authentication produced, naming the account that just authenticated.
 	 *
 	 * @throws LoginDeniedException
 	 *         If there is no authenticated session the confirmation could belong to.
 	 */
-	protected void completeIdentityVerification(String token, LoginCredentials credentials,
-			HttpServletRequest request, HttpServletResponse response) throws IOException, LoginDeniedException {
+	protected void completeIdentityVerification(String token, HttpServletRequest request,
+			HttpServletResponse response) throws IOException, LoginDeniedException {
 		HttpSession existingSession = SessionService.getInstance().getSession(request);
 		if (existingSession == null || !isAuthenticatedSession(existingSession)) {
-			throw new LoginDeniedException(
-				"Identity confirmation for user '" + credentials.getUsername() + "' without an authenticated session.");
+			throw new LoginDeniedException("Identity confirmation without an authenticated session.");
 		}
-		Outcome outcome = IdentityVerifications.forCurrentSession().complete(token, credentials.getPerson());
-		Logger.debug("Identity confirmation for user '" + credentials.getUsername() + "': " + outcome,
-			ExternalAuthenticationServlet.class);
-		writeVerificationResult(response, outcome);
+		VerifiedIdentity identity = retrieveVerifiedIdentity(request, response);
+		VerificationResult result = IdentityVerifications.forCurrentSession().complete(token, identity);
+		Logger.debug("Identity confirmation of " + identity + ": " + result, ExternalAuthenticationServlet.class);
+		writeVerificationResult(response, result);
+	}
+
+	/**
+	 * The identity the external authentication of the given request has confirmed, when the request
+	 * {@link #getVerificationToken(HttpServletRequest) completes an identity verification}.
+	 *
+	 * <p>
+	 * By default an identity known only by its account, which
+	 * {@link #retrieveLoginCredentials(HttpServletRequest, HttpServletResponse)} resolves when the
+	 * handler of the verification asks for it. An authentication that knows the client and subject
+	 * of the user names them, so that a handler can use them without resolving an account.
+	 * </p>
+	 */
+	protected VerifiedIdentity retrieveVerifiedIdentity(HttpServletRequest request, HttpServletResponse response) {
+		return new VerifiedIdentity(null, null, () -> retrieveLoginCredentials(request, response).getPerson());
 	}
 
 	/**
@@ -363,17 +378,21 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 	 *
 	 * <p>
 	 * A page of its own, with nothing to click and nowhere to go: the work the confirmation unblocks
-	 * continues in the window that asked for it. The page tries to close itself, and reads as a
-	 * complete answer where the browser refuses to close a window the user opened.
+	 * continues in the window that asked for it. A result that has been
+	 * {@link VerificationResult#isDelivered() delivered} there - accepted, refused, or expired - is
+	 * shown in that window, and the page closes itself; it reads as a complete answer where the
+	 * browser refuses to close a window. A result that reached no window (an unknown token, or a
+	 * window that is gone) is told by this page alone.
 	 * </p>
 	 */
-	protected void writeVerificationResult(HttpServletResponse response, Outcome outcome) throws IOException {
+	protected void writeVerificationResult(HttpServletResponse response, VerificationResult result)
+			throws IOException {
 		response.setCharacterEncoding(StringServices.UTF8);
 		response.setContentType(HTMLConstants.CONTENT_TYPE_TEXT_HTML);
 
 		Resources resources = Resources.getInstance();
 		String title = resources.getString(I18NConstants.IDENTITY_VERIFICATION_TITLE);
-		String message = resources.getString(verificationMessage(outcome));
+		String message = resources.getString(result.getMessage());
 
 		TagWriter out = new TagWriter(response.getWriter());
 		out.writeContent(HTMLConstants.DOCTYPE_HTML);
@@ -401,7 +420,7 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 				out.writeText(message);
 				out.endTag(HTMLConstants.PARAGRAPH);
 
-				if (outcome == Outcome.VERIFIED) {
+				if (result.isDelivered()) {
 					out.beginScript();
 					out.append("window.close();");
 					out.endScript();
@@ -411,23 +430,6 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 		}
 		out.endTag(HTMLConstants.HTML);
 		out.flush();
-	}
-
-	/**
-	 * What the page written by
-	 * {@link #writeVerificationResult(HttpServletResponse, Outcome) the result page} says about the
-	 * given outcome.
-	 */
-	private static ResKey verificationMessage(Outcome outcome) {
-		switch (outcome) {
-			case VERIFIED:
-				return I18NConstants.IDENTITY_VERIFIED;
-			case MISMATCH:
-				return I18NConstants.ERROR_IDENTITY_MISMATCH;
-			case UNKNOWN:
-				return I18NConstants.ERROR_IDENTITY_VERIFICATION_UNKNOWN;
-		}
-		throw new UnreachableAssertion("No such outcome: " + outcome);
 	}
 
 	/**
@@ -532,7 +534,7 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 	protected void checkLoginCredentials(LoginCredentials credentials, HttpServletRequest request,
 			HttpServletResponse response)
 			throws InMaintenanceModeException, ForwardRequiredException, LoginDeniedException, LoginFailedException {
-		Login.getInstance().checkAllowedGroups(credentials.getPerson());
+		Login.getInstance().checkMayLogIn(credentials.getPerson());
 	}
 
 	/**
@@ -556,7 +558,7 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 			if (window == null) {
 				Login.getInstance().loginFromExternalAuth(request, response, person);
 			} else {
-				Login.getInstance().checkAllowedGroups(person);
+				Login.getInstance().checkMayLogIn(person);
 				ThreadContextManager.inContext(window,
 					() -> SessionService.getInstance().loginUserInWindow(request, response, person));
 			}

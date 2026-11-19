@@ -7,7 +7,10 @@ package test.com.top_logic.layout.react.servlet;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import junit.framework.Test;
@@ -27,9 +30,12 @@ import com.meterware.servletunit.ServletUnitClient;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.Logger.LogEntry;
 import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.tools.CollectingLogListener;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -39,6 +45,7 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.react.control.ReactCommandAnswer;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactCommandTarget;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.protocol.RouteRefusal;
 import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.servlet.ReactServlet;
@@ -53,7 +60,8 @@ import de.haumacher.msgbuf.data.DataObject;
 /**
  * Tests that the reply a {@link ReactCommandHandler} returns reaches the caller in the answer
  * {@link ReactServlet} writes for the command, how a failure of the command is answered, see
- * {@link ReactCommandAnswer}, and the answer to a command whose control is not displayed.
+ * {@link ReactCommandAnswer}, and the answer to a command whose control is not displayed, with and
+ * without {@link ReactServlet#FIELD_IGNORE_STALE_UI}.
  */
 public class TestCommandReply extends BasicTestCase {
 
@@ -62,6 +70,8 @@ public class TestCommandReply extends BasicTestCase {
 	private static final String REACT_SERVLET = "react";
 
 	private static final String WINDOW = "vReply";
+
+	private static final String UNKNOWN_WINDOW = "vUnknown";
 
 	private static final String CONTROL_ID = "replier";
 
@@ -145,6 +155,92 @@ public class TestCommandReply extends BasicTestCase {
 	}
 
 	/**
+	 * A command declaring that it only tidies up is answered with success when its control is not
+	 * displayed in a window that still has its controls.
+	 */
+	public void testTidyUpToGoneControl() throws Exception {
+		displayWindow(arguments -> null);
+
+		InvocationContext invocation = postCommand(GONE_CONTROL_ID, COMMAND, true);
+
+		assertEquals(HttpServletResponse.SC_OK, invocation.getResponse().getStatus());
+		assertEquals("{\"success\":true}", invocation.getServletResponse().getText());
+	}
+
+	/**
+	 * A command declaring that it only tidies up is answered with success in a window that displays
+	 * no page, and the window is not reported as stale.
+	 */
+	public void testTidyUpToWindowWithoutPage() throws Exception {
+		createWindow();
+		CollectingLogListener log = new CollectingLogListener(Set.of(Level.INFO), true);
+		InvocationContext invocation;
+		try {
+			invocation = postCommand(GONE_CONTROL_ID, COMMAND, true);
+		} finally {
+			log.deactivate();
+		}
+
+		assertEquals(HttpServletResponse.SC_OK, invocation.getResponse().getStatus());
+		assertEquals("{\"success\":true}", invocation.getServletResponse().getText());
+		assertEquals(List.of(), staleReports(log));
+	}
+
+	/**
+	 * A command for a control of a window that displays no page is answered with
+	 * {@link ReactServlet#ERROR_CODE_STALE_UI}, and the window is reported as stale.
+	 */
+	public void testCommandToWindowWithoutPage() throws Exception {
+		createWindow();
+		_client.setExceptionsThrownOnErrorStatus(false);
+		CollectingLogListener log = new CollectingLogListener(Set.of(Level.INFO), true);
+		InvocationContext invocation;
+		try {
+			invocation = postCommand(GONE_CONTROL_ID, COMMAND, false);
+		} finally {
+			log.deactivate();
+		}
+
+		assertEquals(HttpServletResponse.SC_NOT_FOUND, invocation.getResponse().getStatus());
+		assertErrorCode(ReactServlet.ERROR_CODE_STALE_UI, invocation);
+		assertEquals(1, staleReports(log).size());
+	}
+
+	/**
+	 * A field value flagged as tidy-up by the client is answered with success when its field is not
+	 * displayed any more, without the flag it is answered with
+	 * {@link ReactServlet#ERROR_CODE_CONTROL_GONE}: the server decides by the flag, not by the
+	 * command name.
+	 */
+	public void testValueChangedToGoneControl() throws Exception {
+		displayWindow(arguments -> null);
+		_client.setExceptionsThrownOnErrorStatus(false);
+
+		InvocationContext flagged = postCommand(GONE_CONTROL_ID, ReactFormFieldControl.CMD_VALUE_CHANGED, true);
+		assertEquals(HttpServletResponse.SC_OK, flagged.getResponse().getStatus());
+		assertEquals("{\"success\":true}", flagged.getServletResponse().getText());
+
+		InvocationContext plain = postCommand(GONE_CONTROL_ID, ReactFormFieldControl.CMD_VALUE_CHANGED, false);
+		assertEquals(HttpServletResponse.SC_NOT_FOUND, plain.getResponse().getStatus());
+		assertErrorCode(ReactServlet.ERROR_CODE_CONTROL_GONE, plain);
+	}
+
+	/**
+	 * A command declaring that it only tidies up still learns that the session does not know its
+	 * window: the client loads such a page again for a field value.
+	 */
+	public void testTidyUpToUnknownWindow() throws Exception {
+		displayWindow(arguments -> null);
+		_client.setExceptionsThrownOnErrorStatus(false);
+
+		InvocationContext invocation =
+			postCommand(UNKNOWN_WINDOW, GONE_CONTROL_ID, ReactFormFieldControl.CMD_VALUE_CHANGED, true);
+
+		assertEquals(HttpServletResponse.SC_BAD_REQUEST, invocation.getResponse().getStatus());
+		assertErrorCode(ReactServlet.ERROR_CODE_STALE_UI, invocation);
+	}
+
+	/**
 	 * A command that fails is answered without error status, with the message the window shows.
 	 */
 	public void testFailureInAnswer() throws Exception {
@@ -191,16 +287,50 @@ public class TestCommandReply extends BasicTestCase {
 		public static final String SUCCESS__PROP = ReactCommandAnswer.FIELD_SUCCESS;
 	}
 
+	private static void assertErrorCode(String expected, InvocationContext invocation) throws Exception {
+		Map<?, ?> answer = (Map<?, ?>) JSON.fromString(invocation.getServletResponse().getText());
+		assertEquals(Boolean.FALSE, answer.get(ReactCommandAnswer.FIELD_SUCCESS));
+		assertEquals(expected, answer.get(ReactCommandAnswer.FIELD_ERROR_CODE));
+	}
+
+	/**
+	 * The entries of the given log that report a stale window.
+	 */
+	private static List<LogEntry> staleReports(CollectingLogListener log) {
+		return log.getLogEntries().stream()
+			.filter(entry -> entry.getCaller() == ReactWindowRegistry.class)
+			.toList();
+	}
+
 	private InvocationContext postCommand(Map<String, Object> arguments) throws Exception {
 		return postCommand(CONTROL_ID, arguments);
 	}
 
 	private InvocationContext postCommand(String controlId, Map<String, Object> arguments) throws Exception {
-		String body = JSON.toString(Map.of(
-			"controlId", controlId,
-			"command", COMMAND,
-			"windowName", WINDOW,
-			"arguments", arguments));
+		return postCommand(WINDOW, controlId, COMMAND, arguments, false);
+	}
+
+	private InvocationContext postCommand(String controlId, String command, boolean ignoreStaleUi)
+			throws Exception {
+		return postCommand(WINDOW, controlId, command, ignoreStaleUi);
+	}
+
+	private InvocationContext postCommand(String window, String controlId, String command, boolean ignoreStaleUi)
+			throws Exception {
+		return postCommand(window, controlId, command, Map.of(), ignoreStaleUi);
+	}
+
+	private InvocationContext postCommand(String window, String controlId, String command,
+			Map<String, Object> arguments, boolean ignoreStaleUi) throws Exception {
+		Map<String, Object> payload = new HashMap<>();
+		payload.put("controlId", controlId);
+		payload.put("command", command);
+		payload.put("windowName", window);
+		payload.put("arguments", arguments);
+		if (ignoreStaleUi) {
+			payload.put(ReactServlet.FIELD_IGNORE_STALE_UI, Boolean.TRUE);
+		}
+		String body = JSON.toString(payload);
 		PostMethodWebRequest request = new PostMethodWebRequest("http://ignore/" + REACT_SERVLET + "/command",
 			new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)), "application/json");
 		InvocationContext invocation = _client.newInvocation(request);
@@ -213,6 +343,7 @@ public class TestCommandReply extends BasicTestCase {
 	 * displays a control in it whose commands are answered by the given handler.
 	 */
 	private void displayWindow(Function<Map<String, Object>, DataObject> handler) {
+		createWindow();
 		ReactCommandTarget control = new ReactCommandTarget() {
 			@Override
 			public String getID() {
@@ -224,6 +355,14 @@ public class TestCommandReply extends BasicTestCase {
 				return handler.apply(arguments);
 			}
 		};
+		ReactWindowRegistry.forSession(_session).getOrCreateQueue(WINDOW).registerControl(control);
+	}
+
+	/**
+	 * Creates the window with its subsession and model scope, as rendering its page does, without
+	 * displaying a control in it.
+	 */
+	private void createWindow() {
 		TLSessionContext sessionContext = sessionContext();
 		ReactWindowRegistry registry = ReactWindowRegistry.forSession(_session);
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
@@ -232,7 +371,6 @@ public class TestCommandReply extends BasicTestCase {
 		sessionContext.setIfAbsent(WINDOW, subSession);
 		subSession.updateSessionRevision(kb.getHistoryManager(), ((UpdateChainView) kb.getUpdateChain()).current());
 		registry.getOrCreateQueue(WINDOW).setWindowContext(WINDOW, sessionContext, registry);
-		registry.getOrCreateQueue(WINDOW).registerControl(control);
 		ThreadContextManager.inContext(sessionContext.getSubSession(WINDOW),
 			() -> registry.getOrCreateModelScope(WINDOW));
 	}

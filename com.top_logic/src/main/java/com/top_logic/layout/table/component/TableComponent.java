@@ -815,8 +815,11 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
 	@Override
 	protected Set<? extends TLStructuredType> getTypesToObserve() {
-		/* Register listeners for the types of the potential row objects. */
-		return FilterUtil.filterSet(TLStructuredType.class, getTypes());
+		/* Register listeners for the types of the potential row objects and the types the rows
+		 * depend on. */
+		Set<TLStructuredType> result = new HashSet<>(getListBuilder().getTypesToObserve());
+		FilterUtil.filterInto(result, TLStructuredType.class, getTypes());
+		return result;
 	}
 
 	/**
@@ -832,6 +835,40 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
             return false;
         }
 
+		boolean dependentRowsUpdated = updateDependentRows(aModel);
+		return receiveRowChangedEvent(aModel) || dependentRowsUpdated;
+	}
+
+	/**
+	 * Updates the rows whose display depends on the given changed object.
+	 * 
+	 * @return Whether a row was updated.
+	 * 
+	 * @see ListModelBuilder#getElementsToUpdate(LayoutComponent, Object)
+	 */
+	private boolean updateDependentRows(Object changedObject) {
+		ListModelBuilder builder = getListBuilder();
+		if (!(changedObject instanceof TLObject tlObject) || !isObservedDependency(builder, tlObject)) {
+			return false;
+		}
+		EditableRowTableModel tableModel = getTableModel();
+		boolean updated = false;
+		for (Object element : builder.getElementsToUpdate(this, changedObject)) {
+			int row = tableModel.getRowOfObject(element);
+			if (row >= 0) {
+				tableModel.updateRows(row, row);
+				updated = true;
+			}
+		}
+		return updated;
+	}
+
+	private static boolean isObservedDependency(ListModelBuilder builder, TLObject changedObject) {
+		return builder.getTypesToObserve().stream()
+			.anyMatch(type -> TLModelUtil.isCompatibleInstance(type, changedObject));
+	}
+
+	private boolean receiveRowChangedEvent(Object aModel) {
         if (supportsInternalModel(aModel)) {
 			// Assume that the displayed rows are build from the changed model.
 			// A complete revalidation is required.

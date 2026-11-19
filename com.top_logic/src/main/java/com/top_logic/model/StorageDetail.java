@@ -29,6 +29,21 @@ public interface StorageDetail {
 	boolean isReadOnly();
 
 	/**
+	 * Whether a change of a value stored by this storage can be detected from the changes of a
+	 * commit.
+	 * 
+	 * <p>
+	 * This is the case for a storage that keeps its values in database rows (or derives them from
+	 * rows that store the values of another attribute), so that the changed rows of a transaction
+	 * lead to the objects whose value has changed. Values that are computed, transient, or kept
+	 * outside the database cannot be observed this way.
+	 * </p>
+	 */
+	default boolean canDetectValueChanges() {
+		return false;
+	}
+
+	/**
 	 * Retrieves the actual value for the given attribute of the given object.
 	 * 
 	 * @param object

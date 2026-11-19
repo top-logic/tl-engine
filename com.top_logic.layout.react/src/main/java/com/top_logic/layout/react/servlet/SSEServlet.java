@@ -53,6 +53,12 @@ public class SSEServlet extends HttpServlet {
 	private static final String CONNECTED_COMMENT = ": connected" + " ".repeat(2048) + "\n\n";
 
 	/**
+	 * Description of a stream connection in a
+	 * {@link ReactWindowRegistry#reportStaleWindow(String, String) report}.
+	 */
+	private static final String EVENT_STREAM_REQUEST = "Event stream connection";
+
+	/**
 	 * The header in which the browser names the last event a stream brought when it reconnects the
 	 * stream by itself.
 	 */
@@ -109,7 +115,7 @@ public class SSEServlet extends HttpServlet {
 
 		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
 		if (registry.getQueue(windowName) == null) {
-			Logger.info("SSEServlet: window '" + windowName + "' is unknown, answered as gone.", SSEServlet.class);
+			registry.reportStaleWindow(windowName, EVENT_STREAM_REQUEST);
 			response.sendError(HttpServletResponse.SC_GONE, "Unknown window.");
 			return;
 		}
@@ -133,8 +139,7 @@ public class SSEServlet extends HttpServlet {
 			queue = registry.connectQueue(windowName);
 			if (queue == null) {
 				// Torn down since it was looked up above.
-				Logger.info("SSEServlet: window '" + windowName + "' was torn down, stream closed.",
-					SSEServlet.class);
+				registry.reportStaleWindow(windowName, EVENT_STREAM_REQUEST);
 				asyncContext.complete();
 				return;
 			}

@@ -581,10 +581,10 @@ public class SSEUpdateQueue {
 	 *
 	 * <p>
 	 * Rendering a page attaches its root control, which stays registered as long as the page is
-	 * displayed. A queue without any controls therefore did not render a page in this session - it
-	 * was typically created empty by an SSE reconnect after the session was replaced underneath an
-	 * open page.
-	 * Commands arriving for such a window target the control tree of a discarded session.
+	 * displayed. A queue without any controls therefore belongs to a window that displays no page:
+	 * its page was unloaded and the window waits for it to come back, or its page was never
+	 * rendered. Commands arriving for such a window target a control tree the window does not
+	 * display.
 	 * </p>
 	 */
 	public boolean hasControls() {

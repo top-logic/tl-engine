@@ -1,0 +1,8 @@
+/*
+ * The classic captcha field (CaptchaFieldControl): the ALTCHA widget draws its check box itself.
+ * The check mark the theme puts behind every checked check box (input[type="checkbox"]:checked::after)
+ * must not appear in it.
+ */
+.tlCaptcha altcha-widget input[type="checkbox"]::after {
+	content: none;
+}

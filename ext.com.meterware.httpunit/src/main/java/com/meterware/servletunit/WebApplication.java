@@ -457,13 +457,16 @@ public class WebApplication implements SessionListenerDispatcher {
 
 
     private void registerFilter( Dictionary mapping, Element filterElement ) throws SAXException {
-        if (XMLUtils.hasChildNode( filterElement, "servlet-name" )) {
-            registerFilterForServlet( XMLUtils.getChildNodeValue( filterElement, "servlet-name" ),
-                             (FilterConfiguration) mapping.get( XMLUtils.getChildNodeValue( filterElement, "filter-name" ) ) );
+        FilterConfiguration configuration =
+            (FilterConfiguration) mapping.get( XMLUtils.getChildNodeValue( filterElement, "filter-name" ) );
+        // Since Servlet 2.5, a mapping may name several servlets and several URL patterns.
+        NodeList servletNames = filterElement.getElementsByTagName( "servlet-name" );
+        for (int i = 0; i < servletNames.getLength(); i++) {
+            registerFilterForServlet( XMLUtils.getTextValue( servletNames.item( i ) ).trim(), configuration );
         }
-        if (XMLUtils.hasChildNode( filterElement, "url-pattern" )) {
-            registerFilterForUrl( XMLUtils.getChildNodeValue( filterElement, "url-pattern" ),
-                             (FilterConfiguration) mapping.get( XMLUtils.getChildNodeValue( filterElement, "filter-name" ) ) );
+        NodeList urlPatterns = filterElement.getElementsByTagName( "url-pattern" );
+        for (int i = 0; i < urlPatterns.getLength(); i++) {
+            registerFilterForUrl( XMLUtils.getTextValue( urlPatterns.item( i ) ).trim(), configuration );
         }
     }
 
@@ -518,8 +521,16 @@ public class WebApplication implements SessionListenerDispatcher {
 
 
     private void registerServlet( Dictionary mapping, Element servletElement ) throws SAXException {
-        registerServlet( XMLUtils.getChildNodeValue( servletElement, "url-pattern" ),
-                         (ServletConfiguration) mapping.get( XMLUtils.getChildNodeValue( servletElement, "servlet-name" ) ) );
+        ServletConfiguration configuration =
+            (ServletConfiguration) mapping.get( XMLUtils.getChildNodeValue( servletElement, "servlet-name" ) );
+        // Since Servlet 2.5, a mapping may name several URL patterns.
+        NodeList urlPatterns = servletElement.getElementsByTagName( "url-pattern" );
+        if (urlPatterns.getLength() == 0) {
+            throw new SAXException( "Node <" + servletElement.getNodeName() + "> has no child named <url-pattern>" );
+        }
+        for (int i = 0; i < urlPatterns.getLength(); i++) {
+            registerServlet( XMLUtils.getTextValue( urlPatterns.item( i ) ).trim(), configuration );
+        }
     }
 
 

@@ -206,6 +206,7 @@ public class ForeignAttributeTemplateProvider extends AbstractFormElementProvide
 			case AFTER_VALUE:
 				return text(MetaLabelProvider.INSTANCE.getLabel(part));
 			case HIDE_LABEL:
+			case PLACEHOLDER:
 				return null;
 			default:
 				return text(MetaLabelProvider.INSTANCE.getLabel(part) + ':');

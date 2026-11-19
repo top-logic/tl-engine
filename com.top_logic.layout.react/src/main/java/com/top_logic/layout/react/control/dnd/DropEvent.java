@@ -14,12 +14,10 @@ import com.top_logic.layout.react.control.ReactControl;
  * {@link DropLocation} the accepting operation applies them at.
  *
  * @param source
- *        The control the objects were dragged out of, or {@code null} when the drop was replayed
- *        from a recorded script (which names the dragged objects themselves, not the control they
- *        came from).
+ *        The control the objects were dragged out of.
  * @param kind
  *        The {@link DragSourceControl#dragKind() kind} of the drag, {@code null} for a drag without
- *        a kind. A replayed drop carries the kind the drag had when it was recorded.
+ *        a kind.
  * @param objects
  *        The dragged business objects, as resolved by the {@link DragSourceControl}. Never empty.
  * @param location

@@ -10,11 +10,14 @@ import java.text.Format;
 import java.util.Date;
 import java.util.List;
 
+import jakarta.servlet.http.Part;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.TextPart;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -35,11 +38,13 @@ import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
 import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
+import com.top_logic.layout.react.control.form.ReactImageFieldControl;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.form.ReactFileChipsControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.form.ReactValueListControl;
+import com.top_logic.layout.react.control.form.ValueCountLimit;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.control.upload.UploadSupport;
@@ -62,6 +67,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.TLMaxUploadSize;
+import com.top_logic.model.annotate.TLValueCount;
 import com.top_logic.model.annotate.ui.BinaryDisplay;
 import com.top_logic.model.annotate.ui.BinaryDisplay.BinaryPresentation;
 import com.top_logic.model.annotate.ui.TLAcceptedTypes;
@@ -298,12 +304,72 @@ public class TestFieldControlServiceMultiplicity extends TestCase {
 			Boolean.TRUE, control.scriptingScalarState().get(ReactValueListControl.UPLOAD));
 	}
 
-	/** An image drop field is displayed as file chips: the React UI offers no image drop field. */
-	public void testFilesAskingForAnImageDropFieldAreDisplayedAsChips() {
+	/**
+	 * The files of a multi-valued binary attribute asking for an image drop field are edited in an
+	 * image field: one control for the whole collection, arranging the images of an ordered
+	 * attribute.
+	 */
+	public void testFilesAskingForAnImageDropFieldAreDisplayedAsImages() {
+		TLStructuredTypePart part = property("files", _binaryType, true, true);
+		part.setAnnotation(BinaryDisplay.display(BinaryPresentation.IMAGE_UPLOAD));
+
+		ReactControl control = control(part, List.of(file("a.png"), file("b.png")));
+
+		assertEquals(ReactImageFieldControl.class, control.getClass());
+		ReactImageFieldControl images = (ReactImageFieldControl) control;
+		assertTrue(images.isMultiple());
+		assertTrue("The images of an ordered attribute are arranged by the user.", images.isOrdered());
+		assertEquals(2, ((List<?>) control.scriptingScalarState().get(ReactImageFieldControl.IMAGES)).size());
+
+		TLStructuredTypePart unordered = property("unordered", _binaryType, true, false);
+		unordered.setAnnotation(BinaryDisplay.display(BinaryPresentation.IMAGE_UPLOAD));
+		assertFalse(((ReactImageFieldControl) control(unordered, List.of())).isOrdered());
+	}
+
+	/** A single file asking for an image drop field is edited in an image field holding one image. */
+	public void testASingleFileAskingForAnImageDropFieldIsDisplayedAsAnImage() {
+		TLStructuredTypePart part = property("file", _binaryType, false, false);
+		part.setAnnotation(BinaryDisplay.display(BinaryPresentation.IMAGE_UPLOAD));
+
+		ReactControl control = control(part, file("a.png"));
+
+		assertEquals(ReactImageFieldControl.class, control.getClass());
+		assertFalse(((ReactImageFieldControl) control).isMultiple());
+		assertEquals(1, ((List<?>) control.scriptingScalarState().get(ReactImageFieldControl.IMAGES)).size());
+	}
+
+	/**
+	 * The accepted types and the size limit of a binary attribute reach the image field; an image
+	 * field is not chosen by the accepted types alone.
+	 */
+	public void testTheImageFieldTakesTheUploadSettings() {
+		long limit = 5L * 1024 * 1024;
+		TLStructuredTypePart part = property("pictures", _binaryType, true, true);
+		part.setAnnotation(acceptedTypes("image/*"));
+		part.setAnnotation(maxUploadSize(limit));
+		assertEquals("Images are offered by the image drop field only.",
+			ReactFileChipsControl.class, control(part, List.of()).getClass());
+
+		part.setAnnotation(BinaryDisplay.display(BinaryPresentation.IMAGE_UPLOAD));
+		ReactControl control = control(part, List.of());
+		assertEquals(ReactImageFieldControl.class, control.getClass());
+		assertEquals("image/*", control.scriptingScalarState().get(UploadSupport.ACCEPT));
+		assertEquals(Long.valueOf(limit), control.scriptingScalarState().get(UploadSupport.MAX_UPLOAD_SIZE));
+		assertEquals(limit, ((UploadHandler) control).maxUploadSize());
+	}
+
+	/**
+	 * A cell showing images gives the names of their files in one line and opens the image field in
+	 * a dialog.
+	 */
+	public void testACellOfImagesShowsTheirNames() {
 		TLStructuredTypePart part = property("files", _binaryType, true, false);
 		part.setAnnotation(BinaryDisplay.display(BinaryPresentation.IMAGE_UPLOAD));
 
-		assertEquals(ReactFileChipsControl.class, control(part, List.of()).getClass());
+		ReactControl cell = display(ColumnType.of(part), List.of(file("a.png"), file("b.png")));
+
+		assertEquals(ReactCompactFieldControl.class, cell.getClass());
+		assertEquals("a.png, b.png", ((ReactCompactFieldControl) cell).getPreviewText());
 	}
 
 	/** A binary display stated at the type decides for an attribute that states none. */
@@ -374,6 +440,68 @@ public class TestFieldControlServiceMultiplicity extends TestCase {
 	}
 
 	/**
+	 * The maximum number of values annotated at a multi-valued attribute reaches the description of
+	 * the field and every control adding values: the chips, the list and the image field. A
+	 * single-valued attribute has no maximum.
+	 */
+	public void testMaxCountReachesTheControlsAddingValues() {
+		TLStructuredTypePart files = property("files", _binaryType, true, false);
+		assertEquals("No maximum without an annotation.", 0,
+			FieldControlService.fieldSpec(_binaryType, files, LABEL, true, new AbstractFieldModel(null))
+				.getMaxCount());
+
+		files.setAnnotation(valueCount(3));
+		assertEquals(3,
+			FieldControlService.fieldSpec(_binaryType, files, LABEL, true, new AbstractFieldModel(null))
+				.getMaxCount());
+		assertEquals(Integer.valueOf(3),
+			control(files, List.of()).scriptingScalarState().get(ValueCountLimit.MAX_COUNT));
+
+		files.setAnnotation(BinaryDisplay.display(BinaryPresentation.LIST));
+		ReactControl list = control(files, List.of());
+		assertEquals(ReactValueListControl.class, list.getClass());
+		assertEquals(Integer.valueOf(3), list.scriptingScalarState().get(ValueCountLimit.MAX_COUNT));
+
+		files.setAnnotation(BinaryDisplay.display(BinaryPresentation.IMAGE_UPLOAD));
+		ReactControl images = control(files, List.of());
+		assertEquals(ReactImageFieldControl.class, images.getClass());
+		assertEquals(Integer.valueOf(3), images.scriptingScalarState().get(ValueCountLimit.MAX_COUNT));
+
+		TLStructuredTypePart texts = property("texts", _textType, true, false);
+		texts.setAnnotation(valueCount(2));
+		ReactControl textList = control(texts, List.of("a"));
+		assertEquals(ReactValueListControl.class, textList.getClass());
+		assertEquals("The maximum applies to values of any type.", Integer.valueOf(2),
+			textList.scriptingScalarState().get(ValueCountLimit.MAX_COUNT));
+
+		TLStructuredTypePart file = property("file", _binaryType, false, false);
+		file.setAnnotation(valueCount(3));
+		assertEquals("A single value has no maximum number.", 0,
+			FieldControlService.fieldSpec(_binaryType, file, LABEL, false, new AbstractFieldModel(null))
+				.getMaxCount());
+	}
+
+	/**
+	 * An image field refuses an upload of more images than its maximum leaves room for as a whole,
+	 * and takes one that fits.
+	 */
+	public void testTheImageFieldRefusesImagesBeyondItsMaximum() {
+		TLStructuredTypePart part = property("pictures", _binaryType, true, true);
+		part.setAnnotation(BinaryDisplay.display(BinaryPresentation.IMAGE_UPLOAD));
+		part.setAnnotation(valueCount(2));
+		AbstractFieldModel model = new AbstractFieldModel(List.of(file("a.png")));
+		ReactImageFieldControl images = (ReactImageFieldControl) _controls.createFieldControl(_context, part, model);
+
+		images.handleUpload(null, List.of(filePart("b.png"), filePart("c.png")));
+		assertEquals("Nothing of a refused upload is added.", 1, ((List<?>) model.getValue()).size());
+		assertNotNull(images.scriptingScalarState().get(UploadSupport.ERROR));
+
+		images.handleUpload(null, List.of(filePart("b.png")));
+		assertEquals(2, ((List<?>) model.getValue()).size());
+		assertNull(images.scriptingScalarState().get(UploadSupport.ERROR));
+	}
+
+	/**
 	 * A cell showing several files shows their chips in place, told that it has little room.
 	 */
 	public void testACellOfSeveralFilesShowsTheirChips() {
@@ -411,6 +539,18 @@ public class TestFieldControlServiceMultiplicity extends TestCase {
 		TLMaxUploadSize result = TypedConfiguration.newConfigItem(TLMaxUploadSize.class);
 		result.setValue(limit);
 		return result;
+	}
+
+	/** A value count annotation stating the given maximum. */
+	private static TLValueCount valueCount(int max) {
+		TLValueCount result = TypedConfiguration.newConfigItem(TLValueCount.class);
+		result.setMax(max);
+		return result;
+	}
+
+	/** An uploaded file of the given name. */
+	private static Part filePart(String name) {
+		return new TextPart(UploadSupport.FILE_PART, name, name);
 	}
 
 	/** A file of the given name. */

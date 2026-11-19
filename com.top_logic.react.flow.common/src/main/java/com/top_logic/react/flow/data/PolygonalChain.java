@@ -147,6 +147,9 @@ public interface PolygonalChain extends com.top_logic.react.flow.data.Box, com.t
 	@Override
 	com.top_logic.react.flow.data.PolygonalChain setRenderInfo(java.lang.Object value);
 
+	@Override
+	com.top_logic.react.flow.data.PolygonalChain setDropTarget(boolean value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.PolygonalChain readPolygonalChain(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

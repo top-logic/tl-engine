@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestViewCheckDependencies">
+			<types>
+				<class name="Entry">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+					<attributes>
+						<property name="title"
+							type="tl.core:String"
+						/>
+						<property name="summary"
+							type="tl.core:String"
+						>
+							<annotations>
+								<storage-algorithm>
+									<query>
+										<expr><![CDATA[e -> $e.get(`TestViewCheckDependencies:Entry#title`)]]></expr>
+									</query>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="code"
+							type="tl.core:String"
+						>
+							<annotations>
+								<constraints>
+									<constraint-by-expression>
+										<check><![CDATA[value -> object -> if($object.get(`TestViewCheckDependencies:Entry#summary`) == null, 'No summary.')]]></check>
+									</constraint-by-expression>
+								</constraints>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

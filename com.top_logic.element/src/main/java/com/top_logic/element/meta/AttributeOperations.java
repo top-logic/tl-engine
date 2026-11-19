@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.Logger;
@@ -80,6 +82,7 @@ import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.utility.DefaultListOptionModel;
+import com.top_logic.layout.form.model.utility.DiscoverableOptions;
 import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
@@ -105,6 +108,9 @@ import com.top_logic.model.annotate.AttributeValueListener;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.annotate.LabelPositionAnnotation;
 import com.top_logic.model.annotate.RenderWholeLineAnnotation;
+import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.annotate.TLChangeHandler;
+import com.top_logic.model.annotate.TLChangeHandlers;
 import com.top_logic.model.annotate.TLFullTextRelevant;
 import com.top_logic.model.annotate.TLRange;
 import com.top_logic.model.annotate.TLSearchRange;
@@ -375,11 +381,16 @@ public class AttributeOperations {
 
 	/**
 	 * Adjusts the given options to the concrete attribute.
+	 *
+	 * <p>
+	 * The result contains only options the current user may discover, see
+	 * {@link DiscoverableOptions#discoverable(List)}.
+	 * </p>
 	 */
 	public static List<?> adjustOptions(EditContext editContext, List<?> allOptions) {
 
 		Filter<Object> filter = createOptionsFilter(editContext);
-		return FilterUtil.filterList(filter, allOptions);
+		return DiscoverableOptions.discoverable(FilterUtil.filterList(filter, allOptions));
 	}
 
 	private static Filter<Object> createOptionsFilter(EditContext context) {
@@ -401,6 +412,12 @@ public class AttributeOperations {
 
 	/**
 	 * Potential values that can be set in the given context.
+	 *
+	 * <p>
+	 * The options contain only objects the current user may discover, see
+	 * {@link DiscoverableOptions#discoverable(OptionModel)}. This holds for the instances of a class
+	 * as well as for the options of a configured {@link Generator}.
+	 * </p>
 	 * 
 	 * @param editContext
 	 *        The current update context.
@@ -408,6 +425,10 @@ public class AttributeOperations {
 	 * @return All available options.
 	 */
 	public static OptionModel<?> allOptions(EditContext editContext) {
+		return DiscoverableOptions.discoverable(allOptionsUnfiltered(editContext));
+	}
+
+	private static OptionModel<?> allOptionsUnfiltered(EditContext editContext) {
 		Filter<Object> optionsFilter = createOptionsFilter(editContext);
 		Generator generator = editContext.getOptions();
 		if (generator == null) {
@@ -971,6 +992,47 @@ public class AttributeOperations {
 	 */
 	public static List<PolymorphicConfiguration<? extends AttributeValueListener>> getValueListenerConfigs(
 			TLStructuredTypePart attribute) {
+		return getInheritedAnnotationEntries(attribute, TLValueListeners.class, TLValueListeners::getListeners,
+			TLValueListeners::isIgnoreInherited);
+	}
+
+	/**
+	 * Determines all {@link TLChangeHandler}s relevant for the given {@link TLStructuredTypePart}.
+	 * This includes also the {@link TLChangeHandler}s annotated to the overridden parts.
+	 * 
+	 * @see TLChangeHandlers
+	 */
+	public static List<? extends TLChangeHandler> getChangeHandlers(TLStructuredTypePart attribute) {
+		InstantiationContext context = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY;
+		List<PolymorphicConfiguration<? extends TLChangeHandler>> configs =
+			getInheritedAnnotationEntries(attribute, TLChangeHandlers.class, TLChangeHandlers::getHandlers,
+				TLChangeHandlers::isIgnoreInherited);
+		return TypedConfiguration.getInstanceList(context, configs);
+	}
+
+	/**
+	 * Collects the entries of a list-valued annotation of the given attribute and of all attributes
+	 * it overrides.
+	 * 
+	 * <p>
+	 * The entries of an overridden attribute come before the entries of the overriding attribute.
+	 * An attribute overridden on several paths contributes its entries once.
+	 * </p>
+	 * 
+	 * @param attribute
+	 *        The attribute to collect the entries for.
+	 * @param annotationType
+	 *        The type of the annotation holding the entries.
+	 * @param entries
+	 *        Access to the entries of an annotation.
+	 * @param ignoreInherited
+	 *        Whether an annotation hides the entries of the attributes overridden by the annotated
+	 *        attribute.
+	 * @return The entries of the given attribute and its overridden attributes. Must not be
+	 *         modified.
+	 */
+	public static <A extends TLAnnotation, E> List<E> getInheritedAnnotationEntries(TLStructuredTypePart attribute,
+			Class<A> annotationType, Function<? super A, List<E>> entries, Predicate<? super A> ignoreInherited) {
 		Set<TLClassPart> overriddenParts;
 		if (attribute instanceof TLClassPart classPart) {
 			overriddenParts = TLModelUtil.getOverriddenParts(classPart);
@@ -978,51 +1040,47 @@ public class AttributeOperations {
 			overriddenParts = Collections.emptySet();
 		}
 		if (overriddenParts.isEmpty()) {
-			return localAnnotatedValueListeners(attribute);
+			return localAnnotationEntries(attribute, annotationType, entries);
 		}
-		return addValueListenerConfigs(Collections.emptyList(), new HashSet<>(), overriddenParts,
-			(TLClassPart) attribute);
+		return addInheritedAnnotationEntries(Collections.emptyList(), new HashSet<>(), overriddenParts,
+			(TLClassPart) attribute, annotationType, entries, ignoreInherited);
 	}
 
-	private static List<PolymorphicConfiguration<? extends AttributeValueListener>> addValueListenerConfigs(
-			List<PolymorphicConfiguration<? extends AttributeValueListener>> allListeners,
-			Set<TLClassPart> processedParts, Set<TLClassPart> overriddenParts,
-			TLClassPart attribute) {
+	private static <A extends TLAnnotation, E> List<E> addInheritedAnnotationEntries(List<E> allEntries,
+			Set<TLClassPart> processedParts, Set<TLClassPart> overriddenParts, TLClassPart attribute,
+			Class<A> annotationType, Function<? super A, List<E>> entries, Predicate<? super A> ignoreInherited) {
 		boolean isNew = processedParts.add(attribute);
 		if (!isNew) {
 			// Attribute already processed
-			return allListeners;
+			return allEntries;
 		}
 
-		TLValueListeners annotation = attribute.getAnnotation(TLValueListeners.class);
-		if (annotation == null || !annotation.isIgnoreInherited()) {
-			/* Sort all inherited listeners before the local listeners. */
+		A annotation = attribute.getAnnotation(annotationType);
+		if (annotation == null || !ignoreInherited.test(annotation)) {
+			/* Sort all inherited entries before the local entries. */
 			for (TLClassPart overridden : overriddenParts) {
-				allListeners = addValueListenerConfigs(allListeners, processedParts,
-					TLModelUtil.getOverriddenParts(overridden), overridden);
+				allEntries = addInheritedAnnotationEntries(allEntries, processedParts,
+					TLModelUtil.getOverriddenParts(overridden), overridden, annotationType, entries, ignoreInherited);
 			}
 		}
 		if (annotation == null) {
-			// No locally annotated listeners
-			return allListeners;
+			// No locally annotated entries
+			return allEntries;
 		}
-		if (allListeners.isEmpty()) {
-			allListeners = new ArrayList<>();
+		if (allEntries.isEmpty()) {
+			allEntries = new ArrayList<>();
 		}
-		allListeners.addAll(annotation.getListeners());
-		return allListeners;
+		allEntries.addAll(entries.apply(annotation));
+		return allEntries;
 	}
 
-	private static List<PolymorphicConfiguration<? extends AttributeValueListener>> localAnnotatedValueListeners(
-			TLStructuredTypePart attribute) {
-		TLValueListeners annotation = attribute.getAnnotation(TLValueListeners.class);
-		List<PolymorphicConfiguration<? extends AttributeValueListener>> localListeners;
+	private static <A extends TLAnnotation, E> List<E> localAnnotationEntries(TLStructuredTypePart attribute,
+			Class<A> annotationType, Function<? super A, List<E>> entries) {
+		A annotation = attribute.getAnnotation(annotationType);
 		if (annotation == null) {
-			localListeners = Collections.emptyList();
-		} else {
-			localListeners = annotation.getListeners();
+			return Collections.emptyList();
 		}
-		return localListeners;
+		return entries.apply(annotation);
 	}
 
 	/**

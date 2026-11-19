@@ -5,7 +5,7 @@ package com.top_logic.layout.react.state;
  *
  * The {@link #getValue()} is the text, a string.
  */
-public interface TextInputState extends com.top_logic.layout.react.state.TypingFieldState {
+public interface TextInputState extends com.top_logic.layout.react.state.ClearableFieldState {
 
 	/**
 	 * The kind of value a text field edits, the {@code type} of the HTML input.
@@ -95,9 +95,6 @@ public interface TextInputState extends com.top_logic.layout.react.state.TypingF
 	/** @see #getIcon() */
 	String ICON__PROP = "icon";
 
-	/** @see #isClearable() */
-	String CLEARABLE__PROP = "clearable";
-
 	/** @see #isMultiline() */
 	String MULTILINE__PROP = "multiline";
 
@@ -138,16 +135,6 @@ public interface TextInputState extends com.top_logic.layout.react.state.TypingF
 	 * @see #getIcon()
 	 */
 	com.top_logic.layout.react.state.TextInputState setIcon(String value);
-
-	/**
-	 * Whether the input offers a button that empties it, while it holds a value.
-	 */
-	boolean isClearable();
-
-	/**
-	 * @see #isClearable()
-	 */
-	com.top_logic.layout.react.state.TextInputState setClearable(boolean value);
 
 	/**
 	 * Whether the field is a text area of several lines, see {@link #getRows()}.
@@ -238,6 +225,9 @@ public interface TextInputState extends com.top_logic.layout.react.state.TypingF
 	 * @see #getSuggestionsCaret()
 	 */
 	com.top_logic.layout.react.state.TextInputState setSuggestionsCaret(int value);
+
+	@Override
+	com.top_logic.layout.react.state.TextInputState setClearable(boolean value);
 
 	@Override
 	com.top_logic.layout.react.state.TextInputState setDebounceMs(long value);

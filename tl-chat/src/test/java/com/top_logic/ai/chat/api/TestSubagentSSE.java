@@ -11,13 +11,13 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
-import com.top_logic.tl.ai.core.agent.StopReason;
-import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
-import com.top_logic.tl.ai.core.cost.Money;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
-import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.ai.core.agent.StopReason;
+import com.top_logic.ai.core.agent.event.AgentEvent;
+import com.top_logic.ai.core.agent.subagent.SubagentInbox;
+import com.top_logic.ai.core.cost.Money;
+import com.top_logic.ai.core.agent.subagent.SubagentNews;
+import com.top_logic.ai.core.agent.subagent.SubagentResult;
+import com.top_logic.ai.core.message.TokenUsage;
 
 /**
  * Verifies that subagent {@link AgentEvent} variants map to the correct subagent_* SSE event names.

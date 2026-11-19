@@ -263,6 +263,13 @@
 			</instance>
 		</config>
 		<!--
+			A user who cannot edit an object because someone else is editing it is told who that is
+			(e.g. the form of the sensor locking demo opened read-only).
+		-->
+		<config service-class="com.top_logic.base.locking.token.TokenService">
+			<instance report-lock-owner-details="true"/>
+		</config>
+		<!--
 			Every newly created account joins the "user" group defined by the engine. The
 			administration hub shows the default-group flag on that group. The members of the
 			"DemoProjectManagers" group create projects; an administrator adds an account to it in
@@ -344,9 +351,9 @@
 						The views follow these rights: for an account that is a member of P1 but not
 						of P2 and no project manager, the project list shows P1 only; "New Project" is
 						not offered at all;
-						"Delete" of P1 is not offered once P1 is selected, since the account administers
-						no project at all, whereas for an account administering another project it is
-						offered but disabled with the reason; "New Milestone", "New
+						"Delete" is not offered, neither without a selection nor once P1 is selected,
+						since the account administers no project at all, whereas for an account
+						administering another project it is offered but disabled; "New Milestone", "New
 						Note" and the deletion of a milestone work in P1; a save that changes the
 						members or the administrators of P1 is refused. In the cockpit of P1, the
 						budget field is missing, and editing the project offers the name and the
@@ -408,6 +415,17 @@
 						/>
 						<grant
 							operation="ShowPlanning"
+							roles="demo.react.ProjectAdmin"
+						/>
+						<!--
+							A project is created without a container, so its creation is decided on the
+							security root, where a project manager holds the role. The administrators of a
+							project hold their role on the project only, so the module grant to them does not
+							apply here.
+						-->
+						<revoke
+							inherit="true"
+							operation="Create"
 							roles="demo.react.ProjectAdmin"
 						/>
 						<grant
@@ -553,15 +571,18 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Create"
-							roles="demo.react.User"
-						/>
-						<grant
-							inherit="true"
 							operation="Delete"
 							roles="demo.react.User"
 						/>
 					</module>
+					<!-- A sensor is created in its site, on which a user holds the role. -->
+					<class name="demo.temperature:DemoSensor">
+						<grant
+							inherit="true"
+							operation="Create"
+							roles="demo.react.User"
+						/>
+					</class>
 					<class name="demo.charts:Transaktion">
 						<grant
 							inherit="true"
@@ -569,6 +590,45 @@
 							roles="demo.react.ChartReader"
 						/>
 					</class>
+					<!--
+						The administrator role manages the invitations and approves the registrations
+						of the self-service ("Invitations" and "Registrations" in Administration >
+						Access control, "Approve" in "People"): both are secured below the security
+						root, on which an administrator holds the role.
+					-->
+					<module name="tl.security.selfservice">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.Administrator"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="demo.react.Administrator"
+						/>
+						<grant
+							inherit="true"
+							operation="Create"
+							roles="demo.react.Administrator"
+						/>
+						<grant
+							inherit="true"
+							operation="Delete"
+							roles="demo.react.Administrator"
+						/>
+					</module>
+					<!--
+						A user - every member of the "user" group, by the role rule on the security
+						root below - reads the units and currencies, but does not change them.
+					-->
+					<module name="tl.units">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.User"
+						/>
+					</module>
 					<!-- The administrator role opens the administration area. -->
 					<singleton name="SecurityStructure#ROOT">
 						<grant
@@ -709,6 +769,16 @@
 								<step attribute="tl.demo.projectManagement:ProjectScope#tickets"/>
 							</path>
 						</inheritance-rule>
+						<!--
+							Every member of the "user" group is a user on the security root, from which
+							the units and currencies inherit their roles.
+						-->
+						<singleton-rule id="UsersOnRoot"
+							role="demo.react.User"
+							target="SecurityStructure#ROOT"
+						>
+							<group-with-name name="user"/>
+						</singleton-rule>
 						<!--
 							Every member of the "user" group is a user on the person contacts and on every
 							object of the ticket demo.
@@ -1027,10 +1097,6 @@ Behind a reverse proxy that sends forwarding headers (Forwarded, X-Forwarded-*),
 		<config config:interface="com.top_logic.layout.view.ViewConfig"
 			login-view="demo-login-page.view.xml"
 		>
-			<title>
-				<en>TopLogic React Demo</en>
-				<de>TopLogic React Demo</de>
-			</title>
 			<!--
 				A second view a URL may load top-level, besides the default view: the document viewer
 				is self-contained, so it shows the same thing in a browser tab of its own as it does

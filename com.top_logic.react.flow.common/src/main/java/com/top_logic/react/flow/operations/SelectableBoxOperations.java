@@ -18,8 +18,6 @@ import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.SelectableBox;
 import com.top_logic.react.flow.data.Widget;
 
-import de.haumacher.msgbuf.graph.AbstractSharedGraphNode;
-
 /**
  * Operations for {@link SelectableBox} model.
  */
@@ -64,12 +62,6 @@ public interface SelectableBoxOperations extends DecorationOperations, SVGClickH
 			cssClass += " " + self().getCssClass();
 		}
 		out.writeCssClass(cssClass);
-
-		int id = ((AbstractSharedGraphNode) self()).id();
-		if (id != 0) {
-			// See HTMLConstants#TL_CONTEXT_MENU_ATTR, which is not available here.
-			out.writeAttribute("data-context-menu", Integer.toString(id));
-		}
 
 		self().setClickHandler(out.attachOnClick(this, self()));
 

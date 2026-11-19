@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, fields of attributes with a <fallback-storage> showing the inherited value, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form, resetting or recomputing dependent fields when a field changes with <value-listeners> and <script>, also in the rows of a <composition-table>), the fields of the object a reference of the form's object points to, edited and saved with it (<object-fields attribute="...">), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, images in an image field stepping through them, arranging them and showing them full page (<binary-display presentation="image-upload">, its size with <dimensions>, an image gallery of tl.imagegallery:GalleryImage), the maximum number of values of a multi-valued attribute with <value-count max="...">, normalizing an entered value with <value-normalizer>, fields of derived attributes, fields of attributes with a <fallback-storage> showing the inherited value, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form, resetting or recomputing dependent fields when a field changes with <value-listeners> and <script>, also in the rows of a <composition-table>), the fields of the object a reference of the form's object points to, edited and saved with it (<object-fields attribute="...">), when the object of a form is locked in edit mode (<lockHandler>, DefaultLockHandler, NoTokenHandling), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -434,14 +434,15 @@ chips by default (`FieldControlRegistry.FILE_CHIPS`, `ReactFileChipsControl`, cl
 one chip per file, a button and a drop area adding several files at once. The model annotation
 `<binary-display presentation="list"/>` (`BinaryDisplay.BinaryPresentation.LIST`) shows them as a
 list with one file field per file instead (`ReactValueListControl` over `FieldControlRegistry.BINARY`),
-whose add button uploads several files at once, one value per file. `data-item` (the default) and
-`image-upload` both give the chips. The annotation `<accepted-types value="image/*, *.pdf"/>`
+whose add button uploads several files at once, one value per file. `data-item` (the default)
+gives the chips; `image-upload` gives the image field described below. The annotation `<accepted-types value="image/*, *.pdf"/>`
 (`TLAcceptedTypes`, MIME types or file patterns) limits the files the file picker offers, for a
 single and a multi-valued value alike. The annotation `<max-upload-size value="5m"/>`
 (`TLMaxUploadSize`) limits the size of each file uploaded to the attribute; the application-wide
 `max-upload-size` of the upload configuration still caps it, so the smaller of both applies. These
 annotations are read at the attribute, else at its type, and act on a `<value-input>` of type
-`tl.core:Binary` through its `<annotations>` as well. A
+`tl.core:Binary` through its `<annotations>` as well. The annotation `<value-count max="3"/>` limits
+the number of files, see [the maximum number of values](#the-maximum-number-of-values). A
 mandatory multi-valued binary value shows the required marker at the chips and, after a refused
 save, the message of the mandatory check under them. In a table cell the chips render inline, while
 the list presentation shows the file names and opens its file fields in a dialog. A multi-valued
@@ -458,13 +459,120 @@ multi-valued `tl.core:Binary` property.
 	<annotations>
 		<accepted-types value="*.pdf"/>
 		<binary-display presentation="list"/>
+		<value-count max="5"/>
 	</annotations>
 </property>
 ```
 
+**Images** — `<binary-display presentation="image-upload"/>`
+(`BinaryDisplay.BinaryPresentation.IMAGE_UPLOAD`) shows a binary value as images
+(`FieldControlRegistry.IMAGE`, `ReactImageFieldControl`, client `TLImageField`), a single and a
+multi-valued value alike. The field takes a whole row of the form
+(`ReactFormFieldControl.prefersWholeLine()`; a `<render-whole-line value="false"/>` at the attribute
+or `full-line="false"` at the `<field>` keeps it in its column). It shows one image at a time on a
+stage as wide as the field and of a fixed height, the theme token `--tl-size-image-stage`;
+`<dimensions width="..." height="..."/>` at the attribute sets the largest width of the image and the
+height of the stage instead. The stage has no background of its own: an image smaller than the stage
+stands centered at its own size, never enlarged, a larger one is fitted into it. The stage of a
+single-valued field has no fixed height: it is exactly as large as its image, at most as wide as the
+field and as high as the theme token or the `<dimensions>` allow. Several images are stepped through with the buttons at the edges of the
+stage or the arrow keys, wrapping around, and a counter "2 of 5" tells where the field is.
+
+- **Displayed, disabled and edited** alike: a click on the image opens it in a view covering the
+  page opaquely on a dark ground (the token `--tl-surface-lightbox`, dark in both modes), scaled to
+  fill it, with the same stepping; its buttons and the counter stand in the margins around the
+  image, never over it. Escape or "Close" closes it.
+- **Edited**: a bar of buttons below the stage acts on the image shown - "Add image" (multi-valued
+  fields) inserts the picked files after it, "Replace" replaces it by a picked file, "Remove"
+  removes it - and "Manage images" (multi-valued fields) opens the *editor* on the scrim over the page. The
+  form never shows more than the stage and this bar. The editor shows a tile per image, all of one
+  width, each with a bar below the image: a button replacing its image by a picked file - a file
+  dropped on the tile replaces it as well - and a button "✕" removing it; the images of an ordered
+  attribute are moved by the handle of their tile, by dragging or with Alt + arrow key. A dashed
+  tile "Upload image" after the last one adds every file dropped or picked there. "Done" or Escape
+  closes the editor; a click on the image of a tile closes it and shows that image on the stage.
+- **Dropping on the stage** of an edited field replaces a single image; among several images, the
+  files are inserted after the image shown, and the stage moves to the first one added.
+- **While uploading**, from the files picked or dropped until the image they become is visible, the
+  stage (or the tile whose image is replaced) shows a spinner over the image and the buttons are
+  disabled; the dashed area shows the spinner and "Uploading…". An image whose data has not arrived
+  yet, e.g. after stepping, shows the spinner as well.
+- **Without an image**, the dashed area fills the whole stage of an edited multi-valued field, as
+  large as the stage with an image, and the bar below it keeps "Add image" alone, so the first upload
+  does not make the field grow; a single-valued
+  field shows a small dashed area. It takes a dropped file or opens the file picker on click. A displayed field shows nothing.
+
+The images are fetched from the data endpoint of the control, they never enter the client state. The
+image field is chosen by the annotation only: `<accepted-types value="image/*"/>` alone keeps the
+chips. `<accepted-types>`, `<max-upload-size>` and `<value-count>` act as for every binary value -
+at the maximum number of images, "Add image", the dashed tile of the editor and dropping on the stage
+are left out, while the images can still be replaced and removed - and the annotations act on a
+`<value-input>` of type `tl.core:Binary` as well. In a table cell the names of the images
+stand for the field, with a button opening it in a dialog.
+
+```xml
+<property name="pictures"
+	multiple="true"
+	ordered="true"
+	type="tl.core:Binary"
+>
+	<annotations>
+		<accepted-types value="image/*"/>
+		<binary-display presentation="image-upload"/>
+		<value-count max="3"/>
+		<dimensions height="400px"/>
+	</annotations>
+</property>
+```
+
+**Image galleries** — a gallery is a multi-valued, ordered reference to `tl.imagegallery:GalleryImage`;
+each image is an object of its own, stored and deleted by the storage of the gallery
+(`ImageGalleryStorage`, chosen automatically for such a reference). It is edited in the same image
+field, `<dimensions>` included, without any other annotation: `FieldControlService` maps the type `tl.imagegallery:GalleryImage` to
+`GalleryFieldControlProvider`, which shows the image of each gallery image and turns an uploaded file
+into a new gallery image (`TransientGalleryImage`) that the storage makes persistent on save - in an
+edited object and in a new one alike. The file picker offers images (`image/*`). Only a gallery is
+edited this way (`GalleryImage.isGallery(multiple, ordered)`): a single reference to a gallery image,
+or a set of them without order, is a plain reference, chosen from the existing gallery images. A
+`<value-input>` of the gallery type that is `multiple="true" ordered="true"` gets the image field as
+well.
+
+```xml
+<reference name="gallery"
+	bag="true"
+	kind="forwards"
+	multiple="true"
+	ordered="true"
+	type="tl.imagegallery:GalleryImage"
+/>
+```
+
+A provider configured for a type may apply to some fields of that type only: where its
+`ReactFieldControlProvider.appliesTo(FieldSpec)` refuses a field - by its multiplicity or its order -,
+the field is resolved as if no provider were configured for the type.
+
 
 The display is how the field looks, not what it says: it is a rendering-only state key, kept out of
 the headless projection, so a scripted test reads the same options and the same value in every shape.
+
+## Locking the edited object
+
+A `<form>` locks the object it displays when it enters edit mode, and releases the lock when it leaves edit mode (save, cancel, another object, the form disposed with its view). A second form trying to edit the same object - in another window or another user's session - fails with the message of the lock held there. The lock is taken through the form's `<lockHandler>`, which defaults to `DefaultLockHandler`: it locks through the application-wide `LockService`, whose lock strategy for the object is selected by the handler's `lockOperation`.
+
+Every form displayed creates a handler of its own from this configuration, so forms of the same view in different windows, sessions and `<tile-stack>` frames lock independently, and releasing one lock touches no other.
+
+Only a persistent object is locked: a transient draft, such as the object of a create dialog, is visible to no other session and is edited without a lock. A form starting in edit mode (`initial-edit-mode="true"`, or an `editMode` channel holding `true`) locks a persistent object just as the Edit button does.
+
+A form entering edit mode by itself - when it is displayed with `initial-edit-mode="true"` or an `editMode` channel holding `true`, and when a form with `initial-edit-mode="true"` switches to another object - does not fail on an object someone else has locked: it shows the object read-only, sets its `editMode` channel to `false`, and tells the user in passing that the object is shown read-only, with the details of the conflict. Whether these name the holder of the lock is decided by `report-lock-owner-details` of the application's `TokenService`. The Edit button and `<enter-edit-mode/>` still fail with the message of the lock held there.
+
+A form that deliberately works without a lock disables locking explicitly:
+
+```xml
+<form input="item">
+	<lockHandler class="com.top_logic.base.locking.handler.NoTokenHandling"/>
+	...
+</form>
+```
 
 ## Unsaved changes are asked before a channel write, transitively
 
@@ -476,6 +584,7 @@ A `<form>` in edit mode checks the constraints of the model on the server: it cr
 
 - `mandatory="true"` of the attribute (`MandatoryConstraintCheck`),
 - `<size-constraint lower-bound upper-bound/>` (`SizeConstraintCheck`) and `<value-range min max/>` (`RangeConstraintCheck`),
+- `<value-count max/>` of a multi-valued attribute (`ValueCountConstraintCheck`), see [the maximum number of values](#the-maximum-number-of-values),
 - every `ConstraintCheck` of the attribute's `<constraints>` annotation, e.g. `<unique/>` or a `<constraint-by-expression>`.
 
 ```xml
@@ -511,11 +620,11 @@ A check reads the values entered in the form, not the stored ones: it receives t
 
 **Errors and warnings.** A check is of type `error` (the default) or `warning`. All checks of an attribute run and their results are collected, except that a failed mandatory check skips the others (a length or a range of an empty value says nothing useful). The field displays its first error and all of its warnings. Model checks report at a field only once it is revealed - after the user changed its value, or after an attempt to save - so a create form does not open covered with "mandatory" errors; an input the field cannot parse (a number field holding text) is reported at once.
 
-**Only errors block saving.** `<store-form-state/>` (and the form's own save) runs every check once more - a check consulting stored data, such as `<unique/>`, may have a different outcome since the value was entered - reveals all fields and stores nothing while an error remains; warnings never prevent saving. Commands guard against the errors in advance with the executability rule `<form-valid/>` (`FormValid`), which disables a command while the form displays an error.
+**Only errors block saving.** `<store-form-state/>` (and the form's own save) runs every check once more - a check consulting stored data, such as `<unique/>`, may have a different outcome since the value was entered - reveals all fields and stores nothing while an error remains; warnings never prevent saving. Save and every other command storing the form state stay enabled in edit mode while the form displays errors: a click on them is what names the errors. After the refusal, the focus is in the first field of the form that shows an error and is visible, scrolled into view - also when the button sits in a toolbar or a dialog footer outside the form, since the refusal names the form (`ValidationErrors.refusal(title, errors, scope)`); a form behind a modal dialog gets the focus once the dialog has closed. A field on a tab that is not shown, or in a table row that is not being edited, is named in the list only. A command that must not be offered while the form displays an error states the executability rule `<form-valid/>` (`FormValid`), which disables it.
 
-Both the refused save and the disabled command name the errors (`FormControl#visibleErrorDetails()`, collected from `FormParticipant#visibleErrors()`): the refusal lists them below its message, the tooltip of the disabled button one per line. An error of a field is named by the field's label ("Name: ..."), an error of a cell of a row-editing table by its row and column ("Row 2, Name: ..." - a row is named by its label, a row without one by its position), an error of the row set as a whole by its attribute. Only the errors that refuse the save are named, and a long list names the first ten and the number of the others. OK of the dialog editing the parts of a composition names the problems of the parts the same way when it is refused, including an attribute of a part that no column shows. A `<config-form-valid/>` command names the errors of the fields of its configuration forms.
+Both the refused save and a command disabled by `<form-valid/>` name the errors (`FormControl#visibleErrorDetails()`, collected from `FormParticipant#visibleErrors()`): the refusal lists them below its message, the tooltip of the disabled button one per line. An error of a field is named by the field's label ("Name: ..."), an error of a cell of a row-editing table by its row and column ("Row 2, Name: ..." - a row is named by its label, a row without one by its position), an error of the row set as a whole by its attribute. Only the errors that refuse the save are named, and a long list names the first ten and the number of the others. OK of the dialog editing the parts of a composition names the problems of the parts the same way when it is refused, including an attribute of a part that no column shows. A `<config-form-valid/>` command names the errors of the fields of its configuration forms.
 
-A command in the `<commands>` of a `<form>` whose action chain applies the form state gets the rule automatically; a command outside the form's commands - a button in a wizard step, for example - states it in its `<executability>`:
+No command gets the rule implicitly; a command states it in its `<executability>`, like Next of a wizard step:
 
 ```xml
 <button appearance="primary">
@@ -536,11 +645,46 @@ A command in the `<commands>` of a `<form>` whose action chain applies the form 
 
 The rule counts only errors on display: an error the user cannot see yet leaves the command enabled, and the attempt to execute it is what reveals the error.
 
-**A value without an object.** A `<value-input mandatory="true">` reports a missing value without a form: its field is marked mandatory and shows the message of the mandatory check (`MandatoryConstraintCheck`) once the user empties it, and its `<on-submit>` command does not run on the empty value (see [view-owned values](doc:view-layer/basics)). The other constraints - `<constraints>`, `<size-constraint>`, `<value-range>` - are checks over an object and need a `<form>` over one.
+**A value without an object.** A `<value-input mandatory="true">` reports a missing value without a form: its field is marked mandatory and shows the message of the mandatory check (`MandatoryConstraintCheck`) once the user empties it, and its `<on-submit>` command does not run on the empty value (see [view-owned values](doc:view-layer/basics)). A `<value-count max="..."/>` among the `<annotations>` of a `<value-input multiple="true">` is checked the same way: more values than the maximum make the field invalid, with the message of the value count check, and its `<on-submit>` command does not run on them. The other constraints - `<constraints>`, `<size-constraint>`, `<value-range>` - are checks over an object and need a `<form>` over one.
 
 **A field the object does not have is hidden.** A `<field attribute="x"/>` whose attribute the type of the displayed object lacks - a form over a selection that may hold objects of several types - is not displayed, label included, and appears again when an object with that attribute is displayed. A field is equally hidden while the form displays no object or a deleted one, and when the attribute is hidden by its visibility annotation.
 
 **A new object shows its create visibility.** While the form displays a new object that is not stored yet - the transient draft of a create dialog (`<create-transient>`) or an edit overlay of it - a field follows the `<create-visibility>` of its attribute instead of its `<visibility>` (hidden, read-only, editable, mandatory; without a create visibility the visibility applies), as in the classic user interface: an attribute that is `read-only` but `<create-visibility value="editable"/>` is entered in the create dialog and read-only once stored. A `<dynamic-visibility>` of the attribute takes precedence over both (`AttributeFieldControl`).
+
+### The maximum number of values
+
+The model annotation `<value-count max="3"/>` (`TLValueCount`) limits the number of values of a
+multi-valued attribute of any type - files, references, a list of texts. Without `max`, the number
+is not limited. It is enforced three times:
+
+- **When saving.** The `ModelService` checks it on every commit, whatever user interface or script
+  changes the object: an object whose attribute holds more values is refused with "Too many values.
+  At most 3 values are allowed, actual: 4." (`ValueCountConstraintCheck`,
+  `ModelService.addChecks(...)`).
+- **At the field.** In a `<form>`, the field holding more values is invalid with the same message
+  (see [validation](#validation)), as is a `<value-input multiple="true">` stating the annotation
+  among its `<annotations>`.
+- **When adding.** The field description carries the maximum (`FieldSpec.getMaxCount()`), and every
+  control adding values offers no further value once the field holds the maximum: the file chips
+  hide their add button, the list of values its add button, the image field its button "Add image",
+  the dashed tile of its editor and dropping on its stage; removing a value offers adding again. Values added at once - the files of one upload or one drop -
+  are taken all or none (`ValueCountLimit`): an addition beyond the room left is refused as a whole
+  with a message naming the maximum, the number of added values and the room left ("Nothing was
+  added: at most 3 values are allowed. 2 selected, room for 1."). The file chips and the image field
+  show it under the field, where they report a failed upload; the list of values shows it as a
+  message of the window.
+
+```xml
+<reference name="reviewers"
+	kind="forwards"
+	multiple="true"
+	type="tl.accounts:Person"
+>
+	<annotations>
+		<value-count max="3"/>
+	</annotations>
+</reference>
+```
 
 ## Normalizing an entered value
 
@@ -588,7 +732,7 @@ A normalizer written in Java implements `ValueNormalizer`; it receives the edite
 
 ## Saving with an action chain
 
-A `<form>` offers Edit, Save and Cancel in the toolbar of the enclosing panel by itself. Save stores the input if there is any and ends the edit session (`FormControl.executeSave()`), Cancel drops the input and ends it (`FormControl.executeCancel()`). `<save-action>` and `<cancel-action>` replace what the two buttons do with an action chain, written like the actions of a `<generic-command>` (see [commands](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments)). The chain runs in the form's context without arguments; `<read-form-object/>` results in the object the form displays, and `<store-form-state/>` in the object it stored, which their follow-up actions in `<with-result>` see (see [actions with a result](doc:view-layer/commands#actions-with-a-result-with-result)). Save stays disabled while the form displays an error.
+A `<form>` offers Edit, Save and Cancel in the toolbar of the enclosing panel by itself. Save stores the input if there is any and ends the edit session (`FormControl.executeSave()`), Cancel drops the input and ends it (`FormControl.executeCancel()`). `<save-action>` and `<cancel-action>` replace what the two buttons do with an action chain, written like the actions of a `<generic-command>` (see [commands](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments)). The chain runs in the form's context without arguments; `<read-form-object/>` results in the object the form displays, and `<store-form-state/>` in the object it stored, which their follow-up actions in `<with-result>` see (see [actions with a result](doc:view-layer/commands#actions-with-a-result-with-result)). Save stays enabled while the form displays an error and refuses to store it, see [validation](#validation).
 
 Four actions work on the edit session of the form they run in:
 
@@ -659,7 +803,7 @@ The actions find the form only where the form runs them: in its `<save-action>` 
 </form>
 ```
 
-A command of the form's `<commands>` that stores the form state is disabled while the form displays an error (`<form-valid/>`, see [validation](#validation)) without stating it.
+A command of the form's `<commands>` that stores the form state stays enabled while the form displays an error and refuses to store it; only a command stating `<form-valid/>` is disabled then (see [validation](#validation)).
 
 ## Fields of a referenced object
 

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<accordion>
+		<section id="project">
+			<visibility
+				expr="$object.instanceOf(`TestViewModelAccess:Project`)"
+				inputs="object"
+			/>
+			<panel/>
+		</section>
+		<section id="open">
+			<panel/>
+		</section>
+	</accordion>
+</view>

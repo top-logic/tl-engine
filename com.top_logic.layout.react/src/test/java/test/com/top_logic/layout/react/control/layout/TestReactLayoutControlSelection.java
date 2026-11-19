@@ -86,7 +86,7 @@ public class TestReactLayoutControlSelection extends TestCase {
 		}
 		assertEquals(Set.of(), _grid.getSelection());
 		assertFalse(_grid.scriptingCommands().contains(ReactLayoutControl.CMD_SELECT_ITEM));
-		assertFalse(_grid.scriptingCommands().contains(ReactLayoutControl.CMD_SELECT_ITEM_BY_KEY));
+		assertNull(_grid.objectIdentities());
 	}
 
 	/**

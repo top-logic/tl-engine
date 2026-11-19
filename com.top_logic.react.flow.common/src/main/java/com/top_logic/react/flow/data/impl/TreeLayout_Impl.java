@@ -420,6 +420,12 @@ public class TreeLayout_Impl extends com.top_logic.react.flow.data.impl.Floating
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.TreeLayout setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return TREE_LAYOUT__TYPE;
 	}

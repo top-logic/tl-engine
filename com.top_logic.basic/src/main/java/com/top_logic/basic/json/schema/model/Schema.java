@@ -430,7 +430,7 @@ public abstract class Schema extends de.haumacher.msgbuf.data.AbstractDataObject
 	}
 
 	/**
-	 * Default value (JSON-serialized string).
+	 * Default value in JSON syntax (a text value including its quotes, e.g. <code>"abc"</code>, a number as <code>42</code>).
 	 */
 	public final String getDefaultValue() {
 		return _defaultValue;
@@ -517,7 +517,7 @@ public abstract class Schema extends de.haumacher.msgbuf.data.AbstractDataObject
 	}
 
 	/**
-	 * Example values (JSON-serialized strings).
+	 * Example values, each in JSON syntax (a text value including its quotes).
 	 */
 	public final java.util.List<String> getExamples() {
 		return _examples;

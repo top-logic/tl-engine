@@ -7,7 +7,7 @@ order: 61
 
 ## The tool contract
 
-`tl-ai-tool-api` (package `com.top_logic.tl.ai.tool.api`) holds the contract, so a tool is defined without depending on `tl-ai-core`:
+`tl-ai-tool-api` (package `com.top_logic.ai.tool.api`) holds the contract, so a tool is defined without depending on `tl-ai-core`:
 
 - `Tool` - `execute(Map<String, Object> args, ToolExecutionContext context) → ToolResult`.
 - `ToolMode` - `READ` (parallel-safe, no approval); `USER_SCOPED`, `DATA_WRITE`, `STRUCTURAL` (serial, need approval, enrol in the turn's transaction); `EXTERNAL` (serial, needs approval, no transaction - the change lands in another system).
@@ -26,12 +26,12 @@ A tool has three names: the bare `Tool.name()` the model calls, the configured `
 - `AnnotatedTools` (in `tl-ai-tool-api`) scans `@ToolMethod` methods into `Tool` instances.
 - `ToolCatalog` - the frozen registry of a run, with JSON-Schema validation of the arguments; a call for an absent tool is answered with which absence it is (`ToolCatalog.absenceReason`), see [capability notices](doc:ai/security/capability-notices).
 - `DynamicToolCatalog` - the catalog with skill overlays, see below.
-- Sub-packages of `com.top_logic.tl.ai.core.tools`: `model/` (model browser, editor, search, the object tools), `script/` (TL-Script execution), `interaction/` (delegation, `askUser`, skills), `task/` (task store), `config/` (schemas, layouts), `integration/` (Gitea), `web/` (web search, web fetch, browser), `memory/`, `registry/` (factories, TL-Script tools), `util/` (serialization, I18N).
+- Sub-packages of `com.top_logic.ai.core.tools`: `model/` (model browser, editor, search, the object tools), `script/` (TL-Script execution), `interaction/` (delegation, `askUser`, skills), `task/` (task store), `config/` (schemas, layouts), `integration/` (Gitea), `web/` (web search, web fetch, browser), `memory/`, `registry/` (factories, TL-Script tools), `util/` (serialization, I18N).
 
 ### The data tools
 
 - **`ObjectEditTool`** - `object-edit.updateObject` / `createObject` / `deleteObject`, core tools of the entry-point agent: one object the agent knows by its id, changed in one call. Values are converted on the server by the attribute's type (`AttributeValues`), the model's constraints are asked before the commit (`ObjectConstraints`), and rights are checked per object and per attribute before the first write - for a new object's initial values with the engine's create-time question (`isAllowedInitial`), as the create dialogs ask it. A call in a system context is refused: the engine checks no rights there and records no user. `createObject` takes the new object's parts in `values` (a composition's objects, nested up to three levels) and creates the whole tree in one call and one approval, with the constraints asked once it is complete - which is what makes an object with a mandatory composition creatable at all. [Object tools](doc:ai/security/object-tools) has the checks.
-- **Reading and changing with TL-Script are two tools.** `query` / `present` (READ, group `data.read`) and `script-exec.changeData` (DATA_WRITE, group `script`; making the change costs `data.write` on top). `changeData` refuses a script that only reads before any approval prompt; its dry run runs the change in an interaction of its own, in a transaction that is always rolled back, and answers what it would change (`ChangeReport`) - only when every effect is a write to the knowledge base. What is a read is decided on the whole expression (`SideEffects`), not by the engine's `HasSideEffects`, which looks at the outermost call only. A set of objects chosen by a condition is changed this way.
+- **Reading and changing with TL-Script are two tools.** `query` / `present` (READ, group `data.read`) and `script-exec.changeData` (DATA_WRITE, group `script`; making the change costs `data.write` on top). `changeData` refuses a script that only reads before any approval prompt; its dry run runs the change in an interaction of its own, in a transaction that is always rolled back, and answers what it would change (`ChangeReport`) - only when every effect is a write to the knowledge base. What is a read is decided on the whole expression (`SideEffects`), not by the engine's `HasSideEffects`, which looks at the outermost call only. A call of a configured TL-Script function (`ConfiguredTLScriptFunctions`) is a read when the function only reads, also through the configured functions it calls - the engine reads this from the function bodies - so an application's own reading functions can be used in `query` and `present`. A refusal names the first function with an effect, for a configured function its name. A set of objects chosen by a condition is changed this way.
 - **`QueryLanguage`** is the verified cheat sheet of TL-Script: a query that fails (it does not compile, or fails while it runs) is answered with its reading part, and a skill gets the whole sheet in place of `<<QUERY_LANGUAGE_CHEAT_SHEET>>`.
 - **`TidResolver`** turns a model-supplied `TypeName:id` into a `TLObject`, and is the only place that does - every call is a read check. An identifier that does not resolve is classified by `TidDiagnostics` rather than answered with one generic sentence: a uuid, a printed object, an unknown or abstract type, an id of the wrong shape, or a code this application speaks (a pattern and a sentence in `<object-ids>` on `AgentApplicationService`, which is tried first). This runs on the error path only. All of these messages are model-facing English literals, not resources, see [development rules](doc:ai/development#text-for-the-model-and-text-for-people).
 
@@ -62,10 +62,10 @@ Which skills and tools an agent is offered depends on the acting user's rights: 
 **Where it lives.** The context is development material, so it lives in the application's source and is deployed with it: a `TextPromptContributor` with `name="application-context"` (`TextPromptContributor.Config.APPLICATION_CONTEXT`) among the prompt contributors of `AgentApplicationService` ([prompt contributors](doc:ai/environment#prompt-contributors)):
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
-	<instance class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+<config service-class="com.top_logic.ai.core.agent.AgentApplicationService">
+	<instance class="com.top_logic.ai.core.agent.AgentApplicationService">
 		<prompt-contributors>
-			<contributor class="com.top_logic.tl.ai.core.agent.TextPromptContributor"
+			<contributor class="com.top_logic.ai.core.agent.TextPromptContributor"
 				name="application-context"
 			>
 				<text>
@@ -86,7 +86,7 @@ Which skills and tools an agent is offered depends on the acting user's rights: 
 
 1. every file that already holds the entry - normally one; a second one exists when the service editor saved `AgentApplicationService` after the entry was written, and both are updated;
 2. otherwise the file that configures `AgentApplicationService` and is read last (files are read in name order, and one with `config:override="true"` drops what earlier ones said), where the entry is added to `<prompt-contributors>`;
-3. otherwise a new file `ai-application-context.config.xml` that adds the entry **without** `config:override` - the contributors are an unkeyed list, to which a later layer appends. Its name differs from the service editor's `com.top_logic.tl.ai.core.agent.AgentApplicationService.config.xml` and sorts before it, so a later service-editor snapshot (which then contains the entry) replaces the entry instead of adding it twice.
+3. otherwise a new file `ai-application-context.config.xml` that adds the entry **without** `config:override` - the contributors are an unkeyed list, to which a later layer appends. Its name differs from the service editor's `com.top_logic.ai.core.agent.AgentApplicationService.config.xml` and sorts before it, so a later service-editor snapshot (which then contains the entry) replaces the entry instead of adding it twice.
 
 The file is edited in place: only the entry is written, every other character stays (`XmlSpans`). The answer names the file and tells the developer to restart the service and commit the file.
 

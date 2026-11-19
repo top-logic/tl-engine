@@ -1,4 +1,3 @@
 db-mysql.xml
-db-mysql55.xml
 enable-debug.xml
 config.xml

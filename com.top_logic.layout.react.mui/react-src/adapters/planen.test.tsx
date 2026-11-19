@@ -29,6 +29,7 @@ import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiChipAdapter from './MuiChipAdapter';
+import MuiSkeletonAdapter from './MuiSkeletonAdapter';
 import { CONTROL_ID, childControl, mountAdapter, patchState, settle, resetTableView } from './wire-test-support';
 
 // The table looks up the toggle of its tree rows, the selection boxes of its rows, the box of its search, the chips of
@@ -40,6 +41,7 @@ replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
 replacePart('Chip', MuiChipAdapter);
+replacePart('Skeleton', MuiSkeletonAdapter);
 // The counter of a Kanban column is the part Badge; its TopLogic drawing is the badge of the design system (tl-badge),
 // which the board's test asks for.
 replacePart('Badge', BadgePart);
@@ -173,7 +175,7 @@ describe('the clicks of a table row (review focus 5: as before the merge of the 
     await userEvent.click(screen.getByText('Text'));
     await settle();
 
-    expect(selects(sent)).toEqual([[CMD_SELECT, { rowIndex: 0, ctrlKey: false, shiftKey: false }]]);
+    expect(selects(sent)).toEqual([[CMD_SELECT, { rowId: 'r0', ctrlKey: false, shiftKey: false }]]);
   });
 
   it('does not select the row by a click on a link in a cell', async () => {
@@ -205,7 +207,7 @@ describe('the clicks of a table row (review focus 5: as before the merge of the 
     fireEvent.click(screen.getByText('Aus'));
     await settle();
 
-    expect(selects(sent)).toEqual([[CMD_SELECT, { rowIndex: 0, ctrlKey: false, shiftKey: false }]]);
+    expect(selects(sent)).toEqual([[CMD_SELECT, { rowId: 'r0', ctrlKey: false, shiftKey: false }]]);
   });
 });
 
@@ -975,7 +977,7 @@ describe('the Kanban board (spec §5: tl-board)', () => {
     await altArrow('a1', 'ArrowDown');
 
     expect(sentOf(sent, CMD_DROP)).toEqual([
-      [CMD_DROP, { source: CONTROL_ID, keys: 'a1', selection: false, targetKey: 'a2', zone: 'lower' }],
+      [CMD_DROP, { source: CONTROL_ID, keys: ['a1'], selection: false, targetKey: 'a2', zone: 'lower' }],
     ]);
     // Until the new state arrives, the focus stays where it is.
     expect(document.activeElement).toBe(cardOf('a1'));
@@ -988,7 +990,7 @@ describe('the Kanban board (spec §5: tl-board)', () => {
     await altArrow('a3', 'ArrowUp');
 
     expect(sentOf(sent, CMD_DROP)).toEqual([
-      [CMD_DROP, { source: CONTROL_ID, keys: 'a3', selection: false, targetKey: 'a2', zone: 'upper' }],
+      [CMD_DROP, { source: CONTROL_ID, keys: ['a3'], selection: false, targetKey: 'a2', zone: 'upper' }],
     ]);
   });
 
@@ -1017,10 +1019,10 @@ describe('the Kanban board (spec §5: tl-board)', () => {
     await altArrow('b2', 'ArrowLeft');
 
     expect(sentOf(sent, CMD_DROP)).toEqual([
-      [CMD_DROP, { source: CONTROL_ID, keys: 'a1', selection: false, targetKey: 'b1', zone: 'upper' }],
+      [CMD_DROP, { source: CONTROL_ID, keys: ['a1'], selection: false, targetKey: 'b1', zone: 'upper' }],
       // B holds no third card: the end of the column.
-      [CMD_DROP, { source: CONTROL_ID, keys: 'a3', selection: false, targetKey: 'B', zone: 'none' }],
-      [CMD_DROP, { source: CONTROL_ID, keys: 'b2', selection: false, targetKey: 'a2', zone: 'upper' }],
+      [CMD_DROP, { source: CONTROL_ID, keys: ['a3'], selection: false, targetKey: 'B', zone: 'none' }],
+      [CMD_DROP, { source: CONTROL_ID, keys: ['b2'], selection: false, targetKey: 'a2', zone: 'upper' }],
     ]);
   });
 
@@ -1031,7 +1033,7 @@ describe('the Kanban board (spec §5: tl-board)', () => {
     await altArrow('a1', 'ArrowRight');
 
     expect(sentOf(sent, CMD_DROP)).toEqual([
-      [CMD_DROP, { source: CONTROL_ID, keys: 'a1', selection: false, targetKey: 'B', zone: 'none' }],
+      [CMD_DROP, { source: CONTROL_ID, keys: ['a1'], selection: false, targetKey: 'B', zone: 'none' }],
     ]);
   });
 
@@ -1044,8 +1046,8 @@ describe('the Kanban board (spec §5: tl-board)', () => {
     await altArrow('a3', 'ArrowUp');
 
     expect(sentOf(sent, CMD_DROP)).toEqual([
-      [CMD_DROP, { source: CONTROL_ID, keys: 'a1,a2', selection: false, targetKey: 'a3', zone: 'lower' }],
-      [CMD_DROP, { source: CONTROL_ID, keys: 'a3', selection: false, targetKey: 'a2', zone: 'upper' }],
+      [CMD_DROP, { source: CONTROL_ID, keys: ['a1', 'a2'], selection: false, targetKey: 'a3', zone: 'lower' }],
+      [CMD_DROP, { source: CONTROL_ID, keys: ['a3'], selection: false, targetKey: 'a2', zone: 'upper' }],
     ]);
   });
 
@@ -1114,7 +1116,7 @@ describe('the Kanban board (spec §5: tl-board)', () => {
     // What a pointer drop on the column sends: the column itself, no place beside a card.
     await altArrow('a1', 'ArrowRight');
     expect(sentOf(sent, CMD_DROP)).toEqual([
-      [CMD_DROP, { source: CONTROL_ID, keys: 'a1', selection: false, targetKey: 'B', zone: 'none' }],
+      [CMD_DROP, { source: CONTROL_ID, keys: ['a1'], selection: false, targetKey: 'B', zone: 'none' }],
     ]);
   });
 
@@ -1167,7 +1169,7 @@ describe('the Kanban board (spec §5: tl-board)', () => {
 
     await altArrow('a1', 'ArrowRight');
     expect(sentOf(accepting, CMD_DROP)).toEqual([
-      [CMD_DROP, { source: CONTROL_ID, keys: 'a1', selection: false, targetKey: 'B', zone: 'none' }],
+      [CMD_DROP, { source: CONTROL_ID, keys: ['a1'], selection: false, targetKey: 'B', zone: 'none' }],
     ]);
   });
 
@@ -1224,7 +1226,7 @@ describe('the Kanban board (spec §5: tl-board)', () => {
     await settle();
 
     expect(sentOf(sent, CMD_DROP)).toEqual([
-      [CMD_DROP, { source: CONTROL_ID, keys: 'b1', selection: false, targetKey: 'a2', zone: 'upper' }],
+      [CMD_DROP, { source: CONTROL_ID, keys: ['b1'], selection: false, targetKey: 'a2', zone: 'upper' }],
     ]);
   });
 
@@ -1260,7 +1262,7 @@ describe('the Kanban board (spec §5: tl-board)', () => {
     const probes = sentOf(sent, CMD_DROP_PROBE);
     expect(probes).toHaveLength(1);
     const probe = probes[0][1];
-    expect(probe).toMatchObject({ source: CONTROL_ID, keys: 'b1', selection: false, targetKey: 'a1', zone: 'upper' });
+    expect(probe).toMatchObject({ source: CONTROL_ID, keys: ['b1'], selection: false, targetKey: 'a1', zone: 'upper' });
 
     patchState({ dropVerdicts: { [probe.probe as string]: { accepted: false, reason: 'Nicht in diese Spalte' } } });
     await settle();
@@ -1795,6 +1797,7 @@ describe('the calendar (spec §3: tl-calendar)', () => {
     it('discards only the new event by Escape inside a window, which stays open (review focus 4)', async () => {
       register('PlanenTestCalendar', TLCalendar);
       const child = { controlId: 'cal', module: 'PlanenTestCalendar', state: calendar('WEEK', WEEK) };
+      vi.stubGlobal('ResizeObserver', NoResizeObserver);
       const sent = mountAdapter(TLWindow, { title: 'Fenster', child, closable: true });
       await settle();
 

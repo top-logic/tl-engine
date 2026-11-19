@@ -5,20 +5,31 @@
  */
 package com.top_logic.layout.view.table;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.field.FieldSpec;
+import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.layout.view.form.BoundFieldModel;
 import com.top_logic.layout.view.form.EditLevel;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
+import com.top_logic.layout.view.I18NConstants;
+import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.view.form.FunctionFieldModel;
+import com.top_logic.layout.view.form.FunctionSelectFieldModel;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLType;
+import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link CellEditing} of a cell whose value is read from the row and written back to it by
@@ -32,10 +43,25 @@ import com.top_logic.layout.view.form.FunctionFieldModel;
  *
  * <p>
  * The control the value is entered with follows from the type of the column's values, which
- * therefore has to be known: a column whose values are of an unknown type cannot be edited.
+ * therefore has to be known: a column whose values are of an unknown type cannot be edited. A value
+ * chosen from options - an object of a class, a classifier of an enumeration - is chosen from the
+ * options computed for the row when its cell is edited.
  * </p>
  */
 public class ValueCellEditing implements CellEditing {
+
+	/**
+	 * The options the value of a cell is chosen from.
+	 *
+	 * @param forRow
+	 *        Computes the options of the cell of a row, when the cell goes into editing.
+	 * @param asComputed
+	 *        Whether the options are offered in the order they are computed in, rather than in the
+	 *        order of the type of the values, see {@link AttributeOptions#orderFor(TLType)}.
+	 */
+	public record Options(Function<Object, List<?>> forRow, boolean asComputed) {
+		// Pure data.
+	}
 
 	private final ColumnType _type;
 
@@ -44,6 +70,19 @@ public class ValueCellEditing implements CellEditing {
 	private final BiConsumer<Object, Object> _update;
 
 	private final Predicate<Object> _canUpdate;
+
+	private final Options _options;
+
+	/**
+	 * Creates a {@link ValueCellEditing} of a value that is entered rather than chosen from
+	 * options.
+	 *
+	 * @see #ValueCellEditing(ColumnType, Function, BiConsumer, Predicate, Options)
+	 */
+	public ValueCellEditing(ColumnType type, Function<Object, Object> value, BiConsumer<Object, Object> update,
+			Predicate<Object> canUpdate) {
+		this(type, value, update, canUpdate, null);
+	}
 
 	/**
 	 * Creates a {@link ValueCellEditing}.
@@ -57,13 +96,17 @@ public class ValueCellEditing implements CellEditing {
 	 *        Writes an edited value, receiving the row and the new value.
 	 * @param canUpdate
 	 *        Which rows offer the edit.
+	 * @param options
+	 *        The options the value of a row is chosen from, {@code null} for a value that is
+	 *        entered rather than chosen.
 	 */
 	public ValueCellEditing(ColumnType type, Function<Object, Object> value, BiConsumer<Object, Object> update,
-			Predicate<Object> canUpdate) {
+			Predicate<Object> canUpdate, Options options) {
 		_type = type;
 		_value = value;
 		_update = update;
 		_canUpdate = canUpdate;
+		_options = options;
 	}
 
 	/**
@@ -85,13 +128,43 @@ public class ValueCellEditing implements CellEditing {
 	 *        column that is displayed but not edited.
 	 * @param canUpdate
 	 *        Which rows offer the edit, or {@code null} where every row of the column does.
+	 * @param options
+	 *        The options the value of a row is chosen from, {@code null} for a value that is
+	 *        entered rather than chosen.
 	 */
 	public static CellEditing forUpdate(ColumnType type, Function<Object, Object> value,
-			BiConsumer<Object, Object> update, Predicate<Object> canUpdate) {
+			BiConsumer<Object, Object> update, Predicate<Object> canUpdate, Options options) {
 		if (update == null || !type.resolved()) {
 			return null;
 		}
-		return new ValueCellEditing(type, value, update, canUpdate == null ? row -> true : canUpdate);
+		return new ValueCellEditing(type, value, update, canUpdate == null ? row -> true : canUpdate, options);
+	}
+
+	/**
+	 * The options the edited value of a row is chosen from, or {@code null} where a value of the
+	 * given type is entered rather than chosen.
+	 *
+	 * <p>
+	 * A value of a class or an enumeration is chosen from what the given expression computes for
+	 * the row, in the order it computes them, or, without an expression, from the options of the
+	 * type, in the order of the type, see
+	 * {@link AttributeOptions#optionsFor(TLType, QueryExecutor, Object...)}.
+	 * </p>
+	 *
+	 * @param type
+	 *        What the column's values are.
+	 * @param options
+	 *        The expression computing the options, {@code null} for the options of the type.
+	 * @param arguments
+	 *        The arguments the expression is applied to for a row.
+	 */
+	public static Options options(ColumnType type, QueryExecutor options, Function<Object, Object[]> arguments) {
+		if (!type.resolved() || !AttributeOptions.isStructuralSelect(type.type())) {
+			return null;
+		}
+		TLType valueType = type.type();
+		return new Options(row -> AttributeOptions.optionsFor(valueType, options, arguments.apply(row)),
+			options != null);
 	}
 
 	@Override
@@ -99,9 +172,31 @@ public class ValueCellEditing implements CellEditing {
 		return _canUpdate.test(row);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The result is a {@link ValueCellEditing} as well, so that its cells are still edited in place
+	 * where the table edits in place, see
+	 * {@link ColumnSetup#buildInPlaceColumn(java.util.function.Consumer, LockHandler)}.
+	 * </p>
+	 */
+	@Override
+	public ValueCellEditing restrictedTo(Predicate<Object> rows) {
+		return new ValueCellEditing(_type, _value, _update, _canUpdate.and(rows), _options);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * A value chosen from options is edited by a {@link FunctionSelectFieldModel} offering the
+	 * options computed for the row now.
+	 * </p>
+	 */
 	@Override
 	public BoundFieldModel createModel(Object row, FormControl form, EditLevel level) {
-		return new FunctionFieldModel(row, _value, _update);
+		return newModel(row, _update, options(row));
 	}
 
 	/**
@@ -113,21 +208,59 @@ public class ValueCellEditing implements CellEditing {
 	 * when the user enters it. A failing write is rolled back and leaves the field as it was.
 	 * </p>
 	 *
+	 * <p>
+	 * A persistent row object is locked while the value is written, and the lock is released right
+	 * after. When someone else holds the lock - e.g. a form editing the object -, nothing is
+	 * written: the cell shows the stored value again, and the user is told that the value was not
+	 * saved and who holds the lock (see {@link ViewMessages#lockConflict}).
+	 * </p>
+	 *
+	 * @param context
+	 *        The context the cell is displayed in, which a refused write is reported to.
 	 * @param row
 	 *        The row whose cell is edited, for which {@link #canEdit(Object)} holds.
+	 * @param lockHandler
+	 *        Locks the row object while a value is written. It holds no lock between two writes,
+	 *        so the cells of one table share it.
 	 * @param written
 	 *        Called after a value was written, when the field shows it, e.g. to build the other
 	 *        cells of the row again.
 	 */
-	public BoundFieldModel createInPlaceModel(Object row, Runnable written) {
+	public BoundFieldModel createInPlaceModel(ReactContext context, Object row, LockHandler lockHandler,
+			Runnable written) {
 		BiConsumer<Object, Object> update = _update;
-		return new FunctionFieldModel(row, _value, (object, value) -> inTransaction(() -> update.accept(object, value))) {
-			@Override
-			public void setValue(Object value) {
-				super.setValue(value);
-				written.run();
-			}
-		};
+		FunctionFieldModel result =
+			newModel(row, (object, value) -> inTransaction(() -> update.accept(object, value)), options(row));
+		result.setWriteGuard((object, write) -> lockedWrite(context, object, lockHandler, write));
+		result.setAfterSetValue(written);
+		return result;
+	}
+
+	/**
+	 * Runs the given write of a value of the given row object while the object is locked.
+	 *
+	 * @return Whether the value was written; {@code false} when someone else holds the lock, which
+	 *         is reported to the given context.
+	 */
+	private static boolean lockedWrite(ReactContext context, Object object, LockHandler lockHandler,
+			Runnable write) {
+		if (!(object instanceof TLObject persistent) || persistent.tTransient()) {
+			// An object other sessions cannot see needs no lock.
+			write.run();
+			return true;
+		}
+		try {
+			lockHandler.acquireLock(object);
+		} catch (TopLogicException ex) {
+			ViewMessages.lockConflict(context, I18NConstants.CELL_VALUE_NOT_SAVED, ex);
+			return false;
+		}
+		try {
+			write.run();
+		} finally {
+			lockHandler.releaseLock();
+		}
+		return true;
 	}
 
 	/**
@@ -144,14 +277,36 @@ public class ValueCellEditing implements CellEditing {
 	 *        The row whose cell is displayed, for which {@link #canEdit(Object)} does not hold.
 	 */
 	public BoundFieldModel createReadOnlyModel(Object row) {
-		BoundFieldModel result = new FunctionFieldModel(row, _value, (object, value) -> {
+		// Nothing is chosen, so no options are offered besides the value shown.
+		BoundFieldModel result = newModel(row, (object, value) -> {
 			throw new IllegalStateException("The cell is not editable: " + object);
-		});
+		}, _options == null ? null : Collections.emptyList());
 		// Disabled rather than only read-only, so that the control looks and announces itself as
 		// not editable.
 		result.setEditable(false);
 		result.setDisabled(true);
 		return result;
+	}
+
+	/**
+	 * The options the value of the given row is chosen from, {@code null} for a value that is
+	 * entered.
+	 */
+	private List<?> options(Object row) {
+		return _options == null ? null : _options.forRow().apply(row);
+	}
+
+	/**
+	 * The field model of the cell of the given row, writing through the given function.
+	 *
+	 * @param options
+	 *        The options the value is chosen from, {@code null} for a value that is entered.
+	 */
+	private FunctionFieldModel newModel(Object row, BiConsumer<Object, Object> write, List<?> options) {
+		if (options == null) {
+			return new FunctionFieldModel(row, _value, write);
+		}
+		return new FunctionSelectFieldModel(row, _value, write, options, _type.multiple());
 	}
 
 	/**
@@ -173,6 +328,9 @@ public class ValueCellEditing implements CellEditing {
 		// The column header says what the cell holds, so the field itself carries no label.
 		FieldSpec field = FieldControlService.cellSpec(
 			FieldControlService.fieldSpec(_type.type(), _type.annotations(), null, _type.multiple(), model));
+		if (_options != null && _options.asComputed()) {
+			field.setOptionOrder(null);
+		}
 		return FieldControlService.getInstance().createFieldControl(context, _type.type(), field, model);
 	}
 

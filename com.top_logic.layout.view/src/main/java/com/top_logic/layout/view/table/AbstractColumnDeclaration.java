@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
@@ -25,24 +28,32 @@ import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
+import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.model.TLClassifier;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
+import com.top_logic.model.annotate.ui.AnnotationValueColorProvider;
+import com.top_logic.model.annotate.ui.TLColor;
+import com.top_logic.model.annotate.ui.ValueColor;
+import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.providers.CellClassProviderByExpression;
 import com.top_logic.model.search.ui.ScriptContextVariables;
+import com.top_logic.table.CellExistence;
 import com.top_logic.table.ColumnAlignment;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Base of the {@link ColumnDeclaration}s that describe a single column, with the properties every
@@ -95,6 +106,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		/** Configuration name for {@link #getReadonly()}. */
 		String READONLY = "readonly";
 
+		/** Configuration name for {@link #getCanUpdate()}. */
+		String CAN_UPDATE = "can-update";
+
 		/** Configuration name for {@link #getSort()}. */
 		String SORT = "sort";
 
@@ -106,6 +120,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getVisible()}. */
 		String VISIBLE = "visible";
+
+		/** Configuration name for {@link #isHiddenWhenCompact()}. */
+		String HIDE_WHEN_COMPACT = "hide-when-compact";
 
 		/** Configuration name for {@link #getComparator()}. */
 		String COMPARATOR = "comparator";
@@ -119,11 +136,23 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		/** Configuration name for {@link #getCellClass()}. */
 		String CELL_CLASS = "cell-class";
 
+		/** Configuration name for {@link #getCellRole()}. */
+		String CELL_ROLE = "cell-role";
+
+		/** Configuration name for {@link #getHeaderRole()}. */
+		String HEADER_ROLE = "header-role";
+
+		/** Configuration name for {@link #getHeaderClass()}. */
+		String HEADER_CLASS = "header-class";
+
 		/** Configuration name for {@link #getDisplay()}. */
 		String DISPLAY = "display";
 
 		/** Configuration name for {@link #getSortable()}. */
 		String SORTABLE = "sortable";
+
+		/** Configuration name for {@link #getEmptyGroupLabel()}. */
+		String EMPTY_GROUP_LABEL = "empty-group-label";
 
 		/**
 		 * The column header label, or unset to keep the label the column derives - the label of the
@@ -131,6 +160,18 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		 */
 		@Name(LABEL)
 		ResKey getLabel();
+
+		/**
+		 * What the header row of a group shows when the table is grouped by this column and the
+		 * rows of the group have no value in it.
+		 *
+		 * <p>
+		 * Unset, the group is labeled with the neutral "(empty)". Set it where the missing value
+		 * means something to the user, e.g. "Not assigned" for a column of persons responsible.
+		 * </p>
+		 */
+		@Name(EMPTY_GROUP_LABEL)
+		ResKey getEmptyGroupLabel();
 
 		/**
 		 * An application-defined filter for this column, overriding the type-derived default. The
@@ -144,6 +185,31 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		 */
 		@Name(READONLY)
 		boolean getReadonly();
+
+		/**
+		 * Whether the cell of a row can be edited: an expression over the row yielding whether the
+		 * cell offers the edit.
+		 *
+		 * <p>
+		 * The expression sees the row as the variable {@value RowAsConfig#DEFAULT_ROW_AS}, or by the
+		 * name the table gives it with {@value RowAsConfig#ROW_AS}, and the values of the inputs of
+		 * the column, of the table for a column without inputs of its own. A row the expression
+		 * refuses shows its cell read-only.
+		 * </p>
+		 *
+		 * <p>
+		 * The condition only restricts the edit: a cell the column does not edit on a row anyway is
+		 * not edited, whatever the condition says - an attribute the model or the access rights of
+		 * the user do not let be changed on the row, a computed column without an
+		 * <code>update</code>, a column that is {@link #getReadonly() read-only}. Unset (the
+		 * default), every cell the column can edit is edited.
+		 * </p>
+		 */
+		@Name(CAN_UPDATE)
+		@Nullable
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getCanUpdate();
 
 		/**
 		 * The direction this column is sorted in when the table is first shown, or unset to leave
@@ -215,6 +281,24 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		boolean getVisible();
 
 		/**
+		 * Whether the table leaves the column out while the window is compact, on a phone.
+		 *
+		 * <p>
+		 * A table whose columns do not fit a phone would scroll sideways, and a column the reader
+		 * needs could end up out of sight. Marking the columns a phone can do without lets the
+		 * table show the ones it cannot do without instead.
+		 * </p>
+		 *
+		 * <p>
+		 * The column comes back as soon as the window is wide enough again. The user's own
+		 * arrangement of the table - the columns displayed, their order, the frozen columns - stays
+		 * as it is; the column only takes no room while the window is compact.
+		 * </p>
+		 */
+		@Name(HIDE_WHEN_COMPACT)
+		boolean isHiddenWhenCompact();
+
+		/**
 		 * The order of this column's values: an expression comparing two cell values, by which the
 		 * column sorts the rows and orders the groups it forms.
 		 *
@@ -278,10 +362,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		 *
 		 * <p>
 		 * The result is put on the cell: nothing or an empty string gives the cell no class, a list
-		 * gives it all of its members as classes, any other value its text. The standard classes
-		 * tl-status-error, tl-status-warning, tl-status-success and tl-status-info tint the cell in
-		 * the color of the corresponding status. Any other class is styled by the application's own
-		 * stylesheet.
+		 * gives it all of its members as classes, any other value its text. The class is a hook for
+		 * the application's own stylesheet; a cell is tinted by the color role its
+		 * {@link #getCellRole() cell role} computes.
 		 * </p>
 		 *
 		 * <p>
@@ -289,20 +372,115 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		 * not read and the header row of a group get no class. Unset (the default) leaves the cells
 		 * without a class of their own.
 		 * </p>
-		 *
-		 * <p>
-		 * Example marking the overdue dates of a column:
-		 * </p>
-		 *
-		 * <pre>
-		 * $value != null &amp;&amp; $value &lt; today() ? "tl-status-error" : null
-		 * </pre>
 		 */
 		@Name(CELL_CLASS)
 		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
 		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getCellClass();
+
+		/**
+		 * The color role of a cell of the column: an expression computing the role the cell is
+		 * tinted in from the row and the value of the cell.
+		 *
+		 * <p>
+		 * The expression sees the same variables as the {@link #getCellClass() cell class}: the row
+		 * as {@value RowAsConfig#DEFAULT_ROW_AS} (or by the name given with
+		 * {@value RowAsConfig#ROW_AS}), the value of the cell as
+		 * {@value ValueAsConfig#DEFAULT_VALUE_AS} (or by the name given with
+		 * {@value ValueAsConfig#VALUE_AS}), and the values of the inputs of the column, of the
+		 * table for a column without inputs of its own.
+		 * </p>
+		 *
+		 * <p>
+		 * The result is the name of a role: <code>error</code>, <code>warning</code>,
+		 * <code>success</code> and <code>info</code> mark a state, <code>brand</code> sets a value
+		 * apart, <code>neutral</code> names the role without a tint, and <code>category-1</code> to
+		 * <code>category-8</code> tell values apart whose meaning the application defines. A
+		 * classifier of an enumeration names the role its <code>&lt;color role="..."/&gt;</code>
+		 * annotation names. Nothing, an empty text and a classifier without a role leave the cell
+		 * without a role, a text naming no role is an error. The
+		 * design system decides how a role looks in each theme. A cell with a role of its own is
+		 * drawn in it, also within a row of another {@link RowRoleConfig#getRowRole() row role}.
+		 * </p>
+		 *
+		 * <p>
+		 * The role follows the cell: it is computed whenever the cell is built. A cell the user may
+		 * not read and the header row of a group get no role. Unset (the default) leaves the cells
+		 * without a role of their own. The {@link #getCellClass() cell class} next to it is the hook
+		 * for the application's own stylesheet.
+		 * </p>
+		 *
+		 * <p>
+		 * Example marking the overdue dates of a column:
+		 * </p>
+		 *
+		 * <pre>
+		 * $value != null &amp;&amp; $value &lt; today() ? "error" : null
+		 * </pre>
+		 */
+		@Name(CELL_ROLE)
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getCellRole();
+
+		/**
+		 * The color role of the heading of the column: an expression computing the role the heading
+		 * is tinted in.
+		 *
+		 * <p>
+		 * The expression sees the values of the inputs of the column, of the table for a column
+		 * without inputs of its own; it sees no row, the heading belongs to the whole column. The
+		 * result names a role as the one of the {@link #getCellRole() cell role} does: a role name
+		 * such as <code>warning</code> or <code>category-3</code>, or a classifier of an enumeration
+		 * whose <code>&lt;color role="..."/&gt;</code> annotation names it. Nothing, an empty text
+		 * and a classifier without a role leave the heading without a role, a text naming no role
+		 * is an error.
+		 * </p>
+		 *
+		 * <p>
+		 * The role is put on the heading only, the data cells do not carry it. It follows the
+		 * inputs: when one of them takes a new value, the heading is drawn in the role computed
+		 * anew, without the table being built again. Unset (the default) leaves the heading without
+		 * a role. The {@link #getHeaderClass() header class} next to it is the hook for the
+		 * application's own stylesheet.
+		 * </p>
+		 *
+		 * <p>
+		 * Example tinting the heading of a column in the role of the classifier the input
+		 * <code>phase</code> holds:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;column attribute="effort" header-role="$phase"/&gt;
+		 * </pre>
+		 */
+		@Name(HEADER_ROLE)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getHeaderRole();
+
+		/**
+		 * The CSS class of the heading of the column: an expression computing the class the
+		 * heading carries.
+		 *
+		 * <p>
+		 * The expression sees the variables of the {@link #getHeaderRole() header role}. The result
+		 * is put on the heading as the one of the {@link #getCellClass() cell class} is put on a
+		 * cell: nothing or an empty string gives the heading no class, a list all of its members as
+		 * classes, any other value its text.
+		 * </p>
+		 *
+		 * <p>
+		 * The class is put on the heading only, the data cells do not carry it; it is the hook for
+		 * the application's own stylesheet. It follows the inputs as the
+		 * {@link #getHeaderRole() header role} does. Unset (the default) leaves the heading without
+		 * a class of its own.
+		 * </p>
+		 */
+		@Name(HEADER_CLASS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getHeaderClass();
 
 		/**
 		 * How a cell of the column displays its value, in place of the display the type of the
@@ -367,9 +545,14 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 	private final ResKey _label;
 
+	private final ResKey _emptyGroupLabel;
+
 	private final ColumnBinding _binding;
 
 	private final boolean _readonly;
+
+	/** The compiled {@link Config#getCanUpdate() edit condition}, {@code null} for none. */
+	private final QueryExecutor _canUpdate;
 
 	private final SortDirection _sort;
 
@@ -384,13 +567,27 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	private final ColumnAlignment _align;
 	private final QueryExecutor _cellClass;
 
+	private final QueryExecutor _cellRole;
+
+	/** The compiled {@link Config#getHeaderRole() header role}, {@code null} for none. */
+	private final QueryExecutor _headerRole;
+
+	/** The compiled {@link Config#getHeaderClass() header class}, {@code null} for none. */
+	private final QueryExecutor _headerClass;
+
+	/**
+	 * The inputs whose values the {@link #_headerRole} and the {@link #_headerClass} see, empty
+	 * without either.
+	 */
+	private final List<InputRef> _headerInputs;
+
 	/** The configured {@link Config#getDisplay() display}, {@code null} for the type-derived one. */
 	private final ReactControlProvider _display;
 
 	/**
-	 * The inputs whose values the {@link #_aggregate}, the {@link #_comparator}, the
-	 * {@link #_tooltip} and the {@link #_cellClass} see, empty for a declaration setting none of
-	 * them.
+	 * The inputs whose values the {@link #_canUpdate}, the {@link #_aggregate}, the
+	 * {@link #_comparator}, the {@link #_tooltip}, the {@link #_cellClass} and the
+	 * {@link #_cellRole} see, empty for a declaration setting none of them.
 	 */
 	private final List<InputRef> _scriptInputs;
 
@@ -401,6 +598,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	private final List<InputRef> _existsInputs;
 
 	private final boolean _hiddenByDefault;
+
+	/** See {@link Config#isHiddenWhenCompact()}. */
+	private final boolean _hiddenWhenCompact;
 
 	private final boolean _sortable;
 
@@ -419,8 +619,10 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 */
 	protected AbstractColumnDeclaration(InstantiationContext context, Config<?> config) {
 		_label = config.getLabel();
+		_emptyGroupLabel = config.getEmptyGroupLabel();
 		_binding = binding(context, config.getFilter());
 		_readonly = config.getReadonly();
+		_canUpdate = InputScript.compile(config, Config.CAN_UPDATE);
 		_sort = config.getSort();
 		_width = config.getWidth();
 		_aggregate = InputScript.compile(config, Config.AGGREGATE);
@@ -428,14 +630,21 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_tooltip = InputScript.compile(config, Config.TOOLTIP);
 		_align = config.getAlign();
 		_cellClass = InputScript.compile(config, Config.CELL_CLASS);
+		_cellRole = InputScript.compile(config, Config.CELL_ROLE);
 		_display = context.getInstance(config.getDisplay());
-		boolean scripted = _aggregate != null || _comparator != null || _tooltip != null || _cellClass != null;
+		boolean scripted = _canUpdate != null || _aggregate != null || _comparator != null || _tooltip != null
+			|| _cellClass != null || _cellRole != null;
 		_scriptInputs =
 			scripted ? InputScript.inputs(config, config.descriptor().getProperty(Config.AGGREGATE)) : List.of();
 		_existsIf = InputScript.compile(config, Config.EXISTS_IF);
 		_existsInputs = _existsIf != null
 			? InputScript.inputs(config, config.descriptor().getProperty(Config.EXISTS_IF)) : List.of();
+		_headerRole = InputScript.compile(config, Config.HEADER_ROLE);
+		_headerClass = InputScript.compile(config, Config.HEADER_CLASS);
+		_headerInputs = _headerRole != null || _headerClass != null
+			? InputScript.inputs(config, config.descriptor().getProperty(Config.HEADER_ROLE)) : List.of();
 		_hiddenByDefault = !config.getVisible();
+		_hiddenWhenCompact = config.isHiddenWhenCompact();
 		_sortable = config.getSortable();
 		_export = ColumnExport.of(context, config);
 		_annotations = config.getAnnotations().isEmpty() ? null : config;
@@ -452,15 +661,18 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 * <p>
 	 * The channels the declared filter reads, and the inputs of the column - of the table, for a
 	 * column without inputs of its own - where the column computes its
-	 * {@link Config#getAggregate() aggregate}, its {@link Config#getComparator() order}, its
-	 * {@link Config#getTooltip() tooltips} or its {@link Config#getCellClass() cell classes} with
-	 * a script: the script sees their values, so the cells follow them. Likewise the inputs its
-	 * {@link Config#getExistsIf() existence condition} sees.
+	 * {@link Config#getCanUpdate() edit condition}, its {@link Config#getAggregate() aggregate}, its
+	 * {@link Config#getComparator() order}, its {@link Config#getTooltip() tooltips}, its
+	 * {@link Config#getCellClass() cell classes} or its {@link Config#getCellRole() cell roles} with a
+	 * script: the script sees their values, so the
+	 * cells follow them. Likewise the inputs its {@link Config#getExistsIf() existence condition}
+	 * and its {@link Config#getHeaderRole() header role} and {@link Config#getHeaderClass() header
+	 * class} see.
 	 * </p>
 	 */
 	@Override
 	public List<InputRef> inputs() {
-		return union(_scriptInputs, _binding.inputs(), _existsInputs);
+		return union(_scriptInputs, _binding.inputs(), _existsInputs, _headerInputs);
 	}
 
 	/**
@@ -486,8 +698,10 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 */
 	protected AbstractColumnDeclaration(boolean hiddenByDefault) {
 		_label = null;
+		_emptyGroupLabel = null;
 		_binding = ColumnBinding.TYPE_DERIVED;
 		_readonly = false;
+		_canUpdate = null;
 		_sort = null;
 		_width = 0;
 		_aggregate = null;
@@ -495,11 +709,16 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_tooltip = null;
 		_align = null;
 		_cellClass = null;
+		_cellRole = null;
 		_display = null;
 		_scriptInputs = List.of();
 		_existsIf = null;
 		_existsInputs = List.of();
+		_headerRole = null;
+		_headerClass = null;
+		_headerInputs = List.of();
 		_hiddenByDefault = hiddenByDefault;
+		_hiddenWhenCompact = false;
 		_sortable = true;
 		_export = ColumnExport.DEFAULT;
 		_annotations = null;
@@ -510,6 +729,11 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 */
 	protected final ResKey label() {
 		return _label;
+	}
+
+	@Override
+	public List<String> hiddenWhenCompact() {
+		return _hiddenWhenCompact ? declaredNames() : List.of();
 	}
 
 	@Override
@@ -540,19 +764,72 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 *        Reads the cell value from a row.
 	 * @param editing
 	 *        How a cell of the column is edited, or {@code null} for a column offering no edit. A
-	 *        column declared read-only is not edited, whatever its kind could offer.
+	 *        column declared read-only is not edited, whatever its kind could offer, and a column
+	 *        declaring an {@link Config#getCanUpdate() edit condition} only on the rows it accepts.
 	 * @param scope
 	 *        What the column is resolved against.
 	 */
 	protected final ColumnSetup setup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			CellEditing editing, ColumnResolution scope) {
+		return setup(name, label, type, value, editing, null, scope);
+	}
+
+	/**
+	 * The descriptor of a column of this declaration that has a cell only for the rows the given
+	 * test accepts, see {@link ColumnSetup#cellExists()}.
+	 *
+	 * @param cellExists
+	 *        Whether the column has a cell for a row, {@code null} for every row.
+	 * @see #setup(String, ResKey, ColumnType, Function, CellEditing, ColumnResolution)
+	 */
+	protected final ColumnSetup setup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			CellEditing editing, CellExistence<Object> cellExists, ColumnResolution scope) {
 		ColumnType annotatedType = _annotations == null ? type : type.annotatedBy(_annotations);
 		List<ViewChannel> inputs =
 			_scriptInputs.isEmpty() ? List.of() : ChannelInputs.resolve(scope.context(), _scriptInputs);
 		return new ColumnSetup(name, _label != null ? _label : label, annotatedType, value, scope.context(), _binding,
-			_width, _readonly ? null : editing, aggregate(_aggregate, inputs), comparator(_comparator, inputs),
-			_hiddenByDefault, _export, tooltip(_tooltip, inputs), cellClass(_cellClass, inputs), _display,
-			_sortable, _align, exists(_existsIf, _existsInputs, scope));
+			_width, editing(editing, inputs), aggregate(_aggregate, inputs), comparator(_comparator, inputs),
+			_hiddenByDefault, _export, tooltip(_tooltip, inputs), cellClass(_cellClass, inputs),
+			cellRole(_cellRole, inputs), _display, _sortable, _align, exists(_existsIf, _existsInputs, scope),
+			cellExists, header(scope), ChannelCondition.ALWAYS, _emptyGroupLabel);
+	}
+
+	/**
+	 * How a cell of a column of this declaration is edited: as its kind offers, restricted to the
+	 * rows the {@link Config#getCanUpdate() edit condition} accepts, and not at all for a column
+	 * declared {@link Config#getReadonly() read-only}.
+	 *
+	 * @param editing
+	 *        How the kind of the column edits a cell, {@code null} for no edit.
+	 * @param inputs
+	 *        The channels of the inputs of the condition.
+	 */
+	private CellEditing editing(CellEditing editing, List<ViewChannel> inputs) {
+		if (_readonly || editing == null) {
+			return null;
+		}
+		QueryExecutor canUpdate = _canUpdate;
+		if (canUpdate == null) {
+			return editing;
+		}
+		Predicate<Object> rows =
+			row -> SearchExpression.isTrue(canUpdate.execute(ChannelInputs.arguments(inputs, row)));
+		return editing.restrictedTo(rows);
+	}
+
+	/**
+	 * The heading of a column of this declaration, {@link ColumnHeader#NONE} for a declaration
+	 * computing neither a {@link Config#getHeaderRole() header role} nor a
+	 * {@link Config#getHeaderClass() header class}.
+	 *
+	 * @param scope
+	 *        What the column is resolved against, holding the session the channels belong to.
+	 */
+	private ColumnHeader header(ColumnResolution scope) {
+		if (_headerRole == null && _headerClass == null) {
+			return ColumnHeader.NONE;
+		}
+		return ColumnHeader.of(_headerRole, _headerClass, ChannelInputs.resolve(scope.context(), _headerInputs));
 	}
 
 	/**
@@ -583,7 +860,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 * This single capability check is the only place filter kinds are distinguished.
 	 * </p>
 	 */
-	private static ColumnBinding binding(InstantiationContext context,
+	static ColumnBinding binding(InstantiationContext context,
 			PolymorphicConfiguration<? extends ColumnFilter<?>> filterConfig) {
 		if (filterConfig == null) {
 			return ColumnBinding.TYPE_DERIVED;
@@ -657,6 +934,64 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 			return null;
 		}
 		return (row, value) -> cssClass(executor.execute(ChannelInputs.arguments(inputs, row, value)));
+	}
+
+	/**
+	 * The function computing the color role of a cell from its row and its value, {@code null} for
+	 * a column whose cells have none. The function answers {@code null} for a cell without a role.
+	 *
+	 * @param executor
+	 *        The compiled {@link Config#getCellRole()}.
+	 * @param inputs
+	 *        The channels of its inputs.
+	 */
+	private static BiFunction<Object, Object, ValueColor> cellRole(QueryExecutor executor,
+			List<ViewChannel> inputs) {
+		if (executor == null) {
+			return null;
+		}
+		return (row, value) -> valueColor(executor.execute(ChannelInputs.arguments(inputs, row, value)));
+	}
+
+	/**
+	 * The color role a script computed, {@code null} for none.
+	 *
+	 * <p>
+	 * A script names a role by its {@link ValueColor#getExternalName() external name}, such as
+	 * <code>warning</code> or <code>category-3</code>, or by a classifier of an enumeration whose
+	 * {@link TLColor} annotation names it; a {@link ValueColor} a Java function hands to the script
+	 * is taken as it is. Nothing, an empty text and a classifier without a role name no role.
+	 * </p>
+	 *
+	 * @param result
+	 *        The result of the script.
+	 * @return The role the result names, {@code null} for none.
+	 * @throws TopLogicException
+	 *         If the result names no role, so that a misspelled role does not leave the value
+	 *         uncolored without notice.
+	 */
+	public static ValueColor valueColor(Object result) {
+		if (result == null) {
+			return null;
+		}
+		if (result instanceof ValueColor color) {
+			return color;
+		}
+		if (result instanceof TLClassifier classifier) {
+			return AnnotationValueColorProvider.INSTANCE.colorOf(classifier);
+		}
+		if (result instanceof CharSequence text) {
+			String name = text.toString();
+			if (name.isEmpty()) {
+				return null;
+			}
+			ValueColor color = ValueColor.byExternalName(name);
+			if (color != null) {
+				return color;
+			}
+		}
+		throw new TopLogicException(I18NConstants.ERROR_UNKNOWN_COLOR_ROLE__VALUE_ROLES.fill(result,
+			Stream.of(ValueColor.values()).map(ValueColor::getExternalName).collect(Collectors.joining(", "))));
 	}
 
 	/**

@@ -207,6 +207,7 @@ public class DeleteTableProcessor extends AbstractConfiguredInstance<DeleteTable
 
 					// IGNORE FindBugs(SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE): DDL statements cannot use prepared statements.
 					nativeStatement.execute("DROP TABLE " + sqlDialect.tableRef(dbName));
+					context.deletedTable(typeName);
 					log.info("Deleted table '" + dbName + "'.");
 				}
 			}

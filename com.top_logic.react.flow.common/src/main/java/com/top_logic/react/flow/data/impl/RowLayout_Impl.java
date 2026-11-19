@@ -113,6 +113,12 @@ public abstract class RowLayout_Impl extends com.top_logic.react.flow.data.impl.
 		return this;
 	}
 
+	@Override
+	public com.top_logic.react.flow.data.RowLayout setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
 	@SuppressWarnings("hiding")
 	static final java.util.List<String> PROPERTIES;
 	static {

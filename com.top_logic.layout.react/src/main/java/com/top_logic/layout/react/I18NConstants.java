@@ -258,6 +258,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_UPLOADING;
 
 	/**
+	 * @en Connection to the server lost. Reconnecting\u2026
+	 */
+	@CustomKey("js.connection.reconnecting")
+	public static ResKey JS_CONNECTION_RECONNECTING;
+
+	/**
 	 * @en Record audio
 	 */
 	@CustomKey("js.audioRecorder.record")

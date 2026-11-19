@@ -22,6 +22,7 @@
  */
 
 import { busyCommandAnswered, busyCommandEnqueued } from './busy';
+import { ERROR_CODE_STALE_UI, readErrorCode, reloadWhenReachable, reportReachable, reportUnreachable } from './connection';
 import { isPageLeaving, leavePage, reloadForStaleUi } from './page-leave';
 import { focusFirstInvalidField } from './focus-invalid';
 import { expectEvents } from './sse-client';
@@ -46,13 +47,6 @@ export const CMD_COMMIT = 'commit';
  * size limit. Must match {@code ReactServlet#CMD_UPLOAD_REJECTED}.
  */
 export const CMD_UPLOAD_REJECTED = 'uploadRejected';
-
-/**
- * Machine-readable error code from the server: the server-side UI state for this page no longer
- * exists (the session was replaced underneath the open page by a login or logout, or the server
- * was restarted). Must match {@code ReactServlet#ERROR_CODE_STALE_UI}.
- */
-const ERROR_CODE_STALE_UI = 'stale-ui';
 
 /**
  * Machine-readable error code from the server: the control a command addresses is not displayed
@@ -146,6 +140,7 @@ async function post(
     const body = await resp.text();
     const lastEvent = resp.headers.get(LAST_EVENT_HEADER);
     if (lastEvent) expectEvents(Number(lastEvent));
+    if (resp.ok) reportReachable();
     if (!resp.ok) {
       const errorCode = readErrorCode(body);
       if (errorCode === ERROR_CODE_STALE_UI) {
@@ -170,6 +165,8 @@ async function post(
     return answer;
   } catch (e) {
     console.error('[TLReact] Command error:', e);
+    // No answer at all: the server or the network is down.
+    if (!isPageLeaving()) reportUnreachable();
     return undefined;
   }
 }
@@ -184,15 +181,6 @@ export function parseResponse(body: string): CommandResponse | undefined {
   } catch {
     return undefined;
   }
-}
-
-/**
- * The machine-readable error code of an error response body (e.g. {@link ERROR_CODE_STALE_UI}), or
- * {@code undefined} if it carries none.
- */
-function readErrorCode(body: string): string | undefined {
-  const errorCode = parseResponse(body)?.errorCode;
-  return typeof errorCode === 'string' ? errorCode : undefined;
 }
 
 /**
@@ -294,10 +282,19 @@ export function enqueueCommand(
  * changed session ID of a login. Leaving the page before would cancel the answer and load the next
  * page without the cookie. Commands enqueued after this call are not waited for.</p>
  *
+ * <p>Without an address, the page is loaded again only once the application answers (see
+ * {@link reloadWhenReachable}): the server orders that reload also while it shuts down.</p>
+ *
  * @param url the address to load, as for {@link leavePage}.
  */
 export function leavePageWhenAnswered(url?: string): void {
-  void _chain.then(() => leavePage(url));
+  void _chain.then(() => {
+    if (url) {
+      leavePage(url);
+    } else {
+      reloadWhenReachable(() => leavePage());
+    }
+  });
 }
 
 /**

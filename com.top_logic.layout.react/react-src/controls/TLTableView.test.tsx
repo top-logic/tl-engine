@@ -34,6 +34,7 @@ import CheckboxPart from './form/CheckboxPart';
 import TextInputPart from './form/TextInputPart';
 import ChipPart from './chip/ChipPart';
 import SkeletonPart from './skeleton/SkeletonPart';
+import MenuTriggerPart from './button/MenuTriggerPart';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -108,6 +109,8 @@ beforeAll(() => {
   registerPart('TextInput', TextInputPart);
   registerPart('Chip', ChipPart);
   registerPart('Skeleton', SkeletonPart);
+  // The gear of the view is on every table.
+  registerPart('MenuTrigger', MenuTriggerPart);
   register('TableTestEditor', EditorCell);
   register('TableTestText', TextCell);
   register('TLTableView', TLTableView);

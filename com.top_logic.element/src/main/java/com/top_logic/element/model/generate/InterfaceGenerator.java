@@ -36,6 +36,12 @@ import com.top_logic.model.util.TLModelNamingConvention;
  */
 public class InterfaceGenerator extends BaseClassGenerator {
 
+	/** Prefix of the method adding a value to a multiple part. */
+	private static final String ADD_PREFIX = "add";
+
+	/** Prefix of the method removing a value from a multiple part. */
+	private static final String REMOVE_PREFIX = "remove";
+
 	/**
 	 * Creates a new {@link InterfaceGenerator}.
 	 * 
@@ -120,35 +126,98 @@ public class InterfaceGenerator extends BaseClassGenerator {
 	}
 
 	private void writeParts() {
+		for (TLStructuredTypePart part : accessorParts()) {
+			writePart(part);
+		}
+	}
+
+	/**
+	 * The local parts of the generated type for which access methods are generated.
+	 */
+	public List<TLStructuredTypePart> accessorParts() {
 		if (!(type() instanceof TLClass)) {
-			return;
+			return Collections.emptyList();
 		}
 		Collection<? extends TLStructuredTypePart> localParts = ((TLClass) type()).getLocalParts();
+		List<TLStructuredTypePart> result = new ArrayList<>();
 		for (TLStructuredTypePart part : sort(localParts)) {
 			// Special handling for the name attribute to prevent clash with implicitly inherited
 			// interface TLNamed.
 			if (part.getName().equals(TLNamed.NAME_ATTRIBUTE)) {
 				continue;
 			}
-			writePart(part);
+			result.add(part);
 		}
+		return result;
+	}
+
+	/**
+	 * The signatures of the access methods generated for the given part.
+	 * 
+	 * @param part
+	 *        One of the {@link #accessorParts()}.
+	 */
+	public List<GeneratedAccessor> accessors(TLStructuredTypePart part) {
+		String accessorSuffix = accessorSuffix(part);
+		TLType valueType = part.getType();
+		String contentType = getQualifiedContentType(part);
+		List<GeneratedAccessor> result = new ArrayList<>();
+		if (hasGetter()) {
+			if (part.isMultiple()) {
+				String collectionType = collectionType(part).getName();
+				String elementType = toQualifiedObjectClass(contentType);
+				result.add(new GeneratedAccessor(part, getterPrefix() + accessorSuffix, collectionType, elementType,
+					hasExtendsClause(valueType, true), valueType, Collections.emptyList()));
+				if (hasModificationGetter(part)) {
+					result.add(new GeneratedAccessor(part, getModificationGetter(accessorSuffix), collectionType,
+						elementType, hasExtendsClause(valueType, false), valueType, Collections.emptyList()));
+				}
+			} else {
+				result.add(new GeneratedAccessor(part, getterPrefix() + accessorSuffix, contentType, null, false,
+					valueType, Collections.emptyList()));
+			}
+		}
+		if (hasSetter(part)) {
+			String setterType = part.isMultiple() ? collectionType(part).getName() : contentType;
+			result.add(new GeneratedAccessor(part, setterPrefix() + accessorSuffix, GeneratedAccessor.VOID, null,
+				false, null, Collections.singletonList(setterType)));
+			if (part.isMultiple()) {
+				String singularSuffix = CodeUtil.singularName(accessorSuffix);
+				List<String> elementParameter = Collections.singletonList(contentType);
+				result.add(new GeneratedAccessor(part, ADD_PREFIX + singularSuffix, GeneratedAccessor.VOID, null,
+					false, null, elementParameter));
+				result.add(new GeneratedAccessor(part, REMOVE_PREFIX + singularSuffix, GeneratedAccessor.VOID, null,
+					false, null, elementParameter));
+			}
+		}
+		return result;
+	}
+
+	private boolean hasGetter() {
+		return !noGetter();
+	}
+
+	private boolean hasModificationGetter(TLStructuredTypePart part) {
+		return shouldGenerateModificationGetter(part) && !noElementClasses();
+	}
+
+	private boolean hasSetter(TLStructuredTypePart part) {
+		/* Don't generate a setter for overrides, as they are useless. */
+		return !noSetter() && !(isReadOnly(part) || part.isOverride());
 	}
 
 	private void writePart(TLStructuredTypePart part) {
 		String partNameConstant = partNameConstant(part);
 		String accessorSuffix = accessorSuffix(part);
 
-		if (!noGetter()) {
+		if (hasGetter()) {
 			writeGetter(part);
-			if (shouldGenerateModificationGetter(part) && !noElementClasses()) {
+			if (hasModificationGetter(part)) {
 				generateModificationGetter(part, partNameConstant, accessorSuffix);
 			}
 		}
-		if (!noSetter()) {
-			/* Don't generate a setter for overrides, as they are useless. */
-			if (!(isReadOnly(part) || part.isOverride())) {
-				writeSetter(part, partNameConstant, accessorSuffix);
-			}
+		if (hasSetter(part)) {
+			writeSetter(part, partNameConstant, accessorSuffix);
 		}
 	}
 
@@ -181,7 +250,7 @@ public class InterfaceGenerator extends BaseClassGenerator {
 			javadocStart();
 			commentLine("Adds a value to the {@link #" + partNameConstant + "} reference.");
 			javadocStop();
-			line("default void " + "add" + singularSuffix + "(" + getContentType(part) + " newValue) {");
+			line("default void " + ADD_PREFIX + singularSuffix + "(" + getContentType(part) + " newValue) {");
 			{
 				StringBuilder setterImpl = new StringBuilder();
 				setterImpl.append("tAddByName(");
@@ -197,7 +266,7 @@ public class InterfaceGenerator extends BaseClassGenerator {
 			javadocStart();
 			commentLine("Removes the given value from the {@link #" + partNameConstant + "} reference.");
 			javadocStop();
-			line("default void " + "remove" + singularSuffix + "(" + getContentType(part) + " oldValue) {");
+			line("default void " + REMOVE_PREFIX + singularSuffix + "(" + getContentType(part) + " oldValue) {");
 			{
 				StringBuilder setterImpl = new StringBuilder();
 				setterImpl.append("tRemoveByName(");

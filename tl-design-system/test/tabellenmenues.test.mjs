@@ -150,8 +150,8 @@ test('Ansicht: zwei Seiten im Popover — jede eine Flex-Spalte mit einem Rollbe
   assert.match(declarationsOf(table, '.tl-table-view-options__title') ?? '', /align-items:\s*center/);
   assert.match(declarationsOf(table, '.tl-table-view-options__back') ?? '', /flex:\s*0 0 auto/);
   assert.match(declarationsOf(table, '.tl-table-view-options__back:focus-visible') ?? '', /outline-offset:\s*calc\(-1 \* var\(--tl-focus-offset\)\)/);
-  // Bis die erste Seite ein Menü ist (#30234), zeichnet das TSX Streifen und Spaltenlinien als tl-choice: eingerückt wie der Eintrag.
-  assert.match(declarationsOf(table, '.tl-table-view-options__switch') ?? '', /padding-inline:\s*var\(--tl-space-control-x\)/);
+  // Der Schalter ist eine Zeile des Menüs (tl-menu__item--check), kein tl-choice mehr: die Einrückungsregel entfällt.
+  assert.equal(declarationsOf(table, '.tl-table-view-options__switch'), null);
 });
 
 test('Spaltenwahl: die Wurzel trägt tl-reorder-list__host — Flex-Spalte, füllt die Seite, schrumpft; die Liste behält max-height', () => {

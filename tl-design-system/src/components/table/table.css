@@ -141,11 +141,6 @@
   margin-inline: var(--tl-space-control-x);
 }
 
-/* Bis die erste Seite ein Menü ist (#30234), sind Streifen und Spaltenlinien Schalter (tl-choice): Einrückung wie der Eintrag. */
-.tl-table-view-options__switch {
-  padding-inline: var(--tl-space-control-x);
-}
-
 /* --- Rahmen und Raster ------------------------------------------------------------ */
 
 /* Der Rahmen trägt das Raster und, was über ihm liegt, aber keine Zelle ist: die Spaltenwahl, den Griff

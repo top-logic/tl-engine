@@ -39,7 +39,7 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 
 // The bridge first, as the page loads it: the bridge entry reaches it through modules that the SSE client imports
 // as well, and these must see the mocked SSE client.
-import { mount, unmount } from '../bridge/tl-react-bridge';
+import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
 import {
   React, register, registerPart, registerTransientOverlay, TLChild, useTLState, useChildCommand, clearance,
   useFloatingFrame, FloatingFrame, FloatingRail,
@@ -105,7 +105,7 @@ beforeAll(() => {
 
 afterEach(async () => {
   act(() => unmount(ROOT_ID));
-  document.getElementById(ROOT_ID)?.remove();
+  findMountPoint(ROOT_ID)?.remove();
   vi.unstubAllGlobals();
   await settle();
 });
@@ -136,7 +136,7 @@ function mountRoot(module: string, state: Record<string, unknown>): void {
     return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
   }));
   const element = document.createElement('div');
-  element.id = ROOT_ID;
+  element.setAttribute(MOUNT_ATTRIBUTE, ROOT_ID);
   document.body.appendChild(element);
   act(() => mount(ROOT_ID, module, state, 'w', '/ctx'));
 }
@@ -384,7 +384,7 @@ describe('useChildCommand', () => {
   it('sends a command to a child drawn by its container', async () => {
     mountRoot('TestPresser', { child: { controlId: 'c1', module: 'TLButton', state: { label: 'C' } } });
 
-    act(() => document.querySelector<HTMLButtonElement>('#root button')!.click());
+    act(() => findMountPoint(ROOT_ID)!.querySelector<HTMLButtonElement>('button')!.click());
     await settle();
 
     expect(sent).toEqual([{ controlId: 'c1', command: 'click', args: {} }]);

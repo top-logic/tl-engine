@@ -5,14 +5,21 @@
  */
 package com.top_logic.ai.demo;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Proxy;
+import java.net.URI;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.BiFunction;
 
 import junit.framework.Test;
@@ -26,32 +33,67 @@ import com.top_logic.ai.mcp.server.resources.TypeInstancesResource;
 import com.top_logic.ai.mcp.server.tools.ExposedTool;
 import com.top_logic.ai.mcp.server.tools.McpExposure;
 import com.top_logic.ai.mcp.server.tools.McpToolAdapter;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.base.discovery.DiscoveryContext;
+import com.top_logic.basic.Logger.LogEntry;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.logging.Level;
+import com.top_logic.basic.tools.CollectingLogListener;
+import com.top_logic.element.accesstoken.AccessToken;
+import com.top_logic.element.accesstoken.AccessTokenPermissions;
+import com.top_logic.element.accesstoken.AccessTokens;
+import com.top_logic.element.accesstoken.SecretTokens;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.view.accesstoken.AccessTokenFunctions;
 import com.top_logic.model.TLObject;
+import com.top_logic.oauth.server.OAuthAccessTokenAuthentication;
+import com.top_logic.oauth.server.OAuthAuthorizationServer;
+import com.top_logic.oauth.server.OAuthException;
+import com.top_logic.oauth.server.OAuthFunctions;
+import com.top_logic.oauth.server.ProtectedResources;
+import com.top_logic.oauth.server.model.OAuthGrant;
+import com.top_logic.oauth.server.model.OAuthToken;
+import com.top_logic.oauth.server.model.TlOauthServerFactory;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
-import com.top_logic.tl.ai.core.access.AccessTokenAuthenticator;
-import com.top_logic.tl.ai.core.access.EndpointAuthentication;
-import com.top_logic.tl.ai.core.access.AccessTokenFunctions;
-import com.top_logic.tl.ai.core.access.AccessTokens;
-import com.top_logic.tl.ai.core.access.model.AccessToken;
-import com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity;
-import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.ai.core.access.AccessTokenAuthenticator;
+import com.top_logic.ai.core.access.EndpointAuthentication;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.agent.ToolPermissionFilter;
+import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import com.nimbusds.oauth2.sdk.AuthorizationCode;
+import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
+import com.nimbusds.oauth2.sdk.AuthorizationRequest;
+import com.nimbusds.oauth2.sdk.ResponseType;
+import com.nimbusds.oauth2.sdk.TokenRequest;
+import com.nimbusds.oauth2.sdk.TokenResponse;
+import com.nimbusds.oauth2.sdk.auth.ClientAuthenticationMethod;
+import com.nimbusds.oauth2.sdk.client.ClientInformationResponse;
+import com.nimbusds.oauth2.sdk.client.ClientMetadata;
+import com.nimbusds.oauth2.sdk.client.ClientRegistrationRequest;
+import com.nimbusds.oauth2.sdk.client.ClientRegistrationResponse;
+import com.nimbusds.oauth2.sdk.id.ClientID;
+import com.nimbusds.oauth2.sdk.pkce.CodeChallengeMethod;
+import com.nimbusds.oauth2.sdk.pkce.CodeVerifier;
+
+import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.server.McpServerFeatures;
+import io.modelcontextprotocol.server.McpSyncListFilter;
 import io.modelcontextprotocol.server.McpSyncServerExchange;
 import io.modelcontextprotocol.spec.McpSchema;
 
@@ -84,6 +126,18 @@ import io.modelcontextprotocol.spec.McpSchema;
  * </p>
  */
 public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
+
+	/** The permissions of a token for the agent endpoints. */
+	private static final List<String> AGENT_ENDPOINTS = List.of(AccessTokenAuthenticator.AGENT_ENDPOINTS_PERMISSION);
+
+	/**
+	 * A permission of another endpoint, contributed by the test configuration
+	 * <code>tl-ai-demo.test.config.xml</code>.
+	 */
+	private static final String OTHER_ENDPOINT_PERMISSION = "test-ui";
+
+	/** The session a token with {@link #OTHER_ENDPOINT_PERMISSION} is bound to. */
+	private static final String SESSION_KEY = "test-session";
 
 	/** The header the demo's API key would be sent in. */
 	private static final String API_KEY_HEADER = "X-Api-Key";
@@ -293,10 +347,65 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 		assertNull("Precondition: no MCP caller is bound on this thread.", McpCallerContext.caller());
 
 		McpSchema.CallToolResult result =
-			toolHandler(MODEL_READ_TOOL).apply(null, new McpSchema.CallToolRequest("t", Map.of()));
+			toolHandler(MODEL_READ_TOOL).apply(null,
+				McpSchema.CallToolRequest.builder("t").arguments(Map.of()).build());
 
 		assertTrue("A call with no account must not execute.", Boolean.TRUE.equals(result.isError()));
 		assertHas("The refusal must say what is missing.", "account", text(result));
+	}
+
+	// --- Tool listing ------------------------------------------------------------------------------
+
+	/**
+	 * {@code tools/list} shows an account the published tools it may call, and not those its call
+	 * would be refused.
+	 *
+	 * <p>
+	 * {@code Anna} holds {@code data.write}, but the background allowlist withholds it - see
+	 * {@link #testACapabilityWithheldInBackgroundIsRefused()} - and {@code egress} is off it - see
+	 * {@link #testAnMcpCallerCannotReachAnExternalSystem()}. {@code Ben} holds {@code model.read}, and
+	 * calls the model browser - see {@link #testAnAuthenticatedToolCallExecutes()}.
+	 * </p>
+	 */
+	public void testToolsListShowsOnlyWhatTheAccountMayCall() {
+		List<McpExposure.Published> published =
+			publish(MODEL_READ_TOOL, CLASSIFIED_WRITE_SCRIPT_TOOL, EXTERNAL_TOOL);
+
+		Set<String> annas = listedTools(ANNA, published);
+		assertFalse("A tool withheld by the background allowlist is not listed: " + annas,
+			annas.contains(CLASSIFIED_WRITE_SCRIPT_TOOL));
+		assertFalse("A tool that leaves the application is not listed: " + annas,
+			annas.contains(EXTERNAL_TOOL));
+
+		Set<String> bens = listedTools(BEN, published);
+		assertTrue("A tool the account may call is listed: " + bens, bens.contains(MODEL_READ_TOOL));
+	}
+
+	/**
+	 * For every published tool and every persona, the tool is listed exactly when its call is not
+	 * refused by the gate - and a refused call answers the gate's reason.
+	 */
+	public void testToolsListAndToolCallAgree() {
+		List<McpExposure.Published> published = publish(MODEL_READ_TOOL, LIST_TOOL,
+			CLASSIFIED_READ_SCRIPT_TOOL, CLASSIFIED_WRITE_SCRIPT_TOOL, EXTERNAL_TOOL);
+
+		for (String login : List.of(ANNA, BEN, DORA)) {
+			Set<String> listed = listedTools(login, published);
+			ToolPermissionFilter gate =
+				new ToolPermissionFilter(ToolContext.forBackgroundRun(account(login)).security());
+			for (McpExposure.Published entry : published) {
+				String denial = gate.denialReason(entry.tool());
+				String what = login + " / " + entry.configName() + " (" + denial + ")";
+				assertEquals("Listed exactly when the call gate lets it pass: " + what, denial == null,
+					listed.contains(entry.configName()));
+				if (denial != null) {
+					McpSchema.CallToolResult result = callTool(login, entry.configName(), Map.of());
+					assertTrue("A tool that is not listed is refused when called: " + what,
+						Boolean.TRUE.equals(result.isError()));
+					assertEquals(what, denial, text(result));
+				}
+			}
+		}
 	}
 
 	// --- The filter, with a real account ------------------------------------------------------------
@@ -319,7 +428,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 		Person anna = account(ANNA);
 		Recording recording = new Recording();
 
-		onARequestThread(() -> McpAuthenticationFilter.guard(authenticating(anna),
+		onARequestThread(() -> McpAuthenticationFilter.guard(authenticating(anna), List.of(),
 			new McpSessionPrincipals(), request(recording), response(recording),
 			(req, resp) -> {
 				recording.chainInvoked = true;
@@ -350,7 +459,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 		Recording recording = new Recording();
 		recording.requestHeaders.put("Mcp-Session-Id", "session-1");
 
-		onARequestThread(() -> McpAuthenticationFilter.guard(authenticating(ben), sessions,
+		onARequestThread(() -> McpAuthenticationFilter.guard(authenticating(ben), List.of(), sessions,
 			request(recording), response(recording), (req, resp) -> recording.chainInvoked = true));
 
 		assertFalse("Ben must not be served on Anna's session.", recording.chainInvoked);
@@ -371,7 +480,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 		McpSessionPrincipals sessions = new McpSessionPrincipals();
 		Recording recording = new Recording();
 
-		onARequestThread(() -> McpAuthenticationFilter.guard(authenticating(anna), sessions,
+		onARequestThread(() -> McpAuthenticationFilter.guard(authenticating(anna), List.of(), sessions,
 			request(recording), response(recording),
 			// What the transport does while answering an initialize request.
 			(req, resp) -> ((jakarta.servlet.http.HttpServletResponse) resp)
@@ -400,7 +509,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 
 		Recording recording = new Recording();
 		try {
-			McpAuthenticationFilter.guard(authenticating(account(ANNA)), new McpSessionPrincipals(),
+			McpAuthenticationFilter.guard(authenticating(account(ANNA)), List.of(), new McpSessionPrincipals(),
 				request(recording), response(recording), (req, resp) -> recording.chainInvoked = true);
 		} catch (Exception ex) {
 			throw new AssertionError("The guard must answer, not throw.", ex);
@@ -459,8 +568,10 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testAnAccessTokenActsAsItsOwner() {
-		String annasToken = AccessTokens.create(account(ANNA), "Anna's client", null).plain();
-		String bensToken = AccessTokens.create(account(BEN), "Ben's client", null).plain();
+		String annasToken =
+			AccessTokens.create(account(ANNA), "Anna's client", null, AGENT_ENDPOINTS, null).plain();
+		String bensToken =
+			AccessTokens.create(account(BEN), "Ben's client", null, AGENT_ENDPOINTS, null).plain();
 
 		assertHas("Anna partners on exactly one of the two seeded projects.", "\"totalCount\":1",
 			listProjectsWith(annasToken));
@@ -477,7 +588,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testTheTokenItselfIsNotStored() {
-		AccessTokens.Created created = AccessTokens.create(account(ANNA), "stored", null);
+		AccessTokens.Created created = AccessTokens.create(account(ANNA), "stored", null, AGENT_ENDPOINTS, null);
 		AccessToken token = created.token();
 
 		assertTrue("A token is recognisable by its prefix.", created.plain().startsWith(AccessTokens.PREFIX));
@@ -496,7 +607,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * A revoked token is answered with 401 and a bearer challenge, and never reaches the protocol.
 	 */
 	public void testARevokedTokenIsRefused() {
-		AccessTokens.Created created = AccessTokens.create(account(ANNA), "revoked", null);
+		AccessTokens.Created created = AccessTokens.create(account(ANNA), "revoked", null, AGENT_ENDPOINTS, null);
 		assertTrue("Precondition: the token works before it is revoked.",
 			requestWith(created.plain()).chainInvoked);
 
@@ -507,14 +618,15 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 		assertEquals(401, recording.status);
 		assertHas("The client is told the token is no longer valid.", "error=\"invalid_token\"",
 			recording.responseHeaders.get("WWW-Authenticate"));
-		assertHasNot("The answer must not echo the token.", created.plain(), recording.message);
+		assertHasNot("The answer must not echo the token.", created.plain(), recording.body.toString());
 	}
 
 	/**
 	 * A token past its expiry is answered with 401.
 	 */
 	public void testAnExpiredTokenIsRefused() {
-		AccessTokens.Created created = AccessTokens.create(account(ANNA), "expiring", Integer.valueOf(1));
+		AccessTokens.Created created = AccessTokens.create(account(ANNA), "expiring", Integer.valueOf(1),
+			AGENT_ENDPOINTS, null);
 		assertTrue("Precondition: a token valid for a day works today.",
 			requestWith(created.plain()).chainInvoked);
 
@@ -529,10 +641,57 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	}
 
 	/**
+	 * A token without the permission for the agent endpoints is refused exactly like an unknown
+	 * one: 401 with a bearer challenge, no use recorded, and the token neither in the answer nor in
+	 * the log.
+	 */
+	public void testATokenWithoutTheAgentPermissionIsRefused() {
+		AccessTokens.Created created = AccessTokens.create(account(ANNA), "other endpoint", null,
+			List.of(OTHER_ENDPOINT_PERMISSION), SESSION_KEY);
+		String unknown = AccessTokens.newToken();
+
+		CollectingLogListener log = new CollectingLogListener(EnumSet.allOf(Level.class), true);
+		Recording recording;
+		Recording unknownRecording;
+		try {
+			recording = requestWith(created.plain());
+			unknownRecording = requestWith(unknown);
+		} finally {
+			log.deactivate();
+		}
+
+		assertFalse("A token without the permission must not reach the protocol.", recording.chainInvoked);
+		assertEquals(401, recording.status);
+		assertEquals("Refused like an unknown token.", unknownRecording.status, recording.status);
+		assertEquals("Refused like an unknown token.", unknownRecording.body.toString(), recording.body.toString());
+		assertEquals("Refused like an unknown token.", unknownRecording.responseHeaders.get("WWW-Authenticate"),
+			recording.responseHeaders.get("WWW-Authenticate"));
+		assertHas("The client is told the token is not valid.", "error=\"invalid_token\"",
+			recording.responseHeaders.get("WWW-Authenticate"));
+		assertHasNot("The answer must not echo the token.", created.plain(), recording.body.toString());
+		for (LogEntry entry : log.getLogEntries()) {
+			assertHasNot("The log must not contain the token.", created.plain(), entry.getMessage());
+		}
+		HistoryUtils.updateSessionRevision();
+		assertNull("A refused token is not recorded as used.", created.token().getLastUsed());
+	}
+
+	/**
+	 * A token with the permission for the agent endpoints is accepted, also if it has a permission
+	 * bound to a session besides.
+	 */
+	public void testATokenWithFurtherPermissionsIsAccepted() {
+		AccessTokens.Created created = AccessTokens.create(account(ANNA), "both", null,
+			List.of(AccessTokenAuthenticator.AGENT_ENDPOINTS_PERMISSION, OTHER_ENDPOINT_PERMISSION), SESSION_KEY);
+
+		assertTrue(requestWith(created.plain()).chainInvoked);
+	}
+
+	/**
 	 * A request with a token records when the token was last used.
 	 */
 	public void testUsingATokenRecordsIt() {
-		AccessTokens.Created created = AccessTokens.create(account(ANNA), "used", null);
+		AccessTokens.Created created = AccessTokens.create(account(ANNA), "used", null, AGENT_ENDPOINTS, null);
 		assertNull("Precondition: a new token has never been used.", created.token().getLastUsed());
 
 		assertTrue(requestWith(created.plain()).chainInvoked);
@@ -551,7 +710,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * </p>
 	 */
 	public void testOnlyTheOwnerReadsAToken() {
-		AccessToken annas = AccessTokens.create(account(ANNA), "Anna's", null).token();
+		AccessToken annas = AccessTokens.create(account(ANNA), "Anna's", null, AGENT_ENDPOINTS, null).token();
 
 		assertTrue("Anna reads her own token.", new ModelAccessRightsSecurity(account(ANNA)).canRead(annas));
 		assertFalse("Ben does not read Anna's token.",
@@ -562,16 +721,16 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * A person revokes their own token, and not somebody else's; an administrator revokes any.
 	 *
 	 * <p>
-	 * The check is in {@code aiAccessTokenRevoke} rather than in the view, because a command's input
+	 * The check is in {@code accessTokenRevoke} rather than in the view, because a command's input
 	 * is whatever a channel holds.
 	 * </p>
 	 */
 	public void testOnlyTheOwnerOrAnAdministratorRevokes() {
-		AccessToken annas = AccessTokens.create(account(ANNA), "Anna's", null).token();
+		AccessToken annas = AccessTokens.create(account(ANNA), "Anna's", null, AGENT_ENDPOINTS, null).token();
 
 		actAs(BEN);
 		try {
-			AccessTokenFunctions.accessTokenRevoke(annas);
+			AccessTokenFunctions.revoke(annas);
 			fail("Ben must not revoke Anna's token.");
 		} catch (TopLogicException expected) {
 			// The only acceptable outcome.
@@ -579,19 +738,99 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 		assertTrue("Anna's token must still be there.", annas.tValid());
 
 		actAs(anyAdministrator());
-		assertTrue(AccessTokenFunctions.accessTokenRevoke(annas));
+		assertTrue(AccessTokenFunctions.revoke(annas));
 		assertFalse("An administrator revokes any token.", annas.tValid());
+	}
+
+	// --- OAuth access tokens ----------------------------------------------------------------------
+
+	/**
+	 * An OAuth access token issued for the MCP endpoint acts as the person who authorized the
+	 * client.
+	 *
+	 * <p>
+	 * A pair through the real filter and the real authenticator of tl-oauth-server, as for the
+	 * personal access tokens: Anna's and Ben's tokens list different projects, by their rights.
+	 * </p>
+	 */
+	public void testAnOAuthAccessTokenActsAsTheGrantsPerson() {
+		String annasToken = oauthAccessToken(account(ANNA), MCPServerService.MCP_ENDPOINT);
+		String bensToken = oauthAccessToken(account(BEN), MCPServerService.MCP_ENDPOINT);
+
+		assertHas("Anna partners on exactly one of the two seeded projects.", "\"totalCount\":1",
+			listProjectsWith(oauthAuthenticator(), annasToken));
+		assertHas("A ticket reader holds no Read grant on pm:Project at all.", "\"totalCount\":0",
+			listProjectsWith(oauthAuthenticator(), bensToken));
+	}
+
+	/**
+	 * An OAuth access token issued for another endpoint is refused at the MCP endpoint, with a
+	 * challenge naming the protected resource metadata of the MCP endpoint.
+	 */
+	public void testAnOAuthAccessTokenForAnotherResourceIsRefused() {
+		String token = oauthAccessToken(account(ANNA), "/a2a");
+
+		Recording recording = requestWith(oauthAuthenticator(), token, () -> {
+			// Must not be reached.
+		});
+		assertFalse("A token for another endpoint must not reach the protocol.", recording.chainInvoked);
+		assertEquals(401, recording.status);
+		String challenge = recording.responseHeaders.get("WWW-Authenticate");
+		assertHas("The client is told the token is not valid here.", "error=\"invalid_token\"", challenge);
+		assertHas("The client is told where to sign in.",
+			"resource_metadata=\"" + requestContext().url(ProtectedResources.metadataPath(MCPServerService.MCP_ENDPOINT))
+				+ "\"",
+			challenge);
+	}
+
+	/**
+	 * A person reads their own OAuth authorizations and nobody else's; the owner or an
+	 * administrator revokes one, nobody else.
+	 */
+	public void testOnlyTheOwnerReadsAndRevokesAnOAuthGrant() {
+		String token = oauthAccessToken(account(ANNA), MCPServerService.MCP_ENDPOINT);
+		OAuthGrant annas = grantOf(token);
+
+		assertTrue("Anna reads her own authorization.", new ModelAccessRightsSecurity(account(ANNA)).canRead(annas));
+		assertFalse("Ben does not read Anna's authorization.",
+			new ModelAccessRightsSecurity(account(BEN)).canRead(annas));
+
+		actAs(BEN);
+		try {
+			OAuthFunctions.revoke(annas);
+			fail("Ben must not revoke Anna's authorization.");
+		} catch (TopLogicException expected) {
+			// The only acceptable outcome.
+		}
+		assertTrue("Anna's authorization must still be there.", annas.tValid());
+
+		actAs(ANNA);
+		assertTrue(OAuthFunctions.revoke(annas));
+		assertFalse("Anna revokes her own authorization.", annas.tValid());
+		assertFalse("The token of a revoked authorization is refused.",
+			requestWith(oauthAuthenticator(), token, () -> {
+				// Must not be reached.
+			}).chainInvoked);
 	}
 
 	/** Lists the seeded projects through the filter, with the given token, and answers the tool's text. */
 	private String listProjectsWith(String token) {
+		return listProjectsWith(new AccessTokenAuthenticator(), token);
+	}
+
+	/**
+	 * Lists the seeded projects through the filter, with the given authenticator and token, and
+	 * answers the tool's text.
+	 */
+	private String listProjectsWith(Authenticator authenticator, String token) {
 		BiFunction<McpSyncServerExchange, McpSchema.CallToolRequest, McpSchema.CallToolResult> handler =
 			toolHandler(LIST_TOOL);
 		Map<String, Object> args = Map.of("moduleName", "pm", "typeName", "Project");
 		String[] answer = new String[1];
 
-		Recording recording = requestWith(token, () -> answer[0] =
-			text(handler.apply(null, new McpSchema.CallToolRequest(LIST_TOOL, new HashMap<>(args)))));
+		Recording recording = requestWith(authenticator, token, () -> answer[0] =
+			text(handler.apply(null,
+				McpSchema.CallToolRequest.builder(LIST_TOOL).arguments(new HashMap<>(args)).build())));
 
 		assertTrue("A valid token must reach the protocol: " + recording.status, recording.chainInvoked);
 		return answer[0];
@@ -606,9 +845,17 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 
 	/** Sends one request with the given bearer token through the filter, running {@code inChain} as its body. */
 	private static Recording requestWith(String token, Runnable inChain) {
+		return requestWith(new AccessTokenAuthenticator(), token, inChain);
+	}
+
+	/**
+	 * Sends one request with the given bearer token through the filter guarded by the given
+	 * authenticator, running {@code inChain} as its body.
+	 */
+	private static Recording requestWith(Authenticator authenticator, String token, Runnable inChain) {
 		Recording recording = new Recording();
 		recording.requestHeaders.put("Authorization", "Bearer " + token);
-		onARequestThread(() -> McpAuthenticationFilter.guard(new AccessTokenAuthenticator(),
+		onARequestThread(() -> McpAuthenticationFilter.guard(authenticator, List.of(),
 			new McpSessionPrincipals(), request(recording), response(recording),
 			(req, resp) -> {
 				recording.chainInvoked = true;
@@ -616,6 +863,78 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 			}));
 		HistoryUtils.updateSessionRevision();
 		return recording;
+	}
+
+	/**
+	 * The authenticator of the MCP endpoint accepting OAuth access tokens issued for it.
+	 */
+	private static Authenticator oauthAuthenticator() {
+		OAuthAccessTokenAuthentication.Config<?> config =
+			TypedConfiguration.newConfigItem(OAuthAccessTokenAuthentication.Config.class);
+		config.update(config.descriptor().getProperty(OAuthAccessTokenAuthentication.Config.RESOURCE),
+			MCPServerService.MCP_ENDPOINT);
+		return TypedConfigUtil.createInstance(config).createAuthenticator(List.of());
+	}
+
+	/**
+	 * Lets {@code person} authorize a newly registered client for the endpoint at
+	 * {@code resourcePath} and exchanges the code, the way a client signs in.
+	 *
+	 * @return The access token.
+	 */
+	private static String oauthAccessToken(Person person, String resourcePath) {
+		OAuthAuthorizationServer server = OAuthAuthorizationServer.getInstance();
+		assertNotNull("The OAuth authorization server must run.", server);
+		DiscoveryContext context = requestContext();
+		URI resource = URI.create(context.url(resourcePath));
+		URI redirect = URI.create("http://127.0.0.1:33418/callback");
+
+		ClientMetadata metadata = new ClientMetadata();
+		metadata.setName("Test client");
+		metadata.setRedirectionURIs(Set.of(redirect));
+		metadata.setTokenEndpointAuthMethod(ClientAuthenticationMethod.NONE);
+		ClientRegistrationResponse registration = server.register(new ClientRegistrationRequest(
+			URI.create(context.url(OAuthAuthorizationServer.REGISTRATION_PATH)), metadata, null));
+		assertTrue(String.valueOf(registration), registration.indicatesSuccess());
+		ClientID clientId = ((ClientInformationResponse) registration).getClientInformation().getID();
+
+		CodeVerifier verifier = new CodeVerifier();
+		AuthorizationRequest request = new AuthorizationRequest.Builder(ResponseType.CODE, clientId)
+			.redirectionURI(redirect)
+			.codeChallenge(verifier, CodeChallengeMethod.S256)
+			.resource(resource)
+			.build();
+		String code;
+		try {
+			code = server.issueCode(server.validateAuthorizationRequest(request, context), person);
+		} catch (OAuthException ex) {
+			throw new AssertionError("The authorization request must be accepted.", ex);
+		}
+		TokenResponse response = server.token(new TokenRequest.Builder(
+			URI.create(context.url(OAuthAuthorizationServer.TOKEN_PATH)), clientId,
+			new AuthorizationCodeGrant(new AuthorizationCode(code), redirect, verifier))
+				.resources(resource)
+				.build());
+		assertTrue(String.valueOf(response), response.indicatesSuccess());
+		HistoryUtils.updateSessionRevision();
+		return response.toSuccessResponse().getTokens().getAccessToken().getValue();
+	}
+
+	/**
+	 * The grant of the given OAuth access token.
+	 */
+	private static OAuthGrant grantOf(String accessToken) {
+		Iterator<KnowledgeItem> hits = PersistencyLayer.getKnowledgeBase().getObjectsByAttribute(
+			TlOauthServerFactory.KO_NAME_O_AUTH_TOKEN, OAuthToken.TOKEN_HASH_ATTR, SecretTokens.hash(accessToken));
+		assertTrue("The token must be stored.", hits.hasNext());
+		return hits.next().<OAuthToken> getWrapper().getGrant();
+	}
+
+	/**
+	 * The application as the requests of {@link #request(Recording)} reach it.
+	 */
+	private static DiscoveryContext requestContext() {
+		return DiscoveryContext.fromRequest(request(new Recording()));
 	}
 
 	// --- Helpers -----------------------------------------------------------------------------------
@@ -631,7 +950,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 		String uri = "toplogic://model/modules/" + module + "/types/" + type + "/instances";
 		return contentOf(McpCallerContext.withCaller(account(login),
 			() -> TypeInstancesResource.createSpecification().readHandler()
-				.apply(null, new McpSchema.ReadResourceRequest(uri))));
+				.apply(null, McpSchema.ReadResourceRequest.builder(uri).build())));
 	}
 
 	/** Calls a registered tool as the given persona, through the MCP tool handler. */
@@ -639,7 +958,40 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 			Map<String, Object> args) {
 		return McpCallerContext.withCaller(account(login),
 			() -> toolHandler(qualifiedToolName)
-				.apply(null, new McpSchema.CallToolRequest(qualifiedToolName, new HashMap<>(args))));
+				.apply(null, McpSchema.CallToolRequest.builder(qualifiedToolName)
+					.arguments(new HashMap<>(args))
+					.build()));
+	}
+
+	/** Publishes the given tools under their default names, as an {@code <exposed-tools>} list. */
+	private static List<McpExposure.Published> publish(String... qualifiedToolNames) {
+		List<ExposedTool> entries = new ArrayList<>();
+		for (String qualifiedToolName : qualifiedToolNames) {
+			ExposedTool entry = TypedConfiguration.newConfigItem(ExposedTool.class);
+			entry.setTool(qualifiedToolName);
+			entries.add(entry);
+		}
+		List<McpExposure.Published> published = McpExposure.resolve(entries);
+		assertEquals("The live registry publishes " + List.of(qualifiedToolNames), qualifiedToolNames.length,
+			published.size());
+		return published;
+	}
+
+	/**
+	 * The qualified names of the given published tools that {@code tools/list} shows the given
+	 * persona, decided by the filter the service registers for it.
+	 */
+	private static Set<String> listedTools(String login, List<McpExposure.Published> published) {
+		McpSyncListFilter<McpSchema.Tool> filter = McpToolAdapter.visibilityFilter(published);
+		return McpCallerContext.withCaller(account(login), () -> {
+			Set<String> listed = new TreeSet<>();
+			for (McpExposure.Published entry : published) {
+				if (filter.isVisible(McpTransportContext.EMPTY, McpToolAdapter.adapt(entry).tool())) {
+					listed.add(entry.configName());
+				}
+			}
+			return listed;
+		});
 	}
 
 	private static BiFunction<McpSyncServerExchange, McpSchema.CallToolRequest,
@@ -658,7 +1010,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	}
 
 	private static McpSchema.ReadResourceRequest readRequest(String tid) {
-		return new McpSchema.ReadResourceRequest("toplogic://instance/" + tid);
+		return McpSchema.ReadResourceRequest.builder("toplogic://instance/" + tid).build();
 	}
 
 	/** The text of the single content item of a resource result. */
@@ -797,6 +1149,9 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 
 		String message;
 
+		/** The plain-text body of a refusal. */
+		final StringWriter body = new StringWriter();
+
 		boolean chainInvoked;
 
 		Person boundCaller;
@@ -820,7 +1175,11 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 			(proxy, method, args) -> switch (method.getName()) {
 				case "getHeader" -> recording.requestHeaders.get(args[0]);
 				case "getMethod" -> "POST";
-				case "getRequestURI" -> "/mcp";
+				case "getRequestURI" -> "/tl-ai-demo/mcp";
+				case "getScheme" -> "http";
+				case "getServerName" -> "localhost";
+				case "getServerPort" -> Integer.valueOf(8080);
+				case "getContextPath" -> "/tl-ai-demo";
 				case "toString" -> "MCP request";
 				default -> throw new UnsupportedOperationException(method.getName());
 			});
@@ -837,9 +1196,21 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 						recording.status = ((Integer) args[0]).intValue();
 						recording.message = args.length > 1 ? (String) args[1] : null;
 						return null;
+					case "setStatus":
+						recording.status = ((Integer) args[0]).intValue();
+						return null;
 					case "setHeader":
 						recording.responseHeaders.put((String) args[0], (String) args[1]);
 						return null;
+					case "addHeader":
+						recording.responseHeaders.merge((String) args[0], (String) args[1],
+							(first, next) -> first + ", " + next);
+						return null;
+					case "setContentType":
+					case "setCharacterEncoding":
+						return null;
+					case "getWriter":
+						return new PrintWriter(recording.body);
 					case "getHeader":
 						return recording.responseHeaders.get(args[0]);
 					case "toString":
@@ -862,6 +1233,7 @@ public class SecDemoMcpEndpointTest extends SecDemoPersonaTest {
 	 * Creates the test suite.
 	 */
 	public static Test suite() {
-		return suite(SecDemoMcpEndpointTest.class);
+		return suite(SecDemoMcpEndpointTest.class, AccessTokenPermissions.Module.INSTANCE,
+			OAuthAuthorizationServer.Module.INSTANCE);
 	}
 }

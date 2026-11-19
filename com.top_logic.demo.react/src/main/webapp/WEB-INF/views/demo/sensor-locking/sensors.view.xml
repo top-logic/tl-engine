@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Initial frame of the sensor locking demo: all sensors, with their names edited in place.
+	
+	An entered name is written at once by the update script, in a transaction of its own; the
+	sensor is locked while it is written. When someone else edits the sensor in its frame, the name
+	is not saved, the cell shows the stored name again and a notice names who holds the lock.
+	
+	Activating a row - a double-click, Enter, or the chevron button of the row - pushes the sensor
+	frame, whose form starts in edit mode.
+-->
+<view>
+	<channels>
+		<channel name="selectedSensor"/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Sensors</en>
+			<de>Sensoren</de>
+		</title>
+		<inset>
+			<text>
+				<label>
+					<en>The names of the sensors are edited right in the table. Opening a sensor edits it in a form, which locks the sensor as long as it is edited. While another user edits a sensor, it opens read-only here, and a name entered for it in the table is not saved.</en>
+					<de>Die Namen der Sensoren werden direkt in der Tabelle bearbeitet. Das Öffnen eines Sensors bearbeitet ihn in einem Formular, das den Sensor sperrt, solange er bearbeitet wird. Solange ein anderer Nutzer einen Sensor bearbeitet, öffnet er sich hier nur lesend, und ein in der Tabelle eingegebener Name wird nicht gespeichert.</de>
+				</label>
+			</text>
+		</inset>
+		<table
+			edit-in-place="true"
+			observed-types="demo.temperature:DemoSite,demo.temperature:DemoSensor"
+			personalization-key="sensor-locking-sensors"
+			selection="selectedSensor"
+			types="demo.temperature:DemoSensor"
+		>
+			<columns>
+				<computed-column name="editName"
+					sort="ASC"
+					type="tl.core:String"
+				>
+					<label>
+						<en>Name</en>
+						<de>Name</de>
+					</label>
+					<value><![CDATA[$row.get(`demo.temperature:DemoSensor#name`)]]></value>
+					<update><![CDATA[$row.set(`demo.temperature:DemoSensor#name`, $value)]]></update>
+				</computed-column>
+				<computed-column name="site"
+					type="tl.core:String"
+				>
+					<label>
+						<en>Site</en>
+						<de>Standort</de>
+					</label>
+					<value><![CDATA[$row.container().get(`demo.temperature:DemoSite#name`)]]></value>
+				</computed-column>
+				<column attribute="minTemperature"/>
+				<column attribute="maxTemperature"/>
+			</columns>
+			<rows><![CDATA[all(`demo.temperature:DemoSensor`)]]></rows>
+			<on-activate class="com.top_logic.layout.view.tiles.NavigatePushCommand"
+				bind-input-to="sensor"
+				frame="sensor"
+			/>
+		</table>
+	</panel>
+</view>

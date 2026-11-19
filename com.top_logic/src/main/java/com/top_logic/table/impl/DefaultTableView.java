@@ -16,6 +16,7 @@ import java.util.function.Function;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
@@ -46,6 +47,7 @@ import com.top_logic.table.TableViewListener;
 import com.top_logic.table.TableViewState;
 import com.top_logic.table.ViewStateStore;
 import com.top_logic.table.filter.TextFilterState;
+import com.top_logic.util.Resources;
 
 /**
  * Default {@link TableView}: composes a column model, a {@link RowSource} and a
@@ -107,6 +109,9 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	/** @see #setRowCssClass(Function) */
 	private Function<? super R, String> _rowCssClass;
+
+	/** @see #setRowColor(Function) */
+	private Function<? super R, ValueColor> _rowColor;
 
 	/** @see #setAbsentColumns(Set) */
 	private Set<String> _absentColumns = Set.of();
@@ -381,6 +386,8 @@ public class DefaultTableView<R> implements TableView<R> {
 				column.alignment(),
 				column.cssClass(),
 				column.aggregate().isPresent(),
+				column.headerClass(),
+				column.headerRole(),
 				sortDirection(sort, name),
 				sortPriority(sort, name)));
 			index++;
@@ -754,6 +761,61 @@ public class DefaultTableView<R> implements TableView<R> {
 		return definition.cssClass(row.data());
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * A {@link RowKind#DATA data row} answers the function set with {@link #setRowColor(Function)},
+	 * a group header or aggregate row none.
+	 * </p>
+	 */
+	@Override
+	public ValueColor rowColor(Row<R> row) {
+		if (_rowColor == null || row.kind() != RowKind.DATA) {
+			return null;
+		}
+		return _rowColor.apply(row.data());
+	}
+
+	/**
+	 * Sets the function computing the color role of a {@link RowKind#DATA data row} from its row
+	 * object.
+	 *
+	 * <p>
+	 * The function is evaluated whenever a UI tier fetches the row, so the role follows the row
+	 * object's state.
+	 * </p>
+	 *
+	 * @param rowColor
+	 *        The function answering the role for a row object, or {@code null} for none. The
+	 *        function may answer {@code null} for a row object that gets no role.
+	 *
+	 * @see #rowColor(Row)
+	 */
+	public void setRowColor(Function<? super R, ValueColor> rowColor) {
+		_rowColor = rowColor;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * A {@link RowKind#DATA data row} answers the column's {@link Column#color(Object)} for its row
+	 * object, a group header or aggregate row none.
+	 * </p>
+	 */
+	@Override
+	public ValueColor cellColor(Row<R> row, String column) {
+		if (row.kind() != RowKind.DATA) {
+			return null;
+		}
+		Column<R, ?> definition = _columns.get(column);
+		if (definition == null) {
+			return null;
+		}
+		return definition.color(row.data());
+	}
+
 	private <V> CellContent aggregate(Column<R, V> column, Group<R> group) {
 		return column.aggregate().map(aggregator -> aggregator.over(group)).orElse(CellContent.empty());
 	}
@@ -761,7 +823,10 @@ public class DefaultTableView<R> implements TableView<R> {
 	/**
 	 * The content displaying what a group stands for: its value, rendered by the column the rows
 	 * are grouped by, so that the header shows the value exactly as that column's cells show it -
-	 * a classifier by its label, a date by its format.
+	 * a classifier by its label, a date by its format. A group of the rows that have
+	 * {@link Column#isNoValue(Object) no value} in the grouping column shows the column's
+	 * {@link Column#emptyGroupLabel() label of an empty group} as a {@link CellContent.Placeholder
+	 * placeholder}.
 	 */
 	private CellContent groupValue(Group<R> group) {
 		List<Object> values = group.key().values();
@@ -776,7 +841,11 @@ public class DefaultTableView<R> implements TableView<R> {
 		if (groupColumn == null) {
 			return CellContent.empty();
 		}
-		return renderValue(groupColumn, values.get(level));
+		Object value = values.get(level);
+		if (Column.isNoValue(value)) {
+			return CellContent.placeholder(Resources.getInstance().getString(groupColumn.emptyGroupLabel()));
+		}
+		return renderValue(groupColumn, value);
 	}
 
 	/**
@@ -825,12 +894,13 @@ public class DefaultTableView<R> implements TableView<R> {
 	 *
 	 * <p>
 	 * A grouped table shows the group values in the header rows in its first displayed column,
-	 * and usually hides the grouping column itself. Sorting that first column therefore orders
-	 * the groups in the same direction: when the grouping column is sortable and not sorted
-	 * itself, but the first displayed column is, the grouping column is put in front of the
-	 * user's sort with the direction of the first displayed column. This decides the direction of
-	 * the group order and leaves the order within a group as it is, since all members of a group
-	 * share the grouping value. The {@link TableViewState#getSort() sort of the state} stays the
+	 * and usually hides the grouping columns themselves. Sorting that first column therefore orders
+	 * the groups of every level in the same direction: when the first displayed column is sorted,
+	 * each grouping column that is sortable and not sorted itself is put in front of the user's
+	 * sort, in grouping order, with the direction of the first displayed column. This decides the
+	 * direction of the group order of its level and leaves the order within a group as it is,
+	 * since all members of a group share the grouping value. A grouping column the user sorts
+	 * itself orders its level in its own direction. The {@link TableViewState#getSort() sort of the state} stays the
 	 * user's sort.
 	 * </p>
 	 *
@@ -845,17 +915,21 @@ public class DefaultTableView<R> implements TableView<R> {
 		if (grouping.isEmpty() || order.isEmpty()) {
 			return new SortSpec(sort);
 		}
-		String groupColumn = grouping.get(0);
-		Column<R, ?> definition = _columns.get(groupColumn);
-		if (definition == null || definition.sort().isEmpty() || sortEntry(sort, groupColumn) != null) {
-			return new SortSpec(sort);
-		}
 		SortColumn firstColumnSort = sortEntry(sort, order.get(0));
 		if (firstColumnSort == null) {
 			return new SortSpec(sort);
 		}
-		List<SortColumn> result = new ArrayList<>(sort.size() + 1);
-		result.add(new SortColumn(groupColumn, firstColumnSort.ascending()));
+		List<SortColumn> result = new ArrayList<>(grouping.size() + sort.size());
+		for (String groupColumn : grouping) {
+			Column<R, ?> definition = _columns.get(groupColumn);
+			if (definition == null || definition.sort().isEmpty() || sortEntry(sort, groupColumn) != null) {
+				continue;
+			}
+			result.add(new SortColumn(groupColumn, firstColumnSort.ascending()));
+		}
+		if (result.isEmpty()) {
+			return new SortSpec(sort);
+		}
 		result.addAll(sort);
 		return new SortSpec(result);
 	}

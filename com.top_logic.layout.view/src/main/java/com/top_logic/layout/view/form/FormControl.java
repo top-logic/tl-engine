@@ -40,6 +40,7 @@ import com.top_logic.model.listen.ModelScope;
 import com.top_logic.layout.form.component.I18NConstants;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.util.error.TopLogicException;
+import com.top_logic.layout.view.ViewMessages;
 
 /**
  * Session-scoped form control managing the editing lifecycle (view/edit mode, locking, KB
@@ -87,6 +88,18 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 	/** State key for the no-model placeholder message. */
 	private static final String NO_MODEL_MESSAGE = "noModelMessage";
+
+	/** Command entering edit mode, see {@link #handleEdit()}. */
+	public static final String CMD_EDIT = "formEdit";
+
+	/** Command applying the changes of the edit session, see {@link #handleApply()}. */
+	public static final String CMD_APPLY = "formApply";
+
+	/** Command saving the changes and leaving edit mode, see {@link #handleSave()}. */
+	public static final String CMD_SAVE = "formSave";
+
+	/** Command discarding the changes and leaving edit mode, see {@link #handleCancel()}. */
+	public static final String CMD_CANCEL = "formCancel";
 
 	private TLObject _currentObject;
 
@@ -161,7 +174,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * @param noModelMessage
 	 *        The message to display when no object is available.
 	 * @param lockHandler
-	 *        The {@link LockHandler} for acquiring/releasing locks during editing.
+	 *        The {@link LockHandler} for acquiring/releasing locks during editing, owned by this
+	 *        control alone (a handler holds the lock it acquired).
 	 */
 	public FormControl(ReactContext context, TLObject initialObject, String noModelMessage, LockHandler lockHandler) {
 		super(context, initialObject, "TLFormLayout");
@@ -690,7 +704,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	/**
-	 * Enters edit mode by acquiring a lock, creating an overlay, and notifying listeners.
+	 * Enters edit mode by acquiring a lock on a persistent object, creating an overlay, and
+	 * notifying listeners.
 	 *
 	 * <p>
 	 * Every transition into edit mode goes through this method, so it is the single place that checks
@@ -711,15 +726,55 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * </p>
 	 *
 	 * @return Whether this call started an edit session.
+	 * @throws TopLogicException
+	 *         If someone else holds the lock of the displayed object. The form stays in view mode.
+	 *
+	 * @see #enterEditModeByItself()
 	 */
 	public boolean enterEditMode() {
+		return enterEditMode(false);
+	}
+
+	/**
+	 * Enters edit mode without the user having asked for it, e.g. when the form is displayed with
+	 * its edit-mode channel set or switches to another object of a form that is
+	 * {@link #setAutoEditMode(boolean) editable whenever an object is available}.
+	 *
+	 * <p>
+	 * Behaves like {@link #enterEditMode()}, except when someone else holds the lock of the displayed
+	 * object: then the form stays in view mode, resets its
+	 * {@link #setEditModeChannel(ViewChannel) edit-mode channel} to {@code false}, and tells the user
+	 * in passing that the object is shown read-only and why (the details of the lock conflict, which
+	 * name the holder of the lock where the application reports it), instead of failing.
+	 * </p>
+	 *
+	 * @return Whether this call started an edit session.
+	 */
+	public boolean enterEditModeByItself() {
+		return enterEditMode(true);
+	}
+
+	private boolean enterEditMode(boolean yieldToLock) {
 		if (_editMode || _currentObject == null || !editPermission().isExecutable()) {
 			ChannelNotificationScope.current().afterNotification(this::updateEditModeChannel);
 			return false;
 		}
 
-		// Acquire lock first -- if this fails, no overlay is created.
-		_lockHandler.acquireLock(_currentObject);
+		// Acquire lock first -- if this fails, no overlay is created. A transient object (e.g. the
+		// draft of a create dialog) is invisible to other sessions and needs no lock.
+		if (!_currentObject.tTransient()) {
+			try {
+				_lockHandler.acquireLock(_currentObject);
+			} catch (TopLogicException ex) {
+				if (!yieldToLock) {
+					throw ex;
+				}
+				ChannelNotificationScope.current().afterNotification(this::updateEditModeChannel);
+				ViewMessages.lockConflict(getReactContext(),
+					com.top_logic.layout.view.I18NConstants.FORM_SHOWN_READ_ONLY, ex);
+				return false;
+			}
+		}
 
 		_editMode = true;
 		showEditMode(true);
@@ -967,8 +1022,8 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 *
 	 * @throws TopLogicException
 	 *         If any participant reports a validation error. The exception lists the
-	 *         {@link #visibleErrorDetails() errors} below its message, see
-	 *         {@link ValidationErrors#refusal(ResKey, List)}.
+	 *         {@link #visibleErrorDetails() errors} below its message and names this form as the
+	 *         place of the errors, see {@link ValidationErrors#refusal(ResKey, List, ReactControl)}.
 	 */
 	public void validateOrThrow() {
 		if (_validationModel != null) {
@@ -983,8 +1038,11 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			}
 		}
 		if (!valid) {
+			// The command storing the form comes from a button outside of it (a toolbar, the footer
+			// of a dialog), so the refusal names the form as the place of the errors.
 			throw ValidationErrors.refusal(
-				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS, visibleErrorDetails());
+				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS, visibleErrorDetails(),
+				this);
 		}
 	}
 
@@ -1294,8 +1352,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		if (_autoEditMode) {
 			// The form is configured to be editable whenever an object is available, so the
-			// object switch re-enters edit mode for the new object, if its edit permission allows.
-			enterEditMode();
+			// object switch re-enters edit mode for the new object, if its edit permission allows
+			// and nobody else holds its lock.
+			enterEditModeByItself();
 		}
 	}
 
@@ -1326,7 +1385,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * executability.
 	 * </p>
 	 */
-	@ReactCommandHandler("formEdit")
+	@ReactCommandHandler(CMD_EDIT)
 	void handleEdit() {
 		if (_currentObject == null) {
 			throw CommandErrors.notExecutable(ExecutableState.NO_EXEC_NO_MODEL);
@@ -1350,7 +1409,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * Refused outside an edit session, see {@link #handleEdit()}.
 	 * </p>
 	 */
-	@ReactCommandHandler("formApply")
+	@ReactCommandHandler(CMD_APPLY)
 	void handleApply() {
 		if (!_editMode) {
 			throw notExecutable();
@@ -1365,7 +1424,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * Refused outside an edit session, see {@link #handleEdit()}.
 	 * </p>
 	 */
-	@ReactCommandHandler("formSave")
+	@ReactCommandHandler(CMD_SAVE)
 	void handleSave() {
 		if (!_editMode) {
 			throw notExecutable();
@@ -1380,12 +1439,48 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * Refused outside an edit session, see {@link #handleEdit()}.
 	 * </p>
 	 */
-	@ReactCommandHandler("formCancel")
+	@ReactCommandHandler(CMD_CANCEL)
 	void handleCancel() {
 		if (!_editMode) {
 			throw notExecutable();
 		}
 		executeCancel();
+	}
+
+	/**
+	 * The content of the form while it displays an object: without one, the form shows its
+	 * {@link #NO_MODEL_MESSAGE} in place of its fields.
+	 */
+	@Override
+	public List<ReactControl> visibleChildren() {
+		if (_currentObject == null && _noModelMessage != null) {
+			return List.of();
+		}
+		return super.visibleChildren();
+	}
+
+	/**
+	 * The lifecycle commands are executable in the states their handlers accept: {@link #CMD_EDIT}
+	 * outside an edit session on an object the user may edit, the others within an edit session.
+	 */
+	@Override
+	public ExecutableState scriptingCommandState(String command) {
+		switch (command) {
+			case CMD_EDIT:
+				if (_currentObject == null) {
+					return ExecutableState.NO_EXEC_NO_MODEL;
+				}
+				if (_editMode) {
+					return ExecutableState.NOT_EXEC_HIDDEN;
+				}
+				return editPermission();
+			case CMD_APPLY:
+			case CMD_SAVE:
+			case CMD_CANCEL:
+				return _editMode ? super.scriptingCommandState(command) : ExecutableState.NOT_EXEC_HIDDEN;
+			default:
+				return super.scriptingCommandState(command);
+		}
 	}
 
 	/**

@@ -56,6 +56,21 @@ public sealed interface CellContent {
 	}
 
 	/**
+	 * A text standing in for a value that is absent, e.g. in the header row of a group whose rows
+	 * have no value in the grouping column.
+	 *
+	 * <p>
+	 * A UI tier sets the text apart from a value, so that it is not read as one.
+	 * </p>
+	 *
+	 * @param text
+	 *        The text to display.
+	 */
+	record Placeholder(String text) implements CellContent {
+		// Pure value type.
+	}
+
+	/**
 	 * An empty cell.
 	 */
 	record Empty() implements CellContent {
@@ -116,6 +131,13 @@ public sealed interface CellContent {
 	}
 
 	/**
+	 * {@link Placeholder} content standing in for an absent value.
+	 */
+	static CellContent placeholder(String text) {
+		return new Placeholder(text);
+	}
+
+	/**
 	 * The shared {@link #EMPTY empty} content.
 	 */
 	static CellContent empty() {
@@ -127,7 +149,7 @@ public sealed interface CellContent {
 	 *
 	 * <p>
 	 * Text and empty content become {@link Labeled} content showing the same; an {@link Editable}
-	 * cell carries no tooltip and is returned unchanged.
+	 * cell and a {@link Placeholder} carry no tooltip and are returned unchanged.
 	 * </p>
 	 *
 	 * @param content

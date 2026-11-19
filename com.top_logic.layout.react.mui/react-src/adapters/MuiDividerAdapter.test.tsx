@@ -39,4 +39,42 @@ describe('the part Divider as MUI Divider', () => {
     expect(divider.getAttribute('aria-orientation')).toBe('vertical');
     expect(divider.classList).toContain('x');
   });
+
+  it('draws a text in a horizontal divider, in the middle by default', () => {
+    const divider = draw({ label: 'or' });
+
+    expect(divider.tagName).toBe('DIV');
+    expect(divider.textContent).toBe('or');
+    expect(divider.classList).toContain('MuiDivider-withChildren');
+    expect(divider.classList).not.toContain('MuiDivider-textAlignLeft');
+    expect(divider.classList).not.toContain('MuiDivider-textAlignRight');
+  });
+
+  it('aligns the text to the start or to the end of the line', () => {
+    expect(draw({ label: 'Address', labelPosition: 'start' }).classList).toContain('MuiDivider-textAlignLeft');
+    cleanup();
+    expect(draw({ label: 'End', labelPosition: 'end' }).classList).toContain('MuiDivider-textAlignRight');
+  });
+
+  it('shows no text in a vertical divider', () => {
+    const divider = draw({ orientation: 'vertical', label: 'ignored' });
+
+    expect(divider.textContent).toBe('');
+    expect(divider.classList).not.toContain('MuiDivider-withChildren');
+  });
+
+  it('draws an inset divider as the inset variant', () => {
+    expect(draw({ inset: 'start' }).classList).toContain('MuiDivider-inset');
+    cleanup();
+    expect(draw({ inset: 'none' }).classList).not.toContain('MuiDivider-inset');
+  });
+
+  it('passes none of the props of the part to the element as attributes', () => {
+    const divider = draw({ label: 'or', labelPosition: 'end', inset: 'start', id: 'd1' });
+
+    expect(divider.id).toBe('d1');
+    for (const name of ['label', 'labelposition', 'labelPosition', 'inset']) {
+      expect(divider.hasAttribute(name), name).toBe(false);
+    }
+  });
 });

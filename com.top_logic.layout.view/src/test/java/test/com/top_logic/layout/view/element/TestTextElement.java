@@ -59,6 +59,12 @@ public class TestTextElement extends TestCase {
 	/** The view the texts under test are read from. */
 	private static final String VIEW = "test-text.view.xml";
 
+	/** A view with one text of each typographic role, in the order of {@link TextVariant}. */
+	private static final String ROLES_VIEW = "test-text-roles.view.xml";
+
+	/** A view with a text of a typographic role the type scale does not know. */
+	private static final String UNKNOWN_ROLE_VIEW = "test-text-unknown-role.view.xml";
+
 	/**
 	 * State key holding the children of a layout container.
 	 *
@@ -109,7 +115,7 @@ public class TestTextElement extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 
-		_stack = state(createContent());
+		_stack = state(createContent(VIEW));
 	}
 
 	@Override
@@ -136,7 +142,7 @@ public class TestTextElement extends TestCase {
 
 	/** A configured typographic role arrives by its external name. */
 	public void testConfiguredVariant() {
-		assertEquals(TextVariant.HEADLINE.getExternalName(), child(1).get(VARIANT));
+		assertEquals(TextVariant.HEADING_LG.getExternalName(), child(1).get(VARIANT));
 	}
 
 	/** A configured color role arrives by its external name, the hyphenated one included. */
@@ -168,18 +174,48 @@ public class TestTextElement extends TestCase {
 		assertEquals(TextTone.PLACEHOLDER.getExternalName(), child(3).get(TONE));
 	}
 
+	/**
+	 * Every role of the type scale is accepted in a view and reaches the client by its external
+	 * name.
+	 */
+	public void testEveryRole() throws ConfigurationException {
+		List<?> children = children(state(createContent(ROLES_VIEW)));
+
+		TextVariant[] roles = TextVariant.values();
+		assertEquals("The test view shows each role of the type scale.", roles.length, children.size());
+		for (int n = 0; n < roles.length; n++) {
+			Map<?, ?> state = (Map<?, ?>) ((Map<?, ?>) children.get(n)).get(STATE);
+			assertEquals(roles[n].getExternalName(), state.get(VARIANT));
+		}
+	}
+
+	/** A role the type scale does not know is a configuration error of the view. */
+	public void testUnknownRole() {
+		try {
+			createContent(UNKNOWN_ROLE_VIEW);
+			fail("A text of an unknown typographic role is reported.");
+		} catch (ConfigurationException ex) {
+			// Expected.
+		}
+	}
+
 	/** The client state of the child at the given position of the container. */
 	private Map<?, ?> child(int index) {
-		List<?> children = (List<?>) _stack.get(CHILDREN);
+		List<?> children = children(_stack);
 		assertTrue("The view holds " + (index + 1) + " children, but only " + children.size() + " were created.",
 			index < children.size());
 		return (Map<?, ?>) ((Map<?, ?>) children.get(index)).get(STATE);
 	}
 
-	/** The control of the element the test view shows. */
-	private static ReactControl createContent() throws ConfigurationException {
+	/** The client states of the children of a layout container. */
+	private static List<?> children(Map<?, ?> container) {
+		return (List<?>) container.get(CHILDREN);
+	}
+
+	/** The control of the element the given test view shows. */
+	private static ReactControl createContent(String viewName) throws ConfigurationException {
 		ViewElement.Config view = ViewLoader.parseConfig(
-			List.of(new ClassRelativeBinaryContent(TestTextElement.class, VIEW)));
+			List.of(new ClassRelativeBinaryContent(TestTextElement.class, viewName)));
 
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestTextElement.class);
 		UIElement element = context.getInstance(view.getContent());

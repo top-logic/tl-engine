@@ -92,6 +92,12 @@ public final class FieldSpec {
 
 	private long _maxUploadSize;
 
+	private int _maxCount;
+
+	private String _width;
+
+	private String _height;
+
 	private FieldSpec(Class<?> valueType, String label) {
 		_valueType = valueType;
 		_label = label;
@@ -208,8 +214,9 @@ public final class FieldSpec {
 	 * </p>
 	 *
 	 * <p>
-	 * Only a single-line text input offers it; a text area, a number and a password input ignore
-	 * it.
+	 * The button is asked for by an input the user empties by deleting what is typed: a text in a
+	 * single line or in a text area, a password and a number. A field whose value cannot be deleted that way - a date, a time of day, a
+	 * selection - offers the button on its own whenever it is not mandatory.
 	 * </p>
 	 */
 	public boolean isClearable() {
@@ -707,6 +714,79 @@ public final class FieldSpec {
 	}
 
 	/**
+	 * The maximum number of values a {@link #isMultiple() multi-valued} field may hold, or
+	 * {@code 0} if the number is not limited.
+	 *
+	 * <p>
+	 * The maximum of the value count annotation of a multi-valued attribute
+	 * ({@link com.top_logic.model.annotate.TLValueCount}). A control adding values offers no further
+	 * value once the field holds this many, and refuses an upload of more files than there is room
+	 * for.
+	 * </p>
+	 */
+	public int getMaxCount() {
+		return _maxCount;
+	}
+
+	/**
+	 * Sets the {@link #getMaxCount() maximum number of values}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setMaxCount(int maxCount) {
+		_maxCount = maxCount;
+		return this;
+	}
+
+	/**
+	 * The CSS width the content of the field is displayed at most, or {@code null} for the width the
+	 * field has.
+	 *
+	 * <p>
+	 * The width of the dimensions annotation of an attribute
+	 * ({@link com.top_logic.model.annotate.ui.TLDimensions}). It limits content that has a size of its
+	 * own, such as the image an image field shows.
+	 * </p>
+	 */
+	public String getWidth() {
+		return _width;
+	}
+
+	/**
+	 * Sets the {@link #getWidth() width}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setWidth(String width) {
+		_width = width;
+		return this;
+	}
+
+	/**
+	 * The CSS height the content of the field is displayed at most, or {@code null} for the height
+	 * the theme sets.
+	 *
+	 * <p>
+	 * The height of the dimensions annotation of an attribute
+	 * ({@link com.top_logic.model.annotate.ui.TLDimensions}). It limits content that has a size of its
+	 * own, such as the image an image field shows.
+	 * </p>
+	 */
+	public String getHeight() {
+		return _height;
+	}
+
+	/**
+	 * Sets the {@link #getHeight() height}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setHeight(String height) {
+		_height = height;
+		return this;
+	}
+
+	/**
 	 * This specification describing a single one of the values of a
 	 * {@link #isMultiple() multi-valued} field.
 	 *
@@ -720,9 +800,11 @@ public final class FieldSpec {
 	 */
 	public FieldSpec elementSpec() {
 		FieldSpec result = copy();
-		// The element is one value: it is not several, and a single value has no order to arrange.
+		// The element is one value: it is not several, a single value has no order to arrange, and
+		// the number of values does not concern it.
 		result._multiple = false;
 		result._ordered = false;
+		result._maxCount = 0;
 		return result;
 	}
 
@@ -764,6 +846,9 @@ public final class FieldSpec {
 		result._optionLabels = _optionLabels;
 		result._acceptedTypes = _acceptedTypes;
 		result._maxUploadSize = _maxUploadSize;
+		result._maxCount = _maxCount;
+		result._width = _width;
+		result._height = _height;
 		return result;
 	}
 

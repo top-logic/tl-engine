@@ -38,7 +38,7 @@ public class TestConfigurationEncryption extends TestCase {
 	 * {@link com.top_logic.basic.Base64Encoder#newBase64AESEncoder(String)} with the configuration
 	 * passphrase.
 	 */
-	static final String UNAUTHENTICATED_VALUE = "dntKC27wX4k4edJb6D7q-Lew0FNrViSNINU4Eq00M2ADFTfD_g";
+	public static final String UNAUTHENTICATED_VALUE = "dntKC27wX4k4edJb6D7q-Lew0FNrViSNINU4Eq00M2ADFTfD_g";
 
 	private static final String PROPERTY = "secret-property";
 

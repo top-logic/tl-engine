@@ -266,7 +266,7 @@ public class TestKanbanBoardDragDrop extends TestCase {
 	private Map<String, Object> dropArguments(String item, String targetKey, DropZone zone) {
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, _board.getID());
-		arguments.put(DropArguments.KEYS, cardKey(item));
+		arguments.put(DropArguments.KEYS, List.of(cardKey(item)));
 		arguments.put(DropArguments.SELECTION, Boolean.FALSE);
 		arguments.put(DropArguments.TARGET_KEY, targetKey);
 		arguments.put(DropArguments.ZONE, zone.wireName());

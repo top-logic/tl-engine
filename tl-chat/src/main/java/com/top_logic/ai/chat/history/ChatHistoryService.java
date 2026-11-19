@@ -23,14 +23,14 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
-import com.top_logic.tl.ai.core.cost.Money;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
-import com.top_logic.tl.ai.core.execution.model.AgentExecution;
-import com.top_logic.tl.ai.core.execution.model.AgentSession;
-import com.top_logic.tl.ai.core.session.persist.messages.PersistedConversationV2;
-import com.top_logic.tl.ai.core.session.persist.messages.PersistedTurn;
+import com.top_logic.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.ai.core.cost.Money;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.execution.AgentExecutionStore.SessionKind;
+import com.top_logic.ai.core.execution.model.AgentExecution;
+import com.top_logic.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.session.persist.messages.PersistedConversationV2;
+import com.top_logic.ai.core.session.persist.messages.PersistedTurn;
 
 import de.haumacher.msgbuf.io.StringR;
 import de.haumacher.msgbuf.io.StringW;
@@ -206,7 +206,7 @@ public class ChatHistoryService {
 	 * @param keepTurns
 	 *        how many turns to keep, counted from the start
 	 * @return how many turns were removed
-	 * @see com.top_logic.tl.ai.core.execution.AgentExecutionStore#truncateConversation
+	 * @see com.top_logic.ai.core.execution.AgentExecutionStore#truncateConversation
 	 */
 	public static int truncateConversation(TLObject session, int keepTurns) {
 		try {
@@ -221,7 +221,7 @@ public class ChatHistoryService {
 	 * What the history of a conversation knows about one of its recorded runs.
 	 *
 	 * @param startedAt
-	 *        When the run started - when its {@link com.top_logic.tl.ai.core.agent.event.AgentEvent.RunStarted}
+	 *        When the run started - when its {@link com.top_logic.ai.core.agent.event.AgentEvent.RunStarted}
 	 *        was recorded, which is after whatever the run's producer did before (starting an
 	 *        external process, say); <code>null</code> if not recorded.
 	 * @param endedAt

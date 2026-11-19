@@ -5,7 +5,7 @@ order: 21
 
 # Capability notices
 
-Filtering the tool schemas leaves the model unable to tell "you are not permitted" from "that skill is not loaded yet" from "that does not exist": all three look like absence, so the agent answers the user with a vague "I can't do that" or goes hunting for a skill it may not use either. The mechanisms below make the absence legible. **They are UX, not a control**: the gates are the deterministic Java checks of [tool authorization](doc:ai/security/tool-authorization); a principal who holds every capability its tools require is told exactly that rather than given a list of gaps. `AgentCapabilities` (package `com.top_logic.tl.ai.core.agent`) is the one place they are computed.
+Filtering the tool schemas leaves the model unable to tell "you are not permitted" from "that skill is not loaded yet" from "that does not exist": all three look like absence, so the agent answers the user with a vague "I can't do that" or goes hunting for a skill it may not use either. The mechanisms below make the absence legible. **They are UX, not a control**: the gates are the deterministic Java checks of [tool authorization](doc:ai/security/tool-authorization); a principal who holds every capability its tools require is told exactly that rather than given a list of gaps. `AgentCapabilities` (package `com.top_logic.ai.core.agent`) is the one place they are computed.
 
 ## Skills and delegates the user cannot use are not offered
 

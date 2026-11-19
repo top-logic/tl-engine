@@ -31,7 +31,7 @@ public class IDEOnly implements ExecutabilityRule {
 
 	@Override
 	public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> someValues) {
-		return isVisibleIn(effectiveMode()) ? ExecutableState.EXECUTABLE : ExecutableState.NOT_EXEC_HIDDEN;
+		return isAllowed() ? ExecutableState.EXECUTABLE : ExecutableState.NOT_EXEC_HIDDEN;
 	}
 
 	/**
@@ -45,6 +45,16 @@ public class IDEOnly implements ExecutabilityRule {
 	 */
 	public static boolean isVisibleIn(OperationMode mode) {
 		return mode != OperationMode.PRODUCTION;
+	}
+
+	/**
+	 * Whether IDE tooling is available in the {@link #effectiveMode() effective mode} of this
+	 * application.
+	 *
+	 * @see #isVisibleIn(OperationMode)
+	 */
+	public static boolean isAllowed() {
+		return isVisibleIn(effectiveMode());
 	}
 
 	/**

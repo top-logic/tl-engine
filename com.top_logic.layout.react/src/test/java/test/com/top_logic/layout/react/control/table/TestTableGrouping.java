@@ -82,7 +82,7 @@ public class TestTableGrouping extends TestCase {
 	/** State key telling the client to render the group affordances. */
 	private static final String TREE_MODE = "treeMode";
 
-	/** State key of the grouped column. */
+	/** State key of the grouping columns. */
 	private static final String GROUPING = "grouping";
 
 	private static final String OPEN = "open";
@@ -159,10 +159,10 @@ public class TestTableGrouping extends TestCase {
 	public void testGroupingProducesGroupRows() {
 		group(COLUMN_STATUS);
 
-		assertEquals(COLUMN_STATUS, _table.getGroupedColumn());
+		assertEquals(List.of(COLUMN_STATUS), _table.getGroupedColumns());
 		assertEquals("A grouped table renders the group affordances of a tree.",
 			Boolean.TRUE, _table.clientState(TREE_MODE));
-		assertEquals(COLUMN_STATUS, _table.clientState(GROUPING));
+		assertEquals(List.of(COLUMN_STATUS), _table.clientState(GROUPING));
 
 		List<Map<String, Object>> rows = clientRows();
 		assertEquals("Two group headers and the three rows they hold.", 5, rows.size());
@@ -180,6 +180,32 @@ public class TestTableGrouping extends TestCase {
 		Map<String, Object> closedGroup = rows.get(3);
 		assertEquals(Integer.valueOf(0), closedGroup.get(TREE_DEPTH));
 		assertEquals("One row is closed.", Integer.valueOf(1), closedGroup.get(GROUP_COUNT));
+	}
+
+	/**
+	 * Tests that grouping by two columns nests a level of group headers per column, each header at
+	 * the depth of its level and the rows below the innermost headers, and that the client is told
+	 * all grouping columns in order.
+	 */
+	public void testGroupingByTwoColumnsNestsTheLevels() {
+		group(COLUMN_STATUS, COLUMN_NAME);
+
+		assertEquals(List.of(COLUMN_STATUS, COLUMN_NAME), _table.getGroupedColumns());
+		assertEquals(List.of(COLUMN_STATUS, COLUMN_NAME), _table.clientState(GROUPING));
+
+		List<Map<String, Object>> rows = clientRows();
+		assertEquals("Per status a header, per name below it a header and the row it holds.", 8, rows.size());
+		List<Integer> depths = new ArrayList<>();
+		for (Map<String, Object> row : rows) {
+			depths.add((Integer) row.get(TREE_DEPTH));
+		}
+		assertEquals(List.of(0, 1, 2, 1, 2, 0, 1, 2), depths);
+		assertEquals("Two rows are open.", Integer.valueOf(2), rows.get(0).get(GROUP_COUNT));
+		assertEquals(Integer.valueOf(1), rows.get(1).get(GROUP_COUNT));
+		assertNull("A data row is no group.", rows.get(2).get(GROUP_COUNT));
+
+		group(COLUMN_STATUS);
+		assertEquals("Removing the inner level keeps the outer one.", 5, clientRows().size());
 	}
 
 	/**
@@ -311,7 +337,7 @@ public class TestTableGrouping extends TestCase {
 			List.of(Integer.valueOf(4)), _table.clientState(SELECTED_ROWS));
 		assertEquals("The cursor found it again.", Integer.valueOf(4), _table.clientState(CURSOR_INDEX));
 
-		group("");
+		group();
 
 		assertEquals(Set.of(B), _table.getSelectedKeys());
 		assertEquals(List.of(Integer.valueOf(1)), _table.clientState(SELECTED_ROWS));
@@ -325,10 +351,10 @@ public class TestTableGrouping extends TestCase {
 		group(COLUMN_STATUS);
 		assertEquals(5, clientRows().size());
 
-		group("");
+		group();
 
-		assertNull(_table.getGroupedColumn());
-		assertEquals("", _table.clientState(GROUPING));
+		assertEquals(List.of(), _table.getGroupedColumns());
+		assertEquals(List.of(), _table.clientState(GROUPING));
 		assertEquals(Boolean.FALSE, _table.clientState(TREE_MODE));
 		List<Map<String, Object>> rows = clientRows();
 		assertEquals(3, rows.size());
@@ -350,7 +376,7 @@ public class TestTableGrouping extends TestCase {
 		TestTable table = new TestTable(context,
 			new DefaultTableView<>(columns(), rows, initialState, null, null));
 
-		assertEquals(COLUMN_STATUS, table.getGroupedColumn());
+		assertEquals(List.of(COLUMN_STATUS), table.getGroupedColumns());
 		assertEquals(Boolean.TRUE, table.clientState(TREE_MODE));
 		assertEquals("Two group headers and the three rows they hold.", 5, clientRows(table).size());
 	}
@@ -403,9 +429,9 @@ public class TestTableGrouping extends TestCase {
 		return result;
 	}
 
-	/** Sends the client's group command for the given column, empty for no grouping. */
-	private void group(String column) {
-		_table.executeClientCommand(TableViewControl.CMD_GROUP, Map.of(GroupArguments.COLUMN, column));
+	/** Sends the client's group command for the given columns, none for no grouping. */
+	private void group(String... columns) {
+		_table.executeClientCommand(TableViewControl.CMD_GROUP, Map.of(GroupArguments.COLUMNS, List.of(columns)));
 	}
 
 	/** Sends the client's sort command. */
@@ -417,13 +443,13 @@ public class TestTableGrouping extends TestCase {
 	/** Sends the client's expand command for the row at the given index. */
 	private void expand(int rowIndex, boolean expanded) {
 		_table.executeClientCommand(TableViewControl.CMD_EXPAND, Map.of(
-			ExpandArguments.ROW_INDEX, Integer.valueOf(rowIndex),
+			ExpandArguments.ROW_ID, _table.rowIdAt(rowIndex),
 			ExpandArguments.EXPANDED, Boolean.valueOf(expanded)));
 	}
 
 	/** Sends the client's plain (unmodified) select command for the row at the given index. */
 	private void select(int rowIndex) {
-		_table.executeClientCommand(TableViewControl.CMD_SELECT, Map.of(SelectRowArguments.ROW_INDEX, Integer.valueOf(rowIndex)));
+		_table.executeClientCommand(TableViewControl.CMD_SELECT, Map.of(SelectRowArguments.ROW_ID, _table.rowIdAt(rowIndex)));
 	}
 
 	/** The rows as pushed to the client. */

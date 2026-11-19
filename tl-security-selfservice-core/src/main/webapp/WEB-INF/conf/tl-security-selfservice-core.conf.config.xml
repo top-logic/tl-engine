@@ -198,6 +198,119 @@ Ihr {0}-Team</p>]]></de>
     }
   );
 }]]></reset-mfa-mail>
+				<self-registration
+					captcha="%SELF_REGISTRATION_CAPTCHA%"
+					mode="%SELF_REGISTRATION%"
+				>
+					<registration-text>
+						<subject>
+							<en>Your verification code for registering with {0}</en>
+							<de>Ihr Bestätigungscode für die Registrierung bei {0}</de>
+						</subject>
+						<body>
+							<en><![CDATA[<p>Dear Recipient,</p>
+<p>To register an account for the application {0}, please enter the following verification code in the application:<br/>
+<b>Verification code:</b> {1}</p>
+<p>This verification code is only valid for a limited time.</p>
+<p>If you did not request a registration, you can safely ignore this email. No account is created then.</p>
+<p>Kind regards,<br/>
+Your {0} Team</p>]]></en>
+							<de><![CDATA[<p>Guten Tag,</p>
+<p>um einen Zugang für die Anwendung {0} zu registrieren, geben Sie bitte den folgenden Bestätigungscode in der Anwendung ein:<br/>
+<b>Bestätigungscode:</b> {1}</p>
+<p>Dieser Bestätigungscode ist nur für begrenzte Zeit gültig.</p>
+<p>Falls Sie keine Registrierung angefordert haben, können Sie diese E-Mail einfach ignorieren. Es wird dann kein Zugang angelegt.</p>
+<p>Mit freundlichen Grüßen<br/>
+Ihr {0}-Team</p>]]></de>
+						</body>
+					</registration-text>
+					<registration-mail><![CDATA[email -> applicationName -> code -> subject -> body -> {
+  mailBody = $body.fill($applicationName, $code).localize();
+  mailSubject = $subject.fill($applicationName).localize();
+
+  try(
+    sendMail(
+      subject: $mailSubject,
+      to: $email,
+      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $mailBody)
+    ),
+    catch: mailError -> {
+      log("Sending mail to {0} failed. reason: {1}", $email, $mailError, level: "warn");
+      false
+    }
+  );
+}]]></registration-mail>
+					<registration-exists-text>
+						<subject>
+							<en>Registration with {0}</en>
+							<de>Registrierung bei {0}</de>
+						</subject>
+						<body>
+							<en><![CDATA[<p>Dear Recipient,</p>
+<p>Someone tried to register an account for the application {0} with this e-mail address. You already have an account with this address.</p>
+<p>If you have forgotten your password, please use the function "Forgot password" at the login of the application.</p>
+<p>If you did not try to register, you can safely ignore this email. Your account remains unchanged.</p>
+<p>Kind regards,<br/>
+Your {0} Team</p>]]></en>
+							<de><![CDATA[<p>Guten Tag,</p>
+<p>für diese E-Mail-Adresse wurde eine Registrierung in der Anwendung {0} angefordert. Mit dieser Adresse besteht aber bereits ein Zugang.</p>
+<p>Falls Sie Ihr Passwort vergessen haben, verwenden Sie bitte die Funktion „Passwort vergessen“ auf der Anmeldeseite der Anwendung.</p>
+<p>Falls Sie keine Registrierung angefordert haben, können Sie diese E-Mail ignorieren. Ihr Zugang bleibt unverändert.</p>
+<p>Mit freundlichen Grüßen<br/>
+Ihr {0}-Team</p>]]></de>
+						</body>
+					</registration-exists-text>
+					<registration-exists-mail><![CDATA[email -> applicationName -> subject -> body -> {
+  mailBody = $body.fill($applicationName).localize();
+  mailSubject = $subject.fill($applicationName).localize();
+
+  try(
+    sendMail(
+      subject: $mailSubject,
+      to: $email,
+      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $mailBody)
+    ),
+    catch: mailError -> {
+      log("Sending mail to {0} failed. reason: {1}", $email, $mailError, level: "warn");
+      false
+    }
+  );
+}]]></registration-exists-mail>
+					<approval-text>
+						<subject>
+							<en>Your registration for {0} has been approved</en>
+							<de>Ihre Registrierung für {0} wurde freigegeben</de>
+						</subject>
+						<body>
+							<en><![CDATA[<p>Dear Recipient,</p>
+<p>Your registration for the application {0} has been approved. You can now log in with your e-mail address and your password:<br/>
+<a href="{1}">{1}</a></p>
+<p>Kind regards,<br/>
+Your {0} Team</p>]]></en>
+							<de><![CDATA[<p>Guten Tag,</p>
+<p>Ihre Registrierung für die Anwendung {0} wurde freigegeben. Sie können sich jetzt mit Ihrer E-Mail-Adresse und Ihrem Passwort anmelden:<br/>
+<a href="{1}">{1}</a></p>
+<p>Mit freundlichen Grüßen<br/>
+Ihr {0}-Team</p>]]></de>
+						</body>
+					</approval-text>
+					<approval-mail><![CDATA[email -> applicationName -> link -> subject -> body -> {
+  mailBody = $body.fill($applicationName, $link).localize();
+  mailSubject = $subject.fill($applicationName).localize();
+
+  try(
+    sendMail(
+      subject: $mailSubject,
+      to: $email,
+      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $mailBody)
+    ),
+    catch: mailError -> {
+      log("Sending mail to {0} failed. reason: {1}", $email, $mailError, level: "warn");
+      false
+    }
+  );
+}]]></approval-mail>
+				</self-registration>
 			</instance>
 		</config>
 
@@ -207,6 +320,12 @@ Ihr {0}-Team</p>]]></de>
 					<rule id="SecRootForInvitation"
 						inherit="true"
 						meta-element="tl.security.selfservice:Invitation"
+					>
+						<singleton module="SecurityStructure"/>
+					</rule>
+					<rule id="SecRootForRegistration"
+						inherit="true"
+						meta-element="tl.security.selfservice:Registration"
 					>
 						<singleton module="SecurityStructure"/>
 					</rule>

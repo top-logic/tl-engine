@@ -15,14 +15,19 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.model.FormFieldAdapter;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.state.ClearableFieldState;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.state.TextInputState;
 import com.top_logic.layout.react.state.TypingFieldState;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A form field control that renders via a React component.
@@ -39,6 +44,13 @@ import com.top_logic.util.Resources;
  * </p>
  */
 public class ReactFormFieldControl extends ReactControl {
+
+	/**
+	 * The state of an input command of a field that does not {@link #acceptsClientValue() accept
+	 * input}.
+	 */
+	private static final ExecutableState NOT_EDITABLE =
+		ExecutableState.createDisabledState(I18NConstants.ERROR_FIELD_NOT_EDITABLE);
 
 	/** Command sent by the client when the field value changes. */
 	public static final String CMD_VALUE_CHANGED = "valueChanged";
@@ -63,6 +75,17 @@ public class ReactFormFieldControl extends ReactControl {
 	private Consumer<Object> _commitListener;
 
 	private boolean _multiline;
+
+	/**
+	 * The text the empty input shows, see {@link #setPlaceholder(String)}.
+	 */
+	private String _placeholder;
+
+	/**
+	 * The inherited value as text, shown in place of {@link #_placeholder} while not {@code null},
+	 * see {@link #setFallbackText(String)}.
+	 */
+	private String _fallbackText;
 
 	/**
 	 * While handling a client {@code valueChanged}, the value the client sent — so the model
@@ -240,23 +263,69 @@ public class ReactFormFieldControl extends ReactControl {
 	 * </p>
 	 */
 	public void setPlaceholder(String placeholder) {
-		putState(FieldState.PLACEHOLDER__PROP, placeholder);
+		_placeholder = placeholder;
+		updatePlaceholder();
 	}
 
 	/**
 	 * Shows the value the field inherits while it holds none of its own.
 	 *
 	 * <p>
-	 * By default the inherited value is shown as {@link #setPlaceholder(String) placeholder},
-	 * written by {@link #formatValue(Object)}. A control whose input has no place for a text where
-	 * it is empty shows the inherited value in a way of its own.
+	 * By default the inherited value is shown in place of the {@link #setPlaceholder(String)
+	 * placeholder}, written by {@link #formatValue(Object)}. A control whose input has no place for
+	 * a text where it is empty shows the inherited value in a way of its own.
 	 * </p>
 	 *
 	 * @param fallback
-	 *        The inherited value, {@code null} for none.
+	 *        The inherited value, {@code null} for none: the input shows its
+	 *        {@link #setPlaceholder(String) placeholder} again.
 	 */
 	public void setFallbackValue(Object fallback) {
-		setPlaceholder(formatValue(fallback));
+		setFallbackText(formatValue(fallback));
+	}
+
+	/**
+	 * Shows the given text of an inherited value in place of the {@link #setPlaceholder(String)
+	 * placeholder}.
+	 *
+	 * @param fallbackText
+	 *        The text, {@code null} to show the placeholder again.
+	 */
+	protected void setFallbackText(String fallbackText) {
+		_fallbackText = fallbackText;
+		updatePlaceholder();
+	}
+
+	private void updatePlaceholder() {
+		if (_fallbackText != null) {
+			showFallbackText(_fallbackText);
+		} else {
+			showPlaceholder(_placeholder);
+		}
+	}
+
+	/**
+	 * Sends the {@link #setPlaceholder(String) placeholder} to the client.
+	 *
+	 * @param placeholder
+	 *        The text the empty input shows, {@code null} for none.
+	 */
+	protected void showPlaceholder(String placeholder) {
+		putState(FieldState.PLACEHOLDER__PROP, placeholder);
+	}
+
+	/**
+	 * Sends the text of the inherited value to the client, see {@link #setFallbackText(String)}.
+	 *
+	 * <p>
+	 * By default the text is shown as placeholder of the empty input.
+	 * </p>
+	 *
+	 * @param fallbackText
+	 *        The text of the inherited value, not {@code null}.
+	 */
+	protected void showFallbackText(String fallbackText) {
+		putState(FieldState.PLACEHOLDER__PROP, fallbackText);
 	}
 
 	/**
@@ -360,11 +429,15 @@ public class ReactFormFieldControl extends ReactControl {
 	 * {@link com.top_logic.layout.form.model.FieldModel#isEditable() editable}, and it writes the
 	 * empty value at once rather than after the {@link #setDebounce(Long) delay}. For a value that
 	 * is taken back as often as it is given - the term a list is searched by - where emptying the
-	 * field is a step of its own. Honoured by the single-line text input.
+	 * field is a step of its own. Honoured by the inputs the user empties by deleting what is
+	 * typed: the text input in a single line or in a text area, the password input and the number
+	 * input. A field whose value cannot be deleted
+	 * that way - a date, a time of day, a selection - offers the button whenever it is not
+	 * {@link #setMandatory(boolean) mandatory}.
 	 * </p>
 	 */
 	public void setClearable(boolean clearable) {
-		putState(TextInputState.CLEARABLE__PROP, clearable);
+		putState(ClearableFieldState.CLEARABLE__PROP, clearable);
 	}
 
 	/**
@@ -418,6 +491,18 @@ public class ReactFormFieldControl extends ReactControl {
 	 */
 	protected final boolean isMultiline() {
 		return _multiline;
+	}
+
+	/**
+	 * Whether this control takes a whole row of a form where the form leaves that to the field.
+	 *
+	 * <p>
+	 * True for a control whose content is shown best as wide as the form, e.g. an image. A form
+	 * that states for the field whether it takes a whole row decides instead.
+	 * </p>
+	 */
+	public boolean prefersWholeLine() {
+		return false;
 	}
 
 	/**
@@ -547,7 +632,7 @@ public class ReactFormFieldControl extends ReactControl {
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
 		return presentationKeys(super.scriptingPresentationKeys(), TextInputState.ICON__PROP,
-			TextInputState.CLEARABLE__PROP, TypingFieldState.DEBOUNCE_MS__PROP, FieldState.COMPACT__PROP);
+			ClearableFieldState.CLEARABLE__PROP, TypingFieldState.DEBOUNCE_MS__PROP, FieldState.COMPACT__PROP);
 	}
 
 	/**
@@ -607,6 +692,7 @@ public class ReactFormFieldControl extends ReactControl {
 	@ReactCommandHandler(COMMIT_COMMAND)
 	final void handleCommit() {
 		if (!acceptsClientValue()) {
+			refuseInput();
 			return;
 		}
 		onCommit();
@@ -626,6 +712,7 @@ public class ReactFormFieldControl extends ReactControl {
 	@ReactCommandHandler(SUBMIT_COMMAND)
 	final void handleSubmit(FieldSubmitArguments args) {
 		if (!acceptsClientValue()) {
+			refuseInput();
 			return;
 		}
 		applyRawClientValue(args.getValue());
@@ -644,6 +731,7 @@ public class ReactFormFieldControl extends ReactControl {
 	 * A field whose value type needs its own command arguments funnels them through here rather
 	 * than writing the model itself, so that the acceptance check cannot be forgotten by a new
 	 * field variant. What happens with an accepted value is {@link #applyRawClientValue(Object)}.
+	 * A value the field does not accept is refused, see {@link #refuseInput()}.
 	 * </p>
 	 *
 	 * @param rawValue
@@ -651,9 +739,57 @@ public class ReactFormFieldControl extends ReactControl {
 	 */
 	protected final void clientValueChanged(Object rawValue) {
 		if (!acceptsClientValue()) {
+			refuseInput();
 			return;
 		}
 		applyRawClientValue(rawValue);
+	}
+
+	/**
+	 * Refuses an input the field does not {@link #acceptsClientValue() accept}.
+	 *
+	 * <p>
+	 * Sent by the client rendering the field, the input is dropped silently: that client lags
+	 * behind the server, see {@link #acceptsClientValue()}. Sent by a headless consumer - an agent
+	 * or a replayed script -, it is refused with the {@link #scriptingCommandState(String) state}
+	 * the field is in, so that the consumer learns that its value was not taken.
+	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         The refusal, unless the input comes from the client.
+	 */
+	protected final void refuseInput() {
+		if (!isClientDispatch()) {
+			throw CommandErrors.notExecutable(NOT_EDITABLE);
+		}
+	}
+
+	/**
+	 * The commands the field offers while it does not {@link #acceptsClientValue() accept input},
+	 * e.g. following the link of a displayed value.
+	 *
+	 * <p>
+	 * Every other command of a field enters or completes an input, so it is not executable while
+	 * the field takes none, see {@link #scriptingCommandState(String)}.
+	 * </p>
+	 *
+	 * @return The commands of the display; empty by default.
+	 */
+	protected Set<String> scriptingDisplayCommands() {
+		return Set.of();
+	}
+
+	/**
+	 * The input commands are executable only while the field {@link #acceptsClientValue() accepts
+	 * input}: a read-only or disabled field offers no input, see
+	 * {@link #scriptingDisplayCommands()}.
+	 */
+	@Override
+	public ExecutableState scriptingCommandState(String command) {
+		if (!acceptsClientValue() && !scriptingDisplayCommands().contains(command)) {
+			return NOT_EDITABLE;
+		}
+		return super.scriptingCommandState(command);
 	}
 
 	/**

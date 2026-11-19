@@ -36,7 +36,8 @@ import com.top_logic.table.impl.ListRowSource;
  * <p>
  * Listeners are registered only for the observed types (to catch creates), the currently displayed
  * persistent objects (to catch their updates / deletes) and the input channels, so any received
- * notification simply means "re-evaluate".
+ * notification simply means "re-evaluate". The persistent objects the channels hold are observed
+ * as well, see {@link ChannelObjectObserver} and below.
  * </p>
  *
  * <p>
@@ -59,6 +60,15 @@ import com.top_logic.table.impl.ListRowSource;
  * <li>A model change re-evaluates the elements and delivers them in any case, even where they equal
  * the ones at hand: the displayed objects themselves may have changed.</li>
  * </ul>
+ *
+ * <p>
+ * A change of a persistent object held by a channel - the channel keeps its value, but an attribute
+ * of the object it points to is edited - is answered as a change of that channel's value would be,
+ * except for an ordinary input: there it counts as a model change, which delivers the elements even
+ * where they equal the ones at hand, since what the display builds from them may read the changed
+ * attribute. So the elements of a table computed from the attributes of its input object follow an
+ * edit of that object without any {@link ObservedTypes observed type}.
+ * </p>
  *
  * <p>
  * The element function receives the values of all input channels in their declared order, the
@@ -100,6 +110,14 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 	 * {@link #_cellInputs}.
 	 */
 	private final List<Registration> _registrations = new ArrayList<>();
+
+	/**
+	 * Observers of the objects held by the input channels that the elements depend on, by the
+	 * {@link #withRowIndependentInputs(Collection) row-independent inputs} and by the
+	 * {@link #withCellInputs(Collection) cell inputs}; created when the observation begins for the
+	 * first time, when the roles of the channels are known.
+	 */
+	private List<ChannelObjectObserver> _channelObjectObservers;
 
 	/** The currently displayed elements, whose updates / deletes are observed. */
 	private List<R> _elements;
@@ -259,7 +277,28 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 		registerObjectListeners();
 		registerTypeListeners();
 		registerChannelListeners();
+		for (ChannelObjectObserver observer : channelObjectObservers()) {
+			observer.attach(scope);
+		}
 		catchUp();
+	}
+
+	/**
+	 * The observers of the objects held by the channels, one for each role a channel plays.
+	 */
+	private List<ChannelObjectObserver> channelObjectObservers() {
+		if (_channelObjectObservers == null) {
+			List<ViewChannel> rowInputs = new ArrayList<>(_inputChannels);
+			rowInputs.removeAll(_rowIndependentInputs);
+			List<ViewChannel> rowIndependentInputs = new ArrayList<>(_inputChannels);
+			rowIndependentInputs.retainAll(_rowIndependentInputs);
+
+			_channelObjectObservers = List.of(
+				new ChannelObjectObserver(rowInputs, Set.of(), this::inputObjectChanged),
+				new ChannelObjectObserver(rowIndependentInputs, Set.of(), this::rowIndependentObjectChanged),
+				new ChannelObjectObserver(_cellInputs, Set.of(), this::cellInputObjectChanged));
+		}
+		return _channelObjectObservers;
 	}
 
 	/**
@@ -294,6 +333,9 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 		_attached = false;
 		_suspended = true;
 		deregisterObjectListeners();
+		for (ChannelObjectObserver observer : _channelObjectObservers) {
+			observer.detach();
+		}
 		for (Registration registration : _registrations) {
 			registration.dispose();
 		}
@@ -323,6 +365,39 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 		}
 		replaceElements(elements);
 		_sink.accept(elements);
+	}
+
+	/**
+	 * An object held by an input the elements depend on changed: the elements are re-evaluated and
+	 * delivered as for a model change.
+	 */
+	private void inputObjectChanged(ModelChangeEvent event) {
+		if (!_attached) {
+			return;
+		}
+		reEvaluate();
+	}
+
+	/**
+	 * An object held by a {@link #withRowIndependentInputs(Collection) row-independent input}
+	 * changed: as for a change of its value, only the inputs-changed handler runs.
+	 */
+	private void rowIndependentObjectChanged(ModelChangeEvent event) {
+		if (!_attached) {
+			return;
+		}
+		inputsChanged();
+	}
+
+	/**
+	 * An object held by a {@link #withCellInputs(Collection) cell input} changed: as for a change of
+	 * its value, the elements at hand are delivered again.
+	 */
+	private void cellInputObjectChanged(ModelChangeEvent event) {
+		if (!_attached) {
+			return;
+		}
+		_sink.accept(_elements);
 	}
 
 	/**

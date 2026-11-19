@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	A drill-down through the transactions of one type, embedded by demo/tiles-typed-demo.view.xml
+	once per type. The embedding binds the channel "type" to the transaction type it shows.
+	
+	The <param> of the transaction frame reads "type" as an input: expr writes the objectId of the
+	transaction into the address, reverse resolves an address only to a transaction of the type of
+	this embedding. An address naming a transaction of another type restores no frame.
+	
+	The stack binds "type" into its frames, so the initial list shows the transactions of that type.
+-->
+<view>
+	<channels>
+		<channel name="type"/>
+		<channel name="navPath"/>
+	</channels>
+
+	<stack>
+		<slot-content to="appbar-content">
+			<tile-breadcrumb path="navPath">
+				<home-label>
+					<en>Transactions</en>
+					<de>Transaktionen</de>
+				</home-label>
+			</tile-breadcrumb>
+		</slot-content>
+
+		<tile-stack
+			bind-path-to="navPath"
+			initial="demo/tiles-typed-demo/list.view.xml"
+			path="navPath"
+		>
+			<bindings>
+				<bind
+					channel="type"
+					to="type"
+				/>
+			</bindings>
+			<frame id="transaction"
+				final-title="true"
+				route="transaction/:transaction"
+				view="demo/tiles-typed-demo/detail.view.xml"
+			>
+				<param name="transaction"
+					expr="objectId($transaction)"
+					inputs="type"
+					reverse="$value.objectResolve(`demo.charts:Transaktion`).with(t -> $t.instanceOf($type) ? $t : null)"
+				/>
+				<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+					expr="$transaction.get(`demo.charts:Transaktion#beschreibung`)"
+					inputs="transaction"
+				/>
+			</frame>
+		</tile-stack>
+	</stack>
+</view>

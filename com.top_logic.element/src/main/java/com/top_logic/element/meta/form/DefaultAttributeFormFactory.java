@@ -56,6 +56,7 @@ import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.SelectField;
+import com.top_logic.layout.form.model.SelectFieldUtils;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.template.AbstractFormFieldControlProvider;
 import com.top_logic.layout.form.template.ControlProvider;
@@ -65,6 +66,7 @@ import com.top_logic.layout.table.provider.GenericTableConfigurationProvider;
 import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.AttributeValueListener;
 import com.top_logic.model.annotate.ModeSelector;
@@ -249,6 +251,11 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 
 			if (result instanceof FormField) {
 				FormField field = (FormField) result;
+
+				if (attribute instanceof TLReference) {
+					// The value of a reference may hold objects the user may not discover.
+					SelectFieldUtils.setMaskUndiscoverable(field, true);
+				}
 
 				TLConstraints annotation = attribute.getAnnotation(TLConstraints.class);
 				if (annotation != null) {

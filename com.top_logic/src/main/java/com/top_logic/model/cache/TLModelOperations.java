@@ -41,6 +41,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.InstancePresentation;
+import com.top_logic.model.annotate.TLLifecycleHandler;
 import com.top_logic.model.annotate.TLSortOrder;
 import com.top_logic.model.annotate.persistency.LinkTables;
 import com.top_logic.model.annotate.ui.TLDynamicColor;
@@ -617,6 +618,15 @@ public class TLModelOperations {
 	 */
 	public List<TLObjectInitializer> getInitializers(TLStructuredType type) {
 		return TLAnnotations.getInitializers(type);
+	}
+
+	/**
+	 * The {@link TLLifecycleHandler}s that are attached to the given type or any supertype.
+	 * 
+	 * @see TLAnnotations#getLifecycleHandlers(TLStructuredType)
+	 */
+	public List<TLLifecycleHandler> getLifecycleHandlers(TLStructuredType type) {
+		return TLAnnotations.getLifecycleHandlers(type);
 	}
 
 	/**

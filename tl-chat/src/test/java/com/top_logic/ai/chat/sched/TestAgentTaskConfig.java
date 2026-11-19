@@ -16,7 +16,7 @@ import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.ai.core.agent.approval.ApprovalMode;
 
 /**
  * The configuration surface of {@link AgentTask}: what an unconfigured task is, what the XML of

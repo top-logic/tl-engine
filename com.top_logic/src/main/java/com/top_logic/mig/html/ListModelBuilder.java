@@ -6,9 +6,13 @@
 package com.top_logic.mig.html;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 import com.top_logic.layout.table.component.TableComponent;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.listen.ModelListener;
 
 /**
  * {@link ModelBuilder} for {@link TableComponent}s.
@@ -69,6 +73,41 @@ public interface ListModelBuilder extends ModelBuilder {
 	 *         {@link #getModel(Object, LayoutComponent)}.
 	 */
 	public Object retrieveModelFromListElement(LayoutComponent component, Object candidate);
+
+	/**
+	 * The list elements whose display must be updated, because the given object changed.
+	 * 
+	 * <p>
+	 * A list element is updated by default when it changes itself. This method reports additional
+	 * elements whose display depends on the given object, e.g. elements showing values of a
+	 * referenced object in a computed column. It is called for changes of objects of the
+	 * {@link #getTypesToObserve() observed types}.
+	 * </p>
+	 * 
+	 * @param component
+	 *        The context component.
+	 * @param businessObject
+	 *        The changed object.
+	 * @return The elements to update. Elements not currently displayed are ignored.
+	 */
+	default Collection<?> getElementsToUpdate(LayoutComponent component, Object businessObject) {
+		return Collections.emptyList();
+	}
+
+	/**
+	 * The {@link TLStructuredType}s for which the list needs to register itself as
+	 * {@link ModelListener} in addition to the types of its elements.
+	 * 
+	 * <p>
+	 * The result has to be constant. It cannot be used for temporarily relevant objects.
+	 * </p>
+	 * 
+	 * @see #getElementsToUpdate(LayoutComponent, Object)
+	 * @see LayoutComponent#getTypesToObserve()
+	 */
+	default Set<TLStructuredType> getTypesToObserve() {
+		return Collections.emptySet();
+	}
 
 }
 

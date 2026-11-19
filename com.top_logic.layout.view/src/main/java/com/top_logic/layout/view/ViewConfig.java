@@ -20,7 +20,6 @@ import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.config.format.MillisFormat;
-import com.top_logic.basic.util.ResKey;
 
 /**
  * Application-level configuration for the view system.
@@ -41,30 +40,8 @@ public interface ViewConfig extends ConfigurationItem {
 	/** Configuration name for {@link #getLoginView()}. */
 	String LOGIN_VIEW = "login-view";
 
-	/** Configuration name for {@link #getTitle()}. */
-	String TITLE = "title";
-
 	/** Configuration name for {@link #getBusyDelay()}. */
 	String BUSY_DELAY = "busy-delay";
-
-	/**
-	 * The title of the application, naming it in the browser tab.
-	 *
-	 * <p>
-	 * The tab title is composed of the label of the innermost route the display shows that has one
-	 * - the item a sidebar selects, the tab a tab bar shows, the frame a tile stack drills into, the
-	 * object a route parameter names - followed by this title, e.g. "Ticket 4711 – My Application".
-	 * A page whose display names no labeled route is titled by this title alone.
-	 * </p>
-	 *
-	 * <p>
-	 * Unset for an application without a title of its own: the tab is then titled by the label of
-	 * the displayed route alone, and by {@link ViewServlet#DEFAULT_TITLE} where there is none.
-	 * </p>
-	 */
-	@Name(TITLE)
-	@Nullable
-	ResKey getTitle();
 
 	/**
 	 * The name of the default view file loaded when the {@link ViewServlet} is accessed without a
@@ -171,6 +148,9 @@ public interface ViewConfig extends ConfigurationItem {
 		/** Configuration name for {@link #isAnonymous()}. */
 		String ANONYMOUS = "anonymous";
 
+		/** Configuration name for {@link #isHoldUrl()}. */
+		String HOLD_URL = "hold-url";
+
 		/**
 		 * The view file, relative to {@code /WEB-INF/views/} in the webapp, e.g.
 		 * {@code demo/pdf-demo.view.xml}.
@@ -198,5 +178,23 @@ public interface ViewConfig extends ConfigurationItem {
 		@Name(ANONYMOUS)
 		@BooleanDefault(false)
 		boolean isAnonymous();
+
+		/**
+		 * Whether the page keeps the URL it was opened with, instead of showing the route of its
+		 * display in the address bar.
+		 *
+		 * <p>
+		 * An entry point usually is an application of its own: the address bar follows the
+		 * navigation inside it, and its addresses are deep links. A page whose address carries
+		 * what the page is about - e.g. an invitation opened as {@code join.view.xml?token=...} -
+		 * would lose that: its display has no route for the query, so the address composed from
+		 * the display drops it, and a reload shows the page without it. Such an entry point holds
+		 * its URL, the way the {@link ViewConfig#getLoginView() login view} holds the URL it stands
+		 * in for: the address bar keeps the view file and the query, and a reload shows the same
+		 * page again. Navigating inside the page then no longer changes the address bar.
+		 * </p>
+		 */
+		@Name(HOLD_URL)
+		boolean isHoldUrl();
 	}
 }

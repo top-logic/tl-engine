@@ -33,13 +33,23 @@ import com.top_logic.layout.react.control.form.ReactTextInputControl;
 public class MultiLineTextConfigProvider implements ConfigAnnotationControlProvider<MultiLine> {
 
 	@Override
+	public boolean accepts(ConfigFieldModel model, MultiLine annotation) {
+		return ConfigControlService.holdsText(model);
+	}
+
+	@Override
 	public ReactControl createControl(ReactContext context, ConfigFieldModel model, MultiLine annotation) {
-		if (!ConfigControlService.holdsText(model)) {
-			return null;
-		}
 		ReactTextInputControl input = ConfigControlService.createTextInput(context, model);
 		input.setMultiline(annotation.rows());
 		return input;
+	}
+
+	/**
+	 * The text area spans several lines and takes the whole row.
+	 */
+	@Override
+	public boolean rendersWholeLine(ConfigFieldModel model, MultiLine annotation) {
+		return true;
 	}
 
 	/**

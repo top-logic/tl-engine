@@ -189,6 +189,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_IDENTITY_VERIFICATION_UNKNOWN;
 
 	/**
+	 * @en The sign-in took too long; the confirmation has expired. Please start again.
+	 */
+	public static ResKey ERROR_IDENTITY_VERIFICATION_EXPIRED;
+
+	/**
 	 * @en Not registered
 	 */
 	@CalledFromJSP
@@ -219,6 +224,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     administrator.
 	 */
 	public static ResKey ERROR_EXTERNAL_LOGIN_FAILED;
+
+	/**
+	 * @en Your account is locked. Please contact your administrator.
+	 */
+	public static ResKey ERROR_ACCOUNT_LOCKED;
 
 	static {
 		initConstants(I18NConstants.class);

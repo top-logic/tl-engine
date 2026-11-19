@@ -44,6 +44,7 @@ import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.react.LabelDescription;
 import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
@@ -58,7 +59,6 @@ import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
-import com.top_logic.layout.view.channel.DeletedObjects;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.GenericViewCommand;
@@ -78,10 +78,11 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.LabelPosition;
+import com.top_logic.model.annotate.TLValueCount;
 import com.top_logic.model.annotate.TLValueNormalizer;
+import com.top_logic.model.annotate.util.ValueCountConstraintCheck;
 import com.top_logic.model.annotate.util.ValueNormalizer;
 import com.top_logic.model.config.AttributeConfigBase;
-import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
@@ -113,7 +114,8 @@ import com.top_logic.util.error.TopLogicException;
  * A value of an enumeration or a class is chosen from options: the classifiers respectively the
  * instances of the type, or whatever the {@link Config#getOptions() options expression} computes.
  * With {@link Config#getMultiple() multiple} set, the channel holds a collection of such values
- * instead of a single one.
+ * instead of a single one. An {@link Config#getOrdered() ordered} collection is a list whose order
+ * the user arranges, as in the field of an ordered attribute.
  * </p>
  *
  * <p>
@@ -127,11 +129,18 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * The value is declared in the words of an attribute of a class in the model: its
  * {@link Config#getType() type}, whether it is {@link Config#getMandatory() mandatory}, whether it
- * holds {@link Config#getMultiple() multiple} values, and the {@link Config#getAnnotations()
+ * holds {@link Config#getMultiple() multiple} values in an {@link Config#getOrdered() order} of
+ * their own, and the {@link Config#getAnnotations()
  * annotations} that shape its display - a {@code <classification-display>}, a
  * {@code <multi-line>}, a {@code <format>}, an {@code <input-control>} - which act on the input as
  * they act on a field of such an attribute. An annotation the input does not state is taken from
  * the type.
+ * </p>
+ *
+ * <p>
+ * A {@link TLValueCount} among the annotations of a {@link Config#getMultiple() multi-valued} input
+ * limits the number of its values: an input holding more is invalid, and the control adding values
+ * offers no further one at the maximum.
  * </p>
  *
  * <p>
@@ -165,12 +174,15 @@ public class ValueInputElement implements UIElement {
 	/**
 	 * Configuration for {@link ValueInputElement}.
 	 */
-	@TagName("value-input")
+	@TagName(Config.TAG_NAME)
 	@TypeIcon("css:bi bi-input-cursor-text")
 	public interface Config extends UIElement.Config, Inputs, AttributeConfigBase, ActionScopeDefinition {
 
 	/** Access to the default methods of this interface for the configuration proxy. */
 	Lookup LOOKUP = MethodHandles.lookup();
+
+		/** The tag name of a {@link ValueInputElement} in a view. */
+		String TAG_NAME = "value-input";
 
 		/** Configuration name for {@link #getOnSubmitAs()}. */
 		String SUBMIT_AS = "submit-as";
@@ -200,6 +212,9 @@ public class ValueInputElement implements UIElement {
 
 		/** Configuration name for {@link #getMultiple()}. */
 		String MULTIPLE = "multiple";
+
+		/** Configuration name for {@link #getOrdered()}. */
+		String ORDERED = TLStructuredTypePart.ORDERED_ATTR;
 
 		/** Configuration name for {@link #getMandatory()}. */
 		String MANDATORY = TLStructuredTypePart.MANDATORY_ATTR;
@@ -334,6 +349,25 @@ public class ValueInputElement implements UIElement {
 		boolean getMultiple();
 
 		/**
+		 * Whether the order of the {@link #getMultiple() multiple} values is part of the value, so
+		 * that the user arranges it.
+		 *
+		 * <p>
+		 * The same statement the ordered flag makes for an attribute: the chosen values are moved
+		 * by dragging their chips or with Alt and an arrow key, and the channel holds them as a
+		 * list in the order shown. Without it, the values are shown in the order of the options,
+		 * and the order of the list on the channel means nothing.
+		 * </p>
+		 *
+		 * <p>
+		 * Only a value of {@link #getMultiple() multiple} values has an order; stating it for a
+		 * single value is a configuration error.
+		 * </p>
+		 */
+		@Name(ORDERED)
+		boolean getOrdered();
+
+		/**
 		 * Whether the value may not be empty.
 		 *
 		 * <p>
@@ -352,6 +386,11 @@ public class ValueInputElement implements UIElement {
 		 * <p>
 		 * Without one, the input stands alone, which is what an input in a toolbar or above a list
 		 * does, where the surrounding display says what it is for.
+		 * </p>
+		 *
+		 * <p>
+		 * The tooltip of the label explains the input, as the description of an attribute explains
+		 * its field: it is shown as tooltip of the label and as help while the value is edited.
 		 * </p>
 		 */
 		@Name(LABEL)
@@ -404,8 +443,9 @@ public class ValueInputElement implements UIElement {
 		 * </p>
 		 *
 		 * <p>
-		 * Offered by an input over a text; an input over a number, a date, a truth value or a
-		 * selection ignores it.
+		 * The button is asked for by an input the user empties by deleting what is typed: a text in
+		 * a single line or in a text area, a password and a number. An input over a date, a time of day or a selection offers the button on its
+		 * own whenever it is not mandatory.
 		 * </p>
 		 */
 		@Name(CLEARABLE)
@@ -464,6 +504,13 @@ public class ValueInputElement implements UIElement {
 		/**
 		 * Where the input renders its label relative to itself, e.g. {@code hide-label} for a
 		 * label-less input.
+		 *
+		 * <p>
+		 * With {@code placeholder}, the label is not shown beside the input but as placeholder in
+		 * the empty input, and remains the accessible name of the input. An explicit
+		 * {@link #getPlaceholder() placeholder} takes precedence over the label. An input that
+		 * shows no placeholder shows no label, as with {@code hide-label}.
+		 * </p>
 		 *
 		 * <p>
 		 * If not set, the position falls back to the responsive default of the enclosing layout.
@@ -580,7 +627,15 @@ public class ValueInputElement implements UIElement {
 
 	private final boolean _multiple;
 
+	private final boolean _ordered;
+
 	private final boolean _mandatory;
+
+	/**
+	 * The check of the {@link TLValueCount maximum number of values} of a
+	 * {@link Config#getMultiple() multi-valued} input, {@code null} where the number is not limited.
+	 */
+	private final ValueCountConstraintCheck _valueCount;
 
 	private final AnnotationLookup _annotations;
 
@@ -626,7 +681,14 @@ public class ValueInputElement implements UIElement {
 		_observedTypes = config.getObservedTypes();
 		_optionOrder = config.getOptionOrder();
 		_multiple = config.getMultiple();
+		_ordered = config.getOrdered();
+		if (_ordered && !_multiple) {
+			context.error("A <" + Config.TAG_NAME + "> with '" + Config.ORDERED + "' arranges several values and needs '"
+				+ Config.MULTIPLE + "': " + config.location());
+		}
 		_mandatory = config.getMandatory();
+		_valueCount =
+			_multiple ? ValueCountConstraintCheck.forAnnotation(config.getAnnotation(TLValueCount.class)) : null;
 		_annotations = config;
 		_normalizer = ValueNormalizer.annotated(config);
 		_label = config.getLabel();
@@ -670,11 +732,12 @@ public class ValueInputElement implements UIElement {
 		// Set after binding: the value the channel holds is shown as it is, only an entered value is
 		// normalized.
 		field.setNormalizer(_normalizer);
-		FieldModelListener mandatoryCheck = _mandatory ? checkMandatory(field) : null;
+		FieldModelListener valueCheck = _mandatory || _valueCount != null ? checkValue(field) : null;
 
 		Resources resources = Resources.getInstance();
 		String label = _label == null ? null : resources.getString(_label);
 		FieldSpec spec = FieldControlService.fieldSpec(type, _annotations, label, _multiple, field);
+		spec.setOrdered(_ordered);
 		if (_optionOrder != null) {
 			spec.setOptionOrder(AttributeOptions.comparator(_optionOrder));
 		} else if (_options != null) {
@@ -683,13 +746,15 @@ public class ValueInputElement implements UIElement {
 		}
 		if (_placeholder != null) {
 			spec.setPlaceholder(resources.getString(_placeholder));
+		} else if (spec.getPlaceholder() == null) {
+			spec.setPlaceholder(AttributeFieldControl.labelPlaceholder(_labelPosition, label));
 		}
 		spec.setIcon(_icon).setClearable(_clearable).setDebounce(_debounce);
 		ReactControl input = FieldControlService.getInstance().createFieldControl(context, type, _annotations,
 			spec, field, _inputControl);
 		input.addCleanupAction(binding::dispose);
-		if (mandatoryCheck != null) {
-			input.addCleanupAction(() -> field.removeListener(mandatoryCheck));
+		if (valueCheck != null) {
+			input.addCleanupAction(() -> field.removeListener(valueCheck));
 		}
 
 		if (options != null) {
@@ -706,9 +771,11 @@ public class ValueInputElement implements UIElement {
 			return input;
 		}
 		boolean editable = field.isEditable();
+		String description = LabelDescription.description(resources, _label);
 		ReactFormFieldChromeControl chrome =
-			new ReactFormFieldChromeControl(context, label, _mandatory && editable, false, null, null,
+			new ReactFormFieldChromeControl(context, label, _mandatory && editable, false, null, description,
 				AttributeFieldControl.wirePosition(_labelPosition, editable), false, true, input);
+		chrome.setTooltipText(description);
 		chrome.setCssClass(_cssClass);
 		followEditMode(editModeChannel, form, field, input, chrome);
 		return chrome;
@@ -793,9 +860,9 @@ public class ValueInputElement implements UIElement {
 	 * </p>
 	 *
 	 * <p>
-	 * A {@link Config#getMandatory() mandatory} value that is empty is not handed to the command:
-	 * the field shows the missing value, and the finished edit or the submit succeeds without
-	 * running anything.
+	 * A {@link Config#getMandatory() mandatory} value that is empty, and a value holding more values
+	 * than its {@link TLValueCount} allows, is not handed to the command: the field shows the
+	 * problem, and the finished edit or the submit succeeds without running anything.
 	 * </p>
 	 */
 	private void followSubmit(ViewContext context, ReactControl input, AbstractFieldModel field,
@@ -804,8 +871,8 @@ public class ValueInputElement implements UIElement {
 			ViewCommandModel.forCommand(context, _submitCommand, _submitCommandConfig, _submitAs);
 		if (input instanceof ReactFormFieldControl fieldControl && fieldControl.commitsEdits()) {
 			Consumer<Object> submit = value -> {
-				if (missingValue(value) != null) {
-					// The field reports the missing value; the submit itself has nothing to add.
+				if (invalidValue(value) != null) {
+					// The field reports the problem; the submit itself has nothing to add.
 					field.setRevealed(true);
 					return;
 				}
@@ -823,8 +890,8 @@ public class ValueInputElement implements UIElement {
 			}
 		} else {
 			binding.setCommitListener(value -> {
-				if (missingValue(value) != null) {
-					// The value change reveals the missing value at the field.
+				if (invalidValue(value) != null) {
+					// The value change reveals the problem at the field.
 					return;
 				}
 				try {
@@ -838,8 +905,9 @@ public class ValueInputElement implements UIElement {
 	}
 
 	/**
-	 * Checks the value of a {@link Config#getMandatory() mandatory} field for emptiness, now and on
-	 * every change.
+	 * Checks the value of a {@link Config#getMandatory() mandatory} field for emptiness and the value
+	 * of a {@link Config#getMultiple() multi-valued} field for its {@link TLValueCount maximum
+	 * number of values}, now and on every change.
 	 *
 	 * <p>
 	 * The check reports at the field only once the field is revealed, which a change of its value
@@ -848,12 +916,12 @@ public class ValueInputElement implements UIElement {
 	 *
 	 * @return The registered listener, to be removed when the input goes away.
 	 */
-	private FieldModelListener checkMandatory(AbstractFieldModel field) {
-		field.setModelValidationError(missingValue(field.getValue()));
+	private FieldModelListener checkValue(AbstractFieldModel field) {
+		field.setModelValidationError(invalidValue(field.getValue()));
 		FieldModelListener listener = new FieldModelListener() {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
-				field.setModelValidationError(missingValue(newValue));
+				field.setModelValidationError(invalidValue(newValue));
 				field.setRevealed(true);
 			}
 
@@ -872,11 +940,17 @@ public class ValueInputElement implements UIElement {
 	}
 
 	/**
-	 * The error reporting that the given value is missing, or {@code null} if the value is given or
-	 * may be empty.
+	 * The error reporting that the given value is missing or holds more values than allowed, or
+	 * {@code null} if the value is valid.
 	 */
-	private ResKey missingValue(Object value) {
-		return _mandatory ? MandatoryConstraintCheck.INSTANCE.checkValue(value) : null;
+	private ResKey invalidValue(Object value) {
+		if (_mandatory) {
+			ResKey missing = MandatoryConstraintCheck.INSTANCE.checkValue(value);
+			if (missing != null) {
+				return missing;
+			}
+		}
+		return _valueCount == null ? null : _valueCount.checkValue(value);
 	}
 
 	/**
@@ -921,14 +995,7 @@ public class ValueInputElement implements UIElement {
 	 *        passed on as nothing.
 	 */
 	private List<?> options(TLType type, Object[] inputValues) {
-		if (_options == null) {
-			return AttributeOptions.optionsFor(type);
-		}
-		Object[] args = new Object[inputValues.length];
-		for (int n = 0, cnt = args.length; n < cnt; n++) {
-			args[n] = DeletedObjects.withoutDeleted(inputValues[n]);
-		}
-		return SearchExpression.asList(_options.execute(args));
+		return AttributeOptions.optionsFor(type, _options, inputValues);
 	}
 
 }

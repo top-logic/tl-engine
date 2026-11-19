@@ -23,7 +23,6 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.FaviconTag;
 import com.top_logic.layout.react.resource.ClientResources;
@@ -150,16 +149,6 @@ public class ViewServlet extends TopLogicServlet {
 	 */
 	public static final String BUSY_DELAY_ATTR = "data-busy-delay";
 
-	/**
-	 * The title of a page whose application has no {@link ViewConfig#getTitle() title}.
-	 *
-	 * <p>
-	 * The page is loaded with it and shows it while its display names no labeled route: the title
-	 * the display composes takes its place as soon as there is one.
-	 * </p>
-	 */
-	public static final String DEFAULT_TITLE = "TopLogic";
-
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
@@ -175,6 +164,17 @@ public class ViewServlet extends TopLogicServlet {
 		if (windowName == null) {
 			writeBootstrapPage(request, response);
 			return;
+		}
+
+		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
+
+		// Collect the windows whose page was unloaded and did not come back within the grace period
+		// - before the subsession of this window is looked up, and sparing this window, whose page
+		// comes back with this request: otherwise a tab returning from another site after the grace
+		// period would be torn down after its subsession was installed for the page, and the page
+		// would be displayed in a subsession no later command finds.
+		try (Interaction interaction = windowRegistry.beginInteraction()) {
+			windowRegistry.sweepUnloadedWindows(windowName);
 		}
 
 		// Create or reuse the SubSession for this browser tab. On F5 (page reload) the
@@ -209,12 +209,16 @@ public class ViewServlet extends TopLogicServlet {
 			}
 		}
 
-		ReactWindowRegistry windowRegistry = ReactWindowRegistry.forSession(session);
-
 		// Rendering the page attaches the window's tree, and that changes the display like any
 		// command does - on a reload, while the report of the page just unloaded detaches the same
 		// tree. The trees are therefore only touched within an interaction.
 		try (Interaction interaction = windowRegistry.beginInteraction()) {
+			// The page sees the current state of the knowledge base, including the commits other
+			// threads made since the window's last request: the session revision of a window that
+			// exists already only advances when its model events are synthesized, and a reloaded page
+			// renders the control tree the window keeps.
+			windowRegistry.synthesizeModelEvents(windowName);
+
 			displayWindow(request, response, subSession, windowRegistry, windowName, address);
 
 			// The client of the rendered page connects within seconds. One that never does - the tab
@@ -251,8 +255,6 @@ public class ViewServlet extends TopLogicServlet {
 			TLSubSessionContext subSession, ReactWindowRegistry windowRegistry, String windowName,
 			String address) throws IOException {
 		PageAddress page = PageAddress.parse(address);
-		// Collect the windows whose page was unloaded and did not come back within the grace period.
-		windowRegistry.sweepUnloadedWindows();
 		SSEUpdateQueue sseQueue = windowRegistry.getOrCreateQueue(windowName);
 		// The page rendered now replaces the one the window displayed: the previous page's stream and
 		// poll end, and what is enqueued from here on waits for this page's client.
@@ -317,6 +319,7 @@ public class ViewServlet extends TopLogicServlet {
 		ViewResolution resolution = resolveNamedView(viewConfig, viewFile, anonymous);
 		String viewPath = resolution.viewPath();
 		boolean loginView = resolution.loginView();
+		boolean holdUrl = resolution.holdsUrl();
 		if (viewPath == null) {
 			response.sendError(HttpServletResponse.SC_NOT_FOUND, "No such entry point.");
 			return;
@@ -358,7 +361,7 @@ public class ViewServlet extends TopLogicServlet {
 		RenderedView rendered = RenderedView.lookup(subSession);
 		if (displayed != null && !rebuildRequested && rendered != null
 			&& rendered.matches(viewPath, view, locale, user)) {
-			renderAgain(request, response, displayed, sseQueue, pagePath, url, loginView);
+			renderAgain(request, response, displayed, sseQueue, pagePath, url, holdUrl);
 			return;
 		}
 		if (displayed != null) {
@@ -371,7 +374,7 @@ public class ViewServlet extends TopLogicServlet {
 
 		ReactContext baseContext = new DefaultReactContext(
 			request.getContextPath(), windowName, sseQueue, windowRegistry);
-		wireRouteManager(baseContext, sseQueue, pagePath, url, loginView);
+		wireRouteManager(baseContext, sseQueue, pagePath, url, holdUrl);
 		ReactSnackbarControl snackbar = createWindowSnackbar(baseContext);
 		// The window's overlays report the results of their commands - a menu selection, say - to
 		// the window snackbar.
@@ -408,18 +411,18 @@ public class ViewServlet extends TopLogicServlet {
 	 * @param url
 	 *        The URL requested, adopted by the tree while it is rendered (a deep link entered in an
 	 *        existing tab).
-	 * @param loginView
-	 *        Whether the tree is the application's login view, which keeps the requested URL instead
-	 *        of taking it up - see
+	 * @param holdUrl
+	 *        Whether the page keeps the requested URL instead of taking it up - the login view, and
+	 *        an entry point that {@link ViewConfig.EntryPoint#isHoldUrl() holds its URL}. See
 	 *        {@link #wireRouteManager(ReactContext, SSEUpdateQueue, String, String, boolean)}.
 	 */
 	private void renderAgain(HttpServletRequest request, HttpServletResponse response,
 			ReactControl rootControl, SSEUpdateQueue sseQueue, String pagePath, String url,
-			boolean loginView) throws IOException {
+			boolean holdUrl) throws IOException {
 		ReactContext context = rootControl.getReactContext();
 
 		sseQueue.setRootControl(rootControl);
-		wireRouteManager(context, sseQueue, pagePath, url, loginView);
+		wireRouteManager(context, sseQueue, pagePath, url, holdUrl);
 
 		renderPage(request, response, rootControl, context);
 	}
@@ -711,13 +714,6 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * The {@link ViewConfig#getTitle() title of the application}, or {@code null} if it has none.
-	 */
-	private static ResKey applicationTitle() {
-		return ApplicationConfig.getInstance().getConfig(ViewConfig.class).getTitle();
-	}
-
-	/**
 	 * Writes the {@link #BUSY_DELAY_ATTR} of the page body, while its begin tag is open.
 	 *
 	 * @param out
@@ -746,14 +742,14 @@ public class ViewServlet extends TopLogicServlet {
 	 *        view.
 	 * @param url
 	 *        The URL to take up, starting with the page path; {@code null} for none.
-	 * @param loginView
-	 *        Whether the page displays the application's login view. Such a page is not the
-	 *        application the URL addresses, so it takes the URL up not at all: the URL is
-	 *        {@link RouteManager#holdUrl(String) held}, which keeps the address the visitor asked
-	 *        for while they log in.
+	 * @param holdUrl
+	 *        Whether the page takes the URL up not at all, but {@link RouteManager#holdUrl(String)
+	 *        holds} it. The login view is not the page the URL addresses, and an entry point that
+	 *        {@link ViewConfig.EntryPoint#isHoldUrl() holds its URL} carries what it is about in its
+	 *        address: both keep the address that was asked for.
 	 */
 	private void wireRouteManager(ReactContext context, SSEUpdateQueue sseQueue, String pagePath,
-			String url, boolean loginView) {
+			String url, boolean holdUrl) {
 		RouteManager routeManager = context.getRouteManager();
 		if (routeManager == null) {
 			return;
@@ -761,7 +757,7 @@ public class ViewServlet extends TopLogicServlet {
 
 		routeManager.setPagePath(pagePath);
 		String requestedRoute = url == null ? "" : url;
-		if (loginView) {
+		if (holdUrl) {
 			routeManager.holdUrl(requestedRoute);
 		} else {
 			// Unconditionally, an empty route included: a freshly loaded page displays what its URL
@@ -770,7 +766,7 @@ public class ViewServlet extends TopLogicServlet {
 			routeManager.adoptUrl(requestedRoute);
 		}
 
-		routeManager.setApplicationTitle(applicationTitle());
+		routeManager.setApplicationTitle(com.top_logic.layout.I18NConstants.APPLICATION_TITLE);
 		routeManager.setUrlChangeHandler((changedUrl, title, replace) -> {
 			RouteChangeEvent event = RouteChangeEvent.create()
 				.setUrl(changedUrl)
@@ -788,9 +784,10 @@ public class ViewServlet extends TopLogicServlet {
 	 * <p>
 	 * Which view is displayed and whether that view is the application's login view are one
 	 * decision, made by {@link ViewServlet#resolveView(ViewConfig, String, boolean)}: the login
-	 * view stands in for the page the URL names, while every other view <em>is</em> that page -
-	 * which is what decides whether the requested route is
-	 * {@link RouteManager#adoptUrl(String) adopted} or {@link RouteManager#holdUrl(String) held}.
+	 * view stands in for the page the URL names, while every other view <em>is</em> that page.
+	 * The login view, and an entry point declared {@link ViewConfig.EntryPoint#isHoldUrl() to hold
+	 * its URL}, keep the requested URL ({@link #holdsUrl()}); every other URL is
+	 * {@link RouteManager#adoptUrl(String) adopted}.
 	 * </p>
 	 *
 	 * @param viewPath
@@ -799,8 +796,12 @@ public class ViewServlet extends TopLogicServlet {
 	 * @param loginView
 	 *        Whether the displayed view is the {@link ViewConfig#getLoginView() login view} shown
 	 *        in place of the page the URL names.
+	 * @param holdsUrl
+	 *        Whether the page keeps the URL it was requested with instead of taking it up: the login
+	 *        view, which is not the page the URL addresses, and an entry point that
+	 *        {@link ViewConfig.EntryPoint#isHoldUrl() holds its URL}.
 	 */
-	public record ViewResolution(String viewPath, boolean loginView) {
+	public record ViewResolution(String viewPath, boolean loginView, boolean holdsUrl) {
 		// Pure result of the resolution.
 	}
 
@@ -851,15 +852,17 @@ public class ViewServlet extends TopLogicServlet {
 	 */
 	private static ViewResolution resolveNamedView(ViewConfig config, String namedView, boolean anonymous) {
 		if (anonymous && hasLoginView(config) && !isAnonymousEntryPoint(config, namedView)) {
-			return new ViewResolution(config.getLoginView().fullPath(), true);
+			return new ViewResolution(config.getLoginView().fullPath(), true, true);
 		}
 		if (namedView == null) {
-			return new ViewResolution(config.getDefaultView().fullPath(), false);
+			return new ViewResolution(config.getDefaultView().fullPath(), false, false);
 		}
 		if (!isEntryPoint(config, namedView)) {
-			return new ViewResolution(null, false);
+			return new ViewResolution(null, false, false);
 		}
-		return new ViewResolution(ViewLoader.VIEW_BASE_PATH + namedView, false);
+		ViewConfig.EntryPoint entryPoint = entryPoint(config, namedView);
+		return new ViewResolution(ViewLoader.VIEW_BASE_PATH + namedView, false,
+			entryPoint != null && entryPoint.isHoldUrl());
 	}
 
 	/**
@@ -1136,9 +1139,7 @@ public class ViewServlet extends TopLogicServlet {
 		out.endBeginTag();
 		// The application title: the page title the display composes is sent once the route of the
 		// page is adopted.
-		ResKey applicationTitle = applicationTitle();
-		out.writeText(
-			applicationTitle == null ? DEFAULT_TITLE : Resources.getInstance().getString(applicationTitle));
+		out.writeText(Resources.getInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE));
 		out.endTag(HTMLConstants.TITLE);
 		// The application icon: without it the browser asks for /favicon.ico, which an application
 		// at the root of the server does not have.

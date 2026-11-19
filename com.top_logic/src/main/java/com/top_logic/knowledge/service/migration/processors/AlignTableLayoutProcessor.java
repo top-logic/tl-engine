@@ -264,7 +264,7 @@ public class AlignTableLayoutProcessor extends AbstractConfiguredInstance<AlignT
 	/**
 	 * The given type, if it is stored in a table of its own.
 	 */
-	private static MOClass tableType(MetaObject type) {
+	static MOClass tableType(MetaObject type) {
 		if (type == null || type.getKind() != MetaObject.Kind.item) {
 			return null;
 		}

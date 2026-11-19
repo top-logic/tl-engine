@@ -4,6 +4,8 @@ export { registerRootWrapper, DEFAULT_ROOT_WRAPPER_ORDER } from './bridge/root-w
 export type { RootWrapper, RootWrapperOptions } from './bridge/root-wrapper';
 export { connect, expectEvents, subscribe, unsubscribe } from './bridge/sse-client';
 export {
+  MOUNT_ATTRIBUTE,
+  findMountPoint,
   mount,
   mountField,
   unmount,
@@ -28,14 +30,16 @@ export {
 export type { TLTypingField, TLTypingFieldOptions } from './bridge/tl-react-bridge';
 export { useUncontrolledFieldSync } from './bridge/uncontrolled-field';
 export type { UncontrolledFieldSync, UncontrolledFieldSyncOptions } from './bridge/uncontrolled-field';
-export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, firstFocusable } from './bridge/focus-trap';
+export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, anchoredOverlayOf, firstFocusable } from './bridge/focus-trap';
 export { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, TOOLTIP_WHEN_CLIPPED, tooltipProps } from './bridge/tooltip-host';
-export { BACKGROUND_COMMAND, CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED, registerPendingFlush, unregisterPendingFlush } from './bridge/command-channel';
+export { BACKGROUND_COMMAND, BACKGROUND_REPORT, CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED, registerPendingFlush, unregisterPendingFlush } from './bridge/command-channel';
 export type { CommandOptions, CommandResponse } from './bridge/command-channel';
 export { pushLocalStep } from './bridge/route-sync';
 export { isPageLeaving, leavePage, onPageLeave, reloadForStaleUi } from './bridge/page-leave';
 export { FieldLabelContext, fieldLabel, fieldInputId, useFieldLabelProps, focusFieldInput } from './bridge/field-label';
 export type { FieldLabel, FieldLabelProps } from './bridge/field-label';
+export { FieldExplanation, explanationTooltip, EXPLANATION_ICON } from './bridge/field-explanation';
+export type { FieldExplanationProps } from './bridge/field-explanation';
 export { FormLayoutContext, useFormLayout } from './bridge/form-layout';
 export type { FormLayout } from './bridge/form-layout';
 export { useTabList } from './bridge/tab-list';
@@ -49,6 +53,8 @@ export type { MenuProps } from './bridge/menu';
 export { ButtonDefaults, useButtonDefaults, menuItemProps } from './bridge/button-defaults';
 export type { ButtonAppearance, ButtonDefaultsValue } from './bridge/button-defaults';
 export { registerPart, replacePart, usePart, buttonPartAttributes, buttonLinkAttributes } from './bridge/parts';
+export { badgePartProps, badgeName, labelWithBadge } from './bridge/parts';
+export { StateBadge } from './bridge/StateBadge';
 export type {
   PartProps,
   PartName,
@@ -71,8 +77,14 @@ export type {
   ChipPartProps,
   ColorRole,
   BadgePartProps,
+  AvatarPartProps,
+  AvatarSize,
   DividerPartProps,
   DividerOrientation,
+  DividerLabelPosition,
+  DividerInset,
+  SkeletonPartProps,
+  SkeletonShape,
   ProgressBarPartProps,
   SpinnerPartProps,
   SpinnerSize,
@@ -84,12 +96,14 @@ export {
   useSuggestions, applySuggestion, CMD_SUGGEST, ARG_SUGGEST_TEXT, ARG_SUGGEST_CARET, SUGGEST_DEBOUNCE_MS,
 } from './bridge/suggestions';
 export type { Suggestions, SuggestionsOptions, SuggestionsAnswer, ComboboxAttributes } from './bridge/suggestions';
-export { OptionValues } from './bridge/option-values';
+export { OptionValues, OPTION_TOOLTIP_PREFIX, optionTooltipProps } from './bridge/option-values';
 export type { OptionDescriptor } from './bridge/option-values';
-export { writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, kindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, boundaryAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
-export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDrag, TLDragStart } from './bridge/drag-drop';
+export { writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, kindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, boundaryAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL, DROP_ARG_X, DROP_ARG_Y, putDropPoint } from './bridge/drag-drop';
+export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDrag, TLDragStart, TLDropPoint } from './bridge/drag-drop';
+export { DropHint, NO_DRAG_IMAGE } from './bridge/drop-hint';
+export type { DropVerdict, HintAnchor } from './bridge/drop-hint';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
-export { INTERACTIVE_SELECTOR, isInteractiveWithin, isInteractiveTarget, isOperableTarget } from './bridge/interactive';
+export { INTERACTIVE_SELECTOR, isInteractiveWithin, isInteractiveTarget, isOperableTarget, operableSelector } from './bridge/interactive';
 export { ATTR_LONG_PRESS, LONG_PRESS_EVENT } from './bridge/touch-drag';
 export type { PointerDragOptions } from './bridge/pointer-drag';
 export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-press';
@@ -139,6 +153,7 @@ export type {
   FieldStateJson,
   TypingFieldStateJson,
   ChildControlJson,
+  BadgeJson,
   ButtonStateJson,
   ToggleButtonStateJson,
   CheckboxStateJson,
@@ -164,10 +179,12 @@ export type {
   AppBarStateJson,
   BreadcrumbStateJson,
   ProgressStateJson,
+  DividerStateJson,
   ImageSourceStateJson,
   AvatarStateJson,
   SliderStateJson,
   FloatingActionStateJson,
+  DataListStateJson,
 } from './state/control-state';
 export { useI18N } from './bridge/i18n';
 export { useCopyToClipboard, COPIED_DISPLAY_MS } from './bridge/clipboard';
@@ -178,6 +195,7 @@ export { lockMode, THEME_CLIENT_API, LOCK_MODE_FUNCTION } from './bridge/theme-m
 export type { ThemeMode } from './bridge/theme-mode';
 export { rootClassName, stateAttr } from './bridge/css';
 export { tokenPx, tokenMs, useTokenPx, useTokenSwitch } from './bridge/token-px';
+export { useElementWidth } from './bridge/element-size';
 export { isEditorTarget } from './bridge/editor-target';
 export { filterOptions, labelMatches } from './bridge/filter-options';
 export { useFocusAfterRemove } from './bridge/focus-after-remove';
@@ -190,7 +208,7 @@ export type { FillHost } from './bridge/fill';
 export { default as TLChild } from './bridge/TLChild';
 export { ThemeIcon } from './bridge/ThemeIcon';
 export type { ChildDescriptor } from './bridge/TLChild';
-export { useChildStates, useChildCommand } from './bridge/child-states';
+export { useChildContexts, useChildStates, useChildCommand } from './bridge/child-states';
 export { useFloatingFrame, FloatingFrame, FloatingRail, useFloatingAnchor, FLOATING_RAIL_CLASS } from './bridge/floating-anchor';
 export type { FloatingEdge, FloatingFrameHost, FloatingAnchor } from './bridge/floating-anchor';
 export { registerTransientOverlay, useTransientOverlay, useTransientOverlayRects, clearance, useOverlayClearance } from './bridge/transient-overlay';

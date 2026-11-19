@@ -1,5 +1,5 @@
 ---
-description: Read before arranging content in a .view.xml with <stack>, <grid>, <columns>, <object-list> (with <link-access> / <remove-access>), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>), or displaying content of a view in an enclosing region with <slot> / <slot-content> (SlotRegistry routing by tree distance, the <empty> fallback of a slot, the app bar slots appbar-content and appbar-leading).
+description: Read before arranging content in a .view.xml with <stack>, <grid>, <divider> (a horizontal or vertical line, with a text in the line or inset), <columns>, <split-panel> (pane sizes, stacking when too narrow), <object-list> (with <link-access> / <remove-access>), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>), sizing a dialog with <window width height>, or displaying content of a view in an enclosing region with <slot> / <slot-content> (SlotRegistry routing by tree distance, the <empty> fallback of a slot, the app bar slots appbar-content and appbar-leading).
 order: 20
 ---
 
@@ -43,7 +43,7 @@ A content column that stays readable on a wide screen is a bounded stack:
 >
 	<text
 		label="Quarterly report"
-		variant="headline"
+		variant="heading-lg"
 	/>
 	<text label="Figures as of yesterday."/>
 </stack>
@@ -61,7 +61,7 @@ further lines where the screen is too narrow for them:
 >
 	<text
 		label="Open tickets"
-		variant="title"
+		variant="heading-sm"
 	/>
 	<button .../>
 </stack>
@@ -80,6 +80,44 @@ work across the direction of a column, while filling is about the height a conta
 own container. A bounded stack that hosts a filling child still carries `tl-fill` and still reports
 filling upwards, so a table inside a centered content column keeps bounding its own scroll viewport.
 
+## A line between content: `<divider>`
+
+`<divider>` (`DividerElement`, `ReactDividerControl`, `TLDivider`) draws a line that separates the
+content before it from the content after it - in a stack, between the children of a row, in a card.
+It is drawn by the part `Divider` (see [Parts](doc:view-layer/parts)), so a customer component
+library that replaces the part draws it as well; colour and width come from the tokens of the theme
+(`--tl-border-separator`, `--tl-border-width-sm`), and the line carries the role `separator`.
+
+- **`orientation`** - `horizontal` (the default): a line across, between content stacked one above
+  the other; `vertical`: a line standing in a row (`<stack direction="row">`), stretched to the
+  height of the row. The direction is always the written one; it is not derived from the element
+  around the line.
+- **`label`** - a short, translatable text shown in the line, e.g. the name of the section below
+  it. Only a horizontal line carries one; a `label` on a vertical line is a configuration error.
+- **`label-position`** - where the text stands: `start`, `center` (the default) or `end`.
+- **`inset`** - `none` (the default): the whole width; `start`: shortened at its start by the indent
+  of an entry of a list (one level of a tree, `--tl-size-control-sm`), for the lines between the
+  entries of a list.
+
+```xml
+<divider/>
+
+<divider label-position="start">
+	<label>
+		<en>Address</en>
+		<de>Adresse</de>
+	</label>
+</divider>
+
+<stack direction="row">
+	<card>...</card>
+	<divider orientation="vertical"/>
+	<card>...</card>
+</stack>
+```
+
+The space around the line is the gap of the container it stands in, as for every other child.
+
 ## A page of weighted columns: `<columns>`
 
 `<columns breakpoint="48rem" gap="default">` (`ColumnsElement`) lays a page out in columns of unequal width and reflows it to a single column when the space gets narrow. Each child is a `<column weight="2">` (`ColumnElement`); a column takes a share of the width in proportion to its weight (weight 1 by default), and its own children stand below each other over the full width of the column. Below the breakpoint the columns stack in the order they are written — the main column first, the side column below it.
@@ -95,7 +133,7 @@ Which of the arrangement elements fits:
 | `<grid>` | Many elements built alike, placed in as many equal columns as fit (`min-column-width`, `max-columns`). |
 | `<group>` | A section of the fields of a `<form>` or `<fields>`, under a heading and optionally folded away; it keeps the columns of that grid. |
 | `<stack direction="row">` | A row of elements that neither grow to a share of the width nor wrap. |
-| `<split-panel>` | Panes with splitters the user drags; fills its box, scrolls per pane, and never folds. |
+| `<split-panel>` | Panes with splitters the user drags; fills its box and scrolls per pane. Side by side, it stacks its panes when its width does not hold their minimum sizes. |
 | `<dashboard>` | Tiles of definite row height whose order the user personalizes. |
 
 ```xml
@@ -132,6 +170,14 @@ Which of the arrangement elements fits:
 
 The client classes an application styles against are `.tl-columns`, `.tl-columns--gap-<gap>` and `.tl-columns__column` (design system, `columns.css`). The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/columns-demo.view.xml`.
 
+## Panes the user resizes: `<split-panel>`
+
+`<split-panel orientation="horizontal" resizable="true">` (`SplitPanelElement`) places its `<pane>`s side by side (`horizontal`) or below each other (`vertical`), with a handle between two open panes the user drags. A pane gives its `size` in `unit` `%` (the panes in percent share the room left, their sizes acting as weights) or `px`, and its `min-size` in pixels. The split panel fills its box, each pane scrolls what does not fit into it, and the sizes the user drags are remembered per user.
+
+**Too narrow for the panes side by side, a horizontal split panel stacks them.** When its own width is less than the `min-size`s of its open panes plus the handles between them, the panes stand below each other: each spans the full width and is as high as its content, the split panel scrolls vertically, and there are no handles. A collapsed pane stays collapsed. Once the width suffices again, the panes are side by side with the sizes they had. As with `<columns>`, it is the width of the element itself that counts, not that of the browser window, so a split panel in a narrow dialog or a sidebar stacks just as it does on a phone. Nothing is configured for it; a vertical split panel keeps its arrangement.
+
+The client classes are `.tl-split`, `.tl-split--horizontal` / `.tl-split--vertical`, `.tl-split__pane` and `.tl-split__handle` (design system, `split.css`); the stacked arrangement is `data-tl-state~="stacked"` on `.tl-split`.
+
 ## Repeating a template over a computed list: `<object-list>`
 
 `<object-list>` (`ObjectListElement`) instantiates its `<item>` content once per object of a list it computes itself, with the object published on a channel (`element-channel`, `element` by default). What the list holds is decided by TL-Script over channel values, not by a containment the element knows about, so the same element serves the comments of a ticket, a catalogue of products and the result of a search.
@@ -140,7 +186,7 @@ The client classes an application styles against are `.tl-columns`, `.tl-columns
 - **With and without a container.** A read-only list configures `items` alone. A list that composes objects adds `element-type` plus the `<new-element>` content bound to `new-element-channel`, whose command chain persists the draft with `<link-element>`, and `<remove-element>` inside the `<item>` content detaches one. The composer appears only while *every* input holds a value, because an element is composed to be attached somewhere; `link` is what attaches it, so any containment style works — a composite reference, a back-reference, an association.
 - **Access of linking and removing.** `<link-access>` and `<remove-access>` declare what `link` and `remove` do in the model, with the checks of a command's `<access>` (`<operation name object type/>`, `<create type in reference/>`, see [the access of a command](doc:view-layer/access-control#commands-the-access-they-declare)). Their scripts see the same variables as `link` and `remove`: the inputs and the element. `<link-element>` and `<remove-element>` bring the declared checks as their own rule, decided on the main argument of their command as the element, so the command offering them is hidden or disabled where the list would refuse — it needs no `<access>` of its own. The `<new-element>` content is displayed only where the link access allows linking in the current context (the inputs, the composed element); a user who may not link sees no composer, as a unit the user may not see is hidden, and it reappears when an input changes to a context allowing it. Without a declaration nothing is checked: unlinking may need no right at all. With `inputs="ticket" element-as="comment"`: `<link-access><create in="$ticket" reference="demo.tickets:Ticket#comments"/></link-access>` and `<remove-access><operation name="Delete" object="$comment" type="demo.tickets:Comment"/></remove-access>`.
 - **Arrangement.** `layout="list"` (the default) stacks the elements in a column; `layout="grid"` places as many next to each other as fit, taking the shared grid options `min-column-width` (16rem by default), `max-columns`, `gap` and `max-width` — the same options `<grid>` takes (see [Layout: stack and grid](#layout-stack-and-grid)). `gap` and `max-width` apply to either arrangement, the column options to a grid.
-- **Selection.** `selection="ch"` makes the elements selectable like the entries of a list box: a click on an element writes its object to the channel, and the element of the object the channel holds is marked as selected (`aria-selected`; the design system draws a ring over the element, `layout.css`; `ItemSelectionBinding`, a `SelectionChannelBinding`; the arrangement container receives the elements together with their objects through `ReactLayoutControl.setItems`). `selection-mode="multi"` selects several elements with `Ctrl` and `Shift`; the channel then holds the set while several are selected. An element that leaves the list gives up the selection. Without `selection`, the list is display-only. A selection is recorded as `selectItemByKey` naming the object.
+- **Selection.** `selection="ch"` makes the elements selectable like the entries of a list box: a click on an element writes its object to the channel, and the element of the object the channel holds is marked as selected (`aria-selected`; the design system draws a ring over the element, `layout.css`; `ItemSelectionBinding`, a `SelectionChannelBinding`; the arrangement container receives the elements together with their objects through `ReactLayoutControl.setItems`). `selection-mode="multi"` selects several elements with `Ctrl` and `Shift`; the channel then holds the set while several are selected. An element that leaves the list gives up the selection. Without `selection`, the list is display-only. A selection is recorded as `selectItem` with the key of the object in place of the client key of the element, see [object ids and keys](doc:view-layer/headless-interface#object-ids-and-keys).
 - **Item wrapper and staggered entrance.** The client wraps every element in `<div class="tl-item tlObjectList__item" style="--item-index: 0">` carrying the 0-based position (`ObjectListElement.ITEM_CSS_CLASS`). The engine ships the position, not the animation: an application composes a per-item delay from it. The arrangement is what an application's rule addresses next to that class — a grid puts its items into a `.tl-grid`, a list into a `.tl-stack` — so an entrance can be given to the cards of a grid while the rows of a list keep appearing at once. Items are reused by key, so an element that stays through a change of the inputs keeps its DOM node and does not animate again — only the ones that appear do.
 
 ```xml
@@ -189,9 +235,9 @@ The demo is `com.top_logic.demo.react`'s `WEB-INF/views/demo/repeater-demo.view.
 
 `<kanban-board>` (`KanbanBoardElement`, control `ReactKanbanBoardControl`, client `TLKanbanBoard`) distributes computed objects into columns of cards. Over its `inputs`, which these two scripts see as variables named after the channels (or by their `as` names), `columns` computes the column values (the classifiers of an enumeration - `all(\`my:Status\`)` - or arbitrary objects), `items` the objects, whose order is their order within a column, and `column` maps an object - `$element`, renamed by `element-as` - to its column value; an object whose column value is none of the columns is not shown. The header shows `column-label` (computed from the column value `$column`, renamed by `column-as`; the label of the column value by default) and the number of cards. These scripts see the inputs as well (see [which names a script sees](doc:view-layer/channels#which-names-a-script-sees)).
 
-The `<card>` content is instantiated per object with the object on `element-channel` (`element` by default, as for `<object-list>`), by the same keyed `TemplateInstances` the items of `<object-list>` use: a card of an object that stays keeps its controls, also when the object moves to another column. `selection` names the channel a clicked card writes its object to; the card of the object the channel holds is highlighted (`ItemSelectionBinding`, a `SelectionChannelBinding`). The board follows its displayed objects and the `observed-types`, so changing the attribute the column is computed from moves the card. A card selection is recorded as `selectCardByKey` naming the object, since the client card keys are allocated per session.
+The `<card>` content is instantiated per object with the object on `element-channel` (`element` by default, as for `<object-list>`), by the same keyed `TemplateInstances` the items of `<object-list>` use: a card of an object that stays keeps its controls, also when the object moves to another column. `selection` names the channel a clicked card writes its object to; the card of the object the channel holds is highlighted (`ItemSelectionBinding`, a `SelectionChannelBinding`). The board follows its displayed objects and the `observed-types`, so changing the attribute the column is computed from moves the card. A card selection is recorded as `selectCard` with the key of the object in place of the client card key, which is allocated per session, see [object ids and keys](doc:view-layer/headless-interface#object-ids-and-keys).
 
-**Drag and drop.** `<drag kind=…/>` (`KanbanDragConfig`: the optional `kind` of the drag; board-wide `executability`; per-card `card-executability`) makes the cards drag sources exactly like table rows - same payload, so a card can be dropped on a `<table>` accepting its kind and table rows on the board. Each `<drop accept=… as=… target-as=… refuse-if=…>` (`accept` lists the kinds taken, none for every drag; see [tables](doc:view-layer/tables#drag-and-drop-of-table-rows); the shared `DropConfig`, compiled with `DropSignature.ONTO`) makes the columns drop targets: the **column value** is the target - the argument `target` (renamed by `target-as`) beside the dragged `objects` (renamed by `as`), which `refuse-if` and the action chain use as variables, and the input of `target-executability`, whose script rules see it under the same name; `card-executability` rules see the card's object as `element` (renamed by `element-as`); `target-channel` additionally writes it to a channel before the chain runs. ``<drop accept="ticket" as="tickets" target-as="column" refuse-if="…"><with-transaction><execute-script function="$tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, $column))"/></with-transaction></drop>`` moves the dropped tickets into the column's status. While a drag hovers a column, the client probes the server (`dropProbe`), and a refusal is shown at the column with its reason next to the pointer. A recorded drop becomes `dropObjects`, naming the objects and the place on the board by business identity: an insertion (`ordered`) into the column value before the card it was dropped before, none at the end. On the wire, a drop beside a card is reported as its `upper` or `lower` zone, a drop on the column beside the cards as `none`.
+**Drag and drop.** `<drag kind=…/>` (`KanbanDragConfig`: the optional `kind` of the drag; board-wide `executability`; per-card `card-executability`) makes the cards drag sources exactly like table rows - same payload, so a card can be dropped on a `<table>` accepting its kind and table rows on the board. Each `<drop accept=… as=… target-as=… refuse-if=…>` (`accept` lists the kinds taken, none for every drag; see [tables](doc:view-layer/tables#drag-and-drop-of-table-rows); the shared `DropConfig`, compiled with `DropSignature.ONTO`) makes the columns drop targets: the **column value** is the target - the argument `target` (renamed by `target-as`) beside the dragged `objects` (renamed by `as`) - and the point coordinates `x` / `y`, always `null` on a board (see [the arguments of a drop](doc:view-layer/tables#drag-and-drop-of-table-rows)) -, which `refuse-if` and the action chain use as variables, and the input of `target-executability`, whose script rules see it under the same name; `card-executability` rules see the card's object as `element` (renamed by `element-as`); `target-channel` additionally writes it to a channel before the chain runs. ``<drop accept="ticket" as="tickets" target-as="column" refuse-if="…"><with-transaction><execute-script function="$tickets.foreach(t -> $t.set(`demo.tickets:Ticket#status`, $column))"/></with-transaction></drop>`` moves the dropped tickets into the column's status. While a drag hovers a column, the client probes the server (`dropProbe`), and a refusal is shown at the column with its reason next to the pointer. A recorded drop names the card or the column it was made on by the key of its object or column value, see [object ids and keys](doc:view-layer/headless-interface#object-ids-and-keys). On the wire, a drop beside a card is reported as its `upper` or `lower` zone, a drop on the column beside the cards as `none`.
 
 **Order within a column: `on-reorder`.** Run in a transaction, it sees the column value as `$column` (renamed by `column-as`) and the objects of that column in their new order as `$objects`: those displayed when the drop was made, with the dropped objects placed where they were dropped. It typically numbers the objects in an attribute `items` sorts by. Order of execution:
 
@@ -273,7 +319,7 @@ The app bar of `com.top_logic.demo.react` shows both this and the two ways an un
 ```
 
 - **Attributes.** `exclusive` (default `false`): at most one section is expanded at a time, expanding one collapses the other; all may be collapsed. `personalize` (default `true`): the expansion is remembered per user. `command-display` (default `icon-only`): how the header buttons show icon and label. `css-class` as for every element.
-- **Sections.** `expanded` (default `false`) is the expansion the section starts with; in an exclusive accordion only the first section written as expanded is. A section with an `<access-control>` is left out when the current user can never hold its operation, shows its content empty or a "no access" placeholder as the check on its object decides, and publishes its checked object to its content, as a tab does (see [access control of UI units](doc:view-layer/access-control)). A section without `<label>` shows its `id`.
+- **Sections.** `expanded` (default `false`) is the expansion the section starts with; in an exclusive accordion only the first section written as expanded is. A section with an `<access-control>` is left out when the current user can never hold its operation, shows its content empty or a "no access" placeholder as the check on its object decides, and publishes its checked object to its content, as a tab does (see [access control of UI units](doc:view-layer/access-control)). A section without `<label>` shows its `id`. A `<visibility>` condition shows a tab or section only for some objects (see [showing a unit only for some objects](doc:view-layer/access-control#showing-a-unit-only-for-some-objects-visibility)).
 - **Header commands.** Like a `<panel>`, every section is a `CommandScope` for its content, with or without `<commands>` of its own. Its header shows a live toolbar (`ToolbarBuilder.buildLive` over `TOOLBAR` then `BUTTON_BAR` — a section has no footer, so button-bar commands appear in the header after the toolbar ones) built with the accordion, so the header commands are there whether the section is expanded or not. Commands the content contributes (a form's edit and save commands) join the header once the section is first expanded and its content created. A header without commands renders an empty toolbar, which takes no space (`.tl-accordion__actions:empty`).
 - **Lazy content.** The content of a section is created when the section is first expanded and kept while it is collapsed — what the user entered there survives collapsing, and collapsing asks nothing about unsaved changes. A section's content gets the personalization segment `section` and the slot path segment of the section `id`; it shares the channels of the enclosing view.
 - **Personalization key.** The expansion is stored as a JSON map from section `id` to `true`/`false`, under the element's `personalization-key` if one is written, else under the view context's personalization key plus `.accordion`. A remembered entry overrides the written `expanded`. A change writes only the entry of the changed section back, so two accordions sharing one key keep each other's entries as long as their section ids differ — two personalized accordions in the same view context therefore need **distinct section ids or a `personalization-key` each**, otherwise they share their expansion.
@@ -309,6 +355,25 @@ The app bar of `com.top_logic.demo.react` shows both this and the two ways an un
 - **Lazy content.** `<content>` holds any elements. The wrapper is required, since the `image` property of the popover and the `<image>` element share a tag name. The content is created when the popover opens for the first time and kept while it is closed, so what the user entered there survives closing. It gets the personalization segment `popover` and is part of the view the popover is written in: it shares that view's channels - a form in the content edits the object of a view channel, a `<write-channel>` in it is seen by the rest of the view. A popover needing channels of its own holds a `<view-ref>`.
 - **Closing from the content.** The action `<close-popover/>` (`ClosePopoverAction`) in a command of the content closes the popover, of nested popovers the innermost one. It has no result, and the actions of the chain beside it work with the same arguments, so "apply what was entered, then close" is one command. Outside a popover it does nothing, like `<close-dialog/>` outside a dialog.
 - **Reveal.** The popover is a container of the reveal protocol with its content under the key `content`: displaying something that lives inside the content of a closed popover (see [Navigation](doc:view-layer/navigation)) opens it.
+
+## The frame of a dialog: `<window>`
+
+`<window>` (`WindowElement`, control `ReactWindowControl`, client `TLWindow`) is the root element of a dialog view opened by `<open-dialog>`: a title bar with the toolbar commands of the content, a scrolling body, and a footer with the `<actions>` and the button-bar commands.
+
+```xml
+<window
+	height="75%"
+	title="Details"
+	width="1200px"
+>
+	<split-panel>…</split-panel>
+	<actions>…</actions>
+</window>
+```
+
+- **Size.** `width` (default `500px`) and `height` are given in pixels (`600px`) or in percent of the browser window (`80%`, `75%`) - not of the box the window happens to be placed in. Any other value is an error of the view, reported when it is loaded. Without `height` the window opens at the height of its content and grows with it, but does not shrink while it is open: the tallest height it had stays its minimum, so neither its footer nor - centered - the window itself moves when the content gets shorter (another tab, an emptied selection). The next opening starts at the height of the content again. A list with a detail whose height changes with the selection is the typical case; give such a dialog a `height` where it should have its full size from the start.
+- **Limits and the user's size.** A window never grows larger than the browser window minus its margin (`--tl-space-lg`) and scrolls its body instead. With `resizable="true"` (the default) the user drags the edges to another size, which takes precedence over `width` and `height` and is remembered per dialog for its next opening while it fits into the browser window; a double click on an edge returns to the configured size.
+- **Small screens.** In the compact display class - a browser window up to 768 px wide, the same breakpoint the app shell uses - every window fills the browser window without margin, like a maximized one: `width`, `height` and the grown height do not apply, the window can be neither moved nor resized, and title bar and footer stay while the body scrolls. Back above the breakpoint, the window is displayed as before.
 
 ## Content shown in an enclosing region: `<slot>` and `<slot-content>`
 

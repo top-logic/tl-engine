@@ -413,6 +413,12 @@ public class GraphEdge_Impl extends com.top_logic.react.flow.data.impl.Widget_Im
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.GraphEdge setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return GRAPH_EDGE__TYPE;
 	}

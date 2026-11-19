@@ -15,7 +15,7 @@ import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.execution.model.AgentSession;
 import com.top_logic.util.error.TopLogicException;
 
 /**

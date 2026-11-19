@@ -189,6 +189,26 @@ public class TestRowSetCreateTypes extends AbstractModelAccessTest {
 	}
 
 	/**
+	 * A row added to the rows of an attribute of the form object is created within the form object,
+	 * a row added to the rows of a query has no container: it belongs to no object of the form,
+	 * neither while it is edited nor when it is stored.
+	 */
+	public void testContainerOfNewRow() {
+		becomeUser(_root);
+		RowSetTableControl tasks = editedTable(new AttributeRowSetBinding(TASKS));
+		TLObject task = tasks.addRow();
+		assertNotNull(task);
+		assertSame(_project, task.tContainer());
+
+		TLClass category = type(CATEGORY);
+		RowSetTableControl categories =
+			editedTable(new QueryRowSetBinding(List::of, category, List.of(category), RemoveMode.NONE));
+		TLObject row = categories.addRow();
+		assertNotNull(row);
+		assertNull(row.tContainer());
+	}
+
+	/**
 	 * Executes the add-row command as triggered by the button {@link #TRIGGER_ID}.
 	 *
 	 * @return The row the command added, {@code null} if it added none.

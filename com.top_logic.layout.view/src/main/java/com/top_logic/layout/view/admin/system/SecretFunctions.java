@@ -14,11 +14,13 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.credential.SecretReference;
 import com.top_logic.basic.credential.SecretReferences;
+import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.label.I18NClassNameProvider;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
+import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
@@ -38,6 +40,13 @@ import com.top_logic.util.error.TopLogicException;
  * {@link #encrypt(String, EncryptionFormat)} and {@link #decrypt(String, EncryptionFormat)} convert
  * a value given by the administrator from and to one of the {@link #formats() forms} in which a
  * configuration accepts an encrypted value. They never write the value to the log.
+ * </p>
+ *
+ * <p>
+ * {@link #store(SecretReference, String)} and {@link #remove(SecretReference)} write and remove
+ * the secret of a reference that gives the secret by its name, through the
+ * {@link SecretStoreService}, where it {@link #storable(SecretReference) can be stored}. The
+ * secret is neither returned nor logged nor put into a message.
  * </p>
  *
  * @implNote Every public static method here is a TL-Script function named by the
@@ -193,6 +202,108 @@ public class SecretFunctions extends TLScriptFunctions {
 	@Label("Whether a secret is missing")
 	public static boolean missing(SecretReference reference) {
 		return reference != null && reference.getStatus() == SecretReference.Status.MISSING;
+	}
+
+	/**
+	 * Whether the given secret can be written from the application, so that the service referring
+	 * to it receives the written value.
+	 *
+	 * @param reference
+	 *        The reference to the secret.
+	 * @return Whether the reference gives the secret by its {@link SecretReference#getSecretName()
+	 *         name} and the {@link SecretStoreService} can store a secret of this name,
+	 *         <code>false</code> without a reference.
+	 *
+	 * @see SecretStoreService#canStoreSecret(String)
+	 */
+	@Label("Whether a secret can be written")
+	@SideEffectFree
+	public static boolean storable(SecretReference reference) {
+		if (reference == null) {
+			return false;
+		}
+		String name = reference.getSecretName();
+		return name != null && SecretStoreService.Module.INSTANCE.isActive()
+			&& SecretStoreService.canStoreSecret(name);
+	}
+
+	/**
+	 * Whether the given secret can be removed from the application: it can be
+	 * {@link #storable(SecretReference) written}, and the writable store holds it.
+	 *
+	 * @param reference
+	 *        The reference to the secret.
+	 * @return Whether {@link #remove(SecretReference)} removes the secret the service referring to
+	 *         it receives, <code>false</code> without a reference.
+	 *
+	 * @see SecretStoreService#canRemoveSecret(String)
+	 */
+	@Label("Whether a secret can be removed")
+	@SideEffectFree
+	public static boolean removable(SecretReference reference) {
+		if (reference == null) {
+			return false;
+		}
+		String name = reference.getSecretName();
+		return name != null && SecretStoreService.Module.INSTANCE.isActive()
+			&& SecretStoreService.canRemoveSecret(name);
+	}
+
+	/**
+	 * Writes the given secret under the name the given reference gives it.
+	 *
+	 * <p>
+	 * A secret stored before under this name is replaced. The reference itself still shows the
+	 * status found when it was read, {@link #references()} reads the new one.
+	 * </p>
+	 *
+	 * @param reference
+	 *        The reference to the secret.
+	 * @param secret
+	 *        The secret to write.
+	 *
+	 * @throws TopLogicException
+	 *         If the reference does not give the secret by its name, or the secret is empty.
+	 * @throws com.top_logic.basic.exception.I18NRuntimeException
+	 *         If the secret cannot be stored, see {@link SecretStoreService#storeSecret(String,
+	 *         String)}. No message contains the secret.
+	 *
+	 * @see #storable(SecretReference)
+	 */
+	@Label("Write a secret")
+	public static void store(SecretReference reference, String secret) {
+		String name = secretName(reference);
+		if (StringServices.isEmpty(secret)) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_VALUE);
+		}
+		SecretStoreService.storeSecret(name, secret);
+	}
+
+	/**
+	 * Removes the secret stored under the name the given reference gives it.
+	 *
+	 * @param reference
+	 *        The reference to the secret.
+	 * @return Whether a secret was stored under the name.
+	 *
+	 * @throws TopLogicException
+	 *         If the reference does not give the secret by its name.
+	 * @throws com.top_logic.basic.exception.I18NRuntimeException
+	 *         If the secret cannot be removed, see {@link SecretStoreService#removeSecret(String)}.
+	 *
+	 * @see #storable(SecretReference)
+	 */
+	@Label("Remove a secret")
+	public static boolean remove(SecretReference reference) {
+		return SecretStoreService.removeSecret(secretName(reference));
+	}
+
+	private static String secretName(SecretReference reference) {
+		String name = reference == null ? null : reference.getSecretName();
+		if (name == null) {
+			throw new TopLogicException(I18NConstants.ERROR_SECRET_NOT_NAMED);
+		}
+		return name;
 	}
 
 	/**

@@ -25,6 +25,14 @@ Hell sind `layer` und `nested` weiß; dort trennt die Linie (`--tl-border-width-
 Leser auch `TLDashboard` (`dashboard.contract.md`): die Kachel ist `tl-card` mit Fläche nach Lage wie oben; sie rollt
 (`overflow: auto`) statt zu beschneiden, ihre Höhe gibt das Raster.
 
+## Tokens
+
+| Teil | Token |
+|---|---|
+| Schrift | `--tl-text-primary` |
+
+Fläche und Linie stehen oben unter „Fläche nach Lage“.
+
 ## Attribute
 
 | Attribut | Wann |

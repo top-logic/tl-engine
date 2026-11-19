@@ -24,11 +24,17 @@
 	same way. The buttons write the search term of the last section, which is where a value bounded
 	to no object goes.
 	
-	The fourth section is a search field: the magnifier ahead of what is typed, the button that
-	empties it, and the delay the typed value is held back for before it reaches the channel the
-	text below reads.
+	The fourth section separates: a plain line, a line with a text at its start, in its middle
+	and at its end, inset lines between the entries of a list, and a vertical line between two
+	cards of a row, stretching to their height.
 	
-	The fifth section shows the display variants of an input: a selection as a cloud of toggle
+	The fifth section is a search field: the magnifier ahead of what is typed, the button that
+	empties it, and the delay the typed value is held back for before it reaches the channel the
+	text below reads. Below it, the button that empties an input on every kind of input: a text
+	area, a number and a password ask for it with clearable, a date offers it on its own as long as
+	it is not mandatory.
+	
+	The sixth section shows the display variants of an input: a selection as a cloud of toggle
 	chips, as a bar of segments, as a group of radio buttons stacked or side by side, as a group of
 	checkboxes where more than one value is chosen, or as a dropdown without a filter input that
 	jumps to an option by its first letters; a number as a handle dragged along a track, a truth
@@ -47,6 +53,7 @@
 		<channel name="status"/>
 		<channel name="choice"/>
 		<channel name="chosen"/>
+		<channel name="arranged"/>
 		<channel name="radioVertical"/>
 		<channel name="radioHorizontal"
 			init="`demo.react:Priority#medium`"
@@ -86,6 +93,21 @@
 		<channel name="annotatedChoice"/>
 		<channel name="files"/>
 		<channel name="documents"/>
+		<channel name="clearNote"
+			init="'First line\nSecond line\nThird line'"
+		/>
+		<channel name="clearAmount"
+			init="42.5"
+		/>
+		<channel name="clearSecret"
+			init="'secret'"
+		/>
+		<channel name="optionalDay"
+			init="date(2026, 6, 1)"
+		/>
+		<channel name="requiredDay"
+			init="date(2026, 6, 1)"
+		/>
 		<!-- The object the form of the last section edits, held by the view and stored nowhere. -->
 		<derived-channel name="obj"
 			expr="new(`demo.react:Demo`, transient: true)"
@@ -98,7 +120,7 @@
 			<de>Gestaltung</de>
 		</title>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>Typography</en>
 				<de>Typografie</de>
@@ -106,8 +128,8 @@
 		</text>
 		<text>
 			<label>
-				<en>A text says what it is for, not which font it is drawn in: the variant names the role, and the family, size, line height and weight of that role come from the tokens of the active theme.</en>
-				<de>Ein Text sagt, wofür er da ist, nicht in welcher Schrift er gesetzt wird: Die Variante benennt die Rolle, und Familie, Größe, Zeilenhöhe und Schnitt dieser Rolle kommen aus den Token des aktiven Themes.</de>
+				<en>A text says what it is for, not which font it is drawn in: the variant names the role, and the family, size, weight, line height and letter spacing of that role come from the tokens of the active theme. The roles are the type scale of the design system.</en>
+				<de>Ein Text sagt, wofür er da ist, nicht in welcher Schrift er gesetzt wird: Die Variante benennt die Rolle, und Familie, Größe, Schnitt, Zeilenhöhe und Laufweite dieser Rolle kommen aus den Token des aktiven Themes. Die Rollen sind die Typo-Skala des Design-Systems.</de>
 			</label>
 		</text>
 		<stack gap="compact">
@@ -117,16 +139,22 @@
 					<de>display</de>
 				</label>
 			</text>
-			<text variant="headline">
+			<text variant="heading-lg">
 				<label>
-					<en>headline</en>
-					<de>headline</de>
+					<en>heading-lg</en>
+					<de>heading-lg</de>
 				</label>
 			</text>
-			<text variant="title">
+			<text variant="heading-md">
 				<label>
-					<en>title</en>
-					<de>title</de>
+					<en>heading-md</en>
+					<de>heading-md</de>
+				</label>
+			</text>
+			<text variant="heading-sm">
+				<label>
+					<en>heading-sm</en>
+					<de>heading-sm</de>
 				</label>
 			</text>
 			<text variant="body">
@@ -135,16 +163,34 @@
 					<de>body</de>
 				</label>
 			</text>
+			<text variant="body-strong">
+				<label>
+					<en>body-strong</en>
+					<de>body-strong</de>
+				</label>
+			</text>
 			<text variant="label">
 				<label>
 					<en>label</en>
 					<de>label</de>
 				</label>
 			</text>
-			<text variant="caption">
+			<text variant="label-strong">
 				<label>
-					<en>caption</en>
-					<de>caption</de>
+					<en>label-strong</en>
+					<de>label-strong</de>
+				</label>
+			</text>
+			<text variant="overline">
+				<label>
+					<en>overline</en>
+					<de>overline</de>
+				</label>
+			</text>
+			<text variant="code">
+				<label>
+					<en>code</en>
+					<de>code</de>
 				</label>
 			</text>
 		</stack>
@@ -178,7 +224,7 @@
 					<de>helper</de>
 				</label>
 			</text>
-			<text css-class="tl-type-body-strong">
+			<text variant="body-strong">
 				<label>
 					<en>strong</en>
 					<de>strong</de>
@@ -270,7 +316,7 @@
 			</value-input>
 		</fields>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>A stylesheet of the application: css-class</en>
 				<de>Ein Stylesheet der Anwendung: css-class</de>
@@ -290,7 +336,7 @@
 				<stack gap="compact">
 					<text
 						tone="on-color"
-						variant="headline"
+						variant="heading-lg"
 					>
 						<label>
 							<en>Everything from a token</en>
@@ -307,7 +353,7 @@
 			</card>
 		</stack>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>Arrangement: stack and grid</en>
 				<de>Anordnung: Stack und Grid</de>
@@ -419,7 +465,7 @@
 			gap="default"
 			max-width="40rem"
 		>
-			<text variant="headline">
+			<text variant="heading-lg">
 				<label>
 					<en>A readable column</en>
 					<de>Eine lesbare Spalte</de>
@@ -495,7 +541,106 @@
 			</card>
 		</grid>
 
-		<text variant="title">
+		<text variant="heading-sm">
+			<label>
+				<en>Dividers</en>
+				<de>Trennlinien</de>
+			</label>
+		</text>
+		<text>
+			<label>
+				<en>A line separates the content before it from the content after it. Its colour and its width come from the tokens of the theme.</en>
+				<de>Eine Linie trennt den Inhalt davor vom Inhalt danach. Farbe und Stärke kommen aus den Token des Themes.</de>
+			</label>
+		</text>
+		<divider/>
+		<text>
+			<label>
+				<en>A line may carry a short text, at its start, in its middle or at its end.</en>
+				<de>Eine Linie kann einen kurzen Text tragen, am Anfang, in der Mitte oder am Ende.</de>
+			</label>
+		</text>
+		<divider label-position="start">
+			<label>
+				<en>Start</en>
+				<de>Anfang</de>
+			</label>
+		</divider>
+		<divider>
+			<label>
+				<en>Center</en>
+				<de>Mitte</de>
+			</label>
+		</divider>
+		<divider label-position="end">
+			<label>
+				<en>End</en>
+				<de>Ende</de>
+			</label>
+		</divider>
+		<text>
+			<label>
+				<en>An inset line begins at the indent of an entry of a list, so it separates the entries without cutting through their leading edge.</en>
+				<de>Eine eingerückte Linie beginnt beim Einzug eines Listeneintrags; sie trennt die Einträge, ohne deren vorderen Rand zu durchschneiden.</de>
+			</label>
+		</text>
+		<stack gap="compact">
+			<text>
+				<label>
+					<en>First entry</en>
+					<de>Erster Eintrag</de>
+				</label>
+			</text>
+			<divider inset="start"/>
+			<text>
+				<label>
+					<en>Second entry</en>
+					<de>Zweiter Eintrag</de>
+				</label>
+			</text>
+			<divider inset="start"/>
+			<text>
+				<label>
+					<en>Third entry</en>
+					<de>Dritter Eintrag</de>
+				</label>
+			</text>
+		</stack>
+		<text>
+			<label>
+				<en>A vertical line stands in a row and stretches to the height of its neighbours.</en>
+				<de>Eine senkrechte Linie steht in einer Zeile und streckt sich auf die Höhe ihrer Nachbarn.</de>
+			</label>
+		</text>
+		<stack direction="row">
+			<card>
+				<title>
+					<en>Before</en>
+					<de>Davor</de>
+				</title>
+				<text tone="secondary">
+					<label>
+						<en>The content before the line.</en>
+						<de>Der Inhalt vor der Linie.</de>
+					</label>
+				</text>
+			</card>
+			<divider orientation="vertical"/>
+			<card>
+				<title>
+					<en>After</en>
+					<de>Danach</de>
+				</title>
+				<text tone="secondary">
+					<label>
+						<en>The content after the line.</en>
+						<de>Der Inhalt nach der Linie.</de>
+					</label>
+				</text>
+			</card>
+		</stack>
+
+		<text variant="heading-sm">
 			<label>
 				<en>A search field</en>
 				<de>Ein Suchfeld</de>
@@ -543,7 +688,79 @@
 			/>
 		</stack>
 
-		<text variant="title">
+		<text variant="heading-sm">
+			<label>
+				<en>Emptying an input</en>
+				<de>Eine Eingabe leeren</de>
+			</label>
+		</text>
+		<text>
+			<label>
+				<en>An input that is emptied by deleting what is typed - a text, also in several lines, a number, a password - offers the button that empties it where it asks for it. A date cannot be deleted at once, its day, month and year are separate segments: it offers the button on its own as long as it is not mandatory.</en>
+				<de>Eine Eingabe, die man durch Löschen des Getippten leert - ein Text, auch mehrzeilig, eine Zahl, ein Passwort -, bietet die Schaltfläche zum Leeren an, wo sie danach verlangt. Ein Datum lässt sich nicht in einem Zug löschen, Tag, Monat und Jahr sind eigene Segmente: Es bietet die Schaltfläche von sich aus an, solange es nicht Pflicht ist.</de>
+			</label>
+		</text>
+		<fields>
+			<value-input
+				clearable="true"
+				type="tl.core:String"
+				value="clearNote"
+			>
+				<label>
+					<en>Note (several lines, clearable)</en>
+					<de>Notiz (mehrzeilig, leerbar)</de>
+				</label>
+				<annotations>
+					<multi-line rows="4"/>
+				</annotations>
+			</value-input>
+			<value-input
+				clearable="true"
+				type="tl.core:Double"
+				value="clearAmount"
+			>
+				<label>
+					<en>Amount (clearable)</en>
+					<de>Betrag (leerbar)</de>
+				</label>
+			</value-input>
+			<value-input
+				clearable="true"
+				type="tl.core:String"
+				value="clearSecret"
+			>
+				<label>
+					<en>Password (clearable)</en>
+					<de>Passwort (leerbar)</de>
+				</label>
+				<annotations>
+					<input-control>
+						<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+					</input-control>
+				</annotations>
+			</value-input>
+			<value-input
+				type="tl.core:Date"
+				value="optionalDay"
+			>
+				<label>
+					<en>Day (optional)</en>
+					<de>Tag (optional)</de>
+				</label>
+			</value-input>
+			<value-input
+				mandatory="true"
+				type="tl.core:Date"
+				value="requiredDay"
+			>
+				<label>
+					<en>Day (mandatory)</en>
+					<de>Tag (Pflicht)</de>
+				</label>
+			</value-input>
+		</fields>
+
+		<text variant="heading-sm">
 			<label>
 				<en>Display variants of an input</en>
 				<de>Darstellungsvarianten einer Eingabe</de>
@@ -596,8 +813,8 @@
 
 		<text>
 			<label>
-				<en>A value that belongs to the view and to no object names its control the same way: the input-control of a value-input overrides the control the type of the value leads to. A radio group lists every option at once, stacked or side by side as its orientation says; an optional single value gets a first radio button for no value, and a multi-valued selection shows checkboxes instead. A dropdown without a filter input jumps to the option whose label starts with the letters typed while it has the focus. The options of an expression are offered in the order it computes them, and the order by-label of the input-control sorts them by their labels instead. The range and the unit of the second slider follow the chosen kind through channels; without a kind, the slider is disabled. The text beside each input reads the channel it writes.</en>
-				<de>Ein Wert, der zur Ansicht und zu keinem Objekt gehört, benennt sein Steuerelement auf dieselbe Weise: Das input-control eines value-input überschreibt das Steuerelement, auf das der Typ des Werts hinweist. Eine Radio-Gruppe zeigt alle Optionen auf einmal, untereinander oder nebeneinander, wie ihre Ausrichtung sagt; ein optionaler Einzelwert bekommt einen ersten Radiobutton für keinen Wert, und eine mehrwertige Auswahl zeigt stattdessen Checkboxen. Ein Dropdown ohne Filtereingabe springt zu der Option, deren Beschriftung mit den Buchstaben beginnt, die getippt werden, während es den Fokus hat. Die Optionen eines Ausdrucks erscheinen in der Reihenfolge, in der er sie berechnet; die Reihenfolge by-label des input-control sortiert sie stattdessen nach ihren Beschriftungen. Bereich und Einheit des zweiten Reglers folgen über Kanäle der gewählten Art; ohne Art ist der Regler deaktiviert. Der Text neben jeder Eingabe liest den Kanal, den sie schreibt.</de>
+				<en>A value that belongs to the view and to no object names its control the same way: the input-control of a value-input overrides the control the type of the value leads to. A radio group lists every option at once, stacked or side by side as its orientation says; an optional single value gets a first radio button for no value, and a multi-valued selection shows checkboxes instead. A dropdown without a filter input jumps to the option whose label starts with the letters typed while it has the focus. An ordered multi-valued selection lets the user arrange the chosen values by dragging their chips or with Alt+arrow, and its channel holds them as a list in that order. The options of an expression are offered in the order it computes them, and the order by-label of the input-control sorts them by their labels instead. The range and the unit of the second slider follow the chosen kind through channels; without a kind, the slider is disabled. The text beside each input reads the channel it writes.</en>
+				<de>Ein Wert, der zur Ansicht und zu keinem Objekt gehört, benennt sein Steuerelement auf dieselbe Weise: Das input-control eines value-input überschreibt das Steuerelement, auf das der Typ des Werts hinweist. Eine Radio-Gruppe zeigt alle Optionen auf einmal, untereinander oder nebeneinander, wie ihre Ausrichtung sagt; ein optionaler Einzelwert bekommt einen ersten Radiobutton für keinen Wert, und eine mehrwertige Auswahl zeigt stattdessen Checkboxen. Ein Dropdown ohne Filtereingabe springt zu der Option, deren Beschriftung mit den Buchstaben beginnt, die getippt werden, während es den Fokus hat. Eine geordnete mehrwertige Auswahl lässt die gewählten Werte durch Ziehen ihrer Chips oder mit Alt+Pfeil umsortieren, und ihr Kanal enthält sie als Liste in dieser Reihenfolge. Die Optionen eines Ausdrucks erscheinen in der Reihenfolge, in der er sie berechnet; die Reihenfolge by-label des input-control sortiert sie stattdessen nach ihren Beschriftungen. Bereich und Einheit des zweiten Reglers folgen über Kanäle der gewählten Art; ohne Art ist der Regler deaktiviert. Der Text neben jeder Eingabe liest den Kanal, den sie schreibt.</de>
 			</label>
 		</text>
 		<fields>
@@ -625,6 +842,17 @@
 				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
 					display="chips"
 				/>
+			</value-input>
+			<value-input
+				multiple="true"
+				ordered="true"
+				type="demo.react:Priority"
+				value="arranged"
+			>
+				<label>
+					<en>Priorities (ordered)</en>
+					<de>Prioritäten (geordnet)</de>
+				</label>
 			</value-input>
 			<value-input
 				type="demo.react:Priority"
@@ -780,6 +1008,10 @@
 				tone="helper"
 			/>
 			<text
+				input="arranged"
+				tone="helper"
+			/>
+			<text
 				input="radioVertical"
 				tone="helper"
 			/>
@@ -821,7 +1053,7 @@
 			/>
 		</stack>
 
-		<text variant="title">
+		<text variant="heading-sm">
 			<label>
 				<en>A value declared like an attribute</en>
 				<de>Ein Wert, deklariert wie ein Attribut</de>

@@ -33,8 +33,6 @@ import com.top_logic.layout.form.values.edit.annotation.Options;
 @Label("Application-wide lock definition")
 public class DefaultLockHandler<C extends DefaultLockHandler.Config<?>> extends AbstractConfiguredLockHandler<C> {
 
-	private final LockService _service = LockService.getInstance();
-
 	/**
 	 * Configuration options for {@link DefaultLockHandler}.
 	 */
@@ -89,9 +87,14 @@ public class DefaultLockHandler<C extends DefaultLockHandler.Config<?>> extends 
 
 	/**
 	 * The {@link LockService} to use.
+	 *
+	 * <p>
+	 * Resolved when a lock is created, so that the handler can be instantiated (e.g. with a view
+	 * that only holds its configuration) without the service.
+	 * </p>
 	 */
 	protected final LockService getService() {
-		return _service;
+		return LockService.getInstance();
 	}
 
 	@Override

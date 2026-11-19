@@ -51,7 +51,7 @@ The agent reads the application's data: lists all customers, looks up one record
 
 ## Changing data
 
-One object the agent knows by its id is changed with the object tools `updateObject`, `createObject` and `deleteObject` (group `data.write`); a set chosen by a condition is changed with one TL-Script through `changeData`. Every change needs the user's approval, is checked against the user's rights per object and per attribute, and is carried out in one transaction per turn - completely or not at all. [Object tools](doc:ai/security/object-tools) describes the checks.
+One object the agent knows by its id is changed with the object tools `updateObject`, `createObject` and `deleteObject` (group `data.write`); a set chosen by a condition is changed with one TL-Script through `changeData`. Every change needs the user's approval, is checked against the user's rights per object and per attribute, and is carried out in one transaction per turn - completely or not at all. The revision log records that transaction as `<agent>: <what the turn did>` - the first paragraph the model wrote alongside its calls, or, without one, the `Tool.commitMessage` of each writing call (`TurnCommitMessage`). [Object tools](doc:ai/security/object-tools) describes the checks.
 
 ## Managing user interfaces
 

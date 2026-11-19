@@ -137,6 +137,21 @@ public class TestCodeConfigProvider extends TestCase {
 		assertTrue(control(model(CodeConfig.JSON_CHOICE)) instanceof ReactDropdownSelectControl);
 	}
 
+	/**
+	 * The code editor takes the whole row; a select of a property the code editor declines stays in
+	 * its column.
+	 */
+	public void testCodeEditorTakesTheWholeRow() {
+		assertTrue(rendersWholeLine(model(CodeConfig.JSON)));
+		assertTrue(rendersWholeLine(model(CodeConfig.HTML_TEMPLATE)));
+		assertTrue(rendersWholeLine(model(CodeConfig.JSON_LIST)));
+		assertFalse(rendersWholeLine(model(CodeConfig.JSON_CHOICE)));
+	}
+
+	private static boolean rendersWholeLine(ConfigFieldModel model) {
+		return ConfigControlService.getInstance().rendersWholeLine(model);
+	}
+
 	private static void assertCodeEditor(CodeEditorLanguage language, boolean editable, ReactControl control) {
 		assertTrue("Not a code editor: " + control, control instanceof ReactCodeEditorControl);
 		Map<String, Object> state = control.scriptingScalarState();

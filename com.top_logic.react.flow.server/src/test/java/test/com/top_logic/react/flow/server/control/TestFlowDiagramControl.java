@@ -146,6 +146,29 @@ public class TestFlowDiagramControl extends TestCase {
 	}
 
 	/**
+	 * Tests that the client is told to fit a diagram shown the first time and a diagram replacing
+	 * the displayed one by {@link FlowDiagramControl#setModel(Diagram)}, and to keep the section
+	 * shown so far for a diagram replacing it by {@link FlowDiagramControl#setModel(Diagram, boolean)}
+	 * with <code>true</code>.
+	 */
+	public void testKeepViewIsSentWithTheDiagram() {
+		_control.render();
+		assertFalse("A diagram shown the first time is fitted.", _control.keepView());
+
+		_control.setModel(diagram(NODE_B, NODE_A), true);
+		assertTrue("The replacing diagram is shown in the section shown so far.", _control.keepView());
+		_control.render();
+		assertTrue("Serializing the diagram again keeps the flag.", _control.keepView());
+
+		_control.setModel(diagram(NODE_A, NODE_B));
+		assertFalse("A diagram replacing the displayed one is fitted by default.", _control.keepView());
+
+		_control.setModel(diagram(NODE_B, NODE_A), true);
+		_control.setModel(diagram(NODE_A, NODE_B), false);
+		assertFalse("A diagram replacing the displayed one is fitted on request.", _control.keepView());
+	}
+
+	/**
 	 * The ID the given serialized diagram assigns to the diagram itself.
 	 */
 	private static int diagramId(String diagramJson) throws IOException {
@@ -243,6 +266,14 @@ public class TestFlowDiagramControl extends TestCase {
 		 */
 		String storedDiagram() {
 			return (String) getState(DIAGRAM_STATE);
+		}
+
+		/**
+		 * Whether the control's state tells the client to show the diagram in the section shown so
+		 * far.
+		 */
+		boolean keepView() {
+			return ((Boolean) getState(KEEP_VIEW_STATE)).booleanValue();
 		}
 
 		/**

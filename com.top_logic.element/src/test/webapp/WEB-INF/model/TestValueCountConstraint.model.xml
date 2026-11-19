@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestValueCountConstraint">
+			<types>
+				<class name="Parent">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<attributes>
+						<reference name="limited"
+							kind="forwards"
+							multiple="true"
+							type="Child"
+						>
+							<annotations>
+								<value-count max="3"/>
+							</annotations>
+						</reference>
+						<reference name="unlimited"
+							kind="forwards"
+							multiple="true"
+							type="Child"
+						/>
+					</attributes>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+				<class name="Child">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

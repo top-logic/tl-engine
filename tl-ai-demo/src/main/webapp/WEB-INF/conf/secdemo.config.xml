@@ -304,11 +304,11 @@
 			in countVisibleTickets, the filterSecurity inside the script, which also drops a ticket the
 			account may discover but not read. Neither tool lies about which one it is.
 		-->
-		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+		<config service-class="com.top_logic.ai.tool.api.registry.ToolRegistryService">
 			<instance>
 				<tool-factories>
 					<factory name="secdemo-reporting">
-						<implementation class="com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory">
+						<implementation class="com.top_logic.ai.core.tools.registry.ScriptToolFactory">
 							<tools>
 								<tool name="countTickets"
 									mode="READ"
@@ -332,7 +332,7 @@
 						</implementation>
 					</factory>
 					<factory name="secdemo-editing">
-						<implementation class="com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory">
+						<implementation class="com.top_logic.ai.core.tools.registry.ScriptToolFactory">
 							<tools>
 								<tool name="addTicket"
 									mode="DATA_WRITE"
@@ -342,14 +342,30 @@
 										<de>Erzeugt ein Ticket mit dem angegebenen Titel im angegebenen Projekt. Ist in tool-groups eingetragen und gehört damit zur Gruppe data.write.</de>
 									</description>
 									<parameters>
-										<parameter name="project"
-											type="pm:Project"
-											mandatory="true"
-										/>
-										<parameter name="title"
-											type="tl.core:String"
-											mandatory="true"
-										/>
+										<property name="project"
+											type="com.top_logic.model.TLObject"
+										>
+											<label>
+												<en>Project</en>
+												<tooltip>
+													<en>The project to add the ticket to.</en>
+												</tooltip>
+											</label>
+											<mandatory/>
+											<format value="com.top_logic.ai.core.tools.model.AgentObjectFormat"/>
+											<object-type value="pm:Project"/>
+										</property>
+										<property name="title"
+											type="String"
+										>
+											<label>
+												<en>Title</en>
+												<tooltip>
+													<en>The title of the new ticket.</en>
+												</tooltip>
+											</label>
+											<mandatory/>
+										</property>
 									</parameters>
 									<implementation>$project.set(`pm:Project#tickets`, $project.get(`pm:Project#tickets`).concat(new(`pm:Ticket`)..set(`pm:Ticket#title`, $title)))</implementation>
 								</tool>
@@ -370,12 +386,12 @@
 						a model as "this application has no projects".
 					-->
 					<factory name="secdemo-projects">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
 							tool-class="com.top_logic.ai.demo.secdemo.SecDemoProjectReportTool"
 						/>
 					</factory>
 					<factory name="secdemo-unclassified">
-						<implementation class="com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory">
+						<implementation class="com.top_logic.ai.core.tools.registry.ScriptToolFactory">
 							<tools>
 								<tool name="countTicketsUnclassified"
 									mode="READ"
@@ -420,8 +436,8 @@
 			the web fetch, the task tools and the authoring tools are denied to every persona -
 			deny-by-default, no <deny> needed.
 		-->
-		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
-			<instance class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+		<config service-class="com.top_logic.ai.core.security.AiToolAccessService">
+			<instance class="com.top_logic.ai.core.security.AiToolAccessService">
 				<!--
 					A TL-Script tool declares no group, so this is the only place it can get one. Every
 					tool is named, one at a time: there is no pattern syntax, and a tool that appears
@@ -493,7 +509,7 @@
 				<model-access default="assigned">
 					<role name="ticketReader">
 						<grants>
-							<grant models="claude-haiku-4-5"/>
+							<grant models="claude-haiku-5-5"/>
 						</grants>
 					</role>
 				</model-access>

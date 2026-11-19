@@ -16,6 +16,13 @@ Das TSX baut das Popup als `PickerPopover`: `Escape` schließt nur den Picker un
 
 **Höhe.** Die Hülle hat keine feste Höhe: `usePopover` setzt `maxHeight` an der Hülle (Raum bis zum Fensterrand abzüglich eines Randes). Der Rollbereich (`tl-picker__scroll`) und die Reiter schrumpfen mit ihr und rollen selbst; das Popup als Ganzes scrollt nicht. `tl-popover` trägt dafür nichts Eigenes — `.tl-picker` ist schon die Flex-Spalte.
 
+## Tokens
+
+| Teil | Token |
+|---|---|
+| Lücke | `--tl-space-sm` zwischen Reitern und Knopfleiste |
+| Reiterfläche | Innenabstand `--tl-space-2xs`, Rollrand `--tl-space-xs` |
+
 ## Konformität
 
 Ein Picker besteht den Vertrag, wenn er `role="dialog"` mit Namen trägt, die Reiter aus `tl-tabs` nimmt, die Leiste aus

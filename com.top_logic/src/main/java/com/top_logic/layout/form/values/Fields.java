@@ -817,15 +817,22 @@ public class Fields {
 	}
 
 	/**
-	 * Whether the property is annotated with {@link CustomOptionOrder}.
+	 * Whether the options of the property keep their order: the property is annotated with
+	 * {@link CustomOptionOrder}, or its options are its {@link PropertyDescriptor#getAllowedValues()
+	 * allowed values}.
 	 */
 	public static boolean hasCustomOptionOrder(PropertyDescriptor property) {
-		return property.getAnnotation(CustomOptionOrder.class) != null;
+		if (property.getAnnotation(CustomOptionOrder.class) != null) {
+			return true;
+		}
+		// The allowed values are offered in the order of their declaration.
+		return property.getAllowedValues() != null && property.getAnnotation(Options.class) == null;
 	}
 
 	/**
 	 * Computes a derived options property for the given {@link PropertyDescriptor} either from
-	 * {@link Options} annotation or generically from type index lookup.
+	 * {@link Options} annotation, from its {@link PropertyDescriptor#getAllowedValues() allowed
+	 * values}, or generically from type index lookup.
 	 * 
 	 * <p>
 	 * The generic options of an instance configuration property are its implementation classes
@@ -849,6 +856,23 @@ public class Fields {
 		AnnotationCustomizations customizations = options.getCustomizations();
 		Options optionsAnnotation = customizations.getAnnotation(property, Options.class);
 		if (optionsAnnotation == null) {
+			List<?> allowedValues = property.getAllowedValues();
+			if (allowedValues != null) {
+				// The fixed list of allowed values, see AllowedValues.
+				Function0<List<?>> fun = new Function0<>() {
+					@Override
+					public List<?> apply() {
+						return allowedValues;
+					}
+				};
+				NamePath[] noPaths = {};
+				AlgorithmSpec spec = AlgorithmSpec.create(fun, noPaths);
+				DerivedProperty derivedProp = DerivedProperty.createDerivedProperty(Iterable.class,
+					descriptor, spec, property, location);
+				derivedProp.set(OPTION_MAPPING, IdentityOptionMapping.INSTANCE);
+				return derivedProp;
+			}
+
 			PropertyKind kind = property.kind();
 			if ((kind == PropertyKind.ITEM || kind == PropertyKind.ARRAY || kind == PropertyKind.LIST
 				|| kind == PropertyKind.MAP)

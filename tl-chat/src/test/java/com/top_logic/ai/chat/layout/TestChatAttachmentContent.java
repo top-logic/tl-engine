@@ -8,10 +8,10 @@ package com.top_logic.ai.chat.layout;
 import junit.framework.TestCase;
 
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
-import com.top_logic.tl.ai.core.message.ContentPart;
-import com.top_logic.tl.ai.core.message.ImageContent;
-import com.top_logic.tl.ai.core.message.PdfContent;
-import com.top_logic.tl.ai.core.message.TextContent;
+import com.top_logic.ai.core.message.ContentPart;
+import com.top_logic.ai.core.message.ImageContent;
+import com.top_logic.ai.core.message.PdfContent;
+import com.top_logic.ai.core.message.TextContent;
 
 /**
  * Tests that a chat attachment becomes a payload the providers can actually carry.

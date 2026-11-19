@@ -43,6 +43,7 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.command.CancelDialogCommand;
 import com.top_logic.layout.view.command.CloseDialogAction;
 import com.top_logic.layout.view.command.CommandCliqueService;
@@ -53,6 +54,7 @@ import com.top_logic.layout.view.command.InterruptibleViewAction;
 import com.top_logic.layout.view.command.OpenDialogAction;
 import com.top_logic.layout.view.command.SuspendedCommands;
 import com.top_logic.layout.view.command.ViewAction;
+import com.top_logic.layout.view.command.ViewActionChain;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.model.listen.ModelScope;
 
@@ -241,19 +243,182 @@ public class TestSuspendedCommands extends TestCase {
 	}
 
 	/**
-	 * Tests that a command closing its own dialog after it was taken up again closes the dialog as
-	 * soon as it has settled, although the dialog does not close while the command runs.
+	 * Tests that a command closing its own dialog after it was taken up again closes the dialog at
+	 * once: the command running the close is no longer held.
 	 */
-	public void testCloseAfterSuspensionClosesOnceSettled() {
+	public void testCloseInContinuationClosesAtOnce() {
 		Suspend suspend = new Suspend();
-		run(suspend, closeDialog(), downstream());
+		run(suspend, closeDialog(), (context, value) -> {
+			_downstream.add(Boolean.valueOf(_dialogs.isOpen(_dialog)));
+			return value;
+		});
 
-		assertTrue("The command waits, nothing is closed yet.", _dialogs.isOpen());
+		assertTrue("The command waits, nothing is closed yet.", _dialogs.isOpen(_dialog));
 
 		suspend.resume("late");
 
-		assertEquals("The actions after the close still run.", List.of("in"), _downstream);
-		assertFalse("The command has settled, so its close took effect.", _dialogs.isOpen());
+		assertEquals("The close took effect before the next action ran.", List.of(Boolean.FALSE), _downstream);
+		assertFalse(_dialogs.isOpen(_dialog));
+	}
+
+	/**
+	 * Tests that the actions continuing a command see it no longer suspended: the action that held
+	 * it has handed it back.
+	 */
+	public void testNotSuspendedWhileContinuationRuns() {
+		Suspend suspend = new Suspend();
+		run(suspend, recordClosable());
+
+		assertFalse(_dialog.isClosable());
+
+		suspend.resume("late");
+
+		assertEquals("The continuation runs with the dialog closable.", List.of(Boolean.TRUE), _downstream);
+		assertTrue(_dialog.isClosable());
+	}
+
+	/**
+	 * Tests that a command held again by a later action counts as suspended again, and is released
+	 * when that action hands it back.
+	 */
+	public void testHeldAgainByLaterAction() {
+		Suspend first = new Suspend();
+		Suspend second = new Suspend();
+		run(first, recordClosable(), second, recordClosable());
+
+		assertFalse(_dialog.isClosable());
+
+		first.resume("one");
+
+		assertEquals("Between the holds, the command is not suspended.", List.of(Boolean.TRUE), _downstream);
+		assertFalse("The second action holds the command again.", _dialog.isClosable());
+
+		second.resume("two");
+
+		assertEquals(List.of(Boolean.TRUE, Boolean.TRUE), _downstream);
+		assertTrue(_dialog.isClosable());
+		assertEquals("Held, handed back, held again, handed back.",
+			List.of(Boolean.FALSE, Boolean.TRUE, Boolean.FALSE, Boolean.TRUE), _dialog.closableChanges());
+	}
+
+	/**
+	 * Tests that the follow-up actions an action runs over its result when it hands the chain back
+	 * (as a finished job does) see the command no longer suspended, and that a hold inside them
+	 * suspends it again.
+	 */
+	public void testFollowUpsRunNotSuspended() {
+		Suspend inner = new Suspend();
+		FollowUpLater job = new FollowUpLater(List.of(recordClosable(), inner, recordClosable()));
+		run(job, recordClosable());
+
+		assertFalse(_dialog.isClosable());
+
+		job.finish("result");
+
+		assertEquals(List.of(Boolean.TRUE), _downstream);
+		assertFalse("The follow-up actions are held again.", _dialog.isClosable());
+
+		inner.resume("inner");
+
+		assertEquals("The follow-up actions and the actions after the step ran with the command released.",
+			List.of(Boolean.TRUE, Boolean.TRUE, Boolean.TRUE), _downstream);
+		assertTrue(_dialog.isClosable());
+	}
+
+	/**
+	 * Tests that a command held inside a branch counts as suspended, and is released when the branch
+	 * is handed back, although the branch action contains the hold.
+	 */
+	public void testHeldInsideNestedChain() {
+		Suspend inner = new Suspend();
+		ViewAction branch = new InterruptibleViewAction() {
+			@Override
+			public void execute(ReactContext context, Object input, Continuation continuation) {
+				ViewActionChain.nest(context, List.of(inner, recordClosable()), ActionArguments.NONE, continuation);
+			}
+		};
+		run(branch, recordClosable());
+
+		assertFalse(_dialog.isClosable());
+
+		inner.resume("late");
+
+		assertEquals(List.of(Boolean.TRUE, Boolean.TRUE), _downstream);
+		assertTrue(_dialog.isClosable());
+	}
+
+	/**
+	 * Tests that a command failing in the actions continuing it after a second hold leaves no
+	 * suspension behind.
+	 */
+	public void testReleasedOnFailureAfterSecondHold() {
+		Suspend first = new Suspend();
+		Suspend second = new Suspend();
+		run(first, second, failing());
+
+		first.resume("one");
+		assertFalse(_dialog.isClosable());
+
+		try {
+			second.resume("two");
+			fail("The action following the suspended one throws.");
+		} catch (RuntimeException expected) {
+			assertEquals("boom", expected.getMessage());
+		}
+
+		assertTrue("A failed command no longer holds the dialog.", _dialog.isClosable());
+		assertEquals(List.of(Boolean.FALSE, Boolean.TRUE, Boolean.FALSE, Boolean.TRUE), _dialog.closableChanges());
+	}
+
+	/**
+	 * Tests that a command failing outside of every action - in the compensation its abort runs -
+	 * leaves no suspension behind.
+	 */
+	public void testReleasedOnFailingCompensation() {
+		Suspend suspend = new Suspend();
+		ViewAction compensated = new InterruptibleViewAction() {
+			@Override
+			public void execute(ReactContext context, Object input, Continuation continuation) {
+				continuation.onAbort(() -> {
+					throw new RuntimeException("undo failed");
+				});
+				continuation.resume(input);
+			}
+		};
+		run(compensated, suspend);
+
+		assertFalse(_dialog.isClosable());
+
+		try {
+			suspend.abort();
+			fail("The compensation throws.");
+		} catch (RuntimeException expected) {
+			assertEquals("undo failed", expected.getMessage());
+		}
+
+		assertTrue("A failed command no longer holds the dialog.", _dialog.isClosable());
+	}
+
+	/**
+	 * Tests that a close requested by another command while one of the dialog is held waits for
+	 * that command, and then closes the dialog it was requested in - not the one on top by then.
+	 */
+	public void testCloseFromOtherCommandWaitsAndClosesOwnDialog() {
+		Suspend suspend = new Suspend();
+		run(suspend);
+
+		run(closeDialog());
+
+		assertTrue("A command of the dialog is held, the dialog stays.", _dialogs.isOpen(_dialog));
+
+		Dialog report = (Dialog) OpenDialogAction.openDialog(_page, ViewLoader.fullPath(VIEW), false, Map.of(),
+			List.of());
+
+		suspend.resume("late");
+
+		assertFalse("The dialog the close was requested in is closed, not just the one on top.",
+			_dialogs.isOpen(_dialog));
+		assertFalse("Closing a dialog closes the ones stacked on it.", _dialogs.isOpen(report));
 	}
 
 	/**
@@ -262,7 +427,7 @@ public class TestSuspendedCommands extends TestCase {
 	public void testCloseWithoutSuspensionClosesAtOnce() {
 		run(closeDialog());
 
-		assertFalse(_dialogs.isOpen());
+		assertFalse(_dialogs.isOpen(_dialog));
 	}
 
 	/**
@@ -295,6 +460,14 @@ public class TestSuspendedCommands extends TestCase {
 	private ViewAction downstream() {
 		return (context, value) -> {
 			_downstream.add(value);
+			return value;
+		};
+	}
+
+	/** An action recording whether the dialog can be closed when it runs. */
+	private ViewAction recordClosable() {
+		return (context, value) -> {
+			_downstream.add(Boolean.valueOf(_dialog.isClosable()));
 			return value;
 		};
 	}
@@ -359,50 +532,94 @@ public class TestSuspendedCommands extends TestCase {
 	}
 
 	/**
-	 * Stands in for the dialogs of a window, holding the one that was opened.
+	 * An action that holds the chain like a job and, when the test finishes it, runs follow-up
+	 * actions over its result before handing the chain on.
 	 */
-	private static class Dialogs implements DialogManager {
+	private static class FollowUpLater extends InterruptibleViewAction {
 
-		private Dialog _open;
+		private final List<ViewAction> _followUps;
 
-		@Override
-		public DialogHandle openDialog(boolean closeOnBackdrop, ReactControl child,
-				DialogResultHandler<Void> handler) {
-			assertNull("One dialog at a time.", _open);
-			_open = new Dialog(child);
-			return _open;
+		private ReactContext _context;
+
+		private Continuation _continuation;
+
+		FollowUpLater(List<ViewAction> followUps) {
+			_followUps = followUps;
 		}
 
 		@Override
-		public void closeTopDialog(DialogResult<Void> result) {
-			assertNotNull("A dialog is open.", _open);
-			if (!_open.isClosable()) {
-				return;
-			}
-			_open = null;
+		public void execute(ReactContext context, Object input, Continuation continuation) {
+			_context = context;
+			_continuation = continuation;
 		}
 
-		@Override
-		public void closeDialogsAbove(DialogHandle dialog) {
-			throw new UnsupportedOperationException("Nothing is stacked on the dialog of these tests.");
-		}
-
-		/** Whether the dialog is still open. */
-		boolean isOpen() {
-			return _open != null;
-		}
-
-		/** The content of the dialog the user is shown. */
-		ReactControl opened() {
-			assertNotNull("A dialog is open.", _open);
-			return _open.content();
+		void finish(Object result) {
+			ViewActionChain.followUp(_context, _followUps, ActionArguments.NONE, result, _continuation);
 		}
 	}
 
 	/**
-	 * The dialog the fixture opened, recording every change of whether it can be closed.
+	 * Stands in for the dialogs of a window, holding the stack of opened ones.
+	 */
+	private static class Dialogs implements DialogManager {
+
+		private final List<Dialog> _stack = new ArrayList<>();
+
+		@Override
+		public DialogHandle openDialog(boolean closeOnBackdrop, ReactControl child,
+				DialogResultHandler<Void> handler) {
+			Dialog dialog = new Dialog(this, child);
+			_stack.add(dialog);
+			return dialog;
+		}
+
+		@Override
+		public void closeTopDialog(DialogResult<Void> result) {
+			assertFalse("A dialog is open.", _stack.isEmpty());
+			close(_stack.get(_stack.size() - 1));
+		}
+
+		@Override
+		public void closeDialogsAbove(DialogHandle dialog) {
+			throw new UnsupportedOperationException("Nothing reveals a dialog in these tests.");
+		}
+
+		/**
+		 * Closes the given dialog together with the ones above it, unless one of them must stay.
+		 */
+		void close(Dialog dialog) {
+			int index = _stack.indexOf(dialog);
+			if (index < 0) {
+				return;
+			}
+			for (int n = index; n < _stack.size(); n++) {
+				if (!_stack.get(n).isClosable()) {
+					return;
+				}
+			}
+			while (_stack.size() > index) {
+				_stack.remove(_stack.size() - 1);
+			}
+		}
+
+		/** Whether the given dialog is still open. */
+		boolean isOpen(Dialog dialog) {
+			return _stack.contains(dialog);
+		}
+
+		/** The content of the dialog the user is shown. */
+		ReactControl opened() {
+			assertFalse("A dialog is open.", _stack.isEmpty());
+			return _stack.get(_stack.size() - 1).content();
+		}
+	}
+
+	/**
+	 * A dialog the fixture opened, recording every change of whether it can be closed.
 	 */
 	private static class Dialog implements DialogHandle {
+
+		private final Dialogs _dialogs;
 
 		private final ReactControl _content;
 
@@ -410,7 +627,8 @@ public class TestSuspendedCommands extends TestCase {
 
 		private final List<Boolean> _closableChanges = new ArrayList<>();
 
-		Dialog(ReactControl content) {
+		Dialog(Dialogs dialogs, ReactControl content) {
+			_dialogs = dialogs;
 			_content = content;
 		}
 
@@ -425,7 +643,7 @@ public class TestSuspendedCommands extends TestCase {
 
 		@Override
 		public void close(DialogResult<Void> result) {
-			// Not used: these tests ask whether the dialog may be closed, not to close it.
+			_dialogs.close(this);
 		}
 
 		@Override

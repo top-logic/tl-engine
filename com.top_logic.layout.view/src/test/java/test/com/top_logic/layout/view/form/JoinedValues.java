@@ -13,6 +13,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.kbbased.storage.AbstractDerivedStorage;
 import com.top_logic.model.TLObject;
@@ -21,7 +22,8 @@ import com.top_logic.model.form.TracingScope;
 
 /**
  * Derived attribute joining the values of other attributes of the same object, separated by a
- * blank.
+ * blank. Empty values are left out, and the attribute is empty (<code>null</code>) if all values
+ * are.
  *
  * <p>
  * The values are read through {@link TLObject#tValue(TLStructuredTypePart)} like in any other Java
@@ -80,9 +82,12 @@ public class JoinedValues<C extends JoinedValues.Config<?>> extends AbstractDeri
 		List<String> values = new ArrayList<>();
 		for (String name : getConfig().getAttributes()) {
 			TLStructuredTypePart part = attribute.getOwner().getPart(name);
-			values.add(String.valueOf(object.tValue(part)));
+			Object value = object.tValue(part);
+			if (!Utils.isEmpty(value)) {
+				values.add(String.valueOf(value));
+			}
 		}
-		return String.join(" ", values);
+		return values.isEmpty() ? null : String.join(" ", values);
 	}
 
 }

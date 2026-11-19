@@ -21,15 +21,15 @@
 -->
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
-		<config service-class="com.top_logic.tl.ai.core.tools.web.WebToolsService">
+		<config service-class="com.top_logic.ai.core.tools.web.WebToolsService">
 			<instance>
-				<search-engine class="com.top_logic.tl.ai.core.tools.web.BraveSearchEngine">
+				<search-engine class="com.top_logic.ai.core.tools.web.BraveSearchEngine">
 					<api-key name="tl_brave_api_key"/>
 				</search-engine>
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+		<config service-class="com.top_logic.ai.core.security.AiToolAccessService">
 			<instance>
 				<background-allowlist>
 					<grant group="model.read"/>

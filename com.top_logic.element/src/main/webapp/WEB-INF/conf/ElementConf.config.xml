@@ -253,6 +253,10 @@
 					<module name="tl.imagegallery"
 						internal="true"
 					/>
+					<!-- A revision is commit metadata readable by everyone; it cannot hold roles. -->
+					<class name="tl.core:Revision"
+						without-security="true"
+					/>
 				</security-config>
 			</instance>
 		</config>

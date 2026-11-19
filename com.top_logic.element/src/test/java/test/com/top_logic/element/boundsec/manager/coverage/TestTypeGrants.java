@@ -76,6 +76,21 @@ public class TestTypeGrants extends BasicTestCase {
 	/** The attribute of {@link #PART_ONLY} granting Read. */
 	private static final String PART_ONLY_LABEL = PART_ONLY + "#label";
 
+	/** Type whose attribute {@link #NAME} denies writing to every role. */
+	private static final String NAMED = MODULE + ":Named";
+
+	/** Specialization of {@link #NAMED} with attribute rights of its own for {@link #NAME}. */
+	private static final String FOO = MODULE + ":Foo";
+
+	/** Specialization of {@link #FOO}. */
+	private static final String SUB = MODULE + ":Sub";
+
+	/** Specialization of {@link #NAMED} inheriting its attribute rights. */
+	private static final String BAR = MODULE + ":Bar";
+
+	/** The attribute of {@link #NAMED} with attribute rights per type. */
+	private static final String NAME = NAMED + "#name";
+
 	/** The composition {@link #EXPLICIT_PART} delegates through. */
 	private static final String EXPLICIT_PARTS = COVERED + "#explicitParts";
 
@@ -86,6 +101,18 @@ public class TestTypeGrants extends BasicTestCase {
 
 	/** Type with a read grant to {@link #ROLE_GHOST}. */
 	private static final String DEAD_GRANT = MODULE + ":DeadGrant";
+
+	/** Type in no composition, granting Create to {@link #ROLE_ROOT_CREATOR}. */
+	private static final String CREATED_AT_ROOT = MODULE + ":CreatedAtRoot";
+
+	/** Type in no composition, granting Create to {@link #ROLE_SELF_CREATOR}. */
+	private static final String CREATED_BY_SELF = MODULE + ":CreatedBySelf";
+
+	/** Role delivered on the security root only. */
+	private static final String ROLE_ROOT_CREATOR = MODULE + ".RootCreator";
+
+	/** Role delivered on objects of {@link #CREATED_BY_SELF} only. */
+	private static final String ROLE_SELF_CREATOR = MODULE + ".SelfCreator";
 
 	private static final BoundCommandGroup READ = SimpleBoundCommandGroup.READ;
 
@@ -314,14 +341,71 @@ public class TestTypeGrants extends BasicTestCase {
 		assertTrue(restricted.granted());
 		assertTrue(restricted.pending());
 		assertEquals(List.of("grant Read " + ROLE_READER),
-			describe(_editor.storedRules(SecurityDefinitionEditor.entryName(owner))));
+			describe(_editor.storedRules(SecurityDefinitionEditor.entryName(type(COVERED), owner))));
 
 		grants.setGranted(row, READ, false);
 		Cell lifted = grants.getCell(row, READ);
 		assertFalse("Revoking the last role lifts the restriction.", lifted.restricted());
 		assertFalse(lifted.pending());
 		assertEquals("The underlying layers do not restrict the attribute, so nothing is stored.", List.of(),
-			describe(_editor.storedRules(SecurityDefinitionEditor.entryName(owner))));
+			describe(_editor.storedRules(SecurityDefinitionEditor.entryName(type(COVERED), owner))));
+	}
+
+	/**
+	 * Attribute rights configured for a type appear for that type and its specializations only.
+	 */
+	public void testAttributeRightsPerType() throws Exception {
+		TLStructuredTypePart name = attribute(NAME);
+		Row read = new Row(name, reader());
+
+		assertFalse(grants(NAMED).getCell(read, READ).restricted());
+		assertFalse("Not for a sibling.", grants(BAR).getCell(read, READ).restricted());
+		for (String type : List.of(FOO, SUB)) {
+			Cell cell = grants(type).getCell(read, READ);
+			assertTrue(type, cell.restricted());
+			assertTrue(type, cell.granted());
+			assertFalse(type, cell.pending());
+		}
+
+		Cell inheritedWrite = grants(BAR).getCell(read, WRITE);
+		assertTrue("Bar inherits the write restriction of Named.", inheritedWrite.restricted());
+		assertFalse(inheritedWrite.granted());
+		assertFalse(inheritedWrite.pending());
+		assertFalse("The rights of Foo replace those of Named.", grants(FOO).getCell(read, WRITE).restricted());
+	}
+
+	/**
+	 * A grant on an attribute changed for a type is stored for that type alone, and keeps the
+	 * attribute rights the type inherits for the other operations.
+	 */
+	public void testAttributeGrantStoredForType() throws Exception {
+		TLStructuredTypePart name = attribute(NAME);
+		Row read = new Row(name, reader());
+
+		TypeGrants bar = grants(BAR);
+		bar.setGranted(read, READ, true);
+
+		assertEquals(List.of("grant Write", "grant Read " + ROLE_READER),
+			describe(_editor.storedRules(SecurityDefinitionEditor.entryName(type(BAR), name))));
+		assertEquals("The generalization is not changed.", List.of(),
+			describe(_editor.storedRules(SecurityDefinitionEditor.entryName(type(NAMED), name))));
+
+		Cell readCell = bar.getCell(read, READ);
+		assertTrue(readCell.restricted());
+		assertTrue(readCell.granted());
+		assertTrue(readCell.pending());
+		Cell writeCell = bar.getCell(read, WRITE);
+		assertTrue("The inherited write restriction is kept.", writeCell.restricted());
+		assertFalse(writeCell.granted());
+		assertFalse(writeCell.pending());
+
+		assertFalse("Named is not changed.", grants(NAMED).getCell(read, READ).restricted());
+
+		bar.setGranted(read, READ, false);
+		assertFalse("Revoking the last role lifts the restriction.", bar.getCell(read, READ).restricted());
+		assertTrue(bar.getCell(read, WRITE).restricted());
+		assertEquals(List.of("grant Write"),
+			describe(_editor.storedRules(SecurityDefinitionEditor.entryName(type(BAR), name))));
 	}
 
 	/**
@@ -356,7 +440,7 @@ public class TestTypeGrants extends BasicTestCase {
 		TypeGrants delegating = grants(EXPLICIT_PART);
 		String label = Resources.getInstance().getString(delegating.getAccessParent().getLabel());
 		assertFalse(label, label.contains(EXPLICIT_PARTS));
-		assertTrue("A part without a label is named by its name: " + label, label.contains("#explicitParts"));
+		assertTrue("A part without a label is named by its name: " + label, label.contains("#Explicit parts"));
 	}
 
 	public void testTypesWithoutGrants() throws Exception {
@@ -368,6 +452,34 @@ public class TestTypeGrants extends BasicTestCase {
 		TypeGrants exempt = grants(UNSECURED);
 		assertTrue(exempt.isExempt());
 		assertEquals(List.of(), exempt.getRows());
+	}
+
+	/**
+	 * A role holding only a grant of Create gets an effective row when it is delivered where the
+	 * objects are created, although it cannot be held on the objects.
+	 */
+	public void testCreateRoleDeliveredOnRootIsEffective() throws Exception {
+		TypeGrants grants = grants(CREATED_AT_ROOT);
+		BoundedRole rootCreator = BoundedRole.getRoleByName(ROLE_ROOT_CREATOR);
+		assertEquals(List.of(reader(), rootCreator), grants.getRoles());
+		assertEquals(List.of(), grants.getIneffectiveRoles());
+		assertFalse(grants.isIneffective(new Row(null, rootCreator)));
+		assertTrue(grants.getCell(new Row(null, rootCreator), SimpleBoundCommandGroup.CREATE).granted());
+	}
+
+	/**
+	 * A role holding only a grant of Create is ineffective when it is delivered on the objects
+	 * alone, not where they are created.
+	 */
+	public void testCreateRoleDeliveredOnTypeIsIneffective() throws Exception {
+		TypeGrants grants = grants(CREATED_BY_SELF);
+		BoundedRole selfCreator = BoundedRole.getRoleByName(ROLE_SELF_CREATOR);
+		assertEquals(List.of(reader()), grants.getRoles());
+		assertEquals(List.of(selfCreator), grants.getIneffectiveRoles());
+		Row row = new Row(null, selfCreator);
+		assertTrue(grants.isIneffective(row));
+		assertTrue(grants.getRows().contains(row));
+		assertEquals("The role is listed once.", 1, grants.getRows().stream().filter(row::equals).count());
 	}
 
 	private TypeGrants grants(String typeName) {

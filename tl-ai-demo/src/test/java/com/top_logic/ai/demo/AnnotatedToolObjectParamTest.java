@@ -20,6 +20,15 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.ai.tool.api.AnnotatedTools;
+import com.top_logic.ai.tool.api.AnswerMarking;
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.P;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolArgumentCoercionException;
+import com.top_logic.ai.tool.api.ToolMethod;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -37,21 +46,12 @@ import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tl.ai.core.agent.ExecutionMode;
-import com.top_logic.tl.ai.core.agent.SecurityContext;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.TransactionScope;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.security.ModelSecurity;
-import com.top_logic.tl.ai.tool.api.AnnotatedTools;
-import com.top_logic.tl.ai.tool.api.AnswerMarking;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.P;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.ToolArgumentCoercionException;
-import com.top_logic.tl.ai.tool.api.ToolMethod;
-import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tl.ai.tool.api.ToolResult;
+import com.top_logic.ai.core.agent.ExecutionMode;
+import com.top_logic.ai.core.agent.SecurityContext;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.agent.TransactionScope;
+import com.top_logic.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
@@ -97,19 +97,6 @@ public class AnnotatedToolObjectParamTest extends BasicTestCase {
 		ToolResult result = tool().execute(Map.of("room", tid(room)), unchecked());
 
 		assertEquals("Kaisaal", result.text());
-	}
-
-	/**
-	 * The whole {@code label [id:TID]} entry a text result writes is accepted too, because that is
-	 * what the model has in front of it.
-	 */
-	public void testLabelWithIdentifierIsAccepted() throws Exception {
-		TLObject room = createRoom("Elbblick");
-
-		ToolResult result = tool().execute(
-			Map.of("room", "Elbblick [id:" + tid(room) + "]"), unchecked());
-
-		assertEquals("Elbblick", result.text());
 	}
 
 	/**

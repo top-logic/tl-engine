@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestScaledIcon">
+			<types>
+				<class name="Symbol">
+					<annotations>
+						<lifecycle-handlers>
+							<script>
+								<created><![CDATA[symbol -> $symbol.set(`TestScaledIcon:Symbol#icon`, $symbol.get(`TestScaledIcon:Symbol#picture`).binaryScaleImage(32, 32))]]></created>
+							</script>
+						</lifecycle-handlers>
+					</annotations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<property name="picture"
+							type="tl.core:Binary"
+						>
+							<annotations>
+								<change-handlers>
+									<script>
+										<operation><![CDATA[symbol -> newValue -> oldValue -> attribute -> $symbol.set(`TestScaledIcon:Symbol#icon`, $newValue.binaryScaleImage(32, 32))]]></operation>
+									</script>
+								</change-handlers>
+							</annotations>
+						</property>
+						<property name="icon"
+							type="tl.core:Binary"
+						/>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

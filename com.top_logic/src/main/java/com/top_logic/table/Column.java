@@ -5,10 +5,12 @@
  */
 package com.top_logic.table;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.annotate.ui.ValueColor;
 
 /**
  * A declarative, type-safe column definition.
@@ -81,7 +83,8 @@ public interface Column<R, V> {
 	 * <p>
 	 * The default implementation takes the text from the {@link #renderCell(Object) rendered
 	 * cell content}, so the search finds what the user sees: the
-	 * {@link CellContent.Text} and {@link CellContent.Labeled} variants carry text, while
+	 * {@link CellContent.Text}, {@link CellContent.Labeled} and {@link CellContent.Placeholder}
+	 * variants carry text, while
 	 * {@link CellContent.Editable}, {@link CellContent.Raw} and {@link CellContent.Empty}
 	 * carry none - a column rendering those never matches a search. A column that can produce
 	 * its text more cheaply than by rendering, or that renders a bespoke control over a
@@ -95,6 +98,9 @@ public interface Column<R, V> {
 		}
 		if (content instanceof CellContent.Labeled labeled) {
 			return labeled.text();
+		}
+		if (content instanceof CellContent.Placeholder placeholder) {
+			return placeholder.text();
 		}
 		return null;
 	}
@@ -217,6 +223,36 @@ public interface Column<R, V> {
 	}
 
 	/**
+	 * Optional CSS class put on the heading of this column only, or {@code null} for none.
+	 *
+	 * <p>
+	 * In contrast to {@link #cssClass()}, the data cells do not carry it: it is the hook for an
+	 * application's own stylesheet to mark the heading. It is asked whenever the columns are
+	 * displayed, so it may follow a state that changes while the table is shown.
+	 * </p>
+	 *
+	 * @see #headerRole() The color role of the heading.
+	 */
+	default String headerClass() {
+		return null;
+	}
+
+	/**
+	 * Optional color role the heading of this column is tinted in, or {@code null} for none.
+	 *
+	 * <p>
+	 * A UI tier draws the heading in that role, independently of the roles of the data cells
+	 * ({@link #color(Object)}). It is asked whenever the columns are displayed, so it may follow a
+	 * state that changes while the table is shown.
+	 * </p>
+	 *
+	 * @see #headerClass() The application's own styling hook for the heading.
+	 */
+	default ValueColor headerRole() {
+		return null;
+	}
+
+	/**
 	 * Optional CSS class for a cell in the given row, or {@code null} for none.
 	 *
 	 * @see #cssClass() The class the whole column carries.
@@ -226,11 +262,47 @@ public interface Column<R, V> {
 	}
 
 	/**
+	 * Optional color role of the cell in the given row, or {@code null} for none.
+	 *
+	 * <p>
+	 * A UI tier draws the cell tinted in that role, so that a single cell can be marked by what its
+	 * row object is (e.g. by its state). The role is independent of the CSS class
+	 * {@link #cssClass(Object)}, which stays the application's own styling hook.
+	 * </p>
+	 *
+	 * @see TableView#cellColor(Row, String)
+	 */
+	default ValueColor color(R row) {
+		return null;
+	}
+
+	/**
 	 * Optional cell-existence test gating filter visibility, or empty if cells always
 	 * exist.
 	 */
 	default Optional<CellExistence<R>> existence() {
 		return Optional.empty();
+	}
+
+	/**
+	 * The text the header row of a group shows in place of the value the group stands for when
+	 * the rows of the group have {@link #isNoValue(Object) no value} in this column.
+	 *
+	 * <p>
+	 * The default is the neutral {@link I18NConstants#EMPTY_GROUP}. A column whose missing value
+	 * means something to the user names it, e.g. "Not assigned" for a column of persons.
+	 * </p>
+	 */
+	default ResKey emptyGroupLabel() {
+		return I18NConstants.EMPTY_GROUP;
+	}
+
+	/**
+	 * Whether the given cell value shows nothing: no value at all, or an empty collection of a
+	 * column over several values.
+	 */
+	static boolean isNoValue(Object value) {
+		return value == null || value instanceof Collection<?> collection && collection.isEmpty();
 	}
 
 }

@@ -72,6 +72,9 @@ public class FailedLogin extends AbstractWrapper {
 	/** Message in case the configured hook has rejected the login. */
 	public static final String REASON_CONFIGURED_HOOK = "configuredHook";
 
+	/** Reason: The account is locked. */
+	public static final String REASON_ACCOUNT_LOCKED = "accountLocked";
+
 	/** Value stored as client IP, if the client IP is not known. */
 	public static final String NO_CLIENT_IP = "noClientIP";
 

@@ -133,6 +133,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_INVALID_WEB_RESOURCE_PATH__PATH;
 
+	/**
+	 * @en Invalid image size "{0}": The size must be a number of at least one pixel.
+	 */
+	public static ResKey1 ERROR_INVALID_IMAGE_SIZE__VALUE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

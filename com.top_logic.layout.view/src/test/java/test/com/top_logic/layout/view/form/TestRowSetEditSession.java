@@ -223,6 +223,188 @@ public class TestRowSetEditSession extends AbstractModelAccessTest {
 	}
 
 	/**
+	 * A stored object adopted by a running session is edited through its buffer, and the change is
+	 * stored with the form.
+	 */
+	public void testAdoptedRowSaved() {
+		TLObject step = createStepWithSubstep();
+		TLObject substep = single(step.tValueByName(SUBSTEPS));
+
+		becomeUser(_root);
+		FormControl form = newForm();
+		CompositionControl rows = stepOnly(form, step);
+		RowSetEditSession session = rows.session();
+
+		TLObject substepRow = single(session.adoptRows(List.of(substep)));
+		assertSame(substep, ((TLObjectOverlay) substepRow).getBase());
+		assertEquals(2, session.currentRows().size());
+		substepRow.tUpdateByName(NAME, RENAMED_SUBSTEP);
+		assertTrue(form.isDirty());
+		// Nothing is stored before the form is saved.
+		assertEquals(OLD_SUBSTEP, substep.tValueByName(NAME));
+
+		form.executeSave();
+
+		assertFalse(form.isEditMode());
+		assertTrue(substep.tValid());
+		assertEquals(RENAMED_SUBSTEP, substep.tValueByName(NAME));
+		assertEquals(List.of(substep), step.tValueByName(SUBSTEPS));
+	}
+
+	/**
+	 * Adopting a row changes nothing: the session stays clean, its display is not rebuilt, and
+	 * saving neither deletes nor changes the adopted row, although the binding deletes removed
+	 * rows.
+	 */
+	public void testAdoptionIsNoChange() {
+		TLObject step = createStepWithSubstep();
+		TLObject substep = single(step.tValueByName(SUBSTEPS));
+
+		becomeUser(_root);
+		FormControl form = newForm();
+		CompositionControl rows = stepOnly(form, step);
+		RowSetEditSession session = rows.session();
+
+		assertNotNull(single(session.adoptRows(List.of(substep))));
+		assertFalse(session.isDirty());
+		assertFalse(form.isDirty());
+		assertEquals("Adoption must not rebuild the display.", 1, rows._shownRows);
+
+		// A change of another row makes the save store something.
+		session.currentRows().get(0).tUpdateByName(NAME, NEW_STEP + "!");
+		form.executeSave();
+
+		assertFalse(form.isEditMode());
+		assertTrue(step.tValid());
+		assertTrue(substep.tValid());
+		assertEquals(OLD_SUBSTEP, substep.tValueByName(NAME));
+		assertEquals(List.of(substep), step.tValueByName(SUBSTEPS));
+	}
+
+	/**
+	 * Adopting an object that is a row already returns its row and adds nothing.
+	 */
+	public void testAdoptionIsIdempotent() {
+		TLObject step = createStepWithSubstep();
+		TLObject substep = single(step.tValueByName(SUBSTEPS));
+
+		becomeUser(_root);
+		FormControl form = newForm();
+		RowSetEditSession session = stepOnly(form, step).session();
+		TLObject stepRow = single(session.currentRows());
+
+		assertNull(session.findRow(substep));
+		TLObject substepRow = single(session.adoptRows(List.of(substep)));
+		assertSame(substepRow, session.findRow(substep));
+		assertEquals(List.of(substepRow), session.adoptRows(List.of(substep)));
+		assertSame(substepRow, session.adoptRow(substep));
+		assertEquals(List.of(stepRow, substepRow), session.adoptRows(List.of(step, substep)));
+		assertEquals(List.of(stepRow, substepRow), session.currentRows());
+		assertFalse(session.isDirty());
+	}
+
+	/**
+	 * An adopted row removed from rows the binding deletes is deleted on save, and is not adopted
+	 * again.
+	 */
+	public void testRemovedAdoptedRowDeleted() {
+		TLObject step = createStepWithSubstep();
+		TLObject substep = single(step.tValueByName(SUBSTEPS));
+
+		becomeUser(_root);
+		FormControl form = newForm();
+		CompositionControl rows = stepOnly(form, step);
+		RowSetEditSession session = rows.session();
+
+		TLObject substepRow = single(session.adoptRows(List.of(substep)));
+		rows.removeRow(substepRow);
+		assertTrue(session.isDirty());
+		assertNull(session.findRow(substep));
+		assertEquals(List.of(), session.adoptRows(List.of(substep)));
+		assertEquals(1, session.currentRows().size());
+
+		form.executeSave();
+
+		assertFalse(form.isEditMode());
+		assertTrue(step.tValid());
+		assertFalse(substep.tValid());
+	}
+
+	/**
+	 * The parts of a removed row the binding deletes are not adopted: they are deleted with it.
+	 */
+	public void testPartOfRemovedRowNotAdopted() {
+		TLObject step = createStepWithSubstep();
+		TLObject substep = single(step.tValueByName(SUBSTEPS));
+
+		becomeUser(_root);
+		FormControl form = newForm();
+		CompositionControl rows = stepOnly(form, step);
+		RowSetEditSession session = rows.session();
+
+		rows.removeRow(single(session.currentRows()));
+		assertEquals(List.of(), session.adoptRows(List.of(substep)));
+	}
+
+	/**
+	 * A violated constraint of an adopted row makes the rows invalid.
+	 */
+	public void testAdoptedRowValidated() {
+		TLObject step = createStepWithSubstep();
+		TLObject item = newPart(step, ITEMS, ITEM);
+
+		becomeUser(_root);
+		FormControl form = newForm();
+		RowSetEditSession session = stepOnly(form, step).session();
+		assertTrue(session.checkValid());
+
+		TLObject itemRow = single(session.adoptRows(List.of(item)));
+		assertTrue(session.checkValid());
+
+		itemRow.tUpdateByName(NAME, null);
+		assertFalse("The mandatory name of an adopted row is checked.", session.checkValid());
+
+		itemRow.tUpdateByName(NAME, ITEM);
+		assertTrue(session.checkValid());
+	}
+
+	/**
+	 * A session that is not running adopts no rows.
+	 */
+	public void testAdoptionRequiresRunningSession() {
+		TLObject step = createStepWithSubstep();
+
+		becomeUser(_root);
+		FormControl form = newForm();
+		RowSetEditSession session = new RowSetEditSession(RowSetOwner.ofForm(form), stepOnlyBinding(step));
+		assertFalse(session.isRunning());
+		assertNull(session.findRow(step));
+		try {
+			session.adoptRows(List.of(step));
+			fail("A session that is not running must refuse to adopt rows.");
+		} catch (IllegalStateException ex) {
+			// Expected.
+		}
+	}
+
+	/**
+	 * A table showing only the given step, deleting removed rows, in edit mode: further rows are
+	 * adopted by the session.
+	 */
+	private CompositionControl stepOnly(FormControl form, TLObject step) {
+		CompositionControl rows = new CompositionControl(form, stepOnlyBinding(step));
+		rows.init();
+		assertTrue(form.enterEditMode());
+		assertEquals(1, rows.session().currentRows().size());
+		assertEquals(1, rows._shownRows);
+		return rows;
+	}
+
+	private static QueryRowSetBinding stepOnlyBinding(TLObject step) {
+		return new QueryRowSetBinding(() -> List.of(step), type(STEP), List.of(), RemoveMode.DELETE);
+	}
+
+	/**
 	 * A table of a step and its substep, deleting removed rows, in edit mode.
 	 */
 	private CompositionControl stepsAndSubsteps(FormControl form, TLObject step, TLObject substep) {

@@ -14,14 +14,14 @@ import java.util.TreeSet;
 
 import junit.framework.Test;
 
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService;
+import com.top_logic.ai.tool.api.registry.ToolRegistryService.ToolFactoryConfig;
 import com.top_logic.basic.util.I18NBundleSPI;
 import com.top_logic.basic.util.ResourcesModule;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.core.security.layout.AdminToolDescriptions;
-import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory;
-import com.top_logic.tl.ai.tool.api.Tool;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
-import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService.ToolFactoryConfig;
+import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.classic.security.layout.AdminToolDescriptions;
+import com.top_logic.ai.core.tools.registry.ScriptToolFactory;
 
 /**
  * Every tool the framework ships is described for an administrator, in both languages.
@@ -73,7 +73,8 @@ public class SecDemoToolDescriptionTest extends SecDemoPersonaTest {
 		}
 
 		assertEquals("Undescribed tools. Add one sentence per language to"
-			+ " tl-ai-core/src/main/webapp/WEB-INF/conf/resources/tl-ai-core.app-messages_*.properties"
+			+ " WEB-INF/conf/resources/<module>.app-messages_*.properties of the module that registers"
+			+ " the tool (tl-ai-classic for the tools of tl-ai-core)"
 			+ " under the key '" + AdminToolDescriptions.PREFIX + ".{factory}.{tool}':\n  "
 			+ missing, Map.of(), missing);
 	}

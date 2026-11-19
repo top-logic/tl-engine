@@ -47,23 +47,32 @@ import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
  */
 public class TestLayoutCreator extends TestCase {
 
-	/** Directory of the test layouts relative to the layout directory. */
-	private static final String DIR = "test/layoutCreator/";
+	/**
+	 * Directory below the layout directory holding the layouts of all tests.
+	 * 
+	 * <p>
+	 * Each test uses its own sub directory named after the test (see {@link #_dir}): the file system
+	 * events of a directory deleted in {@link #tearDown()} arrive asynchronously and could otherwise
+	 * remove the layouts the next test has just written to the same place from the
+	 * {@link FileSystemCache}.
+	 * </p>
+	 */
+	private static final String BASE_DIR = "test/layoutCreator/";
 
-	/** A layout without overlays, copied unchanged. */
-	private static final String PLAIN = DIR + "plain.layout.xml";
+	/** File name of a layout without overlays, copied unchanged. */
+	private static final String PLAIN = "plain.layout.xml";
 
-	/** A layout with an argument overlay that adds a reference to {@link #PLAIN}. */
-	private static final String VALID = DIR + "valid.layout.xml";
+	/** File name of a layout with an argument overlay that adds a reference to {@link #PLAIN}. */
+	private static final String VALID = "valid.layout.xml";
 
-	/** A layout calling a template that does not exist. */
-	private static final String MISSING_TEMPLATE = DIR + "missingTemplate.layout.xml";
+	/** File name of a layout calling a template that does not exist. */
+	private static final String MISSING_TEMPLATE = "missingTemplate.layout.xml";
 
-	/** Name of the template {@link #MISSING_TEMPLATE} calls. */
-	private static final String NO_SUCH_TEMPLATE = DIR + "noSuch.template.xml";
+	/** File name of the template {@link #MISSING_TEMPLATE} calls. */
+	private static final String NO_SUCH_TEMPLATE = "noSuch.template.xml";
 
-	/** A layout whose overlay is not well-formed XML. */
-	private static final String MALFORMED_OVERLAY = DIR + "malformedOverlay.layout.xml";
+	/** File name of a layout whose overlay is not well-formed XML. */
+	private static final String MALFORMED_OVERLAY = "malformedOverlay.layout.xml";
 
 	private static final String TABBAR_CALL = """
 			<?xml version="1.0" encoding="utf-8" ?>
@@ -84,13 +93,16 @@ public class TestLayoutCreator extends TestCase {
 					<layout-reference resource="%s"/>
 				</components>
 			</arguments>
-			""".formatted(PLAIN);
+			""";
 
 	private static final String MALFORMED = """
 			<?xml version="1.0" encoding="utf-8" ?>
 			<arguments>
 				<components>
 			""";
+
+	/** Directory of the layouts of this test relative to the layout directory. */
+	private String _dir;
 
 	private File _target;
 
@@ -101,14 +113,15 @@ public class TestLayoutCreator extends TestCase {
 		super.setUp();
 		_target = Files.createTempDirectory("target-webapp").toFile();
 		_overlays = new LinkedHashMap<>();
+		_dir = BASE_DIR + getName() + "/";
 
-		addLayout(PLAIN, TABBAR_CALL.formatted(TABBAR_TEMPLATE), null);
-		addLayout(VALID, TABBAR_CALL.formatted(TABBAR_TEMPLATE), REFERENCE_OVERLAY);
+		addLayout(key(PLAIN), TABBAR_CALL.formatted(TABBAR_TEMPLATE), null);
+		addLayout(key(VALID), TABBAR_CALL.formatted(TABBAR_TEMPLATE), referenceOverlay());
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
-		FileUtilities.deleteR(moduleRoot().resolve(ModuleLayoutConstants.LAYOUT_PATH + "/" + DIR).toFile());
+		FileUtilities.deleteR(moduleRoot().resolve(ModuleLayoutConstants.LAYOUT_PATH + "/" + _dir).toFile());
 		refreshLayouts();
 		FileUtilities.deleteR(_target);
 		super.tearDown();
@@ -127,19 +140,22 @@ public class TestLayoutCreator extends TestCase {
 	 * written, and aborts on the error check, while the valid layouts are written anyway.
 	 */
 	public void testDefectiveLayoutsAreReported() throws IOException {
-		addLayout(MISSING_TEMPLATE, TABBAR_CALL.formatted(NO_SUCH_TEMPLATE), REFERENCE_OVERLAY);
-		addLayout(MALFORMED_OVERLAY, TABBAR_CALL.formatted(TABBAR_TEMPLATE), MALFORMED);
+		String missingTemplate = key(MISSING_TEMPLATE);
+		String noSuchTemplate = key(NO_SUCH_TEMPLATE);
+		String malformedOverlay = key(MALFORMED_OVERLAY);
+		addLayout(missingTemplate, TABBAR_CALL.formatted(noSuchTemplate), referenceOverlay());
+		addLayout(malformedOverlay, TABBAR_CALL.formatted(TABBAR_TEMPLATE), MALFORMED);
 
 		BufferingProtocol log = createLayouts();
 
 		assertTrue("Defective layouts must be reported as errors.", log.hasErrors());
 		String error = log.getError();
-		assertTrue(error, error.contains("'" + MISSING_TEMPLATE + "'"));
-		assertTrue(error, error.contains(NO_SUCH_TEMPLATE));
-		assertTrue(error, error.contains("'" + MALFORMED_OVERLAY + "'"));
-		assertFalse(error, error.contains("'" + VALID + "'"));
-		assertFalse("A layout that cannot be created is not written.", target(MISSING_TEMPLATE).exists());
-		assertFalse("A layout that cannot be created is not written.", target(MALFORMED_OVERLAY).exists());
+		assertTrue(error, error.contains("'" + missingTemplate + "'"));
+		assertTrue(error, error.contains(noSuchTemplate));
+		assertTrue(error, error.contains("'" + malformedOverlay + "'"));
+		assertFalse(error, error.contains("'" + key(VALID) + "'"));
+		assertFalse("A layout that cannot be created is not written.", target(missingTemplate).exists());
+		assertFalse("A layout that cannot be created is not written.", target(malformedOverlay).exists());
 		assertValidLayoutsWritten();
 
 		try {
@@ -147,16 +163,30 @@ public class TestLayoutCreator extends TestCase {
 			fail("The error check must abort after a layout could not be created.");
 		} catch (AbortExecutionException ex) {
 			String message = ex.getMessage();
-			assertTrue(message, message.contains(MISSING_TEMPLATE));
-			assertTrue(message, message.contains(NO_SUCH_TEMPLATE));
-			assertTrue(message, message.contains(MALFORMED_OVERLAY));
+			assertTrue(message, message.contains(missingTemplate));
+			assertTrue(message, message.contains(noSuchTemplate));
+			assertTrue(message, message.contains(malformedOverlay));
 		}
 	}
 
 	private void assertValidLayoutsWritten() throws IOException {
-		assertTrue("A layout without overlays is copied.", target(PLAIN).exists());
-		String valid = Files.readString(target(VALID).toPath(), StandardCharsets.UTF_8);
-		assertTrue(valid, valid.contains(PLAIN));
+		assertTrue("A layout without overlays is copied.", target(key(PLAIN)).exists());
+		String valid = Files.readString(target(key(VALID)).toPath(), StandardCharsets.UTF_8);
+		assertTrue(valid, valid.contains(key(PLAIN)));
+	}
+
+	/**
+	 * The layout key of the given file in the directory of this test.
+	 */
+	private String key(String fileName) {
+		return _dir + fileName;
+	}
+
+	/**
+	 * An argument overlay that adds a reference to {@link #PLAIN}.
+	 */
+	private String referenceOverlay() {
+		return REFERENCE_OVERLAY.formatted(key(PLAIN));
 	}
 
 	private BufferingProtocol createLayouts() throws IOException {
@@ -190,8 +220,8 @@ public class TestLayoutCreator extends TestCase {
 	/**
 	 * Makes the layouts written to the file system visible through the {@link FileManager}.
 	 */
-	private static void refreshLayouts() {
-		FileManager.getInstance().refresh(ModuleLayoutConstants.LAYOUT_RESOURCE_PREFIX + DIR);
+	private void refreshLayouts() {
+		FileManager.getInstance().refresh(ModuleLayoutConstants.LAYOUT_RESOURCE_PREFIX + _dir);
 	}
 
 	/**

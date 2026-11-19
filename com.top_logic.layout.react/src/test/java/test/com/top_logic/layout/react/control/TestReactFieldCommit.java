@@ -115,7 +115,8 @@ public class TestReactFieldCommit extends TestCase {
 	}
 
 	/**
-	 * A field that may not be edited drops the commit: the listener does not run.
+	 * A field that may not be edited drops the commit of its client, which lags behind, and refuses
+	 * a headless one: the listener does not run.
 	 */
 	public void testNonEditableFieldDropsCommit() {
 		AbstractFieldModel model = new AbstractFieldModel("x");
@@ -127,9 +128,11 @@ public class TestReactFieldCommit extends TestCase {
 		});
 		model.setEditable(false);
 
-		TopLogicException result = commit(field);
+		TopLogicException result =
+			CommandFailures.outcome(() -> field.executeClientCommand(ReactFormFieldControl.COMMIT_COMMAND, Map.of()));
+		assertNull("The commit of a lagging client is dropped.", result);
 
-		assertNull(result);
+		assertNotNull("A headless commit is refused.", commit(field));
 		assertEquals(List.of(), reported);
 	}
 

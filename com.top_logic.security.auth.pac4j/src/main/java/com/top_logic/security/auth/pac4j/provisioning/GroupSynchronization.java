@@ -75,29 +75,31 @@ class GroupSynchronization {
 	}
 
 	/**
-	 * Whether {@link #synchronize(KnowledgeBase, Person, OidcIdentity, ExternalIdentity)} would
-	 * change something.
+	 * Takes back all group memberships the given identity has granted the given account, except
+	 * those another identity of the account grants as well.
+	 *
+	 * <p>
+	 * For an identity that is about to be removed from the account: the memberships it brought go
+	 * with it, exactly as when a login through it no longer yields a group. Must be called in a
+	 * transaction.
+	 * </p>
 	 */
-	boolean needsUpdate(KnowledgeBase kb, Person account, OidcIdentity stored, ExternalIdentity identity) {
-		if (!isActive()) {
-			return false;
+	static void revokeAll(Person account, OidcIdentity stored) {
+		Set<Group> granted = stored.getGrantedGroupsModifiable();
+		for (Group group : new ArrayList<>(granted)) {
+			revoke(account, stored, granted, group);
 		}
-		Set<Group> yielded = yieldedGroups(kb, identity);
-		Set<? extends Group> granted = stored.getGrantedGroups();
-		for (Group group : yielded) {
-			if (!isDirectMember(group, account)) {
-				return true;
-			}
-			if (!granted.contains(group) && grantedByOtherIdentity(account, stored, group)) {
-				return true;
-			}
+	}
+
+	/**
+	 * Takes back the membership in the given group that the given identity has granted, keeping it
+	 * if another identity of the account grants it as well.
+	 */
+	private static void revoke(Person account, OidcIdentity stored, Set<Group> granted, Group group) {
+		granted.remove(group);
+		if (!grantedByOtherIdentity(account, stored, group)) {
+			group.removeMember(account);
 		}
-		for (Group group : granted) {
-			if (!yielded.contains(group)) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	/**
@@ -125,10 +127,7 @@ class GroupSynchronization {
 			if (yielded.contains(group)) {
 				continue;
 			}
-			granted.remove(group);
-			if (!grantedByOtherIdentity(account, stored, group)) {
-				group.removeMember(account);
-			}
+			revoke(account, stored, granted, group);
 		}
 
 		for (Group group : yielded) {

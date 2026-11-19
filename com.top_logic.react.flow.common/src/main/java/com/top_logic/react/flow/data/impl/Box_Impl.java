@@ -146,6 +146,12 @@ public abstract class Box_Impl extends com.top_logic.react.flow.data.impl.Widget
 		return this;
 	}
 
+	@Override
+	public com.top_logic.react.flow.data.Box setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
 	@SuppressWarnings("hiding")
 	static final java.util.List<String> PROPERTIES;
 	static {

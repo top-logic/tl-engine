@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.react.window;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 
@@ -19,9 +20,12 @@ import com.top_logic.base.context.DefaultSessionContext;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.InteractionContext;
+import com.top_logic.basic.Logger.LogEntry;
 import com.top_logic.basic.SubSessionContext;
+import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.tools.CollectingLogListener;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -324,6 +328,38 @@ public class TestReactWindowRegistry extends TestCase {
 	}
 
 	/**
+	 * The sweep collects a window whose page stayed away beyond the grace period, but not the window
+	 * whose page the sweeping request displays: a tab that left the application for another site and
+	 * comes back late keeps its subsession, so that the commands of the displayed page find it.
+	 */
+	public void testSweepSparesTheDisplayedWindow() {
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
+		TLSessionContext session = DefaultSessionContext.newDefaultSessionContext();
+		TLSubSessionContext returning = createSubSession(session, "vTab", Locale.GERMAN);
+		createSubSession(session, "vGone", Locale.GERMAN);
+		displayPage(registry, registry.getOrCreateWindow("vTab"));
+		displayPage(registry, registry.getOrCreateWindow("vGone"));
+		String tabPage = registry.issuePageLoad("vTab");
+		String gonePage = registry.issuePageLoad("vGone");
+		inRequest(session, null, () -> {
+			registry.windowUnloaded("vTab", tabPage);
+			registry.windowUnloaded("vGone", gonePage);
+		});
+
+		long muchLater = System.currentTimeMillis() + 10 * 60 * 1000;
+		inRequest(session, null, () -> registry.sweepUnloadedWindows("vTab", muchLater));
+
+		assertNull("A window that did not come back is collected.", registry.getWindow("vGone"));
+		assertNull("...with its subsession.", session.getSubSession("vGone"));
+		assertNotNull("The window displayed by the request is kept.", registry.getWindow("vTab"));
+		assertSame("...with its subsession.", returning, session.getSubSession("vTab"));
+		assertEquals("It is displayed again.", 0, registry.getWindow("vTab").getUnloadedAt());
+
+		inRequest(session, null, () -> registry.sweepUnloadedWindows(null, muchLater + 10 * 60 * 1000));
+		assertNotNull("A displayed window is no candidate of a later sweep.", registry.getWindow("vTab"));
+	}
+
+	/**
 	 * Closing a window removes its subsession from the session, and only its own.
 	 */
 	public void testCloseRemovesWindowSubSession() {
@@ -407,6 +443,56 @@ public class TestReactWindowRegistry extends TestCase {
 		} finally {
 			manager.removeInteraction();
 		}
+	}
+
+	public void testStaleWindowReportedOncePerWindow() {
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
+		CollectingLogListener log = new CollectingLogListener(EnumSet.allOf(Level.class), true);
+		try {
+			registry.reportStaleWindow("vStale", "Command 'scroll' for control 'v1'");
+			assertEquals(1, countReports(log, Level.INFO, "vStale"));
+
+			registry.reportStaleWindow("vStale", "Command 'scroll' for control 'v1'");
+			registry.reportStaleWindow("vStale", "Event stream connection");
+			assertEquals("A window is reported at info level only once.", 1,
+				countReports(log, Level.INFO, "vStale"));
+			assertEquals(0, countReports(log, Level.WARN, "vStale"));
+
+			registry.reportStaleWindow("vOther", "Command 'scroll' for control 'v1'");
+			assertEquals("Another window is reported at info level.", 1,
+				countReports(log, Level.INFO, "vOther"));
+		} finally {
+			log.deactivate();
+		}
+	}
+
+	public void testStaleWindowReportedAgainAfterPageLoad() {
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
+		CollectingLogListener log = new CollectingLogListener(EnumSet.allOf(Level.class), true);
+		try {
+			registry.reportStaleWindow("vTab", "Poll for events");
+			assertEquals(1, countReports(log, Level.INFO, "vTab"));
+
+			// The client reloads its page, which is displayed again, until the window goes away.
+			registry.issuePageLoad("vTab");
+			registry.windowClosed("vTab");
+
+			registry.reportStaleWindow("vTab", "Poll for events");
+			assertEquals("A window becoming stale again is reported at info level again.", 2,
+				countReports(log, Level.INFO, "vTab"));
+		} finally {
+			log.deactivate();
+		}
+	}
+
+	private static int countReports(CollectingLogListener log, Level level, String windowName) {
+		int result = 0;
+		for (LogEntry entry : log.getLogEntries()) {
+			if (entry.getPriority() == level && entry.getMessage().contains("'" + windowName + "'")) {
+				result++;
+			}
+		}
+		return result;
 	}
 
 	/**

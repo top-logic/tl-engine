@@ -14,7 +14,7 @@ import com.top_logic.ai.chat.sched.AgentTask;
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.DefaultInstantiationContext;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.Scheduler.SchedulerConfig;
 import com.top_logic.util.sched.task.Task;

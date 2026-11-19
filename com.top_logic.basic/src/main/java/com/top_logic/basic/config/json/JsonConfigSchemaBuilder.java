@@ -9,16 +9,21 @@ import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
 
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.CommaSeparatedListValueProvider;
 import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.ConfigurationDescriptorConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationValueBinding;
+import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.DefaultConfigConstructorScheme;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
@@ -33,6 +38,7 @@ import com.top_logic.basic.config.constraint.impl.Negative;
 import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.config.constraint.impl.NonPositive;
 import com.top_logic.basic.config.constraint.impl.Positive;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.json.schema.model.AllOfSchema;
 import com.top_logic.basic.json.schema.model.AnyOfSchema;
 import com.top_logic.basic.json.schema.model.ArraySchema;
@@ -200,7 +206,10 @@ public class JsonConfigSchemaBuilder {
 
 		// Set root schema id for correct reference generation
 		Class<?> instanceType = descriptor.getInstanceType();
-		if (instanceType == null) {
+		if (isDeclared(descriptor)) {
+			// The schema of a declared type is built inline and is not referenced.
+			_rootSchemaId = null;
+		} else if (instanceType == null) {
 			_rootSchemaId = schemaId(descriptor);
 		} else if (instanceType != Object.class) {
 			_rootSchemaId = schemaId(instanceType);
@@ -464,7 +473,7 @@ public class JsonConfigSchemaBuilder {
 		AllOfSchema allOf = AllOfSchema.create();
 
 		ObjectSchema implRef = ObjectSchema.create();
-		implRef.putProperty(TYPE_PROPERTY, ConstSchema.create().setConstValue(instanceType.getName()));
+		implRef.putProperty(TYPE_PROPERTY, ConstSchema.create().setConstValue(JSON.toString(instanceType.getName())));
 		implRef.addRequired(TYPE_PROPERTY);
 		allOf.addAllOf(implRef);
 
@@ -517,6 +526,9 @@ public class JsonConfigSchemaBuilder {
 	 *        <code>null</code> for normal schemas.
 	 */
 	private Schema buildConfigValueSchema(ConfigurationDescriptor descriptor, String excludeProperty) {
+		if (isDeclared(descriptor)) {
+			return buildDeclaredSchema(descriptor, excludeProperty);
+		}
 		String extensionSchemaId = schemaId(descriptor, excludeProperty);
 		Class<?> configInterface = descriptor.getConfigurationInterface();
 		String typeId = resolveTypeId(descriptor, configInterface);
@@ -571,6 +583,38 @@ public class JsonConfigSchemaBuilder {
 
 		_schemaCache.put(extensionSchemaId, result);
 		return ref(extensionSchemaId, configInterface);
+	}
+
+	/**
+	 * Whether the given descriptor is a type declared in configuration (see
+	 * {@link TypedConfiguration#getConfigurationDescriptor(ConfigurationDescriptorConfig)}) rather
+	 * than the descriptor of its {@link ConfigurationDescriptor#getConfigurationInterface()
+	 * configuration interface}.
+	 *
+	 * <p>
+	 * A declared type shares its configuration interface - often just {@link ConfigurationItem} -
+	 * with other types, so it can neither be identified by the interface name nor have subtypes
+	 * found by it.
+	 * </p>
+	 */
+	private static boolean isDeclared(ConfigurationDescriptor descriptor) {
+		return descriptor != TypedConfiguration.getConfigurationDescriptor(descriptor.getConfigurationInterface());
+	}
+
+	/**
+	 * Builds the schema of a {@link #isDeclared(ConfigurationDescriptor) declared} type: an object
+	 * with its properties, inline and without {@code $type}, since the type has no name to give
+	 * and no subtypes to choose from.
+	 */
+	private Schema buildDeclaredSchema(ConfigurationDescriptor descriptor, String excludeProperty) {
+		Schema result = createPropertiesSchema(descriptor, excludeProperty);
+		if (result instanceof AllOfSchema allOf) {
+			result = simplifyAllOf(allOf);
+		}
+		if (result instanceof ObjectSchema objSchema) {
+			objSchema.setAdditionalProperties(NONE);
+		}
+		return result;
 	}
 
 	/**
@@ -704,8 +748,8 @@ public class JsonConfigSchemaBuilder {
 		ObjectSchema result = ObjectSchema.create();
 
 		String typeId = resolveTypeId(descriptor, descriptor.getConfigurationInterface());
-		if (typeId.equals(ConfigurationItem.class.getName())
-			|| typeId.equals(PolymorphicConfiguration.class.getName())) {
+		if (!isDeclared(descriptor) && (typeId.equals(ConfigurationItem.class.getName())
+			|| typeId.equals(PolymorphicConfiguration.class.getName()))) {
 			// All properties are handled especially.
 			return result;
 		}
@@ -738,7 +782,12 @@ public class JsonConfigSchemaBuilder {
 
 				String description = resolvePropertyDescription(descriptor, property);
 				if (description != null && !description.isEmpty()) {
-					schema.setDescription(description);
+					if (property.getValueProvider() instanceof JsonSchemaProvider) {
+						// The format describes its value form, the property what the value means.
+						schema.setDescription(joinDescriptions(description, schema.getDescription()));
+					} else {
+						schema.setDescription(description);
+					}
 				}
 
 				result.putProperty(propertyName, schema);
@@ -751,6 +800,13 @@ public class JsonConfigSchemaBuilder {
 			}
 		}
 		return result;
+	}
+
+	private static String joinDescriptions(String propertyDescription, String formatDescription) {
+		if (formatDescription == null || formatDescription.isEmpty()) {
+			return propertyDescription;
+		}
+		return propertyDescription + "\n\n" + formatDescription;
 	}
 
 	/**
@@ -810,7 +866,7 @@ public class JsonConfigSchemaBuilder {
 		String typeId = resolveTypeId(descriptor, descriptor.getConfigurationInterface());
 
 		ObjectSchema result = ObjectSchema.create();
-		result.putProperty(TYPE_PROPERTY, ConstSchema.create().setConstValue(typeId));
+		result.putProperty(TYPE_PROPERTY, ConstSchema.create().setConstValue(JSON.toString(typeId)));
 		result.addRequired(TYPE_PROPERTY);
 
 		return result;
@@ -1184,6 +1240,20 @@ public class JsonConfigSchemaBuilder {
 	private Schema buildPlainPropertySchema(PropertyDescriptor property, boolean asMapKey) {
 		Class<?> type = property.getType();
 
+		// A list in a format of separated elements is read from a JSON array as well, see
+		// JsonConfigurationReader.
+		if (!asMapKey && property.getValueProvider() instanceof CommaSeparatedListValueProvider<?> listFormat) {
+			Schema elementSchema = property.getAllowedValues() != null
+				? allowedValuesSchema(property.getAllowedValues(), elementSpecification(listFormat), false)
+				: elementSchema(property, listFormat);
+			return ArraySchema.create().setItems(elementSchema);
+		}
+
+		if (property.getAllowedValues() != null && !property.getType().isArray()) {
+			return allowedValuesSchema(property.getAllowedValues(), specification(property.getValueProvider()),
+				asMapKey);
+		}
+
 		// Numeric types
 		if (type == int.class || type == Integer.class || type == long.class || type == Long.class) {
 			if (asMapKey) {
@@ -1233,7 +1303,7 @@ public class JsonConfigSchemaBuilder {
 		// Boolean type
 		if (type == boolean.class || type == Boolean.class) {
 			if (asMapKey) {
-				return EnumSchema.create().addEnumLiteral("true").addEnumLiteral("false");
+				return EnumSchema.create().addEnumLiteral(JSON.toString("true")).addEnumLiteral(JSON.toString("false"));
 			}
 			return BooleanSchema.create();
 		}
@@ -1244,6 +1314,56 @@ public class JsonConfigSchemaBuilder {
 		}
 
 		// Concrete format is defined by the ConfigurationValueProvider.
+		if (property.getValueProvider() instanceof JsonSchemaProvider formatSchema) {
+			return formatSchema.buildSchema(property);
+		}
+		return StringSchema.create();
+	}
+
+	/**
+	 * The {@link EnumSchema} of the {@link PropertyDescriptor#getAllowedValues() allowed values} of
+	 * a property.
+	 *
+	 * @param allowedValues
+	 *        The allowed values (of a single element for a list property).
+	 * @param specification
+	 *        The text format of a single value.
+	 * @param asMapKey
+	 *        Whether the schema describes a map key, which is a string in JSON.
+	 * @return An {@link EnumSchema} listing numbers and truth values as JSON numbers and truth
+	 *         values, and all other values in their text format.
+	 */
+	private static Schema allowedValuesSchema(List<?> allowedValues, Function<Object, String> specification,
+			boolean asMapKey) {
+		EnumSchema schema = EnumSchema.create();
+		for (Object value : allowedValues) {
+			if (!asMapKey && (value instanceof Number || value instanceof Boolean)) {
+				schema.addEnumLiteral(JSON.toString(value));
+			} else {
+				schema.addEnumLiteral(JSON.toString(specification.apply(value)));
+			}
+		}
+		return schema;
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private static Function<Object, String> specification(ConfigurationValueProvider format) {
+		return value -> format.getSpecification(value);
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private static Function<Object, String> elementSpecification(CommaSeparatedListValueProvider listFormat) {
+		return value -> listFormat.getElementSpecification(value);
+	}
+
+	/**
+	 * The schema of a single element of a list in the given format: as the element format describes
+	 * its values, a plain string otherwise.
+	 */
+	private static Schema elementSchema(PropertyDescriptor property, CommaSeparatedListValueProvider<?> listFormat) {
+		if (listFormat.getElementFormat() instanceof JsonSchemaProvider elementSchema) {
+			return elementSchema.buildSchema(property);
+		}
 		return StringSchema.create();
 	}
 
@@ -1293,7 +1413,7 @@ public class JsonConfigSchemaBuilder {
 		if (!hasDocumentation) {
 			EnumSchema schema = EnumSchema.create();
 			for (String literal : literals) {
-				schema.addEnumLiteral(literal);
+				schema.addEnumLiteral(JSON.toString(literal));
 			}
 			return schema;
 		}
@@ -1301,7 +1421,7 @@ public class JsonConfigSchemaBuilder {
 		// Build oneOf schema with documentation
 		OneOfSchema oneOf = OneOfSchema.create();
 		for (int i = 0; i < constants.length; i++) {
-			ConstSchema constSchema = ConstSchema.create().setConstValue(literals[i]);
+			ConstSchema constSchema = ConstSchema.create().setConstValue(JSON.toString(literals[i]));
 			if (titles[i] != null) {
 				constSchema.setTitle(titles[i]);
 			}
@@ -1382,6 +1502,9 @@ public class JsonConfigSchemaBuilder {
 	 */
 	private String resolvePropertyLabel(ConfigurationDescriptor descriptor, PropertyDescriptor property) {
 		ResKey labelKey = getPropertyResourceKey(descriptor, property);
+		if (labelKey == null) {
+			return null;
+		}
 		return resources().getString(labelKey, null);
 	}
 
@@ -1405,17 +1528,16 @@ public class JsonConfigSchemaBuilder {
 	 */
 	private String resolvePropertyDescription(ConfigurationDescriptor descriptor, PropertyDescriptor property) {
 		ResKey labelKey = getPropertyResourceKey(descriptor, property);
-		ResKey tooltipKey = labelKey.tooltip();
-		return resources().getString(tooltipKey, null);
+		if (labelKey == null) {
+			return null;
+		}
+		return resources().getString(labelKey.tooltip(), null);
 	}
 
 	private ResKey getPropertyResourceKey(ConfigurationDescriptor descriptor, PropertyDescriptor property) {
-		Class<?> configInterface = descriptor.getConfigurationInterface();
-		String propertyName = property.getPropertyName();
-
-		// TopLogic convention: class.<ClassName>.<propertyName>.tooltip
-		ResKey labelKey = ResKey.forClass(configInterface).suffix(propertyName);
-		return labelKey;
+		// The property's own label key: the resource of its descriptor, and for a property of a
+		// declared type the label declared with it.
+		return property.labelKey(null);
 	}
 
 	/**

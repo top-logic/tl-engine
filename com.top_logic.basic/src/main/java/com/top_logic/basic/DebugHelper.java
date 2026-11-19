@@ -533,51 +533,58 @@ public abstract class DebugHelper {
         return false;
     }
 
-    /**
-     * Display startup info for the System on standard out.
-     * Information displayed:
-     * <ul>
-     * <li>OS</li>
-     * <li>User</li>
-     * <li>Java</li>
-     * </ul>
-     */
-    public static void infoAndStarter() {
-        System.out.println ();
-        System.out.println ("             OS: " + getOS ());
-        System.out.println ("           User: " + getCurrentUser ());
-        printJavaVersion();
-    }
+	/**
+	 * Appends information about the system the application runs on.
+	 * 
+	 * <p>
+	 * Information appended, one line each:
+	 * </p>
+	 * <ul>
+	 * <li>OS</li>
+	 * <li>User</li>
+	 * <li>Java</li>
+	 * </ul>
+	 * 
+	 * @param out
+	 *        The buffer to append to.
+	 */
+	public static void appendSystemInfo(StringBuilder out) {
+		out.append('\n');
+		out.append("             OS: ").append(getOS()).append('\n');
+		out.append("           User: ").append(getCurrentUser()).append('\n');
+		appendJavaVersion(out);
+	}
 
-    /**
-     * Displays information about the used java system on standard out. There are
-     * several interesting aspects, which will be collected here. If
-     * you are using a security manager, you probably run into problems.
-     */
-    public static void printJavaVersion () {
+	/**
+	 * Appends information about the used java system. There are several interesting aspects, which
+	 * will be collected here. If you are using a security manager, you probably run into problems.
+	 * 
+	 * @param out
+	 *        The buffer to append to.
+	 */
+	public static void appendJavaVersion(StringBuilder out) {
+		out.append('\n');
+		out.append("           Java:").append('\n');
 
-        System.out.println ();
-        System.out.println ("           Java:");
+		try {
+			String theVersion = System.getProperty("java.vm.version");
+			String theRuntime = System.getProperty("java.runtime.name");
+			String theName = System.getProperty("java.vm.name");
+			String theVendor = System.getProperty("java.vm.vendor");
+			String theInfo = System.getProperty("java.vm.info");
+			String theClasses = System.getProperty("java.class.version");
+			String theHome = System.getProperty("java.home");
 
-        try {
-            String theVersion = System.getProperty ("java.vm.version");
-            String theRuntime = System.getProperty ("java.runtime.name");
-            String theName    = System.getProperty ("java.vm.name");
-            String theVendor  = System.getProperty ("java.vm.vendor");
-            String theInfo    = System.getProperty ("java.vm.info");
-            String theClasses = System.getProperty ("java.class.version");
-            String theHome    = System.getProperty ("java.home");
-
-            System.out.println ("        Version: " + theVersion + " (" + theName + ')');
-            System.out.println ("        Runtime: " + theRuntime);
-            System.out.println ("         Vendor: " + theVendor);
-            System.out.println ("        Classes: V" + theClasses);
-            System.out.println ("           Info: " + theInfo);
-            System.out.println ("           Home: " + theHome);
-        } catch (SecurityException se) {
-            System.out.println("Access denied");
-        }
-    }
+			out.append("        Version: ").append(theVersion).append(" (").append(theName).append(')').append('\n');
+			out.append("        Runtime: ").append(theRuntime).append('\n');
+			out.append("         Vendor: ").append(theVendor).append('\n');
+			out.append("        Classes: V").append(theClasses).append('\n');
+			out.append("           Info: ").append(theInfo).append('\n');
+			out.append("           Home: ").append(theHome).append('\n');
+		} catch (SecurityException se) {
+			out.append("Access denied").append('\n');
+		}
+	}
 
     /**
      * Get the current operating system.

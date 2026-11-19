@@ -19,8 +19,8 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.tl.ai.core.limits.RunLimitSettings;
-import com.top_logic.tl.ai.core.limits.RunLimitsConfig;
+import com.top_logic.ai.core.limits.RunLimitSettings;
+import com.top_logic.ai.core.limits.RunLimitsConfig;
 
 /**
  * What the chat's thread pool does with a send: run it, queue it, or refuse it.

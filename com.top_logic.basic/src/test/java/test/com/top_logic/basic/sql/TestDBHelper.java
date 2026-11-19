@@ -47,7 +47,6 @@ import com.top_logic.basic.io.binary.MemoryBinaryData;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.MSSQLHelper;
-import com.top_logic.basic.sql.MySQL55Helper;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.ComputationEx2;
@@ -202,8 +201,6 @@ public class TestDBHelper extends AbstractConnectionTest {
 				} catch (AssertionFailedError ex) {
 					if (getSQLDialect() instanceof MSSQLHelper) {
 						// Known bug in MSSQL 2005 and 2019.
-					} else if (getSQLDialect() instanceof MySQL55Helper) {
-						// Known bug in MySQL 5.5 which can not be solved.
 					} else {
 						throw ex;
 					}

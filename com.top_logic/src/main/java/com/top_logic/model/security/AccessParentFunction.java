@@ -11,7 +11,6 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLType;
-import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.model.util.TLModelNamingConvention;
 
 /**
@@ -68,7 +67,7 @@ public interface AccessParentFunction {
 	 * {@link #getLabel() label} naming the reference.
 	 */
 	static ResKey referenceLabel(TLReference reference) {
-		return ResKey.fallback(TLModelI18N.getI18nKeyWithoutFallback(reference), ResKey.text(reference.getName()));
+		return TLModelNamingConvention.getTypePartLabelKey(reference);
 	}
 
 }

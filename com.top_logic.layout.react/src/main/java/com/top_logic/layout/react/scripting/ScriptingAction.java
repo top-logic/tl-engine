@@ -5,8 +5,6 @@
  */
 package com.top_logic.layout.react.scripting;
 
-import java.util.List;
-
 /**
  * Description of one action a control offers to a headless consumer.
  *
@@ -15,7 +13,7 @@ import java.util.List;
  * {@link com.top_logic.layout.react.control.ReactCommand @ReactCommandHandler} of the underlying control:
  * {@link #command()} is the command ID passed to
  * {@link com.top_logic.layout.react.control.ReactControl#executeCommand(String, java.util.Map)}, and
- * {@link #params()} or {@link #argsSchema()} describes the {@code arguments} the command expects.
+ * {@link #argsSchema()} describes the {@code arguments} the command expects.
  * This is the same dispatch path the browser client uses, so an agent invoking an advertised action
  * exercises the real application behavior rather than a parallel mock.
  * </p>
@@ -24,15 +22,12 @@ import java.util.List;
  *        The command ID to invoke (matches a {@code @ReactCommandHandler} value on the control).
  * @param label
  *        A human/agent readable label for the action.
- * @param params
- *        The hand-declared argument list (from {@code @ReactParam}); an empty list for
- *        argument-less actions or for commands that advertise a typed {@link #argsSchema()} instead.
  * @param argsSchema
- *        The JSON Schema of the command's typed argument interface, as a parsed JSON value
- *        ({@code Map}/{@code List}/scalar), or {@code null} if the command has no typed argument.
- *        When present, this is the self-describing replacement for {@link #params()}.
+ *        The JSON Schema of the command's arguments - of its typed argument interface or its
+ *        hand-declared {@code @ReactParam} parameters -, or {@code null} if the command takes no
+ *        arguments.
  */
-public record ScriptingAction(String command, String label, List<ScriptingParam> params, Object argsSchema) {
+public record ScriptingAction(String command, String label, ArgsSchema argsSchema) {
 
 	/**
 	 * Creates an argument-less action whose label equals its command ID.
@@ -42,6 +37,6 @@ public record ScriptingAction(String command, String label, List<ScriptingParam>
 	 * @return An action with no parameters.
 	 */
 	public static ScriptingAction of(String command) {
-		return new ScriptingAction(command, command, List.of(), null);
+		return new ScriptingAction(command, command, null);
 	}
 }

@@ -12,12 +12,12 @@ import com.top_logic.ai.chat.view.ChatControl;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tl.ai.core.agent.AgentDefinition;
-import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
-import com.top_logic.tl.ai.core.agent.AgentFactory;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
-import com.top_logic.tl.ai.core.security.RunAuthorization;
+import com.top_logic.ai.core.agent.AgentDefinition;
+import com.top_logic.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.ai.core.agent.AgentFactory;
+import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
+import com.top_logic.ai.core.security.RunAuthorization;
 import com.top_logic.util.Resources;
 
 /**
@@ -78,7 +78,7 @@ public record SendRefusal(String status, String reason) {
 			// administrator as an ERROR with a stack trace. Not a refusal: the request is wrong,
 			// not forbidden, so it is "not found" and not "forbidden".
 			return new SendRefusal(ChatControl.STATUS_NOT_FOUND, Resources.getInstance()
-				.getString(com.top_logic.tl.ai.core.security.I18NConstants.UNKNOWN_AGENT__AGENT
+				.getString(com.top_logic.ai.core.security.I18NConstants.UNKNOWN_AGENT__AGENT
 					.fill(named.trim())));
 		}
 		return null;
@@ -110,7 +110,7 @@ public record SendRefusal(String status, String reason) {
 			return null;
 		}
 		return forbidden(Resources.getInstance().getString(
-			com.top_logic.tl.ai.core.security.I18NConstants.AGENT_NOT_A_PERSONA__AGENT.fill(agentName)));
+			com.top_logic.ai.core.security.I18NConstants.AGENT_NOT_A_PERSONA__AGENT.fill(agentName)));
 	}
 
 	/** Whether this application has an agent of that name, assuming it has while it cannot say. */
@@ -146,7 +146,7 @@ public record SendRefusal(String status, String reason) {
 			// A request that names no agent, from an account that may run none. Its own sentence: the
 			// name of the agent they may not have says nothing they can act on.
 			return forbidden(Resources.getInstance().getString(
-				com.top_logic.tl.ai.core.security.I18NConstants.NO_AGENT_AVAILABLE));
+				com.top_logic.ai.core.security.I18NConstants.NO_AGENT_AVAILABLE));
 		}
 		List<String> mcpOverride = options.mcpOverride() ? options.mcpServers() : null;
 		AgentFactory.RunOverrides overrides =

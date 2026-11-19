@@ -30,9 +30,9 @@
  *   TLCard            - CardState
  *   TLAppBar          - AppBarState
  *   TLBreadcrumb      - BreadcrumbState
- *   TLAvatar          - AvatarState
  *   TLSlider          - SliderState
  *   TLFloatingAction  - FloatingActionState
+ *   TLDataList        - DataListState
  *
  * The message of an atomic control, which draws its look through the parts of 'tl-react-bridge'
  * (see "replacePart" and the developer article view-layer/parts). A component library replaces
@@ -46,7 +46,9 @@
  *   TLNumberInput     - NumberInputState
  *   TLOptionChips     - DropdownSelectState
  *   TLProgress        - ProgressState
+ *   TLDivider         - DividerState
  *   TLLink            - LinkState
+ *   TLAvatar          - AvatarState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
  * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
@@ -225,6 +227,12 @@ export interface ButtonStateJson extends ControlStateJson {
 	 * The keyboard gesture that triggers the button (e.g. `ENTER`, `Ctrl+S`).
 	 */
 	keyGesture: string;
+
+	/**
+	 * The badge of the button. Absent: none. Beside a visible label it is visible text of the
+	 * button; at a button showing its icon alone it is part of the accessible name.
+	 */
+	badge?: BadgeJson;
 }
 
 export namespace ButtonStateJson {
@@ -381,6 +389,73 @@ export interface ChildControlJson {
 }
 
 /**
+ * A small marker at the corner of an element - a button, a tab, a navigation entry, an avatar - that
+ * counts or marks something waiting there, drawn through the part `Badge` of
+ * 'tl-react-bridge'.
+ *
+ * A state property holding a badge is absent where the element shows none; an update removing the
+ * badge of an element sends it as `null`, which means the same. A badge shows either
+ * the {@link BadgeJson.content}, or - where {@link BadgeJson.dot} is set - a dot without content.
+ *
+ * The badge belongs to the accessible name of its element. Its own name is the {@link BadgeJson.label} of a
+ * dot, and the {@link BadgeJson.content} of a count, after the {@link BadgeJson.label} where there is one ("New
+ * entries: 3"). Beside a visible label (a button, a tab) a plain count is visible text read with
+ * the label, a dot or a count with a label an image of that name; an element without visible text
+ * (an icon-only button, an avatar) is named by its label followed by the name of its badge
+ * ("Inbox, 3"), and the badge itself is hidden from assistive technology.
+ */
+export interface BadgeJson {
+	/**
+	 * What the badge shows: a count of at most two digits, the overflow `99+`, or a short
+	 * text. Absent for a {@link BadgeJson.dot}.
+	 */
+	content: string;
+
+	/**
+	 * Whether the badge is a dot marking the element without counting.
+	 */
+	dot: boolean;
+
+	/**
+	 * The color role. Absent means `'brand'`.
+	 */
+	role: BadgeJson.Role;
+
+	/**
+	 * The accessible name of a dot, or what a count counts, read before the count ("New entries:
+	 * 3"). Absent: the content alone names a count; a dot stays unnamed.
+	 */
+	label: string;
+}
+
+export namespace BadgeJson {
+	/**
+	 * The color role of a badge.
+	 */
+	export type Role =
+		/**
+		 * The color of the brand.
+		 */
+		| 'brand'
+		/**
+		 * Something failed.
+		 */
+		| 'error'
+		/**
+		 * Something calls for attention before it fails.
+		 */
+		| 'warning'
+		/**
+		 * Something went well.
+		 */
+		| 'success'
+		/**
+		 * Something to know.
+		 */
+		| 'info';
+}
+
+/**
  * State of a toggle button, the component `TLToggleButton`.
  *
  * A click sends the command `click` to the server.
@@ -421,11 +496,26 @@ export interface TypingFieldStateJson extends FieldStateJson {
 }
 
 /**
+ * State properties of a field whose value the user empties by deleting what is typed: a text - in
+ * a single line or in a text area -, a password or a number.
+ */
+export interface ClearableFieldStateJson extends TypingFieldStateJson {
+	/**
+	 * Whether the input offers a button that empties it at once, while it holds a value - for a
+	 * search field, for instance. Absent: the input is emptied by deleting what it holds.
+	 *
+	 * A field whose value cannot be deleted that way - a date, a time of day, a selection - needs
+	 * no such flag: it offers the button whenever it is not {@link FieldStateJson.mandatory}.
+	 */
+	clearable: boolean;
+}
+
+/**
  * State of a text field, the component `TLTextInput`.
  *
  * The {@link FieldStateJson.value} is the text, a string.
  */
-export interface TextInputStateJson extends TypingFieldStateJson {
+export interface TextInputStateJson extends ClearableFieldStateJson {
 	/**
 	 * The kind of value the field edits. Absent: plain text.
 	 */
@@ -435,11 +525,6 @@ export interface TextInputStateJson extends TypingFieldStateJson {
 	 * An icon shown inside the input ahead of the text, the encoded form of a theme image.
 	 */
 	icon: string;
-
-	/**
-	 * Whether the input offers a button that empties it, while it holds a value.
-	 */
-	clearable: boolean;
 
 	/**
 	 * Whether the field is a text area of several lines, see {@link TextInputStateJson.rows}.
@@ -551,7 +636,7 @@ export interface SuggestionEntryJson {
  *
  * The {@link FieldStateJson.value} is the password typed, a string.
  */
-export interface PasswordInputStateJson extends TypingFieldStateJson {}
+export interface PasswordInputStateJson extends ClearableFieldStateJson {}
 
 /**
  * State of a number field, the component `TLNumberInput`.
@@ -559,7 +644,7 @@ export interface PasswordInputStateJson extends TypingFieldStateJson {}
  * The {@link FieldStateJson.value} is the number written in the format of the field, a string; the text typed
  * is sent back as it is and parsed by the server.
  */
-export interface NumberInputStateJson extends TypingFieldStateJson {
+export interface NumberInputStateJson extends ClearableFieldStateJson {
 	/**
 	 * The on-screen keyboard the input asks for.
 	 */
@@ -602,6 +687,9 @@ export namespace NumberInputStateJson {
  *
  * A value typed segment by segment is held back until the field is left or Enter is pressed
  * ({@link TypingFieldStateJson.sendValueOnBlur}); a value chosen in a picker is sent at once.
+ *
+ * The input is emptied segment by segment only, so a field that is not {@link FieldStateJson.mandatory} offers a
+ * button that empties it at once while it is editable and holds a value.
  */
 export interface DatePickerStateJson extends TypingFieldStateJson {
 	/**
@@ -881,6 +969,11 @@ export namespace TabBarStateJson {
 		 * while another tab is visible.
 		 */
 		hidden: boolean;
+
+		/**
+		 * The badge of the tab, standing after its label as visible text of the tab. Absent: none.
+		 */
+		badge?: BadgeJson;
 	}
 }
 
@@ -966,12 +1059,14 @@ export interface WindowStateJson extends ControlStateJson {
 	title: string;
 
 	/**
-	 * The width of the window, a CSS length (e.g. `32rem`, `640px`).
+	 * The width of the window, a CSS length (e.g. `32rem`, `640px`) or a percentage of
+	 * the width of the browser window (e.g. `80%`).
 	 */
 	width: string;
 
 	/**
-	 * The height of the window, a CSS length. Absent: the height of the content.
+	 * The height of the window, a CSS length or a percentage of the height of the browser window
+	 * (e.g. `75%`). Absent: the height of the content.
 	 */
 	height: string;
 
@@ -1693,25 +1788,41 @@ export namespace TextStateJson {
 		 */
 		| 'body'
 		/**
-		 * The heading of a section within a page.
-		 */
-		| 'title'
-		/**
-		 * The heading a page is introduced with.
-		 */
-		| 'headline'
-		/**
-		 * The largest text on a page, for the one statement a landing page is built around.
+		 * The largest text on a page, for the one statement a page is built around, e.g. a key figure.
 		 */
 		| 'display'
 		/**
-		 * The name of a value, shown above or beside what it names.
+		 * The heading a page is introduced with, the largest of the three heading levels.
+		 */
+		| 'heading-lg'
+		/**
+		 * The heading of a section within a page, the middle of the three heading levels.
+		 */
+		| 'heading-md'
+		/**
+		 * The heading of a group within a section, the smallest of the three heading levels.
+		 */
+		| 'heading-sm'
+		/**
+		 * Running text that stands out from the text around it.
+		 */
+		| 'body-strong'
+		/**
+		 * Small text: the name of a value, a hint, a date, an attribution.
 		 */
 		| 'label'
 		/**
-		 * A remark accompanying another text: a hint, a date, an attribution.
+		 * Small text that stands out from the text around it.
 		 */
-		| 'caption';
+		| 'label-strong'
+		/**
+		 * A small line above a heading, set with wide letter spacing.
+		 */
+		| 'overline'
+		/**
+		 * Program code or other text set in a fixed-width font.
+		 */
+		| 'code';
 
 	/**
 	 * What the color of a text means, its color role.
@@ -1998,6 +2109,80 @@ export interface ProgressStateJson extends ControlStateJson {
 }
 
 /**
+ * State of a line separating the content before it from the content after it, the component
+ * `TLDivider`, drawn by the part `Divider`.
+ *
+ * The component sends no commands.
+ */
+export interface DividerStateJson extends ControlStateJson {
+	/**
+	 * The direction of the line. Absent: `horizontal`.
+	 */
+	orientation: DividerStateJson.Orientation;
+
+	/**
+	 * A short text shown in the line, plain text; only a horizontal line carries one. Absent: a
+	 * plain line.
+	 */
+	label: string;
+
+	/**
+	 * Where the {@link DividerStateJson.label} stands in the line. Absent: `center`.
+	 */
+	labelPosition: DividerStateJson.LabelPosition;
+
+	/**
+	 * Where the line begins. Absent: `none`, the whole width.
+	 */
+	inset: DividerStateJson.Inset;
+}
+
+export namespace DividerStateJson {
+	/**
+	 * The direction of a divider.
+	 */
+	export type Orientation =
+		/**
+		 * A line across, between content stacked one above the other.
+		 */
+		| 'horizontal'
+		/**
+		 * A line standing in a row and stretching to its height.
+		 */
+		| 'vertical';
+
+	/**
+	 * Where the text of a divider stands in its line.
+	 */
+	export type LabelPosition =
+		/**
+		 * At the start of the line.
+		 */
+		| 'start'
+		/**
+		 * In the middle, with a line on either side.
+		 */
+		| 'center'
+		/**
+		 * At the end of the line.
+		 */
+		| 'end';
+
+	/**
+	 * Where a divider begins.
+	 */
+	export type Inset =
+		/**
+		 * The line spans the whole width.
+		 */
+		| 'none'
+		/**
+		 * The line is shortened at its start by the indent of an entry of a list.
+		 */
+		| 'start';
+}
+
+/**
  * State properties of a control displaying a picture.
  *
  * The client only ever loads an address: either the {@link ImageSourceStateJson.url} naming the picture, or - while
@@ -2044,6 +2229,12 @@ export interface AvatarStateJson extends ImageSourceStateJson {
 	 * The diameter of the circle. Absent means `'medium'`.
 	 */
 	size: AvatarStateJson.Size;
+
+	/**
+	 * The badge at the corner of the avatar. The avatar with its badge is one image named by the
+	 * {@link AvatarStateJson.name} and the badge ("Anna Meier, Open tickets: 3"). Absent: none.
+	 */
+	badge?: BadgeJson;
 }
 
 export namespace AvatarStateJson {
@@ -2125,4 +2316,198 @@ export interface SliderStateJson extends FieldStateJson {
 	 * inherits no value, and an empty field puts its handle at the lower bound.
 	 */
 	fallbackValue: number;
+}
+
+/**
+ * State of a selectable, groupable, searchable list of objects in the style of a contact or
+ * message list, the component `TLDataList` (design system: tl-list).
+ *
+ * A click on a row sends the command `select` with the {@link DataListStateJson.Row.id} of the row as argument
+ * `id`; an empty `id` clears the selection. The trigger of the row commands sends the
+ * command `rowMenu` with the {@link DataListStateJson.Row.id} as argument `id` and the client
+ * coordinates of the click as arguments `x` and `y`; the server opens the menu.
+ * Searching, collapsing and the drawer stay on the client.
+ */
+export interface DataListStateJson extends ControlStateJson {
+	/**
+	 * The rows in display order.
+	 */
+	rows: DataListStateJson.Row[];
+
+	/**
+	 * The {@link DataListStateJson.Row.id} of the selected row. Empty: none.
+	 */
+	selectedId: string;
+
+	/**
+	 * The title in the header of the list, plain text. Empty: no title.
+	 */
+	title: string;
+
+	/**
+	 * The text of an empty list, plain text. Empty: a general text of the component.
+	 */
+	emptyText: string;
+
+	/**
+	 * Whether the list shows a search field filtering the rows by the text of their lines.
+	 */
+	search: boolean;
+
+	/**
+	 * Whether the header carries the toggle collapsing the list to a narrow strip.
+	 */
+	collapsible: boolean;
+
+	/**
+	 * Whether the list starts collapsed; needs {@link DataListStateJson.collapsible}.
+	 */
+	collapsed: boolean;
+
+	/**
+	 * The width of the element containing the list, in rem, below which a {@link DataListStateJson.collapsible} list
+	 * keeps only its strip and its toggle opens the list as a drawer over its neighbours. Zero: the
+	 * list never becomes a drawer.
+	 */
+	drawerBelow: number;
+
+	/**
+	 * The command buttons of the list, in display order. Absent: none.
+	 */
+	buttons: ChildControlJson[];
+
+	/**
+	 * Whether there are commands per row that the trigger of a row opens.
+	 */
+	hasRowMenu: boolean;
+
+	/**
+	 * When the trigger of the row commands is shown. Absent means `'hover'`.
+	 */
+	rowActions: DataListStateJson.RowActions;
+}
+
+export namespace DataListStateJson {
+	/**
+	 * How prominently a {@link DataListStateJson.Line} is shown.
+	 */
+	export type Emphasis =
+		/**
+		 * The prominent line.
+		 */
+		| 'primary'
+		/**
+		 * A muted secondary line.
+		 */
+		| 'secondary';
+
+	/**
+	 * When the trigger of the row commands is shown.
+	 */
+	export type RowActions =
+		/**
+		 * Revealed when the pointer is over the row or something in it has the keyboard focus.
+		 */
+		| 'hover'
+		/**
+		 * Always visible.
+		 */
+		| 'always'
+		/**
+		 * Never rendered.
+		 */
+		| 'none';
+
+	/**
+	 * A line of text of a {@link DataListStateJson.Row}.
+	 */
+	export interface Line {
+		/**
+		 * The text of the line, plain text. A line after the first one whose text is empty is not
+		 * drawn.
+		 */
+		text: string;
+
+		/**
+		 * How prominently the line is shown. Absent: the first line of a row is
+		 * `'primary'`, every further line `'secondary'`.
+		 */
+		emphasis: DataListStateJson.Emphasis;
+	}
+
+	/**
+	 * What stands in front of the lines of a {@link DataListStateJson.Row}: an icon, or an avatar showing a picture or
+	 * the initials of a name.
+	 */
+	export interface Leading {
+		/**
+		 * The display name the avatar stands for, plain text: the source of its initials, its category
+		 * and its accessible name. Empty: none.
+		 */
+		name: string;
+
+		/**
+		 * An icon drawn instead of an avatar, the encoded form of an icon-font image. Empty: no icon.
+		 */
+		icon: string;
+
+		/**
+		 * The picture of the avatar, the address of an image (a path or a `data` URI). Empty: the
+		 * avatar shows the initials of the {@link DataListStateJson.Leading.name}.
+		 */
+		image: string;
+	}
+
+	/**
+	 * What stands after the lines of a {@link DataListStateJson.Row}: metadata text, or a badge.
+	 */
+	export interface Trailing {
+		/**
+		 * The text, plain text.
+		 */
+		text: string;
+
+		/**
+		 * Whether the {@link DataListStateJson.Trailing.text} is drawn as a badge (a count or a short status) instead of
+		 * metadata text.
+		 */
+		badge: boolean;
+	}
+
+	/**
+	 * An entry of the list.
+	 */
+	export interface Row {
+		/**
+		 * The ID of the row, by which the client names it to the server.
+		 */
+		id: string;
+
+		/**
+		 * The lines of the row, top to bottom.
+		 */
+		lines: DataListStateJson.Line[];
+
+		/**
+		 * The heading of the group the row belongs to. Groups stand in the order of their first row.
+		 * Absent: the row belongs to the group without heading.
+		 */
+		group: string;
+
+		/**
+		 * What stands in front of the lines. Absent: nothing.
+		 */
+		leading?: DataListStateJson.Leading;
+
+		/**
+		 * What stands after the lines. Absent: nothing.
+		 */
+		trailing?: DataListStateJson.Trailing;
+
+		/**
+		 * Additional CSS classes of the row element, separated by spaces, computed by the
+		 * application. Absent: none.
+		 */
+		cssClass: string;
+	}
 }

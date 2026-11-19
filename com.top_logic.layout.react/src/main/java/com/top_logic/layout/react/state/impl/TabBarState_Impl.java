@@ -17,6 +17,8 @@ public class TabBarState_Impl extends com.top_logic.layout.react.state.impl.Cont
 
 		private boolean _hidden = false;
 
+		private com.top_logic.layout.react.state.Badge _badge = null;
+
 		/**
 		 * Creates a {@link Tab_Impl} instance.
 		 *
@@ -91,6 +93,27 @@ public class TabBarState_Impl extends com.top_logic.layout.react.state.impl.Cont
 		}
 
 		@Override
+		public final com.top_logic.layout.react.state.Badge getBadge() {
+			return _badge;
+		}
+
+		@Override
+		public com.top_logic.layout.react.state.TabBarState.Tab setBadge(com.top_logic.layout.react.state.Badge value) {
+			internalSetBadge(value);
+			return this;
+		}
+
+		/** Internal setter for {@link #getBadge()} without chain call utility. */
+		protected final void internalSetBadge(com.top_logic.layout.react.state.Badge value) {
+			_badge = value;
+		}
+
+		@Override
+		public final boolean hasBadge() {
+			return _badge != null;
+		}
+
+		@Override
 		public final void writeTo(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 			writeContent(out);
 		}
@@ -106,6 +129,10 @@ public class TabBarState_Impl extends com.top_logic.layout.react.state.impl.Cont
 			out.value(getIcon());
 			out.name(HIDDEN__PROP);
 			out.value(isHidden());
+			if (hasBadge()) {
+				out.name(BADGE__PROP);
+				getBadge().writeTo(out);
+			}
 		}
 
 		@Override
@@ -115,6 +142,7 @@ public class TabBarState_Impl extends com.top_logic.layout.react.state.impl.Cont
 				case LABEL__PROP: setLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 				case ICON__PROP: setIcon(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 				case HIDDEN__PROP: setHidden(in.nextBoolean()); break;
+				case BADGE__PROP: setBadge(com.top_logic.layout.react.state.Badge.readBadge(in)); break;
 				default: super.readField(in, field);
 			}
 		}

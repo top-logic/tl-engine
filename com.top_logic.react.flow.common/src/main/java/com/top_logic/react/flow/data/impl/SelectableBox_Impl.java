@@ -119,6 +119,12 @@ public class SelectableBox_Impl extends com.top_logic.react.flow.data.impl.Decor
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.SelectableBox setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return SELECTABLE_BOX__TYPE;
 	}

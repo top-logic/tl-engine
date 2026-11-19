@@ -34,7 +34,7 @@
 				direction="column"
 				gap="compact"
 			>
-				<text variant="title">
+				<text variant="heading-sm">
 					<label>
 						<en>Sign in with passkey</en>
 						<de>Anmelden mit Passkey</de>

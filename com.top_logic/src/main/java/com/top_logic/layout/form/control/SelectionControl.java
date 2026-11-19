@@ -49,6 +49,7 @@ import com.top_logic.layout.form.dnd.FieldDropTarget;
 import com.top_logic.layout.form.model.FormFieldInternals;
 import com.top_logic.layout.form.model.SelectField;
 import com.top_logic.layout.form.model.SelectFieldUtils;
+import com.top_logic.layout.form.model.utility.MaskedValues;
 import com.top_logic.layout.form.selection.AbstractSelectDialog;
 import com.top_logic.layout.scripting.recorder.ScriptingRecorder;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
@@ -463,6 +464,9 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 		LabelProvider labels;
 		if (optionRenderer instanceof ResourceRenderer) {
 			labels = ((ResourceRenderer<?>) optionRenderer).getResourceProvider();
+			if (SelectFieldUtils.isMaskUndiscoverable(selectField)) {
+				labels = MaskedValues.labels(labels);
+			}
 		} else {
 			labels = selectField.getOptionLabelProvider();
 		}
@@ -471,7 +475,7 @@ public class SelectionControl extends AbstractFormFieldControlBase {
 
 	private Renderer<Object> getRenderer(SelectField selectField) {
 		if (optionRenderer != null) {
-			return optionRenderer;
+			return SelectFieldUtils.maskedRenderer(selectField, optionRenderer);
 		}
 		
 		return SelectFieldUtils.getOptionRenderer(selectField);

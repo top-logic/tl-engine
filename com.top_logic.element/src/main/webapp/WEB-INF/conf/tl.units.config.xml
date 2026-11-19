@@ -18,6 +18,23 @@
 				</declarations>
 			</instance>
 		</config>
+		<!--
+			Units and currencies inherit the roles held on the security root, so that the grants
+			an application declares on the module tl.units take effect for them.
+		-->
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<security-parents>
+					<rule
+						id="SecRootForUnit"
+						inherit="true"
+						meta-element="tl.units:AbstractUnit"
+					>
+						<singleton module="SecurityStructure"/>
+					</rule>
+				</security-parents>
+			</instance>
+		</config>
 	</services>
 	<configs>
 		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">

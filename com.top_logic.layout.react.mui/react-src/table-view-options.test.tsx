@@ -14,6 +14,7 @@ import MuiDisclosureToggleAdapter from './adapters/MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './adapters/MuiCheckboxAdapter';
 import MuiTextInputAdapter from './adapters/MuiTextInputAdapter';
 import MuiChipAdapter from './adapters/MuiChipAdapter';
+import MuiSkeletonAdapter from './adapters/MuiSkeletonAdapter';
 import { childControl, mountAdapter, patchState, settle } from './adapters/wire-test-support';
 
 // The test registry has no parts of its own: the table looks up the ones it draws with.
@@ -23,6 +24,7 @@ replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
 replacePart('Chip', MuiChipAdapter);
+replacePart('Skeleton', MuiSkeletonAdapter);
 
 class NoResizeObserver {
   observe() {}
@@ -296,7 +298,7 @@ describe('the density segments by keyboard', () => {
 
 describe('the first page as a menu', () => {
   /** The roving stops in order: the density is one of them, whichever segment is in force. */
-  const STOPS: Array<string | RegExp> = [DENSITY_DEFAULT, STRIPES, COLUMN_LINES, COLUMNS_ENTRY, RESET];
+  const STOPS: Array<string | RegExp> = [COLUMNS_ENTRY, DENSITY_DEFAULT, STRIPES, COLUMN_LINES, RESET];
 
   function stop(name: string | RegExp): HTMLElement {
     return screen.getByRole(
@@ -370,8 +372,8 @@ describe('the first page as a menu', () => {
     expect(sent).toHaveBeenLastCalledWith('setViewOptions', { density: '', striped: false, columnLines: false });
   });
 
-  it('starts on the segment in force', async () => {
-    mountMenu({ viewDensity: 'compact' });
+  it('starts on the segment in force where the table offers no column selection', async () => {
+    mountMenu({ viewDensity: 'compact', columnSelect: false });
     await settle();
     await openView();
     expect(document.activeElement).toBe(screen.getByRole('menuitemradio', { name: DENSITY_COMPACT }));
@@ -415,13 +417,16 @@ describe('the first page as a menu', () => {
     await userEvent.keyboard('{End}');
     expect(document.activeElement).toBe(stop(RESET));
     await userEvent.keyboard('{Home}');
-    expect(document.activeElement).toBe(stop(DENSITY_DEFAULT));
+    expect(document.activeElement).toBe(stop(COLUMNS_ENTRY));
   });
 
   it('moves from the segment in force to the stripes, whichever segment that is', async () => {
     mountMenu({ viewDensity: 'compact' });
     await settle();
     await openView();
+    // From the column selection, the first entry, down to the density.
+    await userEvent.keyboard('{ArrowDown}');
+    expect(document.activeElement).toBe(screen.getByRole('menuitemradio', { name: DENSITY_COMPACT }));
     await userEvent.keyboard('{ArrowDown}');
     expect(document.activeElement).toBe(stop(STRIPES));
     await userEvent.keyboard('{ArrowUp}');
@@ -432,16 +437,17 @@ describe('the first page as a menu', () => {
     const sent = mountMenu();
     await settle();
     await openView();
+    await userEvent.keyboard('{ArrowDown}');
     await userEvent.keyboard('{ArrowRight}');
     await settle();
     expect(sent).toHaveBeenLastCalledWith('setViewOptions', { density: 'normal', striped: false, columnLines: false });
-    // The stop is still the density: the way down leads to the stripes, up to the reset.
+    // The stop is still the density: the way down leads to the stripes, up to the column selection.
     await userEvent.keyboard('{ArrowDown}');
     expect(document.activeElement).toBe(stop(STRIPES));
     await userEvent.keyboard('{ArrowUp}');
     expect(document.activeElement).toBe(screen.getByRole('menuitemradio', { name: DENSITY_NORMAL }));
     await userEvent.keyboard('{ArrowUp}');
-    expect(document.activeElement).toBe(stop(RESET));
+    expect(document.activeElement).toBe(stop(COLUMNS_ENTRY));
   });
 
   it('leaves Left and Right on the other entries alone', async () => {
@@ -473,6 +479,16 @@ describe('the column selection and the reset', () => {
     await openView();
     expect(screen.queryByRole('menuitem', { name: COLUMNS_ENTRY })).toBeNull();
     expect(screen.getByRole('menuitem', { name: RESET })).toBeTruthy();
+  });
+
+  it('puts the column selection first, before the density, and starts the focus there', async () => {
+    mountTable({ columnSelect: true });
+    await settle();
+    await openView();
+    const columns = screen.getByRole('menuitem', { name: COLUMNS_ENTRY });
+    expect(document.activeElement).toBe(columns);
+    const firstEntry = screen.getByRole('menu', { name: VIEW }).querySelector('[role^="menuitem"], [role="group"]');
+    expect(firstEntry).toBe(columns);
   });
 
   it('resets the view and closes, the focus back on the gear', async () => {
@@ -975,6 +991,34 @@ describe('the column menu by keyboard', () => {
     await userEvent.keyboard('{ContextMenu}');
     await settle();
     expect(screen.getByRole('menuitem', { name: 'js.table.groupBy' })).toBeTruthy();
+  });
+
+  it('offers the grouping by several columns: "group by also" a further column, "ungroup this column" a grouping one', async () => {
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    const sent = mountAdapter(TLTableView, {
+      columns: [
+        { name: 'name', label: 'Name', width: 120, sortable: true, filterable: false, groupable: true },
+        { name: 'region', label: 'Region', width: 120, sortable: true, filterable: false, groupable: true },
+      ],
+      rows: [],
+      totalRowCount: 0,
+      grouping: ['region'],
+    });
+    await settle();
+    fireEvent.contextMenu(screen.getByRole('columnheader', { name: /Name/ }));
+    await settle();
+    expect(screen.queryByRole('menuitem', { name: 'js.table.groupBy' })).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: 'js.table.ungroupColumn' })).toBeNull();
+    expect(screen.getByRole('menuitem', { name: 'js.table.ungroup' })).toBeTruthy();
+    await userEvent.click(screen.getByRole('menuitem', { name: 'js.table.groupByAlso' }));
+    await settle();
+    expect(sent).toHaveBeenCalledWith('group', { columns: ['region', 'name'] });
+    fireEvent.contextMenu(screen.getByRole('columnheader', { name: /Region/ }));
+    await settle();
+    expect(screen.queryByRole('menuitem', { name: 'js.table.groupByAlso' })).toBeNull();
+    await userEvent.click(screen.getByRole('menuitem', { name: 'js.table.ungroupColumn' }));
+    await settle();
+    expect(sent).toHaveBeenCalledWith('group', { columns: [] });
   });
 
   it('leaves other keys alone', async () => {

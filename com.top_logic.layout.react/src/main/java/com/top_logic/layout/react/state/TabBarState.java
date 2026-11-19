@@ -34,6 +34,9 @@ public interface TabBarState extends com.top_logic.layout.react.state.ControlSta
 		/** @see #isHidden() */
 		String HIDDEN__PROP = "hidden";
 
+		/** @see #getBadge() */
+		String BADGE__PROP = "badge";
+
 		/**
 		 * The ID of the tab.
 		 */
@@ -75,6 +78,21 @@ public interface TabBarState extends com.top_logic.layout.react.state.ControlSta
 		 * @see #isHidden()
 		 */
 		com.top_logic.layout.react.state.TabBarState.Tab setHidden(boolean value);
+
+		/**
+		 * The badge of the tab, standing after its label as visible text of the tab. Absent: none.
+		 */
+		com.top_logic.layout.react.state.Badge getBadge();
+
+		/**
+		 * @see #getBadge()
+		 */
+		com.top_logic.layout.react.state.TabBarState.Tab setBadge(com.top_logic.layout.react.state.Badge value);
+
+		/**
+		 * Checks, whether {@link #getBadge()} has a value.
+		 */
+		boolean hasBadge();
 
 		/** Reads a new instance from the given reader. */
 		static com.top_logic.layout.react.state.TabBarState.Tab readTab(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {

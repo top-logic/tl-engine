@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
@@ -26,7 +27,9 @@ import com.top_logic.basic.exception.I18NException;
 import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.dob.MetaObject;
 import com.top_logic.element.meta.AssociationStorageDescriptor;
+import com.top_logic.element.meta.ChangeLocator;
 import com.top_logic.element.meta.DefaultAssociationStorageDescriptor;
 import com.top_logic.element.meta.kbbased.storage.AbstractStorage;
 import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
@@ -212,6 +215,21 @@ public class StructuredTextAttributeStorage<C extends StructuredTextAttributeSto
 	@Override
 	public List<? extends AssociationStorageDescriptor> getStorageDescriptors() {
 		return _storageDescriptors;
+	}
+
+	/**
+	 * Registers the locators of the source code column and of the table storing the images.
+	 */
+	@Override
+	public void addChangeLocators(TLStructuredTypePart attribute,
+			BiConsumer<? super MetaObject, ? super ChangeLocator> locators) {
+		ColumnStorage.super.addChangeLocators(attribute, locators);
+		super.addChangeLocators(attribute, locators);
+	}
+
+	@Override
+	public boolean canDetectValueChanges() {
+		return true;
 	}
 
 }

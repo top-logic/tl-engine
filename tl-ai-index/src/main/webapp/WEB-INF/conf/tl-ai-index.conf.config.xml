@@ -14,12 +14,12 @@
 			The tools index.search and index.similar. They are offered only while the AiIndexService
 			runs; give them to an agent with <tool name="index.search"/>.
 		-->
-		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+		<config service-class="com.top_logic.ai.tool.api.registry.ToolRegistryService">
 			<instance>
 				<tool-factories>
 					<factory name="index">
-						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
-							tool-class="com.top_logic.tl.ai.index.tools.IndexTools"
+						<implementation class="com.top_logic.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.index.tools.IndexTools"
 						/>
 					</factory>
 				</tool-factories>
@@ -33,15 +33,15 @@
 				<config service-class="com.top_logic.basic.module.ModuleSystem">
 					<instance>
 						<modules>
-							<module key="com.top_logic.tl.ai.index.AiIndexService$Module" value="true"/>
+							<module key="com.top_logic.ai.index.AiIndexService$Module" value="true"/>
 						</modules>
 					</instance>
 				</config>
 
 			See tl-ai-index/README.md.
 		-->
-		<config service-class="com.top_logic.tl.ai.index.AiIndexService">
-			<instance class="com.top_logic.tl.ai.index.AiIndexService"/>
+		<config service-class="com.top_logic.ai.index.AiIndexService">
+			<instance class="com.top_logic.ai.index.AiIndexService"/>
 		</config>
 	</services>
 </application>

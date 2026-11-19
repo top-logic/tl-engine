@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The read policy for the cookie pools this module stores, the same as tl-ai-core ships for its
+	screenshots (see tl-ai-core.binarySecurity.config.xml for how the role "AiBinaryOwner", the role
+	rule and the grant work together).
+
+	A cookie pool is a login somebody saved. It is reachable through "viewDocument", which loads a
+	"tl.core:Binary" attribute into a model's context, so it is readable by its owner, by
+	administrators and by code running in a system context, and by nobody else.
+
+	WHAT THIS DOES NOT DECIDE. A shared cookie pool (CookiePool#shared) is selectable by every user
+	and every agent session - that is what sharing a login means, and CookiePoolService enforces it
+	on the selection path, which never asks model security. Sharing a login is not the same as
+	letting a model READ the stored session state, so the read policy stays owner-plus-administrator
+	for a shared pool too.
+
+	See the developer article ai/security/administration (the shipped read policy for perceivable
+	binaries).
+-->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<rules>
+						<rule id="tl.ai.cookiepool.owner"
+							inherit="true"
+							meta-element="tl.ai.cookiepool:CookiePool"
+							role="AiBinaryOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.cookiepool:CookiePool#owner"/>
+							</path>
+						</rule>
+					</rules>
+				</role-rules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="tl.ai.cookiepool:CookiePool">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="AiBinaryOwner"
+						/>
+					</class>
+				</security-config>
+			</instance>
+		</config>
+	</services>
+</application>

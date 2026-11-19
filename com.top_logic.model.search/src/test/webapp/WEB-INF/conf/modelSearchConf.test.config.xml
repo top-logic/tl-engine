@@ -8,6 +8,9 @@
 					<declaration file="/WEB-INF/model/projElement.model.xml"/>
 					<declaration file="/WEB-INF/model/securityChildren.model.xml"/>
 					<declaration file="/WEB-INF/model/TestValueListenerByExpression.model.xml"/>
+					<declaration file="/WEB-INF/model/TestFallbackFieldDisplay.model.xml"/>
+					<declaration file="/WEB-INF/model/TestHandlersByExpression.model.xml"/>
+					<declaration file="/WEB-INF/model/TestScaledIcon.model.xml"/>
 				</declarations>
 			</instance>
 		</config>

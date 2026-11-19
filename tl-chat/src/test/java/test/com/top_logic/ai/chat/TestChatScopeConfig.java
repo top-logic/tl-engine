@@ -18,7 +18,7 @@ import com.top_logic.ai.chat.view.ChatRailElement;
 import com.top_logic.ai.chat.view.ChatScope;
 import com.top_logic.ai.chat.view.ChatScopeElement;
 import com.top_logic.ai.chat.view.ChatScopeElement.Config;
-import com.top_logic.ai.chat.view.list.DataListElement;
+import com.top_logic.layout.view.list.DataListElement;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackDirection;

@@ -2,6 +2,14 @@
 
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
+		<!-- The documentation of the implementation classes the type selector tests offer. -->
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="testLayoutConfigeditMessages"/>
+				</bundles>
+			</instance>
+		</config>
 		<config service-class="com.top_logic.layout.configedit.ConfigControlService">
 			<instance>
 				<annotation-controls>

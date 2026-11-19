@@ -58,7 +58,10 @@
 		</requiredProperty>
 		<!--
 			The AI agents (tl-starter-ai, with ui=classic or ui=both also the chat in the classic UI
-			tl-chat-classic). The application configures the LLM providers of its agents.
+			tl-chat-classic). With the React UI, the sidebar gets the item "albert" showing the chat
+			page tl-chat/albert.view.xml. An application also gets the commented template of the
+			policy what the assistant Albert can do per role (autoconf, AiToolAccessService). The
+			application configures the LLM providers of its agents.
 		-->
 		<requiredProperty key="useAI">
 			<defaultValue>#foreach($x in $artifactId.split("-"))${x.substring($x.length())}#{end}false</defaultValue>

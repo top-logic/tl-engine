@@ -13,6 +13,12 @@ TopLogic garantiert Navigation und Fokus, nicht das Aussehen.
 |---|---|
 | `navigate` | Stufe der Breadcrumb; Argument `depth` |
 
+## Tokens
+
+| Teil | Token |
+|---|---|
+| Leiste | Mindesthöhe `--tl-size-bar`, seitlicher Abstand `--tl-space-md`, Linie unten `--tl-border-width-sm` in `--tl-border-separator` |
+
 ## Attribute
 
 | Attribut | Wann |

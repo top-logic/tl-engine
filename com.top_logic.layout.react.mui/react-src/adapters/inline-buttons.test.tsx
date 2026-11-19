@@ -23,6 +23,7 @@ import { CONTROL_ID, childControl, mountAdapter, patchState, settle } from './wi
 import { clearI18NCache } from '../../../com.top_logic.layout.react/react-src/bridge/i18n';
 import MuiChipAdapter from './MuiChipAdapter';
 import MuiDividerAdapter from './MuiDividerAdapter';
+import MuiSkeletonAdapter from './MuiSkeletonAdapter';
 
 replacePart('Button', MuiButtonAdapter);
 // The gear of the table is the trigger of its view.
@@ -37,6 +38,7 @@ replacePart('TextInput', MuiTextInputAdapter);
 replacePart('Chip', MuiChipAdapter);
 // The toolbar draws the lines between its groups and between the sections of its menus.
 replacePart('Divider', MuiDividerAdapter);
+replacePart('Skeleton', MuiSkeletonAdapter);
 
 /** The labels of the buttons: the keys, as the test stub translates each key to itself. */
 const LABEL_MINIMIZE = 'js.panel.minimize';
@@ -51,7 +53,8 @@ const LABEL_FILTER_ACTIVE = 'js.table.filterActive';
 const LABEL_ADD = 'js.valueList.add';
 const LABEL_REMOVE = 'js.valueList.remove';
 const LABEL_GROUP_BY = 'js.table.groupBy';
-const LABEL_UNGROUP = 'js.table.ungroup';
+const LABEL_GROUP_BY_ALSO = 'js.table.groupByAlso';
+const LABEL_UNGROUP_COLUMN = 'js.table.ungroupColumn';
 const LABEL_OPEN_DRAWER = 'js.sidebar.openDrawer';
 const LABEL_COLUMN_HIDE = 'js.table.columnHide';
 const LABEL_COLUMN_LOCK = 'js.table.columnLock';
@@ -317,6 +320,7 @@ describe('the menu group of a toolbar as popup surface', () => {
   it('closes only the menu on Escape inside a window', async () => {
     register('InlineButtonsToolbar', TLToolbar);
     const toolbar = { controlId: 'tb', module: 'InlineButtonsToolbar', state: TOOLBAR } as ReturnType<typeof childControl>;
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
     const sent = mountAdapter(TLWindow, { title: 'Fenster', child: toolbar, closable: true });
     await settle();
     await userEvent.click(trigger());
@@ -454,7 +458,7 @@ describe('the row of the column selection', () => {
     await userEvent.click(within(row('a')).getByRole('button', { name: LABEL_GROUP_BY }));
     await settle();
     expect(sent).toHaveBeenCalledTimes(1);
-    expect(sent).toHaveBeenLastCalledWith(CMD_GROUP, { column: 'a' });
+    expect(sent).toHaveBeenLastCalledWith(CMD_GROUP, { columns: ['a'] });
 
     await userEvent.click(within(row('a')).getByRole('button', { name: LABEL_COLUMN_LOCK }));
     await settle();
@@ -1339,13 +1343,16 @@ describe('the group toggle of the column selection', () => {
   /** The command the column selection sends for the group toggle. */
   const CMD_GROUP = 'group';
 
+  /** The argument of the group command: the grouping columns, outermost group level first. */
+  const ARG_COLUMNS = 'columns';
+
   function entry(name: string, visible: boolean, grouped: boolean) {
     return { name, label: 'Spalte ' + name, visible, locked: false, grouped };
   }
 
-  it('offers grouping on every row, also a hidden one, and moves the grouping to the chosen column', async () => {
+  it('offers grouping on every row, also a hidden one, of an ungrouped table', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { revision: 0, groupable: true, entries: [entry('a', true, false), entry('b', false, false), entry('c', true, true)] });
+      { revision: 0, groupable: true, grouping: [], entries: [entry('a', true, false), entry('b', false, false)] });
     await settle();
 
     const groupBy = screen.getAllByRole('button', { name: LABEL_GROUP_BY });
@@ -1358,22 +1365,48 @@ describe('the group toggle of the column selection', () => {
     // The toggle of the hidden column b.
     await userEvent.click(groupBy[1]);
     await settle();
-    expect(sent).toHaveBeenCalledWith(CMD_GROUP, { column: 'b' });
+    expect(sent).toHaveBeenCalledWith(CMD_GROUP, { [ARG_COLUMNS]: ['b'] });
   });
 
-  it('keeps the toggle of the grouped row in sight, pressed, and removes the grouping', async () => {
-    const sent = mountAdapter(TLColumnSelect,
-      { revision: 0, groupable: true, entries: [entry('a', true, false), entry('c', true, true)] });
+  it('adds a further column of a grouped table as the innermost group level', async () => {
+    const sent = mountAdapter(TLColumnSelect, {
+      revision: 0,
+      groupable: true,
+      grouping: ['c', 'a'],
+      entries: [entry('a', true, true), entry('b', false, false), entry('c', true, true)],
+    });
     await settle();
 
-    const ungroup = screen.getByRole('button', { name: LABEL_UNGROUP });
-    expect(ungroup.getAttribute('aria-pressed')).toBe('true');
-    expect(ungroup.classList.contains('tl-reveal-on-hover')).toBe(false);
-    expect(ungroup.closest('.tl-reorder-list__item')!.getAttribute('data-tl-state')).toContain('grouped');
+    expect(screen.queryByRole('button', { name: LABEL_GROUP_BY })).toBeNull();
+    const groupByAlso = screen.getByRole('button', { name: LABEL_GROUP_BY_ALSO });
+    expect(groupByAlso.getAttribute('aria-pressed')).toBe('false');
 
-    await userEvent.click(ungroup);
+    await userEvent.click(groupByAlso);
     await settle();
-    expect(sent).toHaveBeenCalledWith(CMD_GROUP, { column: '' });
+    expect(sent).toHaveBeenCalledWith(CMD_GROUP, { [ARG_COLUMNS]: ['c', 'a', 'b'] });
+  });
+
+  it('keeps the toggles of the grouped rows in sight, pressed, and removes the level of one column alone', async () => {
+    const sent = mountAdapter(TLColumnSelect, {
+      revision: 0,
+      groupable: true,
+      grouping: ['c', 'a'],
+      entries: [entry('a', true, true), entry('b', true, false), entry('c', true, true)],
+    });
+    await settle();
+
+    const ungroup = screen.getAllByRole('button', { name: LABEL_UNGROUP_COLUMN });
+    expect(ungroup).toHaveLength(2);
+    for (const button of ungroup) {
+      expect(button.getAttribute('aria-pressed')).toBe('true');
+      expect(button.classList.contains('tl-reveal-on-hover')).toBe(false);
+      expect(button.closest('.tl-reorder-list__item')!.getAttribute('data-tl-state')).toContain('grouped');
+    }
+
+    // The toggle of the outer level c, the row of c being the last one.
+    await userEvent.click(ungroup[1]);
+    await settle();
+    expect(sent).toHaveBeenCalledWith(CMD_GROUP, { [ARG_COLUMNS]: ['a'] });
   });
 
   it('offers no grouping for a tree', async () => {
@@ -1381,7 +1414,7 @@ describe('the group toggle of the column selection', () => {
     await settle();
 
     expect(screen.queryByRole('button', { name: LABEL_GROUP_BY })).toBeNull();
-    expect(screen.queryByRole('button', { name: LABEL_UNGROUP })).toBeNull();
+    expect(screen.queryByRole('button', { name: LABEL_UNGROUP_COLUMN })).toBeNull();
   });
 });
 

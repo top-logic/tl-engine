@@ -36,7 +36,7 @@ Zugänglichkeit der Position, nicht das Aussehen.
 | Teil | Token |
 |---|---|
 | Scheibe | `--tl-size-icon-lg`, senkrecht `--tl-size-icon-md`; `--tl-radius-full` |
-| Scheibe offen | `--tl-surface-layer-nested`, `--tl-border-control`, `--tl-text-secondary` |
+| Scheibe offen | `--tl-surface-layer-nested`, `--tl-border-width-sm` in `--tl-border-control`, `--tl-text-secondary` |
 | Scheibe erledigt | `--tl-surface-brand-subtle`, `--tl-text-primary` |
 | Scheibe aktuell | `--tl-surface-brand`, `--tl-text-on-brand` |
 | Name | `--tl-text-secondary`, aktuell `--tl-text-primary` |

@@ -15,15 +15,18 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.SimpleEditContext;
+import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.LabelDescription;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.PendingInput;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
@@ -36,6 +39,7 @@ import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.annotate.LabelPositionAnnotation;
 import com.top_logic.model.annotate.ModeSelector;
+import com.top_logic.model.annotate.RenderWholeLineAnnotation;
 import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.definition.FormVisibility;
@@ -238,8 +242,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		addModelListener();
 
-		_innerControl =
-			FieldControlService.getInstance().createFieldControl(_context, part, _model, _inputControl);
+		_innerControl = createInnerControl(part);
 
 		String label = resolveLabel();
 		String description = resolveDescription(part);
@@ -316,8 +319,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 			addModelListener();
 
-			_innerControl =
-			FieldControlService.getInstance().createFieldControl(_context, part, _model, _inputControl);
+			_innerControl = createInnerControl(part);
 
 			String description = resolveDescription(part);
 			_chrome.setLabel(resolveLabel());
@@ -462,7 +464,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 	@Override
 	public boolean displays(TLObject object, TLStructuredTypePart part) {
-		return _model != null && _model.getObject() == object && _model.getPart() == part;
+		return _model != null && _model.getObject() == object
+			&& _model.getPart().getDefinition() == part.getDefinition();
 	}
 
 	private void clearModel() {
@@ -547,6 +550,12 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	 * Maps a model-level {@link LabelPosition} to the wire-level position understood by the field
 	 * chrome, resolving the edit-mode-dependent {@link LabelPosition#ABOVE_INPUT} against the
 	 * field's current editability.
+	 *
+	 * <p>
+	 * The chrome hides the label of a {@link LabelPosition#PLACEHOLDER} field, as of a
+	 * {@link LabelPosition#HIDE_LABEL} one; the input shows it as its placeholder, see
+	 * {@link #labelPlaceholder(LabelPosition, String)}.
+	 * </p>
 	 */
 	public static com.top_logic.layout.react.control.layout.LabelPosition wirePosition(
 			LabelPosition position, boolean editable) {
@@ -563,11 +572,35 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			case AFTER_VALUE:
 				return com.top_logic.layout.react.control.layout.LabelPosition.AFTER;
 			case HIDE_LABEL:
+			case PLACEHOLDER:
 				return com.top_logic.layout.react.control.layout.LabelPosition.HIDDEN;
 			case DEFAULT:
 			default:
 				return null;
 		}
+	}
+
+	/**
+	 * The placeholder an input shows for its label at the given position.
+	 *
+	 * @param position
+	 *        The model-level {@link LabelPosition} of the field, {@code null} if not specified.
+	 * @param label
+	 *        The label of the field.
+	 * @return The label for {@link LabelPosition#PLACEHOLDER}, {@code null} for every other
+	 *         position.
+	 */
+	public static String labelPlaceholder(LabelPosition position, String label) {
+		return position == LabelPosition.PLACEHOLDER ? label : null;
+	}
+
+	/**
+	 * Creates the input control of the field, showing its label as placeholder where the
+	 * {@link #legacyLabelPosition(TLStructuredTypePart) label position} asks for it.
+	 */
+	private ReactControl createInnerControl(TLStructuredTypePart part) {
+		return FieldControlService.getInstance().createFieldControl(_context, part, _model, _inputControl,
+			labelPlaceholder(legacyLabelPosition(part), resolveLabel()));
 	}
 
 	private void onModeDependencyChanged() {
@@ -725,23 +758,32 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	}
 
 	/**
-	 * What the attribute's label says about itself over and above its own text, {@code null} when
-	 * the label has none.
+	 * The {@link LabelDescription description} of the attribute's label, {@code null} when the
+	 * label has none.
 	 *
 	 * <p>
 	 * The description is offered twice: as the tooltip of the field label, where the reader looks
 	 * for it, and as the text the help icon unfolds.
 	 * </p>
 	 */
-	private String resolveDescription(TLStructuredTypePart part) {
-		ResKey labelKey = TLModelI18N.getI18NKey(part);
-		return Resources.getInstance().getString(labelKey.tooltipOptional());
+	private static String resolveDescription(TLStructuredTypePart part) {
+		return LabelDescription.description(TLModelI18N.getI18NKey(part));
 	}
 
+	/**
+	 * Whether the field takes a whole row: as the view says, else as the attribute says, else as
+	 * its {@link ReactFormFieldControl#prefersWholeLine() control prefers}.
+	 */
 	private boolean resolveFullLine(TLStructuredTypePart part) {
 		if (_fullLineOverride != null) {
 			return _fullLineOverride.booleanValue();
 		}
-		return AttributeOperations.renderWholeLine(part, SimpleEditContext.createContext(part));
+		EditContext editContext = SimpleEditContext.createContext(part);
+		RenderWholeLineAnnotation annotation = editContext.getAnnotation(RenderWholeLineAnnotation.class);
+		if (annotation != null) {
+			return annotation.getValue();
+		}
+		return AttributeOperations.renderWholeLine(part, editContext)
+			|| (_innerControl instanceof ReactFormFieldControl field && field.prefersWholeLine());
 	}
 }

@@ -21,11 +21,13 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.provider.LabelProviderService;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -35,9 +37,11 @@ import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.tools.model.InstanceBrowserTool;
-import com.top_logic.tl.ai.core.tools.script.QueryTool;
+import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.tools.model.InstanceBrowserTool;
+import com.top_logic.ai.core.tools.script.QueryTool;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
@@ -165,7 +169,7 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			String result = tool.getInstance(List.of(tid), ToolContext.EMPTY);
 
 			assertNotNull("Result should not be null", result);
-			assertTrue("Result should contain tid", result.contains("\"tid\""));
+			assertTrue("Result should contain tid", result.contains("\"" + ReadFilter.TID + "\""));
 			assertTrue("Result should contain type info", result.contains("\"type\""));
 			assertTrue("Result should contain attributes", result.contains("\"attributes\""));
 			assertTrue("Result should contain metadata", result.contains("\"metadata\""));
@@ -227,10 +231,11 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 				null, null, ToolContext.EMPTY);
 
 			String tid = objects.getEvent(0).tId().asString();
-			assertTrue(result, result.contains("\"id\":\"" + tid + "\""));
-			assertTrue(result, result.contains("\"type\":\"" + EVENTS_MODULE + ":" + EVENT_CLASS + "\""));
+			assertTrue(result, result.contains("\"" + ReadFilter.TID + "\":\"" + tid + "\""));
+			assertTrue(result,
+				result.contains("\"" + ReadFilter.TYPE + "\":\"" + EVENTS_MODULE + ":" + EVENT_CLASS + "\""));
 			assertTrue(result, result.contains("Herbstkonferenz"));
-			assertTrue(result, result.contains("\"maxParticipants\":\"100\""));
+			assertTrue(result, result.contains("\"maxParticipants\":100"));
 			assertFalse("An attribute the type does not have is left out: " + result,
 				result.contains("noSuchAttribute"));
 			assertFalse("An attribute nobody asked for is left out: " + result, result.contains("ticketPrice"));
@@ -246,8 +251,8 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 
 			String result = tool.getInstance(List.of(first, second, "Event:99999"), ToolContext.EMPTY);
 
-			assertTrue(result, result.contains("\"tid\":\"" + first + "\""));
-			assertTrue(result, result.contains("\"tid\":\"" + second + "\""));
+			assertTrue(result, result.contains("\"" + ReadFilter.TID + "\":\"" + first + "\""));
+			assertTrue(result, result.contains("\"" + ReadFilter.TID + "\":\"" + second + "\""));
 			// One id that names nothing does not hide the ones that do.
 			assertTrue(result, result.contains("\"errors\":[\"Event:99999: "));
 		});
@@ -287,8 +292,9 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 				"all(`demo.events:Event`).sort((e -> $e.get(`demo.events:Event#maxParticipants`)).comparator().desc()).firstElement()",
 				ToolContext.EMPTY);
 
-			assertTrue(result, result.contains("Herbstkonferenz [type:demo.events:Event] [id:"
-				+ objects.getEvent(0).tId().asString() + "]"));
+			assertTrue(result, result.contains("{\"" + ReadFilter.TID + "\":\"" + objects.getEvent(0).tId().asString()
+				+ "\",\"" + ReadFilter.TYPE + "\":\"demo.events:Event\",\"" + ReadFilter.DISPLAY
+				+ "\":\"Herbstkonferenz\"}"));
 		});
 	}
 
@@ -314,7 +320,9 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			}
 			String result = new QueryTool().query(sixty.append(")").toString(), ToolContext.EMPTY);
 
-			assertTrue(result, result.contains("... and 10 more (60 in all)"));
+			assertTrue(result, result.contains("\"" + ReadFilter.TOTAL + "\":60"));
+			assertTrue(result, result.contains("[1,2,3,"));
+			assertTrue(result, result.contains("The list is cut at 50 of 60 entries."));
 		});
 	}
 
@@ -493,10 +501,15 @@ public class InstanceBrowserToolTest extends BasicTestCase {
 			assertNotNull("Events result should not be null", eventsResult);
 			assertTrue("Should have events", eventsResult.contains("\"totalCount\":3"));
 
-			// List rooms
-			String roomsResult = tool.listInstances(EVENTS_MODULE, ROOM_CLASS, null, null, null, ToolContext.EMPTY);
+			// List rooms: the knowledge base may hold rooms of other tests besides the two of this one.
+			String roomsResult =
+				tool.listInstances(EVENTS_MODULE, ROOM_CLASS, List.of("name"), 200, null, ToolContext.EMPTY);
 			assertNotNull("Rooms result should not be null", roomsResult);
-			assertTrue("Should have rooms", roomsResult.contains("\"totalCount\":2"));
+			int rooms = MetaElementUtil.getAllInstancesOf(
+				(TLClass) TLModelUtil.findType(EVENTS_MODULE + ":" + ROOM_CLASS), TLObject.class).size();
+			assertTrue("Should count all rooms", roomsResult.contains("\"totalCount\":" + rooms));
+			assertTrue("Should list the rooms of the test",
+				roomsResult.contains("Saal Rhein") && roomsResult.contains("Raum Dom"));
 		});
 	}
 

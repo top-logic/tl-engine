@@ -13,10 +13,11 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 }));
 
 // The bridge first, as the page loads it, so that the modules it imports see the mocked SSE client.
-import { mount, unmount } from '../bridge/tl-react-bridge';
+import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
 import { CMD_COMMIT, CMD_VALUE_CHANGED, register, registerPart } from 'tl-react-bridge';
 import TLDatePicker from './TLDatePicker';
 import FieldValuePart from './form/FieldValuePart';
+import ButtonPart from './button/ButtonPart';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -39,13 +40,19 @@ let sent: Sent[] = [];
 
 beforeAll(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  // The DOM observer of the bridge looks for mounts below a removed element with CSS.escape, which jsdom does not
+  // implement. The control IDs of the tests need no escaping.
+  if (typeof globalThis.CSS === 'undefined') {
+    globalThis.CSS = { escape: (value: string) => value } as unknown as typeof CSS;
+  }
   registerPart('FieldValue', FieldValuePart);
+  registerPart('Button', ButtonPart);
   register('TLDatePicker', TLDatePicker);
 });
 
 afterEach(async () => {
   act(() => unmount(CONTROL_ID));
-  document.getElementById(CONTROL_ID)?.remove();
+  findMountPoint(CONTROL_ID)?.remove();
   // A value still held back is sent on unmount, still to the stubbed fetch.
   await settle();
   vi.unstubAllGlobals();
@@ -67,7 +74,7 @@ function mountDate(state: Record<string, unknown>): HTMLInputElement {
     return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
   }));
   const element = document.createElement('div');
-  element.id = CONTROL_ID;
+  element.setAttribute(MOUNT_ATTRIBUTE, CONTROL_ID);
   document.body.appendChild(element);
   act(() => mount(CONTROL_ID, 'TLDatePicker', { sendValueOnBlur: true, ...state }, 'w', '/ctx'));
   return element.querySelector('input')!;
@@ -244,5 +251,71 @@ describe('TLDatePicker typing', () => {
     await settle();
 
     expect(sent).toEqual([changedTo(null)]);
+  });
+});
+
+/** The clear button of the mounted field, or `null` where it offers none. */
+function clearButton(): HTMLButtonElement | null {
+  return document.getElementById(CONTROL_ID)!.querySelector<HTMLButtonElement>('button');
+}
+
+describe('TLDatePicker clear button', () => {
+  it('empties an optional field at once and hands the focus back to the input', async () => {
+    const input = mountDate({ value: '2026-06-01', editable: true, mandatory: false });
+
+    const button = clearButton();
+    expect(button).not.toBeNull();
+    act(() => button!.click());
+    await settle();
+
+    expect(sent).toEqual([changedTo(null)]);
+    expect(input.value).toBe('');
+    expect(document.activeElement).toBe(input);
+    expect(clearButton()).toBeNull();
+  });
+
+  it('commits the cleared value with commitEdits', async () => {
+    mountDate({ value: '2026-06-01', editable: true, commitEdits: true });
+
+    act(() => clearButton()!.click());
+    await settle();
+
+    expect(sent).toEqual([changedTo(null), { command: CMD_COMMIT, arguments: {} }]);
+  });
+
+  it('is offered for a time of day', async () => {
+    mountDate({ value: '14:30', inputType: 'time', editable: true });
+    await settle();
+    expect(clearButton()).not.toBeNull();
+  });
+
+  it('is offered for a date with a time of day', async () => {
+    mountDate({ value: '2026-06-01T14:30', inputType: 'datetime-local', editable: true });
+    await settle();
+    expect(clearButton()).not.toBeNull();
+  });
+
+  it('is not offered for a mandatory field', async () => {
+    mountDate({ value: '2026-06-01', editable: true, mandatory: true });
+    await settle();
+    expect(clearButton()).toBeNull();
+  });
+
+  it('is not offered for an empty field', async () => {
+    mountDate({ value: null, editable: true });
+    await settle();
+    expect(clearButton()).toBeNull();
+  });
+
+  it('is not offered for a read-only field', async () => {
+    mountDate({ value: '2026-06-01', displayValue: '01.06.2026', editable: false });
+    await settle();
+    expect(clearButton()).toBeNull();
+  });
+
+  it('is not offered for a disabled field', async () => {
+    mountDate({ value: '2026-06-01', editable: false, disabled: true });
+    await settle();
+    expect(clearButton()).toBeNull();
   });
 });

@@ -119,17 +119,10 @@
 		</Logger>
 		<!--
 			AI logging: full per-run diagnostic trace for the AI subsystem, in its own file and out
-			of top-logic.main.log (additivity="false"). "com.top_logic.tl.ai" covers tl-ai-core and
-			tl-ai-tool-api; "com.top_logic.ai" covers tl-chat, tl-ai-mcp-server and
-			tl-ai-vector-index. No prompt/tool payload is written here - that content lives in the
-			persisted AgentExecution records. See the developer article ai/logging.
+			of top-logic.main.log (additivity="false"). The category "com.top_logic.ai" covers all AI
+			modules. No prompt/tool payload is written here - that content lives in the persisted
+			AgentExecution records. See the developer article ai/logging.
 		-->
-		<Logger name="com.top_logic.tl.ai"
-			additivity="false"
-			level="debug"
-		>
-			<AppenderRef ref="TL_AI_APPENDER"/>
-		</Logger>
 		<Logger name="com.top_logic.ai"
 			additivity="false"
 			level="debug"

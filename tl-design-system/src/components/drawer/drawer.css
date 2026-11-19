@@ -71,6 +71,15 @@
   z-index: var(--tl-layer-raised);
 }
 
+/* Der Scrim einer modalen Schublade im Behälter: er deckt nur den Behälter, wie die Schublade, und steht im DOM vor
+   ihr, also unter ihr. Ein Klick darauf schließt. Am Viewport ist der Scrim ein tl-dialog. */
+.tl-drawer__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: var(--tl-layer-raised);
+  background: var(--tl-surface-scrim);
+}
+
 /* Der Behälter beschneidet (Master-Detail: overflow: clip); der Ring der Schublade liegt darum innen. */
 .tl-drawer--container:focus-visible {
   outline-offset: calc(-1 * var(--tl-focus-offset));

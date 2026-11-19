@@ -37,7 +37,6 @@
   min-block-size: 0;
   overflow-y: auto;
 }
-.tl-picker__scroll[hidden] { display: none; }
 
 .tl-picker__actions {
   flex-shrink: 0;

@@ -19,7 +19,6 @@ import java.util.Set;
 import java.util.function.Function;
 
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.LabelProvider;
@@ -28,28 +27,31 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel.SelectOptionsListener;
 import com.top_logic.layout.form.model.SelectFieldModel;
+import com.top_logic.layout.form.model.utility.MaskedValues;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.ReactImages;
+import com.top_logic.layout.react.TooltipContent;
+import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.ReactValueColor;
-import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.ScriptingModelKey;
-import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
-import com.top_logic.layout.react.control.selection.SelectByKeysArguments;
+import com.top_logic.layout.react.control.identity.ObjectIdIndex;
+import com.top_logic.layout.react.control.identity.ObjectIdentities;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.layout.react.scripting.ReactOptionScope;
 import com.top_logic.layout.react.state.DropdownSelectState;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.scripting.recorder.ref.ContextDependent;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
-import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.listen.ObservedObjects;
-import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.model.security.DiscoverRight;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
@@ -87,8 +89,14 @@ import com.top_logic.util.error.TopLogicException;
  * application displays it at, so a reference read in a form or a table cell leads to what it refers
  * to.
  * </p>
+ *
+ * <p>
+ * Every option explains itself in a tooltip the client fetches on demand, under the key
+ * {@link #OPTION_TOOLTIP_PREFIX} followed by the option's id, see
+ * {@link #getTooltipContent(String)}.
+ * </p>
  */
-public class ReactDropdownSelectControl extends ReactFormFieldControl {
+public class ReactDropdownSelectControl extends ReactFormFieldControl implements TooltipProvider {
 
 	/** The React component drawing a list that opens on demand. */
 	private static final String MODULE_DROPDOWN = "TLDropdownSelect";
@@ -107,16 +115,21 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	/** The command the client sends to fetch the options when the dropdown opens. */
 	public static final String CMD_LOAD_OPTIONS = "loadOptions";
 
-	private static final String CMD_SELECT_BY_KEY = "selectByKey";
-
 	/**
 	 * Key of an option in the headless projection marking a {@link #isMasked(Object) masked} value,
-	 * see {@link #scriptingScalarState()}.
+	 * see {@link #scriptingScalarState(ProjectionMode)}.
 	 */
 	public static final String SCRIPTING_MASKED = "masked";
 
 	/** Command sent when the user follows the link of a displayed option. */
 	private static final String CMD_GOTO = "goto";
+
+	/**
+	 * Prefix of the {@link #getTooltipContent(String) tooltip key} of an option, followed by the
+	 * {@link com.top_logic.layout.react.state.DropdownSelectState.Option#VALUE__PROP id} of the
+	 * option.
+	 */
+	public static final String OPTION_TOOLTIP_PREFIX = "option:";
 
 	/**
 	 * Argument of {@link #CMD_GOTO}: the
@@ -161,16 +174,14 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private final List<Object> _enteredValues = new ArrayList<>();
 
 	/**
-	 * Maps option ID strings to the original option objects. Used by
-	 * {@link #handleValueChanged(Map)} to resolve client-sent IDs back to model objects. Populated
-	 * by {@link #loadOptions()} and incrementally by {@link #toOptionDescriptors(List)} when
-	 * fresh IDs are allocated before the full option list has been loaded.
-	 */
-	private Map<String, Object> _optionIndex = new HashMap<>();
-
-	/**
-	 * Maps option objects to their allocated IDs. Built alongside {@link #_optionIndex} so that
-	 * {@link #toOptionDescriptors(List)} produces IDs consistent with the option index.
+	 * The ids the options and the elements of the value are displayed under.
+	 *
+	 * <p>
+	 * An option keeps its id while it is an option or an element of the value, across every
+	 * {@link #loadOptions() load} of the option list. An option gets its id when it is first
+	 * described to the client or addressed by its key, so an option list that is never opened
+	 * allocates ids for the value only.
+	 * </p>
 	 *
 	 * <p>
 	 * Options are looked up by {@link Object#equals(Object)}, as the field's value is compared with
@@ -179,11 +190,16 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * option.
 	 * </p>
 	 */
-	private Map<Object, String> _optionIdByObject = new HashMap<>();
+	private final ObjectIdIndex _optionIds;
+
+	/**
+	 * The {@link #objectIdentities() identities} of the options, over {@link #_optionIds}.
+	 */
+	private final ObjectIdentities _identities = new OptionIdentities();
 
 	/**
 	 * Guard flag to suppress the value changed listener when the change originates from the client
-	 * via {@link #handleValueChanged(Map)}.
+	 * via {@link #handleValueChanged(SelectValueArguments)}.
 	 */
 	private boolean _updatingFromClient;
 
@@ -258,6 +274,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			LabelProvider labelProvider, Comparator<?> optionComparator, boolean customOrder,
 			SelectDisplay display, Orientation orientation) {
 		super(context, model, module(display));
+		_optionIds = new ObjectIdIndex(context::allocateId);
 		_selectModel = model;
 		_labelProvider = labelProvider;
 		_optionComparator = optionComparator;
@@ -426,15 +443,16 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * <p>
 	 * A field holds the unfiltered value of a reference, so it may contain such objects. Their
 	 * identity - label, image, color, link - is not sent to the client: the field shows the
-	 * placeholder {@link I18NConstants#MASKED_VALUE} instead, keeps the object at its place in the
-	 * value, and writes it back unchanged unless the user removes it.
+	 * placeholder {@link com.top_logic.model.security.I18NConstants#MASKED_VALUE} instead, keeps the
+	 * object at its place in the value, and writes it back unchanged unless the user removes it.
 	 * </p>
 	 *
 	 * @param option
 	 *        The value to check, may be {@code null}.
+	 * @see DiscoverRight#isMasked(Object)
 	 */
 	public static boolean isMasked(Object option) {
-		return option instanceof TLObject object && !ModelAccessRights.getInstance().isDiscoverAllowed(object);
+		return DiscoverRight.isMasked(option);
 	}
 
 	/**
@@ -494,21 +512,23 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * Builds the option list, indexes it, and sends it to the client together with the value
-	 * expressed in the ids of that list.
+	 * Builds the option list, indexes it, and sends it to the client together with the value.
+	 *
+	 * <p>
+	 * An option or value element indexed before keeps its id; one that is neither an option nor
+	 * an element of the value any more loses it.
+	 * </p>
 	 */
 	private void loadOptions() {
 		List<?> options = sortedOptions();
-		Map<String, Object> newIndex = new HashMap<>();
-		Map<Object, String> newReverse = new HashMap<>();
-		List<Map<String, Object>> descriptors = buildOptionDescriptors(options, newIndex, newReverse);
-		_optionIndex = newIndex;
-		_optionIdByObject = newReverse;
+		List<Object> indexed = new ArrayList<>(options);
+		indexed.addAll(selection());
+		_optionIds.setObjects(indexed);
+		List<Map<String, Object>> descriptors = buildOptionDescriptors(options);
 
 		Object tx = beginUpdate();
 		putState(DropdownSelectState.OPTIONS__PROP, descriptors);
 		setOptionsLoaded(true);
-		// Re-send value with IDs consistent with the new option index.
 		updateValueState();
 		commitUpdate(tx);
 	}
@@ -531,54 +551,67 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * Projects the options and the value by the business identity of the option objects.
+	 * Projects the options and the value by the identities of the option objects.
 	 *
 	 * <p>
-	 * The client knows an option by an id allocated in the session. In the headless projection, an
-	 * option whose object has a {@link ScriptingModelKey business identity} - built relative to the
-	 * option scope of this control, as {@link #CMD_SELECT_BY_KEY} resolves it - carries that
-	 * identity as {@code key} instead of its id, in the loaded {@link DropdownSelectState#OPTIONS__PROP
-	 * options} as in the {@link FieldState#VALUE__PROP value}. So an assertion on the value holds in
-	 * every session, and an agent selects what it observes with {@link #CMD_SELECT_BY_KEY}. An option
-	 * without an identity keeps its id. A {@link #isMasked(Object) masked} value is projected with
-	 * its placeholder label and {@link #SCRIPTING_MASKED} only: it discloses no identity, and an
-	 * assertion on it holds in every session.
+	 * In the {@link ProjectionMode#AGENT agent projection}, an option is identified by its id under
+	 * {@link ScriptingModelKey#ID} and its label, as the client shows it: the id is what
+	 * {@link #CMD_VALUE_CHANGED} takes. In the
+	 * {@link ProjectionMode#KEY key projection}, an option whose object has a
+	 * {@link ScriptingModelKey business identity} - built relative to the option scope of this
+	 * control - carries that identity as {@code key} instead of its id, in the loaded
+	 * {@link DropdownSelectState#OPTIONS__PROP options} as in the {@link FieldState#VALUE__PROP
+	 * value}, so an assertion on the value holds in every session; an option without an identity
+	 * keeps its id.
+	 * </p>
+	 *
+	 * <p>
+	 * A {@link #isMasked(Object) masked} value is projected with its placeholder label and
+	 * {@link #SCRIPTING_MASKED}: it discloses no identity. The agent projection keeps its id, which
+	 * says nothing about the object but lets an agent keep the value in the field when it sets the
+	 * value; the key projection names nothing but the placeholder, so an assertion on it holds in
+	 * every session.
 	 * </p>
 	 */
 	@Override
-	public Map<String, Object> scriptingScalarState() {
-		Map<String, Object> result = super.scriptingScalarState();
-		ReactOptionScope scope = null;
+	public Map<String, Object> scriptingScalarState(ProjectionMode mode) {
+		Map<String, Object> result = super.scriptingScalarState(mode);
+		Object scope = null;
 		for (String property : List.of(DropdownSelectState.OPTIONS__PROP, FieldState.VALUE__PROP)) {
 			if (result.get(property) instanceof List<?> list && !list.isEmpty()) {
 				if (scope == null) {
-					scope = new ReactOptionScope(optionsAndValue(), _labelProvider);
+					scope = _identities.keyContext();
 				}
-				result.put(property, identifiedOptions(list, scope));
+				result.put(property, identifiedOptions(list, mode, scope));
 			}
 		}
 		return result;
 	}
 
 	/**
-	 * The given option descriptors, each identifying its option by its business identity where it
-	 * has one, see {@link #scriptingScalarState()}.
+	 * The given option descriptors, each identifying its option as the given mode requires, see
+	 * {@link #scriptingScalarState(ProjectionMode)}.
 	 */
 	@SuppressWarnings("unchecked")
-	private List<Object> identifiedOptions(List<?> descriptors, ReactOptionScope scope) {
+	private List<Object> identifiedOptions(List<?> descriptors, ProjectionMode mode, Object scope) {
 		List<Object> result = new ArrayList<>(descriptors.size());
 		for (Object entry : descriptors) {
 			if (entry instanceof Map<?, ?> descriptor) {
 				Map<String, Object> projected = new LinkedHashMap<>((Map<String, Object>) descriptor);
-				Object id = descriptor.get(DropdownSelectState.Option.VALUE__PROP);
-				Object option = _optionIndex.get(id);
+				Object id = projected.remove(DropdownSelectState.Option.VALUE__PROP);
+				Object option = id instanceof String optionId ? _optionIds.objectOf(optionId) : null;
 				if (option != null && isMasked(option)) {
-					// Neither the identity of an object the user may not see nor an id that only holds
-					// in this session: the projection tells that the value is there, and no more.
-					projected.remove(DropdownSelectState.Option.VALUE__PROP);
+					// Never the identity of an object the user may not see. Its id, which holds in this
+					// session only, is kept where the projection identifies options by their ids.
+					if (mode.projectsIds(_identities)) {
+						projected.put(ScriptingModelKey.ID, id);
+					}
 					projected.put(SCRIPTING_MASKED, Boolean.TRUE);
 				} else if (option != null) {
-					ScriptingModelKey.putIdentity(projected, scope, option, DropdownSelectState.Option.VALUE__PROP, id);
+					ScriptingModelKey.putIdentity(projected, mode, _identities, scope, option,
+						DropdownSelectState.Option.VALUE__PROP, id);
+				} else if (id != null) {
+					projected.put(ScriptingModelKey.ID, id);
 				}
 				result.add(projected);
 			} else {
@@ -634,23 +667,35 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * the user to choose one.
 	 *
 	 * <p>
-	 * A group of radio buttons offers the choice of no value as an option of its own; while a
-	 * placeholder is set, that option is labelled with the inherited value it stands for.
+	 * A group of radio buttons shows no placeholder: its option for no value keeps its label.
 	 * </p>
 	 */
 	@Override
-	public void setPlaceholder(String placeholder) {
-		super.setPlaceholder(placeholder);
-		Resources resources = Resources.getInstance();
-		String emptyLabel;
-		if (placeholder == null) {
-			emptyLabel = resources.getString(emptyOptionLabel(_display));
-		} else if (_display == SelectDisplay.RADIO) {
-			emptyLabel = resources.getString(I18NConstants.VALUE_INHERITED__VALUE.fill(placeholder));
-		} else {
-			emptyLabel = placeholder;
-		}
-		putState(DropdownSelectState.EMPTY_OPTION_LABEL__PROP, emptyLabel);
+	protected void showPlaceholder(String placeholder) {
+		super.showPlaceholder(placeholder);
+		putState(DropdownSelectState.EMPTY_OPTION_LABEL__PROP,
+			placeholder == null || _display == SelectDisplay.RADIO ? defaultEmptyLabel() : placeholder);
+	}
+
+	/**
+	 * Shows the inherited value where the field holds no value, in place of the label inviting the
+	 * user to choose one.
+	 *
+	 * <p>
+	 * A group of radio buttons offers the choice of no value as an option of its own; while a value
+	 * is inherited, that option is labelled with the inherited value it stands for.
+	 * </p>
+	 */
+	@Override
+	protected void showFallbackText(String fallbackText) {
+		super.showFallbackText(fallbackText);
+		putState(DropdownSelectState.EMPTY_OPTION_LABEL__PROP, _display == SelectDisplay.RADIO
+			? Resources.getInstance().getString(I18NConstants.VALUE_INHERITED__VALUE.fill(fallbackText))
+			: fallbackText);
+	}
+
+	private String defaultEmptyLabel() {
+		return Resources.getInstance().getString(emptyOptionLabel(_display));
 	}
 
 	/**
@@ -669,32 +714,27 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * Handles the {@link #CMD_VALUE_CHANGED} command from the React client.
+	 * Handles the {@link #CMD_VALUE_CHANGED} command: sets the value to the options with the given
+	 * ids.
 	 *
 	 * <p>
 	 * Like every value arriving from a client, the selection is dropped unless the field
-	 * {@link #acceptsClientValue() accepts client values}.
+	 * {@link #acceptsClientValue() accepts client values}. An id the control displays no option
+	 * under is ignored.
 	 * </p>
 	 *
-	 * @param arguments
-	 *        Must contain a {@link FieldValueArguments#VALUE} entry with a list of option value IDs.
+	 * <p>
+	 * The ids are {@link com.top_logic.layout.react.control.identity.DisplayedObjectId object ids}:
+	 * a recorded step carries the keys of the options and replays in a later session, through the
+	 * {@link #objectIdentities() identities} of the options.
+	 * </p>
 	 */
-	// Argument is a string array (selected option value ids). The config-JSON binding does not
-	// support a List of primitives (the reader expects list elements to be objects), so this command
-	// keeps a raw Map with a lightweight @ReactParam schema rather than a typed ConfigurationItem.
-	@SuppressWarnings("unchecked")
-	@ReactCommandHandler(value = CMD_VALUE_CHANGED, params = @ReactParam(name = FieldValueArguments.VALUE, type = "string[]",
-		required = true, description = "List of selected option value ids, for the options projected without a key (an option with a key is selected with selectByKey)."))
-	void handleValueChanged(Map<String, Object> arguments) {
+	@ReactCommandHandler(CMD_VALUE_CHANGED)
+	void handleValueChanged(SelectValueArguments arguments) {
 		if (!acceptsClientValue()) {
 			return;
 		}
-		List<String> selectedIds = (List<String>) arguments.get(FieldValueArguments.VALUE);
-		if (selectedIds == null) {
-			selectedIds = Collections.emptyList();
-		}
-
-		List<Object> newSelection = resolveOptions(selectedIds);
+		List<Object> newSelection = resolveOptions(arguments.getValue());
 		_updatingFromClient = true;
 		try {
 			_selectModel.setValue(newSelection);
@@ -709,7 +749,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private List<Object> resolveOptions(List<String> ids) {
 		List<Object> resolved = new ArrayList<>(ids.size());
 		for (String id : ids) {
-			Object option = _optionIndex.get(id);
+			Object option = _optionIds.objectOf(id);
 			if (option != null) {
 				resolved.add(option);
 			}
@@ -798,103 +838,63 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * Handles the {@link #CMD_SELECT_BY_KEY} command: sets the selection to the options designated by
-	 * their stable business {@link ScriptingModelKey key}s — the round-trip inverse of the {@code key} that
-	 * {@link #scriptingScalarState()} projects onto each option.
+	 * The options and the elements of the value, by the ids the control displays them under.
 	 *
 	 * <p>
-	 * This lets a headless interface select members by business object identity (e.g. the group labeled
-	 * {@code securityOwner} within this control) instead of session-allocated option ids that do not
-	 * survive a reload or replay. Each {@link ModelName} is resolved against this control's
-	 * {@link ReactOptionScope option scope} (for context-relative names) or globally.
+	 * The keys of the options are built relative to the {@link ReactOptionScope option scope} of
+	 * the control: its {@link #offeredOptions() options} and the elements of its value, named by
+	 * the labels the control shows. A key resolves among all of them - not only among the options
+	 * the client has loaded -, so a recorded value change replays without the option list being
+	 * opened first. A {@link #isMasked(Object) masked} element of the value belongs to the scope as
+	 * well, so a replayed value keeps it.
 	 * </p>
 	 */
-	@ReactCommandHandler(CMD_SELECT_BY_KEY)
-	void handleSelectByKey(SelectByKeysArguments arguments) {
-		if (!acceptsClientValue()) {
-			return;
-		}
-		List<ModelName> keys = arguments.getKeys();
-
-		List<ModelName> unresolved = new ArrayList<>();
-		List<Object> newSelection = resolveByKeys(keys, unresolved);
-		if (!unresolved.isEmpty()) {
-			// Drift contract: a recorded key that no longer designates an option in this session is an
-			// explicit failure, never a silent partial/empty selection. Replay then reports
-			// success:false (a real regression); an agent, which re-observes each step, re-plans.
-			throw new TopLogicException(I18NConstants.ERROR_OPTION_KEYS_UNRESOLVED__KEYS.fill(unresolved));
-		}
-		_updatingFromClient = true;
-		try {
-			_selectModel.setValue(newSelection);
-		} finally {
-			_updatingFromClient = false;
-		}
-		updateValueState();
-	}
-
-	/**
-	 * Records a value change in replay-stable form: the live {@link #CMD_VALUE_CHANGED} carries
-	 * session-allocated option ids, so it is recorded as a {@link #CMD_SELECT_BY_KEY} of the selected
-	 * options' business {@link ModelName identities}, which resolve again in a later session.
-	 */
-	@SuppressWarnings("unchecked")
 	@Override
-	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
-		if (CMD_VALUE_CHANGED.equals(command) && arguments != null) {
-			List<String> ids = (List<String>) arguments.get(FieldValueArguments.VALUE);
-			if (ids != null) {
-				ReactOptionScope scope = new ReactOptionScope(optionsAndValue(), _labelProvider);
-				SelectByKeysArguments recorded = TypedConfiguration.newConfigItem(SelectByKeysArguments.class);
-				recorded.setName(CMD_SELECT_BY_KEY);
-				for (String id : ids) {
-					Object option = _optionIndex.get(id);
-					ModelName key = option == null ? null : ScriptingModelKey.name(scope, option);
-					if (key != null) {
-						recorded.getKeys().add(key);
-					}
-				}
-				return new RecordedCommand(recorded);
-			}
-		}
-		return super.recordCommand(command, arguments);
+	public ObjectIdentities objectIdentities() {
+		return _identities;
 	}
 
 	/**
-	 * Resolves each key to its option, collecting the keys that no longer resolve in
-	 * {@code unresolvedOut}.
-	 *
-	 * <p>
-	 * Resolution is against the model's authoritative option list, not only the options already
-	 * streamed to the client ({@code _optionIndex}). This lets a recorded {@link #CMD_SELECT_BY_KEY}
-	 * replay without first opening the dropdown ({@link #CMD_LOAD_OPTIONS}), and matches the full set
-	 * the keys were built against. A key that throws or resolves to nothing is reported as unresolved
-	 * rather than skipped.
-	 * </p>
-	 *
-	 * <p>
-	 * The scope contains the current value as well: a {@link #isMasked(Object) masked} value is no
-	 * option, but stays in the selection when it is replayed.
-	 * </p>
+	 * {@link ObjectIdentities} of the options over {@link ReactDropdownSelectControl#_optionIds}.
 	 */
-	private List<Object> resolveByKeys(List<ModelName> keys, List<ModelName> unresolvedOut) {
-		ReactOptionScope scope = new ReactOptionScope(optionsAndValue(), _labelProvider);
-		ActionContext actionContext = ScriptingModelKey.newActionContext();
-		List<Object> resolved = new ArrayList<>(keys.size());
-		for (ModelName name : keys) {
-			// Context-relative names (ContextDependent) resolve within this control's option scope;
-			// globally-named options (e.g. a person) resolve without a value context.
-			Object valueContext = name instanceof ContextDependent ? scope : null;
-			Object option = ScriptingModelKey.locate(actionContext, valueContext, name);
-			if (option != null) {
-				resolved.add(option);
-			} else {
-				unresolvedOut.add(name);
-			}
-		}
-		return resolved;
-	}
+	private final class OptionIdentities implements ObjectIdentities {
 
+		@Override
+		public Object objectOf(String id) {
+			return _optionIds.objectOf(id);
+		}
+
+		/**
+		 * The id of the given option, allocated when the option is first addressed.
+		 */
+		@Override
+		public String idOf(Object object) {
+			String id = _optionIds.idOf(object);
+			if (id == null && object != null && optionsAndValue().contains(object)) {
+				id = _optionIds.add(object);
+			}
+			return id;
+		}
+
+		@Override
+		public ReactOptionScope keyContext() {
+			return new ReactOptionScope(optionsAndValue(), _labelProvider);
+		}
+
+		/**
+		 * Resolves a {@link ContextDependent context-relative} key within the option scope and any
+		 * other key globally, and accepts only an object of the option scope.
+		 */
+		@Override
+		public String idOfKey(ModelName key) {
+			ReactOptionScope scope = keyContext();
+			Object option = ScriptingModelKey.locate(key instanceof ContextDependent ? scope : null, key);
+			if (option == null || !scope.options().contains(option)) {
+				return null;
+			}
+			return _optionIds.add(option);
+		}
+	}
 
 	/**
 	 * The {@link #offeredOptions() offered options} followed by the elements of the value of the
@@ -931,28 +931,21 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * Builds option descriptors and populates the given index and reverse maps. Each option
-	 * receives a unique ID from the {@link ReactContext}.
+	 * Builds the descriptors of the given options, each under its id in {@link #_optionIds}.
 	 */
-	private List<Map<String, Object>> buildOptionDescriptors(List<?> options,
-			Map<String, Object> index, Map<Object, String> reverse) {
+	private List<Map<String, Object>> buildOptionDescriptors(List<?> options) {
 		List<Map<String, Object>> descriptors = new ArrayList<>(options.size());
 		ResourceProvider resourceProvider = toResourceProvider(_labelProvider);
 
 		for (Object option : options) {
-			String id = getReactContext().allocateId();
-			index.put(id, option);
-			reverse.put(option, id);
-
-			descriptors.add(describe(id, option, resourceProvider));
+			descriptors.add(describe(_optionIds.add(option), option, resourceProvider));
 		}
 		return descriptors;
 	}
 
 	/**
-	 * Converts a list of selected options to descriptors. Uses the existing
-	 * {@link #_optionIdByObject} map for IDs when available (after {@code loadOptions}), falling
-	 * back to freshly allocated IDs for the initial render.
+	 * Converts a list of selected options to descriptors, each under its id in
+	 * {@link #_optionIds}, indexing an option that has none yet.
 	 *
 	 * <p>
 	 * These are the options the field displays as its value, so they are the ones that carry
@@ -965,14 +958,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		ObjectNavigator navigator = _selectModel.isEditable() ? null : navigator();
 
 		for (Object option : options) {
-			String id = _optionIdByObject.get(option);
-			if (id == null) {
-				id = getReactContext().allocateId();
-				_optionIndex.put(id, option);
-				_optionIdByObject.put(option, id);
-			}
-
-			Map<String, Object> descriptor = describe(id, option, resourceProvider);
+			Map<String, Object> descriptor = describe(_optionIds.add(option), option, resourceProvider);
 			if (navigator != null && !isMasked(option) && navigator.canShow(option)) {
 				descriptor.put(DropdownSelectState.Option.LINK__PROP, Boolean.TRUE);
 			}
@@ -997,7 +983,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * </p>
 	 *
 	 * @param id
-	 *        The id the option is addressed by, from {@link #_optionIndex}.
+	 *        The id the option is addressed by, from {@link #_optionIds}.
 	 * @param option
 	 *        The option to describe.
 	 * @param resourceProvider
@@ -1011,7 +997,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		if (isMasked(option)) {
 			// Only the opaque id, so the masked value is written back unchanged.
 			descriptor.put(DropdownSelectState.Option.LABEL__PROP,
-				Resources.getInstance().getString(I18NConstants.MASKED_VALUE));
+				MaskedValues.placeholder());
 			return descriptor;
 		}
 		descriptor.put(DropdownSelectState.Option.LABEL__PROP, _labelProvider.getLabel(option));
@@ -1024,9 +1010,78 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		return descriptor;
 	}
 
+	/**
+	 * The explanation of an option, for a key made of {@link #OPTION_TOOLTIP_PREFIX} and the id of
+	 * the option: the tooltip the label provider of the options answers for it, e.g. the
+	 * description of a classifier of an enumeration.
+	 *
+	 * <p>
+	 * There is none for an unknown key or id, for a {@link #isMasked(Object) masked} option, and
+	 * where the label provider is no {@link ResourceProvider} or answers no tooltip.
+	 * </p>
+	 */
+	@Override
+	public TooltipContent getTooltipContent(String key) {
+		if (key == null || !key.startsWith(OPTION_TOOLTIP_PREFIX)) {
+			return null;
+		}
+		Object option = _optionIds.objectOf(key.substring(OPTION_TOOLTIP_PREFIX.length()));
+		if (option == null || isMasked(option)) {
+			return null;
+		}
+		ResourceProvider resourceProvider = toResourceProvider(_labelProvider);
+		if (resourceProvider == null) {
+			return null;
+		}
+		String tooltip = resourceProvider.getTooltip(option);
+		if (tooltip == null || tooltip.isEmpty()) {
+			return null;
+		}
+		return new TooltipContent(tooltip, null);
+	}
+
 	private ObjectNavigator navigator() {
 		ReactContext context = getReactContext();
 		return context == null ? null : context.getObjectNavigator();
+	}
+
+	/**
+	 * Following the link of a displayed value is offered also while the field takes no input: a
+	 * read-only field displays its value with links, see {@link #toOptionDescriptors(List)}.
+	 */
+	@Override
+	protected Set<String> scriptingDisplayCommands() {
+		return Set.of(CMD_GOTO);
+	}
+
+	/**
+	 * The {@link #CMD_GOTO} is executable while a displayed value carries a link.
+	 */
+	@Override
+	public ExecutableState scriptingCommandState(String command) {
+		if (CMD_GOTO.equals(command) && !displaysLink()) {
+			return ExecutableState.NOT_EXEC_DISABLED;
+		}
+		return super.scriptingCommandState(command);
+	}
+
+	/**
+	 * Whether a displayed value carries a link, see {@link #toOptionDescriptors(List)}.
+	 */
+	private boolean displaysLink() {
+		if (_selectModel.isEditable()) {
+			return false;
+		}
+		ObjectNavigator navigator = navigator();
+		if (navigator == null) {
+			return false;
+		}
+		for (Object option : selection()) {
+			if (!isMasked(option) && navigator.canShow(option)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -1036,7 +1091,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	@ReactCommandHandler(value = CMD_GOTO, params = @ReactParam(name = ARG_OPTION, required = true,
 		description = "Id of the displayed option to lead to (from the value descriptors)."))
 	void handleGoto(ReactContext context, Map<String, Object> arguments) {
-		Object option = _optionIndex.get(arguments.get(ARG_OPTION));
+		Object option = arguments.get(ARG_OPTION) instanceof String id ? _optionIds.objectOf(id) : null;
 		ObjectNavigator navigator = navigator();
 		if (option != null && navigator != null && !isMasked(option) && navigator.canShow(option)) {
 			navigator.show(context, option);

@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.top_logic.basic.core.workspace.ApplicationResources;
 import com.top_logic.basic.core.workspace.ModuleLayoutConstants;
 import com.top_logic.basic.core.workspace.Workspace;
 import com.top_logic.basic.io.FileSystemCache;
@@ -56,7 +57,8 @@ public class MultiFileManager extends FileManager {
 	 * environment.
 	 */
 	public static FileManager createForModularApplication() {
-		return createMultiFileManager(Workspace.applicationModules());
+		ApplicationResources resources = Workspace.applicationResources();
+		return createMultiFileManager(resources.resourceDirs(), resources.topLevelWebapp());
 	}
 
 	/**
@@ -77,17 +79,34 @@ public class MultiFileManager extends FileManager {
 	 * Creates a {@link MultiFileManager} using the given explicit resource paths.
 	 */
 	public static FileManager createMultiFileManager(List<Path> paths) {
-		return new MultiFileManager(paths);
+		return createMultiFileManager(paths, null);
+	}
+
+	/**
+	 * Creates a {@link MultiFileManager} using the given explicit resource paths.
+	 *
+	 * @param paths
+	 *        Directories to search files in.
+	 * @param topLevelWebapp
+	 *        The web application folder of the application module, see
+	 *        {@link #getTopLevelWebapp()}. <code>null</code> to derive it from the given paths.
+	 *        If given but not part of the given paths, it is inserted after the deploy folders of
+	 *        its project.
+	 */
+	public static FileManager createMultiFileManager(List<Path> paths, Path topLevelWebapp) {
+		return new MultiFileManager(paths, topLevelWebapp);
 	}
 
 	private List<Path> _paths;
 
 	/**
 	 * The directory of the running web application.
+	 *
+	 * @see #getTopLevelWebapp()
 	 */
 	private Path _topLevelWebapp;
 
-    /**
+	/**
 	 * Construct a {@link FileManager} with some predefined directories.
 	 * 
 	 * Allows subclasses to create the files some other way.
@@ -96,25 +115,80 @@ public class MultiFileManager extends FileManager {
 	 *        Directories to search files in.
 	 */
 	protected MultiFileManager(List<Path> paths) {
+		this(paths, null);
+	}
+
+	/**
+	 * Construct a {@link FileManager} with some predefined directories.
+	 * 
+	 * @param paths
+	 *        Directories to search files in.
+	 * @param topLevelWebapp
+	 *        The web application folder of the application module, see
+	 *        {@link #getTopLevelWebapp()}. <code>null</code> to use the first of the given paths
+	 *        that is not a deploy folder. If given but not part of the given paths (because it does
+	 *        not exist yet), it is inserted after the deploy folders of its project, so that files
+	 *        created there are found by this {@link FileManager}.
+	 */
+	protected MultiFileManager(List<Path> paths, Path topLevelWebapp) {
 		if (paths.isEmpty()) {
 			throw new IllegalArgumentException("No paths given.");
 		}
 
-		_paths = paths;
+		if (topLevelWebapp == null) {
+			_paths = paths;
+			_topLevelWebapp = firstMainFolder(paths);
+		} else {
+			_paths = withTopLevelWebapp(paths, topLevelWebapp);
+			_topLevelWebapp = topLevelWebapp;
+		}
+	}
 
-		Optional<File> topLevelWebapp = paths.stream()
-			.filter(this::inDefaultFileSystem)
+	private static List<Path> withTopLevelWebapp(List<Path> paths, Path topLevelWebapp) {
+		Path normalized = normalizedPath(topLevelWebapp);
+		boolean contained = paths.stream()
+			.filter(p -> p.getFileSystem() == topLevelWebapp.getFileSystem())
+			.anyMatch(p -> normalizedPath(p).equals(normalized));
+		if (contained) {
+			return paths;
+		}
+
+		// The web application folder follows the deploy folders of its own project, as in
+		// the resource path built from the classpath.
+		Path project = normalizedPath(Workspace.projectDir(topLevelWebapp.toFile()).toPath());
+		int index = 0;
+		while (index < paths.size() && inDefaultFileSystem(paths.get(index))
+			&& normalizedPath(paths.get(index)).startsWith(project)) {
+			index++;
+		}
+		List<Path> result = new ArrayList<>(paths);
+		result.add(index, topLevelWebapp);
+		return Collections.unmodifiableList(result);
+	}
+
+	private static Path normalizedPath(Path path) {
+		return path.toAbsolutePath().normalize();
+	}
+
+	private Path firstMainFolder(List<Path> paths) {
+		Optional<File> mainFolder = paths.stream()
+			.filter(MultiFileManager::inDefaultFileSystem)
 			.map(Path::toFile)
 			.filter(this::mainFolder)
 			.findFirst();
-		_topLevelWebapp = (topLevelWebapp.isPresent() ? topLevelWebapp.get() : new File(".")).toPath();
-    }
+		return (mainFolder.isPresent() ? mainFolder.get() : new File(".")).toPath();
+	}
 
 	/**
 	 * The underlying {@link Path}s of the modular web application.
 	 */
 	protected final List<Path> paths() {
 		return _paths;
+	}
+
+	@Override
+	public Path getTopLevelWebapp() {
+		return _topLevelWebapp;
 	}
 
 	@Deprecated
@@ -185,7 +259,10 @@ public class MultiFileManager extends FileManager {
 	}
 
 	private List<File> filterDirectories(List<Path> overlays) {
-		return overlays.stream().filter(this::inDefaultFileSystem).map(Path::toFile).collect(Collectors.toList());
+		return overlays.stream()
+			.filter(MultiFileManager::inDefaultFileSystem)
+			.map(Path::toFile)
+			.collect(Collectors.toList());
 	}
 
 	private List<Path> pathOverlays(String resourceName) throws IOException {
@@ -297,7 +374,7 @@ public class MultiFileManager extends FileManager {
 		return _topLevelWebapp.resolve(relative(normalize(resourceName)));
 	}
 
-	private boolean inDefaultFileSystem(Path path) {
+	private static boolean inDefaultFileSystem(Path path) {
 		return path.getFileSystem() == FileSystems.getDefault();
 	}
 

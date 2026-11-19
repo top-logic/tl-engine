@@ -129,6 +129,11 @@ public class TestTLScriptConfigControlProvider extends BasicTestCase {
 		assertEquals("x -> $x", control.scriptingScalarState().get("value"));
 	}
 
+	/** The script editor takes the whole row. */
+	public void testScriptEditorTakesTheWholeRow() {
+		assertTrue(new TLScriptConfigControlProvider().rendersWholeLine(_model));
+	}
+
 	public void testEnteredScriptIsStored() {
 		ReactControl control = createControl();
 		enter(control, "x -> $x.container()");

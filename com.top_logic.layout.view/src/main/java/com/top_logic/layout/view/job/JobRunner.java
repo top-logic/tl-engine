@@ -69,6 +69,13 @@ import com.top_logic.util.error.TopLogicException;
  * ends at the next report or {@link #checkCancelled()} of the body.
  * </p>
  *
+ * <p>
+ * Whether a cancel is accepted is decided under the lock that guards the state of the job, and so
+ * is the {@link #uncancelable() point of no return} of the body: a cancel accepted before it ends
+ * the job as cancelled at that point, a cancel after it is refused. The scope itself is cancelled
+ * outside the lock, so that the listeners the body registered on it never run under it.
+ * </p>
+ *
  * @see JobMonitor
  * @see JobControl
  */
@@ -76,7 +83,25 @@ public class JobRunner implements JobControl, JobMonitor {
 
 	private final ViewChannel _target;
 
-	private final boolean _cancelable;
+	/**
+	 * Whether the reader may still ask this job to stop; given up for good when the body reaches
+	 * its {@link #uncancelable() point of no return}.
+	 *
+	 * <p>
+	 * Guarded by {@link #_lock}.
+	 * </p>
+	 */
+	private boolean _cancelable;
+
+	/**
+	 * Whether a {@link #cancel()} was accepted, decided under {@link #_lock} before the
+	 * {@link #_scope} is cancelled outside of it.
+	 *
+	 * <p>
+	 * Guarded by {@link #_lock}.
+	 * </p>
+	 */
+	private boolean _cancelAccepted;
 
 	private final Consumer<JobState> _onFinished;
 
@@ -208,11 +233,19 @@ public class JobRunner implements JobControl, JobMonitor {
 	 *
 	 * <p>
 	 * A job that was asked to stop ends as cancelled, on both ways out of the body: the request to
-	 * stop decides how the job ended, whatever the body does on its way out. A body whose wait is
+	 * stop decides how the job ended, whatever the body does on its way out. A body that returns
+	 * normally nevertheless - one that caught the cancel and hands back what it got done before,
+	 * e.g. the report of the files it imported and committed - leaves what it returned as the
+	 * result of the cancelled job; a body that throws leaves none. A body whose wait is
 	 * ended by the cancel reaches the outside in whatever shape the layer it was stopped in gives it
 	 * - an abort of a script as the failure of the expression it was raised in, a failed request as
 	 * the I/O failure it raises - and none of these shapes is a failure the reader is to be told
 	 * about.
+	 * </p>
+	 *
+	 * <p>
+	 * A body past its {@link #uncancelable() point of no return} is no longer asked to stop, so
+	 * it ends with what it returns, or as failed.
 	 * </p>
 	 *
 	 * <p>
@@ -250,13 +283,8 @@ public class JobRunner implements JobControl, JobMonitor {
 		List<ResKey> errorDetails = List.of();
 		try (var binding = CancelScope.bind(_scope)) {
 			_scope.checkCancelled();
-			Object produced = body.run(this, arguments);
-			if (_scope.isCancelled()) {
-				status = JobStatus.CANCELLED;
-			} else {
-				status = JobStatus.COMPLETED;
-				result = produced;
-			}
+			result = body.run(this, arguments);
+			status = _scope.isCancelled() ? JobStatus.CANCELLED : JobStatus.COMPLETED;
 		} catch (Throwable ex) {
 			if (_scope.isCancelled() || isAbort(ex)) {
 				status = JobStatus.CANCELLED;
@@ -315,7 +343,9 @@ public class JobRunner implements JobControl, JobMonitor {
 
 	@Override
 	public boolean isCancelable() {
-		return _cancelable;
+		synchronized (_lock) {
+			return _cancelable;
+		}
 	}
 
 	@Override
@@ -324,8 +354,29 @@ public class JobRunner implements JobControl, JobMonitor {
 			if (!_cancelable || _status != JobStatus.RUNNING) {
 				return;
 			}
+			_cancelAccepted = true;
 		}
 		_scope.cancel();
+	}
+
+	@Override
+	public void uncancelable() {
+		boolean cancelled;
+		synchronized (_lock) {
+			cancelled = _cancelAccepted;
+			if (!cancelled && _cancelable) {
+				_cancelable = false;
+				if (_status == JobStatus.RUNNING) {
+					_publisher.publish(snapshot());
+				}
+			}
+		}
+		if (cancelled) {
+			// The cancel may not have reached the scope yet; it is cancelled at the latest here, so
+			// that the job ends as cancelled.
+			_scope.cancel();
+		}
+		checkCancelled();
 	}
 
 	@Override
@@ -400,7 +451,8 @@ public class JobRunner implements JobControl, JobMonitor {
 	 * @param status
 	 *        How the job ended.
 	 * @param result
-	 *        What it produced, for a completed one.
+	 *        What it produced, for a completed one, and for a cancelled one whose body returned
+	 *        normally.
 	 * @param error
 	 *        Why it failed, for a failed one.
 	 * @param errorDetails
@@ -457,7 +509,7 @@ public class JobRunner implements JobControl, JobMonitor {
 	/** Called while holding {@link #_lock}. */
 	private JobState snapshot() {
 		return new JobState(_status, _phases, _currentPhase, _fraction, _message, _startedAt, _finishedAt,
-			_result, _error, _errorDetails, this);
+			_result, _error, _errorDetails, _cancelable, this);
 	}
 
 	/** Called while holding {@link #_lock}. */

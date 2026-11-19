@@ -27,6 +27,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -201,6 +202,25 @@ public class TestDynamicSteps extends TestCase {
 		assertSame("A step that keeps its key keeps its content.", content, activeContent(wizard));
 		assertEquals("The client sees the sequence as it is now.",
 			List.of("welcome", "a0", "a", "b", "summary"), publishedKeys(wizard));
+	}
+
+	/**
+	 * Tests that the headless projection says where the user stands as the counter of the
+	 * indicator does: the number of the step displayed, counted from one, of the number of steps.
+	 */
+	public void testProjectedStepCounter() throws Exception {
+		_questions.set(new ArrayList<>(List.of("a", "b")));
+		_currentStep.set("b");
+		ReactWizardControl wizard = control(_wizards.get(0));
+
+		Map<String, Object> state = wizard.scriptingScalarState(ProjectionMode.AGENT);
+		assertEquals(Integer.valueOf(3), state.get(ReactWizardControl.CURRENT_STEP));
+		assertEquals(Integer.valueOf(4), state.get(ReactWizardControl.STEP_COUNT));
+
+		_questions.set(List.of("b"));
+		state = wizard.scriptingScalarState(ProjectionMode.AGENT);
+		assertEquals(Integer.valueOf(2), state.get(ReactWizardControl.CURRENT_STEP));
+		assertEquals(Integer.valueOf(3), state.get(ReactWizardControl.STEP_COUNT));
 	}
 
 	/**

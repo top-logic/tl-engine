@@ -30,8 +30,10 @@ import com.top_logic.basic.json.schema.model.StringSchema;
 import com.top_logic.basic.json.schema.model.TrueSchema;
 
 import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonReader;
 import de.haumacher.msgbuf.json.JsonToken;
+import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
  * Parser for JSON Schema documents in JSON format.
@@ -111,11 +113,17 @@ public class JsonSchemaParser {
 					break;
 				case "enum":
 					hasEnum = true;
-					properties.put(name, readStringArray(reader));
+					properties.put(name, readJsonValueArray(reader));
 					break;
 				case "const":
 					hasConst = true;
-					properties.put(name, reader.nextString());
+					properties.put(name, readJsonValue(reader));
+					break;
+				case "default":
+					properties.put(name, readJsonValue(reader));
+					break;
+				case "examples":
+					properties.put(name, readJsonValueArray(reader));
 					break;
 				case "allOf":
 					hasAllOf = true;
@@ -265,6 +273,70 @@ public class JsonSchemaParser {
 		}
 		reader.endObject();
 		return result;
+	}
+
+	/**
+	 * Reads an array of arbitrary JSON values, each in its JSON-serialized form.
+	 */
+	private static java.util.List<String> readJsonValueArray(JsonReader reader) throws IOException {
+		java.util.List<String> result = new java.util.ArrayList<>();
+		reader.beginArray();
+		while (reader.hasNext()) {
+			result.add(readJsonValue(reader));
+		}
+		reader.endArray();
+		return result;
+	}
+
+	/**
+	 * Reads an arbitrary JSON value and returns its JSON-serialized form.
+	 */
+	private static String readJsonValue(JsonReader reader) throws IOException {
+		StringW buffer = new StringW();
+		try (JsonWriter writer = new JsonWriter(buffer)) {
+			copyJsonValue(reader, writer);
+		}
+		return buffer.toString();
+	}
+
+	private static void copyJsonValue(JsonReader reader, JsonWriter writer) throws IOException {
+		switch (reader.peek()) {
+			case STRING:
+				writer.value(reader.nextString());
+				break;
+			case NUMBER:
+				// The number literal as given.
+				writer.jsonValue(reader.nextString());
+				break;
+			case BOOLEAN:
+				writer.value(reader.nextBoolean());
+				break;
+			case NULL:
+				reader.nextNull();
+				writer.nullValue();
+				break;
+			case BEGIN_ARRAY:
+				reader.beginArray();
+				writer.beginArray();
+				while (reader.hasNext()) {
+					copyJsonValue(reader, writer);
+				}
+				reader.endArray();
+				writer.endArray();
+				break;
+			case BEGIN_OBJECT:
+				reader.beginObject();
+				writer.beginObject();
+				while (reader.hasNext()) {
+					writer.name(reader.nextName());
+					copyJsonValue(reader, writer);
+				}
+				reader.endObject();
+				writer.endObject();
+				break;
+			default:
+				throw new IOException("Unexpected token: " + reader.peek());
+		}
 	}
 
 	/**

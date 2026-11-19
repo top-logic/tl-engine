@@ -116,10 +116,10 @@ the same checks as a chat page's `present`, without the page.
 
 **A new arm** is one block in the scenario file plus one agent definition and one model assignment
 in `src/test/webapp/WEB-INF/conf/tl-ai-eval.test.config.xml` and
-`.../autoconf/com.top_logic.tl.ai.core.agent.AgentRuntimeService.config.xml`, whose
+`.../autoconf/com.top_logic.ai.core.agent.AgentRuntimeService.config.xml`, whose
 `<agent-overrides>` assign each arm its model and which also names the default model. The
 `LLMProviderService` file next to it,
-`.../autoconf/com.top_logic.tl.ai.core.provider.LLMProviderService.config.xml`, keeps the providers
+`.../autoconf/com.top_logic.ai.core.provider.LLMProviderService.config.xml`, keeps the providers
 and the model catalog. One agent definition per
 model is not a style choice: a per-run model override exists in Java, but the shipped policy
 defaults to `model-access default="assigned"` and refuses a model the agent is not assigned. The
@@ -258,7 +258,7 @@ instead.
 Follow-ups, each of which changes what the report can say:
 
 - **Cost in currency.** The price catalogue is already fetched and parsed (`ModelInfo.cost()`), and
-  nothing in the codebase reads it. Tokens × price, including the cache tiers and the ">200k" tier,
+  nothing in the codebase reads it. Tokens × price, including the cache prices and the prompt-size tiers,
   with "no price known" as a first-class outcome rather than zero.
 - **An `askUser` responder.** An unattended run that reaches `askUser` blocks until the interaction
   timeout. No scenario here triggers it; one that did would need a watcher answering from a script.

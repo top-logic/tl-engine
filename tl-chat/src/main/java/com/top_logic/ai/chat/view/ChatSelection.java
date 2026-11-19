@@ -13,11 +13,9 @@ import java.util.function.Function;
 import com.top_logic.basic.Logger;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredType;
-import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tl.ai.core.security.ReadFilter;
-import com.top_logic.tl.ai.core.tools.present.PresentAs;
-import com.top_logic.tl.ai.core.tools.present.Presentation;
+import com.top_logic.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.tools.present.PresentAs;
+import com.top_logic.ai.core.tools.present.Presentation;
 
 /**
  * How a page's current selection is stated to the agent.
@@ -28,17 +26,16 @@ import com.top_logic.tl.ai.core.tools.present.Presentation;
  * </p>
  *
  * <pre>
- * Selected object: KI im Mittelstand 2026 [type:demo.events:Event] [id:GenericObject:12345]
+ * Selected object: {"_tid":"GenericObject:12345","_type":"demo.events:Event","_display":"KI im Mittelstand 2026"}
  * </pre>
  *
  * <p>
- * <b>Three things, not one.</b> The label answers "which object have I selected?"; the qualified
- * type name says what kind of thing it is, which is what a model needs to reason about it and to
- * name it in a search; and the identifier is what makes it <em>actionable</em> - it is the same
- * {@code label [id:TID]} form every tool result writes, so a model that wants to read or change the
- * selected object feeds it straight back into the next tool call and
- * {@code com.top_logic.tl.ai.core.tools.model.TidResolver} reads it. A label alone would leave the
- * agent searching for the object the user is looking at.
+ * <b>The identity, as every tool result writes it.</b> The label answers "which object have I
+ * selected?"; the qualified type name says what kind of thing it is, which is what a model needs to
+ * reason about it and to name it in a search; and the identifier is what makes it
+ * <em>actionable</em> - a model that wants to read or change the selected object passes its
+ * {@link ReadFilter#TID} to the next tool call. A label alone would leave the agent searching for the
+ * object the user is looking at.
  * </p>
  *
  * <p>
@@ -134,9 +131,7 @@ public final class ChatSelection {
 			// type and no identifier to state, so what it says about itself is all there is.
 			return name;
 		}
-		String type = typeName(model);
-		return ReadFilter.withId(type == null ? name : name + " [type:" + type + "]",
-			ReadFilter.idOf(model));
+		return ReadFilter.identityJson(model, name);
 	}
 
 	/** What to call the object: the configured expression, otherwise the application's own label. */
@@ -150,25 +145,6 @@ public final class ChatSelection {
 			Logger.warn("The chat could not label a selected object: " + ex.getMessage(), ex,
 				ChatSelection.class);
 			return "";
-		}
-	}
-
-	/**
-	 * The qualified name of the object's type, or {@code null} when it has none.
-	 *
-	 * <p>
-	 * The qualified name rather than the type's label, because this half is for the model: it is
-	 * what a tool takes for a type and what the model definition calls the type, and unlike the
-	 * label it is the same string in every language.
-	 * </p>
-	 */
-	private static String typeName(TLObject object) {
-		try {
-			TLStructuredType type = object.tType();
-			return type == null ? null : TLModelUtil.qualifiedName(type);
-		} catch (RuntimeException ex) {
-			Logger.debug("The chat could not name the type of a selected object.", ex, ChatSelection.class);
-			return null;
 		}
 	}
 }

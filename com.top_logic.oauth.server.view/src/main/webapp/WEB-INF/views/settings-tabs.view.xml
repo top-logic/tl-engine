@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing the tab "Authorized clients" to the settings dialog defined by tl-layout-view
+	(WEB-INF/views/settings-tabs.view.xml): the OAuth clients the person allowed to act as them,
+	each of which the person may revoke. A same-path overlay, merged onto the base in dependency
+	order, so tl-layout-view needs no knowledge of this module.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<tab-bar config:ref="settings-tabs">
+		<tabs>
+			<tab id="oauth-grants"
+				config:operation="add"
+				config:position="end"
+				icon="css:bi bi-box-arrow-in-right"
+			>
+				<label>
+					<en>Authorized clients</en>
+					<de>Autorisierte Clients</de>
+				</label>
+				<view-ref view="oauth/grants.view.xml"/>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.tabbar;
 import java.util.function.Supplier;
 
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.common.BadgeDisplay;
 import com.top_logic.layout.react.dirty.DirtyChannel;
 
 /**
@@ -35,6 +36,8 @@ public class TabDefinition {
 	private boolean _finalTitle;
 
 	private boolean _hidden;
+
+	private BadgeDisplay _badge;
 
 	/**
 	 * Creates a new {@link TabDefinition}.
@@ -168,6 +171,27 @@ public class TabDefinition {
 	 */
 	public TabDefinition withHidden(boolean hidden) {
 		_hidden = hidden;
+		return this;
+	}
+
+	/**
+	 * The badge after the label of the tab, {@code null} for none.
+	 *
+	 * @see ReactTabBarControl#setTabBadge(String, BadgeDisplay)
+	 */
+	public BadgeDisplay getBadge() {
+		return _badge;
+	}
+
+	/**
+	 * Sets the badge after the label of the tab.
+	 *
+	 * @param badge
+	 *        The badge, {@code null} for none.
+	 * @return This instance for fluent chaining.
+	 */
+	public TabDefinition withBadge(BadgeDisplay badge) {
+		_badge = badge;
 		return this;
 	}
 

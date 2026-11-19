@@ -5,15 +5,13 @@
 	the model channel by the opening command): the type name and kind (class or enumeration). The
 	primary command stores the form state, runs the ModelEditAction in CREATE_TYPE mode inside a
 	transaction (creating the type in the module held by the container channel), writes the new type to
-	the selection channel bound to the parent view, bumps the reload channel so the diagram re-reads its
-	module, and closes the dialog.
+	the selection channel bound to the parent view, and closes the dialog.
 -->
 <view>
 	<channels>
 		<channel name="model"/>
 		<channel name="selection"/>
 		<channel name="container"/>
-		<channel name="reload"/>
 	</channels>
 	<window
 		resizable="false"
@@ -57,11 +55,6 @@
 							</with-transaction>
 						</with-result>
 					</store-form-state>
-					<execute-script function="now()">
-						<with-result>
-							<write-channel name="reload"/>
-						</with-result>
-					</execute-script>
 					<close-dialog/>
 				</generic-command>
 			</commands>

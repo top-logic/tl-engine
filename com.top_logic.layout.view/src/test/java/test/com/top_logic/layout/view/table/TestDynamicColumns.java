@@ -7,6 +7,7 @@ package test.com.top_logic.layout.view.table;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -24,6 +25,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnExport;
+import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.ColumnType;
@@ -35,12 +37,21 @@ import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.table.Column;
+import com.top_logic.table.FilterState;
+import com.top_logic.table.filter.OptionsFilterState;
+import com.top_logic.table.filter.RegexpOptionsFilter;
+import com.top_logic.table.filter.TextColumnFilter;
+import com.top_logic.table.filter.TextFilterState;
 
 /**
  * Test for the {@code <dynamic-columns>} of a table: one column per object of a computed set, and
  * what each of those columns shows, is named and labelled after, and lets the user edit.
  */
 public class TestDynamicColumns extends TestCase {
+
+	/** The pattern of the declared filter, matching the cell values of the row {@code match}. */
+	private static final String ROW_PATTERN = "^match/";
 
 	/** The module holding the test model. */
 	private static final String MODULE = "test.dynamicColumns";
@@ -146,7 +157,7 @@ public class TestDynamicColumns extends TestCase {
 		Columns edited = set("first");
 		edited.setUpdate(column -> (row, value) -> fail("The column is read-only."));
 
-		assertNull(resolve(new DynamicColumns("milestones", 0, true, ColumnExport.DEFAULT, scope -> edited), edited)
+		assertNull(resolve(new DynamicColumns("milestones", true, ColumnExport.DEFAULT, scope -> edited), edited)
 			.get(0).editing());
 	}
 
@@ -183,16 +194,18 @@ public class TestDynamicColumns extends TestCase {
 	}
 
 	/**
-	 * The display width the declaration states is the width of every column it contributes.
+	 * Every column is displayed as wide as the set says for the object it stands for.
 	 */
-	public void testWidthIsSharedByEveryColumn() {
-		for (ColumnSetup setup : resolve(declaration(), set("first", "second"))) {
-			assertEquals(120, setup.width());
-		}
+	public void testWidthIsDecidedPerColumnObject() {
+		Columns sized = set("name", "start", "end");
+		sized.setWidth(column -> column.equals("name") ? 260 : 130);
 
-		assertEquals("Columns keep the width their type derives unless the declaration states one.",
-			0, resolve(new DynamicColumns("milestones", 0, false, ColumnExport.DEFAULT, scope -> set("first")),
-				set("first")).get(0).width());
+		List<ColumnSetup> columns = resolve(declaration(), sized);
+
+		assertEquals(List.of("milestones.name", "milestones.start", "milestones.end"), names(columns));
+		assertEquals(List.of(260, 130, 130), columns.stream().map(ColumnSetup::width).toList());
+		assertEquals("Columns keep the width their type derives unless the set states one.",
+			0, resolve(declaration(), set("first")).get(0).width());
 	}
 
 	/**
@@ -204,7 +217,7 @@ public class TestDynamicColumns extends TestCase {
 			assertTrue("Columns sort by default.", setup.sortable());
 		}
 
-		DynamicColumns unsortable = new DynamicColumns("milestones", 0, false, ColumnExport.DEFAULT, false,
+		DynamicColumns unsortable = new DynamicColumns("milestones", false, ColumnExport.DEFAULT, false,
 			scope -> set("first"), List.of());
 		for (ColumnSetup setup : resolve(unsortable, set("first", "second"))) {
 			assertFalse(setup.sortable());
@@ -229,6 +242,49 @@ public class TestDynamicColumns extends TestCase {
 			log.getErrors().get(0).contains(DynamicColumns.Config.SORTABLE));
 	}
 
+	/**
+	 * A filter the declaration states is the filter of every column it contributes, matching the
+	 * text of the cell value of each of them.
+	 */
+	public void testDeclaredFilterIsSharedByEveryColumn() {
+		RegexpOptionsFilter.Config filterConfig = TypedConfiguration.newConfigItem(RegexpOptionsFilter.Config.class);
+		RegexpOptionsFilter.PatternConfig pattern =
+			TypedConfiguration.newConfigItem(RegexpOptionsFilter.PatternConfig.class);
+		set(pattern, RegexpOptionsFilter.PatternConfig.REGEXP, ROW_PATTERN);
+		filterConfig.getPatterns().add(pattern);
+
+		DynamicColumns.Config config = TypedConfiguration.newConfigItem(DynamicColumns.Config.class);
+		set(config, DynamicColumns.Config.NAME, "milestones");
+		set(config, DynamicColumns.Config.COLUMNS, TypedConfiguration.newConfigItem(Expr.Null.class));
+		set(config, DynamicColumns.Config.FILTER, filterConfig);
+		BufferingProtocol log = new BufferingProtocol();
+		DynamicColumns declaration = new DefaultInstantiationContext(log).getInstance(config);
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+
+		OptionsFilterState state = new OptionsFilterState(Set.of(ROW_PATTERN));
+		for (ColumnSetup setup : resolve(declaration, set("first", "second"))) {
+			Column<Object, ?> column = setup.buildColumn();
+			assertEquals("The declared filter matches the row of " + setup.name(), List.of("match"),
+				matching(column, state, "match", "other"));
+		}
+	}
+
+	/** Columns whose declaration states no filter filter by the one their type derives. */
+	public void testTypeDerivedFilterWithoutDeclaration() {
+		for (ColumnSetup setup : resolve(declaration(), set("first", "second"))) {
+			Column<Object, ?> column = setup.buildColumn();
+			assertTrue("The label column text-filters: " + column.filter().get(),
+				column.filter().get() instanceof TextColumnFilter);
+			assertEquals(List.of("match"), matching(column, TextFilterState.contains("match/"), "match", "other"));
+		}
+	}
+
+	/** The given rows the given column's filter lets pass in the given state. */
+	private static <V> List<Object> matching(Column<Object, V> column, FilterState state, Object... rows) {
+		Predicate<V> predicate = column.filter().get().predicate(state);
+		return Arrays.stream(rows).filter(row -> predicate.test(column.value(row))).toList();
+	}
+
 	private static void set(ConfigurationItem config, String property, Object value) {
 		config.update(config.descriptor().getProperty(property), value);
 	}
@@ -243,9 +299,9 @@ public class TestDynamicColumns extends TestCase {
 		return columns.stream().map(ColumnSetup::name).toList();
 	}
 
-	/** A declaration naming its columns after {@code milestones} and displaying them 120px wide. */
+	/** A declaration naming its columns after {@code milestones}. */
 	private static DynamicColumns declaration() {
-		return new DynamicColumns("milestones", 120, false, ColumnExport.DEFAULT, scope -> {
+		return new DynamicColumns("milestones", false, ColumnExport.DEFAULT, scope -> {
 			throw new AssertionError("The columns are the ones the test hands over.");
 		});
 	}
@@ -272,6 +328,8 @@ public class TestDynamicColumns extends TestCase {
 		private Function<Object, Function<List<Object>, Object>> _aggregate = column -> null;
 
 		private Predicate<Object> _visible;
+
+		private Function<Object, Integer> _width;
 
 		/**
 		 * Creates a {@link Columns} standing for the given objects, all of them holding values of
@@ -300,6 +358,16 @@ public class TestDynamicColumns extends TestCase {
 		/** @see #aggregate(Object) */
 		void setAggregate(Function<Object, Function<List<Object>, Object>> aggregate) {
 			_aggregate = aggregate;
+		}
+
+		/** @see #width(Object) */
+		void setWidth(Function<Object, Integer> width) {
+			_width = width;
+		}
+
+		@Override
+		public int width(Object column) {
+			return _width == null ? DynamicColumnSet.super.width(column) : _width.apply(column);
 		}
 
 		/** @see #visible(Object) */
@@ -355,11 +423,13 @@ public class TestDynamicColumns extends TestCase {
 	}
 
 	/**
-	 * Test suite requiring the {@link AttributeSettings} the test model is built with.
+	 * Test suite requiring the {@link AttributeSettings} the test model is built with, and the
+	 * {@link ColumnProviderService} the columns are built by.
 	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestDynamicColumns.class, AttributeSettings.Module.INSTANCE));
+			ServiceTestSetup.createSetup(TestDynamicColumns.class, AttributeSettings.Module.INSTANCE,
+				ColumnProviderService.Module.INSTANCE));
 	}
 
 }

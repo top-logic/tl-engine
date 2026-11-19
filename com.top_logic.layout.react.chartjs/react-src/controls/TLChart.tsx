@@ -1,18 +1,12 @@
 // react-src/controls/TLChart.tsx
 import { React, rootClassName, useI18N, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import {
-  Chart as ChartJS,
-  registerables,
-} from 'chart.js';
+import type { Chart as ChartJS } from 'chart.js';
 import { Chart } from 'react-chartjs-2';
-import zoomPlugin from 'chartjs-plugin-zoom';
+import './chart/registerPlugins';
 import { useThemeDefaults } from './chart/useThemeDefaults';
 import { useChartCallbacks } from './chart/useChartCallbacks';
 import ChartTooltip from './chart/ChartTooltip';
-
-// Register all chart types + zoom plugin.
-ChartJS.register(...registerables, zoomPlugin);
 
 const I18N_KEYS = {
   'js.chart.label': 'Chart',

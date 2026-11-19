@@ -258,6 +258,7 @@ The remaining features are single modules, declared like any other dependency (w
 | Account self-service | `tl-layout-view-selfservice` | `tl-security-selfservice` |
 | Process engine | `tl-bpe-view` (built on `tl-bpe`, the engine without user interface) | `tl-bpe-app` (built on `tl-bpe-classic`) |
 | Chat tab of the AI agents | (part of `tl-starter-ai`) | `tl-chat-classic` |
+| Browser tools of the AI agents (a real Chromium through Playwright) | `tl-ai-browser` | `tl-ai-browser` |
 | Single sign-on (pac4j) | `tl-security-auth-pac4j` | `tl-security-auth-pac4j` |
 | OpenAPI client / server | `tl-service-openapi-client` / `tl-service-openapi-server` | same |
 
@@ -270,6 +271,11 @@ them from).
 An application using the AI agents must configure the LLM providers its agents use (API keys,
 models); nothing is preconfigured. The services `LLMProviderService` and `AgentRuntimeService`
 are described in the article `ai/providers` of `tl-ai-core`.
+
+`tl-starter-ai` does not contain the browser tools: `tl-ai-browser` brings Playwright with its
+browser driver, which makes the application considerably larger, so an application opts in with
+that single module when its agents have to operate web pages (article `ai/browser` of
+`tl-ai-browser`).
 
 ## Fragment modules
 
@@ -329,9 +335,14 @@ override the client. The client takes its settings from environment variables:
 | `tl_pac_acr_values` | no | The requested authentication context class references. |
 | `tl_pac_client_authentication_method` | no | How the client authenticates at the token endpoint. Default: `client_secret_basic`. |
 | `tl_pac_callback_url` | no | The URL the provider redirects to after the login. Default: `/servlet/callback`, relative to the application. |
+| `tl_pac_create_accounts` | no | `true` creates an account at the login of an unknown user, with name and e-mail address from the claims. Default: `false`, an unknown login name is refused. |
+| `tl_pac_group_claim` | no | The claim whose values name the groups of the application an account is a member of, e.g. `groups`. Default: none, no groups are assigned. |
 
 Without the mandatory variables, the application starts normally and its login page shows no
-single sign-on button. Since the reference is part of the application's `metaConf.txt`, the login
+single sign-on button. How the login finds, creates and binds accounts and synchronizes their
+groups is described in the section "The generic OpenID Connect client" of the article
+`authentication/account-provisioning` of `tl-security-auth-pac4j`.
+Since the reference is part of the application's `metaConf.txt`, the login
 works alike in the development server and in the WAR. A fragment generated with `useSSO=true` only
 depends on `tl-security-auth-pac4j`; enabling the login is the decision of the application.
 

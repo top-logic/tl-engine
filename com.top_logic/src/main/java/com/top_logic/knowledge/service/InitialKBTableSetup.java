@@ -55,7 +55,7 @@ public class InitialKBTableSetup extends KnowledgeBaseSetup {
 			MORepository typeRepository = DBTypeRepository.newRepository(context.getConnectionPool().getSQLDialect(),
 				schemaSetup, !kbConfig.getDisableVersioning());
 			if (out == null) {
-				schemaSetup.resetTables(pool, typeRepository, false);
+				schemaSetup.dropTables(pool, typeRepository);
 			} else {
 				schemaSetup.printResetTables(out, typeRepository, pool.getSQLDialect(), false);
 			}

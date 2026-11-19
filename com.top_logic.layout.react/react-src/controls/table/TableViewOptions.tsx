@@ -79,12 +79,13 @@ export interface TableViewOptionsProps extends TableViewValues {
 }
 
 /** The stops of the roving over the first page, in the order of the page: the density is one of them. */
-type ViewStop = 'density' | 'stripes' | 'columnLines' | 'columns' | 'reset';
+type ViewStop = 'columns' | 'density' | 'stripes' | 'columnLines' | 'reset';
 
 /**
- * The first page of the popover "View" of a table, a menu: the density as three segments and stripes and column lines
- * as switches (where the table keeps the view, see `viewOptions`), the entry opening the column selection as the
- * second page (where the table offers it; it tells how many of the columns are shown) and the reset.
+ * The first page of the popover "View" of a table, a menu: first the entry opening the column selection as the second
+ * page (where the table offers it; it tells how many of the columns are shown), the setting a table is adjusted by
+ * most; then the density as three segments and stripes and column lines as switches (where the table keeps the view,
+ * see `viewOptions`); last the reset.
  *
  * <p>Every entry is a menu item and the whole row acts: the density a `menuitemradio` per segment, the two switches a
  * `menuitemcheckbox` whose switch at the right is a drawing of the state, no input, the other two a `menuitem`. Up,
@@ -126,8 +127,8 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
 
   // The entries are the tab stop one at a time: the one last focused while there is one, else the first.
   const stops: ViewStop[] = [
-    ...(viewOptions ? ['density', 'stripes', 'columnLines'] as const : []),
     ...(columnSelect ? ['columns'] as const : []),
+    ...(viewOptions ? ['density', 'stripes', 'columnLines'] as const : []),
     'reset',
   ];
   const [focusStop, setFocusStop] = useState<ViewStop | null>(null);
@@ -162,8 +163,25 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
       <div id={titleId} role="presentation" className="tl-table-view-options__title tl-type-label-strong">
         {i18n['js.table.view']}
       </div>
+      {columnSelect && (
+        <button
+          ref={columnsEntryRef}
+          type="button"
+          role="menuitem"
+          className="tl-menu__item tl-menu__item--nav tl-type-body"
+          onClick={onColumns}
+          {...stopProps('columns')}
+        >
+          <span className="tl-menu__label">{i18n['js.table.viewColumns']}</span>
+          {/* Draws nothing between flex items; it separates label and value in the accessible name. */}
+          {' '}
+          <span className="tl-menu__value">{format(i18n['js.table.viewColumnsCount'], columnsShown, columnsTotal)}</span>
+          <ThemeIcon encoded={ICON_NEXT} className="tl-icon-sm tl-menu__chevron" />
+        </button>
+      )}
       {viewOptions && (
         <>
+          {columnSelect && <hr className="tl-divider" />}
           <div id={headingId} role="presentation" className="tl-menu__header tl-type-label">
             {i18n['js.table.viewDensity']}
           </div>
@@ -214,25 +232,9 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
             <span className="tl-menu__label">{i18n['js.table.viewColumnLines']}</span>
             <span className="tl-checkbox tl-checkbox--switch" aria-hidden="true" />
           </button>
-          <hr className="tl-divider" />
         </>
       )}
-      {columnSelect && (
-        <button
-          ref={columnsEntryRef}
-          type="button"
-          role="menuitem"
-          className="tl-menu__item tl-menu__item--nav tl-type-body"
-          onClick={onColumns}
-          {...stopProps('columns')}
-        >
-          <span className="tl-menu__label">{i18n['js.table.viewColumns']}</span>
-          {/* Draws nothing between flex items; it separates label and value in the accessible name. */}
-          {' '}
-          <span className="tl-menu__value">{format(i18n['js.table.viewColumnsCount'], columnsShown, columnsTotal)}</span>
-          <ThemeIcon encoded={ICON_NEXT} className="tl-icon-sm tl-menu__chevron" />
-        </button>
-      )}
+      <hr className="tl-divider" />
       <button
         type="button"
         role="menuitem"
@@ -246,10 +248,12 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
   );
 };
 
-/** The focus starts on the segment of the density in force, where the table offers the density, else on the first entry. */
-function selectedSegment(root: HTMLElement): HTMLElement | null {
-  return root.querySelector<HTMLElement>('[role="menuitemradio"][aria-checked="true"]')
-    ?? root.querySelector<HTMLElement>('[role^="menuitem"]');
+/**
+ * The focus starts on the first entry: the column selection where the table offers it, else the density in force,
+ * else the reset - the one stop in the tab order of a page just opened.
+ */
+function firstEntry(root: HTMLElement): HTMLElement | null {
+  return root.querySelector<HTMLElement>('[role^="menuitem"][tabindex="0"]');
 }
 
 export interface TableViewButtonProps extends TableViewValues {
@@ -412,7 +416,7 @@ export const TableViewButton: React.FC<TableViewButtonProps> = ({
           anchorRef={anchorRef}
           label={i18n[page === 'columns' ? 'js.table.columns' : 'js.table.view']}
           className="tl-menu tl-table-view-options"
-          initialFocus={selectedSegment}
+          initialFocus={firstEntry}
           onClose={close}
           // The pages differ in height, and the selection fills the second one when it arrives: each is placed anew,
           // on the side with room for it; within a page the side stays, also while the search narrows the list.

@@ -88,6 +88,12 @@ public interface DropConfig extends InputExecutabilityConfig, ConfigPart {
 	/** Configuration name for {@link #getBeforeAs()}. */
 	String BEFORE_AS = "before-as";
 
+	/** Configuration name for {@link #getXAs()}. */
+	String X_AS = "x-as";
+
+	/** Configuration name for {@link #getYAs()}. */
+	String Y_AS = "y-as";
+
 	/** Name of the argument holding the dropped objects when no other {@link #getAs() name} is given. */
 	String OBJECTS_ARGUMENT = "objects";
 
@@ -139,6 +145,35 @@ public interface DropConfig extends InputExecutabilityConfig, ConfigPart {
 	@Name(BEFORE_AS)
 	@Nullable
 	String getBeforeAs();
+
+	/**
+	 * The name of the argument holding the horizontal coordinate of the point the drop is made at.
+	 *
+	 * <p>
+	 * Without a name, the argument is called {@value DropArguments#X}. An element displaying its
+	 * items on a surface - a diagram - reports the point in the coordinate system of the target:
+	 * relative to the upper left corner of the item dropped onto, or to the origin of the surface
+	 * for a drop on the element as a whole, in the units of the surface, independent of zoom and
+	 * scrolling. An element without a surface - a table, a tree, a board - reports no point; the
+	 * argument is {@code null} there. Only a drop on the element as a whole or onto a single item
+	 * has a point; naming it for any other drop is a configuration error.
+	 * </p>
+	 */
+	@Name(X_AS)
+	@Nullable
+	String getXAs();
+
+	/**
+	 * The name of the argument holding the vertical coordinate of the point the drop is made at.
+	 *
+	 * <p>
+	 * Without a name, the argument is called {@value DropArguments#Y}. The coordinate grows
+	 * downwards; otherwise it is reported as the horizontal one, see {@link #getXAs()}.
+	 * </p>
+	 */
+	@Name(Y_AS)
+	@Nullable
+	String getYAs();
 
 	/**
 	 * The {@link DragConfig#getKind() kinds} of the drags this drop accepts.
@@ -238,7 +273,10 @@ public interface DropConfig extends InputExecutabilityConfig, ConfigPart {
 	 * list has the item the objects are inserted before ({@value DropArguments#BEFORE}, see
 	 * {@link #getBeforeAs()}), which is {@code null} for an insertion at the end; an insertion into
 	 * a tree has in addition the object the objects are inserted under ({@value DropArguments#PARENT},
-	 * see {@link #getParentAs()}).
+	 * see {@link #getParentAs()}). A drop on the element as a whole or onto a single item has in
+	 * addition the coordinates of the point it is made at ({@value DropArguments#X} and
+	 * {@value DropArguments#Y}, see {@link #getXAs()} and {@link #getYAs()}), which are {@code null}
+	 * where the element reports no point.
 	 * </p>
 	 *
 	 * <p>

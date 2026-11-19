@@ -11,7 +11,11 @@ import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
+
+import com.top_logic.ai.mcp.server.discovery.McpServerCard;
+import com.top_logic.ai.mcp.server.discovery.ServerCardResource;
 
 import io.modelcontextprotocol.spec.HttpHeaders;
 
@@ -24,6 +28,11 @@ import io.modelcontextprotocol.spec.HttpHeaders;
  * application lifecycle. It dynamically dispatches requests to the transport provider of the
  * currently active {@link MCPServerService} instance, allowing the service to be restarted
  * without servlet re-registration issues.
+ * </p>
+ *
+ * <p>
+ * Besides the endpoint it serves the server card at {@link McpServerCard#PATH}, see
+ * {@link ServerCardResource}.
  * </p>
  *
  * @author Bernhard Haumacher
@@ -67,10 +76,78 @@ public class MCPTransportServlet extends HttpServlet {
 			return;
 		}
 
+		if (ServerCardResource.isPublicRequest(req)) {
+			ServerCardResource.serve(service, req, resp);
+			return;
+		}
+
 		// Delegate to the transport provider from the current service instance
 		service.noteSessionRequest(req.getHeader(HttpHeaders.MCP_SESSION_ID));
-		service.getTransportProvider().service(req, resp);
+		service.getTransportProvider().service(endpointRequest(req), resp);
 		// An initialize request has its session id only in the answer.
 		service.noteSessionRequest(resp.getHeader(HttpHeaders.MCP_SESSION_ID));
+	}
+
+	/**
+	 * The request as the transport accepts it: a request to the endpoint with a trailing slash
+	 * ({@code <context>/mcp/}) is presented as a request to the endpoint itself
+	 * ({@code <context>/mcp}).
+	 *
+	 * <p>
+	 * The transport serves only a request whose URI ends with {@link MCPServerService#MCP_ENDPOINT}
+	 * and answers 404 to anything else. The servlet mapping {@code /mcp/*} also delivers the URL
+	 * with a trailing slash, and that is a form people type when they configure a client by hand.
+	 * Both forms name the same endpoint, so both are served.
+	 * </p>
+	 *
+	 * <p>
+	 * A redirect to the form without the slash is no alternative: a client is not required to repeat
+	 * the body of a POST, nor its {@code Authorization} header, after a redirect, so the first
+	 * request of a session would fail anyway.
+	 * </p>
+	 *
+	 * <p>
+	 * Any other path below the endpoint ({@code <context>/mcp/other}) is passed on unchanged and
+	 * stays unserved; the server card ({@link McpServerCard#PATH}) is answered before this.
+	 * </p>
+	 *
+	 * @param req
+	 *        The request as the container delivered it.
+	 * @return The given request, or a wrapper of it without the trailing slash.
+	 */
+	static HttpServletRequest endpointRequest(HttpServletRequest req) {
+		if (!"/".equals(req.getPathInfo())) {
+			return req;
+		}
+		String uri = req.getRequestURI();
+		if (!uri.endsWith("/")) {
+			return req;
+		}
+		return new HttpServletRequestWrapper(req) {
+			@Override
+			public String getRequestURI() {
+				return uri.substring(0, uri.length() - 1);
+			}
+
+			@Override
+			public StringBuffer getRequestURL() {
+				StringBuffer url = super.getRequestURL();
+				int last = url.length() - 1;
+				if (last >= 0 && url.charAt(last) == '/') {
+					url.setLength(last);
+				}
+				return url;
+			}
+
+			@Override
+			public String getPathInfo() {
+				return null;
+			}
+
+			@Override
+			public String getPathTranslated() {
+				return null;
+			}
+		};
 	}
 }

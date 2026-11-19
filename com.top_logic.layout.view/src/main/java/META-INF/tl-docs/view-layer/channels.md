@@ -1,5 +1,5 @@
 ---
-description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally initialized from other channels with inputs, init, observed-types, and remembered per user with personalize, personalization-key), <derived-channel> (inputs, expr, reverse, observed-types), how channel scripts see their inputs as named variables (`as`, no lambda header), the overview of which variables every script of the view layer sees and which attribute renames them (row, node, element, column, value, entry, step, objects, target, result, job, …) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer, and a source that keeps recording while its view is hidden, bound to the window's sub-session), how elements read and write channels, how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>, and <dynamic-view> embedding a view configuration stored in a model attribute of the datatype tl.view:ViewDefinition, edited with <open-view-designer> and written by a script with viewParse.
+description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally declaring the class of its values with type for the access check of commands on an empty channel, optionally initialized from other channels with inputs, init, observed-types, and remembered per user with personalize, personalization-key), <derived-channel> (inputs, expr, reverse, observed-types), how channel scripts see their inputs as named variables (`as`, no lambda header), the overview of which variables every script of the view layer sees and which attribute renames them (row, node, element, column, value, entry, step, objects, target, result, job, …) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer, and a source that keeps recording while its view is hidden, bound to the window's sub-session), how elements read and write channels, how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>, and <dynamic-view> embedding a view configuration stored in a model attribute of the datatype tl.view:ViewDefinition, edited with <open-view-designer> and written by a script with viewParse.
 order: 15
 ---
 
@@ -52,12 +52,12 @@ Every script of the view layer sees the values of its inputs (the `inputs` or `i
 |---|---|---|
 | `<derived-channel>` `expr`, `<channel>` `init` | — | |
 | `<derived-channel>` `reverse` | `value` (the written value) | — |
-| `<table>` / `<tree-table>` / `<composition-table>`: `row-class`, column `<value>`, `<can-update>`, `<object>` | `row` | `row-as` on the table |
+| `<table>` / `<tree-table>` / `<composition-table>`: `row-class`, `row-editable` (not on `<composition-table>`), column `<value>`, `<can-update>`, `<options>`, `<object>` | `row` | `row-as` on the table |
 | column `<update>` | `row`, `value` (the entered value) | `row-as`, `value-as` on the column |
 | column `<tooltip>` | `row`, `value` (the cell value; in a group header row only the group's `value`) | `row-as`, `value-as` on the column |
 | column `cell-class` | `row`, `value` (the cell value) | `row-as`, `value-as` on the column |
 | `label`, `icon`, `css-class`, `tooltip` of a `ResourceDisplayByExpression` (a column `<display>`, a `<tree>` `<nodeContent>`) | `value` (the displayed object) - and no inputs: a display gets no channels | `value-as` on the column |
-| `<dynamic-columns>` `<column-name>`, `<column-label>`, `<column-type>`, `<column-visible>`; `<value>`, `<update>`, `<can-update>`, `<aggregate>`, `<tooltip>`, `cell-class` | `column`; with `row` / `value` / `members` as for the other columns | `column-as` on the dynamic columns |
+| `<dynamic-columns>` `<column-name>`, `<column-label>`, `<column-type>`, `<column-visible>`, `width`; `<value>`, `<update>`, `<can-update>`, `<options>`, `<aggregate>`, `<tooltip>`, `cell-class` | `column`; with `row` / `value` / `members` as for the other columns | `column-as` on the dynamic columns |
 | column `<aggregate>` / `<comparator>` | `members` / `left`, `right` | — |
 | `<match>` of a scripted filter | `params`, `value`, `row` | `value-as`, `row-as` |
 | `<tree>` / `<tree-table>` `children`, `parents` | `node` | `node-as` on the tree |
@@ -70,7 +70,7 @@ Every script of the view layer sees the values of its inputs (the `inputs` or `i
 | chart `<tooltips>` `expr` | `element` (the data point) | `as` on the tooltip |
 | `<flow-diagram>` `createChart` | one variable per entry of `handlers`, named by its key | — |
 | display target `<bind expr>`, `label-expr` | `object` (the shown object) | — |
-| scripts of an action chain (`<execute-script>`, `<if>`, `<switch>`, `<confirm>`, `<notify>`, `<download>`, `<show-view>` binds, …) and the `refuse-if` of a `<drop>` | the arguments of the chain: the command's inputs or the value its trigger supplies (`row`, `node`, `value`, `link`, `element`, `file`, `objects` with `target` / `parent` / `before`), and inside follow-up actions `result` | see [named arguments](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments); `as` on the `<with-result>` of the action with the result |
+| scripts of an action chain (`<execute-script>`, `<if>`, `<switch>`, `<confirm>`, `<notify>`, `<download>`, `<show-view>` binds, …) and the `refuse-if` of a `<drop>` | the arguments of the chain: the command's inputs or the value its trigger supplies (`row`, `node`, `value`, `link`, `element`, `file`, `objects` with `target` / `parent` / `before`), and inside follow-up actions `result` | see [named arguments](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments); `as` on the `<with-result>` of the action with the result, or on the `<on-cancel>` of a `<start-job>` |
 | `<case>` `match` / `test` of a `<switch>` action | `value` (the switch value) | `as` on the switch |
 | `<start-job>` `function`; `ChunkedScriptJobBody` `init` / `elements`, `finish` / `<step>` | `job` beside the arguments / `job`, `state` / `job`, `state`, `chunk` | — |
 | executability rules (`<visible-if>`, `<disabled-if>`) of a command | the arguments of the command, as the chain sees them | as for the chain |
@@ -135,6 +135,16 @@ A `<channel>` with `personalize="true"` remembers the value last written into it
 - **Stored values.** A value is stored in a form that names it stably across sessions (`JsonValueCodec`): texts, booleans and numbers as they are, model parts (types, attributes, classifiers) by their qualified name, other persistent objects by their object key, dates as ISO-8601 instant, and lists, sets and maps with text keys of such values.
 - **No longer resolvable.** A remembered value that does not resolve when the channel is created - a deleted object, a removed classifier - is forgotten, and the channel starts with the value of `init`. Inside a list, set or map, only the elements that no longer resolve are dropped.
 - **Not storable.** A value that cannot be named stably - a transient object, any other Java object, a collection holding one - is not remembered: writing it removes the entry, and a warning naming the channel and the value's class is logged once per channel.
+
+### Declaring the class of the values: `type`
+
+Every channel kind - `<channel>`, `<derived-channel>`, `<source-channel>` - may declare the model class of its values (`ChannelConfig#getType()`):
+
+```xml
+<channel name="project" type="tl.demo.projectManagement:ProjectScope"/>
+```
+
+The declaration is used for the access check of a command working on the channel: while the channel is empty, a command whose action checks the access on its input itself (e.g. `<delete-object/>`) is hidden when the user may perform the operation on no object of this type, and disabled otherwise. With an object in the channel, the object decides (see [the checks actions bring](doc:view-layer/access-control#checks-the-actions-bring)). The values of the channel are not checked against the type. Without `type` nothing changes; a type that is no class is a configuration error. The configured `<executability>` rules of a command decide before the check of its action: a `<null-input-disabled/>` on such a command disables it on the empty channel before the type is asked, so leave it out - the action's check already disables the command without an object. A table does not derive the type of its `selection` channel from its `types`: the type is declared on the channel only.
 
 ### Writing through a derived channel: `reverse`
 

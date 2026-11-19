@@ -15,7 +15,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelNamingConvention;
@@ -33,8 +35,8 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  *
  * <p>
  * The column follows the model access rights of the user: a cell whose value the user may not read
- * on its row is empty, and a column whose attribute the user may read on no row at all is not
- * offered. Where the rows are edited, a cell is edited as a form field for its attribute on that row
+ * on its row is empty, and a column whose attribute the user may read on no row at all does not
+ * exist - it is neither displayed nor offered - until the user gains the right to read it. Where the rows are edited, a cell is edited as a form field for its attribute on that row
  * is: only where the model lets the attribute be edited and the user may write it.
  * </p>
  */
@@ -118,13 +120,45 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 	public List<ColumnSetup> resolve(ColumnResolution scope) {
 		String attribute = _attribute;
 		TLStructuredTypePart part = scope.part(attribute);
-		if (part != null && !mayRead(scope, attribute)) {
-			// The user may read the attribute on no row at all - the column is not offered.
-			return List.of();
-		}
 		return List.of(setup(attribute, derivedLabel(part), ColumnType.of(part),
 			row -> ColumnProviderService.attributeValue(row, attribute), new AttributeCellEditing(attribute),
-			scope));
+			row -> holdsAttribute(row, attribute), scope).releasedIf(readable(scope, part)));
+	}
+
+	/**
+	 * The condition under which the access rights of the user release the column of the given
+	 * attribute: the user may read the attribute on one of the row types holding it.
+	 *
+	 * <p>
+	 * The condition is asked anew whenever the table is updated, so that the column appears once
+	 * the user gains the right to read the attribute, and disappears when the user loses it.
+	 * </p>
+	 *
+	 * @param part
+	 *        The attribute as resolved at the first row type holding it, {@code null} when none
+	 *        does: no right withholds such a column.
+	 */
+	private static ChannelCondition readable(ColumnResolution scope, TLStructuredTypePart part) {
+		if (part == null) {
+			return ChannelCondition.ALWAYS;
+		}
+		List<TLStructuredType> rowTypes = List.copyOf(scope.rowTypes());
+		String attribute = part.getName();
+		return ChannelCondition.computed(() -> mayRead(rowTypes, attribute));
+	}
+
+	/**
+	 * Whether the given row has a cell in the column of the given attribute: its type holds the
+	 * attribute. The attribute is resolved at the row, as {@link AttributeCellEditing} edits it, so
+	 * that a row of a type without the attribute shows an empty cell - not the display of an empty
+	 * value, an unchecked checkbox, say -, while a row holding it shows its value, also an empty one.
+	 */
+	private static boolean holdsAttribute(Object row, String attribute) {
+		if (!(row instanceof TLObject object)) {
+			return true;
+		}
+		TLStructuredType type = object.tType();
+		return type == null || type.getPart(attribute) != null;
 	}
 
 	/**
@@ -136,8 +170,8 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 	 * another type is another attribute, with access rights of its own.
 	 * </p>
 	 */
-	private static boolean mayRead(ColumnResolution scope, String attribute) {
-		for (TLStructuredType type : scope.rowTypes()) {
+	private static boolean mayRead(List<TLStructuredType> rowTypes, String attribute) {
+		for (TLStructuredType type : rowTypes) {
 			TLStructuredTypePart part = type.getPart(attribute);
 			if (part != null && ModelAccessPolicy
 				.onAttributeOfType(SimpleBoundCommandGroup.READ, type, part).isExecutable()) {
@@ -152,7 +186,7 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 	 * holds no such attribute - or could not be resolved at all.
 	 */
 	private ResKey derivedLabel(TLStructuredTypePart part) {
-		return part != null ? TLModelNamingConvention.resourceKey(part) : ResKey.text(_attribute);
+		return part != null ? TLModelNamingConvention.getTypePartLabelKey(part) : ResKey.text(_attribute);
 	}
 
 }

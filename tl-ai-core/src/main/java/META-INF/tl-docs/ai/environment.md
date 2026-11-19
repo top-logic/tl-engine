@@ -58,8 +58,8 @@ The block sits at the front of every request, the part the providers' prompt cac
 The wording is the resource `tl.ai.environment.template` (`WEB-INF/conf/resources/tl-ai-core.app-messages_*.properties`), translated like every shipped text. It is not part of the service configuration, so a service-editor save of `AgentApplicationService` (which writes the whole configuration) does not freeze an English template in front of translated headings. An installation that wants other wording sets `<template>` in the `<environment>` section of `AgentApplicationService`, which wins:
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
-	<instance class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+<config service-class="com.top_logic.ai.core.agent.AgentApplicationService">
+	<instance class="com.top_logic.ai.core.agent.AgentApplicationService">
 		<environment application="...">
 			<template>
 				<en><![CDATA[...]]></en>
@@ -133,7 +133,7 @@ public class ClientHouseRules implements SystemPromptContributor {
 For a fixed text - what the application is, its domain terms, its rules - `tl-ai-core` ships `TextPromptContributor`:
 
 ```xml
-<contributor class="com.top_logic.tl.ai.core.agent.TextPromptContributor" agents="TL_SingleAgent">
+<contributor class="com.top_logic.ai.core.agent.TextPromptContributor" agents="TL_SingleAgent">
 	<text>
 		<de>## Fachwissen
 Ein Auftrag ist 'offen', bis er abgerechnet ist.</de>
@@ -148,7 +148,7 @@ An order is 'open' until it is invoiced.</en>
 - **`name`** lets a tool find an entry again; `name="application-context"` marks the application context that the [`TL_init` skill](doc:ai/tools-and-skills#tl_init-the-application-context) writes. Leave it empty otherwise.
 - **Placeholders** of an agent prompt are allowed; an unknown one is refused by a constraint at startup and when the service editor saves. A `text` given as a resource key is not inspected.
 
-**Changing it in the running application:** *Administration → Service Editor → Agent application knowledge*, change the text and save (the editor checks the constraints, writes `com.top_logic.tl.ai.core.agent.AgentApplicationService.config.xml` to the autoconf folder and reloads the configuration), then restart that service. No other service restarts with it; a run that starts during the restart is refused. Every run started afterwards gets the new text, including the next message of an open conversation - a run composes its prompt once, so an open conversation changes at most once, at a message boundary.
+**Changing it in the running application:** *Administration → Service Editor → Agent application knowledge*, change the text and save (the editor checks the constraints, writes `com.top_logic.ai.core.agent.AgentApplicationService.config.xml` to the autoconf folder and reloads the configuration), then restart that service. No other service restarts with it; a run that starts during the restart is refused. Every run started afterwards gets the new text, including the next message of an open conversation - a run composes its prompt once, so an open conversation changes at most once, at a message boundary.
 
 The save writes the whole configuration of `AgentApplicationService` with `config:override="true"`, so from then on changes of the other files that configure it (contributors, environment section, object-id hints - for example in a new release of the application) have no effect until the written file is deleted. That is the service editor's behaviour for every service. Whoever may save and restart services in the service editor writes text that reaches every named agent's prompt for every account; grant that right only to accounts that may also write agent prompts.
 
@@ -165,7 +165,7 @@ Open invoice: RE-2026-0042
 ```
 
 - **Two blocks, not one string**: every provider renders a message's content parts as separate blocks, so the user's text stays byte-exact. The tags delimit the block; a value containing a tag has its `<` escaped to `&lt;` (as `UntrustedEnvelope` does), and a value keeps no line breaks, because the block is read line by line.
-- **The selection** is the fact worth naming first: `<chat-conversation><selection channel="..."/>` states the selected object in one line - label, qualified type and the `label [id:TID]` every tool reads back.
+- **The selection** is the fact worth naming first: `<chat-conversation><selection channel="..."/>` states the selected object in one line - as the JSON identity `{"_tid", "_type", "_display"}` every tool result writes, whose `_tid` the tools take.
 - **Turn number and time of day** are added by the framework to a block that has facts; a host that states nothing per turn gets no block. The turn number is what `ChatProcessor` counted (`RunFactsBinding.bind(facts, turnNumber)`); a headless run counts none and omits the line.
 - **The model is told what the block means**: the `{{turn_context}}` section of the environment block (resource `tl.ai.environment.turn-context`, fallback `TurnContext.NOTE`) says that the newest block is the current state and earlier ones are past. It is present exactly when a block is (`RunEnvironment.turnContextSection`). Because it is part of the system prompt, a page that states per-turn facts and a dock over the same conversation that does not would flip it between turns: state them from every place the conversation is reachable from.
 

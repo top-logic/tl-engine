@@ -34,6 +34,11 @@ export interface TooltipData {
 export interface TooltipPopoverProps {
   anchor: Element;
   data: TooltipData;
+  /**
+   * The full text of the cut-off element the tooltip stands for, shown as the first line above
+   * the content of {@link data}; absent when the element's text is fully readable.
+   */
+  fullText?: string;
   /** Element used as the portal target for the floating popover (e.g. the per-window tooltip host). */
   portalRoot: HTMLElement;
   onClose: () => void;
@@ -85,7 +90,7 @@ function anchoring(anchor: Element): { reference: ReferenceType; placement: Plac
 }
 
 export function TooltipPopover(props: TooltipPopoverProps) {
-  const { anchor, data, portalRoot, onClose, onEnter, onLeave } = props;
+  const { anchor, data, fullText, portalRoot, onClose, onEnter, onLeave } = props;
   const arrowRef = React.useRef<SVGSVGElement>(null);
   const { reference, placement, fallback } = React.useMemo(() => anchoring(anchor), [anchor]);
 
@@ -121,6 +126,7 @@ export function TooltipPopover(props: TooltipPopoverProps) {
   // The block tl-tooltip of the design system package draws it: surface, layer, the type of caption and
   // body, and whether the pointer goes through it - an interactive tooltip is a state, not a class. A plain
   // text body is the variant --text, which keeps the line breaks of the text; an HTML body breaks by its markup.
+  // The full text of a cut-off element stands above all of it, set off from the explanation below.
   return (
     <FloatingPortal root={portalRoot}>
       <div
@@ -132,6 +138,7 @@ export function TooltipPopover(props: TooltipPopoverProps) {
         onPointerEnter={onEnter}
         onPointerLeave={onLeave}
       >
+        {fullText ? <div className="tl-tooltip__full-text tl-type-label-strong">{fullText}</div> : null}
         {data.caption ? <div className="tl-tooltip__caption tl-type-label-strong">{data.caption}</div> : null}
         {data.html != null ? (
           <div

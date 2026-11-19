@@ -30,6 +30,8 @@ import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.identity.ObjectIdentities;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.routing.RouteManager;
@@ -40,6 +42,7 @@ import com.top_logic.layout.react.state.ControlState;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.listen.ObservedObjects;
+import com.top_logic.tool.execution.ExecutableState;
 
 import de.haumacher.msgbuf.data.DataObject;
 import de.haumacher.msgbuf.io.StringW;
@@ -49,8 +52,9 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * A server-side control that mounts a {@code React} component on the client.
  *
  * <p>
- * The control renders a mount-point {@code <div>} and a bootstrap script that calls
- * {@code TLReact.mount()} on the client. State updates are delivered via SSE.
+ * The control renders a mount-point {@code <div>} (marked with {@link #MOUNT_ATTRIBUTE}) that the
+ * client bridge discovers and mounts the component into. The component renders its root element
+ * with the control ID as {@code id}. State updates are delivered via SSE.
  * </p>
  *
  * <p>
@@ -68,6 +72,17 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * </p>
  */
 public class ReactControl implements HTMLFragment, IReactControl, ScriptingControl {
+
+	/**
+	 * Attribute of the mount point written by {@link #write(TagWriter)}, naming the ID of the
+	 * control whose {@code React} root the element takes.
+	 *
+	 * <p>
+	 * The mount point does not carry the control ID as {@code id}: the ID belongs to the root element
+	 * the client component renders, so that it is unique in the document.
+	 * </p>
+	 */
+	public static final String MOUNT_ATTRIBUTE = "data-react-mount";
 
 	/**
 	 * Key under which the {@link #diagnostics() diagnostic observations} appear in the
@@ -387,7 +402,37 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 
 	@Override
 	public List<ReactControl> scriptingChildren() {
-		return displayedChildren();
+		return visibleChildren();
+	}
+
+	@Override
+	public List<ScriptingItem> scriptingItems() {
+		return List.of();
+	}
+
+	@Override
+	public boolean scriptingVisible() {
+		return !isHidden();
+	}
+
+	@Override
+	public ExecutableState scriptingCommandState(String command) {
+		return ExecutableState.EXECUTABLE;
+	}
+
+	/**
+	 * Whether the command running on this control was sent by the client rendering it, see
+	 * {@link #executeClientCommand(String, Map)}.
+	 *
+	 * <p>
+	 * A client may send a command its display no longer offers, because it lags behind the server
+	 * (a field flushing its input on blur while the same interaction already left edit mode). A
+	 * handler drops such a command silently on a client dispatch, but refuses it on a headless one
+	 * - a script replay or an agent -, which acts on the current state.
+	 * </p>
+	 */
+	protected final boolean isClientDispatch() {
+		return _clientDispatch;
 	}
 
 	/**
@@ -524,7 +569,12 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	@Override
-	public Map<String, Object> scriptingScalarState() {
+	public final Map<String, Object> scriptingScalarState() {
+		return scriptingScalarState(ProjectionMode.KEY);
+	}
+
+	@Override
+	public Map<String, Object> scriptingScalarState(ProjectionMode mode) {
 		Set<String> presentation = scriptingPresentationKeys();
 		Map<String, Object> result = new LinkedHashMap<>();
 		_reactState.entrySet().stream()
@@ -733,6 +783,19 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The default offers none, so the arguments of the commands are recorded as they are dispatched
+	 * and the projection identifies the displayed objects by their keys.
+	 * </p>
+	 */
+	@Override
+	public ObjectIdentities objectIdentities() {
+		return null;
+	}
+
+	/**
 	 * Translates a just-dispatched command into the form the script recorder should capture.
 	 *
 	 * <p>
@@ -741,6 +804,13 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * allocated option ids — overrides this to emit a replay-stable form (business keys instead of
 	 * ids, possibly a different command), so a recorded step resolves in a later session. Called
 	 * before the command runs, with the same arguments.
+	 * </p>
+	 *
+	 * <p>
+	 * Object ids in properties marked
+	 * {@link com.top_logic.layout.react.control.identity.DisplayedObjectId} need no override: the
+	 * recorder replaces them by keys through the {@link #objectIdentities() object identities} of
+	 * the control, in whatever command this method returns.
 	 * </p>
 	 *
 	 * @param command
@@ -827,7 +897,7 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 			String stateJson = toJsonString(_reactContext, _reactState);
 
 			out.beginBeginTag(HTMLConstants.DIV);
-			writeIdAttribute(out);
+			writeMountAttribute(out);
 			writeControlClasses(out);
 			out.writeAttribute("data-react-module", _reactModule);
 			out.writeAttribute("data-react-state", stateJson);
@@ -909,10 +979,10 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	/**
-	 * Writes the control ID as an HTML attribute.
+	 * Writes the control ID as {@link #MOUNT_ATTRIBUTE} of the mount point.
 	 */
-	protected void writeIdAttribute(TagWriter out) throws IOException {
-		out.writeAttribute("id", _id);
+	protected void writeMountAttribute(TagWriter out) throws IOException {
+		out.writeAttribute(MOUNT_ATTRIBUTE, _id);
 	}
 
 	/**

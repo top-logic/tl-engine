@@ -18,17 +18,17 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tl.ai.core.agent.StopReason;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
+import com.top_logic.ai.core.agent.StopReason;
+import com.top_logic.ai.core.agent.subagent.SubagentJob;
+import com.top_logic.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.ai.core.agent.subagent.SubagentJobStatus;
+import com.top_logic.ai.core.agent.subagent.SubagentResult;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.message.TokenUsage;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
 

@@ -33,6 +33,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactBinaryFieldControl;
 import com.top_logic.layout.react.control.form.ReactFileChipsControl;
 import com.top_logic.layout.react.control.form.RemoveChipArguments;
+import com.top_logic.layout.react.control.form.ValueCountLimit;
 import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
@@ -376,6 +377,43 @@ public class TestReactFileChipsControl extends TestCase {
 
 		assertNull("A successful upload clears the error", chips.state(UploadSupport.ERROR));
 		assertEquals(2, ((List<?>) model.getValue()).size());
+	}
+
+	/**
+	 * A field stating a maximum number of files publishes it; an upload of more files than there is
+	 * room for is refused as a whole with a message naming the maximum, the number of files and the
+	 * room left, and an upload that fits is taken and clears the message.
+	 */
+	public void testUploadBeyondMaximum() {
+		FieldModel model = new AbstractFieldModel(Arrays.asList(A));
+		Chips chips = chips(model);
+		assertEquals("No maximum by default", Integer.valueOf(0), chips.state(ValueCountLimit.MAX_COUNT));
+		chips.setMaxCount(3);
+		assertEquals(Integer.valueOf(3), chips.state(ValueCountLimit.MAX_COUNT));
+
+		chips.handleUpload(null, Arrays.asList(part("c.txt", "C"), part("d.txt", "D"), part("e.txt", "E")));
+
+		assertEquals(Resources.getInstance()
+			.getString(I18NConstants.ERROR_TOO_MANY_VALUES_ADDED__MAX_SELECTED_ROOM.fill(3, 3, 2)),
+			chips.state(UploadSupport.ERROR));
+		assertEquals("Nothing of a refused upload is added", Arrays.asList(A), model.getValue());
+
+		chips.handleUpload(null, Arrays.asList(part("c.txt", "C"), part("d.txt", "D")));
+
+		assertNull(chips.state(UploadSupport.ERROR));
+		assertEquals(3, ((List<?>) model.getValue()).size());
+	}
+
+	/**
+	 * The chips provider takes the maximum number of files from the description of the field.
+	 */
+	public void testProviderTakesTheMaxCountOfTheFieldSpec() {
+		FieldSpec spec = FieldSpec.of(BinaryData.class, "files").setMultiple(true).setMaxCount(2);
+
+		ReactControl control =
+			FieldControlRegistry.FILE_CHIPS.createControl(context(), spec, new AbstractFieldModel(null));
+
+		assertEquals(Integer.valueOf(2), control.scriptingScalarState().get(ValueCountLimit.MAX_COUNT));
 	}
 
 	private static BinaryData file(String name, String content) {

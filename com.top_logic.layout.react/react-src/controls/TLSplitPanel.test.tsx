@@ -39,7 +39,7 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 
 // The bridge first, as the page loads it: the bridge entry reaches it through modules that the SSE client imports
 // as well, and these must see the mocked SSE client.
-import { mount, unmount } from '../bridge/tl-react-bridge';
+import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
 import { React, register } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import TLSplitPanel from './TLSplitPanel';
@@ -77,6 +77,9 @@ const WIDTHS = [200, 240, 560, 30];
 
 let sent: Sent[] = [];
 
+/** The commands the split panel sent that the server answers with success once the panel is gone. */
+let staleUiIgnored: string[] = [];
+
 beforeAll(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   // The DOM observer of the bridge looks for mounts below a removed element with CSS.escape, which jsdom does not
@@ -95,7 +98,7 @@ beforeAll(() => {
 
 afterEach(async () => {
   act(() => unmount(SPLIT_ID));
-  document.getElementById(SPLIT_ID)?.remove();
+  findMountPoint(SPLIT_ID)?.remove();
   vi.unstubAllGlobals();
   // Lets the DOM observer of the bridge see the removals while the test environment exists.
   await settle();
@@ -109,19 +112,23 @@ afterAll(async () => {
 });
 
 /** Mounts the split panel, records the commands it sends, and gives its panes their {@link WIDTHS}. */
-function mountSplit(): void {
+function mountSplit(state: Record<string, unknown> = { orientation: 'horizontal', resizable: true, children: CHILDREN }): void {
   sent = [];
+  staleUiIgnored = [];
   vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => {
     const body = JSON.parse(String(init?.body ?? '{}'));
     if (body.controlId === SPLIT_ID) {
       sent.push({ command: body.command, args: body.arguments });
+      if (body.ignoreStaleUi) {
+        staleUiIgnored.push(body.command);
+      }
     }
     return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
   }));
   const element = document.createElement('div');
-  element.id = SPLIT_ID;
+  element.setAttribute(MOUNT_ATTRIBUTE, SPLIT_ID);
   document.body.appendChild(element);
-  act(() => mount(SPLIT_ID, 'TLSplitPanel', { orientation: 'horizontal', resizable: true, children: CHILDREN }, 'w', '/ctx'));
+  act(() => mount(SPLIT_ID, 'TLSplitPanel', state, 'w', '/ctx'));
   panes().forEach((pane, i) => {
     Object.defineProperty(pane, 'offsetWidth', { configurable: true, get: () => WIDTHS[i] });
   });
@@ -185,6 +192,19 @@ describe('the sizes of a split panel', () => {
     expect(flexes()).toEqual(['0 1 250px', '25.33 1 0%', '74.67 1 0%', '0 0 auto']);
   });
 
+  it('sends its sizes as a report that a disposed panel ignores', async () => {
+    mountSplit();
+    const separator = handle();
+    act(() => {
+      separator.dispatchEvent(pointer('pointerdown', 100));
+      separator.dispatchEvent(pointer('pointermove', 150));
+      separator.dispatchEvent(pointer('pointerup', 150));
+    });
+    await settle();
+
+    expect(staleUiIgnored).toEqual(['updateSizes']);
+  });
+
   it('gives a pane in percent its weight back when the drag ends at the sizes the panes had', async () => {
     mountSplit();
     const separator = handle();
@@ -218,5 +238,123 @@ describe('the sizes of a split panel', () => {
     expect(sizes.a).toBeGreaterThan(200);
     expect(sizes.b + sizes.c).toBeCloseTo(100, 1);
     expect(flexes()).toEqual([`0 1 ${sizes.a}px`, `${sizes.b} 1 0%`, `${sizes.c} 1 0%`, '0 0 auto']);
+  });
+});
+
+/** The callbacks of the resize observers the split panel set up. */
+let observed: Array<() => void> = [];
+
+/** Records the resize observers instead of the browser's (jsdom has none). */
+function observeResizes(): void {
+  observed = [];
+  vi.stubGlobal('ResizeObserver', class {
+    private readonly _callback: () => void;
+
+    constructor(callback: () => void) {
+      this._callback = callback;
+    }
+
+    observe(): void {
+      observed.push(this._callback);
+    }
+
+    unobserve(): void {}
+
+    disconnect(): void {
+      observed = observed.filter(callback => callback !== this._callback);
+    }
+  });
+}
+
+function root(): HTMLElement {
+  return document.querySelector<HTMLElement>('.tl-split')!;
+}
+
+/** Gives the split panel the given width, as the browser layout does, and reports the change to its observers. */
+function resize(width: number): void {
+  Object.defineProperty(root(), 'offsetWidth', { configurable: true, get: () => width });
+  act(() => observed.forEach(callback => callback()));
+}
+
+function handles(): HTMLElement[] {
+  return [...document.querySelectorAll<HTMLElement>(`#${SPLIT_ID} .tl-split__handle`)];
+}
+
+/**
+ * Panes with minimum sizes: 150 + 100 + 200 px for the open ones, 2 handles of 8 px between them (the width of a handle
+ * without a design system), together 466 px. The collapsed pane at the end needs no room.
+ */
+const MIN_CHILDREN = [
+  { ...CHILDREN[0], minSize: 150 },
+  { ...CHILDREN[1], minSize: 100 },
+  { ...CHILDREN[2], minSize: 200 },
+  { ...CHILDREN[3], minSize: 500 },
+];
+
+describe('a split panel too narrow for its panes side by side', () => {
+  it('stacks its panes without handles and without minimum widths', () => {
+    observeResizes();
+    mountSplit({ orientation: 'horizontal', resizable: true, children: MIN_CHILDREN });
+    expect(root().getAttribute('data-tl-state')).toBeNull();
+
+    resize(465);
+
+    expect(root().getAttribute('data-tl-state')).toBe('stacked');
+    expect(handles()).toHaveLength(0);
+    expect(flexes()).toEqual(['0 0 auto', '0 0 auto', '0 0 auto', '0 0 auto']);
+    expect(panes().map(pane => pane.style.minWidth)).toEqual(['', '', '', '']);
+  });
+
+  it('places its panes side by side with the sizes of its state when the width suffices', () => {
+    observeResizes();
+    mountSplit({ orientation: 'horizontal', resizable: true, children: MIN_CHILDREN });
+
+    resize(466);
+
+    expect(root().getAttribute('data-tl-state')).toBeNull();
+    expect(handles()).toHaveLength(2);
+    expect(flexes()).toEqual(['0 1 200px', '30 1 0%', '70 1 0%', '0 0 auto']);
+    expect(panes().map(pane => pane.style.minWidth)).toEqual(['150px', '100px', '200px', '']);
+  });
+
+  it('keeps a collapsed pane collapsed', () => {
+    observeResizes();
+    mountSplit({ orientation: 'horizontal', resizable: true, children: MIN_CHILDREN });
+    resize(1000);
+    expect(panes()[3].getAttribute('data-tl-state')).toBe('collapsed');
+
+    resize(300);
+    // Below the others with the height of its content, not a narrow column.
+    expect(panes()[3].style.flex).toBe('0 0 auto');
+    expect(panes()[3].getAttribute('data-tl-state')).toBeNull();
+
+    resize(1000);
+    expect(panes()[3].style.flex).toBe('0 0 auto');
+    expect(panes()[3].getAttribute('data-tl-state')).toBe('collapsed');
+  });
+
+  it('sends no sizes when it changes the arrangement, and gives the panes their sizes back', async () => {
+    observeResizes();
+    mountSplit({ orientation: 'horizontal', resizable: true, children: MIN_CHILDREN });
+    resize(1000);
+    resize(300);
+    resize(1000);
+    await settle();
+
+    expect(sent).toEqual([]);
+    expect(flexes()).toEqual(['0 1 200px', '30 1 0%', '70 1 0%', '0 0 auto']);
+  });
+
+  it('leaves a vertical split panel as it is', () => {
+    observeResizes();
+    mountSplit({ orientation: 'vertical', resizable: true, children: MIN_CHILDREN });
+
+    resize(100);
+
+    expect(root().getAttribute('data-tl-state')).toBeNull();
+    expect(root().classList.contains('tl-split--vertical')).toBe(true);
+    expect(handles()).toHaveLength(2);
+    expect(flexes()).toEqual(['0 1 200px', '30 1 0%', '70 1 0%', '0 0 auto']);
+    expect(panes().map(pane => pane.style.minHeight)).toEqual(['150px', '100px', '200px', '']);
   });
 });

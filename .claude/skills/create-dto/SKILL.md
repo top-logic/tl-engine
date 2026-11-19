@@ -107,6 +107,6 @@ For tool responses in `tl-ai-core`, use `DataClassSerializer.toJson()` which add
 
 ## Existing examples
 
-- `tl-ai-core/src/main/java/com/top_logic/tl/ai/core/tools/model/messages/messages.proto` — largest example
-- `tl-ai-core/src/main/java/com/top_logic/tl/ai/core/tools/integration/messages/messages.proto` — simple example
+- `tl-ai-core/src/main/java/com/top_logic/ai/core/tools/model/messages/messages.proto` — largest example
+- `tl-ai-core/src/main/java/com/top_logic/ai/core/tools/integration/messages/messages.proto` — simple example
 - `tl-chat/src/main/java/com/top_logic/ai/chat/api/messages/messages.proto` — chat API DTOs and SSE event payloads

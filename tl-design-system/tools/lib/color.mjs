@@ -261,6 +261,10 @@ export const UNBUNT_C = 0.02;
 /** Schrittweite in L, mit der aufKontrast() einen Wert nachführt. */
 export const KONTRAST_SCHRITT = 0.005;
 
+/** aufKontrast findet in keiner Helligkeit einen tragenden Wert. Nur dieser Fehler ist ein Befund; jeder andere
+    aus der Rechnung ist ein Programmfehler und darf von keinem Aufrufer verschluckt werden. */
+export class KontrastNichtErreichbar extends Error {}
+
 /**
  * Führt einen Wert in L nach, bis er gegen jeden Grund das geforderte Verhältnis erreicht.
  * Farbton und Chroma bleiben; das ist dieselbe Regel wie bei oklchZuHex(): L und H sind die
@@ -276,7 +280,7 @@ export function aufKontrast(hex, gruende, soll, richtung) {
     const { hex: probe } = oklchZuHex({ L: l, C, H });
     if (traegt(probe)) return { hex: probe, angepasst: true, L: l };
   }
-  throw new Error(`${hex} erreicht ${soll} gegen ${gruende.join(', ')} in keiner Helligkeit`);
+  throw new KontrastNichtErreichbar(`${hex} erreicht ${soll} gegen ${gruende.join(', ')} in keiner Helligkeit`);
 }
 
 /** Chroma eines temperierten Graus — so viel, wie unser heutiges kühles Grau trägt. */
@@ -360,6 +364,15 @@ export const MARKE_SUBTLE = {
   dark: { subtle: { L: 0.255, C: 0.044 }, hover: { L: 0.305, C: 0.056 } },
 };
 
+/** Helligkeit und Chroma der Halbton-Punkte des Login-Hintergrunds (Dekoration, kein Textpaar, darum nicht in der
+ *  Paarliste). Aus den TopLogic-Primitiven gelesen: hell blue-8 (Grundpunkt) und blue-27 (hervorgehoben), dunkel
+ *  blue-72 und blue-55. Ton wie die Marke. Der Grundpunkt entspricht der Markenfarbe mit etwa 16 % Deckkraft auf
+ *  surface-base (feine Textur in Ruhe), der hervorgehobene etwa 40 %. */
+export const MARKE_HALFTONE = {
+  light: { base: { L: 0.921, C: 0.035 }, strong: { L: 0.735, C: 0.137 } },
+  dark: { base: { L: 0.280, C: 0.049 }, strong: { L: 0.454, C: 0.184 } },
+};
+
 /** Helligkeit und Chroma der Auswahlflächen. Hell liegt die gewählte Fläche auf der getönten Marke, die gezeigte
  *  (blue-8) knapp darunter. Dunkel läge blue-74 mit 1,04 kaum über surface-layer; gewählt ist blue-72 (1,12), gezeigt
  *  blue-69. Die gezeigte Stufe muss Hilfetext und Link noch mit 4,5 tragen (Paarliste), darum sind die Stufen eng. */
@@ -405,6 +418,7 @@ export function markenRollen(saatHex, gruende) {
     }
   };
   const subtleC = (mode, teil) => (unbunt ? 0 : MARKE_SUBTLE[mode][teil].C);
+  const halftoneC = (mode, teil) => (unbunt ? 0 : MARKE_HALFTONE[mode][teil].C);
   const auswahlC = (mode, teil) => (unbunt ? 0 : MARKE_AUSWAHL[mode][teil].C);
 
   const dunkelBasis = L + DUNKEL_GRUNDTON_SCHRITT;
@@ -416,6 +430,8 @@ export function markenRollen(saatHex, gruende) {
     'surface-brand-subtle-hover': bei('light', 'surface-brand-subtle-hover', MARKE_SUBTLE.light.hover.L, subtleC('light', 'hover')),
     'surface-selected': bei('light', 'surface-selected', MARKE_AUSWAHL.light.selected.L, auswahlC('light', 'selected')),
     'surface-selected-hover': bei('light', 'surface-selected-hover', MARKE_AUSWAHL.light.hover.L, auswahlC('light', 'hover')),
+    'surface-halftone': bei('light', 'surface-halftone', MARKE_HALFTONE.light.base.L, halftoneC('light', 'base')),
+    'surface-halftone-strong': bei('light', 'surface-halftone-strong', MARKE_HALFTONE.light.strong.L, halftoneC('light', 'strong')),
   };
   pruefeKollaps('light', [light['surface-brand'], light['surface-brand-hover'], light['surface-brand-active']]);
   // Die getönte Markenfläche ist selbst ein Grund: die Paarliste verlangt text-link auf
@@ -436,6 +452,8 @@ export function markenRollen(saatHex, gruende) {
     'surface-brand-subtle-hover': bei('dark', 'surface-brand-subtle-hover', MARKE_SUBTLE.dark.hover.L, subtleC('dark', 'hover')),
     'surface-selected': bei('dark', 'surface-selected', MARKE_AUSWAHL.dark.selected.L, auswahlC('dark', 'selected')),
     'surface-selected-hover': bei('dark', 'surface-selected-hover', MARKE_AUSWAHL.dark.hover.L, auswahlC('dark', 'hover')),
+    'surface-halftone': bei('dark', 'surface-halftone', MARKE_HALFTONE.dark.base.L, halftoneC('dark', 'base')),
+    'surface-halftone-strong': bei('dark', 'surface-halftone-strong', MARKE_HALFTONE.dark.strong.L, halftoneC('dark', 'strong')),
   };
   pruefeKollaps('dark', [dark['surface-brand'], dark['surface-brand-hover'], dark['surface-brand-active']]);
   dark['text-link'] = fuehre('dark', 'text-link', dark['surface-brand-hover'], 4.5, [dark['surface-brand-subtle']]);

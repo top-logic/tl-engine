@@ -16,10 +16,10 @@ import com.top_logic.basic.config.CommaSeparatedSetValueProvider;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationValueProvider;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.CommandGroupType;
+import com.top_logic.util.TLContext;
 
 /**
  * Default implementation of {@link com.top_logic.tool.boundsec.BoundCommandGroup}.
@@ -255,8 +255,10 @@ public class SimpleBoundCommandGroup implements BoundCommandGroup {
 	 * This method checks the {@link Person#isRestrictedUser() restricted user state} of the given
 	 * person and determines, whether the given person has rights on the given
 	 * {@link BoundCommandGroup}, actually it checks whether the given group 'contains' a
-	 * {@link CommandGroupType#WRITE write} or a {@link CommandGroupType#DELETE delete} command.
-	 * 
+	 * {@link CommandGroupType#WRITE write} or a {@link CommandGroupType#DELETE delete} command. A
+	 * person with {@link TLContext#hasAdministrativeRights(Person) administrative rights} is not
+	 * restricted.
+	 *
 	 * @param person
 	 *        the {@link Person}whose rights must be checked, must not be <code>null</code>.
 	 * @param group
@@ -265,7 +267,7 @@ public class SimpleBoundCommandGroup implements BoundCommandGroup {
 	 *         command group} <code>group</code>
 	 */
 	public static boolean isAllowedCommandGroup(Person person, BoundCommandGroup group) {
-		if (ThreadContext.isAdmin()) {
+		if (TLContext.hasAdministrativeRights(person)) {
 			return true;
 		}
 		if (!person.isRestrictedUser().booleanValue()) {

@@ -5,7 +5,9 @@
  */
 package com.top_logic.layout.view.model;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -92,6 +94,83 @@ public class TreeNodes {
 		// Opening a node creates its children, so they can be visited afterwards.
 		for (DefaultTreeUINode child : node.getChildren()) {
 			restoreExpansion(child, expanded, false);
+		}
+	}
+
+	/**
+	 * The business objects of the nodes of the given tree whose children were computed, and of
+	 * their children.
+	 *
+	 * <p>
+	 * These are the objects whose nodes the tree decided to open or to leave closed: a node of
+	 * such an object found in a tree built anew is not opened by
+	 * {@link #openToDepth(DefaultTreeUINode, int, Set)}.
+	 * </p>
+	 *
+	 * @param root
+	 *        The node to start at, typically {@link DefaultTreeUINodeModel#getRoot()}.
+	 */
+	public static Set<Object> collectComputedObjects(DefaultTreeUINode root) {
+		Set<Object> objects = new HashSet<>();
+		collectComputedObjects(root, objects);
+		return objects;
+	}
+
+	private static void collectComputedObjects(DefaultTreeUINode node, Set<Object> objects) {
+		if (!node.isInitialized()) {
+			return;
+		}
+		for (DefaultTreeUINode child : node.getChildren()) {
+			objects.add(child.getBusinessObject());
+			collectComputedObjects(child, objects);
+		}
+	}
+
+	/**
+	 * Opens the nodes of the top levels of the given tree, down to the given depth.
+	 *
+	 * <p>
+	 * The children of the given root are the first level, whether the root is open or not: the
+	 * root stands for the tree as a whole. A node of a level up to the given depth is opened when it
+	 * has children and stands for none of the given known objects. The walk descends into the nodes
+	 * that are open - opened here or before -, so the children of a closed node are not computed.
+	 * </p>
+	 *
+	 * @param root
+	 *        The node to start at, typically {@link DefaultTreeUINodeModel#getRoot()}.
+	 * @param depth
+	 *        The number of levels to open: {@code 0} opens nothing, {@code 1} the children of the
+	 *        root.
+	 * @param known
+	 *        The business objects whose nodes keep their state, see
+	 *        {@link #collectComputedObjects(DefaultTreeUINode)}; empty for a tree built for the
+	 *        first time.
+	 * @return The nodes opened, each before the nodes below it.
+	 */
+	public static List<DefaultTreeUINode> openToDepth(DefaultTreeUINode root, int depth, Set<Object> known) {
+		List<DefaultTreeUINode> opened = new ArrayList<>();
+		if (depth > 0) {
+			for (DefaultTreeUINode child : root.getChildren()) {
+				openToDepth(child, depth - 1, known, opened);
+			}
+		}
+		return opened;
+	}
+
+	private static void openToDepth(DefaultTreeUINode node, int remaining, Set<Object> known,
+			List<DefaultTreeUINode> opened) {
+		if (!node.isExpanded()) {
+			if (known.contains(node.getBusinessObject()) || node.getChildren().isEmpty()) {
+				return;
+			}
+			node.setExpanded(true);
+			opened.add(node);
+		}
+		if (remaining == 0) {
+			return;
+		}
+		for (DefaultTreeUINode child : node.getChildren()) {
+			openToDepth(child, remaining - 1, known, opened);
 		}
 	}
 

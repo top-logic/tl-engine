@@ -156,7 +156,7 @@ public class TestDBConcurrentAccess extends BasicTestCase {
 	
 	@Override
 	protected void tearDown() throws Exception {
-		DBSchemaUtils.resetTables(pool, schema, false);
+		DBSchemaUtils.dropTables(pool, schema);
 
 		pool = null;
 		schema = null;

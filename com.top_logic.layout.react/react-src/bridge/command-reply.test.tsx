@@ -8,7 +8,7 @@ vi.mock('./sse-client', async (importOriginal) => ({
   unsubscribe: () => {},
 }));
 
-import { mount, unmount, useTLCommand, useTLUpload } from './tl-react-bridge';
+import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount, useTLCommand, useTLUpload } from './tl-react-bridge';
 import { register } from './registry';
 import type { CommandResponse } from './command-channel';
 
@@ -42,7 +42,7 @@ beforeAll(() => {
   }
   register('TestReplyProbe', Probe);
   const element = document.createElement('div');
-  element.id = CONTROL_ID;
+  element.setAttribute(MOUNT_ATTRIBUTE, CONTROL_ID);
   document.body.appendChild(element);
   act(() => mount(CONTROL_ID, 'TestReplyProbe', {}, 'w', '/ctx'));
 });
@@ -109,5 +109,5 @@ describe('the upload function of useTLUpload', () => {
 
 afterAll(() => {
   act(() => unmount(CONTROL_ID));
-  document.getElementById(CONTROL_ID)?.remove();
+  findMountPoint(CONTROL_ID)?.remove();
 });

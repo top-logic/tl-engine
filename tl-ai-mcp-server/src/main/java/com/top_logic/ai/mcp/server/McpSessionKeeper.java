@@ -28,13 +28,13 @@ import reactor.core.scheduler.Schedulers;
  * client has used for a while.
  *
  * <p>
- * <b>Why this exists.</b> The MCP Java SDK (1.1.4) pings every session at the keep-alive interval
- * and, when a ping fails, only logs a warning. A session goes away only when its client deletes it
- * ({@code DELETE /mcp}) or when a write to its event stream fails. A client that sends its
- * requests by {@code POST} and never opens the event stream - a script, a command-line tool - can
- * never answer a ping, and most such clients never delete their session either. Their sessions
- * therefore stayed until the application stopped, and each one wrote a warning at every interval: in
- * an evaluation of Pietro (#917, Pietro #738) ten such sessions wrote 1,200 warnings an hour.
+ * <b>Why this exists.</b> A session goes away when its client deletes it ({@code DELETE /mcp}). A
+ * client that sends its requests by {@code POST} and never opens the event stream - a script, a
+ * command-line tool - can never answer a ping, and most such clients never delete their session
+ * either, so its session has to be removed on the server's initiative. The MCP Java SDK can sweep
+ * such sessions itself, but it removes them from the transport without a notice, so the session's
+ * owner would stay in {@link McpSessionPrincipals} for good. The transport is therefore built
+ * without the SDK's sweep and keep-alive, and this keeper does both.
  * </p>
  *
  * <p>
@@ -50,8 +50,8 @@ import reactor.core.scheduler.Schedulers;
  * <b>Why this reaches into the SDK.</b> The transport keeps its sessions in a private map and
  * offers no way to remove one but the client's {@code DELETE}. {@link #attach} reads that map once;
  * should an SDK upgrade remove it, the keeper is not started, a warning says so, and
- * {@code TestMcpSessionKeeper} fails. Delete this class when the SDK removes sessions that do not
- * answer by itself.
+ * {@code TestMcpSessionKeeper} fails. Delete this class when the SDK tells about a session it
+ * removed by itself.
  * </p>
  */
 final class McpSessionKeeper {

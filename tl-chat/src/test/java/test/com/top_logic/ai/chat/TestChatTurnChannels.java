@@ -17,11 +17,11 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.ai.chat.view.ChatTurnChannels;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tl.ai.core.agent.AgentApplicationService;
-import com.top_logic.tl.ai.core.agent.AgentPolicyService;
-import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
-import com.top_logic.tl.ai.core.provider.LLMProviderService;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.agent.AgentApplicationService;
+import com.top_logic.ai.core.agent.AgentPolicyService;
+import com.top_logic.ai.core.agent.AgentRuntimeService;
+import com.top_logic.ai.core.provider.LLMProviderService;
+import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.util.model.ModelService;
 
 /**

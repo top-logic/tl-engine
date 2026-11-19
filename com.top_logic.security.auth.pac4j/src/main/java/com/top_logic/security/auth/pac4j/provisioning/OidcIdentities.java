@@ -9,7 +9,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
+import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -17,6 +19,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.security.auth.pac4j.model.OidcIdentity;
 import com.top_logic.security.auth.pac4j.model.TlSecurityPac4jFactory;
 import com.top_logic.security.auth.pac4j.model.impl.OidcIdentityBase;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Access to the {@link OidcIdentity identities} of the accounts at external logins.
@@ -99,6 +102,114 @@ public class OidcIdentities {
 		identity.setSubject(subject);
 		account.tAddByName(OIDC_IDENTITIES_ATTR, identity);
 		return identity;
+	}
+
+	/**
+	 * Connects the identity of the given client and subject with the given account.
+	 *
+	 * <p>
+	 * An identity is never moved between accounts: one that is part of another account is refused,
+	 * and so is a second identity of a client the account already has an identity of. An identity
+	 * that is already part of the account is no error. No group memberships are granted here; the
+	 * identity's groups are synchronized on its next login.
+	 * </p>
+	 *
+	 * <p>
+	 * Must be called in a transaction.
+	 * </p>
+	 *
+	 * @return The identity, as part of the given account.
+	 * @throws TopLogicException
+	 *         If the identity cannot be connected, with the reason for the user.
+	 */
+	public static OidcIdentity connect(Person account, String client, String subject) throws TopLogicException {
+		Objects.requireNonNull(account, "No account.");
+		OidcIdentity existing = findIdentity(account.getKnowledgeBase(), client, subject);
+		if (existing != null) {
+			if (account.equals(getOwner(existing))) {
+				return existing;
+			}
+			throw new TopLogicException(I18NConstants.ERROR_IDENTITY_OF_OTHER_ACCOUNT);
+		}
+		if (getIdentity(account, client) != null) {
+			throw new TopLogicException(I18NConstants.ERROR_OTHER_IDENTITY__NAME.fill(account.getName()));
+		}
+		return addIdentity(account, client, subject);
+	}
+
+	/**
+	 * Removes the given identity from the given account.
+	 *
+	 * <p>
+	 * Refused when the account would have no way left to sign in, see
+	 * {@link #canRemove(Person, OidcIdentity)}. The group memberships that only this identity has
+	 * granted are taken back with it.
+	 * </p>
+	 *
+	 * <p>
+	 * Must be called in a transaction.
+	 * </p>
+	 *
+	 * @throws TopLogicException
+	 *         If the identity cannot be removed, with the reason for the user.
+	 */
+	public static void removeIdentity(Person account, OidcIdentity identity) throws TopLogicException {
+		if (!account.equals(getOwner(identity))) {
+			throw new TopLogicException(I18NConstants.ERROR_NOT_CONNECTED);
+		}
+		if (!canRemove(account, identity)) {
+			throw new TopLogicException(I18NConstants.ERROR_LAST_LOGIN);
+		}
+		GroupSynchronization.revokeAll(account, identity);
+		identity.tDelete();
+	}
+
+	/**
+	 * Whether the given account can still sign in after the given identity has been removed from
+	 * it.
+	 *
+	 * <p>
+	 * That is the case if the account has another identity, or {@link #hasPasswordLogin(Person) a
+	 * password}.
+	 * </p>
+	 */
+	public static boolean canRemove(Person account, OidcIdentity identity) {
+		for (OidcIdentity other : getIdentities(account)) {
+			if (!other.equals(identity)) {
+				return true;
+			}
+		}
+		return hasPasswordLogin(account);
+	}
+
+	/**
+	 * Whether the given account can sign in with a password.
+	 *
+	 * @see #hasPasswordLogin(AuthenticationDevice, Person)
+	 */
+	public static boolean hasPasswordLogin(Person account) {
+		return hasPasswordLogin(account.getAuthenticationDevice(), account);
+	}
+
+	/**
+	 * Whether the given account can sign in with a password at the given device.
+	 *
+	 * <p>
+	 * An account without a device has no password. A device that stores the passwords itself must
+	 * {@link AuthenticationDevice#hasPassword(Person) hold one for the account}; one that checks the
+	 * password elsewhere (e.g. in an LDAP directory) and therefore does not
+	 * {@link AuthenticationDevice#allowPwdChange() let the password be changed} counts as a
+	 * password, since this application cannot tell whether the directory knows the account.
+	 * </p>
+	 *
+	 * @param device
+	 *        The authentication device of the account, <code>null</code> for none.
+	 */
+	public static boolean hasPasswordLogin(AuthenticationDevice device, Person account) {
+		if (device == null) {
+			return false;
+		}
+		return device.hasPassword(account) || !device.allowPwdChange();
 	}
 
 }

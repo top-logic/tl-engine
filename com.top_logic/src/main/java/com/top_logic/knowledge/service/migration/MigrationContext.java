@@ -9,7 +9,9 @@ import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.w3c.dom.Document;
 
@@ -71,6 +73,8 @@ public class MigrationContext extends TypedAnnotationContainer {
 	private MORepository _schemaRepository;
 
 	private final Map<String, MOStructure> _xrefInvalidates = new HashMap<>();
+
+	private final Set<String> _xrefDeleted = new HashSet<>();
 
 	/**
 	 * Creates a {@link MigrationContext}.
@@ -215,6 +219,24 @@ public class MigrationContext extends TypedAnnotationContainer {
 		 * are created during the migration. However, these MORepository's have different
 		 * MOStructure instances for the same tables. */
 		_xrefInvalidates.put(table.getName(), table);
+		_xrefDeleted.remove(table.getName());
+	}
+
+	/**
+	 * Announces that the table of the given type has been dropped.
+	 * 
+	 * <p>
+	 * The {@link RevisionXref} entries of the table are removed by
+	 * {@link #revalidateXRef(Log, PooledConnection)}, a previous
+	 * {@link #invalidateXRef(MOStructure) invalidation} of the table is dropped.
+	 * </p>
+	 *
+	 * @param tableName
+	 *        The name of the type whose table was dropped.
+	 */
+	public void deletedTable(String tableName) {
+		_xrefInvalidates.remove(tableName);
+		_xrefDeleted.add(tableName);
 	}
 
 	/**
@@ -222,16 +244,11 @@ public class MigrationContext extends TypedAnnotationContainer {
 	 * {@link #invalidateXRef(MOStructure) invalidated}.
 	 */
 	public void revalidateXRef(Log log, PooledConnection connection) throws SQLException {
+		for (String tableName : _xrefDeleted) {
+			clearXRef(log, connection, tableName);
+		}
 		for (MOStructure table : _xrefInvalidates.values()) {
-			CompiledStatement removeXref = query(
-				delete(table(SQLH.mangleDBName(RevisionXref.REVISION_XREF_TYPE_NAME)),
-					eqSQL(
-						column(SQLH.mangleDBName(RevisionXref.XREF_TYPE_ATTRIBUTE)),
-						literal(DBType.STRING, table.getName()))))
-							.toSql(connection.getSQLDialect());
-			int removed = removeXref.executeUpdate(connection);
-			log.info("Cleared " + removed + " rows for table '" + table.getName() + "' from '"
-				+ RevisionXref.REVISION_XREF_TYPE_NAME + ".");
+			clearXRef(log, connection, table.getName());
 		}
 
 		for (MOStructure table : _xrefInvalidates.values()) {
@@ -255,6 +272,19 @@ public class MigrationContext extends TypedAnnotationContainer {
 		}
 
 		_xrefInvalidates.clear();
+		_xrefDeleted.clear();
+	}
+
+	private void clearXRef(Log log, PooledConnection connection, String tableName) throws SQLException {
+		CompiledStatement removeXref = query(
+			delete(table(SQLH.mangleDBName(RevisionXref.REVISION_XREF_TYPE_NAME)),
+				eqSQL(
+					column(SQLH.mangleDBName(RevisionXref.XREF_TYPE_ATTRIBUTE)),
+					literal(DBType.STRING, tableName))))
+						.toSql(connection.getSQLDialect());
+		int removed = removeXref.executeUpdate(connection);
+		log.info("Cleared " + removed + " rows for table '" + tableName + "' from '"
+			+ RevisionXref.REVISION_XREF_TYPE_NAME + ".");
 	}
 
 }

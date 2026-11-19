@@ -106,6 +106,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey MASKED_OBJECT;
 
+	/**
+	 * Error when the script reacting to a deletion returns something other than a function.
+	 *
+	 * @en The script reacting to the deletion of "{0}" must return a function or nothing, but
+	 *     returned: {1}
+	 */
+	public static ResKey2 ERROR_DELETING_SCRIPT_RESULT_NOT_A_FUNCTION__OBJECT_RESULT;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

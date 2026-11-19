@@ -23,6 +23,10 @@ import com.top_logic.layout.react.control.ToolbarControl;
  * </p>
  * <ul>
  * <li>{@code title} - the panel title</li>
+ * <li>{@code explanation} - the explanation of the title (optional): the tooltip of the title, or
+ * of an info icon beside the content of a panel without title</li>
+ * <li>{@code explanationHelp} - whether the explanation is offered as help text, which an icon
+ * shows and hides (edit mode)</li>
  * <li>{@code titleContent} - child control descriptor rendered in the title area (optional)</li>
  * <li>{@code expansionState} - one of "NORMALIZED", "MINIMIZED", "MAXIMIZED", "HIDDEN"</li>
  * <li>{@code showMinimize} - whether the minimize button is shown</li>
@@ -43,6 +47,24 @@ public class ReactPanelControl extends ToolbarControl {
 
 	/** @see #setTitle(String) */
 	private static final String TITLE = "title";
+
+	/**
+	 * State of the explanation of what the panel shows, e.g. the description of the attribute whose
+	 * values a table lists; absent for none.
+	 *
+	 * <p>
+	 * A panel with a {@link #setTitle(String) title} offers the explanation as tooltip of its
+	 * title, a panel without title through an info icon beside its content, whose tooltip it is.
+	 * </p>
+	 */
+	public static final String EXPLANATION = "explanation";
+
+	/**
+	 * State whether the {@link #EXPLANATION} is offered as help text as well, e.g. while the
+	 * content is edited: an icon beside the title - or the info icon - shows and hides it below the
+	 * head of the panel.
+	 */
+	public static final String EXPLANATION_HELP = "explanationHelp";
 
 	/** @see #setExpansionState(ExpansionState) */
 	private static final String EXPANSION_STATE = "expansionState";

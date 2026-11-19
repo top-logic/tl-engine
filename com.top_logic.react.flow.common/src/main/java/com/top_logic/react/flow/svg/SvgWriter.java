@@ -11,12 +11,14 @@ import com.top_logic.react.flow.model.Drawable;
 import com.top_logic.react.flow.svg.event.Registration;
 import com.top_logic.react.flow.svg.event.SVGClickEvent;
 import com.top_logic.react.flow.svg.event.SVGClickHandler;
-import com.top_logic.react.flow.svg.event.SVGDropHandler;
+import com.top_logic.react.flow.svg.event.SVGKeyEvent;
+import com.top_logic.react.flow.svg.event.SVGKeyHandler;
 import com.top_logic.react.flow.svg.event.SVGPanHandler;
 import com.top_logic.react.flow.svg.event.SVGWheelEvent;
 import com.top_logic.react.flow.svg.event.SVGWheelHandler;
 import com.top_logic.react.flow.data.ImageAlign;
 import com.top_logic.react.flow.data.ImageScale;
+import com.top_logic.react.flow.data.Widget;
 
 /**
  * API for stream-based construction of SVG.
@@ -323,6 +325,36 @@ public interface SvgWriter extends AutoCloseable {
 	void writeId(String id);
 
 	/**
+	 * The ID of an element that the given owner writes for the given purpose.
+	 *
+	 * <p>
+	 * The ID is unique in the whole document the SVG becomes part of, also if several diagrams are
+	 * shown in the same document. For the same owner and purpose, the same writer returns the same
+	 * ID. Neither the {@link Widget#getClientId() client ID} nor the CSS class of the owner is a
+	 * source of the ID.
+	 * </p>
+	 *
+	 * @param owner
+	 *        The widget drawing the element.
+	 * @param purpose
+	 *        The role of the element within the owner, unique within the owner.
+	 * @return The ID to {@link #writeId(String) write} to the element and to reference it with.
+	 */
+	String uniqueId(Widget owner, String purpose);
+
+	/**
+	 * Writes a {@value SvgConstants#CLIP_PATH_ATTR} attribute referencing the
+	 * {@value SvgConstants#CLIP_PATH} element with the given ID.
+	 *
+	 * @param clipPathId
+	 *        The ID of the {@value SvgConstants#CLIP_PATH} element, see
+	 *        {@link #uniqueId(Widget, String)}.
+	 */
+	default void writeClipPathRef(String clipPathId) {
+		writeAttribute(SvgConstants.CLIP_PATH_ATTR, "url(#" + clipPathId + ")");
+	}
+
+	/**
 	 * Writes a <code>class</code> attribute.
 	 */
 	void writeCssClass(String cssClass);
@@ -446,6 +478,28 @@ public interface SvgWriter extends AutoCloseable {
 	}
 
 	/**
+	 * Attaches a callback to the currently created SVG element that is called, if the user presses
+	 * a key while the element has the keyboard focus.
+	 *
+	 * <p>
+	 * The element must be focusable, see {@link SvgConstants#TABINDEX_ATTR}. This is an optional
+	 * method that is only supported for special writers that construct interactive documents. In
+	 * all other cases, calls to this method are ignored.
+	 * </p>
+	 *
+	 * @param handler
+	 *        The callback that is invoked upon a key press.
+	 * @param sender
+	 *        The user object to pass to the invoked callback. See
+	 *        {@link SVGKeyEvent#getSender()}.
+	 */
+	default Registration attachOnKeyDown(SVGKeyHandler handler, Object sender) {
+		// Ignore by default. This is only supported in specialized writers that build interactive
+		// DOM trees.
+		return Registration.NONE;
+	}
+
+	/**
 	 * Attaches a callback to the created SVG document that is called, if the user double clicks on
 	 * the currently created element.
 	 * 
@@ -493,21 +547,6 @@ public interface SvgWriter extends AutoCloseable {
 	 *        The attribute value.
 	 */
 	void writeAttribute(String name, String value);
-
-	/**
-	 * Attatches a callback to the created SVG element that captures a drop.
-	 *
-	 * @param handler
-	 *        The callback that is invoked upon click.
-	 * @param sender
-	 *        The user object to pass to the invoked callback. See
-	 *        {@link SVGClickEvent#getSender()}.
-	 */
-	default Registration attachOnDrop(SVGDropHandler handler, Object sender) {
-		// Ignore by default. This is only supported in specialized writers that build interactive
-		// DOM trees.
-		return Registration.NONE;
-	}
 
 	/**
 	 * Attaches a callback to the currently created SVG element that is called when the user

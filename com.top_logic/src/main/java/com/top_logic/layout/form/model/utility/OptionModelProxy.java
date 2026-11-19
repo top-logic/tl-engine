@@ -6,13 +6,24 @@
 package com.top_logic.layout.form.model.utility;
 
 import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * {@link OptionModel} implementation delegating calls to another {@link OptionModel}.
+ *
+ * <p>
+ * A change of the {@link #delegate()} is reported to the listeners of this proxy with the proxy as
+ * sender, so that a listener observing this proxy receives events from the model it observes.
+ * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public abstract class OptionModelProxy<T> implements OptionModel<T> {
+
+	private final List<OptionModelListener> _listeners = new CopyOnWriteArrayList<>();
+
+	private final OptionModelListener _forwarder = sender -> notifyListeners();
 
 	@Override
 	public Iterator<T> iterator() {
@@ -31,12 +42,31 @@ public abstract class OptionModelProxy<T> implements OptionModel<T> {
 
 	@Override
 	public boolean addOptionListener(OptionModelListener listener) {
-		return delegate().addOptionListener(listener);
+		if (_listeners.contains(listener)) {
+			return false;
+		}
+		if (_listeners.isEmpty()) {
+			delegate().addOptionListener(_forwarder);
+		}
+		return _listeners.add(listener);
 	}
 
 	@Override
 	public boolean removeOptionListener(OptionModelListener listener) {
-		return delegate().removeOptionListener(listener);
+		boolean removed = _listeners.remove(listener);
+		if (removed && _listeners.isEmpty()) {
+			delegate().removeOptionListener(_forwarder);
+		}
+		return removed;
+	}
+
+	/**
+	 * Notifies the listeners of this proxy about a change of its options.
+	 */
+	private void notifyListeners() {
+		for (OptionModelListener listener : _listeners) {
+			listener.notifyOptionsChanged(this);
+		}
 	}
 
 	@Override

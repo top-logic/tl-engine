@@ -41,7 +41,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
+import com.top_logic.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;

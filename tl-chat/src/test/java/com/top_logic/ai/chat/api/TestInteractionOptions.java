@@ -12,7 +12,7 @@ import junit.framework.TestCase;
 
 import com.top_logic.ai.chat.api.messages.InteractionOptionDto;
 import com.top_logic.ai.chat.api.messages.UserInteractionEvent;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
+import com.top_logic.ai.core.agent.approval.UserInteractionRequest;
 
 /**
  * Verifies that {@link DtoMapper#toUserInteractionEvent(UserInteractionRequest)} extracts the

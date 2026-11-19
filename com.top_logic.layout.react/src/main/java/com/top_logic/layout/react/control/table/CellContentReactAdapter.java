@@ -24,10 +24,24 @@ import com.top_logic.table.CellContent;
  * {@link FieldModel} renders as an interactive {@link ReactCheckboxControl}; other field types
  * currently render their value read-only. A {@link com.top_logic.table.CellContent.Raw} cell whose
  * payload is a {@link CellControlFactory} renders whatever control the factory builds (the escape
- * hatch for bespoke cells such as typed field inputs or action buttons).
+ * hatch for bespoke cells such as typed field inputs or action buttons). A
+ * {@link com.top_logic.table.CellContent.Placeholder} renders as a text the design system sets
+ * apart from a value.
  * </p>
  */
 public final class CellContentReactAdapter {
+
+	/**
+	 * CSS class of the design system setting a {@link com.top_logic.table.CellContent.Placeholder}
+	 * apart from a value.
+	 */
+	private static final String NO_VALUE_CLASS = "tl-table__no-value";
+
+	/**
+	 * Type class of a {@link com.top_logic.table.CellContent.Placeholder}: it is no value, so it is
+	 * not set in the strong type of the row it stands in, e.g. a group header.
+	 */
+	private static final String NO_VALUE_TYPE_CLASS = "tl-type-body";
 
 	private CellContentReactAdapter() {
 		// Utility class.
@@ -55,6 +69,10 @@ public final class CellContentReactAdapter {
 		}
 		if (content instanceof CellContent.Labeled labeled) {
 			return new ReactTextControl(context, labeled.text(), joinClasses(labeled.cssClass(), typeClass));
+		}
+		if (content instanceof CellContent.Placeholder placeholder) {
+			return new ReactTextControl(context, placeholder.text(),
+				joinClasses(NO_VALUE_CLASS, NO_VALUE_TYPE_CLASS));
 		}
 		if (content instanceof CellContent.Editable editable) {
 			FieldModel field = editable.field();

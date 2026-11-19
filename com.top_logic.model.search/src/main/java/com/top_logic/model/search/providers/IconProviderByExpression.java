@@ -15,7 +15,6 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.icon.IconProvider;
-import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
@@ -40,8 +39,8 @@ public class IconProviderByExpression extends AbstractConfiguredInstance<IconPro
 		 * 
 		 * <p>
 		 * The function expects the object the icon is requested for as single argument. The
-		 * function result must be either the icon itself or a string representing the icon
-		 * resource.
+		 * function result is either the icon itself, a string representing the icon resource, or
+		 * image data (a value of type <code>tl.core:Binary</code> with an image content type).
 		 * </p>
 		 * 
 		 * <p>
@@ -50,8 +49,16 @@ public class IconProviderByExpression extends AbstractConfiguredInstance<IconPro
 		 * </p>
 		 * 
 		 * <p>
-		 * If the function returns <code>null</code>, the static icon of the type is used that is
-		 * defined for the object's type.
+		 * Image data is embedded into the page. Image data that is larger than 32 KB is not
+		 * displayed. An application stores a scaled-down version of a large image in a separate
+		 * attribute (e.g. computed with <code>binaryScaleImage(...)</code> when the image is
+		 * stored) and returns that version from this function.
+		 * </p>
+		 * 
+		 * <p>
+		 * Any other result denotes no icon: <code>null</code>, an empty string, data that is no
+		 * image, image data that is too large, and every other value (a number, a model object, a
+		 * list, ...). For such a result, the static icon defined for the object's type is used.
 		 * </p>
 		 */
 		@Mandatory
@@ -75,26 +82,7 @@ public class IconProviderByExpression extends AbstractConfiguredInstance<IconPro
 
 	@Override
 	public ThemeImage getIcon(Object object, Flavor flavor) {
-		return toIcon(_iconFunction.execute(object));
-	}
-
-	/**
-	 * Converts the result of an icon function to the icon it denotes.
-	 *
-	 * @param result
-	 *        The function result.
-	 * @return The result itself, if it is a {@link ThemeImage}, the icon the text of any other value
-	 *         encodes (e.g. "css:fas fa-car-side"), {@code null} for a {@code null} result.
-	 */
-	public static ThemeImage toIcon(Object result) {
-		if (result instanceof ThemeImage image) {
-			return image;
-		}
-		if (result == null) {
-			return null;
-		}
-		String iconKey = SearchExpression.asString(result);
-		return ThemeImage.internalDecode(iconKey);
+		return ThemeImage.fromValue(_iconFunction.execute(object));
 	}
 
 }

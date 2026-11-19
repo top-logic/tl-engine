@@ -2,7 +2,7 @@
 // liest nur Zustände; kein Block zeichnet ein Drop-Ziel oder die gezogene Quelle selbst.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readComponent, readGenerated, declarationsOf, componentCssFiles } from './lib/component.mjs';
+import { readComponent, readGenerated, declarationsOf, componentCssFiles, declarationsOfAll } from './lib/component.mjs';
 
 const css = readGenerated('drag', 'drag.css');
 
@@ -113,7 +113,7 @@ test('tl-reorder-list: Griff und Knöpfe erscheinen über tl-reveal-on-hover, ni
   const liste = readGenerated('reorder-list', 'reorder-list.css');
   const ohne = liste.replace(/\/\*[\s\S]*?\*\//g, '');
   // Keine zweite Fassung: kein Verbergen, kein Einblenden beim Zeigen, kein eigener Touch-Fall.
-  assert.doesNotMatch(declarationsOf(liste, '.tl-reorder-list__handle') ?? '', /opacity|transition/);
+  assert.doesNotMatch(declarationsOfAll(liste, '.tl-reorder-list__handle'), /opacity|transition/);
   assert.equal(declarationsOf(liste, '.tl-reorder-list__actions > .tl-button'), null);
   assert.doesNotMatch(ohne, /opacity:\s*0(;|\s|$)/, 'reorder-list.css verbirgt nichts mehr selbst');
   assert.doesNotMatch(ohne, /:hover\s*>|@media \(hover: none\)/, 'reorder-list.css blendet nichts mehr selbst ein');

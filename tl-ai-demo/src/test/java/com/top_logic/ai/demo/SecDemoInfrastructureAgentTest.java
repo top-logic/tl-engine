@@ -7,19 +7,19 @@ package com.top_logic.ai.demo;
 
 import junit.framework.Test;
 
-import com.top_logic.tl.ai.core.agent.AgentApplicationService;
-import com.top_logic.tl.ai.core.agent.AgentDefinition;
-import com.top_logic.tl.ai.core.agent.AgentDefinitionQuery;
-import com.top_logic.tl.ai.core.agent.AgentFactory;
-import com.top_logic.tl.ai.core.agent.AgentFactory.RunOverrides;
-import com.top_logic.tl.ai.core.agent.AgentPolicyService;
-import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
-import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
-import com.top_logic.tl.ai.core.provider.LLMProviderService;
-import com.top_logic.tl.ai.core.security.AiToolAccessService;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Cause;
-import com.top_logic.tl.ai.core.security.RoleAccessPolicy.Decision;
-import com.top_logic.tl.ai.core.security.RunAuthorization;
+import com.top_logic.ai.core.agent.AgentApplicationService;
+import com.top_logic.ai.core.agent.AgentDefinition;
+import com.top_logic.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.ai.core.agent.AgentFactory;
+import com.top_logic.ai.core.agent.AgentFactory.RunOverrides;
+import com.top_logic.ai.core.agent.AgentPolicyService;
+import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
+import com.top_logic.ai.core.agent.AgentRuntimeService;
+import com.top_logic.ai.core.provider.LLMProviderService;
+import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Cause;
+import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
+import com.top_logic.ai.core.security.RunAuthorization;
 
 /**
  * That an agent the application runs <em>for</em> a user is not runnable as a chat persona, on the

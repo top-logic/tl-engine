@@ -141,6 +141,20 @@ public class PathInfo {
 	}
 
 	/**
+	 * The web application folder of the application module.
+	 *
+	 * <p>
+	 * The application module is the top-level project, see {@link #addDeployAspects(File)}. Its web
+	 * application folder is the location for all files created by the running application, even if
+	 * the folder does not exist yet. It is therefore not necessarily part of
+	 * {@link #getResourceDirs()}.
+	 * </p>
+	 */
+	public Path getToplevelWebapp() {
+		return new File(_toplevelProjectPath, ModuleLayoutConstants.WEBAPP_DIR).toPath();
+	}
+
+	/**
 	 * All <code>classes</code> folders of the {@link #getClassPath()}.
 	 */
 	public List<File> getClassFolders() {

@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.core.provider;
+package com.top_logic.ai.core.agent;
 
 import java.util.List;
 
@@ -21,6 +21,9 @@ import com.top_logic.basic.config.constraint.check.ConstraintChecker;
 import com.top_logic.basic.config.constraint.check.ConstraintFailure;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.ai.core.agent.AgentRuntimeService.AgentOverride;
+import com.top_logic.ai.core.provider.LLMProviderConfig;
+import com.top_logic.ai.core.provider.LLMProviderService;
+import com.top_logic.ai.core.provider.LLMProviderServiceFixture;
 import com.top_logic.ai.core.provider.vertex.VertexProviderConfig;
 
 /**

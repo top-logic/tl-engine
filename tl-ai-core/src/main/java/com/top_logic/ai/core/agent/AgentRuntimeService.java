@@ -47,7 +47,6 @@ import com.top_logic.ai.core.provider.LLMProviderService;
 import com.top_logic.ai.core.provider.LLMProviderService.ServiceModelOptions;
 import com.top_logic.ai.core.provider.LLMProviderService.ServiceProviderOptions;
 import com.top_logic.ai.core.provider.ModelToolCallConstraint;
-import com.top_logic.ai.core.provider.ModelToolChoiceConstraint;
 import com.top_logic.ai.core.provider.ProviderExposesModelConstraint;
 import com.top_logic.ai.core.provider.ProviderFieldMode;
 import com.top_logic.ai.core.provider.health.ModelTarget;

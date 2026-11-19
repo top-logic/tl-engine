@@ -3,14 +3,16 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.ai.core.provider;
+package com.top_logic.ai.core.agent;
 
 import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.config.constraint.algorithm.GenericValueDependency2;
 import com.top_logic.basic.config.constraint.algorithm.PropertyModel;
-import com.top_logic.ai.core.agent.AgentRuntimeService;
+import com.top_logic.ai.core.provider.LLMProviderConfig;
+import com.top_logic.ai.core.provider.LLMProviderService;
+import com.top_logic.ai.core.provider.ToolChoice;
 
 /**
  * Constraint on the tool choice of an agent that reports a forced tool call

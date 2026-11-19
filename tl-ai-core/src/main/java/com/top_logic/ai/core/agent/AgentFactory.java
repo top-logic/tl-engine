@@ -776,8 +776,6 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			modelInfo = defaultModelInfo(model);
 		}
 
-		String family = llmRegistry.getApiFamily(model, assignment.provider());
-
 		String systemPrompt = agent.systemPrompt();
 		systemPrompt = injectSkills(agent, systemPrompt, capabilities);
 		systemPrompt = injectDelegateDescriptions(agent, systemPrompt, capabilities);
@@ -823,7 +821,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		// toolChoice: assignment override > null (provider default)
 		ToolChoice toolChoice = ToolChoice.parse(assignment.toolChoice());
 
-		Map<String, Object> modelOptions = buildModelOptions(assignment, modelInfo, family);
+		Map<String, Object> modelOptions = buildModelOptions(assignment, modelInfo);
 
 		return new AgentParams(model, systemPrompt, maxTurns,
 			maxOutputTokens, modelOptions, contextWindowTokens,
@@ -916,10 +914,15 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 	/**
 	 * Builds vendor-specific model options from the model assignment, gated on the model's
-	 * {@link ApiFamilies API family} and capabilities.
+	 * {@link LLMProviderService#getApiFamily(String, String) API family} and capabilities.
+	 *
+	 * @param assignment
+	 *        The model and the options assigned to the agent.
+	 * @param modelInfo
+	 *        The catalog entry of the model.
 	 */
-	private Map<String, Object> buildModelOptions(AgentModelAssignment assignment,
-			ModelInfo modelInfo, String family) {
+	static Map<String, Object> buildModelOptions(AgentModelAssignment assignment, ModelInfo modelInfo) {
+		String family = LLMProviderService.getInstance().getApiFamily(assignment.model(), assignment.provider());
 		Map<String, Object> options = new HashMap<>();
 
 		if (modelInfo.capabilities().temperature()) {

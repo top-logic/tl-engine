@@ -86,22 +86,9 @@ public class AnthropicMessagesProvider extends AbstractStreamingProvider {
 
 	/** Creates an {@link AnthropicMessagesProvider}. */
 	public AnthropicMessagesProvider(CredentialProvider credentials, String baseUrl, String apiVersion, HttpClient httpClient) {
-		this(credentials, baseUrl, apiVersion, httpClient, AnthropicProviderConfig.DEFAULT_CATALOG_PROVIDER_ID);
-	}
-
-	/**
-	 * Creates an {@link AnthropicMessagesProvider} with the given {@link HttpClient}.
-	 *
-	 * @param catalogProviderId
-	 *        The {@link com.top_logic.ai.core.provider.LLMProviderConfig#getCatalogProviderId()
-	 *        catalog provider ID} of the configured provider, stamped onto the thinking blocks it
-	 *        produces; <code>null</code> if none is configured.
-	 */
-	public AnthropicMessagesProvider(CredentialProvider credentials, String baseUrl, String apiVersion,
-			HttpClient httpClient, String catalogProviderId) {
 		super(credentials, baseUrl, httpClient);
 		_apiVersion = Objects.requireNonNull(apiVersion, "API version must not be null.");
-		_catalogProviderId = catalogProviderId;
+		_catalogProviderId = AnthropicProviderConfig.DEFAULT_CATALOG_PROVIDER_ID;
 	}
 
 	/**

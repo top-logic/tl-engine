@@ -35,6 +35,27 @@
 				</label>
 			</text>
 			<field attribute="code"/>
+			<stack
+				align="center"
+				direction="row"
+				gap="compact"
+			>
+				<text tone="helper">
+					<label>
+						<en>Didn't receive a code?</en>
+						<de>Keinen Code erhalten?</de>
+					</label>
+				</text>
+				<button appearance="link">
+					<action class="com.top_logic.layout.view.command.GenericViewCommand">
+						<label>
+							<en>Send new code</en>
+							<de>Neuen Code senden</de>
+						</label>
+						<send-new-code/>
+					</action>
+				</button>
+			</stack>
 			<commands>
 				<generic-command placement="BUTTON_BAR">
 					<label>
@@ -46,13 +67,6 @@
 							<check-verification-code/>
 						</with-result>
 					</store-form-state>
-				</generic-command>
-				<generic-command placement="BUTTON_BAR">
-					<label>
-						<en>Send new code</en>
-						<de>Neuen Code senden</de>
-					</label>
-					<send-new-code/>
 				</generic-command>
 			</commands>
 		</form>

@@ -1082,8 +1082,20 @@ public abstract class OracleHelper extends DBHelper {
 	 *           </p>
 	 *
 	 *           <p>
+	 *           Clearing the column would violate a unique index that contains the column together
+	 *           with other columns: Oracle indexes a composite key as soon as one of its parts is
+	 *           not <code>NULL</code>, and treats the cleared parts as equal. A unique index can
+	 *           neither be switched to non-unique nor be suspended in Oracle. Therefore, the
+	 *           indexes containing the column are dropped before clearing it and re-created with
+	 *           their original definition (read by <code>DBMS_METADATA.GET_DDL</code>) after the
+	 *           values have been copied back. Indexes backing a constraint (e.g. a primary key) are
+	 *           not handled.
+	 *           </p>
+	 *
+	 *           <p>
 	 *           Since Oracle commits each DDL statement, a failure in the fallback (e.g. a value
-	 *           that cannot be converted) may leave the temporary column behind.
+	 *           that cannot be converted) may leave the temporary column behind and the indexes of
+	 *           the column dropped.
 	 *           </p>
 	 *
 	 * @see com.top_logic.basic.sql.DBHelper#appendChangeColumnType(java.lang.Appendable,
@@ -1117,12 +1129,28 @@ public abstract class OracleHelper extends DBHelper {
 		result.append("already_nullable EXCEPTION; ");
 		result.append("PRAGMA EXCEPTION_INIT(already_nullable, " + ORA_ALREADY_NULLABLE + "); ");
 		result.append("was_mandatory BOOLEAN := TRUE; ");
+		result.append("TYPE index_ddl_list IS TABLE OF CLOB; ");
+		result.append("index_ddl index_ddl_list := index_ddl_list(); ");
 		result.append("BEGIN ");
 		appendExecuteImmediate(result, modify);
 		result.append("EXCEPTION WHEN column_not_empty THEN ");
 		appendExecuteImmediate(result, addTmp);
 		appendExecuteImmediate(result,
 			"UPDATE " + tableRef(tableName) + " SET " + tmpColumn + " = " + column);
+
+		// Drop the indexes containing the column, clearing the column would violate unique ones.
+		result.append("FOR idx IN (SELECT DISTINCT ic.index_name FROM user_ind_columns ic ");
+		result.append("WHERE ic.table_name = UPPER(");
+		escape(result, tableName);
+		result.append(") AND ic.column_name = ");
+		escape(result, columnName);
+		result.append(" AND NOT EXISTS (SELECT 1 FROM user_constraints c ");
+		result.append("WHERE c.table_name = ic.table_name AND c.index_name = ic.index_name)) LOOP ");
+		result.append("index_ddl.EXTEND; ");
+		result.append("index_ddl(index_ddl.COUNT) := DBMS_METADATA.GET_DDL('INDEX', idx.index_name); ");
+		result.append("EXECUTE IMMEDIATE 'DROP INDEX \"' || idx.index_name || '\"'; ");
+		result.append("END LOOP; ");
+
 		result.append("BEGIN ");
 		appendExecuteImmediate(result, alterTable(tableName) + "MODIFY " + column + " NULL");
 		result.append("EXCEPTION WHEN already_nullable THEN was_mandatory := FALSE; ");
@@ -1132,6 +1160,7 @@ public abstract class OracleHelper extends DBHelper {
 		appendExecuteImmediate(result,
 			"UPDATE " + tableRef(tableName) + " SET " + column + " = " + tmpColumn);
 		appendExecuteImmediate(result, alterTable(tableName) + "DROP COLUMN " + tmpColumn);
+		result.append("FOR i IN 1 .. index_ddl.COUNT LOOP EXECUTE IMMEDIATE index_ddl(i); END LOOP; ");
 		result.append("IF was_mandatory THEN ");
 		appendExecuteImmediate(result, alterTable(tableName) + "MODIFY " + column + " NOT NULL");
 		result.append("END IF; ");

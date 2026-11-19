@@ -312,7 +312,8 @@ const EN = {
   leadWakesExhausted: 'More subagent results are waiting. The agent reads them with your next message.',
 
   sideRail: 'Rail',
-  sideRailBadge: (count: number) => `${count} new`,
+  /** Names the badge of the rail button for a screen reader, read before its count ("New: 3"). */
+  sideRailBadge: 'New',
   /** The floating launcher, for an application that configured no name of its own. */
   dockName: 'Assistant',
   dockOpen: (name: string) => `Open ${name}`,
@@ -619,7 +620,7 @@ const DE: Bundle = {
   leadWakesExhausted: 'Weitere Ergebnisse von Subagenten warten. Der Agent liest sie mit deiner nächsten Nachricht.',
 
   sideRail: 'Leiste',
-  sideRailBadge: (count: number) => `${count} neu`,
+  sideRailBadge: 'Neu',
   dockName: 'Assistent',
   dockOpen: (name: string) => `${name} öffnen`,
   dockClose: (name: string) => `${name} schließen`,

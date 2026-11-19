@@ -1661,14 +1661,14 @@ describe('a mounted rail', () => {
     const release = store.subscribe(() => undefined, control(), DATA_URL)
     store.actions.registerRail()
 
-    store.actions.publishBadgeTotal(3)
-    expect(store.getState().badgeTotal).toBe(3)
-    expect(unseenBadge(store.getState().badgeTotal, store.getState().badgeSeen)).toBe(3)
+    store.actions.publishRailBadge({ total: 3, role: 'error', dot: true, dotRole: 'info' })
+    expect(store.getState().railBadge).toEqual({ total: 3, role: 'error', dot: true, dotRole: 'info' })
+    expect(unseenBadge(store.getState().railBadge.total, store.getState().badgeSeen)).toBe(3)
 
-    store.actions.toggleSide(store.getState().badgeTotal)
+    store.actions.toggleSide(store.getState().railBadge.total)
     expect(store.getState().sideOpen).toBe(true)
     expect(store.getState().badgeSeen).toBe(3)
-    expect(unseenBadge(store.getState().badgeTotal, store.getState().badgeSeen)).toBe(0)
+    expect(unseenBadge(store.getState().railBadge.total, store.getState().badgeSeen)).toBe(0)
 
     release()
   })
@@ -1713,11 +1713,11 @@ describe('a mounted rail', () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined, control(), DATA_URL)
     store.actions.registerRail()
-    store.actions.publishBadgeTotal(4)
+    store.actions.publishRailBadge({ total: 4, dot: false })
 
-    store.actions.markBadgesSeen(store.getState().badgeTotal)
+    store.actions.markBadgesSeen(store.getState().railBadge.total)
     expect(store.getState().badgeSeen).toBe(4)
-    expect(unseenBadge(store.getState().badgeTotal, store.getState().badgeSeen)).toBe(0)
+    expect(unseenBadge(store.getState().railBadge.total, store.getState().badgeSeen)).toBe(0)
     expect(store.getState().sideOpen).toBe(false)
     expect(store.getState().railDecided).toBe(false)
 
@@ -1730,10 +1730,10 @@ describe('a mounted rail', () => {
     const release = store.subscribe(() => undefined, control(), DATA_URL)
 
     const unregister = store.actions.registerRail()
-    store.actions.publishBadgeTotal(2)
+    store.actions.publishRailBadge({ total: 2, dot: false })
     unregister()
 
-    expect(store.getState().badgeTotal).toBe(0)
+    expect(store.getState().railBadge.total).toBe(0)
     release()
   })
 

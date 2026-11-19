@@ -85,10 +85,11 @@ describe('readDockState', () => {
 
 describe('launcherMark', () => {
   it('shows the run before the count, and neither while the panel is open', () => {
-    expect(launcherMark(false, true, 3)).toBe('busy')
-    expect(launcherMark(false, false, 3)).toBe('badge')
-    expect(launcherMark(false, false, 0)).toBe('none')
-    expect(launcherMark(true, true, 3)).toBe('none')
+    const count = { content: '3' }
+    expect(launcherMark(false, true, count)).toBe('busy')
+    expect(launcherMark(false, false, count)).toBe('badge')
+    expect(launcherMark(false, false, null)).toBe('none')
+    expect(launcherMark(true, true, count)).toBe('none')
   })
 })
 
@@ -156,15 +157,16 @@ describe('the rendered dock', () => {
   it('counts the unseen news on the launcher of a closed dock', () => {
     const { store, release } = seedChat('dock-badge')
     store.actions.registerRail()
-    store.actions.publishBadgeTotal(4)
+    store.actions.publishRailBadge({ total: 4, dot: false })
 
     const html = render(dockState({ chatId: 'dock-badge' }))
-    expect(html).toContain('<span class="tl-chat-dock__badge" aria-label="4 new">4</span>')
+    expect(html).toContain('aria-label="Open Albert, New: 4"')
+    expect(html).toContain('<tl-badge data-content="4" data-label="New" data-alone="true"></tl-badge>')
 
     // Opening the dock is the user looking: the watermark moves to the total, not to zero.
-    store.actions.markBadgesSeen(store.getState().badgeTotal)
+    store.actions.markBadgesSeen(store.getState().railBadge.total)
     expect(store.getState().badgeSeen).toBe(4)
-    expect(render(dockState({ chatId: 'dock-badge' }))).not.toContain('tl-chat-dock__badge')
+    expect(render(dockState({ chatId: 'dock-badge' }))).not.toContain('tl-badge')
 
     release()
   })
@@ -172,9 +174,9 @@ describe('the rendered dock', () => {
   it('shows no badge for news the user has already seen', () => {
     const { store, release } = seedChat('dock-seen', { badgeSeen: 3 })
     store.actions.registerRail()
-    store.actions.publishBadgeTotal(3)
+    store.actions.publishRailBadge({ total: 3, dot: false })
 
-    expect(render(dockState({ chatId: 'dock-seen' }))).not.toContain('tl-chat-dock__badge')
+    expect(render(dockState({ chatId: 'dock-seen' }))).not.toContain('tl-badge')
     release()
   })
 

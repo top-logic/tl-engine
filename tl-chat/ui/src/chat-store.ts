@@ -68,6 +68,7 @@ import {
   type ChatPreferences,
 } from './preferences'
 import { parseTasksJson, type AgentTask } from './progress-model'
+import { NO_RAIL_BADGE, type RailBadge } from './rail-model'
 import { argsSummary } from './plain-text'
 import { chatReducer, type ChatAction } from './reducer'
 import { composeOutboundText } from './send-prefix'
@@ -575,13 +576,13 @@ export interface ChatState {
   draftAttachments: DraftAttachment[]
 
   /**
-   * The sum of the mounted rail's section badges.
+   * What the mounted rail's section badges add up to.
    *
    * Published by the rail because the sections are its children and nothing else can see them. The
-   * transcript's toggle button shows this minus {@link badgeSeen} and hands it back to
+   * transcript's toggle button shows its total minus {@link badgeSeen} and hands the total back to
    * {@link ChatActions.toggleSide}, so opening the rail records what the user has now seen.
    */
-  badgeTotal: number
+  railBadge: RailBadge
 
   // Layout preferences.
   sideOpen: boolean
@@ -746,13 +747,13 @@ export interface ChatActions {
    * and in the next one. Idempotent, for the same reason as {@link applyCollapsedDefaults}.
    */
   applyRailDefault(open: boolean): void
-  /** Publishes the sum of the rail's section badges; see {@link ChatState.badgeTotal}. */
-  publishBadgeTotal(total: number): void
+  /** Publishes what the rail's section badges add up to; see {@link ChatState.railBadge}. */
+  publishRailBadge(rail: RailBadge): void
   /**
    * Records that the user has now looked at this conversation.
    *
    * The same watermark {@link toggleSide} moves when the rail is opened: what is counted as new is
-   * {@link ChatState.badgeTotal} minus {@link ChatState.badgeSeen}, so "seen" is the total as it
+   * the total of {@link ChatState.railBadge} minus {@link ChatState.badgeSeen}, so "seen" is the total as it
    * stands, never zero - a section that reports nothing must not turn into news the next time one
    * does. This is the half of `toggleSide` that a `<chat-dock/>` needs: opening the dock is the
    * user looking, but it is not the user opening the rail.
@@ -1139,7 +1140,7 @@ export class ChatStore {
       railDrawerOpen: false,
       conversationsOutsideDock: 0,
       draftAttachments: [],
-      badgeTotal: 0,
+      railBadge: NO_RAIL_BADGE,
     })
     this.effects = this.declareEffects()
     this.actions = this.declareActions()
@@ -2706,10 +2707,19 @@ export class ChatStore {
         this.patch({ sideOpen: open })
       },
 
-      publishBadgeTotal: (total: number) => {
-        const next = Number.isFinite(total) && total > 0 ? Math.round(total) : 0
-        if (next === this.state.badgeTotal) return
-        this.patch({ badgeTotal: next })
+      publishRailBadge: (rail: RailBadge) => {
+        const total = Number.isFinite(rail.total) && rail.total > 0 ? Math.round(rail.total) : 0
+        const next: RailBadge = { ...rail, total }
+        const current = this.state.railBadge
+        if (
+          next.total === current.total &&
+          next.role === current.role &&
+          next.dot === current.dot &&
+          next.dotRole === current.dotRole
+        ) {
+          return
+        }
+        this.patch({ railBadge: next })
       },
 
       markBadgesSeen: (badgeTotal: number) => {
@@ -2731,7 +2741,7 @@ export class ChatStore {
           const mounted = this.rails > 0
           // The badge belongs to the rail that reported it: with none left there is nothing to
           // count, and a stale total would keep a number on a button that opens nothing.
-          this.patch({ railMounted: mounted, badgeTotal: mounted ? this.state.badgeTotal : 0 })
+          this.patch({ railMounted: mounted, railBadge: mounted ? this.state.railBadge : NO_RAIL_BADGE })
         }
       },
 

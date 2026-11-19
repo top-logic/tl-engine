@@ -2,9 +2,12 @@
  * What a `<chat-rail/>` control puts into its state, as the browser reads it.
  *
  * The rail is a shell: the frame - which sections there are, what they are called, their icons and
- * their current counts - is this state, and everything inside a section is the child element's own
+ * their current badges - is this state, and everything inside a section is the child element's own
  * control. Nothing here knows what a section shows.
  */
+
+import type { BadgeJson } from 'tl-react-bridge'
+import { unseenBadge } from './progress-model'
 
 /** One configured section, as the control serialized it. */
 export interface RailSectionState {
@@ -41,16 +44,133 @@ export function readRailSections(state: Record<string, unknown>): RailSectionSta
   return rows
 }
 
-/** Reads the current badge number of each section, keyed by section name. */
-export function readSectionBadges(state: Record<string, unknown>): Record<string, number> {
-  const raw = state.sectionBadges
+/** The color roles of a badge, the most urgent first. */
+const ROLE_URGENCY: readonly BadgeJson.Role[] = ['error', 'warning', 'info', 'success', 'brand']
+
+/** The largest count a badge shows with its digits; the server's `BadgeBinding.MAX_COUNT`. */
+export const MAX_BADGE_COUNT = 99
+
+/** What a badge shows for a count above {@link MAX_BADGE_COUNT}. */
+export const BADGE_OVERFLOW = `${MAX_BADGE_COUNT}+`
+
+/** State key of the badges of the sections; the server's `ChatRailControl.SECTION_BADGES`. */
+export const SECTION_BADGES = 'sectionBadges'
+
+/** Reads the badge each section currently shows, keyed by section name; a section without one is left out. */
+export function readSectionBadges(state: Record<string, unknown>): Record<string, Partial<BadgeJson>> {
+  const raw = state[SECTION_BADGES]
   if (!raw || typeof raw !== 'object') return {}
-  const badges: Record<string, number> = {}
+  const badges: Record<string, Partial<BadgeJson>> = {}
   for (const [name, value] of Object.entries(raw as Record<string, unknown>)) {
-    const count = typeof value === 'number' ? value : Number(value)
-    if (Number.isFinite(count) && count > 0) badges[name] = Math.round(count)
+    if (!value || typeof value !== 'object') continue
+    const row = value as Record<string, unknown>
+    const badge: Partial<BadgeJson> = {}
+    if (row.dot === true) badge.dot = true
+    else if (typeof row.content === 'string' && row.content) badge.content = row.content
+    else continue
+    if (typeof row.role === 'string' && ROLE_URGENCY.includes(row.role as BadgeJson.Role)) {
+      badge.role = row.role as BadgeJson.Role
+    }
+    if (typeof row.label === 'string' && row.label) badge.label = row.label
+    badges[name] = badge
   }
   return badges
+}
+
+/**
+ * What a badge counts: the number it shows, more than {@link MAX_BADGE_COUNT} for the overflow, and
+ * 0 for a dot or a text.
+ */
+export function badgeCount(badge: Partial<BadgeJson> | undefined): number {
+  if (!badge || badge.dot === true || typeof badge.content !== 'string') return 0
+  if (badge.content === BADGE_OVERFLOW) return MAX_BADGE_COUNT + 1
+  if (!/^\d+$/.test(badge.content)) return 0
+  return Number(badge.content)
+}
+
+/** What a count shows on a badge: its digits, or {@link BADGE_OVERFLOW} above {@link MAX_BADGE_COUNT}. */
+export function countContent(count: number): string {
+  return count > MAX_BADGE_COUNT ? BADGE_OVERFLOW : String(count)
+}
+
+/**
+ * What the rail's sections add up to for the transcript's rail button.
+ *
+ * {@link total} sums the counts of the sections, a dot or a text adding nothing. {@link role} is the
+ * most urgent role among the counting sections, {@link dotRole} the most urgent among the sections
+ * showing a dot; `undefined` where there is none.
+ */
+export interface RailBadge {
+  total: number
+  role?: BadgeJson.Role
+  dot: boolean
+  dotRole?: BadgeJson.Role
+}
+
+/** The rail badge of a rail whose sections show nothing. */
+export const NO_RAIL_BADGE: RailBadge = Object.freeze({ total: 0, dot: false })
+
+/** The more urgent of two roles; an absent role is the brand's. */
+function moreUrgent(a: BadgeJson.Role | undefined, b: BadgeJson.Role | undefined): BadgeJson.Role {
+  const ra = ROLE_URGENCY.indexOf(a ?? 'brand')
+  const rb = ROLE_URGENCY.indexOf(b ?? 'brand')
+  return ROLE_URGENCY[Math.min(ra, rb)]
+}
+
+/**
+ * Sums the badges of the sections into the {@link RailBadge} of the transcript's rail button.
+ *
+ * A section with no badge channel contributes nothing: it has no notion of "new", and counting its
+ * rows as news would put a number on the button that never goes away.
+ */
+export function railBadge(
+  sections: RailSectionState[],
+  badges: Record<string, Partial<BadgeJson>>,
+): RailBadge {
+  let total = 0
+  let role: BadgeJson.Role | undefined
+  let dot = false
+  let dotRole: BadgeJson.Role | undefined
+  for (const section of sections) {
+    const badge = badges[section.name]
+    if (!badge) continue
+    if (badge.dot === true) {
+      dotRole = dot ? moreUrgent(dotRole, badge.role) : (badge.role ?? 'brand')
+      dot = true
+      continue
+    }
+    const count = badgeCount(badge)
+    if (count <= 0) continue
+    role = total > 0 ? moreUrgent(role, badge.role) : (badge.role ?? 'brand')
+    total += count
+  }
+  return { total, role, dot, dotRole }
+}
+
+/**
+ * The badge of the transcript's rail button: the count of what is new since the user last looked
+ * (the {@link RailBadge.total} minus `seen`) in the role of the counting sections; when nothing is
+ * new by count, a dot where a section shows one; else none.
+ *
+ * Seen is only a number: a dot stays until its section clears it.
+ *
+ * @param label The name a screen reader gives the badge.
+ */
+export function unseenRailBadge(
+  rail: RailBadge,
+  seen: number,
+  label: string,
+): Partial<BadgeJson> | null {
+  const unseen = unseenBadge(rail.total, seen)
+  if (unseen > 0) return withRole({ content: countContent(unseen), label }, rail.role)
+  if (rail.dot) return withRole({ dot: true, label }, rail.dotRole)
+  return null
+}
+
+/** The badge with the given role, left out for the brand's, which is a badge's default. */
+function withRole(badge: Partial<BadgeJson>, role: BadgeJson.Role | undefined): Partial<BadgeJson> {
+  if (role && role !== 'brand') badge.role = role
+  return badge
 }
 
 /**
@@ -61,19 +181,6 @@ export function readSectionBadges(state: Record<string, unknown>): Record<string
 export function collapsedFromSections(sections: RailSectionState[]): string[] | undefined {
   if (sections.length === 0) return undefined
   return sections.filter((section) => !section.open).map((section) => section.name)
-}
-
-/**
- * The sum the transcript's rail button counts down from.
- *
- * A section with no badge channel contributes nothing: it has no notion of "new", and counting its
- * rows as news would put a number on the button that never goes away.
- */
-export function railBadgeTotal(
-  sections: RailSectionState[],
-  badges: Record<string, number>,
-): number {
-  return sections.reduce((sum, section) => sum + (badges[section.name] ?? 0), 0)
 }
 
 /** Whether the chat's own transient pane (`openInPane`) is showing something. */

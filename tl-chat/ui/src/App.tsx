@@ -15,7 +15,8 @@ import type { ReferenceToken } from './reference'
 import { hostRailSections } from './extensions'
 import { ContextIcon, ContextSection, ProgressIcon, ProgressSection } from './progress'
 import { SourcesIcon, SourcesSection, type CitedSource } from './sources'
-import { progressBadge, unseenBadge } from './progress-model'
+import { progressBadge } from './progress-model'
+import { unseenRailBadge } from './rail-model'
 import { RailToggle, SideRail, SideStrip } from './rail'
 import { SHEET_MAX, SidePane } from './side-pane'
 import { readComposerControls } from './chat-conversation'
@@ -287,7 +288,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
     () => railSections.reduce((sum, section) => sum + (section.badge?.() ?? 0), 0),
     [railSections],
   )
-  const badge = unseenBadge(badgeTotal, chat.badgeSeen)
+  const badge = unseenRailBadge({ total: badgeTotal, dot: false }, chat.badgeSeen, labels.sideRailBadge)
 
   /** What the composer exposes to a host: an imperative handle, because the caret lives in the DOM. */
   const composer = useRef<ComposerApi>(null)

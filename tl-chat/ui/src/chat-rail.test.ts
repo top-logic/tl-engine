@@ -7,10 +7,12 @@ import { TLChatRail } from './chat-rail'
 import {
   collapsedFromSections,
   paneIsOpen,
-  railBadgeTotal,
+  railBadge,
   readPaneSteps,
   readRailSections,
   readSectionBadges,
+  unseenRailBadge,
+  type RailSectionState,
 } from './rail-model'
 
 afterEach(() => resetTLBridge())
@@ -34,7 +36,7 @@ function railState(overrides: Record<string, unknown> = {}): Record<string, unkn
       { name: 'progress', label: 'Progress', icon: 'css:bi bi-list-check', open: true, content: PROGRESS },
       { name: 'invoices', label: 'Invoices', icon: '', open: false, content: INVOICES },
     ],
-    sectionBadges: { progress: 2 },
+    sectionBadges: { progress: { content: '2' } },
     ...overrides,
   }
 }
@@ -67,11 +69,59 @@ describe('readRailSections', () => {
   })
 })
 
-describe('the badge total', () => {
-  it('sums the sections that report a count', () => {
-    const sections = readRailSections(railState())
-    const badges = readSectionBadges(railState({ sectionBadges: { progress: 2, invoices: 3 } }))
-    expect(railBadgeTotal(sections, badges)).toBe(5)
+/** Sections named as given, for summing their badges. */
+function sectionsNamed(...names: string[]): RailSectionState[] {
+  return names.map((name) => ({ name, label: name, icon: '', open: true, content: null }))
+}
+
+describe('the rail badge', () => {
+  const sections = sectionsNamed('a', 'b', 'c')
+
+  it('sums the counts of the sections', () => {
+    const rail = railBadge(sections, { a: { content: '3' }, b: { content: '5' } })
+    expect(rail.total).toBe(8)
+    expect(unseenRailBadge(rail, 0, 'New')).toEqual({ content: '8', label: 'New' })
+  })
+
+  it('shows a sum above 99 as 99+', () => {
+    const rail = railBadge(sections, { a: { content: '60' }, b: { content: '50' } })
+    expect(unseenRailBadge(rail, 0, 'New')).toEqual({ content: '99+', label: 'New' })
+  })
+
+  /** The server cuts a count above 99 off; a section showing "99+" counts as more than 99. */
+  it('carries an overflowing section into the sum', () => {
+    const rail = railBadge(sections, { a: { content: '99+' } })
+    expect(rail.total).toBeGreaterThan(99)
+    expect(unseenRailBadge(rail, 0, 'New')?.content).toBe('99+')
+    expect(unseenRailBadge(railBadge(sections, { a: { content: '99+' }, b: { content: '1' } }), 0, 'New')?.content).toBe('99+')
+  })
+
+  it('shows a dot when only dots are shown', () => {
+    const rail = railBadge(sections, { a: { dot: true }, b: { dot: true, role: 'warning' } })
+    expect(rail.total).toBe(0)
+    expect(unseenRailBadge(rail, 0, 'New')).toEqual({ dot: true, role: 'warning', label: 'New' })
+  })
+
+  it('shows the count rather than a dot when both are shown', () => {
+    const rail = railBadge(sections, { a: { dot: true, role: 'error' }, b: { content: '2' } })
+    expect(unseenRailBadge(rail, 0, 'New')).toEqual({ content: '2', label: 'New' })
+  })
+
+  it('takes the most urgent role of the counting sections', () => {
+    expect(railBadge(sections, { a: { content: '1' }, b: { content: '1', role: 'warning' } }).role).toBe('warning')
+    expect(
+      railBadge(sections, { a: { content: '1', role: 'warning' }, b: { content: '1', role: 'error' }, c: { content: '1' } })
+        .role,
+    ).toBe('error')
+    expect(railBadge(sections, { a: { content: '1', role: 'success' }, b: { content: '1', role: 'info' } }).role).toBe('info')
+    expect(railBadge(sections, { a: { content: '1', role: 'success' }, b: { content: '1' } }).role).toBe('success')
+  })
+
+  it('counts nothing for a text badge', () => {
+    const rail = railBadge(sections, { a: { content: 'neu', role: 'error' }, b: { content: '2' } })
+    expect(rail.total).toBe(2)
+    expect(rail.role).toBe('brand')
+    expect(unseenRailBadge(railBadge(sections, { a: { content: 'neu' } }), 0, 'New')).toBeNull()
   })
 
   /**
@@ -79,12 +129,38 @@ describe('the badge total', () => {
    * the conversation's button that never goes away.
    */
   it('ignores a section that reports nothing', () => {
-    const sections = readRailSections(railState())
-    expect(railBadgeTotal(sections, readSectionBadges(railState()))).toBe(2)
+    expect(railBadge(sectionsNamed('a'), { b: { content: '4' } }).total).toBe(0)
   })
 
-  it('drops values that are not a positive number', () => {
-    expect(readSectionBadges({ sectionBadges: { a: 0, b: -1, c: 'x', d: '4' } })).toEqual({ d: 4 })
+  it('counts only what is new since the user last looked, in the role of the counting sections', () => {
+    const rail = railBadge(sections, { a: { content: '5', role: 'error' } })
+    expect(unseenRailBadge(rail, 3, 'New')).toEqual({ content: '2', role: 'error', label: 'New' })
+    expect(unseenRailBadge(rail, 5, 'New')).toBeNull()
+  })
+
+  /** Seen is a number: a dot stays until its section clears it, and shows only once no count is new. */
+  it('shows a dot only when no count is new', () => {
+    const rail = railBadge(sections, { a: { content: '5' }, b: { dot: true, role: 'info' } })
+    expect(unseenRailBadge(rail, 2, 'New')).toEqual({ content: '3', label: 'New' })
+    expect(unseenRailBadge(rail, 5, 'New')).toEqual({ dot: true, role: 'info', label: 'New' })
+  })
+
+  it('reads the badge states and drops what shows nothing', () => {
+    expect(
+      readSectionBadges({
+        sectionBadges: {
+          a: { content: '3', role: 'error', label: 'New entries' },
+          b: { dot: true },
+          c: {},
+          d: 4,
+          e: { content: '1', role: 'bogus' },
+        },
+      }),
+    ).toEqual({
+      a: { content: '3', role: 'error', label: 'New entries' },
+      b: { dot: true },
+      e: { content: '1' },
+    })
   })
 })
 
@@ -113,10 +189,20 @@ describe('the rendered rail', () => {
     expect(html).toContain('data-module="TLDataList"')
   })
 
-  it('shows the badge beside the title and on the strip icon', () => {
+  it('shows the badge beside the title and on the strip icon through the part', () => {
     const html = render(railState())
-    expect(html).toContain('<span class="side-section-badge">2</span>')
-    expect(html).toContain('<span class="side-strip-badge">2</span>')
+    // Beside the title: read with it.
+    expect(html).toContain('<span class="side-section-title">Progress</span> <tl-badge data-content="2"></tl-badge>')
+    // On the strip icon: hidden, the button is named by its label and the badge.
+    expect(html).toContain('aria-label="Progress, 2"')
+    expect(html).toContain('<tl-badge data-content="2" data-alone="true"></tl-badge>')
+    expect(html).not.toContain('side-section-badge')
+    expect(html).not.toContain('side-strip-badge')
+  })
+
+  it('shows no badge for a section without one', () => {
+    const html = render(railState({ sectionBadges: {} }))
+    expect(html).not.toContain('tl-badge')
   })
 
   it('renders the configured icon and a fallback glyph for a section without one', () => {

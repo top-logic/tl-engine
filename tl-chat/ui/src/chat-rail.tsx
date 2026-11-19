@@ -1,4 +1,12 @@
-import { React, rootClassName, TLChild, useTLCommand, useTLState } from 'tl-react-bridge'
+import {
+  labelWithBadge,
+  React,
+  rootClassName,
+  StateBadge,
+  TLChild,
+  useTLCommand,
+  useTLState,
+} from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { bundle } from './i18n'
@@ -6,7 +14,7 @@ import {
   collapsedFromSections,
   paneIsOpen,
   paneStepIcon,
-  railBadgeTotal,
+  railBadge,
   readPaneSteps,
   readRailSections,
   readSectionBadges,
@@ -90,8 +98,9 @@ export function TLChatRail({ controlId }: TLCellProps) {
 
   useEffect(() => actions.applyRailDefault(openDefault), [actions, openDefault])
 
-  const badgeTotal = useMemo(() => railBadgeTotal(sections, badges), [sections, badges])
-  useEffect(() => actions.publishBadgeTotal(badgeTotal), [actions, badgeTotal])
+  const rail = useMemo(() => railBadge(sections, badges), [sections, badges])
+  useEffect(() => actions.publishRailBadge(rail), [actions, rail])
+  const badgeTotal = rail.total
 
   /*
    * A drawer where the host has no room for the rail's column (#565).
@@ -322,13 +331,19 @@ export function TLChatRail({ controlId }: TLCellProps) {
                 sectionsVisible && !collapsedIds.has(section.name) ? ' is-active' : ''
               }`}
               title={section.label}
-              aria-label={section.label}
+              aria-label={labelWithBadge(section.label, badges[section.name])}
               onClick={() => onStrip(section)}
             >
-              <SectionIcon icon={section.icon} />
               {badges[section.name] ? (
-                <span className="side-strip-badge">{badges[section.name]}</span>
-              ) : null}
+                <span className="tl-icon-badge">
+                  <SectionIcon icon={section.icon} />
+                  <span className="tl-icon-badge__count">
+                    <StateBadge badge={badges[section.name]} alone={true} />
+                  </span>
+                </span>
+              ) : (
+                <SectionIcon icon={section.icon} />
+              )}
             </button>
           ))}
         </nav>
@@ -342,7 +357,7 @@ export function TLChatRail({ controlId }: TLCellProps) {
         <div className="side-rail">
           {sections.map((section) => {
             const collapsed = collapsedIds.has(section.name)
-            const count = badges[section.name] ?? 0
+            const badge = badges[section.name]
             return (
               <section
                 key={section.name}
@@ -356,7 +371,12 @@ export function TLChatRail({ controlId }: TLCellProps) {
                 >
                   <span className={`side-caret${collapsed ? '' : ' is-open'}`} aria-hidden="true" />
                   <span className="side-section-title">{section.label}</span>
-                  {count > 0 ? <span className="side-section-badge">{count}</span> : null}
+                  {badge ? (
+                    <>
+                      {' '}
+                      <StateBadge badge={badge} alone={false} />
+                    </>
+                  ) : null}
                 </button>
                 <div className={`side-section-body${collapsed ? ' is-hidden' : ''}`}>
                   <TLChild control={section.content} />

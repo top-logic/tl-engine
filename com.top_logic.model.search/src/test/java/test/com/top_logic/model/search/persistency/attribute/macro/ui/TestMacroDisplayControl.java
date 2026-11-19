@@ -96,6 +96,26 @@ public class TestMacroDisplayControl extends TestControl {
 		});
 	}
 
+	/**
+	 * A macro is evaluated with the access rights of the current user: the name of another
+	 * account is visible for the administrator, but not for an ordinary user, who may read only
+	 * the own account.
+	 */
+	public void testMacroEvaluatedWithSecurity() {
+		Person root = PersonManager.getManager().getRoot();
+		SearchExpression macro = createMacro("<b>name: {$model.get(`tl.accounts:Person#name`)}</b>");
+
+		TLContextManager.inPersonContext(root, () -> {
+			String output = writeControl(createControl(root, macro));
+			assertContains("<b>name: " + root.getName() + "</b>", output);
+		});
+
+		TLContextManager.inPersonContext(_user, () -> {
+			String output = writeControl(createControl(root, macro));
+			assertContains("User has no right to see the name of another account.", "<b>name: </b>", output);
+		});
+	}
+
 	public void testMacroOutput() {
 		MacroDisplayControl control = createControl("<b>value: {1 + 2}</b>");
 

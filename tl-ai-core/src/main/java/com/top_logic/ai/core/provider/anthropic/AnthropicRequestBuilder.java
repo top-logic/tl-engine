@@ -69,7 +69,7 @@ public final class AnthropicRequestBuilder {
 	 */
 	public static String buildRequestJson(ProviderRequest request, String anthropicVersion)
 			throws ProviderException {
-		String cacheTtl = cacheTtl(request.modelOptions());
+		String cacheTtl = (String) request.modelOptions().get("cacheTtl");
 
 		List<Message> messages = request.messages();
 		int userRoleCount = countUserRolePositions(messages);
@@ -345,25 +345,10 @@ public final class AnthropicRequestBuilder {
 	private static Map<String, Object> buildCacheControl(String cacheTtl) {
 		Map<String, Object> cc = new LinkedHashMap<>();
 		cc.put("type", "ephemeral");
-		if (cacheTtl != null) {
+		if (cacheTtl != null && !cacheTtl.isEmpty()) {
 			cc.put("ttl", cacheTtl);
 		}
 		return cc;
-	}
-
-	/**
-	 * The lifetime of the prompt cache entries the given model options ask for.
-	 *
-	 * @return The value of {@link ProviderRequest#CACHE_TTL}, <code>null</code> if none is set and
-	 *         the endpoint's default applies.
-	 */
-	public static String cacheTtl(Map<String, Object> modelOptions) {
-		Object value = modelOptions.get(ProviderRequest.CACHE_TTL);
-		if (value == null) {
-			return null;
-		}
-		String ttl = value.toString();
-		return ttl.isEmpty() ? null : ttl;
 	}
 
 	/**
@@ -434,77 +419,20 @@ public final class AnthropicRequestBuilder {
 	 */
 	private static void writeThinkingParams(AnthropicRequest req, String model, int maxOutputTokens,
 			Map<String, Object> modelOptions) {
-		ThinkingParams params = thinkingParams(model, maxOutputTokens, modelOptions);
-		if (params == null) {
-			return;
-		}
-		req.setThinking(params.thinking());
-		if (params.effort() != null) {
-			putOutputConfig(req, OUTPUT_CONFIG_EFFORT, params.effort());
-		}
-	}
-
-	/**
-	 * The thinking configuration of a Claude model for the requested effort.
-	 *
-	 * <p>
-	 * With an effort, a Haiku model before generation 5 gets thinking enabled with a token budget
-	 * derived from the effort and the output limit; every other model gets adaptive thinking with
-	 * the summarized display and the effort in the output configuration. Without an effort, only a
-	 * model that thinks unasked gets the adaptive configuration.
-	 * </p>
-	 *
-	 * <p>
-	 * Shared by every endpoint that serves Claude in the Messages API's dialect, so that Claude
-	 * thinks the same whichever provider serves it.
-	 * </p>
-	 *
-	 * @param model
-	 *        The model ID; the rules look for the Claude family and generation in it, so a
-	 *        provider-specific spelling such as {@code eu.anthropic.claude-opus-5-5} works as well.
-	 * @param maxOutputTokens
-	 *        The output limit of the request, from which a token budget is derived.
-	 * @param modelOptions
-	 *        The request's model options, read for {@link ProviderRequest#THINKING_EFFORT}.
-	 * @return The configuration, <code>null</code> if the request leaves thinking to the model.
-	 */
-	public static ThinkingParams thinkingParams(String model, int maxOutputTokens,
-			Map<String, Object> modelOptions) {
-		Object thinkingEffort = modelOptions.get(ProviderRequest.THINKING_EFFORT);
+		Object thinkingEffort = modelOptions.get("thinking_effort");
 		if (thinkingEffort == null) {
-			return thinksUnasked(model) ? new ThinkingParams(adaptiveThinking(), null) : null;
+			if (thinksUnasked(model)) {
+				req.setThinking(adaptiveThinking());
+			}
+			return;
 		}
 		if (requiresBudgetTokens(model)) {
 			int budgetTokens = effortToBudgetTokens(thinkingEffort.toString(), maxOutputTokens);
-			return new ThinkingParams(Map.<String, Object> of("type", "enabled", "budget_tokens", budgetTokens), null);
+			req.setThinking(Map.of("type", "enabled", "budget_tokens", budgetTokens));
+		} else {
+			req.setThinking(adaptiveThinking());
+			putOutputConfig(req, "effort", thinkingEffort.toString());
 		}
-		return new ThinkingParams(adaptiveThinking(), thinkingEffort.toString());
-	}
-
-	/**
-	 * The thinking configuration of a request.
-	 *
-	 * @param thinking
-	 *        The value of the request's {@code thinking} field.
-	 * @param effort
-	 *        The value of {@link #OUTPUT_CONFIG_EFFORT} in the request's {@code output_config},
-	 *        <code>null</code> for none.
-	 */
-	public record ThinkingParams(Map<String, Object> thinking, String effort) {
-		// Pair of values.
-	}
-
-	/** Field of the request's {@code output_config} that carries the thinking effort. */
-	public static final String OUTPUT_CONFIG_EFFORT = "effort";
-
-	/**
-	 * The {@code top_k} sampling parameter of the given model options.
-	 *
-	 * @return The value of {@link ProviderRequest#TOP_K}, <code>null</code> if none is set.
-	 */
-	public static Long topK(Map<String, Object> modelOptions) {
-		Object topK = modelOptions.get(ProviderRequest.TOP_K);
-		return topK == null ? null : Long.valueOf(topK.toString());
 	}
 
 	private static Map<String, Object> adaptiveThinking() {
@@ -587,9 +515,9 @@ public final class AnthropicRequestBuilder {
 		if (topP != null) {
 			req.setTopP(Double.parseDouble(topP.toString()));
 		}
-		Long topK = topK(modelOptions);
+		Object topK = modelOptions.get("top_k");
 		if (topK != null) {
-			req.setTopK(topK.longValue());
+			req.setTopK(Long.parseLong(topK.toString()));
 		}
 	}
 }

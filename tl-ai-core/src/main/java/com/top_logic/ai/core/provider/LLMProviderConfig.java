@@ -271,7 +271,7 @@ public interface LLMProviderConfig {
 	 * <p>
 	 * Decides which vendor-specific options the model is given, see {@link ApiFamilies}. A provider
 	 * that serves the models of one vendor only answers its {@link #getCatalogProviderId() catalog
-	 * provider ID}; a provider that serves the models of several vendors (e.g. AWS Bedrock) answers
+	 * provider ID}; a provider that serves the models of several vendors (e.g. Google Vertex AI) answers
 	 * the family of the model's vendor.
 	 * </p>
 	 *

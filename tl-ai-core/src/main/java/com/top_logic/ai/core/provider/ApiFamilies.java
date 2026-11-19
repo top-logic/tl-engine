@@ -12,8 +12,8 @@ package com.top_logic.ai.core.provider;
  * <p>
  * The family decides which vendor-specific options a model is given (e.g. a thinking effort for
  * {@link #ANTHROPIC}, a reasoning effort for {@link #OPENAI}), independent of the provider that
- * serves it: Claude is of the family {@link #ANTHROPIC} on the Anthropic API as on AWS Bedrock or
- * Google Vertex AI. A family is spelled like the catalog provider ID of the vendor's own API.
+ * serves it: Claude is of the family {@link #ANTHROPIC} on the Anthropic API as on Google Vertex
+ * AI. A family is spelled like the catalog provider ID of the vendor's own API.
  * </p>
  */
 public final class ApiFamilies {

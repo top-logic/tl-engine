@@ -262,3 +262,98 @@ describe('a cancelled beforeunload', () => {
     expect(mayBeNavigating()).toBe(false);
   });
 });
+
+describe('an event stream the server stops answering', () => {
+  /** The answer of the application to a check for a window it knows. */
+  function known(): Response {
+    return new Response('{"last":1}', { status: 200 });
+  }
+
+  it('disconnects the page and is opened again, naming the last event, when the window is still known', async () => {
+    const { connect } = await load();
+    const { isConnected, MIN_RETRY_BACKOFF_MS } = await import('./connection');
+    connect('/ctx/react-api/events?windowName=v1a2b');
+    heartbeat(sources[0]);
+
+    // The server is gone: the browser tries to reconnect the stream by itself.
+    sources[0].readyState = FakeEventSource.CONNECTING;
+    sources[0].onerror?.();
+
+    expect(isConnected()).toBe(false);
+
+    vi.stubGlobal('fetch', vi.fn(async () => known()));
+    await vi.advanceTimersByTimeAsync(MIN_RETRY_BACKOFF_MS);
+
+    expect(fetch).toHaveBeenCalledWith('/ctx/react-api/poll?windowName=v1a2b&peek=true', expect.anything());
+    expect(isConnected()).toBe(true);
+    expect(sources).toHaveLength(2);
+    expect(sources[1].url).toBe('/ctx/react-api/events?windowName=v1a2b&after=1');
+    expect(window.sessionStorage.getItem(POLLING_KEY)).toBeNull();
+  });
+
+  it('does not make the tab poll when the servlet container refuses it meanwhile', async () => {
+    const { connect } = await load();
+    const { isConnected } = await import('./connection');
+    connect('/ctx/react-api/events?windowName=v1a2b');
+    heartbeat(sources[0]);
+    sources[0].readyState = FakeEventSource.CONNECTING;
+    sources[0].onerror?.();
+
+    // The reconnect of the browser reaches the error page of a container whose application is not
+    // started yet.
+    sources[0].abort();
+
+    expect(isConnected()).toBe(false);
+    expect(window.sessionStorage.getItem(POLLING_KEY)).toBeNull();
+  });
+});
+
+describe('a poll refused by a proxy', () => {
+  it('does not load the page again, but disconnects it', async () => {
+    window.sessionStorage.setItem(POLLING_KEY, '1');
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('<html>Unauthorized</html>', { status: 401 })));
+    const replace = vi.fn();
+    const reload = vi.fn();
+    const realLocation = window.location;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { pathname: '/ctx/view/v1a2b', search: '', hash: '', href: 'http://localhost/ctx/view/v1a2b', replace, reload },
+    });
+    try {
+      const { connect, isPageLeaving } = await load();
+      const { isConnected } = await import('./connection');
+      connect('/ctx/react-api/events?windowName=v1a2b');
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(isConnected()).toBe(false);
+      expect(isPageLeaving()).toBe(false);
+      expect(replace).not.toHaveBeenCalled();
+      expect(reload).not.toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(window, 'location', { configurable: true, value: realLocation });
+    }
+  });
+
+  it('loads the page again when the application refuses it as stale', async () => {
+    window.sessionStorage.setItem(POLLING_KEY, '1');
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(
+      JSON.stringify({ success: false, errorCode: 'stale-ui', error: 'No session.' }), { status: 401 })));
+    const replace = vi.fn();
+    const realLocation = window.location;
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { pathname: '/ctx/view/v1a2b', search: '', hash: '', href: 'http://localhost/ctx/view/v1a2b', replace, reload: vi.fn() },
+    });
+    try {
+      const { connect } = await load();
+      connect('/ctx/react-api/events?windowName=v1a2b');
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(replace).toHaveBeenCalledWith('/ctx/view/');
+      // A tab entered again for a lost session tries the stream first again.
+      expect(window.sessionStorage.getItem(POLLING_KEY)).toBeNull();
+    } finally {
+      Object.defineProperty(window, 'location', { configurable: true, value: realLocation });
+    }
+  });
+});

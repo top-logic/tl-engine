@@ -10,6 +10,7 @@ import MuiDisclosureToggleAdapter from './adapters/MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './adapters/MuiCheckboxAdapter';
 import MuiTextInputAdapter from './adapters/MuiTextInputAdapter';
 import MuiChipAdapter from './adapters/MuiChipAdapter';
+import MuiSkeletonAdapter from './adapters/MuiSkeletonAdapter';
 import { childControl, mountAdapter, settle } from './adapters/wire-test-support';
 
 replacePart('Button', MuiButtonAdapter);
@@ -17,6 +18,8 @@ replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
 replacePart('Chip', MuiChipAdapter);
+// The table draws its rows not yet sent as the part Skeleton.
+replacePart('Skeleton', MuiSkeletonAdapter);
 
 class NoResizeObserver {
   observe() {}

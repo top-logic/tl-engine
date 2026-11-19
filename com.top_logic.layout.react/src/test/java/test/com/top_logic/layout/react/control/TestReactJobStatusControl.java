@@ -25,7 +25,8 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 /**
  * Tests what a {@link ReactJobStatusControl} tells the client about a job: how it stands, the steps
  * it goes through, how far it has come and how long it has been at work - and that a request to
- * stop reaches only a job that may be stopped.
+ * stop reaches only a job that may be stopped, and a request to close only the display of a job
+ * that has ended.
  *
  * <p>
  * The elapsed time is counted by the client, so what is tested here is what it counts from: the two
@@ -190,6 +191,76 @@ public class TestReactJobStatusControl extends TestCase {
 		assertTrue(control(running(null, null, () -> {
 			// Nothing to do, the command is not run here.
 		})).isRecordable(ReactJobStatusControl.CANCEL_COMMAND));
+	}
+
+	/** A running job cannot be closed, even by a display that offers closing. */
+	public void testARunningJobIsNotClosable() {
+		ReactJobStatusControl control = control(running(null, null, null));
+		control.setCloseAction(() -> fail());
+
+		assertEquals(Boolean.FALSE, state(control).get(ReactJobStatusControl.CLOSABLE));
+	}
+
+	/** A display offering closing may be closed as soon as its job has ended. */
+	public void testAnEndedJobIsClosable() {
+		ReactJobStatusControl control = control(running(null, null, null));
+		control.setCloseAction(() -> {
+			// Not run here.
+		});
+
+		control.setJob(failed());
+
+		assertEquals(Boolean.TRUE, state(control).get(ReactJobStatusControl.CLOSABLE));
+	}
+
+	/** A display without a close action offers no closing, not even for a job that has ended. */
+	public void testADisplayWithoutACloseActionIsNotClosable() {
+		ReactJobStatusControl control = control(failed());
+
+		assertEquals(Boolean.FALSE, state(control).get(ReactJobStatusControl.CLOSABLE));
+
+		control.executeClientCommand(ReactJobStatusControl.CLOSE_COMMAND, Map.of());
+	}
+
+	/** Without a job there is nothing to close. */
+	public void testNoJobIsNotClosable() {
+		ReactJobStatusControl control = control(null);
+		control.setCloseAction(() -> fail());
+
+		assertEquals(Boolean.FALSE, state(control).get(ReactJobStatusControl.CLOSABLE));
+		control.executeClientCommand(ReactJobStatusControl.CLOSE_COMMAND, Map.of());
+	}
+
+	/** Closing the display of a job that has ended runs the close action. */
+	public void testACloseOfAnEndedJobRunsTheAction() {
+		boolean[] closed = { false };
+		ReactJobStatusControl control = control(failed());
+		control.setCloseAction(() -> closed[0] = true);
+
+		control.executeClientCommand(ReactJobStatusControl.CLOSE_COMMAND, Map.of());
+
+		assertTrue("The display must be closed.", closed[0]);
+	}
+
+	/**
+	 * A close crossing the report of a job started anew is dropped: the running job must stay on
+	 * display.
+	 */
+	public void testACloseOfARunningJobIsIgnored() {
+		boolean[] closed = { false };
+		ReactJobStatusControl control = control(failed());
+		control.setCloseAction(() -> closed[0] = true);
+
+		control.setJob(running(null, null, null));
+		control.executeClientCommand(ReactJobStatusControl.CLOSE_COMMAND, Map.of());
+
+		assertFalse("A running job must not be put away.", closed[0]);
+	}
+
+	/** A job that stopped with an error. */
+	private static JobDisplay failed() {
+		return new JobDisplay(Status.FAILED, phases(1), null, null, STARTED, FINISHED, null, "Connection lost",
+			null, null);
 	}
 
 	/** A job at its second of three steps. */

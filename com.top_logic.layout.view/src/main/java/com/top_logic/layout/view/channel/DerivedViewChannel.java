@@ -13,6 +13,7 @@ import java.util.function.Function;
 
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.form.StateHandler;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.listen.ModelScope;
 
@@ -29,8 +30,8 @@ import com.top_logic.model.listen.ModelScope;
  * </p>
  *
  * <p>
- * By default, a derived channel is read-only: calling {@link #set(Object)} throws
- * {@link UnsupportedOperationException}. When bound with a reverse function via
+ * By default, a derived channel is read-only: it is not {@link #isWritable() writable}, and calling
+ * {@link #set(Object)} throws {@link UnsupportedOperationException}. When bound with a reverse function via
  * {@link #bind(List, Function, Function)}, the channel becomes bidirectional: setting a value
  * applies the reverse function and propagates the result to the first input channel.
  * </p>
@@ -52,6 +53,8 @@ import com.top_logic.model.listen.ModelScope;
 public class DerivedViewChannel implements ObservingChannel {
 
 	private final String _name;
+
+	private final TLClass _valueType;
 
 	private Object _value;
 
@@ -75,7 +78,25 @@ public class DerivedViewChannel implements ObservingChannel {
 	 *        The channel name (for error messages and debugging).
 	 */
 	public DerivedViewChannel(String name) {
+		this(name, null);
+	}
+
+	/**
+	 * Creates a {@link DerivedViewChannel} with a declared value type.
+	 *
+	 * @param name
+	 *        The channel name (for error messages and debugging).
+	 * @param valueType
+	 *        See {@link #getValueType()}, {@code null} for none.
+	 */
+	public DerivedViewChannel(String name, TLClass valueType) {
 		_name = name;
+		_valueType = valueType;
+	}
+
+	@Override
+	public TLClass getValueType() {
+		return _valueType;
 	}
 
 	/**
@@ -182,6 +203,15 @@ public class DerivedViewChannel implements ObservingChannel {
 	@Override
 	public Object get() {
 		return _value;
+	}
+
+	/**
+	 * Whether this channel was {@link #bind(List, Function, Function) bound} with a reverse function
+	 * mapping a written value back to its first input.
+	 */
+	@Override
+	public boolean isWritable() {
+		return _reverseFunction != null;
 	}
 
 	@Override

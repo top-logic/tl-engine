@@ -8,18 +8,18 @@ package com.top_logic.ai.chat.layout;
 import java.util.List;
 
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.tl.ai.core.message.AssistantMessage;
-import com.top_logic.tl.ai.core.message.ContentPart;
-import com.top_logic.tl.ai.core.message.Message;
-import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.core.message.ToolCall;
-import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
-import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.ai.core.message.AssistantMessage;
+import com.top_logic.ai.core.message.ContentPart;
+import com.top_logic.ai.core.message.Message;
+import com.top_logic.ai.core.message.TextContent;
+import com.top_logic.ai.core.message.TokenUsage;
+import com.top_logic.ai.core.message.ToolCall;
+import com.top_logic.ai.core.provider.LLMProvider;
+import com.top_logic.ai.core.provider.LLMProviderConfig;
+import com.top_logic.ai.core.provider.ProviderException;
+import com.top_logic.ai.core.provider.ProviderRequest;
+import com.top_logic.ai.core.provider.StreamEvent;
+import com.top_logic.ai.core.provider.StreamHandler;
 
 /**
  * A provider whose answers a test writes, so that a chat run goes the whole way a real one goes -

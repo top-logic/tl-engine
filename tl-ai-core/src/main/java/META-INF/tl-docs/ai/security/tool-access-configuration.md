@@ -8,7 +8,7 @@ order: 80
 ## The five-line version
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+<config service-class="com.top_logic.ai.core.security.AiToolAccessService">
     <instance>
         <tool-access>
             <role name="YourRole">

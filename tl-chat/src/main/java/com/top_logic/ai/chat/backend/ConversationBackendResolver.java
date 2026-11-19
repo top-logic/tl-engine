@@ -5,7 +5,7 @@
  */
 package com.top_logic.ai.chat.backend;
 
-import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.execution.model.AgentSession;
 
 /**
  * Decides which {@link ConversationBackend} answers a conversation.

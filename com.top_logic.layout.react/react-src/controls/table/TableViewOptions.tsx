@@ -54,9 +54,9 @@ export interface TableViewOptionsProps extends TableViewValues {
 }
 
 /**
- * The content of the popover "View" of a table: the density as three segments and stripes and column lines as
- * switches (where the table keeps the view, see `viewOptions`), the entry opening the column selection (where the
- * table offers it) and the reset.
+ * The content of the popover "View" of a table: first the entry opening the column selection (where the table
+ * offers it), the setting a table is adjusted by most; then the density as three segments and stripes and column
+ * lines as switches (where the table keeps the view, see `viewOptions`); last the reset.
  *
  * <p>A change takes effect at once and is sent with the other two values. The values shown are held here until
  * the server echoes others, so that a second change, made before the echo of the first has arrived, is sent with
@@ -103,8 +103,14 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
   return (
     <>
       <div className="tl-table-view-options__title tl-type-label-strong">{i18n['js.table.view']}</div>
+      {columnSelect && (
+        <button type="button" className="tl-menu__item tl-type-body" onClick={onColumns}>
+          <span className="tl-menu__label">{i18n['js.table.viewChooseColumns']}</span>
+        </button>
+      )}
       {viewOptions && (
         <>
+          {columnSelect && <hr className="tl-divider" />}
           <div id={headingId} className="tl-menu__header tl-type-label">{i18n['js.table.viewDensity']}</div>
           <div
             role="radiogroup"
@@ -144,14 +150,9 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
             checked={shown.columnLines}
             onChange={(checked) => change({ columnLines: checked })}
           />
-          <hr className="tl-divider" />
         </>
       )}
-      {columnSelect && (
-        <button type="button" className="tl-menu__item tl-type-body" onClick={onColumns}>
-          <span className="tl-menu__label">{i18n['js.table.viewChooseColumns']}</span>
-        </button>
-      )}
+      <hr className="tl-divider" />
       <button type="button" className="tl-menu__item tl-type-body" onClick={onReset}>
         <span className="tl-menu__label">{i18n['js.table.viewReset']}</span>
       </button>
@@ -159,9 +160,9 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
   );
 };
 
-/** The focus starts on the segment of the density in force, where the table offers the density, else on the first entry. */
-function selectedSegment(root: HTMLElement): HTMLElement | null {
-  return root.querySelector<HTMLElement>('[role="radio"][tabindex="0"]') ?? root.querySelector<HTMLElement>('button');
+/** The focus starts on the first entry: the column selection where the table offers it, else the density in force. */
+function firstEntry(root: HTMLElement): HTMLElement | null {
+  return root.querySelector<HTMLElement>('button:not([role="radio"]), [role="radio"][tabindex="0"]');
 }
 
 export interface TableViewButtonProps extends TableViewValues {
@@ -212,7 +213,7 @@ export const TableViewButton: React.FC<TableViewButtonProps> = ({ inCell, column
           anchorRef={anchorRef}
           label={i18n['js.table.view']}
           className="tl-menu tl-table-view-options"
-          initialFocus={selectedSegment}
+          initialFocus={firstEntry}
           onClose={close}
         >
           <TableViewOptions

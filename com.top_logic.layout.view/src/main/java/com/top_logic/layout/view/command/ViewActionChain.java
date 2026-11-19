@@ -62,56 +62,43 @@ public class ViewActionChain {
 	 */
 	public static void run(ReactContext context, List<ViewAction> actions, ActionArguments arguments,
 			Consumer<Object> onComplete) {
-		run(context, actions, arguments, onComplete, null);
+		run(context, actions, arguments, ButtonTone.DEFAULT, onComplete, null);
 	}
 
 	/**
-	 * Runs {@code actions} with the given arguments, telling the caller when the chain has come to
-	 * an end whichever way it ended.
+	 * Runs {@code actions} for a caller that knows what the chain stands for, and that follows
+	 * whether an action holds the chain.
 	 *
 	 * @param arguments
 	 *        The arguments every action of the chain runs with; {@code null} for
 	 *        {@link ActionArguments#NONE}.
-	 * @param onComplete
-	 *        Invoked when the chain settles normally, see
-	 *        {@link #run(ReactContext, List, ActionArguments, Consumer)}.
-	 * @param onSettled
-	 *        Invoked exactly once as soon as the chain cannot continue any more: it completed, it
-	 *        was aborted, or an action threw. Invoked before the call returns for a chain that
-	 *        settles within it, and from whatever interaction hands the chain back otherwise - a
-	 *        caller that has to tell the two apart marks the call and inspects the mark after it
-	 *        returned. May be {@code null}.
-	 */
-	public static void run(ReactContext context, List<ViewAction> actions, ActionArguments arguments,
-			Consumer<Object> onComplete, Runnable onSettled) {
-		run(context, actions, arguments, ButtonTone.DEFAULT, onComplete, onSettled);
-	}
-
-	/**
-	 * Runs {@code actions} for a caller that knows what the chain stands for, see
-	 * {@link #run(ReactContext, List, ActionArguments, Consumer, Runnable)}.
-	 *
 	 * @param after
 	 *        The tone of what follows the chain: {@link ButtonTone#DANGER} for the chain of a
 	 *        command that is destructive by its {@link CommandCliques#tone(String) clique}, so that
 	 *        every step of the chain sees a destructive {@link Continuation#tone() tone of what
 	 *        follows it}.
+	 * @param onComplete
+	 *        Invoked when the chain settles normally, see
+	 *        {@link #run(ReactContext, List, ActionArguments, Consumer)}.
+	 * @param holds
+	 *        Told whenever an action comes to hold the chain and whenever it hands the chain back,
+	 *        see {@link HoldObserver}. May be {@code null}.
 	 */
 	public static void run(ReactContext context, List<ViewAction> actions, ActionArguments arguments,
-			ButtonTone after, Consumer<Object> onComplete, Runnable onSettled) {
+			ButtonTone after, Consumer<Object> onComplete, HoldObserver holds) {
 		ActionArguments args = nonNull(arguments);
-		Settlement settlement = new Settlement(onSettled);
+		Activity activity = new Activity(holds);
 		Deque<Runnable> compensations = new ArrayDeque<>();
-		runFrom(context, actions, 0, args, args.value(), after, compensations, settlement,
+		activity.run(() -> runFrom(context, actions, 0, args, args.value(), after, compensations, activity,
 			value -> {
-				settlement.settle();
+				activity.settle();
 				settled(onComplete, value);
 			},
 			() -> {
 				runCompensations(compensations);
-				settlement.settle();
+				activity.settle();
 				settled(onComplete, null);
-			});
+			}));
 	}
 
 	/**
@@ -140,13 +127,14 @@ public class ViewActionChain {
 		ActionArguments args = nonNull(arguments);
 		Deque<Runnable> compensations = new ArrayDeque<>();
 		continuation.onAbort(() -> runCompensations(compensations));
-		runFrom(context, actions, 0, args, args.value(), continuation.tone(), compensations,
-			settlementOf(continuation),
+		Activity activity = activityOf(continuation);
+		activity.run(() -> runFrom(context, actions, 0, args, args.value(), continuation.tone(), compensations,
+			activity,
 			continuation::resume,
 			() -> {
 				runCompensations(compensations);
 				continuation.abort();
-			});
+			}));
 	}
 
 	/**
@@ -175,24 +163,52 @@ public class ViewActionChain {
 	static void followUp(ReactContext context, ViewAction action, ActionArguments input,
 			List<ViewAction> followUps, Function<Object, ActionArguments> followUpArguments,
 			Continuation continuation) {
-		Settlement settlement = settlementOf(continuation);
+		Activity activity = activityOf(continuation);
 		ButtonTone afterAction =
 			ViewActions.tone(followUps) == ButtonTone.DANGER ? ButtonTone.DANGER : continuation.tone();
-		action.execute(context, input, new StepContinuation(settlement, continuation, afterAction,
-			result -> nest(context, followUps, followUpArguments.apply(result),
-				new StepContinuation(settlement, continuation, continuation.tone(),
-					ignored -> continuation.resume(result)))));
+		activity.run(() -> action.execute(context, input, new StepContinuation(activity, continuation, afterAction,
+			result -> followUp(context, followUps, followUpArguments.apply(result), result, continuation))));
 	}
 
 	/**
-	 * The settlement of the chain the given continuation belongs to, so that a chain nested in it
-	 * reports a failure to the caller that started the outermost chain.
+	 * Runs the follow-up actions of the action that is executing right now as a nested chain over
+	 * its result, and resumes the action with that result once they are done.
+	 *
+	 * <p>
+	 * For an action that chooses its follow-up actions itself, e.g. by how the work it waited for
+	 * ended. The follow-up actions behave exactly like the ones a
+	 * {@link WithResultActions#getWithResult() with-result} runs: an abort inside them aborts the
+	 * enclosing chain, the compensations registered inside them join the enclosing chain's unwind
+	 * (see {@link #nest(ReactContext, List, ActionArguments, Continuation)}), and the chain goes on
+	 * with the actions following the action once they are done.
+	 * </p>
+	 *
+	 * @param followUps
+	 *        The actions to run over the result.
+	 * @param arguments
+	 *        The arguments of the follow-up actions, usually the arguments of the action extended by
+	 *        its result.
+	 * @param result
+	 *        The result the action resumes with after the follow-up actions.
+	 * @param continuation
+	 *        The continuation of the action.
 	 */
-	private static Settlement settlementOf(Continuation continuation) {
-		if (continuation instanceof SettledContinuation chained) {
-			return chained.settlement();
+	public static void followUp(ReactContext context, List<ViewAction> followUps, ActionArguments arguments,
+			Object result, Continuation continuation) {
+		nest(context, followUps, arguments,
+			new StepContinuation(activityOf(continuation), continuation, continuation.tone(),
+				ignored -> continuation.resume(result)));
+	}
+
+	/**
+	 * The {@link Activity} of the chain the given continuation belongs to, so that a chain nested in
+	 * it reports to the caller that started the outermost chain.
+	 */
+	private static Activity activityOf(Continuation continuation) {
+		if (continuation instanceof ChainedContinuation chained) {
+			return chained.activity();
 		}
-		return new Settlement(null);
+		return new Activity(null);
 	}
 
 	private static ActionArguments nonNull(ActionArguments arguments) {
@@ -209,7 +225,7 @@ public class ViewActionChain {
 	 */
 	private static void runFrom(ReactContext context, List<ViewAction> actions, int index,
 			ActionArguments arguments, Object last, ButtonTone after, Deque<Runnable> compensations,
-			Settlement settlement, Consumer<Object> onComplete, Runnable onAbort) {
+			Activity activity, Consumer<Object> onComplete, Runnable onAbort) {
 		if (index >= actions.size()) {
 			onComplete.accept(last);
 			return;
@@ -218,15 +234,15 @@ public class ViewActionChain {
 		ButtonTone rest = ViewActions.tone(actions.subList(index + 1, actions.size())) == ButtonTone.DANGER
 			? ButtonTone.DANGER
 			: after;
-		ChainContinuation continuation = new ChainContinuation(settlement, compensations, rest,
-			result -> runFrom(context, actions, index + 1, arguments, result, after, compensations, settlement,
+		ChainContinuation continuation = new ChainContinuation(activity, compensations, rest,
+			result -> runFrom(context, actions, index + 1, arguments, result, after, compensations, activity,
 				onComplete, onAbort),
 			onAbort);
 		try {
 			action.execute(context, arguments, continuation);
 		} catch (RuntimeException failure) {
 			runCompensations(compensations);
-			settlement.settle();
+			activity.settle();
 			throw failure;
 		}
 	}
@@ -251,13 +267,13 @@ public class ViewActionChain {
 	 * The {@link Continuation} of an action running in a chain.
 	 *
 	 * <p>
-	 * Carries the {@link Settlement} of the chain it drives, so that a chain nested into it reaches
-	 * the same settlement and the outermost caller hears of an end reached deep inside.
+	 * Carries the {@link Activity} of the chain it drives, so that a chain nested into it reports to
+	 * the same caller as the outermost chain.
 	 * </p>
 	 */
-	private static final class ChainContinuation implements SettledContinuation {
+	private static final class ChainContinuation implements ChainedContinuation {
 
-		private final Settlement _settlement;
+		private final Activity _activity;
 
 		private final Deque<Runnable> _compensations;
 
@@ -269,9 +285,9 @@ public class ViewActionChain {
 
 		private boolean _spent;
 
-		ChainContinuation(Settlement settlement, Deque<Runnable> compensations, ButtonTone tone,
+		ChainContinuation(Activity activity, Deque<Runnable> compensations, ButtonTone tone,
 				Consumer<Object> onResume, Runnable onAbort) {
-			_settlement = settlement;
+			_activity = activity;
 			_compensations = compensations;
 			_tone = tone;
 			_onResume = onResume;
@@ -279,20 +295,20 @@ public class ViewActionChain {
 		}
 
 		@Override
-		public Settlement settlement() {
-			return _settlement;
+		public Activity activity() {
+			return _activity;
 		}
 
 		@Override
 		public void resume(Object value) {
 			spend();
-			_onResume.accept(value);
+			_activity.run(() -> _onResume.accept(value));
 		}
 
 		@Override
 		public void abort() {
 			spend();
-			_onAbort.run();
+			_activity.run(_onAbort);
 		}
 
 		@Override
@@ -317,14 +333,14 @@ public class ViewActionChain {
 	}
 
 	/**
-	 * A {@link Continuation} knowing the {@link Settlement} of the chain it belongs to.
+	 * A {@link Continuation} knowing the {@link Activity} of the chain it belongs to.
 	 */
-	private interface SettledContinuation extends Continuation {
+	private interface ChainedContinuation extends Continuation {
 
 		/**
-		 * The settlement of the chain this continuation drives.
+		 * The activity of the chain this continuation drives.
 		 */
-		Settlement settlement();
+		Activity activity();
 	}
 
 	/**
@@ -337,9 +353,9 @@ public class ViewActionChain {
 	 * when the follow-up actions are done.
 	 * </p>
 	 */
-	private static final class StepContinuation implements SettledContinuation {
+	private static final class StepContinuation implements ChainedContinuation {
 
-		private final Settlement _settlement;
+		private final Activity _activity;
 
 		private final Continuation _step;
 
@@ -349,28 +365,28 @@ public class ViewActionChain {
 
 		private boolean _spent;
 
-		StepContinuation(Settlement settlement, Continuation step, ButtonTone tone, Consumer<Object> onResume) {
-			_settlement = settlement;
+		StepContinuation(Activity activity, Continuation step, ButtonTone tone, Consumer<Object> onResume) {
+			_activity = activity;
 			_step = step;
 			_tone = tone;
 			_onResume = onResume;
 		}
 
 		@Override
-		public Settlement settlement() {
-			return _settlement;
+		public Activity activity() {
+			return _activity;
 		}
 
 		@Override
 		public void resume(Object value) {
 			spend();
-			_onResume.accept(value);
+			_activity.run(() -> _onResume.accept(value));
 		}
 
 		@Override
 		public void abort() {
 			spend();
-			_step.abort();
+			_activity.run(_step::abort);
 		}
 
 		@Override
@@ -395,37 +411,139 @@ public class ViewActionChain {
 	}
 
 	/**
-	 * Tells the caller of a chain, once, that the chain has come to an end.
+	 * Observer of whether an action holds a chain.
 	 *
 	 * <p>
-	 * Every outcome passes through here - completion, abort and the failure unwind, which runs at
-	 * each level of the chain it propagates through - so the notification is guarded to happen only
-	 * the first time. The guard holds across interactions, since the end may be reached by a thread
-	 * other than the one that started the chain.
+	 * An action <em>holds</em> the chain when it returns from executing without handing the chain
+	 * back - without {@link Continuation#resume(Object) resuming} or {@link Continuation#abort()
+	 * aborting} it, e.g. while a job runs in the background or a question waits for its answer - and
+	 * nothing of the chain runs any more. It hands the chain back when it resumes or aborts it, or
+	 * runs follow-up actions over its result (see
+	 * {@link ViewActionChain#followUp(ReactContext, List, ActionArguments, Object, Continuation)}).
+	 * The chain is handed back <em>before</em> what continues it runs: the actions that follow see
+	 * the chain not held. Once the continuation returns while an action holds the chain again, the
+	 * chain is reported held again.
+	 * </p>
+	 *
+	 * <p>
+	 * The reports alternate, starting with {@link #held()}, and are delivered one at a time, also
+	 * when the chain is handed back by a thread other than the one that ran the action holding it.
+	 * A chain that comes to an end - completed, aborted, or failed - is not held. A chain that runs
+	 * through within the call starting it is never reported.
 	 * </p>
 	 */
-	private static final class Settlement {
+	public interface HoldObserver {
 
-		private final Runnable _onSettled;
+		/**
+		 * An action holds the chain.
+		 */
+		void held();
 
+		/**
+		 * The action holding the chain has handed it back.
+		 */
+		void handedBack();
+	}
+
+	/**
+	 * Tracks whether an action holds a chain and whether the chain has come to an end.
+	 *
+	 * <p>
+	 * Every entry into the chain - the call that starts it, the hand-back of a continuation, a
+	 * nested chain - runs through {@link #run(Runnable)}. The chain is held when the last of these
+	 * calls returns while the chain has not come to an end. A call that fails (an exception escapes
+	 * it) ends the chain: nothing can continue it after its continuation has been used up.
+	 * </p>
+	 *
+	 * <p>
+	 * Transitions are recorded under the lock, and delivered to the {@link HoldObserver} outside of
+	 * it by one thread at a time: a thread finding another one delivering leaves its transition to
+	 * that thread, which delivers until the reported state matches the recorded one.
+	 * </p>
+	 */
+	private static final class Activity {
+
+		private final HoldObserver _observer;
+
+		/** Number of calls into the chain that have not returned yet. */
+		private int _active;
+
+		/** Whether the chain has come to an end. */
 		private boolean _settled;
 
-		Settlement(Runnable onSettled) {
-			_onSettled = onSettled;
+		/** Whether the chain is held. */
+		private boolean _held;
+
+		/** Whether the {@link #_observer} was last told that the chain is held. */
+		private boolean _reported;
+
+		/** Whether a thread is delivering transitions to the {@link #_observer}. */
+		private boolean _reporting;
+
+		Activity(HoldObserver observer) {
+			_observer = observer;
 		}
 
 		/**
-		 * Reports the chain settled, unless that was already reported.
+		 * Runs a part of the chain: its start, the continuation after an action handed it back, or
+		 * a nested chain.
 		 */
-		void settle() {
+		void run(Runnable body) {
 			synchronized (this) {
-				if (_settled) {
-					return;
-				}
-				_settled = true;
+				_active++;
+				_held = false;
 			}
-			if (_onSettled != null) {
-				_onSettled.run();
+			report();
+
+			boolean returned = false;
+			try {
+				body.run();
+				returned = true;
+			} finally {
+				synchronized (this) {
+					_active--;
+					if (!returned) {
+						_settled = true;
+					}
+					_held = _active == 0 && !_settled;
+				}
+				report();
+			}
+		}
+
+		/**
+		 * Records that the chain has come to an end, whichever way.
+		 */
+		synchronized void settle() {
+			_settled = true;
+			_held = false;
+		}
+
+		private void report() {
+			if (_observer == null) {
+				return;
+			}
+			while (true) {
+				boolean held;
+				synchronized (this) {
+					if (_reporting || _reported == _held) {
+						return;
+					}
+					_reporting = true;
+					held = _held;
+					_reported = held;
+				}
+				try {
+					if (held) {
+						_observer.held();
+					} else {
+						_observer.handedBack();
+					}
+				} finally {
+					synchronized (this) {
+						_reporting = false;
+					}
+				}
 			}
 		}
 	}

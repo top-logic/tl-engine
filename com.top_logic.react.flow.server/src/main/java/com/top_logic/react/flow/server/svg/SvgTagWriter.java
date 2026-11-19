@@ -10,6 +10,8 @@ import static com.top_logic.react.flow.svg.SvgConstants.*;
 import java.awt.Color;
 import java.io.IOError;
 import java.io.IOException;
+import java.util.IdentityHashMap;
+import java.util.Map;
 
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.form.format.ColorFormat;
@@ -19,6 +21,7 @@ import com.top_logic.react.flow.svg.SvgUtil;
 import com.top_logic.react.flow.svg.SvgWriter;
 import com.top_logic.react.flow.data.ImageAlign;
 import com.top_logic.react.flow.data.ImageScale;
+import com.top_logic.react.flow.data.Widget;
 
 /**
  * {@link SvgWriter} creating XML output through a {@link TagWriter}.
@@ -34,9 +37,20 @@ import com.top_logic.react.flow.data.ImageScale;
  * attributes of an element are collected and written when its start tag is completed.
  * </p>
  *
+ * <p>
+ * An {@link #uniqueId(Widget, String) ID} is unique in the written document: each owner gets a
+ * number in the order it first asks for an ID.
+ * </p>
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class SvgTagWriter implements SvgWriter {
+
+	/**
+	 * Start of every {@link #uniqueId(Widget, String) ID}, a letter so that the ID is a valid XML
+	 * name.
+	 */
+	private static final String ID_PREFIX = "flow";
 
 	private final TagWriter _out;
 
@@ -51,6 +65,8 @@ public class SvgTagWriter implements SvgWriter {
 	private final Paint _fill = new Paint(FILL_ATTR, FILL_OPACITY_ATTR);
 
 	private final Paint _stroke = new Paint(STROKE_ATTR, STROKE_OPACITY_ATTR);
+
+	private final Map<Widget, Integer> _ownerNumbers = new IdentityHashMap<>();
 
 	/**
 	 * Creates a {@link SvgTagWriter}.
@@ -137,6 +153,16 @@ public class SvgTagWriter implements SvgWriter {
 	@Override
 	public void writeId(String id) {
 		_out.writeAttribute(ID_ATTR, id);
+	}
+
+	@Override
+	public String uniqueId(Widget owner, String purpose) {
+		Integer number = _ownerNumbers.get(owner);
+		if (number == null) {
+			number = Integer.valueOf(_ownerNumbers.size() + 1);
+			_ownerNumbers.put(owner, number);
+		}
+		return ID_PREFIX + number + "-" + purpose;
 	}
 
 	@Override

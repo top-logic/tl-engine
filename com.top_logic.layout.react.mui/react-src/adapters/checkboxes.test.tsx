@@ -17,6 +17,7 @@ import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
 import type { MountOptions } from './wire-test-support';
 import MuiChipAdapter from './MuiChipAdapter';
+import MuiSkeletonAdapter from './MuiSkeletonAdapter';
 
 replacePart('Checkbox', MuiCheckboxAdapter);
 // The table and the column selection look up their buttons and toggles as well.
@@ -26,6 +27,7 @@ replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
 // The table draws its named filters as chips.
 replacePart('Chip', MuiChipAdapter);
+replacePart('Skeleton', MuiSkeletonAdapter);
 
 /** The argument of {@link CMD_VALUE_CHANGED} holding the new value. */
 const ARG_VALUE = 'value';
@@ -245,7 +247,7 @@ describe('the selection boxes of a table as MUI checkboxes', () => {
 
     // The press toggles the row alone: no plain row click selecting it exclusively.
     expect(sent.mock.calls.filter(([command]) => command === CMD_SELECT))
-      .toEqual([[CMD_SELECT, { rowIndex: 1, ctrlKey: true, shiftKey: false }]]);
+      .toEqual([[CMD_SELECT, { rowId: 'r1', ctrlKey: true, shiftKey: false }]]);
   });
 
   it('has no selection box for a group row', async () => {

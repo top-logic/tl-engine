@@ -1,9 +1,10 @@
 # Vertrag: Avatar
 
-Eine Kundenkomponente, die unter dem TopLogic-Namen `TLAvatar` registriert ist (Stufe C der Spec),
-bekommt den Zustand unten, rendert einen Kreis und trägt die genannten Attribute. TopLogic
-garantiert dann Funktion und Zugänglichkeit — nicht das Aussehen. Wer ins Bild passen will, liest
-die Tokens.
+Das Control `TLAvatar` und das Avatar vor einem Eintrag einer Liste (`list.contract.md`) zeichnen den
+Kreis über das Part `Avatar` (`AvatarPartProps`: `name`, `src`, `size`, `decorative`). Eine Kundenkomponente, die das
+Part ersetzt (`replacePart`), bekommt diese Werte, rendert einen Kreis und trägt die genannten
+Attribute. TopLogic garantiert dann Funktion und Zugänglichkeit — nicht das Aussehen. Wer ins Bild
+passen will, liest die Tokens.
 
 ## Zustand
 
@@ -52,7 +53,7 @@ unterschreitet 12 px.
 |---|---|
 | `role="img"` + `aria-label` | Initialen-Avatar: der Name ist die Bedeutung, die Initialen sind Bild. |
 | `alt` am `__image` | Bild-Avatar: der Name; leer, wenn kein Name. |
-| `aria-hidden="true"` | Avatar ohne Namen und ohne Bild: rein dekorativ. |
+| `aria-hidden="true"` | Avatar ohne Namen und ohne Bild: rein dekorativ. Ebenso ein Avatar als Dekoration (`decorative` des Parts), dessen Name daneben schon steht - etwa in den Zeilen eines Eintrags einer Liste: dann ohne `role`, ohne `aria-label`, ohne Tooltip, `alt` leer; Bild oder Initialen auf der Kategorie bleiben. |
 | `title` / Tooltip | der volle Name, weil die Initialen ihn nur andeuten. |
 
 ## Konformität

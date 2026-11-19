@@ -50,6 +50,42 @@ export type TLDropMarker = 'before' | 'after' | 'into' | 'control';
  */
 export type TLZoneSplit = 'thirds' | 'halves' | 'whole' | 'none';
 
+/**
+ * The point a drop is made at (`DropPoint`), in the coordinate system of its target: relative to the
+ * upper left corner of the item under the pointer, or to the origin of the control's surface for a
+ * drop beside the items, in the units of that surface - independent of zoom and scrolling. Only a
+ * control displaying its items on a surface reports one.
+ */
+export interface TLDropPoint {
+  /** The horizontal coordinate, growing to the right. */
+  x: number;
+  /** The vertical coordinate, growing downwards. */
+  y: number;
+}
+
+/** Argument of a drop and a drop probe holding {@link TLDropPoint.x} (`DropArguments.X`). */
+export const DROP_ARG_X = 'x';
+
+/** Argument of a drop and a drop probe holding {@link TLDropPoint.y} (`DropArguments.Y`). */
+export const DROP_ARG_Y = 'y';
+
+/**
+ * Adds the point a drop is made at to the arguments of the drop or of a drop probe; a drop without
+ * a point leaves the arguments as they are.
+ *
+ * @returns The given arguments.
+ */
+export function putDropPoint(
+  args: Record<string, unknown>,
+  point: TLDropPoint | null | undefined,
+): Record<string, unknown> {
+  if (point) {
+    args[DROP_ARG_X] = point.x;
+    args[DROP_ARG_Y] = point.y;
+  }
+  return args;
+}
+
 /** What a drag carries from the control it started in to the control it is dropped on. */
 export interface TLDragPayload {
   /** Id of the control the drag started in. */

@@ -238,8 +238,9 @@
    sortieren oder in der Breite ziehen; die Auswahl- und die Befehlsspalte tragen keinen der beiden. Der Kopf liegt auf
    surface-layer-muted, und surface-interactive-hover ist dort im Hellen dieselbe Farbe (gray-4 auf gray-3): der Kopf
    zeigt darum eine Stufe kräftiger, surface-interactive-strong — wie ein Knopf im Feld (skalen.md „Knöpfe im Feld
-   zeigen eine Stufe kräftiger“). */
-.tl-table__header-cell:has(> .tl-table__sort, > .tl-table__resize):hover {
+   zeigen eine Stufe kräftiger“). Eine getönte Kopfzelle (data-tl-role) behält beim Zeigen ihre Tönung, wie eine
+   getönte Zeile: das Design-System hat keine kräftigere Fläche je Rolle, und das Grau nähme dem Kopf seine Rolle. */
+.tl-table__header-cell:not([data-tl-role]):has(> .tl-table__sort, > .tl-table__resize):hover {
   background: var(--tl-surface-interactive-strong);
 }
 
@@ -272,12 +273,40 @@
 
 /* Werkzeuge nur bei Bedarf (UI-Durchgang 1): der Trichter trägt tl-reveal-on-hover (layout.css) und steht damit beim Zeigen
    auf die Kopfzelle (sein direkter Elternteil), bei Tastaturfokus und ohne Zeigen (Touch). Eine Spalte mit aktivem
-   Filter zeigt ihn immer: was in Kraft ist, steht im Bild. Zwei Klassen und ein Attribut schlagen .tl-reveal-on-hover.
+   Filter zeigt ihn immer: was in Kraft ist, steht im Bild. Zwei Klassen und ein Attribut schlagen .tl-reveal-on-hover. Die
+   Sichtbarkeit kommt aus layout.css, die Breite regelt die Regel darunter.
    Sortierpfeil und Gruppenmarke (.tl-table__mark) bleiben immer, sie stehen nur dort, wo sie gelten; der Titel bekommt
    die Breite zurück (U29). */
 .tl-table__header-cell[data-tl-state~="filtered"] .tl-table__filter {
   color: var(--tl-text-link);
   opacity: 1;
+}
+
+/* Der verborgene Trichter hält keine Breite (Review !2206): sonst stünde er, unsichtbar, zwischen Titel und Zellenende,
+   und der Titel einer Zahlenspalte endete 28 px vor den Ziffern. Die Folge Titel → Trichter bleibt in jeder Spalte
+   gleich — gespiegelt ist verworfen (U53). Beim Zeigen, bei Tastaturfokus in der Kopfzelle und bei aktivem Filter
+   fährt der Platz auf; dann gilt wieder, was der Knopf selbst sagt (button.css oder der MUI-Knopf). Ohne Zeigen
+   (Touch) steht er immer, dort bleibt er breit. Der negative Rand nimmt den gap der Kopfzelle zurück, border-width 0
+   den transparenten Rand des Knopfs. Die Übergangsliste ersetzt die von tl-reveal-on-hover (Spezifität) vollständig. */
+.tl-table__header-cell > .tl-table__filter {
+  transition:
+    opacity var(--tl-duration-fast) var(--tl-easing-standard),
+    width var(--tl-duration-fast) var(--tl-easing-standard),
+    margin-inline-start var(--tl-duration-fast) var(--tl-easing-standard),
+    border-width var(--tl-duration-fast) var(--tl-easing-standard),
+    background-color var(--tl-duration-fast) var(--tl-easing-standard),
+    border-color var(--tl-duration-fast) var(--tl-easing-standard),
+    color var(--tl-duration-fast) var(--tl-easing-standard);
+}
+@media (hover: hover) {
+  .tl-table__header-cell:not(:hover, :has(:focus-visible), [data-tl-state~="filtered"]) > .tl-table__filter {
+    width: 0;
+    min-width: 0;
+    padding-inline: 0;
+    border-width: 0;
+    margin-inline-start: calc(-1 * var(--tl-space-2xs));
+    overflow: hidden;
+  }
 }
 
 /* Die Spaltenwahl (Zahnrad) ist ein tl-button--icon --ghost über der rechten Kante des Kopfes, so hoch
@@ -421,6 +450,25 @@
   isolation: isolate;
 }
 
+/* Die Hülle des Körpers scrollt nicht. Hat der Körper selbst den Tastaturfokus (er scrollt, #30129), trägt ihr
+   ::after seinen Ring (die Regel steht in base.css): der eigene Ring des Körpers läge unter seinen positionierten
+   Zeilen. Die Fläche deckt den Körper, liegt über seinem Stapel, ist für den Zeiger durchlässig, der Ring innen. */
+.tl-table__viewport {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+.tl-table__viewport:has(> .tl-table__body:focus-visible)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: var(--tl-layer-sticky);
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+  pointer-events: none;
+}
+
 /* Was bündig an der Kante von tl-table liegt, trägt den Ring innen — tl-table schneidet (overflow: hidden),
    ein Ring außen wäre ganz oder halb weg (focus-clip.test.mjs): das Raster ohne Cursor (leer, kein
    aria-activedescendant — es zeigt den Ring selbst), der Körper, die Spaltenwahl in der Ecke. In der Engine ist
@@ -524,7 +572,8 @@
    Die Aussage kommt vom Typ der Spalte (Server: ColumnKind.NUMBER), das TSX setzt data-tl-align="end" an Kopf- und
    Datenzelle; Datum und Text bleiben am Anfang. Der Lesewert in der Zelle erbt text-align. Im Kopf bleibt die Folge
    wie bei jeder Spalte (Titel, Sortiermarke, Gruppenmarke, Trichter), nur der Inhalt rückt ans Ende der Zelle: kein
-   row-reverse, sonst springt der Fokus gegen die Leserichtung. */
+   row-reverse, sonst springt der Fokus gegen die Leserichtung. Der Titel endet bündig mit den Ziffern, weil der
+   verborgene Trichter keine Breite hält (oben). */
 .tl-table__cell[data-tl-align="end"],
 .tl-table__header-cell[data-tl-align="end"] {
   justify-content: flex-end;
@@ -536,6 +585,12 @@
    über die ganze Zelle, der text-align nicht weitergibt. Er legt seinen Inhalt deshalb selbst ans Ende (U43). */
 .tl-table__cell[data-tl-align="end"] > .tl-select__values {
   justify-content: flex-end;
+}
+
+/* Ein Eingabefeld erbt text-align nicht: die Zahl, die man in der Zeile bearbeitet, stünde sonst am Anfang, während
+   die Werte darüber und darunter am Ende stehen. */
+.tl-table__cell[data-tl-align="end"] .tl-field {
+  text-align: end;
 }
 
 /* Die Auswahlspalte: input.tl-checkbox, mittig. */
@@ -575,16 +630,48 @@
   border-left: var(--tl-border-width-sm) solid var(--tl-border-emphasis);
 }
 
-/* --- Hervorgehobene Zeilen und Zellen (#29815) ------------------------------------------------ */
+/* --- Getönte Zeilen und Zellen (#29815, #30256) ----------------------------------------------- */
 
-/* Eine Zeile oder Zelle, der die Anwendung eine der Klassen tl-status-error, -warning, -success oder
-   -info gibt (TableView#rowCssClass, #cellCssClass), trägt die Rolle als data-tl-role — TLTableView
-   übersetzt die Klasse, die Rolle bleibt ein Attribut. Die Auswahl gewinnt: an einer ausgewählten Zeile
-   und ihren Zellen setzt das TSX keine Rolle. Zeigen ändert eine getönte Zeile nicht (die Fläche der
+/* Eine Zeile oder Zelle mit einer Farbrolle (TableView#rowColor, #cellColor; im State colorRole bzw.
+   cellRoles) trägt sie als data-tl-role: brand, die Status- und die Kategorierollen. Die CSS-Klassen der
+   Anwendung an Zeile und Zelle sind ihre eigenen, das Design-System liest sie nicht. Die Auswahl gewinnt:
+   an einer ausgewählten Zeile und ihren Zellen setzt das TSX keine Rolle. Zeigen ändert eine getönte Zeile nicht (die Fläche der
    Zeile steht in :where); fixierte und angeheftete Zellen erben die Tönung ihrer Zeile, eine getönte Zelle
    setzt ihre eigene. Nach den Regeln der Lage, die an haftenden Zellen inherit setzen. */
+/* @tl-roles: brand :where(.tl-table__row) */
 /* @tl-roles: status :where(.tl-table__row) */
+/* @tl-roles: category :where(.tl-table__row) */
+/* @tl-roles: brand .tl-table__cell */
 /* @tl-roles: status .tl-table__cell */
+/* @tl-roles: category .tl-table__cell */
+
+/* Eine Kopfzelle mit einer Farbrolle (Column#headerRole; im State columns[].headerRole) trägt sie als
+   data-tl-role: die Fläche der Rolle tönt den Kopf der Spalte, ein Streifen unten in der Linie der Rolle
+   setzt ihn gegen die Kopfzeile ab, und die Überschrift steht in text-primary statt leise — wie die Pill auf
+   ihrer Fläche (theme-tokens „Coloring a value“). Nur die Kopfzelle, nicht die Datenzellen der Spalte. Nach
+   den Regeln der Lage: eine fixierte oder angeheftete Kopfzelle setzt ihre eigene Fläche statt der geerbten. */
+/* @tl-roles: brand .tl-table__header-cell */
+/* @tl-roles: status .tl-table__header-cell */
+/* @tl-roles: category .tl-table__header-cell */
+
+/* Der Streifen liest die Linie, die die Rollenregel als border-color setzt; die Kanten der Lage (frozen-last,
+   pinned-first) behalten border-emphasis. */
+.tl-table__header-cell[data-tl-role] {
+  border-bottom-style: solid;
+  border-bottom-width: var(--tl-border-width-accent);
+}
+
+.tl-table__header-cell[data-tl-role][data-tl-state~="frozen-last"] {
+  border-right-color: var(--tl-border-emphasis);
+}
+
+.tl-table__header-cell[data-tl-role][data-tl-state~="pinned-first"] {
+  border-left-color: var(--tl-border-emphasis);
+}
+
+.tl-table__header-cell[data-tl-role] .tl-table__label {
+  color: var(--tl-text-primary);
+}
 
 /* --- Zellinhalt ------------------------------------------------------------------ */
 
@@ -689,38 +776,80 @@
   display: none;
 }
 
-/* Ein Feld in der Zelle ist die Zelle: randlos, so hoch wie die Zeile. Sein Fokus ist der Basis-Ring
-   nach innen (3a §5.2); Fehler und Warnung zeichnen eine innere Linie in Statusfarbe — kein outline in
-   Statusfarbe (3a-Gate). Warnung vor Fehler: der Fehler steht später und gewinnt. */
+/* Ein Feld in der Zelle sieht aus wie im Formular, eine Stufe niedriger (#30383): Fläche surface-field, voller Rahmen,
+   Höhe size-control − space-2xs (28 px normal, 24 px kompakt) — niedriger als die Zeile, damit oben und unten Luft
+   bleibt und benachbarte Zeilen nicht zu einem Raster aus Kästchen zusammenwachsen. Es steht space-2xs −
+   border-width-sm (3 px) unter der Oberkante und hält unten 4 px bis zur Trennlinie — ganze Pixel statt 3,5 mittig;
+   das trägt, solange size-row eine Rasterstufe über size-control liegt (tokens.test.mjs). Seitlich space-2xs Luft,
+   um die der Innenabstand des Felds kleiner ist: der Text steht wie beim Lesen. Die Höhe sitzt fest am direkten
+   Kind der Zelle (Feld oder Hülle: tl-form-field--compact, tl-field-group, tl-table__tree).
+   Fokus ist der Basis-Ring nach innen (3a §5.2); Warnung und Fehler zeichnen einen inneren Rahmen in Statusfarbe. */
 .tl-table__cell:has(.tl-field) {
-  padding: 0;
-  /* Gestreckt, nicht mittig: das Feld steckt in Hüllen (TLChild, tl-field-group), deren height: 100% nur
-     gegen eine gestreckte Höhe greift — mittig blieb das Feld so hoch wie sein Text (Sichtprüfung 23.10.). */
-  align-items: stretch;
+  padding: calc(var(--tl-space-2xs) - var(--tl-border-width-sm)) var(--tl-space-2xs) 0;
+  align-items: flex-start;
 }
 
+/* (0,3,0): schlägt .tl-table__cell .tl-field { height: 100% }, wenn das Feld selbst direktes Kind ist (S2). */
+.tl-table__cell:has(.tl-field) > :not([hidden]) {
+  height: calc(var(--tl-size-control) - var(--tl-space-2xs));
+}
+
+/* Innenabstand an (0,2,0): field.css (Gruppe mit Knopf oder Icon, (0,3,0)) behält Platz für Endknopf und Icon (B1);
+   readonly und disabled rücken so wie beschreibbare Felder (S1). */
 .tl-table__cell .tl-field {
   height: 100%;
   min-height: 0;
+  padding-inline: calc(var(--tl-space-control-x) - var(--tl-space-2xs));
   border: 0;
-  border-radius: 0;
+  border-radius: var(--tl-radius-sm);
   background: transparent;
+}
+
+/* Die Auswahl hat einen Mindestinhalt aus padding-block und Knopf; in der Zelle ohne padding-block, sonst wird sie
+   30/26 px statt 28/24 hoch (B2). Der Pfeil steht space-2xs vor dem Ende wie in jedem anderen Zellfeld. */
+.tl-table__cell .tl-select {
+  padding-block: 0;
+  padding-inline-end: var(--tl-space-2xs);
 }
 
 .tl-table__cell .tl-field:focus-visible {
   outline-offset: calc(-1 * var(--tl-focus-offset));
 }
 
-/* Ein Feld, in das man schreiben kann, zeigt sich durch eine Linie unten in der Rahmenfarbe der Felder —
-   randlos und durchsichtig sah die Zelle im Bearbeiten-Modus aus wie im Lesen. Auf gezeigter und
-   ausgewählter Zeile hielte border-control 3:1 nicht (bis 2,44), dort trägt border-interactive die Linie.
-   Gleich spezifisch wie Warnung und Fehler, die danach stehen und mit ihrem Rahmen gewinnen. */
-.tl-table__cell .tl-field:not(:disabled, [readonly]) {
-  box-shadow: inset 0 calc(-1 * var(--tl-border-width-sm)) 0 var(--tl-border-control);
+/* Knöpfe im Feld (Leeren, Kalender, Pfeil, Öffner des kompakten Felds): kompakt so hoch wie das Feld, sie deckten dessen Rahmen oben und unten
+   (S7) — eine Rahmenbreite kürzer; min-height: 0, weil button.css den Knopf sonst bei size-control-sm hält (kompakt = Feldhöhe),
+   und die Höhe aus Tokens, weil die Prozent im Auswahlfeld an keiner bestimmten Höhe hängen. Ihr Fokusring liegt nach innen wie im kompakten Feld (compact-field.css), sonst
+   schneidet die Zelle ihn oben und unten (B3, focus-clip). */
+.tl-table__cell .tl-field-group > .tl-button,
+.tl-table__cell .tl-select__controls > .tl-button,
+.tl-table__cell .tl-compact-field > .tl-button {
+  min-height: 0;
+  max-height: calc(var(--tl-size-control) - var(--tl-space-2xs) - 2 * var(--tl-border-width-sm));
 }
 
-:where(.tl-table__row:hover, .tl-table__row[aria-selected="true"]) .tl-table__cell .tl-field:not(:disabled, [readonly]) {
-  box-shadow: inset 0 calc(-1 * var(--tl-border-width-sm)) 0 var(--tl-border-interactive);
+.tl-table__cell .tl-field-group > .tl-button:focus-visible,
+.tl-table__cell .tl-select__controls > .tl-button:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Der native Kalenderknopf des Datumsfelds rechnet mit dem Innenabstand des Formularfelds (field.css); in der Zelle
+   ist der um space-2xs kleiner (S7). */
+.tl-table__cell .tl-field::-webkit-calendar-picker-indicator {
+  margin-inline-end: calc(2 * var(--tl-space-2xs) - var(--tl-space-control-x));
+}
+
+/* Ein Feld, in das man schreiben kann: Fläche und Rahmen in border-control. Ein Feld mit disabled, readonly oder
+   aria-disabled (die Auswahl ist ein div, H1) bleibt durchsichtig und ohne Rahmen — es liest sich wie eine
+   Lesezelle. Auf gezeigter und gewählter Zeile trägt border-emphasis den Rahmen (border-control hielte dort hell
+   2,84 / dunkel 2,60); das Blau bleibt Auswahl und Fokusring vorbehalten. Gleich spezifisch wie Warnung und Fehler,
+   die danach stehen und mit ihrem Rahmen gewinnen. */
+.tl-table__cell .tl-field:not(:disabled, [readonly], [aria-disabled="true"]) {
+  background: var(--tl-surface-field);
+  box-shadow: inset 0 0 0 var(--tl-border-width-sm) var(--tl-border-control);
+}
+
+:where(.tl-table__row:hover, .tl-table__row[aria-selected="true"]) .tl-table__cell .tl-field:not(:disabled, [readonly], [aria-disabled="true"]) {
+  box-shadow: inset 0 0 0 var(--tl-border-width-sm) var(--tl-border-emphasis);
 }
 
 .tl-table__cell .tl-field[data-tl-state~="warning"] {
@@ -741,6 +870,12 @@
    Innenabstand hinausgeht. */
 .tl-table__cell:has(> .tl-form-field--compact > .tl-form-field__marker) {
   padding-inline-end: calc(var(--tl-size-icon-sm) / 2);
+}
+
+/* Ihr Fokusring liegt innen wie der der Knöpfe im Feld: außen reichte er über den freigehaltenen Rand hinaus, und die
+   Zelle schnitte ihn rechts und oben ab (focus-clip). */
+.tl-table__cell .tl-form-field__marker:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
 }
 
 /* --- Baum- und Gruppenzeilen ----------------------------------------------------- */
@@ -769,6 +904,24 @@
   white-space: nowrap;
 }
 
+/* Bearbeitete Baumspalte: die Zelle behält ihren Abstand vorn, so steht der Toggle wie im Lesen (die
+   Feldzelle oben nimmt ihn sonst weg). Das Feld nach dem Toggle ist die übrige Zelle: so hoch
+   wie die Felder der anderen Spalten (eine Stufe niedriger als die Zeile) und bis zum Rand. */
+.tl-table__cell:has(> .tl-table__tree) {
+  padding-inline-start: var(--tl-space-control-x);
+}
+
+.tl-table__value:has(.tl-field) {
+  display: flex;
+  flex: 1 1 auto;
+  align-self: stretch;
+}
+
+.tl-table__value:has(.tl-field) > * {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 /* Die Anzahl der Gruppenzeile ist eine kleine Kapsel (U31), so hoch wie ein Badge. Text in text-primary: text-secondary
    hielte auf surface-interactive-strong dunkel nur 4,27 (Paar text-primary / surface-interactive-strong, pairs.mjs). */
 .tl-table__count {
@@ -784,6 +937,14 @@
   border-radius: var(--tl-radius-full);
   background: var(--tl-surface-interactive-strong);
   color: var(--tl-text-primary);
+}
+
+/* Ein Platzhalter für einen fehlenden Wert (CellContent.Placeholder), z. B. der Wert der Gruppe der Zeilen ohne Wert in der
+   Gruppierungsspalte: leise gesetzt, damit er nicht als Wert gelesen wird — text-secondary in normaler Stärke (das TSX
+   setzt tl-type-body statt der starken Schrift der Gruppenzeile). text-secondary hält 4,5 auf surface-layer-muted, gezeigt
+   und auf den gewählten Flächen (pairs.mjs). */
+.tl-table__no-value {
+  color: var(--tl-text-secondary);
 }
 
 /* --- Zeilenzahl (#29757) ---------------------------------------------------------- */
@@ -821,19 +982,17 @@
 
 /* --- Leer und lädt nach ---------------------------------------------------------- */
 
-/* Zeilen im sichtbaren Fenster, die der Server noch nicht geschickt hat: ein tl-skeleton in
-   Zeilenhöhe. Ohne Zeilen steht im Körper eine tl-status-Zeile. */
+/* Zeilen im sichtbaren Fenster, die der Server noch nicht geschickt hat: ein tl-skeleton als
+   Textzeile. Ohne Zeilen steht im Körper eine tl-status-Zeile. Das Raster gibt dem Platzhalter die
+   ganze Breite, auch wenn eine Komponentenbibliothek ihn zeichnet (Part Skeleton). */
 .tl-table__placeholder {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   padding: 0 var(--tl-space-control-x);
   border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
 }
 .tl-table__placeholder[hidden] { display: none; }
-
-.tl-table__placeholder > .tl-skeleton {
-  flex: 1 1 auto;
-}
 
 /* Die Leerzeile bleibt am linken Rand des Körpers, auch wenn er waagerecht gescrollt ist: sonst stünde
    „Keine Einträge" außerhalb des Bildes, sobald ein Filter die letzte Zeile nimmt (Sichtprüfung 12.10.). */

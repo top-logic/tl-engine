@@ -6,7 +6,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup, within, act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CMD_VALUE_CHANGED, TOOLTIP_ATTR, fieldLabel, replacePart } from 'tl-react-bridge';
+import { CMD_VALUE_CHANGED, OPTION_TOOLTIP_PREFIX, TOOLTIP_ATTR, fieldLabel, replacePart } from 'tl-react-bridge';
 import TLOptionChips from '../../../com.top_logic.layout.react/react-src/controls/TLOptionChips';
 import TLDropdownSelect from '../../../com.top_logic.layout.react/react-src/controls/TLDropdownSelect';
 import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/TLTableView';
@@ -16,6 +16,7 @@ import TLText from '../../../com.top_logic.layout.react/react-src/controls/TLTex
 import TLSidebar from '../../../com.top_logic.layout.react/react-src/controls/TLSidebar';
 import TLBottomBar from '../../../com.top_logic.layout.react/react-src/controls/TLBottomBar';
 import MuiChipAdapter from './MuiChipAdapter';
+import MuiSkeletonAdapter from './MuiSkeletonAdapter';
 import MuiBadgeAdapter from './MuiBadgeAdapter';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
@@ -29,6 +30,7 @@ import { CONTROL_ID, childControl, mountAdapter, patchState, settle } from './wi
 import type { MountOptions } from './wire-test-support';
 
 replacePart('Chip', MuiChipAdapter);
+replacePart('Skeleton', MuiSkeletonAdapter);
 replacePart('Badge', MuiBadgeAdapter);
 // The read-only values without a color role, the buttons, toggles and search boxes of the controls.
 replacePart('FieldValue', MuiFieldValueAdapter);
@@ -129,6 +131,13 @@ describe('the toggles of an option chip field (TLOptionChips) as MUI chips', () 
     expect(chip('Beta').getAttribute('aria-pressed')).toBe('false');
     expect(chip('Beta').classList).toContain('MuiChip-outlined');
     expect(chip('Beta').classList).toContain('MuiChip-colorSuccess');
+  });
+
+  it('offers the explanation of every option as tooltip of its chip', () => {
+    mountChips({ value: [ALPHA] });
+
+    expect(chip('Alpha').getAttribute(TOOLTIP_ATTR)).toBe(`key:${OPTION_TOOLTIP_PREFIX}a`);
+    expect(chip('Beta').getAttribute(TOOLTIP_ATTR)).toBe(`key:${OPTION_TOOLTIP_PREFIX}b`);
   });
 
   it('draws the image of an option as the icon of its chip', () => {
@@ -798,7 +807,7 @@ describe('a text drawn as a pill (TLText) as MUI chip', () => {
 });
 
 describe('the counts of the navigation as MUI badges', () => {
-  const INBOX = { id: 'inbox', type: 'nav', label: 'Eingang', icon: 'css:fa-solid fa-inbox', badge: '3' };
+  const INBOX = { id: 'inbox', type: 'nav', label: 'Eingang', icon: 'css:fa-solid fa-inbox', badge: { content: '3' } };
   const ARCHIVE = { id: 'archive', type: 'nav', label: 'Archiv', icon: 'css:fa-solid fa-box' };
 
   /**
@@ -837,6 +846,17 @@ describe('the counts of the navigation as MUI badges', () => {
 
     expect(badges()).toEqual(['3']);
     expectPlacedByCorner(document.querySelector('.MuiBadge-root')!, 'tl-icon-badge__count');
+  });
+
+  it('reads a badge of null as none at an entry of the sidebar and an item of the bottom bar', async () => {
+    const plain = { ...ARCHIVE, badge: null };
+    mountAdapter(TLSidebar, { items: [plain], activeItemId: 'archive', collapsed: true, drawerOpen: false });
+    await settle();
+    expect(badges()).toEqual([]);
+    cleanup();
+
+    mountAdapter(TLBottomBar, { items: [plain], activeItemId: 'archive' });
+    expect(badges()).toEqual([]);
   });
 
   it('draws the count of an item of the bottom bar, and none for an item without', () => {

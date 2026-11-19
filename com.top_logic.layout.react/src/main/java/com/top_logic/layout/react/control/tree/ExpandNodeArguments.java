@@ -9,13 +9,16 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.identity.DisplayedObjectId;
 
 /**
  * Typed arguments of the {@link ReactTreeControl} expand command: which tree node to expand.
  *
  * <p>
  * The {@link Label} doubles as the {@link com.top_logic.layout.form.values.edit.ConfigLabelProvider}
- * template that renders a recorded step for humans.
+ * template that renders a recorded step for humans. The node is given by the id the tree displays
+ * it under, which a recorded step carries as the business key of the node's object, see
+ * {@link DisplayedObjectId}.
  * </p>
  */
 @Label("Expand node '{nodeId}'")
@@ -25,10 +28,12 @@ public interface ExpandNodeArguments extends ReactCommand {
 	String NODE_ID = "nodeId";
 
 	/**
-	 * The id of the tree node to expand.
+	 * The id of the tree node to expand, as the tree published it in its
+	 * {@link ReactTreeControl#NODES}.
 	 */
 	@Name(NODE_ID)
 	@Mandatory
+	@DisplayedObjectId
 	String getNodeId();
 
 }

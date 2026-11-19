@@ -9,6 +9,7 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.identity.DisplayedObjectId;
 
 /**
  * Typed arguments of the {@link TableViewControl} activate command: which row the user opened by
@@ -16,20 +17,25 @@ import com.top_logic.layout.react.control.ReactCommand;
  *
  * <p>
  * The {@link Label} doubles as the {@link com.top_logic.layout.form.values.edit.ConfigLabelProvider}
- * template that renders a recorded step for humans.
+ * template that renders a recorded step for humans. The row is given by the id the table displays
+ * it under, which a recorded step carries as the business key of the row's object, see
+ * {@link DisplayedObjectId}.
  * </p>
  */
-@Label("Activate row {rowIndex}")
+@Label("Activate row '{rowId}'")
 public interface ActivateRowArguments extends ReactCommand {
 
-	/** @see #getRowIndex() */
-	String ROW_INDEX = SelectRowArguments.ROW_INDEX;
+	/** @see #getRowId() */
+	String ROW_ID = SelectRowArguments.ROW_ID;
 
 	/**
-	 * The zero-based index of the row to activate, as projected in the table's {@code rows}.
+	 * The id of the row to activate, as the table published it with the row.
+	 *
+	 * @see TableViewControl#objectIdentities()
 	 */
-	@Name(ROW_INDEX)
+	@Name(ROW_ID)
 	@Mandatory
-	int getRowIndex();
+	@DisplayedObjectId
+	String getRowId();
 
 }

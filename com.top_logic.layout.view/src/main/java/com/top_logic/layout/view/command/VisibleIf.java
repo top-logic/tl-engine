@@ -42,8 +42,11 @@ public class VisibleIf extends ScriptedRule {
 	/**
 	 * Configuration for {@link VisibleIf}.
 	 */
-	@TagName("visible-if")
+	@TagName(Config.TAG_NAME)
 	public interface Config extends ViewExecutabilityRule.Config, ConfigPart {
+
+		/** Configuration tag of a {@link VisibleIf}. */
+		String TAG_NAME = "visible-if";
 
 		/** Configuration name for {@link #getExpr()}. */
 		String EXPR = "expr";

@@ -126,10 +126,26 @@
 			</attributes>
 		</class>
 		<!--
+			Transient-only type holding the e-mail address a visitor registers an account for, the
+			input of the self-service registration dialog.
+		-->
+		<class name="RegistrationRequest">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="email"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
+
+		<!--
 			Transient-only type holding the input of the self-service account creation from an
-			invitation: the user name (the e-mail address of the invitation, shown read-only), the
-			names and the password. The invitation is transferred separately on the dialog's
-			"invitation" channel.
+			invitation or a registration: the user name (the verified e-mail address, shown
+			read-only), the names and the password. The request is transferred separately on the
+			dialog's "request" channel.
 		-->
 		<class name="AccountCreation">
 			<generalizations>

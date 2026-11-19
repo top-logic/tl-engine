@@ -6,9 +6,7 @@
 package com.top_logic.knowledge.service.event;
 
 import java.util.EventListener;
-import java.util.Map;
 
-import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.AfterCommitAction;
 import com.top_logic.knowledge.service.CommitActions;
@@ -40,20 +38,12 @@ public interface ModificationListener extends EventListener {
 	 *        The transaction being committed. The created {@link Modification} may register an
 	 *        {@link AfterCommitAction} there, e.g. to report its changes to the user only after the
 	 *        commit has succeeded.
-	 * @param createdObjects
-	 *        The objects created in currently committed transaction.
-	 * @param updatedObjects
-	 *        The objects updated in currently committed transaction.
-	 * @param removedObjects
-	 *        The objects deleted in currently committed transaction. As the items are already
-	 *        deleted no attribute access must happen.
+	 * @param changes
+	 *        The created, updated and removed items of the transaction being committed.
 	 * 
 	 * @return Not <code>null</code> (see {@link Modification#NONE}).
 	 */
-	Modification createModification(KnowledgeBase kb, CommitActions commitActions,
-			Map<ObjectKey, ? extends KnowledgeItem> createdObjects,
-			Map<ObjectKey, ? extends KnowledgeItem> updatedObjects,
-			Map<ObjectKey, ? extends KnowledgeItem> removedObjects);
+	Modification createModification(KnowledgeBase kb, CommitActions commitActions, PendingChanges changes);
 
 	/**
 	 * Reacts on the upcoming deletion of the given item.

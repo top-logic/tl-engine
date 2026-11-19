@@ -76,7 +76,7 @@ The fold is the merge of typed configuration, applied to the view's configuratio
 | the `<groups>` of a `<menu>` | `id` of the group |
 | the steps of a `<wizard>` | `id` of the step source (unique within the wizard, not addressable by `config:ref`) |
 | the `<channels>` of a `<view>` | `name` |
-| the `<commands>` of a `<panel>`, `<window>`, `<full-page>`, `<menu>`, `<context-menu>` and `<form>` | `name` of the command; a command without name is anonymous |
+| the `<commands>` of a `<panel>`, `<window>`, `<full-page>`, `<menu>`, `<context-menu>` and `<form>`, the entries of a menu `<group>` | `name` of the command; a command without name is anonymous |
 | the slots of an `<app-shell>` (`header`, `notices`, `content`, `footer`) | the kind of the element: at most one of a kind |
 
 An entry of the fragment changes the list as follows:
@@ -141,14 +141,22 @@ Both produce the same merged view (`TestViewOverlayKeyedLists` pins that, with t
 </view>
 ```
 
-The same overlay redefines the channel `accountName` of the base: its `<derived-channel name="accountName">` matches the base's channel by name and replaces its expression. A `<group config:ref="account">` would add its commands to the base's group instead; the commands inside a group are not keyed, so they are appended.
+The same overlay redefines the channel `accountName` of the base: its `<derived-channel name="accountName">` matches the base's channel by name and replaces its expression. A `<group config:ref="account">` would add its commands to the base's group instead. The commands inside a group are keyed by their `name` like the `<commands>` of an element: a command with a new or no name is appended, a command with the name of an entry of the group updates, moves or removes that entry. The development menu names its entries, so a fragment reaches, e.g., the script recorder through its group:
+
+```xml
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+    <group config:ref="automation">
+        <open-window name="record" config:operation="remove"/>
+    </group>
+</view>
+```
 
 Further shipped views written for overlays:
 
 - the shell `app.view.xml` (see [the application shell](doc:view-layer/app-shell#the-application-shell-extending-appviewxml)): `<sidebar config:ref="sidebar">` and `<app-bar config:ref="app-bar">`, the trailing app-bar elements `dev-menu` and `user-menu` to position against;
-- `dev-menu.view.xml`: the menu `dev-menu` with the groups `page`, `automation` and `reference`;
+- `dev-menu.view.xml`: the menu `dev-menu` with the groups `page` (entries `designer`, `inspect`), `automation` (`record`) and `reference` (`docs`);
 - `settings-tabs.view.xml`: the tab bar `settings-tabs` of the settings dialog; on its tab `security` the column of sections `security-sections` (`password-section`, `deputies-section`, `two-factor-section`), and inside the second factor section the column `two-factor-methods` with the block `authenticator-app`, to which a module adds the block of its own second factor;
-- `login-form.view.xml`: the credentials form `credentials` of the login dialog and the login page, with the single sign-on buttons `login-methods` to place a further way to log in after;
+- `login-form.view.xml`: the credentials form `credentials` of the login dialog and the login page, with the group `login-alternatives` (inside the form) of the other ways to log in under "or", holding the single sign-on buttons `login-methods`, to place a further way to log in after - the group disappears when it holds no button;
 - `admin/admin.view.xml`: the tab bar `sections` of the administration, and inside each section a tab bar of its views - `access-control-views`, `monitoring-views`, `system-views` - so a fragment adds a section (`<tab-bar config:ref="sections">`) or a view inside one (`<tab-bar config:ref="system-views">`); the views of the sections name their panes, panels, tables and forms (`main`, `list`, `detail`, `list-panel`, `table`, `form`, ...) for a fragment that adds a command to a toolbar or a field to a form, and the account administration `admin/access-control/accounts.view.xml` names the commands of its list panel (`new-account`, `delete-account`, `reset-password`, ...), so that a fragment keeps, replaces or removes them one by one - `tl-layout-view-contact` turns the page into the administration of people that way.
 - `admin/system/services/service-detail.view.xml`: the panel `detail` of the page of one service in the administration (System → Services). A module adds commands for its own kind of service to its toolbar with `<panel config:ref="detail"><commands>…</commands></panel>`, each guarded by `<visible-if expr="serviceInstanceOf($module, '<class or interface>')"/>` - the TL-Script function `serviceInstanceOf` tests the running instance of the service, so the command is shown only for a service of that kind, and only while it runs. A command taking `inputs="module, services, job as jobState"` re-evaluates that test after a restart of the service, and runs long work as `<start-job job="job">`: the page shows the channel `job` in its job status. The engine's own commands there - rebuilding and re-indexing the full-text index, rebuilding the security storage of the access manager - are written that way.
 - `admin/system/database.view.xml`: the panel `database` of the database page of the administration (System → Database). A module adds commands maintaining the database to its toolbar with `<panel config:ref="database"><commands>…</commands></panel>`; long work runs as `<start-job job="job">`, shown in the job status of the page, and writing the channel `refresh` reads the state of the database in its table again. The engine's own commands there - exporting a dump, compacting the history - are written that way.

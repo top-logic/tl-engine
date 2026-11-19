@@ -13,6 +13,7 @@ import MuiDisclosureToggleAdapter from './adapters/MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './adapters/MuiCheckboxAdapter';
 import MuiTextInputAdapter from './adapters/MuiTextInputAdapter';
 import MuiChipAdapter from './adapters/MuiChipAdapter';
+import MuiSkeletonAdapter from './adapters/MuiSkeletonAdapter';
 import { mountAdapter, patchState, settle } from './adapters/wire-test-support';
 
 // The test registry has no parts of its own: the table looks up the ones it draws with.
@@ -22,6 +23,7 @@ replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
 replacePart('Chip', MuiChipAdapter);
+replacePart('Skeleton', MuiSkeletonAdapter);
 
 class NoResizeObserver {
   observe() {}
@@ -260,6 +262,16 @@ describe('the column selection and the reset', () => {
     await openView();
     expect(screen.queryByRole('button', { name: CHOOSE_COLUMNS })).toBeNull();
     expect(screen.getByRole('button', { name: RESET })).toBeTruthy();
+  });
+
+  it('puts the column selection first, before the density, and starts the focus there', async () => {
+    mountTable({ columnSelect: true });
+    await settle();
+    const dialog = await openView();
+    const columns = screen.getByRole('button', { name: CHOOSE_COLUMNS });
+    expect(document.activeElement).toBe(columns);
+    const firstEntry = dialog.querySelector('button, [role="radiogroup"], [role="switch"]');
+    expect(firstEntry).toBe(columns);
   });
 
   it('opens the column selection and closes the view', async () => {

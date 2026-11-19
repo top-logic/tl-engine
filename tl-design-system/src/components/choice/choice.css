@@ -103,14 +103,16 @@
 
 /* --- Schalter ---------------------------------------------------------------- */
 
-.tl-checkbox--switch {
+/* Spur und Knopf zeichnet nur der bedienbare Schalter: schreibgeschützt erscheint er als Wert wie das
+   Kästchen (siehe unten). :where hält die Spezifität der Regeln. */
+.tl-checkbox--switch:where(:not([aria-readonly="true"])) {
   width: var(--tl-size-switch);
   border-radius: var(--tl-radius-full);
   justify-content: start;
 }
 
-.tl-checkbox--switch::after,
-.tl-checkbox--switch:checked::after,
+.tl-checkbox--switch:where(:not([aria-readonly="true"]))::after,
+.tl-checkbox--switch:where(:not([aria-readonly="true"])):checked::after,
 .tl-menu__item--check .tl-checkbox--switch::after,
 .tl-menu__item--check[aria-checked="true"] .tl-checkbox--switch::after {
   content: "";
@@ -124,7 +126,7 @@
   transition: transform var(--tl-duration-fast) var(--tl-easing-standard);
 }
 
-.tl-checkbox--switch:checked::after,
+.tl-checkbox--switch:where(:not([aria-readonly="true"])):checked::after,
 .tl-menu__item--check[aria-checked="true"] .tl-checkbox--switch::after {
   background: var(--tl-text-on-brand);
   transform: translateX(calc(var(--tl-size-switch) - var(--tl-size-choice)));
@@ -159,11 +161,36 @@
 }
 
 /* Schreibgeschützt ist nicht deaktiviert: das Kästchen trägt aria-readonly statt disabled, die Engine
-   blockiert die Änderung. Die Füllung bleibt die Marke und hält ihren Kontrast; nur der Zeiger sagt,
-   dass hier nichts zu klicken ist. */
-.tl-checkbox[aria-readonly="true"],
+   blockiert die Änderung, und der Wert liegt nicht im Deaktiviert-Grau. Ein schreibgeschütztes Boolean-Feld
+   (Kästchen und Schalter) erscheint als Wert wie tl-field-value, nicht als Bedienelement: ohne Rahmen und
+   ohne Fläche, angekreuzt der Haken in text-primary, nicht angekreuzt ein Gedankenstrich in text-secondary,
+   ohne Wert (gemischt, triState) nichts — wie ein leerer Lesewert. Maß und Lage sind die des Kästchens, auch
+   beim Schalter: mittig in der Textzeile wie ein Lesewert. aria-readonly und disabled stehen nie
+   zusammen (TLCheckbox). Das Radio bleibt eine Marke: Auswahlfelder zeigen ihren Lesewert als Text. */
+.tl-checkbox[aria-readonly="true"] {
+  border-color: transparent;
+  background: transparent;
+  cursor: default;
+}
+
 .tl-radio[aria-readonly="true"] {
   cursor: default;
+}
+
+/* Der Haken des Kästchens, in der Farbe eines Lesewerts statt der Beschriftung auf der Marke. */
+.tl-checkbox[aria-readonly="true"]:checked::after {
+  border-color: var(--tl-text-primary);
+}
+
+.tl-checkbox[aria-readonly="true"]:not(:checked, :indeterminate)::after {
+  content: "";
+  width: calc(var(--tl-size-choice) * 0.5);
+  height: var(--tl-border-width-md);
+  background: var(--tl-text-secondary);
+}
+
+.tl-checkbox[aria-readonly="true"]:indeterminate::after {
+  content: none;
 }
 
 /* --- Label und Gruppe ------------------------------------------------------------ */

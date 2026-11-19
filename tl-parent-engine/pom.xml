@@ -119,6 +119,8 @@
 		<module>../com.top_logic.model.wysiwyg</module>
 		<module>../tl-monitoring-core</module>
 		<module>../com.top_logic.monitoring</module>
+		<module>../com.top_logic.oauth.server</module>
+		<module>../com.top_logic.oauth.server.view</module>
 		<module>../com.top_logic.office</module>
 		<module>../com.top_logic.presentation</module>
 		<module>../com.top_logic.reporting</module>
@@ -146,10 +148,13 @@
 		<module>../tl-security-selfservice-core</module>
 		<module>../tl-security-selfservice</module>
 		<module>../tl-security-passkey</module>
+		<module>../tl-security-captcha</module>
+		<module>../tl-security-captcha-view</module>
 
 		<!-- AI modules -->
 		<module>../tl-ai-tool-api</module>
 		<module>../tl-ai-core</module>
+		<module>../tl-ai-browser</module>
 		<module>../tl-ai-classic</module>
 		<module>../tl-ai-mcp-server</module>
 		<module>../tl-ai-a2a</module>

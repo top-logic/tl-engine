@@ -19,6 +19,7 @@ import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
 import MuiChipAdapter from './MuiChipAdapter';
+import MuiSkeletonAdapter from './MuiSkeletonAdapter';
 import MuiBadgeAdapter from './MuiBadgeAdapter';
 import MuiProgressBarAdapter from './MuiProgressBarAdapter';
 import MuiDividerAdapter from './MuiDividerAdapter';
@@ -31,6 +32,7 @@ replacePart('Checkbox', MuiCheckboxAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
 // The table draws its named filters as chips, the sidebar its counts as badges.
 replacePart('Chip', MuiChipAdapter);
+replacePart('Skeleton', MuiSkeletonAdapter);
 replacePart('Badge', MuiBadgeAdapter);
 // A tree shows the loading of the children of a node by a progress bar; the sidebar draws lines between
 // its items.
@@ -173,7 +175,7 @@ describe('the toggle of a tree table row as MUI icon button', () => {
     await userEvent.click(toggle);
     await settle();
 
-    expect(sent).toHaveBeenCalledWith(CMD_EXPAND, { rowIndex: 0, expanded: true });
+    expect(sent).toHaveBeenCalledWith(CMD_EXPAND, { rowId: 'r0', expanded: true });
   });
 
   it('collapses an expanded row', async () => {
@@ -185,7 +187,7 @@ describe('the toggle of a tree table row as MUI icon button', () => {
     await userEvent.click(toggle);
     await settle();
 
-    expect(sent).toHaveBeenCalledWith(CMD_EXPAND, { rowIndex: 0, expanded: false });
+    expect(sent).toHaveBeenCalledWith(CMD_EXPAND, { rowId: 'r0', expanded: false });
   });
 });
 

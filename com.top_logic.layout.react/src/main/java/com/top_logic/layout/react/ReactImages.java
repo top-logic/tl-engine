@@ -12,7 +12,9 @@ import com.top_logic.layout.basic.ThemeImage;
  *
  * <p>
  * The client renders an icon font class (<code>css:</code>, <code>colored:</code>) as it is, and
- * everything starting with a slash as the <code>src</code> of an image. The
+ * everything starting with a slash or with <code>data:</code> as the <code>src</code> of an image.
+ * Image data (see {@link ThemeImage#data(com.top_logic.basic.io.binary.BinaryDataSource)}) is sent
+ * as its encoded form, the <code>data</code> URI embedding the image, which needs no context path. The
  * {@link ThemeImage#toEncodedForm() encoded form} of an image file is its theme-local key, which
  * names neither the context path of the application nor the theme the file is taken from - the
  * browser would request it from the root of the server. An image file is therefore sent as the
@@ -43,8 +45,8 @@ public class ReactImages {
 	 *        URL of an image file is relative to the server root.
 	 * @param image
 	 *        The image to display, or <code>null</code> for none.
-	 * @return The URL of an image file, the encoded form of any other image, or <code>null</code>
-	 *         when there is no image.
+	 * @return The URL of an image file, the encoded form of any other image (the <code>data</code>
+	 *         URI of image data), or <code>null</code> when there is no image.
 	 */
 	public static String encode(ReactContext context, ThemeImage image) {
 		if (image == null) {

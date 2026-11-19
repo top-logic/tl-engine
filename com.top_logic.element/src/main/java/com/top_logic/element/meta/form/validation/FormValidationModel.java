@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.AttributeOperations;
@@ -30,6 +31,8 @@ import com.top_logic.model.annotate.TLRange;
 import com.top_logic.model.annotate.TLSize;
 import com.top_logic.model.annotate.util.ConstraintCheck;
 import com.top_logic.model.annotate.util.ConstraintCheck.ConstraintType;
+import com.top_logic.model.annotate.util.ValueCountConstraintCheck;
+import com.top_logic.model.fallback.StorageWithFallback;
 import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.ValidationResult;
@@ -251,6 +254,12 @@ public class FormValidationModel implements OverlayLookup {
 				}
 			}
 
+			// Value count check from @TLValueCount.
+			ValueCountConstraintCheck valueCountCheck = ValueCountConstraintCheck.forAttribute(part);
+			if (valueCountCheck != null) {
+				entries.add(new ConstraintEntry(valueCountCheck, overlay, part));
+			}
+
 			// Custom constraints from @TLConstraints.
 			TLConstraints constraintsAnnotation = part.getAnnotation(TLConstraints.class);
 			if (constraintsAnnotation != null) {
@@ -389,13 +398,44 @@ public class FormValidationModel implements OverlayLookup {
 		}
 	}
 
+	/**
+	 * The attribute values the given check depends on.
+	 *
+	 * <p>
+	 * Besides the dependencies the check reports itself, a check of an attribute with a
+	 * {@link StorageWithFallback} depends on the attributes the computation of its
+	 * {@link StorageWithFallback#getFallbackValue(TLObject, TLStructuredTypePart) fallback value}
+	 * reads: the checked value is the fallback value while no explicit value is set.
+	 * </p>
+	 *
+	 * <p>
+	 * A derived attribute is computed over an overlay by reading the overlay's base object (see
+	 * {@link com.top_logic.model.form.TracingScope#computeOnOverlay(TLObject, TLObject, TLStructuredTypePart)}),
+	 * whereas a change is announced for the overlay. Each dependency is therefore recorded for the
+	 * overlay of the object read.
+	 * </p>
+	 */
 	private Set<Pointer> traceDependencies(ConstraintEntry entry) {
 		Set<Pointer> deps = new HashSet<>();
-		entry.getCheck().traceDependencies(
-			entry.getObject(), entry.getAttribute(),
-			deps::add,
-			this);
+		Sink<Pointer> trace = pointer -> deps.add(toOverlay(pointer));
+		TLObject object = entry.getObject();
+		TLStructuredTypePart attribute = entry.getAttribute();
+		entry.getCheck().traceDependencies(object, attribute, trace, this);
+		if (attribute.getStorageImplementation() instanceof StorageWithFallback fallback) {
+			fallback.traceFallbackValue(object, attribute, trace, this);
+		}
 		return deps;
+	}
+
+	/**
+	 * The given pointer, with its object replaced by its overlay, if there is one.
+	 */
+	private Pointer toOverlay(Pointer pointer) {
+		TLObject overlay = getExistingOverlay(pointer.object());
+		if (overlay == null || overlay == pointer.object()) {
+			return pointer;
+		}
+		return Pointer.create(overlay, pointer.attribute());
 	}
 
 	private void updateDependencies(ConstraintEntry entry, Set<Pointer> newDeps) {

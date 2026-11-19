@@ -1,5 +1,5 @@
 ---
-description: Read before diagnosing agent runs from the log or routing the AI log of an application - the log categories com.top_logic.tl.ai and com.top_logic.ai, the line format of DiagnosticLoggingListener (run=<runId> turn=<n> <EVENT>, RUN_START, TOOL_OK, PROVIDER_RETRY, TX_ROLLBACK, LOOP_BLOCK, ...), what is logged at ERROR, INFO and DEBUG, and the TL_AI_APPENDER route of tl-ai-demo's logging configuration (default.xml, debug.xml, LoggerAdminBean).
+description: Read before diagnosing agent runs from the log or routing the AI log of an application - the log category com.top_logic.ai, the line format of DiagnosticLoggingListener (run=<runId> turn=<n> <EVENT>, RUN_START, TOOL_OK, PROVIDER_RETRY, TX_ROLLBACK, LOOP_BLOCK, ...), what is logged at ERROR, INFO and DEBUG, and the TL_AI_APPENDER route of tl-ai-demo's logging configuration (default.xml, debug.xml, LoggerAdminBean).
 order: 68
 ---
 
@@ -52,9 +52,9 @@ Search by run (`grep 'run=8f3c1e'`) or by event (`grep ' TOOL_FAIL '`, `grep ' P
 
 ## Routing the AI log to a file of its own
 
-The AI modules log under two categories: `com.top_logic.tl.ai` (`tl-ai-core`, `tl-ai-tool-api`, `tl-ai-index`) and `com.top_logic.ai` (`tl-chat`, `tl-ai-mcp-server`, `tl-ai-vector-index`, `tl-ai-a2a`, `tl-ai-views`). Without any configuration the main log stays free of the trace, because the root logger is at `info` and the trace is at `debug`.
+The AI modules log under the category `com.top_logic.ai`. Without any configuration the main log stays free of the trace, because the root logger is at `info` and the trace is at `debug`.
 
-An application assembles one log4j2 configuration from its webapp overlay; a library module cannot add an appender to it. `tl-ai-demo` therefore overrides `WEB-INF/conf/logging/default.xml` (AI categories at `info`) and `debug.xml` (AI categories at `debug`), both copies of the engine's base configuration with an appender and two loggers added. `LoggerAdminBean` selects the file with `<logging-config>debug.xml</logging-config>`; the trace then lands in `<LOG_PATH>/top-logic.tl-ai.log`.
+An application assembles one log4j2 configuration from its webapp overlay; a library module cannot add an appender to it. `tl-ai-demo` therefore overrides `WEB-INF/conf/logging/default.xml` (AI category at `info`) and `debug.xml` (AI category at `debug`), both copies of the engine's base configuration with an appender and a logger added. `LoggerAdminBean` selects the file with `<logging-config>debug.xml</logging-config>`; the trace then lands in `<LOG_PATH>/top-logic.tl-ai.log`.
 
 An application that wants the same route adds to its own copy of the logging configuration:
 
@@ -69,12 +69,9 @@ An application that wants the same route adds to its own copy of the logging con
 </RollingFile>
 ```
 
-and the two loggers, `additivity="false"` keeping the lines out of the main log, `level="debug"` for the full trace:
+and the logger, `additivity="false"` keeping the lines out of the main log, `level="debug"` for the full trace:
 
 ```xml
-<Logger name="com.top_logic.tl.ai" additivity="false" level="info">
-	<AppenderRef ref="TL_AI_APPENDER"/>
-</Logger>
 <Logger name="com.top_logic.ai" additivity="false" level="info">
 	<AppenderRef ref="TL_AI_APPENDER"/>
 </Logger>

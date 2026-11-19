@@ -1,13 +1,11 @@
 package com.top_logic.react.flow.client.bridge;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
 /**
  * {@code JsInterop} bridge to the React SSE/Command infrastructure.
  *
  * <p>
- * Provides access to {@code window.TLReact.subscribe()} for receiving SSE events
- * and {@code fetch('/react-api/command')} for sending commands to the server.
+ * Provides access to {@code window.TLReact.subscribe()} for receiving SSE events. Commands reach the
+ * server through the {@link CommandSender} the React component mounting the diagram provides.
  * </p>
  *
  * <p>
@@ -45,40 +43,6 @@ public class ReactBridge {
 		if ($wnd.TLReact && $wnd.TLReact.unsubscribe) {
 			$wnd.TLReact.unsubscribe(controlId, listener);
 		}
-	}-*/;
-
-	/**
-	 * Send a command to the server via the React command endpoint.
-	 *
-	 * @param contextPath
-	 *        Base path (e.g. "/demo").
-	 * @param controlId
-	 *        The control ID.
-	 * @param command
-	 *        Command name (e.g. "click", "selection").
-	 * @param windowName
-	 *        Browser window identifier.
-	 * @param arguments
-	 *        JSON-serializable arguments object, may be null.
-	 */
-	public static native void sendCommand(
-			String contextPath, String controlId, String command,
-			String windowName, JavaScriptObject arguments) /*-{
-		var url = contextPath + '/react-api/command';
-		var body = {
-			controlId: controlId,
-			command: command,
-			windowName: windowName,
-			arguments: arguments || {}
-		};
-		var promise = $wnd.fetch(url, {
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(body)
-		});
-		promise['catch'](function(err) {
-			$wnd.console.error('[ReactBridge] Command failed:', err);
-		});
 	}-*/;
 
 }

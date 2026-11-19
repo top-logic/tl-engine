@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 import junit.framework.TestCase;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnAlignment;
@@ -46,6 +47,7 @@ import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.filter.TextFilterState;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
+import com.top_logic.table.impl.DelegatingColumn;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.table.impl.NamedFilterCodec;
 import com.top_logic.table.impl.TableViewStateCodec;
@@ -1497,12 +1499,12 @@ public class TestDefaultTableView extends TestCase {
 			assertNull("A view without a row class function marks no row.", view.rowCssClass(row));
 		}
 
-		view.setRowCssClass(person -> person.age() > 35 ? "tl-status-warning" : null);
+		view.setRowCssClass(person -> person.age() > 35 ? "my-highlight" : null);
 		Map<String, String> classes = new java.util.HashMap<>();
 		for (Row<Person> row : view.rows(0, view.rowCount())) {
 			classes.put(row.data().name(), view.rowCssClass(row));
 		}
-		assertEquals("tl-status-warning", classes.get("Bob"));
+		assertEquals("my-highlight", classes.get("Bob"));
 		assertNull(classes.get("alice"));
 		assertNull(classes.get("Charlie"));
 
@@ -1520,7 +1522,7 @@ public class TestDefaultTableView extends TestCase {
 		List<Column<Person, ?>> columns = cssColumns();
 		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
 		for (Row<Person> row : view.rows(0, view.rowCount())) {
-			String expected = row.data().age() < 30 ? "tl-status-info" : null;
+			String expected = row.data().age() < 30 ? "my-young" : null;
 			assertEquals(expected, view.cellCssClass(row, "age"));
 			assertNull("A column without a cell class marks no cell.", view.cellCssClass(row, "name"));
 			assertNull("An unknown column marks no cell.", view.cellCssClass(row, "unknown"));
@@ -1534,7 +1536,7 @@ public class TestDefaultTableView extends TestCase {
 	public void testGroupRowsCarryNoCssClass() {
 		List<Column<Person, ?>> columns = cssColumns();
 		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
-		view.setRowCssClass(person -> "tl-status-error");
+		view.setRowCssClass(person -> "my-marked");
 		view.group(new GroupSpec(List.of("name")));
 
 		int headers = 0;
@@ -1546,11 +1548,115 @@ public class TestDefaultTableView extends TestCase {
 				assertNull(view.cellCssClass(row, "age"));
 			} else if (row.kind() == RowKind.DATA) {
 				data++;
-				assertEquals("tl-status-error", view.rowCssClass(row));
+				assertEquals("my-marked", view.rowCssClass(row));
 			}
 		}
 		assertTrue("The table shows group headers.", headers > 0);
 		assertTrue("The table shows data rows.", data > 0);
+	}
+
+	/**
+	 * Tests that the data rows answer the row color function installed on the view, and that a
+	 * view without one answers none.
+	 */
+	public void testRowColor() {
+		List<Column<Person, ?>> columns = personColumns();
+		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			assertNull("A view without a row color function colors no row.", view.rowColor(row));
+		}
+
+		view.setRowColor(person -> person.age() > 35 ? ValueColor.WARNING : null);
+		Map<String, ValueColor> colors = new java.util.HashMap<>();
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			colors.put(row.data().name(), view.rowColor(row));
+		}
+		assertEquals(ValueColor.WARNING, colors.get("Bob"));
+		assertNull(colors.get("alice"));
+		assertNull(colors.get("Charlie"));
+
+		view.setRowColor(null);
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			assertNull("Removing the function removes the colors.", view.rowColor(row));
+		}
+	}
+
+	/**
+	 * Tests that the row color and the row CSS class are independent of each other.
+	 */
+	public void testRowColorIndependentOfCssClass() {
+		List<Column<Person, ?>> columns = personColumns();
+		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+		view.setRowColor(person -> ValueColor.CATEGORY_2);
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			assertEquals(ValueColor.CATEGORY_2, view.rowColor(row));
+			assertNull("A row color sets no CSS class.", view.rowCssClass(row));
+		}
+	}
+
+	/**
+	 * Tests that the cells of a data row answer their column's color for the row object, and the
+	 * cells of a column without one answer none.
+	 */
+	public void testCellColor() {
+		List<Column<Person, ?>> columns = colorColumns();
+		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			ValueColor expected = row.data().age() < 30 ? ValueColor.INFO : null;
+			assertEquals(expected, view.cellColor(row, "age"));
+			assertNull("A color sets no CSS class.", view.cellCssClass(row, "age"));
+			assertNull("A column without a cell color colors no cell.", view.cellColor(row, "name"));
+			assertNull("An unknown column colors no cell.", view.cellColor(row, "unknown"));
+		}
+	}
+
+	/**
+	 * Tests that a {@link DelegatingColumn} passes the cell color of the column it wraps on.
+	 */
+	public void testDelegatingColumnColor() {
+		Column<Person, ?> age = colorColumns().get(1);
+		Column<Person, ?> wrapped = new DelegatingColumn<>(age);
+		for (Person person : people()) {
+			assertEquals(age.color(person), wrapped.color(person));
+		}
+	}
+
+	/**
+	 * Tests that a group header row is colored neither as a row nor in its cells, whatever the
+	 * functions say about the row objects.
+	 */
+	public void testGroupRowsCarryNoColor() {
+		List<Column<Person, ?>> columns = colorColumns();
+		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+		view.setRowColor(person -> ValueColor.ERROR);
+		view.group(new GroupSpec(List.of("name")));
+
+		int headers = 0;
+		int data = 0;
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			if (row.kind() == RowKind.GROUP_HEADER) {
+				headers++;
+				assertNull(view.rowColor(row));
+				assertNull(view.cellColor(row, "age"));
+			} else if (row.kind() == RowKind.DATA) {
+				data++;
+				assertEquals(ValueColor.ERROR, view.rowColor(row));
+			}
+		}
+		assertTrue("The table shows group headers.", headers > 0);
+		assertTrue("The table shows data rows.", data > 0);
+	}
+
+	/** The {@link #personColumns()} with a cell color on the age of a person younger than 30. */
+	private List<Column<Person, ?>> colorColumns() {
+		Column<Person, String> name = DefaultColumn.<Person, String> builder("name", Person::name)
+			.sort(() -> Comparator.naturalOrder())
+			.build();
+		Column<Person, Integer> age = DefaultColumn.<Person, Integer> builder("age", Person::age)
+			.sort(() -> Comparator.naturalOrder())
+			.color(person -> person.age() < 30 ? ValueColor.INFO : null)
+			.build();
+		return List.of(name, age);
 	}
 
 	/** The {@link #personColumns()} with a cell class on the age of a person younger than 30. */
@@ -1560,9 +1666,90 @@ public class TestDefaultTableView extends TestCase {
 			.build();
 		Column<Person, Integer> age = DefaultColumn.<Person, Integer> builder("age", Person::age)
 			.sort(() -> Comparator.naturalOrder())
-			.css(person -> person.age() < 30 ? "tl-status-info" : null)
+			.css(person -> person.age() < 30 ? "my-young" : null)
 			.build();
 		return List.of(name, age);
+	}
+
+	/** A sale of a product in a region, the fixture of the nested grouping tests. */
+	private record Sale(String region, String product, int amount) {
+		// Test fixture.
+	}
+
+	/**
+	 * A view over sales grouped by region and product, displaying a sortable label first and the
+	 * amount summed up per group.
+	 */
+	private static TableView<Sale> nestedGroupingView() {
+		List<Column<Sale, ?>> columns = List.of(
+			DefaultColumn.<Sale, String> builder("label", sale -> sale.region() + " " + sale.product() + " " + sale.amount())
+				.sort(() -> Comparator.<String> naturalOrder())
+				.build(),
+			DefaultColumn.<Sale, Integer> builder("amount", Sale::amount)
+				.aggregate(group -> CellContent.text(
+					String.valueOf(group.members().stream().mapToInt(Sale::amount).sum())))
+				.build(),
+			DefaultColumn.<Sale, String> builder("region", Sale::region)
+				.sort(() -> Comparator.<String> naturalOrder())
+				.build(),
+			DefaultColumn.<Sale, String> builder("product", Sale::product)
+				.sort(() -> Comparator.<String> naturalOrder())
+				.build());
+		List<Sale> sales = List.of(
+			new Sale("North", "B", 1),
+			new Sale("South", "A", 2),
+			new Sale("North", "A", 3),
+			new Sale("North", "B", 4),
+			new Sale("South", "A", 5),
+			new Sale("South", "C", 6));
+		TableView<Sale> view = DefaultTableView.create(columns, new ListRowSource<>(sales, columns));
+		view.group(new GroupSpec(List.of("region", "product")));
+		return view;
+	}
+
+	/**
+	 * The group headers of the given view as text: depth, the value shown in the first column and
+	 * the aggregate of the amount column.
+	 */
+	private static List<String> groupHeaders(TableView<Sale> view) {
+		List<String> result = new ArrayList<>();
+		for (Row<Sale> row : view.rows(0, view.rowCount())) {
+			if (row.kind() == RowKind.GROUP_HEADER) {
+				result.add(row.depth() + ":" + ((CellContent.Text) view.cell(row, "label")).text() + "="
+					+ ((CellContent.Text) view.cell(row, "amount")).text());
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Tests that the header of a nested group shows the value of its own level's grouping column
+	 * in the first column and the aggregates over its own rows.
+	 */
+	public void testNestedGroupHeadersShowTheirLevelsValueAndAggregates() {
+		TableView<Sale> view = nestedGroupingView();
+		assertEquals(List.of("0:North=8", "1:A=3", "1:B=5", "0:South=13", "1:A=7", "1:C=6"),
+			groupHeaders(view));
+		assertEquals("All levels are kept in the state.", new GroupSpec(List.of("region", "product")),
+			view.state().getGrouping());
+	}
+
+	/**
+	 * Tests that sorting the first displayed column orders the groups of every level in that
+	 * direction, unless the grouping column of a level is sorted itself.
+	 */
+	public void testFirstColumnSortDecidesDirectionOfAllGroupLevels() {
+		TableView<Sale> view = nestedGroupingView();
+		view.sort(new SortSpec(List.of(new SortColumn("label", false))));
+		assertEquals(List.of("0:South=13", "1:C=6", "1:A=7", "0:North=8", "1:B=5", "1:A=3"),
+			groupHeaders(view));
+
+		view.sort(new SortSpec(List.of(new SortColumn("label", false), new SortColumn("product", true))));
+		assertEquals("The product level keeps its own direction.",
+			List.of("0:South=13", "1:A=7", "1:C=6", "0:North=8", "1:A=3", "1:B=5"),
+			groupHeaders(view));
+		assertEquals(List.of(new SortColumn("label", false), new SortColumn("product", true)),
+			view.state().getSort());
 	}
 
 }

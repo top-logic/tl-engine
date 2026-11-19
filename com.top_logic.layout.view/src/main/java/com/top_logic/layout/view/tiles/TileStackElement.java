@@ -62,7 +62,9 @@ import com.top_logic.layout.view.navigation.RevealPath;
  * push names the declaration by its id, and the declarations nested in one another say which frame
  * may follow which. The drill-down path is part of the address of the page, for every frame whose
  * declaration has a route: the URL names the frames of the path one route each, and opening that
- * URL again restores exactly those frames.
+ * URL again restores exactly those frames. The conversions of a frame parameter between its value
+ * and the text of the URL may read {@link FrameParamConfig#getInputs() inputs}, channels of the view
+ * declaring the stack, which the stack resolves when it is displayed.
  * </p>
  *
  * <p>
@@ -219,7 +221,8 @@ public class TileStackElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		ViewChannel pathChannel = context.resolveChannel(_pathRef);
-		TileStackScope scope = new TileStackScope(pathChannel, _frameRoot, RevealPath.of(context), this);
+		TileStackScope scope = new TileStackScope(pathChannel, _frameRoot, RevealPath.of(context), this,
+			context::getModelScope, context);
 		Map<String, ViewChannel> sharedChannels = new LinkedHashMap<>();
 		if (_bindPathTo != null) {
 			sharedChannels.put(_bindPathTo, pathChannel);

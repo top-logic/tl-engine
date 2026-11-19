@@ -9,11 +9,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.common.BadgeDisplay;
 
 /**
  * Bottom navigation bar for mobile screens.
@@ -42,13 +44,16 @@ public class ReactBottomBarControl extends ReactControl {
 	/** Entry CSS icon class. */
 	private static final String ENTRY_ICON = "icon";
 
-	/** Entry badge text. */
+	/** Entry badge, the state of a {@link BadgeDisplay}. */
 	private static final String ENTRY_BADGE = "badge";
 
 	/** The {@link ReactCommandHandler} that selects a navigation item. */
 	public static final String SELECT_ITEM_COMMAND = "selectItem";
 
 	private final Consumer<String> _selectHandler;
+
+	/** The items as displayed, in the order of the bar. */
+	private List<BottomBarEntry> _items = List.of();
 
 	/**
 	 * Creates a bottom navigation bar.
@@ -75,14 +80,41 @@ public class ReactBottomBarControl extends ReactControl {
 	 *        The new navigation items.
 	 */
 	public void updateItems(List<BottomBarEntry> items) {
+		_items = new ArrayList<>(items);
+		putItems();
+	}
+
+	/**
+	 * Shows the given badge at the corner of the icon of the item with the given ID.
+	 *
+	 * @param itemId
+	 *        The ID of the item.
+	 * @param badge
+	 *        The badge, {@code null} for none.
+	 */
+	public void setItemBadge(String itemId, BadgeDisplay badge) {
+		for (int n = 0, cnt = _items.size(); n < cnt; n++) {
+			BottomBarEntry entry = _items.get(n);
+			if (entry.id().equals(itemId)) {
+				if (Objects.equals(entry.badge(), badge)) {
+					return;
+				}
+				_items.set(n, new BottomBarEntry(entry.id(), entry.label(), entry.icon(), badge));
+				putItems();
+				return;
+			}
+		}
+	}
+
+	private void putItems() {
 		List<Map<String, Object>> itemList = new ArrayList<>();
-		for (BottomBarEntry entry : items) {
+		for (BottomBarEntry entry : _items) {
 			Map<String, Object> map = new HashMap<>();
 			map.put(ENTRY_ID, entry.id());
 			map.put(ENTRY_LABEL, entry.label());
 			map.put(ENTRY_ICON, entry.icon());
 			if (entry.badge() != null) {
-				map.put(ENTRY_BADGE, entry.badge());
+				map.put(ENTRY_BADGE, entry.badge().toState());
 			}
 			itemList.add(map);
 		}
@@ -109,9 +141,9 @@ public class ReactBottomBarControl extends ReactControl {
 	 * @param icon
 	 *        The CSS icon class.
 	 * @param badge
-	 *        Optional badge text, or {@code null}.
+	 *        The badge at the corner of the icon, or {@code null} for none.
 	 */
-	public record BottomBarEntry(String id, String label, String icon, String badge) {
+	public record BottomBarEntry(String id, String label, String icon, BadgeDisplay badge) {
 
 		/**
 		 * Creates an entry without a badge.

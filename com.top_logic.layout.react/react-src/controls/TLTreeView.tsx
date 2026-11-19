@@ -1,7 +1,7 @@
 import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, TLChild, rootClassName, stateAttr, useTokenPx, afterDragImage, useI18N, usePart, isEditorTarget, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, dragModes, treeZoneSplit, dropZoneAt } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker } from 'tl-react-bridge';
-import { DropHint, NO_DRAG_IMAGE } from './DropHint';
-import type { HintAnchor, DropVerdict } from './DropHint';
+import { DropHint, NO_DRAG_IMAGE } from 'tl-react-bridge';
+import type { HintAnchor, DropVerdict } from 'tl-react-bridge';
 
 interface NodeState {
   id: string;
@@ -308,7 +308,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
         probes.sent.add(probe);
         const args: Record<string, unknown> = {
           source: drag.payload.source,
-          keys: drag.payload.keys.join(','),
+          keys: drag.payload.keys,
           selection: drag.payload.selection,
           zone: target.zone,
           drag: drag.id,
@@ -356,9 +356,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
     if (payload) {
       const args: Record<string, unknown> = {
         source: payload.source,
-        // Comma-separated: the command argument is a formatted string list, and a node id holds no
-        // comma.
-        keys: payload.keys.join(','),
+        keys: payload.keys,
         selection: payload.selection,
         zone: target.zone,
       };
@@ -482,6 +480,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
 
   return (
     <ul
+      id={controlId}
       ref={listRef}
       role="tree"
       aria-label={i18n['js.tree.label']}

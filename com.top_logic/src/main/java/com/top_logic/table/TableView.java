@@ -12,6 +12,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.model.annotate.ui.ValueColor;
+import com.top_logic.util.Resources;
 import com.top_logic.table.filter.TextFilterState;
 
 /**
@@ -231,6 +234,61 @@ public interface TableView<R> {
 	Column<R, ?> column(String column);
 
 	/**
+	 * The text the header row of the given group shows for the value the group stands for.
+	 *
+	 * <p>
+	 * The value is written as the column the rows are grouped by at the group's level displays it.
+	 * A column that displays its values by a control rather than a text writes the value by its
+	 * label. A group of the rows that have {@link Column#isNoValue(Object) no value} in the grouping
+	 * column is written by the column's {@link Column#emptyGroupLabel() label of an empty group}.
+	 * The number of rows in the group, which the header shows next to the value, is not part of the
+	 * text.
+	 * </p>
+	 *
+	 * @param group
+	 *        The group of a {@link RowKind#GROUP_HEADER group header} row.
+	 * @return The text, empty if the group stands for no value of a grouping column.
+	 */
+	default String groupText(Group<R> group) {
+		List<Object> values = group.key().values();
+		List<String> grouping = state().getGrouping().columns();
+		int level = values.size() - 1;
+		if (level < 0 || level >= grouping.size()) {
+			return "";
+		}
+		Column<R, ?> groupColumn = column(grouping.get(level));
+		if (groupColumn == null) {
+			return "";
+		}
+		Object value = values.get(level);
+		if (Column.isNoValue(value)) {
+			return Resources.getInstance().getString(groupColumn.emptyGroupLabel());
+		}
+		CellContent content = renderGroupValue(groupColumn, value);
+		String text = "";
+		if (content instanceof CellContent.Text plain) {
+			text = plain.text();
+		} else if (content instanceof CellContent.Labeled labeled) {
+			text = labeled.text();
+		}
+		if ((text == null || text.isEmpty()) && value != null) {
+			// The column displays its values by a control rather than a text.
+			return MetaLabelProvider.INSTANCE.getLabel(value);
+		}
+		return text == null ? "" : text;
+	}
+
+	/**
+	 * Renders a group value through the renderer of the column it was taken from.
+	 *
+	 * @implNote The value is a group key value of this very column, hence of its value type.
+	 */
+	@SuppressWarnings("unchecked")
+	private static <R, V> CellContent renderGroupValue(Column<R, V> column, Object value) {
+		return column.renderer().render((V) value);
+	}
+
+	/**
 	 * The CSS class marking the given row as a whole, or {@code null} for none.
 	 *
 	 * <p>
@@ -257,6 +315,38 @@ public interface TableView<R> {
 	 * @see #rowCssClass(Row)
 	 */
 	default String cellCssClass(Row<R> row, String column) {
+		return null;
+	}
+
+	/**
+	 * The color role of the given row as a whole, or {@code null} for none.
+	 *
+	 * <p>
+	 * A UI tier draws the row tinted in that role, so that a row can be marked by what its row
+	 * object is (e.g. by its state). The role is independent of the {@link #rowCssClass(Row) CSS
+	 * class}, which stays the application's own styling hook. A cell with a
+	 * {@link #cellColor(Row, String) role of its own} is drawn in its own role.
+	 * </p>
+	 *
+	 * @see #cellColor(Row, String)
+	 */
+	default ValueColor rowColor(Row<R> row) {
+		return null;
+	}
+
+	/**
+	 * The color role of the given row's cell in the named column, or {@code null} for none.
+	 *
+	 * <p>
+	 * A UI tier draws the cell tinted in that role, so that a single cell can be marked by the row
+	 * it is in, see {@link Column#color(Object)}. The role is independent of the
+	 * {@link #cellCssClass(Row, String) CSS class}, which stays the application's own styling
+	 * hook.
+	 * </p>
+	 *
+	 * @see #rowColor(Row)
+	 */
+	default ValueColor cellColor(Row<R> row, String column) {
 		return null;
 	}
 

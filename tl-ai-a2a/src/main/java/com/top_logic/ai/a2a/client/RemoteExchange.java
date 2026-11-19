@@ -25,7 +25,7 @@ import com.top_logic.ai.a2a.protocol.A2AJson;
 import com.top_logic.ai.a2a.protocol.ArtifactRef;
 import com.top_logic.ai.a2a.protocol.Json;
 import com.top_logic.ai.a2a.protocol.TaskState;
-import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
+import com.top_logic.ai.tool.api.UntrustedEnvelope;
 
 /**
  * One exchange of a local agent with a remote A2A agent: send a message (a new one, or the answer to

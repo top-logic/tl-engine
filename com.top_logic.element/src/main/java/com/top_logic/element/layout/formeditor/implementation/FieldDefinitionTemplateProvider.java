@@ -30,6 +30,7 @@ import com.top_logic.layout.basic.ErrorFragmentGenerator;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.boxes.reactive_tag.AttributeImageProvider;
+import com.top_logic.layout.form.control.TextInputControl;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.layout.form.template.model.AbstractMember;
 import com.top_logic.layout.form.template.model.Templates;
@@ -255,6 +256,15 @@ public class FieldDefinitionTemplateProvider extends AbstractFormElementProvider
 				if (context.getFormMode() == FormMode.DESIGN) {
 					return fieldBox(memberName);
 				} else {
+					return fieldBoxNoLabel(memberName);
+				}
+			case PLACEHOLDER:
+				if (context.getFormMode() == FormMode.DESIGN) {
+					return fieldBox(memberName);
+				} else {
+					// Only a text input shows the label in its empty input, every other input shows
+					// no label.
+					member.set(TextInputControl.LABEL_PLACEHOLDER, member.getLabel());
 					return fieldBoxNoLabel(memberName);
 				}
 			default:

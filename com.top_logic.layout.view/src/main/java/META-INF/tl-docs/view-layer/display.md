@@ -16,12 +16,12 @@ every text of a role at once — see
 <stack>
 	<text
 		label="Quarterly report"
-		variant="headline"
+		variant="heading-lg"
 	/>
 	<text
 		label="Figures as of yesterday."
 		tone="helper"
-		variant="caption"
+		variant="label"
 	/>
 	<text
 		appearance="pill"
@@ -31,18 +31,21 @@ every text of a role at once — see
 </stack>
 ```
 
-- **`variant`** — what the text is for: `body` (the default), `title`, `headline`, `display`,
-  `label`, `caption`. The family, size, line height and weight come from the tokens.
+- **`variant`** — what the text is for, a role of the type scale of the design system: `display`
+  (a key figure), the headings `heading-lg`, `heading-md` and `heading-sm`, `body` (the default) and
+  `body-strong`, the small text `label` and `label-strong`, `overline` (a line above a heading, wide
+  letter spacing) and `code` (fixed-width font). The family, size, weight, line height and letter
+  spacing come from the tokens.
 - **`tone`** — what its colour means: `primary` (the default), `secondary`, `helper`,
   `placeholder`, `success`, `warning`, `error`, `on-color`.
 - **`appearance`** — the shape it is drawn in: `text` (the default) or `pill`.
 
-Every text is a `tl-text` with the type class of its variant (`tl-type-heading-lg` …) and its tone
+Every text is a `tl-text` with the type class of its variant (`tl-type-<variant>`) and its tone
 as the attribute `data-tl-tone` (`secondary`, `helper`, `placeholder`, `success`, `warning`, `error`,
 `on-brand`); the primary tone carries no attribute and inherits the colour of its surroundings, which
-is how text on the primary app bar reads in the bar's colour. A strong text names the strong type
-class, `css-class="tl-type-body-strong"`. A text without a value takes no room, unless it carries a
-role (a live region). A text keeps the line breaks of its value: a `\n` in the value is a line break,
+is how text on the primary app bar reads in the bar's colour. A text that stands out is a role of its
+own, `variant="body-strong"` or `variant="label-strong"`. A text without a value takes no room,
+unless it carries a role (a live region). A text keeps the line breaks of its value: a `\n` in the value is a line break,
 while runs of spaces collapse and the text wraps at the width available (`white-space: pre-line`). A
 text with `overflow="ellipsis"` and a text in a table cell stay on one line. Indentation collapses
 as well, so a multi-line value whose indentation matters (a stack trace, source code) is no
@@ -66,7 +69,7 @@ The box the picture is shown in is described by `aspect-ratio` (`16/9`, so a row
 
 `<overlay>` stacks content over a base: its **first child is the base**, every further child is a layer over it. The base gives the overlay its height; its width is what the surrounding layout grants, and a base sized relative to it (`width="100%"`) fills it. A base of fixed width wants a container that does not stretch its items (`<stack align="start">`), or the overlay is stretched past the base and anchors its layers to the free space beside it. A `<layer position="fill|top-left|top|top-right|left|center|right|bottom-left|bottom|bottom-right" css-class="…">` brings the position its content takes and a class of its own; a child written without a layer covers the base as a whole. A layer passes the pointer through wherever it shows nothing (`.tl-overlay__layer` is `pointer-events: none`, its content `auto`), so the base stays usable below the free space of a layer that only anchors a badge. Placement comes from the element, the look from application CSS on the layer's class — a badge pill, a caption scrim.
 
-`<avatar input="ch" image="photoCh" size="small|medium|large|x-large"/>` shows the picture of the `image` channel circle-cropped, and the initials of the `input` value's label while there is none, on one of the eight category roles of the design system (`data-tl-role="category-<n>"`, derived from the label, the same two tokens a pill of that category reads). The four sizes are words (`medium` when absent); the client maps them to the classes `tl-avatar--sm|lg|xl` and the tokens `size-avatar-sm` to `size-avatar-xl`, and they do not follow the density; the initials carry the type class of their size. The picture follows its channel, so a photo replaced elsewhere appears without the avatar being built anew.
+`<avatar input="ch" image="photoCh" size="small|medium|large|x-large"/>` shows the picture of the `image` channel circle-cropped, and the initials of the `input` value's label while there is none, on one of the eight category roles of the design system (`data-tl-role="category-<n>"`, derived from the label, the same two tokens a pill of that category reads). The four sizes are words (`medium` when absent); the client maps them to the classes `tl-avatar--sm|lg|xl` and the tokens `size-avatar-sm` to `size-avatar-xl`, and they do not follow the density; the initials carry the type class of their size. The picture follows its channel, so a photo replaced elsewhere appears without the avatar being built anew. `badge`, `badge-role` and `badge-label` put a badge over the corner of the circle; the avatar is then named by its name and the badge, e.g. "Anna Meier, Open tickets: 3" (see [Badges](doc:view-layer/badges)).
 
 ```xml
 <overlay>
@@ -159,7 +162,7 @@ A value of any other type has no HTML representation; the element reports that i
 	<item>
 		<card padding="compact">
 			<html display="thumbnail" input="element"/>
-			<text css-class="tl-type-body-strong" input="element"/>
+			<text input="element" variant="body-strong"/>
 			<button appearance="link">
 				<action class="com.top_logic.layout.view.command.GenericViewCommand" inputs="element">
 					<label><en>Show</en></label>

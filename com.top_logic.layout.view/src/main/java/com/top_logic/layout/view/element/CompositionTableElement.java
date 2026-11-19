@@ -33,7 +33,9 @@ import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnsConfig;
 import com.top_logic.layout.view.table.RowAsConfig;
 import com.top_logic.layout.view.table.RowClassConfig;
-import com.top_logic.layout.view.table.RowClassFunction;
+import com.top_logic.layout.view.table.RowFunction;
+import com.top_logic.layout.view.table.RowRoleConfig;
+import com.top_logic.model.annotate.ui.ValueColor;
 
 /**
  * Declarative {@link UIElement} that creates a {@link RowSetTableControl} for an inline
@@ -74,7 +76,7 @@ public class CompositionTableElement implements UIElement {
 	 */
 	@TagName("composition-table")
 	@TypeIcon("css:bi bi-table")
-	public interface Config extends UIElement.Config, RowClassConfig, RowAsConfig {
+	public interface Config extends UIElement.Config, RowClassConfig, RowRoleConfig, RowAsConfig {
 
 		@Override
 		@ClassDefault(CompositionTableElement.class)
@@ -165,7 +167,10 @@ public class CompositionTableElement implements UIElement {
 	private final List<ColumnDeclaration> _columns;
 
 	/** The compiled {@link Config#getRowClass() row class function}. */
-	private final RowClassFunction _rowClass;
+	private final RowFunction<String> _rowClass;
+
+	/** The compiled {@link Config#getRowRole() row role function}. */
+	private final RowFunction<ValueColor> _rowRole;
 
 	/**
 	 * Creates a new {@link CompositionTableElement} from configuration.
@@ -174,7 +179,8 @@ public class CompositionTableElement implements UIElement {
 	public CompositionTableElement(InstantiationContext context, Config config) {
 		_config = config;
 		_columns = ColumnDeclarations.instantiate(context, config.getColumns());
-		_rowClass = RowClassFunction.compile(config);
+		_rowClass = RowFunction.rowClass(config);
+		_rowRole = RowFunction.rowRole(config);
 	}
 
 	@Override
@@ -198,6 +204,7 @@ public class CompositionTableElement implements UIElement {
 		control.setDetailDialog(_config.getDetailDialog());
 		control.setCssClass(_config.getCssClass());
 		control.setRowCssClass(_rowClass.bind(List.of()));
+		control.setRowColor(_rowRole.bind(List.of()));
 		control.init();
 		return control;
 	}

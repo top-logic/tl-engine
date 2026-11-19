@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.control.table;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.table.FilterState;
@@ -37,5 +38,13 @@ public interface ColumnFilterUI {
 	 * clear the filter.
 	 */
 	FilterState read();
+
+	/**
+	 * The title of the filter dialog, {@code null} for the title every filter dialog has
+	 * ({@link com.top_logic.layout.react.I18NConstants#JS_TABLE_FILTER}).
+	 */
+	default ResKey title() {
+		return null;
+	}
 
 }

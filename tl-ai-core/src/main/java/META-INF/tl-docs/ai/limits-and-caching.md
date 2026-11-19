@@ -10,14 +10,14 @@ order: 63
 The ceilings an administrator may put on what this installation carries and what one account may spend (package `limits/`) are configured in `<capacity>` on `AgentRuntimeService` (*Agent runtime* in the service editor) and in `<budget>` on `AgentPolicyService` (*Agent policy*). **All of them are off by default**: the modules run in applications with a thousand users on hardware they know nothing about, and any figure they picked would refuse work the installation allowed before.
 
 ```xml
-<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
-	<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
+<config service-class="com.top_logic.ai.core.agent.AgentRuntimeService">
+	<instance class="com.top_logic.ai.core.agent.AgentRuntimeService">
 		<capacity chat-workers="0" chat-queue="0" concurrent-runs-per-account="0" subagent-workers="0" tool-workers="0"/>
 	</instance>
 </config>
 
-<config service-class="com.top_logic.tl.ai.core.agent.AgentPolicyService">
-	<instance class="com.top_logic.tl.ai.core.agent.AgentPolicyService">
+<config service-class="com.top_logic.ai.core.agent.AgentPolicyService">
+	<instance class="com.top_logic.ai.core.agent.AgentPolicyService">
 		<budget token-budget="0" money-budget="0" budget-window-hours="24">
 			<role-budgets>
 				<role-budget name="tl.admin" tokens="0" money="0"/>
@@ -86,7 +86,7 @@ Not counted are a run without a principal (a test context, a boot step) and a **
 | `thinkingTokens` - a share of `outputTokens` | reasoning | output |
 | the rest of `outputTokens` | output | - |
 
-Some models have a second price list for a prompt above 200 000 tokens (`context_over_200k` in the catalog), which applies to all tokens of that request - the reason the cost is computed per request. Prices come from the models.dev catalog (`ModelsDevFetcher`; shown in the read-only model metadata of `LLMProviderService`) or from a `<model-overrides>` entry of `LLMProviderService` with `input-price`, `output-price`, `cache-read-price`, `cache-write-price` and `reasoning-price`; an entry that sets an input or an output price replaces the catalog prices of that model. A model without a price costs 0, so a local model is free until it gets a price; `RunCosts` writes one INFO line per model without one.
+Some models have further price lists for long prompts, each with its own threshold (`ModelCost.tiers()`). The catalog states them in two forms: `context_over_200k` is a tier above 200 000 prompt tokens, and each entry of `tiers` with `tier.type` `context` is a tier above `tier.size` prompt tokens (an entry of another tier type is ignored; when both forms name the same threshold, the `tiers` entry counts). A request whose prompt - cached part included - exceeds a threshold is charged at the tier with the highest threshold it exceeds, for all of its tokens - the reason the cost is computed per request. A tier without cache prices charges the cached tokens at the tier's input price. Prices come from the models.dev catalog (`ModelsDevFetcher`; shown in the read-only model metadata of `LLMProviderService`) or from a `<model-overrides>` entry of `LLMProviderService` with `input-price`, `output-price`, `cache-read-price`, `cache-write-price` and `reasoning-price`; an entry that sets an input or an output price replaces the catalog prices of that model. A model without a price costs 0, so a local model is free until it gets a price; `RunCosts` writes one INFO line per model without one.
 
 ```xml
 <model-overrides>
@@ -108,7 +108,7 @@ Permission to run denied: account 'jdoe' spent 2145300 tokens in the last 24h, w
 Chat run refused: all 32 chat workers are busy and the queue of 10 is full.
 ```
 
-The user reads one of six sentences (`com.top_logic.tl.ai.core.limits.I18NConstants`): the pool is full, the account is at its cap, the token budget is spent at run start or ran out mid-run, the money budget is spent at run start or ran out mid-run. The token and run sentences do not name the configured figure; the money sentences name the spent amount and the budget, in the account's number format ("Budget used up: €12.40 of €15.00 in the last 24 hours."). After a stopped run the chat asks `RunLimits.budgetStopNotice` which budget ran out.
+The user reads one of six sentences (`com.top_logic.ai.core.limits.I18NConstants`): the pool is full, the account is at its cap, the token budget is spent at run start or ran out mid-run, the money budget is spent at run start or ran out mid-run. The token and run sentences do not name the configured figure; the money sentences name the spent amount and the budget, in the account's number format ("Budget used up: €12.40 of €15.00 in the last 24 hours."). After a stopped run the chat asks `RunLimits.budgetStopNotice` which budget ran out.
 
 ### Boundaries
 

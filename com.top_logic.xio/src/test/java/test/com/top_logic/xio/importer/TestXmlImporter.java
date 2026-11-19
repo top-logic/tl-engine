@@ -308,6 +308,52 @@ public class TestXmlImporter extends TestCase {
 		assertSame(q1, q2.tValueByName("other"));
 	}
 
+	public void testResolveExistingPartitionDescendants() throws XMLStreamException, IOException {
+		Protocol log = new AssertProtocol();
+		XmlImporter importer = XmlImporter.newInstance(log.asI18NLog(Resources.getLogInstance()),
+			resource("testXmlImporter17-PartitionDescendants.importer.xml"));
+		TLModel model = loadModel(log, "testXmlImporter17-PartitionDescendants.model.xml");
+
+		TLModule module = model.getModule("test.com.top_logic.xio.importer.test17");
+		TLClass containerType = (TLClass) module.getType("Container");
+		TLClass itemType = (TLClass) module.getType("Item");
+
+		// Each partition is the composition of a top-level item, whose ID is the partition key.
+		TLObject container = TransientObjectFactory.INSTANCE.createObject(containerType, null, null, null);
+		TLObject p1 = existingItem(container, itemType, "P1");
+		TLObject p1a = existingChild(p1, itemType, "P1_a");
+		TLObject p1ax = existingChild(p1a, itemType, "P1_a_x");
+		TLObject p2 = existingItem(container, itemType, "P2");
+		TLObject p2a = existingChild(p2, itemType, "P2_a");
+
+		ModelBinding binding = new TransientModelBinding(model, false);
+		importer.importModel(binding,
+			new StreamSource(resource("testXmlImporter17-PartitionDescendants.data.xml").getStream()),
+			container);
+
+		List<? extends TLObject> elements = list(container.tValueByName("elements"));
+		assertEquals(List.of(p1, p2), elements.subList(0, 2));
+		assertEquals(4, elements.size());
+
+		// References resolve to existing descendants of the partition's root at any depth.
+		TLObject p2n = elements.get(2);
+		assertEquals("P2_n", p2n.tValueByName("extId"));
+		assertSame(p1ax, p2n.tValueByName("other"));
+
+		TLObject p1m = elements.get(3);
+		assertEquals("P1_m", p1m.tValueByName("extId"));
+		assertSame(p2a, p1m.tValueByName("other"));
+		assertEquals(List.of(p1a), p1.tValueByName("children"));
+	}
+
+	private TLObject existingChild(TLObject parent, TLClass itemType, String extId) {
+		TLObject result = TransientObjectFactory.INSTANCE.createObject(itemType, null, null, null);
+		result.tUpdateByName("extId", extId);
+		result.tUpdateByName("name", "old-" + extId);
+		parent.tAddByName("children", result);
+		return result;
+	}
+
 	public void testUnlessKnownAndIgnoreUnresolved() throws XMLStreamException, IOException {
 		Protocol log = new AssertProtocol();
 		XmlImporter importer = XmlImporter.newInstance(log.asI18NLog(Resources.getLogInstance()),

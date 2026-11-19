@@ -5,6 +5,9 @@
  */
 package com.top_logic.react.flow.svg.event;
 
+import com.top_logic.react.flow.data.Widget;
+import com.top_logic.react.flow.svg.SvgWriter;
+
 /**
  * Base interface for events that might occur in a SVG diagram.
  */
@@ -26,14 +29,27 @@ public interface SVGEvent {
 	void preventDefault();
 
 	/**
-	 * Updates the {@code transform} attribute on the SVG element with the given ID.
+	 * Updates the {@code transform} attribute on the SVG element the given owner has drawn with
+	 * the ID for the given purpose, see {@link SvgWriter#uniqueId(Widget, String)}.
 	 *
 	 * <p>
 	 * This allows event handlers in the common module to manipulate SVG transforms without
 	 * direct DOM access. The implementation is provided by the client-side SVG builder.
 	 * </p>
 	 */
-	default void updateTransform(String elementId, double translateX, double translateY) {
+	default void updateTransform(Widget owner, String purpose, double translateX, double translateY) {
+		// No-op for non-interactive writers.
+	}
+
+	/**
+	 * Requests a full layout recomputation and SVG re-draw.
+	 *
+	 * <p>
+	 * Use this when a model change (e.g. zoom, a collapsed row) alters element positions. For pure
+	 * scroll (transform-only changes), use {@link #updateTransform} instead.
+	 * </p>
+	 */
+	default void requestRelayout() {
 		// No-op for non-interactive writers.
 	}
 

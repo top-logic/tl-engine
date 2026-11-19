@@ -23,6 +23,7 @@ import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.element.meta.ChangeAware;
 import com.top_logic.element.meta.form.AttributeFormFactory;
+import com.top_logic.element.meta.form.FallbackFieldDisplay;
 import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormField;
@@ -55,8 +56,23 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 
 	private final TLStructuredType _type;
 
+	/**
+	 * The {@link AttributeUpdate}s of this object, indexed by the
+	 * {@link TLStructuredTypePart#getDefinition() definition} of their attribute.
+	 *
+	 * <p>
+	 * An attribute and its overrides share one value, so they share one update, whichever of them
+	 * it is looked up with. The update itself is bound to the attribute of the type of this object
+	 * (see {@link AttributeOperations#getAttributeOverride(TLObject, TLStructuredTypePart)}), whose
+	 * annotations it applies.
+	 * </p>
+	 */
 	private Map<TLStructuredTypePart, AttributeUpdate> _updates = new HashMap<>();
 
+	/**
+	 * The callbacks waiting for the creation of an {@link AttributeUpdate}, see
+	 * {@link #withUpdate(TLStructuredTypePart, Consumer)}, indexed like {@link #_updates}.
+	 */
 	private Map<TLStructuredTypePart, Consumer<AttributeUpdate>> _updateFutures;
 
 	private FormContainer _formContainer;
@@ -124,7 +140,7 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 	
 	@Override
 	public final AttributeUpdate getUpdate(TLStructuredTypePart part) {
-		return _updates.get(part);
+		return _updates.get(part.getDefinition());
 	}
 
 	@Override
@@ -132,9 +148,10 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 		AttributeUpdate update = getUpdate(attribute);
 		if (update == null) {
 			Map<TLStructuredTypePart, Consumer<AttributeUpdate>> futures = mkUpdateFutures();
-			Consumer<AttributeUpdate> clash = futures.put(attribute, callback);
+			TLStructuredTypePart definition = attribute.getDefinition();
+			Consumer<AttributeUpdate> clash = futures.put(definition, callback);
 			if (clash != null) {
-				futures.put(attribute, clash.andThen(callback));
+				futures.put(definition, clash.andThen(callback));
 			}
 		} else {
 			callback.accept(update);
@@ -152,10 +169,10 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 	 * Adds the given {@link AttributeUpdate} to this object.
 	 */
 	private final void addUpdate(AttributeUpdate update) {
-		TLStructuredTypePart attribute = update.getAttribute();
-		_updates.put(attribute, update);
+		TLStructuredTypePart definition = update.getAttribute().getDefinition();
+		_updates.put(definition, update);
 		if (_updateFutures != null) {
-			Consumer<AttributeUpdate> future = _updateFutures.remove(attribute);
+			Consumer<AttributeUpdate> future = _updateFutures.remove(definition);
 			if (future != null) {
 				future.accept(update);
 			}
@@ -164,7 +181,7 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 
 	@Override
 	public final AttributeUpdate removeUpdate(TLStructuredTypePart attribute) {
-		return _updates.remove(attribute);
+		return _updates.remove(attribute.getDefinition());
 	}
 
 	@Override
@@ -212,20 +229,54 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 			}
 
 			AttributeUpdate update = getUpdate(part);
-			Object uiValue = update.convertValue(update.fieldToAttributeValue(field));
-			TLType type = part.getType();
-			if (type.getModelKind() == ModelKind.DATATYPE) {
-				StorageMapping<?> storageMapping = ((TLPrimitive) type).getStorageMapping();
-				if (part.isMultiple()) {
-					return toDBValues(part, storageMapping, uiValue);
-				} else {
-					return toDBValue(storageMapping, uiValue);
+			return toModelValue(part, update, update.fieldToAttributeValue(field));
+		} else if (member == null) {
+			AttributeUpdate fallbackUpdate = fallbackUpdateStoringIn(part);
+			if (fallbackUpdate != null) {
+				// The explicit value of an attribute with fallback is edited in the field of that
+				// attribute, the storage attribute has no field of its own.
+				FormField fallbackField = (FormField) fallbackUpdate.getField();
+				Object explicitValue = FallbackFieldDisplay.get(fallbackField).getExplicitValue();
+				return toModelValue(part, fallbackUpdate,
+					fallbackUpdate.fieldToAttributeValue(fallbackField, explicitValue));
+			}
+		}
+		return getBaseValue(part);
+	}
+
+	/**
+	 * The {@link AttributeUpdate} of an attribute with fallback whose field edits the explicit
+	 * value stored in the given storage attribute, or <code>null</code> if there is none.
+	 */
+	private AttributeUpdate fallbackUpdateStoringIn(TLStructuredTypePart storageAttribute) {
+		TLStructuredTypePart storageDefinition = storageAttribute.getDefinition();
+		for (AttributeUpdate update : getUpdates()) {
+			if (update.getField() instanceof FormField field) {
+				FallbackFieldDisplay display = FallbackFieldDisplay.get(field);
+				if (display != null && display.getStorageAttribute().getDefinition() == storageDefinition) {
+					return update;
 				}
 			}
-			return uiValue;
-		} else {
-			return getBaseValue(part);
 		}
+		return null;
+	}
+
+	/**
+	 * Converts the value of an {@link AttributeUpdate} to the value of the given attribute in the
+	 * model.
+	 */
+	private Object toModelValue(TLStructuredTypePart part, AttributeUpdate update, Object attributeValue) {
+		Object uiValue = update.convertValue(attributeValue);
+		TLType type = part.getType();
+		if (type.getModelKind() == ModelKind.DATATYPE) {
+			StorageMapping<?> storageMapping = ((TLPrimitive) type).getStorageMapping();
+			if (part.isMultiple()) {
+				return toDBValues(part, storageMapping, uiValue);
+			} else {
+				return toDBValue(storageMapping, uiValue);
+			}
+		}
+		return uiValue;
 	}
 
 	private Object toDBValues(TLStructuredTypePart part, StorageMapping<?> storageMapping, Object uiValues) {
@@ -395,7 +446,7 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 			return null;
 		}
 
-		AttributeUpdate existing = _updates.get(specializedAttribute);
+		AttributeUpdate existing = _updates.get(specializedAttribute.getDefinition());
 		if (existing != null) {
 			// May happen due to legacy code forcing an update creation while the update has already
 			// been created before.

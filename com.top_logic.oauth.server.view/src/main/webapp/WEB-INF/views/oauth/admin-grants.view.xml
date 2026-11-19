@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Every authorization every account gave an OAuth client, for an administrator. Revoking one here
+	is what to do when a client must lose access at once, e.g. a device that was lost: all its
+	access and refresh tokens are refused from now on.
+-->
+<view>
+	<channels>
+		<channel name="selectedGrant"/>
+	</channels>
+	<panel>
+		<title>
+			<en>OAuth authorizations</en>
+			<de>OAuth-Autorisierungen</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-x-circle"
+				inputs="selectedGrant as grant"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Revoke</en>
+					<de>Widerrufen</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<confirm expr="#('Revoke the authorization {1} gave {0}? The client is refused from now on and has to sign in again.'@en, 'Die Autorisierung, die {1} {0} gegeben hat, widerrufen? Der Client wird ab sofort abgewiesen und muss sich neu anmelden.'@de).fill($grant.get(`tl.oauth.server:OAuthGrant#clientName`), $grant.get(`tl.oauth.server:OAuthGrant#owner`))"/>
+				<with-transaction>
+					<execute-script function="oauthRevoke($grant)"/>
+					<with-result>
+						<write-channel name="selectedGrant"
+							clear="true"
+						/>
+					</with-result>
+				</with-transaction>
+			</generic-command>
+		</commands>
+		<table
+			observed-types="tl.oauth.server:OAuthGrant"
+			selection="selectedGrant"
+			types="tl.oauth.server:OAuthGrant"
+		>
+			<columns>
+				<column
+					attribute="owner"
+					width="160"
+				/>
+				<column
+					attribute="clientName"
+					width="200"
+				/>
+				<column
+					attribute="clientId"
+					width="220"
+				/>
+				<column
+					attribute="resource"
+					width="240"
+				/>
+				<column
+					attribute="scope"
+					width="100"
+				/>
+				<column
+					attribute="createdAt"
+					width="150"
+				/>
+				<column
+					attribute="lastUsed"
+					width="150"
+				/>
+			</columns>
+			<rows><![CDATA[all(`tl.oauth.server:OAuthGrant`)
+				.sort((g -> $g.get(`tl.oauth.server:OAuthGrant#createdAt`)).comparator().desc())]]></rows>
+		</table>
+	</panel>
+</view>

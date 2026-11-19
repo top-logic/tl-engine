@@ -12,6 +12,7 @@
 		<channel name="amount"/>
 		<channel name="switched"/>
 		<channel name="change"/>
+		<channel name="picked"/>
 	</channels>
 
 	<panel>
@@ -219,6 +220,50 @@
 				<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
 					display="chips"
 				/>
+			</value-input>
+			<value-input value="term">
+				<label>
+					<en>Search term</en>
+					<tooltip>
+						<en>Words every shown row contains.</en>
+					</tooltip>
+				</label>
+			</value-input>
+			<value-input
+				label="class.com.top_logic.layout.view.I18NConstants.TABLE_EXPORT_EXCEL"
+				value="term"
+			/>
+			<value-input
+				multiple="true"
+				options="['A', 'B', 'C']"
+				ordered="true"
+				value="picked"
+			>
+				<on-submit class="test.com.top_logic.layout.view.element.TestValueInputElement$RecordingCommand"/>
+			</value-input>
+			<value-input
+				multiple="true"
+				options="['A', 'B', 'C']"
+				value="picked"
+			/>
+			<value-input
+				label-position="placeholder"
+				value="term"
+			>
+				<label>
+					<en>Search term</en>
+				</label>
+			</value-input>
+			<value-input
+				label-position="placeholder"
+				value="term"
+			>
+				<label>
+					<en>Search term</en>
+				</label>
+				<placeholder>
+					<en>Words</en>
+				</placeholder>
 			</value-input>
 		</children>
 	</panel>

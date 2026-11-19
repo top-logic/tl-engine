@@ -100,11 +100,32 @@ To find the module that owns a class or feature, use the `tl-mcp` tools (`module
 
 Standard Maven layout, plus these TopLogic conventions:
 
-- **Tests** live under `src/test/java/test/com/top_logic/...` — note the extra `test.` package prefix.
+- **Tests** live in `src/test/java`. New tests go into the package of the tested class (Maven standard, access to package-private members); most existing tests use the extra `test.` package prefix (`src/test/java/test/com/top_logic/...`), which stays allowed.
 - **Webapp config** (web modules) under `src/main/webapp/WEB-INF/`: `layouts/` (layout XML), `model/` (model XML), `conf/` (app config), `kbase/` (kbase definitions).
 - Model types are also declared in `*.type.xml`.
 
 ## Development Patterns
+
+### No Almost-Duplicate Implementations
+
+When an existing mechanism does nearly what is needed but treats some detail differently (e.g. an
+odd input value), use it and change its behavior if the change is an improvement. Never copy part
+of it into a parallel variant just to keep a questionable subtle difference alive; two converters,
+parsers or resolvers for the same thing drift apart with every extension. If the difference really
+matters, ask instead of deciding it by duplication.
+
+### No Customer-Application Details in the Engine
+
+The engine is used by many applications. Its code, JavaDoc, TL-Script help pages, `messages_*.properties`,
+`tl-docs` articles, test data, configuration examples, commit messages, PR texts, and the summary and
+description of Trac tickets **never** mention a customer application, nor a variable, type, module, view
+or term of one, even if that application motivated the change. TopLogic is open source, so everybody
+can read the commit history, and the release notes are generated from ticket summaries and
+descriptions. A ticket *comment* may name the customer application and its details (e.g. to record
+where a problem occurred and how it was worked around). Examples use only what the engine itself ships (its own aliases such as `%TRANSLATION_ENABLED%`,
+types of the demo applications) or neutral placeholders (`%MY_SWITCH%`, `my.module:MyType`). A ticket
+plan that names a customer detail is rewritten with an engine example before implementing; grep the
+diff for such names before committing.
 
 ### Coding Conventions
 
@@ -208,7 +229,8 @@ external/JS identifiers.
 
 ## Testing Conventions
 
-- Test classes use the `test.` package prefix (e.g., `test.com.top_logic.basic.GenericTest`)
+- The module's `TestAll` (`AbstractBasicTestAll`) collects every test of the whole test source tree `src/test/java`: a public `TestCase` or a class with a static `suite()` method, named `Test<Something>` or `<Something>Test`. Put a new test into the package of the tested class; the `test.` package prefix of the existing tests (e.g., `test.com.top_logic.basic.GenericTest`) stays allowed. A module needs no surefire includes of its own.
+- A test whose precondition the build may lack (a key, a browser, a network) calls `org.junit.Assume`; the `TestAll` reports a violated assumption as skipped (`AssumptionAwareRunner`).
 - Many base test classes exist for common scenarios (see `Abstract*Test.java` patterns)
 - Tests requiring a knowledge base extend `AbstractDBKnowledgeBaseTest`
 - Tests are JUnit 4 based
@@ -306,8 +328,9 @@ mvn exec:java@migrate-ticket28336
   `tl-chat-classic` (the chat in a classic LayoutServlet tab), `tl-ai-views` (agents
   editing `.view.xml` views), `tl-ai-vector-index`, `tl-ai-index` / `tl-ai-index-onnx`
   (hybrid search), `tl-ai-eval` (model eval harness) and the demo application
-  `tl-ai-demo`. Their tests live in packages mirroring the production code and are
-  found through the surefire includes in each module POM (see `tl-ai-core/pom.xml`).
+  `tl-ai-demo`. All of them live in packages below `com.top_logic.ai` (`tl-ai-classic` in
+  `com.top_logic.ai.classic`); their tests sit in the package of the tested class and run
+  through the standard `TestAll`.
   The developer articles of the chapter `ai` (in `tl-ai-core`) describe them.
 - **test-migrate-apps/** - Test applications for migration scenarios
 - **bos-settings/** - Build settings and configuration
@@ -349,7 +372,7 @@ Available tools include:
 
 **Tickets for tl-engine always get the component `tl`.** Do not derive the component from the affected module (there is no component such as `tl-graphic-blocks`), even if an existing ticket carries a different value.
 
-**`update_ticket` silently ignores top-level status/owner fields — nest them under `attributes`.** `{"ticket_id": N, "status": "accepted"}` returns "Updated ticket #N" but changes nothing (the Modified timestamp stays untouched, and a later push is rejected by the ticket-status hook). Use `{"ticket_id": N, "attributes": {"status": "accepted", "owner": "…"}}` and verify with `get_ticket`.
+**`update_ticket` silently ignores top-level fields (status, owner, description, …) — nest them under `attributes`.** `{"ticket_id": N, "status": "accepted"}` returns "Updated ticket #N" but changes nothing (the Modified timestamp stays untouched, and a later push is rejected by the ticket-status hook). Use `{"ticket_id": N, "attributes": {"status": "accepted", "owner": "…"}}` and verify with `get_ticket`; a landed change is echoed in the answer (e.g. `description='...'`).
 
 **Releases are not cut from this repository's tooling.** Building a release is the Jenkins job; the Trac bookkeeping around it (closing the release tickets, the milestone, the `relatedmilestones` marking, the migration keywords) is the `tl-release` command and the `tl-release` skill, both provided by the `tl-dev` plugin.
 

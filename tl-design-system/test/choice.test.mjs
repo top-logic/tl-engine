@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { readComponent, colorVarsOf, declarationsOf, specimenProblems, missingInContract, varsOf, componentCssFiles } from './lib/component.mjs';
+import { readComponent, colorVarsOf, declarationsOf, specimenProblems, missingInContract, componentCssFiles, declarationsOfAll, contrastProblems, rulesOf } from './lib/component.mjs';
 import { declarations } from '../tools/lib/css.mjs';
 import { resolve } from '../tools/resolve.mjs';
 import { lint } from '../tools/lint-css.mjs';
@@ -36,10 +36,10 @@ test('wer welchen Hof liest: die Fläche der Option -hover-strong, die Marken -h
 test('der Hof der Flächen ist als Hof erlaubt und als Fläche, Rand oder Text verboten', () => {
   const known = new Set(['--tl-surface-state-hover-strong', '--tl-space-2xs', '--tl-border-width-md']);
   const rolle = 'var(--tl-surface-state-hover-strong)';
-  assert.deepEqual(lint(`.tl-x:hover { box-shadow: 0 0 0 var(--tl-space-2xs) ${rolle}; }`, { known, file: 'x.css' }), []);
+  assert.deepEqual(lint(`.tl-item:hover { box-shadow: 0 0 0 var(--tl-space-2xs) ${rolle}; }`, { known, file: 'x.css' }), []);
   for (const [p, v] of [['background', rolle], ['border-color', rolle], ['color', rolle],
     ['box-shadow', `inset 0 0 0 var(--tl-border-width-md) ${rolle}`]])
-    assert.ok(lint(`.tl-x { ${p}: ${v}; }`, { known, file: 'x.css' }).length >= 1, `${p}: ${v}`);
+    assert.ok(lint(`.tl-item { ${p}: ${v}; }`, { known, file: 'x.css' }).length >= 1, `${p}: ${v}`);
 });
 
 test('Auswahlmarken zeigen einen Hof: Zeigen und Drücken, an der Marke und am Label, nie deaktiviert oder schreibgeschützt', () => {
@@ -68,7 +68,7 @@ test('Auswahlmarken zeigen einen Hof: Zeigen und Drücken, an der Marke und am L
     }
   }
   // Der Schalter trägt den Hof an der Spur (der Marke selbst), nicht am Knopf: der Hof folgt der Form der Marke.
-  assert.doesNotMatch(declarationsOf(css, '.tl-checkbox--switch::after') ?? '', /box-shadow/);
+  assert.doesNotMatch(declarationsOfAll(css, '.tl-checkbox--switch:where(:not([aria-readonly="true"]))::after'), /box-shadow/);
   assert.match(declarationsOf(css, '.tl-checkbox') ?? '', /transition:\s*box-shadow var\(--tl-duration-fast\) var\(--tl-easing-standard\)/);
 });
 
@@ -133,6 +133,63 @@ test('schreibgeschützt ist nicht deaktiviert: aria-readonly, Zeiger default, ke
   assert.match(declarationsOf(css, '.tl-checkbox[aria-readonly="true"]') ?? '', /cursor:\s*default/);
   assert.match(declarationsOf(css, '.tl-radio[aria-readonly="true"]') ?? '', /cursor:\s*default/);
   assert.match(declarationsOf(css, '.tl-choice:has([aria-readonly="true"])') ?? '', /cursor:\s*default/);
+  // Kein Deaktiviert-Grau am schreibgeschützten Wert.
+  const regeln = rulesOf(css).filter(([s]) => s.includes('aria-readonly="true"]')).map(([, d]) => d).join(';');
+  assert.doesNotMatch(regeln, /disabled/);
+});
+
+// #29966: ein schreibgeschütztes Boolean-Feld erscheint als Wert wie tl-field-value, nicht als Bedienelement.
+const RO = '.tl-checkbox[aria-readonly="true"]';
+
+test('ein schreibgeschütztes Kästchen ist ein Wert: kein Rahmen, keine Fläche, über angekreuzt und gemischt', () => {
+  const d = declarationsOf(css, RO) ?? '';
+  assert.match(d, /border-color:\s*transparent/);
+  assert.match(d, /background:\s*transparent/);
+  // Gleiche Spezifität (0,2,0) wie :checked und :indeterminate, die die Marke als Fläche setzen: die Regel
+  // muss später stehen, um sie zu schlagen.
+  const regeln = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const ro = regeln.indexOf(`${RO} {`);
+  assert.ok(ro > regeln.indexOf('.tl-checkbox:checked,'), 'schreibgeschützt steht vor angekreuzt');
+  assert.ok(ro > regeln.indexOf('.tl-checkbox[aria-invalid="true"]'), 'schreibgeschützt steht vor dem Fehlerrand');
+  // Das Radio bleibt eine Marke: Auswahlfelder zeigen ihren Lesewert als Text.
+  assert.doesNotMatch(declarationsOf(css, '.tl-radio[aria-readonly="true"]') ?? '', /border|background/);
+});
+
+test('schreibgeschützt: Haken in text-primary, Strich in text-secondary, ohne Wert nichts', () => {
+  const haken = declarationsOf(css, `${RO}:checked::after`) ?? '';
+  assert.match(haken, /border-color:\s*var\(--tl-text-primary\)/);
+  // Der Haken ist der des Kästchens (Bau in behaelter.test.mjs), nur die Farbe wechselt.
+  assert.doesNotMatch(haken, /width|height|transform/);
+  const strich = declarationsOf(css, `${RO}:not(:checked, :indeterminate)::after`) ?? '';
+  assert.match(strich, /content:\s*""/);
+  assert.match(strich, /background:\s*var\(--tl-text-secondary\)/);
+  assert.match(strich, /height:\s*var\(--tl-border-width-md\)/);
+  assert.doesNotMatch(strich, /(^|;)\s*border(-[a-z]+)?:/);
+  // Ohne Wert (gemischt, triState) kein Strich und keine Marke: wie ein leerer Lesewert.
+  assert.match(declarationsOf(css, `${RO}:indeterminate::after`) ?? '', /content:\s*none/);
+  // Spezifität (0,3,1) über :indeterminate::after (0,2,1): der gemischte Balken der Marke verschwindet.
+  assert.ok(css.indexOf(`${RO}:indeterminate::after`) > css.indexOf('.tl-checkbox:indeterminate::after'));
+});
+
+test('ein schreibgeschützter Schalter ist ein Wert wie das Kästchen: Spur und Knopf nur bedienbar', () => {
+  const W = ':where(:not([aria-readonly="true"]))';
+  for (const s of [`.tl-checkbox--switch${W}`, `.tl-checkbox--switch${W}::after`, `.tl-checkbox--switch${W}:checked::after`])
+    assert.ok(declarationsOf(css, s), `Schalterregel ohne Wächter: ${s}`);
+  // Keine Regel zeichnet den Schalter ohne den Wächter.
+  for (const [sel] of rulesOf(css))
+    for (const s of sel.split(/,(?![^(]*\))/).map((x) => x.trim()))
+      if (s.startsWith('.tl-checkbox--switch')) assert.ok(s.startsWith(`.tl-checkbox--switch${W}`), `Schalter ohne Wächter: ${s}`);
+});
+
+test('Haken und Strich halten auf jedem Grund eines Lesewerts den Kontrast, hell und dunkel', () => {
+  const P = JSON.parse(readFileSync(new URL('../src/primitives.json', import.meta.url)));
+  const R = resolve(P, T);
+  // Der Lesewert steht im Formular auf dem Grund, auf Panels, verschachtelt, im Dialog, und in der Zelle einer
+  // gezeigten oder gewählten Zeile. Haken und Strich sind Grafik: 3:1 (WCAG 1.4.11).
+  const gruende = ['surface-base', 'surface-layer', 'surface-layer-nested', 'surface-overlay',
+    'surface-interactive-hover', 'surface-selected', 'surface-selected-hover'];
+  const paare = ['text-primary', 'text-secondary'].flatMap((fg) => gruende.map((bg) => ({ fg, bg, soll: 3.0 })));
+  for (const mode of ['light', 'dark']) assert.deepEqual(contrastProblems(R, mode, paare), []);
 });
 
 test('Fehler an Gruppen: aria-invalid an radiogroup, data-tl-state an group', () => {
@@ -187,13 +244,22 @@ test('das Auswahl-Specimen zeigt jede Form in jedem Zustand', () => {
   assert.deepEqual(specimenProblems(html), []);
   for (const s of ['tl-checkbox', 'tl-checkbox--switch', 'role="switch"', 'tl-radio', 'role="radiogroup"', 'checked',
     'indeterminate', 'aria-invalid="true"', 'data-tl-state="warning"', 'disabled', 'tl-segmented', 'aria-checked="true"',
-    'tl-chip', 'aria-pressed="true"', 'data-tl-state="error"'])
+    'tl-chip', 'aria-pressed="true"', 'data-tl-state="error"', 'aria-readonly="true"', 'tl-field-value'])
     assert.ok(html.includes(s), `Specimen zeigt ${s} nicht`);
+  // Schreibgeschützt jeder Wert in beiden Formen: angekreuzt, nicht angekreuzt, ohne Wert; Schalter an und aus.
+  const ro = [...html.matchAll(/<input [^>]*aria-readonly="true"[^>]*>/g)].map((m) => m[0]);
+  const hat = (pred) => ro.some(pred);
+  const sw = (i) => i.includes('tl-checkbox--switch');
+  assert.ok(hat((i) => !sw(i) && / checked/.test(i)), 'schreibgeschützt angekreuzt');
+  assert.ok(hat((i) => !sw(i) && !/ checked|data-indeterminate/.test(i) && i.includes('tl-checkbox')), 'schreibgeschützt nicht angekreuzt');
+  assert.ok(hat((i) => !sw(i) && i.includes('data-indeterminate')), 'schreibgeschützt ohne Wert');
+  assert.ok(hat((i) => sw(i) && / checked/.test(i)), 'schreibgeschützter Schalter an');
+  assert.ok(hat((i) => sw(i) && !/ checked/.test(i)), 'schreibgeschützter Schalter aus');
 });
 
-test('der Auswahl-Vertrag nennt jedes Token, jede Klasse und jedes Attribut', () => {
+test('der Auswahl-Vertrag nennt jede Klasse und jedes Attribut', () => {
   const md = readComponent('choice', 'choice.contract.md');
-  const names = [...varsOf(css), 'tl-checkbox', 'tl-checkbox--switch', 'tl-radio', 'tl-choice', 'tl-choice-group',
+  const names = ['tl-checkbox', 'tl-checkbox--switch', 'tl-radio', 'tl-choice', 'tl-choice-group',
     'tl-segmented', 'tl-segmented__label', 'tl-chip', 'tl-chip__label', 'tl-chip__toggle', 'tl-chip__remove', 'data-tl-role', 'tl-choice-group--vertical', 'aria-checked', 'aria-pressed', 'aria-invalid', 'data-tl-state', 'role="switch"', 'role="radiogroup"'];
   assert.deepEqual(missingInContract(md, names), []);
 });

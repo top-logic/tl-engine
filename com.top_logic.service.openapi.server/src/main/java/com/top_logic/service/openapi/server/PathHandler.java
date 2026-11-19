@@ -13,6 +13,8 @@ import java.util.Map;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import com.top_logic.base.accesscontrol.Login;
+import com.top_logic.base.accesscontrol.Login.AccountLockedException;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
@@ -58,10 +60,22 @@ class PathHandler {
 
 	/**
 	 * Actually performs the actions associated with the request.
+	 * 
+	 * <p>
+	 * A request authenticated for a {@link Person#isLocked() locked} account fails as an
+	 * {@link AuthenticationFailure}.
+	 * </p>
 	 */
 	public void handleRequest(HttpServletRequest req, HttpServletResponse resp, Map<String, String> rawPathParams)
 			throws IOException, InvalidValueException, AuthenticationFailure, ComputationFailure {
 		Person localAccount = _authenticator.authenticate(req, resp);
+		if (localAccount != null) {
+			try {
+				Login.checkNotLocked(localAccount);
+			} catch (AccountLockedException ex) {
+				throw new AuthenticationFailure(ex.getReason(), ex);
+			}
+		}
 		HashMap<String, Object> parameters = new HashMap<>();
 		for (ConcreteRequestParameter<?> parser : _parameterParsers) {
 			parser.parse(parameters, req, rawPathParams);

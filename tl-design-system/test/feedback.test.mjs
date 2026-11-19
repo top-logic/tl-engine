@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from '../tools/resolve.mjs';
-import { readComponent, readGenerated, colorVarsOf, declarationsOf, specimenProblems, missingInContract, varsOf, contrastProblems } from './lib/component.mjs';
+import { readComponent, readGenerated, colorVarsOf, declarationsOf, specimenProblems, missingInContract, contrastProblems } from './lib/component.mjs';
 
 const R = resolve(JSON.parse(readFileSync(new URL('../src/primitives.json', import.meta.url))),
   JSON.parse(readFileSync(new URL('../src/tokens.json', import.meta.url))));
@@ -19,16 +19,26 @@ test('Alert: je Bedeutung subtle-Fläche, border-Linie, Text text-primary, Icon 
     assert.deepEqual(contrastProblems(R, mode, STATUS.map((s) => ({ fg: `status-${s}-text`, bg: `status-${s}-subtle`, soll: 3.0 }))), []);
 });
 
-test('Badge: Marke mit abgeleiteter Beschriftung, Ziffern tabellarisch über tl-nums, Pille', () => {
+test('Badge: Marke mit abgeleiteter Beschriftung, Ziffern tabellarisch über tl-nums, Pille; der Punkt in der Linie der Marke', () => {
   const css = readComponent('badge', 'badge.css');
-  assert.deepEqual(colorVarsOf(css), ['surface-brand', 'text-on-brand']);
+  assert.deepEqual(colorVarsOf(css), ['border-interactive', 'surface-brand', 'text-on-brand']);
   assert.match(declarationsOf(css, '.tl-badge') ?? '', /--tl-radius-full/);
 });
 
+
 test('Divider: Trennlinie ohne Kontrastschuld, horizontal und vertikal', () => {
   const css = readComponent('divider', 'divider.css');
-  assert.deepEqual(colorVarsOf(css), ['border-separator']);
+  assert.deepEqual(colorVarsOf(css), ['border-separator', 'text-secondary']);
   assert.ok(declarationsOf(css, '.tl-divider--vertical'));
+});
+
+test('Divider: Text in der Linie (Lage Anfang, Mitte, Ende) und Einzug um eine Ebene', () => {
+  const css = readComponent('divider', 'divider.css');
+  const labeled = declarationsOf(css, '.tl-divider--labeled') ?? '';
+  for (const d of [/display:\s*flex/, /gap:\s*var\(--tl-space-sm\)/, /color:\s*var\(--tl-text-secondary\)/, /border-top:\s*0/]) assert.match(labeled, d);
+  assert.match(declarationsOf(css, '.tl-divider--labeled::after') ?? '', /--tl-border-separator/);
+  assert.match(declarationsOf(css, '.tl-divider--label-start::before') ?? '', /display:\s*none/);
+  assert.match(declarationsOf(css, '.tl-divider--inset') ?? '', /margin-inline-start:\s*var\(--tl-size-control-sm\)/);
 });
 
 test('Skeleton: vertiefte Fläche, Puls über duration-loop, keine eigene Reduced-Motion-Regel', () => {
@@ -38,15 +48,29 @@ test('Skeleton: vertiefte Fläche, Puls über duration-loop, keine eigene Reduce
   assert.doesNotMatch(css, /prefers-reduced-motion/);
 });
 
+test('Skeleton: Textzeile in Zeilenhöhe des Fließtexts, mehrere Zeilen mit Abstand und kürzerer letzter, Kreis', () => {
+  const css = readComponent('skeleton', 'skeleton.css');
+  assert.match(declarationsOf(css, '.tl-skeleton--text') ?? '', /height:\s*calc\(var\(--tl-font-size-body\) \* var\(--tl-font-line-height-body\)\)/);
+  assert.match(declarationsOf(css, '.tl-skeleton--text + .tl-skeleton--text') ?? '', /margin-block-start:\s*var\(--tl-space-/);
+  assert.match(declarationsOf(css, '.tl-skeleton--text + .tl-skeleton--text:last-child') ?? '', /width:/);
+  assert.match(declarationsOf(css, '.tl-skeleton--circle') ?? '', /border-radius:\s*50%/);
+  const md = readComponent('skeleton', 'skeleton.contract.md');
+  assert.deepEqual(missingInContract(md, ['tl-skeleton--text', 'tl-skeleton--circle', 'shape', 'lines', 'Skeleton', 'aria-hidden="true"', 'aria-busy="true"']), []);
+  assert.doesNotMatch(md, /keine Modifier/);
+});
+
 for (const name of ['alert', 'badge', 'divider', 'skeleton']) {
   test(`${name}: Specimen und Vertrag`, () => {
     assert.deepEqual(specimenProblems(readComponent(name, `${name}.spec.html`)), []);
     if (name === 'badge') assert.ok(readComponent(name, 'badge.spec.html').includes('role="img"'), 'Badge mit aria-label braucht role="img"');
-    const css = readComponent(name, `${name}.css`);
     const md = readComponent(name, `${name}.contract.md`);
-    assert.deepEqual(missingInContract(md, [...varsOf(css), `tl-${name}`]), []);
-    // Der Alert hat seit master #29652 ein Control (TLAlert), der Skeleton seinen ersten Aufrufer (die Tabelle); Badge und Divider noch nicht.
+    assert.deepEqual(missingInContract(md, [`tl-${name}`]), []);
+    // Der Alert hat seit master #29652 ein Control (TLAlert), der Divider seit #29657 (TLDivider), der Skeleton den Part
+    // Skeleton (Tabelle, Bild); Badge noch nicht.
     if (name === 'alert') assert.match(md, /TLAlert/, 'alert: Vertrag nennt sein Control nicht');
+    else if (name === 'divider') assert.deepEqual(missingInContract(md, ['TLDivider', 'tl-divider--labeled', 'tl-divider__label',
+      'tl-divider--label-start', 'tl-divider--label-end', 'tl-divider--inset', 'label', 'labelPosition', 'inset',
+      '--tl-text-secondary', '--tl-size-control-sm', 'role="separator"', 'aria-orientation="vertical"']), []);
     else if (name !== 'skeleton') assert.match(md, /kein Control/i, `${name}: Vertrag sagt nicht, dass es noch kein Control gibt`);
   });
 }

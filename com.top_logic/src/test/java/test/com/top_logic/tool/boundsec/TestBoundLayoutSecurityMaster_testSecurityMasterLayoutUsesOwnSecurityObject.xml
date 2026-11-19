@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<layout class="com.top_logic.tool.boundsec.BoundLayout"
+	name="outer"
+>
+	<layout class="com.top_logic.tool.boundsec.BoundLayout"
+		isSecurityMaster="true"
+		name="master"
+	>
+		<component class="com.top_logic.mig.html.layout.SimpleBoundComponent"
+			isSecurityMaster="true"
+			name="innerMaster"
+			securityObject="model"
+		/>
+	</layout>
+	<component class="com.top_logic.mig.html.layout.SimpleBoundComponent"
+		name="other"
+	/>
+</layout>

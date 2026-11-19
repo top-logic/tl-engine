@@ -15,6 +15,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.logging.Level;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.Argument;
@@ -59,7 +60,14 @@ public class Log extends GenericMethod {
 		Level level = ScriptLog.parse(arguments[0]);
 		String message = asString(arguments[1]);
 		if (arguments.length > 2) {
-			message = MessageFormat.format(message, Arrays.copyOfRange(arguments, 2, arguments.length));
+			Object[] formatArguments = Arrays.copyOfRange(arguments, 2, arguments.length);
+			for (int n = 0; n < formatArguments.length; n++) {
+				if (formatArguments[n] instanceof ResKey key) {
+					// MessageFormat would use the encoded key, not its text.
+					formatArguments[n] = asString(key);
+				}
+			}
+			message = MessageFormat.format(message, formatArguments);
 		}
 		Logger.log("Script (" + whoAmI() + ") reported: " + message, Log.class, level);
 		return null;

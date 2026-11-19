@@ -1,6 +1,7 @@
 import { React, useTLState, useTLTypingField, rootClassName, useFieldLabelProps, fieldInputId, usePart } from 'tl-react-bridge';
 import type { TLCellProps, DatePickerStateJson } from 'tl-react-bridge';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
+import { ClearButton, offersClearByModel } from './form/ClearButton';
 
 const { useCallback, useRef } = React;
 
@@ -54,6 +55,11 @@ function holdsIncompleteInput(input: HTMLInputElement): boolean {
  * A read-only field shows the localized value, drawn by the part `FieldValue`; a disabled field
  * renders the input as an inactive one (native `disabled`, see showsValueOnly).
  *
+ * The native input is emptied segment by segment only. A field that is not mandatory therefore
+ * offers the ClearButton while it is editable and holds a value (see offersClearByModel), for a
+ * date, a time of day and both alike: a click sends no value at once and hands the focus back to
+ * the input.
+ *
  * An empty field shows `state.placeholder` - e.g. the value it inherits, written in the format of
  * the field - as a greyed hint beside the input, since the native input has no place for a text of
  * its own. The hint describes the input for assistive technology.
@@ -103,6 +109,16 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId }) => {
     [setText, commit]
   );
 
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleClear = useCallback(async () => {
+    segmentKeyRef.current = false;
+    setText('');
+    // The gesture is the whole edit, so it is reported at once rather than when the field is left.
+    await commit();
+    inputRef.current?.focus();
+  }, [setText, commit]);
+
   const handleBlur = useCallback(
     (e: React.FocusEvent<HTMLInputElement>) => {
       segmentKeyRef.current = false;
@@ -124,10 +140,15 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId }) => {
 
   const hint = text === '' ? (state.placeholder ?? null) : null;
   const hintId = `${controlId}-hint`;
+  // The clear button is the action of a field group, which has a value; the hint stands beside an
+  // empty input. The input stays the first child either way, so that it keeps the focus.
+  const clearable = offersClearByModel(state, text !== '');
+  const rootClass = clearable ? 'tl-field-group' : hint !== null ? 'tl-field-hint-host' : undefined;
 
   return (
-    <span id={controlId} className={hint !== null ? 'tl-field-hint-host' : undefined}>
+    <span id={controlId} className={rootClass}>
       <input
+        ref={inputRef}
         type={state.inputType ?? 'date'}
         step={state.precision === 'seconds' ? 1 : undefined}
         value={text}
@@ -142,6 +163,7 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId }) => {
         {...labelProps}
         aria-describedby={hint !== null ? hintId : undefined}
       />
+      {clearable && <ClearButton onClick={handleClear} />}
       {hint !== null && <span id={hintId} className="tl-field-hint tl-type-body">{hint}</span>}
     </span>
   );

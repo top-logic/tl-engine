@@ -95,6 +95,9 @@ public class MaintenanceNoticeElement implements UIElement {
 
 	private final String _cssClass;
 
+	/** The name the notice is addressed by in the headless projection. */
+	private static final String NOTICE_NAME = "maintenance";
+
 	/**
 	 * Creates a new {@link MaintenanceNoticeElement} from configuration.
 	 */
@@ -106,7 +109,7 @@ public class MaintenanceNoticeElement implements UIElement {
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		MaintenanceWindowManager manager = MaintenanceWindowManager.getInstance();
-		ReactNoticeBarControl control = new ReactNoticeBarControl(context);
+		ReactNoticeBarControl control = new ReactNoticeBarControl(context, NOTICE_NAME);
 
 		// Bind the viewing session's language now: the listener below runs in the thread of
 		// whoever switches the mode, where the ambient locale is that administrator's, not this

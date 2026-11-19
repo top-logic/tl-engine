@@ -1,4 +1,6 @@
-import { React, useTLState, useTLCommand, useFill, FillBarrier, TLChild, rootClassName, ThemeIcon } from 'tl-react-bridge';
+import {
+  React, useTLState, useTLCommand, useFill, FillBarrier, TLChild, rootClassName, ThemeIcon, StateBadge,
+} from 'tl-react-bridge';
 import type { TLCellProps, TabBarStateJson } from 'tl-react-bridge';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
@@ -27,6 +29,9 @@ const ROOT_STYLE: React.CSSProperties = { display: 'flex', flexDirection: 'colum
 /** The strip: a line below the tabs, as Material UI draws a tab bar above its content. */
 const TABS_SX: SxProps<Theme> = { flexShrink: 0, borderBottom: 1, borderColor: 'divider' };
 
+/** The label of a tab carrying a badge: the label and the badge after it in a line. */
+const LABEL_WITH_BADGE_STYLE: React.CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 8 };
+
 /** A tab with an icon beside its label rather than above it, at the height of a label-only tab. */
 const TAB_SX: SxProps<Theme> = { minHeight: 48 };
 
@@ -47,7 +52,7 @@ const PANEL_STYLE: React.CSSProperties = {
  * <p>Mapping from the control state to the MUI props:</p>
  * <ul>
  * <li>tabs → a `Tab` per tab: label → label, icon → `icon` at the start of the label, rendered by
- *     the bridge's {@link ThemeIcon};</li>
+ *     the bridge's {@link ThemeIcon}, badge → the part `Badge` after the label, read with it;</li>
  * <li>activeTabId → value of the `Tabs`; an ID naming no tab selects none;</li>
  * <li>activeContent → the content region below the strip, rendered through {@link TLChild}. The
  *     server sends the content of the selected tab only, so the content of a tab is mounted when
@@ -124,7 +129,13 @@ const MuiTabBarAdapter: React.FC<TLCellProps> = ({ controlId }) => {
             value={tab.id}
             id={tabElementId(tab.id)}
             aria-controls={panelId}
-            label={tab.label}
+            label={tab.badge ? (
+              <span style={LABEL_WITH_BADGE_STYLE}>
+                {tab.label}
+                {' '}
+                <StateBadge badge={tab.badge} alone={false} />
+              </span>
+            ) : tab.label}
             icon={tab.icon ? <ThemeIcon encoded={tab.icon} className={ICON_CLASS} /> : undefined}
             iconPosition="start"
             sx={TAB_SX}

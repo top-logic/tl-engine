@@ -78,6 +78,8 @@ test('kein Vorfahr schneidet einen Fokusring ab — jede Specimen-Seite, beide D
   let rings = 0;
   for (const page of PAGES) {
     await browser.goto(origin + page);
+    // Ohne Fokus des Dokuments trifft kein Element :focus-visible; das ist ein Zustand des Browsers, kein Befund.
+    assert.ok(await browser.evaluate('document.hasFocus()'), `${page}: das Dokument hat keinen Fokus`);
     for (const density of ['normal', 'compact']) {
       const r = await browser.evaluate(MEASURE(density));
       rings += r.rings;

@@ -1,30 +1,18 @@
-/*
- * SPDX-FileCopyrightText: 2023 (c) Business Operation Systems GmbH <info@top-logic.com>
- * 
- * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
- */
 package com.top_logic.html.template.entities;
-
-import java.io.IOException;
-
-import de.haumacher.msgbuf.data.AbstractDataObject;
-import de.haumacher.msgbuf.json.JsonReader;
-import de.haumacher.msgbuf.json.JsonUtil;
-import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
  * A single entity of the {@link Entities} table.
  */
-public class Entity extends AbstractDataObject {
+public class Entity extends de.haumacher.msgbuf.data.AbstractDataObject {
 
 	/**
-	 * Creates a {@link Entity} instance.
+	 * Creates a {@link com.top_logic.html.template.entities.Entity} instance.
 	 */
-	public static Entity create() {
-		return new Entity();
+	public static com.top_logic.html.template.entities.Entity create() {
+		return new com.top_logic.html.template.entities.Entity();
 	}
 
-	/** Identifier for the {@link Entity} type in JSON format. */
+	/** Identifier for the {@link com.top_logic.html.template.entities.Entity} type in JSON format. */
 	public static final String ENTITY__TYPE = "Entity";
 
 	/** @see #getCharacters() */
@@ -35,7 +23,7 @@ public class Entity extends AbstractDataObject {
 	/**
 	 * Creates a {@link Entity} instance.
 	 *
-	 * @see Entity#create()
+	 * @see com.top_logic.html.template.entities.Entity#create()
 	 */
 	protected Entity() {
 		super();
@@ -51,7 +39,7 @@ public class Entity extends AbstractDataObject {
 	/**
 	 * @see #getCharacters()
 	 */
-	public Entity setCharacters(String value) {
+	public com.top_logic.html.template.entities.Entity setCharacters(String value) {
 		internalSetCharacters(value);
 		return this;
 	}
@@ -62,30 +50,28 @@ public class Entity extends AbstractDataObject {
 	}
 
 	/** Reads a new instance from the given reader. */
-	public static Entity readEntity(JsonReader in) throws IOException {
-		Entity result = new Entity();
+	public static com.top_logic.html.template.entities.Entity readEntity(de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
+		com.top_logic.html.template.entities.Entity result = new com.top_logic.html.template.entities.Entity();
 		result.readContent(in);
 		return result;
 	}
 
 	@Override
-	public final void writeTo(JsonWriter out) throws IOException {
+	public final void writeTo(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 		writeContent(out);
 	}
 
 	@Override
-	protected void writeFields(JsonWriter out) throws IOException {
+	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 		super.writeFields(out);
 		out.name(CHARACTERS__PROP);
 		out.value(getCharacters());
 	}
 
 	@Override
-	protected void readField(JsonReader in, String field) throws IOException {
+	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
-			case CHARACTERS__PROP:
-				setCharacters(JsonUtil.nextStringOptional(in));
-				break;
+			case CHARACTERS__PROP: setCharacters(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

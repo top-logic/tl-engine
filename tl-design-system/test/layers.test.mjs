@@ -21,7 +21,54 @@ function leaves(o, path = '') {
   return out;
 }
 const semantisch = () => [...leaves(T.color), ...leaves(T.effect), ...leaves(T.measure),
-  ...leaves(T.density), ...leaves(T.layer)];
+  ...leaves(T.density), ...leaves(T.layer), ...leaves(T.derived.candidates)
+    .map(([p, v]) => [`derived.candidates.${p}`, v])];
+const schluessel = (o) => Object.keys(o).filter((k) => !k.startsWith('_')).sort();
+const NAME = /^[a-z][a-z0-9-]*$/;
+
+test('jede oberste Gruppe von tokens.json hat eine Regel, und die Untergruppen sind geschlossen', () => {
+  // semantisch() deckt color, effect, measure, density, layer und derived.candidates ab (Literal- und
+  // Referenzprüfung oben); die übrigen Gruppen werden hier geprüft.
+  const regeln = {
+    color: () => assert.deepEqual(schluessel(T.color), ['dark', 'light'], 'color: genau light, dark'),
+    effect: () => assert.deepEqual(schluessel(T.effect), ['dark', 'light'], 'effect: genau light, dark'),
+    measure: () => {},
+    density: () => assert.deepEqual(schluessel(T.density), ['compact', 'normal'], 'density: genau normal, compact'),
+    layer: () => {},
+    derived: () => {
+      assert.deepEqual(schluessel(T.derived), ['candidates', 'dark', 'light'], 'derived: genau light, dark, candidates');
+      for (const modus of ['light', 'dark'])
+        for (const [n, v] of Object.entries(T.derived[modus]).filter(([k]) => !k.startsWith('_'))) {
+          assert.deepEqual(Object.keys(v), ['surface'], `derived.${modus}.${n}: genau der Schlüssel surface`);
+          assert.ok(Object.hasOwn(T.color[modus], v.surface), `derived.${modus}.${n}.surface = ${v.surface} ist kein Schlüssel von color.${modus}`);
+        }
+    },
+    type: () => feldRegeln('type', ['family', 'size', 'weight', 'lineHeight', 'tracking']),
+    print: () => feldRegeln('print', ['size', 'weight', 'lineHeight']),
+    prose: () => {
+      for (const [n, v] of Object.entries(T.prose).filter(([k]) => !k.startsWith('_'))) {
+        assert.ok(Array.isArray(v), `prose.${n}: Array von Elementnamen erwartet`);
+        for (const e of v) assert.match(String(e), /^[a-z][a-z0-9]*$/, `prose.${n}: ${e} ist kein Elementname`);
+      }
+    },
+  };
+  const ROLLE = { family: 'font-family', size: 'font-size', weight: 'font-weight',
+    lineHeight: 'font-line-height', tracking: 'font-letter-spacing' };
+  function feldRegeln(gruppe, felder) {
+    for (const [n, def] of Object.entries(T[gruppe]).filter(([k]) => !k.startsWith('_'))) {
+      assert.deepEqual(Object.keys(def).sort(), [...felder].sort(), `${gruppe}.${n}: Felder genau ${felder.join(', ')}`);
+      for (const f of felder) {
+        const v = def[f];
+        assert.ok(typeof v === 'string' && NAME.test(v), `${gruppe}.${n}.${f} = ${v} — Rollenname ohne Präfix erwartet, kein Wert`);
+        assert.ok(Object.hasOwn(T.measure, `${ROLLE[f]}-${v}`), `${gruppe}.${n}.${f}: Rolle ${ROLLE[f]}-${v} fehlt in measure`);
+      }
+    }
+  }
+  for (const g of schluessel(T)) {
+    assert.ok(Object.hasOwn(regeln, g), `Gruppe ${g} ohne Literalprüfung`);
+    regeln[g]();
+  }
+});
 
 test('kein Wert in der semantischen Schicht, nur Referenzen', () => {
   for (const [path, v] of semantisch())

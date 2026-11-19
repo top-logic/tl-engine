@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<sidebar active-item="project">
+		<nav-item id="project">
+			<visibility
+				expr="$object.instanceOf(`TestViewModelAccess:Project`)"
+				inputs="object"
+			/>
+			<access-control
+				inputs="object"
+				object="$object"
+				operation="Read"
+				type="TestViewModelAccess:Project"
+			/>
+			<panel/>
+		</nav-item>
+		<group id="projects">
+			<visibility
+				expr="$object.instanceOf(`TestViewModelAccess:Project`)"
+				inputs="object"
+			/>
+			<nav-item id="inner">
+				<access-control
+					inputs="object"
+					object="$object"
+					operation="Read"
+					type="TestViewModelAccess:Project"
+				/>
+				<panel/>
+			</nav-item>
+		</group>
+		<nav-item id="open">
+			<panel/>
+		</nav-item>
+	</sidebar>
+</view>

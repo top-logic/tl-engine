@@ -7,6 +7,9 @@ package com.top_logic.react.flow.client.control;
 
 import static com.top_logic.react.flow.svg.SvgConstants.*;
 
+import java.util.IdentityHashMap;
+import java.util.Map;
+
 import org.vectomatic.dom.svg.OMSVGClipPathElement;
 import org.vectomatic.dom.svg.OMSVGDocument;
 import org.vectomatic.dom.svg.OMSVGElement;
@@ -28,10 +31,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.DoubleClickEvent;
 import com.google.gwt.event.dom.client.DoubleClickHandler;
-import com.google.gwt.event.dom.client.DragOverEvent;
-import com.google.gwt.event.dom.client.DragOverHandler;
-import com.google.gwt.event.dom.client.DropEvent;
-import com.google.gwt.event.dom.client.DropHandler;
 import com.google.gwt.event.dom.client.MouseEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 
@@ -42,21 +41,31 @@ import com.top_logic.react.flow.svg.event.MouseButton;
 import com.top_logic.react.flow.svg.event.Registration;
 import com.top_logic.react.flow.svg.event.SVGClickEvent;
 import com.top_logic.react.flow.svg.event.SVGClickHandler;
-import com.top_logic.react.flow.svg.event.SVGDropEvent;
-import com.top_logic.react.flow.svg.event.SVGDropHandler;
+import com.top_logic.react.flow.svg.event.SVGEvent;
+import com.top_logic.react.flow.svg.event.SVGKeyEvent;
+import com.top_logic.react.flow.svg.event.SVGKeyHandler;
 import com.top_logic.react.flow.svg.event.SVGPanEvent;
 import com.top_logic.react.flow.svg.event.SVGPanHandler;
 import com.top_logic.react.flow.svg.event.SVGWheelEvent;
 import com.top_logic.react.flow.svg.event.SVGWheelHandler;
 import com.top_logic.react.flow.data.ImageAlign;
 import com.top_logic.react.flow.data.ImageScale;
+import com.top_logic.react.flow.data.Widget;
 
 /**
  * {@link SvgWriter} directly creating a SVG DOM tree.
  *
+ * <p>
+ * The {@link #uniqueId(Widget, String) IDs} of the drawn elements come from the
+ * {@link SubIdGenerator} of the diagram control, see {@link SubIdGenerator#ownedId(Widget, String)}.
+ * </p>
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class SVGBuilder implements SvgWriter {
+
+	/** DOM event fired when a key is pressed on the focused element. */
+	private static final String KEYDOWN_EVENT = "keydown";
 
 	private OMSVGDocument _doc;
 
@@ -68,6 +77,14 @@ public class SVGBuilder implements SvgWriter {
 
 	private Runnable _relayoutCallback = () -> {};
 
+	private final SubIdGenerator _ids;
+
+	/**
+	 * IDs from {@link SubIdGenerator#createId()} for owners without a node ID, see
+	 * {@link #uniqueId(Widget, String)}.
+	 */
+	private final Map<Widget, String> _ownerIds = new IdentityHashMap<>();
+
 	/**
 	 * Creates a {@link SVGBuilder}.
 	 *
@@ -75,9 +92,11 @@ public class SVGBuilder implements SvgWriter {
 	 *        The {@link OMSVGDocument} to write to.
 	 * @param root
 	 *        The root {@link OMSVGSVGElement} to append to.
+	 * @param ids
+	 *        The ID source of the diagram control.
 	 */
-	public SVGBuilder(OMSVGDocument doc, OMSVGSVGElement root) {
-		this(doc, root, root);
+	public SVGBuilder(OMSVGDocument doc, OMSVGSVGElement root, SubIdGenerator ids) {
+		this(doc, root, root, ids);
 	}
 
 	/**
@@ -89,16 +108,19 @@ public class SVGBuilder implements SvgWriter {
 	 *        The root {@link OMSVGSVGElement} to write to.
 	 * @param parent
 	 *        The parent {@link OMSVGElement} to append to.
+	 * @param ids
+	 *        The ID source of the diagram control.
 	 */
-	public SVGBuilder(OMSVGDocument doc, OMSVGSVGElement root, OMSVGElement parent) {
+	public SVGBuilder(OMSVGDocument doc, OMSVGSVGElement root, OMSVGElement parent, SubIdGenerator ids) {
 		_doc = doc;
 		_root = root;
 		_parent = parent;
 		_current = parent;
+		_ids = ids;
 	}
 
 	/**
-	 * Sets the callback invoked when {@link SVGWheelEvent#requestRelayout()} is called.
+	 * Sets the callback invoked when {@link SVGEvent#requestRelayout()} is called.
 	 */
 	public void setRelayoutCallback(Runnable callback) {
 		_relayoutCallback = callback;
@@ -399,6 +421,29 @@ public class SVGBuilder implements SvgWriter {
 		}
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * For an owner with a node ID, the ID is {@link SubIdGenerator#ownedId(Widget, String)}, so
+	 * that it stays the same over partial redraws. An owner without a node ID gets an ID from
+	 * {@link SubIdGenerator#createId()} once per writer.
+	 * </p>
+	 */
+	@Override
+	public String uniqueId(Widget owner, String purpose) {
+		String id = _ids.ownedId(owner, purpose);
+		if (id != null) {
+			return id;
+		}
+		String ownerId = _ownerIds.get(owner);
+		if (ownerId == null) {
+			ownerId = _ids.createId();
+			_ownerIds.put(owner, ownerId);
+		}
+		return ownerId + "-" + purpose;
+	}
+
 	@Override
 	public void beginText(double x, double y, String text) {
 		appendChild(_doc.createSVGTextElement((float) x, (float) y, OMSVGLength.SVG_LENGTHTYPE_PX, text));
@@ -473,7 +518,8 @@ public class SVGBuilder implements SvgWriter {
 		return () -> registration.removeHandler();
 	}
 
-	private static SVGClickEvent createClickEvent(OMSVGSVGElement svgRoot, MouseEvent<?> event, Object sender) {
+	private SVGClickEvent createClickEvent(OMSVGSVGElement svgRoot, MouseEvent<?> event, Object sender) {
+		Runnable relayout = _relayoutCallback;
 		return new SVGClickEvent() {
 			@Override
 			public Object getSender() {
@@ -525,8 +571,8 @@ public class SVGBuilder implements SvgWriter {
 			}
 
 			@Override
-			public void updateTransform(String elementId, double translateX, double translateY) {
-				nativeSetTranslate(elementId, translateX, translateY);
+			public void updateTransform(Widget owner, String purpose, double translateX, double translateY) {
+				setTranslate(_ids, owner, purpose, translateX, translateY);
 			}
 
 			@Override
@@ -538,51 +584,60 @@ public class SVGBuilder implements SvgWriter {
 			public void preventDefault() {
 				event.getNativeEvent().preventDefault();
 			}
+
+			@Override
+			public void requestRelayout() {
+				relayout.run();
+			}
 		};
 	}
 
 	@Override
-	public Registration attachOnDrop(SVGDropHandler handler, Object sender) {
+	public Registration attachOnKeyDown(SVGKeyHandler handler, Object sender) {
 		if (_current == null) {
 			throw new IllegalStateException(
 				"The last built SVG element is closed. In this state it is not possible to add a "
-					+ SVGDropHandler.class.getName()
+					+ SVGKeyHandler.class.getName()
 					+ "! Please make sure the handler is added within the desired element before its content.");
 		}
-		HandlerRegistration registration = _current.addDomHandler(new DropHandler() {
-			@Override
-			public void onDrop(DropEvent event) {
-				handler.onDrop(new SVGDropEvent() {
-					@Override
-					public Object getSender() {
-						return sender;
-					}
+		elemental2.dom.Element element = jsinterop.base.Js.uncheckedCast(_current.getElement());
+		Runnable relayout = _relayoutCallback;
+		elemental2.dom.EventListener listener = evt -> {
+			elemental2.dom.KeyboardEvent ke = (elemental2.dom.KeyboardEvent) evt;
+			handler.onKeyDown(new SVGKeyEvent() {
+				@Override
+				public Object getSender() {
+					return sender;
+				}
 
-					@Override
-					public void stopPropagation() {
-						event.getNativeEvent().stopPropagation();
-					}
+				@Override
+				public String getKey() {
+					return ke.key;
+				}
 
-					@Override
-					public void preventDefault() {
-						event.getNativeEvent().preventDefault();
-					}
-				});
-			}
-		}, DropEvent.getType());
+				@Override
+				public void stopPropagation() {
+					ke.stopPropagation();
+				}
 
-		// Make sure, the drop can be accepted.
-		HandlerRegistration dragOver = _current.addDomHandler(new DragOverHandler() {
-			@Override
-			public void onDragOver(DragOverEvent event) {
-				event.preventDefault();
-			}
-		}, DragOverEvent.getType());
+				@Override
+				public void preventDefault() {
+					ke.preventDefault();
+				}
 
-		return () -> {
-			registration.removeHandler();
-			dragOver.removeHandler();
+				@Override
+				public void updateTransform(Widget owner, String purpose, double translateX, double translateY) {
+					setTranslate(_ids, owner, purpose, translateX, translateY);
+				}
+
+				@Override
+				public void requestRelayout() {
+					relayout.run();
+				}
+			});
 		};
+		element.addEventListener(KEYDOWN_EVENT, listener);
+		return () -> element.removeEventListener(KEYDOWN_EVENT, listener);
 	}
 
 	@Override
@@ -691,8 +746,8 @@ public class SVGBuilder implements SvgWriter {
 			public double getY() { return y; }
 
 			@Override
-			public void updateTransform(String elementId, double translateX, double translateY) {
-				nativeSetTranslate(elementId, translateX, translateY);
+			public void updateTransform(Widget owner, String purpose, double translateX, double translateY) {
+				setTranslate(_ids, owner, purpose, translateX, translateY);
 			}
 
 			@Override
@@ -772,8 +827,8 @@ public class SVGBuilder implements SvgWriter {
 				}
 
 				@Override
-				public void updateTransform(String elementId, double translateX, double translateY) {
-					nativeSetTranslate(elementId, translateX, translateY);
+				public void updateTransform(Widget owner, String purpose, double translateX, double translateY) {
+					setTranslate(_ids, owner, purpose, translateX, translateY);
 				}
 
 				@Override
@@ -808,6 +863,20 @@ public class SVGBuilder implements SvgWriter {
 			return clientX * inverse.getB() + clientY * inverse.getD() + inverse.getF();
 		}
 		return clientY;
+	}
+
+	/**
+	 * Sets the translation of the element the given owner has drawn for the given purpose.
+	 *
+	 * @param ids
+	 *        The ID source of the diagram control that has drawn the element.
+	 * @see SubIdGenerator#ownedId(Widget, String)
+	 */
+	static void setTranslate(SubIdGenerator ids, Widget owner, String purpose, double tx, double ty) {
+		String id = ids.ownedId(owner, purpose);
+		if (id != null) {
+			nativeSetTranslate(id, tx, ty);
+		}
 	}
 
 	private static native void nativeSetTranslate(String id, double tx, double ty) /*-{

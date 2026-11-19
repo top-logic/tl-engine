@@ -74,6 +74,8 @@ public class TestLoginFailuresModule extends TestCase {
 			long seconds = ((Number) message.arguments()[0]).longValue();
 			assertTrue("The message names the seconds to wait: " + seconds, seconds > 0);
 			assertTrue(ex.getRetryTimeout() > 0);
+			assertEquals("The seconds to wait are rounded up, a refusal never names 0 seconds.",
+				(ex.getRetryTimeout() + 999) / 1000, seconds);
 		}
 		assertEquals("The check is not run while backing off.", checksBeforeBackOff, _checks);
 		assertEquals("A refused attempt is not counted.", checksBeforeBackOff,

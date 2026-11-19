@@ -34,13 +34,16 @@ import com.top_logic.basic.util.ResKey;
  * </pre>
  *
  * <p>
- * Secrets are written to the first of the stores that is writable, with the
+ * Secrets are written to the first of the stores that is currently writable, with the
  * {@link Config#getPrefix() prefix} of this store. A writable store is therefore placed at the end
  * of the chain: the read-only stores in front of it take precedence for the names they hold, and a
- * secret the application writes cannot shadow them.
+ * secret the application writes cannot shadow them. Such a name cannot be written, because a
+ * written secret would not be delivered. A store in front of the writable store that fails to
+ * look the name up counts as holding it.
  * </p>
  *
  * @see #getWritableStore()
+ * @see WritableSecretStore#canStore(String)
  */
 @Label("Several secret stores")
 public class ChainSecretStore extends AbstractSecretStore<ChainSecretStore.Config> {
@@ -76,8 +79,6 @@ public class ChainSecretStore extends AbstractSecretStore<ChainSecretStore.Confi
 
 	private final List<SecretStore> _stores;
 
-	private final WritableSecretStore _writable;
-
 	/**
 	 * Creates a {@link ChainSecretStore} from configuration.
 	 *
@@ -89,26 +90,26 @@ public class ChainSecretStore extends AbstractSecretStore<ChainSecretStore.Confi
 	public ChainSecretStore(InstantiationContext context, Config config) {
 		super(context, config);
 		_stores = TypedConfiguration.getInstanceListReadOnly(context, config.getStores());
-		_writable = createWritable();
-	}
-
-	private WritableSecretStore createWritable() {
-		for (SecretStore store : _stores) {
-			WritableSecretStore writable = store.getWritableStore();
-			if (writable != null) {
-				return getConfig().getPrefix() == null ? writable : new PrefixedStore(writable);
-			}
-		}
-		return null;
 	}
 
 	/**
-	 * The writable store of the first of the {@link Config#getStores() stores} that has one, with
-	 * the {@link Config#getPrefix() prefix} of this store put in front of each name.
+	 * The writable store of the first of the {@link Config#getStores() stores} that currently has
+	 * one, with the {@link Config#getPrefix() prefix} of this store put in front of each name.
+	 *
+	 * <p>
+	 * {@link WritableSecretStore#canStore(String)} of the result answers <code>false</code> for a
+	 * name one of the stores in front of the writable store holds.
+	 * </p>
 	 */
 	@Override
 	public WritableSecretStore getWritableStore() {
-		return _writable;
+		for (int index = 0, cnt = _stores.size(); index < cnt; index++) {
+			WritableSecretStore writable = _stores.get(index).getWritableStore();
+			if (writable != null) {
+				return new ChainWriter(_stores.subList(0, index), writable);
+			}
+		}
+		return null;
 	}
 
 	@Override
@@ -128,14 +129,25 @@ public class ChainSecretStore extends AbstractSecretStore<ChainSecretStore.Confi
 	}
 
 	/**
-	 * View of a writable store of the chain that puts the prefix of the chain in front of each
+	 * View of the writable store of the chain that puts the prefix of the chain in front of each
 	 * name, so that a written secret is found under the name the chain is asked for.
 	 */
-	private final class PrefixedStore implements WritableSecretStore {
+	private final class ChainWriter implements WritableSecretStore {
+
+		private final List<SecretStore> _preceding;
 
 		private final WritableSecretStore _inner;
 
-		PrefixedStore(WritableSecretStore inner) {
+		/**
+		 * Creates a {@link ChainWriter}.
+		 *
+		 * @param preceding
+		 *        The stores of the chain in front of the writable store.
+		 * @param inner
+		 *        The writable store.
+		 */
+		ChainWriter(List<SecretStore> preceding, WritableSecretStore inner) {
+			_preceding = preceding;
 			_inner = inner;
 		}
 
@@ -147,6 +159,30 @@ public class ChainSecretStore extends AbstractSecretStore<ChainSecretStore.Confi
 		@Override
 		public String getSecret(String name) {
 			return _inner.getSecret(key(name));
+		}
+
+		/**
+		 * Whether no store in front of the writable store holds the name and the writable store
+		 * can store it.
+		 */
+		@Override
+		public boolean canStore(String name) {
+			String key = key(name);
+			for (SecretStore store : _preceding) {
+				if (holds(store, key)) {
+					return false;
+				}
+			}
+			return _inner.canStore(key);
+		}
+
+		private boolean holds(SecretStore store, String key) {
+			try {
+				return store.lookup(key) != null;
+			} catch (RuntimeException ex) {
+				// The store holds the secret but cannot deliver it, it still takes precedence.
+				return true;
+			}
 		}
 
 		@Override

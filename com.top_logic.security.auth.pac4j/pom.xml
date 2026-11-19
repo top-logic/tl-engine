@@ -36,9 +36,34 @@
       <artifactId>tl-element</artifactId>
     </dependency>
     <dependency>
+      <!-- The TL-Script functions about the external logins of the session's account. -->
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-model-search</artifactId>
+    </dependency>
+    <dependency>
       <!-- The e-mail address of an account lives in its contact. -->
       <groupId>com.top-logic</groupId>
       <artifactId>tl-contact</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <!--
+        The views of this module are overlays of views of tl-layout-view (settings-tabs.view.xml),
+        which apply only in applications with the React view layer. Test scope, so that an
+        application without it (e.g. one with the classic UI only) does not get it. The dependency
+        still orders the web fragment of this module after the one of tl-layout-view, which an
+        overlay needs: the order of the fragments follows the dependencies declared in the POMs of
+        the modules, whatever their scope (DependencyResolver). It also lets TestViewScripts check
+        the views of this module.
+      -->
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view</artifactId>
+      <type>test-jar</type>
       <scope>test</scope>
     </dependency>
     <dependency>

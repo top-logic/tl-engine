@@ -20,6 +20,14 @@
 			expr="{ tickets = all(`demo.tickets:Ticket`).size(); if($tickets == 0, null, $tickets); }"
 			observed-types="demo.tickets:Ticket"
 		/>
+		<!--
+			The number of open tickets: the badge of the "badge-demo" item, in the role error. A zero
+			shows no badge.
+		-->
+		<derived-channel name="openTicketCount"
+			expr="all(`demo.tickets:Ticket`).filter(t -> $t.get(`demo.tickets:Ticket#status`) == `demo.tickets:TicketStatus#open`).size()"
+			observed-types="demo.tickets:Ticket"
+		/>
 	</channels>
 
 	<sidebar
@@ -83,6 +91,24 @@
 							<de>Board</de>
 						</label>
 					</nav-item>
+					<nav-item id="keywords"
+						icon="css:bi bi-tags"
+					>
+						<view-ref view="keywords.view.xml"/>
+						<label>
+							<en>Keywords</en>
+							<de>Schlagwörter</de>
+						</label>
+					</nav-item>
+					<nav-item id="currencies"
+						icon="css:bi bi-currency-exchange"
+					>
+						<view-ref view="currencies.view.xml"/>
+						<label>
+							<en>Currencies</en>
+							<de>Währungen</de>
+						</label>
+					</nav-item>
 					<nav-item id="projects"
 						icon="css:bi bi-kanban"
 					>
@@ -123,6 +149,15 @@
 						<label>
 							<en>Tree Demo</en>
 							<de>Baum-Demo</de>
+						</label>
+					</nav-item>
+					<nav-item id="tree-grid-demo"
+						icon="css:bi bi-grid-3x3"
+					>
+						<view-ref view="demo/tree-grid-demo.view.xml"/>
+						<label>
+							<en>Tree grid</en>
+							<de>Baum-Raster</de>
 						</label>
 					</nav-item>
 					<nav-item id="tree-table-display-demo"
@@ -168,6 +203,24 @@
 						<label>
 							<en>Gantt Schedule</en>
 							<de>Gantt-Terminplan</de>
+						</label>
+					</nav-item>
+					<nav-item id="graph-demo"
+						icon="css:bi bi-diagram-2"
+					>
+						<view-ref view="demo/graph-demo.view.xml"/>
+						<label>
+							<en>Graph Demo</en>
+							<de>Graph-Demo</de>
+						</label>
+					</nav-item>
+					<nav-item id="flow-clip-demo"
+						icon="css:bi bi-crop"
+					>
+						<view-ref view="demo/flow-clip-demo.view.xml"/>
+						<label>
+							<en>Clipped diagrams</en>
+							<de>Beschnittene Diagramme</de>
 						</label>
 					</nav-item>
 					<nav-item id="pdf"
@@ -251,6 +304,15 @@
 							<de>Tiles Mehr-Tab-Demo</de>
 						</label>
 					</nav-item>
+					<nav-item id="tiles-typed-demo"
+						icon="css:bi bi-funnel"
+					>
+						<view-ref view="demo/tiles-typed-demo.view.xml"/>
+						<label>
+							<en>Tiles Typed Demo</en>
+							<de>Tiles-Demo nach Typ</de>
+						</label>
+					</nav-item>
 					<nav-item id="responsive-md-demo"
 						icon="css:bi bi-layout-sidebar-inset"
 					>
@@ -285,6 +347,17 @@
 						<label>
 							<en>Accordion</en>
 							<de>Akkordeon</de>
+						</label>
+					</nav-item>
+					<nav-item id="badge-demo"
+						badge="openTicketCount"
+						badge-role="error"
+						icon="css:bi bi-app-indicator"
+					>
+						<view-ref view="demo/badge-demo.view.xml"/>
+						<label>
+							<en>Badges</en>
+							<de>Badges</de>
 						</label>
 					</nav-item>
 					<nav-item id="tabs-overflow-demo"
@@ -357,6 +430,15 @@
 						<label>
 							<en>Images</en>
 							<de>Bilder</de>
+						</label>
+					</nav-item>
+					<nav-item id="symbols"
+						icon="css:bi bi-bookmark-star"
+					>
+						<view-ref view="demo/symbols-demo.view.xml"/>
+						<label>
+							<en>Icons from pictures</en>
+							<de>Icons aus Bildern</de>
 						</label>
 					</nav-item>
 					<nav-item id="long-job"
@@ -438,6 +520,24 @@
 						<label>
 							<en>Temperatures</en>
 							<de>Temperaturen</de>
+						</label>
+					</nav-item>
+					<nav-item id="data-list-demo"
+						icon="css:bi bi-person-lines-fill"
+					>
+						<view-ref view="demo/data-list-demo.view.xml"/>
+						<label>
+							<en>List</en>
+							<de>Liste</de>
+						</label>
+					</nav-item>
+					<nav-item id="sensor-locking"
+						icon="css:bi bi-lock"
+					>
+						<view-ref view="demo/sensor-locking.view.xml"/>
+						<label>
+							<en>Sensor locking</en>
+							<de>Sperren von Sensoren</de>
 						</label>
 					</nav-item>
 					<nav-item id="styling-demo"

@@ -8,7 +8,7 @@ package com.top_logic.model.search.expr;
 import static com.top_logic.model.search.expr.SearchExpressionFactory.*;
 
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.exception.I18NException;
+import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
@@ -90,7 +90,7 @@ public class Try extends SearchExpression {
 			
 			// Determine the error message to pass to the catch block
 			Object errorMessage;
-			if (e instanceof I18NException i18nEx) {
+			if (e instanceof I18NFailure i18nEx) {
 				errorMessage = i18nEx.getErrorKey();
 			} else {
 				errorMessage = e.getMessage();

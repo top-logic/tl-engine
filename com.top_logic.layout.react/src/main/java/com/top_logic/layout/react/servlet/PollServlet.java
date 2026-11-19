@@ -48,6 +48,11 @@ import com.top_logic.util.TLContextManager;
  */
 public class PollServlet extends HttpServlet {
 
+	/**
+	 * Description of a poll in a {@link ReactWindowRegistry#reportStaleWindow(String, String) report}.
+	 */
+	private static final String POLL_REQUEST = "Poll for events";
+
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		long after;
@@ -84,6 +89,7 @@ public class PollServlet extends HttpServlet {
 		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
 		SSEUpdateQueue queue = registry.getQueue(windowName);
 		if (queue == null) {
+			registry.reportStaleWindow(windowName, POLL_REQUEST);
 			response.sendError(HttpServletResponse.SC_GONE, "Unknown window.");
 			return;
 		}

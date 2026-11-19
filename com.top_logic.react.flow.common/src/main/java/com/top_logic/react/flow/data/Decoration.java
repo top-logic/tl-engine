@@ -14,9 +14,6 @@ public interface Decoration extends com.top_logic.react.flow.data.Box, com.top_l
 		/** Visit case for {@link com.top_logic.react.flow.data.ClickTarget}.*/
 		R visit(com.top_logic.react.flow.data.ClickTarget self, A arg) throws E;
 
-		/** Visit case for {@link com.top_logic.react.flow.data.ContextMenu}.*/
-		R visit(com.top_logic.react.flow.data.ContextMenu self, A arg) throws E;
-
 		/** Visit case for {@link com.top_logic.react.flow.data.DropRegion}.*/
 		R visit(com.top_logic.react.flow.data.DropRegion self, A arg) throws E;
 
@@ -34,6 +31,9 @@ public interface Decoration extends com.top_logic.react.flow.data.Box, com.top_l
 
 		/** Visit case for {@link com.top_logic.react.flow.data.Padding}.*/
 		R visit(com.top_logic.react.flow.data.Padding self, A arg) throws E;
+
+		/** Visit case for {@link com.top_logic.react.flow.data.Sticky}.*/
+		R visit(com.top_logic.react.flow.data.Sticky self, A arg) throws E;
 
 		/** Visit case for {@link com.top_logic.react.flow.data.Sized}.*/
 		R visit(com.top_logic.react.flow.data.Sized self, A arg) throws E;
@@ -85,6 +85,9 @@ public interface Decoration extends com.top_logic.react.flow.data.Box, com.top_l
 	@Override
 	com.top_logic.react.flow.data.Decoration setRenderInfo(java.lang.Object value);
 
+	@Override
+	com.top_logic.react.flow.data.Decoration setDropTarget(boolean value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.Decoration readDecoration(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {
@@ -97,13 +100,13 @@ public interface Decoration extends com.top_logic.react.flow.data.Box, com.top_l
 		switch (type) {
 			case SelectableBox.SELECTABLE_BOX__TYPE: result = com.top_logic.react.flow.data.SelectableBox.create(); break;
 			case ClickTarget.CLICK_TARGET__TYPE: result = com.top_logic.react.flow.data.ClickTarget.create(); break;
-			case ContextMenu.CONTEXT_MENU__TYPE: result = com.top_logic.react.flow.data.ContextMenu.create(); break;
 			case DropRegion.DROP_REGION__TYPE: result = com.top_logic.react.flow.data.DropRegion.create(); break;
 			case Tooltip.TOOLTIP__TYPE: result = com.top_logic.react.flow.data.Tooltip.create(); break;
 			case Align.ALIGN__TYPE: result = com.top_logic.react.flow.data.Align.create(); break;
 			case Border.BORDER__TYPE: result = com.top_logic.react.flow.data.Border.create(); break;
 			case Fill.FILL__TYPE: result = com.top_logic.react.flow.data.Fill.create(); break;
 			case Padding.PADDING__TYPE: result = com.top_logic.react.flow.data.Padding.create(); break;
+			case Sticky.STICKY__TYPE: result = com.top_logic.react.flow.data.Sticky.create(); break;
 			case Sized.SIZED__TYPE: result = com.top_logic.react.flow.data.Sized.create(); break;
 			case ClipBox.CLIP_BOX__TYPE: result = com.top_logic.react.flow.data.ClipBox.create(); break;
 			default: in.skipValue(); result = null; break;

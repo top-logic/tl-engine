@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="test.com.top_logic.element.meta.TestLifecycleHandlers">
+			<types>
+				<class name="Base">
+					<annotations>
+						<table name="PreloadTest"/>
+						<object-initializers>
+							<initializer class="test.com.top_logic.element.meta.TestLifecycleHandlers$Init"/>
+						</object-initializers>
+						<lifecycle-handlers>
+							<handler class="test.com.top_logic.element.meta.TestLifecycleHandlers$BaseRecorder"/>
+						</lifecycle-handlers>
+					</annotations>
+					<attributes>
+						<property name="log"
+							type="tl.core:String"
+						/>
+						<reference name="parts"
+							composite="true"
+							multiple="true"
+							type="Base"
+						/>
+						<property name="watched"
+							type="tl.core:String"
+						>
+							<annotations>
+								<change-handlers>
+									<handler class="test.com.top_logic.element.meta.TestLifecycleHandlers$ChangeRecorder"/>
+								</change-handlers>
+							</annotations>
+						</property>
+					</attributes>
+				</class>
+				<class name="Sub">
+					<generalizations>
+						<generalization type="Base"/>
+					</generalizations>
+					<annotations>
+						<table name="PreloadTest"/>
+						<lifecycle-handlers>
+							<handler class="test.com.top_logic.element.meta.TestLifecycleHandlers$SubRecorder"/>
+						</lifecycle-handlers>
+					</annotations>
+				</class>
+				<class name="Plain">
+					<annotations>
+						<table name="PreloadTest"/>
+					</annotations>
+					<attributes>
+						<property name="log"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

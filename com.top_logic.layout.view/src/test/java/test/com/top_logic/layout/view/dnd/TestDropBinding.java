@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.view.dnd;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +30,7 @@ import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropEvent;
 import com.top_logic.layout.react.control.dnd.DropLocation;
 import com.top_logic.layout.react.control.dnd.DropMode;
+import com.top_logic.layout.react.control.dnd.DropPoint;
 import com.top_logic.layout.react.control.dnd.DropRequest;
 import com.top_logic.layout.react.control.dnd.DropSupport;
 import com.top_logic.layout.react.control.dnd.DropVerdict;
@@ -39,6 +41,9 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.I18NConstants;
+import com.top_logic.layout.view.command.ActionArguments;
+import com.top_logic.layout.view.command.ArgumentsViewAction;
+import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.dnd.DropBinding;
@@ -88,6 +93,18 @@ public class TestDropBinding extends TestCase {
 			_executed = true;
 			_input = input;
 			return input;
+		}
+	}
+
+	/** A {@link ViewAction} remembering the named arguments the chain handed it. */
+	private static final class ArgumentsRecorder extends ArgumentsViewAction {
+
+		ActionArguments _arguments;
+
+		@Override
+		public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
+			_arguments = arguments;
+			continuation.resume(arguments.value());
 		}
 	}
 
@@ -166,9 +183,12 @@ public class TestDropBinding extends TestCase {
 			ViewExecutabilityRule.ALWAYS_EXECUTABLE, refuseIf);
 	}
 
-	/** The client-side key of the row at the given index of a table. */
-	private static String rowKey(int rowIndex) {
-		return "row_" + rowIndex;
+	/**
+	 * The client-side key of the row at the given index of the given table: the id the table
+	 * displays it under.
+	 */
+	private static String rowKey(TableViewControl<String> table, int rowIndex) {
+		return table.rowIdAt(rowIndex);
 	}
 
 	/**
@@ -184,17 +204,36 @@ public class TestDropBinding extends TestCase {
 	 * {@code targetIndex}, or beside its rows when that is negative.
 	 */
 	private TopLogicException drop(TableViewControl<String> target, int sourceIndex, int targetIndex, DropZone zone) {
+		return CommandFailures.outcome(() -> target.executeClientCommand(DropSupport.CMD_DROP,
+			dropArguments(target, sourceIndex, targetIndex, zone)));
+	}
+
+	/**
+	 * Drops the source table's row {@code sourceIndex} on the given table - on its row
+	 * {@code targetIndex}, or on the table itself when that is negative - reporting the given point.
+	 */
+	private TopLogicException dropAt(TableViewControl<String> target, int sourceIndex, int targetIndex, double x,
+			double y) {
+		Map<String, Object> arguments = dropArguments(target, sourceIndex, targetIndex,
+			targetIndex >= 0 ? DropZone.MIDDLE : DropZone.NONE);
+		arguments.put(DropArguments.X, Double.valueOf(x));
+		arguments.put(DropArguments.Y, Double.valueOf(y));
+		return CommandFailures.outcome(() -> target.executeClientCommand(DropSupport.CMD_DROP, arguments));
+	}
+
+	private Map<String, Object> dropArguments(TableViewControl<String> target, int sourceIndex, int targetIndex,
+			DropZone zone) {
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, _source.getID());
-		arguments.put(DropArguments.KEYS, rowKey(sourceIndex));
+		arguments.put(DropArguments.KEYS, List.of(rowKey(_source, sourceIndex)));
 		arguments.put(DropArguments.SELECTION, Boolean.FALSE);
 		if (targetIndex >= 0) {
-			arguments.put(DropArguments.TARGET_KEY, rowKey(targetIndex));
+			arguments.put(DropArguments.TARGET_KEY, rowKey(target, targetIndex));
 			arguments.put(DropArguments.ZONE, zone.wireName());
 		} else {
 			arguments.put(DropArguments.ZONE, DropZone.NONE.wireName());
 		}
-		return CommandFailures.outcome(() -> target.executeClientCommand(DropSupport.CMD_DROP, arguments));
+		return arguments;
 	}
 
 	/**
@@ -407,7 +446,7 @@ public class TestDropBinding extends TestCase {
 
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, _source.getID());
-		arguments.put(DropArguments.KEYS, rowKey(0));
+		arguments.put(DropArguments.KEYS, List.of(rowKey(_source, 0)));
 		arguments.put(DropArguments.SELECTION, Boolean.TRUE);
 		arguments.put(DropArguments.ZONE, DropZone.NONE.wireName());
 		target.executeClientCommand(DropSupport.CMD_DROP, arguments);
@@ -486,8 +525,8 @@ public class TestDropBinding extends TestCase {
 
 		result[0] = null;
 		assertTrue("No value accepts.", binding.check(request(TARGET_ROWS.get(1))).isAccepted());
-		assertEquals("The function gets the dragged objects and the target row.",
-			List.of(List.of(SOURCE_ROWS.get(0)), List.of(TARGET_ROWS.get(1))), seen);
+		assertEquals("The function gets the dragged objects, the target row and no point.",
+			List.of(List.of(SOURCE_ROWS.get(0)), Arrays.asList(TARGET_ROWS.get(1), null, null)), seen);
 
 		result[0] = Boolean.FALSE;
 		assertTrue("False accepts.", binding.check(request(TARGET_ROWS.get(1))).isAccepted());
@@ -523,6 +562,73 @@ public class TestDropBinding extends TestCase {
 		new DropBinding(_context, List.of(disabled, tableDrop(ROW_KIND, _onTable))).onDrop(event());
 		assertFalse(_onRow._executed);
 		assertTrue("The next matching drop applies.", _onTable._executed);
+	}
+
+	/**
+	 * The point a drop is reported at reaches the refusal function and the actions of a drop onto a
+	 * row and of a drop on the table as a whole as the coordinates
+	 * {@link com.top_logic.layout.view.dnd.DropArguments#X} and
+	 * {@link com.top_logic.layout.view.dnd.DropArguments#Y}; a drop reported without a point has {@code null} there.
+	 */
+	public void testPointReachesRefuseIfAndActions() {
+		List<List<?>> seen = new ArrayList<>();
+		BiFunction<List<?>, List<?>, Object> refuseIf = (objects, references) -> {
+			seen.add(references);
+			return null;
+		};
+		ArgumentsRecorder onRow = new ArgumentsRecorder();
+		ArgumentsRecorder onTable = new ArgumentsRecorder();
+		TableViewControl<String> target = newTargetTable(List.of(
+			new DropBinding.Drop(kinds(ROW_KIND), DropSignature.ONTO, targetChannel(), List.of(onRow),
+				() -> ExecutableState.EXECUTABLE, ViewExecutabilityRule.ALWAYS_EXECUTABLE, refuseIf),
+			new DropBinding.Drop(kinds(ROW_KIND), DropSignature.CONTROL, Map.of(), List.of(onTable),
+				() -> ExecutableState.EXECUTABLE, ViewExecutabilityRule.ALWAYS_EXECUTABLE, refuseIf)));
+
+		assertNull(dropAt(target, 0, 1, 3.5, 7));
+		assertEquals("The refusal function gets the target row and the point.",
+			Arrays.asList(TARGET_ROWS.get(1), Double.valueOf(3.5), Double.valueOf(7)), seen.get(seen.size() - 1));
+		assertPoint(onRow._arguments, Double.valueOf(3.5), Double.valueOf(7));
+		assertEquals(TARGET_ROWS.get(1), onRow._arguments.get(com.top_logic.layout.view.dnd.DropArguments.TARGET));
+
+		seen.clear();
+		assertNull(dropAt(target, 0, -1, -2, 0.25));
+		assertEquals("A drop on the table gets the point on the table.",
+			Arrays.asList(null, Double.valueOf(-2), Double.valueOf(0.25)), seen.get(seen.size() - 1));
+		assertPoint(onTable._arguments, Double.valueOf(-2), Double.valueOf(0.25));
+
+		seen.clear();
+		onRow._arguments = null;
+		assertNull(drop(target, 0, 0));
+		assertEquals("A drop without a point has no coordinates.",
+			Arrays.asList(TARGET_ROWS.get(0), null, null), seen.get(seen.size() - 1));
+		assertPoint(onRow._arguments, null, null);
+	}
+
+	/**
+	 * A point is attached to the locations a drop is checked at, so the verdict and the event of an
+	 * accepted drop carry it; an insertion has no point.
+	 */
+	public void testPointIsPartOfTheLocation() {
+		ArgumentsRecorder recorder = new ArgumentsRecorder();
+		TableViewControl<String> target = newTargetTable(
+			List.of(new DropBinding.Drop(kinds(ROW_KIND), DropSignature.ONTO, Map.of(), List.of(recorder))));
+
+		assertNull(dropAt(target, 0, 0, 1, 2));
+		assertPoint(recorder._arguments, Double.valueOf(1), Double.valueOf(2));
+
+		assertEquals(new DropLocation.Onto("t", new DropPoint(1, 2)), new DropLocation.Onto("t").at(new DropPoint(1, 2)));
+		assertEquals(new DropLocation.Control(new DropPoint(1, 2)), new DropLocation.Control().at(new DropPoint(1, 2)));
+		DropLocation insert = new DropLocation.Insert(null, "t");
+		assertSame("An insertion has no point.", insert, insert.at(new DropPoint(1, 2)));
+		assertNull(insert.point());
+	}
+
+	private static void assertPoint(ActionArguments arguments, Double x, Double y) {
+		assertNotNull("The chain must run.", arguments);
+		assertTrue(arguments.has(com.top_logic.layout.view.dnd.DropArguments.X));
+		assertTrue(arguments.has(com.top_logic.layout.view.dnd.DropArguments.Y));
+		assertEquals(x, arguments.get(com.top_logic.layout.view.dnd.DropArguments.X));
+		assertEquals(y, arguments.get(com.top_logic.layout.view.dnd.DropArguments.Y));
 	}
 
 	/** A value no drop publishes, marking a channel as not written. */

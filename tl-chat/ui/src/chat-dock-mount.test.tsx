@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { React } from 'tl-react-bridge'
 import { flushSync } from 'react-dom'
 import { createRoot, type Root } from 'react-dom/client'
-import { resetTLBridge, setTLState } from '../test/tl-react-bridge'
-import { TLChatDock } from './chat-dock'
+import { resetTLBridge, setTLState, tlCommands } from '../test/tl-react-bridge'
+import { ARG_OPEN, CMD_SET_OPEN, TLChatDock } from './chat-dock'
 import { chatStore, readBootstrap } from './chat-store'
 
 /**
@@ -142,5 +142,37 @@ describe('the dock in a live page', () => {
       inner.dispatchEvent(escape())
     })
     expect(host.querySelector('.tl-chat-dock')!.className).not.toContain('is-open')
+  })
+
+  it('tells the server when the user opens and closes the panel', async () => {
+    setTLState(dockState())
+    act(() => root.render(React.createElement(TLChatDock, { controlId: 'dock', state: dockState() })))
+    await records()
+    const launcher = host.querySelector<HTMLButtonElement>('.tl-chat-dock__launcher')!
+    act(() => launcher.click())
+    act(() => launcher.click())
+    const sent = tlCommands().filter((c) => c.name === CMD_SET_OPEN).map((c) => c.args?.[ARG_OPEN])
+    expect(sent).toEqual([true, false])
+  })
+
+  it('closes an open panel when a page starts showing its conversation', async () => {
+    const state = dockState({ dockOpen: true })
+    setTLState(state)
+    const page = (withConversation: boolean) =>
+      React.createElement(
+        React.Fragment,
+        null,
+        withConversation ? React.createElement(PageConversation) : null,
+        React.createElement(TLChatDock, { controlId: 'dock', state }),
+      )
+    act(() => root.render(page(false)))
+    await records()
+    expect(tlCommands().filter((c) => c.name === CMD_SET_OPEN)).toEqual([])
+
+    // The user navigates to the page that shows this conversation.
+    act(() => root.render(page(true)))
+    await records()
+    const sent = tlCommands().filter((c) => c.name === CMD_SET_OPEN).map((c) => c.args?.[ARG_OPEN])
+    expect(sent).toEqual([false])
   })
 })

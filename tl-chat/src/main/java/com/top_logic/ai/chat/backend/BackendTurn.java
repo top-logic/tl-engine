@@ -9,7 +9,7 @@ import java.util.List;
 
 import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.execution.model.AgentSession;
 
 /**
  * One user message a {@link ConversationBackend} answers.

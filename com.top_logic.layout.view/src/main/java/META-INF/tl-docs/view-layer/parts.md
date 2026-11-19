@@ -1,5 +1,5 @@
 ---
-description: Read when a component library is to draw the atomic elements of the React UI - buttons, menu triggers, disclosure toggles, checkboxes, text inputs, read-only values, chips, badges, dividers, progress bars, spinners, the list of suggestions under a text field (Listbox) - or when a control draws one of them. Covers the part registry of tl-react-bridge (registerPart, replacePart, usePart, PartProps), the list of parts and where they are drawn, a part adapter, and adding a part.
+description: Read when a component library is to draw the atomic elements of the React UI - buttons, menu triggers, disclosure toggles, checkboxes, text inputs, read-only values, chips, badges, dividers, skeletons (placeholders of loading content), progress bars, spinners, the list of suggestions under a text field (Listbox) - or when a control draws one of them. Covers the part registry of tl-react-bridge (registerPart, replacePart, usePart, PartProps), the list of parts and where they are drawn, a part adapter, and adding a part.
 order: 38
 ---
 
@@ -48,24 +48,30 @@ All names and props are typed: `replacePart('Checkbox', C)` accepts only a compo
 
 | Part | Props | What it is | Drawn by |
 |---|---|---|---|
-| `Button` | `ButtonPartProps` | a button, an icon-only button, a toggle (`checked`), an entry of a menu (appearance `menu-item`), a link drawn as a button (`href`) | `TLButton` and `TLToggleButton` (also as buttons of a toolbar and entries of a menu), the action buttons of panels, drawers, tables, alerts, snackbars, form fields, dropdowns, file chips and the calendar, the clear button of a text input, the drag handles of the chosen values of a dropdown and of the column selection |
+| `Button` | `ButtonPartProps` | a button, an icon-only button, a toggle (`checked`), an entry of a menu (appearance `menu-item`), a link drawn as a button (`href`); a `badge` (the state of a badge) after the label or over the corner of the icon of an icon-only button, drawn with the part `Badge` and part of the accessible name (`buttonPartAttributes`) | `TLButton` and `TLToggleButton` (also as buttons of a toolbar and entries of a menu), the action buttons of panels, drawers, tables, alerts, snackbars, form fields, dropdowns, file chips, the tiles of an image field and the calendar, the clear button of a text input, the drag handles of the chosen values of a dropdown and of the column selection |
 | `MenuTrigger` | `MenuTriggerPartProps` | the button opening a menu or another surface anchored to it, with its chevron or an icon alone (`small` like `Button`); `haspopup` names the kind of surface for `aria-haspopup` (`menu` unless given; `listbox`, `tree`, `grid`, `dialog`) | the menu of a toolbar, a menu region |
 | `DisclosureToggle` | `DisclosureTogglePartProps` | the chevron showing or hiding content below it or toward the end of the line | form groups, nodes of a tree, rows of a tree table, the sidebar |
 | `Checkbox` | `CheckboxPartProps` | a box that is ticked, or a switch | `TLCheckbox`, choice groups, the selection column of a table, the column selection |
 | `TextInput` | `TextInputPartProps` | a text box, single-line (text, password, number, search, …) with optional icon, end action and suffix (the unit of a number), or multi-line; a combobox (`role`) when it offers suggestions | `TLTextInput`, `TLPasswordInput`, `TLNumberInput`, the search field (`SearchField`) of a table and of its column selection, the name of a filter to save, the filters of a dropdown and of the icon and color popups |
 | `FieldValue` | `FieldValuePartProps` | the one read-only value, as text or link, with an optional suffix (the unit of a number), a value of a color role as a pill (part `Chip`) within it; a multi-line value, optionally preformatted, with an optional action beside it | every text, password, number, select, date and slider field that is not editable; the chosen values of a choice field (`OptionValues`); the object in a table cell (`TLResourceCell`); a text shown as a link opening an address (`TLLink`) |
 | `Chip` | `ChipPartProps` | a compact value: with a color role, a toggle, removable, reorderable by a handle, or running an action | the toggles of `TLOptionChips`, the chosen values of a dropdown, the named filters of a table, the files of a file chip field, the options of a color role in a list, read-only values of a color role (inside `FieldValue`), texts drawn as a pill |
-| `Badge` | `BadgePartProps` | a small marker carrying a count | the counts of the sidebar and the bottom bar |
-| `Divider` | `DividerPartProps` | a line between content, horizontal or vertical | between the groups of a toolbar, the sections of a toolbar menu, the items of the sidebar |
+| `Badge` | `BadgePartProps` | a small marker carrying a count or a short text (`content`), or a dot without content (`dot`), in a color role (`colorRole`: `brand`, `error`, `warning`, `success`, `info`); with a `label` it is an image named by that label (`role="img"`, `aria-label`), without one its content is text of the element around it; `badgePartProps` derives the props from the state of a badge, `badgeName` and `labelWithBadge` the names (a badge over the corner of an icon or an avatar is hidden, the element is named by its label and the badge) | the badges of buttons and menu entries, tabs, avatars, the entries of the sidebar and the bottom bar (see [Badges](doc:view-layer/badges)), the counts of a kanban column, the badge after the lines of an entry of a data list (`TLDataList`, `<trailing display="badge">`) |
+| `Avatar` | `AvatarPartProps` | a circle standing for a person or an object: the picture (`src`), else the initials of the `name` on the category the name maps to, else the neutral circle; `size` `small` / `medium` / `large` / `x-large`; `decorative` hides it from assistive technology where the name stands beside it | `TLAvatar` (`<avatar>`), the avatar in front of the lines of an entry of a data list (`TLDataList`, `<leading>`) |
+| `Divider` | `DividerPartProps` | a line between content, horizontal or vertical; a horizontal one optionally with a short text in the line (`label`, at `labelPosition` `start`, `center` or `end`, an element of the role `separator` instead of an `hr`), optionally shortened at its start by the indent of an entry of a list (`inset` `start`) | `TLDivider` (the element `<divider>`, see [Layout](doc:view-layer/layout#a-line-between-content-divider)), between the groups of a toolbar, the sections of a toolbar menu, the items of the sidebar |
+| `Skeleton` | `SkeletonPartProps` | a placeholder in the rough shape of content still loading: lines of body text (`text`, `lines`), a rectangle (`rect`, the default) or a circle (`circle`); hidden from assistive technology, the element waiting for the content carries `aria-busy`; its size comes from the element around it, or from its `style` where the site knows it | the rows of a table the server has not sent yet, a picture of known height or proportions still loading (`TLImage`) |
 | `ProgressBar` | `ProgressBarPartProps` | a determinate or indeterminate bar with an optional label naming it, or named by another element | `TLProgress`, the status of a job, the loading options of a dropdown, the loading children of a tree node |
 | `Spinner` | `SpinnerPartProps` | a turning ring: small in place of an icon, or a busy indicator of its own | the icon popup loading its icons |
 | `Listbox` | `ListboxPartProps` | a list of entries floating at an anchor element, one of them active, from which the user picks one; it never takes the focus, the element controlling it names the active entry by `aria-activedescendant` | the suggestions under a text field offering them (`TLTextInput`, see `useSuggestions` of `tl-react-bridge`) |
 | `CopyButton` | `CopyButtonPartProps` | a small button copying a text to the clipboard, showing a check mark for a moment after the copy and announcing it (`role="status"`), a warning and the failure label where the text cannot be copied; the copy is `useCopyToClipboard` of `tl-react-bridge`: the clipboard API in a secure context, the copy command of the document otherwise or where the API refuses | the read-only value of a preformatted multi-line text (`TLTextInput`, as `action` of `FieldValue`) |
 
 A part may draw another part through `usePart`: the `FieldValue` of a color role holds a `Chip`, a
-removable `Chip` draws its remove button with the `Button`, the `TextInput` takes a `Button` as its
+removable `Chip` draws its remove button with the `Button`, an entry of a data list (`TLDataList`)
+draws its avatar with the `Avatar`, its badge with the `Badge`, its row trigger with the `MenuTrigger`
+and its collapse toggle with the `DisclosureToggle`, the `TextInput` takes a `Button` as its
 end action, a multi-line `FieldValue` an action at its top end (the `CopyButton`), in a column of
-its own so that it covers no line. A replacement of the inner part then appears inside the outer
+its own so that it covers no line, and the `Button` draws its badge with the `Badge` - through
+`StateBadge` of `tl-react-bridge`, which looks the part up only where a badge is drawn and derives
+its props from the state of the badge (`badgePartProps`). A replacement of the inner part then appears inside the outer
 one, whichever of them is replaced.
 
 The shared component `OptionValues` of `tl-react-bridge` shows the chosen values of a choice field
@@ -86,7 +92,7 @@ A component library has two ways in (see
   the complete state of the control and sends its commands.
 
 The atomic controls `TLButton`, `TLToggleButton`, `TLCheckbox`, `TLTextInput`,
-`TLPasswordInput`, `TLNumberInput`, `TLOptionChips` and `TLProgress` draw their look through parts
+`TLPasswordInput`, `TLNumberInput`, `TLOptionChips`, `TLProgress` and `TLDivider` draw their look through parts
 only. Replace their parts, not the controls: a replaced part also reaches the inline places the
 control never covers.
 

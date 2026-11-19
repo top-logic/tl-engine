@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Editing the sensors of the temperature demo while other users edit them as well.
+	
+	- The initial frame lists all sensors. Their names are edited right in the table
+	(edit-in-place): an entered name is written at once, and the sensor is locked for the time of
+	writing it.
+	- Activating a row pushes the sensor frame, whose form starts in edit mode and locks the
+	sensor as long as it is edited.
+	- A sensor someone else is editing in the sensor frame is opened read-only, with a notice
+	naming who holds the lock, and a name entered for it in the table is not saved.
+	
+	Every member of the "user" group reads and edits the sensors (see the security configuration
+	of the temperature demo), so two accounts of that group show the locking on the same sensor.
+-->
+<view>
+	<channels>
+		<channel name="navPath"/>
+	</channels>
+
+	<stack>
+		<slot-content to="appbar-content">
+			<tile-breadcrumb path="navPath">
+				<home-label>
+					<en>Sensors</en>
+					<de>Sensoren</de>
+				</home-label>
+			</tile-breadcrumb>
+		</slot-content>
+
+		<tile-stack
+			bind-path-to="navPath"
+			initial="demo/sensor-locking/sensors.view.xml"
+			path="navPath"
+		>
+			<frame id="sensor"
+				final-title="true"
+				route="sensor/:sensor"
+				view="demo/sensor-locking/sensor.view.xml"
+			>
+				<param name="sensor"
+					expr="objectId($sensor)"
+					reverse="$value.objectResolve(`demo.temperature:DemoSensor`)"
+				/>
+				<label class="com.top_logic.layout.view.tiles.ScriptedTileLabel"
+					expr="$sensor.get(`demo.temperature:DemoSensor#name`)"
+					inputs="sensor"
+				/>
+			</frame>
+		</tile-stack>
+	</stack>
+</view>

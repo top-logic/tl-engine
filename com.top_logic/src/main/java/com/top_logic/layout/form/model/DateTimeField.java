@@ -837,7 +837,7 @@ public class DateTimeField extends CompositeField {
 			@Override
 			public HandlerResult handleKeyEvent(DisplayContext commandContext, KeyEvent event) {
 				return listener.handleKeyEvent(commandContext,
-					new KeyEvent(self(), event.getKeyCode(), event.getModifiers()));
+					new KeyEvent(self(), event.getKeyCode(), event.getModifiers(), event.getContentControlId()));
 			}
 		};
 		_listenerProxies.put(listener, proxyListener);

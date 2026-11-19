@@ -778,6 +778,15 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	}
 
 	/**
+	 * Following an object link is offered also while the editor takes no input: a read-only editor
+	 * displays the links of its content.
+	 */
+	@Override
+	protected Set<String> scriptingDisplayCommands() {
+		return Set.of(CMD_SHOW_OBJECT_LINK);
+	}
+
+	/**
 	 * Displays the object an {@link TLObjectLinkUtil#TL_OBJECT object link} in the shown content
 	 * points at.
 	 */

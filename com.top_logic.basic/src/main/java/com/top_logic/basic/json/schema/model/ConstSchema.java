@@ -39,7 +39,7 @@ public class ConstSchema extends com.top_logic.basic.json.schema.model.Schema {
 	}
 
 	/**
-	 * Constant value (JSON-serialized string).
+	 * Constant value in JSON syntax (a text value including its quotes).
 	 */
 	public final String getConstValue() {
 		return _constValue;

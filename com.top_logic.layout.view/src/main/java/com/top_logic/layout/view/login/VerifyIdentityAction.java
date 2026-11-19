@@ -6,11 +6,11 @@
 package com.top_logic.layout.view.login;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 import jakarta.servlet.ServletRequest;
 
+import com.top_logic.base.accesscontrol.IdentityVerificationHandler;
 import com.top_logic.base.accesscontrol.IdentityVerifications;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.base.accesscontrol.LoginCredentials;
@@ -20,7 +20,6 @@ import com.top_logic.base.accesscontrol.loginmethod.LoginMethod;
 import com.top_logic.base.accesscontrol.loginmethod.LoginMethods;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -31,10 +30,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.CommandErrors;
-import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.overlay.DialogManager;
-import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.InterruptibleViewAction;
@@ -58,8 +54,10 @@ import com.top_logic.util.TLContext;
  * <p>
  * The proof is given the way the session was established. A session established through an external
  * identity provider is confirmed there: the browser opens a window of its own, walks through the
- * provider's authentication once more and returns to the application, and the dialog the user left
- * behind closes itself once the confirmation has arrived. Every other session is confirmed with the
+ * provider's authentication once more and returns to the application, and closes itself again.
+ * The answer is given in the window the command was run in: the dialog the user left behind closes
+ * once the confirmation has arrived, and a sign-in as another account, or one that took longer than
+ * the confirmation is offered, aborts the chain with its reason shown there. Every other session is confirmed with the
  * password of its own account, which the account's {@link AuthenticationDevice} checks.
  * </p>
  *
@@ -82,13 +80,11 @@ import com.top_logic.util.TLContext;
  *           {@link IdentityVerifications#forCurrentSession()}: the guard registers what it expects
  *           and hands the token to
  *           {@link LoginMethod#getReauthenticationUrl(String) the login method} that established the
- *           session, and the request coming back from the provider completes the entry, which runs
- *           {@link #confirmed(ReactContext, Runnable, Object, Continuation)} on that request's
- *           thread. That method carries the rest of the chain into the window waiting for it and
- *           reports a failure of that chain there, through
- *           {@link CommandErrors#report(ErrorSink, Throwable, String, Class)}, exactly as a command failing in
- *           that window is reported; the request that brought the confirmation sees none of it and
- *           answers for the identity alone. The password is checked by
+ *           session, and the request coming back from the provider completes the entry, whose
+ *           {@link ChainAwaitingIdentity} handler runs on that request's thread. It carries the
+ *           rest of the chain into the window waiting for it and reports a failure of that chain
+ *           there, exactly as a command failing in that window is reported; the request that
+ *           brought the confirmation sees none of it and answers for the identity alone. The password is checked by
  *           {@link AuthenticationDevice#authentify(LoginCredentials)}, the same check a login makes,
  *           guarded by {@link LoginFailuresModule#attempt(String, com.top_logic.basic.util.ResKey1, LoginFailuresModule.Attempt)}
  *           and handed to {@link PasswordPromptDialogControl#openDialog} as a
@@ -147,12 +143,6 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 		ResKey getMessage();
 	}
 
-	/**
-	 * Names the operation a failure is reported for: the command chain taken up again after the
-	 * identity was confirmed.
-	 */
-	private static final String RESUME_DESCRIPTION = "Continuing the command chain after the identity confirmation";
-
 	private final ResKey _title;
 
 	private final ResKey _message;
@@ -207,11 +197,10 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 	 */
 	private boolean verifyExternally(ReactContext context, DialogManager dialogManager, Object input,
 			Continuation continuation) {
-		// The prompt does not exist yet when the confirmation is registered, and the registered
-		// continuation is what closes it; it is run by a later request, never before this method has
-		// returned.
-		AtomicReference<Runnable> prompt = new AtomicReference<>();
-		String token = registerVerification(() -> confirmed(context, prompt.get(), input, continuation));
+		ChainAwaitingIdentity waiting = new ChainAwaitingIdentity(context,
+			IdentityVerificationHandler.reauthentication(), input, continuation, VerifyIdentityAction.class,
+			action -> runInWindow(context, action));
+		String token = registerVerification(waiting);
 		if (token == null) {
 			return false;
 		}
@@ -223,7 +212,7 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 				// this session.
 				continue;
 			}
-			prompt.set(openWaitingPrompt(context, dialogManager,
+			waiting.setClosePrompt(openWaitingPrompt(context, dialogManager,
 				title(I18NConstants.REAUTHENTICATION_TITLE),
 				I18NConstants.REAUTHENTICATION_MESSAGE,
 				// The provider's own label is the button: it names where the user signs in.
@@ -251,21 +240,22 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 	/**
 	 * Announces to the session that its account is about to authenticate again.
 	 *
-	 * @param onVerified
-	 *        Continues the chain. Run on the thread of the request that brings the confirmation.
+	 * @param waiting
+	 *        The suspended chain, which takes the answer of the identity provider on the thread of
+	 *        the request that brings it.
 	 * @return The token addressing the announcement, to be carried to the identity provider and
 	 *         back, or {@code null} when there is no session account whose return could be awaited.
 	 */
-	protected String registerVerification(Runnable onVerified) {
+	protected String registerVerification(ChainAwaitingIdentity waiting) {
 		Person account = sessionAccount();
 		if (account == null) {
 			return null;
 		}
-		return IdentityVerifications.forCurrentSession().register(account, onVerified);
+		return IdentityVerifications.forCurrentSession().register(account, waiting);
 	}
 
 	/**
-	 * Withdraws the announcement made by {@link #registerVerification(Runnable)} under the given
+	 * Withdraws the announcement made by {@link #registerVerification(ChainAwaitingIdentity)} under the given
 	 * token, because the confirmation is no longer awaited.
 	 */
 	protected void cancelVerification(String token) {
@@ -445,77 +435,13 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 	}
 
 	/**
-	 * Takes the chain up again in the window it was suspended in, once the identity provider has
-	 * confirmed the user.
-	 *
-	 * <p>
-	 * Runs on the thread of the request that came back from the provider - in another browser window
-	 * of the same session - so the dialog that is closed and everything the resumed chain displays
-	 * belong to a window this thread is not serving.
-	 * </p>
-	 *
-	 * <p>
-	 * What the resumed chain throws is shown in that window as the failure of a command is shown,
-	 * and nothing leaves this method: the identity was confirmed whatever the chain then makes of
-	 * it, and the request bringing the confirmation reports on the confirmation only.
-	 * </p>
-	 *
-	 * @param context
-	 *        The React context of the window the chain was suspended in.
-	 * @param closePrompt
-	 *        Closes the waiting dialog of that window, as {@link #openWaitingPrompt} returned it.
-	 * @param input
-	 *        The value the chain continues with, unchanged.
-	 * @param continuation
-	 *        The suspended chain.
-	 */
-	protected void confirmed(ReactContext context, Runnable closePrompt, Object input, Continuation continuation) {
-		try {
-			runInWindow(context, () -> {
-				if (closePrompt != null) {
-					closePrompt.run();
-				}
-				resume(context, input, continuation);
-			});
-		} catch (Throwable ex) {
-			// The request running this answers for the identity, not for the chain: whatever could
-			// not be carried into the window is written to the log and left there.
-			Logger.error("The confirmed identity could not be carried into window '" + context.getWindowName()
-				+ "'.", ex, VerifyIdentityAction.class);
-		}
-	}
-
-	/**
-	 * Continues the chain, reporting what it throws in the window the chain belongs to.
-	 *
-	 * <p>
-	 * The failure travels the way a failed command travels: an internal error is logged as one and
-	 * shown generically, a user-level failure carries its own message into the window's snackbar,
-	 * see {@link CommandErrors#report(ErrorSink, Throwable, String, Class)}.
-	 * </p>
-	 */
-	private void resume(ReactContext context, Object input, Continuation continuation) {
-		try {
-			continuation.resume(input);
-		} catch (Throwable ex) {
-			CommandErrors.report(context.getErrorSink(), ex, RESUME_DESCRIPTION, VerifyIdentityAction.class);
-		}
-	}
-
-	/**
 	 * Runs the given action in the window of the given context, from whatever thread is calling.
 	 *
-	 * @implNote The step that needs a browser: the action is run in the window's sub-session and as
-	 *           one interaction of the session, so that its display updates reach that window's
-	 *           page and its texts are resolved in that window's language. A window whose page is
-	 *           gone is not acted on.
+	 * @implNote The step that needs a browser, see
+	 *           {@link ChainAwaitingIdentity#runInWindow(ReactContext, Runnable)}.
 	 */
 	protected void runInWindow(ReactContext context, Runnable action) {
-		String windowName = context.getWindowName();
-		if (!ReactWindowReplay.inWindow(context.getWindowRegistry(), windowName, action)) {
-			Logger.warn("Window '" + windowName + "' is gone, the command chain waiting in it does not continue.",
-				VerifyIdentityAction.class);
-		}
+		ChainAwaitingIdentity.runInWindow(context, action);
 	}
 
 	/**

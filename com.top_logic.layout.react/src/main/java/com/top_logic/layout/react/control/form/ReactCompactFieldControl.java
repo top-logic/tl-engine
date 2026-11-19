@@ -174,6 +174,16 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	/** State word of a field that may be edited. */
 	private static final String STATE_EDIT = "edit";
 
+	/**
+	 * State word of a field that may be edited and requires a value.
+	 *
+	 * <p>
+	 * A state word instead of <code>aria-required</code>: the root has the role
+	 * <code>group</code>, which does not allow it (ARIA 1.2).
+	 * </p>
+	 */
+	private static final String STATE_REQUIRED = "required";
+
 	/** CSS class of the preview of the value. */
 	private static final String CSS_PREVIEW = "tl-compact-field__preview";
 
@@ -287,7 +297,8 @@ public class ReactCompactFieldControl extends ReactStackControl {
 
 			@Override
 			public void onValidationChanged(FieldModel source) {
-				// Ignored.
+				// A changed mandatory flag is reported as a change of the validation.
+				updateDisplay();
 			}
 		};
 		_model.addListener(_modelListener);
@@ -346,7 +357,7 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	private void updateDisplay() {
 		boolean editable = _model.isEditable();
 		setCssClass(editable ? CSS_FIELD + ' ' + CSS_FIELD_EDIT : CSS_FIELD);
-		setStateWords(editable ? STATE_EDIT : null);
+		setStateWords(editable ? (_model.isMandatory() ? STATE_EDIT + ' ' + STATE_REQUIRED : STATE_EDIT) : null);
 		_opener.setCssClass(editable ? CSS_OPENER : CSS_OPENER_REVEALED);
 
 		Resources resources = Resources.getInstance();

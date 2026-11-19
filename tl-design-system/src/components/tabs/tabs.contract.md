@@ -41,6 +41,13 @@ der Reiterreihe nie; sie ändert sich nur, wenn der Überlauf beginnt oder endet
 Das Umschalten pendelt nicht: die Knöpfe erscheinen erst, wenn die Reiter auch ohne sie nicht passen, und gehen erst,
 wenn sie ohne sie passen. Ein Druck scrollt um etwa eine sichtbare Breite der Reiterreihe.
 
+Solange die Reiter überlaufen, scrollt eine senkrechte Drehung des Mausrads über der Reiterreihe diese seitlich, direkt
+um die Weite der Drehung und ohne eigene Animation; Zeilen- und Seitenschritte (`deltaMode`) werden in Pixel
+umgerechnet (eine Zeile `WHEEL_LINE_WIDTH`, eine Seite die sichtbare Breite). Die Reiterreihe nimmt dann jede solche
+Drehung an (`preventDefault`), auch an ihrem Ende, sodass der Bereich darunter nicht plötzlich losscrollt. Dem Browser
+bleiben: Strg+Mausrad (Zoom), waagerecht überwiegende Bewegungen (Wischen auf dem Touchpad, Kippen des Rads) und jedes
+Mausrad, solange die Reiter passen. Das Mausrad wählt nie einen Reiter.
+
 Die Knöpfe sind eine Hilfe für den Zeiger: `tabindex="-1"`, kein Tab-Halt. Die Tastatur bleibt bei den Pfeilen,
 `Home` und `End` (oben); der Fokus wandert ohne Scrollen der Vorfahren (`preventScroll`).
 
@@ -50,7 +57,8 @@ oder breiter, aus `hidden` gezeigt, Reiter hinzu, weg, umbenannt). Ein Scrollen 
 rückgängig. Gescrollt wird dafür nur die Reiterreihe (`scrollLeft`), nie über
 `scrollIntoView`, das jeden Vorfahren mitscrollte. Ein schon sichtbarer Reiter bewegt nichts.
 
-Die Engine bündelt das in `useScrollStrip` und der Leiste `TabStrip`; alle Reiterleisten nutzen beide.
+Die Engine bündelt das in `useScrollStrip` (das Mausrad in `useWheelScroll`) und der Leiste `TabStrip`; alle
+Reiterleisten nutzen beide, der Reiter-Adapter einer Material-UI-Oberfläche nutzt `useWheelScroll`.
 
 ## Tokens
 
@@ -89,7 +97,8 @@ nichts springt beim Wechsel; alle Reiter tragen `tl-type-body`.
 Tabs bestehen den Vertrag, wenn die Reiterreihe `role="tablist"` trägt, jeder Reiter ein `<button>` mit
 `role="tab"`, `aria-selected` und `aria-controls` ist, genau einer `aria-selected="true"` trägt, jedes
 Panel `role="tabpanel"` mit `aria-labelledby` hat, die Reiterreihe bei Überlauf allein scrollt und die Scrollknöpfe nur
-in verdeckter Richtung zeigt, ohne dass Scrollen ihre Breite ändert, die Tastatur oben vollständig wirkt und im
+in verdeckter Richtung zeigt, ohne dass Scrollen ihre Breite ändert, das Mausrad sie bei Überlauf seitlich scrollt,
+die Tastatur oben vollständig wirkt und im
 Klassen-Gate keine Klasse ohne `tl-`-Präfix hinterlässt.
 
 ## Leser

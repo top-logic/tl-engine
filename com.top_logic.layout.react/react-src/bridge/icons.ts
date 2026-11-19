@@ -92,6 +92,9 @@ export const ICON_CHOOSE_ICON = 'css:fa-solid fa-icons';
 /** Uploads a file (the file upload, the binary field). */
 export const ICON_UPLOAD = 'css:fa-solid fa-upload';
 
+/** Opens the editor of several images (the image field). */
+export const ICON_MANAGE_IMAGES = 'css:fa-regular fa-images';
+
 /** Downloads a file (the download, the binary field). */
 export const ICON_DOWNLOAD = 'css:fa-solid fa-download';
 

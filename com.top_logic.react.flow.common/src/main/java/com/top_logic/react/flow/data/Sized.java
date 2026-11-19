@@ -163,6 +163,9 @@ public interface Sized extends com.top_logic.react.flow.data.Decoration, com.top
 	@Override
 	com.top_logic.react.flow.data.Sized setRenderInfo(java.lang.Object value);
 
+	@Override
+	com.top_logic.react.flow.data.Sized setDropTarget(boolean value);
+
 	/** Reads a new instance from the given reader. */
 	static com.top_logic.react.flow.data.Sized readSized(de.haumacher.msgbuf.graph.Scope scope, de.haumacher.msgbuf.json.JsonReader in) throws java.io.IOException {
 		if (in.peek() == de.haumacher.msgbuf.json.JsonToken.NUMBER) {

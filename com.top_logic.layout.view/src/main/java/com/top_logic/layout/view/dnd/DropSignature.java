@@ -31,14 +31,21 @@ public record DropSignature(DropMode mode, List<DropReference> references) {
 
 	/**
 	 * A drop on the control as a whole: it refers to the {@link DropReference#TARGET target}, which
-	 * is {@code null} there.
+	 * is {@code null} there, and to the coordinates {@link DropReference#X} and
+	 * {@link DropReference#Y} of the point on the control's surface it is made at, {@code null}
+	 * where the control reports none.
 	 */
-	public static final DropSignature CONTROL = new DropSignature(DropMode.CONTROL, List.of(DropReference.TARGET));
+	public static final DropSignature CONTROL = new DropSignature(DropMode.CONTROL,
+		List.of(DropReference.TARGET, DropReference.X, DropReference.Y));
 
 	/**
-	 * A drop onto a single item: it refers to that item as its {@link DropReference#TARGET target}.
+	 * A drop onto a single item: it refers to that item as its {@link DropReference#TARGET target},
+	 * and to the coordinates {@link DropReference#X} and {@link DropReference#Y} of the point it is
+	 * made at, relative to the upper left corner of the item, {@code null} where the control
+	 * reports none.
 	 */
-	public static final DropSignature ONTO = new DropSignature(DropMode.ONTO, List.of(DropReference.TARGET));
+	public static final DropSignature ONTO = new DropSignature(DropMode.ONTO,
+		List.of(DropReference.TARGET, DropReference.X, DropReference.Y));
 
 	/**
 	 * An insertion into a flat list of items: it refers to the item the dropped objects are inserted

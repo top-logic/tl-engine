@@ -143,6 +143,12 @@ public class LODVariant_Impl extends com.top_logic.react.flow.data.impl.Widget_I
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.LODVariant setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return LODVARIANT__TYPE;
 	}

@@ -142,7 +142,10 @@ freezeLabel = reactFlowGanttSpan(model: "marker:freeze", rowModel: "axis:markers
 /* === Data rows (default rowPadding: 4) === */
 
 r_design = reactFlowGanttRow(model: "phase:design", label: reactFlowPadding(reactFlowText("Design"),         all: 4), borderColor: "rgba(128,128,128,0.25)");
-r_impl   = reactFlowGanttRow(model: "phase:impl",   label: reactFlowPadding(reactFlowText("Implementation"), all: 4), backgroundColor: "rgba(128,128,128,0.06)", borderColor: "rgba(128,128,128,0.25)");
+/* A phase with sub-rows: the toggle in its label collapses the sub-rows with their items and edges. */
+r_backend  = reactFlowGanttRow(model: "phase:impl:backend",  label: reactFlowPadding(reactFlowText("Backend"),  all: 4), backgroundColor: "rgba(128,128,128,0.06)", borderColor: "rgba(128,128,128,0.25)");
+r_frontend = reactFlowGanttRow(model: "phase:impl:frontend", label: reactFlowPadding(reactFlowText("Frontend"), all: 4), backgroundColor: "rgba(128,128,128,0.06)", borderColor: "rgba(128,128,128,0.25)");
+r_impl   = reactFlowGanttRow(model: "phase:impl",   label: reactFlowPadding(reactFlowText("Implementation"), all: 4), children: list($r_backend, $r_frontend), backgroundColor: "rgba(128,128,128,0.06)", borderColor: "rgba(128,128,128,0.25)");
 r_test   = reactFlowGanttRow(model: "phase:test",   label: reactFlowPadding(reactFlowText("Testing"),        all: 4), borderColor: "rgba(128,128,128,0.25)");
 r_deploy = reactFlowGanttRow(model: "phase:deploy", label: reactFlowPadding(reactFlowText("Deployment"),   all: 4), backgroundColor: "rgba(128,128,128,0.06)", borderColor: "rgba(128,128,128,0.25)");
 r_docs   = reactFlowGanttRow(model: "phase:docs",   label: reactFlowPadding(reactFlowText("Documentation"), all: 4), borderColor: "rgba(128,128,128,0.25)");
@@ -167,6 +170,11 @@ beta  = reactFlowGanttPoint(model: "milestone:beta", rowModel: "phase:test",
 	)), at: 20544);
 qa    = reactFlowGanttSpan(model: "task:qa",   rowModel: "phase:test",
 	box: $selectable("task:qa", reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("QA"),    all: 3)), fill: "#f8d7da")), start: 20544, end: 20574);
+
+api = reactFlowGanttSpan(model: "task:api", rowModel: "phase:impl:backend",
+	box: $selectable("task:api", reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("API"), all: 3)), fill: "#c8e6c9")), start: 20500, end: 20520);
+ui    = reactFlowGanttSpan(model: "task:ui",  rowModel: "phase:impl:frontend",
+	box: $selectable("task:ui", reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("UI"), all: 3)), fill: "#c8e6c9")), start: 20520, end: 20540);
 
 fixed_row = reactFlowGanttSpan(model: "task:fixed-row", rowModel: "phase:design",
 	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Fixed Row"), all: 3)), fill: "#e0d4f9"),
@@ -198,13 +206,30 @@ docs_anchor = reactFlowGanttPoint(model: "anchor:docs-approved", rowModel: "phas
 
 /* === Edges === */
 
+/* Without color and color role, an edge is drawn in the role "neutral", and in the role "error"
+   while it is violated. Dragging the milestone "Beta" before the end of "Build" violates the edge
+   "Build" -> "Beta": it is not enforced (no "enforce"), so the drag is not limited, and the edge
+   turns red and thicker. */
 e1 = reactFlowGanttEdge(model: "dep:spec->build", sourceModel: "task:spec",  sourceEndpoint: "END", targetModel: "task:build",     targetEndpoint: "START", enforce: "STRICT",
-	strokeColor: "#808080", dashes: list(4, 3), targetSymbol: "filledArrow");
+	dashes: list(4, 3), targetSymbol: "filledArrow");
 e2 = reactFlowGanttEdge(model: "dep:build->beta", sourceModel: "task:build", sourceEndpoint: "END", targetModel: "milestone:beta", targetEndpoint: "START",
-	strokeColor: "#808080",
-	violatedStrokeColor: "#d01030", violatedStrokeWidth: 2.0, targetSymbol: "filledArrow");
+	violatedStrokeWidth: 2.0, targetSymbol: "filledArrow");
+/* A fixed color takes precedence over the color role. */
 e3 = reactFlowGanttEdge(model: "dep:docs->approved", sourceModel: "task:docs", sourceEndpoint: "END", targetModel: "anchor:docs-approved", targetEndpoint: "START",
 	strokeColor: "#808080", strokeWidth: 2.0, targetSymbol: "filledArrow");
+/* An edge in a color role, between rows that are not adjacent: it runs in the gap below its
+   source row instead of crossing the items of the row in between. */
+e4 = reactFlowGanttEdge(model: "dep:docs->launch", sourceModel: "task:docs", sourceEndpoint: "END", targetModel: "task:launch", targetEndpoint: "START",
+	strokeRole: "category-3", strokeWidth: 1.5, targetSymbol: "filledArrow");
+/* A strict dependency: dragging "QA" stops at the end of "Build", dragging "Build" stops at the start of "QA". */
+e5 = reactFlowGanttEdge(model: "dep:build->qa", sourceModel: "task:build", sourceEndpoint: "END", targetModel: "task:qa", targetEndpoint: "START", enforce: "STRICT",
+	strokeColor: "#808080", targetSymbol: "filledArrow");
+
+/* Edges of the items in the sub-rows of "Implementation", hidden while the phase is collapsed. */
+e6 = reactFlowGanttEdge(model: "dep:api->ui", sourceModel: "task:api", sourceEndpoint: "END", targetModel: "task:ui", targetEndpoint: "START",
+	targetSymbol: "filledArrow");
+e7 = reactFlowGanttEdge(model: "dep:ui->qa", sourceModel: "task:ui", sourceEndpoint: "END", targetModel: "task:qa", targetEndpoint: "START",
+	targetSymbol: "filledArrow");
 
 /* === Decorations === */
 
@@ -216,19 +241,18 @@ gl_may = reactFlowGanttLineDeco(model: "grid:may", at: 20574, color: "rgba(128,1
 
 /* Line with a label at the top of the data rows: the label lies over the selectable "Spec" item
    right of the line. A click on the label selects the item below it. */
-today = reactFlowGanttLineDeco(model: "today", at: 20462, color: "#c02020", label: reactFlowText("Today: Jan 9, 2026"));
+today = reactFlowGanttLineDeco(model: "today", at: 20462, colorRole: "error", label: reactFlowText("Today: Jan 9, 2026"));
 
-/* Freeze range (colored strip - no label here, label is in Markers row) */
-freeze = reactFlowGanttRangeDeco(model: "freeze", from: 20513, to: 20520, color: "rgba(255,100,100,0.3)");
+/* Freeze range (strip in a color role - no label here, label is in Markers row) */
+freeze = reactFlowGanttRangeDeco(model: "freeze", from: 20513, to: 20520, colorRole: "warning");
 
 reactFlowGantt(
 	rootRows:    list($r_axis1, $r_axis2, $r_markers, $r_design, $r_impl, $r_test, $r_deploy, $r_docs, $r_review, $r_launch, $r_maint),
-	items:       concat($yearSpans, $monthYearSpans, $monthSpans, $daySpans, list($freezeLabel, $spec, $build, $beta, $qa, $fixed_row, $no_resize, $deploy_item, $docs_item, $review_item, $launch_item, $maint_item, $docs_approved, $docs_anchor)),
-	edges:       list($e1, $e2, $e3),
+	items:       concat($yearSpans, $monthYearSpans, $monthSpans, $daySpans, list($freezeLabel, $spec, $build, $api, $ui, $beta, $qa, $fixed_row, $no_resize, $deploy_item, $docs_item, $review_item, $launch_item, $maint_item, $docs_approved, $docs_anchor)),
+	edges:       list($e1, $e2, $e3, $e4, $e5, $e6, $e7),
 	decorations: list($gl_feb, $gl_mar, $gl_apr, $gl_may, $freeze, $today),
 	rangeMin:    $rangeMin,
 	rangeMax:    $rangeMax,
-	initialZoom: 8,
 	frozenRows:  3
 )
 }]]></createChart>

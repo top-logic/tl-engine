@@ -31,6 +31,7 @@ import com.top_logic.model.annotate.TLRange;
 import com.top_logic.model.annotate.TLSize;
 import com.top_logic.model.annotate.util.ConstraintCheck;
 import com.top_logic.model.annotate.util.ConstraintCheck.ConstraintType;
+import com.top_logic.model.annotate.util.ValueCountConstraintCheck;
 import com.top_logic.model.fallback.StorageWithFallback;
 import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.form.OverlayLookup;
@@ -251,6 +252,12 @@ public class FormValidationModel implements OverlayLookup {
 				if (min != null || max != null) {
 					entries.add(new ConstraintEntry(new RangeConstraintCheck(min, max), overlay, part));
 				}
+			}
+
+			// Value count check from @TLValueCount.
+			ValueCountConstraintCheck valueCountCheck = ValueCountConstraintCheck.forAttribute(part);
+			if (valueCountCheck != null) {
+				entries.add(new ConstraintEntry(valueCountCheck, overlay, part));
 			}
 
 			// Custom constraints from @TLConstraints.

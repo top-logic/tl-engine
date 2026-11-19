@@ -26,8 +26,8 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
-import com.top_logic.tl.ai.core.tools.parameters.DeclaredParameters;
-import com.top_logic.tl.ai.core.tools.parameters.DeclaredParameters.InvalidArguments;
+import com.top_logic.ai.core.tools.parameters.DeclaredParameters;
+import com.top_logic.ai.core.tools.parameters.DeclaredParameters.InvalidArguments;
 
 /**
  * What the chat page shows for the objects an agent <code>present</code>s (Issues #493, #616).

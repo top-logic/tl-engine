@@ -648,6 +648,8 @@ public class ReactServlet extends TopLogicServlet {
 
 		DisplayContext displayContext = window.displayContext();
 		SubsessionHandler rootHandler = window.rootHandler();
+		// Taken before the command runs: a command may end the session (e.g. by removing its
+		// account), which then can no longer be read.
 		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
 
 		ReactCommandTarget control;

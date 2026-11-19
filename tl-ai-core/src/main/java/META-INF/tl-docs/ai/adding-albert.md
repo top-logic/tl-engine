@@ -16,7 +16,7 @@ An application has one of two user interfaces, or both:
 
 A step marked **[React]** or **[Classic]** applies only to that UI.
 
-An application made with `tl-archetype-app` and `useAI=true` already has steps 1 and 3. It also has a template for step 5 in `autoconf/com.top_logic.tl.ai.core.security.AiToolAccessService.config.xml`.
+An application made with `tl-archetype-app` and `useAI=true` already has steps 1 and 3. It also has a template for step 5 in `autoconf/com.top_logic.ai.core.security.AiToolAccessService.config.xml`.
 
 ## Before you start
 
@@ -263,7 +263,7 @@ The chat list is a TL-Script. A TL-Script result contains only objects that the 
 
 The policy of `AiToolAccessService` tells which tool groups Albert can use for a role, and which roles can talk to Albert. The `<security-config>` tells which objects a tool can read or change. Both checks apply to each tool call.
 
-Write the policy in `autoconf/com.top_logic.tl.ai.core.security.AiToolAccessService.config.xml`:
+Write the policy in `autoconf/com.top_logic.ai.core.security.AiToolAccessService.config.xml`:
 
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
@@ -271,8 +271,8 @@ Write the policy in `autoconf/com.top_logic.tl.ai.core.security.AiToolAccessServ
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<services>
-		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
-			<instance class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+		<config service-class="com.top_logic.ai.core.security.AiToolAccessService">
+			<instance class="com.top_logic.ai.core.security.AiToolAccessService">
 				<tool-access>
 					<role name="SecurityStructure.Reader">
 						<grants>
@@ -335,7 +335,7 @@ The tool groups and the rules are in [tool access configuration](doc:ai/security
 
 Albert knows the model from the labels and tooltips of its elements. Give each module, type and attribute a label and a tooltip in English and German. Keep `conf/resources/*.properties` normalized.
 
-Write the terms and the fixed rules of the domain into `autoconf/com.top_logic.tl.ai.core.agent.AgentApplicationService.config.xml`. Keep the text short: each run sends it to the model.
+Write the terms and the fixed rules of the domain into `autoconf/com.top_logic.ai.core.agent.AgentApplicationService.config.xml`. Keep the text short: each run sends it to the model.
 
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
@@ -343,10 +343,10 @@ Write the terms and the fixed rules of the domain into `autoconf/com.top_logic.t
 	xmlns:config="http://www.top-logic.com/ns/config/6.0"
 >
 	<services>
-		<config service-class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
-			<instance class="com.top_logic.tl.ai.core.agent.AgentApplicationService">
+		<config service-class="com.top_logic.ai.core.agent.AgentApplicationService">
+			<instance class="com.top_logic.ai.core.agent.AgentApplicationService">
 				<prompt-contributors>
-					<contributor class="com.top_logic.tl.ai.core.agent.TextPromptContributor"
+					<contributor class="com.top_logic.ai.core.agent.TextPromptContributor"
 						agents="TL_SingleAgent"
 						name="application-context"
 					>

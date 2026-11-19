@@ -25,6 +25,7 @@
 
 					<property name="modelBuilder"/>
 
+					<property name="defaultAction"/>
 					<property name="buttons"/>
 				</value>
 			</display-order>
@@ -52,6 +53,14 @@
 			<implementation-class-default value="com.top_logic.model.search.providers.MonomorphicCreateFormBuilderByExpression"/>
 		</property>
 
+		<property name="defaultAction"
+			instance-type="com.top_logic.tool.boundsec.CommandHandler"
+			type="PolymorphicConfiguration"
+		>
+			<options fun="com.top_logic.layout.form.values.edit.InAppImplementations"/>
+			<acceptable-classifiers value="customTransaction, form, commons"/>
+		</property>
+
 		<property name="buttons"
 			element-type="com.top_logic.tool.boundsec.CommandHandler$ConfigBase"
 			type="List"
@@ -76,7 +85,9 @@
 		titleKey="${name}"
 		toolbar="${toolbar}"
 	>
+		<defaultAction>${defaultAction}</defaultAction>
 		<buttons>
+			<button>${defaultAction}</button>
 			${buttons}
 			<include name="templates/editComponentCommands.xml"/>
 			<reference command-id="configureCreateFormDefinitionCommand"/>

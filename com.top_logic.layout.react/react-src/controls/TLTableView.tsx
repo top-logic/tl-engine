@@ -1,8 +1,9 @@
-import { BACKGROUND_COMMAND, BACKGROUND_REPORT, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, BACKGROUND_REPORT, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, useDisplayClass, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
 import { FOCUSABLE_SELECTOR, editableInRow, focusTargetInRow, focusablesIn, rowCells } from './tableRowFocus';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
-import { DropHint, NO_DRAG_IMAGE } from './DropHint';
-import type { HintAnchor, DropVerdict } from './DropHint';
+import { DropHint, NO_DRAG_IMAGE } from 'tl-react-bridge';
+import { fullCount as fullCountOf, fullIndex, shownColumns, shownCount } from './compactColumns';
+import type { HintAnchor, DropVerdict } from 'tl-react-bridge';
 import { Menu, MenuItem } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
 import { chipFocusTargets } from './chip/chipFocus';
@@ -71,11 +72,14 @@ const I18N_KEYS = {
   'js.table.selectAll': 'Select all rows',
   'js.table.selectRow': 'Select this row',
   'js.table.empty': 'No entries',
+  'js.table.rows': 'Rows of the table',
   'js.treeView.expand': 'Expand',
   'js.treeView.collapse': 'Collapse',
   'js.table.freezeUpTo': 'Freeze up to here',
   'js.table.unfreezeAll': 'Unfreeze all',
   'js.table.groupBy': 'Group by this column',
+  'js.table.groupByAlso': 'Additionally group by this column',
+  'js.table.ungroupColumn': 'Remove grouping by this column',
   'js.table.ungroup': 'Remove grouping',
   'js.table.fitColumn': 'Fit width to content',
   'js.table.grouped': 'The rows are grouped by this column',
@@ -199,6 +203,11 @@ interface ColumnState {
    */
   tooltip?: string;
   /**
+   * {@code true} for a column the table leaves out while the window is compact, on a phone; absent
+   * for a column shown there as well.
+   */
+  hideWhenCompact?: boolean;
+  /**
    * How the column's cells sit in it, their heading included: `end` for numbers, which the column
    * then aligns at the end so that their digits line up. Absent for the start, the default.
    */
@@ -294,6 +303,21 @@ const ARG_CTRL_KEY = 'ctrlKey';
 
 /** Argument of a {@link CMD_SELECT} telling whether the selection is extended up to the row. */
 const ARG_SHIFT_KEY = 'shiftKey';
+
+/** Command grouping the rows (TableViewControl.CMD_GROUP) by the columns {@link ARG_COLUMNS} names. */
+const CMD_GROUP = 'group';
+
+/** Argument of a {@link CMD_GROUP}: the grouping columns, outermost group level first, empty for none. */
+const ARG_COLUMNS = 'columns';
+
+/**
+ * State key (TableViewControl.GROUPING) holding the columns the rows are grouped by, outermost
+ * group level first, empty when they are not grouped.
+ */
+const STATE_GROUPING = 'grouping';
+
+/** The grouping of a table whose rows are not grouped, shared so that it keeps its identity. */
+const NO_GROUPING: string[] = [];
 
 /**
  * State key (TableViewControl.SELECT_ON_EDITOR_FOCUS) telling whether the focus of a control in a
@@ -444,7 +468,15 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       && isEditorTarget(active);
   }, []);
 
-  const columns = (state.columns as ColumnState[]) ?? [];
+  const allColumns = (state.columns as ColumnState[]) ?? [];
+  // The columns displayed: in the compact display without the ones a phone can do without. The
+  // server counts all of them - in a column's target position and in the frozen columns - so these
+  // counts are translated, see compactColumns.
+  const compact = useDisplayClass() === 'compact';
+  const columns = React.useMemo(() => shownColumns(allColumns, compact), [allColumns, compact]);
+  /** How many of all columns the first given number of displayed columns reach. */
+  const fullCount = React.useCallback((count: number) => fullCountOf(allColumns, columns, count),
+    [allColumns, columns]);
   const totalRowCount = (state.totalRowCount as number) ?? 0;
   const rows = (state.rows as RowState[]) ?? [];
   /** The first row of the window the body showed last, unlike the start of the rows sent. */
@@ -470,10 +502,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const selectedRows = (state.selectedRows as number[] | undefined) ?? NO_ROWS;
   const selectedIndexes = React.useMemo(() => new Set(selectedRows), [selectedRows]);
   const isSelected = (row: RowState) => selectedIndexes.has(row.index);
-  const frozenColumnCount = (state.frozenColumnCount as number) ?? 0;
+  const frozenColumnCount = shownCount(allColumns, columns, (state.frozenColumnCount as number) ?? 0);
   const treeMode = (state.treeMode as boolean) ?? false;
-  /** The column the rows are grouped by, empty when they are not grouped. */
-  const grouping = (state.grouping as string) ?? '';
+  /** The columns the rows are grouped by, outermost group level first, empty when they are not grouped. */
+  const grouping = (state[STATE_GROUPING] as string[] | undefined) ?? NO_GROUPING;
   const columnSelect = (state.columnSelect as boolean) ?? false;
   const filterBar = (state.filterBar as boolean) ?? false;
   const namedFilters = (state.namedFilters as NamedFilterState[]) ?? [];
@@ -507,7 +539,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const checkboxWidth = useTokenPx(gridRef, '--tl-size-bar', 40);
   const treeIndentWidth = useTokenPx(gridRef, '--tl-size-control-sm', 24);
   const columnsButtonWidth = useTokenPx(gridRef, '--tl-size-control', 32);
-  const treegrid = treeMode || grouping !== '';
+  const treegrid = treeMode || grouping.length > 0;
   const rowId = (index: number) => `${controlId}-row-${index}`;
 
   const headerRef = React.useRef<HTMLDivElement>(null);
@@ -538,8 +570,24 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     window.addEventListener('dragend', pressOver, true);
   }, [bodyFocusToGrid]);
 
+  // Whether the body scrolls - its rows or its columns do not fit. A body that scrolls is a tab stop
+  // of its own, with a name: the keyboard reaches what lies outside of it, its arrows scroll it (WCAG
+  // 2.1.1, axe scrollable-region-focusable), while the grid's arrows move the cursor.
+  const [bodyScrolls, setBodyScrolls] = React.useState(false);
+  const bodyScrollsRef = React.useRef(false);
+  bodyScrollsRef.current = bodyScrolls;
+  const measureBodyScrolls = React.useCallback(() => {
+    const body = scrollContainerRef.current;
+    setBodyScrolls(body !== null
+      && (body.scrollWidth > body.clientWidth || body.scrollHeight > body.clientHeight));
+  }, []);
+  // After every render - rows and columns change what the body holds; its own size, see the
+  // observer of the body below.
+  React.useLayoutEffect(measureBodyScrolls);
+
+  // A focus the keyboard put on a body that scrolls stays there; any other goes on to the grid.
   const handleBodyFocus = React.useCallback(() => {
-    if (!bodyPressRef.current) {
+    if (!bodyPressRef.current && !bodyScrollsRef.current) {
       bodyFocusToGrid();
     }
   }, [bodyFocusToGrid]);
@@ -559,7 +607,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const columnReorder = useListReorder({
     axis: 'horizontal',
     count: columns.length,
-    onMove: (from, to) => sendCommand('columnReorder', { column: columns[from].name, targetIndex: to }),
+    onMove: (from, to) => sendCommand('columnReorder',
+      { column: columns[from].name, targetIndex: fullIndex(allColumns, columns, to) }),
   });
   const columnDragging = columnReorder.dragIndex !== null;
 
@@ -1400,22 +1449,18 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
 
   const handleFreezeUpTo = React.useCallback(() => {
     if (!contextMenu) return;
-    sendCommand('setFrozenColumnCount', { count: contextMenu.colIdx + 1 });
+    sendCommand('setFrozenColumnCount', { count: fullCount(contextMenu.colIdx + 1) });
     setContextMenu(null);
-  }, [contextMenu, sendCommand]);
+  }, [contextMenu, sendCommand, fullCount]);
 
   const handleUnfreezeAll = React.useCallback(() => {
     sendCommand('setFrozenColumnCount', { count: 0 });
     setContextMenu(null);
   }, [sendCommand]);
 
-  const handleGroupBy = React.useCallback((column: string) => {
-    sendCommand('group', { column });
-    setContextMenu(null);
-  }, [sendCommand]);
-
-  const handleUngroup = React.useCallback(() => {
-    sendCommand('group', { column: '' });
+  /** Groups the rows by the given columns, outermost group level first, or shows them ungrouped. */
+  const handleGroup = React.useCallback((columns: string[]) => {
+    sendCommand(CMD_GROUP, { [ARG_COLUMNS]: columns });
     setContextMenu(null);
   }, [sendCommand]);
 
@@ -1461,7 +1506,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       onEnd: () => {
         setFrozenPreview(null);
         if (target.count !== frozenColumnCount) {
-          sendCommand('setFrozenColumnCount', { count: target.count });
+          sendCommand('setFrozenColumnCount', { count: fullCount(target.count) });
         }
       },
 
@@ -1470,7 +1515,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         setFrozenPreview(null);
       },
     });
-  }, [columns, frozenWidth, frozenColumnCount, sendCommand]);
+  }, [columns, frozenWidth, frozenColumnCount, sendCommand, fullCount]);
 
   // -- Filter handler: open the server-side filter dialog for a column. --
   const handleOpenFilter = React.useCallback((columnName: string, event: React.MouseEvent) => {
@@ -1737,7 +1782,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       return;
     }
     // The body gets its height from the containers filling, without a render of the table.
-    const observer = new ResizeObserver(() => restoreScrollRef.current());
+    const observer = new ResizeObserver(() => {
+      restoreScrollRef.current();
+      measureBodyScrolls();
+    });
     observer.observe(body);
     const timeout = window.setTimeout(() => {
       restoreTimedOutRef.current = true;
@@ -2001,7 +2049,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     )}
                   </button>
                 ) : label}
-                {col.name === grouping && (
+                {grouping.includes(col.name) && (
                   <span className="tl-table__mark" {...tooltipProps(i18n['js.table.grouped'])}>
                     <ThemeIcon encoded={ICON_GROUP} className="tl-icon-sm" />
                   </span>
@@ -2048,13 +2096,18 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           })}
         </div>
       </div>
-      {/* Scrollable body; the focus stays on the grid. tabIndex -1: Chromium makes a scrolling
-          element without one a tab stop of its own. */}
+      {/* The viewport does not scroll: it draws the ring of the focused body above the rows, which
+          would cover an outline of the body itself. */}
+      <div className="tl-table__viewport">
+      {/* Scrollable body. While everything fits, the focus stays on the grid: tabIndex -1, else
+          Chromium makes a scrolling element a tab stop of its own. While it scrolls, it is one
+          (bodyScrolls). */}
       <div
         ref={scrollContainerRef}
         className="tl-table__body tl-type-body"
         role="rowgroup"
-        tabIndex={-1}
+        tabIndex={bodyScrolls ? 0 : -1}
+        aria-label={bodyScrolls ? i18n['js.table.rows'] : undefined}
         // A press on the body or a part of it that takes no focus - the empty area below the rows,
         // the selection cell beside its box - focuses the body (it carries a tabindex); the focus
         // belongs to the grid, which holds the keyboard and shows the ring.
@@ -2218,6 +2271,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         </div>
       </div>
       </div>
+      </div>
 
         {/* Grip on the boundary of the frozen columns, confined to the heading: a grip running down
             the body would swallow the clicks on the cells behind it. */}
@@ -2257,9 +2311,15 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         {contextMenu && frozenColumnCount > 0 && <MenuItem label={i18n['js.table.unfreezeAll']} onSelect={handleUnfreezeAll} />}
         {contextMenu && !columns[contextMenu.colIdx]?.pinnedEnd && (
           <MenuItem label={i18n['js.table.fitColumn']} onSelect={() => { fitColumnToContent(columns[contextMenu.colIdx].name); setContextMenu(null); }} />)}
-        {contextMenu && columns[contextMenu.colIdx]?.groupable && columns[contextMenu.colIdx].name !== grouping && (
-          <MenuItem label={i18n['js.table.groupBy']} onSelect={() => handleGroupBy(columns[contextMenu.colIdx].name)} />)}
-        {contextMenu && grouping !== '' && <MenuItem label={i18n['js.table.ungroup']} onSelect={handleUngroup} />}
+        {/* Grouping by a further column adds it as the innermost group level; removing the grouping by
+            a column removes its level alone, the other levels stay. */}
+        {contextMenu && columns[contextMenu.colIdx]?.groupable && !grouping.includes(columns[contextMenu.colIdx].name) && (
+          <MenuItem label={i18n[grouping.length > 0 ? 'js.table.groupByAlso' : 'js.table.groupBy']}
+            onSelect={() => handleGroup([...grouping, columns[contextMenu.colIdx].name])} />)}
+        {contextMenu && grouping.includes(columns[contextMenu.colIdx]?.name ?? '') && (
+          <MenuItem label={i18n['js.table.ungroupColumn']}
+            onSelect={() => handleGroup(grouping.filter((column) => column !== columns[contextMenu.colIdx].name))} />)}
+        {contextMenu && grouping.length > 0 && <MenuItem label={i18n['js.table.ungroup']} onSelect={() => handleGroup(NO_GROUPING)} />}
       </Menu>
     </div>
     </KeyboardScopeProvider>

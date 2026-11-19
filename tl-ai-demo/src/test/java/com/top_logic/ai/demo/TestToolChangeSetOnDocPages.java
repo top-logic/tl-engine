@@ -30,7 +30,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tl.ai.core.security.ToolChangeSet;
+import com.top_logic.ai.core.security.ToolChangeSet;
 import com.top_logic.util.model.ModelService;
 
 /**

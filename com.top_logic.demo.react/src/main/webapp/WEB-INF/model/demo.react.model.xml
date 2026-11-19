@@ -502,6 +502,8 @@
 						type="tl.core:Binary"
 					>
 						<annotations>
+							<accepted-types value="image/*"/>
+							<binary-display presentation="image-upload"/>
 							<dynamic-visibility>
 								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
 									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
@@ -509,6 +511,28 @@
 							</dynamic-visibility>
 						</annotations>
 					</property>
+					<!-- Several images stepped through one at a time, arranged by the user, on a lower stage. -->
+					<property name="pictures"
+						multiple="true"
+						ordered="true"
+						type="tl.core:Binary"
+					>
+						<annotations>
+							<accepted-types value="image/*"/>
+							<binary-display presentation="image-upload"/>
+							<dimensions height="320px"/>
+							<max-upload-size value="5m"/>
+							<value-count max="3"/>
+						</annotations>
+					</property>
+					<!-- An image gallery: its images are stored as objects of their own by the gallery storage. -->
+					<reference name="gallery"
+						bag="true"
+						kind="forwards"
+						multiple="true"
+						ordered="true"
+						type="tl.imagegallery:GalleryImage"
+					/>
 					<property name="attachments"
 						multiple="true"
 						ordered="true"
@@ -516,6 +540,7 @@
 					>
 						<annotations>
 							<max-upload-size value="5m"/>
+							<value-count max="5"/>
 						</annotations>
 					</property>
 					<property name="documents"
@@ -527,6 +552,7 @@
 							<accepted-types value="*.pdf, *.txt, *.md"/>
 							<binary-display presentation="list"/>
 							<max-upload-size value="1m"/>
+							<value-count max="3"/>
 						</annotations>
 					</property>
 

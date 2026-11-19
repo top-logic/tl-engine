@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<!-- Access rights of objects of locally declared types, see TestLocalTypeSecurity. -->
+		<module name="TestLocalTypeSecurity">
+			<types>
+				<!--
+					Role rule and grants: the owner may read and write it. Declares local types
+					specializing the global types below.
+				-->
+				<class name="Holder">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+						<reference name="items"
+							composite="true"
+							multiple="true"
+							type="Item"
+						/>
+						<reference name="frees"
+							composite="true"
+							multiple="true"
+							type="Free"
+						/>
+					</attributes>
+					<types>
+						<interface name="LocalBase"/>
+						<class name="LocalItem">
+							<generalizations>
+								<generalization
+									scope="this"
+									type="LocalBase"
+								/>
+								<generalization type="Item"/>
+							</generalizations>
+						</class>
+						<class name="LocalFree">
+							<generalizations>
+								<generalization type="Free"/>
+							</generalizations>
+						</class>
+						<class name="LocalGranted">
+							<generalizations>
+								<generalization type="Granted"/>
+							</generalizations>
+						</class>
+					</types>
+				</class>
+
+				<!-- Composition part without any definition: delegates to its container by default. -->
+				<class name="Item">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Global specialization of Item without a definition of its own. -->
+				<class name="ItemSub">
+					<generalizations>
+						<generalization type="Item"/>
+					</generalizations>
+				</class>
+
+				<!-- Excluded from access control. -->
+				<class name="Free"/>
+
+				<!-- Grants of its own, one of them passed on to its specializations. -->
+				<class name="Granted"/>
+
+				<!-- Global specialization of Granted without a definition of its own. -->
+				<class name="GrantedSub">
+					<generalizations>
+						<generalization type="Granted"/>
+					</generalizations>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

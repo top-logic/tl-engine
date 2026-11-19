@@ -151,11 +151,12 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 		boolean composite = end.isComposite();
 		boolean bag = end.isBag();
 		TLType endType = end.getType();
+		if (endType.getName().equals(GalleryImage.GALLERY_IMAGE_TYPE)
+			&& com.top_logic.layout.image.gallery.GalleryImage.isGallery(end.isMultiple(), end.isOrdered())) {
+			return ImageGalleryStorage.imageGalleryConfig(bag);
+		}
 		if (end.isMultiple()) {
 			if (end.isOrdered()) {
-				if (endType.getName().equals(GalleryImage.GALLERY_IMAGE_TYPE)) {
-					return ImageGalleryStorage.imageGalleryConfig(bag);
-				}
 				return ListStorage.listConfig(composite, historyType, deletionPolicy, unversioned, bag);
 			}
 			return SetStorage.setConfig(composite, historyType, deletionPolicy, unversioned, bag);

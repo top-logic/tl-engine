@@ -92,7 +92,7 @@
 		<!--
 			Guard: never drop rows that the startup conversion has not converted yet.
 		-->
-		<processor class="com.top_logic.tl.ai.core.migration.RequireEmptyTableProcessor"
+		<processor class="com.top_logic.ai.core.migration.RequireEmptyTableProcessor"
 			table="ChatSession"
 			hint="Boot the previous release once so that LegacyChatSessionMigration converts the remaining legacy chat sessions into agent sessions, then upgrade again."
 		/>

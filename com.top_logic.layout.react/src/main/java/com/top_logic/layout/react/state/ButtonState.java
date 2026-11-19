@@ -296,6 +296,9 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 	/** @see #getKeyGesture() */
 	String KEY_GESTURE__PROP = "keyGesture";
 
+	/** @see #getBadge() */
+	String BADGE__PROP = "badge";
+
 	/**
 	 * The label of the button.
 	 */
@@ -432,6 +435,22 @@ public interface ButtonState extends com.top_logic.layout.react.state.ControlSta
 	 * @see #getKeyGesture()
 	 */
 	com.top_logic.layout.react.state.ButtonState setKeyGesture(String value);
+
+	/**
+	 * The badge of the button. Absent: none. Beside a visible label it is visible text of the
+	 * button; at a button showing its icon alone it is part of the accessible name.
+	 */
+	com.top_logic.layout.react.state.Badge getBadge();
+
+	/**
+	 * @see #getBadge()
+	 */
+	com.top_logic.layout.react.state.ButtonState setBadge(com.top_logic.layout.react.state.Badge value);
+
+	/**
+	 * Checks, whether {@link #getBadge()} has a value.
+	 */
+	boolean hasBadge();
 
 	@Override
 	com.top_logic.layout.react.state.ButtonState setHidden(boolean value);

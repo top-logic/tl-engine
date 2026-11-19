@@ -154,6 +154,12 @@ public class Padding_Impl extends com.top_logic.react.flow.data.impl.Decoration_
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.Padding setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return PADDING__TYPE;
 	}

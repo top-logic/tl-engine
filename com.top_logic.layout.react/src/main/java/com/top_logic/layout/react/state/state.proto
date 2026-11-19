@@ -42,6 +42,7 @@
  *   TLNumberInput     - NumberInputState
  *   TLOptionChips     - DropdownSelectState
  *   TLProgress        - ProgressState
+ *   TLDivider         - DividerState
  *   TLLink            - LinkState
  *   TLAvatar          - AvatarState
  *
@@ -299,6 +300,12 @@ message ButtonState extends ControlState {
 	 * The keyboard gesture that triggers the button (e.g. {@code ENTER}, {@code Ctrl+S}).
 	 */
 	string keyGesture;
+
+	/**
+	 * The badge of the button. Absent: none. Beside a visible label it is visible text of the
+	 * button; at a button showing its icon alone it is part of the accessible name.
+	 */
+	Badge badge;
 }
 
 /**
@@ -379,6 +386,71 @@ message ChildControl {
 	 * control that is no view root.
 	 */
 	string viewSource;
+}
+
+/**
+ * A small marker at the corner of an element - a button, a tab, a navigation entry, an avatar - that
+ * counts or marks something waiting there, drawn through the part {@code Badge} of
+ * 'tl-react-bridge'.
+ *
+ * A state property holding a badge is absent where the element shows none; an update removing the
+ * badge of an element sends it as {@code null}, which means the same. A badge shows either
+ * the {@link #content}, or - where {@link #dot} is set - a dot without content.
+ *
+ * The badge belongs to the accessible name of its element. Its own name is the {@link #label} of a
+ * dot, and the {@link #content} of a count, after the {@link #label} where there is one ("New
+ * entries: 3"). Beside a visible label (a button, a tab) a plain count is visible text read with
+ * the label, a dot or a count with a label an image of that name; an element without visible text
+ * (an icon-only button, an avatar) is named by its label followed by the name of its badge
+ * ("Inbox, 3"), and the badge itself is hidden from assistive technology.
+ */
+message Badge {
+	/**
+	 * The color role of a badge.
+	 */
+	enum Role {
+		/** The color of the brand. */
+		@Name("brand")
+		BRAND;
+
+		/** Something failed. */
+		@Name("error")
+		ERROR;
+
+		/** Something calls for attention before it fails. */
+		@Name("warning")
+		WARNING;
+
+		/** Something went well. */
+		@Name("success")
+		SUCCESS;
+
+		/** Something to know. */
+		@Name("info")
+		INFO;
+	}
+
+	/**
+	 * What the badge shows: a count of at most two digits, the overflow {@code 99+}, or a short
+	 * text. Absent for a {@link #dot}.
+	 */
+	string content;
+
+	/**
+	 * Whether the badge is a dot marking the element without counting.
+	 */
+	bool dot;
+
+	/**
+	 * The color role. Absent means {@link Role#BRAND}.
+	 */
+	Role role;
+
+	/**
+	 * The accessible name of a dot, or what a count counts, read before the count ("New entries:
+	 * 3"). Absent: the content alone names a count; a dot stays unnamed.
+	 */
+	string label;
 }
 
 /**
@@ -877,6 +949,11 @@ message TabBarState extends ControlState {
 		 * while another tab is visible.
 		 */
 		bool hidden;
+
+		/**
+		 * The badge of the tab, standing after its label as visible text of the tab. Absent: none.
+		 */
+		Badge badge;
 	}
 
 	/**
@@ -2028,6 +2105,79 @@ message ProgressState extends ControlState {
 }
 
 /**
+ * State of a line separating the content before it from the content after it, the component
+ * {@code TLDivider}, drawn by the part {@code Divider}.
+ *
+ * The component sends no commands.
+ */
+message DividerState extends ControlState {
+
+	/**
+	 * The direction of a divider.
+	 */
+	enum Orientation {
+		/** A line across, between content stacked one above the other. */
+		@Name("horizontal")
+		HORIZONTAL;
+
+		/** A line standing in a row and stretching to its height. */
+		@Name("vertical")
+		VERTICAL;
+	}
+
+	/**
+	 * Where the text of a divider stands in its line.
+	 */
+	enum LabelPosition {
+		/** At the start of the line. */
+		@Name("start")
+		START;
+
+		/** In the middle, with a line on either side. */
+		@Name("center")
+		CENTER;
+
+		/** At the end of the line. */
+		@Name("end")
+		END;
+	}
+
+	/**
+	 * Where a divider begins.
+	 */
+	enum Inset {
+		/** The line spans the whole width. */
+		@Name("none")
+		NONE;
+
+		/** The line is shortened at its start by the indent of an entry of a list. */
+		@Name("start")
+		START;
+	}
+
+	/**
+	 * The direction of the line. Absent: {@code horizontal}.
+	 */
+	Orientation orientation;
+
+	/**
+	 * A short text shown in the line, plain text; only a horizontal line carries one. Absent: a
+	 * plain line.
+	 */
+	string label;
+
+	/**
+	 * Where the {@link #label} stands in the line. Absent: {@code center}.
+	 */
+	LabelPosition labelPosition;
+
+	/**
+	 * Where the line begins. Absent: {@code none}, the whole width.
+	 */
+	Inset inset;
+}
+
+/**
  * State properties of a control displaying a picture.
  *
  * The client only ever loads an address: either the {@link #url} naming the picture, or - while
@@ -2096,6 +2246,12 @@ message AvatarState extends ImageSourceState {
 	 * The diameter of the circle. Absent means {@link Size#MEDIUM}.
 	 */
 	Size size;
+
+	/**
+	 * The badge at the corner of the avatar. The avatar with its badge is one image named by the
+	 * {@link #name} and the badge ("Anna Meier, Open tickets: 3"). Absent: none.
+	 */
+	Badge badge;
 }
 
 /**

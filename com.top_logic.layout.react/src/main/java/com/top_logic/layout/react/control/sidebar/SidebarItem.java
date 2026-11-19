@@ -8,6 +8,8 @@ package com.top_logic.layout.react.control.sidebar;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.top_logic.layout.react.control.common.BadgeDisplay;
+
 /**
  * Abstract base for items displayed in a {@link ReactSidebarControl}.
  *
@@ -39,9 +41,14 @@ public abstract class SidebarItem {
 	/** Text explaining the item, shown when the pointer rests on it. */
 	static final String TOOLTIP = "tooltip";
 
+	/** @see #setBadge(BadgeDisplay) */
+	static final String BADGE = "badge";
+
 	private final String _id;
 
 	private boolean _withheld;
+
+	private BadgeDisplay _badge;
 
 	/**
 	 * Creates a new {@link SidebarItem}.
@@ -75,6 +82,9 @@ public abstract class SidebarItem {
 		if (_withheld) {
 			map.put(HIDDEN, Boolean.TRUE);
 		}
+		if (_badge != null) {
+			map.put(BADGE, _badge.toState());
+		}
 		return map;
 	}
 
@@ -100,6 +110,29 @@ public abstract class SidebarItem {
 	 */
 	public void setWithheld(boolean withheld) {
 		_withheld = withheld;
+	}
+
+	/**
+	 * The badge of the entry of the item, {@code null} for none.
+	 *
+	 * <p>
+	 * Drawn at the entries of navigation and command items.
+	 * </p>
+	 */
+	public BadgeDisplay getBadge() {
+		return _badge;
+	}
+
+	/**
+	 * Sets the badge of the entry of the item.
+	 *
+	 * @param badge
+	 *        The badge, or {@code null} for none.
+	 *
+	 * @see ReactSidebarControl#updateBadge(String, BadgeDisplay)
+	 */
+	public void setBadge(BadgeDisplay badge) {
+		_badge = badge;
 	}
 
 }

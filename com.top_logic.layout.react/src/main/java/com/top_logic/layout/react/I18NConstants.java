@@ -9,6 +9,7 @@ import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -75,6 +76,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en File upload failed.
 	 */
 	public static ResKey FILE_UPLOAD_FAILED;
+
+	/**
+	 * @en Nothing was added: at most {0} values are allowed. {1} selected, room for {2}.
+	 */
+	public static ResKey3 ERROR_TOO_MANY_VALUES_ADDED__MAX_SELECTED_ROOM;
 
 	/**
 	 * @en No file data received.
@@ -310,6 +316,96 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.fileChips.remove")
 	public static ResKey JS_FILE_CHIPS_REMOVE;
+
+	/**
+	 * @en Upload image
+	 */
+	@CustomKey("js.imageField.upload")
+	public static ResKey JS_IMAGE_FIELD_UPLOAD;
+
+	/**
+	 * @en Add image
+	 */
+	@CustomKey("js.imageField.add")
+	public static ResKey JS_IMAGE_FIELD_ADD;
+
+	/**
+	 * @en Replace
+	 */
+	@CustomKey("js.imageField.replaceShown")
+	public static ResKey JS_IMAGE_FIELD_REPLACE_SHOWN;
+
+	/**
+	 * @en Remove
+	 */
+	@CustomKey("js.imageField.removeShown")
+	public static ResKey JS_IMAGE_FIELD_REMOVE_SHOWN;
+
+	/**
+	 * @en Manage images
+	 */
+	@CustomKey("js.imageField.manage")
+	public static ResKey JS_IMAGE_FIELD_MANAGE;
+
+	/**
+	 * @en Images ({0})
+	 */
+	@CustomKey("js.imageField.editorTitle")
+	public static ResKey JS_IMAGE_FIELD_EDITOR_TITLE;
+
+	/**
+	 * @en Replace {0}
+	 */
+	@CustomKey("js.imageField.replace")
+	public static ResKey JS_IMAGE_FIELD_REPLACE;
+
+	/**
+	 * @en Remove {0}
+	 */
+	@CustomKey("js.imageField.remove")
+	public static ResKey JS_IMAGE_FIELD_REMOVE;
+
+	/**
+	 * @en Previous image
+	 */
+	@CustomKey("js.imageField.previous")
+	public static ResKey JS_IMAGE_FIELD_PREVIOUS;
+
+	/**
+	 * @en Next image
+	 */
+	@CustomKey("js.imageField.next")
+	public static ResKey JS_IMAGE_FIELD_NEXT;
+
+	/**
+	 * @en {0} of {1}
+	 */
+	@CustomKey("js.imageField.counter")
+	public static ResKey JS_IMAGE_FIELD_COUNTER;
+
+	/**
+	 * @en Show {0} full page
+	 */
+	@CustomKey("js.imageField.open")
+	public static ResKey JS_IMAGE_FIELD_OPEN;
+
+	/**
+	 * @en Show {0}
+	 */
+	@CustomKey("js.imageField.show")
+	public static ResKey JS_IMAGE_FIELD_SHOW;
+
+	/**
+	 * @en Done
+	 */
+	@CustomKey("js.imageField.done")
+	public static ResKey JS_IMAGE_FIELD_DONE;
+
+	/**
+	 * @en Close
+	 */
+	@CustomKey("js.imageField.close")
+	public static ResKey JS_IMAGE_FIELD_CLOSE;
 
 	/**
 	 * @en Open camera
@@ -558,6 +654,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TEXT_INPUT_COPY;
 
 	/**
+	 * @en Powered by
+	 */
+	@CustomKey("js.loginBackdrop.poweredBy")
+	public static ResKey JS_LOGIN_BACKDROP_POWERED_BY;
+
+	/**
 	 * @en Copied
 	 */
 	@CustomKey("js.textInput.copied")
@@ -772,6 +874,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_EMPTY;
 
 	/**
+	 * @en Rows of the table
+	 */
+	@CustomKey("js.table.rows")
+	public static ResKey JS_TABLE_ROWS;
+
+	/**
 	 * @en Freeze up to here
 	 */
 	@CustomKey("js.table.freezeUpTo")
@@ -904,10 +1012,22 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_GROUP_BY;
 
 	/**
+	 * @en Additionally group by this column
+	 */
+	@CustomKey("js.table.groupByAlso")
+	public static ResKey JS_TABLE_GROUP_BY_ALSO;
+
+	/**
 	 * @en Remove grouping
 	 */
 	@CustomKey("js.table.ungroup")
 	public static ResKey JS_TABLE_UNGROUP;
+
+	/**
+	 * @en Remove grouping by this column
+	 */
+	@CustomKey("js.table.ungroupColumn")
+	public static ResKey JS_TABLE_UNGROUP_COLUMN;
 
 	/**
 	 * @en The rows are grouped by this column
@@ -1315,17 +1435,17 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NO_FREE_ENTRY;
 
 	/**
-	 * @en Cannot drop here: this table does not accept the dragged objects.
+	 * @en The dragged objects cannot be dropped here.
 	 */
 	public static ResKey ERROR_DROP_NOT_ACCEPTED;
 
 	/**
-	 * @en Cannot drop: the dragged objects or the target row are no longer present: {0}
+	 * @en Cannot drop: the dragged objects or the target are no longer present: {0}
 	 */
 	public static ResKey1 ERROR_DROP_UNRESOLVED__OBJECTS;
 
 	/**
-	 * @en Cannot drop: the dragged rows include one that cannot be dragged.
+	 * @en Cannot drop: the dragged objects include one that cannot be dragged.
 	 */
 	public static ResKey ERROR_DROP_NOT_DRAGGABLE;
 

@@ -32,6 +32,21 @@
 	word-spacing: normal;
 }
 
+/*
+ * The frame over the node a drag hovers. It lies over the diagram on the layer of the drag, at the
+ * place of the node on the screen; its frame is the drop target's state (drag.css). The node stays
+ * visible beneath it: the frame paints no background.
+ */
+.tl-flow-diagram__drop-marker {
+	position: fixed;
+	z-index: var(--tl-layer-drag);
+	pointer-events: none;
+}
+.tl-flow-diagram__drop-marker[data-tl-state] {
+	position: fixed;
+	background: none;
+}
+
 .tlSelectionMarker {
 	display: none;
 }
@@ -88,6 +103,73 @@ g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--tl-borde
 }
 .tl-gantt-vp-decoration-labels text:not([fill]) {
 	fill: var(--tl-text-primary);
+}
+
+/*
+ * The color roles of the edges and decorations of a Gantt chart (data-tl-role, as on a pill): a
+ * line in the line color of its role, a filled symbol of an edge and a range in the area color.
+ * The model draws them in a fixed substitute color of the role, which an exported PDF keeps; on
+ * the screen the role follows the theme and the dark mode. An element in a fixed color of the
+ * application carries no role.
+ */
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="neutral"] { --tl-gantt-role-line: var(--tl-border-emphasis); --tl-gantt-role-area: var(--tl-surface-interactive-strong); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="brand"] { --tl-gantt-role-line: var(--tl-border-interactive); --tl-gantt-role-area: var(--tl-surface-brand-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="error"] { --tl-gantt-role-line: var(--tl-status-error-border); --tl-gantt-role-area: var(--tl-status-error-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="warning"] { --tl-gantt-role-line: var(--tl-status-warning-border); --tl-gantt-role-area: var(--tl-status-warning-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="success"] { --tl-gantt-role-line: var(--tl-status-success-border); --tl-gantt-role-area: var(--tl-status-success-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="info"] { --tl-gantt-role-line: var(--tl-status-info-border); --tl-gantt-role-area: var(--tl-status-info-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="category-1"] { --tl-gantt-role-line: var(--tl-category-1-border); --tl-gantt-role-area: var(--tl-category-1-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="category-2"] { --tl-gantt-role-line: var(--tl-category-2-border); --tl-gantt-role-area: var(--tl-category-2-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="category-3"] { --tl-gantt-role-line: var(--tl-category-3-border); --tl-gantt-role-area: var(--tl-category-3-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="category-4"] { --tl-gantt-role-line: var(--tl-category-4-border); --tl-gantt-role-area: var(--tl-category-4-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="category-5"] { --tl-gantt-role-line: var(--tl-category-5-border); --tl-gantt-role-area: var(--tl-category-5-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="category-6"] { --tl-gantt-role-line: var(--tl-category-6-border); --tl-gantt-role-area: var(--tl-category-6-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="category-7"] { --tl-gantt-role-line: var(--tl-category-7-border); --tl-gantt-role-area: var(--tl-category-7-subtle); }
+:is(.tl-gantt-edges, .tl-gantt-decorations) [data-tl-role="category-8"] { --tl-gantt-role-line: var(--tl-category-8-border); --tl-gantt-role-area: var(--tl-category-8-subtle); }
+.tl-gantt-edges path[data-tl-role],
+.tl-gantt-decorations path[data-tl-role] {
+	stroke: var(--tl-gantt-role-line);
+}
+.tl-gantt-edges path[data-tl-role]:not([fill="none"]) {
+	fill: var(--tl-gantt-role-line);
+}
+.tl-gantt-decorations rect[data-tl-role] {
+	fill: var(--tl-gantt-role-area);
+}
+
+/*
+ * The dependency edges of a Gantt chart are subdued on the screen, so that the edges of the item
+ * under the pointer and of the selected items stand out (marked "related" by the diagram control).
+ * A violated dependency is never subdued. Only the opacity changes: the color (and its role) and
+ * the stroke width of each edge stay as drawn. An exported PDF does not read this stylesheet and
+ * shows all edges in full.
+ */
+.tl-gantt-edge {
+	opacity: 0.35;
+}
+.tl-gantt-edge--related,
+.tl-gantt-edge--violated {
+	opacity: 1;
+}
+
+/*
+ * The toggle collapsing the children of a row of a Gantt chart, in the row label column. The model
+ * paints the chevron in a fixed gray, which an exported PDF keeps; on the screen it takes the
+ * secondary text color, and the toggle shows the focus ring while it has the keyboard focus.
+ */
+.tl-gantt-row-toggle {
+	cursor: pointer;
+	outline: none;
+}
+.tl-gantt-row-toggle-chevron {
+	stroke: var(--tl-text-secondary);
+}
+.tl-gantt-row-toggle:hover > rect {
+	fill: var(--tl-surface-interactive-hover);
+}
+.tl-gantt-row-toggle:focus-visible > rect {
+	stroke: var(--tl-focus-ring);
+	stroke-width: var(--tl-focus-width);
 }
 
 /*

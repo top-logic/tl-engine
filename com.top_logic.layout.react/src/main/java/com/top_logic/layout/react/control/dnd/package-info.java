@@ -32,7 +32,10 @@
  * receiving control resolves the place into a {@link com.top_logic.layout.react.control.dnd.DropLocation}
  * per mode, the target picks the first of its operations that accepts the drop at the location of
  * its mode, and the control draws the {@link com.top_logic.layout.react.control.dnd.DropMarker marker}
- * of that location.
+ * of that location. A control displaying its items on a surface reports in addition the
+ * {@link com.top_logic.layout.react.control.dnd.DropPoint point} the drop is made at, in the
+ * coordinate system of the item under the pointer or of the surface, which the locations of a drop
+ * on the control and onto an item carry.
  * </p>
  *
  * <p>

@@ -25,6 +25,21 @@ abstract message Widget {
 	
 	/** Private information that must be kept during the layout and rendering phases. */
 	transient java.lang.Object renderInfo;
+
+	/**
+	 * Whether a drop on the diagram is made onto this element.
+	 *
+	 * <p>
+	 * Derived state the server keeps in sync with the element: set for an element with a
+	 * {@link #userObject}, see
+	 * {@link com.top_logic.react.flow.operations.WidgetOperations#isDropTargetByDefinition()}. The
+	 * {@link #userObject} itself is not transmitted, so this flag tells the client the elements a
+	 * drop is made onto. The target of a drop is the innermost element under the pointer that has
+	 * this flag or is a {@link DropRegion}; a drop region without the flag stands for the diagram as
+	 * a whole.
+	 * </p>
+	 */
+	bool dropTarget;
 }
 
 /** Top-level diagram element that can be layouted and rendered. */
@@ -789,16 +804,12 @@ message ClickTarget extends Decoration {
 	
 }
 
-/** A box that accepts drop events by invoking a server callback. */
+/**
+ * A box marking the target of a drop on the diagram: the drop of a flow diagram is made onto the
+ * user object of the region, or on the diagram as a whole for a region without one.
+ */
 @Operations("com.top_logic.react.flow.operations.DropRegionOperations")
 message DropRegion extends Decoration {
-
-	/** Server-side-only field to store the callback to invoke when a drop occurs. */
-	transient com.top_logic.react.flow.callback.DropHandler dropHandler;
-	
-	/** Internal field to store the drop handler registration (client-side only). */
-	transient com.top_logic.react.flow.svg.event.Registration handlerRegistration;
-	
 }
 
 /** A box that shows a tooltip when the mouse hovers over its contents. */
@@ -1128,8 +1139,27 @@ message GanttRow {
 	@Ref
 	Box label;
 
-	/** Child rows forming a hierarchy. Phase 1 renders the tree flat with indentation. */
+	/**
+	 * Child rows forming a hierarchy.
+	 *
+	 * <p>
+	 * The children are shown below their parent row, indented by {@link GanttLayout#indentWidth}
+	 * per level. A row with children shows a toggle in the label column that hides the children
+	 * (see {@link #collapsed}).
+	 * </p>
+	 */
 	repeated GanttRow children;
+
+	/**
+	 * Whether the {@link #children} of this row are hidden together with their items and the
+	 * edges of these items, so that the rows below move up.
+	 *
+	 * <p>
+	 * Client-only (transient) view state, switched by the toggle in the label column. It is not
+	 * sent to the server and does not change the model, all rows start expanded.
+	 * </p>
+	 */
+	transient bool collapsed;
 
 	/** Whether items may be dropped into this row during drag. Default true. */
 	bool acceptsDrop = true;
@@ -1233,8 +1263,29 @@ message GanttEdge {
 	 */
 	ConnectorSymbol targetSymbol;
 
-	/** Stroke color for the normal (non-violated) state. */
-	string strokeColor = "#606060";
+	/**
+	 * Fixed stroke color for the normal (non-violated) state.
+	 *
+	 * <p>
+	 * Takes precedence over {@link #strokeRole}. Empty = draw in the color of the
+	 * {@link #strokeRole}.
+	 * </p>
+	 */
+	@Nullable
+	string strokeColor;
+
+	/**
+	 * Color role of the stroke for the normal (non-violated) state, unless a fixed
+	 * {@link #strokeColor} is given.
+	 *
+	 * <p>
+	 * The external name of a color role of the user interface ({@code neutral}, {@code brand},
+	 * {@code error}, {@code warning}, {@code success}, {@code info}, {@code category-1} ...
+	 * {@code category-8}). On the screen the role follows the theme and the dark mode, an export
+	 * shows it in a fixed substitute color.
+	 * </p>
+	 */
+	string strokeRole = "neutral";
 
 	/** Line thickness in pixels for the normal state. */
 	double strokeWidth = 1.0;
@@ -1243,11 +1294,27 @@ message GanttEdge {
 	repeated double dashes;
 
 	/**
-	 * Stroke color applied when the constraint is violated (enforce != NONE and
-	 * source endpoint position > target endpoint position). Empty = use normal {@link #strokeColor}.
+	 * Fixed stroke color applied when the dependency is violated: the source endpoint lies after
+	 * the target endpoint on the time axis. This holds independently of {@link #enforce}, which
+	 * only decides whether dragging is limited.
+	 *
+	 * <p>
+	 * Takes precedence over {@link #violatedStrokeRole}. Empty = draw in the color of the
+	 * {@link #violatedStrokeRole}.
+	 * </p>
 	 */
 	@Nullable
 	string violatedStrokeColor;
+
+	/**
+	 * Color role of the stroke applied when the dependency is violated (see
+	 * {@link #violatedStrokeColor}), unless a fixed {@link #violatedStrokeColor} is given.
+	 *
+	 * <p>
+	 * The external name of a color role, see {@link #strokeRole}.
+	 * </p>
+	 */
+	string violatedStrokeRole = "error";
 
 	/** Line thickness when violated. Zero = use normal {@link #strokeWidth}. */
 	double violatedStrokeWidth;
@@ -1365,8 +1432,27 @@ abstract message GanttDecoration {
 	 */
 	transient repeated java.lang.Object relevantForModels;
 
-	/** CSS-style color. */
+	/**
+	 * Fixed CSS-style color.
+	 *
+	 * <p>
+	 * Takes precedence over {@link #colorRole}. Empty = draw in the color of the
+	 * {@link #colorRole}.
+	 * </p>
+	 */
+	@Nullable
 	string color;
+
+	/**
+	 * Color role of the decoration, unless a fixed {@link #color} is given.
+	 *
+	 * <p>
+	 * The external name of a color role, see {@link GanttEdge#strokeRole}. A line is drawn in the
+	 * line color of the role, a range is filled with its area color. Empty = {@code neutral}.
+	 * </p>
+	 */
+	@Nullable
+	string colorRole;
 
 	/**
 	 * Label box drawn near the decoration. The box is owned by the enclosing
@@ -1588,6 +1674,16 @@ message GanttLayout extends Layout {
 
 	/** The part of the chart dragged by the current pan gesture. */
 	transient GanttPanTarget panTarget;
+
+	/**
+	 * The rows in display order with their geometry, as placed by the last layout pass.
+	 *
+	 * <p>
+	 * Set by each layout pass and cleared when an item is dropped into another row. Drawing and
+	 * dragging read the rows from here instead of traversing {@link #rootRows} again.
+	 * </p>
+	 */
+	transient com.top_logic.react.flow.operations.layout.GanttRowLayout rowLayout;
 }
 
 /** The part of a {@link GanttLayout} dragged by a pan gesture. */

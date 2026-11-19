@@ -29,7 +29,8 @@ test('tl-icon-badge: der Behälter ist positioniert, der Zähler sitzt an der Ec
   assert.match(z, /position:\s*absolute/);
   assert.match(z, /top:\s*calc\(-1 \* var\(--tl-space-2xs\)\)/);
   assert.match(z, /inset-inline-end:\s*calc\(-1 \* var\(--tl-space-xs\)\)/);
-  assert.doesNotMatch(ohneKommentar(readGenerated('badge', 'badge.css')), /\.tl-badge--/);
+  // Einziger Modifier ist die Form Punkt; Lage und Bedeutung sind keine Modifier.
+  assert.doesNotMatch(ohneKommentar(readGenerated('badge', 'badge.css')), /\.tl-badge--(?!dot(?![a-z0-9-]))/);
 });
 
 test('tl-app-shell: Spalte, füllt; der Inhalt ist begrenzt, Hinweise stehen bündig', () => {

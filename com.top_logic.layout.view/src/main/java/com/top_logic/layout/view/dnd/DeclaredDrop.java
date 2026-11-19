@@ -106,8 +106,10 @@ public record DeclaredDrop(DropConfig config, DropSignature signature, List<View
 	}
 
 	private static String describeChannels(DropSignature signature) {
-		List<String> properties =
-			signature.references().stream().map(DropReference::channelProperty).toList();
+		List<String> properties = signature.references().stream()
+			.map(DropReference::channelProperty)
+			.filter(property -> property != null)
+			.toList();
 		return properties.isEmpty() ? "nothing" : "only through " + String.join(", ", properties);
 	}
 

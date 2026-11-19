@@ -94,6 +94,12 @@ public class Sticky_Impl extends com.top_logic.react.flow.data.impl.Decoration_I
 	}
 
 	@Override
+	public com.top_logic.react.flow.data.Sticky setDropTarget(boolean value) {
+		internalSetDropTarget(value);
+		return this;
+	}
+
+	@Override
 	public String jsonType() {
 		return STICKY__TYPE;
 	}

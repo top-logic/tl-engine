@@ -1,6 +1,7 @@
 import { React, useTLState, useTLCommand, useUpload, useI18N, useListReorder, reorderState, TLChild, rootClassName, stateAttr, useFieldLabelProps, ICON_ADD, ICON_REMOVE, ICON_HANDLE, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { showsValueOnly } from './form/fieldState';
+import { isFull } from './form/valueCount';
 
 const I18N_KEYS = {
   'js.valueList.add': 'Add a value',
@@ -49,6 +50,8 @@ const SEPARATOR = ', ';
  * - ordered: boolean - whether the order of the values is part of the value, so the user arranges it
  * - upload: boolean - whether values are added by uploading files rather than as empty values
  * - accept: string - the file types the file picker offers (HTML accept attribute); absent: all
+ * - maxCount: number - the maximum number of values (0: none); at the maximum, the list offers no
+ *   further value, neither by its add button nor by dropping files
  *
  * While the field is only displayed, the values follow each other with a separator between them
  * ('inline') or each on a line of its own ('block', for a value that is a text of several lines).
@@ -84,6 +87,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
   const arrangeable = editable && state.ordered === true && elements.length > 1;
   const uploads = state.upload === true;
   const accept = (state.accept as string | null) ?? '';
+  const full = isFull(elements.length, state.maxCount);
 
   const [fileDragOver, setFileDragOver] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -102,7 +106,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
 
   // Files are dropped while the list takes uploads; a value of the list dragged to another position
   // is no file drag and goes to the arranging gesture.
-  const takesFileDrop = uploads && editable && !disabled && !uploading;
+  const takesFileDrop = uploads && editable && !disabled && !uploading && !full;
   const isFileDrag = (event: React.DragEvent) => event.dataTransfer.types.includes(FILES_TRANSFER_TYPE);
 
   const cls = block ? 'tl-value-list tl-value-list--block' : 'tl-value-list';
@@ -206,7 +210,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
           style={{ display: 'none' }}
         />
       )}
-      <Button
+      {!full && <Button
         label={addLabel}
         image={ICON_ADD}
         display="icon-only"
@@ -221,7 +225,7 @@ const TLValueList: React.FC<TLCellProps> = ({ controlId }) => {
             sendCommand(CMD_ADD_ELEMENT);
           }
         }}
-      />
+      />}
       {arrangeable && reorder.announcer}
     </div>
   );

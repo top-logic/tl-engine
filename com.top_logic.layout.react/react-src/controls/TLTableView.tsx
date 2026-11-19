@@ -2056,7 +2056,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 )}
                 {col.filterable && (
                   // One glyph; an active filter is the column's state (data-tl-state~="filtered",
-                  // icon-primary) and the button's name says so as well.
+                  // drawn in the link color, #29999) and the button's name says so as well.
                   <Button
                     label={filterLabel}
                     image={ICON_FILTER}

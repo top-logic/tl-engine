@@ -12,19 +12,11 @@ const I18N_KEYS = {
   'js.table.viewDensityCompact': 'Compact',
   'js.table.viewStripes': 'Stripes',
   'js.table.viewColumnLines': 'Column lines',
-  'js.table.viewColumns': 'Columns',
-  // The value of the entry "Columns": how many of the columns the table shows.
-  'js.table.viewColumnsCount': '{0} of {1}',
   'js.table.viewBack': 'Back',
   'js.table.viewReset': 'Reset',
-  // The title of the second page: the columns.
+  // The title of the first page, the columns, and the name of the gear opening it.
   'js.table.columns': 'Columns',
 };
-
-/** Fills the placeholders {0} and {1} of a translated text. */
-function format(template: string, first: number, second: number): string {
-  return template.replace('{0}', String(first)).replace('{1}', String(second));
-}
 
 /** The density of a table: the empty word follows the density of the page, the others hold the table to theirs. */
 export type TableDensity = '' | 'normal' | 'compact';
@@ -45,49 +37,38 @@ const DENSITIES: ReadonlyArray<{ value: TableDensity; key: keyof typeof I18N_KEY
 
 export interface TableViewOptionsProps extends TableViewValues {
   /**
-   * Whether the table keeps the view of the user: the density and the two switches are offered only then, since a
-   * choice that is lost at once is none.
-   */
-  viewOptions: boolean;
-
-  /** Whether the table offers the column selection: the entry opening it is there only then. */
-  columnSelect: boolean;
-
-  /** How many of the columns the user can choose the table displays: the "n" of the entry "Columns · n of m". */
-  columnsShown: number;
-
-  /** How many columns the user can choose, displayed or not: the "m" of the entry. */
-  columnsTotal: number;
-
-  /** Receives the entry for the column selection, so that the focus can return to it from the second page. */
-  columnsEntryRef?: React.Ref<HTMLButtonElement>;
-
-  /**
    * Whether the page is not the one showing: it stays in the popover, hidden, so that what it holds stays as it is,
    * and its entries leave the roving.
    */
   hidden?: boolean;
 
+  /** Receives the way back, so that the focus can go to it when the page shows. */
+  backRef?: React.Ref<HTMLElement>;
+
+  /**
+   * Called by the way back in the head of the page; the way back is there only with it, where the page stands behind
+   * the page "Columns".
+   */
+  onBack?(): void;
+
   /** Called at once with all three values whenever one of them is changed. */
   onChange(values: TableViewValues): void;
-
-  /** Called when the entry for the column selection is pressed. */
-  onColumns(): void;
 
   /** Called when the entry resetting the view is pressed. */
   onReset(): void;
 }
 
-/** The stops of the roving over the first page, in the order of the page: the density is one of them. */
-type ViewStop = 'density' | 'stripes' | 'columnLines' | 'columns' | 'reset';
+/** The stops of the roving over the menu, in the order of the page: the density is one of them. */
+type ViewStop = 'density' | 'stripes' | 'columnLines' | 'reset';
 
 /**
- * The first page of the popover "View" of a table, a menu: the density as three segments and stripes and column lines
- * as switches (where the table keeps the view, see `viewOptions`), the entry opening the column selection as the
- * second page (where the table offers it; it tells how many of the columns are shown) and the reset.
+ * The page "View" of the popover of a table, offered where the table keeps the view of the user, since a choice that
+ * is lost at once is none: a head with the title, behind the way back where the page stands behind the page
+ * "Columns", and under it a menu named by the title: the density as three segments, stripes and column lines as
+ * switches, last the reset.
  *
  * <p>Every entry is a menu item and the whole row acts: the density a `menuitemradio` per segment, the two switches a
- * `menuitemcheckbox` whose switch at the right is a drawing of the state, no input, the other two a `menuitem`. Up,
+ * `menuitemcheckbox` whose switch at the right is a drawing of the state, no input, the reset a `menuitem`. Up,
  * Down, Home and End move over the entries (useRovingMenu), where the three segments are one stop - the one in
  * force; Left and Right on a segment choose the density, wrapping around at the ends, and leave the stop where it
  * is. One entry is in the tab order, the one last focused. The reset sends its command and closes the popover.</p>
@@ -97,10 +78,10 @@ type ViewStop = 'density' | 'stripes' | 'columnLines' | 'columns' | 'reset';
  * the first one and not against the old state.</p>
  */
 export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
-  density, striped, columnLines, viewOptions, columnSelect, columnsShown, columnsTotal, columnsEntryRef, hidden,
-  onChange, onColumns, onReset,
+  density, striped, columnLines, hidden, backRef, onBack, onChange, onReset,
 }) => {
   const i18n = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
   const titleId = useId();
   const headingId = useId();
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -124,17 +105,11 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
 
   const selectedIndex = Math.max(0, DENSITIES.findIndex((entry) => entry.value === shown.density));
 
-  // The entries are the tab stop one at a time: the one last focused while there is one, else the first.
-  const stops: ViewStop[] = [
-    ...(viewOptions ? ['density', 'stripes', 'columnLines'] as const : []),
-    ...(columnSelect ? ['columns'] as const : []),
-    'reset',
-  ];
-  const [focusStop, setFocusStop] = useState<ViewStop | null>(null);
-  const tabStop = focusStop !== null && stops.includes(focusStop) ? focusStop : stops[0];
+  // The entries are the tab stop one at a time: the one last focused, else the first.
+  const [tabStop, setTabStop] = useState<ViewStop>('density');
   const stopProps = (stop: ViewStop) => ({
     tabIndex: stop === tabStop ? 0 : -1,
-    onFocus: () => setFocusStop(stop),
+    onFocus: () => setTabStop(stop),
   });
 
   // The segments of the density are one stop: only the one in force takes the arrows from above and below.
@@ -158,98 +133,101 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
   };
 
   return (
-    <div ref={menuRef} role="menu" aria-labelledby={titleId} className="tl-table-view-options__page" hidden={hidden} onKeyDown={roveKeyDown}>
-      <div id={titleId} role="presentation" className="tl-table-view-options__title tl-type-label-strong">
-        {i18n['js.table.view']}
+    <div className="tl-table-view-options__page" hidden={hidden}>
+      <div className="tl-table-view-options__title tl-type-label-strong">
+        {onBack && (
+          <Button
+            ref={backRef}
+            label={i18n['js.table.viewBack']}
+            image={ICON_PREVIOUS}
+            display="icon-only"
+            appearance="ghost"
+            small
+            className="tl-table-view-options__back"
+            onClick={onBack}
+          />
+        )}
+        {/* The text alone names the menu, not the way back. */}
+        <span id={titleId}>{i18n['js.table.view']}</span>
       </div>
-      {viewOptions && (
-        <>
-          <div id={headingId} role="presentation" className="tl-menu__header tl-type-label">
-            {i18n['js.table.viewDensity']}
-          </div>
-          <div
-            role="group"
-            aria-labelledby={headingId}
-            className="tl-segmented tl-table-view-options__segments"
-            onKeyDown={handleDensityKeyDown}
-          >
-            {DENSITIES.map((entry, index) => (
-              <button
-                key={entry.value}
-                ref={(element) => {
-                  segmentRefs.current[index] = element;
-                }}
-                type="button"
-                role="menuitemradio"
-                aria-checked={index === selectedIndex}
-                // The segment in force is the stop of the density; the others are reached with Left and Right.
-                tabIndex={index === selectedIndex && tabStop === 'density' ? 0 : -1}
-                onFocus={() => setFocusStop('density')}
-                className="tl-segmented__segment tl-type-label"
-                onClick={() => change({ density: entry.value })}
-              >
-                <span className="tl-segmented__label">{i18n[entry.key]}</span>
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            role="menuitemcheckbox"
-            aria-checked={shown.striped}
-            className="tl-menu__item tl-menu__item--check tl-type-body"
-            onClick={() => change({ striped: !latest.current.striped })}
-            {...stopProps('stripes')}
-          >
-            <span className="tl-menu__label">{i18n['js.table.viewStripes']}</span>
-            <span className="tl-checkbox tl-checkbox--switch" aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            role="menuitemcheckbox"
-            aria-checked={shown.columnLines}
-            className="tl-menu__item tl-menu__item--check tl-type-body"
-            onClick={() => change({ columnLines: !latest.current.columnLines })}
-            {...stopProps('columnLines')}
-          >
-            <span className="tl-menu__label">{i18n['js.table.viewColumnLines']}</span>
-            <span className="tl-checkbox tl-checkbox--switch" aria-hidden="true" />
-          </button>
-          <hr className="tl-divider" />
-        </>
-      )}
-      {columnSelect && (
+      <div ref={menuRef} role="menu" aria-labelledby={titleId} className="tl-table-view-options__menu" onKeyDown={roveKeyDown}>
+        <div id={headingId} role="presentation" className="tl-menu__header tl-type-label">
+          {i18n['js.table.viewDensity']}
+        </div>
+        <div
+          role="group"
+          aria-labelledby={headingId}
+          className="tl-segmented tl-table-view-options__segments"
+          onKeyDown={handleDensityKeyDown}
+        >
+          {DENSITIES.map((entry, index) => (
+            <button
+              key={entry.value}
+              ref={(element) => {
+                segmentRefs.current[index] = element;
+              }}
+              type="button"
+              role="menuitemradio"
+              aria-checked={index === selectedIndex}
+              // The segment in force is the stop of the density; the others are reached with Left and Right.
+              tabIndex={index === selectedIndex && tabStop === 'density' ? 0 : -1}
+              onFocus={() => setTabStop('density')}
+              className="tl-segmented__segment tl-type-label"
+              onClick={() => change({ density: entry.value })}
+            >
+              <span className="tl-segmented__label">{i18n[entry.key]}</span>
+            </button>
+          ))}
+        </div>
         <button
-          ref={columnsEntryRef}
+          type="button"
+          role="menuitemcheckbox"
+          aria-checked={shown.striped}
+          className="tl-menu__item tl-menu__item--check tl-type-body"
+          onClick={() => change({ striped: !latest.current.striped })}
+          {...stopProps('stripes')}
+        >
+          <span className="tl-menu__label">{i18n['js.table.viewStripes']}</span>
+          <span className="tl-checkbox tl-checkbox--switch" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          role="menuitemcheckbox"
+          aria-checked={shown.columnLines}
+          className="tl-menu__item tl-menu__item--check tl-type-body"
+          onClick={() => change({ columnLines: !latest.current.columnLines })}
+          {...stopProps('columnLines')}
+        >
+          <span className="tl-menu__label">{i18n['js.table.viewColumnLines']}</span>
+          <span className="tl-checkbox tl-checkbox--switch" aria-hidden="true" />
+        </button>
+        <hr className="tl-divider" />
+        <button
           type="button"
           role="menuitem"
-          className="tl-menu__item tl-menu__item--nav tl-type-body"
-          onClick={onColumns}
-          {...stopProps('columns')}
+          className="tl-menu__item tl-type-body"
+          onClick={onReset}
+          {...stopProps('reset')}
         >
-          <span className="tl-menu__label">{i18n['js.table.viewColumns']}</span>
-          {/* Draws nothing between flex items; it separates label and value in the accessible name. */}
-          {' '}
-          <span className="tl-menu__value">{format(i18n['js.table.viewColumnsCount'], columnsShown, columnsTotal)}</span>
-          <ThemeIcon encoded={ICON_NEXT} className="tl-icon-sm tl-menu__chevron" />
+          <span className="tl-menu__label">{i18n['js.table.viewReset']}</span>
         </button>
-      )}
-      <button
-        type="button"
-        role="menuitem"
-        className="tl-menu__item tl-type-body"
-        onClick={onReset}
-        {...stopProps('reset')}
-      >
-        <span className="tl-menu__label">{i18n['js.table.viewReset']}</span>
-      </button>
+      </div>
     </div>
   );
 };
 
-/** The focus starts on the segment of the density in force, where the table offers the density, else on the first entry. */
-function selectedSegment(root: HTMLElement): HTMLElement | null {
-  return root.querySelector<HTMLElement>('[role="menuitemradio"][aria-checked="true"]')
-    ?? root.querySelector<HTMLElement>('[role^="menuitem"]');
+/**
+ * Where the focus starts, on the page that shows: the density in force on the page "View"; on the page "Columns" the
+ * search of the selection where it has arrived with one, else the control at the foot of the page - the row "View",
+ * or the reset where there is no page "View". The rows of the selection take no focus here: the handle of the first
+ * one shows only under the pointer.
+ */
+function initialFocus(root: HTMLElement): HTMLElement | null {
+  const page = root.querySelector<HTMLElement>('.tl-table-view-options__page:not([hidden])');
+  return page?.querySelector<HTMLElement>('[role="menuitemradio"][aria-checked="true"]')
+    ?? page?.querySelector<HTMLElement>('input')
+    ?? page?.querySelector<HTMLElement>('.tl-menu__item')
+    ?? null;
 }
 
 export interface TableViewButtonProps extends TableViewValues {
@@ -257,23 +235,21 @@ export interface TableViewButtonProps extends TableViewValues {
   inCell?: boolean;
   viewOptions: boolean;
   columnSelect: boolean;
-  columnsShown: number;
-  columnsTotal: number;
 
   /**
-   * The column selection the server holds for the second page, a child control; `null` while it holds none. It
+   * The column selection the server holds for the page "Columns", a child control; `null` while it holds none. It
    * arrives after `onColumns`, and it is released after `onColumnsClose`.
    */
   columnSelection: unknown;
 
   onChange(values: TableViewValues): void;
 
-  /** Called when the second page opens: the server builds the column selection. */
+  /** Called when the popover opens where the table offers the column selection: the server builds it. */
   onColumns(): void;
 
   /**
-   * Called when the second page closes - by its way back, on Escape, on a press outside - so that the server releases
-   * the column selection. Not called for the first page.
+   * Called when the popover closes after `onColumns` - on Escape, on a press outside, on a second press of the gear,
+   * after the reset, or with the button going away -, so that the server releases the column selection.
    */
   onColumnsClose(): void;
   onReset(): void;
@@ -284,110 +260,115 @@ function controlIdOf(child: unknown): string | null {
   return (child as { controlId?: string } | null)?.controlId ?? null;
 }
 
-/** The two pages of the popover: the view, and the columns. */
-type ViewPage = 'view' | 'columns';
+/** The two pages of the popover: the columns, and the view. */
+type ViewPage = 'columns' | 'view';
 
 /**
  * The gear of the table: the strip that places it (`tl-table__columns`), the trigger of the part `MenuTrigger`
- * announcing a dialog (usePopupTrigger), and the popover it opens under itself with two pages, one at a time: the
- * view ({@link TableViewOptions}) and, behind its entry "Columns", the column selection the server holds as a child
- * control, under a head with the way back. The pages are the popover's own, the selection takes effect with every
- * gesture, and there is no dialog.
+ * announcing a dialog (usePopupTrigger), and the popover it opens under itself with two pages, one at a time. First the
+ * columns, the setting a table is adjusted by most: the column selection the server holds as a child control, at the
+ * foot the row "View" leading to the second page, the view ({@link TableViewOptions}) under a head with the way back.
+ * A table without column selection has the view alone, a table that keeps no view the columns alone, with the reset at
+ * their foot. The gear is named after the page it opens. The pages are the popover's own, every gesture takes effect at
+ * once, and there is no dialog.
  *
- * <p>Escape and a press outside close the popover - also from the second page, which then tells the server - and the
- * focus returns to the gear; so does a second press of the gear (its press is a press outside, so the click that
- * follows does not open the popover again). The focus follows the page: it starts on the way back of the second
- * page, and returns to the entry "Columns" on the way back.</p>
+ * <p>The column selection lives while the popover is open: the server is asked for it when the popover opens and told
+ * to release it when the popover closes, not when the pages change. Escape and a press outside close the popover from
+ * either page, and the focus returns to the gear; so does a second press of the gear (its press is a press outside,
+ * so the click that follows does not open the popover again). Opened again, the popover starts on the columns.</p>
+ *
+ * <p>The focus follows the page: the way back takes it on the view, the row "View" on the way back. The selection
+ * arrives a round trip after the opening; until then the focus waits at the foot of the columns, and the selection
+ * takes it from there into its search, if it has one.</p>
  */
 export const TableViewButton: React.FC<TableViewButtonProps> = ({
-  inCell, columnSelect, columnsShown, columnsTotal, columnSelection, onColumns, onColumnsClose, ...view
+  inCell, viewOptions, columnSelect, columnSelection, onColumns, onColumnsClose, onReset, ...values
 }) => {
   const i18n = useI18N(I18N_KEYS);
   const MenuTrigger = usePart('MenuTrigger');
-  const Button = usePart('Button');
   const anchorRef = useRef<HTMLButtonElement | null>(null);
-  const columnsEntryRef = useRef<HTMLButtonElement | null>(null);
+  // The control at the foot of the columns: the row "View", or the reset where there is no view.
+  const footRef = useRef<HTMLButtonElement | null>(null);
   const backRef = useRef<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
-  const [page, setPage] = useState<ViewPage>('view');
-  // Read by the closing handlers, which a surface keeps from the render that opened it, and by the cleanup.
-  const pageRef = useRef(page);
-  pageRef.current = page;
-  const openRef = useRef(open);
-  openRef.current = open;
+  // Whether the view shows in front of the columns; a table without column selection shows it alone.
+  const [viewShown, setViewShown] = useState(false);
+  const page: ViewPage = columnSelect && !viewShown ? 'columns' : 'view';
+
+  // Whether the server was asked for the column selection and not yet told to release it. Refs: read by the closing
+  // handlers, which a surface keeps from the render that opened it, and by the cleanup.
+  const columnsAsked = useRef(false);
   const onColumnsCloseRef = useRef(onColumnsClose);
   onColumnsCloseRef.current = onColumnsClose;
 
-  // The selections of the server are told apart by their ID. Between a press of the entry and the arrival of what it
-  // asked for, the server may still hold the selection of an earlier press (the way back and the entry again within one
-  // round trip): that one was released - the client said so - and is neither drawn nor waited for. `pending` counts
-  // the presses of the entry whose selection has not arrived; while it is above zero, a release (`null`) is the
-  // server catching up and no reason to go back to the first page.
+  // The selections of the server are told apart by their ID. When the popover opens again within one round trip of
+  // its closing (a second press of the gear), the server may still hold the selection of the earlier opening: that one
+  // was released - the client said so - and is not drawn; the page waits for the new one.
   const released = useRef(new Set<string>());
-  const pending = useRef(0);
-  const arrived = useRef<string | null>(null);
   const currentId = controlIdOf(columnSelection);
-  const selection = currentId !== null && !released.current.has(currentId) ? columnSelection : null;
-
-  const releaseSelection = useCallback(() => {
-    const id = controlIdOf(columnSelection);
-    if (id !== null) {
-      released.current.add(id);
-    }
-  }, [columnSelection]);
+  const currentIdRef = useRef(currentId);
+  currentIdRef.current = currentId;
+  const selectionId = currentId !== null && !released.current.has(currentId) ? currentId : null;
 
   const close = useCallback(() => {
-    if (pageRef.current === 'columns') {
-      releaseSelection();
-      onColumnsClose();
-    }
-    pending.current = 0;
-    setPage('view');
-    setOpen(false);
-  }, [onColumnsClose, releaseSelection]);
-  const trigger = usePopupTrigger(open, (next) => (next ? setOpen(true) : close()), 'dialog');
-
-  const showColumns = useCallback(() => {
-    pending.current++;
-    setPage('columns');
-    onColumns();
-  }, [onColumns]);
-  const showView = useCallback(() => {
-    releaseSelection();
-    onColumnsClose();
-    setPage('view');
-  }, [onColumnsClose, releaseSelection]);
-
-  // The server wins: a selection it released - the table left the display, another selection replaced it - takes the
-  // popover back to the first page.
-  useEffect(() => {
-    if (selection !== null) {
-      if (currentId !== arrived.current) {
-        arrived.current = currentId;
-        pending.current = Math.max(0, pending.current - 1);
+    if (columnsAsked.current) {
+      columnsAsked.current = false;
+      if (currentIdRef.current !== null) {
+        released.current.add(currentIdRef.current);
       }
-    } else if (page === 'columns' && pending.current === 0) {
-      setPage('view');
+      onColumnsCloseRef.current();
     }
-  }, [selection, currentId, page]);
+    setViewShown(false);
+    setOpen(false);
+  }, []);
+  const show = () => {
+    if (columnSelect) {
+      columnsAsked.current = true;
+      onColumns();
+    }
+    setOpen(true);
+  };
+  const trigger = usePopupTrigger(open, (next) => (next ? show() : close()), 'dialog');
 
-  // The button goes away - the table redraws its heading, the table is closed - while the second page is open: the
-  // server releases the selection nobody shows any more.
+  // Like every menu entry, the reset closes the popover after it has acted.
+  const reset = () => {
+    onReset();
+    close();
+  };
+
+  // The button goes away - the table redraws its heading, the table is closed - while the popover is open: the server
+  // releases the selection nobody shows any more.
   useEffect(() => () => {
-    if (openRef.current && pageRef.current === 'columns') {
+    if (columnsAsked.current) {
       onColumnsCloseRef.current();
     }
   }, []);
 
-  // The focus follows the page: the entry that was pressed is gone with its page.
+  // The focus follows the page: the control that was pressed is gone with its page.
   const shownPage = useRef(page);
   useLayoutEffect(() => {
     if (shownPage.current === page) {
       return;
     }
     shownPage.current = page;
-    (page === 'columns' ? backRef : columnsEntryRef).current?.focus();
+    (page === 'view' ? backRef : footRef).current?.focus();
   }, [page]);
+
+  // The focus follows the selection on the columns, once per selection. A selection going away with the focus leaves
+  // it at the foot; a selection arriving while the focus waits there takes it into its search - and has none for it
+  // without a search (ten columns or fewer).
+  useLayoutEffect(() => {
+    if (!open || page !== 'columns') {
+      return;
+    }
+    const foot = footRef.current;
+    if (document.activeElement === null || document.activeElement === document.body) {
+      foot?.focus();
+    }
+    if (selectionId !== null && document.activeElement === foot) {
+      document.getElementById(selectionId)?.querySelector<HTMLElement>('input')?.focus();
+    }
+  }, [selectionId]);
 
   return (
     <div className="tl-table__columns">
@@ -395,7 +376,7 @@ export const TableViewButton: React.FC<TableViewButtonProps> = ({
         ref={anchorRef}
         appearance="ghost"
         icon={ICON_COLUMNS}
-        label={i18n['js.table.view']}
+        label={i18n[columnSelect ? 'js.table.columns' : 'js.table.view']}
         small={inCell}
         haspopup={trigger.haspopup}
         expanded={trigger.expanded}
@@ -412,44 +393,44 @@ export const TableViewButton: React.FC<TableViewButtonProps> = ({
           anchorRef={anchorRef}
           label={i18n[page === 'columns' ? 'js.table.columns' : 'js.table.view']}
           className="tl-menu tl-table-view-options"
-          initialFocus={selectedSegment}
+          initialFocus={initialFocus}
           onClose={close}
-          // The pages differ in height, and the selection fills the second one when it arrives: each is placed anew,
-          // on the side with room for it; within a page the side stays, also while the search narrows the list.
-          layoutKey={page + ':' + (controlIdOf(selection) ?? '')}
+          // The pages differ in height, and the selection fills the columns when it arrives: each is placed anew, on
+          // the side with room for it; within a page the side stays, also while the search narrows the list.
+          layoutKey={page + ':' + (selectionId ?? '')}
         >
           {/* Hidden, not unmounted, while the other page shows: what the page holds stays as it is. */}
-          <TableViewOptions
-            {...view}
-            hidden={page !== 'view'}
-            columnSelect={columnSelect}
-            columnsShown={columnsShown}
-            columnsTotal={columnsTotal}
-            columnsEntryRef={columnsEntryRef}
-            onColumns={showColumns}
-            // Like every menu entry, the reset closes the popover after it has acted.
-            onReset={() => {
-              view.onReset();
-              close();
-            }}
-          />
-          {page === 'columns' && (
-            <div className="tl-table-view-options__page">
-              <div className="tl-table-view-options__title tl-type-label-strong">
-                <Button
-                  ref={backRef}
-                  label={i18n['js.table.viewBack']}
-                  image={ICON_PREVIOUS}
-                  display="icon-only"
-                  appearance="ghost"
-                  small
-                  className="tl-table-view-options__back"
-                  onClick={showView}
-                />
-                {i18n['js.table.columns']}
-              </div>
-              {selection !== null && <TLChild control={selection} />}
+          {columnSelect && (
+            <div className="tl-table-view-options__page" hidden={page !== 'columns'}>
+              <div className="tl-table-view-options__title tl-type-label-strong">{i18n['js.table.columns']}</div>
+              {selectionId !== null && <TLChild control={columnSelection} />}
+              <hr className="tl-divider" />
+              {/* The page is no menu: plain buttons, no menu items. */}
+              {viewOptions ? (
+                <button
+                  ref={footRef}
+                  type="button"
+                  className="tl-menu__item tl-menu__item--nav tl-type-body"
+                  onClick={() => setViewShown(true)}
+                >
+                  <span className="tl-menu__label">{i18n['js.table.view']}</span>
+                  <ThemeIcon encoded={ICON_NEXT} className="tl-icon-sm tl-menu__chevron" />
+                </button>
+              ) : (
+                <button ref={footRef} type="button" className="tl-menu__item tl-type-body" onClick={reset}>
+                  <span className="tl-menu__label">{i18n['js.table.viewReset']}</span>
+                </button>
+              )}
             </div>
+          )}
+          {viewOptions && (
+            <TableViewOptions
+              {...values}
+              hidden={page !== 'view'}
+              backRef={backRef}
+              onBack={columnSelect ? () => setViewShown(false) : undefined}
+              onReset={reset}
+            />
           )}
         </PickerPopover>
       )}

@@ -92,6 +92,9 @@ export const ICON_CHOOSE_ICON = 'css:fa-solid fa-icons';
 /** Uploads a file (the file upload, the binary field). */
 export const ICON_UPLOAD = 'css:fa-solid fa-upload';
 
+/** Opens the editor of several images (the image field). */
+export const ICON_MANAGE_IMAGES = 'css:fa-regular fa-images';
+
 /** Downloads a file (the download, the binary field). */
 export const ICON_DOWNLOAD = 'css:fa-solid fa-download';
 
@@ -181,3 +184,6 @@ export const ICON_REDO = 'css:fa-solid fa-arrow-rotate-right';
 
 /** Shows the HTML source in place of the formatted text (the toolbar of the rich text editor). */
 export const ICON_SOURCE = 'css:fa-solid fa-file-code';
+
+/** Opens the commands of one entry of a list (the trigger of the row commands of a data list). */
+export const ICON_ROW_MENU = 'css:fa-solid fa-ellipsis-vertical';

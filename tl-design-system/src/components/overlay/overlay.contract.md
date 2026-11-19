@@ -43,6 +43,7 @@ sie stünde im Dunkelmodus helle Schrift auf dem weißen Dokument (`--tl-surface
 | Ecke | `--tl-radius-md` |
 | Schatten | `--tl-shadow-popover` |
 | Innenabstand | `--tl-space-2xs` |
+| Außenabstand | `--tl-space-xs` |
 
 ## Attribute
 

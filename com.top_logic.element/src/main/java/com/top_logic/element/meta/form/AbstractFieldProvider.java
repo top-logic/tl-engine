@@ -9,11 +9,8 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AttributeWithFallbackStorage;
 import com.top_logic.element.meta.StorageImplementation;
-import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
-import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.fallback.UpdateFallbackDisplay;
 
 /**
  * Common base class for {@link FieldProvider} implementations.
@@ -38,38 +35,7 @@ public abstract class AbstractFieldProvider implements FieldProvider {
 			if (storage != null) {
 				PolymorphicConfiguration<? extends StorageImplementation> implementation = storage.getImplementation();
 				if (implementation instanceof AttributeWithFallbackStorage.Config<?> fallbackConfig) {
-					String storageAttributeName = fallbackConfig.getStorageAttribute();
-					String fallbackAttributeName = fallbackConfig.getFallbackAttribute();
-
-					TLFormObject overlay = editContext.getOverlay();
-					TLStructuredTypePart fallbackAttr = overlay.tType().getPart(fallbackAttributeName);
-					Object explicitValue = overlay.tValueByName(storageAttributeName);
-
-					if (!editContext.isDisabled()) {
-						AttributeFormFactory.initFieldValue(editContext, (FormField) member);
-						
-						Object fallbackValue = AttributeFormFactory.toFieldValue(editContext, field,
-							overlay.tValue(fallbackAttr));
-						field.setPlaceholder(fallbackValue);
-						
-						Object fieldValue = AttributeFormFactory.toFieldValue(editContext, field, explicitValue);
-						field.initializeField(fieldValue);
-
-						overlay.getScope().addValueListener(overlay, fallbackAttr,
-							(fallbackField, oldFallback, newFallback) -> {
-								field.setPlaceholder(newFallback);
-							});
-					}
-
-					UpdateFallbackDisplay updater =
-						new UpdateFallbackDisplay(fallbackConfig.getCssExplicit(), fallbackConfig.getCssFallback());
-
-					field.addValueListener(updater);
-					field.addListener(FormField.ACTIVE_PROPERTY, updater);
-
-					// Set initial values.
-					updater.valueChanged(field, null, explicitValue);
-
+					FallbackFieldDisplay.install(editContext, field, fallbackConfig);
 					return;
 				}
 			}

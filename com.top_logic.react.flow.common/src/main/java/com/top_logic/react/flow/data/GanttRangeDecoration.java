@@ -71,6 +71,9 @@ public interface GanttRangeDecoration extends com.top_logic.react.flow.data.Gant
 	com.top_logic.react.flow.data.GanttRangeDecoration setColor(String value);
 
 	@Override
+	com.top_logic.react.flow.data.GanttRangeDecoration setColorRole(String value);
+
+	@Override
 	com.top_logic.react.flow.data.GanttRangeDecoration setLabel(com.top_logic.react.flow.data.Box value);
 
 	@Override

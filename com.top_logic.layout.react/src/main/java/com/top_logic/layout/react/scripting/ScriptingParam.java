@@ -6,7 +6,8 @@
 package com.top_logic.layout.react.scripting;
 
 /**
- * Schema description of a single argument of an {@link ScriptingAction}.
+ * Description of a single hand-declared argument of an {@link ScriptingAction}, from which
+ * {@link ArgsSchema#forParams(String, java.util.List)} builds the argument schema of the action.
  *
  * <p>
  * The headless interface advertises the parameters an action accepts so that a consumer (the

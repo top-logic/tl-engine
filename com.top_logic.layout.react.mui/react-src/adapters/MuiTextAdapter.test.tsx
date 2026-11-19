@@ -15,15 +15,15 @@ function mountText(state: Partial<TextStateJson>) {
   return mountAdapter(MuiTextAdapter, { text: 'Hallo', ...state });
 }
 
-/** The text color the MUI styles declare for the given element, without resolving variables. */
-function declaredColor(element: Element): string {
-  let declared = '';
+/** The value the MUI styles declare for a property of the given element, without resolving variables. */
+function declared(element: Element, property: string): string {
+  let result = '';
   for (const rule of styleRules()) {
     if (element.matches(rule.selectorText)) {
-      declared = rule.style.getPropertyValue('color') || declared;
+      result = rule.style.getPropertyValue(property) || result;
     }
   }
-  return declared;
+  return result;
 }
 
 function root(): HTMLElement {
@@ -49,7 +49,9 @@ describe('TLText as MUI Typography', () => {
 
   it('maps each typographic role to an MUI variant', () => {
     const expected: Record<TextStateJson.Variant, string> = {
-      body: 'body2', title: 'h6', headline: 'h5', display: 'h4', label: 'subtitle2', caption: 'caption',
+      display: 'h4', 'heading-lg': 'h5', 'heading-md': 'h6', 'heading-sm': 'subtitle1',
+      body: 'body2', 'body-strong': 'body2', label: 'caption', 'label-strong': 'subtitle2',
+      overline: 'overline', code: 'body2',
     };
     for (const [variant, muiVariant] of Object.entries(expected)) {
       mountText({ variant: variant as TextStateJson.Variant });
@@ -57,6 +59,26 @@ describe('TLText as MUI Typography', () => {
       expect(root().tagName).toBe('SPAN');
       cleanup();
     }
+  });
+
+  it('sets the roles MUI has no variant for apart from the variant they are drawn in', () => {
+    mountText({ variant: 'label-strong' });
+    const emphasized = declared(root(), 'font-weight');
+    cleanup();
+
+    mountText({ variant: 'body' });
+    const regular = declared(root(), 'font-weight');
+    expect(regular).not.toBe(emphasized);
+    expect(declared(root(), 'font-family')).not.toBe('var(--tl-font-family-mono)');
+    cleanup();
+
+    mountText({ variant: 'body-strong' });
+    expect(declared(root(), 'font-weight')).toBe(emphasized);
+    cleanup();
+
+    mountText({ variant: 'code' });
+    expect(declared(root(), 'font-family')).toBe('var(--tl-font-family-mono)');
+    expect(declared(root(), 'font-weight')).toBe(regular);
   });
 
   it('draws each tone in its palette color', () => {
@@ -72,7 +94,7 @@ describe('TLText as MUI Typography', () => {
     };
     for (const [tone, color] of Object.entries(expected)) {
       mountText({ tone: tone as TextStateJson.Tone });
-      expect(declaredColor(root()), tone).toBe(color);
+      expect(declared(root(), 'color'), tone).toBe(color);
       cleanup();
     }
   });

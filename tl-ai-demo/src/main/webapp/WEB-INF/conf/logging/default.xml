@@ -120,20 +120,13 @@
 		</Logger>
 		<!--
 			AI logging: route the whole AI subsystem to its own file, out of top-logic.main.log
-			(additivity="false"). "com.top_logic.tl.ai" covers tl-ai-core and tl-ai-tool-api;
-			"com.top_logic.ai" covers tl-chat, tl-ai-mcp-server and tl-ai-vector-index.
+			(additivity="false"). The category "com.top_logic.ai" covers all AI modules.
 
 			Level "info" keeps only rare operational events (provider retries, reactive
 			compaction). Raise to "debug" for the full per-run diagnostic trace (this is what the
 			shipped debug.xml does). No prompt/tool payload is ever written here - that content
 			lives in the persisted AgentExecution records. See the developer article ai/logging.
 		-->
-		<Logger name="com.top_logic.tl.ai"
-			additivity="false"
-			level="info"
-		>
-			<AppenderRef ref="TL_AI_APPENDER"/>
-		</Logger>
 		<Logger name="com.top_logic.ai"
 			additivity="false"
 			level="info"

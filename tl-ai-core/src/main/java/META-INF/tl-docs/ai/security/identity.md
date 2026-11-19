@@ -42,7 +42,7 @@ Three permissive constructs exist, all of them test seams that no production pat
 |---|---|
 | `SecurityContext.UNRESTRICTED` | a context with no principal, for unit tests of anything that merely needs *a* context |
 | `ToolContext.EMPTY` | the same, wrapped with `AUTO_APPROVE` and a no-op transaction scope |
-| `ModelSecurity.UNCHECKED`, `ToolAuthorization.UNCHECKED`, `PreCommitGuard.PERMISSIVE` | the engine's model rights need a booted `SecurityConfigurationService` and the tool policy a booted `AiToolAccessService`; a unit test about how a context *behaves* has neither |
+| `ModelSecurity.UNCHECKED`, `ToolAuthorization.UNCHECKED` | the engine's model rights need a booted `SecurityConfigurationService` and the tool policy a booted `AiToolAccessService`; a unit test about how a context *behaves* has neither |
 
 `AiToolAccessService.authorizationFor` and `ModelAccessRightsSecurity` both throw when their service is down, rather than granting everything - both services are registered active by default, so absence is a deliberate deactivation and not a state to be permissive about.
 

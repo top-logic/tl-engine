@@ -5,7 +5,7 @@
  */
 package com.top_logic.ai.chat.layout;
 
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.ai.core.agent.subagent.SubagentJobRegistry;
 
 import junit.framework.TestCase;
 

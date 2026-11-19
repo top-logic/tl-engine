@@ -19,6 +19,7 @@ import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.AttributeFormFactory;
+import com.top_logic.element.meta.form.FallbackFieldDisplay;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.gui.MetaAttributeGUIHelper;
 import com.top_logic.knowledge.service.KBUtils;
@@ -38,6 +39,7 @@ import com.top_logic.model.annotate.AnnotationContainer;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.TLAnnotation;
+import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Utils;
 
@@ -673,6 +675,11 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 
 	/**
 	 * Forces this update to check its value.
+	 *
+	 * <p>
+	 * Independent of the configured {@link UpdateCheck}, a reference must not get a new target the
+	 * current user may not discover, see {@link #checkNewTargets()}.
+	 * </p>
 	 */
 	@FrameworkInternal
 	public void checkUpdate() throws I18NRuntimeException {
@@ -684,7 +691,29 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 			return;
 		}
 
+		checkNewTargets();
 		_updateCheck.checkUpdate(this);
+	}
+
+	/**
+	 * Checks that the value of this update adds no target to a reference that the current user may
+	 * not discover.
+	 *
+	 * <p>
+	 * Targets the reference already holds may stay, also when the user cannot discover them. The
+	 * reference of an object that is not yet created holds nothing, so all its targets are checked.
+	 * </p>
+	 *
+	 * @see DiscoverRight#checkNewTargets(TLObject, TLStructuredTypePart, Object, Object)
+	 */
+	private void checkNewTargets() {
+		TLObject object = getObject();
+		TLStructuredTypePart attribute = getAttribute();
+		if (object == null) {
+			DiscoverRight.checkNewTargets(getOverlay(), attribute, null, getCorrectValues());
+		} else {
+			DiscoverRight.checkNewTargets(object, attribute, getCorrectValues());
+		}
 	}
 
 	/**
@@ -850,6 +879,17 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 				return;
 			}
 	
+			FallbackFieldDisplay fallbackDisplay = FallbackFieldDisplay.get(field);
+			if (fallbackDisplay != null) {
+				// The field may display the fallback value, but only its explicit value is
+				// transferred to the model.
+				if (!isUpdateForCreate() && !isChanged() && !fallbackDisplay.isChanged()) {
+					return;
+				}
+				updateValue(fieldToAttributeValue(field, fallbackDisplay.getExplicitValue()));
+				return;
+			}
+
 			if (!isUpdateRequired()) {
 				return;
 			}
@@ -871,7 +911,24 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 	 */
 	@FrameworkInternal
 	public final Object fieldToAttributeValue(FormField field) {
-		Object fieldValue = field.getValue();
+		return fieldToAttributeValue(field, field.getValue());
+	}
+
+	/**
+	 * Converts the given value in the representation of the given field to a potential attribute
+	 * value.
+	 *
+	 * @param field
+	 *        The {@link FormField} the value is meant for.
+	 * @param fieldValue
+	 *        A value in the representation of the given field, e.g. the explicit value of a field
+	 *        displaying an attribute with fallback.
+	 * @return The value that can be used as value for this {@link AttributeUpdate}.
+	 *
+	 * @see #fieldToAttributeValue(FormField)
+	 */
+	@FrameworkInternal
+	public final Object fieldToAttributeValue(FormField field, Object fieldValue) {
 		if (field instanceof StringField) {
 			if (StringServices.isEmpty(fieldValue)) {
 				// The field value represents "null".
@@ -888,12 +945,22 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 			}
 		} else if (field instanceof SelectField) {
 			if (!((SelectField)field).isMultiple()) {
-				fieldValue = ((SelectField) field).getSingleSelection();
+				fieldValue = singleValue(fieldValue);
 			}
 		} else if (field instanceof DataField) {
 			if (!((DataField) field).isMultiple()) {
-				fieldValue = ((DataField) field).getDataItem();
+				fieldValue = singleValue(fieldValue);
 			}
+		}
+		return fieldValue;
+	}
+
+	/**
+	 * The single value of a single-valued field whose value may be a collection.
+	 */
+	private static Object singleValue(Object fieldValue) {
+		if (fieldValue instanceof Collection<?> collection) {
+			return collection.isEmpty() ? null : collection.iterator().next();
 		}
 		return fieldValue;
 	}

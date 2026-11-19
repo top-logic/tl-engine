@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Icons from pictures stored in the model.
+	
+	A symbol holds a picture and an icon. The type Symbol has a <dynamic-icon> annotation returning
+	the icon attribute, a binary value. So every display of a symbol shows its stored picture as icon:
+	the rows of the table, the options of the selection field and the chip of the chosen value. A
+	symbol without icon shows the icon of its type.
+	
+	The icon is embedded into the page, so it must be small. The model computes it from the picture
+	with binaryScaleImage(), which scales the picture down to at most 32 pixels: a lifecycle handler of
+	the type when a symbol is created, a change handler of the picture when the picture changes. The
+	view therefore only edits the picture, with the plain create dialog and save of the form; a symbol
+	created or changed elsewhere (e.g. in the generic instance editor) gets its icon the same way.
+-->
+<view>
+	<channels>
+		<channel name="symbol"/>
+		<channel name="chosenSymbol"/>
+	</channels>
+
+	<panel with-inset="true">
+		<title>
+			<en>Icons from pictures</en>
+			<de>Icons aus Bildern</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-plus-lg"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>New Symbol</en>
+					<de>Neues Symbol</de>
+				</label>
+				<create-transient type="demo.react:Symbol">
+					<with-result>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="demo/create-symbol.view.xml"
+						>
+							<bind
+								channel="selection"
+								to="symbol"
+							/>
+						</open-dialog>
+					</with-result>
+				</create-transient>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-trash"
+				inputs="symbol"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Delete</en>
+					<de>Löschen</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<delete-object/>
+				<write-channel name="symbol"
+					clear="true"
+				/>
+			</generic-command>
+		</commands>
+
+		<text>
+			<label>
+				<en>Every display of a symbol shows the picture stored in its icon attribute: the rows of the table, the options of the selection field below and the chosen value. Create a symbol with a picture, or select one and upload another picture in the form: the model scales the picture down to 32 pixels with binaryScaleImage() and stores it as icon, whatever changes the picture. A symbol without picture shows the icon of its type.</en>
+				<de>Jede Anzeige eines Symbols zeigt das Bild, das in seinem Attribut Icon gespeichert ist: die Zeilen der Tabelle, die Optionen des Auswahlfelds darunter und der gewählte Wert. Legen Sie ein Symbol mit Bild an, oder wählen Sie eines und laden Sie im Formular ein anderes Bild hoch: Das Modell verkleinert das Bild mit binaryScaleImage() auf 32 Pixel und legt es als Icon ab, egal wodurch das Bild geändert wird. Ein Symbol ohne Bild zeigt das Icon seines Typs.</de>
+			</label>
+		</text>
+
+		<grid
+			gap="default"
+			max-columns="2"
+			min-column-width="20rem"
+		>
+			<table
+				observed-types="demo.react:Symbol"
+				selection="symbol"
+				types="demo.react:Symbol"
+			>
+				<columns>
+					<computed-column name="symbol"
+						type="demo.react:Symbol"
+					>
+						<label>
+							<en>Symbol</en>
+							<de>Symbol</de>
+						</label>
+						<value>$row</value>
+					</computed-column>
+					<column attribute="picture"/>
+				</columns>
+				<rows>all(`demo.react:Symbol`)</rows>
+			</table>
+			<form input="symbol">
+				<field attribute="name"/>
+				<field attribute="picture"/>
+			</form>
+		</grid>
+
+		<fields>
+			<value-input
+				type="demo.react:Symbol"
+				value="chosenSymbol"
+			>
+				<label>
+					<en>Chosen symbol</en>
+					<de>Gewähltes Symbol</de>
+				</label>
+			</value-input>
+		</fields>
+	</panel>
+</view>

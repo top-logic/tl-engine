@@ -9,9 +9,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.IntConsumer;
 
-import com.top_logic.tl.ai.core.limits.BoundedWorkerPool;
-import com.top_logic.tl.ai.core.limits.CapacityConfig;
-import com.top_logic.tl.ai.core.limits.RunLimitSettings;
+import com.top_logic.ai.core.limits.BoundedWorkerPool;
+import com.top_logic.ai.core.limits.CapacityConfig;
+import com.top_logic.ai.core.limits.RunLimitSettings;
 
 /**
  * The threads the chat's agent runs execute on, and how many of them there are.

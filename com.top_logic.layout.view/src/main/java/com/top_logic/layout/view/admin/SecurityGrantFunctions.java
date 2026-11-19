@@ -28,6 +28,7 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.ApplicableOperations;
 import com.top_logic.model.security.ModelAccessRights;
@@ -61,10 +62,10 @@ import com.top_logic.util.error.TopLogicException;
 public class SecurityGrantFunctions extends TLScriptFunctions {
 
 	/**
-	 * CSS class of a cell whose state is stored but not yet in effect, and of a row whose grants
-	 * never take effect.
+	 * Name of the color role of a cell whose state is stored but not yet in effect, and of a row
+	 * whose grants never take effect: {@link ValueColor#WARNING}.
 	 */
-	public static final String PENDING_CLASS = "tl-status-warning";
+	public static final String PENDING_ROLE = ValueColor.WARNING.getExternalName();
 
 	/** Separator between the places listed in a tooltip. */
 	private static final String SEPARATOR = ", ";
@@ -398,8 +399,8 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * The CSS class marking a cell of the given grant: {@value #PENDING_CLASS} for a state that is
-	 * stored but not yet in effect.
+	 * The color role marking a cell of the given grant: {@link ValueColor#WARNING warning} for a
+	 * state that is stored but not yet in effect.
 	 *
 	 * @param grants
 	 *        The grants, see {@link #of(TLClass)}.
@@ -407,29 +408,29 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 	 *        A row, see {@link #rows(TypeGrants)}.
 	 * @param operation
 	 *        An operation, see {@link #operations(TypeGrants)}.
-	 * @return The class, <code>null</code> for a cell in effect as it is shown.
+	 * @return The name of the role, <code>null</code> for a cell in effect as it is shown.
 	 */
-	@Label("CSS class of a grant")
+	@Label("Color role of a grant")
 	@SideEffectFree
-	public static String cellClass(@Mandatory TypeGrants grants, @Mandatory Row row,
+	public static String cellRole(@Mandatory TypeGrants grants, @Mandatory Row row,
 			@Mandatory BoundCommandGroup operation) {
-		return cell(grants, row, operation).pending() ? PENDING_CLASS : null;
+		return cell(grants, row, operation).pending() ? PENDING_ROLE : null;
 	}
 
 	/**
-	 * The CSS class marking the given row: {@value #PENDING_CLASS} for a role that cannot be held
-	 * on the type, whose grants never take effect.
+	 * The color role marking the given row: {@link ValueColor#WARNING warning} for a role that
+	 * cannot be held on the type, whose grants never take effect.
 	 *
 	 * @param grants
 	 *        The grants, see {@link #of(TLClass)}.
 	 * @param row
 	 *        A row, see {@link #rows(TypeGrants)}.
-	 * @return The class, <code>null</code> for a row of a role that can be held.
+	 * @return The name of the role, <code>null</code> for a row of a role that can be held.
 	 */
-	@Label("CSS class of a row of the grants")
+	@Label("Color role of a row of the grants")
 	@SideEffectFree
-	public static String rowClass(@Mandatory TypeGrants grants, @Mandatory Row row) {
-		return grants.isIneffective(row) ? PENDING_CLASS : null;
+	public static String rowRole(@Mandatory TypeGrants grants, @Mandatory Row row) {
+		return grants.isIneffective(row) ? PENDING_ROLE : null;
 	}
 
 	/**

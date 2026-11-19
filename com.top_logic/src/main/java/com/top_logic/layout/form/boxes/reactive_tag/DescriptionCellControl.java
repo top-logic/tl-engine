@@ -73,7 +73,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	
 		HTMLFragment content;
 		HTMLFragment description;
-		if (labelPosition != LabelPosition.HIDE_LABEL) {
+		if (!labelPosition.isLabelHidden()) {
 			content = inputControl;
 			description = Fragments.concat(labelControl, errorControl);
 		} else {
@@ -97,7 +97,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 				return cp.createControl(member,
 					colon ? FormTemplateConstants.STYLE_LABEL_WITH_COLON_VALUE
 						: FormTemplateConstants.STYLE_LABEL_VALUE);
-			case HIDE_LABEL:
+			case HIDE_LABEL, PLACEHOLDER:
 				return null;
 		}
 		throw new UnreachableAssertion("Uncovered label position: " + labelPosition);
@@ -428,7 +428,7 @@ public class DescriptionCellControl extends AbstractControlBase implements Visib
 	 */
 	@TemplateVariable("hasLabel")
 	public boolean hasLabel() {
-		return _description != null && _labelPosition != LabelPosition.HIDE_LABEL;
+		return _description != null && !_labelPosition.isLabelHidden();
 	}
 
 	/**

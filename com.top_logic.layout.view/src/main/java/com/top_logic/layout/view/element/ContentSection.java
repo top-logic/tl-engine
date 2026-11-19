@@ -14,6 +14,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.layout.view.security.AccessChecks;
 import com.top_logic.layout.view.security.SecuredObject;
 import com.top_logic.layout.view.security.UnitAccess;
@@ -42,14 +43,17 @@ public final class ContentSection {
 
 	private final UnitAccess _access;
 
+	private final UnitVisibility _visibility;
+
 	private final List<UIElement> _children;
 
-	private ContentSection(String id, ResKey label, String icon, UnitAccess access,
+	private ContentSection(String id, ResKey label, String icon, UnitAccess access, UnitVisibility visibility,
 			List<UIElement> children) {
 		_id = id;
 		_label = label;
 		_icon = icon;
 		_access = access;
+		_visibility = visibility;
 		_children = children;
 	}
 
@@ -65,6 +69,7 @@ public final class ContentSection {
 		String icon = config.getIcon();
 		return new ContentSection(config.getId(), config.getLabel(), StringServices.isEmpty(icon) ? null : icon,
 			UnitAccess.create(context, config.getAccessControl()),
+			UnitVisibility.create(config.getVisibility()),
 			config.getChildren().stream()
 				.map(context::getInstance)
 				.collect(Collectors.toList()));
@@ -101,15 +106,15 @@ public final class ContentSection {
 	}
 
 	/**
-	 * Whether this part is currently left out of its container, see
-	 * {@link AccessChecks#hiding(UnitAccess, ViewContext)}.
+	 * Whether this part is currently left out of its container, by its visibility condition or its
+	 * access check, see {@link AccessChecks#hiding(UnitAccess, ChannelCondition, ViewContext)}.
 	 *
 	 * @param context
 	 *        The context the container is displayed in.
-	 * @return {@code null} when this part is never left out this way.
+	 * @return {@code null} when this part is never left out.
 	 */
 	public UnitHiding hiding(ViewContext context) {
-		return AccessChecks.hiding(_access, context);
+		return AccessChecks.hiding(_access, UnitVisibility.bind(_visibility, context), context);
 	}
 
 	/**
@@ -153,14 +158,16 @@ public final class ContentSection {
 	 *
 	 * <p>
 	 * With an access control over an object, the content is displayed as the access check decides
-	 * for the current object, see {@link AccessChecks#guard(UnitAccess, ViewContext, java.util.function.Function)}.
+	 * for the current object while the visibility condition holds, see
+	 * {@link AccessChecks#guard(UnitAccess, ChannelCondition, ViewContext, java.util.function.Function)}.
 	 * </p>
 	 *
 	 * @param contentContext
 	 *        The context derived by {@link #contentContext(ViewContext, String)}.
 	 */
 	public ReactControl createContent(ViewContext contentContext) {
-		return AccessChecks.guard(_access, contentContext, ctx -> ContentControls.toControl(_children, ctx));
+		return AccessChecks.guard(_access, UnitVisibility.bind(_visibility, contentContext), contentContext,
+			ctx -> ContentControls.toControl(_children, ctx));
 	}
 
 }

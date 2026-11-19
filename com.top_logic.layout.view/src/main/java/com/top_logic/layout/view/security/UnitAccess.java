@@ -13,6 +13,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.element.WithVisibility;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.CheckedObjects.Decision;
@@ -67,6 +68,11 @@ public final class UnitAccess {
 	/** Description of a unit's access check in messages. */
 	private static final String OWNER = "an '" + WithAccessControl.ACCESS_CONTROL + "'";
 
+	/** How a unit is restricted to objects of the type of its check, in messages. */
+	private static final String REMEDY = "A UI unit meant only for objects of this type declares a '<"
+		+ WithVisibility.VISIBILITY
+		+ ">' condition testing the type, so that it is left out for other objects without being checked.";
+
 	private final OperationCheck _check;
 
 	private final List<InputRef> _inputs;
@@ -85,7 +91,7 @@ public final class UnitAccess {
 	 * </p>
 	 */
 	private UnitAccess(InstantiationContext context, AccessControl config) {
-		_check = new OperationCheck(OWNER, config.getOperation(), config.getType());
+		_check = new OperationCheck(OWNER, config.getOperation(), config.getType(), REMEDY);
 		_inputs = config.getInputs();
 		_denied = config.getDenied();
 		_object = InputScript.compile(config, AccessControl.OBJECT);

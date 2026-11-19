@@ -8,6 +8,7 @@ package com.top_logic.table.impl;
 import java.util.Optional;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellExistence;
@@ -139,13 +140,52 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 	}
 
 	@Override
+	public String headerClass() {
+		return _inner.headerClass();
+	}
+
+	@Override
+	public ValueColor headerRole() {
+		return _inner.headerRole();
+	}
+
+	@Override
+	public ResKey emptyGroupLabel() {
+		return _inner.emptyGroupLabel();
+	}
+
+	@Override
 	public String cssClass(R row) {
 		return _inner.cssClass(row);
 	}
 
 	@Override
+	public ValueColor color(R row) {
+		return _inner.color(row);
+	}
+
+	@Override
 	public Optional<CellExistence<R>> existence() {
 		return _inner.existence();
+	}
+
+	/**
+	 * The given column with another {@link Column#emptyGroupLabel() label of an empty group}.
+	 *
+	 * @param column
+	 *        The column to label the empty group of.
+	 * @param label
+	 *        The text the header row of a group shows when its rows have no value in the column.
+	 * @return A column identical to the given one, except for its
+	 *         {@link Column#emptyGroupLabel() label of an empty group}.
+	 */
+	public static <R, V> Column<R, V> withEmptyGroupLabel(Column<R, V> column, ResKey label) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public ResKey emptyGroupLabel() {
+				return label;
+			}
+		};
 	}
 
 	/**

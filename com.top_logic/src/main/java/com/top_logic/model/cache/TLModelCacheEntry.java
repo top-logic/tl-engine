@@ -44,6 +44,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.TLLifecycleHandler;
 import com.top_logic.model.annotate.ui.ValueColorProvider;
 import com.top_logic.model.composite.CompositeStorage;
 import com.top_logic.model.composite.ContainerStorage;
@@ -75,6 +76,8 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 	private final Map<TLStructuredTypePart, ImmutableSet<TLStructuredTypePart>> _overridesOfPart = map();
 
 	private final Map<TLStructuredType, List<TLObjectInitializer>> _initializers = map();
+
+	private final Map<TLStructuredType, List<TLLifecycleHandler>> _lifecycleHandlers = map();
 
 	private final Map<TLStructuredType, List<PartDefault>> _defaultProviders = map();
 
@@ -499,6 +502,12 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 	}
 
 	@Override
+	public List<TLLifecycleHandler> getLifecycleHandlers(TLStructuredType type) {
+		return cached(_lifecycleHandlers, type, this::canModelPartBeCached,
+			key -> immutable(super.getLifecycleHandlers(key)), super::getLifecycleHandlers);
+	}
+
+	@Override
 	public List<PartDefault> getDefaultProviders(TLStructuredType type) {
 		return cached(_defaultProviders, type, this::canModelPartBeCached, super::getDefaultProviders,
 			super::getDefaultProviders);
@@ -545,6 +554,7 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 		_concreteOverridesByPart.clear();
 		_resolvedParts.clear();
 		_initializers.clear();
+		_lifecycleHandlers.clear();
 		_defaultProviders.clear();
 		_globalAppModelClasses = null;
 		_globalClasses = null;
@@ -564,6 +574,7 @@ public class TLModelCacheEntry extends TLModelOperations implements AbstractTLMo
 			.add("globalAppModelClasses", _globalAppModelClasses == null ? "null" : _globalAppModelClasses.size())
 			.add("globalClasses", _globalClasses == null ? null : _globalClasses.size())
 			.add("initializers", _initializers.size())
+			.add("lifecycleHandlers", _lifecycleHandlers.size())
 			.add("defaultProviders", _defaultProviders.size())
 			.add("resolvedParts", _resolvedParts.values().stream().mapToInt(Map::size).sum())
 			.build();

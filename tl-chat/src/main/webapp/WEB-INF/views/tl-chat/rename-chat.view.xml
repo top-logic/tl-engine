@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The rename dialog for a chat, opened from the row menu of the chat list in
+	tl-chat/albert.view.xml.
+
+	One field on the title of the chat. OK does not use <store-form-state/>: that writes the attribute
+	directly on the session, which skips the notification of the store (a second browser tab would
+	not follow) and skips lastUpdated (the renamed chat would keep its old group). <read-form-object/>
+	gives the overlay of the form - the object with what the user typed, nothing written yet - and
+	aiSessionRename makes the one write, after it checked that the chat is the user's.
+
+	Enter and Escape are bound explicitly, so that a second command added later does not take Enter
+	away.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+	</channels>
+
+	<!-- One field: nothing to resize or maximize, so the window offers neither. -->
+	<window resizable="false"
+		width="420px"
+	>
+		<title>
+			<en>Rename chat</en>
+			<de>Chat umbenennen</de>
+		</title>
+		<form initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="title"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					key="Enter"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>OK</en>
+						<de>OK</de>
+					</label>
+					<read-form-object>
+						<with-result as="edited">
+							<execute-script>
+								<inputs>
+									<input
+										as="session"
+										channel="model"
+									/>
+								</inputs>
+								<function><![CDATA[aiSessionRename($session, $edited.get(`tl.ai.execution:AgentSession#title`))]]></function>
+							</execute-script>
+						</with-result>
+					</read-form-object>
+					<close-dialog/>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+					key="Escape"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

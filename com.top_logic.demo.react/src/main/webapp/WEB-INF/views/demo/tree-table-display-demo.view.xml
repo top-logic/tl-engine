@@ -14,17 +14,18 @@
 	- the label is computed: a scope and a milestone name the number of their children, a ticket
 	shows its number in front of its title;
 	- the icon is computed per kind, an approved milestone showing a check mark instead of a flag;
-	- an approved milestone gets the class tlDemoApproved, which the demo's stylesheet colors;
+	- a ticket without an assignee is drawn in the color role warning, as a pill;
+	- an approved milestone gets the class tlDemoApproved, which the demo's own stylesheet colors;
 	- the tooltip names the description of a scope, the approval state of a milestone and the
 	assignee of a ticket.
 	
-	The "Approved" column states the approval of each milestone and marks its cell with the standard
-	class tl-status-success or tl-status-warning, the "Assignee" column marks a ticket without an
-	assignee with tl-status-error. The row-class of the tree table tints the rows of the tickets
-	whose milestone is approved with tl-status-success.
+	The "Approved" column states the approval of each milestone and tints its cell by its cell-role
+	in the role success or warning, the "Assignee" column tints the cell of a ticket without an
+	assignee in the role error. The row-role of the tree table tints the rows of the tickets whose
+	milestone is approved in the role success.
 	
-	"Toggle approval" switches the approval of the selected milestone. The display, the cell class
-	and the row class follow the change: the milestone's icon, label color, tooltip and "Approved"
+	"Toggle approval" switches the approval of the selected milestone. The display, the cell role
+	and the row role follow the change: the milestone's icon, label color, tooltip and "Approved"
 	cell change on both sides, and the rows of its tickets are tinted or no longer tinted.
 -->
 <view>
@@ -77,7 +78,7 @@
 						<children>if($node == `tl.demo.projectManagement:ProjectScope`, all(`tl.demo.projectManagement:ProjectScope`), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), $node.get(`tl.demo.projectManagement:ProjectScope#milestones`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.get(`tl.demo.projectManagement:Milestone#tickets`), [])))</children>
 						<parents>if($node.instanceOf(`tl.demo.projectManagement:Ticket`), $node.get(`tl.demo.projectManagement:Ticket#milestone`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.container(), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), `tl.demo.projectManagement:ProjectScope`, null)))</parents>
 						<!-- Tints the tickets of an approved milestone. -->
-						<row-class>if($row.instanceOf(`tl.demo.projectManagement:Ticket`), if($row.get(`tl.demo.projectManagement:Ticket#milestone`).get(`tl.demo.projectManagement:Milestone#approved`) == true, 'tl-status-success', null), null)</row-class>
+						<row-role>if($row.instanceOf(`tl.demo.projectManagement:Ticket`), if($row.get(`tl.demo.projectManagement:Ticket#milestone`).get(`tl.demo.projectManagement:Milestone#approved`) == true, 'success', null), null)</row-role>
 						<columns>
 							<computed-column name="node"
 								value="$row"
@@ -90,6 +91,7 @@
 								<display class="com.top_logic.layout.view.element.ResourceDisplayByExpression">
 									<label>if($value.instanceOf(`tl.demo.projectManagement:Ticket`), if($value.get(`tl.demo.projectManagement:Ticket#number`) == null, $value.get(`tl.demo.projectManagement:Ticket#title`), '#' + $value.get(`tl.demo.projectManagement:Ticket#number`) + ' ' + $value.get(`tl.demo.projectManagement:Ticket#title`)), if($value.instanceOf(`tl.demo.projectManagement:Milestone`), $value.get(`tl.demo.projectManagement:Milestone#name`) + ' (' + $value.get(`tl.demo.projectManagement:Milestone#tickets`).size() + ')', $value.get(`tl.demo.projectManagement:ProjectScope#name`) + ' (' + $value.get(`tl.demo.projectManagement:ProjectScope#milestones`).size() + ')'))</label>
 									<icon>if($value.instanceOf(`tl.demo.projectManagement:Ticket`), 'css:bi bi-ticket-detailed', if($value.instanceOf(`tl.demo.projectManagement:Milestone`), if($value.get(`tl.demo.projectManagement:Milestone#approved`) == true, 'css:bi bi-check-circle', 'css:bi bi-flag'), 'css:bi bi-folder2-open'))</icon>
+									<role>if($value.instanceOf(`tl.demo.projectManagement:Ticket`), if($value.get(`tl.demo.projectManagement:Ticket#assignee`) == null, 'warning', null), null)</role>
 									<css-class>if($value.instanceOf(`tl.demo.projectManagement:Milestone`), if($value.get(`tl.demo.projectManagement:Milestone#approved`) == true, 'tlDemoApproved', null), null)</css-class>
 									<tooltip>if($value.instanceOf(`tl.demo.projectManagement:Ticket`), if($value.get(`tl.demo.projectManagement:Ticket#assignee`) == null, #('Not assigned'@en, 'Nicht zugewiesen'@de), $value.get(`tl.demo.projectManagement:Ticket#assignee`).get(`Contacts:PersonContact#firstname`) + ' ' + $value.get(`tl.demo.projectManagement:Ticket#assignee`).get(`Contacts:PersonContact#name`)), if($value.instanceOf(`tl.demo.projectManagement:Milestone`), if($value.get(`tl.demo.projectManagement:Milestone#approved`) == true, #('Approved'@en, 'Freigegeben'@de), #('Awaiting approval'@en, 'Wartet auf Freigabe'@de)), $value.get(`tl.demo.projectManagement:ProjectScope#description`)))</tooltip>
 								</display>
@@ -102,7 +104,7 @@
 									<de>Freigegeben</de>
 								</label>
 								<value>if($row.instanceOf(`tl.demo.projectManagement:Milestone`), if($row.get(`tl.demo.projectManagement:Milestone#approved`) == true, #('Approved'@en, 'Freigegeben'@de), #('Awaiting approval'@en, 'Wartet auf Freigabe'@de)), null)</value>
-								<cell-class>if($row.instanceOf(`tl.demo.projectManagement:Milestone`), if($row.get(`tl.demo.projectManagement:Milestone#approved`) == true, 'tl-status-success', 'tl-status-warning'), null)</cell-class>
+								<cell-role>if($row.instanceOf(`tl.demo.projectManagement:Milestone`), if($row.get(`tl.demo.projectManagement:Milestone#approved`) == true, 'success', 'warning'), null)</cell-role>
 							</computed-column>
 							<computed-column name="assignee"
 								type="Contacts:PersonContact"
@@ -112,7 +114,7 @@
 									<de>Zuständig</de>
 								</label>
 								<value>if($row.instanceOf(`tl.demo.projectManagement:Ticket`), $row.get(`tl.demo.projectManagement:Ticket#assignee`), null)</value>
-								<cell-class>if($row.instanceOf(`tl.demo.projectManagement:Ticket`), if($value == null, 'tl-status-error', null), null)</cell-class>
+								<cell-role>if($row.instanceOf(`tl.demo.projectManagement:Ticket`), if($value == null, 'error', null), null)</cell-role>
 							</computed-column>
 						</columns>
 					</tree-table>
@@ -133,6 +135,7 @@
 						<nodeContent class="com.top_logic.layout.view.element.ResourceDisplayByExpression">
 							<label>if($value.instanceOf(`tl.demo.projectManagement:Ticket`), if($value.get(`tl.demo.projectManagement:Ticket#number`) == null, $value.get(`tl.demo.projectManagement:Ticket#title`), '#' + $value.get(`tl.demo.projectManagement:Ticket#number`) + ' ' + $value.get(`tl.demo.projectManagement:Ticket#title`)), if($value.instanceOf(`tl.demo.projectManagement:Milestone`), $value.get(`tl.demo.projectManagement:Milestone#name`) + ' (' + $value.get(`tl.demo.projectManagement:Milestone#tickets`).size() + ')', $value.get(`tl.demo.projectManagement:ProjectScope#name`) + ' (' + $value.get(`tl.demo.projectManagement:ProjectScope#milestones`).size() + ')'))</label>
 							<icon>if($value.instanceOf(`tl.demo.projectManagement:Ticket`), 'css:bi bi-ticket-detailed', if($value.instanceOf(`tl.demo.projectManagement:Milestone`), if($value.get(`tl.demo.projectManagement:Milestone#approved`) == true, 'css:bi bi-check-circle', 'css:bi bi-flag'), 'css:bi bi-folder2-open'))</icon>
+							<role>if($value.instanceOf(`tl.demo.projectManagement:Ticket`), if($value.get(`tl.demo.projectManagement:Ticket#assignee`) == null, 'warning', null), null)</role>
 							<css-class>if($value.instanceOf(`tl.demo.projectManagement:Milestone`), if($value.get(`tl.demo.projectManagement:Milestone#approved`) == true, 'tlDemoApproved', null), null)</css-class>
 							<tooltip>if($value.instanceOf(`tl.demo.projectManagement:Ticket`), if($value.get(`tl.demo.projectManagement:Ticket#assignee`) == null, #('Not assigned'@en, 'Nicht zugewiesen'@de), $value.get(`tl.demo.projectManagement:Ticket#assignee`).get(`Contacts:PersonContact#firstname`) + ' ' + $value.get(`tl.demo.projectManagement:Ticket#assignee`).get(`Contacts:PersonContact#name`)), if($value.instanceOf(`tl.demo.projectManagement:Milestone`), if($value.get(`tl.demo.projectManagement:Milestone#approved`) == true, #('Approved'@en, 'Freigegeben'@de), #('Awaiting approval'@en, 'Wartet auf Freigabe'@de)), $value.get(`tl.demo.projectManagement:ProjectScope#description`)))</tooltip>
 						</nodeContent>

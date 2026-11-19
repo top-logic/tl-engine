@@ -23,6 +23,7 @@
 
 import { busyCommandAnswered, busyCommandEnqueued } from './busy';
 import { isPageLeaving, leavePage, reloadForStaleUi } from './page-leave';
+import { focusFirstInvalidField } from './focus-invalid';
 import { expectEvents } from './sse-client';
 
 /** Command name for transmitting a form-field value to the server. */
@@ -61,6 +62,21 @@ const ERROR_CODE_STALE_UI = 'stale-ui';
 const ERROR_CODE_CONTROL_GONE = 'control-gone';
 
 /**
+ * Machine-readable error code of a command the server refused because of input the user has to
+ * correct first: the focus goes to the first field showing an error in the control the answer
+ * names in {@link FIELD_INVALID_INPUT_SCOPE}, or else in the control the command was sent to (see
+ * {@link focusFirstInvalidField}). Must match {@code ReactCommandAnswer#ERROR_CODE_INVALID_INPUT}.
+ */
+const ERROR_CODE_INVALID_INPUT = 'invalid-input';
+
+/**
+ * Field of the answer to a command refused with {@link ERROR_CODE_INVALID_INPUT}: the ID of the
+ * control whose fields hold the input to correct - e.g. the form a Save button in a toolbar
+ * stores. Must match {@code ReactCommandAnswer#FIELD_INVALID_INPUT_SCOPE}.
+ */
+const FIELD_INVALID_INPUT_SCOPE = 'invalidInputScope';
+
+/**
  * Header of a command's answer: the number of the last event the server wrote for the window.
  * Must match {@code ReactServlet#LAST_EVENT_HEADER}.
  */
@@ -73,10 +89,18 @@ const LAST_EVENT_HEADER = 'X-TL-Last-Event';
  * fields - the properties of the msgbuf message its handler returned on the server (see
  * {@code ReactCommandAnswer}) - which the caller reads by the name both sides agree on. A command
  * that failed is answered with {@code success: false} and, in {@code error}, the message the
- * window shows. The names {@code success}, {@code error} and {@code errorCode} belong to the
- * answer itself and never name a reply field.</p>
+ * window shows. The names {@code success}, {@code error}, {@code errorCode} and
+ * {@link FIELD_INVALID_INPUT_SCOPE} belong to the answer itself and never name a reply field.</p>
  */
 export type CommandResponse = Record<string, unknown>;
+
+/**
+ * Field of a command's payload telling the server that the command only tidies up (see
+ * {@link CommandOptions.ignoreStaleUi}): the server answers it with success when its control is not
+ * displayed any more, so that the browser logs no failed request. Set by {@link enqueueCommand}.
+ * Must match {@code ReactServlet#FIELD_IGNORE_STALE_UI}.
+ */
+export const FIELD_IGNORE_STALE_UI = 'ignoreStaleUi';
 
 /** JSON payload of a control command POST. */
 export interface CommandPayload {
@@ -84,6 +108,8 @@ export interface CommandPayload {
   command: string;
   windowName: string;
   arguments: Record<string, unknown>;
+  /** See {@link FIELD_IGNORE_STALE_UI}. */
+  [FIELD_IGNORE_STALE_UI]?: boolean;
 }
 
 /**
@@ -135,7 +161,13 @@ async function post(
       console.error('[TLReact] Command failed:', resp.status, body);
       return undefined;
     }
-    return parseResponse(body);
+    const answer = parseResponse(body);
+    if (answer?.success === false && answer.errorCode === ERROR_CODE_INVALID_INPUT) {
+      const scope = answer[FIELD_INVALID_INPUT_SCOPE];
+      focusFirstInvalidField(typeof scope === 'string' ? scope : payload.controlId,
+        lastEvent ? Number(lastEvent) : undefined);
+    }
+    return answer;
   } catch (e) {
     console.error('[TLReact] Command error:', e);
     return undefined;
@@ -184,6 +216,8 @@ export interface CommandOptions {
    * component whose control the server has disposed already, for instance because the page or a
    * classic tab holding it was left - passes `true`: there is nothing left to tidy, and loading the
    * page again would throw away a page that is fine. The command then resolves with `undefined`.
+   * The option also travels with the command (see {@link FIELD_IGNORE_STALE_UI}), so that the
+   * server answers it with success when the addressed control is gone.
    */
   ignoreStaleUi?: boolean;
 
@@ -202,6 +236,15 @@ export interface CommandOptions {
 export const BACKGROUND_COMMAND: Readonly<CommandOptions> = Object.freeze({ background: true });
 
 /**
+ * The {@link CommandOptions} of a report a control sends on its own about its own state - the part
+ * of the rows a table shows, the sizes of the panes of a split panel, the size of a window. Such a
+ * report means nothing once the control is no longer displayed: it runs in the
+ * {@link CommandOptions.background background} and {@link CommandOptions.ignoreStaleUi ignores} a
+ * control the server has disposed already.
+ */
+export const BACKGROUND_REPORT: Readonly<CommandOptions> = Object.freeze({ background: true, ignoreStaleUi: true });
+
+/**
  * Enqueues a command into the strict FIFO chain.
  *
  * <p>For an action command (anything but {@link CMD_VALUE_CHANGED}), all pending debounced field
@@ -211,6 +254,12 @@ export const BACKGROUND_COMMAND: Readonly<CommandOptions> = Object.freeze({ back
  *
  * <p>Unless it is a {@link CommandOptions.background background} command, the command counts as one
  * the user waits for from now until its answer has arrived (see {@link busyCommandEnqueued}).</p>
+ *
+ * <p>A command sent with {@link CommandOptions.ignoreStaleUi} carries {@link FIELD_IGNORE_STALE_UI} in
+ * its payload. So does every {@link CMD_VALUE_CHANGED}: a value for a field that left the display
+ * was abandoned with its field, which is no error. Unlike a command sent with the option, a
+ * {@link CMD_VALUE_CHANGED} answered with {@link ERROR_CODE_STALE_UI} still loads the page
+ * again.</p>
  *
  * @returns a promise resolving with this command's answer once it has arrived, or with
  *          {@code undefined} when the command failed or the page started leaving before its turn
@@ -224,7 +273,10 @@ export function enqueueCommand(
   if (payload.command !== CMD_VALUE_CHANGED && options?.flushFields !== false) {
     void flushPendingFieldValues();
   }
-  const result = _chain.then(() => post(url, payload, options));
+  const sent = options?.ignoreStaleUi || payload.command === CMD_VALUE_CHANGED
+    ? { ...payload, [FIELD_IGNORE_STALE_UI]: true }
+    : payload;
+  const result = _chain.then(() => post(url, sent, options));
   _chain = result;
   if (options?.background !== true) {
     busyCommandEnqueued();

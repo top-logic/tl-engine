@@ -31,14 +31,24 @@ import com.top_logic.layout.react.control.form.ReactTextInputControl;
 public class CodeTextConfigProvider implements ConfigAnnotationControlProvider<Code> {
 
 	@Override
+	public boolean accepts(ConfigFieldModel model, Code annotation) {
+		return ConfigControlService.holdsText(model);
+	}
+
+	@Override
 	public ReactControl createControl(ReactContext context, ConfigFieldModel model, Code annotation) {
-		if (!ConfigControlService.holdsText(model)) {
-			return null;
-		}
 		MultiLine multiLine = ConfigControlService.annotation(model.getProperty(), MultiLine.class);
 		ReactTextInputControl input = ConfigControlService.createTextInput(context, model);
 		input.setMultiline(multiLine != null ? multiLine.rows() : MultiLineText.DEFAULT_ROWS);
 		return input;
+	}
+
+	/**
+	 * The text area spans several lines and takes the whole row.
+	 */
+	@Override
+	public boolean rendersWholeLine(ConfigFieldModel model, Code annotation) {
+		return true;
 	}
 
 }

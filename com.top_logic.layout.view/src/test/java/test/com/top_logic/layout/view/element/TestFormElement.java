@@ -235,7 +235,7 @@ public class TestFormElement extends TestCase {
 		assertTrue("An inset form must be wrapped in an inset, but is " + control,
 			control instanceof ReactInsetControl);
 
-		List<ReactControl> content = ((ReactInsetControl) control).scriptingChildren();
+		List<ReactControl> content = ((ReactInsetControl) control).displayedChildren();
 		assertEquals("The inset holds exactly the form.", 1, content.size());
 		assertTrue("The content of the inset must be the form, but is " + content.get(0),
 			content.get(0) instanceof FormControl);

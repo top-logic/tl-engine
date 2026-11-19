@@ -5,7 +5,12 @@
  */
 package com.top_logic.model.search.providers;
 
+import static com.top_logic.basic.util.Utils.*;
+
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
@@ -14,6 +19,7 @@ import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
@@ -26,10 +32,13 @@ import com.top_logic.layout.component.ComponentUtil;
 import com.top_logic.mig.html.ElementUpdate;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
@@ -49,7 +58,9 @@ public class ListModelByExpression<C extends ListModelByExpression.Config<?>>
 		Config.ELEMENTS_NAME,
 		Config.SUPPORTS_ELEMENT_NAME,
 		Config.MODEL_FOR_ELEMENT_NAME,
-		Config.SUPPORTS_MODEL_NAME
+		Config.SUPPORTS_MODEL_NAME,
+		Config.TYPES_TO_OBSERVE,
+		Config.ELEMENTS_TO_UPDATE,
 	})
 	public interface Config<I extends ListModelByExpression<?>> extends PolymorphicConfiguration<I> {
 
@@ -72,6 +83,16 @@ public class ListModelByExpression<C extends ListModelByExpression.Config<?>>
 		 * Property name for configuration option {@link #getElements()}.
 		 */
 		String ELEMENTS_NAME = "elements";
+
+		/**
+		 * Property name for configuration option {@link #getTypesToObserve()}.
+		 */
+		String TYPES_TO_OBSERVE = "typesToObserve";
+
+		/**
+		 * Property name for configuration option {@link #getElementsToUpdate()}.
+		 */
+		String ELEMENTS_TO_UPDATE = "elementsToUpdate";
 
 		/**
 		 * Expression retrieving list elements in the context of the component's model.
@@ -202,6 +223,44 @@ public class ListModelByExpression<C extends ListModelByExpression.Config<?>>
 		@NonNullable
 		Expr getModelForElement();
 
+		/**
+		 * Types whose instances are observed for changes in addition to the types of the list
+		 * elements.
+		 *
+		 * <p>
+		 * When an instance of one of these types is modified, the function
+		 * {@link #getElementsToUpdate()} determines the list elements whose display must be
+		 * refreshed, e.g. because a column shows a value of the modified object.
+		 * </p>
+		 *
+		 * @see ListModelByExpression#getTypesToObserve()
+		 */
+		@Name(TYPES_TO_OBSERVE)
+		@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
+		List<TLModelPartRef> getTypesToObserve();
+
+		/**
+		 * Function computing the list elements to refresh when an object of one of the
+		 * {@link #getTypesToObserve() observed types} is modified.
+		 *
+		 * <p>
+		 * The function receives the modified object as first argument and the current component
+		 * model as second argument. It returns the list elements whose display depends on the
+		 * modified object. A list element is refreshed by default when it is modified itself.
+		 * </p>
+		 *
+		 * <p>
+		 * Example: Refresh the contact of a modified account, whose row shows values of the
+		 * account:<br/>
+		 * <code>account -&gt; $account.get(`tl.accounts:Person#contact`)</code>
+		 * </p>
+		 *
+		 * @see ListModelByExpression#getElementsToUpdate(LayoutComponent, Object)
+		 */
+		@Name(ELEMENTS_TO_UPDATE)
+		@ItemDefault(Expr.Null.class)
+		Expr getElementsToUpdate();
+
 	}
 
 	static final String UPDATE_NO_CHANGE = "no_change";
@@ -215,6 +274,10 @@ public class ListModelByExpression<C extends ListModelByExpression.Config<?>>
 	private QueryExecutor _modelForElement;
 
 	private QueryExecutor _supportsElement;
+
+	private final QueryExecutor _elementsToUpdate;
+
+	private final Set<TLStructuredType> _typesToObserve;
 
 	/**
 	 * Creates a {@link ListModelByExpression} from configuration.
@@ -233,6 +296,28 @@ public class ListModelByExpression<C extends ListModelByExpression.Config<?>>
 		_supportsModel = QueryExecutor.compile(kb, model, config.getSupportsModel());
 		_supportsElement = QueryExecutor.compileOptional(kb, model, config.getSupportsElement());
 		_modelForElement = QueryExecutor.compile(kb, model, config.getModelForElement());
+		_elementsToUpdate = QueryExecutor.compile(kb, model, config.getElementsToUpdate());
+		_typesToObserve = resolveTypes(context, config.getTypesToObserve());
+	}
+
+	private static Set<TLStructuredType> resolveTypes(InstantiationContext context, List<TLModelPartRef> typeRefs) {
+		Set<TLStructuredType> types = new HashSet<>();
+		for (TLModelPartRef ref : typeRefs) {
+			TLClass type = resolve(context, ref);
+			if (type != null) {
+				types.add(type);
+			}
+		}
+		return Set.copyOf(types);
+	}
+
+	private static TLClass resolve(InstantiationContext context, TLModelPartRef typeReference) {
+		try {
+			return typeReference.resolveClass();
+		} catch (ConfigurationException exception) {
+			context.error("Failed to resolve " + debug(typeReference) + ".", exception);
+			return null;
+		}
 	}
 
 	@Override
@@ -271,6 +356,16 @@ public class ListModelByExpression<C extends ListModelByExpression.Config<?>>
 			return ElementUpdate.NO_CHANGE;
 		}
 		return ElementUpdate.fromDecision(SearchExpression.asBoolean(result));
+	}
+
+	@Override
+	public Collection<?> getElementsToUpdate(LayoutComponent component, Object businessObject) {
+		return SearchExpression.asCollection(_elementsToUpdate.execute(businessObject, component.getModel()));
+	}
+
+	@Override
+	public Set<TLStructuredType> getTypesToObserve() {
+		return _typesToObserve;
 	}
 
 	@Override

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<!--
+			The authorization endpoint sends the browser to the page of the React view UI on which
+			the person allows or denies the request of the client, and to the page telling why a
+			request is refused.
+		-->
+		<config service-class="com.top_logic.oauth.server.OAuthAuthorizationServer">
+			<instance
+				consent-page="/view/oauth-consent.view.xml"
+				refusal-page="/view/oauth-refused.view.xml"
+			/>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.layout.view.ViewConfig">
+			<entry-points>
+				<!--
+					Not anonymous: in an application with a login view, a visitor without an account
+					logs in first and returns to the page with the URL it was called with.
+				-->
+				<entry-point view="oauth-consent.view.xml"/>
+				<!-- Anonymous: tells a visitor why a sign-in is not possible, without a login. -->
+				<entry-point
+					anonymous="true"
+					view="oauth-refused.view.xml"
+				/>
+			</entry-points>
+		</config>
+	</configs>
+</application>

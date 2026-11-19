@@ -268,6 +268,32 @@ public class ReactMenuControl extends ReactControl {
 	 * failure is the failure of the selection.
 	 * </p>
 	 */
+	/**
+	 * Whether the menu is open.
+	 */
+	public boolean isOpen() {
+		return Boolean.TRUE.equals(getState(MenuState.OPEN__PROP));
+	}
+
+	/**
+	 * A closed menu is not seen.
+	 */
+	@Override
+	public boolean scriptingVisible() {
+		return isOpen() && super.scriptingVisible();
+	}
+
+	/**
+	 * Items are selected only from the {@link #isOpen() open} menu.
+	 */
+	@Override
+	public ExecutableState scriptingCommandState(String command) {
+		if (SELECT_ITEM_COMMAND.equals(command) && !isOpen()) {
+			return ExecutableState.NOT_EXEC_HIDDEN;
+		}
+		return super.scriptingCommandState(command);
+	}
+
 	@ReactCommandHandler(SELECT_ITEM_COMMAND)
 	void handleSelectItem(MenuSelectItemArguments args) {
 		String itemId = args.getItemId();

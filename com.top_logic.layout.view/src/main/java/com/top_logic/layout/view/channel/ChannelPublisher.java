@@ -43,6 +43,13 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
  * </p>
  *
  * <p>
+ * Like a command, a value is written after the window has synthesized the model events of the
+ * commits made up to its delivery. What the channel's listeners do with the value sees the objects
+ * the publishing thread committed before it published the value: a background job's result that
+ * names an object the job created is, for example, selected in a table that already shows it.
+ * </p>
+ *
+ * <p>
  * Values are delivered one at a time and in the order they were published.
  * </p>
  *

@@ -14,6 +14,7 @@ import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.control.common.BadgeDisplay;
 import com.top_logic.layout.react.state.ButtonState;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
@@ -28,8 +29,8 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * When constructed with a {@link CommandModel}, the button automatically reads the label, the
- * disabled state, and the {@link CommandModel#isActive() active} state from the model, listens for
- * state changes, and removes its listener during cleanup. The {@link CommandModel#getTone() tone}
+ * tooltip, the image, the disabled state, and the {@link CommandModel#isActive() active} state from
+ * the model, listens for state changes, and removes its listener during cleanup. The {@link CommandModel#getTone() tone}
  * is taken once, at construction: it is what the command does and does not change.
  * </p>
  */
@@ -40,6 +41,13 @@ public class ReactButtonControl extends ReactControl {
 	private CommandModel _model;
 
 	private Runnable _modelChangeHandler;
+
+	/**
+	 * The display mode asked for a button backed by a {@link CommandModel}: the command's own, else
+	 * the {@link #setDefaultDisplayMode(ButtonDisplayMode) default of its container}; {@code null}
+	 * for none.
+	 */
+	private ButtonDisplayMode _requestedDisplay;
 
 	/**
 	 * Creates a new {@link ReactButtonControl} with a simple action.
@@ -91,8 +99,10 @@ public class ReactButtonControl extends ReactControl {
 		setHidden(!model.isVisible());
 		setImage(model.getImage());
 		setTooltip(model.getTooltip());
+		setBadge(model.getBadge());
 		setKeyGesture(model.getKeyGesture());
-		setDisplayMode(offered(model, model.getDisplayMode(), true));
+		_requestedDisplay = model.getDisplayMode();
+		setDisplayMode(offered(model, _requestedDisplay, true));
 		setCssClasses(model.getCssClasses());
 		// Fixed per command: handleModelChange() does not pull it again.
 		setTone(model.getTone());
@@ -116,6 +126,7 @@ public class ReactButtonControl extends ReactControl {
 		if (containerDefault == null || _model == null || _model.getDisplayMode() != null) {
 			return;
 		}
+		_requestedDisplay = containerDefault;
 		setDisplayMode(offered(_model, containerDefault, false));
 	}
 
@@ -201,6 +212,21 @@ public class ReactButtonControl extends ReactControl {
 	 */
 	public void setTooltip(String tooltip) {
 		putState(ButtonState.TOOLTIP__PROP, (tooltip == null || tooltip.isEmpty()) ? null : tooltip);
+	}
+
+	/**
+	 * Sets the badge of the button, {@code null} for none.
+	 *
+	 * <p>
+	 * A button that never had a badge sends no {@link ButtonState#BADGE__PROP} at all; a badge
+	 * removed later is sent as {@code null}, which the client reads as absent.
+	 * </p>
+	 */
+	public void setBadge(BadgeDisplay badge) {
+		if (badge == null && getState(ButtonState.BADGE__PROP) == null) {
+			return;
+		}
+		putState(ButtonState.BADGE__PROP, badge == null ? null : badge.toState());
 	}
 
 	/**
@@ -364,6 +390,18 @@ public class ReactButtonControl extends ReactControl {
 	}
 
 	/**
+	 * The {@link #CMD_CLICK} is executable while the button is offered, see
+	 * {@link #getOfferedState()}.
+	 */
+	@Override
+	public ExecutableState scriptingCommandState(String command) {
+		if (CMD_CLICK.equals(command)) {
+			return getOfferedState();
+		}
+		return super.scriptingCommandState(command);
+	}
+
+	/**
 	 * Records a click as a {@link ClickCommand}, so it renders as <em>Press button 'Label'</em> (by
 	 * the button's label-derived target name).
 	 */
@@ -390,6 +428,15 @@ public class ReactButtonControl extends ReactControl {
 		setActive(_model.isActive());
 		setHidden(!_model.isVisible());
 		setTooltip(_model.getTooltip());
+		setBadge(_model.getBadge());
+
+		ThemeImage image = _model.getImage();
+		boolean hadImage = getState(ButtonState.IMAGE__PROP) != null;
+		setImage(image);
+		if (hadImage != (image != null)) {
+			// The display mode a button can render depends on whether it has an image.
+			setDisplayMode(offered(_model, _requestedDisplay, false));
+		}
 	}
 
 

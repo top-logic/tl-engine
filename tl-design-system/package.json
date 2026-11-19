@@ -9,8 +9,9 @@
     "build": "node tools/generate.mjs",
     "lint": "node tools/lint-css.mjs",
     "test": "node tools/run-tests.mjs",
+    "pretest:dom": "node tools/generate.mjs",
     "test:dom": "node tools/run-tests.mjs --dom",
     "serve": "node tools/serve.mjs"
   },
-  "engines": { "node": ">=22" }
+  "engines": { "node": ">=22.15" }
 }

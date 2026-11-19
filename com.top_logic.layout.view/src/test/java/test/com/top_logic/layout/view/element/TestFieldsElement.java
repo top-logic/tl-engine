@@ -121,7 +121,7 @@ public class TestFieldsElement extends TestCase {
 	public void testTheGridHoldsTheFieldsInOrder() throws Exception {
 		ReactFormLayoutControl grid = grid(DEFAULT_GRID);
 
-		List<ReactControl> fields = grid.scriptingChildren();
+		List<ReactControl> fields = grid.displayedChildren();
 		assertEquals("Both fields must stand in the grid.", 2, fields.size());
 		assertEquals("The first field written must stand first.", "First", text(fields, 0));
 		assertEquals("...and the second one after it.", "Second", text(fields, 1));
@@ -169,7 +169,7 @@ public class TestFieldsElement extends TestCase {
 		_context.registerChannel(DISPLAYED_OBJECT, displayed);
 
 		FormControl form = formInView();
-		List<ReactControl> children = form.scriptingChildren();
+		List<ReactControl> children = form.displayedChildren();
 		assertEquals("The grid is the only content of the form.", 1, children.size());
 		assertTrue("The content of the form must be a field grid, but is " + children.get(0),
 			children.get(0) instanceof ReactFormLayoutControl);
@@ -196,12 +196,12 @@ public class TestFieldsElement extends TestCase {
 		assertTrue("An inset grid must be wrapped in an inset, but is " + control,
 			control instanceof ReactInsetControl);
 
-		List<ReactControl> content = ((ReactInsetControl) control).scriptingChildren();
+		List<ReactControl> content = ((ReactInsetControl) control).displayedChildren();
 		assertEquals("The inset holds exactly the grid.", 1, content.size());
 		assertTrue("The content of the inset must be the grid, but is " + content.get(0),
 			content.get(0) instanceof ReactFormLayoutControl);
 		ReactFormLayoutControl grid = (ReactFormLayoutControl) content.get(0);
-		assertEquals("The grid holds its field.", "Inset", text(grid.scriptingChildren(), 0));
+		assertEquals("The grid holds its field.", "Inset", text(grid.displayedChildren(), 0));
 	}
 
 	/** Without a word about an inset, the grid is what the element builds, with nothing around it. */

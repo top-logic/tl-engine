@@ -43,6 +43,43 @@
   flex-shrink: 0;
 }
 
+/* Die Erklärung als Hilfetext steht unter dem Kopf, eingerückt wie der Titel, im leisen Text der Hilfe eines Felds. */
+.tl-panel__help-text {
+  padding: var(--tl-space-2xs) var(--tl-space-md);
+  color: var(--tl-text-helper);
+}
+
+/* Ein Panel ohne Titel trägt die Erklärung als Info-Icon neben dem Inhalt, oben am Ende. Die Zeile nimmt den Platz des
+   Körpers ein: sie streckt sich wie er, damit ein füllendes Kind seine Höhe weiter gegen den Körper auflöst. */
+.tl-panel__explained {
+  display: flex;
+  flex: 1;
+  gap: var(--tl-space-2xs);
+  min-height: 0;
+}
+
+.tl-panel__explained > .tl-panel__body {
+  min-width: 0;
+}
+
+.tl-panel__info {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  align-self: start;
+  min-width: var(--tl-size-control-sm);
+  min-height: var(--tl-size-control-sm);
+}
+
+.tl-panel__help {
+  color: var(--tl-icon-secondary);
+}
+
+.tl-panel__help:hover {
+  color: var(--tl-icon-primary);
+}
+
 /* Über die ganze Zeile eines Formular-Rasters: eine Variante, kein Zustand. */
 .tl-panel--full-line {
   grid-column: 1 / -1;

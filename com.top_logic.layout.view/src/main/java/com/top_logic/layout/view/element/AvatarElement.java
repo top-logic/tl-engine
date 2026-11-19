@@ -43,7 +43,7 @@ public class AvatarElement implements UIElement {
 	 */
 	@TagName("avatar")
 	@TypeIcon("css:bi bi-person-circle")
-	public interface Config extends UIElement.Config {
+	public interface Config extends UIElement.Config, WithBadge {
 
 		@Override
 		@ClassDefault(AvatarElement.class)
@@ -106,6 +106,12 @@ public class AvatarElement implements UIElement {
 		ReactAvatarControl control = new ReactAvatarControl(context, label(channel.get()));
 		control.setSize(_config.getSize());
 		control.setCssClass(_config.getCssClass());
+
+		BadgeBinding badge = BadgeBinding.create(context, _config);
+		if (badge != null) {
+			control.setBadge(badge.current());
+			badge.bind(control, control::setBadge);
+		}
 
 		ChannelListener listener = (sender, oldValue, newValue) -> control.setName(label(newValue));
 		Registration registration = channel.addListener(listener);

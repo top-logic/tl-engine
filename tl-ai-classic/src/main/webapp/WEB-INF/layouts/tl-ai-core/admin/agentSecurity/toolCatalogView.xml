@@ -13,8 +13,8 @@
 >
 	<tabInfo label="admin.ai.agentSecurity.catalog.tabber"/>
 	<components>
-		<component class="com.top_logic.tl.ai.core.security.layout.ToolCatalogComponent"
-			modelBuilder="com.top_logic.tl.ai.core.security.layout.ToolCatalogModelBuilder"
+		<component class="com.top_logic.ai.classic.security.layout.ToolCatalogComponent"
+			modelBuilder="com.top_logic.ai.classic.security.layout.ToolCatalogModelBuilder"
 			name="aiToolCatalogTable"
 			resPrefix="admin.ai.agentSecurity.catalog."
 			securityObject="securityRoot"
@@ -32,7 +32,7 @@
 				showTitle="true"
 			>
 				<column-default
-					accessor="com.top_logic.tl.ai.core.security.layout.ToolCatalogAccessor"
+					accessor="com.top_logic.ai.classic.security.layout.ToolCatalogAccessor"
 					filterProvider="com.top_logic.layout.table.filter.LabelFilterProvider"
 				/>
 				<columns>

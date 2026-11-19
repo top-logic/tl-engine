@@ -18,9 +18,16 @@ import com.top_logic.util.TLContext;
  */
 public class I18NStructuredTextLabelProvider extends NullSafeLabelProvider {
 
+	/**
+	 * The label of the text in the language of the current user, the empty label for a text that
+	 * has none in that language - a display of the text shows nothing either.
+	 */
 	@Override
 	protected String getLabelNullSafe(Object model) {
 		StructuredText localized = ((I18NStructuredText) model).localize(TLContext.getLocale());
+		if (localized == null) {
+			return "";
+		}
 		return MetaLabelProvider.INSTANCE.getLabel(localized);
 	}
 

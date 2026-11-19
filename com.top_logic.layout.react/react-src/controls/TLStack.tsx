@@ -13,6 +13,8 @@ import { useItems } from './items';
  *   (default: "start") - how the free space along the direction is distributed
  * - wrap: boolean  (default: false)
  * - growFirst: boolean  (default: false) — first child fills the main axis
+ * - fill: boolean  (default: false) - the stack takes the height its container offers, whatever
+ *   its children need; with justify, its children stand in the middle or at the end of that space
  * - maxWidth: string - CSS length the stack is bounded to, centered in its container
  *   (default: null - the width the container offers)
  * - itemClass: string - CSS class of a wrapper around each child (default: null - no wrapper)
@@ -23,7 +25,8 @@ import { useItems } from './items';
  *   container, not even a gap
  *
  * Takes part in the fill contract as a container: a stack hosting a filling child fills its own
- * container, so that the child's height resolves against a definite one.
+ * container, so that the child's height resolves against a definite one; a stack with fill does so
+ * regardless of its children.
  *
  * A stack in a form field's input slot - an input together with an adornment button, say - is
  * the field's input as a whole: a group named by the field's label (see FieldLabelContext), whose
@@ -41,10 +44,11 @@ const TLStack: React.FC<TLCellProps> = ({ controlId }) => {
   const wrap = state.wrap === true;
   const maxWidth = (state.maxWidth as string) ?? null;
   const growFirst = state.growFirst === true;
+  const fill = state.fill === true;
   const stateWords = (state.stateWords as string | undefined) || undefined;
   const items = useItems(state);
 
-  const [fillClass, fillHost] = useFillHost();
+  const [fillClass, fillHost] = useFillHost(fill);
 
   const className = rootClassName(
     state,

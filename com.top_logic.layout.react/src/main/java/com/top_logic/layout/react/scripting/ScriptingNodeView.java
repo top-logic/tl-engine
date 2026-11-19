@@ -5,10 +5,15 @@
  */
 package com.top_logic.layout.react.scripting;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+
+import com.top_logic.common.json.gstream.JsonWriter;
 
 /**
  * An immutable, addressable projection of one node in the control tree, as a headless consumer sees
@@ -25,6 +30,53 @@ import java.util.Map;
  * @see ScriptingSession
  */
 public final class ScriptingNodeView {
+
+	/**
+	 * Indentation of one nesting level in the JSON rendering, see {@link #toJson()}.
+	 */
+	private static final String INDENT = "  ";
+
+	/** Member of a node holding its {@link #address()}. */
+	public static final String ADDRESS = "address";
+
+	/** Member of a node holding its {@link #role()}. */
+	public static final String ROLE = "role";
+
+	/** Member of a node holding its {@link #name()}. */
+	public static final String NAME = "name";
+
+	/** Member of a node holding its {@link #module()}. */
+	public static final String MODULE = "module";
+
+	/** Member of a node holding its {@link #state()}. */
+	public static final String STATE = "state";
+
+	/** Member of a node listing its {@link #actions()}. */
+	public static final String ACTIONS = "actions";
+
+	/** Member of a node listing its {@link #children()}. */
+	public static final String CHILDREN = "children";
+
+	/** Member of an action holding its {@link ScriptingAction#command()}. */
+	public static final String COMMAND = "command";
+
+	/** Member of an action holding its {@link ScriptingAction#label()}. */
+	public static final String LABEL = "label";
+
+	/**
+	 * Member of an action holding the {@link #REF reference} to its {@link ScriptingAction#argsSchema()}
+	 * in the {@link #SCHEMAS} of the observation.
+	 */
+	public static final String ARGS_SCHEMA = "argsSchema";
+
+	/** Member of a JSON Schema reference holding the JSON pointer of the referenced schema. */
+	public static final String REF = "$ref";
+
+	/**
+	 * Member of an observation holding the argument schemas its actions refer to, by
+	 * {@link ArgsSchema#id()}.
+	 */
+	public static final String SCHEMAS = "schemas";
 
 	private final String _address;
 
@@ -120,47 +172,76 @@ public final class ScriptingNodeView {
 
 	/**
 	 * Converts this view (and its subtree) into a plain {@link Map}/{@link List} structure suitable
-	 * for JSON serialization.
+	 * for JSON serialization: the observation document.
+	 *
+	 * <p>
+	 * The argument schemas the actions of the subtree refer to are listed once, in the
+	 * {@link #SCHEMAS} member of the result; an action names its schema by an
+	 * {@link ArgsSchema#reference() reference} into it.
+	 * </p>
 	 */
 	public Map<String, Object> toMap() {
-		return toMap(true);
+		Map<String, Object> schemas = new TreeMap<>();
+		Map<String, Object> result = toMap(true, schemas);
+		putSchemas(result, schemas);
+		return result;
 	}
 
 	/**
-	 * Converts this view into a plain {@link Map}/{@link List} structure.
+	 * Converts this view into a plain {@link Map}/{@link List} structure, for a node within a
+	 * document that lists the argument schemas.
 	 *
 	 * @param withChildren
 	 *        Whether to include the {@code children} subtree. The flat {@code actions} view passes
 	 *        {@code false} to emit each node without its descendants.
+	 * @param schemas
+	 *        The schemas of the document by {@link ArgsSchema#id() id}, to which the schemas the
+	 *        actions refer to are added.
+	 *
+	 * @see #putSchemas(Map, Map)
 	 */
-	public Map<String, Object> toMap(boolean withChildren) {
+	public Map<String, Object> toMap(boolean withChildren, Map<String, Object> schemas) {
 		Map<String, Object> result = new LinkedHashMap<>();
-		result.put("address", _address);
-		result.put("role", _role);
+		result.put(ADDRESS, _address);
+		result.put(ROLE, _role);
 		if (_name != null) {
-			result.put("name", _name);
+			result.put(NAME, _name);
 		}
 		if (_module != null) {
-			result.put("module", _module);
+			result.put(MODULE, _module);
 		}
 		if (_state != null && !_state.isEmpty()) {
-			result.put("state", _state);
+			result.put(STATE, _state);
 		}
 		if (_actions != null && !_actions.isEmpty()) {
 			List<Object> actions = new ArrayList<>();
 			for (ScriptingAction action : _actions) {
-				actions.add(actionToMap(action));
+				actions.add(actionToMap(action, schemas));
 			}
-			result.put("actions", actions);
+			result.put(ACTIONS, actions);
 		}
 		if (withChildren && _children != null && !_children.isEmpty()) {
 			List<Object> children = new ArrayList<>();
 			for (ScriptingNodeView child : _children) {
-				children.add(child.toMap());
+				children.add(child.toMap(true, schemas));
 			}
-			result.put("children", children);
+			result.put(CHILDREN, children);
 		}
 		return result;
+	}
+
+	/**
+	 * Adds the collected schemas as {@link #SCHEMAS} member to an observation document.
+	 *
+	 * @param document
+	 *        The observation document.
+	 * @param schemas
+	 *        The schemas collected by {@link #toMap(boolean, Map)} for the nodes of the document.
+	 */
+	public static void putSchemas(Map<String, Object> document, Map<String, Object> schemas) {
+		if (!schemas.isEmpty()) {
+			document.put(SCHEMAS, schemas);
+		}
 	}
 
 	/**
@@ -185,24 +266,14 @@ public final class ScriptingNodeView {
 		}
 	}
 
-	private static Map<String, Object> actionToMap(ScriptingAction action) {
+	private static Map<String, Object> actionToMap(ScriptingAction action, Map<String, Object> schemas) {
 		Map<String, Object> result = new LinkedHashMap<>();
-		result.put("command", action.command());
-		result.put("label", action.label());
-		if (!action.params().isEmpty()) {
-			List<Object> params = new ArrayList<>();
-			for (ScriptingParam param : action.params()) {
-				Map<String, Object> p = new LinkedHashMap<>();
-				p.put("name", param.name());
-				p.put("type", param.type());
-				p.put("required", param.required());
-				p.put("description", param.description());
-				params.add(p);
-			}
-			result.put("params", params);
-		}
-		if (action.argsSchema() != null) {
-			result.put("argsSchema", action.argsSchema());
+		result.put(COMMAND, action.command());
+		result.put(LABEL, action.label());
+		ArgsSchema argsSchema = action.argsSchema();
+		if (argsSchema != null) {
+			schemas.putIfAbsent(argsSchema.id(), argsSchema.schema());
+			result.put(ARGS_SCHEMA, Map.of(REF, argsSchema.reference()));
 		}
 		return result;
 	}
@@ -214,108 +285,145 @@ public final class ScriptingNodeView {
 	 * This is the agent-facing serialization of an observation; it intentionally produces
 	 * human-readable output for inspection and recording.
 	 * </p>
+	 *
+	 * @see #writeJson(Appendable)
 	 */
 	public String toJson() {
 		return toJson(toMap());
 	}
 
 	/**
-	 * Renders an arbitrary {@link Map}/{@link List}/scalar structure as indented JSON, using the same
-	 * formatting as {@link #toJson()}. Used to serialize the flat {@code actions} view.
+	 * Writes this view (and its subtree) as indented JSON to the given output, in the format of
+	 * {@link #toJson()}.
+	 *
+	 * @param out
+	 *        The output to write to, e.g. the writer of an HTTP response.
+	 */
+	public void writeJson(Appendable out) throws IOException {
+		writeJson(out, toMap());
+	}
+
+	/**
+	 * Renders an arbitrary {@link Map}/{@link Collection}/scalar structure as indented JSON, using
+	 * the same formatting as {@link #toJson()}. Used to serialize the flat {@code actions} view.
 	 *
 	 * @param value
 	 *        The value to render.
 	 * @return The indented JSON.
+	 *
+	 * @see #writeJson(Appendable, Object)
 	 */
 	public static String toJson(Object value) {
 		StringBuilder out = new StringBuilder();
-		writeJson(out, value, 0);
+		try {
+			writeJson(out, value);
+		} catch (IOException ex) {
+			throw new IllegalStateException("Writing to a string buffer failed.", ex);
+		}
 		return out.toString();
+	}
+
+	/**
+	 * Writes an arbitrary {@link Map}/{@link Collection}/scalar structure as indented JSON to the
+	 * given output, in the format of {@link #toJson(Object)}.
+	 *
+	 * @param out
+	 *        The output to write to.
+	 * @param value
+	 *        The value to write.
+	 */
+	public static void writeJson(Appendable out, Object value) throws IOException {
+		writeJson(out, value, true);
+	}
+
+	/**
+	 * Writes an arbitrary {@link Map}/{@link Collection}/scalar structure as JSON to the given
+	 * output.
+	 *
+	 * @param out
+	 *        The output to write to.
+	 * @param value
+	 *        The value to write.
+	 * @param indent
+	 *        Whether to write the indented format of {@link #toJson(Object)}, or compact JSON
+	 *        without any whitespace.
+	 */
+	public static void writeJson(Appendable out, Object value, boolean indent) throws IOException {
+		writeValue(jsonWriter(out, indent), value);
+	}
+
+	/**
+	 * A {@link JsonWriter} producing the indented format of {@link #toJson(Object)}, for writing a
+	 * document that embeds observations with {@link #writeValue(JsonWriter, Object)}.
+	 *
+	 * @param out
+	 *        The output to write to.
+	 */
+	public static JsonWriter jsonWriter(Appendable out) {
+		return jsonWriter(out, true);
+	}
+
+	/**
+	 * A {@link JsonWriter} for writing a document that embeds observations with
+	 * {@link #writeValue(JsonWriter, Object)}.
+	 *
+	 * @param out
+	 *        The output to write to.
+	 * @param indent
+	 *        Whether to write the indented format of {@link #toJson(Object)}, or compact JSON.
+	 */
+	public static JsonWriter jsonWriter(Appendable out, boolean indent) {
+		JsonWriter json = new JsonWriter(out);
+		if (indent) {
+			json.setIndent(INDENT);
+		}
+		// A non-finite number in a node's state is written as it is rather than failing the
+		// observation.
+		json.setLenient(true);
+		return json;
+	}
+
+	/**
+	 * Writes an arbitrary {@link Map}/{@link Collection}/scalar structure as JSON value.
+	 *
+	 * <p>
+	 * A value of another type is written as the string of its {@link Object#toString()}.
+	 * </p>
+	 *
+	 * @param json
+	 *        The writer to write to.
+	 * @param value
+	 *        The value to write.
+	 */
+	public static void writeValue(JsonWriter json, Object value) throws IOException {
+		if (value == null) {
+			json.nullValue();
+		} else if (value instanceof String str) {
+			json.value(str);
+		} else if (value instanceof Boolean bool) {
+			json.value(bool.booleanValue());
+		} else if (value instanceof Number number) {
+			json.value(number);
+		} else if (value instanceof Map<?, ?> map) {
+			json.beginObject();
+			for (Map.Entry<?, ?> entry : map.entrySet()) {
+				json.name(String.valueOf(entry.getKey()));
+				writeValue(json, entry.getValue());
+			}
+			json.endObject();
+		} else if (value instanceof Collection<?> collection) {
+			json.beginArray();
+			for (Object element : collection) {
+				writeValue(json, element);
+			}
+			json.endArray();
+		} else {
+			json.value(String.valueOf(value));
+		}
 	}
 
 	@Override
 	public String toString() {
 		return toJson();
-	}
-
-	@SuppressWarnings("unchecked")
-	private static void writeJson(StringBuilder out, Object value, int indent) {
-		if (value == null) {
-			out.append("null");
-		} else if (value instanceof String str) {
-			writeJsonString(out, str);
-		} else if (value instanceof Boolean || value instanceof Number) {
-			out.append(value);
-		} else if (value instanceof Map<?, ?> map) {
-			if (map.isEmpty()) {
-				out.append("{}");
-				return;
-			}
-			out.append("{\n");
-			int i = 0;
-			for (Map.Entry<String, Object> entry : ((Map<String, Object>) map).entrySet()) {
-				indent(out, indent + 1);
-				writeJsonString(out, entry.getKey());
-				out.append(": ");
-				writeJson(out, entry.getValue(), indent + 1);
-				if (++i < map.size()) {
-					out.append(',');
-				}
-				out.append('\n');
-			}
-			indent(out, indent);
-			out.append('}');
-		} else if (value instanceof List<?> list) {
-			if (list.isEmpty()) {
-				out.append("[]");
-				return;
-			}
-			out.append("[\n");
-			for (int i = 0; i < list.size(); i++) {
-				indent(out, indent + 1);
-				writeJson(out, list.get(i), indent + 1);
-				if (i + 1 < list.size()) {
-					out.append(',');
-				}
-				out.append('\n');
-			}
-			indent(out, indent);
-			out.append(']');
-		} else {
-			writeJsonString(out, String.valueOf(value));
-		}
-	}
-
-	private static void writeJsonString(StringBuilder out, String str) {
-		out.append('"');
-		for (int i = 0; i < str.length(); i++) {
-			char c = str.charAt(i);
-			switch (c) {
-				case '"':
-					out.append("\\\"");
-					break;
-				case '\\':
-					out.append("\\\\");
-					break;
-				case '\n':
-					out.append("\\n");
-					break;
-				case '\r':
-					out.append("\\r");
-					break;
-				case '\t':
-					out.append("\\t");
-					break;
-				default:
-					out.append(c);
-			}
-		}
-		out.append('"');
-	}
-
-	private static void indent(StringBuilder out, int level) {
-		for (int i = 0; i < level; i++) {
-			out.append("  ");
-		}
 	}
 }

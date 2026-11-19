@@ -13,6 +13,10 @@
 			<classifier name="EXPIRED"/>
 			<classifier name="ACCEPTED"/>
 		</enum>
+		<enum name="RegistrationState">
+			<classifier name="PENDING"/>
+			<classifier name="APPROVED"/>
+		</enum>
 		<class name="Invitation">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
@@ -53,8 +57,7 @@
 }]]></check>
 							</constraint-by-expression>
 							<constraint-by-expression>
-								<check><![CDATA[email -> regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$").regexSearch($email).isEmpty() ?  #("''{0}'' ist keine gültige E-Mail-Adresse."@de, "''{0}'' is not a valid email address."@en).fill($email) :
-  null]]></check>
+								<check><![CDATA[email -> invitationEmailRefusal($email)]]></check>
 							</constraint-by-expression>
 							<constraint-by-expression>
 								<check><![CDATA[email -> self -> {
@@ -168,6 +171,80 @@
       `tl.security.selfservice:InvitationState#EXPIRED` :
       `tl.security.selfservice:InvitationState#OPEN`
   )]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+			</attributes>
+		</class>
+		<class name="Registration">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<annotations>
+				<table name="Registration"/>
+				<id-column value="email"/>
+			</annotations>
+			<attributes>
+				<property name="email"
+					mandatory="true"
+					type="tl.core:String"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
+				<reference name="account"
+					deletion-policy="delete-referer"
+					kind="forwards"
+					navigate="true"
+					type="tl.accounts:Person"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</reference>
+				<property name="createdAt"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<delete-protected/>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[registration -> $registration.createRevision().get(`tl.core:Revision#date`)]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<property name="approved"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
+				<reference name="approvedBy"
+					kind="forwards"
+					navigate="true"
+					type="tl.accounts:Person"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</reference>
+				<reference name="state"
+					kind="forwards"
+					type="RegistrationState"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[registration ->
+  $registration.get(`tl.security.selfservice:Registration#approved`) == null
+    && $registration.get(`tl.security.selfservice:Registration#account`).get(`tl.accounts:Person#locked`) == true ?
+    `tl.security.selfservice:RegistrationState#PENDING` :
+    `tl.security.selfservice:RegistrationState#APPROVED`]]></expr>
 							</query>
 						</storage-algorithm>
 					</annotations>

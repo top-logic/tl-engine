@@ -2,7 +2,8 @@
    role=separator: fokussierbar, Pfeiltasten, Home und End (bridge/separator.ts, derselbe wie der Spaltengriff der
    Tabelle). In Ruhe eine Linie — Flächen brauchen eine Grenze —, unter dem Zeiger, beim Ziehen und mit Fokus kräftig.
    Sind alle Flächen eingeklappt, kippt die Achse (data-tl-state~="all-collapsed"); eine eingeklappte Fläche im
-   waagrechten Split zeigt den Kopf ihres Panels als schmale Spalte mit senkrechtem Titel. */
+   waagrechten Split zeigt den Kopf ihres Panels als schmale Spalte mit senkrechtem Titel. Reicht die Breite des
+   waagrechten Splits nicht für die Mindestbreiten seiner Flächen, stehen sie untereinander (data-tl-state~="stacked"). */
 
 .tl-split {
   display: flex;
@@ -15,6 +16,15 @@
 .tl-split--vertical { flex-direction: column; }
 .tl-split--horizontal[data-tl-state~="all-collapsed"] { flex-direction: column; }
 .tl-split--vertical[data-tl-state~="all-collapsed"] { flex-direction: row; }
+
+/* Zu schmal für die Mindestbreiten der Flächen nebeneinander (TLSplitPanel misst die eigene Breite): die Flächen
+   stehen untereinander, jede in voller Breite und so hoch wie ihr Inhalt, der Split scrollt senkrecht; Griffe gibt es
+   dann keine. */
+.tl-split--horizontal[data-tl-state~="stacked"] {
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
 
 .tl-split__handle {
   position: relative;

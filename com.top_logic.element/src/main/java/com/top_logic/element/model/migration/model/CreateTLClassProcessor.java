@@ -9,6 +9,7 @@ import org.w3c.dom.Document;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
+import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -17,6 +18,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.config.ClassConfig;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
@@ -29,6 +31,7 @@ import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.QualifiedTypeName;
 import com.top_logic.model.migration.data.Type;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.Resources;
 
 /**
  * {@link MigrationProcessor} creating a new {@link TLClass}.
@@ -75,6 +78,11 @@ public class CreateTLClassProcessor extends TLModelBaseLineMigrationProcessor<Cr
 
 		/**
 		 * See {@link ClassConfig#isFinal()}.
+		 * 
+		 * <p>
+		 * Must not be set together with {@link #isAbstract()}: An abstract class without
+		 * specializations cannot have instances.
+		 * </p>
 		 */
 		@Name(FINAL)
 		boolean isFinal();
@@ -130,6 +138,12 @@ public class CreateTLClassProcessor extends TLModelBaseLineMigrationProcessor<Cr
 	@CalledByReflection
 	public CreateTLClassProcessor(InstantiationContext context, Config config) {
 		super(context, config);
+		if (config.isAbstract() && config.isFinal()) {
+			ResKey message = I18NConstants.ERROR_ABSTRACT_FINAL_CLASS__CLASS_LOCATION
+				.fill(config.getName().getName(), config.location());
+			context.error(Resources.getLogInstance().getString(message),
+				new ConfigurationException(message, Config.FINAL, Boolean.toString(true)));
+		}
 	}
 
 	@Override

@@ -240,9 +240,6 @@
 				<attribute name="milestone">
 					<ref id="9"/>
 				</attribute>
-				<attribute name="assignee">
-					<ref id="20"/>
-				</attribute>
 			</object>
 		</attribute>
 		<attribute name="notes">

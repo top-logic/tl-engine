@@ -22,22 +22,25 @@ import java.util.regex.Pattern;
 import com.top_logic.ai.chat.api.messages.ApprovalRequiredEvent;
 import com.top_logic.ai.chat.api.messages.ApprovalResolvedEvent;
 import com.top_logic.ai.chat.api.messages.CompactionStartedEvent;
-import com.top_logic.ai.chat.api.messages.ContextCompositionEvent;
 import com.top_logic.ai.chat.api.messages.ConnectedEvent;
+import com.top_logic.ai.chat.api.messages.ContextCompositionEvent;
 import com.top_logic.ai.chat.api.messages.DelegationEventWrapper;
 import com.top_logic.ai.chat.api.messages.HeartbeatEvent;
-import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.LeadWakesExhaustedEvent;
 import com.top_logic.ai.chat.api.messages.LeadWokenEvent;
-import com.top_logic.ai.chat.api.messages.WokenSubagent;
+import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ModelSwitchedEvent;
-import com.top_logic.ai.chat.api.messages.RetryScheduledEvent;
 import com.top_logic.ai.chat.api.messages.PromptImprovedEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
+import com.top_logic.ai.chat.api.messages.RetryScheduledEvent;
 import com.top_logic.ai.chat.api.messages.RunCompletedEvent;
 import com.top_logic.ai.chat.api.messages.RunStartedEvent;
 import com.top_logic.ai.chat.api.messages.RunWaitingEvent;
+import com.top_logic.ai.chat.api.messages.SubagentMessageDto;
+import com.top_logic.ai.chat.api.messages.SubagentMessagesReadEvent;
+import com.top_logic.ai.chat.api.messages.SubagentStatusEvent;
+import com.top_logic.ai.chat.api.messages.TaskUpdateEvent;
 import com.top_logic.ai.chat.api.messages.TextDeltaEvent;
 import com.top_logic.ai.chat.api.messages.ThinkingDeltaEvent;
 import com.top_logic.ai.chat.api.messages.TokenUsageDto;
@@ -46,13 +49,10 @@ import com.top_logic.ai.chat.api.messages.ToolDeniedEvent;
 import com.top_logic.ai.chat.api.messages.ToolFailedEvent;
 import com.top_logic.ai.chat.api.messages.ToolStartedEvent;
 import com.top_logic.ai.chat.api.messages.TransactionCommittedEvent;
-import com.top_logic.ai.chat.api.messages.SubagentMessageDto;
-import com.top_logic.ai.chat.api.messages.SubagentMessagesReadEvent;
-import com.top_logic.ai.chat.api.messages.SubagentStatusEvent;
-import com.top_logic.ai.chat.api.messages.TaskUpdateEvent;
 import com.top_logic.ai.chat.api.messages.TransactionRolledBackEvent;
 import com.top_logic.ai.chat.api.messages.TurnCompletedEvent;
 import com.top_logic.ai.chat.api.messages.TurnStartedEvent;
+import com.top_logic.ai.chat.api.messages.WokenSubagent;
 import com.top_logic.ai.chat.backend.ConversationBackend;
 import com.top_logic.ai.chat.backend.ConversationBackendService;
 import com.top_logic.ai.chat.history.ChatHistoryService;
@@ -60,24 +60,24 @@ import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.tool.api.json.JsonEscape;
+import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.protocol.PatchEvent;
-import com.top_logic.model.TLObject;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
-import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
-import com.top_logic.basic.Logger;
-import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.core.cost.CostConversion;
-import com.top_logic.tl.ai.core.execution.model.AgentSession;
-import com.top_logic.tl.ai.core.cost.Money;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentNews;
-import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.tool.api.json.JsonEscape;
+import com.top_logic.model.TLObject;
+import com.top_logic.ai.core.agent.approval.ApprovalMode;
+import com.top_logic.ai.core.agent.approval.UserInteractionRequest;
+import com.top_logic.ai.core.agent.approval.UserInteractionStore;
+import com.top_logic.ai.core.agent.event.AgentEvent;
+import com.top_logic.ai.core.agent.subagent.SubagentInbox;
+import com.top_logic.ai.core.agent.subagent.SubagentNews;
+import com.top_logic.ai.core.cost.CostConversion;
+import com.top_logic.ai.core.cost.Money;
+import com.top_logic.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.message.TokenUsage;
 
 /**
  * Push-based implementation of {@link ChatEventHandler} that writes the chat's frames onto the
@@ -394,8 +394,19 @@ public class ChatSSEHandler implements ChatEventHandler {
 		}
 	}
 
+	/**
+	 * Queues the event for the next flush.
+	 *
+	 * <p>
+	 * Called on the thread of the run, which works in the context of the window the message was
+	 * sent in. The message of a provider error is worded here, in that user's language
+	 * ({@link ChatProcessor#providerErrorMessage(AgentEvent.ProviderError)}): the flush runs on a
+	 * worker without a user.
+	 * </p>
+	 */
 	@Override
-	public void onEvent(AgentEvent event) {
+	public void onEvent(AgentEvent rawEvent) {
+		AgentEvent event = inUserLanguage(rawEvent);
 		if (_closed.get()) {
 			// This handler was replaced by a newer attach of the window, or its window is gone.
 			// Forward to the current active handler for the same tracker.
@@ -413,6 +424,25 @@ public class ChatSSEHandler implements ChatEventHandler {
 			_runContextWindow = backendContextWindow(_tracker);
 		}
 		_eventQueue.add(event);
+	}
+
+	/**
+	 * The given event with the message of a provider error - also one a subagent reported - in the
+	 * language of the current thread, see {@link ChatProcessor#providerErrorMessage(AgentEvent.ProviderError)}.
+	 */
+	private static AgentEvent inUserLanguage(AgentEvent event) {
+		if (event instanceof AgentEvent.ProviderError e && e.messageKey() != null) {
+			return new AgentEvent.ProviderError(e.runId(), e.turnNumber(), e.timestamp(), e.kind(),
+				ChatProcessor.providerErrorMessage(e));
+		}
+		if (event instanceof AgentEvent.DelegatedEvent d) {
+			AgentEvent child = inUserLanguage(d.childEvent());
+			if (child != d.childEvent()) {
+				return new AgentEvent.DelegatedEvent(d.runId(), d.turnNumber(), d.timestamp(), d.subagentId(),
+					d.delegationToolCallId(), child);
+			}
+		}
+		return event;
 	}
 
 	/**
@@ -727,9 +757,10 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setParentToolCallId(e.parentToolCallId())
 				.setChildRunId(e.childRunId())));
 		} else if (event instanceof AgentEvent.ProviderError e) {
+			// Worded for the user when it was queued, see onEvent().
 			sendEvent("provider_error", DtoMapper.toJson(ProviderErrorEvent.create()
 				.setKind(e.kind())
-				.setErrorMessage(ChatProcessor.providerErrorMessage(e))));
+				.setErrorMessage(e.message())));
 		} else if (event instanceof AgentEvent.ModelSwitched e) {
 			sendEvent("model_switched", DtoMapper.toJson(ModelSwitchedEvent.create()
 				.setFromModel(e.fromModel())
@@ -829,7 +860,7 @@ public class ChatSSEHandler implements ChatEventHandler {
 		} else if (child instanceof AgentEvent.ProviderError e) {
 			innerType = "provider_error";
 			innerData = DtoMapper.toJson(ProviderErrorEvent.create()
-				.setKind(e.kind()).setErrorMessage(ChatProcessor.providerErrorMessage(e)));
+				.setKind(e.kind()).setErrorMessage(e.message()));
 		} else if (child instanceof AgentEvent.UserMessageDelivered e) {
 			// What the user wrote from the subagent's card has been read: the card says so.
 			innerType = "user_message_read";
@@ -961,7 +992,7 @@ public class ChatSSEHandler implements ChatEventHandler {
 	}
 
 	private int usedTokens() {
-		com.top_logic.tl.ai.core.memory.ConversationMemory memory = _tracker.getConversationMemory();
+		com.top_logic.ai.core.memory.ConversationMemory memory = _tracker.getConversationMemory();
 		return memory == null ? 0 : memory.estimateTokens();
 	}
 
@@ -970,7 +1001,7 @@ public class ChatSSEHandler implements ChatEventHandler {
 		if (backendWindow != null) {
 			return backendWindow.intValue();
 		}
-		com.top_logic.tl.ai.core.memory.ConversationMemory memory = _tracker.getConversationMemory();
+		com.top_logic.ai.core.memory.ConversationMemory memory = _tracker.getConversationMemory();
 		return memory == null ? 0 : memory.contextWindowTokens();
 	}
 

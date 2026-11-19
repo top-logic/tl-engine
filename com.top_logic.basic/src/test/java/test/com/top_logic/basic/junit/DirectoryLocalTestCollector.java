@@ -127,7 +127,8 @@ public class DirectoryLocalTestCollector {
 	 * Only tests in the current project are found!
 	 * 
 	 * @param pckgName
-	 *        the name of the package under test
+	 *        the name of the package under test, the empty string for the default package, i.e.
+	 *        the whole test source directory.
 	 */
 	public Test createTests(String pckgName) {
 		_log.info("Creating tests for package '" + pckgName + "'.", Protocol.VERBOSE);
@@ -136,13 +137,13 @@ public class DirectoryLocalTestCollector {
 		File srcDir = new File(workingDir, ModuleLayoutConstants.SRC_TEST_DIR);
 		File packageDir = new File(srcDir, path);
 		if (!packageDir.exists()) {
-			return new TestSuite(pckgName);
+			return new TestSuite(suiteName(pckgName));
 		}
 		return createTests(packageDir, pckgName);
 	}
 
 	private Test createTests(File packageDirectory, String pckgName) {
-		TestSuite result = new TestSuite(pckgName);
+		TestSuite result = new TestSuite(suiteName(pckgName));
 		File[] contents =
 			packageDirectory.listFiles(_includeSubPackages ? testClassFilterIncl : testClassFilterExcl);
 
@@ -153,7 +154,7 @@ public class DirectoryLocalTestCollector {
 
 		for (File content : contents) {
 			if (_includeSubPackages && content.isDirectory()) {
-				String subPckg = pckgName + '.' + content.getName();
+				String subPckg = qualify(pckgName, content.getName());
 				Test subPckgTests = createTests(content, subPckg);
 				if (subPckgTests != null && subPckgTests.countTestCases() > 0) {
 					result.addTest(subPckgTests);
@@ -163,10 +164,29 @@ public class DirectoryLocalTestCollector {
 
 			int suffixIndex = content.getName().indexOf(JAVA_EXT);
 			String className = content.getName().substring(0, suffixIndex);
-			String qualifiedClassName = pckgName + '.' + className;
+			String qualifiedClassName = qualify(pckgName, className);
 			addTest(qualifiedClassName, result, _log, _markScriptedUnits);
 		}
 		return result;
+	}
+
+	/**
+	 * The name of the suite with the tests of the given package.
+	 * 
+	 * <p>
+	 * JUnit rejects a suite with an empty name, therefore the default package is named after the
+	 * test source directory.
+	 * </p>
+	 */
+	private static String suiteName(String pckgName) {
+		return pckgName.isEmpty() ? ModuleLayoutConstants.SRC_TEST_DIR : pckgName;
+	}
+
+	/**
+	 * The qualified name of the given package member.
+	 */
+	private static String qualify(String pckgName, String localName) {
+		return pckgName.isEmpty() ? localName : pckgName + '.' + localName;
 	}
 
 	/**

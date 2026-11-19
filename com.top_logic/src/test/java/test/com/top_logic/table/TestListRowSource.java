@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.table;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -17,9 +18,12 @@ import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterSpec;
 import com.top_logic.table.FilterState;
+import com.top_logic.table.GroupKey;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Row;
+import com.top_logic.table.RowKind;
 import com.top_logic.table.RowSource;
+import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortSpec;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.ListRowSource;
@@ -361,6 +365,168 @@ public class TestListRowSource extends TestCase {
 	/** The names of the people with the given keys. */
 	private static List<String> names(List<Object> keys) {
 		return keys.stream().map(key -> ((Person) key).name()).toList();
+	}
+
+	/** A sale of a product in a region, the fixture of the nested grouping tests. */
+	private record Sale(String region, String product, int amount) {
+		// Test fixture.
+	}
+
+	/**
+	 * Region, product and amount columns, all sortable unless the product is requested without.
+	 */
+	private static List<Column<Sale, ?>> saleColumns(boolean sortableProduct) {
+		DefaultColumn.Builder<Sale, String> product = DefaultColumn.<Sale, String> builder("product", Sale::product);
+		if (sortableProduct) {
+			product.sort(() -> Comparator.<String> naturalOrder());
+		}
+		return List.of(
+			DefaultColumn.<Sale, String> builder("region", Sale::region)
+				.sort(() -> Comparator.<String> naturalOrder())
+				.build(),
+			product.build(),
+			DefaultColumn.<Sale, Integer> builder("amount", Sale::amount)
+				.sort(() -> Comparator.<Integer> naturalOrder())
+				.build());
+	}
+
+	private static List<Sale> sales() {
+		return List.of(
+			new Sale("North", "B", 1),
+			new Sale("South", "A", 2),
+			new Sale("North", "A", 3),
+			new Sale("North", "B", 4),
+			new Sale("South", "A", 5),
+			new Sale("South", "C", 6));
+	}
+
+	/** A source over {@link #sales()} grouped by region and product. */
+	private static ListRowSource<Sale> groupedSales() {
+		ListRowSource<Sale> source = new ListRowSource<>(sales(), saleColumns(true));
+		source.withGrouping(new GroupSpec(List.of("region", "product")));
+		return source;
+	}
+
+	/**
+	 * The given rows as text: a group header as its depth and the values of its key, a data row
+	 * as its depth and amount.
+	 */
+	private static List<String> describe(List<Row<Sale>> rows) {
+		List<String> result = new ArrayList<>();
+		for (Row<Sale> row : rows) {
+			if (row.kind() == RowKind.GROUP_HEADER) {
+				result.add(row.depth() + ":" + String.join("/", row.group().key().values().stream()
+					.map(String::valueOf).toList()) + "(" + row.group().size() + ")");
+			} else {
+				result.add(row.depth() + ":" + row.data().amount());
+			}
+		}
+		return result;
+	}
+
+	private static List<String> describe(ListRowSource<Sale> source) {
+		return describe(source.window(0, source.size()));
+	}
+
+	/**
+	 * The key of the group with the given values.
+	 */
+	private static GroupKey groupKey(String... values) {
+		return new GroupKey(List.of((Object[]) values));
+	}
+
+	/**
+	 * Tests that grouping by two columns nests a level of groups per column: each header has the
+	 * depth of its level, the path of values down to its level as key and the number of its rows,
+	 * and the data rows follow the innermost headers.
+	 */
+	public void testTwoLevelGrouping() {
+		ListRowSource<Sale> source = groupedSales();
+		assertEquals(List.of(
+			"0:North(3)", "1:North/A(1)", "2:3", "1:North/B(2)", "2:1", "2:4",
+			"0:South(3)", "1:South/A(2)", "2:2", "2:5", "1:South/C(1)", "2:6"),
+			describe(source));
+		assertEquals("Group headers are no matches.", 6, source.matchCount());
+	}
+
+	/**
+	 * Tests that collapsing an outer group hides the headers and rows of its nested groups, and
+	 * that expanding it again shows the nested groups in the state they had.
+	 */
+	public void testCollapseOuterGroupKeepsStateOfInnerGroups() {
+		ListRowSource<Sale> source = groupedSales();
+		source.setExpanded(groupKey("North", "B"), false);
+		assertEquals(List.of(
+			"0:North(3)", "1:North/A(1)", "2:3", "1:North/B(2)",
+			"0:South(3)", "1:South/A(2)", "2:2", "2:5", "1:South/C(1)", "2:6"),
+			describe(source));
+
+		source.setExpanded(groupKey("North"), false);
+		assertEquals(List.of(
+			"0:North(3)",
+			"0:South(3)", "1:South/A(2)", "2:2", "2:5", "1:South/C(1)", "2:6"),
+			describe(source));
+		assertFalse(source.window(0, 1).get(0).expanded());
+		assertEquals("Rows of a collapsed group are still matches.", 6, source.matchCount());
+		assertEquals(6, source.matchingKeys().size());
+
+		source.setExpanded(groupKey("North"), true);
+		assertEquals(List.of(
+			"0:North(3)", "1:North/A(1)", "2:3", "1:North/B(2)",
+			"0:South(3)", "1:South/A(2)", "2:2", "2:5", "1:South/C(1)", "2:6"),
+			describe(source));
+		assertFalse("The inner group stays collapsed.", source.window(3, 4).get(0).expanded());
+	}
+
+	/**
+	 * Tests that all rows of a nested grouping contain the content of collapsed groups at every
+	 * level.
+	 */
+	public void testAllRowsOfNestedGroupingIncludeCollapsedGroups() {
+		ListRowSource<Sale> source = groupedSales();
+		source.setExpanded(groupKey("North", "B"), false);
+		source.setExpanded(groupKey("South"), false);
+		assertEquals(List.of(
+			"0:North(3)", "1:North/A(1)", "2:3", "1:North/B(2)", "2:1", "2:4",
+			"0:South(3)", "1:South/A(2)", "2:2", "2:5", "1:South/C(1)", "2:6"),
+			describe(source.allRows()));
+	}
+
+	/**
+	 * Tests that each level orders its groups by its own column, in the direction the sort gives
+	 * that column, while the sort orders the rows within the innermost groups.
+	 */
+	public void testNestedGroupOrderFollowsEachLevelsColumn() {
+		ListRowSource<Sale> source = groupedSales();
+		source.withOrder(new SortSpec(List.of(
+			new SortColumn("product", false),
+			new SortColumn("amount", false))));
+		assertEquals(List.of(
+			"0:North(3)", "1:North/B(2)", "2:4", "2:1", "1:North/A(1)", "2:3",
+			"0:South(3)", "1:South/C(1)", "2:6", "1:South/A(2)", "2:5", "2:2"),
+			describe(source));
+	}
+
+	/**
+	 * Tests that the groups of a nested grouping column without sort capability come in the order
+	 * in which their first rows appear within the enclosing group in the backing list, whatever
+	 * the rows are sorted by.
+	 */
+	public void testUnsortableInnerColumnKeepsFirstAppearanceWithinItsGroup() {
+		List<Sale> sales = List.of(
+			new Sale("North", "B", 1),
+			new Sale("South", "A", 2),
+			new Sale("North", "A", 9),
+			new Sale("North", "B", 4),
+			new Sale("South", "A", 5),
+			new Sale("South", "B", 7));
+		ListRowSource<Sale> source = new ListRowSource<>(sales, saleColumns(false));
+		source.withGrouping(new GroupSpec(List.of("region", "product")));
+		source.withOrder(new SortSpec(List.of(new SortColumn("amount", false))));
+		assertEquals(List.of(
+			"0:North(3)", "1:North/B(2)", "2:4", "2:1", "1:North/A(1)", "2:9",
+			"0:South(3)", "1:South/A(2)", "2:5", "2:2", "1:South/B(1)", "2:7"),
+			describe(source));
 	}
 
 }

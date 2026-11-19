@@ -50,6 +50,8 @@ public final class OperationCheck {
 
 	private final TLModelPartRef _typeRef;
 
+	private final String _remedy;
+
 	/**
 	 * Creates an {@link OperationCheck}.
 	 *
@@ -60,11 +62,16 @@ public final class OperationCheck {
 	 * @param type
 	 *        The static type of the object the declaring element computes, {@code null} when it
 	 *        computes none.
+	 * @param remedy
+	 *        Sentence appended to the warning about an object that is no instance of the type,
+	 *        telling how the declaring element is restricted to objects of the type without
+	 *        checking others; {@code null} for none.
 	 */
-	public OperationCheck(String owner, CommandGroupReference operation, TLModelPartRef type) {
+	public OperationCheck(String owner, CommandGroupReference operation, TLModelPartRef type, String remedy) {
 		_owner = owner;
 		_operationRef = operation;
 		_typeRef = type;
+		_remedy = remedy;
 	}
 
 	/**
@@ -244,7 +251,8 @@ public final class OperationCheck {
 	private Decision checkElement(Person user, Object element, BoundCommandGroup operation, TLClass type) {
 		if (element instanceof TLObject object && !TLModelUtil.isCompatibleInstance(type, object)) {
 			Logger.warn("Access to '" + object + "' denied: it is no instance of the type '" + TLModelUtil.qualifiedName(type)
-				+ "' declared by " + _owner + " checking the operation '" + operation.getID() + "'.",
+				+ "' declared by " + _owner + " checking the operation '" + operation.getID() + "'."
+				+ (_remedy == null ? "" : " " + _remedy),
 				OperationCheck.class);
 			return Decision.denied(element);
 		}

@@ -16,12 +16,12 @@ import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
-import com.top_logic.tl.ai.core.agent.StopReason;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
-import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.core.cost.Money;
-import com.top_logic.tl.ai.core.message.TokenUsage;
-import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.ai.tool.api.ToolMode;
+import com.top_logic.ai.core.agent.StopReason;
+import com.top_logic.ai.core.agent.approval.ApprovalOutcome;
+import com.top_logic.ai.core.agent.event.AgentEvent;
+import com.top_logic.ai.core.cost.Money;
+import com.top_logic.ai.core.message.TokenUsage;
 
 /**
  * Verifies the {@link ChatEventHandler} seam: a chat UI that is not {@link ChatSSEHandler} can

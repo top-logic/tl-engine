@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { act } from 'react';
 
-// The error of a failed job, with the problems behind it listed below.
+// The error of a failed job, with the problems behind it listed below; the close button of a job that has ended.
 
 vi.mock('../bridge/sse-client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../bridge/sse-client')>()),
@@ -11,7 +11,7 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 }));
 
 // The bridge first, as the page loads it, so that the modules it imports see the mocked SSE client.
-import { mount, unmount } from '../bridge/tl-react-bridge';
+import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
 import { register, registerPart } from 'tl-react-bridge';
 import TLJobStatus from './TLJobStatus';
 import ButtonPart from './button/ButtonPart';
@@ -24,6 +24,9 @@ declare global {
 
 const CONTROL_ID = 'job';
 
+/** The commands sent so far, by name. */
+let sent: string[] = [];
+
 beforeAll(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
   registerPart('Button', ButtonPart);
@@ -33,7 +36,7 @@ beforeAll(() => {
 
 afterEach(() => {
   act(() => unmount(CONTROL_ID));
-  document.getElementById(CONTROL_ID)?.remove();
+  findMountPoint(CONTROL_ID)?.remove();
   vi.unstubAllGlobals();
 });
 
@@ -43,11 +46,16 @@ afterAll(() => {
 
 /** Mounts a job status with the given state and answers the element it is drawn into. */
 function mountJobStatus(state: Record<string, unknown>): HTMLElement {
-  // The translations of the control's texts are fetched from the server; the test answers none.
-  vi.stubGlobal('fetch', vi.fn(async () =>
-    new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } })));
+  // The translations of the control's texts are fetched from the server; the test answers none. A
+  // command is recorded by its name.
+  sent = [];
+  vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => {
+    const command = init?.body != null ? JSON.parse(String(init.body)).command : undefined;
+    if (command !== undefined) sent.push(command);
+    return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
+  }));
   const element = document.createElement('div');
-  element.id = CONTROL_ID;
+  element.setAttribute(MOUNT_ATTRIBUTE, CONTROL_ID);
   document.body.appendChild(element);
   act(() => mount(CONTROL_ID, 'TLJobStatus', state, 'w', '/ctx'));
   return document.getElementById(CONTROL_ID)!;
@@ -74,5 +82,36 @@ describe('the error of a failed job', () => {
     const alert = root.querySelector('.tl-job-status__error')!;
     expect(alert.textContent).toBe('Connection lost');
     expect(alert.querySelector('.tl-job-status__details')).toBeNull();
+  });
+});
+
+/** Waits until the command channel has handed all queued commands to fetch, and their answers back. */
+async function settle(): Promise<void> {
+  await act(async () => {
+    for (let round = 0; round < 5; round++) {
+      await new Promise<void>(resolve => setTimeout(resolve, 0));
+    }
+  });
+}
+
+describe('the close button', () => {
+  it('is drawn at the end of the header of a closable job and sends the close command', async () => {
+    const root = mountJobStatus({ status: 'failed', error: 'Connection lost', closable: true });
+
+    const button = root.querySelector<HTMLButtonElement>('.tl-job-status__header > .tl-job-status__close button');
+    expect(button).not.toBeNull();
+    expect(root.querySelector('.tl-job-status__header')!.lastElementChild!.classList)
+      .toContain('tl-job-status__close');
+
+    act(() => button!.click());
+    await settle();
+    expect(sent).toEqual(['close']);
+  });
+
+  it('is missing for a job that is not closable', () => {
+    const root = mountJobStatus({ status: 'running', cancelable: true, closable: false });
+
+    expect(root.querySelector('.tl-job-status__close')).toBeNull();
+    expect(root.querySelector('.tl-job-status__cancel')).not.toBeNull();
   });
 });

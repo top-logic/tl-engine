@@ -321,6 +321,18 @@
 							<boolean-display presentation="select"/>
 						</annotations>
 					</property>
+					<property name="activeSwitch"
+						type="tl.core:Boolean"
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
+							<boolean-display presentation="switch"/>
+						</annotations>
+					</property>
 
 					<property name="locked"
 						type="tl.core:Boolean"
@@ -358,6 +370,20 @@
 							<dynamic-visibility>
 								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
 									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
+								/>
+							</dynamic-visibility>
+						</annotations>
+					</property>
+					<property name="dueDateRequired"
+						type="tl.core:Boolean"
+					/>
+					<property name="dueDate"
+						type="tl.core:Date"
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#dueDateRequired`), &quot;mandatory&quot;, &quot;default&quot;)"
 								/>
 							</dynamic-visibility>
 						</annotations>
@@ -476,6 +502,8 @@
 						type="tl.core:Binary"
 					>
 						<annotations>
+							<accepted-types value="image/*"/>
+							<binary-display presentation="image-upload"/>
 							<dynamic-visibility>
 								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
 									function="obj -> if($obj.get(`demo.react:Demo#locked`), &quot;disabled&quot;, &quot;default&quot;)"
@@ -483,6 +511,28 @@
 							</dynamic-visibility>
 						</annotations>
 					</property>
+					<!-- Several images stepped through one at a time, arranged by the user, on a lower stage. -->
+					<property name="pictures"
+						multiple="true"
+						ordered="true"
+						type="tl.core:Binary"
+					>
+						<annotations>
+							<accepted-types value="image/*"/>
+							<binary-display presentation="image-upload"/>
+							<dimensions height="320px"/>
+							<max-upload-size value="5m"/>
+							<value-count max="3"/>
+						</annotations>
+					</property>
+					<!-- An image gallery: its images are stored as objects of their own by the gallery storage. -->
+					<reference name="gallery"
+						bag="true"
+						kind="forwards"
+						multiple="true"
+						ordered="true"
+						type="tl.imagegallery:GalleryImage"
+					/>
 					<property name="attachments"
 						multiple="true"
 						ordered="true"
@@ -490,6 +540,7 @@
 					>
 						<annotations>
 							<max-upload-size value="5m"/>
+							<value-count max="5"/>
 						</annotations>
 					</property>
 					<property name="documents"
@@ -501,6 +552,7 @@
 							<accepted-types value="*.pdf, *.txt, *.md"/>
 							<binary-display presentation="list"/>
 							<max-upload-size value="1m"/>
+							<value-count max="3"/>
 						</annotations>
 					</property>
 
@@ -608,6 +660,52 @@
 						ordered="true"
 						type="DemoPart"
 					/>
+				</attributes>
+			</class>
+			<!--
+				A symbol shows its picture as icon. The icon is embedded into the page, so it must be
+				small: it is the picture scaled down to at most 32 pixels. The model keeps it up to date
+				with the picture, however the picture is set (a form, the generic instance editor, an
+				import, a script): the lifecycle handler computes it when a symbol is created, the change
+				handler of the picture whenever the picture of a stored symbol changes.
+			-->
+			<class name="Symbol">
+				<annotations>
+					<instance-presentation icon="css:bi bi-bookmark-star"/>
+					<dynamic-icon>
+						<icon-by-expression icon="symbol -> $symbol.get(`demo.react:Symbol#icon`)"/>
+					</dynamic-icon>
+					<lifecycle-handlers>
+						<script>
+							<created><![CDATA[symbol ->
+	$symbol.set(`demo.react:Symbol#icon`, $symbol.get(`demo.react:Symbol#picture`).binaryScaleImage(32, 32))]]></created>
+						</script>
+					</lifecycle-handlers>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="picture"
+						type="tl.core:Binary"
+					>
+						<annotations>
+							<change-handlers>
+								<script>
+									<operation><![CDATA[symbol -> newValue -> oldValue -> attribute ->
+	$symbol.set(`demo.react:Symbol#icon`, $newValue.binaryScaleImage(32, 32))]]></operation>
+								</script>
+							</change-handlers>
+						</annotations>
+					</property>
+					<property name="icon"
+						type="tl.core:Binary"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
 				</attributes>
 			</class>
 		</module>

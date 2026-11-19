@@ -8,6 +8,7 @@ package test.com.top_logic.element.changelog;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import junit.framework.Test;
 
@@ -41,6 +42,14 @@ import com.top_logic.util.model.ModelService;
 public class TestChangeSetReverter extends TestWithModelExtension {
 
 	private static final String MODULE = "test.com.top_logic.element.changelog.TestSubtreeChangeLog";
+
+	private static final String OWNER = "Owner";
+
+	private static final String PART = "Part";
+
+	private static final String PARTS = "parts";
+
+	private static final String OWNER_REF = "owner";
 
 	private TLModule _testModule;
 
@@ -131,6 +140,118 @@ public class TestChangeSetReverter extends TestWithModelExtension {
 		assertEquals("child", child.tValueByName("name"));
 		assertEquals("Sibling tree must keep its post-snapshot modification.",
 			"otherChild-2", otherChild.tValueByName("name"));
+	}
+
+	/**
+	 * Reverting the subtree restores a node referenced through the opt-in reference {@code peers}
+	 * and keeps the changes of a part of the opt-out composition {@code noise} and of an unrelated
+	 * node.
+	 */
+	public void testRevertAnnotatedPeer() {
+		TLObject root = createNode(null, "root");
+		TLObject peer = createNode(null, "peer");
+		TLObject noiseChild = createNoiseChild(root, "noise-child");
+		TLObject unrelated = createNode(null, "unrelated");
+		try (Transaction tx = beginTX()) {
+			root.tUpdateByName("peers", List.of(peer));
+			tx.commit();
+		}
+
+		Revision snapshot = currentRevision();
+
+		rename(peer, "peer-2");
+		rename(noiseChild, "noise-child-2");
+		rename(unrelated, "unrelated-2");
+
+		List<ResKey> problems = ChangeSetReverter.revertSubtreeTo(root, snapshot,
+			com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
+
+		assertEquals(List.of(), problems);
+		assertEquals("peer", peer.tValueByName("name"));
+		assertEquals("noise-child-2", noiseChild.tValueByName("name"));
+		assertEquals("unrelated-2", unrelated.tValueByName("name"));
+	}
+
+	/**
+	 * Reverting the subtree of a member restores its {@code home} node (opt-in backward reference,
+	 * the member is the root) and keeps the changes of a part of the opt-out composition
+	 * {@code noise} and of an unrelated node.
+	 */
+	public void testRevertAnnotatedHome() {
+		TLObject member = createNode(null, "member");
+		TLObject home = createNode(null, "home");
+		TLObject noiseChild = createNoiseChild(member, "noise-child");
+		TLObject unrelated = createNode(null, "unrelated");
+		try (Transaction tx = beginTX()) {
+			home.tUpdateByName("homeMembers", List.of(member));
+			tx.commit();
+		}
+		assertEquals(home, member.tValueByName("home"));
+
+		Revision snapshot = currentRevision();
+
+		rename(home, "home-2");
+		rename(noiseChild, "noise-child-2");
+		rename(unrelated, "unrelated-2");
+
+		List<ResKey> problems = ChangeSetReverter.revertSubtreeTo(member, snapshot,
+			com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
+
+		assertEquals(List.of(), problems);
+		assertEquals("home", home.tValueByName("name"));
+		assertEquals("noise-child-2", noiseChild.tValueByName("name"));
+		assertEquals("unrelated-2", unrelated.tValueByName("name"));
+	}
+
+	/**
+	 * Reverting the subtree of a container restores a part that was moved out of its composition
+	 * stored in the rows of the parts ({@code inline-set-storage}) into another container.
+	 */
+	public void testRevertMoveOutOfInlineComposition() {
+		TLClass ownerType = (TLClass) _testModule.getType(OWNER);
+		TLClass partType = (TLClass) _testModule.getType(PART);
+		TLObject a;
+		TLObject b;
+		TLObject x;
+		try (Transaction tx = beginTX()) {
+			a = _factory.createObject(ownerType, null);
+			a.tUpdateByName("name", "a");
+			b = _factory.createObject(ownerType, null);
+			b.tUpdateByName("name", "b");
+			x = _factory.createObject(partType, a);
+			x.tUpdateByName("name", "x");
+			a.tUpdateByName(PARTS, List.of(x));
+			tx.commit();
+		}
+
+		Revision snapshot = currentRevision();
+
+		try (Transaction tx = beginTX()) {
+			a.tUpdateByName(PARTS, List.of());
+			b.tUpdateByName(PARTS, List.of(x));
+			tx.commit();
+		}
+
+		List<ResKey> problems = ChangeSetReverter.revertSubtreeTo(a, snapshot,
+			com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE);
+
+		assertEquals("No problems (e.g. a value changed in between) expected when restoring the moved part.",
+			List.of(), problems);
+		assertEquals(Set.of(x), Set.copyOf((Collection<?>) a.tValueByName(PARTS)));
+		assertEquals(Set.of(), Set.copyOf((Collection<?>) b.tValueByName(PARTS)));
+		assertEquals(a, x.tValueByName(OWNER_REF));
+	}
+
+	private TLObject createNoiseChild(TLObject parent, String name) {
+		try (Transaction tx = beginTX()) {
+			TLObject node = _factory.createObject(_nodeType, parent);
+			node.tUpdateByName("name", name);
+			List<Object> current = new ArrayList<>((Collection<?>) parent.tValueByName("noise"));
+			current.add(node);
+			parent.tUpdateByName("noise", current);
+			tx.commit();
+			return node;
+		}
 	}
 
 	/**

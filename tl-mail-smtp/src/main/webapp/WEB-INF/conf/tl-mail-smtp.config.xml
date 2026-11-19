@@ -33,6 +33,7 @@
 					<option name="mail.smtp.starttls.enable" value="%SMTP_STARTTLS%" />
 					<option name="mail.smtp.timeout" value="%SMTP_TIMEOUT%" />
 					<option name="mail.smtp.connectiontimeout" value="%SMTP_CONNECTION_TIMEOUT%" />
+					<option name="mail.mime.allowutf8" value="%SMTP_ALLOW_UTF8%" />
 				</options>
 			</instance>
 		</config>

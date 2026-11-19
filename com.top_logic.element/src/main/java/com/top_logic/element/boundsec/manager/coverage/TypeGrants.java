@@ -7,6 +7,7 @@ package com.top_logic.element.boundsec.manager.coverage;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -39,11 +40,11 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  *
  * <p>
  * Only what has an effect is offered: the {@link #getRoles() roles} a user can hold on an object
- * of the type, and the {@link #getOperations() operations} applying to it. A role that is granted
- * an operation on the type but cannot be held there gets a row as well, marked
- * {@link #isIneffective(Row) ineffective}, so that its grant can be revoked. An attribute is offered
- * with the operations {@link SimpleBoundCommandGroup#READ} and {@link SimpleBoundCommandGroup#WRITE}
- * only, the operations an attribute grant decides.
+ * of the type or holding a grant that takes effect, and the {@link #getOperations() operations}
+ * applying to it. A role none of whose grants on the type can take effect gets a row as well,
+ * marked {@link #isIneffective(Row) ineffective}, so that its grants can be revoked. An attribute is
+ * offered with the operations {@link SimpleBoundCommandGroup#READ} and
+ * {@link SimpleBoundCommandGroup#WRITE} only, the operations an attribute grant decides.
  * </p>
  *
  * <p>
@@ -176,32 +177,86 @@ public class TypeGrants {
 		_editor = Objects.requireNonNull(editor);
 		_type = Objects.requireNonNull(type);
 		boolean ownGrants = getAccessParent() == null && !isExempt();
-		_roles = ownGrants ? analysis.getHoldableRoles(type) : Collections.emptyList();
 		_operations = ownGrants ? operations(rights.getOperations(type)) : Collections.emptyList();
-		_ineffectiveRoles = ownGrants ? ineffectiveRoles() : Collections.emptyList();
+		if (ownGrants) {
+			Map<BoundedRole, Boolean> granted = grantedRoles();
+			_ineffectiveRoles =
+				sortedByName(granted.keySet().stream().filter(role -> !granted.get(role).booleanValue()).toList());
+			Set<BoundedRole> roles = new HashSet<>(analysis.getHoldableRoles(type));
+			roles.addAll(granted.keySet());
+			roles.removeAll(_ineffectiveRoles);
+			_roles = sortedByName(roles);
+		} else {
+			_ineffectiveRoles = Collections.emptyList();
+			_roles = Collections.emptyList();
+		}
 		_attributes = ownGrants ? attributes(type) : Collections.emptyList();
 	}
 
 	/**
-	 * The roles granted an operation on the type, in effect or by a stored rule, that a user cannot
-	 * hold on it, ordered by their names.
+	 * The roles granted an operation on the type, in effect or by a stored rule, each with whether
+	 * one of its grants can take effect.
+	 *
+	 * <p>
+	 * Of {@link SimpleBoundCommandGroup#DISCOVER} only the direct grants count: every other grant
+	 * implies it, so a role holding it through another grant holds that grant as well, which
+	 * decides on its own.
+	 * </p>
+	 *
+	 * @see SecurityCoverageAnalysis#isLiveGrant(TLClass, BoundCommandGroup, BoundedRole)
 	 */
-	private List<BoundedRole> ineffectiveRoles() {
-		Set<BoundedRole> granted = new HashSet<>();
-		for (BoundCommandGroup operation : _operations) {
-			granted.addAll(_analysis.getGrantedRoles(_type, operation));
-		}
+	private Map<BoundedRole, Boolean> grantedRoles() {
+		Map<BoundedRole, Boolean> result = new HashMap<>();
 		try {
+			for (BoundCommandGroup operation : _operations) {
+				Set<BoundedRole> granted = SimpleBoundCommandGroup.DISCOVER.equals(operation)
+					? storedTypeRoles(operation)
+					: _analysis.getGrantedRoles(_type, operation);
+				for (BoundedRole role : granted) {
+					addGrant(result, operation, role);
+				}
+			}
 			for (AccessRule rule : storedRules(TLModelUtil.qualifiedName(_type))) {
-				if (!(rule instanceof AccessRevoke)) {
-					granted.addAll(roles(rule));
+				if (rule instanceof AccessRevoke || rule.getOperation() == null) {
+					continue;
+				}
+				BoundCommandGroup operation = operation(rule.getOperation().id());
+				for (BoundedRole role : roles(rule)) {
+					if (operation == null) {
+						// An operation not applying to the type is decided nowhere.
+						result.putIfAbsent(role, Boolean.FALSE);
+					} else {
+						addGrant(result, operation, role);
+					}
 				}
 			}
 		} catch (ConfigurationException ex) {
 			throw new IllegalStateException("The stored access definition cannot be read.", ex);
 		}
-		granted.removeAll(_roles);
-		List<BoundedRole> result = new ArrayList<>(granted);
+		return result;
+	}
+
+	private void addGrant(Map<BoundedRole, Boolean> liveByRole, BoundCommandGroup operation, BoundedRole role) {
+		if (!Boolean.TRUE.equals(liveByRole.get(role))) {
+			liveByRole.put(role, Boolean.valueOf(_analysis.isLiveGrant(_type, operation, role)));
+		}
+	}
+
+	/**
+	 * The {@link #getOperations() operation} of the given name, <code>null</code> when no such
+	 * operation applies to the type.
+	 */
+	private BoundCommandGroup operation(String id) {
+		for (BoundCommandGroup operation : _operations) {
+			if (operation.getID().equals(id)) {
+				return operation;
+			}
+		}
+		return null;
+	}
+
+	private static List<BoundedRole> sortedByName(Collection<BoundedRole> roles) {
+		List<BoundedRole> result = new ArrayList<>(roles);
 		result.sort(Comparator.comparing(BoundedRole::getName));
 		return Collections.unmodifiableList(result);
 	}
@@ -264,27 +319,36 @@ public class TypeGrants {
 	}
 
 	/**
-	 * The roles a user can hold on an object of the type.
+	 * The roles a user can hold on an object of the type, and the roles holding a grant on the
+	 * type that can take effect, without the {@link #getIneffectiveRoles() ineffective} ones,
+	 * ordered by their names.
+	 *
+	 * <p>
+	 * A role holding only a grant of {@link SimpleBoundCommandGroup#CREATE} is among them when a
+	 * user can hold it where an object of the type is created, even if no user can hold it on the
+	 * object itself.
+	 * </p>
 	 *
 	 * @see SecurityCoverageAnalysis#getHoldableRoles(TLClass)
+	 * @see SecurityCoverageAnalysis#isLiveGrant(TLClass, BoundCommandGroup, BoundedRole)
 	 */
 	public List<BoundedRole> getRoles() {
 		return _roles;
 	}
 
 	/**
-	 * The roles granted an operation on the type that a user cannot hold on it: their grants
-	 * never take effect.
+	 * The roles granted an operation on the type none of whose grants can take effect, ordered by
+	 * their names.
 	 *
-	 * @see SecurityCoverageAnalysis#canHold(TLClass, BoundedRole)
+	 * @see SecurityCoverageAnalysis#isLiveGrant(TLClass, BoundCommandGroup, BoundedRole)
 	 */
 	public List<BoundedRole> getIneffectiveRoles() {
 		return _ineffectiveRoles;
 	}
 
 	/**
-	 * Whether the given row is about a role that cannot be held on the type, so that its grants
-	 * never take effect and are offered for revocation only.
+	 * Whether the given row is about a role none of whose grants on the type can take effect, so
+	 * that they are offered for revocation only.
 	 */
 	public boolean isIneffective(Row row) {
 		return row.attribute() == null && _ineffectiveRoles.contains(row.role());
@@ -437,10 +501,10 @@ public class TypeGrants {
 	 * when the attribute is not restricted.
 	 */
 	private Set<BoundedRole> effectiveAttributeRoles(TLStructuredTypePart attribute, BoundCommandGroup operation) {
-		if (!_rights.hasGrant(attribute, operation)) {
+		if (!_rights.hasGrant(_type, attribute, operation)) {
 			return null;
 		}
-		return _rights.getAllowedRoles(attribute, operation);
+		return _rights.getAllowedRoles(_type, attribute, operation);
 	}
 
 	/**
@@ -448,14 +512,42 @@ public class TypeGrants {
 	 * attribute are applied, <code>null</code> when the attribute is not restricted then.
 	 *
 	 * <p>
-	 * The rules of the underlying configuration layers and the stored ones are applied in order,
-	 * as for the {@link #storedTypeRoles(BoundCommandGroup) type}; an attribute inherits nothing.
+	 * With an {@link #hasOwnEntry(TLStructuredTypePart) entry of its own} for the attribute, the
+	 * rules of the underlying configuration layers and the stored ones of that entry are applied
+	 * in order, as for the {@link #storedTypeRoles(BoundCommandGroup) type}; such an entry inherits
+	 * nothing. Without one, the type has the attribute rights its generalizations pass on, as they
+	 * are in effect.
 	 * </p>
 	 */
 	private Set<BoundedRole> storedAttributeRoles(TLStructuredTypePart attribute, BoundCommandGroup operation)
 			throws ConfigurationException {
-		String entry = SecurityDefinitionEditor.entryName(attribute);
+		if (!hasOwnEntry(attribute)) {
+			Set<BoundedRole> inherited = effectiveAttributeRoles(attribute, operation);
+			return inherited == null ? null : new HashSet<>(inherited);
+		}
+		String entry = attributeEntry(attribute);
 		return apply(apply(null, baseRules(entry), operation), storedRules(entry), operation);
+	}
+
+	/**
+	 * Whether the type has an access rights entry of its own for the given attribute, in the
+	 * underlying configuration layers or stored.
+	 *
+	 * <p>
+	 * An entry of its own replaces the attribute rights the generalizations of the type pass on,
+	 * for all operations.
+	 * </p>
+	 */
+	private boolean hasOwnEntry(TLStructuredTypePart attribute) throws ConfigurationException {
+		String entry = attributeEntry(attribute);
+		if (_baseRules == null) {
+			_baseRules = _editor.baseRules();
+		}
+		return _baseRules.containsKey(entry) || !storedRules(entry).isEmpty();
+	}
+
+	private String attributeEntry(TLStructuredTypePart attribute) {
+		return SecurityDefinitionEditor.entryName(_type, attribute);
 	}
 
 	/**
@@ -531,6 +623,13 @@ public class TypeGrants {
 	 * denying the attribute to everybody.
 	 * </p>
 	 *
+	 * <p>
+	 * A grant on an attribute is stored for the type, so that it applies to the type and its
+	 * specializations only. When the type has no entry of its own for the attribute yet, the entry
+	 * is created with the attribute rights the type inherits, so that the change affects nothing
+	 * but the grant changed.
+	 * </p>
+	 *
 	 * @param row
 	 *        The row of the grant.
 	 * @param operation
@@ -558,18 +657,38 @@ public class TypeGrants {
 			if (storedTypeRoles(operation).contains(role) != granted) {
 				_editor.setGranted(_type, operation, role, granted);
 			}
-		} else if (!granted && isLastRole(attribute, role, operation)) {
-			_editor.dropStoredRules(attribute, operation);
-			_storedRules.clear();
-			if (storedAttributeRoles(attribute, operation) != null) {
-				_editor.dropAttributeGrants(attribute, operation);
-			}
 		} else {
-			_editor.dropStoredGrant(attribute, operation, role);
-			_storedRules.clear();
-			Set<BoundedRole> remaining = storedAttributeRoles(attribute, operation);
-			if ((remaining != null && remaining.contains(role)) != granted) {
-				_editor.setGranted(attribute, operation, role, granted);
+			if (!hasOwnEntry(attribute)) {
+				copyInheritedAttributeRights(attribute);
+			}
+			if (!granted && isLastRole(attribute, role, operation)) {
+				_editor.dropStoredRules(_type, attribute, operation);
+				_storedRules.clear();
+				if (storedAttributeRoles(attribute, operation) != null) {
+					_editor.dropAttributeGrants(_type, attribute, operation);
+				}
+			} else {
+				_editor.dropStoredGrant(_type, attribute, operation, role);
+				_storedRules.clear();
+				Set<BoundedRole> remaining = storedAttributeRoles(attribute, operation);
+				if ((remaining != null && remaining.contains(role)) != granted) {
+					_editor.setGranted(_type, attribute, operation, role, granted);
+				}
+			}
+		}
+		_storedRules.clear();
+	}
+
+	/**
+	 * Stores the attribute rights the type inherits for the given attribute in an entry of the type
+	 * itself.
+	 */
+	private void copyInheritedAttributeRights(TLStructuredTypePart attribute)
+			throws IOException, ConfigurationException {
+		for (BoundCommandGroup operation : _operations) {
+			if (_rights.hasGrant(_type, attribute, operation)) {
+				_editor.setAttributeGrant(_type, attribute, operation,
+					sortedByName(_rights.getAllowedRoles(_type, attribute, operation)));
 			}
 		}
 		_storedRules.clear();

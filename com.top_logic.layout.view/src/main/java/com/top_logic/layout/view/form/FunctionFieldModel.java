@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.form;
 
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 /**
@@ -24,6 +25,10 @@ public class FunctionFieldModel extends BoundFieldModel {
 	private final Function<Object, Object> _read;
 
 	private final BiConsumer<Object, Object> _write;
+
+	private Runnable _afterSetValue;
+
+	private BiPredicate<Object, Runnable> _writeGuard;
 
 	/**
 	 * Creates a {@link FunctionFieldModel}.
@@ -48,6 +53,52 @@ public class FunctionFieldModel extends BoundFieldModel {
 	@Override
 	public Object getObject() {
 		return _object;
+	}
+
+	/**
+	 * Runs the given action after every {@link #setValue(Object)}, when the field shows the value
+	 * that was set.
+	 *
+	 * @param action
+	 *        The action to run, e.g. to build what depends on the written value again;
+	 *        {@code null} for none.
+	 */
+	public void setAfterSetValue(Runnable action) {
+		_afterSetValue = action;
+	}
+
+	/**
+	 * Decides around every {@link #setValue(Object)} whether the value is set.
+	 *
+	 * <p>
+	 * The guard receives the {@link #getObject() object} and the setting of the value, which it
+	 * runs - e.g. while it holds a lock of the object - or refuses. A refused value is not
+	 * written, the field shows the value the object holds again, and the
+	 * {@link #setAfterSetValue(Runnable) action after setting a value} does not run.
+	 * </p>
+	 *
+	 * @param guard
+	 *        Runs the given setting of the value and answers {@code true}, or answers {@code false}
+	 *        without running it; {@code null} to set every value.
+	 */
+	public void setWriteGuard(BiPredicate<Object, Runnable> guard) {
+		_writeGuard = guard;
+	}
+
+	@Override
+	public void setValue(Object value) {
+		BiPredicate<Object, Runnable> guard = _writeGuard;
+		if (guard == null) {
+			super.setValue(value);
+		} else if (!guard.test(_object, () -> super.setValue(value))) {
+			// The input shows the value it was given, which was not written.
+			fireIfRewritten(value, getValue());
+			return;
+		}
+		Runnable action = _afterSetValue;
+		if (action != null) {
+			action.run();
+		}
 	}
 
 	@Override

@@ -12,11 +12,11 @@ import java.util.Map;
 import junit.framework.Test;
 
 import com.top_logic.model.TLObject;
-import com.top_logic.tl.ai.core.agent.SecurityContext;
-import com.top_logic.tl.ai.core.agent.ToolContext;
-import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.security.ReadFilter;
-import com.top_logic.tl.ai.core.tools.ToolExecutions;
+import com.top_logic.ai.core.agent.SecurityContext;
+import com.top_logic.ai.core.agent.ToolContext;
+import com.top_logic.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.tools.ToolExecutions;
 
 /**
  * End-to-end test that the data tools disclose only what the acting persona may read (issue #289).
@@ -136,7 +136,7 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 		assertHasNot("Nothing of the project may appear in the refusal.", "_display", forAnna);
 
 		String forCara = getInstance(CARA, tid);
-		assertHas("Cara does, so she gets it.", "\"tid\"", forCara);
+		assertHas("Cara does, so she gets it.", "\"" + ReadFilter.TID + "\"", forCara);
 		assertHasNot("not found", forCara);
 	}
 
@@ -153,13 +153,13 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 	 */
 	public void testScriptResultDisclosesOnlyReadableObjects() {
 		String forAnna = queryAs(ANNA, "all(`pm:Project`)");
-		assertHas("Anna may read her project, so the query names it.", "[id:", forAnna);
+		assertHas("Anna may read her project, so the query names it.", "\"" + ReadFilter.TID + "\"", forAnna);
 		assertHas(ALPHA, forAnna);
 
 		String forDora = queryAs(DORA, "all(`pm:Project`)");
-		assertHasNot("No identifier of an unreadable object may reach the model.", "[id:", forDora);
+		assertHasNot("No identifier of an unreadable object may reach the model.", "\"" + ReadFilter.TID + "\"", forDora);
 		assertHasNot("A label is business data.", ALPHA, forDora);
-		assertEquals("An empty collection is the honest answer.", "(empty list)", MarkedResults.disclosed(forDora));
+		assertEquals("An empty collection is the honest answer.", "[]", MarkedResults.disclosed(forDora));
 	}
 
 	/**
@@ -169,7 +169,7 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 		String result = queryAs(DORA, "all(`pm:Project`).firstElement()");
 
 		assertEquals("null", MarkedResults.disclosed(result));
-		assertHasNot("A hidden object contributes no identifier.", "[id:", result);
+		assertHasNot("A hidden object contributes no identifier.", "\"" + ReadFilter.TID + "\"", result);
 	}
 
 	/**
@@ -211,11 +211,11 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 	 */
 	public void testADeniedAttributeReadYieldsNothingInEitherSpelling() {
 		String collectionAccess = queryAs(DORA, "all(`pm:Project`).get(`pm:Project#name`)");
-		assertEquals("Collection access over no discoverable project.", "(empty list)",
+		assertEquals("Collection access over no discoverable project.", "[]",
 			MarkedResults.disclosed(collectionAccess));
 
 		String mapped = queryAs(DORA, "all(`pm:Project`).map(p -> $p.get(`pm:Project#name`))");
-		assertEquals("An explicit map has nothing to map over either.", "(empty list)",
+		assertEquals("An explicit map has nothing to map over either.", "[]",
 			MarkedResults.disclosed(mapped));
 
 		for (String result : new String[] { collectionAccess, mapped }) {
@@ -243,7 +243,7 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 	 */
 	public void testStringCoercionLabelsOnlyDiscoverableObjects() {
 		String coerced = queryAs(DORA, "all(`pm:Project`).map(p -> toString($p))");
-		assertEquals("Dora may discover no project, so there is nothing to label.", "(empty list)",
+		assertEquals("Dora may discover no project, so there is nothing to label.", "[]",
 			MarkedResults.disclosed(coerced));
 		assertHasNot(ALPHA, coerced);
 		assertHasNot(BETA, coerced);
@@ -270,7 +270,7 @@ public class SecDemoReadFilterTest extends SecDemoPersonaTest {
 	public void testFilteringInsideTheScriptIsTheControl() {
 		String filtered = queryAs(DORA, "filterSecurity(all(`pm:Project`)).map(p -> toString($p))");
 
-		assertEquals("Nothing survives the filter, so nothing is labelled.", "(empty list)",
+		assertEquals("Nothing survives the filter, so nothing is labelled.", "[]",
 			MarkedResults.disclosed(filtered));
 		assertHasNot(ALPHA, filtered);
 		assertHasNot(BETA, filtered);

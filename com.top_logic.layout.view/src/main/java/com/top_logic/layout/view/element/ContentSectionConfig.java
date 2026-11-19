@@ -25,7 +25,7 @@ import com.top_logic.layout.view.security.WithAccessControl;
  *
  * @see ContentSection
  */
-public interface ContentSectionConfig extends WithAccessControl {
+public interface ContentSectionConfig extends WithAccessControl, WithVisibility {
 
 	/** Configuration name for {@link #getId()}. */
 	String ID = "id";

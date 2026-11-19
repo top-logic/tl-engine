@@ -14,6 +14,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.component.LayoutContainerBoundChecker;
 import com.top_logic.mig.html.layout.Layout;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.tool.boundsec.securityObjectProvider.SecurityRootObjectProvider;
 
 /**
  * A Layout that that will care for Bound security.
@@ -26,7 +27,7 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 	 * Configuration options for {@link BoundLayout}.
 	 */
 	@TagName(Config.TAG_NAME)
-	public interface Config extends Layout.Config, BoundCheckerLayoutConfig, SecurityObjectProviderConfig {
+	public interface Config extends Layout.Config, BoundCheckerLayoutConfig, WithSecurityMaster {
 
 		/**
 		 * Short-cut name for {@link BoundLayout} in XML configuration.
@@ -44,12 +45,27 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 
 	private SecurityObjectProvider _securityObjectProvider;
 
+	/** @see Config#getIsSecurityMaster() */
+	private final boolean _isSecurityMaster;
+
     /** Construct a {@link BoundLayout} from (XML-)Attributes. */
 	public BoundLayout(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
 
 		_securityObjectProvider = atts.resolveSecurityObject(context);
+		_isSecurityMaster = atts.getIsSecurityMaster();
     }
+
+	@Override
+	protected void componentsResolved(InstantiationContext context) {
+		super.componentsResolved(context);
+
+		if (_isSecurityMaster) {
+			if (getParent() instanceof BoundLayout layout) {
+				layout.initSecurityMaster(this);
+			}
+		}
+	}
 
 	@Override
 	public SecurityObjectProvider getSecurityObjectProvider() {
@@ -94,8 +110,11 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 			return _securityMaster;
 		}
 
-		if (getChildCount() == 1) {
-			/* When there is only one child, treat it as security master. */
+		if (getChildCount() == 1 && !hasOwnSecurityObjectProvider() && !_isSecurityMaster) {
+			/* When there is only one child, treat it as security master - unless this layout
+			 * configures a security object of its own or is itself security master. A dialog
+			 * always has exactly one child (its content layout), so otherwise a security object
+			 * configured at the dialog would be ignored. */
 			LayoutComponent child = getChild(0);
 			if (child instanceof BoundCheckerComponent childChecker) {
 				// Only BoundCheckerComponent can be "security master".
@@ -106,20 +125,50 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 	}
 
 	/**
+	 * Whether this layout configures a {@link #getSecurityObjectProvider() security object
+	 * provider} that differs from the default {@link SecurityRootObjectProvider}.
+	 *
+	 * <p>
+	 * The default can not be detected by checking whether the configuration value is set: Layout
+	 * templates (e.g. the dialog template) always pass the security object to the layout, even if
+	 * it is not specified in the template call.
+	 * </p>
+	 */
+	private boolean hasOwnSecurityObjectProvider() {
+		return !(_securityObjectProvider instanceof SecurityRootObjectProvider);
+	}
+
+	/**
 	 * Initializes the child component that is responsible for for checking access rights.
 	 * 
 	 * <p>
 	 * This method must be called from components with a {@link WithSecurityMaster} configuration on
 	 * their parent component.
 	 * </p>
+	 * 
+	 * <p>
+	 * A layout that is itself {@link Config#getIsSecurityMaster() security master} ignores a
+	 * security master from its inside: It always checks access on its own security object and
+	 * reports itself (not the inner security master) to its parent.
+	 * </p>
 	 */
 	public void initSecurityMaster(BoundCheckerComponent masterComponent) {
+		if (_isSecurityMaster) {
+			return;
+		}
 		if (_securityMaster != null && !_securityMaster.getName().equals(masterComponent.getName())) {
 			Logger.warn("Non-unique security master components in layout '" + getName() + "': "
 					+ _securityMaster.getName() + " and " + masterComponent.getName(),
 				BoundLayout.class);
 		}
 		_securityMaster = masterComponent;
+
+		if (hasOwnSecurityObjectProvider()) {
+			Logger.warn("The security object configured at layout '" + getName()
+				+ "' is not used, because '" + masterComponent.getName()
+				+ "' is the security master of this layout. Configure the security object at the security master instead.",
+				BoundLayout.class);
+		}
 
 		// Forward to ancestors.
 		if (getParent() instanceof BoundLayout layout) {

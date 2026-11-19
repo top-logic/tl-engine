@@ -4,7 +4,9 @@
 	The same long-running job, started from within a dialog. The command that starts the job is
 	suspended while the job runs, and the dialog hosting a suspended command stays open: the close
 	button, Escape, the backdrop and the Close button below all refuse until the job has settled.
-	Cancelling the job from the display is the way out while it runs.
+	Cancelling the job from the display is the way out while it runs. A job that completes closes
+	the dialog itself: the <with-result> of its <start-job> closes the dialog at once - the command
+	running it is no longer held by the job - and then tells the result in a notification.
 -->
 <view>
 	<channels>
@@ -20,8 +22,8 @@
 		<inset>
 			<text>
 				<label>
-					<en>The job below takes about five seconds. While it runs, this dialog cannot be closed - the command that started the job is waiting for it. Cancel the job to get out early.</en>
-					<de>Der Auftrag unten dauert etwa fünf Sekunden. Während er läuft, kann dieser Dialog nicht geschlossen werden - der Befehl, der den Auftrag gestartet hat, wartet auf ihn. Brechen Sie den Auftrag ab, um vorzeitig herauszukommen.</de>
+					<en>The job below takes about five seconds. While it runs, this dialog cannot be closed - the command that started the job is waiting for it. Cancel the job to get out early. Once the job has completed, it closes this dialog and reports its result in a notification.</en>
+					<de>Der Auftrag unten dauert etwa fünf Sekunden. Während er läuft, kann dieser Dialog nicht geschlossen werden - der Befehl, der den Auftrag gestartet hat, wartet auf ihn. Brechen Sie den Auftrag ab, um vorzeitig herauszukommen. Sobald der Auftrag abgeschlossen ist, schließt er diesen Dialog und meldet sein Ergebnis in einer Benachrichtigung.</de>
 				</label>
 			</text>
 
@@ -81,6 +83,10 @@
 	});
 	#('5 records processed.'@en, '5 Datensätze verarbeitet.'@de);
 }]]></function>
+						<with-result>
+							<close-dialog/>
+							<notify expr="$result"/>
+						</with-result>
 					</start-job>
 				</action>
 			</button>

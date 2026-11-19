@@ -57,6 +57,21 @@ public class ReactAvatarControl extends ReactControl implements DataProvider {
 	}
 
 	/**
+	 * Shows the given badge at the corner of the avatar, {@code null} for none.
+	 *
+	 * <p>
+	 * An avatar that never had a badge sends no {@link AvatarState#BADGE__PROP} at all; a badge
+	 * removed later is sent as {@code null}, which the client reads as absent.
+	 * </p>
+	 */
+	public void setBadge(BadgeDisplay badge) {
+		if (badge == null && getState(AvatarState.BADGE__PROP) == null) {
+			return;
+		}
+		putState(AvatarState.BADGE__PROP, badge == null ? null : badge.toState());
+	}
+
+	/**
 	 * Sets the diameter of the circle.
 	 */
 	public void setSize(AvatarSize size) {

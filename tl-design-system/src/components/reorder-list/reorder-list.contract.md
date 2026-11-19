@@ -39,7 +39,7 @@ Liste rendert nur die passenden Einträge. Jeder behält seine Position in der g
 ausgeblendete, wie ohne Suche): Ziehen und Alt + Pfeil rechnen mit ihr, ein Eintrag lässt sich also neben einen ausgefilterten ablegen. Mit der Suche
 davor füllen Suche und Liste ihren Behälter als Spalte mit Innenabstand `--tl-space-md` (oben und
 seitlich): die Suche bleibt stehen, nur die Liste scrollt. Die Höhe gibt der Behälter — die Spaltenwahl sitzt auf der
-zweiten Seite des Popovers der Ansicht, das mit dem freien Platz wächst, so schrumpft es beim Tippen nicht (Sichtprüfung 12.10.;
+ersten Seite „Spalten“ des Popovers am Zahnrad, das mit dem freien Platz wächst, so schrumpft es beim Tippen nicht (Sichtprüfung 12.10.;
 vorher war die Liste fest `--tl-size-popover-max` hoch und lief im kleineren Fensterkörper über). Alt + Pfeil verschiebt in einer gefilterten Liste wie ohne Suche:
 um eine Stelle der **ganzen** Anzeige-Liste und über die Grenzen der Abschnitte hinweg (Z7, s. Tastatur); liegt ein ausgefilterter Eintrag
 dazwischen, ändert sich sichtbar nichts, nur die Ansage.
@@ -119,7 +119,7 @@ Klassen:
 | `tl-reorder-list__handle` | der Griff, zusammen mit `tl-button tl-button--ghost tl-button--sm tl-button--icon` und `tl-reveal-on-hover` |
 | `tl-reorder-list__label` | die Beschriftung |
 | `tl-reorder-list__search` | an der `tl-field-group` der Suche vor der Liste |
-| `tl-reorder-list__host` | die Wurzel der Spaltenwahl um Suche und Liste: eine Flex-Spalte, die ihren Behälter füllt und mit ihm schrumpft (`flex: 1 1 auto`, `min-block-size: 0`); es rollt allein die Liste. Im Popover der Ansicht sitzt sie auf der zweiten Seite (`table.contract.md`) und trägt dort weder Fensterabstand noch Fensterhöhe |
+| `tl-reorder-list__host` | die Wurzel der Spaltenwahl um Suche und Liste: eine Flex-Spalte, die ihren Behälter füllt und mit ihm schrumpft (`flex: 1 1 auto`, `min-block-size: 0`); es rollt allein die Liste. Im Popover am Zahnrad sitzt sie auf der ersten Seite „Spalten“ (`table.contract.md`) und trägt dort weder Fensterabstand noch Fensterhöhe |
 | `tl-reorder-list__actions` | `span` am Zeilenende um Schloss und Auge |
 | `tl-reorder-list__lock` | das Schloss, mit `tl-button tl-button--ghost tl-button--sm tl-button--icon` und `tl-reveal-on-hover` |
 | `tl-reorder-list__eye` | das Auge, ebenso |

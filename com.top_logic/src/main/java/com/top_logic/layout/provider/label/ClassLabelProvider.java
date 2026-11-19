@@ -6,15 +6,23 @@
 package com.top_logic.layout.provider.label;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.AbstractResourceProvider;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.ResourceProvider;
 import com.top_logic.util.Resources;
 
 /**
  * A {@link LabelProvider} for {@link Class Classes} that uses {@link Class#getName()}.
  * 
+ * <p>
+ * As {@link ResourceProvider}, it explains a class by the tooltip of its resource key, the
+ * documentation of the class, e.g. in the tooltip of an option of a selection of implementation
+ * classes.
+ * </p>
+ * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
-public class ClassLabelProvider implements LabelProvider {
+public class ClassLabelProvider extends AbstractResourceProvider {
 
 	@Override
 	public String getLabel(Object object) {
@@ -34,6 +42,18 @@ public class ClassLabelProvider implements LabelProvider {
 		} else {
 			return i18nName + " (" + simpleName(clazz) + ")";
 		}
+	}
+
+	/**
+	 * The tooltip of the {@link ResKey#forClass(Class) resource key} of the given class, the
+	 * documentation of the class; {@code null} for a class without one.
+	 */
+	@Override
+	public String getTooltip(Object object) {
+		if (!(object instanceof Class<?> clazz)) {
+			return null;
+		}
+		return Resources.getInstance().getString(ResKey.forClass(clazz).tooltip(), null);
 	}
 
 	/**

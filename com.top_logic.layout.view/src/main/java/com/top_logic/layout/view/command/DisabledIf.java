@@ -60,8 +60,11 @@ public class DisabledIf extends ScriptedRule {
 	/**
 	 * Configuration for {@link DisabledIf}.
 	 */
-	@TagName("disabled-if")
+	@TagName(Config.TAG_NAME)
 	public interface Config extends ViewExecutabilityRule.Config, ConfigPart {
+
+		/** Configuration tag of a {@link DisabledIf}. */
+		String TAG_NAME = "disabled-if";
 
 		/** Configuration name for {@link #getExpr()}. */
 		String EXPR = "expr";

@@ -5,6 +5,7 @@
  */
 package com.top_logic.tool.export.tableview;
 
+import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +28,7 @@ import com.top_logic.base.office.excel.streaming.ExcelWriter;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnView;
@@ -48,6 +49,15 @@ import com.top_logic.util.Resources;
  * sorted as the table is. A cell is written from the typed {@link Column#exportValue(Object) value} of
  * its column, rendered by the {@link ExcelCellRenderer} configured for the column, so that a number
  * stays a number and a date a date in the sheet.
+ * </p>
+ *
+ * <p>
+ * The color roles the table tints its headings and cells in are written as the fill of the cells,
+ * in the colors of the {@link #setRoleFills(Function) role fills}: a heading in the
+ * {@link ColumnView#headerRole() role of its column}, a data cell in its
+ * {@link TableView#cellColor(com.top_logic.table.Row, String) own role}, else in the
+ * {@link TableView#rowColor(com.top_logic.table.Row) role of its row}. A cell without a role is not
+ * filled.
  * </p>
  *
  * <p>
@@ -92,6 +102,8 @@ public class TableViewExcelExport {
 	private boolean _freezeHeader = true;
 
 	private boolean _autoFilter = true;
+
+	private Function<ValueColor, Color> _roleFills = role -> null;
 
 	/**
 	 * Creates a {@link TableViewExcelExport}.
@@ -168,6 +180,20 @@ public class TableViewExcelExport {
 	}
 
 	/**
+	 * The fill colors of the color roles.
+	 *
+	 * <p>
+	 * A heading or a cell drawn in a color role in the table is filled with the color the given
+	 * function answers for that role; {@code null} leaves it unfilled. Cells of the same role share
+	 * one cell style of the workbook. Without this setting, no cell is filled.
+	 * </p>
+	 */
+	public TableViewExcelExport setRoleFills(Function<ValueColor, Color> roleFills) {
+		_roleFills = roleFills;
+		return this;
+	}
+
+	/**
 	 * Takes what is to be exported from the given table.
 	 *
 	 * <p>
@@ -198,7 +224,7 @@ public class TableViewExcelExport {
 				// The custom context is the renderer's per-column state, created once per column as
 				// the export of a classic table does.
 				columns.add(new ExportColumn(label(columnView.label()), columnView.width(), renderer,
-					renderer.newCustomContext(null, null)));
+					renderer.newCustomContext(null, null), columnView.headerRole()));
 				if (index < frozenDisplayed) {
 					frozen++;
 				}
@@ -211,11 +237,11 @@ public class TableViewExcelExport {
 			int depth = row.depth();
 			switch (row.kind()) {
 				case DATA:
-					rows.add(new ExportRow(values(definitions, row.data()), false, depth));
+					rows.add(new ExportRow(values(definitions, row.data()), false, depth, roles(view, row, definitions)));
 					break;
 				case GROUP_HEADER:
 				case AGGREGATE:
-					rows.add(new ExportRow(groupCells(view, row, definitions), true, depth));
+					rows.add(new ExportRow(groupCells(view, row, definitions), true, depth, List.of()));
 					break;
 			}
 		}
@@ -226,6 +252,21 @@ public class TableViewExcelExport {
 		List<Object> result = new ArrayList<>(columns.size());
 		for (Column<R, ?> column : columns) {
 			result.add(column.exportValue(data));
+		}
+		return result;
+	}
+
+	/**
+	 * The color roles of the cells of a data row, in column order: the cell's own role, else the role
+	 * of the row, {@code null} for a cell without either.
+	 */
+	private static <R> List<ValueColor> roles(TableView<R> view, com.top_logic.table.Row<R> row,
+			List<Column<R, ?>> columns) {
+		ValueColor rowRole = view.rowColor(row);
+		List<ValueColor> result = new ArrayList<>(columns.size());
+		for (Column<R, ?> column : columns) {
+			ValueColor own = view.cellColor(row, column.name());
+			result.add(own != null ? own : rowRole);
 		}
 		return result;
 	}
@@ -251,33 +292,12 @@ public class TableViewExcelExport {
 	 * number of its rows.
 	 *
 	 * <p>
-	 * The value is rendered here rather than taken from the table's first cell of the row: the
-	 * first displayed column may be one that is not exported.
+	 * The value is {@link TableView#groupText(Group) written by the table} rather than taken from
+	 * its first cell of the row: the first displayed column may be one that is not exported.
 	 * </p>
 	 */
 	private static <R> String groupLabel(TableView<R> view, Group<R> group) {
-		List<Object> values = group.key().values();
-		List<String> grouping = view.state().getGrouping().columns();
-		int level = values.size() - 1;
-		String value = "";
-		if (level >= 0 && level < grouping.size()) {
-			Column<R, ?> groupColumn = view.column(grouping.get(level));
-			if (groupColumn != null) {
-				Object groupValue = values.get(level);
-				value = text(render(groupColumn, groupValue));
-				if (value.isEmpty() && groupValue != null) {
-					// The column displays its values by a control rather than a text.
-					value = MetaLabelProvider.INSTANCE.getLabel(groupValue);
-				}
-			}
-		}
-		return value + " (" + group.size() + ")";
-	}
-
-	@SuppressWarnings("unchecked")
-	private static <R, V> CellContent render(Column<R, V> column, Object value) {
-		// The value is a group key value taken from this very column.
-		return column.renderer().render((V) value);
+		return view.groupText(group) + " (" + group.size() + ")";
 	}
 
 	private static String text(CellContent content) {
@@ -286,6 +306,9 @@ public class TableViewExcelExport {
 		}
 		if (content instanceof CellContent.Labeled labeled) {
 			return labeled.text();
+		}
+		if (content instanceof CellContent.Placeholder placeholder) {
+			return placeholder.text();
 		}
 		return "";
 	}
@@ -340,7 +363,7 @@ public class TableViewExcelExport {
 			if (row.header()) {
 				writeGroup(writer, row.cells());
 			} else {
-				writeData(writer, columns, contexts, row.cells(), done, excelRow);
+				writeData(writer, columns, contexts, row, done, excelRow);
 			}
 			if (row.level() > 0) {
 				outline = true;
@@ -399,22 +422,47 @@ public class TableViewExcelExport {
 		return WorkbookUtil.createSafeSheetName(label(I18NConstants.DEFAULT_SHEET_NAME));
 	}
 
-	private static void writeHeader(ExcelWriter writer, List<ExportColumn> columns) throws IOException {
+	private void writeHeader(ExcelWriter writer, List<ExportColumn> columns) throws IOException {
 		for (ExportColumn column : columns) {
-			ExcelValue header = new ExcelValue(0, 0, column.label());
+			ExcelValue header = new ExcelValue(0, 0, column.label(), fill(column.headerRole()));
 			header.setBold();
 			header.setFontSize(HEADER_FONT_SIZE);
 			writer.write(header);
 		}
 	}
 
-	private static void writeData(ExcelWriter writer, List<ExportColumn> columns, List<ViewRenderContext> contexts,
-			List<Object> values, int modelRow, int excelRow) throws IOException {
+	private void writeData(ExcelWriter writer, List<ExportColumn> columns, List<ViewRenderContext> contexts,
+			ExportRow row, int modelRow, int excelRow) throws IOException {
+		List<Object> values = row.cells();
+		List<ValueColor> roles = row.roles();
 		for (int n = 0, size = columns.size(); n < size; n++) {
 			ViewRenderContext context = contexts.get(n);
 			context.update(values.get(n), modelRow, excelRow, n);
-			writer.write(columns.get(n).renderer().renderCell(context));
+			Object cell = columns.get(n).renderer().renderCell(context);
+			writer.write(filled(cell, n < roles.size() ? fill(roles.get(n)) : null));
 		}
+	}
+
+	/** The fill color of the given role, {@code null} for no role and a role without a fill. */
+	private Color fill(ValueColor role) {
+		return role == null ? null : _roleFills.apply(role);
+	}
+
+	/**
+	 * The given rendered cell filled with the given color, the cell itself where it has no fill or
+	 * the renderer gave it a background of its own.
+	 */
+	private static Object filled(Object cell, Color fill) {
+		if (fill == null) {
+			return cell;
+		}
+		if (cell instanceof ExcelValue value) {
+			if (value.getBackgroundColor() == null) {
+				value.setBackgroundColor(fill);
+			}
+			return value;
+		}
+		return new ExcelValue(0, 0, cell, fill);
 	}
 
 	private static void writeGroup(ExcelWriter writer, List<Object> cells) throws IOException {
@@ -509,8 +557,11 @@ public class TableViewExcelExport {
 	 * @param customContext
 	 *        The renderer's {@link ExcelCellRenderer#newCustomContext(com.top_logic.layout.table.TableModel,
 	 *        com.top_logic.layout.table.model.Column) context} of this column.
+	 * @param headerRole
+	 *        The {@link ColumnView#headerRole() color role} of the heading, {@code null} for none.
 	 */
-	public record ExportColumn(String label, int width, ExcelCellRenderer renderer, Object customContext) {
+	public record ExportColumn(String label, int width, ExcelCellRenderer renderer, Object customContext,
+			ValueColor headerRole) {
 		// Pure value type.
 	}
 
@@ -523,8 +574,11 @@ public class TableViewExcelExport {
 	 *        Whether the row is a group header (or aggregation row), written from texts.
 	 * @param level
 	 *        The outline level of the row.
+	 * @param roles
+	 *        The color roles of the cells of a data row, in column order, {@code null} for a cell
+	 *        without one; empty for a group header.
 	 */
-	public record ExportRow(List<Object> cells, boolean header, int level) {
+	public record ExportRow(List<Object> cells, boolean header, int level, List<ValueColor> roles) {
 		// Pure value type.
 	}
 

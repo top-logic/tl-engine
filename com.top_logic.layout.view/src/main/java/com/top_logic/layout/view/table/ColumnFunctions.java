@@ -11,22 +11,27 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * The functions a column computes its cells from: the value a row shows, what an edit of that value
- * writes, and which rows offer the edit.
+ * writes, which rows offer the edit, and which options an edited value is chosen from.
  *
  * <p>
  * Every function is an {@link InputScript} and sees the values of the inputs, then the row, then
  * whatever the column binds behind it - the object one column of a computed set stands for, for
  * instance. An update sees the entered value last. A column computing its value from the row alone
- * binds nothing and is described by the same three functions.
+ * binds nothing and is described by the same functions.
  * </p>
  */
 public class ColumnFunctions {
@@ -36,6 +41,8 @@ public class ColumnFunctions {
 	private final QueryExecutor _update;
 
 	private final QueryExecutor _canUpdate;
+
+	private final QueryExecutor _options;
 
 	private final List<InputRef> _inputs;
 
@@ -51,21 +58,70 @@ public class ColumnFunctions {
 	 *        that is displayed but not edited.
 	 * @param canUpdate
 	 *        The name of the property deciding whether the cell of a row is edited, holding nothing
-	 *        where every row of an edited column offers the edit.
+	 *        where every row of an edited column offers the edit. {@code null} for a column
+	 *        whose edit condition is applied by its declaration, see
+	 *        {@link AbstractColumnDeclaration.Config#getCanUpdate()}.
+	 * @param options
+	 *        The name of the property computing the options an edited value is chosen from,
+	 *        holding nothing where the options are those of the type of the values.
 	 */
 	public static ColumnFunctions compile(ConfigurationItem config, String value, String update,
-			String canUpdate) {
+			String canUpdate, String options) {
 		return new ColumnFunctions(InputScript.compile(config, value), InputScript.compile(config, update),
-			InputScript.compile(config, canUpdate),
+			canUpdate == null ? null : InputScript.compile(config, canUpdate), InputScript.compile(config, options),
 			InputScript.inputs(config, config.descriptor().getProperty(value)));
 	}
 
 	private ColumnFunctions(QueryExecutor value, QueryExecutor update, QueryExecutor canUpdate,
-			List<InputRef> inputs) {
+			QueryExecutor options, List<InputRef> inputs) {
 		_value = value;
 		_update = update;
 		_canUpdate = canUpdate;
+		_options = options;
 		_inputs = inputs;
+	}
+
+	/**
+	 * Reports options declared where nothing is chosen from them: at a column that is not edited,
+	 * or at one whose values are of a named type that is entered rather than chosen - a type other
+	 * than a class or an enumeration.
+	 *
+	 * @param context
+	 *        Where a misconfiguration is reported.
+	 * @param config
+	 *        The configuration of the column.
+	 * @param update
+	 *        The name of the property writing an edited cell value.
+	 * @param options
+	 *        The name of the property computing the options.
+	 * @param type
+	 *        The type the column names for its values, {@code null} where it names none.
+	 * @param column
+	 *        How a message refers to the column.
+	 */
+	public static void checkOptions(InstantiationContext context, ConfigurationItem config, String update,
+			String options, TLModelPartRef type, String column) {
+		if (config.value(config.descriptor().getProperty(options)) == null) {
+			return;
+		}
+		if (config.value(config.descriptor().getProperty(update)) == null) {
+			context.error("Options are chosen from in an edited cell only, but " + column + " declares '"
+				+ options + "' without '" + update + "'.");
+		}
+		if (type == null) {
+			return;
+		}
+		TLType resolved;
+		try {
+			resolved = type.resolveType();
+		} catch (TopLogicException ex) {
+			context.error("The type '" + type.qualifiedName() + "' of " + column + " cannot be resolved.", ex);
+			return;
+		}
+		if (resolved != null && !AttributeOptions.isStructuralSelect(resolved)) {
+			context.error("A value of type '" + type.qualifiedName() + "' is entered rather than chosen, but " + column
+				+ " declares '" + options + "'.");
+		}
 	}
 
 	/**
@@ -152,8 +208,23 @@ public class ColumnFunctions {
 		}
 
 		/**
+		 * The options the edited value of a row is chosen from, or {@code null} where a value of
+		 * the given type is entered rather than chosen, see
+		 * {@link ValueCellEditing#options(ColumnType, QueryExecutor, Function)}.
+		 *
+		 * @param type
+		 *        What the column's values are.
+		 * @param bound
+		 *        The arguments the column binds behind the row.
+		 */
+		public ValueCellEditing.Options options(ColumnType type, Object... bound) {
+			return ValueCellEditing.options(type, _options, row -> arguments(row, bound));
+		}
+
+		/**
 		 * How a cell of the column is edited: through the update function, on the rows the
-		 * predicate accepts.
+		 * predicate accepts, choosing the value from the {@link #options(ColumnType, Object...)
+		 * options} where it is not entered.
 		 *
 		 * @param type
 		 *        What the column's values are, deciding which control enters them.
@@ -163,10 +234,10 @@ public class ColumnFunctions {
 		 * @param bound
 		 *        The arguments the column binds behind the row.
 		 * @return {@code null} for a column that is not edited, see
-		 *         {@link ValueCellEditing#forUpdate(ColumnType, Function, BiConsumer, Predicate)}.
+		 *         {@link ValueCellEditing#forUpdate(ColumnType, Function, BiConsumer, Predicate, ValueCellEditing.Options)}.
 		 */
 		public CellEditing editing(ColumnType type, Function<Object, Object> value, Object... bound) {
-			return ValueCellEditing.forUpdate(type, value, update(bound), canUpdate(bound));
+			return ValueCellEditing.forUpdate(type, value, update(bound), canUpdate(bound), options(type, bound));
 		}
 
 		/**

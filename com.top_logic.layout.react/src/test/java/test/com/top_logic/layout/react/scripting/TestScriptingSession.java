@@ -25,6 +25,7 @@ import com.top_logic.layout.react.control.tabbar.TabDefinition;
 import com.top_logic.layout.react.scripting.ScriptingAction;
 import com.top_logic.layout.react.scripting.ScriptingNode;
 import com.top_logic.layout.react.scripting.ScriptingNodeView;
+import com.top_logic.layout.react.scripting.ArgsSchema;
 import com.top_logic.layout.react.scripting.ScriptingParam;
 import com.top_logic.layout.react.scripting.ScriptingSession;
 import com.top_logic.layout.react.scripting.AssertCommand;
@@ -107,8 +108,9 @@ public class TestScriptingSession extends TestCase {
 		// The action space is advertised with an argument schema for the field's change command.
 		ScriptingAction change = single(field.actions());
 		assertEquals("change", change.command());
-		assertEquals("value", single(change.params()).name());
-		assertTrue(single(change.params()).required());
+		assertEquals(Map.of("value", Map.of("type", "string", "description", "The new text value.")),
+			((Map<?, ?>) change.argsSchema().schema()).get("properties"));
+		assertEquals(List.of("value"), ((Map<?, ?>) change.argsSchema().schema()).get("required"));
 	}
 
 	/**
@@ -345,11 +347,19 @@ public class TestScriptingSession extends TestCase {
 		assertEquals(List.of("open", "setNote"),
 			view.actions().stream().map(ScriptingAction::command).toList());
 
-		// The Map-based action carries its declared @ReactParam schema.
+		// The Map-based action carries the schema of its declared @ReactParams.
 		ScriptingAction open = view.actions().get(0);
-		ScriptingParam param = single(open.params());
-		assertEquals("tab", param.name());
-		assertTrue(param.required());
+		Map<?, ?> schema = (Map<?, ?>) open.argsSchema().schema();
+		assertEquals(java.util.Set.of("tab"), ((Map<?, ?>) schema.get("properties")).keySet());
+		assertEquals(List.of("tab"), schema.get("required"));
+		assertEquals(DemoModelControl.class.getSimpleName() + ".open", open.argsSchema().id());
+
+		// The observation lists the schema once and refers to it from the action.
+		Map<String, Object> document = ScriptingSession.forRoot(row).observe().toMap();
+		assertEquals(schema, ((Map<?, ?>) document.get(ScriptingNodeView.SCHEMAS)).get(open.argsSchema().id()));
+		String json = ScriptingNodeView.toJson(document);
+		assertEquals("The schema is listed once.", json.indexOf("\"tab\": {"), json.lastIndexOf("\"tab\": {"));
+		assertTrue(json.contains("\"$ref\": \"" + open.argsSchema().reference() + "\""));
 	}
 
 	/**
@@ -364,7 +374,7 @@ public class TestScriptingSession extends TestCase {
 
 		// Flat: serialized entries carry no children.
 		for (ScriptingNodeView node : nodes) {
-			assertFalse(node.toMap(false).containsKey("children"));
+			assertFalse(node.toMap(false, new java.util.HashMap<>()).containsKey(ScriptingNodeView.CHILDREN));
 		}
 
 		// The actions JSON wraps the flat entries and is acceptable to act() by the same addresses.
@@ -527,7 +537,8 @@ public class TestScriptingSession extends TestCase {
 		@Override
 		public List<ScriptingAction> scriptingActions() {
 			return List.of(new ScriptingAction("change", "Set the field value",
-				List.of(ScriptingParam.requiredString("value", "The new text value.")), null));
+				ArgsSchema.forParams("TextField.change",
+					List.of(ScriptingParam.requiredString("value", "The new text value.")))));
 		}
 
 		@ReactCommandHandler("change")

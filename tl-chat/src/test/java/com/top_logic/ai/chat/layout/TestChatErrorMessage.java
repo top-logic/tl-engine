@@ -15,9 +15,9 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
-import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.core.provider.I18NConstants;
-import com.top_logic.tl.ai.core.provider.ProviderException;
+import com.top_logic.ai.core.agent.event.AgentEvent;
+import com.top_logic.ai.core.provider.I18NConstants;
+import com.top_logic.ai.core.provider.ProviderException;
 import com.top_logic.util.Resources;
 
 /**
@@ -44,7 +44,7 @@ public class TestChatErrorMessage extends TestCase {
 		ResKey error = I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET
 			.fill("model", "provider", ResKey.text(SECRET));
 		String message = ChatProcessor.providerErrorMessage(new AgentEvent.ProviderError("run", 1, Instant.now(),
-			ProviderException.Kind.AUTHENTICATION.name(), "logged text", error));
+			ProviderException.Kind.NO_CREDENTIALS.name(), "logged text", error));
 
 		assertEquals(Resources.getInstance().getString(error), message);
 		assertTrue(message, message.contains(SECRET));

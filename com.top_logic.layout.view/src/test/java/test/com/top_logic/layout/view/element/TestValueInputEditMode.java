@@ -35,6 +35,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactFileChipsControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactValueListControl;
+import com.top_logic.layout.react.control.form.ValueCountLimit;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -63,8 +64,8 @@ import com.top_logic.util.model.ModelService;
  * Tests that a {@link ValueInputElement} inside a form follows the form's edit mode, that an
  * {@link ValueInputElement.Config#getEditMode() edit mode channel} decides instead, and that
  * {@link ValueInputElement.Config#getReadonly() readonly} wins over both. Further, the files of a
- * multi-valued binary input: edited as file chips or as a list, offering the accepted types, and
- * reporting missing files of a mandatory input at the chips.
+ * multi-valued binary input: edited as file chips or as a list, offering the accepted types,
+ * reporting missing files of a mandatory input and more files than allowed at the chips.
  */
 public class TestValueInputEditMode extends TestCase {
 
@@ -85,6 +86,12 @@ public class TestValueInputEditMode extends TestCase {
 
 	/** Position of the input of several files asking for a list. */
 	private static final int FILE_LIST = 5;
+
+	/** Position of the labelled input of at most {@link #MAX_FILES} files. */
+	private static final int LIMITED_FILES = 6;
+
+	/** The maximum number of files of the input at {@link #LIMITED_FILES}. */
+	private static final int MAX_FILES = 3;
 
 	/** The channel deciding about the edit mode of the inputs naming it. */
 	private static final String EDITING = "editing";
@@ -223,6 +230,31 @@ public class TestValueInputEditMode extends TestCase {
 		IReactControl control = element(FILE_LIST);
 
 		assertEquals(ReactValueListControl.class, control.getClass());
+	}
+
+	/**
+	 * An input of several files limited by a {@code <value-count>} publishes its maximum to the
+	 * chips and reports more files than allowed at the field.
+	 */
+	public void testTooManyFilesAreReportedAtTheChips() throws Exception {
+		ReactFormFieldChromeControl chrome = chrome(LIMITED_FILES);
+		ReactFormFieldControl input = field(chrome);
+		FieldModel model = input.getFieldModel();
+		assertEquals(Integer.valueOf(MAX_FILES), input.scriptingScalarState().get(ValueCountLimit.MAX_COUNT));
+
+		model.setValue(List.of(file("a.pdf"), file("b.pdf"), file("c.pdf")));
+		assertNull("The maximum is allowed.", error(chrome));
+		assertFalse(model.hasError());
+
+		model.setValue(List.of(file("a.pdf"), file("b.pdf"), file("c.pdf"), file("d.pdf")));
+		assertEquals(Resources.getInstance().getString(
+			com.top_logic.model.annotate.util.I18NConstants.ERROR_TOO_MANY_VALUES__MAX_ACTUAL.fill(MAX_FILES,
+				MAX_FILES + 1)),
+			error(chrome));
+		assertTrue("More files than allowed make the input invalid.", model.hasError());
+
+		model.setValue(List.of(file("a.pdf")));
+		assertNull("Removing files clears the message.", error(chrome));
 	}
 
 	/** Whether the given chrome marks its input required. */

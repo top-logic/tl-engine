@@ -1036,6 +1036,24 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_GROUPED;
 
 	/**
+	 * @en The rows are grouped by this column, level {0}
+	 */
+	@CustomKey("js.table.groupedLevel")
+	public static ResKey JS_TABLE_GROUPED_LEVEL;
+
+	/**
+	 * @en Grouping level
+	 */
+	@CustomKey("js.table.groupLevel")
+	public static ResKey JS_TABLE_GROUP_LEVEL;
+
+	/**
+	 * @en Sort priority
+	 */
+	@CustomKey("js.table.sortPriority")
+	public static ResKey JS_TABLE_SORT_PRIORITY;
+
+	/**
 	 * @en Fit width to content
 	 */
 	@CustomKey("js.table.fitColumn")

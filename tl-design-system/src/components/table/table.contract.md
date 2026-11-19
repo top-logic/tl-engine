@@ -242,7 +242,7 @@ Klassen:
 | `tl-table__header-cell` | jede Kopfzelle |
 | `tl-table__sort` | der Sortierknopf, ein `button` |
 | `tl-table__label` | die Überschrift, Großbuchstaben in `--tl-text-secondary`; endet mit Ellipse. Das TSX setzt `tl-type-overline` daran (Sperrung `0.04em`) |
-| `tl-table__mark` | Sortierpfeil, Gruppierungsmarke: `tl-icon-sm`, `aria-hidden` |
+| `tl-table__mark` | Sortierpfeil, Gruppierungsmarke: `tl-icon-sm`, `aria-hidden`; die Gruppierungsmarke trägt bei einer Gruppierung nach mehreren Spalten hinter dem Symbol die Ebene als `tl-badge` (Part Badge, `aria-hidden`), Symbol und Ebene tragen zusammen ihren Tooltip |
 | `tl-table__filter` | der Trichter |
 | `tl-table__columns` | die Spaltenwahl (Zahnrad) |
 | `tl-table__resize` | Griff der Spaltenbreite |

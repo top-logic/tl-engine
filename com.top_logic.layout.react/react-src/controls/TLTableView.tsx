@@ -1,4 +1,4 @@
-import { BACKGROUND_COMMAND, BACKGROUND_REPORT, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, useDisplayClass, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, BACKGROUND_REPORT, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, StateBadge, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, useDisplayClass, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
 import { FOCUSABLE_SELECTOR, editableInRow, focusTargetInRow, focusablesIn, rowCells } from './tableRowFocus';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from 'tl-react-bridge';
@@ -83,6 +83,8 @@ const I18N_KEYS = {
   'js.table.ungroup': 'Remove grouping',
   'js.table.fitColumn': 'Fit width to content',
   'js.table.grouped': 'The rows are grouped by this column',
+  'js.table.groupedLevel': 'The rows are grouped by this column, level {0}',
+  'js.table.sortPriority': 'Sort priority',
   'js.table.freezeSplitter': 'Drag to choose the columns that stay in place while scrolling',
   'js.table.filter': 'Filter',
   'js.table.filterActive': 'Filter (active)',
@@ -2045,15 +2047,27 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     {label}
                     {col.sortDirection && <ThemeIcon encoded={sortIcon} className="tl-table__mark tl-icon-sm" />}
                     {col.sortDirection && sortedColumnCount > 1 && col.sortPriority != null && col.sortPriority > 0 && (
-                      <span className="tl-badge tl-type-label-strong tl-nums" aria-hidden="true">{col.sortPriority}</span>
+                      // Beside the label the badge is read with it: "<label>, Sort priority: 2".
+                      <StateBadge badge={{
+                        content: String(col.sortPriority),
+                        label: i18n['js.table.sortPriority'],
+                      }} alone={false} />
                     )}
                   </button>
                 ) : label}
-                {grouping.includes(col.name) && (
-                  <span className="tl-table__mark" {...tooltipProps(i18n['js.table.grouped'])}>
-                    <ThemeIcon encoded={ICON_GROUP} className="tl-icon-sm" />
-                  </span>
-                )}
+                {grouping.includes(col.name) && (() => {
+                  // Grouped by several columns, the mark carries the number of the column's group level after
+                  // its symbol, the outermost one 1; symbol and number together carry the tooltip naming the level.
+                  const level = grouping.length > 1 ? String(grouping.indexOf(col.name) + 1) : undefined;
+                  return (
+                    <span className="tl-table__mark" {...tooltipProps(level
+                      ? i18n['js.table.groupedLevel'].replace('{0}', level)
+                      : i18n['js.table.grouped'])}>
+                      <ThemeIcon encoded={ICON_GROUP} className="tl-icon-sm" />
+                      {level && <StateBadge badge={{ content: level }} alone />}
+                    </span>
+                  );
+                })()}
                 {col.filterable && (
                   // One glyph; an active filter is the column's state (data-tl-state~="filtered",
                   // icon-primary) and the button's name says so as well.

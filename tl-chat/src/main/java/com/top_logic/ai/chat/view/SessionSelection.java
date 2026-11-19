@@ -26,6 +26,12 @@ import com.top_logic.model.TLObject;
  * </p>
  *
  * <p>
+ * A session that becomes the window's active one on the server - a chat started by a command of the
+ * page - is {@link #adopt(String) written onto the channel} the same way, as a proposal a host may
+ * refuse.
+ * </p>
+ *
+ * <p>
  * <b>A refusal is a write the browser must follow even when nothing changes.</b> A host that writes
  * back the empty channel it had leaves {@code selected} at {@code ""} - the value it had before the
  * browser reported its restored session. Unchanged state is no news to the browser, so every
@@ -111,6 +117,27 @@ final class SessionSelection {
 		if (!held.equals(id)) {
 			_state.accept(CORRECTIONS, Integer.valueOf(++_corrections));
 		}
+	}
+
+	/**
+	 * Writes a session that became the window's active one on the server - a chat started by a
+	 * command of the page - onto the channel, as if the user had picked it.
+	 *
+	 * <p>
+	 * Nothing is written when the channel already holds that session, or when the session is not the
+	 * acting account's. A host that refuses the session answers as it answers a session the browser
+	 * reported, and its answer wins, see {@link #publish(String, TLObject)}.
+	 * </p>
+	 *
+	 * @param id
+	 *        The id of the session that became the active one.
+	 */
+	void adopt(String id) {
+		TLObject session = ChatSessionIds.ownedSession(id, _user.get());
+		if (session == null || session.equals(ChatSessionIds.sessionOf(_channel.get()))) {
+			return;
+		}
+		publish(id, session);
 	}
 
 	private String selectedId() {

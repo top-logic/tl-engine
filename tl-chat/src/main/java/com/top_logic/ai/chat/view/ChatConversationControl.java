@@ -18,6 +18,7 @@ import java.util.function.Supplier;
 
 import com.top_logic.ai.chat.api.ChatCapabilities;
 import com.top_logic.ai.chat.api.ChatTranscripts;
+import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.chat.api.messages.ChatCapabilitiesResponse;
 import com.top_logic.ai.chat.view.ChatConversationElement.Actions;
 import com.top_logic.ai.chat.view.ChatConversationElement.AgentCommand;
@@ -30,6 +31,7 @@ import com.top_logic.ai.chat.view.ChatConversationElement.Prompt;
 import com.top_logic.ai.chat.view.ChatConversationElement.Prompts;
 import com.top_logic.ai.chat.view.ChatConversationElement.Selection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -37,6 +39,7 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
@@ -55,8 +58,10 @@ import com.top_logic.util.TLContext;
  * React control for {@code <chat-conversation/>}.
  *
  * <p>
- * Binds the window once through {@link ChatViewBinding}. An optional {@code input} channel selects
- * the open session, mapped by {@link ChatSessionIds}; an optional {@code busy} channel is written
+ * Binds the window once through {@link ChatViewBinding}. The {@code input} channel - a configured
+ * one, or an internal one - selects the open session, mapped by {@link ChatSessionIds}; a chat the
+ * window switches to on the server is written onto it, see {@link SessionSelection#adopt(String)}.
+ * An optional {@code busy} channel is written
  * from the browser while the agent works. Prompt improvement is a composer concern: this control
  * names the agent on the shared tracker.
  * </p>
@@ -98,10 +103,25 @@ public class ChatConversationControl extends ChatControl {
 	public static final String STATE_CAPABILITIES = "capabilities";
 
 	/**
-	 * The {@code input} channel and what the browser is told of it, or <code>null</code> when the
-	 * element wires none and the browser's store is the source.
+	 * Name of the channel that holds the open conversation of an element that wires no
+	 * {@code input}.
+	 */
+	static final String INTERNAL_INPUT = "input";
+
+	/**
+	 * The {@code input} channel - the configured one, or an internal one - and what the browser is
+	 * told of it.
 	 */
 	private final SessionSelection _selection;
+
+	/** The listening to the window's active chat while this control is displayed. */
+	private Registration _activeSessionWatch = Registration.NONE;
+
+	/**
+	 * The window's active chat when this control was last hidden, <code>null</code> before it was
+	 * displayed: what is no news when it is displayed again.
+	 */
+	private String _activeWhenHidden;
 
 	private final ViewChannel _busyChannel;
 
@@ -286,21 +306,20 @@ public class ChatConversationControl extends ChatControl {
 		putState("attachments", Boolean.valueOf(controls.getAttachments()));
 		putState("tracePicker", Boolean.valueOf(controls.getTracePicker()));
 
+		// The open conversation is what the channel holds. Without a configured one, the element keeps
+		// a channel of its own, which the server keeps over a reload of the page as well.
 		ChannelRef inputRef = config.getInput();
-		// Whether a selection channel is wired. The browser distinguishes "no channel, the store is the
-		// source" from "channel wired but empty, which means a fresh conversation".
-		putState("hasInput", Boolean.valueOf(inputRef != null));
-		if (inputRef == null) {
-			_selection = null;
-			putState(SessionSelection.SELECTED, "");
-		} else {
-			ViewChannel input = context.resolveChannel(inputRef);
-			_selection = new SessionSelection(input, this::putState, ChatConversationControl::currentPerson);
-			ViewChannel.ChannelListener listener = _selection.listener();
-			input.addListener(listener);
-			addCleanupAction(() -> input.removeListener(listener));
-			_selection.apply();
-		}
+		ViewChannel input =
+			inputRef == null ? new DefaultViewChannel(INTERNAL_INPUT) : context.resolveChannel(inputRef);
+		_selection = new SessionSelection(input, this::putState, ChatConversationControl::currentPerson);
+		ViewChannel.ChannelListener listener = _selection.listener();
+		input.addListener(listener);
+		addCleanupAction(() -> input.removeListener(listener));
+		_selection.apply();
+		// A chat the window switches to on the server - one a command of the page started - is opened
+		// here, while this control is displayed, and when it is displayed again.
+		addDetachListener(this::stopWatchingActiveSession);
+		addCleanupAction(this::stopWatchingActiveSession);
 
 		// The chats of the account, which the conversation's header and the App rail read their titles
 		// from: written with every render, and again whenever they change (#596).
@@ -440,9 +459,8 @@ public class ChatConversationControl extends ChatControl {
 	@Override
 	protected void onAttach() {
 		super.onAttach();
-		if (_selection != null) {
-			_selection.apply();
-		}
+		_selection.apply();
+		watchActiveSession();
 		reapply(_agentChannel, this::applyAgentFromChannel);
 		reapply(_modelChannel, this::applyModelFromChannel);
 		reapply(_effortChannel, this::applyEffortFromChannel);
@@ -456,6 +474,27 @@ public class ChatConversationControl extends ChatControl {
 	private static void reapply(ViewChannel channel, Consumer<Object> apply) {
 		if (channel != null) {
 			apply.accept(channel.get());
+		}
+	}
+
+	/**
+	 * Follows the window's active chat from now on, and opens the one the window switched to while
+	 * this control was hidden.
+	 */
+	private void watchActiveSession() {
+		_activeSessionWatch.dispose();
+		TaskProgressTracker tracker = binding().tracker();
+		_activeSessionWatch = tracker.addActiveSessionListener((sessionId, owner) -> _selection.adopt(sessionId));
+		String active = tracker.getActiveSessionId();
+		if (active != null && !active.equals(_activeWhenHidden)) {
+			_selection.adopt(active);
+		}
+	}
+
+	private void stopWatchingActiveSession() {
+		if (_activeSessionWatch.isActive()) {
+			_activeSessionWatch.dispose();
+			_activeWhenHidden = binding().tracker().getActiveSessionId();
 		}
 	}
 
@@ -500,9 +539,6 @@ public class ChatConversationControl extends ChatControl {
 	public void publishSession(Map<String, Object> args) {
 		String id = args == null ? "" : String.valueOf(args.getOrDefault("id", "")).trim();
 		TLObject session = id.isEmpty() ? null : ChatSessionIds.ownedSession(id, currentPerson());
-		if (_selection == null) {
-			return;
-		}
 		_selection.publish(id, session);
 	}
 

@@ -65,6 +65,13 @@ cannot (a plain knowledge item standing for itself) grants no role, so only the 
    access parents; a grant without roles denies everyone. Without attribute-level grants the
    class-level decision stands.
 
+Model elements (types, attributes, modules, the classifiers of an enumeration, all objects of
+`tl.model`) are meta-data, not business objects: every user may discover and read them and the
+values of their attributes, without a grant on `tl.model`, so a reflective script (the target type
+of a reference, whether an attribute is multiple or composite) works for every user. This rule is applied
+before the steps above; a deleted model element stays inaccessible. Modifying, creating and deleting a model element is checked like for any other
+object, so no application needs a definition for `tl.model`.
+
 `Discover` - every right on an object or one of its attributes implies the operation `Discover`, see [the Discover specification](doc:access-discover-spec).
 How code and TL-Script ask for a decision (`ModelAccessRights`, `canRead`, ...) and which objects
 are exempt from the check is described in [checking access in Java and TL-Script](doc:access-checks).

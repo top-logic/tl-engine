@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { resetTLBridge, setTLState } from '../test/tl-react-bridge'
 import { closesOnKey, launcherMark, readDockState, TLChatDock } from './chat-dock'
 import { chatStore, type ChatBootstrap } from './chat-store'
+import { seenCounts } from './rail-model'
 
 afterEach(() => resetTLBridge())
 
@@ -50,7 +51,7 @@ function seedChat(chatId: string, boot: Partial<ChatBootstrap> = {}) {
     railOpenDefault: false,
     paneWidth: 0,
     paneWidthDefault: 0,
-    badgeSeen: 0,
+    badgeSeen: {},
     sectionChoices: {},
     autoApprove: false,
     ...boot,
@@ -157,24 +158,24 @@ describe('the rendered dock', () => {
   it('counts the unseen news on the launcher of a closed dock', () => {
     const { store, release } = seedChat('dock-badge')
     store.actions.registerRail()
-    store.actions.publishRailBadge({ total: 4, dot: false })
+    store.actions.publishRailBadge({ progress: { count: 4, role: 'brand', dot: false } })
 
     const html = render(dockState({ chatId: 'dock-badge' }))
     expect(html).toContain('aria-label="Open Albert, New: 4"')
     expect(html).toContain('<tl-badge data-content="4" data-label="New" data-alone="true"></tl-badge>')
 
-    // Opening the dock is the user looking: the watermark moves to the total, not to zero.
-    store.actions.markBadgesSeen(store.getState().railBadge.total)
-    expect(store.getState().badgeSeen).toBe(4)
+    // Opening the dock is the user looking: the watermark moves to the counts, not to zero.
+    store.actions.markBadgesSeen(seenCounts(store.getState().railBadge))
+    expect(store.getState().badgeSeen).toEqual({ progress: 4 })
     expect(render(dockState({ chatId: 'dock-badge' }))).not.toContain('tl-badge')
 
     release()
   })
 
   it('shows no badge for news the user has already seen', () => {
-    const { store, release } = seedChat('dock-seen', { badgeSeen: 3 })
+    const { store, release } = seedChat('dock-seen', { badgeSeen: { progress: 3 } })
     store.actions.registerRail()
-    store.actions.publishRailBadge({ total: 3, dot: false })
+    store.actions.publishRailBadge({ progress: { count: 3, role: 'brand', dot: false } })
 
     expect(render(dockState({ chatId: 'dock-seen' }))).not.toContain('tl-badge')
     release()

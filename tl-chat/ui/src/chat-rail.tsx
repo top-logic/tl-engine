@@ -15,6 +15,7 @@ import {
   paneIsOpen,
   paneStepIcon,
   railBadge,
+  seenCounts,
   readPaneSteps,
   readRailSections,
   readSectionBadges,
@@ -100,7 +101,8 @@ export function TLChatRail({ controlId }: TLCellProps) {
 
   const rail = useMemo(() => railBadge(sections, badges), [sections, badges])
   useEffect(() => actions.publishRailBadge(rail), [actions, rail])
-  const badgeTotal = rail.total
+  /** What the user sees of the sections' badges while the rail is open. */
+  const seen = useMemo(() => seenCounts(rail), [rail])
 
   /*
    * A drawer where the host has no room for the rail's column (#565).
@@ -178,6 +180,18 @@ export function TLChatRail({ controlId }: TLCellProps) {
   /** Whether the drawer shows something over the conversation. The object pane opens it too. */
   const drawerOpen = drawer && (railOpen || objectPane)
 
+  /*
+   * What the user sees while the rail is open is seen: the watermark follows the total while the
+   * rail is open and on screen - on the first render of a rail that starts open, and when a count
+   * rises while it is open - so the closed rail's button counts only what came in afterwards. A rail
+   * inside a closed dock or a hidden tab is open but not on screen and sees nothing; opening the
+   * dock marks what it shows itself.
+   */
+  useEffect(() => {
+    const element = root.current
+    if (railOpen && element && isShown(element)) actions.markBadgesSeen(seen)
+  }, [actions, railOpen, seen])
+
   const closeObjectPane = useCallback(() => {
     void command('closePane')
   }, [command])
@@ -210,12 +224,12 @@ export function TLChatRail({ controlId }: TLCellProps) {
       // A second click on what is already showing closes the rail: with no header of its own, the
       // strip is where a rail says "that is enough for now".
       if (railOpen && !paneOpen && !collapsedIds.has(section.name)) {
-        actions.toggleSide(badgeTotal)
+        actions.toggleSide(seen)
         return
       }
-      actions.showSection(section.name, badgeTotal)
+      actions.showSection(section.name, seen)
     },
-    [actions, badgeTotal, railOpen, collapsedIds, paneOpen],
+    [actions, seen, railOpen, collapsedIds, paneOpen],
   )
 
   /*

@@ -16,7 +16,7 @@ import { hostRailSections } from './extensions'
 import { ContextIcon, ContextSection, ProgressIcon, ProgressSection } from './progress'
 import { SourcesIcon, SourcesSection, type CitedSource } from './sources'
 import { progressBadge } from './progress-model'
-import { unseenRailBadge } from './rail-model'
+import { seenCounts, unseenRailBadge, type RailBadge, type SectionCount } from './rail-model'
 import { RailToggle, SideRail, SideStrip } from './rail'
 import { SHEET_MAX, SidePane } from './side-pane'
 import { readComposerControls } from './chat-conversation'
@@ -284,11 +284,16 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
     [progressSection, contextSection, sourcesSection, extensions],
   )
 
-  const badgeTotal = useMemo(
-    () => railSections.reduce((sum, section) => sum + (section.badge?.() ?? 0), 0),
-    [railSections],
-  )
-  const badge = unseenRailBadge({ total: badgeTotal, dot: false }, chat.badgeSeen, labels.sideRailBadge)
+  const rail = useMemo<RailBadge>(() => {
+    const result: Record<string, SectionCount> = {}
+    for (const section of railSections) {
+      const count = section.badge?.()
+      if (count !== undefined) result[section.id] = { count, role: 'brand', dot: false }
+    }
+    return result
+  }, [railSections])
+  const seen = useMemo(() => seenCounts(rail), [rail])
+  const badge = unseenRailBadge(rail, chat.badgeSeen, labels.sideRailBadge)
 
   /** What the composer exposes to a host: an imperative handle, because the caret lives in the DOM. */
   const composer = useRef<ComposerApi>(null)
@@ -380,7 +385,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
                 open={chat.sideOpen}
                 badge={badge}
                 labels={labels}
-                onToggle={() => actions.toggleSide(badgeTotal)}
+                onToggle={() => actions.toggleSide(seen)}
               />
             }
             renderAnnotation={extensions?.messageAnnotations?.render}
@@ -457,7 +462,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
         <SideStrip
           sections={railSections}
           activeId={paneOpen ? chat.paneOptions?.sectionId : undefined}
-          onSelect={(id) => actions.showSection(id, badgeTotal)}
+          onSelect={(id) => actions.showSection(id, seen)}
           labels={labels}
         />
         {/*

@@ -93,22 +93,30 @@ export function countContent(count: number): string {
   return count > MAX_BADGE_COUNT ? BADGE_OVERFLOW : String(count)
 }
 
-/**
- * What the rail's sections add up to for the transcript's rail button.
- *
- * {@link total} sums the counts of the sections, a dot or a text adding nothing. {@link role} is the
- * most urgent role among the counting sections, {@link dotRole} the most urgent among the sections
- * showing a dot; `undefined` where there is none.
- */
-export interface RailBadge {
-  total: number
-  role?: BadgeJson.Role
+/** What one section's badge contributes to the transcript's rail button. */
+export interface SectionCount {
+  /** What the badge counts, see {@link badgeCount}; 0 for a dot or a text. */
+  count: number
+  /** The color role of the badge. */
+  role: BadgeJson.Role
+  /** Whether the badge is a dot. */
   dot: boolean
-  dotRole?: BadgeJson.Role
 }
 
+/**
+ * What the rail's sections show for the transcript's rail button: per section name the
+ * {@link SectionCount} of its badge, a section without a badge left out.
+ */
+export type RailBadge = Readonly<Record<string, SectionCount>>
+
 /** The rail badge of a rail whose sections show nothing. */
-export const NO_RAIL_BADGE: RailBadge = Object.freeze({ total: 0, dot: false })
+export const NO_RAIL_BADGE: RailBadge = Object.freeze({})
+
+/**
+ * Per section name, the count of its badge the user has seen; a section absent has had nothing
+ * seen.
+ */
+export type SeenCounts = Readonly<Record<string, number>>
 
 /** The more urgent of two roles; an absent role is the brand's. */
 function moreUrgent(a: BadgeJson.Role | undefined, b: BadgeJson.Role | undefined): BadgeJson.Role {
@@ -118,7 +126,7 @@ function moreUrgent(a: BadgeJson.Role | undefined, b: BadgeJson.Role | undefined
 }
 
 /**
- * Sums the badges of the sections into the {@link RailBadge} of the transcript's rail button.
+ * Collects the badges of the sections into the {@link RailBadge} of the transcript's rail button.
  *
  * A section with no badge channel contributes nothing: it has no notion of "new", and counting its
  * rows as news would put a number on the button that never goes away.
@@ -127,43 +135,88 @@ export function railBadge(
   sections: RailSectionState[],
   badges: Record<string, Partial<BadgeJson>>,
 ): RailBadge {
-  let total = 0
-  let role: BadgeJson.Role | undefined
-  let dot = false
-  let dotRole: BadgeJson.Role | undefined
+  const result: Record<string, SectionCount> = {}
   for (const section of sections) {
     const badge = badges[section.name]
     if (!badge) continue
-    if (badge.dot === true) {
-      dotRole = dot ? moreUrgent(dotRole, badge.role) : (badge.role ?? 'brand')
-      dot = true
-      continue
+    result[section.name] = {
+      count: badgeCount(badge),
+      role: badge.role ?? 'brand',
+      dot: badge.dot === true,
     }
-    const count = badgeCount(badge)
-    if (count <= 0) continue
-    role = total > 0 ? moreUrgent(role, badge.role) : (badge.role ?? 'brand')
-    total += count
   }
-  return { total, role, dot, dotRole }
+  return result
+}
+
+/** Whether two rail badges say the same. */
+export function sameRailBadge(left: RailBadge, right: RailBadge): boolean {
+  const names = Object.keys(left)
+  if (names.length !== Object.keys(right).length) return false
+  return names.every((name) => {
+    const a = left[name]
+    const b = right[name]
+    return b !== undefined && a.count === b.count && a.role === b.role && a.dot === b.dot
+  })
 }
 
 /**
- * The badge of the transcript's rail button: the count of what is new since the user last looked
- * (the {@link RailBadge.total} minus `seen`) in the role of the counting sections; when nothing is
- * new by count, a dot where a section shows one; else none.
+ * What the user sees of the given rail: per section the count of its badge, a section counting
+ * nothing left out.
+ */
+export function seenCounts(rail: RailBadge): SeenCounts {
+  const result: Record<string, number> = {}
+  for (const [name, section] of Object.entries(rail)) {
+    if (section.count > 0) result[name] = section.count
+  }
+  return result
+}
+
+/** Whether two sets of seen counts say the same; a section absent has seen 0. */
+export function sameSeenCounts(left: SeenCounts, right: SeenCounts): boolean {
+  const names = new Set([...Object.keys(left), ...Object.keys(right)])
+  for (const name of names) {
+    if ((left[name] ?? 0) !== (right[name] ?? 0)) return false
+  }
+  return true
+}
+
+/**
+ * The badge of the transcript's rail button: what is new since the user last looked.
  *
- * Seen is only a number: a dot stays until its section clears it.
+ * Per section, the count above what was seen of it; the button shows the sum of these, in the most
+ * urgent role among the sections with something new. A section showing {@link BADGE_OVERFLOW} has an
+ * unknown real count: when it counts above what was seen of it, the button shows
+ * {@link BADGE_OVERFLOW} as well; seen at {@link BADGE_OVERFLOW}, it adds nothing. When nothing is
+ * new by count, the button shows a dot where a section shows one, in the most urgent role among those;
+ * a dot stays until its section clears it. Else no badge.
  *
+ * @param seen What was seen of each section, see {@link seenCounts}.
  * @param label The name a screen reader gives the badge.
  */
 export function unseenRailBadge(
   rail: RailBadge,
-  seen: number,
+  seen: SeenCounts,
   label: string,
 ): Partial<BadgeJson> | null {
-  const unseen = unseenBadge(rail.total, seen)
-  if (unseen > 0) return withRole({ content: countContent(unseen), label }, rail.role)
-  if (rail.dot) return withRole({ dot: true, label }, rail.dotRole)
+  let unseen = 0
+  let overflow = false
+  let role: BadgeJson.Role | undefined
+  let dotRole: BadgeJson.Role | undefined
+  for (const [name, section] of Object.entries(rail)) {
+    if (section.dot) {
+      dotRole = moreUrgent(dotRole, section.role)
+      continue
+    }
+    const fresh = unseenBadge(section.count, seen[name] ?? 0)
+    if (fresh <= 0) continue
+    unseen += fresh
+    role = moreUrgent(role, section.role)
+    if (section.count > MAX_BADGE_COUNT) overflow = true
+  }
+  if (unseen > 0) {
+    return withRole({ content: overflow ? BADGE_OVERFLOW : countContent(unseen), label }, role)
+  }
+  if (dotRole) return withRole({ dot: true, label }, dotRole)
   return null
 }
 

@@ -11,7 +11,7 @@ import {
 import type { BadgeJson, TLCellProps } from 'tl-react-bridge'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { bundle } from './i18n'
-import { unseenRailBadge } from './rail-model'
+import { seenCounts, unseenRailBadge } from './rail-model'
 import { ThemeIcon } from './theme-icon'
 
 const { useCallback, useEffect, useMemo, useRef, useState } = React
@@ -151,9 +151,9 @@ export function TLChatDock({ controlId }: TLCellProps) {
   // the watermark moves to the total as it stands now, exactly as opening the rail moves it. Only
   // the watermark: the dock does not open the rail, so `toggleSide` would be the wrong half.
   const toggle = useCallback(() => {
-    if (!open) actions.markBadgesSeen(chat.railBadge.total)
+    if (!open) actions.markBadgesSeen(seenCounts(chat.railBadge))
     setOpen(!open)
-  }, [open, setOpen, actions, chat.railBadge.total])
+  }, [open, setOpen, actions, chat.railBadge])
 
   // Focus follows the panel: into it when it opens, back to the launcher when it closes. Skipped on
   // the first render, so a page configured `open="true"` does not take the focus from the page.

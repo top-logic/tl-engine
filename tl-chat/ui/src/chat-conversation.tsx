@@ -9,7 +9,7 @@ import { bundle } from './i18n'
 import { agentLabel } from './models'
 import type { ReferenceToken } from './reference'
 import { RailToggle } from './rail'
-import { unseenRailBadge } from './rail-model'
+import { seenCounts, unseenRailBadge } from './rail-model'
 import {
   registeredAnnotationRenderer,
   registeredReferenceSource,
@@ -603,7 +603,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
                 open={chat.railDrawer ? chat.railDrawerOpen : chat.sideOpen}
                 badge={unseenRailBadge(chat.railBadge, chat.badgeSeen, labels.sideRailBadge)}
                 labels={labels}
-                onToggle={() => actions.toggleSide(chat.railBadge.total)}
+                onToggle={() => actions.toggleSide(seenCounts(chat.railBadge))}
               />
             ) : null
           }

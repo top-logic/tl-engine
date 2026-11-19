@@ -46,7 +46,7 @@ import com.top_logic.util.model.ModelService;
 
 /**
  * Test of {@link ModelEditAction} creating references of a given kind with an opposite reference,
- * and adding and removing generalizations of a class, and of the visibility of the reference kind
+ * and adding and removing generalizations of a class (also by deleting a generalization link), and of the visibility of the reference kind
  * and opposite fields of the "new attribute" dialog.
  */
 @SuppressWarnings("javadoc")
@@ -55,6 +55,10 @@ public class TestModelEditAction extends TestCase {
 	private static final String NEW_ATTRIBUTE = "tl.devtools:NewAttribute";
 
 	private static final String NEW_GENERALIZATION = "tl.devtools:NewGeneralization";
+
+	private static final String GENERALIZATION_LINK = "tl.devtools:Generalization";
+
+	private static final String SPECIALIZATION = "specialization";
 
 	private static final String REFERENCE_KIND = "tl.devtools:ReferenceKind";
 
@@ -191,6 +195,19 @@ public class TestModelEditAction extends TestCase {
 		});
 	}
 
+	public void testDeleteGeneralizationLink() {
+		inTestModule((owner, target, enumeration) -> {
+			TLClass other = TLModelUtil.addClass(owner.getModule(), "Other");
+			addGeneralization(owner, target);
+			addGeneralization(owner, other);
+
+			assertNull(execute(Mode.DELETE, null, generalizationLink(owner, target)));
+			assertEquals(List.of(other), owner.getGeneralizations());
+			assertNotNull("Only the link is removed, not the generalized class.",
+				owner.getModule().getType("Target"));
+		});
+	}
+
 	public void testCyclicGeneralizationRefused() {
 		inTestModule((owner, target, enumeration) -> {
 			addGeneralization(owner, target);
@@ -300,6 +317,14 @@ public class TestModelEditAction extends TestCase {
 			TransientObjectFactory.INSTANCE.createObject((TLClass) TLModelUtil.findType(NEW_GENERALIZATION));
 		input.tUpdateByName(GENERALIZATION, generalization);
 		return execute(Mode.ADD_GENERALIZATION, specialization, input);
+	}
+
+	private static TLObject generalizationLink(TLClass specialization, TLClass generalization) {
+		TLObject link =
+			TransientObjectFactory.INSTANCE.createObject((TLClass) TLModelUtil.findType(GENERALIZATION_LINK));
+		link.tUpdateByName(SPECIALIZATION, specialization);
+		link.tUpdateByName(GENERALIZATION, generalization);
+		return link;
 	}
 
 	private static Object execute(Mode mode, Object container, Object input) {

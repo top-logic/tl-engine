@@ -7,7 +7,10 @@
 	types of other modules as attribute lines); the detail form (bottom) edits whichever of the two is
 	selected - the model element, or the module itself while the diagram has no selection. The
 	toolbars create and delete modules, types and attributes, and the class form adds and removes
-	generalizations, through the ModelEditAction. The diagram observes the model types it draws, so
+	generalizations, through the ModelEditAction. The context menu of the diagram offers the same
+	commands on the element right-clicked, and Del deletes the selected node or edge (a reference, or
+	a generalization, which the diagram represents by a transient tl.devtools:Generalization). The
+	diagram observes the model types it draws, so
 	it follows every model change, also one made in another session. Beside the diagram, the Instances tab lists all instances of
 	the class selected in the diagram, edits them in place, exports them to Excel or XML and imports an
 	XML file written by that export (admin/model/import-instances.view.xml).
@@ -198,7 +201,7 @@
 														<de>Neues Attribut</de>
 													</label>
 													<executability>
-														<visible-if expr="$selectedPart != null &amp;&amp; !$selectedPart.instanceOf(`tl.model:TLEnumeration`) &amp;&amp; !$selectedPart.instanceOf(`tl.model:TLClassifier`)"/>
+														<visible-if expr="$selectedPart != null &amp;&amp; ($selectedPart.instanceOf(`tl.model:TLClass`) || $selectedPart.instanceOf(`tl.model:TLStructuredTypePart`))"/>
 													</executability>
 													<execute-script function="new(`tl.devtools:NewAttribute`, transient: true)">
 														<with-result>
@@ -248,10 +251,14 @@
 														</with-result>
 													</execute-script>
 												</generic-command>
+												<!--
+													Del deletes the element selected in the diagram, a node or an edge.
+												-->
 												<generic-command
 													clique="more"
 													image="css:bi bi-trash"
 													inputs="selectedPart"
+													key="Delete"
 													placement="TOOLBAR"
 												>
 													<label>
@@ -278,17 +285,18 @@
 												session or another one - redraws it. A generalization is a link
 												between two classes, whose change is announced as a change of both.
 											-->
-											<flow-diagram
-												observed-types="tl.model:TLModule, tl.model:TLClass, tl.model:TLEnumeration, tl.model:TLClassifier, tl.model:TLReference, tl.model:TLAssociationEnd, tl.model:TLProperty"
-												selection="selectedPart"
-											>
-												<inputs>
-													<input
-														as="module"
-														channel="selectedModule"
-													/>
-												</inputs>
-												<createChart><![CDATA[{
+											<context-menu input="selectedPart">
+												<flow-diagram
+													observed-types="tl.model:TLModule, tl.model:TLClass, tl.model:TLEnumeration, tl.model:TLClassifier, tl.model:TLReference, tl.model:TLAssociationEnd, tl.model:TLProperty"
+													selection="selectedPart"
+												>
+													<inputs>
+														<input
+															as="module"
+															channel="selectedModule"
+														/>
+													</inputs>
+													<createChart><![CDATA[{
 	allTypes = $module == null ? list() : $module.get(`tl.model:TLModule#types`)
 		.filter(t -> $t.get(`tl.model:TLType#scope`).instanceOf(`tl.model:TLModule`));
 	classes = $allTypes.filter(t -> $t.instanceOf(`tl.model:TLClass`));
@@ -373,7 +381,14 @@
 			.map(g -> reactFlowGraphEdge(
 				$nodeByName[$g.get(`tl.model:TLNamedPart#name`)],
 				$nodeByName[$c.get(`tl.model:TLNamedPart#name`)],
-				priority: 3, sourceSymbol: "CLOSED_ARROW")))
+				priority: 3, sourceSymbol: "CLOSED_ARROW",
+				selectable: true,
+				userObject: {
+					link = new(`tl.devtools:Generalization`, transient: true);
+					$link.set(`tl.devtools:Generalization#specialization`, $c);
+					$link.set(`tl.devtools:Generalization#generalization`, $g);
+					$link
+				})))
 		.flatten();
 
 	refEdges = $classes
@@ -437,7 +452,160 @@
 				content: reactFlowGraphLayout($nodes,
 					list($genEdges, $refEdges).flatten())))
 }]]></createChart>
-											</flow-diagram>
+												</flow-diagram>
+												<!--
+													The menu offers the commands of the toolbar on what was right-clicked, through the same
+													dialogs and ModelEditAction modes: on the free area (where the right-click clears the
+													selection) a new class or enumeration in the module, on a class or attribute a new
+													attribute, on an enumeration or classifier a new classifier, and on any element its
+													deletion.
+												-->
+												<commands>
+													<generic-command
+														image="css:bi bi-plus-lg"
+														inputs="selectedModule, selectedPart"
+														placement="CONTEXT_MENU"
+													>
+														<label>
+															<en>New class</en>
+															<de>Neue Klasse</de>
+														</label>
+														<executability>
+															<visible-if expr="$selectedModule != null &amp;&amp; $selectedPart == null"/>
+														</executability>
+														<execute-script function="{ type = new(`tl.devtools:NewType`, transient: true); $type.set(`tl.devtools:NewType#kind`, `tl.devtools:TypeKind#class`); $type }">
+															<with-result>
+																<open-dialog
+																	bind-input-to="model"
+																	dialog-view="admin/model/create-type.view.xml"
+																>
+																	<bind
+																		channel="selection"
+																		to="selectedPart"
+																	/>
+																	<bind
+																		channel="container"
+																		to="selectedModule"
+																	/>
+																</open-dialog>
+															</with-result>
+														</execute-script>
+													</generic-command>
+													<generic-command
+														image="css:bi bi-list-ul"
+														inputs="selectedModule, selectedPart"
+														placement="CONTEXT_MENU"
+													>
+														<label>
+															<en>New enumeration</en>
+															<de>Neue Aufzählung</de>
+														</label>
+														<executability>
+															<visible-if expr="$selectedModule != null &amp;&amp; $selectedPart == null"/>
+														</executability>
+														<execute-script function="{ type = new(`tl.devtools:NewType`, transient: true); $type.set(`tl.devtools:NewType#kind`, `tl.devtools:TypeKind#enumeration`); $type }">
+															<with-result>
+																<open-dialog
+																	bind-input-to="model"
+																	dialog-view="admin/model/create-type.view.xml"
+																>
+																	<bind
+																		channel="selection"
+																		to="selectedPart"
+																	/>
+																	<bind
+																		channel="container"
+																		to="selectedModule"
+																	/>
+																</open-dialog>
+															</with-result>
+														</execute-script>
+													</generic-command>
+													<generic-command
+														image="css:bi bi-node-plus"
+														inputs="selectedPart"
+														placement="CONTEXT_MENU"
+													>
+														<label>
+															<en>New attribute</en>
+															<de>Neues Attribut</de>
+														</label>
+														<executability>
+															<visible-if expr="$selectedPart != null &amp;&amp; ($selectedPart.instanceOf(`tl.model:TLClass`) || $selectedPart.instanceOf(`tl.model:TLStructuredTypePart`))"/>
+														</executability>
+														<execute-script function="new(`tl.devtools:NewAttribute`, transient: true)">
+															<with-result>
+																<open-dialog
+																	bind-input-to="model"
+																	dialog-view="admin/model/create-attribute.view.xml"
+																>
+																	<bind
+																		channel="selection"
+																		to="selectedPart"
+																	/>
+																	<bind
+																		channel="container"
+																		to="selectedPart"
+																	/>
+																</open-dialog>
+															</with-result>
+														</execute-script>
+													</generic-command>
+													<generic-command
+														image="css:bi bi-tag"
+														inputs="selectedPart"
+														placement="CONTEXT_MENU"
+													>
+														<label>
+															<en>New classifier</en>
+															<de>Neuer Klassifikator</de>
+														</label>
+														<executability>
+															<visible-if expr="$selectedPart != null &amp;&amp; ($selectedPart.instanceOf(`tl.model:TLEnumeration`) || $selectedPart.instanceOf(`tl.model:TLClassifier`))"/>
+														</executability>
+														<execute-script function="new(`tl.devtools:NewClassifier`, transient: true)">
+															<with-result>
+																<open-dialog
+																	bind-input-to="model"
+																	dialog-view="admin/model/create-classifier.view.xml"
+																>
+																	<bind
+																		channel="selection"
+																		to="selectedPart"
+																	/>
+																	<bind
+																		channel="container"
+																		to="selectedPart"
+																	/>
+																</open-dialog>
+															</with-result>
+														</execute-script>
+													</generic-command>
+													<generic-command
+														clique="delete"
+														image="css:bi bi-trash"
+														inputs="selectedPart"
+														placement="CONTEXT_MENU"
+													>
+														<label>
+															<en>Delete</en>
+															<de>Löschen</de>
+														</label>
+														<executability>
+															<null-input-hidden/>
+														</executability>
+														<confirm expr="#('Delete the selected model element?'@en, 'Das ausgewählte Modellelement löschen?'@de)"/>
+														<with-transaction>
+															<action class="com.top_logic.dev.tools.model.ModelEditAction"
+																mode="DELETE"
+															/>
+														</with-transaction>
+														<write-channel name="selectedPart"
+															clear="true"
+														/>
+													</generic-command>
+												</commands>
+											</context-menu>
 										</panel>
 									</tab>
 									<!--
@@ -776,6 +944,28 @@
 											</table>
 										</panel>
 									</stack>
+								</case>
+								<!--
+									A generalization edge selected in the diagram: the two classes it links. The link is added
+									and removed, never edited, so it is shown read-only.
+								-->
+								<case test="$selectedDetail != null &amp;&amp; $selectedDetail.instanceOf(`tl.devtools:Generalization`)">
+									<panel>
+										<title>
+											<en>Generalization</en>
+											<de>Generalisierung</de>
+										</title>
+										<form
+											input="selectedDetail"
+											with-inset="true"
+										>
+											<edit-executability>
+												<visible-if expr="false"/>
+											</edit-executability>
+											<field attribute="specialization"/>
+											<field attribute="generalization"/>
+										</form>
+									</panel>
 								</case>
 								<default>
 									<panel>

@@ -6,7 +6,7 @@
 package com.top_logic.ai.core.provider.vertex;
 
 import java.util.EnumSet;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +41,7 @@ import com.top_logic.ai.core.provider.ToolChoice;
  *
  * <p>
  * Vertex AI serves the models of several publishers. A model is addressed as
- * {@code {base}/{api-version}/projects/{project}/locations/{location}/publishers/{publisher}/models/{model-id}:streamRawPredict}
+ * {@code {base}/{api-version}/projects/{project}/locations/{location}/publishers/{publisher}/models/{model}:streamRawPredict}
  * and answers in the dialect of its publisher. The publisher of a model is configured in its
  * {@link Config#getModelSettings() model settings}; a model whose name starts with
  * {@link #CLAUDE_PREFIX} is of the publisher {@link #PUBLISHER_ANTHROPIC} without that. A model
@@ -93,9 +93,6 @@ public class VertexProviderConfig implements LLMProviderConfig {
 
 	/** The multi-region locations, served by {@code aiplatform.{location}.rep.googleapis.com}. */
 	private static final Set<String> MULTI_REGIONS = Set.of("us", "eu");
-
-	/** Method of the streaming endpoint of a model that answers in its publisher's dialect. */
-	private static final String STREAM_RAW_PREDICT = ":streamRawPredict";
 
 	private static final String HTTPS = "https://";
 
@@ -153,8 +150,7 @@ public class VertexProviderConfig implements LLMProviderConfig {
 		 * region such as {@code europe-west4}.
 		 *
 		 * <p>
-		 * Without a {@link #getBaseUrl() base URL}, it also decides the host. A model may be served
-		 * at another location, see {@link ModelSettings#getLocation()}.
+		 * Without a {@link #getBaseUrl() base URL}, it also decides the host.
 		 * </p>
 		 */
 		@Name(LOCATION)
@@ -225,8 +221,7 @@ public class VertexProviderConfig implements LLMProviderConfig {
 		 * Settings of individual {@link #getModels() models}, by model name.
 		 *
 		 * <p>
-		 * A model without settings is addressed under its name, at the {@link #getLocation()
-		 * location} of the provider, with the publisher derived from its name.
+		 * A model without settings has the publisher derived from its name.
 		 * </p>
 		 */
 		@Name(MODEL_SETTINGS)
@@ -246,15 +241,6 @@ public class VertexProviderConfig implements LLMProviderConfig {
 		/** Configuration property name for {@link #getPublisher()}. */
 		String PUBLISHER = "publisher";
 
-		/** Configuration property name for {@link #getModelId()}. */
-		String MODEL_ID = "model-id";
-
-		/** Configuration property name for {@link #getLocation()}. */
-		String LOCATION = "location";
-
-		/** Configuration property name for {@link #getCatalogModel()}. */
-		String CATALOG_MODEL = "catalog-model";
-
 		/**
 		 * The publisher of the model, e.g. {@value VertexProviderConfig#PUBLISHER_ANTHROPIC}.
 		 *
@@ -266,58 +252,14 @@ public class VertexProviderConfig implements LLMProviderConfig {
 		@Name(PUBLISHER)
 		@Nullable
 		String getPublisher();
-
-		/**
-		 * The ID of the model in the path of its endpoint, if it differs from the model name, e.g.
-		 * {@code claude-sonnet-5-5@20260101}.
-		 */
-		@Name(MODEL_ID)
-		@Nullable
-		String getModelId();
-
-		/**
-		 * The location the model is served at, if it differs from the
-		 * {@link Config#getLocation() location} of the provider.
-		 */
-		@Name(LOCATION)
-		@Nullable
-		String getLocation();
-
-		/**
-		 * The key of the model in the model catalog, if it differs from the model name.
-		 *
-		 * <p>
-		 * The catalog is searched under this key, then under the key with the suffix
-		 * {@code @default}.
-		 * </p>
-		 */
-		@Name(CATALOG_MODEL)
-		@Nullable
-		String getCatalogModel();
-	}
-
-	/**
-	 * How one model of this provider is addressed.
-	 *
-	 * @param publisher
-	 *        The publisher of the model.
-	 * @param baseUrl
-	 *        The URL the {@link #path()} is appended to, without trailing slash.
-	 * @param path
-	 *        The path of the streaming endpoint of the model.
-	 */
-	public record ModelEndpoint(String publisher, String baseUrl, String path) {
-		/** The URL of the streaming endpoint of the model. */
-		public String url() {
-			return baseUrl + path;
-		}
 	}
 
 	private final Config _config;
 
 	private final CredentialProvider _credentials;
 
-	private final Map<String, ModelEndpoint> _endpoints;
+	/** The publisher of each configured model. */
+	private final Map<String, String> _publishers;
 
 	/** */
 	@CalledByReflection
@@ -325,42 +267,52 @@ public class VertexProviderConfig implements LLMProviderConfig {
 		_config = config;
 		_credentials = LLMProviderConfig.createCredentials(context, config, config.getApiKey(),
 			CredentialProvider.AUTHORIZATION, CredentialProvider.BEARER);
-		_endpoints = endpoints(config);
+		_publishers = publishers(config);
 	}
 
-	private static Map<String, ModelEndpoint> endpoints(Config config) {
-		Map<String, ModelEndpoint> result = new LinkedHashMap<>();
-		List<String> models = config.getModels();
-		if (models != null) {
-			for (String model : models) {
-				result.put(model, endpoint(config, model));
+	/**
+	 * The publisher of each configured model, checked to be {@link #SUPPORTED_PUBLISHERS
+	 * supported}.
+	 */
+	private static Map<String, String> publishers(Config config) {
+		Map<String, String> result = new HashMap<>();
+		for (String model : configuredModels(config)) {
+			String publisher = publisher(model, config.getModelSettings().get(model));
+			if (publisher == null) {
+				throw new ConfigurationError(I18NConstants.ERROR_VERTEX_NO_PUBLISHER__PROVIDER_MODEL
+					.fill(config.getName(), model));
 			}
+			if (!SUPPORTED_PUBLISHERS.contains(publisher)) {
+				throw new ConfigurationError(
+					I18NConstants.ERROR_VERTEX_UNSUPPORTED_PUBLISHER__PROVIDER_MODEL_PUBLISHER_SUPPORTED
+						.fill(config.getName(), model, publisher, String.join(", ", SUPPORTED_PUBLISHERS)));
+			}
+			result.put(model, publisher);
 		}
 		return result;
 	}
 
-	private static ModelEndpoint endpoint(Config config, String model) {
-		ModelSettings settings = config.getModelSettings().get(model);
-		String publisher = publisher(model, settings);
-		if (publisher == null) {
-			throw new ConfigurationError(I18NConstants.ERROR_VERTEX_NO_PUBLISHER__PROVIDER_MODEL
-				.fill(config.getName(), model));
-		}
-		if (!SUPPORTED_PUBLISHERS.contains(publisher)) {
-			throw new ConfigurationError(
-				I18NConstants.ERROR_VERTEX_UNSUPPORTED_PUBLISHER__PROVIDER_MODEL_PUBLISHER_SUPPORTED
-					.fill(config.getName(), model, publisher, String.join(", ", SUPPORTED_PUBLISHERS)));
-		}
-		String location = nonBlank(settings == null ? null : settings.getLocation(), config.getLocation());
-		String modelId = nonBlank(settings == null ? null : settings.getModelId(), model);
-		String apiVersion = config.getApiVersion();
+	private static List<String> configuredModels(Config config) {
+		List<String> models = config.getModels();
+		return models != null ? models : List.of();
+	}
 
-		String baseUrl = isBlank(config.getBaseUrl())
-			? HTTPS + host(location)
-			: gatewayUrl(config.getBaseUrl(), apiVersion);
-		String path = "/" + apiVersion + "/projects/" + config.getProject() + "/locations/" + location
-			+ "/publishers/" + publisher + "/models/" + modelId + STREAM_RAW_PREDICT;
-		return new ModelEndpoint(publisher, baseUrl, path);
+	/**
+	 * The URL the paths of the models are appended to: the gateway, or the host of the
+	 * {@link Config#getLocation() location}.
+	 */
+	private String baseUrl() {
+		return isBlank(_config.getBaseUrl())
+			? HTTPS + host(_config.getLocation())
+			: gatewayUrl(_config.getBaseUrl(), _config.getApiVersion());
+	}
+
+	/**
+	 * The path of the models of the given publisher, to which the model name is appended.
+	 */
+	private String modelsPath(String publisher) {
+		return "/" + _config.getApiVersion() + "/projects/" + _config.getProject() + "/locations/"
+			+ _config.getLocation() + "/publishers/" + publisher + "/models/";
 	}
 
 	/**
@@ -411,10 +363,6 @@ public class VertexProviderConfig implements LLMProviderConfig {
 		return result;
 	}
 
-	private static String nonBlank(String value, String fallback) {
-		return isBlank(value) ? fallback : value.trim();
-	}
-
 	private static boolean isBlank(String value) {
 		return value == null || value.isBlank();
 	}
@@ -426,15 +374,6 @@ public class VertexProviderConfig implements LLMProviderConfig {
 		return _config;
 	}
 
-	/**
-	 * How the given model of this provider is addressed.
-	 *
-	 * @return The endpoint, <code>null</code> if the model is not one of this provider.
-	 */
-	public ModelEndpoint getEndpoint(String model) {
-		return _endpoints.get(model);
-	}
-
 	@Override
 	public CredentialProvider getCredentials() {
 		return _credentials;
@@ -442,15 +381,11 @@ public class VertexProviderConfig implements LLMProviderConfig {
 
 	@Override
 	public LLMProvider createProvider() {
-		Map<String, LLMProvider> models = new LinkedHashMap<>();
-		for (Map.Entry<String, ModelEndpoint> entry : _endpoints.entrySet()) {
-			ModelEndpoint endpoint = entry.getValue();
-			// All endpoints are of a supported publisher, see endpoint(Config, String).
-			models.put(entry.getKey(), new VertexAnthropicProvider(_credentials, endpoint.baseUrl(),
-				endpoint.path(), _config.getAnthropicVersion(), _config.getConnectTimeout(),
-				_config.getRequestTimeout(), _config.getCustomHeaders(), _config.getCatalogProviderId()));
-		}
-		return new VertexProvider(_config.getName(), toolChoices(), models, _credentials);
+		// All configured models are of the only supported publisher, see publishers(Config).
+		return new VertexAnthropicProvider(_config.getName(), _credentials, baseUrl(),
+			modelsPath(PUBLISHER_ANTHROPIC), _config.getAnthropicVersion(), toolChoices(),
+			_config.getConnectTimeout(), _config.getRequestTimeout(), _config.getCustomHeaders(),
+			_config.getCatalogProviderId());
 	}
 
 	/**
@@ -474,8 +409,7 @@ public class VertexProviderConfig implements LLMProviderConfig {
 
 	@Override
 	public List<String> getConfiguredModels() {
-		List<String> models = _config.getModels();
-		return models != null ? models : List.of();
+		return configuredModels(_config);
 	}
 
 	@Override
@@ -489,16 +423,9 @@ public class VertexProviderConfig implements LLMProviderConfig {
 	 */
 	@Override
 	public String getApiFamily(String model) {
-		ModelEndpoint endpoint = _endpoints.get(model);
-		if (endpoint != null && PUBLISHER_ANTHROPIC.equals(endpoint.publisher())) {
+		if (PUBLISHER_ANTHROPIC.equals(_publishers.get(model))) {
 			return ApiFamilies.ANTHROPIC;
 		}
 		return getCatalogProviderId();
-	}
-
-	@Override
-	public String getCatalogModel(String model) {
-		ModelSettings settings = _config.getModelSettings().get(model);
-		return nonBlank(settings == null ? null : settings.getCatalogModel(), model);
 	}
 }

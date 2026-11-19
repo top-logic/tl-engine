@@ -5,24 +5,30 @@
  */
 package com.top_logic.ai.core.provider.vertex;
 
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.ai.core.provider.ProviderException;
 import com.top_logic.ai.core.provider.ProviderRequest;
+import com.top_logic.ai.core.provider.ToolChoice;
 import com.top_logic.ai.core.provider.anthropic.AnthropicMessagesProvider;
 import com.top_logic.ai.core.provider.anthropic.AnthropicRequestBuilder;
 
 /**
- * {@link AnthropicMessagesProvider} for one Claude model on Google Vertex AI.
+ * {@link AnthropicMessagesProvider} for the Claude models on Google Vertex AI.
  *
  * <p>
  * Vertex AI speaks the Messages API with three differences: the model is named in the path of its
  * endpoint instead of the body, the API version is sent in the body ({@code anthropic_version})
  * instead of a header, and an error Google Cloud answers itself has Google's form. The stream is
  * the one of the Anthropic API.
+ * </p>
+ *
+ * <p>
+ * The {@link ToolChoice} of a request is {@link ToolChoice#restrict(ProviderRequest, Set, String)
+ * restricted} to the ones the endpoint accepts before it is sent.
  * </p>
  */
 public class VertexAnthropicProvider extends AnthropicMessagesProvider {
@@ -42,19 +48,30 @@ public class VertexAnthropicProvider extends AnthropicMessagesProvider {
 		Map.entry("OUT_OF_RANGE", ProviderException.Kind.INVALID_REQUEST),
 		Map.entry("NOT_FOUND", ProviderException.Kind.INVALID_REQUEST));
 
-	private final String _path;
+	/** Method of the streaming endpoint of a model that answers in its publisher's dialect. */
+	private static final String STREAM_RAW_PREDICT = ":streamRawPredict";
+
+	private final String _name;
+
+	private final String _modelsPath;
+
+	private final Set<ToolChoice> _toolChoices;
 
 	/**
 	 * Creates a {@link VertexAnthropicProvider}.
 	 *
+	 * @param name
+	 *        The name of the configured provider, for error messages.
 	 * @param credentials
 	 *        Authentication of the requests.
 	 * @param baseUrl
-	 *        The URL the path is appended to.
-	 * @param path
-	 *        The path of the streaming endpoint of the model.
+	 *        The URL the path of a model is appended to.
+	 * @param modelsPath
+	 *        The path of the models of the publisher, to which the model name is appended.
 	 * @param anthropicVersion
 	 *        The version of the Messages API sent in the body.
+	 * @param toolChoices
+	 *        The tool choices the endpoint accepts.
 	 * @param connectTimeoutSeconds
 	 *        TCP connect timeout in seconds.
 	 * @param requestTimeoutSeconds
@@ -64,28 +81,19 @@ public class VertexAnthropicProvider extends AnthropicMessagesProvider {
 	 * @param catalogProviderId
 	 *        The catalog provider ID stamped onto the thinking blocks.
 	 */
-	public VertexAnthropicProvider(CredentialProvider credentials, String baseUrl, String path,
-			String anthropicVersion, int connectTimeoutSeconds, int requestTimeoutSeconds,
-			Map<String, String> customHeaders, String catalogProviderId) {
+	public VertexAnthropicProvider(String name, CredentialProvider credentials, String baseUrl, String modelsPath,
+			String anthropicVersion, Set<ToolChoice> toolChoices, int connectTimeoutSeconds,
+			int requestTimeoutSeconds, Map<String, String> customHeaders, String catalogProviderId) {
 		super(credentials, baseUrl, anthropicVersion, connectTimeoutSeconds, requestTimeoutSeconds, customHeaders,
 			catalogProviderId);
-		_path = path;
-	}
-
-	/**
-	 * Creates a {@link VertexAnthropicProvider} with the given {@link HttpClient}.
-	 *
-	 * @see #VertexAnthropicProvider(CredentialProvider, String, String, String, int, int, Map, String)
-	 */
-	public VertexAnthropicProvider(CredentialProvider credentials, String baseUrl, String path,
-			String anthropicVersion, HttpClient httpClient, String catalogProviderId) {
-		super(credentials, baseUrl, anthropicVersion, httpClient, catalogProviderId);
-		_path = path;
+		_name = name;
+		_modelsPath = modelsPath;
+		_toolChoices = Set.copyOf(toolChoices);
 	}
 
 	@Override
 	protected String endpointPath(ProviderRequest request) {
-		return _path;
+		return _modelsPath + request.model() + STREAM_RAW_PREDICT;
 	}
 
 	@Override
@@ -95,7 +103,8 @@ public class VertexAnthropicProvider extends AnthropicMessagesProvider {
 
 	@Override
 	protected String buildRequestJson(ProviderRequest request) throws ProviderException {
-		return AnthropicRequestBuilder.buildRequestJson(request, apiVersion());
+		return AnthropicRequestBuilder.buildRequestJson(ToolChoice.restrict(request, _toolChoices, _name),
+			apiVersion());
 	}
 
 	/**

@@ -284,23 +284,6 @@ public interface LLMProviderConfig {
 	}
 
 	/**
-	 * The key under which the model catalog lists the given model of this provider.
-	 *
-	 * <p>
-	 * The catalog is searched in the entries of the {@link #getCatalogProviderId() catalog provider
-	 * ID} under this key, then under the key with the suffix
-	 * {@link com.top_logic.ai.core.provider.catalog.ModelsDevFetcher#DEFAULT_VERSION_SUFFIX}.
-	 * </p>
-	 *
-	 * @param model
-	 *        A model of this provider.
-	 * @return The key; by default the model name.
-	 */
-	default String getCatalogModel(String model) {
-		return model;
-	}
-
-	/**
 	 * The tool choices this provider accepts for the given model.
 	 *
 	 * <p>

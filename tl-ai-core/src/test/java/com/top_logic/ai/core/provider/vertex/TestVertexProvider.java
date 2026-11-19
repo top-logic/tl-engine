@@ -13,7 +13,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
 
@@ -55,7 +54,6 @@ import com.top_logic.ai.core.provider.StreamEvent;
 import com.top_logic.ai.core.provider.StreamEventContractAssertions;
 import com.top_logic.ai.core.provider.ToolChoice;
 import com.top_logic.ai.core.provider.catalog.ModelInfo;
-import com.top_logic.ai.core.provider.catalog.ModelsDevFetcher;
 import com.top_logic.ai.tool.api.ToolSchema;
 
 import de.haumacher.msgbuf.json.JsonUtil;
@@ -303,39 +301,37 @@ public class TestVertexProvider extends TestCase {
 	/**
 	 * Without a base URL, the host is derived from the location.
 	 */
-	public void testHostOfLocation() throws Exception {
-		assertEquals("https://aiplatform.googleapis.com/v1/projects/p/locations/global/publishers/anthropic"
-			+ "/models/" + MODEL + ":streamRawPredict", direct("global").getEndpoint(MODEL).url());
-		assertEquals("https://aiplatform.eu.rep.googleapis.com/v1/projects/p/locations/eu/publishers/anthropic"
-			+ "/models/" + MODEL + ":streamRawPredict", direct("eu").getEndpoint(MODEL).url());
-		assertEquals("https://europe-west4-aiplatform.googleapis.com/v1/projects/p/locations/europe-west4"
-			+ "/publishers/anthropic/models/" + MODEL + ":streamRawPredict",
-			direct("europe-west4").getEndpoint(MODEL).url());
+	public void testHostOfLocation() {
+		assertEquals("aiplatform.googleapis.com", VertexProviderConfig.host("global"));
+		assertEquals("aiplatform.eu.rep.googleapis.com", VertexProviderConfig.host("eu"));
+		assertEquals("europe-west4-aiplatform.googleapis.com", VertexProviderConfig.host("europe-west4"));
 	}
 
 	/**
 	 * A base URL with or without trailing API version addresses the same endpoint.
 	 */
 	public void testBaseUrlWithAndWithoutVersion() throws Exception {
-		String withVersion = provider("").getEndpoint(MODEL).url();
-		String withoutVersion = provider(baseUrl(), "", "").getEndpoint(MODEL).url();
-		String withSlash = provider(baseUrl() + "/v1/", "", "").getEndpoint(MODEL).url();
+		stream(provider(""), request(null, Map.of()));
+		stream(provider(baseUrl(), "", ""), request(null, Map.of()));
+		stream(provider(baseUrl() + "/v1/", "", ""), request(null, Map.of()));
 
-		assertEquals(baseUrl() + MODEL_PATH, withVersion);
-		assertEquals(withVersion, withoutVersion);
-		assertEquals(withVersion, withSlash);
+		assertEquals(3, _requests.size());
+		for (Received received : _requests) {
+			assertEquals(MODEL_PATH, received.path());
+		}
 	}
 
 	/**
-	 * The settings of a model decide its publisher, its ID in the path and its location.
+	 * The settings of a model decide its publisher.
 	 */
-	public void testModelSettings() throws Exception {
+	public void testPublisherSetting() throws Exception {
 		VertexProviderConfig provider = provider(baseUrl(), "models='my-model'",
-			"<model-settings><model name='my-model' publisher='anthropic' model-id='claude-opus-5-5@20260101'"
-				+ " location='us-east5'/></model-settings>");
+			"<model-settings><model name='my-model' publisher='anthropic'/></model-settings>");
 
-		assertEquals(baseUrl() + "/v1/projects/my-project/locations/us-east5/publishers/anthropic/models/"
-			+ "claude-opus-5-5@20260101:streamRawPredict", provider.getEndpoint("my-model").url());
+		stream(provider, new ProviderRequest("my-model", null, List.of(user("Hello.")), List.of(), 1000));
+
+		assertEquals("/v1/projects/my-project/locations/eu/publishers/anthropic/models/my-model:streamRawPredict",
+			last().path());
 		assertEquals(ApiFamilies.ANTHROPIC, provider.getApiFamily("my-model"));
 	}
 
@@ -366,13 +362,10 @@ public class TestVertexProvider extends TestCase {
 	}
 
 	/**
-	 * Claude on Vertex has the catalog data of its {@code @default} entry, and the catalog key of a
-	 * model can be configured.
+	 * Claude on Vertex has the catalog data of its {@code @default} entry.
 	 */
 	public void testCatalog() throws Exception {
-		LLMProviderConfig.Config vertex = config(baseUrl(), "models='" + MODEL + ",my-model'",
-			"<model-settings><model name='my-model' publisher='anthropic' model-id='claude-haiku-5-5'"
-				+ " catalog-model='claude-haiku-5-5'/></model-settings>");
+		LLMProviderConfig.Config vertex = config(baseUrl(), "", "");
 		@SuppressWarnings("unchecked")
 		LLMProviderService.Config<LLMProviderService> config =
 			(LLMProviderService.Config<LLMProviderService>) TypedConfiguration.newConfigItem(
@@ -387,14 +380,6 @@ public class TestVertexProvider extends TestCase {
 		assertNotNull(sonnet);
 		assertEquals(1_000_000, sonnet.limits().contextWindow());
 		assertEquals(ApiFamilies.ANTHROPIC, _service.getApiFamily(MODEL));
-
-		ModelInfo haiku = ModelsDevFetcher
-			.loadSnapshot(Map.of(VertexProviderConfig.DEFAULT_CATALOG_PROVIDER_ID, Set.of("claude-haiku-5-5")))
-			.get("claude-haiku-5-5");
-		ModelInfo mine = _service.getModel("my-model");
-		assertNotNull("The model must be found under its catalog key.", mine);
-		assertEquals("my-model", mine.id());
-		assertEquals(haiku.limits().contextWindow(), mine.limits().contextWindow());
 	}
 
 	private ProviderException.Kind error(int status, String body) throws Exception {
@@ -450,17 +435,6 @@ public class TestVertexProvider extends TestCase {
 			throws ConfigurationException {
 		return (VertexProviderConfig) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
 			.getInstance(config(baseUrl, attributes, content));
-	}
-
-	/** A provider that calls Vertex AI directly at the given location. */
-	private static VertexProviderConfig direct(String location) throws ConfigurationException {
-		String xml = "<provider xmlns:config='http://www.top-logic.com/ns/config/6.0'"
-			+ " config:interface='" + VertexProviderConfig.Config.class.getName() + "'"
-			+ " class='" + VertexProviderConfig.class.getName() + "' name='test' project='p'"
-			+ " location='" + location + "' models='" + MODEL + "'/>";
-		LLMProviderConfig.Config config =
-			(LLMProviderConfig.Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
-		return (VertexProviderConfig) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
 	}
 
 	private static LLMProviderConfig.Config config(String baseUrl, String attributes, String content)

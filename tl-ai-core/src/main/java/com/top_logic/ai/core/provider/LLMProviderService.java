@@ -463,13 +463,12 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 		// --- Catalog phase ---
 		ModelCatalogConfig catalogConfig = getConfig().getModelCatalog();
 		Map<String, Set<String>> catalogRequested = buildCatalogProviderModels();
-		List<LLMProviderConfig> providers = List.copyOf(_providerConfigs.values());
 
 		Map<String, ModelInfo> bundled;
 		if (catalogConfig == null || catalogRequested.isEmpty()) {
 			bundled = Map.of();
 		} else {
-			bundled = byModelName(ModelsDevFetcher.loadSnapshot(catalogRequested), providers);
+			bundled = ModelsDevFetcher.loadSnapshot(catalogRequested);
 		}
 		boolean fetchRemote =
 			catalogConfig != null && !catalogRequested.isEmpty() && catalogConfig.getFetchRemoteCatalog();
@@ -487,8 +486,7 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 		if (fetchRemote) {
 			String url = catalogConfig.getCatalogUrl();
 			Thread loader =
-				new Thread(() -> loadRemoteCatalog(url, catalogRequested, providers, bundledEntries),
-					"Model catalog");
+				new Thread(() -> loadRemoteCatalog(url, catalogRequested, bundledEntries), "Model catalog");
 			loader.setDaemon(true);
 			synchronized (this) {
 				_catalogLoader = loader;
@@ -502,10 +500,10 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	 * {@link #_catalogLoader} thread.
 	 */
 	private void loadRemoteCatalog(String url, Map<String, Set<String>> requested,
-			List<LLMProviderConfig> providers, Map<String, ResolvedModel> bundled) {
+			Map<String, ResolvedModel> bundled) {
 		Map<String, ModelInfo> remote;
 		try {
-			remote = byModelName(ModelsDevFetcher.fetch(url, requested, CATALOG_DEADLINE), providers);
+			remote = ModelsDevFetcher.fetch(url, requested, CATALOG_DEADLINE);
 		} catch (InterruptedException ex) {
 			// The service stopped.
 			return;
@@ -1295,38 +1293,8 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 			}
 			// Every provider contributes its own allowlist: a model two providers expose is
 			// requested once per catalog ID, and neither provider's models go unrequested.
-			Set<String> keys = result.computeIfAbsent(catalogId, id -> new LinkedHashSet<>());
-			for (String model : providerConfig.getConfiguredModels()) {
-				keys.add(providerConfig.getCatalogModel(model));
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * The given catalog entries, with every configured model that its provider looks up under
-	 * another {@link LLMProviderConfig#getCatalogModel(String) key} added under its own name.
-	 *
-	 * @param byKey
-	 *        The catalog entries by the keys they were requested under.
-	 * @param providers
-	 *        The configured providers.
-	 */
-	private static Map<String, ModelInfo> byModelName(Map<String, ModelInfo> byKey,
-			List<LLMProviderConfig> providers) {
-		Map<String, ModelInfo> result = new LinkedHashMap<>(byKey);
-		for (LLMProviderConfig providerConfig : providers) {
-			String catalogId = providerConfig.getCatalogProviderId();
-			if (catalogId == null || catalogId.isBlank()) {
-				continue;
-			}
-			for (String model : providerConfig.getConfiguredModels()) {
-				String key = providerConfig.getCatalogModel(model);
-				ModelInfo info = byKey.get(key);
-				if (info != null && !key.equals(model)) {
-					result.put(model, info.withId(model));
-				}
-			}
+			result.computeIfAbsent(catalogId, id -> new LinkedHashSet<>())
+				.addAll(providerConfig.getConfiguredModels());
 		}
 		return result;
 	}

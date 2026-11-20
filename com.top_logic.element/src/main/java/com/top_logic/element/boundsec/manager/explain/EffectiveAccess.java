@@ -201,13 +201,24 @@ public class EffectiveAccess {
 		List<OperationDecision> result = new ArrayList<>(applicable.size());
 		for (BoundCommandGroup operation : applicable) {
 			TLObject roleHolder = _rights.getRoleHolder(object, operation);
-			Set<BoundedRole> admitting = _rights.getAdmittingRoles(object, operation);
-			Set<BoundedRole> granting = new HashSet<>(admitting);
-			granting.retainAll(held(heldByHolder, person, roleHolder));
+			Set<BoundedRole> admitting = new HashSet<>();
+			Set<BoundedRole> granting = new HashSet<>();
+			Set<BoundedRole> ownGranting = new HashSet<>();
+			for (Map.Entry<TLObject, Set<BoundedRole>> entry : _rights.getAdmittingRolesByHolder(object, operation)
+				.entrySet()) {
+				TLObject holder = entry.getKey();
+				admitting.addAll(entry.getValue());
+				Set<BoundedRole> grantingOnHolder = new HashSet<>(entry.getValue());
+				grantingOnHolder.retainAll(held(heldByHolder, person, holder));
+				granting.addAll(grantingOnHolder);
+				if (holder.equals(object) && !object.equals(roleHolder)) {
+					ownGranting.addAll(grantingOnHolder);
+				}
+			}
 			result.add(new OperationDecision(operation, _rights.getOperationOnRoleHolder(object, operation),
 				roleHolder, allowed.get(operation).booleanValue(),
 				Collections.unmodifiableSet(admitting), Collections.unmodifiableSet(granting),
-				restricted.contains(operation)));
+				Collections.unmodifiableSet(ownGranting), restricted.contains(operation)));
 		}
 		return Collections.unmodifiableList(result);
 	}

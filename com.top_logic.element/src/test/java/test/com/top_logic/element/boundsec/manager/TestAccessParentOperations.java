@@ -7,6 +7,7 @@ package test.com.top_logic.element.boundsec.manager;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import junit.framework.Test;
@@ -222,6 +223,18 @@ public class TestAccessParentOperations extends BasicTestCase {
 		assertEquals(Set.of(entryEditor), rights().getAdmittingRoles(_entry, SimpleBoundCommandGroup.WRITE));
 		assertEquals(Set.of(catalogReader), rights().getAdmittingRoles(_part, SimpleBoundCommandGroup.WRITE));
 		assertEquals(Set.of(), rights().getAdmittingRoles(_part, SimpleBoundCommandGroup.DELETE));
+
+		Map<TLObject, Set<BoundedRole>> discover =
+			rights().getAdmittingRolesByHolder(_entry, SimpleBoundCommandGroup.DISCOVER);
+		assertEquals("Discover is delegated to the catalog.", Set.of(catalogReader), discover.get(_catalog));
+		assertTrue("Discover is implied by the own Write grant of the entry.",
+			discover.get(_entry).contains(entryEditor));
+		assertEquals(Map.of(_catalog, Set.of(catalogReader)),
+			rights().getAdmittingRolesByHolder(_entry, SimpleBoundCommandGroup.READ));
+		assertEquals(Map.of(_entry, Set.of(entryEditor)),
+			rights().getAdmittingRolesByHolder(_entry, SimpleBoundCommandGroup.WRITE));
+		assertEquals("Every operation is decided by the catalog.", Map.of(_catalog, Set.of(catalogReader)),
+			rights().getAdmittingRolesByHolder(_fullPart, SimpleBoundCommandGroup.DELETE));
 	}
 
 	public void testInitialValuesWithOwnWrite() {

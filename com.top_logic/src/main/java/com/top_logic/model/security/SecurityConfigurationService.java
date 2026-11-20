@@ -1935,15 +1935,31 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	@Override
 	public Set<BoundedRole> getAdmittingRoles(TLObject object, BoundCommandGroup operation) {
 		Set<BoundedRole> result = new HashSet<>();
+		for (Set<BoundedRole> roles : getAdmittingRolesByHolder(object, operation).values()) {
+			result.addAll(roles);
+		}
+		return result;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @implNote Follows the delegation of {@link #isAllowed(Person, TLObject, BoundCommandGroup)}
+	 *           as {@link #getAdmittingRoles(TLObject, BoundCommandGroup)} does, keeping the roles
+	 *           apart by the object they are granted on.
+	 */
+	@Override
+	public Map<TLObject, Set<BoundedRole>> getAdmittingRolesByHolder(TLObject object, BoundCommandGroup operation) {
+		Map<TLObject, Set<BoundedRole>> result = new LinkedHashMap<>();
 		collectAdmittingRoles(object, operation, new HashSet<>(), result);
 		return result;
 	}
 
 	private void collectAdmittingRoles(TLObject instance, BoundCommandGroup operation,
-			Set<AdmittingRolesKey> visiting, Set<BoundedRole> result) {
+			Set<AdmittingRolesKey> visiting, Map<TLObject, Set<BoundedRole>> result) {
 		AccessParentFunction parent = accessParentOf(instance);
 		if (parent == null) {
-			result.addAll(getRoles(instance, operation));
+			addAdmittingRoles(result, instance, getRoles(instance, operation));
 			return;
 		}
 		AdmittingRolesKey key = new AdmittingRolesKey(instance, operation);
@@ -1970,9 +1986,16 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		}
 		if (parent.getOperations() != null) {
 			// The object decides the operations not delegated by its own roles, see compute().
-			result.addAll(getRoles(instance, operation));
+			addAdmittingRoles(result, instance, getRoles(instance, operation));
 		}
 		visiting.remove(key);
+	}
+
+	private static void addAdmittingRoles(Map<TLObject, Set<BoundedRole>> result, TLObject holder,
+			Set<BoundedRole> roles) {
+		if (!roles.isEmpty()) {
+			result.computeIfAbsent(holder, x -> new HashSet<>()).addAll(roles);
+		}
 	}
 
 	/**

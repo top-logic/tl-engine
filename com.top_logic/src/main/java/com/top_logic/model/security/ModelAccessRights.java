@@ -7,6 +7,7 @@
 package com.top_logic.model.security;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.thread.ThreadContext;
@@ -283,8 +284,8 @@ public interface ModelAccessRights {
 	 * operation is checked on the parent, possibly as another operation (creating or deleting a
 	 * part, for instance, is a modification of the whole). Along a chain of access parents, this
 	 * mapping applies at every step, up to the first object deciding the operation for itself.
-	 * Operations implying the given one on the object are checked
-	 * on the parent as well; they contribute to the
+	 * Operations implying the given one on the object are checked on the parent as well, as far as
+	 * the access parent delegates them; they contribute to the
 	 * {@link #getAdmittingRoles(TLObject, BoundCommandGroup) admitting roles}.
 	 * </p>
 	 *
@@ -330,6 +331,37 @@ public interface ModelAccessRights {
 	 */
 	default Set<BoundedRole> getAdmittingRoles(TLObject object, BoundCommandGroup operation) {
 		return object.tType() instanceof TLClass type ? getAllowedRoles(type, operation) : Collections.emptySet();
+	}
+
+	/**
+	 * The {@link #getAdmittingRoles(TLObject, BoundCommandGroup) admitting roles} of the given
+	 * operation on the given object, grouped by the object they must be held on.
+	 *
+	 * <p>
+	 * Usually, all admitting roles must be held on the
+	 * {@link #getRoleHolder(TLObject, BoundCommandGroup) role holder} of the operation. An object
+	 * whose access parent is restricted to some operations decides a delegated operation by the
+	 * roles held on its access parent and by the roles granted the operation (or an operation
+	 * implying it) on the object itself, which must be held on the object.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object to access.
+	 * @param operation
+	 *        The operation to perform on the object.
+	 * @return The admitting roles by the object they must be held on. Objects without admitting
+	 *         roles are left out.
+	 * @implSpec The default answers the {@link #getAdmittingRoles(TLObject, BoundCommandGroup)
+	 *           admitting roles}, to be held on the {@link #getRoleHolder(TLObject, BoundCommandGroup)
+	 *           role holder}.
+	 */
+	default Map<TLObject, Set<BoundedRole>> getAdmittingRolesByHolder(TLObject object, BoundCommandGroup operation) {
+		TLObject roleHolder = getRoleHolder(object, operation);
+		Set<BoundedRole> roles = getAdmittingRoles(object, operation);
+		if (roleHolder == null || roles.isEmpty()) {
+			return Collections.emptyMap();
+		}
+		return Collections.singletonMap(roleHolder, roles);
 	}
 
 	/**

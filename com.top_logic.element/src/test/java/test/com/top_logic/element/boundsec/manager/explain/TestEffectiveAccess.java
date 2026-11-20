@@ -316,6 +316,21 @@ public class TestEffectiveAccess extends BasicTestCase {
 		assertEquals("The role is held on the entry, not on the catalog.", Set.of(entryEditor),
 			editorWrite.grantingRoles());
 		assertFalse(decision(editorExplanation, SimpleBoundCommandGroup.READ).allowed());
+		assertEquals("Write is decided by the entry itself, no own role of a delegating object.", Set.of(),
+			editorWrite.ownGrantingRoles());
+
+		OperationDecision editorDiscover = decision(editorExplanation, SimpleBoundCommandGroup.DISCOVER);
+		assertSame("Discover is delegated to the catalog.", _catalog, editorDiscover.roleHolder());
+		assertTrue("The own Write grant of the entry implies Discover.", editorDiscover.allowed());
+		assertEquals(Set.of(catalogReader, entryEditor), editorDiscover.admittingRoles());
+		assertEquals(Set.of(entryEditor), editorDiscover.grantingRoles());
+		assertEquals("The role is held on the entry, not on the catalog.", Set.of(entryEditor),
+			editorDiscover.ownGrantingRoles());
+
+		OperationDecision readerDiscover = decision(explanation, SimpleBoundCommandGroup.DISCOVER);
+		assertTrue(readerDiscover.allowed());
+		assertEquals(Set.of(catalogReader), readerDiscover.grantingRoles());
+		assertEquals("The role is held on the catalog.", Set.of(), readerDiscover.ownGrantingRoles());
 	}
 
 	public void testDenied() {

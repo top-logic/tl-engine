@@ -272,7 +272,8 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 	 *
 	 * <p>
 	 * For an object delegating the operation to an access parent, the reason names the operation
-	 * checked on the object deciding the operation in place of the operation of the decision.
+	 * checked on the object deciding the operation in place of the operation of the decision,
+	 * unless the operation is allowed by roles held on the object itself.
 	 * </p>
 	 *
 	 * @param explanation
@@ -311,6 +312,11 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 		String text = resources.getString(reason);
 		TLObject roleHolder = decision.roleHolder();
 		if (roleHolder == null || roleHolder.equals(explanation.object())) {
+			return text;
+		}
+		if (decision.allowed() && !decision.grantingRoles().isEmpty()
+			&& decision.ownGrantingRoles().containsAll(decision.grantingRoles())) {
+			// Allowed by roles held on the object itself, not by roles held on the role holder.
 			return text;
 		}
 		return resources.getString(I18NConstants.EFFECTIVE_ACCESS_CHECKED_ON__OPERATION_OBJECT_REASON.fill(

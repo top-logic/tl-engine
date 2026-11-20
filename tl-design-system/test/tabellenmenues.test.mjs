@@ -186,6 +186,11 @@ test('tl-picker__scroll: füllt den Rest der Hülle, schrumpft mit ihr, rollt al
 
 const SPALTE = [/display:\s*flex/, /flex-direction:\s*column/, /flex:\s*1 1 auto/, /min-block-size:\s*0/];
 
+test('Ansicht: eine Breite für beide Seiten — der Seitenwechsel springt nicht', () => {
+  const popover = declarationsOf(table, '.tl-popover.tl-table-view-options') ?? '';
+  assert.match(popover, /inline-size:\s*min\(var\(--tl-size-popover-view\)/);
+});
+
 test('Ansicht: zwei Seiten im Popover — jede eine Flex-Spalte mit einem Rollbereich (der Liste), Kopf mit Zurück-Knopf', () => {
   const seite = declarationsOf(table, '.tl-table-view-options__page') ?? '';
   for (const re of SPALTE) assert.match(seite, re, String(re));

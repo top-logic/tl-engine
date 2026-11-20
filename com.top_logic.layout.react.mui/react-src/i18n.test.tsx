@@ -34,6 +34,18 @@ function fakeServer(): { answers: PendingAnswer[]; fetch: ReturnType<typeof vi.f
   return { answers, fetch };
 }
 
+/**
+ * The requests for the given key among the calls of the fake fetch. The bridge requests
+ * translations of its own as well (the message of the busy overlay, which is always mounted); the
+ * fake server answers only the key under test, so those are requested again and must not count.
+ */
+function requestsOf(fetch: ReturnType<typeof vi.fn>, key: string): number {
+  return fetch.mock.calls.filter(([url]) => {
+    const keys = new URL(String(url), 'http://localhost/').searchParams.get('keys') ?? '';
+    return keys.split(',').includes(key);
+  }).length;
+}
+
 /** The bridge, loaded afresh for each test: the translations are cached for the page. */
 async function load() {
   vi.resetModules();
@@ -70,7 +82,7 @@ describe('useI18N', () => {
       rerender(<Probe round={round} />);
       await settle();
     }
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(requestsOf(fetch, KEY)).toBe(1);
     expect(screen.getByTestId('text').textContent).toBe(FALLBACK);
 
     await act(async () => answers[0].resolve({ [KEY]: TRANSLATION }));
@@ -80,7 +92,7 @@ describe('useI18N', () => {
     const rendersAfterAnswer = renders;
     rerender(<Probe round={6} />);
     await settle();
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(requestsOf(fetch, KEY)).toBe(1);
     expect(renders).toBe(rendersAfterAnswer + 1);
   });
 
@@ -96,7 +108,7 @@ describe('useI18N', () => {
 
     render(<Probe />);
     await settle();
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(requestsOf(fetch, KEY)).toBe(1);
     const rendersBeforeAnswer = renders;
 
     // The server knows no translation of the key: the fallback stays, and nothing renders again.

@@ -1,6 +1,7 @@
-import { React } from 'tl-react-bridge'
+import { labelWithBadge, React, StateBadge, type BadgeJson } from 'tl-react-bridge'
 import type { RailRenderContext, RailSection, SidePaneState } from './extensions'
 import type { bundle } from './i18n'
+import { countContent } from './rail-model'
 
 type Labels = ReturnType<typeof bundle>
 
@@ -35,7 +36,12 @@ export function SideRail({
             >
               <span className={`side-caret${collapsed ? '' : ' is-open'}`} aria-hidden="true" />
               <span className="side-section-title">{section.title}</span>
-              {count > 0 ? <span className="side-section-badge">{count}</span> : null}
+              {count > 0 ? (
+                <>
+                  {' '}
+                  <StateBadge badge={{ content: countContent(count) }} alone={false} />
+                </>
+              ) : null}
               {section.contributor ? (
                 <span className="side-section-by">{section.contributor}</span>
               ) : null}
@@ -93,32 +99,39 @@ export function RailToggle({
   onToggle,
 }: {
   open: boolean
-  badge: number
+  /** What is new since the user last looked, see `unseenRailBadge`; `null` for nothing. */
+  badge: Partial<BadgeJson> | null
   labels: Labels
   onToggle: () => void
 }) {
+  // Only while the rail is closed: "N new since you last looked" says nothing next to an open rail
+  // that is showing exactly those N things.
+  const shown = open ? null : badge
+  const icon = (
+    <svg viewBox="0 0 16 16" aria-hidden="true">
+      <rect x="2" y="3" width="12" height="10" rx="1.6" />
+      <path d="M10.2 3v10" />
+    </svg>
+  )
   return (
     <button
       type="button"
       className="icon-button side-toggle"
-      aria-label={labels.sideRail}
+      aria-label={labelWithBadge(labels.sideRail, shown)}
       aria-pressed={open}
       title={labels.sideRail}
       onClick={onToggle}
     >
-      <svg viewBox="0 0 16 16" aria-hidden="true">
-        <rect x="2" y="3" width="12" height="10" rx="1.6" />
-        <path d="M10.2 3v10" />
-      </svg>
-      {/*
-        Only while the rail is closed: "N new since you last looked" says nothing next to an open
-        rail that is showing exactly those N things.
-      */}
-      {!open && badge > 0 ? (
-        <span className="side-toggle-badge" aria-label={labels.sideRailBadge(badge)}>
-          {badge}
+      {shown ? (
+        <span className="tl-icon-badge">
+          {icon}
+          <span className="tl-icon-badge__count">
+            <StateBadge badge={shown} alone={true} />
+          </span>
         </span>
-      ) : null}
+      ) : (
+        icon
+      )}
     </button>
   )
 }

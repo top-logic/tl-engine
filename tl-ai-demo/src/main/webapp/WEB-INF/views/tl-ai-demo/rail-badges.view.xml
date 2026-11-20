@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Rail badges: a <chat-rail> whose sections carry badges, beside a conversation of its own.
+	
+	Each section of the rail declares its badge like any other element carrying one (badge,
+	badge-role, badge-label): the badge stands beside the section's title and on its strip icon. The
+	rail button in the header of the conversation shows what the sections count together since the
+	user last opened the rail, in the most urgent role among the counting sections, and a dot when no
+	count is new but a section shows one.
+	
+	- Events counts the events of the demo, in the role of the brand. "New event" in the panel
+	creates one, the delete command of a row in the section removes one.
+	- Venues counts the venues, in the role warning.
+	- Trial shows the number entered in the panel, in the role error: 0 shows no badge, a number above
+	99 shows "99+", and the sum on the rail button then shows "99+" as well.
+	- Marked shows a dot while the checkbox is ticked, in the role success, named by its badge-label
+	for a screen reader. A dot adds nothing to the sum.
+	- Notes has no badge and contributes nothing.
+	
+	The conversation and the rail join a chat of their own, so this page neither shares the layout of
+	the rail on the Chat page nor feeds the badge of the dock.
+-->
+<view>
+	<channels>
+		<channel name="eventCount"/>
+		<channel name="venueCount"/>
+		<channel name="trialCount"/>
+		<channel name="marked"/>
+		<channel name="selectedEvent"/>
+	</channels>
+
+	<chat
+		chat-id="rail-badges"
+		direction="row"
+	>
+		<!--
+			The controls above the conversation, so the conversation takes the width the rail leaves and
+			the height below the controls: the stack fills because the conversation's panel does.
+		-->
+		<stack>
+			<panel with-inset="true">
+				<title>
+					<en>Rail badges</en>
+					<de>Badges der Leiste</de>
+				</title>
+				<commands>
+					<generic-command
+						image="css:bi bi-plus-lg"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>New event</en>
+							<de>Neue Veranstaltung</de>
+						</label>
+						<!-- A transient object, copied in by the dialog: an abandoned dialog leaves nothing behind. -->
+						<execute-script function="new(`demo.events:Event`, transient: true)">
+							<with-result>
+								<open-dialog
+									bind-input-to="model"
+									close-on-backdrop="false"
+									dialog-view="tl-ai-demo/events/create-event.view.xml"
+								>
+									<bind
+										channel="selection"
+										to="selectedEvent"
+									/>
+								</open-dialog>
+							</with-result>
+						</execute-script>
+					</generic-command>
+				</commands>
+				<stack gap="default">
+					<text>
+						<label>
+							<en>The sections of the rail on the right count the events and the venues of the demo. Create an event with "New event" or delete one in the section "Events", and its badge follows - as does the rail button in the header of the conversation while the rail is closed, which counts what is new since you last opened the rail. Enter a number to try the rules of a badge: 0 shows no badge, a number above 99 shows "99+". The checkbox marks the section "Marked" with a dot.</en>
+							<de>Die Abschnitte der Leiste rechts zählen die Veranstaltungen und die Veranstaltungsorte der Demo. Legen Sie mit „Neue Veranstaltung“ eine Veranstaltung an oder löschen Sie eine im Abschnitt „Veranstaltungen“, und dessen Badge folgt - wie auch die Leisten-Schaltfläche im Kopf der Unterhaltung, solange die Leiste geschlossen ist; sie zählt, was seit dem letzten Öffnen der Leiste neu ist. Geben Sie eine Zahl ein, um die Regeln eines Badges auszuprobieren: 0 zeigt kein Badge, eine Zahl über 99 zeigt „99+“. Das Kontrollkästchen markiert den Abschnitt „Markiert“ mit einem Punkt.</de>
+						</label>
+					</text>
+					<value-input
+						type="tl.core:Integer"
+						value="trialCount"
+					>
+						<label>
+							<en>Count of the section "Trial"</en>
+							<de>Zahl des Abschnitts „Probe“</de>
+						</label>
+					</value-input>
+					<value-input
+						type="tl.core:Boolean"
+						value="marked"
+					>
+						<label>
+							<en>Mark the section "Marked" with a dot</en>
+							<de>Abschnitt „Markiert“ mit einem Punkt markieren</de>
+						</label>
+					</value-input>
+				</stack>
+			</panel>
+
+			<!-- The panel bounds the conversation's height; its header carries the rail button. -->
+			<panel fill="true">
+				<chat-conversation/>
+			</panel>
+		</stack>
+
+		<chat-rail strip="true">
+			<section name="events"
+				badge="eventCount"
+				icon="css:bi bi-calendar-event"
+				open="true"
+			>
+				<label>
+					<en>Events</en>
+					<de>Veranstaltungen</de>
+				</label>
+				<data-list
+					collapsible="false"
+					count="eventCount"
+					observed-types="demo.events:Event"
+					row-actions="hover"
+					row-channel="event"
+					search="false"
+				>
+					<empty-text>
+						<en>No events yet</en>
+						<de>Noch keine Veranstaltungen</de>
+					</empty-text>
+					<row-commands>
+						<generic-command
+							image="css:bi bi-trash"
+							inputs="event"
+						>
+							<label>
+								<en>Delete event</en>
+								<de>Veranstaltung löschen</de>
+							</label>
+							<confirm>
+								<confirm-label>
+									<en>Delete</en>
+									<de>Löschen</de>
+								</confirm-label>
+								<cancel-label>
+									<en>Cancel</en>
+									<de>Abbrechen</de>
+								</cancel-label>
+								<expr><![CDATA[{
+									"en": "Delete “" + $event.get(`demo.events:Named#name`)
+										+ "” with its sessions, registrations, sponsorships and invoices?",
+									"de": "„" + $event.get(`demo.events:Named#name`)
+										+ "“ mit allen Sessions, Anmeldungen, Sponsorings und Rechnungen löschen?"
+								}.internationalize()]]></expr>
+							</confirm>
+							<with-transaction>
+								<execute-script function="$event.delete()"/>
+							</with-transaction>
+						</generic-command>
+					</row-commands>
+					<lines>
+						<line attribute="name"/>
+					</lines>
+					<rows>all(`demo.events:Event`)</rows>
+				</data-list>
+			</section>
+			<section name="venues"
+				badge="venueCount"
+				badge-role="warning"
+				icon="css:bi bi-geo-alt"
+			>
+				<label>
+					<en>Venues</en>
+					<de>Veranstaltungsorte</de>
+				</label>
+				<data-list
+					collapsible="false"
+					count="venueCount"
+					observed-types="demo.events:Venue"
+					search="false"
+				>
+					<empty-text>
+						<en>No venues yet</en>
+						<de>Noch keine Veranstaltungsorte</de>
+					</empty-text>
+					<lines>
+						<line attribute="name"/>
+					</lines>
+					<rows>all(`demo.events:Venue`)</rows>
+				</data-list>
+			</section>
+			<section name="trial"
+				badge="trialCount"
+				badge-role="error"
+				icon="css:bi bi-123"
+			>
+				<label>
+					<en>Trial</en>
+					<de>Probe</de>
+				</label>
+				<text>
+					<label>
+						<en>Shows the number entered in the panel on the left.</en>
+						<de>Zeigt die im Panel links eingegebene Zahl.</de>
+					</label>
+				</text>
+			</section>
+			<section name="marked"
+				badge="marked"
+				badge-role="success"
+				icon="css:bi bi-bookmark"
+			>
+				<label>
+					<en>Marked</en>
+					<de>Markiert</de>
+				</label>
+				<badge-label>
+					<en>New entries</en>
+					<de>Neue Einträge</de>
+				</badge-label>
+				<text>
+					<label>
+						<en>Shows a dot while the checkbox in the panel on the left is ticked.</en>
+						<de>Zeigt einen Punkt, solange das Kontrollkästchen im Panel links angekreuzt ist.</de>
+					</label>
+				</text>
+			</section>
+			<section name="notes"
+				icon="css:bi bi-journal-text"
+			>
+				<label>
+					<en>Notes</en>
+					<de>Notizen</de>
+				</label>
+				<text>
+					<label>
+						<en>A section without a badge: it adds nothing to the rail button.</en>
+						<de>Ein Abschnitt ohne Badge: Er trägt nichts zur Leisten-Schaltfläche bei.</de>
+					</label>
+				</text>
+			</section>
+		</chat-rail>
+	</chat>
+</view>

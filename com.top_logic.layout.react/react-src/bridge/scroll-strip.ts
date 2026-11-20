@@ -15,6 +15,12 @@ export const EDGE_END: StripEdge = 'end';
  */
 export const PAGE_FRACTION = 0.8;
 
+/**
+ * The width (px) of one line a mouse wheel reports its turn in ({@link WheelEvent.DOM_DELTA_LINE},
+ * e.g. in Firefox), see {@link wheelScrollDelta}.
+ */
+export const WHEEL_LINE_WIDTH = 16;
+
 /** Tolerance (px) against sub-pixel rounding when comparing scroll positions and extents. */
 const EPSILON = 0.5;
 
@@ -102,6 +108,71 @@ export function pageScrollLeft(g: StripGeometry, edge: StripEdge): number {
   return clamp(g, g.scrollLeft + (edge === EDGE_START ? -step : step));
 }
 
+/** What {@link wheelScrollDelta} reads from a wheel event. */
+export type WheelInput = Pick<WheelEvent, 'deltaX' | 'deltaY' | 'deltaMode' | 'ctrlKey'>;
+
+/**
+ * The horizontal scroll distance (px) a wheel event moves a strip with the given geometry, or
+ * `null` if the strip leaves the event to the browser.
+ *
+ * <p>A strip takes every vertically dominated turn of the wheel while its content overflows, even at
+ * an end, so that the area around it does not start to scroll instead. It leaves to the browser: a
+ * turn with Ctrl held (zoom), a horizontally dominated movement (a swipe on a touchpad, a tilted
+ * wheel; the browser scrolls the strip itself), and any turn while the content fits.</p>
+ *
+ * <p>The distance follows the turn directly: lines count {@link WHEEL_LINE_WIDTH} each, pages the
+ * visible width of the strip. The distance is not limited to the scroll range of the strip.</p>
+ */
+export function wheelScrollDelta(event: WheelInput, g: StripGeometry): number | null {
+  if (event.ctrlKey || Math.abs(event.deltaX) >= Math.abs(event.deltaY)) {
+    return null;
+  }
+  // Whatever the scroll buttons beside the strip take: only content to scroll counts.
+  if (!stripOverflow({ ...g, spare: 0 }).overflows) {
+    return null;
+  }
+  switch (event.deltaMode) {
+    case WheelEvent.DOM_DELTA_LINE:
+      return event.deltaY * WHEEL_LINE_WIDTH;
+    case WheelEvent.DOM_DELTA_PAGE:
+      return event.deltaY * g.clientWidth;
+    default:
+      return event.deltaY;
+  }
+}
+
+/**
+ * Lets the mouse wheel scroll the given horizontally scrolling element sideways, see
+ * {@link wheelScrollDelta}.
+ *
+ * <p>The listener is registered non-passive, since it cancels each event it handles: neither the
+ * page nor a scrolling ancestor moves with the element. A React `onWheel` handler is passive
+ * and cannot do that. The offset is set directly, without an animation of its own.</p>
+ *
+ * @param element The horizontally scrolling element, `null` while there is none.
+ */
+export function useWheelScroll(element: HTMLElement | null): void {
+  useEffect(() => {
+    if (!element) {
+      return;
+    }
+    const onWheel = (event: WheelEvent) => {
+      const g = { scrollLeft: element.scrollLeft, clientWidth: element.clientWidth, scrollWidth: element.scrollWidth };
+      const delta = wheelScrollDelta(event, g);
+      if (delta === null) {
+        return;
+      }
+      event.preventDefault();
+      const scrollLeft = clamp(g, g.scrollLeft + delta);
+      if (Math.abs(scrollLeft - g.scrollLeft) > EPSILON) {
+        element.scrollLeft = scrollLeft;
+      }
+    };
+    element.addEventListener('wheel', onWheel, { passive: false });
+    return () => element.removeEventListener('wheel', onWheel);
+  }, [element]);
+}
+
 /** The width the elements beside the given strip element take: its scroll buttons, see {@link StripGeometry.spare}. */
 function spareOf(list: HTMLElement): number {
   let spare = 0;
@@ -186,12 +257,16 @@ const NO_OVERFLOW: StripOverflow = { overflows: false, canScrollStart: false, ca
  *
  * <p>Revealing sets the scroll offset of the strip itself, never through
  * {@link Element.scrollIntoView}, which would scroll every scrolling ancestor as well.</p>
+ *
+ * <p>The mouse wheel scrolls the strip sideways while its content overflows
+ * ({@link useWheelScroll}).</p>
  */
 export function useScrollStrip({ revealKey, target }: ScrollStripOptions = {}): ScrollStrip {
   const [list, setList] = useState<HTMLElement | null>(null);
   const [overflow, setOverflow] = useState<StripOverflow>(NO_OVERFLOW);
   const targetRef = useRef(target);
   targetRef.current = target;
+  useWheelScroll(list);
 
   const update = useCallback((element: HTMLElement) => {
     const next = stripOverflow(geometryOf(element));

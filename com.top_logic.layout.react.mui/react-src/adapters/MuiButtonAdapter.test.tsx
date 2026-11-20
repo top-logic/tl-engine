@@ -412,6 +412,16 @@ describe('TLButton with a badge as MUI Button', () => {
     expect(button.querySelector('.tl-icon-badge__count .MuiBadge-root')!.getAttribute('aria-hidden')).toBe('true');
   });
 
+  it('puts the badge over the corner of the icon of a toggle showing its icon alone and into its name', () => {
+    render(<MuiButtonAdapter label="Group" image={IMAGE_EDIT} display="icon-only" checked
+      badge={{ content: '2', label: 'Level' }} onClick={() => {}} />);
+
+    const button = screen.getByRole('button', { name: 'Group, Level: 2' });
+    expect(button.getAttribute('aria-pressed')).toBe('true');
+    expect(button.querySelector('.tl-icon-badge__count .MuiBadge-root')!.getAttribute('aria-hidden')).toBe('true');
+    expect(button.querySelector('.MuiBadge-badge')!.textContent).toBe('2');
+  });
+
   it('combines the label of a counting badge with its count in the name of an icon button', () => {
     mountButton({ label: 'Inbox', image: IMAGE_EDIT, displayMode: 'icon-only', badge: { content: '1', label: 'Open tickets' } as ButtonStateJson['badge'] });
 

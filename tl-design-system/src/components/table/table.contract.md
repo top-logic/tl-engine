@@ -158,6 +158,7 @@ Es ist nicht modal und wirkt sofort; was die Seiten zeigen:
 | `tl-menu__item`, `tl-menu__item--check` | Streifen und Spaltenlinien: Zeilen des Menüs mit Rolle `menuitemcheckbox` und `aria-checked`, die ganze Zeile klickt; der Schalter steht rechts als gezeichnetes `tl-checkbox` mit `tl-checkbox--switch` (`<span aria-hidden="true">`) ohne Eingabe (`choice.contract.md`) — dasselbe Bild wie der Schalter mit Eingabe |
 | `tl-divider` | Trennlinien in `--tl-border-separator`: zwischen „Spalten …“ und „Dichte“ und vor „Zurücksetzen“ |
 | `tl-reorder-list__host` | die Wurzel der Spaltenwahl auf der zweiten Seite (`reorder-list.contract.md`): Suche und Liste in einer Flex-Spalte, ohne Fensterabstand und Fensterhöhe; die Liste ist der einzige Rollbereich |
+| `tl-menu__icon` | „Spalten …“ und „Zurücksetzen“ tragen je ein Icon vor der Beschriftung (`menu.contract.md`), damit die Befehle auch bei weiteren Einträgen auffindbar bleiben (Review !2226); Dichte und Schalter haben keins, sie haben ihre eigene Form |
 
 Reihenfolge der Seite „Ansicht“: Titel, „Spalten …“, Dichte, Streifen, Spaltenlinien, „Zurücksetzen“. Die Spaltenwahl steht
 zuerst und trägt den Startfokus, denn sie ist, was man an einer Tabelle am häufigsten einstellt (Review !2226); ohne sie
@@ -283,7 +284,7 @@ Klassen:
 | `tl-table__header-cell` | jede Kopfzelle |
 | `tl-table__sort` | der Sortierknopf, ein `button` |
 | `tl-table__label` | die Überschrift, Großbuchstaben in `--tl-text-secondary`; endet mit Ellipse. Das TSX setzt `tl-type-overline` daran (Sperrung `0.04em`) |
-| `tl-table__mark` | Sortierpfeil, Gruppierungsmarke: `tl-icon-sm`, `aria-hidden` |
+| `tl-table__mark` | Sortierpfeil, Gruppierungsmarke: `tl-icon-sm`, `aria-hidden`; die Gruppierungsmarke trägt bei einer Gruppierung nach mehreren Spalten hinter dem Symbol die Ebene als `tl-badge` (Part Badge, `aria-hidden`), Symbol und Ebene tragen zusammen ihren Tooltip |
 | `tl-table__filter` | der Trichter |
 | `tl-table__columns` | die Spaltenwahl (Zahnrad) |
 | `tl-table__resize` | Griff der Spaltenbreite |

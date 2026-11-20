@@ -10,6 +10,7 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
 import com.top_logic.basic.json.JSON;
 
 /**
@@ -51,6 +52,29 @@ public class TestChatPreferenceStorage extends TestCase {
 			ChatPreferencesStore.storageKey("grouped"), ChatPreferencesStore.storageKey("  grouped "));
 	}
 
+	/** The badge counts seen are kept per section, through the JSON round trip. */
+	public void testSeenCountsPerSection() throws Exception {
+		Map<String, Object> layout = layout(true);
+		Map<String, Object> seen = new LinkedHashMap<>();
+		seen.put("progress", Integer.valueOf(3));
+		seen.put("sources", Integer.valueOf(100));
+		layout.put("badgeSeen", seen);
+
+		ChatPreferencesDto read =
+			ChatPreferencesStore.read((Map<?, ?>) JSON.fromString(JSON.toString(layout)));
+		assertEquals(Map.of("progress", Integer.valueOf(3), "sources", Integer.valueOf(100)), read.getBadgeSeen());
+	}
+
+	/** A seen count that is not a map per section is nothing seen. */
+	public void testSeenCountOfAnotherFormIsNothingSeen() {
+		Map<String, Object> layout = layout(true);
+		layout.put("badgeSeen", Integer.valueOf(13));
+
+		ChatPreferencesDto read = ChatPreferencesStore.read(layout);
+		assertTrue(read.getBadgeSeen().isEmpty());
+		assertEquals(Boolean.TRUE, read.getRailOpen());
+	}
+
 	private static Map<?, ?> layoutOf(Map<?, ?> byChat, String chatId) {
 		return (Map<?, ?>) byChat.get(ChatPreferencesStore.storageKey(chatId));
 	}
@@ -61,7 +85,7 @@ public class TestChatPreferenceStorage extends TestCase {
 		Map<String, Object> layout = new LinkedHashMap<>();
 		layout.put("railOpen", Boolean.valueOf(railOpen));
 		layout.put("paneWidth", Integer.valueOf(0));
-		layout.put("badgeSeen", Integer.valueOf(0));
+		layout.put("badgeSeen", new LinkedHashMap<>());
 		layout.put("sections", sections);
 		return layout;
 	}

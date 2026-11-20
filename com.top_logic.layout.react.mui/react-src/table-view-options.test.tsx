@@ -264,6 +264,17 @@ describe('the column selection and the reset', () => {
     expect(screen.getByRole('button', { name: RESET })).toBeTruthy();
   });
 
+  it('gives the column selection and the reset an icon each, hidden from assistive technology', async () => {
+    mountTable({ columnSelect: true });
+    await settle();
+    await openView();
+    for (const name of [CHOOSE_COLUMNS, RESET]) {
+      const icon = screen.getByRole('button', { name }).querySelector('.tl-menu__icon');
+      expect(icon).not.toBeNull();
+      expect(icon!.getAttribute('aria-hidden')).toBe('true');
+    }
+  });
+
   it('puts the column selection first, before the density, and starts the focus there', async () => {
     mountTable({ columnSelect: true });
     await settle();

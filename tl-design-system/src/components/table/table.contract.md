@@ -158,6 +158,7 @@ der Fokus auf dem geltenden Segment der Dichte.
 | `tl-segmented tl-table-view-options__segments` | die drei Dichten als Radiogruppe (`choice.contract.md`), von den Rändern um `--tl-space-control-x` eingerückt wie der Text der Einträge |
 | `tl-table-view-options__switch` | Schalter (`tl-choice` mit `tl-checkbox--switch`) für Streifen und Spaltenlinien, mit derselben Einrückung |
 | `tl-divider` | Trennlinien in `--tl-border-separator`: zwischen „Spalten …“ und „Dichte“ und vor „Zurücksetzen“ |
+| `tl-menu__icon` | „Spalten …“ und „Zurücksetzen“ tragen je ein Icon vor der Beschriftung (`menu.contract.md`), damit die Befehle auch bei weiteren Einträgen auffindbar bleiben (Review !2226); Dichte und Schalter haben keins, sie haben ihre eigene Form |
 
 Die Ansichtsoptionen (Dichte, Streifen, Spaltenlinien) gibt es nur, wo sie bleiben: Der Server schickt `viewOptions`
 nur für eine Tabelle, die ihre Ansicht speichert (`TableView.isPersonalized()`). Ohne sie zeigt das Popover nur

@@ -1,4 +1,4 @@
-import { React, useI18N, usePart, pressClosedSurface, ICON_COLUMNS } from 'tl-react-bridge';
+import { React, useI18N, usePart, pressClosedSurface, ThemeIcon, ICON_COLUMNS, ICON_CHOOSE_COLUMNS, ICON_RESET } from 'tl-react-bridge';
 import { PickerPopover } from '../picker/PickerPopover';
 import { radioArrowTarget } from '../radioGroupKey';
 
@@ -105,6 +105,7 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
       <div className="tl-table-view-options__title tl-type-label-strong">{i18n['js.table.view']}</div>
       {columnSelect && (
         <button type="button" className="tl-menu__item tl-type-body" onClick={onColumns}>
+          <ThemeIcon encoded={ICON_CHOOSE_COLUMNS} className="tl-menu__icon tl-icon-sm" />
           <span className="tl-menu__label">{i18n['js.table.viewChooseColumns']}</span>
         </button>
       )}
@@ -154,6 +155,7 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
       )}
       <hr className="tl-divider" />
       <button type="button" className="tl-menu__item tl-type-body" onClick={onReset}>
+        <ThemeIcon encoded={ICON_RESET} className="tl-menu__icon tl-icon-sm" />
         <span className="tl-menu__label">{i18n['js.table.viewReset']}</span>
       </button>
     </>

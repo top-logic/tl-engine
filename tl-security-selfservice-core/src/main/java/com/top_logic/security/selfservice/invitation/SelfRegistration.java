@@ -25,6 +25,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.security.captcha.CaptchaService;
 import com.top_logic.security.selfservice.I18NConstants;
+import com.top_logic.security.selfservice.model.Invitation;
 import com.top_logic.security.selfservice.model.Registration;
 import com.top_logic.security.selfservice.model.TlSecuritySelfserviceFactory;
 import com.top_logic.util.TLContext;
@@ -350,11 +351,14 @@ public class SelfRegistration {
 	 *
 	 * <p>
 	 * The code is sent through {@link Config#getRegistrationMail()}, in the
-	 * {@link InvitationModule#defaultLanguage() default language} of the application. If an account
-	 * with the address exists already, {@link Config#getRegistrationExistsMail()} is sent instead,
-	 * in the {@link InvitationModule#accountLanguage(Person) language of the account}, and the returned
-	 * code is mailed to nobody: the caller behaves the same in both cases, so it does not reveal
-	 * which addresses have an account. No record is written.
+	 * {@link InvitationModule#defaultLanguage() default language} of the application. If the
+	 * address is {@link InvitationModule#existingAccount(String) taken} by an account, as name or as
+	 * e-mail address, {@link Config#getRegistrationExistsMail()} is sent instead, in the
+	 * {@link InvitationModule#accountLanguage(Person) language of the account}. The same mail is sent
+	 * if there is an {@link InvitationModule#findOpenInvitationByEmail(String) open invitation} for
+	 * the address, in the {@link InvitationModule#invitationLanguage(Invitation) language of the
+	 * invitation}. In these cases the returned code is mailed to nobody: the caller behaves the same
+	 * in all cases, so it does not reveal which addresses have an account. No record is written.
 	 * </p>
 	 *
 	 * <p>
@@ -392,11 +396,11 @@ public class SelfRegistration {
 		VerificationCode.throttleRequest(THROTTLE_ADDRESS_PREFIX + address.toLowerCase(Locale.ROOT));
 
 		VerificationCode code = new VerificationCode();
-		Person existing = Person.byName(_module.kb(), address);
+		Locale existsLanguage = existsLanguage(address);
 		Object sent;
-		if (existing != null) {
+		if (existsLanguage != null) {
 			MailText text = _config.getRegistrationExistsText();
-			sent = InvitationModule.inLanguage(InvitationModule.accountLanguage(existing),
+			sent = InvitationModule.inLanguage(existsLanguage,
 				() -> _registrationExistsMail.execute(address, InvitationModule.applicationTitle(),
 					text.getSubject(), text.getBody()));
 		} else {
@@ -409,6 +413,25 @@ public class SelfRegistration {
 			throw new TopLogicException(I18NConstants.ERROR_VERIFICATION_CODE_NOT_SENT);
 		}
 		return code;
+	}
+
+	/**
+	 * The language of the mail telling that the given address cannot be registered.
+	 *
+	 * @return The language of the account that has {@link InvitationModule#existingAccount(String)
+	 *         taken} the address, otherwise the language of an open invitation for the address,
+	 *         <code>null</code> if the address can be registered.
+	 */
+	private static Locale existsLanguage(String address) {
+		Person existing = InvitationModule.existingAccount(address);
+		if (existing != null) {
+			return InvitationModule.accountLanguage(existing);
+		}
+		Invitation invitation = InvitationModule.findOpenInvitationByEmail(address);
+		if (invitation != null) {
+			return InvitationModule.invitationLanguage(invitation);
+		}
+		return null;
 	}
 
 	/**
@@ -440,8 +463,8 @@ public class SelfRegistration {
 	 * @return The created account.
 	 *
 	 * @throws TopLogicException
-	 *         If registration is not {@link #isEnabled() enabled}, the address is invalid or has an
-	 *         account, the password is missing or violates the password rules, or the callback
+	 *         If registration is not {@link #isEnabled() enabled}, the address is invalid or
+	 *         {@link InvitationModule#existingAccount(String) taken} by an account, the password is missing or violates the password rules, or the callback
 	 *         refuses the account.
 	 */
 	public Person register(String email, String surname, String givenName, char[] password) {

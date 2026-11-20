@@ -1,7 +1,7 @@
 /* Umsortierbare Liste — docs/skalen.md „Gleiches wird zusammengelegt“ (W2, W11), 3b §8.
    ul.tl-reorder-list > li.tl-reorder-list__item: vorn der Griff (tl-reorder-list__handle, ein
    tl-button--icon --sm --ghost: Ziehen mit der Maus, Alt + Pfeil mit der Tastatur), dahinter die
-   Beschriftung und rechts Schloss und Auge (tl-reorder-list__actions); Griff und Knöpfe erscheinen beim Zeigen
+   Beschriftung und rechts Schloss und Minus (tl-reorder-list__actions); Griff und Knöpfe erscheinen beim Zeigen
    oder Fokus (Spec 2026-10-12, #29825) über tl-reveal-on-hover (layout.css, Spec 5d §6). Die Ziehen-Optik zeichnet
    drag.css, den Ring base.css — am Griff innen, weil die Liste scrollt. Höchstens size-popover-max
    hoch; dann scrollt die Liste in sich. Steht die Suche davor, füllen beide ihren Behälter: die
@@ -67,7 +67,7 @@
 }
 
 /* Die letzte sichtbare Spalte lässt sich nicht ausblenden, ein Klick auf ihre Zeile bewirkt nichts: kein Zeiger, keine
-   Hover-Fläche. Die Zeile trägt den Grund als Tooltip, das Auge darin ist gesperrt. Steht nach der Hover-Regel, beide in
+   Hover-Fläche. Die Zeile trägt den Grund als Tooltip, das Minus darin ist gesperrt. Steht nach der Hover-Regel, beide in
    :where gleich schwach. */
 .tl-reorder-list__item[data-tl-state~="last"] {
   cursor: default;
@@ -99,7 +99,7 @@
   white-space: nowrap;
 }
 
-/* Rechts am Ende der Zeile: Schloss (fixieren) und Auge (aus- und einblenden). Ihre Plätze sind immer reserviert,
+/* Rechts am Ende der Zeile: Schloss (fixieren) und Minus bzw. Plus (aus- und einblenden). Ihre Plätze sind immer reserviert,
    damit die Zeile beim Zeigen nicht springt. */
 .tl-reorder-list__actions {
   display: flex;
@@ -109,7 +109,7 @@
   margin-inline-start: auto;
 }
 
-/* Gesetzte Zustände bleiben zu sehen, auch ohne Zeigen (tl-reveal-on-hover verbirgt sie sonst): das Auge einer
+/* Gesetzte Zustände bleiben zu sehen, auch ohne Zeigen (tl-reveal-on-hover verbirgt sie sonst): das Plus einer
    ausgeblendeten, das Schloss einer fixierten Spalte. */
 .tl-reorder-list__item[data-tl-state~="off"] .tl-reorder-list__eye,
 .tl-reorder-list__item[data-tl-state~="locked"] .tl-reorder-list__lock {
@@ -117,8 +117,8 @@
 }
 
 /* Ausgeblendet: die Spalte behält ihren Platz, ihr Name tritt zurück. Der Eintrag bleibt bedienbar — die
-   WCAG-Ausnahme für text-disabled gilt nur für inaktive Elemente, darum text-secondary; das zugeklappte Auge trägt
-   den Zustand mit. */
+   WCAG-Ausnahme für text-disabled gilt nur für inaktive Elemente, darum text-secondary; das Plus trägt den
+   Zustand mit. */
 .tl-reorder-list__item[data-tl-state~="off"] > .tl-reorder-list__label {
   color: var(--tl-text-secondary);
 }

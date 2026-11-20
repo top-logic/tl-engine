@@ -597,6 +597,15 @@ describe('the page "View" behind the row "View" as a menu', () => {
 });
 
 describe('the reset on the page "View" of a table without column selection', () => {
+  it('carries an icon, hidden from assistive technology', async () => {
+    mountTable({ columnSelect: false });
+    await settle();
+    await openPopover();
+    const icon = screen.getByRole('menuitem', { name: RESET }).querySelector('.tl-menu__icon')!;
+    expect(icon.classList.contains('fa-arrow-rotate-left')).toBe(true);
+    expect(icon.getAttribute('aria-hidden')).toBe('true');
+  });
+
   it('resets the columns and closes, the focus back on the gear', async () => {
     const sent = mountTable({ columnSelect: false }, { density: 'compact', striped: true });
     await settle();
@@ -690,6 +699,15 @@ describe('the page "Columns", the first page of the popover', () => {
     expect(screen.queryByRole('menuitem', { name: RESET })).toBeNull();
   });
 
+  it('gives the reset of the columns at the foot an icon, hidden from assistive technology', async () => {
+    mountColumns();
+    await settle();
+    await openPopover();
+    const icon = within(page()).getByRole('button', { name: RESET }).querySelector('.tl-menu__icon')!;
+    expect(icon.classList.contains('fa-arrow-rotate-left')).toBe(true);
+    expect(icon.getAttribute('aria-hidden')).toBe('true');
+  });
+
   it('offers no reset where the table keeps no state: the row "View" follows the divider', async () => {
     mountColumns({ viewOptions: false });
     await settle();
@@ -713,7 +731,7 @@ describe('the page "Columns", the first page of the popover', () => {
     expect(root().getAttribute('data-tl-density')).toBe('compact');
   });
 
-  it('draws the row "View" as a way to the next page: a plain button, the label and a hidden chevron at the end', async () => {
+  it('draws the row "View" as a way to the next page: a plain button, its icon, the label and a hidden chevron at the end', async () => {
     mountColumns();
     await settle();
     await openPopover();
@@ -723,8 +741,13 @@ describe('the page "Columns", the first page of the popover', () => {
     expect(row.hasAttribute('role')).toBe(false);
     expect(row.classList.contains('tl-menu__item')).toBe(true);
     expect(row.classList.contains('tl-menu__item--nav')).toBe(true);
-    // The label and the chevron, in this order; no value.
-    const [label, chevron] = Array.from(row.children);
+    // The icon, the label and the chevron, in this order; no value.
+    const [icon, label, chevron] = Array.from(row.children);
+    expect(icon.tagName).toBe('I');
+    expect(icon.classList.contains('tl-menu__icon')).toBe(true);
+    expect(icon.classList.contains('tl-icon-sm')).toBe(true);
+    expect(icon.classList.contains('fa-sliders')).toBe(true);
+    expect(icon.getAttribute('aria-hidden')).toBe('true');
     expect(label.className).toContain('tl-menu__label');
     expect(label.textContent).toBe(VIEW);
     expect(chevron.tagName).toBe('I');
@@ -732,7 +755,7 @@ describe('the page "Columns", the first page of the popover', () => {
     expect(chevron.classList.contains('tl-icon-sm')).toBe(true);
     expect(chevron.classList.contains('fa-chevron-right')).toBe(true);
     expect(chevron.getAttribute('aria-hidden')).toBe('true');
-    expect(row.children.length).toBe(2);
+    expect(row.children.length).toBe(3);
     expect(row.querySelector('.tl-menu__value')).toBeNull();
     expect(row.textContent).not.toContain('›');
   });
@@ -1209,7 +1232,7 @@ describe('the column menu by keyboard', () => {
     await settle();
     expect(screen.queryByRole('menu')).toBeNull();
     // Grouping by another column: the pinned heading would now offer "ungroup".
-    patchState({ grouping: 'name' });
+    patchState({ grouping: ['name'] });
     await settle();
     expect(screen.queryByRole('menu')).toBeNull();
   });

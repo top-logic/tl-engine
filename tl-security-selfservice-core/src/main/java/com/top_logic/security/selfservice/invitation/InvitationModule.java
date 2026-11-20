@@ -7,6 +7,7 @@
 package com.top_logic.security.selfservice.invitation;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -43,6 +44,7 @@ import com.top_logic.basic.module.category.AuthenticationCategory;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObject;
+import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -500,6 +502,29 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	}
 
 	/**
+	 * An {@link #isOpen(Invitation) open} {@link Invitation} for the given e-mail address.
+	 *
+	 * @param email
+	 *        The e-mail address, compared ignoring case and leading and trailing whitespace; may
+	 *        be <code>null</code>.
+	 * @return An open invitation for the address, or <code>null</code> if there is none.
+	 */
+	public static Invitation findOpenInvitationByEmail(String email) {
+		if (email == null || email.isBlank()) {
+			return null;
+		}
+		String expected = email.strip();
+		for (Invitation invitation : MetaElementUtil
+			.getAllInstancesOf(TlSecuritySelfserviceFactory.getInvitationType(), Invitation.class)) {
+			String invited = invitation.getEmail();
+			if (invited != null && expected.equalsIgnoreCase(invited.strip()) && isOpen(invitation)) {
+				return invitation;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Checks that the given {@link Invitation} can be accepted.
 	 *
 	 * @throws TopLogicException
@@ -572,8 +597,9 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	 * @return The created account.
 	 *
 	 * @throws TopLogicException
-	 *         If the invitation is not open, the password is missing or violates the password
-	 *         rules, the account cannot be created, or the callback refuses it.
+	 *         If the invitation is not open, its address has been {@link #existingAccount(String)
+	 *         taken} by an account in the meantime, the password is missing or violates the
+	 *         password rules, the account cannot be created, or the callback refuses it.
 	 */
 	public Person acceptInvitation(Invitation invitation, String surname, String givenName, char[] password) {
 		checkOpen(invitation);
@@ -628,11 +654,15 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	 * @return The created account.
 	 *
 	 * @throws TopLogicException
-	 *         If the password is missing or violates the password rules, or the account cannot be
-	 *         created, e.g. because an account with the user name exists.
+	 *         With {@link I18NConstants#ERROR_ACCOUNT_EXISTS__EMAIL} if the address is
+	 *         {@link #existingAccount(String) taken} by an account, or if the password is missing
+	 *         or violates the password rules, or the account cannot be created otherwise.
 	 */
 	public Person createAccount(KnowledgeBase kb, String email, String surname, String givenName,
 			char[] password, MfaRequirement mfaRequirement) {
+		if (existingAccount(email) != null) {
+			throw new TopLogicException(I18NConstants.ERROR_ACCOUNT_EXISTS__EMAIL.fill(email));
+		}
 		AuthenticationDevice device = authenticationDevice();
 		Person account = Person.create(kb, email, device);
 		if (mfaRequirement != null) {
@@ -650,6 +680,30 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 			setPassword(device, account, password);
 		}
 		return account;
+	}
+
+	/**
+	 * The account that has taken the given address.
+	 *
+	 * <p>
+	 * An address is taken by an account that has it as {@link Person#byName(String) name}, compared
+	 * ignoring case, or as {@link Person#allByEMail(String) e-mail address}, compared ignoring case
+	 * and leading and trailing whitespace. The latter is the case e.g. for an account synchronized
+	 * from a directory or provisioned by an external login, whose name is not its e-mail address.
+	 * </p>
+	 *
+	 * @param address
+	 *        The e-mail address to check, may be <code>null</code>.
+	 * @return The account with the address as name, otherwise one of the accounts with the address
+	 *         as e-mail address, <code>null</code> if the address is not taken.
+	 */
+	public static Person existingAccount(String address) {
+		Person byName = Person.byName(address);
+		if (byName != null) {
+			return byName;
+		}
+		List<Person> byEMail = Person.allByEMail(address);
+		return byEMail.isEmpty() ? null : byEMail.get(0);
 	}
 
 	private static void setPassword(AuthenticationDevice device, Person account, char[] password) {

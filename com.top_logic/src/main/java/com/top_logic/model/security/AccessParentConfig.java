@@ -60,4 +60,20 @@ public interface AccessParentConfig extends ConfigPart {
 			&& !(config.getDefinition() instanceof SelfAccessParent.Config);
 	}
 
+	/**
+	 * Whether the given setting delegates only some operations, see
+	 * {@link OperationRestriction#getOperations()}.
+	 *
+	 * <p>
+	 * The type of a restricted setting decides the other operations by grants of its own.
+	 * </p>
+	 *
+	 * @param config
+	 *        The setting, <code>null</code> for none.
+	 */
+	static boolean isRestricted(AccessParentConfig config) {
+		return config != null && config.getDefinition() instanceof OperationRestriction restriction
+			&& !restriction.getOperations().isEmpty();
+	}
+
 }

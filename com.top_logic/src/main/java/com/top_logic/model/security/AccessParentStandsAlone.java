@@ -18,6 +18,12 @@ import com.top_logic.basic.util.ResKey;
  * object has no grants and no marks, so a {@link AccessParentConfig#delegates(AccessParentConfig)
  * delegating} setting is reported as the problem whenever one of the others is set.
  * </p>
+ * <p>
+ * A setting {@link AccessParentConfig#isRestricted(AccessParentConfig) restricted} to some
+ * operations leaves the other operations to the grants of the type, so only the marks are reported
+ * beside it. Whether a grant names a delegated operation is checked by the
+ * {@link SecurityConfigurationService}, which resolves the operations.
+ * </p>
  * 
  * @see SecurityConfigurationService.TLClassAccessRights#getAccessParent()
  * 
@@ -43,8 +49,13 @@ public class AccessParentStandsAlone extends GenericPropertyConstraint {
 		if (!(self.getValue() instanceof AccessParentConfig config) || !AccessParentConfig.delegates(config)) {
 			return;
 		}
+		boolean restricted = AccessParentConfig.isRestricted(config);
 		for (int n = 1, cnt = models.length; n < cnt; n++) {
 			PropertyModel<?> other = models[n];
+			if (restricted && other.getValue() instanceof Collection<?>) {
+				// The grants of the operations not delegated.
+				continue;
+			}
 			if (isSet(other.getValue())) {
 				self.setProblemDescription(
 					I18NConstants.ACCESS_PARENT_EXCLUDES_OWN_DEFINITION__PROPERTY.fill(label(other)));

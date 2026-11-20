@@ -147,6 +147,24 @@ public class TestAccessParentConfig extends BasicTestCase {
 			checker.getFailures().isEmpty());
 	}
 
+	public void testRestrictedParentWithGrantsIsAccepted() throws Exception {
+		TLClassAccessRights entry = read("<class name='" + LINKED + "'><access-parent>" + TARGET_PARENT
+			+ " operations='Read'/></access-parent><grant operation='Write' roles='TestSecurityCoverage.Reader'/>"
+			+ "</class>");
+		ConstraintChecker checker = new ConstraintChecker();
+		checker.check(entry);
+		assertTrue("A type delegating some operations grants the others: " + checker.getFailures(),
+			checker.getFailures().isEmpty());
+	}
+
+	public void testRestrictedParentWithMarkIsRejected() throws Exception {
+		TLClassAccessRights entry = read("<class name='" + LINKED + "' internal='true'><access-parent>"
+			+ TARGET_PARENT + " operations='Read'/></access-parent></class>");
+		ConstraintChecker checker = new ConstraintChecker();
+		checker.check(entry);
+		assertFalse("A mark beside a restricted access parent must be rejected.", checker.getFailures().isEmpty());
+	}
+
 	public void testOperationsRestrictRelation() throws Exception {
 		BufferingProtocol log = new BufferingProtocol();
 		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent>"
@@ -243,6 +261,32 @@ public class TestAccessParentConfig extends BasicTestCase {
 		assertError(log, "neither grants nor marks");
 	}
 
+	public void testOwnGrantOfSpecializationForDelegatedOperationIsError() throws Exception {
+		String entry = "<class name='TestAccessParentOperations:Entry'><access-parent>"
+			+ "<target reference='TestAccessParentOperations:Entry#catalog' operations='Read'/>"
+			+ "</access-parent></class>";
+
+		BufferingProtocol log = new BufferingProtocol();
+		newService(log, entry, "<class name='TestAccessParentOperations:EntrySub'><grant operation='Read'/></class>");
+		assertError(log, "TestAccessParentOperations:EntrySub delegates the operation Read");
+
+		BufferingProtocol logOwn = new BufferingProtocol();
+		newService(logOwn, entry, "<class name='TestAccessParentOperations:EntrySub'><grant operation='Write'/></class>");
+		assertTrue("A grant of an operation not delegated is the own definition of the specialization: "
+			+ logOwn.getErrors(), logOwn.getErrors().isEmpty());
+	}
+
+	public void testInheritedGrantForDelegatedOperationIsNoError() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		newService(log,
+			"<class name='TestAccessParentOperations:EntryBase'><grant inherit='true' operation='Read'/></class>",
+			"<class name='TestAccessParentOperations:Entry'><access-parent>"
+				+ "<target reference='TestAccessParentOperations:Entry#catalog' operations='Read'/>"
+				+ "</access-parent></class>");
+		assertTrue("A grant inherited from a generalization is dropped silently: " + log.getErrors(),
+			log.getErrors().isEmpty());
+	}
+
 	public void testSelfHasNoOperations() {
 		assertParseError("<class name='" + LINKED + "'><access-parent><self operations='Read'/></access-parent></class>");
 	}
@@ -252,13 +296,21 @@ public class TestAccessParentConfig extends BasicTestCase {
 	 * access parent it resolves for {@link #LINKED}.
 	 */
 	private static AccessParentFunction linkedParent(BufferingProtocol log, String classXml) throws Exception {
+		return newService(log, classXml).getAccessParent((TLClass) TLModelUtil.findType(LINKED));
+	}
+
+	/**
+	 * Instantiates a {@link SecurityConfigurationService} with the given entries alone.
+	 */
+	private static SecurityConfigurationService newService(BufferingProtocol log, String... classXmls)
+			throws Exception {
 		SecurityConfigurationService.Config config =
 			TypedConfiguration.newConfigItem(SecurityConfigurationService.Config.class);
-		TLClassAccessRights entry = read(classXml);
-		config.getSecurityConfig().put(entry.getName(), entry);
-		SecurityConfigurationService service =
-			new SecurityConfigurationService(new DefaultInstantiationContext(log), config);
-		return service.getAccessParent((TLClass) TLModelUtil.findType(LINKED));
+		for (String classXml : classXmls) {
+			TLClassAccessRights entry = read(classXml);
+			config.getSecurityConfig().put(entry.getName(), entry);
+		}
+		return new SecurityConfigurationService(new DefaultInstantiationContext(log), config);
 	}
 
 	private static void assertError(BufferingProtocol log, String expectedMessagePart) {

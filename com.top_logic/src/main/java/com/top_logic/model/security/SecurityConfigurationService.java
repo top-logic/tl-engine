@@ -530,6 +530,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			markOrigin(type, entry, Mark.INTERNAL);
 		}
 		for (TLClass type : types) {
+			inheritAccessParent(type, entry(type), explicitParents);
+		}
+		checkInheritedRestriction(context, classRules, explicitParents);
+		for (TLClass type : types) {
 			computeClassRights(type, entry(type), classRules);
 		}
 		for (TLClass type : types) {
@@ -542,9 +546,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			applyImplications(entry(type));
 		}
 		applySingletonImplications();
-		for (TLClass type : types) {
-			inheritAccessParent(type, entry(type), explicitParents);
-		}
 		_started = true;
 	}
 
@@ -614,11 +615,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		mergeOperations(type, entry, Collections.emptyMap());
 		markOrigin(type, entry, Mark.WITHOUT_SECURITY);
 		markOrigin(type, entry, Mark.INTERNAL);
+		inheritAccessParent(type, entry, Collections.emptyMap());
 		computeClassRights(type, entry, Collections.emptyMap());
 		computePartRights(type, entry, message -> Logger.error(message, SecurityConfigurationService.class));
 		computeDiscoverRoles(type, entry);
 		applyImplications(entry);
-		inheritAccessParent(type, entry, Collections.emptyMap());
 		for (TLClass generalization : type.getGeneralizations()) {
 			entry._containerTypes.addAll(entry(generalization)._containerTypes);
 		}
@@ -928,6 +929,38 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		return false;
 	}
 
+	/**
+	 * Reports a grant of a type for an operation that the access parent it inherits from a
+	 * generalization decides.
+	 *
+	 * <p>
+	 * A type with an access parent of its own is checked when its definition is read, see
+	 * {@link #checkOwnDefinition(InstantiationContext, TLClassAccessRights, AccessParentFunction)}.
+	 * A grant inherited from a generalization is no definition of the type and is dropped silently,
+	 * see {@link #computeClassRights(TLClass, TypeEntry, Map)}.
+	 * </p>
+	 */
+	private void checkInheritedRestriction(InstantiationContext context, Map<TLClass, List<ResolvedRule>> classRules,
+			Map<TLClass, AccessParentFunction> explicitParents) {
+		for (Map.Entry<TLClass, List<ResolvedRule>> rules : classRules.entrySet()) {
+			TLClass type = rules.getKey();
+			if (explicitParents.containsKey(type)) {
+				continue;
+			}
+			AccessParentFunction parent = entry(type)._accessParent;
+			if (parent == null || parent.getOperations() == null) {
+				continue;
+			}
+			for (ResolvedRule rule : rules.getValue()) {
+				if (parent.delegates(rule.operation())) {
+					context.error("The type " + TLModelUtil.qualifiedName(type) + " delegates the operation "
+						+ rule.operation().getID()
+						+ " to the access parent it inherits and therefore must neither grant nor revoke it.");
+				}
+			}
+		}
+	}
+
 	private void handleTLModule(InstantiationContext context, TLObject part, TLModuleAccessRights config) {
 		if (!(part instanceof TLModule module)) {
 			context.error("The configured part " + part + " is not a module.");
@@ -1146,9 +1179,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (function == null) {
 			return null;
 		}
-		if (config.getDefinition() instanceof OperationRestriction restriction
-			&& !restriction.getOperations().isEmpty()) {
-			Set<BoundCommandGroup> operations = resolveDelegatedOperations(context, type, restriction);
+		if (AccessParentConfig.isRestricted(config)) {
+			Set<BoundCommandGroup> operations =
+				resolveDelegatedOperations(context, type, (OperationRestriction) config.getDefinition());
 			if (operations == null) {
 				return null;
 			}
@@ -1201,7 +1234,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 */
 	private void checkOwnDefinition(InstantiationContext context, TLClassAccessRights config,
 			AccessParentFunction function) {
-		if (!isRestricted(config)) {
+		if (!AccessParentConfig.isRestricted(config.getAccessParent())) {
 			if (!config.getGrants().isEmpty() || config.isWithoutSecurity() || config.isInternal()) {
 				context.error("The type " + config.getName()
 					+ " has an access parent and therefore must have neither grants nor marks of its own.");
@@ -1222,14 +1255,6 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 					+ " to its access parent and therefore must neither grant nor revoke it.");
 			}
 		}
-	}
-
-	/**
-	 * Whether the access parent setting of the given entry is restricted to some operations.
-	 */
-	private static boolean isRestricted(TLClassAccessRights config) {
-		return config.getAccessParent().getDefinition() instanceof OperationRestriction restriction
-			&& !restriction.getOperations().isEmpty();
 	}
 
 	/**
@@ -1436,7 +1461,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * @implNote The rights a type requires start out as the union of the rights all its
 	 *           generalizations pass on. On top of that, the rules of the type's module are applied
 	 *           as an additive baseline, followed by the rules configured for the type itself. A
-	 *           rule marked as inherited adjusts the passed on rights as well.
+	 *           rule marked as inherited adjusts the passed on rights as well. A type whose access
+	 *           parent is {@link AccessParentFunction#getOperations() restricted} to some operations
+	 *           keeps only the rights of the other operations, the rights it passes on are not
+	 *           restricted. The access parent of the type must therefore be resolved before.
 	 */
 	private Map<BoundCommandGroup, Set<BoundedRole>> computeClassRights(TLClass type, TypeEntry entry,
 			Map<TLClass, List<ResolvedRule>> classRules) {
@@ -1456,9 +1484,15 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		applyRules(_moduleRules.getOrDefault(type.getModule(), Collections.emptyList()), effective, inheritable);
 		Map<BoundCommandGroup, Set<BoundedRole>> inherited = new HashMap<>();
 		addRights(inherited, effective);
-		entry._inheritedRights = inherited;
 		applyRules(classRules.getOrDefault(type, Collections.emptyList()), effective, inheritable);
 
+		AccessParentFunction parent = entry._accessParent;
+		if (parent != null && parent.getOperations() != null) {
+			// The access parent decides the delegated operations, the type the others.
+			effective.keySet().removeIf(parent::delegates);
+			inherited.keySet().removeIf(parent::delegates);
+		}
+		entry._inheritedRights = inherited;
 		entry._rights = effective;
 		entry._passedOnRights = inheritable;
 		return inheritable;
@@ -1793,27 +1827,37 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			BoundCommandGroup commandGroup) {
 		AccessParentFunction parent = accessParentOf(instance);
 		if (parent != null) {
-			TLObject parentObject = parent.resolve(instance);
-			if (parentObject == null) {
-				// The relation leads nowhere: nobody decides for the object, so nobody may access it.
-				return false;
-			}
-			if (!CheckedObjects.isStored(parentObject)) {
-				// The parent is not access controlled, or it is being built in the current
-				// transaction and has no computed roles yet (see isAllowed(Person, TLObject,
-				// BoundCommandGroup)): its decision is not meaningful, and the object follows it.
-				return true;
-			}
-			if (decide(cache, person, parentObject, operationOnParent(commandGroup))) {
-				return true;
-			}
-			// An operation implying the requested one on the object, checked on the parent as well.
-			for (BoundCommandGroup implying : getObjectOperations(instance).getImplying(commandGroup)) {
-				if (implying != commandGroup && decide(cache, person, parentObject, operationOnParent(implying))) {
+			// The requested operation and the operations implying it on the object, as far as they
+			// are delegated, are checked on the parent.
+			Set<BoundCommandGroup> operations = new LinkedHashSet<>();
+			operations.add(commandGroup);
+			operations.addAll(getObjectOperations(instance).getImplying(commandGroup));
+			TLObject parentObject = null;
+			for (BoundCommandGroup operation : operations) {
+				if (!parent.delegates(operation)) {
+					continue;
+				}
+				if (parentObject == null) {
+					parentObject = parent.resolve(instance);
+					if (parentObject == null) {
+						// The relation leads nowhere: nobody decides for the object on the parent.
+						break;
+					}
+					if (!CheckedObjects.isStored(parentObject)) {
+						// The parent is not access controlled, or it is being built in the current
+						// transaction and has no computed roles yet (see isAllowed(Person, TLObject,
+						// BoundCommandGroup)): its decision is not meaningful, and the object follows it.
+						return true;
+					}
+				}
+				if (decide(cache, person, parentObject, operationOnParent(operation))) {
 					return true;
 				}
 			}
-			return false;
+			if (parent.getOperations() == null) {
+				// Every operation is delegated: the object holds no rights of its own.
+				return false;
+			}
 		}
 		if (!(instance instanceof BoundObject holder)) {
 			// A persistent object that cannot hold roles grants no role to anybody.
@@ -2030,9 +2074,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// creation was already authorized, so creating into it is not checked here.
 			return true;
 		}
-		if (getAccessParent(type) != null) {
-			// Creating an object that delegates its access decision is writing the object it is
-			// created in, which is its access parent by construction for a composition part.
+		AccessParentFunction accessParent = getAccessParent(type);
+		if (accessParent != null && accessParent.delegates(SimpleBoundCommandGroup.CREATE)) {
+			// Creating an object that delegates the creation to its access parent is writing the
+			// object it is created in, which is its access parent by construction for a composition
+			// part.
 			// Without a context the object is free-standing: nobody can access it until it is put
 			// into a container, and that is a write of the container checked in its own right, so
 			// the creation itself is not restricted.
@@ -2041,6 +2087,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			}
 			return decide(decisionCache(), person, context, SimpleBoundCommandGroup.WRITE);
 		}
+		// A type deciding for itself, or not delegating the creation, grants it by its own rights.
 		Set<BoundedRole> roles = getAllowedRoles(type, SimpleBoundCommandGroup.CREATE);
 		return accessManager().hasRole(person, createContext(context), roles);
 	}

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<!-- Access parents restricted to some operations, see TestAccessParentOperations. -->
+		<module name="TestAccessParentOperations">
+			<types>
+				<!-- Role rule and grants: the reader may read and write it. -->
+				<class name="Catalog">
+					<attributes>
+						<reference name="reader"
+							type="tl.accounts:Person"
+						/>
+						<reference name="parts"
+							composite="true"
+							multiple="true"
+							type="Part"
+						/>
+						<reference name="fullParts"
+							composite="true"
+							multiple="true"
+							type="FullPart"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Grants passed on to its specializations: Read is delegated by them, Export is not. -->
+				<class name="EntryBase"
+					abstract="true"
+				/>
+
+				<!-- Delegates Read to its catalog, decides Write by its own grant. -->
+				<class name="Entry">
+					<generalizations>
+						<generalization type="EntryBase"/>
+					</generalizations>
+					<attributes>
+						<reference name="catalog"
+							type="Catalog"
+						/>
+						<reference name="editor"
+							type="tl.accounts:Person"
+						/>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Inherits the restricted access parent and the role rule of Entry. -->
+				<class name="EntrySub">
+					<generalizations>
+						<generalization type="Entry"/>
+					</generalizations>
+				</class>
+
+				<!-- Composition part delegating Read and Write to its container. -->
+				<class name="Part"/>
+
+				<!-- Composition part delegating every operation to its container. -->
+				<class name="FullPart">
+					<generalizations>
+						<generalization type="EntryBase"/>
+					</generalizations>
+					<attributes>
+						<reference name="editor"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

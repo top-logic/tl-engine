@@ -23,11 +23,15 @@ import com.top_logic.element.boundsec.manager.explain.RoleAssignment;
 import com.top_logic.element.boundsec.manager.explain.RoleSource;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
+import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.Resources;
@@ -157,8 +161,11 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 			if (explanation.decidingObject() == null) {
 				texts.add(I18NConstants.EFFECTIVE_ACCESS_NO_DECIDING_OBJECT);
 			} else if (explanation.isDelegating()) {
-				texts.add(I18NConstants.EFFECTIVE_ACCESS_DELEGATED__TYPE_OBJECT.fill(type,
-					MetaLabelProvider.INSTANCE.getLabel(explanation.decidingObject())));
+				AccessParentFunction parent = object.tType() instanceof TLClass objectType
+					? ModelAccessRights.getInstance().getAccessParent(objectType)
+					: null;
+				texts.add(
+					delegation(type, MetaLabelProvider.INSTANCE.getLabel(explanation.decidingObject()), parent));
 			}
 			if (!explanation.sourcesAvailable()) {
 				texts.add(I18NConstants.EFFECTIVE_ACCESS_SOURCES_UNAVAILABLE);
@@ -175,6 +182,26 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 			result.append(HTML_PARAGRAPH_END);
 		}
 		return result.toString();
+	}
+
+	/**
+	 * The paragraph telling that an object of the given type delegates to the given deciding
+	 * object.
+	 *
+	 * @param type
+	 *        The label of the type of the delegating object.
+	 * @param decidingObject
+	 *        The label of the object deciding.
+	 * @param parent
+	 *        The access parent of the type, <code>null</code> when it is not known.
+	 */
+	static ResKey delegation(String type, String decidingObject, AccessParentFunction parent) {
+		Set<BoundCommandGroup> operations = parent == null ? null : parent.getOperations();
+		if (operations == null) {
+			return I18NConstants.EFFECTIVE_ACCESS_DELEGATED__TYPE_OBJECT.fill(type, decidingObject);
+		}
+		return I18NConstants.EFFECTIVE_ACCESS_DELEGATED_RESTRICTED__TYPE_OBJECT_OPERATIONS.fill(type, decidingObject,
+			SecurityGrantFunctions.operationLabels(operations));
 	}
 
 	private static void addAccountInfo(List<ResKey> texts, Person account) {

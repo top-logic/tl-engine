@@ -95,6 +95,9 @@
    tl-picker setzt eine Lücke von space-sm zwischen die Kinder; hier gilt die dichte Folge eines Menüs. */
 .tl-popover.tl-table-view-options {
   gap: var(--tl-space-2xs);
+  /* Eine Breite für beide Seiten: der Wechsel zwischen „Spalten“ und „Ansicht“ springt nicht (Hendrik 20.11.). Lange
+     Spaltennamen kürzen mit Ellipse; am schmalen Fenster gibt das Popover nach. */
+  inline-size: min(var(--tl-size-popover-view), calc(var(--tl-size-viewport-width) - 2 * var(--tl-space-xs)));
 }
 
 /* Jede Seite ist eine Flex-Spalte, die das Popover füllt und mit ihm schrumpft (min-block-size 0): wo das Popover am

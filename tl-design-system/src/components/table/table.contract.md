@@ -244,7 +244,7 @@ Körper scrollen waagerecht gemeinsam: das TSX überträgt `scrollLeft` des Kör
 | Zelle mit Feldmarke | am Ende eine halbe Markenbreite frei: `--tl-size-icon-sm` / 2; der Fokusring der Marke liegt innen (`outline-offset` −`--tl-focus-offset`) |
 | Platzhalter | Innenabstand `--tl-space-control-x`, Linie darunter wie die Zeile |
 | Ablehnung | Rand `--tl-status-error-border`, Text `--tl-status-error-text` |
-| Ansicht, Popover | Fläche, Rand und Schatten die von `tl-popover`; Lücke zwischen den Zeilen `--tl-space-2xs`; Titel `--tl-text-primary` in `tl-type-label-strong`, Innenabstand `--tl-space-2xs` `--tl-space-control-x`; Segmente und Schalter rücken um `--tl-space-control-x` ein; Trennlinie `--tl-border-width-sm` in `--tl-border-separator` (`tl-divider`) |
+| Ansicht, Popover | Fläche, Rand und Schatten die von `tl-popover`; eine Breite für beide Seiten `--tl-size-popover-view`, am schmalen Fenster höchstens `--tl-size-viewport-width` abzüglich zweimal `--tl-space-xs`; Lücke zwischen den Zeilen `--tl-space-2xs`; Titel `--tl-text-primary` in `tl-type-label-strong`, Innenabstand `--tl-space-2xs` `--tl-space-control-x`; Segmente und Schalter rücken um `--tl-space-control-x` ein; Trennlinie `--tl-border-width-sm` in `--tl-border-separator` (`tl-divider`) |
 | „+ n weitere“ | der Chevron steht im Label, die Lücke zum Text ist `--tl-space-2xs` |
 
 Der Kopf scrollt waagerecht ohne eigenen Balken (`scrollbar-width: none`); Kopf und Körper folgen einander in beide Richtungen (12.10.). Schrift: `.tl-type-body` am `tl-table__body`, von der Komponente gesetzt. Die Gruppenzeile ist stark: jede ihrer Zellen

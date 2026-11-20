@@ -33,6 +33,7 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
+import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
@@ -71,6 +72,16 @@ public class TestAccessParentOperations extends BasicTestCase {
 
 	private Person _other;
 
+	private Person _rootEditor;
+
+	private Person _rootReader;
+
+	/** Members hold {@link #ROLE_ENTRY_EDITOR} on the security root. */
+	private Group _rootEditors;
+
+	/** Members hold {@link #ROLE_CATALOG_READER} on the security root. */
+	private Group _rootReaders;
+
 	private TLObject _catalog;
 
 	private TLObject _entry;
@@ -91,6 +102,13 @@ public class TestAccessParentOperations extends BasicTestCase {
 			_reader = createPerson("accessParentOperationsReader");
 			_editor = createPerson("accessParentOperationsEditor");
 			_other = createPerson("accessParentOperationsOther");
+			_rootEditor = createPerson("accessParentOperationsRootEditor");
+			_rootReader = createPerson("accessParentOperationsRootReader");
+
+			_rootEditors = Group.createGroup("TestAccessParentOperationsRootEditors");
+			_rootEditors.addMember(_rootEditor);
+			_rootReaders = Group.createGroup("TestAccessParentOperationsRootReaders");
+			_rootReaders.addMember(_rootReader);
 
 			_catalog = create(CATALOG);
 			_catalog.tUpdateByName("reader", _reader);
@@ -117,7 +135,11 @@ public class TestAccessParentOperations extends BasicTestCase {
 					object.tDelete();
 				}
 			}
+			_rootEditors.tDelete();
+			_rootReaders.tDelete();
 			_reader.tDelete();
+			_rootEditor.tDelete();
+			_rootReader.tDelete();
 			_editor.tDelete();
 			_other.tDelete();
 		});
@@ -194,6 +216,27 @@ public class TestAccessParentOperations extends BasicTestCase {
 			rights().isAllowed(_reader, _entry, name, SimpleBoundCommandGroup.WRITE));
 		assertFalse("The editor holds no role on the catalog.",
 			rights().isAllowed(_editor, _entry, name, SimpleBoundCommandGroup.READ));
+	}
+
+	public void testTypeLevelPerOperation() {
+		TLClass entry = type(ENTRY);
+		Set<TLClass> editorWrite = rights().getAccessibleTypes(_rootEditor, SimpleBoundCommandGroup.WRITE);
+		Set<TLClass> editorRead = rights().getAccessibleTypes(_rootEditor, SimpleBoundCommandGroup.READ);
+		assertTrue("Write is decided by the own grant of the entry.", editorWrite.contains(entry));
+		assertFalse("Read is delegated to the catalog, the editor holds no role there.",
+			editorRead.contains(entry));
+
+		Set<TLClass> readerRead = rights().getAccessibleTypes(_rootReader, SimpleBoundCommandGroup.READ);
+		Set<TLClass> readerWrite = rights().getAccessibleTypes(_rootReader, SimpleBoundCommandGroup.WRITE);
+		assertTrue("Read is delegated to the catalog.", readerRead.contains(entry));
+		assertFalse("Write is not delegated.", readerWrite.contains(entry));
+
+		TLClass part = type(PART);
+		assertTrue("Write is delegated to the catalog.", readerWrite.contains(part));
+		assertFalse("Delete is not delegated by the part.",
+			rights().getAccessibleTypes(_rootReader, SimpleBoundCommandGroup.DELETE).contains(part));
+		assertTrue("Delete of a fully delegating part is writing the catalog.",
+			rights().getAccessibleTypes(_rootReader, SimpleBoundCommandGroup.WRITE).contains(type(FULL_PART)));
 	}
 
 	public void testRoleHolderPerOperation() {

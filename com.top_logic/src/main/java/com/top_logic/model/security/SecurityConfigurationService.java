@@ -2238,30 +2238,45 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		}
 		decisions.put(commandGroup, null);
 		boolean result;
-		if (getAccessParent(type) != null) {
+		AccessParentFunction accessParent = getAccessParent(type);
+		if (accessParent != null) {
 			Set<TLClass> parentTypes = getAccessParentTypes(type);
-			// Unknown parent types (a computed access parent): the type-level check is a pre-filter
-			// only, the check of each object follows the relation.
-			result = parentTypes == null;
-			if (!result) {
-				// The operation itself or one implying it on the type, checked on the parent types.
-				Set<BoundCommandGroup> operations = new HashSet<>(getOperations(type).getImplying(commandGroup));
-				operations.add(commandGroup);
-				for (BoundCommandGroup operation : operations) {
-					BoundCommandGroup parentOperation = operationOnParent(operation);
-					if (parentTypes.stream().anyMatch(
-						parentType -> isAccessibleType(parentType, person, parentOperation, securityRoot, memo))) {
-						result = true;
-						break;
-					}
+			result = false;
+			// The operation itself or one implying it on the type: a delegated one is checked on
+			// the parent types.
+			Set<BoundCommandGroup> operations = new HashSet<>(getOperations(type).getImplying(commandGroup));
+			operations.add(commandGroup);
+			for (BoundCommandGroup operation : operations) {
+				if (!accessParent.delegates(operation)) {
+					continue;
+				}
+				if (parentTypes == null) {
+					// Unknown parent types (a computed access parent): the type-level check is a
+					// pre-filter only, the check of each object follows the relation.
+					result = true;
+					break;
+				}
+				BoundCommandGroup parentOperation = operationOnParent(operation);
+				if (parentTypes.stream().anyMatch(
+					parentType -> isAccessibleType(parentType, person, parentOperation, securityRoot, memo))) {
+					result = true;
+					break;
 				}
 			}
+			if (!result && accessParent.getOperations() != null) {
+				// A restricted relation: the grants of the type itself decide the operations not
+				// delegated.
+				result = holdsOnRoot(person, securityRoot, getAllowedRoles(type, commandGroup));
+			}
 		} else {
-			Set<BoundedRole> roles = getAllowedRoles(type, commandGroup);
-			result = !roles.isEmpty() && accessManager().hasRole(person, securityRoot, roles);
+			result = holdsOnRoot(person, securityRoot, getAllowedRoles(type, commandGroup));
 		}
 		decisions.put(commandGroup, Boolean.valueOf(result));
 		return result;
+	}
+
+	private boolean holdsOnRoot(Person person, BoundObject securityRoot, Set<BoundedRole> roles) {
+		return !roles.isEmpty() && accessManager().hasRole(person, securityRoot, roles);
 	}
 
 	/**

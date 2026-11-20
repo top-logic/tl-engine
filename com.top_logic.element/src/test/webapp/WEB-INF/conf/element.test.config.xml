@@ -329,6 +329,21 @@
 								<step attribute="TestAccessParentOperations:FullPart#editor"/>
 							</path>
 						</rule>
+						<!-- Roles on the security root, held by the members of a group. -->
+						<singleton-rule
+							id="TestAccessParentOperations_rootEditors"
+							target="SecurityStructure#ROOT"
+							role="TestAccessParentOperations.EntryEditor"
+						>
+							<group-with-name name="TestAccessParentOperationsRootEditors"/>
+						</singleton-rule>
+						<singleton-rule
+							id="TestAccessParentOperations_rootReaders"
+							target="SecurityStructure#ROOT"
+							role="TestAccessParentOperations.CatalogReader"
+						>
+							<group-with-name name="TestAccessParentOperationsRootReaders"/>
+						</singleton-rule>
 					</rules>
 				</role-rules>
 

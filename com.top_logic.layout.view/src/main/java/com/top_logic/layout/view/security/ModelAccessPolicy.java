@@ -22,6 +22,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.CheckedObjects;
 import com.top_logic.model.security.CheckedObjects.Decision;
 import com.top_logic.model.security.ModelAccessRights;
@@ -454,9 +455,9 @@ public final class ModelAccessPolicy {
 	 * or when the user holds, on any object, none of the roles granted the operation (or an
 	 * operation implying it) on the type or on one of its specializations, as
 	 * {@link AccessManager#hasRoleOnAnyObject(Person, Collection)} answers it. A type with an access
-	 * parent is decided by the types its access parent may
-	 * lead to, with {@link SimpleBoundCommandGroup#WRITE} in place of
-	 * {@link SimpleBoundCommandGroup#CREATE} and {@link SimpleBoundCommandGroup#DELETE} (see
+	 * parent is decided, for each operation it delegates, by the types its access parent may
+	 * lead to, and for each operation it does not delegate by the grants of the type itself, with
+	 * {@link SimpleBoundCommandGroup#WRITE} in place of {@link SimpleBoundCommandGroup#CREATE} and {@link SimpleBoundCommandGroup#DELETE} (see
 	 * {@link ModelAccessRights#getAccessParentTypes(TLClass)}). A type without security, one whose
 	 * singletons have rights of their own, or one whose access parent types are not known statically
 	 * is always in reach.
@@ -497,19 +498,36 @@ public final class ModelAccessPolicy {
 			if (rights.isWithoutSecurity(candidate) || rights.hasSingletonRights(candidate)) {
 				return true;
 			}
-			if (rights.getAccessParent(candidate) != null) {
-				Set<TLClass> parentTypes = rights.getAccessParentTypes(candidate);
-				if (parentTypes == null) {
-					// Not known statically: only the check of a concrete object decides.
-					return true;
-				}
-				BoundCommandGroup parentOperation = isCreate(operation) || isDelete(operation)
-					? SimpleBoundCommandGroup.WRITE
-					: operation;
-				for (TLClass parentType : parentTypes) {
-					if (isGrantable(rights, user, parentOperation, parentType, seen)) {
+			AccessParentFunction accessParent = rights.getAccessParent(candidate);
+			if (accessParent != null) {
+				// The operation itself or one implying it, a delegated one is checked on the parent
+				// types.
+				Set<BoundCommandGroup> operations =
+					new HashSet<>(rights.getOperations(candidate).getImplying(operation));
+				operations.add(operation);
+				for (BoundCommandGroup delegated : operations) {
+					if (!accessParent.delegates(delegated)) {
+						continue;
+					}
+					Set<TLClass> parentTypes = rights.getAccessParentTypes(candidate);
+					if (parentTypes == null) {
+						// Not known statically: only the check of a concrete object decides.
 						return true;
 					}
+					BoundCommandGroup parentOperation = isCreate(delegated) || isDelete(delegated)
+						? SimpleBoundCommandGroup.WRITE
+						: delegated;
+					for (TLClass parentType : parentTypes) {
+						if (isGrantable(rights, user, parentOperation, parentType, seen)) {
+							return true;
+						}
+					}
+				}
+				if (accessParent.getOperations() != null
+					&& holdsAnyOf(user, rights.getAllowedRoles(candidate, operation))) {
+					// A restricted relation: the grants of the type itself decide the operations not
+					// delegated.
+					return true;
 				}
 				continue;
 			}

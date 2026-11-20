@@ -409,6 +409,14 @@
 							<target reference="TestSecurityCoverage:Linked#target"/>
 						</access-parent>
 					</class>
+					<class name="TestSecurityCoverage:RestrictedLinked">
+						<access-parent>
+							<target
+								operations="Read"
+								reference="TestSecurityCoverage:RestrictedLinked#target"
+							/>
+						</access-parent>
+					</class>
 					<class name="TestSecurityCoverage:LinkedSub">
 						<access-parent>
 							<self/>

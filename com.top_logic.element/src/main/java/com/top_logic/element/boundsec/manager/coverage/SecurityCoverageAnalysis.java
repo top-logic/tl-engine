@@ -407,22 +407,26 @@ public class SecurityCoverageAnalysis {
 		List<CoverageFinding> findings = new ArrayList<>();
 		if (withoutSecurity != null || internal != null) {
 			// An exempt type needs no definition.
-		} else if (accessParent != null) {
+		} else if (accessParent != null && accessParent.getOperations() == null) {
 			List<String> shadowed = shadowedRules(roleRules, parentRules);
 			if (!shadowed.isEmpty()) {
 				findings.add(CoverageFinding.shadowedRules(type, shadowed));
 			}
 		} else {
-			if (roleRules.isEmpty() && parentRules.isEmpty()) {
+			// A type whose access parent decides only some operations decides the others itself.
+			if (roleRules.isEmpty() && parentRules.isEmpty()
+				&& (accessParent == null || hasOwnGrant(type, accessParent))) {
 				findings.add(CoverageFinding.noRoleSource(type));
 			}
-			// Every grant on the type or on one of its attributes implies Discover.
-			if (discoverRoles.isEmpty()) {
+			// Every grant on the type or on one of its attributes implies Discover. Discover is
+			// delegated together with any operation, the operations not delegated are reported
+			// one by one.
+			if (accessParent == null && discoverRoles.isEmpty()) {
 				findings.add(CoverageFinding.noReadGrant(type));
 			}
-			addDeadGrantFindings(type, findings);
-			addUngrantedOperationFindings(type, findings);
-			addUncheckedGrantFindings(type, findings);
+			addDeadGrantFindings(type, accessParent, findings);
+			addUngrantedOperationFindings(type, accessParent, findings);
+			addUncheckedGrantFindings(type, accessParent, findings);
 		}
 		if (withoutSecurity == null && internal == null) {
 			findings.addAll(_useFindings.getOrDefault(type, Collections.emptyList()));
@@ -458,12 +462,40 @@ public class SecurityCoverageAnalysis {
 	}
 
 	/**
+	 * Whether the given type grants an operation its access parent does not delegate.
+	 */
+	private boolean hasOwnGrant(TLClass type, AccessParentFunction accessParent) {
+		for (BoundCommandGroup operation : _accessRights.getOperations(type).getOperations()) {
+			if (!accessParent.delegates(operation) && !_accessRights.getAllowedRoles(type, operation).isEmpty()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Whether the given access parent decides the given operation, so that the type has no grant
+	 * of it.
+	 *
+	 * @param accessParent
+	 *        The access parent of the type, <code>null</code> when the type decides for itself.
+	 */
+	private static boolean isDelegated(AccessParentFunction accessParent, BoundCommandGroup operation) {
+		return accessParent != null && accessParent.delegates(operation);
+	}
+
+	/**
 	 * Reports every operation whose grant names a role that cannot be delivered where the operation
 	 * is checked, see {@link #isLiveGrant(TLClass, BoundCommandGroup, BoundedRole)}.
+	 *
+	 * @param accessParent
+	 *        The access parent deciding some operations of the type, <code>null</code> when the
+	 *        type decides all of them itself.
 	 */
-	private void addDeadGrantFindings(TLClass type, List<CoverageFinding> findings) {
+	private void addDeadGrantFindings(TLClass type, AccessParentFunction accessParent,
+			List<CoverageFinding> findings) {
 		for (BoundCommandGroup operation : _operations) {
-			if (SimpleBoundCommandGroup.DISCOVER.equals(operation)) {
+			if (SimpleBoundCommandGroup.DISCOVER.equals(operation) || isDelegated(accessParent, operation)) {
 				// Its roles are derived; every source grant is already checked on its own.
 				continue;
 			}
@@ -501,10 +533,23 @@ public class SecurityCoverageAnalysis {
 
 	/**
 	 * Reports every operation declared for the given type that no role holds on it.
+	 *
+	 * <p>
+	 * A built-in operation is reported for a type whose access parent decides only some
+	 * operations, when the access parent does not decide it: such an operation is no longer
+	 * decided on the access parent, only the grants of the type itself admit it. A type deciding
+	 * all operations itself is left to {@link FindingKind#NO_READ_GRANT}: it may well be read-only.
+	 * </p>
+	 *
+	 * @param accessParent
+	 *        The access parent deciding some operations of the type, <code>null</code> when the
+	 *        type decides all of them itself.
 	 */
-	private void addUngrantedOperationFindings(TLClass type, List<CoverageFinding> findings) {
+	private void addUngrantedOperationFindings(TLClass type, AccessParentFunction accessParent,
+			List<CoverageFinding> findings) {
 		for (BoundCommandGroup operation : sortedById(_accessRights.getOperations(type).getOperations())) {
-			if (ApplicableOperations.isBuiltIn(operation)) {
+			if (accessParent == null ? ApplicableOperations.isBuiltIn(operation)
+				: accessParent.delegates(operation)) {
 				continue;
 			}
 			if (_accessRights.getAllowedRoles(type, operation).isEmpty()) {
@@ -532,14 +577,19 @@ public class SecurityCoverageAnalysis {
 	 * <p>
 	 * Only reported when the places checking an operation are known.
 	 * </p>
+	 *
+	 * @param accessParent
+	 *        The access parent deciding some operations of the type, <code>null</code> when the
+	 *        type decides all of them itself.
 	 */
-	private void addUncheckedGrantFindings(TLClass type, List<CoverageFinding> findings) {
+	private void addUncheckedGrantFindings(TLClass type, AccessParentFunction accessParent,
+			List<CoverageFinding> findings) {
 		if (!_usesKnown) {
 			return;
 		}
 		ApplicableOperations applicable = _accessRights.getOperations(type);
 		for (BoundCommandGroup operation : sortedById(applicable.getOperations())) {
-			if (ApplicableOperations.isBuiltIn(operation)) {
+			if (ApplicableOperations.isBuiltIn(operation) || isDelegated(accessParent, operation)) {
 				continue;
 			}
 			Set<BoundedRole> granted = getGrantedRoles(type, operation);
@@ -576,7 +626,7 @@ public class SecurityCoverageAnalysis {
 	/**
 	 * Whether the given place checks its operation on objects of the given type.
 	 *
-	 * @see #addUncheckedGrantFindings(TLClass, List)
+	 * @see #addUncheckedGrantFindings(TLClass, AccessParentFunction, List)
 	 */
 	private boolean checks(OperationUse use, TLClass type) {
 		return switch (use.target()) {

@@ -66,6 +66,18 @@
 					</attributes>
 				</class>
 
+				<!--
+					Configured access parent restricted to Read: its own to-one reference, navigated
+					forwards. All other operations are decided by grants of the type itself.
+				-->
+				<class name="RestrictedLinked">
+					<attributes>
+						<reference name="target"
+							type="Covered"
+						/>
+					</attributes>
+				</class>
+
 				<!-- Decides for itself instead of inheriting the access parent of its generalization. -->
 				<class name="LinkedSub">
 					<generalizations>

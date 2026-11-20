@@ -157,6 +157,18 @@ public class TestAccessParentConfig extends BasicTestCase {
 			checker.getFailures().isEmpty());
 	}
 
+	public void testRestrictedParentWithGrantOfDelegatedOperationIsRejected() throws Exception {
+		for (String operation : List.of("Read", "Discover")) {
+			TLClassAccessRights entry = read("<class name='" + LINKED + "'><access-parent>" + TARGET_PARENT
+				+ " operations='Read'/></access-parent><grant operation='" + operation
+				+ "' roles='TestSecurityCoverage.Reader'/></class>");
+			ConstraintChecker checker = new ConstraintChecker();
+			checker.check(entry);
+			assertFalse(operation + " is delegated and must not be granted beside the access parent.",
+				checker.getFailures().isEmpty());
+		}
+	}
+
 	public void testRestrictedParentWithMarkIsRejected() throws Exception {
 		TLClassAccessRights entry = read("<class name='" + LINKED + "' internal='true'><access-parent>"
 			+ TARGET_PARENT + " operations='Read'/></access-parent></class>");

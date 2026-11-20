@@ -4,6 +4,10 @@
  */
 package com.top_logic.model.security;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Container;
 import com.top_logic.basic.config.annotation.DefaultContainer;
@@ -12,6 +16,8 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
+import com.top_logic.tool.boundsec.CommandGroupReference;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
  * The access parent setting of a type: the element <code>&lt;access-parent&gt;</code> of a
@@ -74,6 +80,31 @@ public interface AccessParentConfig extends ConfigPart {
 	static boolean isRestricted(AccessParentConfig config) {
 		return config != null && config.getDefinition() instanceof OperationRestriction restriction
 			&& !restriction.getOperations().isEmpty();
+	}
+
+	/**
+	 * The names of the operations the given setting delegates, as written in the configuration.
+	 *
+	 * @param config
+	 *        The setting, <code>null</code> for none.
+	 * @return The names of the operations {@link OperationRestriction#getOperations() listed} and
+	 *         Discover, which is delegated together with any of them; <code>null</code> when the
+	 *         setting delegates all operations; the empty set when it does not
+	 *         {@link #delegates(AccessParentConfig) delegate} at all.
+	 */
+	static Set<String> delegatedOperationNames(AccessParentConfig config) {
+		if (!delegates(config)) {
+			return Collections.emptySet();
+		}
+		if (!isRestricted(config)) {
+			return null;
+		}
+		Set<String> result = new HashSet<>();
+		for (CommandGroupReference operation : ((OperationRestriction) config.getDefinition()).getOperations()) {
+			result.add(operation.id());
+		}
+		result.add(SimpleBoundCommandGroup.DISCOVER_NAME);
+		return result;
 	}
 
 }

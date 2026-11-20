@@ -23,6 +23,13 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ACCESS_PARENT_EXCLUDES_OWN_DEFINITION__PROPERTY;
 
 	/**
+	 * @en The access parent decides the operations {1} itself, since it is restricted to them and
+	 *     decides Discover together with them: either remove the grants of these operations from
+	 *     "{0}", or remove the operations from the access parent.
+	 */
+	public static ResKey2 ACCESS_PARENT_DECIDES_GRANTED__PROPERTY_OPERATIONS;
+
+	/**
 	 * @en container (default)
 	 */
 	public static ResKey ACCESS_PARENT_CONTAINER_DEFAULT;

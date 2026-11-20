@@ -527,7 +527,7 @@ describe('the column menu by keyboard', () => {
     await settle();
     expect(screen.queryByRole('menu')).toBeNull();
     // Grouping by another column: the pinned heading would now offer "ungroup".
-    patchState({ grouping: 'name' });
+    patchState({ grouping: ['name'] });
     await settle();
     expect(screen.queryByRole('menu')).toBeNull();
   });

@@ -25,6 +25,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.DoubleDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryData;
@@ -108,10 +109,10 @@ public class FlowFactory extends TLScriptFunctions {
 	private static final String EXPORT_CSS = "tl-react-flow-export.css";
 
 	/** Color of a Gantt line decoration created without color and color role. */
-	private static final String DEFAULT_LINE_DECORATION_COLOR = "#c02020";
+	static final String DEFAULT_LINE_DECORATION_COLOR = "#c02020";
 
 	/** Color of a Gantt range decoration created without color and color role. */
-	private static final String DEFAULT_RANGE_DECORATION_COLOR = "rgba(255, 220, 120, 0.35)";
+	static final String DEFAULT_RANGE_DECORATION_COLOR = "rgba(255, 220, 120, 0.35)";
 
 	/**
 	 * Factory for {@link Diagram}s.
@@ -1895,8 +1896,8 @@ public class FlowFactory extends TLScriptFunctions {
 			List<Double> violatedDashes,
 			ConnectorSymbol sourceSymbol,
 			ConnectorSymbol targetSymbol,
-			@ScriptConversion(ToColorRole.class) String strokeRole,
-			@ScriptConversion(ToColorRole.class) String violatedStrokeRole) {
+			@NullDefault ValueColor strokeRole,
+			@NullDefault ValueColor violatedStrokeRole) {
 		GanttEdge edge = GanttEdge.create()
 			.setUserObject(model)
 			.setSourceModel(sourceModel).setSourceEndpoint(sourceEndpoint)
@@ -1910,8 +1911,8 @@ public class FlowFactory extends TLScriptFunctions {
 		if (violatedDashes != null && !violatedDashes.isEmpty()) edge.setViolatedDashes(violatedDashes);
 		if (sourceSymbol != null) edge.setSourceSymbol(sourceSymbol);
 		if (targetSymbol != null) edge.setTargetSymbol(targetSymbol);
-		if (strokeRole != null) edge.setStrokeRole(strokeRole);
-		if (violatedStrokeRole != null) edge.setViolatedStrokeRole(violatedStrokeRole);
+		if (strokeRole != null) edge.setStrokeRole(strokeRole.getExternalName());
+		if (violatedStrokeRole != null) edge.setViolatedStrokeRole(violatedStrokeRole.getExternalName());
 		return edge;
 	}
 
@@ -1950,7 +1951,7 @@ public class FlowFactory extends TLScriptFunctions {
 			Boolean canMove,
 			Double strokeWidth,
 			List<Double> dashes,
-			@ScriptConversion(ToColorRole.class) String colorRole) {
+			@NullDefault ValueColor colorRole) {
 		GanttLineDecoration deco = GanttLineDecoration.create()
 			.setUserObject(model)
 			.setAt(at)
@@ -2000,7 +2001,7 @@ public class FlowFactory extends TLScriptFunctions {
 			List<Object> relevantFor,
 			Boolean canMove,
 			Boolean canResize,
-			@ScriptConversion(ToColorRole.class) String colorRole) {
+			@NullDefault ValueColor colorRole) {
 		GanttRangeDecoration deco = GanttRangeDecoration.create()
 			.setUserObject(model)
 			.setFrom(from).setTo(to)
@@ -2018,11 +2019,12 @@ public class FlowFactory extends TLScriptFunctions {
 	 * Sets the color of a decoration: the given fixed color, otherwise the given role, otherwise
 	 * the given default color.
 	 */
-	private static void applyColor(GanttDecoration deco, String color, String colorRole, String defaultColor) {
+	private static void applyColor(GanttDecoration deco, String color, ValueColor colorRole,
+			String defaultColor) {
 		if (color != null) {
 			deco.setColor(color);
 		} else if (colorRole != null) {
-			deco.setColorRole(colorRole);
+			deco.setColorRole(colorRole.getExternalName());
 		} else {
 			deco.setColor(defaultColor);
 		}

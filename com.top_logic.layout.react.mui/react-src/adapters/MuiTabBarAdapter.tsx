@@ -1,12 +1,12 @@
 import {
-  React, useTLState, useTLCommand, useFill, FillBarrier, TLChild, rootClassName, ThemeIcon, StateBadge,
+  React, useTLState, useTLCommand, useFill, useWheelScroll, FillBarrier, TLChild, rootClassName, ThemeIcon, StateBadge,
 } from 'tl-react-bridge';
 import type { TLCellProps, TabBarStateJson } from 'tl-react-bridge';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import type { SxProps, Theme } from '@mui/material/styles';
 
-const { useCallback } = React;
+const { useCallback, useMemo, useState } = React;
 
 /** Command a tab bar sends when another tab is chosen. */
 const CMD_SELECT_TAB = 'selectTab';
@@ -62,7 +62,8 @@ const PANEL_STYLE: React.CSSProperties = {
  *     Choosing the selected tab sends nothing, and so does a tab receiving the focus without such
  *     a gesture (a closing dialog giving the focus back to it);</li>
  * <li>a strip wider than the tab bar scrolls (`variant="scrollable"`), with scroll buttons while
- *     it does;</li>
+ *     it does; the mouse wheel scrolls it sideways then, as in TLTabBar ({@link useWheelScroll} on
+ *     the scroller of the `Tabs`), and never selects a tab;</li>
  * <li>hidden → the tab bar is not rendered and does not fill; the configured CSS class →
  *     className of the root.</li>
  * </ul>
@@ -81,6 +82,11 @@ const MuiTabBarAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const fillClass = useFill(!hidden);
   const tabs = (state.tabs ?? []) as TabInfo[];
   const activeTabId = state.activeTabId;
+
+  // The horizontally scrolling element of the strip, reached through the ref of its slot.
+  const [scroller, setScroller] = useState<HTMLDivElement | null>(null);
+  useWheelScroll(scroller);
+  const tabsSlotProps = useMemo(() => ({ scroller: { ref: setScroller } }), []);
 
   const selectTab = useCallback((tabId: string) => {
     if (tabId !== activeTabId) {
@@ -122,6 +128,7 @@ const MuiTabBarAdapter: React.FC<TLCellProps> = ({ controlId }) => {
         variant="scrollable"
         scrollButtons="auto"
         sx={TABS_SX}
+        slotProps={tabsSlotProps}
       >
         {tabs.map((tab, index) => (
           <Tab

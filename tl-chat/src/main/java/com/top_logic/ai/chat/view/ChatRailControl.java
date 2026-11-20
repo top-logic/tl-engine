@@ -6,19 +6,20 @@
 package com.top_logic.ai.chat.view;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.top_logic.ai.chat.view.ChatRailElement.Config;
 import com.top_logic.ai.chat.view.ChatRailElement.Section;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.ReactCommandHandler;
+import com.top_logic.layout.react.control.common.BadgeDisplay;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
-import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.element.BadgeBinding;
 import com.top_logic.layout.view.element.ContentControls;
 import com.top_logic.util.Resources;
 
@@ -40,18 +41,22 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * The state this control owns is the frame: which sections there are, what they are called, their
- * icons, the current badge numbers and the pane's history. Everything inside a section belongs to the
+ * icons, the badges they currently show and the pane's history. Everything inside a section belongs to the
  * element configured there.
  * </p>
  */
 public class ChatRailControl extends ChatControl {
 
-	/** State key for the section badge numbers, keyed by section name. */
-	private static final String SECTION_BADGES = "sectionBadges";
+	/**
+	 * State key for the badges of the sections: per section name the state of its
+	 * {@link BadgeDisplay}, a section showing no badge left out.
+	 */
+	public static final String SECTION_BADGES = "sectionBadges";
 
 	private final PresentationPane _pane;
 
-	private final Map<String, Integer> _badges = new LinkedHashMap<>();
+	/** The badge each section shows, by section name; a section showing none is left out. */
+	private final Map<String, BadgeDisplay> _badges = new LinkedHashMap<>();
 
 	/**
 	 * Creates a {@link ChatRailControl}.
@@ -79,7 +84,7 @@ public class ChatRailControl extends ChatControl {
 		putState("paneWidthDefault", Integer.valueOf(Math.max(0, config.getPaneWidth())));
 
 		putState("sections", sectionState(context, sections));
-		putState(SECTION_BADGES, new LinkedHashMap<>(_badges));
+		putState(SECTION_BADGES, badgeState());
 		// Part of the bootstrap, so a rail that is the first element of its chat renders collapsed
 		// where it should be rather than flashing every section open. When another element built the
 		// store first, the browser applies the same seed once instead.
@@ -131,28 +136,37 @@ public class ChatRailControl extends ChatControl {
 				context.childContext("section").withChildSlotPath(name)));
 			rows.add(row);
 
-			ChannelRef badgeRef = section.badge();
-			if (badgeRef == null) {
+			BadgeBinding badge = BadgeBinding.create(context, section.badge());
+			if (badge == null) {
 				continue;
 			}
-			ViewChannel badge = context.resolveChannel(badgeRef);
-			_badges.put(name, Integer.valueOf(count(badge.get())));
-			ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> applyBadge(name, newValue);
-			badge.addListener(listener);
-			addCleanupAction(() -> badge.removeListener(listener));
+			BadgeDisplay current = badge.current();
+			if (current != null) {
+				_badges.put(name, current);
+			}
+			badge.bind(this, display -> applyBadge(name, display));
 		}
 		return rows;
 	}
 
-	private void applyBadge(String name, Object value) {
-		Integer count = Integer.valueOf(count(value));
-		if (count.equals(_badges.get(name))) {
+	private void applyBadge(String name, BadgeDisplay display) {
+		if (Objects.equals(display, _badges.get(name))) {
 			return;
 		}
-		_badges.put(name, count);
+		if (display == null) {
+			_badges.remove(name);
+		} else {
+			_badges.put(name, display);
+		}
 		// A map of its own, so the section list - which carries the child controls - is written once
-		// and never re-serialized for a changing number.
-		putState(SECTION_BADGES, new LinkedHashMap<>(_badges));
+		// and never re-serialized for a changing badge.
+		putState(SECTION_BADGES, badgeState());
+	}
+
+	private Map<String, Object> badgeState() {
+		Map<String, Object> result = new LinkedHashMap<>();
+		_badges.forEach((name, display) -> result.put(name, display.toState()));
+		return result;
 	}
 
 	/**
@@ -161,19 +175,6 @@ public class ChatRailControl extends ChatControl {
 	 */
 	private void applyPane() {
 		putState("paneSteps", _pane == null ? List.of() : _pane.state());
-	}
-
-	/** The one object a channel holds, {@code null} for nothing and for a set of several. */
-	private static Object single(Object value) {
-		if (value instanceof Collection<?> many) {
-			return many.size() == 1 ? many.iterator().next() : null;
-		}
-		return value;
-	}
-
-	private static int count(Object value) {
-		Object single = single(value);
-		return single instanceof Number number ? Math.max(0, number.intValue()) : 0;
 	}
 
 	private static String label(Resources resources, ResKey key, String fallback) {

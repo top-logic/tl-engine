@@ -185,3 +185,40 @@ export function TLChild({ control }: { control: unknown }) {
     'data-module': descriptor.module ?? '',
   })
 }
+
+/** See `BadgeJson` of the real bridge. */
+export interface BadgeJson {
+  content: string
+  dot: boolean
+  role: 'brand' | 'error' | 'warning' | 'success' | 'info'
+  label: string
+}
+
+/**
+ * The part `Badge` as a marker element carrying the state it was given, so a test asserts on what
+ * the component asked the part to draw, not on how the default part draws it.
+ */
+export function StateBadge({ badge, alone }: { badge: Partial<BadgeJson>; alone: boolean }) {
+  return RealReact.createElement('tl-badge', {
+    'data-content': badge.content,
+    'data-dot': badge.dot === true ? 'true' : undefined,
+    'data-role': badge.role,
+    'data-label': badge.label,
+    'data-alone': alone ? 'true' : undefined,
+  })
+}
+
+/** The naming rule of the real bridge's `labelWithBadge`. */
+export function labelWithBadge(
+  label: string | undefined,
+  badge: Partial<BadgeJson> | null | undefined,
+): string | undefined {
+  let name: string | undefined
+  if (badge) {
+    if (badge.dot === true) name = badge.label
+    else if (badge.label && badge.content) name = badge.label + ': ' + badge.content
+    else name = badge.label ?? badge.content
+  }
+  if (!name) return label
+  return label ? label + ', ' + name : name
+}

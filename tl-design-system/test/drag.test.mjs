@@ -136,7 +136,7 @@ test('tl-reorder-list: Griff und Knöpfe erscheinen über tl-reveal-on-hover, ni
   ]) assert.match(declarationsOf(reveal, sel) ?? '', /opacity:\s*1/, sel);
   assert.match(reveal, /@media \(hover: none\)/, 'ohne Zeigen (Touch) bleibt alles sichtbar');
 
-  // Das Specimen der Liste trägt die Klasse an Griff, Schloss und Auge.
+  // Das Specimen der Liste trägt die Klasse an Griff, Schloss und Minus.
   const spec = readComponent('reorder-list', 'reorder-list.spec.html');
   for (const teil of ['handle', 'lock', 'eye']) {
     const knoepfe = [...spec.matchAll(new RegExp(`class="[^"]*tl-reorder-list__${teil}[^"]*"`, 'g'))].map((m) => m[0]);

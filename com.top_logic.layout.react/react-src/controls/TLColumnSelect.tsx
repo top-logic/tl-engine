@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, useListReorder, reorderState, filterOptions, rootClassName, stateAttr, usePart, tooltipProps, ICON_HANDLE, ICON_VISIBLE, ICON_ADD, ICON_LOCK, ICON_UNLOCK, ICON_GROUP } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useListReorder, reorderState, filterOptions, rootClassName, stateAttr, usePart, tooltipProps, ICON_HANDLE, ICON_MINUS, ICON_ADD, ICON_LOCK, ICON_UNLOCK, ICON_GROUP } from 'tl-react-bridge';
 import type { TLCellProps, ReorderDirection, ReorderDropTarget, ReorderStep } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
 import { applyColumnMove, lockedCount } from './columnMove';
@@ -30,6 +30,7 @@ const I18N_KEYS = {
   'js.table.groupBy': 'Group by this column',
   'js.table.groupByAlso': 'Additionally group by this column',
   'js.table.ungroupColumn': 'Remove grouping by this column',
+  'js.table.groupLevel': 'Grouping level',
 };
 
 /** Shows or hides one of the columns. */
@@ -144,19 +145,19 @@ interface Sync {
 
 /**
  * The column selection of a table as a layer panel (design system: tl-reorder-list): each column with its handle at
- * the start, its name, and at the end a lock that freezes it and an eye that shows or hides it. Handle, lock and eye
+ * the start, its name, and at the end a lock that freezes it and a minus that hides it. Handle, lock and minus
  * appear on hover or focus; a frozen column shows its lock. The list has three sections in one scroll area, each under
  * its heading: the frozen columns under "Frozen", the movable ones under "Movable" and the hidden ones under "Hidden".
  * Each section stands also while it is empty, with a quiet row naming what a drop there does ("Drag here to freeze");
- * a search leaves out the sections without a match. A hidden column shows a plus where the others show the eye. A
- * frozen column is always shown: the eye of a frozen column also releases it, the lock of a hidden one also shows it,
+ * a search leaves out the sections without a match. A hidden column shows a plus where the others show a minus. A
+ * frozen column is always shown: the minus of a frozen column also releases it, the lock of a hidden one also shows it,
  * and both say so in their names.
  *
  * The section a column is dropped into decides its state: dragged among the frozen columns it is frozen there, among
  * the movable ones it is released there, and into "Hidden" it is hidden (a frozen one released as well) - a hidden
  * column has its handle as well and is shown where it is dropped. A drop is one command (`columnMove`) naming the
  * position and the state. "Hidden" is a zone rather than an order: the server keeps a hidden column at its place, so
- * shown again by its eye it is back where it was; the pointer over "Hidden" marks the whole section as the target
+ * shown again by its plus it is back where it was; the pointer over "Hidden" marks the whole section as the target
  * instead of a place between rows. Every heading and every placeholder takes the drop of its section as well. The last
  * shown column is not taken by "Hidden". Alt + arrow on the handle moves the same way, one step across a section line
  * at a time: up from the first movable column freezes it, down from the last frozen one releases it, down from the
@@ -165,11 +166,13 @@ interface Sync {
  * Unless the table is a tree (state `groupable` false), each row also offers a toggle grouping the rows by its column,
  * hidden or shown; the toggle of a column the rows are not grouped by groups them by it, as the innermost group level
  * if they are grouped already, the toggle of a grouping column removes the level of that column alone. Like lock and
- * eye it appears on hover or focus, but on a grouped row it always stands, so the current grouping is in sight.
+ * minus it appears on hover or focus, but on a grouped row it always stands, so the current grouping is in sight.
+ * Grouped by several columns, the toggle of each grouping column carries the number of its group level as a badge
+ * (part `Badge`), the outermost level 1.
  *
- * A click on the row itself shows or hides the column like the eye (the last shown column stays). The root is the host
- * of the list (tl-reorder-list__host): in the popover of the view it fills the page, the search stays above and the
- * list is the one area that scrolls.
+ * A click on the row itself shows or hides the column like its plus or minus (the last shown column stays). The root
+ * is the host of the list (tl-reorder-list__host): in the popover of the view it fills the page, the search stays above
+ * and the list is the one area that scrolls.
  *
  * Order, visibility and lock live on the server (see ReactColumnSelectControl), so a gesture sends a command and the
  * re-pushed list is what renders; the table follows each one at once. A drop and an Alt + arrow show the list they
@@ -223,10 +226,10 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand(command, args);
   }, [controlId, sendCommand]);
 
-  // A click on lock or eye can reorder the list (the column joins or leaves the frozen block; hiding a frozen column
-  // releases it), and React then moves the row's node, which takes the focus from the button. The clicked button is
-  // remembered by column name and kind and focused again once the re-pushed list has rendered, as the keyboard move of
-  // the handle does - but only a button that had the focus: a click that does not focus the button (Safari, for one)
+  // A click on lock, plus or minus can reorder the list (the column joins or leaves the frozen block; hiding a frozen
+  // column releases it), and React then moves the row's node, which takes the focus from the button. The clicked button
+  // is remembered by column name and kind and focused again once the re-pushed list has rendered, as the keyboard move
+  // of the handle does - but only a button that had the focus: a click that does not focus the button (Safari, for one)
   // must not scroll the list to the block and show a focus ring. A drag or an Alt + arrow remembers the handle the same
   // way, and keeps it until the server has answered: an answer differing from the expected list moves the row again.
   const buttonRefs = React.useRef(new Map<string, HTMLElement>());
@@ -270,9 +273,9 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
     send(CMD_COLUMN_LOCK, { [ARG_COLUMN]: name, [ARG_LOCKED]: locked });
   }, [send]);
 
-  // A click on the row itself shows or hides the column, as the eye does: the row is the click target of the whole entry,
-  // and the eye shows the state. The handle, the toggle, the lock and the eye are buttons with a gesture of their own,
-  // which a click on them must not repeat. The last shown column stays, as its eye does.
+  // A click on the row itself shows or hides the column, as plus and minus do: the row is the click target of the whole
+  // entry, and plus or minus shows the state. The handle, the toggle, the lock and plus or minus are buttons with a
+  // gesture of their own, which a click on them must not repeat. The last shown column stays, as its minus does.
   const handleRowClick = React.useCallback((entry: ColumnEntry, lastVisible: boolean, event: React.MouseEvent<HTMLElement>) => {
     const button = (event.target as HTMLElement).closest('button');
     if (lastVisible || (button !== null && event.currentTarget.contains(button))) {
@@ -446,7 +449,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
       ? i18n['js.table.columnLastVisible']
       : format(i18n[!entry.visible ? 'js.table.columnShow'
         : entry.locked ? 'js.table.columnHideUnlock' : 'js.table.columnHide'], entry.label);
-    // The tooltips of eye and lock stand next to the row and need no column name; the accessible names keep it,
+    // The tooltips of plus, minus and lock stand next to the row and need no column name; the accessible names keep it,
     // since a screen reader announces a button on its own.
     const eyeTip = lastVisible
       ? eyeLabel
@@ -471,7 +474,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
           lastVisible && 'last',
           target && 'drop-target',
         )}
-        // The row says why a click does nothing, as the disabled eye does.
+        // The row says why a click does nothing, as the disabled minus does.
         {...(lastVisible ? tooltipProps(i18n['js.table.columnLastVisible']) : {})}
         {...drag}
         // The drag takes the column by name, see draggedAt.
@@ -509,6 +512,12 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
               appearance="ghost"
               small
               checked={grouped}
+              // Grouped by several columns, the toggle of each grouping column names its level, the
+              // outermost one 1.
+              badge={grouped && grouping.length > 1 ? {
+                content: String(grouping.indexOf(entry.name) + 1),
+                label: i18n['js.table.groupLevel'],
+              } : undefined}
               // A grouped row keeps its toggle in sight; the others show it on hover or focus.
               className={grouped ? undefined : 'tl-reveal-on-hover'}
               onClick={() => handleGroup(entry.name, grouped)}
@@ -529,7 +538,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
             ref={buttonRef(`${entry.name}:eye`)}
             label={eyeLabel}
             tooltip={eyeTip}
-            image={entry.visible ? ICON_VISIBLE : ICON_ADD}
+            image={entry.visible ? ICON_MINUS : ICON_ADD}
             display="icon-only"
             appearance="ghost"
             small

@@ -181,6 +181,29 @@ public class TestPerson extends BasicTestCase {
 	}
 
 	/**
+	 * {@link Person#allByEMail(String)} finds nothing for a missing or empty address.
+	 */
+	public void testAllByEMailWithoutAddress() {
+		assertTrue(Person.allByEMail(null).isEmpty());
+		assertTrue(Person.allByEMail("").isEmpty());
+		assertTrue(Person.allByEMail("   ").isEmpty());
+	}
+
+	/**
+	 * An account without user data carries no e-mail address and is not found by
+	 * {@link Person#allByEMail(String)}, even if its name is the address.
+	 */
+	public void testAllByEMailIgnoresAccountWithoutUser() {
+		Person person = createPerson("no.user@example.com");
+		try {
+			assertNull(person.getUser());
+			assertTrue(Person.allByEMail("no.user@example.com").isEmpty());
+		} finally {
+			deletePersonAndUser(person);
+		}
+	}
+
+	/**
 	 * The secret of the second factor is stored in its own attribute and leaves the requirement
 	 * alone.
 	 */

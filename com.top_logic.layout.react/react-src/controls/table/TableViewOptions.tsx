@@ -1,4 +1,4 @@
-import { React, useI18N, usePart, usePopupTrigger, useRovingMenu, TLChild, ThemeIcon, ICON_COLUMNS, ICON_NEXT, ICON_PREVIOUS } from 'tl-react-bridge';
+import { React, useI18N, usePart, usePopupTrigger, useRovingMenu, TLChild, ThemeIcon, ICON_COLUMNS, ICON_NEXT, ICON_PREVIOUS, ICON_RESET, ICON_VIEW_SETTINGS } from 'tl-react-bridge';
 import { PickerPopover } from '../picker/PickerPopover';
 import { radioArrowTarget } from '../radioGroupKey';
 
@@ -209,6 +209,7 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
           onClick={onReset}
           {...stopProps('reset')}
         >
+          <ThemeIcon encoded={ICON_RESET} className="tl-menu__icon tl-icon-sm" />
           <span className="tl-menu__label">{i18n['js.table.viewReset']}</span>
         </button>
       </div>
@@ -413,11 +414,13 @@ export const TableViewButton: React.FC<TableViewButtonProps> = ({
                   className="tl-menu__item tl-menu__item--nav tl-type-body"
                   onClick={() => setViewShown(true)}
                 >
+                  <ThemeIcon encoded={ICON_VIEW_SETTINGS} className="tl-menu__icon tl-icon-sm" />
                   <span className="tl-menu__label">{i18n['js.table.view']}</span>
                   <ThemeIcon encoded={ICON_NEXT} className="tl-icon-sm tl-menu__chevron" />
                 </button>
               ) : (
                 <button ref={footRef} type="button" className="tl-menu__item tl-type-body" onClick={reset}>
+                  <ThemeIcon encoded={ICON_RESET} className="tl-menu__icon tl-icon-sm" />
                   <span className="tl-menu__label">{i18n['js.table.viewReset']}</span>
                 </button>
               )}

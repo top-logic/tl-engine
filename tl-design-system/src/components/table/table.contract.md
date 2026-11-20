@@ -166,9 +166,10 @@ Es ist nicht modal und wirkt sofort; was die Seiten zeigen:
 | `tl-menu__header` | Abschnittskopf „Dichte“ (`tl-type-label`, leiser Sekundärtext), `role="presentation"`; er benennt die Gruppe der Segmente (`aria-labelledby`) |
 | `tl-segmented tl-table-view-options__segments` | die drei Dichten als Gruppe (`role="group"`, `aria-labelledby`) von Segmenten mit Rolle `menuitemradio` und `aria-checked` (`menu.contract.md`; `choice.css` liest `aria-checked`, gleich welche Rolle), von den Rändern um `--tl-space-control-x` eingerückt wie der Text der Einträge |
 | `tl-menu__item`, `tl-menu__item--check` | Streifen und Spaltenlinien: Zeilen des Menüs mit Rolle `menuitemcheckbox` und `aria-checked`, die ganze Zeile klickt; der Schalter steht rechts als gezeichnetes `tl-checkbox` mit `tl-checkbox--switch` (`<span aria-hidden="true">`) ohne Eingabe (`choice.contract.md`) — dasselbe Bild wie der Schalter mit Eingabe |
-| `tl-menu__item`, `tl-menu__item--nav` | die Zeile „Ansicht“ am Fuß der Seite „Spalten“: ein `<button>` ohne Rolle, Beschriftung `tl-menu__label` links, am Zeilenende ein Chevron (`<i class="tl-menu__chevron tl-icon-sm" aria-hidden="true">`, `menu.contract.md`), kein Wert; der zugängliche Name ist die Beschriftung, ein Klick zeigt die Seite „Ansicht“ |
+| `tl-menu__item`, `tl-menu__item--nav` | die Zeile „Ansicht“ am Fuß der Seite „Spalten“: ein `<button>` ohne Rolle, links Icon und Beschriftung `tl-menu__label`, am Zeilenende ein Chevron (`<i class="tl-menu__chevron tl-icon-sm" aria-hidden="true">`, `menu.contract.md`), kein Wert; der zugängliche Name ist die Beschriftung, ein Klick zeigt die Seite „Ansicht“ |
 | `tl-divider` | Trennlinien in `--tl-border-separator`: auf der Seite „Spalten“ vor der Zeile „Ansicht“ (bzw. „Zurücksetzen“), im Menü vor „Zurücksetzen“ |
 | `tl-reorder-list__host` | die Wurzel der Spaltenwahl auf der Seite „Spalten“ (`reorder-list.contract.md`): Suche und Liste in einer Flex-Spalte, ohne Fensterabstand und Fensterhöhe; die Liste ist der einzige Rollbereich |
+| `tl-menu__icon` | die Zeile „Ansicht“ und „Zurücksetzen“ (im Menü wie am Fuß der Seite „Spalten“) tragen je ein Icon vor der Beschriftung (`menu.contract.md`), damit die Befehle auch bei weiteren Einträgen auffindbar bleiben (Review !2226); Dichte und Schalter haben keins, sie haben ihre eigene Form |
 
 Reihenfolge der Seiten: „Spalten“ zuerst, „Ansicht“ dahinter. Die Spaltenwahl steht zuerst, denn sie ist, was man an einer
 Tabelle am häufigsten einstellt (Review !2226); das Zahnrad öffnet sie und heißt darum „Spalten“, ohne Spaltenwahl
@@ -310,7 +311,7 @@ Klassen:
 | `tl-table__header-cell` | jede Kopfzelle |
 | `tl-table__sort` | der Sortierknopf, ein `button` |
 | `tl-table__label` | die Überschrift, Großbuchstaben in `--tl-text-secondary`; endet mit Ellipse. Das TSX setzt `tl-type-overline` daran (Sperrung `0.04em`) |
-| `tl-table__mark` | Sortierpfeil, Gruppierungsmarke: `tl-icon-sm`, `aria-hidden` |
+| `tl-table__mark` | Sortierpfeil, Gruppierungsmarke: `tl-icon-sm`, `aria-hidden`; die Gruppierungsmarke trägt bei einer Gruppierung nach mehreren Spalten hinter dem Symbol die Ebene als `tl-badge` (Part Badge, `aria-hidden`), Symbol und Ebene tragen zusammen ihren Tooltip |
 | `tl-table__filter` | der Trichter |
 | `tl-table__columns` | die Spaltenwahl (Zahnrad) |
 | `tl-table__resize` | Griff der Spaltenbreite |

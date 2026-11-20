@@ -193,7 +193,7 @@ test('Spaltenwahl: Zeile mit Zeiger, die letzte sichtbare ohne Zeiger und Hover;
   for (const w of ['„Hierher ziehen, um zu fixieren“', '„Hierher ziehen, um zu lösen“', '„Hierher ziehen, um auszublenden“',
     'data-tl-state="drop-target"']) assert.ok(md.includes(w), `Vertrag nennt ${w}`);
   const html = readComponent('reorder-list', 'reorder-list.spec.html');
-  for (const t of ['>Fixiert<', '>Beweglich<', '>Ausgeblendet<', 'data-tl-state="last"', 'bi-plus', 'tl-reorder-list__section'])
+  for (const t of ['>Fixiert<', '>Beweglich<', '>Ausgeblendet<', 'data-tl-state="last"', 'bi-plus', 'bi-dash', 'tl-reorder-list__section'])
     assert.ok(html.includes(t), `Specimen zeigt ${t}`);
   // Eine ausgeblendete Zeile hat einen Griff und ist ziehbar (Z3); leere Abschnitte zeigen den Platzhalter (Z4).
   const aus = html.match(/<li class="tl-reorder-list__item" data-tl-state="off[^"]*">[\s\S]*?<\/li>/)?.[0] ?? '';
@@ -253,7 +253,8 @@ test('Ansicht: die Seite „Spalten“ steht zuerst, an ihrem Fuß die Zeile „
   assert.equal(zeilen.length, 1, 'das Specimen zeigt die Zeile „Ansicht“ einmal: am Fuß der Seite „Spalten“');
   const [zeile] = zeilen;
   assert.doesNotMatch(zeile, /role=/, 'die Seite „Spalten“ ist kein Menü: die Zeile ist ein schlichter Knopf');
-  assert.match(zeile, /<span class="tl-menu__label">Ansicht<\/span>/, zeile);
+  assert.match(zeile, /<i class="tl-menu__icon [^"]*" aria-hidden="true"><\/i><span class="tl-menu__label">Ansicht<\/span>/,
+    `ein Icon vor der Beschriftung, verborgen: ${zeile}`);
   assert.match(zeile, /<i [^>]*tl-menu__chevron[^>]*aria-hidden="true"/, `das Chevron ist für Hilfstechnik verborgen: ${zeile}`);
   assert.doesNotMatch(zeile, /›/, zeile);
   // Die Zeile steht am Fuß: nach der Liste der Spaltenwahl und einer Trennlinie.
@@ -261,7 +262,7 @@ test('Ansicht: die Seite „Spalten“ steht zuerst, an ihrem Fuß die Zeile „
   assert.ok(capped.indexOf('tl-reorder-list__host') < capped.indexOf(zeile), 'die Zeile steht nach der Spaltenwahl');
   assert.match(capped.slice(0, capped.indexOf(zeile)), /<hr class="tl-divider">\s*$/, 'Trennlinie vor der Zeile');
   // Eine Tabelle ohne Speicher hat keine Seite „Ansicht“: „Zurücksetzen“ steht als schlichter Knopf am Fuß der Spalten.
-  assert.match(panel, /<hr class="tl-divider">\s*<button type="button" class="tl-menu__item tl-type-body"><span class="tl-menu__label">Zurücksetzen<\/span><\/button>\s*<\/div>/,
+  assert.match(panel, /<hr class="tl-divider">\s*<button type="button" class="tl-menu__item tl-type-body"><i class="tl-menu__icon [^"]*" aria-hidden="true"><\/i><span class="tl-menu__label">Zurücksetzen<\/span><\/button>\s*<\/div>/,
     'Spalten ohne Ansicht: „Zurücksetzen“ am Fuß');
   const reorder = readComponent('reorder-list', 'reorder-list.contract.md');
   assert.match(reorder, /Klick auf die Zeile/, 'die Zeile der Spaltenwahl klickt');

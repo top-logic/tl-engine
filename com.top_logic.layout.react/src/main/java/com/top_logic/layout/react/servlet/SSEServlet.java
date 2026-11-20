@@ -103,7 +103,8 @@ public class SSEServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 		HttpSession session = request.getSession(false);
 		if (session == null) {
-			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "No session.");
+			ReactServlet.sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ReactServlet.ERROR_CODE_STALE_UI,
+				"No session.");
 			return;
 		}
 
@@ -116,7 +117,8 @@ public class SSEServlet extends HttpServlet {
 		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
 		if (registry.getQueue(windowName) == null) {
 			registry.reportStaleWindow(windowName, EVENT_STREAM_REQUEST);
-			response.sendError(HttpServletResponse.SC_GONE, "Unknown window.");
+			ReactServlet.sendError(response, HttpServletResponse.SC_GONE, ReactServlet.ERROR_CODE_STALE_UI,
+				"Unknown window.");
 			return;
 		}
 

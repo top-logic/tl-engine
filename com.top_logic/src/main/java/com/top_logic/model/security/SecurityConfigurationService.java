@@ -76,6 +76,7 @@ import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
+import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -1110,12 +1111,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		}
 		AccessParentConfig accessParent = config.getAccessParent();
 		if (accessParent != null) {
-			if (AccessParentConfig.delegates(accessParent)
-				&& (!config.getGrants().isEmpty() || config.isWithoutSecurity() || config.isInternal())) {
-				context.error("The type " + config.getName()
-					+ " has an access parent and therefore must have neither grants nor marks of its own.");
+			AccessParentFunction function = resolveAccessParent(context, clazz, accessParent, explicitParents);
+			if (AccessParentConfig.delegates(accessParent)) {
+				checkOwnDefinition(context, config, function);
 			}
-			resolveAccessParent(context, clazz, accessParent, explicitParents);
 		}
 		classRules.computeIfAbsent(clazz, unused -> new ArrayList<>())
 			.addAll(resolveRules(context, config, getOperations(clazz)::appliesTo));
@@ -1126,23 +1125,111 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * <p>
 	 * A type {@link SelfAccessParent deciding for itself} is entered as <code>null</code>, which also
 	 * switches off the default of a composition part and an access parent inherited from a
-	 * generalization. An unusable setting is reported by its definition and not entered.
+	 * generalization. A definition restricted to some operations is entered as
+	 * {@link RestrictedRelation}. An unusable setting is reported and not entered.
 	 * </p>
+	 *
+	 * @return The entered relation, <code>null</code> for a type deciding for itself and for an
+	 *         unusable setting.
 	 */
-	private void resolveAccessParent(InstantiationContext context, TLClass type, AccessParentConfig config,
-			Map<TLClass, AccessParentFunction> explicitParents) {
+	private AccessParentFunction resolveAccessParent(InstantiationContext context, TLClass type,
+			AccessParentConfig config, Map<TLClass, AccessParentFunction> explicitParents) {
 		AccessParentDefinition definition = context.getInstance(config.getDefinition());
 		if (definition == null) {
-			return;
+			return null;
 		}
 		if (definition instanceof SelfAccessParent) {
 			explicitParents.put(type, null);
-			return;
+			return null;
 		}
 		AccessParentFunction function = definition.resolve(context, type);
-		if (function != null) {
-			explicitParents.put(type, function);
+		if (function == null) {
+			return null;
 		}
+		if (config.getDefinition() instanceof OperationRestriction restriction
+			&& !restriction.getOperations().isEmpty()) {
+			Set<BoundCommandGroup> operations = resolveDelegatedOperations(context, type, restriction);
+			if (operations == null) {
+				return null;
+			}
+			function = new RestrictedRelation(function, Set.copyOf(operations));
+		}
+		explicitParents.put(type, function);
+		return function;
+	}
+
+	/**
+	 * Resolves the operations an access parent is restricted to, reporting a configuration error for
+	 * an operation that does not exist or does not apply to the type.
+	 *
+	 * @return The delegated operations, <code>null</code> when one of them is unusable.
+	 */
+	private Set<BoundCommandGroup> resolveDelegatedOperations(InstantiationContext context, TLClass type,
+			OperationRestriction restriction) {
+		String typeName = TLModelUtil.qualifiedName(type);
+		ApplicableOperations applicable = getOperations(type);
+		Set<BoundCommandGroup> result = new HashSet<>();
+		boolean valid = true;
+		for (CommandGroupReference reference : restriction.getOperations()) {
+			BoundCommandGroup operation = reference.resolve(_commandGroups);
+			if (operation == null) {
+				context.error("The command group " + reference.id() + " in the access parent of " + typeName
+					+ " does not exist.");
+				valid = false;
+				continue;
+			}
+			if (!applicable.appliesTo(operation)) {
+				context.error("The operation " + operation.getID() + " in the access parent of " + typeName
+					+ " does not apply there: declare it with <" + OperationDeclaration.TAG_NAME + " "
+					+ OperationDeclaration.NAME + "=\"" + operation.getID() + "\"/> in the <"
+					+ WithOperations.OPERATIONS + "> of the type, of a generalization or of the module.");
+				valid = false;
+				continue;
+			}
+			result.add(operation);
+		}
+		return valid ? result : null;
+	}
+
+	/**
+	 * Reports the own definition of a type with a delegating access parent that the access parent
+	 * takes over: a mark, and a grant of an operation the access parent decides.
+	 *
+	 * @param function
+	 *        The resolved access parent, <code>null</code> when the setting is unusable, which is
+	 *        reported already.
+	 */
+	private void checkOwnDefinition(InstantiationContext context, TLClassAccessRights config,
+			AccessParentFunction function) {
+		if (!isRestricted(config)) {
+			if (!config.getGrants().isEmpty() || config.isWithoutSecurity() || config.isInternal()) {
+				context.error("The type " + config.getName()
+					+ " has an access parent and therefore must have neither grants nor marks of its own.");
+			}
+			return;
+		}
+		if (config.isWithoutSecurity() || config.isInternal()) {
+			context.error("The type " + config.getName()
+				+ " has an access parent and therefore must not be marked internal or without security.");
+		}
+		if (function == null) {
+			return;
+		}
+		for (AccessRule rule : config.getGrants()) {
+			BoundCommandGroup operation = rule.getOperation().resolve(_commandGroups);
+			if (operation != null && function.delegates(operation)) {
+				context.error("The type " + config.getName() + " delegates the operation " + operation.getID()
+					+ " to its access parent and therefore must neither grant nor revoke it.");
+			}
+		}
+	}
+
+	/**
+	 * Whether the access parent setting of the given entry is restricted to some operations.
+	 */
+	private static boolean isRestricted(TLClassAccessRights config) {
+		return config.getAccessParent().getDefinition() instanceof OperationRestriction restriction
+			&& !restriction.getOperations().isEmpty();
 	}
 
 	/**
@@ -1251,7 +1338,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (parent == null) {
 			return Collections.emptySet();
 		}
-		if (parent instanceof ContainerRelation container && container.composition() == null) {
+		if (parent.getRelation() instanceof ContainerRelation container && container.composition() == null) {
 			return Collections.unmodifiableSet(entry(type)._containerTypes);
 		}
 		return parent.getParentTypes(type);
@@ -1595,7 +1682,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * </p>
 	 */
 	private static TLObject draftParent(AccessParentFunction parent, TLObject draft) {
-		if (parent instanceof ContainerRelation && draft.tContainerReference() == null) {
+		if (parent.getRelation() instanceof ContainerRelation && draft.tContainerReference() == null) {
 			return draft.tContainer();
 		}
 		return parent.resolve(draft);

@@ -50,7 +50,7 @@ dazwischen, ändert sich sichtbar nichts, nur die Ansage.
 |---|---|
 | Ziehen eines Eintrags an eine neue Stelle oder in einen anderen Abschnitt, Alt + Pfeil auf dem Griff | `sendCommand('columnMove', …)` mit `column`, `targetIndex` (Stelle in der ganzen Liste nach dem Entfernen), `locked` und `visible` (der Zielzustand) — derselbe Befehl für Maus und Tastatur; Stelle und Zustand setzt der Server in einem Schritt. Nach dem Ablegen zeigt die Liste sofort die erwartete Reihenfolge, bis die Antwort kommt; weicht sie ab, gilt die Antwort (Z8). |
 | Klick auf die Zeile (nicht auf Griff, Schloss, Minus bzw. Plus oder Gruppieren) | wie Minus und Plus: `sendCommand('columnVisible', …)` für diesen Eintrag, ausgeblendete werden eingeblendet; die letzte sichtbare Spalte reagiert nicht. Die Zeile ist die Klickfläche (U42), Minus bzw. Plus zeigt den Zustand und bleibt der Weg der Tastatur. |
-| Minus bzw. Plus (`tl-reorder-list__eye`) | `sendCommand('columnVisible', …)` für diesen Eintrag; an der letzten sichtbaren Spalte disabled mit Tooltip `js.table.columnLastVisible`. |
+| Minus bzw. Plus (`tl-reorder-list__visibility`) | `sendCommand('columnVisible', …)` für diesen Eintrag; an der letzten sichtbaren Spalte disabled mit Tooltip `js.table.columnLastVisible`. |
 | Schloss (`tl-reorder-list__lock`) | Befehl `columnLock` (`sendCommand('columnLock', …)`): fixieren stellt den Eintrag ans Ende des Blocks, lösen direkt dahinter. |
 
 ## Tastatur
@@ -122,7 +122,7 @@ Klassen:
 | `tl-reorder-list__host` | die Wurzel der Spaltenwahl um Suche und Liste: eine Flex-Spalte, die ihren Behälter füllt und mit ihm schrumpft (`flex: 1 1 auto`, `min-block-size: 0`); es rollt allein die Liste. Im Popover am Zahnrad sitzt sie auf der ersten Seite „Spalten“ (`table.contract.md`) und trägt dort weder Fensterabstand noch Fensterhöhe |
 | `tl-reorder-list__actions` | `span` am Zeilenende um Schloss und Minus bzw. Plus |
 | `tl-reorder-list__lock` | das Schloss, mit `tl-button tl-button--ghost tl-button--sm tl-button--icon` und `tl-reveal-on-hover` |
-| `tl-reorder-list__eye` | das Minus einer gezeigten, das Plus einer ausgeblendeten Spalte, ebenso |
+| `tl-reorder-list__visibility` | das Minus einer gezeigten, das Plus einer ausgeblendeten Spalte, ebenso |
 | `tl-reorder-list__section` | `li` mit der Überschrift eines Abschnitts („Fixiert“, „Beweglich“, „Ausgeblendet“), `role="presentation"`, `tl-type-label`; nimmt die Ablage an wie der Platzhalter seiner Zone |
 | `tl-reorder-list__empty` | `li` eines leeren Abschnitts, `role="presentation"` wie die Überschrift: der leise Hinweis „Hierher ziehen, um …“, nimmt die Ablage der Zone an |
 | `tl-visually-hidden` | der Live-Bereich: gelesen, nicht gezeigt (der Hinweis trägt `hidden`, siehe Attribute) |

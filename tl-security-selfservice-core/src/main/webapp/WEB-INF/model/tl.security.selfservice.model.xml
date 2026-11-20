@@ -46,15 +46,9 @@
 					<annotations>
 						<constraints>
 							<constraint-by-expression>
-								<check><![CDATA[email -> {
-  lowerCaseMail = $email.toLowerCase();
-  existingAccount = all(`tl.accounts:Person`)
-    .filter(account -> $account.get(`tl.accounts:Person#name`).toLowerCase() == $lowerCaseMail)
-    .firstElement();
-  $existingAccount != null ?
-  #("Es gibt bereits einen Zugang für die E-Mail-Adresse {0}."@de, "There is already an account for the email address {0}."@en).fill($existingAccount.get(`tl.accounts:Person#name`)) :
-  null;
-}]]></check>
+								<check><![CDATA[email -> self -> $self.get(`tl.security.selfservice:Invitation#accepted`) == null && invitationExistingAccount($email) != null ?
+  #("Es gibt bereits einen Zugang für die E-Mail-Adresse {0}."@de, "There is already an account for the email address {0}."@en).fill($email) :
+  null]]></check>
 							</constraint-by-expression>
 							<constraint-by-expression>
 								<check><![CDATA[email -> invitationEmailRefusal($email)]]></check>

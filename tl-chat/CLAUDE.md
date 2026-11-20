@@ -858,11 +858,28 @@ Layout preferences (`railOpen`, `paneWidth`, `badgeSeen`, the per-section collap
 from PersonalConfiguration via `ChatViewBinding.writeRenderState` and written through the
 `saveLayout` command.
 
-The Leiste badge is the sum of each section's badge minus the total last stored when the rail was
-opened - "N new since you last looked", so a section that reports nothing contributes nothing. In
-`App` the sections are `RailSection` objects and the sum is computed in place; with a composed
-`<chat-rail>` the sections are separate view elements, so the rail publishes the sum into the store
-(`badgeTotal`) and `<chat-conversation>`'s button reads it there.
+Every badge of the rail - beside a section title, on a strip icon, on the transcript's rail button
+and on the dock's launcher - is drawn through the part `Badge` (`StateBadge`, `labelWithBadge` of the
+bridge). A `<section>` of a `<chat-rail>` is declared `WithBadge` (`badge`, `badge-role`,
+`badge-label`); `ChatRailControl` sends per section the state of its `BadgeBinding` under
+`sectionBadges`.
+
+The Leiste badge is what is new since the user last looked, counted per section: the seen watermark
+(`badgeSeen`, stored in the layout preferences) holds per section name the count the user has seen,
+and the button shows the sum over the sections of what each counts above its seen count - so a
+section dropping below what was seen of it does not swallow the news of another, a section that
+reports nothing contributes nothing and a text badge adds nothing. Its role is the most urgent role
+among the sections with something new (error, warning, info, success, brand). A section showing "99+"
+has an unknown real count: counting above its seen count, it makes the button "99+"; seen at "99+", it
+adds nothing. When nothing is new by count but a section shows a dot, the button shows a dot; the dot
+stays until its section clears it. Opening the rail, and the rail being open and on screen (also a
+rail that starts open), sets every section's seen count to its current count, so the closed rail's
+button counts only what came in afterwards (`railBadge`, `seenCounts`, `unseenRailBadge` in
+`rail-model.ts`). A stored seen value that is not a map per section is nothing seen.
+In `App` the sections are `RailSection` objects and their badges are collected in place; with a
+composed `<chat-rail>` the sections are separate view elements, so the rail publishes their badges
+into the store (`railBadge`) and `<chat-conversation>`'s button and the dock's launcher read them
+there.
 
 ### Where the chat's state lives
 

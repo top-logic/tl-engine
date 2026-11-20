@@ -30,6 +30,7 @@ const I18N_KEYS = {
   'js.table.groupBy': 'Group by this column',
   'js.table.groupByAlso': 'Additionally group by this column',
   'js.table.ungroupColumn': 'Remove grouping by this column',
+  'js.table.groupLevel': 'Grouping level',
 };
 
 /** Shows or hides one of the columns. */
@@ -166,6 +167,8 @@ interface Sync {
  * hidden or shown; the toggle of a column the rows are not grouped by groups them by it, as the innermost group level
  * if they are grouped already, the toggle of a grouping column removes the level of that column alone. Like lock and
  * eye it appears on hover or focus, but on a grouped row it always stands, so the current grouping is in sight.
+ * Grouped by several columns, the toggle of each grouping column carries the number of its group level as a badge
+ * (part `Badge`), the outermost level 1.
  *
  * A click on the row itself shows or hides the column like the eye (the last shown column stays). The root is the host
  * of the list (tl-reorder-list__host): in the popover of the view it fills the page, the search stays above and the
@@ -509,6 +512,12 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
               appearance="ghost"
               small
               checked={grouped}
+              // Grouped by several columns, the toggle of each grouping column names its level, the
+              // outermost one 1.
+              badge={grouped && grouping.length > 1 ? {
+                content: String(grouping.indexOf(entry.name) + 1),
+                label: i18n['js.table.groupLevel'],
+              } : undefined}
               // A grouped row keeps its toggle in sight; the others show it on hover or focus.
               className={grouped ? undefined : 'tl-reveal-on-hover'}
               onClick={() => handleGroup(entry.name, grouped)}

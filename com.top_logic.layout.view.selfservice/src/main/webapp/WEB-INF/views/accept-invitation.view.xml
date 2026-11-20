@@ -54,7 +54,7 @@
 									<de>Sie wurden eingeladen, ein Konto anzulegen. Zur Bestätigung, dass die Einladung Sie erreicht hat, senden wir einen Bestätigungscode an die E-Mail-Adresse, an die die Einladung ging.</de>
 								</label>
 							</text>
-							<button>
+							<button appearance="primary">
 								<action class="com.top_logic.layout.view.command.GenericViewCommand"
 									inputs="token"
 								>

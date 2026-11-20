@@ -265,9 +265,18 @@
 }
 
 /* Sortierpfeil und Gruppierungsmarke: tl-icon-sm, aria-hidden. Die Stufe einer mehrstufigen Sortierung
-   ist ein tl-badge. */
+   ist ein tl-badge (Part Badge). */
 .tl-table__mark {
   color: var(--tl-icon-secondary);
+}
+
+/* Die Gruppierungsmarke steht direkt in der Kopfzelle und trägt deren Tooltip. Bei einer Gruppierung nach mehreren
+   Spalten steht in ihr hinter dem Symbol die Ebene als tl-badge (Part Badge), so dass Symbol und Ebene
+   zusammen den Tooltip tragen; der Abstand ist derselbe wie zwischen den Elementen der Kopfzelle. */
+.tl-table__header-cell > .tl-table__mark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
 }
 
 /* Der Trichter ist ein tl-button--icon --sm --ghost mit einer Glyphe. Ein aktiver Filter ist ein Zustand

@@ -168,6 +168,7 @@ Es ist nicht modal und wirkt sofort; was die Seiten zeigen:
 | `tl-menu__item`, `tl-menu__item--nav` | die Zeile „Ansicht“ am Fuß der Seite „Spalten“: ein `<button>` ohne Rolle, Beschriftung `tl-menu__label` links, am Zeilenende ein Chevron (`<i class="tl-menu__chevron tl-icon-sm" aria-hidden="true">`, `menu.contract.md`), kein Wert; der zugängliche Name ist die Beschriftung, ein Klick zeigt die Seite „Ansicht“ |
 | `tl-divider` | Trennlinien in `--tl-border-separator`: auf der Seite „Spalten“ vor der Zeile „Ansicht“ (bzw. „Zurücksetzen“), im Menü vor „Zurücksetzen“ |
 | `tl-reorder-list__host` | die Wurzel der Spaltenwahl auf der Seite „Spalten“ (`reorder-list.contract.md`): Suche und Liste in einer Flex-Spalte, ohne Fensterabstand und Fensterhöhe; die Liste ist der einzige Rollbereich |
+| `tl-menu__icon` | „Zurücksetzen“ trägt ein Icon vor der Beschriftung (`menu.contract.md`), damit der Befehl auch bei weiteren Einträgen auffindbar bleibt (Review !2226); Dichte und Schalter haben keins, sie haben ihre eigene Form |
 
 Reihenfolge der Seiten: „Spalten“ zuerst, „Ansicht“ dahinter. Die Spaltenwahl steht zuerst, denn sie ist, was man an einer
 Tabelle am häufigsten einstellt (Review !2226); das Zahnrad öffnet sie und heißt darum „Spalten“, ohne Spaltenwahl
@@ -308,7 +309,7 @@ Klassen:
 | `tl-table__header-cell` | jede Kopfzelle |
 | `tl-table__sort` | der Sortierknopf, ein `button` |
 | `tl-table__label` | die Überschrift, Großbuchstaben in `--tl-text-secondary`; endet mit Ellipse. Das TSX setzt `tl-type-overline` daran (Sperrung `0.04em`) |
-| `tl-table__mark` | Sortierpfeil, Gruppierungsmarke: `tl-icon-sm`, `aria-hidden` |
+| `tl-table__mark` | Sortierpfeil, Gruppierungsmarke: `tl-icon-sm`, `aria-hidden`; die Gruppierungsmarke trägt bei einer Gruppierung nach mehreren Spalten hinter dem Symbol die Ebene als `tl-badge` (Part Badge, `aria-hidden`), Symbol und Ebene tragen zusammen ihren Tooltip |
 | `tl-table__filter` | der Trichter |
 | `tl-table__columns` | die Spaltenwahl (Zahnrad) |
 | `tl-table__resize` | Griff der Spaltenbreite |

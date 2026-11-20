@@ -394,6 +394,15 @@ describe('the page "View" behind the row "View" as a menu', () => {
     expect(name.closest('.tl-table-view-options__title')).toBe(back.closest('.tl-table-view-options__title'));
   });
 
+  it('gives the reset an icon, hidden from assistive technology', async () => {
+    mountMenu();
+    await settle();
+    await openView();
+    const icon = stop(RESET).querySelector('.tl-menu__icon');
+    expect(icon).not.toBeNull();
+    expect(icon!.getAttribute('aria-hidden')).toBe('true');
+  });
+
   it('draws the rows as the spec has them: the whole row a menu item, the switch a drawing without input', async () => {
     mountMenu({ striped: true });
     await settle();
@@ -1137,7 +1146,7 @@ describe('the column menu by keyboard', () => {
     await settle();
     expect(screen.queryByRole('menu')).toBeNull();
     // Grouping by another column: the pinned heading would now offer "ungroup".
-    patchState({ grouping: 'name' });
+    patchState({ grouping: ['name'] });
     await settle();
     expect(screen.queryByRole('menu')).toBeNull();
   });

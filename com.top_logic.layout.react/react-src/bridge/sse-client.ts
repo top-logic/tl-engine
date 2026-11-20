@@ -31,6 +31,16 @@ import { handleDownload, type DownloadEventData } from './download';
 import { handleOpenUrl, type OpenUrlEventData } from './open-url';
 import { afterNavigationGrace, isPageLeaving, mayBeNavigating, onPageLeave, reloadForStaleUi } from './page-leave';
 import { leavePageWhenAnswered } from './command-channel';
+import {
+  MAX_RETRY_BACKOFF_MS,
+  MIN_RETRY_BACKOFF_MS,
+  classifyAnswer,
+  isConnected,
+  reportReachable,
+  reportUnreachable,
+  setCheckUrl,
+  subscribeConnection,
+} from './connection';
 
 type StateListener = (state: Record<string, unknown>) => void;
 
@@ -67,9 +77,6 @@ const HEARTBEAT_CHECK_INTERVAL_MS = 15_000;
 /** A stream that brings no event within this after it was opened does not arrive. */
 const FIRST_MESSAGE_TIMEOUT_MS = 3_000;
 
-/** The longest wait between two failed polls. */
-const MAX_POLL_BACKOFF_MS = 10_000;
-
 /**
  * The parameter naming the last event the client received, for a poll and for a stream the client
  * opens again by itself (`AFTER_PARAM` of `SSEServlet`).
@@ -99,7 +106,9 @@ export function connect(url: string): void {
   if (!_leaveListenerRegistered) {
     _leaveListenerRegistered = true;
     onPageLeave(disconnect);
+    subscribeConnection(reconnect);
   }
+  setCheckUrl(peekUrl());
 
   if (_heartbeatCheckInterval) {
     clearInterval(_heartbeatCheckInterval);
@@ -113,6 +122,8 @@ export function connect(url: string): void {
   createEventSource(url);
 
   _heartbeatCheckInterval = setInterval(() => {
+    // A server that does not answer sends no heartbeat either; that says nothing about a proxy.
+    if (!isConnected()) return;
     if (_lastMessageTime > 0 && Date.now() - _lastMessageTime > HEARTBEAT_TIMEOUT_MS) {
       // A stream that went silent is held back somewhere on the way; polling passes.
       usePolling('no heartbeat received');
@@ -141,6 +152,18 @@ function disconnect(): void {
 }
 
 /**
+ * Opens the event stream again once the server answers again after it did not (see
+ * {@link isConnected}): the stream names the last event received, and its connection brings the
+ * full state. A stream the browser reconnected by itself meanwhile is kept, and a tab that polls
+ * simply polls on.
+ */
+function reconnect(): void {
+  if (!isConnected() || _polling || !_url || isPageLeaving()) return;
+  if (_eventSource && _eventSource.readyState === EventSource.OPEN) return;
+  createEventSource(_url);
+}
+
+/**
  * Creates (or re-creates) the EventSource connection.
  *
  * A stream opened again names the last event received, so that the server replays the events
@@ -163,8 +186,13 @@ function createEventSource(url: string): void {
   if (_firstMessageTimer) clearTimeout(_firstMessageTimer);
   _firstMessageTimer = setTimeout(() => usePolling('the event stream brought nothing'), FIRST_MESSAGE_TIMEOUT_MS);
 
+  source.onopen = () => {
+    reportReachable();
+  };
+
   source.onmessage = (event: MessageEvent) => {
     _lastMessageTime = Date.now();
+    reportReachable();
     if (_firstMessageTimer) {
       clearTimeout(_firstMessageTimer);
       _firstMessageTimer = null;
@@ -194,6 +222,12 @@ function createEventSource(url: string): void {
       return;
     }
     if (source.readyState === EventSource.CLOSED) {
+      if (!isConnected()) {
+        // The server did not answer before, and refuses the stream while it comes back (the error
+        // page of a servlet container whose application is not started yet): the checks of the
+        // connection open the stream again once the application answers.
+        return;
+      }
       // The stream was refused: the session is gone (401 after a server restart), or a proxy does
       // not let an event stream through. Polling tells the two apart - its first request answers
       // 401 or 410 for a lost session, which reloads the page then.
@@ -201,6 +235,7 @@ function createEventSource(url: string): void {
       return;
     }
     console.warn('[TLReact] SSE connection error, will reconnect automatically.');
+    reportUnreachable();
   };
 }
 
@@ -216,10 +251,11 @@ function dispatchMessage(text: string): void {
  * Gives up the event stream and receives the events by polling from now on.
  *
  * Not while a navigation may be starting ({@link mayBeNavigating}): a stream the navigation
- * aborted or held up says nothing about a proxy, and the tab would poll for good.
+ * aborted or held up says nothing about a proxy, and the tab would poll for good. Nor while the
+ * server does not answer ({@link isConnected}), which says nothing about a proxy either.
  */
 function usePolling(reason: string): void {
-  if (_polling || isPageLeaving() || mayBeNavigating()) return;
+  if (_polling || isPageLeaving() || mayBeNavigating() || !isConnected()) return;
   _polling = true;
   console.warn('[TLReact] polling: ' + reason);
   writeStorage(POLLING_KEY, '1');
@@ -244,8 +280,19 @@ interface PollAnswer {
   events: unknown[];
 }
 
+/** The address of a poll of the page's window, without the parameters of a single poll. */
+function pollUrl(): string {
+  return _url!.replace('react-api/events', 'react-api/poll');
+}
+
+/** The address of a poll that only asks for the number of the last event written. */
+function peekUrl(): string {
+  const base = pollUrl();
+  return base + (base.includes('?') ? '&' : '?') + 'peek=true';
+}
+
 async function pollLoop(): Promise<void> {
-  const base = _url!.replace('react-api/events', 'react-api/poll');
+  const base = pollUrl();
   // The first poll sends the cookie and asks for the full state: what the stream carried may not
   // have arrived either.
   let full = true;
@@ -266,7 +313,12 @@ async function pollLoop(): Promise<void> {
         cache: 'no-store',
         credentials: withToken ? 'omit' : 'same-origin',
       });
+      const text = await response.text();
       if (response.status === 401 || response.status === 410) {
+        if (classifyAnswer(response.status, text) !== 'stale') {
+          // Not the application's answer, but one of a proxy or of the servlet container.
+          throw new Error('poll refused (' + response.status + ')');
+        }
         // The session or the window is gone, as a closed stream used to say.
         reloadForLostSession();
         return;
@@ -277,7 +329,9 @@ async function pollLoop(): Promise<void> {
         continue;
       }
       if (!response.ok) throw new Error('poll failed (' + response.status + ')');
-      const answer = (await response.json()) as PollAnswer;
+      // A page that is not JSON does not come from the application.
+      const answer = JSON.parse(text) as PollAnswer;
+      reportReachable();
       full = false;
       backoff = 0;
       if (answer.token) _pollToken = answer.token;
@@ -287,7 +341,8 @@ async function pollLoop(): Promise<void> {
         dispatch(event);
       }
     } catch (e) {
-      backoff = Math.min(backoff ? backoff * 2 : 1_000, MAX_POLL_BACKOFF_MS);
+      reportUnreachable();
+      backoff = Math.min(backoff ? backoff * 2 : MIN_RETRY_BACKOFF_MS, MAX_RETRY_BACKOFF_MS);
       console.warn('[TLReact] poll failed, trying again in ' + backoff + ' ms:', e);
       await new Promise((resolve) => setTimeout(resolve, backoff));
     }
@@ -366,8 +421,7 @@ async function checkDelivery(): Promise<void> {
 }
 
 async function peekLastSeq(): Promise<number> {
-  const base = _url!.replace('react-api/events', 'react-api/poll');
-  const response = await fetch(base + (base.includes('?') ? '&' : '?') + 'peek=true', { cache: 'no-store' });
+  const response = await fetch(peekUrl(), { cache: 'no-store' });
   if (!response.ok) return 0;
   return ((await response.json()) as { last: number }).last;
 }

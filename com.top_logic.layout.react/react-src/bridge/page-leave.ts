@@ -24,8 +24,12 @@
  * <p>When the server does not know the page any more for a reason of its own - the session was
  * replaced in another tab, the server restarted - {@link reloadForStaleUi} loads it again, guarded
  * against loops, and through {@link reentryUrl}: the address without the name of the window, which
- * the server may have discarded, so the view application's bootstrap page names the window again.</p>
+ * the server may have discarded, so the view application's bootstrap page names the window again.
+ * It does so only once the application answers ({@link reloadWhenReachable}): a server that is
+ * shutting down would leave the browser on the error page of the servlet container.</p>
  */
+
+import { reloadWhenReachable } from './connection';
 
 /**
  * Session-storage key holding the time (ms since the epoch) of the last reload for a page the
@@ -120,40 +124,40 @@ export function leavePage(url?: string): void {
  * Loads the page again after the server answered that it no longer knows it, unless that was just
  * done for the same reason.
  *
- * <p>The page is loaded through {@link reentryUrl}. Nothing happens while the page is leaving
- * anyway: the answer then belongs to a request the navigation overtook.</p>
+ * <p>The page is loaded through {@link reentryUrl}, once the application answers (see
+ * {@link reloadWhenReachable}). Nothing happens while the page is leaving anyway: the answer then
+ * belongs to a request the navigation overtook.</p>
  *
  * @param options.waitForGuard what happens within {@link STALE_UI_RELOAD_GUARD_MS} after the last
  *        such reload: `false` (the default) does not reload, so a page the server still does not
  *        know after being loaded again stops there; `true` reloads once the interval has passed,
- *        for a server that is expected to come back (a restart).
+ *        for a server that is expected to come back (a restart). A tab without session storage
+ *        cannot remember its last reload and always waits for the interval.
  * @returns whether the page is being or will be loaded again.
  */
 export function reloadForStaleUi(options?: { waitForGuard?: boolean }): boolean {
   if (_leaving) return false;
   const stored = readStorage(STALE_UI_RELOAD_TIME_KEY);
-  if (stored === undefined) {
-    // Without storage there is no guard, and a page that cannot remember its last reload must not
-    // risk a loop: it stays as it is.
-    console.error('[TLReact] The server no longer knows this page; no storage to guard a reload, not reloading.');
-    return false;
-  }
-  const last = Number(stored) || 0;
+  // Without storage, the page cannot remember its last reload: it counts as just reloaded, so that
+  // the guard delays the reload - a page the server never knows reloads in the guard's rhythm
+  // instead of a loop - but never prevents it.
+  const last = stored === undefined ? Date.now() : Number(stored) || 0;
+  const waitForGuard = options?.waitForGuard || stored === undefined;
   const elapsed = Date.now() - last;
   if (elapsed < STALE_UI_RELOAD_GUARD_MS) {
-    if (!options?.waitForGuard) {
+    if (!waitForGuard) {
       console.error('[TLReact] The server still does not know this page right after a reload; not reloading again.');
       return false;
     }
     const wait = STALE_UI_RELOAD_GUARD_MS - elapsed;
     console.warn('[TLReact] The server no longer knows this page. Reloading in ' + wait + ' ms.');
     setTimeout(() => {
-      if (!_leaving) reloadStale();
+      if (!_leaving) reloadWhenReachable(reloadStale);
     }, wait);
     return true;
   }
   console.warn('[TLReact] The server no longer knows this page (session replaced or window discarded). Reloading.');
-  reloadStale();
+  reloadWhenReachable(reloadStale);
   return true;
 }
 

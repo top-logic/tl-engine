@@ -79,7 +79,9 @@
     document.getElementById(id).append(rows);
   }
   // Die Knöpfe der Leiste wie in der Engine (useScrollStrip): da, solange die Reiter überlaufen; disabled (unsichtbar,
-  // Platz bleibt), solange in ihrer Richtung nichts verdeckt ist.
+  // Platz bleibt), solange in ihrer Richtung nichts verdeckt ist. Das Mausrad wie in der Engine (useWheelScroll):
+  // bei Überlauf scrollt eine senkrechte Drehung die Reiterreihe seitlich und wird abgefangen, auch am Ende; Strg (Zoom)
+  // und waagerechte Bewegungen bleiben dem Browser.
   for (const list of document.querySelectorAll('.tl-tabs__list')) {
     const strip = list.parentElement;
     const start = strip.querySelector('[data-tl-edge="start"]'), end = strip.querySelector('[data-tl-edge="end"]');
@@ -93,6 +95,12 @@
     new ResizeObserver(update).observe(list);
     start.addEventListener('click', () => list.scrollBy({ left: -list.clientWidth * 0.8, behavior: 'smooth' }));
     end.addEventListener('click', () => list.scrollBy({ left: list.clientWidth * 0.8, behavior: 'smooth' }));
+    list.addEventListener('wheel', (e) => {
+      if (e.ctrlKey || Math.abs(e.deltaX) >= Math.abs(e.deltaY) || list.scrollWidth <= list.clientWidth + 0.5) return;
+      e.preventDefault();
+      const unit = e.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : e.deltaMode === WheelEvent.DOM_DELTA_PAGE ? list.clientWidth : 1;
+      list.scrollLeft += e.deltaY * unit;
+    }, { passive: false });
   }
   const html = document.documentElement;
   document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));

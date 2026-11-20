@@ -52,8 +52,9 @@ function keepFocus(e: React.MouseEvent): void {
  * <p>The tab list scrolls horizontally by itself when the tabs are wider than the strip. While they
  * are, a scroll button stands outside the list at each end and keeps its space; a button with no
  * tabs hidden in its direction is disabled, which the design system draws invisible
- * ({@link useScrollStrip}). Without overflow both buttons are hidden. The selected tab is kept in
- * view inside the list only.</p>
+ * ({@link useScrollStrip}). Without overflow both buttons are hidden. While the tabs overflow, the
+ * mouse wheel scrolls the list sideways and never selects a tab. The selected tab is kept in view
+ * inside the list only.</p>
  */
 export function TabStrip({ selected, onKeyDown, 'aria-label': ariaLabel, children }: TabStripProps) {
   const i18n = useI18N(I18N_KEYS);

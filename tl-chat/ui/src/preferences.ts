@@ -1,5 +1,6 @@
 import { BACKGROUND_COMMAND } from 'tl-react-bridge'
 import type { ChatCommand } from './chat-stream'
+import { sameSeenCounts, type SeenCounts } from './rail-model'
 
 /** Technical command that stores a chat's layout. Must match `ChatControl#CMD_SAVE_LAYOUT`. */
 export const CMD_SAVE_LAYOUT = 'saveLayout'
@@ -34,8 +35,8 @@ export interface ChatPreferences {
   railOpen: boolean | null
   /** Width the user dragged the artefact pane to; 0 while they never did. */
   paneWidth: number
-  /** Sum of section badges last stored when the rail was opened. */
-  badgeSeen: number
+  /** Per section name, the count of its badge the user has seen. */
+  badgeSeen: SeenCounts
   /** Per section name, whether the user left it open. A section never toggled is absent. */
   sections: Record<string, boolean>
 }
@@ -45,7 +46,7 @@ export function sameLayout(left: ChatPreferences, right: ChatPreferences): boole
   if (
     left.railOpen !== right.railOpen ||
     left.paneWidth !== right.paneWidth ||
-    left.badgeSeen !== right.badgeSeen
+    !sameSeenCounts(left.badgeSeen, right.badgeSeen)
   ) {
     return false
   }
@@ -75,9 +76,22 @@ export function parsePreferences(state: Record<string, unknown>): ChatPreference
   return {
     railOpen: typeof state.railOpen === 'boolean' ? state.railOpen : null,
     paneWidth: typeof state.paneWidth === 'number' && state.paneWidth > 0 ? state.paneWidth : 0,
-    badgeSeen: typeof state.badgeSeen === 'number' && state.badgeSeen >= 0 ? state.badgeSeen : 0,
+    badgeSeen: readSeenCounts(state.badgeSeen),
     sections,
   }
+}
+
+/**
+ * Reads the seen counts per section name; a value of another form, or a count that is not a
+ * non-negative number, is nothing seen.
+ */
+function readSeenCounts(raw: unknown): SeenCounts {
+  const seen: Record<string, number> = {}
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return seen
+  for (const [name, count] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof count === 'number' && Number.isFinite(count) && count > 0) seen[name] = Math.round(count)
+  }
+  return seen
 }
 
 /** The width an element configures for its pane; applies only until the user drags the splitter. */

@@ -22,7 +22,7 @@
 
   <!-- Die Spaltenwahl: vor der Liste die Suche, dann fünf Einträge — einer ist fixiert, einer wird gezogen, vor
        einem landet er, einer ist ausgeblendet. Darunter eine kleine Liste mit der letzten sichtbaren Spalte, deren
-       Auge gesperrt ist. Das Skript setzt beide auf jede Fläche. -->
+       Minus gesperrt ist. Das Skript setzt beide auf jede Fläche. -->
   <template id="rows">
     <div class="specimen__row specimen__row--narrow specimen__row--top">
       <span class="tl-type-label">Spaltenwahl</span>
@@ -34,7 +34,7 @@
         <ul class="tl-reorder-list tl-type-body" aria-label="Spalten">
           <!-- Die Spaltenwahl als Ebenen-Panel in drei Abschnitten, ein Rollbereich: Fixiert mit Name, Beweglich mit Status (wird
                gezogen), Region (landet davor) und „Zuletzt geändert am“ (Ellipse), Ausgeblendet mit Verantwortlich — mit Griff (ziehbar),
-               mit Plus statt des geschlossenen Auges. Der Abschnitt Ausgeblendet ist hier der Zielabschnitt (drop-target an
+               mit Plus statt des Minus. Der Abschnitt Ausgeblendet ist hier der Zielabschnitt (drop-target an
                Überschrift und Zeile), eine Trennlinie steht vor Beweglich und Ausgeblendet. -->
           <li class="tl-reorder-list__section tl-type-label" role="presentation">Fixiert</li>
           <li class="tl-reorder-list__item" data-tl-state="locked">
@@ -42,7 +42,7 @@
             <span class="tl-reorder-list__label">Name</span>
             <span class="tl-reorder-list__actions">
               <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__lock tl-reveal-on-hover" aria-label="Name lösen"><i class="tl-icon-sm bi bi-lock-fill tl-button__icon" aria-hidden="true"></i></button>
-              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Name ausblenden"><i class="tl-icon-sm bi bi-eye tl-button__icon" aria-hidden="true"></i></button>
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Name ausblenden"><i class="tl-icon-sm bi bi-dash tl-button__icon" aria-hidden="true"></i></button>
             </span>
           </li>
           <li class="tl-reorder-list__section tl-type-label" role="presentation">Beweglich</li>
@@ -51,7 +51,7 @@
             <span class="tl-reorder-list__label">Status</span>
             <span class="tl-reorder-list__actions">
               <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__lock tl-reveal-on-hover" aria-label="Status fixieren"><i class="tl-icon-sm bi bi-unlock tl-button__icon" aria-hidden="true"></i></button>
-              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Status ausblenden"><i class="tl-icon-sm bi bi-eye tl-button__icon" aria-hidden="true"></i></button>
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Status ausblenden"><i class="tl-icon-sm bi bi-dash tl-button__icon" aria-hidden="true"></i></button>
             </span>
           </li>
           <li class="tl-reorder-list__item" data-tl-state="drop-before">
@@ -59,7 +59,7 @@
             <span class="tl-reorder-list__label">Region</span>
             <span class="tl-reorder-list__actions">
               <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__lock tl-reveal-on-hover" aria-label="Region fixieren"><i class="tl-icon-sm bi bi-unlock tl-button__icon" aria-hidden="true"></i></button>
-              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Region ausblenden"><i class="tl-icon-sm bi bi-eye tl-button__icon" aria-hidden="true"></i></button>
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Region ausblenden"><i class="tl-icon-sm bi bi-dash tl-button__icon" aria-hidden="true"></i></button>
             </span>
           </li>
           <li class="tl-reorder-list__item">
@@ -67,7 +67,7 @@
             <span class="tl-reorder-list__label">Zuletzt geändert am, mit einer Beschriftung, die mit Ellipse endet</span>
             <span class="tl-reorder-list__actions">
               <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__lock tl-reveal-on-hover" aria-label="Zuletzt geändert am fixieren"><i class="tl-icon-sm bi bi-unlock tl-button__icon" aria-hidden="true"></i></button>
-              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Zuletzt geändert am ausblenden"><i class="tl-icon-sm bi bi-eye tl-button__icon" aria-hidden="true"></i></button>
+              <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Zuletzt geändert am ausblenden"><i class="tl-icon-sm bi bi-dash tl-button__icon" aria-hidden="true"></i></button>
             </span>
           </li>
           <li class="tl-reorder-list__section tl-type-label" role="presentation" data-tl-state="drop-target">Ausgeblendet</li>
@@ -86,7 +86,7 @@
     <div class="specimen__row specimen__row--narrow specimen__row--top">
       <span class="tl-type-label">Letzte sichtbare Spalte</span>
       <!-- Nur noch Name ist sichtbar (state last): ein Klick auf die Zeile bewirkt nichts, darum kein Zeiger und keine Hover-Fläche;
-           das Auge ist gesperrt, Zeile und Auge sagen, warum. Status ist ausgeblendet und steht darunter. „Fixiert“ ist leer und zeigt den leisen Platzhalter, hier als Zielabschnitt
+           das Minus ist gesperrt, Zeile und Minus sagen, warum. Status ist ausgeblendet und steht darunter. „Fixiert“ ist leer und zeigt den leisen Platzhalter, hier als Zielabschnitt
            hervorgehoben; ein leerer Abschnitt ohne Ziehen trägt kein drop-target. -->
       <ul class="tl-reorder-list tl-type-body" aria-label="Spalten">
         <li class="tl-reorder-list__section tl-type-label" role="presentation">Fixiert</li>
@@ -97,7 +97,7 @@
           <span class="tl-reorder-list__label">Name</span>
           <span class="tl-reorder-list__actions">
             <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__lock tl-reveal-on-hover" aria-label="Name fixieren"><i class="tl-icon-sm bi bi-unlock tl-button__icon" aria-hidden="true"></i></button>
-            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Mindestens eine Spalte bleibt sichtbar" disabled data-tooltip="text:Mindestens eine Spalte bleibt sichtbar"><i class="tl-icon-sm bi bi-eye tl-button__icon" aria-hidden="true"></i></button>
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Mindestens eine Spalte bleibt sichtbar" disabled data-tooltip="text:Mindestens eine Spalte bleibt sichtbar"><i class="tl-icon-sm bi bi-dash tl-button__icon" aria-hidden="true"></i></button>
           </span>
         </li>
         <li class="tl-reorder-list__section tl-type-label" role="presentation">Ausgeblendet</li>

@@ -59,6 +59,8 @@ public class TestInvitationLifecycle extends BasicTestCase {
 
 	private final List<Invitation> _invitations = new ArrayList<>();
 
+	private final List<Person> _accounts = new ArrayList<>();
+
 	@Override
 	protected void tearDown() throws Exception {
 		try (Transaction tx = kb().beginTransaction(ResKey.text("Delete test invitations"))) {
@@ -71,9 +73,15 @@ public class TestInvitationLifecycle extends BasicTestCase {
 					}
 				}
 			}
+			for (Person account : _accounts) {
+				if (account.tValid()) {
+					TestPerson.deletePersonAndUser(account);
+				}
+			}
 			tx.commit();
 		}
 		_invitations.clear();
+		_accounts.clear();
 		super.tearDown();
 	}
 
@@ -281,6 +289,47 @@ public class TestInvitationLifecycle extends BasicTestCase {
 		assertTrue(InvitationModule.isOpen(third));
 	}
 
+	/**
+	 * The address of an account is refused when the invitation is stored, also if the account has
+	 * another name and carries the address as e-mail address in another spelling.
+	 */
+	public void testInviteTakenAddressRefused() {
+		Person account = accountWithEMail("invJdoe", " Inv.John.Doe@Example.com ");
+		assertSame(account, InvitationModule.existingAccount("inv.john.doe@example.com"));
+
+		assertRefused(com.top_logic.util.model.I18NConstants.CONSTRAINTS_VIOLATED,
+			() -> invite("inv.john.doe@example.com"));
+
+		Person byName = accountWithEMail("inv.by.name@example.com", null);
+		assertSame(byName, InvitationModule.existingAccount("INV.By.Name@example.com"));
+		assertRefused(com.top_logic.util.model.I18NConstants.CONSTRAINTS_VIOLATED,
+			() -> invite("INV.By.Name@example.com"));
+
+		assertNull(InvitationModule.existingAccount("inv.free@example.com"));
+		Invitation free = invite("inv.free@example.com");
+		assertTrue(InvitationModule.isOpen(free));
+	}
+
+	/**
+	 * An account getting the address of an open invitation as e-mail address after the invitation
+	 * was created, e.g. by a directory synchronization, prevents accepting the invitation, which
+	 * changes nothing.
+	 */
+	public void testAcceptTakenAddressRefused() {
+		String email = "late.sync@example.com";
+		Invitation invitation = invite(email);
+		Person account = accountWithEMail("lateSync", "Late.Sync@example.com");
+
+		assertRefused(I18NConstants.ERROR_ACCOUNT_EXISTS__EMAIL.fill(email),
+			() -> module().acceptInvitation(invitation, "Doe", "Jane", PASSWORD.toCharArray()));
+
+		assertNull(Person.byName(kb(), email));
+		assertEquals(List.of(account), Person.allByEMail(email));
+		assertTrue(InvitationModule.isOpen(invitation));
+		assertNull(invitation.getAccepted());
+		assertNull(invitation.getAccount());
+	}
+
 	/** An invalid address is refused when the invitation is stored. */
 	public void testInvalidAddressRefused() {
 		assertRefused(com.top_logic.util.model.I18NConstants.CONSTRAINTS_VIOLATED, () -> invite("no address"));
@@ -347,6 +396,24 @@ public class TestInvitationLifecycle extends BasicTestCase {
 		Invitation invitation = module().createInvitation(email, MfaRequirement.OPTIONAL);
 		_invitations.add(invitation);
 		return invitation;
+	}
+
+	/**
+	 * Creates an account with the given name and e-mail address, deleted after the test.
+	 *
+	 * @param eMail
+	 *        The e-mail address, <code>null</code> for none.
+	 */
+	private Person accountWithEMail(String name, String eMail) {
+		Person account = TestPerson.createPerson(name);
+		_accounts.add(account);
+		if (eMail != null) {
+			try (Transaction tx = kb().beginTransaction(ResKey.text("Set e-mail address"))) {
+				account.getUser().setEMail(eMail);
+				tx.commit();
+			}
+		}
+		return account;
 	}
 
 	private void expire(Invitation invitation) {

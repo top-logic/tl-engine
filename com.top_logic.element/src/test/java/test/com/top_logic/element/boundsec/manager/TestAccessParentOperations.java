@@ -7,6 +7,7 @@ package test.com.top_logic.element.boundsec.manager;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -25,10 +26,12 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
@@ -56,6 +59,10 @@ public class TestAccessParentOperations extends BasicTestCase {
 	private static final String PART = MODULE + ":Part";
 
 	private static final String FULL_PART = MODULE + ":FullPart";
+
+	private static final String ROLE_CATALOG_READER = MODULE + ".CatalogReader";
+
+	private static final String ROLE_ENTRY_EDITOR = MODULE + ".EntryEditor";
 
 	private Person _reader;
 
@@ -173,6 +180,61 @@ public class TestAccessParentOperations extends BasicTestCase {
 	public void testSpecializationInheritsRestriction() {
 		assertReadDelegatedWriteOwn(_entrySub);
 		assertOwnWriteImpliesDiscover(_entrySub);
+	}
+
+	public void testAttributeGrantsPerOperation() {
+		TLStructuredTypePart name = type(ENTRY).getPart("name");
+
+		assertTrue("Reading the name is checked by the roles held on the catalog.",
+			rights().isAllowed(_reader, _entry, name, SimpleBoundCommandGroup.READ));
+		assertTrue("Writing the name is checked by the roles held on the entry.",
+			rights().isAllowed(_editor, _entry, name, SimpleBoundCommandGroup.WRITE));
+		assertFalse("The reader holds no role on the entry.",
+			rights().isAllowed(_reader, _entry, name, SimpleBoundCommandGroup.WRITE));
+		assertFalse("The editor holds no role on the catalog.",
+			rights().isAllowed(_editor, _entry, name, SimpleBoundCommandGroup.READ));
+	}
+
+	public void testRoleHolderPerOperation() {
+		assertSame(_catalog, rights().getRoleHolder(_entry, SimpleBoundCommandGroup.READ));
+		assertSame(_catalog, rights().getRoleHolder(_entry, SimpleBoundCommandGroup.DISCOVER));
+		assertSame(_entry, rights().getRoleHolder(_entry, SimpleBoundCommandGroup.WRITE));
+		assertSame(_entry, rights().getRoleHolder(_entry, SimpleBoundCommandGroup.EXPORT));
+		assertSame(SimpleBoundCommandGroup.WRITE,
+			rights().getOperationOnRoleHolder(_entry, SimpleBoundCommandGroup.WRITE));
+
+		assertSame(_catalog, rights().getRoleHolder(_part, SimpleBoundCommandGroup.WRITE));
+		assertSame("Delete is not delegated by the part.", _part,
+			rights().getRoleHolder(_part, SimpleBoundCommandGroup.DELETE));
+		assertSame("Delete is checked on the part itself.", SimpleBoundCommandGroup.DELETE,
+			rights().getOperationOnRoleHolder(_part, SimpleBoundCommandGroup.DELETE));
+
+		assertSame(_catalog, rights().getRoleHolder(_fullPart, SimpleBoundCommandGroup.DELETE));
+		assertSame("Deleting a fully delegating part is writing its container.", SimpleBoundCommandGroup.WRITE,
+			rights().getOperationOnRoleHolder(_fullPart, SimpleBoundCommandGroup.DELETE));
+	}
+
+	public void testAdmittingRolesPerOperation() {
+		BoundedRole catalogReader = BoundedRole.getRoleByName(ROLE_CATALOG_READER);
+		BoundedRole entryEditor = BoundedRole.getRoleByName(ROLE_ENTRY_EDITOR);
+
+		assertEquals(Set.of(catalogReader), rights().getAdmittingRoles(_entry, SimpleBoundCommandGroup.READ));
+		assertEquals(Set.of(entryEditor), rights().getAdmittingRoles(_entry, SimpleBoundCommandGroup.WRITE));
+		assertEquals(Set.of(catalogReader), rights().getAdmittingRoles(_part, SimpleBoundCommandGroup.WRITE));
+		assertEquals(Set.of(), rights().getAdmittingRoles(_part, SimpleBoundCommandGroup.DELETE));
+	}
+
+	public void testInitialValuesWithOwnWrite() {
+		TLStructuredTypePart name = type(ENTRY).getPart("name");
+		TLObject draft = TransientObjectFactory.INSTANCE.createObject(type(ENTRY));
+		draft.tUpdateByName("catalog", _catalog);
+
+		assertTrue("Writing the name is decided by the roles the entry will hold.",
+			rights().isAllowedInitial(_editor, draft, name, SimpleBoundCommandGroup.WRITE));
+		assertTrue("Reading the name is decided by the roles held on the catalog.",
+			rights().isAllowedInitial(_reader, draft, name, SimpleBoundCommandGroup.READ));
+		assertFalse("The editor holds no role on the catalog.",
+			rights().isAllowedInitial(_editor, draft, name, SimpleBoundCommandGroup.READ));
 	}
 
 	private void assertReadDelegatedWriteOwn(TLObject entry) {

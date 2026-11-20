@@ -101,26 +101,23 @@ public class EffectiveAccess {
 	 * @param object
 	 *        The object to explain the access to.
 	 * @return The decision for every operation that applies to the object, and the roles the
-	 *         account holds on the object deciding with their sources.
+	 *         account holds on the object deciding on reading with their sources. Each decision
+	 *         names the object deciding its operation.
 	 */
 	public AccessExplanation explain(Person person, TLObject object) {
 		TLClass type = object.tType() instanceof TLClass clazz ? clazz : null;
 		boolean withoutSecurity = type != null && _rights.isWithoutSecurity(type);
 		boolean internal = type != null && _rights.isInternal(type);
 
-		TLObject decidingObject = _rights.getRoleHolder(object);
+		TLObject decidingObject = _rights.getRoleHolder(object, SimpleBoundCommandGroup.READ);
 		List<BoundObject> roleParents = new ArrayList<>();
-		Set<BoundedRole> held = new HashSet<>();
 		if (decidingObject instanceof BoundObject holder) {
 			BoundHelper.collectAllSecurityParents(holder, roleParents::add);
-			for (BoundRole role : _accessManager.getRoles(person, holder)) {
-				if (role instanceof BoundedRole bounded) {
-					held.add(bounded);
-				}
-			}
 		}
+		Map<TLObject, Set<BoundedRole>> heldByHolder = new HashMap<>();
+		Set<BoundedRole> held = held(heldByHolder, person, decidingObject);
 
-		List<OperationDecision> operations = decide(person, object, held);
+		List<OperationDecision> operations = decide(person, object, heldByHolder);
 
 		SecurityStorage storage = storage();
 		List<HeldRole> heldRoles;
@@ -170,7 +167,26 @@ public class EffectiveAccess {
 		return result;
 	}
 
-	private List<OperationDecision> decide(Person person, TLObject object, Set<BoundedRole> held) {
+	/**
+	 * The roles the given account holds on the given role holder, looked up once per role holder.
+	 */
+	private Set<BoundedRole> held(Map<TLObject, Set<BoundedRole>> heldByHolder, Person person, TLObject roleHolder) {
+		if (!(roleHolder instanceof BoundObject holder)) {
+			return Collections.emptySet();
+		}
+		return heldByHolder.computeIfAbsent(roleHolder, x -> {
+			Set<BoundedRole> result = new HashSet<>();
+			for (BoundRole role : _accessManager.getRoles(person, holder)) {
+				if (role instanceof BoundedRole bounded) {
+					result.add(bounded);
+				}
+			}
+			return result;
+		});
+	}
+
+	private List<OperationDecision> decide(Person person, TLObject object,
+			Map<TLObject, Set<BoundedRole>> heldByHolder) {
 		Collection<BoundCommandGroup> applicable = _rights.getObjectOperations(object).getOperations();
 
 		Map<BoundCommandGroup, Boolean> allowed = new HashMap<>();
@@ -184,11 +200,12 @@ public class EffectiveAccess {
 
 		List<OperationDecision> result = new ArrayList<>(applicable.size());
 		for (BoundCommandGroup operation : applicable) {
+			TLObject roleHolder = _rights.getRoleHolder(object, operation);
 			Set<BoundedRole> admitting = _rights.getAdmittingRoles(object, operation);
 			Set<BoundedRole> granting = new HashSet<>(admitting);
-			granting.retainAll(held);
+			granting.retainAll(held(heldByHolder, person, roleHolder));
 			result.add(new OperationDecision(operation, _rights.getOperationOnRoleHolder(object, operation),
-				allowed.get(operation).booleanValue(),
+				roleHolder, allowed.get(operation).booleanValue(),
 				Collections.unmodifiableSet(admitting), Collections.unmodifiableSet(granting),
 				restricted.contains(operation)));
 		}

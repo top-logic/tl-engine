@@ -661,6 +661,17 @@
 							roles="TestAccessParentOperations.EntryEditor"
 						/>
 					</class>
+					<!-- Read is checked on the catalog, Write on the entry itself. -->
+					<part name="TestAccessParentOperations:Entry#name">
+						<grant
+							operation="Read"
+							roles="TestAccessParentOperations.CatalogReader"
+						/>
+						<grant
+							operation="Write"
+							roles="TestAccessParentOperations.EntryEditor"
+						/>
+					</part>
 					<class name="TestAccessParentOperations:Part">
 						<access-parent>
 							<container operations="Read,Write"/>

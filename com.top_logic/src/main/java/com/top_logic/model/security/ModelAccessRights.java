@@ -245,32 +245,45 @@ public interface ModelAccessRights {
 	}
 
 	/**
-	 * The object whose roles decide the access to the given object.
+	 * The object whose roles decide whether the given operation may be performed on the given
+	 * object.
 	 *
 	 * <p>
-	 * This is the end of the chain of {@link #getAccessParent(TLClass) access parents} of the
-	 * object, or the object itself when its type decides for itself.
+	 * The chain of {@link #getAccessParent(TLClass) access parents} of the object is followed as
+	 * long as the access parent delegates the operation, which is mapped to the
+	 * {@link #getOperationOnRoleHolder(TLObject, BoundCommandGroup) operation checked on the
+	 * parent} at every step. The role holder is the first object of the chain that decides the
+	 * operation for itself: the object itself when its type has no access parent, or when its
+	 * access parent is restricted to operations not including the given one.
+	 * </p>
+	 *
+	 * <p>
+	 * For an access parent delegating every operation, the role holder is the same for all
+	 * operations.
 	 * </p>
 	 *
 	 * @param object
 	 *        The object to access.
+	 * @param operation
+	 *        The operation to perform on the object.
 	 * @return The object the roles of a user are looked up on, <code>null</code> when the chain of
 	 *         access parents leads nowhere or runs in a cycle, so that nobody decides for the object.
 	 * @implSpec An implementation without a notion of access parents answers the object itself.
 	 */
-	default TLObject getRoleHolder(TLObject object) {
+	default TLObject getRoleHolder(TLObject object, BoundCommandGroup operation) {
 		return object;
 	}
 
 	/**
-	 * The operation checked on the {@link #getRoleHolder(TLObject) role holder} of the given object
-	 * in place of the given operation on the object.
+	 * The operation checked on the {@link #getRoleHolder(TLObject, BoundCommandGroup) role holder}
+	 * of the given object in place of the given operation on the object.
 	 *
 	 * <p>
 	 * An object delegating to an access parent is not checked for the operation itself: the
 	 * operation is checked on the parent, possibly as another operation (creating or deleting a
 	 * part, for instance, is a modification of the whole). Along a chain of access parents, this
-	 * mapping applies at every step. Operations implying the given one on the object are checked
+	 * mapping applies at every step, up to the first object deciding the operation for itself.
+	 * Operations implying the given one on the object are checked
 	 * on the parent as well; they contribute to the
 	 * {@link #getAdmittingRoles(TLObject, BoundCommandGroup) admitting roles}.
 	 * </p>
@@ -288,15 +301,17 @@ public interface ModelAccessRights {
 	}
 
 	/**
-	 * The roles admitting the given operation on the given object, when held on its
-	 * {@link #getRoleHolder(TLObject) role holder}.
+	 * The roles admitting the given operation on the given object, when held on the
+	 * {@link #getRoleHolder(TLObject, BoundCommandGroup) role holder} of the operation.
 	 *
 	 * <p>
 	 * For an object deciding for itself, these are the roles granted the operation, or an operation
 	 * implying it, on the object (on its type, or on the object itself for a module singleton with
 	 * rights of its own). For an object with an access parent, these are the roles admitting the
 	 * operation checked on the parent instead (see {@link #isAllowed(Person, TLObject, BoundCommandGroup)}),
-	 * collected along the chain of access parents.
+	 * collected along the chain of access parents, as far as the access parent delegates the
+	 * operation, or an operation implying it. An object whose access parent is restricted to some
+	 * operations adds the roles granted the operation on the object itself.
 	 * </p>
 	 *
 	 * <p>

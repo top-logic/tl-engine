@@ -271,8 +271,8 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 	 * Why the given decision is made.
 	 *
 	 * <p>
-	 * For an object delegating to an access parent, the reason names the operation checked on the
-	 * deciding object in place of the operation of the decision.
+	 * For an object delegating the operation to an access parent, the reason names the operation
+	 * checked on the object deciding the operation in place of the operation of the decision.
 	 * </p>
 	 *
 	 * @param explanation
@@ -281,8 +281,8 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 	 *        A decision of it, see {@link #operations(AccessExplanation)}.
 	 * @return The reason in the language of the user.
 	 *
-	 * @implNote The operation checked on the deciding object is
-	 *           {@link OperationDecision#checkedOperation()}.
+	 * @implNote The object deciding the operation is {@link OperationDecision#roleHolder()}, the
+	 *           operation checked on it is {@link OperationDecision#checkedOperation()}.
 	 */
 	@Label("Reason of a decision")
 	@SideEffectFree
@@ -309,13 +309,13 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 		}
 		Resources resources = Resources.getInstance();
 		String text = resources.getString(reason);
-		TLObject decidingObject = explanation.decidingObject();
-		if (!explanation.isDelegating() || decidingObject == null) {
+		TLObject roleHolder = decision.roleHolder();
+		if (roleHolder == null || roleHolder.equals(explanation.object())) {
 			return text;
 		}
 		return resources.getString(I18NConstants.EFFECTIVE_ACCESS_CHECKED_ON__OPERATION_OBJECT_REASON.fill(
 			resources.getString(SecurityGrantFunctions.labelKey(decision.checkedOperation())),
-			MetaLabelProvider.INSTANCE.getLabel(decidingObject), text));
+			MetaLabelProvider.INSTANCE.getLabel(roleHolder), text));
 	}
 
 	private static String roles(Set<BoundedRole> roles) {

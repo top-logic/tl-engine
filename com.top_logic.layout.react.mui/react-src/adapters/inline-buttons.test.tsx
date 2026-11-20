@@ -647,7 +647,7 @@ describe('the sections of the column selection as drop zones', () => {
     expect(show.querySelector('i.fa-plus')).not.toBeNull();
     expect(show.querySelector('i.fa-minus')).toBeNull();
     for (const name of ['f', 'a']) {
-      const hide = row(name).querySelector('.tl-reorder-list__eye')!;
+      const hide = row(name).querySelector('.tl-reorder-list__visibility')!;
       expect(hide.querySelector('i.fa-minus')).not.toBeNull();
       expect(hide.querySelector('i.fa-plus')).toBeNull();
     }

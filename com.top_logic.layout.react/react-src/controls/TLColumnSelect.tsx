@@ -264,7 +264,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   };
 
   const handleToggle = React.useCallback((name: string, visible: boolean, event: React.MouseEvent<HTMLElement>) => {
-    keepFocus(`${name}:eye`, event);
+    keepFocus(`${name}:visibility`, event);
     send(CMD_COLUMN_VISIBLE, { [ARG_COLUMN]: name, [ARG_VISIBLE]: visible });
   }, [send]);
 
@@ -445,14 +445,14 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const renderRow = (entry: ColumnEntry, index: number, target: boolean) => {
     // Keep the table from losing its last column: there would be nothing left to click.
     const lastVisible = entry.visible && visibleCount <= 1;
-    const eyeLabel = lastVisible
+    const visibilityLabel = lastVisible
       ? i18n['js.table.columnLastVisible']
       : format(i18n[!entry.visible ? 'js.table.columnShow'
         : entry.locked ? 'js.table.columnHideUnlock' : 'js.table.columnHide'], entry.label);
     // The tooltips of plus, minus and lock stand next to the row and need no column name; the accessible names keep it,
     // since a screen reader announces a button on its own.
-    const eyeTip = lastVisible
-      ? eyeLabel
+    const visibilityTip = lastVisible
+      ? visibilityLabel
       : i18n[entry.visible ? 'js.table.columnHideShort' : 'js.table.columnShowShort'];
     const lockLabel = format(i18n[entry.locked ? 'js.table.columnUnlock'
       : entry.visible ? 'js.table.columnLock' : 'js.table.columnShowLock'], entry.label);
@@ -535,15 +535,15 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
             onClick={(event) => handleLock(entry.name, !entry.locked, event)}
           />
           <Button
-            ref={buttonRef(`${entry.name}:eye`)}
-            label={eyeLabel}
-            tooltip={eyeTip}
+            ref={buttonRef(`${entry.name}:visibility`)}
+            label={visibilityLabel}
+            tooltip={visibilityTip}
             image={entry.visible ? ICON_MINUS : ICON_ADD}
             display="icon-only"
             appearance="ghost"
             small
             disabled={lastVisible}
-            className="tl-reorder-list__eye tl-reveal-on-hover"
+            className="tl-reorder-list__visibility tl-reveal-on-hover"
             onClick={(event) => handleToggle(entry.name, !entry.visible, event)}
           />
         </span>

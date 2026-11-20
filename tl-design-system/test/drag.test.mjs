@@ -120,7 +120,7 @@ test('tl-reorder-list: Griff und Knöpfe erscheinen über tl-reveal-on-hover, ni
   assert.doesNotMatch(ohne, /:focus-within/, 'Zeigen bei Fokus nur über :focus-visible');
   assert.doesNotMatch(ohne, /visibility:\s*hidden/);
   for (const sel of [
-    '.tl-reorder-list__item[data-tl-state~="off"] .tl-reorder-list__eye',
+    '.tl-reorder-list__item[data-tl-state~="off"] .tl-reorder-list__visibility',
     '.tl-reorder-list__item[data-tl-state~="locked"] .tl-reorder-list__lock',
   ]) assert.match(declarationsOf(liste, sel) ?? '', /opacity:\s*1/, sel);
 
@@ -138,7 +138,7 @@ test('tl-reorder-list: Griff und Knöpfe erscheinen über tl-reveal-on-hover, ni
 
   // Das Specimen der Liste trägt die Klasse an Griff, Schloss und Minus.
   const spec = readComponent('reorder-list', 'reorder-list.spec.html');
-  for (const teil of ['handle', 'lock', 'eye']) {
+  for (const teil of ['handle', 'lock', 'visibility']) {
     const knoepfe = [...spec.matchAll(new RegExp(`class="[^"]*tl-reorder-list__${teil}[^"]*"`, 'g'))].map((m) => m[0]);
     assert.ok(knoepfe.length > 0, teil);
     for (const k of knoepfe) assert.match(k, /\btl-reveal-on-hover\b/, `${teil}: ${k}`);

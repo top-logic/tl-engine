@@ -3,7 +3,7 @@ import { applyColumnMove } from './columnMove';
 import type { ColumnEntry } from './columnMove';
 
 // The cases of TestReactColumnSelect (columnMove): the client predicts the list the server will push, so both must
-// come to the same order, the same locks and the same eyes.
+// come to the same order, the same locks and the same visibility.
 
 /** Five shown columns a to e, the given ones frozen as the block at the start, the given ones hidden. */
 function columns(locked: string[], hidden: string[] = []): ColumnEntry[] {

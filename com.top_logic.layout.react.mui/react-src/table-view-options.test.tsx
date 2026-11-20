@@ -209,6 +209,10 @@ describe('the popover of a table that keeps no view', () => {
     expect(reset.hasAttribute('role')).toBe(false);
     expect(reset.previousElementSibling!.tagName).toBe('HR');
     expect(reset.parentElement!.lastElementChild).toBe(reset);
+    // The reset carries its icon here as well.
+    const icon = reset.querySelector('.tl-menu__icon')!;
+    expect(icon.classList.contains('fa-arrow-rotate-left')).toBe(true);
+    expect(icon.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('starts the focus on the reset while the selection has not arrived', async () => {
@@ -394,13 +398,18 @@ describe('the page "View" behind the row "View" as a menu', () => {
     expect(name.closest('.tl-table-view-options__title')).toBe(back.closest('.tl-table-view-options__title'));
   });
 
-  it('gives the reset an icon, hidden from assistive technology', async () => {
+  it('gives the row "View" and the reset an icon each, hidden from assistive technology', async () => {
     mountMenu();
     await settle();
-    await openView();
-    const icon = stop(RESET).querySelector('.tl-menu__icon');
-    expect(icon).not.toBeNull();
-    expect(icon!.getAttribute('aria-hidden')).toBe('true');
+    await openPopover();
+    const rowIcon = viewRow().querySelector('.tl-menu__icon');
+    expect(rowIcon).not.toBeNull();
+    expect(rowIcon!.getAttribute('aria-hidden')).toBe('true');
+    await userEvent.click(viewRow());
+    await settle();
+    const resetIcon = stop(RESET).querySelector('.tl-menu__icon');
+    expect(resetIcon).not.toBeNull();
+    expect(resetIcon!.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('draws the rows as the spec has them: the whole row a menu item, the switch a drawing without input', async () => {
@@ -651,7 +660,7 @@ describe('the page "Columns", the first page of the popover', () => {
     expect(screen.queryByRole('button', { name: RESET })).toBeNull();
   });
 
-  it('draws the row "View" as a way to the next page: a plain button, the label and a hidden chevron at the end', async () => {
+  it('draws the row "View" as a way to the next page: a plain button, its icon, the label and a hidden chevron at the end', async () => {
     mountColumns();
     await settle();
     await openPopover();
@@ -661,8 +670,13 @@ describe('the page "Columns", the first page of the popover', () => {
     expect(row.hasAttribute('role')).toBe(false);
     expect(row.classList.contains('tl-menu__item')).toBe(true);
     expect(row.classList.contains('tl-menu__item--nav')).toBe(true);
-    // The label and the chevron, in this order; no value.
-    const [label, chevron] = Array.from(row.children);
+    // The icon, the label and the chevron, in this order; no value.
+    const [icon, label, chevron] = Array.from(row.children);
+    expect(icon.tagName).toBe('I');
+    expect(icon.classList.contains('tl-menu__icon')).toBe(true);
+    expect(icon.classList.contains('tl-icon-sm')).toBe(true);
+    expect(icon.classList.contains('fa-sliders')).toBe(true);
+    expect(icon.getAttribute('aria-hidden')).toBe('true');
     expect(label.className).toContain('tl-menu__label');
     expect(label.textContent).toBe(VIEW);
     expect(chevron.tagName).toBe('I');
@@ -670,7 +684,7 @@ describe('the page "Columns", the first page of the popover', () => {
     expect(chevron.classList.contains('tl-icon-sm')).toBe(true);
     expect(chevron.classList.contains('fa-chevron-right')).toBe(true);
     expect(chevron.getAttribute('aria-hidden')).toBe('true');
-    expect(row.children.length).toBe(2);
+    expect(row.children.length).toBe(3);
     expect(row.querySelector('.tl-menu__value')).toBeNull();
     expect(row.textContent).not.toContain('›');
   });

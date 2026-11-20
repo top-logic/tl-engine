@@ -365,8 +365,8 @@ describe('the buttons of a value list as MUI icon buttons', () => {
   });
 });
 
-describe('the lock and the eye of the column selection as MUI icon buttons', () => {
-  /** The commands the column selection sends for lock and eye. */
+describe('the lock and the minus of the column selection as MUI icon buttons', () => {
+  /** The commands the column selection sends for lock and minus. */
   const CMD_COLUMN_LOCK = 'columnLock';
   const CMD_COLUMN_VISIBLE = 'columnVisible';
 
@@ -374,8 +374,8 @@ describe('the lock and the eye of the column selection as MUI icon buttons', () 
     return { name, label: 'Spalte ' + name, visible, locked };
   }
 
-  it('draws lock and eye as icon buttons in the row, named by what a click does', async () => {
-    // Two shown columns, so that the eye of the first one is not the last eye and stays enabled.
+  it('draws lock and minus as icon buttons in the row, named by what a click does', async () => {
+    // Two shown columns, so that the minus of the first one is not the last one and stays enabled.
     const sent = mountAdapter(TLColumnSelect,
       { revision: 0, entries: [entry('a', true, false), entry('b', false, false), entry('c', true, false)] });
     await settle();
@@ -626,8 +626,8 @@ describe('the sections of the column selection as drop zones', () => {
     expect(listed()).toEqual([SECTION_MOVABLE, 'Spalte b']);
   });
 
-  it('draws a hidden column with handle, draggable, with a plus instead of the closed eye', async () => {
-    mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('a', true), entry('h', false)] });
+  it('draws a hidden column with handle, draggable, with a plus where a frozen or movable one shows a minus', async () => {
+    mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('f', true, true), entry('a', true), entry('h', false)] });
     await settle();
 
     const hidden = row('h');
@@ -636,7 +636,12 @@ describe('the sections of the column selection as drop zones', () => {
     expect(hidden.getAttribute('data-tl-state')).toContain('off');
     const show = within(hidden).getByRole('button', { name: 'js.table.columnShow' });
     expect(show.querySelector('i.fa-plus')).not.toBeNull();
-    expect(show.querySelector('i.fa-eye-slash')).toBeNull();
+    expect(show.querySelector('i.fa-minus')).toBeNull();
+    for (const name of ['f', 'a']) {
+      const hide = row(name).querySelector('.tl-reorder-list__eye')!;
+      expect(hide.querySelector('i.fa-minus')).not.toBeNull();
+      expect(hide.querySelector('i.fa-plus')).toBeNull();
+    }
     expect(row('a').getAttribute('draggable')).toBe('true');
   });
 
@@ -1158,7 +1163,7 @@ describe('the predicted list of the column selection', () => {
     expect(rows()).toEqual(['Spalte a', 'Spalte b', 'Spalte c']);
   });
 
-  it('keeps the prediction until every command sent is answered, the eye included', async () => {
+  it('keeps the prediction until every command sent is answered, the minus included', async () => {
     mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('a'), entry('b'), entry('c')] });
     await settle();
 
@@ -1166,14 +1171,14 @@ describe('the predicted list of the column selection', () => {
     await userEvent.click(within(row('b')).getByRole('button', { name: LABEL_COLUMN_HIDE }));
     await settle();
 
-    // The answer to the move - here one the prediction does not show: the answer to the eye is still out, so the
+    // The answer to the move - here one the prediction does not show: the answer to the minus is still out, so the
     // predicted list stays.
     patchState({ revision: 1, entries: [entry('a'), entry('b'), entry('c')] });
     await settle();
     expect(rows()).toEqual(['Spalte c', 'Spalte a', 'Spalte b']);
     expect(row('b').getAttribute('data-tl-state') ?? '').not.toContain('off');
 
-    // The answer to the eye.
+    // The answer to the minus.
     patchState({ revision: 2, entries: [entry('c'), entry('a'), entry('b', false)] });
     await settle();
     expect(row('b').getAttribute('data-tl-state')).toContain('off');

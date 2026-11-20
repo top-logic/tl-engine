@@ -28,6 +28,7 @@
 					<role name="TestViewModelAccess.Responsible"/>
 					<role name="TestViewModelAccess.Reader"/>
 					<role name="TestViewModelAccess.Viewer"/>
+					<role name="TestViewModelAccess.Finisher"/>
 					<role name="TestViewModelAccess.NameReader"/>
 					<role name="TestViewModelAccess.NameKeeper"/>
 				</roles>
@@ -58,10 +59,10 @@
 							operation="Delete"
 							roles="TestViewModelAccess.Responsible"
 						/>
-						<!-- The responsible may finish a project (a custom command group). -->
+						<!-- The responsible and the finisher may finish a project (a custom command group). -->
 						<grant
 							operation="Finish"
-							roles="TestViewModelAccess.Responsible"
+							roles="TestViewModelAccess.Responsible,TestViewModelAccess.Finisher"
 						/>
 						<!-- The viewer may only read a project. -->
 						<grant
@@ -88,8 +89,16 @@
 							roles="TestViewModelAccess.Responsible"
 						/>
 					</class>
-					<!-- A step of a project is decided by the project. -->
+					<!--
+						A step of a project is decided by the project. Whoever may read a step may finish
+						it, see TestTypeLevelPolicy.
+					-->
 					<class name="TestViewModelAccess:Step">
+						<operations>
+							<operation name="Finish"
+								implied-by="Read"
+							/>
+						</operations>
 						<access-parent>
 							<container/>
 						</access-parent>
@@ -304,6 +313,14 @@
 						>
 							<path>
 								<step attribute="TestViewModelAccess:Project#viewer"/>
+							</path>
+						</rule>
+						<rule id="TestViewModelAccess_Project_Finisher"
+							meta-element="TestViewModelAccess:Project"
+							role="TestViewModelAccess.Finisher"
+						>
+							<path>
+								<step attribute="TestViewModelAccess:Project#finisher"/>
 							</path>
 						</rule>
 						<inheritance-rule id="TestViewModelAccess_Task_Responsible"

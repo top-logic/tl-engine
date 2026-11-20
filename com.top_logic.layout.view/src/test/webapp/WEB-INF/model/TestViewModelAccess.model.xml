@@ -92,6 +92,9 @@
 						<reference name="viewer"
 							type="tl.accounts:Person"
 						/>
+						<reference name="finisher"
+							type="tl.accounts:Person"
+						/>
 						<reference name="sponsor"
 							type="Category"
 						/>

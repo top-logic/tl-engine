@@ -8,6 +8,7 @@ package com.top_logic.layout.view.security;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
@@ -483,16 +484,25 @@ public final class ModelAccessPolicy {
 	}
 
 	/**
+	 * A type visited for an operation: different operations asked on the same type are independent
+	 * questions.
+	 */
+	private record Visit(TLClass type, BoundCommandGroup operation) {
+		// Pure value.
+	}
+
+	/**
 	 * Whether the given user may hold the given operation on some object of the given type or of
 	 * one of its specializations, see {@link #isOffered(BoundCommandGroup, TLClass)}.
 	 *
 	 * @param seen
-	 *        The types already visited, to stop at cyclic access parent relations.
+	 *        The types already visited, each for the operation asked on it, to stop at cyclic
+	 *        access parent relations.
 	 */
 	private static boolean isGrantable(ModelAccessRights rights, Person user, BoundCommandGroup operation,
-			TLClass type, Set<TLClass> seen) {
+			TLClass type, Set<Visit> seen) {
 		for (TLClass candidate : TLModelUtil.getReflexiveTransitiveSpecializations(type)) {
-			if (!seen.add(candidate)) {
+			if (!seen.add(new Visit(candidate, operation))) {
 				continue;
 			}
 			if (rights.isWithoutSecurity(candidate) || rights.hasSingletonRights(candidate)) {
@@ -503,7 +513,7 @@ public final class ModelAccessPolicy {
 				// The operation itself or one implying it, a delegated one is checked on the parent
 				// types.
 				Set<BoundCommandGroup> operations =
-					new HashSet<>(rights.getOperations(candidate).getImplying(operation));
+					new LinkedHashSet<>(rights.getOperations(candidate).getImplying(operation));
 				operations.add(operation);
 				for (BoundCommandGroup delegated : operations) {
 					if (!accessParent.delegates(delegated)) {

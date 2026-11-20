@@ -236,7 +236,7 @@ public class TestAccessParentOperations extends BasicTestCase {
 		assertFalse("Delete is not delegated by the part.",
 			rights().getAccessibleTypes(_rootReader, SimpleBoundCommandGroup.DELETE).contains(part));
 		assertTrue("Delete of a fully delegating part is writing the catalog.",
-			rights().getAccessibleTypes(_rootReader, SimpleBoundCommandGroup.WRITE).contains(type(FULL_PART)));
+			rights().getAccessibleTypes(_rootReader, SimpleBoundCommandGroup.DELETE).contains(type(FULL_PART)));
 	}
 
 	public void testRoleHolderPerOperation() {

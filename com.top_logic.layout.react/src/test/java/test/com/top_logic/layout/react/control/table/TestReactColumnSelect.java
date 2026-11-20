@@ -132,7 +132,7 @@ public class TestReactColumnSelect extends TestCase {
 		assertEquals(List.of("a", "c", "b", "d", "e"), control.order());
 		assertEquals(List.of("a", "c"), control.lockedColumns());
 
-		// Shown again, the column stays released: no lock waited behind the closed eye.
+		// Shown again, the column stays released: no lock waited behind the hidden state.
 		assertTrue(visible(control, "b", true));
 		assertEquals(List.of("a", "c"), control.lockedColumns());
 	}

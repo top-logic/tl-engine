@@ -111,7 +111,7 @@
 
 /* Gesetzte Zustände bleiben zu sehen, auch ohne Zeigen (tl-reveal-on-hover verbirgt sie sonst): das Plus einer
    ausgeblendeten, das Schloss einer fixierten Spalte. */
-.tl-reorder-list__item[data-tl-state~="off"] .tl-reorder-list__eye,
+.tl-reorder-list__item[data-tl-state~="off"] .tl-reorder-list__visibility,
 .tl-reorder-list__item[data-tl-state~="locked"] .tl-reorder-list__lock {
   opacity: 1;
 }

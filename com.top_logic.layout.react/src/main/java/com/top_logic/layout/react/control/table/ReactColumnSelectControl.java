@@ -22,16 +22,16 @@ import com.top_logic.util.Resources;
 import de.haumacher.msgbuf.data.DataObject;
 
 /**
- * The column selection of a table as a layer panel: each column with its handle, its name, a lock that freezes it, an
- * eye that shows or hides it and a toggle grouping the rows by it.
+ * The column selection of a table as a layer panel: each column with its handle, its name, a lock that freezes it,
+ * a minus or plus that shows or hides it and a toggle grouping the rows by it.
  *
  * <p>
  * The locked columns form a block at the start of the list - the columns the table freezes. Locking puts a column at
  * the end of the block, releasing it directly behind. A drag changes the section of the column as well: the client
  * lists the columns in three sections, frozen, movable and hidden, and dropping a column into another section is one
  * {@link #CMD_COLUMN_MOVE move} that sets the lock and the visibility of the column and its position. A hidden column
- * keeps its place when it is hidden by the eye or by a drop on the section "hidden": it is the same position in this
- * list, so showing it again by the eye puts it back where it was.
+ * keeps its place when it is hidden by the minus or by a drop on the section "hidden": it is the same position in this
+ * list, so showing it again by the plus puts it back where it was.
  * </p>
  *
  * <p>
@@ -50,7 +50,7 @@ import de.haumacher.msgbuf.data.DataObject;
  * <p>
  * The control holds no working copy of its own to be applied later: whoever shows it learns of every gesture that
  * changed something by {@link #setOnChange(Runnable)} and applies {@link #visibleColumns()}, {@link #lockedColumns()}
- * and {@link #groupedColumns()} then, so the table follows each click. The order, the eyes, the locks and the grouping
+ * and {@link #groupedColumns()} then, so the table follows each click. The order, the visibility, the locks and the grouping
  * all live on the server: every gesture is a command, and the resulting list is pushed back, exactly as dragging a
  * column header is handled by the {@link TableViewControl}.
  * </p>
@@ -345,7 +345,7 @@ public class ReactColumnSelectControl extends ReactControl {
 	}
 
 	/**
-	 * Handles a click on the eye.
+	 * Handles a click on the minus or plus that shows or hides a column.
 	 *
 	 * <p>
 	 * Hiding the last displayed column is refused: a table without columns shows nothing at all, and nothing in it

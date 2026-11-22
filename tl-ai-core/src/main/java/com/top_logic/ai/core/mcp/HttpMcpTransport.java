@@ -63,7 +63,13 @@ public class HttpMcpTransport implements McpTransportConfig {
 		String CREDENTIALS = "credentials";
 
 		/**
-		 * The URL of the MCP server endpoint (e.g., {@code "https://mcp.example.com/mcp"}).
+		 * The full address of the MCP server endpoint (e.g., {@code "https://mcp.example.com/mcp"}).
+		 *
+		 * <p>
+		 * The client uses the path and the query of this URL as given, e.g.
+		 * {@code "https://host/app/mcp"} for the MCP endpoint of an application with the context
+		 * path {@code /app}.
+		 * </p>
 		 */
 		@Name(URL)
 		String getUrl();
@@ -114,6 +120,9 @@ public class HttpMcpTransport implements McpTransportConfig {
 	@Override
 	public McpClientTransport createTransport() {
 		return HttpClientStreamableHttpTransport.builder(_url)
+			// Without an endpoint, the library resolves its default endpoint "/mcp" against the
+			// URL, which replaces the path and the query of the URL.
+			.endpoint(_url)
 			.addHttpRequestCustomizer((request, method, uri, body, context) -> {
 				if (_headers != null) {
 					for (NamedValueConfig entry : _headers.values()) {

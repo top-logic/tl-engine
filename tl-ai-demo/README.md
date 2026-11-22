@@ -73,7 +73,9 @@ The chat states facts about the situation it is asked in (`<chat-conversation><c
 the overlay `tl-chat/albert.view.xml`): the application, which holds for the whole conversation and is therefore
 rendered into the run's system prompt, and the event open in the rail's pane, which follows the
 user's clicks and is therefore not. Neither changes the message text - that is the point of the seam
-(#437; see the developer article `ai/environment`).
+(#437; see the developer article `ai/environment`). The value of the application fact has two lines
+on purpose: each fact value is one line in the block, so the run detail of **Administration** →
+"Agent activity" shows `- Application: Event management demo (tl-ai-demo)` in the environment.
 
 The open object is stated by a `<selection>` of the shipped page rather than by a `<fact>`, which is
 the one-line way to say which object the user has selected: the agent gets its label, its type and

@@ -107,6 +107,8 @@ A host states facts in two places, and a run gets both, the agent's own first.
 
 `ChatConversationControl` evaluates them on the server when a message is sent or an answer regenerated (the `send` and `regenerate` commands of the chat controls read them from `ChatViewBinding.facts()`), and `ChatProcessor.sendMessage` binds them for the run through `RunFactsBinding`, which is also how a delegate and a subagent are told the same. A fact that cannot be evaluated is dropped with a log line and does not fail the run. The values are computed on the server in the acting account's context, and the browser carries none of them: what a run is told about the page is what the page's own configuration states.
 
+**Each fact value is one line, in both blocks.** The name and the value of every fact go through `TurnContext.flatten`, in the environment block and in the [per-turn block](#the-per-turn-block). Each line terminator (`\R`: CR LF, LF, CR, vertical tab, form feed, U+0085, U+2028, U+2029) becomes a space. The `<` of a tag of either block (`<environment>`, `</environment>`, `<turn-context>`, `</turn-context>`, in any case) becomes `&lt;`, as `UntrustedEnvelope` does it, so the text stays readable. A value can therefore neither add a line to a block nor open or close one. This matters because a fact often shows data that a user can write, for example the label of an object, and the environment block tells the model that what the application states is authoritative.
+
 ## Prompt contributors
 
 A fact is a name and a value. Text the model is to **follow** - house rules per client, per project, per account - is a `SystemPromptContributor` in `<prompt-contributors>` of `AgentApplicationService`:
@@ -164,7 +166,7 @@ Open invoice: RE-2026-0042
 </turn-context>
 ```
 
-- **Two blocks, not one string**: every provider renders a message's content parts as separate blocks, so the user's text stays byte-exact. The tags delimit the block; a value containing a tag has its `<` escaped to `&lt;` (as `UntrustedEnvelope` does), and a value keeps no line breaks, because the block is read line by line.
+- **Two blocks, not one string**: every provider renders a message's content parts as separate blocks, so the user's text stays byte-exact. The tags delimit the block, and the block is read line by line: a value is one line and cannot write a tag of either block, by the same rule as in the environment block ([application facts](#application-facts)).
 - **The selection** is the fact worth naming first: `<chat-conversation><selection channel="..."/>` states the selected object in one line - as the JSON identity `{"_tid", "_type", "_display"}` every tool result writes, whose `_tid` the tools take.
 - **Turn number and time of day** are added by the framework to a block that has facts; a host that states nothing per turn gets no block. The turn number is what `ChatProcessor` counted (`RunFactsBinding.bind(facts, turnNumber)`); a headless run counts none and omits the line.
 - **The model is told what the block means**: the `{{turn_context}}` section of the environment block (resource `tl.ai.environment.turn-context`, fallback `TurnContext.NOTE`) says that the newest block is the current state and earlier ones are past. It is present exactly when a block is (`RunEnvironment.turnContextSection`). Because it is part of the system prompt, a page that states per-turn facts and a dock over the same conversation that does not would flip it between turns: state them from every place the conversation is reachable from.

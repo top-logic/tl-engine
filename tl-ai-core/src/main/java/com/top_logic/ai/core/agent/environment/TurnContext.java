@@ -104,9 +104,20 @@ public final class TurnContext {
 	/** Every line terminator, {@code \r\n} as one. */
 	private static final Pattern LINE_BREAK = Pattern.compile("\\R");
 
-	/** A tag of this block or of the environment block, wherever a fact tries to write one. */
+	/**
+	 * The start of a tag of this block or of the environment block, wherever a value tries to write
+	 * one.
+	 *
+	 * <p>
+	 * The start only, in any case, with the optional slash and the inner white space, the form
+	 * {@link com.top_logic.ai.tool.api.UntrustedEnvelope} matches: a model that reads loosely also
+	 * reads {@code </ environment>}, {@code <environment source='x'>} or {@code <environment/>} as a
+	 * tag of the block. The word boundary keeps a longer name such as {@code <environmental>} as it
+	 * is.
+	 * </p>
+	 */
 	private static final Pattern BLOCK_TAG_IN_VALUE =
-		Pattern.compile("</?(?:turn-context|environment)\\s*>", Pattern.CASE_INSENSITIVE);
+		Pattern.compile("<\\s*/?\\s*(?:turn-context|environment)\\b", Pattern.CASE_INSENSITIVE);
 
 	private TurnContext() {
 		// Static utility.
@@ -198,14 +209,15 @@ public final class TurnContext {
 	 *
 	 * <p>
 	 * Every name and value of a fact goes through here, in this block and in the
-	 * {@code <environment>} block of {@link RunEnvironment}. Both blocks are read line by line, and
+	 * {@code <environment>} block of {@link RunEnvironment}, and so does every memory that
+	 * {@link UserMemories} writes into the environment block. Both blocks are read line by line, and
 	 * the system prompt tells the model that the environment block is authoritative. A line break in
 	 * a value would let the next line read as a fact of its own, and a tag of either block would end
 	 * the block early and let everything after it read as something else: the user's words after
 	 * this block, the instructions of the agent after the environment block. Each line terminator
 	 * therefore becomes a space, and the leading {@code <} of a tag is escaped rather than the phrase
-	 * deleted, the way {@code UntrustedEnvelope} does it: the text stays readable and structurally
-	 * inert.
+	 * deleted, the way {@link com.top_logic.ai.tool.api.UntrustedEnvelope} does it: the text stays
+	 * readable and structurally inert.
 	 * </p>
 	 *
 	 * <p>

@@ -9,6 +9,8 @@
 //     to (nobody holds Delete on pm:Ticket, so this should never be needed -
 //     it is here so a reset that finds one missing says so rather than
 //     silently leaving the fixture short of a ticket),
+//   * clears the "related" links of the seeded tickets, which the seed does
+//     not set,
 //   * reports what it did, so the output is a verification and not a promise.
 //
 // It does NOT touch the projects themselves, the accounts, the groups or the
@@ -54,8 +56,15 @@
 
 	missingTickets = $seededTickets.filter(t -> !$presentTitles.containsElement($t[1]));
 
+	linkedTickets = $tickets
+		.filter(t -> $seededTitles.containsElement($t.get(`pm:Ticket#title`)))
+		.filter(t -> !$t.get(`pm:Ticket#related`).isEmpty());
+
+	linkedTitles = $linkedTickets.get(`pm:Ticket#title`);
+
 	// -- delete what the scenarios added ----------------------------------
 	$obsoleteTickets.foreach(t -> $t.delete());
+	$linkedTickets.foreach(t -> $t.set(`pm:Ticket#related`, []));
 
 	// -- restore what a scenario removed ----------------------------------
 	// Into the project it belongs to, because a ticket outside a project has no
@@ -84,11 +93,14 @@
 		"restored tickets : " + ($missingTickets.size() == 0
 			? "none - all three seeded tickets were present"
 			: $missingTickets.map(t -> $t[1]).join(separator: ", ")),
+		"cleared links    : " + ($linkedTitles.size() == 0
+			? "none"
+			: $linkedTitles.size() + " (" + $linkedTitles.join(separator: ", ") + ")"),
 		"projects         : " + $projects.size() + " ("
 			+ $projects.get(`pm:Project#name`).join(separator: ", ") + ") - untouched",
 		"",
 		"The fixture now holds exactly the 3 seeded tickets in their 2 projects.",
 		"Run this script a second time to verify: it must then report 'none' on",
-		"both lines. If it does not, something is still creating data."
+		"every line. If it does not, something is still creating data."
 	].join(separator: "\n");
 }

@@ -16,6 +16,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -39,6 +40,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.security.HiddenElements;
 import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
@@ -100,6 +102,10 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * than the user's; a write that cannot be checked or attributed is not made.</li>
  * <li>The approval prompt of a {@link ToolMode#DATA_WRITE} tool comes on top of all this.</li>
  * <li>The answer shows only values the principal may read.</li>
+ * <li>A new value is applied to the value as the principal reads it. The elements of a reference
+ * that the principal may not read stay, and a call is a change only if it differs from what the
+ * principal reads. An attribute that the principal may write but not read has no such value, so
+ * each call that names it is a change: "No change" would tell the stored value.</li>
  * </ul>
  *
  * <p>
@@ -220,18 +226,30 @@ public class ObjectEditTool {
 		}
 
 		Map<TLStructuredTypePart, Object> converted = convert(values, parts, security);
+		ReadFilter filter = ReadFilter.forSecurity(security);
 		Map<TLStructuredTypePart, Object> before = new LinkedHashMap<>();
-		for (TLStructuredTypePart part : converted.keySet()) {
-			before.put(part, snapshot(target.tValue(part)));
+		Map<TLStructuredTypePart, Object> written = new LinkedHashMap<>();
+		boolean differs = false;
+		for (Map.Entry<TLStructuredTypePart, Object> entry : converted.entrySet()) {
+			TLStructuredTypePart part = entry.getKey();
+			Object stored = snapshot(target.tValue(part));
+			boolean readable = security.canRead(target, part);
+			Predicate<Object> seen = readable ? element -> AttributeValues.shown(element, filter) : element -> false;
+			before.put(part, stored);
+			written.put(part, withUnseen(part, stored, entry.getValue(), seen));
+			// The call is compared with the value that the run can read, not with the stored value.
+			// A comparison with the stored value tells the model that elements exist that it cannot
+			// read, and for an attribute that the run may not read, it tells the model the stored value.
+			differs |= !readable || !sameValue(seenPart(stored, seen), entry.getValue());
 		}
-		if (converted.entrySet().stream().allMatch(e -> sameValue(before.get(e.getKey()), e.getValue()))) {
+		if (!differs) {
 			return ToolResult.of("No change: " + nameOf(target)
 				+ " already has these values. Nothing was written.");
 		}
 
 		lock(context, target);
 		List<Reason> violations = writing("updateObject", () -> {
-			converted.forEach(target::tUpdate);
+			written.forEach(target::tUpdate);
 			List<Reason> problems = ObjectConstraints.violations(target);
 			if (!problems.isEmpty()) {
 				before.forEach(target::tUpdate);
@@ -240,11 +258,10 @@ public class ObjectEditTool {
 		});
 		if (!violations.isEmpty()) {
 			return refusal(ApplicationRefusals.toJson(ApplicationRefusals.refusal()
-				.setObject(ReadFilter.forSecurity(security).disclose(target))
+				.setObject(filter.disclose(target))
 				.setReasons(violations)));
 		}
 
-		ReadFilter filter = ReadFilter.forSecurity(security);
 		Map<String, Object> changes = new LinkedHashMap<>();
 		for (TLStructuredTypePart part : converted.keySet()) {
 			Map<String, Object> change = new LinkedHashMap<>();
@@ -1120,6 +1137,42 @@ public class ObjectEditTool {
 			return new ArrayList<>(collection);
 		}
 		return value;
+	}
+
+	/** The elements of a stored value that the run sees, detached like a {@link #snapshot(Object)}. */
+	private static Object seenPart(Object stored, Predicate<Object> seen) {
+		if (stored instanceof Collection<?> elements) {
+			Collection<Object> result = stored instanceof Set<?> ? new LinkedHashSet<>() : new ArrayList<>();
+			for (Object element : elements) {
+				if (seen.test(element)) {
+					result.add(element);
+				}
+			}
+			return result;
+		}
+		return stored == null || seen.test(stored) ? stored : null;
+	}
+
+	/**
+	 * The value to store for the new value of a call: for a reference, the new value applied to the
+	 * elements that the run sees.
+	 *
+	 * <p>
+	 * The run cannot name an element that it does not see, since {@link TidResolver} refuses its
+	 * identifier. So such an element stays, at its stored position ({@link HiddenElements}). A new
+	 * target of a single-valued reference replaces a target that the run does not see: a refusal
+	 * would tell the model that there is a target. Every other attribute takes the new value as it is.
+	 * </p>
+	 */
+	private static Object withUnseen(TLStructuredTypePart part, Object stored, Object value, Predicate<Object> seen) {
+		if (!(part instanceof TLReference)) {
+			return value;
+		}
+		if (stored instanceof Collection<?> elements && value instanceof Collection<?> given) {
+			List<Object> result = HiddenElements.keep(elements, given, seen);
+			return value instanceof Set<?> ? new LinkedHashSet<>(result) : result;
+		}
+		return value == null && stored != null && !seen.test(stored) ? stored : value;
 	}
 
 	private static boolean sameValue(Object before, Object after) {

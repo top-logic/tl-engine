@@ -192,5 +192,41 @@
 				/>
 			</attributes>
 		</class>
+		<!--
+			References that are no compositions, for a value with an element that the run cannot read:
+			a set of members, an ordered queue of members and one lead.
+		-->
+		<class name="Team">
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<reference name="members"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="Member"
+				/>
+				<reference name="queue"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					ordered="true"
+					type="Member"
+				/>
+				<reference name="lead"
+					kind="forwards"
+					navigate="true"
+					type="Member"
+				/>
+			</attributes>
+		</class>
+		<class name="Member">
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+			</attributes>
+		</class>
 	</module>
 </model>

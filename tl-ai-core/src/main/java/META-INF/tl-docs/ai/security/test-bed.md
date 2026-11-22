@@ -11,7 +11,7 @@ order: 6
 
 | Element | Value |
 |---|---|
-| model | module `pm`: `pm:Project {name, partners, tickets}`, `pm:Ticket {title, body}` (`WEB-INF/model/pm.model.xml`) |
+| model | module `pm`: `pm:Project {name, partners, tickets}`, `pm:Ticket {title, body, related}` (`WEB-INF/model/pm.model.xml`) |
 | seed data | two projects (Alpha, Beta), three tickets |
 | roles | `projectPartner`, `ticketReader` - both appear in both grant tables |
 | rules | four declarative role rules and one security-parent rule; nothing assigned from Java |
@@ -51,7 +51,7 @@ L1 cannot see objects, so Anna and Dora are indistinguishable at L1 and opposite
    ```
 
    A warning above the first line names a persona and a role a rule failed to produce; every scenario of that persona is then wrong in a way that looks like a policy problem. On the first boot of a fresh database the line comes at the end of the startup, after the startup transaction committed. In the second line, `baseline=default[model.read, data.read]` means the `<baseline/>` did not reach the service and `roles=0` that the aspect did not reach the application ([diagnosis](doc:ai/security/tool-access-recipes)).
-4. Between scenarios run `reset.tlscript` as `root` with **execute and save changes**: it deletes the tickets a scenario created and restores missing seed tickets. A second run must report `none` on both lines.
+4. Between scenarios run `reset.tlscript` as `root` with **execute and save changes**: it deletes the tickets a scenario created, restores missing seed tickets and clears the `related` links of the seed tickets. A second run must report `none` on every line.
 
 To turn it off, comment the line out again **and delete `tl-ai-demo/tmp/h2.mv.db`**: withdrawing the `pm` model makes the model upgrade delete the module, which fails while instances exist. To keep the database, delete the instances as `root` first (``all(`pm:Ticket`).concat(all(`pm:Project`)).foreach(x -> $x.delete())``, tickets first) and restart after disabling.
 
@@ -172,6 +172,8 @@ A write is checked by the tool that makes it, and the turn commits what its tool
 |---|---|---|
 | `anna` | change the title of an Alpha ticket / a Beta ticket | changed, the revision's author is Anna / refused, nothing written |
 | `anna` | set `partners` of Alpha | refused, naming `'partners'`: no role may write who partners on a project |
+| `anna` | set `related` of an Alpha ticket that `root` linked to a Beta ticket: the list she reads plus the other Alpha ticket / the list she reads | the Beta ticket stays, and the answer does not name it / `No change` |
+| `anna`, in a run that may not read the other Alpha ticket (test only) | set `related` of an Alpha ticket linked to it to `[]` | `No change`, and the link stays: the run sees less than Anna, and it keeps what it does not see |
 | `anna` | create a ticket in Alpha / in Beta | created / refused |
 | `anna` | delete an Alpha ticket | refused: `pm:Ticket` has no Delete grant |
 | `ben` | any of the three | not offered (no `data.write`), refused by the model rights when handed the tool anyway |

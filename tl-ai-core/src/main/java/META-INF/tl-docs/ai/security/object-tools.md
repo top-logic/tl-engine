@@ -1,5 +1,5 @@
 ---
-description: Read before changing the object tools updateObject / createObject / deleteObject (ObjectEditTool, group data.write) or reasoning about what they check - read check through TidResolver, canWrite per attribute, canCreate for every created part, canDelete over the composition subtree and DeleteChecker, model constraints, isAllowedInitial for initial values, and the refusal to run in a system context.
+description: Read before changing the object tools updateObject / createObject / deleteObject (ObjectEditTool, group data.write) or reasoning about what they check - read check through TidResolver, canWrite per attribute, canCreate for every created part, canDelete over the composition subtree and DeleteChecker, model constraints, isAllowedInitial for initial values, the refusal to run in a system context, and the elements of a reference that the account may not read, which a call keeps.
 order: 32
 ---
 
@@ -15,10 +15,26 @@ order: 32
 | May it delete this object **and everything it contains**? | `canDelete` for the object and, by type, for every object of its composition subtree; then the engine's own `DeleteChecker` veto |
 | Do the values satisfy the model? | the checks `ModelService` vetoes a commit with (mandatory, `TLSize`, `TLRange`, error-level `TLConstraints`), asked on the changed object - for a new object with its parts once the whole tree exists, so a mandatory composition can be satisfied; a violation anywhere undoes the call's whole write |
 | What does the answer show? | only attributes the account may read; a written attribute it may not read is reported as written, without its value |
+| What does a new value replace? | only the value as the account reads it: the elements of a reference that it may not read stay, see [below](#a-value-that-the-account-reads-only-in-part) |
 
 **Every refusal happens before anything is written** (or after the call undid its own write), so it is reported as a failed tool call that the turn does not roll back - other permitted changes of the same turn survive. These checks are the security of the write: the turn commits what its tools wrote.
 
 **Never with the security checks bypassed.** `ModelAccessRights` grants every right while the security checks of the thread are bypassed (`ThreadContext.isSecurityBypassed()`) - in a system context and within `ThreadContext.withoutSecurityChecks` -, whatever account the run names, and in a system context the knowledge base records the context's id as the author of the commit. So the tools refuse to run there, and without a user, instead of writing something nobody checked and nobody authored. In a chat the tools run in the user's sub-session, and the revision names the user (`SecDemoObjectEditTest` asserts the author). A scheduled `AgentTask` binds its configured account to its sub-session, so it acts - and is recorded - as that account, bounded by the `<background-allowlist>`.
+
+## A value that the account reads only in part
+
+The read tools leave out each element that the account may not read, and `TidResolver` refuses its identifier. So a model can never send such an element back. `updateObject` therefore applies the new value to the value as the account reads it, and it never removes what the account does not see. What the account reads is decided by the read check of the run, as in `getInstance`; a security context factory can make it narrower than the rights of the person:
+
+- **A multi-valued reference:** the list is the new value of the readable elements. The tool removes a readable element that the list does not have, and it adds a new element. Each element that the account may not read stays. In an ordered reference, the list gives the order of the readable elements, and each other element stays at its stored place.
+- **A single-valued reference:** `null` does not remove a target that the account may not read, because the account sees an empty value there. A new target replaces it: the reference holds one target, and a refusal would tell the model that there is a target.
+- **A reference that the account may write but not read:** the account sees none of its elements, so each stored element stays, and the tool adds the elements of the call.
+- **Every other attribute** takes the new value as it is.
+
+A call is a change only if it is different from the value that the account reads. If it is equal, the tool writes nothing and answers "No change". An attribute that the account may write but not read has no value that it reads, so each call that names this attribute is a change: "No change" would tell the model the stored value. The answer shows the old and the new value as the account reads them, so no count, no placeholder and no refusal gives a sign of the other elements.
+
+This is the rule of the rows of a composition table, which keep the parts that the user may not discover, and both use one implementation (`HiddenElements`): the rows with the `Discover` check of the user, the tool with the read check of the run.
+
+To remove an element that the account may not read, a person who sees it changes the value in a form, or a script replaces the whole value with `set`. `set` removes also the elements that the user may not discover ([rule R10](doc:access-discover-spec)).
 
 ## Engine facts the tools inherit
 

@@ -100,6 +100,10 @@ public class TestObjectEditTool extends BasicTestCase {
 
 	private static final String ARCHIVE = "test.objectedit:Archive";
 
+	private static final String TEAM = "test.objectedit:Team";
+
+	private static final String MEMBER = "test.objectedit:Member";
+
 	private static Person _owner;
 
 	private ObjectEditTool _tool;
@@ -294,6 +298,154 @@ public class TestObjectEditTool extends BasicTestCase {
 		assertEquals("secret-after", agent.getDescription());
 		assertFalse("A value the account may not read must not be shown: " + result.text(),
 			result.text().contains("secret-after") || result.text().contains("before"));
+	}
+
+	/**
+	 * A run that adds an element sends the elements it can read and the new one. An element of the
+	 * stored value that the run cannot read is not in this list, and it stays.
+	 */
+	public void testAnElementTheRunCannotReadStaysWhenOneIsAdded() {
+		TLObject seen = member("seen");
+		TLObject hidden = member("hidden");
+		TLObject added = member("added");
+		TLObject team = newObject(TEAM, "members", Set.of(seen, hidden));
+
+		ToolResult result = update(context(new DenyRead(hidden)), team,
+			values("members", List.of(idOf(seen), idOf(added))));
+
+		assertSucceeded(result);
+		assertEquals("The element that the run cannot read must stay. The answer was: " + result.text(),
+			Set.of(seen, hidden, added), Set.copyOf(stored(team, "members")));
+		assertNoSignOf(hidden, result);
+	}
+
+	/**
+	 * A run that sends the elements it can read without a change changes nothing: the element that it
+	 * cannot read stays, and the answer gives no sign of it.
+	 */
+	public void testTheReadableElementsUnchangedAreNoChange() {
+		TLObject seen = member("seen");
+		TLObject hidden = member("hidden");
+		TLObject team = newObject(TEAM, "members", Set.of(seen, hidden));
+
+		ToolResult result = update(context(new DenyRead(hidden)), team, values("members", List.of(idOf(seen))));
+
+		assertSucceeded(result);
+		assertEquals("The element that the run cannot read must stay. The answer was: " + result.text(),
+			Set.of(seen, hidden), Set.copyOf(stored(team, "members")));
+		assertContains("No change", result.text());
+		assertNoSignOf(hidden, result);
+	}
+
+	/** A readable element that the list leaves out is removed, and only this element. */
+	public void testOneReadableElementLessRemovesOnlyThisElement() {
+		TLObject kept = member("kept");
+		TLObject removed = member("removed");
+		TLObject hidden = member("hidden");
+		TLObject team = newObject(TEAM, "members", Set.of(kept, removed, hidden));
+
+		ToolResult result = update(context(new DenyRead(hidden)), team, values("members", List.of(idOf(kept))));
+
+		assertSucceeded(result);
+		assertEquals(Set.of(kept, hidden), Set.copyOf(stored(team, "members")));
+		assertNoSignOf(hidden, result);
+	}
+
+	/** The empty list removes the readable elements, and the element that the run cannot read stays. */
+	public void testTheEmptyListRemovesOnlyTheReadableElements() {
+		TLObject seen = member("seen");
+		TLObject hidden = member("hidden");
+		TLObject team = newObject(TEAM, "members", Set.of(seen, hidden));
+
+		ToolResult result = update(context(new DenyRead(hidden)), team, values("members", List.of()));
+
+		assertSucceeded(result);
+		assertEquals(Set.of(hidden), Set.copyOf(stored(team, "members")));
+		assertNoSignOf(hidden, result);
+	}
+
+	/**
+	 * In an ordered reference the list gives the order of the readable elements, and the element that
+	 * the run cannot read stays at its stored place.
+	 */
+	public void testAnOrderedReferenceKeepsTheHiddenElementAtItsPlace() {
+		TLObject first = member("first");
+		TLObject hidden = member("hidden");
+		TLObject last = member("last");
+		TLObject team = newObject(TEAM, "queue", List.of(first, hidden, last));
+
+		ToolResult result = update(context(new DenyRead(hidden)), team,
+			values("queue", List.of(idOf(last), idOf(first))));
+
+		assertSucceeded(result);
+		assertEquals(List.of(last, hidden, first), List.copyOf(stored(team, "queue")));
+		assertNoSignOf(hidden, result);
+	}
+
+	/**
+	 * The run sees no target where the stored target is one that it cannot read. So null is no change
+	 * there, and the target stays.
+	 */
+	public void testNullKeepsASingleTargetTheRunCannotRead() {
+		TLObject hidden = member("hidden");
+		TLObject team = newObject(TEAM, "lead", hidden);
+
+		ToolResult result = update(context(new DenyRead(hidden)), team, values("lead", null));
+
+		assertSucceeded(result);
+		assertContains("No change", result.text());
+		assertEquals(hidden, team.tValue(part(team, "lead")));
+		assertNoSignOf(hidden, result);
+	}
+
+	/**
+	 * A new target replaces a target that the run cannot read: the reference holds one target, and a
+	 * refusal would tell the model that there is one.
+	 */
+	public void testANewTargetReplacesASingleTargetTheRunCannotRead() {
+		TLObject hidden = member("hidden");
+		TLObject lead = member("lead");
+		TLObject team = newObject(TEAM, "lead", hidden);
+
+		ToolResult result = update(context(new DenyRead(hidden)), team, values("lead", idOf(lead)));
+
+		assertSucceeded(result);
+		assertEquals(lead, team.tValue(part(team, "lead")));
+		assertNoSignOf(hidden, result);
+	}
+
+	/**
+	 * A run that may write a reference but not read it sees none of its elements: each stored element
+	 * stays, and the elements of the call are added.
+	 */
+	public void testAReferenceTheRunMayNotReadKeepsEveryElement() {
+		TLObject kept = member("kept");
+		TLObject added = member("added");
+		TLObject team = newObject(TEAM, "members", Set.of(kept));
+
+		ToolResult result = update(context(new DenyReadAttribute(team, part(team, "members"))), team,
+			values("members", List.of(idOf(added))));
+
+		assertSucceeded(result);
+		assertEquals(Set.of(kept, added), Set.copyOf(stored(team, "members")));
+		assertNoSignOf(kept, result);
+	}
+
+	/**
+	 * An attribute that the run may write but not read has no value that the run can read. So a call
+	 * with the stored value is a change, as each other call: "No change" would tell the model the
+	 * stored value.
+	 */
+	public void testAProbeWithTheStoredValueOfAnAttributeTheRunMayNotReadIsAChange() {
+		Agent agent = agent("secret-stored");
+
+		ToolResult result = update(context(new DenyReadAttribute(agent, part(agent, "description"))), agent,
+			values("description", "secret-stored"));
+
+		assertSucceeded(result);
+		assertContains("Changed 1 attribute", result.text());
+		assertFalse("The answer must not show the value: " + result.text(), result.text().contains("secret-stored"));
+		assertEquals("secret-stored", agent.getDescription());
 	}
 
 	/**
@@ -798,6 +950,36 @@ public class TestObjectEditTool extends BasicTestCase {
 			tx.commit();
 			return agent;
 		}
+	}
+
+	/** A new member with a name that no answer contains by chance. */
+	private static TLObject member(String name) {
+		return newObject(MEMBER, "name", name + "-member-" + System.nanoTime());
+	}
+
+	/** A new object of the given type with the given values, committed. */
+	private static TLObject newObject(String type, Object... namesAndValues) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			TLObject result =
+				ModelService.getInstance().getFactory().createObject((TLClass) TLModelUtil.findType(type), null);
+			for (int i = 0; i < namesAndValues.length; i += 2) {
+				result.tUpdateByName((String) namesAndValues[i], namesAndValues[i + 1]);
+			}
+			tx.commit();
+			return result;
+		}
+	}
+
+	/** The stored elements of the given multi-valued attribute. */
+	private static Collection<?> stored(TLObject object, String attribute) {
+		return (Collection<?>) object.tValue(part(object, attribute));
+	}
+
+	/** Neither the identifier nor the label of the given object is in the answer. */
+	private static void assertNoSignOf(TLObject object, ToolResult result) {
+		assertFalse("The answer must not name an object that the run cannot read: " + result.text(),
+			result.text().contains(idOf(object))
+				|| result.text().contains((String) object.tValue(part(object, "name"))));
 	}
 
 	private static void delete(TLObject object) {

@@ -335,7 +335,7 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 		String GRANTS = "grants";
 
 		/**
-		 * Lets a run with nobody to ask use everything the acting user's roles allow.
+		 * Lets a run whose tool calls nobody approves use everything the acting user's roles allow.
 		 *
 		 * <p>
 		 * Switch this on only if you deliberately want such runs without a limit of their own. It gives
@@ -351,7 +351,7 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 		void setAll(boolean value);
 
 		/**
-		 * The capabilities and single tools a run with nobody to ask may use.
+		 * The capabilities and single tools that a run whose tool calls nobody approves may use.
 		 *
 		 * <p>
 		 * Ignored when {@link #isAll()} is switched on.

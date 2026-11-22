@@ -60,14 +60,15 @@ Give an agent the client tools by adding `a2a.listAgents`, `a2a.askAgent`, `a2a.
 The client reads the card at `card-url` without credentials. It takes two addresses from the card: the
 JSON-RPC address and the artifact address. The calls to them carry the credentials and the messages, so
 they go only to the origin (scheme, host and port) of `card-url` and to the origins in `endpoint-origins`.
-An address of the card at another origin ends the call with a message that names the address and
-`card-url`, and no request goes out. This also applies to a card read over https that names an http
-address.
+Of the JSON-RPC interfaces of the card, the client takes the first one at such an origin. An address of
+the card at another origin ends the call with a message that names the origin of the address and the
+origin of `card-url`, and no request goes out. This also applies to a card read over https that names an
+http address.
 
 `endpoint-origins` is for a card on the address of a domain and an agent on another host, as the A2A
-protocol permits. It is a comma-separated list of origins, `scheme://host` or `scheme://host:port`, with
-no path, query, fragment or user info. An entry that is no origin stops the start of the service. Name
-only origins of the remote application:
+protocol permits. It is a comma-separated list of origins, `http://host` or `https://host[:port]`, with
+no path, query, fragment or user info. An entry that is not an origin stops the start of the service.
+Name only origins of the remote application:
 
 ```xml
 <remote-agent name="other" card-url="https://example.com/.well-known/agent-card.json"

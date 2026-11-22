@@ -297,9 +297,9 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 		 * For a card on the address of a domain and an agent on another host, as the A2A protocol
 		 * permits. The calls to these origins carry the {@link #getCredentials() credentials} and
 		 * the messages, so name only origins of the remote application. An origin is
-		 * {@code scheme://host} or {@code scheme://host:port}, with no path, e.g.
-		 * {@code https://agents.example.com}. Separate more than one with commas. Empty: only the
-		 * origin of the card URL.
+		 * {@code http://host} or {@code https://host[:port]}, with no path, query, fragment or user
+		 * info, e.g. {@code https://agents.example.com}. Separate more than one with commas. Empty:
+		 * only the origin of the card URL.
 		 * </p>
 		 */
 		@Name("endpoint-origins")

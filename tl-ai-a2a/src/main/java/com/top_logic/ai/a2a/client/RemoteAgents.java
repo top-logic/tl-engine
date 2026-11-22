@@ -58,6 +58,9 @@ public final class RemoteAgents {
 
 		private final String _cardUrl;
 
+		/** The {@link RemoteAgents#origin(String) origin} of the card URL. */
+		private final String _cardOrigin;
+
 		/** The {@link RemoteAgents#origin(String) origins} that may get the calls to this agent. */
 		private final Set<String> _allowedOrigins = new HashSet<>();
 
@@ -81,7 +84,8 @@ public final class RemoteAgents {
 			_name = name;
 			_cardUrl = cardUrl;
 			_credentials = credentials;
-			_allowedOrigins.add(origin(cardUrl));
+			_cardOrigin = origin(cardUrl);
+			_allowedOrigins.add(_cardOrigin);
 			for (String endpointOrigin : endpointOrigins) {
 				_allowedOrigins.add(origin(endpointOrigin));
 			}
@@ -95,7 +99,9 @@ public final class RemoteAgents {
 		}
 
 		/**
-		 * Authenticates the calls to this agent.
+		 * Authenticates the calls to this agent. The calls with these credentials go only to an
+		 * address at an allowed origin of this agent: the origin of its card URL or one of its
+		 * {@link RemoteAgentConfig#getEndpointOrigins() endpoint origins}.
 		 */
 		public CredentialProvider credentials() {
 			return _credentials;
@@ -122,18 +128,30 @@ public final class RemoteAgents {
 		}
 
 		/**
-		 * Checks that an address of the card of this agent is at an allowed origin.
-		 *
-		 * @throws A2AError
-		 *         If it is not. Then no request was sent.
+		 * Whether an address of the card of this agent is at an allowed origin, so that a call with
+		 * the credentials of this agent may go there.
 		 */
-		void checkOrigin(String address) {
-			if (!_allowedOrigins.contains(origin(address))) {
-				throw new A2AError(A2AError.INVALID_AGENT_RESPONSE, "The agent card of '" + _name
-					+ "' names the address " + address + ", which is neither at the origin of its card URL " + _cardUrl
-					+ " nor at one of its endpoint-origins. The calls to a remote agent go only to these origins"
-					+ " (scheme, host and port), so no request was sent.");
-			}
+		boolean allows(String address) {
+			return _allowedOrigins.contains(origin(address));
+		}
+
+		/**
+		 * The error for an address of the card that this agent does not {@link #allows(String)
+		 * allow}.
+		 *
+		 * <p>
+		 * It names the origin of the address, not the address: the card is text of the remote side,
+		 * and the message reaches the model of the caller as it is.
+		 * </p>
+		 */
+		A2AError refusal(String address) {
+			String origin = origin(address);
+			return new A2AError(A2AError.INVALID_AGENT_RESPONSE, "The agent card of '" + _name + "' names "
+				+ (origin == null ? "an address that is not an absolute http or https URL"
+					: "an address at the origin " + origin)
+				+ ", which is neither the origin " + _cardOrigin + " of its card URL nor one of its endpoint-origins."
+				+ " The calls to a remote agent go only to these origins (scheme, host and port), so no request"
+				+ " was sent.");
 		}
 	}
 
@@ -142,7 +160,7 @@ public final class RemoteAgents {
 	 *
 	 * @param context
 	 *        The context for instantiating the credentials of the agents. It gets an error for an
-	 *        entry of the endpoint origins that is no origin.
+	 *        entry of the endpoint origins that is not an origin.
 	 */
 	public RemoteAgents(InstantiationContext context, List<? extends RemoteAgentConfig> configs) {
 		for (RemoteAgentConfig config : configs) {
@@ -154,7 +172,7 @@ public final class RemoteAgents {
 					endpointOrigins.add(entry);
 				} else {
 					context.error("The entry '" + entry + "' of the endpoint-origins of the remote agent '"
-						+ config.getName() + "' is no origin. Write scheme://host or scheme://host:port, with no"
+						+ config.getName() + "' is not an origin. Write http://host or https://host[:port], with no"
 						+ " path, query, fragment or user info, e.g. https://agents.example.com.");
 				}
 			}
@@ -166,33 +184,33 @@ public final class RemoteAgents {
 
 	private static void warnIfUnencrypted(String agent, String address) {
 		if (isUnencrypted(address)) {
-			Logger.warn("The calls to the remote agent '" + agent + "' can go over http to a host that is not a"
-				+ " loopback host: " + address + ". Then its credentials and the messages go out without"
+			Logger.warn("The calls to the remote agent '" + agent + "' can go over http to " + origin(address)
+				+ ", a host that is not a loopback host. Then its credentials and the messages go out without"
 				+ " encryption. Use https.", RemoteAgents.class);
 		}
 	}
 
 	/**
-	 * The origin of an address: scheme and host in lower case, the host without a trailing dot, and
-	 * the port, also where the address leaves out the default port of http or https.
+	 * The origin of an http or https address: scheme and host in lower case, the host without a
+	 * trailing dot, and the port, also where the address leaves out the default port.
 	 *
-	 * @return The origin as {@code scheme://host:port}, or <code>null</code> if the address is no
-	 *         absolute URL with a host.
+	 * @return The origin as {@code scheme://host:port}, or <code>null</code> if the address is not an
+	 *         absolute http or https URL.
 	 */
 	static String origin(String address) {
 		URI uri = parse(address);
+		String scheme = uri == null || uri.getScheme() == null ? null : uri.getScheme().toLowerCase(Locale.ROOT);
 		String host = uri == null ? null : UrlSafety.normalizeHost(uri.getHost());
-		if (host == null || host.isEmpty() || uri.getScheme() == null) {
+		if (!("http".equals(scheme) || "https".equals(scheme)) || host == null || host.isEmpty()) {
 			return null;
 		}
-		String scheme = uri.getScheme().toLowerCase(Locale.ROOT);
-		int port = uri.getPort() >= 0 ? uri.getPort() : "https".equals(scheme) ? 443 : "http".equals(scheme) ? 80 : -1;
+		int port = uri.getPort() >= 0 ? uri.getPort() : "https".equals(scheme) ? 443 : 80;
 		return scheme + "://" + host + ":" + port;
 	}
 
 	/**
-	 * Whether an entry of the endpoint origins is an origin only: a scheme and a host, perhaps a
-	 * port, nothing more.
+	 * Whether an entry of the endpoint origins is an origin only: http://host or
+	 * https://host[:port], with no path, query, fragment or user info.
 	 */
 	static boolean isOrigin(String entry) {
 		URI uri = parse(entry);
@@ -230,7 +248,7 @@ public final class RemoteAgents {
 	}
 
 	/**
-	 * The address as the HTTP client reads it, or <code>null</code> if it is no URI.
+	 * The address as the HTTP client reads it, or <code>null</code> if it is not a URI.
 	 */
 	private static URI parse(String address) {
 		try {
@@ -286,19 +304,25 @@ public final class RemoteAgents {
 	}
 
 	/**
-	 * The JSON-RPC endpoint the card of a remote agent names.
+	 * The first JSON-RPC endpoint that the card of a remote agent names at an allowed origin of the
+	 * agent.
 	 *
 	 * @throws A2AError
-	 *         If the card names no JSON-RPC endpoint, or one that is not at an allowed origin of the
-	 *         agent.
+	 *         If the card names no JSON-RPC endpoint, or none at an allowed origin.
 	 */
 	public String endpoint(RemoteAgent agent) throws IOException, InterruptedException {
+		String refused = null;
 		for (Object entry : Json.list(card(agent), "supportedInterfaces")) {
 			String url = Json.str(entry, "url");
 			if ("JSONRPC".equalsIgnoreCase(Json.str(entry, "protocolBinding")) && url != null) {
-				agent.checkOrigin(url);
-				return url;
+				if (agent.allows(url)) {
+					return url;
+				}
+				refused = refused == null ? url : refused;
 			}
+		}
+		if (refused != null) {
+			throw agent.refusal(refused);
 		}
 		throw new A2AError(A2AError.INVALID_AGENT_RESPONSE, "The agent card of '" + agent.name()
 			+ "' names no JSON-RPC interface.");
@@ -323,8 +347,10 @@ public final class RemoteAgents {
 				continue;
 			}
 			if (url != null) {
-				// Outside the try above: a foreign address ends the fetch, it is no unreachable peer.
-				agent.checkOrigin(url);
+				// Outside the try above: a foreign address ends the fetch, it is not an unreachable peer.
+				if (!agent.allows(url)) {
+					throw agent.refusal(url);
+				}
 				String query = url + "?ref=" + URLEncoder.encode(ref.toString(), StandardCharsets.UTF_8)
 					+ (section == null || section.isBlank() ? ""
 						: "&section=" + URLEncoder.encode(section.trim(), StandardCharsets.UTF_8));

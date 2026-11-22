@@ -60,6 +60,7 @@ import com.top_logic.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.ai.core.execution.AgentEnvironment;
 import com.top_logic.ai.core.execution.AgentRunner;
 import com.top_logic.ai.core.execution.AgentTaskMirror;
+import com.top_logic.ai.core.execution.CancelSignalObserver;
 import com.top_logic.ai.core.execution.RunFailure;
 import com.top_logic.ai.core.execution.model.AgentSession;
 import com.top_logic.ai.core.limits.I18NConstants;
@@ -413,9 +414,15 @@ public class ChatProcessor {
 				if (state.isWake() && !openWithNews(convLog, conversation, toolContext, listener)) {
 					return null;
 				}
+				// Unlike the stop button, a stop by the persisted cancel marker (aiAgentRunCancel, the stop
+				// command of the agent activity monitor) does not look for this run among the runs of the
+				// account: it can come from any node. The observer on this node reads the marker and
+				// cancels the run's token.
+				AgentEventListener runListener = new CompositeAgentEventListener(listener,
+					new CancelSignalObserver(toolContext.executionHandle(), cancellationToken));
 				try {
 					AgentRunner.RecordedRun runResult = AgentRunner.run(entryPointAgent, conversation,
-						conversationMemory, toolContext, listener, sessionRegistry, convLog, agentSession, null,
+						conversationMemory, toolContext, runListener, sessionRegistry, convLog, agentSession, null,
 						runOverrides);
 					if (ToolRegistryReloadFlag.consume()) {
 						// A tool modified a service that affects the tool catalog (e.g. FrameworkWiringTool

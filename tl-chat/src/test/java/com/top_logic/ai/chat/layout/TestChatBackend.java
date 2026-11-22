@@ -56,6 +56,7 @@ import com.top_logic.ai.core.message.TextContent;
 import com.top_logic.ai.core.message.TokenUsage;
 import com.top_logic.ai.core.provider.I18NConstants;
 import com.top_logic.ai.core.provider.LLMProviderService;
+import com.top_logic.ai.core.scripting.AIScriptFunctions;
 import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.ai.core.session.Part;
 import com.top_logic.ai.core.session.Turn;
@@ -228,6 +229,39 @@ public class TestChatBackend extends BasicTestCase {
 		assertEquals(StopReason.ABORTED.name(), execution.getStopReason());
 		assertFalse(_window.hasActiveProcessingStateFor(_sessionId));
 		assertNull(PendingInteractionRegistry.findBySession(_owner, _sessionId));
+	}
+
+	/**
+	 * The cancel marker that {@code aiAgentRunCancel} sets reaches the backend's token, as a stop of
+	 * the user does, and the run is recorded as cancelled (#30483).
+	 */
+	public void testCancelMarkerReachesTheBackend() throws Exception {
+		CountDownLatch working = new CountDownLatch(1);
+		CountDownLatch marked = new CountDownLatch(1);
+		claim((turn, sink, cancel) -> {
+			String runId = start(sink);
+			working.countDown();
+			assertTrue("The marker was not set.", marked.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+			sink.onEvent(new AgentEvent.TurnCompleted(runId, 1, Instant.now(), USAGE, List.of()));
+			// A run reads its marker at the start of a turn at the latest.
+			sink.onEvent(new AgentEvent.TurnStarted(runId, 2, Instant.now()));
+			sink.onEvent(new AgentEvent.TurnCompleted(runId, 2, Instant.now(), USAGE, List.of()));
+			complete(sink, runId, cancel.isCancelled() ? StopReason.ABORTED : StopReason.COMPLETE);
+			return "Partial";
+		});
+
+		ChatProcessor.SendResult sent = sendOnly("Take your time.");
+		ChatProcessor.AIProcessingState run = _window.getProcessingState(sent.getTaskId());
+		assertTrue("The backend did not start.", working.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
+		HistoryUtils.updateSessionRevision();
+		assertTrue("aiAgentRunCancel found no running execution of the chat.",
+			AIScriptFunctions.agentRunCancel(_session));
+		marked.countDown();
+
+		run._backgroundTask.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+		assertNull("A stop is no error: " + run.getError(), run.getError());
+		assertEquals("The run did not stop at its cancel marker.", "CANCELLED",
+			onlyExecution().getStatus().getName());
 	}
 
 	/**

@@ -42,7 +42,7 @@ A refusal is a `ProviderException` of kind `INVALID_REQUEST`, raised while the r
 - `aiAgentRunStatus($handle)` - `RUNNING`, `COMPLETE`, `ERROR`, `CANCELLED`, `REJECTED`;
 - `aiAgentRunResult($handle)` - the answer of a `COMPLETE` run, `null` while it is not finished, and the same exception as `aiChat` for a run that ended otherwise;
 - `aiAgentRunError($handle)` - the recorded message without raising it, for a script that stores or shows the failure;
-- `aiAgentRunCancel($handle)` - stops the run.
+- `aiAgentRunCancel($handle)` - stops the run. It also stops a chat run and a scheduled run (`AgentTask`, below), given the `AgentSession` of its chat.
 
 The polling shape never reaches the exception:
 

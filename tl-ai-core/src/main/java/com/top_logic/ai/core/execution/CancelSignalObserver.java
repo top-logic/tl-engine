@@ -32,13 +32,14 @@ import com.top_logic.ai.core.execution.model.AgentExecution;
  *
  * <p>
  * The marker is polled on a fixed time cadence for the whole lifetime of the run (started on
- * {@code RunStarted}, stopped on {@code RunCompleted}), <em>not</em> only at turn boundaries. A
- * turn-boundary-only check is not enough: a run that sits inside a single long turn - one long LLM
- * stream or a long-running tool call - never crosses a boundary, so the committed marker would never
- * be read and the run would stay {@code RUNNING} forever. The time-based poll guarantees the token
- * flips within a bounded delay regardless of where the run currently is. As an optimization the
- * marker is additionally polled on each {@code TurnStarted}, so a cancel that lands right before a
- * boundary takes effect immediately rather than waiting for the next tick.
+ * {@code RunStarted}, stopped on {@code RunCompleted} or {@link #close()}), <em>not</em> only at
+ * turn boundaries. A turn-boundary-only check is not enough: a run that sits inside a single long
+ * turn - one long LLM stream or a long-running tool call - never crosses a boundary, so the
+ * committed marker would never be read and the run would stay {@code RUNNING} forever. The
+ * time-based poll guarantees the token flips within a bounded delay regardless of where the run
+ * currently is. As an optimization the marker is additionally polled on each {@code TurnStarted},
+ * so a cancel that lands right before a boundary takes effect immediately rather than waiting for
+ * the next tick.
  * </p>
  *
  * <p>
@@ -48,7 +49,7 @@ import com.top_logic.ai.core.execution.model.AgentExecution;
  * writer thread lightly loaded.
  * </p>
  */
-public final class CancelSignalObserver implements AgentEventListener {
+public final class CancelSignalObserver implements AgentEventListener, AutoCloseable {
 
 	/**
 	 * How often the persisted cancel marker is polled at HEAD while the run is in flight. Bounds
@@ -88,6 +89,20 @@ public final class CancelSignalObserver implements AgentEventListener {
 		} else if (event instanceof AgentEvent.TurnStarted) {
 			pollCancelMarker();
 		}
+	}
+
+	/**
+	 * Stops the poll of a run that ended without {@code RunCompleted}.
+	 *
+	 * <p>
+	 * The agent loop always ends a run with {@code RunCompleted}. A producer that cannot promise it -
+	 * an external backend that throws or returns early - closes the observer when the run is over, so
+	 * that the poll does not go on for the life of the application.
+	 * </p>
+	 */
+	@Override
+	public void close() {
+		stopPolling();
 	}
 
 	/**

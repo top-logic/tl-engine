@@ -9,6 +9,9 @@ import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.basic.Logger;
 import com.top_logic.ai.core.agent.event.AgentEvent;
 import com.top_logic.ai.core.agent.event.AgentEventListener;
+import com.top_logic.ai.core.agent.event.CompositeAgentEventListener;
+import com.top_logic.ai.core.execution.CancelSignalObserver;
+import com.top_logic.ai.core.execution.ExecutionHandle;
 import com.top_logic.ai.core.execution.RunRecording;
 import com.top_logic.ai.core.session.ConversationLog;
 import com.top_logic.ai.core.session.ConversationLogListener;
@@ -22,7 +25,8 @@ import com.top_logic.ai.core.session.ConversationLogListenerBinding;
  * The chat calls {@link #run(ConversationBackend, BackendTurn, ConversationLog,
  * ConversationLogListener, AgentEventListener, CancellationToken)} on its worker thread, inside the
  * frame it sets up for every run (send lock, processing state, the windows' stream). What this adds
- * is the recording through {@link RunRecording} and the enforcement of the backend's contract: its
+ * is the recording through {@link RunRecording}, the stop by the cancel marker of the recorded
+ * execution ({@link CancelSignalObserver}) and the enforcement of the backend's contract: its
  * events arrive on the calling thread while the call lasts, and the run ends with
  * {@link AgentEvent.RunCompleted}. A backend that throws, breaks the contract or returns without
  * completing the run ends the run in an error, recorded and thrown to the chat, which reports it.
@@ -57,13 +61,19 @@ public final class BackendRun {
 	public static String run(ConversationBackend backend, BackendTurn turn, ConversationLog log,
 			ConversationLogListener logListener, AgentEventListener listener, CancellationToken cancel)
 			throws Exception {
-		// Bound, so that the recording takes this listener as the transcript's recorder instead of
-		// adding a second one over the same log.
-		try (ConversationLogListenerBinding.Binding binding = ConversationLogListenerBinding.bind(logListener)) {
+		// The log listener is bound, so that the recording takes it as the transcript's recorder
+		// instead of adding a second one over the same log. The observer turns a stop by the persisted
+		// cancel marker (aiAgentRunCancel, the stop command of the agent activity monitor) into a
+		// cancel of the backend's token. It is closed with the run, because a backend that throws or
+		// returns early never completes the run for it.
+		ExecutionHandle handle = new ExecutionHandle();
+		try (ConversationLogListenerBinding.Binding binding = ConversationLogListenerBinding.bind(logListener);
+				CancelSignalObserver cancelObserver = new CancelSignalObserver(handle, cancel)) {
 			String agentName = backend.agentName();
 			Logger.info("Chat " + turn.sessionId() + " is answered by the backend '" + agentName + "'.",
 				BackendRun.class);
-			RunRecording recording = RunRecording.open(agentName, turn.session(), null, null, log, listener);
+			RunRecording recording = RunRecording.open(agentName, turn.session(), null, handle, log,
+				new CompositeAgentEventListener(listener, cancelObserver));
 			Sink sink = new Sink(recording, Thread.currentThread());
 			String answer;
 			try {

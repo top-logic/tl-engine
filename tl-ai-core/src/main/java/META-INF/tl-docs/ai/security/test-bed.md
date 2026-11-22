@@ -41,7 +41,7 @@ L1 cannot see objects, so Anna and Dora are indistinguishable at L1 and opposite
 
 ## Enabling and resetting
 
-1. Uncomment `secdemo.config.xml` in `tl-ai-demo/src/main/webapp/WEB-INF/conf/metaConf.txt` and comment out `research.config.xml`, whose background allowlist is a second one.
+1. Uncomment `secdemo.config.xml` in `tl-ai-demo/src/main/webapp/WEB-INF/conf/metaConf.txt` and comment out `research.config.xml`, whose background allowlist is a second one. Keep `a2a-demo.config.xml` off for the same reason: it puts `egress` on the list.
 2. Build and start the demo (the `tl-app` skill, or `mvn -B` in `tl-ai-demo`); the log ends with `***** up and running *****`.
 3. Check two lines of `tl-ai-demo/tmp/app-data/logs/top-logic.tl-ai.log`:
 

@@ -241,8 +241,8 @@ public interface ToolAccessPolicy extends ConfigurationItem {
 	}
 
 	/**
-	 * What an agent run with nobody to ask may use: a scheduled or asynchronous run, or a request from
-	 * an external client.
+	 * What an agent run may use when nobody approves its tool calls: a scheduled or asynchronous run,
+	 * or a request of an external client over MCP or A2A.
 	 *
 	 * <p>
 	 * Such a run confirms every tool call itself, so this is its upper limit; the acting user's roles

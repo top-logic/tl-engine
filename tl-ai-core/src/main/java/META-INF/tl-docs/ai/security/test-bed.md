@@ -1,5 +1,5 @@
 ---
-description: Read before verifying agent security by hand or adding a case to the security test bed of tl-ai-demo (secdemo.config.xml, the pm model, SecDemoSetup) - enabling and resetting the fixture, the personas anna, ben, cara and dora, the four harness scripts (probe, fire, collect, reset) for the script console, the scenario tables per layer (tool access T1-T10, read filtering D1-D11, capability notices C1-C8, background allowlist A1-A5, object tools, closed doors P1-P2) and the SecDemo*Test classes asserting each.
+description: Read before verifying agent security by hand or adding a case to the security test bed of tl-ai-demo (secdemo.config.xml, the pm model, SecDemoSetup) - enabling and resetting the fixture, the personas anna, ben, cara and dora, the four harness scripts (probe, fire, collect, reset) for the script console, the scenario tables per layer (tool access T1-T10, read filtering D1-D11, capability notices C1-C8, background allowlist A1-A9, object tools, closed doors P1-P2) and the SecDemo*Test classes asserting each.
 order: 6
 ---
 
@@ -163,6 +163,10 @@ A run with nobody to answer an approval prompt auto-approves every call, so it i
 | A3 | it binds administrators too | `root` | 3.2 (as `root`, `fire` fires every case) | still refused: the missing approval prompt is the reason, not the principal's authority |
 | A4 | what the allowlist admits works | `ben` | 3.3, 3.4, 3.5 | the listings, with the model rights applied |
 | A5 | an enforcing policy must declare an allowlist | - | delete `<background-allowlist>` from `secdemo.config.xml` and restart | the application refuses to start ([capping unattended runs](doc:ai/security/tool-access-recipes)) |
+| A6 | an A2A request is a background run that can still ask | `anna` | test | the calling agent approves no tool call, so the list caps the run; `askUser` is not refused, the calling agent answers it |
+| A7 | `allow-writes="true"` alone opens no write tool | `anna`, then `root` | test | `secdemo-editing.addTicket` refused naming the allowlist, also for the administrator |
+| A8 | a write tool on the list follows `allow-writes` | `anna` | test | `script-exec.changeData` permitted with `allow-writes="true"`, refused with `"false"` by the served agent's switch |
+| A9 | a READ or EXTERNAL tool off the list is refused over A2A | `root` | test | `a2a.listAgents` and `a2a.askAgent` (`egress`) refused naming the allowlist, whatever `allow-writes` says |
 
 ### The object tools
 
@@ -189,7 +193,7 @@ A write is checked by the tool that makes it, and the turn commits what its tool
 The scenario tables are for exploring; the tests keep the feature honest, against a real application boot with real roles, rules, accounts, the shipped aspect file and the running tool registry:
 
 ```bash
-mvn -B test -DskipTests=false -pl tl-ai-demo -Dtest='com.top_logic.ai.demo.SecDemo*' -Dsurefire.failIfNoSpecifiedTests=false
+mvn -B test -DskipTests=false -pl tl-ai-demo -Dtest='com.top_logic.ai.demo.SecDemo*,com.top_logic.ai.a2a.server.SecDemo*' -Dsurefire.failIfNoSpecifiedTests=false
 ```
 
 | Class | Scenarios | Class | Scenarios |
@@ -201,7 +205,7 @@ mvn -B test -DskipTests=false -pl tl-ai-demo -Dtest='com.top_logic.ai.demo.SecDe
 | `SecDemoCapabilityNoticeTest` | C1, C2 | `SecDemoRoleRuleTest` | the boot check |
 | `SecDemoSkillAbsenceTest` | C1, C4-C6 | `SecDemoMcpEndpointTest` | P1 |
 | `SecDemoListToolsTest` | C3, C4, C8 | `SecDemoModelSecurityTest` | the worked example, persona by persona |
-| `SecDemoVectorIndexTest` | the vector index | | |
+| `SecDemoVectorIndexTest` | the vector index | `SecDemoA2ARunTest` (package `com.top_logic.ai.a2a.server`) | A6-A9 |
 
 `SecDemoSpawnFilterTest` (a spawn is decided per child context), `SecDemoDeclaredTypesTest` (a tool declaring `pm:Project` refuses a persona without read access before it runs), `SecDemoInfrastructureAgentTest` (an agent the application runs for a user, such as the prompt improver, cannot be run as a chat persona, whatever `<agent-access>` says), `SecDemoHarnessScriptsTest` (the harness compiles) and the tests of the [policy editor](doc:ai/security/tool-access-editor) (`SecDemoEffectiveAccessTest`, `SecDemoPolicyEditorTest`, `SecDemoApplyPolicyGuardTest`, `SecDemoToolDescriptionTest`, `SecDemoGermanTerminologyTest`) run in the same suite because they need the booted fixture. The unit-level counterparts in `tl-ai-core` use hand-built policies: `TestRoleToolAccess`, `TestToolAuthorization`, `TestAiToolAccessService`, `TestAgentCapabilities`, `TestDelegateFilter`, `TestSpawnFilter`, `TestDetachedSubagentCeiling`, `TestSkillTool`, `TestSkillAbsenceReason`, `TestTopLogicSecurityContext`, `TestReadFilter`.
 

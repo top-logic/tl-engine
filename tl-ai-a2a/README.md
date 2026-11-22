@@ -46,14 +46,40 @@ Both are closed until an application configures them. `tl-ai-demo` carries a rea
 | Setting | Meaning |
 |---|---|
 | `app` | The application's name in artifact references and in the metadata it sends. Default: the context path. |
-| `public-url` | Base URL in the agent cards. Default: taken from the request. |
+| `public-url` | Base URL in the agent cards. Default: taken from the request. Set it behind a proxy that ends TLS, unless the servlet container applies the forwarding headers (`X-Forwarded-*`, `Forwarded`): otherwise the cards name http addresses, and a caller that reads a card over https refuses them. |
 | `max-blocking-seconds` | Longest wait of a blocking `SendMessage` and of `askAgent` (default 1500). |
 | `<authentications>`, `<secrets>` | As on `MCPServerService` (the developer article `ai/security/mcp-endpoint`). A calling application uses a personal access token of the account its requests should act as, created with the permission *Agent interfaces (MCP/A2A)* in *Settings → Access tokens*. Nothing configured: every call is answered 503. |
 | `<agent>` | `path` is the URL name, `agent` the tl-ai agent, `model` an optional override. `allow-writes="true"` lets A2A runs use the tools that change the application, without approval; otherwise those tools are not offered. The first agent also answers `/.well-known/agent-card.json`. |
-| `<remote-agent>` | `card-url` of the remote agent; `<credentials>` authenticate the calls, typically a personal access token of the remote application sent as `Authorization: Bearer` from an environment variable or a file (any `CredentialProvider`, see "Configuring the LLM providers" in the developer article `ai/index`). Without credentials the calls carry none. A call whose credentials are rejected (401) is repeated once with fresh ones. |
+| `<remote-agent>` | `card-url` of the remote agent; `<credentials>` authenticate the calls, typically a personal access token of the remote application sent as `Authorization: Bearer` from an environment variable or a file (any `CredentialProvider`, see "Configuring the LLM providers" in the developer article `ai/index`). Without credentials the calls carry none. A call whose credentials are rejected (401) is repeated once with fresh ones. `endpoint-origins`: more origins that the card may name, see "Where the credentials go". |
 
 Give an agent the client tools by adding `a2a.listAgents`, `a2a.askAgent`, `a2a.replyAgent`,
 `a2a.getAgentTask`, `a2a.listAgentConversations` and `a2a.fetchArtifact` to its tool list.
+
+## Where the credentials go
+
+The client reads the card at `card-url` without credentials. It takes two addresses from the card: the
+JSON-RPC address and the artifact address. The calls to them carry the credentials and the messages, so
+they go only to the origin (scheme, host and port) of `card-url` and to the origins in `endpoint-origins`.
+An address of the card at another origin ends the call with a message that names the address and
+`card-url`, and no request goes out. This also applies to a card read over https that names an http
+address.
+
+`endpoint-origins` is for a card on the address of a domain and an agent on another host, as the A2A
+protocol permits. It is a comma-separated list of origins, `scheme://host` or `scheme://host:port`, with
+no path, query, fragment or user info. An entry that is no origin stops the start of the service. Name
+only origins of the remote application:
+
+```xml
+<remote-agent name="other" card-url="https://example.com/.well-known/agent-card.json"
+	endpoint-origins="https://agents.example.com">
+	...
+</remote-agent>
+```
+
+Use https. A `card-url` or an origin in `endpoint-origins` with http to a host that is not a loopback
+host (`localhost`, `127.0.0.0/8`, `::1`) gives a warning at the start: its credentials and the messages
+go out without encryption. When the remote application runs behind a proxy that ends TLS, it sets
+`public-url` (see above), so that its cards name https addresses.
 
 ## What a call does
 

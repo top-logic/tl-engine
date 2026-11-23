@@ -24,6 +24,7 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -34,7 +35,7 @@ import io.modelcontextprotocol.spec.McpSchema;
 
 /**
  * Tests that {@link HttpMcpTransport} sends its requests to the path and query of the configured
- * <code>url</code>.
+ * <code>url</code>, and refuses a <code>url</code> that it cannot send requests to.
  *
  * <p>
  * A local HTTP server plays the MCP server: it answers MCP only at the path and query of the
@@ -125,6 +126,19 @@ public class TestHttpMcpTransportEndpoint extends TestCase {
 		assertServed("/app/mcp?tenant=a", "/app/mcp?tenant=a");
 	}
 
+	/** A url without an http or https scheme or without a host is refused when it is configured. */
+	public void testInvalidUrl() throws ConfigurationException {
+		for (String url : List.of("localhost:8080/mcp", "http:///mcp", "/app/mcp", "ftp://host/mcp",
+			"http://host/a b")) {
+			try {
+				new HttpMcpTransport(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config(url));
+				fail("Accepted: " + url);
+			} catch (ConfigurationError ex) {
+				assertEquals(I18NConstants.ERROR_INVALID_URL__URL.fill(url), ex.getErrorKey());
+			}
+		}
+	}
+
 	/**
 	 * Connects with a url that ends with the given part, lists the tools, calls one and ends the
 	 * session.
@@ -161,13 +175,16 @@ public class TestHttpMcpTransportEndpoint extends TestCase {
 	}
 
 	private HttpMcpTransport transport(String urlEnd) throws ConfigurationException {
+		HttpMcpTransport.Config config = config("http://127.0.0.1:" + _server.getAddress().getPort() + urlEnd);
+		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
+	}
+
+	private static HttpMcpTransport.Config config(String url) throws ConfigurationException {
 		String xml = "<transport xmlns:config='http://www.top-logic.com/ns/config/6.0'"
 			+ " config:interface='" + HttpMcpTransport.Config.class.getName() + "'"
 			+ " class='" + HttpMcpTransport.class.getName() + "'"
-			+ " url='http://127.0.0.1:" + _server.getAddress().getPort() + urlEnd + "'/>";
-		HttpMcpTransport.Config config =
-			(HttpMcpTransport.Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
-		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
+			+ " url='" + url + "'/>";
+		return (HttpMcpTransport.Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
 	}
 
 	private void handle(HttpExchange exchange) throws IOException {

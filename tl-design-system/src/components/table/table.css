@@ -6,9 +6,9 @@
    drag.css. Breiten, Versätze und die Lage der Zeilen sind Daten und stehen inline; alles andere hier.
    Eine Zeile schwebt nicht (skalen.md „Elevation“): kein Schatten, Kanten sind Linien. Die Tabelle als Ganzes steht
    abgesetzt (UI-Durchgang 1, „Tiefe“): Fläche, Rundung, Rand und ein leichter Schatten — außer sie füllt eine ganze
-   Fläche (tl-fill). Zebra, Spaltenlinien und Dichte sind Attribute an tl-table (data-tl-striped, data-tl-column-lines,
-   data-tl-density), Zahlenspalten data-tl-align="end" an Kopf- und Datenzelle; beide Zeilenformen, Gruppe und gerade
-   Zeile, sind Wörter in data-tl-state der Zeile ("group", "even"). */
+   Fläche (tl-fill). Zebra und Spaltenlinien sind Attribute an tl-table (data-tl-striped, data-tl-column-lines; die
+   Dichte erbt die Tabelle von der Seite), Zahlenspalten data-tl-align="end" an Kopf- und Datenzelle; beide Zeilenformen,
+   Gruppe und gerade Zeile, sind Wörter in data-tl-state der Zeile ("group", "even"). */
 
 /* isolation hält die Marke an der Wurzel (drop-onto, drop-refused: Fläche ::before auf layer-sticky,
    drag.css) im Stapel der Tabelle: sie liegt über Filterleiste, Kopf und Zeilen, nie über einem Nachbarn
@@ -86,22 +86,19 @@
 }
 .tl-table__save[hidden] { display: none; }
 
-/* --- Ansicht: das Popover des Zahnrads ---------------------------------------------- */
+/* --- Spalten: das Popover des Zahnrads ---------------------------------------------- */
 
-/* Der Inhalt des Popovers des Zahnrads (tl-popover tl-picker tl-menu tl-table-view-options): zwei Seiten, nie beide zugleich.
-   Seite 1 „Spalten“: Titel, die Spaltenwahl, Trennlinie, am Fuß „Spalten zurücksetzen“ und die Zeile „Ansicht“. Seite 2
-   „Ansicht“: Kopf mit Zurück-Knopf, darunter das Menü — Abschnitt „Dichte“ mit Segmenten, zwei Schalterzeilen; allein
-   (ohne Spaltenwahl) ohne Zurück und am Ende Trennlinie, „Spalten zurücksetzen“.
-   Alles steht auf der Einrückung der Menüeinträge (space-control-x), damit die Zeilen untereinander bündig sind. Die Hülle
-   tl-picker setzt eine Lücke von space-sm zwischen die Kinder; hier gilt die dichte Folge eines Menüs. */
+/* Der Inhalt des Popovers des Zahnrads (tl-popover tl-picker tl-menu tl-table-view-options): eine Seite — Titel, die
+   Spaltenwahl, Trennlinie, am Fuß „Spalten zurücksetzen“. Alles steht auf der Einrückung der Menüeinträge
+   (space-control-x), damit die Zeilen untereinander bündig sind. Die Hülle tl-picker setzt eine Lücke von space-sm
+   zwischen die Kinder; hier gilt die dichte Folge eines Menüs. */
 .tl-popover.tl-table-view-options {
   gap: var(--tl-space-2xs);
-  /* Eine Breite für beide Seiten: der Wechsel zwischen „Spalten“ und „Ansicht“ springt nicht (Hendrik 20.11.). Lange
-     Spaltennamen kürzen mit Ellipse; am schmalen Fenster gibt das Popover nach. */
+  /* Lange Spaltennamen kürzen mit Ellipse; am schmalen Fenster gibt das Popover nach. */
   inline-size: min(var(--tl-size-popover-view), calc(var(--tl-size-viewport-width) - 2 * var(--tl-space-xs)));
 }
 
-/* Jede Seite ist eine Flex-Spalte, die das Popover füllt und mit ihm schrumpft (min-block-size 0): wo das Popover am
+/* Die Seite ist eine Flex-Spalte, die das Popover füllt und mit ihm schrumpft (min-block-size 0): wo das Popover am
    Fensterrand gedeckelt ist (usePopover setzt maxHeight), gibt die Seite nach, und es rollt genau ein Bereich — die Liste der
    Spaltenwahl. Die Seite selbst rollt nie. Die Lücke der Folge zieht sie vom Popover mit. */
 .tl-table-view-options__page {
@@ -109,14 +106,6 @@
   flex-direction: column;
   flex: 1 1 auto;
   min-block-size: 0;
-  gap: var(--tl-space-2xs);
-}
-.tl-table-view-options__page[hidden] { display: none; }
-
-/* Das Menü der Seite „Ansicht“ unter ihrem Kopf: die Einträge in der Folge der Seite. */
-.tl-table-view-options__menu {
-  display: flex;
-  flex-direction: column;
   gap: var(--tl-space-2xs);
 }
 
@@ -127,30 +116,13 @@
   block-size: auto;
 }
 
-/* Der Titel ist ein Titel, kein Abschnittskopf: Primärtext in tl-type-label-strong (die Klasse setzt das Element),
-   der Abschnitt „Dichte“ darunter bleibt der leise Kopf tl-menu__header. Auf Seite 2 „Ansicht“ steht der Zurück-Knopf
-   davor. */
+/* Der Titel ist ein Titel, kein Abschnittskopf: Primärtext in tl-type-label-strong (die Klasse setzt das Element). */
 .tl-table-view-options__title {
   display: flex;
   align-items: center;
   gap: var(--tl-space-2xs);
   padding: var(--tl-space-2xs) var(--tl-space-control-x);
   color: var(--tl-text-primary);
-}
-
-/* Zurück: ein tl-button--icon --sm --ghost vor dem Titel der Seite „Ansicht“. Das Popover schneidet (overflow), darum liegt
-   der Fokusring innen. */
-.tl-table-view-options__back {
-  flex: 0 0 auto;
-}
-
-.tl-table-view-options__back:focus-visible {
-  outline-offset: calc(-1 * var(--tl-focus-offset));
-}
-
-/* Die Segmente rücken von den Rändern des Popovers ab wie der Text der Einträge. */
-.tl-table-view-options__segments {
-  margin-inline: var(--tl-space-control-x);
 }
 
 /* --- Rahmen und Raster ------------------------------------------------------------ */

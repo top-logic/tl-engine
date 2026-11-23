@@ -292,8 +292,10 @@ test('Tiefe: „+ n weitere“ ist ein Element der Filterleiste, das nur sein La
 
 test('Tiefe: Vertrag und Specimen nennen die neuen Attribute und Klassen', () => {
   const md = readComponent('table', 'table.contract.md');
-  assert.deepEqual(missingInContract(md, ['data-tl-striped', 'data-tl-column-lines', 'data-tl-align="end"', 'data-tl-density',
+  assert.deepEqual(missingInContract(md, ['data-tl-striped', 'data-tl-column-lines', 'data-tl-align="end"',
     'data-tl-state~="group"', 'data-tl-state~="even"', 'tl-table__more', 'tl-type-overline', '--tl-surface-layer-muted', 'tl-reveal-on-hover']), []);
+  // Die Tabelle hat keine eigene Dichte: sie erbt die der Seite (#30233).
+  assert.doesNotMatch(md, /data-tl-density="/, 'der Vertrag kennt kein Dichte-Attribut an der Tabelle');
   const html = readComponent('table', 'table.spec.html');
   for (const t of ['data-tl-striped', 'data-tl-column-lines', 'data-tl-align="end"', 'tl-table__more', 'tl-type-overline',
     'data-tl-state="filtered"', 'aria-sort="ascending"'])

@@ -1,6 +1,6 @@
 // Tabellenmenüs (#30102): Filter und Spaltenwahl sind Popover, die sofort wirken; jedes Tabellenmenü hat dasselbe Verhalten.
 // Das Paket liefert dafür die Zeile als Klickfläche (tl-menu__item--check), die Werteliste (tl-filter-list), den Rollbereich
-// im Popover (tl-picker__scroll), die zwei Seiten der Ansicht und die Wurzel der Spaltenwahl. Reihenfolge der Tests wie die
+// im Popover (tl-picker__scroll), das Popover des Zahnrads und die Wurzel der Spaltenwahl. Reihenfolge der Tests wie die
 // der Regeln: erst die Zeile, dann was darauf aufbaut.
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -66,7 +66,7 @@ test('Auswahl: Schalter und Kästchen ohne Eingabe in tl-menu__item--check zeich
   assert.ok(i(`${ZEILE}[aria-checked="true"] .tl-checkbox--switch::after`) > i(`${ZEILE}[aria-checked="true"] .tl-checkbox::after`));
 });
 
-test('Segmente der Dichte: das gewählte Segment liest aria-checked, gleich welche role es trägt (menuitemradio im Menü)', () => {
+test('Segmente: das gewählte Segment liest aria-checked, gleich welche role es trägt (menuitemradio im Menü)', () => {
   const ausgewaehlt = rulesWith(choice, '.tl-segmented__segment[aria-checked="true"]');
   assert.equal(ausgewaehlt.length, 1);
   assert.match(ausgewaehlt[0][1], /background:\s*var\(--tl-surface-brand-subtle\)/);
@@ -134,34 +134,27 @@ test('tl-picker__scroll: füllt den Rest der Hülle, schrumpft mit ihr, rollt al
   assert.match(readComponent('picker', 'picker.spec.html'), /tl-picker__scroll/);
 });
 
-// --- Ansicht: zwei Seiten und Spaltenwahl --------------------------------------------------------------------------------
+// --- Spalten: das Popover des Zahnrads und die Spaltenwahl ---------------------------------------------------------------
 
 const SPALTE = [/display:\s*flex/, /flex-direction:\s*column/, /flex:\s*1 1 auto/, /min-block-size:\s*0/];
 
-test('Ansicht: eine Breite für beide Seiten — der Seitenwechsel springt nicht', () => {
+test('Spalten: das Popover hat eine Breite aus dem Token', () => {
   const popover = declarationsOf(table, '.tl-popover.tl-table-view-options') ?? '';
   assert.match(popover, /inline-size:\s*min\(var\(--tl-size-popover-view\)/);
 });
 
-test('Ansicht: zwei Seiten im Popover — jede eine Flex-Spalte mit einem Rollbereich (der Liste), Kopf mit Zurück-Knopf', () => {
+test('Spalten: eine Seite im Popover — Flex-Spalte mit einem Rollbereich (der Liste); keine zweite Seite, kein Zurück, kein Menü der Ansicht', () => {
   const seite = declarationsOf(table, '.tl-table-view-options__page') ?? '';
   for (const re of SPALTE) assert.match(seite, re, String(re));
   assert.match(seite, /gap:\s*var\(--tl-space-2xs\)/, 'die dichte Folge des Popovers gilt auch in der Seite');
-  assert.match(declarationsOf(table, '.tl-table-view-options__page[hidden]') ?? '', /display:\s*none/);
   // Kein zweiter Rollbereich: die Seite scrollt nicht selbst, es rollt die Liste der Spaltenwahl.
   assert.doesNotMatch(seite, /overflow/);
-  // Der Kopf mit Zurück: Knopf und Titel in einer Zeile, der Ring des Knopfs innen (das Popover schneidet).
-  assert.match(declarationsOf(table, '.tl-table-view-options__title') ?? '', /display:\s*flex/);
-  assert.match(declarationsOf(table, '.tl-table-view-options__title') ?? '', /align-items:\s*center/);
-  assert.match(declarationsOf(table, '.tl-table-view-options__back') ?? '', /flex:\s*0 0 auto/);
-  assert.match(declarationsOf(table, '.tl-table-view-options__back:focus-visible') ?? '', /outline-offset:\s*calc\(-1 \* var\(--tl-focus-offset\)\)/);
-  // Der Schalter ist eine Zeile des Menüs (tl-menu__item--check), kein tl-choice mehr: die Einrückungsregel entfällt.
-  assert.equal(declarationsOf(table, '.tl-table-view-options__switch'), null);
-  // Das Menü der Seite „Ansicht“ steht unter ihrem Kopf: eine Flex-Spalte mit der Lücke der Seite.
-  const menue = declarationsOf(table, '.tl-table-view-options__menu') ?? '';
-  assert.match(menue, /display:\s*flex/);
-  assert.match(menue, /flex-direction:\s*column/);
-  assert.match(menue, /gap:\s*var\(--tl-space-2xs\)/);
+  assert.match(declarationsOf(table, '.tl-table-view-options__title') ?? '', /padding:\s*var\(--tl-space-2xs\) var\(--tl-space-control-x\)/);
+  // Dichte, Zebra und Spaltenlinien kommen aus dem Benutzermenü: was die zweite Seite der Ansicht zeichnete, ist weg.
+  for (const weg of ['.tl-table-view-options__page[hidden]', '.tl-table-view-options__back', '.tl-table-view-options__back:focus-visible',
+    '.tl-table-view-options__menu', '.tl-table-view-options__segments', '.tl-table-view-options__switch'])
+    assert.equal(declarationsOf(table, weg), null, `${weg} gibt es nicht mehr`);
+  assert.doesNotMatch(table, /tl-table-view-options__(back|menu|segments)/);
 });
 
 test('Spaltenwahl: die Wurzel trägt tl-reorder-list__host — Flex-Spalte, füllt die Seite, schrumpft; die Liste behält max-height', () => {
@@ -206,100 +199,56 @@ test('Spaltenwahl: Zeile mit Zeiger, die letzte sichtbare ohne Zeiger und Hover;
   assert.ok(html.includes('tl-reorder-list__empty') && html.includes('drop-target'), 'Specimen zeigt Platzhalter und Zielabschnitt');
 });
 
-test('Ansicht: Vertrag und Specimen — Seiten, Zurück, Schalter als Zeile ohne Eingabe, Dichte als menuitemradio, Filter-Popover am Trichter', () => {
+test('Spalten: Vertrag und Specimen — eine Seite, Spaltenwahl, Filter-Popover am Trichter; nichts von der Ansicht, die ins Benutzermenü zog', () => {
   const md = readComponent('table', 'table.contract.md');
-  assert.deepEqual(missingInContract(md, ['tl-table-view-options__page', 'tl-table-view-options__back', 'tl-table-view-options__menu',
-    'tl-reorder-list__host', 'tl-menu__item--check', 'menuitemcheckbox', 'menuitemradio', 'tl-filter-list', 'aria-expanded',
-    'tl-checkbox--switch']), []);
-  assert.doesNotMatch(md, /tl-table-view-options__switch/);
+  assert.deepEqual(missingInContract(md, ['tl-table-view-options__page', 'tl-table-view-options__title', 'tl-reorder-list__host',
+    'tl-filter-list', 'aria-expanded', 'data-tl-striped', 'data-tl-column-lines']), []);
+  assert.match(md, /Benutzermenü/, 'der Vertrag sagt, wo Dichte, Zebra und Spaltenlinien eingestellt werden');
+  assert.doesNotMatch(md, /tl-table-view-options__(back|menu|segments|switch)|tl-menu__item--nav|menuitemradio|data-tl-density="/);
   const html = readComponent('table', 'table.spec.html');
-  for (const t of ['tl-table-view-options__page', 'tl-table-view-options__back', 'tl-table-view-options__menu', 'tl-reorder-list__host',
-    'tl-menu__item--check',
-    'role="menuitemradio"', 'tl-checkbox tl-checkbox--switch', 'tl-filter-list', 'aria-expanded="true"'])
+  for (const t of ['tl-table-view-options__page', 'tl-reorder-list__host', 'tl-filter-list', 'aria-expanded="true"'])
     assert.ok(html.includes(t), `Specimen zeigt ${t}`);
-  assert.doesNotMatch(html, /tl-table-view-options__switch/);
-  assert.doesNotMatch(html.match(/tl-table-view-options[\s\S]*?<\/section>/)?.[0] ?? '', /type="checkbox" role="switch"/, 'der Schalter der Ansicht ist gezeichnet');
+  assert.doesNotMatch(html, /tl-table-view-options__(back|menu|segments|switch)|tl-menu__item--nav|menuitemradio/);
 });
 
-// Die Seite „Ansicht“ hält ein Menü (K4, #30102): benannt nach dem Text ihres Titels; der Kopf mit dem Zurück-Knopf steht außerhalb
-// des Menüs (#30234), der Kopf „Dichte“ ist kein Eintrag. Allein (ohne Spaltenwahl) hat sie keinen Zurück-Knopf.
-test('Ansicht: die Seite „Ansicht“ hält ein role="menu" mit aria-labelledby auf den Text ihres Titels; der Kopf mit Zurück steht davor', () => {
-  const md = readComponent('table', 'table.contract.md');
-  const ansicht = md.match(/## Ansicht \(Popover des Zahnrads\)[\s\S]*?\n## /)?.[0] ?? '';
-  assert.deepEqual(missingInContract(ansicht, ['role="menu"', 'aria-labelledby', 'role="presentation"', 'tl-table-view-options__menu']), []);
+// Das Popover des Zahnrads ist kein Menü (#30233): kein role="menu", der Knopf „Spalten zurücksetzen“ ist ein schlichter Knopf.
+// Ohne Spaltenwahl besteht es aus diesem Knopf allein, ohne Titel und ohne Trennlinie.
+test('Spalten: das Popover ist kein Menü; „Spalten zurücksetzen“ ohne Rolle, allein ohne Titel und Trennlinie', () => {
   const html = readComponent('table', 'table.spec.html');
-  const seiten = [...html.matchAll(/<div class="tl-popover tl-picker tl-menu tl-table-view-options[^"]*" role="dialog" aria-label="Ansicht">\s*<div class="tl-table-view-options__page">\s*(<div class="tl-table-view-options__title[^"]*">[\s\S]*?<\/div>)\s*(<div[^>]*>)/g)];
-  assert.equal(seiten.length, 2, 'Specimen zeigt die Seite „Ansicht“ hinter „Spalten“ und allein');
-  for (const [i, [, titel, menue]] of seiten.entries()) {
-    assert.match(menue, /class="tl-table-view-options__menu"/, menue);
-    assert.match(menue, /role="menu"/, menue);
-    const id = menue.match(/aria-labelledby="([^"]+)"/)?.[1];
-    assert.ok(id, `aria-labelledby an ${menue}`);
-    // Der Name ist der Text allein, nicht der Knopf davor.
-    assert.equal(titel.match(new RegExp(`<span id="${id}">([^<]*)</span>`))?.[1], 'Ansicht', titel);
-    if (i === 0) assert.match(titel, /tl-table-view-options__back/, 'hinter „Spalten“ trägt der Kopf den Zurück-Knopf');
-    else assert.doesNotMatch(titel, /tl-table-view-options__back/, 'allein hat die Seite keinen Rückweg');
-  }
-  assert.match(html, /<div[^>]*role="presentation"[^>]*class="tl-menu__header tl-type-label">Dichte<\/div>|<div[^>]*class="tl-menu__header tl-type-label"[^>]*role="presentation"[^>]*>Dichte<\/div>/, 'Kopf „Dichte“');
+  const panel = html.match(/<p class="tl-type-heading-sm">Spalten: das Popover des Zahnrads<\/p>[\s\S]*?<\/section>/)?.[0] ?? '';
+  assert.ok(panel.length > 0, 'Specimen zeigt das Popover des Zahnrads');
+  assert.doesNotMatch(panel, /role="menu"|role="menuitem/, 'kein Menü');
+  assert.doesNotMatch(panel, /tl-menu__value|\d+ von \d+/, 'kein Wert „n von m“');
+  const popovers = [...panel.matchAll(/<div class="tl-popover tl-picker tl-menu tl-table-view-options[^"]*" role="dialog" aria-label="Spalten">[\s\S]*?<\/div>\s*<\/div>\s*(?=<div class="tl-popover|<\/div>\s*<\/section>|$)/g)].map((m) => m[0]);
+  assert.equal(popovers.length, 2, 'das Specimen zeigt das Popover mit Spaltenwahl und das mit dem Knopf allein');
+  const reset = /<button type="button" class="tl-menu__item tl-type-body"><i class="tl-menu__icon [^"]*" aria-hidden="true"><\/i><span class="tl-menu__label">Spalten zurücksetzen<\/span><\/button>/;
+  // Mit Spaltenwahl: Titel, Spaltenwahl, Trennlinie, „Spalten zurücksetzen“ als Letztes.
+  const [mitWahl, allein] = popovers;
+  assert.match(mitWahl, /tl-table-view-options__title[^>]*>Spalten<\/div>/);
+  assert.ok(mitWahl.indexOf('tl-reorder-list__host') < mitWahl.indexOf('<hr class="tl-divider">'), 'die Trennlinie steht nach der Spaltenwahl');
+  assert.match(mitWahl, new RegExp('<hr class="tl-divider">\\s*' + reset.source + '\\s*</div>\\s*</div>\\s*$'), 'Trennlinie, dann der Knopf als Letztes');
+  // Allein: nur der Knopf.
+  assert.doesNotMatch(allein, /tl-table-view-options__title|<hr|tl-reorder-list/, 'allein: ohne Titel, Trennlinie und Spaltenwahl');
+  assert.match(allein, reset);
 });
 
-// Die Spaltenwahl ist die erste Seite von „Ansicht“ und wirkt sofort (E7, #30102; Seiten getauscht #30234): am Fuß „Spalten
-// zurücksetzen“ (#30233) und die Zeile „Ansicht“ zur zweiten Seite, der Server hält die Spaltenwahl als Kind, solange das Popover
-// offen ist; das „n von m“ gibt es nicht mehr.
-test('Ansicht: die Seite „Spalten“ steht zuerst, an ihrem Fuß „Spalten zurücksetzen“ und die Zeile „Ansicht“ mit Chevron; Vertrag nennt Zustand und Kommandos', () => {
+// Die Spaltenwahl wirkt sofort (E7, #30102): der Server hält sie als Kind, solange das Popover offen ist; am Fuß „Spalten
+// zurücksetzen“ (#30233).
+test('Spalten: der Vertrag nennt Zustand und Kommandos der Spaltenwahl und „Spalten zurücksetzen“', () => {
   const md = readComponent('table', 'table.contract.md');
-  assert.deepEqual(missingInContract(md, ['columnSelection', 'openColumns', 'closeColumns', 'tl-menu__item--nav']), []);
+  assert.deepEqual(missingInContract(md, ['columnSelection', 'openColumns', 'closeColumns']), []);
   assert.doesNotMatch(md, /openColumnSelect/);
   assert.doesNotMatch(md, /columnsShown|columnsTotal|n von m/, 'der Vertrag kennt kein „n von m“ mehr');
-  const html = readComponent('table', 'table.spec.html');
-  const panel = html.match(/<p class="tl-type-heading-sm">Ansicht: das Popover des Zahnrads<\/p>[\s\S]*?<\/section>/)?.[0] ?? '';
-  assert.doesNotMatch(panel, /tl-menu__value|\d+ von \d+/, 'kein Wert „n von m“');
-  assert.ok(panel.indexOf('aria-label="Spalten"') >= 0 && panel.indexOf('aria-label="Spalten"') < panel.indexOf('aria-label="Ansicht"'),
-    'die Seite „Spalten“ steht vorn');
-  const zeilen = [...panel.matchAll(/<button[^>]*tl-menu__item--nav[\s\S]*?<\/button>/g)].map((m) => m[0]);
-  assert.equal(zeilen.length, 1, 'das Specimen zeigt die Zeile „Ansicht“ einmal: am Fuß der Seite „Spalten“');
-  const [zeile] = zeilen;
-  assert.doesNotMatch(zeile, /role=/, 'die Seite „Spalten“ ist kein Menü: die Zeile ist ein schlichter Knopf');
-  assert.match(zeile, /<i class="tl-menu__icon [^"]*" aria-hidden="true"><\/i><span class="tl-menu__label">Ansicht<\/span>/,
-    `ein Icon vor der Beschriftung, verborgen: ${zeile}`);
-  assert.match(zeile, /<i [^>]*tl-menu__chevron[^>]*aria-hidden="true"/, `das Chevron ist für Hilfstechnik verborgen: ${zeile}`);
-  assert.doesNotMatch(zeile, /›/, zeile);
-  // Der Fuß steht nach der Liste der Spaltenwahl: Trennlinie, „Spalten zurücksetzen“ als schlichter Knopf, dann die Zeile.
-  const capped = panel.slice(panel.indexOf('specimen__capped'));
-  assert.ok(capped.indexOf('tl-reorder-list__host') < capped.indexOf(zeile), 'die Zeile steht nach der Spaltenwahl');
-  assert.match(capped.slice(0, capped.indexOf(zeile)),
-    /<hr class="tl-divider">\s*<button type="button" class="tl-menu__item tl-type-body"><i class="tl-menu__icon [^"]*" aria-hidden="true"><\/i><span class="tl-menu__label">Spalten zurücksetzen<\/span><\/button>\s*$/,
-    'Trennlinie, „Spalten zurücksetzen“ ohne Rolle, dann die Zeile');
-  // Die Seite „Ansicht“ hinter „Spalten“ hat kein Zurücksetzen; allein steht es als letzter Eintrag ihres Menüs.
-  const ansichten = [...panel.matchAll(/role="dialog" aria-label="Ansicht">[\s\S]*?role="menu"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/g)].map((m) => m[0]);
-  assert.equal(ansichten.length, 2, 'zwei Seiten „Ansicht“');
-  assert.doesNotMatch(ansichten[0], /zurücksetzen/, 'hinter „Spalten“ kein Zurücksetzen');
-  assert.match(ansichten[1], /<hr class="tl-divider">\s*<button type="button" role="menuitem"[^>]*class="tl-menu__item tl-type-body"><i class="tl-menu__icon [^"]*" aria-hidden="true"><\/i><span class="tl-menu__label">Spalten zurücksetzen<\/span><\/button>\s*<\/div>/,
-    'allein: „Spalten zurücksetzen“ als letzter Eintrag des Menüs');
   assert.match(md, /Spalten zurücksetzen/, 'der Vertrag nennt „Spalten zurücksetzen“');
   const reorder = readComponent('reorder-list', 'reorder-list.contract.md');
   assert.match(reorder, /Klick auf die Zeile/, 'die Zeile der Spaltenwahl klickt');
 });
 
-// Ein Eintrag, der eine Seite weiter führt (Z9, #30102): Beschriftung links, leiser Wert und Chevron am Zeilenende. Wiederverwendbar
-// für jeden solchen Eintrag; Fläche, Zeigen und Fokus kommen vom Eintrag.
-test('tl-menu__item--nav: Wert leise ans Zeilenende, Chevron in icon-secondary, keine eigene Fläche', () => {
-  const wert = declarationsOf(menu, '.tl-menu__item--nav .tl-menu__value') ?? '';
-  assert.match(wert, /margin-inline-start:\s*auto/);
-  assert.match(wert, /color:\s*var\(--tl-text-secondary\)/);
-  assert.match(wert, /white-space:\s*nowrap/);
-  const chevron = declarationsOf(menu, '.tl-menu__item--nav .tl-menu__chevron') ?? '';
-  assert.match(chevron, /color:\s*var\(--tl-icon-secondary\)/);
-  assert.match(chevron, /flex-shrink:\s*0/);
-  for (const sel of ['.tl-menu__item--nav', '.tl-menu__item--nav:hover']) {
-    assert.doesNotMatch(declarationsOf(menu, sel) ?? '', /background/, `${sel}: eine Fläche, die des Eintrags`);
-  }
-  const md = readComponent('menu', 'menu.contract.md');
-  assert.deepEqual(missingInContract(md, ['tl-menu__item--nav', 'tl-menu__value', 'tl-menu__chevron', 'tl-icon-sm', 'aria-hidden']), []);
-  const html = readComponent('menu', 'menu.spec.html');
-  const zeile = html.match(/<button[^>]*tl-menu__item--nav[\s\S]*?<\/button>/)?.[0] ?? '';
-  assert.match(zeile, /tl-menu__value/, 'das Specimen zeigt den Wert');
-  assert.match(zeile, /<i class="tl-menu__chevron tl-icon-sm [^"]*" aria-hidden="true"><\/i>/, 'das Chevron ist ein Icon mit tl-icon-sm, verborgen');
+// Der Eintrag mit Weg (Wert und Chevron, eine zweite Seite im Popover) ist mit der Seite „Ansicht“ gegangen (#30233): niemand nutzt ihn.
+test('Menü: kein Eintrag mit Weg mehr — weder Regel noch Vertrag noch Specimen', () => {
+  assert.doesNotMatch(menu, /tl-menu__item--nav|tl-menu__value|tl-menu__chevron/);
+  assert.doesNotMatch(readComponent('menu', 'menu.contract.md'), /tl-menu__item--nav|tl-menu__value|tl-menu__chevron/);
+  assert.doesNotMatch(readComponent('menu', 'menu.spec.html'), /tl-menu__item--nav|tl-menu__value|tl-menu__chevron/);
 });
 
 // --- Anker des offenen Popovers -------------------------------------------------------------------------------------------

@@ -315,13 +315,11 @@
     </div>
   </section>
   <section class="specimen__panel">
-    <p class="tl-type-heading-sm">Ansicht: das Popover des Zahnrads</p>
-    <p class="tl-type-label">Seite „Spalten“, die erste, mit der das Zahnrad öffnet: Titel, die Spaltenwahl und am Fuß nach einer
-      Trennlinie „Spalten zurücksetzen“ (schlichter Knopf, nur wo die Tabelle ihren Zustand speichert) und die Zeile „Ansicht“
-      (Chevron am Zeilenende, ohne Wert), die die zweite Seite zeigt. Daneben die Seite „Ansicht“: Kopf mit Zurück-Knopf und
-      Titel, darunter das Menü — der leise Kopf „Dichte“, die Segmente (menuitemradio) und zwei Schalterzeilen (die ganze Zeile
-      klickt, der Schalter rechts ist gezeichnet, ohne Eingabe). Rechts eine Tabelle ohne Spaltenwahl: nur die Seite „Ansicht“,
-      ohne Zurück, „Spalten zurücksetzen“ als letzter Eintrag ihres Menüs.</p>
+    <p class="tl-type-heading-sm">Spalten: das Popover des Zahnrads</p>
+    <p class="tl-type-label">Eine Seite: Titel, die Spaltenwahl und am Fuß nach einer Trennlinie „Spalten zurücksetzen“
+      (schlichter Knopf, nur wo die Tabelle ihren Zustand speichert). Rechts eine Tabelle ohne Spaltenwahl: nur der Knopf,
+      ohne Titel und ohne Trennlinie. Dichte, Zebrastreifen und Spaltenlinien stehen hier nicht: sie gehören der Person und
+      kommen aus dem Benutzermenü.</p>
     <div class="specimen__view-options">
       <div class="tl-popover tl-picker tl-menu tl-table-view-options specimen__capped" role="dialog" aria-label="Spalten">
         <div class="tl-table-view-options__page">
@@ -341,39 +339,11 @@
           </div>
           <hr class="tl-divider">
           <button type="button" class="tl-menu__item tl-type-body"><i class="tl-menu__icon tl-icon-sm bi bi-arrow-counterclockwise" aria-hidden="true"></i><span class="tl-menu__label">Spalten zurücksetzen</span></button>
-          <button type="button" class="tl-menu__item tl-menu__item--nav tl-type-body"><i class="tl-menu__icon tl-icon-sm bi bi-sliders" aria-hidden="true"></i><span class="tl-menu__label">Ansicht</span><i class="tl-menu__chevron tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button>
         </div>
       </div>
-      <div class="tl-popover tl-picker tl-menu tl-table-view-options" role="dialog" aria-label="Ansicht">
+      <div class="tl-popover tl-picker tl-menu tl-table-view-options" role="dialog" aria-label="Spalten">
         <div class="tl-table-view-options__page">
-          <div class="tl-table-view-options__title tl-type-label-strong"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-table-view-options__back" aria-label="Zurück"><i class="tl-icon-sm bi bi-chevron-left tl-button__icon" aria-hidden="true"></i></button><span id="view-title">Ansicht</span></div>
-          <div class="tl-table-view-options__menu" role="menu" aria-labelledby="view-title">
-            <div id="view-density" role="presentation" class="tl-menu__header tl-type-label">Dichte</div>
-            <div role="group" aria-labelledby="view-density" class="tl-segmented tl-table-view-options__segments">
-              <button type="button" role="menuitemradio" aria-checked="true" tabindex="0" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Wie überall</span></button>
-              <button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Normal</span></button>
-              <button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Kompakt</span></button>
-            </div>
-            <button type="button" role="menuitemcheckbox" aria-checked="false" tabindex="-1" class="tl-menu__item tl-menu__item--check tl-type-body"><span class="tl-menu__label">Streifen</span><span class="tl-checkbox tl-checkbox--switch" aria-hidden="true"></span></button>
-            <button type="button" role="menuitemcheckbox" aria-checked="true" tabindex="-1" class="tl-menu__item tl-menu__item--check tl-type-body"><span class="tl-menu__label">Spaltenlinien</span><span class="tl-checkbox tl-checkbox--switch" aria-hidden="true"></span></button>
-          </div>
-        </div>
-      </div>
-      <div class="tl-popover tl-picker tl-menu tl-table-view-options" role="dialog" aria-label="Ansicht">
-        <div class="tl-table-view-options__page">
-          <div class="tl-table-view-options__title tl-type-label-strong"><span id="view-alone-title">Ansicht</span></div>
-          <div class="tl-table-view-options__menu" role="menu" aria-labelledby="view-alone-title">
-            <div id="view-alone-density" role="presentation" class="tl-menu__header tl-type-label">Dichte</div>
-            <div role="group" aria-labelledby="view-alone-density" class="tl-segmented tl-table-view-options__segments">
-              <button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Wie überall</span></button>
-              <button type="button" role="menuitemradio" aria-checked="false" tabindex="-1" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Normal</span></button>
-              <button type="button" role="menuitemradio" aria-checked="true" tabindex="0" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Kompakt</span></button>
-            </div>
-            <button type="button" role="menuitemcheckbox" aria-checked="true" tabindex="-1" class="tl-menu__item tl-menu__item--check tl-type-body"><span class="tl-menu__label">Streifen</span><span class="tl-checkbox tl-checkbox--switch" aria-hidden="true"></span></button>
-            <button type="button" role="menuitemcheckbox" aria-checked="false" tabindex="-1" class="tl-menu__item tl-menu__item--check tl-type-body"><span class="tl-menu__label">Spaltenlinien</span><span class="tl-checkbox tl-checkbox--switch" aria-hidden="true"></span></button>
-            <hr class="tl-divider">
-            <button type="button" role="menuitem" tabindex="-1" class="tl-menu__item tl-type-body"><i class="tl-menu__icon tl-icon-sm bi bi-arrow-counterclockwise" aria-hidden="true"></i><span class="tl-menu__label">Spalten zurücksetzen</span></button>
-          </div>
+          <button type="button" class="tl-menu__item tl-type-body"><i class="tl-menu__icon tl-icon-sm bi bi-arrow-counterclockwise" aria-hidden="true"></i><span class="tl-menu__label">Spalten zurücksetzen</span></button>
         </div>
       </div>
     </div>

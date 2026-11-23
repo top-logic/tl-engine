@@ -59,7 +59,7 @@ rechnet sie aus `--tl-size-row` (`useTokenPx`).
 | `activeNamedFilter` | string | Id des wirkenden benannten Filters; sein `tl-chip__toggle` trägt `aria-pressed="true"`. |
 | `search` | string | Suchtext über die angezeigten Spalten. |
 | `filterSaving` | boolean | Die aktuellen Kriterien lassen sich speichern (`tl-table__save`). |
-| `columnSelection` | Control \| `null` | Die Spaltenwahl der ersten Seite „Spalten“ des Popovers am Zahnrad (`TLColumnSelect`, `reorder-list.contract.md`) als Kind der Tabelle, solange das Popover offen ist — auch während es die Seite „Ansicht“ zeigt; `null`: das Popover ist nicht offen. Jede Handlung darin ändert die Tabelle sofort, es gibt nichts zu bestätigen. |
+| `columnSelection` | Control \| `null` | Die Spaltenwahl im Popover am Zahnrad (`TLColumnSelect`, `reorder-list.contract.md`) als Kind der Tabelle, solange das Popover offen ist; `null`: das Popover ist nicht offen. Jede Handlung darin ändert die Tabelle sofort, es gibt nichts zu bestätigen. |
 | `dragEnabled` | boolean | Zeilen lassen sich ziehen. |
 | `dragKind` | string | Art der gezogenen Daten (#29776). |
 | `dropAcceptsAny` | boolean | Die Tabelle nimmt jede Art an. |
@@ -144,59 +144,43 @@ außen wäre weg. Ebenso innen: der Körper und die Spaltenwahl in der Ecke (`fo
 Cursorzeile ab: `base.css` zeichnet ihn innen auf ihrem `::after`. Ein `aria-activedescendant` auf eine
 Id, die es nicht gibt, ließe den Fokus unsichtbar.
 
-## Ansicht (Popover des Zahnrads)
+## Spalten (Popover des Zahnrads)
 
 Das Zahnrad (`tl-table__columns`) öffnet ein Popover `tl-popover tl-picker tl-menu tl-table-view-options` mit
-`role="dialog"`, benannt nach der Seite, die es zeigt. Die Einträge, die Anatomie und das Verhalten des Menüs gelten
-(`menu.contract.md`). Das Popover hat zwei Seiten, nie beide zugleich sichtbar (`tl-table-view-options__page`, die andere
-trägt `hidden`): zuerst die Spalten, dahinter die Ansicht. Die Seite „Spalten“ ist kein Menü: Titel, die Spaltenwahl und
-am Fuß nach einer Trennlinie „Spalten zurücksetzen“ (wo die Tabelle ihren Zustand speichert) und die Zeile „Ansicht“,
-schlichte Knöpfe ohne Rolle. Die Seite „Ansicht“ trägt unter ihrem
-Kopf ein Menü (`tl-table-view-options__menu`, `role="menu"`, benannt per `aria-labelledby` nach dem Text ihres Titels, nicht
-nach dem Zurück-Knopf): Pfeile, Pos1 und Ende gehen über seine Einträge, die drei Segmente sind ein Halt. Was darin kein
-Eintrag ist, trägt `role="presentation"` — der Kopf „Dichte“; die Trennlinie ist ein `hr` (Trenner im Menü). Der Kopf mit
-Zurück-Knopf und Titel steht außerhalb des Menüs.
-Es ist nicht modal und wirkt sofort; was die Seiten zeigen:
+`role="dialog"`, benannt „Spalten“ — so heißt auch das Zahnrad. Das Popover hat eine einzige Seite
+(`tl-table-view-options__page`): Titel, die Spaltenwahl und, wo die Tabelle ihren Zustand speichert, nach einer Trennlinie
+„Spalten zurücksetzen“. Es ist kein Menü: der Knopf ist ein schlichter `<button>` ohne Rolle. Es ist nicht modal und wirkt
+sofort. Das Zahnrad steht nur da, wo das Popover etwas anbietet — mit Spaltenwahl oder mit „Spalten zurücksetzen“; ohne
+beides fehlt es, und die Tabelle hält keinen Platz dafür frei. Wo nur „Spalten zurücksetzen“ da ist, besteht das Popover aus
+diesem Knopf allein, ohne Titel und ohne Trennlinie. Was es zeigt:
 
 | Element | Aufbau |
 |---|---|
-| `tl-table-view-options__page` | eine Seite des Popovers: Flex-Spalte, die das Popover füllt und mit ihm schrumpft (`flex: 1 1 auto`, `min-block-size: 0`); sie rollt nie selbst, auf der Seite „Spalten“ rollt allein die Liste |
-| `tl-table-view-options__title` | Titel der Seite („Spalten“, „Ansicht“): `tl-type-label-strong` in Primärtext, kein Abschnittskopf; Zeile, in der auf der Seite „Ansicht“ der Zurück-Knopf vor dem Text steht. Dort trägt der Text ein `span` mit `id`, das das Menü der Seite benennt (`aria-labelledby`) |
-| `tl-table-view-options__back` | der Zurück-Knopf im Titel der Seite „Ansicht“, wo sie hinter der Seite „Spalten“ steht: `tl-button tl-button--ghost tl-button--sm tl-button--icon` mit `aria-label`, Icon `tl-icon-sm bi bi-chevron-left`; der Fokusring liegt innen, das Popover schneidet |
-| `tl-table-view-options__menu` | das Menü der Seite „Ansicht“ unter ihrem Kopf (`role="menu"`, `aria-labelledby`): Flex-Spalte mit der Lücke der Seite |
-| `tl-menu__header` | Abschnittskopf „Dichte“ (`tl-type-label`, leiser Sekundärtext), `role="presentation"`; er benennt die Gruppe der Segmente (`aria-labelledby`) |
-| `tl-segmented tl-table-view-options__segments` | die drei Dichten als Gruppe (`role="group"`, `aria-labelledby`) von Segmenten mit Rolle `menuitemradio` und `aria-checked` (`menu.contract.md`; `choice.css` liest `aria-checked`, gleich welche Rolle), von den Rändern um `--tl-space-control-x` eingerückt wie der Text der Einträge |
-| `tl-menu__item`, `tl-menu__item--check` | Streifen und Spaltenlinien: Zeilen des Menüs mit Rolle `menuitemcheckbox` und `aria-checked`, die ganze Zeile klickt; der Schalter steht rechts als gezeichnetes `tl-checkbox` mit `tl-checkbox--switch` (`<span aria-hidden="true">`) ohne Eingabe (`choice.contract.md`) — dasselbe Bild wie der Schalter mit Eingabe |
-| `tl-menu__item`, `tl-menu__item--nav` | die Zeile „Ansicht“ am Fuß der Seite „Spalten“: ein `<button>` ohne Rolle, links Icon und Beschriftung `tl-menu__label`, am Zeilenende ein Chevron (`<i class="tl-menu__chevron tl-icon-sm" aria-hidden="true">`, `menu.contract.md`), kein Wert; der zugängliche Name ist die Beschriftung, ein Klick zeigt die Seite „Ansicht“ |
-| `tl-menu__item` | „Spalten zurücksetzen“: auf der Seite „Spalten“ ein `<button>` ohne Rolle über der Zeile „Ansicht“; auf der allein stehenden Seite „Ansicht“ der letzte Eintrag des Menüs (`menuitem`). Er setzt die Anordnung der Spalten zurück (Spalten, Reihenfolge, Breiten, Fixierung, Sortierung, Gruppierung), nicht die Ansicht der Person, und schließt das Popover |
-| `tl-divider` | Trennlinien in `--tl-border-separator`: auf der Seite „Spalten“ vor dem Fuß („Spalten zurücksetzen“, „Ansicht“), im Menü der allein stehenden Seite „Ansicht“ vor „Spalten zurücksetzen“ |
-| `tl-reorder-list__host` | die Wurzel der Spaltenwahl auf der Seite „Spalten“ (`reorder-list.contract.md`): Suche und Liste in einer Flex-Spalte, ohne Fensterabstand und Fensterhöhe; die Liste ist der einzige Rollbereich |
-| `tl-menu__icon` | die Zeile „Ansicht“ und „Spalten zurücksetzen“ (am Fuß der Seite „Spalten“ wie im Menü der allein stehenden Seite „Ansicht“) tragen je ein Icon vor der Beschriftung (`menu.contract.md`), damit die Befehle auch bei weiteren Einträgen auffindbar bleiben (Review !2226); Dichte und Schalter haben keins, sie haben ihre eigene Form |
+| `tl-table-view-options__page` | die Seite des Popovers: Flex-Spalte, die das Popover füllt und mit ihm schrumpft (`flex: 1 1 auto`, `min-block-size: 0`); sie rollt nie selbst, allein die Liste der Spaltenwahl rollt |
+| `tl-table-view-options__title` | Titel „Spalten“: `tl-type-label-strong` in Primärtext, kein Abschnittskopf; nur mit Spaltenwahl |
+| `tl-menu__item` | „Spalten zurücksetzen“: ein `<button>` ohne Rolle, der letzte Eintrag der Seite. Er setzt die Anordnung der Spalten zurück (Spalten, Reihenfolge, Breiten, Fixierung, Sortierung, Gruppierung), nicht die Ansicht der Person, und schließt das Popover |
+| `tl-divider` | Trennlinie in `--tl-border-separator` zwischen Spaltenwahl und „Spalten zurücksetzen“; nur, wo beide da sind |
+| `tl-reorder-list__host` | die Wurzel der Spaltenwahl (`reorder-list.contract.md`): Suche und Liste in einer Flex-Spalte, ohne Fensterabstand und Fensterhöhe; die Liste ist der einzige Rollbereich |
+| `tl-menu__icon` | „Spalten zurücksetzen“ trägt ein Icon vor der Beschriftung (`menu.contract.md`), damit der Befehl auch bei weiteren Einträgen auffindbar bleibt (Review !2226) |
 
-Reihenfolge der Seiten: „Spalten“ zuerst, „Ansicht“ dahinter. Die Spaltenwahl steht zuerst, denn sie ist, was man an einer
-Tabelle am häufigsten einstellt (Review !2226); das Zahnrad öffnet sie und heißt darum „Spalten“, ohne Spaltenwahl
-„Ansicht“. Erneutes Öffnen beginnt immer auf „Spalten“. Reihenfolge der Seite „Spalten“: Titel, Spaltenwahl, Trennlinie,
-„Spalten zurücksetzen“, „Ansicht“. Reihenfolge der Seite „Ansicht“: Kopf (Zurück, Titel), Dichte, Streifen, Spaltenlinien;
-allein stehend (ohne Spaltenwahl) ohne Zurück und am Ende nach einer Trennlinie „Spalten zurücksetzen“. Die Pfeile, `Home`
-und `End` folgen ihr, der des DOM.
+Reihenfolge: Titel, Spaltenwahl, Trennlinie, „Spalten zurücksetzen“.
 
-Die Spaltenwahl lebt, solange das Popover offen ist: `openColumns` beim Öffnen, `closeColumns` beim Schließen, der Wechsel
-der Seiten gibt sie nicht frei — die Seite „Spalten“ bleibt dabei verborgen stehen. Sie kommt einen Roundtrip nach dem
-Öffnen; bis dahin zeigt die Seite Titel und Fuß. Gibt der Server sie von sich aus frei, bleibt die Seite stehen und zeigt
-nichts, bis eine neue kommt. Eine Auswahl, die der Client freigegeben hat (Schließen und erneutes Öffnen innerhalb eines
-Roundtrips), wird nicht mehr gezeichnet.
+Die Spaltenwahl lebt, solange das Popover offen ist: `openColumns` beim Öffnen, `closeColumns` beim Schließen. Sie kommt
+einen Roundtrip nach dem Öffnen; bis dahin zeigt das Popover Titel und Fuß. Gibt der Server sie von sich aus frei, bleibt
+das Popover stehen und zeigt nichts, bis eine neue kommt. Eine Auswahl, die der Client freigegeben hat (Schließen und
+erneutes Öffnen innerhalb eines Roundtrips), wird nicht mehr gezeichnet.
 
-Fokus: Beim Öffnen mit Spaltenwahl liegt er auf der Zeile „Ansicht“, nie auf „Spalten zurücksetzen“ darüber, bis die
-Auswahl ankommt; steht er dann noch dort, wandert er einmal in deren Suche, wenn sie eine hat (mehr als zehn
-Spalten) — ohne Suche bleibt er, der Griff der ersten Zeile zeigt sich nur unter dem Zeiger. Verschwindet die Auswahl mit dem
-Fokus, geht er auf die Zeile „Ansicht“. „Ansicht“ legt ihn auf den Zurück-Knopf, der Zurück-Knopf auf die Zeile „Ansicht“. Ohne
-Spaltenwahl startet er auf dem geltenden Segment der Dichte. `Escape` und Druck außerhalb schließen auf jeder Seite, der
-Fokus geht ans Zahnrad.
+Fokus: Beim Öffnen liegt er auf dem Popover selbst, nie auf „Spalten zurücksetzen“; kommt die Auswahl an und steht er dann
+noch dort, wandert er einmal in deren Suche, wenn sie eine hat (mehr als zehn Spalten) — ohne Suche bleibt er, der Griff der
+ersten Zeile zeigt sich nur unter dem Zeiger. Verschwindet die Auswahl mit dem Fokus, geht er auf das Popover. `Escape` und
+Druck außerhalb schließen, der Fokus geht ans Zahnrad.
 
-Die Ansicht (Dichte, Streifen, Spaltenlinien) gehört der Person, gleich für alle Tabellen des Fensters
-(`TableViewPreferences`), und steht darum an jeder Tabelle: Das Zahnrad steht immer da, die Seite „Ansicht“ ebenso.
-`viewOptions` sagt nur, dass die Tabelle ihren Zustand speichert (`TableView.isPersonalized()`); nur dann gibt es
-„Spalten zurücksetzen“, sonst fehlt der Knopf samt der Trennlinie davor, wo er allein stand.
+Wie Tabellen aussehen — Dichte, Zebrastreifen, Spaltenlinien — gehört der Person, gleich für alle Tabellen des Fensters, und
+steht darum nicht an der Tabelle, sondern im Benutzermenü (Gruppen „Dichte“ und „Tabellen“, `TableViewPreferences`). Die
+Dichte ist die der Seite (`data-tl-density` an `<html>`); die Tabelle erbt sie und hat keine eigene. Zebra und Spaltenlinien
+setzt das Benutzermenü als Attribute an die Wurzel der Seite, die Tabelle liest sie von dort und zeichnet sie als
+`data-tl-striped` und `data-tl-column-lines` (Zustand der Tabelle unten). `viewOptions` sagt nur, dass die Tabelle ihren
+Zustand speichert (`TableView.isPersonalized()`); nur dann gibt es „Spalten zurücksetzen“.
 
 Die Höhe gibt der Anker: `usePopover` setzt `maxHeight` an der Hülle (Raum bis zum Fensterrand), die Seite gibt nach, die Liste
 rollt (`picker.contract.md`).
@@ -248,7 +232,7 @@ Körper scrollen waagerecht gemeinsam: das TSX überträgt `scrollLeft` des Kör
 | Zelle mit Feldmarke | am Ende eine halbe Markenbreite frei: `--tl-size-icon-sm` / 2; der Fokusring der Marke liegt innen (`outline-offset` −`--tl-focus-offset`) |
 | Platzhalter | Innenabstand `--tl-space-control-x`, Linie darunter wie die Zeile |
 | Ablehnung | Rand `--tl-status-error-border`, Text `--tl-status-error-text` |
-| Ansicht, Popover | Fläche, Rand und Schatten die von `tl-popover`; eine Breite für beide Seiten `--tl-size-popover-view`, am schmalen Fenster höchstens `--tl-size-viewport-width` abzüglich zweimal `--tl-space-xs`; Lücke zwischen den Zeilen `--tl-space-2xs`; Titel `--tl-text-primary` in `tl-type-label-strong`, Innenabstand `--tl-space-2xs` `--tl-space-control-x`; Segmente und Schalter rücken um `--tl-space-control-x` ein; Trennlinie `--tl-border-width-sm` in `--tl-border-separator` (`tl-divider`) |
+| Spalten, Popover | Fläche, Rand und Schatten die von `tl-popover`; Breite `--tl-size-popover-view`, am schmalen Fenster höchstens `--tl-size-viewport-width` abzüglich zweimal `--tl-space-xs`; Lücke zwischen den Zeilen `--tl-space-2xs`; Titel `--tl-text-primary` in `tl-type-label-strong`, Innenabstand `--tl-space-2xs` `--tl-space-control-x`; Trennlinie `--tl-border-width-sm` in `--tl-border-separator` (`tl-divider`) |
 | „+ n weitere“ | der Chevron steht im Label, die Lücke zum Text ist `--tl-space-2xs` |
 
 Der Kopf scrollt waagerecht ohne eigenen Balken (`scrollbar-width: none`); Kopf und Körper folgen einander in beide Richtungen (12.10.). Schrift: `.tl-type-body` am `tl-table__body`, von der Komponente gesetzt. Die Gruppenzeile ist stark: jede ihrer Zellen
@@ -270,7 +254,6 @@ zeichnet `drag.css` (`drag.contract.md`), den Cursor-Ring `base.css`.
 | `data-tl-state~="even"` | an jeder zweiten Zeile, gezählt aus `rows[].index` (nicht aus dem DOM: die Zeilen sind virtuell gerendert und absolut gelegt, `nth-child` zählte die Fenster-Position); sie liest nur mit `data-tl-striped` an der Tabelle |
 | `data-tl-striped` | an `tl-table`, vorhanden = an: Zebra (die geraden Zeilen auf `--tl-surface-layer-muted`); ab Werk aus |
 | `data-tl-column-lines` | an `tl-table`, vorhanden = an: Linien zwischen den Spalten in Kopf und Zeilen; ab Werk aus |
-| `data-tl-density="normal"` \| `"compact"` | an `tl-table`: die Dichte dieser Tabelle, gegen die Dichte der Seite (`tokens.css` hat einen Block für `normal`, damit eine Tabelle eine kompakte Seite überstimmt); fehlt das Attribut, gilt die Dichte der Seite |
 | `data-tl-align="end"` | an Kopf- und Datenzelle einer Zahlenspalte (`ColumnKind.NUMBER`): rechtsbündig, Ziffern gleich breit; fehlt es, steht die Spalte am Anfang |
 | `data-tl-state~="frozen"` | an Kopf- und Zellen der fixierten Spalten; die letzte zusätzlich `"frozen-last"` |
 | `data-tl-state~="pinned"` | an Kopf- und Zellen der angehefteten Spalten; die erste zusätzlich `"pinned-first"` |

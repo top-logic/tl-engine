@@ -183,7 +183,7 @@ A write is checked by the tool that makes it, and the turn commits what its tool
 |---|---|---|---|
 | P1 | `/mcp/*` is not served | `curl -i http://localhost:8080/tl-ai-demo/mcp` | HTTP 503 naming both steps: enable the module `MCPServerService$Module` and configure an authentication ([the MCP endpoint](doc:ai/security/mcp-endpoint)); `SecDemoMcpEndpointTest` asserts the authenticated surface against these personas |
 | P2 | a run without an account does not start | test | `SecDemoBackgroundAccessTest.testARunWithoutAPrincipalCannotBeBuilt` |
-| P3 | a script reads or stops a run of another account | script console as `ben`, with the handle that `aiAgentChatAsync` gave `anna` | `aiAgentRunStatus`, `aiAgentRunResult`, `aiAgentRunError` and `aiAgentRunTranscript` answer `null`, `aiAgentRunCancel` answers `false`, and the log has a `WARN` `Run handle denied` that names `ben`; `SecDemoRunHandleTest` asserts it |
+| P3 | a script reads or stops a run of another account | script console as `ben`, with the handle that `aiAgentChatAsync` gave `anna` | `aiAgentRunStatus`, `aiAgentRunResult`, `aiAgentRunError` and `aiAgentRunTranscript` answer `null`, `aiAgentRunCancel` answers `false`; with `DEBUG` on for `AIScriptFunctions`, the log has a `Run handle denied` line that names `ben`; `SecDemoRunHandleTest` asserts the answers |
 
 ## The tests
 

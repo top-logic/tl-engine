@@ -1695,11 +1695,10 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		if (denied == null) {
 			return run;
 		}
-		String name = run instanceof AgentExecution execution
-			? execution.getRunId()
-			: KBUtils.getWrappedObjectName(run).toString();
-		Logger.warn("Run handle denied: function=" + function + " operation=" + operation.getID()
-			+ " on=" + TLModelUtil.qualifiedName(denied) + " run=" + name + " user=" + actorName(),
+		// DEBUG and not WARN: a denial is a normal result of the access rights, and a script that
+		// polls a handle of another account would otherwise write one line for each call.
+		Logger.debug(() -> "Run handle denied: function=" + function + " operation=" + operation.getID()
+			+ " on=" + TLModelUtil.qualifiedName(denied) + " run=" + runName(run) + " user=" + actorName(),
 			AIScriptFunctions.class);
 		return null;
 	}
@@ -1758,6 +1757,13 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		}
 		AgentExecution topLevel = topLevelExecutionOf(store, session);
 		return topLevel != null ? topLevel : session;
+	}
+
+	/** The name of a run or of a queued session, for a log record. */
+	private static String runName(TLObject run) {
+		return run instanceof AgentExecution execution
+			? execution.getRunId()
+			: KBUtils.getWrappedObjectName(run).toString();
 	}
 
 	/** The login name of the acting account, for a log record. */

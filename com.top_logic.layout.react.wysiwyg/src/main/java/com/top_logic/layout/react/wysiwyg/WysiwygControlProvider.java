@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
@@ -271,7 +272,9 @@ public class WysiwygControlProvider implements ReactFieldControlProvider {
 		if (source == null || source.isBlank()) {
 			return "";
 		}
-		return firstLine(Jsoup.parseBodyFragment(TLObjectLinkUtil.maskLinks(source, null)).body());
+		Document document = Jsoup.parseBodyFragment(source);
+		TLObjectLinkUtil.maskLinks(document, null);
+		return firstLine(document.body());
 	}
 
 	/**

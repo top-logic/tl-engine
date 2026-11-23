@@ -18,6 +18,9 @@
 						<reference name="reader"
 							type="tl.accounts:Person"
 						/>
+						<property name="text"
+							type="tl.model.wysiwyg:Html"
+						/>
 					</attributes>
 				</class>
 			</types>

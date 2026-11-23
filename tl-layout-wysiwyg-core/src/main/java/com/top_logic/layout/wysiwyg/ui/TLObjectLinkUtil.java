@@ -18,6 +18,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.xml.TagWriter;
@@ -109,9 +110,12 @@ public class TLObjectLinkUtil {
 		Wrapper target;
 		try {
 			target = getObject(href);
+		} catch (ObjectNotFound | IndexOutOfBoundsException | IllegalArgumentException ex) {
+			// The object does not exist, or the destination cannot be read.
+			return null;
 		} catch (RuntimeException ex) {
-			// The destination names an object that does not exist, or cannot be read at all. In
-			// both cases the link leads nowhere, and the reader learns nothing more.
+			// The link leads nowhere for the reader all the same, but the cause is not the link.
+			Logger.debug("Cannot resolve the object link '" + href + "'.", ex, TLObjectLinkUtil.class);
 			return null;
 		}
 		return target == null || DiscoverRight.isMasked(target) ? null : target;
@@ -125,7 +129,9 @@ public class TLObjectLinkUtil {
 	 * Applies the rule for a masked element to the object links of a formatted text: the
 	 * placeholder <code>&lt;span data-masked="token"&gt;*****&lt;/span&gt;</code> has no label, no
 	 * link and no identity of the object. A link whose destination names no existing object is
-	 * masked as well, see {@link #getDiscoverableObject(String)}. All other content stays as it is.
+	 * masked as well, see {@link #getDiscoverableObject(String)}. A
+	 * {@link #TL_OBJECT_WRAPPER wrapper} around the link, which holds the icon of the object's type,
+	 * is replaced as a whole. All other content stays as it is.
 	 * </p>
 	 *
 	 * <p>
@@ -138,8 +144,8 @@ public class TLObjectLinkUtil {
 	 * @param html
 	 *        The HTML source of a formatted text. May be <code>null</code>.
 	 * @param tokens
-	 *        Gives the token for each masked link, in the order of the text, from the markup of the
-	 *        link. <code>null</code> for placeholders without a token.
+	 *        Gives the token for each masked link, in the order of the text, from the markup that
+	 *        the placeholder replaces. <code>null</code> for placeholders without a token.
 	 * @return The masked HTML; the given HTML itself if it contains no link to mask.
 	 */
 	@FrameworkInternal
@@ -148,16 +154,43 @@ public class TLObjectLinkUtil {
 			return html;
 		}
 		Document document = parseFragment(html);
+		return maskLinks(document, tokens) ? document.body().html() : html;
+	}
+
+	/**
+	 * Replaces each link of the given document to an object that the current user may not discover
+	 * by a placeholder, see {@link #maskLinks(String, Function)}.
+	 *
+	 * <p>
+	 * For an output that works on the parsed text anyway, so that the text is parsed once.
+	 * </p>
+	 *
+	 * @param document
+	 *        The parsed formatted text, changed in place.
+	 * @param tokens
+	 *        Gives the token for each masked link, in the order of the text, from the markup that
+	 *        the placeholder replaces, as the document writes it. <code>null</code> for
+	 *        placeholders without a token.
+	 * @return Whether a link was masked.
+	 */
+	@FrameworkInternal
+	public static boolean maskLinks(Document document, Function<String, String> tokens) {
 		boolean masked = false;
 		for (Element link : document.select(ANCHOR + "." + TL_OBJECT)) {
+			if (link.ownerDocument() != document) {
+				// Inside a link or wrapper that is masked already.
+				continue;
+			}
 			if (getDiscoverableObject(link.attr(HREF_ATTR)) != null) {
 				continue;
 			}
-			String token = tokens == null ? "" : tokens.apply(link.outerHtml());
-			link.replaceWith(new Element(SPAN).attr(DATA_MASKED, token).text(MaskedValues.placeholder()));
+			Element parent = link.parent();
+			Element hidden = parent != null && parent.is(SPAN + "." + TL_OBJECT_WRAPPER) ? parent : link;
+			String token = tokens == null ? "" : tokens.apply(hidden.outerHtml());
+			hidden.replaceWith(new Element(SPAN).attr(DATA_MASKED, token).text(MaskedValues.placeholder()));
 			masked = true;
 		}
-		return masked ? document.body().html() : html;
+		return masked;
 	}
 
 	/**

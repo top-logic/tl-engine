@@ -50,13 +50,17 @@ import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.wysiwyg.ReactWysiwygControl;
 import com.top_logic.layout.react.wysiwyg.WysiwygControlProvider;
+import com.top_logic.layout.view.form.AttributeFieldModel;
+import com.top_logic.layout.view.form.TLObjectOverlay;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextPDFRenderer;
 import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
 import com.top_logic.layout.wysiwyg.ui.excel.StructuredTextExcelHandler;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.security.DiscoverRight;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.commandhandlers.BookmarkService;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 
@@ -86,6 +90,15 @@ public class TestMaskedObjectLinks extends AbstractSearchExpressionTest {
 
 	/** Name of the reference to the person holding the reader role on a topic. */
 	private static final String READER = "reader";
+
+	/** Name of the formatted text of a topic. */
+	private static final String TEXT = "text";
+
+	/** The state asking the client to insert markup at the cursor. */
+	private static final String INSERT = "insert";
+
+	/** Field of {@link #INSERT} holding the markup to insert. */
+	private static final String INSERT_HTML = "html";
 
 	/** The command the client sends when the user follows an object link. */
 	private static final String CMD_SHOW_OBJECT_LINK = "showObjectLink";
@@ -121,7 +134,7 @@ public class TestMaskedObjectLinks extends AbstractSearchExpressionTest {
 	private static final String GONE_LABEL = "goneTopic";
 
 	/** A placeholder of a masked object link in the text of the client. */
-	private static final Pattern PLACEHOLDER = Pattern.compile("<span data-masked=\"[^\"]*\">[^<]*</span>");
+	private static final Pattern PLACEHOLDER = Pattern.compile("<span data-masked=\"([^\"]*)\">[^<]*</span>");
 
 	/** May discover {@link #_shown}, but not {@link #_hidden}. */
 	private Person _reader;
@@ -181,17 +194,6 @@ public class TestMaskedObjectLinks extends AbstractSearchExpressionTest {
 	@Override
 	protected boolean checksSecurity() {
 		return true;
-	}
-
-	/**
-	 * The fixture the other tests rely on: the reader may discover the shown topic, but not the
-	 * hidden one.
-	 */
-	public void testReaderMayDiscoverTheShownTopicOnly() {
-		becomeUser(_reader);
-
-		assertTrue(DiscoverRight.isDiscoverable(_shown));
-		assertTrue(DiscoverRight.isMasked(_hidden));
 	}
 
 	/**
@@ -395,19 +397,115 @@ public class TestMaskedObjectLinks extends AbstractSearchExpressionTest {
 	}
 
 	/**
-	 * A placeholder whose token this editor did not hand out brings in no link, neither a made up
-	 * one nor one of another editor.
+	 * A placeholder whose token this editor did not hand out brings in no link: neither a made up
+	 * token nor one of the form the editor's own tokens have.
 	 */
 	public void testUnknownTokenBringsInNoLink() {
 		becomeUser(_reader);
-		ReactWysiwygControl other = control(field(textWith(link(_hidden, HIDDEN_LABEL)), true));
-		String foreign = placeholders(clientValue(other)).get(0);
-		AbstractFieldModel field = field(new StructuredText("<p>text</p>"), true);
+		AbstractFieldModel field = field(textWith(link(_hidden, HIDDEN_LABEL)), true);
 		ReactWysiwygControl editor = control(field);
+		String own = token(placeholders(clientValue(editor)).get(0));
+		String sameForm = (own.charAt(0) == '0' ? "1" : "0") + own.substring(1);
 
-		send(editor, "<p>A " + foreign + " B <span data-masked=\"x\">*****</span> C</p>");
+		send(editor, "<p>A " + placeholder(sameForm) + " B " + placeholder("x") + " C</p>");
 
 		assertEquals("<p>A  B  C</p>", storedSource(field));
+	}
+
+	/**
+	 * A placeholder copied from another editor brings in no link, also where both editors mask a
+	 * link: the tokens of one editor are none of another.
+	 */
+	public void testPlaceholderOfAnotherEditorBringsInNoLink() {
+		becomeUser(_reader);
+		ReactWysiwygControl other = control(field(textWith(link(_hidden, HIDDEN_LABEL)), true));
+		String foreign = placeholders(clientValue(other)).get(0);
+		AbstractFieldModel field = field(textWith(mention(_hidden, HIDDEN_LABEL)), true);
+		ReactWysiwygControl editor = control(field);
+
+		send(editor, "<p>Text " + foreign + "</p>");
+
+		assertEquals("<p>Text </p>", storedSource(field));
+	}
+
+	/**
+	 * When the editor shows the text of another object, a token of the former text brings in
+	 * nothing, and an equal link of the new text gets a token of its own.
+	 */
+	public void testSwitchToAnotherObjectForgetsTokens() {
+		String link = link(_hidden, HIDDEN_LABEL);
+		TLObject first = topicWithText("first", "<p>First " + link + "</p>");
+		TLObject second = topicWithText("second", "<p>Second " + link + "</p>");
+		becomeUser(_reader);
+		AttributeFieldModel field = new AttributeFieldModel(new TLObjectOverlay(first), textPart());
+		ReactWysiwygControl editor = control(field);
+		String former = placeholders(clientValue(editor)).get(0);
+
+		field.setObject(new TLObjectOverlay(second));
+		String current = placeholders(clientValue(editor)).get(0);
+		assertFalse("The equal link of the new text has a token of its own.", former.equals(current));
+		send(editor, "<p>Second " + former + "</p>");
+
+		assertEquals("<p>Second </p>", ((StructuredText) field.getValue()).getSourceCode());
+	}
+
+	/**
+	 * Switching between view and edit mode of the same object keeps the tokens of the text the
+	 * client holds.
+	 */
+	public void testSwitchToEditModeKeepsTokens() {
+		String link = link(_hidden, HIDDEN_LABEL);
+		TLObject topic = topicWithText("topic", "<p>Text " + link + "</p>");
+		becomeUser(_reader);
+		AttributeFieldModel field = new AttributeFieldModel(topic, textPart());
+		ReactWysiwygControl editor = control(field);
+		String received = clientValue(editor);
+
+		field.setObject(new TLObjectOverlay(topic));
+		assertEquals(received, clientValue(editor));
+		send(editor, received.replace("Text", "Edited"));
+
+		assertEquals("<p>Edited " + link + "</p>", ((StructuredText) field.getValue()).getSourceCode());
+	}
+
+	/**
+	 * Markup inserted at the cursor masks a link to an object the reader may not discover, and the
+	 * link comes back with the text the client reports.
+	 */
+	@SuppressWarnings("unchecked")
+	public void testInsertionMasksUndiscoverableLink() {
+		becomeUser(_reader);
+		String link = link(_hidden, HIDDEN_LABEL);
+		AbstractFieldModel field = field(new StructuredText("<p>Text</p>"), true);
+		ReactWysiwygControl editor = control(field);
+
+		editor.insertAtCursor(link);
+		Map<String, Object> insert = (Map<String, Object>) editor.scriptingScalarState().get(INSERT);
+		String inserted = (String) insert.get(INSERT_HTML);
+		assertMasked(inserted, _hidden, HIDDEN_LABEL);
+		send(editor, "<p>Text " + inserted + "</p>");
+
+		assertEquals("<p>Text " + link + "</p>", storedSource(field));
+	}
+
+	/**
+	 * The wrapper of a masked link, which holds the icon of the object's type, is replaced as a
+	 * whole, and comes back with the link.
+	 */
+	public void testWrapperOfMaskedLinkIsReplacedAsAWhole() {
+		becomeUser(_reader);
+		String wrapper = "<span class=\"" + TLObjectLinkUtil.TL_OBJECT_WRAPPER + "\"><img src=\"/type-icon.png\">&nbsp;"
+			+ link(_hidden, HIDDEN_LABEL) + "</span>";
+		AbstractFieldModel field = field(textWith(wrapper), true);
+		ReactWysiwygControl editor = control(field);
+
+		String html = clientValue(editor);
+		assertMasked(html, _hidden, HIDDEN_LABEL);
+		assertFalse(html, html.contains("type-icon"));
+		assertFalse(html, html.contains(TLObjectLinkUtil.TL_OBJECT_WRAPPER));
+		send(editor, html.replace("for details", "for all details"));
+
+		assertEquals("<p>See " + wrapper + " for all details.</p>", storedSource(field));
 	}
 
 	/**
@@ -547,6 +645,22 @@ public class TestMaskedObjectLinks extends AbstractSearchExpressionTest {
 		return new StructuredText("<p>See " + link + " for details.</p>");
 	}
 
+	/** The formatted text of a topic. */
+	private static TLStructuredTypePart textPart() {
+		return ((TLClass) TLModelUtil.findType(TOPIC)).getPartOrFail(TEXT);
+	}
+
+	/** A topic {@link #_reader} may read, with the given formatted text. */
+	private TLObject topicWithText(String name, String html) {
+		TLObject result = newObject(TOPIC, name);
+		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			result.tUpdateByName(READER, _reader);
+			result.tUpdateByName(TEXT, new StructuredText(html));
+			tx.commit();
+		}
+		return result;
+	}
+
 	/** A text with a link to {@link #_shown} and one to {@link #_hidden}. */
 	private StructuredText mixedText() {
 		return textWith(link(_shown, SHOWN_LABEL) + " and " + link(_hidden, HIDDEN_LABEL));
@@ -575,6 +689,18 @@ public class TestMaskedObjectLinks extends AbstractSearchExpressionTest {
 			result.add(matcher.group());
 		}
 		return result;
+	}
+
+	/** The token of the given placeholder. */
+	private static String token(String placeholder) {
+		Matcher matcher = PLACEHOLDER.matcher(placeholder);
+		assertTrue(placeholder, matcher.matches());
+		return matcher.group(1);
+	}
+
+	/** A placeholder of a masked object link with the given token, as the client writes it. */
+	private static String placeholder(String token) {
+		return "<span data-masked=\"" + token + "\">" + MaskedValues.placeholder() + "</span>";
 	}
 
 	/** The text of the given message to the user. */

@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import jakarta.activation.MimeType;
@@ -27,6 +28,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.exception.I18NException;
 import com.top_logic.basic.html.SafeHTML;
 import com.top_logic.basic.io.binary.BinaryData;
@@ -63,6 +65,7 @@ import com.top_logic.layout.wysiwyg.ui.HTMLTextExtractor;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextUtil;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.util.error.TopLogicException;
 
@@ -281,8 +284,11 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 * The markup of each object link the client received masked, by the token of its placeholder.
 	 *
 	 * <p>
-	 * A token stays valid as long as the editor lives: a text that the client sends after the
-	 * server changed the value still gets its links back.
+	 * A token is a random value that no other editor hands out and that cannot be guessed, so that
+	 * a placeholder copied from another editor brings in nothing. A token stays valid while the
+	 * editor shows the text of the same object: a text that the client sends after the server
+	 * changed the value still gets its links back. When the editor shows the text of another
+	 * object, it forgets all tokens, see {@link #forgetTokensOfOtherObject()}.
 	 * </p>
 	 */
 	private final Map<String, String> _maskedLinks = new HashMap<>();
@@ -297,6 +303,12 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 * </p>
 	 */
 	private final Map<String, String> _maskTokens = new HashMap<>();
+
+	/**
+	 * The object whose text the tokens of {@link #_maskedLinks} are handed out for, see
+	 * {@link #forgetTokensOfOtherObject()}.
+	 */
+	private Object _tokenOwner;
 
 	/**
 	 * Creates a {@link ReactWysiwygControl} that formats text and offers no commands of its own.
@@ -636,8 +648,14 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 
 	@Override
 	protected Object parseClientValue(Object rawValue) {
-		String html = rawValue != null ? rawValue.toString() : "";
-		String cleanHtml = toStoredHtml(html);
+		return toModelValue(toStoredHtml(rawValue != null ? rawValue.toString() : ""));
+	}
+
+	/**
+	 * The model value for the given HTML in the form it is stored in, see
+	 * {@link #toStoredHtml(String)}.
+	 */
+	private Object toModelValue(String cleanHtml) {
 		if (isVisuallyEmpty(cleanHtml)) {
 			// An emptied editor means "no value": normalize to null so emptiness checks (e.g. a
 			// mandatory constraint) treat the field like a cleared text input rather than
@@ -812,6 +830,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 * download URLs for the images.
 	 */
 	private String toClientHtml(String html) {
+		forgetTokensOfOtherObject();
 		Map<String, Integer> occurrences = new HashMap<>();
 		String masked = TLObjectLinkUtil.maskLinks(html,
 			link -> maskToken(link, occurrences.merge(link, 1, Integer::sum)));
@@ -823,10 +842,32 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 */
 	private String maskToken(String link, int occurrence) {
 		return _maskTokens.computeIfAbsent(occurrence + ":" + link, key -> {
-			String token = Integer.toString(_maskedLinks.size() + 1);
+			String token = SecureRandomService.getInstance().getRandomString();
 			_maskedLinks.put(token, link);
 			return token;
 		});
+	}
+
+	/**
+	 * Forgets the tokens of the masked links when the editor shows the text of another object than
+	 * the one they were handed out for, so that a token of the former text brings in nothing.
+	 *
+	 * <p>
+	 * An object edited in a form is compared by the persistent object behind it, so that switching
+	 * between view and edit mode keeps the tokens of the text the client holds.
+	 * </p>
+	 */
+	private void forgetTokensOfOtherObject() {
+		Object owner = editedObject();
+		if (owner instanceof TLObject object) {
+			owner = TLFormObjectBase.editedObject(object);
+		}
+		if (Objects.equals(owner, _tokenOwner)) {
+			return;
+		}
+		_maskedLinks.clear();
+		_maskTokens.clear();
+		_tokenOwner = owner;
 	}
 
 	/**
@@ -839,6 +880,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 * </p>
 	 */
 	private String toStoredHtml(String clientHtml) {
+		forgetTokensOfOtherObject();
 		return stripImageUrls(TLObjectLinkUtil.restoreLinks(clientHtml, _maskedLinks::get));
 	}
 
@@ -878,13 +920,18 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 * a second insertion and not a repetition of the first.
 	 * </p>
 	 *
+	 * <p>
+	 * A link of the markup to an object that the current user may not discover is masked as in the
+	 * text, and comes back as a link when the client reports the text.
+	 * </p>
+	 *
 	 * @param html
 	 *        The markup to insert.
 	 */
 	public void insertAtCursor(String html) {
 		Map<String, Object> insert = new LinkedHashMap<>();
 		insert.put(INSERT_SEQ, Integer.valueOf(++_insertions));
-		insert.put(INSERT_HTML, html);
+		insert.put(INSERT_HTML, toClientHtml(html));
 		putState(INSERT, insert);
 	}
 
@@ -899,14 +946,16 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 */
 	@Override
 	protected void applyRawClientValue(Object rawValue) {
+		// The masked links are taken back once, for the safety check and the value alike.
+		String storedHtml = toStoredHtml(rawValue != null ? rawValue.toString() : "");
 		if (_checkHtml) {
-			ResKey problem = rawValue == null ? null : htmlProblem(toStoredHtml(rawValue.toString()));
+			ResKey problem = rawValue == null ? null : htmlProblem(storedHtml);
 			setInputError(problem);
 			if (problem == null) {
-				super.applyRawClientValue(rawValue);
+				applyClientValue(toModelValue(storedHtml));
 			}
 		} else {
-			super.applyRawClientValue(rawValue);
+			applyClientValue(toModelValue(storedHtml));
 		}
 
 		if (getState(INSERT) == null) {

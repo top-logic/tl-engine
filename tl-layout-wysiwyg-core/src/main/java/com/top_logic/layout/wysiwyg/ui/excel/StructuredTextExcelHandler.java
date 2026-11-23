@@ -36,7 +36,8 @@ public class StructuredTextExcelHandler implements PoiTypeHandler {
 	@Override
 	public int setValue(Cell aCell, Workbook aWorkbook, Object aValue, POITypeSupporter aSupport) {
 		StructuredText text = (StructuredText) aValue;
-		Document html = Jsoup.parse(TLObjectLinkUtil.maskLinks(text.getSourceCode(), null));
+		Document html = Jsoup.parse(text.getSourceCode());
+		TLObjectLinkUtil.maskLinks(html, null);
 
 		RichTextBuilder builder = new RichTextBuilder(aWorkbook).append(html);
 		RichTextString rts = builder.getText();

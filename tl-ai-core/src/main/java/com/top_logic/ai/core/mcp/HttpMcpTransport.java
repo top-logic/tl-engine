@@ -5,7 +5,7 @@
  */
 package com.top_logic.ai.core.mcp;
 
-import java.net.http.HttpRequest;
+import java.net.HttpURLConnection;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -18,8 +18,10 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.RequestAuthentication;
 
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
+import io.modelcontextprotocol.client.transport.customizer.McpHttpClientTransportAuthorizationErrorHandler;
 import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.spec.McpClientTransport;
 
@@ -116,13 +118,15 @@ public class HttpMcpTransport implements McpTransportConfig {
 	 * their call. A request that the library sends by itself gets none.
 	 *
 	 * <p>
-	 * The {@link McpClientConnection} uses {@link #createTransport(Supplier)}, which gives such a
-	 * request the headers of the last call that succeeded.
+	 * The {@link McpClientConnection} uses {@link #createTransport(Supplier, Runnable)}, which gives
+	 * such a request the headers of the last call that succeeded.
 	 * </p>
 	 */
 	@Override
 	public McpClientTransport createTransport() {
-		return createTransport(() -> CredentialHeaders.NONE);
+		return createTransport(() -> CredentialHeaders.NONE, () -> {
+			// No caller of this transport invalidates the credentials.
+		});
 	}
 
 	/**
@@ -130,8 +134,10 @@ public class HttpMcpTransport implements McpTransportConfig {
 	 *
 	 * @param lastSucceeded
 	 *        The headers of the last call of the connection that succeeded.
+	 * @param rejected
+	 *        Called when the server rejects the headers of a request (HTTP 401).
 	 */
-	McpClientTransport createTransport(Supplier<CredentialHeaders> lastSucceeded) {
+	McpClientTransport createTransport(Supplier<CredentialHeaders> lastSucceeded, Runnable rejected) {
 		return HttpClientStreamableHttpTransport.builder(_url)
 			.addHttpRequestCustomizer((request, method, uri, body, context) -> {
 				if (_headers != null) {
@@ -144,16 +150,28 @@ public class HttpMcpTransport implements McpTransportConfig {
 					credentials = resolved;
 				} else {
 					// A request that the library sends by itself has no caller, e.g. the new
-					// initialize after the server forgot the session. It gets the headers of the
-					// last call that succeeded. They belong to the one connection: a client for each
-					// person needs a connection for each person.
+					// initialize after the server forgot the session, or the tools/list after the
+					// server said that its tools changed. It gets the headers of the last call that
+					// succeeded. They belong to the connection, so callers with different
+					// credentials must not share a connection.
 					credentials = lastSucceeded.get();
 				}
 				// Limit: the stream of server messages (GET), which the library opens after the
 				// first answer of a session, keeps the headers of that call. After a rotation of the
 				// secret these headers can be stale.
-				credentials.addTo(request);
+				credentials.addTo(RequestAuthentication.of(request));
 			})
+			.authorizationErrorHandler(McpHttpClientTransportAuthorizationErrorHandler.fromSync(
+				(request, response, context) -> {
+					if (response.statusCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+						// Cached credentials (an access token) may have expired or been revoked.
+						// No repeat here: the library would send the same headers again. Fresh
+						// headers come only from the credential provider on the thread of a
+						// caller, and the next caller invalidates the credentials first.
+						rejected.run();
+					}
+					return false;
+				}))
 			.build();
 	}
 
@@ -201,7 +219,7 @@ public class HttpMcpTransport implements McpTransportConfig {
 			return McpTransportContext.create(Map.of(KEY, this));
 		}
 
-		void addTo(HttpRequest.Builder request) {
+		void addTo(RequestAuthentication request) {
 			values.forEach(request::setHeader);
 		}
 

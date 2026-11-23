@@ -60,9 +60,8 @@ public class AllToolNames extends Function0<List<String>> {
 		if (McpServerRegistry.Module.INSTANCE.isActive()) {
 			McpServerRegistry mcp = McpServerRegistry.getInstance();
 			for (String serverName : mcp.getServerNames()) {
-				// The cached tool list of a connected server, without a wait for the server: after a
-				// change of its tools, a later call gets the new list. A disconnected server
-				// contributes nothing here and relies on the policy's own entries below.
+				// The cached tool list of a connected server; a disconnected one contributes nothing
+				// here and relies on the policy's own entries below.
 				List<Tool> tools = mcp.getTools(serverName);
 				if (tools != null) {
 					for (Tool tool : tools) {

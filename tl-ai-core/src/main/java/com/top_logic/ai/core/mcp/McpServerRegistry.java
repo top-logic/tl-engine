@@ -174,8 +174,6 @@ public class McpServerRegistry extends ConfiguredManagedClass<McpServerRegistry.
 	 * @param serverName
 	 *        The server name as configured.
 	 * @return List of tools, or {@code null} if the server is not found or not connected.
-	 *         Never waits for the server: after the server said that its tools changed, the list in
-	 *         place comes back, and a later call gets the new list.
 	 */
 	public List<Tool> getTools(String serverName) {
 		McpClientConnection connection = _connections.get(serverName);

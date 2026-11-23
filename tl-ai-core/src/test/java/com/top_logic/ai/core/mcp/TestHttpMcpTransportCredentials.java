@@ -11,7 +11,6 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,7 +41,6 @@ import com.top_logic.ai.tool.api.ProgressReporter;
 import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.ai.tool.api.ToolExecutionContext;
 import com.top_logic.ai.tool.api.ToolResult;
-import com.top_logic.basic.Logger.LogEntry;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -55,9 +53,7 @@ import com.top_logic.basic.credential.HeaderCredentials;
 import com.top_logic.basic.credential.RequestAuthentication;
 import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.io.character.CharacterContents;
-import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.thread.CancelScope.BlockingCall;
-import com.top_logic.basic.tools.CollectingLogListener;
 
 import io.modelcontextprotocol.spec.McpSchema;
 
@@ -134,15 +130,6 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 	/** The number of POST requests with {@link #_expired} credentials. */
 	private int _expiredRequests;
 
-	/** The number of the next <code>tools/list</code> requests that fail with HTTP 500. */
-	private int _failingToolLists;
-
-	/**
-	 * The server holds its answer to a <code>tools/list</code> after the change back until this
-	 * latch opens.
-	 */
-	private CountDownLatch _changedToolListAnswered = new CountDownLatch(0);
-
 	/** Opens when the server receives a <code>tools/call</code>. */
 	private final CountDownLatch _toolCallReceived = new CountDownLatch(1);
 
@@ -171,7 +158,6 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 	@Override
 	protected void tearDown() throws Exception {
 		_toolCallAnswered.countDown();
-		_changedToolListAnswered.countDown();
 		_server.stop(0);
 		System.clearProperty(VARIABLE);
 		super.tearDown();
@@ -260,10 +246,7 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 			assertEquals("Rejected request and repeat of " + method + ". " + report, 2, authentications(calls, method));
 		}
 		assertEquals("One invalidation for each rejection. " + report, methods.size(), invalidations(calls));
-		for (ProviderCall call : calls) {
-			assertSame("Not on the thread of the caller. " + report, Thread.currentThread(), call.thread());
-			assertFalse("Inside the cancellable wait. " + report, call.inWait());
-		}
+		assertCallerThread(calls, report);
 	}
 
 	/** A stop of the run ends a tool call that waits for the answer of the server. */
@@ -364,21 +347,15 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 	}
 
 	/**
-	 * The server says that its tools changed. From then on it rejects all credentials that it got
-	 * before, and the first new tools/list once more (HTTP 401).
-	 *
-	 * <p>
-	 * The library sends no tools/list by itself. A later caller gets the new list: its refresh is
-	 * rejected, and the refresh of the next caller invalidates the credentials and asks with fresh
-	 * ones. The credential provider runs only on the thread of the caller, never inside the
-	 * cancellable wait.
-	 * </p>
+	 * The server says that its tools changed, and accepts only requests with a credential. The
+	 * library asks for the new list by itself, with no caller: its request carries the credential
+	 * of the last call that succeeded. The credential provider runs only on the thread of the
+	 * caller, never inside the cancellable wait.
 	 */
-	public void testChangedToolsWithFreshCredentials() throws Exception {
+	public void testChangedTools() throws Exception {
+		_accepted = authorization -> authorization != null;
 		_onToolChange = () -> {
-			_expired = new HashSet<>(_authorizations);
-			_accepted = value -> !_expired.contains(value);
-			_rejectedOnce.add("tools/list");
+			// Only the change of the tools.
 		};
 
 		McpServerRegistry registry = registry(RECORDING);
@@ -391,7 +368,6 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 				ToolResult result = tool(registry).execute(Map.of(), context(token));
 				assertFalse(result.text(), result.failed());
 
-				// The refresh runs in the background: a later call gets the new list.
 				names = changedToolNames(registry);
 			} finally {
 				calls = List.copyOf(RecordingCredentials.CALLS);
@@ -401,72 +377,68 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 
 		String report = report(calls);
 		assertEquals(report, List.of("mcp__test__echo", "mcp__test__second"), names);
-		assertEquals("One invalidation for the rejected refresh. " + report, 1, invalidations(calls));
+		assertEquals("Only initialize, tools/list and tools/call of the caller authenticate. " + report,
+			List.of("initialize", "tools/list", "tools/call"),
+			calls.stream().map(call -> method(call.authorization())).toList());
+		assertCallerThread(calls, report);
+	}
+
+	/**
+	 * The server says that its tools changed, and from then on rejects all credentials that it got
+	 * before (HTTP 401). The library asks for the new list with the credential of the last call
+	 * that succeeded, and the server rejects it.
+	 *
+	 * <p>
+	 * The next caller invalidates the credentials before it authenticates, on its own thread and
+	 * outside the cancellable wait. No request of a caller is rejected.
+	 * </p>
+	 */
+	public void testRejectedRequestOfLibrary() throws Exception {
+		_onToolChange = () -> {
+			_expired = new HashSet<>(_authorizations);
+			_accepted = value -> !_expired.contains(value);
+		};
+
+		McpServerRegistry registry = registry(RECORDING);
+		WaitTrackingToken token = new WaitTrackingToken();
+		List<ProviderCall> calls;
+		try (RunCancellationBinding.Binding run = RunCancellationBinding.bind(token)) {
+			registry.startUp();
+			try {
+				Tool tool = tool(registry);
+				// The first call makes the server change its tools. The rejection of the request of
+				// the library reaches the client a moment later: until then, a call authenticates
+				// without an invalidation.
+				long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+				do {
+					ToolResult result = tool.execute(Map.of(), context(token));
+					assertFalse(result.text(), result.failed());
+					Thread.sleep(10);
+				} while (invalidations(RecordingCredentials.CALLS) == 0 && System.nanoTime() < deadline);
+			} finally {
+				calls = List.copyOf(RecordingCredentials.CALLS);
+				registry.shutDown();
+			}
+		}
+
+		String report = report(calls);
+		assertEquals("One invalidation for the rejected request of the library. " + report, 1, invalidations(calls));
+		List<String> sequence = calls.stream()
+			.map(call -> call.authorization() == null ? "invalidate" : method(call.authorization()))
+			.toList();
+		assertEquals("The invalidation comes right before the authentication of a call. " + report,
+			"tools/call", sequence.get(sequence.indexOf("invalidate") + 1));
+		assertCallerThread(calls, report);
+		synchronized (_authorizations) {
+			assertEquals("Only the request of the library carries an expired credential.", 1, _expiredRequests);
+		}
+	}
+
+	private static void assertCallerThread(List<ProviderCall> calls, String report) {
 		for (ProviderCall call : calls) {
 			assertSame("Not on the thread of the caller. " + report, Thread.currentThread(), call.thread());
 			assertFalse("Inside the cancellable wait. " + report, call.inWait());
 		}
-		synchronized (_authorizations) {
-			assertEquals("Requests with expired credentials after the change.", 0, _expiredRequests);
-		}
-	}
-
-	/**
-	 * A call of <code>getTools</code> after a change of the tools does not wait for the server: it
-	 * gets the old list at once, and a later call gets the new list.
-	 */
-	public void testGetToolsDoesNotWait() throws Exception {
-		_onToolChange = () -> {
-			// Only the change of the tools.
-		};
-		_changedToolListAnswered = new CountDownLatch(1);
-
-		McpServerRegistry registry = registry("");
-		registry.startUp();
-		try {
-			ToolResult result = tool(registry).execute(Map.of(), context(CancellationToken.UNCANCELLABLE));
-			assertFalse(result.text(), result.failed());
-
-			// The server holds its answer back: a call that waited for it would get the new list.
-			assertEquals(List.of("mcp__test__echo"), toolNames(registry));
-
-			_changedToolListAnswered.countDown();
-			assertEquals(List.of("mcp__test__echo", "mcp__test__second"), changedToolNames(registry));
-		} finally {
-			_changedToolListAnswered.countDown();
-			registry.shutDown();
-		}
-	}
-
-	/**
-	 * Refreshes of the tool list that fail in a row give one warning, and a line at the level
-	 * debug for each further failure. A server that cannot be reached would fail each refresh.
-	 */
-	public void testFailedRefreshesWarnOnce() throws Exception {
-		_onToolChange = () -> _failingToolLists = 3;
-
-		McpServerRegistry registry = registry("");
-		registry.startUp();
-		CollectingLogListener log = new CollectingLogListener(EnumSet.of(Level.WARN, Level.DEBUG), true);
-		List<LogEntry> entries;
-		List<String> names;
-		try {
-			ToolResult result = tool(registry).execute(Map.of(), context(CancellationToken.UNCANCELLABLE));
-			assertFalse(result.text(), result.failed());
-			names = changedToolNames(registry);
-		} finally {
-			entries = log.getLogEntries();
-			log.deactivate();
-			registry.shutDown();
-		}
-
-		assertEquals(List.of("mcp__test__echo", "mcp__test__second"), names);
-		List<Level> failures = entries.stream()
-			.filter(entry -> entry.getMessage() != null && entry.getMessage().contains("Failed to refresh the tools"))
-			.map(LogEntry::getPriority)
-			.toList();
-		assertEquals("Three failed refreshes, then one that succeeded.",
-			List.of(Level.WARN, Level.DEBUG, Level.DEBUG), failures);
 	}
 
 	/** The tool names of a later call, after the refresh that the change of the tools started. */
@@ -639,24 +611,8 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 			}
 			case "tools/list": {
 				boolean changed;
-				boolean failing;
 				synchronized (_authorizations) {
 					changed = _toolsChanged;
-					failing = _failingToolLists > 0;
-					if (failing) {
-						_failingToolLists--;
-					}
-				}
-				if (failing) {
-					reply(exchange, HttpURLConnection.HTTP_INTERNAL_ERROR, null);
-					return;
-				}
-				if (changed) {
-					try {
-						_changedToolListAnswered.await(10, TimeUnit.SECONDS);
-					} catch (InterruptedException ex) {
-						Thread.currentThread().interrupt();
-					}
 				}
 				reply(exchange, HttpURLConnection.HTTP_OK, result(id.group(1),
 					"{\"tools\":[" + tool("echo") + (changed ? "," + tool("second") : "") + "]}"));

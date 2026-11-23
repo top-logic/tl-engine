@@ -51,7 +51,7 @@ import com.top_logic.util.sched.task.result.TaskResult.ResultType;
 /**
  * A scheduled run of an {@link AgentTask} stops at the cancel marker of its execution, which
  * {@code aiAgentRunCancel} and the stop command of the agent activity monitor set, and ends as
- * {@code CANCELLED} (#30483).
+ * {@code CANCELLED} (#30483). A run that nobody stops is still reported as a success.
  *
  * <p>
  * The marker is set while the model call of the first turn is in flight. The scripted model holds
@@ -132,6 +132,22 @@ public class TestScheduledRunCancelMarker extends BasicTestCase {
 		assertFalse("The model was asked again after the cancel marker was set.", askedAgain.get());
 		assertEquals("The task must report the cancelled run as cancelled.", ResultType.CANCELED,
 			TestScheduledAgentRun.resultType(task));
+	}
+
+	/** A scheduled run whose marker is not set ends normally, and the task reports a success. */
+	public void testRunWithoutMarkerSucceeds() throws Exception {
+		ScriptedModel.install((request, turn) -> List.<ContentPart> of(new TextContent("Done.")));
+
+		ProbeTask task = new ProbeTask(new DefaultInstantiationContext(TestScheduledRunCancelMarker.class),
+			config("<task %s name='NoCancelMarker' agent='TestChatPlanner'><prompt>Work on it.</prompt></task>"));
+		task.drive();
+
+		HistoryUtils.updateSessionRevision();
+		AgentSession session =
+			(AgentSession) ChatHistoryService.findOwnedSessionById(task.tracker().getActiveSessionId(), _owner);
+		assertNotNull("The sitting was not recorded as a session.", session);
+		assertEquals("COMPLETE", statusOfLastRun(session));
+		assertEquals(ResultType.SUCCESS, TestScheduledAgentRun.resultType(task));
 	}
 
 	/**

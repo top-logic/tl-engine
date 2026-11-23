@@ -342,7 +342,10 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 		List<CancelSignalObserver> observers = new ArrayList<>();
 		try {
 			assertTrue("The writer did not start the checkpoint.", writerBusy.await(10, TimeUnit.SECONDS));
-			for (int i = 0; i < 8; i++) {
+			// More runs than the scheduler has threads: ticks that waited for the writer would hold
+			// every thread.
+			int runs = SchedulerService.getInstance().getConfig().getCorePoolSize() + 2;
+			for (int i = 0; i < runs; i++) {
 				CancelSignalObserver observer = new CancelSignalObserver(handle, new CancellationToken());
 				observers.add(observer);
 				observer.onEvent(new AgentEvent.RunStarted("run-busy-writer", 0, Instant.now(), "test-model"));

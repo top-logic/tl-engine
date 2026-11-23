@@ -40,8 +40,8 @@ import com.top_logic.ai.core.execution.model.AgentExecution;
  * boundary, so the committed marker would never be read and the run would stay {@code RUNNING}
  * forever. The time-based poll guarantees the token flips within a bounded delay regardless of
  * where the run currently is. As an optimization the marker is additionally polled on each
- * {@code TurnStarted}, so a cancel that lands right before a boundary takes effect immediately
- * rather than waiting for the next tick.
+ * {@link AgentEvent.TurnStarted}, so a cancel that lands right before a boundary takes effect
+ * immediately rather than waiting for the next tick.
  * </p>
  *
  * <p>
@@ -70,7 +70,7 @@ public final class CancelSignalObserver implements AgentEventListener, AutoClose
 
 	/**
 	 * The marker read that the last tick queued, until a tick takes its result. Only the ticks of
-	 * {@link #_pollTask} use it, and they never overlap.
+	 * {@link #_pollTask} set it, and they never overlap; {@link #close()} cancels it.
 	 */
 	private volatile Future<Boolean> _queuedRead;
 
@@ -112,6 +112,11 @@ public final class CancelSignalObserver implements AgentEventListener, AutoClose
 	@Override
 	public void close() {
 		stopPolling();
+		// A read still queued on the writer is of no use any more.
+		Future<Boolean> read = _queuedRead;
+		if (read != null) {
+			read.cancel(false);
+		}
 	}
 
 	/**
@@ -184,6 +189,10 @@ public final class CancelSignalObserver implements AgentEventListener, AutoClose
 			return;
 		}
 		_queuedRead = null;
+		if (read != null && read.isCancelled()) {
+			// Cancelled by close(): the run is over, nothing to report.
+			return;
+		}
 		try {
 			// A read that is done: get() does not wait.
 			if (read != null && read.get().booleanValue()) {

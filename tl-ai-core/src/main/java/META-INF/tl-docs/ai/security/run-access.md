@@ -1,5 +1,5 @@
 ---
-description: Read before restricting which agents, models and MCP servers a role may use - <agent-access default="all|none">, <model-access default="assigned|all|none">, <mcp-access default="agent|all|none"> in the AiToolAccessService policy, the five decision rules (RoleAccessPolicy, RunAuthorization), infrastructure agents (infrastructure="true", SecurityContext.withoutAgentChoice), the chat entry point, the chat's capabilities and 403 refusals, delegation, and the boot check of names (AgentNameCheck).
+description: Read before restricting which agents, models and MCP servers a role may use - <agent-access default="all|none">, <model-access default="assigned|all|none">, <mcp-access default="agent|all|none"> in the AiToolAccessService policy, the five decision rules (RoleAccessPolicy, RunAuthorization), infrastructure agents (infrastructure="true", SecurityContext.withoutAgentChoice), the chat entry point, the chat's capabilities and 403 refusals, delegation, the boot check of names (AgentNameCheck), and stored agents and skills under model rights (Read on tl.ai.core:Agent and tl.ai.core:Skill, AgentDefinitionQuery with a reader, the global names).
 order: 75
 ---
 
@@ -22,7 +22,7 @@ The [tool access policy](doc:ai/security/tool-access-configuration) decides what
 </mcp-access>
 ```
 
-An agent definition does **not** decide who may run it: it is editable by whoever may author agents, so anything it declared about its own security would be inert or an escalation path. An allowlist keyed by role is.
+An agent definition does **not** decide who may run it: it is editable by whoever may author agents, so anything it declared about its own security would be inert or an escalation path. An allowlist keyed by role is - and, for an agent stored in the knowledge base, also the model rights on its record ([stored agents and skills](#stored-agents-and-skills-under-model-rights)).
 
 ## What each section decides when nothing is written
 
@@ -110,3 +110,17 @@ The chat's capabilities (the state of a `<chat-conversation>`) list the agents a
 ```
 
 A holder of `ticketReader` is offered `TL_ModelExplorer` and nothing else, and may pick the Haiku model as well as the one its agent is assigned. `internal-docs` is out of reach: an agent that does not declare it cannot attach it, and an agent that *does* declare it is not offered to this role at all, because every run of it would reach the denied server. Everybody else keeps every agent.
+
+## Stored agents and skills under model rights
+
+Besides the configured agents, an application has stored agents and skills: objects of `tl.ai.core:Agent` and `tl.ai.core:Skill` (or of a specialization) that a person creates at runtime. They are data, so the model rights of the application apply to them in addition to `<agent-access>`. **Both must allow**: `<agent-access>` the name, and the account of the run `Read` on the record. Configured agents are not records and are decided by `<agent-access>` alone.
+
+**Cannot read means unknown.** A stored agent or skill that an account may not read does not exist for that account. The engine applies the rule at each start - the chat, A2A, TL-Script, a scheduled task -, for the default agent, for a delegate and a subagent, for each skill (the skill catalog, `loadSkill`), and in each list: the agent menu of the chat, `list_agents`, the options of `delegations` and `skills` of an agent record, and the authoring tools. The answer is the answer for a name that nothing has: `No agent found`, "not found" in the chat. If a configured agent has the same name, it answers in place of the record.
+
+The rights are those of the run, `SecurityContext.modelSecurity()`. Java code asks `AgentDefinitionQuery` with that reader: `findAgentByName(name, reader)`, `getAllAgents(reader)`, `findSkillByName(name, reader)`, `getAllSkills(reader)`; `AgentFactory.defaultAgentFor` and `runRefusal` take it too. A menu that has only a `Person` uses `new ModelAccessRightsSecurity(person)`, as the default security context does. The methods without a reader return every definition with no check; they are for checks of the configuration only.
+
+**Names are global.** A name is unique in the whole application, also against records an account may not read: a person who creates an agent with the name of a record they do not see is told that the name is already in use. A stored agent cannot take the name of a configured agent, and a stored skill not the name of a configured skill; the case of the letters does not count. Only an administrator, and code in a system context such as the import of the initial data, may save such a name, because a record wins over the configured definition of its name.
+
+**An allowlist and a new agent.** Under `<agent-access>` with a `<grants>` list, a role reaches only the names its list gives - an agent that a person creates at runtime has a name that no list names yet, so the holders of that role cannot run it until an administrator adds the name. Recommended: keep `<agent-access default="all">` and list only the forbidden agents in `<denies>`. Then a new stored agent works at once, and its model rights alone decide who uses it.
+
+The access definition that the engine ships for the two types, and recipes for the agents of a team and for personal agents, are in the [administration reference](doc:ai/security/administration#the-shipped-access-definition-for-stored-agents-and-skills).

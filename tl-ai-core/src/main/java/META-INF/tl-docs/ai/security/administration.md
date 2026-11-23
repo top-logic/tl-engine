@@ -1,5 +1,5 @@
 ---
-description: Read when the precise semantics of the agent security configuration matter - the reference of AiToolAccessService / ToolAccessPolicy (<tool-groups>, <tool-access>, <baseline>, <background-allowlist>, boot errors and warnings, the three names of a tool), the defaults for a new tool, approval decided from the call (SecurityContextFactory, RunPrincipal, SecurityContextProxy, <security-context> on AgentRuntimeService), the shipped read policy for Screenshot and CookiePool (tl-ai-core.binarySecurity.config.xml, AiBinaryOwner), and the shipped access policy for chat sessions and memories under model-based security (tl-ai-core.chatSecurity.config.xml, AiChatOwner).
+description: Read when the precise semantics of the agent security configuration matter - the reference of AiToolAccessService / ToolAccessPolicy (<tool-groups>, <tool-access>, <baseline>, <background-allowlist>, boot errors and warnings, the three names of a tool), the defaults for a new tool, approval decided from the call (SecurityContextFactory, RunPrincipal, SecurityContextProxy, <security-context> on AgentRuntimeService), the shipped read policy for Screenshot and CookiePool (tl-ai-core.binarySecurity.config.xml, AiBinaryOwner), the shipped access policy for chat sessions and memories under model-based security (tl-ai-core.chatSecurity.config.xml, AiChatOwner), and the shipped access definition for stored agents and skills (tl-ai-core.agentSecurity.config.xml, recipes for team and personal agents).
 order: 70
 ---
 
@@ -189,3 +189,85 @@ The chat sessions (`tl.ai.execution:AgentSession`) and the memories (`tl.ai.exec
 | `<access-parent>` `<target>` | a run (`AgentExecution#session`) and a plan item (`AgentTask#session`) decide through their session, a question (`InteractionRequest#execution`) through its run |
 
 `Create` and `Delete` of a session or a memory are granted to nobody: sessions and memories are created and deleted by the `AgentExecutionStore`, which writes in a system context, and `aiSessionRename`, `aiSessionDelete` and `aiMemoryDelete` check the ownership themselves. A memory decides through its own owner and not through its session, since the session reference is optional and a memory outlives its conversation. Administrators and system contexts bypass the check as everywhere. `TestChatSessionAccessPolicy` pins the policy against the shipped configuration.
+
+## The shipped access definition for stored agents and skills
+
+Stored agents and skills (`tl.ai.core:Agent`, `tl.ai.core:Skill`) are under the model rights of the application, in addition to `<agent-access>`; an account that may not read one does not know it ([run access](doc:ai/security/run-access#stored-agents-and-skills-under-model-rights)). `tl-ai-core/src/main/webapp/WEB-INF/conf/tl-ai-core.agentSecurity.config.xml` gives the two base types their definition:
+
+| Piece | What it does |
+|---|---|
+| `<security-parents>` rules to `SecurityStructure#ROOT`, not inherited | a role held on the security root is held on each stored agent and skill, so a grant of the application to such a role takes effect |
+| `<security-config>` `Read` for `SecurityStructure.user`, not inherited | every member of the group `user` - every new account - sees the stored agents and skills, as before |
+| `<part>` grants on `Agent#mcpServers` and `Agent#infrastructure` with no role | nobody but an administrator changes them: every run of an agent reaches the tools of its MCP servers, and the engine runs an infrastructure agent in its own code |
+
+`Create`, `Write` and `Delete` of the two base types are granted to nobody. Who may create an agent where is a model right that each application writes into its own security configuration. Administrators and code in a system context bypass the check as everywhere.
+
+Nothing is inherited, on purpose. **A specialization starts closed**: without rules of the application, nobody but an administrator reads it. **A specialization in a composition follows its container**: a composition part with no rule of its own takes its container as access parent ([access configuration](doc:access-configuration#access-parent-delegating-the-whole-decision)), so whoever reads the container reads its agents, and whoever writes the container creates, changes and deletes them. An inherited role source would switch that default off. The `<part>` grants apply to the specializations as well; an application gives `Write` on the two attributes to another role with a `<grant>` of its own on the same `<part>`.
+
+The `Read` grant makes the instructions of a stored agent (`systemPrompt`) and the text of a skill (`content`) readable for the group `user`, also with TL-Script and with a data tool of an agent. An application that hides them adds a `<part>` grant; a run of the agent still gets its instructions, since the engine reads them without the rights of the account:
+
+```xml
+<part name="tl.ai.core:Agent#systemPrompt">
+	<grant operation="Read" roles="AgentEditor"/>
+</part>
+<part name="tl.ai.core:Skill#content">
+	<grant operation="Read" roles="AgentEditor"/>
+</part>
+```
+
+**Names are global.** `UniqueNameConstraint` refuses, at commit, a name that another stored record of the base type has (in any case of the letters, also a record the person may not read), and the name of a configured agent for a stored agent and of a configured skill for a stored skill, unless an administrator or a system context saves it. A record that already has such a name is refused at its next change by a person who is no administrator; rename it.
+
+### Recipe: the agents of a team
+
+A specialization held in a composition of the team. No security rule is needed: the agents follow the team.
+
+```xml
+<class name="Team">
+	<attributes>
+		<reference name="agents" composite="true" multiple="true" kind="forwards" type="TeamAgent"/>
+	</attributes>
+</class>
+<class name="TeamAgent">
+	<generalizations>
+		<generalization type="tl.ai.core:Agent"/>
+	</generalizations>
+</class>
+```
+
+A member of a team who may read the team sees, starts and delegates to its agents; a member who may write the team creates, changes and deletes them. Everybody else does not know them, and a person of another team who picks the same name is told that it is in use. The security test bed of `tl-ai-demo` does this with `pm:ProjectAgent` and `pm:ProjectSkill` ([test bed](doc:ai/security/test-bed)).
+
+### Recipe: personal agents
+
+A specialization with an owner, and a role that a rule derives from the owner, built like the access policy for conversations above:
+
+```xml
+<!-- my.module.model.xml -->
+<class name="PersonalAgent">
+	<generalizations>
+		<generalization type="tl.ai.core:Agent"/>
+	</generalizations>
+	<attributes>
+		<reference name="owner" kind="forwards" type="tl.accounts:Person"/>
+	</attributes>
+</class>
+
+<!-- InitialRolesManager -->
+<role name="AgentOwner"/>
+
+<!-- AccessManager -->
+<rule id="my.module.agent.owner" meta-element="my.module:PersonalAgent" role="AgentOwner" type="reference">
+	<path>
+		<step attribute="my.module:PersonalAgent#owner"/>
+	</path>
+</rule>
+
+<!-- SecurityConfigurationService -->
+<class name="my.module:PersonalAgent">
+	<grant operation="Read" roles="AgentOwner"/>
+	<grant operation="Write" roles="AgentOwner"/>
+	<grant operation="Delete" roles="AgentOwner"/>
+	<grant operation="Create" roles="SecurityStructure.user"/>
+</class>
+```
+
+`Create` is checked on the security root for a type that no composition holds, where every member of the group `user` holds `SecurityStructure.user`. The view that creates the agent sets `owner` to the creating account. To share a personal agent with somebody, grant `Read` to a second role that a rule derives from a reference such as `sharedWith`.

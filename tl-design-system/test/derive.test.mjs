@@ -496,7 +496,7 @@ test('radius-mark ab einem Drittel der Kante ist ein Formbefund, darunter nicht'
   assert.deepEqual(befund({ 'bevel-1': '0.5rem' }), [{ rolle: 'radius-mark', ist: '0.5rem', grenze: '5.33px', bezug: 'size-choice' }]);
   assert.equal(befund({ 'bevel-1': '.5rem' }).length, 1);
   assert.equal(befund({ 'bevel-1': '50%' }).length, 1);
-  assert.deepEqual(befund({ 'size-4': '0.5rem' }), [{ rolle: 'radius-mark', ist: '0.25rem', grenze: '2.67px', bezug: 'size-choice' }]);
+  assert.deepEqual(befund({ 'size-4': '0.5rem' }), [{ rolle: 'radius-mark', ist: '0.25rem', grenze: '2.66px', bezug: 'size-choice' }]);
   const knapp = derive(P, T, { theme: 'f', measure: { 'bevel-1': '0.3rem' } });
   assert.deepEqual(knapp.formBefunde, []);
   assert.equal(knapp.rollen.measure['radius-mark'], '0.3rem');
@@ -522,4 +522,23 @@ test('radius-mark-Befund: ohne --strict Exit 0 mit Konsolenzeile, mit --strict E
   const mit = lauf(json, '--strict');
   assert.equal(mit.status, 1);
   assert.ok(!existsSync(mit.datei));
+});
+
+test('radius-mark: die Grenze sitzt genau bei einem Drittel, Einheiten groß und klein, keine Kante ohne Länge', () => {
+  const n = (measure) => derive(P, T, { theme: 'f', measure }).formBefunde.length;
+  assert.equal(n({ 'bevel-1': '6px' }), 1);
+  assert.equal(n({ 'bevel-1': '5px' }), 0);
+  assert.equal(n({ 'bevel-1': '6PX' }), 1);
+  assert.equal(n({ 'bevel-1': ' 6px' }), 1, 'Leerraum um den Wert');
+  assert.equal(n({ 'bevel-1': '1px', 'size-4': '3px' }), 1, 'genau ein Drittel ist ein Befund');
+  assert.equal(n({ 'bevel-1': '0.7px', 'size-4': '2.1px' }), 1, 'Gleitkomma bei genau einem Drittel');
+  assert.equal(n({ 'bevel-1': '34%' }), 1);
+  assert.equal(n({ 'bevel-1': '33%' }), 0);
+  for (const measure of [{ 'size-4': '100%' }, { 'size-4': '0' }, { 'bevel-1': '-1px' }]) {
+    const r = derive(P, T, { theme: 'f', measure });
+    assert.equal(r.formBefunde.length, 0, JSON.stringify(measure));
+    assert.ok(r.hinweise.some((h) => h.startsWith('radius-mark nicht geprüft')), JSON.stringify(measure));
+  }
+  const { css } = derive(P, T, { theme: 'f', measure: { 'bevel-1': 'x*/y' } });
+  assert.ok(css.includes('x* /y') && !css.slice(css.indexOf('/* Report')).slice(0, -3).includes('*/'), 'ein */ im Hinweis schließt den Report nicht');
 });

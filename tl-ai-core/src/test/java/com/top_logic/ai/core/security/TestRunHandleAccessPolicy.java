@@ -78,6 +78,9 @@ public class TestRunHandleAccessPolicy extends BasicTestCase {
 
 	private static Person administrator;
 
+	/** An owner that may only read. */
+	private static Person restrictedOwner;
+
 	private static Run completeRun;
 
 	private static Run failedRun;
@@ -94,16 +97,18 @@ public class TestRunHandleAccessPolicy extends BasicTestCase {
 		owner = TestPerson.createPerson("run-handle-owner");
 		stranger = TestPerson.createPerson("run-handle-stranger");
 		administrator = TestPerson.createPerson("run-handle-admin");
+		restrictedOwner = TestPerson.createPerson("run-handle-restricted");
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
 			administrator.setAdmin(true);
+			restrictedOwner.setRestrictedUser(Boolean.TRUE);
 			tx.commit();
 		}
 
 		AgentExecutionStore store = AgentExecutionStore.getInstance();
-		completeRun = startRun();
+		completeRun = startRun(owner);
 		store.finishExecution(completeRun.execution(), ExecutionStatus.COMPLETE, StopReason.COMPLETE, null,
 			null, LOG, ANSWER);
-		failedRun = startRun();
+		failedRun = startRun(owner);
 		store.finishExecution(failedRun.execution(), ExecutionStatus.ERROR, StopReason.ERROR, FAILURE, null,
 			LOG);
 		queuedSession = store.createSession(SessionKind.BACKGROUND, owner, "queued");
@@ -150,7 +155,7 @@ public class TestRunHandleAccessPolicy extends BasicTestCase {
 	public void testStrangerStopsNoRun() {
 		List<String> stops = new ArrayList<>();
 		for (String form : Run.FORMS) {
-			Run run = startRun();
+			Run run = startRun(owner);
 			HistoryUtils.updateSessionRevision();
 			Object answer = evalAs(stranger, true, CANCEL, run.handles().get(form));
 			boolean marked = AgentExecutionStore.getInstance().isCancelRequested(run.execution());
@@ -179,6 +184,20 @@ public class TestRunHandleAccessPolicy extends BasicTestCase {
 		assertReadsAndStops(stranger, false);
 	}
 
+	/**
+	 * A restricted account, which may only read, reads its own run and cannot stop it, since a stop
+	 * needs the right {@code Write}.
+	 */
+	public void testRestrictedOwnerReadsButStopsNothing() {
+		Run run = startRun(restrictedOwner);
+		HistoryUtils.updateSessionRevision();
+		Object handle = run.handles().get("session id");
+
+		assertEquals(ExecutionStatus.RUNNING.name(), evalAs(restrictedOwner, true, STATUS, handle));
+		assertEquals(Boolean.FALSE, evalAs(restrictedOwner, true, CANCEL, handle));
+		assertFalse(AgentExecutionStore.getInstance().isCancelRequested(run.execution()));
+	}
+
 	private static void assertReadsAndStops(Person account, boolean withSecurity) {
 		for (Map.Entry<String, Object> handle : completeRun.handles().entrySet()) {
 			String form = handle.getKey();
@@ -203,7 +222,7 @@ public class TestRunHandleAccessPolicy extends BasicTestCase {
 				evalAs(account, withSecurity, STATUS, handle.getValue()));
 		}
 		for (String form : Run.FORMS) {
-			Run run = startRun();
+			Run run = startRun(owner);
 			HistoryUtils.updateSessionRevision();
 			assertEquals(form, Boolean.TRUE, evalAs(account, withSecurity, CANCEL, run.handles().get(form)));
 			assertTrue(form, AgentExecutionStore.getInstance().isCancelRequested(run.execution()));
@@ -247,10 +266,10 @@ public class TestRunHandleAccessPolicy extends BasicTestCase {
 		});
 	}
 
-	/** Records a new running run of the owner, with a session of its own. */
-	private static Run startRun() {
+	/** Records a new running run of the given account, with a session of its own. */
+	private static Run startRun(Person account) {
 		AgentExecutionStore store = AgentExecutionStore.getInstance();
-		AgentSession session = store.createSession(SessionKind.BACKGROUND, owner, "run-handle");
+		AgentSession session = store.createSession(SessionKind.BACKGROUND, account, "run-handle");
 		AgentExecution execution =
 			store.beginExecution(session, "run-handle-" + UUID.randomUUID(), "agent", null, null, null);
 		return new Run(session, execution);

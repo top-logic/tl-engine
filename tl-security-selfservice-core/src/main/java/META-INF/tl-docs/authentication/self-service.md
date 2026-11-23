@@ -1,5 +1,5 @@
 ---
-description: Read before offering users a password reset, a reset of their second factor, an invitation to create their own account or an open self-registration without invitation - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the configurable mail texts (invitation-text, verification-text, reset-password-text, reset-mfa-text, MailText) and mail scripts written in the language of the recipient, sendResetPasswordMail, sendResetMFAMail, the TL-Script functions sendInvitation, invitationRenew, invitationResend and invitationExistingAccount, taken addresses (existingAccount, Person.allByEMail, accounts synchronized by LDAP or provisioned by OpenID with a user name other than their e-mail address), the model type tl.security.selfservice:Invitation with its state open / expired / accepted and its language, CurrentUserLanguageDefault, the self-registration SelfRegistration with its option self-registration - mode off / direct / approval, set from the variable tl_self_registration (alias %SELF_REGISTRATION%, default off), captcha, set from the variable tl_self_registration_captcha (alias %SELF_REGISTRATION_CAPTCHA%, default true), callback, registration-text, registration-mail, registration-exists-text, registration-exists-mail, approval-text, approval-mail -, requestCode, register, approve, pendingRegistration, the TL-Script functions registrationEnabled, registrationCaptcha, registrationApprove and registrationPending, the model type tl.security.selfservice:Registration with its state pending / approved, ApplicationAddress), the classic module tl-security-selfservice (the login hook CreateLoginHook, the shared dialogs CheckAccountCode and CreateAccountDialog with the classic AccountRequest (InvitationRequest, RegistrationRequest), the registration dialog RegisterDialog with its login command RegisterDialog$Opener and the captcha field, ForgotPasswordDialog, ResetMFADialog, AbstractVerificationCodeDialog, the admin dialogs "Invite users", "Invitations" and "Registrations" and the command "Approve registration" of the account table) and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, the registration dialog register.view.xml with <request-registration-code> and the captcha, the shared dialogs verification-code.view.xml and create-account.view.xml with <check-verification-code>, <send-new-code>, <create-own-account> and the AccountRequest (InvitationRequest, RegistrationRequest), the login command "Register", the administration views admin/access-control/invitations.view.xml with create-invitation.view.xml and admin/access-control/registrations.view.xml, the command "Approve" added to accounts.view.xml), the approval of registered accounts and who may approve, the demo setup, and VerificationCode, the code of all these flows.
+description: Read before offering users a password reset, a reset of their second factor, an invitation to create their own account or an open self-registration without invitation - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the configurable mail texts (invitation-text, verification-text, reset-password-text, reset-mfa-text, MailText) and mail scripts written in the language of the recipient, sendResetPasswordMail, sendResetMFAMail, the TL-Script functions sendInvitation, invitationRenew, invitationResend and invitationExistingAccount, taken addresses (existingAccount, Person.allByEMail, accounts synchronized by LDAP or provisioned by OpenID with a user name other than their e-mail address), the model type tl.security.selfservice:Invitation with its state open / expired / accepted and its language, CurrentUserLanguageDefault, the self-registration SelfRegistration with its option self-registration - mode off / direct / approval, set from the variable tl_self_registration (alias %SELF_REGISTRATION%, default off), captcha, set from the variable tl_self_registration_captcha (alias %SELF_REGISTRATION_CAPTCHA%, default true), callback, registration-text, registration-mail, registration-exists-text, registration-exists-mail, approval-text, approval-mail -, requestCode, register, approve, pendingRegistration, the TL-Script functions registrationEnabled, registrationCaptcha, registrationApprove and registrationPending, the model type tl.security.selfservice:Registration with its state pending / approved, ApplicationAddress), the classic module tl-security-selfservice (the login hook CreateLoginHook, the shared dialogs CheckAccountCode and CreateAccountDialog with the classic AccountRequest (InvitationRequest, RegistrationRequest), the registration dialog RegisterDialog with its login command RegisterDialog$Opener and the captcha field, ForgotPasswordDialog, ResetMFADialog, AbstractVerificationCodeDialog, the admin dialogs "Invite users", "Invitations" with the commands "Revoke invitation" and "Revoke access", and "Registrations" and the command "Approve registration" of the account table) and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, the registration dialog register.view.xml with <request-registration-code> and the captcha, the shared dialogs verification-code.view.xml and create-account.view.xml with <check-verification-code>, <send-new-code>, <create-own-account> and the AccountRequest (InvitationRequest, RegistrationRequest), the login command "Register", the administration views admin/access-control/invitations.view.xml with create-invitation.view.xml and the commands "Revoke invitation" and "Revoke access", admin/access-control/registrations.view.xml, the command "Approve" added to accounts.view.xml), the approval of registered accounts and who may approve, the demo setup, and VerificationCode, the code of all these flows.
 order: 20
 ---
 
@@ -207,7 +207,7 @@ by the dialog that sent it and never stored in the database.
 | `language` | The language of the mails of the invitation and of the new account; one of the supported languages of the application (`supportedLocales`). The default is the language of the user creating the invitation (`CurrentUserLanguageDefault` of `com.top_logic`). Without a language, the mails are written in the default language of the application and the account gets the default language. |
 | `createdAt`, `createdBy` | Derived: when and by whom the invitation was created, taken from the commit that created it. |
 | `expires` | Until when the invitation can be accepted; set to the time of creation plus `invitation-validity` (`InvitationExpiryDefault`). The default is computed in the transaction storing the invitation (`DefaultProvider#isComputedInTransaction()`): a transient draft, such as the one a create dialog edits, has no expiry date, and storing it with `<persist-transient>` or `$draft.copy(transient: false, skipTransactionDefaults: true)` counts the validity from that moment. The token `id` is generated on the draft already and is kept when it is stored. |
-| `accepted`, `account` | When the invitation was accepted and the account created from it; empty while it is not accepted. |
+| `accepted`, `account` | When the invitation was accepted and the account created from it; empty while it is not accepted. Deleting the account deletes the invitation (`deletion-policy="delete-referer"` on `account`). |
 | `state` | Derived (`<query>`), the enumeration `tl.security.selfservice:InvitationState`: `ACCEPTED` if `accepted` is set, otherwise `EXPIRED` once `expires` has passed, otherwise `OPEN`. |
 | `createCallback` | Derived (`tl.model.search:Expr`, a `<storage-algorithm><query>`): a function called with the new account. The base type answers `invitation -> person -> null`. |
 
@@ -237,7 +237,8 @@ React actions and scripts share them:
 | `sendVerificationMail(invitation, code)` | Runs `verification-mail` in the language of the invitation. |
 | `sendResetPasswordMail(account, code)`, `sendResetMFAMail(account, code)` | Run `reset-password-mail` or `reset-mfa-mail` with the e-mail address of the account, in the language of the account; answer `false` without running the script if the account has no e-mail address. |
 
-An accepted invitation is kept as the record of the account created from it.
+An accepted invitation is kept as the record of the account created from it as long as the account
+exists: deleting the account deletes the invitation, so the address can be invited again.
 
 ### Taken addresses
 
@@ -299,13 +300,22 @@ with the dialog "Registrations", see
   `optional`, and sends it with `sendInvitation`.
 - "Invitations" (`existingInvitations/invitationsGrid.layout.xml`) lists all invitations with the
   columns e-mail address, `language`, `state`, `expires`, `createdAt`, `createdBy`, `accepted`, `account` and
-  `mfaRequirement`, and offers two commands for the selected invitation:
+  `mfaRequirement`, and offers these commands for the selected invitation:
   - "Send invitation again" calls `invitationResend($invitation)`: an open invitation is sent with
     its link, an expired one gets a new link and a new expiry date first.
-  - "Revoke invitation" deletes the invitation (`GenericDeleteCommandHandler`), so its link no
-    longer works.
+  - "Revoke invitation" deletes an open or expired invitation (`GenericDeleteCommandHandler`), so
+    its link no longer works.
+  - "Revoke access" replaces "Revoke invitation" for an accepted invitation
+    (`CommandHandlerByExpression`). After a confirmation, it deletes the account created from the
+    invitation, which deletes the invitation with it. Only the account (`tl.accounts:Person`) is
+    deleted; the contact data of the person remain, as with removing the login of a contact. An
+    accepted invitation without account (its account was deleted while the invitation was not yet
+    deleted with it) is deleted itself. The command is disabled for the own account and for an
+    administrator account.
 
-  Both are disabled for an accepted invitation, which stays as the record of the account.
+  "Revoke invitation" and "Revoke access" are switched by visibility (`rule-by-expression` with
+  `show-disabled="false"`), never shown both. "Send invitation again" is disabled for an accepted
+  invitation.
 
 The messages of these commands are the keys `tl.security.selfservice.invitations.*` of the bundle
 `tl-security-selfservice.app-messages`.
@@ -326,13 +336,22 @@ first (`sort="DESC"` on `createdAt`), and offers:
   with a warning that it was not sent.
 - "Send again": `invitationResend($selectedInvitation)`, with a warning when the mail script answers
   `false`.
-- "Revoke": `<delete-object/>` after a confirmation.
+- "Revoke invitation": `<delete-object/>` after a confirmation, shown for an open or expired
+  invitation.
+- "Revoke access": shown instead of "Revoke invitation" for an accepted invitation (`<visible-if>` on
+  `state`). Its input is the derived channel `invitationRevokeTarget`, the `account` of the
+  invitation, or the invitation itself for an accepted invitation without account. After a
+  confirmation, `<delete-object/>` deletes the account, and the invitation with it, or the
+  invitation without account. The contact data of the person remain, as with "Remove login" of the
+  contact administration. The command is disabled for the own account and for an administrator
+  account, like "Delete" of the account administration.
 
-"Send again" and "Revoke" are disabled for an accepted invitation (`<disabled-if>` on `state`), with
-the reason as tooltip. The messages are written in the view files. The view is shown to whoever
+"Send again" is disabled for an accepted invitation (`<disabled-if>` on `state`), with the reason as
+tooltip. The messages are written in the view files. The view is shown to whoever
 sees the administration (operation `Administration` on the security root); the commands are further
 subject to the access rights on `tl.security.selfservice:Invitation` - create, write and delete
-below the `SecurityStructure` singleton -, which an application grants to its administrator roles.
+below the `SecurityStructure` singleton -, which an application grants to its administrator roles;
+"Revoke access" needs the right to delete the account.
 
 TL-Script offers the operations as functions of `tl-security-selfservice-core`, usable from any
 user interface. They open a transaction of their own and are called from a command without
@@ -701,5 +720,5 @@ with the variable `tl_self_registration_captcha=false` of `tl-security-selfservi
 - An application with both `tl-security-selfservice` and `tl-layout-view-selfservice` gets the
   invitation link of the module configured last; it sets `page` in its own configuration of
   `InvitationModule` to the UI that is to accept invitations.
-- An accepted invitation cannot be revoked in the "Invitations" dialog or view; it is the record of
-  the account and refers to it in `account`.
+- An accepted invitation whose account was deleted while the invitation was not yet deleted with
+  its account remains without account; it is not migrated. "Revoke access" deletes it.

@@ -7,8 +7,11 @@ package com.top_logic.layout.view.admin;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.annotation.Label;
@@ -32,6 +35,7 @@ import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.Resources;
@@ -160,12 +164,14 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 			}
 			if (explanation.decidingObject() == null) {
 				texts.add(I18NConstants.EFFECTIVE_ACCESS_NO_DECIDING_OBJECT);
-			} else if (explanation.isDelegating()) {
+			} else {
 				AccessParentFunction parent = object.tType() instanceof TLClass objectType
 					? ModelAccessRights.getInstance().getAccessParent(objectType)
 					: null;
-				texts.add(
-					delegation(type, MetaLabelProvider.INSTANCE.getLabel(explanation.decidingObject()), parent));
+				ResKey delegation = delegation(type, explanation, parent, MetaLabelProvider.INSTANCE::getLabel);
+				if (delegation != null) {
+					texts.add(delegation);
+				}
 			}
 			if (!explanation.sourcesAvailable()) {
 				texts.add(I18NConstants.EFFECTIVE_ACCESS_SOURCES_UNAVAILABLE);
@@ -182,6 +188,56 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 			result.append(HTML_PARAGRAPH_END);
 		}
 		return result.toString();
+	}
+
+	/**
+	 * The paragraph telling which object decides for the object of the given explanation, when it
+	 * delegates to an access parent.
+	 *
+	 * <p>
+	 * An object whose access parent decides only some operations is described with these
+	 * operations and the object deciding them, also when the object decides
+	 * {@link SimpleBoundCommandGroup#READ} itself, which makes it the
+	 * {@link AccessExplanation#decidingObject() deciding object} of the explanation.
+	 * </p>
+	 *
+	 * @param type
+	 *        The label of the type of the object.
+	 * @param explanation
+	 *        The explanation of the access to the object.
+	 * @param parent
+	 *        The access parent of the type, <code>null</code> when it has none or it is not
+	 *        known.
+	 * @param labels
+	 *        The label of an object.
+	 * @return The paragraph, <code>null</code> for nothing to tell.
+	 */
+	static ResKey delegation(String type, AccessExplanation explanation, AccessParentFunction parent,
+			Function<Object, String> labels) {
+		Set<BoundCommandGroup> operations = parent == null ? null : parent.getOperations();
+		if (operations != null) {
+			TLObject holder = delegatedRoleHolder(explanation, operations);
+			return holder == null ? null : delegation(type, labels.apply(holder), parent);
+		}
+		if (!explanation.isDelegating()) {
+			return null;
+		}
+		return delegation(type, labels.apply(explanation.decidingObject()), parent);
+	}
+
+	/**
+	 * The object holding the roles that decide the first of the given delegated operations, in the
+	 * order of their names, that applies to the object; <code>null</code> when there is none.
+	 */
+	private static TLObject delegatedRoleHolder(AccessExplanation explanation, Set<BoundCommandGroup> operations) {
+		return operations.stream()
+			.sorted(Comparator.comparing(BoundCommandGroup::getID))
+			.map(explanation::getDecision)
+			.filter(Objects::nonNull)
+			.map(OperationDecision::roleHolder)
+			.filter(Objects::nonNull)
+			.findFirst()
+			.orElse(null);
 	}
 
 	/**

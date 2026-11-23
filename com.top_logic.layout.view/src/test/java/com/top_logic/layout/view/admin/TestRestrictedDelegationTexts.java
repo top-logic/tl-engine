@@ -7,6 +7,7 @@ package com.top_logic.layout.view.admin;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -19,17 +20,21 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
+import com.top_logic.element.boundsec.manager.explain.AccessExplanation;
+import com.top_logic.element.boundsec.manager.explain.OperationDecision;
 import com.top_logic.layout.view.admin.SecurityCoverageTable.Detail;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.ContainerRelation;
 import com.top_logic.model.security.RestrictedRelation;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.Resources;
 
@@ -65,6 +70,46 @@ public class TestRestrictedDelegationTexts extends TestCase {
 		ResKey unrestricted = EffectiveAccessFunctions.delegation("Entry", "Catalog", ContainerRelation.ANY);
 		assertEquals("A type delegating everything keeps its text.",
 			I18NConstants.EFFECTIVE_ACCESS_DELEGATED__TYPE_OBJECT.getKey(), unrestricted.plain().getKey());
+	}
+
+	/**
+	 * An object deciding Read itself, whose access parent decides Write, is described with the
+	 * object deciding Write, although the explanation names the object itself as deciding object.
+	 */
+	public void testEffectiveAccessOfRestrictedTypeDecidingReadItself() {
+		TLModule module = TLModelUtil.addModule(new TLModelImpl(), "test.explain");
+		TLClass object = TLModelUtil.addClass(module, "Entry");
+		TLClass parentObject = TLModelUtil.addClass(module, "Catalog");
+		AccessParentFunction writeOnly =
+			new RestrictedRelation(ContainerRelation.ANY, Set.of(SimpleBoundCommandGroup.WRITE));
+		AccessExplanation explanation = explanation(object, object, List.of(
+			decision(SimpleBoundCommandGroup.READ, object),
+			decision(SimpleBoundCommandGroup.WRITE, parentObject)));
+
+		ResKey restricted = EffectiveAccessFunctions.delegation("Entry", explanation, writeOnly, LABELS);
+		assertNotNull("The delegated operations are told although Read is decided by the object.", restricted);
+		assertEquals(I18NConstants.EFFECTIVE_ACCESS_DELEGATED_RESTRICTED__TYPE_OBJECT_OPERATIONS.getKey(),
+			restricted.plain().getKey());
+		assertEquals("The object deciding the delegated operation is named.", "Catalog", restricted.arguments()[1]);
+
+		assertNull("A type without access parent has nothing to tell.",
+			EffectiveAccessFunctions.delegation("Entry", explanation, null, LABELS));
+		AccessExplanation delegating = explanation(object, parentObject, List.of());
+		assertEquals("A type delegating everything keeps its text.",
+			I18NConstants.EFFECTIVE_ACCESS_DELEGATED__TYPE_OBJECT.getKey(),
+			EffectiveAccessFunctions.delegation("Entry", delegating, ContainerRelation.ANY, LABELS).plain().getKey());
+	}
+
+	private static final Function<Object, String> LABELS = object -> ((TLClass) object).getName();
+
+	private static AccessExplanation explanation(TLObject object, TLObject decidingObject,
+			List<OperationDecision> decisions) {
+		return new AccessExplanation(null, object, false, false, false, false, decidingObject, List.of(), decisions,
+			List.of(), true);
+	}
+
+	private static OperationDecision decision(BoundCommandGroup operation, TLObject roleHolder) {
+		return new OperationDecision(operation, operation, roleHolder, false, Set.of(), Set.of(), Set.of(), true);
 	}
 
 	/**

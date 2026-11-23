@@ -412,10 +412,16 @@
 					<class name="TestSecurityCoverage:RestrictedLinked">
 						<access-parent>
 							<target
-								operations="Read"
+								operations="Read,TestCoverageShow"
 								reference="TestSecurityCoverage:RestrictedLinked#target"
 							/>
 						</access-parent>
+						<operations>
+							<!-- Decided by the type itself and granted to no role. -->
+							<operation name="Finish"/>
+							<!-- Delegated to the access parent. -->
+							<operation name="TestCoverageShow"/>
+						</operations>
 					</class>
 					<class name="TestSecurityCoverage:LinkedSub">
 						<access-parent>

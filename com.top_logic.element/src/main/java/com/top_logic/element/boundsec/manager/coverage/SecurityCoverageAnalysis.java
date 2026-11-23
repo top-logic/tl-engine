@@ -474,17 +474,6 @@ public class SecurityCoverageAnalysis {
 	}
 
 	/**
-	 * Whether the given access parent decides the given operation, so that the type has no grant
-	 * of it.
-	 *
-	 * @param accessParent
-	 *        The access parent of the type, <code>null</code> when the type decides for itself.
-	 */
-	private static boolean isDelegated(AccessParentFunction accessParent, BoundCommandGroup operation) {
-		return accessParent != null && accessParent.delegates(operation);
-	}
-
-	/**
 	 * Reports every operation whose grant names a role that cannot be delivered where the operation
 	 * is checked, see {@link #isLiveGrant(TLClass, BoundCommandGroup, BoundedRole)}.
 	 *
@@ -495,7 +484,8 @@ public class SecurityCoverageAnalysis {
 	private void addDeadGrantFindings(TLClass type, AccessParentFunction accessParent,
 			List<CoverageFinding> findings) {
 		for (BoundCommandGroup operation : _operations) {
-			if (SimpleBoundCommandGroup.DISCOVER.equals(operation) || isDelegated(accessParent, operation)) {
+			if (SimpleBoundCommandGroup.DISCOVER.equals(operation)
+				|| AccessParentFunction.isDelegated(accessParent, operation)) {
 				// Its roles are derived; every source grant is already checked on its own.
 				continue;
 			}
@@ -535,10 +525,8 @@ public class SecurityCoverageAnalysis {
 	 * Reports every operation declared for the given type that no role holds on it.
 	 *
 	 * <p>
-	 * A built-in operation is reported for a type whose access parent decides only some
-	 * operations, when the access parent does not decide it: such an operation is no longer
-	 * decided on the access parent, only the grants of the type itself admit it. A type deciding
-	 * all operations itself is left to {@link FindingKind#NO_READ_GRANT}: it may well be read-only.
+	 * A built-in operation is not reported: a type may well be read-only. An operation the access
+	 * parent of the type decides is not reported either, since the type does not grant it.
 	 * </p>
 	 *
 	 * @param accessParent
@@ -548,8 +536,8 @@ public class SecurityCoverageAnalysis {
 	private void addUngrantedOperationFindings(TLClass type, AccessParentFunction accessParent,
 			List<CoverageFinding> findings) {
 		for (BoundCommandGroup operation : sortedById(_accessRights.getOperations(type).getOperations())) {
-			if (accessParent == null ? ApplicableOperations.isBuiltIn(operation)
-				: accessParent.delegates(operation)) {
+			if (ApplicableOperations.isBuiltIn(operation)
+				|| AccessParentFunction.isDelegated(accessParent, operation)) {
 				continue;
 			}
 			if (_accessRights.getAllowedRoles(type, operation).isEmpty()) {
@@ -589,7 +577,8 @@ public class SecurityCoverageAnalysis {
 		}
 		ApplicableOperations applicable = _accessRights.getOperations(type);
 		for (BoundCommandGroup operation : sortedById(applicable.getOperations())) {
-			if (ApplicableOperations.isBuiltIn(operation) || isDelegated(accessParent, operation)) {
+			if (ApplicableOperations.isBuiltIn(operation)
+				|| AccessParentFunction.isDelegated(accessParent, operation)) {
 				continue;
 			}
 			Set<BoundedRole> granted = getGrantedRoles(type, operation);

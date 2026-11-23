@@ -68,7 +68,7 @@ public class TestTypeGrants extends BasicTestCase {
 	/** Type excluded from access control. */
 	private static final String UNSECURED = MODULE + ":Unsecured";
 
-	/** Type delegating Read to its access parent only. */
+	/** Type delegating Read and TestCoverageShow to its access parent, deciding Finish itself. */
 	private static final String RESTRICTED_LINKED = MODULE + ":RestrictedLinked";
 
 	private static final String OWNER = COVERED + "#owner";
@@ -463,8 +463,9 @@ public class TestTypeGrants extends BasicTestCase {
 	public void testRestrictedParentOffersUndelegatedOperations() throws Exception {
 		TypeGrants grants = grants(RESTRICTED_LINKED);
 		assertNotNull(grants.getAccessParent());
-		assertEquals("Discover is delegated together with Read.",
-			List.of(WRITE, SimpleBoundCommandGroup.CREATE, DELETE, SimpleBoundCommandGroup.EXPORT),
+		assertEquals("Discover is delegated together with Read, the declared TestCoverageShow is delegated as well.",
+			List.of(WRITE, SimpleBoundCommandGroup.CREATE, DELETE, SimpleBoundCommandGroup.EXPORT,
+				CommandGroupRegistry.getInstance().getGroup(SimpleBoundCommandGroup.FINISH_NAME)),
 			grants.getOperations());
 		assertFalse("The attributes are granted as on a type deciding for itself.",
 			grants.getAttributes().isEmpty());

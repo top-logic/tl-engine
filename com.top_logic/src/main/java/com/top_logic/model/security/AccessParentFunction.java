@@ -68,6 +68,20 @@ public interface AccessParentFunction {
 	}
 
 	/**
+	 * Whether the given access parent decides the given operation.
+	 *
+	 * @param accessParent
+	 *        The access parent of a type, <code>null</code> when the type decides for itself.
+	 * @param operation
+	 *        The operation on an object of the type.
+	 * @return Whether the access parent {@link #delegates(BoundCommandGroup) delegates} the
+	 *         operation, <code>false</code> for no access parent.
+	 */
+	static boolean isDelegated(AccessParentFunction accessParent, BoundCommandGroup operation) {
+		return accessParent != null && accessParent.delegates(operation);
+	}
+
+	/**
 	 * The operations on the delegating object the access parent decides, besides Discover.
 	 *
 	 * @return The delegated operations, <code>null</code> when all operations are delegated.

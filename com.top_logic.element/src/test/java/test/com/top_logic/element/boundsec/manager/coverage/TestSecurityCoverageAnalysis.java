@@ -86,7 +86,10 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 	/** Type with a configured access parent navigating its own reference forwards. */
 	private static final String LINKED = MODULE + ":Linked";
 
-	/** Type delegating Read to its access parent only, without grants of its own. */
+	/**
+	 * Type delegating Read and the declared operation TestCoverageShow to its access parent,
+	 * declaring Finish as well, without grants of its own.
+	 */
 	private static final String RESTRICTED_LINKED = MODULE + ":RestrictedLinked";
 
 	/** Composition containing {@link #EXPLICIT_PART}. */
@@ -344,10 +347,13 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 		Set<BoundCommandGroup> ungranted = coverage.findings(FindingKind.UNGRANTED_OPERATION).stream()
 			.map(CoverageFinding::getOperation)
 			.collect(Collectors.toSet());
-		assertTrue("Write is not delegated and granted to nobody: " + coverage,
-			ungranted.contains(SimpleBoundCommandGroup.WRITE));
+		assertEquals("Only the declared operation the type decides itself and grants to nobody: " + coverage,
+			Set.of(SimpleBoundCommandGroup.FINISH_NAME),
+			ungranted.stream().map(BoundCommandGroup::getID).collect(Collectors.toSet()));
 		assertFalse("Read is decided by the access parent: " + coverage,
 			ungranted.contains(SimpleBoundCommandGroup.READ));
+		assertFalse("A built-in operation is not reported, as for a type deciding for itself: " + coverage,
+			ungranted.contains(SimpleBoundCommandGroup.WRITE));
 		assertFalse("Read is decided by the access parent: " + coverage,
 			coverage.hasFinding(FindingKind.NO_READ_GRANT));
 		assertFalse("Without grants of its own, the type needs no role source: " + coverage,

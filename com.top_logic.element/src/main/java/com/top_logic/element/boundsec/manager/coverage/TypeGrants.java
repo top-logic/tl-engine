@@ -279,23 +279,20 @@ public class TypeGrants {
 			AccessParentFunction accessParent) {
 		List<BoundCommandGroup> result = new ArrayList<>();
 		for (BoundCommandGroup builtIn : ApplicableOperations.BUILT_IN) {
-			if (applicable.appliesTo(builtIn) && !isDelegated(accessParent, builtIn)) {
+			if (applicable.appliesTo(builtIn) && !AccessParentFunction.isDelegated(accessParent, builtIn)) {
 				result.add(builtIn);
 			}
 		}
 		List<BoundCommandGroup> declared = new ArrayList<>();
 		for (BoundCommandGroup operation : applicable.getOperations()) {
-			if (!ApplicableOperations.isBuiltIn(operation) && !isDelegated(accessParent, operation)) {
+			if (!ApplicableOperations.isBuiltIn(operation)
+				&& !AccessParentFunction.isDelegated(accessParent, operation)) {
 				declared.add(operation);
 			}
 		}
 		declared.sort(Comparator.comparing(BoundCommandGroup::getID));
 		result.addAll(declared);
 		return Collections.unmodifiableList(result);
-	}
-
-	private static boolean isDelegated(AccessParentFunction accessParent, BoundCommandGroup operation) {
-		return accessParent != null && accessParent.delegates(operation);
 	}
 
 	/**

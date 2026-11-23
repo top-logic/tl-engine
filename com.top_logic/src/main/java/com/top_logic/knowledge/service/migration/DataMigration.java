@@ -76,7 +76,7 @@ import com.top_logic.knowledge.service.db2.migration.sql.SQLDumper;
  * 
  * <ol>
  * <li>{@link #build(Log)}</li>
- * <li>{@link #executeSQLMigration(MigrationContext, Log, PooledConnection)}</li>
+ * <li>{@link #createSQLSteps(MigrationContext, Log, PooledConnection)}</li>
  * <li>{@link #createInsertSQL(Log, KnowledgeBaseConfiguration, ConnectionPool, long, InputStream, InsertWriter)}</li>
  * <li>{@link #dropAndRecreateDatabase(PooledConnection, KnowledgeBaseConfiguration, Reader)}</li>
  * </ol>
@@ -204,57 +204,46 @@ public class DataMigration {
 	}
 
 	/**
-	 * Executes the SQL migration.
+	 * The steps of the SQL migration: One step for each pre-processor of all migrations, followed
+	 * by one step for each processor of all migrations.
 	 * 
 	 * <p>
-	 * Must be called before
+	 * The steps must be executed before
 	 * {@link #createInsertSQL(Log, KnowledgeBaseConfiguration, ConnectionPool, long, InputStream, InsertWriter)}.
 	 * </p>
+	 * 
+	 * @see MigrationProgress#execute(com.top_logic.basic.Protocol, PooledConnection, MigrationContext,
+	 *      List)
 	 */
-	public void executeSQLMigration(MigrationContext context, Log log, PooledConnection connection) {
+	public List<MigrationStep> createSQLSteps(MigrationContext context, Log log, PooledConnection connection) {
+		List<MigrationStep> steps = new ArrayList<>();
 		for (MigrationConfig migration : _migrationInfo.getMigrations()) {
-			if (migration.getPreProcessors().isEmpty()) {
-				continue;
-			}
-
-			Version version = migration.getVersion();
-			String versionName = version.getName() + "(" + version.getModule() + ")";
-			logHeader(log, "Performing pre-migration: " + versionName);
-
-			processProcessors(context, log, connection, migration.getPreProcessors());
-
-			try {
-				log.info("Done with pre-migration: " + versionName);
-				connection.commit();
-			} catch (SQLException ex) {
-				log.error("Failed to commit preprocessor result of '" + versionName + "'. ", ex);
-			}
+			addSteps(steps, context, log, connection, migration, "pre-processor", migration.getPreProcessors());
 		}
-
 		for (MigrationConfig migration : _migrationInfo.getMigrations()) {
-			if (migration.getProcessors().isEmpty()) {
-				continue;
-			}
-
-			Version version = migration.getVersion();
-			String versionName = version.getName() + "(" + version.getModule() + ")";
-			logHeader(log, "Performing SQL migration: " + versionName);
-
-			processProcessors(context, log, connection, migration.getProcessors());
-
-			try {
-				log.info("Done with SQL Migration: " + versionName);
-				connection.commit();
-			} catch (SQLException ex) {
-				log.error("Failed to commit processor result of '" + versionName + "'. ", ex);
-			}
+			addSteps(steps, context, log, connection, migration, "processor", migration.getProcessors());
 		}
+		return steps;
+	}
 
-		try {
-			context.revalidateXRef(log, connection);
-			connection.commit();
-		} catch (SQLException ex) {
-			log.error("Failed to commit xref update. ", ex);
+	private void addSteps(List<MigrationStep> steps, MigrationContext context, Log log, PooledConnection connection,
+			MigrationConfig migration, String kind,
+			List<? extends PolymorphicConfiguration<? extends MigrationProcessor>> processorConfigs) {
+		String versionName = MigrationUtil.toString(migration.getVersion());
+		int number = 1;
+		for (PolymorphicConfiguration<? extends MigrationProcessor> processorConfig : processorConfigs) {
+			String name = kind + " " + number + " (" + processorConfig.getImplementationClass().getSimpleName()
+				+ ") of migration " + versionName;
+			boolean first = number == 1;
+			steps.add(MigrationStep.create(name, () -> {
+				if (first) {
+					logHeader(log, "Performing " + kind + "s of migration " + versionName);
+				}
+				MigrationProcessor processor =
+					SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(processorConfig);
+				processor.doMigration(context, log, connection);
+			}));
+			number++;
 		}
 	}
 

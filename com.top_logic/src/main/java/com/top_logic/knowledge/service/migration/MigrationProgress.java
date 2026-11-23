@@ -1,0 +1,371 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.knowledge.service.migration;
+
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import com.top_logic.basic.Protocol;
+import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.ListBinding;
+import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.db.schema.properties.DBProperties;
+import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.knowledge.service.db2.RevisionXref;
+
+/**
+ * Progress of a data migration, stored in the global {@link DBProperties database property}
+ * {@value #PROGRESS_PROPERTY}.
+ *
+ * <p>
+ * A migration consists of a sequence of {@link MigrationStep}s. Each step commits its changes
+ * together with the progress record, so that a start after an interrupted migration continues
+ * after the last completed step instead of starting all over. Before a step is executed, the
+ * progress records that the step has started, in a commit of its own. A start finding a started
+ * but not completed step repeats it only on a database whose DDL is transactional (see
+ * {@link com.top_logic.basic.sql.DBHelper#supportsTransactionalDDL()}): Only there the
+ * interruption has rolled back the step completely. Otherwise, the start fails, and the database
+ * must be restored from a backup.
+ * </p>
+ *
+ * <p>
+ * The progress records the {@link #getPlan() plan} of the migration, i.e. the versions of the
+ * migrations being applied, since the versions stored in the database do not tell which
+ * migrations were pending, once the step storing the new versions is completed. It also records
+ * the pending {@link RevisionXref} changes of the {@link MigrationContext}.
+ * </p>
+ */
+public final class MigrationProgress {
+
+	/**
+	 * Name of the global {@link DBProperties database property} holding the progress record.
+	 */
+	public static final String PROGRESS_PROPERTY = "migration.progress";
+
+	/**
+	 * Root tag of the serialized {@link Record}.
+	 */
+	public static final String ROOT_TAG = "migration-progress";
+
+	/**
+	 * Separator between the module and the name of a version in the {@link Record#getPlan() plan}.
+	 */
+	private static final char MODULE_SEPARATOR = '/';
+
+	/**
+	 * Serialized form of a {@link MigrationProgress}.
+	 */
+	public interface Record extends ConfigurationItem {
+
+		/**
+		 * @see #getPlan()
+		 */
+		String PLAN = "plan";
+
+		/**
+		 * @see #getCompleted()
+		 */
+		String COMPLETED = "completed";
+
+		/**
+		 * @see #getStarted()
+		 */
+		String STARTED = "started";
+
+		/**
+		 * @see #getXRefInvalidated()
+		 */
+		String XREF_INVALIDATED = "xref-invalidated";
+
+		/**
+		 * @see #getXRefDeleted()
+		 */
+		String XREF_DELETED = "xref-deleted";
+
+		/**
+		 * Tag of an entry of {@link #getPlan()}.
+		 */
+		String VERSION_TAG = "version";
+
+		/**
+		 * Tag of an entry of {@link #getXRefInvalidated()} and {@link #getXRefDeleted()}.
+		 */
+		String TABLE_TAG = "table";
+
+		/**
+		 * Attribute holding the value of a list entry.
+		 */
+		String NAME_ATTRIBUTE = "name";
+
+		/**
+		 * The versions of the migrations being applied in their order, each as module and name
+		 * separated by a slash.
+		 */
+		@Name(PLAN)
+		@ListBinding(tag = VERSION_TAG, attribute = NAME_ATTRIBUTE)
+		List<String> getPlan();
+
+		/**
+		 * @see #getPlan()
+		 */
+		void setPlan(List<String> value);
+
+		/**
+		 * The number of steps completed.
+		 */
+		@Name(COMPLETED)
+		int getCompleted();
+
+		/**
+		 * @see #getCompleted()
+		 */
+		void setCompleted(int value);
+
+		/**
+		 * The number of the step that has been started but not completed, <code>0</code> if no
+		 * step is running.
+		 */
+		@Name(STARTED)
+		int getStarted();
+
+		/**
+		 * @see #getStarted()
+		 */
+		void setStarted(int value);
+
+		/**
+		 * The tables whose {@link RevisionXref} entries must be rebuilt.
+		 *
+		 * @see MigrationContext#getXRefInvalidated()
+		 */
+		@Name(XREF_INVALIDATED)
+		@ListBinding(tag = TABLE_TAG, attribute = NAME_ATTRIBUTE)
+		List<String> getXRefInvalidated();
+
+		/**
+		 * @see #getXRefInvalidated()
+		 */
+		void setXRefInvalidated(List<String> value);
+
+		/**
+		 * The dropped tables whose {@link RevisionXref} entries must be removed.
+		 *
+		 * @see MigrationContext#getXRefDeleted()
+		 */
+		@Name(XREF_DELETED)
+		@ListBinding(tag = TABLE_TAG, attribute = NAME_ATTRIBUTE)
+		List<String> getXRefDeleted();
+
+		/**
+		 * @see #getXRefDeleted()
+		 */
+		void setXRefDeleted(List<String> value);
+
+	}
+
+	private final Record _record;
+
+	private MigrationProgress(Record record) {
+		_record = record;
+	}
+
+	/**
+	 * Creates the progress of a migration that has not yet started.
+	 *
+	 * @param plan
+	 *        See {@link #getPlan()}.
+	 */
+	public static MigrationProgress create(Collection<Version> plan) {
+		Record record = TypedConfiguration.newConfigItem(Record.class);
+		List<String> versions = new ArrayList<>();
+		for (Version version : plan) {
+			versions.add(version.getModule() + MODULE_SEPARATOR + version.getName());
+		}
+		record.setPlan(versions);
+		return new MigrationProgress(record);
+	}
+
+	/**
+	 * Reads the progress of an interrupted migration.
+	 *
+	 * @return The stored progress, <code>null</code> if no migration was interrupted.
+	 */
+	public static MigrationProgress read(PooledConnection connection) throws SQLException, ConfigurationException {
+		String value = DBProperties.getProperty(connection, DBProperties.GLOBAL_PROPERTY, PROGRESS_PROPERTY);
+		if (value == null) {
+			return null;
+		}
+		Record record = TypedConfiguration.parse(ROOT_TAG, Record.class,
+			CharacterContents.newContent(value, PROGRESS_PROPERTY));
+		return new MigrationProgress(record);
+	}
+
+	/**
+	 * The versions of the migrations being applied in their order.
+	 *
+	 * @throws IllegalArgumentException
+	 *         If an entry of the stored plan is no version.
+	 */
+	public List<Version> getPlan() {
+		List<Version> result = new ArrayList<>();
+		for (String entry : _record.getPlan()) {
+			int separator = entry.indexOf(MODULE_SEPARATOR);
+			if (separator <= 0 || separator == entry.length() - 1) {
+				throw new IllegalArgumentException(
+					"Invalid version '" + entry + "' in the database property '" + PROGRESS_PROPERTY + "'.");
+			}
+			result.add(MigrationUtil.newVersion(entry.substring(0, separator), entry.substring(separator + 1)));
+		}
+		return result;
+	}
+
+	/**
+	 * The number of steps completed.
+	 */
+	public int getCompleted() {
+		return _record.getCompleted();
+	}
+
+	/**
+	 * The number of the step that has been started but not completed, <code>0</code> if no step is
+	 * running.
+	 */
+	public int getStarted() {
+		return _record.getStarted();
+	}
+
+	/**
+	 * Executes the given steps that are not yet completed.
+	 *
+	 * <p>
+	 * The pending {@link RevisionXref} changes of the progress are restored to the given context
+	 * before. Each step is committed together with the progress. After the last step, the progress
+	 * record is deleted in the commit of the step.
+	 * </p>
+	 *
+	 * @param log
+	 *        The log of the migration. A step reporting an error is rolled back and terminates the
+	 *        migration.
+	 * @param connection
+	 *        The connection the steps write to.
+	 * @param context
+	 *        The context of the migration.
+	 * @param steps
+	 *        All steps of the migration, including the completed ones.
+	 */
+	public void execute(Protocol log, PooledConnection connection, MigrationContext context,
+			List<? extends MigrationStep> steps) {
+		int completed = getCompleted();
+		if (completed > steps.size()) {
+			throw log.fatal("The migration progress in the database property '" + PROGRESS_PROPERTY
+				+ "' names " + completed + " completed steps, the migration of this application has only "
+				+ steps.size() + " steps. The interrupted migration was started by another application version.");
+		}
+
+		int started = getStarted();
+		if (started != 0) {
+			if (started != completed + 1) {
+				throw log.fatal("Inconsistent migration progress in the database property '" + PROGRESS_PROPERTY
+					+ "': step " + started + " started after " + completed + " completed steps.");
+			}
+			String interrupted = describe(started, steps);
+			if (!context.getSQLDialect().supportsTransactionalDDL()) {
+				throw log.fatal(interrupted + " was interrupted. The database does not roll back schema"
+					+ " changes of an interrupted transaction, its state is unknown. Restore the database"
+					+ " from a backup.");
+			}
+			log.info(interrupted + " was interrupted and is repeated.", Protocol.WARN);
+		}
+		if (completed > 0) {
+			log.info("Resuming the interrupted migration after " + describe(completed, steps) + ".");
+		}
+
+		context.restoreXRef(_record.getXRefInvalidated(), _record.getXRefDeleted());
+
+		for (int index = completed; index < steps.size(); index++) {
+			int number = index + 1;
+			MigrationStep step = steps.get(index);
+
+			_record.setStarted(number);
+			commit(log, connection, store(log, connection), describe(number, steps));
+
+			try {
+				step.run();
+			} catch (Exception ex) {
+				rollback(connection);
+				throw log.fatal(describe(number, steps) + " failed.", ex);
+			}
+			if (log.hasErrors()) {
+				rollback(connection);
+				throw log.fatal(describe(number, steps) + " failed.");
+			}
+
+			_record.setStarted(0);
+			_record.setCompleted(number);
+			_record.setXRefInvalidated(new ArrayList<>(context.getXRefInvalidated()));
+			_record.setXRefDeleted(new ArrayList<>(context.getXRefDeleted()));
+			boolean stored;
+			if (number == steps.size()) {
+				stored = delete(log, connection);
+			} else {
+				stored = store(log, connection);
+			}
+			commit(log, connection, stored, describe(number, steps));
+		}
+	}
+
+	private static String describe(int number, List<? extends MigrationStep> steps) {
+		return "Step " + number + " of the migration (" + steps.get(number - 1).getName() + ")";
+	}
+
+	private boolean store(Protocol log, PooledConnection connection) {
+		try {
+			DBProperties.setProperty(connection, DBProperties.GLOBAL_PROPERTY, PROGRESS_PROPERTY,
+				TypedConfiguration.toString(ROOT_TAG, _record));
+			return true;
+		} catch (SQLException ex) {
+			log.error("Unable to store the migration progress.", ex);
+			return false;
+		}
+	}
+
+	private static boolean delete(Protocol log, PooledConnection connection) {
+		try {
+			DBProperties.setProperty(connection, DBProperties.GLOBAL_PROPERTY, PROGRESS_PROPERTY, null);
+			return true;
+		} catch (SQLException ex) {
+			log.error("Unable to delete the migration progress.", ex);
+			return false;
+		}
+	}
+
+	private static void commit(Protocol log, PooledConnection connection, boolean progressWritten, String step) {
+		if (!progressWritten) {
+			rollback(connection);
+			throw log.fatal("Unable to record the progress of " + step + ".");
+		}
+		try {
+			connection.commit();
+		} catch (SQLException ex) {
+			rollback(connection);
+			throw log.fatal("Unable to commit " + step + ".", ex);
+		}
+	}
+
+	private static void rollback(PooledConnection connection) {
+		try {
+			connection.rollback();
+		} catch (SQLException ex) {
+			// Ignore, the original problem is reported.
+		}
+	}
+
+}

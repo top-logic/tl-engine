@@ -90,6 +90,7 @@ import com.top_logic.basic.util.StopWatch;
 import com.top_logic.basic.xml.XMLPrettyPrinter;
 import com.top_logic.dob.schema.config.MetaObjectName;
 import com.top_logic.dob.schema.config.MetaObjectsConfig;
+import com.top_logic.dsa.DatabaseAccessException;
 import com.top_logic.knowledge.security.SecurityStorage;
 import com.top_logic.knowledge.service.InitialTableSetup;
 import com.top_logic.knowledge.service.KBUtils;
@@ -253,6 +254,12 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	private MigrationInfo _migrationInfo = MigrationInfo.NO_MIGRATION;
 
 	/**
+	 * The progress of an interrupted migration that is resumed, <code>null</code> if no
+	 * migration was interrupted.
+	 */
+	private MigrationProgress _progress;
+
+	/**
 	 * The lock held while migrating, <code>null</code> outside the migration.
 	 */
 	private MigrationLock _migrationLock;
@@ -317,18 +324,41 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	 * Determines the migrations to apply from the versions currently stored in the database.
 	 *
 	 * <p>
+	 * If a {@link MigrationProgress} of an interrupted migration exists, the migrations are the
+	 * ones of its {@link MigrationProgress#getPlan() plan}, and the progress is kept in
+	 * {@link #_progress}.
+	 * </p>
+	 *
+	 * <p>
 	 * Before migrating, the result must be determined again while holding the
 	 * {@link MigrationLock}: Another node may have migrated the database in the meantime.
 	 * </p>
 	 */
 	private MigrationInfo fetchMigrations(Log log) {
+		_progress = null;
 		PooledConnection connection = _connectionPool.borrowReadConnection();
 		try {
 			Config config = getConfig();
 			List<String> migrationModules = config.getModules();
-			return relevantMigrations(log, connection, migrationModules, config.getAllowDowngrade());
+			Map<String, Map<Version, MigrationConfig>> migrationScripts =
+				readMigrationScripts(log, migrationModules);
+
+			MigrationProgress progress = MigrationProgress.read(connection);
+			if (progress != null) {
+				_progress = progress;
+				return MigrationUtil.resumedMigrations(log, migrationScripts, progress.getPlan());
+			}
+			return relevantMigrations(log, connection, migrationScripts, migrationModules,
+				config.getAllowDowngrade());
 		} catch (SQLException ex) {
 			log.error("Unable to fetch migration scripts.", ex);
+			return MigrationInfo.NO_MIGRATION;
+		} catch (ConfigurationException | IllegalArgumentException ex) {
+			log.error("Unable to read the progress of an interrupted migration from the database property '"
+				+ MigrationProgress.PROGRESS_PROPERTY + "'.", ex);
+			return MigrationInfo.NO_MIGRATION;
+		} catch (DatabaseAccessException ex) {
+			log.error("Unable to read migration scripts for modules: " + getConfig().getModules(), ex);
 			return MigrationInfo.NO_MIGRATION;
 		} finally {
 			_connectionPool.releaseReadConnection(connection);
@@ -336,10 +366,39 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	}
 
 	/**
+	 * Reads the migrations known to the application.
+	 *
+	 * @param log
+	 *        The error reporter.
+	 * @param migrationModules
+	 *        The {@link Config#getModules() migration modules}.
+	 * @return The migrations indexed by module and version, see
+	 *         {@link MigrationUtil#readMigrationScripts(Log, List)}.
+	 */
+	protected Map<String, Map<Version, MigrationConfig>> readMigrationScripts(Log log, List<String> migrationModules)
+			throws DatabaseAccessException {
+		return MigrationUtil.readMigrationScripts(log, migrationModules);
+	}
+
+	/**
+	 * Creates the {@link MigrationContext} for the migration processors.
+	 *
+	 * @param log
+	 *        The log of the migration.
+	 * @param connection
+	 *        The connection to the database to migrate.
+	 */
+	protected MigrationContext createMigrationContext(Protocol log, PooledConnection connection) {
+		return new MigrationContext(log, connection);
+	}
+
+	/**
 	 * Determines the correct {@link MigrationConfig}s for the given migration modules.
 	 * 
 	 * @param connection
 	 *        {@link PooledConnection} to connect to database to read current version.
+	 * @param migrationScripts
+	 *        All known migrations, see {@link #readMigrationScripts(Log, List)}.
 	 * @param migrationModules
 	 *        All known database modules. The order of the module is the dependency order, i.e. when
 	 *        <code>module1</code> depends on <code>module2</code>, <code>module2</code> appears
@@ -353,7 +412,8 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	 *         when reading versions from database failed for some reason.
 	 */
 	private MigrationInfo relevantMigrations(Log log, PooledConnection connection,
-			List<String> migrationModules, boolean allowDowngrade) throws SQLException {
+			Map<String, Map<Version, MigrationConfig>> migrationScripts, List<String> migrationModules,
+			boolean allowDowngrade) throws SQLException {
 		Map<String, Version> storedVersions = MigrationUtil.readStoredVersions(connection, migrationModules);
 
 		for (String module : getConfig().getMinimumModules()) {
@@ -363,7 +423,8 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		log.info("Migration modules: " + migrationModules);
 		log.info("Current data version: " + storedVersions.values().stream()
 			.map(v -> v.getModule() + ": " + v.getName()).collect(Collectors.joining(", ")));
-		return MigrationUtil.relevantMigrations(log, migrationModules, allowDowngrade, storedVersions);
+		return MigrationUtil.relevantMigrations(log, migrationScripts, migrationModules, allowDowngrade,
+			storedVersions);
 	}
 
 	/**
@@ -708,7 +769,8 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	 * {@link #fetchMigrations(Log) migration info}.
 	 *
 	 * <p>
-	 * This is the case for configured migrations, a downgrade, and for automatic changes at a
+	 * This is the case for configured migrations (including the ones of an interrupted migration,
+	 * see {@link MigrationProgress}), a downgrade, and for automatic changes at a
 	 * start without migrations: a layout or type difference between the stored and the configured
 	 * schema (see {@link #hasAutomaticSchemaChanges(MigrationContext)}) or a module without stored
 	 * version (see {@link #missingVersions(Protocol, PooledConnection)}). The check reads the
@@ -724,7 +786,7 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		}
 		PooledConnection connection = _connectionPool.borrowReadConnection();
 		try {
-			MigrationContext context = new MigrationContext(log, connection);
+			MigrationContext context = createMigrationContext(log, connection);
 			if (hasAutomaticSchemaChanges(context)) {
 				return true;
 			}
@@ -775,7 +837,7 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	private void migrate(Protocol log) {
 		PooledConnection connection = _connectionPool.borrowWriteConnection();
 		try {
-			MigrationContext context = new MigrationContext(log, connection);
+			MigrationContext context = createMigrationContext(log, connection);
 
 			if (_migrationInfo.nothingToDo()) {
 				log.info("No configured migrations.");
@@ -806,17 +868,7 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			}
 			createTempFiles();
 
-			Map<String, Version> maximalVersionByModule =
-				migrate(context, log, connection);
-
-			MigrationUtil.updateStoredVersions(log, connection, maximalVersionByModule.values());
-			storeMissingVersions(log, connection);
-
-			// Update stored schema to be compatible with the current application configuration.
-			StoreTypeConfiguration store = TypedConfigUtil.createInstance(StoreTypeConfiguration.Config.class);
-			store.doMigration(context, log, connection);
-
-			commitConnection(log, connection, "Unable to commit migrated changes.");
+			migrate(context, log, connection);
 
 			KnowledgeBase kb = null;
 			Transaction tx = null;
@@ -971,7 +1023,17 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		}
 	}
 
-	private Map<String, Version> migrate(MigrationContext context, Protocol log, PooledConnection connection) {
+	/**
+	 * Executes the steps of the configured migrations that are not yet completed.
+	 *
+	 * <p>
+	 * The steps are: each pre-processor and each processor of the migrations, the rebuild of the
+	 * {@link com.top_logic.knowledge.service.db2.RevisionXref} entries together with the automatic
+	 * schema adaption, the replay (if required), and storing the new versions together with the
+	 * schema baseline. Each step is committed together with the {@link MigrationProgress}.
+	 * </p>
+	 */
+	private void migrate(MigrationContext context, Protocol log, PooledConnection connection) {
 		DataMigration migration = new DataMigration(_migrationInfo);
 		migration.setBufferChunkSize(getConfig().getBufferChunkSize());
 		migration.build(log);
@@ -979,23 +1041,41 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		// Note: SQL migration (migration processors) must happen before the persistency layer is
 		// accessed to allow upgrading the baseline of the persistency layer configuration in those
 		// processors.
-		migration.executeSQLMigration(context, log, connection);
+		List<MigrationStep> steps = new ArrayList<>(migration.createSQLSteps(context, log, connection));
 
-		// The migration processors work on the table layout of the stored schema, which the state
-		// of the context is derived from. The layout is aligned with the configuration only
-		// afterwards, including the tables the processors have created.
-		executeAutomaticSchemaMigrations(context, log, connection, false);
+		steps.add(MigrationStep.create("rebuild of xref entries and automatic schema adaption", () -> {
+			context.revalidateXRef(log, connection);
+
+			// The migration processors work on the table layout of the stored schema, which the
+			// state of the context is derived from. The layout is aligned with the configuration
+			// only afterwards, including the tables the processors have created.
+			executeAutomaticSchemaMigrations(context, log, connection, false);
+		}));
 
 		if (migration.isReplayRequired()) {
-			commitConnection(log, connection, "Unable to commit changes before KnowledgeBase replay.");
-
-			KnowledgeBase kb = createKB(log);
-			if (kb != null) {
-				replayHistory(log, connection, migration, kb);
-			}
+			steps.add(MigrationStep.create("replay of the history", () -> {
+				KnowledgeBase kb = createKB(log);
+				if (kb != null) {
+					replayHistory(log, connection, migration, kb);
+				}
+			}));
 		}
 
-		return migration.getNewVersion();
+		steps.add(MigrationStep.create("storing versions and schema baseline", () -> {
+			MigrationUtil.updateStoredVersions(log, connection, migration.getNewVersion().values());
+			storeMissingVersions(log, connection);
+
+			// Update stored schema to be compatible with the current application configuration.
+			StoreTypeConfiguration store = TypedConfigUtil.createInstance(StoreTypeConfiguration.Config.class);
+			store.doMigration(context, log, connection);
+		}));
+
+		MigrationProgress progress = _progress;
+		if (progress == null) {
+			progress = MigrationProgress.create(MigrationUtil.versions(_migrationInfo.getMigrations()));
+		}
+		progress.execute(log, connection, context, steps);
+		_progress = null;
 	}
 
 	private KnowledgeBase createKB(Protocol log) {

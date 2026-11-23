@@ -80,6 +80,15 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey RUN_STOPPED;
 
+	/**
+	 * The run was cancelled from outside the task, for example by its cancel marker, before the
+	 * agent had finished.
+	 *
+	 * @en The agent run was cancelled while it worked, for example with aiAgentRunCancel.
+	 * @de Der Agentenlauf wurde während der Arbeit abgebrochen, zum Beispiel mit aiAgentRunCancel.
+	 */
+	public static ResKey RUN_CANCELLED;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

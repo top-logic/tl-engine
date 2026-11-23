@@ -301,7 +301,8 @@ public class TestScheduledAgentRun extends BasicTestCase {
 		return (String) session.tValueByName("title");
 	}
 
-	private static ResultType resultType(ProbeTask task) {
+	/** The result the task reported last. */
+	static ResultType resultType(ProbeTask task) {
 		TaskResult result = task.getLog().getLastResult();
 		assertNotNull("The task reported no result.", result);
 		return result.getResultType();

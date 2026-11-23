@@ -46,6 +46,7 @@ import com.top_logic.ai.core.scripting.AIScriptFunctions;
 import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
+import com.top_logic.util.sched.task.result.TaskResult.ResultType;
 
 /**
  * A scheduled run of an {@link AgentTask} stops at the cancel marker of its execution, which
@@ -57,6 +58,12 @@ import com.top_logic.util.model.ModelService;
  * that call until the run is cancelled, or until the run had more than enough time to read the
  * marker. The scheduler service runs, because the run reads its marker on a timer of the scheduler
  * while a model call is in flight.
+ * </p>
+ *
+ * <p>
+ * The helpers that hold the model call and read the run's status are the same as in
+ * {@link com.top_logic.ai.chat.layout.TestChatRunCancelMarker}: each test stays in the package of
+ * the class it drives, and a shared helper class for a few lines is not worth it.
  * </p>
  */
 public class TestScheduledRunCancelMarker extends BasicTestCase {
@@ -123,6 +130,8 @@ public class TestScheduledRunCancelMarker extends BasicTestCase {
 		assertFalse("The sitting did not end.", sitting.isAlive());
 		assertEquals("The run did not stop at its cancel marker.", "CANCELLED", statusOfLastRun(session));
 		assertFalse("The model was asked again after the cancel marker was set.", askedAgain.get());
+		assertEquals("The task must report the cancelled run as cancelled.", ResultType.CANCELED,
+			TestScheduledAgentRun.resultType(task));
 	}
 
 	/**

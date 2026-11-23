@@ -466,6 +466,13 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 			getLog().taskEnded(ResultType.ERROR, I18NConstants.RUN_FAILED__MESSAGE.fill(message(error)), error);
 			return;
 		}
+		// The run ended by itself, but because it was told to: aiAgentRunCancel or the stop command of
+		// the agent activity monitor set its cancel marker, or a window of the account stopped it.
+		if (state != null && state.getCancellationToken().isCancelled()) {
+			Logger.info("Task '" + getName() + "': its agent run was cancelled.", AgentTask.class);
+			getLog().taskEnded(ResultType.CANCELED, I18NConstants.RUN_CANCELLED);
+			return;
+		}
 		Logger.info("Task '" + getName() + "' finished its agent run.", AgentTask.class);
 	}
 

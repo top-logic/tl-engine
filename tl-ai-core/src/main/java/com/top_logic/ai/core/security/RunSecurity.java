@@ -55,7 +55,18 @@ public final class RunSecurity {
 	 *         An application's factory may refuse for its own reasons too.
 	 */
 	public static SecurityContext contextFor(RunPrincipal run) {
-		SecurityContext result = factory().createSecurityContext(run);
+		return contextFor(run, factory());
+	}
+
+	/**
+	 * {@link #contextFor(RunPrincipal)} with the given factory in place of the configured one.
+	 *
+	 * <p>
+	 * Package-visible so that a test can give the check the context of a factory of its own.
+	 * </p>
+	 */
+	static SecurityContext contextFor(RunPrincipal run, SecurityContextFactory factory) {
+		SecurityContext result = factory.createSecurityContext(run);
 		if (result == null) {
 			throw new IllegalStateException("The configured " + SecurityContextFactory.class.getSimpleName()
 				+ " answered no security context for a run of " + run.entryPoint()
@@ -87,7 +98,9 @@ public final class RunSecurity {
 		} catch (RuntimeException ex) {
 			// A subject that was deleted after the entry point named it, for example. The run goes
 			// on without one rather than failing for an object it would not be told about anyway.
-			failure = "its read access cannot be checked: " + ex.getMessage();
+			// Only the class of the exception goes into the line: its message can name the object.
+			failure = "its read access cannot be checked (" + ex.getClass().getName() + ")";
+			Logger.debug("Read access to the subject of a run could not be checked.", ex, RunSecurity.class);
 		}
 		Logger.info("A run (" + run.entryPoint() + ") of the account '" + accountName(run.account())
 			+ "' has no subject: " + objectName(subject) + " was stated, and " + failure + ".", RunSecurity.class);

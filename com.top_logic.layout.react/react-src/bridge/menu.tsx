@@ -1,11 +1,9 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { usePart } from './parts';
-import { useCloseOnOutsidePress } from './outside-press';
-import { useFocusTrap } from './tl-react-bridge';
 import { anchoredOverlayProps } from './focus-trap';
-import { usePopover } from './popover';
 import type { PopoverAnchor, PopoverOptions } from './popover';
+import { usePopupSurface } from './popup-surface';
 import { ThemeIcon } from './ThemeIcon';
 import { tooltipProps } from './tooltip-host';
 
@@ -61,24 +59,17 @@ export function useEscapeClose(open: boolean, onClose: () => void, trigger?: () 
 
 /**
  * Roving tabindex over the entries of a menu: exactly one entry is in the tab order, the one that
- * has focus; arrows cycle, Home/End jump; disabled and hidden entries are skipped. Escape closes -
- * also a menu whose entries are all disabled - and {@code restoreTo} then answers the trigger, see
- * {@link useEscapeClose}. Shared by Menu and the toolbar overflow.
- *
- * @param trigger
- *        The element that opens the menu, read when the menu closes; absent or answering
- *        {@code null} for a menu without one.
+ * has focus; arrows cycle, Home/End jump; disabled and hidden entries are skipped. Shared by
+ * Menu and the toolbar overflow. Escape is not the menu's but its surface's (usePopupSurface), which
+ * takes it wherever the focus is. A key an entry has handled itself (`preventDefault`) is left alone.
  */
-export function useRovingMenu(ref: React.RefObject<HTMLElement | null>, open: boolean, onClose: () => void,
-  trigger?: () => HTMLElement | null): { onKeyDown: (e: React.KeyboardEvent) => void; restoreTo: () => HTMLElement | null } {
+export function useRovingMenu(ref: React.RefObject<HTMLElement | null>, open: boolean): { onKeyDown: (e: React.KeyboardEvent) => void } {
   // Only rendered entries rove: an entry inside a hidden wrapper (the upload button renders
   // `<span hidden>` around its menuitem) cannot take focus, and as a target it would stall the arrows.
   const items = useCallback(
     () => Array.from(ref.current?.querySelectorAll<HTMLElement>(ITEM) ?? []).filter(el => el.getClientRects().length > 0),
     [ref],
   );
-  const escape = useEscapeClose(open, onClose, trigger);
-  const handleEscape = escape.onKeyDown;
 
   useEffect(() => {
     if (!open) return;
@@ -86,7 +77,7 @@ export function useRovingMenu(ref: React.RefObject<HTMLElement | null>, open: bo
   }, [open, items]);
 
   const onKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (handleEscape(e)) return;
+    if (e.defaultPrevented) return;
     const all = items();
     if (all.length === 0) return;
     const current = all.indexOf(document.activeElement as HTMLElement);
@@ -99,9 +90,9 @@ export function useRovingMenu(ref: React.RefObject<HTMLElement | null>, open: bo
     e.preventDefault();
     all.forEach((el, i) => el.setAttribute('tabindex', i === next ? '0' : '-1'));
     all[next].focus();
-  }, [items, handleEscape]);
+  }, [items]);
 
-  return { onKeyDown, restoreTo: escape.restoreTo };
+  return { onKeyDown };
 }
 
 export interface MenuProps {
@@ -115,27 +106,15 @@ export interface MenuProps {
 }
 
 /**
- * The one menu: a tl-popover with entries, portaled to the body, placed by usePopover, closed on
- * Escape and on a press outside. Closed with Escape, it gives the focus to its anchor when that is an
- * element (the button that opened it); otherwise, and after every other close, the focus returns to
- * where it was when the menu opened. Mounted only while open - a caller that needs its entries to stay
- * live (the toolbar overflow) keeps them mounted itself and uses useRovingMenu directly.
+ * The one menu: a tl-popover with entries, portaled to the body, in the shell of every floating surface
+ * (usePopupSurface): placed at its anchor and held to the room there, closed on Escape and on a press
+ * outside, the focus on its first entry while open and back where it was afterwards. Its trigger is
+ * wired by usePopupTrigger. Mounted only while open - a caller that needs its entries to stay live (the
+ * toolbar overflow) keeps them mounted itself, in the same shell, and uses useRovingMenu directly.
  */
 export const Menu: React.FC<MenuProps> = ({ open, anchor, onClose, placement, id, className, children }) => {
-  const ref = useRef<HTMLDivElement | null>(null);
-  const { setFloating, style } = usePopover({ open, anchor, placement });
-  // Both the own ref and the popover's go on the surface. A plain callback rather than floating-ui's
-  // useMergeRefs: that one's return type comes from the React types of this module and fails to match
-  // the JSX of a module with its own copy of @types/react.
-  const setRefs = useCallback((el: HTMLDivElement | null) => {
-    ref.current = el;
-    setFloating(el);
-  }, [setFloating]);
-  useCloseOnOutsidePress(open, [ref], onClose);
-  const anchorElement = anchor instanceof HTMLElement ? anchor : null;
-  const trigger = useCallback(() => anchorElement, [anchorElement]);
-  const { onKeyDown, restoreTo } = useRovingMenu(ref, open, onClose, trigger);
-  useFocusTrap(open, ref, 'first', { restoreTo });
+  const { surfaceRef, setRefs, style } = usePopupSurface({ open, anchor, placement, onClose, initialFocus: 'first' });
+  const { onKeyDown } = useRovingMenu(surfaceRef, open);
 
   if (!open) return null;
   return createPortal(

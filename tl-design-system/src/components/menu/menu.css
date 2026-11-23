@@ -70,6 +70,15 @@
   flex-shrink: 0;
 }
 
+/* Eine Zeile, die etwas an- und abschaltet (#30102): Häkchen links (Werteliste) oder Schalter rechts (Ansicht). Die ganze
+   Zeile ist die Klickfläche, darum trägt sie Fläche, Zeigen und Drücken vom Eintrag und keine eigenen — Zeigen gibt es nur
+   dort, wo ein Klick wirkt. Die Marke ist ein gezeichnetes tl-checkbox ohne Eingabe (choice.css liest aria-checked der
+   Zeile) und nimmt keinen Zeiger an: Rand und Hof der Marke gehören dem Label tl-choice, das es in der Zeile nicht gibt;
+   sonst läge beim Zeigen auf die Marke ein zweiter Rahmen auf der Zeilenfläche. */
+.tl-menu__item--check .tl-checkbox {
+  pointer-events: none;
+}
+
 .tl-menu__label {
   flex: 1 1 auto;
   min-width: 0;

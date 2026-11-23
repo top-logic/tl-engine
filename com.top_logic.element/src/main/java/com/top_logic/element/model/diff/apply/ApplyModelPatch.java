@@ -50,6 +50,7 @@ import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.element.meta.StorageImplementation;
 import com.top_logic.element.meta.kbbased.StorageImplementationFactory;
 import com.top_logic.element.meta.kbbased.storage.LinkStorage;
+import com.top_logic.element.meta.kbbased.storage.PrimitiveStorage;
 import com.top_logic.element.model.ModelResolver;
 import com.top_logic.element.model.diff.config.AddAnnotations;
 import com.top_logic.element.model.diff.config.AddGeneralization;
@@ -1060,18 +1061,18 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 
 	/**
 	 * Refuses a new property that would store its values in a system column, see
-	 * {@link #systemColumnError(TLStructuredTypePart)}.
+	 * {@link PrimitiveStorage#systemColumnError(TLStructuredTypePart)}.
 	 *
 	 * <p>
 	 * A transient copy of the model is not checked: it only computes the migration processors of
-	 * the patch, and its parts have no table.
+	 * the patch.
 	 * </p>
 	 */
 	@Override
 	public TLProperty createProperty(TLStructuredType owner, AttributeConfig attributeConfig) {
 		TLProperty property = super.createProperty(owner, attributeConfig);
 		if (!property.tTransient()) {
-			ResKey error = systemColumnError(property);
+			ResKey error = PrimitiveStorage.systemColumnError(property);
 			if (error != null) {
 				throw new TopLogicException(error);
 			}

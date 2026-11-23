@@ -52,6 +52,7 @@ import com.top_logic.element.config.ModuleConfig;
 import com.top_logic.element.config.ObjectTypeConfig;
 import com.top_logic.element.meta.MetaElementException;
 import com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil;
+import com.top_logic.element.meta.kbbased.storage.PrimitiveStorage;
 import com.top_logic.element.meta.schema.HolderType;
 import com.top_logic.element.model.diff.apply.ApplyModelPatch;
 import com.top_logic.element.model.diff.compare.CreateModelPatch;
@@ -560,7 +561,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 
 	/**
 	 * Reports an error for each property of the given model that stores its values in a system
-	 * column, see {@link ModelResolver#systemColumnError(TLStructuredTypePart)}.
+	 * column, see {@link PrimitiveStorage#systemColumnError(TLStructuredTypePart)}.
 	 *
 	 * <p>
 	 * The model editors and the model upgrade refuse such a property. A model that has one from an
@@ -575,7 +576,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 					continue;
 				}
 				for (TLStructuredTypePart part : structuredType.getLocalParts()) {
-					if (ModelResolver.systemColumnError(part) != null) {
+					if (PrimitiveStorage.systemColumnError(part) != null) {
 						log.error("Attribute '" + TLModelUtil.qualifiedName(part)
 							+ "' stores its values in the system column '" + part.getName()
 							+ "'. Rename the attribute with a model migration and move its values with a data migration,"

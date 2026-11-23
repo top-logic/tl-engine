@@ -31,6 +31,7 @@ import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.meta.MOStructure;
+import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.kbbased.AttributeUtil;
@@ -40,6 +41,7 @@ import com.top_logic.knowledge.service.db2.FlexAttributeFetch;
 import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
+import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
@@ -149,8 +151,47 @@ public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends Abst
 	 */
 	@FrameworkInternal
 	public static ResKey systemColumnError(String propertyName, TLType valueType, boolean multiple) {
-		PolymorphicConfiguration<?> storage =
-			StorageImplementationFactory.defaultPropertyStorage(valueType, multiple, () -> false);
+		return systemColumnError(propertyName,
+			StorageImplementationFactory.defaultPropertyStorage(valueType, multiple, () -> false));
+	}
+
+	/**
+	 * The error for an existing property that stores its values in a system column, see
+	 * {@link #systemColumnError(String, TLType, boolean)}.
+	 *
+	 * <p>
+	 * The check reads the storage configuration and does not create the storage: during a model
+	 * upgrade, the storage of a property can refer to parts that the upgrade creates later. The
+	 * check follows the storage selection of
+	 * {@link StorageImplementationFactory#createStorageImplementation(TLStructuredTypePart)}: an
+	 * override uses the storage of the part that it overrides, an abstract property has no
+	 * storage, and the {@link TLStorage} annotation of the property wins over the storage of the
+	 * value type. A property of a TLAssociation is checked against the columns of
+	 * {@value PersistentObject#OBJECT_TYPE} too, although a link table has not all of them: such a
+	 * property is rare, and the refusal is accepted.
+	 * </p>
+	 *
+	 * <p>
+	 * This check serves the model upgrade and the model load of the engine. An application must not
+	 * use it.
+	 * </p>
+	 *
+	 * @return The error that names the column, or <code>null</code> if the given part does not
+	 *         store its values in a system column.
+	 */
+	@FrameworkInternal
+	public static ResKey systemColumnError(TLStructuredTypePart part) {
+		if (!(part instanceof TLProperty) || part.isOverride() || part.isAbstract()) {
+			return null;
+		}
+		TLStorage annotation = part.getAnnotation(TLStorage.class);
+		if (annotation == null) {
+			return systemColumnError(part.getName(), part.getType(), part.isMultiple());
+		}
+		return systemColumnError(part.getName(), annotation.getImplementation());
+	}
+
+	private static ResKey systemColumnError(String propertyName, PolymorphicConfiguration<?> storage) {
 		if (!(storage instanceof Config<?> primitiveStorage) || primitiveStorage.getStorageAttribute() != null) {
 			return null;
 		}

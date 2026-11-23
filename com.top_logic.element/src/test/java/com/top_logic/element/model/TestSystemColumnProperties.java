@@ -5,6 +5,7 @@
  */
 package com.top_logic.element.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import junit.framework.Test;
@@ -19,6 +20,7 @@ import com.top_logic.element.config.AttributeConfig;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.layout.meta.TLPropertyFormBuilder;
 import com.top_logic.element.layout.meta.TLStructuredTypePartFormBuilder.PartModel;
+import com.top_logic.element.meta.AttributeWithFallbackStorage;
 import com.top_logic.element.meta.kbbased.storage.I18NConstants;
 import com.top_logic.element.meta.kbbased.storage.PrimitiveStorage;
 import com.top_logic.element.model.diff.apply.ApplyModelPatch;
@@ -135,6 +137,21 @@ public class TestSystemColumnProperties extends TestWithModelExtension {
 	}
 
 	/**
+	 * A model upgrade creates the parts of a type one after the other. The check of a new property
+	 * must not initialize its storage: the storage of a property with a fallback refers to parts
+	 * that the upgrade creates later.
+	 */
+	public void testUpgradeCreatesPropertyReferringToLaterParts() {
+		AttributeConfig value = newProperty("value", STRING);
+		value.getAnnotations().add(fallbackStorage("storage", "fallback"));
+		try (Transaction tx = beginTX()) {
+			applyCreateProperties(_type, value, newProperty("storage", STRING), newProperty("fallback", STRING));
+			assertNotNull(_type.getPart("value"));
+			assertNotNull(_type.getPart("fallback"));
+		}
+	}
+
+	/**
 	 * The load of a model that already has a property with the name of a system column reports one
 	 * error that names the property and the column. A reference of such a name stores no value in
 	 * the column and is not reported. The models of the engine report nothing.
@@ -188,11 +205,31 @@ public class TestSystemColumnProperties extends TestWithModelExtension {
 	}
 
 	private static void applyCreateProperty(TLClass type, AttributeConfig property) {
-		CreateStructuredTypePart create = TypedConfiguration.newConfigItem(CreateStructuredTypePart.class);
-		create.setType(TLModelUtil.qualifiedName(type));
-		create.setPart(property);
+		applyCreateProperties(type, property);
+	}
+
+	private static void applyCreateProperties(TLClass type, AttributeConfig... properties) {
+		List<CreateStructuredTypePart> patch = new ArrayList<>();
+		for (AttributeConfig property : properties) {
+			CreateStructuredTypePart create = TypedConfiguration.newConfigItem(CreateStructuredTypePart.class);
+			create.setType(TLModelUtil.qualifiedName(type));
+			create.setPart(property);
+			patch.add(create);
+		}
 		ApplyModelPatch.applyPatch(new BufferingProtocol(), ModelService.getApplicationModel(),
-			ModelService.getInstance().getFactory(), List.of(create));
+			ModelService.getInstance().getFactory(), patch);
+	}
+
+	private static TLStorage fallbackStorage(String storageAttribute, String fallbackAttribute) {
+		AttributeWithFallbackStorage.Config<?> storage =
+			TypedConfiguration.newConfigItem(AttributeWithFallbackStorage.Config.class);
+		storage.update(storage.descriptor().getProperty(AttributeWithFallbackStorage.Config.STORAGE_ATTRIBUTE),
+			storageAttribute);
+		storage.update(storage.descriptor().getProperty(AttributeWithFallbackStorage.Config.FALLBACK_ATTRIBUTE),
+			fallbackAttribute);
+		TLStorage annotation = TypedConfiguration.newConfigItem(TLStorage.class);
+		annotation.setImplementation(storage);
+		return annotation;
 	}
 
 	private static TLStorage explicitStorage(String column) {

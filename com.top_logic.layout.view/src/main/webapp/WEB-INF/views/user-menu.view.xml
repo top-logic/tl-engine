@@ -182,12 +182,15 @@
 					normal and compact. All mark the choice in force as active, which the menu shows
 					in bold, all head their group with a label naming the choice, and languages and
 					themes contribute nothing when there is only one of them - so an application
-					with a single theme and a single language sees only the densities.
+					with a single theme and a single language sees only the densities and the
+					tables. The tables are two switches, striped rows and column lines, each on or
+					off rather than a choice among alternatives.
 				-->
 				<command-sources>
 					<language-commands/>
 					<theme-commands/>
 					<density-commands/>
+					<table-view-commands/>
 				</command-sources>
 			</menu>
 		</default>

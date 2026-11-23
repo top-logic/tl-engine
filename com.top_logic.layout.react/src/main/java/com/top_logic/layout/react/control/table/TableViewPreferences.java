@@ -13,7 +13,7 @@ import com.top_logic.util.TLContext;
  * How tables look for the person using them: stripes and column lines.
  *
  * <p>
- * The two settings are stored per person in the
+ * The two settings are chosen in the user menu, stored per person in the
  * {@link PersonalConfiguration} and apply to every table. They are written as start values onto the
  * root element of the page, where the client reads them from; every table sets its own
  * {@code data-tl-striped} and {@code data-tl-column-lines} from them. The density of a table is not

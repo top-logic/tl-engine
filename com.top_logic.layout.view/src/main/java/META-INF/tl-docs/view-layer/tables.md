@@ -112,12 +112,12 @@ A React table shows a gear named *Columns* where it has something to offer: the 
 
 A table without a column selection that persists its state shows the gear as well; the popover then holds **Reset columns** alone. A table with neither shows no gear.
 
-How tables look is not a property of a table but of the person, and it holds for **all** tables. It is not set at the table:
+How tables look is not a property of a table but of the person, and it holds for **all** tables. It is set in the user menu, not at the table:
 
 - **Density** (the group *Density*): the density of the whole page, tables included. A table has no density of its own and follows the page.
-- **Striped rows** and **Column lines**: both off by default.
+- **Striped rows** and **Column lines** (the group *Tables*): two switches, both off by default. A command source `<table-view-commands/>` offers them; the user menu of the application lists it after `<density-commands/>`.
 
-The two settings are stored in the person's configuration (`react.table.striped`, `react.table.columnLines`), and the page carries them as attributes of its root element (`data-tl-table-striped`, `data-tl-table-column-lines`, beside `data-tl-table-view`); the classic host of a React control on a classic page sets them as well. A change applies at once to every table of the page. Other windows of the same person show it after they are reloaded. A table state stored before this change keeps its columns, widths and sorting; any view options it may still hold are ignored.
+The two switches are stored in the person's configuration (`react.table.striped`, `react.table.columnLines`), and the page carries them as attributes of its root element (`data-tl-table-striped`, `data-tl-table-column-lines`, beside `data-tl-table-view`); the classic host of a React control on a classic page sets them as well. A switch applies at once to every table of the page. Other windows of the same person show it after they are reloaded. A table state stored before this change keeps its columns, widths and sorting; any view options it may still hold are ignored.
 
 ## Selecting rows and nodes
 

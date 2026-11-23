@@ -251,6 +251,21 @@ test('Menü: kein Eintrag mit Weg mehr — weder Regel noch Vertrag noch Specime
   assert.doesNotMatch(readComponent('menu', 'menu.spec.html'), /tl-menu__item--nav|tl-menu__value|tl-menu__chevron/);
 });
 
+// Ein Eintrag, der eine Einstellung an- und abschaltet, ist im Benutzermenü ein Schalter (#30233): dieselbe Zeile wie die
+// Häkchen der Werteliste, die Regeln gelten im Menü überhaupt, nicht erst in einem Popover der Tabelle.
+test('Menü: der Schalter-Eintrag — Zeile mit gezeichnetem Schalter, Regeln ohne Popover der Tabelle, Vertrag und Specimen', () => {
+  assert.match(declarationsOf(menu, '.tl-menu__item--check .tl-checkbox') ?? '', /pointer-events:\s*none/);
+  const md = readComponent('menu', 'menu.contract.md');
+  assert.deepEqual(missingInContract(md, ['tl-menu__item--check', 'menuitemcheckbox', 'tl-checkbox--switch', 'toggle']), []);
+  const html = readComponent('menu', 'menu.spec.html');
+  const schalter = html.match(/<button[^>]*tl-menu__item--check[^>]*>(?:(?!<\/button>)[\s\S])*tl-checkbox--switch[\s\S]*?<\/button>/)?.[0] ?? '';
+  assert.match(schalter, /role="menuitemcheckbox" aria-checked="(true|false)"/, 'das Specimen zeigt den Schalter als menuitemcheckbox');
+  assert.match(schalter, /<span class="tl-menu__label">[^<]*<\/span><span class="tl-checkbox tl-checkbox--switch" aria-hidden="true"><\/span>/,
+    'der Schalter steht nach dem Label, gezeichnet');
+  // Keine der Regeln für Zeile und Schalter hängt an dem Popover der Tabelle.
+  for (const css of [menu, choice]) assert.doesNotMatch(css, /tl-table-view-options[^{]*tl-menu__item--check|tl-menu__item--check[^{]*tl-table-view-options/);
+});
+
 // --- Anker des offenen Popovers -------------------------------------------------------------------------------------------
 
 test('tl-reveal-on-hover: der Anker eines offenen Popovers (aria-expanded="true") bleibt sichtbar', () => {

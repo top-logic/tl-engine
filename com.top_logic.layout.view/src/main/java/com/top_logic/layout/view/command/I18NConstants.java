@@ -62,6 +62,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey DENSITY_COMPACT;
 
 	/**
+	 * @en Tables
+	 */
+	public static ResKey TABLES_GROUP;
+
+	/**
+	 * @en Striped rows
+	 */
+	public static ResKey TABLE_STRIPED_ROWS;
+
+	/**
+	 * @en Column lines
+	 */
+	public static ResKey TABLE_COLUMN_LINES;
+
+	/**
 	 * @en Changed language of "{0}".
 	 */
 	public static ResKey1 CHANGED_LANGUAGE__USER;

@@ -7,6 +7,7 @@ package com.top_logic.ai.core.execution;
 
 import java.util.List;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.ai.core.agent.AgentFactory;
 import com.top_logic.ai.core.agent.AgentLoop;
 import com.top_logic.ai.core.agent.AgentResult;
@@ -120,9 +121,13 @@ public final class AgentRunner {
 
 			AgentFactory.RunResult runResult;
 			try (ConversationRegistry registry = bindConversationRegistry(session, parentExecution)) {
-				runResult = AgentFactory.getInstance().runAgent(agentName, conversation, memory,
-					context, recording, sessionRegistry,
-					overrides != null ? overrides : AgentFactory.RunOverrides.NONE);
+				try {
+					runResult = AgentFactory.getInstance().runAgent(agentName, conversation, memory,
+						context, recording, sessionRegistry,
+						overrides != null ? overrides : AgentFactory.RunOverrides.NONE);
+				} finally {
+					stopSubagentsOfStoppedRun(context, parentExecution);
+				}
 			} catch (RunLimitExceededException ex) {
 				// Not a failure: the run was not let in, nothing of it ran, and the caller tells the
 				// user the reason as such - not as an error of the run.
@@ -211,6 +216,32 @@ public final class AgentRunner {
 			}
 			recording.finish(null);
 			return new RecordedRun(null, null, result, recording.execution());
+		}
+	}
+
+	/**
+	 * Stops the background subagents of a top-level run whose token was cancelled, as the stop button
+	 * of the chat does.
+	 *
+	 * <p>
+	 * A background subagent has a token of its own, because it goes on working after the turn that
+	 * started it has ended. A stop that cancels only the token of the run (its cancel marker, the
+	 * stop of a scheduled task, the cancel of an A2A task) would leave the subagents of the run at
+	 * work. They are the subagents of the conversation, in the registry that the run has bound. A
+	 * delegated run has the registry of its lead bound and stops none of them.
+	 * </p>
+	 */
+	private static void stopSubagentsOfStoppedRun(ToolContext context, AgentExecution parentExecution) {
+		if (parentExecution != null || !context.cancellationToken().isCancelled()) {
+			return;
+		}
+		SubagentJobRegistry subagents = SubagentRegistryBinding.getRegistry();
+		if (subagents == null) {
+			return;
+		}
+		int cancelled = subagents.cancelAll();
+		if (cancelled > 0) {
+			Logger.info("Cancelled " + cancelled + " subagent(s) of a stopped run.", AgentRunner.class);
 		}
 	}
 

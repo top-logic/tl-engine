@@ -1249,9 +1249,14 @@ public class ChatProcessor {
 				state.completeWithError(ex instanceof Exception ? (Exception) ex : new RuntimeException(ex));
 				notifyError(state, ex instanceof Exception ? (Exception) ex : new RuntimeException(ex));
 			} finally {
-				// News that arrived too late for this turn to read waits for the next one.
+				// News that arrived too late for this turn to read waits for the next one. After a stop,
+				// no turn is started for news until the user's next message, as after the stop button:
+				// a stop by the cancel marker or of a scheduled task reaches only the token of the run.
 				SubagentWaker waker = _taskTracker.getSessionManager().getSubagentWaker(state.getSessionId());
 				if (waker != null) {
+					if (state.getCancellationToken().isCancelled()) {
+						waker.userStopped();
+					}
 					waker.leadRunEnded();
 				}
 			}

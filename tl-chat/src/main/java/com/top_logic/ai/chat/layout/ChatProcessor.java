@@ -116,8 +116,8 @@ public class ChatProcessor {
 	 * @param subject
 	 *        The object the run is about, or {@code null} for the subject of the chat session. A chat
 	 *        page states its subject on the session when it creates it; a sender that may have no
-	 *        session - a scheduled {@code AgentTask} that records none - states it here. The run
-	 *        has the subject only if its account may read it.
+	 *        session - a scheduled {@link com.top_logic.ai.chat.sched.AgentTask} that records none -
+	 *        states it here. The run has the subject only if its account may read it.
 	 */
 	public record ChatRunOptions(String agent, String model, boolean mcpOverride, List<String> mcpServers,
 			String effort, TLObject subject) {
@@ -156,9 +156,14 @@ public class ChatProcessor {
 	 *        Agent, model and MCP choices.
 	 * @param facts
 	 *        What the page stated.
+	 * @param sessionId
+	 *        The chat the message was sent in.
+	 * @param subject
+	 *        What the run of the message was about, as the send read it; <code>null</code> for
+	 *        nothing.
 	 */
 	record LastSend(WeakReference<TLSubSessionContext> userSession, ChatRunOptions options,
-			List<EnvironmentFact> facts) {
+			List<EnvironmentFact> facts, String sessionId, TLObject subject) {
 		// Plain data.
 	}
 
@@ -633,7 +638,12 @@ public class ChatProcessor {
 			taskId = state.getCurrentTaskId();
 		}
 
-		prepareRun(tracker, state, options != null ? options : ChatRunOptions.DEFAULT, facts, spendReading);
+		ChatRunOptions runOptions = options != null ? options : ChatRunOptions.DEFAULT;
+		// Read here, on the thread of the send, and handed to the run as a value: the run's thread may
+		// see an older state of a session that was created just before the send.
+		TLObject subject = runOptions.subject() != null ? runOptions.subject()
+			: sessionSubject(sessionId, tracker.getSessionOwner());
+		prepareRun(tracker, state, runOptions, facts, subject, spendReading);
 
 		// Create ConversationLog Turn before submitting background task
 		String messageText = userMessage != null ? userMessage.trim() : "";
@@ -672,7 +682,8 @@ public class ChatProcessor {
 		// worker takes it and finds the token cancelled.
 		state.getCancellationToken().onCancel(() -> ChatRunExecutor.stopWatching(future));
 
-		tracker.setLastSend(new LastSend(new WeakReference<>(window), state.getRunOptions(), state.getFacts()));
+		tracker.setLastSend(new LastSend(new WeakReference<>(window), state.getRunOptions(), state.getFacts(),
+			sessionId, state.getSubject()));
 		SubagentWaker waker = tracker.getSessionManager().getSubagentWaker(sessionId);
 		if (waker != null) {
 			waker.userSent();
@@ -751,7 +762,12 @@ public class ChatProcessor {
 			state = registerRun(tracker, chat, sessionId, true);
 			taskId = state.getCurrentTaskId();
 		}
-		prepareRun(tracker, state, last.options(), last.facts(), spendReading);
+		// The subject the last send read for this chat. Only when the window has sent nothing in this
+		// chat since it showed another one, the session is asked here; it was created long before
+		// the run whose subagents report now, so this thread sees it.
+		TLObject subject = sessionId.equals(last.sessionId()) ? last.subject()
+			: sessionSubject(sessionId, tracker.getSessionOwner());
+		prepareRun(tracker, state, last.options(), last.facts(), subject, spendReading);
 
 		ConversationLog convLog = chat.log();
 		convLog.startTurn().setUserParts(List.of());
@@ -813,13 +829,10 @@ public class ChatProcessor {
 
 	/** Hands a registered run what it is started with. */
 	private static void prepareRun(TaskProgressTracker tracker, AIProcessingState state, ChatRunOptions options,
-			List<EnvironmentFact> facts, RunLimits.SpendReading spendReading) {
+			List<EnvironmentFact> facts, TLObject subject, RunLimits.SpendReading spendReading) {
 		state.setRunOptions(options);
 		state.setFacts(facts);
-		// Read here, on the thread of the send, and handed to the run as a value: the run's thread may
-		// see an older state of a session that was created just before the send.
-		state.setSubject(options.subject() != null ? options.subject()
-			: sessionSubject(state.getSessionId(), tracker.getSessionOwner()));
+		state.setSubject(subject);
 		state.setSpendReading(spendReading);
 		// Read here, on the request thread and in the acting account's context, and only once per
 		// conversation: they go into the environment block, which has to stay byte-identical
@@ -1739,12 +1752,12 @@ public class ChatProcessor {
 		 * The object the run is about, captured at send time; <code>null</code> for none. Not yet
 		 * checked: the run's security context drops it if the user may not read it.
 		 */
-		public TLObject getSubject() {
+		TLObject getSubject() {
 			return _subject;
 		}
 
 		/** @see #getSubject() */
-		public void setSubject(TLObject subject) {
+		void setSubject(TLObject subject) {
 			_subject = subject;
 		}
 

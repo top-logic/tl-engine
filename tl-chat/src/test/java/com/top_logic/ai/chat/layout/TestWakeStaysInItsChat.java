@@ -59,7 +59,7 @@ public class TestWakeStaysInItsChat extends BasicTestCase {
 		}
 		_window = new SwitchingWindow();
 		_window.setLastSend(new ChatProcessor.LastSend(new WeakReference<>(TLContextManager.getSubSession()),
-			ChatProcessor.ChatRunOptions.DEFAULT, List.of()));
+			ChatProcessor.ChatRunOptions.DEFAULT, List.of(), null, null));
 		_handler = new Handler(_window);
 		ChatEventHandlerRegistry.register(_handler);
 	}

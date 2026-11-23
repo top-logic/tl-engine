@@ -578,7 +578,9 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 					if (ModelResolver.systemColumnError(part) != null) {
 						log.error("Attribute '" + TLModelUtil.qualifiedName(part)
 							+ "' stores its values in the system column '" + part.getName()
-							+ "'. Rename the attribute with a model migration and move its values with a data migration.");
+							+ "'. Rename the attribute with a model migration and move its values with a data migration,"
+							+ " or bind the column on purpose with <primitive-storage storage-attribute=\"" + part.getName()
+							+ "\"/> (an add-annotations migration).");
 					}
 				}
 			}

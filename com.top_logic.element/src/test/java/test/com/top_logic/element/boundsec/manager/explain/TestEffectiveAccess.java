@@ -15,6 +15,7 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.element.boundsec.manager.TestAllOfAccessParent.AllOfRelation;
 import test.com.top_logic.element.util.ElementWebTestSetup;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
@@ -32,6 +33,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -56,7 +58,9 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * A {@code Part} of the model module {@code TestAccessParentAnyOf} delegates every operation to its
  * {@code Folder} and read to every {@code Document} relating it. A {@code Both} object delegates to
- * two folders at once, through a combinator requiring the operation on both of them.
+ * two folders at once, through a combinator requiring the operation on both of them. A
+ * {@code Nested} object delegates Write to its folder and Read through that combinator, nested in
+ * an {@code any-of}.
  * </p>
  * <p>
  * The analysis runs in the system context of the test, in which the security checks are bypassed:
@@ -109,6 +113,8 @@ public class TestEffectiveAccess extends BasicTestCase {
 	private static final String ANY_OF_PART = ANY_OF_MODULE + ":Part";
 
 	private static final String BOTH = ANY_OF_MODULE + ":Both";
+
+	private static final String NESTED = ANY_OF_MODULE + ":Nested";
 
 	private static final String ROLE_DOC_READER = ANY_OF_MODULE + ".DocReader";
 
@@ -420,6 +426,40 @@ public class TestEffectiveAccess extends BasicTestCase {
 		assertEquals(2, read.roleHolders().size());
 		assertEquals("The role held on the first folder is shown, although it does not suffice.",
 			Set.of(BoundedRole.getRoleByName(ROLE_FOLDER_OWNER)), read.grantingRoles());
+	}
+
+	/**
+	 * A combinator nested in an any-of is named for the operations it decides, not the any-of
+	 * holding it.
+	 */
+	public void testCombinatorNestedInAnyOf() {
+		TLObject nested = inTransaction(() -> {
+			TLObject container = create(FOLDER);
+			container.tUpdateByName(OWNER, _owner);
+			TLObject first = create(FOLDER);
+			first.tUpdateByName(OWNER, _owner);
+			TLObject second = create(FOLDER);
+			second.tUpdateByName(OWNER, _other);
+			TLObject result = create(NESTED);
+			container.tUpdateByName("nesteds", List.of(result));
+			result.tUpdateByName("first", first);
+			result.tUpdateByName("second", second);
+			return result;
+		});
+
+		AccessParentFunction readCombinator =
+			inInteraction(() -> analysis().combiningParent(nested, SimpleBoundCommandGroup.READ));
+		assertTrue("The combinator deciding Read is named, not the any-of holding it: " + readCombinator,
+			readCombinator instanceof AllOfRelation);
+		assertNull("Write is decided by the container alone, which combines nothing.",
+			inInteraction(() -> analysis().combiningParent(nested, SimpleBoundCommandGroup.WRITE)));
+
+		AccessExplanation explanation = explain(_owner, nested);
+		assertEquals(readCombinator, explanation.combiningParent());
+		assertFalse("The owner owns only the first of the folders deciding Read.",
+			decision(explanation, SimpleBoundCommandGroup.READ).allowed());
+		assertTrue("The owner owns the container deciding Write.",
+			decision(explanation, SimpleBoundCommandGroup.WRITE).allowed());
 	}
 
 	public void testDenied() {

@@ -908,6 +908,23 @@
 							</test-all-of>
 						</access-parent>
 					</class>
+					<class name="TestAccessParentAnyOf:Nested">
+						<access-parent>
+							<any-of>
+								<container operations="Write"/>
+								<test-all-of>
+									<target
+										operations="Read"
+										reference="TestAccessParentAnyOf:Nested#first"
+									/>
+									<target
+										operations="Read"
+										reference="TestAccessParentAnyOf:Nested#second"
+									/>
+								</test-all-of>
+							</any-of>
+						</access-parent>
+					</class>
 					<module name="TestDiscoverForm">
 						<grant
 							inherit="true"

@@ -34,6 +34,11 @@
 							multiple="true"
 							type="Mixed"
 						/>
+						<reference name="nesteds"
+							composite="true"
+							multiple="true"
+							type="Nested"
+						/>
 					</attributes>
 				</class>
 
@@ -127,6 +132,18 @@
 
 				<!-- Delegates to both of its folders at once, through the test combinator. -->
 				<class name="Both">
+					<attributes>
+						<reference name="first"
+							type="Folder"
+						/>
+						<reference name="second"
+							type="Folder"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Delegates Write to its folder, and Read to both of two other folders at once, through the test combinator. -->
+				<class name="Nested">
 					<attributes>
 						<reference name="first"
 							type="Folder"

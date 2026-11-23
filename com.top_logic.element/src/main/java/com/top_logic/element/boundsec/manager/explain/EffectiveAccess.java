@@ -255,7 +255,7 @@ public class EffectiveAccess {
 	 */
 	private AccessParentFunction combiningParent(TLObject object, Collection<BoundCommandGroup> operations) {
 		for (BoundCommandGroup operation : operations) {
-			AccessParentFunction result = combiningParent(object, operation, new HashSet<>());
+			AccessParentFunction result = combiningParent(object, operation);
 			if (result != null) {
 				return result;
 			}
@@ -264,12 +264,32 @@ public class EffectiveAccess {
 	}
 
 	/**
+	 * The first access parent on the chains of access parents deciding the given operation on the
+	 * given object that does not {@link AccessParentFunction#isDisjunctive() combine its candidates
+	 * by OR}, also as a candidate of an access parent with several candidates.
+	 *
+	 * @param object
+	 *        The object whose access parents are followed.
+	 * @param operation
+	 *        The operation whose deciding access parents are followed.
+	 * @return <code>null</code> when every access parent on these chains combines its candidates by
+	 *         OR, or the object decides the operation itself.
+	 *
+	 * @see AccessExplanation#combiningParent()
+	 */
+	public AccessParentFunction combiningParent(TLObject object, BoundCommandGroup operation) {
+		return combiningParent(object, operation, new HashSet<>());
+	}
+
+	/**
 	 * Follows the chains of access parents deciding the given operation as
 	 * {@link ModelAccessRights#getRoleHolders(TLObject, BoundCommandGroup)} does, up to the first
 	 * access parent not combining its candidates by OR.
 	 *
 	 * @param visiting
-	 *        The objects on the path to the given one, an object reached again closes a cycle.
+	 *        All objects already visited on any of the chains followed so far. Objects are never
+	 *        removed, so an object reached again, be it on a cycle or over a second path, is not
+	 *        followed a second time.
 	 */
 	private AccessParentFunction combiningParent(TLObject object, BoundCommandGroup operation,
 			Set<TLObject> visiting) {

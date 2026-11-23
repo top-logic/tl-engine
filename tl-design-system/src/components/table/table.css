@@ -25,14 +25,14 @@
 }
 .tl-table[hidden] { display: none; }
 
-/* Die abgesetzte Fläche (UI-Durchgang 1, Hendrik 26.10.): surface-layer mit Rundung, Rand und dem leichtesten Schatten
-   der Skala. Eine Tabelle, die eine ganze Fläche füllt (tl-fill), bekommt ihn nicht — dort kommt die Tiefe vom
-   abgesetzten Kopf, nicht von einer schwebenden Karte. overflow: hidden (oben) schneidet Kopf und Zeilen an der Rundung. */
+/* Die abgesetzte Fläche (UI-Durchgang 1, Hendrik 26.10.): surface-layer mit Rundung und Rand, ohne Schatten: die
+   Tabelle liegt in der Oberfläche wie die Karte (docs/skalen.md „Schatten bekommt nur, was wirklich schwebt“). Eine
+   Tabelle, die eine ganze Fläche füllt (tl-fill), trägt auch Rundung und Rand nicht — dort kommt die Tiefe vom
+   abgesetzten Kopf. overflow: hidden (oben) schneidet Kopf und Zeilen an der Rundung. */
 .tl-table:not(.tl-fill) {
   border: var(--tl-border-width-sm) solid var(--tl-border-separator);
   border-radius: var(--tl-radius-md);
   background: var(--tl-surface-layer);
-  box-shadow: var(--tl-shadow-1);
 }
 
 /* Eine füllende Tabelle behält Kopf, drei Zeilen und Fuß (#29922): kürzer zeigt sie nichts Brauchbares. Ist die

@@ -144,13 +144,15 @@ test('der Kopf scrollt waagerecht ohne eigenen Balken (Hendrik 12.10.)', () => {
 
 // --- UI-Durchgang 1, Task 4: Tabelle mit Tiefe (Spec §1) ---------------------------------------------------------
 
-test('Tiefe: die Tabelle steht auf einer abgesetzten Fläche mit Rundung, Rand und leichtem Schatten, die füllende ohne Schatten', () => {
+test('Tiefe: die Tabelle steht auf einer abgesetzten Fläche mit Rundung und Rand, ohne Schatten', () => {
   const d = declarationsOf(css, '.tl-table:not(.tl-fill)') ?? '';
   assert.match(d, /background:\s*var\(--tl-surface-layer\)/);
   assert.match(d, /border-radius:\s*var\(--tl-radius-md\)/);
   assert.match(d, /border:\s*var\(--tl-border-width-sm\) solid var\(--tl-border-separator\)/);
-  assert.match(d, /box-shadow:\s*var\(--tl-shadow-1\)/);
-  // Die füllende Tabelle schwebt nicht: kein Schatten (ihre Tiefe kommt vom abgesetzten Kopf).
+  // Die Tabelle schwebt nicht (skalen.md „Schatten bekommt nur, was wirklich schwebt“): kein Schatten, auch kein
+  // Primitiv, das am Modus vorbei die Regel umginge. Die füllende trägt ebenfalls keinen.
+  assert.doesNotMatch(d, /shadow/);
+  assert.doesNotMatch(css, /var\(--tl-shadow-/);
   assert.doesNotMatch(declarationsOfAll(css, '.tl-table.tl-fill'), /shadow/);
   assert.doesNotMatch(declarationsOfAll(css, '.tl-table'), /shadow/);
 });

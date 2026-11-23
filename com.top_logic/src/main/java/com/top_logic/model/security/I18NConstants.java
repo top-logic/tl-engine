@@ -56,6 +56,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ACCESS_PARENT_TARGET__OWNER_REFERENCE;
 
 	/**
+	 * @en Objects referencing it via {1} of {0}
+	 */
+	public static ResKey2 ACCESS_PARENT_REFERER__OWNER_REFERENCE;
+
+	/**
+	 * @en One of: {0}
+	 */
+	public static ResKey1 ACCESS_PARENT_ANY_OF__CANDIDATES;
+
+	/**
 	 * @en {0}, only for {1}
 	 */
 	public static ResKey2 ACCESS_PARENT_RESTRICTED__RELATION_OPERATIONS;

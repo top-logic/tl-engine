@@ -22,7 +22,8 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 /**
  * The access parent setting of a type: the element <code>&lt;access-parent&gt;</code> of a
  * {@link TLClassAccessRights} entry, holding exactly one {@link AccessParentDefinition}, e.g.
- * <code>&lt;container/&gt;</code>, <code>&lt;target reference="..."/&gt;</code> or
+ * <code>&lt;container/&gt;</code>, <code>&lt;target reference="..."/&gt;</code>,
+ * <code>&lt;referer reference="..."/&gt;</code>, <code>&lt;any-of&gt;</code> of several of them or
  * <code>&lt;self/&gt;</code>.
  */
 public interface AccessParentConfig extends ConfigPart {
@@ -71,15 +72,30 @@ public interface AccessParentConfig extends ConfigPart {
 	 * {@link OperationRestriction#getOperations()}.
 	 *
 	 * <p>
-	 * The type of a restricted setting decides the other operations by grants of its own.
+	 * The type of a restricted setting decides the other operations by grants of its own. An
+	 * {@link AnyOfAccessParent} is restricted when all its candidates are.
 	 * </p>
 	 *
 	 * @param config
 	 *        The setting, <code>null</code> for none.
 	 */
 	static boolean isRestricted(AccessParentConfig config) {
-		return config != null && config.getDefinition() instanceof OperationRestriction restriction
-			&& !restriction.getOperations().isEmpty();
+		return config != null && isRestricted(config.getDefinition());
+	}
+
+	/**
+	 * Whether the given definition delegates only some operations, see
+	 * {@link #isRestricted(AccessParentConfig)}.
+	 */
+	private static boolean isRestricted(PolymorphicConfiguration<?> definition) {
+		if (definition instanceof OperationRestriction restriction) {
+			return !restriction.getOperations().isEmpty();
+		}
+		if (definition instanceof AnyOfAccessParent.Config anyOf) {
+			return !anyOf.getCandidates().isEmpty()
+				&& anyOf.getCandidates().stream().allMatch(AccessParentConfig::isRestricted);
+		}
+		return false;
 	}
 
 	/**
@@ -88,7 +104,8 @@ public interface AccessParentConfig extends ConfigPart {
 	 * @param config
 	 *        The setting, <code>null</code> for none.
 	 * @return The names of the operations {@link OperationRestriction#getOperations() listed} and
-	 *         Discover, which is delegated together with any of them; <code>null</code> when the
+	 *         Discover, which is delegated together with any of them, for an
+	 *         {@link AnyOfAccessParent} those of all its candidates; <code>null</code> when the
 	 *         setting delegates all operations; the empty set when it does not
 	 *         {@link #delegates(AccessParentConfig) delegate} at all.
 	 */
@@ -100,11 +117,25 @@ public interface AccessParentConfig extends ConfigPart {
 			return null;
 		}
 		Set<String> result = new HashSet<>();
-		for (CommandGroupReference operation : ((OperationRestriction) config.getDefinition()).getOperations()) {
-			result.add(operation.id());
-		}
-		result.add(SimpleBoundCommandGroup.DISCOVER_NAME);
+		addDelegatedOperationNames(result, config.getDefinition());
 		return result;
+	}
+
+	/**
+	 * Adds the names of the operations the given {@link #isRestricted(PolymorphicConfiguration)
+	 * restricted} definition delegates to the given set.
+	 */
+	private static void addDelegatedOperationNames(Set<String> result, PolymorphicConfiguration<?> definition) {
+		if (definition instanceof AnyOfAccessParent.Config anyOf) {
+			for (PolymorphicConfiguration<?> candidate : anyOf.getCandidates()) {
+				addDelegatedOperationNames(result, candidate);
+			}
+		} else if (definition instanceof OperationRestriction restriction) {
+			for (CommandGroupReference operation : restriction.getOperations()) {
+				result.add(operation.id());
+			}
+			result.add(SimpleBoundCommandGroup.DISCOVER_NAME);
+		}
 	}
 
 }

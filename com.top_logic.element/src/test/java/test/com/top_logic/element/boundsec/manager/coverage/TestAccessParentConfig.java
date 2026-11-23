@@ -13,6 +13,7 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.element.boundsec.manager.TestAllOfAccessParent;
 import test.com.top_logic.element.util.ElementWebTestSetup;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
@@ -25,9 +26,12 @@ import com.top_logic.basic.config.constraint.check.ConstraintChecker;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.security.AccessParentConfig;
 import com.top_logic.model.security.AccessParentDefinition;
 import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ContainerRelation;
+import com.top_logic.model.security.RefererRelation;
 import com.top_logic.model.security.RestrictedRelation;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
@@ -93,10 +97,183 @@ public class TestAccessParentConfig extends BasicTestCase {
 			"is not a composition holding objects of the type");
 	}
 
-	public void testTargetMultiple() throws Exception {
-		assertResolveError("Covered",
+	public void testMultipleTargetIsAccepted() throws Exception {
+		AccessParentFunction parent = resolveOk("Covered",
+			"<access-parent><target reference='TestSecurityCoverage:Covered#explicitParts'/></access-parent>");
+		assertEquals("TestSecurityCoverage:Covered#explicitParts",
+			TLModelUtil.qualifiedName(((TargetRelation) parent).reference()));
+	}
+
+	public void testTargetOfOtherType() throws Exception {
+		assertResolveError("Linked",
 			"<access-parent><target reference='TestSecurityCoverage:Covered#explicitParts'/></access-parent>",
-			"is not a to-one reference of the type");
+			"is not a reference of the type");
+	}
+
+	public void testReferer() throws Exception {
+		AccessParentFunction parent = resolveOk("Covered",
+			"<access-parent><referer reference='" + LINKED + "#target'/></access-parent>");
+		RefererRelation referer = (RefererRelation) parent;
+		assertEquals(LINKED + "#target", TLModelUtil.qualifiedName(referer.reference()));
+		assertEquals(Set.of(TLModelUtil.findType(LINKED)),
+			referer.getParentTypes((TLClass) TLModelUtil.findType(MODULE + ":Covered")));
+	}
+
+	public void testRefererWithIncompatibleReferenceIsError() throws Exception {
+		assertResolveError("Linked",
+			"<access-parent><referer reference='" + LINKED + "#target'/></access-parent>",
+			"does not point to objects of the type");
+	}
+
+	public void testRefererWithoutReference() {
+		assertParseError("<class name='TestSecurityCoverage:Covered'><access-parent><referer/></access-parent></class>");
+	}
+
+	public void testRefererRestricted() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = newService(log, "<class name='" + MODULE + ":Covered'><access-parent>"
+			+ "<referer reference='" + LINKED + "#target' operations='Read'/></access-parent></class>")
+				.getAccessParent((TLClass) TLModelUtil.findType(MODULE + ":Covered"));
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+		assertEquals(Set.of(SimpleBoundCommandGroup.READ), parent.getOperations());
+		assertTrue(parent.getRelation() instanceof RefererRelation);
+	}
+
+	public void testAnyOfResolvesCandidates() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<container/>" + TARGET_PARENT + " operations='Read'/></any-of></access-parent></class>");
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+
+		AnyOfRelation anyOf = (AnyOfRelation) parent;
+		assertEquals(2, anyOf.candidates().size());
+		assertSame(ContainerRelation.ANY, anyOf.candidates().get(0));
+		AccessParentFunction restricted = anyOf.candidates().get(1);
+		assertTrue("The candidate is restricted: " + restricted, restricted instanceof RestrictedRelation);
+		assertTrue(restricted.getRelation() instanceof TargetRelation);
+
+		assertSame(anyOf, anyOf.getRelation());
+		assertNull("A candidate delegates all operations.", anyOf.getOperations());
+		for (BoundCommandGroup operation : BUILT_IN) {
+			assertTrue(operation.getID(), anyOf.delegates(operation));
+		}
+		assertNull("The parent types of the container candidate are not known statically.",
+			anyOf.getParentTypes((TLClass) TLModelUtil.findType(LINKED)));
+		assertTrue(anyOf.isDisjunctive());
+		assertTrue("The container candidate delegates Create.", anyOf.delegatesCreation());
+	}
+
+	public void testAnyOfOfRestrictedCandidates() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<container operations='Write'/>" + TARGET_PARENT + " operations='Read'/></any-of></access-parent>"
+			+ "<grant operation='Delete'/></class>");
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+		assertEquals(Set.of(SimpleBoundCommandGroup.READ, SimpleBoundCommandGroup.WRITE), parent.getOperations());
+		assertTrue(parent.delegates(SimpleBoundCommandGroup.DISCOVER));
+		assertFalse(parent.delegates(SimpleBoundCommandGroup.DELETE));
+		assertFalse("No container candidate delegates Create.", parent.delegatesCreation());
+	}
+
+	public void testAnyOfParentTypes() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		TLClass covered = (TLClass) TLModelUtil.findType(MODULE + ":Covered");
+		AccessParentFunction parent = newService(log, "<class name='" + MODULE + ":Covered'><access-parent><any-of>"
+			+ "<referer reference='" + LINKED + "#target'/>"
+			+ "<target reference='" + MODULE + ":Covered#explicitParts'/>"
+			+ "</any-of></access-parent></class>").getAccessParent(covered);
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+		assertEquals(Set.of(TLModelUtil.findType(LINKED), TLModelUtil.findType(MODULE + ":ExplicitPart")),
+			parent.getParentTypes(covered));
+		assertFalse("No candidate leads to a container.", parent.delegatesCreation());
+	}
+
+	public void testNestedAnyOfIsFlattened() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<container/><any-of>" + TARGET_PARENT + "/><container/></any-of></any-of></access-parent></class>");
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+		List<AccessParentFunction> candidates = ((AnyOfRelation) parent).candidates();
+		assertEquals(3, candidates.size());
+		assertTrue(candidates.get(1) instanceof TargetRelation);
+	}
+
+	public void testSelfInAnyOfIsError() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<self/>" + TARGET_PARENT + "/></any-of></access-parent></class>");
+		assertNull("An unusable candidate leaves the type without access parent.", parent);
+		assertError(log, "<self/>");
+	}
+
+	public void testUnusableCandidateIsError() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<container/>" + TARGET_PARENT + " operations='NoSuchGroup'/></any-of></access-parent></class>");
+		assertNull("An unusable candidate leaves the type without access parent.", parent);
+		assertError(log, "NoSuchGroup");
+	}
+
+	public void testEmptyAnyOfIsError() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent =
+			linkedParent(log, "<class name='" + LINKED + "'><access-parent><any-of/></access-parent></class>");
+		assertNull(parent);
+		assertError(log, "no candidate");
+	}
+
+	public void testOperationsNotAllowedOnAnyOf() {
+		assertParseError("<class name='" + LINKED + "'><access-parent><any-of operations='Read'>"
+			+ TARGET_PARENT + "/></any-of></access-parent></class>");
+	}
+
+	public void testAnyOfRestrictedOnlyIfAllCandidatesRestricted() throws Exception {
+		TLClassAccessRights allRestricted = read("<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<container operations='Write'/>" + TARGET_PARENT + " operations='Read'/></any-of></access-parent></class>");
+		assertTrue(AccessParentConfig.isRestricted(allRestricted.getAccessParent()));
+		assertEquals(Set.of("Read", "Write", "Discover"),
+			AccessParentConfig.delegatedOperationNames(allRestricted.getAccessParent()));
+
+		TLClassAccessRights oneUnrestricted = read("<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<container/>" + TARGET_PARENT + " operations='Read'/></any-of></access-parent></class>");
+		assertFalse(AccessParentConfig.isRestricted(oneUnrestricted.getAccessParent()));
+		assertNull(AccessParentConfig.delegatedOperationNames(oneUnrestricted.getAccessParent()));
+
+		TLClassAccessRights nested = read("<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<container operations='Write'/><any-of>" + TARGET_PARENT + " operations='Read'/></any-of>"
+			+ "</any-of></access-parent></class>");
+		assertTrue(AccessParentConfig.isRestricted(nested.getAccessParent()));
+		assertEquals(Set.of("Read", "Write", "Discover"),
+			AccessParentConfig.delegatedOperationNames(nested.getAccessParent()));
+	}
+
+	public void testGrantBesideUnrestrictedAnyOfIsError() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		linkedParent(log, "<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<container/>" + TARGET_PARENT + " operations='Read'/></any-of></access-parent>"
+			+ "<grant operation='Write'/></class>");
+		assertError(log, "neither grants nor marks");
+	}
+
+	public void testCustomCombinator() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent>"
+			+ "<test-all-of><container/>" + TARGET_PARENT + " operations='Read'/></test-all-of>"
+			+ "</access-parent></class>");
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+		TestAllOfAccessParent.AllOfRelation allOf = (TestAllOfAccessParent.AllOfRelation) parent;
+		assertEquals(2, allOf.candidates().size());
+		assertTrue(allOf.candidates().get(1) instanceof RestrictedRelation);
+		assertFalse(allOf.isDisjunctive());
+
+		BufferingProtocol logNested = new BufferingProtocol();
+		AccessParentFunction anyOf = linkedParent(logNested, "<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<container/><test-all-of><container/>" + TARGET_PARENT + "/></test-all-of></any-of>"
+			+ "</access-parent></class>");
+		assertTrue(logNested.getErrors().toString(), logNested.getErrors().isEmpty());
+		assertEquals("A combinator is a candidate of its own, not flattened.", 2,
+			((AnyOfRelation) anyOf).candidates().size());
+		assertFalse("A conjunctive candidate makes the combination non-disjunctive.", anyOf.isDisjunctive());
 	}
 
 	public void testReferenceDoesNotExist() throws Exception {

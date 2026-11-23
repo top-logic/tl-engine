@@ -6,6 +6,7 @@ package com.top_logic.model.security;
 
 import java.util.List;
 
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.annotation.Container;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
@@ -49,7 +50,7 @@ public interface OperationRestriction extends ConfigPart {
 	@Format(CommaSeparatedCommandGroups.class)
 	@Options(fun = AccessParentReferenceOptions.Operations.class, args = @Ref(steps = {
 		@Step(OWNER),
-		@Step(AccessParentConfig.RIGHTS),
+		@Step(value = AccessParentConfig.RIGHTS, type = AccessParentConfig.class),
 		@Step(TLClassAccessRights.NAME_ATTRIBUTE) }), mapping = ToCommandGroupReference.class)
 	List<CommandGroupReference> getOperations();
 
@@ -59,11 +60,12 @@ public interface OperationRestriction extends ConfigPart {
 	void setOperations(List<CommandGroupReference> value);
 
 	/**
-	 * The setting this definition belongs to.
+	 * The configuration this definition belongs to: the {@link AccessParentConfig setting} of a
+	 * type, or a definition combining several ones like {@link AnyOfAccessParent}.
 	 */
 	@Name(OWNER)
 	@Hidden
 	@Container
-	AccessParentConfig getOwner();
+	ConfigurationItem getOwner();
 
 }

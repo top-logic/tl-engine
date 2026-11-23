@@ -4,6 +4,7 @@
  */
 package test.com.top_logic.model.search.rules;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -194,17 +195,23 @@ public class TestScriptAccessParent extends BasicTestCase {
 		assertNull(expectNoError(() -> function("t -> null").resolve(_task)));
 	}
 
-	public void testSeveralObjectsDenyAndLog() {
-		assertNull(expectError(
-			() -> function("t -> list(" + project(_project) + ", " + project(_project2) + ")").resolve(_task)));
+	public void testSeveralResultsAreSeveralParents() {
+		ScriptAccessParent function =
+			function("t -> list(" + project(_project) + ", " + project(_project2) + ")");
+		assertEquals(List.of(_project, _project2),
+			expectNoError(() -> list(function.resolveAll(_task, SimpleBoundCommandGroup.READ))));
+		assertSame("A single parent is the first one.", _project, expectNoError(() -> function.resolve(_task)));
 	}
 
-	public void testObjectWithNullDeniesAndLogs() {
-		assertNull(expectError(() -> function("t -> list(" + project(_project) + ", null)").resolve(_task)));
+	public void testNullInResultIsSkipped() {
+		ScriptAccessParent function = function("t -> list(" + project(_project) + ", null)");
+		assertEquals(List.of(_project), expectNoError(() -> list(function.resolveAll(_task, SimpleBoundCommandGroup.READ))));
+		assertSame(_project, expectNoError(() -> function.resolve(_task)));
 	}
 
 	public void testNonObjectDeniesAndLogs() {
 		assertNull(expectError(() -> function("t -> 42").resolve(_task)));
+		assertEquals(List.of(), expectError(() -> list(function("t -> 42").resolveAll(_task, SimpleBoundCommandGroup.READ))));
 	}
 
 	public void testObjectWithoutAccessControlDeniesAndLogs() {
@@ -215,9 +222,17 @@ public class TestScriptAccessParent extends BasicTestCase {
 		assertNull(expectError(() -> function("t -> list(" + transientProject + ")").resolve(_task)));
 	}
 
+	public void testObjectWithoutAccessControlIsSkipped() {
+		String transientProject = "new(type: `" + MODULE + ":Project`, transient: true)";
+		ScriptAccessParent function = function("t -> list(" + transientProject + ", " + project(_project) + ")");
+		assertEquals("The object without access control is skipped, the other one decides.", List.of(_project),
+			expectError(() -> list(function.resolveAll(_task, SimpleBoundCommandGroup.READ))));
+	}
+
 	public void testExceptionDeniesAndLogs() {
 		ScriptAccessParent failing = function("t -> throw('broken')");
 		assertNull(expectError(() -> failing.resolve(_task)));
+		assertEquals(List.of(), expectError(() -> list(failing.resolveAll(_task, SimpleBoundCommandGroup.READ))));
 		assertSame("Another object is still decided after a failure.", _project,
 			function("t -> " + project(_project)).resolve(_freeTask));
 	}
@@ -257,6 +272,12 @@ public class TestScriptAccessParent extends BasicTestCase {
 	private static String project(TLObject project) {
 		return "all(`" + MODULE + ":Project`).filter(p -> $p.get(`" + MODULE + ":Project#name`) == '"
 			+ project.tValueByName("name") + "').singleElement()";
+	}
+
+	private static List<TLObject> list(Iterable<TLObject> parents) {
+		List<TLObject> result = new ArrayList<>();
+		parents.forEach(result::add);
+		return result;
 	}
 
 	private static ScriptAccessParent function(String expr) {

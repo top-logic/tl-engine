@@ -4,7 +4,9 @@
  */
 package com.top_logic.model.search.rules;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.Logger;
@@ -25,19 +27,19 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.AccessParentDefinition;
 import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.OperationRestriction;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
 
 /**
  * {@link AccessParentDefinition} computing the access parent of an object by a TL-Script function.
  *
  * <p>
- * The function receives the object and yields its access parent. A result of exactly one object, or
- * a collection holding exactly one object, is the access parent. <code>null</code> or an empty
- * collection means that the object has no access parent and is therefore not accessible. Any other
- * result - several objects, a value that is no object, an object without access control of its own
- * like a transient object - and a failure of the function deny access, too, and are
- * logged as an error: the author of the function is responsible for it yielding at most one access
- * controlled object, also when it navigates a multi-valued reference.
+ * The function receives the object and yields its access parents: a single object or a collection
+ * of objects, each of them an access parent of its own. <code>null</code> or an empty collection
+ * means that the object has no access parent and is therefore not accessible; a <code>null</code>
+ * in a collection is ignored. A value that is no object and an object without access control of its
+ * own, like a transient object, is skipped and logged as an error, the other objects still being
+ * access parents. A failure of the function denies access and is logged as an error, too.
  * </p>
  *
  * <p>
@@ -62,7 +64,7 @@ public class ScriptAccessParent extends AbstractConfiguredInstance<ScriptAccessP
 		String EXPR = "expr";
 
 		/**
-		 * Function computing the access parent of the object it receives.
+		 * Function computing the access parents of the object it receives.
 		 */
 		@Name(EXPR)
 		@Mandatory
@@ -109,40 +111,64 @@ public class ScriptAccessParent extends AbstractConfiguredInstance<ScriptAccessP
 		return _function == null ? null : this;
 	}
 
+	/**
+	 * @return The first access parent the function yields.
+	 */
 	@Override
 	public TLObject resolve(TLObject object) {
+		List<TLObject> parents = parents(object);
+		return parents.isEmpty() ? null : parents.get(0);
+	}
+
+	/**
+	 * @return The access parents the function yields, computed when iterating.
+	 */
+	@Override
+	public Iterable<TLObject> resolveAll(TLObject object, BoundCommandGroup operation) {
+		if (!delegates(operation)) {
+			return List.of();
+		}
+		return () -> parents(object).iterator();
+	}
+
+	/**
+	 * Evaluates the function for the given object.
+	 *
+	 * @return The objects with access control of their own the function yields, empty when the
+	 *         function fails.
+	 */
+	private List<TLObject> parents(TLObject object) {
 		Object result;
 		try {
 			result = _function.execute(object);
 		} catch (RuntimeException ex) {
 			Logger.error("Access parent script failed for " + object + " of type " + object.tType()
 				+ ", access is denied: " + _source, ex, ScriptAccessParent.class);
-			return null;
+			return List.of();
 		}
 		if (result == null) {
-			return null;
+			return List.of();
 		}
-		Object single = result;
-		if (result instanceof Collection<?> collection) {
-			if (collection.isEmpty()) {
-				return null;
+		Collection<?> values = result instanceof Collection<?> collection ? collection : List.of(result);
+		List<TLObject> parents = new ArrayList<>(values.size());
+		for (Object value : values) {
+			if (value == null) {
+				continue;
 			}
-			single = collection.size() == 1 ? collection.iterator().next() : null;
+			if (value instanceof BoundObject parent) {
+				parents.add(parent);
+			} else if (value instanceof TLObject) {
+				// An object without access control of its own - a transient object, for instance -
+				// would open the object to every user, since nobody decides for it.
+				Logger.error("Access parent script yields an object without access control for " + object
+					+ " of type " + object.tType() + ", it is skipped: " + value + " (" + _source + ")",
+					ScriptAccessParent.class);
+			} else {
+				Logger.error("Access parent script yields a value that is no object for " + object + " of type "
+					+ object.tType() + ", it is skipped: " + value + " (" + _source + ")", ScriptAccessParent.class);
+			}
 		}
-		if (single instanceof BoundObject parent) {
-			return parent;
-		}
-		if (single instanceof TLObject) {
-			// An object without access control of its own - a transient object, for instance - would
-			// open the object to every user, since nobody decides for it.
-			Logger.error("Access parent script yields an object without access control for " + object
-				+ " of type " + object.tType() + ", access is denied: " + result + " (" + _source + ")",
-				ScriptAccessParent.class);
-			return null;
-		}
-		Logger.error("Access parent script yields no single object for " + object + " of type " + object.tType()
-			+ ", access is denied: " + result + " (" + _source + ")", ScriptAccessParent.class);
-		return null;
+		return parents;
 	}
 
 	/**

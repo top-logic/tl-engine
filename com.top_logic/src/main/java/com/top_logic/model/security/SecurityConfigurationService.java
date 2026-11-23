@@ -28,6 +28,7 @@ import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
@@ -1380,27 +1381,45 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 */
 	private AccessParentFunction resolveAccessParent(InstantiationContext context, TLClass type,
 			AccessParentConfig config, Map<TLClass, AccessParentFunction> explicitParents) {
-		AccessParentDefinition definition = context.getInstance(config.getDefinition());
-		if (definition == null) {
-			return null;
-		}
-		if (definition instanceof SelfAccessParent) {
+		if (!AccessParentConfig.delegates(config)) {
 			explicitParents.put(type, null);
 			return null;
 		}
-		AccessParentFunction function = definition.resolve(context, type);
+		AccessParentFunction function = resolveAccessParentDefinition(context, type, config.getDefinition());
 		if (function == null) {
 			return null;
 		}
-		if (AccessParentConfig.isRestricted(config)) {
-			Set<BoundCommandGroup> operations =
-				resolveDelegatedOperations(context, type, (OperationRestriction) config.getDefinition());
+		explicitParents.put(type, function);
+		return function;
+	}
+
+	/**
+	 * Resolves the given access parent definition of the given type, the definition configured for
+	 * the type as well as a candidate of a combining definition like {@link AnyOfAccessParent}.
+	 *
+	 * @return The relation of the definition, a {@link RestrictedRelation} when it is restricted to
+	 *         some operations; <code>null</code> for an unusable definition, which is reported, and
+	 *         for {@link SelfAccessParent}.
+	 *
+	 * @see AccessParentDefinition.CandidateResolver
+	 */
+	private AccessParentFunction resolveAccessParentDefinition(InstantiationContext context, TLClass type,
+			PolymorphicConfiguration<? extends AccessParentDefinition> config) {
+		AccessParentDefinition definition = context.getInstance(config);
+		if (definition == null) {
+			return null;
+		}
+		AccessParentFunction function = definition.resolveWith(context, type, this::resolveAccessParentDefinition);
+		if (function == null) {
+			return null;
+		}
+		if (config instanceof OperationRestriction restriction && !restriction.getOperations().isEmpty()) {
+			Set<BoundCommandGroup> operations = resolveDelegatedOperations(context, type, restriction);
 			if (operations == null) {
 				return null;
 			}
 			function = new RestrictedRelation(function, Set.copyOf(operations));
 		}
-		explicitParents.put(type, function);
 		return function;
 	}
 

@@ -4,6 +4,7 @@
  */
 package com.top_logic.model.security;
 
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -46,6 +47,31 @@ public record RestrictedRelation(AccessParentFunction relation, Set<BoundCommand
 	@Override
 	public TLObject resolve(TLObject object) {
 		return relation.resolve(object);
+	}
+
+	@Override
+	public Iterable<TLObject> resolveAll(TLObject object, BoundCommandGroup operation) {
+		return delegates(operation) ? relation.resolveAll(object, operation) : List.of();
+	}
+
+	@Override
+	public Iterable<TLObject> resolveDraft(TLObject draft, BoundCommandGroup operation) {
+		return delegates(operation) ? relation.resolveDraft(draft, operation) : List.of();
+	}
+
+	@Override
+	public boolean delegatesCreation() {
+		return delegates(SimpleBoundCommandGroup.CREATE) && relation.delegatesCreation();
+	}
+
+	@Override
+	public boolean allows(TLObject object, BoundCommandGroup operation, ParentCheck check) {
+		return delegates(operation) && relation.allows(object, operation, check);
+	}
+
+	@Override
+	public boolean isDisjunctive() {
+		return relation.isDisjunctive();
 	}
 
 	@Override

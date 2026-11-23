@@ -45,15 +45,29 @@ public class AccessParentReferenceOptions {
 	}
 
 	/**
-	 * The to-one references of the named type, which can be navigated forwards, see
+	 * The references of the named type, which can be navigated forwards, see
 	 * {@link TargetAccessParent}.
 	 */
-	public static class ToOneReferences extends Function1<Collection<TLReference>, String> {
+	public static class References extends Function1<Collection<TLReference>, String> {
 
 		@Override
 		public Collection<TLReference> apply(String typeName) {
 			TLClass type = type(typeName);
-			return type == null ? Collections.emptyList() : sorted(toOneReferences(type));
+			return type == null ? Collections.emptyList() : sorted(references(type));
+		}
+
+	}
+
+	/**
+	 * The references of the application model pointing to objects of the named type, which can be
+	 * navigated backwards, see {@link RefererAccessParent}.
+	 */
+	public static class Referers extends Function1<Collection<TLReference>, String> {
+
+		@Override
+		public Collection<TLReference> apply(String typeName) {
+			TLClass type = type(typeName);
+			return type == null ? Collections.emptyList() : sorted(referencesTo(type, false));
 		}
 
 	}
@@ -116,12 +130,12 @@ public class AccessParentReferenceOptions {
 	}
 
 	/**
-	 * The to-one references of the given type, which can be navigated forwards.
+	 * The references of the given type, which can be navigated forwards.
 	 */
-	private static List<TLReference> toOneReferences(TLClass type) {
+	private static List<TLReference> references(TLClass type) {
 		List<TLReference> result = new ArrayList<>();
 		for (TLStructuredTypePart part : type.getAllParts()) {
-			if (part instanceof TLReference reference && !reference.isMultiple()) {
+			if (part instanceof TLReference reference) {
 				result.add(reference);
 			}
 		}
@@ -132,10 +146,21 @@ public class AccessParentReferenceOptions {
 	 * The compositions holding objects of the given type, which can be navigated backwards.
 	 */
 	private static List<TLReference> compositions(TLClass type) {
+		return referencesTo(type, true);
+	}
+
+	/**
+	 * The references of the application model pointing to objects of the given type, which can be
+	 * navigated backwards.
+	 *
+	 * @param compositionsOnly
+	 *        Whether only compositions are wanted.
+	 */
+	private static List<TLReference> referencesTo(TLClass type, boolean compositionsOnly) {
 		List<TLReference> result = new ArrayList<>();
 		for (TLClass owner : TLModelUtil.getAllGlobalClasses(ModelService.getApplicationModel())) {
 			for (TLStructuredTypePart part : owner.getLocalParts()) {
-				if (part instanceof TLReference reference && reference.isComposite()
+				if (part instanceof TLReference reference && (!compositionsOnly || reference.isComposite())
 					&& TLModelUtil.isCompatibleType(reference.getType(), type)) {
 					result.add(reference);
 				}

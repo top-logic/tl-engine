@@ -4,12 +4,14 @@
  */
 package com.top_logic.model.security;
 
+import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
 
 /**
  * {@link AccessParentFunction} leading to the container of an object.
@@ -42,6 +44,19 @@ public record ContainerRelation(TLReference composition, boolean configured) imp
 			return null;
 		}
 		return object.tContainer();
+	}
+
+	/**
+	 * The container the transient object is created in, when the composition that will hold it is
+	 * not known yet.
+	 */
+	@Override
+	public Iterable<TLObject> resolveDraft(TLObject draft, BoundCommandGroup operation) {
+		if (!delegates(operation)) {
+			return List.of();
+		}
+		TLObject parent = draft.tContainerReference() == null ? draft.tContainer() : resolve(draft);
+		return parent == null ? List.of() : List.of(parent);
 	}
 
 	/**

@@ -50,7 +50,7 @@ public class ContainerAccessParent extends AbstractConfiguredInstance<ContainerA
 		@Nullable
 		@Options(fun = AccessParentReferenceOptions.Compositions.class, args = @Ref(steps = {
 			@Step(OWNER),
-			@Step(AccessParentConfig.RIGHTS),
+			@Step(value = AccessParentConfig.RIGHTS, type = AccessParentConfig.class),
 			@Step(TLClassAccessRights.NAME_ATTRIBUTE) }), mapping = TLModelPartRef.PartMapping.class)
 		@OptionLabels(TLPartInOwnerResourceProvider.class)
 		TLModelPartRef getReference();

@@ -43,7 +43,10 @@ import com.top_logic.ai.core.tools.ToolRegistry;
 import com.top_logic.ai.core.tools.authoring.AgentAuthoringTool;
 import com.top_logic.ai.core.tools.interaction.ListAgentsTool;
 import com.top_logic.ai.core.tools.script.TLScriptExecutor;
+import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -100,9 +103,12 @@ public class SecDemoStoredAgentAccessTest extends SecDemoPersonaTest {
 
 	private static final List<String> AGENTS =
 		List.of(ALPHA_AGENT, BETA_AGENT, LOOSE_AGENT, SHARED_AGENT, CONFIGURED_AGENT_OTHER_CASE,
-			BETA_AGENT.toUpperCase(), "secdemo-authored-agent");
+			SHARED_AGENT.toUpperCase(), "secdemo-authored-agent");
 
 	private static final List<String> SKILLS = List.of(ALPHA_SKILL, SHARED_SKILL, CONFIGURED_SKILL_OTHER_CASE);
+
+	/** The message of the name rule. */
+	private static final ResKey1 TAKEN = com.top_logic.ai.core.agent.I18NConstants.DUPLICATE_NAME_ERROR__NAME;
 
 	@Override
 	protected void setUp() throws Exception {
@@ -266,14 +272,14 @@ public class SecDemoStoredAgentAccessTest extends SecDemoPersonaTest {
 	}
 
 	/**
-	 * Names are global. Anna cannot take the name of a configured agent or skill, nor the name of
-	 * the agent of Beta, which she may not read.
+	 * Names are global. Anna cannot take the name of a configured agent or skill, and a project agent
+	 * cannot take the name of a stored agent of another type.
 	 */
 	public void testTheNameRule() {
 		actAs(ANNA);
-		assertRefused(() -> addAgentToAlpha(CONFIGURED_AGENT_OTHER_CASE));
-		assertRefused(() -> addAgentToAlpha(BETA_AGENT.toUpperCase()));
-		assertRefused(() -> {
+		assertRefusedAsTaken(() -> addAgentToAlpha(CONFIGURED_AGENT_OTHER_CASE));
+		assertRefusedAsTaken(() -> addAgentToAlpha(SHARED_AGENT.toUpperCase()));
+		assertRefusedAsTaken(() -> {
 			Skill skill = (Skill) newObject("pm:ProjectSkill");
 			skill.setName(CONFIGURED_SKILL_OTHER_CASE);
 			project(ALPHA).tAddByName("skills", skill);
@@ -285,15 +291,40 @@ public class SecDemoStoredAgentAccessTest extends SecDemoPersonaTest {
 		project(ALPHA).tAddByName("agents", projectAgent(name));
 	}
 
-	/** Runs the given change in a transaction of its own and expects the commit to be refused. */
-	private static void assertRefused(Runnable change) {
+	/**
+	 * Runs the given change in a transaction of its own and expects the commit to be refused by the
+	 * name rule, with its message: a refusal for another reason, for example by the unique index of
+	 * the database, does not count.
+	 */
+	private static void assertRefusedAsTaken(Runnable change) {
+		String expected = TAKEN.fill("").getKey();
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
 			change.run();
 			tx.commit();
-		} catch (RuntimeException expected) {
-			return;
+		} catch (RuntimeException ex) {
+			for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+				if (cause instanceof I18NFailure failure && mentions(failure.getErrorKey(), expected)) {
+					return;
+				}
+			}
+			throw new AssertionError("Refused for another reason than the name rule.", ex);
 		}
 		fail("The commit must be refused by the name rule.");
+	}
+
+	private static boolean mentions(ResKey key, String expected) {
+		if (key == null) {
+			return false;
+		}
+		if (key.hasKey() && expected.equals(key.getKey())) {
+			return true;
+		}
+		for (Object argument : key.arguments()) {
+			if (argument instanceof ResKey nested && mentions(nested, expected)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/** Asserts that the answer about the unreadable record is the answer about a name nothing has. */

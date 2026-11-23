@@ -29,6 +29,7 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 
+import io.modelcontextprotocol.spec.HttpHeaders;
 import io.modelcontextprotocol.spec.McpSchema;
 
 /**
@@ -37,13 +38,21 @@ import io.modelcontextprotocol.spec.McpSchema;
  *
  * <p>
  * A local HTTP server plays the MCP server: it answers MCP only at the path and query of the
- * configured <code>url</code> and answers 404 at each other request target. The client connects through
- * {@link McpClientConnection}, as {@link McpServerRegistry} does.
+ * configured <code>url</code> and answers 404 at each other request target. The client connects
+ * through {@link McpClientConnection}, as {@link McpServerRegistry} does.
+ * </p>
+ *
+ * <p>
+ * The fake server is not shared with the one of {@link TestHttpMcpTransportCredentials}, because
+ * that one checks the credentials and this one answers the tool requests and the end of the
+ * session.
  * </p>
  */
 public class TestHttpMcpTransportEndpoint extends TestCase {
 
 	private static final String TOOL = "echo";
+
+	private static final String SESSION = "session-1";
 
 	private static final Pattern ID = Pattern.compile("\"id\"\\s*:\\s*(\"[^\"]*\"|\\d+)");
 
@@ -53,11 +62,17 @@ public class TestHttpMcpTransportEndpoint extends TestCase {
 
 	private HttpServer _server;
 
-	/** The request target (path and query) at which the server answers MCP. */
-	private String _target;
+	/**
+	 * The request target (path and query) at which the server answers MCP.
+	 *
+	 * <p>
+	 * Read by the thread of the server.
+	 * </p>
+	 */
+	private volatile String _target;
 
-	/** The request targets of all received requests. */
-	private final List<String> _targets = new CopyOnWriteArrayList<>();
+	/** The HTTP method and the request target of each received request, e.g. "POST /mcp". */
+	private final List<String> _requests = new CopyOnWriteArrayList<>();
 
 	/** The JSON-RPC methods that the server got at {@link #_target}. */
 	private final List<String> _methods = new CopyOnWriteArrayList<>();
@@ -83,7 +98,9 @@ public class TestHttpMcpTransportEndpoint extends TestCase {
 		super.tearDown();
 	}
 
-	/** A server below a path other than <code>/mcp</code>, e.g. an application with a context path. */
+	/**
+	 * A server below a path other than <code>/mcp</code>, e.g. an application with a context path.
+	 */
 	public void testPathBelowContext() throws Exception {
 		assertServed("/app/mcp", "/app/mcp");
 	}
@@ -109,7 +126,8 @@ public class TestHttpMcpTransportEndpoint extends TestCase {
 	}
 
 	/**
-	 * Connects with a url that ends with the given part, lists the tools and calls one.
+	 * Connects with a url that ends with the given part, lists the tools, calls one and ends the
+	 * session.
 	 *
 	 * @param urlEnd
 	 *        The part of the url after the host and port.
@@ -120,21 +138,26 @@ public class TestHttpMcpTransportEndpoint extends TestCase {
 		_target = target;
 		McpClientConnection connection = new McpClientConnection("test", transport(urlEnd), 10);
 		try {
-			connection.connect();
+			try {
+				connection.connect();
+			} catch (RuntimeException ex) {
+				fail("No connection to " + target + ", the requests went to " + _requests + ": " + ex);
+			}
 			assertEquals(1, connection.tools().size());
 			McpSchema.CallToolResult result = connection.callTool(TOOL, Collections.emptyMap());
 			assertEquals("called", ((McpSchema.TextContent) result.content().get(0)).text());
-		} catch (RuntimeException ex) {
-			fail("No connection to " + target + ", the requests went to " + _targets + ": " + ex);
 		} finally {
 			connection.close();
 		}
 
-		for (String requestTarget : _targets) {
-			assertEquals(target, requestTarget);
+		for (String request : _requests) {
+			assertEquals(request, target, request.substring(request.indexOf(' ') + 1));
 		}
 		assertTrue("Methods at " + target + ": " + _methods,
 			_methods.containsAll(List.of("initialize", "tools/list", "tools/call")));
+		// The GET of the event stream is sent asynchronously, so only the end of the session is
+		// checked besides the POST requests.
+		assertTrue("Requests: " + _requests, _requests.contains("DELETE " + target));
 	}
 
 	private HttpMcpTransport transport(String urlEnd) throws ConfigurationException {
@@ -150,12 +173,17 @@ public class TestHttpMcpTransportEndpoint extends TestCase {
 	private void handle(HttpExchange exchange) throws IOException {
 		String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
 		String target = exchange.getRequestURI().toString();
-		_targets.add(target);
+		String httpMethod = exchange.getRequestMethod();
+		_requests.add(httpMethod + " " + target);
 		if (!target.equals(_target)) {
 			reply(exchange, HttpURLConnection.HTTP_NOT_FOUND, null);
 			return;
 		}
-		if (!"POST".equals(exchange.getRequestMethod())) {
+		if ("DELETE".equals(httpMethod)) {
+			reply(exchange, HttpURLConnection.HTTP_OK, null);
+			return;
+		}
+		if (!"POST".equals(httpMethod)) {
 			reply(exchange, HttpURLConnection.HTTP_BAD_METHOD, null);
 			return;
 		}
@@ -170,6 +198,9 @@ public class TestHttpMcpTransportEndpoint extends TestCase {
 			// A notification.
 			reply(exchange, HttpURLConnection.HTTP_ACCEPTED, null);
 			return;
+		}
+		if ("initialize".equals(method.group(1))) {
+			exchange.getResponseHeaders().set(HttpHeaders.MCP_SESSION_ID, SESSION);
 		}
 		reply(exchange, HttpURLConnection.HTTP_OK,
 			"{\"jsonrpc\":\"2.0\",\"id\":" + id.group(1) + "," + result(method.group(1), body) + "}");

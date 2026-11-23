@@ -156,9 +156,9 @@ public class HttpMcpTransport implements McpTransportConfig {
 					// credentials must not share a connection.
 					credentials = lastSucceeded.get();
 				}
-				// Limit: the stream of server messages (GET), which the library opens after the
-				// first answer of a session, keeps the headers of that call. After a rotation of the
-				// secret these headers can be stale.
+				// The stream of server messages (GET) carries the context of the initialize of its
+				// session: the library opens it once, right after the server accepted this
+				// initialize.
 				credentials.addTo(RequestAuthentication.of(request));
 			})
 			.authorizationErrorHandler(McpHttpClientTransportAuthorizationErrorHandler.fromSync(

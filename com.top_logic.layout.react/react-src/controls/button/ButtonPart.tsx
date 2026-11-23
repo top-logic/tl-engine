@@ -27,7 +27,8 @@ const ButtonPart: React.FC<ButtonPartProps> = (props) => {
   // A button showing no icon shows its label, also in icon-only mode.
   const showLabel = !iconOnly || !image;
   // Small applies to a button that shows its icon alone: asked for, or said by the container (a table row).
-  const smallIcon = iconOnly && !!image && (small === true || useButtonDefaults().small === true);
+  const defaults = useButtonDefaults();
+  const smallIcon = iconOnly && !!image && (small === true || defaults.small === true);
   // An entry of a menu is drawn by the menu, a button by the button.
   const block = appearance === 'menu-item' ? 'tl-menu' : 'tl-button';
 

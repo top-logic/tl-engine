@@ -21,7 +21,8 @@ const MenuTriggerPart: React.FC<MenuTriggerPartProps> = ({
   const iconOnly = children === undefined && !!icon;
   // A trigger opening on hover shows its surface at once; a tooltip beside it would say the same twice.
   const hover = attributes['data-tl-trigger'] === 'hover';
-  const smallIcon = iconOnly && (small === true || useButtonDefaults().small === true);
+  const defaults = useButtonDefaults();
+  const smallIcon = iconOnly && (small === true || defaults.small === true);
   let content: React.ReactNode;
   if (children !== undefined) {
     content = children;

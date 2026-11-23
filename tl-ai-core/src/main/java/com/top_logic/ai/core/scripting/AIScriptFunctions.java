@@ -208,6 +208,21 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	/** Key of the {@link #modelCatalogStatus()} map: why loading the remote catalog failed. */
 	public static final String CATALOG_FAILURE = "failure";
 
+	/** The TL-Script name of {@link #agentRunStatus(Object, boolean)}, for the log of a denial. */
+	private static final String RUN_STATUS_FUNCTION = "aiAgentRunStatus";
+
+	/** The TL-Script name of {@link #agentRunResult(Object, boolean)}, for the log of a denial. */
+	private static final String RUN_RESULT_FUNCTION = "aiAgentRunResult";
+
+	/** The TL-Script name of {@link #agentRunError(Object, boolean)}, for the log of a denial. */
+	private static final String RUN_ERROR_FUNCTION = "aiAgentRunError";
+
+	/** The TL-Script name of {@link #agentRunTranscript(Object, boolean)}, for the log of a denial. */
+	private static final String RUN_TRANSCRIPT_FUNCTION = "aiAgentRunTranscript";
+
+	/** The TL-Script name of {@link #agentRunCancel(Object, boolean)}, for the log of a denial. */
+	private static final String RUN_CANCEL_FUNCTION = "aiAgentRunCancel";
+
 	/**
 	 * Returns a list of all available model names from the {@link LLMProviderService}.
 	 *
@@ -960,7 +975,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *         status the current account may read.
 	 */
 	public static String agentRunStatus(Object handle, @UsesSecurity boolean usesSecurity) {
-		TLObject run = resolveRun(handle, usesSecurity, SimpleBoundCommandGroup.READ, "aiAgentRunStatus",
+		TLObject run = resolveRun(handle, usesSecurity, SimpleBoundCommandGroup.READ, RUN_STATUS_FUNCTION,
 			TlAiExecutionFactory.getStatusAgentExecutionAttr());
 		if (run instanceof AgentExecution execution) {
 			com.top_logic.model.TLClassifier status = execution.getStatus();
@@ -1020,7 +1035,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 */
 	public static String agentRunResult(Object handle, @UsesSecurity boolean usesSecurity) {
 		AgentExecution execution =
-			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.READ, "aiAgentRunResult",
+			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.READ, RUN_RESULT_FUNCTION,
 				TlAiExecutionFactory.getStatusAgentExecutionAttr(),
 				TlAiExecutionFactory.getResponseAgentExecutionAttr(),
 				TlAiExecutionFactory.getErrorMessageAgentExecutionAttr());
@@ -1075,7 +1090,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 */
 	public static String agentRunError(Object handle, @UsesSecurity boolean usesSecurity) {
 		AgentExecution execution =
-			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.READ, "aiAgentRunError",
+			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.READ, RUN_ERROR_FUNCTION,
 				TlAiExecutionFactory.getErrorMessageAgentExecutionAttr());
 		if (execution == null) {
 			return null;
@@ -1117,7 +1132,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 */
 	public static String agentRunTranscript(Object handle, @UsesSecurity boolean usesSecurity) {
 		AgentExecution execution =
-			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.READ, "aiAgentRunTranscript",
+			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.READ, RUN_TRANSCRIPT_FUNCTION,
 				TlAiExecutionFactory.getTranscriptAgentExecutionAttr());
 		if (execution == null) {
 			return null;
@@ -1163,7 +1178,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 */
 	public static boolean agentRunCancel(Object handle, @UsesSecurity boolean usesSecurity) {
 		AgentExecution execution =
-			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.WRITE, "aiAgentRunCancel",
+			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.WRITE, RUN_CANCEL_FUNCTION,
 				TlAiExecutionFactory.getCancelRequestedAgentExecutionAttr());
 		if (execution == null || !AgentExecutionStore.Module.INSTANCE.isActive()) {
 			return false;

@@ -18,7 +18,7 @@ import com.top_logic.table.FilterState;
 
 /**
  * A {@link ColumnFilter} matching a textual representation of the cell value against a
- * {@link TextFilterState} (substring or regular expression, case-sensitive or not, partial
+ * {@link TextFilterState} (in one of the {@link TextMatchMode}s, case-sensitive or not, partial
  * or whole-field) using {@link TextFilterState#matcher()}.
  *
  * @param <V>
@@ -32,7 +32,13 @@ public class TextColumnFilter<V> implements ColumnFilter<V> {
 	/** JSON key of {@link TextFilterState#caseSensitive()}. */
 	public static final String CASE_SENSITIVE = "caseSensitive";
 
-	/** JSON key of {@link TextFilterState#regexp()}. */
+	/** JSON key of {@link TextFilterState#mode()}, the name of a {@link TextMatchMode}. */
+	public static final String MODE = "mode";
+
+	/**
+	 * JSON key of a flag selecting {@link TextMatchMode#REGEXP} for a state that has no
+	 * {@link #MODE}.
+	 */
 	public static final String REGEXP = "regexp";
 
 	/** JSON key of {@link TextFilterState#wholeField()}. */
@@ -60,11 +66,6 @@ public class TextColumnFilter<V> implements ColumnFilter<V> {
 	}
 
 	@Override
-	public boolean supportsInversion() {
-		return true;
-	}
-
-	@Override
 	public Object toJson(FilterState state) {
 		return textToJson((TextFilterState) state);
 	}
@@ -76,7 +77,7 @@ public class TextColumnFilter<V> implements ColumnFilter<V> {
 
 	/**
 	 * Serializes a {@link TextFilterState} into a JSON value map with the keys
-	 * {@link #PATTERN}, {@link #CASE_SENSITIVE}, {@link #REGEXP} and {@link #WHOLE_FIELD}.
+	 * {@link #PATTERN}, {@link #CASE_SENSITIVE}, {@link #MODE} and {@link #WHOLE_FIELD}.
 	 *
 	 * <p>
 	 * This is the single definition of the JSON shape of a text pattern, shared by the column
@@ -87,7 +88,7 @@ public class TextColumnFilter<V> implements ColumnFilter<V> {
 		Map<String, Object> json = new LinkedHashMap<>();
 		json.put(PATTERN, state.pattern());
 		json.put(CASE_SENSITIVE, Boolean.valueOf(state.caseSensitive()));
-		json.put(REGEXP, Boolean.valueOf(state.regexp()));
+		json.put(MODE, state.mode().name());
 		json.put(WHOLE_FIELD, Boolean.valueOf(state.wholeField()));
 		return json;
 	}
@@ -96,6 +97,12 @@ public class TextColumnFilter<V> implements ColumnFilter<V> {
 	 * The {@link TextFilterState} of a {@link #textToJson(TextFilterState) serialized} JSON
 	 * value, or {@code null} if the value is no such serialization (anything but a map, or a
 	 * map holding no {@link #PATTERN}).
+	 *
+	 * <p>
+	 * A map without a {@link #MODE} - or with a mode no {@link TextMatchMode} has - is read in
+	 * {@link TextMatchMode#REGEXP} mode if its {@link #REGEXP} flag is set, and in
+	 * {@link TextMatchMode#CONTAINS} mode otherwise.
+	 * </p>
 	 */
 	public static TextFilterState textFromJson(Object json) {
 		if (!(json instanceof Map<?, ?> map)) {
@@ -105,8 +112,20 @@ public class TextColumnFilter<V> implements ColumnFilter<V> {
 		if (pattern == null) {
 			return null;
 		}
-		return new TextFilterState(String.valueOf(pattern), bool(map.get(CASE_SENSITIVE)), bool(map.get(REGEXP)),
+		return new TextFilterState(String.valueOf(pattern), bool(map.get(CASE_SENSITIVE)), mode(map),
 			bool(map.get(WHOLE_FIELD)));
+	}
+
+	private static TextMatchMode mode(Map<?, ?> map) {
+		Object mode = map.get(MODE);
+		if (mode != null) {
+			try {
+				return TextMatchMode.valueOf(String.valueOf(mode));
+			} catch (IllegalArgumentException ex) {
+				// No mode of this version, read as if no mode were given.
+			}
+		}
+		return bool(map.get(REGEXP)) ? TextMatchMode.REGEXP : TextMatchMode.CONTAINS;
 	}
 
 	private static boolean bool(Object value) {

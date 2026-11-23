@@ -474,6 +474,27 @@ public interface ModelAccessRights {
 	boolean hasGrant(TLClass type, TLStructuredTypePart attribute, BoundCommandGroup commandGroup);
 
 	/**
+	 * The names of the attributes of objects of the given type that a person may read who holds
+	 * {@link SimpleBoundCommandGroup#DISCOVER} on the object.
+	 *
+	 * <p>
+	 * A discover attribute with a read grant of its own (see
+	 * {@link #hasGrant(TLClass, TLStructuredTypePart, BoundCommandGroup)}) is decided by that grant
+	 * instead.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type of the objects.
+	 * @return The names of the discover attributes in effect for the given type, never
+	 *         <code>null</code>.
+	 *
+	 * @implSpec Without access control configuration, no type has discover attributes.
+	 */
+	default Set<String> getDiscoverAttributes(TLClass type) {
+		return Collections.emptySet();
+	}
+
+	/**
 	 * Checks whether the given person can perform the given command group on the given attribute
 	 * of the given object to be created.
 	 *
@@ -602,7 +623,8 @@ public interface ModelAccessRights {
 	 *
 	 * <p>
 	 * A discoverable object appears in references, enumerations and option lists and shows its
-	 * label; its attributes are readable only by their own read right. A person holds
+	 * label; its attributes are readable only by their own read right, except the
+	 * {@link #getDiscoverAttributes(TLClass) discover attributes} of its type. A person holds
 	 * {@link SimpleBoundCommandGroup#DISCOVER} on an object if they hold a role on it that is granted
 	 * {@link SimpleBoundCommandGroup#DISCOVER}, any other operation on the object's type, any right on
 	 * one of its attributes, or the right to create objects in one of its compositions.
@@ -635,9 +657,25 @@ public interface ModelAccessRights {
 	 * </p>
 	 *
 	 * <p>
+	 * Every person may perform {@link SimpleBoundCommandGroup#DISCOVER} and
+	 * {@link SimpleBoundCommandGroup#READ} on every attribute of a {@link TLModelPart model element}
+	 * that is not deleted, like on the element itself (see
+	 * {@link #isAllowed(Person, TLObject, BoundCommandGroup)}): a script may e.g. read the target
+	 * type of a reference or whether an attribute is multiple. Modifying an attribute of a model
+	 * element is checked like for any other object.
+	 * </p>
+	 *
+	 * <p>
 	 * The attribute rights applying are those of the type of the given instance for the name of
 	 * the given attribute: the most specific attribute rights configured on the way from that type
 	 * to its generalizations.
+	 * </p>
+	 *
+	 * <p>
+	 * An attribute with attribute rights for the given command group is decided by them. Otherwise,
+	 * reading one of the {@link #getDiscoverAttributes(TLClass) discover attributes} of the type
+	 * requires {@link SimpleBoundCommandGroup#DISCOVER} on the instance, and any other access the
+	 * command group on the instance.
 	 * </p>
 	 *
 	 * <p>

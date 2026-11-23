@@ -466,6 +466,28 @@ public class TestCompactField extends TestCase {
 	}
 
 	/**
+	 * A field that may be edited and requires a value carries the state word
+	 * <code>required</code>, following the mandatory flag and the editability.
+	 */
+	public void testRequiredFollowsMandatory() {
+		AbstractFieldModel model = new AbstractFieldModel("A");
+		ReactCompactFieldControl compact = compactText(model, FieldControlRegistry.TEXT);
+		assertTrue(compact.stateAsJSON().contains("\"stateWords\":\"edit\""));
+
+		model.setMandatory(true);
+		assertTrue(compact.stateAsJSON().contains("\"stateWords\":\"edit required\""));
+
+		model.setEditable(false);
+		assertFalse(compact.stateAsJSON().contains("required"));
+
+		model.setEditable(true);
+		assertTrue(compact.stateAsJSON().contains("\"stateWords\":\"edit required\""));
+
+		model.setMandatory(false);
+		assertTrue(compact.stateAsJSON().contains("\"stateWords\":\"edit\""));
+	}
+
+	/**
 	 * An empty field that may be edited is an input field whose preview, empty as it is, comes
 	 * first and takes the free width, the button after it at the end of the field.
 	 */

@@ -541,6 +541,15 @@
 						<generalization type="Named"/>
 					</generalizations>
 				</class>
+				<!-- A Named type with discover attributes, see TestDiscoverAttributesPolicy. -->
+				<class name="DiscoverNamed">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="Named"/>
+					</generalizations>
+				</class>
 			</types>
 		</module>
 	</modules>

@@ -27,6 +27,8 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.gui.ThemeFactory;
+import com.top_logic.knowledge.service.I18NConstants;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -44,7 +46,10 @@ import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLPrimitive;
+import com.top_logic.model.builtin.TLCore;
 import com.top_logic.model.search.expr.config.SearchBuilder;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.ColumnOption;
 import com.top_logic.table.ColumnView;
 import com.top_logic.table.TableView;
@@ -74,6 +79,9 @@ public class TestTableTypesExpr extends AbstractModelAccessTest {
 
 	/** Name of a concrete {@link #DELIVERABLE}. */
 	private static final String PLAN = "Plan";
+
+	/** Name of a type a test creates and deletes again. */
+	private static final String DELETED = "Deleted";
 
 	private ReactContext _reactContext;
 
@@ -243,6 +251,56 @@ public class TestTableTypesExpr extends AbstractModelAccessTest {
 		assertContains(TableElement.Config.CREATE_TYPE_EXPR, errors(TABLE,
 			"<table inputs='type' create-type='" + qualified(TASK) + "' create-type-expr='$type' rows='[]'"
 				+ " row-edit='ALL'/>"));
+	}
+
+	/**
+	 * A row-editing table whose computed type is deleted while the table is displayed builds itself
+	 * again without an error, with neither data columns nor rows.
+	 */
+	public void testDeletedComputedType() throws Exception {
+		becomeUser(_root);
+		TLClass deleted = createType(DELETED);
+		try {
+			TableElement element = table("<table inputs='type' types-expr='$type' rows='[]' row-edit='ALL'/>");
+			_type.set(deleted);
+			FormControl form = new FormControl(_reactContext, _project, "no model", NoTokenHandling.INSTANCE);
+			_context.setFormModel(form);
+			RowSetTableControl control = (RowSetTableControl) element.createControl(_context);
+			assertTrue(form.enterEditMode());
+			assertEquals("A valid type derives the columns.", List.of(NAME),
+				shown(control.getTableControl().getView()));
+
+			deleteType(deleted);
+			form.leaveEditMode();
+
+			assertEquals("A deleted type derives no columns.", List.of(),
+				shown(control.getTableControl().getView()));
+			assertEquals("The rows of a deleted type are gone.", 0,
+				control.getTableControl().getView().rowCount());
+		} finally {
+			if (deleted.tValid()) {
+				deleteType(deleted);
+			}
+		}
+	}
+
+	/**
+	 * Creates a type with the given name and a text attribute {@link #NAME} in the test module.
+	 */
+	private static TLClass createType(String name) throws Exception {
+		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			TLClass result = TLModelUtil.addClass(type(TASK).getModule(), name);
+			TLModelUtil.addProperty(result, NAME, TLCore.getPrimitiveType(model(), TLPrimitive.Kind.STRING));
+			tx.commit();
+			return result;
+		}
+	}
+
+	private static void deleteType(TLClass type) throws Exception {
+		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			TLModelUtil.deleteRecursive(type);
+			tx.commit();
+		}
 	}
 
 	/**

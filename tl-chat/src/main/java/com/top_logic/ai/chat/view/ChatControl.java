@@ -615,7 +615,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			return reply.setOpened(false);
 		}
 		TaskProgressTracker tracker = _binding.tracker();
-		boolean opened = tracker.getSessionManager().switchSession(id, person);
+		boolean opened = tracker.adoptActiveSessionId(id, person);
 		reply.setOpened(opened);
 		if (opened) {
 			reply.setRunState(RunStateFrame.of(tracker, person));
@@ -753,7 +753,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		}
 		boolean sent = false;
 		try {
-			if (!tracker.setActiveSessionId(sessionId, person)) {
+			if (!tracker.adoptActiveSessionId(sessionId, person)) {
 				return status(STATUS_NOT_FOUND);
 			}
 			ChatSendReply reply = sendInto(tracker, person, sessionId, message, attached, shown, args, fromTurn);
@@ -856,7 +856,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		// Switches the conversation to the chat, as a send does: it starts a run, and a run is sent
 		// into the chat the conversation shows. The regenerate button sits under an answer of the chat
 		// on screen, so this is the chat it shows already.
-		tracker.setActiveSessionId(sessionId, person);
+		tracker.adoptActiveSessionId(sessionId, person);
 		if (tracker.hasActiveProcessingState()) {
 			return status(STATUS_BUSY);
 		}

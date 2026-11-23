@@ -5,6 +5,7 @@
  */
 package com.top_logic.table.impl;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.top_logic.basic.util.ResKey;
@@ -95,6 +96,11 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 	}
 
 	@Override
+	public List<ColumnFilter<V>> filters() {
+		return _inner.filters();
+	}
+
+	@Override
 	public Optional<ColumnFilter<V>> filter() {
 		return _inner.filter();
 	}
@@ -127,6 +133,11 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 	@Override
 	public boolean pinnedEnd() {
 		return _inner.pinnedEnd();
+	}
+
+	@Override
+	public boolean required() {
+		return _inner.required();
 	}
 
 	@Override

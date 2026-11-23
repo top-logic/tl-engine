@@ -54,8 +54,9 @@ The unit is displayed as the check decides for the current user (`UnitAccess`, m
 - **Content** - the operation is allowed on every checked object.
 
 The decision follows the inputs: it is made again when an input channel takes a new value, and when an
-object an input holds is changed. Content that is no longer allowed is retired after the channel
-notification has unwound (`ContentControls.retire`); a content allowed again is built anew. A
+object an input holds is changed. Content that is no longer allowed is disposed at once, so that the
+channel notification in progress does not reach it anymore (`ContentControls.retire`); a content
+allowed again is built anew. A
 sidebar `<group>` or `<section>` with an `<access-control>` applies its check to the content of every `<nav-item>` in it, in
 addition to the check of the item itself.
 

@@ -183,6 +183,15 @@
 							roles="TestViewModelAccess.NameReader"
 						/>
 					</class>
+					<!-- NameKeeper may discover a DiscoverNamed and thereby read its name. -->
+					<class name="TestViewModelAccess:DiscoverNamed"
+						discover-attributes="name"
+					>
+						<grant
+							operation="Discover"
+							roles="TestViewModelAccess.NameKeeper"
+						/>
+					</class>
 					<part name="TestViewModelAccess:Foo#name">
 						<!-- Applies to Foo only, not to Bar sharing the attribute definition. -->
 						<grant

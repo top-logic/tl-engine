@@ -388,6 +388,15 @@
 							roles="TestTLScriptSecurity.NameReader"
 						/>
 					</class>
+					<!-- NameKeeper may discover a DiscoverNamed and thereby read its name and related objects. -->
+					<class name="TestTLScriptSecurity:DiscoverNamed"
+						discover-attributes="name,related"
+					>
+						<grant
+							operation="Discover"
+							roles="TestTLScriptSecurity.NameKeeper"
+						/>
+					</class>
 					<!-- Foo overrides name: the rights apply to Foo, not to the other types sharing the definition. -->
 					<part name="TestTLScriptSecurity:Foo#name">
 						<grant

@@ -435,7 +435,9 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 			parts.add(resources.getString(I18NConstants.GRANTS_IMPLIED_BY_ATTRIBUTES__OPERATION_ATTRIBUTES
 				.fill(resources.getString(labelKey(entry.getKey())), attributes)));
 		}
-		if (!cell.restricted()) {
+		if (cell.discoverReadable()) {
+			parts.add(resources.getString(I18NConstants.GRANTS_DISCOVER_ATTRIBUTE));
+		} else if (!cell.restricted()) {
 			parts.add(resources.getString(I18NConstants.GRANTS_UNRESTRICTED));
 		}
 		if (cell.pending()) {

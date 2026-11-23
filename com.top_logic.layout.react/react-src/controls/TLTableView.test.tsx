@@ -226,6 +226,30 @@ describe('a table whose rows are not all edited', () => {
   });
 });
 
+describe('the heading of a column that requires a value', () => {
+  const REQUIRED = '.tl-table__required';
+
+  it('shows the required mark, hidden from assistive technology, in a sortable and in a plain heading', () => {
+    mountTable({
+      columns: [
+        { name: COL_NAME, label: 'Name', width: 100, sortable: true, required: true },
+        { name: COL_INFO, label: 'Info', width: 100, sortable: false, required: true },
+      ],
+    });
+
+    const marks = document.querySelectorAll(REQUIRED);
+    expect(marks).toHaveLength(2);
+    marks.forEach(mark => expect(mark.getAttribute('aria-hidden')).toBe('true'));
+    expect(document.querySelector('.tl-table__sort ' + REQUIRED)).not.toBeNull();
+  });
+
+  it('shows no mark for a column that does not require a value', () => {
+    mountTable({});
+
+    expect(document.querySelector(REQUIRED)).toBeNull();
+  });
+});
+
 describe('a table whose rows in the visible window are not all sent', () => {
   it('draws the missing rows as text skeletons and marks the grid busy', async () => {
     // jsdom lays nothing out: the body shows five rows of the fallback row height (36px).

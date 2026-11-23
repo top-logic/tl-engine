@@ -119,13 +119,18 @@ public class TypeGrants {
 	 * @param pending
 	 *        Whether the stored rules change the state in effect, so that the state shown takes
 	 *        effect only when the stored definition is applied.
+	 * @param discoverReadable
+	 *        Whether the cell reads a {@link ModelAccessRights#getDiscoverAttributes(TLClass)
+	 *        discover attribute} of the type that is not restricted: not the type, but its grant of
+	 *        {@link SimpleBoundCommandGroup#DISCOVER} decides who may read it.
 	 */
 	public record Cell(boolean applies, boolean restricted, boolean granted, Set<BoundCommandGroup> impliedBy,
-			Map<BoundCommandGroup, List<TLStructuredTypePart>> impliedByAttributes, boolean pending) {
+			Map<BoundCommandGroup, List<TLStructuredTypePart>> impliedByAttributes, boolean pending,
+			boolean discoverReadable) {
 
 		/** The {@link Cell} of an operation that cannot be granted in a row. */
 		public static final Cell NOT_APPLICABLE =
-			new Cell(false, false, false, Collections.emptySet(), Collections.emptyMap(), false);
+			new Cell(false, false, false, Collections.emptySet(), Collections.emptyMap(), false, false);
 
 		/**
 		 * Whether the grant can be changed in its row.
@@ -452,7 +457,7 @@ public class TypeGrants {
 		boolean granted = direct || !impliedBy.isEmpty() || !impliedByAttributes.isEmpty();
 		boolean effective = _rights.getAllowedRoles(_type, operation).contains(role);
 		return new Cell(true, true, granted, Collections.unmodifiableSet(impliedBy),
-			Collections.unmodifiableMap(impliedByAttributes), granted != effective);
+			Collections.unmodifiableMap(impliedByAttributes), granted != effective, false);
 	}
 
 	/**
@@ -507,7 +512,10 @@ public class TypeGrants {
 		boolean granted = restricted && stored.contains(role);
 		boolean pending = !Objects.equals(effective == null ? null : effective.contains(role),
 			stored == null ? null : stored.contains(role));
-		return new Cell(true, restricted, granted, Collections.emptySet(), Collections.emptyMap(), pending);
+		boolean discoverReadable = !restricted && SimpleBoundCommandGroup.READ.equals(operation)
+			&& _rights.getDiscoverAttributes(_type).contains(attribute.getName());
+		return new Cell(true, restricted, granted, Collections.emptySet(), Collections.emptyMap(), pending,
+			discoverReadable);
 	}
 
 	/**

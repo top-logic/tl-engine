@@ -71,8 +71,14 @@ export const ICON_SORT_DESC = 'css:fa-solid fa-arrow-down';
 /** A column filter. */
 export const ICON_FILTER = 'css:fa-solid fa-filter';
 
-/** The column selection of a table. */
+/** The gear of a table, opening its view and column selection. */
 export const ICON_COLUMNS = 'css:fa-solid fa-gear';
+
+/** The entry choosing and ordering the columns of a table. */
+export const ICON_CHOOSE_COLUMNS = 'css:fa-solid fa-table-columns';
+
+/** An entry resetting something to how it is defined (the view of a table). */
+export const ICON_RESET = 'css:fa-solid fa-arrow-rotate-left';
 
 /** Saving the current criteria under a name. */
 export const ICON_SAVE = 'css:fa-regular fa-bookmark';

@@ -86,6 +86,12 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 		/**
 		 * The public base URL of the application, e.g. {@code https://example.com/app}, for the agent
 		 * cards. Empty: taken from the request that fetches the card.
+		 *
+		 * <p>
+		 * Set it behind a proxy that ends TLS, unless the servlet container applies the forwarding
+		 * headers of the proxy. Otherwise the cards name http addresses, and a caller that reads a card
+		 * over https refuses them.
+		 * </p>
 		 */
 		@Name("public-url")
 		@Nullable
@@ -270,10 +276,35 @@ public class A2AService extends ConfiguredManagedClass<A2AService.Config<?>> {
 
 		/**
 		 * The URL of the remote agent card.
+		 *
+		 * <p>
+		 * The card is read without credentials. The calls to the agent, with its credentials and the
+		 * messages, go only to the origin (scheme, host and port) of this URL and to the
+		 * {@link #getEndpointOrigins() endpoint origins}. An address of the card at another origin
+		 * ends the call, and no request is sent. Use https: an http URL to a host that is not a
+		 * loopback host gives a warning at the start.
+		 * </p>
 		 */
 		@Name("card-url")
 		@Mandatory
 		String getCardUrl();
+
+		/**
+		 * More origins that the card may name for the calls to the remote agent, besides the origin
+		 * of the {@link #getCardUrl() card URL}.
+		 *
+		 * <p>
+		 * For a card on the address of a domain and an agent on another host, as the A2A protocol
+		 * permits. The calls to these origins carry the {@link #getCredentials() credentials} and
+		 * the messages, so name only origins of the remote application. An origin is
+		 * {@code http://host} or {@code https://host[:port]}, with no path, query, fragment or user
+		 * info, e.g. {@code https://agents.example.com}. Separate more than one with commas. Empty:
+		 * only the origin of the card URL.
+		 * </p>
+		 */
+		@Name("endpoint-origins")
+		@Format(CommaSeparatedStrings.class)
+		List<String> getEndpointOrigins();
 
 		/** Configuration property name for {@link #getCredentials()}. */
 		String CREDENTIALS = "credentials";

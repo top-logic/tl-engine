@@ -20,6 +20,7 @@ import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.ColumnFilterState;
 import com.top_logic.table.ColumnOption;
 import com.top_logic.table.ColumnView;
 import com.top_logic.table.FilterCodec;
@@ -30,7 +31,6 @@ import com.top_logic.table.GroupSpec;
 import com.top_logic.table.MatchCounts;
 import com.top_logic.table.NamedFilter;
 import com.top_logic.table.NamedFilterStore;
-import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowHierarchy;
 import com.top_logic.table.RowKind;
@@ -63,7 +63,10 @@ public class DefaultTableView<R> implements TableView<R> {
 	/** JSON key of a column's inner {@link FilterState}, see {@link #filterCodec()}. */
 	private static final String STATE = "state";
 
-	/** JSON key marking a column's filter as {@link NegatedFilterState inverted}. */
+	/** JSON key of the {@link ColumnFilterState#kind() kind of filter} a column's filter state is of. */
+	private static final String KIND = "kind";
+
+	/** JSON key marking a column's filter as {@link ColumnFilterState#inverted() inverted}. */
 	private static final String INVERTED = "inverted";
 
 	private final Map<String, Column<R, ?>> _columns = new LinkedHashMap<>();
@@ -383,6 +386,7 @@ public class DefaultTableView<R> implements TableView<R> {
 				column.filter().isPresent(),
 				frozen,
 				column.pinnedEnd(),
+				column.required(),
 				column.alignment(),
 				column.cssClass(),
 				column.aggregate().isPresent(),
@@ -865,14 +869,19 @@ public class DefaultTableView<R> implements TableView<R> {
 	}
 
 	@Override
-	public ColumnFilter<?> columnFilter(String column) {
+	public List<? extends ColumnFilter<?>> columnFilters(String column) {
 		Column<R, ?> definition = _columns.get(column);
-		return definition == null ? null : definition.filter().orElse(null);
+		return definition == null ? List.of() : definition.filters();
 	}
 
 	@Override
 	public MatchCounts columnMatchCounts(String column) {
 		return _source.matchCounts(column);
+	}
+
+	@Override
+	public MatchCounts columnMatchCounts(String column, String kind) {
+		return _source.matchCounts(column, kind);
 	}
 
 	/**
@@ -1136,7 +1145,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		Map<String, FilterState> result = new LinkedHashMap<>();
 		for (Map.Entry<String, FilterState> entry : filter.filters().entrySet()) {
 			Column<R, ?> column = _columns.get(entry.getKey());
-			if (column != null && column.filter().isPresent()) {
+			if (column != null && column.filter(ColumnFilterState.kindOf(entry.getValue())).isPresent()) {
 				result.put(entry.getKey(), entry.getValue());
 			}
 		}
@@ -1155,6 +1164,11 @@ public class DefaultTableView<R> implements TableView<R> {
 	@Override
 	public int matchCount(NamedFilter filter) {
 		return _source.matchCount(filterSpec(applicableCriteria(filter), filter.search()));
+	}
+
+	@Override
+	public boolean isPersonalized() {
+		return _store != null && _id != null;
 	}
 
 	@Override
@@ -1436,6 +1450,9 @@ public class DefaultTableView<R> implements TableView<R> {
 		_state.setFrozenCount(defaults.getFrozenCount());
 		_state.setSort(defaults.getSort());
 		_state.setGrouping(defaults.getGrouping());
+		_state.setDensity(defaults.getDensity());
+		_state.setStriped(defaults.isStriped());
+		_state.setColumnLines(defaults.isColumnLines());
 		fitArrangement();
 		searchScopeChanged();
 		pushOrder();
@@ -1443,6 +1460,16 @@ public class DefaultTableView<R> implements TableView<R> {
 		_source.withGrouping(effectiveGrouping());
 		persist();
 		fireColumnsChanged();
+	}
+
+	@Override
+	public void setViewOptions(String density, boolean striped, boolean columnLines) {
+		// A density this version does not know is the default, as when it is read back.
+		boolean known = TableViewState.DENSITY_NORMAL.equals(density) || TableViewState.DENSITY_COMPACT.equals(density);
+		_state.setDensity(known ? density : TableViewState.DENSITY_DEFAULT);
+		_state.setStriped(striped);
+		_state.setColumnLines(columnLines);
+		persist();
 	}
 
 	/**
@@ -1598,7 +1625,7 @@ public class DefaultTableView<R> implements TableView<R> {
 
 		for (Map.Entry<String, FilterState> entry : persisted.getFilters().entrySet()) {
 			Column<R, ?> column = _columns.get(entry.getKey());
-			if (column != null && column.filter().isPresent()) {
+			if (column != null && column.filter(ColumnFilterState.kindOf(entry.getValue())).isPresent()) {
 				_state.getFilters().put(entry.getKey(), entry.getValue());
 			}
 		}
@@ -1607,6 +1634,10 @@ public class DefaultTableView<R> implements TableView<R> {
 		if (search != null && !search.isEmpty()) {
 			_state.setSearch(search);
 		}
+
+		_state.setDensity(persisted.getDensity());
+		_state.setStriped(persisted.isStriped());
+		_state.setColumnLines(persisted.isColumnLines());
 
 		if (!_state.getFilters().isEmpty() || _state.getSearch() != null) {
 			applyFilter();
@@ -1645,27 +1676,41 @@ public class DefaultTableView<R> implements TableView<R> {
 	}
 
 	/**
-	 * A {@link FilterCodec} bridging this view's columns: it delegates a column's inner state to its
-	 * {@link ColumnFilter#toJson(FilterState) filter} and handles {@link NegatedFilterState
-	 * inversion} generically.
+	 * A {@link FilterCodec} bridging this view's columns: it delegates a column's inner state to the
+	 * {@link ColumnFilter#toJson(FilterState) filter} of its kind and stores the
+	 * {@link ColumnFilterState#kind() kind} and the {@link ColumnFilterState#inverted() inversion}
+	 * generically.
+	 *
+	 * <p>
+	 * A stored state without {@link #KIND} - the form a state of a column with a single kind of
+	 * filter was stored in - is read by the kinds of filter of the column in their order: the
+	 * first kind whose {@link ColumnFilter#fromJson(Object)} accepts it is the kind of the restored
+	 * state. A state naming a kind the column does not have is not restored.
+	 * </p>
 	 */
 	private FilterCodec filterCodec() {
 		return new FilterCodec() {
 			@Override
 			public Object toJson(String column, FilterState state) {
-				ColumnFilter<?> filter = columnFilter(column);
+				Column<R, ?> definition = _columns.get(column);
+				if (definition == null) {
+					return null;
+				}
+				String kind = ColumnFilterState.kindOf(state);
+				ColumnFilter<?> filter = definition.filter(kind).orElse(null);
 				if (filter == null) {
 					return null;
 				}
-				boolean inverted = state instanceof NegatedFilterState;
-				FilterState inner = inverted ? ((NegatedFilterState) state).inner() : state;
-				Object innerJson = filter.toJson(inner);
+				Object innerJson = filter.toJson(ColumnFilterState.innerOf(state));
 				if (innerJson == null) {
 					return null;
 				}
 				Map<String, Object> result = new LinkedHashMap<>();
+				if (kind != null) {
+					result.put(KIND, kind);
+				}
 				result.put(STATE, innerJson);
-				if (inverted) {
+				if (ColumnFilterState.isInverted(state)) {
 					result.put(INVERTED, Boolean.TRUE);
 				}
 				return result;
@@ -1673,15 +1718,33 @@ public class DefaultTableView<R> implements TableView<R> {
 
 			@Override
 			public FilterState fromJson(String column, Object json) {
-				ColumnFilter<?> filter = columnFilter(column);
-				if (filter == null || !(json instanceof Map<?, ?> map)) {
+				Column<R, ?> definition = _columns.get(column);
+				if (definition == null || !(json instanceof Map<?, ?> map)) {
+					return null;
+				}
+				boolean inverted = Boolean.TRUE.equals(map.get(INVERTED));
+				Object storedKind = map.get(KIND);
+				if (storedKind == null) {
+					// A state stored without its kind is one of the kinds the column offers: the first
+					// one, in the column's order, that can read it.
+					for (ColumnFilter<?> filter : definition.filters()) {
+						FilterState inner = filter.fromJson(map.get(STATE));
+						if (inner != null) {
+							return ColumnFilterState.of(definition.filters(), filter.kind(), inner, inverted);
+						}
+					}
+					return null;
+				}
+				String kind = String.valueOf(storedKind);
+				ColumnFilter<?> filter = definition.filter(kind).orElse(null);
+				if (filter == null) {
 					return null;
 				}
 				FilterState inner = filter.fromJson(map.get(STATE));
 				if (inner == null) {
 					return null;
 				}
-				return Boolean.TRUE.equals(map.get(INVERTED)) ? new NegatedFilterState(inner) : inner;
+				return ColumnFilterState.of(definition.filters(), kind, inner, inverted);
 			}
 		};
 	}

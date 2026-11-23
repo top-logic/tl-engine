@@ -188,6 +188,7 @@ const MODIFIERS = {
   'tl-fill': new Set([]), // layout.css, table.css
   'tl-region': new Set([]), // layout.css, tabs.css, dialog.css
   'tl-reveal-on-hover': new Set([]), // layout.css
+  'tl-table-view-options': new Set([]), // table.css
 };
 
 // Punkt 11b: Die Modifier eines Elements (block__element--modifier) sind ebenso entschieden. Ein Element ohne
@@ -206,6 +207,9 @@ const ELEMENT_MODIFIERS = {
 };
 
 // Die einzige Ausnahme vom Ring: der Behälter mit virtuellem Cursor, nur in base.css (Spec 3b §3).
+// Auf dem Handy bekommen Felder 16 px Schrift, sonst zoomt iOS-Safari beim Antippen hinein (Ticket 30477): die einzige
+// Schriftgröße in base.css außerhalb einer Typo-Klasse, weil sie jedes Feld treffen muss, gleich welche Klasse es trägt.
+const FIELD_TOUCH = ':is(input, textarea, select, [contenteditable]:not([contenteditable="false"]), .tl-field)';
 const CURSOR_CONTAINER = ':where(:not(input, textarea, [role="combobox"])[aria-activedescendant]):focus-visible';
 
 export function knownVariables(css) {
@@ -225,7 +229,8 @@ export function lint(css, { known, file, base = new Set() }) {
   const say = (d, msg) => out.push(`${file}:${d.line} ${d.selector} { ${d.property} } — ${msg}`);
   for (const d of declarations(css)) {
     const sel = d.selector;
-    const isTypeClass = TYPE_FILES.test(file) && TYPE_SELECTOR.test(sel);
+    const isTypeClass = TYPE_FILES.test(file) && TYPE_SELECTOR.test(sel)
+      || (file === 'base.css' && sel.trim() === FIELD_TOUCH && d.property === 'font-size');
 
     // Punkt 2: Fallback im var() — vor jeder weiteren Wert-Verarbeitung, sonst ist der
     // Fallback schon aus dem Wert verschwunden.

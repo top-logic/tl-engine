@@ -378,6 +378,26 @@ public class TestTypeGrants extends BasicTestCase {
 	}
 
 	/**
+	 * The read cell of a discover attribute without a read grant of its own shows that the
+	 * attribute is readable with Discover; a read grant of the attribute itself takes precedence.
+	 */
+	public void testDiscoverAttributeCell() throws Exception {
+		Row name = new Row(attribute(NAME), reader());
+		Row owner = new Row(attribute(NAMED + "#owner"), reader());
+
+		for (String type : List.of(NAMED, BAR)) {
+			Cell cell = grants(type).getCell(name, READ);
+			assertTrue(type, cell.discoverReadable());
+			assertFalse(type, cell.restricted());
+			assertTrue(type, cell.editable());
+		}
+		assertFalse("Only reading.", grants(BAR).getCell(name, WRITE).discoverReadable());
+		assertFalse("No discover attribute.", grants(BAR).getCell(owner, READ).discoverReadable());
+		assertFalse("The own read grant of Foo takes precedence.", grants(FOO).getCell(name, READ).discoverReadable());
+		assertFalse("Not on the type row.", grants(BAR).getCell(new Row(null, reader()), READ).discoverReadable());
+	}
+
+	/**
 	 * A grant on an attribute changed for a type is stored for that type alone, and keeps the
 	 * attribute rights the type inherits for the other operations.
 	 */

@@ -837,7 +837,9 @@ public final class ModelAccessPolicy {
 	 *
 	 * <p>
 	 * An attribute with a grant of its own for the operation is decided by that grant, which
-	 * replaces the grant of the type for the attribute. Otherwise the type decides.
+	 * replaces the grant of the type for the attribute. Otherwise the type decides: reading a
+	 * {@link ModelAccessRights#getDiscoverAttributes(TLClass) discover attribute} by its grant of
+	 * {@link SimpleBoundCommandGroup#DISCOVER}, any other operation by its grant of the operation.
 	 * </p>
 	 *
 	 * @param attribute
@@ -850,8 +852,44 @@ public final class ModelAccessPolicy {
 			if (granted != null) {
 				return !holdsAnyOf(user, granted);
 			}
+			if (readableByDiscover(rights, user, type, attribute, operation)) {
+				return false;
+			}
 		}
 		return heldByNoGrantedRole(rights, user, type, operation);
+	}
+
+	/**
+	 * Whether the given operation reads a discover attribute that the given user may read on some
+	 * objects of the given type, since it may discover them.
+	 *
+	 * <p>
+	 * The objects of the type include those of its specializations, so the attribute counts when it
+	 * is a discover attribute of the type or of one of its specializations, without a read grant
+	 * of its own there.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type of the objects, {@code null} when unknown: then the
+	 *        {@link TLStructuredTypePart#getOwner() owner} of the attribute stands for it.
+	 */
+	private static boolean readableByDiscover(ModelAccessRights rights, Person user, TLClass type,
+			TLStructuredTypePart attribute, BoundCommandGroup operation) {
+		if (!SimpleBoundCommandGroup.READ.equals(operation)) {
+			return false;
+		}
+		TLClass clazz = type != null ? type : attribute.getOwner() instanceof TLClass owner ? owner : null;
+		if (clazz == null) {
+			return false;
+		}
+		for (TLClass specialization : TLModelUtil.getReflexiveTransitiveSpecializations(clazz)) {
+			if (rights.getDiscoverAttributes(specialization).contains(attribute.getName())
+				&& !rights.hasGrant(specialization, attribute, operation)
+				&& !heldByNoGrantedRole(rights, user, specialization, SimpleBoundCommandGroup.DISCOVER)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

@@ -470,7 +470,7 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 		assertTrue("A contact is read through the documents referring to it.",
 			docReaderRead.contains(type(CONTACT)));
 		assertTrue("A part is read through the documents relating it.", docReaderRead.contains(type(PART)));
-		assertFalse("A part is written through its folder only.",
+		assertFalse("The document reader role grants Write neither on a folder nor on a document, the parent types of a part.",
 			rights().getAccessibleTypes(_rootDocReader, SimpleBoundCommandGroup.WRITE).contains(type(PART)));
 
 		assertTrue("A part is read through its folder.",

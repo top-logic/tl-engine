@@ -4,9 +4,11 @@
  */
 package com.top_logic.model.security;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 import com.top_logic.basic.util.ResKey;
@@ -132,19 +134,34 @@ public record AnyOfRelation(List<AccessParentFunction> candidates) implements Ac
 
 	/**
 	 * @return The parent types of all candidates, <code>null</code> when those of one candidate are
-	 *         not known statically.
+	 *         not known statically, as for a {@link ContainerRelation} without composition.
+	 * @see #getParentTypes(Function)
 	 */
 	@Override
 	public Set<TLClass> getParentTypes(TLClass type) {
+		return getParentTypes(candidate -> candidate.getParentTypes(type));
+	}
+
+	/**
+	 * The union of the parent types of all candidates.
+	 *
+	 * @param candidateTypes
+	 *        The parent types of a single candidate, <code>null</code> when they are not known
+	 *        statically. A caller knowing more than a candidate itself, such as the possible
+	 *        containers of a type, resolves the candidate's types here.
+	 * @return The parent types of all candidates, <code>null</code> when those of one candidate are
+	 *         not known statically.
+	 */
+	public Set<TLClass> getParentTypes(Function<? super AccessParentFunction, Set<TLClass>> candidateTypes) {
 		Set<TLClass> result = new HashSet<>();
 		for (AccessParentFunction candidate : candidates) {
-			Set<TLClass> types = candidate.getParentTypes(type);
+			Set<TLClass> types = candidateTypes.apply(candidate);
 			if (types == null) {
 				return null;
 			}
 			result.addAll(types);
 		}
-		return result;
+		return Collections.unmodifiableSet(result);
 	}
 
 	@Override

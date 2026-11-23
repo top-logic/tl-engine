@@ -553,6 +553,14 @@
 							roles="TestSecurityCoverage.Reader"
 						/>
 					</class>
+					<class name="TestSecurityCoverage:AnyOfPartOfGranted">
+						<access-parent>
+							<any-of>
+								<container/>
+								<target reference="TestSecurityCoverage:AnyOfPartOfGranted#related"/>
+							</any-of>
+						</access-parent>
+					</class>
 					<class name="TestSecurityCoverage:ImpliedOperation">
 						<operations>
 							<operation name="Finish"

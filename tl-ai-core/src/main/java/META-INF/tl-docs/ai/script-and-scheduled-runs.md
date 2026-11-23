@@ -42,7 +42,7 @@ A refusal is a `ProviderException` of kind `INVALID_REQUEST`, raised while the r
 - `aiAgentRunStatus($handle)` - `RUNNING`, `COMPLETE`, `ERROR`, `CANCELLED`, `REJECTED`;
 - `aiAgentRunResult($handle)` - the answer of a `COMPLETE` run, `null` while it is not finished, and the same exception as `aiChat` for a run that ended otherwise;
 - `aiAgentRunError($handle)` - the recorded message without raising it, for a script that stores or shows the failure;
-- `aiAgentRunCancel($handle)` - stops the run. It also stops a chat run and a scheduled run (`AgentTask`, below), given the `AgentSession` of its chat.
+- `aiAgentRunCancel($handle)` - stops the run. It also stops a chat run and a scheduled run (`AgentTask`, below), given the `AgentSession` of its chat. A task with `record-session="false"` records no execution, so `aiAgentRunCancel` cannot reach its run.
 
 The polling shape never reaches the exception:
 
@@ -103,7 +103,7 @@ Approval itself does not block: the run's `ChatApprovalCallback` reads the chat'
 ### Overlap, stopping, cluster
 
 - A run started while the previous one of the task is still working is **skipped** and reported as a warning in the scheduler's task table; it is not queued.
-- **Stop task** cancels the run's token, as the chat's stop button does, and reports the run as cancelled. It never interrupts the agent thread: an interrupt during a database read closes H2's database file for the whole application.
+- **Stop task** cancels the run's token, as the chat's stop button does, and reports the run as cancelled. It never interrupts the agent thread: an interrupt during a database read closes H2's database file for the whole application. A run stopped with `aiAgentRunCancel` is reported as cancelled too.
 - The task is not node-local (`isNodeLocal()` is `false`), so one node of a cluster runs it - a run writes, sends and costs money.
 
 | A scheduled run | |

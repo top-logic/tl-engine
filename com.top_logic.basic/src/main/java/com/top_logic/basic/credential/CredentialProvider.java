@@ -136,6 +136,50 @@ public interface CredentialProvider {
 	}
 
 	/**
+	 * Whether this provider sends the credentials of the acting person instead of credentials of the
+	 * application.
+	 *
+	 * <p>
+	 * The acting person is the person for whom the current call acts: a person who is present in a
+	 * browser window, or a person who started the run of the current thread there. The class
+	 * <code>com.top_logic.util.ActingPerson</code> of the module <code>tl-core</code> names this
+	 * person. A consumer that keeps a connection open, e.g. a client of an MCP server, reads this
+	 * property, because a connection with personal credentials must not serve another person. A
+	 * consumer that authenticates each request separately needs no change.
+	 * </p>
+	 *
+	 * <p>
+	 * A personal provider keeps these rules:
+	 * </p>
+	 * <ul>
+	 * <li>It asks for the acting person at each call, also in {@link #invalidate()}. It never keeps
+	 * the person of an earlier call.</li>
+	 * <li>Without an acting person, it refuses the call with an {@link I18NRuntimeException}, as
+	 * {@link #authenticate(RequestAuthentication)} declares it, and adds nothing to the request. The
+	 * message names the reason and the place where the person connects the account.</li>
+	 * <li>It never falls back to a credential that the application or another person shares.</li>
+	 * <li>It never does its work on a background thread of a library, because the engine knows the
+	 * acting person only on its own threads.</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * The test base class <code>test.com.top_logic.util.AbstractPersonalCredentialProviderTest</code>
+	 * in the tests of <code>tl-core</code> checks these rules for a personal provider.
+	 * </p>
+	 *
+	 * <p>
+	 * A consumer that never acts for a person, e.g. the translation service, refuses a personal
+	 * provider at each call.
+	 * </p>
+	 *
+	 * @return <code>true</code> if this provider sends the credentials of the acting person;
+	 *         <code>false</code> (the default) if it sends credentials of the application.
+	 */
+	default boolean isPersonal() {
+		return false;
+	}
+
+	/**
 	 * Creates the {@link CredentialProvider} of a consumer that accepts an API key as shorthand
 	 * for its credentials.
 	 *

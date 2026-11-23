@@ -38,6 +38,24 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Performed startup hook: {0} */
 	public static ResKey1 PERFORMED_STARTUP_HOOK__ID;
 
+	/**
+	 * @en This call needs the own account of a person, but it runs without an account, for example
+	 *     in a system context.
+	 */
+	public static ResKey ERROR_NO_ACCOUNT;
+
+	/**
+	 * @en This call needs the own account of a person, but no person started it, or the account of
+	 *     that person is locked or deleted.
+	 */
+	public static ResKey ERROR_NO_ACTING_PERSON;
+
+	/**
+	 * @en This call needs the own account of a person, but another account acts in it than the
+	 *     person who started it.
+	 */
+	public static ResKey ERROR_OTHER_ACCOUNT_ACTS;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

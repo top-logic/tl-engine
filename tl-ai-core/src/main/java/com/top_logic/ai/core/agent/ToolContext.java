@@ -99,10 +99,23 @@ public class ToolContext implements ToolExecutionContext {
 	 *         be authorized, and there is no unchecked mode to fall back to.
 	 */
 	public static ToolContext forCurrentUser() {
+		return forCurrentUser(null);
+	}
+
+	/**
+	 * {@link #forCurrentUser()} for a run about the given object.
+	 *
+	 * @param subject
+	 *        The object the run is about, or <code>null</code> for none. The context names it only if
+	 *        the user may read it - see {@link RunSecurity#contextFor(RunPrincipal)}.
+	 * @throws IllegalStateException
+	 *         If no user is bound to the calling thread - see {@link #forCurrentUser()}.
+	 */
+	public static ToolContext forCurrentUser(TLObject subject) {
 		CancellationToken cancellationToken = new CancellationToken();
 		return new ToolContext(
 			RunSecurity.contextFor(
-				new RunPrincipal(TLContext.currentUser(), RunEntryPoint.SCRIPT, false)),
+				new RunPrincipal(TLContext.currentUser(), RunEntryPoint.SCRIPT, false, null, subject)),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 	}
 

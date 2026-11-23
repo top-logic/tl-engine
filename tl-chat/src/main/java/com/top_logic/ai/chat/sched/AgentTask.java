@@ -5,6 +5,7 @@
  */
 package com.top_logic.ai.chat.sched;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -14,6 +15,7 @@ import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.ai.chat.layout.ChatProcessor.ChatRunOptions;
 import com.top_logic.ai.chat.layout.ChatProcessor.SendResult;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.chat.view.ChatViewBinding;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.CalledByReflection;
@@ -96,6 +98,9 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 		/** @see #getPromptExpression() */
 		String PROMPT_EXPRESSION = "prompt-expression";
 
+		/** @see #getSubjectExpression() */
+		String SUBJECT_EXPRESSION = "subject-expression";
+
 		/** @see #getRunAs() */
 		String RUN_AS = "run-as";
 
@@ -150,6 +155,25 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 		@Name(PROMPT_EXPRESSION)
 		@Nullable
 		Expr getPromptExpression();
+
+		/**
+		 * TL-Script computing the object the run is about, evaluated at the start of every run.
+		 *
+		 * <p>
+		 * For a task about one object - "summarise the week of this project". The agent reads the
+		 * object in the environment block of its run, as the line {@code - Subject:} with the
+		 * identity of the object, and the recorded chat session is about it. The object reaches the
+		 * run only if the {@code run-as} account may read it.
+		 * </p>
+		 *
+		 * <p>
+		 * The expression takes no arguments. Its result is one object, or nothing for a run without
+		 * a subject. Any other result ends the run with an error, as an expression that fails does.
+		 * </p>
+		 */
+		@Name(SUBJECT_EXPRESSION)
+		@Nullable
+		Expr getSubjectExpression();
 
 		/**
 		 * Login name of the account the run acts as.
@@ -233,6 +257,9 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 	/** The compiled {@link Config#getPromptExpression()}, or <code>null</code> if none is configured. */
 	private final QueryExecutor _promptExpression;
 
+	/** The compiled {@link Config#getSubjectExpression()}, or <code>null</code> if none is configured. */
+	private final QueryExecutor _subjectExpression;
+
 	/** Creates an {@link AgentTask} from configuration. */
 	@CalledByReflection
 	public AgentTask(InstantiationContext context, Config config) {
@@ -257,6 +284,13 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 				// the run's own security context.
 				_promptExpression.disableSecurity();
 			}
+		}
+		Expr subjectExpression = config.getSubjectExpression();
+		_subjectExpression = subjectExpression == null ? null : QueryExecutor.compile(subjectExpression);
+		if (_subjectExpression != null) {
+			// Like the prompt, the subject is named by the task itself. Whether the run may read it
+			// is decided where the run's security context is built, with the run-as account's rights.
+			_subjectExpression.disableSecurity();
 		}
 	}
 
@@ -341,13 +375,32 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 			getLog().taskEnded(ResultType.FAILURE, I18NConstants.PROMPT_EMPTY);
 			return;
 		}
+		Object computedSubject;
+		try {
+			computedSubject = computedSubject();
+		} catch (RuntimeException ex) {
+			Logger.error("Task '" + getName() + "': computing the subject failed: " + ex.getMessage(), ex,
+				AgentTask.class);
+			getLog().taskEnded(ResultType.ERROR,
+				I18NConstants.SUBJECT_FAILED__MESSAGE.fill(message(ex)), ex);
+			return;
+		}
+		TLObject subject = ChatViewBinding.singleObject(computedSubject);
+		if (subject == null && !isNothing(computedSubject)) {
+			Logger.error("Task '" + getName() + "': the subject expression computed no single object.",
+				AgentTask.class);
+			getLog().taskEnded(ResultType.ERROR, I18NConstants.SUBJECT_NOT_ONE_OBJECT);
+			return;
+		}
 
 		if (getConfig().isRecordSession() && !openSession(tracker, account)) {
 			return;
 		}
 
+		// The subject travels with the message rather than on the session: a task that records no
+		// session has its subject too, and the run writes onto the session only a subject it may read.
 		SendResult sent = ChatProcessor.sendMessage(tracker, subSession, account.getName(), prompt, null,
-			new ChatRunOptions(getConfig().getAgent(), null, false, List.of()));
+			new ChatRunOptions(getConfig().getAgent(), null, false, List.of(), null, subject));
 		if (sent.isBusy()) {
 			Logger.info("Task '" + getName() + "' skipped: its chat session is already processing.",
 				AgentTask.class);
@@ -501,6 +554,19 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 		}
 		Object computed = _promptExpression.execute();
 		return computed == null ? null : computed.toString();
+	}
+
+	/**
+	 * The result of the configured subject expression evaluated now, or <code>null</code> when none
+	 * is configured.
+	 */
+	private Object computedSubject() {
+		return _subjectExpression == null ? null : _subjectExpression.execute();
+	}
+
+	/** Whether a computed subject names no object at all, which is a run without a subject. */
+	private static boolean isNothing(Object computed) {
+		return computed == null || computed instanceof Collection<?> none && none.isEmpty();
 	}
 
 	/** The title the recorded session is created with. */

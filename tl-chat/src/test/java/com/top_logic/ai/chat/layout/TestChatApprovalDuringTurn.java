@@ -181,7 +181,7 @@ public class TestChatApprovalDuringTurn extends BasicTestCase {
 		catalog.register(new WriteTool());
 		catalog.freeze();
 		ApprovalCallback approval =
-			ChatProcessor.buildToolContext(_store, new TaskProgressTracker(), _chat, new CancellationToken())
+			ChatProcessor.buildToolContext(_store, new TaskProgressTracker(), _chat, null, new CancellationToken())
 				.approval();
 		ToolContext context = new ToolContext(asksForWrites(), approval);
 		AgentLoop loop = new AgentLoop(new AgentParams(MODEL, "You write.", 10,

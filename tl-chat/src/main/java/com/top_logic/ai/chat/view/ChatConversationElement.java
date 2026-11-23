@@ -416,6 +416,13 @@ public class ChatConversationElement implements UIElement {
 		 * </pre>
 		 *
 		 * <p>
+		 * Every run of the conversation is about that object: the agent reads it in the environment
+		 * block of the run, as the line {@code - Subject:} with the identity of the object, if the
+		 * user may read it. So a question such as "which tickets are still open here?" needs no
+		 * further word about which project is meant.
+		 * </p>
+		 *
+		 * <p>
 		 * Only on the way out. Which conversation is shown stays the {@code input} channel's
 		 * business, and which conversations a user may pick from stays the {@code <data-list>}'s -
 		 * scoped by asking the object for the sessions that refer to it:

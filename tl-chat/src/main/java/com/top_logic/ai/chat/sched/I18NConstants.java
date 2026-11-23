@@ -57,6 +57,24 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey PROMPT_EMPTY;
 
 	/**
+	 * The object the run is about could not be computed.
+	 *
+	 * @en The subject of this task could not be computed: {0}
+	 * @de Das Bezugsobjekt dieser Aufgabe konnte nicht berechnet werden: {0}
+	 */
+	public static ResKey1 SUBJECT_FAILED__MESSAGE;
+
+	/**
+	 * The subject expression computed something that is not one object.
+	 *
+	 * @en The subject expression of this task computed no single object; a run is about one object or
+	 *     about none.
+	 * @de Der Ausdruck für das Bezugsobjekt dieser Aufgabe hat kein einzelnes Objekt berechnet; ein
+	 *     Lauf betrifft ein Objekt oder keines.
+	 */
+	public static ResKey SUBJECT_NOT_ONE_OBJECT;
+
+	/**
 	 * The chat session the run would have been recorded in could not be created.
 	 *
 	 * @en The chat session for this run could not be created.

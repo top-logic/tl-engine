@@ -100,7 +100,7 @@ public class ChatProcessor {
 
 	/**
 	 * Per-turn chat UI choices: which agent to run, which model to use, and which MCP servers to
-	 * attach.
+	 * attach - and, for a sender without a chat page, which object the run is about.
 	 *
 	 * @param agent
 	 *        Agent name, or {@code null}/{@code blank} for the configured entry-point.
@@ -113,12 +113,17 @@ public class ChatProcessor {
 	 * @param effort
 	 *        Thinking / reasoning effort chosen for this turn, or {@code null} to leave the model's
 	 *        own setting alone.
+	 * @param subject
+	 *        The object the run is about, or {@code null} for the subject of the chat session. A chat
+	 *        page states its subject on the session when it creates it; a sender that may have no
+	 *        session - a scheduled {@code AgentTask} that records none - states it here. The run
+	 *        has the subject only if its account may read it.
 	 */
 	public record ChatRunOptions(String agent, String model, boolean mcpOverride, List<String> mcpServers,
-			String effort) {
+			String effort, TLObject subject) {
 
 		/** No UI overrides. */
-		public static final ChatRunOptions DEFAULT = new ChatRunOptions(null, null, false, List.of(), null);
+		public static final ChatRunOptions DEFAULT = new ChatRunOptions(null, null, false, List.of(), null, null);
 
 		/**
 		 * Canonicalizes null lists so callers never have to null-check {@link #mcpServers()}.
@@ -127,9 +132,15 @@ public class ChatProcessor {
 			mcpServers = mcpServers != null ? List.copyOf(mcpServers) : List.of();
 		}
 
+		/** Options about the subject of the chat session, for the chat UI. */
+		public ChatRunOptions(String agent, String model, boolean mcpOverride, List<String> mcpServers,
+				String effort) {
+			this(agent, model, mcpOverride, mcpServers, effort, null);
+		}
+
 		/** Options without an effort level, for callers that do not offer the setting. */
 		public ChatRunOptions(String agent, String model, boolean mcpOverride, List<String> mcpServers) {
-			this(agent, model, mcpOverride, mcpServers, null);
+			this(agent, model, mcpOverride, mcpServers, null, null);
 		}
 	}
 
@@ -379,7 +390,8 @@ public class ChatProcessor {
 			}
 
 			// Build ToolContext with real security, approval, and transaction scope
-			ToolContext toolContext = buildToolContext(interactionStore, taskTracker, chatState, cancellationToken);
+			ToolContext toolContext =
+				buildToolContext(interactionStore, taskTracker, chatState, state.getSubject(), cancellationToken);
 
 			// Run the agent chosen in the chat UI, or - when the request names none - the one this
 			// account may run. Resolved exactly as the chat's capabilities report it and as the pre-check
@@ -804,12 +816,25 @@ public class ChatProcessor {
 			List<EnvironmentFact> facts, RunLimits.SpendReading spendReading) {
 		state.setRunOptions(options);
 		state.setFacts(facts);
+		// Read here, on the thread of the send, and handed to the run as a value: the run's thread may
+		// see an older state of a session that was created just before the send.
+		state.setSubject(options.subject() != null ? options.subject()
+			: sessionSubject(state.getSessionId(), tracker.getSessionOwner()));
 		state.setSpendReading(spendReading);
 		// Read here, on the request thread and in the acting account's context, and only once per
 		// conversation: they go into the environment block, which has to stay byte-identical
 		// across the turns of one conversation. See ChatSessionManager.getMemories.
 		state.setMemories(
 			tracker.getSessionManager().getMemories(state.getSessionId(), tracker.getSessionOwner()));
+	}
+
+	/** The subject of the given chat session of the given account, or <code>null</code>. */
+	private static TLObject sessionSubject(String sessionId, Person owner) {
+		if (sessionId == null) {
+			return null;
+		}
+		return ChatHistoryService.findOwnedSessionById(sessionId, owner) instanceof AgentSession session
+			? session.getSubject() : null;
 	}
 
 	/** Takes the turn just opened out of the log again, for a run that is not going to fill it. */
@@ -1001,12 +1026,19 @@ public class ChatProcessor {
 	 * </p>
 	 *
 	 * <p>
+	 * The run is about {@code subject}, if the user may read it.
+	 * </p>
+	 *
+	 * <p>
 	 * Package-visible rather than private so a test can ask what a tracker's runs are given; it has
 	 * one production caller, {@link #runInternal}.
 	 * </p>
+	 *
+	 * @param subject
+	 *        The object the run is about, as the send captured it; <code>null</code> for none.
 	 */
 	static ToolContext buildToolContext(UserInteractionStore interactionStore,
-			TaskProgressTracker taskTracker, ChatState chat, CancellationToken cancellationToken) {
+			TaskProgressTracker taskTracker, ChatState chat, TLObject subject, CancellationToken cancellationToken) {
 		// The run's own chat decides, not the one the window shows by the time the run starts - and
 		// it decides at every call, so the switch reaches the turn that is running (#943).
 		ApprovalCallback approvalCallback = new ChatApprovalCallback(interactionStore, chat);
@@ -1024,7 +1056,7 @@ public class ChatProcessor {
 		boolean unattended = taskTracker.isUnattended();
 		RunEntryPoint entryPoint = unattended ? RunEntryPoint.SCHEDULED : RunEntryPoint.CHAT;
 		SecurityContext security = RunSecurity.contextFor(
-			new RunPrincipal(TLContext.currentUser(), entryPoint, unattended, chat.sessionId(), null));
+			new RunPrincipal(TLContext.currentUser(), entryPoint, unattended, chat.sessionId(), subject));
 		ToolContext context = new ToolContext(
 			security, approvalCallback, new TransactionScope(cancellationToken),
 			chat.approvedTools(), cancellationToken);
@@ -1445,6 +1477,8 @@ public class ChatProcessor {
 
 		private volatile List<EnvironmentFact> _facts = List.of();
 
+		private volatile TLObject _subject;
+
 		/** The send's reading of the account's spend, which the run start takes over. */
 		private volatile RunLimits.SpendReading _spendReading;
 
@@ -1699,6 +1733,19 @@ public class ChatProcessor {
 		/** Captures the page's facts before the background task starts. */
 		public void setFacts(List<EnvironmentFact> facts) {
 			_facts = facts == null ? List.of() : List.copyOf(facts);
+		}
+
+		/**
+		 * The object the run is about, captured at send time; <code>null</code> for none. Not yet
+		 * checked: the run's security context drops it if the user may not read it.
+		 */
+		public TLObject getSubject() {
+			return _subject;
+		}
+
+		/** @see #getSubject() */
+		public void setSubject(TLObject subject) {
+			_subject = subject;
 		}
 
 		/**

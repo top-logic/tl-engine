@@ -36,6 +36,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
@@ -585,7 +586,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
-	 * <b>Not usable from the Script console. Use {@link #agentChatAsync(String, Object)} there.</b> A
+	 * <b>Not usable from the Script console. Use {@link #agentChatAsync(String, Object, TLObject)} there.</b> A
 	 * request pins the knowledge-base revision it started at, and an inline run commits past it: the
 	 * run's own {@link AgentSession}/{@link AgentExecution} records are committed out-of-band on the
 	 * {@link AgentExecutionStore} writer thread, and any writing tool the agent calls commits as well.
@@ -600,7 +601,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * Reading an async run back needs a <b>second</b> console execution: within the request that
 	 * started it, {@link #agentRunStatus(Object)} returns {@code null} (not {@code RUNNING}) for the
 	 * same revision-pinning reason, however long the script waits. See
-	 * {@link #agentChatAsync(String, Object)}.
+	 * {@link #agentChatAsync(String, Object, TLObject)}.
 	 * </p>
 	 *
 	 * <p>
@@ -613,25 +614,34 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
+	 * A run about an object names it as {@code subject}. The agent reads it in the environment block
+	 * of its run, as {@code - Subject:} with the identity of the object, if the account may read it.
+	 * The run's session is then about that object, as a chat started on the page of the object is.
+	 * </p>
+	 *
+	 * <p>
 	 * Example usage in TL-Script:
 	 * </p>
 	 *
 	 * <pre>
 	 * aiAgentChat("my-agent", "Summarize the latest changes.")
+	 * aiAgentChat("my-agent", "Which tickets are still open here?", $project)
 	 * </pre>
 	 *
 	 * @param agentName
 	 *        The agent name as configured in the knowledge base.
 	 * @param userMessage
 	 *        The user message to send to the agent.
+	 * @param subject
+	 *        The object the run is about; optional. Without Read on it, the run has no subject.
 	 * @return The agent's final text response.
 	 * @throws TopLogicException
 	 *         If the run did not reach an answer, carrying the provider's error kind and message -
 	 *         as {@link #chat(List, String, Object, Collection)} does, and for the same reason.
-	 * @see #agentChatAsync(String, Object)
-	 * @see ToolContext#forCurrentUser()
+	 * @see #agentChatAsync(String, Object, TLObject)
+	 * @see ToolContext#forCurrentUser(TLObject)
 	 */
-	public static String agentChat(String agentName, Object userMessage) {
+	public static String agentChat(String agentName, Object userMessage, TLObject subject) {
 		AgentFactory factory = AgentFactory.getInstance();
 		UserMessage request = createUserMessage(userMessage);
 		Conversation conversation = new Conversation();
@@ -639,7 +649,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 
 		// Acts as the account that executed the script, and refuses if the thread has none: a run that
 		// cannot name its principal cannot be authorized.
-		ToolContext context = ToolContext.forCurrentUser();
+		ToolContext context = ToolContext.forCurrentUser(subject);
 
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 			recordUserTurn(env.logListener().log(), request);
@@ -657,7 +667,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * Starts a named agent on a background thread and returns immediately with a handle.
 	 *
 	 * <p>
-	 * Unlike {@link #agentChat(String, Object)}, which runs the agent loop synchronously on the
+	 * Unlike {@link #agentChat(String, Object, TLObject)}, which runs the agent loop synchronously on the
 	 * calling thread and blocks until it finishes, this function submits the run to the
 	 * {@link SchedulerService} and returns right away. The return value is the session's persistent
 	 * id as a plain {@link String} handle: poll it with {@link #agentRunStatus(Object)} and
@@ -702,6 +712,12 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
+	 * A run about an object names it as {@code subject}, as for
+	 * {@link #agentChat(String, Object, TLObject)}. The object is taken here, on the calling thread,
+	 * and is checked when the run starts.
+	 * </p>
+	 *
+	 * <p>
 	 * Example usage in TL-Script. The first execution starts the run and keeps its handle:
 	 * </p>
 	 *
@@ -728,6 +744,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        The agent name as configured in the knowledge base.
 	 * @param userMessage
 	 *        The user message to send to the agent.
+	 * @param subject
+	 *        The object the run is about; optional. Without Read on it, the run has no subject.
 	 * @return The session's persistent id as a {@link String} handle to poll for status and result.
 	 * @throws IllegalStateException
 	 *         If the calling thread has no usable sub-session to run as, or the
@@ -736,7 +754,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @see com.top_logic.ai.core.execution.model.AgentExecution
 	 * @see AgentRunner
 	 */
-	public static String agentChatAsync(String agentName, Object userMessage) {
+	public static String agentChatAsync(String agentName, Object userMessage, TLObject subject) {
 		/*
 		 * A String handle (rather than the live AgentSession wrapper) is returned deliberately: the
 		 * session is committed out-of-band on the AgentExecutionStore writer thread at a revision
@@ -772,7 +790,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 
 		Object messageContent = userMessage;
 		SchedulerService.getInstance().submit(() -> ThreadContextManager.inDerivedContext(callerSession,
-			() -> runAsync(agentName, messageContent, session)));
+			() -> runAsync(agentName, messageContent, subject, session)));
 
 		// Return the session's persistent id as a plain String rather than the live AgentSession
 		// wrapper. The session was committed out-of-band on the store's writer thread at a revision
@@ -784,10 +802,10 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * The background body of {@link #agentChatAsync(String, Object)}: runs the agent as the
+	 * The background body of {@link #agentChatAsync(String, Object, TLObject)}: runs the agent as the
 	 * re-established user, in its own transaction, recording the execution against {@code session}.
 	 */
-	private static void runAsync(String agentName, Object userMessage, AgentSession session) {
+	private static void runAsync(String agentName, Object userMessage, TLObject subject, AgentSession session) {
 		UserMessage request = createUserMessage(userMessage);
 		Conversation conversation = new Conversation();
 		conversation.add(request);
@@ -802,7 +820,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		ToolContext context = new ToolContext(
 			RunSecurity.contextFor(
 				new RunPrincipal(TLContext.currentUser(), RunEntryPoint.SCRIPT, true,
-					ExecutionRecorder.conversationIdOf(session), null)),
+					ExecutionRecorder.conversationIdOf(session), subject)),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 
 		// Cluster-safe cancellation: this node runs the job and holds the token, so a listener on
@@ -865,7 +883,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * the start of the question. The chat appears in the owner's chat list, and the owner reads the
 	 * report there, with its footnotes. {@link #agentRunResult(Object)} returns the same report for the
 	 * handle; {@link #agentRunStatus(Object)} and {@link #agentRunCancel(Object)} work as for
-	 * {@link #agentChatAsync(String, Object)}. As there, read the handle in a later request than the
+	 * {@link #agentChatAsync(String, Object, TLObject)}. As there, read the handle in a later request than the
 	 * one that started the run.
 	 * </p>
 	 *
@@ -914,7 +932,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 
 	/**
 	 * Returns the status of an async agent run started with
-	 * {@link #agentChatAsync(String, Object)}.
+	 * {@link #agentChatAsync(String, Object, TLObject)}.
 	 *
 	 * <p>
 	 * The status is one of the
@@ -926,7 +944,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *
 	 * <p>
 	 * <b>Not in the request that started the run.</b> Called from the same request as
-	 * {@link #agentChatAsync(String, Object)}, this returns {@code null} rather than {@code RUNNING},
+	 * {@link #agentChatAsync(String, Object, TLObject)}, this returns {@code null} rather than {@code RUNNING},
 	 * however long the script waits in between: the run's session was committed at a revision newer
 	 * than that request's pinned one, so the handle resolves to nothing there and an unresolvable
 	 * handle cannot be reported as running. Poll from a later request, i.e. from a separate Script
@@ -934,7 +952,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * @param handle
-	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
+	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object, TLObject)}, an
 	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
 	 * @return The status name, or {@code null} if the handle cannot be resolved to a run.
 	 */
@@ -955,7 +973,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 
 	/**
 	 * Whether the handle refers to an {@link AgentSession} - either the wrapper directly or the
-	 * string session id returned by {@link #agentChatAsync(String, Object)} - as opposed to a
+	 * string session id returned by {@link #agentChatAsync(String, Object, TLObject)} - as opposed to a
 	 * run-id string or an unresolvable value.
 	 */
 	private static boolean isSessionHandle(Object handle) {
@@ -973,7 +991,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * {@link com.top_logic.ai.core.execution.AgentExecutionStore.ExecutionStatus#COMPLETE}.
 	 *
 	 * <p>
-	 * This is symmetric with the synchronous {@link #agentChat(String, Object)}, in both
+	 * This is symmetric with the synchronous {@link #agentChat(String, Object, TLObject)}, in both
 	 * directions: it returns the same final-answer string that {@code agentChat} would have
 	 * returned for the run - the persisted {@link AgentExecution#getResponse() response}, not the
 	 * transcript - and it raises what {@code agentChat} would have raised. A run that ended in
@@ -992,7 +1010,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * @param handle
-	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
+	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object, TLObject)}, an
 	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
 	 * @return The final answer text when the run is {@code COMPLETE}, or {@code null} while it is
 	 *         not finished.
@@ -1033,7 +1051,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * @param handle
-	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
+	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object, TLObject)}, an
 	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
 	 * @return The recorded error message, or {@code null} if there is none.
 	 * @see #agentRunStatus(Object)
@@ -1061,7 +1079,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * @param handle
-	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
+	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object, TLObject)}, an
 	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
 	 * @return The serialized transcript, or {@code null} if the handle cannot be resolved or no
 	 *         transcript has been recorded yet.
@@ -1076,7 +1094,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 
 	/**
 	 * Requests cancellation of a running async agent run started with
-	 * {@link #agentChatAsync(String, Object)}.
+	 * {@link #agentChatAsync(String, Object, TLObject)}.
 	 *
 	 * <p>
 	 * Cluster-safe: the handle is resolved to its top-level execution and the run's persisted
@@ -1092,7 +1110,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * @param handle
-	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object)}, an
+	 *        The string session-id handle returned by {@link #agentChatAsync(String, Object, TLObject)}, an
 	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
 	 * @return {@code true} if a still-running run was signalled to cancel; {@code false} if the
 	 *         handle could not be resolved or the run was already terminal.
@@ -1553,7 +1571,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * Resolves an async-run handle to its {@link AgentExecution}.
 	 *
 	 * <p>
-	 * Accepts the string session-id handle returned by {@link #agentChatAsync(String, Object)} (its
+	 * Accepts the string session-id handle returned by {@link #agentChatAsync(String, Object, TLObject)} (its
 	 * session's top-level execution is returned), an {@link AgentSession} directly, an
 	 * {@link AgentExecution} directly, or a run-id string. Returns <code>null</code> when the handle
 	 * cannot be resolved (unknown type, or no execution recorded yet).

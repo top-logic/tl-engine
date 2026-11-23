@@ -35,7 +35,7 @@ import com.top_logic.util.model.ModelService;
 
 /**
  * Integration tests for the async agent TL-Script functions
- * {@link AIScriptFunctions#agentChatAsync(String, Object)},
+ * {@link AIScriptFunctions#agentChatAsync(String, Object, com.top_logic.model.TLObject)},
  * {@link AIScriptFunctions#agentRunStatus(Object)} and
  * {@link AIScriptFunctions#agentRunResult(Object)}.
  *
@@ -69,7 +69,7 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 
 	/**
 	 * A freshly created session with no execution recorded yet - the state right after
-	 * {@link AIScriptFunctions#agentChatAsync(String, Object)} returns - resolves to
+	 * {@link AIScriptFunctions#agentChatAsync(String, Object, com.top_logic.model.TLObject)} returns - resolves to
 	 * {@code RUNNING} with no result.
 	 */
 	public void testHandleWithoutExecutionIsRunning() throws Exception {
@@ -352,7 +352,7 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 
 		if (subSession == null || person == null) {
 			try {
-				AIScriptFunctions.agentChatAsync("__no_such_agent__", "hello");
+				AIScriptFunctions.agentChatAsync("__no_such_agent__", "hello", null);
 				fail("Expected agentChatAsync to fail fast without a usable sub-session.");
 			} catch (IllegalStateException expected) {
 				// Fail-closed guard: no silent fallback to a system user.
@@ -360,7 +360,7 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 			return;
 		}
 
-		String handle = AIScriptFunctions.agentChatAsync("__no_such_agent__", "hello");
+		String handle = AIScriptFunctions.agentChatAsync("__no_such_agent__", "hello", null);
 		assertNotNull("async kickoff must return a handle immediately", handle);
 
 		String status = pollUntilTerminal(handle);

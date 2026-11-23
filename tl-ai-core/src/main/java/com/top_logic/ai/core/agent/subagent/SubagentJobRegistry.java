@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.ai.core.agent.StopReason;
 import com.top_logic.ai.core.message.TokenUsage;
+import com.top_logic.util.ActingPerson;
 
 /**
  * Per-session registry of asynchronous subagent jobs. Tracks each {@link SubagentJob}
@@ -165,10 +166,18 @@ public class SubagentJobRegistry {
 		return _maxConcurrent;
 	}
 
-	/** Registers a new QUEUED job and returns it. */
+	/**
+	 * Registers a new QUEUED job and returns it.
+	 *
+	 * <p>
+	 * Called on the thread of the turn that spawns the subagent. The job acts for the
+	 * {@link ActingPerson} that this turn hands over, see {@link SubagentJob#actingPerson()}.
+	 * </p>
+	 */
 	public SubagentJob register(String targetAgentName, String taskBrief, CancellationToken token) {
 		String id = ID_PREFIX + _ids.incrementAndGet();
 		SubagentJob job = new SubagentJob(id, targetAgentName, taskBrief, token);
+		job.setActingPerson(ActingPerson.handOver());
 		job.setQuestionSignal(() -> questionAsked(job));
 		_jobs.put(id, job);
 		return job;
@@ -270,15 +279,6 @@ public class SubagentJobRegistry {
 		return result;
 	}
 
-	/**
-	 * The questions to the lead no lead turn has been shown yet, in registration order of the asking
-	 * jobs, each marked as shown.
-	 */
-	public List<SubagentJob> takeUndeliveredQuestions() {
-		List<SubagentJob> asking = new ArrayList<>();
-		for (SubagentJob job : ordered()) {
-			LeadQuestion asked = job.leadQuestion();
-			if (isUnread(asked) && asked.markDelivered()) {
 	/** Whether the given job has ended and no lead turn has been shown its result. */
 	private static boolean hasUnreadResult(SubagentJob job) {
 		return job.status().isTerminal() && !job.isDelivered();
@@ -289,6 +289,15 @@ public class SubagentJobRegistry {
 		return asked != null && !asked.isDelivered() && !asked.answer().isDone();
 	}
 
+	/**
+	 * The questions to the lead no lead turn has been shown yet, in registration order of the asking
+	 * jobs, each marked as shown.
+	 */
+	public List<SubagentJob> takeUndeliveredQuestions() {
+		List<SubagentJob> asking = new ArrayList<>();
+		for (SubagentJob job : ordered()) {
+			LeadQuestion asked = job.leadQuestion();
+			if (isUnread(asked) && asked.markDelivered()) {
 				asking.add(job);
 			}
 		}

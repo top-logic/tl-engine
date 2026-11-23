@@ -167,10 +167,6 @@ public class SubagentSpawner {
 		}
 		SubagentJob job = registry.register(targetAgentName, task, childToken);
 		job.setParentToolCallId(toolContext.toolCallId());
-		// The child acts for the acting person of this turn, if any, until it ends. Taken here, where
-		// the acting person is checked against the account that acts now, not as the raw binding of
-		// the snapshot.
-		job.setActingPerson(ActingPerson.handOver());
 		// A detached child spends from the allowance of the run that started it; the chat shows how
 		// much of it the subagents took.
 		job.setBudget(toolContext.budgetAllowance());
@@ -207,8 +203,9 @@ public class SubagentSpawner {
 					SubagentInboxBinding.Binding inbox = SubagentInboxBinding.bind(j.inbox());
 					// Its own job, which ask_lead parks its question on.
 					SubagentJobBinding.Binding self = SubagentJobBinding.bind(j);
-					// Replaces the acting person the snapshot just carried over by the one the spawn
-					// took for the job.
+					// Replaces the acting person the snapshot just carried over by the one the registry
+					// took for the job on the spawning thread, where it is checked against the account
+					// that acts there.
 					ThreadLocalBinding<Person>.Handle acting = ActingPerson.bind(j.actingPerson())) {
 
 					Instant start = Instant.now();

@@ -23,6 +23,7 @@ import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.basic.sched.SchedulerService;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
@@ -31,10 +32,12 @@ import com.top_logic.ai.core.agent.event.AgentEvent;
 import com.top_logic.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.ai.core.agent.subagent.SubagentJobStatus;
+import com.top_logic.ai.core.agent.subagent.SubagentNews;
 import com.top_logic.ai.core.agent.subagent.SubagentResult;
 import com.top_logic.ai.core.execution.AgentExecutionStore;
 import com.top_logic.ai.core.message.TokenUsage;
 import com.top_logic.ai.core.session.ConversationLog;
+import com.top_logic.util.ActingPerson;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
@@ -144,12 +147,65 @@ public class TestWakeStaysInItsChat extends BasicTestCase {
 		}
 	}
 
-	/** Registers a subagent spawned for the given acting person that has finished. */
-	private static void finish(SubagentJobRegistry registry, Person actingPerson) {
-		SubagentJob job = registry.register("worker", "task", new CancellationToken());
-		job.setActingPerson(actingPerson);
+	/**
+	 * News taken after the start of the turn decides again: a subagent without acting person among
+	 * it lets the turn act for nobody.
+	 */
+	public void testNewsTakenLaterDecidesAgain() {
+		SubagentJobRegistry registry = new SubagentJobRegistry(4);
+		try {
+			SubagentJob ofOwner = finish(registry, owner);
+			assertSame("The turn starts for the person.", owner,
+				ChatProcessor.wakeActingPerson(_window.getLastSend(), registry));
+
+			// Arrives before the turn takes the news.
+			SubagentJob late = finish(registry, null);
+			assertNull(ChatProcessor.actingPersonOfNews(owner,
+				List.of(SubagentNews.ended(ofOwner), SubagentNews.ended(late)), registry));
+			assertSame(owner, ChatProcessor.actingPersonOfNews(owner, List.of(SubagentNews.ended(ofOwner)), registry));
+			assertNull(ChatProcessor.actingPersonOfNews(owner, List.of(), registry));
+		} finally {
+			registry.shutdown();
+		}
+	}
+
+	/**
+	 * A spawn in a step of another account during a request of the person gives the subagent no
+	 * acting person.
+	 */
+	public void testASpawnInAStepOfAnotherAccountActsForNobody() {
+		Person other = TestPerson.createPerson("wake-stays-other-account");
+		SubagentJobRegistry registry = new SubagentJobRegistry(4);
+		try {
+			SubagentJob job = TLContextManager.inPersonContext(owner, () -> {
+				try (ThreadLocalBinding<Person>.Handle acting = ActingPerson.bind(owner)) {
+					return TLContextManager.inPersonContext(other,
+						() -> registry.register("worker", "task", new CancellationToken()));
+				}
+			});
+			assertNull(job.actingPerson());
+		} finally {
+			registry.shutdown();
+			TestPerson.deletePersonAndUser(other);
+		}
+	}
+
+	/**
+	 * Registers a subagent that has finished, spawned in a request of the given person, or without
+	 * acting person for <code>null</code>.
+	 */
+	private static SubagentJob finish(SubagentJobRegistry registry, Person actingPerson) {
+		SubagentJob job = actingPerson == null
+			? registry.register("worker", "task", new CancellationToken())
+			: TLContextManager.inPersonContext(actingPerson, () -> {
+				try (ThreadLocalBinding<Person>.Handle acting = ActingPerson.bind(actingPerson)) {
+					return registry.register("worker", "task", new CancellationToken());
+				}
+			});
+		assertSame(actingPerson, job.actingPerson());
 		job.markTerminal(SubagentJobStatus.DONE,
 			new SubagentResult("done", TokenUsage.EMPTY, 1L, 1, StopReason.COMPLETE));
+		return job;
 	}
 
 	/** A run of chat A reads chat A's subagents, also after the window switched to chat B. */

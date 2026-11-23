@@ -416,10 +416,12 @@ public class ChatProcessor {
 			try (SubagentRegistryBinding.Binding saBind = SubagentRegistryBinding.bind(subagentRegistry);
 					AgentTaskMirror taskMirror =
 						AgentTaskMirror.attach(taskStore, agentSession, toolContext.executionHandle())) {
-				if (state.isWake() && !openWithNews(convLog, conversation, toolContext, listener)) {
+				if (state.isWake() && !openWithNews(convLog, conversation, toolContext, listener, subagentRegistry,
+					state)) {
 					return null;
 				}
-				try {
+				// A lead turn for subagents' news may have lost its acting person when it took the news.
+				try (ThreadLocalBinding<Person>.Handle acting = ActingPerson.bind(state.getActingPerson())) {
 					AgentRunner.RecordedRun runResult = AgentRunner.run(entryPointAgent, conversation,
 						conversationMemory, toolContext, listener, sessionRegistry, convLog, agentSession, null,
 						runOverrides);
@@ -452,16 +454,25 @@ public class ChatProcessor {
 	 * Opens a lead turn that was started without a user message with the subagents' news, and tells
 	 * the windows why the turn started.
 	 *
+	 * <p>
+	 * The turn keeps the {@link AIProcessingState#getActingPerson() acting person} it was started with
+	 * only if each subagent whose news it took was spawned for this person, see
+	 * {@link #actingPersonOfNews(Person, List, SubagentJobRegistry)}: news can arrive between the
+	 * start of the turn and this moment.
+	 * </p>
+	 *
 	 * @return Whether there was news. When there was none - a turn of the user's read it in between -
 	 *         the empty turn is taken out of the log again and nothing runs.
 	 */
 	private static boolean openWithNews(ConversationLog convLog, Conversation conversation,
-			ToolContext toolContext, AgentEventListener listener) {
+			ToolContext toolContext, AgentEventListener listener, SubagentJobRegistry registry,
+			AIProcessingState state) {
 		List<SubagentNews> news = AgentLoop.injectSubagentNews(conversation, toolContext);
 		if (news.isEmpty()) {
 			discardCurrentTurn(convLog);
 			return false;
 		}
+		state.setActingPerson(actingPersonOfNews(state.getActingPerson(), news, registry));
 		int asking = (int) news.stream().filter(item -> item.reason() == SubagentNews.Reason.ASKS).count();
 		listener.onEvent(new AgentEvent.LeadWoken("", 0, Instant.now(), news.size() - asking, asking, news));
 		return true;
@@ -768,13 +779,15 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * The {@link ActingPerson} of a lead turn for subagents' news.
+	 * The {@link ActingPerson} a lead turn for subagents' news is started with.
 	 *
 	 * <p>
 	 * A subagent acts for the acting person of the turn that spawned it. The turn that reads its news
 	 * acts for the person of the last message in the window only if each subagent whose news it
 	 * reads was spawned for the same person. Otherwise it acts for nobody: the news of a subagent
-	 * that no present person started must not lead to a turn with the account of a person.
+	 * that no present person started must not lead to a turn with the account of a person. When the
+	 * turn takes the news, this is decided again for the news it takes, see
+	 * {@link #actingPersonOfNews(Person, List, SubagentJobRegistry)}.
 	 * </p>
 	 *
 	 * @param registry
@@ -787,6 +800,28 @@ public class ChatProcessor {
 		}
 		for (SubagentJob job : registry.unread()) {
 			if (!acting.equals(job.actingPerson())) {
+				return null;
+			}
+		}
+		return acting;
+	}
+
+	/**
+	 * The {@link ActingPerson} of a lead turn after it took the given news of its subagents.
+	 *
+	 * @param acting
+	 *        The acting person the turn was started with, see
+	 *        {@link #wakeActingPerson(LastSend, SubagentJobRegistry)}.
+	 * @return The given person if each subagent of the news was spawned for this person, else
+	 *         <code>null</code>.
+	 */
+	static Person actingPersonOfNews(Person acting, List<SubagentNews> news, SubagentJobRegistry registry) {
+		if (acting == null || news.isEmpty() || registry == null) {
+			return null;
+		}
+		for (SubagentNews item : news) {
+			SubagentJob job = registry.get(item.subagentId());
+			if (job == null || !acting.equals(job.actingPerson())) {
 				return null;
 			}
 		}

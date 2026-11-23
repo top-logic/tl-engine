@@ -316,13 +316,22 @@ public class SubagentJob {
 	/**
 	 * The {@link ActingPerson} of the turn that spawned the subagent, which the subagent acts for;
 	 * <code>null</code> for none.
+	 *
+	 * @see SubagentJobRegistry#register(String, String, CancellationToken)
 	 */
 	public Person actingPerson() {
 		return _actingPerson;
 	}
 
-	/** Sets the {@link #actingPerson() acting person} of the subagent. */
-	public void setActingPerson(Person actingPerson) {
+	/**
+	 * Sets the {@link #actingPerson() acting person} of the subagent.
+	 *
+	 * <p>
+	 * Only the registry sets it, at the registration of the job: an application must not give a job
+	 * of a run without acting person the acting person of somebody.
+	 * </p>
+	 */
+	void setActingPerson(Person actingPerson) {
 		_actingPerson = actingPerson;
 	}
 

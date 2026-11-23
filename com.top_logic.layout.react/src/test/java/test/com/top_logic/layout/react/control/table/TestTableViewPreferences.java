@@ -17,34 +17,22 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.react.control.table.TableViewPreferences;
 
 /**
- * Tests {@link TableViewPreferences}: the per-person table view - density, stripes and column
- * lines - and the start values written onto the root element of the page.
+ * Tests {@link TableViewPreferences}: the per-person table view - stripes and column lines - and
+ * the start values written onto the root element of the page.
  */
 public class TestTableViewPreferences extends TestCase {
-
-	/**
-	 * Only the two densities of the design system count; anything else is no choice.
-	 */
-	public void testDensityOf() {
-		assertEquals("compact", TableViewPreferences.densityOf("compact"));
-		assertEquals("normal", TableViewPreferences.densityOf("normal"));
-		assertEquals("", TableViewPreferences.densityOf("huge"));
-		assertEquals("", TableViewPreferences.densityOf(null));
-		assertEquals("", TableViewPreferences.densityOf(Integer.valueOf(1)));
-	}
 
 	/**
 	 * Without a user context there is nothing to store the view in: the factory values apply and
 	 * storing changes nothing.
 	 */
 	public void testNoContext() {
-		assertEquals("", TableViewPreferences.density());
 		assertFalse(TableViewPreferences.striped());
 		assertFalse(TableViewPreferences.columnLines());
 
-		TableViewPreferences.store("compact", true, true);
+		TableViewPreferences.setStriped(true);
+		TableViewPreferences.setColumnLines(true);
 
-		assertEquals("", TableViewPreferences.density());
 		assertFalse(TableViewPreferences.striped());
 		assertFalse(TableViewPreferences.columnLines());
 	}
@@ -54,19 +42,17 @@ public class TestTableViewPreferences extends TestCase {
 	 */
 	public void testStoreAndRead() {
 		ThreadContext.inSystemContext(TestTableViewPreferences.class, () -> {
-			assertEquals("", TableViewPreferences.density());
 			assertFalse(TableViewPreferences.striped());
 			assertFalse(TableViewPreferences.columnLines());
 
-			TableViewPreferences.store("compact", true, false);
+			TableViewPreferences.setStriped(true);
 
-			assertEquals("compact", TableViewPreferences.density());
 			assertTrue(TableViewPreferences.striped());
 			assertFalse(TableViewPreferences.columnLines());
 
-			TableViewPreferences.store("", false, true);
+			TableViewPreferences.setColumnLines(true);
+			TableViewPreferences.setStriped(false);
 
-			assertEquals("", TableViewPreferences.density());
 			assertFalse(TableViewPreferences.striped());
 			assertTrue(TableViewPreferences.columnLines());
 		});
@@ -77,15 +63,10 @@ public class TestTableViewPreferences extends TestCase {
 	 * deviate from the factory values.
 	 */
 	public void testAttributes() {
-		assertEquals("<html data-tl-table-view=\"\">", startTag("", false, false));
-		assertEquals("<html data-tl-table-view=\"\" data-tl-table-density=\"normal\">",
-			startTag("normal", false, false));
-		assertEquals(
-			"<html data-tl-table-view=\"\" data-tl-table-density=\"compact\" data-tl-table-striped=\"\""
-				+ " data-tl-table-column-lines=\"\">",
-			startTag("compact", true, true));
-		assertEquals("<html data-tl-table-view=\"\" data-tl-table-column-lines=\"\">",
-			startTag("", false, true));
+		assertEquals("<html data-tl-table-view=\"\">", startTag(false, false));
+		assertEquals("<html data-tl-table-view=\"\" data-tl-table-striped=\"\" data-tl-table-column-lines=\"\">",
+			startTag(true, true));
+		assertEquals("<html data-tl-table-view=\"\" data-tl-table-column-lines=\"\">", startTag(false, true));
 	}
 
 	/**
@@ -99,10 +80,10 @@ public class TestTableViewPreferences extends TestCase {
 		assertEquals("<html data-tl-table-view=\"\">", out.toString());
 	}
 
-	private static String startTag(String density, boolean striped, boolean columnLines) {
+	private static String startTag(boolean striped, boolean columnLines) {
 		TagWriter out = new TagWriter();
 		out.beginBeginTag("html");
-		TableViewPreferences.writeAttributes(out, density, striped, columnLines);
+		TableViewPreferences.writeAttributes(out, striped, columnLines);
 		out.endBeginTag();
 		return out.toString();
 	}

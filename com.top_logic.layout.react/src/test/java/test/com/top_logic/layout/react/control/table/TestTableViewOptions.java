@@ -27,7 +27,6 @@ import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.table.ApplyNamedFilterArguments;
 import com.top_logic.layout.react.control.table.SearchArguments;
-import com.top_logic.layout.react.control.table.SetViewOptionsArguments;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.control.table.TableViewPreferences;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -49,9 +48,9 @@ import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.util.Resources;
 
 /**
- * Tests the view options a {@link TableViewControl} accepts from the client - density, stripes and
- * column lines, kept per person in the {@link TableViewPreferences} and not in the state of a
- * table -, the view reset, and the active filter its row count names.
+ * Tests what a {@link TableViewControl} offers about its view - stripes and column lines are kept
+ * per person in the {@link TableViewPreferences} and not in the state of a table -, the view reset,
+ * and the active filter its row count names.
  */
 public class TestTableViewOptions extends TestCase {
 
@@ -65,8 +64,6 @@ public class TestTableViewOptions extends TestCase {
 	private static final String STATE_VIEW_OPTIONS = "viewOptions";
 
 	private static final String STATE_ROW_COUNT = "rowCount";
-
-	private static final String CMD_SET_VIEW_OPTIONS = "setViewOptions";
 
 	private static final String CMD_RESET_VIEW = "resetView";
 
@@ -143,7 +140,6 @@ public class TestTableViewOptions extends TestCase {
 	 */
 	public void testInitialState() {
 		assertEquals(Boolean.TRUE, _table.clientState(STATE_VIEW_OPTIONS));
-		assertNull(_table.clientState("viewDensity"));
 		assertNull(_table.clientState("striped"));
 		assertNull(_table.clientState("columnLines"));
 	}
@@ -170,76 +166,19 @@ public class TestTableViewOptions extends TestCase {
 	}
 
 	/**
-	 * Tests that the command stores the options for the person, and neither changes nor persists
-	 * the state of the table.
-	 */
-	public void testSetViewOptionsStoresForThePerson() {
-		inContext(() -> {
-			setViewOptions("compact", true, true);
-
-			assertEquals("compact", TableViewPreferences.density());
-			assertTrue(TableViewPreferences.striped());
-			assertTrue(TableViewPreferences.columnLines());
-			assertNull("The table persists nothing of it.", _store._saved);
-			assertNull(_table.clientState("viewDensity"));
-
-			setViewOptions("normal", false, true);
-
-			assertEquals("normal", TableViewPreferences.density());
-			assertFalse(TableViewPreferences.striped());
-			assertTrue(TableViewPreferences.columnLines());
-		});
-	}
-
-	/**
-	 * Tests that a density the table does not know is the default.
-	 */
-	public void testUnknownDensityIsDefault() {
-		inContext(() -> {
-			setViewOptions("compact", false, false);
-			assertEquals("compact", TableViewPreferences.density());
-
-			setViewOptions("roomy", false, false);
-
-			assertEquals("", TableViewPreferences.density());
-		});
-	}
-
-	/**
-	 * Tests that the empty density the client sends for "like everywhere" is accepted, and that a
-	 * command without a density means the same.
-	 */
-	public void testEmptyAndMissingDensityIsDefault() {
-		inContext(() -> {
-			setViewOptions("compact", true, false);
-
-			setViewOptions("", true, false);
-			assertEquals("", TableViewPreferences.density());
-			assertTrue(TableViewPreferences.striped());
-
-			setViewOptions("compact", false, false);
-			_table.executeClientCommand(CMD_SET_VIEW_OPTIONS, Map.of(
-				SetViewOptionsArguments.STRIPED, Boolean.TRUE,
-				SetViewOptionsArguments.COLUMN_LINES, Boolean.FALSE));
-			assertEquals("", TableViewPreferences.density());
-			assertTrue(TableViewPreferences.striped());
-		});
-	}
-
-	/**
 	 * Tests that the view reset restores the arrangement - column order, sort and grouping - and
 	 * leaves the options of the person alone: those are not part of the table.
 	 */
 	public void testResetViewKeepsOptionsOfThePerson() {
 		inContext(() -> {
-			setViewOptions("compact", true, true);
+			TableViewPreferences.setStriped(true);
+			TableViewPreferences.setColumnLines(true);
 			_view.setColumnOrder(List.of(COLUMN_STATUS, COLUMN_NAME));
 			_view.sort(SortSpec.ascending(COLUMN_NAME));
 			_view.group(new GroupSpec(List.of(COLUMN_STATUS)));
 
 			_table.executeClientCommand(CMD_RESET_VIEW, Map.of());
 
-			assertEquals("compact", TableViewPreferences.density());
 			assertTrue(TableViewPreferences.striped());
 			assertTrue(TableViewPreferences.columnLines());
 			assertEquals(List.of(COLUMN_NAME, COLUMN_STATUS), _view.state().getColumnOrder());
@@ -317,13 +256,6 @@ public class TestTableViewOptions extends TestCase {
 	/** Runs the given test body as a person: the options are stored in a user context. */
 	private static void inContext(InContext body) {
 		ThreadContext.inSystemContext(TestTableViewOptions.class, body);
-	}
-
-	private void setViewOptions(String density, boolean striped, boolean columnLines) {
-		_table.executeClientCommand(CMD_SET_VIEW_OPTIONS, Map.of(
-			SetViewOptionsArguments.DENSITY, density,
-			SetViewOptionsArguments.STRIPED, Boolean.valueOf(striped),
-			SetViewOptionsArguments.COLUMN_LINES, Boolean.valueOf(columnLines)));
 	}
 
 	private void search(String term) {

@@ -636,16 +636,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	public static final String CMD_SET_FROZEN_COLUMN_COUNT = "setFrozenColumnCount";
 
 	/**
-	 * The command the client sends to change the view options of the table.
-	 *
-	 * @see SetViewOptionsArguments
-	 */
-	public static final String CMD_SET_VIEW_OPTIONS = "setViewOptions";
-
-	/**
 	 * The command the client sends to return the table to the arrangement it is defined with: its
-	 * columns, their widths, the frozen columns, the sort, the grouping and the view options. The
-	 * filters stay.
+	 * columns, their widths, the frozen columns, the sort and the grouping. The filters stay.
 	 */
 	public static final String CMD_RESET_VIEW = "resetView";
 
@@ -2860,24 +2852,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Handles a change of the view options: density, stripes and column lines.
-	 *
-	 * <p>
-	 * They are stored for the person, not for this table: they apply to every table, and the
-	 * state of this table does not change.
-	 * </p>
-	 *
-	 * @see TableViewPreferences#store(String, boolean, boolean)
-	 */
-	@ReactCommandHandler(CMD_SET_VIEW_OPTIONS)
-	void handleSetViewOptions(SetViewOptionsArguments args) {
-		TableViewPreferences.store(args.getDensity(), args.isStriped(), args.isColumnLines());
-	}
-
-	/**
 	 * Handles the view reset: restores the arrangement the table is defined with - its columns,
-	 * their widths, the frozen columns, the sort and the grouping - and keeps the filters. The view
-	 * options of the person are not part of it.
+	 * their widths, the frozen columns, the sort and the grouping - and keeps the filters.
 	 */
 	@ReactCommandHandler(CMD_RESET_VIEW)
 	void handleResetView() {

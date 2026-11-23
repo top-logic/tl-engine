@@ -934,54 +934,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_COLUMNS;
 
 	/**
-	 * @en View
-	 */
-	@CustomKey("js.table.view")
-	public static ResKey JS_TABLE_VIEW;
-
-	/**
-	 * @en Density
-	 */
-	@CustomKey("js.table.viewDensity")
-	public static ResKey JS_TABLE_VIEW_DENSITY;
-
-	/**
-	 * @en As everywhere
-	 */
-	@CustomKey("js.table.viewDensityDefault")
-	public static ResKey JS_TABLE_VIEW_DENSITY_DEFAULT;
-
-	/**
-	 * @en Normal
-	 */
-	@CustomKey("js.table.viewDensityNormal")
-	public static ResKey JS_TABLE_VIEW_DENSITY_NORMAL;
-
-	/**
-	 * @en Compact
-	 */
-	@CustomKey("js.table.viewDensityCompact")
-	public static ResKey JS_TABLE_VIEW_DENSITY_COMPACT;
-
-	/**
-	 * @en Stripes
-	 */
-	@CustomKey("js.table.viewStripes")
-	public static ResKey JS_TABLE_VIEW_STRIPES;
-
-	/**
-	 * @en Column lines
-	 */
-	@CustomKey("js.table.viewColumnLines")
-	public static ResKey JS_TABLE_VIEW_COLUMN_LINES;
-
-	/**
-	 * @en Back
-	 */
-	@CustomKey("js.table.viewBack")
-	public static ResKey JS_TABLE_VIEW_BACK;
-
-	/**
 	 * @en Reset columns
 	 */
 	@CustomKey("js.table.columnsReset")

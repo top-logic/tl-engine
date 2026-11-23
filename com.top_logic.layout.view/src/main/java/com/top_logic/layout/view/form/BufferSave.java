@@ -180,13 +180,15 @@ public class BufferSave {
 
 	/**
 	 * Checks every change that a {@link #save(List) save} of the given buffers writes, before
-	 * anything is written: {@link TLObjectOverlay#checkApply()} of each overlay over an existing
-	 * object that the save reaches.
+	 * anything is written: {@link TLObjectOverlay#checkApply()} of each overlay that the save
+	 * reaches.
 	 *
 	 * <p>
 	 * The save reaches the buffers in the compositions of the given ones: also a buffer that a
 	 * confirmed dialog left in a composition of another buffer without making it one of the given
-	 * buffers. The values of a new object are not checked attribute by attribute, its creation is.
+	 * buffers. An overlay over a transient object needs no right to write its attributes and takes
+	 * out no stored part; its check makes sure that its references get no object the user may not
+	 * discover.
 	 * </p>
 	 *
 	 * @param buffers
@@ -201,9 +203,7 @@ public class BufferSave {
 			save.visit(buffer, null, null);
 		}
 		for (TLObjectOverlay overlay : save._overlays) {
-			if (!EditLevel.isNew(overlay)) {
-				overlay.checkApply();
-			}
+			overlay.checkApply();
 		}
 	}
 

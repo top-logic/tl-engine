@@ -423,6 +423,12 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * a refusal it can do nothing about. An {@link AgentDefinition#infrastructure()} agent fails the
 	 * same question, because a run the user did not ask for may not be one.
 	 * </p>
+	 *
+	 * <p>
+	 * A name the account knows no agent of fails it too: a stored agent the account may not read is
+	 * unknown to it, and a run of it would answer "no agent found". The default goes on to the next
+	 * agent the account knows instead.
+	 * </p>
 	 */
 	private static boolean canRun(RunAuthorization authorization, ModelSecurity reader, String agentName) {
 		if (agentName == null || agentName.isBlank()) {
@@ -437,7 +443,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			return authorization.allowsAgent(agentName, false);
 		}
 		if (agentDef == null) {
-			return authorization.allowsAgent(agentName, false);
+			return false;
 		}
 		return authorization.allowsAgent(agentDef.name(), agentDef.infrastructure())
 			&& authorization.allowsAgentsOwn(assignedModelOf(agentDef.name()), agentDef.mcpServers());

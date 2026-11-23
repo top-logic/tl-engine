@@ -112,10 +112,13 @@ public class HttpMcpTransport implements McpTransportConfig {
 	}
 
 	/**
-	 * A transport without a connection: a request that the library sends by itself gets no
-	 * credentials.
+	 * A transport whose requests carry only the credentials of the {@link McpTransportContext} of
+	 * their call. A request that the library sends by itself gets none.
 	 *
-	 * @see #createTransport(Supplier)
+	 * <p>
+	 * The {@link McpClientConnection} uses {@link #createTransport(Supplier)}, which gives such a
+	 * request the headers of the last call that succeeded.
+	 * </p>
 	 */
 	@Override
 	public McpClientTransport createTransport() {

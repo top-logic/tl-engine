@@ -287,8 +287,7 @@ class McpClientConnection {
 			// Stopping the run ends the wait for the server.
 			result = RunCancellationBinding.whileBlocked(() -> call.contextWrite(context).block());
 		} catch (CancellationException ex) {
-			// The stop of the run, which took back its interrupt, or a request that the library
-			// cancelled.
+			// The stop of the run, before or during the wait. It took back its interrupt.
 			throw ex;
 		} catch (InterruptedException ex) {
 			throw interrupted(ex);

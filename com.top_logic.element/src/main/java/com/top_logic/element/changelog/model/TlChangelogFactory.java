@@ -242,6 +242,13 @@ public class TlChangelogFactory extends com.top_logic.element.meta.kbbased.Abstr
 	}
 
 	/**
+	 * Lookup {@link ChangeSet#INCOMPLETE_ATTR} of {@link ChangeSet}.
+	 */
+	public static com.top_logic.model.TLProperty getIncompleteChangeSetAttr() {
+		return (com.top_logic.model.TLProperty) getChangeSetType().getPart(ChangeSet.INCOMPLETE_ATTR);
+	}
+
+	/**
 	 * Lookup {@link ChangeSet#IS_REDO_ATTR} of {@link ChangeSet}.
 	 */
 	public static com.top_logic.model.TLProperty getIsRedoChangeSetAttr() {

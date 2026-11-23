@@ -117,6 +117,10 @@ public interface AccessParentFunction {
 	 * may pass to the check.</li>
 	 * <li>This method returns <code>true</code> only when the check returned <code>true</code> for
 	 * at least one of these objects.</li>
+	 * <li>The decision is monotonic: a check returning <code>true</code> for more objects never
+	 * turns an allowed operation into a denied one. The access check stores allowed decisions
+	 * computed while a check in a cycle of access parents answered <code>false</code>
+	 * provisionally.</li>
 	 * </ol>
 	 *
 	 * @param object

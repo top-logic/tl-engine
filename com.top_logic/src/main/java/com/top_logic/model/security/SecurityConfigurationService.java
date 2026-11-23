@@ -2053,21 +2053,48 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (cache.isComputing(key)) {
 			// A cycle denies along this path only: another access parent may still allow the
 			// operation, see AccessDecisionCache#computingHits().
-			Logger.info("The access parents of " + instance + " form a cycle, the path through it is denied.",
-				SecurityConfigurationService.class);
+			logCycle(instance);
 			cache.hitComputing();
 			return false;
 		}
 		int hits = cache.computingHits();
 		cache.computing(key);
-		boolean result = compute(cache, person, instance, commandGroup);
-		if (result || cache.computingHits() == hits) {
-			cache.decided(key, result);
-		} else {
-			// The denial depends on a decision still being computed, which may turn out to allow.
-			cache.forget(key);
+		boolean result = false;
+		boolean stored = false;
+		try {
+			result = compute(cache, person, instance, commandGroup);
+			if (result || cache.computingHits() == hits) {
+				cache.decided(key, result);
+				stored = true;
+			}
+		} finally {
+			if (!stored) {
+				// The denial depends on a decision still being computed, which may turn out to
+				// allow, or the computation failed. In a dense graph of cyclic access parents, such
+				// a denial is computed again on each path reaching it.
+				cache.forget(key);
+			}
 		}
 		return result;
+	}
+
+	/**
+	 * Logs that the access parents of the given object lead back to it.
+	 *
+	 * <p>
+	 * Where the access parent of the object offers alternatives, a cycle is a matter of the data,
+	 * and another candidate may still decide. Otherwise the object is denied by the cycle.
+	 * </p>
+	 */
+	private void logCycle(TLObject instance) {
+		AccessParentFunction parent = accessParentOf(instance);
+		if (parent != null && parent.getRelation() instanceof AnyOfRelation anyOf && anyOf.candidates().size() > 1) {
+			Logger.info("The access parents of " + instance + " form a cycle, the path through it is denied.",
+				SecurityConfigurationService.class);
+		} else {
+			Logger.error("The access parents of " + instance + " form a cycle, access is denied.",
+				SecurityConfigurationService.class);
+		}
 	}
 
 	/**

@@ -29,6 +29,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.security.ModelAccessRights;
@@ -257,6 +258,32 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 		for (Person person : persons()) {
 			assertFalse("Nobody may read the only document referring to the contact: " + person.getName(),
 				allowed(person, _hiddenContact, SimpleBoundCommandGroup.READ));
+		}
+	}
+
+	public void testUncommittedRefererGivesNoVerdict() {
+		TLObject contact = inTransaction(() -> create(CONTACT));
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			TLObject document = ModelService.getInstance().getFactory().createObject(type(DOCUMENT));
+			document.tUpdateByName("author", contact);
+			document.tUpdateByName("reviewers", List.of(_contact));
+			assertEquals("Precondition: the new document refers to the contact.", Set.of(document),
+				contact.tReferers((TLReference) type(DOCUMENT).getPart("author")));
+
+			for (Person person : persons()) {
+				assertFalse("A document not committed yet gives no verdict: " + person.getName(),
+					allowed(person, contact, SimpleBoundCommandGroup.READ));
+			}
+			assertEquals("Nobody decides for the contact.", List.of(),
+				holders(contact, SimpleBoundCommandGroup.READ));
+			assertTrue("The committed referers still decide.",
+				allowed(_docReader, _contact, SimpleBoundCommandGroup.READ));
+			assertFalse(allowed(_other, _contact, SimpleBoundCommandGroup.READ));
+			tx.rollback();
+		}
+		for (Person person : persons()) {
+			assertFalse("No allowance is left in the interaction after the rollback: " + person.getName(),
+				allowed(person, contact, SimpleBoundCommandGroup.READ));
 		}
 	}
 

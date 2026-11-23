@@ -5,7 +5,6 @@
 package com.top_logic.model.security;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.basic.util.ResKey;
@@ -19,7 +18,9 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
  * reference, see {@link RefererAccessParent}.
  *
  * <p>
- * Each referring object is an access parent of its own.
+ * Each referring object is an access parent of its own. Only committed referring objects count: an
+ * object created in the current transaction is set up by whoever creates it, without any check on
+ * the object it refers to, and therefore gives no verdict for that object.
  * </p>
  *
  * @param reference
@@ -29,12 +30,12 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 public record RefererRelation(TLReference reference) implements AccessParentFunction {
 
 	/**
-	 * @return The first object pointing to the given one.
+	 * @return The first committed object pointing to the given one.
 	 */
 	@Override
 	public TLObject resolve(TLObject object) {
 		for (TLObject referer : object.tReferers(reference)) {
-			if (referer != null) {
+			if (SecurityConfigurationService.isCommitted(referer)) {
 				return referer;
 			}
 		}
@@ -47,7 +48,7 @@ public record RefererRelation(TLReference reference) implements AccessParentFunc
 			return List.of();
 		}
 		return () -> object.tReferers(reference).stream()
-			.filter(Objects::nonNull)
+			.filter(SecurityConfigurationService::isCommitted)
 			.map(TLObject.class::cast)
 			.iterator();
 	}

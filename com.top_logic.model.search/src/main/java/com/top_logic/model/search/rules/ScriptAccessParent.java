@@ -26,6 +26,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.AccessParentDefinition;
 import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.CheckedObjects;
 import com.top_logic.model.security.OperationRestriction;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
@@ -40,6 +41,13 @@ import com.top_logic.tool.boundsec.BoundObject;
  * in a collection is ignored. A value that is no object and an object without access control of its
  * own, like a transient object, is skipped and logged as an error, the other objects still being
  * access parents. A failure of the function denies access and is logged as an error, too.
+ * </p>
+ *
+ * <p>
+ * Only committed objects count: an object created in the current transaction is set up by whoever
+ * creates it, without any check on the object whose access it would decide, and is skipped without
+ * a verdict. An object whose type is without security is not access controlled and opens the object
+ * to everybody.
  * </p>
  *
  * <p>
@@ -134,8 +142,8 @@ public class ScriptAccessParent extends AbstractConfiguredInstance<ScriptAccessP
 	/**
 	 * Evaluates the function for the given object.
 	 *
-	 * @return The objects with access control of their own the function yields, empty when the
-	 *         function fails.
+	 * @return The committed objects with access control of their own the function yields, empty
+	 *         when the function fails.
 	 */
 	private List<TLObject> parents(TLObject object) {
 		Object result;
@@ -156,7 +164,9 @@ public class ScriptAccessParent extends AbstractConfiguredInstance<ScriptAccessP
 				continue;
 			}
 			if (value instanceof BoundObject parent) {
-				parents.add(parent);
+				if (CheckedObjects.isStored(parent)) {
+					parents.add(parent);
+				}
 			} else if (value instanceof TLObject) {
 				// An object without access control of its own - a transient object, for instance -
 				// would open the object to every user, since nobody decides for it.

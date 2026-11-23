@@ -101,6 +101,12 @@ public class TestScriptAccessParent extends BasicTestCase {
 	/** A {@code RestrictedTask} assigned to {@link #_employee}. */
 	private TLObject _restrictedTask;
 
+	/** The employee of {@link #_other}, responsible for no project. */
+	private TLObject _lonelyEmployee;
+
+	/** A task assigned to {@link #_lonelyEmployee}, whose access parent is empty. */
+	private TLObject _lonelyTask;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -132,6 +138,13 @@ public class TestScriptAccessParent extends BasicTestCase {
 			_restrictedTask = newObject("RestrictedTask");
 			_restrictedTask.tUpdateByName("name", "restrictedTask");
 			_restrictedTask.tUpdateByName("assignee", _employee);
+
+			_lonelyEmployee = newObject("Employee");
+			_lonelyEmployee.tUpdateByName("salary", Integer.valueOf(1000));
+			_lonelyEmployee.tUpdateByName("account", _other);
+			_lonelyTask = newObject("ProjectTask");
+			_lonelyTask.tUpdateByName("name", "lonelyTask");
+			_lonelyTask.tUpdateByName("assignee", _lonelyEmployee);
 
 			tx.commit();
 		}
@@ -177,6 +190,22 @@ public class TestScriptAccessParent extends BasicTestCase {
 
 	public void testEmptyResultDenies() {
 		assertFalse(allowed(_responsible, _freeTask));
+	}
+
+	public void testUncommittedResultGivesNoVerdict() {
+		try (Transaction tx = beginTx()) {
+			TLObject project = newObject("Project");
+			project.tUpdateByName("name", "scriptAccessParentNewProject");
+			project.tUpdateByName("responsible", _lonelyEmployee);
+
+			assertFalse("A project not committed yet gives no verdict, though its responsible will hold a role on it.",
+				allowed(_other, _lonelyTask));
+			assertFalse(allowed(_responsible, _lonelyTask));
+			assertEquals(Set.of(),
+				ModelAccessRights.getInstance().getRoleHolders(_lonelyTask, SimpleBoundCommandGroup.READ));
+			tx.rollback();
+		}
+		assertFalse("No allowance is left after the rollback.", allowed(_other, _lonelyTask));
 	}
 
 	public void testSingleObject() {

@@ -14,6 +14,7 @@ import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-re
 import { React, ButtonDefaults, register, registerPart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import TLButton from './TLButton';
+import TLAudioPlayer from './TLAudioPlayer';
 import ButtonPart from './button/ButtonPart';
 import MenuTriggerPart from './button/MenuTriggerPart';
 import BadgePart from './chip/BadgePart';
@@ -48,6 +49,7 @@ beforeAll(() => {
     <MenuTriggerPart id={controlId} appearance="ghost" expanded={false} label={LABEL} icon={ICON} data-tl-trigger="hover" />
   ));
   register('RowButton', (props: TLCellProps) => <ButtonDefaults small><TLButton {...props} /></ButtonDefaults>);
+  register('RowPlayer', (props: TLCellProps) => <ButtonDefaults small><TLAudioPlayer {...props} /></ButtonDefaults>);
 });
 
 afterEach(async () => {
@@ -224,6 +226,13 @@ describe('TLButton in a table row (ButtonDefaults small)', () => {
   it('draws the icon trigger of a menu or popover small, too', () => {
     mountButton({}, 'RowTrigger');
     expect(small()).toBe(true);
+  });
+
+  it('keeps a media button at its size: it is the exception that needs a surface', () => {
+    mountButton({}, 'RowPlayer');
+    const play = document.querySelector<HTMLButtonElement>('.tl-button--icon');
+    expect(play).not.toBeNull();
+    expect(play!.classList.contains('tl-button--sm')).toBe(false);
   });
 
   it('names an icon trigger by its label and shows the label as tooltip, except on a trigger opening on hover', () => {

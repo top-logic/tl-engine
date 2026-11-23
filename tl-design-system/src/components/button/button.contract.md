@@ -92,4 +92,5 @@ ersten Kundenkomponente; bis dahin gilt dieser Text.
 `menu.contract.md`) und **schlägt die Server-Erscheinung** — ein Eintrag ist Struktur. `iconOnly`:
 ein Knopf, der sein Icon zeigt, lässt sein Label weg und wird `--icon`; ein Knopf ohne Icon oder mit
 `label-only` bleibt, wie er ist. `small`: eine Tabellenzeile sagt `true`, jeder Icon-Knopf darin (mit Bild) wird `--sm`; eine Fläche, die aus der Zeile
-öffnet (Menü, Popover, Picker, Bildoverlay), sagt `false`, ihre Knöpfe sind normal. Ein Knopf ohne Bild bleibt `label-only`, auch dann ohne `--sm`.
+öffnet (Menü, Popover, Picker, Bildoverlay), sagt `false`, ihre Knöpfe sind normal. Die Medien-Controls (Aufnahme, Abspielen, Kamera) sagen ebenfalls `false`: sie
+behalten in der Zeile ihre Größe, weil sie als Ausnahme eine Fläche tragen. Ein Knopf ohne Bild bleibt `label-only`, auch dann ohne `--sm`.

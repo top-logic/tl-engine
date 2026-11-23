@@ -236,7 +236,7 @@ public class ObjectEditTool {
 			boolean readable = security.canRead(target, part);
 			Predicate<Object> seen = readable ? element -> AttributeValues.shown(element, filter) : element -> false;
 			before.put(part, stored);
-			written.put(part, withUnseen(part, stored, entry.getValue(), seen));
+			written.put(part, withUnseen(part, stored, entry.getValue(), readable, seen));
 			// The call is compared with the value that the run can read, not with the stored value.
 			// A comparison with the stored value tells the model that elements exist that it cannot
 			// read, and for an attribute that the run may not read, it tells the model the stored value.
@@ -268,6 +268,10 @@ public class ObjectEditTool {
 			if (security.canRead(target, part)) {
 				change.put("from", AttributeValues.echo(part, before.get(part), filter));
 				change.put("to", AttributeValues.echo(part, target.tValue(part), filter));
+			} else if (part instanceof TLReference && part.isMultiple()) {
+				// The same sentence whatever the stored value, so that it tells nothing about it.
+				change.put("to", "(written; your account may not read it. Its stored elements stay, and the"
+					+ " given ones are added.)");
 			} else {
 				change.put("to", "(written; your account may not read it)");
 			}
@@ -1163,8 +1167,15 @@ public class ObjectEditTool {
 	 * target of a single-valued reference replaces a target that the run does not see: a refusal
 	 * would tell the model that there is a target. Every other attribute takes the new value as it is.
 	 * </p>
+	 *
+	 * <p>
+	 * <code>null</code> keeps a single target that the run does not see only where the run reads the
+	 * reference: there it sees an empty value, so <code>null</code> asks for no change. A run that may
+	 * write but not read the reference sees no value at all, and <code>null</code> clears it.
+	 * </p>
 	 */
-	private static Object withUnseen(TLStructuredTypePart part, Object stored, Object value, Predicate<Object> seen) {
+	private static Object withUnseen(TLStructuredTypePart part, Object stored, Object value, boolean readable,
+			Predicate<Object> seen) {
 		if (!(part instanceof TLReference)) {
 			return value;
 		}
@@ -1172,7 +1183,7 @@ public class ObjectEditTool {
 			List<Object> result = HiddenElements.keep(elements, given, seen);
 			return value instanceof Set<?> ? new LinkedHashSet<>(result) : result;
 		}
-		return value == null && stored != null && !seen.test(stored) ? stored : value;
+		return readable && value == null && stored != null && !seen.test(stored) ? stored : value;
 	}
 
 	private static boolean sameValue(Object before, Object after) {

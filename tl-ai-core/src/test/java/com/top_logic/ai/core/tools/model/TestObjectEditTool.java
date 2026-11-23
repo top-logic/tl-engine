@@ -432,6 +432,37 @@ public class TestObjectEditTool extends BasicTestCase {
 	}
 
 	/**
+	 * A run that may write a single-valued reference but not read it sees no value there, so null is
+	 * no request to keep the target: it clears the reference, as each call is a change.
+	 */
+	public void testNullClearsASingleReferenceTheRunMayNotRead() {
+		TLObject lead = member("lead");
+		TLObject team = newObject(TEAM, "lead", lead);
+
+		ToolResult result = update(context(new DenyReadAttribute(team, part(team, "lead"))), team,
+			values("lead", null));
+
+		assertSucceeded(result);
+		assertContains("Changed 1 attribute", result.text());
+		assertNull(team.tValue(part(team, "lead")));
+		assertNoSignOf(lead, result);
+	}
+
+	/** The parts of an object are changed with createObject and deleteObject, not with a new list. */
+	public void testACompositionIsRefused() {
+		assertSucceeded(create(ORDER, values("number", "A-30489", "lines", List.of(
+			newPart(null, values("product", "Tea"))))));
+		TLObject order = only(ORDER, "number", "A-30489");
+		List<?> lines = List.copyOf((Collection<?>) order.tValue(part(order, "lines")));
+
+		ToolResult result = update(order, values("lines", List.of()));
+
+		assertRefused(result, "createObject");
+		assertEquals(lines, List.copyOf((Collection<?>) order.tValue(part(order, "lines"))));
+		delete(order);
+	}
+
+	/**
 	 * An attribute that the run may write but not read has no value that the run can read. So a call
 	 * with the stored value is a change, as each other call: "No change" would tell the model the
 	 * stored value.

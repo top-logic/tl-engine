@@ -10,14 +10,21 @@ import java.util.List;
 import junit.framework.Test;
 
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.search.expr.config.ExprFormat;
+import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.ai.core.agent.AgentRuntimeService;
 import com.top_logic.ai.core.provider.ProviderRequest;
 import com.top_logic.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.ai.core.provider.ScriptedProvider;
 import com.top_logic.ai.core.provider.ScriptedProviderOverride;
+import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.ai.core.security.I18NConstants;
+import com.top_logic.ai.core.security.ToolAccessPolicy.ModelGrant;
+import com.top_logic.ai.core.security.ToolAccessPolicy.ModelRoleAccess;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -26,9 +33,9 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * Ben holds {@code ticketReader}, which the fixture grants the Haiku model. A call without an agent
- * runs on the default model, which needs no grant, and any other model needs one. The models are
- * served by a {@link ScriptedProvider} under the names the fixture configures, so that no request
- * leaves the test.
+ * runs on the default model, which needs no grant unless a role denies it, and any other model needs
+ * a grant. The models are served by a {@link ScriptedProvider} under the names the fixture
+ * configures, so that no request leaves the test.
  * </p>
  */
 public class SecDemoScriptModelAccessTest extends SecDemoPersonaTest {
@@ -41,6 +48,9 @@ public class SecDemoScriptModelAccessTest extends SecDemoPersonaTest {
 
 	/** A configured model that nothing grants {@code ticketReader}. */
 	private static final String OTHER_MODEL = "claude-opus-5-5";
+
+	/** The role of {@link #BEN} that the model section of the fixture names. */
+	private static final String TICKET_READER = "ticketReader";
 
 	private static final String ANSWER = "The scripted answer.";
 
@@ -56,8 +66,10 @@ public class SecDemoScriptModelAccessTest extends SecDemoPersonaTest {
 
 	@Override
 	protected void tearDown() throws Exception {
-		_providers.restore();
-		_providers = null;
+		if (_providers != null) {
+			_providers.restore();
+			_providers = null;
+		}
 		super.tearDown();
 	}
 
@@ -88,6 +100,32 @@ public class SecDemoScriptModelAccessTest extends SecDemoPersonaTest {
 	}
 
 	/**
+	 * A deny wins over the default model too: a role that denies it is refused a call without a model
+	 * name, with the sentence that names the role.
+	 */
+	public void testADenyOfTheDefaultModelRefusesACallWithoutAModelName() throws Exception {
+		ModelGrant deny = TypedConfiguration.newConfigItem(ModelGrant.class);
+		deny.setModels(List.of(DEFAULT_MODEL));
+		ticketReaderModels().getDenies().add(deny);
+		ModuleUtil.INSTANCE.restart(AiToolAccessService.Module.INSTANCE);
+		try {
+			actAs(BEN);
+			try {
+				Object answer = eval("aiChat(['Hello'])");
+				fail("ben ran aiChat on the default model '" + DEFAULT_MODEL + "', which ticketReader denies: "
+					+ answer);
+			} catch (TopLogicException expected) {
+				assertEquals(I18NConstants.MODEL_DENIED_BY_ROLE__MODEL_ROLE.fill(DEFAULT_MODEL, TICKET_READER),
+					expected.getErrorKey());
+			}
+			assertEquals(List.of(), calledModels());
+		} finally {
+			ticketReaderModels().getDenies().remove(deny);
+			ModuleUtil.INSTANCE.restart(AiToolAccessService.Module.INSTANCE);
+		}
+	}
+
+	/**
 	 * Anna holds no role the section names, so the default of the section decides: no model but the
 	 * default one, and the refusal says so for a call without an agent.
 	 */
@@ -103,7 +141,15 @@ public class SecDemoScriptModelAccessTest extends SecDemoPersonaTest {
 		assertEquals(List.of(), calledModels());
 	}
 
-	/** Evaluates the script as the script console does, with the security checks of the account. */
+	/** The entry of {@link #TICKET_READER} in the model section of the saved policy of the fixture. */
+	private static ModelRoleAccess ticketReaderModels() {
+		return AiToolAccessService.savedPolicy().getModelAccess().getRoles().get(TICKET_READER);
+	}
+
+	/**
+	 * Evaluates the script as the plain "execute" of the script console does: with the interactive
+	 * context, the security checks of the acting account, and no modification of the knowledge base.
+	 */
 	private static Object eval(String script) {
 		QueryExecutor executor;
 		try {
@@ -111,7 +157,8 @@ public class SecDemoScriptModelAccessTest extends SecDemoPersonaTest {
 		} catch (ConfigurationException ex) {
 			throw new AssertionError("The test script does not parse: " + script, ex);
 		}
-		return executor.execute();
+		return PersistencyLayer.getKnowledgeBase().withoutModifications(
+			() -> executor.executeWith(executor.context(true, null, null), Args.none()));
 	}
 
 	/** The models of the requests that reached the scripted provider since {@link #setUp()}. */

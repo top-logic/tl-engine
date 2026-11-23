@@ -412,12 +412,15 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			Collection<String> tools) {
 		LLMProviderService registry = LLMProviderService.getInstance();
 		AgentRuntimeService runtime = AgentRuntimeService.getInstance();
+		// Also for a call that names a model: the policy decides against the default model. Without a
+		// default model no provider is available, and the call fails here, naming the missing secrets.
+		ModelTarget defaultTarget = runtime != null ? runtime.defaultTarget() : null;
+		String defaultModel = defaultTarget != null ? defaultTarget.model() : null;
 		String modelName = model;
 		String providerName = null;
-		if (modelName == null && runtime != null) {
-			ModelTarget target = runtime.defaultTarget();
-			modelName = target.model();
-			providerName = target.provider();
+		if (modelName == null && defaultTarget != null) {
+			modelName = defaultModel;
+			providerName = defaultTarget.provider();
 		}
 
 		// Build system prompt and user messages from the input
@@ -465,8 +468,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		ToolContext context = ToolContext.forCurrentUser();
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 			// Before the provider is built: a call the account may not make costs no round trip.
-			refuseModel(context.security().runAuthorization(), modelName,
-				model == null ? modelName : defaultModelOf(runtime));
+			refuseModel(context.security().runAuthorization(), modelName, defaultModel);
 			LLMProvider provider = registry.buildProvider(modelName, providerName);
 
 			AgentParams config = new AgentParams(
@@ -519,8 +521,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @param modelName
 	 *        The model the call runs on.
 	 * @param defaultModel
-	 *        The default model of the installation; <code>null</code> when there is none now, and then
-	 *        every model needs a grant.
+	 *        The default model of the installation; <code>null</code> only while the agent runtime is
+	 *        not running, and then every model needs a grant.
 	 * @throws TopLogicException
 	 *         With the reason of the policy, if the account may not use the model.
 	 */
@@ -534,22 +536,6 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			? I18NConstants.ERROR_MODEL_NOT_THE_DEFAULT__MODEL.fill(denied.name())
 			: denied.reason();
 		throw new TopLogicException(reason);
-	}
-
-	/**
-	 * The model a call of {@link #chat(List, String, Object, Collection)} that names none runs on, or
-	 * <code>null</code> when the installation cannot resolve one now.
-	 */
-	private static String defaultModelOf(AgentRuntimeService runtime) {
-		if (runtime == null) {
-			return null;
-		}
-		try {
-			return runtime.defaultTarget().model();
-		} catch (TopLogicException ex) {
-			// No configured default model and no available provider: a named model then needs a grant.
-			return null;
-		}
 	}
 
 	/**

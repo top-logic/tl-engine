@@ -74,7 +74,18 @@ public final class ScriptedProviderOverride {
 		set(providers, LLMProviderService.Config.PROVIDERS, Map.of(PROVIDER, scriptedProvider(models)));
 		set(providers, LLMProviderService.Config.MODEL_CATALOG, null);
 		set(runtime, AgentRuntimeService.Config.DEFAULT_MODEL, defaultModel);
-		ModuleUtil.INSTANCE.restart(LLMProviderService.Module.INSTANCE);
+		try {
+			ModuleUtil.INSTANCE.restart(LLMProviderService.Module.INSTANCE);
+		} catch (RestartException | RuntimeException ex) {
+			// A test whose setUp fails gets no tearDown. Without this, the later tests of the same JVM
+			// would run on the scripted provider, or on services that did not start.
+			try {
+				result.restore();
+			} catch (ConfigurationException | RestartException | RuntimeException restoreFailure) {
+				ex.addSuppressed(restoreFailure);
+			}
+			throw ex;
+		}
 		return result;
 	}
 

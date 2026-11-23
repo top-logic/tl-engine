@@ -9,7 +9,7 @@ order: 69
 
 `aiChat(messages, model, responseFormat, tools)` runs one exchange with a model. A call without tools is one turn; a call that passes tools gets the default turn limit, because the answer comes after the tool results.
 
-The call acts as the account that executed the script, and `<model-access>` decides which models this account may name: the default model needs no grant, another model does ([run access](doc:ai/security/run-access)). A refused call sends no request.
+The call acts as the account that executed the script, and `<model-access>` decides which models this account may name: the default model needs no grant, another model does ([run access](doc:ai/security/run-access)). A refused call sends no request and records no run; only the audit log gets a warning. A call without an account, from a system context or a scheduled `ScriptTask`, is refused: a run that names no principal cannot be authorized.
 
 `responseFormat` takes four shapes:
 

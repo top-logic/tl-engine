@@ -16,9 +16,11 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.model.search.expr.config.ExprFormat;
+import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.ai.core.agent.AgentRuntimeService;
 import com.top_logic.ai.core.provider.LLMProviderService;
@@ -74,8 +76,10 @@ public class TestAIScriptChatModelAccess extends BasicTestCase {
 
 	@Override
 	protected void tearDown() throws Exception {
-		_providers.restore();
-		_providers = null;
+		if (_providers != null) {
+			_providers.restore();
+			_providers = null;
+		}
 		super.tearDown();
 	}
 
@@ -125,15 +129,38 @@ public class TestAIScriptChatModelAccess extends BasicTestCase {
 		assertEquals(List.of(OTHER_MODEL), calledModels());
 	}
 
+	/**
+	 * A call without an account is refused before anything is built: a run that names no principal
+	 * cannot be authorized. This is the case of a system context and of a scheduled script task.
+	 */
+	public void testACallWithoutAnAccountIsRefused() {
+		try {
+			Object answer = as(null, "aiChat(['Hello'])");
+			fail("aiChat ran without an account and answered '" + answer + "'.");
+		} catch (TopLogicException expected) {
+			// The evaluation wraps the refusal of the security context, which is no TopLogicException.
+			Throwable cause = expected.getCause();
+			while (cause != null && !(cause instanceof IllegalStateException)) {
+				cause = cause.getCause();
+			}
+			assertNotNull("The refusal of a run without a principal must be the cause: " + expected, cause);
+		}
+		assertEquals(List.of(), calledModels());
+	}
+
 	private static String asClerk(String script) {
 		return as(clerk, script);
 	}
 
-	/** Evaluates the script as the given account, as the script console of that account does. */
+	/** Evaluates the script as the given account; <code>null</code> evaluates it without one. */
 	private static String as(Person account, String script) {
 		return TLContextManager.inPersonContext(account, () -> (String) eval(script));
 	}
 
+	/**
+	 * Evaluates the script as the plain "execute" of the script console does: with the interactive
+	 * context, the security checks of the acting account, and no modification of the knowledge base.
+	 */
 	private static Object eval(String script) {
 		QueryExecutor executor;
 		try {
@@ -141,7 +168,8 @@ public class TestAIScriptChatModelAccess extends BasicTestCase {
 		} catch (ConfigurationException ex) {
 			throw new AssertionError("The test script does not parse: " + script, ex);
 		}
-		return executor.execute();
+		return PersistencyLayer.getKnowledgeBase().withoutModifications(
+			() -> executor.executeWith(executor.context(true, null, null), Args.none()));
 	}
 
 	/** The models of the requests that reached the scripted provider since {@link #setUp()}. */

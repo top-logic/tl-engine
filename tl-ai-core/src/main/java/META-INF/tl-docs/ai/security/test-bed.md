@@ -172,7 +172,7 @@ A run with nobody to answer an approval prompt auto-approves every call, so it i
 |---|---|---|---|---|
 | M1 | `aiChat` follows `<model-access>` | `ben` | `aiChat(["Hello"], "claude-opus-5-5")`, then `aiChat(["Hello"])` | `The model claude-opus-5-5 is not available to you. Your roles do not include it.`, and no request is sent; then an answer of the default model (needs a key). `claude-haiku-5-5` answers too |
 
-As `anna`, whose role the section does not name, `claude-haiku-5-5` is refused as well, with `... A call without an agent runs on the default model of the application.` `SecDemoScriptModelAccessTest` asserts the row with a scripted provider under the same model names.
+As `anna`, whose role the section does not name, `claude-haiku-5-5` is refused as well, with `... A call without an agent runs on the default model of the application.` A `<deny>` of the default model for `ticketReader` refuses Ben's `aiChat(["Hello"])` too, naming the role. `SecDemoScriptModelAccessTest` asserts the row, the case of Anna and the deny with a scripted provider under the same model names.
 
 ### The object tools
 

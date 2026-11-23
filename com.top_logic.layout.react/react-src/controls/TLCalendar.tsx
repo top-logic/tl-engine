@@ -1,6 +1,6 @@
 import {
   React, useTLState, useTLCommand, useI18N, startPointerDrag, rootClassName, stateAttr, tooltipProps, usePart,
-  useStandaloneKeyboardScope, categoryOf, textOn, isInteractiveWithin, ICON_PREVIOUS, ICON_NEXT,
+  useStandaloneKeyboardScope, categoryOf, textOn, isInteractiveWithin, isCompositionKey, ICON_PREVIOUS, ICON_NEXT,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { useRovingFocus } from './useRovingFocus';
@@ -465,7 +465,8 @@ const CreateStub: React.FC<{
             return;
           }
           e.stopPropagation();
-          if (e.key === 'Enter') {
+          // The Enter that ends a composition is the input method's: the title is not finished yet.
+          if (e.key === 'Enter' && !isCompositionKey(e.nativeEvent)) {
             const title = e.currentTarget.value;
             settle(() => onCommit(title));
           }

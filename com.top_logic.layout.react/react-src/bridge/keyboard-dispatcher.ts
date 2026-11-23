@@ -148,12 +148,15 @@ const KEY_CODE_INPUT_METHOD = 229;
  * that composes the text, or the Enter that ends the composition. Such a key is the input method's
  * and triggers nothing.
  *
+ * <p>A control that handles a key itself in an input - Enter to submit or to pick, Escape, the arrow
+ * keys - asks this first and leaves such a key alone. A React handler passes `event.nativeEvent`.</p>
+ *
  * <p>`isComposing` alone is not sufficient: Safari ends the composition before it reports the Enter
  * that ends it, with `isComposing` false. Every engine reports such a key with the key code of a key
  * that an input method processes, which is why the deprecated `keyCode` is read.</p>
  */
-export function isCompositionKey(e: KeyboardEvent): boolean {
-  return e.isComposing || e.keyCode === KEY_CODE_INPUT_METHOD;
+export function isCompositionKey(event: KeyboardEvent): boolean {
+  return event.isComposing || event.keyCode === KEY_CODE_INPUT_METHOD;
 }
 
 // -- Focus / text-entry rules ---------------------------------------------------

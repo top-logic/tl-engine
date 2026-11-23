@@ -320,6 +320,28 @@ describe('a select without free entry', () => {
 
     expect(sent).toEqual([{ command: CMD_VALUE_CHANGED, args: { value: ['b'] } }]);
   });
+
+  it('chooses nothing with the Enter that ends an input method composition; the next Enter does', async () => {
+    mountSelect({});
+    open();
+    // The search typed with an input method (#30487), which reports the Enter that ends the
+    // composition with the key code 229.
+    type('Bet');
+    expect(highlighted()).toBe('Beta');
+    act(() => {
+      search()!.dispatchEvent(new KeyboardEvent('keydown',
+        { key: 'Enter', keyCode: 229, isComposing: true, bubbles: true, cancelable: true }));
+    });
+    await settle();
+
+    expect(sent).toEqual([]);
+    expect(highlighted()).toBe('Beta');
+
+    key('Enter');
+    await settle();
+
+    expect(sent).toEqual([{ command: CMD_VALUE_CHANGED, args: { value: ['b'] } }]);
+  });
 });
 
 describe('the clear button of a select', () => {

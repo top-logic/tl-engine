@@ -28,6 +28,9 @@ export {
   VALUE_DEBOUNCE_MS,
 } from './bridge/tl-react-bridge';
 export type { TLTypingField, TLTypingFieldOptions } from './bridge/tl-react-bridge';
+// Whether a key belongs to an input method composition, including the Enter that ends it, which
+// Safari reports after the end of the composition: a control's own key handler leaves such a key alone.
+export { isCompositionKey } from './bridge/keyboard-dispatcher';
 export { useUncontrolledFieldSync } from './bridge/uncontrolled-field';
 export type { UncontrolledFieldSync, UncontrolledFieldSyncOptions } from './bridge/uncontrolled-field';
 export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, anchoredOverlayOf, firstFocusable } from './bridge/focus-trap';

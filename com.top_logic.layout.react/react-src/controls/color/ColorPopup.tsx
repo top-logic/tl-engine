@@ -1,4 +1,4 @@
-import { React, useI18N, usePart, tooltipProps, useTabList, TabStrip } from 'tl-react-bridge';
+import { React, useI18N, usePart, tooltipProps, useTabList, TabStrip, isCompositionKey } from 'tl-react-bridge';
 import ColorPalette, { COLOR_DRAG_TYPE } from './ColorPalette';
 import ColorMixer from './ColorMixer';
 import { PickerPopover } from '../picker/PickerPopover';
@@ -195,10 +195,11 @@ const ColorPopup: React.FC<ColorPopupProps> = ({
     [onConfirm, autoAddToPalette]
   );
 
-  // Enter in an input finishes the edit like OK, while the hex field holds a color.
+  // Enter in an input finishes the edit like OK, while the hex field holds a color; the Enter that ends
+  // a composition is the input method's.
   const handleInputKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key !== 'Enter' || !isValidHex(hexInput)) return;
+      if (e.key !== 'Enter' || isCompositionKey(e.nativeEvent) || !isValidHex(hexInput)) return;
       e.preventDefault();
       confirmColor(draft);
     },

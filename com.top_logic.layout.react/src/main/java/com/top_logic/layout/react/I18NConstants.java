@@ -785,6 +785,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COMPACT_FIELD_EDIT_BUTTON;
 
 	/**
+	 * @en Edit the value (required)
+	 */
+	public static ResKey COMPACT_FIELD_EDIT_REQUIRED_BUTTON;
+
+	/**
 	 * @en Value
 	 */
 	public static ResKey COMPACT_FIELD_TITLE;

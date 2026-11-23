@@ -356,14 +356,16 @@ public class ReactCompactFieldControl extends ReactStackControl {
 	 */
 	private void updateDisplay() {
 		boolean editable = _model.isEditable();
+		boolean required = editable && _model.isMandatory();
 		setCssClass(editable ? CSS_FIELD + ' ' + CSS_FIELD_EDIT : CSS_FIELD);
-		setStateWords(editable ? (_model.isMandatory() ? STATE_EDIT + ' ' + STATE_REQUIRED : STATE_EDIT) : null);
+		setStateWords(editable ? (required ? STATE_EDIT + ' ' + STATE_REQUIRED : STATE_EDIT) : null);
 		_opener.setCssClass(editable ? CSS_OPENER : CSS_OPENER_REVEALED);
 
 		Resources resources = Resources.getInstance();
 		_opener.setImage(editable ? Icons.COMPACT_FIELD_EDIT : Icons.COMPACT_FIELD_VIEW);
-		_opener.setLabel(resources.getString(
-			editable ? I18NConstants.COMPACT_FIELD_EDIT_BUTTON : I18NConstants.COMPACT_FIELD_VIEW_BUTTON));
+		// The root (a group) cannot carry aria-required, so the opener names the requirement.
+		_opener.setLabel(resources.getString(required ? I18NConstants.COMPACT_FIELD_EDIT_REQUIRED_BUTTON
+			: editable ? I18NConstants.COMPACT_FIELD_EDIT_BUTTON : I18NConstants.COMPACT_FIELD_VIEW_BUTTON));
 		_opener.setHidden(!editable && (_previewShowsAll || _isEmpty.test(_model.getValue())));
 	}
 

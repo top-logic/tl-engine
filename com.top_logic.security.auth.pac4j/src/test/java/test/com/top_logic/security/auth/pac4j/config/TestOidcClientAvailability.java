@@ -160,6 +160,20 @@ public class TestOidcClientAvailability extends AbstractTypedConfigurationTestCa
 	}
 
 	/**
+	 * A client with a discovery URI but without a client ID is an error of the configuration, so the
+	 * start logs a warning.
+	 */
+	public void testClientWithoutClientIdLogsWarning() throws Exception {
+		assertEquals(1, startupWarnings("", "https://provider.test/.well-known/openid-configuration").size());
+	}
+
+	/** A client with a client ID and a discovery URI logs no warning. */
+	public void testConfiguredClientLogsNoWarning() throws Exception {
+		assertEquals(Collections.emptyList(),
+			startupWarnings("the-client-id", "https://provider.test/.well-known/openid-configuration"));
+	}
+
+	/**
 	 * The messages of level warning and above that are logged while the generic client is created.
 	 */
 	private List<LogEntry> startupWarnings(String clientId, String discoveryUri) throws Exception {

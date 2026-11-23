@@ -325,8 +325,9 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		super(context, config);
 		_secret = context.getInstance(config.getSecret());
 		_hasProviderMetadataSource = hasProviderMetadataSource();
+		boolean hasClientId = !StringServices.isEmpty(config.getClientId());
 		if (!_hasProviderMetadataSource) {
-			if (StringServices.isEmpty(config.getClientId())) {
+			if (!hasClientId) {
 				/* A client that nobody configured is a normal state: an application can contain a
 				 * client whose values come from environment variables that are not set. A warning
 				 * would fail each test that counts a warning at the start as an error. */
@@ -337,6 +338,13 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 					+ Config.DISCOVERY_URI + "' nor '" + Config.PROVIDER_METADATA + "' is configured.",
 					DefaultOidcClientConfigurator.class);
 			}
+		} else if (!hasClientId && hasConfiguredProviderMetadata(config)) {
+			/* Only an explicit source of provider metadata shows that somebody configured the client. A
+			 * subclass that derives its source from other values always has one, also when nobody
+			 * configured it, and must not warn then. */
+			Logger.warn("Login client '" + config.getName() + "' has no client ID, but '"
+				+ Config.DISCOVERY_URI + "' or '" + Config.PROVIDER_METADATA + "' is configured.",
+				DefaultOidcClientConfigurator.class);
 		}
 	}
 
@@ -357,7 +365,13 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 	 *         configured.
 	 */
 	protected boolean hasProviderMetadataSource() {
-		Config<?> config = getConfig();
+		return hasConfiguredProviderMetadata(getConfig());
+	}
+
+	/**
+	 * Whether {@link Config#getDiscoveryURI()} or {@link Config#getProviderMetadata()} is configured.
+	 */
+	private static boolean hasConfiguredProviderMetadata(Config<?> config) {
 		return !StringServices.isEmpty(config.getDiscoveryURI()) || config.getProviderMetadata() != null;
 	}
 

@@ -11,6 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import com.top_logic.ai.tool.api.AnswerMarking;
 import com.top_logic.ai.tool.api.P;
@@ -27,12 +28,19 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.ai.core.agent.AgentDefinitionQuery;
+import com.top_logic.ai.core.agent.ToolContext;
 import com.top_logic.ai.core.model.Agent;
 import com.top_logic.ai.core.model.Skill;
 import com.top_logic.ai.core.model.TlAiCoreFactory;
 import com.top_logic.ai.core.model.impl.AgentBase;
 import com.top_logic.ai.core.model.impl.SkillBase;
+import com.top_logic.ai.core.security.ModelSecurity;
+import com.top_logic.ai.core.security.ToolSecurityException;
 import com.top_logic.ai.core.tools.I18NConstants;
 import com.top_logic.ai.core.tools.authoring.messages.AgentDetail;
 import com.top_logic.ai.core.tools.authoring.messages.AgentListResult;
@@ -52,6 +60,15 @@ import com.top_logic.ai.core.tools.util.DataClassSerializer;
  * Mutating methods inherit the default {@link ToolMode#STRUCTURAL} mode, so they require human
  * approval and are blocked in production. Query methods are {@link ToolMode#READ}. This tool only
  * sees application agents/skills; framework (TopLogic-provided) ones are not visible or editable here.
+ * </p>
+ *
+ * <p>
+ * Every method checks the model rights of the run ({@link ToolContext#modelSecurity()}), as a form
+ * of the application would: a stored agent or skill the run may not read is unknown, and creating,
+ * changing and deleting one needs Create, Write and Delete. A change of an attribute with rights of
+ * its own (the MCP servers of an agent) needs Write on that attribute. A name is free only when no
+ * stored record has it, also one the run may not read, because names are unique in the whole
+ * application.
  * </p>
  */
 public class AgentAuthoringTool {
@@ -82,10 +99,11 @@ public class AgentAuthoringTool {
 	// ---- Skill mutations -------------------------------------------------
 
 	/**
-	 * The commit message of {@link #createSkill(String, String, String, List)}.
+	 * The commit message of {@link #createSkill(String, String, String, List, ToolContext)}.
 	 */
 	@CalledByReflection
-	ResKey createSkillMessage(String name, String description, String content, List<String> tools) {
+	ResKey createSkillMessage(String name, String description, String content, List<String> tools,
+			ToolContext context) {
 		return I18NConstants.SKILL_CREATED__NAME.fill(name);
 	}
 
@@ -98,6 +116,8 @@ public class AgentAuthoringTool {
 	 *        Short description shown in the skill catalog.
 	 * @param content
 	 *        The skill's instruction content (markdown).
+	 * @param context
+	 *        The run, whose model rights decide.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
 	@ToolMethod(description = "Create a new skill (instruction text + optional tools) in the application", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "createSkillMessage")
@@ -106,24 +126,23 @@ public class AgentAuthoringTool {
 			@P("Short description that tells the agent WHEN to load this skill, not what it does internally") String description,
 			@P("Skill content — use XML tags for sections (<core_rules>, <workflow>, etc.), flat imperative rules, no filler prose") String content,
 			@P(value = "Qualified tool names this skill provides when loaded (see listAvailableTools); omit for none",
-				required = false) List<String> tools) {
-		try {
-			OperationResult result = doCreateSkill(name, description, content, tools);
-			return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "createSkill()");
-		} catch (Exception ex) {
-			Logger.error("createSkill() error: " + ex.getMessage(), ex, AgentAuthoringTool.class);
-			return DataClassSerializer.errorToJson("Failed to create skill: " + ex.getMessage(),
-				AgentAuthoringTool.class, "createSkill()");
-		}
+				required = false) List<String> tools,
+			ToolContext context) {
+		return perform("createSkill()", "Failed to create skill: ",
+			() -> doCreateSkill(name, description, content, tools, context.modelSecurity()));
 	}
 
 	private OperationResult doCreateSkill(String name, String description, String content,
-			List<String> tools) {
+			List<String> tools, ModelSecurity rights) {
 		requireName(name, "Skill");
 		if (findSkill(name) != null) {
 			throw new IllegalArgumentException("A skill named '" + name + "' already exists.");
 		}
 		validateSkillTools(tools);
+		if (!rights.canCreate(TlAiCoreFactory.getSkillType(), null)) {
+			throw new ToolSecurityException(SimpleBoundCommandGroup.CREATE,
+				TLModelUtil.qualifiedName(TlAiCoreFactory.getSkillType()));
+		}
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
 				.beginTransaction(ResKey.text("Create skill: " + name))) {
 			Skill skill = TlAiCoreFactory.getInstance().createSkill();
@@ -131,16 +150,21 @@ public class AgentAuthoringTool {
 			skill.setDescription(description);
 			skill.setContent(content);
 			skill.setTools(toSet(tools));
+			requireInitial(rights, skill, TlAiCoreFactory.getNameSkillAttr(), name);
+			requireInitial(rights, skill, TlAiCoreFactory.getDescriptionSkillAttr(), description);
+			requireInitial(rights, skill, TlAiCoreFactory.getContentSkillAttr(), content);
+			requireInitial(rights, skill, TlAiCoreFactory.getToolsSkillAttr(), tools);
 			tx.commit();
 		}
 		return success("Skill '" + name + "' created.");
 	}
 
 	/**
-	 * The commit message of {@link #updateSkill(String, String, String, List)}.
+	 * The commit message of {@link #updateSkill(String, String, String, List, ToolContext)}.
 	 */
 	@CalledByReflection
-	ResKey updateSkillMessage(String name, String description, String content, List<String> tools) {
+	ResKey updateSkillMessage(String name, String description, String content, List<String> tools,
+			ToolContext context) {
 		return I18NConstants.SKILL_UPDATED__NAME.fill(name);
 	}
 
@@ -153,6 +177,8 @@ public class AgentAuthoringTool {
 	 *        New description, or {@code null} to leave unchanged.
 	 * @param content
 	 *        New content, or {@code null} to leave unchanged.
+	 * @param context
+	 *        The run, whose model rights decide.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
 	@ToolMethod(description = "Update an existing application skill. Omitted fields are left unchanged.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "updateSkillMessage")
@@ -161,26 +187,25 @@ public class AgentAuthoringTool {
 			@P(value = "New description — tells the agent WHEN to load (omit to leave unchanged)", required = false) String description,
 			@P(value = "New content — use XML tags, flat imperative rules, no filler (omit to leave unchanged)", required = false) String content,
 			@P(value = "New tool list (omit to leave unchanged; empty replaces with none)",
-				required = false) List<String> tools) {
-		try {
-			OperationResult result = doUpdateSkill(name, description, content, tools);
-			return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "updateSkill()");
-		} catch (Exception ex) {
-			Logger.error("updateSkill() error: " + ex.getMessage(), ex, AgentAuthoringTool.class);
-			return DataClassSerializer.errorToJson("Failed to update skill: " + ex.getMessage(),
-				AgentAuthoringTool.class, "updateSkill()");
-		}
+				required = false) List<String> tools,
+			ToolContext context) {
+		return perform("updateSkill()", "Failed to update skill: ",
+			() -> doUpdateSkill(name, description, content, tools, context.modelSecurity()));
 	}
 
 	private OperationResult doUpdateSkill(String name, String description, String content,
-			List<String> tools) {
-		Skill skill = findSkill(name);
+			List<String> tools, ModelSecurity rights) {
+		Skill skill = readable(findSkill(name), rights);
 		if (skill == null) {
 			throw new IllegalArgumentException("No application skill named '" + name + "'.");
 		}
 		if (tools != null) {
 			validateSkillTools(tools);
 		}
+		requireWrite(rights, skill);
+		requireWrite(rights, skill, TlAiCoreFactory.getDescriptionSkillAttr(), description);
+		requireWrite(rights, skill, TlAiCoreFactory.getContentSkillAttr(), content);
+		requireWrite(rights, skill, TlAiCoreFactory.getToolsSkillAttr(), tools);
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
 				.beginTransaction(ResKey.text("Update skill: " + name))) {
 			if (description != null) {
@@ -198,10 +223,10 @@ public class AgentAuthoringTool {
 	}
 
 	/**
-	 * The commit message of {@link #deleteSkill(String)}.
+	 * The commit message of {@link #deleteSkill(String, ToolContext)}.
 	 */
 	@CalledByReflection
-	ResKey deleteSkillMessage(String name) {
+	ResKey deleteSkillMessage(String name, ToolContext context) {
 		return I18NConstants.SKILL_DELETED__NAME.fill(name);
 	}
 
@@ -210,25 +235,22 @@ public class AgentAuthoringTool {
 	 *
 	 * @param name
 	 *        Name of the skill to delete.
+	 * @param context
+	 *        The run, whose model rights decide.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
 	@ToolMethod(description = "Delete a application skill by name", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "deleteSkillMessage")
-	public String deleteSkill(@P("Name of the skill to delete") String name) {
-		try {
-			OperationResult result = doDeleteSkill(name);
-			return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "deleteSkill()");
-		} catch (Exception ex) {
-			Logger.error("deleteSkill() error: " + ex.getMessage(), ex, AgentAuthoringTool.class);
-			return DataClassSerializer.errorToJson("Failed to delete skill: " + ex.getMessage(),
-				AgentAuthoringTool.class, "deleteSkill()");
-		}
+	public String deleteSkill(@P("Name of the skill to delete") String name, ToolContext context) {
+		return perform("deleteSkill()", "Failed to delete skill: ",
+			() -> doDeleteSkill(name, context.modelSecurity()));
 	}
 
-	private OperationResult doDeleteSkill(String name) {
-		Skill skill = findSkill(name);
+	private OperationResult doDeleteSkill(String name, ModelSecurity rights) {
+		Skill skill = readable(findSkill(name), rights);
 		if (skill == null) {
 			throw new IllegalArgumentException("No application skill named '" + name + "'.");
 		}
+		requireDelete(rights, skill);
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
 				.beginTransaction(ResKey.text("Delete skill: " + name))) {
 			skill.tDelete();
@@ -240,14 +262,16 @@ public class AgentAuthoringTool {
 	// ---- Skill queries ---------------------------------------------------
 
 	/**
-	 * Lists all application skills.
+	 * Lists all application skills the run may read.
 	 *
+	 * @param context
+	 *        The run, whose model rights decide.
 	 * @return JSON-serialized {@link SkillListResult} with one summary per skill.
 	 */
 	@ToolMethod(description = "List all application skills", mode = ToolMode.READ, group = ToolGroups.AGENT_META)
-	public String listSkills() {
+	public String listSkills(ToolContext context) {
 		SkillListResult result = SkillListResult.create();
-		for (Skill skill : allKBSkills()) {
+		for (Skill skill : context.modelSecurity().filterReadable(allKBSkills())) {
 			SkillSummary summary = SkillSummary.create();
 			summary.setName(skill.getName());
 			summary.setDescription(skill.getDescription());
@@ -262,13 +286,16 @@ public class AgentAuthoringTool {
 	 *
 	 * @param name
 	 *        Skill name.
-	 * @return JSON-serialized {@link SkillDetail}; {@code exists} is {@code false} if no such skill.
+	 * @param context
+	 *        The run, whose model rights decide.
+	 * @return JSON-serialized {@link SkillDetail}; {@code exists} is {@code false} if the run knows
+	 *         no such skill.
 	 */
 	@ToolMethod(description = "Get the full definition of a application skill", mode = ToolMode.READ, group = ToolGroups.AGENT_META)
-	public String getSkill(@P("Skill name") String name) {
+	public String getSkill(@P("Skill name") String name, ToolContext context) {
 		SkillDetail detail = SkillDetail.create();
 		detail.setName(name);
-		Skill skill = findSkill(name);
+		Skill skill = readable(findSkill(name), context.modelSecurity());
 		if (skill == null) {
 			detail.setExists(false);
 		} else {
@@ -284,11 +311,11 @@ public class AgentAuthoringTool {
 
 	/**
 	 * The commit message of
-	 * {@link #createAgent(String, String, String, List, List, List, List)}.
+	 * {@link #createAgent(String, String, String, List, List, List, List, ToolContext)}.
 	 */
 	@CalledByReflection
 	ResKey createAgentMessage(String name, String description, String systemPrompt, List<String> tools,
-			List<String> mcpServers, List<String> skills, List<String> delegations) {
+			List<String> mcpServers, List<String> skills, List<String> delegations, ToolContext context) {
 		return I18NConstants.AGENT_CREATED__NAME.fill(name);
 	}
 
@@ -309,6 +336,8 @@ public class AgentAuthoringTool {
 	 *        Skill names the agent loads, or {@code null} for none.
 	 * @param delegations
 	 *        Names of agents this agent may delegate to, or {@code null} for none.
+	 * @param context
+	 *        The run, whose model rights decide.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
 	@ToolMethod(description = "Create a new agent in the application", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "createAgentMessage")
@@ -321,25 +350,24 @@ public class AgentAuthoringTool {
 			@P(value = "MCP server names the agent may use; omit for none", required = false) List<String> mcpServers,
 			@P(value = "Skill names the agent loads; omit for none", required = false) List<String> skills,
 			@P(value = "Names of agents this agent may delegate to; omit for none",
-				required = false) List<String> delegations) {
-		try {
-			OperationResult result =
-				doCreateAgent(name, description, systemPrompt, tools, mcpServers, skills, delegations);
-			return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "createAgent()");
-		} catch (Exception ex) {
-			Logger.error("createAgent() error: " + ex.getMessage(), ex, AgentAuthoringTool.class);
-			return DataClassSerializer.errorToJson("Failed to create agent: " + ex.getMessage(),
-				AgentAuthoringTool.class, "createAgent()");
-		}
+				required = false) List<String> delegations,
+			ToolContext context) {
+		return perform("createAgent()", "Failed to create agent: ", () -> doCreateAgent(name, description,
+			systemPrompt, tools, mcpServers, skills, delegations, context.modelSecurity()));
 	}
 
 	private OperationResult doCreateAgent(String name, String description, String systemPrompt,
-			List<String> tools, List<String> mcpServers, List<String> skills, List<String> delegations) {
+			List<String> tools, List<String> mcpServers, List<String> skills, List<String> delegations,
+			ModelSecurity rights) {
 		requireName(name, "Agent");
 		if (findAgent(name) != null) {
 			throw new IllegalArgumentException("An agent named '" + name + "' already exists.");
 		}
-		List<String> warnings = validateReferences(tools, skills, delegations);
+		List<String> warnings = validateReferences(tools, skills, delegations, rights);
+		if (!rights.canCreate(TlAiCoreFactory.getAgentType(), null)) {
+			throw new ToolSecurityException(SimpleBoundCommandGroup.CREATE,
+				TLModelUtil.qualifiedName(TlAiCoreFactory.getAgentType()));
+		}
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
 				.beginTransaction(ResKey.text("Create agent: " + name))) {
 			Agent agent = TlAiCoreFactory.getInstance().createAgent();
@@ -350,6 +378,13 @@ public class AgentAuthoringTool {
 			agent.setMcpServers(toSet(mcpServers));
 			agent.setSkills(toSet(skills));
 			agent.setDelegations(toSet(delegations));
+			requireInitial(rights, agent, TlAiCoreFactory.getNameAgentAttr(), name);
+			requireInitial(rights, agent, TlAiCoreFactory.getDescriptionAgentAttr(), description);
+			requireInitial(rights, agent, TlAiCoreFactory.getSystemPromptAgentAttr(), systemPrompt);
+			requireInitial(rights, agent, TlAiCoreFactory.getToolsAgentAttr(), tools);
+			requireInitial(rights, agent, TlAiCoreFactory.getMcpServersAgentAttr(), mcpServers);
+			requireInitial(rights, agent, TlAiCoreFactory.getSkillsAgentAttr(), skills);
+			requireInitial(rights, agent, TlAiCoreFactory.getDelegationsAgentAttr(), delegations);
 			tx.commit();
 		}
 		return result("Agent '" + name + "' created.", warnings);
@@ -357,11 +392,11 @@ public class AgentAuthoringTool {
 
 	/**
 	 * The commit message of
-	 * {@link #updateAgent(String, String, String, List, List, List, List)}.
+	 * {@link #updateAgent(String, String, String, List, List, List, List, ToolContext)}.
 	 */
 	@CalledByReflection
 	ResKey updateAgentMessage(String name, String description, String systemPrompt, List<String> tools,
-			List<String> mcpServers, List<String> skills, List<String> delegations) {
+			List<String> mcpServers, List<String> skills, List<String> delegations, ToolContext context) {
 		return I18NConstants.AGENT_UPDATED__NAME.fill(name);
 	}
 
@@ -382,6 +417,8 @@ public class AgentAuthoringTool {
 	 *        New skill list, or {@code null} to leave unchanged (an empty list replaces with none).
 	 * @param delegations
 	 *        New delegation list, or {@code null} to leave unchanged (an empty list replaces with none).
+	 * @param context
+	 *        The run, whose model rights decide.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
 	@ToolMethod(description = "Update an existing application agent. Omitted fields are left unchanged.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "updateAgentMessage")
@@ -396,25 +433,27 @@ public class AgentAuthoringTool {
 			@P(value = "New skill list (omit to leave unchanged; empty replaces with none)",
 				required = false) List<String> skills,
 			@P(value = "New delegation list (omit to leave unchanged; empty replaces with none)",
-				required = false) List<String> delegations) {
-		try {
-			OperationResult result =
-				doUpdateAgent(name, description, systemPrompt, tools, mcpServers, skills, delegations);
-			return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "updateAgent()");
-		} catch (Exception ex) {
-			Logger.error("updateAgent() error: " + ex.getMessage(), ex, AgentAuthoringTool.class);
-			return DataClassSerializer.errorToJson("Failed to update agent: " + ex.getMessage(),
-				AgentAuthoringTool.class, "updateAgent()");
-		}
+				required = false) List<String> delegations,
+			ToolContext context) {
+		return perform("updateAgent()", "Failed to update agent: ", () -> doUpdateAgent(name, description,
+			systemPrompt, tools, mcpServers, skills, delegations, context.modelSecurity()));
 	}
 
 	private OperationResult doUpdateAgent(String name, String description, String systemPrompt,
-			List<String> tools, List<String> mcpServers, List<String> skills, List<String> delegations) {
-		Agent agent = findAgent(name);
+			List<String> tools, List<String> mcpServers, List<String> skills, List<String> delegations,
+			ModelSecurity rights) {
+		Agent agent = readable(findAgent(name), rights);
 		if (agent == null) {
 			throw new IllegalArgumentException("No application agent named '" + name + "'.");
 		}
-		List<String> warnings = validateReferences(tools, skills, delegations);
+		List<String> warnings = validateReferences(tools, skills, delegations, rights);
+		requireWrite(rights, agent);
+		requireWrite(rights, agent, TlAiCoreFactory.getDescriptionAgentAttr(), description);
+		requireWrite(rights, agent, TlAiCoreFactory.getSystemPromptAgentAttr(), systemPrompt);
+		requireWrite(rights, agent, TlAiCoreFactory.getToolsAgentAttr(), tools);
+		requireWrite(rights, agent, TlAiCoreFactory.getMcpServersAgentAttr(), mcpServers);
+		requireWrite(rights, agent, TlAiCoreFactory.getSkillsAgentAttr(), skills);
+		requireWrite(rights, agent, TlAiCoreFactory.getDelegationsAgentAttr(), delegations);
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
 				.beginTransaction(ResKey.text("Update agent: " + name))) {
 			if (description != null) {
@@ -441,10 +480,10 @@ public class AgentAuthoringTool {
 	}
 
 	/**
-	 * The commit message of {@link #deleteAgent(String)}.
+	 * The commit message of {@link #deleteAgent(String, ToolContext)}.
 	 */
 	@CalledByReflection
-	ResKey deleteAgentMessage(String name) {
+	ResKey deleteAgentMessage(String name, ToolContext context) {
 		return I18NConstants.AGENT_DELETED__NAME.fill(name);
 	}
 
@@ -453,25 +492,22 @@ public class AgentAuthoringTool {
 	 *
 	 * @param name
 	 *        Name of the agent to delete.
+	 * @param context
+	 *        The run, whose model rights decide.
 	 * @return JSON-serialized {@link OperationResult} describing the outcome.
 	 */
 	@ToolMethod(description = "Delete a application agent by name", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "deleteAgentMessage")
-	public String deleteAgent(@P("Name of the agent to delete") String name) {
-		try {
-			OperationResult result = doDeleteAgent(name);
-			return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "deleteAgent()");
-		} catch (Exception ex) {
-			Logger.error("deleteAgent() error: " + ex.getMessage(), ex, AgentAuthoringTool.class);
-			return DataClassSerializer.errorToJson("Failed to delete agent: " + ex.getMessage(),
-				AgentAuthoringTool.class, "deleteAgent()");
-		}
+	public String deleteAgent(@P("Name of the agent to delete") String name, ToolContext context) {
+		return perform("deleteAgent()", "Failed to delete agent: ",
+			() -> doDeleteAgent(name, context.modelSecurity()));
 	}
 
-	private OperationResult doDeleteAgent(String name) {
-		Agent agent = findAgent(name);
+	private OperationResult doDeleteAgent(String name, ModelSecurity rights) {
+		Agent agent = readable(findAgent(name), rights);
 		if (agent == null) {
 			throw new IllegalArgumentException("No application agent named '" + name + "'.");
 		}
+		requireDelete(rights, agent);
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
 				.beginTransaction(ResKey.text("Delete agent: " + name))) {
 			agent.tDelete();
@@ -483,14 +519,16 @@ public class AgentAuthoringTool {
 	// ---- Agent queries ---------------------------------------------------
 
 	/**
-	 * Lists all application agents.
+	 * Lists all application agents the run may read.
 	 *
+	 * @param context
+	 *        The run, whose model rights decide.
 	 * @return JSON-serialized {@link AgentListResult} with one summary per agent.
 	 */
 	@ToolMethod(description = "List all application agents", mode = ToolMode.READ, group = ToolGroups.AGENT_META)
-	public String listAgents() {
+	public String listAgents(ToolContext context) {
 		AgentListResult result = AgentListResult.create();
-		for (Agent agent : allKBAgents()) {
+		for (Agent agent : context.modelSecurity().filterReadable(allKBAgents())) {
 			AgentSummary summary = AgentSummary.create();
 			summary.setName(agent.getName());
 			summary.setDescription(agent.getDescription());
@@ -504,13 +542,16 @@ public class AgentAuthoringTool {
 	 *
 	 * @param name
 	 *        Agent name.
-	 * @return JSON-serialized {@link AgentDetail}; {@code exists} is {@code false} if no such agent.
+	 * @param context
+	 *        The run, whose model rights decide.
+	 * @return JSON-serialized {@link AgentDetail}; {@code exists} is {@code false} if the run knows
+	 *         no such agent.
 	 */
 	@ToolMethod(description = "Get the full definition of a application agent", mode = ToolMode.READ, group = ToolGroups.AGENT_META)
-	public String getAgent(@P("Agent name") String name) {
+	public String getAgent(@P("Agent name") String name, ToolContext context) {
 		AgentDetail detail = AgentDetail.create();
 		detail.setName(name);
-		Agent agent = findAgent(name);
+		Agent agent = readable(findAgent(name), context.modelSecurity());
 		if (agent == null) {
 			detail.setExists(false);
 		} else {
@@ -550,6 +591,83 @@ public class AgentAuthoringTool {
 
 	// ---- Shared helpers --------------------------------------------------
 
+	/**
+	 * Runs the given operation and answers its result, or the reason it failed, as JSON.
+	 *
+	 * <p>
+	 * A refusal by the model rights is logged at INFO and not as an error: an account without a
+	 * right is a configured state, not a failure of the application.
+	 * </p>
+	 */
+	private static String perform(String operationName, String failure, Supplier<OperationResult> operation) {
+		try {
+			return DataClassSerializer.toJson(operation.get(), AgentAuthoringTool.class, operationName);
+		} catch (ToolSecurityException ex) {
+			Logger.info(operationName + " refused: " + ex.getMessage(), AgentAuthoringTool.class);
+			return DataClassSerializer.errorToJson(failure + ex.getMessage(), AgentAuthoringTool.class,
+				operationName);
+		} catch (Exception ex) {
+			Logger.error(operationName + " error: " + ex.getMessage(), ex, AgentAuthoringTool.class);
+			return DataClassSerializer.errorToJson(failure + ex.getMessage(), AgentAuthoringTool.class,
+				operationName);
+		}
+	}
+
+	/**
+	 * The given record, or <code>null</code> if there is none or the run may not read it: for the
+	 * run, a record it may not read does not exist.
+	 */
+	private static <T extends TLObject> T readable(T record, ModelSecurity rights) {
+		return record != null && rights.canRead(record) ? record : null;
+	}
+
+	/** Refuses unless the run may change the given record. */
+	private static void requireWrite(ModelSecurity rights, TLObject record) {
+		if (!rights.canWrite(record)) {
+			throw new ToolSecurityException(SimpleBoundCommandGroup.WRITE, TLModelUtil.qualifiedName(record.tType()));
+		}
+	}
+
+	/**
+	 * Refuses unless the run may change the given attribute of the record, when the call gives the
+	 * attribute a value.
+	 */
+	private static void requireWrite(ModelSecurity rights, TLObject record, TLStructuredTypePart attribute,
+			Object value) {
+		if (value != null && !rights.canWrite(record, attribute)) {
+			throw attributeRefusal(attribute);
+		}
+	}
+
+	/**
+	 * Refuses unless the run may set the given attribute of the record it creates, when the call
+	 * gives the attribute a value. An empty list sets nothing.
+	 */
+	private static void requireInitial(ModelSecurity rights, TLObject draft, TLStructuredTypePart attribute,
+			Object value) {
+		if (isEmpty(value)) {
+			return;
+		}
+		if (!rights.canSetInitial(draft, attribute)) {
+			throw attributeRefusal(attribute);
+		}
+	}
+
+	private static boolean isEmpty(Object value) {
+		return value == null || (value instanceof List<?> list && list.isEmpty());
+	}
+
+	private static ToolSecurityException attributeRefusal(TLStructuredTypePart attribute) {
+		return new ToolSecurityException(SimpleBoundCommandGroup.WRITE, TLModelUtil.qualifiedName(attribute));
+	}
+
+	/** Refuses unless the run may delete the given record. */
+	private static void requireDelete(ModelSecurity rights, TLObject record) {
+		if (!rights.canDelete(record)) {
+			throw new ToolSecurityException(SimpleBoundCommandGroup.DELETE, TLModelUtil.qualifiedName(record.tType()));
+		}
+	}
+
 	private static Skill findSkill(String name) {
 		List<Skill> skills = WrapperFactory.getWrappersByAttribute(
 			AgentDefinitionQuery.SKILL_TABLE, PersistencyLayer.getKnowledgeBase(), SkillBase.NAME_ATTR, name);
@@ -586,14 +704,15 @@ public class AgentAuthoringTool {
 		return result;
 	}
 
-	private List<String> validateReferences(List<String> tools, List<String> skills, List<String> delegations) {
+	private List<String> validateReferences(List<String> tools, List<String> skills, List<String> delegations,
+			ModelSecurity rights) {
 		Set<String> validTools = (tools == null || tools.isEmpty())
 			? Set.of()
 			: ToolRegistryService.getInstance().getToolNames();
 		Predicate<String> skillExists =
-			skillName -> AgentDefinitionQuery.getInstance().findSkillByName(skillName) != null;
+			skillName -> AgentDefinitionQuery.getInstance().findSkillByName(skillName, rights) != null;
 		Predicate<String> agentExists =
-			agentName -> AgentDefinitionQuery.getInstance().findAgentByName(agentName) != null;
+			agentName -> AgentDefinitionQuery.getInstance().findAgentByName(agentName, rights) != null;
 		return checkReferences(tools, skills, delegations, validTools, skillExists, agentExists);
 	}
 

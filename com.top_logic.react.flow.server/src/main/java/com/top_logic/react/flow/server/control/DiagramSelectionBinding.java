@@ -6,6 +6,7 @@
 package com.top_logic.react.flow.server.control;
 
 import java.util.Set;
+import java.util.function.Supplier;
 
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.SelectionChannelBinding;
@@ -27,6 +28,12 @@ import com.top_logic.react.flow.data.SelectableBox;
  * {@link Diagram#isMultiSelect() multi-select} one. Whichever elements are selected, the client
  * learns about the marking through the diagram patch the control pushes.
  * </p>
+ *
+ * <p>
+ * A diagram whose empty area stands for an object - the one it displays - writes that object when
+ * the user leaves no element selected: a click or a context menu on the empty area, or a click with
+ * {@code Ctrl} giving up the last selected element, see {@link #noSelectionValue()}.
+ * </p>
  */
 public class DiagramSelectionBinding extends SelectionChannelBinding {
 
@@ -36,6 +43,21 @@ public class DiagramSelectionBinding extends SelectionChannelBinding {
 
 	private final FlowDiagramControl.ModelListener _modelListener = this::refreshed;
 
+	private final Supplier<?> _emptyAreaSelection;
+
+	/**
+	 * Creates a {@link DiagramSelectionBinding} whose empty area selects nothing, and applies the
+	 * channel's current value to the diagram.
+	 *
+	 * @param control
+	 *        The diagram whose selection is bound.
+	 * @param channel
+	 *        The channel holding the selection.
+	 */
+	public DiagramSelectionBinding(FlowDiagramControl control, ViewChannel channel) {
+		this(control, channel, () -> null);
+	}
+
 	/**
 	 * Creates a {@link DiagramSelectionBinding} and applies the channel's current value to the
 	 * diagram.
@@ -44,10 +66,15 @@ public class DiagramSelectionBinding extends SelectionChannelBinding {
 	 *        The diagram whose selection is bound.
 	 * @param channel
 	 *        The channel holding the selection.
+	 * @param emptyAreaSelection
+	 *        The object the empty area of the diagram stands for, asked whenever the user leaves no
+	 *        element selected; it may answer <code>null</code> for no object.
 	 */
-	public DiagramSelectionBinding(FlowDiagramControl control, ViewChannel channel) {
+	public DiagramSelectionBinding(FlowDiagramControl control, ViewChannel channel,
+			Supplier<?> emptyAreaSelection) {
 		super(channel);
 		_control = control;
+		_emptyAreaSelection = emptyAreaSelection;
 
 		control.addSelectionListener(_selectionListener);
 		control.addModelListener(_modelListener);
@@ -83,6 +110,14 @@ public class DiagramSelectionBinding extends SelectionChannelBinding {
 	@Override
 	protected boolean hasElement(Object key) {
 		return _control.hasElementFor(key);
+	}
+
+	/**
+	 * The object the empty area of the diagram stands for, <code>null</code> if none.
+	 */
+	@Override
+	protected Object noSelectionValue() {
+		return _emptyAreaSelection.get();
 	}
 
 	@Override

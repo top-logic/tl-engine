@@ -417,9 +417,12 @@ A part taken out of a composition is lost to its container. Therefore a remove o
 `Delete` right on the part, as `delete()` does, in addition to the `Write` right on the composition.
 Each operation with a security check asks it for each part that it takes out, before it changes
 anything: the TL-Script functions `set` and `remove` in a secured script, the save of a form, of a
-`<composition-table>` and of a row-editing `<table>` or `<tree-table>` with `on-remove="DELETE"`,
+`<composition-table>` and of a row-editing `<table>` or `<tree-table>` with `on-remove="DELETE"`
+(also for the parts removed in the dialogs that edit the compositions of the rows, at any depth),
 and `<persist-transient>` into a single-valued composition, where the new part replaces the part the
-composition holds. A refusal has the message of `delete()`, and nothing changes. A row-editing
+composition holds. A refusal has the message of `delete()`, and nothing changes. For a part the
+user may not discover (a secured script and a dialog see only the parts the user may discover), the
+refusal names only the container and the composition, not the part. A row-editing
 `<table>` or `<tree-table>` with `on-remove="DELETE"` deletes each removed row, so it asks the
 `Delete` right also for a row that is no part of a composition.
 

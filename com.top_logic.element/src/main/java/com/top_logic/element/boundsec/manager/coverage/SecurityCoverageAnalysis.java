@@ -408,7 +408,7 @@ public class SecurityCoverageAnalysis {
 		List<CoverageFinding> findings = new ArrayList<>();
 		if (withoutSecurity != null || internal != null) {
 			// An exempt type needs no definition.
-		} else if (accessParent != null && accessParent.getOperations() == null) {
+		} else if (AccessParentFunction.delegatesAll(accessParent)) {
 			List<String> shadowed = shadowedRules(roleRules, parentRules);
 			if (!shadowed.isEmpty()) {
 				findings.add(CoverageFinding.shadowedRules(type, shadowed));

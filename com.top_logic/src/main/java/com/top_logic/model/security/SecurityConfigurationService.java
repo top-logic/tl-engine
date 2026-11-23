@@ -957,7 +957,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 */
 	private void computeDiscoverRoles(TLClass type, TypeEntry entry) {
 		AccessParentFunction restriction =
-			entry._accessParent != null && entry._accessParent.getOperations() != null ? entry._accessParent : null;
+			entry._accessParent != null && !entry._accessParent.delegatesAll() ? entry._accessParent : null;
 		Set<BoundedRole> roles = new HashSet<>();
 		for (Map<BoundCommandGroup, Set<BoundedRole>> partRights : entry._partRights.values()) {
 			for (Map.Entry<BoundCommandGroup, Set<BoundedRole>> right : partRights.entrySet()) {
@@ -1057,7 +1057,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 				continue;
 			}
 			AccessParentFunction parent = entry(type)._accessParent;
-			if (parent == null || parent.getOperations() == null) {
+			if (parent == null || parent.delegatesAll()) {
 				continue;
 			}
 			for (ResolvedRule rule : rules.getValue()) {
@@ -1734,7 +1734,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		applyRules(classRules.getOrDefault(type, Collections.emptyList()), effective, inheritable);
 
 		AccessParentFunction parent = entry._accessParent;
-		if (parent != null && parent.getOperations() != null) {
+		if (parent != null && !parent.delegatesAll()) {
 			// The access parent decides the delegated operations, the type the others.
 			effective.keySet().removeIf(parent::delegates);
 			inherited.keySet().removeIf(parent::delegates);
@@ -2152,7 +2152,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 					return true;
 				}
 			}
-			if (parent.getOperations() == null) {
+			if (parent.delegatesAll()) {
 				// Every operation is delegated: the object holds no rights of its own.
 				return false;
 			}
@@ -2263,7 +2263,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 				collectAdmittingRoles(parentObject, operationOnParent(delegated), visiting, result);
 			}
 		}
-		if (parent.getOperations() != null) {
+		if (!parent.delegatesAll()) {
 			// The object decides the operations not delegated by its own roles, see compute().
 			addAdmittingRoles(result, instance, getRoles(instance, operation));
 		}
@@ -2591,9 +2591,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 					break;
 				}
 			}
-			if (!result && accessParent.getOperations() != null) {
-				// A restricted relation: the grants of the type itself decide the operations not
-				// delegated.
+			if (!result && !accessParent.delegatesAll()) {
+				// An access parent not deciding every operation: the grants of the type itself
+				// decide the operations not delegated.
 				result = holdsOnRoot(person, securityRoot, getAllowedRoles(type, commandGroup));
 			}
 		} else {

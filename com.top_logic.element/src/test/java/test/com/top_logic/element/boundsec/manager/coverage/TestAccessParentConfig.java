@@ -51,6 +51,7 @@ import com.top_logic.model.security.TargetAccessParent;
 import com.top_logic.model.security.TargetRelation;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.Resources;
 
@@ -244,20 +245,19 @@ public class TestAccessParentConfig extends BasicTestCase {
 		TLClassAccessRights allRestricted = read("<class name='" + LINKED + "'><access-parent><any-of>"
 			+ "<container operations='Write'/>" + TARGET_PARENT + " operations='Read'/></any-of></access-parent></class>");
 		assertTrue(AccessParentConfig.isRestricted(allRestricted.getAccessParent()));
-		assertEquals(Set.of("Read", "Write", "Discover"),
-			AccessParentConfig.delegatedOperationNames(allRestricted.getAccessParent()));
+		assertDelegatesExactly(allRestricted.getAccessParent(), "Read", "Write", "Discover");
 
 		TLClassAccessRights oneUnrestricted = read("<class name='" + LINKED + "'><access-parent><any-of>"
 			+ "<container/>" + TARGET_PARENT + " operations='Read'/></any-of></access-parent></class>");
 		assertFalse(AccessParentConfig.isRestricted(oneUnrestricted.getAccessParent()));
-		assertNull(AccessParentConfig.delegatedOperationNames(oneUnrestricted.getAccessParent()));
+		assertDelegatesExactly(oneUnrestricted.getAccessParent(), "Read", "Write", "Discover", "Create", "Delete",
+			"Export");
 
 		TLClassAccessRights nested = read("<class name='" + LINKED + "'><access-parent><any-of>"
 			+ "<container operations='Write'/><any-of>" + TARGET_PARENT + " operations='Read'/></any-of>"
 			+ "</any-of></access-parent></class>");
 		assertTrue(AccessParentConfig.isRestricted(nested.getAccessParent()));
-		assertEquals(Set.of("Read", "Write", "Discover"),
-			AccessParentConfig.delegatedOperationNames(nested.getAccessParent()));
+		assertDelegatesExactly(nested.getAccessParent(), "Read", "Write", "Discover");
 	}
 
 	/**
@@ -314,6 +314,112 @@ public class TestAccessParentConfig extends BasicTestCase {
 		List<Object> result = new ArrayList<>();
 		function.invoke(args).forEach(result::add);
 		return result;
+	}
+
+	/**
+	 * Without a candidate leading to the container, an <code>&lt;any-of&gt;</code> does not delegate
+	 * Create: the type grants it itself, the configuration and the resolved relation agree.
+	 */
+	public void testAnyOfWithoutContainerCandidateLeavesCreate() throws Exception {
+		String classXml = "<class name='" + LINKED + "'><access-parent><any-of>" + TARGET_PARENT + "/>"
+			+ TARGET_PARENT + " operations='Read'/></any-of></access-parent><grant operation='Create'/></class>";
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = linkedParent(log, classXml);
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+		assertFalse(parent.delegates(SimpleBoundCommandGroup.CREATE));
+		assertFalse(parent.delegatesCreation());
+		assertFalse(parent.delegatesAll());
+		assertTrue(parent.delegates(SimpleBoundCommandGroup.WRITE));
+
+		TLClassAccessRights entry = read(classXml);
+		assertTrue(AccessParentConfig.isRestricted(entry.getAccessParent()));
+		assertFalse(AccessParentConfig.delegatesOperation(entry.getAccessParent(), "Create"));
+		assertTrue(AccessParentConfig.delegatesOperation(entry.getAccessParent(), "Write"));
+
+		BufferingProtocol writeLog = new BufferingProtocol();
+		linkedParent(writeLog, "<class name='" + LINKED + "'><access-parent><any-of>" + TARGET_PARENT + "/>"
+			+ TARGET_PARENT + " operations='Read'/></any-of></access-parent><grant operation='Write'/></class>");
+		assertError(writeLog, "delegates the operation Write");
+	}
+
+	/**
+	 * A container candidate delegating Create makes the <code>&lt;any-of&gt;</code> delegate it.
+	 */
+	public void testAnyOfWithContainerCandidateDelegatesCreate() throws Exception {
+		TLClassAccessRights entry = read("<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<container/>" + TARGET_PARENT + "/></any-of></access-parent></class>");
+		assertFalse(AccessParentConfig.isRestricted(entry.getAccessParent()));
+		assertTrue(AccessParentConfig.delegatesOperation(entry.getAccessParent(), "Create"));
+
+		TLClassAccessRights restricted = read("<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<container operations='Write'/>" + TARGET_PARENT + " operations='Read,Create'/></any-of></access-parent></class>");
+		assertFalse("A target candidate does not delegate Create.",
+			AccessParentConfig.delegatesOperation(restricted.getAccessParent(), "Create"));
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<container operations='Write'/>" + TARGET_PARENT + " operations='Read,Create'/></any-of></access-parent></class>");
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+		assertEquals(Set.of(SimpleBoundCommandGroup.READ, SimpleBoundCommandGroup.WRITE), parent.getOperations());
+		assertFalse(parent.delegates(SimpleBoundCommandGroup.CREATE));
+	}
+
+	/**
+	 * A nested <code>&lt;any-of&gt;</code> counts by its candidates, as the resolved relation takes
+	 * them: the configuration and the relation agree whether the type grants operations itself.
+	 */
+	public void testNestedAnyOfConfigAgreesWithRelation() throws Exception {
+		assertConfigAgrees("<container operations='Create,Write'/><any-of>" + TARGET_PARENT + "/>" + TARGET_PARENT
+			+ " operations='Read'/></any-of>", true);
+		assertConfigAgrees(TARGET_PARENT + " operations='Read'/><any-of>" + TARGET_PARENT + "/>" + TARGET_PARENT
+			+ " operations='Write'/></any-of>", false);
+		assertConfigAgrees("<container operations='Write'/><any-of>" + TARGET_PARENT + " operations='Read'/>"
+			+ TARGET_PARENT + " operations='Export'/></any-of>", false);
+	}
+
+	private static void assertConfigAgrees(String candidatesXml, boolean delegatesAll) throws Exception {
+		String classXml =
+			"<class name='" + LINKED + "'><access-parent><any-of>" + candidatesXml + "</any-of></access-parent></class>";
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = linkedParent(log, classXml);
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+		assertEquals(candidatesXml, delegatesAll, parent.delegatesAll());
+		AccessParentConfig config = read(classXml).getAccessParent();
+		assertEquals(candidatesXml, !delegatesAll, AccessParentConfig.isRestricted(config));
+		for (String operation : List.of("Read", "Write", "Create", "Delete", "Export", "Discover")) {
+			assertEquals(candidatesXml + ": " + operation, AccessParentConfig.delegatesOperation(config, operation),
+				parent.delegates(CommandGroupRegistry.getInstance().getGroup(operation)));
+		}
+	}
+
+	/**
+	 * A custom combinator decides every operation, as before: its configuration is not restricted,
+	 * and the relation delegates all operations although its candidates are restricted.
+	 */
+	public void testCustomCombinatorOfRestrictedCandidatesDelegatesAll() throws Exception {
+		String classXml = "<class name='" + LINKED + "'><access-parent><test-all-of>" + TARGET_PARENT
+			+ " operations='Read'/>" + TARGET_PARENT + " operations='Write'/></test-all-of></access-parent></class>";
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = linkedParent(log, classXml);
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+		assertTrue(parent.delegatesAll());
+		assertFalse(AccessParentConfig.isRestricted(read(classXml).getAccessParent()));
+	}
+
+	/**
+	 * An <code>&lt;any-of&gt;</code> with a single candidate is that candidate.
+	 */
+	public void testSingleCandidateAnyOfIsTheCandidate() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<any-of>" + TARGET_PARENT + "/></any-of></any-of></access-parent></class>");
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+		assertTrue(String.valueOf(parent), parent instanceof TargetRelation);
+		assertTrue(parent.delegates(SimpleBoundCommandGroup.CREATE));
+
+		TLClassAccessRights entry = read("<class name='" + LINKED + "'><access-parent><any-of>"
+			+ TARGET_PARENT + "/></any-of></access-parent></class>");
+		assertFalse(AccessParentConfig.isRestricted(entry.getAccessParent()));
+		assertTrue(AccessParentConfig.delegatesOperation(entry.getAccessParent(), "Create"));
 	}
 
 	public void testGrantBesideUnrestrictedAnyOfIsError() throws Exception {
@@ -620,6 +726,13 @@ public class TestAccessParentConfig extends BasicTestCase {
 			config.getSecurityConfig().put(entry.getName(), entry);
 		}
 		return new SecurityConfigurationService(new DefaultInstantiationContext(log), config);
+	}
+
+	private static void assertDelegatesExactly(AccessParentConfig config, String... operations) {
+		Set<String> expected = Set.of(operations);
+		for (String operation : List.of("Read", "Write", "Discover", "Create", "Delete", "Export")) {
+			assertEquals(operation, expected.contains(operation), AccessParentConfig.delegatesOperation(config, operation));
+		}
 	}
 
 	private static void assertError(BufferingProtocol log, String expectedMessagePart) {

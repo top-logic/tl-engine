@@ -32,6 +32,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.impl.TransientObjectFactory;
+import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -74,6 +75,10 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 	private static final String NODE = MODULE + ":Node";
 
 	private static final String HOLDER = MODULE + ":Holder";
+
+	private static final String NOTE = MODULE + ":Note";
+
+	private static final String BOTH_RESTRICTED = MODULE + ":BothRestricted";
 
 	private static final String BOTH = MODULE + ":Both";
 
@@ -330,6 +335,64 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 				rights().isAllowedCreate(person, type(SINGLE), _folder));
 		}
 		assertTrue(rights().isAllowedCreate(_folderOwner, type(SINGLE), _folder));
+		assertEquals("A single candidate is the access parent itself.", rights().getAccessParent(type(DIRECT)),
+			rights().getAccessParent(type(SINGLE)));
+	}
+
+	/**
+	 * An access parent without a candidate leading to the container does not delegate Create: the
+	 * grants of the type itself decide it, checked on the context the object is created in.
+	 */
+	public void testCreateWithoutContainerCandidateIsOwnGrant() {
+		AccessParentFunction parent = rights().getAccessParent(type(NOTE));
+		assertFalse(parent.delegates(SimpleBoundCommandGroup.CREATE));
+		assertFalse(parent.delegatesCreation());
+		assertTrue(parent.delegates(SimpleBoundCommandGroup.READ));
+
+		assertTrue("The own Create grant decides.", rights().isAllowedCreate(_docReader, type(NOTE), _document));
+		assertTrue(rights().isAllowedCreate(_rootDocReader, type(NOTE), (TLObject) null));
+		assertFalse(rights().isAllowedCreate(_other, type(NOTE), _document));
+		assertFalse("Creating is no write of the context.", rights().isAllowedCreate(_folderOwner, type(NOTE), _folder));
+		assertFalse(rights().isAllowedCreate(_rootOwner, type(NOTE), (TLObject) null));
+
+		assertFalse("Without an own Create grant nobody may create.",
+			rights().isAllowedCreate(_folderOwner, type(NODE), _folder));
+		assertFalse(rights().isAllowedCreate(_rootOwner, type(NODE), (TLObject) null));
+		assertFalse(rights().isAllowedCreate(_rootDocReader, type(NODE), (TLObject) null));
+
+		TLObject note = inTransaction(() -> {
+			TLObject result = create(NOTE);
+			result.tUpdateByName("folder", _folder);
+			return result;
+		});
+		assertTrue("The other operations are still delegated.", allowed(_folderOwner, note, SimpleBoundCommandGroup.WRITE));
+		assertFalse(allowed(_docReader, note, SimpleBoundCommandGroup.READ));
+	}
+
+	/**
+	 * A custom combinator not overriding {@link AccessParentFunction#delegatesAll()} decides every
+	 * operation although its candidates are restricted and none of them lists Create: the grants it
+	 * inherits for the other operations do not apply.
+	 */
+	public void testCustomCombinatorOfRestrictedCandidatesDecidesAll() {
+		AccessParentFunction parent = rights().getAccessParent(type(BOTH_RESTRICTED));
+		assertFalse(parent.delegates(SimpleBoundCommandGroup.DELETE));
+		for (BoundCommandGroup operation : List.of(SimpleBoundCommandGroup.DELETE, SimpleBoundCommandGroup.EXPORT,
+			SimpleBoundCommandGroup.CREATE)) {
+			assertFalse("The inherited grant of " + operation.getID() + " does not apply.",
+				rights().getAccessibleTypes(_rootOwner, operation).contains(type(BOTH_RESTRICTED)));
+		}
+		TLObject object = inTransaction(() -> {
+			TLObject result = create(BOTH_RESTRICTED);
+			result.tUpdateByName("first", _folder);
+			result.tUpdateByName("second", _folder);
+			return result;
+		});
+		assertTrue(allowed(_folderOwner, object, SimpleBoundCommandGroup.WRITE));
+		assertFalse(allowed(_folderOwner, object, SimpleBoundCommandGroup.DELETE));
+		assertFalse(allowed(_rootOwner, object, SimpleBoundCommandGroup.DELETE));
+		assertFalse(allowed(_rootOwner, object, SimpleBoundCommandGroup.EXPORT));
+		assertTrue(parent.delegatesAll());
 	}
 
 	public void testMultiValuedTarget() {

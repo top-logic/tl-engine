@@ -4,9 +4,7 @@
  */
 package com.top_logic.model.security;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Container;
@@ -68,12 +66,15 @@ public interface AccessParentConfig extends ConfigPart {
 	}
 
 	/**
-	 * Whether the given setting delegates only some operations, see
-	 * {@link OperationRestriction#getOperations()}.
+	 * Whether the given setting delegates only some operations.
 	 *
 	 * <p>
-	 * The type of a restricted setting decides the other operations by grants of its own. An
-	 * {@link AnyOfAccessParent} is restricted when all its candidates are.
+	 * The type of a restricted setting decides the other operations by grants of its own. A
+	 * building block is restricted when it lists its {@link OperationRestriction#getOperations()
+	 * operations}. An {@link AnyOfAccessParent} is restricted when all its candidates are, or when
+	 * it does not delegate Create, because no candidate leading to the container does, see
+	 * {@link #delegatesOperation(AccessParentConfig, String)}. An {@link AnyOfAccessParent} with a
+	 * single candidate is that candidate.
 	 * </p>
 	 *
 	 * @param config
@@ -96,50 +97,85 @@ public interface AccessParentConfig extends ConfigPart {
 			return !restriction.getOperations().isEmpty();
 		}
 		if (definition instanceof AnyOfAccessParent.Config anyOf) {
-			return !anyOf.getCandidates().isEmpty()
-				&& anyOf.getCandidates().stream().allMatch(AccessParentConfig::isRestricted);
+			List<PolymorphicConfiguration<? extends AccessParentDefinition>> candidates = anyOf.getCandidates();
+			if (candidates.size() == 1) {
+				return isRestricted(candidates.get(0));
+			}
+			return !candidates.isEmpty() && (allCandidatesRestricted(anyOf)
+				|| !delegatesOperation(anyOf, SimpleBoundCommandGroup.CREATE_NAME));
 		}
 		return false;
 	}
 
 	/**
-	 * The names of the operations the given setting delegates, as written in the configuration.
-	 *
-	 * @param config
-	 *        The setting, <code>null</code> for none.
-	 * @return The names of the operations {@link OperationRestriction#getOperations() listed} and
-	 *         Discover, which is delegated together with any of them, for an
-	 *         {@link AnyOfAccessParent} those of all its candidates; <code>null</code> when the
-	 *         setting delegates all operations; the empty set when it does not
-	 *         {@link #delegates(AccessParentConfig) delegate} at all.
+	 * Whether every building block of the given {@link AnyOfAccessParent} lists its operations, the
+	 * candidates of a nested {@link AnyOfAccessParent} taken as its own candidates, as the resolved
+	 * {@link AnyOfRelation} takes them.
 	 */
-	static Set<String> delegatedOperationNames(AccessParentConfig config) {
-		if (!delegates(config)) {
-			return Collections.emptySet();
-		}
-		if (!isRestricted(config)) {
-			return null;
-		}
-		Set<String> result = new HashSet<>();
-		addDelegatedOperationNames(result, config.getDefinition());
-		return result;
+	private static boolean allCandidatesRestricted(AnyOfAccessParent.Config anyOf) {
+		return anyOf.getCandidates().stream()
+			.allMatch(candidate -> candidate instanceof AnyOfAccessParent.Config nested
+				? allCandidatesRestricted(nested)
+				: isRestricted(candidate));
 	}
 
 	/**
-	 * Adds the names of the operations the given {@link #isRestricted(PolymorphicConfiguration)
-	 * restricted} definition delegates to the given set.
+	 * Whether the given setting delegates the named operation, as written in the configuration.
+	 *
+	 * <p>
+	 * A building block delegates the operations it {@link OperationRestriction#getOperations()
+	 * lists} and Discover, which is delegated together with any of them, or all operations when it
+	 * lists none. An {@link AnyOfAccessParent} delegates an operation one of its candidates
+	 * delegates, Create only when a candidate leading to the container delegates it.
+	 * </p>
+	 *
+	 * @param config
+	 *        The setting, <code>null</code> for none.
+	 * @param operationName
+	 *        The name of the operation.
+	 * @return <code>false</code> when the setting does not {@link #delegates(AccessParentConfig)
+	 *         delegate} at all.
 	 */
-	private static void addDelegatedOperationNames(Set<String> result, PolymorphicConfiguration<?> definition) {
+	static boolean delegatesOperation(AccessParentConfig config, String operationName) {
+		return delegates(config) && delegatesOperation(config.getDefinition(), operationName);
+	}
+
+	/**
+	 * Whether the given definition delegates the named operation, see
+	 * {@link #delegatesOperation(AccessParentConfig, String)}.
+	 */
+	private static boolean delegatesOperation(PolymorphicConfiguration<?> definition, String operationName) {
 		if (definition instanceof AnyOfAccessParent.Config anyOf) {
-			for (PolymorphicConfiguration<?> candidate : anyOf.getCandidates()) {
-				addDelegatedOperationNames(result, candidate);
+			List<PolymorphicConfiguration<? extends AccessParentDefinition>> candidates = anyOf.getCandidates();
+			if (candidates.size() == 1) {
+				return delegatesOperation(candidates.get(0), operationName);
 			}
-		} else if (definition instanceof OperationRestriction restriction) {
-			for (CommandGroupReference operation : restriction.getOperations()) {
-				result.add(operation.id());
+			if (SimpleBoundCommandGroup.CREATE_NAME.equals(operationName)) {
+				return candidates.stream().anyMatch(AccessParentConfig::createsInContainer);
 			}
-			result.add(SimpleBoundCommandGroup.DISCOVER_NAME);
+			return candidates.stream().anyMatch(candidate -> delegatesOperation(candidate, operationName));
 		}
+		if (definition instanceof SelfAccessParent.Config) {
+			return false;
+		}
+		if (definition instanceof OperationRestriction restriction) {
+			List<CommandGroupReference> operations = restriction.getOperations();
+			return operations.isEmpty() || SimpleBoundCommandGroup.DISCOVER_NAME.equals(operationName)
+				|| operations.stream().anyMatch(operation -> operationName.equals(operation.id()));
+		}
+		return true;
+	}
+
+	/**
+	 * Whether the given candidate of an {@link AnyOfAccessParent} leads to the container and
+	 * delegates Create there, directly or through a nested {@link AnyOfAccessParent}.
+	 */
+	private static boolean createsInContainer(PolymorphicConfiguration<?> candidate) {
+		if (candidate instanceof AnyOfAccessParent.Config nested) {
+			return nested.getCandidates().stream().anyMatch(AccessParentConfig::createsInContainer);
+		}
+		return candidate instanceof ContainerAccessParent.Config
+			&& delegatesOperation(candidate, SimpleBoundCommandGroup.CREATE_NAME);
 	}
 
 }

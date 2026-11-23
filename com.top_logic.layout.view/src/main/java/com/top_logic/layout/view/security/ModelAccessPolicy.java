@@ -534,10 +534,10 @@ public final class ModelAccessPolicy {
 						}
 					}
 				}
-				if (accessParent.getOperations() != null
+				if (!accessParent.delegatesAll()
 					&& holdsAnyOf(user, rights.getAllowedRoles(candidate, operation))) {
-					// A restricted relation: the grants of the type itself decide the operations not
-					// delegated.
+					// An access parent not deciding every operation: the grants of the type itself
+					// decide the operations not delegated.
 					return true;
 				}
 				continue;

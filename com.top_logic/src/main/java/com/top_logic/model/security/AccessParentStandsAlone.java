@@ -26,7 +26,8 @@ import com.top_logic.tool.boundsec.CommandGroupReference;
  * <p>
  * A setting {@link AccessParentConfig#isRestricted(AccessParentConfig) restricted} to some
  * operations leaves the other operations to the grants of the type. Beside it, a mark is reported,
- * and a grant of an operation the setting delegates: one of the
+ * and a grant of an operation the setting
+ * {@link AccessParentConfig#delegatesOperation(AccessParentConfig, String) delegates}: one of the
  * {@link OperationRestriction#getOperations() operations listed}, or Discover, which is delegated
  * together with any of them. The operations are compared by their names, as written in the
  * configuration.
@@ -56,11 +57,10 @@ public class AccessParentStandsAlone extends GenericPropertyConstraint {
 		if (!(self.getValue() instanceof AccessParentConfig config) || !AccessParentConfig.delegates(config)) {
 			return;
 		}
-		Set<String> delegated = AccessParentConfig.delegatedOperationNames(config);
 		for (int n = 1, cnt = models.length; n < cnt; n++) {
 			PropertyModel<?> other = models[n];
 			if (isGrants(other)) {
-				checkGrants(self, other, delegated);
+				checkGrants(self, other, config);
 			} else if (Boolean.TRUE.equals(other.getValue())) {
 				self.setProblemDescription(
 					I18NConstants.ACCESS_PARENT_EXCLUDES_OWN_DEFINITION__PROPERTY.fill(label(other)));
@@ -69,17 +69,14 @@ public class AccessParentStandsAlone extends GenericPropertyConstraint {
 	}
 
 	/**
-	 * Reports the grants of the given property that name a delegated operation.
-	 *
-	 * @param delegated
-	 *        The names of the delegated operations, <code>null</code> for all.
+	 * Reports the grants of the given property that name an operation the given setting delegates.
 	 */
-	private static void checkGrants(PropertyModel<?> self, PropertyModel<?> grants, Set<String> delegated) {
+	private static void checkGrants(PropertyModel<?> self, PropertyModel<?> grants, AccessParentConfig config) {
 		Collection<?> rules = (Collection<?>) grants.getValue();
 		if (rules == null || rules.isEmpty()) {
 			return;
 		}
-		if (delegated == null) {
+		if (!AccessParentConfig.isRestricted(config)) {
 			self.setProblemDescription(
 				I18NConstants.ACCESS_PARENT_EXCLUDES_OWN_DEFINITION__PROPERTY.fill(label(grants)));
 			return;
@@ -87,7 +84,7 @@ public class AccessParentStandsAlone extends GenericPropertyConstraint {
 		Set<String> granted = new TreeSet<>();
 		for (Object rule : rules) {
 			CommandGroupReference operation = ((AccessRule) rule).getOperation();
-			if (operation != null && delegated.contains(operation.id())) {
+			if (operation != null && AccessParentConfig.delegatesOperation(config, operation.id())) {
 				granted.add(operation.id());
 			}
 		}

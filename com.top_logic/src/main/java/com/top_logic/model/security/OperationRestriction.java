@@ -58,6 +58,11 @@ public interface OperationRestriction extends ConfigPart {
 	/**
 	 * The configuration this definition belongs to: the {@link AccessParentConfig setting} of a
 	 * type, or a definition combining several ones like {@link AnyOfAccessParent}.
+	 *
+	 * @implNote The options of the definition are those of the type of the setting, found by
+	 *           following the containers of the owner, see {@link AccessParentReferenceOptions}.
+	 *           The configuration of a custom combining definition must therefore extend
+	 *           {@link ConfigPart}.
 	 */
 	@Name(OWNER)
 	@Hidden

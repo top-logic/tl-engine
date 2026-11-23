@@ -167,10 +167,13 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 	static ResKey delegation(AccessParentFunction parent) {
 		Set<BoundCommandGroup> operations = parent.getOperations();
 		if (parent instanceof AnyOfRelation) {
-			return operations == null
-				? I18NConstants.GRANTS_DELEGATED_ANY_OF__CANDIDATES.fill(parent.getLabel())
-				: I18NConstants.GRANTS_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS.fill(parent.getLabel(),
-					operationLabels(operations));
+			if (operations == null) {
+				return parent.delegatesCreation()
+					? I18NConstants.GRANTS_DELEGATED_ANY_OF__CANDIDATES.fill(parent.getLabel())
+					: I18NConstants.GRANTS_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.fill(parent.getLabel());
+			}
+			return I18NConstants.GRANTS_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS.fill(parent.getLabel(),
+				operationLabels(operations));
 		}
 		if (operations == null) {
 			return I18NConstants.GRANTS_DELEGATED__PARENT.fill(parent.getLabel());

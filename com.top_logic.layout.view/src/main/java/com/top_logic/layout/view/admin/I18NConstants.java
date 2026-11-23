@@ -353,11 +353,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 COVERAGE_DELEGATED_ANY_OF__CANDIDATES;
 
 	/**
+	 * @en The type delegates every access decision but Create to several access parents, "{0}":
+	 *     whether a user may perform an operation on an object of the type is whether the user may
+	 *     perform it on one of the access parents of the object deciding it, where deleting is
+	 *     writing it. No access parent is the container, so Create is decided by the grants of the
+	 *     type itself and the roles the users hold on the context the object is created in.
+	 */
+	public static ResKey1 COVERAGE_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES;
+
+	/**
 	 * @en The type delegates the operations {1} to several access parents, "{0}": whether a user may
 	 *     perform one of them on an object of the type is whether the user may perform it on one of
-	 *     the access parents of the object deciding it, where deleting is writing it and creating is
-	 *     writing the container. Discover is delegated together with them. All other operations are
-	 *     decided by the grants of the type itself and the roles the users hold on its objects.
+	 *     the access parents of the object deciding it, where deleting is writing it and creating,
+	 *     when listed, is writing the container. Discover is delegated together with them. All other
+	 *     operations are decided by the grants of the type itself and the roles the users hold on
+	 *     its objects.
 	 */
 	public static ResKey2 COVERAGE_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS;
 
@@ -416,6 +426,14 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     parent deciding it allow it.
 	 */
 	public static ResKey1 GRANTS_DELEGATED_ANY_OF__CANDIDATES;
+
+	/**
+	 * @en The type delegates every operation but Create to several access parents, "{0}": such an
+	 *     operation is allowed as soon as the grants of the type of one access parent deciding it
+	 *     allow it. No access parent is the container, so the grants of the type itself decide
+	 *     Create.
+	 */
+	public static ResKey1 GRANTS_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES;
 
 	/**
 	 * @en The type delegates the operations {1} to several access parents, "{0}", Discover together

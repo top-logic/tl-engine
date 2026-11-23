@@ -520,6 +520,15 @@ public class TestTypeGrants extends BasicTestCase {
 	}
 
 	/**
+	 * A type deciding by any of several access parents, none of them its container, grants Create
+	 * itself.
+	 */
+	public void testAnyOfWithoutContainerOffersCreate() throws Exception {
+		assertEquals(List.of(SimpleBoundCommandGroup.CREATE), grants("TestAccessParentAnyOf:Note").getOperations());
+		assertEquals(List.of(SimpleBoundCommandGroup.CREATE), grants("TestAccessParentAnyOf:Node").getOperations());
+	}
+
+	/**
 	 * A role holding only a grant of Create gets an effective row when it is delivered where the
 	 * objects are created, although it cannot be held on the objects.
 	 */

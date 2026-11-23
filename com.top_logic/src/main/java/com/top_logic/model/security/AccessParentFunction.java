@@ -199,14 +199,48 @@ public interface AccessParentFunction {
 	}
 
 	/**
-	 * The operations on the delegating object the access parent decides, besides Discover.
+	 * The operations on the delegating object the access parent decides, besides Discover, when it
+	 * is restricted to a list of them.
 	 *
-	 * @return The delegated operations, <code>null</code> when all operations are delegated.
+	 * @return The delegated operations, <code>null</code> when the relation is not restricted to a
+	 *         list: it then delegates every operation, unless it tells otherwise by
+	 *         {@link #delegatesAll()} - an {@link AnyOfRelation} without a candidate leading to the
+	 *         container does not delegate Create.
 	 *
 	 * @see #delegates(BoundCommandGroup)
+	 * @see #delegatesAll()
 	 */
 	default Set<BoundCommandGroup> getOperations() {
 		return null;
+	}
+
+	/**
+	 * Whether the access parent decides every operation on the delegating object.
+	 *
+	 * <p>
+	 * A type whose access parent decides every operation has neither grants nor roles of its own.
+	 * Otherwise, the grants of the type decide the operations not
+	 * {@link #delegates(BoundCommandGroup) delegated}.
+	 * </p>
+	 *
+	 * @return By default, whether the relation is not restricted to a list of
+	 *         {@link #getOperations() operations}. A relation leaving an operation to the type
+	 *         without listing its operations, like an {@link AnyOfRelation} not delegating Create,
+	 *         overrides this method.
+	 */
+	default boolean delegatesAll() {
+		return getOperations() == null;
+	}
+
+	/**
+	 * Whether the given access parent decides every operation, see {@link #delegatesAll()}.
+	 *
+	 * @param accessParent
+	 *        The access parent of a type, <code>null</code> when the type decides for itself.
+	 * @return <code>false</code> for no access parent.
+	 */
+	static boolean delegatesAll(AccessParentFunction accessParent) {
+		return accessParent != null && accessParent.delegatesAll();
 	}
 
 	/**

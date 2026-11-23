@@ -615,6 +615,38 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 			constraintFailures(_editor.editableAccessRights(contained)).size());
 	}
 
+	/**
+	 * An access parent without a candidate leading to the container leaves Create to the grants of
+	 * the type.
+	 */
+	public void testAnyOfWithoutContainerKeepsCreateGrant() throws Exception {
+		TLClass contained = type(SINGLE_CONTAINED);
+		TLClassAccessRights entry = _editor.editableAccessRights(contained);
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.CREATE_NAME, READER_ROLE));
+		entry.getGrants().add(newGrant(SimpleBoundCommandGroup.WRITE_NAME, READER_ROLE));
+		_editor.putAccessRights(entry);
+
+		AnyOfAccessParent.Config anyOf = TypedConfiguration.newConfigItem(AnyOfAccessParent.Config.class);
+		anyOf.getCandidates().add(referer(CONTAINER_REFERENCE));
+		anyOf.getCandidates().add(referer(CONTAINER_REFERENCE));
+		_editor.setAccessParent(contained, anyOf);
+
+		TLClassAccessRights stored = _editor.editableAccessRights(contained);
+		assertEquals("Create is not delegated.", List.of(SimpleBoundCommandGroup.CREATE_NAME),
+			stored.getGrants().stream().map(grant -> grant.getOperation().id()).toList());
+		assertEquals(List.of(), constraintFailures(stored));
+
+		stored.getGrants().add(newGrant(SimpleBoundCommandGroup.WRITE_NAME, READER_ROLE));
+		_editor.putAccessRights(stored);
+		assertEquals("Write is delegated.", 1, constraintFailures(_editor.editableAccessRights(contained)).size());
+	}
+
+	private static RefererAccessParent.Config referer(String reference) {
+		RefererAccessParent.Config result = TypedConfiguration.newConfigItem(RefererAccessParent.Config.class);
+		result.setReference(TLModelPartRef.ref(reference));
+		return result;
+	}
+
 	private static List<ConstraintFailure> constraintFailures(TLClassAccessRights entry) throws Exception {
 		ConstraintChecker checker = new ConstraintChecker();
 		checker.check(entry);

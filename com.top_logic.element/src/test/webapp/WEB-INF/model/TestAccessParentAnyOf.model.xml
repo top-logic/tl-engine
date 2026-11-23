@@ -66,6 +66,10 @@
 							multiple="true"
 							type="Mixed"
 						/>
+						<reference name="notes"
+							multiple="true"
+							type="Note"
+						/>
 					</attributes>
 				</class>
 
@@ -120,6 +124,15 @@
 					</attributes>
 				</class>
 
+				<!-- Delegates to its folder or to the documents referring to it, without a container candidate; grants Create itself. -->
+				<class name="Note">
+					<attributes>
+						<reference name="folder"
+							type="Folder"
+						/>
+					</attributes>
+				</class>
+
 				<!-- Delegates to each of its folders. -->
 				<class name="Holder">
 					<attributes>
@@ -140,6 +153,19 @@
 							type="Folder"
 						/>
 					</attributes>
+				</class>
+
+				<!-- Grants Delete and Export to its specializations. -->
+				<class name="Granting"
+					abstract="true"
+				/>
+
+				<!-- Delegates Read to its first folder and Write to its second one at once, through the test combinator; inherits grants of operations it does not delegate. -->
+				<class name="BothRestricted">
+					<generalizations>
+						<generalization type="Both"/>
+						<generalization type="Granting"/>
+					</generalizations>
 				</class>
 
 				<!-- Delegates Write to its folder, and Read to both of two other folders at once, through the test combinator. -->

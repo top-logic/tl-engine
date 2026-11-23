@@ -40,7 +40,9 @@ public class AnyOfAccessParent extends AbstractConfiguredInstance<AnyOfAccessPar
 	 *
 	 * <p>
 	 * As a {@link ConfigPart}, it leads the option functions of its candidates to the setting it
-	 * belongs to, see {@link AccessParentReferenceOptions}.
+	 * belongs to, see {@link AccessParentReferenceOptions}. The configuration of a custom
+	 * definition combining several building blocks extends {@link ConfigPart} as well, so that the
+	 * building blocks inside it offer their options.
 	 * </p>
 	 */
 	@TagName("any-of")
@@ -82,8 +84,8 @@ public class AnyOfAccessParent extends AbstractConfiguredInstance<AnyOfAccessPar
 	}
 
 	/**
-	 * @return An {@link AnyOfRelation} of the resolved candidates, <code>null</code> when one of
-	 *         them is unusable.
+	 * @return An {@link AnyOfRelation} of the resolved candidates, the candidate itself when there
+	 *         is only one, <code>null</code> when one of them is unusable.
 	 */
 	@Override
 	public AccessParentFunction resolveWith(InstantiationContext context, TLClass type, CandidateResolver candidates) {
@@ -113,7 +115,11 @@ public class AnyOfAccessParent extends AbstractConfiguredInstance<AnyOfAccessPar
 				result.add(function);
 			}
 		}
-		return valid ? new AnyOfRelation(result) : null;
+		if (!valid) {
+			return null;
+		}
+		// A single candidate is the access parent itself, decided and described as such.
+		return result.size() == 1 ? result.get(0) : new AnyOfRelation(result);
 	}
 
 }

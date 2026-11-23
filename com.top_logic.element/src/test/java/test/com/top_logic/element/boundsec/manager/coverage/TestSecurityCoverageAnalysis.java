@@ -352,6 +352,17 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 			label.contains("; "));
 	}
 
+	/**
+	 * A type deciding by any of several access parents without a container candidate decides Create
+	 * itself, like a type deciding for itself: without a grant of the built-in Create there is no
+	 * finding.
+	 */
+	public void testAnyOfWithoutContainerDecidesCreate() {
+		TypeCoverage coverage = coverage("TestAccessParentAnyOf:Node");
+		assertFalse(coverage.accessParent().delegates(SimpleBoundCommandGroup.CREATE));
+		assertEquals(coverage.toString(), Set.of(), findingKinds(coverage));
+	}
+
 	public void testConfiguredContainerTellsDirectionOfRecursiveComposition() {
 		ContainerRelation parent = (ContainerRelation) coverage(RECURSIVE).accessParent();
 		assertEquals("A composition the type owns is navigated backwards when the container is configured.",

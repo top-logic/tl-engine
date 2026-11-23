@@ -281,6 +281,48 @@ public class TestRestrictedDelegationTexts extends TestCase {
 			translate(restricted).contains(SecurityGrantFunctions.operationLabels(RESTRICTED_ANY_OF.getOperations())));
 	}
 
+	/**
+	 * An access parent with several candidates, none of them the container, leaves Create to the
+	 * grants of the type, and the texts say so.
+	 */
+	public void testAnyOfWithoutContainerTellsOwnCreate() {
+		TLModule module = TLModelUtil.addModule(new TLModelImpl(), "test.coverage");
+		TLClass note = TLModelUtil.addClass(module, "Note");
+		AnyOfRelation anyOf = new AnyOfRelation(List.of(relation("target of folder"), relation("notes of folder")));
+
+		ResKey grants = SecurityGrantFunctions.delegation(anyOf);
+		assertEquals(I18NConstants.GRANTS_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.getKey(), grants.plain().getKey());
+		ResKey coverage = SecurityCoverageTable.delegation(row(note, anyOf));
+		assertEquals(I18NConstants.COVERAGE_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.getKey(),
+			coverage.plain().getKey());
+		assertNamesCandidates(anyOf, translate(coverage));
+
+		assertEquals("A container candidate delegates Create.", I18NConstants.GRANTS_DELEGATED_ANY_OF__CANDIDATES.getKey(),
+			SecurityGrantFunctions.delegation(ANY_OF).plain().getKey());
+	}
+
+	/**
+	 * A relation that is no container, with the given label.
+	 */
+	private static AccessParentFunction relation(String label) {
+		return new AccessParentFunction() {
+			@Override
+			public TLObject resolve(TLObject delegating) {
+				return null;
+			}
+
+			@Override
+			public Set<TLClass> getParentTypes(TLClass type) {
+				return null;
+			}
+
+			@Override
+			public ResKey getLabel() {
+				return ResKey.text(label);
+			}
+		};
+	}
+
 	private static TypeCoverage row(TLClass type, AccessParentFunction accessParent) {
 		return new TypeCoverage(type, null, null, accessParent, List.of(), Set.of(), List.of(), List.of(), List.of());
 	}

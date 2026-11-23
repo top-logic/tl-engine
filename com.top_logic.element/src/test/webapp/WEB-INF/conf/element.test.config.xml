@@ -910,6 +910,19 @@
 							</any-of>
 						</access-parent>
 					</class>
+					<!-- No candidate leads to the container: Create is decided by the grants of the type itself. -->
+					<class name="TestAccessParentAnyOf:Note">
+						<access-parent>
+							<any-of>
+								<target reference="TestAccessParentAnyOf:Note#folder"/>
+								<referer reference="TestAccessParentAnyOf:Document#notes"/>
+							</any-of>
+						</access-parent>
+						<grant
+							operation="Create"
+							roles="TestAccessParentAnyOf.DocReader"
+						/>
+					</class>
 					<class name="TestAccessParentAnyOf:Holder">
 						<access-parent>
 							<target reference="TestAccessParentAnyOf:Holder#owners"/>
@@ -920,6 +933,32 @@
 							<test-all-of>
 								<target reference="TestAccessParentAnyOf:Both#first"/>
 								<target reference="TestAccessParentAnyOf:Both#second"/>
+							</test-all-of>
+						</access-parent>
+					</class>
+					<class name="TestAccessParentAnyOf:Granting">
+						<grant
+							inherit="true"
+							operation="Delete"
+							roles="TestAccessParentAnyOf.FolderOwner"
+						/>
+						<grant
+							inherit="true"
+							operation="Export"
+							roles="TestAccessParentAnyOf.FolderOwner"
+						/>
+					</class>
+					<class name="TestAccessParentAnyOf:BothRestricted">
+						<access-parent>
+							<test-all-of>
+								<target
+									operations="Read"
+									reference="TestAccessParentAnyOf:Both#first"
+								/>
+								<target
+									operations="Write"
+									reference="TestAccessParentAnyOf:Both#second"
+								/>
 							</test-all-of>
 						</access-parent>
 					</class>

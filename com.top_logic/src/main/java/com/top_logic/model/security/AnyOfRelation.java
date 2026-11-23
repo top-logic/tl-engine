@@ -53,11 +53,12 @@ public record AnyOfRelation(List<AccessParentFunction> candidates) implements Ac
 	}
 
 	/**
-	 * @return The access parents of all candidates, one candidate after the other.
+	 * @return The access parents of all candidates deciding the operation, one candidate after the
+	 *         other, see {@link #deciding(BoundCommandGroup)}.
 	 */
 	@Override
 	public Iterable<TLObject> resolveAll(TLObject object, BoundCommandGroup operation) {
-		return () -> candidates.stream()
+		return () -> deciding(operation).stream()
 			.flatMap(candidate -> StreamSupport.stream(candidate.resolveAll(object, operation).spliterator(), false))
 			.iterator();
 	}
@@ -84,18 +85,37 @@ public record AnyOfRelation(List<AccessParentFunction> candidates) implements Ac
 				&& candidate.delegates(SimpleBoundCommandGroup.CREATE));
 	}
 
+	/**
+	 * The candidates that may decide the given operation: for Create those leading to the
+	 * container, all of them otherwise.
+	 */
+	private List<AccessParentFunction> deciding(BoundCommandGroup operation) {
+		if (SimpleBoundCommandGroup.CREATE.equals(operation)) {
+			return candidates.stream().filter(AnyOfRelation::isContainerCandidate).toList();
+		}
+		return candidates;
+	}
+
 	private static boolean isContainerCandidate(AccessParentFunction candidate) {
 		return candidate.getRelation() instanceof ContainerRelation;
 	}
 
+	/**
+	 * @return Whether a candidate delegates the operation; Create only when a candidate leading to
+	 *         the container delegates it, see {@link #delegatesCreation()}.
+	 */
 	@Override
 	public boolean delegates(BoundCommandGroup operation) {
+		if (SimpleBoundCommandGroup.CREATE.equals(operation)) {
+			return delegatesCreation();
+		}
 		return candidates.stream().anyMatch(candidate -> candidate.delegates(operation));
 	}
 
 	/**
-	 * @return <code>null</code> when a candidate delegates all operations, the operations any
-	 *         candidate delegates otherwise.
+	 * @return <code>null</code> when a candidate is not restricted to a list of operations, the
+	 *         operations any candidate delegates otherwise, Create only as
+	 *         {@link #delegates(BoundCommandGroup)} tells.
 	 */
 	@Override
 	public Set<BoundCommandGroup> getOperations() {
@@ -107,21 +127,34 @@ public record AnyOfRelation(List<AccessParentFunction> candidates) implements Ac
 			}
 			result.addAll(operations);
 		}
+		if (!delegatesCreation()) {
+			result.remove(SimpleBoundCommandGroup.CREATE);
+		}
 		return result;
 	}
 
 	/**
-	 * @return Whether one of the candidates allows the operation, each candidate deciding the way
-	 *         it combines its own access parents.
+	 * @return Whether one of the candidates {@link #deciding(BoundCommandGroup) deciding} the
+	 *         operation allows it, each candidate deciding the way it combines its own access
+	 *         parents.
 	 */
 	@Override
 	public boolean allows(TLObject object, BoundCommandGroup operation, ParentCheck check) {
-		for (AccessParentFunction candidate : candidates) {
+		for (AccessParentFunction candidate : deciding(operation)) {
 			if (candidate.allows(object, operation, check)) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * @return Whether a candidate is not restricted to a list of operations and a candidate leading
+	 *         to the container delegates Create, see {@link #delegatesCreation()}.
+	 */
+	@Override
+	public boolean delegatesAll() {
+		return getOperations() == null && delegatesCreation();
 	}
 
 	/**

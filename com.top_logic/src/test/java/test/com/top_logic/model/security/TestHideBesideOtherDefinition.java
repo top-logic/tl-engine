@@ -90,12 +90,23 @@ public class TestHideBesideOtherDefinition extends TestCase {
 	public void testGrantsVisibleBesideRestrictedAnyOf() {
 		AnyOfAccessParent.Config restricted = anyOf(target(SimpleBoundCommandGroup.READ_NAME),
 			anyOf(target(SimpleBoundCommandGroup.WRITE_NAME)));
-		AnyOfAccessParent.Config unrestricted = anyOf(target(SimpleBoundCommandGroup.READ_NAME), target());
+		AnyOfAccessParent.Config unrestricted = anyOf(target(SimpleBoundCommandGroup.READ_NAME),
+			TypedConfiguration.newConfigItem(ContainerAccessParent.Config.class));
 
 		assertEquals("All candidates leave some operations to the type itself.", FieldMode.ACTIVE,
 			_grantsMode.invoke(false, List.of(), restricted));
-		assertEquals("A candidate delegates all operations.", FieldMode.INVISIBLE,
+		assertEquals("The container candidate delegates all operations.", FieldMode.INVISIBLE,
 			_grantsMode.invoke(false, List.of(), unrestricted));
+	}
+
+	public void testGrantsVisibleBesideAnyOfWithoutContainer() {
+		assertEquals("Create is granted by the type itself.", FieldMode.ACTIVE,
+			_grantsMode.invoke(false, List.of(), anyOf(target(), target())));
+		assertEquals("The container candidate delegates Create.", FieldMode.INVISIBLE,
+			_grantsMode.invoke(false, List.of(), anyOf(TypedConfiguration.newConfigItem(ContainerAccessParent.Config.class),
+				target())));
+		assertEquals("A single candidate is the candidate itself.", FieldMode.INVISIBLE,
+			_grantsMode.invoke(false, List.of(), anyOf(target())));
 	}
 
 	private static TargetAccessParent.Config target(String... operations) {

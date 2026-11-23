@@ -102,4 +102,13 @@ final class AccessDecisionCache {
 		return _decisions.decide(key, computation, onCycle);
 	}
 
+	/**
+	 * Whether a cycle concerning the given subject is to be reported.
+	 *
+	 * @see CyclicDecisions#reportOnce(Object)
+	 */
+	boolean reportOnce(Object subject) {
+		return _decisions.reportOnce(subject);
+	}
+
 }

@@ -96,10 +96,12 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 	private static final int MESH_SIZE = 12;
 
 	/**
-	 * Time in milliseconds the checks on a complete graph of {@link #MESH_SIZE} nodes may take.
-	 * Following every simple path through the graph would take hours.
+	 * The number of times the checks on a complete graph of {@link #MESH_SIZE} nodes may ask the
+	 * access parents of a node, see {@link TestCountingAccessParent}: polynomial in the number of
+	 * nodes. Following every simple path through the graph would ask them more than
+	 * {@code 11!} times.
 	 */
-	private static final long MESH_TIME_LIMIT = 2000;
+	private static final long MESH_INVOCATION_LIMIT = (long) MESH_SIZE * MESH_SIZE * MESH_SIZE;
 
 	private static final String COMMENT = MODULE + ":Comment";
 
@@ -550,7 +552,7 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 		List<TLObject> mesh = inTransaction(() -> createMesh());
 		TLStructuredTypePart name = type(MESH).getPart("name");
 
-		long start = System.currentTimeMillis();
+		TestCountingAccessParent.resetInvocations();
 		for (TLObject node : mesh) {
 			assertFalse(allowed(_folderOwner, node, SimpleBoundCommandGroup.READ));
 			assertFalse(allowed(_folderOwner, node, SimpleBoundCommandGroup.WRITE));
@@ -558,7 +560,7 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 		}
 		assertEquals(Set.of(), rights().getRoleHolders(mesh.get(0), SimpleBoundCommandGroup.READ));
 		assertEquals(Map.of(), rights().getAdmittingRolesByHolder(mesh.get(0), SimpleBoundCommandGroup.READ));
-		assertFasterThanLimit(start);
+		assertPolynomialWork();
 	}
 
 	/**
@@ -570,7 +572,7 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 		inTransaction(() -> mesh.get(MESH_SIZE - 1).tUpdateByName("exit", _folder));
 		TLStructuredTypePart name = type(MESH).getPart("name");
 
-		long start = System.currentTimeMillis();
+		TestCountingAccessParent.resetInvocations();
 		for (TLObject node : mesh) {
 			assertTrue(allowed(_folderOwner, node, SimpleBoundCommandGroup.READ));
 			assertTrue(allowed(_folderReader, node, SimpleBoundCommandGroup.READ));
@@ -580,7 +582,7 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 			assertFalse(rights().isAllowed(_folderOwner, node, name, SimpleBoundCommandGroup.READ));
 			assertEquals(Set.of(_folder), rights().getRoleHolders(node, SimpleBoundCommandGroup.READ));
 		}
-		assertFasterThanLimit(start);
+		assertPolynomialWork();
 	}
 
 	/**
@@ -592,11 +594,11 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
 			List<TLObject> mesh = ThreadContext.withoutSecurityChecks(() -> createMesh());
 
-			long start = System.currentTimeMillis();
+			TestCountingAccessParent.resetInvocations();
 			for (TLObject node : mesh) {
 				assertFalse(rights().isAllowedInitial(_folderReader, node, name, SimpleBoundCommandGroup.READ));
 			}
-			assertFasterThanLimit(start);
+			assertPolynomialWork();
 			tx.rollback();
 		}
 	}
@@ -617,9 +619,39 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 		return result;
 	}
 
-	private static void assertFasterThanLimit(long start) {
-		long elapsed = System.currentTimeMillis() - start;
-		assertTrue("The checks took " + elapsed + " ms.", elapsed < MESH_TIME_LIMIT);
+	private static void assertPolynomialWork() {
+		long invocations = TestCountingAccessParent.invocations();
+		assertTrue("The checks asked the access parents " + invocations + " times.",
+			invocations > 0 && invocations <= MESH_INVOCATION_LIMIT);
+	}
+
+	/**
+	 * A cycle through a complete graph of access parents is logged at most once per node and check,
+	 * not once per path closing it, as info since the access parent of a node has several
+	 * candidates.
+	 */
+	public void testCompleteGraphLogsCycleOncePerNode() {
+		List<TLObject> mesh = inTransaction(() -> createMesh());
+
+		CollectingLogListener listener = new CollectingLogListener(Set.of(Level.INFO, Level.ERROR), true);
+		try {
+			assertFalse(allowed(_folderOwner, mesh.get(0), SimpleBoundCommandGroup.READ));
+		} finally {
+			listener.deactivate();
+		}
+		List<String> cycles = listener.getLogEntries().stream()
+			.filter(entry -> entry.getPriority() == Level.INFO)
+			.map(entry -> entry.getMessage())
+			.filter(message -> message.contains("form a cycle"))
+			.toList();
+		assertFalse("The cycle is logged.", cycles.isEmpty());
+		for (TLObject node : mesh) {
+			long lines = cycles.stream().filter(message -> message.contains("of " + node + " form")).count();
+			assertTrue("The cycle through " + node + " is logged " + lines + " times: " + cycles, lines <= 1);
+		}
+		assertTrue("At most one line per node: " + cycles, cycles.size() <= MESH_SIZE);
+		assertTrue("No error for a node with several candidates.", listener.getLogEntries().stream()
+			.noneMatch(entry -> entry.getPriority() == Level.ERROR && entry.getMessage().contains("form a cycle")));
 	}
 
 	public void testCreatePartChecksContainerOnly() {

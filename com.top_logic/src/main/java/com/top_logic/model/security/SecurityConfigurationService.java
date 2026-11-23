@@ -1987,7 +1987,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// A free-standing object is not accessible until it is put into a container, which is a
 			// write of the container checked in its own right.
 			return !leadsAnywhere;
-		}, () -> logCycle(current));
+		}, () -> {
+			if (initial.reportOnce(current)) {
+				logCycle(current);
+			}
+		});
 	}
 
 	@Override
@@ -2077,11 +2081,20 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		}
 		return cache.decide(AccessDecisionCache.key(person, instance, commandGroup),
 			key -> compute(cache, person, instance, commandGroup),
-			() -> logCycle(instance));
+			() -> {
+				if (cache.reportOnce(instance)) {
+					logCycle(instance);
+				}
+			});
 	}
 
 	/**
 	 * Logs that the access parents of the given object lead back to it.
+	 *
+	 * <p>
+	 * The cycle is logged once per object and top-level check, see
+	 * {@link CyclicDecisions#reportOnce(Object)}, not once per path closing it.
+	 * </p>
 	 *
 	 * <p>
 	 * Where the access parent of the object offers alternatives, a cycle is a matter of the data,

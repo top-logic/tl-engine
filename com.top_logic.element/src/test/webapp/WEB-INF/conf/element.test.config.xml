@@ -945,12 +945,15 @@
 							roles="TestAccessParentAnyOf.DocReader"
 						/>
 					</class>
+					<!-- The work of an access check is counted by test-counting, see TestAccessParentAnyOf. -->
 					<class name="TestAccessParentAnyOf:Mesh">
 						<access-parent>
-							<any-of>
-								<target reference="TestAccessParentAnyOf:Mesh#links"/>
-								<target reference="TestAccessParentAnyOf:Mesh#exit"/>
-							</any-of>
+							<test-counting>
+								<any-of>
+									<target reference="TestAccessParentAnyOf:Mesh#links"/>
+									<target reference="TestAccessParentAnyOf:Mesh#exit"/>
+								</any-of>
+							</test-counting>
 						</access-parent>
 					</class>
 					<part name="TestAccessParentAnyOf:Mesh#name">

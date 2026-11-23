@@ -546,10 +546,10 @@ folder may do everything with it.
   is an access parent of its own.
 - **`<any-of>`** holds the building blocks (`<container>`, `<target>`, `<referer>`, `<script>`) as
   its candidates; the access parents of the object are those of all candidates. A building block
-  directly in `<access-parent>` behaves like a single candidate (also for Create, see below). A nested `<any-of>` adds its
-  candidates, an `<any-of>` with a single candidate is that candidate. `<self/>` as candidate, an
-  empty `<any-of>` and `operations` on `<any-of>` are configuration errors; each candidate restricts
-  its own operations.
+  directly in `<access-parent>` behaves like a single candidate (also for Create, see below). A
+  nested `<any-of>` adds its candidates, an `<any-of>` with a single candidate is that candidate.
+  `<self/>` as candidate, an empty `<any-of>` and `operations` on `<any-of>` are configuration
+  errors; each candidate restricts its own operations.
 - **A candidate not delegating an operation abstains** for it. An operation delegated by no
   candidate is decided by the grants of the type itself, as for a single restricted access parent.
   Discover is delegated by a candidate delegating any operation.
@@ -572,16 +572,21 @@ folder may do everything with it.
   though every other operation is delegated. `Create` in the `operations` of a `<referer>` is a
   configuration error. Where no container candidate delegates the operation of an attribute grant
   (an `<any-of>` of only `<referer>`, `<target>` or `<script>` candidates, a `<referer>` alone, or
-  a `<container>` candidate restricted to other operations), an object being created has no access parent for it yet: it is free-standing, and
-  the attribute grant does not restrict its initial values (`isAllowedInitial`). The grant applies
-  as soon as the object exists and its access parents are found.
+  a `<container>` candidate restricted to other operations), a draft being created (a transient
+  object, whose access parents are found by `resolveDraft`) has no access parent for it yet: it is
+  free-standing, and the attribute grant does not restrict its initial values
+  (`isAllowedInitial`). A persistent object created in the running transaction, not committed yet,
+  is checked on the access parents all its candidates already yield (`resolveAll`), e.g. a target
+  it already points to; it is free-standing only where they yield none. The grant applies as soon
+  as the object exists and its access parents are found.
 - **Cycles.** Access parents referring to each other (two nodes pointing to each other with `next`)
   form a cycle. The path that reaches a check under way again is denied, while another candidate
   may still allow the operation. A denial computed while such a cycle was hit is stored in the
   [memo of the interaction](#caching-of-decisions) only provisionally, until the check under way is
   decided: if it is allowed, the provisional denials are discarded, so the object closing the cycle
-  is decided anew when it is checked on its own. The cycle is logged as info where the access parent has several
-  candidates (a matter of the data), as an error otherwise.
+  is decided anew when it is checked on its own. The cycle is logged once per object and check,
+  as info where the access parent has several candidates (a matter of the data), as an error
+  otherwise.
 - **Role holders and explanation.** `getRoleHolders` yields the ends of all chains, each deciding
   the operation for itself. The explanation of the effective access (React admin hub) lists every
   object deciding an operation; a user may perform it when holding an admitting role on one of

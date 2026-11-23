@@ -6,8 +6,10 @@ package com.top_logic.model.security;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import com.top_logic.model.TLObject;
@@ -127,6 +129,12 @@ final class CyclicDecisions<K> {
 	private final List<Provisional<K>> _provisional = new ArrayList<>();
 
 	/**
+	 * The subjects of the cycles reported during the current top-level decision, see
+	 * {@link #reportOnce(Object)}.
+	 */
+	private final Set<Object> _reported = new HashSet<>();
+
+	/**
 	 * Decides for the given key, answering from the memo where possible.
 	 *
 	 * @param key
@@ -135,7 +143,9 @@ final class CyclicDecisions<K> {
 	 *        Computes the decision for the key, possibly asking for further decisions through this
 	 *        memo.
 	 * @param onCycle
-	 *        Called when the decision is asked for while it is under way.
+	 *        Called when the decision is asked for while it is under way. In a dense graph of
+	 *        decisions, this happens once per path closing a cycle; a report should be limited
+	 *        with {@link #reportOnce(Object)}.
 	 * @return The decision, <code>false</code> for a decision under way, see the
 	 *         {@link CyclicDecisions algorithm}.
 	 */
@@ -170,7 +180,28 @@ final class CyclicDecisions<K> {
 				discardProvisional(frame._provisionalStart);
 				_states.remove(key);
 			}
+			if (_stack.isEmpty()) {
+				_reported.clear();
+			}
 		}
+	}
+
+	/**
+	 * Whether a cycle concerning the given subject is to be reported: the first time during the
+	 * current top-level decision.
+	 *
+	 * <p>
+	 * A {@link #decide(Object, Predicate, Runnable) cycle callback} reports through this method to
+	 * report a subject at most once per top-level decision, instead of once per path closing a
+	 * cycle through it.
+	 * </p>
+	 *
+	 * @param subject
+	 *        What the cycle is reported for, e.g. the object whose decision is under way.
+	 * @return Whether the subject was not reported yet during the current top-level decision.
+	 */
+	boolean reportOnce(Object subject) {
+		return _reported.add(subject);
 	}
 
 	private void complete(K key, Frame frame, boolean result) {

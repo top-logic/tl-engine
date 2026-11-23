@@ -1,5 +1,5 @@
 ---
-description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), attributes readable with Discover (discover-attributes), operation declarations (<operations>, implied-by), the internal / without-security marks, access parents, role rules of the AccessManager, the autoconf files and the SecurityCoverageCheck.
+description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), attributes readable with Discover (discover-attributes), operation declarations (<operations>, implied-by), the internal / without-security marks, access parents, the Delete right a remove from a composition needs, role rules of the AccessManager, the autoconf files and the SecurityCoverageCheck.
 order: 20
 ---
 
@@ -410,6 +410,28 @@ In Java, `ModelAccessRights.getAccessParent(TLClass)` returns the relation in ef
 is an `AccessParentDefinition`, resolved once per type at startup; an application can add its own
 implementation with a tag name of its own. `AccessManager.hasRoleSource(TLClass)` is the hook the
 default consults.
+
+### Removing a part from a composition
+
+A part taken out of a composition is lost to its container. Therefore a remove of a part needs the
+`Delete` right on the part, as `delete()` does, in addition to the `Write` right on the composition.
+Each operation with a security check asks it for each part that it takes out, before it changes
+anything: the TL-Script functions `set` and `remove` in a secured script, the save of a form, of a
+`<composition-table>` and of a row-editing `<table>` or `<tree-table>` with `on-remove="DELETE"`,
+and `<persist-transient>` into a single-valued composition, where the new part replaces the part the
+composition holds. A refusal has the message of `delete()`, and nothing changes. A row-editing
+`<table>` or `<tree-table>` with `on-remove="DELETE"` deletes each removed row, so it asks the
+`Delete` right also for a row that is no part of a composition.
+
+- A part with an access parent (the default for a composition part) needs `Write` on its parent
+  for `Delete`, see above. A user who writes the container and the composition removes its parts.
+- A part type that decides for itself (`<self/>`, or a role rule of its own) needs a `Delete`
+  grant for each role that removes such parts. The rule "a member adds, only an owner removes" is
+  configuration: grant `Create` to the member and the owner, and `Delete` to the owner only.
+- A part that is deleted with another removed part is not checked on its own, as a delete checks
+  only the deleted object.
+- TL-Script without security and Java code that calls `tUpdate` do not check the right, nor does
+  the composition field of the classic layout UI.
 
 ### Caching of decisions
 

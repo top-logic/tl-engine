@@ -19,6 +19,8 @@ import com.top_logic.ai.core.agent.environment.AgentFact;
 import com.top_logic.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.ai.core.agent.environment.RunEnvironment;
 import com.top_logic.ai.core.agent.environment.RunFactsBinding;
+import com.top_logic.ai.core.citation.ReadingList;
+import com.top_logic.ai.core.citation.ReadingListBinding;
 import com.top_logic.ai.core.security.ReadFilter;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
@@ -118,6 +120,19 @@ public class TestRunFacts extends BasicTestCase {
 			"- Project: Airport"), factLines);
 		assertTrue("The identity names the object by its identifier: " + block,
 			block.contains("\"" + ReadFilter.TID + "\":\"" + ReadFilter.idOf(subject) + "\""));
+	}
+
+	/**
+	 * Naming the subject in the block is no read of a tool: the reading list bound to the thread - the
+	 * one of a parent's tool call that builds the configuration of a delegate - does not get it.
+	 */
+	public void testTheSubjectIsNotPutOnTheReadingList() {
+		ReadingList list = new ReadingList();
+		try (ReadingListBinding.Binding binding = ReadingListBinding.bind(list)) {
+			AgentFactory.runFacts(agent(), PersonManager.getManager().getRoot());
+		}
+
+		assertEquals(List.of(), list.sources());
 	}
 
 	/** A run without a subject gets the block it got before there was one. */

@@ -27,6 +27,7 @@ import com.top_logic.ai.core.agent.environment.RunFactsBinding;
 import com.top_logic.ai.core.agent.environment.TurnContext;
 import com.top_logic.ai.core.agent.environment.UserMemorySettings;
 import com.top_logic.ai.core.agent.event.AgentEventListener;
+import com.top_logic.ai.core.citation.ReadingListBinding;
 import com.top_logic.ai.core.agent.skills.Skill;
 import com.top_logic.ai.core.limits.RunLimits;
 import com.top_logic.ai.core.mcp.McpServerRegistry;
@@ -918,7 +919,11 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	static List<EnvironmentFact> runFacts(AgentDefinition agent, TLObject subject) {
 		List<EnvironmentFact> facts = new ArrayList<>();
 		if (subject != null) {
-			facts.add(new EnvironmentFact(SUBJECT_FACT, ReadFilter.identityJson(subject), true));
+			// Naming the subject is not a read of a tool: the configuration of a delegate is built
+			// inside the tool call of its parent, whose reading list must not get the subject from it.
+			try (ReadingListBinding.Binding none = ReadingListBinding.bind(null)) {
+				facts.add(new EnvironmentFact(SUBJECT_FACT, ReadFilter.identityJson(subject), true));
+			}
 		}
 		for (AgentFact declared : agent.facts()) {
 			EnvironmentFact fact = declared.evaluate();

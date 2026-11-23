@@ -148,7 +148,8 @@ public class SecDemoNestedRunCeilingTest extends SecDemoPersonaTest {
 	private static void withDataWriteOnTheAllowlist(Runnable test) throws Exception {
 		ToolAccessPolicy.Grant dataWrite = TypedConfiguration.newConfigItem(ToolAccessPolicy.Grant.class);
 		dataWrite.setGroup(ToolGroups.DATA_WRITE);
-		List<ToolAccessPolicy.Grant> allowlist = AiToolAccessService.policy().getBackgroundAllowlist().getGrants();
+		// The saved policy, not the running one: a restart reads the saved one.
+		List<ToolAccessPolicy.Grant> allowlist = AiToolAccessService.savedPolicy().getBackgroundAllowlist().getGrants();
 		allowlist.add(dataWrite);
 		ModuleUtil.INSTANCE.restart(AiToolAccessService.Module.INSTANCE, null);
 		try {

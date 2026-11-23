@@ -232,7 +232,8 @@ public class TestChatStart extends BasicTestCase {
 	 * background run may execute a script with {@code changeData}.
 	 */
 	private static void withEverythingOnTheBackgroundAllowlist(TestBody test) throws Exception {
-		ToolAccessPolicy policy = AiToolAccessService.policy();
+		// The saved policy, not the running one: a restart reads the saved one.
+		ToolAccessPolicy policy = AiToolAccessService.savedPolicy();
 		ToolAccessPolicy.BackgroundAllowlist before = policy.getBackgroundAllowlist();
 		ToolAccessPolicy.BackgroundAllowlist everything =
 			TypedConfiguration.newConfigItem(ToolAccessPolicy.BackgroundAllowlist.class);

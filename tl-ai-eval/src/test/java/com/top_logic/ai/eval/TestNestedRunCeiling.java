@@ -104,7 +104,9 @@ public class TestNestedRunCeiling extends BasicTestCase {
 		NESTED_OFFERED.clear();
 		NESTED_TOOL_RESULTS.clear();
 		ScriptedProvider.install(TestNestedRunCeiling::reply);
-		List<ToolAccessPolicy.Grant> allowlist = AiToolAccessService.policy().getBackgroundAllowlist().getGrants();
+		// The saved policy, not the running one: a restart reads the saved one, and in a suite that
+		// shares its services with other suites the running service can still carry an older item.
+		List<ToolAccessPolicy.Grant> allowlist = AiToolAccessService.savedPolicy().getBackgroundAllowlist().getGrants();
 		for (String group : List.of(ToolGroups.SCRIPT, ToolGroups.DATA_WRITE)) {
 			ToolAccessPolicy.Grant grant = TypedConfiguration.newConfigItem(ToolAccessPolicy.Grant.class);
 			grant.setGroup(group);
@@ -116,7 +118,7 @@ public class TestNestedRunCeiling extends BasicTestCase {
 
 	@Override
 	protected void tearDown() throws Exception {
-		AiToolAccessService.policy().getBackgroundAllowlist().getGrants().removeAll(_added);
+		AiToolAccessService.savedPolicy().getBackgroundAllowlist().getGrants().removeAll(_added);
 		_added.clear();
 		ModuleUtil.INSTANCE.restart(AiToolAccessService.Module.INSTANCE, null);
 		super.tearDown();
@@ -151,8 +153,8 @@ public class TestNestedRunCeiling extends BasicTestCase {
 		assertFalse("The nested run must not be offered the workspace tool: " + NESTED_OFFERED,
 			NESTED_OFFERED.contains("listTasks"));
 		String nested = String.valueOf(NESTED_TOOL_RESULTS);
-		assertTrue("The nested run must be refused the workspace tool, naming the allowlist: " + nested,
-			nested.contains(ALLOWLIST));
+		assertTrue("The nested run must be refused the workspace tool, naming the allowlist: " + nested
+			+ ", outer run: " + OUTER_TOOL_RESULTS, nested.contains(ALLOWLIST));
 	}
 
 	/** {@code aiChat} with tools in a script of a background run is refused a tool off the allowlist. */
@@ -167,7 +169,8 @@ public class TestNestedRunCeiling extends BasicTestCase {
 			NESTED_OFFERED.contains(AGENT_META_TOOL_NAME));
 		String nested = String.valueOf(NESTED_TOOL_RESULTS);
 		assertFalse("The nested chat must not run the agent.meta tool: " + nested, nested.contains(NESTED_AGENT));
-		assertTrue("The refusal must name the allowlist: " + nested, nested.contains(ALLOWLIST));
+		assertTrue("The refusal must name the allowlist: " + nested + ", outer run: " + OUTER_TOOL_RESULTS,
+			nested.contains(ALLOWLIST));
 	}
 
 	/** The background run itself is refused the given tool, so a nested run must be too. */

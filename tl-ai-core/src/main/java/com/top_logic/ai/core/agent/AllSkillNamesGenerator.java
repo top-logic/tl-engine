@@ -15,6 +15,8 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.kbbased.filtergen.ListGeneratorAdaptor;
+import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link ListGeneratorAdaptor} providing all available skill names as options.
@@ -23,7 +25,12 @@ import com.top_logic.element.meta.kbbased.filtergen.ListGeneratorAdaptor;
  * Provides the options for the {@code skills} attribute of {@code tl.ai.core:Agent}.
  * </p>
  *
- * @see AgentDefinitionQuery#getAllSkills()
+ * <p>
+ * Only the skills the editing account may know are offered: a stored skill it may not read is not
+ * an option (developer article {@code ai/security/run-access}).
+ * </p>
+ *
+ * @see AgentDefinitionQuery#getAllSkills(com.top_logic.ai.core.security.ModelSecurity)
  */
 @InApp
 public class AllSkillNamesGenerator extends ListGeneratorAdaptor {
@@ -46,7 +53,8 @@ public class AllSkillNamesGenerator extends ListGeneratorAdaptor {
 	@Override
 	public List<?> generateList(EditContext editContext) {
 		List<String> names = new ArrayList<>();
-		for (SkillDefinition sd : AgentDefinitionQuery.getInstance().getAllSkills()) {
+		ModelAccessRightsSecurity editor = new ModelAccessRightsSecurity(TLContext.currentUser());
+		for (SkillDefinition sd : AgentDefinitionQuery.getInstance().getAllSkills(editor)) {
 			names.add(sd.name());
 		}
 		return names;

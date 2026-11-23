@@ -29,6 +29,7 @@ import com.top_logic.ai.core.provider.EffortLevels;
 import com.top_logic.ai.core.provider.LLMProviderService;
 import com.top_logic.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
 import com.top_logic.ai.core.security.RunAuthorization;
 import com.top_logic.util.Resources;
 
@@ -56,6 +57,11 @@ public final class ChatCapabilities {
 	 * the menu honest.
 	 * </p>
 	 *
+	 * <p>
+	 * A stored agent that the account may not read is not offered: for that account it does not
+	 * exist, whatever the policy says.
+	 * </p>
+	 *
 	 * @param person
 	 *        The account asking, may be <code>null</code> - who then holds no role.
 	 * @param improverAgent
@@ -74,7 +80,7 @@ public final class ChatCapabilities {
 		// offered whatever the policy hands out beyond them - see RoleAccessPolicy.
 		Set<String> assignedModels = new LinkedHashSet<>();
 		Set<String> declaredServers = new LinkedHashSet<>();
-		for (AgentDefinition agent : listAgents()) {
+		for (AgentDefinition agent : listAgents(person)) {
 			if (agent.infrastructure()) {
 				// The application runs it for the user; it is no conversation partner, and naming it
 				// in a request is refused whatever <agent-access> grants (#397).
@@ -137,7 +143,7 @@ public final class ChatCapabilities {
 		// refusal. See PromptImprovementProcessor.start, whose run refuses exactly this case.
 		response.setPromptImproverAvailable(improverAgent == null || access == null
 			|| access.allowsAgentsOwn(assignedModelOf(llm, improverAgent),
-				declaredServersOf(improverAgent)));
+				declaredServersOf(person, improverAgent)));
 
 		if (McpServerRegistry.Module.INSTANCE.isActive()) {
 			McpServerRegistry mcp = McpServerRegistry.getInstance();
@@ -250,10 +256,11 @@ public final class ChatCapabilities {
 		}
 	}
 
-	/** The MCP servers the named agent declares, empty if there is no such agent. */
-	private static Collection<String> declaredServersOf(String agentName) {
+	/** The MCP servers the named agent declares, empty if the account knows no such agent. */
+	private static Collection<String> declaredServersOf(Person person, String agentName) {
 		try {
-			AgentDefinition agent = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
+			AgentDefinition agent =
+				AgentDefinitionQuery.getInstance().findAgentByName(agentName, new ModelAccessRightsSecurity(person));
 			return agent == null ? List.of() : agent.mcpServers();
 		} catch (RuntimeException ex) {
 			Logger.debug("Cannot read the servers of '" + agentName + "'.", ChatCapabilities.class);
@@ -261,9 +268,17 @@ public final class ChatCapabilities {
 		}
 	}
 
-	private static Collection<AgentDefinition> listAgents() {
+	/**
+	 * The agents the given account knows: a stored agent it may not read is not offered.
+	 *
+	 * <p>
+	 * When the knowledge base or the model rights cannot answer, only the configured agents are
+	 * offered, which is the safe direction: no stored agent reaches a menu without its Read check.
+	 * </p>
+	 */
+	private static Collection<AgentDefinition> listAgents(Person person) {
 		try {
-			return AgentDefinitionQuery.getInstance().getAllAgents();
+			return AgentDefinitionQuery.getInstance().getAllAgents(new ModelAccessRightsSecurity(person));
 		} catch (RuntimeException ex) {
 			Logger.warn("Listing knowledge-base agents failed; using configured agents only.",
 				ex, ChatCapabilities.class);

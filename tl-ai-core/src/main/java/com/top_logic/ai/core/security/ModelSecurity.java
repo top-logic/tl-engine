@@ -55,6 +55,11 @@ public interface ModelSecurity {
 	 * {@code TopLogicSecurityContext.forRun(Person, boolean)} always constructs a
 	 * {@link ModelAccessRightsSecurity}.
 	 * </p>
+	 *
+	 * <p>
+	 * Outside the tests, it is only the reader of the lookups of {@code AgentDefinitionQuery} that
+	 * check the configuration and therefore check no rights.
+	 * </p>
 	 */
 	ModelSecurity UNCHECKED = new ModelSecurity() {
 

@@ -16,6 +16,8 @@ import com.top_logic.ai.core.agent.AgentDefinition;
 import com.top_logic.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.ai.core.agent.AgentFactory;
 import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.ai.core.security.RunAuthorization;
 import com.top_logic.util.Resources;
@@ -63,7 +65,7 @@ public record SendRefusal(String status, String reason) {
 	public static SendRefusal forRun(Person person, ChatProcessor.ChatRunOptions options) {
 		String named = blankToNull(options.agent());
 		if (named != null) {
-			SendRefusal notAPersona = personaRefusal(named.trim());
+			SendRefusal notAPersona = personaRefusal(person, named.trim());
 			if (notAPersona != null) {
 				return notAPersona;
 			}
@@ -72,7 +74,7 @@ public record SendRefusal(String status, String reason) {
 		if (denial != null) {
 			return denial;
 		}
-		if (named != null && !agentExists(named.trim())) {
+		if (named != null && !agentExists(person, named.trim())) {
 			// A name no agent has. Answered here rather than accepted and left to fail in the
 			// background thread, where it reached the user as a turn that stopped and the
 			// administrator as an ERROR with a stack trace. Not a refusal: the request is wrong,
@@ -96,10 +98,10 @@ public record SendRefusal(String status, String reason) {
 	 * {@code AgentFactory} asks the same question of the run's security context.
 	 * </p>
 	 */
-	private static SendRefusal personaRefusal(String agentName) {
+	private static SendRefusal personaRefusal(Person person, String agentName) {
 		AgentDefinition agentDef;
 		try {
-			agentDef = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
+			agentDef = AgentDefinitionQuery.getInstance().findAgentByName(agentName, reader(person));
 		} catch (RuntimeException ex) {
 			// Cannot read it, so cannot judge it: leave the request to the run, as before.
 			Logger.warn("Could not check whether '" + agentName + "' is a conversation partner.", ex,
@@ -113,10 +115,17 @@ public record SendRefusal(String status, String reason) {
 			com.top_logic.ai.core.security.I18NConstants.AGENT_NOT_A_PERSONA__AGENT.fill(agentName)));
 	}
 
-	/** Whether this application has an agent of that name, assuming it has while it cannot say. */
-	private static boolean agentExists(String agentName) {
+	/**
+	 * Whether the account knows an agent of that name, assuming it does while it cannot say.
+	 *
+	 * <p>
+	 * A stored agent the account may not read is unknown, so the request gets the same "not found"
+	 * as a name that nothing has.
+	 * </p>
+	 */
+	private static boolean agentExists(Person person, String agentName) {
 		try {
-			return AgentDefinitionQuery.getInstance().findAgentByName(agentName) != null;
+			return AgentDefinitionQuery.getInstance().findAgentByName(agentName, reader(person)) != null;
 		} catch (RuntimeException ex) {
 			// Cannot enumerate, so cannot judge: leave the request to the run, as before.
 			Logger.warn("Could not check whether an agent '" + agentName + "' exists.", ex,
@@ -131,12 +140,14 @@ public record SendRefusal(String status, String reason) {
 			return null;
 		}
 		RunAuthorization access;
+		ModelSecurity reader;
 		String agentName;
 		try {
 			access = AiToolAccessService.effectiveRunAccessFor(person);
+			reader = reader(person);
 			agentName = options.agent() != null && !options.agent().isBlank()
 				? options.agent().trim()
-				: AgentFactory.defaultAgentFor(access);
+				: AgentFactory.defaultAgentFor(access, reader);
 		} catch (RuntimeException ex) {
 			// A pre-check is a courtesy; a failure in it must not stop a request the run would accept.
 			Logger.warn("Could not pre-check what this account may run.", ex, SendRefusal.class);
@@ -153,12 +164,17 @@ public record SendRefusal(String status, String reason) {
 			new AgentFactory.RunOverrides(options.model(), mcpOverride, options.effort());
 		Decision.Denied denied;
 		try {
-			denied = AgentFactory.runRefusal(access, agentName, overrides);
+			denied = AgentFactory.runRefusal(access, reader, agentName, overrides);
 		} catch (RuntimeException ex) {
 			Logger.warn("Could not pre-check what '" + agentName + "' may run.", ex, SendRefusal.class);
 			return null;
 		}
 		return denied == null ? null : forbidden(Resources.getInstance().getString(denied.reason()));
+	}
+
+	/** The model rights the run of this account will have, as the default security context builds them. */
+	private static ModelSecurity reader(Person person) {
+		return new ModelAccessRightsSecurity(person);
 	}
 
 	private static String blankToNull(String value) {

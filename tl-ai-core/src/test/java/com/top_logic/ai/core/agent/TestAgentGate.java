@@ -236,7 +236,8 @@ public class TestAgentGate extends TestCase {
 
 	/** A request that names no agent is never answered with one nobody may talk to. */
 	public void testTheFallbackAgentIsNeverInfrastructure() {
-		String fallback = AgentFactory.defaultAgentFor(grantingEveryAgent().runAuthorization());
+		TopLogicSecurityContext security = grantingEveryAgent();
+		String fallback = AgentFactory.defaultAgentFor(security.runAuthorization(), security.modelSecurity());
 
 		assertNotNull("Every agent is granted here, so there is one to fall back to.", fallback);
 		assertFalse("The fallback must not be an agent the application runs for the user.",

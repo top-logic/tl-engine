@@ -20,6 +20,7 @@ import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.ai.core.mcp.McpServerRegistry;
 import com.top_logic.ai.core.security.DeclaredTypeAccess;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.security.RoleAccessPolicy;
 import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.ai.core.security.RunAuthorization;
@@ -100,32 +101,10 @@ public class AgentCapabilities {
 	 */
 	public interface AgentGraph {
 
-		/** The graph of the running deployment. */
-		AgentGraph DEPLOYED = new AgentGraph() {
-
-			@Override
-			public AgentDefinition agent(String name) {
-				return AgentDefinitionQuery.getInstance().findAgentByName(name);
-			}
-
-			@Override
-			public SkillDefinition skill(String name) {
-				return AgentDefinitionQuery.getInstance().findSkillByName(name);
-			}
-
-			@Override
-			public List<Tool> mcpTools(String serverName) {
-				if (!McpServerRegistry.Module.INSTANCE.isActive()) {
-					return null;
-				}
-				return McpServerRegistry.getInstance().getTools(serverName);
-			}
-		};
-
-		/** The named agent, or <code>null</code> if there is none. */
+		/** The named agent, or <code>null</code> if there is none the run may know. */
 		AgentDefinition agent(String name);
 
-		/** The named skill, or <code>null</code> if there is none. */
+		/** The named skill, or <code>null</code> if there is none the run may know. */
 		SkillDefinition skill(String name);
 
 		/**
@@ -260,8 +239,8 @@ public class AgentCapabilities {
 	private final DeclaredTypeAccess _declaredTypes;
 
 	/**
-	 * Creates an {@link AgentCapabilities} view for one run over the
-	 * {@link AgentGraph#DEPLOYED deployed} agent graph.
+	 * Creates an {@link AgentCapabilities} view for one run over the deployed agent graph, as the
+	 * run's {@link SecurityContext#modelSecurity() model rights} may know it.
 	 *
 	 * @param toolResolver
 	 *        Resolves a qualified tool name to the registered {@link Tool}, or <code>null</code> if
@@ -270,7 +249,7 @@ public class AgentCapabilities {
 	 *        The run's security context.
 	 */
 	public AgentCapabilities(Function<String, Tool> toolResolver, SecurityContext security) {
-		this(toolResolver, security, AgentGraph.DEPLOYED);
+		this(toolResolver, security, deployed(security.modelSecurity()));
 	}
 
 	/**
@@ -307,6 +286,38 @@ public class AgentCapabilities {
 		_security = security;
 		_graph = graph;
 		_declaredTypes = declaredTypes;
+	}
+
+	/**
+	 * The graph of the running deployment, as the given reader knows it.
+	 *
+	 * @param reader
+	 *        The model rights of the run. A stored agent or skill that the reader may not read is not
+	 *        part of the graph, so a delegate, a subagent or a skill of that name is unknown, the same
+	 *        as a name that nothing has.
+	 * @see AgentDefinitionQuery#findAgentByName(String, ModelSecurity)
+	 */
+	private static AgentGraph deployed(ModelSecurity reader) {
+		return new AgentGraph() {
+
+			@Override
+			public AgentDefinition agent(String name) {
+				return AgentDefinitionQuery.getInstance().findAgentByName(name, reader);
+			}
+
+			@Override
+			public SkillDefinition skill(String name) {
+				return AgentDefinitionQuery.getInstance().findSkillByName(name, reader);
+			}
+
+			@Override
+			public List<Tool> mcpTools(String serverName) {
+				if (!McpServerRegistry.Module.INSTANCE.isActive()) {
+					return null;
+				}
+				return McpServerRegistry.getInstance().getTools(serverName);
+			}
+		};
 	}
 
 	/**

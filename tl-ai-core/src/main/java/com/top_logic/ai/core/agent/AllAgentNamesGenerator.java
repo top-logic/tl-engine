@@ -15,6 +15,8 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.kbbased.filtergen.ListGeneratorAdaptor;
+import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link ListGeneratorAdaptor} providing all available agent names as options.
@@ -28,8 +30,13 @@ import com.top_logic.element.meta.kbbased.filtergen.ListGeneratorAdaptor;
  * gate refuses a delegation to it, so an option naming one would be an option that never works.
  * </p>
  *
+ * <p>
+ * Only the agents the editing account may know are offered: a stored agent it may not read is not
+ * an option (developer article {@code ai/security/run-access}).
+ * </p>
+ *
  * @see AgentDefinition#infrastructure()
- * @see AgentDefinitionQuery#getAllAgents()
+ * @see AgentDefinitionQuery#getAllAgents(com.top_logic.ai.core.security.ModelSecurity)
  */
 @InApp
 public class AllAgentNamesGenerator extends ListGeneratorAdaptor {
@@ -52,7 +59,8 @@ public class AllAgentNamesGenerator extends ListGeneratorAdaptor {
 	@Override
 	public List<?> generateList(EditContext editContext) {
 		List<String> names = new ArrayList<>();
-		for (AgentDefinition ad : AgentDefinitionQuery.getInstance().getAllAgents()) {
+		ModelAccessRightsSecurity editor = new ModelAccessRightsSecurity(TLContext.currentUser());
+		for (AgentDefinition ad : AgentDefinitionQuery.getInstance().getAllAgents(editor)) {
 			if (ad.infrastructure()) {
 				continue;
 			}

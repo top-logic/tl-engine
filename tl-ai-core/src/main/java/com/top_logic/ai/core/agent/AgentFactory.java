@@ -43,6 +43,7 @@ import com.top_logic.ai.core.provider.LLMProvider;
 import com.top_logic.ai.core.provider.LLMProviderService;
 import com.top_logic.ai.core.provider.ToolChoice;
 import com.top_logic.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.ai.core.security.RunAuthorization;
 import com.top_logic.ai.core.security.ToolSecurityException;
@@ -219,7 +220,10 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	private RunResult runAdmitted(String name, Conversation conversation,
 			ConversationMemory conversationMemory, ToolContext context,
 			AgentEventListener listener, ToolRegistry sessionRegistry, RunOverrides overrides) {
-		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(name);
+		// The run's own model rights: a stored agent the account may not read is unknown to it, and
+		// the answer is the same as for a name that nothing has.
+		AgentDefinition agentDef =
+			AgentDefinitionQuery.getInstance().findAgentByName(name, context.security().modelSecurity());
 		if (agentDef == null) {
 			throw new RuntimeException(
 				"No agent found with name '" + name + "'.");
@@ -391,16 +395,19 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 *
 	 * @param authorization
 	 *        What the acting principal may run.
+	 * @param reader
+	 *        The model rights of the acting principal. A stored agent it may not read is never the
+	 *        answer.
 	 * @return The agent name, or <code>null</code> if the principal may run none at all - which is a
 	 *         refusal of its own and a different sentence from "you may not run this one".
 	 */
-	public static String defaultAgentFor(RunAuthorization authorization) {
+	public static String defaultAgentFor(RunAuthorization authorization, ModelSecurity reader) {
 		String configured = AgentRuntimeService.chatEntryPoint();
-		if (canRun(authorization, configured)) {
+		if (canRun(authorization, reader, configured)) {
 			return configured;
 		}
-		for (AgentDefinition agent : agents()) {
-			if (canRun(authorization, agent.name())) {
+		for (AgentDefinition agent : agents(reader)) {
+			if (canRun(authorization, reader, agent.name())) {
 				return agent.name();
 			}
 		}
@@ -417,13 +424,13 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * same question, because a run the user did not ask for may not be one.
 	 * </p>
 	 */
-	private static boolean canRun(RunAuthorization authorization, String agentName) {
+	private static boolean canRun(RunAuthorization authorization, ModelSecurity reader, String agentName) {
 		if (agentName == null || agentName.isBlank()) {
 			return false;
 		}
 		AgentDefinition agentDef;
 		try {
-			agentDef = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
+			agentDef = AgentDefinitionQuery.getInstance().findAgentByName(agentName, reader);
 		} catch (RuntimeException ex) {
 			// Cannot look it up, so cannot rule it out - the run itself decides, as it always does.
 			Logger.debug("Cannot read '" + agentName + "' to check what it uses.", AgentFactory.class);
@@ -479,10 +486,13 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		}
 	}
 
-	/** The agents of this application, in the order a client lists them; empty when none can answer. */
-	private static Collection<AgentDefinition> agents() {
+	/**
+	 * The agents of this application the given reader knows, in the order a client lists them; empty
+	 * when none can answer.
+	 */
+	private static Collection<AgentDefinition> agents(ModelSecurity reader) {
 		try {
-			return AgentDefinitionQuery.getInstance().getAllAgents();
+			return AgentDefinitionQuery.getInstance().getAllAgents(reader);
 		} catch (RuntimeException ex) {
 			Logger.warn("Listing the agents of this application failed; no default agent can be"
 				+ " resolved.", ex, AgentFactory.class);
@@ -504,6 +514,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * @param authorization
 	 *        What the acting principal may run, from
 	 *        {@code AiToolAccessService.effectiveRunAccessFor(Person)}.
+	 * @param reader
+	 *        The model rights of the acting principal. A stored agent it may not read is treated as a
+	 *        name no agent has.
 	 * @param agentName
 	 *        The agent the request names, or the entry point it would fall back to.
 	 * @param overrides
@@ -511,9 +524,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * @return The refusal, or <code>null</code> if the run is permitted. A name no agent has is not
 	 *         refused here - that is not a denial, and it fails where it always did.
 	 */
-	public static Decision.Denied runRefusal(RunAuthorization authorization, String agentName,
-			RunOverrides overrides) {
-		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
+	public static Decision.Denied runRefusal(RunAuthorization authorization, ModelSecurity reader,
+			String agentName, RunOverrides overrides) {
+		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(agentName, reader);
 		if (agentDef == null) {
 			return authorization.agentRefusal(agentName, false);
 		}
@@ -667,7 +680,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 */
 	@Override
 	public AgentLoop buildAgentLoop(String name, SecurityContext security) {
-		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(name);
+		// A delegate the account may not read is unknown, exactly like a name that nothing has.
+		AgentDefinition agentDef =
+			AgentDefinitionQuery.getInstance().findAgentByName(name, security.modelSecurity());
 		if (agentDef == null) {
 			throw new IllegalArgumentException("No agent found with name: " + name);
 		}
@@ -713,7 +728,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 */
 	@Override
 	public AgentLoop buildSubagentLoop(String name, SecurityContext security) {
-		AgentDefinition agentDef = AgentDefinitionQuery.getInstance().findAgentByName(name);
+		AgentDefinition agentDef =
+			AgentDefinitionQuery.getInstance().findAgentByName(name, security.modelSecurity());
 		if (agentDef == null) {
 			throw new IllegalArgumentException("No agent found with name: " + name);
 		}
@@ -1086,7 +1102,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		// Last, so that it sees every tool the agent ended up with - delegation tools included.
 		// No loadSkill tool: this catalog is built exactly for an agent that declares no skills.
-		registry.register(listToolsTool(agent, registry.tools(), null));
+		registry.register(listToolsTool(agent, registry.tools(), null, capabilities));
 
 		return registry.freeze();
 	}
@@ -1170,7 +1186,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		// Its own overlay rather than the base, because it has to be built after the SkillTool whose
 		// state it reports, and the base is frozen by then.
 		ToolCatalog selfInspection = new ToolCatalog();
-		selfInspection.register(listToolsTool(agent, ownTools, skillTool));
+		selfInspection.register(listToolsTool(agent, ownTools, skillTool, capabilities));
 		dynamicCatalog.addOverlay(selfInspection.freeze());
 
 		return dynamicCatalog;
@@ -1192,12 +1208,14 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 *        {@code loadSkill}.
 	 * @param skillTool
 	 *        The agent's {@code loadSkill} tool, or <code>null</code> if it has none.
+	 * @param capabilities
+	 *        The capability view of the run, whose graph knows the skills the run may read.
 	 */
-	private static Tool listToolsTool(AgentDefinition agent, List<Tool> ownTools, SkillTool skillTool) {
+	private static Tool listToolsTool(AgentDefinition agent, List<Tool> ownTools, SkillTool skillTool,
+			AgentCapabilities capabilities) {
 		List<SkillDefinition> skills = new ArrayList<>();
-		Function<String, SkillDefinition> lookup = skillLookup();
 		for (String skillName : agent.skills()) {
-			SkillDefinition skill = lookup.apply(skillName);
+			SkillDefinition skill = capabilities.graph().skill(skillName);
 			if (skill != null) {
 				skills.add(skill);
 			}
@@ -1212,7 +1230,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			return null;
 		}
 
-		Map<String, Skill> skillMap = buildSkillMap(skillNames, skillLookup(), capabilities);
+		Map<String, Skill> skillMap = buildSkillMap(skillNames, capabilities.graph()::skill, capabilities);
 		if (skillMap.isEmpty()) {
 			return null;
 		}
@@ -1235,12 +1253,6 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			AgentCapabilities capabilities) {
 		List<String> declared = agent.skills();
 		return skillId -> capabilities.skillAbsenceReason(skillId, declared);
-	}
-
-	/** Resolves a skill name against the merged config and knowledge-base definitions. */
-	private static Function<String, SkillDefinition> skillLookup() {
-		AgentDefinitionQuery query = AgentDefinitionQuery.getInstance();
-		return query::findSkillByName;
 	}
 
 	/**
@@ -1288,7 +1300,8 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 */
 	private String injectSkills(AgentDefinition agent, String systemPrompt, AgentCapabilities capabilities) {
 		String base = systemPrompt != null ? systemPrompt : "";
-		String catalog = skillCatalog(agent.name(), agent.skills(), agent.tools(), skillLookup(), capabilities);
+		String catalog =
+			skillCatalog(agent.name(), agent.skills(), agent.tools(), capabilities.graph()::skill, capabilities);
 		return replacePlaceholderOrAppend(base, SKILLS_PLACEHOLDER, catalog);
 	}
 

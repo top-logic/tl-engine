@@ -32,6 +32,11 @@ import com.top_logic.ai.core.agent.ToolContext;
  * what this filter exists to stop; see {@link AgentCapabilities#unusableReason(AgentDefinition)} and
  * the developer article {@code ai/security/capability-notices}.
  * </p>
+ *
+ * <p>
+ * A stored agent that the acting account may not read is not listed at all: for that account it
+ * does not exist (developer article {@code ai/security/run-access}).
+ * </p>
  */
 public class ListAgentsTool implements Tool {
 
@@ -85,8 +90,11 @@ public class ListAgentsTool implements Tool {
 
 	@Override
 	public ToolResult execute(Map<String, Object> args, ToolExecutionContext context) {
-		Collection<AgentDefinition> agents = AgentDefinitionQuery.getInstance().getAllAgents();
-		AgentCapabilities capabilities = AgentCapabilities.forRun(security(context));
+		SecurityContext security = security(context);
+		// Only the agents the run's account may read: a stored agent it may not read is unknown to it.
+		Collection<AgentDefinition> agents =
+			AgentDefinitionQuery.getInstance().getAllAgents(security.modelSecurity());
+		AgentCapabilities capabilities = AgentCapabilities.forRun(security);
 
 		StringBuilder json = new StringBuilder("[");
 		boolean first = true;

@@ -17,6 +17,8 @@ import com.top_logic.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.ai.core.agent.AgentRuntimeService;
 import com.top_logic.ai.core.provider.LLMProviderService;
 import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.security.RoleAccessPolicy.Cause;
 import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.ai.core.security.RunAuthorization;
@@ -85,7 +87,7 @@ public class SecDemoInfrastructureAgentTest extends SecDemoPersonaTest {
 	/** A request that names no agent is never answered with the one nobody may talk to. */
 	public void testTheFallbackAgentIsNeverTheImprover() {
 		assertFalse("The fallback must not be an agent the application runs for the user.",
-			IMPROVER.equals(AgentFactory.defaultAgentFor(runAccessFor(ANNA))));
+			IMPROVER.equals(AgentFactory.defaultAgentFor(runAccessFor(ANNA), readerOf(ANNA))));
 	}
 
 	/**
@@ -99,13 +101,18 @@ public class SecDemoInfrastructureAgentTest extends SecDemoPersonaTest {
 	 */
 	public void testTheProductStillRunsItForAnna() {
 		assertNull("The improve-prompt button runs the very same agent and must keep working.",
-			AgentFactory.runRefusal(runAccessFor(ANNA).withoutAgentCheck(), IMPROVER,
+			AgentFactory.runRefusal(runAccessFor(ANNA).withoutAgentCheck(), readerOf(ANNA), IMPROVER,
 				RunOverrides.NONE));
 	}
 
 	/** Why a run of the named agent would be refused for the given persona, or <code>null</code>. */
 	private Decision.Denied refusalFor(String login, String agentName) {
-		return AgentFactory.runRefusal(runAccessFor(login), agentName, RunOverrides.NONE);
+		return AgentFactory.runRefusal(runAccessFor(login), readerOf(login), agentName, RunOverrides.NONE);
+	}
+
+	/** The model rights of the given persona, as a run of it has them. */
+	private ModelSecurity readerOf(String login) {
+		return new ModelAccessRightsSecurity(actAs(login));
 	}
 
 	/** What the given persona may run under the policy the fixture ships. */

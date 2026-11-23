@@ -19,6 +19,7 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.ai.core.model.Agent;
 import com.top_logic.ai.core.model.Skill;
 import com.top_logic.ai.core.model.impl.AgentBase;
+import com.top_logic.ai.core.security.ModelSecurity;
 
 /**
  * Unified resolution layer for agent and skill definitions.
@@ -27,6 +28,20 @@ import com.top_logic.ai.core.model.impl.AgentBase;
  * Queries both service configuration (via {@link TopLogicAgentDefinitions}) and the knowledge base,
  * merging results with the "KB wins by name" rule. All public methods return source-agnostic
  * {@link AgentDefinition} and {@link SkillDefinition} records.
+ * </p>
+ *
+ * <p>
+ * There are two kinds of lookup. The methods with a {@link ModelSecurity reader} answer for one
+ * account: a stored agent or skill that the reader may not read is unknown to it, and a configured
+ * definition of the same name answers in its place. Every run and every list that a person sees
+ * uses them. The methods without a reader return every definition without a check. The engine uses
+ * them only to check its configuration, for example the agent names of the tool access policy.
+ * </p>
+ *
+ * <p>
+ * A stored record is found by its name for every reader. Names are unique for the whole
+ * application ({@link UniqueNameConstraint}), so the name of a record that a reader may not read is
+ * not free for that reader either.
  * </p>
  */
 public class AgentDefinitionQuery {
@@ -49,13 +64,37 @@ public class AgentDefinitionQuery {
 	}
 
 	/**
-	 * Finds an agent definition by name using layered lookup (KB first, then config).
+	 * Finds an agent definition by name using layered lookup (KB first, then config), without a
+	 * check of the model rights.
+	 *
+	 * <p>
+	 * Only for a check of the configuration. A run or a list for a person uses
+	 * {@link #findAgentByName(String, ModelSecurity)}.
+	 * </p>
 	 *
 	 * @return the merged {@link AgentDefinition}, or {@code null} if not found in either source
 	 */
 	public AgentDefinition findAgentByName(String name) {
+		return findAgentByName(name, ModelSecurity.UNCHECKED);
+	}
+
+	/**
+	 * Finds an agent definition by name for the given reader, using layered lookup (KB first, then
+	 * config).
+	 *
+	 * @param name
+	 *        The agent name.
+	 * @param reader
+	 *        The model rights of the account the answer is for, usually
+	 *        {@link SecurityContext#modelSecurity()} of a run. A stored agent that the reader may not
+	 *        read is unknown: the configured agent of the same name answers in its place, if there is
+	 *        one.
+	 * @return The merged {@link AgentDefinition}, or {@code null} if the reader knows no agent of
+	 *         this name.
+	 */
+	public AgentDefinition findAgentByName(String name, ModelSecurity reader) {
 		Agent kbAgent = findKBAgentByName(name);
-		if (kbAgent != null) {
+		if (kbAgent != null && reader.canRead(kbAgent)) {
 			AgentSource source = hasConfigAgent(name) ? AgentSource.KB_OVERRIDE : AgentSource.KB;
 			return toAgentDefinition(kbAgent, source);
 		}
@@ -66,16 +105,35 @@ public class AgentDefinitionQuery {
 	}
 
 	/**
-	 * All agent definitions merged from config and KB, with KB overriding config by name.
+	 * All agent definitions merged from config and KB, with KB overriding config by name, without a
+	 * check of the model rights.
+	 *
+	 * <p>
+	 * Only for a check of the configuration. A run or a list for a person uses
+	 * {@link #getAllAgents(ModelSecurity)}.
+	 * </p>
 	 */
 	public Collection<AgentDefinition> getAllAgents() {
+		return getAllAgents(ModelSecurity.UNCHECKED);
+	}
+
+	/**
+	 * All agent definitions the given reader knows, merged from config and KB, with KB overriding
+	 * config by name.
+	 *
+	 * @param reader
+	 *        The model rights of the account the answer is for. A stored agent that the reader may
+	 *        not read is left out.
+	 * @see #findAgentByName(String, ModelSecurity)
+	 */
+	public Collection<AgentDefinition> getAllAgents(ModelSecurity reader) {
 		Map<String, AgentDefinition> result = new LinkedHashMap<>();
 
 		if (isConfigServiceActive()) {
 			result.putAll(getConfigService().getAllConfigAgents());
 		}
 
-		for (Agent kbAgent : getAllKBAgents()) {
+		for (Agent kbAgent : reader.filterReadable(getAllKBAgents())) {
 			String name = kbAgent.getName();
 			AgentSource source = result.containsKey(name) ? AgentSource.KB_OVERRIDE : AgentSource.KB;
 			result.put(name, toAgentDefinition(kbAgent, source));
@@ -85,13 +143,36 @@ public class AgentDefinitionQuery {
 	}
 
 	/**
-	 * Finds a skill definition by name using layered lookup (KB first, then config).
+	 * Finds a skill definition by name using layered lookup (KB first, then config), without a
+	 * check of the model rights.
+	 *
+	 * <p>
+	 * Only for a check of the configuration. A run or a list for a person uses
+	 * {@link #findSkillByName(String, ModelSecurity)}.
+	 * </p>
 	 *
 	 * @return the merged {@link SkillDefinition}, or {@code null} if not found in either source
 	 */
 	public SkillDefinition findSkillByName(String name) {
+		return findSkillByName(name, ModelSecurity.UNCHECKED);
+	}
+
+	/**
+	 * Finds a skill definition by name for the given reader, using layered lookup (KB first, then
+	 * config).
+	 *
+	 * @param name
+	 *        The skill name.
+	 * @param reader
+	 *        The model rights of the account the answer is for. A stored skill that the reader may
+	 *        not read is unknown: the configured skill of the same name answers in its place, if there
+	 *        is one.
+	 * @return The merged {@link SkillDefinition}, or {@code null} if the reader knows no skill of
+	 *         this name.
+	 */
+	public SkillDefinition findSkillByName(String name, ModelSecurity reader) {
 		Skill kbSkill = findKBSkillByName(name);
-		if (kbSkill != null) {
+		if (kbSkill != null && reader.canRead(kbSkill)) {
 			AgentSource source = hasConfigSkill(name) ? AgentSource.KB_OVERRIDE : AgentSource.KB;
 			return toSkillDefinition(kbSkill, source);
 		}
@@ -102,16 +183,35 @@ public class AgentDefinitionQuery {
 	}
 
 	/**
-	 * All skill definitions merged from config and KB, with KB overriding config by name.
+	 * All skill definitions merged from config and KB, with KB overriding config by name, without a
+	 * check of the model rights.
+	 *
+	 * <p>
+	 * Only for a check of the configuration. A run or a list for a person uses
+	 * {@link #getAllSkills(ModelSecurity)}.
+	 * </p>
 	 */
 	public Collection<SkillDefinition> getAllSkills() {
+		return getAllSkills(ModelSecurity.UNCHECKED);
+	}
+
+	/**
+	 * All skill definitions the given reader knows, merged from config and KB, with KB overriding
+	 * config by name.
+	 *
+	 * @param reader
+	 *        The model rights of the account the answer is for. A stored skill that the reader may
+	 *        not read is left out.
+	 * @see #findSkillByName(String, ModelSecurity)
+	 */
+	public Collection<SkillDefinition> getAllSkills(ModelSecurity reader) {
 		Map<String, SkillDefinition> result = new LinkedHashMap<>();
 
 		if (isConfigServiceActive()) {
 			result.putAll(getConfigService().getAllConfigSkills());
 		}
 
-		for (Skill kbSkill : getAllKBSkills()) {
+		for (Skill kbSkill : reader.filterReadable(getAllKBSkills())) {
 			String name = kbSkill.getName();
 			AgentSource source = result.containsKey(name) ? AgentSource.KB_OVERRIDE : AgentSource.KB;
 			result.put(name, toSkillDefinition(kbSkill, source));

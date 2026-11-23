@@ -18,6 +18,8 @@ import com.top_logic.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.ai.core.agent.AgentFactory;
 import com.top_logic.ai.core.agent.AgentFactory.RunOverrides;
 import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.ai.core.security.RunAuthorization;
 
@@ -106,7 +108,7 @@ public final class ChatTurnChannels {
 	 * </p>
 	 */
 	public static boolean allowsAgent(Person owner, String agentName) {
-		return exists(agentName) && allows(owner, agentName, RunOverrides.NONE);
+		return exists(owner, agentName) && allows(owner, agentName, RunOverrides.NONE);
 	}
 
 	/**
@@ -148,14 +150,15 @@ public final class ChatTurnChannels {
 		}
 		try {
 			RunAuthorization access = AiToolAccessService.effectiveRunAccessFor(owner);
+			ModelSecurity reader = new ModelAccessRightsSecurity(owner);
 			String agent = agentName == null || agentName.isBlank()
-				? AgentFactory.defaultAgentFor(access)
+				? AgentFactory.defaultAgentFor(access, reader)
 				: agentName.trim();
 			if (agent == null) {
 				// An account that may run no agent at all. Nothing it could be given is legal.
 				return false;
 			}
-			Decision.Denied denied = AgentFactory.runRefusal(access, agent, overrides);
+			Decision.Denied denied = AgentFactory.runRefusal(access, reader, agent, overrides);
 			if (denied != null) {
 				Logger.debug("Channel value refused for '" + agent + "': " + denied.name(),
 					ChatTurnChannels.class);
@@ -170,19 +173,21 @@ public final class ChatTurnChannels {
 	}
 
 	/**
-	 * Whether this application has an agent of that name, assuming it has while it cannot say.
+	 * Whether {@code owner} knows an agent of that name, assuming it does while it cannot say.
 	 *
 	 * <p>
 	 * Mirrors {@code SendRefusal}: a name no agent has is not forbidden, it is wrong, and the run
-	 * would die in the background thread rather than refuse. The composer must not be put there.
+	 * would die in the background thread rather than refuse. The composer must not be put there. A
+	 * stored agent the account may not read is such a name too.
 	 * </p>
 	 */
-	private static boolean exists(String agentName) {
+	private static boolean exists(Person owner, String agentName) {
 		if (agentName == null || agentName.isBlank()) {
 			return false;
 		}
 		try {
-			boolean known = AgentDefinitionQuery.getInstance().findAgentByName(agentName.trim()) != null;
+			boolean known = AgentDefinitionQuery.getInstance()
+				.findAgentByName(agentName.trim(), new ModelAccessRightsSecurity(owner)) != null;
 			if (!known) {
 				Logger.debug("No agent '" + agentName + "' to follow a channel to.", ChatTurnChannels.class);
 			}

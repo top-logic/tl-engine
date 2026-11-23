@@ -154,10 +154,12 @@ public class ChatProcessor {
 	/**
 	 * The agent a request that names none runs as.
 	 *
-	 * @see AgentFactory#defaultAgentFor(com.top_logic.ai.core.security.RunAuthorization)
+	 * @see AgentFactory#defaultAgentFor(com.top_logic.ai.core.security.RunAuthorization,
+	 *      com.top_logic.ai.core.security.ModelSecurity)
 	 */
 	private static String defaultAgent(ToolContext context, AgentFactory agentFactory) {
-		String resolved = AgentFactory.defaultAgentFor(context.security().runAuthorization());
+		String resolved = AgentFactory.defaultAgentFor(context.security().runAuthorization(),
+			context.security().modelSecurity());
 		return resolved != null ? resolved : agentFactory.getEntryPointAgentName();
 	}
 

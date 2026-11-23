@@ -106,8 +106,9 @@ go out without encryption. When the remote application runs behind a proxy that 
 | `fetchArtifact(ref, section?)` | READ | An artifact, or one section of it, by reference; at most 30000 characters. |
 
 Remote content reaches the model inside `UntrustedEnvelope.A2A_RESULT`. A conversation that is itself
-an incoming A2A context calls back in that context, and the caller's conversation subject travels as
-`metadata.tlAi = {app, agent, conversationId, subject}`.
+an incoming A2A context calls back in that context, and the subject of the calling run travels as
+`metadata.tlAi = {app, agent, conversationId, subject}`. That is the subject the run's security context
+names: a subject the run's account may not read is not sent, also if its session holds one.
 
 ## Artifacts by reference
 
@@ -123,7 +124,7 @@ Configured on `A2AService`, each a list asked in order:
 
 | Element | Interface | Asked |
 |---|---|---|
-| `<subject-resolvers>` | `A2ASubjectResolver` | once per incoming context: the subject of its session |
+| `<subject-resolvers>` | `A2ASubjectResolver` | once per incoming context: the subject of the conversation; the engine checks at each run that the calling account may read it |
 | `<artifact-sources>` | `A2AArtifactSource` | for a reference of this application: the artifact |
 | `<artifact-contributors>` | `A2AArtifactContributor` | after a completed task: more artifacts |
 | `<data-handlers>` | `A2ADataHandler` | for a data part of an incoming message: the text the agent reads instead |

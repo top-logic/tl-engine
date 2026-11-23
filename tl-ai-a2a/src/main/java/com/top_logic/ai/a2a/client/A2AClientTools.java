@@ -31,10 +31,9 @@ import com.top_logic.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.basic.Logger;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.TLObject;
+import com.top_logic.ai.core.agent.SecurityContext;
 import com.top_logic.ai.core.agent.ToolContext;
-import com.top_logic.ai.core.execution.AgentExecutionStore;
-import com.top_logic.ai.core.execution.model.AgentExecution;
-import com.top_logic.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.security.RunPrincipal;
 import com.top_logic.util.TLContext;
 
 /**
@@ -304,7 +303,7 @@ public class A2AClientTools {
 	}
 
 	/**
-	 * Who calls: this application, the local agent, its conversation and that conversation's subject.
+	 * Who calls: this application, the local agent, its conversation and the subject of the run.
 	 */
 	private static RemoteExchange.Caller caller(A2AService service, ToolExecutionContext context) {
 		RunInfo info = context.runInfo();
@@ -314,21 +313,25 @@ public class A2AClientTools {
 			if (conversationId == null) {
 				conversationId = toolContext.executionHandle().conversationId();
 			}
-			subject = subjectOf(toolContext);
+			subject = subjectOf(toolContext.security());
 		}
 		return new RemoteExchange.Caller(service.appName(), service.localDisplayName(info == null ? null : info.agentName()),
 			conversationId, subject, subject == null ? null : MetaLabelProvider.INSTANCE.getLabel(subject),
 			info == null ? null : info.runId());
 	}
 
-	private static TLObject subjectOf(ToolContext context) {
-		try {
-			AgentExecution execution = context.executionHandle().get();
-			AgentSession session = execution == null ? null : AgentExecutionStore.getInstance().sessionOf(execution);
-			return session == null ? null : session.getSubject();
-		} catch (RuntimeException ex) {
-			Logger.info("Cannot read the subject of the calling conversation: " + ex.getMessage(), A2AClientTools.class);
-			return null;
-		}
+	/**
+	 * The subject of the run, which another application may be told.
+	 *
+	 * <p>
+	 * Taken from the run's security context, not from its session: {@code RunSecurity} has removed a
+	 * subject the run's account may not read there, and the session may hold one - a page writes the
+	 * object it shows onto a new conversation, and rights change. It is also the subject the agent
+	 * itself was told.
+	 * </p>
+	 */
+	private static TLObject subjectOf(SecurityContext security) {
+		RunPrincipal principal = security.principal();
+		return principal == null ? null : principal.subject();
 	}
 }

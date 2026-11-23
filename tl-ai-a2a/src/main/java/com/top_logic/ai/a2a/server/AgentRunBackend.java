@@ -54,7 +54,6 @@ import com.top_logic.ai.core.message.ContentPart;
 import com.top_logic.ai.core.message.Conversation;
 import com.top_logic.ai.core.message.TextContent;
 import com.top_logic.ai.core.message.UserMessage;
-import com.top_logic.ai.core.security.ReadFilter;
 import com.top_logic.ai.core.security.RunEntryPoint;
 import com.top_logic.ai.core.security.RunPrincipal;
 import com.top_logic.ai.core.security.RunSecurity;
@@ -81,6 +80,11 @@ import com.top_logic.util.TLContextManager;
  * agent answers its questions ({@link A2AInteractionStore}) - so the account's grants bound it, not
  * the background allowlist. Tool calls are approved automatically; an agent exposed without
  * {@code allow-writes} is not offered the tools that change the application ({@link WriteGuard}).</li>
+ * <li>The subject of a context is what the {@link A2ASubjectResolver}s find, else the subject
+ * remembered for the context. It is a statement, not yet a disclosure: each run states it, and
+ * {@link RunSecurity} keeps it only if the calling account may read it. Only that checked subject
+ * reaches the agent (in the environment block of its run), the session, the answer and the artifact
+ * contributors.</li>
  * </ul>
  */
 public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
@@ -131,6 +135,7 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 
 		AgentSession _session;
 
+		/** The subject stated for the context; each run checks it again for the calling account. */
 		TLObject _subject;
 
 		/** The {@code a2a} object of the session's metadata: context, agent, caller, peer, tasks. */
@@ -223,13 +228,18 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 				: createSession(store, person, task, agent, context, metadata, text);
 			persist(task, context);
 
-			SecurityContext security = RunSecurity.contextFor(
-				new RunPrincipal(person, RunEntryPoint.A2A, false, ExecutionRecorder.conversationIdOf(session), null));
+			SecurityContext security = RunSecurity.contextFor(new RunPrincipal(person, RunEntryPoint.A2A, false,
+				ExecutionRecorder.conversationIdOf(session), context._subject));
+			TLObject subject = security.principal().subject();
+			if (subject != null) {
+				task.putMetadata("subject", label(subject));
+			}
+			_service.contexts().rememberSubject(context._contextId, subject);
 			ToolContext toolContext = new ToolContext(agent.getAllowWrites() ? security : new WriteGuard(security),
 				ApprovalCallback.AUTO_APPROVE, new TransactionScope(token), token);
 			run[0] = toolContext;
 
-			String prompt = header(message, task.peer(), context._subject) + text;
+			String prompt = header(message, task.peer()) + text;
 			context._conversation.add(new UserMessage(A2AJson.newId(), Instant.now(),
 				List.<ContentPart> of(new TextContent(prompt))));
 			context._log.startTurn()
@@ -252,7 +262,7 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 				HistoryUtils.updateSessionRevision();
 			}
 			context._toolRegistry = ToolRegistryReloadFlag.consume() ? null : result.registry();
-			finish(task, agent, context, result, token, text);
+			finish(task, agent, context, subject, result, token, text);
 		} finally {
 			try {
 				persist(task, context);
@@ -319,13 +329,7 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 		A2ASubjectResolver.Request request = new A2ASubjectResolver.Request(agent.getPath(), agent.getAgent(),
 			task.contextId(), task.owner(), peer, metadata, text, remembered);
 		TLObject resolved = A2AService.ask(_service.subjectResolvers(), resolver -> resolver.resolveSubject(request));
-		TLObject subject = resolved != null ? resolved : remembered;
-		if (subject != null) {
-			store.setSubject(session, subject);
-			task.putMetadata("subject", label(subject));
-			HistoryUtils.updateSessionRevision();
-		}
-		bind(context, session, subject);
+		bind(context, session, resolved != null ? resolved : remembered);
 		return session;
 	}
 
@@ -333,11 +337,10 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 		context._session = session;
 		context._subject = subject;
 		_service.contexts().bind(ExecutionRecorder.conversationIdOf(session), context._contextId);
-		_service.contexts().rememberSubject(context._contextId, subject);
 	}
 
-	private void finish(A2ATask task, ExposedAgentConfig agent, Context context, AgentRunner.RecordedRun run,
-			CancellationToken token, String request) {
+	private void finish(A2ATask task, ExposedAgentConfig agent, Context context, TLObject subject,
+			AgentRunner.RecordedRun run, CancellationToken token, String request) {
 		if (task.state().isTerminal()) {
 			return;
 		}
@@ -347,7 +350,7 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 			if (!answer.isBlank()) {
 				addArtifact(task, A2AJson.artifact(A2AJson.ANSWER, "The agent's answer.", List.of(A2AJson.textPart(answer))));
 			}
-			contributeArtifacts(task, agent, context, request, answer);
+			contributeArtifacts(task, agent, context, subject, request, answer);
 			task.moveTo(TaskState.COMPLETED, A2AJson.textMessage(A2AJson.ROLE_AGENT, task.contextId(), task.id(),
 				answer.isBlank() ? "(The agent finished without an answer.)" : answer));
 		} else if (token.isCancelled() || result.stopReason() == StopReason.ABORTED) {
@@ -359,10 +362,10 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 		}
 	}
 
-	private void contributeArtifacts(A2ATask task, ExposedAgentConfig agent, Context context, String request,
-			String answer) {
+	private void contributeArtifacts(A2ATask task, ExposedAgentConfig agent, Context context, TLObject subject,
+			String request, String answer) {
 		A2AArtifactContributor.Request info = new A2AArtifactContributor.Request(agent.getPath(), agent.getAgent(),
-			task.contextId(), task.id(), request, answer, context._subject);
+			task.contextId(), task.id(), request, answer, subject);
 		A2AArtifactContributor.Sink sink = new A2AArtifactContributor.Sink() {
 			@Override
 			public void text(String name, String description, String text, String mediaType) {
@@ -406,16 +409,19 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 	/**
 	 * Tells the agent who it talks to: another agent, which answers its questions as the answers of
 	 * {@code askUser} and receives its final answer.
+	 *
+	 * <p>
+	 * It does not name the subject: the agent reads that in the environment block of its run, where
+	 * every entry point states it and only if the calling account may read it.
+	 * </p>
 	 */
-	private static String header(Map<String, Object> message, String peer, TLObject subject) {
+	private static String header(Map<String, Object> message, String peer) {
 		String agent = Json.str(Json.obj(Json.obj(message, "metadata"), A2AJson.CALLER_METADATA), "agent");
 		String from = agent != null
 			? "the agent " + agent + " of the application '" + peer + "'"
 			: "the remote client '" + peer + "'";
-		String about = subject == null ? ""
-			: " This conversation is about " + ReadFilter.identityJson(subject) + " in this application.";
 		return "[A2A message from " + from + ". You talk to that agent, not to a person: what you ask with"
-			+ " askUser goes to it, and your final answer is returned to it." + about + "]\n\n";
+			+ " askUser goes to it, and your final answer is returned to it.]\n\n";
 	}
 
 	/**

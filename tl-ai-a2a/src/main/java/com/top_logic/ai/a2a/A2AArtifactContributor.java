@@ -39,7 +39,8 @@ public interface A2AArtifactContributor {
 	 * @param answer
 	 *        The agent's final answer.
 	 * @param subject
-	 *        The conversation's subject, or <code>null</code>.
+	 *        The subject of the run, or <code>null</code>: the subject of the conversation if the
+	 *        calling account may read it.
 	 */
 	record Request(String agent, String agentName, String contextId, String taskId, String request,
 			String answer, TLObject subject) {

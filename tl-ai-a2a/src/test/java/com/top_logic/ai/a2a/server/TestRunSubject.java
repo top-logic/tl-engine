@@ -1,0 +1,169 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.ai.a2a.server;
+
+import java.util.List;
+import java.util.Map;
+
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
+import test.com.top_logic.PersonManagerSetup;
+import test.com.top_logic.basic.BasicTestCase;
+import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.knowledge.wrap.person.TestPerson;
+
+import com.top_logic.ai.a2a.A2AService;
+import com.top_logic.ai.a2a.A2ASubjectResolver;
+import com.top_logic.ai.a2a.protocol.A2AJson;
+import com.top_logic.ai.a2a.protocol.Json;
+import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.execution.AgentExecutionStore.SessionKind;
+import com.top_logic.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
+import com.top_logic.basic.config.SimpleInstantiationContext;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.knowledge.service.HistoryUtils;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.manager.AccessManager;
+import com.top_logic.util.model.ModelService;
+
+/**
+ * The subject an {@link A2ASubjectResolver} finds for an incoming A2A conversation reaches the
+ * session and the answer to the calling application only when the calling account may read it.
+ *
+ * <p>
+ * The subject here is a conversation of another account. Under the access policy that
+ * {@code tl-ai-core} ships for conversations, only its owner may read it, so the caller of the
+ * second test has no Read on it. No language model is involved: the run is refused before its first
+ * request, because no agent service runs. Everything the engine names about the subject is named
+ * before that point, in the answer and on the session.
+ * </p>
+ */
+public class TestRunSubject extends BasicTestCase {
+
+	/** How long a test waits for the run of a task to end. */
+	private static final long TIMEOUT_MILLIS = 30_000;
+
+	/** May read {@link #subject}. */
+	private static Person owner;
+
+	/** May not read {@link #subject}. */
+	private static Person stranger;
+
+	/** What the resolver finds: a conversation of {@link #owner}. */
+	private static AgentSession subject;
+
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		if (owner != null) {
+			return;
+		}
+		owner = TestPerson.createPerson("a2a-subject-owner");
+		stranger = TestPerson.createPerson("a2a-subject-stranger");
+		subject = AgentExecutionStore.getInstance().createSession(SessionKind.CHAT, owner, "Website relaunch");
+		HistoryUtils.updateSessionRevision();
+	}
+
+	/** Precondition: the fixture gives the two accounts different rights on the subject. */
+	public void testRightsOnTheSubject() {
+		assertTrue(new ModelAccessRightsSecurity(owner).canRead(subject));
+		assertFalse(new ModelAccessRightsSecurity(stranger).canRead(subject));
+	}
+
+	/** The control case: an account that may read the subject gets it on the session and in the answer. */
+	public void testReadableSubjectIsKept() throws Exception {
+		A2ATask task = runTask(owner, "ctx-readable");
+
+		assertNotNull("The answer names the subject: " + metadata(task), metadata(task).get("subject"));
+		assertEquals(subject, sessionOf(owner, "ctx-readable").getSubject());
+	}
+
+	/**
+	 * A subject that the calling account may not read is named nowhere: not in the answer to the
+	 * calling application and not on the session.
+	 */
+	public void testUnreadableSubjectIsNamedNowhere() throws Exception {
+		A2ATask task = runTask(stranger, "ctx-unreadable");
+
+		assertNull("The answer to the calling application names a subject its account may not read: "
+			+ metadata(task), metadata(task).get("subject"));
+		assertNull("The session is about a subject its owner may not read.",
+			sessionOf(stranger, "ctx-unreadable").getSubject());
+	}
+
+	/** Runs one task of the exposed agent as the given account, until its run ends. */
+	private static A2ATask runTask(Person caller, String contextId) throws Exception {
+		AgentRunBackend backend = new AgentRunBackend(service());
+		A2ATask task = new A2ATask(contextId + "-task", contextId, "alpha", caller.getName());
+		try {
+			backend.start(task,
+				A2AJson.textMessage(A2AJson.ROLE_USER, contextId, task.id(), "Which tickets are still open here?"),
+				Map.of());
+			long end = System.currentTimeMillis() + TIMEOUT_MILLIS;
+			while (!task.state().isTerminal()) {
+				assertTrue("The run did not end in time.", System.currentTimeMillis() < end);
+				Thread.sleep(50);
+			}
+		} finally {
+			backend.shutDown();
+		}
+		HistoryUtils.updateSessionRevision();
+		return task;
+	}
+
+	/** The service the backend serves: one exposed agent, and a resolver that finds {@link #subject}. */
+	private static A2AService service() throws Exception {
+		A2AService.Config<?> config = (A2AService.Config<?>) TypedConfiguration.parse(CharacterContents.newContent(
+			"<service xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+				+ " config:interface='" + A2AService.Config.class.getName() + "'"
+				+ " class='" + A2AService.class.getName() + "' app='alpha-app'>"
+				+ "<agents><agent path='alpha' agent='TL_ModelExplorer'/></agents>"
+				+ "</service>"));
+		return new A2AService(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config) {
+			@Override
+			public List<A2ASubjectResolver> subjectResolvers() {
+				return List.of(request -> subject);
+			}
+		};
+	}
+
+	/** The session the backend recorded the given context in. */
+	private static AgentSession sessionOf(Person caller, String contextId) {
+		for (AgentSession session : AgentExecutionStore.getInstance().sessionsForOwner(caller,
+			SessionKind.BACKGROUND)) {
+			String metadata = session.getMetadata();
+			if (metadata != null && metadata.contains("\"" + contextId + "\"")) {
+				return session;
+			}
+		}
+		fail("No session was recorded for context " + contextId + ".");
+		return null;
+	}
+
+	private static Map<String, Object> metadata(A2ATask task) {
+		return Json.obj(task.toJson(null), "metadata");
+	}
+
+	/**
+	 * The services of the conversations and of their access policy, and the tool access the context
+	 * of a run is built with.
+	 */
+	public static Test suite() {
+		return PersonManagerSetup.createPersonManagerSetup(
+			ServiceTestSetup.createSetup(
+				new TestSuite(TestRunSubject.class),
+				ModelService.Module.INSTANCE,
+				AccessManager.Module.INSTANCE,
+				SecurityConfigurationService.Module.INSTANCE,
+				AgentExecutionStore.Module.INSTANCE,
+				AiToolAccessService.Module.INSTANCE));
+	}
+}

@@ -10,8 +10,7 @@ import java.util.Map;
 import com.top_logic.model.TLObject;
 
 /**
- * Application hook: the subject of an incoming A2A conversation, set on the {@code AgentSession} the
- * conversation is recorded in and named to the agent in each message.
+ * Application hook: the subject of an incoming A2A conversation.
  *
  * <p>
  * Asked once per context, before its first run, in the {@code TLContext} of the account the run acts
@@ -19,6 +18,13 @@ import com.top_logic.model.TLObject;
  * asked in order ({@code <subject-resolvers>} on {@link A2AService}); the first non-<code>null</code>
  * answer wins. When none answers, the conversation gets the
  * {@link Request#rememberedSubject() remembered subject}, or none.
+ * </p>
+ *
+ * <p>
+ * A resolver only finds the object; it need not check whether the calling account may read it. The
+ * engine checks that at each run, with the rights of the run. Only a subject the account may read
+ * reaches the agent (in the environment block of its run), the {@code AgentSession} the conversation
+ * is recorded in, the answer to the calling application and the {@link A2AArtifactContributor}s.
  * </p>
  */
 public interface A2ASubjectResolver {

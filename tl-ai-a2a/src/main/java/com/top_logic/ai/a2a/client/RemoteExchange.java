@@ -72,7 +72,8 @@ public final class RemoteExchange {
 	 * @param conversationId
 	 *        The local conversation, or <code>null</code>.
 	 * @param subject
-	 *        The local conversation's subject, remembered with the context id, or <code>null</code>.
+	 *        The subject of the local run, remembered with the context id, or <code>null</code>. Only
+	 *        a subject the run's account may read: its label is sent to the peer.
 	 * @param subjectLabel
 	 *        The subject's label, sent to the peer, or <code>null</code>.
 	 * @param runId

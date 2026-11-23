@@ -32,7 +32,7 @@ The read tools leave out each element that the account may not read, and `TidRes
 
 A call is a change only if it is different from the value that the account reads. If it is equal, the tool writes nothing and answers "No change". An attribute that the account may write but not read has no value that it reads, so each call that names this attribute is a change: "No change" would tell the model the stored value. The answer shows the old and the new value as the account reads them, so no count and no placeholder gives a sign of the other elements.
 
-**The limit: a refusal of the model.** The constraints of an attribute (for example a maximum number of elements) and the veto of the commit check the stored value, with the elements that the account may not read ([rule R10](doc:access-discover-spec)). So their refusal can tell the model that such elements exist, as a form tells the number of elements to a person who may read the attribute (rule R11).
+**A refusal of a constraint.** The constraints of an attribute (for example a maximum number of elements) and the veto of the commit check the stored value, with the elements that the account may not read ([rule R10](doc:access-discover-spec)). A constraint holds for the whole value: a check of only the readable elements would let a call break it. So a refusal can tell the model that such elements exist, as a form tells the number of elements to a person who may read the attribute (rule R11).
 
 This is the rule of the rows of a composition table, which keep the parts that the user may not discover, and both use one implementation (`HiddenElements`): the rows with the `Discover` check of the user, the tool with the read check of the run.
 

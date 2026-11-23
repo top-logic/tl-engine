@@ -654,15 +654,15 @@ public class TestMaskedObjectLinks extends AbstractSearchExpressionTest {
 	}
 
 	/**
-	 * The label of a text, outside a computation on behalf of the user, is the text as it is
-	 * stored, so that a value computed on behalf of the system does not depend on the user.
+	 * The label of a text outside a script masks a hidden link, so that every display of the label
+	 * masks it.
 	 */
-	public void testLabelIsStoredText() {
+	public void testLabelMasksUndiscoverableLink() {
 		becomeUser(_reader);
 
 		String label = MetaLabelProvider.INSTANCE.getLabel(mixedText());
 
-		assertEquals("See " + SHOWN_LABEL + " and " + HIDDEN_LABEL + " for details.", label);
+		assertEquals("See " + SHOWN_LABEL + " and " + MaskedValues.placeholder() + " for details.", label);
 	}
 
 	/**

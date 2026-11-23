@@ -62,7 +62,6 @@ import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.DynamicVisibility;
 import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.form.definition.FormVisibility;
-import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
@@ -1231,13 +1230,6 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * {@link #UNREADABLE} marker of a value the user may not read is labelled by the same
 	 * placeholder.
 	 * </p>
-	 *
-	 * <p>
-	 * The label is computed on behalf of the current user, see
-	 * {@link DiscoverRight#computeForUser(boolean, java.util.function.Supplier)}: a value that
-	 * contains objects in a form of its own, for example a formatted text with object links, is
-	 * labelled with the objects the user may not discover masked.
-	 * </p>
 	 */
 	public static String label(Object value) {
 		if (value == null) {
@@ -1250,7 +1242,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			&& collection.stream().anyMatch(ColumnProviderService::isPlaceholder)) {
 			return new CollectionLabelProvider(ColumnProviderService::label, VALUE_SEPARATOR).getLabel(value);
 		}
-		return DiscoverRight.computeForUser(true, () -> MetaLabelProvider.INSTANCE.getLabel(value));
+		return MetaLabelProvider.INSTANCE.getLabel(value);
 	}
 
 	/**

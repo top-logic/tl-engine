@@ -266,7 +266,8 @@ An object link follows the rules for a masked element (R11):
 - The outputs derived from the text for the user are masked as well: the preview where the
   editor has no room, the text of an inherited value, the display of an HTML property of a
   configuration that cannot be edited, the text of a table cell of the React view layer (which the
-  cell is sorted, filtered, searched and exported by), the PDF and the Excel export.
+  cell is sorted, filtered, searched and exported by), the PDF and the Excel export, and every
+  other display of the label of the text.
 - The string conversion of a formatted text in TL-Script follows the security of the script
   (R12). A secured script gets the placeholder for a link to an object that its user may not
   discover and for a link to an object that does not exist; like every result of a secured
@@ -277,10 +278,10 @@ An object link follows the rules for a masked element (R11):
   account of the run may not read masked, as the run reads no other trace of such an object.
 
 One function applies the rule: `TLObjectLinkUtil.maskLinks` (with `restoreLinks` for the editor).
-The React editor and the derived outputs call it. The label of a formatted text (its label
-provider) masks only in a computation on behalf of the user (`DiscoverRight.computeForUser`): a
-secured TL-Script evaluation and the text of a table cell of the React view layer. Everywhere else
-the label is the stored text.
+The React editor, the derived outputs and the label of a formatted text (its label provider) call
+it. The label masks by default, so that every display of it masks. Only a computation on behalf of
+the system gets the stored text: an unsecured TL-Script evaluation, which sets this mode for its
+duration (`DiscoverRight.computeForUser`).
 
 ### R12 - secured and unsecured script kinds
 

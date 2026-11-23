@@ -47,7 +47,8 @@ public final class DiscoverRight {
 
 	/**
 	 * Per-thread state of {@link #isComputedForUser()}, <code>null</code> outside
-	 * {@link #computeForUser(boolean, Supplier)}.
+	 * {@link #computeForUser(boolean, Supplier)}, which counts as a computation on behalf of the
+	 * user.
 	 */
 	private static final ThreadLocal<Boolean> COMPUTED_FOR_USER = new ThreadLocal<>();
 
@@ -158,16 +159,17 @@ public final class DiscoverRight {
 	 * <p>
 	 * A value can contain objects in a form of its own, for example the object links of a formatted
 	 * text. A presentation of such a value as text masks the objects that the current user may not
-	 * discover only in a computation on behalf of the user. Everywhere else, for example in a
-	 * computation on behalf of the system, it gives the value as it is stored, so that a result that
-	 * is stored does not depend on the user who started the computation.
+	 * discover, unless the computation is explicitly on behalf of the system. So every output to a
+	 * user masks, also one that nobody thought of, and only a computation on behalf of the system
+	 * gives the value as it is stored, so that a result that it stores does not depend on the user
+	 * who started it.
 	 * </p>
 	 *
-	 * @return <code>false</code> outside {@link #computeForUser(boolean, Supplier)}.
+	 * @return <code>true</code> outside {@link #computeForUser(boolean, Supplier)}.
 	 */
 	@FrameworkInternal
 	public static boolean isComputedForUser() {
-		return COMPUTED_FOR_USER.get() == Boolean.TRUE;
+		return COMPUTED_FOR_USER.get() != Boolean.FALSE;
 	}
 
 	/**
@@ -176,9 +178,8 @@ public final class DiscoverRight {
 	 *
 	 * <p>
 	 * A secured TL-Script evaluation computes on behalf of the user, an unsecured one on behalf of
-	 * the system (R12 of the Discover specification). A display that sends a text to the client of
-	 * the user computes on behalf of the user. A computation inside the given one can change the
-	 * setting for its own duration.
+	 * the system (R12 of the Discover specification). A computation inside the given one can change
+	 * the setting for its own duration.
 	 * </p>
 	 *
 	 * @param forUser

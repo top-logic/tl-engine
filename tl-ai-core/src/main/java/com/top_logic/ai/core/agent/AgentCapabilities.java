@@ -411,12 +411,12 @@ public class AgentCapabilities {
 		}
 		String capability = _security.toolCapability(tool);
 		if (_security.withheldByBackgroundCeiling(tool)) {
-			// The user's roles do reach it; the run being unattended is what removed it. Blaming the
+			// The user's roles do reach it; the run being a background run is what removed it. Blaming the
 			// roles here would send them to an administrator who has already granted everything.
 			return capability == null
-				? "out of reach because this run is unattended: it has nobody who could approve a tool"
-					+ " call, and this tool is not on the background allowlist"
-				: "out of reach because this run is unattended: it needs the `" + capability
+				? "out of reach because this is a background run: nobody approves its tool calls, and"
+					+ " this tool is not on the background allowlist"
+				: "out of reach because this is a background run: it needs the `" + capability
 					+ "` capability, which is not on the background allowlist. This is not about the"
 					+ " current user's roles";
 		}
@@ -841,7 +841,7 @@ public class AgentCapabilities {
 				appendCapabilities(notice, notHeld);
 			}
 			if (!unattended.isEmpty()) {
-				notice.append("This run is **unattended**: nobody is present to approve a tool call, so"
+				notice.append("This is a **background run**: nobody approves its tool calls, so"
 					+ " it is additionally bounded by the deployment's background allowlist. These"
 					+ " capabilities are out of reach in this run even though the user holds them, and"
 					+ " no retry and no other tool will get around that:\n\n");
@@ -952,8 +952,8 @@ public class AgentCapabilities {
 		Set<String> lacking = lacking(skill.tools());
 		StringBuilder reason = new StringBuilder();
 		if (withheldByBackgroundCeiling(skill)) {
-			reason.append("Skill '").append(skillId).append("' is withheld because this run is"
-				+ " unattended: it has no user who could approve a tool call, so only the capabilities"
+			reason.append("Skill '").append(skillId).append("' is withheld because this is a"
+				+ " background run: nobody approves its tool calls, so only the capabilities"
 				+ " on the background allowlist are reachable, and every tool of this skill needs one"
 				+ " that is not");
 			reason.append(capabilityList(lacking)).append(". This is not about the acting user's roles"

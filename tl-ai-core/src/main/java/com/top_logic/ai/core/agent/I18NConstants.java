@@ -32,6 +32,19 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 DUPLICATE_NAME_ERROR__NAME;
 
 	/**
+	 * Error message when an agent or skill name starts or ends with a blank.
+	 *
+	 * <p>
+	 * A database that ignores trailing blanks would find such a record also for the name without
+	 * the blank.
+	 * </p>
+	 *
+	 * @en The name ''{0}'' must not start or end with a blank.
+	 * @de Der Name ''{0}'' darf nicht mit einem Leerzeichen beginnen oder enden.
+	 */
+	public static ResKey1 OUTER_BLANK_ERROR__NAME;
+
+	/**
 	 * Success message after exporting instances to the data folder.
 	 *
 	 * @en Instances exported to development environment.

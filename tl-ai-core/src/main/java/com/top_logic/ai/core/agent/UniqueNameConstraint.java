@@ -41,11 +41,12 @@ import com.top_logic.util.TLContext;
  * </p>
  *
  * <p>
- * The comparison is case-insensitive to match the persistence-level backstop: the {@code name}
- * columns of {@code AIAgent} / {@code AISkill} are {@code String} columns, which the database
- * renders case-insensitively (e.g. {@code VARCHAR_IGNORECASE} on H2), and the lookup by name finds a
- * record in any case. Aligning both layers ensures the form gives fast feedback for exactly those
- * duplicates the unique DB index would reject.
+ * The comparison ignores the case and nothing else, and it is the comparison of the lookup by name
+ * ({@link AgentDefinitionQuery#findStoredAgent(String)}), which filters what the database answers.
+ * The {@code name} columns of {@code AIAgent} / {@code AISkill} are {@code String} columns, which a
+ * database can compare more widely, for example without the case, the accents or trailing blanks.
+ * A name that starts or ends with a blank is refused, so that such a database cannot see two names
+ * as one where this rule sees two.
  * </p>
  */
 public class UniqueNameConstraint implements ConstraintCheck {
@@ -55,6 +56,9 @@ public class UniqueNameConstraint implements ConstraintCheck {
 		Object value = object.tValue(attribute);
 		if (!(value instanceof String name) || name.isEmpty()) {
 			return null;
+		}
+		if (!name.equals(name.strip())) {
+			return I18NConstants.OUTER_BLANK_ERROR__NAME.fill(name);
 		}
 		if (takenByOtherRecord(object, attribute, name) || takesConfiguredName(object, name)) {
 			return I18NConstants.DUPLICATE_NAME_ERROR__NAME.fill(name);

@@ -16,9 +16,11 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.model.TLNamed;
 import com.top_logic.ai.core.model.Agent;
 import com.top_logic.ai.core.model.Skill;
 import com.top_logic.ai.core.model.impl.AgentBase;
+import com.top_logic.ai.core.model.impl.SkillBase;
 import com.top_logic.ai.core.security.ModelSecurity;
 
 /**
@@ -93,7 +95,7 @@ public class AgentDefinitionQuery {
 	 *         this name.
 	 */
 	public AgentDefinition findAgentByName(String name, ModelSecurity reader) {
-		Agent kbAgent = findKBAgentByName(name);
+		Agent kbAgent = findStoredAgent(name);
 		if (kbAgent != null && reader.canRead(kbAgent)) {
 			AgentSource source = hasConfigAgent(name) ? AgentSource.KB_OVERRIDE : AgentSource.KB;
 			return toAgentDefinition(kbAgent, source);
@@ -135,8 +137,9 @@ public class AgentDefinitionQuery {
 
 		for (Agent kbAgent : reader.filterReadable(getAllKBAgents())) {
 			String name = kbAgent.getName();
-			AgentSource source = result.containsKey(name) ? AgentSource.KB_OVERRIDE : AgentSource.KB;
-			result.put(name, toAgentDefinition(kbAgent, source));
+			String overridden = sameName(result.keySet(), name);
+			AgentSource source = overridden != null ? AgentSource.KB_OVERRIDE : AgentSource.KB;
+			result.put(overridden != null ? overridden : name, toAgentDefinition(kbAgent, source));
 		}
 
 		return result.values();
@@ -171,7 +174,7 @@ public class AgentDefinitionQuery {
 	 *         this name.
 	 */
 	public SkillDefinition findSkillByName(String name, ModelSecurity reader) {
-		Skill kbSkill = findKBSkillByName(name);
+		Skill kbSkill = findStoredSkill(name);
 		if (kbSkill != null && reader.canRead(kbSkill)) {
 			AgentSource source = hasConfigSkill(name) ? AgentSource.KB_OVERRIDE : AgentSource.KB;
 			return toSkillDefinition(kbSkill, source);
@@ -213,8 +216,9 @@ public class AgentDefinitionQuery {
 
 		for (Skill kbSkill : reader.filterReadable(getAllKBSkills())) {
 			String name = kbSkill.getName();
-			AgentSource source = result.containsKey(name) ? AgentSource.KB_OVERRIDE : AgentSource.KB;
-			result.put(name, toSkillDefinition(kbSkill, source));
+			String overridden = sameName(result.keySet(), name);
+			AgentSource source = overridden != null ? AgentSource.KB_OVERRIDE : AgentSource.KB;
+			result.put(overridden != null ? overridden : name, toSkillDefinition(kbSkill, source));
 		}
 
 		return result.values();
@@ -252,24 +256,67 @@ public class AgentDefinitionQuery {
 		return WrapperFactory.getWrappersForKOs(Skill.class, kos);
 	}
 
-	private Agent findKBAgentByName(String name) {
+	/**
+	 * The stored agent of the given name, for every account and without a check of the model rights.
+	 *
+	 * <p>
+	 * The one lookup of a stored agent by its name. The database compares the name column by its
+	 * collation, which can also ignore accents or trailing blanks; the result is therefore filtered
+	 * with the comparison of the name rule ({@link UniqueNameConstraint}), which ignores the case and
+	 * nothing else. Otherwise a record "chät" could answer for "chat" on one database and not on
+	 * another.
+	 * </p>
+	 *
+	 * @return The record, or <code>null</code> if no stored agent has this name.
+	 */
+	public Agent findStoredAgent(String name) {
 		KnowledgeBase kb = knowledgeBase();
-		if (kb == null) {
+		if (kb == null || name == null) {
 			return null;
 		}
-		List<Agent> agents =
-			WrapperFactory.getWrappersByAttribute(AGENT_TABLE, kb, AgentBase.NAME_ATTR, name);
-		return agents.isEmpty() ? null : agents.get(0);
+		return named(WrapperFactory.getWrappersByAttribute(AGENT_TABLE, kb, AgentBase.NAME_ATTR, name), name);
 	}
 
-	private Skill findKBSkillByName(String name) {
+	/**
+	 * The stored skill of the given name, for every account and without a check of the model rights.
+	 *
+	 * @return The record, or <code>null</code> if no stored skill has this name.
+	 * @see #findStoredAgent(String)
+	 */
+	public Skill findStoredSkill(String name) {
 		KnowledgeBase kb = knowledgeBase();
-		if (kb == null) {
+		if (kb == null || name == null) {
 			return null;
 		}
-		List<Skill> skills =
-			WrapperFactory.getWrappersByAttribute(SKILL_TABLE, kb, "name", name);
-		return skills.isEmpty() ? null : skills.get(0);
+		return named(WrapperFactory.getWrappersByAttribute(SKILL_TABLE, kb, SkillBase.NAME_ATTR, name), name);
+	}
+
+	/**
+	 * The first of the given records whose name is the given name, with the case ignored.
+	 *
+	 * <p>
+	 * The comparison of the name rule ({@link UniqueNameConstraint}), whatever the database answered.
+	 * </p>
+	 */
+	static <T extends TLNamed> T named(Collection<T> candidates, String name) {
+		for (T candidate : candidates) {
+			if (name.equalsIgnoreCase(candidate.getName())) {
+				return candidate;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The one of the given names that is the given name with the case ignored, or <code>null</code>.
+	 */
+	private static String sameName(Collection<String> names, String name) {
+		for (String candidate : names) {
+			if (candidate.equalsIgnoreCase(name)) {
+				return candidate;
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -343,12 +390,14 @@ public class AgentDefinitionQuery {
 			source);
 	}
 
+	/** Whether a configured agent has the given name, with the case ignored as in the name rule. */
 	private boolean hasConfigAgent(String name) {
-		return isConfigServiceActive() && getConfigService().hasConfigAgent(name);
+		return isConfigServiceActive() && sameName(getConfigService().getAllConfigAgents().keySet(), name) != null;
 	}
 
+	/** Whether a configured skill has the given name, with the case ignored as in the name rule. */
 	private boolean hasConfigSkill(String name) {
-		return isConfigServiceActive() && getConfigService().hasConfigSkill(name);
+		return isConfigServiceActive() && sameName(getConfigService().getAllConfigSkills().keySet(), name) != null;
 	}
 
 	private boolean isConfigServiceActive() {

@@ -5,6 +5,7 @@
 package test.com.top_logic.element.boundsec.manager.coverage;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 import junit.framework.Test;
@@ -239,7 +240,9 @@ public class TestAccessParentConfig extends BasicTestCase {
 		ConstraintChecker checker = new ConstraintChecker();
 		checker.check(entry);
 		assertFalse(checker.getFailures().isEmpty());
-		Resources resources = Resources.getInstance();
+		// The English label of Read equals its raw id, so only a locale with a different label tells
+		// them apart.
+		Resources resources = Resources.getInstance(Locale.GERMAN);
 		String message = resources.getString(checker.getFailures().get(0).getConstraintName());
 		String label = resources.getString(
 			com.top_logic.tool.boundsec.simple.I18NConstants.COMMAND_GROUP_NAMES.key(SimpleBoundCommandGroup.READ_NAME));

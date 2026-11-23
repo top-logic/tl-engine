@@ -1,4 +1,5 @@
 import React from 'react';
+import { getApiBase, getWindowName } from './page-context';
 
 /**
  * Client-side i18n service for React controls.
@@ -32,44 +33,6 @@ let _cacheVersion = 0;
 
 /** React re-render callbacks registered via useSyncExternalStore. */
 const _subscribers = new Set<() => void>();
-
-/**
- * Base URL of the server API (e.g. "/demo/"), set by mount(). Used only on a page that does not
- * name its context path (see {@link getI18NApiBase}).
- */
-let _apiBase = '';
-
-/** Window name to include in i18n requests so the server resolves the correct locale. */
-let _windowName = '';
-
-/**
- * Sets the API base URL for a page that does not name its context path. Called once from
- * tl-react-bridge.ts during mount().
- */
-export function setI18NApiBase(base: string): void {
-  _apiBase = base;
-}
-
-/**
- * Sets the window name for i18n requests. Called from tl-react-bridge.ts on every mount().
- */
-export function setI18NWindowName(name: string): void {
-  _windowName = name;
-}
-
-/**
- * The base URL of the server API at the time of a request.
- *
- * <p>The context path of the page is read from its body, as route-sync.ts does. A request does
- * not depend on the first mount(): the busy overlay asks for its text before any control is
- * mounted, and with an empty base the request is relative to the page, which is wrong on a page at
- * a deep address. Only a page that does not name its context path uses the base set by
- * mount().</p>
- */
-function getI18NApiBase(): string {
-  const contextPath = document.body.dataset.contextPath;
-  return contextPath !== undefined ? contextPath + '/' : _apiBase;
-}
 
 function notifySubscribers(): void {
   for (const cb of _subscribers) {
@@ -112,8 +75,11 @@ async function flushPending(): Promise<void> {
 
   let data: Record<string, string>;
   try {
-    const url = getI18NApiBase() + 'react-api/i18n?keys=' + encodeURIComponent(keys.join(','))
-      + '&windowName=' + encodeURIComponent(_windowName);
+    // The window name lets the server answer in the locale of the session of the window. The page
+    // context is read now and not at the first mount(): the busy overlay asks for its text before
+    // any control is mounted.
+    const url = getApiBase() + 'react-api/i18n?keys=' + encodeURIComponent(keys.join(','))
+      + '&windowName=' + encodeURIComponent(getWindowName());
     const resp = await fetch(url);
     if (!resp.ok) {
       console.error('[TLReact] i18n fetch failed:', resp.status);

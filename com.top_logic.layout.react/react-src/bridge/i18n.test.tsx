@@ -1,5 +1,6 @@
-// The address of the text request: it is built from the context path of the page, also when the
-// busy overlay asks for its text before the first control is mounted on a page at a deep address.
+// The address of the text request: it is built from the context path and the window name of the
+// page, also when the busy overlay asks for its text before the first control is mounted on a page
+// at a deep address.
 
 import { act } from 'react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -17,6 +18,9 @@ const DEEP_PAGE = CONTEXT_PATH + '/view/a/b';
 
 /** The path that the text requests must go to. */
 const I18N_PATH = CONTEXT_PATH + '/react-api/i18n';
+
+/** The name of the window of the page. */
+const WINDOW_NAME = 'v1a2b3c';
 
 /** The addresses of the requests sent so far, resolved against the page as the browser does. */
 let requested: URL[] = [];
@@ -45,29 +49,33 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   delete document.body.dataset.contextPath;
+  delete document.body.dataset.windowName;
   document.body.innerHTML = '';
   window.history.replaceState(null, '', '/');
 });
 
 describe('the text request', () => {
-  it('goes to the context path when the busy overlay asks before the first mount', async () => {
+  it('goes to the context path with the window name when the busy overlay asks before the first mount', async () => {
     document.body.dataset.contextPath = CONTEXT_PATH;
+    document.body.dataset.windowName = WINDOW_NAME;
     const { initBusyOverlay } = await import('./busy-overlay');
 
     act(() => initBusyOverlay());
     await settle();
 
     expect(requested.map(url => url.pathname)).toEqual([I18N_PATH]);
+    expect(requested.map(url => url.searchParams.get('windowName'))).toEqual([WINDOW_NAME]);
   });
 
-  it('goes to the base set by the mount on a page without a context path', async () => {
-    const { setI18NApiBase } = await import('./i18n');
-    setI18NApiBase(CONTEXT_PATH + '/');
+  it('uses the context of the mount on a page without the body attributes', async () => {
+    const { setMountContext } = await import('./page-context');
+    setMountContext(CONTEXT_PATH, WINDOW_NAME);
     const { initBusyOverlay } = await import('./busy-overlay');
 
     act(() => initBusyOverlay());
     await settle();
 
     expect(requested.map(url => url.pathname)).toEqual([I18N_PATH]);
+    expect(requested.map(url => url.searchParams.get('windowName'))).toEqual([WINDOW_NAME]);
   });
 });

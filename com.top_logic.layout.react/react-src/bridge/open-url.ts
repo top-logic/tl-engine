@@ -7,7 +7,7 @@
  */
 import { opensPage, resolveAddress } from './address';
 import { BACKGROUND_COMMAND, enqueueCommand, leavePageWhenAnswered } from './command-channel';
-import { getApiBase } from './tl-react-bridge';
+import { getApiBase, getWindowName } from './page-context';
 
 /** Data shape of the msgbuf-generated OpenUrlEvent. */
 export interface OpenUrlEventData {
@@ -74,7 +74,7 @@ function reportRefused(url: string): void {
   void enqueueCommand(getApiBase() + 'react-api/command', {
     controlId: '',
     command: CMD_OPEN_URL_REFUSED,
-    windowName: document.body.dataset.windowName ?? '',
+    windowName: getWindowName(),
     arguments: { [ARG_URL]: url },
   }, BACKGROUND_COMMAND);
 }

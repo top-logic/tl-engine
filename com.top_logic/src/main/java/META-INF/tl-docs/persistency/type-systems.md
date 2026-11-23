@@ -241,6 +241,16 @@ The `dependencies` of a migration must contain every module the `dependencies` o
 	</dropped-dependencies>
 ```
 
+As soon as one migration of a module names a module, every other migration of the module that does not name it gets an implicit dependency on its initial version `<initial>`. When an application adds a module with its own older migration history later (e.g. `tl-ai-core`), its earlier migrations would therefore depend on `<initial>` of that module. The first migration of the added module depends on an older version of `tl` than these application migrations, so the consistency check reports each of them ("... is to old since ..."). To prevent this, the first migration that names the added module lists it in `added-dependencies`; `CreateMigrationScriptTemplate` writes it there when an upstream module has migrations that the latest migration does not list. The earlier migrations stay unchanged:
+
+```xml
+	<added-dependencies>
+		<module name="tl-ai-core"/>
+	</added-dependencies>
+```
+
+The earlier migrations need no order relative to the migrations of the added module: a database that stores no version of the module skips them (see below). A database that already holds data of the module but has no stored version for it needs `minimum-modules`.
+
 A migration runs only if the database stores a version of its module. The database setup stores the maximal version of every module with a migration folder, and every startup stores it for each module that has no stored version yet. A module without stored version is considered new to the application, e.g. a framework module just added as dependency, and its migrations are skipped (logged as "Skipping migrations of module ..."). This is wrong for an application whose database was created before it had its folder `WEB-INF/kbase/migration/<module>/`: its first migration must come with `minimum-modules="<module>"` in the configuration of the `MigrationService`, see [the upgrade guide](doc:upgrade-7.11-to-8.0#83-own-migrations). Why a module with persistent types is a migration module from its first release on, and how persistent types move to another module or leave an application with their module, is described in [migrations and modules with persistent types](doc:persistency/migrations).
 
 Processors are written with their tag name, or as `<processor class="…"/>` for a processor without one. The demo application added a column to its table `DemoTypes` like this (dependencies trimmed); the same `<mo_attribute>` was added to `DemoTypesMeta.xml`:

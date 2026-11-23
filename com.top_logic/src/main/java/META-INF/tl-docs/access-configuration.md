@@ -319,6 +319,46 @@ unambiguous:
 A reference not fitting the definition (a composition not holding the type for `container`, a
 multiple or foreign reference for `target`) and an empty `<access-parent/>` are configuration errors.
 
+**Delegating only some operations (`operations`).** The building blocks `<container>`, `<target>` and
+`<script>` take an optional attribute `operations="Read,Write,..."` (comma-separated, the operation
+names of the grants). Without it everything is delegated as described above. With it the access
+parent decides only the listed operations; the type decides all others itself:
+
+- The list is literal: **Create** and **Delete** are delegated only if listed, `Write` does not bring
+  them along. **Discover** is delegated whenever any operation is delegated.
+- The names are the operations on the delegating object. The mapping of Create and Delete to Write
+  on the parent happens afterwards.
+- A delegated operation `Y` is allowed if the parent allows `Y`, or if a delegated operation `X`
+  implies `Y` (see [operations](#operations-which-operations-apply-to-a-type)) and the parent allows `X`.
+- The operations that are not delegated fall back to the grants of the type itself, checked with
+  the roles the user holds on the object itself (assignments, role rules, role parents). Without a
+  grant the operation is denied.
+- A type with own grants for an operation it delegates is a configuration error (also for a
+  specialization inheriting the restricted access parent). Grants inherited with `inherit="true"` from
+  a generalization for delegated operations are dropped silently.
+- Unknown or inapplicable operation names are configuration errors. `operations` is not allowed on
+  `<self/>` nor on `<access-parent>` itself.
+- The role holder, the explanation of the effective access, the type-level checks (commands, view
+  elements), the grants editor and the coverage check all work per operation: the grants editor shows
+  grant columns only for the operations the type decides itself, the coverage check treats the
+  built-in operations of such a type like those of a self-deciding type and reports declared
+  operations that are neither delegated nor granted.
+
+Example: an entry of a catalog is readable by everybody who may read the catalog, but writing it is
+a right of its own, granted to a role the user holds on the entry itself:
+
+```xml
+<class name="my.module:Entry">
+	<access-parent>
+		<target reference="my.module:Entry#catalog" operations="Read"/>
+	</access-parent>
+	<grant operation="Write" roles="Editor"/>
+</class>
+```
+
+Read and Discover of an entry follow the catalog; Write is allowed to holders of `Editor` on the
+entry. A Read grant on `my.module:Entry` would be a configuration error.
+
 **Upgrading from `TL_8.0.0-alpha9`.** The attributes `access-parent="..."` and `access-reference="..."`
 of a `<class>` entry are gone and rejected at startup: `access-parent="container"` becomes
 `<access-parent><container/></access-parent>`, `access-parent="container" access-reference="X"`
@@ -436,6 +476,10 @@ Roles on an object come from three sources, all collected by `ElementAccessManag
 - A role parent is the right choice where the type has grants of its own on top of the inherited
   roles (a sub-project with its own roles). Where the type has nothing of its own, an access parent
   is simpler and cheaper.
+- A role parent rule has **no operation filter**: it passes on roles, and the grants of the type
+  itself decide which operations those roles give. To treat roles of different sources differently,
+  derive distinct roles with role rules of type `inheritance` and grant them separately. (Delegating
+  selected operations to another object is what `operations` of an access parent does.)
 - A role rule of type `inheritance` (`source-role`, `source-meta-element`) derives the role from a
   role the user holds on the object the path leads to; a rule of type `reference` derives it from
   a relation to a group.

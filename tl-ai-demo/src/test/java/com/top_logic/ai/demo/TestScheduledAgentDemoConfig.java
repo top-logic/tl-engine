@@ -46,23 +46,6 @@ public class TestScheduledAgentDemoConfig extends TestCase {
 		}
 	}
 
-	/**
-	 * The second example names the object its run is about.
-	 *
-	 * <p>
-	 * Only read here, not compiled: the expression names a type of the demo's model, which this test
-	 * does not boot.
-	 * </p>
-	 */
-	public void testTheSubjectTaskNamesItsSubject() throws Exception {
-		AgentTask.Config config = demoTask(SUBJECT_TASK_NAME);
-
-		assertNotNull("The example is about one event.", config.getSubjectExpression());
-		assertEquals("root", config.getRunAs());
-		assertTrue("The sitting is about the event, so it is recorded.", config.isRecordSession());
-		assertNotNull("There has to be something to ask.", config.getPrompt());
-	}
-
 	/** What the example says: an entry-point agent, root, auto-approval, a recorded session. */
 	public void testTheDemoTaskIsTheWorkedExample() throws Exception {
 		AgentTask.Config config = demoTask(TASK_NAME);

@@ -1356,6 +1356,21 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey3 AGENT_USES_DENIED__AGENT_NAME_ROLE;
 
 	/**
+	 * Why a stored agent that this account is permitted cannot run for it.
+	 *
+	 * <p>
+	 * The row of a stored agent that the account may not read. The agent section permits it, but the
+	 * model rights hide it: no run, menu or list of the account knows it.
+	 * </p>
+	 *
+	 * @en The agent {0} does not exist for this account: it is a stored agent that the account may not
+	 *     read.
+	 * @de Den Agenten {0} gibt es für dieses Konto nicht: Er ist ein gespeicherter Agent, den das Konto
+	 *     nicht lesen darf.
+	 */
+	public static ResKey1 AGENT_NOT_READABLE__AGENT_NAME;
+
+	/**
 	 * Heading of the agent rows of the effective-access table, and of the agent section of the editor.
 	 *
 	 * @en Agents

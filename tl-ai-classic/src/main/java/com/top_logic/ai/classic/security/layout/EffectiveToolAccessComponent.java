@@ -44,9 +44,11 @@ import com.top_logic.layout.tree.model.DefaultTreeTableModel;
 import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableBuilder;
 import com.top_logic.layout.tree.model.DefaultTreeTableModel.DefaultTreeTableNode;
 import com.top_logic.mig.html.layout.LayoutComponent;
+import com.top_logic.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.ai.core.security.EffectiveToolAccess;
 import com.top_logic.ai.core.security.EffectiveToolAccess.CapabilityAccess;
+import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
 import com.top_logic.ai.core.security.RoleAccessPolicy;
 import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.ai.core.security.RoleAccessPolicy.Dimension;
@@ -417,12 +419,20 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 		// An infrastructure agent is stopped for a third reason that no role decides: the application
 		// runs it for the user and nobody converses with it (#397). Its row says so rather than
 		// reporting a grant that the gate would refuse.
-		Map<String, Decision.Denied> stopped = new LinkedHashMap<>();
+		// A stored agent the account may not read does not exist for it (#30493): no run, menu or
+		// list of the account knows it. Only an account has model rights, so a role is not asked this.
+		Map<String, EffectiveAccessRow.RunName> stopped = new LinkedHashMap<>();
 		List<String> allowedAgents = new ArrayList<>();
 		for (String agentName : access.allowedAgents(agents)) {
+			if (_account != null && !knownTo(_account, agentName)) {
+				stopped.put(agentName, new EffectiveAccessRow.RunName(Dimension.AGENT, agentName,
+					new Decision.Denied(Dimension.AGENT, agentName, null, RoleAccessPolicy.Cause.NOT_GRANTED),
+					Resources.getInstance().getString(I18NConstants.AGENT_NOT_READABLE__AGENT_NAME.fill(agentName))));
+				continue;
+			}
 			if (facts.isInfrastructure(agentName)) {
-				stopped.put(agentName, new Decision.Denied(Dimension.AGENT, agentName, null,
-					RoleAccessPolicy.Cause.INFRASTRUCTURE_AGENT));
+				stopped.put(agentName, stoppedRow(agentName, new Decision.Denied(Dimension.AGENT, agentName, null,
+					RoleAccessPolicy.Cause.INFRASTRUCTURE_AGENT)));
 				continue;
 			}
 			Decision.Denied own =
@@ -430,7 +440,7 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 			if (own == null) {
 				allowedAgents.add(agentName);
 			} else {
-				stopped.put(agentName, own);
+				stopped.put(agentName, stoppedRow(agentName, own));
 			}
 		}
 		addSection(root, Dimension.AGENT, agents, allowedAgents, Set.of(), stopped);
@@ -456,11 +466,11 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 	 * One heading row and one row per candidate, with the rule that decided each.
 	 *
 	 * @param stopped
-	 *        The candidates its own section permits and something else stops, with the refusal that
-	 *        stops them; empty for every dimension but {@link Dimension#AGENT}.
+	 *        The candidates its own section permits and something else stops, with the row that says
+	 *        why; empty for every dimension but {@link Dimension#AGENT}.
 	 */
 	private void addSection(DefaultTreeTableNode root, Dimension dimension, List<String> candidates,
-			List<String> allowed, Set<String> agentsOwn, Map<String, Decision.Denied> stopped) {
+			List<String> allowed, Set<String> agentsOwn, Map<String, EffectiveAccessRow.RunName> stopped) {
 		DefaultTreeTableNode node = root.createChild(
 			new EffectiveAccessRow.RunSection(dimension, allowed.size(), candidates.size()));
 		RoleAccessPolicy policy = sectionOf(dimension);
@@ -468,12 +478,30 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 			? AiToolAccessService.heldRoleNames(_account)
 			: (_role == null ? Set.of() : Set.of(_role));
 		for (String candidate : candidates) {
-			Decision.Denied own = stopped.get(candidate);
-			node.createChild(own == null
+			EffectiveAccessRow.RunName stoppedRow = stopped.get(candidate);
+			node.createChild(stoppedRow == null
 				? new EffectiveAccessRow.RunName(dimension, candidate,
 					policy.check(roleNames, candidate, agentsOwn))
-				: new EffectiveAccessRow.RunName(dimension, candidate, own, stoppedBecause(candidate, own)));
+				: stoppedRow);
 		}
+	}
+
+	/**
+	 * Whether the given account knows the agent of that name.
+	 *
+	 * <p>
+	 * Asked the way every run and menu of the account asks: a stored agent that the account may not
+	 * read is unknown, and a configured agent of the same name takes its place.
+	 * </p>
+	 */
+	private static boolean knownTo(Person account, String agentName) {
+		return AgentDefinitionQuery.getInstance()
+			.findAgentByName(agentName, new ModelAccessRightsSecurity(account)) != null;
+	}
+
+	/** The row of an agent that something other than the agent section stops. */
+	private static EffectiveAccessRow.RunName stoppedRow(String agentName, Decision.Denied own) {
+		return new EffectiveAccessRow.RunName(Dimension.AGENT, agentName, own, stoppedBecause(agentName, own));
 	}
 
 	/** What the row of an agent says that something other than the agent section stops. */

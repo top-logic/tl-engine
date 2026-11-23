@@ -10,10 +10,17 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,6 +35,12 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 
+import com.top_logic.ai.core.agent.RunCancellationBinding;
+import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.ai.tool.api.ProgressReporter;
+import com.top_logic.ai.tool.api.Tool;
+import com.top_logic.ai.tool.api.ToolExecutionContext;
+import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -40,26 +53,40 @@ import com.top_logic.basic.credential.HeaderCredentials;
 import com.top_logic.basic.credential.RequestAuthentication;
 import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.io.character.CharacterContents;
-
-import io.modelcontextprotocol.client.McpClient;
-import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.spec.McpSchema;
+import com.top_logic.basic.thread.CancelScope.BlockingCall;
 
 /**
- * Tests how {@link HttpMcpTransport} authenticates its requests with the configured
- * <code>credentials</code>, and repeats a rejected request once with fresh ones.
+ * Tests how the MCP client authenticates the requests of an {@link HttpMcpTransport} with the
+ * configured <code>credentials</code>, and repeats a rejected call once with fresh ones.
  *
  * <p>
- * A local HTTP server plays the MCP server: it answers <code>initialize</code> and accepts
- * notifications, if the request carries the expected <code>Authorization</code> header.
+ * A local HTTP server plays the MCP server: it answers <code>initialize</code>,
+ * <code>tools/list</code> and <code>tools/call</code> and accepts notifications, if the request
+ * carries the expected <code>Authorization</code> header.
  * </p>
  */
 public class TestHttpMcpTransportCredentials extends TestCase {
 
-	/** The system property holding the token of {@link #testEnvironmentToken()}. */
+	/** The system property holding the token of {@link #ENVIRONMENT_TOKEN}. */
 	private static final String VARIABLE = "test_http_mcp_transport_token";
 
+	/** Credentials with a bearer token from {@link #VARIABLE}. */
+	private static final String ENVIRONMENT_TOKEN =
+		"<credentials class='" + HeaderCredentials.class.getName() + "' scheme='Bearer'>"
+			+ "<secret class='" + EnvironmentSecretSource.class.getName() + "' name='" + VARIABLE + "'/>"
+			+ "</credentials>";
+
+	/** Credentials of {@link RecordingCredentials}. */
+	private static final String RECORDING = "<credentials class='" + RecordingCredentials.class.getName() + "'/>";
+
+	/** The name of the MCP server in the {@link McpServerRegistry} of a test. */
+	private static final String SERVER = "test";
+
+	private static final String SESSION_HEADER = "Mcp-Session-Id";
+
 	private static final Pattern ID = Pattern.compile("\"id\"\\s*:\\s*(\"[^\"]*\"|\\d+)");
+
+	private static final Pattern METHOD = Pattern.compile("\"method\"\\s*:\\s*\"([^\"]*)\"");
 
 	private static final Pattern PROTOCOL_VERSION = Pattern.compile("\"protocolVersion\"\\s*:\\s*\"([^\"]*)\"");
 
@@ -68,8 +95,29 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 	/** The <code>Authorization</code> headers of the received POST requests. */
 	private final List<String> _authorizations = new ArrayList<>();
 
+	/**
+	 * The method of the first request with each <code>Authorization</code> header: the JSON-RPC
+	 * method of a POST request, else the HTTP method.
+	 */
+	private final Map<String, String> _methods = new HashMap<>();
+
 	/** Decides from the <code>Authorization</code> header whether a request is accepted. */
 	private Predicate<String> _accepted = authorization -> true;
+
+	/** The JSON-RPC methods whose first request the server rejects with HTTP 401. */
+	private final Set<String> _rejectedOnce = new HashSet<>();
+
+	/** The sessions that the server knows, <code>null</code> for a server without sessions. */
+	private Set<String> _sessions;
+
+	/** The number of sessions that the server started. */
+	private int _sessionCount;
+
+	/** Opens when the server receives a <code>tools/call</code>. */
+	private final CountDownLatch _toolCallReceived = new CountDownLatch(1);
+
+	/** The server holds its answer to a <code>tools/call</code> back until this latch opens. */
+	private CountDownLatch _toolCallAnswered = new CountDownLatch(0);
 
 	/**
 	 * Parsing the transport configuration resolves the nested configuration types of the
@@ -84,7 +132,7 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		RotatingCredentials.INVALIDATIONS.set(0);
+		RecordingCredentials.CALLS.clear();
 		_server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
 		_server.createContext("/", this::handle);
 		_server.start();
@@ -92,6 +140,7 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 
 	@Override
 	protected void tearDown() throws Exception {
+		_toolCallAnswered.countDown();
 		_server.stop(0);
 		System.clearProperty(VARIABLE);
 		super.tearDown();
@@ -102,10 +151,7 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 		System.setProperty(VARIABLE, "mcp-token");
 		_accepted = "Bearer mcp-token"::equals;
 
-		initialize(transport(
-			"<credentials class='" + HeaderCredentials.class.getName() + "' scheme='Bearer'>"
-				+ "<secret class='" + EnvironmentSecretSource.class.getName() + "' name='" + VARIABLE + "'/>"
-				+ "</credentials>"));
+		assertTrue(connect(ENVIRONMENT_TOKEN));
 
 		assertFalse(_authorizations.isEmpty());
 		for (String authorization : _authorizations) {
@@ -115,7 +161,7 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 
 	/** Without credentials, the requests carry none. */
 	public void testNoCredentials() throws Exception {
-		initialize(transport(""));
+		assertTrue(connect(""));
 
 		assertFalse(_authorizations.isEmpty());
 		for (String authorization : _authorizations) {
@@ -125,79 +171,331 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 
 	/** A rejected request is repeated once with fresh credentials. */
 	public void testRetryWithFreshCredentials() throws Exception {
-		_accepted = authorization -> !"Bearer token-0".equals(authorization);
+		_accepted = authorization -> !"Bearer call-0".equals(authorization);
 
-		initialize(transport("<credentials class='" + RotatingCredentials.class.getName() + "'/>"));
+		assertTrue(connect(RECORDING));
 
-		assertEquals(1, RotatingCredentials.INVALIDATIONS.get());
-		assertEquals("Bearer token-0", _authorizations.get(0));
-		assertEquals("Bearer token-1", _authorizations.get(1));
+		assertEquals(1, invalidations(RecordingCredentials.CALLS));
+		assertEquals("Bearer call-0", _authorizations.get(0));
+		assertEquals("Bearer call-1", _authorizations.get(1));
 	}
 
 	/** Credentials rejected again are not tried a third time. */
 	public void testRetryOnlyOnce() throws Exception {
 		_accepted = authorization -> false;
 
-		try {
-			initialize(transport("<credentials class='" + RotatingCredentials.class.getName() + "'/>"));
-			fail("A rejected initialization must fail.");
-		} catch (RuntimeException expected) {
-			// The server refuses the client.
-		}
+		assertFalse("A rejected initialization must fail.", connect(RECORDING));
 
 		assertEquals(2, _authorizations.size());
-		assertEquals(1, RotatingCredentials.INVALIDATIONS.get());
+		assertEquals(1, invalidations(RecordingCredentials.CALLS));
 	}
 
-	private void initialize(HttpMcpTransport transport) {
-		McpSyncClient client = McpClient.sync(transport.createTransport())
-			.requestTimeout(Duration.ofSeconds(10))
-			.clientInfo(McpSchema.Implementation.builder("test", "1.0.0").build())
-			.build();
-		try {
-			client.initialize();
-		} finally {
-			client.close();
+	/**
+	 * The credential provider runs on the thread that uses the MCP client, and never inside the
+	 * wait that a stop of the run ends: for <code>initialize</code>, <code>tools/list</code>,
+	 * <code>tools/call</code>, and for the repeat after a rejection.
+	 *
+	 * <p>
+	 * A provider may read the knowledge base (a secret of the database), and it may take the
+	 * person from the thread. An interrupt of the wait during a read of the database closes the
+	 * database file, and a thread of the MCP library has no person. The connect runs in the run as
+	 * well, as it does for a connection of a person.
+	 * </p>
+	 */
+	public void testProviderRunsOnCallerThread() throws Exception {
+		List<String> methods = List.of("initialize", "tools/list", "tools/call");
+		_rejectedOnce.addAll(methods);
+
+		McpServerRegistry registry = registry(RECORDING);
+		WaitTrackingToken token = new WaitTrackingToken();
+		ToolResult result;
+		List<ProviderCall> calls;
+		try (RunCancellationBinding.Binding run = RunCancellationBinding.bind(token)) {
+			registry.startUp();
+			try {
+				result = tool(registry).execute(Map.of(), context(token));
+			} finally {
+				calls = List.copyOf(RecordingCredentials.CALLS);
+				registry.shutDown();
+			}
+		}
+
+		String report = report(calls);
+		assertFalse(result.text() + " " + report, result.failed());
+		for (String method : methods) {
+			assertEquals("Rejected request and repeat of " + method + ". " + report, 2, authentications(calls, method));
+		}
+		assertEquals("One invalidation for each rejection. " + report, methods.size(), invalidations(calls));
+		for (ProviderCall call : calls) {
+			assertSame("Not on the thread of the caller. " + report, Thread.currentThread(), call.thread());
+			assertFalse("Inside the cancellable wait. " + report, call.inWait());
 		}
 	}
 
-	private HttpMcpTransport transport(String content) throws ConfigurationException {
-		String xml = "<transport xmlns:config='http://www.top-logic.com/ns/config/6.0'"
-			+ " config:interface='" + HttpMcpTransport.Config.class.getName() + "'"
-			+ " class='" + HttpMcpTransport.class.getName() + "'"
+	/** A stop of the run ends a tool call that waits for the answer of the server. */
+	public void testStopEndsWaitingCall() throws Exception {
+		_toolCallAnswered = new CountDownLatch(1);
+		McpServerRegistry registry = registry("");
+		registry.startUp();
+		try {
+			Tool tool = tool(registry);
+			CancellationToken token = new CancellationToken();
+			Thread stop = onToolCall(token::cancel);
+			// As in the agent loop: the token of the run is bound to its thread and given to the tool.
+			try (RunCancellationBinding.Binding run = RunCancellationBinding.bind(token)) {
+				tool.execute(Map.of(), context(token));
+				fail("A stop of the run must end the wait for the server.");
+			} catch (CancellationException expected) {
+				// The stop ended the wait.
+			}
+			stop.join();
+			assertFalse("The interrupt of the stop stays inside the wait.", Thread.currentThread().isInterrupted());
+		} finally {
+			_toolCallAnswered.countDown();
+			registry.shutDown();
+		}
+	}
+
+	/**
+	 * Another party than the run interrupts a tool call that waits for the server: the call ends
+	 * with a failure, and the interrupt flag stays set for that party.
+	 */
+	public void testForeignInterruptEndsCall() throws Exception {
+		_toolCallAnswered = new CountDownLatch(1);
+		McpServerRegistry registry = registry("");
+		registry.startUp();
+		try {
+			Tool tool = tool(registry);
+			CancellationToken token = new CancellationToken();
+			Thread interrupt = onToolCall(Thread.currentThread()::interrupt);
+			ToolResult result;
+			boolean interrupted;
+			try (RunCancellationBinding.Binding run = RunCancellationBinding.bind(token)) {
+				result = tool.execute(Map.of(), context(token));
+			} finally {
+				// Taken back here, so that the flag does not reach the rest of the test.
+				interrupted = Thread.interrupted();
+			}
+			interrupt.join();
+			assertTrue("The interrupt flag stays set.", interrupted);
+			assertTrue(result.failed());
+			assertEquals("Error: the call to " + tool.name() + " was interrupted.", result.text());
+		} finally {
+			_toolCallAnswered.countDown();
+			registry.shutDown();
+		}
+	}
+
+	/**
+	 * A server that forgot the session (for example after a restart) answers 404. The library then
+	 * starts a new session by itself, with no caller. Its requests carry the credential all the
+	 * same, so that the next call works.
+	 */
+	public void testNewSessionKeepsCredential() throws Exception {
+		System.setProperty(VARIABLE, "mcp-token");
+		_accepted = "Bearer mcp-token"::equals;
+		_sessions = new HashSet<>();
+
+		McpServerRegistry registry = registry(ENVIRONMENT_TOKEN);
+		registry.startUp();
+		try {
+			Tool tool = tool(registry);
+			synchronized (_authorizations) {
+				_sessions.clear();
+			}
+			try {
+				tool.execute(Map.of(), context(CancellationToken.UNCANCELLABLE));
+			} catch (RuntimeException expected) {
+				// The call that meets the forgotten session fails, and the library starts a new one.
+			}
+			// The library starts the new session in the background. The registry offers the server
+			// again when it is done, and never again when the new session is refused.
+			long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+			while (!registry.isConnected(SERVER) && System.nanoTime() < deadline) {
+				Thread.sleep(10);
+			}
+			assertTrue("The new session is not ready.", registry.isConnected(SERVER));
+			ToolResult result = tool.execute(Map.of(), context(CancellationToken.UNCANCELLABLE));
+			assertFalse(result.text(), result.failed());
+		} finally {
+			registry.shutDown();
+		}
+
+		synchronized (_authorizations) {
+			assertEquals("The library started a new session.", 2, _sessionCount);
+			for (String authorization : _authorizations) {
+				assertEquals("Each request carries the credential.", "Bearer mcp-token", authorization);
+			}
+		}
+	}
+
+	/** Whether a registry connects to the test server, as at the start of the service. */
+	private boolean connect(String credentials) throws ConfigurationException {
+		McpServerRegistry registry = registry(credentials);
+		registry.startUp();
+		try {
+			return registry.isConnected(SERVER);
+		} finally {
+			registry.shutDown();
+		}
+	}
+
+	/**
+	 * A registry with one HTTP server, the local test server. It connects on
+	 * {@link McpServerRegistry#startUp()}.
+	 */
+	private McpServerRegistry registry(String credentials) throws ConfigurationException {
+		String xml = "<registry xmlns:config='http://www.top-logic.com/ns/config/6.0'"
+			+ " config:interface='" + McpServerRegistry.Config.class.getName() + "'"
+			+ " class='" + McpServerRegistry.class.getName() + "'>"
+			+ "<servers><server name='" + SERVER + "'>"
+			+ "<transport class='" + HttpMcpTransport.class.getName() + "'"
 			+ " url='http://127.0.0.1:" + _server.getAddress().getPort() + "/mcp'>"
-			+ content + "</transport>";
-		HttpMcpTransport.Config config =
-			(HttpMcpTransport.Config) TypedConfiguration.parse(CharacterContents.newContent(xml));
+			+ credentials + "</transport>"
+			+ "</server></servers></registry>";
+		McpServerRegistry.Config<?> config =
+			(McpServerRegistry.Config<?>) TypedConfiguration.parse(CharacterContents.newContent(xml));
 		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
+	}
+
+	private static Tool tool(McpServerRegistry registry) {
+		List<Tool> tools = registry.getTools(SERVER);
+		assertNotNull("The registry did not connect to the test server.", tools);
+		assertEquals(1, tools.size());
+		return tools.get(0);
+	}
+
+	private static ToolExecutionContext context(CancellationToken token) {
+		return new ToolExecutionContext() {
+			@Override
+			public ProgressReporter progressReporter() {
+				return ProgressReporter.NOOP;
+			}
+
+			@Override
+			public CancellationToken cancellationToken() {
+				return token;
+			}
+		};
+	}
+
+	/** Starts a thread that runs the given action as soon as the server receives a <code>tools/call</code>. */
+	private Thread onToolCall(Runnable action) {
+		Thread thread = new Thread(() -> {
+			try {
+				if (_toolCallReceived.await(10, TimeUnit.SECONDS)) {
+					action.run();
+				}
+			} catch (InterruptedException ex) {
+				// The test is over.
+			}
+		}, "on-tool-call");
+		thread.start();
+		return thread;
+	}
+
+	private static long invalidations(List<ProviderCall> calls) {
+		return calls.stream().filter(call -> call.authorization() == null).count();
+	}
+
+	private long authentications(List<ProviderCall> calls, String method) {
+		return calls.stream()
+			.filter(call -> call.authorization() != null && method.equals(method(call.authorization())))
+			.count();
+	}
+
+	/** The method of the first request that carried the given <code>Authorization</code> header. */
+	private String method(String authorization) {
+		synchronized (_authorizations) {
+			return _methods.get(authorization);
+		}
+	}
+
+	private String report(List<ProviderCall> calls) {
+		StringBuilder result = new StringBuilder("Calls of the credential provider:");
+		for (ProviderCall call : calls) {
+			result.append("\n  ")
+				.append(call.authorization() == null ? "invalidate" : "authenticate for " + method(call.authorization()))
+				.append(" on thread '").append(call.thread().getName()).append("'")
+				.append(call.inWait() ? ", inside the cancellable wait" : "");
+		}
+		return result.toString();
 	}
 
 	private void handle(HttpExchange exchange) throws IOException {
 		String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+		String authorization = exchange.getRequestHeaders().getFirst(CredentialProvider.AUTHORIZATION);
 		if (!"POST".equals(exchange.getRequestMethod())) {
+			// The stream of server messages (GET) and the end of a session (DELETE): not offered.
+			synchronized (_authorizations) {
+				_methods.putIfAbsent(authorization, exchange.getRequestMethod());
+			}
 			reply(exchange, HttpURLConnection.HTTP_BAD_METHOD, null);
 			return;
 		}
-		String authorization = exchange.getRequestHeaders().getFirst(CredentialProvider.AUTHORIZATION);
+		Matcher methodMatch = METHOD.matcher(body);
+		String method = methodMatch.find() ? methodMatch.group(1) : null;
+		boolean initialize = "initialize".equals(method);
+		String session = exchange.getRequestHeaders().getFirst(SESSION_HEADER);
 		boolean accepted;
+		boolean knownSession;
 		synchronized (_authorizations) {
 			_authorizations.add(authorization);
-			accepted = _accepted.test(authorization);
+			_methods.putIfAbsent(authorization, method);
+			accepted = _accepted.test(authorization) && !_rejectedOnce.remove(method);
+			knownSession = _sessions == null || initialize || _sessions.contains(session);
+			if (accepted && _sessions != null && initialize) {
+				session = "session-" + ++_sessionCount;
+				_sessions.add(session);
+				exchange.getResponseHeaders().set(SESSION_HEADER, session);
+			}
 		}
 		if (!accepted) {
 			reply(exchange, HttpURLConnection.HTTP_UNAUTHORIZED, null);
 			return;
 		}
+		if (!knownSession) {
+			reply(exchange, HttpURLConnection.HTTP_NOT_FOUND, null);
+			return;
+		}
 		Matcher id = ID.matcher(body);
-		if (!body.contains("\"initialize\"") || !id.find()) {
+		if (method == null || !id.find()) {
 			reply(exchange, HttpURLConnection.HTTP_ACCEPTED, null);
 			return;
 		}
-		Matcher version = PROTOCOL_VERSION.matcher(body);
-		String protocolVersion = version.find() ? version.group(1) : "2025-06-18";
-		reply(exchange, HttpURLConnection.HTTP_OK, "{\"jsonrpc\":\"2.0\",\"id\":" + id.group(1)
-			+ ",\"result\":{\"protocolVersion\":\"" + protocolVersion + "\",\"capabilities\":{},"
-			+ "\"serverInfo\":{\"name\":\"mock\",\"version\":\"1.0.0\"}}}");
+		switch (method) {
+			case "initialize": {
+				Matcher version = PROTOCOL_VERSION.matcher(body);
+				String protocolVersion = version.find() ? version.group(1) : "2025-06-18";
+				reply(exchange, HttpURLConnection.HTTP_OK, result(id.group(1),
+					"{\"protocolVersion\":\"" + protocolVersion + "\",\"capabilities\":{\"tools\":{}},"
+						+ "\"serverInfo\":{\"name\":\"mock\",\"version\":\"1.0.0\"}}"));
+				return;
+			}
+			case "tools/list": {
+				reply(exchange, HttpURLConnection.HTTP_OK, result(id.group(1),
+					"{\"tools\":[{\"name\":\"echo\",\"description\":\"Answers done.\","
+						+ "\"inputSchema\":{\"type\":\"object\",\"properties\":{}}}]}"));
+				return;
+			}
+			case "tools/call": {
+				_toolCallReceived.countDown();
+				try {
+					_toolCallAnswered.await(10, TimeUnit.SECONDS);
+				} catch (InterruptedException ex) {
+					Thread.currentThread().interrupt();
+				}
+				reply(exchange, HttpURLConnection.HTTP_OK, result(id.group(1),
+					"{\"content\":[{\"type\":\"text\",\"text\":\"done\"}],\"isError\":false}"));
+				return;
+			}
+			default:
+				reply(exchange, HttpURLConnection.HTTP_ACCEPTED, null);
+		}
+	}
+
+	private static String result(String id, String result) {
+		return "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + result + "}";
 	}
 
 	private static void reply(HttpExchange exchange, int status, String json) throws IOException {
@@ -215,39 +513,81 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 	}
 
 	/**
-	 * Credentials sending a bearer token that is replaced by the next one on each invalidation.
+	 * One call of {@link RecordingCredentials}.
+	 *
+	 * @param authorization
+	 *        The header value that {@link CredentialProvider#authenticate(RequestAuthentication)}
+	 *        set, <code>null</code> for a call of {@link CredentialProvider#invalidate()}.
+	 * @param thread
+	 *        The thread of the call.
+	 * @param inWait
+	 *        Whether the call ran inside the cancellable wait of a {@link WaitTrackingToken}.
 	 */
-	public static class RotatingCredentials extends AbstractConfiguredInstance<RotatingCredentials.Config>
+	record ProviderCall(String authorization, Thread thread, boolean inWait) {
+		// Pure data.
+	}
+
+	/**
+	 * Credentials that record the thread of each call, and that send a new bearer token for each
+	 * authentication, so that the server log tells which request an authentication was for.
+	 */
+	public static class RecordingCredentials extends AbstractConfiguredInstance<RecordingCredentials.Config>
 			implements CredentialProvider {
 
-		/** The number of invalidations since the start of the test. */
-		static final AtomicInteger INVALIDATIONS = new AtomicInteger();
+		/** The calls since the start of the test. */
+		static final List<ProviderCall> CALLS = new CopyOnWriteArrayList<>();
 
 		/**
-		 * Configuration options for {@link RotatingCredentials}.
+		 * Configuration options for {@link RecordingCredentials}.
 		 */
-		public interface Config extends PolymorphicConfiguration<RotatingCredentials> {
+		public interface Config extends PolymorphicConfiguration<RecordingCredentials> {
 			// No options.
 		}
 
 		/**
-		 * Creates a {@link RotatingCredentials} from configuration.
+		 * Creates a {@link RecordingCredentials} from configuration.
 		 */
-		public RotatingCredentials(InstantiationContext context, Config config) {
+		public RecordingCredentials(InstantiationContext context, Config config) {
 			super(context, config);
 		}
 
 		@Override
 		public void authenticate(RequestAuthentication request) {
-			request.setHeader(CredentialProvider.AUTHORIZATION,
-				CredentialProvider.BEARER + " token-" + INVALIDATIONS.get());
+			String authorization = CredentialProvider.BEARER + " call-" + (CALLS.size() - invalidations(CALLS));
+			CALLS.add(new ProviderCall(authorization, Thread.currentThread(), WaitTrackingToken.isWaiting()));
+			request.setHeader(CredentialProvider.AUTHORIZATION, authorization);
 		}
 
 		@Override
 		public void invalidate() {
-			INVALIDATIONS.incrementAndGet();
+			CALLS.add(new ProviderCall(null, Thread.currentThread(), WaitTrackingToken.isWaiting()));
 		}
 
+	}
+
+	/**
+	 * A {@link CancellationToken} that knows which threads are inside its cancellable wait, where a
+	 * stop of the run interrupts them.
+	 */
+	static class WaitTrackingToken extends CancellationToken {
+
+		private static final Set<Thread> WAITING = ConcurrentHashMap.newKeySet();
+
+		/** Whether the current thread is inside the cancellable wait of a {@link WaitTrackingToken}. */
+		static boolean isWaiting() {
+			return WAITING.contains(Thread.currentThread());
+		}
+
+		@Override
+		public <T, E extends Exception> T interruptibly(BlockingCall<T, E> call) throws E, InterruptedException {
+			Thread thread = Thread.currentThread();
+			WAITING.add(thread);
+			try {
+				return super.interruptibly(call);
+			} finally {
+				WAITING.remove(thread);
+			}
+		}
 	}
 
 }

@@ -5,8 +5,9 @@
  */
 package com.top_logic.ai.core.mcp;
 
-import java.net.HttpURLConnection;
+import java.net.http.HttpRequest;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
@@ -17,19 +18,18 @@ import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.credential.CredentialProvider;
-import com.top_logic.basic.credential.RequestAuthentication;
 
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
-import io.modelcontextprotocol.client.transport.customizer.McpHttpClientTransportAuthorizationErrorHandler;
+import io.modelcontextprotocol.common.McpTransportContext;
 import io.modelcontextprotocol.spec.McpClientTransport;
 
 /**
  * {@link McpTransportConfig} creating an MCP HTTP transport (Streamable HTTP).
  *
  * <p>
- * The MCP server runs as an external HTTP service. Each request is authenticated by the configured
- * {@link Config#getCredentials() credentials} at the moment it is sent, e.g. with a bearer token
- * read from an environment variable:
+ * The MCP server runs as an external HTTP service. Each call of the client is authenticated by the
+ * configured {@link Config#getCredentials() credentials} at the moment it is made, e.g. with a bearer
+ * token read from an environment variable:
  * </p>
  *
  * <pre>
@@ -41,7 +41,7 @@ import io.modelcontextprotocol.spec.McpClientTransport;
  * </pre>
  *
  * <p>
- * When the server rejects the credentials (HTTP 401), they are invalidated and the request is sent
+ * When the server rejects the credentials (HTTP 401), they are invalidated and the call is sent
  * once more with fresh ones.
  * </p>
  */
@@ -113,6 +113,7 @@ public class HttpMcpTransport implements McpTransportConfig {
 
 	@Override
 	public McpClientTransport createTransport() {
+		AtomicReference<CredentialHeaders> lastCredentials = new AtomicReference<>(CredentialHeaders.NONE);
 		return HttpClientStreamableHttpTransport.builder(_url)
 			.addHttpRequestCustomizer((request, method, uri, body, context) -> {
 				if (_headers != null) {
@@ -120,19 +121,72 @@ public class HttpMcpTransport implements McpTransportConfig {
 						request.header(entry.getName(), entry.getValue());
 					}
 				}
-				_credentials.authenticate(RequestAuthentication.of(request));
+				CredentialHeaders credentials;
+				if (context.get(CredentialHeaders.KEY) instanceof CredentialHeaders resolved) {
+					credentials = resolved;
+					lastCredentials.set(resolved);
+				} else {
+					// A request that the library sends by itself has no caller, e.g. the new
+					// initialize after the server forgot the session. It gets the headers that a
+					// caller resolved last. They belong to the one connection of this transport: a
+					// client for each person needs a connection, and so a transport, for each person.
+					credentials = lastCredentials.get();
+				}
+				// Limit: a request that the library sends in the context of an earlier call keeps
+				// the headers of that call, e.g. the stream of server messages (GET) and its
+				// reconnects. After a rotation of the secret these headers can be stale.
+				credentials.addTo(request);
 			})
-			.authorizationErrorHandler(McpHttpClientTransportAuthorizationErrorHandler.fromSync(
-				(request, response, context) -> {
-					if (response.statusCode() != HttpURLConnection.HTTP_UNAUTHORIZED) {
-						return false;
-					}
-					// Cached credentials (an access token) may have expired or been revoked: one
-					// more attempt with fresh ones.
-					_credentials.invalidate();
-					return true;
-				}))
 			.build();
+	}
+
+	/**
+	 * The {@link Config#getCredentials() credentials}, which the {@link McpClientConnection} calls on
+	 * the thread of its caller.
+	 */
+	CredentialProvider credentials() {
+		return _credentials;
+	}
+
+	/**
+	 * The headers that the {@link Config#getCredentials() credentials} set for one call, resolved on
+	 * the thread of the caller.
+	 *
+	 * <p>
+	 * The transport itself never calls the credential provider: it runs inside the wait that a stop
+	 * of the run ends, and on threads of the MCP library. A credential provider may read the
+	 * knowledge base, which such a wait must not touch, and it may take the person from the thread,
+	 * which a thread of the library does not have. The {@link McpClientConnection} calls the
+	 * provider on the thread of its caller and gives these headers to the transport in the
+	 * {@link McpTransportContext} of the call.
+	 * </p>
+	 *
+	 * @param values
+	 *        The header values by header name.
+	 */
+	record CredentialHeaders(Map<String, String> values) {
+
+		/** The key of the headers in the {@link McpTransportContext} of a call. */
+		static final String KEY = CredentialHeaders.class.getName();
+
+		/** No headers, before a caller resolved any. */
+		static final CredentialHeaders NONE = new CredentialHeaders(Map.of());
+
+		/** Copies the given values, which the caller may change later. */
+		CredentialHeaders {
+			values = Map.copyOf(values);
+		}
+
+		/**
+		 * The {@link McpTransportContext} that gives these headers to the transport.
+		 */
+		McpTransportContext context() {
+			return McpTransportContext.create(Map.of(KEY, this));
+		}
+
+		void addTo(HttpRequest.Builder request) {
+			values.forEach(request::setHeader);
+		}
 	}
 
 }

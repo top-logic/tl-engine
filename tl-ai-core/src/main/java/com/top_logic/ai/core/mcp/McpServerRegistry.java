@@ -227,6 +227,9 @@ public class McpServerRegistry extends ConfiguredManagedClass<McpServerRegistry.
 	 * @return The call result.
 	 * @throws IllegalArgumentException
 	 *         if the server is not found or not connected
+	 * @throws java.util.concurrent.CancellationException
+	 *         if the run is stopped while the call waits for the server, or if another party
+	 *         interrupts the thread; in the second case, the interrupt flag stays set
 	 */
 	public McpSchema.CallToolResult callTool(String serverName, String toolName,
 			Map<String, Object> arguments) {

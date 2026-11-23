@@ -121,8 +121,8 @@
 						</access-parent>
 					</class>
 					<!--
-						The reports of a project decide for themselves: the responsible of the project
-						reads, writes and creates them, but no role deletes one.
+						The reports of a project and of a task decide for themselves: the responsible of
+						the project reads, writes and creates them, but no role deletes one.
 					-->
 					<class name="TestViewModelAccess:Report">
 						<access-parent>
@@ -365,6 +365,17 @@
 							<path>
 								<step
 									attribute="TestViewModelAccess:Task#reports"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule id="TestViewModelAccess_Subtask_Responsible"
+							meta-element="TestViewModelAccess:Task"
+							role="TestViewModelAccess.Responsible"
+						>
+							<path>
+								<step
+									attribute="TestViewModelAccess:Task#subtasks"
 									inverse="true"
 								/>
 							</path>

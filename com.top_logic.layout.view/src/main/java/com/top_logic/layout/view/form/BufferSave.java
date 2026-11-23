@@ -179,6 +179,35 @@ public class BufferSave {
 	}
 
 	/**
+	 * Checks every change that a {@link #save(List) save} of the given buffers writes, before
+	 * anything is written: {@link TLObjectOverlay#checkApply()} of each overlay over an existing
+	 * object that the save reaches.
+	 *
+	 * <p>
+	 * The save reaches the buffers in the compositions of the given ones: also a buffer that a
+	 * confirmed dialog left in a composition of another buffer without making it one of the given
+	 * buffers. The values of a new object are not checked attribute by attribute, its creation is.
+	 * </p>
+	 *
+	 * @param buffers
+	 *        The buffers to save, as given to the save.
+	 * @throws TopLogicException
+	 *         If the current user may not make one of the changes, see
+	 *         {@link TLObjectOverlay#checkApply()}.
+	 */
+	static void checkApply(List<? extends TLObject> buffers) {
+		BufferSave save = new BufferSave();
+		for (TLObject buffer : buffers) {
+			save.visit(buffer, null, null);
+		}
+		for (TLObjectOverlay overlay : save._overlays) {
+			if (!EditLevel.isNew(overlay)) {
+				overlay.checkApply();
+			}
+		}
+	}
+
+	/**
 	 * Replaces the buffers and new objects stored here in the references of the given holder by the
 	 * persistent objects they are stored as.
 	 */

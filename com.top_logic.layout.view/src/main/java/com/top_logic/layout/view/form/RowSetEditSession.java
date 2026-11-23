@@ -1069,8 +1069,14 @@ public class RowSetEditSession implements FormParticipant {
 	}
 
 	/**
-	 * Checks the write right of every changed row, the right to create every added row and the
-	 * right to delete every removed row the save deletes.
+	 * Checks the write right of every change the save writes, the right to create every added row
+	 * and the right to delete every removed row the save deletes.
+	 *
+	 * <p>
+	 * The save writes the changes of the rows, of the objects edited with them, and of the buffers
+	 * in their compositions, also of a buffer a confirmed dialog left there, see
+	 * {@link BufferSave#checkApply(List)}.
+	 * </p>
 	 *
 	 * <p>
 	 * A row added to the rows of a persistent owner is created when the form is saved: the user
@@ -1090,22 +1096,25 @@ public class RowSetEditSession implements FormParticipant {
 		if (_fieldModel == null) {
 			return;
 		}
-		for (CompositionRowModel row : _rowModels) {
-			TLObjectOverlay overlay = row.getRowOverlay();
-			// The values of a new row are not checked attribute by attribute, its creation is.
-			if (!row.isNew() && overlay.isDirty()) {
-				overlay.checkApply();
-			}
-		}
-		for (TLObjectOverlay edited : _editedObjects) {
-			if (isOwnEditedObject(edited) && edited.isDirty()) {
-				edited.checkApply();
-			}
-		}
+		BufferSave.checkApply(storedBuffers());
 		if (!_owner.isTransient()) {
 			checkCreateRights();
 			checkDeleteRights();
 		}
+	}
+
+	/**
+	 * The buffers this session stores: the current rows and the objects edited with them that the
+	 * session stores itself.
+	 */
+	private List<TLObject> storedBuffers() {
+		List<TLObject> result = new ArrayList<>(_fieldModel.getCurrentList());
+		for (TLObjectOverlay edited : _editedObjects) {
+			if (isOwnEditedObject(edited)) {
+				result.add(edited);
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -1235,12 +1244,10 @@ public class RowSetEditSession implements FormParticipant {
 		// compositions - and build the persisted row list.
 		TLStructuredTypePart boundPart = _binding.getBoundPart();
 		List<TLObject> currentList = _fieldModel.getCurrentList();
-		List<TLObject> buffers = new ArrayList<>(currentList);
+		List<TLObject> buffers = storedBuffers();
 		List<TLObjectOverlay> holders = new ArrayList<>();
 		for (TLObjectOverlay edited : _editedObjects) {
-			if (isOwnEditedObject(edited)) {
-				buffers.add(edited);
-			} else {
+			if (!isOwnEditedObject(edited)) {
 				// The editing buffer of the owner, stored by the form: the buffers and new objects of
 				// this session it holds must be the stored objects when the form stores it.
 				holders.add(edited);

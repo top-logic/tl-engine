@@ -62,8 +62,9 @@ import com.top_logic.util.error.TopLogicException;
  * {@value #SPONSOR} to {@value #ROLE_RESPONSIBLE} only. Writing {@value #RATING} is granted to {@value #ROLE_VIEWER} only.
  * The attribute {@value #CODE} is read-only by its display annotation, and writing it is granted to
  * {@value #ROLE_VIEWER} only.</li>
- * <li>{@value #TASK}: the type of the composition {@value #TASKS} of a project. A task inherits the
- * role {@value #ROLE_RESPONSIBLE} from its project, with the same grants. Its reference
+ * <li>{@value #TASK}: the type of the composition {@value #TASKS} of a project and of the composition
+ * <code>subtasks</code> of a task. A task inherits the role {@value #ROLE_RESPONSIBLE} from its
+ * project or task, with the same grants. Its reference
  * {@value #CREATED_IN} defaults to the context the task is created in. Writing its attribute
  * <code>note</code> is granted to {@value #ROLE_RESPONSIBLE} only, writing its {@value #SECRET}
  * (with a constant default) to no role. Its attribute {@value #VIEW} stores a view configuration

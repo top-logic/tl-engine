@@ -77,6 +77,15 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 
 	private static final String NEW_SUBSTEP = "new substep";
 
+	/** Name of a type deciding for itself whose objects no role deletes. */
+	private static final String REPORT = "Report";
+
+	/** Name of the {@link #TASK} composition of {@link #REPORT}s. */
+	private static final String REPORTS = "reports";
+
+	/** Name of the {@link #TASK} composition of {@link #TASK}s. */
+	private static final String SUBTASKS = "subtasks";
+
 	private RecordingDialogManager _dialogs;
 
 	private ReactContext _context;
@@ -89,7 +98,7 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 
 	private FormControl _form;
 
-	private StepsControl _steps;
+	private PartsControl _steps;
 
 	private TLObject _stepRow;
 
@@ -114,7 +123,7 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 
 		TLContextManager.inPersonContext(_responsible, () -> {
 			_form = new FormControl(_context, _project, "no model", NoTokenHandling.INSTANCE);
-			_steps = new StepsControl(_form);
+			_steps = new PartsControl(_form, STEPS);
 			_steps.init();
 			assertTrue(_form.enterEditMode());
 			_stepRow = single(_steps.session().currentRows());
@@ -365,6 +374,59 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 	}
 
 	/**
+	 * A part removed in a dialog and confirmed is deleted by the save, which therefore needs the
+	 * right to delete the part.
+	 */
+	public void testRemoveInDialogNeedsDeleteRight() {
+		TLObject report = newPart(_task, REPORTS, REPORT);
+		RowSetEditSession tasks = tasks();
+
+		open(cell(tasks, single(tasks.currentRows()), TASK, REPORTS));
+		RowSetEditSession reports = rowsOfTopDialog();
+		reports.removeRow(single(reports.currentRows()));
+		press(dialogActions().get(1));
+
+		assertRefused(com.top_logic.model.search.expr.I18NConstants.DELETE_PERMISSION_DENIED__OBJECT,
+			_form::executeSave);
+		assertTrue(report.tValid());
+		assertEquals(List.of(report), _task.tValueByName(REPORTS));
+	}
+
+	/**
+	 * A part removed in a nested dialog and confirmed in both dialogs is deleted by the save, which
+	 * therefore needs the right to delete the part: the buffer of the part's container, which the
+	 * outer dialog leaves to the form, is checked although it is no row.
+	 */
+	public void testRemoveInNestedDialogNeedsDeleteRight() {
+		TLObject subtask = newPart(_task, SUBTASKS, TASK);
+		TLObject report = newPart(subtask, REPORTS, REPORT);
+		RowSetEditSession tasks = tasks();
+
+		open(cell(tasks, single(tasks.currentRows()), TASK, SUBTASKS));
+		RowSetEditSession subtasks = rowsOfTopDialog();
+		open(cell(subtasks, single(subtasks.currentRows()), TASK, REPORTS));
+		RowSetEditSession reports = rowsOfTopDialog();
+		reports.removeRow(single(reports.currentRows()));
+		press(dialogActions().get(1));
+		press(dialogActions().get(1));
+		assertTrue(_dialogs._open.isEmpty());
+
+		assertRefused(com.top_logic.model.search.expr.I18NConstants.DELETE_PERMISSION_DENIED__OBJECT,
+			_form::executeSave);
+		assertTrue(report.tValid());
+		assertEquals(List.of(report), subtask.tValueByName(REPORTS));
+	}
+
+	/**
+	 * The session of the tasks of the project, edited in the form.
+	 */
+	private RowSetEditSession tasks() {
+		PartsControl tasks = new PartsControl(_form, TASKS);
+		tasks.init();
+		return tasks.session();
+	}
+
+	/**
 	 * A composition displayed in a table in view mode shows the labels of its parts with a button
 	 * opening a read-only table of the parts, whose composition cells open nested read-only
 	 * dialogs; an empty composition offers no button.
@@ -434,10 +496,19 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 	}
 
 	private ReactCompactFieldControl cell(RowSetEditSession session, TLObject row, String composition) {
+		return cell(session, row, STEP, composition);
+	}
+
+	/**
+	 * Creates the cell of the given composition of the given row of the given type, as the table of
+	 * the rows creates it.
+	 */
+	private ReactCompactFieldControl cell(RowSetEditSession session, TLObject row, String rowType,
+			String composition) {
 		// Whether the column is offered at all is decided for the type, which is not under test.
 		becomeUser(_root);
-		ColumnSetup column = single(AttributeColumn.derived(type(STEP).getPartOrFail(composition))
-			.resolve(new ColumnResolution(type(STEP), null)));
+		ColumnSetup column = single(AttributeColumn.derived(type(rowType).getPartOrFail(composition))
+			.resolve(new ColumnResolution(type(rowType), null)));
 		becomeUser(_responsible);
 		BoundFieldModel model = session.cellModel(row, column);
 		assertNotNull(model);
@@ -511,12 +582,13 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * {@link AbstractCompositionControl} over the steps of the form object, without a presentation.
+	 * {@link AbstractCompositionControl} over a composition of the form object, without a
+	 * presentation.
 	 */
-	private static class StepsControl extends AbstractCompositionControl {
+	private static class PartsControl extends AbstractCompositionControl {
 
-		StepsControl(FormControl form) {
-			super(form.getReactContext(), form, STEPS, "TLPanel");
+		PartsControl(FormControl form, String composition) {
+			super(form.getReactContext(), form, composition, "TLPanel");
 		}
 
 		@Override

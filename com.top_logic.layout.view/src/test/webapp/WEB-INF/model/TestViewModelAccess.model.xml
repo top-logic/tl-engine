@@ -272,6 +272,12 @@
 							ordered="true"
 							type="Report"
 						/>
+						<reference name="subtasks"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Task"
+						/>
 					</attributes>
 				</class>
 

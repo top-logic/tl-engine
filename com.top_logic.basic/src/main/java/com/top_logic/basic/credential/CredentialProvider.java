@@ -96,6 +96,10 @@ public interface CredentialProvider {
 	 * {@link #authenticate(RequestAuthentication)} fetches fresh ones. Providers without cache
 	 * ignore the call.
 	 * </p>
+	 *
+	 * @throws I18NRuntimeException
+	 *         If this provider is {@link #isPersonal() personal} and the current call has no acting
+	 *         person: the provider cannot tell whose credentials to drop.
 	 */
 	default void invalidate() {
 		// No cached credentials.
@@ -143,9 +147,8 @@ public interface CredentialProvider {
 	 * The acting person is the person for whom the current call acts: a person who is present in a
 	 * browser window, or a person who started the run of the current thread there. The class
 	 * <code>com.top_logic.util.ActingPerson</code> of the module <code>tl-core</code> names this
-	 * person. A consumer that keeps a connection open, e.g. a client of an MCP server, reads this
-	 * property, because a connection with personal credentials must not serve another person. A
-	 * consumer that authenticates each request separately needs no change.
+	 * person. A consumer that authenticates each request separately for the acting person needs no
+	 * change for a personal provider.
 	 * </p>
 	 *
 	 * <p>
@@ -168,8 +171,8 @@ public interface CredentialProvider {
 	 * </p>
 	 *
 	 * <p>
-	 * A consumer that never acts for a person, e.g. the translation service, refuses a personal
-	 * provider at each call.
+	 * A consumer that never acts for a person, e.g. the translation service, must read this property
+	 * and refuse a personal provider at each call.
 	 * </p>
 	 *
 	 * @return <code>true</code> if this provider sends the credentials of the acting person;

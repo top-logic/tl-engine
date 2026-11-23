@@ -23,7 +23,7 @@ import com.top_logic.util.error.TopLogicException;
  * for the person whose credentials it sends. The engine names an acting person in two cases only:
  * </p>
  * <ul>
- * <li>The person is present: a request from the browser window of a signed-in person, i.e. a
+ * <li>The person is present: a request from the browser window of a signed-in person, that is a
  * command, the load of a view or the change of a field, in the React and in the classic user
  * interface. A script that runs within such a request belongs to it.</li>
  * <li>A present person started the run: a chat run with a message of the person, an
@@ -39,11 +39,11 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <p>
- * No acting person exists in a system context, in a scheduled task, in a request to the MCP, A2A or
- * OpenAPI endpoint of the application, and in each run that one of these starts. The anonymous
- * account is never an acting person, because all visitors share it. A background job of a window
- * (a job of a view, the progress dialog of the classic user interface) has no acting person
- * either.
+ * No acting person exists in a system context, in a scheduled task, in a request to an endpoint of
+ * the application for MCP, A2A or the <code>OpenAPI</code> server, and in each run that one of these
+ * starts. The anonymous account is never an acting person, because all visitors share it. A
+ * background job of a window (a job of a view, the progress dialog of the classic user interface)
+ * has no acting person either.
  * </p>
  *
  * <p>
@@ -65,7 +65,8 @@ public final class ActingPerson {
 	 * <p>
 	 * The person must still be active: the newest committed version of the account is read at each
 	 * call, so that a lock or delete takes effect also in a run that reads the knowledge base at an
-	 * older revision.
+	 * older revision. On another node of a cluster, a lock or delete takes effect after the next
+	 * refetch of that node.
 	 * </p>
 	 *
 	 * @return The acting person, never <code>null</code>.

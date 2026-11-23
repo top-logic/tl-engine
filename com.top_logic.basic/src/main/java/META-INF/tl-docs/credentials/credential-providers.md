@@ -214,7 +214,7 @@ A run takes over the acting person of the place that starts it. If that place ha
 The second case ends:
 
 - with the end of the run. The run acts for the person also in the background: after the window is closed, after a sign-out and after the session timed out. The person stops the run with the stop button of the chat or with `aiAgentRunCancel`.
-- when the account of the person is locked or deleted. `require()` reads the newest committed version of the account at each call, so the next call of the run has no acting person.
+- when the account of the person is locked or deleted. `require()` reads the newest committed version of the account at each call, so the next call of the run has no acting person. On another node of a cluster, a lock or delete takes effect after the next refetch of that node.
 
 No acting person exists:
 
@@ -230,7 +230,7 @@ A call in which another account acts than the acting person gets no credentials 
 ### Rules of a personal provider
 
 - It asks for the acting person at each call, also in `invalidate()`. It never keeps the person of an earlier call.
-- Without an acting person, it refuses the call with the `I18NRuntimeException` that `authenticate` declares, and adds nothing to the request. The message names the reason and the place where the person connects the account.
+- Without an acting person, it refuses the call, also a call of `invalidate()`, with the `I18NRuntimeException` that `authenticate` declares, and adds nothing to the request. The message names the reason and the place where the person connects the account.
 - It never falls back to a credential of the application or of another person.
 - It never does its work on a background thread of a library: the engine knows the acting person only on its own threads. A worker thread of the engine gets the acting person with the other thread bindings (`BindingSnapshot`).
 
@@ -238,9 +238,7 @@ The test base class `test.com.top_logic.util.AbstractPersonalCredentialProviderT
 
 ### Consumers of a personal provider
 
-A consumer that authenticates each request separately needs no change. A consumer that keeps a connection open, for example the MCP client, reads `isPersonal()`, because a connection with personal credentials must not serve another person.
-
-The parts of the engine that never act for a person refuse a personal provider at each call: the embedder, which computes the vectors of the search for all persons, the DeepL translation service and the client of an Azure Key Vault. The message names the service.
+A consumer that authenticates each request separately for the acting person needs no change. A consumer that never acts for a person must read `isPersonal()` and refuse a personal provider at each call. These parts of the engine do this: the embedder, which computes the vectors of the search for all persons, the DeepL translation service and the client of an Azure Key Vault. The message names the service.
 
 ## A consumer of an HTTP service
 

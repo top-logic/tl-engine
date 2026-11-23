@@ -37,7 +37,7 @@ const MuiMenuTriggerAdapter: React.FC<MenuTriggerPartProps> = ({
 
   if (children === undefined && icon) {
     return (
-      <IconButton {...common} size={small || rowSmall ? 'small' : 'medium'} color={iconButtonColor(appearance, false)} aria-label={label} {...tooltipProps(label)} {...attributes}>
+      <IconButton {...common} size={small || rowSmall ? 'small' : 'medium'} color={iconButtonColor(appearance, false)} aria-label={label} {...tooltipProps(attributes['data-tl-trigger'] === 'hover' ? undefined : label)} {...attributes}>
         <ThemeIcon encoded={icon} className={ICON_ALONE_CLASS} />
       </IconButton>
     );

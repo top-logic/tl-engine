@@ -282,4 +282,17 @@ describe('a popover in a table row (ButtonDefaults small)', () => {
     expect(isSmall(trigger())).toBe(false);
     expect(isSmall(surface()!.querySelector('button'))).toBe(false);
   });
+
+  it('shows no tooltip on an icon trigger opening on hover, the surface says more', () => {
+    mountAdapter(TLPopover, { open: false, mode: 'hover', label: 'Details', icon: IMAGE });
+
+    expect(trigger().getAttribute('aria-label')).toBe('Details');
+    expect(trigger().hasAttribute('data-tooltip')).toBe(false);
+  });
+
+  it('shows the label as tooltip on an icon trigger opening on a click', () => {
+    mountAdapter(TLPopover, { open: false, mode: 'click', label: 'Details', icon: IMAGE });
+
+    expect(trigger().hasAttribute('data-tooltip')).toBe(true);
+  });
 });

@@ -44,6 +44,9 @@ beforeAll(() => {
   register('RowTrigger', ({ controlId }: TLCellProps) => (
     <ButtonDefaults small><MenuTriggerPart id={controlId} appearance="ghost" expanded={false} label={LABEL} icon={ICON} /></ButtonDefaults>
   ));
+  register('HoverTrigger', ({ controlId }: TLCellProps) => (
+    <MenuTriggerPart id={controlId} appearance="ghost" expanded={false} label={LABEL} icon={ICON} data-tl-trigger="hover" />
+  ));
   register('RowButton', (props: TLCellProps) => <ButtonDefaults small><TLButton {...props} /></ButtonDefaults>);
 });
 
@@ -221,5 +224,16 @@ describe('TLButton in a table row (ButtonDefaults small)', () => {
   it('draws the icon trigger of a menu or popover small, too', () => {
     mountButton({}, 'RowTrigger');
     expect(small()).toBe(true);
+  });
+
+  it('names an icon trigger by its label and shows the label as tooltip, except on a trigger opening on hover', () => {
+    mountButton({}, 'RowTrigger');
+    expect(button().hasAttribute('data-tooltip')).toBe(true);
+    act(() => unmount(ROOT_ID));
+    findMountPoint(ROOT_ID)?.remove();
+
+    mountButton({}, 'HoverTrigger');
+    expect(button().getAttribute('aria-label')).toBe(LABEL);
+    expect(button().hasAttribute('data-tooltip')).toBe(false);
   });
 });

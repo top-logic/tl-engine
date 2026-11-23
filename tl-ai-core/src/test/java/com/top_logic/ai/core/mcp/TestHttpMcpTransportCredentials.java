@@ -55,6 +55,8 @@ import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.thread.CancelScope.BlockingCall;
 
+import io.modelcontextprotocol.spec.McpSchema;
+
 /**
  * Tests how the MCP client authenticates the requests of an {@link HttpMcpTransport} with the
  * configured <code>credentials</code>, and repeats a rejected call once with fresh ones.
@@ -113,6 +115,15 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 	/** The number of sessions that the server started. */
 	private int _sessionCount;
 
+	/**
+	 * Whether the server changes its tools with the next <code>tools/call</code>, and from then on
+	 * rejects all credentials that it got before.
+	 */
+	private boolean _changeToolsOnCall;
+
+	/** Whether the server offers its second tool. */
+	private boolean _toolsChanged;
+
 	/** Opens when the server receives a <code>tools/call</code>. */
 	private final CountDownLatch _toolCallReceived = new CountDownLatch(1);
 
@@ -153,8 +164,9 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 
 		assertTrue(connect(ENVIRONMENT_TOKEN));
 
-		assertFalse(_authorizations.isEmpty());
-		for (String authorization : _authorizations) {
+		List<String> authorizations = authorizations();
+		assertFalse(authorizations.isEmpty());
+		for (String authorization : authorizations) {
 			assertEquals("Bearer mcp-token", authorization);
 		}
 	}
@@ -163,8 +175,9 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 	public void testNoCredentials() throws Exception {
 		assertTrue(connect(""));
 
-		assertFalse(_authorizations.isEmpty());
-		for (String authorization : _authorizations) {
+		List<String> authorizations = authorizations();
+		assertFalse(authorizations.isEmpty());
+		for (String authorization : authorizations) {
 			assertNull(authorization);
 		}
 	}
@@ -176,8 +189,9 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 		assertTrue(connect(RECORDING));
 
 		assertEquals(1, invalidations(RecordingCredentials.CALLS));
-		assertEquals("Bearer call-0", _authorizations.get(0));
-		assertEquals("Bearer call-1", _authorizations.get(1));
+		List<String> authorizations = authorizations();
+		assertEquals("Bearer call-0", authorizations.get(0));
+		assertEquals("Bearer call-1", authorizations.get(1));
 	}
 
 	/** Credentials rejected again are not tried a third time. */
@@ -186,7 +200,7 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 
 		assertFalse("A rejected initialization must fail.", connect(RECORDING));
 
-		assertEquals(2, _authorizations.size());
+		assertEquals(2, authorizations().size());
 		assertEquals(1, invalidations(RecordingCredentials.CALLS));
 	}
 
@@ -323,9 +337,31 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 
 		synchronized (_authorizations) {
 			assertEquals("The library started a new session.", 2, _sessionCount);
-			for (String authorization : _authorizations) {
-				assertEquals("Each request carries the credential.", "Bearer mcp-token", authorization);
-			}
+		}
+		for (String authorization : authorizations()) {
+			assertEquals("Each request carries the credential.", "Bearer mcp-token", authorization);
+		}
+	}
+
+	/**
+	 * The server says that its tools changed, and it rejects all credentials that it got before.
+	 * The library asks the new list by itself, with the headers of the last call that succeeded,
+	 * and gets a rejection. The next caller gets the new list with fresh credentials.
+	 */
+	public void testChangedToolsWithFreshCredentials() throws Exception {
+		_changeToolsOnCall = true;
+
+		McpServerRegistry registry = registry(RECORDING);
+		registry.startUp();
+		try {
+			ToolResult result = tool(registry).execute(Map.of(), context(CancellationToken.UNCANCELLABLE));
+			assertFalse(result.text(), result.failed());
+
+			List<Tool> tools = registry.getTools(SERVER);
+			assertEquals(List.of("mcp__test__echo", "mcp__test__second"),
+				tools.stream().map(Tool::name).toList());
+		} finally {
+			registry.shutDown();
 		}
 	}
 
@@ -396,6 +432,13 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 
 	private static long invalidations(List<ProviderCall> calls) {
 		return calls.stream().filter(call -> call.authorization() == null).count();
+	}
+
+	/** The <code>Authorization</code> headers of the received POST requests until now. */
+	private List<String> authorizations() {
+		synchronized (_authorizations) {
+			return new ArrayList<>(_authorizations);
+		}
 	}
 
 	private long authentications(List<ProviderCall> calls, String method) {
@@ -473,9 +516,12 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 				return;
 			}
 			case "tools/list": {
+				boolean changed;
+				synchronized (_authorizations) {
+					changed = _toolsChanged;
+				}
 				reply(exchange, HttpURLConnection.HTTP_OK, result(id.group(1),
-					"{\"tools\":[{\"name\":\"echo\",\"description\":\"Answers done.\","
-						+ "\"inputSchema\":{\"type\":\"object\",\"properties\":{}}}]}"));
+					"{\"tools\":[" + tool("echo") + (changed ? "," + tool("second") : "") + "]}"));
 				return;
 			}
 			case "tools/call": {
@@ -485,13 +531,34 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 				} catch (InterruptedException ex) {
 					Thread.currentThread().interrupt();
 				}
-				reply(exchange, HttpURLConnection.HTTP_OK, result(id.group(1),
-					"{\"content\":[{\"type\":\"text\",\"text\":\"done\"}],\"isError\":false}"));
+				String answer = result(id.group(1),
+					"{\"content\":[{\"type\":\"text\",\"text\":\"done\"}],\"isError\":false}");
+				boolean change;
+				synchronized (_authorizations) {
+					change = _changeToolsOnCall && !_toolsChanged;
+					if (change) {
+						_toolsChanged = true;
+						Set<String> expired = new HashSet<>(_authorizations);
+						_accepted = value -> !expired.contains(value);
+					}
+				}
+				if (change) {
+					replyStream(exchange,
+						"{\"jsonrpc\":\"2.0\",\"method\":\"" + McpSchema.METHOD_NOTIFICATION_TOOLS_LIST_CHANGED + "\"}",
+						answer);
+				} else {
+					reply(exchange, HttpURLConnection.HTTP_OK, answer);
+				}
 				return;
 			}
 			default:
 				reply(exchange, HttpURLConnection.HTTP_ACCEPTED, null);
 		}
+	}
+
+	private static String tool(String name) {
+		return "{\"name\":\"" + name + "\",\"description\":\"Answers done.\","
+			+ "\"inputSchema\":{\"type\":\"object\",\"properties\":{}}}";
 	}
 
 	private static String result(String id, String result) {
@@ -509,6 +576,17 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 		exchange.sendResponseHeaders(status, bytes.length);
 		try (OutputStream out = exchange.getResponseBody()) {
 			out.write(bytes);
+		}
+	}
+
+	/** Answers with a stream of server messages (Server-Sent Events). */
+	private static void replyStream(HttpExchange exchange, String... messages) throws IOException {
+		exchange.getResponseHeaders().set("Content-Type", "text/event-stream");
+		exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0);
+		try (OutputStream out = exchange.getResponseBody()) {
+			for (String message : messages) {
+				out.write(("event: message\ndata: " + message + "\n\n").getBytes(StandardCharsets.UTF_8));
+			}
 		}
 	}
 

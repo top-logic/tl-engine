@@ -7,7 +7,7 @@ package com.top_logic.ai.core.mcp;
 
 import java.net.http.HttpRequest;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
@@ -111,9 +111,24 @@ public class HttpMcpTransport implements McpTransportConfig {
 		_credentials = CredentialProvider.create(context, _url, config.getCredentials(), null, null, null);
 	}
 
+	/**
+	 * A transport without a connection: a request that the library sends by itself gets no
+	 * credentials.
+	 *
+	 * @see #createTransport(Supplier)
+	 */
 	@Override
 	public McpClientTransport createTransport() {
-		AtomicReference<CredentialHeaders> lastCredentials = new AtomicReference<>(CredentialHeaders.NONE);
+		return createTransport(() -> CredentialHeaders.NONE);
+	}
+
+	/**
+	 * Creates the transport of one connection.
+	 *
+	 * @param lastSucceeded
+	 *        The headers of the last call of the connection that succeeded.
+	 */
+	McpClientTransport createTransport(Supplier<CredentialHeaders> lastSucceeded) {
 		return HttpClientStreamableHttpTransport.builder(_url)
 			.addHttpRequestCustomizer((request, method, uri, body, context) -> {
 				if (_headers != null) {
@@ -124,13 +139,13 @@ public class HttpMcpTransport implements McpTransportConfig {
 				CredentialHeaders credentials;
 				if (context.get(CredentialHeaders.KEY) instanceof CredentialHeaders resolved) {
 					credentials = resolved;
-					lastCredentials.set(resolved);
 				} else {
 					// A request that the library sends by itself has no caller, e.g. the new
-					// initialize after the server forgot the session. It gets the headers that a
-					// caller resolved last. They belong to the one connection of this transport: a
-					// client for each person needs a connection, and so a transport, for each person.
-					credentials = lastCredentials.get();
+					// initialize after the server forgot the session, or the tools/list after a
+					// tools/list_changed notification. It gets the headers of the last call that
+					// succeeded. They belong to the one connection: a client for each person needs a
+					// connection for each person.
+					credentials = lastSucceeded.get();
 				}
 				// Limit: the stream of server messages (GET), which the library opens after the
 				// first answer of a session, keeps the headers of that call. After a rotation of the
@@ -169,7 +184,7 @@ public class HttpMcpTransport implements McpTransportConfig {
 		/** The key of the headers in the {@link McpTransportContext} of a call. */
 		static final String KEY = CredentialHeaders.class.getName();
 
-		/** No headers, before a caller resolved any. */
+		/** No headers, before a call succeeded. */
 		static final CredentialHeaders NONE = new CredentialHeaders(Map.of());
 
 		/** Copies the given values, which the caller may change later. */

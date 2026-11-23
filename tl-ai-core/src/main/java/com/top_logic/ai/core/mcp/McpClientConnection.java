@@ -12,6 +12,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.top_logic.ai.core.agent.RunCancellationBinding;
@@ -24,11 +28,11 @@ import io.modelcontextprotocol.client.McpAsyncClient;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.transport.McpHttpClientTransportAuthorizationException;
 import io.modelcontextprotocol.common.McpTransportContext;
+import io.modelcontextprotocol.json.TypeRef;
 import io.modelcontextprotocol.spec.McpClientTransport;
 import io.modelcontextprotocol.spec.McpSchema;
 
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import reactor.util.context.Context;
 
 /**
@@ -36,8 +40,8 @@ import reactor.util.context.Context;
  *
  * <p>
  * Handles transport creation, client initialization, tool discovery, and graceful shutdown.
- * Tool lists are cached and refreshed when the server sends a {@code tools/list_changed}
- * notification.
+ * Tool lists are cached. When the server sends a {@code tools/list_changed} notification, the next
+ * caller of {@link #tools()} refreshes the list.
  * </p>
  *
  * <p>
@@ -58,11 +62,23 @@ class McpClientConnection {
 	/** The credentials of the requests, <code>null</code> for a transport without credentials. */
 	private final CredentialProvider _credentials;
 
+	/** Counts the headers that the calls resolved, in the order of their resolution. */
+	private final AtomicLong _resolutions = new AtomicLong();
+
+	/**
+	 * The headers of the last call that succeeded, for the requests that the library sends by
+	 * itself.
+	 */
+	private final AtomicReference<ResolvedHeaders> _lastSucceeded = new AtomicReference<>(ResolvedHeaders.NONE);
+
 	private final int _toolTimeoutSeconds;
 
 	private McpAsyncClient _client;
 
 	private volatile List<McpSchema.Tool> _tools = Collections.emptyList();
+
+	/** Whether the server said that its tools changed after the last refresh of {@link #_tools}. */
+	private volatile boolean _toolsStale;
 
 	/**
 	 * Creates a new connection for the given transport configuration.
@@ -88,17 +104,15 @@ class McpClientConnection {
 	 *         if the connection or initialization fails
 	 */
 	void connect() {
-		McpClientTransport transport = _transportConfig.createTransport();
+		McpClientTransport transport = observeToolChanges(createTransport());
 		Duration timeout = Duration.ofSeconds(_toolTimeoutSeconds > 0 ? _toolTimeoutSeconds : 60);
 
+		// No consumer of changed tools: the library asks the new list by itself, with no caller, and
+		// calls a consumer only when the server accepts that request.
 		_client = McpClient.async(transport)
 			.requestTimeout(timeout)
 			.clientInfo(McpSchema.Implementation.builder("tl-ai", "1.0.0").build())
 			.capabilities(McpSchema.ClientCapabilities.builder().build())
-			// On a worker of the library, not on the thread that delivers the notification, as
-			// the synchronous client of the library runs a consumer.
-			.toolsChangeConsumer(tools -> Mono.<Void> fromRunnable(() -> onToolsChanged(tools))
-				.subscribeOn(Schedulers.boundedElastic()))
 			.build();
 
 		send(_client::initialize);
@@ -106,6 +120,69 @@ class McpClientConnection {
 
 		Logger.info("Connected to MCP server '" + _serverName + "', discovered "
 			+ _tools.size() + " tools.", McpClientConnection.class);
+	}
+
+	private McpClientTransport createTransport() {
+		return _transportConfig instanceof HttpMcpTransport http
+			? http.createTransport(() -> _lastSucceeded.get().headers())
+			: _transportConfig.createTransport();
+	}
+
+	/**
+	 * The given transport, which also marks the tool list as stale when the server says that its
+	 * tools changed.
+	 *
+	 * <p>
+	 * The mark is set on the notification itself, so that it does not depend on the request that
+	 * the library then sends by itself. The next caller of {@link #tools()} asks the new list with
+	 * fresh credentials.
+	 * </p>
+	 */
+	private McpClientTransport observeToolChanges(McpClientTransport transport) {
+		return new McpClientTransport() {
+			@Override
+			public Mono<Void> connect(
+					Function<Mono<McpSchema.JSONRPCMessage>, Mono<McpSchema.JSONRPCMessage>> handler) {
+				return transport.connect(message -> handler.apply(message.doOnNext(this::observe)));
+			}
+
+			private void observe(McpSchema.JSONRPCMessage message) {
+				if (message instanceof McpSchema.JSONRPCNotification notification
+					&& McpSchema.METHOD_NOTIFICATION_TOOLS_LIST_CHANGED.equals(notification.method())) {
+					_toolsStale = true;
+				}
+			}
+
+			@Override
+			public void setExceptionHandler(Consumer<Throwable> handler) {
+				transport.setExceptionHandler(handler);
+			}
+
+			@Override
+			public Mono<Void> sendMessage(McpSchema.JSONRPCMessage message) {
+				return transport.sendMessage(message);
+			}
+
+			@Override
+			public <T> T unmarshalFrom(Object data, TypeRef<T> type) {
+				return transport.unmarshalFrom(data, type);
+			}
+
+			@Override
+			public List<String> protocolVersions() {
+				return transport.protocolVersions();
+			}
+
+			@Override
+			public Mono<Void> closeGracefully() {
+				return transport.closeGracefully();
+			}
+
+			@Override
+			public void close() {
+				transport.close();
+			}
+		};
 	}
 
 	/**
@@ -117,18 +194,33 @@ class McpClientConnection {
 	}
 
 	/**
-	 * Callback for the {@code tools/list_changed} notification.
-	 */
-	private void onToolsChanged(List<McpSchema.Tool> newTools) {
-		_tools = newTools != null ? List.copyOf(newTools) : Collections.emptyList();
-		Logger.info("MCP server '" + _serverName + "' tools refreshed, now "
-			+ _tools.size() + " tools.", McpClientConnection.class);
-	}
-
-	/**
 	 * Returns the cached list of tools from this server.
+	 *
+	 * <p>
+	 * After the server said that its tools changed, the caller asks the new list first. When that
+	 * fails, the old list stays, and the next caller tries again.
+	 * </p>
+	 *
+	 * @throws CancellationException
+	 *         See {@link #send(Supplier)}.
 	 */
 	List<McpSchema.Tool> tools() {
+		if (_toolsStale) {
+			// Cleared before the request, so that a notification during the request is not lost.
+			_toolsStale = false;
+			try {
+				refreshTools();
+				Logger.info("MCP server '" + _serverName + "' tools refreshed, now "
+					+ _tools.size() + " tools.", McpClientConnection.class);
+			} catch (CancellationException ex) {
+				_toolsStale = true;
+				throw ex;
+			} catch (RuntimeException ex) {
+				_toolsStale = true;
+				Logger.warn("Failed to refresh the tools of MCP server '" + _serverName + "': "
+					+ ex.getMessage(), ex, McpClientConnection.class);
+			}
+		}
 		return _tools;
 	}
 
@@ -188,10 +280,12 @@ class McpClientConnection {
 	}
 
 	private <T> T await(Mono<T> call) {
-		Context context = Context.of(McpTransportContext.KEY, authenticate());
+		ResolvedHeaders credentials = authenticate();
+		Context context = Context.of(McpTransportContext.KEY, credentials.headers().context());
+		T result;
 		try {
 			// Stopping the run ends the wait for the server.
-			return RunCancellationBinding.whileBlocked(() -> call.contextWrite(context).block());
+			result = RunCancellationBinding.whileBlocked(() -> call.contextWrite(context).block());
 		} catch (CancellationException ex) {
 			// The stop of the run, which took back its interrupt, or a request that the library
 			// cancelled.
@@ -205,18 +299,21 @@ class McpClientConnection {
 			}
 			throw ex;
 		}
+		_lastSucceeded.accumulateAndGet(credentials, ResolvedHeaders::later);
+		return result;
 	}
 
 	/**
-	 * The {@link McpTransportContext} with the headers that the credentials set for one call.
+	 * The headers that the credentials set for one call.
 	 */
-	private McpTransportContext authenticate() {
+	private ResolvedHeaders authenticate() {
+		long order = _resolutions.incrementAndGet();
 		if (_credentials == null) {
-			return McpTransportContext.EMPTY;
+			return new ResolvedHeaders(order, CredentialHeaders.NONE);
 		}
 		Map<String, String> headers = new HashMap<>();
 		_credentials.authenticate(headers::put);
-		return new CredentialHeaders(headers).context();
+		return new ResolvedHeaders(order, new CredentialHeaders(headers));
 	}
 
 	private CancellationException interrupted(Exception ex) {
@@ -256,5 +353,27 @@ class McpClientConnection {
 	 */
 	boolean isConnected() {
 		return _client != null && _client.isInitialized();
+	}
+
+	/**
+	 * The headers of one call, with the order in which the calls resolved them.
+	 *
+	 * @param order
+	 *        Larger for headers that a call resolved later.
+	 * @param headers
+	 *        The headers.
+	 */
+	private record ResolvedHeaders(long order, CredentialHeaders headers) {
+
+		/** No headers, before a call succeeded. */
+		static final ResolvedHeaders NONE = new ResolvedHeaders(0, CredentialHeaders.NONE);
+
+		/**
+		 * The headers that a call resolved later, so that an older call that ends later does not
+		 * bring older headers back.
+		 */
+		static ResolvedHeaders later(ResolvedHeaders a, ResolvedHeaders b) {
+			return b.order() > a.order() ? b : a;
+		}
 	}
 }

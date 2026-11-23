@@ -1,5 +1,5 @@
 ---
-description: Read before configuring how an application authenticates its requests to an external HTTP service (the <credentials> of LLM providers, web search, MCP client, A2A remote agents, embedder, DeepL, OpenAPI client, Gitea tool), or before writing an own HTTP consumer - HeaderCredentials, BasicCredentials, NoCredentials, ClientCredentialsProvider of tl-credential-oauth on the Nimbus SDK (client_secret, private_key_jwt, Kubernetes service account token), ManagedIdentityCredentials of tl-credential-azure on the Azure SDK (App Service, AKS workload identity, instance metadata service), DeviceLoginProvider for developers, CredentialProvider.create, RequestAuthentication, 401 handling.
+description: Read before configuring how an application authenticates its requests to an external HTTP service (the <credentials> of LLM providers, web search, MCP client, A2A remote agents, embedder, DeepL, OpenAPI client, Gitea tool), or before writing an own HTTP consumer - HeaderCredentials, BasicCredentials, NoCredentials, ClientCredentialsProvider of tl-credential-oauth on the Nimbus SDK (client_secret, private_key_jwt, Kubernetes service account token), ManagedIdentityCredentials of tl-credential-azure on the Azure SDK (App Service, AKS workload identity, instance metadata service), DeviceLoginProvider for developers, CredentialProvider.create, RequestAuthentication, 401 handling; personal credentials of the acting person (CredentialProvider.isPersonal, ActingPerson.require, when a request or a run has an acting person, AbstractPersonalCredentialProviderTest).
 order: 20
 ---
 
@@ -199,6 +199,48 @@ The SDK reads these as environment variables (the AKS variables also as Java sys
 - With the scope `offline_access`, the server issues an offline token that survives the end of the browser session; without it, the refresh token ends with the developer's login session at the server.
 - A refresh token the server rejects is removed and a new device login starts.
 - Neither the device code nor any token appears in a log or exception message.
+
+## Personal credentials: the acting person
+
+The providers above send credentials of the application: all persons use the same account in the other system. A personal provider sends the credentials of the person for whom the call acts, the acting person. `CredentialProvider.isPersonal()` tells which kind a provider is. The default is `false`, and the providers above are not personal.
+
+A personal provider asks `ActingPerson.require()` (package `com.top_logic.util` of `tl-core`) for the acting person. The engine names an acting person in two cases only:
+
+1. The person is present: a request from the browser window of a signed-in person. This is a command, the load of a view and the change of a field, in the React and in the classic user interface. A script that runs within such a request belongs to it, for example `aiAgentChat`.
+2. A present person started the run: a chat run with a message of the person, an `aiAgentChatAsync` run and an `aiResearch` run started in a request of the person, a detached subagent of such a run, and the turn that a finished subagent starts for its lead. This turn acts for the person of the last message in the window.
+
+A run takes over the acting person of the place that starts it. If that place has no acting person, the run has none.
+
+The second case ends:
+
+- with the end of the run. The run acts for the person also in the background: after the window is closed, after a sign-out and after the session timed out. The person stops the run with the stop button of the chat or with `aiAgentRunCancel`.
+- when the account of the person is locked or deleted. `require()` reads the newest committed version of the account at each call, so the next call of the run has no acting person.
+
+No acting person exists:
+
+- in a system context,
+- in a scheduled task, also with `approval-mode="MANUAL"`,
+- in a request to the MCP, A2A or OpenAPI endpoint of the application,
+- in each run that one of these starts, for example an `aiResearch` run of a scheduled script task or a subagent of a scheduled run,
+- in a background job of a window: a job of a view and the progress dialog of the classic user interface,
+- for the anonymous account, because all visitors share it.
+
+A call in which another account acts than the acting person gets no credentials of the person, for example a step of a command in a system context or in `TLContextManager.inPersonContext`. Without an acting person, `require()` throws a `TopLogicException` with one of three reasons: no account acts; no present person started the run, or the account is locked or deleted; another account acts than the acting person.
+
+### Rules of a personal provider
+
+- It asks for the acting person at each call, also in `invalidate()`. It never keeps the person of an earlier call.
+- Without an acting person, it refuses the call with the `I18NRuntimeException` that `authenticate` declares, and adds nothing to the request. The message names the reason and the place where the person connects the account.
+- It never falls back to a credential of the application or of another person.
+- It never does its work on a background thread of a library: the engine knows the acting person only on its own threads. A worker thread of the engine gets the acting person with the other thread bindings (`BindingSnapshot`).
+
+The test base class `test.com.top_logic.util.AbstractPersonalCredentialProviderTest` in the tests of `tl-core` checks these rules. The test of a provider extends it and implements `createProvider()` and `connect(Person)`.
+
+### Consumers of a personal provider
+
+A consumer that authenticates each request separately needs no change. A consumer that keeps a connection open, for example the MCP client, reads `isPersonal()`, because a connection with personal credentials must not serve another person.
+
+The parts of the engine that never act for a person refuse a personal provider at each call: the embedder, which computes the vectors of the search for all persons, the DeepL translation service and the client of an Azure Key Vault. The message names the service.
 
 ## A consumer of an HTTP service
 

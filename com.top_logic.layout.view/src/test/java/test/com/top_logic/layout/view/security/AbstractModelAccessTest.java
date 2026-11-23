@@ -88,6 +88,10 @@ import com.top_logic.util.error.TopLogicException;
  * a dynamic visibility while the project is not {@value #APPROVED}.</li>
  * <li>{@value #REMARK}: a type whose access parent is computed by a script, so that the types of its
  * access parents are not known statically.</li>
+ * <li><code>Report</code>: the type of the compositions <code>reports</code> and
+ * <code>mainReport</code> (single-valued) of a project and <code>reports</code> of a task. A report
+ * decides for itself: it inherits the role {@value #ROLE_RESPONSIBLE} from its project or task,
+ * which grants read, write and create, but no role deletes a report.</li>
  * </ul>
  *
  * <p>

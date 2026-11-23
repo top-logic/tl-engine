@@ -121,6 +121,27 @@
 						</access-parent>
 					</class>
 					<!--
+						The reports of a project decide for themselves: the responsible of the project
+						reads, writes and creates them, but no role deletes one.
+					-->
+					<class name="TestViewModelAccess:Report">
+						<access-parent>
+							<self/>
+						</access-parent>
+						<grant
+							operation="Read"
+							roles="TestViewModelAccess.Responsible"
+						/>
+						<grant
+							operation="Write"
+							roles="TestViewModelAccess.Responsible"
+						/>
+						<grant
+							operation="Create"
+							roles="TestViewModelAccess.Responsible"
+						/>
+					</class>
+					<!--
 						The milestones of a project and the notes of a category have no configuration:
 						as composition parts without a role source, they are decided by their
 						container.
@@ -315,6 +336,39 @@
 								<step attribute="TestViewModelAccess:Project#viewer"/>
 							</path>
 						</rule>
+						<inheritance-rule id="TestViewModelAccess_Report_Responsible"
+							meta-element="TestViewModelAccess:Report"
+							role="TestViewModelAccess.Responsible"
+						>
+							<path>
+								<step
+									attribute="TestViewModelAccess:Project#reports"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule id="TestViewModelAccess_MainReport_Responsible"
+							meta-element="TestViewModelAccess:Report"
+							role="TestViewModelAccess.Responsible"
+						>
+							<path>
+								<step
+									attribute="TestViewModelAccess:Project#mainReport"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule id="TestViewModelAccess_TaskReport_Responsible"
+							meta-element="TestViewModelAccess:Report"
+							role="TestViewModelAccess.Responsible"
+						>
+							<path>
+								<step
+									attribute="TestViewModelAccess:Task#reports"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
 						<inheritance-rule id="TestViewModelAccess_Task_Responsible"
 							meta-element="TestViewModelAccess:Task"
 							role="TestViewModelAccess.Responsible"

@@ -133,6 +133,16 @@
 							ordered="true"
 							type="Archive"
 						/>
+						<reference name="reports"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Report"
+						/>
+						<reference name="mainReport"
+							composite="true"
+							type="Report"
+						/>
 						<reference name="milestones"
 							composite="true"
 							multiple="true"
@@ -255,6 +265,12 @@
 						</reference>
 						<property name="view"
 							type="tl.view:ViewDefinition"
+						/>
+						<reference name="reports"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Report"
 						/>
 					</attributes>
 				</class>
@@ -432,6 +448,20 @@
 				</class>
 
 				<class name="Milestone">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<class name="Report">
 					<annotations>
 						<table name="GenericObject"/>
 					</annotations>

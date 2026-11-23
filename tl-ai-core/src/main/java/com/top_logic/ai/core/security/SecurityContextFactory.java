@@ -42,6 +42,16 @@ import com.top_logic.ai.core.agent.SecurityContext;
  */
 public interface SecurityContextFactory {
 
+	/*
+	 * The JavaDoc of the method below is exported to META-INF/messages_*.properties by the build's
+	 * doclet and shown to an administrator, so it stays short.
+	 *
+	 * The subject of the run (RunPrincipal#subject()) is given here as the entry point stated it, not
+	 * yet checked. RunSecurity.contextFor checks it after this call, against the modelSecurity() of
+	 * the context returned here, and the run has no subject if that context may not read it. A factory
+	 * therefore need not check the subject, and cannot give a run a subject its context may not read.
+	 */
+
 	/**
 	 * The security context the given run is to be authorized against.
 	 *
@@ -49,13 +59,6 @@ public interface SecurityContextFactory {
 	 * Called once per run, before its first provider request. The result is carried for the whole run
 	 * and is passed on to every sub-agent it delegates to, so nothing here may depend on which turn or
 	 * which tool call is being served.
-	 * </p>
-	 *
-	 * <p>
-	 * {@link RunPrincipal#subject()} is the subject as the entry point stated it, not yet checked.
-	 * The engine checks it after this call, against the {@link SecurityContext#modelSecurity()} of the
-	 * context returned here, and the run has no subject if that context may not read it. A factory
-	 * therefore need not check the subject, and cannot give a run a subject its context may not read.
 	 * </p>
 	 *
 	 * @param run

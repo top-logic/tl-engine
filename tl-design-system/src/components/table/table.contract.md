@@ -144,25 +144,39 @@ Id, die es nicht gibt, ließe den Fokus unsichtbar.
 ## Ansicht (Popover des Zahnrads)
 
 Das Zahnrad (`tl-table__columns`) öffnet ein Popover `tl-popover tl-picker tl-menu tl-table-view-options` mit
-`role="dialog"`. Die Einträge, die Anatomie und das Verhalten des Menüs gelten (`menu.contract.md`); was dazukommt:
-
-Reihenfolge: Titel, „Spalten …“, Dichte, Streifen, Spaltenlinien, „Zurücksetzen“. Die Spaltenwahl steht zuerst und
-trägt den Startfokus, denn sie ist, was man an einer Tabelle am häufigsten einstellt (Review !2226); ohne sie startet
-der Fokus auf dem geltenden Segment der Dichte.
-
+`role="dialog"`. Die Einträge, die Anatomie und das Verhalten des Menüs gelten (`menu.contract.md`). Das Popover hat zwei
+Seiten, nie beide zugleich sichtbar (`tl-table-view-options__page`, die andere trägt `hidden`): die Ansicht und die Spalten.
+Es ist nicht modal und wirkt sofort; was die Seiten zeigen:
 
 | Element | Aufbau |
 |---|---|
-| `tl-table-view-options__title` | Titel „Ansicht“: `tl-type-label-strong` in Primärtext, kein Abschnittskopf |
+| `tl-table-view-options__page` | eine Seite des Popovers: Flex-Spalte, die das Popover füllt und mit ihm schrumpft (`flex: 1 1 auto`, `min-block-size: 0`); sie rollt nie selbst, auf der Seite „Spalten“ rollt allein die Liste |
+| `tl-table-view-options__title` | Titel der Seite („Ansicht“, „Spalten“): `tl-type-label-strong` in Primärtext, kein Abschnittskopf; Zeile, in der auf der zweiten Seite der Zurück-Knopf davor steht |
+| `tl-table-view-options__back` | der Zurück-Knopf im Titel der zweiten Seite: `tl-button tl-button--ghost tl-button--sm tl-button--icon` mit `aria-label`, Icon `tl-icon-sm bi bi-chevron-left`; der Fokusring liegt innen, das Popover schneidet |
 | `tl-menu__header` | Abschnittskopf „Dichte“ (`tl-type-label`, leiser Sekundärtext); er benennt die Gruppe der Segmente (`aria-labelledby`) |
-| `tl-segmented tl-table-view-options__segments` | die drei Dichten als Radiogruppe (`choice.contract.md`), von den Rändern um `--tl-space-control-x` eingerückt wie der Text der Einträge |
-| `tl-table-view-options__switch` | Schalter (`tl-choice` mit `tl-checkbox--switch`) für Streifen und Spaltenlinien, mit derselben Einrückung |
+| `tl-segmented tl-table-view-options__segments` | die drei Dichten als Gruppe (`role="group"`, `aria-labelledby`) von Segmenten mit Rolle `menuitemradio` und `aria-checked` (`menu.contract.md`; `choice.css` liest `aria-checked`, gleich welche Rolle), von den Rändern um `--tl-space-control-x` eingerückt wie der Text der Einträge |
+| `tl-menu__item`, `tl-menu__item--check` | Streifen und Spaltenlinien: Zeilen des Menüs mit Rolle `menuitemcheckbox` und `aria-checked`, die ganze Zeile klickt; der Schalter steht rechts als gezeichnetes `tl-checkbox` mit `tl-checkbox--switch` (`<span aria-hidden="true">`) ohne Eingabe (`choice.contract.md`) — dasselbe Bild wie der Schalter mit Eingabe |
 | `tl-divider` | Trennlinien in `--tl-border-separator`: zwischen „Spalten …“ und „Dichte“ und vor „Zurücksetzen“ |
+| `tl-reorder-list__host` | die Wurzel der Spaltenwahl auf der zweiten Seite (`reorder-list.contract.md`): Suche und Liste in einer Flex-Spalte, ohne Fensterabstand und Fensterhöhe; die Liste ist der einzige Rollbereich |
 | `tl-menu__icon` | „Spalten …“ und „Zurücksetzen“ tragen je ein Icon vor der Beschriftung (`menu.contract.md`), damit die Befehle auch bei weiteren Einträgen auffindbar bleiben (Review !2226); Dichte und Schalter haben keins, sie haben ihre eigene Form |
+
+Reihenfolge der Seite „Ansicht“: Titel, „Spalten …“, Dichte, Streifen, Spaltenlinien, „Zurücksetzen“. Die Spaltenwahl steht
+zuerst und trägt den Startfokus, denn sie ist, was man an einer Tabelle am häufigsten einstellt (Review !2226); ohne sie
+startet der Fokus auf dem geltenden Segment der Dichte. Die Pfeile, `Home` und `End` folgen derselben Reihenfolge, der des DOM.
 
 Die Ansichtsoptionen (Dichte, Streifen, Spaltenlinien) gibt es nur, wo sie bleiben: Der Server schickt `viewOptions`
 nur für eine Tabelle, die ihre Ansicht speichert (`TableView.isPersonalized()`). Ohne sie zeigt das Popover nur
 „Spalten …“ (falls `columnSelect`) und „Zurücksetzen“; ohne beides steht das Zahnrad nicht da.
+
+Die Höhe gibt der Anker: `usePopover` setzt `maxHeight` an der Hülle (Raum bis zum Fensterrand), die Seite gibt nach, die Liste
+rollt (`picker.contract.md`).
+
+### Filter-Popover am Trichter
+
+Der Trichter (`tl-table__filter`) öffnet ein Popover unter der Kopfzelle, ohne die Seite abzudunkeln. Ist der Filter eine Auswahl
+aus Werten, ist es die Werteliste `tl-filter-list` auf `tl-popover tl-picker` (`filter-list.contract.md`); jede Zeile wirkt sofort. Der
+Trichter trägt `aria-haspopup="dialog"` und `aria-expanded` (`true`, solange das Popover offen ist) und bleibt dann sichtbar, auch
+ohne Zeigen (`tl-reveal-on-hover`, `layout.contract.md`).
 
 ## Stapel
 
@@ -200,6 +214,7 @@ Körper scrollen waagerecht gemeinsam: das TSX überträgt `scrollLeft` des Kör
 | Zelle | Innenabstand `--tl-space-control-x`; ohne Trennlinie, mit `data-tl-column-lines` rechts `--tl-border-width-sm` in `--tl-border-separator` (die letzte Zelle nie; die Kante von `frozen-last` bleibt `--tl-border-emphasis`). Zahlenspalte (`data-tl-align="end"`): rechtsbündig, `justify-content: flex-end`, `font-variant-numeric: tabular-nums`; der Kopf einer solchen Spalte behält die Folge Titel, Sortiermarke, Gruppenmarke, Trichter wie jede Spalte, nur sein Inhalt rückt ans Ende der Zelle; der Titel endet bündig mit den Ziffern, weil der verborgene Trichter keine Breite hält (`test/table-align.test.mjs`) |
 | Kante zur scrollenden Fläche | `frozen-last` rechts, `pinned-first` links: `--tl-border-width-sm` in `--tl-border-emphasis` |
 | Feld in der Zelle | wie im Formular, eine Stufe niedriger (#30383): Fläche `--tl-surface-field`, voller Rahmen `--tl-border-width-sm` in `--tl-border-control`, auf gezeigter und ausgewählter Zeile `--tl-border-emphasis`, Radius `--tl-radius-sm`; Höhe `--tl-size-control` − `--tl-space-2xs` (die Zeile behält ihre Höhe), oben `--tl-space-2xs` − `--tl-border-width-sm`, seitlich `--tl-space-2xs`, Innenabstand `--tl-space-control-x` − `--tl-space-2xs` (der Text steht wie beim Lesen); `disabled`, `readonly` und `aria-disabled` ohne Fläche und Rahmen; Knöpfe im Feld (Leeren, Pfeil, Öffner des kompakten Felds) eine Rahmenbreite kürzer als das Feld; Fokusring innen (`outline-offset` −`--tl-focus-offset`); Warnung innere Linie `--tl-border-width-md` in `--tl-status-warning-border`, Fehler in `--tl-status-error-border` |
+| Pflicht in der bearbeiteten Zeile | Stern im Kopf: `--tl-status-error-text` hinter dem Titel (Symbol, 3:1 gegen `--tl-surface-layer-muted` und `--tl-surface-interactive-strong`, in `pairs.mjs`); Pflichtfeld in der bearbeiteten Zeile: Ecke `--tl-status-error-text`, `--tl-space-xs` breit, oben rechts im Feld, an `[aria-required="true"]`, am kompakten Feld (`role="group"`, das `aria-required` nicht erlaubt) an `[data-tl-state~="required"]`; mit Fokusring (`:focus-visible`) um `--tl-focus-width` größer, weil der Ring nach innen über ihr liegt (3:1 gegen `--tl-surface-field`); nicht an read-only oder inaktiven Feldern |
 | Baum | Toggle und Einzug je Ebene `--tl-size-control-sm` (Platzhalter `tl-table__spacer`); Abstand der Anzahl `--tl-space-xs` |
 | Zelle mit Feldmarke | am Ende eine halbe Markenbreite frei: `--tl-size-icon-sm` / 2; der Fokusring der Marke liegt innen (`outline-offset` −`--tl-focus-offset`) |
 | Platzhalter | Innenabstand `--tl-space-control-x`, Linie darunter wie die Zeile |
@@ -270,6 +285,7 @@ Klassen:
 | `tl-table__header-cell` | jede Kopfzelle |
 | `tl-table__sort` | der Sortierknopf, ein `button` |
 | `tl-table__label` | die Überschrift, Großbuchstaben in `--tl-text-secondary`; endet mit Ellipse. Das TSX setzt `tl-type-overline` daran (Sperrung `0.04em`) |
+| `tl-table__required` | der Pflichtstern hinter dem Titel, solange die Tabelle bearbeitet wird: `--tl-status-error-text`, `aria-hidden`, ohne eigene Typo-Klasse (erbt die Schrift der Kopfzelle); gibt nie nach; in einer Zahlenspalte vor dem Titel |
 | `tl-table__mark` | Sortierpfeil, Gruppierungsmarke: `tl-icon-sm`, `aria-hidden`; die Gruppierungsmarke trägt bei einer Gruppierung nach mehreren Spalten hinter dem Symbol die Ebene als `tl-badge` (Part Badge, `aria-hidden`), Symbol und Ebene tragen zusammen ihren Tooltip |
 | `tl-table__filter` | der Trichter |
 | `tl-table__columns` | die Spaltenwahl (Zahnrad) |

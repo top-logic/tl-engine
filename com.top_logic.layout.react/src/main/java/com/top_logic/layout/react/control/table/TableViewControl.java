@@ -478,6 +478,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String COLUMN_PINNED_END = "pinnedEnd";
 
 	/**
+	 * Per-column state key telling whether the column {@link ColumnView#required() requires a value}
+	 * in the cells the user edits. Absent for a column that does not.
+	 */
+	private static final String COLUMN_REQUIRED = "required";
+
+	/**
 	 * Per-column state key holding the {@link ColumnView#cssClass() CSS class} the client puts on
 	 * every cell of that column, its heading included. Absent for a column declaring none.
 	 */
@@ -1276,6 +1282,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			columnState.put(COLUMN_FILTER_ACTIVE, Boolean.valueOf(isFilterActive(column.name())));
 			columnState.put(COLUMN_GROUPABLE, Boolean.valueOf(groupable.contains(column.name())));
 			columnState.put(COLUMN_PINNED_END, Boolean.valueOf(column.pinnedEnd()));
+			if (column.required()) {
+				columnState.put(COLUMN_REQUIRED, Boolean.TRUE);
+			}
 			if (column.cssClass() != null) {
 				columnState.put(COLUMN_CSS_CLASS, column.cssClass());
 			}

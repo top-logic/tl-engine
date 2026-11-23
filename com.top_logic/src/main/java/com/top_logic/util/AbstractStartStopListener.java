@@ -45,6 +45,7 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.Computation;
+import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.basic.version.Version;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
@@ -81,6 +82,9 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 	private Lock _startupToken;
 
 	private boolean _deferredBoot;
+
+	/** The {@link ServletContext} of the application being started. */
+	private ServletContext _servletContext;
 
 	/** Indicating whether an error occurred during startup. */
 	private boolean errorOnStartup;
@@ -135,6 +139,7 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 		_moduleContext = ModuleUtil.beginContext();
 
         final ServletContext context = event.getServletContext();
+		_servletContext = context;
         errorOnStartup = false;
         
         try {
@@ -182,17 +187,7 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 			this.configure();
 
 			if (_deferredBoot) {
-				DeferredBootService.startUp(new Computation<Exception>() {
-					@Override
-					public Exception run() {
-						try {
-							boot();
-							return null;
-						} catch (Exception ex) {
-							return ex;
-						}
-					}
-				});
+				DeferredBootService.startUp(this);
 			} else {
 				boot();
 			}
@@ -207,78 +202,79 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 					AbstractStartStopListener.class);
             }
 
-        }
-		catch (InvalidLicenceException ex) {
-			Logger.error(ex.getMessage(), ex, AbstractStartStopListener.class);
-			errorOnStartup = true;
-			shutdownApplication(context);
+		} catch (Throwable ex) {
+			startFailed(ex);
+			if (ex instanceof RuntimeException runtimeProblem) {
+				throw runtimeProblem;
+			}
+			if (ex instanceof Error error) {
+				throw error;
+			}
 			throw new RuntimeException(ex);
 		}
-        catch (RuntimeException ex) {
-            reportProblem(ex);
-            errorOnStartup = true;
-			shutdownApplication(context);
-            // RuntimeException instances can be thrown without being wrapped.
-            throw ex;
-        }
-        catch (Error ex) {
-        	reportProblem(ex);
-        	errorOnStartup = true;
-			shutdownApplication(context);
-            // Error instances can be also thrown without being wrapped.
-        	throw ex;
-        } catch (Throwable ex) {
-            reportProblem(ex);
-            errorOnStartup = true;
-			shutdownApplication(context);
-            // All other Exception instances must be wrapped into a RuntimeException.
-            throw new RuntimeException(ex);
-        }
 	}
 
+	/**
+	 * Boots the application.
+	 * 
+	 * <p>
+	 * A failure is not reported but thrown to the caller, which hands it to
+	 * {@link #startFailed(Throwable)}.
+	 * </p>
+	 */
 	void boot() throws Exception {
 		// Run in systemContext as some Modules needs an existing ThreadContext
-		Exception problem =
-		    ThreadContext.inSystemContext(this.getClass(), new Computation<Exception>() {
-		    	@Override
-				public Exception run() {
-		    		try {
-						Logger.info("Starting module system ...", AbstractStartStopListener.class);
-						// The module system is not running before the application has
-						// completely started.
-						try (StartupPhase startup = ModuleUtil.INSTANCE.beginStartup()) {
-							ClusterManager.startUpClusterManager();
-							ClusterManager clusterManagerInstance = ClusterManager.getInstance();
+		ThreadContext.inSystemContext(this.getClass(), new ComputationEx2<Void, Exception, RuntimeException>() {
+			@Override
+			public Void run() throws Exception {
+				Logger.info("Starting module system ...", AbstractStartStopListener.class);
+				// The module system is not running before the application has
+				// completely started.
+				try (StartupPhase startup = ModuleUtil.INSTANCE.beginStartup()) {
+					ClusterManager.startUpClusterManager();
+					ClusterManager clusterManagerInstance = ClusterManager.getInstance();
 
-							startTokenSystem(clusterManagerInstance);
-							try {
-								startupModuleSystem(Version.getApplicationVersion());
-								Logger.info("Module system started successfully", AbstractStartStopListener.class);
+					startTokenSystem(clusterManagerInstance);
+					try {
+						startupModuleSystem(Version.getApplicationVersion());
+						Logger.info("Module system started successfully", AbstractStartStopListener.class);
 
-								initApplication(ServletContextService.getInstance().getServletContext());
+						initApplication(ServletContextService.getInstance().getServletContext());
 
-								if (!ContainerDetector.getInstance().isTesting()) {
-									infoAndStarter(Version.getApplicationVersion());
-								}
-							} catch (InvalidLicenceException e) {
-								return e.dropStack();
-							} finally {
-								releaseTokenSystem(clusterManagerInstance);
-							}
+						if (!ContainerDetector.getInstance().isTesting()) {
+							infoAndStarter(Version.getApplicationVersion());
 						}
-
-						return null;
-					} catch (Exception e) {
-						Logger.error("System startup failed.", AbstractStartStopListener.class);
-						return e;
+					} catch (InvalidLicenceException e) {
+						throw e.dropStack();
+					} finally {
+						releaseTokenSystem(clusterManagerInstance);
 					}
-		    	}
+				}
 
-		    });
-		
-		if (problem != null) {
-			throw problem;
+				return null;
+			}
+		});
+	}
+
+	/**
+	 * Handles a failed application start, regardless of whether the start runs immediately or
+	 * deferred and of the kind of the failure.
+	 * 
+	 * <p>
+	 * Reports the problem once with its stack trace and shuts the application down.
+	 * </p>
+	 * 
+	 * @param problem
+	 *        The problem that prevented the application from starting.
+	 */
+	void startFailed(Throwable problem) {
+		if (problem instanceof InvalidLicenceException) {
+			Logger.error(problem.getMessage(), problem, AbstractStartStopListener.class);
+		} else {
+			reportProblem(problem);
 		}
+		errorOnStartup = true;
+		shutdownApplication(_servletContext);
 	}
 
 	/**

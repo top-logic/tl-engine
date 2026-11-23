@@ -300,7 +300,6 @@ import { initOutsidePress } from './bridge/outside-press';
 initOutsidePress();
 export {
   useTableViewPreferences,
-  setTableViewPreferences,
   resetTableViewPreferencesForTest,
 } from './bridge/table-view-preferences';
-export type { TableDensity, TableViewPreferences } from './bridge/table-view-preferences';
+export type { TableViewPreferences } from './bridge/table-view-preferences';

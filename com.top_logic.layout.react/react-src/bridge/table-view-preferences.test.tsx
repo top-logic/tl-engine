@@ -1,10 +1,9 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   resetTableViewPreferencesForTest,
-  setTableViewPreferences,
   useTableViewPreferences,
 } from './table-view-preferences';
 
@@ -15,8 +14,8 @@ declare global {
 
 /** Shows the preferences the hook hands back, as a table does. */
 function Probe({ name }: { name: string }) {
-  const { density, striped, columnLines } = useTableViewPreferences();
-  return <span data-probe={name}>{`${density}|${striped}|${columnLines}`}</span>;
+  const { striped, columnLines } = useTableViewPreferences();
+  return <span data-probe={name}>{`${striped}|${columnLines}`}</span>;
 }
 
 let host: HTMLElement;
@@ -32,13 +31,22 @@ function render(...names: string[]) {
   });
 }
 
-function mark(attributes: Record<string, string>) {
+function mark(attributes: Record<string, string>): HTMLElement {
   const element = document.createElement('div');
   element.setAttribute('data-tl-table-view', '');
   for (const [key, value] of Object.entries(attributes)) {
     element.setAttribute(key, value);
   }
   document.body.appendChild(element);
+  return element;
+}
+
+/** Runs the change and waits until the probe shows what is expected, as the observer reports it asynchronously. */
+async function changeAndExpect(change: () => void, name: string, expected: string) {
+  await act(async () => {
+    change();
+    await vi.waitFor(() => expect(text(name)).toBe(expected));
+  });
 }
 
 describe('table-view-preferences', () => {
@@ -61,37 +69,57 @@ describe('table-view-preferences', () => {
   });
 
   it('reads the start values from the marked element', () => {
-    mark({ 'data-tl-table-density': 'compact', 'data-tl-table-striped': '', 'data-tl-table-column-lines': '' });
+    mark({ 'data-tl-table-striped': '', 'data-tl-table-column-lines': '' });
     render('a');
-    expect(text('a')).toBe('compact|true|true');
+    expect(text('a')).toBe('true|true');
   });
 
   it('has the factory values without a marked element', () => {
     render('a');
-    expect(text('a')).toBe('|false|false');
+    expect(text('a')).toBe('false|false');
   });
 
-  it('takes an unknown density value as the factory density', () => {
-    mark({ 'data-tl-table-density': 'huge' });
-    render('a');
-    expect(text('a')).toBe('|false|false');
-  });
-
-  it('re-renders all components using the hook after a change', () => {
+  it('follows the attributes of the marked element, for every component using the hook', async () => {
+    const element = mark({});
     render('a', 'b');
-    act(() => setTableViewPreferences({ density: 'normal', striped: true, columnLines: false }));
-    expect(text('a')).toBe('normal|true|false');
-    expect(text('b')).toBe('normal|true|false');
+
+    await changeAndExpect(() => element.setAttribute('data-tl-table-striped', ''), 'a', 'true|false');
+    expect(text('b')).toBe('true|false');
+
+    await changeAndExpect(() => element.setAttribute('data-tl-table-column-lines', ''), 'a', 'true|true');
+    await changeAndExpect(() => element.removeAttribute('data-tl-table-striped'), 'a', 'false|true');
+    expect(text('b')).toBe('false|true');
+  });
+
+  it('ignores other attributes of the marked element', async () => {
+    const element = mark({});
+    render('a');
+    await act(async () => {
+      element.setAttribute('data-other', '');
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(text('a')).toBe('false|false');
+  });
+
+  it('reads the element afresh for the next table once the last one is gone', async () => {
+    const element = mark({});
+    render('a');
+    act(() => root.unmount());
+    element.setAttribute('data-tl-table-striped', '');
+    root = createRoot(host);
+    render('a');
+    expect(text('a')).toBe('true|false');
+    // The new table follows the element again.
+    await changeAndExpect(() => element.setAttribute('data-tl-table-column-lines', ''), 'a', 'true|true');
   });
 
   it('reads the DOM again after a reset', () => {
     render('a');
-    act(() => setTableViewPreferences({ density: 'normal', striped: true, columnLines: true }));
     act(() => root.unmount());
     root = createRoot(host);
     resetTableViewPreferencesForTest();
     mark({ 'data-tl-table-striped': '' });
     render('a');
-    expect(text('a')).toBe('|true|false');
+    expect(text('a')).toBe('true|false');
   });
 });

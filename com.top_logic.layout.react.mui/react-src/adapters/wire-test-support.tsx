@@ -165,13 +165,25 @@ export function mountAdapter(
   return sent;
 }
 
-/** The attributes by which the server hands the table view of the person to the page: start values on the root element. */
-const TABLE_VIEW_ATTRIBUTES = ['data-tl-table-view', 'data-tl-table-density', 'data-tl-table-striped', 'data-tl-table-column-lines'];
+/** The attributes by which the server hands the table view of the person to the page: values on the root element. */
+const TABLE_VIEW_ATTRIBUTES = ['data-tl-table-view', 'data-tl-table-striped', 'data-tl-table-column-lines'];
+
+/**
+ * Sets the table view of the person on the root element of the page, where the server writes it and the user menu
+ * changes it; the tables follow it from there. Not synchronous for a table already mounted: the store learns of it
+ * from the observer of the element.
+ */
+export function setTableView(view: { striped?: boolean; columnLines?: boolean }) {
+  const html = document.documentElement;
+  html.setAttribute('data-tl-table-view', '');
+  html.toggleAttribute('data-tl-table-striped', view.striped === true);
+  html.toggleAttribute('data-tl-table-column-lines', view.columnLines === true);
+}
 
 /**
  * Forgets the table view of the person, which the tables of a page share through the store of the bridge: the store,
- * and the start values on the root element it would read again. A test file mounting tables calls it in `beforeEach`
- * and in `afterEach`, so that the view one test chose does not reach the next.
+ * and the values on the root element it would read again. A test file mounting tables calls it in `beforeEach` and in
+ * `afterEach`, so that the view one test chose does not reach the next.
  */
 export function resetTableView() {
   for (const name of TABLE_VIEW_ATTRIBUTES) {

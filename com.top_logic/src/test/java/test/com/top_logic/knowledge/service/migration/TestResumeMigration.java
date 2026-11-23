@@ -51,9 +51,12 @@ import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.meta.MOStructure;
+import com.top_logic.dsa.DatabaseAccessException;
 import com.top_logic.knowledge.event.ChangeSet;
 import com.top_logic.knowledge.event.EventWriter;
 import com.top_logic.knowledge.event.convert.EventRewriter;
+import com.top_logic.knowledge.objects.KnowledgeObject;
+import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.InitialTableSetup;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -61,6 +64,8 @@ import com.top_logic.knowledge.service.KnowledgeBaseConfiguration;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.KnowledgeBaseFactoryConfig;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.knowledge.service.db2.KBSchemaUtil;
 import com.top_logic.knowledge.service.db2.RevisionXref;
 import com.top_logic.knowledge.service.db2.migration.config.ReplayConfig;
@@ -72,6 +77,7 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.knowledge.service.migration.MigrationProgress;
 import com.top_logic.knowledge.service.migration.MigrationService;
 import com.top_logic.knowledge.service.migration.MigrationUtil;
+import com.top_logic.knowledge.service.migration.StartupAction;
 import com.top_logic.knowledge.service.migration.Version;
 
 /**
@@ -84,6 +90,11 @@ import com.top_logic.knowledge.service.migration.Version;
  * migrations consist of {@link CountingProcessor}s that write data only (no DDL), so that a
  * rollback undoes them on every database. An abort is simulated by a processor that throws an
  * exception at a configured call.
+ * </p>
+ *
+ * <p>
+ * Startup actions ({@link CountingStartupAction}) run in a knowledge base on the same database,
+ * see {@link StartableMigrationService#getStartupKnowledgeBase()}.
  * </p>
  */
 @SuppressWarnings("javadoc")
@@ -114,6 +125,15 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 	/** Number of the steps before the post-processors: five processors, xref rebuild, versions. */
 	private static final int STEPS_BEFORE_POST_PROCESSORS = 7;
 
+	/** Number of the steps before the startup actions: the steps before and the post-processors. */
+	private static final int STEPS_BEFORE_STARTUP_ACTIONS = STEPS_BEFORE_POST_PROCESSORS + 1;
+
+	/** The startup actions of the test migrations in the order of their execution. */
+	private static final List<String> STARTUP_ACTIONS = List.of("s1", "s2");
+
+	/** Type of the object created during the simulated start of the application. */
+	private static final String OBJECT_TYPE = "Person";
+
 	/** Number of the replay step: after five processors and the xref rebuild. */
 	private static final int REPLAY_STEP = 7;
 
@@ -125,6 +145,24 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 
 	/** IDs of the {@link CountingProcessor}s in the order of their calls. */
 	static final List<String> CALLS = new ArrayList<>();
+
+	/** IDs of the {@link CountingStartupAction}s in the order of their calls. */
+	static final List<String> STARTUP_CALLS = new ArrayList<>();
+
+	/**
+	 * Number of committed objects of the {@link #OBJECT_TYPE} each {@link CountingStartupAction}
+	 * has found, in the order of the calls.
+	 */
+	static final List<Integer> COMMITTED_OBJECTS = new ArrayList<>();
+
+	/** ID of the {@link CountingStartupAction} that throws an exception, <code>null</code> for none. */
+	static String _failStartupAction;
+
+	/** Whether the test migrations have the {@link #STARTUP_ACTIONS}. */
+	private boolean _withStartupActions;
+
+	/** The knowledge base the {@link CountingStartupAction}s run in. */
+	static KnowledgeBase _startupKB;
 
 	/** Number of change sets rewritten by the {@link CountingRewriter}. */
 	static final AtomicInteger REWRITES = new AtomicInteger();
@@ -153,6 +191,10 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 		super.setUp();
 
 		CALLS.clear();
+		STARTUP_CALLS.clear();
+		COMMITTED_OBJECTS.clear();
+		_failStartupAction = null;
+		_startupKB = null;
 		_failAtCall = 0;
 		_xrefTable = null;
 		REWRITES.set(0);
@@ -204,6 +246,7 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 		try {
 			for (String key : DBProperties.getPropertiesForNode(connection, DBProperties.GLOBAL_PROPERTY).keySet()) {
 				if (key.startsWith(RESULT_PREFIX) || key.equals(MigrationProgress.PROGRESS_PROPERTY)
+					|| key.equals(MigrationLock.LOCK_PROPERTY)
 					|| key.equals(MigrationUtil.COMMON_KEY_PREFIX + BASE_MODULE)
 					|| key.equals(MigrationUtil.COMMON_KEY_PREFIX + APP_MODULE)) {
 					DBProperties.setProperty(connection, DBProperties.GLOBAL_PROPERTY, key, null);
@@ -223,6 +266,9 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 		_kbConfig = null;
 		_scripts = null;
 		CALLS.clear();
+		STARTUP_CALLS.clear();
+		COMMITTED_OBJECTS.clear();
+		_startupKB = null;
 		super.tearDown();
 	}
 
@@ -413,6 +459,168 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 		assertCompleted();
 	}
 
+	/**
+	 * (h) The second startup action fails: The change of the first one is committed, the progress
+	 * names the second one as pending, the next start executes only the second one and leaves no
+	 * progress.
+	 */
+	public void testResumeAfterAbortInStartupAction() throws Exception {
+		addStartupActions();
+		_failStartupAction = "s2";
+		assertStartFails(null, "Step " + (STEPS_BEFORE_STARTUP_ACTIONS + 2) + " of the migration",
+			"startup action 1 (CountingStartupAction)", APP_MIGRATION, "Simulated abort in startup action s2");
+
+		assertEquals(ALL_CALLS, CALLS);
+		assertEquals(STARTUP_ACTIONS, STARTUP_CALLS);
+		assertEquals("1", results().get(RESULT_PREFIX + "s1"));
+		assertNull("Change of the failing startup action not rolled back.", results().get(RESULT_PREFIX + "s2"));
+		MigrationProgress progress = progress();
+		assertNotNull("No progress recorded.", progress);
+		assertEquals("The second startup action is pending.", STEPS_BEFORE_STARTUP_ACTIONS + 1,
+			progress.getCompleted());
+		assertEquals(0, progress.getStarted());
+
+		_failStartupAction = null;
+		CALLS.clear();
+		STARTUP_CALLS.clear();
+		startMigration(null);
+
+		assertEquals(List.of(), CALLS);
+		assertEquals(List.of("s2"), STARTUP_CALLS);
+		assertCompleted();
+		assertEquals("1", results().get(RESULT_PREFIX + "s2"));
+	}
+
+	/**
+	 * (i) A start that migrates holds the lock until {@link MigrationService#applicationStarted()}
+	 * has executed the startup actions.
+	 */
+	public void testLockHeldUntilApplicationStarted() throws Exception {
+		addStartupActions();
+		StartableMigrationService service = startService(null);
+
+		assertNotNull("Lock released before the startup actions.", lockHolder());
+		assertEquals(List.of(), STARTUP_CALLS);
+		assertEquals("Startup actions pending.", STEPS_BEFORE_STARTUP_ACTIONS, progress().getCompleted());
+
+		service.applicationStarted();
+
+		assertNull("Lock not released after the startup actions.", lockHolder());
+		assertEquals(STARTUP_ACTIONS, STARTUP_CALLS);
+		assertCompleted();
+	}
+
+	/**
+	 * (j) Shutting down a started service without {@link MigrationService#applicationStarted()}
+	 * (a start failing after the migration) releases the lock and keeps the progress, the next
+	 * start executes the startup actions.
+	 */
+	public void testShutDownWithoutApplicationStarted() throws Exception {
+		addStartupActions();
+		StartableMigrationService service = startService(null);
+		assertNotNull(lockHolder());
+
+		service.stop();
+
+		assertNull("Lock not released on shut down.", lockHolder());
+		assertEquals(List.of(), STARTUP_CALLS);
+		MigrationProgress progress = progress();
+		assertNotNull("Progress removed.", progress);
+		assertEquals(STEPS_BEFORE_STARTUP_ACTIONS, progress.getCompleted());
+
+		CALLS.clear();
+		startMigration(null);
+
+		assertEquals(List.of(), CALLS);
+		assertEquals(STARTUP_ACTIONS, STARTUP_CALLS);
+		assertCompleted();
+	}
+
+	/**
+	 * (k) A start without pending changes takes no lock and executes nothing in
+	 * {@link MigrationService#applicationStarted()}.
+	 */
+	public void testStartWithoutPendingChanges() throws Exception {
+		addStartupActions();
+		startMigration(null);
+		assertCompleted();
+
+		CALLS.clear();
+		STARTUP_CALLS.clear();
+		StartableMigrationService service = startService(null);
+		assertNull("Lock taken by a start without changes.", lockHolder());
+
+		service.applicationStarted();
+
+		assertEquals(List.of(), CALLS);
+		assertEquals(List.of(), STARTUP_CALLS);
+		assertNull(lockHolder());
+		assertCompleted();
+	}
+
+	/**
+	 * (l) A startup action sees an object created during the start of the application, through a
+	 * query of committed objects.
+	 */
+	public void testStartupActionSeesObjectsOfStart() throws Exception {
+		addStartupActions();
+		StartableMigrationService service = startService(null);
+
+		// The start of the application: An object is created in the startup transaction, which is
+		// committed before the startup actions are executed.
+		KnowledgeBase kb = service.getStartupKnowledgeBase();
+		int before = committedObjects();
+		try (Transaction tx = kb.beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			KnowledgeObject object = kb.createKnowledgeObject(OBJECT_TYPE);
+			object.setAttributeValue("name", "test-resume-start");
+			tx.commit();
+		}
+
+		service.applicationStarted();
+
+		assertEquals(STARTUP_ACTIONS, STARTUP_CALLS);
+		assertEquals("Object of the start not visible to the startup actions.", List.of(before + 1, before + 1),
+			COMMITTED_OBJECTS);
+		assertCompleted();
+	}
+
+	/**
+	 * Adds the startup action "s1" to the base migration and "s2" to the app migration.
+	 */
+	private void addStartupActions() {
+		_withStartupActions = true;
+		_scripts.get(BASE_MODULE).get(MigrationUtil.newVersion(BASE_MODULE, BASE_MIGRATION)).getStartupActions()
+			.add(startupAction("s1"));
+		_scripts.get(APP_MODULE).get(MigrationUtil.newVersion(APP_MODULE, APP_MIGRATION)).getStartupActions()
+			.add(startupAction("s2"));
+	}
+
+	private String lockHolder() throws SQLException {
+		return _properties.getProperty(MigrationLock.LOCK_PROPERTY);
+	}
+
+	/**
+	 * Number of the committed objects of the {@link #OBJECT_TYPE} in the knowledge base of the
+	 * {@link CountingStartupAction}s, read through a connection of its own.
+	 */
+	static int committedObjects() throws SQLException {
+		MOStructure type = (MOStructure) _startupKB.getMORepository().getTypeOrNull(OBJECT_TYPE);
+		ConnectionPool pool = KBUtils.getConnectionPool(_startupKB);
+		PooledConnection connection = pool.borrowReadConnection();
+		try {
+			DBHelper sql = connection.getSQLDialect();
+			try (PreparedStatement statement = connection.prepareStatement(
+				"SELECT COUNT(*) FROM " + sql.tableRef(type.getDBMapping().getDBName()))) {
+				try (ResultSet result = statement.executeQuery()) {
+					assertTrue(result.next());
+					return result.getInt(1);
+				}
+			}
+		} finally {
+			pool.releaseReadConnection(connection);
+		}
+	}
+
 	private int revisionCount() throws SQLException {
 		PooledConnection connection = _pool.borrowReadConnection();
 		try {
@@ -458,12 +666,17 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 		for (String id : ALL_CALLS) {
 			expected.put(RESULT_PREFIX + id, "1");
 		}
-		assertEquals("Each processor must be applied exactly once.", expected, results());
+		if (_withStartupActions) {
+			for (String id : STARTUP_ACTIONS) {
+				expected.put(RESULT_PREFIX + id, "1");
+			}
+		}
+		assertEquals("Each processor and startup action must be applied exactly once.", expected, results());
 		assertNull("Progress not removed.", progress());
 		Map<String, Version> stored = storedVersions();
 		assertEquals(BASE_MIGRATION, stored.get(BASE_MODULE).getName());
 		assertEquals(APP_MIGRATION, stored.get(APP_MODULE).getName());
-		assertNull(_properties.getProperty(MigrationLock.LOCK_PROPERTY));
+		assertNull(lockHolder());
 	}
 
 	private void assertStartFails(DBHelper dialect, String... messageParts) throws Exception {
@@ -609,6 +822,12 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 		return config;
 	}
 
+	private static PolymorphicConfiguration<? extends StartupAction> startupAction(String id) {
+		CountingStartupAction.Config<?> config = TypedConfiguration.newConfigItem(CountingStartupAction.Config.class);
+		config.setId(id);
+		return config;
+	}
+
 	private static PolymorphicConfiguration<? extends MigrationProcessor> processor(String id) {
 		CountingProcessor.Config config = TypedConfiguration.newConfigItem(CountingProcessor.Config.class);
 		config.setId(id);
@@ -638,16 +857,35 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 
 	/**
 	 * Starts a {@link MigrationService} with the test migrations on
-	 * {@link DatabaseTestSetup#MIGRATION_POOL_NAME}.
+	 * {@link DatabaseTestSetup#MIGRATION_POOL_NAME} and completes the start of the application by
+	 * {@link MigrationService#applicationStarted()}.
 	 *
 	 * @param dialect
 	 *        The dialect the {@link MigrationContext} reports, <code>null</code> for the dialect
 	 *        of the database.
 	 */
 	private void startMigration(DBHelper dialect) throws ConfigurationException {
+		startService(dialect).applicationStarted();
+	}
+
+	/**
+	 * Starts a {@link MigrationService} with the test migrations on
+	 * {@link DatabaseTestSetup#MIGRATION_POOL_NAME}, without completing the start of the
+	 * application.
+	 *
+	 * @param dialect
+	 *        The dialect the {@link MigrationContext} reports, <code>null</code> for the dialect
+	 *        of the database.
+	 */
+	private StartableMigrationService startService(DBHelper dialect) throws ConfigurationException {
 		MigrationService.Config config = TypedConfiguration.copy((MigrationService.Config) ApplicationConfig
 			.getInstance().getServiceConfiguration(MigrationService.class));
-		TypedConfigUtil.setProperty(config, MigrationService.Config.MODULES_NAME, List.of(BASE_MODULE, APP_MODULE));
+		// The modules of the application stay migration modules, so that a start without the test
+		// migrations finds no module without stored version.
+		List<String> modules = new ArrayList<>(config.getModules());
+		modules.add(BASE_MODULE);
+		modules.add(APP_MODULE);
+		TypedConfigUtil.setProperty(config, MigrationService.Config.MODULES_NAME, modules);
 		TypedConfigUtil.setProperty(config, MigrationService.Config.MINIMUM_MODULES, List.of());
 
 		String noTableSetup = System.clearProperty(InitialTableSetup.NO_DATABASE_TABLE_SETUP);
@@ -657,8 +895,10 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 			PoolRef defaultPool =
 				TestingConnectionPoolRegistryAccess.setupDefaultPool(DatabaseTestSetup.MIGRATION_POOL_NAME);
 			try {
-				new StartableMigrationService(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config,
-					_scripts, dialect).start();
+				StartableMigrationService service = new StartableMigrationService(
+					SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config, _scripts, dialect, _kbConfig);
+				service.start();
+				return service;
 			} finally {
 				TestingConnectionPoolRegistryAccess.restoreDefaultPool(defaultPool);
 			}
@@ -797,6 +1037,61 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 	}
 
 	/**
+	 * {@link StartupAction} recording its call in {@link TestResumeMigration#STARTUP_CALLS} and the
+	 * number of committed objects it finds in {@link TestResumeMigration#COMMITTED_OBJECTS}, and
+	 * counting its executions in the database property {@link TestResumeMigration#RESULT_PREFIX}
+	 * plus its ID, in its transaction.
+	 */
+	public static class CountingStartupAction extends AbstractConfiguredInstance<CountingStartupAction.Config<?>>
+			implements StartupAction {
+
+		/**
+		 * Configuration of a {@link CountingStartupAction}.
+		 */
+		public interface Config<I extends CountingStartupAction> extends PolymorphicConfiguration<I> {
+
+			/**
+			 * ID of the action.
+			 */
+			@Name("id")
+			String getId();
+
+			/**
+			 * @see #getId()
+			 */
+			void setId(String value);
+
+		}
+
+		/**
+		 * Creates a {@link CountingStartupAction}.
+		 */
+		public CountingStartupAction(InstantiationContext context, Config<?> config) {
+			super(context, config);
+		}
+
+		@Override
+		public void perform() {
+			String id = getConfig().getId();
+			STARTUP_CALLS.add(id);
+			PooledConnection connection = KBUtils.getCurrentContext(_startupKB).getConnection();
+			try {
+				COMMITTED_OBJECTS.add(committedObjects());
+				String key = RESULT_PREFIX + id;
+				String count = DBProperties.getProperty(connection, DBProperties.GLOBAL_PROPERTY, key);
+				DBProperties.setProperty(connection, DBProperties.GLOBAL_PROPERTY, key,
+					Integer.toString(count == null ? 1 : Integer.parseInt(count) + 1));
+			} catch (SQLException ex) {
+				throw new RuntimeException(ex);
+			}
+			if (id.equals(_failStartupAction)) {
+				throw new RuntimeException("Simulated abort in startup action " + id + ".");
+			}
+		}
+
+	}
+
+	/**
 	 * {@link EventRewriter} counting its calls in {@link TestResumeMigration#REWRITES} and throwing
 	 * an exception, while {@link TestResumeMigration#_failReplay} is set.
 	 */
@@ -876,21 +1171,52 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 
 		private final DBHelper _dialect;
 
+		private final KnowledgeBaseConfiguration _kbConfig;
+
+		private KnowledgeBase _kb;
+
 		StartableMigrationService(InstantiationContext context, Config config,
-				Map<String, Map<Version, MigrationConfig>> scripts, DBHelper dialect) {
+				Map<String, Map<Version, MigrationConfig>> scripts, DBHelper dialect,
+				KnowledgeBaseConfiguration kbConfig) {
 			super(context, config);
 			_testScripts = scripts;
 			_dialect = dialect;
+			_kbConfig = kbConfig;
 		}
 
 		void start() {
 			startUp();
 		}
 
+		void stop() {
+			shutDown();
+		}
+
+		/**
+		 * A knowledge base on {@link DatabaseTestSetup#MIGRATION_POOL_NAME}, created on first
+		 * access.
+		 */
+		@Override
+		protected KnowledgeBase getStartupKnowledgeBase() {
+			if (_kb == null) {
+				BufferingProtocol log = new BufferingProtocol();
+				_kb = KnowledgeBaseFactory.createKnowledgeBase(log, _kbConfig);
+				((DBKnowledgeBase) _kb).initLocalVariablesFromDatabase(log);
+				assertEquals("Errors: " + log.getErrors(), List.of(), log.getErrors());
+				_startupKB = _kb;
+			}
+			return _kb;
+		}
+
 		@Override
 		protected Map<String, Map<Version, MigrationConfig>> readMigrationScripts(Log log,
-				List<String> migrationModules) {
-			return _testScripts;
+				List<String> migrationModules) throws DatabaseAccessException {
+			List<String> applicationModules = new ArrayList<>(migrationModules);
+			applicationModules.removeAll(_testScripts.keySet());
+			Map<String, Map<Version, MigrationConfig>> result =
+				new HashMap<>(super.readMigrationScripts(log, applicationModules));
+			result.putAll(_testScripts);
+			return result;
 		}
 
 		@Override

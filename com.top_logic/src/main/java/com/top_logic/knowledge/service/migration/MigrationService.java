@@ -136,8 +136,18 @@ import com.top_logic.util.model.CompatibilityService;
  * longer running, the lock property {@value MigrationLock#LOCK_PROPERTY} may be deleted manually,
  * and the next start resumes the migration as well.
  * </p>
+ *
+ * <p>
+ * The {@link MigrationConfig#getStartupActions() startup actions} of the migrations are the last
+ * steps of a migration. They are executed after the startup transaction of the application has
+ * been committed, each in a knowledge base transaction of its
+ * own. The lock is held until the last startup action is committed, or until the service is shut
+ * down after a failed start. A start interrupted before the startup actions resumes with the
+ * pending ones.
+ * </p>
  * 
  * @see MigrationConfig
+ * @see #applicationStarted()
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -264,13 +274,25 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	private MigrationInfo _migrationInfo = MigrationInfo.NO_MIGRATION;
 
 	/**
-	 * The progress of an interrupted migration that is resumed, <code>null</code> if no
-	 * migration was interrupted.
+	 * The progress of the migration.
+	 *
+	 * <p>
+	 * Before migrating, the progress of an interrupted migration that is resumed,
+	 * <code>null</code> if no migration was interrupted. After migrating, the progress of the
+	 * migration whose remaining {@link #_steps} (the startup actions) are executed in
+	 * {@link #applicationStarted()}, <code>null</code> if this start has not migrated.
+	 * </p>
 	 */
 	private MigrationProgress _progress;
 
 	/**
-	 * The lock held while migrating, <code>null</code> outside the migration.
+	 * All steps of the migration of this start, <code>null</code> if this start has not migrated.
+	 */
+	private List<MigrationStep> _steps;
+
+	/**
+	 * The lock held from the start of the migration until the last startup action is committed,
+	 * <code>null</code> if not held.
 	 */
 	private MigrationLock _migrationLock;
 
@@ -759,18 +781,44 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 
 		/* The migration runs before the cluster startup token is acquired (the token requires the
 		 * persistency layer, i.e. a migrated database). The migration lock prevents nodes starting
-		 * concurrently from migrating the same database at the same time. */
-		try (MigrationLock lock = acquireLock(log)) {
-			_migrationLock = lock;
-
+		 * concurrently from migrating the same database at the same time. A waiting node waits here,
+		 * before acquiring the token, so the lock held until the startup actions are done in
+		 * applicationStarted() cannot dead-lock with the token. */
+		_migrationLock = acquireLock(log);
+		boolean migrated = false;
+		try {
 			// Determine the pending migrations again after acquiring the lock: A node that had to
 			// wait finds the database migrated by the other node.
 			_migrationInfo = fetchMigrations(log);
 			log.checkErrors();
 
 			migrate(log);
+			migrated = true;
 		} finally {
+			if (!migrated) {
+				releaseLock();
+			}
+		}
+	}
+
+	@Override
+	protected void shutDown() {
+		// After a start that failed after the migration, the startup actions are still pending. The
+		// progress is kept, the next start executes them.
+		_progress = null;
+		_steps = null;
+		releaseLock();
+		super.shutDown();
+	}
+
+	/**
+	 * Releases the {@link MigrationLock}, if held.
+	 */
+	private void releaseLock() {
+		MigrationLock lock = _migrationLock;
+		if (lock != null) {
 			_migrationLock = null;
+			lock.close();
 		}
 	}
 
@@ -818,26 +866,80 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	}
 
 	/**
-	 * Callback invoked, after all modules are up and running.
+	 * Callback invoked, after all modules are up and running and the startup transaction of the
+	 * application has been committed, before the {@link com.top_logic.util.StartupHooks}.
+	 *
+	 * <p>
+	 * Executes the pending {@link MigrationConfig#getStartupActions() startup actions} of the
+	 * migration of this start, in the order of the migrations and of their configuration, each in
+	 * a {@link KnowledgeBase} transaction of its own, which also records its completion in the
+	 * {@link MigrationProgress}. The actions see all objects created during the start. The last
+	 * action deletes the progress. A failing action terminates the start: The preceding actions
+	 * stay committed, the progress names the failing one as pending, and the next start executes
+	 * the pending actions only.
+	 * </p>
+	 *
+	 * <p>
+	 * Afterwards, the {@link MigrationLock} taken by this start is released, also if an action
+	 * fails.
+	 * </p>
 	 */
 	public void applicationStarted() {
-		List<MigrationConfig> migrationsWithActions =
-			_migrationInfo.getMigrations().stream().filter(m -> !m.getStartupActions().isEmpty()).toList();
-		if (!migrationsWithActions.isEmpty()) {
-			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-			for (var m : migrationsWithActions) {
-				Logger.info("Performing startup actions from: " + m.getVersion().getModule() + ": "
-						+ m.getVersion().getName(), MigrationService.class);
-				for (var actionConfig : m.getStartupActions()) {
-					StartupAction action = TypedConfigUtil.createInstance(actionConfig);
-					try (Transaction tx =
-						kb.beginTransaction(I18NConstants.PERFORMED_STARTUP_ACTION__NAME
-							.fill(actionConfig.getImplementationClass().getSimpleName()))) {
-						action.perform();
-						tx.commit();
-					}
-				}
+		try {
+			if (_progress != null) {
+				LogProtocol log = new LogProtocol(MigrationService.class);
+				_progress.executeRemaining(log, _steps);
+				log.checkErrors();
 			}
+		} finally {
+			_progress = null;
+			_steps = null;
+			releaseLock();
+		}
+	}
+
+	/**
+	 * The {@link KnowledgeBase} the startup actions are executed in.
+	 */
+	protected KnowledgeBase getStartupKnowledgeBase() {
+		return PersistencyLayer.getKnowledgeBase();
+	}
+
+	/**
+	 * Creates the steps executing the {@link MigrationConfig#getStartupActions() startup actions}
+	 * of the given migration.
+	 */
+	private void addStartupActionSteps(List<MigrationStep> steps, MigrationConfig migration) {
+		String versionName = MigrationUtil.toString(migration.getVersion());
+		int number = 1;
+		for (PolymorphicConfiguration<? extends StartupAction> actionConfig : migration.getStartupActions()) {
+			String actionName = actionConfig.getImplementationClass().getSimpleName();
+			boolean first = number == 1;
+			steps.add(MigrationStep.createInKnowledgeBase(
+				"startup action " + number + " (" + actionName + ") of migration " + versionName,
+				completion -> {
+					if (first) {
+						Logger.info("Performing startup actions of migration " + versionName,
+							MigrationService.class);
+					}
+					performStartupAction(actionConfig, actionName, completion);
+				}));
+			number++;
+		}
+	}
+
+	/**
+	 * Performs the given startup action in a {@link KnowledgeBase} transaction of its own, in which
+	 * its completion is recorded.
+	 */
+	private void performStartupAction(PolymorphicConfiguration<? extends StartupAction> actionConfig,
+			String actionName, MigrationStep.Completion completion) throws Exception {
+		KnowledgeBase kb = getStartupKnowledgeBase();
+		StartupAction action = TypedConfigUtil.createInstance(actionConfig);
+		try (Transaction tx = kb.beginTransaction(I18NConstants.PERFORMED_STARTUP_ACTION__NAME.fill(actionName))) {
+			action.perform();
+			completion.record(KBUtils.getCurrentContext(kb).getConnection());
+			tx.commit();
 		}
 	}
 
@@ -1009,8 +1111,9 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	 * The steps are: each pre-processor and each processor of the migrations, the rebuild of the
 	 * {@link com.top_logic.knowledge.service.db2.RevisionXref} entries together with the automatic
 	 * schema adaption, the replay (if required), storing the new versions together with the schema
-	 * baseline, and the post-processors of all migrations in a {@link KnowledgeBase} transaction.
-	 * Each step is committed together with the {@link MigrationProgress}.
+	 * baseline, the post-processors of all migrations in a {@link KnowledgeBase} transaction, and
+	 * each startup action. Each step is committed together with the {@link MigrationProgress}. The
+	 * startup actions are not executed here but in {@link #applicationStarted()}.
 	 * </p>
 	 */
 	private void migrate(MigrationContext context, Protocol log, PooledConnection connection) {
@@ -1056,12 +1159,19 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			}));
 		}
 
+		// The startup actions are the last steps, they are executed in applicationStarted().
+		int firstStartupAction = steps.size();
+		for (MigrationConfig migrationConfig : _migrationInfo.getMigrations()) {
+			addStartupActionSteps(steps, migrationConfig);
+		}
+
 		MigrationProgress progress = _progress;
 		if (progress == null) {
 			progress = MigrationProgress.create(MigrationUtil.versions(_migrationInfo.getMigrations()));
 		}
-		progress.execute(log, connection, context, steps);
-		_progress = null;
+		progress.execute(log, connection, context, steps, firstStartupAction);
+		_progress = progress;
+		_steps = steps;
 	}
 
 	private boolean hasPostProcessors() {

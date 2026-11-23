@@ -23,7 +23,8 @@ import com.top_logic.knowledge.service.KnowledgeBase;
  * records} its completion.
  * </p>
  *
- * @see MigrationProgress#execute(Protocol, PooledConnection, MigrationContext, List)
+ * @see MigrationProgress#execute(Protocol, PooledConnection, MigrationContext, List, int)
+ * @see MigrationProgress#executeRemaining(Protocol, List)
  */
 public interface MigrationStep {
 

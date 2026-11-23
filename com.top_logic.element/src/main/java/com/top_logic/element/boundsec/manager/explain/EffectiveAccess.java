@@ -109,7 +109,7 @@ public class EffectiveAccess {
 		boolean withoutSecurity = type != null && _rights.isWithoutSecurity(type);
 		boolean internal = type != null && _rights.isInternal(type);
 
-		TLObject decidingObject = _rights.getRoleHolder(object, SimpleBoundCommandGroup.READ);
+		TLObject decidingObject = firstRoleHolder(object, SimpleBoundCommandGroup.READ);
 		List<BoundObject> roleParents = new ArrayList<>();
 		if (decidingObject instanceof BoundObject holder) {
 			BoundHelper.collectAllSecurityParents(holder, roleParents::add);
@@ -168,6 +168,17 @@ public class EffectiveAccess {
 	}
 
 	/**
+	 * The first of the {@link ModelAccessRights#getRoleHolders(TLObject, BoundCommandGroup) role
+	 * holders} of the given operation on the given object.
+	 *
+	 * @return <code>null</code> when nobody decides for the object.
+	 */
+	private TLObject firstRoleHolder(TLObject object, BoundCommandGroup operation) {
+		Set<TLObject> holders = _rights.getRoleHolders(object, operation);
+		return holders.isEmpty() ? null : holders.iterator().next();
+	}
+
+	/**
 	 * The roles the given account holds on the given role holder, looked up once per role holder.
 	 */
 	private Set<BoundedRole> held(Map<TLObject, Set<BoundedRole>> heldByHolder, Person person, TLObject roleHolder) {
@@ -200,7 +211,7 @@ public class EffectiveAccess {
 
 		List<OperationDecision> result = new ArrayList<>(applicable.size());
 		for (BoundCommandGroup operation : applicable) {
-			TLObject roleHolder = _rights.getRoleHolder(object, operation);
+			TLObject roleHolder = firstRoleHolder(object, operation);
 			Set<BoundedRole> admitting = new HashSet<>();
 			Set<BoundedRole> granting = new HashSet<>();
 			Set<BoundedRole> ownGranting = new HashSet<>();

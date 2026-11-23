@@ -26,7 +26,10 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
  * </p>
  * <p>
  * While a decision is being computed, its entry is marked. A delegation chain that reaches an
- * object whose decision is marked runs in a cycle and is denied instead of recursing forever.
+ * object whose decision is marked runs in a cycle and is denied instead of recursing forever. Such
+ * a denial holds for that chain only: the decision marked may still be allowed through another
+ * access parent. A denial computed while a marked decision was reached is therefore not stored,
+ * see {@link #computingHits()}.
  * </p>
  * <p>
  * The memo is discarded together with the interaction, and it is replaced as soon as the knowledge
@@ -61,6 +64,8 @@ final class AccessDecisionCache {
 	private final long _revision;
 
 	private final Map<Key, Object> _decisions = new HashMap<>();
+
+	private int _computingHits;
 
 	private AccessDecisionCache(long revision) {
 		_revision = revision;
@@ -126,6 +131,33 @@ final class AccessDecisionCache {
 	 */
 	void decided(Key key, boolean decision) {
 		_decisions.put(key, Boolean.valueOf(decision));
+	}
+
+	/**
+	 * Removes the mark of the decision for the given key without storing a decision.
+	 */
+	void forget(Key key) {
+		_decisions.remove(key);
+	}
+
+	/**
+	 * Counts that a decision {@link #isComputing(Key) being computed} was asked for again.
+	 */
+	void hitComputing() {
+		_computingHits++;
+	}
+
+	/**
+	 * How often a decision {@link #isComputing(Key) being computed} was asked for again.
+	 *
+	 * <p>
+	 * A decision whose computation changes this count depends on a decision not made yet: a
+	 * denial must not be stored, since it may turn out wrong once the decision is made. An
+	 * allowance is never wrong, a cycle only denies.
+	 * </p>
+	 */
+	int computingHits() {
+		return _computingHits;
 	}
 
 }

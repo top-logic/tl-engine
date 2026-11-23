@@ -951,7 +951,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * <p>
 	 * For a type whose access parent is restricted to some operations, the rights of its attributes
 	 * for a delegated operation do not count: they are checked on the access parent (see
-	 * {@link #roleHolder(TLObject, BoundCommandGroup)}), so that holding one of their roles on the
+	 * {@link #getRoleHolders(TLObject, BoundCommandGroup)}), so that holding one of their roles on the
 	 * object itself admits nothing. Discover is delegated together with these operations.
 	 * </p>
 	 */
@@ -1908,53 +1908,57 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// A grant without roles denies the operation in every context.
 			return false;
 		}
-		Set<TLObject> seen = new HashSet<>();
-		TLObject current = draft;
-		BoundCommandGroup operation = commandGroup;
-		while (!isCommitted(current)) {
-			if (!seen.add(current)) {
-				Logger.error("The access parents of " + draft + " form a cycle, access is denied.",
-					SecurityConfigurationService.class);
-				return false;
-			}
-			AccessParentFunction parent = accessParentOf(current);
-			if (parent == null || !parent.delegates(operation)) {
-				// An object deciding the operation by its own roles: the roles it will hold are
-				// computed only once it exists.
-				return true;
-			}
-			TLObject next = current.tTransient() ? draftParent(parent, current) : parent.resolve(current);
-			if (next == null) {
-				// A free-standing object is not accessible until it is put into a container, which is
-				// a write of the container checked in its own right.
-				return true;
-			}
-			operation = operationOnParent(operation);
-			current = TLFormObjectBase.editedObject(next);
-		}
-		// The roles the person holds on the object deciding the operation for the committed access
-		// parent are checked, as for an attribute of a persistent object delegating its access
-		// decision.
-		if (!(roleHolder(current, operation) instanceof BoundObject holder)) {
-			return false;
-		}
-		return accessManager().hasRole(person, holder, requiredPartRoles);
+		return isAllowedInitial(person, draft, commandGroup, requiredPartRoles, new HashSet<>());
 	}
 
 	/**
-	 * The access parent of the given transient object.
+	 * Whether the given person holds one of the given roles, granted the given operation on an
+	 * attribute, for an object not committed yet.
 	 *
 	 * <p>
-	 * A transient object knows the {@link TLObject#tContainer() container} it is created in, but
-	 * not necessarily the composition that will hold it. A relation navigating a composition
-	 * backwards therefore leads to the container whenever the composition is unknown.
+	 * The access parents of an object not committed yet are followed up to the committed objects
+	 * deciding the operation, a transient object leading to its
+	 * {@link AccessParentFunction#resolveDraft(TLObject, BoundCommandGroup) draft parents}. The
+	 * roles the person holds there are checked, as for an attribute of a persistent object
+	 * delegating its access decision. One of the parents admitting the person suffices.
 	 * </p>
+	 *
+	 * @param visiting
+	 *        The objects on the path to the given one, an object reached again closes a cycle.
 	 */
-	private static TLObject draftParent(AccessParentFunction parent, TLObject draft) {
-		if (parent.getRelation() instanceof ContainerRelation && draft.tContainerReference() == null) {
-			return draft.tContainer();
+	private boolean isAllowedInitial(Person person, TLObject current, BoundCommandGroup operation,
+			Set<BoundedRole> requiredPartRoles, Set<TLObject> visiting) {
+		if (isCommitted(current)) {
+			return holdsRole(person, current, operation, requiredPartRoles, new HashSet<>());
 		}
-		return parent.resolve(draft);
+		AccessParentFunction parent = accessParentOf(current);
+		if (parent == null || !parent.delegates(operation)) {
+			// An object deciding the operation by its own roles: the roles it will hold are
+			// computed only once it exists.
+			return true;
+		}
+		if (!visiting.add(current)) {
+			Logger.error("The access parents of " + current + " form a cycle, access is denied.",
+				SecurityConfigurationService.class);
+			return false;
+		}
+		try {
+			Iterable<TLObject> parents =
+				current.tTransient() ? parent.resolveDraft(current, operation) : parent.resolveAll(current, operation);
+			boolean leadsAnywhere = false;
+			for (TLObject next : parents) {
+				leadsAnywhere = true;
+				if (isAllowedInitial(person, TLFormObjectBase.editedObject(next), operationOnParent(operation),
+					requiredPartRoles, visiting)) {
+					return true;
+				}
+			}
+			// A free-standing object is not accessible until it is put into a container, which is a
+			// write of the container checked in its own right.
+			return !leadsAnywhere;
+		} finally {
+			visiting.remove(current);
+		}
 	}
 
 	@Override
@@ -2029,9 +2033,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * {@link #compute(AccessDecisionCache, Person, TLObject, BoundCommandGroup)}.
 	 * </p>
 	 * <p>
-	 * An object whose access parents lead back to itself is denied: the memo marks the decision as
-	 * being computed, and reaching that mark again means that the chain of access parents has a
-	 * cycle.
+	 * An object whose access parents lead back to itself is denied along that path: the memo marks
+	 * the decision as being computed, and reaching that mark again means that the chain of access
+	 * parents has a cycle. A denial computed while reaching such a mark is not stored, since the
+	 * decision marked may still allow the operation through another access parent.
 	 * </p>
 	 */
 	private boolean decide(AccessDecisionCache cache, Person person, TLObject instance,
@@ -2046,13 +2051,22 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return decision.booleanValue();
 		}
 		if (cache.isComputing(key)) {
-			Logger.error("The access parents of " + instance + " form a cycle, access is denied.",
+			// A cycle denies along this path only: another access parent may still allow the
+			// operation, see AccessDecisionCache#computingHits().
+			Logger.info("The access parents of " + instance + " form a cycle, the path through it is denied.",
 				SecurityConfigurationService.class);
+			cache.hitComputing();
 			return false;
 		}
+		int hits = cache.computingHits();
 		cache.computing(key);
 		boolean result = compute(cache, person, instance, commandGroup);
-		cache.decided(key, result);
+		if (result || cache.computingHits() == hits) {
+			cache.decided(key, result);
+		} else {
+			// The denial depends on a decision still being computed, which may turn out to allow.
+			cache.forget(key);
+		}
 		return result;
 	}
 
@@ -2062,14 +2076,15 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 *
 	 * <p>
 	 * The operation and each operation implying it on the object, as far as the access parent
-	 * delegates it, is checked on the access parent, mapped by
-	 * {@link #operationOnParent(BoundCommandGroup)}; one of them allowed there allows the
-	 * operation. An access parent delegating every operation decides alone. For an access parent
-	 * restricted to some operations, the roles the person holds on the object itself, granted the
-	 * operation on its type, allow it as well: the type holds a delegated operation only where an
-	 * operation it does not delegate implies it, so that this decides the operations not
-	 * delegated, and the delegated ones (Discover in particular) for a person holding an own grant
-	 * implying them.
+	 * delegates it, is checked on the access parents, mapped by
+	 * {@link #operationOnParent(BoundCommandGroup)}; one of them
+	 * {@link AccessParentFunction#allows(TLObject, BoundCommandGroup, ParentCheck) allowed} by the
+	 * access parents allows the operation. An access parent delegating every operation decides
+	 * alone. For an access parent restricted to some operations, the roles the person holds on the
+	 * object itself, granted the operation on its type, allow it as well: the type holds a
+	 * delegated operation only where an operation it does not delegate implies it, so that this
+	 * decides the operations not delegated, and the delegated ones (Discover in particular) for a
+	 * person holding an own grant implying them.
 	 * </p>
 	 */
 	private boolean compute(AccessDecisionCache cache, Person person, TLObject instance,
@@ -2081,25 +2096,17 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			Set<BoundCommandGroup> operations = new LinkedHashSet<>();
 			operations.add(commandGroup);
 			operations.addAll(getObjectOperations(instance).getImplying(commandGroup));
-			TLObject parentObject = null;
+			ParentCheck check = (parentObject, operation) -> {
+				if (!CheckedObjects.isStored(parentObject)) {
+					// The parent is not access controlled, or it is being built in the current
+					// transaction and has no computed roles yet (see isAllowed(Person, TLObject,
+					// BoundCommandGroup)): its decision is not meaningful, and the object follows it.
+					return true;
+				}
+				return decide(cache, person, parentObject, operationOnParent(operation));
+			};
 			for (BoundCommandGroup operation : operations) {
-				if (!parent.delegates(operation)) {
-					continue;
-				}
-				if (parentObject == null) {
-					parentObject = parent.resolve(instance);
-					if (parentObject == null) {
-						// The relation leads nowhere: nobody decides for the object on the parent.
-						break;
-					}
-					if (!CheckedObjects.isStored(parentObject)) {
-						// The parent is not access controlled, or it is being built in the current
-						// transaction and has no computed roles yet (see isAllowed(Person, TLObject,
-						// BoundCommandGroup)): its decision is not meaningful, and the object follows it.
-						return true;
-					}
-				}
-				if (decide(cache, person, parentObject, operationOnParent(operation))) {
+				if (parent.delegates(operation) && parent.allows(instance, operation, check)) {
 					return true;
 				}
 			}
@@ -2141,31 +2148,24 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	@Override
-	public TLObject getRoleHolder(TLObject object, BoundCommandGroup operation) {
-		return roleHolder(object, operation);
+	public Set<TLObject> getRoleHolders(TLObject object, BoundCommandGroup operation) {
+		Set<TLObject> result = new LinkedHashSet<>();
+		collectRoleHolders(object, operation, new HashSet<>(), result);
+		return result;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 *
-	 * @implNote Follows the chain of access parents as
-	 *           {@link #getRoleHolder(TLObject, BoundCommandGroup)} does and maps the operation at
-	 *           every step as {@link #isAllowed(Person, TLObject, BoundCommandGroup)} does.
+	 * @implNote Maps the operation as {@link #isAllowed(Person, TLObject, BoundCommandGroup)} does
+	 *           when the access parent of the object delegates it. The mapping does not change the
+	 *           operation any further along the chains of access parents, so that the first step
+	 *           decides it for every chain.
 	 */
 	@Override
 	public BoundCommandGroup getOperationOnRoleHolder(TLObject object, BoundCommandGroup operation) {
-		Set<TLObject> seen = new HashSet<>();
-		TLObject current = object;
-		BoundCommandGroup result = operation;
-		while (current != null && seen.add(current)) {
-			AccessParentFunction parent = accessParentOf(current);
-			if (parent == null || !parent.delegates(result)) {
-				break;
-			}
-			result = operationOnParent(result);
-			current = parent.resolve(current);
-		}
-		return result;
+		return AccessParentFunction.isDelegated(accessParentOf(object), operation) ? operationOnParent(operation)
+			: operation;
 	}
 
 	/**
@@ -2216,19 +2216,10 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		Set<BoundCommandGroup> operations = new LinkedHashSet<>();
 		operations.add(operation);
 		operations.addAll(getObjectOperations(instance).getImplying(operation));
-		TLObject parentObject = null;
 		for (BoundCommandGroup delegated : operations) {
-			if (!parent.delegates(delegated)) {
-				continue;
+			for (TLObject parentObject : parent.resolveAll(instance, delegated)) {
+				collectAdmittingRoles(parentObject, operationOnParent(delegated), visiting, result);
 			}
-			if (parentObject == null) {
-				parentObject = parent.resolve(instance);
-				if (parentObject == null) {
-					// The relation leads nowhere: nobody decides for the object on the parent.
-					break;
-				}
-			}
-			collectAdmittingRoles(parentObject, operationOnParent(delegated), visiting, result);
 		}
 		if (parent.getOperations() != null) {
 			// The object decides the operations not delegated by its own roles, see compute().
@@ -2252,29 +2243,62 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	/**
-	 * The object whose roles decide the given operation on the given object: the first object of
-	 * its chain of access parents that does not delegate the operation (mapped by
+	 * Adds the objects whose roles decide the given operation on the given object: the first
+	 * objects of its chains of access parents that do not delegate the operation (mapped by
 	 * {@link #operationOnParent(BoundCommandGroup)} at every step), or the object itself when it
-	 * has no access parent.
-	 * 
-	 * @return <code>null</code> when the chain leads nowhere or runs in a cycle.
+	 * does not delegate the operation. A chain leading nowhere or running in a cycle adds nothing.
+	 *
+	 * @param visiting
+	 *        The objects on the path to the given one, an object reached again closes a cycle.
 	 */
-	private TLObject roleHolder(TLObject instance, BoundCommandGroup operation) {
-		Set<TLObject> seen = new HashSet<>();
-		TLObject current = instance;
-		BoundCommandGroup currentOperation = operation;
-		while (seen.add(current)) {
-			AccessParentFunction parent = accessParentOf(current);
-			if (parent == null || !parent.delegates(currentOperation)) {
-				return current;
-			}
-			currentOperation = operationOnParent(currentOperation);
-			current = parent.resolve(current);
-			if (current == null) {
-				return null;
-			}
+	private void collectRoleHolders(TLObject instance, BoundCommandGroup operation, Set<TLObject> visiting,
+			Set<TLObject> result) {
+		AccessParentFunction parent = accessParentOf(instance);
+		if (parent == null || !parent.delegates(operation)) {
+			result.add(instance);
+			return;
 		}
-		return null;
+		if (!visiting.add(instance)) {
+			return;
+		}
+		for (TLObject parentObject : parent.resolveAll(instance, operation)) {
+			collectRoleHolders(parentObject, operationOnParent(operation), visiting, result);
+		}
+		visiting.remove(instance);
+	}
+
+	/**
+	 * Whether the given person holds one of the given roles on an object deciding the given
+	 * operation on the given object.
+	 *
+	 * <p>
+	 * An object deciding the operation for itself is checked by the roles held on itself. For an
+	 * object delegating the operation, the roles held on its access parents are checked instead,
+	 * combined as the access parent {@link AccessParentFunction#allows(TLObject, BoundCommandGroup,
+	 * ParentCheck) combines its decisions}; for the usual combination by OR, a role held on one of
+	 * the {@link #getRoleHolders(TLObject, BoundCommandGroup) role holders} suffices.
+	 * </p>
+	 *
+	 * @param visiting
+	 *        The objects on the path to the given one, an object reached again closes a cycle,
+	 *        which admits nobody.
+	 */
+	private boolean holdsRole(Person person, TLObject instance, BoundCommandGroup operation,
+			Set<BoundedRole> roles, Set<TLObject> visiting) {
+		AccessParentFunction parent = accessParentOf(instance);
+		if (parent == null || !parent.delegates(operation)) {
+			return instance instanceof BoundObject holder && accessManager().hasRole(person, holder, roles);
+		}
+		if (!visiting.add(instance)) {
+			return false;
+		}
+		try {
+			return parent.allows(instance, operation,
+				(parentObject, delegated) -> holdsRole(person, parentObject, operationOnParent(delegated), roles,
+					visiting));
+		} finally {
+			visiting.remove(instance);
+		}
 	}
 
 	@Override
@@ -2324,12 +2348,8 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return false;
 		}
 		// An object delegating the operation to an access parent holds no roles for it: the roles
-		// the person holds on the object deciding the operation for it are checked instead.
-		TLObject roleHolder = roleHolder(instance, commandGroup);
-		if (!(roleHolder instanceof BoundObject holder)) {
-			return false;
-		}
-		return accessManager().hasRole(person, holder, requiredPartRoles);
+		// the person holds on the objects deciding the operation for it are checked instead.
+		return holdsRole(person, instance, commandGroup, requiredPartRoles, new HashSet<>());
 	}
 
 	@Override
@@ -2358,11 +2378,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	/**
 	 * {@inheritDoc}
 	 *
-	 * @implNote A type whose access parent delegates {@link SimpleBoundCommandGroup#CREATE} is
-	 *           decided by {@link SimpleBoundCommandGroup#WRITE} on the context; any other type,
-	 *           also one whose access parent is restricted to operations not including
-	 *           {@link SimpleBoundCommandGroup#CREATE}, by its own create grants, checked on the
-	 *           context.
+	 * @implNote A type whose access parent {@link AccessParentFunction#delegatesCreation()
+	 *           delegates the creation} is decided by {@link SimpleBoundCommandGroup#WRITE} on the
+	 *           context; any other type, also one whose access parent is restricted to operations
+	 *           not including {@link SimpleBoundCommandGroup#CREATE}, by its own create grants,
+	 *           checked on the context.
 	 */
 	@Override
 	public boolean isAllowedCreate(Person person, TLClass type, TLObject context) {
@@ -2385,7 +2405,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return true;
 		}
 		AccessParentFunction accessParent = getAccessParent(type);
-		if (accessParent != null && accessParent.delegates(SimpleBoundCommandGroup.CREATE)) {
+		if (accessParent != null && accessParent.delegatesCreation()) {
 			// Creating an object that delegates the creation to its access parent is writing the
 			// object it is created in, which is its access parent by construction for a composition
 			// part.

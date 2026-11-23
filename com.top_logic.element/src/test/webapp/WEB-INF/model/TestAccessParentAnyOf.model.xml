@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<!-- Access parents with several candidates, see TestAccessParentAnyOf. -->
+		<module name="TestAccessParentAnyOf">
+			<types>
+				<!-- Role rules and grants: the owner may read, write, create and delete it, the reader may read it. -->
+				<class name="Folder">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+						<reference name="reader"
+							type="tl.accounts:Person"
+						/>
+						<reference name="parts"
+							composite="true"
+							multiple="true"
+							type="Part"
+						/>
+						<reference name="singles"
+							composite="true"
+							multiple="true"
+							type="Single"
+						/>
+						<reference name="directs"
+							composite="true"
+							multiple="true"
+							type="Direct"
+						/>
+						<reference name="mixed"
+							composite="true"
+							multiple="true"
+							type="Mixed"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Role rules and grants: the reader may read it, the editor may read and write it. -->
+				<class name="Document">
+					<attributes>
+						<reference name="reader"
+							type="tl.accounts:Person"
+						/>
+						<reference name="editor"
+							type="tl.accounts:Person"
+						/>
+						<reference name="author"
+							type="Contact"
+						/>
+						<reference name="reviewers"
+							multiple="true"
+							type="Contact"
+						/>
+						<reference name="relatedParts"
+							multiple="true"
+							type="Part"
+						/>
+						<reference name="relatedMixed"
+							multiple="true"
+							type="Mixed"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Role rule and grant: the owner may read it. -->
+				<class name="Task">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+						<reference name="assignee"
+							type="Contact"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Delegates Read to every document and task referring to it. -->
+				<class name="Contact">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Delegates every operation to its folder, and Read to every document relating it. -->
+				<class name="Part">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Delegates Write to its folder, and Read to every document relating it. -->
+				<class name="Mixed"/>
+
+				<!-- Delegates to its folder through an any-of with a single candidate. -->
+				<class name="Single"/>
+
+				<!-- Delegates to its folder directly. -->
+				<class name="Direct"/>
+
+				<!-- Delegates to the next node or to an alternative folder. -->
+				<class name="Node">
+					<attributes>
+						<reference name="next"
+							type="Node"
+						/>
+						<reference name="alt"
+							type="Folder"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Delegates to each of its folders. -->
+				<class name="Holder">
+					<attributes>
+						<reference name="owners"
+							multiple="true"
+							type="Folder"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Delegates to both of its folders at once, through the test combinator. -->
+				<class name="Both">
+					<attributes>
+						<reference name="first"
+							type="Folder"
+						/>
+						<reference name="second"
+							type="Folder"
+						/>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

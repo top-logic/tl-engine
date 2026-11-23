@@ -40,8 +40,8 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * @param decidingObject
  *        The object whose roles decide on reading the object: the end of the chain of access
  *        parents of the object delegating {@link SimpleBoundCommandGroup#READ}, or the object
- *        itself when its type decides for itself, see
- *        {@link ModelAccessRights#getRoleHolder(TLObject, BoundCommandGroup)}. Unless the access
+ *        itself when its type decides for itself, see the first of
+ *        {@link ModelAccessRights#getRoleHolders(TLObject, BoundCommandGroup)}. Unless the access
  *        parent is restricted to some operations, it decides every operation. The object deciding
  *        a single operation is its {@link OperationDecision#roleHolder() role holder}.
  *        <code>null</code> when the chain of access parents leads nowhere or runs in a cycle.

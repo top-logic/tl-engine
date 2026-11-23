@@ -165,8 +165,8 @@ public class TestScriptAccessParent extends BasicTestCase {
 			allowed(_responsible, _restrictedTask, SimpleBoundCommandGroup.WRITE));
 		assertFalse("Delete is not delegated, and the task grants it to nobody.",
 			allowed(_responsible, _restrictedTask, SimpleBoundCommandGroup.DELETE));
-		assertSame(_restrictedTask,
-			ModelAccessRights.getInstance().getRoleHolder(_restrictedTask, SimpleBoundCommandGroup.WRITE));
+		assertEquals(Set.of(_restrictedTask),
+			ModelAccessRights.getInstance().getRoleHolders(_restrictedTask, SimpleBoundCommandGroup.WRITE));
 	}
 
 	public void testScriptNavigatesThroughUnreadableObject() {

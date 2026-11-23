@@ -25,8 +25,8 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
  *        {@link ModelAccessRights#getOperationOnRoleHolder(TLObject, BoundCommandGroup)}. The
  *        operation itself for an object deciding the operation for itself.
  * @param roleHolder
- *        The object whose roles decide the operation, see
- *        {@link ModelAccessRights#getRoleHolder(TLObject, BoundCommandGroup)}. It is the
+ *        The object whose roles decide the operation, see the first of
+ *        {@link ModelAccessRights#getRoleHolders(TLObject, BoundCommandGroup)}. It is the
  *        {@link AccessExplanation#decidingObject() deciding object} of the explanation, unless the
  *        access parent of the object is restricted to some operations. <code>null</code> when the
  *        chain of access parents leads nowhere or runs in a cycle.

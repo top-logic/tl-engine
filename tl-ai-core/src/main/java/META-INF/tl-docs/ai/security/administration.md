@@ -204,7 +204,7 @@ Stored agents and skills (`tl.ai.core:Agent`, `tl.ai.core:Skill`) are under the 
 
 Nothing is inherited, on purpose. **A specialization starts closed**: without rules of the application, nobody but an administrator reads it. **A specialization in a composition follows its container**: a composition part with no rule of its own takes its container as access parent ([access configuration](doc:access-configuration#access-parent-delegating-the-whole-decision)), so whoever reads the container reads its agents, and whoever writes the container creates, changes and deletes them. An inherited role source would switch that default off. The `<part>` grants apply to the specializations as well; an application gives `Write` on the two attributes to another role with a `<grant>` of its own on the same `<part>`.
 
-The `Read` grant makes the instructions of a stored agent (`systemPrompt`) and the text of a skill (`content`) readable for the group `user`, also with TL-Script and with a data tool of an agent. An application that hides them adds a `<part>` grant; a run of the agent still gets its instructions, since the engine reads them without the rights of the account:
+The `Read` grant makes the instructions of a stored agent (`systemPrompt`) and the text of a skill (`content`) readable for the group `user`, also with TL-Script and with a data tool of an agent. An application that hides them adds a `<part>` grant; a run of the agent still gets its instructions, since the engine reads them without the rights of the account, and the authoring tools of an agent hand out only the attributes its run may read:
 
 ```xml
 <part name="tl.ai.core:Agent#systemPrompt">
@@ -215,7 +215,7 @@ The `Read` grant makes the instructions of a stored agent (`systemPrompt`) and t
 </part>
 ```
 
-**Names are global.** `UniqueNameConstraint` refuses, at commit, a name that another stored record of the base type has (in any case of the letters, also a record the person may not read), and the name of a configured agent for a stored agent and of a configured skill for a stored skill, unless an administrator or a system context saves it. A record that already has such a name is refused at its next change by a person who is no administrator; rename it.
+**Names are global.** `UniqueNameConstraint` refuses, at commit, a name that another stored record of the base type has (in any case of the letters, also a record the person may not read), a name that starts or ends with a blank, and the name of a configured agent for a stored agent and of a configured skill for a stored skill, unless an administrator or a system context saves it. The lookup by name (`AgentDefinitionQuery.findStoredAgent`, `findStoredSkill`) filters what the database finds with the same comparison, so that a collation that ignores accents or trailing blanks cannot make one record answer for another name. A record that already has such a name is refused at its next change by a person who is no administrator; rename it.
 
 ### Recipe: the agents of a team
 

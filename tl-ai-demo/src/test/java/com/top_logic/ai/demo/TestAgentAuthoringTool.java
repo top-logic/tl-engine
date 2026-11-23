@@ -12,14 +12,16 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
-import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.PersonManagerSetup;
 
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.ai.core.agent.ToolContext;
 import com.top_logic.ai.core.model.Skill;
 import com.top_logic.ai.core.tools.authoring.AgentAuthoringTool;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -39,6 +41,18 @@ public class TestAgentAuthoringTool extends BasicTestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		_tool = new AgentAuthoringTool();
+	}
+
+	/**
+	 * Runs each test as an administrator: the tool changes nothing without a user account.
+	 */
+	@Override
+	protected void runTest() throws Throwable {
+		TLContextManager.<Void, Throwable, RuntimeException> inPersonContext(PersonManager.getManager().getRoot(),
+			() -> {
+				super.runTest();
+				return null;
+			});
 	}
 
 	public void testCreateGetListUpdateDeleteSkill() throws Exception {
@@ -129,7 +143,7 @@ public class TestAgentAuthoringTool extends BasicTestCase {
 	}
 
 	public static Test suite() {
-		return KBSetup.getSingleKBTest(
+		return PersonManagerSetup.createPersonManagerSetup(
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestAgentAuthoringTool.class),
 				ModelService.Module.INSTANCE));

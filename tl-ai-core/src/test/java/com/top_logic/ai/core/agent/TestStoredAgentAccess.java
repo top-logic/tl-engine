@@ -6,7 +6,9 @@
 package com.top_logic.ai.core.agent;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import junit.framework.Test;
@@ -27,12 +29,18 @@ import com.top_logic.ai.core.tools.authoring.AgentAuthoringTool;
 import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.base.services.InitialGroupManager;
 import com.top_logic.base.services.InitialRolesManager;
+import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.TLContextManager;
@@ -66,7 +74,11 @@ public class TestStoredAgentAccess extends BasicTestCase {
 
 	private static final String NEW_AGENT = "stored-access-new-agent";
 
-	private static final List<String> AGENT_NAMES = List.of(STORED_AGENT, CONFIGURED_AGENT_OTHER_CASE, NEW_AGENT);
+	/** A name with an accent, which a database may compare equal to the name without it. */
+	private static final String ACCENTED_AGENT = "stored-access-ch\u00e4t";
+
+	private static final List<String> AGENT_NAMES =
+		List.of(STORED_AGENT, CONFIGURED_AGENT_OTHER_CASE, NEW_AGENT, ACCENTED_AGENT, "stored-access-blank ");
 
 	private static final List<String> SKILL_NAMES = List.of(STORED_SKILL, CONFIGURED_SKILL_OTHER_CASE);
 
@@ -152,20 +164,28 @@ public class TestStoredAgentAccess extends BasicTestCase {
 
 	/**
 	 * A stored record that the reader may not read and that has the name of a configured agent leaves
-	 * the configured agent in its place.
+	 * the configured agent in its place, while it replaces the configured agent for a reader of it.
+	 *
+	 * <p>
+	 * Asked through the list, which merges in Java: what the database finds for a name depends on
+	 * its collation, and the list does not.
+	 * </p>
 	 */
 	public void testAnUnreadableRecordLeavesTheConfiguredAgent() {
 		ThreadContext.inSystemContext(TestStoredAgentAccess.class, () -> createAgent(CONFIGURED_AGENT_OTHER_CASE));
 
-		assertEquals(AgentSource.KB_OVERRIDE, query().findAgentByName(CONFIGURED_AGENT, rights(member)).source());
+		assertEquals(AgentSource.KB_OVERRIDE, sourceOf(CONFIGURED_AGENT, query().getAllAgents(rights(member))));
+		assertEquals(AgentSource.CONFIG, sourceOf(CONFIGURED_AGENT, query().getAllAgents(rights(outsider))));
 		assertEquals(AgentSource.CONFIG, query().findAgentByName(CONFIGURED_AGENT, rights(outsider)).source());
 	}
 
 	/** A person who is no administrator cannot take the name of a configured agent or skill. */
 	public void testOnlyAnAdministratorOrTheSystemTakesAConfiguredName() {
-		assertRefused(() -> asPerson(member, () -> createAgent(CONFIGURED_AGENT_OTHER_CASE)));
+		assertRefused(I18NConstants.DUPLICATE_NAME_ERROR__NAME,
+			() -> asPerson(member, () -> createAgent(CONFIGURED_AGENT_OTHER_CASE)));
 		assertNull(storedAgent(CONFIGURED_AGENT_OTHER_CASE));
-		assertRefused(() -> asPerson(member, () -> createSkill(CONFIGURED_SKILL_OTHER_CASE)));
+		assertRefused(I18NConstants.DUPLICATE_NAME_ERROR__NAME,
+			() -> asPerson(member, () -> createSkill(CONFIGURED_SKILL_OTHER_CASE)));
 
 		asPerson(administrator, () -> createAgent(CONFIGURED_AGENT_OTHER_CASE));
 		assertNotNull(storedAgent(CONFIGURED_AGENT_OTHER_CASE));
@@ -175,11 +195,33 @@ public class TestStoredAgentAccess extends BasicTestCase {
 		assertNotNull(storedSkill(CONFIGURED_SKILL_OTHER_CASE));
 	}
 
-	/** The name of a record the person may not read is taken all the same: names are global. */
-	public void testTheNameOfAnUnreadableRecordIsTaken() {
-		assertNull("Precondition: the outsider does not know the record.",
-			query().findAgentByName(STORED_AGENT, rights(outsider)));
-		assertRefused(() -> asPerson(outsider, () -> createAgent(STORED_AGENT.toUpperCase())));
+	/** A name with a blank at its start or end is refused, for everybody. */
+	public void testANameWithAnOuterBlankIsRefused() {
+		assertRefused(I18NConstants.OUTER_BLANK_ERROR__NAME,
+			() -> ThreadContext.inSystemContext(TestStoredAgentAccess.class, () -> createAgent("stored-access-blank ")));
+		assertNull(storedAgent("stored-access-blank "));
+	}
+
+	/**
+	 * The lookup by name compares like the name rule, whatever the database answers: a record whose
+	 * name differs by more than the case is not the record of that name.
+	 */
+	public void testTheLookupComparesLikeTheNameRule() {
+		ThreadContext.inSystemContext(TestStoredAgentAccess.class, () -> createAgent(ACCENTED_AGENT));
+		Agent accented = storedAgent(ACCENTED_AGENT);
+
+		assertNull(AgentDefinitionQuery.named(List.of(accented), "stored-access-chat"));
+		assertNull(AgentDefinitionQuery.named(List.of(accented), ACCENTED_AGENT + " "));
+		assertSame(accented, AgentDefinitionQuery.named(List.of(accented), ACCENTED_AGENT.toUpperCase()));
+		assertNull(query().findStoredAgent("stored-access-chat"));
+		assertSame(accented, query().findStoredAgent(ACCENTED_AGENT));
+	}
+
+	/** A form keeps the names a record holds, also those its editor may not know. */
+	public void testTheOptionsKeepTheHeldNames() {
+		assertEquals(List.of("known", "held"),
+			AllAgentNamesGenerator.withHeld(new ArrayList<>(List.of("known")), List.of("known", "held")));
+		assertEquals(List.of("known"), AllAgentNamesGenerator.withHeld(new ArrayList<>(List.of("known")), null));
 	}
 
 	/** The authoring tool asks the model rights of the run for every record. */
@@ -210,18 +252,93 @@ public class TestStoredAgentAccess extends BasicTestCase {
 		assertTrue(byAdministrator, byAdministrator.contains("\"success\":true"));
 	}
 
-	private static void assertRefused(Runnable commit) {
+	/** Who may create an agent still may not set its MCP servers: they are the administrator's. */
+	public void testTheMcpServersOfANewAgentAreTheAdministrators() {
+		AgentAuthoringTool tool = new AgentAuthoringTool();
+		ModelSecurity mayCreate = new Narrowed(rights(member), true, null);
+
+		String withServer = answerAs(member, () -> tool.createAgent(NEW_AGENT, null, "You help.", null,
+			List.of("some-server"), null, null, runOf(mayCreate)));
+		assertTrue("Refused for the attribute: " + withServer, withServer.contains("mcpServers"));
+		assertNull(storedAgent(NEW_AGENT));
+
+		String withoutServer = answerAs(member,
+			() -> tool.createAgent(NEW_AGENT, null, "You help.", null, null, null, null, runOf(mayCreate)));
+		assertTrue(withoutServer, withoutServer.contains("\"success\":true"));
+	}
+
+	/** The tool hands out an attribute only where the run may read it. */
+	public void testTheToolAnswersOnlyTheReadableAttributes() {
+		AgentAuthoringTool tool = new AgentAuthoringTool();
+		ModelSecurity withoutInstructions =
+			new Narrowed(rights(member), false, TlAiCoreFactory.getSystemPromptAgentAttr());
+
+		String detail = answerAs(member, () -> tool.getAgent(STORED_AGENT, runOf(withoutInstructions)));
+		assertTrue(detail, detail.contains("\"exists\":true"));
+		assertFalse(detail, detail.contains("The instructions of a stored agent."));
+		assertTrue(answerAs(member, () -> tool.getAgent(STORED_AGENT, runOf(member)))
+			.contains("The instructions of a stored agent."));
+	}
+
+	/** The tool changes nothing without a user account. */
+	public void testTheToolRefusesASystemContext() {
+		AgentAuthoringTool tool = new AgentAuthoringTool();
+		String created = ThreadContext.inSystemContext(TestStoredAgentAccess.class,
+			() -> tool.createAgent(NEW_AGENT, null, "You help.", null, null, null, null, runOf(administrator)));
+		assertTrue(created, created.contains("without a user account"));
+		assertNull(storedAgent(NEW_AGENT));
+	}
+
+	/**
+	 * Asserts that the given commit is refused by a rule with the given message, in the chain of the
+	 * exception or in the arguments of a message there.
+	 */
+	private static void assertRefused(ResKey1 rule, Runnable commit) {
+		String expected = rule.fill("").getKey();
 		try {
 			commit.run();
-		} catch (RuntimeException expected) {
-			return;
+		} catch (RuntimeException ex) {
+			for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+				if (cause instanceof I18NFailure failure && mentions(failure.getErrorKey(), expected)) {
+					return;
+				}
+			}
+			throw new AssertionError("Refused for another reason than " + expected + ".", ex);
 		}
-		fail("The commit must be refused by the name rule.");
+		fail("The commit must be refused by the rule " + expected + ".");
+	}
+
+	private static boolean mentions(ResKey key, String expected) {
+		if (key == null) {
+			return false;
+		}
+		if (key.hasKey() && expected.equals(key.getKey())) {
+			return true;
+		}
+		for (Object argument : key.arguments()) {
+			if (argument instanceof ResKey nested && mentions(nested, expected)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static AgentSource sourceOf(String name, Iterable<AgentDefinition> agents) {
+		for (AgentDefinition agent : agents) {
+			if (agent.name().equalsIgnoreCase(name)) {
+				return agent.source();
+			}
+		}
+		return null;
 	}
 
 	/** A run of the given account whose tool policy permits everything. */
 	private static ToolContext runOf(Person account) {
-		ModelSecurity rights = rights(account);
+		return runOf(rights(account));
+	}
+
+	/** A run with the given model rights whose tool policy permits everything. */
+	private static ToolContext runOf(ModelSecurity rights) {
 		SecurityContext security = new SecurityContext() {
 			@Override
 			public boolean hasToolPermission(Tool tool) {
@@ -327,6 +444,80 @@ public class TestStoredAgentAccess extends BasicTestCase {
 				tx.commit();
 			}
 		});
+	}
+
+	/**
+	 * The model rights of an account, with Create granted on top or the Read of one attribute taken
+	 * away: shapes an application configures, which the shipped definition does not have.
+	 */
+	private static final class Narrowed implements ModelSecurity {
+
+		private final ModelSecurity _base;
+
+		private final boolean _mayCreate;
+
+		private final TLStructuredTypePart _hidden;
+
+		Narrowed(ModelSecurity base, boolean mayCreate, TLStructuredTypePart hidden) {
+			_base = base;
+			_mayCreate = mayCreate;
+			_hidden = hidden;
+		}
+
+		@Override
+		public boolean canRead(TLObject obj) {
+			return _base.canRead(obj);
+		}
+
+		@Override
+		public boolean canRead(TLObject obj, TLStructuredTypePart attribute) {
+			return !attribute.equals(_hidden) && _base.canRead(obj, attribute);
+		}
+
+		@Override
+		public boolean canWrite(TLObject obj) {
+			return _base.canWrite(obj);
+		}
+
+		@Override
+		public boolean canWrite(TLObject obj, TLStructuredTypePart attribute) {
+			return _base.canWrite(obj, attribute);
+		}
+
+		@Override
+		public boolean canDelete(TLObject obj) {
+			return _base.canDelete(obj);
+		}
+
+		@Override
+		public boolean canCreate(TLClass type, TLObject context) {
+			return _mayCreate || _base.canCreate(type, context);
+		}
+
+		@Override
+		public boolean canCreate(TLObject parent, TLStructuredTypePart compositionAttribute, TLClass type) {
+			return _mayCreate || _base.canCreate(parent, compositionAttribute, type);
+		}
+
+		@Override
+		public boolean canSetInitial(TLObject draft, TLStructuredTypePart attribute) {
+			return _base.canSetInitial(draft, attribute);
+		}
+
+		@Override
+		public boolean canPerform(TLObject obj, BoundCommandGroup operation) {
+			return _base.canPerform(obj, operation);
+		}
+
+		@Override
+		public <T extends TLObject> List<T> filterReadable(Collection<T> objects) {
+			return _base.filterReadable(objects);
+		}
+
+		@Override
+		public Set<TLClass> accessibleTypes(BoundCommandGroup operation) {
+			return _base.accessibleTypes(operation);
+		}
 	}
 
 	/**

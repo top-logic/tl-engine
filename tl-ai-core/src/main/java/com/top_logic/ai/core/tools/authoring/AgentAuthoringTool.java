@@ -24,6 +24,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -32,13 +33,12 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.TLContext;
 import com.top_logic.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.ai.core.agent.ToolContext;
 import com.top_logic.ai.core.model.Agent;
 import com.top_logic.ai.core.model.Skill;
 import com.top_logic.ai.core.model.TlAiCoreFactory;
-import com.top_logic.ai.core.model.impl.AgentBase;
-import com.top_logic.ai.core.model.impl.SkillBase;
 import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.security.ToolSecurityException;
 import com.top_logic.ai.core.tools.I18NConstants;
@@ -66,9 +66,10 @@ import com.top_logic.ai.core.tools.util.DataClassSerializer;
  * Every method checks the model rights of the run ({@link ToolContext#modelSecurity()}), as a form
  * of the application would: a stored agent or skill the run may not read is unknown, and creating,
  * changing and deleting one needs Create, Write and Delete. A change of an attribute with rights of
- * its own (the MCP servers of an agent) needs Write on that attribute. A name is free only when no
- * stored record has it, also one the run may not read, because names are unique in the whole
- * application.
+ * its own (the MCP servers of an agent) needs Write on that attribute, and an answer holds only the
+ * attributes the run may read. A name is free only when no stored record has it, also one the run
+ * may not read, because names are unique in the whole application. A change without a user account
+ * or in a system context is refused.
  * </p>
  */
 public class AgentAuthoringTool {
@@ -135,14 +136,15 @@ public class AgentAuthoringTool {
 	private OperationResult doCreateSkill(String name, String description, String content,
 			List<String> tools, ModelSecurity rights) {
 		requireName(name, "Skill");
-		if (findSkill(name) != null) {
-			throw new IllegalArgumentException("A skill named '" + name + "' already exists.");
-		}
-		validateSkillTools(tools);
+		// The right first: who may not create a skill learns nothing about the names that exist.
 		if (!rights.canCreate(TlAiCoreFactory.getSkillType(), null)) {
 			throw new ToolSecurityException(SimpleBoundCommandGroup.CREATE,
 				TLModelUtil.qualifiedName(TlAiCoreFactory.getSkillType()));
 		}
+		if (findSkill(name) != null) {
+			throw new IllegalArgumentException("A skill named '" + name + "' already exists.");
+		}
+		validateSkillTools(tools);
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
 				.beginTransaction(ResKey.text("Create skill: " + name))) {
 			Skill skill = TlAiCoreFactory.getInstance().createSkill();
@@ -270,12 +272,17 @@ public class AgentAuthoringTool {
 	 */
 	@ToolMethod(description = "List all application skills", mode = ToolMode.READ, group = ToolGroups.AGENT_META)
 	public String listSkills(ToolContext context) {
+		ModelSecurity rights = context.modelSecurity();
 		SkillListResult result = SkillListResult.create();
-		for (Skill skill : context.modelSecurity().filterReadable(allKBSkills())) {
+		for (Skill skill : rights.filterReadable(allKBSkills())) {
 			SkillSummary summary = SkillSummary.create();
 			summary.setName(skill.getName());
-			summary.setDescription(skill.getDescription());
-			summary.setTools(new ArrayList<>(skill.getTools()));
+			if (rights.canRead(skill, TlAiCoreFactory.getDescriptionSkillAttr())) {
+				summary.setDescription(skill.getDescription());
+			}
+			if (rights.canRead(skill, TlAiCoreFactory.getToolsSkillAttr())) {
+				summary.setTools(new ArrayList<>(skill.getTools()));
+			}
 			result.addSkill(summary);
 		}
 		return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "listSkills()");
@@ -293,16 +300,25 @@ public class AgentAuthoringTool {
 	 */
 	@ToolMethod(description = "Get the full definition of a application skill", mode = ToolMode.READ, group = ToolGroups.AGENT_META)
 	public String getSkill(@P("Skill name") String name, ToolContext context) {
+		ModelSecurity rights = context.modelSecurity();
 		SkillDetail detail = SkillDetail.create();
 		detail.setName(name);
-		Skill skill = readable(findSkill(name), context.modelSecurity());
+		Skill skill = readable(findSkill(name), rights);
 		if (skill == null) {
 			detail.setExists(false);
 		} else {
+			// Each attribute only where the run may read it: an application can hide the text of a
+			// skill with a <part> grant.
 			detail.setExists(true);
-			detail.setDescription(skill.getDescription());
-			detail.setContent(skill.getContent());
-			detail.setTools(new ArrayList<>(skill.getTools()));
+			if (rights.canRead(skill, TlAiCoreFactory.getDescriptionSkillAttr())) {
+				detail.setDescription(skill.getDescription());
+			}
+			if (rights.canRead(skill, TlAiCoreFactory.getContentSkillAttr())) {
+				detail.setContent(skill.getContent());
+			}
+			if (rights.canRead(skill, TlAiCoreFactory.getToolsSkillAttr())) {
+				detail.setTools(new ArrayList<>(skill.getTools()));
+			}
 		}
 		return DataClassSerializer.toJson(detail, AgentAuthoringTool.class, "getSkill()");
 	}
@@ -360,14 +376,15 @@ public class AgentAuthoringTool {
 			List<String> tools, List<String> mcpServers, List<String> skills, List<String> delegations,
 			ModelSecurity rights) {
 		requireName(name, "Agent");
-		if (findAgent(name) != null) {
-			throw new IllegalArgumentException("An agent named '" + name + "' already exists.");
-		}
-		List<String> warnings = validateReferences(tools, skills, delegations, rights);
+		// The right first: who may not create an agent learns nothing about the names that exist.
 		if (!rights.canCreate(TlAiCoreFactory.getAgentType(), null)) {
 			throw new ToolSecurityException(SimpleBoundCommandGroup.CREATE,
 				TLModelUtil.qualifiedName(TlAiCoreFactory.getAgentType()));
 		}
+		if (findAgent(name) != null) {
+			throw new IllegalArgumentException("An agent named '" + name + "' already exists.");
+		}
+		List<String> warnings = validateReferences(tools, skills, delegations, rights);
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
 				.beginTransaction(ResKey.text("Create agent: " + name))) {
 			Agent agent = TlAiCoreFactory.getInstance().createAgent();
@@ -527,11 +544,14 @@ public class AgentAuthoringTool {
 	 */
 	@ToolMethod(description = "List all application agents", mode = ToolMode.READ, group = ToolGroups.AGENT_META)
 	public String listAgents(ToolContext context) {
+		ModelSecurity rights = context.modelSecurity();
 		AgentListResult result = AgentListResult.create();
-		for (Agent agent : context.modelSecurity().filterReadable(allKBAgents())) {
+		for (Agent agent : rights.filterReadable(allKBAgents())) {
 			AgentSummary summary = AgentSummary.create();
 			summary.setName(agent.getName());
-			summary.setDescription(agent.getDescription());
+			if (rights.canRead(agent, TlAiCoreFactory.getDescriptionAgentAttr())) {
+				summary.setDescription(agent.getDescription());
+			}
 			result.addAgent(summary);
 		}
 		return DataClassSerializer.toJson(result, AgentAuthoringTool.class, "listAgents()");
@@ -549,19 +569,34 @@ public class AgentAuthoringTool {
 	 */
 	@ToolMethod(description = "Get the full definition of a application agent", mode = ToolMode.READ, group = ToolGroups.AGENT_META)
 	public String getAgent(@P("Agent name") String name, ToolContext context) {
+		ModelSecurity rights = context.modelSecurity();
 		AgentDetail detail = AgentDetail.create();
 		detail.setName(name);
-		Agent agent = readable(findAgent(name), context.modelSecurity());
+		Agent agent = readable(findAgent(name), rights);
 		if (agent == null) {
 			detail.setExists(false);
 		} else {
+			// Each attribute only where the run may read it: an application can hide the instructions
+			// of an agent with a <part> grant.
 			detail.setExists(true);
-			detail.setDescription(agent.getDescription());
-			detail.setSystemPrompt(agent.getSystemPrompt());
-			detail.setTools(new ArrayList<>(agent.getTools()));
-			detail.setMcpServers(new ArrayList<>(agent.getMcpServers()));
-			detail.setSkills(new ArrayList<>(agent.getSkills()));
-			detail.setDelegations(new ArrayList<>(agent.getDelegations()));
+			if (rights.canRead(agent, TlAiCoreFactory.getDescriptionAgentAttr())) {
+				detail.setDescription(agent.getDescription());
+			}
+			if (rights.canRead(agent, TlAiCoreFactory.getSystemPromptAgentAttr())) {
+				detail.setSystemPrompt(agent.getSystemPrompt());
+			}
+			if (rights.canRead(agent, TlAiCoreFactory.getToolsAgentAttr())) {
+				detail.setTools(new ArrayList<>(agent.getTools()));
+			}
+			if (rights.canRead(agent, TlAiCoreFactory.getMcpServersAgentAttr())) {
+				detail.setMcpServers(new ArrayList<>(agent.getMcpServers()));
+			}
+			if (rights.canRead(agent, TlAiCoreFactory.getSkillsAgentAttr())) {
+				detail.setSkills(new ArrayList<>(agent.getSkills()));
+			}
+			if (rights.canRead(agent, TlAiCoreFactory.getDelegationsAgentAttr())) {
+				detail.setDelegations(new ArrayList<>(agent.getDelegations()));
+			}
 		}
 		return DataClassSerializer.toJson(detail, AgentAuthoringTool.class, "getAgent()");
 	}
@@ -598,8 +633,19 @@ public class AgentAuthoringTool {
 	 * A refusal by the model rights is logged at INFO and not as an error: an account without a
 	 * right is a configured state, not a failure of the application.
 	 * </p>
+	 *
+	 * <p>
+	 * A call without a user account, or in a system context, is refused before anything: there the
+	 * application checks no rights and records no author, as for the object tools.
+	 * </p>
 	 */
 	private static String perform(String operationName, String failure, Supplier<OperationResult> operation) {
+		if (ThreadContext.isSecurityBypassed() || TLContext.currentUser() == null) {
+			return DataClassSerializer.errorToJson(failure + "This call runs without a user account, in a system"
+				+ " context where the application checks no rights and records no author. Agents and skills are"
+				+ " only changed in the name of the user the run acts for. Nothing was changed.",
+				AgentAuthoringTool.class, operationName);
+		}
 		try {
 			return DataClassSerializer.toJson(operation.get(), AgentAuthoringTool.class, operationName);
 		} catch (ToolSecurityException ex) {
@@ -669,9 +715,7 @@ public class AgentAuthoringTool {
 	}
 
 	private static Skill findSkill(String name) {
-		List<Skill> skills = WrapperFactory.getWrappersByAttribute(
-			AgentDefinitionQuery.SKILL_TABLE, PersistencyLayer.getKnowledgeBase(), SkillBase.NAME_ATTR, name);
-		return skills.isEmpty() ? null : skills.get(0);
+		return AgentDefinitionQuery.getInstance().findStoredSkill(name);
 	}
 
 	private static Collection<Skill> allKBSkills() {
@@ -680,9 +724,7 @@ public class AgentAuthoringTool {
 	}
 
 	private static Agent findAgent(String name) {
-		List<Agent> agents = WrapperFactory.getWrappersByAttribute(
-			AgentDefinitionQuery.AGENT_TABLE, PersistencyLayer.getKnowledgeBase(), AgentBase.NAME_ATTR, name);
-		return agents.isEmpty() ? null : agents.get(0);
+		return AgentDefinitionQuery.getInstance().findStoredAgent(name);
 	}
 
 	private static Collection<Agent> allKBAgents() {

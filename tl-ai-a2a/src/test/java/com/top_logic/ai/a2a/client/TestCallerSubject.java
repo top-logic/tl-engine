@@ -112,12 +112,6 @@ public class TestCallerSubject extends BasicTestCase {
 		super.tearDown();
 	}
 
-	/** Precondition: the fixture gives the two accounts different rights on the subject. */
-	public void testRightsOnTheSubject() {
-		assertTrue(new ModelAccessRightsSecurity(owner).canRead(subject));
-		assertFalse(new ModelAccessRightsSecurity(stranger).canRead(subject));
-	}
-
 	/** The control case: a run whose account may read the subject names it to the remote agent. */
 	public void testReadableSubjectIsSent() {
 		askAlpha(owner);
@@ -128,6 +122,9 @@ public class TestCallerSubject extends BasicTestCase {
 
 	/** A run whose account may not read the subject does not name it to the remote agent. */
 	public void testUnreadableSubjectIsNotSent() {
+		assertFalse("Precondition: the run's account may not read the subject.",
+			new ModelAccessRightsSecurity(stranger).canRead(subject));
+
 		askAlpha(stranger);
 
 		assertNull("The caller sent the subject of its conversation, which its account may not read: "

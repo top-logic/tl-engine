@@ -324,10 +324,10 @@ public class A2AClientTools {
 	 * The subject of the run, which another application may be told.
 	 *
 	 * <p>
-	 * Taken from the run's security context, not from its session: {@code RunSecurity} has removed a
-	 * subject the run's account may not read there, and the session may hold one - a page writes the
-	 * object it shows onto a new conversation, and rights change. It is also the subject the agent
-	 * itself was told.
+	 * Taken from the run's security context, not from its session:
+	 * {@link com.top_logic.ai.core.security.RunSecurity} has removed a subject the run's account may
+	 * not read there, and the session may hold one - a page writes the object it shows onto a new
+	 * conversation, and rights change. It is also the subject the agent itself was told.
 	 * </p>
 	 */
 	private static TLObject subjectOf(SecurityContext security) {

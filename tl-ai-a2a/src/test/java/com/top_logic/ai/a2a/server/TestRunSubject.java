@@ -25,11 +25,16 @@ import com.top_logic.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.ai.core.execution.model.AgentSession;
 import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
+import com.top_logic.ai.core.security.ReadFilter;
+import com.top_logic.ai.core.session.ConversationLog;
+import com.top_logic.ai.core.session.Part;
+import com.top_logic.ai.core.session.Turn;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.model.ModelService;
@@ -72,15 +77,9 @@ public class TestRunSubject extends BasicTestCase {
 		HistoryUtils.updateSessionRevision();
 	}
 
-	/** Precondition: the fixture gives the two accounts different rights on the subject. */
-	public void testRightsOnTheSubject() {
-		assertTrue(new ModelAccessRightsSecurity(owner).canRead(subject));
-		assertFalse(new ModelAccessRightsSecurity(stranger).canRead(subject));
-	}
-
 	/** The control case: an account that may read the subject gets it on the session and in the answer. */
 	public void testReadableSubjectIsKept() throws Exception {
-		A2ATask task = runTask(owner, "ctx-readable");
+		A2ATask task = runTask(owner, "ctx-readable").task();
 
 		assertNotNull("The answer names the subject: " + metadata(task), metadata(task).get("subject"));
 		assertEquals(subject, sessionOf(owner, "ctx-readable").getSubject());
@@ -91,16 +90,31 @@ public class TestRunSubject extends BasicTestCase {
 	 * calling application and not on the session.
 	 */
 	public void testUnreadableSubjectIsNamedNowhere() throws Exception {
-		A2ATask task = runTask(stranger, "ctx-unreadable");
+		assertFalse("Precondition: the caller may not read the subject.",
+			new ModelAccessRightsSecurity(stranger).canRead(subject));
+
+		Run run = runTask(stranger, "ctx-unreadable");
+		A2ATask task = run.task();
 
 		assertNull("The answer to the calling application names a subject its account may not read: "
 			+ metadata(task), metadata(task).get("subject"));
 		assertNull("The session is about a subject its owner may not read.",
 			sessionOf(stranger, "ctx-unreadable").getSubject());
+		String told = userText(run.backend().conversationLog("ctx-unreadable"));
+		assertTrue("The message the agent was given: " + told, told.contains("Which tickets are still open here?"));
+		assertFalse("The message names the identifier of the subject: " + told,
+			told.contains(ReadFilter.idOf(subject)));
+		assertFalse("The message names the subject: " + told,
+			told.contains(MetaLabelProvider.INSTANCE.getLabel(subject)));
+	}
+
+	/** A task and the backend that ran it. */
+	private record Run(A2ATask task, AgentRunBackend backend) {
+		// Plain data.
 	}
 
 	/** Runs one task of the exposed agent as the given account, until its run ends. */
-	private static A2ATask runTask(Person caller, String contextId) throws Exception {
+	private static Run runTask(Person caller, String contextId) throws Exception {
 		AgentRunBackend backend = new AgentRunBackend(service());
 		A2ATask task = new A2ATask(contextId + "-task", contextId, "alpha", caller.getName());
 		try {
@@ -116,7 +130,21 @@ public class TestRunSubject extends BasicTestCase {
 			backend.shutDown();
 		}
 		HistoryUtils.updateSessionRevision();
-		return task;
+		return new Run(task, backend);
+	}
+
+	/** The text of the user turns of a conversation log. */
+	private static String userText(ConversationLog log) {
+		assertNotNull("The backend holds no conversation for the context.", log);
+		StringBuilder result = new StringBuilder();
+		for (Turn turn : log.turns()) {
+			for (Part part : turn.userParts()) {
+				if (part instanceof Part.TextPart text) {
+					result.append(text.text()).append('\n');
+				}
+			}
+		}
+		return result.toString();
 	}
 
 	/** The service the backend serves: one exposed agent, and a resolver that finds {@link #subject}. */

@@ -481,6 +481,23 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 		}
 	}
 
+	/**
+	 * The conversation log of the given context, as the agent reads it, or <code>null</code> for a
+	 * context this backend does not hold.
+	 *
+	 * <p>
+	 * Package-visible for a test: the text that a message gives the agent must be checkable without
+	 * a model, and a run that fails before its first model call records no transcript.
+	 * </p>
+	 */
+	ConversationLog conversationLog(String contextId) {
+		Context context;
+		synchronized (_contexts) {
+			context = _contexts.get(contextId);
+		}
+		return context == null ? null : context._log;
+	}
+
 	@Override
 	public A2ATask findTask(String taskId, String owner) {
 		return ThreadContext.<A2ATask, RuntimeException, RuntimeException> inSystemContext(

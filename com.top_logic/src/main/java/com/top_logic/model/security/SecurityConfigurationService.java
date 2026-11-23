@@ -271,10 +271,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		 * access parent decides, whether a user may perform it on one of its objects is whether the
 		 * user may do the same to the access parent, where creating or deleting one of its objects
 		 * is writing the access parent; an object whose relation leads nowhere is denied the
-		 * delegated operations, unless the own grants of the type imply them. Without a
-		 * restriction to some operations, the access parent decides all of them, and the type has no grants and no roles of its own. Restricted to some
-		 * operations, the access parent decides these and Discover, and the grants of the type
-		 * together with the roles held on the object itself decide all other operations.
+		 * delegated operations, unless the own grants of the type imply them. Without a restriction
+		 * to some operations, the access parent decides all of them, and the type has no grants and
+		 * no roles of its own. Restricted to some operations, the access parent decides these and
+		 * Discover, and the grants of the type together with the roles held on the object itself
+		 * decide all other operations.
 		 * </p>
 		 * <p>
 		 * Without a setting the type inherits the setting of its generalizations; without one, a

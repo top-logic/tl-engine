@@ -75,7 +75,7 @@ public record RestrictedRelation(AccessParentFunction relation, Set<BoundCommand
 	 */
 	@Override
 	public ResKey getLabel() {
-		ResKey labels = AccessParentConfig.operationLabels(
+		ResKey labels = OperationLabels.of(
 			operations.stream().map(BoundCommandGroup::getID).collect(Collectors.toSet()));
 		return I18NConstants.ACCESS_PARENT_RESTRICTED__RELATION_OPERATIONS.fill(relation.getLabel(), labels);
 	}

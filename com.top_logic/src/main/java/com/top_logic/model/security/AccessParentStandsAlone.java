@@ -93,7 +93,7 @@ public class AccessParentStandsAlone extends GenericPropertyConstraint {
 		}
 		if (!granted.isEmpty()) {
 			self.setProblemDescription(I18NConstants.ACCESS_PARENT_DECIDES_GRANTED__PROPERTY_OPERATIONS
-				.fill(label(grants), AccessParentConfig.operationLabels(granted)));
+				.fill(label(grants), OperationLabels.of(granted)));
 		}
 	}
 

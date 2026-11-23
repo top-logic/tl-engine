@@ -501,13 +501,16 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 	}
 
 	/**
-	 * A type delegating only Read grants the other operations itself, but must not grant Read.
+	 * The label of the given operation as the user knows it.
 	 */
 	private static String operationLabel(Resources resources, String operation) {
 		return resources
 			.getString(com.top_logic.tool.boundsec.simple.I18NConstants.COMMAND_GROUP_NAMES.key(operation));
 	}
 
+	/**
+	 * A type delegating only Read grants the other operations itself, but must not grant Read.
+	 */
 	public void testGrantBesideRestrictedParentIsStored() throws Exception {
 		TLClass restricted = type(RESTRICTED_LINKED);
 		TLClassAccessRights entry = _editor.editableAccessRights(restricted);

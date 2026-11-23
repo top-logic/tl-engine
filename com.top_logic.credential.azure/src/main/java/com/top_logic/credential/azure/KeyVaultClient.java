@@ -38,6 +38,12 @@ import com.top_logic.basic.util.ResKey;
  * application. The absence of a secret is kept like a secret, a failed read is not kept.
  * </p>
  *
+ * <p>
+ * The secrets are secrets of the application, which every person uses. A
+ * {@link CredentialProvider#isPersonal() personal} credential provider is therefore refused at each
+ * read.
+ * </p>
+ *
  * @see KeyVaultSecretSource
  * @see KeyVaultSecretStore
  */
@@ -55,6 +61,8 @@ public final class KeyVaultClient {
 	public static final int STATUS_NOT_FOUND = 404;
 
 	private final SecretClient _client;
+
+	private final CredentialProvider _credentials;
 
 	private final String _vaultUrl;
 
@@ -75,12 +83,12 @@ public final class KeyVaultClient {
 		if (credentials == null) {
 			credentials = defaultCredentials();
 		}
-		CredentialProvider provider = context.getInstance(credentials);
+		_credentials = context.getInstance(credentials);
 		_vaultUrl = stripTrailingSlash(config.getVaultUrl());
 		_cacheTime = config.getCacheTime();
 		HttpPipeline pipeline = new HttpPipelineBuilder()
 			.httpClient(AzureHttpClients.create(config))
-			.policies(new CredentialProviderPolicy(provider))
+			.policies(new CredentialProviderPolicy(_credentials))
 			.build();
 		SecretClientBuilder builder = new SecretClientBuilder().pipeline(pipeline);
 		try {
@@ -121,10 +129,14 @@ public final class KeyVaultClient {
 	 *         the request is optional.
 	 *
 	 * @throws I18NRuntimeException
-	 *         If the secret cannot be read. The message names the secret and the vault but never
-	 *         contains the secret.
+	 *         If the secret cannot be read, or if the credentials of the key vault are personal. The
+	 *         message names the secret and the vault but never contains the secret.
 	 */
 	public String getSecret(String name, String version, boolean optional) {
+		if (_credentials.isPersonal()) {
+			throw new I18NRuntimeException(
+				com.top_logic.basic.credential.I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER.fill(_vaultUrl));
+		}
 		String key = version.isEmpty() ? name : name + '/' + version;
 		CacheEntry entry = _cache.computeIfAbsent(key, x -> new CacheEntry());
 		Snapshot snapshot = entry.get(() -> fetch(name, version));

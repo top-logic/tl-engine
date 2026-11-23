@@ -10,6 +10,8 @@ import java.util.Map;
 
 import junit.framework.Test;
 
+import test.com.top_logic.basic.credential.PersonalTestCredentials;
+
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.json.JSON;
@@ -266,6 +268,24 @@ public class TestKeyVaultSecretSource extends AbstractAzureMockTest {
 			assertEquals(I18NConstants.ERROR_TOKEN_REQUEST_FAILED__RESOURCE_URL_STATUS_DETAIL.fill(_resource,
 				"http://" + ImdsRedirectHttpClientProvider.IMDS_HOST + TOKEN_PATH, 400,
 				"invalid_request: Identity not found"), ex.getErrorKey());
+		}
+		assertEquals(0, requests(SECRET_PATH).size());
+	}
+
+	/**
+	 * The secrets of the key vault are secrets of the application: personal credentials are refused,
+	 * and the key vault is not asked.
+	 */
+	public void testPersonalCredentialsRefused() throws Exception {
+		SecretSource source =
+			vault("", "<credentials class='" + PersonalTestCredentials.class.getName() + "'/>");
+
+		try {
+			source.getSecret();
+			fail("Personal credentials must be refused.");
+		} catch (I18NRuntimeException ex) {
+			assertEquals(com.top_logic.basic.credential.I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER.getKey(),
+				ex.getErrorKey().getKey());
 		}
 		assertEquals(0, requests(SECRET_PATH).size());
 	}

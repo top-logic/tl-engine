@@ -86,6 +86,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_CREDENTIALS_AND_API_KEY__OWNER;
 
 	/**
+	 * @en "{0}" never acts for a person and cannot use personal credentials. Configure credentials
+	 *     of the application for it.
+	 */
+	public static ResKey1 ERROR_PERSONAL_CREDENTIALS__OWNER;
+
+	/**
 	 * Description of a secret that is kept in the configuration itself.
 	 *
 	 * @en In the configuration

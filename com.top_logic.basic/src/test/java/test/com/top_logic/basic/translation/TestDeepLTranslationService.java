@@ -19,6 +19,7 @@ import java.util.function.IntFunction;
 import junit.framework.Test;
 
 import test.com.top_logic.basic.config.AbstractTypedConfigurationTestCase;
+import test.com.top_logic.basic.credential.PersonalTestCredentials;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
@@ -34,6 +35,7 @@ import com.top_logic.basic.credential.NamedSecretSource;
 import com.top_logic.basic.credential.HeaderCredentials;
 import com.top_logic.basic.credential.I18NConstants;
 import com.top_logic.basic.credential.SecretStoreService;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.translation.DeepLTranslationService;
 import com.top_logic.basic.translation.TranslationService;
 import com.top_logic.basic.util.ResKey;
@@ -199,6 +201,23 @@ public class TestDeepLTranslationService extends AbstractTypedConfigurationTestC
 				assertTrue("Not refused for credentials and API key: " + ex,
 					isRefused(ex, I18NConstants.ERROR_CREDENTIALS_AND_API_KEY__OWNER.fill("DeepL")));
 			}
+		}
+	}
+
+	/**
+	 * A translation never acts for a person: personal credentials are refused, and no request is
+	 * sent.
+	 */
+	public void testPersonalCredentialsRefused() throws Exception {
+		try (MockApi api = new MockApi(index -> 200)) {
+			try {
+				translate(api, "", "<credentials class='" + PersonalTestCredentials.class.getName() + "'/>");
+				fail("Personal credentials must be refused.");
+			} catch (I18NRuntimeException ex) {
+				assertEquals(I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER.fill("DeepL"), ex.getErrorKey());
+			}
+
+			assertEquals(List.of(), api._authorizations);
 		}
 	}
 

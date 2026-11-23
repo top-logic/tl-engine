@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.RequestAuthentication;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.tools.resources.translate.ConnectionAuthentication;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.tools.resources.translate.deepl.DeepLTranslator;
@@ -31,6 +32,11 @@ import com.top_logic.tools.resources.translate.deepl.DeepLTranslator.Builder;
  * with the scheme {@link DeepLTranslator#AUTH_SCHEME}. Each request is authenticated at the moment
  * it is sent; an answer <code>401 Unauthorized</code> invalidates the credentials and the request
  * is sent once more with fresh ones.
+ * </p>
+ *
+ * <p>
+ * A translation never acts for a person, so a {@link CredentialProvider#isPersonal() personal}
+ * credential provider is refused at each request.
  * </p>
  *
  * @author <a href="mailto:Dmitry.Ivanizki@top-logic.com">Dmitry Ivanizki</a>
@@ -141,6 +147,10 @@ public class DeepLTranslationService extends TranslationService<DeepLTranslation
 		builder.setAuthentication(new ConnectionAuthentication() {
 			@Override
 			public void authenticate(HttpURLConnection connection) {
+				if (_credentials.isPersonal()) {
+					throw new I18NRuntimeException(
+						com.top_logic.basic.credential.I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER.fill(LABEL));
+				}
 				_credentials.authenticate(RequestAuthentication.of(connection));
 			}
 

@@ -29,6 +29,7 @@ import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.basic.credential.CredentialProvider;
+import com.top_logic.basic.credential.I18NConstants;
 import com.top_logic.basic.credential.RequestAuthentication;
 import com.top_logic.basic.credential.SecretSource;
 import com.top_logic.basic.credential.SecretSourceFormat;
@@ -55,6 +56,11 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * Each attempt is authenticated by the configured {@link CredentialProvider} at the moment it is
  * sent. An answer {@code 401 Unauthorized} invalidates the credentials - a cached access token may
  * have expired or been revoked - and the request is sent once more with fresh ones.
+ * </p>
+ *
+ * <p>
+ * The embedder computes the vectors of the search for all persons and never acts for one, so a
+ * {@link CredentialProvider#isPersonal() personal} credential provider is refused at each request.
  * </p>
  */
 @Label("HTTP embedding endpoint")
@@ -263,6 +269,10 @@ public class OpenAiCompatibleEmbedder extends AbstractEmbedder<OpenAiCompatibleE
 			.header("Content-Type", "application/json")
 			.POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8));
 		try {
+			if (_credentials.isPersonal()) {
+				throw new I18NRuntimeException(
+					I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER.fill(_endpoint.toString()));
+			}
 			_credentials.authenticate(RequestAuthentication.of(builder));
 		} catch (I18NRuntimeException ex) {
 			throw new EmbeddingException(

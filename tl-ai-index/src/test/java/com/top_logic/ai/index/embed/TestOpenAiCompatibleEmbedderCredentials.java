@@ -21,6 +21,7 @@ import junit.framework.TestSuite;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.credential.PersonalTestCredentials;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -37,6 +38,7 @@ import com.top_logic.basic.credential.EnvironmentSecretSource;
 import com.top_logic.basic.credential.HeaderCredentials;
 import com.top_logic.basic.credential.I18NConstants;
 import com.top_logic.basic.credential.SecretStoreService;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.util.ResKey;
@@ -118,6 +120,24 @@ public class TestOpenAiCompatibleEmbedderCredentials extends TestCase {
 			fail("A request without its key must fail.");
 		} catch (EmbeddingException ex) {
 			assertTrue(ex.getMessage(), ex.getMessage().startsWith("No credentials"));
+		}
+		assertEquals(List.of(), _authorizations);
+	}
+
+	/**
+	 * The embedder never acts for a person: personal credentials are refused, and no request is
+	 * sent.
+	 */
+	public void testPersonalCredentialsRefused() throws Exception {
+		Embedder embedder =
+			embedder("", "<credentials class='" + PersonalTestCredentials.class.getName() + "'/>");
+		try {
+			embedder.embedQuery("q");
+			fail("Personal credentials must be refused.");
+		} catch (EmbeddingException ex) {
+			I18NRuntimeException refusal = (I18NRuntimeException) ex.getCause();
+			assertEquals(I18NConstants.ERROR_PERSONAL_CREDENTIALS__OWNER
+				.fill("http://127.0.0.1:" + _server.getAddress().getPort() + "/v1/embeddings"), refusal.getErrorKey());
 		}
 		assertEquals(List.of(), _authorizations);
 	}

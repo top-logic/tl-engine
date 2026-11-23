@@ -1,4 +1,4 @@
-import { React, ThemeIcon, buttonPartAttributes, buttonLinkAttributes, StateBadge } from 'tl-react-bridge';
+import { React, ThemeIcon, buttonPartAttributes, buttonLinkAttributes, StateBadge, useButtonDefaults } from 'tl-react-bridge';
 import type { ButtonPartProps, PartRef } from 'tl-react-bridge';
 import { buttonClassName } from './buttonClassName';
 
@@ -10,10 +10,10 @@ import { buttonClassName } from './buttonClassName';
  * <p>A link ({@link ButtonPartProps.href}) is an anchor with the same classes
  * ({@link buttonLinkAttributes}).</p>
  *
- * <p>A button showing its icon alone is a square icon button; drawn small, it carries a small
- * icon. Beside a label the icon is small. A checked radio entry reads strong, like the entry in force: a
- * menu entry has no check mark of its own. The label is drawn in the label element of the button or
- * of the menu entry.</p>
+ * <p>A button showing its icon alone is a square icon button; drawn small (asked for, or by a table row around
+ * it, {@link ButtonDefaultsValue.small}), it carries a small icon. Beside a label the icon is small. A checked
+ * radio entry reads strong, like the entry in force: a menu entry has no check mark of its own.
+ * The label is drawn in the label element of the button or of the menu entry.</p>
  *
  * <p>A badge ({@link ButtonPartProps.badge}) is drawn through the part `Badge` after the label, and
  * over the corner of the icon of a button showing its icon alone (tl-icon-badge).</p>
@@ -26,7 +26,8 @@ const ButtonPart: React.FC<ButtonPartProps> = (props) => {
   const iconOnly = display === 'icon-only';
   // A button showing no icon shows its label, also in icon-only mode.
   const showLabel = !iconOnly || !image;
-  const smallIcon = small === true && iconOnly;
+  // Small applies to a button that shows its icon alone: asked for, or said by the container (a table row).
+  const smallIcon = iconOnly && !!image && (small === true || useButtonDefaults().small === true);
   // An entry of a menu is drawn by the menu, a button by the button.
   const block = appearance === 'menu-item' ? 'tl-menu' : 'tl-button';
 

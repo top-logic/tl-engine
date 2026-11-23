@@ -1,4 +1,4 @@
-import { React, ThemeIcon, tooltipProps } from 'tl-react-bridge';
+import { React, ThemeIcon, tooltipProps, useButtonDefaults } from 'tl-react-bridge';
 import type { MenuTriggerPartProps } from 'tl-react-bridge';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -13,7 +13,7 @@ const CHEVRON_ICON = 'css:fa-solid fa-chevron-down';
  *
  * <ul>
  * <li>free content → a `Button` around that content;</li>
- * <li>an icon → an `IconButton` named by the label, which is also its tooltip; small → size `small`;</li>
+ * <li>an icon → an `IconButton` named by the label, which is also its tooltip; small, or a table row around the trigger (ButtonDefaults small) → size `small`;</li>
  * <li>otherwise → a `Button` showing the label, with a chevron as `endIcon`.</li>
  * </ul>
  *
@@ -23,6 +23,7 @@ const CHEVRON_ICON = 'css:fa-solid fa-chevron-down';
 const MuiMenuTriggerAdapter: React.FC<MenuTriggerPartProps> = ({
   id, ref, appearance, expanded, haspopup = 'menu', label, icon, small, children, className, style, onClick, onMouseDown, ...attributes
 }) => {
+  const rowSmall = useButtonDefaults().small === true;
   const common = {
     id,
     ref,
@@ -36,7 +37,7 @@ const MuiMenuTriggerAdapter: React.FC<MenuTriggerPartProps> = ({
 
   if (children === undefined && icon) {
     return (
-      <IconButton {...common} size={small ? 'small' : 'medium'} color={iconButtonColor(appearance, false)} aria-label={label} {...tooltipProps(label)} {...attributes}>
+      <IconButton {...common} size={small || rowSmall ? 'small' : 'medium'} color={iconButtonColor(appearance, false)} aria-label={label} {...tooltipProps(label)} {...attributes}>
         <ThemeIcon encoded={icon} className={ICON_ALONE_CLASS} />
       </IconButton>
     );

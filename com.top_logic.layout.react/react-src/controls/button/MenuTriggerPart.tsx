@@ -1,4 +1,4 @@
-import { React, ThemeIcon, tooltipProps } from 'tl-react-bridge';
+import { React, ThemeIcon, tooltipProps, useButtonDefaults } from 'tl-react-bridge';
 import type { MenuTriggerPartProps } from 'tl-react-bridge';
 import { buttonClassName } from './buttonClassName';
 
@@ -19,7 +19,7 @@ const MenuTriggerPart: React.FC<MenuTriggerPartProps> = ({
   id, ref, appearance, expanded, haspopup = 'menu', label, icon, small, children, className, style, onClick, onMouseDown, ...attributes
 }) => {
   const iconOnly = children === undefined && !!icon;
-  const smallIcon = small === true && iconOnly;
+  const smallIcon = iconOnly && (small === true || useButtonDefaults().small === true);
   let content: React.ReactNode;
   if (children !== undefined) {
     content = children;

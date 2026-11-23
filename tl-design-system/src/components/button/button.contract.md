@@ -16,7 +16,7 @@ Vom Server über `useTLState()`:
 | `displayMode` | `icon-only` \| `icon-label` \| `label-only`, optional | Standard `label-only`. Ohne `image` fällt `icon-only` auf `label-only` zurück. |
 | `appearance` | `primary` \| `ghost` \| `link`, optional | Fehlt er, gilt die Vorgabe des Containers (`ButtonDefaults`), sonst `secondary`. |
 | `tone` | `danger`, optional | Destruktive Aktion. Nicht mit `link`. |
-| `size` | `small`, optional | Nur mit `displayMode: icon-only` wirksam (`--sm`). |
+| `size` | `small`, optional | Nur mit `displayMode: icon-only` und Bild wirksam (`--sm`). Fehlt er, gilt `small` des Containers (`ButtonDefaults`: Tabellenzeile, Kopf). |
 | `disabled` | boolean | Der Button ist `disabled`. |
 | `active` | boolean | Der Button ist gedrückt oder die geltende Alternative: `aria-pressed="true"`. |
 | `hidden` | boolean | Rendert nichts. Die Tastenbindung bleibt registriert und lehnt ab. |
@@ -91,4 +91,5 @@ ersten Kundenkomponente; bis dahin gilt dieser Text.
 `appearance` ist die Erscheinung; `menu-item` rendert als `button.tl-menu__item` (siehe
 `menu.contract.md`) und **schlägt die Server-Erscheinung** — ein Eintrag ist Struktur. `iconOnly`:
 ein Knopf, der sein Icon zeigt, lässt sein Label weg und wird `--icon`; ein Knopf ohne Icon oder mit
-`label-only` bleibt, wie er ist.
+`label-only` bleibt, wie er ist. `small`: eine Tabellenzeile sagt `true`, jeder Icon-Knopf darin (mit Bild) wird `--sm`; eine Fläche, die aus der Zeile
+öffnet (Menü, Popover, Picker, Bildoverlay), sagt `false`, ihre Knöpfe sind normal. Ein Knopf ohne Bild bleibt `label-only`, auch dann ohne `--sm`.

@@ -5,12 +5,16 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { replacePart, ANCHORED_OVERLAY_ATTR } from 'tl-react-bridge';
+import { replacePart, register, ANCHORED_OVERLAY_ATTR } from 'tl-react-bridge';
+import TLButton from '../../../com.top_logic.layout.react/react-src/controls/TLButton';
+import MuiButtonAdapter from './MuiButtonAdapter';
 import TLPopover from '../../../com.top_logic.layout.react/react-src/controls/TLPopover';
 import MuiMenuTriggerAdapter from './MuiMenuTriggerAdapter';
 import { CONTROL_ID, childControl, fakeDebounceTimers, mountAdapter, patchState, settle } from './wire-test-support';
 
 replacePart('MenuTrigger', MuiMenuTriggerAdapter);
+replacePart('Button', MuiButtonAdapter);
+register('TLButton', TLButton);
 
 /** The command asking the server to open the popover. */
 const CMD_OPEN = 'open';
@@ -256,5 +260,26 @@ describe('a popover opened by hovering', () => {
     await settle();
 
     expect(sent).not.toHaveBeenCalledWith(CMD_CLOSE, expect.anything());
+  });
+});
+
+describe('a popover in a table row (ButtonDefaults small)', () => {
+  const IMAGE = 'css:bi bi-info';
+  const iconButton = { controlId: 'b2', module: 'TLButton', state: { label: 'Edit', image: IMAGE, displayMode: 'icon-only' } };
+  const state = { open: true, mode: 'click', label: 'Details', icon: IMAGE, content: iconButton };
+  const isSmall = (element: Element | null) => element?.classList.contains('MuiIconButton-sizeSmall');
+
+  it('draws its trigger small, but the buttons on its surface normal', () => {
+    mountAdapter(TLPopover, state, { buttonDefaults: { small: true } });
+
+    expect(isSmall(trigger())).toBe(true);
+    expect(isSmall(surface()!.querySelector('button'))).toBe(false);
+  });
+
+  it('draws trigger and buttons normal outside a row', () => {
+    mountAdapter(TLPopover, state);
+
+    expect(isSmall(trigger())).toBe(false);
+    expect(isSmall(surface()!.querySelector('button'))).toBe(false);
   });
 });

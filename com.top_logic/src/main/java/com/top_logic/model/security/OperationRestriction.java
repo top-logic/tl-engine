@@ -12,11 +12,9 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
-import com.top_logic.basic.config.annotation.Step;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.annotate.security.CommaSeparatedCommandGroups;
-import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.CommandHandler.Config.ToCommandGroupReference;
 
@@ -48,10 +46,8 @@ public interface OperationRestriction extends ConfigPart {
 	 */
 	@Name(OPERATIONS)
 	@Format(CommaSeparatedCommandGroups.class)
-	@Options(fun = AccessParentReferenceOptions.Operations.class, args = @Ref(steps = {
-		@Step(OWNER),
-		@Step(value = AccessParentConfig.RIGHTS, type = AccessParentConfig.class),
-		@Step(TLClassAccessRights.NAME_ATTRIBUTE) }), mapping = ToCommandGroupReference.class)
+	@Options(fun = AccessParentReferenceOptions.Operations.class, args = @Ref(OWNER),
+		mapping = ToCommandGroupReference.class)
 	List<CommandGroupReference> getOperations();
 
 	/**

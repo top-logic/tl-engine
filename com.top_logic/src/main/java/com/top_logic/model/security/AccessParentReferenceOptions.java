@@ -11,7 +11,9 @@ import java.util.Comparator;
 import java.util.List;
 
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.func.Function1;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModelPart;
@@ -27,59 +29,66 @@ import com.top_logic.util.model.ModelService;
  * Option functions for the reference of an {@link AccessParentDefinition}, offering the references
  * fitting the type of the enclosing {@link TLClassAccessRights} entry, and for the operations it is
  * restricted to.
+ *
+ * <p>
+ * Each function is given the {@link OperationRestriction#getOwner() owner} of the definition: the
+ * {@link AccessParentConfig setting} of the entry, or a definition combining several ones like
+ * {@link AnyOfAccessParent}, however deeply nested. The type is found by following the containers
+ * up to the setting, see {@link #configuredType(ConfigurationItem)}.
+ * </p>
  */
 public class AccessParentReferenceOptions {
 
 	/**
-	 * The compositions holding objects of the named type, which can be navigated backwards, see
-	 * {@link ContainerAccessParent}.
+	 * The compositions holding objects of the configured type, which can be navigated backwards,
+	 * see {@link ContainerAccessParent}.
 	 */
-	public static class Compositions extends Function1<Collection<TLReference>, String> {
+	public static class Compositions extends Function1<Collection<TLReference>, ConfigurationItem> {
 
 		@Override
-		public Collection<TLReference> apply(String typeName) {
-			TLClass type = type(typeName);
+		public Collection<TLReference> apply(ConfigurationItem owner) {
+			TLClass type = configuredType(owner);
 			return type == null ? Collections.emptyList() : sorted(compositions(type));
 		}
 
 	}
 
 	/**
-	 * The references of the named type, which can be navigated forwards, see
+	 * The references of the configured type, which can be navigated forwards, see
 	 * {@link TargetAccessParent}.
 	 */
-	public static class References extends Function1<Collection<TLReference>, String> {
+	public static class References extends Function1<Collection<TLReference>, ConfigurationItem> {
 
 		@Override
-		public Collection<TLReference> apply(String typeName) {
-			TLClass type = type(typeName);
+		public Collection<TLReference> apply(ConfigurationItem owner) {
+			TLClass type = configuredType(owner);
 			return type == null ? Collections.emptyList() : sorted(references(type));
 		}
 
 	}
 
 	/**
-	 * The references of the application model pointing to objects of the named type, which can be
-	 * navigated backwards, see {@link RefererAccessParent}.
+	 * The references of the application model pointing to objects of the configured type, which
+	 * can be navigated backwards, see {@link RefererAccessParent}.
 	 */
-	public static class Referers extends Function1<Collection<TLReference>, String> {
+	public static class Referers extends Function1<Collection<TLReference>, ConfigurationItem> {
 
 		@Override
-		public Collection<TLReference> apply(String typeName) {
-			TLClass type = type(typeName);
+		public Collection<TLReference> apply(ConfigurationItem owner) {
+			TLClass type = configuredType(owner);
 			return type == null ? Collections.emptyList() : sorted(referencesTo(type, false));
 		}
 
 	}
 
 	/**
-	 * The operations applying to the named type, see {@link OperationRestriction}.
+	 * The operations applying to the configured type, see {@link OperationRestriction}.
 	 */
-	public static class Operations extends Function1<Collection<BoundCommandGroup>, String> {
+	public static class Operations extends Function1<Collection<BoundCommandGroup>, ConfigurationItem> {
 
 		@Override
-		public Collection<BoundCommandGroup> apply(String typeName) {
-			TLClass type = type(typeName);
+		public Collection<BoundCommandGroup> apply(ConfigurationItem owner) {
+			TLClass type = configuredType(owner);
 			return type == null ? Collections.emptyList()
 				: ModelAccessRights.getInstance().getOperations(type).getOperations();
 		}
@@ -105,6 +114,28 @@ public class AccessParentReferenceOptions {
 			context.error("The access reference " + ref + " of " + typeName + " does not exist.", ex);
 			return null;
 		}
+	}
+
+	/**
+	 * The type the access parent setting enclosing the given owner of a definition is configured
+	 * for.
+	 *
+	 * @param owner
+	 *        The {@link OperationRestriction#getOwner() owner} of a definition, <code>null</code>
+	 *        while the definition is not part of a setting.
+	 * @return <code>null</code> when the owner is in no setting of an entry for a class of the
+	 *         application.
+	 */
+	static TLClass configuredType(ConfigurationItem owner) {
+		ConfigurationItem item = owner;
+		while (item != null) {
+			if (item instanceof AccessParentConfig setting) {
+				TLClassAccessRights rights = setting.getRights();
+				return rights == null ? null : type(rights.getName());
+			}
+			item = item instanceof ConfigPart part ? part.container() : null;
+		}
+		return null;
 	}
 
 	/**

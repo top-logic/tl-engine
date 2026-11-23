@@ -4,6 +4,7 @@
  */
 package test.com.top_logic.element.boundsec.manager.coverage;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -19,22 +20,34 @@ import test.com.top_logic.element.util.ElementWebTestSetup;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.ConfigurationError;
+import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.config.NamePath;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.constraint.check.ConstraintChecker;
+import com.top_logic.basic.config.misc.PropertyValue;
+import com.top_logic.basic.func.IGenericFunction;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.security.AccessParentConfig;
 import com.top_logic.model.security.AccessParentDefinition;
 import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.AnyOfAccessParent;
 import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ContainerRelation;
+import com.top_logic.model.security.OperationRestriction;
+import com.top_logic.model.security.RefererAccessParent;
 import com.top_logic.model.security.RefererRelation;
 import com.top_logic.model.security.RestrictedRelation;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
+import com.top_logic.model.security.TargetAccessParent;
 import com.top_logic.model.security.TargetRelation;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -245,6 +258,62 @@ public class TestAccessParentConfig extends BasicTestCase {
 		assertTrue(AccessParentConfig.isRestricted(nested.getAccessParent()));
 		assertEquals(Set.of("Read", "Write", "Discover"),
 			AccessParentConfig.delegatedOperationNames(nested.getAccessParent()));
+	}
+
+	/**
+	 * The options of a building block inside <code>&lt;any-of&gt;</code> are those of the type the
+	 * enclosing entry is configured for, as for a building block directly in the setting.
+	 */
+	public void testOptionsInsideAnyOf() throws Exception {
+		String referer = "<referer reference='" + LINKED + "#target'/>";
+		String target = "<target reference='" + MODULE + ":Covered#explicitParts' operations='Read'/>";
+		TLClassAccessRights direct = read("<class name='" + MODULE + ":Covered'><access-parent>" + referer
+			+ "</access-parent></class>");
+		TLClassAccessRights nested = read("<class name='" + MODULE + ":Covered'><access-parent><any-of>" + referer
+			+ "<any-of>" + target + "</any-of></any-of></access-parent></class>");
+
+		ConfigurationItem directReferer = (ConfigurationItem) direct.getAccessParent().getDefinition();
+		AnyOfAccessParent.Config anyOf = (AnyOfAccessParent.Config) nested.getAccessParent().getDefinition();
+		ConfigurationItem nestedReferer = (ConfigurationItem) anyOf.getCandidates().get(0);
+		ConfigurationItem nestedTarget =
+			(ConfigurationItem) ((AnyOfAccessParent.Config) anyOf.getCandidates().get(1)).getCandidates().get(0);
+
+		List<?> referers = options(directReferer, RefererAccessParent.Config.REFERENCE);
+		assertTrue("The references pointing to the type are offered: " + referers,
+			referers.contains(TLModelUtil.findPart(LINKED + "#target")));
+		assertEquals(referers, options(nestedReferer, RefererAccessParent.Config.REFERENCE));
+
+		List<?> references = options(nestedTarget, TargetAccessParent.Config.REFERENCE);
+		assertTrue("The references of the type are offered: " + references,
+			references.contains(TLModelUtil.findPart(MODULE + ":Covered#explicitParts")));
+		List<?> operations = options(nestedTarget, OperationRestriction.OPERATIONS);
+		assertTrue("The operations of the type are offered: " + operations,
+			operations.contains(SimpleBoundCommandGroup.READ));
+	}
+
+	/**
+	 * The values the {@link Options} function of the given property offers, before mapping them to
+	 * the property's value type.
+	 */
+	private static List<?> options(ConfigurationItem item, String propertyName) {
+		PropertyDescriptor property = item.descriptor().getProperty(propertyName);
+		Options annotation = property.getAnnotation(Options.class);
+		assertNotNull("No options for " + propertyName, annotation);
+		Ref[] refs = annotation.args();
+		Object[] args = new Object[refs.length];
+		for (int n = 0; n < refs.length; n++) {
+			PropertyValue value = NamePath.resolve(refs[n], item);
+			args[n] = value == null ? null : value.get();
+		}
+		IGenericFunction<? extends Iterable<?>> function;
+		try {
+			function = ConfigUtil.getInstance(annotation.fun());
+		} catch (ConfigurationException ex) {
+			throw new AssertionError(ex);
+		}
+		List<Object> result = new ArrayList<>();
+		function.invoke(args).forEach(result::add);
+		return result;
 	}
 
 	public void testGrantBesideUnrestrictedAnyOfIsError() throws Exception {

@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -36,9 +37,14 @@ public class AnyOfAccessParent extends AbstractConfiguredInstance<AnyOfAccessPar
 
 	/**
 	 * Configuration of {@link AnyOfAccessParent}.
+	 *
+	 * <p>
+	 * As a {@link ConfigPart}, it leads the option functions of its candidates to the setting it
+	 * belongs to, see {@link AccessParentReferenceOptions}.
+	 * </p>
 	 */
 	@TagName("any-of")
-	public interface Config extends PolymorphicConfiguration<AnyOfAccessParent> {
+	public interface Config extends PolymorphicConfiguration<AnyOfAccessParent>, ConfigPart {
 
 		/** Configuration name for {@link #getCandidates()}. */
 		String CANDIDATES = "candidates";

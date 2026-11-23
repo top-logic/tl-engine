@@ -86,8 +86,12 @@ public interface AccessParentConfig extends ConfigPart {
 	/**
 	 * Whether the given definition delegates only some operations, see
 	 * {@link #isRestricted(AccessParentConfig)}.
+	 *
+	 * @param definition
+	 *        The definition of a setting or one of the candidates of an {@link AnyOfAccessParent},
+	 *        <code>null</code> for none.
 	 */
-	private static boolean isRestricted(PolymorphicConfiguration<?> definition) {
+	static boolean isRestricted(PolymorphicConfiguration<?> definition) {
 		if (definition instanceof OperationRestriction restriction) {
 			return !restriction.getOperations().isEmpty();
 		}

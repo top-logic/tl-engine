@@ -7,6 +7,7 @@ package com.top_logic.model.security;
 import java.util.Arrays;
 import java.util.Collection;
 
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.func.GenericFunction;
 import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
@@ -87,9 +88,9 @@ public class HideBesideOtherDefinition extends GenericFunction<FieldMode> {
 	 * </p>
 	 *
 	 * <p>
-	 * A definition {@link AccessParentConfig#isRestricted(AccessParentConfig) restricted} to some
-	 * operations leaves the other operations to the grants of the type, so the grants are not
-	 * hidden beside it.
+	 * A definition {@link AccessParentConfig#isRestricted(PolymorphicConfiguration) restricted} to
+	 * some operations leaves the other operations to the grants of the type, so the grants are not
+	 * hidden beside it - for an {@link AnyOfAccessParent}, when all its candidates are restricted.
 	 * </p>
 	 */
 	public static class ForGrants extends HideBesideOtherDefinition {
@@ -99,8 +100,8 @@ public class HideBesideOtherDefinition extends GenericFunction<FieldMode> {
 			if (args.length > 0 && Boolean.TRUE.equals(args[0])) {
 				return FieldMode.INVISIBLE;
 			}
-			if (args.length > 2 && args[2] instanceof OperationRestriction restriction
-				&& !restriction.getOperations().isEmpty()) {
+			if (args.length > 2 && args[2] instanceof PolymorphicConfiguration<?> definition
+				&& AccessParentConfig.isRestricted(definition)) {
 				return FieldMode.ACTIVE;
 			}
 			return super.invoke(Arrays.copyOfRange(args, Math.min(1, args.length), args.length));

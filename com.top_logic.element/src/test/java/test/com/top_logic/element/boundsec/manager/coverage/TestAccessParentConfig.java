@@ -220,6 +220,35 @@ public class TestAccessParentConfig extends BasicTestCase {
 		assertError(log, "<self/>");
 	}
 
+	/**
+	 * The editor reports <code>&lt;self/&gt;</code> among the candidates before the setting is
+	 * stored, not only when the access rights are loaded with it.
+	 */
+	public void testSelfInAnyOfIsConstraintFailure() throws Exception {
+		TLClassAccessRights entry = read("<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<container/><self/></any-of></access-parent></class>");
+		ConstraintChecker checker = new ConstraintChecker();
+		checker.check(entry);
+		assertEquals(checker.getFailures().toString(), 1, checker.getFailures().size());
+		assertEquals(AnyOfAccessParent.Config.CANDIDATES,
+			checker.getFailures().get(0).getContextProperty().getPropertyName());
+
+		TLClassAccessRights nestedSelf = read("<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<container/><any-of>" + TARGET_PARENT + "/><self/></any-of></any-of></access-parent></class>");
+		checker = new ConstraintChecker();
+		checker.check(nestedSelf);
+		assertEquals("A nested any-of is checked as well: " + checker.getFailures(), 1,
+			checker.getFailures().size());
+	}
+
+	public void testAnyOfWithoutSelfIsNoConstraintFailure() throws Exception {
+		TLClassAccessRights entry = read("<class name='" + LINKED + "'><access-parent><any-of>"
+			+ "<container/><any-of>" + TARGET_PARENT + "/><container/></any-of></any-of></access-parent></class>");
+		ConstraintChecker checker = new ConstraintChecker();
+		checker.check(entry);
+		assertTrue("Nested any-of is a valid candidate: " + checker.getFailures(), checker.getFailures().isEmpty());
+	}
+
 	public void testUnusableCandidateIsError() throws Exception {
 		BufferingProtocol log = new BufferingProtocol();
 		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent><any-of>"

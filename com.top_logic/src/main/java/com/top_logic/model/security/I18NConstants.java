@@ -29,6 +29,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ACCESS_PARENT_EXCLUDES_OWN_DEFINITION__PROPERTY;
 
 	/**
+	 * @en "Own decision" is no candidate of "Any of": a type deciding for itself has no access
+	 *     parent. Remove it, or choose it instead of "Any of".
+	 */
+	public static ResKey ERROR_SELF_IN_ANY_OF;
+
+	/**
 	 * @en The access parent decides the operations {1} itself, since it is restricted to them and
 	 *     decides Discover together with them: either remove the grants of these operations from
 	 *     "{0}", or remove the operations from the access parent.

@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.util.TLModelUtil;
@@ -56,6 +57,7 @@ public class AnyOfAccessParent extends AbstractConfiguredInstance<AnyOfAccessPar
 		 */
 		@Name(CANDIDATES)
 		@DefaultContainer
+		@Constraint(SelfIsNoCandidate.class)
 		List<PolymorphicConfiguration<? extends AccessParentDefinition>> getCandidates();
 
 	}

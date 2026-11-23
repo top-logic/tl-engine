@@ -123,7 +123,7 @@ public class TestScheduledRunCancelMarker extends BasicTestCase {
 				_owner);
 			assertNotNull("The sitting was not recorded as a session.", session);
 			assertTrue("aiAgentRunCancel found no running execution of the sitting.",
-				AIScriptFunctions.agentRunCancel(session));
+				AIScriptFunctions.agentRunCancel(session, false));
 		} finally {
 			sitting.join(TimeUnit.SECONDS.toMillis(TIMEOUT_SECONDS));
 		}

@@ -127,7 +127,7 @@ public class TestChatRunCancelMarker extends BasicTestCase {
 
 		HistoryUtils.updateSessionRevision();
 		assertTrue("aiAgentRunCancel found no running execution of the chat.",
-			AIScriptFunctions.agentRunCancel(session));
+			AIScriptFunctions.agentRunCancel(session, false));
 
 		run._backgroundTask.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		assertNull("A stop is no error: " + run.getError(), run.getError());
@@ -185,7 +185,7 @@ public class TestChatRunCancelMarker extends BasicTestCase {
 
 		HistoryUtils.updateSessionRevision();
 		assertTrue("aiAgentRunCancel found no running execution of the chat.",
-			AIScriptFunctions.agentRunCancel(session));
+			AIScriptFunctions.agentRunCancel(session, false));
 		run._backgroundTask.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
 		assertEquals("The run did not stop at its cancel marker.", "CANCELLED", statusOfLastRun(session));
 

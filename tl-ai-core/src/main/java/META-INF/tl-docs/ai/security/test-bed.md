@@ -1,5 +1,5 @@
 ---
-description: Read before verifying agent security by hand or adding a case to the security test bed of tl-ai-demo (secdemo.config.xml, the pm model, SecDemoSetup) - enabling and resetting the fixture, the personas anna, ben, cara and dora, the four harness scripts (probe, fire, collect, reset) for the script console, the scenario tables per layer (tool access T1-T10, read filtering D1-D11, capability notices C1-C8, background allowlist A1-A5, object tools, closed doors P1-P2) and the SecDemo*Test classes asserting each.
+description: Read before verifying agent security by hand or adding a case to the security test bed of tl-ai-demo (secdemo.config.xml, the pm model, SecDemoSetup) - enabling and resetting the fixture, the personas anna, ben, cara and dora, the four harness scripts (probe, fire, collect, reset) for the script console, the scenario tables per layer (tool access T1-T10, read filtering D1-D11, capability notices C1-C8, background allowlist A1-A5, object tools, closed doors P1-P3) and the SecDemo*Test classes asserting each.
 order: 6
 ---
 
@@ -177,12 +177,13 @@ A write is checked by the tool that makes it, and the turn commits what its tool
 | `ben` | any of the three | not offered (no `data.write`), refused by the model rights when handed the tool anyway |
 | `anna`, unattended | any of the three | not offered: the background allowlist holds no `data.write` |
 
-### Two closed doors
+### Three closed doors
 
 | # | Behaviour | Where | You should see |
 |---|---|---|---|
 | P1 | `/mcp/*` is not served | `curl -i http://localhost:8080/tl-ai-demo/mcp` | HTTP 503 naming both steps: enable the module `MCPServerService$Module` and configure an authentication ([the MCP endpoint](doc:ai/security/mcp-endpoint)); `SecDemoMcpEndpointTest` asserts the authenticated surface against these personas |
 | P2 | a run without an account does not start | test | `SecDemoBackgroundAccessTest.testARunWithoutAPrincipalCannotBeBuilt` |
+| P3 | a script reads or stops a run of another account | script console as `ben`, with the handle that `aiAgentChatAsync` gave `anna` | `aiAgentRunStatus`, `aiAgentRunResult`, `aiAgentRunError` and `aiAgentRunTranscript` answer `null`, `aiAgentRunCancel` answers `false`; with `DEBUG` on for `AIScriptFunctions`, the log has a `Run handle denied` line that names `ben`; `SecDemoRunHandleTest` asserts the answers |
 
 ## The tests
 
@@ -202,6 +203,7 @@ mvn -B test -DskipTests=false -pl tl-ai-demo -Dtest='com.top_logic.ai.demo.SecDe
 | `SecDemoSkillAbsenceTest` | C1, C4-C6 | `SecDemoMcpEndpointTest` | P1 |
 | `SecDemoListToolsTest` | C3, C4, C8 | `SecDemoModelSecurityTest` | the worked example, persona by persona |
 | `SecDemoVectorIndexTest` | the vector index | | |
+| `SecDemoRunHandleTest` | P3 | | |
 
 `SecDemoSpawnFilterTest` (a spawn is decided per child context), `SecDemoDeclaredTypesTest` (a tool declaring `pm:Project` refuses a persona without read access before it runs), `SecDemoInfrastructureAgentTest` (an agent the application runs for a user, such as the prompt improver, cannot be run as a chat persona, whatever `<agent-access>` says), `SecDemoHarnessScriptsTest` (the harness compiles) and the tests of the [policy editor](doc:ai/security/tool-access-editor) (`SecDemoEffectiveAccessTest`, `SecDemoPolicyEditorTest`, `SecDemoApplyPolicyGuardTest`, `SecDemoToolDescriptionTest`, `SecDemoGermanTerminologyTest`) run in the same suite because they need the booted fixture. The unit-level counterparts in `tl-ai-core` use hand-built policies: `TestRoleToolAccess`, `TestToolAuthorization`, `TestAiToolAccessService`, `TestAgentCapabilities`, `TestDelegateFilter`, `TestSpawnFilter`, `TestDetachedSubagentCeiling`, `TestSkillTool`, `TestSkillAbsenceReason`, `TestTopLogicSecurityContext`, `TestReadFilter`.
 

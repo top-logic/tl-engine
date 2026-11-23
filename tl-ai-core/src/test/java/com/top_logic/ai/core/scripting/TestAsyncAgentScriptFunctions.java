@@ -41,8 +41,8 @@ import com.top_logic.util.model.ModelService;
 /**
  * Integration tests for the async agent TL-Script functions
  * {@link AIScriptFunctions#agentChatAsync(String, Object)},
- * {@link AIScriptFunctions#agentRunStatus(Object)} and
- * {@link AIScriptFunctions#agentRunResult(Object)}.
+ * {@link AIScriptFunctions#agentRunStatus(Object, boolean)} and
+ * {@link AIScriptFunctions#agentRunResult(Object, boolean)}.
  *
  * <p>
  * The status/result tests drive the exact persistence path an async run writes to - the
@@ -50,6 +50,12 @@ import com.top_logic.util.model.ModelService;
  * transcript. Because the store commits on its own writer-thread session, each read first advances
  * the caller's session revision via {@link HistoryUtils#updateSessionRevision()}, mirroring how the
  * chat servlet advances the revision per request so polling sees the background writes.
+ * </p>
+ *
+ * <p>
+ * The functions are called without access checks, as a scheduler task calls them: these tests are
+ * about what a handle resolves to. Who may read and stop a run is the subject of
+ * {@link com.top_logic.ai.core.security.TestRunHandleAccessPolicy}.
  * </p>
  *
  * <p>
@@ -81,8 +87,8 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 		AgentSession session = _store.createSession(SessionKind.BACKGROUND, null, "no-execution-yet");
 		advance();
 
-		assertEquals(ExecutionStatus.RUNNING.name(), AIScriptFunctions.agentRunStatus(session));
-		assertNull(AIScriptFunctions.agentRunResult(session));
+		assertEquals(ExecutionStatus.RUNNING.name(), AIScriptFunctions.agentRunStatus(session, false));
+		assertNull(AIScriptFunctions.agentRunResult(session, false));
 	}
 
 	/**
@@ -94,19 +100,19 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 		AgentExecution execution =
 			_store.beginExecution(session, "run-complete", "test-agent", "test-model", null, null);
 		advance();
-		assertEquals(ExecutionStatus.RUNNING.name(), AIScriptFunctions.agentRunStatus(session));
-		assertNull("result not available while running", AIScriptFunctions.agentRunResult(session));
+		assertEquals(ExecutionStatus.RUNNING.name(), AIScriptFunctions.agentRunStatus(session, false));
+		assertNull("result not available while running", AIScriptFunctions.agentRunResult(session, false));
 
 		_store.finishExecution(execution, ExecutionStatus.COMPLETE, StopReason.COMPLETE, null, null,
 			TRANSCRIPT, RESPONSE);
 		advance();
 
-		assertEquals(ExecutionStatus.COMPLETE.name(), AIScriptFunctions.agentRunStatus(session));
-		assertEquals("result is the final answer", RESPONSE, AIScriptFunctions.agentRunResult(session));
+		assertEquals(ExecutionStatus.COMPLETE.name(), AIScriptFunctions.agentRunStatus(session, false));
+		assertEquals("result is the final answer", RESPONSE, AIScriptFunctions.agentRunResult(session, false));
 		assertEquals("transcript is the full log", TRANSCRIPT,
-			AIScriptFunctions.agentRunTranscript(session));
+			AIScriptFunctions.agentRunTranscript(session, false));
 		assertFalse("result must not be the transcript",
-			TRANSCRIPT.equals(AIScriptFunctions.agentRunResult(session)));
+			TRANSCRIPT.equals(AIScriptFunctions.agentRunResult(session, false)));
 	}
 
 	/**
@@ -121,18 +127,18 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 			TRANSCRIPT);
 		advance();
 
-		assertEquals(ExecutionStatus.ERROR.name(), AIScriptFunctions.agentRunStatus(session));
+		assertEquals(ExecutionStatus.ERROR.name(), AIScriptFunctions.agentRunStatus(session, false));
 		assertEquals("the error is readable without being raised", "boom",
-			AIScriptFunctions.agentRunError(session));
+			AIScriptFunctions.agentRunError(session, false));
 		try {
-			AIScriptFunctions.agentRunResult(session);
+			AIScriptFunctions.agentRunResult(session, false);
 			fail("A failed run must not report its absent answer as a value.");
 		} catch (TopLogicException ex) {
 			assertTrue("The provider's own message belongs in the failure: " + ex.getMessage(),
 				ex.getMessage().contains("boom"));
 		}
 		assertEquals("the transcript stays readable for diagnosis", TRANSCRIPT,
-			AIScriptFunctions.agentRunTranscript(session));
+			AIScriptFunctions.agentRunTranscript(session, false));
 	}
 
 	/** A run that is still going reports no error, and no answer either. */
@@ -141,9 +147,9 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 		_store.beginExecution(session, "run-still-going", "test-agent", "test-model", null, null);
 		advance();
 
-		assertEquals(ExecutionStatus.RUNNING.name(), AIScriptFunctions.agentRunStatus(session));
-		assertNull(AIScriptFunctions.agentRunResult(session));
-		assertNull(AIScriptFunctions.agentRunError(session));
+		assertEquals(ExecutionStatus.RUNNING.name(), AIScriptFunctions.agentRunStatus(session, false));
+		assertNull(AIScriptFunctions.agentRunResult(session, false));
+		assertNull(AIScriptFunctions.agentRunError(session, false));
 	}
 
 	/**
@@ -158,12 +164,12 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 			TRANSCRIPT, RESPONSE);
 		advance();
 
-		assertEquals(ExecutionStatus.COMPLETE.name(), AIScriptFunctions.agentRunStatus("run-42"));
-		assertEquals(RESPONSE, AIScriptFunctions.agentRunResult("run-42"));
-		assertEquals(TRANSCRIPT, AIScriptFunctions.agentRunTranscript("run-42"));
-		assertEquals(ExecutionStatus.COMPLETE.name(), AIScriptFunctions.agentRunStatus(execution));
-		assertEquals(RESPONSE, AIScriptFunctions.agentRunResult(execution));
-		assertEquals(TRANSCRIPT, AIScriptFunctions.agentRunTranscript(execution));
+		assertEquals(ExecutionStatus.COMPLETE.name(), AIScriptFunctions.agentRunStatus("run-42", false));
+		assertEquals(RESPONSE, AIScriptFunctions.agentRunResult("run-42", false));
+		assertEquals(TRANSCRIPT, AIScriptFunctions.agentRunTranscript("run-42", false));
+		assertEquals(ExecutionStatus.COMPLETE.name(), AIScriptFunctions.agentRunStatus(execution, false));
+		assertEquals(RESPONSE, AIScriptFunctions.agentRunResult(execution, false));
+		assertEquals(TRANSCRIPT, AIScriptFunctions.agentRunTranscript(execution, false));
 	}
 
 	/**
@@ -180,8 +186,8 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 
 		// Before any execution row is visible, the string session id still reads as RUNNING (queued),
 		// unlike an unknown string which is null.
-		assertEquals(ExecutionStatus.RUNNING.name(), AIScriptFunctions.agentRunStatus(sessionId));
-		assertNull(AIScriptFunctions.agentRunResult(sessionId));
+		assertEquals(ExecutionStatus.RUNNING.name(), AIScriptFunctions.agentRunStatus(sessionId, false));
+		assertNull(AIScriptFunctions.agentRunResult(sessionId, false));
 		assertSame(session, _store.findSessionById(sessionId));
 
 		AgentExecution execution =
@@ -190,9 +196,9 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 			TRANSCRIPT, RESPONSE);
 		advance();
 
-		assertEquals(ExecutionStatus.COMPLETE.name(), AIScriptFunctions.agentRunStatus(sessionId));
-		assertEquals(RESPONSE, AIScriptFunctions.agentRunResult(sessionId));
-		assertEquals(TRANSCRIPT, AIScriptFunctions.agentRunTranscript(sessionId));
+		assertEquals(ExecutionStatus.COMPLETE.name(), AIScriptFunctions.agentRunStatus(sessionId, false));
+		assertEquals(RESPONSE, AIScriptFunctions.agentRunResult(sessionId, false));
+		assertEquals(TRANSCRIPT, AIScriptFunctions.agentRunTranscript(sessionId, false));
 	}
 
 	/**
@@ -218,8 +224,8 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 		advance();
 
 		assertEquals("handle must resolve to the top-level run's answer", RESPONSE,
-			AIScriptFunctions.agentRunResult(sessionId));
-		assertEquals(TRANSCRIPT, AIScriptFunctions.agentRunTranscript(sessionId));
+			AIScriptFunctions.agentRunResult(sessionId, false));
+		assertEquals(TRANSCRIPT, AIScriptFunctions.agentRunTranscript(sessionId, false));
 	}
 
 	/**
@@ -234,7 +240,7 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 			_store.beginExecution(session, "run-cancel", "test-agent", "test-model", null, null);
 		advance();
 
-		assertTrue("a running run is signalled", AIScriptFunctions.agentRunCancel(sessionId));
+		assertTrue("a running run is signalled", AIScriptFunctions.agentRunCancel(sessionId, false));
 		// The marker is committed: it is visible at HEAD (the store reads it on its writer thread)
 		// and, after advancing the caller revision, on the execution wrapper itself.
 		assertTrue("marker read at HEAD", _store.isCancelRequested(execution));
@@ -242,14 +248,15 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 		assertTrue("marker visible on the wrapper after advancing", execution.getCancelRequested());
 
 		assertFalse("re-cancelling an already-signalled run is a no-op",
-			AIScriptFunctions.agentRunCancel(sessionId));
+			AIScriptFunctions.agentRunCancel(sessionId, false));
 
 		_store.finishExecution(execution, ExecutionStatus.CANCELLED, StopReason.ABORTED, null, null,
 			TRANSCRIPT, null);
 		advance();
-		assertFalse("cancelling a terminal run is a no-op", AIScriptFunctions.agentRunCancel(sessionId));
+		assertFalse("cancelling a terminal run is a no-op",
+			AIScriptFunctions.agentRunCancel(sessionId, false));
 		assertFalse("cancelling an unknown handle is a no-op",
-			AIScriptFunctions.agentRunCancel("no-such-run"));
+			AIScriptFunctions.agentRunCancel("no-such-run", false));
 	}
 
 	/**
@@ -274,7 +281,7 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 		assertFalse(token.isCancelled());
 
 		// Request cancel (the marker is committed) and let the next turn boundary observe it.
-		assertTrue(AIScriptFunctions.agentRunCancel(execution));
+		assertTrue(AIScriptFunctions.agentRunCancel(execution, false));
 		observer.onEvent(new AgentEvent.TurnStarted("run-observed", 2, now));
 		assertTrue("observer flips the local token from the committed marker", token.isCancelled());
 	}
@@ -303,7 +310,7 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 			observer.onEvent(new AgentEvent.RunStarted("run-long-turn", 0, now, "test-model"));
 
 			// A cancel is requested from (possibly) another node: the marker is committed.
-			assertTrue(AIScriptFunctions.agentRunCancel(execution));
+			assertTrue(AIScriptFunctions.agentRunCancel(execution, false));
 
 			// The observer must flip the local token within a bounded delay despite no turn boundary.
 			assertTrue("cancel must take effect without a turn boundary",
@@ -382,18 +389,18 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 	 * throwing.
 	 */
 	public void testUnknownHandleResolvesNull() {
-		assertNull(AIScriptFunctions.agentRunStatus(Integer.valueOf(7)));
-		assertNull(AIScriptFunctions.agentRunResult(Integer.valueOf(7)));
-		assertNull(AIScriptFunctions.agentRunTranscript(Integer.valueOf(7)));
-		assertFalse(AIScriptFunctions.agentRunCancel(Integer.valueOf(7)));
-		assertNull(AIScriptFunctions.agentRunStatus("no-such-run-id"));
-		assertNull(AIScriptFunctions.agentRunResult("no-such-run-id"));
-		assertNull(AIScriptFunctions.agentRunTranscript("no-such-run-id"));
-		assertFalse(AIScriptFunctions.agentRunCancel("no-such-run-id"));
-		assertNull(AIScriptFunctions.agentRunStatus(null));
-		assertNull(AIScriptFunctions.agentRunResult(null));
-		assertNull(AIScriptFunctions.agentRunTranscript(null));
-		assertFalse(AIScriptFunctions.agentRunCancel(null));
+		assertNull(AIScriptFunctions.agentRunStatus(Integer.valueOf(7), false));
+		assertNull(AIScriptFunctions.agentRunResult(Integer.valueOf(7), false));
+		assertNull(AIScriptFunctions.agentRunTranscript(Integer.valueOf(7), false));
+		assertFalse(AIScriptFunctions.agentRunCancel(Integer.valueOf(7), false));
+		assertNull(AIScriptFunctions.agentRunStatus("no-such-run-id", false));
+		assertNull(AIScriptFunctions.agentRunResult("no-such-run-id", false));
+		assertNull(AIScriptFunctions.agentRunTranscript("no-such-run-id", false));
+		assertFalse(AIScriptFunctions.agentRunCancel("no-such-run-id", false));
+		assertNull(AIScriptFunctions.agentRunStatus(null, false));
+		assertNull(AIScriptFunctions.agentRunResult(null, false));
+		assertNull(AIScriptFunctions.agentRunTranscript(null, false));
+		assertFalse(AIScriptFunctions.agentRunCancel(null, false));
 	}
 
 	/**
@@ -423,9 +430,9 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 		assertEquals("failed background run must be recorded as ERROR",
 			ExecutionStatus.ERROR.name(), status);
 		assertNotNull("the failure must be readable through the handle",
-			AIScriptFunctions.agentRunError(handle));
+			AIScriptFunctions.agentRunError(handle, false));
 		try {
-			AIScriptFunctions.agentRunResult(handle);
+			AIScriptFunctions.agentRunResult(handle, false);
 			fail("A failed run must not report its absent answer as a value.");
 		} catch (TopLogicException expected) {
 			// The run never answered; asking for its answer says so.
@@ -441,7 +448,7 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 		String status = null;
 		for (int i = 0; i < 150; i++) {
 			advance();
-			status = AIScriptFunctions.agentRunStatus(handle);
+			status = AIScriptFunctions.agentRunStatus(handle, false);
 			if (status != null && !ExecutionStatus.RUNNING.name().equals(status)) {
 				return status;
 			}

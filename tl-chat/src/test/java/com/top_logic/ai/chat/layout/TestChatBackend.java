@@ -255,7 +255,7 @@ public class TestChatBackend extends BasicTestCase {
 		assertTrue("The backend did not start.", working.await(TIMEOUT_SECONDS, TimeUnit.SECONDS));
 		HistoryUtils.updateSessionRevision();
 		assertTrue("aiAgentRunCancel found no running execution of the chat.",
-			AIScriptFunctions.agentRunCancel(_session));
+			AIScriptFunctions.agentRunCancel(_session, false));
 		marked.countDown();
 
 		run._backgroundTask.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);

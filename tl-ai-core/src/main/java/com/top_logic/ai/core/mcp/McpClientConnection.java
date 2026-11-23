@@ -173,6 +173,9 @@ class McpClientConnection {
 	private <T> T send(Supplier<Mono<T>> call) {
 		try {
 			return await(call.get());
+		} catch (CancellationException ex) {
+			// A stop also ends a call that the server rejected: no invalidation and no repeat.
+			throw ex;
 		} catch (RuntimeException ex) {
 			if (_credentials == null || !isUnauthorized(ex)) {
 				throw ex;
@@ -190,13 +193,14 @@ class McpClientConnection {
 			// Stopping the run ends the wait for the server.
 			return RunCancellationBinding.whileBlocked(() -> call.contextWrite(context).block());
 		} catch (CancellationException ex) {
-			// The stop of the run, which took back its interrupt.
+			// The stop of the run, which took back its interrupt, or a request that the library
+			// cancelled.
 			throw ex;
 		} catch (InterruptedException ex) {
 			throw interrupted(ex);
 		} catch (RuntimeException ex) {
-			// A wait of the library that ends by an interrupt fails with the interrupt as cause.
-			if (cause(ex, InterruptedException.class) != null) {
+			// When an interrupt ends a wait of the library, Reactor sets the interrupt flag again.
+			if (Thread.currentThread().isInterrupted()) {
 				throw interrupted(ex);
 			}
 			throw ex;
@@ -216,7 +220,7 @@ class McpClientConnection {
 	}
 
 	private CancellationException interrupted(Exception ex) {
-		// Another party than the run interrupted the thread: that party finds the flag set again.
+		// Another party than the run interrupted the thread: that party finds the flag set.
 		Thread.currentThread().interrupt();
 		CancellationException result =
 			new CancellationException("The call to the MCP server '" + _serverName + "' was interrupted.");
@@ -225,22 +229,10 @@ class McpClientConnection {
 	}
 
 	private static boolean isUnauthorized(RuntimeException ex) {
-		McpHttpClientTransportAuthorizationException rejection =
-			cause(ex, McpHttpClientTransportAuthorizationException.class);
-		return rejection != null
-			&& rejection.getResponseInfo().statusCode() == HttpURLConnection.HTTP_UNAUTHORIZED;
-	}
-
-	/**
-	 * The first exception of the given type in the chain of causes, <code>null</code> if there is
-	 * none.
-	 */
-	private static <E extends Throwable> E cause(Throwable failure, Class<E> type) {
-		return ExceptionUtil.getCauseChain(failure).stream()
-			.filter(type::isInstance)
-			.map(type::cast)
-			.findFirst()
-			.orElse(null);
+		return ExceptionUtil.getCauseChain(ex).stream()
+			.filter(McpHttpClientTransportAuthorizationException.class::isInstance)
+			.map(McpHttpClientTransportAuthorizationException.class::cast)
+			.anyMatch(rejection -> rejection.getResponseInfo().statusCode() == HttpURLConnection.HTTP_UNAUTHORIZED);
 	}
 
 	/**

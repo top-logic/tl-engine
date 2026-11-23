@@ -483,7 +483,7 @@ public class TestUIThemeService extends TestCase {
 	}
 
 	private static String selector(String themeId) {
-		return "[" + UIThemeService.THEME_ATTRIBUTE + "=\"" + themeId + "\"]";
+		return ":root[" + UIThemeService.THEME_ATTRIBUTE + "=\"" + themeId + "\"]";
 	}
 
 	private static String block(String css, String themeId) {

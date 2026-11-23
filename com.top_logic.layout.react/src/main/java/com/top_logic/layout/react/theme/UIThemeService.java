@@ -453,6 +453,15 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	 * </p>
 	 *
 	 * <p>
+	 * The design system declares its roles ({@code --tl-*}) in the same layer, after these blocks,
+	 * with selectors such as {@code [data-tl-mode="dark"]}. A block is therefore scoped by
+	 * {@code :root[data-theme="x"]}: this selector has a higher specificity, so that a role that a
+	 * theme sets wins over the role of the design system in the light and in the dark mode. The
+	 * selector {@code :root} alone of the default theme, for a page whose script did not run, does
+	 * not win over a role of the design system.
+	 * </p>
+	 *
+	 * <p>
 	 * An abstract theme gets no block: no page is ever put into it, and its tokens are part of the
 	 * blocks of the themes extending it.
 	 * </p>
@@ -489,7 +498,7 @@ public class UIThemeService extends ConfiguredManagedClass<UIThemeService.Config
 	}
 
 	private String selector(String themeId) {
-		String scoped = "[" + THEME_ATTRIBUTE + "=\"" + themeId + "\"]";
+		String scoped = ":root[" + THEME_ATTRIBUTE + "=\"" + themeId + "\"]";
 		return themeId.equals(_defaultTheme) ? ":root, " + scoped : scoped;
 	}
 

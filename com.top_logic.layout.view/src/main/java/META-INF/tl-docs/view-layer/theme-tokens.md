@@ -14,9 +14,15 @@ configuration of the `UIThemeService`. Each `<theme>` holds a list of tokens; a 
 e.g. a shadow) or a `<ref>` naming another token.
 
 `UIThemeService.writeThemeStyles` emits every token of every theme verbatim as `--<name>:<value>`
-into an inline `<style>` element of the React page, in a block scoped by the theme's
-`data-theme` attribute; the default theme is bound to `:root` in addition. So a token named
+into an inline `<style>` element of the React page, in a block with the selector
+`:root[data-theme="<theme>"]`; the default theme is bound to `:root` in addition. So a token named
 `corner-radius` is a custom property `--corner-radius` and is consumed as `var(--corner-radius)`.
+
+A theme can also set a role of the design system (a `--tl-*` token, see the section "Typography
+tokens" below). The design system declares its roles in the same layer
+`tl`, after the theme blocks, with selectors such as `[data-tl-mode="dark"]`. The selector of a theme
+block has a higher specificity, so the value of the theme wins in the light and in the dark mode.
+A theme that sets a role of the density (for example `tl-size-control`) sets it for both densities.
 
 A theme `extends` another one and overrides only the tokens that differ; the emitted block carries
 the inherited tokens as well, so every theme declares the full set.
@@ -190,6 +196,22 @@ A theme that maps the typography of a customer's design system onto TopLogic set
 maps each style of the customer scale onto the role of the ten that serves the same purpose. The
 component code uses the same classes, so a theme restyles every text of a role at once - a `<text>`
 as well as the header of a table or the title of an alert.
+
+The token of a role has the name of the role with the prefix `tl-`. A theme that sets the font of
+all texts and the size of the body text:
+
+```xml
+<theme name="large-text"
+	extends="default"
+>
+	<label>
+		<en>Large text</en>
+		<de>Große Schrift</de>
+	</label>
+	<text name="tl-font-family-sans" value="Georgia, serif"/>
+	<length name="tl-font-size-body" value="1rem"/>
+</theme>
+```
 
 ## The page background
 

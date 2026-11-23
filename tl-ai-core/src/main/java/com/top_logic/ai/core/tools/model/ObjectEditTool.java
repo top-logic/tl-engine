@@ -143,6 +143,25 @@ public class ObjectEditTool {
 	/** How every answer that changed something ends. */
 	private static final String SAVED = "The change is saved when this turn ends.";
 
+	/**
+	 * The new value of a written attribute that the run may not read.
+	 *
+	 * <p>
+	 * The same text for every stored value, so that the answer tells nothing about it.
+	 * </p>
+	 */
+	private static final String WRITTEN_UNREADABLE = "(written; your account may not read it)";
+
+	/**
+	 * The new value of a written multiple reference that the run may not read.
+	 *
+	 * <p>
+	 * The same text for every stored value, so that the answer tells nothing about it.
+	 * </p>
+	 */
+	private static final String WRITTEN_UNREADABLE_ELEMENTS =
+		"(written; your account may not read it. Its stored elements stay, and the given ones are added.)";
+
 	/** How many levels of parts one {@code createObject} call creates below the object it names. */
 	private static final int MAX_DEPTH = 3;
 
@@ -269,11 +288,9 @@ public class ObjectEditTool {
 				change.put("from", AttributeValues.echo(part, before.get(part), filter));
 				change.put("to", AttributeValues.echo(part, target.tValue(part), filter));
 			} else if (part instanceof TLReference && part.isMultiple()) {
-				// The same sentence whatever the stored value, so that it tells nothing about it.
-				change.put("to", "(written; your account may not read it. Its stored elements stay, and the"
-					+ " given ones are added.)");
+				change.put("to", WRITTEN_UNREADABLE_ELEMENTS);
 			} else {
-				change.put("to", "(written; your account may not read it)");
+				change.put("to", WRITTEN_UNREADABLE);
 			}
 			changes.put(part.getName(), change);
 		}

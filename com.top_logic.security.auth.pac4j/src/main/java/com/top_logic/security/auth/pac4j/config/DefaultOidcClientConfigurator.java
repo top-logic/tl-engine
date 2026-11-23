@@ -326,9 +326,17 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		_secret = context.getInstance(config.getSecret());
 		_hasProviderMetadataSource = hasProviderMetadataSource();
 		if (!_hasProviderMetadataSource) {
-			Logger.warn("Login client '" + config.getName() + "' is not offered: neither '"
-				+ Config.DISCOVERY_URI + "' nor '" + Config.PROVIDER_METADATA + "' is configured.",
-				DefaultOidcClientConfigurator.class);
+			if (StringServices.isEmpty(config.getClientId())) {
+				/* A client that nobody configured is a normal state: an application can contain a
+				 * client whose values come from environment variables that are not set. A warning
+				 * would fail each test that counts a warning at the start as an error. */
+				Logger.info("Login client '" + config.getName() + "' is not configured and is not offered.",
+					DefaultOidcClientConfigurator.class);
+			} else {
+				Logger.warn("Login client '" + config.getName() + "' is not offered: neither '"
+					+ Config.DISCOVERY_URI + "' nor '" + Config.PROVIDER_METADATA + "' is configured.",
+					DefaultOidcClientConfigurator.class);
+			}
 		}
 	}
 

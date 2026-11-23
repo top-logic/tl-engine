@@ -6,15 +6,18 @@
 package test.com.top_logic.security.auth.pac4j.config;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.Test;
 
 import org.pac4j.oidc.config.OidcConfiguration;
 
+import test.com.top_logic.basic.AssertNoErrorLogListener;
 import test.com.top_logic.basic.config.AbstractTypedConfigurationTestCase;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger.LogEntry;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
@@ -119,7 +122,7 @@ public class TestOidcClientAvailability extends AbstractTypedConfigurationTestCa
 	 * resolves to the empty string, the secret is missing.
 	 */
 	public void testWithoutEnvironmentVariables() throws Exception {
-		ExposingConfigurator configurator = genericClient("", "");
+		ExposingConfigurator configurator = genericClient("", "", "");
 		assertFalse(configurator.isAvailable());
 		assertNull("Empty scope must leave the default scopes of pac4j.",
 			configurator.oidcConfiguration().getScope());
@@ -127,27 +130,58 @@ public class TestOidcClientAvailability extends AbstractTypedConfigurationTestCa
 
 	/** An empty scope is not handed to pac4j, which would request no scope at all. */
 	public void testEmptyScope() throws Exception {
-		ExposingConfigurator configurator = genericClient(
+		ExposingConfigurator configurator = genericClient("",
 			"https://provider.test/.well-known/openid-configuration", "");
 		assertNull(configurator.oidcConfiguration().getScope());
 	}
 
 	/** An explicit scope is handed to pac4j. */
 	public void testExplicitScope() throws Exception {
-		ExposingConfigurator configurator = genericClient(
+		ExposingConfigurator configurator = genericClient("",
 			"https://provider.test/.well-known/openid-configuration", EXPLICIT_SCOPE);
 		assertEquals(EXPLICIT_SCOPE, configurator.oidcConfiguration().getScope());
+	}
+
+	/**
+	 * The generic client without any of its environment variables is a normal state of an
+	 * application and must not log a warning, because a test of the application counts a warning
+	 * at the start as a failure.
+	 */
+	public void testUnconfiguredClientLogsNoWarning() throws Exception {
+		assertEquals(Collections.emptyList(), startupWarnings("", ""));
+	}
+
+	/**
+	 * A client with a client ID but without a source of provider metadata is configured in part,
+	 * which is an error of the configuration, so the start logs a warning.
+	 */
+	public void testPartlyConfiguredClientLogsWarning() throws Exception {
+		assertEquals(1, startupWarnings("the-client-id", "").size());
+	}
+
+	/**
+	 * The messages of level warning and above that are logged while the generic client is created.
+	 */
+	private List<LogEntry> startupWarnings(String clientId, String discoveryUri) throws Exception {
+		AssertNoErrorLogListener warnings = new AssertNoErrorLogListener(true);
+		try {
+			genericClient(clientId, discoveryUri, "");
+		} finally {
+			warnings.deactivate();
+		}
+		return warnings.getLogEntries();
 	}
 
 	/**
 	 * The client of the configuration <code>pac4j-generic.config.xml</code> with its aliases
 	 * resolved.
 	 */
-	private ExposingConfigurator genericClient(String discoveryUri, String scope) throws Exception {
+	private ExposingConfigurator genericClient(String clientId, String discoveryUri, String scope)
+			throws Exception {
 		Config config = read("<" + ROOT_TAG + "><" + Config.CLIENT + " class='" + ExposingConfigurator.class.getName()
 			+ "' name='pac4j-generic'>"
 			+ "<label><en></en></label>"
-			+ "<client-id></client-id>"
+			+ "<client-id>" + clientId + "</client-id>"
 			+ "<" + DefaultOidcClientConfigurator.Config.SCOPE + ">" + scope + "</"
 			+ DefaultOidcClientConfigurator.Config.SCOPE + ">"
 			+ "<" + DefaultOidcClientConfigurator.Config.SECRET + " name='" + MISSING_VARIABLE + "'/>"

@@ -13,8 +13,11 @@ import com.top_logic.ai.mcp.server.authentication.McpCallerContext;
 import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.ai.core.agent.RunSecurityBinding;
+import com.top_logic.ai.core.agent.SecurityContext;
 import com.top_logic.ai.core.agent.ToolContext;
 import com.top_logic.ai.core.agent.ToolPermissionFilter;
 import com.top_logic.ai.core.agent.TransactionScope;
@@ -228,7 +231,12 @@ public class McpToolAdapter {
 				commitMessage = TurnCommitMessage.of(context.runInfo().agentName(), null,
 					List.of(ToolCatalog.commitMessage(tool, arguments, context)));
 			}
-			ToolResult result = tool.execute(arguments, context);
+			ToolResult result;
+			// What ToolExecutions does for a tool call of an agent loop: a script that the tool
+			// executes starts its nested run as a background run, as this request is one.
+			try (ThreadLocalBinding<SecurityContext>.Handle security = RunSecurityBinding.bind(context.security())) {
+				result = tool.execute(arguments, context);
+			}
 
 			if (writes) {
 				scope.commit(commitMessage);

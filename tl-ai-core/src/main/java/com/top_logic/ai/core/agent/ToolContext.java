@@ -94,6 +94,14 @@ public class ToolContext implements ToolExecutionContext {
 	 * {@code aiAgentChatAsync}, which detaches.
 	 * </p>
 	 *
+	 * <p>
+	 * The exception is a script that a tool of a {@link SecurityContext#isBackgroundRun() background
+	 * run} executes, for example through {@code changeData}: nobody watches that script either. Its
+	 * nested run is a background run of the same account, bounded by the same
+	 * {@code <background-allowlist>}, so that a nested run is never wider than the run that executes
+	 * it. The tool dispatch tells which run that is through {@link RunSecurityBinding}.
+	 * </p>
+	 *
 	 * @throws IllegalStateException
 	 *         If no user is bound to the calling thread. A run that cannot name its principal cannot
 	 *         be authorized, and there is no unchecked mode to fall back to.
@@ -102,7 +110,8 @@ public class ToolContext implements ToolExecutionContext {
 		CancellationToken cancellationToken = new CancellationToken();
 		return new ToolContext(
 			RunSecurity.contextFor(
-				new RunPrincipal(TLContext.currentUser(), RunEntryPoint.SCRIPT, false)),
+				new RunPrincipal(TLContext.currentUser(), RunEntryPoint.SCRIPT,
+					RunSecurityBinding.executesBackgroundRun())),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 	}
 

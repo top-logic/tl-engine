@@ -13,7 +13,10 @@ import com.top_logic.ai.tool.api.ToolExecutionContext;
 import com.top_logic.ai.tool.api.ToolResult;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.basic.util.ComputationEx2;
+import com.top_logic.ai.core.agent.RunSecurityBinding;
+import com.top_logic.ai.core.agent.SecurityContext;
 import com.top_logic.ai.core.agent.ToolContext;
 import com.top_logic.ai.core.citation.ReadingList;
 import com.top_logic.ai.core.citation.ReadingListBinding;
@@ -49,7 +52,9 @@ import com.top_logic.ai.core.execution.RunInfoBinding;
  * that code <em>beneath</em> a tool, which gets no {@link ToolExecutionContext}, can still learn
  * which agent run it is serving. The binding is removed when the call returns. The run's
  * {@link ReadingListBinding reading list} is bound the same way, so that the code which renders what
- * a tool read - the read filter, the page renderer - can register it as a source.
+ * a tool read - the read filter, the page renderer - can register it as a source. And so is the run's
+ * {@link RunSecurityBinding security context}, so that a script the tool executes starts a nested run
+ * of a background run as a background run.
  * </p>
  *
  * @see ThreadContext#inSystemContext(Class, ComputationEx2)
@@ -76,7 +81,8 @@ public final class ToolExecutions {
 	public static ToolResult execute(Tool tool, Map<String, Object> args, ToolExecutionContext context) {
 		RunInfo run = context != null ? context.runInfo() : RunInfo.NONE;
 		try (RunInfoBinding.Binding bound = RunInfoBinding.bind(run);
-				ReadingListBinding.Binding reading = ReadingListBinding.bind(readingListOf(context))) {
+				ReadingListBinding.Binding reading = ReadingListBinding.bind(readingListOf(context));
+				ThreadLocalBinding<SecurityContext>.Handle security = RunSecurityBinding.bind(securityOf(context))) {
 			return inCallerOrSystemContext(tool.getClass(), () -> tool.execute(args, context));
 		}
 	}
@@ -84,6 +90,11 @@ public final class ToolExecutions {
 	/** The reading list the call registers what it read into, or <code>null</code> outside a run. */
 	private static ReadingList readingListOf(ToolExecutionContext context) {
 		return context instanceof ToolContext toolContext ? toolContext.readingList() : null;
+	}
+
+	/** The security context of the run the call belongs to, or <code>null</code> outside a run. */
+	private static SecurityContext securityOf(ToolExecutionContext context) {
+		return context instanceof ToolContext toolContext ? toolContext.security() : null;
 	}
 
 	/**

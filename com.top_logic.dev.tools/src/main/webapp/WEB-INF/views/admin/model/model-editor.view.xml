@@ -12,8 +12,11 @@
 	toolbars create and delete modules, types and attributes, and the class form adds and removes
 	generalizations, through the ModelEditAction. The context menu of the diagram offers the same
 	commands on the element right-clicked, and Del deletes the selected node or edge (a reference, or
-	a generalization, which the diagram represents by a transient tl.devtools:Generalization). The
-	diagram observes the model types it draws, so
+	a generalization, which the diagram represents by a transient tl.devtools:Generalization). A type
+	of another module dragged out of the tree onto the diagram is drawn there as an external node
+	(externalTypes), linked to the module's types by their generalizations and references; selecting
+	it keeps the diagram at its module, "Hide" in its context menu removes it again, and it cannot be
+	deleted there. The diagram observes the model types it draws, so
 	it follows every model change, also one made in another session. Beside the diagram, the Instances tab lists all instances of
 	the class selected in the diagram, edits them in place, exports them to Excel or XML and imports an
 	XML file written by that export (admin/model/import-instances.view.xml).
@@ -22,13 +25,28 @@
 	<channels>
 		<channel name="selectedPart"/>
 		<!--
-			The module the diagram shows: the selected module itself, the module of a selected type, or
+			The types of other modules dragged out of the tree onto the diagram, together with the module
+			the diagram showed then: {'module': <module>, 'types': [<types>]}. The diagram draws them as
+			external nodes while it shows that module.
+		-->
+		<channel name="externalTypes"/>
+		<!--
+			The module the diagram shows: the module the external types were dropped on while one of
+			them is selected, otherwise the selected module itself, the module of a selected type, or
 			the module of the owner of a selected attribute, reference or classifier, or of the
 			specialization of a selected generalization.
 		-->
 		<derived-channel name="selectedModule"
-			expr="$selectedPart == null ? null : ($selectedPart.instanceOf(`tl.model:TLModule`) ? $selectedPart : ($selectedPart.instanceOf(`tl.model:TLType`) ? $selectedPart.get(`tl.model:TLType#module`) : ($selectedPart.instanceOf(`tl.model:TLStructuredTypePart`) ? $selectedPart.get(`tl.model:TLStructuredTypePart#owner`).get(`tl.model:TLType#module`) : ($selectedPart.instanceOf(`tl.model:TLClassifier`) ? $selectedPart.get(`tl.model:TLClassifier#owner`).get(`tl.model:TLType#module`) : ($selectedPart.instanceOf(`tl.devtools:Generalization`) ? $selectedPart.get(`tl.devtools:Generalization#specialization`).get(`tl.model:TLType#module`) : null)))))"
-			inputs="selectedPart"
+			expr="$externalTypes != null &amp;&amp; $externalTypes['types'].containsElement($selectedPart) ? $externalTypes['module'] : ($selectedPart == null ? null : ($selectedPart.instanceOf(`tl.model:TLModule`) ? $selectedPart : ($selectedPart.instanceOf(`tl.model:TLType`) ? $selectedPart.get(`tl.model:TLType#module`) : ($selectedPart.instanceOf(`tl.model:TLStructuredTypePart`) ? $selectedPart.get(`tl.model:TLStructuredTypePart#owner`).get(`tl.model:TLType#module`) : ($selectedPart.instanceOf(`tl.model:TLClassifier`) ? $selectedPart.get(`tl.model:TLClassifier#owner`).get(`tl.model:TLType#module`) : ($selectedPart.instanceOf(`tl.devtools:Generalization`) ? $selectedPart.get(`tl.devtools:Generalization#specialization`).get(`tl.model:TLType#module`) : null))))))"
+			inputs="selectedPart, externalTypes"
+		/>
+		<!--
+			The module the diagram shows and the external types it draws there, in the form of
+			externalTypes; no types while the external types were dropped on another module.
+		-->
+		<derived-channel name="diagramTypes"
+			expr="{'module': $selectedModule, 'types': ($externalTypes != null &amp;&amp; $selectedModule != null &amp;&amp; $externalTypes['module'] == $selectedModule ? $externalTypes['types'] : list())}"
+			inputs="selectedModule, externalTypes"
 		/>
 		<channel name="selectedInstances"/>
 		<!-- Bumped after an import, so the instance table reads its rows again. -->
@@ -128,7 +146,8 @@
 						module are its classes and enumerations - the types the diagram draws, those with the
 						module as scope -, each level sorted by name, ignoring case. The parents lead from a type to its module
 						and from a module to the model, so that a type selected in the diagram is found in the
-						tree.
+						tree. Modules and types are dragged as "modelType"; the diagram takes a type of another
+						module.
 					-->
 					<tree-table
 						children="$node.instanceOf(`tl.model:TLModel`) ? $node.get(`tl.model:TLModel#modules`).sort(comparator(x -> $x.get(`tl.model:TLNamedPart#name`).toLowerCase())) : ($node.instanceOf(`tl.model:TLModule`) ? $node.get(`tl.model:TLModule#types`).filter(t -> $t.get(`tl.model:TLType#scope`) == $node &amp;&amp; ($t.instanceOf(`tl.model:TLClass`) || $t.instanceOf(`tl.model:TLEnumeration`))).sort(comparator(x -> $x.get(`tl.model:TLNamedPart#name`).toLowerCase())) : list())"
@@ -139,6 +158,7 @@
 						selection="selectedPart"
 						types="tl.model:TLNamedPart"
 					>
+						<drag kind="modelType"/>
 						<columns>
 							<column attribute="name"/>
 						</columns>
@@ -266,12 +286,13 @@
 												<!--
 													Del deletes the element selected in the diagram, a node or an edge, and selects what the
 													deleted element belonged to: the module of a type, the type of an attribute, the
-													enumeration of a classifier, the specialization of a generalization.
+													enumeration of a classifier, the specialization of a generalization. A type of
+													another module, drawn as external node, is not deleted here.
 												-->
 												<generic-command key="Delete"
 													clique="more"
 													image="css:bi bi-trash"
-													inputs="selectedPart"
+													inputs="selectedPart, selectedModule"
 													placement="TOOLBAR"
 												>
 													<label>
@@ -280,7 +301,7 @@
 													</label>
 													<executability>
 														<null-input-disabled/>
-														<disabled-if expr="if($selectedPart.instanceOf(`tl.model:TLModule`), #('A module is deleted with &quot;Delete module&quot; in the model tree.'@en, 'Ein Modul wird mit &quot;Modul löschen&quot; im Modellbaum gelöscht.'@de))"/>
+														<disabled-if expr="if($selectedPart.instanceOf(`tl.model:TLModule`), #('A module is deleted with &quot;Delete module&quot; in the model tree.'@en, 'Ein Modul wird mit &quot;Modul löschen&quot; im Modellbaum gelöscht.'@de), if($selectedPart.instanceOf(`tl.model:TLType`) &amp;&amp; $selectedPart.get(`tl.model:TLType#module`) != $selectedModule, #('A type of another module is not deleted here. Select it in the model tree to show and delete it in its own module.'@en, 'Ein Typ eines anderen Moduls wird hier nicht gelöscht. Wählen Sie ihn im Modellbaum, um ihn in seinem eigenen Modul zu zeigen und zu löschen.'@de)))"/>
 													</executability>
 													<confirm expr="#('Delete the selected model element?'@en, 'Das ausgewählte Modellelement löschen?'@de)"/>
 													<with-transaction>
@@ -296,6 +317,11 @@
 												classifier or generalization created, changed or deleted - in this
 												session or another one - redraws it. A generalization is a link
 												between two classes, whose change is announced as a change of both.
+												A type of another module dropped from the tree is drawn as an external
+												node while the diagram shows the module it was dropped on: a box with
+												a dashed grey border, the name of its module and its own name. The
+												generalizations and references between the drawn types are edges in
+												both directions, those to types not drawn are left out.
 											-->
 											<context-menu input="selectedPart">
 												<flow-diagram
@@ -308,25 +334,29 @@
 															as="module"
 															channel="selectedModule"
 														/>
+														<input
+															as="external"
+															channel="externalTypes"
+														/>
 													</inputs>
 													<createChart><![CDATA[{
 	allTypes = $module == null ? list() : $module.get(`tl.model:TLModule#types`)
 		.filter(t -> $t.get(`tl.model:TLType#scope`).instanceOf(`tl.model:TLModule`));
 	classes = $allTypes.filter(t -> $t.instanceOf(`tl.model:TLClass`));
 	enums = $allTypes.filter(t -> $t.instanceOf(`tl.model:TLEnumeration`));
-	classNameSet = $classes.indexBy(c -> $c.get(`tl.model:TLNamedPart#name`));
-	enumNameSet = $enums.indexBy(e -> $e.get(`tl.model:TLNamedPart#name`));
+	dropped = $module == null || $external == null || $external["module"] != $module
+		? list()
+		: $external["types"];
+	droppedClasses = $dropped.filter(t -> $t.instanceOf(`tl.model:TLClass`));
+	shown = list($classes, $enums, $dropped).flatten().indexBy(t -> $t);
 
 	classNodes = $classes.map(c -> {
 		props = $c.get(`tl.model:TLStructuredType#localParts`)
-			.filter(p -> $p.instanceOf(`tl.model:TLProperty`) || {
-				targetName = $p.get(`tl.model:TLStructuredTypePart#type`).get(`tl.model:TLNamedPart#name`);
-				$p.instanceOf(`tl.model:TLReference`)
-					&& $classNameSet[$targetName] == null && $enumNameSet[$targetName] == null
-			});
+			.filter(p -> $p.instanceOf(`tl.model:TLProperty`)
+				|| $p.instanceOf(`tl.model:TLReference`) && $shown[$p.get(`tl.model:TLStructuredTypePart#type`)] == null);
 		allGens = $c.get(`tl.model:TLClass#generalizations`);
 		externalGens = $allGens
-			.filter(g -> $classNameSet[$g.get(`tl.model:TLNamedPart#name`)] == null)
+			.filter(g -> $shown[$g] == null)
 			.map(g -> $g.get(`tl.model:TLType#module`).get(`tl.model:TLNamedPart#name`)
 				+ ":" + $g.get(`tl.model:TLNamedPart#name`));
 
@@ -385,15 +415,27 @@
 					]))))
 	});
 
-	nodes = list($classNodes, $enumNodes).flatten();
-	nodeByName = $nodes.indexBy(n -> $n["userObject"].get(`tl.model:TLNamedPart#name`));
+	externalNodes = $dropped.map(t ->
+		reactFlowSelection(userObject: $t,
+			content: reactFlowBorder(stroke: "#999", dashes: [4, 3], cssClass: "tlSelectionStroke",
+				content: reactFlowFill(fill: "white", cssClass: "tlSelectionFill",
+					content: reactFlowPadding(all: 6, content: reactFlowAlign(hAlign: "middle",
+						content: reactFlowVertical(gap: 2, contents: [
+							reactFlowText("«" + $t.get(`tl.model:TLType#module`).get(`tl.model:TLNamedPart#name`) + "»",
+								fontSize: 10, fillStyle: "#888"),
+							reactFlowText($t.get(`tl.model:TLNamedPart#name`), fontWeight: "bold")
+						])))))));
 
-	genEdges = $classes
+	nodes = list($classNodes, $enumNodes, $externalNodes).flatten();
+	nodeByType = $nodes.indexBy(n -> $n["userObject"]);
+	edgeSources = list($classes, $droppedClasses).flatten();
+
+	genEdges = $edgeSources
 		.map(c -> $c.get(`tl.model:TLClass#generalizations`)
-			.filter(g -> $nodeByName[$g.get(`tl.model:TLNamedPart#name`)] != null)
+			.filter(g -> $nodeByType[$g] != null)
 			.map(g -> reactFlowGraphEdge(
-				$nodeByName[$g.get(`tl.model:TLNamedPart#name`)],
-				$nodeByName[$c.get(`tl.model:TLNamedPart#name`)],
+				$nodeByType[$g],
+				$nodeByType[$c],
 				priority: 3, sourceSymbol: "CLOSED_ARROW",
 				selectable: true,
 				userObject: {
@@ -404,11 +446,11 @@
 				})))
 		.flatten();
 
-	refEdges = $classes
+	refEdges = $edgeSources
 		.map(c -> $c.get(`tl.model:TLStructuredType#localParts`)
 			.filter(p -> $p.instanceOf(`tl.model:TLReference`))
 			.filter(p -> !$p.get(`tl.model:TLReference#backwards`))
-			.filter(p -> $nodeByName[$p.get(`tl.model:TLStructuredTypePart#type`).get(`tl.model:TLNamedPart#name`)] != null)
+			.filter(p -> $nodeByType[$p.get(`tl.model:TLStructuredTypePart#type`)] != null)
 			.map(p -> {
 				targetType = $p.get(`tl.model:TLStructuredTypePart#type`);
 				rawName = $p.get(`tl.model:TLNamedPart#name`);
@@ -446,8 +488,8 @@
 				} : list($targetLabel);
 
 				reactFlowGraphEdge(
-					$nodeByName[$c.get(`tl.model:TLNamedPart#name`)],
-					$nodeByName[$targetType.get(`tl.model:TLNamedPart#name`)],
+					$nodeByType[$c],
+					$nodeByType[$targetType],
 					priority: $composite || $aggregate ? 2 : 1,
 					sourceSymbol: $composite ? "FILLED_DIAMOND" : ($aggregate ? "DIAMOND" : null),
 					targetSymbol: $composite || $aggregate ? null : "ARROW",
@@ -465,6 +507,37 @@
 				content: reactFlowGraphLayout($nodes,
 					list($genEdges, $refEdges).flatten())))
 }]]></createChart>
+													<!--
+														A type of another module dragged out of the tree onto the diagram is added to the external
+														types of the module shown: to their list, or as a new list where the external types were
+														dropped on another module. The point of the drop is not used, the layout places the node. A
+														module, a type of the module shown and a type shown already are refused, with the reason at the
+														pointer.
+													-->
+													<drop
+														accept="modelType"
+														as="dropped"
+														input="diagramTypes as shown"
+														target="diagram"
+													>
+														<refuse-if><![CDATA[{
+	module = $shown["module"];
+	if($module == null,
+		#("Select a module to show first."@en, "Wählen Sie zuerst ein Modul zur Anzeige."@de),
+		if(!$dropped.filter(t -> !$t.instanceOf(`tl.model:TLType`)).isEmpty(),
+			#("A module cannot be added to the diagram, only a type of another module."@en, "Ein Modul kann nicht ins Diagramm aufgenommen werden, nur ein Typ eines anderen Moduls."@de),
+			if(!$dropped.filter(t -> $t.get(`tl.model:TLType#module`) == $module).isEmpty(),
+				#("A type of the module shown is already part of the diagram."@en, "Ein Typ des gezeigten Moduls ist bereits Teil des Diagramms."@de),
+				if(!$dropped.filter(t -> $shown["types"].containsElement($t)).isEmpty(),
+					#("The type is already shown in the diagram."@en, "Der Typ wird bereits im Diagramm gezeigt."@de),
+					null))))
+}]]></refuse-if>
+														<execute-script function="{'module': $shown['module'], 'types': list($shown['types'], $dropped).flatten()}">
+															<with-result>
+																<write-channel name="externalTypes"/>
+															</with-result>
+														</execute-script>
+													</drop>
 												</flow-diagram>
 												<!--
 													The menu offers the commands of the toolbar on what was right-clicked, through the same
@@ -472,7 +545,9 @@
 													module, see empty-area-selection) a new class or enumeration in the module, on a class or
 													attribute a new attribute, on an enumeration or classifier a new classifier, and on any
 													element its deletion. A deletion selects what the deleted element belonged to. A module is
-													deleted in the model tree only.
+													deleted in the model tree only, a type of another module drawn as external node in its own
+													module only. "Hide" removes an external node from the diagram and selects the module
+													shown, so the diagram stays with it.
 												-->
 												<commands>
 													<generic-command
@@ -596,9 +671,32 @@
 														</execute-script>
 													</generic-command>
 													<generic-command
+														image="css:bi bi-eye-slash"
+														inputs="selectedPart, diagramTypes"
+														placement="CONTEXT_MENU"
+													>
+														<label>
+															<en>Hide</en>
+															<de>Ausblenden</de>
+														</label>
+														<executability>
+															<visible-if expr="$selectedPart != null &amp;&amp; $diagramTypes['types'].containsElement($selectedPart)"/>
+														</executability>
+														<execute-script function="$diagramTypes['module']">
+															<with-result>
+																<write-channel name="selectedPart"/>
+															</with-result>
+														</execute-script>
+														<execute-script function="{'module': $diagramTypes['module'], 'types': $diagramTypes['types'].filter(t -> $t != $selectedPart)}">
+															<with-result>
+																<write-channel name="externalTypes"/>
+															</with-result>
+														</execute-script>
+													</generic-command>
+													<generic-command
 														clique="delete"
 														image="css:bi bi-trash"
-														inputs="selectedPart"
+														inputs="selectedPart, selectedModule"
 														placement="CONTEXT_MENU"
 													>
 														<label>
@@ -607,7 +705,7 @@
 														</label>
 														<executability>
 															<null-input-hidden/>
-															<disabled-if expr="if($selectedPart.instanceOf(`tl.model:TLModule`), #('A module is deleted with &quot;Delete module&quot; in the model tree.'@en, 'Ein Modul wird mit &quot;Modul löschen&quot; im Modellbaum gelöscht.'@de))"/>
+															<disabled-if expr="if($selectedPart.instanceOf(`tl.model:TLModule`), #('A module is deleted with &quot;Delete module&quot; in the model tree.'@en, 'Ein Modul wird mit &quot;Modul löschen&quot; im Modellbaum gelöscht.'@de), if($selectedPart.instanceOf(`tl.model:TLType`) &amp;&amp; $selectedPart.get(`tl.model:TLType#module`) != $selectedModule, #('A type of another module is not deleted here. Select it in the model tree to show and delete it in its own module.'@en, 'Ein Typ eines anderen Moduls wird hier nicht gelöscht. Wählen Sie ihn im Modellbaum, um ihn in seinem eigenen Modul zu zeigen und zu löschen.'@de)))"/>
 														</executability>
 														<confirm expr="#('Delete the selected model element?'@en, 'Das ausgewählte Modellelement löschen?'@de)"/>
 														<with-transaction>

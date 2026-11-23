@@ -317,8 +317,8 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	 * Determines the migrations to apply from the versions currently stored in the database.
 	 *
 	 * <p>
-	 * Must be called while holding the {@link MigrationLock}: Another node may have migrated the
-	 * database in the meantime.
+	 * Before migrating, the result must be determined again while holding the
+	 * {@link MigrationLock}: Another node may have migrated the database in the meantime.
 	 * </p>
 	 */
 	private MigrationInfo fetchMigrations(Log log) {
@@ -397,8 +397,57 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		MapDifference<String, EqualityRedirect<MetaObjectName>> diff = typeDifference(context);
 		boolean typesAdded = addApplicationTypes(context, log, connection, diff);
 		boolean typesAdopted =
-			adoptTypeChanges && adoptTypeChanges(context, log, connection, diff.entriesDiffering().keySet());
+			adoptTypeChanges && adoptTypeChanges(context, log, connection, changedTypes(diff));
 		return layoutChanged || typesAdded || typesAdopted;
+	}
+
+	/**
+	 * Whether {@link #executeAutomaticSchemaMigrations(MigrationContext, Protocol, PooledConnection, boolean)}
+	 * with type adoption would change anything.
+	 *
+	 * <p>
+	 * The check reads the database only. It uses the same criteria as the methods doing the
+	 * changes: {@link #hasLayoutChange(MigrationContext)} for
+	 * {@link #alignTableLayout(MigrationContext, Protocol, PooledConnection)},
+	 * {@link #lostTypes(MapDifference)} and {@link #newTypes(MapDifference)} for
+	 * {@link #addApplicationTypes(MigrationContext, Protocol, PooledConnection, MapDifference)}, and
+	 * {@link #changedTypes(MapDifference)} for
+	 * {@link #adoptTypeChanges(MigrationContext, Protocol, PooledConnection, Set)}.
+	 * </p>
+	 */
+	private static boolean hasAutomaticSchemaChanges(MigrationContext context) {
+		if (context.getPersistentSchema() == null) {
+			// No stored schema to compare with, let the migration under the lock handle it.
+			return true;
+		}
+		if (hasLayoutChange(context)) {
+			return true;
+		}
+		MapDifference<String, EqualityRedirect<MetaObjectName>> diff = typeDifference(context);
+		return !lostTypes(diff).isEmpty() || !newTypes(diff).isEmpty() || !changedTypes(diff).isEmpty();
+	}
+
+	/**
+	 * Types of the stored schema that are not part of the configured schema.
+	 */
+	private static Map<String, EqualityRedirect<MetaObjectName>> lostTypes(
+			MapDifference<String, EqualityRedirect<MetaObjectName>> diff) {
+		return diff.entriesOnlyOnLeft();
+	}
+
+	/**
+	 * Types of the configured schema that are not part of the stored schema.
+	 */
+	private static Map<String, EqualityRedirect<MetaObjectName>> newTypes(
+			MapDifference<String, EqualityRedirect<MetaObjectName>> diff) {
+		return diff.entriesOnlyOnRight();
+	}
+
+	/**
+	 * Names of the types defined differently in the stored and the configured schema.
+	 */
+	private static Set<String> changedTypes(MapDifference<String, EqualityRedirect<MetaObjectName>> diff) {
+		return diff.entriesDiffering().keySet();
 	}
 
 	/**
@@ -418,13 +467,23 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	 * @return Whether any changes have been written to the given connection.
 	 */
 	private boolean alignTableLayout(MigrationContext context, Protocol log, PooledConnection connection) {
-		SchemaConfiguration persistentSchema = context.getPersistentSchema();
-		if (persistentSchema == null
-			|| !AlignTableLayoutProcessor.hasLayoutChange(persistentSchema, context.getApplicationSchema())) {
+		if (!hasLayoutChange(context)) {
 			return false;
 		}
 		execute(context, log, connection, TypedConfiguration.newConfigItem(AlignTableLayoutProcessor.Config.class));
 		return true;
+	}
+
+	/**
+	 * Whether the layout options of the stored schema differ from the ones of the configured
+	 * schema.
+	 *
+	 * @see AlignTableLayoutProcessor#hasLayoutChange(SchemaConfiguration, SchemaConfiguration)
+	 */
+	private static boolean hasLayoutChange(MigrationContext context) {
+		SchemaConfiguration persistentSchema = context.getPersistentSchema();
+		return persistentSchema != null
+			&& AlignTableLayoutProcessor.hasLayoutChange(persistentSchema, context.getApplicationSchema());
 	}
 
 	/**
@@ -438,10 +497,10 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	 */
 	private boolean addApplicationTypes(MigrationContext context, Protocol log, PooledConnection connection,
 			MapDifference<String, EqualityRedirect<MetaObjectName>> diff) {
-		Map<String, MetaObjectName> lostTypes = unwrap(diff.entriesOnlyOnLeft());
+		Map<String, MetaObjectName> lostTypes = unwrap(lostTypes(diff));
 		recoverMetaDefinitions(log, lostTypes, lostTypes.keySet());
 
-		Map<String, EqualityRedirect<MetaObjectName>> newTypes = diff.entriesOnlyOnRight();
+		Map<String, EqualityRedirect<MetaObjectName>> newTypes = newTypes(diff);
 		if (!newTypes.isEmpty()) {
 			AddApplicationTypesProcessor.Config<?> addConfig =
 				TypedConfiguration.newConfigItem(AddApplicationTypesProcessor.Config.class);
@@ -618,13 +677,22 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			return;
 		}
 
+		// Check without lock whether this start changes the database at all. This is not the case
+		// for an ordinary restart, which therefore does not touch the migration lock.
+		_migrationInfo = fetchMigrations(log);
+		log.checkErrors();
+		if (!hasPendingChanges(log)) {
+			log.info("Database is up to date, no migration required.");
+			return;
+		}
+
 		/* The migration runs before the cluster startup token is acquired (the token requires the
 		 * persistency layer, i.e. a migrated database). The migration lock prevents nodes starting
 		 * concurrently from migrating the same database at the same time. */
 		try (MigrationLock lock = acquireLock(log)) {
 			_migrationLock = lock;
 
-			// Determine the pending migrations only after acquiring the lock: A node that had to
+			// Determine the pending migrations again after acquiring the lock: A node that had to
 			// wait finds the database migrated by the other node.
 			_migrationInfo = fetchMigrations(log);
 			log.checkErrors();
@@ -635,9 +703,45 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		}
 	}
 
+	/**
+	 * Whether {@link #migrate(Protocol)} would write to the database for the current
+	 * {@link #fetchMigrations(Log) migration info}.
+	 *
+	 * <p>
+	 * This is the case for configured migrations, a downgrade, and for automatic changes at a
+	 * start without migrations: a layout or type difference between the stored and the configured
+	 * schema (see {@link #hasAutomaticSchemaChanges(MigrationContext)}) or a module without stored
+	 * version (see {@link #missingVersions(Protocol, PooledConnection)}). The check reads the
+	 * database only.
+	 * </p>
+	 */
+	private boolean hasPendingChanges(Protocol log) {
+		if (!_migrationInfo.nothingToDo()) {
+			return true;
+		}
+		if (!_automaticMigration) {
+			return false;
+		}
+		PooledConnection connection = _connectionPool.borrowReadConnection();
+		try {
+			MigrationContext context = new MigrationContext(log, connection);
+			if (hasAutomaticSchemaChanges(context)) {
+				return true;
+			}
+			List<Version> missingVersions = missingVersions(log, connection);
+			log.checkErrors();
+			return !missingVersions.isEmpty();
+		} finally {
+			_connectionPool.releaseReadConnection(connection);
+		}
+	}
+
 	private MigrationLock acquireLock(Protocol log) {
 		try {
 			return MigrationLock.acquire(log, _connectionPool);
+		} catch (IllegalStateException ex) {
+			// The lock was left behind by a former run of this node.
+			throw log.fatal(ex.getMessage(), ex);
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 			throw log.fatal("Interrupted while waiting for the migration lock.", ex);
@@ -768,18 +872,27 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	 * @return Whether some version was written. The connection is not committed.
 	 */
 	private boolean storeMissingVersions(Protocol log, PooledConnection connection) {
+		List<Version> missingVersions = missingVersions(log, connection);
+		MigrationUtil.updateStoredVersions(log, connection, missingVersions);
+		log.checkErrors();
+		return !missingVersions.isEmpty();
+	}
+
+	/**
+	 * The maximal versions of the migration modules that have no version stored in the database.
+	 *
+	 * @return The versions {@link #storeMissingVersions(Protocol, PooledConnection)} stores, the
+	 *         empty list after reporting an error, if the stored versions cannot be read.
+	 */
+	private List<Version> missingVersions(Protocol log, PooledConnection connection) {
 		Map<String, Version> storedVersions;
 		try {
 			storedVersions = MigrationUtil.readStoredVersions(connection, getConfig().getModules());
 		} catch (SQLException ex) {
 			log.error("Unable to read stored versions.", ex);
-			return false;
+			return Collections.emptyList();
 		}
-		List<Version> missingVersions =
-			MigrationUtil.versionsOfUnstoredModules(MigrationUtil.maximalVersions(log), storedVersions);
-		MigrationUtil.updateStoredVersions(log, connection, missingVersions);
-		log.checkErrors();
-		return !missingVersions.isEmpty();
+		return MigrationUtil.versionsOfUnstoredModules(MigrationUtil.maximalVersions(log), storedVersions);
 	}
 
 	private void commitConnection(Protocol log, PooledConnection connection, String failureMessage) {

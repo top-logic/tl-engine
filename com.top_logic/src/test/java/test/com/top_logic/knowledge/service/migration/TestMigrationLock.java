@@ -5,6 +5,9 @@
  */
 package test.com.top_logic.knowledge.service.migration;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+import java.time.Instant;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import junit.framework.Test;
@@ -51,10 +54,14 @@ public class TestMigrationLock extends BasicTestCase {
 	}
 
 	/**
-	 * The lock property exists exactly while the lock is held.
+	 * The lock property exists exactly while the lock is held. Its value identifies the JVM by its
+	 * runtime name and start time.
 	 */
 	public void testLockProperty() throws Exception {
+		RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
 		try (MigrationLock lock = MigrationLock.acquire(new BufferingProtocol(), _pool)) {
+			assertEquals(runtime.getName() + " since " + Instant.ofEpochMilli(runtime.getStartTime()),
+				lock.getOwner());
 			assertEquals(lock.getOwner(), lockProperty());
 		}
 		assertNull(lockProperty());
@@ -86,7 +93,8 @@ public class TestMigrationLock extends BasicTestCase {
 	}
 
 	/**
-	 * A lock left behind by a terminated node blocks until the property is deleted manually.
+	 * A lock left behind by another, terminated node blocks until the property is deleted
+	 * manually.
 	 */
 	public void testLeftOverLockBlocks() throws Exception {
 		_properties.setProperty(MigrationLock.LOCK_PROPERTY, "crashed node");
@@ -107,6 +115,30 @@ public class TestMigrationLock extends BasicTestCase {
 		_properties.setProperty(MigrationLock.LOCK_PROPERTY, null);
 		future.check(30000);
 		assertTrue("Lock not acquired after manual deletion.", acquired.get());
+	}
+
+	/**
+	 * A lock left behind by a former run of this node (same runtime name, other start time) is not
+	 * waited for: The acquisition fails immediately with a message naming the holder and the time
+	 * of the terminated migration.
+	 */
+	public void testLeftOverLockOfThisNodeFails() throws Exception {
+		String formerStart = "2026-01-01T00:00:00Z";
+		String formerRun = ManagementFactory.getRuntimeMXBean().getName() + " since " + formerStart;
+		_properties.setProperty(MigrationLock.LOCK_PROPERTY, formerRun);
+
+		long start = System.currentTimeMillis();
+		try {
+			MigrationLock.acquire(new BufferingProtocol(), _pool).close();
+			fail("Lock of a terminated run of this node acquired.");
+		} catch (IllegalStateException ex) {
+			String message = ex.getMessage();
+			assertTrue(message, message.contains(formerRun));
+			assertTrue(message, message.contains("terminated during a migration started at " + formerStart));
+			assertTrue(message, message.contains(MigrationLock.LOCK_PROPERTY));
+		}
+		assertTrue("Acquisition waited for the lock.", System.currentTimeMillis() - start < 1000);
+		assertEquals("Lock of the terminated run changed.", formerRun, lockProperty());
 	}
 
 	/**

@@ -616,6 +616,13 @@ public class ReactServlet extends TopLogicServlet {
 			sendSuccess(response);
 			return;
 		}
+		if (windowName == null) {
+			// A client error, refused as the event stream and the poll refuse it. It is not answered as
+			// a request for an unknown window: that answer lets the client load its page again, for a
+			// request it did not send.
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing windowName parameter.");
+			return;
+		}
 		if (CMD_NAVIGATE_TO_ROUTE.equals(commandName)) {
 			handleNavigateToRoute(request, response, session, windowName, arguments);
 			return;

@@ -60,8 +60,9 @@ import de.haumacher.msgbuf.data.DataObject;
 /**
  * Tests that the reply a {@link ReactCommandHandler} returns reaches the caller in the answer
  * {@link ReactServlet} writes for the command, how a failure of the command is answered, see
- * {@link ReactCommandAnswer}, and the answer to a command whose control is not displayed, with and
- * without {@link ReactServlet#FIELD_IGNORE_STALE_UI}.
+ * {@link ReactCommandAnswer}, the answer to a command whose control is not displayed, with and
+ * without {@link ReactServlet#FIELD_IGNORE_STALE_UI}, and the answer to a command without a window
+ * name or with an empty window name.
  */
 public class TestCommandReply extends BasicTestCase {
 
@@ -241,6 +242,44 @@ public class TestCommandReply extends BasicTestCase {
 	}
 
 	/**
+	 * A command without a window name is refused as a bad request, as the event stream and the poll
+	 * refuse it. The answer has no {@link ReactServlet#ERROR_CODE_STALE_UI}, because the client did
+	 * not send this request and must not load its page again. No error is logged.
+	 */
+	public void testCommandWithoutWindowName() throws Exception {
+		displayWindow(arguments -> null);
+		_client.setExceptionsThrownOnErrorStatus(false);
+		CollectingLogListener log = new CollectingLogListener(Set.of(Level.ERROR, Level.FATAL), true);
+		InvocationContext invocation;
+		try {
+			invocation = postCommand(null, CONTROL_ID, COMMAND, false);
+		} finally {
+			log.deactivate();
+		}
+
+		assertEquals(HttpServletResponse.SC_BAD_REQUEST, invocation.getResponse().getStatus());
+		Map<?, ?> answer = (Map<?, ?>) JSON.fromString(invocation.getServletResponse().getText());
+		assertEquals(Boolean.FALSE, answer.get(ReactCommandAnswer.FIELD_SUCCESS));
+		assertEquals("Missing windowName parameter.", answer.get(ReactCommandAnswer.FIELD_ERROR));
+		assertNull(answer.get(ReactCommandAnswer.FIELD_ERROR_CODE));
+		assertEquals(List.of(), log.getLogEntries());
+	}
+
+	/**
+	 * A command with an empty window name is answered with {@link ReactServlet#ERROR_CODE_STALE_UI}:
+	 * the client loads its page again.
+	 */
+	public void testCommandWithEmptyWindowName() throws Exception {
+		displayWindow(arguments -> null);
+		_client.setExceptionsThrownOnErrorStatus(false);
+
+		InvocationContext invocation = postCommand("", CONTROL_ID, COMMAND, false);
+
+		assertEquals(HttpServletResponse.SC_BAD_REQUEST, invocation.getResponse().getStatus());
+		assertErrorCode(ReactServlet.ERROR_CODE_STALE_UI, invocation);
+	}
+
+	/**
 	 * A command that fails is answered without error status, with the message the window shows.
 	 */
 	public void testFailureInAnswer() throws Exception {
@@ -325,7 +364,9 @@ public class TestCommandReply extends BasicTestCase {
 		Map<String, Object> payload = new HashMap<>();
 		payload.put("controlId", controlId);
 		payload.put("command", command);
-		payload.put("windowName", window);
+		if (window != null) {
+			payload.put("windowName", window);
+		}
 		payload.put("arguments", arguments);
 		if (ignoreStaleUi) {
 			payload.put(ReactServlet.FIELD_IGNORE_STALE_UI, Boolean.TRUE);

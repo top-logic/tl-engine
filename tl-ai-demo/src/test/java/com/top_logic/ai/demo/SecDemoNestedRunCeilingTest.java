@@ -19,9 +19,13 @@ import com.top_logic.ai.tool.api.ToolGroups;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.ai.core.agent.SecurityContext;
 import com.top_logic.ai.core.agent.TopLogicSecurityContext;
 import com.top_logic.ai.core.scripting.AIScriptFunctions;
 import com.top_logic.ai.core.security.AiToolAccessService;
+import com.top_logic.ai.core.security.RunEntryPoint;
+import com.top_logic.ai.core.security.RunPrincipal;
+import com.top_logic.ai.core.security.RunSecurity;
 import com.top_logic.ai.core.security.ToolAccessPolicy;
 
 import io.modelcontextprotocol.spec.McpSchema;
@@ -51,6 +55,12 @@ public class SecDemoNestedRunCeilingTest extends SecDemoPersonaTest {
 
 	/** What each refusal by the ceiling says. */
 	private static final String ALLOWLIST = "background allowlist";
+
+	/**
+	 * How {@code aiCallTool} begins a refusal of {@link #AGENT_META_READ_TOOL}. Only the nested call
+	 * says this; a refusal of {@code changeData} itself does not.
+	 */
+	private static final String NESTED_REFUSAL = "Error invoking tool '" + AGENT_META_READ_TOOL + "'";
 
 	/**
 	 * In a background run, the nested call is refused the tool that the allowlist withholds from the
@@ -95,6 +105,24 @@ public class SecDemoNestedRunCeilingTest extends SecDemoPersonaTest {
 		});
 	}
 
+	/**
+	 * A detached subagent becomes a background run after its principal was described as attended: its
+	 * nested call is refused, too.
+	 */
+	public void testANestedCallInADetachedSubagentIsBoundedByTheAllowlist() throws Exception {
+		Person administrator = anyAdministrator();
+		actAs(administrator);
+		withDataWriteOnTheAllowlist(() -> {
+			SecurityContext detached =
+				RunSecurity.contextFor(new RunPrincipal(administrator, RunEntryPoint.CHAT, false))
+					.withBackgroundCeiling();
+			assertFalse("Precondition: the principal of the run is described as attended.",
+				detached.principal().background());
+
+			assertRefusedByTheAllowlist(changeData(detached, NESTED_CALL, false));
+		});
+	}
+
 	/** In a run with a person who can approve, the nested call reaches the tool as before. */
 	public void testANestedCallInAnAttendedRunReachesTheTool() {
 		Person administrator = anyAdministrator();
@@ -108,6 +136,8 @@ public class SecDemoNestedRunCeilingTest extends SecDemoPersonaTest {
 
 	private static void assertRefusedByTheAllowlist(String result) {
 		assertFalse("The nested call must not run the agent.meta tool: " + result, result.contains(TOOL_ANSWER));
+		assertTrue("changeData must run the script, and the nested call must be refused: " + result,
+			result.contains(NESTED_REFUSAL));
 		assertTrue("The refusal must name the allowlist: " + result, result.contains(ALLOWLIST));
 	}
 

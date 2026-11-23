@@ -132,6 +132,8 @@ public class TestNestedRunCeiling extends BasicTestCase {
 
 		String outer = String.valueOf(OUTER_TOOL_RESULTS);
 		assertFalse("The nested call must not run the agent.meta tool: " + outer, outer.contains(NESTED_AGENT));
+		assertTrue("changeData must run the script, and the nested call must be refused: " + outer,
+			outer.contains("Error invoking tool '" + AGENT_META_TOOL + "'"));
 		assertTrue("The refusal must name the allowlist: " + outer, outer.contains(ALLOWLIST));
 	}
 

@@ -33,7 +33,9 @@ import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.model.security.RefererRelation;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
@@ -275,12 +277,17 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 	 * @param decidingObject
 	 *        The label of the object deciding.
 	 * @param parent
-	 *        The access parent of the type, <code>null</code> when it is not known.
+	 *        The access parent of the type, <code>null</code> when it is not known. An access parent
+	 *        not restricted to some operations that does not {@link AccessParentFunction#delegatesAll()
+	 *        decide every operation} leaves Create to the type, as a {@link RefererRelation} or an
+	 *        {@link AnyOfRelation} without a candidate leading to the container does.
 	 */
 	static ResKey delegation(String type, String decidingObject, AccessParentFunction parent) {
 		Set<BoundCommandGroup> operations = parent == null ? null : parent.getOperations();
 		if (operations == null) {
-			return I18NConstants.EFFECTIVE_ACCESS_DELEGATED__TYPE_OBJECT.fill(type, decidingObject);
+			return parent == null || parent.delegatesAll()
+				? I18NConstants.EFFECTIVE_ACCESS_DELEGATED__TYPE_OBJECT.fill(type, decidingObject)
+				: I18NConstants.EFFECTIVE_ACCESS_DELEGATED_OWN_CREATE__TYPE_OBJECT.fill(type, decidingObject);
 		}
 		return I18NConstants.EFFECTIVE_ACCESS_DELEGATED_RESTRICTED__TYPE_OBJECT_OPERATIONS.fill(type, decidingObject,
 			SecurityGrantFunctions.operationLabels(operations));

@@ -36,6 +36,7 @@ import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ApplicableOperations;
 import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.model.security.RefererRelation;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
@@ -161,16 +162,19 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 	 *
 	 * <p>
 	 * An {@link AnyOfRelation} is told as several access parents, its label naming the candidates
-	 * with the operations each of them is restricted to.
+	 * with the operations each of them is restricted to. An access parent not restricted to some
+	 * operations that does not {@link AccessParentFunction#delegatesAll() decide every operation},
+	 * like a {@link RefererRelation}, is told as several access parents leaving Create to the type.
 	 * </p>
 	 */
 	static ResKey delegation(AccessParentFunction parent) {
 		Set<BoundCommandGroup> operations = parent.getOperations();
+		if (operations == null && !parent.delegatesAll()) {
+			return I18NConstants.GRANTS_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.fill(parent.getLabel());
+		}
 		if (parent instanceof AnyOfRelation) {
 			if (operations == null) {
-				return parent.delegatesCreation()
-					? I18NConstants.GRANTS_DELEGATED_ANY_OF__CANDIDATES.fill(parent.getLabel())
-					: I18NConstants.GRANTS_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.fill(parent.getLabel());
+				return I18NConstants.GRANTS_DELEGATED_ANY_OF__CANDIDATES.fill(parent.getLabel());
 			}
 			return I18NConstants.GRANTS_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS.fill(parent.getLabel(),
 				operationLabels(operations));

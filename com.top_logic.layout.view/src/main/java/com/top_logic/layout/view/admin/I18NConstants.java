@@ -545,6 +545,14 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 EFFECTIVE_ACCESS_DELEGATED__TYPE_OBJECT;
 
 	/**
+	 * @en The type "{0}" delegates every access decision but Create to its access parents: the
+	 *     grants of the type of "{1}" and the roles the account holds on "{1}" decide. No access
+	 *     parent is the container, so Create is decided by the grants of the type "{0}" and the
+	 *     roles the account holds on the context the object is created in.
+	 */
+	public static ResKey2 EFFECTIVE_ACCESS_DELEGATED_OWN_CREATE__TYPE_OBJECT;
+
+	/**
 	 * @en The type "{0}" delegates the operations {2} to an access parent, Discover together with
 	 *     them: for these, the grants of the type of "{1}" and the roles the account holds on "{1}"
 	 *     decide. All other operations are decided by the grants of the type "{0}" and the roles
@@ -611,7 +619,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey3 EFFECTIVE_ACCESS_CHECKED_ON__OPERATION_OBJECT_REASON;
 
 	/**
-	 * @en Checked as "{0}" on each of: {1}. {2}
+	 * @en Checked as "{0}" on any of: {1}. {2}
 	 */
 	public static ResKey3 EFFECTIVE_ACCESS_CHECKED_ON_SEVERAL__OPERATION_OBJECTS_REASON;
 

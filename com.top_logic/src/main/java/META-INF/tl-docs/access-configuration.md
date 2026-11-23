@@ -570,7 +570,11 @@ folder may do everything with it.
   `<referer>` directly in `<access-parent>`: the grants of the type itself decide it, checked with
   the roles on the context the object is created in, and such a `Create` grant is allowed even
   though every other operation is delegated. `Create` in the `operations` of a `<referer>` is a
-  configuration error.
+  configuration error. Where no container candidate delegates the operation of an attribute grant
+  (an `<any-of>` of only `<referer>`, `<target>` or `<script>` candidates, a `<referer>` alone, or
+  a `<container>` candidate restricted to other operations), an object being created has no access parent for it yet: it is free-standing, and
+  the attribute grant does not restrict its initial values (`isAllowedInitial`). The grant applies
+  as soon as the object exists and its access parents are found.
 - **Cycles.** Access parents referring to each other (two nodes pointing to each other with `next`)
   form a cycle. The path that reaches a check under way again is denied, while another candidate
   may still allow the operation. A denial computed while such a cycle was hit is stored in the

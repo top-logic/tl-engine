@@ -475,6 +475,17 @@ public class TestAccessParentConfig extends BasicTestCase {
 	}
 
 	/**
+	 * <code>&lt;self/&gt;</code> inside a custom combinator is reported, not dropped silently.
+	 */
+	public void testSelfInCustomCombinatorIsError() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent><test-all-of>"
+			+ TARGET_PARENT + "/><self/></test-all-of></access-parent></class>");
+		assertNull(parent);
+		assertError(log, "names <self/> as a candidate");
+	}
+
+	/**
 	 * An <code>&lt;any-of&gt;</code> with a single candidate is that candidate.
 	 */
 	public void testSingleCandidateAnyOfIsTheCandidate() throws Exception {

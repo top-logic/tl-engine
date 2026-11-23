@@ -67,6 +67,7 @@ import com.top_logic.model.search.rules.PathByExpression;
 import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ContainerRelation;
+import com.top_logic.model.security.RefererRelation;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
@@ -1192,7 +1193,10 @@ public class SecurityCoverageTable implements UIElement {
 	 * <p>
 	 * An access parent deciding only some operations is described with these operations, the
 	 * other operations being decided by the type itself. An {@link AnyOfRelation} is described as
-	 * several access parents, its label naming the candidates.
+	 * several access parents, its label naming the candidates. An access parent not restricted to
+	 * some operations that does not {@link AccessParentFunction#delegatesAll() decide every
+	 * operation}, like a {@link RefererRelation}, is described as several access parents leaving
+	 * Create to the type.
 	 * </p>
 	 */
 	static ResKey delegation(TypeCoverage coverage) {
@@ -1201,11 +1205,12 @@ public class SecurityCoverageTable implements UIElement {
 			return null;
 		}
 		Set<BoundCommandGroup> operations = parent.getOperations();
+		if (operations == null && !parent.delegatesAll()) {
+			return I18NConstants.COVERAGE_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.fill(parent.getLabel());
+		}
 		if (parent instanceof AnyOfRelation) {
 			if (operations == null) {
-				return parent.delegatesCreation()
-					? I18NConstants.COVERAGE_DELEGATED_ANY_OF__CANDIDATES.fill(parent.getLabel())
-					: I18NConstants.COVERAGE_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.fill(parent.getLabel());
+				return I18NConstants.COVERAGE_DELEGATED_ANY_OF__CANDIDATES.fill(parent.getLabel());
 			}
 			return I18NConstants.COVERAGE_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS.fill(parent.getLabel(),
 				SecurityGrantFunctions.operationLabels(operations));

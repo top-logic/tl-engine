@@ -1398,13 +1398,20 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * the type as well as a candidate of a combining definition like {@link AnyOfAccessParent}.
 	 *
 	 * @return The relation of the definition, a {@link RestrictedRelation} when it is restricted to
-	 *         some operations; <code>null</code> for an unusable definition, which is reported, and
-	 *         for {@link SelfAccessParent}.
+	 *         some operations; <code>null</code> for an unusable definition, which is reported,
+	 *         {@link SelfAccessParent} as candidate included.
 	 *
 	 * @see AccessParentDefinition.CandidateResolver
 	 */
 	private AccessParentFunction resolveAccessParentDefinition(InstantiationContext context, TLClass type,
 			PolymorphicConfiguration<? extends AccessParentDefinition> config) {
+		if (config instanceof SelfAccessParent.Config) {
+			// The setting of a type deciding for itself is handled before, so this is a candidate of a
+			// combining definition.
+			context.error("The access parent of " + TLModelUtil.qualifiedName(type)
+				+ " names <self/> as a candidate: a type deciding for itself has no candidates.");
+			return null;
+		}
 		AccessParentDefinition definition = context.getInstance(config);
 		if (definition == null) {
 			return null;

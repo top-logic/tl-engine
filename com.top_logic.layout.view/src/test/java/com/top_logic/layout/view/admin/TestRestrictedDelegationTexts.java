@@ -31,10 +31,12 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ContainerRelation;
+import com.top_logic.model.security.RefererRelation;
 import com.top_logic.model.security.RestrictedRelation;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
@@ -302,6 +304,34 @@ public class TestRestrictedDelegationTexts extends TestCase {
 	}
 
 	/**
+	 * A referer directly in the access parent and an access parent with several candidates, none of
+	 * them the container, leave Create to the grants of the type: the explanation of the effective
+	 * access, the grants and the coverage say so.
+	 */
+	public void testOwnCreateIsTold() {
+		TLModule module = TLModelUtil.addModule(new TLModelImpl(), "test.coverage");
+		TLClass note = TLModelUtil.addClass(module, "Note");
+		TLClass document = TLModelUtil.addClass(module, "Document");
+		TLReference notes = TLModelUtil.addForwardReference(document, "notes", note);
+		AccessParentFunction referer = new RefererRelation(notes);
+		AnyOfRelation anyOf = new AnyOfRelation(List.of(relation("target of folder"), relation("notes of folder")));
+		for (AccessParentFunction parent : List.of(referer, anyOf)) {
+			ResKey effective = EffectiveAccessFunctions.delegation("Note", "Document", parent);
+			assertEquals(I18NConstants.EFFECTIVE_ACCESS_DELEGATED_OWN_CREATE__TYPE_OBJECT.getKey(),
+				effective.plain().getKey());
+			assertTrue("The type deciding Create is named: " + translate(effective),
+				translate(effective).contains("Note"));
+			assertEquals(I18NConstants.GRANTS_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.getKey(),
+				SecurityGrantFunctions.delegation(parent).plain().getKey());
+			assertEquals(I18NConstants.COVERAGE_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.getKey(),
+				SecurityCoverageTable.delegation(row(note, parent)).plain().getKey());
+		}
+		assertEquals("A container candidate delegates Create.",
+			I18NConstants.EFFECTIVE_ACCESS_DELEGATED__TYPE_OBJECT.getKey(),
+			EffectiveAccessFunctions.delegation("Part", "Folder", ANY_OF).plain().getKey());
+	}
+
+	/**
 	 * A relation that is no container, with the given label.
 	 */
 	private static AccessParentFunction relation(String label) {
@@ -344,11 +374,12 @@ public class TestRestrictedDelegationTexts extends TestCase {
 	}
 
 	/**
-	 * Test suite requiring the {@link ResourcesModule}, which translates the texts.
+	 * Test suite requiring the {@link ResourcesModule}, which translates the texts, and the
+	 * {@link AttributeSettings}, which the labels of types need.
 	 */
 	public static Test suite() throws ModuleException {
 		return TLTestSetup.createTLTestSetup(ServiceTestSetup.createSetup(TestRestrictedDelegationTexts.class,
-			TypeIndex.Module.INSTANCE, ResourcesModule.Module.INSTANCE));
+			TypeIndex.Module.INSTANCE, ResourcesModule.Module.INSTANCE, AttributeSettings.Module.INSTANCE));
 	}
 
 }

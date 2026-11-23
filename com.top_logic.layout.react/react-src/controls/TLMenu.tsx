@@ -30,7 +30,8 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
     <Menu id={controlId} className={rootClassName(state)} open={open} anchor={anchor} onClose={close}>
       {items.map((item, i) => item.type === 'separator' ? <MenuSeparator key={i} />
         : item.type === 'header' ? <MenuHeader key={i} label={item.label} />
-        : <MenuItem key={item.id} icon={item.icon} label={item.label} disabled={item.disabled} current={item.active}
+        : <MenuItem key={item.id} icon={item.icon} label={item.label} disabled={item.disabled} current={item.toggle ? undefined : item.active}
+            checked={item.toggle ? item.active === true : undefined}
             danger={item.tone === 'danger'} className={item.cssClasses} onSelect={() => selectItem(CMD_SELECT_ITEM, { [ARG_ITEM_ID]: item.id })} />)}
     </Menu>
   );

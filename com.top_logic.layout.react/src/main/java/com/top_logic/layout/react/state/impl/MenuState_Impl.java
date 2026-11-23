@@ -21,6 +21,8 @@ public class MenuState_Impl extends com.top_logic.layout.react.state.impl.Contro
 
 		private boolean _active = false;
 
+		private boolean _toggle = false;
+
 		private String _cssClasses = "";
 
 		private com.top_logic.layout.react.state.ButtonState.Tone _tone = com.top_logic.layout.react.state.ButtonState.Tone.DEFAULT;
@@ -132,6 +134,22 @@ public class MenuState_Impl extends com.top_logic.layout.react.state.impl.Contro
 		}
 
 		@Override
+		public final boolean isToggle() {
+			return _toggle;
+		}
+
+		@Override
+		public com.top_logic.layout.react.state.MenuState.Entry setToggle(boolean value) {
+			internalSetToggle(value);
+			return this;
+		}
+
+		/** Internal setter for {@link #isToggle()} without chain call utility. */
+		protected final void internalSetToggle(boolean value) {
+			_toggle = value;
+		}
+
+		@Override
 		public final String getCssClasses() {
 			return _cssClasses;
 		}
@@ -184,6 +202,8 @@ public class MenuState_Impl extends com.top_logic.layout.react.state.impl.Contro
 			out.value(isDisabled());
 			out.name(ACTIVE__PROP);
 			out.value(isActive());
+			out.name(TOGGLE__PROP);
+			out.value(isToggle());
 			out.name(CSS_CLASSES__PROP);
 			out.value(getCssClasses());
 			out.name(TONE__PROP);
@@ -199,6 +219,7 @@ public class MenuState_Impl extends com.top_logic.layout.react.state.impl.Contro
 				case ICON__PROP: setIcon(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 				case DISABLED__PROP: setDisabled(in.nextBoolean()); break;
 				case ACTIVE__PROP: setActive(in.nextBoolean()); break;
+				case TOGGLE__PROP: setToggle(in.nextBoolean()); break;
 				case CSS_CLASSES__PROP: setCssClasses(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 				case TONE__PROP: setTone(com.top_logic.layout.react.state.ButtonState.Tone.readTone(in)); break;
 				default: super.readField(in, field);

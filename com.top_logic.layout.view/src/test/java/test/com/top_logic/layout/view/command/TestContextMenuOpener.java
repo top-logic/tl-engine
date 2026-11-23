@@ -17,6 +17,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.CommandModel;
+import com.top_logic.layout.react.control.button.SimpleCommandModel;
 import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener.MenuRenderer;
@@ -391,5 +392,26 @@ public class TestContextMenuOpener extends TestCase {
 		assertEquals(2, items.size());
 		assertEquals(ButtonTone.DEFAULT, items.get(0).tone());
 		assertEquals(ButtonTone.DANGER, items.get(1).tone());
+	}
+
+	/**
+	 * The entry of a toggle command is a toggle whose position is the command's active state; the
+	 * entry of an ordinary command is none.
+	 */
+	public void testAToggleCommandMakesAToggleEntry() {
+		AtomicReference<Object> target = new AtomicReference<>();
+		CommandModel striped = SimpleCommandModel.create("striped", "Striped", ctx -> {
+			// Not run.
+		}).setToggle(true).setActive(() -> true);
+		CommandModel edit = FakeCommandModels.contextMenu("edit", "Edit", true, true, true);
+		ContextMenuContribution contribution = new ContextMenuContribution(target::set, List.of(striped, edit));
+
+		RecordingRenderer renderer = new RecordingRenderer();
+		new ContextMenuOpener(renderer).open(0, 0, List.of(new Targeted(contribution, "row")));
+
+		List<MenuEntry> items = renderer.lastItems;
+		assertTrue(items.get(0).toggle());
+		assertTrue(items.get(0).active());
+		assertFalse(items.get(1).toggle());
 	}
 }

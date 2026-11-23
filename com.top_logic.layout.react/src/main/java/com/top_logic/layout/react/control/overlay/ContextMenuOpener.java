@@ -283,6 +283,7 @@ public class ContextMenuOpener {
 				cmd.getExecutableState(),
 				cmd.getCssClasses(),
 				cmd.isActive(),
+				cmd.isToggle(),
 				cmd.getTone()));
 			currentClique = clique;
 			first = false;

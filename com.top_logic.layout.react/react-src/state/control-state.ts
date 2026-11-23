@@ -1366,6 +1366,13 @@ export namespace MenuStateJson {
 		active: boolean;
 
 		/**
+		 * Whether the item switches a setting on and off: shown as a switch whose {@link MenuStateJson.Entry.active} tells
+		 * whether the setting is on. Absent: an ordinary item, {@link MenuStateJson.Entry.active} marking the choice in
+		 * force.
+		 */
+		toggle: boolean;
+
+		/**
 		 * Additional CSS classes of the item, separated by spaces.
 		 */
 		cssClasses: string;

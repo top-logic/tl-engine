@@ -116,7 +116,8 @@ function availableHeight(anchor: PopoverAnchor): number {
  *     not in the page is not shown;</li>
  * <li>items → an entry per item: an item → `MenuItem` with the label, the icon in a
  *     `ListItemIcon` rendered by the bridge's {@link ThemeIcon}, disabled → `disabled`, active →
- *     `selected`, `aria-current` and a strong label, tone `danger` → the error color, cssClasses →
+ *     `selected`, `aria-current` and a strong label (a toggle: role `menuitemcheckbox` and `aria-checked`, no
+ *     `selected`), tone `danger` → the error color, cssClasses →
  *     className; a separator → `Divider`; a header → `ListSubheader` on the background of the menu
  *     surface, which can neither be chosen nor focused;</li>
  * <li>choosing an item → the command `selectItem` with the argument `itemId`, sent through
@@ -209,7 +210,9 @@ const MuiMenuAdapter: React.FC<TLCellProps> = ({ controlId }) => {
           if (item.type === 'header') {
             return <ListSubheader key={index} sx={HEADER_SX}>{item.label}</ListSubheader>;
           }
-          const active = item.active === true;
+          // A toggle's `active` is the position of its switch, not a choice among alternatives.
+          const toggle = item.toggle === true;
+          const active = !toggle && item.active === true;
           return (
             <MenuItem
               key={item.id}
@@ -217,6 +220,8 @@ const MuiMenuAdapter: React.FC<TLCellProps> = ({ controlId }) => {
               selected={active}
               tabIndex={item.id === firstItemId ? 0 : -1}
               aria-current={active ? 'true' : undefined}
+              role={toggle ? 'menuitemcheckbox' : undefined}
+              aria-checked={toggle ? item.active === true : undefined}
               className={item.cssClasses}
               sx={item.tone === 'danger' ? DANGER_SX : undefined}
               onClick={() => selectItem(CMD_SELECT_ITEM, { [ARG_ITEM_ID]: item.id })}

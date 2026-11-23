@@ -47,6 +47,8 @@ public final class SimpleCommandModel implements CommandModel {
 
 	private BooleanSupplier _active = () -> false;
 
+	private boolean _toggle;
+
 	private final List<Runnable> _stateChangeListeners = new ArrayList<>();
 
 	private SimpleCommandModel(String name, String label, ButtonAction action) {
@@ -151,6 +153,16 @@ public final class SimpleCommandModel implements CommandModel {
 	}
 
 	/**
+	 * Sets whether the command {@link #isToggle() switches a setting} on and off.
+	 *
+	 * @return This model for call chaining.
+	 */
+	public SimpleCommandModel setToggle(boolean toggle) {
+		_toggle = toggle;
+		return this;
+	}
+
+	/**
 	 * Notifies the registered state change listeners that label, executability, visibility, or the
 	 * {@link #isActive() active} state may have changed.
 	 */
@@ -203,6 +215,11 @@ public final class SimpleCommandModel implements CommandModel {
 	@Override
 	public boolean isActive() {
 		return _active.getAsBoolean();
+	}
+
+	@Override
+	public boolean isToggle() {
+		return _toggle;
 	}
 
 	@Override

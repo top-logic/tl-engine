@@ -89,6 +89,9 @@ public class ReactMenuControl extends ReactControl {
 				if (entry.active()) {
 					map.put(MenuState.Entry.ACTIVE__PROP, true);
 				}
+				if (entry.toggle()) {
+					map.put(MenuState.Entry.TOGGLE__PROP, true);
+				}
 				if (entry.cssClasses() != null) {
 					map.put(MenuState.Entry.CSS_CLASSES__PROP, entry.cssClasses());
 				}
@@ -178,12 +181,15 @@ public class ReactMenuControl extends ReactControl {
 	 * @param active
 	 *        Whether the effect of the command this entry renders is currently in force, so that
 	 *        the entry is marked as the chosen one among its alternatives.
+	 * @param toggle
+	 *        Whether the entry switches a setting on and off, so that it is drawn as a switch whose
+	 *        position is {@code active}.
 	 * @param tone
 	 *        The kind of action the command this entry renders stands for; a
 	 *        {@link ButtonTone#DANGER destructive} entry is drawn as such. Never {@code null}.
 	 */
 	public record MenuEntry(EntryType type, String id, String label, String icon, ExecutableState state,
-			String cssClasses, boolean active, ButtonTone tone) {
+			String cssClasses, boolean active, boolean toggle, ButtonTone tone) {
 
 		/**
 		 * Creates a {@link MenuEntry}.
@@ -237,7 +243,16 @@ public class ReactMenuControl extends ReactControl {
 		 */
 		public static MenuEntry item(String id, String label, String icon, ExecutableState state,
 				String cssClasses, boolean active, ButtonTone tone) {
-			return new MenuEntry(EntryType.ITEM, id, label, icon, state, cssClasses, active, tone);
+			return item(id, label, icon, state, cssClasses, active, false, tone);
+		}
+
+		/**
+		 * Creates a menu item for a command that may be a {@link MenuEntry#toggle() toggle}, see
+		 * {@link #item(String, String, String, ExecutableState, String, boolean, ButtonTone)}.
+		 */
+		public static MenuEntry item(String id, String label, String icon, ExecutableState state,
+				String cssClasses, boolean active, boolean toggle, ButtonTone tone) {
+			return new MenuEntry(EntryType.ITEM, id, label, icon, state, cssClasses, active, toggle, tone);
 		}
 
 		/**
@@ -245,7 +260,7 @@ public class ReactMenuControl extends ReactControl {
 		 */
 		public static MenuEntry separator() {
 			return new MenuEntry(EntryType.SEPARATOR, null, null, null, ExecutableState.EXECUTABLE, null, false,
-				ButtonTone.DEFAULT);
+				false, ButtonTone.DEFAULT);
 		}
 
 		/**
@@ -254,7 +269,7 @@ public class ReactMenuControl extends ReactControl {
 		 */
 		public static MenuEntry header(String label) {
 			return new MenuEntry(EntryType.HEADER, null, label, null, ExecutableState.EXECUTABLE, null, false,
-				ButtonTone.DEFAULT);
+				false, ButtonTone.DEFAULT);
 		}
 	}
 

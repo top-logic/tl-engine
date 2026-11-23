@@ -152,3 +152,35 @@ describe('Menu', () => {
     expect(document.activeElement).toBe(byId('origin'));
   });
 });
+
+describe('MenuItem', () => {
+  it('draws an entry with `checked` as a switch, on or off, without the mark of a choice', () => {
+    act(() => root.render(
+      <>
+        <MenuItem id="on" label="On" checked onSelect={() => {}} />
+        <MenuItem id="off" label="Off" checked={false} onSelect={() => {}} />
+      </>));
+
+    const on = byId('on');
+    expect(on.getAttribute('role')).toBe('menuitemcheckbox');
+    expect(on.getAttribute('aria-checked')).toBe('true');
+    expect(on.getAttribute('aria-current')).toBeNull();
+    expect(on.classList).toContain('tl-menu__item--check');
+    expect(on.classList).toContain('tl-type-body');
+    const mark = on.lastElementChild!;
+    expect(mark.className).toBe('tl-checkbox tl-checkbox--switch');
+    expect(mark.getAttribute('aria-hidden')).toBe('true');
+    expect(byId('off').getAttribute('aria-checked')).toBe('false');
+  });
+
+  it('leaves an entry without `checked` an ordinary item', () => {
+    act(() => root.render(<MenuItem id="plain" label="Plain" current onSelect={() => {}} />));
+
+    const plain = byId('plain');
+    expect(plain.getAttribute('role')).toBe('menuitem');
+    expect(plain.hasAttribute('aria-checked')).toBe(false);
+    expect(plain.getAttribute('aria-current')).toBe('true');
+    expect(plain.classList).not.toContain('tl-menu__item--check');
+    expect(plain.querySelector('.tl-checkbox')).toBeNull();
+  });
+});

@@ -151,16 +151,18 @@ export function menuItemClassName(current?: boolean, extra?: string, danger?: bo
 /**
  * An entry of a menu. `current` marks the entry in force (`true`, reported as aria-current="true") or the page the
  * user is on (`'page'`, the flyout of a sidebar group). `trailing` stands after the label (the badge of a sidebar
- * page); `tooltip` explains a disabled entry.
+ * page); `tooltip` explains a disabled entry. `checked` makes the entry a switch (role menuitemcheckbox, the switch
+ * drawn after the label) that is on or off; it replaces `current`, which marks a choice among alternatives.
  */
 export const MenuItem: React.FC<{ id?: string; icon?: string; label: string; disabled?: boolean; current?: boolean | 'page';
-  danger?: boolean; className?: string; trailing?: React.ReactNode; tooltip?: string; onSelect: () => void }> =
-  ({ id, icon, label, disabled, current, danger, className, trailing, tooltip, onSelect }) => (
+  checked?: boolean; danger?: boolean; className?: string; trailing?: React.ReactNode; tooltip?: string; onSelect: () => void }> =
+  ({ id, icon, label, disabled, current, checked, danger, className, trailing, tooltip, onSelect }) => (
     <button
       type="button"
       id={id}
-      className={menuItemClassName(!!current, className, danger)}
-      role="menuitem"
+      className={menuItemClassName(!!current, checked === undefined ? className : ['tl-menu__item--check', className].filter(Boolean).join(' '), danger)}
+      role={checked === undefined ? 'menuitem' : 'menuitemcheckbox'}
+      aria-checked={checked}
       aria-current={current === 'page' ? 'page' : current ? 'true' : undefined}
       disabled={disabled}
       tabIndex={-1}
@@ -169,6 +171,7 @@ export const MenuItem: React.FC<{ id?: string; icon?: string; label: string; dis
     >
       {icon && <ThemeIcon encoded={icon} className="tl-menu__icon tl-icon-sm" />}
       <span className="tl-menu__label">{label}</span>
+      {checked !== undefined && <span className="tl-checkbox tl-checkbox--switch" aria-hidden="true" />}
       {trailing}
     </button>
   );

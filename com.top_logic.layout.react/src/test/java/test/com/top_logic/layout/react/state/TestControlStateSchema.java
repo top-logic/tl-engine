@@ -608,6 +608,7 @@ public class TestControlStateSchema extends TestCase {
 		ReactMenuControl control = new ReactMenuControl(createContext(), null, List.of(
 			MenuEntry.header("Header"),
 			MenuEntry.item("a", "A", "css:fas fa-home", ExecutableState.NOT_EXEC_DISABLED, "css", true, ButtonTone.DANGER),
+			MenuEntry.item("t", "T", null, ExecutableState.EXECUTABLE, null, true, true, ButtonTone.DEFAULT),
 			MenuEntry.separator()),
 			id -> {}, () -> {
 				// Never closed.
@@ -617,7 +618,7 @@ public class TestControlStateSchema extends TestCase {
 		Map<?, ?> state = state(control);
 		assertDeclared(state, MenuState.class);
 		assertEachDeclared(state.get(MenuState.ITEMS__PROP), MenuState.Entry.class);
-		assertEquals(List.of("header", "item", "separator"),
+		assertEquals(List.of("header", "item", "item", "separator"),
 			((List<?>) state.get(MenuState.ITEMS__PROP)).stream()
 				.map(entry -> ((Map<?, ?>) entry).get(MenuState.Entry.TYPE__PROP)).toList());
 	}
@@ -640,12 +641,31 @@ public class TestControlStateSchema extends TestCase {
 	}
 
 	/**
+	 * A toggle entry sends {@code toggle} together with its position; an ordinary one sends no
+	 * {@code toggle}, since an absent flag means an ordinary item.
+	 */
+	public void testMenuEntryToggle() {
+		ReactMenuControl control = new ReactMenuControl(createContext(), null, List.of(
+			MenuEntry.item("a", "Striped", null, ExecutableState.EXECUTABLE, null, true, true, ButtonTone.DEFAULT),
+			MenuEntry.item("b", "Edit", null, ExecutableState.EXECUTABLE, null, true)),
+			id -> {}, () -> {
+				// Never closed.
+			});
+
+		List<?> items = (List<?>) state(control).get(MenuState.ITEMS__PROP);
+		Map<?, ?> toggle = (Map<?, ?>) items.get(0);
+		assertEquals(Boolean.TRUE, toggle.get(MenuState.Entry.TOGGLE__PROP));
+		assertEquals(Boolean.TRUE, toggle.get(MenuState.Entry.ACTIVE__PROP));
+		assertFalse(((Map<?, ?>) items.get(1)).containsKey(MenuState.Entry.TOGGLE__PROP));
+	}
+
+	/**
 	 * A menu entry without a tone is rejected at construction.
 	 */
 	public void testMenuEntryRequiresTone() {
 		try {
 			new MenuEntry(MenuState.EntryType.ITEM, "a", "Delete", null, ExecutableState.EXECUTABLE, null, false,
-				null);
+				false, null);
 			fail("A null tone must be rejected.");
 		} catch (NullPointerException ex) {
 			// Expected.

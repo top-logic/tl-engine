@@ -1336,6 +1336,13 @@ message MenuState extends ControlState {
 		bool active;
 
 		/**
+		 * Whether the item switches a setting on and off: shown as a switch whose {@link #active} tells
+		 * whether the setting is on. Absent: an ordinary item, {@link #active} marking the choice in
+		 * force.
+		 */
+		bool toggle;
+
+		/**
 		 * Additional CSS classes of the item, separated by spaces.
 		 */
 		string cssClasses;

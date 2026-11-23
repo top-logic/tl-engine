@@ -99,6 +99,18 @@ public interface CommandModel {
 	}
 
 	/**
+	 * Whether the command switches a setting on and off.
+	 *
+	 * <p>
+	 * A menu renders such a command as a switch instead of an ordinary entry; {@link #isActive()}
+	 * then tells whether the setting is on.
+	 * </p>
+	 */
+	default boolean isToggle() {
+		return false;
+	}
+
+	/**
 	 * Whether the command button should be visible.
 	 *
 	 * <p>

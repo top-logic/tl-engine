@@ -100,6 +100,9 @@ public interface MenuState extends com.top_logic.layout.react.state.ControlState
 		/** @see #isActive() */
 		String ACTIVE__PROP = "active";
 
+		/** @see #isToggle() */
+		String TOGGLE__PROP = "toggle";
+
 		/** @see #getCssClasses() */
 		String CSS_CLASSES__PROP = "cssClasses";
 
@@ -166,6 +169,18 @@ public interface MenuState extends com.top_logic.layout.react.state.ControlState
 		 * @see #isActive()
 		 */
 		com.top_logic.layout.react.state.MenuState.Entry setActive(boolean value);
+
+		/**
+		 * Whether the item switches a setting on and off: shown as a switch whose {@link #isActive()} tells
+		 * whether the setting is on. Absent: an ordinary item, {@link #isActive()} marking the choice in
+		 * force.
+		 */
+		boolean isToggle();
+
+		/**
+		 * @see #isToggle()
+		 */
+		com.top_logic.layout.react.state.MenuState.Entry setToggle(boolean value);
 
 		/**
 		 * Additional CSS classes of the item, separated by spaces.

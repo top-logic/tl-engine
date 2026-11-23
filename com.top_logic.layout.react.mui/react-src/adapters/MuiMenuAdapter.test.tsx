@@ -96,6 +96,21 @@ describe('TLMenu as MUI Menu', () => {
     expect(menu.querySelector('.MuiDivider-root')).not.toBeNull();
   });
 
+  it('renders a toggle as a menuitemcheckbox that is on or off, not as the choice in force', () => {
+    mountMenu({
+      items: [
+        { type: 'item', id: 'on', label: 'Striped', toggle: true, active: true },
+        { type: 'item', id: 'off', label: 'Lines', toggle: true },
+      ] as MenuStateJson.Entry[],
+    });
+
+    const [on, off] = screen.getAllByRole('menuitemcheckbox');
+    expect(on.getAttribute('aria-checked')).toBe('true');
+    expect(off.getAttribute('aria-checked')).toBe('false');
+    expect(on.getAttribute('aria-current')).toBeNull();
+    expect(on.classList).not.toContain('Mui-selected');
+  });
+
   it('paints a header with the background of the menu surface, including its elevation overlay', () => {
     mountMenu({});
 

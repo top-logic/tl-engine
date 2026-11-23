@@ -54,6 +54,11 @@ import com.top_logic.util.model.ModelService;
  * {@code Catalog} only, and decides write by the roles held on the entry itself.
  * </p>
  * <p>
+ * A {@code Part} of the model module {@code TestAccessParentAnyOf} delegates every operation to its
+ * {@code Folder} and read to every {@code Document} relating it. A {@code Both} object delegates to
+ * two folders at once, through a combinator requiring the operation on both of them.
+ * </p>
+ * <p>
  * The analysis runs in the system context of the test, in which the security checks are bypassed:
  * the decisions must nevertheless be made for the explained account.
  * </p>
@@ -94,6 +99,20 @@ public class TestEffectiveAccess extends BasicTestCase {
 	private static final String ROLE_CATALOG_READER = RESTRICTED_MODULE + ".CatalogReader";
 
 	private static final String ROLE_ENTRY_EDITOR = RESTRICTED_MODULE + ".EntryEditor";
+
+	private static final String ANY_OF_MODULE = "TestAccessParentAnyOf";
+
+	private static final String FOLDER = ANY_OF_MODULE + ":Folder";
+
+	private static final String DOCUMENT = ANY_OF_MODULE + ":Document";
+
+	private static final String ANY_OF_PART = ANY_OF_MODULE + ":Part";
+
+	private static final String BOTH = ANY_OF_MODULE + ":Both";
+
+	private static final String ROLE_DOC_READER = ANY_OF_MODULE + ".DocReader";
+
+	private static final String ROLE_FOLDER_OWNER = ANY_OF_MODULE + ".FolderOwner";
 
 	private BoundedRole _reader;
 
@@ -280,8 +299,9 @@ public class TestEffectiveAccess extends BasicTestCase {
 			delete.checkedOperation());
 		assertSame("Reading a part is checked as reading its container.", SimpleBoundCommandGroup.READ,
 			read.checkedOperation());
-		assertSame("Every operation is checked on the container.", _covered, read.roleHolder());
-		assertSame("Every operation is checked on the container.", _covered, delete.roleHolder());
+		assertEquals("Every operation is checked on the container.", List.of(_covered), read.roleHolders());
+		assertEquals("Every operation is checked on the container.", List.of(_covered), delete.roleHolders());
+		assertNull("A container combines nothing.", explanation.combiningParent());
 
 		RoleAssignment source = singleSource(explanation, _reader);
 		assertFalse(explanation.isInherited(source));
@@ -299,12 +319,13 @@ public class TestEffectiveAccess extends BasicTestCase {
 		assertTrue(explanation.isDelegating());
 
 		OperationDecision read = decision(explanation, SimpleBoundCommandGroup.READ);
-		assertSame(_catalog, read.roleHolder());
+		assertEquals(List.of(_catalog), read.roleHolders());
+		assertNull("A restricted single access parent combines nothing.", explanation.combiningParent());
 		assertTrue(read.allowed());
 		assertEquals(Set.of(catalogReader), read.grantingRoles());
 
 		OperationDecision write = decision(explanation, SimpleBoundCommandGroup.WRITE);
-		assertSame("The entry decides on writing itself.", _entry, write.roleHolder());
+		assertEquals("The entry decides on writing itself.", List.of(_entry), write.roleHolders());
 		assertSame(SimpleBoundCommandGroup.WRITE, write.checkedOperation());
 		assertFalse(write.allowed());
 		assertEquals(Set.of(entryEditor), write.admittingRoles());
@@ -320,7 +341,7 @@ public class TestEffectiveAccess extends BasicTestCase {
 			editorWrite.ownGrantingRoles());
 
 		OperationDecision editorDiscover = decision(editorExplanation, SimpleBoundCommandGroup.DISCOVER);
-		assertSame("Discover is delegated to the catalog.", _catalog, editorDiscover.roleHolder());
+		assertEquals("Discover is delegated to the catalog.", List.of(_catalog), editorDiscover.roleHolders());
 		assertTrue("The own Write grant of the entry implies Discover.", editorDiscover.allowed());
 		assertEquals(Set.of(catalogReader, entryEditor), editorDiscover.admittingRoles());
 		assertEquals(Set.of(entryEditor), editorDiscover.grantingRoles());
@@ -331,6 +352,74 @@ public class TestEffectiveAccess extends BasicTestCase {
 		assertTrue(readerDiscover.allowed());
 		assertEquals(Set.of(catalogReader), readerDiscover.grantingRoles());
 		assertEquals("The role is held on the catalog.", Set.of(), readerDiscover.ownGrantingRoles());
+	}
+
+	/**
+	 * A part decides Read by its folder and by every document relating it, Write by its folder
+	 * only: the decision names every object deciding it, and the roles granting it are those held
+	 * on the object admitting them.
+	 */
+	public void testAnyOfExplainsEveryHolder() {
+		Person docReader = createPerson("effectiveAccessDocReader");
+		TLObject folder = inTransaction(() -> {
+			TLObject result = create(FOLDER);
+			result.tUpdateByName(OWNER, _owner);
+			return result;
+		});
+		TLObject part = inTransaction(() -> {
+			TLObject result = create(ANY_OF_PART);
+			folder.tUpdateByName(PARTS, List.of(result));
+			return result;
+		});
+		TLObject document = inTransaction(() -> {
+			TLObject result = create(DOCUMENT);
+			result.tUpdateByName("reader", docReader);
+			result.tUpdateByName("relatedParts", List.of(part));
+			return result;
+		});
+
+		AccessExplanation explanation = explain(docReader, part);
+		assertSame("The first object deciding Read is the deciding object.", folder, explanation.decidingObject());
+		assertNull("An any-of of a container and a referer combines its candidates by OR.",
+			explanation.combiningParent());
+
+		OperationDecision read = decision(explanation, SimpleBoundCommandGroup.READ);
+		assertTrue(read.allowed());
+		assertEquals(List.of(folder, document), read.roleHolders());
+		assertEquals("The role is held on the document, which admits it.",
+			Set.of(BoundedRole.getRoleByName(ROLE_DOC_READER)), read.grantingRoles());
+
+		OperationDecision write = decision(explanation, SimpleBoundCommandGroup.WRITE);
+		assertFalse(write.allowed());
+		assertEquals("The documents relating the part decide Read only.", List.of(folder), write.roleHolders());
+		assertEquals(Set.of(), write.grantingRoles());
+	}
+
+	/**
+	 * An access parent combining its candidates itself is marked, since the roles shown may admit
+	 * more than it does.
+	 */
+	public void testCustomCombinatorIsMarked() {
+		TLObject both = inTransaction(() -> {
+			TLObject first = create(FOLDER);
+			first.tUpdateByName(OWNER, _owner);
+			TLObject second = create(FOLDER);
+			second.tUpdateByName(OWNER, _other);
+			TLObject result = create(BOTH);
+			result.tUpdateByName("first", first);
+			result.tUpdateByName("second", second);
+			return result;
+		});
+
+		AccessExplanation explanation = explain(_owner, both);
+		assertNotNull("The combinator is named.", explanation.combiningParent());
+		assertFalse(explanation.combiningParent().isDisjunctive());
+
+		OperationDecision read = decision(explanation, SimpleBoundCommandGroup.READ);
+		assertFalse("The owner owns only the first folder.", read.allowed());
+		assertEquals(2, read.roleHolders().size());
+		assertEquals("The role held on the first folder is shown, although it does not suffice.",
+			Set.of(BoundedRole.getRoleByName(ROLE_FOLDER_OWNER)), read.grantingRoles());
 	}
 
 	public void testDenied() {
@@ -480,11 +569,19 @@ public class TestEffectiveAccess extends BasicTestCase {
 	}
 
 	private static void inTransaction(Runnable modification) {
-		ThreadContext.withoutSecurityChecks(() -> {
+		inTransaction(() -> {
+			modification.run();
+			return null;
+		});
+	}
+
+	private static <T> T inTransaction(Supplier<T> modification) {
+		return ThreadContext.withoutSecurityChecks(() -> {
 			try (Transaction tx =
 				kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
-				modification.run();
+				T result = modification.get();
 				tx.commit();
+				return result;
 			}
 		});
 	}

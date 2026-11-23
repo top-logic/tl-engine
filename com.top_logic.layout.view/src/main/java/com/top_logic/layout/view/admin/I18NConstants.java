@@ -562,6 +562,17 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey3 EFFECTIVE_ACCESS_CHECKED_ON__OPERATION_OBJECT_REASON;
 
 	/**
+	 * @en Checked as "{0}" on each of: {1}. {2}
+	 */
+	public static ResKey3 EFFECTIVE_ACCESS_CHECKED_ON_SEVERAL__OPERATION_OBJECTS_REASON;
+
+	/**
+	 * @en The access parent {0} combines its candidates itself; the roles shown may admit more than
+	 *     it does.
+	 */
+	public static ResKey1 EFFECTIVE_ACCESS_COMBINED__PARENT;
+
+	/**
 	 * @en Inherited from the role parent "{0}".
 	 */
 	public static ResKey1 EFFECTIVE_ACCESS_INHERITED__PARENT;

@@ -27,7 +27,8 @@ import com.top_logic.util.TLContext;
  *
  * <p>
  * Only the skills the editing account may know are offered: a stored skill it may not read is not
- * an option (developer article {@code ai/security/run-access}).
+ * an option (developer article {@code ai/security/run-access}). A name the record already holds
+ * stays an option, so that saving the form does not drop what another editor set.
  * </p>
  *
  * @see AgentDefinitionQuery#getAllSkills(com.top_logic.ai.core.security.ModelSecurity)
@@ -57,6 +58,6 @@ public class AllSkillNamesGenerator extends ListGeneratorAdaptor {
 		for (SkillDefinition sd : AgentDefinitionQuery.getInstance().getAllSkills(editor)) {
 			names.add(sd.name());
 		}
-		return names;
+		return AllAgentNamesGenerator.withHeld(names, editContext.getCorrectValues());
 	}
 }

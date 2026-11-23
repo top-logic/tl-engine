@@ -6,6 +6,7 @@
 package com.top_logic.ai.core.agent;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
@@ -32,7 +33,8 @@ import com.top_logic.util.TLContext;
  *
  * <p>
  * Only the agents the editing account may know are offered: a stored agent it may not read is not
- * an option (developer article {@code ai/security/run-access}).
+ * an option (developer article {@code ai/security/run-access}). A name the record already holds
+ * stays an option, so that saving the form does not drop what another editor set.
  * </p>
  *
  * @see AgentDefinition#infrastructure()
@@ -66,6 +68,28 @@ public class AllAgentNamesGenerator extends ListGeneratorAdaptor {
 			}
 			names.add(ad.name());
 		}
-		return names;
+		return withHeld(names, editContext.getCorrectValues());
+	}
+
+	/**
+	 * The given options, plus the names the edited attribute holds already.
+	 *
+	 * <p>
+	 * A value that is not an option is dropped when the form is saved. An editor who may not read a
+	 * stored agent or skill would thus remove it from a record that another editor gave it.
+	 * </p>
+	 *
+	 * @param held
+	 *        The value of the edited attribute ({@link EditContext#getCorrectValues()}).
+	 */
+	static List<String> withHeld(List<String> options, Object held) {
+		if (held instanceof Collection<?> values) {
+			for (Object value : values) {
+				if (value instanceof String name && !options.contains(name)) {
+					options.add(name);
+				}
+			}
+		}
+		return options;
 	}
 }

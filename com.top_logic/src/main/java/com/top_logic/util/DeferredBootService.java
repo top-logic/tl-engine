@@ -19,7 +19,6 @@ import com.top_logic.basic.module.ModuleUtil;
 import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.RuntimeCategory;
-import com.top_logic.basic.util.ComputationEx2;
 
 /**
  * Delays the full application boot until it is explicitly triggered, redirecting incoming requests
@@ -37,7 +36,7 @@ public class DeferredBootService extends ManagedClass {
 	 */
 	public static final String DEFERRED_BOOT_LOCATION_PROPERTY = "deferredBootLocation";
 
-	private ComputationEx2<?, ? extends Exception, ? extends Exception> _boot;
+	private AbstractStartStopListener _application;
 
 	private String _deferredBootLocation;
 
@@ -67,7 +66,7 @@ public class DeferredBootService extends ManagedClass {
 
 	@Override
 	protected void shutDown() {
-		_boot = null;
+		_application = null;
 		super.shutDown();
 	}
 
@@ -81,24 +80,36 @@ public class DeferredBootService extends ManagedClass {
 	/**
 	 * Boot the system.
 	 * 
+	 * <p>
+	 * A failure of the boot is handled by {@link AbstractStartStopListener#startFailed(Throwable)},
+	 * which reports it and shuts the application down.
+	 * </p>
+	 * 
 	 * @throws BootFailure
 	 *         If the booting fails.
 	 */
 	public void boot() throws BootFailure {
+		AbstractStartStopListener application = _application;
 		try {
-			_boot.run();
-		} catch (Exception ex) {
+			application.boot();
+		} catch (Throwable ex) {
+			application.startFailed(ex);
 			throw new BootFailure(ex);
 		}
 
 		ModuleUtil.INSTANCE.shutDown(Module.INSTANCE);
 	}
 
-	static void startUp(ComputationEx2<?, ? extends Exception, ? extends Exception> boot)
-			throws ModuleException {
+	/**
+	 * Starts the {@link DeferredBootService} that boots the given application on request.
+	 * 
+	 * @param application
+	 *        The application to {@link AbstractStartStopListener#boot() boot}.
+	 */
+	static void startUp(AbstractStartStopListener application) throws ModuleException {
 		ModuleUtil.INSTANCE.startUp(Module.INSTANCE);
 
-		Module.INSTANCE.getImplementationInstance()._boot = boot;
+		Module.INSTANCE.getImplementationInstance()._application = application;
 	}
 
 	/**

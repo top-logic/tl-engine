@@ -88,6 +88,7 @@ Klassen:
 | `tl-reorder-list__handle` | der Griff, zusammen mit `tl-button tl-button--ghost tl-button--sm tl-button--icon` und `tl-reveal-on-hover` |
 | `tl-reorder-list__label` | die Beschriftung |
 | `tl-reorder-list__search` | an der `tl-field-group` der Suche vor der Liste |
+| `tl-reorder-list__host` | die Wurzel der Spaltenwahl um Suche und Liste: eine Flex-Spalte, die ihren Behälter füllt und mit ihm schrumpft (`flex: 1 1 auto`, `min-block-size: 0`); es rollt allein die Liste. Im Popover der Ansicht sitzt sie auf der zweiten Seite (`table.contract.md`) und trägt dort weder Fensterabstand noch Fensterhöhe |
 | `tl-reorder-list__actions` | `span` am Zeilenende um Schloss und Auge |
 | `tl-reorder-list__lock` | das Schloss, mit `tl-button tl-button--ghost tl-button--sm tl-button--icon` und `tl-reveal-on-hover` |
 | `tl-reorder-list__eye` | das Auge, ebenso |

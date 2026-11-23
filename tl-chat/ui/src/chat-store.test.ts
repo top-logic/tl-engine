@@ -8,7 +8,7 @@ import {
   type ChatBootstrap,
 } from './chat-store'
 import { bundle, PROVIDER_ERROR_NO_CREDENTIALS } from './i18n'
-import { unseenBadge } from './progress-model'
+import { seenCounts, unseenRailBadge } from './rail-model'
 import { cardsForTurn } from './subagent-card'
 import type { ChatMessage, SubagentRef } from './types'
 import {
@@ -243,7 +243,7 @@ const BOOT: ChatBootstrap = {
   railOpenDefault: false,
   paneWidth: 0,
   paneWidthDefault: 0,
-  badgeSeen: 0,
+  badgeSeen: {},
   sectionChoices: {},
   autoApprove: false,
 }
@@ -1528,14 +1528,14 @@ describe('the layout preferences', () => {
     // Booting writes nothing: the bootstrap IS what the server holds.
     expect(preferenceWrites).toHaveLength(0)
 
-    store.actions.showSection('progress', 4)
+    store.actions.showSection('progress', { progress: 4 })
     await settle()
 
     expect(preferenceWrites).toHaveLength(1)
     expect(preferenceWrites[0]).toEqual({
       railOpen: true,
       paneWidth: 0,
-      badgeSeen: 4,
+      badgeSeen: { progress: 4 },
       // Opening the rail on a section expands that section, and that is a decision too.
       sections: { progress: true },
     })
@@ -1551,9 +1551,9 @@ describe('the layout preferences', () => {
    * stored one - the user's choice was overwritten by the page that was supposed to restore it.
    */
   it('does not write back the layout it booted with', async () => {
-    const store = chatStore('alpha', { ...BOOT, railOpen: true, paneWidth: 480, badgeSeen: 3 })
+    const store = chatStore('alpha', { ...BOOT, railOpen: true, paneWidth: 480, badgeSeen: { progress: 3 } })
     const release = store.subscribe(() => undefined, control(), DATA_URL)
-    store.attach({ ...BOOT, railOpen: true, paneWidth: 480, badgeSeen: 3 })
+    store.attach({ ...BOOT, railOpen: true, paneWidth: 480, badgeSeen: { progress: 3 } })
     await settle()
 
     expect(preferenceWrites).toHaveLength(0)
@@ -1651,24 +1651,37 @@ describe('a mounted rail', () => {
   })
 
   /**
-   * The badge the transcript's toggle shows is the rail's sum, and opening the rail records it.
+   * The badge the transcript's toggle shows comes from the rail's sections, and opening the rail
+   * records what each of them counts.
    *
-   * Passing 0 - which is what the toggle did before the rail published a total - reset `badgeSeen`
-   * in the user's preferences on every open, so the next unseen count was measured against nothing.
+   * Passing nothing would reset `badgeSeen` in the user's preferences on every open, so the next
+   * unseen count was measured against nothing.
    */
-  it('publishes the badge total the toggle shows and records', () => {
+  it('publishes the section badges the toggle shows and records', () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined, control(), DATA_URL)
     store.actions.registerRail()
 
-    store.actions.publishBadgeTotal(3)
-    expect(store.getState().badgeTotal).toBe(3)
-    expect(unseenBadge(store.getState().badgeTotal, store.getState().badgeSeen)).toBe(3)
+    const rail = {
+      progress: { count: 3, role: 'error', dot: false },
+      marked: { count: 0, role: 'info', dot: true },
+    } as const
+    store.actions.publishRailBadge(rail)
+    expect(store.getState().railBadge).toEqual(rail)
+    expect(unseenRailBadge(store.getState().railBadge, store.getState().badgeSeen, 'New')).toEqual({
+      content: '3',
+      role: 'error',
+      label: 'New',
+    })
 
-    store.actions.toggleSide(store.getState().badgeTotal)
+    store.actions.toggleSide(seenCounts(store.getState().railBadge))
     expect(store.getState().sideOpen).toBe(true)
-    expect(store.getState().badgeSeen).toBe(3)
-    expect(unseenBadge(store.getState().badgeTotal, store.getState().badgeSeen)).toBe(0)
+    expect(store.getState().badgeSeen).toEqual({ progress: 3 })
+    expect(unseenRailBadge(store.getState().railBadge, store.getState().badgeSeen, 'New')).toEqual({
+      dot: true,
+      role: 'info',
+      label: 'New',
+    })
 
     release()
   })
@@ -1713,11 +1726,11 @@ describe('a mounted rail', () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined, control(), DATA_URL)
     store.actions.registerRail()
-    store.actions.publishBadgeTotal(4)
+    store.actions.publishRailBadge({ progress: { count: 4, role: 'brand', dot: false } })
 
-    store.actions.markBadgesSeen(store.getState().badgeTotal)
-    expect(store.getState().badgeSeen).toBe(4)
-    expect(unseenBadge(store.getState().badgeTotal, store.getState().badgeSeen)).toBe(0)
+    store.actions.markBadgesSeen(seenCounts(store.getState().railBadge))
+    expect(store.getState().badgeSeen).toEqual({ progress: 4 })
+    expect(unseenRailBadge(store.getState().railBadge, store.getState().badgeSeen, 'New')).toBeNull()
     expect(store.getState().sideOpen).toBe(false)
     expect(store.getState().railDecided).toBe(false)
 
@@ -1730,10 +1743,10 @@ describe('a mounted rail', () => {
     const release = store.subscribe(() => undefined, control(), DATA_URL)
 
     const unregister = store.actions.registerRail()
-    store.actions.publishBadgeTotal(2)
+    store.actions.publishRailBadge({ progress: { count: 2, role: 'brand', dot: false } })
     unregister()
 
-    expect(store.getState().badgeTotal).toBe(0)
+    expect(store.getState().railBadge).toEqual({})
     release()
   })
 
@@ -1750,7 +1763,7 @@ describe('a mounted rail', () => {
     expect(store.getState().sideOpen).toBe(true)
 
     // The user's own toggle wins: a remount, or a second rail, re-states the default and is ignored.
-    store.actions.toggleSide(0)
+    store.actions.toggleSide({})
     expect(store.getState().sideOpen).toBe(false)
     store.actions.applyRailDefault(true)
     expect(store.getState().sideOpen).toBe(false)
@@ -1808,7 +1821,7 @@ describe('a mounted rail', () => {
     expect(preferenceWrites).toHaveLength(1)
     expect(preferenceWrites[0]).toEqual({
       paneWidth: 0,
-      badgeSeen: 0,
+      badgeSeen: {},
       sections: { progress: false },
     })
 
@@ -1862,7 +1875,7 @@ describe('the bootstrap', () => {
         traceMode: 'detailed',
         railOpen: true,
         paneWidth: 480,
-        badgeSeen: 3,
+        badgeSeen: { progress: 3 },
         sectionChoices: { progress: false },
         approvalMode: 'AUTO_APPROVE',
       }),
@@ -1877,11 +1890,20 @@ describe('the bootstrap', () => {
       railOpenDefault: false,
       paneWidth: 480,
       paneWidthDefault: 0,
-      badgeSeen: 3,
+      badgeSeen: { progress: 3 },
       sectionChoices: { progress: false },
       autoApprove: true,
       collapsedSections: undefined,
     })
+  })
+
+  /** Seen counts are kept per section; a seen value of another form is nothing seen. */
+  it('reads the seen counts per section and ignores a single number', () => {
+    expect(readBootstrap({ badgeSeen: { progress: 3, sources: 100, bad: 'x', gone: -1 } }).badgeSeen).toEqual({
+      progress: 3,
+      sources: 100,
+    })
+    expect(readBootstrap({ badgeSeen: 13 }).badgeSeen).toEqual({})
   })
 
   it('falls back to a readable chat when the state says nothing', () => {
@@ -1896,7 +1918,7 @@ describe('the bootstrap', () => {
       railOpenDefault: false,
       paneWidth: 0,
       paneWidthDefault: 0,
-      badgeSeen: 0,
+      badgeSeen: {},
       sectionChoices: {},
       autoApprove: false,
       collapsedSections: undefined,
@@ -2564,7 +2586,7 @@ describe('every request names its conversation', () => {
     const release = store.subscribe(() => undefined, control('belege'), DATA_URL)
     store.attach(BOOT)
     await settle()
-    store.actions.toggleSide(0)
+    store.actions.toggleSide({})
     await settle()
 
     expect(streams[0].conversation).toBe('belege')
@@ -2586,7 +2608,7 @@ describe('every request names its conversation', () => {
     const release = store.subscribe(() => undefined, control('v42'), DATA_URL)
     store.attach(boot)
     await settle()
-    store.actions.toggleSide(0)
+    store.actions.toggleSide({})
     await settle()
 
     const layout = commands.find((item) => item.name === CMD_SAVE_LAYOUT)
@@ -3223,20 +3245,15 @@ describe('a window the server no longer knows', () => {
 /**
  * Which chat a window shows when the choice changes while a transcript is still on its way (#576).
  *
- * A host's `input` channel and the tab's remembered chat both open chats, and an opening that
- * completed after a later one put its chat back on screen. The write-back then reported it, the
- * channel asked for the other one again, and the window switched between two conversations every
- * few milliseconds without end.
+ * The `input` channel opens chats, and an opening that completed after a later one put its chat
+ * back on screen. The write-back then reported it, the channel asked for the other one again, and
+ * the window switched between two conversations every few milliseconds without end.
  */
 describe('choosing a chat while another one loads', () => {
   /** The transcript loads that have not been answered yet, by session id. */
   let pending: Map<string, () => void>
-  /** The chats the conversation's state lists. */
-  let listed: { id: string; title: string }[]
-
   beforeEach(() => {
     pending = new Map()
-    listed = []
     const globals = globalThis as unknown as Record<string, unknown>
     const inner = globals.fetch as (url: string, init?: unknown) => Promise<unknown>
     globals.fetch = vi.fn(async (url: string, init?: { method?: string; body?: string }) => {
@@ -3257,10 +3274,6 @@ describe('choosing a chat while another one loads', () => {
       }
       return inner(url, init)
     })
-  })
-
-  afterEach(() => {
-    delete (globalThis as unknown as { window: Record<string, unknown> }).window.sessionStorage
   })
 
   const userTexts = (store: ReturnType<typeof chatStore>) =>
@@ -3295,31 +3308,6 @@ describe('choosing a chat while another one loads', () => {
 
     expect(store.getState().sessionId).toBeNull()
     expect(userTexts(store)).toEqual([])
-
-    release()
-  })
-
-  it('does not reopen the remembered chat over one the window was already given', async () => {
-    const window = (globalThis as unknown as { window: Record<string, unknown> }).window
-    window.sessionStorage = { getItem: () => 'previous', setItem: () => undefined, removeItem: () => undefined }
-    listed = [
-      { id: 'previous', title: 'Vorher' },
-      { id: 'current', title: 'Jetzt' },
-    ]
-    const store = chatStore('alpha', BOOT)
-    const release = store.subscribe(() => undefined, control(), DATA_URL)
-    // The host's channel names the page's conversation as the element mounts, before the session
-    // list - which is what the restore waits for - has come back.
-    const chosen = store.actions.selectSession('current')
-    store.attach(BOOT)
-    store.takeLists(undefined, listed)
-    await settle()
-    pending.get('current')!()
-    await chosen
-    await settle()
-
-    expect(pending.has('previous')).toBe(false)
-    expect(store.getState().sessionId).toBe('current')
 
     release()
   })

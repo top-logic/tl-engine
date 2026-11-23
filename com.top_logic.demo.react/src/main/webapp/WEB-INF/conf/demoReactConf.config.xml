@@ -399,7 +399,9 @@
 							roles="demo.react.ProjectAdmin"
 						/>
 					</module>
-					<class name="tl.demo.projectManagement:ProjectScope">
+					<class name="tl.demo.projectManagement:ProjectScope"
+						discover-attributes="name"
+					>
 						<operations>
 							<operation name="Approve"/>
 							<operation name="ShowPlanning"/>
@@ -468,7 +470,9 @@
 							roles="demo.react.ProjectAdmin"
 						/>
 					</part>
-					<class name="tl.demo.projectManagement:Milestone">
+					<class name="tl.demo.projectManagement:Milestone"
+						discover-attributes="name"
+					>
 						<access-parent>
 							<container reference="tl.demo.projectManagement:ProjectScope#milestones"/>
 						</access-parent>
@@ -492,11 +496,14 @@
 						their labels.
 						
 						For that, a ticket watcher is a project path viewer on the project containing
-						the ticket. A project path viewer reads the names and the milestones of the
-						project and the names and tickets of its milestones, but no other attribute of
-						the project or a milestone: not its description, its budget, its members. Reading an attribute of an object
-						implies discovering the object, so the project and its milestones appear in the
-						tree with their labels. The tickets of a milestone are filtered: the watcher
+						the ticket. A project path viewer reads the milestones of the project and the
+						tickets of its milestones. Reading an attribute of an object implies discovering
+						the object, so the project and its milestones appear in the tree with their
+						labels. The name is the discover attribute of a project and of a milestone (see
+						their class entries above), so the project path viewer reads it as well, and a
+						table or a form shows which object a discovered row is. No other attribute of the
+						project or a milestone is readable for it: not its description, its budget, its
+						members. The tickets of a milestone are filtered: the watcher
 						discovers the ticket it watches, not the other tickets of the milestone, and not
 						the projects in which it watches no ticket.
 						
@@ -520,20 +527,6 @@
 						/>
 					</part>
 					<part name="tl.demo.projectManagement:Milestone#tickets">
-						<grant
-							operation="Read"
-							roles="demo.react.ProjectMember, demo.react.ProjectAdmin, demo.react.ProjectPathViewer"
-						/>
-					</part>
-					<!-- The project path viewer also reads the names of the project and its milestones, so
-						that a table or a form shows which object a discovered row is. -->
-					<part name="tl.demo.projectManagement:ProjectScope#name">
-						<grant
-							operation="Read"
-							roles="demo.react.ProjectMember, demo.react.ProjectAdmin, demo.react.ProjectPathViewer"
-						/>
-					</part>
-					<part name="tl.demo.projectManagement:Milestone#name">
 						<grant
 							operation="Read"
 							roles="demo.react.ProjectMember, demo.react.ProjectAdmin, demo.react.ProjectPathViewer"

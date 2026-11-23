@@ -130,6 +130,10 @@ ${block(T.effect.light)}
 ${block(T.density.normal)}
 }
 
+[data-tl-density="normal"] {
+${block(T.density.normal)}
+}
+
 [data-tl-mode="dark"] {
   color-scheme: dark;
 ${block(T.color.dark)}
@@ -191,6 +195,17 @@ body {
 
 /* Typografie: eine Größe ist keine Klasse. Die Klasse legt alles fest. */
 ${type}
+
+/* Auf dem iPhone zoomt Safari in jedes Feld mit weniger als 16 px Schrift hinein (Ticket 30477). Reine Finger-Geräte
+   (Handy, Tablet, in jeder Lage) bekommen font-size-field-touch; Desktop und Laptop, auch mit Touchscreen, haben ein
+   Trackpad oder eine Maus als Hauptgerät und behalten die Größe ihrer Typo-Klasse. :is() nimmt
+   die Spezifität seines stärksten Arguments (.tl-field), so schlägt die Regel die Typo-Klasse am Feld, die vor ihr
+   steht. Den Zoom per Viewport zu sperren sperrte auch das Zoomen mit zwei Fingern. */
+@media (hover: none) and (pointer: coarse) {
+  :is(input, textarea, select, [contenteditable]:not([contenteditable="false"]), .tl-field) {
+    font-size: var(--tl-font-size-field-touch);
+  }
+}
 
 /* Zahlen in Spalten fluchten nur mit tabellarischen Ziffern. Pflicht, nicht Option. */
 .tl-nums {

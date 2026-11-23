@@ -100,7 +100,10 @@ public final class ChatViewBinding {
 	/** State entry of {@link #writeRenderState(BiConsumer)}: the width the user gave the pane. */
 	public static final String STATE_PANE_WIDTH = "paneWidth";
 
-	/** State entry of {@link #writeRenderState(BiConsumer)}: the badge count the user has seen. */
+	/**
+	 * State entry of {@link #writeRenderState(BiConsumer)}: per section name, the badge count the
+	 * user has seen.
+	 */
 	public static final String STATE_BADGE_SEEN = "badgeSeen";
 
 	/** State entry of {@link #writeRenderState(BiConsumer)}: the rail sections the user left open. */
@@ -778,7 +781,7 @@ public final class ChatViewBinding {
 		// what applies then.
 		put.accept(STATE_RAIL_OPEN, preferences.getRailOpen());
 		put.accept(STATE_PANE_WIDTH, Integer.valueOf(preferences.getPaneWidth()));
-		put.accept(STATE_BADGE_SEEN, Integer.valueOf(preferences.getBadgeSeen()));
+		put.accept(STATE_BADGE_SEEN, new LinkedHashMap<>(preferences.getBadgeSeen()));
 		put.accept(STATE_SECTION_CHOICES, new LinkedHashMap<>(preferences.getSections()));
 		// The person's last position of the auto-approve switch, which a new chat starts with.
 		put.accept(STATE_APPROVAL_MODE, ApprovalChoice.load().name());

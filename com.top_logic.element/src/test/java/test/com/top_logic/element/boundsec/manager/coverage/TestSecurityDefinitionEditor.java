@@ -453,6 +453,13 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		assertFalse("A value in effect by default is not set explicitly.",
 			entry.valueSet(entry.descriptor().getProperty(TypeBasedAccessRights.INTERNAL)));
 		assertFalse(entry.valueSet(entry.descriptor().getProperty(TLClassAccessRights.ACCESS_PARENT)));
+		assertFalse(entry.valueSet(entry.descriptor().getProperty(TLClassAccessRights.DISCOVER_ATTRIBUTES)));
+	}
+
+	public void testEditShowsTheDiscoverAttributesOfTheBaseConfiguration() throws Exception {
+		TLClassAccessRights entry = _editor.editableAccessRights(type(MODULE + ":Named"));
+		assertEquals("The discover attributes of the underlying configuration are in effect, though not stored.",
+			List.of("name"), entry.getDiscoverAttributes());
 	}
 
 	public void testDroppedMarkOverridesTheBaseConfiguration() throws Exception {

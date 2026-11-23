@@ -47,6 +47,7 @@ import com.top_logic.layout.view.table.ScriptedFilterUI;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.filter.ComparableColumnFilter;
 import com.top_logic.table.filter.OptionsFilterState;
@@ -261,7 +262,8 @@ public class TestColumnDisplayLabel extends AbstractModelAccessTest {
 
 	/** The rows the given column's filter lets pass in the given state. */
 	private <V> List<Object> matching(Column<Object, V> column, FilterState state) {
-		Predicate<V> predicate = column.filter().get().predicate(state);
+		String kind = state instanceof TextFilterState ? ColumnFilter.KIND_TEXT : null;
+		Predicate<V> predicate = column.filter(kind).get().predicate(state);
 		List<Object> result = new ArrayList<>();
 		for (Object row : rows()) {
 			if (predicate.test(column.value(row))) {

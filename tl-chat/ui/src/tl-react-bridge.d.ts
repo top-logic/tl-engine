@@ -105,4 +105,38 @@ declare module 'tl-react-bridge' {
    * server), to which the caller appends `&key=…`.
    */
   export function useTLDataUrl(): string
+
+  /**
+   * The state of a badge: a count or short text, or a dot, in a color role, with the name a screen
+   * reader gives it where the content does not say it itself.
+   */
+  export interface BadgeJson {
+    /** What the badge shows: a count, the overflow `99+`, or a short text. Absent for a dot. */
+    content: string
+    /** Whether the badge is a dot marking the element without counting. */
+    dot: boolean
+    /** The color role. Absent means `'brand'`. */
+    role: BadgeJson.Role
+    /** The accessible name of a dot, or what a count counts. */
+    label: string
+  }
+
+  export namespace BadgeJson {
+    /** The color role of a badge. */
+    export type Role = 'brand' | 'error' | 'warning' | 'success' | 'info'
+  }
+
+  /**
+   * Draws the given badge through the part `Badge`, which a component library may replace.
+   *
+   * `alone`: the badge stands over the corner of an icon whose element is named by
+   * {@link labelWithBadge}, so the badge itself is hidden from assistive technology.
+   */
+  export const StateBadge: ReactTypes.FC<{ badge: Partial<BadgeJson>; alone: boolean }>
+
+  /** The accessible name of an element named by the given label and carrying the given badge. */
+  export function labelWithBadge(
+    label: string | undefined,
+    badge: Partial<BadgeJson> | null | undefined,
+  ): string | undefined
 }

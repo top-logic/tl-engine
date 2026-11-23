@@ -257,10 +257,12 @@ public final class RemoteExchange {
 		outcome._agent = agent.name();
 		outcome._contextId = Json.str(message, "contextId");
 		outcome._taskId = Json.str(message, "taskId");
+		// Before the observers learn of the message: a card that names no allowed address sends nothing.
+		String endpoint = _agents.endpoint(agent);
 		observe(A2AExchange.Kind.MESSAGE_SENT, outcome, message);
 
 		long start = System.currentTimeMillis();
-		_agents.client().stream(_agents.endpoint(agent), agent.credentials(), "SendStreamingMessage",
+		_agents.client().stream(endpoint, agent.credentials(), "SendStreamingMessage",
 			Json.map("message", message), follower(outcome, agent), _waitMillis, _cancelled);
 		outcome._waitedSeconds = (System.currentTimeMillis() - start) / 1000;
 

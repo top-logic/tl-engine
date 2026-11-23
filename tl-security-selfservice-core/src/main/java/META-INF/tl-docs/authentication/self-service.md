@@ -1,5 +1,5 @@
 ---
-description: Read before offering users a password reset, a reset of their second factor, an invitation to create their own account or an open self-registration without invitation - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the configurable mail texts (invitation-text, verification-text, reset-password-text, reset-mfa-text, MailText) and mail scripts written in the language of the recipient, sendResetPasswordMail, sendResetMFAMail, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted and its language, CurrentUserLanguageDefault, the self-registration SelfRegistration with its option self-registration - mode off / direct / approval, set from the variable tl_self_registration (alias %SELF_REGISTRATION%, default off), captcha, set from the variable tl_self_registration_captcha (alias %SELF_REGISTRATION_CAPTCHA%, default true), callback, registration-text, registration-mail, registration-exists-text, registration-exists-mail, approval-text, approval-mail -, requestCode, register, approve, pendingRegistration, the TL-Script functions registrationEnabled, registrationCaptcha, registrationApprove and registrationPending, the model type tl.security.selfservice:Registration with its state pending / approved, ApplicationAddress), the classic module tl-security-selfservice (the login hook CreateLoginHook, the shared dialogs CheckAccountCode and CreateAccountDialog with the classic AccountRequest (InvitationRequest, RegistrationRequest), the registration dialog RegisterDialog with its login command RegisterDialog$Opener and the captcha field, ForgotPasswordDialog, ResetMFADialog, AbstractVerificationCodeDialog, the admin dialogs "Invite users", "Invitations" and "Registrations" and the command "Approve registration" of the account table) and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, the registration dialog register.view.xml with <request-registration-code> and the captcha, the shared dialogs verification-code.view.xml and create-account.view.xml with <check-verification-code>, <send-new-code>, <create-own-account> and the AccountRequest (InvitationRequest, RegistrationRequest), the login command "Register", the administration views admin/access-control/invitations.view.xml with create-invitation.view.xml and admin/access-control/registrations.view.xml, the command "Approve" added to accounts.view.xml), the approval of registered accounts and who may approve, the demo setup, and VerificationCode, the code of all these flows.
+description: Read before offering users a password reset, a reset of their second factor, an invitation to create their own account or an open self-registration without invitation - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the configurable mail texts (invitation-text, verification-text, reset-password-text, reset-mfa-text, MailText) and mail scripts written in the language of the recipient, sendResetPasswordMail, sendResetMFAMail, the TL-Script functions sendInvitation, invitationRenew, invitationResend and invitationExistingAccount, taken addresses (existingAccount, Person.allByEMail, accounts synchronized by LDAP or provisioned by OpenID with a user name other than their e-mail address), the model type tl.security.selfservice:Invitation with its state open / expired / accepted and its language, CurrentUserLanguageDefault, the self-registration SelfRegistration with its option self-registration - mode off / direct / approval, set from the variable tl_self_registration (alias %SELF_REGISTRATION%, default off), captcha, set from the variable tl_self_registration_captcha (alias %SELF_REGISTRATION_CAPTCHA%, default true), callback, registration-text, registration-mail, registration-exists-text, registration-exists-mail, approval-text, approval-mail -, requestCode, register, approve, pendingRegistration, the TL-Script functions registrationEnabled, registrationCaptcha, registrationApprove and registrationPending, the model type tl.security.selfservice:Registration with its state pending / approved, ApplicationAddress), the classic module tl-security-selfservice (the login hook CreateLoginHook, the shared dialogs CheckAccountCode and CreateAccountDialog with the classic AccountRequest (InvitationRequest, RegistrationRequest), the registration dialog RegisterDialog with its login command RegisterDialog$Opener and the captcha field, ForgotPasswordDialog, ResetMFADialog, AbstractVerificationCodeDialog, the admin dialogs "Invite users", "Invitations" and "Registrations" and the command "Approve registration" of the account table) and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, the registration dialog register.view.xml with <request-registration-code> and the captcha, the shared dialogs verification-code.view.xml and create-account.view.xml with <check-verification-code>, <send-new-code>, <create-own-account> and the AccountRequest (InvitationRequest, RegistrationRequest), the login command "Register", the administration views admin/access-control/invitations.view.xml with create-invitation.view.xml and admin/access-control/registrations.view.xml, the command "Approve" added to accounts.view.xml), the approval of registered accounts and who may approve, the demo setup, and VerificationCode, the code of all these flows.
 order: 20
 ---
 
@@ -138,8 +138,9 @@ this language, also in a redefined script:
 - `reset-password-mail` and `reset-mfa-mail`: the language of the account the mail is for
   (`InvitationModule.accountLanguage(...)`).
 - The mails of the [self-registration](doc:authentication/self-service#self-registration):
-  `registration-exists-mail` and `approval-mail` in the language of the account the mail is about;
-  `registration-mail` in the default language of the application
+  `registration-exists-mail` and `approval-mail` in the language of the account the mail is about,
+  `registration-exists-mail` for an address with an open invitation in the language of the
+  invitation; `registration-mail` in the default language of the application
   (`InvitationModule.defaultLanguage()`), since the visitor has neither an account nor an invitation.
 
 Without such a language, the mail is written in the default language of the application
@@ -201,7 +202,7 @@ by the dialog that sent it and never stored in the database.
 | Attribute | Meaning |
 |---|---|
 | `id` | Hidden secure random string (`SecureStringDefaultProvider` with `size="32"`, 32 random bytes), the token in the invitation link. |
-| `email` | Mandatory. The address the invitation goes to, and the user name of the new account. Its constraints reject an invalid address, an existing account with that name and a second open invitation for the same address (case-insensitive); expired and accepted invitations do not count. |
+| `email` | Mandatory. The address the invitation goes to, and the user name of the new account. Its constraints reject an invalid address, a [taken address](doc:authentication/self-service#taken-addresses) (TL-Script `invitationExistingAccount($email)`) and a second open invitation for the same address (case-insensitive); expired and accepted invitations do not count. |
 | `mfaRequirement` | `MfaRequirement` of the new account; overrides the default of the authentication device. |
 | `language` | The language of the mails of the invitation and of the new account; one of the supported languages of the application (`supportedLocales`). The default is the language of the user creating the invitation (`CurrentUserLanguageDefault` of `com.top_logic`). Without a language, the mails are written in the default language of the application and the account gets the default language. |
 | `createdAt`, `createdBy` | Derived: when and by whom the invitation was created, taken from the commit that created it. |
@@ -225,10 +226,10 @@ React actions and scripts share them:
 
 | Operation | Effect |
 |---|---|
-| `createInvitation(email, mfaRequirement)` | Creates an open invitation expiring after `invitation-validity`; the constraints of `email`, checked when the invitation is stored, refuse an address with an account or with another open invitation. |
+| `createInvitation(email, mfaRequirement)` | Creates an open invitation expiring after `invitation-validity`; the constraints of `email`, checked when the invitation is stored, refuse a [taken address](doc:authentication/self-service#taken-addresses) or an address with another open invitation. |
 | `findInvitation(token)` | The invitation with the token in any state, or `null`. |
 | `findOpenInvitation(token)` | The open invitation with the token; otherwise a `TopLogicException` with `ERROR_UNKNOWN_INVITATION`, `ERROR_INVITATION_EXPIRED` or `ERROR_INVITATION_ACCEPTED` (`com.top_logic.security.selfservice.I18NConstants`), so the user interface can show the reason. |
-| `acceptInvitation(invitation, surname, givenName, password)` | In one transaction: creates the account on the device `authentication-device` with the e-mail address as user name, the `mfaRequirement` of the invitation, surname, given name and e-mail address, and the `language` of the invitation, if set; checks the password against the password rules of the device and sets it, if the device manages passwords; runs `createCallback`, whose answer other than `null` refuses the account (`ERROR_ACCOUNT_CREATION_DENIED` with the answer as details); sets `accepted` and `account`. A refusal leaves neither account nor change. Expired and accepted invitations are refused. |
+| `acceptInvitation(invitation, surname, givenName, password)` | In one transaction: creates the account on the device `authentication-device` with the e-mail address as user name, the `mfaRequirement` of the invitation, surname, given name and e-mail address, and the `language` of the invitation, if set; refuses an address [taken](doc:authentication/self-service#taken-addresses) by an account in the meantime (`ERROR_ACCOUNT_EXISTS__EMAIL`), e.g. by an account synchronized after the invitation was created; checks the password against the password rules of the device and sets it, if the device manages passwords; runs `createCallback`, whose answer other than `null` refuses the account (`ERROR_ACCOUNT_CREATION_DENIED` with the answer as details); sets `accepted` and `account`. A refusal leaves neither account nor change. Expired and accepted invitations are refused. |
 | `renewInvitation(invitation)` | Gives an open or expired invitation a new token and a new `expires`, so the old link is invalid; refuses an accepted one. |
 | `invitationLink(invitation)` | The absolute link of the invitation. |
 | `sendInvitation(invitation)` | Runs `invitation-mail` with the invitation, the application title, the link and the texts of `invitation-text`, in the language of the invitation; refuses an invitation that is not open. |
@@ -237,6 +238,28 @@ React actions and scripts share them:
 | `sendResetPasswordMail(account, code)`, `sendResetMFAMail(account, code)` | Run `reset-password-mail` or `reset-mfa-mail` with the e-mail address of the account, in the language of the account; answer `false` without running the script if the account has no e-mail address. |
 
 An accepted invitation is kept as the record of the account created from it.
+
+### Taken addresses
+
+An address is taken if an account has it
+
+- as user name, compared ignoring case (`Person.byName(...)`), or
+- as e-mail address (`getUser().getEMail()`), compared ignoring case and leading and trailing
+  whitespace (`Person.allByEMail(...)`); several accounts with the same address also take it.
+
+The second case covers accounts whose user name is not their e-mail address, e.g. accounts
+synchronized from an LDAP directory or provisioned by an OpenID login (`jdoe` with the e-mail address
+`john.doe@example.com`). `InvitationModule.existingAccount(address)` answers the account that has
+taken an address, `null` for a free address; the TL-Script function
+`invitationExistingAccount(email)` calls it. The check applies to
+
+- the constraint of `Invitation#email` of an invitation not yet accepted, so no invitation goes to a
+  taken address (the address of an accepted invitation is taken by the account created from it),
+- the creation of the account (`InvitationModule.createAccount(...)`), shared by
+  `acceptInvitation` and the self-registration `register`, which refuses a taken address with
+  `ERROR_ACCOUNT_EXISTS__EMAIL`, and
+- the code request of the self-registration (`requestCode`), which sends `registration-exists-mail`
+  for a taken address.
 
 ### The link
 
@@ -439,7 +462,7 @@ updates the `<self-registration>` element of an earlier one instead of replacing
 | `callback` | Function called with each registered account in the transaction creating it, e.g. to assign roles or groups. It answers `null` to accept the account, or an internationalizable value as the reason to refuse it (`ERROR_ACCOUNT_CREATION_DENIED` with the answer as details), which rolls the registration back. |
 | `registration-text` | Subject and content of the mail with the verification code; `{0}` is the application title, `{1}` the code. |
 | `registration-mail` | Called with the e-mail address, the application title, the verification code and subject and content of `registration-text`. |
-| `registration-exists-text` | Subject and content of the mail sent instead of the code when an account with the address exists; `{0}` is the application title. The shipped text points to "Forgot password". |
+| `registration-exists-text` | Subject and content of the mail sent instead of the code when the address is [taken](doc:authentication/self-service#taken-addresses) or has an open invitation; `{0}` is the application title. The shipped text points to "Forgot password". |
 | `registration-exists-mail` | Called with the e-mail address, the application title and subject and content of `registration-exists-text`. |
 | `approval-text` | Subject and content of the mail telling that a registration has been approved; `{0}` is the application title, `{1}` the address of the login page. |
 | `approval-mail` | Called with the e-mail address of the registration, the application title, the address of the login page (`ApplicationAddress.loginUrl()`, built like the [invitation link](doc:authentication/self-service#the-link) from `tl_host`, the context path and `loginPage` of `ApplicationPages`) and subject and content of `approval-text`; without a value, no mail is sent. |
@@ -459,8 +482,8 @@ application can send mails (`MailSenderService.isConfigured()`).
 | Operation | Effect |
 |---|---|
 | `getMode()`, `isEnabled()`, `isCaptchaRequired()` | The configured mode; whether visitors can register; whether a code request needs a solved captcha. |
-| `requestCode(email, captchaPayload, clientAddress)` | Refuses when registration is not enabled (`ERROR_SELF_REGISTRATION_DISABLED`); checks the captcha if required; checks the syntax of the address (`ERROR_INVALID_EMAIL__ADDRESS`, the same check as the constraint of `Invitation#email`); throttles; sends `registration-mail` with a new `VerificationCode`, or `registration-exists-mail` if an account with the address exists, and answers a code in both cases, so the caller behaves the same and does not reveal which addresses have an account. A script answering `false` fails with `ERROR_VERIFICATION_CODE_NOT_SENT`. Nothing is stored. |
-| `register(email, surname, givenName, password)` | Refuses when registration is not enabled. In one transaction: creates the account like an accepted invitation (`InvitationModule.createAccount(...)`: device `authentication-device`, the address as user name, surname, given name, the password checked against the password rules of the device), locks it in mode `approval`, runs `callback`, and stores a `Registration`. A refusal leaves neither account nor record. The caller has checked the code sent to the address before. |
+| `requestCode(email, captchaPayload, clientAddress)` | Refuses when registration is not enabled (`ERROR_SELF_REGISTRATION_DISABLED`); checks the captcha if required; checks the syntax of the address (`ERROR_INVALID_EMAIL__ADDRESS`, the same check as the constraint of `Invitation#email`); throttles; sends `registration-mail` with a new `VerificationCode`, or `registration-exists-mail` if the address is [taken](doc:authentication/self-service#taken-addresses) by an account (in the language of the account) or has an open invitation (in the language of the invitation), and answers a code in all cases, so the caller behaves the same and does not reveal which addresses have an account. A script answering `false` fails with `ERROR_VERIFICATION_CODE_NOT_SENT`. Nothing is stored. |
+| `register(email, surname, givenName, password)` | Refuses when registration is not enabled. In one transaction: creates the account like an accepted invitation (`InvitationModule.createAccount(...)`: device `authentication-device`, the address as user name, surname, given name, the password checked against the password rules of the device; a [taken address](doc:authentication/self-service#taken-addresses) is refused with `ERROR_ACCOUNT_EXISTS__EMAIL`), locks it in mode `approval`, runs `callback`, and stores a `Registration`. A refusal leaves neither account nor record. The caller has checked the code sent to the address before. |
 | `approve(registration)` | Refuses an approved registration (`ERROR_REGISTRATION_NOT_PENDING`). In one transaction: unlocks the account and sets `approved` and `approvedBy` (the current user, the approving administrator); then sends `approval-mail` and answers its result. Without a public address and request, nothing is changed (`ERROR_NO_PUBLIC_ADDRESS`). |
 | `pendingRegistration(account)`, `isPending(registration)` | The registration of an account that waits for its approval - not approved, account locked -, `null` otherwise. |
 
@@ -568,8 +591,9 @@ Registrations are secured below the `SecurityStructure` singleton (access parent
   any address, waits longer each time.
 - Captcha: with `captcha="true"`, a request without a solved proof-of-work captcha is refused before
   it is counted, so requests of bots do not delay the requests of others.
-- No address enumeration: an address with an account gets `registration-exists-mail` instead of a
-  code, and the caller cannot tell the difference.
+- No address enumeration: a [taken address](doc:authentication/self-service#taken-addresses) and an
+  address with an open invitation get `registration-exists-mail` instead of a code, and the caller
+  cannot tell the difference.
 - Approval: in mode `approval`, a registered account cannot log in before an administrator approves
   it (see [Approving registrations](doc:authentication/self-service#approving-registrations)).
 

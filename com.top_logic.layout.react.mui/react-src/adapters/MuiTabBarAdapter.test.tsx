@@ -1,7 +1,7 @@
 // The wire contract of TLTabBar, checked against the MUI adapter.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, cleanup } from '@testing-library/react';
+import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { TabBarStateJson } from 'tl-react-bridge';
 import { replacePart } from 'tl-react-bridge';
@@ -126,6 +126,50 @@ describe('TLTabBar as MUI Tabs', () => {
 
     expect(screen.queryByRole('tablist')).toBeNull();
     expect(document.getElementById(CONTROL_ID)).toBeNull();
+  });
+});
+
+/**
+ * The horizontally scrolling element of the strip, given the extent jsdom does not compute: its
+ * content `scrollWidth` wide in `clientWidth` of visible width, scrolled from 0.
+ */
+function scrollerOf(scrollWidth: number, clientWidth: number): HTMLElement {
+  const scroller = screen.getByRole('tablist').parentElement!;
+  expect(scroller.classList).toContain('MuiTabs-scroller');
+  let scrollLeft = 0;
+  Object.defineProperty(scroller, 'scrollWidth', { configurable: true, get: () => scrollWidth });
+  Object.defineProperty(scroller, 'clientWidth', { configurable: true, get: () => clientWidth });
+  Object.defineProperty(scroller, 'scrollLeft', {
+    configurable: true,
+    get: () => scrollLeft,
+    set: (value: number) => { scrollLeft = value; },
+  });
+  return scroller;
+}
+
+describe('TLTabBar as MUI Tabs under the mouse wheel', () => {
+  it('scrolls an overflowing strip sideways and takes the event, without selecting a tab', async () => {
+    const sent = mountTabBar({ activeTabId: 'a' });
+    const scroller = scrollerOf(800, 300);
+
+    expect(fireEvent.wheel(scroller, { deltaY: 120 })).toBe(false);
+    expect(scroller.scrollLeft).toBe(120);
+
+    // At the end the strip keeps taking the event, so that nothing around it starts to scroll.
+    expect(fireEvent.wheel(scroller, { deltaY: 1000 })).toBe(false);
+    expect(scroller.scrollLeft).toBe(500);
+    expect(fireEvent.wheel(scroller, { deltaY: 40 })).toBe(false);
+    expect(scroller.scrollLeft).toBe(500);
+    await settle();
+    expect(sent).not.toHaveBeenCalled();
+  });
+
+  it('leaves the wheel to the browser while the tabs fit', () => {
+    mountTabBar({ activeTabId: 'a' });
+    const scroller = scrollerOf(300, 300);
+
+    expect(fireEvent.wheel(scroller, { deltaY: 120 })).toBe(true);
+    expect(scroller.scrollLeft).toBe(0);
   });
 });
 

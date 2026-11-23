@@ -3,24 +3,31 @@
 // part Button: one replacement of the part reaches them all.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, cleanup } from '@testing-library/react';
+import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { replacePart } from 'tl-react-bridge';
+import { register, replacePart } from 'tl-react-bridge';
 import TLPanel from '../../../com.top_logic.layout.react/react-src/controls/TLPanel';
 import TLDrawer from '../../../com.top_logic.layout.react/react-src/controls/TLDrawer';
 import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/TLTableView';
 import TLValueList from '../../../com.top_logic.layout.react/react-src/controls/TLValueList';
 import TLColumnSelect from '../../../com.top_logic.layout.react/react-src/controls/TLColumnSelect';
 import TLDrawerToggle from '../../../com.top_logic.layout.react/react-src/controls/TLDrawerToggle';
+import TLToolbar from '../../../com.top_logic.layout.react/react-src/controls/TLToolbar';
+import TLWindow from '../../../com.top_logic.layout.react/react-src/controls/TLWindow';
 import MuiButtonAdapter from './MuiButtonAdapter';
+import MuiMenuTriggerAdapter from './MuiMenuTriggerAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
 import MuiChipAdapter from './MuiChipAdapter';
+import MuiDividerAdapter from './MuiDividerAdapter';
 import MuiSkeletonAdapter from './MuiSkeletonAdapter';
+import MuiBadgeAdapter from './MuiBadgeAdapter';
 
 replacePart('Button', MuiButtonAdapter);
+// The gear of the table is the trigger of its view.
+replacePart('MenuTrigger', MuiMenuTriggerAdapter);
 // The table looks up the toggle of its tree rows as well.
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 // The table looks up the selection boxes of its rows as well.
@@ -29,14 +36,19 @@ replacePart('Checkbox', MuiCheckboxAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
 // The table draws its named filters as chips.
 replacePart('Chip', MuiChipAdapter);
+// The toolbar draws the lines between its groups and between the sections of its menus.
+replacePart('Divider', MuiDividerAdapter);
 replacePart('Skeleton', MuiSkeletonAdapter);
+// The group toggle of a grouping column carries its group level as a badge.
+replacePart('Badge', MuiBadgeAdapter);
 
 /** The labels of the buttons: the keys, as the test stub translates each key to itself. */
 const LABEL_MINIMIZE = 'js.panel.minimize';
 const LABEL_MAXIMIZE = 'js.panel.maximize';
 const LABEL_POP_OUT = 'js.panel.popOut';
 const LABEL_DRAWER_CLOSE = 'js.drawer.close';
-const LABEL_COLUMNS = 'js.table.columns';
+const LABEL_VIEW = 'js.table.view';
+const LABEL_CHOOSE_COLUMNS = 'js.table.viewChooseColumns';
 const LABEL_FILTER = 'js.table.filter';
 const LABEL_FILTER_ACTIVE = 'js.table.filterActive';
 const LABEL_ADD = 'js.valueList.add';
@@ -44,9 +56,16 @@ const LABEL_REMOVE = 'js.valueList.remove';
 const LABEL_GROUP_BY = 'js.table.groupBy';
 const LABEL_GROUP_BY_ALSO = 'js.table.groupByAlso';
 const LABEL_UNGROUP_COLUMN = 'js.table.ungroupColumn';
+const LABEL_GROUP_LEVEL = 'js.table.groupLevel';
 const LABEL_OPEN_DRAWER = 'js.sidebar.openDrawer';
 const LABEL_COLUMN_HIDE = 'js.table.columnHide';
 const LABEL_COLUMN_SHOW_LOCK = 'js.table.columnShowLock';
+
+/** The primary color of the MUI default theme the tests mount below, the color of a link in MUI. */
+const COLOR_PRIMARY = 'var(--mui-palette-primary-main)';
+
+/** The color of an MUI icon button of the default color. */
+const COLOR_ICON_BUTTON = 'var(--mui-palette-action-active)';
 
 /** The commands the controls send for their buttons. */
 const CMD_TOGGLE_MINIMIZE = 'toggleMinimize';
@@ -122,16 +141,19 @@ describe('the column buttons of a table as MUI icon buttons', () => {
       rows: [],
       totalRowCount: 0,
       columnSelect: true,
+      viewOptions: true,
     });
   }
 
-  it('opens the column selection from the gear', async () => {
+  it('opens the column selection from the view of the gear', async () => {
     const sent = mountTable(false);
     await settle();
 
-    const gear = screen.getByRole('button', { name: LABEL_COLUMNS });
+    const gear = screen.getByRole('button', { name: LABEL_VIEW });
     expectMuiIconButton(gear);
     await userEvent.click(gear);
+    await settle();
+    await userEvent.click(screen.getByRole('button', { name: LABEL_CHOOSE_COLUMNS }));
     await settle();
 
     expect(sent).toHaveBeenCalledWith(CMD_OPEN_COLUMN_SELECT, expect.anything());
@@ -154,6 +176,22 @@ describe('the column buttons of a table as MUI icon buttons', () => {
     expect(sent).toHaveBeenCalledWith(CMD_OPEN_FILTER, { column: 'name' });
   });
 
+  it('draws the funnel of a column with a filter in force in the primary color of the theme', async () => {
+    mountTable(true);
+    await settle();
+
+    const funnel = screen.getByRole('button', { name: LABEL_FILTER_ACTIVE });
+    expect(getComputedStyle(funnel).color).toBe(COLOR_PRIMARY);
+  });
+
+  it('draws the funnel of a column without filter in the default color of an icon button', async () => {
+    mountTable(false);
+    await settle();
+
+    const funnel = screen.getByRole('button', { name: LABEL_FILTER });
+    expect(getComputedStyle(funnel).color).toBe(COLOR_ICON_BUTTON);
+  });
+
   it('shows the funnel of a column without filter empty', async () => {
     mountTable(false);
     await settle();
@@ -161,6 +199,146 @@ describe('the column buttons of a table as MUI icon buttons', () => {
     const funnel = screen.getByRole('button', { name: LABEL_FILTER });
     expect(funnel.closest('[role="columnheader"]')!.getAttribute('data-tl-state') ?? '').not.toContain('filtered');
     expect(funnel.querySelector('i.fa-filter')).not.toBeNull();
+  });
+});
+
+describe('the gear of a table as the trigger of its view', () => {
+  function mountTable() {
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    // jsdom lays nothing out; the focus search skips elements without a client rect.
+    vi.spyOn(Element.prototype, 'getClientRects').mockReturnValue([new DOMRect()] as unknown as DOMRectList);
+    return mountAdapter(TLTableView, {
+      columns: [{ name: 'name', label: 'Name', width: 120, sortable: false }],
+      rows: [],
+      totalRowCount: 0,
+      columnSelect: true,
+      viewOptions: true,
+    });
+  }
+
+  function gear(): HTMLElement {
+    return screen.getByRole('button', { name: LABEL_VIEW });
+  }
+
+  function view(): HTMLElement | null {
+    return screen.queryByRole('dialog', { name: LABEL_VIEW });
+  }
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it('announces a dialog and whether it is open', async () => {
+    mountTable();
+    await settle();
+    expect(gear().getAttribute('aria-haspopup')).toBe('dialog');
+    expect(gear().getAttribute('aria-expanded')).toBe('false');
+    await userEvent.click(gear());
+    expect(gear().getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('closes the view on a second click and does not open it again', async () => {
+    mountTable();
+    await settle();
+    await userEvent.click(gear());
+    expect(view()).not.toBeNull();
+    await userEvent.click(gear());
+    expect(view()).toBeNull();
+    expect(gear().getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('closes the view on Escape from the gear', async () => {
+    mountTable();
+    await settle();
+    await userEvent.click(gear());
+    fireEvent.keyDown(gear(), { key: 'Escape' });
+    expect(view()).toBeNull();
+  });
+
+  it('gets the focus back when the view closes', async () => {
+    mountTable();
+    await settle();
+    await userEvent.click(gear());
+    expect(view()!.contains(document.activeElement)).toBe(true);
+    await userEvent.keyboard('{Escape}');
+    expect(view()).toBeNull();
+    expect(document.activeElement).toBe(gear());
+  });
+});
+
+describe('the menu group of a toolbar as popup surface', () => {
+  /** A toolbar with one menu group of two entries. */
+  const TOOLBAR = {
+    groups: [{
+      name: 'more',
+      label: 'Bearbeiten',
+      display: 'menu',
+      items: [childControl('i1', 'Kopieren'), childControl('i2', 'Einfuegen')],
+    }],
+  };
+
+  function trigger(): HTMLElement {
+    return screen.getByRole('button', { name: 'Bearbeiten' });
+  }
+
+  function dropdown(): HTMLElement {
+    return document.body.querySelector('.tl-menu[role="menu"]') as HTMLElement;
+  }
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it('closes on Escape from the trigger', async () => {
+    mountAdapter(TLToolbar, TOOLBAR);
+    await userEvent.click(trigger());
+    expect(dropdown().hidden).toBe(false);
+    // The trigger keeps the focus where it was on its press; the key reaches the page outside the menu.
+    fireEvent.keyDown(trigger(), { key: 'Escape' });
+    expect(dropdown().hidden).toBe(true);
+    expect(trigger().getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('holds no keyboard scope while closed: Escape reaches the bindings around the toolbar', async () => {
+    const onEscape = vi.fn();
+    mountAdapter(TLToolbar, TOOLBAR, { outer: { gesture: 'ESCAPE', onGesture: onEscape } });
+    await userEvent.keyboard('{Escape}');
+    expect(onEscape).toHaveBeenCalledTimes(1);
+    await userEvent.click(trigger());
+    await userEvent.keyboard('{Escape}');
+    expect(onEscape).toHaveBeenCalledTimes(1);
+    expect(dropdown().hidden).toBe(true);
+  });
+
+  it('gives the focus to its trigger when it closes and the focus had no place to return to', async () => {
+    mountAdapter(TLToolbar, TOOLBAR);
+    // The trigger keeps the focus where it is on its press: here, nowhere.
+    await userEvent.click(trigger());
+    expect(dropdown().hidden).toBe(false);
+    await userEvent.keyboard('{Escape}');
+    await Promise.resolve();
+    expect(document.activeElement).toBe(trigger());
+  });
+
+  it('holds its height to the room at its trigger, at most the height of the design system', async () => {
+    mountAdapter(TLToolbar, TOOLBAR);
+    await userEvent.click(trigger());
+    await settle();
+    expect(dropdown().style.maxHeight).toMatch(/^min\(\d+px, var\(--tl-size-popover-max\)\)$/);
+  });
+
+  it('closes only the menu on Escape inside a window', async () => {
+    register('InlineButtonsToolbar', TLToolbar);
+    const toolbar = { controlId: 'tb', module: 'InlineButtonsToolbar', state: TOOLBAR } as ReturnType<typeof childControl>;
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    const sent = mountAdapter(TLWindow, { title: 'Fenster', child: toolbar, closable: true });
+    await settle();
+    await userEvent.click(trigger());
+    expect(dropdown().hidden).toBe(false);
+    await userEvent.keyboard('{Escape}');
+    await settle();
+    expect(dropdown().hidden).toBe(true);
+    expect(sent).not.toHaveBeenCalledWith(CMD_CLOSE, expect.anything());
+    // Positive control: with the menu closed, the same key reaches the window.
+    await userEvent.keyboard('{Escape}');
+    await settle();
+    expect(sent).toHaveBeenCalledWith(CMD_CLOSE, {});
   });
 });
 
@@ -284,8 +462,13 @@ describe('the group toggle of the column selection', () => {
     });
     await settle();
 
-    const ungroup = screen.getAllByRole('button', { name: LABEL_UNGROUP_COLUMN });
-    expect(ungroup).toHaveLength(2);
+    // Grouped by two columns, each toggle names the group level of its column, c the outermost.
+    const ungroup = [
+      screen.getByRole('button', { name: LABEL_UNGROUP_COLUMN + ', ' + LABEL_GROUP_LEVEL + ': 2' }),
+      screen.getByRole('button', { name: LABEL_UNGROUP_COLUMN + ', ' + LABEL_GROUP_LEVEL + ': 1' }),
+    ];
+    expect(ungroup[0].closest('.tl-reorder-list__item')!.textContent).toContain('Spalte a');
+    expect(ungroup[0].querySelector('.MuiBadge-badge')!.textContent).toBe('2');
     for (const button of ungroup) {
       expect(button.getAttribute('aria-pressed')).toBe('true');
       expect(button.classList.contains('tl-reveal-on-hover')).toBe(false);

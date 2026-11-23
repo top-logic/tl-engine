@@ -30,14 +30,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey CASE_SENSITIVE;
 
 	/**
-	 * @en Regular expression
+	 * @en Search mode
 	 */
-	public static ResKey REGEXP;
-
-	/**
-	 * @en Whole field
-	 */
-	public static ResKey WHOLE_FIELD;
+	public static ResKey TEXT_MODE;
 
 	/**
 	 * @en Operator
@@ -55,7 +50,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey VALUE;
 
 	/**
-	 * @en Upper bound
+	 * @en From
+	 */
+	public static ResKey LOWER_BOUND;
+
+	/**
+	 * @en To
 	 */
 	public static ResKey UPPER_BOUND;
 
@@ -78,6 +78,31 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Invert
 	 */
 	public static ResKey FILTER_INVERT;
+
+	/**
+	 * @en Text
+	 */
+	public static ResKey KIND_TEXT;
+
+	/**
+	 * @en Range
+	 */
+	public static ResKey KIND_RANGE;
+
+	/**
+	 * @en Values
+	 */
+	public static ResKey KIND_VALUES;
+
+	/**
+	 * @en Yes/No
+	 */
+	public static ResKey KIND_BOOLEAN;
+
+	/**
+	 * @en Form
+	 */
+	public static ResKey KIND_FORM;
 
 	static {
 		initConstants(I18NConstants.class);

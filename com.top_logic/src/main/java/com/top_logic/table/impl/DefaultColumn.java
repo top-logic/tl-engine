@@ -5,7 +5,10 @@
  */
 package com.top_logic.table.impl;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -18,6 +21,7 @@ import com.top_logic.table.CellRenderer;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnAlignment;
 import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.FilterState;
 import com.top_logic.table.Sort;
 
 /**
@@ -53,7 +57,7 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 	private final Sort<V> _sort;
 
-	private final ColumnFilter<V> _filter;
+	private final List<ColumnFilter<V>> _filters;
 
 	private final Aggregator<R, V> _aggregate;
 
@@ -85,7 +89,7 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		_searchText = builder._searchText;
 		_exportValue = builder._exportValue;
 		_sort = builder._sort;
-		_filter = builder._filter;
+		_filters = builder._filters;
 		_aggregate = builder._aggregate;
 		_width = builder._width;
 		_pinnedEnd = builder._pinnedEnd;
@@ -155,8 +159,13 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 	}
 
 	@Override
+	public List<ColumnFilter<V>> filters() {
+		return _filters;
+	}
+
+	@Override
 	public Optional<ColumnFilter<V>> filter() {
-		return Optional.ofNullable(_filter);
+		return _filters.isEmpty() ? Optional.empty() : Optional.of(_filters.get(0));
 	}
 
 	@Override
@@ -247,7 +256,7 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 		Sort<V> _sort;
 
-		ColumnFilter<V> _filter;
+		List<ColumnFilter<V>> _filters = List.of();
 
 		Aggregator<R, V> _aggregate;
 
@@ -358,10 +367,29 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		}
 
 		/**
-		 * Makes the column filterable with the given filter capability.
+		 * Makes the column filterable with the given filter capability as its only kind of
+		 * filter, or not filterable for {@code null}.
 		 */
 		public Builder<R, V> filter(ColumnFilter<V> filter) {
-			_filter = filter;
+			return filters(filter == null ? List.of() : List.of(filter));
+		}
+
+		/**
+		 * Makes the column filterable with the given kinds of filter, see {@link Column#filters()}.
+		 *
+		 * @param filters
+		 *        The kinds of filter, the first being the one a plain {@link FilterState} applies
+		 *        to; their {@link ColumnFilter#kind() kinds} must be unique.
+		 */
+		public Builder<R, V> filters(List<? extends ColumnFilter<V>> filters) {
+			Set<String> kinds = new HashSet<>();
+			for (ColumnFilter<V> filter : filters) {
+				if (!kinds.add(filter.kind())) {
+					throw new IllegalArgumentException(
+						"Two filters of the kind '" + filter.kind() + "' for column '" + _name + "'.");
+				}
+			}
+			_filters = List.copyOf(filters);
 			return this;
 		}
 

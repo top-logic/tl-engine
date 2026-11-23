@@ -453,6 +453,19 @@
 						<generalization type="Right"/>
 					</generalizations>
 				</class>
+
+				<!-- A Named type with discover attributes, see TestDiscoverAttributes. -->
+				<class name="DiscoverNamed">
+					<generalizations>
+						<generalization type="Named"/>
+					</generalizations>
+					<attributes>
+						<reference name="related"
+							multiple="true"
+							type="Named"
+						/>
+					</attributes>
+				</class>
 			</types>
 		</module>
 	</modules>

@@ -258,6 +258,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_UPLOADING;
 
 	/**
+	 * @en Connection to the server lost. Reconnecting\u2026
+	 */
+	@CustomKey("js.connection.reconnecting")
+	public static ResKey JS_CONNECTION_RECONNECTING;
+
+	/**
 	 * @en Record audio
 	 */
 	@CustomKey("js.audioRecorder.record")
@@ -779,6 +785,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COMPACT_FIELD_EDIT_BUTTON;
 
 	/**
+	 * @en Edit the value (required)
+	 */
+	public static ResKey COMPACT_FIELD_EDIT_REQUIRED_BUTTON;
+
+	/**
 	 * @en Value
 	 */
 	public static ResKey COMPACT_FIELD_TITLE;
@@ -928,6 +939,60 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_COLUMNS;
 
 	/**
+	 * @en View
+	 */
+	@CustomKey("js.table.view")
+	public static ResKey JS_TABLE_VIEW;
+
+	/**
+	 * @en Density
+	 */
+	@CustomKey("js.table.viewDensity")
+	public static ResKey JS_TABLE_VIEW_DENSITY;
+
+	/**
+	 * @en As everywhere
+	 */
+	@CustomKey("js.table.viewDensityDefault")
+	public static ResKey JS_TABLE_VIEW_DENSITY_DEFAULT;
+
+	/**
+	 * @en Normal
+	 */
+	@CustomKey("js.table.viewDensityNormal")
+	public static ResKey JS_TABLE_VIEW_DENSITY_NORMAL;
+
+	/**
+	 * @en Compact
+	 */
+	@CustomKey("js.table.viewDensityCompact")
+	public static ResKey JS_TABLE_VIEW_DENSITY_COMPACT;
+
+	/**
+	 * @en Stripes
+	 */
+	@CustomKey("js.table.viewStripes")
+	public static ResKey JS_TABLE_VIEW_STRIPES;
+
+	/**
+	 * @en Column lines
+	 */
+	@CustomKey("js.table.viewColumnLines")
+	public static ResKey JS_TABLE_VIEW_COLUMN_LINES;
+
+	/**
+	 * @en Choose and order columns …
+	 */
+	@CustomKey("js.table.viewChooseColumns")
+	public static ResKey JS_TABLE_VIEW_CHOOSE_COLUMNS;
+
+	/**
+	 * @en Reset
+	 */
+	@CustomKey("js.table.viewReset")
+	public static ResKey JS_TABLE_VIEW_RESET;
+
+	/**
 	 * @en Find column
 	 */
 	@CustomKey("js.table.columnSearch")
@@ -1036,6 +1101,24 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_GROUPED;
 
 	/**
+	 * @en The rows are grouped by this column, level {0}
+	 */
+	@CustomKey("js.table.groupedLevel")
+	public static ResKey JS_TABLE_GROUPED_LEVEL;
+
+	/**
+	 * @en Grouping level
+	 */
+	@CustomKey("js.table.groupLevel")
+	public static ResKey JS_TABLE_GROUP_LEVEL;
+
+	/**
+	 * @en Sort priority
+	 */
+	@CustomKey("js.table.sortPriority")
+	public static ResKey JS_TABLE_SORT_PRIORITY;
+
+	/**
 	 * @en Fit width to content
 	 */
 	@CustomKey("js.table.fitColumn")
@@ -1052,6 +1135,28 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.table.searchHint")
 	public static ResKey JS_TABLE_SEARCH_HINT;
+
+	/**
+	 * @en Filter by
+	 *
+	 * @see com.top_logic.layout.react.control.table.ColumnFilterDialog
+	 */
+	public static ResKey FILTER_KIND;
+
+	/**
+	 * @en {0} (not available)
+	 *
+	 * @see com.top_logic.layout.react.control.table.ColumnFilterDialog
+	 */
+	public static ResKey1 FILTER_KIND_NOT_AVAILABLE__KIND;
+
+	/**
+	 * @en This kind of filter is not offered for the values the column currently holds. The column
+	 *     stays filtered by it until you choose another kind or reset the filter.
+	 *
+	 * @see com.top_logic.layout.react.control.table.ColumnFilterDialog
+	 */
+	public static ResKey FILTER_KIND_NOT_AVAILABLE_NOTICE;
 
 	/**
 	 * @en Show all rows again

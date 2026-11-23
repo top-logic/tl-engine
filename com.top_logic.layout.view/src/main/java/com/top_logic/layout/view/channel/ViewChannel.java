@@ -41,9 +41,11 @@ public interface ViewChannel {
 	 * listeners registered when it starts: a listener registered during the notification is first
 	 * called by the next one, and a listener whose {@link Registration} is
 	 * {@link Registration#dispose() disposed} before the notification reaches it is not called
-	 * anymore. A listener that replaces and disposes a control subtree in reaction to the change
-	 * defers the disposal via {@link ChannelNotificationScope#afterNotification(Runnable)}, so that
-	 * the old subtree is torn down once the notification is complete.
+	 * anymore. A listener that replaces a control subtree in reaction to the change disposes the
+	 * old subtree right away (see
+	 * {@link com.top_logic.layout.view.element.ContentControls#retire(com.top_logic.layout.react.control.ReactControl)}):
+	 * its registrations end with the disposal, so the notification does not reach the controls of
+	 * the old subtree that are still pending in it.
 	 * </p>
 	 *
 	 * @param newValue

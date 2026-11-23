@@ -66,6 +66,7 @@ Zusätze je Control:
 | Rand | `--tl-border-control`, Breite `--tl-border-width-sm` |
 | Rand beim Zeigen | `--tl-border-emphasis` |
 | Text / Platzhalter | `--tl-text-primary` / `--tl-text-placeholder` |
+| Schrift auf dem Handy | `--tl-font-size-field-touch` (16 px) auf reinen Finger-Geräten (`hover: none` und `pointer: coarse`: Handy und Tablet, hoch und quer), für jedes Feld (`input`, `textarea`, `select`, bearbeitbarer Inhalt, `tl-field`) aus `base.css`; darunter zoomt iOS-Safari beim Antippen hinein. Desktop und Laptop, auch mit Touchscreen, behalten die Typo-Klasse |
 | Fehler | Rand `--tl-status-error-border` |
 | Warnung | Rand `--tl-status-warning-border` |
 | deaktiviert (vom Kontrast-Gate ausgenommen) | Fläche `--tl-surface-disabled`, Text `--tl-text-disabled`, Rand `--tl-border-disabled` |

@@ -27,10 +27,12 @@ The read tools leave out each element that the account may not read, and `TidRes
 
 - **A multi-valued reference:** the list is the new value of the readable elements. The tool removes a readable element that the list does not have, and it adds a new element. Each element that the account may not read stays. In an ordered reference, the list gives the order of the readable elements, and each other element stays at its stored place.
 - **A single-valued reference:** `null` does not remove a target that the account may not read, because the account sees an empty value there. A new target replaces it: the reference holds one target, and a refusal would tell the model that there is a target.
-- **A reference that the account may write but not read:** the account sees none of its elements, so each stored element stays, and the tool adds the elements of the call.
+- **A reference that the account may write but not read:** the account sees none of its elements. For a multi-valued reference, each stored element stays, the tool adds the elements of the call, and the answer says so in one fixed sentence. For a single-valued reference, `null` clears it, and a new target replaces it.
 - **Every other attribute** takes the new value as it is.
 
-A call is a change only if it is different from the value that the account reads. If it is equal, the tool writes nothing and answers "No change". An attribute that the account may write but not read has no value that it reads, so each call that names this attribute is a change: "No change" would tell the model the stored value. The answer shows the old and the new value as the account reads them, so no count, no placeholder and no refusal gives a sign of the other elements.
+A call is a change only if it is different from the value that the account reads. If it is equal, the tool writes nothing and answers "No change". An attribute that the account may write but not read has no value that it reads, so each call that names this attribute is a change: "No change" would tell the model the stored value. The answer shows the old and the new value as the account reads them, so no count and no placeholder gives a sign of the other elements.
+
+**The limit: a refusal of the model.** The constraints of an attribute (for example a maximum number of elements) and the veto of the commit check the stored value, with the elements that the account may not read ([rule R10](doc:access-discover-spec)). So their refusal can tell the model that such elements exist, as a form tells the number of elements to a person who may read the attribute (rule R11).
 
 This is the rule of the rows of a composition table, which keep the parts that the user may not discover, and both use one implementation (`HiddenElements`): the rows with the `Discover` check of the user, the tool with the read check of the run.
 

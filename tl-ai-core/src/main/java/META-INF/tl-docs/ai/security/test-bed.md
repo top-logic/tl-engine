@@ -172,7 +172,7 @@ A write is checked by the tool that makes it, and the turn commits what its tool
 |---|---|---|
 | `anna` | change the title of an Alpha ticket / a Beta ticket | changed, the revision's author is Anna / refused, nothing written |
 | `anna` | set `partners` of Alpha | refused, naming `'partners'`: no role may write who partners on a project |
-| `anna` | set `related` of an Alpha ticket that `root` linked to a Beta ticket: the list she reads plus the other Alpha ticket / the list she reads | the Beta ticket stays, and the answer does not name it / `No change` |
+| `anna` | set `related` of an Alpha ticket that `root` linked to a Beta ticket first, with *execute and save changes*: ``all(`pm:Ticket`).filter(t -> $t.get(`pm:Ticket#title`) == "Alpha: cut the release branch").firstElement().add(`pm:Ticket#related`, all(`pm:Ticket`).filter(t -> $t.get(`pm:Ticket#title`) == "Beta: import the customer list").firstElement())``. Anna sends the list she reads plus the other Alpha ticket / the list she reads | the Beta ticket stays, and the answer does not name it / `No change` |
 | `anna`, in a run that may not read the other Alpha ticket (test only) | set `related` of an Alpha ticket linked to it to `[]` | `No change`, and the link stays: the run sees less than Anna, and it keeps what it does not see |
 | `anna` | create a ticket in Alpha / in Beta | created / refused |
 | `anna` | delete an Alpha ticket | refused: `pm:Ticket` has no Delete grant |

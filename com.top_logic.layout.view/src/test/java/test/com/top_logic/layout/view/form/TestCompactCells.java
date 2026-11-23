@@ -56,6 +56,7 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.filter.TextColumnFilter;
+import com.top_logic.table.filter.TextMatchMode;
 import com.top_logic.util.model.CompatibilityService;
 
 /**
@@ -219,10 +220,10 @@ public class TestCompactCells extends TestCase {
 		Comparator<Object> order = column.sort().get().comparator();
 		assertTrue("Sorted by the labels of the parts.", order.compare(alphaBeta, gamma) < 0);
 
-		ColumnFilter<Object> filter = column.filter().get();
+		ColumnFilter<Object> filter = column.filter(ColumnFilter.KIND_TEXT).get();
 		var state = filter.fromJson(Map.of(TextColumnFilter.PATTERN, labels(List.of(alphaBeta.get(1))).get(0),
 			TextColumnFilter.CASE_SENSITIVE, Boolean.FALSE,
-			TextColumnFilter.REGEXP, Boolean.FALSE,
+			TextColumnFilter.MODE, TextMatchMode.CONTAINS.name(),
 			TextColumnFilter.WHOLE_FIELD, Boolean.FALSE));
 		assertTrue("Filtered by the labels of the parts.", filter.predicate(state).test(alphaBeta));
 		assertFalse(filter.predicate(state).test(gamma));

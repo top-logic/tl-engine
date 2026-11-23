@@ -1326,8 +1326,8 @@ public class SecurityDefinitionEditor {
 	}
 
 	/**
-	 * Sets the marks and the access parent of the given effective entry that the given copy does
-	 * not set of its own.
+	 * Sets the marks, the access parent and the discover attributes of the given effective entry
+	 * that the given copy does not set of its own.
 	 *
 	 * <p>
 	 * Only a value differing from the default is taken over, so that a copy handed back unchanged
@@ -1346,6 +1346,12 @@ public class SecurityDefinitionEditor {
 			&& !isSet(copy, TLClassAccessRights.ACCESS_PARENT)
 			&& classEffective.getAccessParent() != null) {
 			classCopy.setAccessParent(TypedConfiguration.copy(classEffective.getAccessParent()));
+		}
+		if (copy instanceof TLClassAccessRights classCopy
+			&& effective instanceof TLClassAccessRights classEffective
+			&& !isSet(copy, TLClassAccessRights.DISCOVER_ATTRIBUTES)
+			&& isSet(classEffective, TLClassAccessRights.DISCOVER_ATTRIBUTES)) {
+			classCopy.setDiscoverAttributes(new ArrayList<>(classEffective.getDiscoverAttributes()));
 		}
 	}
 

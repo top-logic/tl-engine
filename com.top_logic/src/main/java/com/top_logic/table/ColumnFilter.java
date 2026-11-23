@@ -6,9 +6,13 @@
 package com.top_logic.table;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.table.filter.I18NConstants;
 
 /**
  * The filter capability of a {@link Column}: a UI-neutral input descriptor, plus the logic
@@ -22,10 +26,82 @@ import java.util.function.Predicate;
  * or control type appears anywhere.
  * </p>
  *
+ * <p>
+ * A column can offer several kinds of filter, see {@link Column#filters()}; each kind is a
+ * {@link ColumnFilter} of its own, told apart by its {@link #kind()}.
+ * </p>
+ *
  * @param <V>
  *        The cell value type being filtered.
  */
 public interface ColumnFilter<V> {
+
+	/** {@link #kind()} of a filter with a {@link FilterInput.Text text input}. */
+	String KIND_TEXT = "text";
+
+	/** {@link #kind()} of a filter with a {@link FilterInput.Range range input}. */
+	String KIND_RANGE = "range";
+
+	/** {@link #kind()} of a filter with an {@link FilterInput.Options options input}. */
+	String KIND_VALUES = "values";
+
+	/** {@link #kind()} of a filter with a {@link FilterInput.Bool boolean input}. */
+	String KIND_BOOLEAN = "boolean";
+
+	/** {@link #kind()} of a filter with a {@link FilterInput.Form form input}. */
+	String KIND_FORM = "form";
+
+	/**
+	 * The identifier of this kind of filter, unique among the {@link Column#filters() filters of a
+	 * column}.
+	 *
+	 * <p>
+	 * A {@link ColumnFilterState} names the kind it is a state of by this identifier, also in a
+	 * persisted filter. The default is derived from the {@link #input()}: {@link #KIND_TEXT},
+	 * {@link #KIND_RANGE}, {@link #KIND_VALUES}, {@link #KIND_BOOLEAN} or {@link #KIND_FORM}. A
+	 * column offering two filters with the same input overrides it in one of them.
+	 * </p>
+	 */
+	default String kind() {
+		FilterInput input = input();
+		if (input instanceof FilterInput.Text) {
+			return KIND_TEXT;
+		}
+		if (input instanceof FilterInput.Range) {
+			return KIND_RANGE;
+		}
+		if (input instanceof FilterInput.Options) {
+			return KIND_VALUES;
+		}
+		if (input instanceof FilterInput.Bool) {
+			return KIND_BOOLEAN;
+		}
+		return KIND_FORM;
+	}
+
+	/**
+	 * The label a UI offers this kind of filter under, when a column offers several.
+	 *
+	 * <p>
+	 * The default is derived from the {@link #input()}, like the {@link #kind()}.
+	 * </p>
+	 */
+	default ResKey kindLabel() {
+		FilterInput input = input();
+		if (input instanceof FilterInput.Text) {
+			return I18NConstants.KIND_TEXT;
+		}
+		if (input instanceof FilterInput.Range) {
+			return I18NConstants.KIND_RANGE;
+		}
+		if (input instanceof FilterInput.Options) {
+			return I18NConstants.KIND_VALUES;
+		}
+		if (input instanceof FilterInput.Bool) {
+			return I18NConstants.KIND_BOOLEAN;
+		}
+		return I18NConstants.KIND_FORM;
+	}
 
 	/**
 	 * The inputs this filter needs, for a UI tier to render an editor.
@@ -46,23 +122,27 @@ public interface ColumnFilter<V> {
 	}
 
 	/**
-	 * Whether this filter wants per-option {@link MatchCounts facet counts} computed.
+	 * Whether this kind of filter is offered for a table whose column has the given facet counts.
+	 *
+	 * <p>
+	 * A filter offering the {@link FilterInput.Options#occurring() occurring values} is only
+	 * offered as long as the values are few enough to choose from. A UI shows a kind that is not
+	 * offered only if the current state of the column is of that kind, and then as not available.
+	 * The default offers this filter always.
+	 * </p>
+	 *
+	 * @param counts
+	 *        The facet counts of the column as this filter buckets its values, see
+	 *        {@link RowSource#matchCounts(String, String)}.
 	 */
-	default boolean countsMatches() {
-		return false;
+	default boolean offered(MatchCounts counts) {
+		return true;
 	}
 
 	/**
-	 * Whether a UI should offer to invert this filter (accept exactly the non-matching rows).
-	 *
-	 * <p>
-	 * Inversion is applied generically via {@link NegatedFilterState}; a filter only opts into
-	 * the inversion checkbox by returning {@code true}. Filters for which inversion is redundant
-	 * (e.g. a boolean filter, where picking the other value already inverts) leave this
-	 * {@code false}.
-	 * </p>
+	 * Whether this filter wants per-option {@link MatchCounts facet counts} computed.
 	 */
-	default boolean supportsInversion() {
+	default boolean countsMatches() {
 		return false;
 	}
 
@@ -73,12 +153,13 @@ public interface ColumnFilter<V> {
 	 *
 	 * <p>
 	 * Returns {@code null} when this filter's state cannot be stably serialized (the default), so
-	 * the column's filter is simply not personalized. {@link NegatedFilterState inversion} is
-	 * handled by the caller - implementations (de)serialize only their own inner state.
+	 * the column's filter is simply not personalized. The {@link ColumnFilterState#kind() kind} and
+	 * the {@link ColumnFilterState#inverted() inversion} are handled by the caller -
+	 * implementations (de)serialize only their own inner state.
 	 * </p>
 	 *
 	 * @param state
-	 *        The state to serialize (never a {@link NegatedFilterState}).
+	 *        The state to serialize (never a {@link ColumnFilterState}).
 	 */
 	default Object toJson(FilterState state) {
 		return null;
@@ -132,6 +213,19 @@ public interface ColumnFilter<V> {
 	 */
 	default Collection<Object> facetKeys(V value) {
 		return value == null ? List.of() : List.of(value);
+	}
+
+	/**
+	 * The order of the {@link #facetKeys(Object) facet keys} in a list of the values occurring in
+	 * the column, {@code null} for the column's own sort order.
+	 *
+	 * <p>
+	 * A column sorting cells holding several values sorts them by their text; a facet key is one
+	 * of the values, which this order compares by its type, e.g. numbers by their size.
+	 * </p>
+	 */
+	default Comparator<Object> facetOrder() {
+		return null;
 	}
 
 }

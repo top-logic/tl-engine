@@ -409,6 +409,13 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey GRANTS_UNRESTRICTED;
 
 	/**
+	 * @en Readable with Discover: the attribute is a discover attribute of the type, so every role
+	 *     that may discover the object may read it. Granting Read to a role restricts the attribute
+	 *     to the roles it is granted to.
+	 */
+	public static ResKey GRANTS_DISCOVER_ATTRIBUTE;
+
+	/**
 	 * @en Stored, but not yet in effect: the change takes effect with "Apply configuration".
 	 */
 	public static ResKey GRANTS_PENDING;

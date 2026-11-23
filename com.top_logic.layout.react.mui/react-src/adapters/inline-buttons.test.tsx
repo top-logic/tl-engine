@@ -13,6 +13,7 @@ import TLValueList from '../../../com.top_logic.layout.react/react-src/controls/
 import TLColumnSelect from '../../../com.top_logic.layout.react/react-src/controls/TLColumnSelect';
 import TLDrawerToggle from '../../../com.top_logic.layout.react/react-src/controls/TLDrawerToggle';
 import MuiButtonAdapter from './MuiButtonAdapter';
+import MuiMenuTriggerAdapter from './MuiMenuTriggerAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
@@ -22,6 +23,8 @@ import MuiSkeletonAdapter from './MuiSkeletonAdapter';
 import MuiBadgeAdapter from './MuiBadgeAdapter';
 
 replacePart('Button', MuiButtonAdapter);
+// The gear of the table is the trigger of its view.
+replacePart('MenuTrigger', MuiMenuTriggerAdapter);
 // The table looks up the toggle of its tree rows as well.
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 // The table looks up the selection boxes of its rows as well.
@@ -39,7 +42,8 @@ const LABEL_MINIMIZE = 'js.panel.minimize';
 const LABEL_MAXIMIZE = 'js.panel.maximize';
 const LABEL_POP_OUT = 'js.panel.popOut';
 const LABEL_DRAWER_CLOSE = 'js.drawer.close';
-const LABEL_COLUMNS = 'js.table.columns';
+const LABEL_VIEW = 'js.table.view';
+const LABEL_CHOOSE_COLUMNS = 'js.table.viewChooseColumns';
 const LABEL_FILTER = 'js.table.filter';
 const LABEL_FILTER_ACTIVE = 'js.table.filterActive';
 const LABEL_ADD = 'js.valueList.add';
@@ -51,6 +55,12 @@ const LABEL_GROUP_LEVEL = 'js.table.groupLevel';
 const LABEL_OPEN_DRAWER = 'js.sidebar.openDrawer';
 const LABEL_COLUMN_HIDE = 'js.table.columnHide';
 const LABEL_COLUMN_SHOW_LOCK = 'js.table.columnShowLock';
+
+/** The primary color of the MUI default theme the tests mount below, the color of a link in MUI. */
+const COLOR_PRIMARY = 'var(--mui-palette-primary-main)';
+
+/** The color of an MUI icon button of the default color. */
+const COLOR_ICON_BUTTON = 'var(--mui-palette-action-active)';
 
 /** The commands the controls send for their buttons. */
 const CMD_TOGGLE_MINIMIZE = 'toggleMinimize';
@@ -126,16 +136,19 @@ describe('the column buttons of a table as MUI icon buttons', () => {
       rows: [],
       totalRowCount: 0,
       columnSelect: true,
+      viewOptions: true,
     });
   }
 
-  it('opens the column selection from the gear', async () => {
+  it('opens the column selection from the view of the gear', async () => {
     const sent = mountTable(false);
     await settle();
 
-    const gear = screen.getByRole('button', { name: LABEL_COLUMNS });
+    const gear = screen.getByRole('button', { name: LABEL_VIEW });
     expectMuiIconButton(gear);
     await userEvent.click(gear);
+    await settle();
+    await userEvent.click(screen.getByRole('button', { name: LABEL_CHOOSE_COLUMNS }));
     await settle();
 
     expect(sent).toHaveBeenCalledWith(CMD_OPEN_COLUMN_SELECT, expect.anything());
@@ -156,6 +169,22 @@ describe('the column buttons of a table as MUI icon buttons', () => {
     await settle();
 
     expect(sent).toHaveBeenCalledWith(CMD_OPEN_FILTER, { column: 'name' });
+  });
+
+  it('draws the funnel of a column with a filter in force in the primary color of the theme', async () => {
+    mountTable(true);
+    await settle();
+
+    const funnel = screen.getByRole('button', { name: LABEL_FILTER_ACTIVE });
+    expect(getComputedStyle(funnel).color).toBe(COLOR_PRIMARY);
+  });
+
+  it('draws the funnel of a column without filter in the default color of an icon button', async () => {
+    mountTable(false);
+    await settle();
+
+    const funnel = screen.getByRole('button', { name: LABEL_FILTER });
+    expect(getComputedStyle(funnel).color).toBe(COLOR_ICON_BUTTON);
   });
 
   it('shows the funnel of a column without filter empty', async () => {

@@ -50,10 +50,16 @@ export function tokenMs(name: string, fallback: number): number {
 /** The attributes of the document root that switch the tokens. */
 const TOKEN_SWITCHES = ['data-tl-density', 'data-tl-theme', 'data-tl-mode'];
 
+/** The attribute below the document root that switches the tokens: a view or a table names its own density. */
+const DENSITY_SWITCH = ['data-tl-density'];
+
 /**
  * A value read from the tokens as state: read when the control is mounted, and again whenever the document root
  * switches density, theme or mode. The state keeps its previous value when the new one is equal, so a switch that does
  * not touch what the control reads renders nothing; after unmount the observer is gone.
+ *
+ * A density is also named below the document root - a table carries its own - so the element the value is read at
+ * and every element above it, up to the document root, are watched for `data-tl-density` as well.
  *
  * @param read Reads the value from the page now. The latest one given is the one called, so an inline closure may
  *        change between renders.
@@ -61,12 +67,15 @@ const TOKEN_SWITCHES = ['data-tl-density', 'data-tl-theme', 'data-tl-mode'];
  *        element to read at does not exist yet, or the first reading itself.
  * @param same Whether two values read are the same; identity by default. The latest one given is the one called.
  * @param deps What `read` depends on: the reading is repeated, and the observer set up anew, when one of them changes.
+ * @param target The element the value is read at; absent for a value read at the document root. The element is looked
+ *        up when the observer is set up, so a target that is mounted later is watched from the next setup on.
  */
 export function useTokenSwitch<T>(
   read: () => T,
   initial: T | (() => T),
   same: (a: T, b: T) => boolean = Object.is,
   deps: React.DependencyList = [],
+  target?: React.RefObject<Element | null>,
 ): T {
   const [value, setValue] = React.useState<T>(initial);
   // The observer outlives a render: it calls what the latest render gave, not the first one's closure.
@@ -84,20 +93,23 @@ export function useTokenSwitch<T>(
     update();
     const observer = new MutationObserver(update);
     observer.observe(document.documentElement, { attributes: true, attributeFilter: TOKEN_SWITCHES });
+    for (let at = target?.current ?? null; at && at !== document.documentElement; at = at.parentElement) {
+      observer.observe(at, { attributes: true, attributeFilter: DENSITY_SWITCH });
+    }
     return () => observer.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [target, ...deps]);
   return value;
 }
 
 /**
  * A length token as state: measured at the element once it is mounted, and again whenever the
- * document root switches density or theme.
+ * document root switches density or theme, or the element or one of its ancestors switches its density.
  *
  * @param ref The element the token is read at.
  * @param name The custom property, e.g. `--tl-size-row`.
  * @param fallback The value before the first measurement and without a design system.
  */
 export function useTokenPx(ref: React.RefObject<Element | null>, name: string, fallback: number): number {
-  return useTokenSwitch(() => tokenPx(ref.current, name, fallback), fallback, Object.is, [ref, name, fallback]);
+  return useTokenSwitch(() => tokenPx(ref.current, name, fallback), fallback, Object.is, [ref, name, fallback], ref);
 }

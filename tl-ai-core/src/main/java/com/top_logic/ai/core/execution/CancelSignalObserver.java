@@ -50,6 +50,12 @@ import com.top_logic.ai.core.execution.model.AgentExecution;
  * The poll is coarse (one HEAD read per {@link #POLL_INTERVAL_MS} plus one per turn), keeping the
  * writer thread lightly loaded.
  * </p>
+ *
+ * <p>
+ * {@link AgentRunner} attaches one observer to each run it starts, and
+ * {@code com.top_logic.ai.chat.backend.BackendRun} one to each chat run of an external backend.
+ * Both close it with the run.
+ * </p>
  */
 public final class CancelSignalObserver implements AgentEventListener, AutoCloseable {
 

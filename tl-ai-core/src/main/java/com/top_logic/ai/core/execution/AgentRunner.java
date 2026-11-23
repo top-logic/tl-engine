@@ -12,6 +12,7 @@ import com.top_logic.ai.core.agent.AgentLoop;
 import com.top_logic.ai.core.agent.AgentResult;
 import com.top_logic.ai.core.agent.ToolContext;
 import com.top_logic.ai.core.agent.event.AgentEventListener;
+import com.top_logic.ai.core.agent.event.CompositeAgentEventListener;
 import com.top_logic.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.ai.core.agent.subagent.SubagentRegistries;
 import com.top_logic.ai.core.agent.subagent.SubagentRegistryBinding;
@@ -37,6 +38,14 @@ import com.top_logic.ai.core.tools.ToolRegistry;
  * message and the serialized per-run transcript on any exit, including exceptional ones. The
  * execution is recorded against the {@link AgentSession} captured at call time, so a completed
  * run can never be attributed to a different session than the one it started under.
+ * </p>
+ *
+ * <p>
+ * Every run observes the persisted cancel marker of its execution through a
+ * {@link CancelSignalObserver}: a stop by the marker ({@code aiAgentRunCancel}, the stop command of
+ * the agent activity monitor) reaches each recorded run, whichever entry point started it. The
+ * observer is closed with the run, also when an {@link Error} ends the run without
+ * {@link com.top_logic.ai.core.agent.event.AgentEvent.RunCompleted}.
  * </p>
  *
  * <p>
@@ -79,7 +88,7 @@ public final class AgentRunner {
 	 * @param context
 	 *        Execution context with security policy, approval callback, and transaction scope.
 	 * @param listener
-	 *        Receives progress events during the run.
+	 *        Receives progress events during the run, or <code>null</code>.
 	 * @param sessionRegistry
 	 *        Optional session-scoped tool registry for skill persistence, or <code>null</code>.
 	 * @param log
@@ -105,33 +114,35 @@ public final class AgentRunner {
 			ConversationMemory memory, ToolContext context, AgentEventListener listener,
 			ToolRegistry sessionRegistry, ConversationLog log, AgentSession session,
 			AgentExecution parentExecution, AgentFactory.RunOverrides overrides) {
-		RunRecording recording = RunRecording.open(agentName, session, parentExecution,
-			context.executionHandle(), log, listener);
+		try (CancelSignalObserver cancelObserver = observeCancelMarker(context)) {
+			RunRecording recording = RunRecording.open(agentName, session, parentExecution,
+				context.executionHandle(), log, withObserver(listener, cancelObserver));
 
-		AgentFactory.RunResult runResult;
-		try (ConversationRegistry registry = bindConversationRegistry(session, parentExecution)) {
-			runResult = AgentFactory.getInstance().runAgent(agentName, conversation, memory,
-				context, recording, sessionRegistry,
-				overrides != null ? overrides : AgentFactory.RunOverrides.NONE);
-		} catch (RunLimitExceededException ex) {
-			// Not a failure: the run was not let in, nothing of it ran, and the caller tells the user
-			// the reason as such - not as an error of the run.
-			throw ex;
-		} catch (RuntimeException ex) {
-			recording.fail(ex);
-			throw ex;
-		}
+			AgentFactory.RunResult runResult;
+			try (ConversationRegistry registry = bindConversationRegistry(session, parentExecution)) {
+				runResult = AgentFactory.getInstance().runAgent(agentName, conversation, memory,
+					context, recording, sessionRegistry,
+					overrides != null ? overrides : AgentFactory.RunOverrides.NONE);
+			} catch (RunLimitExceededException ex) {
+				// Not a failure: the run was not let in, nothing of it ran, and the caller tells the
+				// user the reason as such - not as an error of the run.
+				throw ex;
+			} catch (RuntimeException ex) {
+				recording.fail(ex);
+				throw ex;
+			}
 
-		String response = runResult.response();
-		if (log != null) {
-			response = CitationValidator.apply(log, response, context.readingList()).text();
+			String response = runResult.response();
+			if (log != null) {
+				response = CitationValidator.apply(log, response, context.readingList()).text();
+			}
+			recording.finish(response);
+			// The recording's result carries the provider's own error message (it saw the
+			// ProviderError event); the loop's own result is the fallback for an unrecorded run.
+			return new RecordedRun(response, runResult.registry(),
+				recording.result() != null ? recording.result() : runResult.result(),
+				recording.execution());
 		}
-		recording.finish(response);
-		// The recording's result carries the provider's own error message (it saw the ProviderError
-		// event); the loop's own result is the fallback for an unrecorded run.
-		return new RecordedRun(response, runResult.registry(),
-			recording.result() != null ? recording.result() : runResult.result(),
-			recording.execution());
 	}
 
 	/**
@@ -181,24 +192,39 @@ public final class AgentRunner {
 		// which agent the run serves. Published as plain data for the run's tools to read.
 		context.executionHandle().setAgentName(agentName);
 
-		RunRecording recording = RunRecording.open(agentName, session, parentExecution,
-			context.executionHandle(), log, listener);
+		try (CancelSignalObserver cancelObserver = observeCancelMarker(context)) {
+			RunRecording recording = RunRecording.open(agentName, session, parentExecution,
+				context.executionHandle(), log, withObserver(listener, cancelObserver));
 
-		AgentResult result;
-		try {
-			// A pre-built loop serves a subagent, which brings no session memory: it gets one over its
-			// own conversation, so that it compacts like a chat run instead of overflowing.
-			result = loop.run(conversation, CompactionStrategies.forDefaultModel(), context, recording);
-		} catch (RuntimeException ex) {
-			recording.fail(ex);
-			throw ex;
-		}
+			AgentResult result;
+			try {
+				// A pre-built loop serves a subagent, which brings no session memory: it gets one over
+				// its own conversation, so that it compacts like a chat run instead of overflowing.
+				result = loop.run(conversation, CompactionStrategies.forDefaultModel(), context, recording);
+			} catch (RuntimeException ex) {
+				recording.fail(ex);
+				throw ex;
+			}
 
-		if (log != null) {
-			CitationValidator.apply(log, lastAssistantText(log), context.readingList());
+			if (log != null) {
+				CitationValidator.apply(log, lastAssistantText(log), context.readingList());
+			}
+			recording.finish(null);
+			return new RecordedRun(null, null, result, recording.execution());
 		}
-		recording.finish(null);
-		return new RecordedRun(null, null, result, recording.execution());
+	}
+
+	/**
+	 * The observer that cancels the token of the run when the cancel marker of its execution is
+	 * set.
+	 */
+	private static CancelSignalObserver observeCancelMarker(ToolContext context) {
+		return new CancelSignalObserver(context.executionHandle(), context.cancellationToken());
+	}
+
+	/** The listener of the caller, followed by the observer of the run's cancel marker. */
+	private static AgentEventListener withObserver(AgentEventListener listener, CancelSignalObserver observer) {
+		return listener == null ? observer : new CompositeAgentEventListener(listener, observer);
 	}
 
 	/**

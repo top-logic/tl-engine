@@ -46,7 +46,6 @@ import com.top_logic.ai.core.agent.event.CompositeAgentEventListener;
 import com.top_logic.ai.core.execution.AgentEnvironment;
 import com.top_logic.ai.core.execution.AgentExecutionStore;
 import com.top_logic.ai.core.execution.AgentRunner;
-import com.top_logic.ai.core.execution.CancelSignalObserver;
 import com.top_logic.ai.core.execution.ExecutionRecorder;
 import com.top_logic.ai.core.execution.model.AgentExecution;
 import com.top_logic.ai.core.execution.model.AgentSession;
@@ -244,8 +243,7 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 			try (AgentEnvironment env = AgentEnvironment.open(context._logListener, context._taskStore,
 					new A2AInteractionStore(task, () -> persist(task, context)), context._loadedSkills, token)) {
 				result = AgentRunner.run(agent.getAgent(), context._conversation, null, toolContext,
-					new CompositeAgentEventListener(context._logListener, event -> report(task, event),
-						new CancelSignalObserver(toolContext.executionHandle(), token)),
+					new CompositeAgentEventListener(context._logListener, event -> report(task, event)),
 					context._toolRegistry, context._log, session, null, overrides);
 			} finally {
 				toolContext.transaction().close();

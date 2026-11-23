@@ -55,7 +55,6 @@ import com.top_logic.ai.core.cost.Money;
 import com.top_logic.ai.core.execution.AgentEnvironment;
 import com.top_logic.ai.core.execution.AgentExecutionStore;
 import com.top_logic.ai.core.execution.AgentRunner;
-import com.top_logic.ai.core.execution.CancelSignalObserver;
 import com.top_logic.ai.core.execution.ExecutionRecorder;
 import com.top_logic.ai.core.execution.RunInfoBinding;
 import com.top_logic.ai.core.execution.RunRecording;
@@ -805,16 +804,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 					ExecutionRecorder.conversationIdOf(session))),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 
-		// Cluster-safe cancellation: this node runs the job and holds the token, so a listener on
-		// this thread observes the persisted cancel marker (committed by aiAgentRunCancel from any
-		// node) at each turn and flips the local token. No cross-node in-memory registry is needed -
-		// only the request must cross nodes, which the KB marker carries.
-		CancelSignalObserver cancelObserver =
-			new CancelSignalObserver(context.executionHandle(), cancellationToken);
-
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 			recordUserTurn(env.logListener().log(), request);
-			AgentRunner.run(agentName, conversation, null, context, cancelObserver, null,
+			AgentRunner.run(agentName, conversation, null, context, NO_LISTENER, null,
 				env.logListener().log(), session, null);
 		} catch (Throwable ex) {
 			// AgentRunner records ERROR itself once the loop has started (the recorder publishes the

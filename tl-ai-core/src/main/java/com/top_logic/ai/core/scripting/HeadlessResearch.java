@@ -26,7 +26,6 @@ import com.top_logic.ai.core.execution.AgentExecutionStore;
 import com.top_logic.ai.core.execution.AgentExecutionStore.ExecutionStatus;
 import com.top_logic.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.ai.core.execution.AgentRunner;
-import com.top_logic.ai.core.execution.CancelSignalObserver;
 import com.top_logic.ai.core.execution.ExecutionRecorder;
 import com.top_logic.ai.core.execution.model.AgentExecution;
 import com.top_logic.ai.core.execution.model.AgentSession;
@@ -214,15 +213,13 @@ public final class HeadlessResearch {
 			RunSecurity.contextFor(new RunPrincipal(owner, RunEntryPoint.SCRIPT, true,
 				ExecutionRecorder.conversationIdOf(session))),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellation), cancellation).unattended();
-		// aiAgentRunCancel sets the persisted marker from any node; this node holds the token.
-		CancelSignalObserver cancelObserver = new CancelSignalObserver(context.executionHandle(), cancellation);
 
 		try (AgentEnvironment env = AgentEnvironment.openEphemeral()) {
 			ConversationLog log = env.logListener().log();
 			Turn turn = log.startTurn();
 			turn.setUserParts(List.of(new Part.TextPart(UUID.randomUUID().toString(), Instant.now(), text)));
 			try {
-				AgentRunner.run(LEAD, conversation, null, context, cancelObserver, null, log, session, null);
+				AgentRunner.run(LEAD, conversation, null, context, null, null, log, session, null);
 			} catch (RunLimitExceededException ex) {
 				// Refused where every run enters: no model was asked. Said as the run's answer, in the
 				// owner's language, because the owner looks for the report in the chat.

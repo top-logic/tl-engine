@@ -110,6 +110,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 DELETE_PERMISSION_DENIED__OBJECT;
 
 	/**
+	 * @en The user is not allowed to remove a part from attribute {1} of object {0}.
+	 */
+	public static ResKey2 REMOVE_PERMISSION_DENIED__OBJECT_ATTRIBUTE;
+
+	/**
 	 * @en Invalid log level ''{0}'', expected one of: {1}
 	 */
 	public static ResKey2 ERROR_INVALID_LOG_LEVEL__VALUE_OPTIONS;

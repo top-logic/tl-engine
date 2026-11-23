@@ -123,10 +123,13 @@ public class DeleteObject extends GenericMethodWithSecurity implements WithFlatM
 	 *         delete it.
 	 */
 	public static void checkDeletePermission(TLObject obj) {
-		if (!ModelAccessRights.getInstance().isAllowed(TLContext.currentUser(), obj,
-			SimpleBoundCommandGroup.DELETE)) {
+		if (!mayDelete(obj)) {
 			throw new TopLogicException(I18NConstants.DELETE_PERMISSION_DENIED__OBJECT.fill(obj));
 		}
+	}
+
+	private static boolean mayDelete(TLObject obj) {
+		return ModelAccessRights.getInstance().isAllowed(TLContext.currentUser(), obj, SimpleBoundCommandGroup.DELETE);
 	}
 
 	/**
@@ -140,6 +143,12 @@ public class DeleteObject extends GenericMethodWithSecurity implements WithFlatM
 	 * composition.
 	 * </p>
 	 *
+	 * <p>
+	 * The new value may take out a part the user may not discover: a secured script and a dialog
+	 * see only the parts the user may discover. The refusal for such a part names the container and
+	 * the attribute only, so that it does not reveal the part.
+	 * </p>
+	 *
 	 * @param container
 	 *        The object whose attribute changes.
 	 * @param attribute
@@ -150,7 +159,9 @@ public class DeleteObject extends GenericMethodWithSecurity implements WithFlatM
 	 *        holds now.
 	 * @throws TopLogicException
 	 *         With {@link I18NConstants#DELETE_PERMISSION_DENIED__OBJECT}, when the user may not
-	 *         delete one of the parts that the new value takes out.
+	 *         delete one of the parts that the new value takes out, or with
+	 *         {@link I18NConstants#REMOVE_PERMISSION_DENIED__OBJECT_ATTRIBUTE}, when that part is
+	 *         one the user may not discover either.
 	 */
 	@FrameworkInternal
 	public static void checkRemovedParts(TLObject container, TLStructuredTypePart attribute, Object newValue) {
@@ -160,8 +171,12 @@ public class DeleteObject extends GenericMethodWithSecurity implements WithFlatM
 		Set<Object> kept = Collections.newSetFromMap(new IdentityHashMap<>());
 		kept.addAll(asCollection(newValue));
 		for (Object part : asCollection(container.tValue(attribute))) {
-			if (part instanceof TLObject removed && !kept.contains(removed)) {
-				checkDeletePermission(removed);
+			if (part instanceof TLObject removed && !kept.contains(removed) && !mayDelete(removed)) {
+				if (ModelAccessRights.getInstance().isDiscoverAllowed(removed)) {
+					throw new TopLogicException(I18NConstants.DELETE_PERMISSION_DENIED__OBJECT.fill(removed));
+				}
+				throw new TopLogicException(
+					I18NConstants.REMOVE_PERMISSION_DENIED__OBJECT_ATTRIBUTE.fill(container, attribute));
 			}
 		}
 	}

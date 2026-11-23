@@ -45,6 +45,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.parser.ParseException;
+import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -63,7 +64,8 @@ import com.top_logic.util.error.TopLogicException;
  * A report decides for itself: the responsible of a project reads, writes and creates the reports
  * of the project, but no role deletes a report. A task grants its Delete right to the responsible. A
  * milestone is decided by its container, the default access parent of a composition part: its
- * Delete right is the Write right on the project.
+ * Delete right is the Write right on the project. An archive entry decides for itself, and no role
+ * may discover or delete it: a refusal must not name it.
  * </p>
  */
 public class TestCompositionRemoveDeleteRight extends AbstractModelAccessTest {
@@ -76,6 +78,12 @@ public class TestCompositionRemoveDeleteRight extends AbstractModelAccessTest {
 
 	/** Name of the single-valued {@link #PROJECT} composition of a {@link #REPORT}. */
 	private static final String MAIN_REPORT = "mainReport";
+
+	/** Name of a type deciding for itself whose objects no role reads or deletes. */
+	private static final String ARCHIVE_ENTRY = "ArchiveEntry";
+
+	/** Name of the {@link #PROJECT} composition of {@link #ARCHIVE_ENTRY}s. */
+	private static final String ARCHIVE = "archive";
 
 	/** Name of the channel holding the project. */
 	private static final String PROJECT_CHANNEL = "project";
@@ -170,6 +178,26 @@ public class TestCompositionRemoveDeleteRight extends AbstractModelAccessTest {
 			}
 		});
 		assertSame(_mainReport, _project.tValueByName(MAIN_REPORT));
+	}
+
+	/**
+	 * A remove of a part the user may neither delete nor discover is refused with a message that
+	 * names the container and the composition, but not the part.
+	 */
+	public void testHiddenPartNotNamed() {
+		TLObject entry;
+		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			entry = DynamicModelService.getFactoryFor(MODULE).createObject(type(ARCHIVE_ENTRY));
+			_project.tUpdateByName(ARCHIVE, List.of(entry));
+			tx.commit();
+		}
+		becomeUser(_responsible);
+		assertFalse(ModelAccessRights.getInstance().isDiscoverAllowed(entry));
+
+		TopLogicException refusal = refusal(entry, () -> script(setScript(ARCHIVE), _project, List.of()));
+		assertEquals(REMOVE_PERMISSION_DENIED__OBJECT_ATTRIBUTE.getKey(), refusal.getErrorKey().getKey());
+		assertEquals(List.of(_project, part(PROJECT, ARCHIVE)), List.of(refusal.getErrorKey().arguments()));
+		assertEquals(List.of(entry), _project.tValueByName(ARCHIVE));
 	}
 
 	/**
@@ -346,19 +374,26 @@ public class TestCompositionRemoveDeleteRight extends AbstractModelAccessTest {
 	 * <code>delete()</code>, and that the part stays.
 	 */
 	private static void assertRemoveRefused(TLObject part, Runnable remove) {
+		TopLogicException refusal = refusal(part, remove);
+		assertEquals(DELETE_PERMISSION_DENIED__OBJECT.getKey(), refusal.getErrorKey().getKey());
+		assertTrue("A refused remove keeps the part.", part.tValid());
+	}
+
+	/**
+	 * The refusal of the given remove of the given part.
+	 */
+	private static TopLogicException refusal(TLObject part, Runnable remove) {
 		try {
 			remove.run();
 		} catch (RuntimeException ex) {
 			for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
 				if (cause instanceof TopLogicException refusal) {
-					assertEquals(DELETE_PERMISSION_DENIED__OBJECT.getKey(), refusal.getErrorKey().getKey());
-					assertTrue("A refused remove keeps the part.", part.tValid());
-					return;
+					return refusal;
 				}
 			}
 			throw ex;
 		}
-		fail("The remove was not refused: " + state(part));
+		throw new AssertionError("The remove was not refused: " + state(part));
 	}
 
 	/**

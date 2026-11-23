@@ -10,16 +10,25 @@ import org.jsoup.nodes.Document;
 
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.provider.label.NullSafeLabelProvider;
+import com.top_logic.model.security.DiscoverRight;
 
 /**
  * {@link LabelProvider} for a {@link StructuredText}.
  * 
  * <p>
- * The label is the text without markup. A link to an object that the current user may not discover
- * is labeled by the placeholder of a masked element, see
- * {@link TLObjectLinkUtil#maskLinks(String, java.util.function.Function)}: a table cell, its sort
- * and filter, and an export by labels do not disclose the label of such an object. The label is
- * also the string conversion of a formatted text in TL-Script, so its result depends on the user.
+ * The label is the text without markup, as it is stored. Only in a computation on behalf of the
+ * current user (see {@link DiscoverRight#isComputedForUser()}), a link to an object that the user
+ * may not discover is labeled by the placeholder of a masked element, see
+ * {@link TLObjectLinkUtil#maskLinks(String, java.util.function.Function)}. Such a computation is a
+ * secured TL-Script evaluation, whose string conversion of a formatted text thereby depends on the
+ * user, and the text of a table cell of the React view layer, which the cell is sorted, filtered
+ * and exported by.
+ * </p>
+ *
+ * <p>
+ * The label provider does not mask in every computation: the label is also the string conversion
+ * of an unsecured script, for example a derived attribute or a scheduled task, whose result can be
+ * stored and must not depend on the user who started the computation.
  * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -30,7 +39,9 @@ public class StructuredTextLabelProvider extends NullSafeLabelProvider {
 	protected String getLabelNullSafe(Object model) {
 		StructuredText text = (StructuredText) model;
 		Document document = Jsoup.parse(text.getSourceCode());
-		TLObjectLinkUtil.maskLinks(document, null);
+		if (DiscoverRight.isComputedForUser()) {
+			TLObjectLinkUtil.maskLinks(document, null);
+		}
 		return document.wholeText();
 	}
 

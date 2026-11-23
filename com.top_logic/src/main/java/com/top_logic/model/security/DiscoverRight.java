@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
@@ -43,6 +44,12 @@ import de.haumacher.msgbuf.data.ReflectiveDataObject;
  * </p>
  */
 public final class DiscoverRight {
+
+	/**
+	 * Per-thread state of {@link #isComputedForUser()}, <code>null</code> outside
+	 * {@link #computeForUser(boolean, Supplier)}.
+	 */
+	private static final ThreadLocal<Boolean> COMPUTED_FOR_USER = new ThreadLocal<>();
 
 	private DiscoverRight() {
 		// Static utility.
@@ -142,6 +149,58 @@ public final class DiscoverRight {
 	 */
 	public static boolean isMasked(Object value) {
 		return !isDiscoverable(value);
+	}
+
+	/**
+	 * Whether the current thread computes a value on behalf of the current user, see
+	 * {@link #computeForUser(boolean, Supplier)}.
+	 *
+	 * <p>
+	 * A value can contain objects in a form of its own, for example the object links of a formatted
+	 * text. A presentation of such a value as text masks the objects that the current user may not
+	 * discover only in a computation on behalf of the user. Everywhere else, for example in a
+	 * computation on behalf of the system, it gives the value as it is stored, so that a result that
+	 * is stored does not depend on the user who started the computation.
+	 * </p>
+	 *
+	 * @return <code>false</code> outside {@link #computeForUser(boolean, Supplier)}.
+	 */
+	@FrameworkInternal
+	public static boolean isComputedForUser() {
+		return COMPUTED_FOR_USER.get() == Boolean.TRUE;
+	}
+
+	/**
+	 * Computes a value on behalf of the current user or on behalf of the system, see
+	 * {@link #isComputedForUser()}.
+	 *
+	 * <p>
+	 * A secured TL-Script evaluation computes on behalf of the user, an unsecured one on behalf of
+	 * the system (R12 of the Discover specification). A display that sends a text to the client of
+	 * the user computes on behalf of the user. A computation inside the given one can change the
+	 * setting for its own duration.
+	 * </p>
+	 *
+	 * @param forUser
+	 *        Whether the computation is on behalf of the current user.
+	 * @param computation
+	 *        The computation.
+	 * @return The result of the computation.
+	 */
+	@FrameworkInternal
+	public static <T> T computeForUser(boolean forUser, Supplier<T> computation) {
+		Boolean before = COMPUTED_FOR_USER.get();
+		COMPUTED_FOR_USER.set(Boolean.valueOf(forUser));
+		try {
+			return computation.get();
+		} finally {
+			if (before == null) {
+				// A pooled thread keeps no state of a former computation.
+				COMPUTED_FOR_USER.remove();
+			} else {
+				COMPUTED_FOR_USER.set(before);
+			}
+		}
 	}
 
 	/**

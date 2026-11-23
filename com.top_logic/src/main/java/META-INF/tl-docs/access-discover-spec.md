@@ -263,32 +263,22 @@ An object link follows the rules for a masked element (R11):
   in the same text copies it. A placeholder whose token the editor did not hand out for the text it
   shows brings in no link. Markup that a command inserts at the cursor is masked in the same way,
   with fresh tokens.
-- The derived outputs of the text are masked as well: the preview where the editor has no room,
-  the text of an inherited value, the display of an HTML property of a configuration that cannot
-  be edited, the label (table cells of the React view layer, their sort and filter, and the export
-  by label), the PDF and the Excel export.
-- The label is also the string conversion of a formatted text in TL-Script. A secured script
-  therefore gets the placeholder for a link to an object that its user may not discover, and every
-  script gets the placeholder for a link to an object that does not exist. Like every result of a
-  secured script, the result depends on the user (R6).
+- The outputs derived from the text for the user are masked as well: the preview where the
+  editor has no room, the text of an inherited value, the display of an HTML property of a
+  configuration that cannot be edited, the text of a table cell of the React view layer (which the
+  cell is sorted, filtered, searched and exported by), the PDF and the Excel export.
+- The string conversion of a formatted text in TL-Script follows the security of the script
+  (R12). A secured script gets the placeholder for a link to an object that its user may not
+  discover and for a link to an object that does not exist; like every result of a secured
+  script, the result depends on the user (R6). An unsecured script gets the text as it is stored,
+  so that a value that it stores does not depend on the user who started it. The value of the
+  attribute itself is not masked: `htmlSource()` gives the stored source in every script.
 
 One function applies the rule: `TLObjectLinkUtil.maskLinks` (with `restoreLinks` for the editor).
-The React editor, the label provider and the PDF and Excel export of a formatted text use it; the
-label provider and the exports serve the classic layout UI too.
-
-Limits - these paths do not apply the rule:
-
-- The classic layout UI displays and edits a formatted text with `StructuredTextControl`, which
-  sends the stored links, and follows a link with `OpenTLObjectLink`.
-- The full-text index holds the text with the labels of its links, so a search for the label of a
-  hidden object finds the text that links it.
-- The sort key of a formatted text (`HTMLTextExtractor`) holds the labels of its links. It is used
-  by the tables of the classic layout UI only: there, the position of a row in a table sorted by
-  the text can tell something about a hidden label. A table of the React view layer sorts and
-  filters by the masked label.
-- The view element `<html>` shows the HTML that a script computes; a script that puts a stored
-  text there is responsible for its links.
-- Agent tools and REST services that read attribute values give the stored text.
+The React editor and the derived outputs call it. The label of a formatted text (its label
+provider) masks only in a computation on behalf of the user (`DiscoverRight.computeForUser`): a
+secured TL-Script evaluation and the text of a table cell of the React view layer. Everywhere else
+the label is the stored text.
 
 ### R12 - secured and unsecured script kinds
 

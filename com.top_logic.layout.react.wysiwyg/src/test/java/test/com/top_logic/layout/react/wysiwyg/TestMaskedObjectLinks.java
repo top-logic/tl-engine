@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -68,6 +69,8 @@ import com.top_logic.layout.react.wysiwyg.ReactWysiwygControl;
 import com.top_logic.layout.react.wysiwyg.WysiwygControlProvider;
 import com.top_logic.layout.view.form.AttributeFieldModel;
 import com.top_logic.layout.view.form.TLObjectOverlay;
+import com.top_logic.layout.view.table.ColumnProviderService;
+import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.StructuredTextPDFRenderer;
 import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
@@ -75,8 +78,13 @@ import com.top_logic.layout.wysiwyg.ui.excel.StructuredTextExcelHandler;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.search.expr.parser.ParseException;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.table.Column;
+import com.top_logic.table.FilterState;
+import com.top_logic.table.filter.TextFilterState;
 import com.top_logic.tool.boundsec.commandhandlers.BookmarkService;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 
@@ -624,15 +632,69 @@ public class TestMaskedObjectLinks extends AbstractSearchExpressionTest {
 	}
 
 	/**
-	 * The label of a text, which table cells, their sort and filter, and exports by label use,
-	 * masks a hidden link.
+	 * The label of a text, outside a computation on behalf of the user, is the text as it is
+	 * stored, so that a value computed on behalf of the system does not depend on the user.
 	 */
-	public void testLabelMasksUndiscoverableLink() {
+	public void testLabelIsStoredText() {
 		becomeUser(_reader);
 
 		String label = MetaLabelProvider.INSTANCE.getLabel(mixedText());
 
-		assertEquals("See " + SHOWN_LABEL + " and " + MaskedValues.placeholder() + " for details.", label);
+		assertEquals("See " + SHOWN_LABEL + " and " + HIDDEN_LABEL + " for details.", label);
+	}
+
+	/**
+	 * The text of a table cell, which the cell is searched and exported by, masks a hidden link.
+	 */
+	public void testTableCellTextMasksUndiscoverableLink() {
+		becomeUser(_reader);
+
+		String text = ColumnProviderService.label(mixedText());
+
+		assertEquals("See " + SHOWN_LABEL + " and " + MaskedValues.placeholder() + " for details.", text);
+	}
+
+	/**
+	 * A table column of texts filters and sorts by the masked text: a filter for the label of a
+	 * hidden link finds nothing, and the sort order does not tell the label.
+	 */
+	public void testTableColumnFiltersAndSortsByMaskedText() {
+		becomeUser(_reader);
+		Column<Object, ?> column = ColumnProviderService.getInstance().createColumn(TEXT, ResKey.text(TEXT),
+			ColumnType.of(textPart()), Function.identity());
+		// Stored, the text of the hidden link sorts after the shown one; masked, it sorts before it.
+		StructuredText hidden = textWith(link(_hidden, "zzz"));
+		StructuredText shown = textWith(link(_shown, SHOWN_LABEL));
+
+		assertFalse(matches(column, TextFilterState.contains("zzz"), hidden));
+		assertTrue(matches(column, TextFilterState.contains(MaskedValues.placeholder()), hidden));
+		assertTrue(compare(column, hidden, shown) < 0);
+	}
+
+	/**
+	 * A secured script converts a text to a string with a hidden link masked, as its result is for
+	 * its user.
+	 */
+	public void testSecuredScriptConvertsMaskedText() throws ParseException {
+		becomeUser(_reader);
+
+		Object result = eval("x -> toString($x)", mixedText());
+
+		assertEquals("See " + SHOWN_LABEL + " and " + MaskedValues.placeholder() + " for details.", result);
+	}
+
+	/**
+	 * An unsecured script converts a text to the string as it is stored, so that a value it stores
+	 * does not depend on the user who started it.
+	 */
+	public void testUnsecuredScriptConvertsStoredText() throws ParseException {
+		becomeUser(_reader);
+		QueryExecutor executor = QueryExecutor.compile(kb(), model(), search("x -> toString($x)"));
+		executor.disableSecurity();
+
+		Object result = executor.execute(mixedText());
+
+		assertEquals("See " + SHOWN_LABEL + " and " + HIDDEN_LABEL + " for details.", result);
 	}
 
 	/**
@@ -767,6 +829,14 @@ public class TestMaskedObjectLinks extends AbstractSearchExpressionTest {
 		return textWith(link(_shown, SHOWN_LABEL) + " and " + link(_hidden, HIDDEN_LABEL));
 	}
 
+	private static <V> boolean matches(Column<Object, V> column, FilterState state, Object row) {
+		return column.filter().orElseThrow().predicate(state).test(column.value(row));
+	}
+
+	private static <V> int compare(Column<Object, V> column, Object row1, Object row2) {
+		return column.sort().orElseThrow().comparator().compare(column.value(row1), column.value(row2));
+	}
+
 	/** The text the client received from the given control. */
 	private static String clientValue(ReactWysiwygControl control) {
 		return (String) control.scriptingScalarState().get(FieldState.VALUE__PROP);
@@ -889,7 +959,8 @@ public class TestMaskedObjectLinks extends AbstractSearchExpressionTest {
 				MimeTypesModule.Module.INSTANCE,
 				ThemeFactory.Module.INSTANCE,
 				SafeHTML.Module.INSTANCE,
-				ConfigControlService.Module.INSTANCE)));
+				ConfigControlService.Module.INSTANCE,
+				ColumnProviderService.Module.INSTANCE)));
 		String configFile = CustomPropertiesDecorator.createFileName(TestMaskedObjectLinks.class, CONFIG_FILE);
 		return TLTestSetup.createTLTestSetup(TestUtils.doNotMerge(new CustomPropertiesSetup(kbTest, configFile, true)));
 	}

@@ -155,6 +155,22 @@ public class TestMigrationLock extends BasicTestCase {
 		}
 	}
 
+	/**
+	 * Releasing a lock whose property has vanished reports a warning, but neither fails nor
+	 * creates the property.
+	 */
+	public void testCloseWithoutLockProperty() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		MigrationLock lock = MigrationLock.acquire(log, _pool);
+		_properties.setProperty(MigrationLock.LOCK_PROPERTY, null);
+
+		lock.close();
+
+		assertFalse(log.getError(), log.hasErrors());
+		assertTrue(log.getOutput(), log.getOutput().contains("Migration lock was no longer held by this node."));
+		assertNull(lockProperty());
+	}
+
 	private String lockProperty() {
 		return _properties.getProperty(MigrationLock.LOCK_PROPERTY);
 	}

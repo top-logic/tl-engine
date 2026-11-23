@@ -662,6 +662,33 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 	}
 
 	/**
+	 * The attribute values of a model element are readable for every user, also for one holding no
+	 * role at all and without any grant on <code>tl.model</code> (ticket #30437): a script reading
+	 * the target type, the owner, whether an attribute is multiple or composite, or the
+	 * generalizations of a type gets the actual values.
+	 */
+	public void testModelElementAttributesReadable() throws Exception {
+		TLObject cs = (TLObject) part("PathB", "cs");
+		TLStructuredTypePart typeAttr =
+			(TLStructuredTypePart) TLModelUtil.resolveQualifiedName("tl.model:TLStructuredTypePart#type");
+		assertTrue(rights().isReadAllowed(_stranger, cs, typeAttr));
+		assertFalse(rights().isAllowed(_stranger, cs, typeAttr, SimpleBoundCommandGroup.WRITE));
+
+		becomeUser(_stranger);
+		assertEquals(TLModelUtil.findType("TestTLScriptSecurity:PathC"),
+			eval("p -> $p.get(`tl.model:TLStructuredTypePart#type`)", cs));
+		assertEquals(TLModelUtil.findType("TestTLScriptSecurity:PathC"),
+			eval("`TestTLScriptSecurity:PathB#cs`.get(`tl.model:TLStructuredTypePart#type`)"));
+		assertEquals(TLModelUtil.findType("TestTLScriptSecurity:PathB"),
+			eval("p -> $p.get(`tl.model:TLStructuredTypePart#owner`)", cs));
+		assertEquals(Boolean.TRUE, eval("p -> $p.get(`tl.model:TLStructuredTypePart#multiple`)", cs));
+		assertEquals(Boolean.FALSE, eval("p -> $p.get(`tl.model:TLReference#composite`)", cs));
+		assertEquals(Arrays.asList(TLModelUtil.findType("TestTLScriptSecurity:PathNode")),
+			asList(eval("t -> $t.get(`tl.model:TLClass#generalizations`)",
+				TLModelUtil.findType("TestTLScriptSecurity:PathB"))));
+	}
+
+	/**
 	 * Modifying and deleting a model element stays protected (ticket #30275).
 	 */
 	public void testModelElementNotWritable() {

@@ -1092,8 +1092,13 @@ public class RowSetTableControl extends AbstractCompositionControl {
 				.build());
 		}
 
+		ColumnResolution scope = columnResolution();
+		if (scope == null) {
+			// The type of the rows was deleted while the table is displayed: its rows went with it.
+			rowObjects = List.of();
+		}
 		List<ColumnSetup> setups = new ArrayList<>(_columns.size());
-		columns.addAll(createDataColumns(editMode, isEditing(), setups));
+		columns.addAll(createDataColumns(scope, editMode, isEditing(), setups));
 		_hiddenByDefault = ColumnDeclarations.hiddenByDefault(setups);
 		_dataSetups = setups;
 
@@ -1260,10 +1265,40 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
-	 * Builds the data columns for the current mode, resolving the declarations against the
-	 * {@link #setRowTypes(List) row types}, or the binding's current row type (the bound attribute
-	 * may resolve only once the form has an object).
+	 * What the data columns are resolved against: the {@link #setRowTypes(List) row types}, or the
+	 * binding's current row type (the bound attribute may resolve only once the form has an
+	 * object), without the types deleted meanwhile.
 	 *
+	 * @return The resolution against the row types still alive, {@code null} when all row types
+	 *         are deleted - the table then shows neither data columns nor rows until it is built
+	 *         for other types.
+	 */
+	private ColumnResolution columnResolution() {
+		List<? extends TLStructuredType> types;
+		if (_rowTypes.isEmpty()) {
+			TLStructuredType rowType = binding().getRowType();
+			types = rowType == null ? List.of() : List.of(rowType);
+		} else {
+			types = _rowTypes;
+		}
+		List<TLStructuredType> alive = new ArrayList<>(types.size());
+		for (TLStructuredType type : types) {
+			if (type.tValid()) {
+				alive.add(type);
+			}
+		}
+		if (alive.isEmpty() && !types.isEmpty()) {
+			return null;
+		}
+		return new ColumnResolution(alive, _context);
+	}
+
+	/**
+	 * Builds the data columns for the current mode.
+	 *
+	 * @param scope
+	 *        What the columns are resolved against, see {@link #columnResolution()}; {@code null}
+	 *        builds no data columns.
 	 * @param editMode
 	 *        Whether the rows may be changed, so that editable cells render their inputs.
 	 * @param edited
@@ -1271,10 +1306,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * @param setups
 	 *        Collects the resolved {@link ColumnSetup}s, for per-session UI installation.
 	 */
-	private List<Column<TLObject, ?>> createDataColumns(boolean editMode, boolean edited, List<ColumnSetup> setups) {
+	private List<Column<TLObject, ?>> createDataColumns(ColumnResolution scope, boolean editMode, boolean edited,
+			List<ColumnSetup> setups) {
+		if (scope == null) {
+			return List.of();
+		}
 		List<Column<TLObject, ?>> columns = new ArrayList<>(_columns.size());
-		ColumnResolution scope = _rowTypes.isEmpty() ? new ColumnResolution(binding().getRowType(), _context)
-			: new ColumnResolution(_rowTypes, _context);
 		List<ColumnDeclaration> declarations =
 			_columns.isEmpty() ? ColumnDeclarations.mainColumns(scope.rowType()) : _columns;
 		for (ColumnSetup resolved : ColumnDeclarations.resolve(declarations, scope)) {

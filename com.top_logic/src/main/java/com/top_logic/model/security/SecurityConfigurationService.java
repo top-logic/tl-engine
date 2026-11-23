@@ -1866,6 +1866,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// A deleted object is accessible for nobody, and its type must not be read.
 			return false;
 		}
+		if (instance instanceof TLModelPart && isMetaDataAccess(commandGroup)) {
+			// The attribute values of a model element are meta-data like the element itself, see
+			// isAllowed(Person, TLObject, BoundCommandGroup).
+			return true;
+		}
 		if (!isCommitted(instance)) {
 			// See isAllowed(Person, TLObject, BoundCommandGroup): no check on not-yet-committed objects.
 			return true;

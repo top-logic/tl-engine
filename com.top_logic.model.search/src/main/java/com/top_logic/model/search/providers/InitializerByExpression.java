@@ -47,6 +47,12 @@ public class InitializerByExpression extends AbstractConfiguredInstance<Initiali
 		 * <p>
 		 * The object already has default values for all attributes.
 		 * </p>
+		 *
+		 * <p>
+		 * The function runs within the commit of the transaction that created the object and
+		 * without security checks: It may read and modify any object, independent of the rights of
+		 * the user committing the transaction.
+		 * </p>
 		 */
 		@Mandatory
 		Expr getFunction();

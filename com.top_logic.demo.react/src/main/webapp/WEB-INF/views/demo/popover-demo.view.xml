@@ -119,6 +119,7 @@
 				</label>
 			</text>
 			<popover
+				image="css:bi bi-info-circle"
 				open-on="hover"
 				placement="right"
 			>
@@ -126,9 +127,6 @@
 					<en>About the response time</en>
 					<de>Zur Antwortzeit</de>
 				</label>
-				<trigger>
-					<theme-icon image="css:bi bi-info-circle"/>
-				</trigger>
 				<content>
 					<inset>
 						<text>

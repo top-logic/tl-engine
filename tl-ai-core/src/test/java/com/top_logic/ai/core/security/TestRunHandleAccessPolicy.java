@@ -166,6 +166,28 @@ public class TestRunHandleAccessPolicy extends BasicTestCase {
 		assertEquals(List.of(), stops);
 	}
 
+	/**
+	 * The run id of a delegated run names that run, and its rights come from the session of its
+	 * parent run: the owner reads and stops it, another account does neither.
+	 */
+	public void testDelegatedRunByRunId() {
+		Run parent = startRun(owner);
+		AgentExecution delegated = AgentExecutionStore.getInstance().beginExecution(parent.session(),
+			"run-handle-delegated-" + UUID.randomUUID(), "sub-agent", null, null, parent.execution());
+		HistoryUtils.updateSessionRevision();
+		String runId = delegated.getRunId();
+
+		assertNull(evalAs(stranger, true, STATUS, runId));
+		assertEquals(Boolean.FALSE, evalAs(stranger, true, CANCEL, runId));
+		assertFalse(AgentExecutionStore.getInstance().isCancelRequested(delegated));
+
+		assertEquals(ExecutionStatus.RUNNING.name(), evalAs(owner, true, STATUS, runId));
+		assertEquals(Boolean.TRUE, evalAs(owner, true, CANCEL, runId));
+		assertTrue(AgentExecutionStore.getInstance().isCancelRequested(delegated));
+		assertFalse("The run id names the delegated run, not its parent.",
+			AgentExecutionStore.getInstance().isCancelRequested(parent.execution()));
+	}
+
 	/** The owner reads and stops their own run. */
 	public void testOwnerReadsAndStops() {
 		assertReadsAndStops(owner, true);

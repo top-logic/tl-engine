@@ -57,7 +57,6 @@ import com.top_logic.ai.core.tools.model.messages.ModelPartResponse;
 import com.top_logic.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.ai.core.tools.util.ToolI18NUtil;
 import com.top_logic.ai.core.tools.util.ToolI18NUtil.LocalizedTexts;
-import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -608,9 +607,9 @@ public class ModelEditorTool {
 			property = (TLClassProperty) existingPart;
 		} else {
 			TLType resolvedType = resolvePrimitiveType(model, propertyType);
-			ResKey systemColumnError = PrimitiveStorage.systemColumnError(propertyName);
-			if (systemColumnError != null) {
-				throw new IllegalArgumentException(Resources.getInstance().getString(systemColumnError));
+			if (PrimitiveStorage.systemColumnError(propertyName, resolvedType, multipleFlag) != null) {
+				throw new IllegalArgumentException("Property name '" + propertyName
+					+ "' is the name of a system column of each object; choose another name.");
 			}
 
 			try (Transaction tx =

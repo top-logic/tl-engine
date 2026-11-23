@@ -5,6 +5,8 @@
  */
 package com.top_logic.element.meta.kbbased;
 
+import java.util.function.BooleanSupplier;
+
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstanceAccess;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -90,10 +92,6 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 				return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
 			}
 
-			private boolean isBinary(TLType type) {
-				return type instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.BINARY;
-			}
-
 			@Override
 			public StorageImplementation visitAssociationEnd(TLAssociationEnd model, Void arg) {
 				return NoStorage.INSTANCE;
@@ -106,20 +104,41 @@ public class StorageImplementationFactory extends AnnotationsBasedCacheValueFact
 
 			@Override
 			public StorageImplementation visitProperty(TLProperty model, Void arg) {
-				TLStorage annotation = (model.getType()).getAnnotation(TLStorage.class);
-				PolymorphicConfiguration<? extends StorageImplementation> config;
-				if (annotation == null) {
-					if (model.isMultiple() && isBinary(model.getType())) {
-						config = BinaryCollectionStorage.defaultConfig(unversionedStorage(model));
-					} else {
-						config = PRIMITIVE_STORAGE_CONFIG;
-					}
-				} else {
-					config = annotation.getImplementation();
-				}
-				return TypedConfigUtil.createInstance(config);
+				return TypedConfigUtil.createInstance(
+					defaultPropertyStorage(model.getType(), model.isMultiple(), () -> unversionedStorage(model)));
 			}
 		};
+
+	/**
+	 * The configuration of the storage that a property uses, if it has no {@link TLStorage}
+	 * annotation of its own and is not an override.
+	 *
+	 * @param valueType
+	 *        The value type of the property.
+	 * @param multiple
+	 *        Whether the property holds several values.
+	 * @param unversioned
+	 *        Whether the values are stored unversioned, see
+	 *        {@link #unversionedStorage(TLStructuredTypePart, MORepository)}. It is only asked for
+	 *        a multiple binary property.
+	 * @return The storage configuration given by the {@link TLStorage} annotation of the value
+	 *         type, or the default storage configuration for the value type.
+	 */
+	public static PolymorphicConfiguration<? extends StorageImplementation> defaultPropertyStorage(TLType valueType,
+			boolean multiple, BooleanSupplier unversioned) {
+		TLStorage annotation = valueType.getAnnotation(TLStorage.class);
+		if (annotation != null) {
+			return annotation.getImplementation();
+		}
+		if (multiple && isBinary(valueType)) {
+			return BinaryCollectionStorage.defaultConfig(unversioned.getAsBoolean());
+		}
+		return PRIMITIVE_STORAGE_CONFIG;
+	}
+
+	private static boolean isBinary(TLType type) {
+		return type instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.BINARY;
+	}
 
 	/**
 	 * The configuration of the storage that the given reference uses, if it has no

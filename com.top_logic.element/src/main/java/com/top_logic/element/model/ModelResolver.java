@@ -1135,7 +1135,7 @@ public class ModelResolver {
 
 	/**
 	 * The error for a property that stores its values in a system column, see
-	 * {@link PrimitiveStorage#systemColumnError(String)}.
+	 * {@link PrimitiveStorage#systemColumnError(String, TLType, boolean)}.
 	 *
 	 * <p>
 	 * Only a property definition with a {@link PrimitiveStorage} without an explicit
@@ -1156,7 +1156,9 @@ public class ModelResolver {
 			|| storage.getConfig().getStorageAttribute() != null) {
 			return null;
 		}
-		return PrimitiveStorage.systemColumnError(part.getName());
+		// A property of a TLAssociation is checked against the columns of TLObject too, although
+		// a link table has not all of them: such a property is rare, and the refusal is accepted.
+		return PrimitiveStorage.systemColumnError(part.getName(), part.getType(), part.isMultiple());
 	}
 
 	private void configureClassPart(TLClassPart classPart, PartConfig partConfig) {

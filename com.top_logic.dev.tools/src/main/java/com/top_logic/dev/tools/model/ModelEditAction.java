@@ -241,7 +241,7 @@ public class ModelEditAction implements ViewAction {
 
 		TLStructuredTypePart part;
 		if (valueType instanceof TLPrimitive) {
-			ResKey systemColumnError = PrimitiveStorage.systemColumnError(name);
+			ResKey systemColumnError = PrimitiveStorage.systemColumnError(name, valueType, multiple);
 			if (systemColumnError != null) {
 				throw new TopLogicException(systemColumnError);
 			}

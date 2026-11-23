@@ -167,6 +167,11 @@ public class TLStructuredTypePartFormBuilder extends
 		 */
 		String MULTIPLE_AND_NEW = "multipleAndNew";
 
+		/**
+		 * @see #isCreatingNewAttribute()
+		 */
+		String CREATING_NEW_ATTRIBUTE = "creatingNewAttribute";
+
 		@Override
 		@Hidden(false)
 		@OptionLabels(ConfigLabelProvider.class)
@@ -215,9 +220,18 @@ public class TLStructuredTypePartFormBuilder extends
 		@RegexpConstraint(value = PartNameConstraints.RECOMMENDED_TYPE_PART_NAME_PATTERN, errorKey = PartNameConstraints.RecommendedTypePartNameKey.class, asWarning = true)
 		@Constraint(value = TypePartNotExistsConstraint.class, args = { @Ref({ EDIT_MODEL, EditModel.CONTEXT_TYPE }),
 			@Ref(OVERRIDE), @Ref({ EDIT_MODEL, EditModel.CREATING }) })
-		@Constraint(value = SystemColumnNameConstraint.class, args = { @Ref(RESOLVED_TYPE), @Ref(OVERRIDE),
-			@Ref({ EDIT_MODEL, EditModel.CREATING }) })
+		@Constraint(value = SystemColumnNameConstraint.class, args = { @Ref(RESOLVED_TYPE), @Ref(MULTIPLE_PROPERTY),
+			@Ref(CREATING_NEW_ATTRIBUTE) })
 		public String getName();
+
+		/**
+		 * Whether a new attribute is created that does not override an attribute of a
+		 * generalization.
+		 */
+		@Name(CREATING_NEW_ATTRIBUTE)
+		@Derived(fun = And.class, args = { @Ref({ EDIT_MODEL, EditModel.CREATING }), @Ref(NEW_ATTRIBUTE) })
+		@Hidden
+		boolean isCreatingNewAttribute();
 
 		/**
 		 * Whether it is allowed to change the collection properties.
@@ -330,7 +344,7 @@ public class TLStructuredTypePartFormBuilder extends
 		/**
 		 * {@link ValueConstraint} that refuses the name of a system column for a new property.
 		 *
-		 * @see PrimitiveStorage#systemColumnError(String)
+		 * @see PrimitiveStorage#systemColumnError(String, TLType, boolean)
 		 */
 		class SystemColumnNameConstraint extends GenericValueDependency3<String, TLType, Boolean, Boolean> {
 
@@ -343,19 +357,20 @@ public class TLStructuredTypePartFormBuilder extends
 
 			@Override
 			protected void checkValue(PropertyModel<String> propertyModel, PropertyModel<TLType> typeModel,
-					PropertyModel<Boolean> overrideModel, PropertyModel<Boolean> createModel) {
-				if (!Boolean.TRUE.equals(createModel.getValue()) || !Boolean.FALSE.equals(overrideModel.getValue())) {
+					PropertyModel<Boolean> multipleModel, PropertyModel<Boolean> creatingNewModel) {
+				if (!Boolean.TRUE.equals(creatingNewModel.getValue())) {
 					return;
 				}
 				// Only a property stores its value in the column of its name.
-				if (!(typeModel.getValue() instanceof TLPrimitive)) {
+				if (!(typeModel.getValue() instanceof TLPrimitive valueType)) {
 					return;
 				}
 				String newPartName = propertyModel.getValue();
 				if (StringServices.isEmpty(newPartName)) {
 					return;
 				}
-				ResKey error = PrimitiveStorage.systemColumnError(newPartName);
+				ResKey error = PrimitiveStorage.systemColumnError(newPartName, valueType,
+					Boolean.TRUE.equals(multipleModel.getValue()));
 				if (error != null) {
 					propertyModel.setProblemDescription(error);
 				}

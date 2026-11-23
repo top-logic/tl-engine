@@ -27,7 +27,9 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.config.annotation.TableName;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
@@ -42,6 +44,14 @@ public class TestSystemColumnProperties extends TestWithModelExtension {
 	private static final String MODULE = TestSystemColumnProperties.class.getName();
 
 	private static final String SYSTEM_COLUMN = "created";
+
+	private static final String STRING = "tl.core:String";
+
+	private static final String I18N_STRING = "tl.model.i18n:I18NString";
+
+	private static final String APPLICATION_TABLE = "StructuredElement";
+
+	private static final String APPLICATION_COLUMN = "name";
 
 	private TLModule _module;
 
@@ -66,7 +76,7 @@ public class TestSystemColumnProperties extends TestWithModelExtension {
 	 */
 	public void testUpgradeRefusesSystemColumnProperty() {
 		try (Transaction tx = beginTX()) {
-			applyCreateProperty(newProperty(SYSTEM_COLUMN));
+			applyCreateProperty(_type, newProperty(SYSTEM_COLUMN, STRING));
 			fail("A model upgrade must refuse a property with the name of the system column '" + SYSTEM_COLUMN + "'.");
 		} catch (TopLogicException ex) {
 			assertEquals(I18NConstants.ERROR_SYSTEM_COLUMN_NAME__COLUMN.fill(SYSTEM_COLUMN), ex.getErrorKey());
@@ -80,21 +90,48 @@ public class TestSystemColumnProperties extends TestWithModelExtension {
 	 */
 	public void testUpgradeAcceptsExplicitStorageAttribute() {
 		try (Transaction tx = beginTX()) {
-			AttributeConfig property = newProperty(SYSTEM_COLUMN);
+			AttributeConfig property = newProperty(SYSTEM_COLUMN, STRING);
 			property.getAnnotations().add(explicitStorage(SYSTEM_COLUMN));
-			applyCreateProperty(property);
+			applyCreateProperty(_type, property);
 			assertNotNull(_type.getPart(SYSTEM_COLUMN));
 		}
 	}
 
 	/**
-	 * A property with the name of a column that only an application table declares is accepted.
+	 * A property with the name of a column that only an application table declares stores its
+	 * values in this column and is accepted.
 	 */
 	public void testApplicationColumnAccepted() throws Exception {
-		MOStructure applicationTable = (MOStructure) _kb.getMORepository().getMetaObject("StructuredElement");
-		assertNotNull(applicationTable.getAttributeOrNull("name"));
+		MOStructure applicationTable = (MOStructure) _kb.getMORepository().getMetaObject(APPLICATION_TABLE);
+		assertNotNull(applicationTable.getAttributeOrNull(APPLICATION_COLUMN));
+		TLClass type;
+		try (Transaction tx = beginTX()) {
+			type = TLModelUtil.addClass(_module, "Element");
+			TableName table = TypedConfiguration.newConfigItem(TableName.class);
+			table.setName(APPLICATION_TABLE);
+			type.setAnnotation(table);
+			tx.commit();
+		}
+		try (Transaction tx = beginTX()) {
+			applyCreateProperty(type, newProperty(APPLICATION_COLUMN, STRING));
+			TLStructuredTypePart property = type.getPart(APPLICATION_COLUMN);
+			assertNotNull(property);
+			assertEquals(APPLICATION_COLUMN,
+				((PrimitiveStorage<?>) property.getStorageImplementation()).getStorageAttribute());
+		}
+	}
 
-		assertNull(PrimitiveStorage.systemColumnError("name"));
+	/**
+	 * A property with the name of a system column, whose value type has a storage of its own,
+	 * stores no value in the column and is accepted.
+	 */
+	public void testOwnStorageOfValueTypeAccepted() {
+		TLType i18nString = TLModelUtil.findType(I18N_STRING);
+		assertNull(PrimitiveStorage.systemColumnError(SYSTEM_COLUMN, i18nString, false));
+		try (Transaction tx = beginTX()) {
+			applyCreateProperty(_type, newProperty(SYSTEM_COLUMN, I18N_STRING));
+			assertNotNull(_type.getPart(SYSTEM_COLUMN));
+		}
 	}
 
 	/**
@@ -104,7 +141,7 @@ public class TestSystemColumnProperties extends TestWithModelExtension {
 	 */
 	public void testLoadReportsSystemColumnProperty() {
 		try (Transaction tx = beginTX()) {
-			TLType stringType = TLModelUtil.findType("tl.core:String");
+			TLType stringType = TLModelUtil.findType(STRING);
 			TLModelUtil.addProperty(_type, SYSTEM_COLUMN, stringType);
 			TLAssociationEnd end = TLModelUtil.addForwardReferenceEnd(_type, "modified", _type, false);
 			TLModelUtil.addReference(_type, "modified", end);
@@ -136,23 +173,23 @@ public class TestSystemColumnProperties extends TestWithModelExtension {
 		editModel.setContextType(_type);
 		PartModel part = editModel.getPartModel();
 		part.setName(name);
-		part.setTypeSpec("tl.core:String");
+		part.setTypeSpec(STRING);
 
 		BufferingProtocol log = new BufferingProtocol();
 		new ConstraintChecker().check(log, editModel);
 		return log.getErrors();
 	}
 
-	private AttributeConfig newProperty(String name) {
+	private static AttributeConfig newProperty(String name, String typeSpec) {
 		AttributeConfig property = TypedConfiguration.newConfigItem(AttributeConfig.class);
 		property.setName(name);
-		property.setTypeSpec("tl.core:String");
+		property.setTypeSpec(typeSpec);
 		return property;
 	}
 
-	private void applyCreateProperty(AttributeConfig property) {
+	private static void applyCreateProperty(TLClass type, AttributeConfig property) {
 		CreateStructuredTypePart create = TypedConfiguration.newConfigItem(CreateStructuredTypePart.class);
-		create.setType(TLModelUtil.qualifiedName(_type));
+		create.setType(TLModelUtil.qualifiedName(type));
 		create.setPart(property);
 		ApplyModelPatch.applyPatch(new BufferingProtocol(), ModelService.getApplicationModel(),
 			ModelService.getInstance().getFactory(), List.of(create));

@@ -739,6 +739,9 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	private MigrationLock acquireLock(Protocol log) {
 		try {
 			return MigrationLock.acquire(log, _connectionPool);
+		} catch (IllegalStateException ex) {
+			// The lock was left behind by a former run of this node.
+			throw log.fatal(ex.getMessage(), ex);
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 			throw log.fatal("Interrupted while waiting for the migration lock.", ex);

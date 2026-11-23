@@ -1183,12 +1183,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		if (execution == null || !AgentExecutionStore.Module.INSTANCE.isActive()) {
 			return false;
 		}
-		boolean signalled = AgentExecutionStore.getInstance().requestCancel(execution);
-		if (signalled) {
-			Logger.info("Run stop requested: run=" + execution.getRunId() + " user=" + actorName(),
-				AIScriptFunctions.class);
-		}
-		return signalled;
+		return AgentExecutionStore.getInstance().requestCancel(execution);
 	}
 
 	/**

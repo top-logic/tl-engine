@@ -67,6 +67,7 @@ import com.top_logic.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.ai.core.session.persist.InterruptedTranscript;
 import com.top_logic.ai.core.session.persist.messages.PersistedConversationV2;
 import com.top_logic.ai.core.session.persist.messages.PersistedTurn;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -1106,12 +1107,22 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * is seen correctly regardless of the caller's pinned revision.
 	 * </p>
 	 *
+	 * <p>
+	 * Each newly signalled run is logged at <code>INFO</code> with the account that asked for the
+	 * stop. Every way to stop a run comes through here (TL-Script, the command of the agent
+	 * activity, an A2A cancel, the delete of a session), so the log names the account for each of
+	 * them.
+	 * </p>
+	 *
 	 * @param execution
 	 *        The execution to cancel; must not be <code>null</code>.
 	 * @return <code>true</code> if a still-running execution was newly signalled to cancel;
 	 *         <code>false</code> if it was already terminal (or already signalled).
 	 */
 	public boolean requestCancel(AgentExecution execution) {
+		// Read on the calling thread: the write runs in a system context, which has no account.
+		Person account = TLContext.currentUser();
+		String actor = account == null ? "(none)" : account.getName();
 		return write(() -> {
 			if (isTerminal(execution) || execution.getCancelRequested()) {
 				return Boolean.FALSE;
@@ -1120,6 +1131,8 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				execution.setCancelRequested(true);
 				tx.commit();
 			}
+			Logger.info("Run stop requested: run=" + execution.getRunId() + " user=" + actor,
+				AgentExecutionStore.class);
 			return Boolean.TRUE;
 		});
 	}

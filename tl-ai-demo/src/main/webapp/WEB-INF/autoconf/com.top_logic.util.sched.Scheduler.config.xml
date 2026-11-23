@@ -29,6 +29,28 @@
 							<daily time-of-day="18:00"/>
 						</schedules>
 					</task>
+					<!--
+						An AgentTask about one object: <subject-expression> computes the event the run is
+						about, here the first one by its start date. The agent reads the event in the
+						environment block of its run, in the line "- Subject: ..." (Agent activity, the
+						run, group "Environment"), and the sitting in root's chat history is about that
+						event, so it is in the list of the chats about it.
+
+						Disabled for the same reason as the task above. Start it by hand: Administration >
+						Scheduler > Tasks > NextEventBriefing > "Start task".
+					-->
+					<task class="com.top_logic.ai.chat.sched.AgentTask"
+						name="NextEventBriefing"
+						enabled="false"
+						run-as="root"
+						session-title="Briefing zur nächsten Veranstaltung"
+					>
+						<prompt>Fasse den Stand dieser Veranstaltung zusammen: Programm, Anmeldungen, freie Plätze und offene Rechnungen. Frage nicht nach - zu diesem Lauf gibt es niemanden, der antworten könnte.</prompt>
+						<subject-expression>all(`demo.events:Event`).sort((e -> $e.get(`demo.events:Event#startDate`)).comparator()).firstElement()</subject-expression>
+						<schedules>
+							<daily time-of-day="07:00"/>
+						</schedules>
+					</task>
 				</tasks>
 			</instance>
 		</config>

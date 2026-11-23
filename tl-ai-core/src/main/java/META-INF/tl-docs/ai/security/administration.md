@@ -1,5 +1,5 @@
 ---
-description: Read when the precise semantics of the agent security configuration matter - the reference of AiToolAccessService / ToolAccessPolicy (<tool-groups>, <tool-access>, <baseline>, <background-allowlist>, boot errors and warnings, the three names of a tool), the defaults for a new tool, approval decided from the call (SecurityContextFactory, RunPrincipal, SecurityContextProxy, <security-context> on AgentRuntimeService), the shipped read policy for Screenshot and CookiePool (tl-ai-core.binarySecurity.config.xml, AiBinaryOwner), and the shipped access policy for chat sessions and memories under model-based security (tl-ai-core.chatSecurity.config.xml, AiChatOwner).
+description: Read when the precise semantics of the agent security configuration matter - the reference of AiToolAccessService / ToolAccessPolicy (<tool-groups>, <tool-access>, <baseline>, <background-allowlist>, boot errors and warnings, the three names of a tool), the defaults for a new tool, approval decided from the call (SecurityContextFactory, RunPrincipal, SecurityContextProxy, <security-context> on AgentRuntimeService), the subject of a run and its one read check (RunPrincipal#subject, RunSecurity.contextFor), the shipped read policy for Screenshot and CookiePool (tl-ai-core.binarySecurity.config.xml, AiBinaryOwner), and the shipped access policy for chat sessions and memories under model-based security (tl-ai-core.chatSecurity.config.xml, AiChatOwner).
 order: 70
 ---
 
@@ -152,11 +152,22 @@ public class SectionApproval implements SecurityContextFactory {
 }
 ```
 
-The factory is told a `RunPrincipal`: the account the run acts as, how the run was started (`CHAT`, `SCRIPT`, `MCP`, `SCHEDULED`, `INTERNAL`), whether anybody is there to answer a prompt, and the conversation the run belongs to when the entry point has one. The run has no id and no agent yet - those are settled after the context is built. Three rules:
+The factory is told a `RunPrincipal`: the account the run acts as, how the run was started (`CHAT`, `SCRIPT`, `MCP`, `SCHEDULED`, `INTERNAL`), whether anybody is there to answer a prompt, the conversation the run belongs to when the entry point has one, and the object the run is about (the subject) when the entry point states one. The run has no id and no agent yet - those are settled after the context is built. Three rules:
 
 - **Every entry point asks.** `RunSecurity.contextFor` is the one call, and the chat, the TL-Script functions, the MCP endpoint and the prompt improver all go through it. An application substitutes one implementation, not several call sites.
 - **Configuring nothing changes nothing.** The default is `DefaultSecurityContextFactory`.
 - **A factory may narrow and may not widen.** Everything else about a run - which tools, which agents, which objects - is decided against the account's roles, and a context written from scratch would answer all of that permissively, since `SecurityContext`'s methods have permissive defaults. Build `DefaultSecurityContextFactory.defaultContext(run)`, wrap it in `SecurityContextProxy`, and override the one answer that is to differ.
+
+### The subject of a run
+
+`RunPrincipal#subject` is the object the run is about, as the entry point states it: the subject of the chat session, the `subject` argument of `aiAgentChat` and `aiAgentChatAsync`, the `subject-expression` of an `AgentTask`, or what an `A2ASubjectResolver` found. The model reads it in the environment block of the run ([the subject of a run](doc:ai/environment#the-subject-of-a-run)), so it is business data, and one check decides whether the run gets it:
+
+- The factory gets the subject unchecked. It need not check it.
+- `RunSecurity.contextFor` then checks Read on it with the `modelSecurity()` of the context the factory returned. A factory that narrows the model rights therefore narrows this check too.
+- Without Read the context names no subject (`principal().subject()` is `null`), and the log gets one line at level INFO with the entry point, the account, and the type and the identifier of the object. The line never contains the label of the object.
+- The check uses the model access rights of the run. In an application without a `<security-config>`, an account that is not an administrator may read no object, so its runs have no subject.
+
+Everything that names the subject later takes it from the context, not from the session: the environment block, the session of a script, a scheduled task or an A2A call (`AgentSession#subject`, written by `AgentRunner` when the session has none), the answer of the A2A server, and the A2A client. An application that resolves an A2A subject therefore does not check Read in its resolver.
 
 ## The shipped read policy for perceivable binaries
 

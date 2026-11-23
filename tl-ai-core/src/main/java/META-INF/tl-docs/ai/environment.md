@@ -1,5 +1,5 @@
 ---
-description: Read before changing what an agent run is told about its situation - the <environment> block and its {{...}} placeholders (PromptPlaceholders, PlaceholderConstraint, RunEnvironment, EnvironmentTemplate, tl.ai.environment.template), application facts (<facts> on an agent, <chat-conversation><context>, RunFactsBinding), prompt contributors (SystemPromptContributor, TextPromptContributor), the per-turn <turn-context> block (TurnContext, ensureTurnContext), user preferences (Person#aiPreferences, max-preferences-length) and user memories (remember, recall, MemoryConsent, <user-memory>, aiMemoryDelete).
+description: Read before changing what an agent run is told about its situation - the <environment> block and its {{...}} placeholders (PromptPlaceholders, PlaceholderConstraint, RunEnvironment, EnvironmentTemplate, tl.ai.environment.template), application facts (<facts> on an agent, <chat-conversation><context>, RunFactsBinding), prompt contributors (SystemPromptContributor, TextPromptContributor), the per-turn <turn-context> block (TurnContext, ensureTurnContext), user preferences (Person#aiPreferences, max-preferences-length) and user memories (remember, recall, MemoryConsent, <user-memory>, aiMemoryDelete), and the subject of a run (RunPrincipal#subject, the one read check in RunSecurity.contextFor, the line "- Subject:", subject-expression of AgentTask, the subject argument of aiAgentChat, A2ASubjectResolver).
 order: 60
 ---
 
@@ -19,6 +19,7 @@ Agent: Albert. Model: claude-sonnet-4-6.
 What the application states below is authoritative. Where the application context and the user
 preferences disagree, follow the application context.
 Application context - what this application states about the situation:
+- Subject: {"_tid":"...","_type":"pm:Project","_display":"Airport expansion"}
 - Project: Airport expansion
 User preferences - what this user asked for:
 Keep answers to three sentences.
@@ -108,6 +109,35 @@ A host states facts in two places, and a run gets both, the agent's own first.
 `ChatConversationControl` evaluates them on the server when a message is sent or an answer regenerated (the `send` and `regenerate` commands of the chat controls read them from `ChatViewBinding.facts()`), and `ChatProcessor.sendMessage` binds them for the run through `RunFactsBinding`, which is also how a delegate and a subagent are told the same. A fact that cannot be evaluated is dropped with a log line and does not fail the run. The values are computed on the server in the acting account's context, and the browser carries none of them: what a run is told about the page is what the page's own configuration states.
 
 **Each fact value is one line, in both blocks.** The name and the value of every fact go through `TurnContext.flatten`, in the environment block and in the [per-turn block](#the-per-turn-block), and so does the text of every [memory](#user-memories) in the environment block. Each line terminator (`\R`: CR LF, LF, CR, vertical tab, form feed, U+0085, U+2028, U+2029) becomes a space. The `<` that starts a tag of either block becomes `&lt;`, as `UntrustedEnvelope` does it, so the text stays readable. A tag is matched in the loose form a model also reads as one: any case, with white space around the slash, with attributes or self-closing (`</ environment>`, `< /environment>`, `<environment source='x'>`, `<environment/>`; the same for `turn-context`). A value can therefore neither add a line to a block nor open or close one. This matters because a fact often shows data that a user can write, for example the label of an object, and the environment block tells the model that what the application states is authoritative.
+
+## The subject of a run
+
+A run can be about one object of the application: the project of the page that shows the chat, the object that a scheduled task names, the object that another application names over A2A. This object is the subject of the run. The model reads it as the first line of the application context in the environment block, before the facts:
+
+```
+- Subject: {"_tid":"...","_type":"pm:Project","_display":"Airport expansion"}
+```
+
+The line gives the identity of the object as JSON, in the form that the tool results use for an object (`ReadFilter.identityJson`). So a question such as "Which tickets are still open here?" needs no more words about the project. Every agent gets the line, and no agent definition must change. The word `Subject` is not translated: it is the word of the configuration and of `tl.ai.execution:AgentSession#subject`. A run without a subject gets the same block as before. A conversation keeps its subject for all its runs, so the block stays the same from turn to turn.
+
+| Entry point | The subject |
+|--|--|
+| chat (`<chat-conversation subject="...">`, `chatStart(chatId, subject, text)`) | the subject of the chat session, which is written when the conversation is created |
+| `aiAgentChat(agent, message, subject)`, `aiAgentChatAsync(agent, message, subject)` | the optional third argument |
+| `com.top_logic.ai.chat.sched.AgentTask` | `<subject-expression>`, TL-Script evaluated at each run start ([agents on a schedule](doc:ai/script-and-scheduled-runs#agents-on-a-schedule)) |
+| A2A | what an `A2ASubjectResolver` finds, else the subject remembered for the context |
+
+`aiResearch`, the prompt improver of the chat and the MCP endpoint state no subject.
+
+**One read check.** The entry point states the subject in the run description `RunPrincipal`. `RunSecurity.contextFor` asks the `SecurityContextFactory` with the stated subject, and then checks Read on it with the `modelSecurity()` of the context that the factory returned: the rights that the run really has. If the run may not read the object, the run has no subject, and the log gets one line at level INFO with the entry point, the account, and the type and the identifier of the object, but not its label. Example: a user opens an old link to a project that the user may not read. The run has no subject, and the agent answers as without a project.
+
+The check uses the model access rights of the run. In an application without a model security configuration (`<security-config>`), an account that is not an administrator may read no object. So its run gets no subject line. That is the same answer that its tools get.
+
+A delegate and a subagent get the security context of their parent, and with it the same checked subject. The entry point gives the subject to the run as a value: the chat reads the subject of the session on the thread of the send, because the thread of the run can see an older state of a session that was created just before the send.
+
+**On the session.** A top-level run with a subject writes it onto its session (`AgentSession#subject`) if the session has none yet (`AgentRunner`). So the session of a script, of a scheduled task and of an A2A conversation is in the list of the conversations about the object, as a chat is. Who sees the session there is a question of that list; with the filter of the example on `<chat-conversation subject>`, only the account of the run sees it. Only a checked subject is written.
+
+**A2A.** The engine checks the subject, not the `A2ASubjectResolver`. The header of an A2A message names the calling agent but not the subject. A subject that the calling account may not read is named nowhere: not to the agent, not on the session, not in the answer to the other application (the task metadata `subject`), and not to an `A2AArtifactContributor`. The A2A client sends the checked subject of the run as `metadata.tlAi.subject`, and never the subject of the session.
 
 ## Prompt contributors
 
@@ -212,6 +242,7 @@ The filled block is written onto the run as `tl.ai.execution:AgentExecution#envi
 | `agent/environment/EnvironmentTemplate`, `RunEnvironment` | the default text, empty sections, composing one run's block |
 | `agent/environment/EnvironmentConfig`, `EnvironmentSettings` | the `<environment>` section and the resource behind it |
 | `agent/environment/AgentFact`, `EnvironmentFact`, `RunFactsBinding` | facts: declared, evaluated, bound for a run |
+| `security/RunPrincipal`, `security/RunSecurity#contextFor`, `AgentFactory#runFacts`, `execution/AgentRunner` | the subject of a run: stated, checked, its line, written onto the session |
 | `agent/environment/TurnContext`, `AgentLoop#ensureTurnContext` | the per-turn block and where it is attached |
 | `agent/environment/UserPreferences`, `PreferencesLengthConstraint` | the preference text and its cap |
 | `agent/environment/UserMemories`, `UserMemoryBinding`, `UserMemoryConfig`, `UserMemorySettings` | the memory section and its configuration |

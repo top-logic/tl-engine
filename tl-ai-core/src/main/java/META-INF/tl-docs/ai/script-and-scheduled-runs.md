@@ -1,5 +1,5 @@
 ---
-description: Read before running models or agents from TL-Script or on a schedule - aiChat with its responseFormat (text, json, a JSON schema) and how each provider sends it, how a failed run is reported (TopLogicException, aiAgentRunStatus, aiAgentRunResult, aiAgentRunError), the asynchronous handle of aiAgentChatAsync, and the scheduler task com.top_logic.ai.chat.sched.AgentTask of tl-chat (agent, prompt, prompt-expression, run-as, approval-mode, record-session, session-title) with what an unattended run has and lacks.
+description: Read before running models or agents from TL-Script or on a schedule - aiChat with its responseFormat (text, json, a JSON schema) and how each provider sends it, how a failed run is reported (TopLogicException, aiAgentRunStatus, aiAgentRunResult, aiAgentRunError), the asynchronous handle of aiAgentChatAsync, the subject argument of aiAgentChat and aiAgentChatAsync, and the scheduler task com.top_logic.ai.chat.sched.AgentTask of tl-chat (agent, prompt, prompt-expression, subject-expression, run-as, approval-mode, record-session, session-title) with what an unattended run has and lacks.
 order: 69
 ---
 
@@ -34,6 +34,16 @@ A refusal is a `ProviderException` of kind `INVALID_REQUEST`, raised while the r
 ## A failed run is a failure
 
 `aiChat` and `aiAgentChat` throw a `TopLogicException` carrying the provider's error kind and message for every stop reason but `COMPLETE` - a rejected key, a stream error, an exhausted turn limit, a model that answered nothing - after the run has been recorded. The failed run is a row an administrator can look at and an error the caller cannot mistake for an answer.
+
+### A run about an object
+
+`aiAgentChat(agent, message, subject)` and `aiAgentChatAsync(agent, message, subject)` take the object the run is about as an optional third argument:
+
+```
+aiAgentChat("my-agent", "Which tickets are still open here?", $project)
+```
+
+The agent reads the object in the environment block of its run, as the line `- Subject:`, if the calling account may read it, and the session of the run is then about it. See [the subject of a run](doc:ai/environment#the-subject-of-a-run).
 
 ### Asynchronous runs
 
@@ -82,6 +92,7 @@ Read a handle in a later request than the one that started the run: the run's se
 | `agent` | the entry-point agent | which agent answers; the `run-as` account must be allowed to run it, as in the chat |
 | `prompt` | - | the message as plain text, written as an element |
 | `prompt-expression` | - | TL-Script computing the message, evaluated at the start of every run; configure exactly one of `prompt` and `prompt-expression`, or the task refuses at boot |
+| `subject-expression` | - | TL-Script computing the object the run is about, evaluated at the start of every run beside the prompt; the agent reads it as [the subject of the run](doc:ai/environment#the-subject-of-a-run) if the `run-as` account may read it, and the recorded session is about it. The result is one object, or nothing for a run without a subject; any other result, and an expression that fails, end the run with an error |
 | `run-as` | `root` | the account the run acts as: its roles decide the tools and agents, its access rights the objects, and the recorded session belongs to it |
 | `approval-mode` | `AUTO_APPROVE` | see below |
 | `record-session` | `true` | whether the sitting is kept as a chat session of that account |

@@ -35,17 +35,37 @@ public class TestScheduledAgentDemoConfig extends TestCase {
 
 	private static final String TASK_NAME = "DailyEventBriefing";
 
-	/** The demo ships exactly one scheduled agent, and it is disabled. */
-	public void testTheDemoTaskIsShippedDisabled() throws Exception {
-		AgentTask.Config config = demoTask();
+	/** The task of the demo whose run is about one object. */
+	private static final String SUBJECT_TASK_NAME = "NextEventBriefing";
 
-		assertFalse("Every run of it costs a real model call; a demo must not start one by itself.",
-			config.isEnabled());
+	/** The demo's scheduled agents are disabled. */
+	public void testTheDemoTasksAreShippedDisabled() throws Exception {
+		for (String name : new String[] { TASK_NAME, SUBJECT_TASK_NAME }) {
+			assertFalse("Every run of " + name + " costs a real model call; a demo must not start one by itself.",
+				demoTask(name).isEnabled());
+		}
+	}
+
+	/**
+	 * The second example names the object its run is about.
+	 *
+	 * <p>
+	 * Only read here, not compiled: the expression names a type of the demo's model, which this test
+	 * does not boot.
+	 * </p>
+	 */
+	public void testTheSubjectTaskNamesItsSubject() throws Exception {
+		AgentTask.Config config = demoTask(SUBJECT_TASK_NAME);
+
+		assertNotNull("The example is about one event.", config.getSubjectExpression());
+		assertEquals("root", config.getRunAs());
+		assertTrue("The sitting is about the event, so it is recorded.", config.isRecordSession());
+		assertNotNull("There has to be something to ask.", config.getPrompt());
 	}
 
 	/** What the example says: an entry-point agent, root, auto-approval, a recorded session. */
 	public void testTheDemoTaskIsTheWorkedExample() throws Exception {
-		AgentTask.Config config = demoTask();
+		AgentTask.Config config = demoTask(TASK_NAME);
 
 		assertNull("The example runs whichever agent the application makes its entry point.",
 			config.getAgent());
@@ -61,20 +81,20 @@ public class TestScheduledAgentDemoConfig extends TestCase {
 	/** It instantiates: the class resolves, and the prompt configuration is accepted. */
 	public void testTheDemoTaskInstantiates() throws Exception {
 		BufferingProtocol log = new BufferingProtocol();
-		Task task = new DefaultInstantiationContext(log).getInstance(demoTask());
+		Task task = new DefaultInstantiationContext(log).getInstance(demoTask(TASK_NAME));
 
 		assertEquals(String.join(" | ", log.getErrors()), 0, log.getErrors().size());
 		assertTrue("Expected an AgentTask, got: " + task, task instanceof AgentTask);
 		assertEquals(TASK_NAME, task.getName());
 	}
 
-	/** The demo's scheduled agent, read from the assembled application configuration. */
-	private static AgentTask.Config demoTask() throws Exception {
+	/** A scheduled agent of the demo, read from the assembled application configuration. */
+	private static AgentTask.Config demoTask(String name) throws Exception {
 		SchedulerConfig scheduler =
 			(SchedulerConfig) ApplicationConfig.getInstance().getServiceConfiguration(Scheduler.class);
-		Task.Config<?> task = scheduler.getTasks().get(TASK_NAME);
+		Task.Config<?> task = scheduler.getTasks().get(name);
 
-		assertNotNull("The demo's scheduler configuration does not declare '" + TASK_NAME
+		assertNotNull("The demo's scheduler configuration does not declare '" + name
 			+ "'. Declared: " + scheduler.getTasks().keySet(), task);
 		assertTrue("Expected an AgentTask configuration, got: " + task.getImplementationClass(),
 			task instanceof AgentTask.Config);

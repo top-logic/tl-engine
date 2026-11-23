@@ -56,8 +56,8 @@ cannot (a plain knowledge item standing for itself) grants no role, so only the 
    implying ones) are asked; if the parent does not allow them, the decision continues at step 5
    with the roles on the object itself, as for the operations not delegated. The parent may
    delegate further. An object whose relation leads nowhere (no container, an empty reference) is
-   denied the delegated operations (without `operations`: every operation), as is one whose chain
-   of access parents runs in a cycle.
+   denied the delegated operations (without `operations`: every operation), unless the own grants
+   of the type imply them, as is one whose chain of access parents runs in a cycle.
 5. The roles granted the operation, or an operation implying it, on the object's type are looked
    up (for a module singleton, the
    singleton's own grants take precedence; `Discover` on such a singleton is implied by its own
@@ -306,8 +306,9 @@ marks `internal` and `without-security` remain rejected:
   not restricted, since the object is inaccessible until it is put into a container, which is a
   write of the container.
 - The parent may delegate further; the chain is followed at runtime. An object whose relation
-  leads nowhere is not accessible (with `operations`: for the delegated operations), and a chain
-  running in a cycle is denied (and logged as an error).
+  leads nowhere is denied the delegated operations (without `operations`: every operation), unless
+  the own grants of the type imply them, and a chain running in a cycle is denied (and logged as an
+  error).
 - Attribute-level `<part>` grants on the type are checked against the roles the user holds at the
   end of the chain (for an access parent restricted to operations: at the object deciding the
   requested operation, the object itself where the operation is not delegated).

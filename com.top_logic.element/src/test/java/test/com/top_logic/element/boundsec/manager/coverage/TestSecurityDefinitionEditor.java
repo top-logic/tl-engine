@@ -503,6 +503,11 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 	/**
 	 * A type delegating only Read grants the other operations itself, but must not grant Read.
 	 */
+	private static String operationLabel(Resources resources, String operation) {
+		return resources
+			.getString(com.top_logic.tool.boundsec.simple.I18NConstants.COMMAND_GROUP_NAMES.key(operation));
+	}
+
 	public void testGrantBesideRestrictedParentIsStored() throws Exception {
 		TLClass restricted = type(RESTRICTED_LINKED);
 		TLClassAccessRights entry = _editor.editableAccessRights(restricted);
@@ -524,10 +529,11 @@ public class TestSecurityDefinitionEditor extends BasicTestCase {
 		String grantsLabel =
 			resources.getString(stored.descriptor().getProperty(TLClassAccessRights.GRANTS).labelKey(null));
 		assertTrue("The problem names the grants: " + message, message.contains(grantsLabel));
-		assertTrue("The problem names the delegated operation granted: " + message,
-			message.contains(SimpleBoundCommandGroup.READ_NAME));
-		assertFalse("The operation not delegated is fine: " + message,
-			message.contains(SimpleBoundCommandGroup.WRITE_NAME));
+		String readLabel = operationLabel(resources, SimpleBoundCommandGroup.READ_NAME);
+		String writeLabel = operationLabel(resources, SimpleBoundCommandGroup.WRITE_NAME);
+		assertTrue("The problem names the delegated operation granted by its label: " + message,
+			message.contains(readLabel));
+		assertFalse("The operation not delegated is fine: " + message, message.contains(writeLabel));
 	}
 
 	/**

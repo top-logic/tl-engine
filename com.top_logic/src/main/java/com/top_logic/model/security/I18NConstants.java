@@ -17,6 +17,12 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
+	 * @en The value "{1}" of "{0}" names no operation: either list at least one operation, or leave
+	 *     the value empty to delegate all operations.
+	 */
+	public static ResKey2 ERROR_NO_OPERATION_NAMES__PROPERTY_VALUE;
+
+	/**
 	 * @en A type with an access parent takes over the access definition of that parent and has none
 	 *     of its own: either remove the access parent, or clear "{0}".
 	 */

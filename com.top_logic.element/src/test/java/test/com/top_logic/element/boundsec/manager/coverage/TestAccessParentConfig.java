@@ -216,6 +216,37 @@ public class TestAccessParentConfig extends BasicTestCase {
 		assertEquals(Set.of(SimpleBoundCommandGroup.READ, SimpleBoundCommandGroup.WRITE), parent.getOperations());
 	}
 
+	public void testOperationsWithoutNamesAreRejected() {
+		for (String blank : new String[] { ",", " ", " , ", ",," }) {
+			assertParseError("<class name='" + LINKED + "'><access-parent>" + TARGET_PARENT
+				+ " operations='" + blank + "'/></access-parent></class>");
+		}
+	}
+
+	public void testEmptyOperationsAreUnrestricted() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent>"
+			+ TARGET_PARENT + " operations=''/></access-parent></class>");
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+		assertTrue("An empty list of operations delegates all.", parent.delegates(SimpleBoundCommandGroup.CREATE));
+		assertNull(parent.getOperations());
+	}
+
+	public void testGrantedOperationIsNamedByLabel() throws Exception {
+		TLClassAccessRights entry = read("<class name='" + LINKED + "'><access-parent>" + TARGET_PARENT
+			+ " operations='Read'/></access-parent>"
+			+ "<grant operation='Read' roles='TestSecurityCoverage.Reader'/></class>");
+		ConstraintChecker checker = new ConstraintChecker();
+		checker.check(entry);
+		assertFalse(checker.getFailures().isEmpty());
+		Resources resources = Resources.getInstance();
+		String message = resources.getString(checker.getFailures().get(0).getConstraintName());
+		String label = resources.getString(
+			com.top_logic.tool.boundsec.simple.I18NConstants.COMMAND_GROUP_NAMES.key(SimpleBoundCommandGroup.READ_NAME));
+		assertTrue("Operation label '" + label + "' expected in: " + message, message.contains(label));
+		assertFalse("Raw operation id not expected in: " + message, message.contains(" Read "));
+	}
+
 	public void testRestrictionToNoOperationsIsRejected() {
 		try {
 			new RestrictedRelation(ContainerRelation.ANY, Set.of());

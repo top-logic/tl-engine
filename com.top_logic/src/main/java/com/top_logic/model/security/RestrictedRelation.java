@@ -4,8 +4,8 @@
  */
 package com.top_logic.model.security;
 
-import java.util.Comparator;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLClass;
@@ -75,15 +75,8 @@ public record RestrictedRelation(AccessParentFunction relation, Set<BoundCommand
 	 */
 	@Override
 	public ResKey getLabel() {
-		ResKey labels = null;
-		for (BoundCommandGroup operation : operations.stream()
-			.sorted(Comparator.comparing(BoundCommandGroup::getID))
-			.toList()) {
-			ResKey label = ResKey.fallback(
-				com.top_logic.tool.boundsec.simple.I18NConstants.COMMAND_GROUP_NAMES.key(operation.getID()),
-				ResKey.text(operation.getID()));
-			labels = labels == null ? label : I18NConstants.OPERATION_LIST__LIST_OPERATION.fill(labels, label);
-		}
+		ResKey labels = AccessParentConfig.operationLabels(
+			operations.stream().map(BoundCommandGroup::getID).collect(Collectors.toSet()));
 		return I18NConstants.ACCESS_PARENT_RESTRICTED__RELATION_OPERATIONS.fill(relation.getLabel(), labels);
 	}
 

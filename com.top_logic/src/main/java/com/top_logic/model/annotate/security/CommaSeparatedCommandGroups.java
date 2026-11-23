@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ListConfigValueProvider;
+import com.top_logic.model.security.I18NConstants;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 
 /**
@@ -17,7 +18,8 @@ import com.top_logic.tool.boundsec.CommandGroupReference;
  *
  * <p>
  * Each entry in the comma-separated string becomes a {@link CommandGroupReference} to the trimmed
- * name. Empty entries, e.g. from a trailing comma, are skipped.
+ * name. Empty entries, e.g. from a trailing comma, are skipped. A value that is not empty but
+ * names no operation at all is rejected, since it would otherwise silently mean all operations.
  * </p>
  *
  * @see CommaSeparatedRoles
@@ -34,6 +36,11 @@ public class CommaSeparatedCommandGroups extends ListConfigValueProvider<Command
 				continue;
 			}
 			result.add(new CommandGroupReference(name));
+		}
+		if (result.isEmpty()) {
+			throw new ConfigurationException(
+				I18NConstants.ERROR_NO_OPERATION_NAMES__PROPERTY_VALUE.fill(propertyName, propertyValue),
+				propertyName, propertyValue);
 		}
 		return result;
 	}

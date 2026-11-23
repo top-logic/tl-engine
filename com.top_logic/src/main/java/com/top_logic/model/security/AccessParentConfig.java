@@ -4,9 +4,11 @@
  */
 package com.top_logic.model.security;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Container;
@@ -15,6 +17,7 @@ import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.container.ConfigPart;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRights;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -105,6 +108,24 @@ public interface AccessParentConfig extends ConfigPart {
 		}
 		result.add(SimpleBoundCommandGroup.DISCOVER_NAME);
 		return result;
+	}
+
+	/**
+	 * The localized list of the given operations, named as the user knows them.
+	 *
+	 * @param operationNames
+	 *        The names (IDs) of the operations, at least one.
+	 * @return The labels of the operations sorted by name, as a comma-separated list; an operation
+	 *         without a label is named by its name.
+	 */
+	static ResKey operationLabels(Collection<String> operationNames) {
+		ResKey labels = null;
+		for (String name : new TreeSet<>(operationNames)) {
+			ResKey label = ResKey.fallback(
+				com.top_logic.tool.boundsec.simple.I18NConstants.COMMAND_GROUP_NAMES.key(name), ResKey.text(name));
+			labels = labels == null ? label : I18NConstants.OPERATION_LIST__LIST_OPERATION.fill(labels, label);
+		}
+		return labels;
 	}
 
 }

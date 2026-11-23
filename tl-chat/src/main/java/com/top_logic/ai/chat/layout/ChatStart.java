@@ -15,6 +15,7 @@ import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.ai.core.agent.RunSecurityBinding;
 import com.top_logic.ai.core.execution.model.AgentSession;
 import com.top_logic.util.error.TopLogicException;
 
@@ -55,10 +56,16 @@ public final class ChatStart {
 	 * @return The new conversation, a run answering the message is in progress.
 	 * @throws TopLogicException
 	 *         If the message cannot be sent: the agent policy refuses it, the installation has no
-	 *         room for a run. The conversation is not kept then.
+	 *         room for a run. The conversation is not kept then. Also if a tool of a background run
+	 *         executes this call, for example through a script.
 	 */
 	public static AgentSession start(TLSubSessionContext window, String conversation, Person owner,
 			TLObject subject, String text) {
+		if (RunSecurityBinding.executesBackgroundRun()) {
+			// The chat run is attended and asks with the owner's approval mode, so it would be wider
+			// than the run that executes this call: the background allowlist would not bound it.
+			throw new TopLogicException(I18NConstants.ERROR_STARTED_IN_BACKGROUND_RUN);
+		}
 		String message = text == null ? "" : text.trim();
 		if (message.isEmpty()) {
 			throw new TopLogicException(I18NConstants.ERROR_EMPTY_MESSAGE);

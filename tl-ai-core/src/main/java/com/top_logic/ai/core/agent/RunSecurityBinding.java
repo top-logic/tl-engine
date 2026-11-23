@@ -22,7 +22,8 @@ import com.top_logic.basic.thread.ThreadLocalBinding;
  *
  * <p>
  * Only the tool dispatch of the engine binds it, for the duration of one tool call: the agent loop
- * and {@code aiCallTool} through {@code ToolExecutions}, an MCP request through its tool adapter.
+ * and {@code aiCallTool} through {@link com.top_logic.ai.core.tools.ToolExecutions}, an MCP request
+ * through its tool adapter.
  * Outside a tool call nothing is bound, so a script of a person or of the script console runs as
  * before. As a {@link ThreadLocalBinding}, the value goes with the other bindings of the run onto the
  * threads that a tool call starts, for example the worker threads of a nested run.
@@ -63,10 +64,15 @@ public final class RunSecurityBinding {
 	 * described.
 	 * </p>
 	 *
+	 * <p>
+	 * Code that a script can call and that starts a run of its own asks here, so that the run it
+	 * starts is not wider than the run that executes the script.
+	 * </p>
+	 *
 	 * @return <code>false</code> outside a tool call, and in a tool call of a run that a person can
 	 *         approve.
 	 */
-	static boolean executesBackgroundRun() {
+	public static boolean executesBackgroundRun() {
 		SecurityContext security = SECURITY.get();
 		return security != null && security.isBackgroundRun();
 	}

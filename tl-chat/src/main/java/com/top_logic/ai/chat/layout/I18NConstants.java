@@ -28,6 +28,14 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_CHAT_NOT_CREATED;
 
 	/**
+	 * @en A chat cannot be started from a background run. Nobody watches a background run, and the
+	 *     background allowlist does not bound a chat.
+	 * @de Aus einem Hintergrundlauf kann kein Chat gestartet werden. Niemand beobachtet einen
+	 *     Hintergrundlauf, und die Hintergrund-Zulassungsliste begrenzt einen Chat nicht.
+	 */
+	public static ResKey ERROR_STARTED_IN_BACKGROUND_RUN;
+
+	/**
 	 * @en The message was not sent: {0}
 	 * @de Die Nachricht wurde nicht gesendet: {0}
 	 */

@@ -7,6 +7,7 @@
 		<entry name="%OPENAI_MODELS%" value="${env:tl_openai_models:gpt-5.5,gpt-5.4-mini}" comment="Comma separated models of the provider openai, the default one first."/>
 		<entry name="%MISTRAL_MODELS%" value="${env:tl_mistral_models:mistral-medium-latest,mistral-small-latest}" comment="Comma separated models of the provider mistral, the default one first."/>
 		<entry name="%XAI_MODELS%" value="${env:tl_xai_models:grok-4.7,grok-4.3}" comment="Comma separated models of the provider xai, the default one first."/>
+		<entry name="%AI_FETCH_MODEL_CATALOG%" value="${env:tl_ai_fetch_model_catalog:false}" comment="Whether the current model catalog is loaded from models.dev at startup; the request must be allowed by the operation. Otherwise the catalog bundled with the release is used."/>
 		<entry name="%AI_DEFAULT_MODEL%" value="${env:tl_ai_default_model:}" comment="Model the agents run on; empty for the first model of the first available provider."/>
 	</alias>
 </root>

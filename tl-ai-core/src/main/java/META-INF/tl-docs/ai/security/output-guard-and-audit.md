@@ -42,7 +42,7 @@ Denials and rollbacks are logged to the application log, with run, turn, account
 | A refused browsing origin | `INFO` - see [browsing governance](doc:ai/security/browsing-governance#what-the-operator-sees) |
 | A skill or delegate not offered to the user | `INFO` with the deciding reason ([capability notices](doc:ai/security/capability-notices)) |
 | A run that cannot name a principal | refused where its security context is built ([identity](doc:ai/security/identity)) |
-| A run handle of a run that the account may not read or stop | `WARN` `Run handle denied` under `com.top_logic.ai.core.scripting.AIScriptFunctions`, naming the TL-Script function, the operation (`Read`, `Write`), the type, the run and the account |
+| A run handle of a run that the account may not read or stop | `WARN` `Run handle denied` under `com.top_logic.ai.core.scripting.AIScriptFunctions`, naming the TL-Script function, the operation (`Read`, `Write`), the attribute (or the type of a queued session), the run and the account |
 | A run stopped through `aiAgentRunCancel` | `INFO` `Run stop requested` under `com.top_logic.ai.core.scripting.AIScriptFunctions`, naming the run and the acting account |
 
 Denials are logged at `WARN` and a refused commit at `ERROR`; a denial that is a configured state rather than an operator's problem - an account without a read right on a declared type, a browsing refusal - is logged at `INFO`.

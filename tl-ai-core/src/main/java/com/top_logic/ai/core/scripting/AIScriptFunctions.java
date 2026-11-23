@@ -36,7 +36,9 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
@@ -67,6 +69,7 @@ import com.top_logic.ai.core.execution.RunInfoBinding;
 import com.top_logic.ai.core.execution.RunRecording;
 import com.top_logic.ai.core.execution.model.AgentExecution;
 import com.top_logic.ai.core.execution.model.AgentSession;
+import com.top_logic.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.ai.core.execution.model.UserMemory;
 import com.top_logic.ai.core.limits.RunLimitSettings;
 import com.top_logic.ai.core.message.AssistantMessage;
@@ -941,10 +944,11 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *
 	 * <p>
 	 * <b>Who reads the status.</b> A script that applies the access rights of the current account
-	 * reads the status only of a run that this account may read. With the shipped access policy,
-	 * these are the runs of the account itself, and every run for an administrator. For another
-	 * run, the result is {@code null}, as for an unknown handle, also while that run is queued. A
-	 * script without access checks, such as a scheduler task, reads the status of every run.
+	 * reads the status only where this account may read the attribute {@code status} of the run, and
+	 * a queued run only where it may read the session. With the shipped access policy, these are the
+	 * runs of the account itself, and every run for an administrator. For another run, the result is
+	 * {@code null}, as for an unknown handle, also while that run is queued. A script without access
+	 * checks, such as a scheduler task, reads the status of every run.
 	 * </p>
 	 *
 	 * @param handle
@@ -952,11 +956,12 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        {@link AgentSession} directly, an {@link AgentExecution} directly, or a run-id string.
 	 * @param usesSecurity
 	 *        Whether the call is evaluated with the access rights of the current account.
-	 * @return The status name, or {@code null} if the handle cannot be resolved to a run that the
-	 *         current account may read.
+	 * @return The status name, or {@code null} if the handle cannot be resolved to a run whose
+	 *         status the current account may read.
 	 */
 	public static String agentRunStatus(Object handle, @UsesSecurity boolean usesSecurity) {
-		TLObject run = resolveRun(handle, usesSecurity, SimpleBoundCommandGroup.READ, "aiAgentRunStatus");
+		TLObject run = resolveRun(handle, usesSecurity, SimpleBoundCommandGroup.READ, "aiAgentRunStatus",
+			TlAiExecutionFactory.getStatusAgentExecutionAttr());
 		if (run instanceof AgentExecution execution) {
 			com.top_logic.model.TLClassifier status = execution.getStatus();
 			return status != null ? status.getName() : null;
@@ -983,9 +988,9 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
-	 * {@code null} means only "not finished yet": the handle resolves to no execution (queued, or
-	 * not yet visible in this request's revision) or the run is still {@code RUNNING}. A script
-	 * that wants to handle a failure instead of failing asks
+	 * For a run that the account may read, {@code null} means only "not finished yet": the handle
+	 * resolves to no execution (queued, or not yet visible in this request's revision) or the run is
+	 * still {@code RUNNING}. A script that wants to handle a failure instead of failing asks
 	 * {@link #agentRunStatus(Object, boolean)} first and reads
 	 * {@link #agentRunError(Object, boolean)}; the documented polling shape
 	 * ({@code aiAgentRunStatus($h) == "COMPLETE" ? aiAgentRunResult($h) : null}) never reaches the
@@ -994,10 +999,12 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *
 	 * <p>
 	 * <b>Who reads the answer.</b> A script that applies the access rights of the current account
-	 * reads the answer only of a run that this account may read. With the shipped access policy,
-	 * these are the runs of the account itself, and every run for an administrator. For another
-	 * run, the result is {@code null}, as for an unknown handle, and a failed run raises nothing. A
-	 * script without access checks, such as a scheduler task, reads the answer of every run.
+	 * reads the answer only where this account may read the attributes {@code status},
+	 * {@code response} and {@code errorMessage} of the run, since the answer, its absence and the
+	 * raised failure come from them. With the shipped access policy, these are the runs of the
+	 * account itself, and every run for an administrator. For another run, the result is
+	 * {@code null}, as for an unknown handle, and a failed run raises nothing. A script without
+	 * access checks, such as a scheduler task, reads the answer of every run.
 	 * </p>
 	 *
 	 * @param handle
@@ -1006,14 +1013,17 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @param usesSecurity
 	 *        Whether the call is evaluated with the access rights of the current account.
 	 * @return The final answer text when the run is {@code COMPLETE}, or {@code null} while it is
-	 *         not finished or when the current account may not read the run.
+	 *         not finished or when the current account may not read its answer.
 	 * @throws TopLogicException
 	 *         If the run ended in a state other than {@code COMPLETE}, carrying the recorded error
 	 *         message.
 	 */
 	public static String agentRunResult(Object handle, @UsesSecurity boolean usesSecurity) {
 		AgentExecution execution =
-			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.READ, "aiAgentRunResult");
+			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.READ, "aiAgentRunResult",
+				TlAiExecutionFactory.getStatusAgentExecutionAttr(),
+				TlAiExecutionFactory.getResponseAgentExecutionAttr(),
+				TlAiExecutionFactory.getErrorMessageAgentExecutionAttr());
 		if (execution == null) {
 			return null;
 		}
@@ -1047,7 +1057,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *
 	 * <p>
 	 * <b>Who reads the error.</b> A script that applies the access rights of the current account
-	 * reads the error only of a run that this account may read. With the shipped access policy,
+	 * reads the error only where this account may read the attribute {@code errorMessage} of the
+	 * run. With the shipped access policy,
 	 * these are the runs of the account itself, and every run for an administrator. For another
 	 * run, the result is {@code null}, as for an unknown handle. A script without access checks,
 	 * such as a scheduler task, reads the error of every run.
@@ -1059,12 +1070,13 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @param usesSecurity
 	 *        Whether the call is evaluated with the access rights of the current account.
 	 * @return The recorded error message, or {@code null} if there is none or the current account
-	 *         may not read the run.
+	 *         may not read it.
 	 * @see #agentRunStatus(Object, boolean)
 	 */
 	public static String agentRunError(Object handle, @UsesSecurity boolean usesSecurity) {
 		AgentExecution execution =
-			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.READ, "aiAgentRunError");
+			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.READ, "aiAgentRunError",
+				TlAiExecutionFactory.getErrorMessageAgentExecutionAttr());
 		if (execution == null) {
 			return null;
 		}
@@ -1088,10 +1100,11 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * <p>
 	 * <b>Who reads the transcript.</b> The transcript holds the arguments and the results of the
 	 * tool calls, which the run read with the rights of its owner. A script that applies the access
-	 * rights of the current account reads the transcript only of a run that this account may read.
-	 * With the shipped access policy, these are the runs of the account itself, and every run for an
-	 * administrator. For another run, the result is {@code null}, as for an unknown handle. A script
-	 * without access checks, such as a scheduler task, reads the transcript of every run.
+	 * rights of the current account reads the transcript only where this account may read the
+	 * attribute {@code transcript} of the run, as {@code $run.get(...)} does. With the shipped access
+	 * policy, these are the runs of the account itself, and every run for an administrator. For
+	 * another run, the result is {@code null}, as for an unknown handle. A script without access
+	 * checks, such as a scheduler task, reads the transcript of every run.
 	 * </p>
 	 *
 	 * @param handle
@@ -1100,11 +1113,12 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @param usesSecurity
 	 *        Whether the call is evaluated with the access rights of the current account.
 	 * @return The serialized transcript, or {@code null} if the handle cannot be resolved to a run
-	 *         that the current account may read, or no transcript has been recorded yet.
+	 *         whose transcript the current account may read, or no transcript has been recorded yet.
 	 */
 	public static String agentRunTranscript(Object handle, @UsesSecurity boolean usesSecurity) {
 		AgentExecution execution =
-			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.READ, "aiAgentRunTranscript");
+			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.READ, "aiAgentRunTranscript",
+				TlAiExecutionFactory.getTranscriptAgentExecutionAttr());
 		if (execution == null) {
 			return null;
 		}
@@ -1130,11 +1144,12 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *
 	 * <p>
 	 * <b>Who stops a run.</b> A script that applies the access rights of the current account stops
-	 * only a run on which this account has the right {@code Write}. With the shipped access policy,
-	 * these are the runs of the account itself, and every run for an administrator. For another
-	 * run, the result is {@code false}, as for an unknown handle, and the run continues. A script
-	 * without access checks, such as a scheduler task, stops every run. The application log names
-	 * the account that stopped a run.
+	 * only a run on whose attribute {@code cancelRequested} this account has the right
+	 * {@code Write}. With the shipped access policy, these are the runs of the account itself, and
+	 * every run for an administrator. A restricted account, which may only read, cannot stop even
+	 * its own run. For another run, the result is {@code false}, as for an unknown handle, and the
+	 * run continues. A script without access checks, such as a scheduler task, stops every run. The
+	 * application log names the account that stopped a run.
 	 * </p>
 	 *
 	 * @param handle
@@ -1148,7 +1163,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 */
 	public static boolean agentRunCancel(Object handle, @UsesSecurity boolean usesSecurity) {
 		AgentExecution execution =
-			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.WRITE, "aiAgentRunCancel");
+			resolveExecution(handle, usesSecurity, SimpleBoundCommandGroup.WRITE, "aiAgentRunCancel",
+				TlAiExecutionFactory.getCancelRequestedAgentExecutionAttr());
 		if (execution == null || !AgentExecutionStore.Module.INSTANCE.isActive()) {
 			return false;
 		}
@@ -1610,13 +1626,14 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *
 	 * <p>
 	 * A handle of a session whose run is not recorded (or not visible) yet resolves to
-	 * <code>null</code>; see {@link #resolveRun(Object, boolean, BoundCommandGroup, String)} for
+	 * <code>null</code>; see
+	 * {@link #resolveRun(Object, boolean, BoundCommandGroup, String, TLStructuredTypePart...)} for
 	 * the check.
 	 * </p>
 	 */
 	private static AgentExecution resolveExecution(Object handle, boolean usesSecurity,
-			BoundCommandGroup operation, String function) {
-		return resolveRun(handle, usesSecurity, operation, function) instanceof AgentExecution execution
+			BoundCommandGroup operation, String function, TLStructuredTypePart... attributes) {
+		return resolveRun(handle, usesSecurity, operation, function, attributes) instanceof AgentExecution execution
 			? execution
 			: null;
 	}
@@ -1634,6 +1651,14 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * reads and who stops a run, and an application can give this right to a role with a grant.
 	 * </p>
 	 *
+	 * <p>
+	 * A run is checked on each attribute that the function reads or writes, as
+	 * {@code $run.get(...)} and {@code $run.set(...)} are: a grant on the attribute (a
+	 * {@code <part>} of the security configuration) decides for it, and without one the right on the
+	 * run decides. A session whose run is not visible yet has none of these attributes; it is checked
+	 * as a whole.
+	 * </p>
+	 *
 	 * @param usesSecurity
 	 *        Whether the calling script is evaluated with the access rights of the current account.
 	 *        Without them, as in a scheduler task, every run resolves.
@@ -1642,10 +1667,12 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 *        {@link SimpleBoundCommandGroup#WRITE} to stop it.
 	 * @param function
 	 *        The name of the calling TL-Script function, for the log of a denial.
+	 * @param attributes
+	 *        The attributes of the run that the function reads or writes.
 	 * @return The run, the session of a run that is not visible yet, or <code>null</code>.
 	 */
 	private static TLObject resolveRun(Object handle, boolean usesSecurity, BoundCommandGroup operation,
-			String function) {
+			String function, TLStructuredTypePart... attributes) {
 		TLObject run = findRun(handle);
 		if (run == null || !usesSecurity) {
 			return run;
@@ -1654,16 +1681,36 @@ public class AIScriptFunctions extends TLScriptFunctions {
 			// Accessible for nobody, but no denial to log: a channel can still hold a deleted run.
 			return null;
 		}
-		if (ModelAccessRights.getInstance().isAllowed(run, operation)) {
+		TLModelPart denied = deniedPart(run, operation, attributes);
+		if (denied == null) {
 			return run;
 		}
 		String name = run instanceof AgentExecution execution
 			? execution.getRunId()
 			: KBUtils.getWrappedObjectName(run).toString();
 		Logger.warn("Run handle denied: function=" + function + " operation=" + operation.getID()
-			+ " type=" + TLModelUtil.qualifiedName(run.tType()) + " run=" + name + " user=" + actorName(),
+			+ " on=" + TLModelUtil.qualifiedName(denied) + " run=" + name + " user=" + actorName(),
 			AIScriptFunctions.class);
 		return null;
+	}
+
+	/**
+	 * The attribute of the run, or the type of the session, on which the current account may not
+	 * perform the given operation, or <code>null</code> if it may.
+	 */
+	private static TLModelPart deniedPart(TLObject run, BoundCommandGroup operation,
+			TLStructuredTypePart[] attributes) {
+		ModelAccessRights rights = ModelAccessRights.getInstance();
+		Person actor = TLContext.currentUser();
+		if (run instanceof AgentExecution) {
+			for (TLStructuredTypePart attribute : attributes) {
+				if (!rights.isAllowed(actor, run, attribute, operation)) {
+					return attribute;
+				}
+			}
+			return null;
+		}
+		return rights.isAllowed(actor, run, operation) ? null : run.tType();
 	}
 
 	/**

@@ -58,7 +58,11 @@ afterAll(async () => {
 function mountButton(state: Record<string, unknown> = {}): void {
   sent = [];
   answers = [];
-  vi.stubGlobal('fetch', vi.fn((_url: string, init?: RequestInit) => {
+  vi.stubGlobal('fetch', vi.fn((url: string, init?: RequestInit) => {
+    if (url.includes('react-api/i18n')) {
+      // Translations requested before the mount are sent once the mount makes the context path known.
+      return Promise.resolve(new Response('{}', { status: 200 }));
+    }
     sent.push(JSON.parse(String(init?.body ?? '{}')).command);
     return new Promise<Response>((resolve) => {
       answers.push(() => resolve(new Response('{"success":true}', { status: 200 })));

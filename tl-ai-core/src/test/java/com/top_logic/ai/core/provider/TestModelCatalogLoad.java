@@ -60,6 +60,9 @@ public class TestModelCatalogLoad extends TestCase {
 	/** The context window the model overrides of a test give a model. */
 	public static final int OVERRIDE_CONTEXT = 777;
 
+	/** The path of the test server that sends the start of a catalog and then nothing more. */
+	private static final String STALLED_PATH = "/stalled.json";
+
 	/** The path of the test server that answers every request with a server error. */
 	private static final String BROKEN_PATH = "/broken.json";
 
@@ -71,6 +74,9 @@ public class TestModelCatalogLoad extends TestCase {
 
 	/** Counted down when the client of the slow catalog has gone away. */
 	private final CountDownLatch _slowClientGone = new CountDownLatch(1);
+
+	/** Counted down when the stalled answer may end, at the end of a test. */
+	private final CountDownLatch _releaseStalled = new CountDownLatch(1);
 
 	private LLMProviderService _service;
 
@@ -88,6 +94,7 @@ public class TestModelCatalogLoad extends TestCase {
 		_server.createContext("/catalog.json", this::answerCatalog);
 		_server.createContext("/slow.json", this::answerSlowly);
 		_server.createContext(BROKEN_PATH, this::answerError);
+		_server.createContext(STALLED_PATH, this::answerStalled);
 		_serverThreads = Executors.newCachedThreadPool();
 		_server.setExecutor(_serverThreads);
 		_server.start();
@@ -99,6 +106,7 @@ public class TestModelCatalogLoad extends TestCase {
 			_service.shutDown();
 			_service = null;
 		}
+		_releaseStalled.countDown();
 		_server.stop(0);
 		_serverThreads.shutdownNow();
 		super.tearDown();
@@ -138,6 +146,22 @@ public class TestModelCatalogLoad extends TestCase {
 	}
 
 	/**
+	 * A body that stops arriving after its first part ends the fetch at its deadline, with the
+	 * deadline as reason.
+	 */
+	public void testDeadlineEndsAStalledBody() throws Exception {
+		long start = System.nanoTime();
+		try {
+			ModelsDevFetcher.fetch(url(STALLED_PATH), Map.of("anthropic", Set.of(MODEL)), Duration.ofSeconds(1));
+			fail("A body that stops arriving must not be waited for.");
+		} catch (IOException expected) {
+			assertTrue(expected.getMessage(), expected.getMessage().startsWith("no complete answer within"));
+		}
+		long millis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+		assertTrue("The fetch took " + millis + " ms.", millis < 5000);
+	}
+
+	/**
 	 * A catalog that arrives replaces the bundled one.
 	 */
 	public void testRemoteCatalogIsInstalled() throws InterruptedException {
@@ -167,6 +191,18 @@ public class TestModelCatalogLoad extends TestCase {
 		_service = start(url("/catalog.json"), false);
 
 		assertNotNull(_service.getModel(MODEL));
+		Thread.sleep(1000);
+		assertEquals(0, _requests.get());
+	}
+
+	/**
+	 * Without a setting, the service does not load the remote catalog: it sends no request.
+	 */
+	public void testNoRequestByDefault() throws InterruptedException {
+		_service = startWith(url("/catalog.json"), null, List.of(MODEL), null);
+
+		assertEquals(CatalogStatus.State.DISABLED, _service.catalogStatus().state());
+		assertEquals(ResolvedModel.Origin.BUNDLED, _service.getCatalogEntry(MODEL).origin());
 		Thread.sleep(1000);
 		assertEquals(0, _requests.get());
 	}
@@ -270,6 +306,23 @@ public class TestModelCatalogLoad extends TestCase {
 		exchange.close();
 	}
 
+	private void answerStalled(HttpExchange exchange) throws IOException {
+		_requests.incrementAndGet();
+		exchange.sendResponseHeaders(200, 0);
+		OutputStream out = exchange.getResponseBody();
+		try {
+			out.write("{\"anthropic\": {".getBytes(StandardCharsets.UTF_8));
+			out.flush();
+			_releaseStalled.await(30, TimeUnit.SECONDS);
+		} catch (IOException ex) {
+			// Client gone.
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		} finally {
+			exchange.close();
+		}
+	}
+
 	private void answerSlowly(HttpExchange exchange) throws IOException {
 		_requests.incrementAndGet();
 		exchange.sendResponseHeaders(200, 0);
@@ -316,6 +369,18 @@ public class TestModelCatalogLoad extends TestCase {
 	 */
 	public static LLMProviderService start(String catalogUrl, boolean fetchRemote, List<String> models,
 			String overridden) {
+		return startWith(catalogUrl, Boolean.valueOf(fetchRemote), models, overridden);
+	}
+
+	/**
+	 * Starts a service like {@link #start(String, boolean, List, String)}.
+	 *
+	 * @param fetchRemote
+	 *        Whether the service loads the remote catalog, or <code>null</code> to leave the
+	 *        setting at its default.
+	 */
+	private static LLMProviderService startWith(String catalogUrl, Boolean fetchRemote, List<String> models,
+			String overridden) {
 		@SuppressWarnings("unchecked")
 		LLMProviderService.Config<LLMProviderService> config =
 			(LLMProviderService.Config<LLMProviderService>) TypedConfiguration.newConfigItem(
@@ -330,7 +395,9 @@ public class TestModelCatalogLoad extends TestCase {
 
 		ModelCatalogConfig catalog = TypedConfiguration.newConfigItem(ModelCatalogConfig.class);
 		set(catalog, ModelCatalogConfig.CATALOG_URL, catalogUrl);
-		set(catalog, ModelCatalogConfig.FETCH_REMOTE_CATALOG, fetchRemote);
+		if (fetchRemote != null) {
+			set(catalog, ModelCatalogConfig.FETCH_REMOTE_CATALOG, fetchRemote);
+		}
 		if (overridden != null) {
 			ModelCatalogEntry.OverrideConfig override =
 				TypedConfiguration.newConfigItem(ModelCatalogEntry.OverrideConfig.class);

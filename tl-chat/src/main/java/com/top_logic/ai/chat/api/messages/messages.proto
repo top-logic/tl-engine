@@ -1108,8 +1108,11 @@ message ChatPreferencesDto {
 	/** Width of the artefact pane in pixels; 0 means the configured or built-in default. */
 	int paneWidth;
 
-	/** Sum of section badges last stored when the rail was opened. */
-	int badgeSeen;
+	/**
+	 * Per section name, the count of its badge the user has seen: what the section counted while
+	 * the rail was last open on screen. A section that is absent has had nothing seen.
+	 */
+	map<string, int> badgeSeen;
 
 	/**
 	 * Per section name, whether the user left that section open.

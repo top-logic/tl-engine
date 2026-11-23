@@ -29,7 +29,7 @@ import com.top_logic.table.FilterState;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.NamedFilter;
 import com.top_logic.table.NamedFilterStore;
-import com.top_logic.table.NegatedFilterState;
+import com.top_logic.table.ColumnFilterState;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowKind;
 import com.top_logic.table.Sort;
@@ -45,6 +45,7 @@ import com.top_logic.table.filter.ComparableColumnFilter;
 import com.top_logic.table.filter.RangeFilterState;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.filter.TextFilterState;
+import com.top_logic.table.filter.TextMatchMode;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.DelegatingColumn;
@@ -258,7 +259,7 @@ public class TestDefaultTableView extends TestCase {
 	public void testInvertedFilterAcceptsNonMatching() {
 		TableView<Person> view = newView();
 		// "Charlie" and "alice" contain "li"; inverting keeps exactly the rest.
-		view.filter("name", new NegatedFilterState(new Contains("li")));
+		view.filter("name", ColumnFilterState.invert(new Contains("li")));
 		assertEquals(List.of("Bob"), names(view));
 	}
 
@@ -356,7 +357,7 @@ public class TestDefaultTableView extends TestCase {
 		TableId id = new TableId("t-search");
 
 		TableView<Person> view1 = newView(store, id);
-		view1.search(new TextFilterState("LI", false, false, false));
+		view1.search(new TextFilterState("LI", false, TextMatchMode.CONTAINS));
 		assertEquals(List.of("Charlie", "alice"), names(view1));
 
 		// A fresh view over the same store restores the persisted search (and re-applies it).
@@ -632,6 +633,52 @@ public class TestDefaultTableView extends TestCase {
 		assertEquals(1, view2.state().getFrozenCount());
 		assertEquals(List.of(new SortColumn("name", true)), view2.state().getSort());
 		assertEquals("restored sort re-applied to rows", List.of("Bob", "Charlie", "alice"), names(view2));
+	}
+
+	public void testPersistsAndRestoresViewOptions() {
+		ViewStateStore store = new MapViewStateStore();
+		TableId id = new TableId("t-view-options");
+
+		TableView<Person> view1 = newView(store, id);
+		view1.setViewOptions("compact", true, true);
+
+		TableView<Person> view2 = newView(store, id);
+		assertEquals("compact", view2.state().getDensity());
+		assertTrue(view2.state().isStriped());
+		assertTrue(view2.state().isColumnLines());
+	}
+
+	public void testUnknownDensityIsDefault() {
+		TableView<Person> view = newView();
+		view.setViewOptions("roomy", false, false);
+		assertEquals("", view.state().getDensity());
+	}
+
+	public void testResetRestoresViewOptionsButKeepsFilters() {
+		TableView<Person> view = newView();
+		view.filter("name", new Contains("a"));
+		view.setViewOptions("normal", true, true);
+
+		view.resetToDefaults();
+
+		assertEquals("", view.state().getDensity());
+		assertFalse(view.state().isStriped());
+		assertFalse(view.state().isColumnLines());
+		assertEquals("The reset keeps the column filters.", Set.of("name"), view.state().getFilters().keySet());
+	}
+
+	public void testResetPersistsDefaultViewOptions() {
+		ViewStateStore store = new MapViewStateStore();
+		TableId id = new TableId("t-view-options-reset");
+
+		TableView<Person> view1 = newView(store, id);
+		view1.setViewOptions("compact", true, true);
+		view1.resetToDefaults();
+
+		TableView<Person> view2 = newView(store, id);
+		assertEquals("", view2.state().getDensity());
+		assertFalse(view2.state().isStriped());
+		assertFalse(view2.state().isColumnLines());
 	}
 
 	public void testRestoreDropsStaleAndAppendsNewColumns() {

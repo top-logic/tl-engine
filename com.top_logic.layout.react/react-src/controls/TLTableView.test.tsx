@@ -34,6 +34,7 @@ import CheckboxPart from './form/CheckboxPart';
 import TextInputPart from './form/TextInputPart';
 import ChipPart from './chip/ChipPart';
 import SkeletonPart from './skeleton/SkeletonPart';
+import BadgePart from './chip/BadgePart';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -108,6 +109,7 @@ beforeAll(() => {
   registerPart('TextInput', TextInputPart);
   registerPart('Chip', ChipPart);
   registerPart('Skeleton', SkeletonPart);
+  registerPart('Badge', BadgePart);
   register('TableTestEditor', EditorCell);
   register('TableTestText', TextCell);
   register('TLTableView', TLTableView);
@@ -224,6 +226,30 @@ describe('a table whose rows are not all edited', () => {
   });
 });
 
+describe('the heading of a column that requires a value', () => {
+  const REQUIRED = '.tl-table__required';
+
+  it('shows the required mark, hidden from assistive technology, in a sortable and in a plain heading', () => {
+    mountTable({
+      columns: [
+        { name: COL_NAME, label: 'Name', width: 100, sortable: true, required: true },
+        { name: COL_INFO, label: 'Info', width: 100, sortable: false, required: true },
+      ],
+    });
+
+    const marks = document.querySelectorAll(REQUIRED);
+    expect(marks).toHaveLength(2);
+    marks.forEach(mark => expect(mark.getAttribute('aria-hidden')).toBe('true'));
+    expect(document.querySelector('.tl-table__sort ' + REQUIRED)).not.toBeNull();
+  });
+
+  it('shows no mark for a column that does not require a value', () => {
+    mountTable({});
+
+    expect(document.querySelector(REQUIRED)).toBeNull();
+  });
+});
+
 describe('a table whose rows in the visible window are not all sent', () => {
   it('draws the missing rows as text skeletons and marks the grid busy', async () => {
     // jsdom lays nothing out: the body shows five rows of the fallback row height (36px).
@@ -312,5 +338,65 @@ describe('the viewport report of a table', () => {
     await settle();
 
     expect(scrolls()).toEqual([]);
+  });
+});
+
+/** State key of the grouping: the names of the grouping columns, outermost group level first. */
+const STATE_GROUPING = 'grouping';
+
+describe('the marks in the header of a table', () => {
+  /** The header cell of the given column. */
+  function header(column: string): HTMLElement {
+    return document.querySelector<HTMLElement>(`.tl-table__header-cell[data-col="${column}"]`)!;
+  }
+
+  /** Mounts the table sorted by the given priorities of its two columns (0: unsorted) and grouped as given. */
+  function mountMarked(namePriority: number, infoPriority: number, grouping: string[]): void {
+    const sort = (priority: number) => priority > 0 ? { sortDirection: 'asc', sortPriority: priority } : {};
+    mountTable({
+      columns: [
+        { name: COL_NAME, label: 'Name', width: 100, sortable: true, ...sort(namePriority) },
+        { name: COL_INFO, label: 'Info', width: 100, sortable: true, ...sort(infoPriority) },
+      ],
+      [STATE_GROUPING]: grouping,
+    });
+  }
+
+  it('numbers the group level of each grouping column while the rows are grouped by several', () => {
+    mountMarked(0, 0, [COL_INFO, COL_NAME]);
+
+    // The badge stands inside the mark, so that the mark's tooltip covers it.
+    const outer = header(COL_INFO).querySelector('.tl-table__mark > .tl-badge')!;
+    expect(outer.textContent).toBe('1');
+    expect(outer.getAttribute('aria-hidden')).toBe('true');
+    const mark = header(COL_NAME).querySelector('.tl-table__mark')!;
+    expect(mark.querySelector(':scope > .tl-badge')!.textContent).toBe('2');
+    expect(header(COL_NAME).querySelectorAll('.tl-badge')).toHaveLength(1);
+    expect(mark.getAttribute('data-tooltip')).toBe('text:The rows are grouped by this column, level 2');
+  });
+
+  it('shows no group level while the rows are grouped by a single column', () => {
+    mountMarked(0, 0, [COL_NAME]);
+
+    expect(header(COL_NAME).querySelector('.tl-table__mark')).not.toBeNull();
+    expect(header(COL_NAME).querySelector('.tl-badge')).toBeNull();
+    expect(header(COL_NAME).querySelector('.tl-table__mark')!.getAttribute('data-tooltip'))
+      .toBe('text:The rows are grouped by this column');
+  });
+
+  it('draws the sort priority through the part Badge, read with the label', () => {
+    mountMarked(2, 1, []);
+
+    const badge = header(COL_NAME).querySelector('.tl-table__sort .tl-badge')!;
+    expect(badge.textContent).toBe('2');
+    expect(badge.getAttribute('role')).toBe('img');
+    expect(badge.getAttribute('aria-label')).toBe('Sort priority: 2');
+    expect(header(COL_INFO).querySelector('.tl-table__sort .tl-badge')!.textContent).toBe('1');
+  });
+
+  it('shows no sort priority while the table is sorted by a single column', () => {
+    mountMarked(1, 0, []);
+
+    expect(document.querySelector('.tl-table__header-cell .tl-badge')).toBeNull();
   });
 });

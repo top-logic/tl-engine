@@ -28,6 +28,8 @@ public class OptionsFilterEditor implements FilterEditor {
 
 	private final MatchCounts _counts;
 
+	private final boolean _columnValues;
+
 	/**
 	 * Creates an {@link OptionsFilterEditor}.
 	 *
@@ -37,10 +39,15 @@ public class OptionsFilterEditor implements FilterEditor {
 	 *        The current selection, or {@code null}.
 	 * @param counts
 	 *        Facet counts, or {@link MatchCounts#NONE}.
+	 * @param columnValues
+	 *        Whether the values of the options are values of the column, apart from
+	 *        {@link Option#NO_VALUE}, see {@link FilterField#isColumnValue()}.
 	 */
-	public OptionsFilterEditor(List<Option> options, OptionsFilterState current, MatchCounts counts) {
+	public OptionsFilterEditor(List<Option> options, OptionsFilterState current, MatchCounts counts,
+			boolean columnValues) {
 		_options = options;
 		_counts = counts;
+		_columnValues = columnValues;
 		Set<Object> selected = current != null ? current.selected() : Set.of();
 		_checks = new ArrayList<>(options.size());
 		for (Option option : options) {
@@ -52,7 +59,10 @@ public class OptionsFilterEditor implements FilterEditor {
 	public List<FilterField> fields() {
 		List<FilterField> fields = new ArrayList<>(_options.size());
 		for (int n = 0; n < _options.size(); n++) {
-			fields.add(new FilterField(label(_options.get(n)), _checks.get(n)));
+			Option option = _options.get(n);
+			Integer count = _counts.isAvailable() ? Integer.valueOf(_counts.count(option.value())) : null;
+			boolean columnValue = _columnValues && option.value() != Option.NO_VALUE;
+			fields.add(FilterField.option(label(option), _checks.get(n), option, count, columnValue));
 		}
 		return fields;
 	}

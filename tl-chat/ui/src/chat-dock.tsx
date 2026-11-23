@@ -1,8 +1,17 @@
-import { FillBarrier, React, rootClassName, TLChild, useTLCommand, useTLState } from 'tl-react-bridge'
-import type { TLCellProps } from 'tl-react-bridge'
+import {
+  FillBarrier,
+  labelWithBadge,
+  React,
+  rootClassName,
+  StateBadge,
+  TLChild,
+  useTLCommand,
+  useTLState,
+} from 'tl-react-bridge'
+import type { BadgeJson, TLCellProps } from 'tl-react-bridge'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { bundle } from './i18n'
-import { unseenBadge } from './progress-model'
+import { seenCounts, unseenRailBadge } from './rail-model'
 import { ThemeIcon } from './theme-icon'
 
 const { useCallback, useEffect, useMemo, useRef, useState } = React
@@ -62,10 +71,14 @@ export type LauncherMark = 'busy' | 'badge' | 'none'
  * new since you last looked" says nothing, and a busy composer is already saying it is busy. A run
  * in progress wins over a count, because it is the newer fact and the count will follow it.
  */
-export function launcherMark(open: boolean, busy: boolean, badge: number): LauncherMark {
+export function launcherMark(
+  open: boolean,
+  busy: boolean,
+  badge: Partial<BadgeJson> | null,
+): LauncherMark {
   if (open) return 'none'
   if (busy) return 'busy'
-  return badge > 0 ? 'badge' : 'none'
+  return badge ? 'badge' : 'none'
 }
 
 /**
@@ -131,16 +144,16 @@ export function TLChatDock({ controlId }: TLCellProps) {
   const launcherRef = useRef<HTMLButtonElement | null>(null)
 
   const name = dock.label || labels.dockName
-  const badge = unseenBadge(chat.badgeTotal, chat.badgeSeen)
+  const badge = unseenRailBadge(chat.railBadge, chat.badgeSeen, labels.sideRailBadge)
   const mark = launcherMark(open, chat.busy, badge)
 
   // Opening the dock is the user looking at this conversation, so what was new stops being new -
   // the watermark moves to the total as it stands now, exactly as opening the rail moves it. Only
   // the watermark: the dock does not open the rail, so `toggleSide` would be the wrong half.
   const toggle = useCallback(() => {
-    if (!open) actions.markBadgesSeen(chat.badgeTotal)
+    if (!open) actions.markBadgesSeen(seenCounts(chat.railBadge))
     setOpen(!open)
-  }, [open, setOpen, actions, chat.badgeTotal])
+  }, [open, setOpen, actions, chat.railBadge])
 
   // Focus follows the panel: into it when it opens, back to the launcher when it closes. Skipped on
   // the first render, so a page configured `open="true"` does not take the focus from the page.
@@ -210,18 +223,25 @@ export function TLChatDock({ controlId }: TLCellProps) {
         className="tl-chat-dock__launcher"
         aria-expanded={open}
         aria-controls={panelId}
-        aria-label={open ? labels.dockClose(name) : labels.dockOpen(name)}
+        aria-label={labelWithBadge(
+          open ? labels.dockClose(name) : labels.dockOpen(name),
+          mark === 'badge' ? badge : null,
+        )}
         title={open ? labels.dockClose(name) : labels.dockOpen(name)}
         onClick={toggle}
       >
-        <LauncherIcon icon={dock.icon} open={open} />
+        {mark === 'badge' && badge ? (
+          <span className="tl-icon-badge">
+            <LauncherIcon icon={dock.icon} open={open} />
+            <span className="tl-icon-badge__count">
+              <StateBadge badge={badge} alone={true} />
+            </span>
+          </span>
+        ) : (
+          <LauncherIcon icon={dock.icon} open={open} />
+        )}
         {mark === 'busy' ? (
           <span className="tl-chat-dock__busy" role="status" aria-label={labels.dockBusy} />
-        ) : null}
-        {mark === 'badge' ? (
-          <span className="tl-chat-dock__badge" aria-label={labels.sideRailBadge(badge)}>
-            {badge}
-          </span>
         ) : null}
       </button>
     </div>

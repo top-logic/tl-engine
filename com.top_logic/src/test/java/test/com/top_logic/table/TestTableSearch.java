@@ -22,6 +22,7 @@ import com.top_logic.table.SearchSpec;
 import com.top_logic.table.TreeStructure;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.filter.TextFilterState;
+import com.top_logic.table.filter.TextMatchMode;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.table.impl.TreeRowSource;
@@ -138,14 +139,14 @@ public class TestTableSearch extends TestCase {
 
 	public void testSearchUsesTheTextFilterFlags() {
 		assertEquals("Regular-expression pattern.",
-			List.of("Alice"), search(new SearchSpec(new TextFilterState("^Ali.*e$", false, true, false),
+			List.of("Alice"), search(new SearchSpec(new TextFilterState("^Ali.*e$", false, TextMatchMode.REGEXP),
 				List.of("name"))));
 		assertEquals("Whole-field matching: 'Ber' is no complete city.",
-			List.of(), search(new SearchSpec(new TextFilterState("Ber", false, false, true), List.of("city"))));
+			List.of(), search(new SearchSpec(new TextFilterState("Ber", false, TextMatchMode.CONTAINS, true), List.of("city"))));
 		assertEquals("Whole-field matching: 'Bern' is.",
-			List.of("Bob"), search(new SearchSpec(new TextFilterState("Bern", false, false, true), List.of("city"))));
+			List.of("Bob"), search(new SearchSpec(new TextFilterState("Bern", false, TextMatchMode.CONTAINS, true), List.of("city"))));
 		assertEquals("Case-sensitive matching.",
-			List.of(), search(new SearchSpec(new TextFilterState("alice", true, false, false), List.of("name"))));
+			List.of(), search(new SearchSpec(new TextFilterState("alice", true, TextMatchMode.CONTAINS), List.of("name"))));
 	}
 
 	public void testFacetCountsReflectSearch() {

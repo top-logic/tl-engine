@@ -37,6 +37,7 @@ import com.top_logic.ai.core.message.Message;
 import com.top_logic.ai.core.message.TextContent;
 import com.top_logic.ai.core.message.ToolCall;
 import com.top_logic.ai.core.provider.AgentModelAssignment;
+import com.top_logic.ai.core.provider.ApiFamilies;
 import com.top_logic.ai.core.provider.EffortLevels;
 import com.top_logic.ai.core.provider.LLMProvider;
 import com.top_logic.ai.core.provider.LLMProviderService;
@@ -574,16 +575,16 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	private static AgentModelAssignment applyEffort(AgentModelAssignment assignment, String effort) {
 		String model = assignment.model();
 		LLMProviderService llm = LLMProviderService.getInstance();
-		String providerId = llm.getProviderId(model, assignment.provider());
+		String family = llm.getApiFamily(model, assignment.provider());
 		ModelInfo info = llm.getModel(model);
 		String level = effort.trim().toLowerCase(Locale.ROOT);
 
-		if (!EffortLevels.isValid(providerId, info, level)) {
+		if (!EffortLevels.isValid(family, info, level)) {
 			Logger.warn("Ignoring effort '" + effort + "' for model '" + model
-				+ "': it offers " + EffortLevels.forModel(providerId, info) + ".", AgentFactory.class);
+				+ "': it offers " + EffortLevels.forModel(family, info) + ".", AgentFactory.class);
 			return assignment;
 		}
-		return switch (EffortLevels.kindOf(providerId, info)) {
+		return switch (EffortLevels.kindOf(family, info)) {
 			case THINKING_EFFORT -> assignment.withThinkingEffort(level);
 			case REASONING_EFFORT -> assignment.withReasoningEffort(level);
 			case NONE -> assignment;
@@ -775,8 +776,6 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			modelInfo = defaultModelInfo(model);
 		}
 
-		String providerId = llmRegistry.getProviderId(model, assignment.provider());
-
 		String systemPrompt = agent.systemPrompt();
 		systemPrompt = injectSkills(agent, systemPrompt, capabilities);
 		systemPrompt = injectDelegateDescriptions(agent, systemPrompt, capabilities);
@@ -820,9 +819,9 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			? assignedTimeoutSeconds : AgentParams.DEFAULT_TIMEOUT_SECONDS;
 
 		// toolChoice: assignment override > null (provider default)
-		ToolChoice toolChoice = resolveToolChoice(assignment.toolChoice());
+		ToolChoice toolChoice = ToolChoice.parse(assignment.toolChoice());
 
-		Map<String, Object> modelOptions = buildModelOptions(assignment, modelInfo, providerId);
+		Map<String, Object> modelOptions = buildModelOptions(assignment, modelInfo);
 
 		return new AgentParams(model, systemPrompt, maxTurns,
 			maxOutputTokens, modelOptions, contextWindowTokens,
@@ -914,10 +913,16 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	}
 
 	/**
-	 * Builds provider-specific model options from the model assignment, gated on model capabilities.
+	 * Builds vendor-specific model options from the model assignment, gated on the model's
+	 * {@link LLMProviderService#getApiFamily(String, String) API family} and capabilities.
+	 *
+	 * @param assignment
+	 *        The model and the options assigned to the agent.
+	 * @param modelInfo
+	 *        The catalog entry of the model.
 	 */
-	private Map<String, Object> buildModelOptions(AgentModelAssignment assignment,
-			ModelInfo modelInfo, String providerId) {
+	static Map<String, Object> buildModelOptions(AgentModelAssignment assignment, ModelInfo modelInfo) {
+		String family = LLMProviderService.getInstance().getApiFamily(assignment.model(), assignment.provider());
 		Map<String, Object> options = new HashMap<>();
 
 		if (modelInfo.capabilities().temperature()) {
@@ -933,7 +938,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		}
 
 		// Anthropic-specific options
-		if ("anthropic".equals(providerId)) {
+		if (ApiFamilies.ANTHROPIC.equals(family)) {
 			if (modelInfo.capabilities().reasoning()) {
 				String thinkingEffort = assignment.thinkingEffort();
 				if (thinkingEffort != null) {
@@ -947,7 +952,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		}
 
 		// OpenAI/xAI-specific options
-		if ("openai".equals(providerId) || "xai".equals(providerId)) {
+		if (ApiFamilies.OPENAI.equals(family) || ApiFamilies.XAI.equals(family)) {
 			if (modelInfo.capabilities().reasoning()) {
 				String reasoningEffort = assignment.reasoningEffort();
 				if (reasoningEffort != null) {
@@ -978,21 +983,6 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			new ModelInfo.ModelLimits(128_000, 16_384, 0),
 			new ModelInfo.ModelCapabilities(false, true, true, false, false, null, null),
 			null, null, false, null);
-	}
-
-	/**
-	 * Maps the tool choice string to the Java {@link ToolChoice} enum.
-	 */
-	private static ToolChoice resolveToolChoice(String choice) {
-		if (choice == null) {
-			return null;
-		}
-		return switch (choice) {
-			case "AUTO" -> ToolChoice.AUTO;
-			case "REQUIRED" -> ToolChoice.REQUIRED;
-			case "NONE" -> ToolChoice.NONE;
-			default -> null;
-		};
 	}
 
 	/**

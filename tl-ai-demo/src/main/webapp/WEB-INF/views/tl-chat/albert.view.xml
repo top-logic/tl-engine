@@ -56,6 +56,11 @@
 				
 				Every fact takes the <inputs> as its leading arguments, the way <data-list> binds
 				its rows - which is why the stable one names the channel it does not use.
+				
+				The value of "Application" has two lines on purpose. The environment block shows
+				each fact value as one line, so the recorded environment of a run (the Environment
+				group of a run in the agent activity monitor) shows it on one line, the two parts
+				joined by a space.
 			-->
 			<context>
 				<inputs>
@@ -64,7 +69,7 @@
 				<fact name="Application"
 					stable="true"
 				>
-					<value><![CDATA[open -> "Event management demo (tl-ai-demo)"]]></value>
+					<value><![CDATA[open -> "Event management demo\n(tl-ai-demo)"]]></value>
 				</fact>
 				<fact name="Open event"
 					stable="false"

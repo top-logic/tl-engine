@@ -27,6 +27,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 
@@ -168,16 +169,39 @@ public final class ChatCommandDriver {
 	 *        The content of the {@code <chat-conversation>} element, e.g. a {@code <context>}.
 	 */
 	public Conversation conversation(Person person, String content) throws Exception {
-		return inWindow(() -> render(person, content));
+		return conversation(person, "", content);
 	}
 
-	private Conversation render(Person person, String content) throws Exception {
+	/**
+	 * A conversation of the given configuration, rendered and displayed for the given account.
+	 *
+	 * @param attributes
+	 *        Further attributes of the {@code <chat-conversation>} element, e.g. an {@code input}
+	 *        naming a channel {@link #registerChannel(String, ViewChannel) registered} before.
+	 * @param content
+	 *        The content of the {@code <chat-conversation>} element, e.g. a {@code <context>}.
+	 */
+	public Conversation conversation(Person person, String attributes, String content) throws Exception {
+		return inWindow(() -> render(person, attributes, content));
+	}
+
+	/** Declares a channel of the view the conversations are rendered in. */
+	public void registerChannel(String name, ViewChannel channel) {
+		_view.registerChannel(name, channel);
+	}
+
+	/** The chat id of the driver's conversation for the given account. */
+	public String chatId(Person person) {
+		return _chatId + "-" + person.getName();
+	}
+
+	private Conversation render(Person person, String attributes, String content) throws Exception {
 		_subSession.setPerson(person);
 		Conversation control = new Conversation(_view,
 			(ChatConversationElement.Config) TypedConfiguration.parse(
 				CharacterContents.newContent("<chat-conversation xmlns:config='http://www.top-logic.com/ns/config/6.0'"
 					+ " config:interface='" + ChatConversationElement.Config.class.getName() + "'"
-					+ " chat-id='" + _chatId + "-" + person.getName() + "'>" + content + "</chat-conversation>")));
+					+ " chat-id='" + chatId(person) + "' " + attributes + ">" + content + "</chat-conversation>")));
 		control.attach();
 		return control;
 	}

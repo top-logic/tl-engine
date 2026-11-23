@@ -191,8 +191,29 @@ public interface RowSource<R> {
 	/**
 	 * Per-option facet counts for the given option-style filtered column, or
 	 * {@link MatchCounts#NONE} if counting is unavailable.
+	 *
+	 * <p>
+	 * The counts are those of the active {@link Column#filters() kind of filter} of the column:
+	 * the one its current {@link ColumnFilterState} names, the first one while the column is not
+	 * filtered.
+	 * </p>
+	 *
+	 * @see #matchCounts(String, String)
 	 */
 	default MatchCounts matchCounts(String column) {
+		return MatchCounts.NONE;
+	}
+
+	/**
+	 * Per-option facet counts for the given column, as the given {@link ColumnFilter#kind() kind of
+	 * filter} of it buckets the values, or {@link MatchCounts#NONE} if counting is unavailable.
+	 *
+	 * @param column
+	 *        The name of the column.
+	 * @param kind
+	 *        The kind of filter, {@code null} for the first one of the column.
+	 */
+	default MatchCounts matchCounts(String column, String kind) {
 		return MatchCounts.NONE;
 	}
 

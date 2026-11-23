@@ -20,7 +20,13 @@ import com.top_logic.table.FilterState;
 
 /**
  * A {@link ColumnFilter} comparing the cell value against a {@link RangeFilterState} using
- * a {@link Comparator}. A {@code null} cell value never matches.
+ * a {@link Comparator}.
+ *
+ * <p>
+ * A {@code null} cell value is no value to compare: it matches only
+ * {@link ComparisonOperator#NE}, since it is not equal to any bound. So the inverted
+ * {@link ComparisonOperator#NE} selects exactly the cells {@link ComparisonOperator#EQ} selects.
+ * </p>
  *
  * @param <V>
  *        The compared value type.
@@ -103,11 +109,6 @@ public class ComparableColumnFilter<V> implements ColumnFilter<V> {
 	@Override
 	public FilterInput input() {
 		return new FilterInput.Range();
-	}
-
-	@Override
-	public boolean supportsInversion() {
-		return true;
 	}
 
 	/**
@@ -218,7 +219,7 @@ public class ComparableColumnFilter<V> implements ColumnFilter<V> {
 		V secondary = range.secondary();
 		return value -> {
 			if (value == null) {
-				return false;
+				return operator == ComparisonOperator.NE;
 			}
 			int toPrimary = _comparator.compare(value, primary);
 			switch (operator) {

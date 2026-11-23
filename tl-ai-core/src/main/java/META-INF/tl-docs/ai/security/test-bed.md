@@ -163,9 +163,9 @@ A run with nobody to answer an approval prompt auto-approves every call, so it i
 | A3 | it binds administrators too | `root` | 3.2 (as `root`, `fire` fires every case) | still refused: the missing approval prompt is the reason, not the principal's authority |
 | A4 | what the allowlist admits works | `ben` | 3.3, 3.4, 3.5 | the listings, with the model rights applied |
 | A5 | an enforcing policy must declare an allowlist | - | delete `<background-allowlist>` from `secdemo.config.xml` and restart | the application refuses to start ([capping unattended runs](doc:ai/security/tool-access-recipes)) |
-| A6 | an A2A request is a background run that can still ask | `anna` | test | the calling agent approves no tool call, so the list caps the run; `askUser` is not refused, the calling agent answers it |
+| A6 | an A2A request is a background run that can still ask | `anna` | test | the calling agent approves no tool call, so the list caps the run; `askUser` moves the task to `INPUT_REQUIRED` and returns the answer of the calling agent (`testAQuestionOfTheRunGoesToTheCallingAgent`) |
 | A7 | `allow-writes="true"` alone opens no write tool | `anna`, then `root` | test | `secdemo-editing.addTicket` refused naming the allowlist, also for the administrator |
-| A8 | a write tool on the list follows `allow-writes` | `anna` | test | `script-exec.changeData` permitted with `allow-writes="true"`, refused with `"false"` by the served agent's switch |
+| A8 | a write tool on the list follows `allow-writes` | `anna` | test | the gate admits `script-exec.changeData` with `allow-writes="true"` and refuses it with `"false"` by the served agent's switch; a change that it saves still needs `data.write`, which is off the list (A2) |
 | A9 | a READ or EXTERNAL tool off the list is refused over A2A | `root` | test | `a2a.listAgents` and `a2a.askAgent` (`egress`) refused naming the allowlist, whatever `allow-writes` says |
 
 ### The object tools

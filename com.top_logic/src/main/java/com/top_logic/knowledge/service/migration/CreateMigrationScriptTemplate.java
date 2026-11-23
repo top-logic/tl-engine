@@ -105,6 +105,7 @@ public class CreateMigrationScriptTemplate extends XMain {
 	private MigrationConfig newMigrationConfig(List<String> migrationModules, File migrationFile) {
 		MigrationConfig migration = TypedConfiguration.newConfigItem(MigrationConfig.class);
 		Version version = getVersion(migrationFile);
+		MigrationConfig predecessor = null;
 		for (String migrationModule : migrationModules) {
 			MigrationConfig latest = getLatestMigration(migrationModule);
 			if (latest == null) {
@@ -114,21 +115,40 @@ public class CreateMigrationScriptTemplate extends XMain {
 			migration.getDependencies().put(moduleVersion.getModule(), moduleVersion);
 
 			if (migrationModule.equals(version.getModule())) {
-				Set<String> droppedModules = droppedDependencies(latest, migrationModules);
-				if (!droppedModules.isEmpty()) {
-					getProtocol().info("Module '" + migrationModule + "' no longer depends on " + droppedModules
-						+ ", the new migration lists them as '" + MigrationConfig.DROPPED_DEPENDENCIES_PROPERTY
-						+ "'.");
-					for (String droppedModule : droppedModules) {
-						ModuleRef entry = TypedConfiguration.newConfigItem(ModuleRef.class);
-						entry.setName(droppedModule);
-						migration.getDroppedDependencies().put(droppedModule, entry);
-					}
+				predecessor = latest;
+			}
+		}
+
+		if (predecessor != null) {
+			String module = version.getModule();
+			Set<String> droppedModules = droppedDependencies(predecessor, migrationModules);
+			if (!droppedModules.isEmpty()) {
+				getProtocol().info("Module '" + module + "' no longer depends on " + droppedModules
+					+ ", the new migration lists them as '" + MigrationConfig.DROPPED_DEPENDENCIES_PROPERTY
+					+ "'.");
+				for (String droppedModule : droppedModules) {
+					migration.getDroppedDependencies().put(droppedModule, moduleRef(droppedModule));
+				}
+			}
+
+			Set<String> addedModules = addedDependencies(predecessor, migration.getDependencies().keySet());
+			if (!addedModules.isEmpty()) {
+				getProtocol().info("Module '" + module + "' depends on " + addedModules
+					+ " its latest migration does not depend on, the new migration lists them as '"
+					+ MigrationConfig.ADDED_DEPENDENCIES_PROPERTY + "'.");
+				for (String addedModule : addedModules) {
+					migration.getAddedDependencies().put(addedModule, moduleRef(addedModule));
 				}
 			}
 		}
 		migration.setVersion(version);
 		return migration;
+	}
+
+	private static ModuleRef moduleRef(String module) {
+		ModuleRef entry = TypedConfiguration.newConfigItem(ModuleRef.class);
+		entry.setName(module);
+		return entry;
 	}
 
 	/**
@@ -146,6 +166,24 @@ public class CreateMigrationScriptTemplate extends XMain {
 	public static Set<String> droppedDependencies(MigrationConfig predecessor, Collection<String> migrationModules) {
 		Set<String> result = new TreeSet<>(predecessor.getDependencies().keySet());
 		result.removeAll(migrationModules);
+		return result;
+	}
+
+	/**
+	 * The modules a follow-up migration of the given migration depends on, that the given migration
+	 * does not depend on.
+	 * 
+	 * @param predecessor
+	 *        The latest existing migration of a module.
+	 * @param dependencyModules
+	 *        The modules the follow-up migration depends on (including the module itself).
+	 * @return The names of the modules the follow-up migration of the predecessor must list as
+	 *         {@link MigrationConfig#getAddedDependencies() added dependencies}, in a stable order.
+	 */
+	public static Set<String> addedDependencies(MigrationConfig predecessor, Collection<String> dependencyModules) {
+		Set<String> result = new TreeSet<>(dependencyModules);
+		result.removeAll(predecessor.getDependencies().keySet());
+		result.remove(predecessor.getVersion().getModule());
 		return result;
 	}
 

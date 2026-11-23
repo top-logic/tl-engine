@@ -386,6 +386,23 @@ public class TestMigrationUtil extends BasicTestCase {
 				Arrays.asList("tl", "element", "ewe", "demo"))));
 	}
 
+	public void testAddedDependencyComputation() {
+		MigrationConfig predecessor = migrationsWithLostDependency().get(0);
+		assertEquals(set("demo", "element", "ewe", "importer", "reporting", "tl"),
+			predecessor.getDependencies().keySet());
+
+		assertEquals(Collections.emptySet(), CreateMigrationScriptTemplate.addedDependencies(predecessor,
+			Arrays.asList("tl", "element", "importer", "reporting", "ewe", "demo")));
+		assertEquals(Arrays.asList("ai", "chat"),
+			new ArrayList<>(CreateMigrationScriptTemplate.addedDependencies(predecessor,
+				Arrays.asList("tl", "element", "chat", "ewe", "ai", "demo"))));
+
+		MigrationConfig first = TypedConfiguration.newConfigItem(MigrationConfig.class);
+		first.setVersion(MigrationUtil.newVersion("app", "first"));
+		assertEquals(Arrays.asList("tl"),
+			new ArrayList<>(CreateMigrationScriptTemplate.addedDependencies(first, Arrays.asList("app", "tl"))));
+	}
+
 	public void testDroppedDependencySerialization() throws Exception {
 		MigrationConfig followUp = migrationsWithLostDependency().get(1);
 		addDroppedDependency(followUp, "tl");

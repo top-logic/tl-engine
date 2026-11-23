@@ -19,6 +19,7 @@ import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -1135,6 +1136,31 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 */
 	public boolean isCancelRequested(AgentExecution execution) {
 		return write(() -> Boolean.valueOf(execution.getCancelRequested())).booleanValue();
+	}
+
+	/**
+	 * Queues the read of {@link #isCancelRequested(AgentExecution)} on the writer thread and
+	 * returns at once.
+	 *
+	 * <p>
+	 * Internal to the timer of {@link CancelSignalObserver}, which runs on the few threads that the
+	 * {@link com.top_logic.basic.sched.SchedulerService} shares with the whole application. Such a
+	 * thread must not wait for the writer, which can be busy with commits for seconds.
+	 * </p>
+	 *
+	 * @return The read. Its value is whether the marker is set; a failed read fails it.
+	 * @throws IllegalStateException
+	 *         When this store is not started.
+	 * @throws RejectedExecutionException
+	 *         When this store is shutting down.
+	 */
+	Future<Boolean> readCancelMarker(AgentExecution execution) {
+		ThreadPoolExecutor writer = _writer;
+		if (writer == null) {
+			throw new IllegalStateException("AgentExecutionStore is not started.");
+		}
+		Supplier<Boolean> read = () -> Boolean.valueOf(execution.getCancelRequested());
+		return writer.submit(() -> ThreadContext.inSystemContext(AgentExecutionStore.class, read::get));
 	}
 
 	/**

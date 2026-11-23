@@ -5,6 +5,8 @@
  */
 package com.top_logic.ai.core.execution;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -54,7 +56,8 @@ public final class CancelSignalObserver implements AgentEventListener, AutoClose
 	/**
 	 * How often the persisted cancel marker is polled at HEAD while the run is in flight. Bounds
 	 * the worst-case delay between a cancel request and the local token being flipped when the run
-	 * is busy inside a single long turn.
+	 * is busy inside a single long turn: about two intervals, because a tick takes the result of the
+	 * read that the tick before it queued.
 	 */
 	static final long POLL_INTERVAL_MS = 1000;
 
@@ -64,6 +67,12 @@ public final class CancelSignalObserver implements AgentEventListener, AutoClose
 
 	/** The recurring poll while the run is in flight; guarded by {@code this}. */
 	private ScheduledFuture<?> _pollTask;
+
+	/**
+	 * The marker read that the last tick queued, until a tick takes its result. Only the ticks of
+	 * {@link #_pollTask} use it, and they never overlap.
+	 */
+	private volatile Future<Boolean> _queuedRead;
 
 	/**
 	 * Creates a {@link CancelSignalObserver}.
@@ -113,7 +122,7 @@ public final class CancelSignalObserver implements AgentEventListener, AutoClose
 		if (_pollTask != null || !SchedulerService.Module.INSTANCE.isActive()) {
 			return;
 		}
-		_pollTask = SchedulerService.getInstance().scheduleWithFixedDelay(this::pollCancelMarker,
+		_pollTask = SchedulerService.getInstance().scheduleWithFixedDelay(this::onTick,
 			POLL_INTERVAL_MS, POLL_INTERVAL_MS, TimeUnit.MILLISECONDS);
 	}
 
@@ -125,6 +134,13 @@ public final class CancelSignalObserver implements AgentEventListener, AutoClose
 		}
 	}
 
+	/**
+	 * Reads the marker at the start of a turn, and waits for the read.
+	 *
+	 * <p>
+	 * Runs on the run's own thread, before the turn's model call, which a set marker then saves.
+	 * </p>
+	 */
 	private void pollCancelMarker() {
 		if (_token.isCancelled()) {
 			stopPolling();
@@ -136,13 +152,62 @@ public final class CancelSignalObserver implements AgentEventListener, AutoClose
 		}
 		try {
 			if (AgentExecutionStore.getInstance().isCancelRequested(execution)) {
-				_token.cancel();
-				stopPolling();
+				cancelRun();
 			}
 		} catch (RuntimeException ex) {
-			// Observing the marker is best-effort: a failed read must not disturb the run.
-			Logger.warn("Failed to read cancel marker of a running agent execution: " + ex.getMessage(),
-				ex, CancelSignalObserver.class);
+			warnReadFailed(ex);
 		}
+	}
+
+	/**
+	 * A tick of the timer, on a thread that the {@link SchedulerService} shares with the whole
+	 * application.
+	 *
+	 * <p>
+	 * Never waits for the store's writer, which can be busy with commits for seconds: the tick takes
+	 * the result of the read that the tick before it queued, and queues the next read. While that
+	 * read is still queued, a tick does nothing, so that a busy writer gets one read of this run and
+	 * not one for each tick.
+	 * </p>
+	 */
+	private void onTick() {
+		if (_token.isCancelled()) {
+			stopPolling();
+			return;
+		}
+		AgentExecution execution = _handle.get();
+		if (execution == null || !AgentExecutionStore.Module.INSTANCE.isActive()) {
+			return;
+		}
+		Future<Boolean> read = _queuedRead;
+		if (read != null && !read.isDone()) {
+			return;
+		}
+		_queuedRead = null;
+		try {
+			// A read that is done: get() does not wait.
+			if (read != null && read.get().booleanValue()) {
+				cancelRun();
+				return;
+			}
+			_queuedRead = AgentExecutionStore.getInstance().readCancelMarker(execution);
+		} catch (ExecutionException ex) {
+			warnReadFailed(ex.getCause());
+		} catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
+		} catch (RuntimeException ex) {
+			warnReadFailed(ex);
+		}
+	}
+
+	private void cancelRun() {
+		_token.cancel();
+		stopPolling();
+	}
+
+	/** Observing the marker is best-effort: a failed read must not disturb the run. */
+	private static void warnReadFailed(Throwable ex) {
+		Logger.warn("Failed to read cancel marker of a running agent execution: " + ex.getMessage(), ex,
+			CancelSignalObserver.class);
 	}
 }

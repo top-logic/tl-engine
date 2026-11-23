@@ -6,6 +6,10 @@
 package com.top_logic.ai.core.scripting;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -16,6 +20,7 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -306,6 +311,54 @@ public class TestAsyncAgentScriptFunctions extends BasicTestCase {
 		} finally {
 			observer.onEvent(new AgentEvent.RunCompleted("run-long-turn", 1, now, StopReason.ABORTED,
 				com.top_logic.ai.core.message.TokenUsage.EMPTY, Money.zero(Money.USD)));
+		}
+	}
+
+	/**
+	 * The timer of the observer does not wait for a busy writer of the store. It runs on the few
+	 * threads that the scheduler shares with the whole application: while the writer is held and
+	 * more runs observe their markers than the scheduler has threads, a task given to the scheduler
+	 * still runs at once.
+	 */
+	public void testBusyWriterDoesNotHoldTheScheduler() throws Exception {
+		AgentSession session = _store.createSession(SessionKind.BACKGROUND, null, "busy-writer");
+		AgentExecution execution =
+			_store.beginExecution(session, "run-busy-writer", "test-agent", "test-model", null, null);
+		ExecutionHandle handle = new ExecutionHandle();
+		handle.set(execution);
+
+		CountDownLatch writerBusy = new CountDownLatch(1);
+		CountDownLatch releaseWriter = new CountDownLatch(1);
+		// The supplier of a checkpoint is asked on the writer thread: it holds the writer.
+		assertTrue(_store.checkpointTranscript(execution, () -> {
+			writerBusy.countDown();
+			try {
+				releaseWriter.await(60, TimeUnit.SECONDS);
+			} catch (InterruptedException ex) {
+				Thread.currentThread().interrupt();
+			}
+			return null;
+		}));
+		List<CancelSignalObserver> observers = new ArrayList<>();
+		try {
+			assertTrue("The writer did not start the checkpoint.", writerBusy.await(10, TimeUnit.SECONDS));
+			for (int i = 0; i < 8; i++) {
+				CancelSignalObserver observer = new CancelSignalObserver(handle, new CancellationToken());
+				observers.add(observer);
+				observer.onEvent(new AgentEvent.RunStarted("run-busy-writer", 0, Instant.now(), "test-model"));
+			}
+			// Past the first two ticks of every timer.
+			Thread.sleep(2500);
+
+			CountDownLatch ran = new CountDownLatch(1);
+			SchedulerService.getInstance().submit(ran::countDown);
+			assertTrue("The marker reads of the runs hold the threads of the scheduler.",
+				ran.await(5, TimeUnit.SECONDS));
+		} finally {
+			releaseWriter.countDown();
+			for (CancelSignalObserver observer : observers) {
+				observer.close();
+			}
 		}
 	}
 

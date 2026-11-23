@@ -93,6 +93,7 @@
   --tl-font-family-sans: 'Probe Sans', system-ui, sans-serif;
   --tl-radius-sm: 0;
   --tl-radius-md: 0;
+  --tl-radius-mark: 0;
 }
 [data-tl-theme="probe"][data-tl-mode="dark"] {
   --tl-surface-base: #1A1714;

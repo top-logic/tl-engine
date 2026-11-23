@@ -320,3 +320,16 @@ test('Kästchen und Kreis springen beim Ankreuzen nicht: mittig statt auf der Gr
     assert.match(declarationsOf(css, sel) ?? '', /vertical-align:\s*middle/, sel);
   }
 });
+
+test('das Kästchen liest radius-mark auf eigener Stufe bevel-1, das Radio bleibt rund (#30502, U69)', () => {
+  assert.equal(T.measure['radius-mark'], '{bevel-1}');
+  const kaestchen = declarationsOfAll(css, '.tl-checkbox');
+  assert.match(kaestchen, /border-radius:\s*var\(--tl-radius-mark\)/);
+  assert.doesNotMatch(kaestchen, /--tl-radius-sm/);
+  assert.match(declarationsOfAll(css, '.tl-radio'), /border-radius:\s*var\(--tl-radius-round\)/);
+  // Nur das Kästchen ist eine Auswahlmarke: kein anderes Bedienteil liest die Rolle.
+  const leser = [];
+  for (const [name, text] of componentCssFiles())
+    for (const [sel, d] of rulesOf(text)) if (d.includes('--tl-radius-mark')) leser.push(`${name}: ${sel}`);
+  assert.deepEqual(leser, ['choice/choice.css: .tl-checkbox']);
+});

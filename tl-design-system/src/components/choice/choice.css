@@ -27,7 +27,7 @@
 .tl-radio[hidden] { display: none; }
 
 .tl-checkbox {
-  border-radius: var(--tl-radius-sm);
+  border-radius: var(--tl-radius-mark);
 }
 
 .tl-radio {

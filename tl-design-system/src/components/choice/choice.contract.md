@@ -41,9 +41,9 @@ Feldes (`field.contract.md`, Abschnitt Zustand) und gelten hier unverändert. Zu
 
 | Teil | Token |
 |---|---|
-| Kästchen, Kreis | Maß `--tl-size-choice` (folgt nicht der Dichte); Ecke `--tl-radius-sm` bzw. `--tl-radius-round` |
+| Kästchen, Kreis | Maß `--tl-size-choice` (folgt nicht der Dichte); Ecke `--tl-radius-mark` bzw. `--tl-radius-round` |
 | Rand | `--tl-border-control`, Breite `--tl-border-width-sm`; beim Zeigen `--tl-border-emphasis` |
-| Halo (Kästchen, Radio, Schalter) | beim Zeigen `--tl-surface-state-hover`, beim Drücken `--tl-surface-state-active` — durchscheinende Schichten, was darunter liegt bleibt sichtbar; angekreuzt wie leer; als `box-shadow` ohne Versatz und Unschärfe, Ausdehnung (`--tl-size-control` − `--tl-size-choice`) / 2, folgt der Form der Marke (Quadrat mit `--tl-radius-sm`, Kreis, Pille um die Spur); Übergang `--tl-duration-fast`, `--tl-easing-standard` |
+| Halo (Kästchen, Radio, Schalter) | beim Zeigen `--tl-surface-state-hover`, beim Drücken `--tl-surface-state-active` — durchscheinende Schichten, was darunter liegt bleibt sichtbar; angekreuzt wie leer; als `box-shadow` ohne Versatz und Unschärfe, Ausdehnung (`--tl-size-control` − `--tl-size-choice`) / 2, folgt der Form der Marke (Quadrat mit `--tl-radius-mark`, Kreis, Pille um die Spur); Übergang `--tl-duration-fast`, `--tl-easing-standard` |
 | Fläche | `--tl-surface-field` |
 | Angekreuzt, gemischt, gewähltes Radio | Fläche und Rand `--tl-surface-brand`; Haken, Strich, Punkt `--tl-text-on-brand`, Strichstärke `--tl-border-width-md` |
 | Schalter | Spur `--tl-size-switch` × `--tl-size-choice`, Ecke `--tl-radius-full`; Knopf `--tl-size-switch-knob`, rund `--tl-radius-round`, aus `--tl-icon-secondary`, an `--tl-text-on-brand`; Bewegung `--tl-duration-fast`, `--tl-easing-standard` (Reduced Motion über den globalen Schalter) |

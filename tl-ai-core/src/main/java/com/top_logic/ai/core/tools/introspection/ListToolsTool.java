@@ -320,8 +320,9 @@ public class ListToolsTool implements Tool {
 			? "every tool in it belongs to no capability, so no grant reaches it"
 			: "every tool in it needs a capability this user does not hold: " + join(lacking);
 		if (capabilities.withheldByBackgroundCeiling(skill)) {
-			return "this run is unattended, so only the capabilities on the background allowlist are"
-				+ " reachable, and " + needs + ". The same request in the chat would have this skill.";
+			return "this run is unattended: nobody is present to approve a tool call, so only the"
+				+ " capabilities on the background allowlist are reachable, and " + needs
+				+ ". The same request in the chat would have this skill.";
 		}
 		return needs + ". Loading it would hand over nothing, so it is not offered.";
 	}

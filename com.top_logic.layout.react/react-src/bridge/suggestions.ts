@@ -10,6 +10,7 @@
  */
 import React from 'react';
 import type { SuggestionEntryJson } from '../state/control-state';
+import { isCompositionKey } from './keyboard-dispatcher';
 
 const { useCallback, useEffect, useMemo, useRef, useState } = React;
 
@@ -162,7 +163,9 @@ export function applySuggestion(text: string, entry: SuggestionEntryJson): { tex
  * an active entry, Enter is left to the editor (a new line, the end of the edit). Escape closes the
  * list. A handled key goes no further: Enter does not submit the form around, Escape does not close
  * the dialog around. ArrowLeft, ArrowRight, Home and End move the caret away from where the list was
- * computed for and close it. Every other key types on.</p>
+ * computed for and close it. Every other key types on. The keys of the composition of an input method
+ * (for example for Japanese), the Enter that ends it included, are the input method's: they move no
+ * entry, pick none and close nothing (see {@link isCompositionKey}).</p>
  */
 export function useSuggestions(options: SuggestionsOptions): Suggestions {
   const { id, enabled, text, answer, debounceMs = SUGGEST_DEBOUNCE_MS } = options;
@@ -231,6 +234,8 @@ export function useSuggestions(options: SuggestionsOptions): Suggestions {
 
   const onKeyDown = useCallback((event: React.KeyboardEvent): boolean => {
     if (!optionsRef.current.enabled) return false;
+    // The keys of a composition choose in the list of the input method, not in this one.
+    if (isCompositionKey(event.nativeEvent)) return false;
     const handled = () => {
       event.preventDefault();
       event.stopPropagation();

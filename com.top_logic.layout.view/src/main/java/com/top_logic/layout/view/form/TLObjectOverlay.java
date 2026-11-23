@@ -27,6 +27,7 @@ import com.top_logic.model.TransientObject;
 import com.top_logic.model.annotate.util.ConstraintCheck;
 import com.top_logic.model.fallback.StorageWithFallback;
 import com.top_logic.model.form.TracingScope;
+import com.top_logic.model.search.expr.DeleteObject;
 import com.top_logic.model.search.expr.Update;
 import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.util.error.TopLogicException;
@@ -619,13 +620,20 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 * </p>
 	 *
 	 * <p>
+	 * A changed composition must not take out a part the current user may not delete, see
+	 * {@link DeleteObject#checkRemovedParts(TLObject, TLStructuredTypePart, Object)}: the save
+	 * deletes such a part.
+	 * </p>
+	 *
+	 * <p>
 	 * A save writing several overlays checks all of them before the first one is applied, so a
 	 * refused save leaves every overlay with its changes.
 	 * </p>
 	 *
 	 * @throws TopLogicException
-	 *         If the current user is not allowed to modify one of the changed attributes, or a changed
-	 *         reference adds an object the user may not discover.
+	 *         If the current user is not allowed to modify one of the changed attributes, a changed
+	 *         reference adds an object the user may not discover, or a changed composition takes out
+	 *         a part the user may not delete.
 	 */
 	public void checkApply() {
 		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
@@ -634,8 +642,9 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 			if (isChange(value, baseValue(part))) {
 				Update.checkWritePermission(_base, part);
 				// Rows of a composition are buffered in overlays, which stand for their objects.
-				DiscoverRight.checkNewTargets(_base, part,
-					value instanceof Collection<?> values ? resolveAll(values) : resolve(value));
+				Object resolved = value instanceof Collection<?> values ? resolveAll(values) : resolve(value);
+				DiscoverRight.checkNewTargets(_base, part, resolved);
+				DeleteObject.checkRemovedParts(_base, part, resolved);
 			}
 		}
 	}

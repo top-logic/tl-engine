@@ -37,6 +37,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.ValidationResult;
+import com.top_logic.model.search.expr.DeleteObject;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.TLContext;
@@ -1068,13 +1069,20 @@ public class RowSetEditSession implements FormParticipant {
 	}
 
 	/**
-	 * Checks the write right of every changed row and the right to create every added row.
+	 * Checks the write right of every changed row, the right to create every added row and the
+	 * right to delete every removed row the save deletes.
 	 *
 	 * <p>
 	 * A row added to the rows of a persistent owner is created when the form is saved: the user
 	 * needs the right to create an object of its type in the context of the owner and, for rows of
 	 * an attribute of the owner, the right to write that attribute. Rows of a transient owner
 	 * become persistent together with it, where that creation is checked.
+	 * </p>
+	 *
+	 * <p>
+	 * A row removed from the rows of a persistent owner is deleted when the form is saved, if the
+	 * binding {@link RowSetBinding.RemoveMode#DELETE deletes} removed rows: the user needs the right
+	 * to delete it, see {@link DeleteObject#checkDeletePermission(TLObject)}.
 	 * </p>
 	 */
 	@Override
@@ -1096,6 +1104,26 @@ public class RowSetEditSession implements FormParticipant {
 		}
 		if (!_owner.isTransient()) {
 			checkCreateRights();
+			checkDeleteRights();
+		}
+	}
+
+	/**
+	 * Checks the right to delete each removed row, for a binding that deletes removed rows.
+	 *
+	 * <p>
+	 * A row that is a part of another removed row is deleted with that row and is not checked on
+	 * its own: a delete checks the deleted object, not the parts deleted with it.
+	 * </p>
+	 */
+	private void checkDeleteRights() {
+		if (_binding.getRemoveMode() != RowSetBinding.RemoveMode.DELETE) {
+			return;
+		}
+		for (TLObject removed : _removedObjects) {
+			if (!isPartOf(removed, _removedObjects, _removedNewObjects)) {
+				DeleteObject.checkDeletePermission(removed);
+			}
 		}
 	}
 

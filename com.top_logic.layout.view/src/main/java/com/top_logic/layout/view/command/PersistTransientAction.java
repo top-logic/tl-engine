@@ -24,6 +24,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.provider.DefaultProvider;
+import com.top_logic.model.search.expr.DeleteObject;
 import com.top_logic.model.search.expr.Update;
 import com.top_logic.model.util.TLModelPartRef;
 
@@ -52,8 +53,9 @@ import com.top_logic.model.util.TLModelPartRef;
  *
  * <p>
  * The current user must hold the right to create the object and, when it is added to a reference
- * of the container, the right to write that reference. A refusal aborts the chain with the message
- * of the refused TL-Script operation, and nothing is created.
+ * of the container, the right to write that reference. A single-valued composition takes out the
+ * part it holds, which needs the right to delete that part. A refusal aborts the chain with the
+ * message of the refused TL-Script operation, and nothing is created.
  * </p>
  *
  * <p>
@@ -87,7 +89,9 @@ import com.top_logic.model.util.TLModelPartRef;
  * @implNote The persistent object is created by a {@link CopyOperation} with security and
  *           {@link CopyOperation#skipTransactionDefaults(boolean)}; the reference of the
  *           container is checked by
- *           {@link Update#checkWritePermission(TLObject, TLStructuredTypePart)}.
+ *           {@link Update#checkWritePermission(TLObject, TLStructuredTypePart)}, the part a
+ *           single-valued composition takes out by
+ *           {@link DeleteObject#checkRemovedParts(TLObject, TLStructuredTypePart, Object)}.
  */
 @InApp
 public class PersistTransientAction implements ViewAction {
@@ -188,6 +192,7 @@ public class PersistTransientAction implements ViewAction {
 				if (reference.isMultiple()) {
 					container.tAdd(reference, created);
 				} else {
+					DeleteObject.checkRemovedParts(container, reference, created);
 					container.tUpdate(reference, created);
 				}
 			}

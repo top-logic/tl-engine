@@ -13,19 +13,24 @@ import junit.framework.Test;
 import test.com.top_logic.layout.view.command.ArgumentsProbe;
 import test.com.top_logic.layout.view.security.AbstractModelAccessTest;
 
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.layout.react.control.dnd.DropLocation;
+import com.top_logic.layout.react.control.dnd.DropMode;
 import com.top_logic.layout.react.control.dnd.DropPoint;
+import com.top_logic.layout.react.control.dnd.DropRequest;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.command.ActionScopes;
 import com.top_logic.layout.view.command.ViewActionChain;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
 import com.top_logic.layout.view.dnd.DropArguments;
+import com.top_logic.layout.view.dnd.DropBinding;
 import com.top_logic.layout.view.dnd.DropConfig;
 import com.top_logic.layout.view.dnd.DropSignature;
 import com.top_logic.layout.view.element.TreeDropConfig;
@@ -186,6 +191,66 @@ public class TestDropArguments extends AbstractModelAccessTest {
 			ActionScopes.scopeAt(config).names());
 		assertEquals(List.of("objects", "folder", "before"),
 			ActionScopes.scopeAt(config.getActions().get(0)).names());
+	}
+
+	/**
+	 * Tests that the refusal function and the actions of a drop with an input see the current
+	 * value of the input channel under the name of the input.
+	 */
+	public void testRefuseIfAndActionsSeeInput() throws Exception {
+		TreeDropConfig config = drops(
+			"<drop target='node' input='shown as pinned' refuse-if='$objects.containsSome($pinned)'>"
+				+ "<action class='" + ArgumentsProbe.class.getName() + "'/>"
+				+ "</drop>").get(0);
+		DeclaredDrop drop = compile(config, DropSignature.ONTO);
+		assertEquals(List.of("objects", "target", "x", "y", "pinned"), drop.names());
+		assertEquals("The editor offers the input.", List.of("objects", "target", "x", "y", "pinned"),
+			ActionScopes.scopeAt(config).names());
+
+		DefaultViewContext context = new DefaultViewContext(null);
+		DefaultViewChannel shown = new DefaultViewChannel("shown");
+		context.registerChannel("shown", shown);
+		DropBinding binding = DeclaredDrop.bind(context, null, () -> {
+			// Nothing to announce.
+		}, List.of(drop));
+
+		shown.set(List.of("a"));
+		assertFalse("An object the input holds is refused.", binding.check(request("a")).isAccepted());
+		assertTrue(binding.check(request("b")).isAccepted());
+
+		shown.set(List.of("b"));
+		assertTrue("The refusal follows the current value of the input.", binding.check(request("a")).isAccepted());
+		assertFalse(binding.check(request("b")).isAccepted());
+
+		DropRequest accepted = request("a");
+		binding.onDrop(accepted.event(accepted.location(DropMode.ONTO)));
+		ActionArguments seen = ArgumentsProbe.SEEN.get(0);
+		assertEquals(List.of("objects", "target", "x", "y", "pinned"), seen.names());
+		assertEquals(List.of("b"), seen.get("pinned"));
+		assertEquals("t", seen.get("target"));
+	}
+
+	/**
+	 * Tests that a drop without input has no argument for one, and that a refusal function using
+	 * an input the drop does not declare is a configuration error.
+	 */
+	public void testNoInputNoArgument() throws Exception {
+		TreeDropConfig config = drops("<drop target='node' refuse-if='$objects.isEmpty()'/>").get(0);
+		assertEquals(List.of("objects", "target", "x", "y"), compile(config, DropSignature.ONTO).names());
+		assertEquals(List.of("objects", "target", "x", "y"), ActionScopes.scopeAt(config).names());
+
+		DropConfig undeclared = drops("<drop target='node' refuse-if='$objects.containsSome($pinned)'/>").get(0);
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestDropArguments.class);
+		try {
+			DeclaredDrop.compile(context, undeclared, DropSignature.ONTO);
+			fail("A refusal function using an input the drop does not declare is not accepted.");
+		} catch (ConfigurationError expected) {
+			assertTrue(expected.getMessage(), expected.getMessage().contains("pinned"));
+		}
+	}
+
+	private static DropRequest request(String object) {
+		return DropRequest.at(null, null, List.of(object), new DropLocation.Onto("t"));
 	}
 
 	private static boolean isTrue(Object value) {

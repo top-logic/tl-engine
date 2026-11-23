@@ -401,6 +401,13 @@
 						>
 							<group-with-name name="TestAccessParentAnyOfRootOwners"/>
 						</singleton-rule>
+						<singleton-rule
+							id="TestAccessParentAnyOf_rootDocReaders"
+							target="SecurityStructure#ROOT"
+							role="TestAccessParentAnyOf.DocReader"
+						>
+							<group-with-name name="TestAccessParentAnyOfRootDocReaders"/>
+						</singleton-rule>
 					</rules>
 				</role-rules>
 

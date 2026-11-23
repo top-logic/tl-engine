@@ -1587,7 +1587,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * {@inheritDoc}
 	 *
 	 * @implNote The container, whichever composition holds the object, is followed to the types
-	 *           owning a composition of the type, which this service indexes.
+	 *           owning a composition of the type, which this service indexes. For an
+	 *           {@link AnyOfRelation}, the types of all its candidates are joined, a container
+	 *           candidate contributing the indexed types as well.
 	 */
 	@Override
 	public Set<TLClass> getAccessParentTypes(TLClass type) {
@@ -1595,10 +1597,30 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (parent == null) {
 			return Collections.emptySet();
 		}
-		if (parent.getRelation() instanceof ContainerRelation container && container.composition() == null) {
+		if (parent instanceof AnyOfRelation anyOf) {
+			Set<TLClass> result = new HashSet<>();
+			for (AccessParentFunction candidate : anyOf.candidates()) {
+				Set<TLClass> candidateTypes = parentTypes(type, candidate);
+				if (candidateTypes == null) {
+					return null;
+				}
+				result.addAll(candidateTypes);
+			}
+			return Collections.unmodifiableSet(result);
+		}
+		return parentTypes(type, parent);
+	}
+
+	/**
+	 * The types the given relation may lead to from an object of the given type.
+	 *
+	 * @return <code>null</code> when they are not known statically.
+	 */
+	private Set<TLClass> parentTypes(TLClass type, AccessParentFunction relation) {
+		if (relation.getRelation() instanceof ContainerRelation container && container.composition() == null) {
 			return Collections.unmodifiableSet(entry(type)._containerTypes);
 		}
-		return parent.getParentTypes(type);
+		return relation.getParentTypes(type);
 	}
 
 	/**

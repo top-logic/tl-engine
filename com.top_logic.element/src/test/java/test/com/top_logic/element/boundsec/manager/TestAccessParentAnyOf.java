@@ -97,6 +97,12 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 	/** Members hold the folder owner role on the security root. */
 	private Group _rootOwners;
 
+	/** Member of {@link #_rootDocReaders}. */
+	private Person _rootDocReader;
+
+	/** Members hold the document reader role on the security root. */
+	private Group _rootDocReaders;
+
 	/** Owned by {@link #_folderOwner}, read by {@link #_folderReader}. */
 	private TLObject _folder;
 
@@ -149,6 +155,9 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 
 			_rootOwners = Group.createGroup("TestAccessParentAnyOfRootOwners");
 			_rootOwners.addMember(_rootOwner);
+			_rootDocReader = createPerson("anyOfRootDocReader");
+			_rootDocReaders = Group.createGroup("TestAccessParentAnyOfRootDocReaders");
+			_rootDocReaders.addMember(_rootDocReader);
 
 			_folder = createFolder(_folderOwner);
 			_folder.tUpdateByName("reader", _folderReader);
@@ -194,11 +203,13 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 				}
 			}
 			_rootOwners.tDelete();
+			_rootDocReaders.tDelete();
 			for (Person person : persons()) {
 				person.tDelete();
 			}
 			_otherOwner.tDelete();
 			_rootOwner.tDelete();
+			_rootDocReader.tDelete();
 		});
 		_created.clear();
 
@@ -447,6 +458,25 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 		Set<TLClass> accessible = rights().getAccessibleTypes(_rootOwner, SimpleBoundCommandGroup.READ);
 		assertTrue("The type level is a superset of the access.", accessible.contains(type(BOTH)));
 		assertFalse(rights().getAccessibleTypes(_other, SimpleBoundCommandGroup.READ).contains(type(BOTH)));
+	}
+
+	/**
+	 * On the type level, an access parent with several candidates is accessible as soon as a type
+	 * one of its candidates leads to is; a container candidate leads to the types owning a
+	 * composition of the type.
+	 */
+	public void testTypeLevel() {
+		Set<TLClass> docReaderRead = rights().getAccessibleTypes(_rootDocReader, SimpleBoundCommandGroup.READ);
+		assertTrue("A contact is read through the documents referring to it.",
+			docReaderRead.contains(type(CONTACT)));
+		assertTrue("A part is read through the documents relating it.", docReaderRead.contains(type(PART)));
+		assertFalse("A part is written through its folder only.",
+			rights().getAccessibleTypes(_rootDocReader, SimpleBoundCommandGroup.WRITE).contains(type(PART)));
+
+		assertTrue("A part is read through its folder.",
+			rights().getAccessibleTypes(_rootOwner, SimpleBoundCommandGroup.READ).contains(type(PART)));
+		assertTrue("A part is written through its folder.",
+			rights().getAccessibleTypes(_rootOwner, SimpleBoundCommandGroup.WRITE).contains(type(PART)));
 	}
 
 	private List<Person> persons() {

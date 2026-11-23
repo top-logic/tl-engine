@@ -324,8 +324,8 @@ test('Kästchen und Kreis springen beim Ankreuzen nicht: mittig statt auf der Gr
 test('das Kästchen liest radius-mark auf eigener Stufe bevel-1, das Radio bleibt rund (#30502, U69)', () => {
   assert.equal(T.measure['radius-mark'], '{bevel-1}');
   const kaestchen = declarationsOfAll(css, '.tl-checkbox');
-  assert.match(kaestchen, /border-radius:\s*var\(--tl-radius-mark\)/);
-  assert.doesNotMatch(kaestchen, /--tl-radius-sm/);
+  // Nie runder als die Felder, nie runder als die Kappe: eckige Themes bleiben eckig, weiche kippen nicht zum Kreis.
+  assert.match(kaestchen, /border-radius:\s*min\(var\(--tl-radius-sm\),\s*var\(--tl-radius-mark\)\)/);
   assert.match(declarationsOfAll(css, '.tl-radio'), /border-radius:\s*var\(--tl-radius-round\)/);
   // Nur das Kästchen ist eine Auswahlmarke: kein anderes Bedienteil liest die Rolle.
   const leser = [];

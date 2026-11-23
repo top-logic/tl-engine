@@ -26,8 +26,10 @@
 .tl-checkbox[hidden] { display: none; }
 .tl-radio[hidden] { display: none; }
 
+/* Nie runder als die Felder (ein eckiges Theme bleibt eckig) und nie runder als die eigene Kappe (ein weiches
+   Theme macht das Kästchen nicht zum Kreis, docs/skalen.md „Radius“). */
 .tl-checkbox {
-  border-radius: var(--tl-radius-mark);
+  border-radius: min(var(--tl-radius-sm), var(--tl-radius-mark));
 }
 
 .tl-radio {

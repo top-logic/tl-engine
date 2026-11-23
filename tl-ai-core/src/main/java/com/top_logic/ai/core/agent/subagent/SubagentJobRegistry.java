@@ -247,7 +247,7 @@ public class SubagentJobRegistry {
 	public List<SubagentJob> takeUndeliveredResults() {
 		List<SubagentJob> result = new ArrayList<>();
 		for (SubagentJob job : ordered()) {
-			if (job.status().isTerminal() && !job.isDelivered()) {
+			if (hasUnreadResult(job)) {
 				job.markDelivered();
 				result.add(job);
 			}
@@ -263,9 +263,7 @@ public class SubagentJobRegistry {
 	public List<SubagentJob> unread() {
 		List<SubagentJob> result = new ArrayList<>();
 		for (SubagentJob job : ordered()) {
-			LeadQuestion asked = job.leadQuestion();
-			if ((job.status().isTerminal() && !job.isDelivered())
-				|| (asked != null && !asked.answer().isDone() && !asked.isDelivered())) {
+			if (hasUnreadResult(job) || isUnread(job.leadQuestion())) {
 				result.add(job);
 			}
 		}
@@ -280,7 +278,17 @@ public class SubagentJobRegistry {
 		List<SubagentJob> asking = new ArrayList<>();
 		for (SubagentJob job : ordered()) {
 			LeadQuestion asked = job.leadQuestion();
-			if (asked != null && !asked.answer().isDone() && asked.markDelivered()) {
+			if (isUnread(asked) && asked.markDelivered()) {
+	/** Whether the given job has ended and no lead turn has been shown its result. */
+	private static boolean hasUnreadResult(SubagentJob job) {
+		return job.status().isTerminal() && !job.isDelivered();
+	}
+
+	/** Whether the given question waits: no lead turn has been shown it, and nobody has answered it. */
+	private static boolean isUnread(LeadQuestion asked) {
+		return asked != null && !asked.isDelivered() && !asked.answer().isDone();
+	}
+
 				asking.add(job);
 			}
 		}
@@ -356,12 +364,10 @@ public class SubagentJobRegistry {
 		int finished = 0;
 		int asking = 0;
 		for (SubagentJob job : _jobs.values()) {
-			if (job.status().isTerminal() && job.status() != SubagentJobStatus.CANCELLED
-				&& !job.isDelivered()) {
+			if (hasUnreadResult(job) && job.status() != SubagentJobStatus.CANCELLED) {
 				finished++;
 			}
-			LeadQuestion asked = job.leadQuestion();
-			if (asked != null && !asked.isDelivered() && !asked.answer().isDone()) {
+			if (isUnread(job.leadQuestion())) {
 				asking++;
 			}
 		}

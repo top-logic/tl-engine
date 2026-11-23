@@ -24,9 +24,10 @@ user inherits from the container.
 
 A type that needs neither has an **access parent** instead: its objects delegate the decision,
 grants and roles, to another object - the *whole* decision, unless the access parent is restricted
-to some operations, see [Access parent](#access-parent-delegating-the-decision). A composition part gets its container as access
-parent by default, so the rows of a composition table, the comments of a ticket or the attachments
-of a comment need no definition of their own. See [Access parent](#access-parent-delegating-the-decision).
+to some operations, see [Access parent](#access-parent-delegating-the-decision). A composition part
+gets its container as access parent by default, so the rows of a composition table, the comments of
+a ticket or the attachments of a comment need no definition of their own. See [Access
+parent](#access-parent-delegating-the-decision).
 
 The check itself is `SecurityConfigurationService.isAllowed(Person, TLObject, BoundCommandGroup)`.
 It applies to every persistent object, whatever its implementation class; a transient object (a
@@ -49,11 +50,12 @@ cannot (a plain knowledge item standing for itself) grants no role, so only the 
    interaction, if it was made before (see [Caching](#caching-of-decisions)).
 3. A type marked `without-security` is not checked at all.
 4. A type with an access parent asks the object the relation leads to, with the same operation, or
-   with `Write` in place of `Create` and `Delete`; an operation [implying](#operations-which-operations-apply-to-a-type)
-   the requested one on the type is asked as well. With `operations` on the access parent, only the
-   delegated operations (and delegated implying ones) are asked; the others continue at step 5. The parent may delegate further. An object whose
-   relation leads nowhere (no container, an empty reference) is denied, as is one whose chain of
-   access parents runs in a cycle.
+   with `Write` in place of `Create` and `Delete`; an operation
+   [implying](#operations-which-operations-apply-to-a-type) the requested one on the type is asked
+   as well. With `operations` on the access parent, only the delegated operations (and delegated
+   implying ones) are asked; the others continue at step 5. The parent may delegate further. An
+   object whose relation leads nowhere (no container, an empty reference) is denied, as is one whose
+   chain of access parents runs in a cycle.
 5. The roles granted the operation, or an operation implying it, on the object's type are looked
    up (for a module singleton, the
    singleton's own grants take precedence; `Discover` on such a singleton is implied by its own
@@ -65,8 +67,8 @@ cannot (a plain knowledge item standing for itself) grants no role, so only the 
    they grant the operation, they **replace** the class grant for this attribute - the user must
    hold one of those roles, on the object or, for a delegating object, on the end of its chain of
    access parents (for an access parent restricted to operations: the chain is followed only while
-   the requested operation is delegated); a grant without roles denies everyone. Without attribute-level grants the
-   class-level decision stands.
+   the requested operation is delegated); a grant without roles denies everyone. Without
+   attribute-level grants the class-level decision stands.
 
 `Discover` - every right on an object or one of its attributes implies the operation `Discover`, see [the Discover specification](doc:access-discover-spec).
 How code and TL-Script ask for a decision (`ModelAccessRights`, `canRead`, ...) and which objects
@@ -232,9 +234,10 @@ that **applies** to a type may be granted on it:
 - The declarations of all configuration layers are appended, like the grants.
 - The operation must be a command group of the `CommandGroupRegistry` and needs labels
   `commandGroup.<Name>` and `commandGroup.<Name>.tooltip` in a resource bundle of the application.
-- A type with an access parent may declare operations, too (it has no grants of its own for the delegated operations): a custom
-  operation on such a type, if delegated, is checked as the same operation on the parent, so it must apply to the
-  parent type as well, unless it is implied by an operation the parent has.
+- A type with an access parent may declare operations, too (it has no grants of its own for the
+  delegated operations): a custom operation on such a type, if delegated, is checked as the same
+  operation on the parent, so it must apply to the parent type as well, unless it is implied by an
+  operation the parent has.
 
 **`implied-by="X"`**: whoever holds the operation `X` on an object also holds the declared
 operation on it. This generalizes "every right implies `Discover`": an application that grants
@@ -550,8 +553,9 @@ The places checking an operation are reported to the check by the `OperationUseP
 privileged scripts of the configured TL-Script functions (see the section "Administration of
 grants" of the article `view-layer/access-control` of that module). A place
 naming the type it checks is checked against that type and its concrete specializations; a type
-delegating to an access parent is not checked for applicability (a type delegating only some
-operations is checked for the operations it decides itself, like a type without access parent). A place not declaring its type (a
+delegating to an access parent, restricted to operations or not, is not checked for applicability
+by the coverage analysis (the check at startup, which reports an operation not applying to the type
+of a place as a configuration error, covers every type). A place not declaring its type (a
 privileged script, a form, a command whose unit lies in another view file) is only checked for an
 unknown operation; such findings belong to no type and are reported by
 `SecurityCoverageAnalysis.getUnattachedFindings()`.

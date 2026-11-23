@@ -36,6 +36,7 @@ import com.top_logic.basic.func.Not;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.config.PartConfig;
 import com.top_logic.element.config.TypedPartAspect;
+import com.top_logic.element.meta.kbbased.storage.PrimitiveStorage;
 import com.top_logic.html.i18n.DefaultHtmlResKey;
 import com.top_logic.layout.form.declarative.DeclarativeFormBuilder;
 import com.top_logic.layout.form.values.edit.ConfigLabelProvider;
@@ -45,6 +46,7 @@ import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
 import com.top_logic.layout.form.values.edit.mode.ActiveIf;
 import com.top_logic.layout.form.values.edit.mode.HideImmutableIf;
 import com.top_logic.model.TLModelPart;
+import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredType;
@@ -213,6 +215,8 @@ public class TLStructuredTypePartFormBuilder extends
 		@RegexpConstraint(value = PartNameConstraints.RECOMMENDED_TYPE_PART_NAME_PATTERN, errorKey = PartNameConstraints.RecommendedTypePartNameKey.class, asWarning = true)
 		@Constraint(value = TypePartNotExistsConstraint.class, args = { @Ref({ EDIT_MODEL, EditModel.CONTEXT_TYPE }),
 			@Ref(OVERRIDE), @Ref({ EDIT_MODEL, EditModel.CREATING }) })
+		@Constraint(value = SystemColumnNameConstraint.class, args = { @Ref(RESOLVED_TYPE), @Ref(OVERRIDE),
+			@Ref({ EDIT_MODEL, EditModel.CREATING }) })
 		public String getName();
 
 		/**
@@ -319,6 +323,42 @@ public class TLStructuredTypePartFormBuilder extends
 					propertyModel.setProblemDescription(error);
 				}
 
+			}
+
+		}
+
+		/**
+		 * {@link ValueConstraint} that refuses the name of a system column for a new property.
+		 *
+		 * @see PrimitiveStorage#systemColumnError(String)
+		 */
+		class SystemColumnNameConstraint extends GenericValueDependency3<String, TLType, Boolean, Boolean> {
+
+			/**
+			 * Creates a {@link SystemColumnNameConstraint}.
+			 */
+			public SystemColumnNameConstraint() {
+				super(String.class, TLType.class, Boolean.class, Boolean.class);
+			}
+
+			@Override
+			protected void checkValue(PropertyModel<String> propertyModel, PropertyModel<TLType> typeModel,
+					PropertyModel<Boolean> overrideModel, PropertyModel<Boolean> createModel) {
+				if (!Boolean.TRUE.equals(createModel.getValue()) || !Boolean.FALSE.equals(overrideModel.getValue())) {
+					return;
+				}
+				// Only a property stores its value in the column of its name.
+				if (!(typeModel.getValue() instanceof TLPrimitive)) {
+					return;
+				}
+				String newPartName = propertyModel.getValue();
+				if (StringServices.isEmpty(newPartName)) {
+					return;
+				}
+				ResKey error = PrimitiveStorage.systemColumnError(newPartName);
+				if (error != null) {
+					propertyModel.setProblemDescription(error);
+				}
 			}
 
 		}

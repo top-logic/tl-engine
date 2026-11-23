@@ -8,6 +8,14 @@
 
 <p>Im sich darauf öffnenden Dialog muss für das neue Attribut mindestens ein technischer Name und ein Wertetyp festgelegt werden. Der technische Name eines Attribut sollte mit einem Kleinbuchstaben beginnen und nur aus Buchstaben ohne Leerzeichen und Sonderzeichen bestehen. Wie bei Klassennamen können zusammengesetzte Wörter über Großbuchstaben im Wort strukturiert werden.</p>
 
+<h3>Reservierte Namen</h3>
+
+<p>Jedes Objekt hat in seiner Tabelle Systemspalten. Ein Attribut speichert seinen Wert in der Spalte seines Namens, wenn die Tabelle eine solche Spalte hat. Der Name einer Systemspalte kann daher nicht der Name eines Attributs sein: Der Modelleditor und ein Modell-Upgrade lehnen ihn ab. Diese Namen sind reserviert:</p>
+
+<p><code class="hljs inlineCode">_branch</code>, <code class="hljs inlineCode">_identifier</code>, <code class="hljs inlineCode">_rev_max</code>, <code class="hljs inlineCode">_rev_min</code>, <code class="hljs inlineCode">createRev</code>, <code class="hljs inlineCode">created</code>, <code class="hljs inlineCode">creatorid</code>, <code class="hljs inlineCode">modified</code>, <code class="hljs inlineCode">modifier</code>, <code class="hljs inlineCode">physicalResource</code>, <code class="hljs inlineCode">tType</code></p>
+
+<p>Das sind die Spalten der Tabellen <code class="hljs inlineCode">Item</code>, <code class="hljs inlineCode">KnowledgeObject</code> und <code class="hljs inlineCode">TLObject</code>. Eine Referenz ist nicht betroffen, denn sie speichert ihren Wert nicht in einer Spalte ihres Namens. Ein Attribut mit einer expliziten Speicherspalte (<code class="hljs inlineCode">&lt;primitive-storage storage-attribute="..."/&gt;</code>) nutzt diese Spalte absichtlich und wird angenommen. Der Name einer Spalte einer Tabelle der Anwendung ist erlaubt.</p>
+
 <p><img src="ref:image_1.png" style="height:394px; opacity:1; width:601px" /></p>
 
 <h2>Wertetyp auswählen</h2>

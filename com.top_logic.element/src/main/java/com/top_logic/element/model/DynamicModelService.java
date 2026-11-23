@@ -70,6 +70,8 @@ import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLScope;
+import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.config.TLModuleAnnotation;
@@ -338,6 +340,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 			}
 
 			startModules(context);
+			logSystemColumnProperties(log(), getModel());
 			context.checkErrors();
 
 			tx.commit();
@@ -553,6 +556,33 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 	private void startModule(InstantiationContext context, TLModule module) {
 		context.info("Starting module '" + module + "'.");
 		getFactory(module);
+	}
+
+	/**
+	 * Reports an error for each property of the given model that stores its values in a system
+	 * column, see {@link ModelResolver#systemColumnError(TLStructuredTypePart)}.
+	 *
+	 * <p>
+	 * The model editors and the model upgrade refuse such a property. A model that has one from an
+	 * earlier version still loads: a value of such a property fails only when it is stored, and the
+	 * engine does not rename the property itself.
+	 * </p>
+	 */
+	static void logSystemColumnProperties(Protocol log, TLModel model) {
+		for (TLModule module : model.getModules()) {
+			for (TLType type : module.getTypes()) {
+				if (!(type instanceof TLStructuredType structuredType)) {
+					continue;
+				}
+				for (TLStructuredTypePart part : structuredType.getLocalParts()) {
+					if (ModelResolver.systemColumnError(part) != null) {
+						log.error("Attribute '" + TLModelUtil.qualifiedName(part)
+							+ "' stores its values in the system column '" + part.getName()
+							+ "'. Rename the attribute with a model migration and move its values with a data migration.");
+					}
+				}
+			}
+		}
 	}
 
 	/**

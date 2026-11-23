@@ -28,6 +28,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.meta.MetaElementUtil;
+import com.top_logic.element.meta.kbbased.storage.PrimitiveStorage;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -56,6 +57,7 @@ import com.top_logic.ai.core.tools.model.messages.ModelPartResponse;
 import com.top_logic.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.ai.core.tools.util.ToolI18NUtil;
 import com.top_logic.ai.core.tools.util.ToolI18NUtil.LocalizedTexts;
+import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -606,6 +608,10 @@ public class ModelEditorTool {
 			property = (TLClassProperty) existingPart;
 		} else {
 			TLType resolvedType = resolvePrimitiveType(model, propertyType);
+			ResKey systemColumnError = PrimitiveStorage.systemColumnError(propertyName);
+			if (systemColumnError != null) {
+				throw new IllegalArgumentException(Resources.getInstance().getString(systemColumnError));
+			}
 
 			try (Transaction tx =
 				PersistencyLayer.getKnowledgeBase().beginTransaction(ResKey.text("Create Property"))) {

@@ -28,6 +28,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.schema.config.DBColumnType;
@@ -1057,9 +1058,24 @@ public class ApplyModelPatch extends ModelResolver implements DiffVisitor<Void, 
 		}
 	}
 
+	/**
+	 * Refuses a new property that would store its values in a system column, see
+	 * {@link #systemColumnError(TLStructuredTypePart)}.
+	 *
+	 * <p>
+	 * A transient copy of the model is not checked: it only computes the migration processors of
+	 * the patch, and its parts have no table.
+	 * </p>
+	 */
 	@Override
 	public TLProperty createProperty(TLStructuredType owner, AttributeConfig attributeConfig) {
 		TLProperty property = super.createProperty(owner, attributeConfig);
+		if (!property.tTransient()) {
+			ResKey error = systemColumnError(property);
+			if (error != null) {
+				throw new TopLogicException(error);
+			}
+		}
 
 		if (createProcessors()) {
 			CreateTLPropertyProcessor.Config config = newConfigItem(CreateTLPropertyProcessor.Config.class);

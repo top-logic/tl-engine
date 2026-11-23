@@ -12,6 +12,8 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.meta.kbbased.storage.PrimitiveStorage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
@@ -239,6 +241,10 @@ public class ModelEditAction implements ViewAction {
 
 		TLStructuredTypePart part;
 		if (valueType instanceof TLPrimitive) {
+			ResKey systemColumnError = PrimitiveStorage.systemColumnError(name);
+			if (systemColumnError != null) {
+				throw new TopLogicException(systemColumnError);
+			}
 			part = TLModelUtil.addProperty(owner, name, valueType);
 		} else if (owner instanceof TLClass ownerClass) {
 			part = createReference(ownerClass, name, valueType, model);

@@ -18,20 +18,25 @@ import java.util.List;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.shared.io.StringR;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.common.json.gstream.JsonReader;
 import com.top_logic.common.json.gstream.JsonWriter;
+import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.kbbased.AttributeUtil;
+import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.FlexAttributeFetch;
+import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
@@ -110,6 +115,39 @@ public class PrimitiveStorage<C extends PrimitiveStorage.Config<?>> extends Abst
 	public PrimitiveStorage(InstantiationContext context, C config) {
 		super(context, config);
 		_storageMapping = context.getInstance(config.getStorageMapping());
+	}
+
+	/**
+	 * The error for a property of the given name that stores its values in a system column.
+	 *
+	 * <p>
+	 * Without an explicit {@link Config#getStorageAttribute() storage attribute}, a property uses
+	 * the column of its own name, if the table of its owner has one. The system columns are the
+	 * columns of the base table {@value PersistentObject#OBJECT_TYPE} of each object, its inherited
+	 * columns included. A value that a property writes into such a column fails at run time or
+	 * changes data of the engine. An application table can declare more columns: a property may
+	 * use them by name.
+	 * </p>
+	 *
+	 * <p>
+	 * This check serves the model editors and the model tools of the engine. An application must
+	 * not use it.
+	 * </p>
+	 *
+	 * @param propertyName
+	 *        The name of a property without an explicit storage attribute.
+	 * @return The error that names the column, or <code>null</code> if the name is not the name of
+	 *         a system column.
+	 */
+	@FrameworkInternal
+	public static ResKey systemColumnError(String propertyName) {
+		MetaObject baseTable =
+			PersistencyLayer.getKnowledgeBase().getMORepository().getTypeOrNull(PersistentObject.OBJECT_TYPE);
+		if (!(baseTable instanceof MOStructure baseStructure)
+			|| baseStructure.getAttributeOrNull(propertyName) == null) {
+			return null;
+		}
+		return I18NConstants.ERROR_SYSTEM_COLUMN_NAME__COLUMN.fill(propertyName);
 	}
 
 	@Override

@@ -8,6 +8,14 @@
 
 <p>In the dialog that opens, at least a technical name and a value type must be defined for the new attribute. The technical name of an attribute should begin with a lower case letter and consist only of letters without spaces or special characters. As with class names, compound words can be structured using capital letters in the word.</p>
 
+<h3>Reserved names</h3>
+
+<p>Each object has system columns in its table. An attribute stores its value in the column of its name if the table has such a column. Thus the name of a system column cannot be the name of an attribute: the model editor and a model upgrade refuse it. These names are reserved:</p>
+
+<p><code class="hljs inlineCode">_branch</code>, <code class="hljs inlineCode">_identifier</code>, <code class="hljs inlineCode">_rev_max</code>, <code class="hljs inlineCode">_rev_min</code>, <code class="hljs inlineCode">createRev</code>, <code class="hljs inlineCode">created</code>, <code class="hljs inlineCode">creatorid</code>, <code class="hljs inlineCode">modified</code>, <code class="hljs inlineCode">modifier</code>, <code class="hljs inlineCode">physicalResource</code>, <code class="hljs inlineCode">tType</code></p>
+
+<p>These are the columns of the tables <code class="hljs inlineCode">Item</code>, <code class="hljs inlineCode">KnowledgeObject</code> and <code class="hljs inlineCode">TLObject</code>. A reference is not affected, because it does not store its value in a column of its name. An attribute with an explicit storage column (<code class="hljs inlineCode">&lt;primitive-storage storage-attribute="..."/&gt;</code>) uses this column deliberately and is accepted. The name of a column of a table of the application is allowed.</p>
+
 <p><img src="ref:image_1.png" style="height:394px; opacity:1; width:601px" /></p>
 
 <h2>Selecting the value type</h2>

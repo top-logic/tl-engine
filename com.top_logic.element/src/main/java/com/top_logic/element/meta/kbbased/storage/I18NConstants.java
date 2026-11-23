@@ -41,6 +41,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey3 ERROR_CANNOT_ACCESS_ATTRIBUTE__OBJ_ATTR_ERR;
 
+	/**
+	 * @en The name "{0}" is the name of a system column of each object. An attribute of this name
+	 *     would store its values in this column. Choose another name.
+	 */
+	public static ResKey1 ERROR_SYSTEM_COLUMN_NAME__COLUMN;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

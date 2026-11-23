@@ -30,6 +30,7 @@ import com.top_logic.basic.col.factory.CollectionFactory;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.config.AssociationConfig;
@@ -51,6 +52,7 @@ import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.StorageImplementation;
 import com.top_logic.element.meta.kbbased.KBBasedMetaAttribute;
 import com.top_logic.element.meta.kbbased.PersistentAssociation;
+import com.top_logic.element.meta.kbbased.storage.PrimitiveStorage;
 import com.top_logic.element.meta.schema.HolderType;
 import com.top_logic.knowledge.util.OrderedLinkUtil;
 import com.top_logic.model.ModelKind;
@@ -1129,6 +1131,32 @@ public class ModelResolver {
 		}
 		configureClassPart((TLClassPart) newProperty, config);
 		return newProperty;
+	}
+
+	/**
+	 * The error for a property that stores its values in a system column, see
+	 * {@link PrimitiveStorage#systemColumnError(String)}.
+	 *
+	 * <p>
+	 * Only a property definition with a {@link PrimitiveStorage} without an explicit
+	 * {@link PrimitiveStorage.Config#getStorageAttribute() storage attribute} uses the column of its
+	 * name. An override uses the storage of the part that it overrides, and a reference stores its
+	 * values outside a column of its name. An explicit storage attribute binds a column on purpose
+	 * and is accepted.
+	 * </p>
+	 *
+	 * @return The error that names the column, or <code>null</code> if the given part does not
+	 *         store its values in a system column.
+	 */
+	protected static ResKey systemColumnError(TLStructuredTypePart part) {
+		if (!(part instanceof TLProperty) || part.isOverride()) {
+			return null;
+		}
+		if (!(part.getStorageImplementation() instanceof PrimitiveStorage<?> storage)
+			|| storage.getConfig().getStorageAttribute() != null) {
+			return null;
+		}
+		return PrimitiveStorage.systemColumnError(part.getName());
 	}
 
 	private void configureClassPart(TLClassPart classPart, PartConfig partConfig) {

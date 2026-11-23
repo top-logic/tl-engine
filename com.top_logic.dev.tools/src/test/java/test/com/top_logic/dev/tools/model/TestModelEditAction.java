@@ -46,8 +46,9 @@ import com.top_logic.util.model.ModelService;
 
 /**
  * Test of {@link ModelEditAction} creating references of a given kind with an opposite reference,
- * and adding and removing generalizations of a class, and of the visibility of the reference kind
- * and opposite fields of the "new attribute" dialog.
+ * refusing an attribute with the name of a system column, and adding and removing generalizations
+ * of a class, and of the visibility of the reference kind and opposite fields of the "new
+ * attribute" dialog.
  */
 @SuppressWarnings("javadoc")
 public class TestModelEditAction extends TestCase {
@@ -174,6 +175,19 @@ public class TestModelEditAction extends TestCase {
 			createReference(owner, target, KIND_NORMAL, null);
 			assertRefused(I18NConstants.ERROR_PART_EXISTS__TYPE_NAME,
 				() -> createReference(owner, target, KIND_NORMAL, null));
+		});
+	}
+
+	public void testSystemColumnNameRefused() {
+		inTestModule((owner, target, enumeration) -> {
+			TLObject input =
+				TransientObjectFactory.INSTANCE.createObject((TLClass) TLModelUtil.findType(NEW_ATTRIBUTE));
+			input.tUpdateByName(NAME, "created");
+			input.tUpdateByName(TYPE, TLModelUtil.findType("tl.core:String"));
+			assertRefused(
+				com.top_logic.element.meta.kbbased.storage.I18NConstants.ERROR_SYSTEM_COLUMN_NAME__COLUMN,
+				() -> execute(Mode.CREATE_ATTRIBUTE, owner, input));
+			assertNull(owner.getPart("created"));
 		});
 	}
 

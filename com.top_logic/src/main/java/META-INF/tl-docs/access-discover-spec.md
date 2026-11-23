@@ -256,12 +256,19 @@ An object link follows the rules for a masked element (R11):
   So a link written by hand does not tell whether the object exists or where it is displayed.
 - The stored text keeps its form. A user who edits the text keeps each masked link that the user
   does not delete: the editor gives each placeholder a token of its own and puts the stored link
-  back when the text is saved. A deleted placeholder deletes the link, a moved one moves it, and a
-  copy in the same editor copies it. A placeholder whose token the editor did not hand out brings
-  in no link.
+  back when the text is saved. A token is a random value that no other editor hands out, and the
+  editor forgets its tokens when it shows the text of another object. A deleted placeholder deletes
+  the link, a moved one moves it, and a copy in the same text copies it. A placeholder whose token
+  the editor did not hand out for the text it shows brings in no link. Markup that a command
+  inserts at the cursor is masked in the same way.
 - The derived outputs of the text are masked as well: the preview where the editor has no room,
-  the text of an inherited value, the label (table cells, their sort and filter, and the export by
-  label), the PDF and the Excel export.
+  the text of an inherited value, the display of an HTML property of a configuration that cannot
+  be edited, the label (table cells of the React view layer, their sort and filter, and the export
+  by label), the PDF and the Excel export.
+- The label is also the string conversion of a formatted text in TL-Script. A secured script
+  therefore gets the placeholder for a link to an object that its user may not discover, and every
+  script gets the placeholder for a link to an object that does not exist. Like every result of a
+  secured script, the result depends on the user (R6).
 
 One function applies the rule: `TLObjectLinkUtil.maskLinks` (with `restoreLinks` for the editor).
 The React editor, the label provider and the PDF and Excel export of a formatted text use it; the
@@ -273,8 +280,10 @@ Limits - these paths do not apply the rule:
   sends the stored links, and follows a link with `OpenTLObjectLink`.
 - The full-text index holds the text with the labels of its links, so a search for the label of a
   hidden object finds the text that links it.
-- The sort key of a formatted text (`HTMLTextExtractor`) holds the labels of its links, so the
-  position of a row in a table sorted by the text can tell something about a hidden label.
+- The sort key of a formatted text (`HTMLTextExtractor`) holds the labels of its links. It is used
+  by the tables of the classic layout UI only: there, the position of a row in a table sorted by
+  the text can tell something about a hidden label. A table of the React view layer sorts and
+  filters by the masked label.
 - The view element `<html>` shows the HTML that a script computes; a script that puts a stored
   text there is responsible for its links.
 - Agent tools and REST services that read attribute values give the stored text.

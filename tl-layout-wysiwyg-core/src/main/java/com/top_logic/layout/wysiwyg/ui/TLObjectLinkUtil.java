@@ -12,6 +12,7 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -104,12 +105,20 @@ public class TLObjectLinkUtil {
 	 */
 	@FrameworkInternal
 	public static Wrapper getDiscoverableObject(String href) {
+		Wrapper target = linkedObject(href);
+		return target == null || DiscoverRight.isMasked(target) ? null : target;
+	}
+
+	/**
+	 * The object that the given link destination names, <code>null</code> if it names no object
+	 * that exists.
+	 */
+	private static Wrapper linkedObject(String href) {
 		if (href == null) {
 			return null;
 		}
-		Wrapper target;
 		try {
-			target = getObject(href);
+			return getObject(href);
 		} catch (ObjectNotFound | IndexOutOfBoundsException | IllegalArgumentException ex) {
 			// The object does not exist, or the destination cannot be read.
 			return null;
@@ -118,7 +127,6 @@ public class TLObjectLinkUtil {
 			Logger.debug("Cannot resolve the object link '" + href + "'.", ex, TLObjectLinkUtil.class);
 			return null;
 		}
-		return target == null || DiscoverRight.isMasked(target) ? null : target;
 	}
 
 	/**
@@ -151,11 +159,36 @@ public class TLObjectLinkUtil {
 	 */
 	@FrameworkInternal
 	public static String maskLinks(String html, Function<String, String> tokens) {
+		return maskLinks(html, DiscoverRight::isDiscoverable, tokens);
+	}
+
+	/**
+	 * The given HTML, in which each link to an object that the given reader may not see is replaced
+	 * by a placeholder without a token, see {@link #maskLinks(String, Function)}.
+	 *
+	 * <p>
+	 * Serves an output of the engine for a reader whose rights are not the Discover right of the
+	 * current user, for example a language model that reads what the account of its run may read.
+	 * </p>
+	 *
+	 * @param html
+	 *        The HTML source of a formatted text. May be <code>null</code>.
+	 * @param shown
+	 *        Whether the reader may see a linked object. A link whose destination names no existing
+	 *        object is masked without this check.
+	 * @return The masked HTML; the given HTML itself if it contains no link to mask.
+	 */
+	@FrameworkInternal
+	public static String maskLinksFor(String html, Predicate<? super TLObject> shown) {
+		return maskLinks(html, shown, null);
+	}
+
+	private static String maskLinks(String html, Predicate<? super TLObject> shown, Function<String, String> tokens) {
 		if (html == null || !html.contains(TL_OBJECT)) {
 			return html;
 		}
 		Document document = parseFragment(html);
-		return maskLinks(document, tokens) ? document.body().html() : html;
+		return maskLinks(document, shown, tokens) ? document.body().html() : html;
 	}
 
 	/**
@@ -176,13 +209,19 @@ public class TLObjectLinkUtil {
 	 */
 	@FrameworkInternal
 	public static boolean maskLinks(Document document, Function<String, String> tokens) {
+		return maskLinks(document, DiscoverRight::isDiscoverable, tokens);
+	}
+
+	private static boolean maskLinks(Document document, Predicate<? super TLObject> shown,
+			Function<String, String> tokens) {
 		boolean masked = false;
 		for (Element link : document.select(ANCHOR + "." + TL_OBJECT)) {
 			if (link.ownerDocument() != document) {
 				// Inside a link or wrapper that is masked already.
 				continue;
 			}
-			if (getDiscoverableObject(link.attr(HREF_ATTR)) != null) {
+			Wrapper target = linkedObject(link.attr(HREF_ATTR));
+			if (target != null && shown.test(target)) {
 				continue;
 			}
 			Element hidden = link;

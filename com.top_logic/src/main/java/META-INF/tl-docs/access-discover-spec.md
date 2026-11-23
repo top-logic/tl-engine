@@ -273,6 +273,8 @@ An object link follows the rules for a masked element (R11):
   script, the result depends on the user (R6). An unsecured script gets the text as it is stored,
   so that a value that it stores does not depend on the user who started it. The value of the
   attribute itself is not masked: `htmlSource()` gives the stored source in every script.
+- An agent run reads a formatted text in a tool result with each link to an object that the
+  account of the run may not read masked, as the run reads no other trace of such an object.
 
 One function applies the rule: `TLObjectLinkUtil.maskLinks` (with `restoreLinks` for the editor).
 The React editor and the derived outputs call it. The label of a formatted text (its label

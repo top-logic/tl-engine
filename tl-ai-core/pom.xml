@@ -64,6 +64,13 @@
       <artifactId>tl-element</artifactId>
     </dependency>
 
+    <!-- ReadFilter masks the object links of a formatted text before a model reads it. Declared
+         explicitly rather than relying on the transitive path through tl-service-openapi-server. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-wysiwyg-core</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>com.vladsch.flexmark</groupId>
       <artifactId>flexmark-html2md-converter</artifactId>

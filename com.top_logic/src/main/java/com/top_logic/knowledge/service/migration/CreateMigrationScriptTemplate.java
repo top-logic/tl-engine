@@ -21,7 +21,7 @@ import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.tooling.Workspace;
 import com.top_logic.dsa.DataAccessService;
-import com.top_logic.knowledge.service.migration.MigrationConfig.DroppedDependency;
+import com.top_logic.knowledge.service.migration.MigrationConfig.ModuleRef;
 
 /**
  * Main class to create a new file that can be used as template for a migration file.
@@ -120,7 +120,7 @@ public class CreateMigrationScriptTemplate extends XMain {
 						+ ", the new migration lists them as '" + MigrationConfig.DROPPED_DEPENDENCIES_PROPERTY
 						+ "'.");
 					for (String droppedModule : droppedModules) {
-						DroppedDependency entry = TypedConfiguration.newConfigItem(DroppedDependency.class);
+						ModuleRef entry = TypedConfiguration.newConfigItem(ModuleRef.class);
 						entry.setName(droppedModule);
 						migration.getDroppedDependencies().put(droppedModule, entry);
 					}

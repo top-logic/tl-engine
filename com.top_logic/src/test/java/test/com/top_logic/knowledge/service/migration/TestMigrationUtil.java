@@ -43,7 +43,7 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.dsa.DataAccessService;
 import com.top_logic.knowledge.service.migration.CreateMigrationScriptTemplate;
 import com.top_logic.knowledge.service.migration.MigrationConfig;
-import com.top_logic.knowledge.service.migration.MigrationConfig.DroppedDependency;
+import com.top_logic.knowledge.service.migration.MigrationConfig.ModuleRef;
 import com.top_logic.knowledge.service.migration.MigrationUtil;
 import com.top_logic.knowledge.service.migration.Version;
 
@@ -394,7 +394,7 @@ public class TestMigrationUtil extends BasicTestCase {
 		MigrationUtil.dumpMigrationConfig(out, followUp);
 		String xml = out.toString();
 		assertTrue(xml, xml.contains("<" + MigrationConfig.DROPPED_DEPENDENCIES_PROPERTY + ">"));
-		assertTrue(xml, xml.contains("<" + MigrationConfig.DROPPED_DEPENDENCY_ENTRY + " name=\"tl\""));
+		assertTrue(xml, xml.contains("<" + MigrationConfig.MODULE_ENTRY + " name=\"tl\""));
 
 		MigrationConfig read = readMigration(xml);
 		assertEquals(set("tl"), read.getDroppedDependencies().keySet());
@@ -407,6 +407,226 @@ public class TestMigrationUtil extends BasicTestCase {
 		assertFalse(withoutDropped.toString(),
 			withoutDropped.toString().contains(MigrationConfig.DROPPED_DEPENDENCIES_PROPERTY));
 		assertEquals(Collections.emptySet(), readMigration(withoutDropped.toString()).getDroppedDependencies().keySet());
+	}
+
+	/**
+	 * A module adopted by the application, that has an older migration history of its own, without
+	 * {@link MigrationConfig#getAddedDependencies() added dependencies}: The older migrations of the
+	 * application get an implicit dependency on the initial version of the adopted module, which
+	 * is too old for them.
+	 */
+	public void testAdoptedModuleWithoutAddedDependency() {
+		AdoptionScenario scenario = new AdoptionScenario();
+
+		MigrationUtil.addInitialDependencies(availableMigrations(), scenario._initialVersions);
+		assertEquals(MigrationUtil.initialVersion(scenario._ai.name()),
+			_migrationForVersion.get(scenario._p1).getDependencies().get(scenario._ai.name()));
+
+		migrationsPerformed(scenario.dbVersion(), scenario.modules());
+
+		List<String> tooOld = infos("is to old since");
+		assertFalse("Expected the too old dependency to be reported.", tooOld.isEmpty());
+		for (String warning : tooOld) {
+			assertTrue(warning, warning.contains(MigrationConfig.ADDED_DEPENDENCIES_PROPERTY));
+			assertTrue(warning, warning.contains("'" + scenario._ai.name() + "'"));
+		}
+	}
+
+	/**
+	 * A module adopted by the application, that has an older migration history of its own, listed
+	 * in the {@link MigrationConfig#getAddedDependencies() added dependencies} of the first
+	 * application migration depending on it: The older migrations of the application get no
+	 * dependency on the adopted module.
+	 */
+	public void testAdoptedModuleWithAddedDependency() {
+		AdoptionScenario scenario = new AdoptionScenario();
+		MigrationConfig adopting = _migrationForVersion.get(scenario._p3);
+		addAddedDependency(adopting, scenario._ai.name());
+
+		MigrationUtil.addInitialDependencies(availableMigrations(), scenario._initialVersions);
+		String ai = scenario._ai.name();
+		assertFalse(_migrationForVersion.get(scenario._p1).getDependencies().containsKey(ai));
+		assertFalse(_migrationForVersion.get(scenario._p2).getDependencies().containsKey(ai));
+		assertFalse(_migrationForVersion.get(scenario._appInitial).getDependencies().containsKey(ai));
+		assertEquals(scenario._a2, adopting.getDependencies().get(ai));
+
+		List<MigrationConfig> migrations = migrationsPerformed(scenario.dbVersion(), scenario.modules());
+
+		assertEquals(Collections.emptyList(),
+			infos("transitive dependency", "Upgrading dependency", "adds dependencies to modules"));
+		assertFalse(_migrationForVersion.get(scenario._p1).getDependencies().containsKey(ai));
+		assertFalse(_migrationForVersion.get(scenario._p2).getDependencies().containsKey(ai));
+		assertEquals(Arrays.asList(scenario._p3), versions(migrations));
+	}
+
+	/**
+	 * The migrations of a module adopted by the application run before the application migration
+	 * listing it in its {@link MigrationConfig#getAddedDependencies() added dependencies}.
+	 */
+	public void testAdoptedModuleOrder() {
+		AdoptionScenario scenario = new AdoptionScenario();
+		addAddedDependency(_migrationForVersion.get(scenario._p3), scenario._ai.name());
+		MigrationUtil.addInitialDependencies(availableMigrations(), scenario._initialVersions);
+
+		Map<String, Version> dbVersion = new HashMap<>();
+		dbVersion.put(scenario._tl.name(), scenario._t0);
+		dbVersion.put(scenario._ai.name(), scenario._a1);
+		dbVersion.put(scenario._app.name(), scenario._appInitial);
+		List<Version> order = versions(migrationsPerformed(dbVersion, scenario.modules()));
+
+		assertEquals(set(scenario._t1, scenario._t2, scenario._t3, scenario._p1, scenario._p2, scenario._a2,
+			scenario._p3), new HashSet<>(order));
+		assertTrue(order.toString(), order.indexOf(scenario._t3) < order.indexOf(scenario._p1));
+		assertTrue(order.toString(), order.indexOf(scenario._p1) < order.indexOf(scenario._p2));
+		assertTrue(order.toString(), order.indexOf(scenario._t3) < order.indexOf(scenario._a2));
+		assertTrue(order.toString(), order.indexOf(scenario._a2) < order.indexOf(scenario._p3));
+		assertTrue(order.toString(), order.indexOf(scenario._p2) < order.indexOf(scenario._p3));
+	}
+
+	public void testAddedDependencyAlreadyInPredecessor() {
+		List<MigrationConfig> migrations = migrationsWithLostDependency();
+		MigrationConfig followUp = migrations.get(1);
+		addDroppedDependency(followUp, "tl");
+		addAddedDependency(followUp, "element");
+
+		MigrationUtil.getAllVersions(_log, migrations);
+
+		List<String> warnings = infos("adds dependencies to modules");
+		assertEquals("Expected a warning for the added module already depended on: " + warnings, 1,
+			warnings.size());
+		assertTrue(warnings.get(0), warnings.get(0).contains("[element]"));
+		assertTrue(warnings.get(0), warnings.get(0).contains("already depends on"));
+	}
+
+	public void testAddedDependencyNotInOwnDependencies() {
+		List<MigrationConfig> migrations = migrationsWithLostDependency();
+		MigrationConfig followUp = migrations.get(1);
+		addDroppedDependency(followUp, "tl");
+		addAddedDependency(followUp, "unknown");
+
+		MigrationUtil.getAllVersions(_log, migrations);
+
+		List<String> warnings = infos("adds dependencies to modules");
+		assertEquals("Expected a warning for the added module not depended on: " + warnings, 1,
+			warnings.size());
+		assertTrue(warnings.get(0), warnings.get(0).contains("[unknown]"));
+		assertTrue(warnings.get(0), warnings.get(0).contains("it does not depend on"));
+	}
+
+	public void testAddedDependencySerialization() throws Exception {
+		MigrationConfig followUp = migrationsWithLostDependency().get(1);
+		addAddedDependency(followUp, "ai");
+
+		StringWriter out = new StringWriter();
+		MigrationUtil.dumpMigrationConfig(out, followUp);
+		String xml = out.toString();
+		assertTrue(xml, xml.contains("<" + MigrationConfig.ADDED_DEPENDENCIES_PROPERTY + ">"));
+		assertTrue(xml, xml.contains("<" + MigrationConfig.MODULE_ENTRY + " name=\"ai\""));
+
+		MigrationConfig read = readMigration(xml);
+		assertEquals(set("ai"), read.getAddedDependencies().keySet());
+		AbstractTypedConfigurationTestCase.assertEquals(followUp, read);
+
+		MigrationConfig plain = migrationsWithLostDependency().get(0);
+		StringWriter withoutAdded = new StringWriter();
+		MigrationUtil.dumpMigrationConfig(withoutAdded, plain);
+		assertFalse(withoutAdded.toString(),
+			withoutAdded.toString().contains(MigrationConfig.ADDED_DEPENDENCIES_PROPERTY));
+		assertEquals(Collections.emptySet(), readMigration(withoutAdded.toString()).getAddedDependencies().keySet());
+	}
+
+	/**
+	 * An application module "app" adopting the module "ai", whose first migration is older than the
+	 * first migrations of "app".
+	 * 
+	 * <p>
+	 * The modules have implicit initial versions without own migration as read from the
+	 * application. The migrations of "app" before {@link #_p3} do not depend on "ai".
+	 * </p>
+	 */
+	private class AdoptionScenario {
+		final TestModule _tl = new TestModule("tl");
+
+		final TestModule _ai = new TestModule("ai", _tl);
+
+		final TestModule _app = new TestModule("app", _ai, _tl);
+
+		final Map<String, Version> _initialVersions = new HashMap<>();
+
+		final Version _appInitial;
+
+		final Version _t0;
+
+		final Version _a1;
+
+		final Version _t1;
+
+		final Version _t2;
+
+		final Version _t3;
+
+		final Version _p1;
+
+		final Version _p2;
+
+		final Version _a2;
+
+		final Version _p3;
+
+		AdoptionScenario() {
+			createImplicitInitialVersion(_tl, _initialVersions);
+			createImplicitInitialVersion(_ai, _initialVersions);
+			_appInitial = createImplicitInitialVersion(_app, _initialVersions);
+
+			_t0 = createVersion(_tl);
+			_a1 = createVersion(_ai);
+			_t1 = createVersion(_tl);
+			_t2 = createVersion(_tl);
+			_t3 = createVersion(_tl);
+			_p1 = createVersion(_app);
+			_migrationForVersion.get(_p1).getDependencies().remove(_ai.name());
+			_p2 = createVersion(_app);
+			_migrationForVersion.get(_p2).getDependencies().remove(_ai.name());
+			_a2 = createVersion(_ai);
+			_p3 = createVersion(_app);
+		}
+
+		List<TestModule> modules() {
+			return Arrays.asList(_tl, _ai, _app);
+		}
+
+		/**
+		 * The version of a database of the application before adopting "ai".
+		 */
+		Map<String, Version> dbVersion() {
+			Map<String, Version> result = new HashMap<>();
+			result.put(_tl.name(), _t3);
+			result.put(_app.name(), _p2);
+			return result;
+		}
+	}
+
+	/**
+	 * Simulates the implicit initial version without migration of the given module, as read from
+	 * the application.
+	 */
+	private Version createImplicitInitialVersion(TestModule module, Map<String, Version> initialVersions) {
+		Version initial = MigrationUtil.initialVersion(module.name());
+		_migrationForVersion.put(initial, newMigration(initial, Collections.emptyList()));
+		initialVersions.put(module.name(), initial);
+		return initial;
+	}
+
+	private List<String> infos(String... fragments) {
+		return ((AssertProtocol) _log).getInfos().stream()
+			.filter(info -> Arrays.stream(fragments).anyMatch(info::contains))
+			.collect(Collectors.toList());
+	}
+
+	private static void addAddedDependency(MigrationConfig migration, String module) {
+		ModuleRef entry = TypedConfiguration.newConfigItem(ModuleRef.class);
+		entry.setName(module);
+		migration.getAddedDependencies().put(module, entry);
 	}
 
 	private MigrationConfig readMigration(String xml) throws Exception {
@@ -424,7 +644,7 @@ public class TestMigrationUtil extends BasicTestCase {
 	}
 
 	private static void addDroppedDependency(MigrationConfig migration, String module) {
-		DroppedDependency entry = TypedConfiguration.newConfigItem(DroppedDependency.class);
+		ModuleRef entry = TypedConfiguration.newConfigItem(ModuleRef.class);
 		entry.setName(module);
 		migration.getDroppedDependencies().put(module, entry);
 	}

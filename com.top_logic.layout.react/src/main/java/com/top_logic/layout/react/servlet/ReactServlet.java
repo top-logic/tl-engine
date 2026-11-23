@@ -170,6 +170,18 @@ public class ReactServlet extends TopLogicServlet {
 	 */
 	public static final String FIELD_IGNORE_STALE_UI = "ignoreStaleUi";
 
+	/**
+	 * Error message of the answer to a request that names no window: a command, an event stream or a
+	 * poll without the parameter {@code windowName}.
+	 *
+	 * <p>
+	 * The answer has the status {@code 400}. A command answered with it has no
+	 * {@link #ERROR_CODE_STALE_UI}: the client of the engine always sends a window name, so it must
+	 * not load its page again for a request that it did not send.
+	 * </p>
+	 */
+	public static final String MISSING_WINDOW_NAME_MESSAGE = "Missing windowName parameter.";
+
 	/** Name of the global command the client sends when the browser navigated in its history. */
 	private static final String CMD_NAVIGATE_TO_ROUTE = "navigateToRoute";
 
@@ -620,7 +632,7 @@ public class ReactServlet extends TopLogicServlet {
 			// A client error, refused as the event stream and the poll refuse it. It is not answered as
 			// a request for an unknown window: that answer lets the client load its page again, for a
 			// request it did not send.
-			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing windowName parameter.");
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, MISSING_WINDOW_NAME_MESSAGE);
 			return;
 		}
 		if (CMD_NAVIGATE_TO_ROUTE.equals(commandName)) {

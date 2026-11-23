@@ -61,8 +61,9 @@ import de.haumacher.msgbuf.data.DataObject;
  * Tests that the reply a {@link ReactCommandHandler} returns reaches the caller in the answer
  * {@link ReactServlet} writes for the command, how a failure of the command is answered, see
  * {@link ReactCommandAnswer}, the answer to a command whose control is not displayed, with and
- * without {@link ReactServlet#FIELD_IGNORE_STALE_UI}, and the answer to a command without a window
- * name or with an empty window name.
+ * without {@link ReactServlet#FIELD_IGNORE_STALE_UI}, the answer to a command without a window
+ * name or with an empty window name, and the answer to a report of a closed window without its
+ * window.
  */
 public class TestCommandReply extends BasicTestCase {
 
@@ -260,7 +261,7 @@ public class TestCommandReply extends BasicTestCase {
 		assertEquals(HttpServletResponse.SC_BAD_REQUEST, invocation.getResponse().getStatus());
 		Map<?, ?> answer = (Map<?, ?>) JSON.fromString(invocation.getServletResponse().getText());
 		assertEquals(Boolean.FALSE, answer.get(ReactCommandAnswer.FIELD_SUCCESS));
-		assertEquals("Missing windowName parameter.", answer.get(ReactCommandAnswer.FIELD_ERROR));
+		assertEquals(ReactServlet.MISSING_WINDOW_NAME_MESSAGE, answer.get(ReactCommandAnswer.FIELD_ERROR));
 		assertNull(answer.get(ReactCommandAnswer.FIELD_ERROR_CODE));
 		assertEquals(List.of(), log.getLogEntries());
 	}
@@ -277,6 +278,30 @@ public class TestCommandReply extends BasicTestCase {
 
 		assertEquals(HttpServletResponse.SC_BAD_REQUEST, invocation.getResponse().getStatus());
 		assertErrorCode(ReactServlet.ERROR_CODE_STALE_UI, invocation);
+	}
+
+	/**
+	 * A report of a closed or unloaded window without the argument {@code windowId} and without a
+	 * window name is answered with success. It closes no window of the session and logs no error.
+	 */
+	public void testWindowClosedWithoutWindowId() throws Exception {
+		displayWindow(arguments -> null);
+		CollectingLogListener log = new CollectingLogListener(Set.of(Level.ERROR, Level.FATAL), true);
+		InvocationContext closed;
+		InvocationContext unloaded;
+		try {
+			closed = postCommand(null, "", "windowClosed", Map.of(), false);
+			unloaded = postCommand(null, "", "windowClosed", Map.of("unload", Boolean.TRUE), false);
+		} finally {
+			log.deactivate();
+		}
+
+		assertEquals(HttpServletResponse.SC_OK, closed.getResponse().getStatus());
+		assertEquals("{\"success\":true}", closed.getServletResponse().getText());
+		assertEquals(HttpServletResponse.SC_OK, unloaded.getResponse().getStatus());
+		assertEquals("{\"success\":true}", unloaded.getServletResponse().getText());
+		assertNotNull(ReactWindowRegistry.forSession(_session).getQueue(WINDOW));
+		assertEquals(List.of(), log.getLogEntries());
 	}
 
 	/**

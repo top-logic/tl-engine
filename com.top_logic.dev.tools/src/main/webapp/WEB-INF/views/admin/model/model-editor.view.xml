@@ -2,10 +2,13 @@
 
 <!--
 	Model editor (admin hub, Model section). A master/detail editor over the application model:
-	the module table (left) selects a module; the class diagram (center) shows and selects the
-	module's types and their attributes (references between the module's types as edges, references to
-	types of other modules as attribute lines); the detail form (bottom) edits whichever of the two is
-	selected - the model element, or the module itself while the diagram has no selection. The
+	the module type tree (left) lists the modules with their classes and enumerations; the class
+	diagram (center) shows the module of the selected element and selects the module's types and
+	their attributes (references between the module's types as edges, references to types of other
+	modules as attribute lines). Tree and diagram share one selection, selectedPart: a type chosen in
+	the tree is highlighted in the diagram, a type clicked in the diagram is chosen in the tree, and a
+	click on the free area of the diagram selects the module. The module shown is derived from the
+	selection (selectedModule). The detail form (bottom) edits the selected model element. The
 	toolbars create and delete modules, types and attributes, and the class form adds and removes
 	generalizations, through the ModelEditAction. The context menu of the diagram offers the same
 	commands on the element right-clicked, and Del deletes the selected node or edge (a reference, or
@@ -17,8 +20,16 @@
 -->
 <view>
 	<channels>
-		<channel name="selectedModule"/>
 		<channel name="selectedPart"/>
+		<!--
+			The module the diagram shows: the selected module itself, the module of a selected type, or
+			the module of the owner of a selected attribute, reference or classifier, or of the
+			specialization of a selected generalization.
+		-->
+		<derived-channel name="selectedModule"
+			expr="$selectedPart == null ? null : ($selectedPart.instanceOf(`tl.model:TLModule`) ? $selectedPart : ($selectedPart.instanceOf(`tl.model:TLType`) ? $selectedPart.get(`tl.model:TLType#module`) : ($selectedPart.instanceOf(`tl.model:TLStructuredTypePart`) ? $selectedPart.get(`tl.model:TLStructuredTypePart#owner`).get(`tl.model:TLType#module`) : ($selectedPart.instanceOf(`tl.model:TLClassifier`) ? $selectedPart.get(`tl.model:TLClassifier#owner`).get(`tl.model:TLType#module`) : ($selectedPart.instanceOf(`tl.devtools:Generalization`) ? $selectedPart.get(`tl.devtools:Generalization#specialization`).get(`tl.model:TLType#module`) : null)))))"
+			inputs="selectedPart"
+		/>
 		<channel name="selectedInstances"/>
 		<!-- Bumped after an import, so the instance table reads its rows again. -->
 		<channel name="instancesReload"/>
@@ -30,15 +41,6 @@
 		<derived-channel name="exportedInstances"
 			expr="$selectedPart == null || !$selectedPart.instanceOf(`tl.model:TLClass`) ? null : { sel = $selectedInstances.filter(o -> $o.instanceOf($selectedPart)); $sel.isEmpty() ? null : $sel }"
 			inputs="selectedPart, selectedInstances"
-		/>
-		<!--
-			What the detail form edits: the selected model element, or the module itself while
-			nothing is selected in the diagram. A module carries a name and annotations like every
-			other model part, so one form serves both and the module needs no panel of its own.
-		-->
-		<derived-channel name="selectedDetail"
-			expr="ifElse($selectedPart != null, $selectedPart, $selectedModule)"
-			inputs="selectedPart, selectedModule"
 		/>
 		<!--
 			The association end implementing the selected reference. A reference reads its cardinality
@@ -71,8 +73,8 @@
 			>
 				<panel fill="true">
 					<title>
-						<en>Modules</en>
-						<de>Module</de>
+						<en>Model</en>
+						<de>Modell</de>
 					</title>
 					<commands>
 						<generic-command
@@ -91,7 +93,7 @@
 									>
 										<bind
 											channel="selection"
-											to="selectedModule"
+											to="selectedPart"
 										/>
 									</open-dialog>
 								</with-result>
@@ -100,7 +102,7 @@
 						<generic-command
 							clique="more"
 							image="css:bi bi-trash"
-							inputs="selectedModule"
+							inputs="selectedPart"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -108,7 +110,7 @@
 								<de>Modul löschen</de>
 							</label>
 							<executability>
-								<null-input-disabled/>
+								<disabled-if expr="if($selectedPart == null || !$selectedPart.instanceOf(`tl.model:TLModule`), #('Select a module.'@en, 'Wählen Sie ein Modul.'@de))"/>
 							</executability>
 							<confirm expr="#('Delete the selected module and all its contents?'@en, 'Das ausgewählte Modul und seinen gesamten Inhalt löschen?'@de)"/>
 							<with-transaction>
@@ -116,21 +118,31 @@
 									mode="DELETE"
 								/>
 							</with-transaction>
-							<write-channel name="selectedModule"
+							<write-channel name="selectedPart"
 								clear="true"
 							/>
 						</generic-command>
 					</commands>
-					<table
-						observed-types="tl.model:TLModule"
-						selection="selectedModule"
-						types="tl.model:TLModule"
+					<!--
+						The model is the invisible root, its children are the modules, and the children of a
+						module are its classes and enumerations - the types the diagram draws, those with the
+						module as scope -, each level sorted by name, ignoring case. The parents lead from a type to its module
+						and from a module to the model, so that a type selected in the diagram is found in the
+						tree.
+					-->
+					<tree-table
+						children="$node.instanceOf(`tl.model:TLModel`) ? $node.get(`tl.model:TLModel#modules`).sort(comparator(x -> $x.get(`tl.model:TLNamedPart#name`).toLowerCase())) : ($node.instanceOf(`tl.model:TLModule`) ? $node.get(`tl.model:TLModule#types`).filter(t -> $t.get(`tl.model:TLType#scope`) == $node &amp;&amp; ($t.instanceOf(`tl.model:TLClass`) || $t.instanceOf(`tl.model:TLEnumeration`))).sort(comparator(x -> $x.get(`tl.model:TLNamedPart#name`).toLowerCase())) : list())"
+						initial-expansion-depth="0"
+						observed-types="tl.model:TLModule, tl.model:TLClass, tl.model:TLEnumeration"
+						parents="$node.instanceOf(`tl.model:TLType`) ? $node.get(`tl.model:TLType#module`) : ($node.instanceOf(`tl.model:TLModule`) ? $node.get(`tl.model:TLModule#model`) : null)"
+						root="all(`tl.model:TLModel`).firstElement()"
+						selection="selectedPart"
+						types="tl.model:TLNamedPart"
 					>
 						<columns>
 							<column attribute="name"/>
 						</columns>
-						<rows>all(`tl.model:TLModule`)</rows>
-					</table>
+					</tree-table>
 				</panel>
 			</pane>
 			<pane
@@ -252,13 +264,14 @@
 													</execute-script>
 												</generic-command>
 												<!--
-													Del deletes the element selected in the diagram, a node or an edge.
+													Del deletes the element selected in the diagram, a node or an edge, and selects what the
+													deleted element belonged to: the module of a type, the type of an attribute, the
+													enumeration of a classifier, the specialization of a generalization.
 												-->
-												<generic-command
+												<generic-command key="Delete"
 													clique="more"
 													image="css:bi bi-trash"
 													inputs="selectedPart"
-													key="Delete"
 													placement="TOOLBAR"
 												>
 													<label>
@@ -267,6 +280,7 @@
 													</label>
 													<executability>
 														<null-input-disabled/>
+														<disabled-if expr="if($selectedPart.instanceOf(`tl.model:TLModule`), #('A module is deleted with &quot;Delete module&quot; in the model tree.'@en, 'Ein Modul wird mit &quot;Modul löschen&quot; im Modellbaum gelöscht.'@de))"/>
 													</executability>
 													<confirm expr="#('Delete the selected model element?'@en, 'Das ausgewählte Modellelement löschen?'@de)"/>
 													<with-transaction>
@@ -274,9 +288,7 @@
 															mode="DELETE"
 														/>
 													</with-transaction>
-													<write-channel name="selectedPart"
-														clear="true"
-													/>
+													<write-channel name="selectedPart"/>
 												</generic-command>
 											</commands>
 											<!--
@@ -287,6 +299,7 @@
 											-->
 											<context-menu input="selectedPart">
 												<flow-diagram
+													empty-area-selection="$module"
 													observed-types="tl.model:TLModule, tl.model:TLClass, tl.model:TLEnumeration, tl.model:TLClassifier, tl.model:TLReference, tl.model:TLAssociationEnd, tl.model:TLProperty"
 													selection="selectedPart"
 												>
@@ -455,10 +468,11 @@
 												</flow-diagram>
 												<!--
 													The menu offers the commands of the toolbar on what was right-clicked, through the same
-													dialogs and ModelEditAction modes: on the free area (where the right-click clears the
-													selection) a new class or enumeration in the module, on a class or attribute a new
-													attribute, on an enumeration or classifier a new classifier, and on any element its
-													deletion.
+													dialogs and ModelEditAction modes: on the free area (where the right-click selects the
+													module, see empty-area-selection) a new class or enumeration in the module, on a class or
+													attribute a new attribute, on an enumeration or classifier a new classifier, and on any
+													element its deletion. A deletion selects what the deleted element belonged to. A module is
+													deleted in the model tree only.
 												-->
 												<commands>
 													<generic-command
@@ -471,7 +485,7 @@
 															<de>Neue Klasse</de>
 														</label>
 														<executability>
-															<visible-if expr="$selectedModule != null &amp;&amp; $selectedPart == null"/>
+															<visible-if expr="$selectedPart != null &amp;&amp; $selectedPart.instanceOf(`tl.model:TLModule`)"/>
 														</executability>
 														<execute-script function="{ type = new(`tl.devtools:NewType`, transient: true); $type.set(`tl.devtools:NewType#kind`, `tl.devtools:TypeKind#class`); $type }">
 															<with-result>
@@ -501,7 +515,7 @@
 															<de>Neue Aufzählung</de>
 														</label>
 														<executability>
-															<visible-if expr="$selectedModule != null &amp;&amp; $selectedPart == null"/>
+															<visible-if expr="$selectedPart != null &amp;&amp; $selectedPart.instanceOf(`tl.model:TLModule`)"/>
 														</executability>
 														<execute-script function="{ type = new(`tl.devtools:NewType`, transient: true); $type.set(`tl.devtools:NewType#kind`, `tl.devtools:TypeKind#enumeration`); $type }">
 															<with-result>
@@ -593,6 +607,7 @@
 														</label>
 														<executability>
 															<null-input-hidden/>
+															<disabled-if expr="if($selectedPart.instanceOf(`tl.model:TLModule`), #('A module is deleted with &quot;Delete module&quot; in the model tree.'@en, 'Ein Modul wird mit &quot;Modul löschen&quot; im Modellbaum gelöscht.'@de))"/>
 														</executability>
 														<confirm expr="#('Delete the selected model element?'@en, 'Das ausgewählte Modellelement löschen?'@de)"/>
 														<with-transaction>
@@ -600,9 +615,7 @@
 																mode="DELETE"
 															/>
 														</with-transaction>
-														<write-channel name="selectedPart"
-															clear="true"
-														/>
+														<write-channel name="selectedPart"/>
 													</generic-command>
 												</commands>
 											</context-menu>
@@ -742,15 +755,15 @@
 								covers everything with no panel of its own - an enumeration, a
 								classifier, a datatype - with what every model part has.
 							-->
-							<switch input="selectedDetail">
-								<case test="$selectedDetail != null &amp;&amp; $selectedDetail.instanceOf(`tl.model:TLModule`)">
+							<switch input="selectedPart">
+								<case test="$selectedPart != null &amp;&amp; $selectedPart.instanceOf(`tl.model:TLModule`)">
 									<panel>
 										<title>
 											<en>Module</en>
 											<de>Modul</de>
 										</title>
 										<form
-											input="selectedDetail"
+											input="selectedPart"
 											with-inset="true"
 											withEditMode="true"
 										>
@@ -762,7 +775,7 @@
 										</form>
 									</panel>
 								</case>
-								<case test="$selectedDetail != null &amp;&amp; $selectedDetail.instanceOf(`tl.model:TLReference`)">
+								<case test="$selectedPart != null &amp;&amp; $selectedPart.instanceOf(`tl.model:TLReference`)">
 									<stack>
 										<panel>
 											<title>
@@ -770,7 +783,7 @@
 												<de>Referenz</de>
 											</title>
 											<form
-												input="selectedDetail"
+												input="selectedPart"
 												with-inset="true"
 												withEditMode="true"
 											>
@@ -818,14 +831,14 @@
 										</panel>
 									</stack>
 								</case>
-								<case test="$selectedDetail != null &amp;&amp; $selectedDetail.instanceOf(`tl.model:TLStructuredTypePart`)">
+								<case test="$selectedPart != null &amp;&amp; $selectedPart.instanceOf(`tl.model:TLStructuredTypePart`)">
 									<panel>
 										<title>
 											<en>Attribute</en>
 											<de>Attribut</de>
 										</title>
 										<form
-											input="selectedDetail"
+											input="selectedPart"
 											with-inset="true"
 											withEditMode="true"
 										>
@@ -839,7 +852,7 @@
 										</form>
 									</panel>
 								</case>
-								<case test="$selectedDetail != null &amp;&amp; $selectedDetail.instanceOf(`tl.model:TLClass`)">
+								<case test="$selectedPart != null &amp;&amp; $selectedPart.instanceOf(`tl.model:TLClass`)">
 									<stack>
 										<panel>
 											<title>
@@ -847,7 +860,7 @@
 												<de>Klasse</de>
 											</title>
 											<form
-												input="selectedDetail"
+												input="selectedPart"
 												with-inset="true"
 												withEditMode="true"
 											>
@@ -949,14 +962,14 @@
 									A generalization edge selected in the diagram: the two classes it links. The link is added
 									and removed, never edited, so it is shown read-only.
 								-->
-								<case test="$selectedDetail != null &amp;&amp; $selectedDetail.instanceOf(`tl.devtools:Generalization`)">
+								<case test="$selectedPart != null &amp;&amp; $selectedPart.instanceOf(`tl.devtools:Generalization`)">
 									<panel>
 										<title>
 											<en>Generalization</en>
 											<de>Generalisierung</de>
 										</title>
 										<form
-											input="selectedDetail"
+											input="selectedPart"
 											with-inset="true"
 										>
 											<edit-executability>
@@ -974,7 +987,7 @@
 											<de>Details</de>
 										</title>
 										<form
-											input="selectedDetail"
+											input="selectedPart"
 											with-inset="true"
 											withEditMode="true"
 										>

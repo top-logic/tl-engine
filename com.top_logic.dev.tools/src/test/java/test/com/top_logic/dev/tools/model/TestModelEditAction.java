@@ -29,9 +29,11 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DynamicVisibility;
@@ -46,8 +48,9 @@ import com.top_logic.util.model.ModelService;
 
 /**
  * Test of {@link ModelEditAction} creating references of a given kind with an opposite reference,
- * and adding and removing generalizations of a class (also by deleting a generalization link), and of the visibility of the reference kind
- * and opposite fields of the "new attribute" dialog.
+ * adding and removing generalizations of a class (also by deleting a generalization link),
+ * deleting model parts, and of the visibility of the reference kind and opposite fields of the
+ * "new attribute" dialog.
  */
 @SuppressWarnings("javadoc")
 public class TestModelEditAction extends TestCase {
@@ -201,10 +204,24 @@ public class TestModelEditAction extends TestCase {
 			addGeneralization(owner, target);
 			addGeneralization(owner, other);
 
-			assertNull(execute(Mode.DELETE, null, generalizationLink(owner, target)));
+			assertSame("The specialization is what the link belonged to.", owner,
+				execute(Mode.DELETE, null, generalizationLink(owner, target)));
 			assertEquals(List.of(other), owner.getGeneralizations());
 			assertNotNull("Only the link is removed, not the generalized class.",
 				owner.getModule().getType("Target"));
+		});
+	}
+
+	public void testDeleteReturnsWhatTheDeletedPartBelongedTo() {
+		inTestModule((owner, target, enumeration) -> {
+			TLModule module = owner.getModule();
+			TLProperty property = TLModelUtil.addProperty(owner, "prop", TLModelUtil.findType("tl.core:String"));
+			TLClassifier classifier = TLModelUtil.addClassifier(enumeration, "first");
+
+			assertSame("The owner of an attribute.", owner, execute(Mode.DELETE, null, property));
+			assertSame("The enumeration of a classifier.", enumeration, execute(Mode.DELETE, null, classifier));
+			assertSame("The module of a type.", module, execute(Mode.DELETE, null, target));
+			assertNull("Nothing for a module.", execute(Mode.DELETE, null, module));
 		});
 	}
 

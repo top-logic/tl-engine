@@ -237,14 +237,7 @@ public class DerivedViewChannel implements ObservingChannel {
 
 	@Override
 	public List<StateHandler> dirtyHandlers() {
-		if (_vetoListeners.isEmpty()) {
-			return List.of();
-		}
-		VetoCollector dirtyHandlers = new VetoCollector();
-		for (VetoListener vetoListener : _vetoListeners) {
-			dirtyHandlers.addAll(vetoListener.checkDirty(this));
-		}
-		return dirtyHandlers.toList();
+		return VetoCollector.ask(this, _vetoListeners, vetoListener -> vetoListener.checkDirty(this));
 	}
 
 	@Override

@@ -126,6 +126,16 @@ import com.top_logic.util.model.CompatibilityService;
  * other words, the set of {@link MigrationConfig}s applied corresponds to the database version of
  * the application.
  * </p>
+ *
+ * <p>
+ * A start that changes the database holds the {@link MigrationLock} while migrating, so that nodes
+ * of a cluster starting concurrently do not migrate the same database. Each step of the migration
+ * is committed together with a {@link MigrationProgress}. A start after an interrupted migration
+ * resumes it after its last completed step: It takes over the lock left behind by a terminated run
+ * of the same node. The lock of another node is waited for; after checking that the holder is no
+ * longer running, the lock property {@value MigrationLock#LOCK_PROPERTY} may be deleted manually,
+ * and the next start resumes the migration as well.
+ * </p>
  * 
  * @see MigrationConfig
  * 
@@ -801,9 +811,6 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	private MigrationLock acquireLock(Protocol log) {
 		try {
 			return MigrationLock.acquire(log, _connectionPool);
-		} catch (IllegalStateException ex) {
-			// The lock was left behind by a former run of this node.
-			throw log.fatal(ex.getMessage(), ex);
 		} catch (InterruptedException ex) {
 			Thread.currentThread().interrupt();
 			throw log.fatal("Interrupted while waiting for the migration lock.", ex);

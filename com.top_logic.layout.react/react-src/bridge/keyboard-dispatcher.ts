@@ -152,7 +152,7 @@ const KEY_CODE_INPUT_METHOD = 229;
  * keys - asks this first and leaves such a key alone. A React handler passes `event.nativeEvent`.</p>
  *
  * <p>`isComposing` alone is not sufficient: Safari ends the composition before it reports the Enter
- * that ends it, with `isComposing` false. Every engine reports such a key with the key code of a key
+ * that ends it, with `isComposing` false. Every browser reports such a key with the key code of a key
  * that an input method processes, which is why the deprecated `keyCode` is read.</p>
  */
 export function isCompositionKey(event: KeyboardEvent): boolean {

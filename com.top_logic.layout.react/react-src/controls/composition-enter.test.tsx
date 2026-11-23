@@ -233,3 +233,30 @@ describe.each(COMPOSITION_ENTERS)('the Enter that ends a composition %s', (_form
     expect(command).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('the Escape that cancels a composition', () => {
+  it('runs no Escape binding of the page; the next Escape does', () => {
+    const input = mountText({});
+    // The binding that closes what the field stands on, e.g. a dialog.
+    const close = vi.fn(() => true);
+    removeBinding = addBinding(pageScope(), 'Escape', close);
+
+    compose(input, COMPOSED);
+    act(() => {
+      input.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Escape', code: 'Escape', keyCode: 229, isComposing: true, bubbles: true, cancelable: true,
+      }));
+      input.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: '' }));
+    });
+
+    expect(close).not.toHaveBeenCalled();
+
+    act(() => {
+      input.dispatchEvent(new KeyboardEvent('keydown', {
+        key: 'Escape', code: 'Escape', keyCode: 27, bubbles: true, cancelable: true,
+      }));
+    });
+
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+});

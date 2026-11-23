@@ -818,6 +818,8 @@ describe('the search and the filter name of a table as MUI text fields', () => {
   it('neither sends the term nor saves the filter on the Enter that ends an input method composition', async () => {
     // The key code an input method reports for the Enter that ends its composition (#30487).
     const compositionEnter = { key: 'Enter', keyCode: 229, isComposing: true };
+    // The pause after which the term is sent anyway never runs out, so only the Enter could send it.
+    fakeDebounceTimers();
     const sent = mountTable({ filterSaving: true });
     await settle();
 
@@ -826,7 +828,7 @@ describe('the search and the filter name of a table as MUI text fields', () => {
     await settle();
     expect(sent).not.toHaveBeenCalledWith('search', expect.anything());
 
-    await userEvent.click(screen.getByRole('button', { name: LABEL_SAVE_FILTER }));
+    fireEvent.click(screen.getByRole('button', { name: LABEL_SAVE_FILTER }));
     const name = screen.getByRole('textbox', { name: LABEL_FILTER_NAME });
     fireEvent.change(name, { target: { value: 'Meins' } });
     fireEvent.keyDown(name, compositionEnter);

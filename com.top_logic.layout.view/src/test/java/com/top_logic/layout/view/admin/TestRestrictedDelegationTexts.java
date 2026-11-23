@@ -20,6 +20,7 @@ import com.top_logic.basic.module.ModuleException;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
 import com.top_logic.element.boundsec.manager.explain.AccessExplanation;
 import com.top_logic.element.boundsec.manager.explain.OperationDecision;
@@ -32,6 +33,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ContainerRelation;
 import com.top_logic.model.security.RestrictedRelation;
 import com.top_logic.model.util.TLModelUtil;
@@ -49,6 +51,13 @@ public class TestRestrictedDelegationTexts extends TestCase {
 
 	private static final AccessParentFunction RESTRICTED =
 		new RestrictedRelation(ContainerRelation.ANY, Set.of(SimpleBoundCommandGroup.READ));
+
+	private static final AnyOfRelation ANY_OF = new AnyOfRelation(List.of(ContainerRelation.ANY,
+		new RestrictedRelation(ContainerRelation.DEFAULT, Set.of(SimpleBoundCommandGroup.READ))));
+
+	private static final AnyOfRelation RESTRICTED_ANY_OF = new AnyOfRelation(List.of(
+		new RestrictedRelation(ContainerRelation.ANY, Set.of(SimpleBoundCommandGroup.WRITE)),
+		new RestrictedRelation(ContainerRelation.DEFAULT, Set.of(SimpleBoundCommandGroup.READ))));
 
 	public void testGrantsOfRestrictedType() {
 		ResKey restricted = SecurityGrantFunctions.delegation(RESTRICTED);
@@ -227,6 +236,61 @@ public class TestRestrictedDelegationTexts extends TestCase {
 		String unrestricted = Resources.getInstance()
 			.getString(I18NConstants.COVERAGE_DELEGATED_CONTAINER__CONTAINERS.fill(TLModelUtil.qualifiedName(parts)));
 		assertFalse("A restricted type does not delegate every access decision: " + html, html.contains(unrestricted));
+	}
+
+	/**
+	 * An access parent with several candidates is told as such, naming every candidate, with the
+	 * operations its candidates delegate when none delegates all of them.
+	 */
+	public void testGrantsOfAnyOf() {
+		ResKey all = SecurityGrantFunctions.delegation(ANY_OF);
+		assertEquals(I18NConstants.GRANTS_DELEGATED_ANY_OF__CANDIDATES.getKey(), all.plain().getKey());
+		assertNamesCandidates(ANY_OF, translate(all));
+
+		ResKey restricted = SecurityGrantFunctions.delegation(RESTRICTED_ANY_OF);
+		assertEquals(I18NConstants.GRANTS_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS.getKey(),
+			restricted.plain().getKey());
+		assertNamesCandidates(RESTRICTED_ANY_OF, translate(restricted));
+		assertTrue("The delegated operations are named: " + translate(restricted),
+			translate(restricted).contains(SecurityGrantFunctions.operationLabels(RESTRICTED_ANY_OF.getOperations())));
+	}
+
+	/**
+	 * The coverage of a type with several access parents tells them as such, naming every
+	 * candidate.
+	 */
+	public void testCoverageOfAnyOf() {
+		TLModule module = TLModelUtil.addModule(new TLModelImpl(), "test.coverage");
+		TLClass part = TLModelUtil.addClass(module, "Part");
+		for (AnyOfRelation anyOf : List.of(ANY_OF, RESTRICTED_ANY_OF)) {
+			TypeCoverage row = row(part, anyOf);
+			ViewChannel findings = new DefaultViewChannel("findings");
+			Detail detail = new Detail(null, null, null, null, findings, null, null);
+
+			detail.show(part, Map.of(part, row)::get);
+
+			String html = (String) findings.get();
+			assertNamesCandidates(anyOf, html);
+		}
+		ResKey all = SecurityCoverageTable.delegation(row(part, ANY_OF));
+		assertEquals(I18NConstants.COVERAGE_DELEGATED_ANY_OF__CANDIDATES.getKey(), all.plain().getKey());
+		ResKey restricted = SecurityCoverageTable.delegation(row(part, RESTRICTED_ANY_OF));
+		assertEquals(I18NConstants.COVERAGE_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS.getKey(),
+			restricted.plain().getKey());
+		assertTrue("The delegated operations are named: " + translate(restricted),
+			translate(restricted).contains(SecurityGrantFunctions.operationLabels(RESTRICTED_ANY_OF.getOperations())));
+	}
+
+	private static TypeCoverage row(TLClass type, AccessParentFunction accessParent) {
+		return new TypeCoverage(type, null, null, accessParent, List.of(), Set.of(), List.of(), List.of(), List.of());
+	}
+
+	private static void assertNamesCandidates(AnyOfRelation anyOf, String text) {
+		for (AccessParentFunction candidate : anyOf.candidates()) {
+			String candidateLabel = TagUtil.encodeXML(translate(candidate.getLabel()));
+			assertTrue("The candidate '" + candidateLabel + "' is named: " + text, text.contains(candidateLabel)
+				|| text.contains(translate(candidate.getLabel())));
+		}
 	}
 
 	private static String translate(ResKey key) {

@@ -164,12 +164,16 @@ public record AnyOfRelation(List<AccessParentFunction> candidates) implements Ac
 		return Collections.unmodifiableSet(result);
 	}
 
+	/**
+	 * @return The labels of the candidates, separated by a semicolon to set them apart from the
+	 *         comma of a {@link RestrictedRelation restricted} candidate's operations.
+	 */
 	@Override
 	public ResKey getLabel() {
 		ResKey labels = null;
 		for (AccessParentFunction candidate : candidates) {
 			ResKey label = candidate.getLabel();
-			labels = labels == null ? label : I18NConstants.OPERATION_LIST__LIST_OPERATION.fill(labels, label);
+			labels = labels == null ? label : I18NConstants.CANDIDATE_LIST__LIST_CANDIDATE.fill(labels, label);
 		}
 		return I18NConstants.ACCESS_PARENT_ANY_OF__CANDIDATES.fill(labels);
 	}

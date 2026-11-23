@@ -6,6 +6,7 @@
 package test.com.top_logic.element.boundsec.manager.coverage;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -26,12 +27,14 @@ import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ContainerRelation;
 import com.top_logic.model.security.TargetRelation;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
+import com.top_logic.util.Resources;
 
 /**
  * Test for the {@link SecurityCoverageAnalysis} against the model module
@@ -121,6 +124,9 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 
 	/** The to-one composition of {@link #RECURSIVE} holding objects of its own type. */
 	private static final String DETAIL_REFERENCE = MODULE + ":Recursive#detail";
+
+	/** Type delegating to its folder or, for Read, to the documents relating it. */
+	private static final String ANY_OF_PART = "TestAccessParentAnyOf:Part";
 
 	/** Type with a read grant to a role that no rule delivers on it. */
 	private static final String DEAD_GRANT = MODULE + ":DeadGrant";
@@ -322,6 +328,28 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 
 		CoverageFinding finding = singleFinding(coverage, FindingKind.SHADOWED_RULES);
 		assertEquals(List.of(ANY_CONTAINER_RULE_ID), finding.getRuleIds());
+	}
+
+	/**
+	 * A type deciding by any of several access parents delegates like a type with a single one, and
+	 * its label names every candidate.
+	 */
+	public void testAnyOfType() {
+		TypeCoverage coverage = coverage(ANY_OF_PART);
+		assertEquals(coverage.toString(), Set.of(), findingKinds(coverage));
+		assertEquals(coverage.toString(), CoverageStatus.DELEGATED, coverage.status());
+
+		AnyOfRelation parent = (AnyOfRelation) coverage.accessParent();
+		assertEquals(2, parent.candidates().size());
+		Resources resources = Resources.getInstance(Locale.ENGLISH);
+		String label = resources.getString(parent.getLabel());
+		for (AccessParentFunction candidate : parent.candidates()) {
+			String candidateLabel = resources.getString(candidate.getLabel());
+			assertTrue("The label names the candidate '" + candidateLabel + "': " + label,
+				label.contains(candidateLabel));
+		}
+		assertTrue("The candidates are set apart from the comma of a restricted candidate: " + label,
+			label.contains("; "));
 	}
 
 	public void testConfiguredContainerTellsDirectionOfRecursiveComposition() {

@@ -65,6 +65,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.rules.PathByExpression;
 import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ContainerRelation;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.CellContent;
@@ -1190,15 +1191,22 @@ public class SecurityCoverageTable implements UIElement {
 	 *
 	 * <p>
 	 * An access parent deciding only some operations is described with these operations, the
-	 * other operations being decided by the type itself.
+	 * other operations being decided by the type itself. An {@link AnyOfRelation} is described as
+	 * several access parents, its label naming the candidates.
 	 * </p>
 	 */
-	private static ResKey delegation(TypeCoverage coverage) {
+	static ResKey delegation(TypeCoverage coverage) {
 		AccessParentFunction parent = coverage.accessParent();
 		if (parent == null) {
 			return null;
 		}
 		Set<BoundCommandGroup> operations = parent.getOperations();
+		if (parent instanceof AnyOfRelation) {
+			return operations == null
+				? I18NConstants.COVERAGE_DELEGATED_ANY_OF__CANDIDATES.fill(parent.getLabel())
+				: I18NConstants.COVERAGE_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS.fill(parent.getLabel(),
+					SecurityGrantFunctions.operationLabels(operations));
+		}
 		if (parent.getRelation() instanceof ContainerRelation container && container.composition() == null) {
 			String containers = coverage.containerReferences().stream()
 				.map(TLModelUtil::qualifiedName)

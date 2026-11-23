@@ -33,6 +33,7 @@ import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.AnyOfRelation;
 import com.top_logic.model.security.ApplicableOperations;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.search.expr.config.operations.AdminOnly;
@@ -157,9 +158,20 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 	/**
 	 * What the given access parent decides, for the explanation of the grants of the type
 	 * delegating to it.
+	 *
+	 * <p>
+	 * An {@link AnyOfRelation} is told as several access parents, its label naming the candidates
+	 * with the operations each of them is restricted to.
+	 * </p>
 	 */
 	static ResKey delegation(AccessParentFunction parent) {
 		Set<BoundCommandGroup> operations = parent.getOperations();
+		if (parent instanceof AnyOfRelation) {
+			return operations == null
+				? I18NConstants.GRANTS_DELEGATED_ANY_OF__CANDIDATES.fill(parent.getLabel())
+				: I18NConstants.GRANTS_DELEGATED_RESTRICTED_ANY_OF__CANDIDATES_OPERATIONS.fill(parent.getLabel(),
+					operationLabels(operations));
+		}
 		if (operations == null) {
 			return I18NConstants.GRANTS_DELEGATED__PARENT.fill(parent.getLabel());
 		}

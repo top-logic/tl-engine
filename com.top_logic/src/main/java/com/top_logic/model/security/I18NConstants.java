@@ -66,6 +66,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ACCESS_PARENT_ANY_OF__CANDIDATES;
 
 	/**
+	 * @en {0}; {1}
+	 */
+	public static ResKey2 CANDIDATE_LIST__LIST_CANDIDATE;
+
+	/**
 	 * @en {0}, only for {1}
 	 */
 	public static ResKey2 ACCESS_PARENT_RESTRICTED__RELATION_OPERATIONS;

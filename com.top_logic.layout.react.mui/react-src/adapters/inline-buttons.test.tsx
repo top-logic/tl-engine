@@ -19,6 +19,7 @@ import MuiTextInputAdapter from './MuiTextInputAdapter';
 import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
 import MuiChipAdapter from './MuiChipAdapter';
 import MuiSkeletonAdapter from './MuiSkeletonAdapter';
+import MuiBadgeAdapter from './MuiBadgeAdapter';
 
 replacePart('Button', MuiButtonAdapter);
 // The table looks up the toggle of its tree rows as well.
@@ -30,6 +31,8 @@ replacePart('TextInput', MuiTextInputAdapter);
 // The table draws its named filters as chips.
 replacePart('Chip', MuiChipAdapter);
 replacePart('Skeleton', MuiSkeletonAdapter);
+// The group toggle of a grouping column carries its group level as a badge.
+replacePart('Badge', MuiBadgeAdapter);
 
 /** The labels of the buttons: the keys, as the test stub translates each key to itself. */
 const LABEL_MINIMIZE = 'js.panel.minimize';
@@ -42,10 +45,18 @@ const LABEL_FILTER_ACTIVE = 'js.table.filterActive';
 const LABEL_ADD = 'js.valueList.add';
 const LABEL_REMOVE = 'js.valueList.remove';
 const LABEL_GROUP_BY = 'js.table.groupBy';
-const LABEL_UNGROUP = 'js.table.ungroup';
+const LABEL_GROUP_BY_ALSO = 'js.table.groupByAlso';
+const LABEL_UNGROUP_COLUMN = 'js.table.ungroupColumn';
+const LABEL_GROUP_LEVEL = 'js.table.groupLevel';
 const LABEL_OPEN_DRAWER = 'js.sidebar.openDrawer';
 const LABEL_COLUMN_HIDE = 'js.table.columnHide';
 const LABEL_COLUMN_SHOW_LOCK = 'js.table.columnShowLock';
+
+/** The primary color of the MUI default theme the tests mount below, the color of a link in MUI. */
+const COLOR_PRIMARY = 'var(--mui-palette-primary-main)';
+
+/** The color of an MUI icon button of the default color. */
+const COLOR_ICON_BUTTON = 'var(--mui-palette-action-active)';
 
 /** The commands the controls send for their buttons. */
 const CMD_TOGGLE_MINIMIZE = 'toggleMinimize';
@@ -153,6 +164,22 @@ describe('the column buttons of a table as MUI icon buttons', () => {
     expect(sent).toHaveBeenCalledWith(CMD_OPEN_FILTER, { column: 'name' });
   });
 
+  it('draws the funnel of a column with a filter in force in the primary color of the theme', async () => {
+    mountTable(true);
+    await settle();
+
+    const funnel = screen.getByRole('button', { name: LABEL_FILTER_ACTIVE });
+    expect(getComputedStyle(funnel).color).toBe(COLOR_PRIMARY);
+  });
+
+  it('draws the funnel of a column without filter in the default color of an icon button', async () => {
+    mountTable(false);
+    await settle();
+
+    const funnel = screen.getByRole('button', { name: LABEL_FILTER });
+    expect(getComputedStyle(funnel).color).toBe(COLOR_ICON_BUTTON);
+  });
+
   it('shows the funnel of a column without filter empty', async () => {
     mountTable(false);
     await settle();
@@ -233,13 +260,16 @@ describe('the group toggle of the column selection', () => {
   /** The command the column selection sends for the group toggle. */
   const CMD_GROUP = 'group';
 
+  /** The argument of the group command: the grouping columns, outermost group level first. */
+  const ARG_COLUMNS = 'columns';
+
   function entry(name: string, visible: boolean, grouped: boolean) {
     return { name, label: 'Spalte ' + name, visible, locked: false, grouped };
   }
 
-  it('offers grouping on every row, also a hidden one, and moves the grouping to the chosen column', async () => {
+  it('offers grouping on every row, also a hidden one, of an ungrouped table', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { groupable: true, entries: [entry('a', true, false), entry('b', false, false), entry('c', true, true)] });
+      { groupable: true, grouping: [], entries: [entry('a', true, false), entry('b', false, false)] });
     await settle();
 
     const groupBy = screen.getAllByRole('button', { name: LABEL_GROUP_BY });
@@ -252,22 +282,51 @@ describe('the group toggle of the column selection', () => {
     // The toggle of the hidden column b.
     await userEvent.click(groupBy[1]);
     await settle();
-    expect(sent).toHaveBeenCalledWith(CMD_GROUP, { column: 'b' });
+    expect(sent).toHaveBeenCalledWith(CMD_GROUP, { [ARG_COLUMNS]: ['b'] });
   });
 
-  it('keeps the toggle of the grouped row in sight, pressed, and removes the grouping', async () => {
-    const sent = mountAdapter(TLColumnSelect,
-      { groupable: true, entries: [entry('a', true, false), entry('c', true, true)] });
+  it('adds a further column of a grouped table as the innermost group level', async () => {
+    const sent = mountAdapter(TLColumnSelect, {
+      groupable: true,
+      grouping: ['c', 'a'],
+      entries: [entry('a', true, true), entry('b', false, false), entry('c', true, true)],
+    });
     await settle();
 
-    const ungroup = screen.getByRole('button', { name: LABEL_UNGROUP });
-    expect(ungroup.getAttribute('aria-pressed')).toBe('true');
-    expect(ungroup.classList.contains('tl-reveal-on-hover')).toBe(false);
-    expect(ungroup.closest('.tl-reorder-list__item')!.getAttribute('data-tl-state')).toContain('grouped');
+    expect(screen.queryByRole('button', { name: LABEL_GROUP_BY })).toBeNull();
+    const groupByAlso = screen.getByRole('button', { name: LABEL_GROUP_BY_ALSO });
+    expect(groupByAlso.getAttribute('aria-pressed')).toBe('false');
 
-    await userEvent.click(ungroup);
+    await userEvent.click(groupByAlso);
     await settle();
-    expect(sent).toHaveBeenCalledWith(CMD_GROUP, { column: '' });
+    expect(sent).toHaveBeenCalledWith(CMD_GROUP, { [ARG_COLUMNS]: ['c', 'a', 'b'] });
+  });
+
+  it('keeps the toggles of the grouped rows in sight, pressed, and removes the level of one column alone', async () => {
+    const sent = mountAdapter(TLColumnSelect, {
+      groupable: true,
+      grouping: ['c', 'a'],
+      entries: [entry('a', true, true), entry('b', true, false), entry('c', true, true)],
+    });
+    await settle();
+
+    // Grouped by two columns, each toggle names the group level of its column, c the outermost.
+    const ungroup = [
+      screen.getByRole('button', { name: LABEL_UNGROUP_COLUMN + ', ' + LABEL_GROUP_LEVEL + ': 2' }),
+      screen.getByRole('button', { name: LABEL_UNGROUP_COLUMN + ', ' + LABEL_GROUP_LEVEL + ': 1' }),
+    ];
+    expect(ungroup[0].closest('.tl-reorder-list__item')!.textContent).toContain('Spalte a');
+    expect(ungroup[0].querySelector('.MuiBadge-badge')!.textContent).toBe('2');
+    for (const button of ungroup) {
+      expect(button.getAttribute('aria-pressed')).toBe('true');
+      expect(button.classList.contains('tl-reveal-on-hover')).toBe(false);
+      expect(button.closest('.tl-reorder-list__item')!.getAttribute('data-tl-state')).toContain('grouped');
+    }
+
+    // The toggle of the outer level c, the row of c being the last one.
+    await userEvent.click(ungroup[1]);
+    await settle();
+    expect(sent).toHaveBeenCalledWith(CMD_GROUP, { [ARG_COLUMNS]: ['a'] });
   });
 
   it('offers no grouping for a tree', async () => {
@@ -275,7 +334,7 @@ describe('the group toggle of the column selection', () => {
     await settle();
 
     expect(screen.queryByRole('button', { name: LABEL_GROUP_BY })).toBeNull();
-    expect(screen.queryByRole('button', { name: LABEL_UNGROUP })).toBeNull();
+    expect(screen.queryByRole('button', { name: LABEL_UNGROUP_COLUMN })).toBeNull();
   });
 });
 

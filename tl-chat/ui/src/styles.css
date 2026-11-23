@@ -650,25 +650,6 @@
   stroke-linejoin: round;
 }
 
-/* "N new since you last looked", on the button because the rail's own is behind a closed panel. */
-.tl-chat-dock__badge {
-  position: absolute;
-  top: 0.3rem;
-  inset-inline-end: 0.3rem;
-  display: grid;
-  place-items: center;
-  min-width: 1.15rem;
-  height: 1.15rem;
-  padding: 0 0.25rem;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--r-pill);
-  background: var(--background);
-  color: var(--text-primary);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  line-height: 1;
-}
-
 /* Something is running behind the closed panel. */
 .tl-chat-dock__busy {
   position: absolute;
@@ -888,26 +869,6 @@
   z-index: 30;
   /* The engine's own drawer backdrop, as for the list's drawer. */
   background: var(--overlay, rgb(0 0 0 / 40%));
-}
-
-/* A count on a strip icon, so a closed rail still says which section the news is in. */
-.side-strip-badge {
-  position: absolute;
-  top: -0.2rem;
-  inset-inline-end: -0.2rem;
-  min-width: 1.05rem;
-  height: 1.05rem;
-  padding: 0 0.22rem;
-  border-radius: var(--r-pill);
-  background: var(--button-primary);
-  color: var(--text-on-color, #fff);
-  font-size: 0.625rem;
-  line-height: 1;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
 }
 
 .tl-chat-rail .side-strip-item {
@@ -3784,29 +3745,6 @@
   position: relative;
 }
 
-/*
- * A badge, not a second label: absolutely positioned over the toggle's top-right corner, so it
- * cannot grow the button or spill across the header's bottom border.
- */
-.side-toggle-badge {
-  position: absolute;
-  top: -0.2rem;
-  inset-inline-end: -0.2rem;
-  pointer-events: none;
-  min-width: 1.05rem;
-  height: 1.05rem;
-  padding: 0 0.22rem;
-  border-radius: var(--r-pill);
-  background: var(--button-primary);
-  color: var(--text-on-color, #fff);
-  font-size: 0.625rem;
-  line-height: 1;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .side-column {
   grid-column: 3;
   width: 18.75rem;
@@ -3865,11 +3803,6 @@
 
 .side-section-title {
   font-weight: 600;
-}
-
-.side-section-badge {
-  font-size: var(--chat-small);
-  color: var(--text-secondary);
 }
 
 .side-section-by {

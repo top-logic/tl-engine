@@ -53,6 +53,9 @@ public class TestShippedProviders extends TestCase {
 	/** The variable of the default model of the agents. */
 	private static final String DEFAULT_MODEL_VARIABLE = "tl_ai_default_model";
 
+	/** The variable that switches on loading the current model catalog. */
+	private static final String FETCH_CATALOG_VARIABLE = "tl_ai_fetch_model_catalog";
+
 	/** The four providers, in this order, each referencing its secret by name. */
 	public void testTheProvidersAndTheirSecrets() throws ConfigurationException {
 		Map<String, LLMProviderConfig.Config> providers = providers();
@@ -103,6 +106,20 @@ public class TestShippedProviders extends TestCase {
 			.getServiceConfiguration(AgentRuntimeService.class);
 		String model = runtime.getDefaultModel();
 		assertTrue("Default model: '" + model + "'", model == null || model.isBlank());
+	}
+
+	/**
+	 * Without its variable, the shipped configuration does not load the current model catalog: no
+	 * request leaves the application for it.
+	 */
+	public void testTheCatalogIsNotFetchedWithoutItsVariable() throws ConfigurationException {
+		if (isSet(FETCH_CATALOG_VARIABLE)) {
+			return;
+		}
+		LLMProviderService.Config<?> config = (LLMProviderService.Config<?>) ApplicationConfig.getInstance()
+			.getServiceConfiguration(LLMProviderService.class);
+		assertNotNull("The shipped configuration switches the catalog on.", config.getModelCatalog());
+		assertFalse(config.getModelCatalog().getFetchRemoteCatalog());
 	}
 
 	private static boolean isSet(String variable) {

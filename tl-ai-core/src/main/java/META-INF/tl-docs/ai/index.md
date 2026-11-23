@@ -1,5 +1,5 @@
 ---
-description: Read before adding AI agents to a TopLogic application or working on the AI modules (tl-ai-core, tl-ai-tool-api, tl-ai-browser, tl-chat, tl-ai-mcp-server, tl-ai-a2a, tl-ai-views, tl-ai-vector-index, tl-ai-index, tl-ai-eval) - which module provides what, the LLM providers tl-ai-core ships (anthropic, openai, mistral, xai) with their API key secrets (tl_anthropic_api_key, tl_openai_api_key, tl_mistral_api_key, tl_xai_api_key), the model variables (tl_<provider>_models, tl_ai_default_model), inactive providers without a key, overriding the providers of LLMProviderService, and where each topic of the chapter is.
+description: Read before adding AI agents to a TopLogic application or working on the AI modules (tl-ai-core, tl-ai-tool-api, tl-ai-browser, tl-chat, tl-ai-mcp-server, tl-ai-a2a, tl-ai-views, tl-ai-vector-index, tl-ai-index, tl-ai-eval) - which module provides what, the LLM providers tl-ai-core ships (anthropic, openai, mistral, xai) with their API key secrets (tl_anthropic_api_key, tl_openai_api_key, tl_mistral_api_key, tl_xai_api_key), the model variables (tl_<provider>_models, tl_ai_default_model), loading the current model catalog from models.dev (tl_ai_fetch_model_catalog), inactive providers without a key, overriding the providers of LLMProviderService, and where each topic of the chapter is.
 order: 50
 ---
 
@@ -46,11 +46,14 @@ The providers are configured on `LLMProviderService` (service editor: *LLM provi
 export tl_anthropic_api_key="sk-ant-..."
 export tl_openai_models="gpt-5.5"           # optional: other models, comma separated
 export tl_ai_default_model="gpt-5.5"        # optional: the model the agents run on
+export tl_ai_fetch_model_catalog=true      # optional: load the current model catalog from models.dev
 ```
 
 The API keys are named secrets: the shipped providers carry `<api-key name="tl_anthropic_api_key"/>` and so on, a `NamedSecretSource`, which fetches the secret of that name at each request from the secret store of the installation (see [secret stores](doc:credentials/secret-stores)). The default store reads the system property or environment variable of that name, which holds the plain key; in development the key can also be a file of that name in `~/.top-logic/secrets` ([development secrets](doc:credentials/secret-stores#development-secrets)). The model variables are read once at startup, through the aliases `%ANTHROPIC_MODELS%`, `%OPENAI_MODELS%`, `%MISTRAL_MODELS%` and `%XAI_MODELS%` of `tl-ai-core.conf.xml`.
 
 A provider whose key is not set is **inactive**: the application starts, the provider is never called, the chat does not offer its models, failover passes over it, and a run that needs a model of it is refused with a message naming the missing secret. A key provided later is used from the next run on, without a restart. The agents run on `default-model` of `AgentRuntimeService`, which the variable `tl_ai_default_model` sets (alias `%AI_DEFAULT_MODEL%`); left empty, each run takes the first model of the first available provider, in the order of the table. Without any key, a chat message is answered with the names of the secrets that would make a provider available. [Providers and failover](doc:ai/providers#the-shipped-providers) describes the rule.
+
+The metadata of the models - context window, output limit, prices - comes from the copy of the [models.dev](https://models.dev) catalog bundled with the release. The variable `tl_ai_fetch_model_catalog` (alias `%AI_FETCH_MODEL_CATALOG%`, `false` by default) set to `true` makes the application load the current catalog from `https://models.dev/api.json` in the background after the start; the operation of the installation must allow that request. Without it, no request leaves the application for the catalog.
 
 An application changes the providers in its own configuration of `LLMProviderService`, typically in `WEB-INF/autoconf/com.top_logic.ai.core.provider.LLMProviderService.config.xml`. The providers are keyed by name: an entry of a shipped name merges into the shipped one (what it sets wins), an entry of another name is added.
 

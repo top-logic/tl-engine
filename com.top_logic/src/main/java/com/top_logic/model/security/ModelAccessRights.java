@@ -568,6 +568,15 @@ public interface ModelAccessRights {
 	 * </p>
 	 *
 	 * <p>
+	 * Every person may perform {@link SimpleBoundCommandGroup#DISCOVER} and
+	 * {@link SimpleBoundCommandGroup#READ} on every attribute of a {@link TLModelPart model element}
+	 * that is not deleted, like on the element itself (see
+	 * {@link #isAllowed(Person, TLObject, BoundCommandGroup)}): a script may e.g. read the target
+	 * type of a reference or whether an attribute is multiple. Modifying an attribute of a model
+	 * element is checked like for any other object.
+	 * </p>
+	 *
+	 * <p>
 	 * The attribute rights applying are those of the type of the given instance for the name of
 	 * the given attribute: the most specific attribute rights configured on the way from that type
 	 * to its generalizations.

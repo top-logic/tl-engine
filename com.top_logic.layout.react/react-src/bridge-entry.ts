@@ -46,8 +46,8 @@ export { useTabList } from './bridge/tab-list';
 export type { TabProps, PanelProps, TabListOptions } from './bridge/tab-list';
 export { TabStrip, SCROLL_START_KEY, SCROLL_END_KEY } from './bridge/TabStrip';
 export type { TabStripProps } from './bridge/TabStrip';
-export { useScrollStrip, stripOverflow, revealScrollLeft, pageScrollLeft, EDGE_START, EDGE_END, PAGE_FRACTION } from './bridge/scroll-strip';
-export type { StripEdge, StripGeometry, StripExtent, StripOverflow, ScrollStrip, ScrollStripOptions } from './bridge/scroll-strip';
+export { useScrollStrip, useWheelScroll, wheelScrollDelta, stripOverflow, revealScrollLeft, pageScrollLeft, EDGE_START, EDGE_END, PAGE_FRACTION, WHEEL_LINE_WIDTH } from './bridge/scroll-strip';
+export type { StripEdge, StripGeometry, StripExtent, StripOverflow, ScrollStrip, ScrollStripOptions, WheelInput } from './bridge/scroll-strip';
 export { Menu, MenuItem, MenuHeader, MenuSeparator, useEscapeClose, useRovingMenu, menuItemClassName } from './bridge/menu';
 export type { MenuProps } from './bridge/menu';
 export { ButtonDefaults, useButtonDefaults, menuItemProps } from './bridge/button-defaults';
@@ -81,6 +81,8 @@ export type {
   AvatarSize,
   DividerPartProps,
   DividerOrientation,
+  DividerLabelPosition,
+  DividerInset,
   SkeletonPartProps,
   SkeletonShape,
   ProgressBarPartProps,
@@ -108,7 +110,7 @@ export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-pre
 export type { InsideRef } from './bridge/outside-press';
 export { usePopover } from './bridge/popover';
 export type { PopoverAnchor, PopoverOptions, PopoverPlacement, PopoverHover } from './bridge/popover';
-export { DisplayClassProvider, useDisplayClass, useMeasuredDisplayClass } from './bridge/display-class';
+export { DisplayClassProvider, useDisplayClass } from './bridge/display-class';
 export type { DisplayClass } from './bridge/display-class';
 export { SurfaceProvider, useSurface, cardSurfaceClass, insetClass, paintedLevel, panelSurface } from './bridge/surface';
 export type { Surface, SurfaceLevel, InsetKind } from './bridge/surface';
@@ -170,6 +172,7 @@ export type {
   AppBarStateJson,
   BreadcrumbStateJson,
   ProgressStateJson,
+  DividerStateJson,
   ImageSourceStateJson,
   AvatarStateJson,
   SliderStateJson,

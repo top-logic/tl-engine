@@ -251,15 +251,16 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 		 * Whether the current catalog is loaded from the catalog URL.
 		 *
 		 * <p>
-		 * The service never waits for it: it starts with the catalog bundled with the application
-		 * and loads the current one in the background. Switched off, no request is made at all and
-		 * the bundled catalog is used alone - for an installation without access to the internet.
+		 * Switched off, no request is made at all and the catalog bundled with the application is
+		 * used alone. Switched on, the service still never waits for the current catalog: it starts
+		 * with the bundled one and loads the current one in the background. The request goes to
+		 * the catalog URL, which the operation of the installation must allow.
 		 * </p>
 		 *
 		 * @see #FETCH_REMOTE_CATALOG
 		 */
 		@Name(FETCH_REMOTE_CATALOG)
-		@BooleanDefault(true)
+		@BooleanDefault(false)
 		boolean getFetchRemoteCatalog();
 
 		/**

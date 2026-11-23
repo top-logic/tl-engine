@@ -38,10 +38,11 @@ body {
 	height: 100%;
 }
 
-/* The busy lock (busy-overlay.tsx): while commands keep the page waiting longer than its delay, a
-   transparent layer above every surface of the page takes the pointer and shows that the page is
-   working. The page stays visible as it is; only the spinner at the centre, on a small floating
-   surface, stands out. */
+/* The busy lock (busy-overlay.tsx): while commands keep the page waiting longer than its delay, or
+   the server does not answer, a transparent layer above every surface of the page takes the pointer
+   and shows that the page is working. The page stays visible as it is; only the spinner at the
+   centre, on a small floating surface, stands out - with a message below it while the server does
+   not answer. */
 .tl-busy-lock {
 	position: fixed;
 	inset: 0;
@@ -54,8 +55,20 @@ body {
 
 .tl-busy-lock__indicator {
 	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--tl-space-sm);
 	padding: var(--tl-space-sm);
 	background: var(--tl-surface-overlay);
 	border-radius: var(--tl-radius-md);
 	box-shadow: var(--tl-shadow-popover);
+}
+
+.tl-busy-lock__message {
+	max-width: 32em;
+	padding: 0 var(--tl-space-xs) var(--tl-space-2xs);
+	color: var(--tl-text-primary);
+	font-size: var(--tl-font-size-body);
+	line-height: var(--tl-font-line-height-body);
+	text-align: center;
 }

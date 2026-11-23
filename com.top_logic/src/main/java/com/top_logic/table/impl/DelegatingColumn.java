@@ -150,6 +150,11 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 	}
 
 	@Override
+	public ResKey emptyGroupLabel() {
+		return _inner.emptyGroupLabel();
+	}
+
+	@Override
 	public String cssClass(R row) {
 		return _inner.cssClass(row);
 	}
@@ -162,6 +167,25 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 	@Override
 	public Optional<CellExistence<R>> existence() {
 		return _inner.existence();
+	}
+
+	/**
+	 * The given column with another {@link Column#emptyGroupLabel() label of an empty group}.
+	 *
+	 * @param column
+	 *        The column to label the empty group of.
+	 * @param label
+	 *        The text the header row of a group shows when its rows have no value in the column.
+	 * @return A column identical to the given one, except for its
+	 *         {@link Column#emptyGroupLabel() label of an empty group}.
+	 */
+	public static <R, V> Column<R, V> withEmptyGroupLabel(Column<R, V> column, ResKey label) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public ResKey emptyGroupLabel() {
+				return label;
+			}
+		};
 	}
 
 	/**

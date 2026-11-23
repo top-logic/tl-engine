@@ -42,6 +42,7 @@
  *   TLNumberInput     - NumberInputState
  *   TLOptionChips     - DropdownSelectState
  *   TLProgress        - ProgressState
+ *   TLDivider         - DividerState
  *   TLLink            - LinkState
  *   TLAvatar          - AvatarState
  *
@@ -2101,6 +2102,79 @@ message ProgressState extends ControlState {
 	 * The text beside the bar, plain text (e.g. {@code 3 / 4}). Absent: the bar stands alone.
 	 */
 	string label;
+}
+
+/**
+ * State of a line separating the content before it from the content after it, the component
+ * {@code TLDivider}, drawn by the part {@code Divider}.
+ *
+ * The component sends no commands.
+ */
+message DividerState extends ControlState {
+
+	/**
+	 * The direction of a divider.
+	 */
+	enum Orientation {
+		/** A line across, between content stacked one above the other. */
+		@Name("horizontal")
+		HORIZONTAL;
+
+		/** A line standing in a row and stretching to its height. */
+		@Name("vertical")
+		VERTICAL;
+	}
+
+	/**
+	 * Where the text of a divider stands in its line.
+	 */
+	enum LabelPosition {
+		/** At the start of the line. */
+		@Name("start")
+		START;
+
+		/** In the middle, with a line on either side. */
+		@Name("center")
+		CENTER;
+
+		/** At the end of the line. */
+		@Name("end")
+		END;
+	}
+
+	/**
+	 * Where a divider begins.
+	 */
+	enum Inset {
+		/** The line spans the whole width. */
+		@Name("none")
+		NONE;
+
+		/** The line is shortened at its start by the indent of an entry of a list. */
+		@Name("start")
+		START;
+	}
+
+	/**
+	 * The direction of the line. Absent: {@code horizontal}.
+	 */
+	Orientation orientation;
+
+	/**
+	 * A short text shown in the line, plain text; only a horizontal line carries one. Absent: a
+	 * plain line.
+	 */
+	string label;
+
+	/**
+	 * Where the {@link #label} stands in the line. Absent: {@code center}.
+	 */
+	LabelPosition labelPosition;
+
+	/**
+	 * Where the line begins. Absent: {@code none}, the whole width.
+	 */
+	Inset inset;
 }
 
 /**

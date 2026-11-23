@@ -201,9 +201,18 @@
 }
 
 /* Sortierpfeil und Gruppierungsmarke: tl-icon-sm, aria-hidden. Die Stufe einer mehrstufigen Sortierung
-   ist ein tl-badge. */
+   ist ein tl-badge (Part Badge). */
 .tl-table__mark {
   color: var(--tl-icon-secondary);
+}
+
+/* Die Gruppierungsmarke steht direkt in der Kopfzelle und trägt deren Tooltip. Bei einer Gruppierung nach mehreren
+   Spalten steht in ihr hinter dem Symbol die Ebene als tl-badge (Part Badge), so dass Symbol und Ebene
+   zusammen den Tooltip tragen; der Abstand ist derselbe wie zwischen den Elementen der Kopfzelle. */
+.tl-table__header-cell > .tl-table__mark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
 }
 
 /* Der Trichter ist ein tl-button--icon --sm --ghost mit einer Glyphe. Ein aktiver Filter ist ein Zustand
@@ -391,6 +400,25 @@
   min-height: 0;
   overflow: auto;
   isolation: isolate;
+}
+
+/* Die Hülle des Körpers scrollt nicht. Hat der Körper selbst den Tastaturfokus (er scrollt, #30129), trägt ihr
+   ::after seinen Ring (die Regel steht in base.css): der eigene Ring des Körpers läge unter seinen positionierten
+   Zeilen. Die Fläche deckt den Körper, liegt über seinem Stapel, ist für den Zeiger durchlässig, der Ring innen. */
+.tl-table__viewport {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+.tl-table__viewport:has(> .tl-table__body:focus-visible)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: var(--tl-layer-sticky);
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+  pointer-events: none;
 }
 
 /* Was bündig an der Kante von tl-table liegt, trägt den Ring innen — tl-table schneidet (overflow: hidden),
@@ -847,6 +875,14 @@
   border-radius: var(--tl-radius-full);
   background: var(--tl-surface-interactive-strong);
   color: var(--tl-text-primary);
+}
+
+/* Ein Platzhalter für einen fehlenden Wert (CellContent.Placeholder), z. B. der Wert der Gruppe der Zeilen ohne Wert in der
+   Gruppierungsspalte: leise gesetzt, damit er nicht als Wert gelesen wird — text-secondary in normaler Stärke (das TSX
+   setzt tl-type-body statt der starken Schrift der Gruppenzeile). text-secondary hält 4,5 auf surface-layer-muted, gezeigt
+   und auf den gewählten Flächen (pairs.mjs). */
+.tl-table__no-value {
+  color: var(--tl-text-secondary);
 }
 
 /* --- Zeilenzahl (#29757) ---------------------------------------------------------- */

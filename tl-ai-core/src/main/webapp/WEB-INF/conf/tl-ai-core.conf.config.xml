@@ -278,9 +278,11 @@
 
 					The metadata of a model models.dev does not know goes into
 					<model-catalog><model-overrides>, where a run goes when its model cannot answer into
-					<failover>. The empty catalog element switches the catalog on: the bundled copy of
-					models.dev at the start, the current one loaded in the background after it.
-					fetch-remote-catalog="false" keeps the bundled copy and sends no request.
+					<failover>. The catalog element switches the catalog on: the copy of models.dev
+					bundled with the release. Only with fetch-remote-catalog="true" (alias
+					%AI_FETCH_MODEL_CATALOG%, variable tl_ai_fetch_model_catalog, default false) is the
+					current catalog loaded in the background from its catalog-url
+					(https://models.dev/api.json); that request must be allowed by the operation.
 				-->
 				<providers>
 					<provider class="com.top_logic.ai.core.provider.anthropic.AnthropicProviderConfig"
@@ -308,7 +310,7 @@
 						<api-key name="tl_xai_api_key"/>
 					</provider>
 				</providers>
-				<model-catalog/>
+				<model-catalog fetch-remote-catalog="%AI_FETCH_MODEL_CATALOG%"/>
 			</instance>
 		</config>
 

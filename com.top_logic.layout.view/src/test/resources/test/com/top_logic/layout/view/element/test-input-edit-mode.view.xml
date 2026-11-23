@@ -61,6 +61,18 @@
 					<binary-display presentation="list"/>
 				</annotations>
 			</value-input>
+			<value-input
+				multiple="true"
+				type="tl.core:Binary"
+				value="files"
+			>
+				<label>
+					<en>Files</en>
+				</label>
+				<annotations>
+					<value-count max="3"/>
+				</annotations>
+			</value-input>
 		</children>
 	</panel>
 </view>

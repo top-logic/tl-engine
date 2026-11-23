@@ -298,8 +298,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	public static final String DROP_TREE_ZONES = "dropTreeZones";
 
 	/**
-	 * State key holding the name of the column the rows are grouped by, {@link #NOTHING} when they
-	 * are not grouped.
+	 * State key holding the names of the columns the rows are grouped by, outermost group level
+	 * first, an empty list when they are not grouped.
 	 */
 	private static final String GROUPING = "grouping";
 
@@ -476,6 +476,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String COLUMN_CSS_CLASS = "cssClass";
 
 	/**
+	 * Per-column state key, {@code true} for a column the client leaves out while the window is
+	 * compact, see {@link #setHiddenWhenCompact(Set)}. Absent for a column shown there as well.
+	 */
+	private static final String COLUMN_HIDE_WHEN_COMPACT = "hideWhenCompact";
+
+	/**
 	 * Per-column state key holding the {@link ColumnView#headerClass() CSS class} the client puts on
 	 * the heading of that column only. Absent for a column whose heading has none.
 	 */
@@ -566,7 +572,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	public static final String CMD_SORT = "sort";
 
 	/**
-	 * The command the client sends to group the rows by a column, or to show them ungrouped.
+	 * The command the client sends to group the rows by columns, or to show them ungrouped.
 	 *
 	 * @see GroupArguments
 	 */
@@ -705,6 +711,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** Whether the user may choose which columns are displayed, and in which order. */
 	private boolean _columnSelect = true;
 
+	/** The columns left out in the compact display, see {@link #setHiddenWhenCompact(Set)}. */
+	private Set<String> _hiddenWhenCompact = Set.of();
+
 	/** Whether the named filters, the search field and saving a filter are displayed. */
 	private boolean _filterBar;
 
@@ -820,6 +829,20 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	public void setColumnSelect(boolean columnSelect) {
 		_columnSelect = columnSelect;
 		putState(COLUMN_SELECT, Boolean.valueOf(columnSelect));
+	}
+
+	/**
+	 * Sets the columns the table leaves out in the compact display, on a phone, by name.
+	 *
+	 * <p>
+	 * The client shows them as soon as the window is wide enough again; the arrangement of the
+	 * table - which columns it displays, in which order, how many frozen - is the same in both
+	 * displays.
+	 * </p>
+	 */
+	public void setHiddenWhenCompact(Set<String> columns) {
+		_hiddenWhenCompact = Set.copyOf(columns);
+		refreshColumns();
 	}
 
 	/**
@@ -1218,6 +1241,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			columnState.put(COLUMN_PINNED_END, Boolean.valueOf(column.pinnedEnd()));
 			if (column.cssClass() != null) {
 				columnState.put(COLUMN_CSS_CLASS, column.cssClass());
+			}
+			if (_hiddenWhenCompact.contains(column.name())) {
+				columnState.put(COLUMN_HIDE_WHEN_COMPACT, Boolean.TRUE);
 			}
 			if (column.headerClass() != null) {
 				columnState.put(COLUMN_HEADER_CLASS, column.headerClass());
@@ -1680,6 +1706,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		if (content instanceof CellContent.Labeled labeled) {
 			return labeled.text();
 		}
+		if (content instanceof CellContent.Placeholder placeholder) {
+			return placeholder.text();
+		}
 		if (content instanceof CellContent.Editable editable) {
 			Object value = editable.field().getValue();
 			return value == null ? "" : String.valueOf(value);
@@ -1880,7 +1909,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		Resources resources = Resources.getInstance();
 
 		ReactColumnSelectControl selection =
-			new ReactColumnSelectControl(context, _view.columnOptions(), lockedColumnNames(), getGroupedColumn(),
+			new ReactColumnSelectControl(context, _view.columnOptions(), lockedColumnNames(), getGroupedColumns(),
 				!_treeMode);
 		// Wider than the filter dialog: three actions, one of them a spelled-out "show all columns".
 		ReactWindowControl window = new ReactWindowControl(context,
@@ -1891,7 +1920,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		window.setHeight(DisplayDimension.percent(70));
 		window.setChild(selection);
 		ReactButtonControl applyButton = MessageButtons.ok(context, ctx -> {
-			applyColumns(selection.visibleColumns(), selection.lockedColumns(), selection.groupedColumn());
+			applyColumns(selection.visibleColumns(), selection.lockedColumns(), selection.groupedColumns());
 			dialogs.closeTopDialog(DialogResult.ok(null));
 		});
 		applyButton.markAsDefault();
@@ -1918,11 +1947,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 *        The columns to display, in display order.
 	 * @param lockedColumns
 	 *        The displayed columns to freeze; the table freezes up to the last of them in the new order.
-	 * @param groupedColumn
-	 *        The column to group the rows by, displayed or not; {@code null} or empty for none.
+	 * @param groupedColumns
+	 *        The columns to group the rows by, displayed or not, outermost group level first; empty for
+	 *        none.
 	 */
-	protected void applyColumns(List<String> columns, List<String> lockedColumns, String groupedColumn) {
-		GroupSpec grouping = groupSpec(groupedColumn);
+	protected void applyColumns(List<String> columns, List<String> lockedColumns, List<String> groupedColumns) {
+		GroupSpec grouping = new GroupSpec(groupedColumns);
 		rearrange(() -> {
 			_view.setColumnOrder(columns);
 			_view.setFrozenColumnCount(frozenPrefixOf(lockedColumns));
@@ -2100,7 +2130,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Groups the rows by one column, or shows them ungrouped again.
+	 * Groups the rows by columns, or shows them ungrouped again.
 	 *
 	 * <p>
 	 * The grouping is part of what the user personalizes about the table, so it is persisted under
@@ -2108,33 +2138,25 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * </p>
 	 *
 	 * @param args
-	 *        The {@link GroupArguments#getColumn() column} to group by, empty for no grouping.
+	 *        The {@link GroupArguments#getColumns() columns} to group by, empty for no grouping.
 	 */
 	@ReactCommandHandler(CMD_GROUP)
 	void handleGroup(GroupArguments args) {
-		setGroupedColumn(args.getColumn());
+		setGroupedColumns(args.getColumns());
 	}
 
 	/**
-	 * Groups the rows by the given column, or shows them ungrouped when it is {@code null} or
-	 * empty.
+	 * Groups the rows by the given columns, or shows them ungrouped when there are none.
 	 *
-	 * @param column
-	 *        The name of the column to group by.
+	 * @param columns
+	 *        The names of the columns to group by, outermost group level first.
 	 */
-	public void setGroupedColumn(String column) {
-		GroupSpec grouping = groupSpec(column);
+	public void setGroupedColumns(List<String> columns) {
+		GroupSpec grouping = new GroupSpec(columns);
 		if (grouping.columns().equals(effectiveGrouping())) {
 			return;
 		}
 		rearrange(() -> _view.group(grouping));
-	}
-
-	/**
-	 * The grouping by the given column, {@link GroupSpec#NONE} for a {@code null} or empty one.
-	 */
-	private static GroupSpec groupSpec(String column) {
-		return StringServices.isEmpty(column) ? GroupSpec.NONE : new GroupSpec(List.of(column));
 	}
 
 	/**
@@ -2173,16 +2195,16 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * The name of the column the rows are grouped by, {@code null} when they are not grouped.
+	 * The names of the columns the rows are grouped by, outermost group level first, empty when they
+	 * are not grouped.
 	 *
 	 * <p>
 	 * A grouping by a column that is {@link TableView#absentColumns() absent} takes no effect, so
-	 * the rows are grouped by the first grouping column that exists.
+	 * the rows are grouped by the grouping columns that exist.
 	 * </p>
 	 */
-	public String getGroupedColumn() {
-		List<String> columns = effectiveGrouping();
-		return columns.isEmpty() ? null : columns.get(0);
+	public List<String> getGroupedColumns() {
+		return effectiveGrouping();
 	}
 
 	/**
@@ -2210,12 +2232,18 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * as.
 	 */
 	private boolean treeMode() {
-		return _treeMode || getGroupedColumn() != null;
+		return _treeMode || isGrouped();
+	}
+
+	/**
+	 * Whether the rows are grouped by at least one column.
+	 */
+	private boolean isGrouped() {
+		return !effectiveGrouping().isEmpty();
 	}
 
 	private void pushGrouping() {
-		String grouped = getGroupedColumn();
-		putState(GROUPING, grouped == null ? NOTHING : grouped);
+		putState(GROUPING, new ArrayList<>(effectiveGrouping()));
 		putState(TREE_MODE, Boolean.valueOf(treeMode()));
 		putState(DROP_TREE_ZONES, Boolean.valueOf(rowTree() != null));
 	}
@@ -2225,7 +2253,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * whose group headers stand for no object.
 	 */
 	private RowHierarchy<R> rowTree() {
-		return getGroupedColumn() != null ? null : _view.hierarchy();
+		return isGrouped() ? null : _view.hierarchy();
 	}
 
 	/**

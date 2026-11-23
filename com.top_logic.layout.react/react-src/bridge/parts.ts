@@ -911,18 +911,55 @@ export interface AvatarPartProps extends PartAttributes {
 export type DividerOrientation = 'horizontal' | 'vertical';
 
 /**
- * The props of the part {@link PartProps.Divider}: a thin line separating the content before it from
- * the content after it.
+ * Where the text of a {@link DividerPartProps divider} stands in its line:
  *
- * <p>A divider only separates; it carries no content and takes no focus. Every implementation draws a
- * separator (an `hr`, or an element of the role `separator`), marks a vertical one
- * `aria-orientation="vertical"` and puts {@link className} and the passed-through attributes on it.
- * The space around the line is up to the element around it, which sets it through the
- * {@link className}.</p>
+ * <ul>
+ * <li>`start`: at the start, the line running from the text to the end.</li>
+ * <li>`center`: in the middle, with a line on either side.</li>
+ * <li>`end`: at the end, the line running from the start to the text.</li>
+ * </ul>
+ */
+export type DividerLabelPosition = 'start' | 'center' | 'end';
+
+/**
+ * Where a {@link DividerPartProps divider} begins:
+ *
+ * <ul>
+ * <li>`none`: the line spans the whole width.</li>
+ * <li>`start`: the line is shortened at its start by the indent of an entry of a list, so that it
+ *     separates the entries of a list without cutting through its leading edge.</li>
+ * </ul>
+ */
+export type DividerInset = 'none' | 'start';
+
+/**
+ * The props of the part {@link PartProps.Divider}: a thin line separating the content before it from
+ * the content after it, optionally with a short text in the line.
+ *
+ * <p>A divider only separates; it takes no focus. Every implementation draws a separator (an `hr`,
+ * or an element of the role `separator`), marks a vertical one `aria-orientation="vertical"` and
+ * puts {@link id}, {@link className} and the passed-through attributes on it. A divider with a {@link label}
+ * shows the text in the line, at the {@link labelPosition}. The space around the line is up to the
+ * element around it, which sets it through the {@link className}.</p>
  */
 export interface DividerPartProps extends PartAttributes {
+  /** The ID of the drawn element. */
+  id?: string;
+
   /** The direction of the line; absent: `horizontal`. */
   orientation?: DividerOrientation;
+
+  /**
+   * A short text shown in the line, e.g. the name of the section below it; plain text. Only a
+   * horizontal divider shows it. Absent: a plain line.
+   */
+  label?: string;
+
+  /** Where the {@link label} stands in the line; absent: `center`. */
+  labelPosition?: DividerLabelPosition;
+
+  /** Where the line begins; absent: `none`, the whole width. */
+  inset?: DividerInset;
 
   /**
    * Classes added to the drawn element. They mark the part and carry no layout: the element

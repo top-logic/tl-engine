@@ -132,6 +132,12 @@ public class ReactServlet extends TopLogicServlet {
 	 * appearing frozen. The client-side counterpart of this constant is
 	 * {@code ERROR_CODE_STALE_UI} in {@code command-channel.ts}.
 	 * </p>
+	 *
+	 * <p>
+	 * {@link SSEServlet} and {@link PollServlet} mark their answers for a missing session and an
+	 * unknown window with this code as well: only an answer carrying it comes from the application,
+	 * whereas a {@code 401} or {@code 410} without it comes from the servlet container or a proxy.
+	 * </p>
 	 */
 	public static final String ERROR_CODE_STALE_UI = "stale-ui";
 
@@ -648,6 +654,8 @@ public class ReactServlet extends TopLogicServlet {
 
 		DisplayContext displayContext = window.displayContext();
 		SubsessionHandler rootHandler = window.rootHandler();
+		// Taken before the command runs: a command may end the session (e.g. by removing its
+		// account), which then can no longer be read.
 		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
 
 		ReactCommandTarget control;
@@ -1387,7 +1395,7 @@ public class ReactServlet extends TopLogicServlet {
 	/**
 	 * Writes the given JSON answer.
 	 */
-	private void sendJson(HttpServletResponse response, String answer) throws IOException {
+	private static void sendJson(HttpServletResponse response, String answer) throws IOException {
 		PrintWriter writer = response.getWriter();
 		writer.write(answer);
 		writer.flush();
@@ -1421,11 +1429,17 @@ public class ReactServlet extends TopLogicServlet {
 	 * Writes a JSON error response, optionally carrying a machine-readable error code the client
 	 * dispatches on (e.g. {@link #ERROR_CODE_STALE_UI}).
 	 *
+	 * <p>
+	 * The servlets of the React client ({@link SSEServlet}, {@link PollServlet}) answer with it as
+	 * well, so that the client tells an answer of the application from one of the servlet container
+	 * or a proxy.
+	 * </p>
+	 *
 	 * @param errorCode
 	 *        The machine-readable code identifying the error condition, or {@code null} for errors
 	 *        the client only logs.
 	 */
-	private void sendError(HttpServletResponse response, int status, String errorCode, String message)
+	static void sendError(HttpServletResponse response, int status, String errorCode, String message)
 			throws IOException {
 		response.setStatus(status);
 		response.setContentType("application/json");

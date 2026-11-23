@@ -2,7 +2,7 @@ import {
   BACKGROUND_REPORT, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, EscapeToClose, useFocusTrap,
   firstFocusable, FillBarrier, startPointerDrag, rootClassName, tooltipProps, ButtonDefaults, ThemeIcon, useTokenPx,
   ICON_CLOSE, ICON_MAXIMIZE, ICON_RESTORE, SurfaceProvider, useFloatingFrame, FloatingFrame, FloatingRail,
-  useMeasuredDisplayClass,
+  useDisplayClass,
 } from 'tl-react-bridge';
 import type { TLCellProps, WindowStateJson, Surface } from 'tl-react-bridge';
 import { buttonClassName } from './button/buttonClassName';
@@ -142,7 +142,7 @@ const RESIZE_CURSORS: Record<ResizeDir, string> = {
  * A double click on a resize handle gives the window its configured size back and makes the server
  * forget the remembered one - the way back from a size the user no longer wants.
  *
- * On a small screen (the compact display class of the app shell) the window fills the browser window without margin
+ * On a small screen (the compact display class of the browser window) the window fills the browser window without margin
  * and is displayed maximized: width, height, the grown height, moving and resizing do not apply, and title bar and
  * footer stay while the body scrolls.
  *
@@ -179,10 +179,9 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const [maximized, setMaximized] = useState(false);
 
   // On a small screen every window fills the browser window, without margin, whatever size it is given; it can be
-  // neither moved nor resized there. A window is displayed beside the app shell rather than within it, so it measures
-  // the display class itself, against the breakpoint of the shell. What the user did to the window on a larger screen
-  // is kept for when the browser window grows again.
-  const compact = useMeasuredDisplayClass() === 'compact';
+  // neither moved nor resized there. The display class is the one of the browser window, the same the app shell
+  // reports. What the user did to the window on a larger screen is kept for when the browser window grows again.
+  const compact = useDisplayClass() === 'compact';
   const fullscreen = maximized || compact;
   const regularBoundsRef = useRef<{ x: number; y: number; w: number | null; h: number | null } | null>(null);
 

@@ -9,6 +9,7 @@ import com.top_logic.basic.i18n.CustomKey;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -75,6 +76,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en File upload failed.
 	 */
 	public static ResKey FILE_UPLOAD_FAILED;
+
+	/**
+	 * @en Nothing was added: at most {0} values are allowed. {1} selected, room for {2}.
+	 */
+	public static ResKey3 ERROR_TOO_MANY_VALUES_ADDED__MAX_SELECTED_ROOM;
 
 	/**
 	 * @en No file data received.
@@ -250,6 +256,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.uploading")
 	public static ResKey JS_UPLOADING;
+
+	/**
+	 * @en Connection to the server lost. Reconnecting\u2026
+	 */
+	@CustomKey("js.connection.reconnecting")
+	public static ResKey JS_CONNECTION_RECONNECTING;
 
 	/**
 	 * @en Record audio
@@ -868,6 +880,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_EMPTY;
 
 	/**
+	 * @en Rows of the table
+	 */
+	@CustomKey("js.table.rows")
+	public static ResKey JS_TABLE_ROWS;
+
+	/**
 	 * @en Freeze up to here
 	 */
 	@CustomKey("js.table.freezeUpTo")
@@ -1000,16 +1018,46 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_GROUP_BY;
 
 	/**
+	 * @en Additionally group by this column
+	 */
+	@CustomKey("js.table.groupByAlso")
+	public static ResKey JS_TABLE_GROUP_BY_ALSO;
+
+	/**
 	 * @en Remove grouping
 	 */
 	@CustomKey("js.table.ungroup")
 	public static ResKey JS_TABLE_UNGROUP;
 
 	/**
+	 * @en Remove grouping by this column
+	 */
+	@CustomKey("js.table.ungroupColumn")
+	public static ResKey JS_TABLE_UNGROUP_COLUMN;
+
+	/**
 	 * @en The rows are grouped by this column
 	 */
 	@CustomKey("js.table.grouped")
 	public static ResKey JS_TABLE_GROUPED;
+
+	/**
+	 * @en The rows are grouped by this column, level {0}
+	 */
+	@CustomKey("js.table.groupedLevel")
+	public static ResKey JS_TABLE_GROUPED_LEVEL;
+
+	/**
+	 * @en Grouping level
+	 */
+	@CustomKey("js.table.groupLevel")
+	public static ResKey JS_TABLE_GROUP_LEVEL;
+
+	/**
+	 * @en Sort priority
+	 */
+	@CustomKey("js.table.sortPriority")
+	public static ResKey JS_TABLE_SORT_PRIORITY;
 
 	/**
 	 * @en Fit width to content

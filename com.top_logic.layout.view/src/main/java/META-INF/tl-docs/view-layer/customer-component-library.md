@@ -101,7 +101,7 @@ There are two levels of replacement:
 Replace a part when the library has a counterpart for the atom; replace a control when the library
 has a counterpart for the whole composite, its layout and its behaviour included. The atomic
 controls (`TLButton`, `TLToggleButton`, `TLCheckbox`, `TLTextInput`, `TLPasswordInput`,
-`TLNumberInput`, `TLOptionChips`, `TLProgress`) draw their look through parts only: replace their
+`TLNumberInput`, `TLOptionChips`, `TLProgress`, `TLDivider`) draw their look through parts only: replace their
 parts, which also reach the inline places these controls never cover. A replaced control may itself
 draw parts (`usePart`), so the parts of the library appear inside it as well.
 
@@ -366,7 +366,7 @@ typography onto the tokens of these roles
 ([Typography tokens](doc:view-layer/theme-tokens#typography-tokens)).
 
 The header also lists the atomic controls `TLButton`, `TLToggleButton`, `TLCheckbox`,
-`TLTextInput`, `TLPasswordInput`, `TLNumberInput`, `TLOptionChips`, `TLProgress` and `TLAvatar`. Their look is
+`TLTextInput`, `TLPasswordInput`, `TLNumberInput`, `TLOptionChips`, `TLProgress`, `TLAvatar` and `TLDivider`. Their look is
 drawn by parts ([Parts and controls](#parts-and-controls)); a library replaces those parts.
 
 The shared parts are `ControlState` (`hidden`, `cssClass`), `FieldState` (value, `editable`,

@@ -13,6 +13,7 @@ import 'dayjs/locale/en';
 import { CSS_LAYER, MODE_ATTRIBUTE } from './themeProperties';
 import type { SchemeName } from './themeProperties';
 import { avatarRootStyle } from './adapters/MuiAvatarAdapter';
+import { iconButtonRootStyle } from './adapters/button-look';
 
 /** The language of the MUI texts and the date format while the page names none this bundle has. */
 const DEFAULT_LOCALE = 'en';
@@ -86,6 +87,7 @@ function withModeSelector(options: ThemeOptions): ThemeOptions {
  */
 const ROOT_STYLE_DEFAULTS: Readonly<Record<string, unknown>> = {
   MuiAvatar: avatarRootStyle,
+  MuiIconButton: iconButtonRootStyle,
 };
 
 /** The part of the theme options a component's {@link ROOT_STYLE_DEFAULTS} goes into. */

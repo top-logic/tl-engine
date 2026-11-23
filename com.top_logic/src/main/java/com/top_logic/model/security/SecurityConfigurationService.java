@@ -24,11 +24,13 @@ import java.util.function.Predicate;
 
 import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Abstract;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
@@ -37,6 +39,8 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.NotBothTrue;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.basic.exception.I18NRuntimeException;
+import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.ServiceDependencies;
@@ -66,6 +70,7 @@ import com.top_logic.model.annotate.security.AccessRule;
 import com.top_logic.model.annotate.security.OperationDeclaration;
 import com.top_logic.model.annotate.security.RoleConfig;
 import com.top_logic.model.config.SingletonMapping;
+import com.top_logic.model.form.definition.NamedPartNames;
 import com.top_logic.model.config.TLModelPartMapping;
 import com.top_logic.model.util.AllAttributes;
 import com.top_logic.model.util.AllClasses;
@@ -249,6 +254,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		TLClassAccessRights.WITHOUT_SECURITY,
 		TLClassAccessRights.INTERNAL,
 		TLClassAccessRights.ACCESS_PARENT,
+		TLClassAccessRights.DISCOVER_ATTRIBUTES,
 		TLClassAccessRights.OPERATIONS,
 		TLClassAccessRights.GRANTS
 	})
@@ -258,9 +264,48 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		/** Configuration name for {@link #getAccessParent()}. */
 		String ACCESS_PARENT = "access-parent";
 
+		/** Configuration name for {@link #getDiscoverAttributes()}. */
+		String DISCOVER_ATTRIBUTES = "discover-attributes";
+
 		@Options(fun = AllClasses.class, mapping = TLModelPartMapping.class)
 		@Override
 		String getName();
+
+		/**
+		 * The attributes of the class that a person may read who may discover the object.
+		 *
+		 * <p>
+		 * A discoverable object shows its label only. The discover attributes show additional
+		 * properties of it, e.g. in an option list that presents the objects to choose from in a
+		 * table. Only reading is extended: writing such an attribute still requires the write right.
+		 * When a discover attribute is a reference, a target the person may not discover is still
+		 * hidden.
+		 * </p>
+		 *
+		 * <p>
+		 * An attribute with a read grant of its own (see {@link TLPartAccessRights}) is decided by
+		 * that grant, not by the discover attributes.
+		 * </p>
+		 *
+		 * <p>
+		 * The setting applies to the class and its specializations. A specialization with a setting
+		 * of its own replaces the setting of its generalizations, an empty setting withdraws all
+		 * discover attributes. Different settings of two independent generalizations of a class are
+		 * a configuration error, unless the class has a setting of its own.
+		 * </p>
+		 *
+		 * @see SimpleBoundCommandGroup#DISCOVER
+		 * @see SimpleBoundCommandGroup#WRITE
+		 */
+		@Name(DISCOVER_ATTRIBUTES)
+		@Format(CommaSeparatedStrings.class)
+		@Options(fun = ClassAttributes.class, args = @Ref(NAME_ATTRIBUTE), mapping = NamedPartNames.class)
+		List<String> getDiscoverAttributes();
+
+		/**
+		 * Setter for {@link #getDiscoverAttributes()}.
+		 */
+		void setDiscoverAttributes(List<String> value);
 
 		/**
 		 * The access parent of the type: the object whose access definition decides access to an
@@ -319,6 +364,36 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		@DynamicMode(fun = HideBesideOtherDefinition.class,
 			args = { @Ref(INTERNAL), @Ref({ ACCESS_PARENT, AccessParentConfig.DEFINITION }) })
 		boolean isInternal();
+
+	}
+
+	/**
+	 * Options for {@link TLClassAccessRights#getDiscoverAttributes()}: the attributes of the class
+	 * with the given qualified name, including the inherited ones.
+	 *
+	 * <p>
+	 * A name that does not denote a class - it may still be incomplete while it is edited - has no
+	 * attributes.
+	 * </p>
+	 */
+	public static class ClassAttributes extends Function1<Collection<? extends TLStructuredTypePart>, String> {
+
+		@Override
+		public Collection<? extends TLStructuredTypePart> apply(String className) {
+			if (className == null || className.isEmpty()) {
+				return Collections.emptyList();
+			}
+			TLObject type;
+			try {
+				type = TLModelUtil.resolveQualifiedName(className);
+			} catch (I18NRuntimeException ex) {
+				return Collections.emptyList();
+			}
+			if (!(type instanceof TLClass clazz)) {
+				return Collections.emptyList();
+			}
+			return clazz.getAllParts();
+		}
 
 	}
 
@@ -402,6 +477,15 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 */
 	private final Map<TLStructuredType, Map<String, Map<BoundCommandGroup, Set<BoundedRole>>>> _declaredPartRights =
 		new HashMap<>();
+
+	/**
+	 * The {@link TLClassAccessRights#getDiscoverAttributes() discover attributes} of the class
+	 * entries that set them, by class. An entry setting no attribute withdraws the discover
+	 * attributes of the generalizations of its class.
+	 *
+	 * @see TypeEntry#_discoverAttributes
+	 */
+	private final Map<TLClass, Set<String>> _declaredDiscoverAttributes = new HashMap<>();
 
 	/**
 	 * The rules of the {@link TLModuleAccessRights module entries}, by module.
@@ -535,6 +619,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			computePartRights(type, entry(type), context::error);
 		}
 		for (TLClass type : types) {
+			computeDiscoverAttributes(type, entry(type), context::error);
+		}
+		for (TLClass type : types) {
 			computeDiscoverRoles(type, entry(type));
 		}
 		for (TLClass type : types) {
@@ -615,6 +702,8 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		markOrigin(type, entry, Mark.INTERNAL);
 		computeClassRights(type, entry, Collections.emptyMap());
 		computePartRights(type, entry, message -> Logger.error(message, SecurityConfigurationService.class));
+		computeDiscoverAttributes(type, entry,
+			message -> Logger.error(message, SecurityConfigurationService.class));
 		computeDiscoverRoles(type, entry);
 		applyImplications(entry);
 		inheritAccessParent(type, entry, Collections.emptyMap());
@@ -1117,8 +1206,113 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			}
 			resolveAccessParent(context, clazz, accessParent, explicitParents);
 		}
+		if (config.valueSet(config.descriptor().getProperty(TLClassAccessRights.DISCOVER_ATTRIBUTES))) {
+			Set<String> discoverAttributes = new HashSet<>();
+			for (String name : config.getDiscoverAttributes()) {
+				if (clazz.getPart(name) == null) {
+					context.error("The class " + config.getName() + " has no attribute " + name
+						+ " declared as discover attribute.");
+					continue;
+				}
+				discoverAttributes.add(name);
+			}
+			_declaredDiscoverAttributes.put(clazz, Collections.unmodifiableSet(discoverAttributes));
+		}
 		classRules.computeIfAbsent(clazz, unused -> new ArrayList<>())
 			.addAll(resolveRules(context, config, getOperations(clazz)::appliesTo));
+	}
+
+	/**
+	 * Computes the discover attributes in effect for the given class, see
+	 * {@link TypeEntry#_discoverAttributes}.
+	 *
+	 * <p>
+	 * Discover attributes that contradict each other, because two independent generalizations of a
+	 * class pass on different settings and the class has no setting of its own, are reported as
+	 * configuration error. The class then has no discover attributes.
+	 * </p>
+	 *
+	 * @param error
+	 *        Reports a configuration error.
+	 */
+	private void computeDiscoverAttributes(TLClass type, TypeEntry entry, Consumer<String> error) {
+		if (_declaredDiscoverAttributes.isEmpty()) {
+			return;
+		}
+		Set<TLClass> sources = discoverAttributeOrigins(type, entry);
+		if (sources.isEmpty()) {
+			return;
+		}
+		if (contradictingDiscoverAttributes(sources)) {
+			if (!inheritsDiscoverAttributeContradiction(type)) {
+				error.accept("The discover attributes of " + TLModelUtil.qualifiedName(type)
+					+ " are ambiguous: its generalizations "
+					+ sources.stream().map(TLModelUtil::qualifiedName).sorted().toList()
+					+ " define different discover attributes. Configure "
+					+ TLClassAccessRights.DISCOVER_ATTRIBUTES + " for " + TLModelUtil.qualifiedName(type)
+					+ " itself.");
+			}
+			return;
+		}
+		entry._discoverAttributes = _declaredDiscoverAttributes.get(sources.iterator().next());
+	}
+
+	/**
+	 * Whether the given types declare different discover attributes.
+	 */
+	private boolean contradictingDiscoverAttributes(Set<TLClass> sources) {
+		return sources.stream().map(_declaredDiscoverAttributes::get).distinct().count() > 1;
+	}
+
+	/**
+	 * Whether a generalization of the given type already has contradicting discover attributes, so
+	 * that the contradiction is reported there.
+	 */
+	private boolean inheritsDiscoverAttributeContradiction(TLClass type) {
+		for (TLClass generalization : type.getGeneralizations()) {
+			if (contradictingDiscoverAttributes(discoverAttributeOrigins(generalization, entry(generalization)))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * The types whose {@link #_declaredDiscoverAttributes} are in effect for the given type,
+	 * entered into the given entry of the type.
+	 *
+	 * <p>
+	 * For a type with a setting of its own, this is the type alone. Otherwise, the types the
+	 * generalizations of the type pass on, without those that are a generalization of another one
+	 * of them, since the setting of the more specific type wins. More than one type remains only
+	 * if independent generalizations have a setting.
+	 * </p>
+	 */
+	private Set<TLClass> discoverAttributeOrigins(TLClass type, TypeEntry typeEntry) {
+		Set<TLClass> result = typeEntry._discoverAttributeOrigins;
+		if (result != null) {
+			return result;
+		}
+		if (_declaredDiscoverAttributes.containsKey(type)) {
+			result = Collections.singleton(type);
+		} else {
+			result = new LinkedHashSet<>();
+			for (TLClass generalization : type.getGeneralizations()) {
+				result.addAll(discoverAttributeOrigins(generalization, entry(generalization)));
+			}
+			if (result.size() > 1) {
+				List<TLClass> candidates = new ArrayList<>(result);
+				result.removeIf(source -> candidates.stream()
+					.anyMatch(other -> other != source && TLModelUtil.isGeneralization(source, other)));
+			}
+		}
+		typeEntry._discoverAttributeOrigins = result;
+		return result;
+	}
+
+	@Override
+	public Set<String> getDiscoverAttributes(TLClass type) {
+		return entry(type)._discoverAttributes;
 	}
 
 	/**
@@ -1886,6 +2080,12 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		}
 		Map<BoundCommandGroup, Set<BoundedRole>> partRights = partRights(instance.tType(), attribute.getName());
 		if (!partRights.containsKey(commandGroup)) {
+			if (SimpleBoundCommandGroup.READ.equals(commandGroup) && instance.tType() instanceof TLClass type
+				&& getDiscoverAttributes(type).contains(attribute.getName())) {
+				// A discover attribute without a read grant of its own is readable for everybody
+				// who may discover the object.
+				return decide(decisionCache(), person, instance, SimpleBoundCommandGroup.DISCOVER);
+			}
 			// No grant of the attribute itself: the class decision applies.
 			return decide(decisionCache(), person, instance, commandGroup);
 		}
@@ -2147,6 +2347,20 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		Map<String, Map<BoundCommandGroup, Set<BoundedRole>>> _partRights = Collections.emptyMap();
 
 		/**
+		 * The types whose discover attributes are in effect for the class.
+		 *
+		 * @see SecurityConfigurationService#discoverAttributeOrigins(TLClass, TypeEntry)
+		 */
+		Set<TLClass> _discoverAttributeOrigins;
+
+		/**
+		 * The names of the {@link TLClassAccessRights#getDiscoverAttributes() discover attributes}
+		 * in effect for the class: the setting of the most specific entry on the way from the class
+		 * to its generalizations.
+		 */
+		Set<String> _discoverAttributes = Collections.emptySet();
+
+		/**
 		 * The roles holding {@link SimpleBoundCommandGroup#DISCOVER} on the instances of the class.
 		 *
 		 * @see SecurityConfigurationService#computeDiscoverRoles(TLClass, TypeEntry)
@@ -2209,6 +2423,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			result._declaredOperations = Collections.emptyMap();
 			result._passedOnRights = Collections.emptyMap();
 			result._partRightOrigins = Collections.emptyMap();
+			result._discoverAttributeOrigins = Collections.emptySet();
 			result._withoutSecurity = Optional.empty();
 			result._internal = Optional.empty();
 			result._accessParentResolved = true;

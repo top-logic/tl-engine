@@ -641,6 +641,21 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 	}
 
 	/**
+	 * A deleted new target is no question of the discover right (ticket #30480): the check lets it
+	 * pass, also for a user who could discover it before and for an administrator, although the
+	 * deleted object itself is discoverable for nobody.
+	 */
+	public void testCoreCheckIgnoresDeletedTarget() throws Exception {
+		TLObject deleted = createDeletedC("deleted");
+		for (Person person : Arrays.asList(_pathUser, PersonManager.getManager().getRoot())) {
+			becomeUser(person);
+			assertFalse(rights().isDiscoverAllowed(deleted));
+			DiscoverRight.checkNewTargets(_b1, part("PathB", "cs"), Arrays.asList(_c1, deleted));
+			DiscoverRight.checkNewTargets(_b1, part("PathB", "cs"), null, deleted);
+		}
+	}
+
+	/**
 	 * A model element is discoverable for every user, also for one holding no role at all (ticket
 	 * #30016): a classifier, whose type is an enumeration and no class, and a type.
 	 */

@@ -604,20 +604,42 @@ public class TestMaskedObjectLinks extends AbstractSearchExpressionTest {
 	}
 
 	/**
-	 * A text the client sends after the value changed on the server still gets its hidden links
-	 * back.
+	 * A text of an object that the client sends after the value changed on the server still gets
+	 * its hidden links back.
 	 */
 	public void testTokensSurviveAChangeOfTheValue() {
-		becomeUser(_reader);
 		String link = link(_hidden, HIDDEN_LABEL);
-		AbstractFieldModel field = field(textWith(link), true);
+		TLObject topic = topicWithText("topic", textWith(link).getSourceCode());
+		becomeUser(_reader);
+		AttributeFieldModel field = new AttributeFieldModel(new TLObjectOverlay(topic), textPart());
 		ReactWysiwygControl editor = control(field);
 		String received = clientValue(editor);
 
 		field.setValue(new StructuredText("<p>changed on the server</p>"));
 		send(editor, received);
 
-		assertEquals(textWith(link).getSourceCode(), storedSource(field));
+		assertEquals(textWith(link).getSourceCode(), ((StructuredText) field.getValue()).getSourceCode());
+	}
+
+	/**
+	 * An editor of a value that is no attribute of an object forgets the tokens of the former value
+	 * when the server sets another value, so that their number does not grow while the editor
+	 * lives.
+	 */
+	public void testEditorWithoutObjectForgetsTokensOfFormerValue() {
+		becomeUser(_reader);
+		String link = link(_hidden, HIDDEN_LABEL);
+		AbstractFieldModel field = field(textWith(link), true);
+		ReactWysiwygControl editor = control(field);
+		String former = clientValue(editor);
+
+		field.setValue(new StructuredText("<p>Now " + link + "</p>"));
+		String current = clientValue(editor);
+		assertFalse("The link of the new value has a new token.",
+			placeholders(former).get(0).equals(placeholders(current).get(0)));
+		send(editor, former);
+
+		assertEquals("<p>See  for details.</p>", storedSource(field));
 	}
 
 	/**

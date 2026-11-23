@@ -289,7 +289,8 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 * whose text the editor shows: a text that the client sends after the server changed the value
 	 * still gets its links back. When the editor shows the text of another object, it forgets all
 	 * tokens, see {@link #forgetTokensOfOtherObject()}. An editor of a value that is no attribute of
-	 * an object keeps its tokens while it lives.
+	 * an object has no object to bind its tokens to: it forgets them when the server sets another
+	 * value, see {@link #handleModelValueChanged(FieldModel, Object, Object)}.
 	 * </p>
 	 */
 	private final Map<String, String> _maskedLinks = new HashMap<>();
@@ -311,6 +312,12 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 * {@link #forgetTokensOfOtherObject()}.
 	 */
 	private Object _tokenOwner;
+
+	/**
+	 * Whether the editor applies a text of the client to the model, so that a change of the model
+	 * value is no value that the server sets.
+	 */
+	private boolean _applyingClientText;
 
 	/**
 	 * Creates a {@link ReactWysiwygControl} that formats text and offers no commands of its own.
@@ -624,8 +631,21 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		return new StructuredText();
 	}
 
+	/**
+	 * Sends the new value to the client.
+	 *
+	 * <p>
+	 * When the server sets another value and the editor edits no attribute of an object, the editor
+	 * forgets the tokens of the former value, so that their number does not grow while the editor
+	 * lives. The client receives the new value with new tokens. A text that the client sent with a
+	 * token of the former value brings in no link for it.
+	 * </p>
+	 */
 	@Override
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
+		if (!_applyingClientText && tokenOwner() == null && !Objects.equals(oldValue, newValue)) {
+			forgetTokens();
+		}
 		_shadowCopy = toStructuredText(newValue);
 		putState(FieldState.VALUE__PROP, toClientHtml(extractHtml(_shadowCopy)));
 	}
@@ -871,16 +891,29 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 *           object is masked or a text of the client is taken back.
 	 */
 	private void forgetTokensOfOtherObject() {
-		Object owner = editedObject();
-		if (owner instanceof TLObject object) {
-			owner = TLFormObjectBase.editedObject(object);
-		}
+		Object owner = tokenOwner();
 		if (Objects.equals(owner, _tokenOwner)) {
 			return;
 		}
+		forgetTokens();
+		_tokenOwner = owner;
+	}
+
+	/**
+	 * The object the tokens of the shown text are valid for, {@code null} for an editor of a value
+	 * that is no attribute of an object.
+	 */
+	private Object tokenOwner() {
+		Object owner = editedObject();
+		if (owner instanceof TLObject object) {
+			return TLFormObjectBase.editedObject(object);
+		}
+		return owner;
+	}
+
+	private void forgetTokens() {
 		_maskedLinks.clear();
 		_maskTokens.clear();
-		_tokenOwner = owner;
 	}
 
 	/**
@@ -967,16 +1000,28 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 			ResKey problem = rawValue == null ? null : htmlProblem(storedHtml);
 			setInputError(problem);
 			if (problem == null) {
-				applyClientValue(toModelValue(storedHtml));
+				applyClientText(storedHtml);
 			}
 		} else {
-			applyClientValue(toModelValue(storedHtml));
+			applyClientText(storedHtml);
 		}
 
 		if (getState(INSERT) == null) {
 			return;
 		}
 		putState(INSERT, null);
+	}
+
+	/**
+	 * Applies the given text of the client, in the form it is stored, to the model.
+	 */
+	private void applyClientText(String storedHtml) {
+		_applyingClientText = true;
+		try {
+			applyClientValue(toModelValue(storedHtml));
+		} finally {
+			_applyingClientText = false;
+		}
 	}
 
 	/**

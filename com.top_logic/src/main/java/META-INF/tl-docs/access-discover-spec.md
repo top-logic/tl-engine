@@ -258,8 +258,8 @@ An object link follows the rules for a masked element (R11):
   does not delete: the editor gives each placeholder a token of its own and puts the stored link
   back when the text is saved. A token is a random value that no other editor hands out. It is
   valid for the object whose text the editor shows: the editor forgets its tokens when it shows
-  the text of another object. An editor of a value that is no attribute of an object keeps its
-  tokens while it lives. A deleted placeholder deletes the link, a moved one moves it, and a copy
+  the text of another object. An editor of a value that is no attribute of an object forgets its
+  tokens when the server sets another value. A deleted placeholder deletes the link, a moved one moves it, and a copy
   in the same text copies it. A placeholder whose token the editor did not hand out for the text it
   shows brings in no link. Markup that a command inserts at the cursor is masked in the same way,
   with fresh tokens.

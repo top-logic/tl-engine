@@ -134,6 +134,22 @@
 						as composition parts without a role source, they are decided by their
 						container.
 					-->
+					<!--
+						An annex delegates Read to its project and decides Write by its own grant, see
+						TestTypeLevelPolicy.
+					-->
+					<class name="TestViewModelAccess:Annex">
+						<access-parent>
+							<target
+								operations="Read"
+								reference="TestViewModelAccess:Annex#project"
+							/>
+						</access-parent>
+						<grant
+							operation="Write"
+							roles="TestViewModelAccess.Finisher"
+						/>
+					</class>
 					<!-- A remark is decided by an access parent whose type is not known statically. -->
 					<class name="TestViewModelAccess:Remark">
 						<access-parent>

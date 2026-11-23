@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -31,6 +32,7 @@ import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
@@ -43,8 +45,9 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * An {@code Entry} delegates Read to its {@code Catalog} and decides every other operation by the
- * grants of its type and the roles held on the entry itself. A {@code Part} of a catalog delegates
- * Read and Write to the catalog, a {@code FullPart} delegates every operation.
+ * grants of its type and the roles held on the entry itself; its declared operation Finish is
+ * implied by Read. A {@code Part} of a catalog delegates Read and Write to the catalog, a
+ * {@code ListedPart} Read, Create and Delete, a {@code FullPart} every operation.
  * </p>
  */
 @SuppressWarnings("javadoc")
@@ -62,6 +65,8 @@ public class TestAccessParentOperations extends BasicTestCase {
 
 	private static final String FULL_PART = MODULE + ":FullPart";
 
+	private static final String LISTED_PART = MODULE + ":ListedPart";
+
 	private static final String ROLE_CATALOG_READER = MODULE + ".CatalogReader";
 
 	private static final String ROLE_ENTRY_EDITOR = MODULE + ".EntryEditor";
@@ -71,6 +76,9 @@ public class TestAccessParentOperations extends BasicTestCase {
 	private Person _editor;
 
 	private Person _other;
+
+	/** Holds {@link #ROLE_CATALOG_READER} on {@link #_entry} itself, not on the catalog. */
+	private Person _entryReader;
 
 	private Person _rootEditor;
 
@@ -102,6 +110,7 @@ public class TestAccessParentOperations extends BasicTestCase {
 			_reader = createPerson("accessParentOperationsReader");
 			_editor = createPerson("accessParentOperationsEditor");
 			_other = createPerson("accessParentOperationsOther");
+			_entryReader = createPerson("accessParentOperationsEntryReader");
 			_rootEditor = createPerson("accessParentOperationsRootEditor");
 			_rootReader = createPerson("accessParentOperationsRootReader");
 
@@ -115,6 +124,7 @@ public class TestAccessParentOperations extends BasicTestCase {
 		});
 		inTransaction(() -> {
 			_entry = createEntry(ENTRY);
+			_entry.tUpdateByName("entryReader", _entryReader);
 			_entrySub = createEntry(ENTRY_SUB);
 
 			_part = create(PART);
@@ -142,6 +152,7 @@ public class TestAccessParentOperations extends BasicTestCase {
 			_rootReader.tDelete();
 			_editor.tDelete();
 			_other.tDelete();
+			_entryReader.tDelete();
 		});
 		_created.clear();
 
@@ -181,6 +192,66 @@ public class TestAccessParentOperations extends BasicTestCase {
 		TLStructuredTypePart parts = type(CATALOG).getPart("parts");
 		assertFalse("Create is not delegated, and the part grants it to nobody.",
 			rights().isAllowedCreate(_reader, _catalog, parts, type(PART)));
+	}
+
+	public void testCreateDeleteWhenListed() {
+		TLStructuredTypePart listedParts = type(CATALOG).getPart("listedParts");
+		assertTrue("Creating is delegated, it is writing the catalog.",
+			rights().isAllowedCreate(_reader, _catalog, listedParts, type(LISTED_PART)));
+		assertTrue("Creating is delegated, it is writing the catalog.",
+			rights().isAllowedCreate(_reader, type(LISTED_PART), _catalog));
+		assertFalse("The editor may not write the catalog.",
+			rights().isAllowedCreate(_editor, type(LISTED_PART), _catalog));
+
+		TLObject listedPart = inTransaction(() -> {
+			TLObject result = create(LISTED_PART);
+			_catalog.tUpdateByName("listedParts", List.of(result));
+			return result;
+		});
+		assertTrue("Deleting is delegated, it is writing the catalog.",
+			allowed(_reader, listedPart, SimpleBoundCommandGroup.DELETE));
+		assertFalse("Write is not delegated, and the part grants it to nobody.",
+			allowed(_reader, listedPart, SimpleBoundCommandGroup.WRITE));
+	}
+
+	public void testDelegatedOperationImpliesUndelegatedOne() {
+		BoundCommandGroup finish = CommandGroupRegistry.resolve(SimpleBoundCommandGroup.FINISH_NAME);
+		assertTrue("Finish is implied by Read, which is delegated to the catalog.",
+			allowed(_reader, _entry, finish));
+		assertFalse("The editor may not read the catalog, and the entry grants Finish to nobody.",
+			allowed(_editor, _entry, finish));
+		assertFalse(allowed(_other, _entry, finish));
+	}
+
+	public void testRelationLeadingNowhere() {
+		TLObject orphan = inTransaction(() -> {
+			TLObject result = create(ENTRY);
+			result.tUpdateByName("editor", _editor);
+			return result;
+		});
+		assertNull("Nobody decides Read for an entry without catalog.",
+			rights().getRoleHolder(orphan, SimpleBoundCommandGroup.READ));
+		assertFalse("Read is delegated, and the relation leads nowhere.",
+			allowed(_reader, orphan, SimpleBoundCommandGroup.READ));
+		assertFalse("Read is delegated, the inherited Read grant is dropped.",
+			allowed(_editor, orphan, SimpleBoundCommandGroup.READ));
+
+		assertSame(orphan, rights().getRoleHolder(orphan, SimpleBoundCommandGroup.WRITE));
+		assertTrue("Write is decided by the grant of the entry.",
+			allowed(_editor, orphan, SimpleBoundCommandGroup.WRITE));
+		assertTrue("Export is decided by the grant the entry inherits.",
+			allowed(_editor, orphan, SimpleBoundCommandGroup.EXPORT));
+		assertTrue("The own Write grant implies Discover.",
+			allowed(_editor, orphan, SimpleBoundCommandGroup.DISCOVER));
+		assertFalse(allowed(_reader, orphan, SimpleBoundCommandGroup.DISCOVER));
+	}
+
+	public void testAttributeGrantOfDelegatedOperationAdmitsNoOwnDiscover() {
+		assertFalse("Reading the name is checked on the catalog.",
+			rights().isAllowed(_entryReader, _entry, type(ENTRY).getPart("name"), SimpleBoundCommandGroup.READ));
+		assertFalse("Discover is delegated to the catalog together with Read.",
+			allowed(_entryReader, _entry, SimpleBoundCommandGroup.DISCOVER));
+		assertFalse(allowed(_entryReader, _entry, SimpleBoundCommandGroup.READ));
 	}
 
 	public void testInheritedGrantOfUndelegatedOperation() {
@@ -270,8 +341,8 @@ public class TestAccessParentOperations extends BasicTestCase {
 		Map<TLObject, Set<BoundedRole>> discover =
 			rights().getAdmittingRolesByHolder(_entry, SimpleBoundCommandGroup.DISCOVER);
 		assertEquals("Discover is delegated to the catalog.", Set.of(catalogReader), discover.get(_catalog));
-		assertTrue("Discover is implied by the own Write grant of the entry.",
-			discover.get(_entry).contains(entryEditor));
+		assertEquals("Discover is implied by the own Write grant of the entry, not by the attribute grant of the delegated Read.",
+			Set.of(entryEditor), discover.get(_entry));
 		assertEquals(Map.of(_catalog, Set.of(catalogReader)),
 			rights().getAdmittingRolesByHolder(_entry, SimpleBoundCommandGroup.READ));
 		assertEquals(Map.of(_entry, Set.of(entryEditor)),
@@ -350,10 +421,18 @@ public class TestAccessParentOperations extends BasicTestCase {
 	}
 
 	private static void inTransaction(Runnable modification) {
-		ThreadContext.withoutSecurityChecks(() -> {
+		inTransaction(() -> {
+			modification.run();
+			return null;
+		});
+	}
+
+	private static <T> T inTransaction(Supplier<T> modification) {
+		return ThreadContext.withoutSecurityChecks(() -> {
 			try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
-				modification.run();
+				T result = modification.get();
 				tx.commit();
+				return result;
 			}
 		});
 	}

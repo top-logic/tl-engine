@@ -56,10 +56,11 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * For every concrete global type the analysis answers the two questions that decide whether a user
  * can ever see an object of that type: does a rule deliver a role on it, and is a role granted the
- * read operation on it? Each gap is reported as a {@link CoverageFinding}. A type with an
- * {@link AccessParentFunction access parent} delegates every access decision to another object and needs no
- * definition of its own; it is reported as delegated, with a finding only where a rule applying to
- * it is shadowed by the access parent.
+ * read operation on it? Each gap is reported as a {@link CoverageFinding}. A type whose
+ * {@link AccessParentFunction access parent} delegates every access decision to another object needs
+ * no definition of its own; it is reported as delegated, with a finding only where a rule applying
+ * to it is shadowed by the access parent. A type whose access parent is restricted to some
+ * operations is checked like a type deciding for itself for the operations it does not delegate.
  * </p>
  *
  * <p>
@@ -419,9 +420,14 @@ public class SecurityCoverageAnalysis {
 				findings.add(CoverageFinding.noRoleSource(type));
 			}
 			// Every grant on the type or on one of its attributes implies Discover. Discover is
-			// delegated together with any operation, the operations not delegated are reported
-			// one by one.
-			if (accessParent == null && discoverRoles.isEmpty()) {
+			// delegated together with any operation, the declared operations not delegated are
+			// reported one by one. A type deciding Read itself is reported when it grants Read to
+			// nobody, as a type deciding for itself.
+			if (accessParent == null) {
+				if (discoverRoles.isEmpty()) {
+					findings.add(CoverageFinding.noReadGrant(type));
+				}
+			} else if (readRoles.isEmpty() && !readsThroughParent(type, accessParent)) {
 				findings.add(CoverageFinding.noReadGrant(type));
 			}
 			addDeadGrantFindings(type, accessParent, findings);
@@ -459,6 +465,22 @@ public class SecurityCoverageAnalysis {
 		return _compositeReferences.stream()
 			.filter(reference -> TLModelUtil.isCompatibleType(reference.getType(), type))
 			.toList();
+	}
+
+	/**
+	 * Whether the given access parent decides Read on objects of the given type: it delegates Read
+	 * itself or an operation implying Read.
+	 */
+	private boolean readsThroughParent(TLClass type, AccessParentFunction accessParent) {
+		if (accessParent.delegates(SimpleBoundCommandGroup.READ)) {
+			return true;
+		}
+		for (BoundCommandGroup implying : _accessRights.getOperations(type).getImplying(SimpleBoundCommandGroup.READ)) {
+			if (accessParent.delegates(implying)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

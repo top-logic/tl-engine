@@ -92,6 +92,9 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 	 */
 	private static final String RESTRICTED_LINKED = MODULE + ":RestrictedLinked";
 
+	/** Type delegating Write to its access parent, without grants of its own. */
+	private static final String RESTRICTED_WRITE = MODULE + ":RestrictedWrite";
+
 	/** Composition containing {@link #EXPLICIT_PART}. */
 	private static final String EXPLICIT_PARTS_REFERENCE = MODULE + ":Covered#explicitParts";
 
@@ -360,6 +363,15 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 			coverage.hasFinding(FindingKind.NO_ROLE_SOURCE));
 		assertFalse("The type has no role rules to shadow: " + coverage,
 			coverage.hasFinding(FindingKind.SHADOWED_RULES));
+	}
+
+	public void testRestrictedParentWithoutReadGrant() {
+		TypeCoverage coverage = coverage(RESTRICTED_WRITE);
+		assertNotNull(coverage.accessParent());
+		assertTrue("Read is decided by the type itself, which grants it to nobody: " + coverage,
+			coverage.hasFinding(FindingKind.NO_READ_GRANT));
+		assertFalse("Without grants of its own, the type needs no role source: " + coverage,
+			coverage.hasFinding(FindingKind.NO_ROLE_SOURCE));
 	}
 
 	public void testDeadGrant() {

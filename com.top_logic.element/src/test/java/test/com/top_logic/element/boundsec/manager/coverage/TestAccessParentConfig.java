@@ -208,6 +208,23 @@ public class TestAccessParentConfig extends BasicTestCase {
 		assertFalse(parent.delegates(SimpleBoundCommandGroup.CREATE));
 	}
 
+	public void testEmptyOperationEntriesAreSkipped() throws Exception {
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent>"
+			+ TARGET_PARENT + " operations='Read,,Write,'/></access-parent></class>");
+		assertTrue(log.getErrors().toString(), log.getErrors().isEmpty());
+		assertEquals(Set.of(SimpleBoundCommandGroup.READ, SimpleBoundCommandGroup.WRITE), parent.getOperations());
+	}
+
+	public void testRestrictionToNoOperationsIsRejected() {
+		try {
+			new RestrictedRelation(ContainerRelation.ANY, Set.of());
+			fail("A relation restricted to no operations must be rejected.");
+		} catch (IllegalArgumentException ex) {
+			// Expected.
+		}
+	}
+
 	public void testUnknownOperationIsError() throws Exception {
 		BufferingProtocol log = new BufferingProtocol();
 		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent>"

@@ -26,8 +26,15 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * Finish on a step asks two operations on the project. The user of the test holds the finisher
  * role on a project only, which grants Finish but not Read.
  * </p>
+ *
+ * <p>
+ * An {@value #ANNEX} delegates Read to its project and grants Write to the finisher role itself.
+ * </p>
  */
 public class TestTypeLevelPolicy extends AbstractModelAccessTest {
+
+	/** Name of the type delegating only Read to its project. */
+	private static final String ANNEX = "Annex";
 
 	/**
 	 * Finishing is offered because Finish is grantable on the parent type, although Read, the other
@@ -47,6 +54,31 @@ public class TestTypeLevelPolicy extends AbstractModelAccessTest {
 				ModelAccessPolicy.isOffered(finish, type(STEP)));
 			assertFalse("Write is granted to the responsible only.",
 				ModelAccessPolicy.isOffered(SimpleBoundCommandGroup.WRITE, type(STEP)));
+		} finally {
+			becomeUser(_root);
+			TestPerson.deletePersonAndUser(finisher);
+		}
+	}
+
+	/**
+	 * An operation a restricted access parent does not delegate is offered by the grants of the
+	 * type itself, a delegated one by the types the access parent leads to.
+	 */
+	public void testRestrictedAccessParentOwnGrant() {
+		Person finisher = TestPerson.createPerson("viewModelAccessAnnexFinisher");
+		try {
+			try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+				_project.tUpdateByName("finisher", finisher);
+				tx.commit();
+			}
+			becomeUser(finisher);
+			assertTrue("Write of an annex is granted to the finisher role by the annex itself.",
+				ModelAccessPolicy.isOffered(SimpleBoundCommandGroup.WRITE, type(ANNEX)));
+			assertFalse("Read of an annex is decided by Read on the project, not granted to the finisher.",
+				ModelAccessPolicy.isOffered(SimpleBoundCommandGroup.READ, type(ANNEX)));
+
+			becomeUser(_roleless);
+			assertFalse(ModelAccessPolicy.isOffered(SimpleBoundCommandGroup.WRITE, type(ANNEX)));
 		} finally {
 			becomeUser(_root);
 			TestPerson.deletePersonAndUser(finisher);

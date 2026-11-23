@@ -53,9 +53,11 @@ cannot (a plain knowledge item standing for itself) grants no role, so only the 
    with `Write` in place of `Create` and `Delete`; an operation
    [implying](#operations-which-operations-apply-to-a-type) the requested one on the type is asked
    as well. With `operations` on the access parent, only the delegated operations (and delegated
-   implying ones) are asked; the others continue at step 5. The parent may delegate further. An
-   object whose relation leads nowhere (no container, an empty reference) is denied, as is one whose
-   chain of access parents runs in a cycle.
+   implying ones) are asked; if the parent does not allow them, the decision continues at step 5
+   with the roles on the object itself, as for the operations not delegated. The parent may
+   delegate further. An object whose relation leads nowhere (no container, an empty reference) is
+   denied the delegated operations (without `operations`: every operation), as is one whose chain
+   of access parents runs in a cycle.
 5. The roles granted the operation, or an operation implying it, on the object's type are looked
    up (for a module singleton, the
    singleton's own grants take precedence; `Discover` on such a singleton is implied by its own
@@ -304,8 +306,8 @@ marks `internal` and `without-security` remain rejected:
   not restricted, since the object is inaccessible until it is put into a container, which is a
   write of the container.
 - The parent may delegate further; the chain is followed at runtime. An object whose relation
-  leads nowhere is not accessible, and a chain running in a cycle is denied (and logged as an
-  error).
+  leads nowhere is not accessible (with `operations`: for the delegated operations), and a chain
+  running in a cycle is denied (and logged as an error).
 - Attribute-level `<part>` grants on the type are checked against the roles the user holds at the
   end of the chain (for an access parent restricted to operations: at the object deciding the
   requested operation, the object itself where the operation is not delegated).
@@ -337,8 +339,11 @@ parent decides only the listed operations; the type decides all others itself:
   them along. **Discover** is delegated whenever any operation is delegated.
 - The names are the operations on the delegating object. The mapping of Create and Delete to Write
   on the parent happens afterwards.
-- A delegated operation `Y` is allowed if the parent allows `Y`, or if a delegated operation `X`
-  implies `Y` (see [operations](#operations-which-operations-apply-to-a-type)) and the parent allows `X`.
+- An operation `Y` is allowed through the parent if `Y` is delegated and the parent allows `Y`, or
+  if a delegated operation `X` implies `Y`
+  (see [operations](#operations-which-operations-apply-to-a-type)) and the parent allows `X`, also
+  when `Y` itself is not delegated. Conversely, an operation `X` that is not delegated may imply a
+  delegated `Y`: holding `X` by a grant of the type on the object itself allows `Y` as well.
 - The operations that are not delegated fall back to the grants of the type itself, checked with
   the roles the user holds on the object itself (assignments, role rules, role parents). Without a
   grant the operation is denied.

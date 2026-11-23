@@ -321,6 +321,15 @@
 								<step attribute="TestAccessParentOperations:Entry#editor"/>
 							</path>
 						</rule>
+						<!-- CatalogReader on the entry itself, where it admits nothing. -->
+						<rule id="TestAccessParentOperations_entryReader"
+							meta-element="TestAccessParentOperations:Entry"
+							role="TestAccessParentOperations.CatalogReader"
+						>
+							<path>
+								<step attribute="TestAccessParentOperations:Entry#entryReader"/>
+							</path>
+						</rule>
 						<rule id="TestAccessParentOperations_fullPart"
 							meta-element="TestAccessParentOperations:FullPart"
 							role="TestAccessParentOperations.EntryEditor"
@@ -422,6 +431,14 @@
 							<!-- Delegated to the access parent. -->
 							<operation name="TestCoverageShow"/>
 						</operations>
+					</class>
+					<class name="TestSecurityCoverage:RestrictedWrite">
+						<access-parent>
+							<target
+								operations="Write"
+								reference="TestSecurityCoverage:RestrictedWrite#target"
+							/>
+						</access-parent>
 					</class>
 					<class name="TestSecurityCoverage:LinkedSub">
 						<access-parent>
@@ -679,6 +696,12 @@
 								reference="TestAccessParentOperations:Entry#catalog"
 							/>
 						</access-parent>
+						<operations>
+							<!-- Not delegated, but implied by the delegated Read. -->
+							<operation name="Finish"
+								implied-by="Read"
+							/>
+						</operations>
 						<grant
 							operation="Write"
 							roles="TestAccessParentOperations.EntryEditor"
@@ -704,6 +727,11 @@
 					<class name="TestAccessParentOperations:Part">
 						<access-parent>
 							<container operations="Read,Write"/>
+						</access-parent>
+					</class>
+					<class name="TestAccessParentOperations:ListedPart">
+						<access-parent>
+							<container operations="Read,Create,Delete"/>
 						</access-parent>
 					</class>
 					<!-- Explicit, since the role rule of the type switches off the default of a composition part. -->

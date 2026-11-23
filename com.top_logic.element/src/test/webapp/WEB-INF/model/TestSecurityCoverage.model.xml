@@ -78,6 +78,18 @@
 					</attributes>
 				</class>
 
+				<!--
+					Configured access parent restricted to Write, without grants of its own: nobody may
+					read an object of the type.
+				-->
+				<class name="RestrictedWrite">
+					<attributes>
+						<reference name="target"
+							type="Covered"
+						/>
+					</attributes>
+				</class>
+
 				<!-- Decides for itself instead of inheriting the access parent of its generalization. -->
 				<class name="LinkedSub">
 					<generalizations>

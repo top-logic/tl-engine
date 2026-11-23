@@ -137,11 +137,14 @@ public interface ModelAccessRights {
 	 * The relation leading from an object of the given type to the object whose access definition
 	 * decides access to it.
 	 * <p>
-	 * An object of a type with an access parent has no grants and no roles of its own: the access
-	 * checks ({@link #isAllowed(Person, TLObject, BoundCommandGroup)} and its variants) ask its
-	 * access parent instead, which may delegate further. A composition part gets its container as
-	 * access parent by default, unless a rule delivers a role on it or the configuration names
-	 * another parent.
+	 * For an operation the access parent {@link AccessParentFunction#delegates(BoundCommandGroup)
+	 * delegates}, the access checks ({@link #isAllowed(Person, TLObject, BoundCommandGroup)} and
+	 * its variants) ask the access parent instead of the object, which may delegate further. An
+	 * access parent delegating every operation leaves the type no grants and no roles of its own.
+	 * An access parent {@link AccessParentFunction#getOperations() restricted} to some operations
+	 * leaves the other operations to the grants of the type and the roles held on the object
+	 * itself. A composition part gets its container as access parent by default, unless a rule
+	 * delivers a role on it or the configuration names another parent.
 	 * </p>
 	 * 
 	 * @param type
@@ -273,6 +276,22 @@ public interface ModelAccessRights {
 	 */
 	default TLObject getRoleHolder(TLObject object, BoundCommandGroup operation) {
 		return object;
+	}
+
+	/**
+	 * The object whose roles decide whether the given object may be read.
+	 *
+	 * @param object
+	 *        The object to access.
+	 * @return The {@link #getRoleHolder(TLObject, BoundCommandGroup) role holder} of
+	 *         {@link SimpleBoundCommandGroup#READ}.
+	 * @deprecated The role holder depends on the operation, since an access parent may be
+	 *             restricted to some operations: use
+	 *             {@link #getRoleHolder(TLObject, BoundCommandGroup)}.
+	 */
+	@Deprecated
+	default TLObject getRoleHolder(TLObject object) {
+		return getRoleHolder(object, SimpleBoundCommandGroup.READ);
 	}
 
 	/**
@@ -474,20 +493,21 @@ public interface ModelAccessRights {
 	 * <li>For an attribute with such a grant, a person bypassing the model security decides by the
 	 * bypass.</li>
 	 * <li>An attribute-level grant listing no role denies the command group.</li>
-	 * <li>For a type with an {@link #getAccessParent(TLClass) access parent}, the person must hold
-	 * one of the granted roles on the object deciding for the access parent, as for an attribute of
-	 * a persistent object. The access parent of the object to be created is resolved on the object:
-	 * its {@link TLObject#tContainer() container}, also for a relation navigating a composition the
-	 * object is not yet held by, or the value of its reference. An access parent that is itself to
-	 * be created continues the chain through its own access parent, up to the first committed
-	 * object. The edited object stands for a {@link TLFormObjectBase form object} editing it. An
-	 * object to be created without access parent (in no container, or with an empty reference) is
-	 * not restricted, it is not accessible until it is put into a container, which is a write of
-	 * the container checked in its own right.</li>
-	 * <li>Attribute grants of a type deciding by its own roles (without access parent) do not
-	 * restrict an object to be created, since the roles it will hold are computed only once it
-	 * exists. This also holds for an object reaching such an object to be created on its chain of
-	 * access parents.</li>
+	 * <li>For a type whose {@link #getAccessParent(TLClass) access parent} delegates the command
+	 * group, the person must hold one of the granted roles on the object deciding the command group
+	 * for the access parent, as for an attribute of a persistent object. The access parent of the
+	 * object to be created is resolved on the object: its {@link TLObject#tContainer() container},
+	 * also for a relation navigating a composition the object is not yet held by, or the value of
+	 * its reference. An access parent that is itself to be created continues the chain through its
+	 * own access parent, up to the first committed object. The edited object stands for a
+	 * {@link TLFormObjectBase form object} editing it. An object to be created without access
+	 * parent (in no container, or with an empty reference) is not restricted, it is not accessible
+	 * until it is put into a container, which is a write of the container checked in its own
+	 * right.</li>
+	 * <li>Attribute grants of a command group decided by the roles of the object itself (without
+	 * access parent, or with one restricted to other operations) do not restrict an object to be
+	 * created, since the roles it will hold are computed only once it exists. This also holds for
+	 * an object reaching such an object to be created on its chain of access parents.</li>
 	 * </ul>
 	 *
 	 * <p>
@@ -705,10 +725,13 @@ public interface ModelAccessRights {
 	 * (<code>null</code>), the check uses the global security root.
 	 * </p>
 	 * <p>
-	 * A type with an {@link #getAccessParent(TLClass) access parent} has no create grants of its
-	 * own: creating one of its objects in a context is writing that context, and creating one
-	 * without a context is not restricted, since the object is inaccessible until it is put into a
-	 * container, which is a write of the container.
+	 * A type whose {@link #getAccessParent(TLClass) access parent} delegates
+	 * {@link SimpleBoundCommandGroup#CREATE CREATE} has no create grants of its own: creating one of
+	 * its objects in a context is writing that context, and creating one without a context is not
+	 * restricted, since the object is inaccessible until it is put into a container, which is a
+	 * write of the container. A type whose access parent is restricted to operations not including
+	 * {@link SimpleBoundCommandGroup#CREATE CREATE} grants it by its own grants, as a type deciding
+	 * for itself.
 	 * </p>
 	 * <p>
 	 * Nobody may create an object in a deleted context.

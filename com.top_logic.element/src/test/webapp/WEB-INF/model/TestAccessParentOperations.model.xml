@@ -21,6 +21,11 @@
 							multiple="true"
 							type="FullPart"
 						/>
+						<reference name="listedParts"
+							composite="true"
+							multiple="true"
+							type="ListedPart"
+						/>
 					</attributes>
 				</class>
 
@@ -41,6 +46,9 @@
 						<reference name="editor"
 							type="tl.accounts:Person"
 						/>
+						<reference name="entryReader"
+							type="tl.accounts:Person"
+						/>
 						<property name="name"
 							type="tl.core:String"
 						/>
@@ -56,6 +64,9 @@
 
 				<!-- Composition part delegating Read and Write to its container. -->
 				<class name="Part"/>
+
+				<!-- Composition part delegating Read, Create and Delete to its container. -->
+				<class name="ListedPart"/>
 
 				<!-- Composition part delegating every operation to its container. -->
 				<class name="FullPart">

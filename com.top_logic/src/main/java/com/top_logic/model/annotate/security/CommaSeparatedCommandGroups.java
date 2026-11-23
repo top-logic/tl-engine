@@ -17,7 +17,7 @@ import com.top_logic.tool.boundsec.CommandGroupReference;
  *
  * <p>
  * Each entry in the comma-separated string becomes a {@link CommandGroupReference} to the trimmed
- * name.
+ * name. Empty entries, e.g. from a trailing comma, are skipped.
  * </p>
  *
  * @see CommaSeparatedRoles
@@ -30,6 +30,9 @@ public class CommaSeparatedCommandGroups extends ListConfigValueProvider<Command
 		String[] names = propertyValue.toString().trim().split("\\s*,\\s*");
 		List<CommandGroupReference> result = new ArrayList<>(names.length);
 		for (String name : names) {
+			if (name.isEmpty()) {
+				continue;
+			}
 			result.add(new CommandGroupReference(name));
 		}
 		return result;

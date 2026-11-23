@@ -267,10 +267,14 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		 * The access parent of the type: the object whose access definition decides access to an
 		 * object of the type.
 		 * <p>
-		 * A type with a delegating access parent has no grants, no marks and no roles of its own:
-		 * whether a user may read, write or export one of its objects is whether the user may do
-		 * the same to the access parent, and creating or deleting one of its objects is writing
-		 * the access parent. An object whose relation leads nowhere is not accessible.
+		 * A type with a delegating access parent has no marks of its own. For every operation the
+		 * access parent decides, whether a user may perform it on one of its objects is whether the
+		 * user may do the same to the access parent, where creating or deleting one of its objects
+		 * is writing the access parent; an object whose relation leads nowhere is not accessible
+		 * for these operations. Without a restriction to some operations, the access parent decides
+		 * all of them, and the type has no grants and no roles of its own. Restricted to some
+		 * operations, the access parent decides these and Discover, and the grants of the type
+		 * together with the roles held on the object itself decide all other operations.
 		 * </p>
 		 * <p>
 		 * Without a setting the type inherits the setting of its generalizations; without one, a
@@ -852,11 +856,25 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * declared locally in an object holds the {@link SimpleBoundCommandGroup#CREATE} rights it
 	 * inherits, which enter the union through its concrete global generalizations.
 	 * </p>
+	 *
+	 * <p>
+	 * For a type whose access parent is restricted to some operations, the rights of its attributes
+	 * for a delegated operation do not count: they are checked on the access parent (see
+	 * {@link #roleHolder(TLObject, BoundCommandGroup)}), so that holding one of their roles on the
+	 * object itself admits nothing. Discover is delegated together with these operations.
+	 * </p>
 	 */
 	private void computeDiscoverRoles(TLClass type, TypeEntry entry) {
+		AccessParentFunction restriction =
+			entry._accessParent != null && entry._accessParent.getOperations() != null ? entry._accessParent : null;
 		Set<BoundedRole> roles = new HashSet<>();
 		for (Map<BoundCommandGroup, Set<BoundedRole>> partRights : entry._partRights.values()) {
-			partRights.values().forEach(roles::addAll);
+			for (Map.Entry<BoundCommandGroup, Set<BoundedRole>> right : partRights.entrySet()) {
+				if (restriction != null && restriction.delegates(right.getKey())) {
+					continue;
+				}
+				roles.addAll(right.getValue());
+			}
 		}
 		for (TLStructuredTypePart part : type.getAllParts()) {
 			if (part instanceof TLReference reference && reference.isComposite()
@@ -1790,9 +1808,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * object, the bypasses being settled already.
 	 * <p>
 	 * The decision is answered from the memo where the interaction has made it before. Otherwise an
-	 * object of a type without security is accessible, an object with an access parent asks its
-	 * parent, and any other object requires the person to hold a role granted the operation on its
-	 * type.
+	 * object of a type without security is accessible, an object whose access parent delegates the
+	 * operation (or an operation implying it) asks its parent, and any other object requires the
+	 * person to hold a role granted the operation on its type. An object whose access parent is
+	 * restricted to some operations is also admitted by the roles held on itself, see
+	 * {@link #compute(AccessDecisionCache, Person, TLObject, BoundCommandGroup)}.
 	 * </p>
 	 * <p>
 	 * An object whose access parents lead back to itself is denied: the memo marks the decision as
@@ -1825,6 +1845,18 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	/**
 	 * Computes the decision that {@link #decide(AccessDecisionCache, Person, TLObject, BoundCommandGroup)}
 	 * stores.
+	 *
+	 * <p>
+	 * The operation and each operation implying it on the object, as far as the access parent
+	 * delegates it, is checked on the access parent, mapped by
+	 * {@link #operationOnParent(BoundCommandGroup)}; one of them allowed there allows the
+	 * operation. An access parent delegating every operation decides alone. For an access parent
+	 * restricted to some operations, the roles the person holds on the object itself, granted the
+	 * operation on its type, allow it as well: the type holds a delegated operation only where an
+	 * operation it does not delegate implies it, so that this decides the operations not
+	 * delegated, and the delegated ones (Discover in particular) for a person holding an own grant
+	 * implying them.
+	 * </p>
 	 */
 	private boolean compute(AccessDecisionCache cache, Person person, TLObject instance,
 			BoundCommandGroup commandGroup) {
@@ -2098,6 +2130,15 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		return isAllowed(person, parent, compositionAttribute, SimpleBoundCommandGroup.WRITE);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @implNote A type whose access parent delegates {@link SimpleBoundCommandGroup#CREATE} is
+	 *           decided by {@link SimpleBoundCommandGroup#WRITE} on the context; any other type,
+	 *           also one whose access parent is restricted to operations not including
+	 *           {@link SimpleBoundCommandGroup#CREATE}, by its own create grants, checked on the
+	 *           context.
+	 */
 	@Override
 	public boolean isAllowedCreate(Person person, TLClass type, TLObject context) {
 		if (context != null && isDeleted(context)) {

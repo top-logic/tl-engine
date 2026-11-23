@@ -5,6 +5,7 @@
 package com.top_logic.layout.view.admin;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -98,6 +99,26 @@ public class TestRestrictedDelegationTexts extends TestCase {
 		assertEquals("A type delegating everything keeps its text.",
 			I18NConstants.EFFECTIVE_ACCESS_DELEGATED__TYPE_OBJECT.getKey(),
 			EffectiveAccessFunctions.delegation("Entry", delegating, ContainerRelation.ANY, LABELS).plain().getKey());
+	}
+
+	/**
+	 * The label of a restricted relation names the delegated operations by their labels in the
+	 * language of the user, ordered by their names.
+	 */
+	public void testLabelOfRestrictedRelation() {
+		AccessParentFunction relation = new RestrictedRelation(ContainerRelation.ANY,
+			Set.of(SimpleBoundCommandGroup.WRITE, SimpleBoundCommandGroup.READ));
+		Resources german = Resources.getInstance(Locale.GERMAN);
+		String label = german.getString(relation.getLabel());
+		String read = german.getString(com.top_logic.tool.boundsec.simple.I18NConstants.COMMAND_GROUP_NAMES
+			.key(SimpleBoundCommandGroup.READ_NAME));
+		String write = german.getString(com.top_logic.tool.boundsec.simple.I18NConstants.COMMAND_GROUP_NAMES
+			.key(SimpleBoundCommandGroup.WRITE_NAME));
+		assertFalse("Precondition: the operations have labels other than their names.",
+			read.equals(SimpleBoundCommandGroup.READ_NAME) || write.equals(SimpleBoundCommandGroup.WRITE_NAME));
+		assertTrue("The operations are named by their labels: " + label, label.endsWith(read + ", " + write));
+		assertTrue("The relation is named: " + label,
+			label.startsWith(german.getString(ContainerRelation.ANY.getLabel())));
 	}
 
 	private static final Function<Object, String> LABELS = object -> ((TLClass) object).getName();

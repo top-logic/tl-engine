@@ -462,6 +462,20 @@
 					</attributes>
 				</class>
 
+				<class name="Annex">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+					<attributes>
+						<reference name="project"
+							type="Project"
+						/>
+					</attributes>
+				</class>
+
 				<class name="Remark">
 					<annotations>
 						<table name="GenericObject"/>

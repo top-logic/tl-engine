@@ -17,6 +17,11 @@
 	title and not its body. That is the per-attribute half of the read filtering of issue #289, and it
 	needs an attribute whose grant differs from its class's.
 
+	"ProjectAgent" and "ProjectSkill" are the stored agents and skills of one project (Ticket #30493).
+	They specialize the engine's tl.ai.core:Agent and tl.ai.core:Skill and are parts of a project, so
+	they follow the project: its partners see, use and change them, and nobody else does. No rule of
+	this fixture names them - a composition part decides through its container by default.
+
 	The model is only declared when the "secdemo.config.xml" aspect is enabled; see
 	"WEB-INF/conf/metaConf.txt" and the developer article ai/security/test-bed.
 -->
@@ -49,7 +54,33 @@
 					navigate="true"
 					type="Ticket"
 				/>
+				<!-- The stored agents of this project. Only who reads the project knows them. -->
+				<reference name="agents"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="ProjectAgent"
+				/>
+				<!-- The stored skills of this project. -->
+				<reference name="skills"
+					composite="true"
+					kind="forwards"
+					multiple="true"
+					navigate="true"
+					type="ProjectSkill"
+				/>
 			</attributes>
+		</class>
+		<class name="ProjectAgent">
+			<generalizations>
+				<generalization type="tl.ai.core:Agent"/>
+			</generalizations>
+		</class>
+		<class name="ProjectSkill">
+			<generalizations>
+				<generalization type="tl.ai.core:Skill"/>
+			</generalizations>
 		</class>
 		<class name="Ticket">
 			<attributes>

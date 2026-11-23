@@ -1,5 +1,5 @@
 ---
-description: Read before verifying agent security by hand or adding a case to the security test bed of tl-ai-demo (secdemo.config.xml, the pm model, SecDemoSetup) - enabling and resetting the fixture, the personas anna, ben, cara and dora, the four harness scripts (probe, fire, collect, reset) for the script console, the scenario tables per layer (tool access T1-T10, read filtering D1-D11, capability notices C1-C8, background allowlist A1-A5, object tools, closed doors P1-P2) and the SecDemo*Test classes asserting each.
+description: Read before verifying agent security by hand or adding a case to the security test bed of tl-ai-demo (secdemo.config.xml, the pm model, SecDemoSetup) - enabling and resetting the fixture, the personas anna, ben, cara and dora, the four harness scripts (probe, fire, collect, reset) for the script console, the scenario tables per layer (tool access T1-T10, read filtering D1-D11, capability notices C1-C8, background allowlist A1-A5, object tools, stored agents of a project S1-S6, closed doors P1-P2) and the SecDemo*Test classes asserting each.
 order: 6
 ---
 
@@ -11,7 +11,7 @@ order: 6
 
 | Element | Value |
 |---|---|
-| model | module `pm`: `pm:Project {name, partners, tickets}`, `pm:Ticket {title, body}` (`WEB-INF/model/pm.model.xml`) |
+| model | module `pm`: `pm:Project {name, partners, tickets, agents, skills}`, `pm:Ticket {title, body}`, and the stored agents and skills of a project `pm:ProjectAgent`, `pm:ProjectSkill` (specializations of `tl.ai.core:Agent` and `tl.ai.core:Skill`) (`WEB-INF/model/pm.model.xml`) |
 | seed data | two projects (Alpha, Beta), three tickets |
 | roles | `projectPartner`, `ticketReader` - both appear in both grant tables |
 | rules | four declarative role rules and one security-parent rule; nothing assigned from Java |
@@ -53,7 +53,7 @@ L1 cannot see objects, so Anna and Dora are indistinguishable at L1 and opposite
    A warning above the first line names a persona and a role a rule failed to produce; every scenario of that persona is then wrong in a way that looks like a policy problem. On the first boot of a fresh database the line comes at the end of the startup, after the startup transaction committed. In the second line, `baseline=default[model.read, data.read]` means the `<baseline/>` did not reach the service and `roles=0` that the aspect did not reach the application ([diagnosis](doc:ai/security/tool-access-recipes)).
 4. Between scenarios run `reset.tlscript` as `root` with **execute and save changes**: it deletes the tickets a scenario created and restores missing seed tickets. A second run must report `none` on both lines.
 
-To turn it off, comment the line out again **and delete `tl-ai-demo/tmp/h2.mv.db`**: withdrawing the `pm` model makes the model upgrade delete the module, which fails while instances exist. To keep the database, delete the instances as `root` first (``all(`pm:Ticket`).concat(all(`pm:Project`)).foreach(x -> $x.delete())``, tickets first) and restart after disabling.
+To turn it off, comment the line out again **and delete `tl-ai-demo/tmp/h2.mv.db`**: withdrawing the `pm` model makes the model upgrade delete the module, which fails while instances exist. To keep the database, delete the instances as `root` first (``all(`pm:Ticket`).concat(all(`pm:ProjectAgent`)).concat(all(`pm:ProjectSkill`)).concat(all(`pm:Project`)).foreach(x -> $x.delete())``, the parts first) and restart after disabling.
 
 ## The personas
 
@@ -177,6 +177,29 @@ A write is checked by the tool that makes it, and the turn commits what its tool
 | `ben` | any of the three | not offered (no `data.write`), refused by the model rights when handed the tool anyway |
 | `anna`, unattended | any of the three | not offered: the background allowlist holds no `data.write` |
 
+### Stored agents of a project
+
+The agents and skills of a project are parts of the project ([run access](doc:ai/security/run-access#stored-agents-and-skills-under-model-rights)): no rule of the fixture names `pm:ProjectAgent` or `pm:ProjectSkill`, they follow their project as composition parts. Create one as `root` in the script console with *execute and save changes*:
+
+```
+all(`pm:Project`).filter(p -> $p.get(`pm:Project#name`) == "Alpha").first()
+  .add(`pm:Project#agents`, new(`pm:ProjectAgent`)..set(`tl.ai.core:Agent#name`, "alpha-planner")
+    ..set(`tl.ai.core:Agent#systemPrompt`, "Plan the releases of Alpha."))
+```
+
+Dora is the persona to compare with, not Cara: `<agent-access>` already gives Cara's role one agent only, and Dora's role every agent, so what Dora does not see is the model rights alone. `SecDemoStoredAgentAccessTest`:
+
+| # | Behaviour | Persona | Do this | You should see |
+|---|---|---|---|---|
+| S1 | an agent of a project follows the project | `anna`, then `dora` | open the agent menu of the chat | Anna is offered `alpha-planner`, Dora is not; `list_agents` in a run says the same |
+| S2 | cannot read means unknown | `dora` | ``aiAgentChat("alpha-planner", "Hello")`` | the run fails as for a name that nothing has (`No agent found ...`); the same for a delegation, a subagent and a skill of Alpha |
+| S3 | a stored agent of the base type stays visible | any | create a `tl.ai.core:Agent` as `root`, open the agent menu | every persona is offered it: each account is a member of the group `user` |
+| S4 | the MCP servers are the administrator's | `anna` | set `tl.ai.core:Agent#mcpServers` of `alpha-planner` | refused, although Anna may change the agent itself |
+| S5 | names are global | `anna` | create an agent in Alpha with the name of an agent of Beta, or `tl_singleagent` | the commit is refused: the name is already in use - also for a record she may not read, and for the name of a configured agent in any case |
+| S6 | a specialization starts closed | `root`, then any | create a `pm:ProjectAgent` in no project | nobody but `root` sees it |
+
+To turn the aspect off again, delete the instances of `pm:ProjectAgent` and `pm:ProjectSkill` together with the tickets and projects (see [enabling and resetting](#enabling-and-resetting)).
+
 ### Two closed doors
 
 | # | Behaviour | Where | You should see |
@@ -203,7 +226,7 @@ mvn -B test -DskipTests=false -pl tl-ai-demo -Dtest='com.top_logic.ai.demo.SecDe
 | `SecDemoListToolsTest` | C3, C4, C8 | `SecDemoModelSecurityTest` | the worked example, persona by persona |
 | `SecDemoVectorIndexTest` | the vector index | | |
 
-`SecDemoSpawnFilterTest` (a spawn is decided per child context), `SecDemoDeclaredTypesTest` (a tool declaring `pm:Project` refuses a persona without read access before it runs), `SecDemoInfrastructureAgentTest` (an agent the application runs for a user, such as the prompt improver, cannot be run as a chat persona, whatever `<agent-access>` says), `SecDemoHarnessScriptsTest` (the harness compiles) and the tests of the [policy editor](doc:ai/security/tool-access-editor) (`SecDemoEffectiveAccessTest`, `SecDemoPolicyEditorTest`, `SecDemoApplyPolicyGuardTest`, `SecDemoToolDescriptionTest`, `SecDemoGermanTerminologyTest`) run in the same suite because they need the booted fixture. The unit-level counterparts in `tl-ai-core` use hand-built policies: `TestRoleToolAccess`, `TestToolAuthorization`, `TestAiToolAccessService`, `TestAgentCapabilities`, `TestDelegateFilter`, `TestSpawnFilter`, `TestDetachedSubagentCeiling`, `TestSkillTool`, `TestSkillAbsenceReason`, `TestTopLogicSecurityContext`, `TestReadFilter`.
+`SecDemoStoredAgentAccessTest` (S1-S6, and the authoring tools under the model rights), `SecDemoSpawnFilterTest` (a spawn is decided per child context), `SecDemoDeclaredTypesTest` (a tool declaring `pm:Project` refuses a persona without read access before it runs), `SecDemoInfrastructureAgentTest` (an agent the application runs for a user, such as the prompt improver, cannot be run as a chat persona, whatever `<agent-access>` says), `SecDemoHarnessScriptsTest` (the harness compiles) and the tests of the [policy editor](doc:ai/security/tool-access-editor) (`SecDemoEffectiveAccessTest`, `SecDemoPolicyEditorTest`, `SecDemoApplyPolicyGuardTest`, `SecDemoToolDescriptionTest`, `SecDemoGermanTerminologyTest`) run in the same suite because they need the booted fixture. The unit-level counterparts in `tl-ai-core` use hand-built policies: `TestRoleToolAccess`, `TestToolAuthorization`, `TestAiToolAccessService`, `TestAgentCapabilities`, `TestDelegateFilter`, `TestSpawnFilter`, `TestDetachedSubagentCeiling`, `TestSkillTool`, `TestSkillAbsenceReason`, `TestTopLogicSecurityContext`, `TestReadFilter`.
 
 ## Pitfalls
 

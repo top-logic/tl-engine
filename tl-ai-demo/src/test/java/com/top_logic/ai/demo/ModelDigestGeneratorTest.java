@@ -153,6 +153,7 @@ public class ModelDigestGeneratorTest extends BasicTestCase {
 
 		// The security test bed's "pm" model documents nothing: no comment above or beside it.
 		assertTrue(english, english.contains("\n\nclass Project extends tl.model:TLObject {\n"
+			+ "  agents: -> ProjectAgent[] (composite)\n"
 			+ "  name: tl.core:String (mandatory)\n"));
 		assertTrue(english, english.contains("  sessions: -> Session[] (composite) // Program of the event.\n"));
 

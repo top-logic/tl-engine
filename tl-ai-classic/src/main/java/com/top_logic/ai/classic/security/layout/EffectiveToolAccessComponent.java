@@ -49,6 +49,7 @@ import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.ai.core.security.EffectiveToolAccess;
 import com.top_logic.ai.core.security.EffectiveToolAccess.CapabilityAccess;
 import com.top_logic.ai.core.security.ModelAccessRightsSecurity;
+import com.top_logic.ai.core.security.ModelSecurity;
 import com.top_logic.ai.core.security.RoleAccessPolicy;
 import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.ai.core.security.RoleAccessPolicy.Dimension;
@@ -410,7 +411,10 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 			? AiToolAccessService.effectiveRunAccessFor(_account)
 			: AiToolAccessService.effectiveRunAccessForRoles(_role == null ? Set.of() : Set.of(_role));
 
-		AgentFacts facts = AgentFacts.live();
+		// For an account, what it knows: a stored agent it may not read is not its agent, and a
+		// configured agent of the same name is what it runs.
+		ModelSecurity reader = _account != null ? new ModelAccessRightsSecurity(_account) : null;
+		AgentFacts facts = reader != null ? AgentFacts.liveFor(reader) : AgentFacts.live();
 		List<String> agents = names(Dimension.AGENT);
 		// The agent section is not the only one that can stop an agent: one whose own model, or one of
 		// whose own servers, a role forbids cannot run at all - the chat's menu, the fallback agent and
@@ -424,7 +428,7 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 		Map<String, EffectiveAccessRow.RunName> stopped = new LinkedHashMap<>();
 		List<String> allowedAgents = new ArrayList<>();
 		for (String agentName : access.allowedAgents(agents)) {
-			if (_account != null && !knownTo(_account, agentName)) {
+			if (reader != null && !knownTo(reader, agentName)) {
 				stopped.put(agentName, new EffectiveAccessRow.RunName(Dimension.AGENT, agentName,
 					new Decision.Denied(Dimension.AGENT, agentName, null, RoleAccessPolicy.Cause.NOT_GRANTED),
 					Resources.getInstance().getString(I18NConstants.AGENT_NOT_READABLE__AGENT_NAME.fill(agentName))));
@@ -487,16 +491,15 @@ public class EffectiveToolAccessComponent extends FormComponent implements Contr
 	}
 
 	/**
-	 * Whether the given account knows the agent of that name.
+	 * Whether the account of the given model rights knows the agent of that name.
 	 *
 	 * <p>
 	 * Asked the way every run and menu of the account asks: a stored agent that the account may not
 	 * read is unknown, and a configured agent of the same name takes its place.
 	 * </p>
 	 */
-	private static boolean knownTo(Person account, String agentName) {
-		return AgentDefinitionQuery.getInstance()
-			.findAgentByName(agentName, new ModelAccessRightsSecurity(account)) != null;
+	private static boolean knownTo(ModelSecurity reader, String agentName) {
+		return AgentDefinitionQuery.getInstance().findAgentByName(agentName, reader) != null;
 	}
 
 	/** The row of an agent that something other than the agent section stops. */

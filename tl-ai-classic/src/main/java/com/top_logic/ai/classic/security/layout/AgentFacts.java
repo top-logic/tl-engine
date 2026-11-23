@@ -12,6 +12,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.ai.core.agent.AgentDefinition;
 import com.top_logic.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.ai.core.agent.AgentRuntimeService;
+import com.top_logic.ai.core.security.ModelSecurity;
 
 /**
  * What the application says about an agent that decides whether a role can run it: the model it is
@@ -35,9 +36,30 @@ public interface AgentFacts {
 	/** Whether the named agent is one the application runs for a user rather than a persona. */
 	boolean isInfrastructure(String agentName);
 
-	/** The facts of the running application. */
+	/**
+	 * The facts of the running application, as its configuration states them.
+	 *
+	 * <p>
+	 * For a view about roles, which have no model rights: every stored agent counts.
+	 * </p>
+	 */
 	static AgentFacts live() {
-		return Live.INSTANCE;
+		return Live.CONFIGURATION;
+	}
+
+	/**
+	 * The facts of the running application as the given account knows them.
+	 *
+	 * <p>
+	 * For a view about one account: where a stored agent the account may not read has the name of a
+	 * configured agent, the account runs the configured one, so its facts count.
+	 * </p>
+	 *
+	 * @param reader
+	 *        The model rights of the account.
+	 */
+	static AgentFacts liveFor(ModelSecurity reader) {
+		return new Live(reader);
 	}
 
 	/**
@@ -46,10 +68,12 @@ public interface AgentFacts {
 	 */
 	final class Live implements AgentFacts {
 
-		static final Live INSTANCE = new Live();
+		static final Live CONFIGURATION = new Live(ModelSecurity.UNCHECKED);
 
-		private Live() {
-			// Singleton.
+		private final ModelSecurity _reader;
+
+		private Live(ModelSecurity reader) {
+			_reader = reader;
 		}
 
 		@Override
@@ -68,13 +92,13 @@ public interface AgentFacts {
 
 		@Override
 		public Collection<String> declaredServers(String agentName) {
-			AgentDefinition agent = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
+			AgentDefinition agent = AgentDefinitionQuery.getInstance().findAgentByName(agentName, _reader);
 			return agent == null ? List.of() : agent.mcpServers();
 		}
 
 		@Override
 		public boolean isInfrastructure(String agentName) {
-			AgentDefinition agent = AgentDefinitionQuery.getInstance().findAgentByName(agentName);
+			AgentDefinition agent = AgentDefinitionQuery.getInstance().findAgentByName(agentName, _reader);
 			return agent != null && agent.infrastructure();
 		}
 	}

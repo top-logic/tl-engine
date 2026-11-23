@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import com.top_logic.ai.core.message.ThinkingContent;
 import com.top_logic.ai.core.provider.FixedCredentials;
 import com.top_logic.ai.core.provider.AbstractProviderStreamTest;
 import com.top_logic.ai.core.provider.ProviderException;
@@ -23,6 +25,11 @@ public class TestAnthropicStreamContract extends AbstractProviderStreamTest {
 	static class TestableProvider extends AnthropicMessagesProvider {
 		TestableProvider() {
 			super(FixedCredentials.NONE);
+		}
+
+		TestableProvider(String catalogProviderId) {
+			super(FixedCredentials.NONE, "https://api.example.com", "2023-06-01", 10, 10, Map.of(),
+				catalogProviderId);
 		}
 
 		List<StreamEvent> parse(InputStream sse) throws IOException, ProviderException {
@@ -137,5 +144,21 @@ public class TestAnthropicStreamContract extends AbstractProviderStreamTest {
 
 			+ "event: message_stop\n"
 			+ "data: {\"type\":\"message_stop\"}\n\n";
+	}
+
+	/**
+	 * Thinking is stamped with the catalog ID the provider is configured with, and with the default
+	 * catalog ID of the Anthropic API otherwise.
+	 */
+	public void testThinkingStampedWithCatalogId() throws Exception {
+		assertEquals("my-anthropic", thinkingOrigin(new TestableProvider("my-anthropic")));
+		assertEquals(AnthropicProviderConfig.DEFAULT_CATALOG_PROVIDER_ID, thinkingOrigin(_provider));
+	}
+
+	private String thinkingOrigin(TestableProvider provider) throws Exception {
+		StreamEvent.MessageComplete complete = (StreamEvent.MessageComplete) provider.parse(toStream(cannedThinkingSSE())).stream()
+			.filter(StreamEvent.MessageComplete.class::isInstance).findFirst().orElseThrow();
+		return complete.content().stream().filter(ThinkingContent.class::isInstance)
+			.map(ThinkingContent.class::cast).findFirst().orElseThrow().provider();
 	}
 }

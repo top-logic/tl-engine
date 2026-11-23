@@ -10,12 +10,14 @@ import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.top_logic.ai.tool.api.AICategory;
 import com.top_logic.basic.CalledByReflection;
@@ -1154,21 +1156,56 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	 * @return The catalog provider ID (e.g. "anthropic", "openai"), or {@code null}.
 	 */
 	public String getProviderId(String modelName) {
+		return agreedValue(modelName, LLMProviderConfig::getCatalogProviderId);
+	}
+
+	/**
+	 * The value all providers exposing the given model agree on.
+	 *
+	 * @param modelName
+	 *        The model name to look up.
+	 * @param property
+	 *        The value of a provider.
+	 * @return The common value, {@code null} if no provider exposes the model or two of them
+	 *         disagree.
+	 */
+	private String agreedValue(String modelName, Function<LLMProviderConfig, String> property) {
 		if (_providerConfigs == null) {
 			return null;
 		}
 		String result = null;
 		boolean first = true;
 		for (String providerName : getProvidersOf(modelName)) {
-			String catalogId = _providerConfigs.get(providerName).getCatalogProviderId();
+			String value = property.apply(_providerConfigs.get(providerName));
 			if (first) {
-				result = catalogId;
+				result = value;
 				first = false;
-			} else if (!Objects.equals(result, catalogId)) {
+			} else if (!Objects.equals(result, value)) {
 				return null;
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * The value of the provider of the given model reference.
+	 *
+	 * @param modelName
+	 *        The model name to look up.
+	 * @param providerName
+	 *        The provider qualifying the model, or {@code null} for an unqualified reference, for
+	 *        which the {@link #agreedValue(String, Function) agreed value} is returned.
+	 * @param property
+	 *        The value of a provider.
+	 * @return The value, {@code null} if the reference does not resolve.
+	 */
+	private String providerValue(String modelName, String providerName,
+			Function<LLMProviderConfig, String> property) {
+		if (providerName == null || providerName.isBlank()) {
+			return agreedValue(modelName, property);
+		}
+		LLMProviderConfig providerConfig = lookupProvider(modelName, providerName);
+		return providerConfig == null ? null : property.apply(providerConfig);
 	}
 
 	/**
@@ -1182,11 +1219,54 @@ public class LLMProviderService extends ConfiguredManagedClass<LLMProviderServic
 	 * @return The catalog provider ID (e.g. "anthropic", "openai"), or {@code null}.
 	 */
 	public String getProviderId(String modelName, String providerName) {
-		if (providerName == null || providerName.isBlank()) {
-			return getProviderId(modelName);
-		}
+		return providerValue(modelName, providerName, LLMProviderConfig::getCatalogProviderId);
+	}
+
+	/**
+	 * The {@link LLMProviderConfig#getToolChoices(String) tool choices} the provider of the given
+	 * model reference accepts.
+	 *
+	 * @param modelName
+	 *        The model name.
+	 * @param providerName
+	 *        The provider qualifying the model, or {@code null} for an unqualified reference.
+	 * @return The accepted tool choices; all of them if the reference does not resolve to exactly
+	 *         one provider.
+	 */
+	public Set<ToolChoice> getToolChoices(String modelName, String providerName) {
 		LLMProviderConfig providerConfig = lookupProvider(modelName, providerName);
-		return providerConfig == null ? null : providerConfig.getCatalogProviderId();
+		return providerConfig == null ? EnumSet.allOf(ToolChoice.class) : providerConfig.getToolChoices(modelName);
+	}
+
+	/**
+	 * The {@link LLMProviderConfig#getApiFamily(String) API family} of an unqualified model
+	 * reference, or {@code null} if it cannot be determined.
+	 *
+	 * <p>
+	 * Like {@link #getProviderId(String)}, the answer is unambiguous as long as all providers
+	 * exposing the model agree on it.
+	 * </p>
+	 *
+	 * @param modelName
+	 *        The model name to look up.
+	 * @return The API family (e.g. {@link ApiFamilies#ANTHROPIC}), or {@code null}.
+	 */
+	public String getApiFamily(String modelName) {
+		return agreedValue(modelName, provider -> provider.getApiFamily(modelName));
+	}
+
+	/**
+	 * The {@link LLMProviderConfig#getApiFamily(String) API family} of the given model reference,
+	 * or {@code null} if the reference does not resolve to exactly one provider.
+	 *
+	 * @param modelName
+	 *        The model name to look up.
+	 * @param providerName
+	 *        The provider qualifying the model, or {@code null} for an unqualified reference.
+	 * @return The API family (e.g. {@link ApiFamilies#ANTHROPIC}), or {@code null}.
+	 */
+	public String getApiFamily(String modelName, String providerName) {
+		return providerValue(modelName, providerName, provider -> provider.getApiFamily(modelName));
 	}
 
 	/**

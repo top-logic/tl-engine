@@ -235,7 +235,7 @@ public class DataMigration {
 			String name = kind + " " + number + " (" + processorConfig.getImplementationClass().getSimpleName()
 				+ ") of migration " + versionName;
 			boolean first = number == 1;
-			steps.add(MigrationStep.create(name, () -> {
+			steps.add(MigrationStep.create(name, completion -> {
 				if (first) {
 					logHeader(log, "Performing " + kind + "s of migration " + versionName);
 				}

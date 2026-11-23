@@ -870,34 +870,6 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 
 			migrate(context, log, connection);
 
-			KnowledgeBase kb = null;
-			Transaction tx = null;
-			try {
-				for (MigrationConfig migration : _migrationInfo.getMigrations()) {
-					for (PolymorphicConfiguration<? extends MigrationPostProcessor> processorConf : migration
-						.getPostProcessors()) {
-						MigrationPostProcessor processor = TypedConfigUtil.createInstance(processorConf);
-
-						if (kb == null) {
-							kb = createKB(log);
-							tx = kb.beginTransaction(
-								I18NConstants.PERFORMED_MIGRATION__NAME.fill(migration.getVersion().getModule() + ": "
-									+ migration.getVersion().getName()));
-						}
-
-						processor.afterMigration(log, kb);
-					}
-				}
-
-				if (tx != null && !log.hasErrors()) {
-					tx.commit();
-				}
-			} finally {
-				if (tx != null) {
-					tx.rollback();
-				}
-			}
-
 			// Check that everything is ok.
 			log.checkErrors();
 
@@ -1029,8 +1001,9 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	 * <p>
 	 * The steps are: each pre-processor and each processor of the migrations, the rebuild of the
 	 * {@link com.top_logic.knowledge.service.db2.RevisionXref} entries together with the automatic
-	 * schema adaption, the replay (if required), and storing the new versions together with the
-	 * schema baseline. Each step is committed together with the {@link MigrationProgress}.
+	 * schema adaption, the replay (if required), storing the new versions together with the schema
+	 * baseline, and the post-processors of all migrations in a {@link KnowledgeBase} transaction.
+	 * Each step is committed together with the {@link MigrationProgress}.
 	 * </p>
 	 */
 	private void migrate(MigrationContext context, Protocol log, PooledConnection connection) {
@@ -1043,7 +1016,7 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		// processors.
 		List<MigrationStep> steps = new ArrayList<>(migration.createSQLSteps(context, log, connection));
 
-		steps.add(MigrationStep.create("rebuild of xref entries and automatic schema adaption", () -> {
+		steps.add(MigrationStep.create("rebuild of xref entries and automatic schema adaption", completion -> {
 			context.revalidateXRef(log, connection);
 
 			// The migration processors work on the table layout of the stored schema, which the
@@ -1053,15 +1026,15 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 		}));
 
 		if (migration.isReplayRequired()) {
-			steps.add(MigrationStep.create("replay of the history", () -> {
+			steps.add(MigrationStep.create("replay of the history", completion -> {
 				KnowledgeBase kb = createKB(log);
 				if (kb != null) {
-					replayHistory(log, connection, migration, kb);
+					replayHistory(log, connection, migration, kb, completion);
 				}
 			}));
 		}
 
-		steps.add(MigrationStep.create("storing versions and schema baseline", () -> {
+		steps.add(MigrationStep.create("storing versions and schema baseline", completion -> {
 			MigrationUtil.updateStoredVersions(log, connection, migration.getNewVersion().values());
 			storeMissingVersions(log, connection);
 
@@ -1070,12 +1043,58 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			store.doMigration(context, log, connection);
 		}));
 
+		if (hasPostProcessors()) {
+			steps.add(MigrationStep.createInKnowledgeBase("post-processors", completion -> {
+				executePostProcessors(log, completion);
+			}));
+		}
+
 		MigrationProgress progress = _progress;
 		if (progress == null) {
 			progress = MigrationProgress.create(MigrationUtil.versions(_migrationInfo.getMigrations()));
 		}
 		progress.execute(log, connection, context, steps);
 		_progress = null;
+	}
+
+	private boolean hasPostProcessors() {
+		return _migrationInfo.getMigrations().stream().anyMatch(m -> !m.getPostProcessors().isEmpty());
+	}
+
+	/**
+	 * Executes the post-processors of all migrations in a single {@link KnowledgeBase} transaction,
+	 * in which the completion of the step is recorded.
+	 */
+	private void executePostProcessors(Protocol log, MigrationStep.Completion completion) throws SQLException {
+		KnowledgeBase kb = null;
+		Transaction tx = null;
+		try {
+			for (MigrationConfig migration : _migrationInfo.getMigrations()) {
+				for (PolymorphicConfiguration<? extends MigrationPostProcessor> processorConf : migration
+					.getPostProcessors()) {
+					MigrationPostProcessor processor = TypedConfigUtil.createInstance(processorConf);
+
+					if (kb == null) {
+						kb = createKB(log);
+						log.checkErrors();
+						tx = kb.beginTransaction(
+							I18NConstants.PERFORMED_MIGRATION__NAME.fill(migration.getVersion().getModule() + ": "
+								+ migration.getVersion().getName()));
+					}
+
+					processor.afterMigration(log, kb);
+				}
+			}
+
+			if (tx != null && !log.hasErrors()) {
+				completion.record(KBUtils.getCurrentContext(kb).getConnection());
+				tx.commit();
+			}
+		} finally {
+			if (tx != null) {
+				tx.rollback();
+			}
+		}
 	}
 
 	private KnowledgeBase createKB(Protocol log) {
@@ -1090,7 +1109,7 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 	}
 
 	private void replayHistory(Protocol log, PooledConnection connection, DataMigration migration,
-			KnowledgeBase dumpingKB) {
+			KnowledgeBase dumpingKB, MigrationStep.Completion completion) {
 		try {
 			// Commit all changes so far. The database is now dumped and recreated.
 			connection.commit();
@@ -1131,8 +1150,11 @@ public class MigrationService extends ConfiguredManagedClass<MigrationService.Co
 			StopWatch sw = StopWatch.createStartedWatch();
 			DataMigration.dropAndRecreateDatabase(connection, kbConfig, in);
 
-			// The properties table holding the migration lock has been dropped and re-created.
+			// The properties table holding the migration lock and the migration progress has been
+			// dropped and re-created.
 			_migrationLock.restore();
+			completion.record(connection);
+			connection.commit();
 
 			log.info("Database adapted in " + sw);
 		} catch (Exception ex) {

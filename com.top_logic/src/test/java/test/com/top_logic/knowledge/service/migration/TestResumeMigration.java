@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
 
@@ -46,19 +47,27 @@ import com.top_logic.basic.sql.H2Helper;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
 import com.top_logic.dob.MetaObject;
+import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.dob.meta.MOStructure;
+import com.top_logic.knowledge.event.ChangeSet;
+import com.top_logic.knowledge.event.EventWriter;
+import com.top_logic.knowledge.event.convert.EventRewriter;
 import com.top_logic.knowledge.service.InitialTableSetup;
+import com.top_logic.knowledge.service.KBUtils;
+import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseConfiguration;
 import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.KnowledgeBaseFactoryConfig;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.KBSchemaUtil;
 import com.top_logic.knowledge.service.db2.RevisionXref;
+import com.top_logic.knowledge.service.db2.migration.config.ReplayConfig;
 import com.top_logic.knowledge.service.migration.MigrationConfig;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationLock;
+import com.top_logic.knowledge.service.migration.MigrationPostProcessor;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.knowledge.service.migration.MigrationProgress;
 import com.top_logic.knowledge.service.migration.MigrationService;
@@ -99,13 +108,31 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 	/** Branch of the {@link RevisionXref} entry that the rebuild removes. */
 	private static final long OUTDATED_XREF_BRANCH = 1L;
 
-	/** The processors of the test migrations in the order of their execution. */
-	private static final List<String> ALL_PROCESSORS = List.of("pre1", "p1", "p2", "p3", "p4");
+	/** The processors and post-processors of the test migrations in the order of their execution. */
+	private static final List<String> ALL_CALLS = List.of("pre1", "p1", "p2", "p3", "p4", "q1", "q2");
+
+	/** Number of the steps before the post-processors: five processors, xref rebuild, versions. */
+	private static final int STEPS_BEFORE_POST_PROCESSORS = 7;
+
+	/** Number of the replay step: after five processors and the xref rebuild. */
+	private static final int REPLAY_STEP = 7;
+
+	/** The post-processors of the test migrations in the order of their execution. */
+	private static final List<String> POST_PROCESSORS = List.of("q1", "q2");
+
+	/** The calls of a migration resumed after the interrupted processor "p2". */
+	private static final List<String> RESUMED_AT_P2 = List.of("p2", "p3", "p4", "q1", "q2");
 
 	/** IDs of the {@link CountingProcessor}s in the order of their calls. */
 	static final List<String> CALLS = new ArrayList<>();
 
-	/** Call of a {@link CountingProcessor} that throws an exception, 0 for none. */
+	/** Number of change sets rewritten by the {@link CountingRewriter}. */
+	static final AtomicInteger REWRITES = new AtomicInteger();
+
+	/** Whether the {@link CountingRewriter} throws an exception. */
+	static boolean _failReplay;
+
+	/** Call of a {@link CountingProcessor} or {@link CountingPostProcessor} that throws an exception, 0 for none. */
 	static int _failAtCall;
 
 	/** The table whose {@link RevisionXref} entries the processor "pre1" invalidates. */
@@ -128,6 +155,8 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 		CALLS.clear();
 		_failAtCall = 0;
 		_xrefTable = null;
+		REWRITES.set(0);
+		_failReplay = false;
 
 		_kbConfig = migrationKBConfig();
 		_pool = ConnectionPoolRegistry.getConnectionPool(_kbConfig.getConnectionPool());
@@ -158,12 +187,14 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 		base.getPreProcessors().add(processor("pre1"));
 		base.getProcessors().add(processor("p1"));
 		base.getProcessors().add(processor("p2"));
+		base.getPostProcessors().add(postProcessor("q1"));
 		Version baseVersion =
 			addMigration(base, MigrationUtil.newVersion(BASE_MODULE, BASE_MIGRATION), baseInitial);
 
 		MigrationConfig app = TypedConfiguration.newConfigItem(MigrationConfig.class);
 		app.getProcessors().add(processor("p3"));
 		app.getProcessors().add(processor("p4"));
+		app.getPostProcessors().add(postProcessor("q2"));
 		addMigration(app, MigrationUtil.newVersion(APP_MODULE, APP_MIGRATION), appInitial, baseVersion);
 	}
 
@@ -201,7 +232,7 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 	public void testUninterrupted() throws Exception {
 		startMigration(null);
 
-		assertEquals(ALL_PROCESSORS, CALLS);
+		assertEquals(ALL_CALLS, CALLS);
 		assertCompleted();
 	}
 
@@ -228,7 +259,7 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 		CALLS.clear();
 		startMigration(transactionalDDL());
 
-		assertEquals(List.of("p2", "p3", "p4"), CALLS);
+		assertEquals(RESUMED_AT_P2, CALLS);
 		assertCompleted();
 	}
 
@@ -267,7 +298,7 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 
 		startMigration(transactionalDDL());
 
-		assertEquals(List.of("p2", "p3", "p4"), CALLS);
+		assertEquals(RESUMED_AT_P2, CALLS);
 		assertNull(progress());
 	}
 
@@ -280,7 +311,7 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 
 		if (_pool.getSQLDialect().supportsTransactionalDDL()) {
 			startMigration(null);
-			assertEquals(List.of("p2", "p3", "p4"), CALLS);
+			assertEquals(RESUMED_AT_P2, CALLS);
 			assertNull(progress());
 		} else {
 			assertStartFails(null, "Step 3 of the migration", "backup");
@@ -305,9 +336,97 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 		CALLS.clear();
 		startMigration(transactionalDDL());
 
-		assertEquals(List.of("p2", "p3", "p4"), CALLS);
+		assertEquals(RESUMED_AT_P2, CALLS);
 		assertEquals("Xref entries of the invalidated table not rebuilt.", 0, outdatedXrefCount());
 		assertNull(progress());
+	}
+
+	/**
+	 * (e) An abort in a post-processor: The next start executes the post-processors again, but not
+	 * the processors.
+	 */
+	public void testResumeAfterAbortInPostProcessor() throws Exception {
+		_failAtCall = ALL_CALLS.size();
+		assertStartFails(null, "post-processors", "Simulated abort in post-processor q2");
+
+		assertEquals(ALL_CALLS, CALLS);
+		MigrationProgress progress = progress();
+		assertNotNull("No progress recorded.", progress);
+		assertEquals("All steps before the post-processors completed.", STEPS_BEFORE_POST_PROCESSORS,
+			progress.getCompleted());
+		assertEquals(0, progress.getStarted());
+		assertNull("Post-processor results not rolled back.", results().get(RESULT_PREFIX + "q1"));
+
+		_failAtCall = 0;
+		CALLS.clear();
+		startMigration(null);
+
+		assertEquals(POST_PROCESSORS, CALLS);
+		assertCompleted();
+	}
+
+	/**
+	 * (f) After the commit of the post-processors, no progress is left.
+	 */
+	public void testNoProgressAfterPostProcessors() throws Exception {
+		startMigration(null);
+
+		assertEquals(ALL_CALLS, CALLS);
+		assertNull(progress());
+		assertEquals("1", results().get(RESULT_PREFIX + "q2"));
+	}
+
+	/**
+	 * (g) A migration with replay that is aborted before the database is dropped: The next start
+	 * repeats the replay, the result equals the one of an uninterrupted migration.
+	 */
+	public void testResumeReplay() throws Exception {
+		Version baseVersion = MigrationUtil.newVersion(BASE_MODULE, BASE_MIGRATION);
+		ReplayConfig replay = TypedConfiguration.newConfigItem(ReplayConfig.class);
+		ReplayConfig.Step step = TypedConfiguration.newConfigItem(ReplayConfig.Step.class);
+		step.setName("test-rewrite");
+		step.getRewriters().add(TypedConfiguration.newConfigItem(CountingRewriter.Config.class));
+		replay.getSteps().put(step.getName(), step);
+		TypedConfigUtil.setProperty(_scripts.get(BASE_MODULE).get(baseVersion), MigrationConfig.MIGRATION_PROPERTY,
+			replay);
+
+		int revisions = revisionCount();
+		assertTrue("No history to replay.", revisions > 0);
+
+		_failReplay = true;
+		assertStartFails(null, "replay", "Simulated abort in replay");
+
+		assertEquals(1, REWRITES.get());
+		assertEquals(List.of("pre1", "p1", "p2", "p3", "p4"), CALLS);
+		MigrationProgress progress = progress();
+		assertEquals("Replay step not marked as started.", REPLAY_STEP, progress.getStarted());
+
+		_failReplay = false;
+		REWRITES.set(0);
+		CALLS.clear();
+		startMigration(transactionalDDL());
+
+		assertTrue("Replay not repeated.", REWRITES.get() > 1);
+		// The history is kept, the transaction of the post-processors adds a revision.
+		assertEquals("History changed by the replay.", revisions + 1, revisionCount());
+		assertEquals(POST_PROCESSORS, CALLS);
+		assertCompleted();
+	}
+
+	private int revisionCount() throws SQLException {
+		PooledConnection connection = _pool.borrowReadConnection();
+		try {
+			DBHelper sql = connection.getSQLDialect();
+			try (PreparedStatement statement = connection.prepareStatement(
+				"SELECT COUNT(*) FROM " + sql.tableRef(SQLH.mangleDBName(BasicTypes.REVISION_TYPE_NAME)))) {
+				try (ResultSet result = statement.executeQuery()) {
+					assertTrue(result.next());
+					return result.getInt(1);
+				}
+			}
+		} finally {
+			_pool.releaseReadConnection(connection);
+		}
 	}
 
 	private void storeInterruptedProgress() throws Exception {
@@ -336,7 +455,7 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 
 	private void assertCompleted() throws Exception {
 		Map<String, String> expected = new TreeMap<>();
-		for (String id : ALL_PROCESSORS) {
+		for (String id : ALL_CALLS) {
 			expected.put(RESULT_PREFIX + id, "1");
 		}
 		assertEquals("Each processor must be applied exactly once.", expected, results());
@@ -484,6 +603,12 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 		return version;
 	}
 
+	private static PolymorphicConfiguration<? extends MigrationPostProcessor> postProcessor(String id) {
+		CountingPostProcessor.Config<?> config = TypedConfiguration.newConfigItem(CountingPostProcessor.Config.class);
+		config.setId(id);
+		return config;
+	}
+
 	private static PolymorphicConfiguration<? extends MigrationProcessor> processor(String id) {
 		CountingProcessor.Config config = TypedConfiguration.newConfigItem(CountingProcessor.Config.class);
 		config.setId(id);
@@ -527,16 +652,16 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 
 		String noTableSetup = System.clearProperty(InitialTableSetup.NO_DATABASE_TABLE_SETUP);
 		try {
-			StartableMigrationService service;
+			// The knowledge bases of the replay and the post-processors are created on the default
+			// pool.
 			PoolRef defaultPool =
 				TestingConnectionPoolRegistryAccess.setupDefaultPool(DatabaseTestSetup.MIGRATION_POOL_NAME);
 			try {
-				service = new StartableMigrationService(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
-					config, _scripts, dialect);
+				new StartableMigrationService(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config,
+					_scripts, dialect).start();
 			} finally {
 				TestingConnectionPoolRegistryAccess.restoreDefaultPool(defaultPool);
 			}
-			service.start();
 		} finally {
 			if (noTableSetup != null) {
 				System.setProperty(InitialTableSetup.NO_DATABASE_TABLE_SETUP, noTableSetup);
@@ -614,6 +739,91 @@ public class TestResumeMigration extends AbstractDBKnowledgeBaseTest {
 			if (CALLS.size() == _failAtCall) {
 				throw new RuntimeException("Simulated abort in processor " + id + ".");
 			}
+		}
+
+	}
+
+	/**
+	 * {@link MigrationPostProcessor} recording its call in {@link TestResumeMigration#CALLS} and
+	 * counting its executions in the database property {@link TestResumeMigration#RESULT_PREFIX}
+	 * plus its ID, in the transaction of the post-processors.
+	 */
+	public static class CountingPostProcessor extends AbstractConfiguredInstance<CountingPostProcessor.Config<?>>
+			implements MigrationPostProcessor {
+
+		/**
+		 * Configuration of a {@link CountingPostProcessor}.
+		 */
+		public interface Config<I extends CountingPostProcessor> extends PolymorphicConfiguration<I> {
+
+			/**
+			 * ID of the post-processor.
+			 */
+			@Name("id")
+			String getId();
+
+			/**
+			 * @see #getId()
+			 */
+			void setId(String value);
+
+		}
+
+		/**
+		 * Creates a {@link CountingPostProcessor}.
+		 */
+		public CountingPostProcessor(InstantiationContext context, Config<?> config) {
+			super(context, config);
+		}
+
+		@Override
+		public void afterMigration(Log log, KnowledgeBase kb) {
+			String id = getConfig().getId();
+			CALLS.add(id);
+			PooledConnection connection = KBUtils.getCurrentContext(kb).getConnection();
+			try {
+				String key = RESULT_PREFIX + id;
+				String count = DBProperties.getProperty(connection, DBProperties.GLOBAL_PROPERTY, key);
+				DBProperties.setProperty(connection, DBProperties.GLOBAL_PROPERTY, key,
+					Integer.toString(count == null ? 1 : Integer.parseInt(count) + 1));
+			} catch (SQLException ex) {
+				throw new RuntimeException(ex);
+			}
+			if (CALLS.size() == _failAtCall) {
+				throw new RuntimeException("Simulated abort in post-processor " + id + ".");
+			}
+		}
+
+	}
+
+	/**
+	 * {@link EventRewriter} counting its calls in {@link TestResumeMigration#REWRITES} and throwing
+	 * an exception, while {@link TestResumeMigration#_failReplay} is set.
+	 */
+	public static class CountingRewriter extends AbstractConfiguredInstance<CountingRewriter.Config<?>>
+			implements EventRewriter {
+
+		/**
+		 * Configuration of a {@link CountingRewriter}.
+		 */
+		public interface Config<I extends CountingRewriter> extends PolymorphicConfiguration<I> {
+			// No properties.
+		}
+
+		/**
+		 * Creates a {@link CountingRewriter}.
+		 */
+		public CountingRewriter(InstantiationContext context, Config<?> config) {
+			super(context, config);
+		}
+
+		@Override
+		public void rewrite(ChangeSet cs, EventWriter out) {
+			REWRITES.incrementAndGet();
+			if (_failReplay) {
+				throw new RuntimeException("Simulated abort in replay.");
+			}
+			out.write(cs);
 		}
 
 	}

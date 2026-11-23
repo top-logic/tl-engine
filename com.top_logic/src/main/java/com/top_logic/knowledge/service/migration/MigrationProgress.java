@@ -37,6 +37,13 @@ import com.top_logic.knowledge.service.db2.RevisionXref;
  * </p>
  *
  * <p>
+ * A step writing in a {@link com.top_logic.knowledge.service.KnowledgeBase} transaction of its own
+ * (see {@link MigrationStep#inKnowledgeBaseTransaction()}) writes the progress in that
+ * transaction. It writes no DDL, so it is not marked as started: An interruption before its commit
+ * executes it again at the next start, an interruption after its commit never executes it twice.
+ * </p>
+ *
+ * <p>
  * The progress records the {@link #getPlan() plan} of the migration, i.e. the versions of the
  * migrations being applied, since the versions stored in the database do not tell which
  * migrations were pending, once the step storing the new versions is completed. It also records
@@ -251,6 +258,12 @@ public final class MigrationProgress {
 	 * record is deleted in the commit of the step.
 	 * </p>
 	 *
+	 * <p>
+	 * A step that replaces the database (such as the replay) {@link MigrationStep.Completion#record(PooledConnection)
+	 * records} its completion itself as soon as the database is re-created, since re-creating the
+	 * database drops the progress.
+	 * </p>
+	 *
 	 * @param log
 	 *        The log of the migration. A step reporting an error is rolled back and terminates the
 	 *        migration.
@@ -293,32 +306,67 @@ public final class MigrationProgress {
 		for (int index = completed; index < steps.size(); index++) {
 			int number = index + 1;
 			MigrationStep step = steps.get(index);
+			String description = describe(number, steps);
+			boolean inKnowledgeBase = step.inKnowledgeBaseTransaction();
 
-			_record.setStarted(number);
-			commit(log, connection, store(log, connection), describe(number, steps));
+			if (!inKnowledgeBase) {
+				_record.setStarted(number);
+				commit(log, connection, store(log, connection), description);
+			}
 
+			boolean[] recorded = { false };
+			MigrationStep.Completion completion = stepConnection -> {
+				recordCompleted(context, number, steps.size(), stepConnection);
+				recorded[0] = true;
+			};
 			try {
-				step.run();
+				step.run(completion);
 			} catch (Exception ex) {
-				rollback(connection);
-				throw log.fatal(describe(number, steps) + " failed.", ex);
+				if (!inKnowledgeBase) {
+					rollback(connection);
+				}
+				throw log.fatal(description + " failed.", ex);
 			}
 			if (log.hasErrors()) {
-				rollback(connection);
-				throw log.fatal(describe(number, steps) + " failed.");
+				if (!inKnowledgeBase) {
+					rollback(connection);
+				}
+				throw log.fatal(description + " failed.");
 			}
 
-			_record.setStarted(0);
-			_record.setCompleted(number);
-			_record.setXRefInvalidated(new ArrayList<>(context.getXRefInvalidated()));
-			_record.setXRefDeleted(new ArrayList<>(context.getXRefDeleted()));
-			boolean stored;
-			if (number == steps.size()) {
-				stored = delete(log, connection);
+			if (inKnowledgeBase) {
+				if (!recorded[0]) {
+					throw log.fatal(description + " did not record its completion.");
+				}
 			} else {
-				stored = store(log, connection);
+				boolean written;
+				try {
+					completion.record(connection);
+					written = true;
+				} catch (SQLException ex) {
+					log.error("Unable to record the progress of the migration.", ex);
+					written = false;
+				}
+				commit(log, connection, written, description);
 			}
-			commit(log, connection, stored, describe(number, steps));
+		}
+	}
+
+	/**
+	 * Writes the progress with the given step completed to the given connection, deletes it after
+	 * the last step.
+	 */
+	private void recordCompleted(MigrationContext context, int number, int stepCount, PooledConnection connection)
+			throws SQLException {
+		_record.setStarted(0);
+		_record.setCompleted(number);
+		_record.setXRefInvalidated(new ArrayList<>(context.getXRefInvalidated()));
+		_record.setXRefDeleted(new ArrayList<>(context.getXRefDeleted()));
+		if (number == stepCount) {
+			DBProperties.setProperty(connection, DBProperties.GLOBAL_PROPERTY, PROGRESS_PROPERTY, null);
+		} else {
+			DBProperties.setProperty(connection, DBProperties.GLOBAL_PROPERTY, PROGRESS_PROPERTY,
+				TypedConfiguration.toString(ROOT_TAG, _record));
 		}
 	}
 
@@ -333,16 +381,6 @@ public final class MigrationProgress {
 			return true;
 		} catch (SQLException ex) {
 			log.error("Unable to store the migration progress.", ex);
-			return false;
-		}
-	}
-
-	private static boolean delete(Protocol log, PooledConnection connection) {
-		try {
-			DBProperties.setProperty(connection, DBProperties.GLOBAL_PROPERTY, PROGRESS_PROPERTY, null);
-			return true;
-		} catch (SQLException ex) {
-			log.error("Unable to delete the migration progress.", ex);
 			return false;
 		}
 	}

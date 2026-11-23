@@ -132,9 +132,9 @@ public class HttpMcpTransport implements McpTransportConfig {
 					// client for each person needs a connection, and so a transport, for each person.
 					credentials = lastCredentials.get();
 				}
-				// Limit: a request that the library sends in the context of an earlier call keeps
-				// the headers of that call, e.g. the stream of server messages (GET) and its
-				// reconnects. After a rotation of the secret these headers can be stale.
+				// Limit: the stream of server messages (GET), which the library opens after the
+				// first answer of a session, keeps the headers of that call. After a rotation of the
+				// secret these headers can be stale.
 				credentials.addTo(request);
 			})
 			.build();
@@ -186,6 +186,14 @@ public class HttpMcpTransport implements McpTransportConfig {
 
 		void addTo(HttpRequest.Builder request) {
 			values.forEach(request::setHeader);
+		}
+
+		/**
+		 * The header names only: the values are secrets.
+		 */
+		@Override
+		public String toString() {
+			return "CredentialHeaders" + values.keySet();
 		}
 	}
 

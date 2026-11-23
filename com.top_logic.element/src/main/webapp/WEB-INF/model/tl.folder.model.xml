@@ -48,6 +48,9 @@
 					type="tl.core:String"
 				>
 					<annotations>
+						<storage-algorithm>
+							<primitive-storage storage-attribute="physicalResource"/>
+						</storage-algorithm>
 						<delete-protected/>
 						<visibility value="hidden"/>
 						<fulltext-relevant value="false"/>

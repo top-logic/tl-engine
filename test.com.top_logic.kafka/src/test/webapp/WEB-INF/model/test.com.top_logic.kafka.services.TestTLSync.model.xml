@@ -18,7 +18,13 @@
 					<attributes>
 						<property name="createRev"
 							type="tl.core:Long"
-						/>
+						>
+							<annotations>
+								<storage-algorithm>
+									<primitive-storage storage-attribute="createRev"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
 						<reference name="otherNode"
 							type="test.com.top_logic.kafka.services.TestTLSync.source:Node2"
 						/>
@@ -54,7 +60,13 @@
 					<attributes>
 						<property name="createRev"
 							type="tl.core:Long"
-						/>
+						>
+							<annotations>
+								<storage-algorithm>
+									<primitive-storage storage-attribute="createRev"/>
+								</storage-algorithm>
+							</annotations>
+						</property>
 						<reference name="otherNode"
 							type="test.com.top_logic.kafka.services.TestTLSync.target:TargetNode2"
 						/>

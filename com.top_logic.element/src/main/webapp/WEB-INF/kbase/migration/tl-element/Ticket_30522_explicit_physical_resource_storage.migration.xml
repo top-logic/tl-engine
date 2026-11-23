@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30522_explicit_physical_resource_storage"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30183_account_lock"
+			module="tl-element"
+		/>
+	</dependencies>
+	<processors>
+		<add-annotations name="tl.folder:WithResource#physicalResource">
+			<annotations>
+				<storage-algorithm>
+					<primitive-storage storage-attribute="physicalResource"/>
+				</storage-algorithm>
+			</annotations>
+		</add-annotations>
+	</processors>
+	<post-processors/>
+</migration>

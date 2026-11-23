@@ -91,6 +91,7 @@ public class Update extends SearchExpressionWithSecurity {
 		if (usesSecurity()) {
 			checkWritePermission(self, part);
 			DiscoverRight.checkNewTargets(self, part, value);
+			DeleteObject.checkRemovedParts(self, part, value);
 		}
 
 		self.tUpdate(part, value);

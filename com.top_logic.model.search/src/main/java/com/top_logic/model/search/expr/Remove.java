@@ -61,6 +61,9 @@ public class Remove extends GenericMethodWithSecurity {
 					newValue.add(item);
 				}
 			}
+			if (usesSecurity()) {
+				DeleteObject.checkRemovedParts(obj, part, newValue);
+			}
 			obj.tUpdate(part, newValue);
 		}
 

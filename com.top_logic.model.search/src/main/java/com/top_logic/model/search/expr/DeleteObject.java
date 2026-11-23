@@ -6,12 +6,18 @@
 package com.top_logic.model.search.expr;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 
+import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.SingleArgMethodBuilder;
@@ -120,6 +126,43 @@ public class DeleteObject extends GenericMethodWithSecurity implements WithFlatM
 		if (!ModelAccessRights.getInstance().isAllowed(TLContext.currentUser(), obj,
 			SimpleBoundCommandGroup.DELETE)) {
 			throw new TopLogicException(I18NConstants.DELETE_PERMISSION_DENIED__OBJECT.fill(obj));
+		}
+	}
+
+	/**
+	 * Checks that the current user may delete each part that the given new value takes out of the
+	 * given composition.
+	 *
+	 * <p>
+	 * A part taken out of a composition is lost to its container, so its remove needs the right to
+	 * delete the part, see {@link #checkDeletePermission(TLObject)}. A reference that is no
+	 * composition takes out no part. Each operation with security calls this before it changes the
+	 * composition.
+	 * </p>
+	 *
+	 * @param container
+	 *        The object whose attribute changes.
+	 * @param attribute
+	 *        The changed attribute of the container.
+	 * @param newValue
+	 *        The new value of the attribute: an object, a collection of objects, or {@code null}.
+	 *        An object stands for itself, it is compared by identity with the parts the container
+	 *        holds now.
+	 * @throws TopLogicException
+	 *         With {@link I18NConstants#DELETE_PERMISSION_DENIED__OBJECT}, when the user may not
+	 *         delete one of the parts that the new value takes out.
+	 */
+	@FrameworkInternal
+	public static void checkRemovedParts(TLObject container, TLStructuredTypePart attribute, Object newValue) {
+		if (!(attribute instanceof TLReference reference) || !reference.isComposite()) {
+			return;
+		}
+		Set<Object> kept = Collections.newSetFromMap(new IdentityHashMap<>());
+		kept.addAll(asCollection(newValue));
+		for (Object part : asCollection(container.tValue(attribute))) {
+			if (part instanceof TLObject removed && !kept.contains(removed)) {
+				checkDeletePermission(removed);
+			}
 		}
 	}
 

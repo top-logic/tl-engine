@@ -1418,6 +1418,14 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			if (operations == null) {
 				return null;
 			}
+			for (BoundCommandGroup operation : operations) {
+				if (!function.delegates(operation)) {
+					// E.g. Create for a referer: nothing refers to an object being created.
+					context.error("The access parent of " + TLModelUtil.qualifiedName(type) + " lists the operation "
+						+ operation.getID() + ", which it never decides: the grants of the type decide it.");
+					return null;
+				}
+			}
 			function = new RestrictedRelation(function, Set.copyOf(operations));
 		}
 		return function;

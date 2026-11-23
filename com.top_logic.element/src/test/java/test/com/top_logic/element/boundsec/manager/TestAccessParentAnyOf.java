@@ -87,6 +87,10 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 
 	private static final String BOTH = MODULE + ":Both";
 
+	private static final String ANNOTATION = MODULE + ":Annotation";
+
+	private static final String COMMENT = MODULE + ":Comment";
+
 	private Person _folderOwner;
 
 	private Person _folderReader;
@@ -420,6 +424,47 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 		});
 		assertTrue("The other operations are still delegated.", allowed(_folderOwner, note, SimpleBoundCommandGroup.WRITE));
 		assertFalse(allowed(_docReader, note, SimpleBoundCommandGroup.READ));
+	}
+
+	/**
+	 * A referer directly in the access parent decides Create no more than an any-of of two referers:
+	 * nothing refers to an object being created, the grants of the type decide it, on the object
+	 * level as on the type level.
+	 */
+	public void testDirectRefererLeavesCreateToType() {
+		for (String typeName : List.of(ANNOTATION, COMMENT)) {
+			TLClass type = type(typeName);
+			AccessParentFunction parent = rights().getAccessParent(type);
+			assertFalse(typeName, parent.delegates(SimpleBoundCommandGroup.CREATE));
+			assertFalse(typeName, parent.delegatesCreation());
+			assertFalse(typeName, parent.delegatesAll());
+			assertTrue(typeName, parent.delegates(SimpleBoundCommandGroup.READ));
+			assertTrue(typeName, parent.delegates(SimpleBoundCommandGroup.WRITE));
+
+			assertTrue(typeName + ": The own Create grant decides.",
+				rights().isAllowedCreate(_docReader, type, _document));
+			assertFalse(typeName + ": Creating is no write of the context.",
+				rights().isAllowedCreate(_docEditor, type, _document));
+			assertTrue(typeName, rights().isAllowedCreate(_rootDocReader, type, (TLObject) null));
+			assertFalse(typeName + ": Without a context, the own grant decides as well.",
+				rights().isAllowedCreate(_other, type, (TLObject) null));
+
+			assertTrue(typeName + ": The type level follows the own Create grant.",
+				rights().getAccessibleTypes(_rootDocReader, SimpleBoundCommandGroup.CREATE).contains(type));
+			assertFalse(typeName,
+				rights().getAccessibleTypes(_rootOwner, SimpleBoundCommandGroup.CREATE).contains(type));
+		}
+
+		TLObject annotation = inTransaction(() -> {
+			TLObject result = create(ANNOTATION);
+			_document.tUpdateByName("annotations", List.of(result));
+			return result;
+		});
+		assertTrue("The other operations are still delegated.",
+			allowed(_docEditor, annotation, SimpleBoundCommandGroup.WRITE));
+		assertTrue(allowed(_docReader, annotation, SimpleBoundCommandGroup.READ));
+		assertFalse(allowed(_docReader, annotation, SimpleBoundCommandGroup.WRITE));
+		assertFalse(allowed(_other, annotation, SimpleBoundCommandGroup.READ));
 	}
 
 	/**

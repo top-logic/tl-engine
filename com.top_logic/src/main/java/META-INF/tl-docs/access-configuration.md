@@ -355,8 +355,9 @@ marks `internal` and `without-security` remain rejected:
   by editing the whole. Creating an object of such a type in a context requires Write on that
   context; creating one without a context (the transient-then-copy pattern of the view layer) is
   not restricted, since the object is inaccessible until it is put into a container, which is a
-  write of the container. With several access parents, only a container candidate decides the
-  creation, see [Several access parents](#several-access-parents-any-of-referer).
+  write of the container. A `<referer>` never decides the creation, and with several access
+  parents only a container candidate does, see
+  [Several access parents](#several-access-parents-any-of-referer).
 - The parent may delegate further; the chain is followed at runtime. An object whose relation
   leads nowhere is denied the delegated operations (without `operations`: every operation), unless
   the own grants of the type imply them. A chain running in a cycle is logged as an error (as info
@@ -545,7 +546,7 @@ folder may do everything with it.
   is an access parent of its own.
 - **`<any-of>`** holds the building blocks (`<container>`, `<target>`, `<referer>`, `<script>`) as
   its candidates; the access parents of the object are those of all candidates. A building block
-  directly in `<access-parent>` behaves like a single candidate. A nested `<any-of>` adds its
+  directly in `<access-parent>` behaves like a single candidate (also for Create, see below). A nested `<any-of>` adds its
   candidates, an `<any-of>` with a single candidate is that candidate. `<self/>` as candidate, an
   empty `<any-of>` and `operations` on `<any-of>` are configuration errors; each candidate restricts
   its own operations.
@@ -565,9 +566,11 @@ folder may do everything with it.
 - **Create and initial values.** Nothing refers to an object being created, so only the candidates
   leading to the container (`<container>`) decide whether it may be created and which initial
   attribute values may be set (Write on the container, as described above). An `<any-of>` without
-  a container candidate delegating Create does not delegate Create at all: the grants of the type
-  itself decide it, checked with the roles on the context the object is created in, and such a
-  `Create` grant is allowed even though every other operation is delegated.
+  a container candidate delegating Create does not delegate Create at all, and neither does a
+  `<referer>` directly in `<access-parent>`: the grants of the type itself decide it, checked with
+  the roles on the context the object is created in, and such a `Create` grant is allowed even
+  though every other operation is delegated. `Create` in the `operations` of a `<referer>` is a
+  configuration error.
 - **Cycles.** Access parents referring to each other (two nodes pointing to each other with `next`)
   form a cycle. The path that reaches a check under way again is denied, while another candidate
   may still allow the operation. A denial computed while such a cycle was hit is not stored in the

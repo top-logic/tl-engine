@@ -84,10 +84,15 @@ public record RestrictedRelation(AccessParentFunction relation, Set<BoundCommand
 		return relation.getRelation();
 	}
 
+	/**
+	 * @return Whether the operation is listed, or is Discover, and the restricted relation
+	 *         delegates it at all.
+	 */
 	@Override
 	public boolean delegates(BoundCommandGroup operation) {
-		return operations.contains(operation)
-			|| (SimpleBoundCommandGroup.DISCOVER.equals(operation) && !operations.isEmpty());
+		return (operations.contains(operation)
+			|| (SimpleBoundCommandGroup.DISCOVER.equals(operation) && !operations.isEmpty()))
+			&& relation.delegates(operation);
 	}
 
 	@Override

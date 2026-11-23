@@ -13,6 +13,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
  * {@link AccessParentFunction} leading to the objects pointing to the delegating object through a
@@ -25,6 +26,12 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
  * current transaction is set up by whoever creates it, without any check on the object it refers
  * to, and therefore gives no verdict for that object; an object that cannot hold roles gives no
  * verdict either, and is logged as an error.
+ * </p>
+ *
+ * <p>
+ * A referring object never decides Create: nothing refers to an object being created. The grants of
+ * the delegating type decide it, as for an {@link AnyOfRelation} without a candidate leading to the
+ * container.
  * </p>
  *
  * @param reference
@@ -55,6 +62,23 @@ public record RefererRelation(TLReference reference) implements AccessParentFunc
 			.filter(referer -> AccessParentFunction.givesVerdict(referer, object, description()))
 			.map(TLObject.class::cast)
 			.iterator();
+	}
+
+	/**
+	 * @return Whether the operation is not Create, which the grants of the delegating type decide.
+	 */
+	@Override
+	public boolean delegates(BoundCommandGroup operation) {
+		return !SimpleBoundCommandGroup.CREATE.equals(operation);
+	}
+
+	/**
+	 * @return <code>false</code>: Create is decided by the grants of the delegating type, see
+	 *         {@link #delegates(BoundCommandGroup)}.
+	 */
+	@Override
+	public boolean delegatesAll() {
+		return false;
 	}
 
 	/**

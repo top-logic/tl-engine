@@ -206,8 +206,8 @@ public interface AccessParentFunction {
 	 *
 	 * @return The delegated operations, <code>null</code> when the relation is not restricted to a
 	 *         list: it then delegates every operation, unless it tells otherwise by
-	 *         {@link #delegatesAll()} - an {@link AnyOfRelation} without a candidate leading to the
-	 *         container does not delegate Create.
+	 *         {@link #delegatesAll()} - a {@link RefererRelation} and an {@link AnyOfRelation}
+	 *         without a candidate leading to the container do not delegate Create.
 	 *
 	 * @see #delegates(BoundCommandGroup)
 	 * @see #delegatesAll()

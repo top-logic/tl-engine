@@ -70,6 +70,14 @@
 							multiple="true"
 							type="Note"
 						/>
+						<reference name="annotations"
+							multiple="true"
+							type="Annotation"
+						/>
+						<reference name="comments"
+							multiple="true"
+							type="Comment"
+						/>
 					</attributes>
 				</class>
 
@@ -81,6 +89,10 @@
 						/>
 						<reference name="assignee"
 							type="Contact"
+						/>
+						<reference name="comments"
+							multiple="true"
+							type="Comment"
 						/>
 					</attributes>
 				</class>
@@ -132,6 +144,12 @@
 						/>
 					</attributes>
 				</class>
+
+				<!-- Delegates to the documents referring to it, through a referer directly in the access parent; grants Create itself. -->
+				<class name="Annotation"/>
+
+				<!-- Delegates to the documents and tasks referring to it; grants Create itself. -->
+				<class name="Comment"/>
 
 				<!-- Delegates to each of its folders. -->
 				<class name="Holder">

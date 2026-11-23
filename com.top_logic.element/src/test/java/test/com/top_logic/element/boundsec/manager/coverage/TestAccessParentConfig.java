@@ -153,6 +153,46 @@ public class TestAccessParentConfig extends BasicTestCase {
 		assertTrue(parent.getRelation() instanceof RefererRelation);
 	}
 
+	/**
+	 * A referer never decides Create, also directly in the access parent: the type grants it
+	 * itself, the configuration and the resolved relation agree.
+	 */
+	public void testRefererNeverDecidesCreate() throws Exception {
+		String covered = MODULE + ":Covered";
+		String classXml = "<class name='" + covered + "'><access-parent><referer reference='" + LINKED
+			+ "#target'/></access-parent><grant operation='Create'/></class>";
+		BufferingProtocol log = new BufferingProtocol();
+		AccessParentFunction parent =
+			newService(log, classXml).getAccessParent((TLClass) TLModelUtil.findType(covered));
+		assertTrue("The own Create grant is accepted: " + log.getErrors(), log.getErrors().isEmpty());
+		assertFalse(parent.delegates(SimpleBoundCommandGroup.CREATE));
+		assertFalse(parent.delegatesCreation());
+		assertFalse(parent.delegatesAll());
+		assertNull(parent.getOperations());
+		assertTrue(parent.delegates(SimpleBoundCommandGroup.WRITE));
+
+		TLClassAccessRights entry = read(classXml);
+		assertTrue(AccessParentConfig.isRestricted(entry.getAccessParent()));
+		assertDelegatesExactly(entry.getAccessParent(), "Read", "Write", "Discover", "Delete", "Export");
+		ConstraintChecker checker = new ConstraintChecker();
+		checker.check(entry);
+		assertTrue("The editor accepts the own Create grant: " + checker.getFailures(),
+			checker.getFailures().isEmpty());
+
+		BufferingProtocol writeLog = new BufferingProtocol();
+		newService(writeLog, "<class name='" + covered + "'><access-parent><referer reference='" + LINKED
+			+ "#target'/></access-parent><grant operation='Write'/></class>");
+		assertError(writeLog, "delegates the operation Write");
+
+		BufferingProtocol listedLog = new BufferingProtocol();
+		newService(listedLog, "<class name='" + covered + "'><access-parent><referer reference='" + LINKED
+			+ "#target' operations='Read,Create'/></access-parent></class>");
+		assertError(listedLog, "lists the operation Create, which it never decides");
+		TLClassAccessRights listed = read("<class name='" + covered + "'><access-parent><referer reference='"
+			+ LINKED + "#target' operations='Read,Create'/></access-parent></class>");
+		assertDelegatesExactly(listed.getAccessParent(), "Read", "Discover");
+	}
+
 	public void testAnyOfResolvesCandidates() throws Exception {
 		BufferingProtocol log = new BufferingProtocol();
 		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent><any-of>"

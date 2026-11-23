@@ -71,7 +71,8 @@ public interface AccessParentConfig extends ConfigPart {
 	 * <p>
 	 * The type of a restricted setting decides the other operations by grants of its own. A
 	 * building block is restricted when it lists its {@link OperationRestriction#getOperations()
-	 * operations}. An {@link AnyOfAccessParent} is restricted when all its candidates are, or when
+	 * operations}; a {@link RefererAccessParent} always is, since it never decides Create. An
+	 * {@link AnyOfAccessParent} is restricted when all its candidates are, or when
 	 * it does not delegate Create, because no candidate leading to the container does, see
 	 * {@link #delegatesOperation(AccessParentConfig, String)}. An {@link AnyOfAccessParent} with a
 	 * single candidate is that candidate.
@@ -93,6 +94,10 @@ public interface AccessParentConfig extends ConfigPart {
 	 *        <code>null</code> for none.
 	 */
 	static boolean isRestricted(PolymorphicConfiguration<?> definition) {
+		if (definition instanceof RefererAccessParent.Config) {
+			// Never decides Create, see RefererRelation.
+			return true;
+		}
 		if (definition instanceof OperationRestriction restriction) {
 			return !restriction.getOperations().isEmpty();
 		}
@@ -125,7 +130,8 @@ public interface AccessParentConfig extends ConfigPart {
 	 * <p>
 	 * A building block delegates the operations it {@link OperationRestriction#getOperations()
 	 * lists} and Discover, which is delegated together with any of them, or all operations when it
-	 * lists none. An {@link AnyOfAccessParent} delegates an operation one of its candidates
+	 * lists none, except Create for a {@link RefererAccessParent}, which never decides it. An
+	 * {@link AnyOfAccessParent} delegates an operation one of its candidates
 	 * delegates, Create only when a candidate leading to the container delegates it.
 	 * </p>
 	 *
@@ -156,6 +162,10 @@ public interface AccessParentConfig extends ConfigPart {
 			return candidates.stream().anyMatch(candidate -> delegatesOperation(candidate, operationName));
 		}
 		if (definition instanceof SelfAccessParent.Config) {
+			return false;
+		}
+		if (definition instanceof RefererAccessParent.Config
+			&& SimpleBoundCommandGroup.CREATE_NAME.equals(operationName)) {
 			return false;
 		}
 		if (definition instanceof OperationRestriction restriction) {

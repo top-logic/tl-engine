@@ -33,6 +33,11 @@ import com.top_logic.model.util.TLModelUtil;
  * to everybody.
  * </p>
  *
+ * <p>
+ * Nothing refers to an object being created, so a referer never decides Create: the grants of the
+ * type decide it, also when the referer is the access parent alone.
+ * </p>
+ *
  * @see RefererRelation
  */
 @Label("Referring objects")

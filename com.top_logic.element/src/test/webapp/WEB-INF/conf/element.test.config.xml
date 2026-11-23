@@ -923,6 +923,28 @@
 							roles="TestAccessParentAnyOf.DocReader"
 						/>
 					</class>
+					<!-- A referer never decides Create: the grants of the type decide it. -->
+					<class name="TestAccessParentAnyOf:Annotation">
+						<access-parent>
+							<referer reference="TestAccessParentAnyOf:Document#annotations"/>
+						</access-parent>
+						<grant
+							operation="Create"
+							roles="TestAccessParentAnyOf.DocReader"
+						/>
+					</class>
+					<class name="TestAccessParentAnyOf:Comment">
+						<access-parent>
+							<any-of>
+								<referer reference="TestAccessParentAnyOf:Document#comments"/>
+								<referer reference="TestAccessParentAnyOf:Task#comments"/>
+							</any-of>
+						</access-parent>
+						<grant
+							operation="Create"
+							roles="TestAccessParentAnyOf.DocReader"
+						/>
+					</class>
 					<class name="TestAccessParentAnyOf:Holder">
 						<access-parent>
 							<target reference="TestAccessParentAnyOf:Holder#owners"/>

@@ -11,6 +11,7 @@ import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -41,6 +42,7 @@ import com.top_logic.ai.tool.api.ProgressReporter;
 import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.ai.tool.api.ToolExecutionContext;
 import com.top_logic.ai.tool.api.ToolResult;
+import com.top_logic.basic.Logger.LogEntry;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -53,7 +55,9 @@ import com.top_logic.basic.credential.HeaderCredentials;
 import com.top_logic.basic.credential.RequestAuthentication;
 import com.top_logic.basic.credential.SecretStoreService;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.thread.CancelScope.BlockingCall;
+import com.top_logic.basic.tools.CollectingLogListener;
 
 import io.modelcontextprotocol.spec.McpSchema;
 
@@ -116,10 +120,10 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 	private int _sessionCount;
 
 	/**
-	 * Whether the server changes its tools with the next <code>tools/call</code>. From then on it
-	 * rejects all credentials that it got before, and the first new <code>tools/list</code> once.
+	 * When set, the server changes its tools with the next <code>tools/call</code> and runs this
+	 * action, under the lock of {@link #_authorizations}.
 	 */
-	private boolean _changeToolsOnCall;
+	private Runnable _onToolChange;
 
 	/** Whether the server offers its second tool. */
 	private boolean _toolsChanged;
@@ -129,6 +133,9 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 
 	/** The number of POST requests with {@link #_expired} credentials. */
 	private int _expiredRequests;
+
+	/** The number of the next <code>tools/list</code> requests that fail with HTTP 500. */
+	private int _failingToolLists;
 
 	/** Opens when the server receives a <code>tools/call</code>. */
 	private final CountDownLatch _toolCallReceived = new CountDownLatch(1);
@@ -361,7 +368,11 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 	 * </p>
 	 */
 	public void testChangedToolsWithFreshCredentials() throws Exception {
-		_changeToolsOnCall = true;
+		_onToolChange = () -> {
+			_expired = new HashSet<>(_authorizations);
+			_accepted = value -> !_expired.contains(value);
+			_rejectedOnce.add("tools/list");
+		};
 
 		McpServerRegistry registry = registry(RECORDING);
 		WaitTrackingToken token = new WaitTrackingToken();
@@ -374,12 +385,7 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 				assertFalse(result.text(), result.failed());
 
 				// The refresh runs in the background: a later call gets the new list.
-				long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
-				names = toolNames(registry);
-				while (names.size() < 2 && System.nanoTime() < deadline) {
-					Thread.sleep(10);
-					names = toolNames(registry);
-				}
+				names = changedToolNames(registry);
 			} finally {
 				calls = List.copyOf(RecordingCredentials.CALLS);
 				registry.shutDown();
@@ -396,6 +402,45 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 		synchronized (_authorizations) {
 			assertEquals("Requests with expired credentials after the change.", 0, _expiredRequests);
 		}
+	}
+
+	/**
+	 * Refreshes of the tool list that fail in a row give one warning. A server that cannot be
+	 * reached would fail each refresh.
+	 */
+	public void testFailedRefreshesWarnOnce() throws Exception {
+		_onToolChange = () -> _failingToolLists = 2;
+
+		McpServerRegistry registry = registry("");
+		registry.startUp();
+		CollectingLogListener log = new CollectingLogListener(EnumSet.of(Level.WARN), true);
+		List<LogEntry> entries;
+		List<String> names;
+		try {
+			ToolResult result = tool(registry).execute(Map.of(), context(CancellationToken.UNCANCELLABLE));
+			assertFalse(result.text(), result.failed());
+			names = changedToolNames(registry);
+		} finally {
+			entries = log.getLogEntries();
+			log.deactivate();
+			registry.shutDown();
+		}
+
+		assertEquals(List.of("mcp__test__echo", "mcp__test__second"), names);
+		assertEquals("Two failed refreshes, then one that succeeded: " + entries, 1, entries.stream()
+			.filter(entry -> entry.getMessage() != null && entry.getMessage().contains("Failed to refresh the tools"))
+			.count());
+	}
+
+	/** The tool names of a later call, after the refresh that the change of the tools started. */
+	private static List<String> changedToolNames(McpServerRegistry registry) throws InterruptedException {
+		long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+		List<String> names = toolNames(registry);
+		while (names.size() < 2 && System.nanoTime() < deadline) {
+			Thread.sleep(10);
+			names = toolNames(registry);
+		}
+		return names;
 	}
 
 	private static List<String> toolNames(McpServerRegistry registry) {
@@ -557,8 +602,17 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 			}
 			case "tools/list": {
 				boolean changed;
+				boolean failing;
 				synchronized (_authorizations) {
 					changed = _toolsChanged;
+					failing = _failingToolLists > 0;
+					if (failing) {
+						_failingToolLists--;
+					}
+				}
+				if (failing) {
+					reply(exchange, HttpURLConnection.HTTP_INTERNAL_ERROR, null);
+					return;
 				}
 				reply(exchange, HttpURLConnection.HTTP_OK, result(id.group(1),
 					"{\"tools\":[" + tool("echo") + (changed ? "," + tool("second") : "") + "]}"));
@@ -575,12 +629,10 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 					"{\"content\":[{\"type\":\"text\",\"text\":\"done\"}],\"isError\":false}");
 				boolean change;
 				synchronized (_authorizations) {
-					change = _changeToolsOnCall && !_toolsChanged;
+					change = _onToolChange != null && !_toolsChanged;
 					if (change) {
 						_toolsChanged = true;
-						_expired = new HashSet<>(_authorizations);
-						_accepted = value -> !_expired.contains(value);
-						_rejectedOnce.add("tools/list");
+						_onToolChange.run();
 					}
 				}
 				if (change) {

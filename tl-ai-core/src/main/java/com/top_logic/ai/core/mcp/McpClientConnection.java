@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -85,6 +86,12 @@ class McpClientConnection {
 	/** Whether the server rejected the credentials of the last refresh of {@link #_tools}. */
 	private final AtomicBoolean _refreshRejected = new AtomicBoolean();
 
+	/** The number of refreshes of {@link #_tools} that failed since the last one that succeeded. */
+	private final AtomicInteger _refreshFailures = new AtomicInteger();
+
+	/** Whether a refresh failure since the last refresh that succeeded was logged as a warning. */
+	private final AtomicBoolean _refreshWarned = new AtomicBoolean();
+
 	/**
 	 * Creates a new connection for the given transport configuration.
 	 *
@@ -157,6 +164,11 @@ class McpClientConnection {
 	 * caller of {@link #tools()} starts a new refresh. After a rejection (HTTP 401), that caller
 	 * first invalidates the credentials, again on its own thread.
 	 * </p>
+	 *
+	 * <p>
+	 * A server that cannot be reached would fail each refresh, so only the first failure in a row
+	 * is a warning. A rejection that the next refresh repairs is no failure to report.
+	 * </p>
 	 */
 	private void startRefresh() {
 		Ordered<CredentialHeaders> credentials;
@@ -166,7 +178,7 @@ class McpClientConnection {
 			}
 			credentials = authenticate();
 		} catch (RuntimeException ex) {
-			refreshFailed(ex);
+			refreshFailed(ex, false);
 			return;
 		}
 		_client.listTools()
@@ -175,21 +187,41 @@ class McpClientConnection {
 				result -> {
 					setTools(credentials.order(), result);
 					_lastSucceeded.accumulateAndGet(credentials, Ordered::later);
+					_refreshFailures.set(0);
+					_refreshWarned.set(false);
 					Logger.info("MCP server '" + _serverName + "' tools refreshed, now "
 						+ _tools.get().value().size() + " tools.", McpClientConnection.class);
 				},
 				error -> {
-					if (_credentials != null && isUnauthorized(error)) {
+					boolean rejected = _credentials != null && isUnauthorized(error);
+					if (rejected) {
 						_refreshRejected.set(true);
 					}
-					refreshFailed(error);
+					refreshFailed(error, rejected);
 				});
 	}
 
-	private void refreshFailed(Throwable error) {
+	/**
+	 * Marks the list as stale again, and logs the failure.
+	 *
+	 * @param rejected
+	 *        Whether the server rejected the credentials (HTTP 401).
+	 */
+	private void refreshFailed(Throwable error, boolean rejected) {
+		int failures = _refreshFailures.incrementAndGet();
+		// After a first rejection, the next refresh invalidates the credentials and asks again. Only
+		// when it fails too, a failure is logged.
+		if (failures > 1 || !rejected) {
+			String message =
+				"Failed to refresh the tools of MCP server '" + _serverName + "': " + error.getMessage();
+			if (_refreshWarned.compareAndSet(false, true)) {
+				Logger.warn(message, error, McpClientConnection.class);
+			} else {
+				Logger.debug(message, McpClientConnection.class);
+			}
+		}
+		// Last, so that the next refresh starts after this failure is counted.
 		_toolsStale.set(true);
-		Logger.warn("Failed to refresh the tools of MCP server '" + _serverName + "': " + error.getMessage(),
-			error, McpClientConnection.class);
 	}
 
 	/**

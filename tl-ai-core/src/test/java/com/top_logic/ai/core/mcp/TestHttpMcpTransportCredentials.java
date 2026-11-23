@@ -116,13 +116,19 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 	private int _sessionCount;
 
 	/**
-	 * Whether the server changes its tools with the next <code>tools/call</code>, and from then on
-	 * rejects all credentials that it got before.
+	 * Whether the server changes its tools with the next <code>tools/call</code>. From then on it
+	 * rejects all credentials that it got before, and the first new <code>tools/list</code> once.
 	 */
 	private boolean _changeToolsOnCall;
 
 	/** Whether the server offers its second tool. */
 	private boolean _toolsChanged;
+
+	/** The credentials that the server got before its tools changed, <code>null</code> before. */
+	private Set<String> _expired;
+
+	/** The number of POST requests with {@link #_expired} credentials. */
+	private int _expiredRequests;
 
 	/** Opens when the server receives a <code>tools/call</code>. */
 	private final CountDownLatch _toolCallReceived = new CountDownLatch(1);
@@ -344,25 +350,56 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 	}
 
 	/**
-	 * The server says that its tools changed, and it rejects all credentials that it got before.
-	 * The library asks the new list by itself, with the headers of the last call that succeeded,
-	 * and gets a rejection. The next caller gets the new list with fresh credentials.
+	 * The server says that its tools changed. From then on it rejects all credentials that it got
+	 * before, and the first new tools/list once more (HTTP 401).
+	 *
+	 * <p>
+	 * The library sends no tools/list by itself. A later caller gets the new list: its refresh is
+	 * rejected, and the refresh of the next caller invalidates the credentials and asks with fresh
+	 * ones. The credential provider runs only on the thread of the caller, never inside the
+	 * cancellable wait.
+	 * </p>
 	 */
 	public void testChangedToolsWithFreshCredentials() throws Exception {
 		_changeToolsOnCall = true;
 
 		McpServerRegistry registry = registry(RECORDING);
-		registry.startUp();
-		try {
-			ToolResult result = tool(registry).execute(Map.of(), context(CancellationToken.UNCANCELLABLE));
-			assertFalse(result.text(), result.failed());
+		WaitTrackingToken token = new WaitTrackingToken();
+		List<String> names;
+		List<ProviderCall> calls;
+		try (RunCancellationBinding.Binding run = RunCancellationBinding.bind(token)) {
+			registry.startUp();
+			try {
+				ToolResult result = tool(registry).execute(Map.of(), context(token));
+				assertFalse(result.text(), result.failed());
 
-			List<Tool> tools = registry.getTools(SERVER);
-			assertEquals(List.of("mcp__test__echo", "mcp__test__second"),
-				tools.stream().map(Tool::name).toList());
-		} finally {
-			registry.shutDown();
+				// The refresh runs in the background: a later call gets the new list.
+				long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+				names = toolNames(registry);
+				while (names.size() < 2 && System.nanoTime() < deadline) {
+					Thread.sleep(10);
+					names = toolNames(registry);
+				}
+			} finally {
+				calls = List.copyOf(RecordingCredentials.CALLS);
+				registry.shutDown();
+			}
 		}
+
+		String report = report(calls);
+		assertEquals(report, List.of("mcp__test__echo", "mcp__test__second"), names);
+		assertEquals("One invalidation for the rejected refresh. " + report, 1, invalidations(calls));
+		for (ProviderCall call : calls) {
+			assertSame("Not on the thread of the caller. " + report, Thread.currentThread(), call.thread());
+			assertFalse("Inside the cancellable wait. " + report, call.inWait());
+		}
+		synchronized (_authorizations) {
+			assertEquals("Requests with expired credentials after the change.", 0, _expiredRequests);
+		}
+	}
+
+	private static List<String> toolNames(McpServerRegistry registry) {
+		return registry.getTools(SERVER).stream().map(Tool::name).toList();
 	}
 
 	/** Whether a registry connects to the test server, as at the start of the service. */
@@ -485,6 +522,9 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 		synchronized (_authorizations) {
 			_authorizations.add(authorization);
 			_methods.putIfAbsent(authorization, method);
+			if (_expired != null && _expired.contains(authorization)) {
+				_expiredRequests++;
+			}
 			accepted = _accepted.test(authorization) && !_rejectedOnce.remove(method);
 			knownSession = _sessions == null || initialize || _sessions.contains(session);
 			if (accepted && _sessions != null && initialize) {
@@ -538,8 +578,9 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 					change = _changeToolsOnCall && !_toolsChanged;
 					if (change) {
 						_toolsChanged = true;
-						Set<String> expired = new HashSet<>(_authorizations);
-						_accepted = value -> !expired.contains(value);
+						_expired = new HashSet<>(_authorizations);
+						_accepted = value -> !_expired.contains(value);
+						_rejectedOnce.add("tools/list");
 					}
 				}
 				if (change) {

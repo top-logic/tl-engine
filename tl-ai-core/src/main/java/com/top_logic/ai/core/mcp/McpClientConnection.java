@@ -7,11 +7,11 @@ package com.top_logic.ai.core.mcp;
 
 import java.net.HttpURLConnection;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -41,13 +41,13 @@ import reactor.util.context.Context;
  * <p>
  * Handles transport creation, client initialization, tool discovery, and graceful shutdown.
  * Tool lists are cached. When the server sends a {@code tools/list_changed} notification, the next
- * caller of {@link #tools()} refreshes the list.
+ * caller of {@link #tools()} starts a refresh of the list.
  * </p>
  *
  * <p>
- * For each call of the client (initialize, tools/list, tools/call), the credential provider of an
- * {@link HttpMcpTransport} runs on the thread of the caller, before the wait for the server, see
- * {@link #send(Supplier)}.
+ * For each request of the client (initialize, tools/list, tools/call), the credential provider of
+ * an {@link HttpMcpTransport} runs on the thread of the caller, before the wait for the server, see
+ * {@link #send(Supplier)} and {@link #startRefresh()}.
  * </p>
  */
 class McpClientConnection {
@@ -62,23 +62,28 @@ class McpClientConnection {
 	/** The credentials of the requests, <code>null</code> for a transport without credentials. */
 	private final CredentialProvider _credentials;
 
-	/** Counts the headers that the calls resolved, in the order of their resolution. */
-	private final AtomicLong _resolutions = new AtomicLong();
+	/** Gives each request of credentials and each request of the tool list its order. */
+	private final AtomicLong _order = new AtomicLong();
 
 	/**
 	 * The headers of the last call that succeeded, for the requests that the library sends by
 	 * itself.
 	 */
-	private final AtomicReference<ResolvedHeaders> _lastSucceeded = new AtomicReference<>(ResolvedHeaders.NONE);
+	private final AtomicReference<Ordered<CredentialHeaders>> _lastSucceeded =
+		new AtomicReference<>(new Ordered<>(0, CredentialHeaders.NONE));
 
 	private final int _toolTimeoutSeconds;
 
 	private McpAsyncClient _client;
 
-	private volatile List<McpSchema.Tool> _tools = Collections.emptyList();
+	private final AtomicReference<Ordered<List<McpSchema.Tool>>> _tools =
+		new AtomicReference<>(new Ordered<>(0, List.of()));
 
-	/** Whether the server said that its tools changed after the last refresh of {@link #_tools}. */
-	private volatile boolean _toolsStale;
+	/** Whether the server said that its tools changed, and no refresh of {@link #_tools} runs. */
+	private final AtomicBoolean _toolsStale = new AtomicBoolean();
+
+	/** Whether the server rejected the credentials of the last refresh of {@link #_tools}. */
+	private final AtomicBoolean _refreshRejected = new AtomicBoolean();
 
 	/**
 	 * Creates a new connection for the given transport configuration.
@@ -104,11 +109,9 @@ class McpClientConnection {
 	 *         if the connection or initialization fails
 	 */
 	void connect() {
-		McpClientTransport transport = observeToolChanges(createTransport());
+		McpClientTransport transport = new ToolChangeObserver(createTransport(), _toolsStale);
 		Duration timeout = Duration.ofSeconds(_toolTimeoutSeconds > 0 ? _toolTimeoutSeconds : 60);
 
-		// No consumer of changed tools: the library asks the new list by itself, with no caller, and
-		// calls a consumer only when the server accepts that request.
 		_client = McpClient.async(transport)
 			.requestTimeout(timeout)
 			.clientInfo(McpSchema.Implementation.builder("tl-ai", "1.0.0").build())
@@ -116,112 +119,86 @@ class McpClientConnection {
 			.build();
 
 		send(_client::initialize);
-		refreshTools();
+		long order = _order.incrementAndGet();
+		setTools(order, send(_client::listTools));
 
 		Logger.info("Connected to MCP server '" + _serverName + "', discovered "
-			+ _tools.size() + " tools.", McpClientConnection.class);
+			+ _tools.get().value().size() + " tools.", McpClientConnection.class);
 	}
 
 	private McpClientTransport createTransport() {
 		return _transportConfig instanceof HttpMcpTransport http
-			? http.createTransport(() -> _lastSucceeded.get().headers())
+			? http.createTransport(() -> _lastSucceeded.get().value())
 			: _transportConfig.createTransport();
-	}
-
-	/**
-	 * The given transport, which also marks the tool list as stale when the server says that its
-	 * tools changed.
-	 *
-	 * <p>
-	 * The mark is set on the notification itself, so that it does not depend on the request that
-	 * the library then sends by itself. The next caller of {@link #tools()} asks the new list with
-	 * fresh credentials.
-	 * </p>
-	 */
-	private McpClientTransport observeToolChanges(McpClientTransport transport) {
-		return new McpClientTransport() {
-			@Override
-			public Mono<Void> connect(
-					Function<Mono<McpSchema.JSONRPCMessage>, Mono<McpSchema.JSONRPCMessage>> handler) {
-				return transport.connect(message -> handler.apply(message.doOnNext(this::observe)));
-			}
-
-			private void observe(McpSchema.JSONRPCMessage message) {
-				if (message instanceof McpSchema.JSONRPCNotification notification
-					&& McpSchema.METHOD_NOTIFICATION_TOOLS_LIST_CHANGED.equals(notification.method())) {
-					_toolsStale = true;
-				}
-			}
-
-			@Override
-			public void setExceptionHandler(Consumer<Throwable> handler) {
-				transport.setExceptionHandler(handler);
-			}
-
-			@Override
-			public Mono<Void> sendMessage(McpSchema.JSONRPCMessage message) {
-				return transport.sendMessage(message);
-			}
-
-			@Override
-			public <T> T unmarshalFrom(Object data, TypeRef<T> type) {
-				return transport.unmarshalFrom(data, type);
-			}
-
-			@Override
-			public List<String> protocolVersions() {
-				return transport.protocolVersions();
-			}
-
-			@Override
-			public Mono<Void> closeGracefully() {
-				return transport.closeGracefully();
-			}
-
-			@Override
-			public void close() {
-				transport.close();
-			}
-		};
-	}
-
-	/**
-	 * Refreshes the cached tool list from the MCP server.
-	 */
-	private void refreshTools() {
-		McpSchema.ListToolsResult result = send(_client::listTools);
-		_tools = result.tools() != null ? List.copyOf(result.tools()) : Collections.emptyList();
 	}
 
 	/**
 	 * Returns the cached list of tools from this server.
 	 *
 	 * <p>
-	 * After the server said that its tools changed, the caller asks the new list first. When that
-	 * fails, the old list stays, and the next caller tries again.
+	 * Never waits for the server. After the server said that its tools changed, the call starts a
+	 * refresh and returns the list in place; a later call gets the new list. The credential
+	 * provider runs on the calling thread, outside a cancellable wait, see {@link #startRefresh()}.
 	 * </p>
-	 *
-	 * @throws CancellationException
-	 *         See {@link #send(Supplier)}.
 	 */
 	List<McpSchema.Tool> tools() {
-		if (_toolsStale) {
-			// Cleared before the request, so that a notification during the request is not lost.
-			_toolsStale = false;
-			try {
-				refreshTools();
-				Logger.info("MCP server '" + _serverName + "' tools refreshed, now "
-					+ _tools.size() + " tools.", McpClientConnection.class);
-			} catch (CancellationException ex) {
-				_toolsStale = true;
-				throw ex;
-			} catch (RuntimeException ex) {
-				_toolsStale = true;
-				Logger.warn("Failed to refresh the tools of MCP server '" + _serverName + "': "
-					+ ex.getMessage(), ex, McpClientConnection.class);
-			}
+		if (_toolsStale.compareAndSet(true, false)) {
+			startRefresh();
 		}
-		return _tools;
+		return _tools.get().value();
+	}
+
+	/**
+	 * Asks the server for its tool list, and does not wait for the answer.
+	 *
+	 * <p>
+	 * The credential provider runs on the calling thread. The answer comes on a thread of the library
+	 * and sets the list and the headers of the last call that succeeded. After a failure, the next
+	 * caller of {@link #tools()} starts a new refresh. After a rejection (HTTP 401), that caller
+	 * first invalidates the credentials, again on its own thread.
+	 * </p>
+	 */
+	private void startRefresh() {
+		Ordered<CredentialHeaders> credentials;
+		try {
+			if (_refreshRejected.compareAndSet(true, false) && _credentials != null) {
+				_credentials.invalidate();
+			}
+			credentials = authenticate();
+		} catch (RuntimeException ex) {
+			refreshFailed(ex);
+			return;
+		}
+		_client.listTools()
+			.contextWrite(Context.of(McpTransportContext.KEY, credentials.value().context()))
+			.subscribe(
+				result -> {
+					setTools(credentials.order(), result);
+					_lastSucceeded.accumulateAndGet(credentials, Ordered::later);
+					Logger.info("MCP server '" + _serverName + "' tools refreshed, now "
+						+ _tools.get().value().size() + " tools.", McpClientConnection.class);
+				},
+				error -> {
+					if (_credentials != null && isUnauthorized(error)) {
+						_refreshRejected.set(true);
+					}
+					refreshFailed(error);
+				});
+	}
+
+	private void refreshFailed(Throwable error) {
+		_toolsStale.set(true);
+		Logger.warn("Failed to refresh the tools of MCP server '" + _serverName + "': " + error.getMessage(),
+			error, McpClientConnection.class);
+	}
+
+	/**
+	 * Puts the given list in place, unless the list in place comes from a request that started
+	 * later.
+	 */
+	private void setTools(long order, McpSchema.ListToolsResult result) {
+		List<McpSchema.Tool> tools = result.tools() != null ? List.copyOf(result.tools()) : List.of();
+		_tools.accumulateAndGet(new Ordered<>(order, tools), Ordered::later);
 	}
 
 	/**
@@ -280,8 +257,8 @@ class McpClientConnection {
 	}
 
 	private <T> T await(Mono<T> call) {
-		ResolvedHeaders credentials = authenticate();
-		Context context = Context.of(McpTransportContext.KEY, credentials.headers().context());
+		Ordered<CredentialHeaders> credentials = authenticate();
+		Context context = Context.of(McpTransportContext.KEY, credentials.value().context());
 		T result;
 		try {
 			// Stopping the run ends the wait for the server.
@@ -298,21 +275,21 @@ class McpClientConnection {
 			}
 			throw ex;
 		}
-		_lastSucceeded.accumulateAndGet(credentials, ResolvedHeaders::later);
+		_lastSucceeded.accumulateAndGet(credentials, Ordered::later);
 		return result;
 	}
 
 	/**
-	 * The headers that the credentials set for one call.
+	 * The headers that the credentials set for one request.
 	 */
-	private ResolvedHeaders authenticate() {
-		long order = _resolutions.incrementAndGet();
+	private Ordered<CredentialHeaders> authenticate() {
+		long order = _order.incrementAndGet();
 		if (_credentials == null) {
-			return new ResolvedHeaders(order, CredentialHeaders.NONE);
+			return new Ordered<>(order, CredentialHeaders.NONE);
 		}
 		Map<String, String> headers = new HashMap<>();
 		_credentials.authenticate(headers::put);
-		return new ResolvedHeaders(order, new CredentialHeaders(headers));
+		return new Ordered<>(order, new CredentialHeaders(headers));
 	}
 
 	private CancellationException interrupted(Exception ex) {
@@ -324,8 +301,8 @@ class McpClientConnection {
 		return result;
 	}
 
-	private static boolean isUnauthorized(RuntimeException ex) {
-		return ExceptionUtil.getCauseChain(ex).stream()
+	private static boolean isUnauthorized(Throwable failure) {
+		return ExceptionUtil.getCauseChain(failure).stream()
 			.filter(McpHttpClientTransportAuthorizationException.class::isInstance)
 			.map(McpHttpClientTransportAuthorizationException.class::cast)
 			.anyMatch(rejection -> rejection.getResponseInfo().statusCode() == HttpURLConnection.HTTP_UNAUTHORIZED);
@@ -344,7 +321,7 @@ class McpClientConnection {
 			}
 			_client = null;
 		}
-		_tools = Collections.emptyList();
+		_tools.set(new Ordered<>(_order.incrementAndGet(), List.of()));
 	}
 
 	/**
@@ -355,24 +332,100 @@ class McpClientConnection {
 	}
 
 	/**
-	 * The headers of one call, with the order in which the calls resolved them.
+	 * A value, with the order in which the request for it started.
 	 *
 	 * @param order
-	 *        Larger for headers that a call resolved later.
-	 * @param headers
-	 *        The headers.
+	 *        Larger for a request that started later.
+	 * @param value
+	 *        The value.
 	 */
-	private record ResolvedHeaders(long order, CredentialHeaders headers) {
-
-		/** No headers, before a call succeeded. */
-		static final ResolvedHeaders NONE = new ResolvedHeaders(0, CredentialHeaders.NONE);
+	private record Ordered<T>(long order, T value) {
 
 		/**
-		 * The headers that a call resolved later, so that an older call that ends later does not
-		 * bring older headers back.
+		 * The value of the request that started later, so that an older request that ends later does
+		 * not bring an older value back.
 		 */
-		static ResolvedHeaders later(ResolvedHeaders a, ResolvedHeaders b) {
+		static <T> Ordered<T> later(Ordered<T> a, Ordered<T> b) {
 			return b.order() > a.order() ? b : a;
+		}
+	}
+
+	/**
+	 * A transport that marks the tool list of its connection as stale when the server says that its
+	 * tools changed, and that drops this notification.
+	 *
+	 * <p>
+	 * The notification is dropped, so that the library does not ask for the new list by itself,
+	 * with no caller and with headers that can be stale. The next caller of
+	 * {@link McpClientConnection#tools()} asks for it with fresh credentials.
+	 * </p>
+	 *
+	 * <p>
+	 * Each method of {@link io.modelcontextprotocol.spec.McpTransport} and
+	 * {@link McpClientTransport} must be delegated, also a default method: without
+	 * {@link #protocolVersions()}, for example, the library would offer the default protocol
+	 * versions of the interface instead of those of the transport.
+	 * </p>
+	 */
+	private static final class ToolChangeObserver implements McpClientTransport {
+
+		private final McpClientTransport _transport;
+
+		private final AtomicBoolean _toolsStale;
+
+		ToolChangeObserver(McpClientTransport transport, AtomicBoolean toolsStale) {
+			_transport = transport;
+			_toolsStale = toolsStale;
+		}
+
+		@Override
+		public Mono<Void> connect(
+				Function<Mono<McpSchema.JSONRPCMessage>, Mono<McpSchema.JSONRPCMessage>> handler) {
+			// The transport accepts an empty result of the handler for a message.
+			return _transport.connect(message -> handler.apply(message.filter(this::isForTheLibrary)));
+		}
+
+		/**
+		 * <code>false</code> for the notification that the tools changed, which marks the tool list
+		 * as stale.
+		 */
+		private boolean isForTheLibrary(McpSchema.JSONRPCMessage message) {
+			if (message instanceof McpSchema.JSONRPCNotification notification
+				&& McpSchema.METHOD_NOTIFICATION_TOOLS_LIST_CHANGED.equals(notification.method())) {
+				_toolsStale.set(true);
+				return false;
+			}
+			return true;
+		}
+
+		@Override
+		public void setExceptionHandler(Consumer<Throwable> handler) {
+			_transport.setExceptionHandler(handler);
+		}
+
+		@Override
+		public Mono<Void> sendMessage(McpSchema.JSONRPCMessage message) {
+			return _transport.sendMessage(message);
+		}
+
+		@Override
+		public <T> T unmarshalFrom(Object data, TypeRef<T> type) {
+			return _transport.unmarshalFrom(data, type);
+		}
+
+		@Override
+		public List<String> protocolVersions() {
+			return _transport.protocolVersions();
+		}
+
+		@Override
+		public Mono<Void> closeGracefully() {
+			return _transport.closeGracefully();
+		}
+
+		@Override
+		public void close() {
+			_transport.close();
 		}
 	}
 }

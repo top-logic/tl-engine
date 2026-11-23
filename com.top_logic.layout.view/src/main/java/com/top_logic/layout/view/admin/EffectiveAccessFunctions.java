@@ -278,14 +278,15 @@ public class EffectiveAccessFunctions extends TLScriptFunctions {
 	 *        The label of the object deciding.
 	 * @param parent
 	 *        The access parent of the type, <code>null</code> when it is not known. An access parent
-	 *        not restricted to some operations that does not {@link AccessParentFunction#delegatesAll()
-	 *        decide every operation} leaves Create to the type, as a {@link RefererRelation} or an
-	 *        {@link AnyOfRelation} without a candidate leading to the container does.
+	 *        not restricted to some operations that does not
+	 *        {@link AccessParentFunction#delegatesCreation() decide Create} leaves Create to the type,
+	 *        as a {@link RefererRelation} or an {@link AnyOfRelation} without a candidate leading to
+	 *        the container does.
 	 */
 	static ResKey delegation(String type, String decidingObject, AccessParentFunction parent) {
 		Set<BoundCommandGroup> operations = parent == null ? null : parent.getOperations();
 		if (operations == null) {
-			return parent == null || parent.delegatesAll()
+			return parent == null || parent.delegatesCreation()
 				? I18NConstants.EFFECTIVE_ACCESS_DELEGATED__TYPE_OBJECT.fill(type, decidingObject)
 				: I18NConstants.EFFECTIVE_ACCESS_DELEGATED_OWN_CREATE__TYPE_OBJECT.fill(type, decidingObject);
 		}

@@ -163,13 +163,13 @@ public class SecurityGrantFunctions extends TLScriptFunctions {
 	 * <p>
 	 * An {@link AnyOfRelation} is told as several access parents, its label naming the candidates
 	 * with the operations each of them is restricted to. An access parent not restricted to some
-	 * operations that does not {@link AccessParentFunction#delegatesAll() decide every operation},
-	 * like a {@link RefererRelation}, is told as several access parents leaving Create to the type.
+	 * operations that does not {@link AccessParentFunction#delegatesCreation() decide Create}, like
+	 * a {@link RefererRelation}, is told as several access parents leaving Create to the type.
 	 * </p>
 	 */
 	static ResKey delegation(AccessParentFunction parent) {
 		Set<BoundCommandGroup> operations = parent.getOperations();
-		if (operations == null && !parent.delegatesAll()) {
+		if (operations == null && !parent.delegatesCreation()) {
 			return I18NConstants.GRANTS_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.fill(parent.getLabel());
 		}
 		if (parent instanceof AnyOfRelation) {

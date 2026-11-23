@@ -332,6 +332,46 @@ public class TestRestrictedDelegationTexts extends TestCase {
 	}
 
 	/**
+	 * An access parent leaving some operation to the type without listing its operations, but
+	 * deciding Create, does not claim that the type decides Create.
+	 */
+	public void testCreateDecidingParentDoesNotTellOwnCreate() {
+		TLModule module = TLModelUtil.addModule(new TLModelImpl(), "test.coverage");
+		TLClass part = TLModelUtil.addClass(module, "Part");
+		AccessParentFunction parent = new AccessParentFunction() {
+			@Override
+			public TLObject resolve(TLObject delegating) {
+				return null;
+			}
+
+			@Override
+			public Set<TLClass> getParentTypes(TLClass type) {
+				return null;
+			}
+
+			@Override
+			public ResKey getLabel() {
+				return ResKey.text("custom");
+			}
+
+			@Override
+			public boolean delegatesAll() {
+				// Leaves some operation to the type, though without listing its operations.
+				return false;
+			}
+		};
+		assertNull("Precondition: the operations are not listed.", parent.getOperations());
+		assertTrue("Precondition: Create is decided by the access parent.", parent.delegatesCreation());
+
+		assertFalse(I18NConstants.EFFECTIVE_ACCESS_DELEGATED_OWN_CREATE__TYPE_OBJECT.getKey()
+			.equals(EffectiveAccessFunctions.delegation("Part", "Folder", parent).plain().getKey()));
+		assertFalse(I18NConstants.GRANTS_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.getKey()
+			.equals(SecurityGrantFunctions.delegation(parent).plain().getKey()));
+		assertFalse(I18NConstants.COVERAGE_DELEGATED_ANY_OF_OWN_CREATE__CANDIDATES.getKey()
+			.equals(SecurityCoverageTable.delegation(row(part, parent)).plain().getKey()));
+	}
+
+	/**
 	 * A relation that is no container, with the given label.
 	 */
 	private static AccessParentFunction relation(String label) {

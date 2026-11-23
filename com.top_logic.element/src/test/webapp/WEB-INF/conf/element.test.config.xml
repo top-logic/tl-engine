@@ -445,7 +445,9 @@
 						/>
 					</class>
 					<!-- No class grant: only the attribute grant implies Discover. -->
-					<class name="TestSecurityCoverage:Named">
+					<class name="TestSecurityCoverage:Named"
+						discover-attributes="name"
+					>
 						<grant
 							inherit="true"
 							operation="Read"

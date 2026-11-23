@@ -1,5 +1,5 @@
 ---
-description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), operation declarations (<operations>, implied-by), the internal / without-security marks, access parents, role rules of the AccessManager, the autoconf files and the SecurityCoverageCheck.
+description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), attributes readable with Discover (discover-attributes), operation declarations (<operations>, implied-by), the internal / without-security marks, access parents, role rules of the AccessManager, the autoconf files and the SecurityCoverageCheck.
 order: 20
 ---
 
@@ -219,6 +219,40 @@ check it on with `<access-control>` and are decided by these grants as well (art
 `view-layer/access-control` of the module `com.top_logic.layout.view`). The operation `Administration` of the
 engine's administration views is declared on the security root (`<singleton
 name="SecurityStructure#ROOT">`) and granted there.
+
+### Discover attributes: what `Discover` makes readable
+
+An object a user may only discover shows its label, but none of its attributes (see
+[the Discover right](doc:access-discover-spec)). Where a user must tell the objects apart by more
+than their label - e.g. in an option list that shows the objects to choose from as a table - the
+class entry names the attributes that `Discover` makes readable:
+
+```xml
+<class name="my.module:Product" discover-attributes="name,number">
+	<grant inherit="true" operation="Read" roles="Editor"/>
+	<grant inherit="true" operation="Discover" roles="Buyer"/>
+</class>
+```
+
+A `Buyer` sees `name` and `number` of a `Product` it may discover, but no other attribute.
+
+- Only reading is extended. Writing a discover attribute still requires `Write`.
+- An attribute with a read grant of its own (`<part>` entry granting `Read`) is decided by that grant,
+  not by the discover attributes.
+- When a discover attribute is a reference, a target the user may not discover is still filtered
+  (TL-Script, tables) or masked (form fields).
+- The setting applies to the class and its specializations. A specialization with a setting of its own
+  replaces it; an empty setting (`discover-attributes=""`) withdraws all discover attributes. A class
+  entry without the setting keeps the setting of the generalizations.
+- If two independent generalizations pass on different settings and the type has none of its own, the
+  start fails with a configuration error.
+- An attribute name the class does not have is a configuration error. The editor of the access rights
+  offers the attributes of the class to choose from.
+- A module entry has no discover attributes: configure them on a common generalization instead.
+
+The question without an object is `ModelAccessRights.getDiscoverAttributes(TLClass)`. In the
+"Access rights…" dialog of a type, the `Read` cell of a discover attribute without a read grant of its
+own says that the attribute is readable with `Discover`.
 
 ### Operations: which operations apply to a type
 

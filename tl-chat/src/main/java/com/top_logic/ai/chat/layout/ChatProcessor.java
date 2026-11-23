@@ -417,13 +417,13 @@ public class ChatProcessor {
 				// Unlike the stop button, a stop by the persisted cancel marker (aiAgentRunCancel, the stop
 				// command of the agent activity monitor) does not look for this run among the runs of the
 				// account: it can come from any node. The observer on this node reads the marker and
-				// cancels the run's token.
-				AgentEventListener runListener = new CompositeAgentEventListener(listener,
-					new CancelSignalObserver(toolContext.executionHandle(), cancellationToken));
-				try {
+				// cancels the run's token. Closed with the run, because an Error ends the run without
+				// RunCompleted, and only that event stops the observer's poll otherwise.
+				try (CancelSignalObserver cancelObserver =
+					new CancelSignalObserver(toolContext.executionHandle(), cancellationToken)) {
 					AgentRunner.RecordedRun runResult = AgentRunner.run(entryPointAgent, conversation,
-						conversationMemory, toolContext, runListener, sessionRegistry, convLog, agentSession, null,
-						runOverrides);
+						conversationMemory, toolContext, new CompositeAgentEventListener(listener, cancelObserver),
+						sessionRegistry, convLog, agentSession, null, runOverrides);
 					if (ToolRegistryReloadFlag.consume()) {
 						// A tool modified a service that affects the tool catalog (e.g. FrameworkWiringTool
 						// or ScriptToolAuthoringTool). Discard the cached registry so the next turn

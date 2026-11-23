@@ -3,3 +3,4 @@ tl-ai-core.conf.xml
 tl-ai-core.binarySecurity.config.xml
 tl-ai-core.accessTokens.config.xml
 tl-ai-core.chatSecurity.config.xml
+tl-ai-core.agentSecurity.config.xml

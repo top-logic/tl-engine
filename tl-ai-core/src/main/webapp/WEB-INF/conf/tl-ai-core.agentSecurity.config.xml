@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Who may see and use a stored agent (tl.ai.core:Agent) or skill (tl.ai.core:Skill), in addition
+	to <agent-access> (Ticket #30493). Both must allow.
+
+	Every run and every list asks the model rights of the account: a stored agent or skill that the
+	account may not read is unknown to it (AgentDefinitionQuery with a reader). This file gives the
+	two base types their access definition:
+
+	  1. The two base types inherit the roles held on the security root. So a role on the root keeps
+	     its rights on each stored agent and skill, for example a role of the application that is
+	     granted Write here.
+	  2. The group "user" (role SecurityStructure.user on the root) gets Read. Without rules of the
+	     application, stored agents and skills stay visible for every member of that group, as
+	     before. This also lets the members read the instructions (systemPrompt) of an agent and the
+	     text (content) of a skill, also with TL-Script or a data tool of an agent. An application
+	     that hides these texts adds a <part> grant on the two attributes.
+	  3. Nobody but an administrator changes the MCP servers and the infrastructure mark of a stored
+	     agent: every run of the agent reaches the tools of its MCP servers, and the engine runs an
+	     infrastructure agent in its own code. An application gives Write on the two attributes to
+	     other roles with a <grant> of its own on the same <part>.
+
+	Nothing is inherited. A specialization of the base types starts closed: without rules of the
+	application, nobody but an administrator reads it. A specialization in a composition follows its
+	container (the default access parent of a composition part), so the agents of a project are read
+	and changed by whoever reads and changes the project.
+
+	Create, Write and Delete of the base types are granted to nobody. Who may create an agent where
+	is a model right that each application writes into its own security configuration.
+
+	Administrators and code in a system context bypass the check (SecurityConfigurationService
+	.isAllowedBypass); nothing here grants them anything.
+
+	See the developer articles ai/security/run-access and ai/security/administration (the shipped
+	access definition for stored agents and skills).
+-->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<!--
+			Contributed additively to whatever access manager the application runs; no "class" is
+			named, for the reason tl-ai-core.binarySecurity.config.xml gives.
+
+			Not inherited: an inherited role source would switch off the default access parent of a
+			specialization held in a composition.
+		-->
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<security-parents>
+					<rule id="tl.ai.core.agent.root"
+						inherit="false"
+						meta-element="tl.ai.core:Agent"
+					>
+						<singleton module="SecurityStructure"/>
+					</rule>
+					<rule id="tl.ai.core.skill.root"
+						inherit="false"
+						meta-element="tl.ai.core:Skill"
+					>
+						<singleton module="SecurityStructure"/>
+					</rule>
+				</security-parents>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="tl.ai.core:Agent">
+						<grant
+							inherit="false"
+							operation="Read"
+							roles="SecurityStructure.user"
+						/>
+					</class>
+					<class name="tl.ai.core:Skill">
+						<grant
+							inherit="false"
+							operation="Read"
+							roles="SecurityStructure.user"
+						/>
+					</class>
+					<!-- A Write grant naming no role: nobody but an administrator writes it. -->
+					<part name="tl.ai.core:Agent#mcpServers">
+						<grant operation="Write"/>
+					</part>
+					<part name="tl.ai.core:Agent#infrastructure">
+						<grant operation="Write"/>
+					</part>
+				</security-config>
+			</instance>
+		</config>
+	</services>
+</application>

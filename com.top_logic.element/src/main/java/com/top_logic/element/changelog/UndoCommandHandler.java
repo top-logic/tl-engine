@@ -50,9 +50,10 @@ import com.top_logic.util.TLContext;
  *
  * <p>
  * The change set is {@link ChangeSetRestriction restricted} to what the current user may see. If
- * the user may not see all of it, the command is refused with an error message, see
- * {@link ChangeSetReverter#checkComplete(ChangeSet)}.
+ * the user may not see all of it, the command is refused with an error message.
  * </p>
+ *
+ * @see ChangeSetReverter#checkComplete(ChangeSet)
  */
 @InApp
 public class UndoCommandHandler extends AbstractCommandHandler implements WithPostCreateActions {

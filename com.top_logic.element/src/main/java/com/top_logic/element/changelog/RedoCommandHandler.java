@@ -51,8 +51,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * The change set is {@link ChangeSetRestriction restricted} to what the current user may see. If
- * the user may not see all of it, the command is refused with an error message, see
- * {@link ChangeSetReverter#checkComplete(ChangeSet)}.
+ * the user may not see all of it, the command is refused with an error message.
  * </p>
  *
  * <p>
@@ -60,6 +59,8 @@ import com.top_logic.util.error.TopLogicException;
  * recent undo, a {@link TopLogicException} is thrown; this handler lets it propagate so the
  * standard error UI informs the user.
  * </p>
+ *
+ * @see ChangeSetReverter#checkComplete(ChangeSet)
  */
 @InApp
 public class RedoCommandHandler extends AbstractCommandHandler implements WithPostCreateActions {

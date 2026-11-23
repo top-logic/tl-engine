@@ -27,6 +27,7 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.thread.BindingSnapshot;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
@@ -287,8 +288,15 @@ public class ChangeDataTool {
 				+ " Nothing was changed.";
 		}
 		ModelSecurity security = context.modelSecurity();
-		Future<String> future =
-			DRY_RUNS.submit(() -> ThreadContextManager.inDerivedContext(session, () -> sandbox(change, security)));
+		// The script of the dry run sees the run of this tool call, as the script of the real run does:
+		// a nested run it starts is a background run when this run is one. The cancel scope that comes
+		// along interrupts only an interruptible wait, never the work in the knowledge base.
+		BindingSnapshot bindings = BindingSnapshot.capture();
+		Future<String> future = DRY_RUNS.submit(() -> ThreadContextManager.inDerivedContext(session, () -> {
+			try (BindingSnapshot.Established established = bindings.establish()) {
+				return sandbox(change, security);
+			}
+		}));
 		// A cancelled dry run is given up, not interrupted: it works in the knowledge base, where an
 		// interrupt during a file read closes H2's database file for the whole application. Its
 		// transaction is rolled back whenever it ends.

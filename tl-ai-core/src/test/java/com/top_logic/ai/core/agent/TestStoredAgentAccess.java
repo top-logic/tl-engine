@@ -151,6 +151,8 @@ public class TestStoredAgentAccess extends BasicTestCase {
 		assertTrue("A configured agent is no stored record and stays known.",
 			names(query().getAllAgents(rights(outsider))).contains(CONFIGURED_AGENT));
 		assertNotNull("The lookup for a configuration check still sees it.", query().findAgentByName(STORED_AGENT));
+		assertNull(query().findStoredAgent(STORED_AGENT, rights(outsider)));
+		assertNotNull(query().findStoredAgent(STORED_AGENT, rights(member)));
 	}
 
 	/** The shipped definition writes nothing: changing a stored agent is the administrator's. */
@@ -213,8 +215,8 @@ public class TestStoredAgentAccess extends BasicTestCase {
 		assertNull(AgentDefinitionQuery.named(List.of(accented), "stored-access-chat"));
 		assertNull(AgentDefinitionQuery.named(List.of(accented), ACCENTED_AGENT + " "));
 		assertSame(accented, AgentDefinitionQuery.named(List.of(accented), ACCENTED_AGENT.toUpperCase()));
-		assertNull(query().findStoredAgent("stored-access-chat"));
-		assertSame(accented, query().findStoredAgent(ACCENTED_AGENT));
+		assertNull(query().findStoredAgent("stored-access-chat", ModelSecurity.UNCHECKED));
+		assertSame(accented, query().findStoredAgent(ACCENTED_AGENT, ModelSecurity.UNCHECKED));
 	}
 
 	/** A form keeps the names a record holds, also those its editor may not know. */
@@ -250,6 +252,11 @@ public class TestStoredAgentAccess extends BasicTestCase {
 		String byAdministrator = answerAs(administrator, () -> tool.createAgent(NEW_AGENT, null, "You help.", null,
 			List.of("some-server"), null, null, runOf(administrator)));
 		assertTrue(byAdministrator, byAdministrator.contains("\"success\":true"));
+
+		String taken = answerAs(administrator, () -> tool.createAgent(STORED_AGENT.toUpperCase(), null, "You help.",
+			null, null, null, null, runOf(administrator)));
+		assertFalse("The name rule refuses a taken name at commit: " + taken, taken.contains("\"success\":true"));
+		assertTrue("The refusal names the name: " + taken, taken.contains(STORED_AGENT.toUpperCase()));
 	}
 
 	/** Who may create an agent still may not set its MCP servers: they are the administrator's. */

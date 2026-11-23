@@ -17,6 +17,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.model.TLNamed;
+import com.top_logic.model.TLObject;
 import com.top_logic.ai.core.model.Agent;
 import com.top_logic.ai.core.model.Skill;
 import com.top_logic.ai.core.model.impl.AgentBase;
@@ -95,8 +96,8 @@ public class AgentDefinitionQuery {
 	 *         this name.
 	 */
 	public AgentDefinition findAgentByName(String name, ModelSecurity reader) {
-		Agent kbAgent = findStoredAgent(name);
-		if (kbAgent != null && reader.canRead(kbAgent)) {
+		Agent kbAgent = findStoredAgent(name, reader);
+		if (kbAgent != null) {
 			AgentSource source = hasConfigAgent(name) ? AgentSource.KB_OVERRIDE : AgentSource.KB;
 			return toAgentDefinition(kbAgent, source);
 		}
@@ -174,8 +175,8 @@ public class AgentDefinitionQuery {
 	 *         this name.
 	 */
 	public SkillDefinition findSkillByName(String name, ModelSecurity reader) {
-		Skill kbSkill = findStoredSkill(name);
-		if (kbSkill != null && reader.canRead(kbSkill)) {
+		Skill kbSkill = findStoredSkill(name, reader);
+		if (kbSkill != null) {
 			AgentSource source = hasConfigSkill(name) ? AgentSource.KB_OVERRIDE : AgentSource.KB;
 			return toSkillDefinition(kbSkill, source);
 		}
@@ -257,19 +258,40 @@ public class AgentDefinitionQuery {
 	}
 
 	/**
-	 * The stored agent of the given name, for every account and without a check of the model rights.
+	 * The stored agent of the given name, if the given reader may read it.
 	 *
 	 * <p>
-	 * The one lookup of a stored agent by its name. The database compares the name column by its
-	 * collation, which can also ignore accents or trailing blanks; the result is therefore filtered
-	 * with the comparison of the name rule ({@link UniqueNameConstraint}), which ignores the case and
-	 * nothing else. Otherwise a record "chät" could answer for "chat" on one database and not on
-	 * another.
+	 * The one lookup of a stored agent record by its name. The database compares the name column by
+	 * its collation, which can also ignore accents or trailing blanks; the result is therefore
+	 * filtered with the comparison of the name rule ({@link UniqueNameConstraint}), which ignores the
+	 * case and nothing else. Otherwise a record "chät" could answer for "chat" on one database and not
+	 * on another.
 	 * </p>
 	 *
-	 * @return The record, or <code>null</code> if no stored agent has this name.
+	 * @param reader
+	 *        The model rights of the account the answer is for.
+	 * @return The record, or <code>null</code> if no stored agent has this name or the reader may not
+	 *         read it.
 	 */
-	public Agent findStoredAgent(String name) {
+	public Agent findStoredAgent(String name, ModelSecurity reader) {
+		return readable(findStoredAgent(name), reader);
+	}
+
+	/**
+	 * The stored skill of the given name, if the given reader may read it.
+	 *
+	 * @param reader
+	 *        The model rights of the account the answer is for.
+	 * @return The record, or <code>null</code> if no stored skill has this name or the reader may not
+	 *         read it.
+	 * @see #findStoredAgent(String, ModelSecurity)
+	 */
+	public Skill findStoredSkill(String name, ModelSecurity reader) {
+		return readable(findStoredSkill(name), reader);
+	}
+
+	/** The stored agent of the given name, for every account: the reader decides after this. */
+	private Agent findStoredAgent(String name) {
 		KnowledgeBase kb = knowledgeBase();
 		if (kb == null || name == null) {
 			return null;
@@ -277,18 +299,17 @@ public class AgentDefinitionQuery {
 		return named(WrapperFactory.getWrappersByAttribute(AGENT_TABLE, kb, AgentBase.NAME_ATTR, name), name);
 	}
 
-	/**
-	 * The stored skill of the given name, for every account and without a check of the model rights.
-	 *
-	 * @return The record, or <code>null</code> if no stored skill has this name.
-	 * @see #findStoredAgent(String)
-	 */
-	public Skill findStoredSkill(String name) {
+	/** The stored skill of the given name, for every account: the reader decides after this. */
+	private Skill findStoredSkill(String name) {
 		KnowledgeBase kb = knowledgeBase();
 		if (kb == null || name == null) {
 			return null;
 		}
 		return named(WrapperFactory.getWrappersByAttribute(SKILL_TABLE, kb, SkillBase.NAME_ATTR, name), name);
+	}
+
+	private static <T extends TLObject> T readable(T record, ModelSecurity reader) {
+		return record != null && reader.canRead(record) ? record : null;
 	}
 
 	/**

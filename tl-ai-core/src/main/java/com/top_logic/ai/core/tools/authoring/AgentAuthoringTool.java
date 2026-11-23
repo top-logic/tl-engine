@@ -24,6 +24,8 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.exception.I18NFailure;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -33,6 +35,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.ai.core.agent.AgentDefinitionQuery;
 import com.top_logic.ai.core.agent.ToolContext;
@@ -136,13 +139,12 @@ public class AgentAuthoringTool {
 	private OperationResult doCreateSkill(String name, String description, String content,
 			List<String> tools, ModelSecurity rights) {
 		requireName(name, "Skill");
-		// The right first: who may not create a skill learns nothing about the names that exist.
+		// The right first: who may not create a skill learns nothing about the names that exist. A
+		// taken name is refused by the name rule at commit, also the name of a skill the run may not
+		// read.
 		if (!rights.canCreate(TlAiCoreFactory.getSkillType(), null)) {
 			throw new ToolSecurityException(SimpleBoundCommandGroup.CREATE,
 				TLModelUtil.qualifiedName(TlAiCoreFactory.getSkillType()));
-		}
-		if (findSkill(name) != null) {
-			throw new IllegalArgumentException("A skill named '" + name + "' already exists.");
 		}
 		validateSkillTools(tools);
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
@@ -197,7 +199,7 @@ public class AgentAuthoringTool {
 
 	private OperationResult doUpdateSkill(String name, String description, String content,
 			List<String> tools, ModelSecurity rights) {
-		Skill skill = readable(findSkill(name), rights);
+		Skill skill = findSkill(name, rights);
 		if (skill == null) {
 			throw new IllegalArgumentException("No application skill named '" + name + "'.");
 		}
@@ -248,7 +250,7 @@ public class AgentAuthoringTool {
 	}
 
 	private OperationResult doDeleteSkill(String name, ModelSecurity rights) {
-		Skill skill = readable(findSkill(name), rights);
+		Skill skill = findSkill(name, rights);
 		if (skill == null) {
 			throw new IllegalArgumentException("No application skill named '" + name + "'.");
 		}
@@ -303,7 +305,7 @@ public class AgentAuthoringTool {
 		ModelSecurity rights = context.modelSecurity();
 		SkillDetail detail = SkillDetail.create();
 		detail.setName(name);
-		Skill skill = readable(findSkill(name), rights);
+		Skill skill = findSkill(name, rights);
 		if (skill == null) {
 			detail.setExists(false);
 		} else {
@@ -376,13 +378,12 @@ public class AgentAuthoringTool {
 			List<String> tools, List<String> mcpServers, List<String> skills, List<String> delegations,
 			ModelSecurity rights) {
 		requireName(name, "Agent");
-		// The right first: who may not create an agent learns nothing about the names that exist.
+		// The right first: who may not create an agent learns nothing about the names that exist. A
+		// taken name is refused by the name rule at commit, also the name of an agent the run may not
+		// read.
 		if (!rights.canCreate(TlAiCoreFactory.getAgentType(), null)) {
 			throw new ToolSecurityException(SimpleBoundCommandGroup.CREATE,
 				TLModelUtil.qualifiedName(TlAiCoreFactory.getAgentType()));
-		}
-		if (findAgent(name) != null) {
-			throw new IllegalArgumentException("An agent named '" + name + "' already exists.");
 		}
 		List<String> warnings = validateReferences(tools, skills, delegations, rights);
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase()
@@ -459,7 +460,7 @@ public class AgentAuthoringTool {
 	private OperationResult doUpdateAgent(String name, String description, String systemPrompt,
 			List<String> tools, List<String> mcpServers, List<String> skills, List<String> delegations,
 			ModelSecurity rights) {
-		Agent agent = readable(findAgent(name), rights);
+		Agent agent = findAgent(name, rights);
 		if (agent == null) {
 			throw new IllegalArgumentException("No application agent named '" + name + "'.");
 		}
@@ -520,7 +521,7 @@ public class AgentAuthoringTool {
 	}
 
 	private OperationResult doDeleteAgent(String name, ModelSecurity rights) {
-		Agent agent = readable(findAgent(name), rights);
+		Agent agent = findAgent(name, rights);
 		if (agent == null) {
 			throw new IllegalArgumentException("No application agent named '" + name + "'.");
 		}
@@ -572,7 +573,7 @@ public class AgentAuthoringTool {
 		ModelSecurity rights = context.modelSecurity();
 		AgentDetail detail = AgentDetail.create();
 		detail.setName(name);
-		Agent agent = readable(findAgent(name), rights);
+		Agent agent = findAgent(name, rights);
 		if (agent == null) {
 			detail.setExists(false);
 		} else {
@@ -652,6 +653,12 @@ public class AgentAuthoringTool {
 			Logger.info(operationName + " refused: " + ex.getMessage(), AgentAuthoringTool.class);
 			return DataClassSerializer.errorToJson(failure + ex.getMessage(), AgentAuthoringTool.class,
 				operationName);
+		} catch (I18NRuntimeException ex) {
+			// A commit the model refused, for example a name that is taken: the sentences of the
+			// engine say why, and the run can correct the call.
+			Logger.info(operationName + " refused: " + sentences(ex), AgentAuthoringTool.class);
+			return DataClassSerializer.errorToJson(failure + sentences(ex), AgentAuthoringTool.class,
+				operationName);
 		} catch (Exception ex) {
 			Logger.error(operationName + " error: " + ex.getMessage(), ex, AgentAuthoringTool.class);
 			return DataClassSerializer.errorToJson(failure + ex.getMessage(), AgentAuthoringTool.class,
@@ -659,12 +666,15 @@ public class AgentAuthoringTool {
 		}
 	}
 
-	/**
-	 * The given record, or <code>null</code> if there is none or the run may not read it: for the
-	 * run, a record it may not read does not exist.
-	 */
-	private static <T extends TLObject> T readable(T record, ModelSecurity rights) {
-		return record != null && rights.canRead(record) ? record : null;
+	/** The translated messages of the given failure and of its causes, outermost first. */
+	private static String sentences(Throwable failure) {
+		List<String> sentences = new ArrayList<>();
+		for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+			if (cause instanceof I18NFailure i18n) {
+				sentences.add(Resources.getInstance().getString(i18n.getErrorKey()));
+			}
+		}
+		return String.join(" ", sentences);
 	}
 
 	/** Refuses unless the run may change the given record. */
@@ -714,8 +724,9 @@ public class AgentAuthoringTool {
 		}
 	}
 
-	private static Skill findSkill(String name) {
-		return AgentDefinitionQuery.getInstance().findStoredSkill(name);
+	/** The stored skill of the given name, or <code>null</code> if the run may not read it. */
+	private static Skill findSkill(String name, ModelSecurity rights) {
+		return AgentDefinitionQuery.getInstance().findStoredSkill(name, rights);
 	}
 
 	private static Collection<Skill> allKBSkills() {
@@ -723,8 +734,9 @@ public class AgentAuthoringTool {
 			PersistencyLayer.getKnowledgeBase().getAllKnowledgeObjects(AgentDefinitionQuery.SKILL_TABLE));
 	}
 
-	private static Agent findAgent(String name) {
-		return AgentDefinitionQuery.getInstance().findStoredAgent(name);
+	/** The stored agent of the given name, or <code>null</code> if the run may not read it. */
+	private static Agent findAgent(String name, ModelSecurity rights) {
+		return AgentDefinitionQuery.getInstance().findStoredAgent(name, rights);
 	}
 
 	private static Collection<Agent> allKBAgents() {

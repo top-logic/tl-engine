@@ -42,7 +42,8 @@ import com.top_logic.util.TLContext;
  *
  * <p>
  * The comparison ignores the case and nothing else, and it is the comparison of the lookup by name
- * ({@link AgentDefinitionQuery#findStoredAgent(String)}), which filters what the database answers.
+ * ({@link AgentDefinitionQuery#findStoredAgent(String, com.top_logic.ai.core.security.ModelSecurity)}),
+ * which filters what the database answers.
  * The {@code name} columns of {@code AIAgent} / {@code AISkill} are {@code String} columns, which a
  * database can compare more widely, for example without the case, the accents or trailing blanks.
  * A name that starts or ends with a blank is refused, so that such a database cannot see two names

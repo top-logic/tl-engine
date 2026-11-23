@@ -1081,10 +1081,10 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * <p>
 	 * Cluster-safe: the handle is resolved to its top-level execution and the run's persisted
 	 * cancel marker is set and committed - a normal KB write that works from any node, so the node
-	 * receiving the cancel need not be the node running the job. The running node observes the
-	 * marker at its next agent-loop turn and cancels the run, which then finalizes as
-	 * {@code CANCELLED}. Cancellation is therefore asynchronous: poll {@link #agentRunStatus(Object)}
-	 * to observe the run reach {@code CANCELLED}.
+	 * receiving the cancel need not be the node running the job. The running node sees the marker
+	 * within a few seconds, also during a long model call or tool call, and cancels the run, which
+	 * then finalizes as {@code CANCELLED}. Cancellation is therefore asynchronous: poll
+	 * {@link #agentRunStatus(Object)} to observe the run reach {@code CANCELLED}.
 	 * </p>
 	 *
 	 * <p>

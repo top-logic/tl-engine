@@ -50,15 +50,17 @@ public interface ModelSecurity {
 	 * Grants everything and checks nothing.
 	 *
 	 * <p>
-	 * <b>A test seam.</b> The engine's rights need a booted {@code SecurityConfigurationService},
-	 * which a unit test about how a context behaves does not have. No production run carries it:
-	 * {@code TopLogicSecurityContext.forRun(Person, boolean)} always constructs a
-	 * {@link ModelAccessRightsSecurity}.
+	 * A test seam in the first place: the engine's rights need a booted
+	 * {@code SecurityConfigurationService}, which a unit test about how a context behaves does not
+	 * have. A run of an account never carries it: {@code TopLogicSecurityContext.forRun(Person, boolean)}
+	 * always constructs a {@link ModelAccessRightsSecurity}.
 	 * </p>
 	 *
 	 * <p>
-	 * Outside the tests, it is only the reader of the lookups of {@code AgentDefinitionQuery} that
-	 * check the configuration and therefore check no rights.
+	 * Outside the tests, it is the model security of the trusted internal calls that act for no
+	 * account: {@code SecurityContext.UNRESTRICTED} and therefore {@code ToolContext.unrestricted()},
+	 * the graders of the evaluation harness when they resolve the objects an evaluation names, and the
+	 * lookups of {@code AgentDefinitionQuery} that check the configuration.
 	 * </p>
 	 */
 	ModelSecurity UNCHECKED = new ModelSecurity() {

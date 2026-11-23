@@ -77,6 +77,8 @@ How code and TL-Script ask for a decision (`ModelAccessRights`, `canRead`, ...) 
 are exempt from the check is described in [checking access in Java and TL-Script](doc:access-checks).
 The classic layout UI does not check attribute rights; an application using model based security
 with `Discover`-only roles must use the React view layer for such types.
+On which object a view of the classic layout UI checks access (`securityObject`, `isSecurityMaster`)
+is described in [access checks of layouts](doc:access-layouts).
 
 ## Grants: which roles may do what on a type
 

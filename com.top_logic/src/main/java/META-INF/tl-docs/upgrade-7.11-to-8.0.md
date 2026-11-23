@@ -261,7 +261,8 @@ removed without replacement: express the assignment as a configured rule.
 - Narrow `securityObject="model"` to `securityObject="model(Mod:Type1,Mod:Type2)"` where the possible
   types are known; otherwise the profile editor offers every role/command-group cell (optional).
 - The defaults for "which component is the security master of a dialog" and "is a dialog button bar
-  shown" changed (#29221): verify dialogs and mark the security master explicitly.
+  shown" changed (#29221): verify dialogs and mark the security master explicitly, see
+  [access checks of layouts](doc:access-layouts).
 
 ### 3.5 Model-based access rights: ship a `<security-config>` (mandatory)
 

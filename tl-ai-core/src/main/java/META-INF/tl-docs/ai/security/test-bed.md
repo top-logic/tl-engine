@@ -1,5 +1,5 @@
 ---
-description: Read before verifying agent security by hand or adding a case to the security test bed of tl-ai-demo (secdemo.config.xml, the pm model, SecDemoSetup) - enabling and resetting the fixture, the personas anna, ben, cara and dora, the four harness scripts (probe, fire, collect, reset) for the script console, the scenario tables per layer (tool access T1-T10, read filtering D1-D11, capability notices C1-C8, background allowlist A1-A5, object tools, closed doors P1-P2) and the SecDemo*Test classes asserting each.
+description: Read before verifying agent security by hand or adding a case to the security test bed of tl-ai-demo (secdemo.config.xml, the pm model, SecDemoSetup) - enabling and resetting the fixture, the personas anna, ben, cara and dora, the four harness scripts (probe, fire, collect, reset) for the script console, the scenario tables per layer (tool access T1-T10, read filtering D1-D11, capability notices C1-C8, background allowlist A1-A5, model choice in TL-Script M1, object tools, closed doors P1-P2) and the SecDemo*Test classes asserting each.
 order: 6
 ---
 
@@ -164,6 +164,16 @@ A run with nobody to answer an approval prompt auto-approves every call, so it i
 | A4 | what the allowlist admits works | `ben` | 3.3, 3.4, 3.5 | the listings, with the model rights applied |
 | A5 | an enforcing policy must declare an allowlist | - | delete `<background-allowlist>` from `secdemo.config.xml` and restart | the application refuses to start ([capping unattended runs](doc:ai/security/tool-access-recipes)) |
 
+### Model choice in TL-Script
+
+`aiChat` runs no agent, so the default model takes the place of the model of the agent ([run access](doc:ai/security/run-access)). `<model-access>` of the fixture grants `ticketReader` the Haiku model.
+
+| # | Behaviour | Persona | Do this (console) | You should see |
+|---|---|---|---|---|
+| M1 | `aiChat` follows `<model-access>` | `ben` | `aiChat(["Hello"], "claude-opus-5-5")`, then `aiChat(["Hello"])` | `The model claude-opus-5-5 is not available to you. Your roles do not include it.`, and no request is sent; then an answer of the default model (needs a key). `claude-haiku-5-5` answers too |
+
+As `anna`, whose role the section does not name, `claude-haiku-5-5` is refused as well, with `... A call without an agent runs on the default model of the application.` `SecDemoScriptModelAccessTest` asserts the row with a scripted provider under the same model names.
+
 ### The object tools
 
 A write is checked by the tool that makes it, and the turn commits what its tools wrote ([the layers](doc:ai/security#the-layers)). The TL-Script tool `secdemo-editing.addTicket` writes through the engine's own checks of the acting account's rights. `updateObject`, `createObject` and `deleteObject` ask the model rights themselves, per object and attribute, before they write ([object tools](doc:ai/security/object-tools)); `SecDemoObjectEditTest`:
@@ -201,7 +211,7 @@ mvn -B test -DskipTests=false -pl tl-ai-demo -Dtest='com.top_logic.ai.demo.SecDe
 | `SecDemoCapabilityNoticeTest` | C1, C2 | `SecDemoRoleRuleTest` | the boot check |
 | `SecDemoSkillAbsenceTest` | C1, C4-C6 | `SecDemoMcpEndpointTest` | P1 |
 | `SecDemoListToolsTest` | C3, C4, C8 | `SecDemoModelSecurityTest` | the worked example, persona by persona |
-| `SecDemoVectorIndexTest` | the vector index | | |
+| `SecDemoVectorIndexTest` | the vector index | `SecDemoScriptModelAccessTest` | M1 |
 
 `SecDemoSpawnFilterTest` (a spawn is decided per child context), `SecDemoDeclaredTypesTest` (a tool declaring `pm:Project` refuses a persona without read access before it runs), `SecDemoInfrastructureAgentTest` (an agent the application runs for a user, such as the prompt improver, cannot be run as a chat persona, whatever `<agent-access>` says), `SecDemoHarnessScriptsTest` (the harness compiles) and the tests of the [policy editor](doc:ai/security/tool-access-editor) (`SecDemoEffectiveAccessTest`, `SecDemoPolicyEditorTest`, `SecDemoApplyPolicyGuardTest`, `SecDemoToolDescriptionTest`, `SecDemoGermanTerminologyTest`) run in the same suite because they need the booted fixture. The unit-level counterparts in `tl-ai-core` use hand-built policies: `TestRoleToolAccess`, `TestToolAuthorization`, `TestAiToolAccessService`, `TestAgentCapabilities`, `TestDelegateFilter`, `TestSpawnFilter`, `TestDetachedSubagentCeiling`, `TestSkillTool`, `TestSkillAbsenceReason`, `TestTopLogicSecurityContext`, `TestReadFilter`.
 

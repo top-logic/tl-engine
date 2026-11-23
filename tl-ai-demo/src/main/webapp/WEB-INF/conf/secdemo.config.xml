@@ -494,6 +494,10 @@
 					  Anna holds projectPartner, which no section names, so she keeps every agent - the
 					  contrast that makes Ben's restriction visible rather than merely configured.
 
+					  aiChat in the script console runs no agent, so there the default model takes the
+					  place of the model of the agent: Ben may name the Haiku and gets the default model
+					  without a name, and Opus is refused (scenario M1 of ai/security/test-bed).
+
 					The model names have to be the ones this application configures, spelled exactly:
 					a name no provider lists refuses the boot, which is deliberate and is what makes a
 					typo in a <deny> impossible to ship.

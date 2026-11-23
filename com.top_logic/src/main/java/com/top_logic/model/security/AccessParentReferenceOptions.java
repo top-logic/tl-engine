@@ -23,6 +23,7 @@ import com.top_logic.model.security.SecurityConfigurationService.TLClassAccessRi
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -91,6 +92,23 @@ public class AccessParentReferenceOptions {
 			TLClass type = configuredType(owner);
 			return type == null ? Collections.emptyList()
 				: ModelAccessRights.getInstance().getOperations(type).getOperations();
+		}
+
+	}
+
+	/**
+	 * The operations applying to the configured type that a {@link RefererAccessParent} can
+	 * decide: all but Create, since nothing refers to an object being created.
+	 *
+	 * @see RefererDecidesNoCreate
+	 */
+	public static class RefererOperations extends Function1<Collection<BoundCommandGroup>, ConfigurationItem> {
+
+		@Override
+		public Collection<BoundCommandGroup> apply(ConfigurationItem owner) {
+			List<BoundCommandGroup> result = new ArrayList<>(new Operations().apply(owner));
+			result.removeIf(operation -> SimpleBoundCommandGroup.CREATE.getID().equals(operation.getID()));
+			return result;
 		}
 
 	}

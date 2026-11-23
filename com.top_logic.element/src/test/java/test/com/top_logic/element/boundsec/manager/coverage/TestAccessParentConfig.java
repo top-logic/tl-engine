@@ -193,6 +193,66 @@ public class TestAccessParentConfig extends BasicTestCase {
 		assertDelegatesExactly(listed.getAccessParent(), "Read", "Discover");
 	}
 
+	/**
+	 * The editor does not offer Create for a referer, neither directly in the access parent nor as
+	 * candidate, while the other building blocks offer it.
+	 */
+	public void testRefererOperationsOptionsWithoutCreate() throws Exception {
+		String covered = MODULE + ":Covered";
+		String referer = "<referer reference='" + LINKED + "#target'/>";
+		String target = "<target reference='" + covered + "#explicitParts'/>";
+		TLClassAccessRights direct =
+			read("<class name='" + covered + "'><access-parent>" + referer + "</access-parent></class>");
+		TLClassAccessRights nested = read("<class name='" + covered + "'><access-parent><any-of>" + referer
+			+ target + "</any-of></access-parent></class>");
+
+		ConfigurationItem directReferer = (ConfigurationItem) direct.getAccessParent().getDefinition();
+		AnyOfAccessParent.Config anyOf = (AnyOfAccessParent.Config) nested.getAccessParent().getDefinition();
+		ConfigurationItem nestedReferer = (ConfigurationItem) anyOf.getCandidates().get(0);
+		ConfigurationItem nestedTarget = (ConfigurationItem) anyOf.getCandidates().get(1);
+
+		for (ConfigurationItem item : List.of(directReferer, nestedReferer)) {
+			List<?> operations = options(item, OperationRestriction.OPERATIONS);
+			assertFalse("Create is not offered for a referer: " + operations,
+				operations.contains(SimpleBoundCommandGroup.CREATE));
+			assertTrue("The other operations are offered: " + operations,
+				operations.contains(SimpleBoundCommandGroup.READ));
+		}
+		assertTrue("A target offers Create.",
+			options(nestedTarget, OperationRestriction.OPERATIONS).contains(SimpleBoundCommandGroup.CREATE));
+	}
+
+	/**
+	 * The editor rejects Create in the operations of a referer before the setting is stored, which
+	 * the loading of the access rights would reject.
+	 */
+	public void testRefererWithCreateIsConstraintFailure() throws Exception {
+		String covered = MODULE + ":Covered";
+		String referer = "<referer reference='" + LINKED + "#target' operations='Read,Create'/>";
+		for (String accessParent : List.of(referer, "<any-of>" + referer + "<container/></any-of>")) {
+			TLClassAccessRights entry =
+				read("<class name='" + covered + "'><access-parent>" + accessParent + "</access-parent></class>");
+			ConstraintChecker checker = new ConstraintChecker();
+			checker.check(entry);
+			assertEquals(checker.getFailures().toString(), 1, checker.getFailures().size());
+			assertEquals(OperationRestriction.OPERATIONS,
+				checker.getFailures().get(0).getContextProperty().getPropertyName());
+		}
+
+		TLClassAccessRights readOnly = read("<class name='" + covered + "'><access-parent><referer reference='"
+			+ LINKED + "#target' operations='Read'/></access-parent></class>");
+		ConstraintChecker checker = new ConstraintChecker();
+		checker.check(readOnly);
+		assertTrue("A referer without Create is accepted: " + checker.getFailures(),
+			checker.getFailures().isEmpty());
+
+		TLClassAccessRights target = read("<class name='" + LINKED + "'><access-parent>" + TARGET_PARENT
+			+ " operations='Read,Create'/></access-parent></class>");
+		checker = new ConstraintChecker();
+		checker.check(target);
+		assertTrue("A target may decide Create: " + checker.getFailures(), checker.getFailures().isEmpty());
+	}
+
 	public void testAnyOfResolvesCandidates() throws Exception {
 		BufferingProtocol log = new BufferingProtocol();
 		AccessParentFunction parent = linkedParent(log, "<class name='" + LINKED + "'><access-parent><any-of>"

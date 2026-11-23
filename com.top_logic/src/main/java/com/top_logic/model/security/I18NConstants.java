@@ -35,6 +35,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_SELF_IN_ANY_OF;
 
 	/**
+	 * @en Referring objects never decide "Create": nothing refers to an object being created.
+	 *     Remove "Create" from the operations, the grants of the type decide it.
+	 */
+	public static ResKey ERROR_CREATE_FOR_REFERER;
+
+	/**
 	 * @en The access parent decides the operations {1} itself, since it is restricted to them and
 	 *     decides Discover together with them: either remove the grants of these operations from
 	 *     "{0}", or remove the operations from the access parent.

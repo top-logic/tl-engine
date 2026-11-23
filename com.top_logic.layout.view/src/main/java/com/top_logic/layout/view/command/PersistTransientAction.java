@@ -176,6 +176,10 @@ public class PersistTransientAction implements ViewAction {
 
 		TLObject container = CreationContainer.resolveContainer(context, _config, Config.TAG_NAME);
 		TLStructuredTypePart reference = reference(container);
+		if (reference != null && !reference.isMultiple()) {
+			// The created object takes the place of the part the composition holds.
+			DeleteObject.checkRemovedParts(container, reference, null);
+		}
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(_commitMessage.create(draft))) {
 			CopyOperation operation = CopyOperation.initial();
 			if (container != null) {
@@ -192,7 +196,6 @@ public class PersistTransientAction implements ViewAction {
 				if (reference.isMultiple()) {
 					container.tAdd(reference, created);
 				} else {
-					DeleteObject.checkRemovedParts(container, reference, created);
 					container.tUpdate(reference, created);
 				}
 			}

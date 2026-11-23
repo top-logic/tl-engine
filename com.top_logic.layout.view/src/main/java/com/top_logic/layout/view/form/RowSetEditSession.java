@@ -1130,7 +1130,8 @@ public class RowSetEditSession implements FormParticipant {
 			return;
 		}
 		for (TLObject removed : _removedObjects) {
-			if (!isPartOf(removed, _removedObjects, _removedNewObjects)) {
+			// A row deleted by someone else in the meantime is not deleted by the save.
+			if (removed.tValid() && !isPartOf(removed, _removedObjects, _removedNewObjects)) {
 				DeleteObject.checkDeletePermission(removed);
 			}
 		}

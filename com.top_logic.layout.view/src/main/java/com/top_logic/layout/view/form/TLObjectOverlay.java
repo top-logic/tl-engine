@@ -658,7 +658,9 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 * </p>
 	 *
 	 * @throws TopLogicException
-	 *         If the current user is not allowed to modify one of the changed attributes.
+	 *         If {@link #checkApply()} refuses one of the changes: the current user is not allowed
+	 *         to modify one of the changed attributes, a changed reference adds an object the user
+	 *         may not discover, or a changed composition takes out a part the user may not delete.
 	 */
 	public void apply() {
 		checkApply();

@@ -337,6 +337,8 @@ public class TestCompositionRemoveDeleteRight extends AbstractModelAccessTest {
 		becomeUser(_responsible);
 		script(REMOVE, _project, part(PROJECT, TASKS), _task);
 		assertEquals(List.of(), _project.tValueByName(TASKS));
+		// A script leaves the part without container.
+		delete(_task);
 
 		TLObject other = newPart(_project, TASKS, TASK);
 		FormControl form = newForm();
@@ -357,6 +359,8 @@ public class TestCompositionRemoveDeleteRight extends AbstractModelAccessTest {
 		becomeUser(_responsible);
 		script(setScript(MILESTONES), _project, List.of());
 		assertEquals(List.of(), _project.tValueByName(MILESTONES));
+		// A script leaves the part without container.
+		delete(_milestone);
 
 		TLObject other = newPart(_project, MILESTONES, MILESTONE);
 		FormControl form = newForm();

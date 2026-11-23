@@ -189,6 +189,7 @@ const MODIFIERS = {
   'tl-region': new Set([]), // layout.css, tabs.css, dialog.css
   'tl-reveal-on-hover': new Set([]), // layout.css
   'tl-table-view-options': new Set([]), // table.css
+  'tl-filter-list': new Set([]), // filter-list.css
 };
 
 // Punkt 11b: Die Modifier eines Elements (block__element--modifier) sind ebenso entschieden. Ein Element ohne
@@ -198,7 +199,7 @@ const ELEMENT_MODIFIERS = {
   'tl-form-field__input': new Set(['explained', 'resettable']),
   'tl-image-field__step': new Set(['previous', 'next']),
   'tl-image-overlay__step': new Set(['previous', 'next']),
-  'tl-menu__item': new Set(['danger']),
+  'tl-menu__item': new Set(['danger', 'check']), // check: die Zeile mit gezeichneter Marke (menuitemcheckbox, #30102), eine Form.
   'tl-overlay__layer': new Set(['bottom', 'bottom-left', 'bottom-right', 'center', 'fill', 'left', 'right', 'top',
     'top-left', 'top-right']), // Die Anker der Überlagerung.
   'tl-rich-text__markup': new Set(['inline']),

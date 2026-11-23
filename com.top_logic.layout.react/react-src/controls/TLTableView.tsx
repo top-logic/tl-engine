@@ -1,4 +1,4 @@
-import { BACKGROUND_COMMAND, BACKGROUND_REPORT, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, StateBadge, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, useDisplayClass, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, BACKGROUND_REPORT, React, useTLState, useTLCommand, registerPendingFlush, unregisterPendingFlush, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, StateBadge, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, useDisplayClass, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
 import { FOCUSABLE_SELECTOR, editableInRow, focusTargetInRow, focusablesIn, rowCells } from './tableRowFocus';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from 'tl-react-bridge';
@@ -6,6 +6,7 @@ import { fullCount as fullCountOf, fullIndex, shownColumns, shownCount } from '.
 import type { HintAnchor, DropVerdict } from 'tl-react-bridge';
 import { Menu, MenuItem } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
+import { isContextMenuKey } from './contextMenuKey';
 import { chipFocusTargets } from './chip/chipFocus';
 import { TableViewButton } from './table/TableViewOptions';
 import { FilterPresets } from './table/FilterPresets';
@@ -641,9 +642,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const hintMoveRef = React.useRef<((at: HintAnchor) => void) | null>(null);
 
   // -- Column context menu state --
-  const [contextMenu, setContextMenu] = React.useState<{
-    x: number; y: number; colIdx: number;
-  } | null>(null);
+  // At the pointer (right-click) or at the heading cell (keyboard).
+  const [contextMenu, setContextMenu] = React.useState<
+    ({ x: number; y: number } | { element: HTMLElement }) & { colIdx: number }
+  | null>(null);
 
   // -- Frozen column splitter state: the boundary the running drag would drop the frozen area at. --
   const [frozenPreview, setFrozenPreview] = React.useState<{ x: number; count: number } | null>(null);
@@ -1424,15 +1426,84 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, [rows, cursorIndex, sendCommand, columnsButtonWidth]);
 
   // -- Column context menu handlers --
-  const handleColumnContextMenu = React.useCallback((colIdx: number, event: React.MouseEvent) => {
-    // An event of something portaled out of the heading (the popover of the view) reaches the heading through
-    // the React tree only: it is not the heading's.
-    if (!event.currentTarget.contains(event.target as Node)) {
+
+  // Whether an event reaching a heading is a request for the menu of its column. An event of something portaled out
+  // of the heading (the popover of the view) reaches the heading through the React tree only: it is not the
+  // heading's. Nor is one of the gear a pinned last heading carries (`tl-table__columns`): the gear belongs to the
+  // table, not to that column.
+  const isHeadingEvent = (event: React.SyntheticEvent): boolean => {
+    const target = event.target as Node;
+    if (!event.currentTarget.contains(target)) {
+      return false;
+    }
+    const element = target instanceof Element ? target : target.parentElement;
+    return !element?.closest('.tl-table__columns');
+  };
+
+  const handleColumnContextMenu = (colIdx: number, event: React.MouseEvent) => {
+    if (!isHeadingEvent(event)) {
       return;
     }
     event.preventDefault();
+    // A column offering nothing keeps no request: one standing would open by itself as soon as the column offers
+    // something (a freezing or grouping changed elsewhere).
+    if (columnMenuEntries(colIdx).length === 0) {
+      return;
+    }
     setContextMenu({ x: event.clientX, y: event.clientY, colIdx });
-  }, []);
+  };
+
+  // The keyboard reaches the same menu as the pointer, hanging off the heading cell itself: it stays with the
+  // column when the table scrolls, and the focus returns to what had it (sort button, funnel or resizer) on
+  // closing. The cell takes no focus, so the key arrives from one of those by bubbling.
+  const handleColumnContextKey = (colIdx: number, event: React.KeyboardEvent) => {
+    if (!isContextMenuKey(event) || !isHeadingEvent(event)) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    if (columnMenuEntries(colIdx).length === 0) {
+      return;
+    }
+    setContextMenu({ element: event.currentTarget as HTMLElement, colIdx });
+  };
+
+  // The entries of the menu of a column, computed once: the menu renders this list and opens only when it is not
+  // empty (an empty box would open otherwise), so what is shown and whether it opens cannot drift apart.
+  const columnMenuEntries = (colIdx: number): Array<{ key: string; label: string; onSelect: () => void }> => {
+    const column = columns[colIdx];
+    const entries: Array<{ key: string; label: string; onSelect: () => void }> = [];
+    if (colIdx + 1 !== frozenColumnCount && !column?.pinnedEnd) {
+      entries.push({ key: 'freezeUpTo', label: i18n['js.table.freezeUpTo'], onSelect: handleFreezeUpTo });
+    }
+    if (frozenColumnCount > 0) {
+      entries.push({ key: 'unfreezeAll', label: i18n['js.table.unfreezeAll'], onSelect: handleUnfreezeAll });
+    }
+    if (column && !column.pinnedEnd) {
+      entries.push({
+        key: 'fitColumn', label: i18n['js.table.fitColumn'],
+        onSelect: () => { fitColumnToContent(column.name); setContextMenu(null); },
+      });
+    }
+    // Grouping by a further column adds it as the innermost group level; removing the grouping by a column removes
+    // its level alone, the other levels stay.
+    if (column?.groupable && !grouping.includes(column.name)) {
+      entries.push({
+        key: 'groupBy', label: i18n[grouping.length > 0 ? 'js.table.groupByAlso' : 'js.table.groupBy'],
+        onSelect: () => handleGroup([...grouping, column.name]),
+      });
+    }
+    if (column && grouping.includes(column.name)) {
+      entries.push({
+        key: 'ungroupColumn', label: i18n['js.table.ungroupColumn'],
+        onSelect: () => handleGroup(grouping.filter((name) => name !== column.name)),
+      });
+    }
+    if (grouping.length > 0) {
+      entries.push({ key: 'ungroup', label: i18n['js.table.ungroup'], onSelect: () => handleGroup(NO_GROUPING) });
+    }
+    return entries;
+  };
 
   const handleFreezeUpTo = React.useCallback(() => {
     if (!contextMenu) return;
@@ -1541,38 +1612,51 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // The typed term is held locally while a send is pending: the input stays responsive between
   // round-trips, and the echoed server state cannot move the caret while the user is still typing.
   const [searchDraft, setSearchDraft] = React.useState(serverSearch);
-  const searchPendingRef = React.useRef(false);
+  // The term typed and not yet sent; null when nothing waits.
+  const searchPendingRef = React.useRef<string | null>(null);
   const searchTimeoutRef = React.useRef<number | null>(null);
+  const flushSearchRef = React.useRef<() => Promise<void>>(() => Promise.resolve());
+  // Identity-stable wrapper for the command channel: while a term waits, every action command
+  // (also of other controls) sends it first, so a click on a preset chip or a sort header within
+  // the pause cannot overtake the search - the same mechanism the debounced form fields use.
+  const stableFlushSearchRef = React.useRef<() => Promise<void>>(() => flushSearchRef.current());
 
   React.useEffect(() => {
-    if (!searchPendingRef.current) {
+    if (searchPendingRef.current === null) {
       setSearchDraft(serverSearch);
     }
   }, [serverSearch]);
 
-  React.useEffect(() => () => {
-    if (searchTimeoutRef.current !== null) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-  }, []);
-
-  const sendSearch = React.useCallback((term: string) => {
+  const sendSearch = React.useCallback((term: string): Promise<void> => {
     if (searchTimeoutRef.current !== null) {
       clearTimeout(searchTimeoutRef.current);
       searchTimeoutRef.current = null;
     }
-    searchPendingRef.current = false;
-    sendCommand('search', { term });
+    unregisterPendingFlush(stableFlushSearchRef.current);
+    searchPendingRef.current = null;
+    return sendCommand('search', { term }).then(() => undefined);
   }, [sendCommand]);
+
+  // Sends the waiting term, if any: on leaving the field, before another command, and on unmount.
+  flushSearchRef.current = () => {
+    const pending = searchPendingRef.current;
+    return pending === null ? Promise.resolve() : sendSearch(pending);
+  };
+
+  // A table that goes away within the pause still sends what was typed instead of dropping it.
+  React.useEffect(() => () => { void flushSearchRef.current(); }, []);
 
   const handleSearchChange = React.useCallback((term: string) => {
     setSearchDraft(term);
-    searchPendingRef.current = true;
+    searchPendingRef.current = term;
+    registerPendingFlush(stableFlushSearchRef.current);
     if (searchTimeoutRef.current !== null) {
       clearTimeout(searchTimeoutRef.current);
     }
-    searchTimeoutRef.current = window.setTimeout(() => sendSearch(term), SEARCH_DEBOUNCE_MS);
-  }, [sendSearch]);
+    searchTimeoutRef.current = window.setTimeout(() => { void flushSearchRef.current(); }, SEARCH_DEBOUNCE_MS);
+  }, []);
+
+  const handleSearchBlur = React.useCallback(() => { void flushSearchRef.current(); }, []);
 
   const handleSearchKeyDown = React.useCallback((event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (event.key === 'Enter') {
@@ -1926,6 +2010,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               sendSearch('');
             }}
             onKeyDown={handleSearchKeyDown}
+            onBlur={handleSearchBlur}
           />
           {filterSaving && (saveName === null ? (
             <Button
@@ -2040,6 +2125,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 }}
                 {...(isPinned ? {} : columnReorder.itemProps(colIdx))}
                 onContextMenu={(e) => handleColumnContextMenu(colIdx, e)}
+                onKeyDown={(e) => handleColumnContextKey(colIdx, e)}
               >
                 {col.sortable ? (
                   <button
@@ -2329,23 +2415,17 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         </div>
       )}
 
-      {/* Column context menu */}
-      <Menu open={!!contextMenu} anchor={contextMenu ? { x: contextMenu.x, y: contextMenu.y } : null} onClose={() => setContextMenu(null)}>
-        {contextMenu && contextMenu.colIdx + 1 !== frozenColumnCount && !columns[contextMenu.colIdx]?.pinnedEnd && (
-          <MenuItem label={i18n['js.table.freezeUpTo']} onSelect={handleFreezeUpTo} />)}
-        {contextMenu && frozenColumnCount > 0 && <MenuItem label={i18n['js.table.unfreezeAll']} onSelect={handleUnfreezeAll} />}
-        {contextMenu && !columns[contextMenu.colIdx]?.pinnedEnd && (
-          <MenuItem label={i18n['js.table.fitColumn']} onSelect={() => { fitColumnToContent(columns[contextMenu.colIdx].name); setContextMenu(null); }} />)}
-        {/* Grouping by a further column adds it as the innermost group level; removing the grouping by
-            a column removes its level alone, the other levels stay. */}
-        {contextMenu && columns[contextMenu.colIdx]?.groupable && !grouping.includes(columns[contextMenu.colIdx].name) && (
-          <MenuItem label={i18n[grouping.length > 0 ? 'js.table.groupByAlso' : 'js.table.groupBy']}
-            onSelect={() => handleGroup([...grouping, columns[contextMenu.colIdx].name])} />)}
-        {contextMenu && grouping.includes(columns[contextMenu.colIdx]?.name ?? '') && (
-          <MenuItem label={i18n['js.table.ungroupColumn']}
-            onSelect={() => handleGroup(grouping.filter((column) => column !== columns[contextMenu.colIdx].name))} />)}
-        {contextMenu && grouping.length > 0 && <MenuItem label={i18n['js.table.ungroup']} onSelect={() => handleGroup(NO_GROUPING)} />}
-      </Menu>
+      {/* Column context menu; a column that offers nothing (a pinned one, no grouping) opens none. */}
+      {(() => {
+        const entries = contextMenu ? columnMenuEntries(contextMenu.colIdx) : [];
+        return (
+          <Menu open={!!contextMenu && entries.length > 0}
+            anchor={contextMenu ? ('element' in contextMenu ? contextMenu.element : { x: contextMenu.x, y: contextMenu.y }) : null}
+            onClose={() => setContextMenu(null)}>
+            {entries.map(e => <MenuItem key={e.key} label={e.label} onSelect={e.onSelect} />)}
+          </Menu>
+        );
+      })()}
     </div>
     </KeyboardScopeProvider>
   );

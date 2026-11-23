@@ -1,5 +1,5 @@
 ---
-description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), operation declarations (<operations>, implied-by), the internal / without-security marks, access parents, role rules of the AccessManager, the autoconf files and the SecurityCoverageCheck.
+description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), operation declarations (<operations>, implied-by), the internal / without-security marks, access parents (also restricted to operations, `operations` of an access parent), role rules of the AccessManager, the autoconf files and the SecurityCoverageCheck.
 order: 20
 ---
 
@@ -22,10 +22,11 @@ Both must be satisfied. A role parent inherits **roles**, never grants: a type w
 rule but no grant is unreadable for every user except a technical admin, however many roles the
 user inherits from the container.
 
-A type that needs neither has an **access parent** instead: its objects delegate the *whole*
-decision, grants and roles, to another object. A composition part gets its container as access
+A type that needs neither has an **access parent** instead: its objects delegate the decision,
+grants and roles, to another object - the *whole* decision, unless the access parent is restricted
+to some operations, see [Access parent](#access-parent-delegating-the-decision). A composition part gets its container as access
 parent by default, so the rows of a composition table, the comments of a ticket or the attachments
-of a comment need no definition of their own. See [Access parent](#access-parent-delegating-the-whole-decision).
+of a comment need no definition of their own. See [Access parent](#access-parent-delegating-the-decision).
 
 The check itself is `SecurityConfigurationService.isAllowed(Person, TLObject, BoundCommandGroup)`.
 It applies to every persistent object, whatever its implementation class; a transient object (a
@@ -49,7 +50,8 @@ cannot (a plain knowledge item standing for itself) grants no role, so only the 
 3. A type marked `without-security` is not checked at all.
 4. A type with an access parent asks the object the relation leads to, with the same operation, or
    with `Write` in place of `Create` and `Delete`; an operation [implying](#operations-which-operations-apply-to-a-type)
-   the requested one on the type is asked as well. The parent may delegate further. An object whose
+   the requested one on the type is asked as well. With `operations` on the access parent, only the
+   delegated operations (and delegated implying ones) are asked; the others continue at step 5. The parent may delegate further. An object whose
    relation leads nowhere (no container, an empty reference) is denied, as is one whose chain of
    access parents runs in a cycle.
 5. The roles granted the operation, or an operation implying it, on the object's type are looked
@@ -62,7 +64,8 @@ cannot (a plain knowledge item standing for itself) grants no role, so only the 
    name are looked up (see [Attribute rights](#attribute-rights-which-types-a-part-applies-to)). If
    they grant the operation, they **replace** the class grant for this attribute - the user must
    hold one of those roles, on the object or, for a delegating object, on the end of its chain of
-   access parents; a grant without roles denies everyone. Without attribute-level grants the
+   access parents (for an access parent restricted to operations: the chain is followed only while
+   the requested operation is delegated); a grant without roles denies everyone. Without attribute-level grants the
    class-level decision stands.
 
 `Discover` - every right on an object or one of its attributes implies the operation `Discover`, see [the Discover specification](doc:access-discover-spec).
@@ -229,8 +232,8 @@ that **applies** to a type may be granted on it:
 - The declarations of all configuration layers are appended, like the grants.
 - The operation must be a command group of the `CommandGroupRegistry` and needs labels
   `commandGroup.<Name>` and `commandGroup.<Name>.tooltip` in a resource bundle of the application.
-- A type with an access parent may declare operations, too (it still has no grants): a custom
-  operation on such a type is checked as the same operation on the parent, so it must apply to the
+- A type with an access parent may declare operations, too (it has no grants of its own for the delegated operations): a custom
+  operation on such a type, if delegated, is checked as the same operation on the parent, so it must apply to the
   parent type as well, unless it is implied by an operation the parent has.
 
 **`implied-by="X"`**: whoever holds the operation `X` on an object also holds the declared
@@ -241,7 +244,7 @@ later explicit `<grant operation="Show" .../>` changes no view. Implications are
 declarations of the same operation add their implying operations. The implied roles count
 everywhere a grant counts: `isAllowed`, `getAllowedRoles(TLClass, BoundCommandGroup)`,
 `getAccessibleTypes`, the checks on a singleton and the coverage check. For a type with an access
-parent, the implying operation is checked on the parent.
+parent, the implying operation is checked on the parent (with `operations`: only if it is delegated).
 
 **Configuration errors**, reported when the service starts:
 
@@ -282,12 +285,14 @@ the modules `tl.changelog` and `tl.imagegallery` are `internal` (maintained by t
 code), the class `tl.core:Revision` is `without-security` (commit metadata readable by everyone; a
 revision cannot hold roles).
 
-### Access parent: delegating the whole decision
+### Access parent: delegating the decision
 
 A `<class>` entry with an `<access-parent>` element other than `<self/>` makes the type
-delegate to its **access parent**, the object whose access definition decides. The type has no
+delegate to its **access parent**, the object whose access definition decides. Unless the access
+parent is restricted to some operations (see below), the type has no
 grants, no marks and no roles of its own (an entry combining them is rejected at startup and by the
-editor):
+editor); with `operations`, grants are allowed for the operations that are not delegated, while the
+marks `internal` and `without-security` remain rejected:
 
 - Read, Write and Export on the object are Read, Write and Export on the parent.
 - Create and Delete of the object are **Write** on the parent, since a part is created or deleted
@@ -299,7 +304,8 @@ editor):
   leads nowhere is not accessible, and a chain running in a cycle is denied (and logged as an
   error).
 - Attribute-level `<part>` grants on the type are checked against the roles the user holds at the
-  end of the chain.
+  end of the chain (for an access parent restricted to operations: at the object deciding the
+  requested operation, the object itself where the operation is not delegated).
 - Specializations inherit the setting unless they have one of their own.
 
 The `<access-parent>` element holds exactly one definition of the relation. The kind of relation is
@@ -338,11 +344,11 @@ parent decides only the listed operations; the type decides all others itself:
   a generalization for delegated operations are dropped silently.
 - Unknown or inapplicable operation names are configuration errors. `operations` is not allowed on
   `<self/>` nor on `<access-parent>` itself.
-- The role holder, the explanation of the effective access, the type-level checks (commands, view
-  elements), the grants editor and the coverage check all work per operation: the grants editor shows
-  grant columns only for the operations the type decides itself, the coverage check treats the
-  built-in operations of such a type like those of a self-deciding type and reports declared
-  operations that are neither delegated nor granted.
+- At runtime, the role holder (the object whose roles decide, see step 7 above), the explanation of
+  the effective access and the type-level checks (commands, view elements) work per operation.
+- In the tooling, the grants editor shows grant columns only for the operations the type decides
+  itself, and the coverage check treats the built-in operations of such a type like those of a
+  self-deciding type and reports declared operations that are neither delegated nor granted.
 
 Example: an entry of a catalog is readable by everybody who may read the catalog, but writing it is
 a right of its own, granted to a role the user holds on the entry itself:
@@ -544,7 +550,8 @@ The places checking an operation are reported to the check by the `OperationUseP
 privileged scripts of the configured TL-Script functions (see the section "Administration of
 grants" of the article `view-layer/access-control` of that module). A place
 naming the type it checks is checked against that type and its concrete specializations; a type
-delegating to an access parent is not checked for applicability. A place not declaring its type (a
+delegating to an access parent is not checked for applicability (a type delegating only some
+operations is checked for the operations it decides itself, like a type without access parent). A place not declaring its type (a
 privileged script, a form, a command whose unit lies in another view file) is only checked for an
 unknown operation; such findings belong to no type and are reported by
 `SecurityCoverageAnalysis.getUnattachedFindings()`.
@@ -561,7 +568,10 @@ The unchecked grants are only reported when the places checking an operation are
 module contributes an `OperationUseProvider` (as `com.top_logic.layout.view` does).
 
 A type is **covered** when it has a role source and at least one role may read it, **delegated**
-when it has an access parent (whether the parent is accessible is reported with the parent's type),
+when it has an access parent (whether the parent is accessible is reported with the parent's type;
+a type whose access parent is restricted to operations is delegated, too, but additionally gets the
+findings of the operations it decides itself: no role source, an operation neither delegated nor
+granted, dead or unchecked grants),
 **exempt** when it is internal or without security, **incomplete** otherwise.
 
 - At startup the findings of the access definition are logged at INFO (`log-findings="false"`

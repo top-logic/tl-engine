@@ -23,6 +23,7 @@ import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.FaviconTag;
 import com.top_logic.layout.react.resource.ClientResources;
@@ -58,6 +59,7 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.layout.view.login.PendingSessionAction;
 import com.top_logic.mig.html.HTMLConstants;
+import com.top_logic.util.ActingPerson;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
@@ -210,8 +212,10 @@ public class ViewServlet extends TopLogicServlet {
 
 		// Rendering the page attaches the window's tree, and that changes the display like any
 		// command does - on a reload, while the report of the page just unloaded detaches the same
-		// tree. The trees are therefore only touched within an interaction.
-		try (Interaction interaction = windowRegistry.beginInteraction()) {
+		// tree. The trees are therefore only touched within an interaction. The view is loaded for the
+		// person of the window, who is present in it.
+		try (Interaction interaction = windowRegistry.beginInteraction();
+				ThreadLocalBinding<Person>.Handle acting = ActingPerson.bind(TLContext.currentUser())) {
 			// The page sees the current state of the knowledge base, including the commits other
 			// threads made since the window's last request: the session revision of a window that
 			// exists already only advances when its model events are synthesized, and a reloaded page

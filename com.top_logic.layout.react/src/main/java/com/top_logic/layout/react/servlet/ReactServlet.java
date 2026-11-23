@@ -39,11 +39,13 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.scan.UploadGuardRequest;
 import com.top_logic.basic.io.binary.scan.UploadRejectedException;
 import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.event.infoservice.DefaultInfoServiceItem;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.event.infoservice.InfoServiceXMLStringConverter;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DynamicText;
 import com.top_logic.layout.UpdateWriter;
@@ -82,7 +84,9 @@ import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.RevalidationVisitor;
+import com.top_logic.util.ActingPerson;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.TopLogicServlet;
 
 import de.haumacher.msgbuf.data.DataObject;
@@ -280,26 +284,27 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		WindowContext window = resolveWindow(request, session, windowName);
-		if (window.queue() == null) {
-			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
-			return;
-		}
-		ReactCommandTarget control = window.queue().getControl(controlId);
-		if (!(control instanceof DataProvider)) {
-			sendError(response, HttpServletResponse.SC_NOT_FOUND,
-				"Control does not provide data: " + controlId);
-			return;
-		}
+		try (WindowContext window = resolveWindow(request, session, windowName)) {
+			if (window.queue() == null) {
+				sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+				return;
+			}
+			ReactCommandTarget control = window.queue().getControl(controlId);
+			if (!(control instanceof DataProvider)) {
+				sendError(response, HttpServletResponse.SC_NOT_FOUND,
+					"Control does not provide data: " + controlId);
+				return;
+			}
 
-		String key = request.getParameter("key");
-		BinaryData data = ((DataProvider) control).getDownloadData(key);
-		if (data == null) {
-			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-			return;
-		}
+			String key = request.getParameter("key");
+			BinaryData data = ((DataProvider) control).getDownloadData(key);
+			if (data == null) {
+				response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+				return;
+			}
 
-		sendData(response, data);
+			sendData(response, data);
+		}
 	}
 
 	/**
@@ -329,23 +334,24 @@ public class ReactServlet extends TopLogicServlet {
 	private void handleDownload(HttpServletRequest request, HttpServletResponse response, HttpSession session)
 			throws IOException {
 		String windowName = request.getParameter("windowName");
-		WindowContext window = resolveWindow(request, session, windowName);
-		if (window.queue() == null) {
-			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
-			return;
-		}
-		PendingDownload download = window.queue().takeDownload(request.getParameter("key"));
-		if (download == null) {
-			sendError(response, HttpServletResponse.SC_NOT_FOUND, "No such download.");
-			return;
-		}
-		try {
-			BinaryData data = download.data();
-			ContentDisposition.setAttachment(response, data.getName());
-			response.setHeader("Cache-Control", "no-store");
-			sendData(response, data);
-		} finally {
-			download.discard();
+		try (WindowContext window = resolveWindow(request, session, windowName)) {
+			if (window.queue() == null) {
+				sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+				return;
+			}
+			PendingDownload download = window.queue().takeDownload(request.getParameter("key"));
+			if (download == null) {
+				sendError(response, HttpServletResponse.SC_NOT_FOUND, "No such download.");
+				return;
+			}
+			try {
+				BinaryData data = download.data();
+				ContentDisposition.setAttachment(response, data.getName());
+				response.setHeader("Cache-Control", "no-store");
+				sendData(response, data);
+			} finally {
+				download.discard();
+			}
 		}
 	}
 
@@ -358,40 +364,41 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		WindowContext window = resolveWindow(request, session, windowName);
-		if (window.queue() == null) {
-			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
-			return;
-		}
-		ReactCommandTarget control = window.queue().getControl(controlId);
-		if (!(control instanceof TooltipProvider)) {
-			// A control without tooltips (e.g. a table whose cells probe for an optional tooltip) is
-			// a normal case, not an error: answer "no tooltip" rather than a 404 (which the browser
-			// logs as a failed request).
-			sendNoTooltip(response);
-			return;
-		}
-
-		String key = request.getParameter("key");
-		TooltipContent content = ((TooltipProvider) control).getTooltipContent(key);
-		if (content == null) {
-			sendNoTooltip(response);
-			return;
-		}
-
-		response.setContentType("application/json; charset=UTF-8");
-		try (PrintWriter out = response.getWriter()) {
-			out.write('{');
-			writeTooltipJsonField(out, "html", content.getHtml());
-			String caption = content.getCaption();
-			if (caption != null) {
-				out.write(',');
-				writeTooltipJsonField(out, "caption", caption);
+		try (WindowContext window = resolveWindow(request, session, windowName)) {
+			if (window.queue() == null) {
+				sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+				return;
 			}
-			if (content.isInteractive()) {
-				out.write(",\"interactive\":true");
+			ReactCommandTarget control = window.queue().getControl(controlId);
+			if (!(control instanceof TooltipProvider)) {
+				// A control without tooltips (e.g. a table whose cells probe for an optional tooltip) is
+				// a normal case, not an error: answer "no tooltip" rather than a 404 (which the browser
+				// logs as a failed request).
+				sendNoTooltip(response);
+				return;
 			}
-			out.write('}');
+
+			String key = request.getParameter("key");
+			TooltipContent content = ((TooltipProvider) control).getTooltipContent(key);
+			if (content == null) {
+				sendNoTooltip(response);
+				return;
+			}
+
+			response.setContentType("application/json; charset=UTF-8");
+			try (PrintWriter out = response.getWriter()) {
+				out.write('{');
+				writeTooltipJsonField(out, "html", content.getHtml());
+				String caption = content.getCaption();
+				if (caption != null) {
+					out.write(',');
+					writeTooltipJsonField(out, "caption", caption);
+				}
+				if (content.isInteractive()) {
+					out.write(",\"interactive\":true");
+				}
+				out.write('}');
+			}
 		}
 	}
 
@@ -531,9 +538,17 @@ public class ReactServlet extends TopLogicServlet {
 	 * @param rootHandler
 	 *        The window's {@link SubsessionHandler}, or {@code null} for a window that does not use
 	 *        the traditional layout engine.
+	 * @param actingPerson
+	 *        The binding of the window's person as {@link ActingPerson}, released by
+	 *        {@link #close()} at the end of the request.
 	 */
-	private record WindowContext(DisplayContext displayContext, SSEUpdateQueue queue, SubsessionHandler rootHandler) {
-		// Pure value.
+	private record WindowContext(DisplayContext displayContext, SSEUpdateQueue queue, SubsessionHandler rootHandler,
+			ThreadLocalBinding<Person>.Handle actingPerson) implements AutoCloseable {
+
+		@Override
+		public void close() {
+			actingPerson.close();
+		}
 	}
 
 	/**
@@ -545,6 +560,11 @@ public class ReactServlet extends TopLogicServlet {
 	 * a cell tooltip - runs in the context the window's controls belong to. Without it, resolving a
 	 * label or a value of a model object has no user, no locale and no session-bound caches to work
 	 * with.
+	 * </p>
+	 *
+	 * <p>
+	 * The request acts for the person of the window, who is present in it: until the returned window
+	 * is {@link WindowContext#close() closed}, this person is the {@link ActingPerson}.
 	 * </p>
 	 *
 	 * @param request
@@ -559,7 +579,9 @@ public class ReactServlet extends TopLogicServlet {
 	private WindowContext resolveWindow(HttpServletRequest request, HttpSession session, String windowName) {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
-		return new WindowContext(displayContext, getWindowQueue(session, windowName), rootHandler);
+		SSEUpdateQueue queue = getWindowQueue(session, windowName);
+		// The person of the sub-session just installed; none if the session does not know the window.
+		return new WindowContext(displayContext, queue, rootHandler, ActingPerson.bind(TLContext.currentUser()));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -638,57 +660,58 @@ public class ReactServlet extends TopLogicServlet {
 			arguments = Map.of();
 		}
 
-		WindowContext window = resolveWindow(request, session, windowName);
-		SSEUpdateQueue queue = window.queue();
-		if (queue == null) {
-			ReactWindowRegistry.forSession(session).reportStaleWindow(windowName,
-				describeCommand(commandName, controlId));
-			sendError(response, HttpServletResponse.SC_BAD_REQUEST, ERROR_CODE_STALE_UI,
-				"Unknown window: " + windowName);
-			return;
-		}
-		if (queue.getControl(controlId) == null) {
-			answerMissingControl(response, session, queue, windowName, controlId, commandName, ignoreStaleUi);
-			return;
-		}
+		try (WindowContext window = resolveWindow(request, session, windowName)) {
+			SSEUpdateQueue queue = window.queue();
+			if (queue == null) {
+				ReactWindowRegistry.forSession(session).reportStaleWindow(windowName,
+					describeCommand(commandName, controlId));
+				sendError(response, HttpServletResponse.SC_BAD_REQUEST, ERROR_CODE_STALE_UI,
+					"Unknown window: " + windowName);
+				return;
+			}
+			if (queue.getControl(controlId) == null) {
+				answerMissingControl(response, session, queue, windowName, controlId, commandName, ignoreStaleUi);
+				return;
+			}
 
-		DisplayContext displayContext = window.displayContext();
-		SubsessionHandler rootHandler = window.rootHandler();
-		// Taken before the command runs: a command may end the session (e.g. by removing its
-		// account), which then can no longer be read.
-		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
+			DisplayContext displayContext = window.displayContext();
+			SubsessionHandler rootHandler = window.rootHandler();
+			// Taken before the command runs: a command may end the session (e.g. by removing its
+			// account), which then can no longer be read.
+			ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
 
-		ReactCommandTarget control;
-		String answer = null;
-		try (Interaction interaction = registry.beginInteraction()) {
-			// The command sees the current state of the knowledge base, including the commits other
-			// threads made since the window's last request: the session revision of the window only
-			// advances when its model events are synthesized.
-			registry.synthesizeModelEvents(windowName);
+			ReactCommandTarget control;
+			String answer = null;
+			try (Interaction interaction = registry.beginInteraction()) {
+				// The command sees the current state of the knowledge base, including the commits other
+				// threads made since the window's last request: the session revision of the window only
+				// advances when its model events are synthesized.
+				registry.synthesizeModelEvents(windowName);
 
-			// The model events may have removed the addressed control from the display.
-			control = queue.getControl(controlId);
+				// The model events may have removed the addressed control from the display.
+				control = queue.getControl(controlId);
+				if (control == null) {
+					Logger.info("Command '" + commandName + "' for control '" + controlId
+						+ "' dropped: the control left the display while the window caught up with the model.",
+						ReactServlet.class);
+				} else {
+					answer = executeCommand(queue, control, commandName, arguments, displayContext, rootHandler,
+						registry, windowName);
+				}
+			}
 			if (control == null) {
-				Logger.info("Command '" + commandName + "' for control '" + controlId
-					+ "' dropped: the control left the display while the window caught up with the model.",
-					ReactServlet.class);
-			} else {
-				answer = executeCommand(queue, control, commandName, arguments, displayContext, rootHandler,
-					registry, windowName);
+				if (ignoreStaleUi) {
+					sendSuccess(response);
+				} else {
+					sendControlNotFound(response, controlId);
+				}
+				return;
 			}
+			// Answered once the interaction has delivered its events, so that the answer can name the
+			// last of them: the client checks that its stream brings them (see LAST_EVENT_HEADER).
+			response.setHeader(LAST_EVENT_HEADER, Long.toString(queue.lastSeq()));
+			sendJson(response, answer);
 		}
-		if (control == null) {
-			if (ignoreStaleUi) {
-				sendSuccess(response);
-			} else {
-				sendControlNotFound(response, controlId);
-			}
-			return;
-		}
-		// Answered once the interaction has delivered its events, so that the answer can name the
-		// last of them: the client checks that its stream brings them (see LAST_EVENT_HEADER).
-		response.setHeader(LAST_EVENT_HEADER, Long.toString(queue.lastSeq()));
-		sendJson(response, answer);
 	}
 
 	/**
@@ -837,63 +860,64 @@ public class ReactServlet extends TopLogicServlet {
 	 */
 	private void handleNavigateToRoute(HttpServletRequest request, HttpServletResponse response,
 			HttpSession session, String windowName, Map<String, Object> arguments) throws IOException {
-		WindowContext window = resolveWindow(request, session, windowName);
-		SSEUpdateQueue queue = window.queue();
-		if (queue == null) {
-			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
-			return;
-		}
+		try (WindowContext window = resolveWindow(request, session, windowName)) {
+			SSEUpdateQueue queue = window.queue();
+			if (queue == null) {
+				sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+				return;
+			}
 
-		RouteManager routeManager = queue.getRouteManager();
-		if (routeManager == null) {
-			Logger.warn("No RouteManager found for window '" + windowName + "'.", ReactServlet.class);
-			sendSuccess(response);
-			return;
-		}
+			RouteManager routeManager = queue.getRouteManager();
+			if (routeManager == null) {
+				Logger.warn("No RouteManager found for window '" + windowName + "'.", ReactServlet.class);
+				sendSuccess(response);
+				return;
+			}
 
-		String requested = arguments != null ? (String) arguments.get(ARG_URL) : null;
-		String url = requested != null ? requested : "";
+			String requested = arguments != null ? (String) arguments.get(ARG_URL) : null;
+			String url = requested != null ? requested : "";
 
-		// Adopting a URL changes the display like any other command does, and needs the same context
-		// for it: the subsession the controls belong to, which the window resolution above installs -
-		// without it a channel bound to a route parameter cannot look up the object the URL names -
-		// the update phase that lets the controls write their state, and the interaction that keeps a
-		// second request out of the tree meanwhile and delivers what the navigation changed.
-		SubsessionHandler rootHandler = window.rootHandler();
+			// Adopting a URL changes the display like any other command does, and needs the same context
+			// for it: the subsession the controls belong to, which the window resolution above installs -
+			// without it a channel bound to a route parameter cannot look up the object the URL names -
+			// the update phase that lets the controls write their state, and the interaction that keeps a
+			// second request out of the tree meanwhile and delivers what the navigation changed.
+			SubsessionHandler rootHandler = window.rootHandler();
 
-		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
-		try (Interaction interaction = registry.beginInteraction()) {
-			// The URL is resolved against the current state of the knowledge base, see
-			// handleCommand(HttpServletRequest, HttpServletResponse, HttpSession).
-			registry.synthesizeModelEvents(windowName);
+			ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
+			try (Interaction interaction = registry.beginInteraction()) {
+				// The URL is resolved against the current state of the knowledge base, see
+				// handleCommand(HttpServletRequest, HttpServletResponse, HttpSession).
+				registry.synthesizeModelEvents(windowName);
 
-			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
-			try {
+				boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 				try {
-					routeManager.navigateToRoute(url);
+					try {
+						routeManager.navigateToRoute(url);
 
-					// The display has taken the URL as far as it can: a segment it cannot reproduce is
-					// dropped, and what the display adds from here on is a navigation again.
-					routeManager.finishAdoption();
-					sendSuccess(response);
-				} catch (ChannelVetoException veto) {
-					Logger.info("Route navigation refused by unsaved changes for url '" + url + "'.",
-						ReactServlet.class);
+						// The display has taken the URL as far as it can: a segment it cannot reproduce is
+						// dropped, and what the display adds from here on is a navigation again.
+						routeManager.finishAdoption();
+						sendSuccess(response);
+					} catch (ChannelVetoException veto) {
+						Logger.info("Route navigation refused by unsaved changes for url '" + url + "'.",
+							ReactServlet.class);
 
-					// The refusal is complete before the question is put: display and address bar agree
-					// on the page that is kept, so the user stays on it whatever they answer.
-					sendRefused(response, restoreUrl(routeManager));
+						// The refusal is complete before the question is put: display and address bar agree
+						// on the page that is kept, so the user stays on it whatever they answer.
+						sendRefused(response, restoreUrl(routeManager));
 
-					askAndResume(queue, url, veto);
-				} catch (Exception ex) {
-					Logger.info("Route navigation failed for url '" + url + "': " + ex.getMessage(),
-						ReactServlet.class);
+						askAndResume(queue, url, veto);
+					} catch (Exception ex) {
+						Logger.info("Route navigation failed for url '" + url + "': " + ex.getMessage(),
+							ReactServlet.class);
 
-					sendRefused(response, restoreUrl(routeManager));
-				}
-			} finally {
-				if (rootHandler != null) {
-					rootHandler.enableUpdate(updateBefore);
+						sendRefused(response, restoreUrl(routeManager));
+					}
+				} finally {
+					if (rootHandler != null) {
+						rootHandler.enableUpdate(updateBefore);
+					}
 				}
 			}
 		}
@@ -978,20 +1002,22 @@ public class ReactServlet extends TopLogicServlet {
 		}
 
 		String requesterWindowId = delivery.pick().requesterWindowId();
-		SubsessionHandler rootHandler = resolveWindow(request, session, requesterWindowId).rootHandler();
+		try (WindowContext window = resolveWindow(request, session, requesterWindowId)) {
+			SubsessionHandler rootHandler = window.rootHandler();
 
-		try (Interaction interaction = registry.beginInteraction()) {
-			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
-			try {
-				delivery.deliver();
-			} finally {
-				if (rootHandler != null) {
-					rootHandler.enableUpdate(updateBefore);
+			try (Interaction interaction = registry.beginInteraction()) {
+				boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
+				try {
+					delivery.deliver();
+				} finally {
+					if (rootHandler != null) {
+						rootHandler.enableUpdate(updateBefore);
+					}
 				}
+				registry.synthesizeModelEvents(requesterWindowId);
 			}
-			registry.synthesizeModelEvents(requesterWindowId);
+			sendSuccess(response);
 		}
-		sendSuccess(response);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -1004,20 +1030,21 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		WindowContext window = resolveWindow(request, session, windowName);
-		if (window.queue() == null) {
-			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
-			return;
-		}
-		ReactCommandTarget control = window.queue().getControl(controlId);
-		if (control instanceof ReactControl) {
-			ReactControl reactControl = (ReactControl) control;
-			PrintWriter writer = response.getWriter();
+		try (WindowContext window = resolveWindow(request, session, windowName)) {
+			if (window.queue() == null) {
+				sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+				return;
+			}
+			ReactCommandTarget control = window.queue().getControl(controlId);
+			if (control instanceof ReactControl) {
+				ReactControl reactControl = (ReactControl) control;
+				PrintWriter writer = response.getWriter();
 
-			writer.write(reactControl.stateAsJSON());
-			writer.flush();
-		} else {
-			sendControlNotFound(response, controlId);
+				writer.write(reactControl.stateAsJSON());
+				writer.flush();
+			} else {
+				sendControlNotFound(response, controlId);
+			}
 		}
 	}
 
@@ -1044,94 +1071,95 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 
-		WindowContext window = resolveWindow(request, session, windowName);
-		SSEUpdateQueue queue = window.queue();
-		if (queue == null) {
-			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
-			return;
-		}
-		ReactCommandTarget control = queue.getControl(controlId);
-		if (!(control instanceof UploadHandler)) {
-			sendError(response, HttpServletResponse.SC_NOT_FOUND,
-				"Control does not support uploads: " + controlId);
-			return;
-		}
-
-		long limit = ((UploadHandler) control).maxUploadSize();
-		if (limit > 0) {
-			// Let the container apply the limit of the control to each file while it parses the body,
-			// instead of the fixed one from the deployment descriptor. The request as a whole is not
-			// limited: the limit is one per file, however many are uploaded at once.
-			request.setAttribute(MULTIPART_CONFIG_ATTRIBUTE,
-				new MultipartConfigElement("", limit, -1, FILE_SIZE_THRESHOLD));
-		}
-
-		DisplayContext displayContext = window.displayContext();
-		SubsessionHandler rootHandler = window.rootHandler();
-		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
-
-		try (Interaction interaction = registry.beginInteraction()) {
-			// The upload is handled against the current state of the knowledge base, see
-			// handleCommand(HttpServletRequest, HttpServletResponse, HttpSession).
-			registry.synthesizeModelEvents(windowName);
-			if (queue.getControl(controlId) != control) {
-				Logger.info("Upload for control '" + controlId
-					+ "' dropped: the control left the display while the window caught up with the model.",
-					ReactServlet.class);
-				sendControlNotFound(response, controlId);
+		try (WindowContext window = resolveWindow(request, session, windowName)) {
+			SSEUpdateQueue queue = window.queue();
+			if (queue == null) {
+				sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+				return;
+			}
+			ReactCommandTarget control = queue.getControl(controlId);
+			if (!(control instanceof UploadHandler)) {
+				sendError(response, HttpServletResponse.SC_NOT_FOUND,
+					"Control does not support uploads: " + controlId);
 				return;
 			}
 
-			DataObject reply = null;
-			Throwable failure = null;
-			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
-			try {
-				Collection<Part> parts;
-				try {
-					parts = request.getParts();
-				} catch (UploadRejectedException ex) {
-					// A content checker of the upload guard refused one of the uploaded files.
-					rejectUpload(response, control, TopLogicServlet.SC_UNPROCESSABLE_CONTENT, ex.getErrorKey(),
-						"content check failed: " + Resources.getInstance().getString(ex.getErrorKey()));
-					return;
-				} catch (IllegalStateException ex) {
-					if (limit <= 0) {
-						// Uploads are unlimited, so the container refused the body for another
-						// reason - report it like any other failure of the upload.
-						throw ex;
-					}
-					// The file size check of the container tripped while it parsed the body.
-					rejectTooLarge(response, control, limit, ex.getMessage());
-					return;
-				}
-				if (limit > 0) {
-					// A container that ignores the multipart configuration attribute has not checked
-					// the file sizes while parsing the body.
-					Part oversized = oversizedPart(parts, limit);
-					if (oversized != null) {
-						rejectTooLarge(response, control, limit,
-							"file '" + oversized.getSubmittedFileName() + "' of " + oversized.getSize() + " bytes");
-						return;
-					}
-				}
-				reply = ((UploadHandler) control).handleUpload(displayContext, parts);
-			} catch (Throwable ex) {
-				failure = ex;
-			} finally {
-				if (rootHandler != null) {
-					rootHandler.enableUpdate(updateBefore);
-				}
+			long limit = ((UploadHandler) control).maxUploadSize();
+			if (limit > 0) {
+				// Let the container apply the limit of the control to each file while it parses the body,
+				// instead of the fixed one from the deployment descriptor. The request as a whole is not
+				// limited: the limit is one per file, however many are uploaded at once.
+				request.setAttribute(MULTIPART_CONFIG_ATTRIBUTE,
+					new MultipartConfigElement("", limit, -1, FILE_SIZE_THRESHOLD));
 			}
 
-			// Forward side effects: InfoService messages and legacy control repaints.
-			forwardPendingUpdates(displayContext, rootHandler, queue, control);
+			DisplayContext displayContext = window.displayContext();
+			SubsessionHandler rootHandler = window.rootHandler();
+			ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
 
-			// Synthesize model events so that observable models (e.g. tables observing the uploaded
-			// objects' type) receive the changes made during upload handling before the interaction
-			// delivers its updates - otherwise the upload's effect only shows after a later rebuild.
-			registry.synthesizeModelEvents(windowName);
+			try (Interaction interaction = registry.beginInteraction()) {
+				// The upload is handled against the current state of the knowledge base, see
+				// handleCommand(HttpServletRequest, HttpServletResponse, HttpSession).
+				registry.synthesizeModelEvents(windowName);
+				if (queue.getControl(controlId) != control) {
+					Logger.info("Upload for control '" + controlId
+						+ "' dropped: the control left the display while the window caught up with the model.",
+						ReactServlet.class);
+					sendControlNotFound(response, controlId);
+					return;
+				}
 
-			sendJson(response, answer(control, failure, reply, "Upload on " + control.getClass().getName()));
+				DataObject reply = null;
+				Throwable failure = null;
+				boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
+				try {
+					Collection<Part> parts;
+					try {
+						parts = request.getParts();
+					} catch (UploadRejectedException ex) {
+						// A content checker of the upload guard refused one of the uploaded files.
+						rejectUpload(response, control, TopLogicServlet.SC_UNPROCESSABLE_CONTENT, ex.getErrorKey(),
+							"content check failed: " + Resources.getInstance().getString(ex.getErrorKey()));
+						return;
+					} catch (IllegalStateException ex) {
+						if (limit <= 0) {
+							// Uploads are unlimited, so the container refused the body for another
+							// reason - report it like any other failure of the upload.
+							throw ex;
+						}
+						// The file size check of the container tripped while it parsed the body.
+						rejectTooLarge(response, control, limit, ex.getMessage());
+						return;
+					}
+					if (limit > 0) {
+						// A container that ignores the multipart configuration attribute has not checked
+						// the file sizes while parsing the body.
+						Part oversized = oversizedPart(parts, limit);
+						if (oversized != null) {
+							rejectTooLarge(response, control, limit,
+								"file '" + oversized.getSubmittedFileName() + "' of " + oversized.getSize() + " bytes");
+							return;
+						}
+					}
+					reply = ((UploadHandler) control).handleUpload(displayContext, parts);
+				} catch (Throwable ex) {
+					failure = ex;
+				} finally {
+					if (rootHandler != null) {
+						rootHandler.enableUpdate(updateBefore);
+					}
+				}
+
+				// Forward side effects: InfoService messages and legacy control repaints.
+				forwardPendingUpdates(displayContext, rootHandler, queue, control);
+
+				// Synthesize model events so that observable models (e.g. tables observing the uploaded
+				// objects' type) receive the changes made during upload handling before the interaction
+				// delivers its updates - otherwise the upload's effect only shows after a later rebuild.
+				registry.synthesizeModelEvents(windowName);
+
+				sendJson(response, answer(control, failure, reply, "Upload on " + control.getClass().getName()));
+			}
 		}
 	}
 
@@ -1225,22 +1253,23 @@ public class ReactServlet extends TopLogicServlet {
 	private void handleUploadRejected(HttpServletRequest request, HttpServletResponse response,
 			HttpSession session, String windowName, String controlId, Map<String, Object> arguments)
 			throws IOException {
-		WindowContext window = resolveWindow(request, session, windowName);
-		if (window.queue() == null) {
-			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
-			return;
-		}
-		ReactCommandTarget control = controlId != null ? window.queue().getControl(controlId) : null;
-		Object fileName = arguments != null ? arguments.get(ARG_FILE_NAME) : null;
-		Object size = arguments != null ? arguments.get(ARG_SIZE) : null;
-		Logger.info("Upload of '" + fileName + "' (" + size + " bytes) refused by the client, larger than the "
-			+ "upload limit.", ReactServlet.class);
+		try (WindowContext window = resolveWindow(request, session, windowName)) {
+			if (window.queue() == null) {
+				sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+				return;
+			}
+			ReactCommandTarget control = controlId != null ? window.queue().getControl(controlId) : null;
+			Object fileName = arguments != null ? arguments.get(ARG_FILE_NAME) : null;
+			Object size = arguments != null ? arguments.get(ARG_SIZE) : null;
+			Logger.info("Upload of '" + fileName + "' (" + size + " bytes) refused by the client, larger than the "
+				+ "upload limit.", ReactServlet.class);
 
-		long limit = control instanceof UploadHandler handler ? handler.maxUploadSize() : UploadSupport.maxUploadSize();
-		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
-			showUploadNotice(control, uploadTooLarge(limit));
+			long limit = control instanceof UploadHandler handler ? handler.maxUploadSize() : UploadSupport.maxUploadSize();
+			try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
+				showUploadNotice(control, uploadTooLarge(limit));
+			}
+			sendSuccess(response);
 		}
-		sendSuccess(response);
 	}
 
 	/**
@@ -1249,20 +1278,21 @@ public class ReactServlet extends TopLogicServlet {
 	 */
 	private void handleOpenUrlRefused(HttpServletRequest request, HttpServletResponse response,
 			HttpSession session, String windowName, Map<String, Object> arguments) throws IOException {
-		WindowContext window = resolveWindow(request, session, windowName);
-		if (window.queue() == null) {
-			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
-			return;
+		try (WindowContext window = resolveWindow(request, session, windowName)) {
+			if (window.queue() == null) {
+				sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+				return;
+			}
+			Object url = arguments != null ? arguments.get(ARG_REFUSED_URL) : null;
+			if (!(url instanceof String address)) {
+				sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing argument: " + ARG_REFUSED_URL);
+				return;
+			}
+			try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
+				window.queue().offerRefusedUrl(address);
+			}
+			sendSuccess(response);
 		}
-		Object url = arguments != null ? arguments.get(ARG_REFUSED_URL) : null;
-		if (!(url instanceof String address)) {
-			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing argument: " + ARG_REFUSED_URL);
-			return;
-		}
-		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
-			window.queue().offerRefusedUrl(address);
-		}
-		sendSuccess(response);
 	}
 
 	/**

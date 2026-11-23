@@ -25,6 +25,7 @@ import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.knowledge.gui.layout.LayoutConfig;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -36,6 +37,7 @@ import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
 import com.top_logic.layout.internal.WindowId;
 import com.top_logic.layout.internal.WindowRegistry;
+import com.top_logic.util.ActingPerson;
 import com.top_logic.util.TLContextManager;
 
 /**
@@ -167,7 +169,10 @@ public class ContentHandlersRegistry extends WindowRegistry<SubsessionHandler> {
 
 		context.installSubSessionContext(subSession);
 
-		super.dispatch(context, rootHandler, windowId, url);
+		// The page and the content of the window are loaded for its present person.
+		try (ThreadLocalBinding<Person>.Handle acting = ActingPerson.bind(subSession.getPerson())) {
+			super.dispatch(context, rootHandler, windowId, url);
+		}
 	}
 
 	private SubsessionHandler startLogin(DisplayContext context, WindowId subsessionId) throws IOException {

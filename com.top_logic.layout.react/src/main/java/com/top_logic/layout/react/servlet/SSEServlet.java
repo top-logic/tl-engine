@@ -19,11 +19,15 @@ import jakarta.servlet.http.HttpSession;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.thread.ThreadLocalBinding;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.util.ActingPerson;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 
 /**
@@ -154,7 +158,10 @@ public class SSEServlet extends HttpServlet {
 			TLContextManager.inInteraction(sessionContext, getServletContext(), request, response, () -> {
 				DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 				ReactWindowReplay.installSubSession(displayContext, windowName);
-				accepted[0] = queue.setConnection(asyncContext, lastEventId);
+				// Rendering the tree is a load of the view for the present person of the window.
+				try (ThreadLocalBinding<Person>.Handle acting = ActingPerson.bind(TLContext.currentUser())) {
+					accepted[0] = queue.setConnection(asyncContext, lastEventId);
+				}
 			});
 			if (!accepted[0]) {
 				// The queue closed the stream: its window is torn down.

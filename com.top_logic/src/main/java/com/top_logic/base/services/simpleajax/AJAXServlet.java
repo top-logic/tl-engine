@@ -32,12 +32,14 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.PrefixBufferedInputStream;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.basic.xml.sax.SAXUtil;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.event.infoservice.InfoServiceXMLStringConverter;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.ContentHandlersRegistry;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.ProcessingInfo;
@@ -57,6 +59,7 @@ import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.mig.html.layout.RevalidationVisitor;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.ActingPerson;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
@@ -338,7 +341,9 @@ public class AJAXServlet extends TopLogicServlet {
 					store.acknowledge(ajaxRequest.getAcks());
 				}
 
-				try (Response handle = store.createResponse(rxSequence)) {
+				// The commands, field changes and updates of the window act for its present person.
+				try (Response handle = store.createResponse(rxSequence);
+						ThreadLocalBinding<Person>.Handle acting = ActingPerson.bind(subSession.getPerson())) {
 				TagWriter out = handle.open(displayContext);
 				UpdateWriter writer = new UpdateWriter(displayContext, out, encoding, rxSequence, sourceReference);
 				boolean processExternalModelEvents = false;

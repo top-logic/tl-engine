@@ -9,6 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
@@ -44,6 +45,7 @@ import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.servlet.ReactServlet;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowModelEventService;
+import com.top_logic.util.ActingPerson;
 import com.top_logic.util.CachePolicy;
 import com.top_logic.util.TLContext;
 
@@ -51,8 +53,8 @@ import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * Tests that a command posted to {@link ReactServlet} sees the commits other threads made since
- * the last request of its window, and that a command ending its own session is no internal
- * error.
+ * the last request of its window, that a command ending its own session is no internal error, and
+ * that a command acts for the person of its window.
  */
 public class TestCommandSeesForeignCommit extends BasicTestCase {
 
@@ -178,6 +180,41 @@ public class TestCommandSeesForeignCommit extends BasicTestCase {
 			body.contains("\"errorCode\":\"" + ReactServlet.ERROR_CODE_STALE_UI + "\""));
 	}
 
+	/**
+	 * A command acts for the person who is present in its window, and the request leaves no acting
+	 * person on its thread, also when the command fails.
+	 */
+	public void testCommandActsForThePersonOfItsWindow() throws Exception {
+		AtomicReference<Person> acting = new AtomicReference<>();
+		AtomicBoolean fail = new AtomicBoolean();
+		displayWindow(new ReactCommandTarget() {
+			@Override
+			public String getID() {
+				return CONTROL_ID;
+			}
+
+			@Override
+			public DataObject executeCommand(String commandName, Map<String, Object> arguments) {
+				acting.set(ActingPerson.handOver());
+				if (fail.get()) {
+					throw new IllegalStateException("Expected failure of the command.");
+				}
+				return null;
+			}
+		});
+
+		postCommand();
+		assertSame(_person, acting.get());
+		assertNull("The request left its acting person on the thread.", inWindow(ActingPerson::handOver));
+
+		acting.set(null);
+		fail.set(true);
+		_client.setExceptionsThrownOnErrorStatus(false);
+		postCommand();
+		assertSame(_person, acting.get());
+		assertNull("The failed request left its acting person on the thread.", inWindow(ActingPerson::handOver));
+	}
+
 	private InvocationContext postCommand() throws Exception {
 		String body = JSON.toString(Map.of(
 			"controlId", CONTROL_ID,
@@ -201,6 +238,7 @@ public class TestCommandSeesForeignCommit extends BasicTestCase {
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		TLContext subSession = new TLContext();
 		subSession.setSessionContext(sessionContext);
+		subSession.setPerson(_person);
 		sessionContext.setIfAbsent(WINDOW, subSession);
 		subSession.updateSessionRevision(kb.getHistoryManager(), ((UpdateChainView) kb.getUpdateChain()).current());
 		registry.getOrCreateQueue(WINDOW).setWindowContext(WINDOW, sessionContext, registry);

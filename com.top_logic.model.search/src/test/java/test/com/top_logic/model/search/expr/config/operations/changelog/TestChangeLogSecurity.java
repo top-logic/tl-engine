@@ -23,7 +23,10 @@ import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.element.changelog.ChangeLogBuilder;
+import com.top_logic.element.changelog.ChangeLogOptions;
+import com.top_logic.element.changelog.ChangeSetReverter;
 import com.top_logic.element.changelog.model.Change;
 import com.top_logic.element.changelog.model.ChangeSet;
 import com.top_logic.element.changelog.model.Modification;
@@ -43,10 +46,12 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.model.search.configured.ConfiguredTLScriptFunctions;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
@@ -74,6 +79,8 @@ public class TestChangeLogSecurity extends AbstractSearchExpressionTest {
 
 	private static final String RELATED = "related";
 
+	private static final String WRITER = "writer";
+
 	private static final String RESTRICT = "cs -> changeSetRestrict($cs)";
 
 	private static final String CHANGE_LOG = "changeLog(null, 1)";
@@ -81,6 +88,12 @@ public class TestChangeLogSecurity extends AbstractSearchExpressionTest {
 	private static final String CHANGE_LOG_OF_OBJECT = "obj -> changeLog($obj, 1)";
 
 	private static final String REVERT = "cs -> revertChanges($cs)";
+
+	/**
+	 * Privileged function of the test configuration reading the latest commit and restricting it
+	 * for the caller.
+	 */
+	private static final String PRIVILEGED_CHANGE_LOG = "obj -> testRestrictedChangeLog($obj)";
 
 	private KnowledgeBase _kb;
 
@@ -100,6 +113,9 @@ public class TestChangeLogSecurity extends AbstractSearchExpressionTest {
 	/** Holds the role on {@link #_barB}, which {@link #_reader} can neither read nor discover. */
 	private Person _other;
 
+	/** Reads and writes {@link #_barA}. */
+	private Person _writer;
+
 	private TLObject _barA;
 
 	private TLObject _barB;
@@ -117,7 +133,9 @@ public class TestChangeLogSecurity extends AbstractSearchExpressionTest {
 		try (Transaction tx = beginTx()) {
 			_reader = TestPerson.createPerson("changeLogSecReader");
 			_other = TestPerson.createPerson("changeLogSecOther");
+			_writer = TestPerson.createPerson("changeLogSecWriter");
 			_barA = newNamed("Bar", "barA", _reader);
+			_barA.tUpdateByName(WRITER, _writer);
 			_barB = newNamed("Bar", "barB", _other);
 			_fooA = newNamed("Foo", "fooA", _reader);
 			_related = newNamed("DiscoverNamed", "related", _reader);
@@ -327,6 +345,25 @@ public class TestChangeLogSecurity extends AbstractSearchExpressionTest {
 	}
 
 	/**
+	 * A user who is not an administrator reads the change log in a privileged function, which
+	 * restricts every commit to what the user may see.
+	 */
+	public void testChangeLogInPrivilegedFunction() throws Exception {
+		ChangeSet commit = commit(ResKey.text("mixed"), () -> {
+			_barA.tUpdateByName(NAME, "barA2");
+			_barB.tUpdateByName(NAME, "barB2");
+		});
+
+		becomeUser(_reader);
+		Collection<?> log = (Collection<?>) execute(search(PRIVILEGED_CHANGE_LOG), _barA);
+		assertEquals(1, log.size());
+		ChangeSet restricted = (ChangeSet) log.iterator().next();
+		assertEquals(commit.getRevision(), restricted.getRevision());
+		assertTrue(restricted.getIncomplete());
+		assertEquals(Set.of(_barA), changedObjects(restricted));
+	}
+
+	/**
 	 * {@code revertChanges()} refuses a restricted commit that lacks changes the user may not see.
 	 * Nothing is reverted.
 	 */
@@ -354,7 +391,8 @@ public class TestChangeLogSecurity extends AbstractSearchExpressionTest {
 	}
 
 	/**
-	 * {@code revertChanges()} reverts a restricted commit that contains all changes.
+	 * {@code revertChanges()} reverts a restricted commit that contains all changes, for a user who
+	 * may write the changed object.
 	 */
 	public void testRevertCompleteCommit() throws Exception {
 		becomeUser(_reader);
@@ -362,6 +400,7 @@ public class TestChangeLogSecurity extends AbstractSearchExpressionTest {
 			_barA.tUpdateByName(NAME, "barA2");
 		});
 
+		becomeUser(_writer);
 		ChangeSet restricted = restrict(commit);
 		assertFalse("Precondition: the restriction is complete.", restricted.getIncomplete());
 
@@ -370,6 +409,60 @@ public class TestChangeLogSecurity extends AbstractSearchExpressionTest {
 			tx.commit();
 		}
 		assertEquals("barA", _barA.tValueByName(NAME));
+	}
+
+	/**
+	 * The undo of a user's own newest commit is refused when the user lost the right to read a
+	 * part of it. Nothing is reverted.
+	 */
+	public void testUndoRefusedForHiddenParts() throws Exception {
+		becomeUser(_reader);
+		commit(ResKey.text("by reader"), () -> {
+			_barA.tUpdateByName(NAME, "barA2");
+			_related.tUpdateByName(NAME, "related2");
+		});
+
+		// The reader loses the role on the related object.
+		becomeUser(PersonManager.getManager().getRoot());
+		commit(ResKey.text("revoke"), () -> _related.tUpdateByName(ACCOUNT_A, _other));
+
+		becomeUser(_reader);
+		ChangeSet target = ChangeSetReverter.findUndoTarget(null, ownChanges(), 0, true, _reader);
+		assertEquals(Set.of(_barA), changedObjects(target));
+		assertTrue(target.getIncomplete());
+
+		long lastRevision = _kb.getHistoryManager().getLastRevision();
+		try {
+			ChangeSetReverter.revert(_kb, target, false);
+			fail("The undo of a commit with hidden parts must be refused.");
+		} catch (TopLogicException ex) {
+			assertEquals(com.top_logic.element.changelog.I18NConstants.ERROR_REVERT_INCOMPLETE_CHANGE_SET__DATE,
+				ex.getErrorKey().plain());
+		}
+		assertEquals(lastRevision, _kb.getHistoryManager().getLastRevision());
+		assertEquals("barA2", _barA.tValueByName(NAME));
+		assertEquals("related2", _related.tValueByName(NAME));
+	}
+
+	/**
+	 * The undo of a user's own newest commit, which the user sees completely and may write, reverts
+	 * it.
+	 */
+	public void testUndoVisibleCommit() throws Exception {
+		becomeUser(_writer);
+		commit(ResKey.text("by writer"), () -> _barA.tUpdateByName(NAME, "barA2"));
+
+		ChangeSet target = ChangeSetReverter.findUndoTarget(null, ownChanges(), 0, true, _writer);
+		assertFalse(target.getIncomplete());
+		assertEquals(List.of(), ChangeSetReverter.revert(_kb, target, false));
+		assertEquals("barA", _barA.tValueByName(NAME));
+	}
+
+	/**
+	 * The options of an undo command considering the changes of the current user.
+	 */
+	private static ChangeLogOptions ownChanges() {
+		return TypedConfiguration.newConfigItem(ChangeLogOptions.class);
 	}
 
 	private static void assertChangeLogDenied(String script, Object... args) throws Exception {
@@ -476,7 +569,9 @@ public class TestChangeLogSecurity extends AbstractSearchExpressionTest {
 			AccessManager.Module.INSTANCE,
 			TLSecurityDeviceManager.Module.INSTANCE,
 			InitialRolesManager.Module.INSTANCE,
-			SecurityConfigurationService.Module.INSTANCE);
+			CommandGroupRegistry.Module.INSTANCE,
+			SecurityConfigurationService.Module.INSTANCE,
+			ConfiguredTLScriptFunctions.Module.INSTANCE);
 	}
 
 }

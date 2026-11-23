@@ -28,6 +28,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.util.error.TopLogicException;
@@ -355,6 +356,46 @@ public final class ChangeSetReverter {
 	public static ChangeSet findRedoCandidate(TLObject root, ChangeLogOptions options, int windowSize,
 			boolean includeSubtree) {
 		return findNewestPendingRevert(readLog(root, options, windowSize, includeSubtree));
+	}
+
+	/**
+	 * The change set an {@code undo} operation of the given user reverts: the
+	 * {@link #findUndoCandidate(TLObject, ChangeLogOptions, int, boolean) undo candidate},
+	 * {@link ChangeSetRestriction restricted} to what the user may see.
+	 *
+	 * <p>
+	 * If the user may not see all of the candidate, the result is
+	 * {@link ChangeSet#getIncomplete() incomplete}, and {@link #revert(KnowledgeBase, ChangeSet, boolean)}
+	 * refuses it: an undo must not change objects the user may not see.
+	 * </p>
+	 *
+	 * @param user
+	 *        The user undoing the change.
+	 * @return The restricted candidate, {@code null} if there is none.
+	 *
+	 * @see #findUndoCandidate(TLObject, ChangeLogOptions, int, boolean) for the other parameters.
+	 */
+	public static ChangeSet findUndoTarget(TLObject root, ChangeLogOptions options, int windowSize,
+			boolean includeSubtree, Person user) {
+		return restrict(findUndoCandidate(root, options, windowSize, includeSubtree), user);
+	}
+
+	/**
+	 * The change set a {@code redo} operation of the given user reverts: the
+	 * {@link #findRedoCandidate(TLObject, ChangeLogOptions, int, boolean) redo candidate},
+	 * {@link ChangeSetRestriction restricted} to what the user may see.
+	 *
+	 * @see #findUndoTarget(TLObject, ChangeLogOptions, int, boolean, Person)
+	 * @throws TopLogicException
+	 *         when a pending undo exists but a newer regular change has broken the redo stack.
+	 */
+	public static ChangeSet findRedoTarget(TLObject root, ChangeLogOptions options, int windowSize,
+			boolean includeSubtree, Person user) {
+		return restrict(findRedoCandidate(root, options, windowSize, includeSubtree), user);
+	}
+
+	private static ChangeSet restrict(ChangeSet candidate, Person user) {
+		return candidate == null ? null : new ChangeSetRestriction(user).restrict(candidate);
 	}
 
 	/**

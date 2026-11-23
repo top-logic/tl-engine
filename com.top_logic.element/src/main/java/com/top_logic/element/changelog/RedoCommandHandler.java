@@ -37,6 +37,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -46,6 +47,12 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * The target model is interpreted as a subtree root. A {@code null} model operates on the whole
  * application change log.
+ * </p>
+ *
+ * <p>
+ * The change set is {@link ChangeSetRestriction restricted} to what the current user may see. If
+ * the user may not see all of it, the command is refused with an error message, see
+ * {@link ChangeSetReverter#checkComplete(ChangeSet)}.
  * </p>
  *
  * <p>
@@ -128,7 +135,8 @@ public class RedoCommandHandler extends AbstractCommandHandler implements WithPo
 		Config cfg = config();
 
 		ChangeSet target =
-			ChangeSetReverter.findRedoCandidate(root, cfg, cfg.getWindowSize(), cfg.getIncludeSubtree());
+			ChangeSetReverter.findRedoTarget(root, cfg, cfg.getWindowSize(), cfg.getIncludeSubtree(),
+				TLContext.currentUser());
 		if (target == null) {
 			return HandlerResult.DEFAULT_RESULT;
 		}

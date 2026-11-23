@@ -131,7 +131,8 @@ public class TLObjectLinkUtil {
 	 * link and no identity of the object. A link whose destination names no existing object is
 	 * masked as well, see {@link #getDiscoverableObject(String)}. A
 	 * {@link #TL_OBJECT_WRAPPER wrapper} around the link, which holds the icon of the object's type,
-	 * is replaced as a whole. All other content stays as it is.
+	 * is replaced as a whole, the outermost one where there are several. All other content stays as
+	 * it is.
 	 * </p>
 	 *
 	 * <p>
@@ -184,8 +185,13 @@ public class TLObjectLinkUtil {
 			if (getDiscoverableObject(link.attr(HREF_ATTR)) != null) {
 				continue;
 			}
-			Element parent = link.parent();
-			Element hidden = parent != null && parent.is(SPAN + "." + TL_OBJECT_WRAPPER) ? parent : link;
+			Element hidden = link;
+			for (Element ancestor : link.parents()) {
+				// The outermost wrapper, also where the link stands in formatting within it.
+				if (ancestor.is(SPAN + "." + TL_OBJECT_WRAPPER)) {
+					hidden = ancestor;
+				}
+			}
 			String token = tokens == null ? "" : tokens.apply(hidden.outerHtml());
 			hidden.replaceWith(new Element(SPAN).attr(DATA_MASKED, token).text(MaskedValues.placeholder()));
 			masked = true;

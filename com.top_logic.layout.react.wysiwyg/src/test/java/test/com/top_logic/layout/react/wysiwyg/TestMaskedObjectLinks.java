@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,17 +26,29 @@ import test.com.top_logic.basic.TestUtils;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
+import test.com.top_logic.layout.react.wysiwyg.TestHtmlConfigProvider.HtmlConfig;
 import test.com.top_logic.model.search.expr.AbstractSearchExpressionTest;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.services.InitialRolesManager;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.format.configured.FormatterService;
+import com.top_logic.basic.html.SafeHTML;
+import com.top_logic.basic.mime.MimeTypesModule;
+import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.gui.ThemeFactory;
+import com.top_logic.html.i18n.DefaultHtmlResKey;
 import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.basic.DummyDisplayContext;
+import com.top_logic.layout.configedit.ConfigControlService;
+import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.utility.MaskedValues;
 import com.top_logic.layout.provider.MetaLabelProvider;
@@ -43,7 +56,10 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ForwardingReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ErrorSink;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.form.ReactRenderedTextControl;
+import com.top_logic.layout.react.control.html.ReactHtmlControl;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.FieldState;
@@ -489,6 +505,77 @@ public class TestMaskedObjectLinks extends AbstractSearchExpressionTest {
 	}
 
 	/**
+	 * A link of markup inserted at the cursor gets a fresh token, also where the text holds an
+	 * equal link already, and both links come back with the text the client reports.
+	 */
+	@SuppressWarnings("unchecked")
+	public void testInsertionGetsFreshTokens() {
+		becomeUser(_reader);
+		String link = link(_hidden, HIDDEN_LABEL);
+		AbstractFieldModel field = field(textWith(link), true);
+		ReactWysiwygControl editor = control(field);
+		String existing = placeholders(clientValue(editor)).get(0);
+
+		editor.insertAtCursor(link);
+		Map<String, Object> insert = (Map<String, Object>) editor.scriptingScalarState().get(INSERT);
+		String inserted = (String) insert.get(INSERT_HTML);
+		assertFalse(inserted, token(inserted).equals(token(existing)));
+		send(editor, "<p>See " + existing + " and " + inserted + "</p>");
+
+		assertEquals("<p>See " + link + " and " + link + "</p>", storedSource(field));
+	}
+
+	/**
+	 * The wrapper of a masked link is replaced as a whole also where the link stands in formatting
+	 * within it.
+	 */
+	public void testWrapperOfFormattedMaskedLinkIsReplacedAsAWhole() {
+		becomeUser(_reader);
+		String wrapper = "<span class=\"" + TLObjectLinkUtil.TL_OBJECT_WRAPPER + "\">"
+			+ "<img src=\"/type-icon.png\">&nbsp;<b>" + link(_hidden, HIDDEN_LABEL) + "</b></span>";
+		AbstractFieldModel field = field(textWith(wrapper), true);
+		ReactWysiwygControl editor = control(field);
+
+		String html = clientValue(editor);
+		assertMasked(html, _hidden, HIDDEN_LABEL);
+		assertFalse(html, html.contains("type-icon"));
+		send(editor, html.replace("for details", "for all details"));
+
+		assertEquals("<p>See " + wrapper + " for all details.</p>", storedSource(field));
+	}
+
+	/**
+	 * A text property of a configuration that cannot be edited displays a hidden link masked.
+	 */
+	public void testReadOnlyHtmlPropertyMasksUndiscoverableLink() {
+		HtmlConfig config = TypedConfiguration.newConfigItem(HtmlConfig.class);
+		config.setText(textWith(link(_hidden, HIDDEN_LABEL)).getSourceCode());
+		becomeUser(_reader);
+
+		String html = readOnlyDisplay(config, HtmlConfig.TEXT);
+
+		assertMasked(html, _hidden, HIDDEN_LABEL);
+	}
+
+	/**
+	 * An internationalized text property of a configuration that cannot be edited displays a
+	 * hidden link masked.
+	 */
+	public void testReadOnlyInternationalizedHtmlPropertyMasksUndiscoverableLink() {
+		HtmlConfig config = TypedConfiguration.newConfigItem(HtmlConfig.class);
+		String source = textWith(link(_hidden, HIDDEN_LABEL)).getSourceCode();
+		config.setHtmlResKey(new DefaultHtmlResKey(ResKey.builder()
+			.add(Locale.ENGLISH, source)
+			.add(Locale.GERMAN, source)
+			.build()));
+		becomeUser(_reader);
+
+		String html = readOnlyDisplay(config, HtmlConfig.HTML_RES_KEY);
+
+		assertMasked(html, _hidden, HIDDEN_LABEL);
+	}
+
+	/**
 	 * The wrapper of a masked link, which holds the icon of the object's type, is replaced as a
 	 * whole, and comes back with the link.
 	 */
@@ -645,6 +732,20 @@ public class TestMaskedObjectLinks extends AbstractSearchExpressionTest {
 		return new StructuredText("<p>See " + link + " for details.</p>");
 	}
 
+	/**
+	 * The HTML that the display of the given property shows while the property cannot be edited.
+	 */
+	private String readOnlyDisplay(HtmlConfig config, String propertyName) {
+		PropertyDescriptor property = config.descriptor().getProperty(propertyName);
+		ConfigFieldModel model = ConfigControlService.getInstance().createModel(config, property);
+		model.setEditable(false);
+		ReactControl control = ConfigControlService.getInstance().createControl(_context, model);
+		assertTrue("Not a rendered text: " + control, control instanceof ReactRenderedTextControl);
+		Map<String, Object> state = ((ReactRenderedTextControl) control).getDisplay().scriptingScalarState();
+		assertNull(state.get(ReactHtmlControl.ERROR));
+		return (String) state.get(ReactHtmlControl.HTML);
+	}
+
 	/** The formatted text of a topic. */
 	private static TLStructuredTypePart textPart() {
 		return ((TLClass) TLModelUtil.findType(TOPIC)).getPartOrFail(TEXT);
@@ -782,7 +883,13 @@ public class TestMaskedObjectLinks extends AbstractSearchExpressionTest {
 				TLSecurityDeviceManager.Module.INSTANCE,
 				InitialRolesManager.Module.INSTANCE,
 				SecurityConfigurationService.Module.INSTANCE,
-				BookmarkService.Module.INSTANCE)));
+				BookmarkService.Module.INSTANCE,
+				TypeIndex.Module.INSTANCE,
+				FormatterService.Module.INSTANCE,
+				MimeTypesModule.Module.INSTANCE,
+				ThemeFactory.Module.INSTANCE,
+				SafeHTML.Module.INSTANCE,
+				ConfigControlService.Module.INSTANCE)));
 		String configFile = CustomPropertiesDecorator.createFileName(TestMaskedObjectLinks.class, CONFIG_FILE);
 		return TLTestSetup.createTLTestSetup(TestUtils.doNotMerge(new CustomPropertiesSetup(kbTest, configFile, true)));
 	}

@@ -285,10 +285,11 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 *
 	 * <p>
 	 * A token is a random value that no other editor hands out and that cannot be guessed, so that
-	 * a placeholder copied from another editor brings in nothing. A token stays valid while the
-	 * editor shows the text of the same object: a text that the client sends after the server
-	 * changed the value still gets its links back. When the editor shows the text of another
-	 * object, it forgets all tokens, see {@link #forgetTokensOfOtherObject()}.
+	 * a placeholder copied from another editor brings in nothing. A token is valid for the object
+	 * whose text the editor shows: a text that the client sends after the server changed the value
+	 * still gets its links back. When the editor shows the text of another object, it forgets all
+	 * tokens, see {@link #forgetTokensOfOtherObject()}. An editor of a value that is no attribute of
+	 * an object keeps its tokens while it lives.
 	 * </p>
 	 */
 	private final Map<String, String> _maskedLinks = new HashMap<>();
@@ -298,8 +299,9 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 *
 	 * <p>
 	 * A link keeps its token when the text is sent again, so that the client's text stays valid. Two
-	 * equal links of one text get tokens of their own, so that the client cannot tell that they
-	 * name the same object.
+	 * equal links within one text as the server sends it get tokens of their own, so that the
+	 * client cannot tell that they name the same object. A link of markup inserted at the cursor
+	 * gets a fresh token, see {@link #insertAtCursor(String)}.
 	 * </p>
 	 */
 	private final Map<String, String> _maskTokens = new HashMap<>();
@@ -841,11 +843,16 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 * The token of the given occurrence of the given masked link, see {@link #_maskTokens}.
 	 */
 	private String maskToken(String link, int occurrence) {
-		return _maskTokens.computeIfAbsent(occurrence + ":" + link, key -> {
-			String token = SecureRandomService.getInstance().getRandomString();
-			_maskedLinks.put(token, link);
-			return token;
-		});
+		return _maskTokens.computeIfAbsent(occurrence + ":" + link, key -> newToken(link));
+	}
+
+	/**
+	 * A token that names the given masked link and no other, see {@link #_maskedLinks}.
+	 */
+	private String newToken(String link) {
+		String token = SecureRandomService.getInstance().getRandomString();
+		_maskedLinks.put(token, link);
+		return token;
 	}
 
 	/**
@@ -856,6 +863,12 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 * An object edited in a form is compared by the persistent object behind it, so that switching
 	 * between view and edit mode keeps the tokens of the text the client holds.
 	 * </p>
+	 *
+	 * @implNote The client receives the placeholders of the new object's text with new tokens only
+	 *           because the value is sent again on a switch of the object: the form
+	 *           ({@code FormControl}) leaves and enters edit mode, and the field sends its value
+	 *           again. The tokens of the former text are dropped here, before the text of the new
+	 *           object is masked or a text of the client is taken back.
 	 */
 	private void forgetTokensOfOtherObject() {
 		Object owner = editedObject();
@@ -922,7 +935,8 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 *
 	 * <p>
 	 * A link of the markup to an object that the current user may not discover is masked as in the
-	 * text, and comes back as a link when the client reports the text.
+	 * text, and comes back as a link when the client reports the text. Its placeholder gets a fresh
+	 * token, equal to no token of a link the text holds already.
 	 * </p>
 	 *
 	 * @param html
@@ -931,7 +945,8 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	public void insertAtCursor(String html) {
 		Map<String, Object> insert = new LinkedHashMap<>();
 		insert.put(INSERT_SEQ, Integer.valueOf(++_insertions));
-		insert.put(INSERT_HTML, toClientHtml(html));
+		forgetTokensOfOtherObject();
+		insert.put(INSERT_HTML, rewriteImageUrls(TLObjectLinkUtil.maskLinks(html, this::newToken)));
 		putState(INSERT, insert);
 	}
 

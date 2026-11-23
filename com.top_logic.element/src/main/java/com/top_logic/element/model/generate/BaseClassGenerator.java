@@ -210,16 +210,50 @@ public abstract class BaseClassGenerator extends TLTypeGenerator {
 			// Wrap primitive class because Collection<boolean> is invalid.
 			contentType = toObjectClass(contentType);
 			String typeParameter = "<" + extendsModifier + contentType + ">";
-			if (part.isOrdered()) {
-				return List.class.getName() + typeParameter;
-			} else if (!part.isBag()) {
-				return Set.class.getName() + typeParameter;
-			} else {
-				return Collection.class.getName() + typeParameter;
-			}
+			return collectionType(part).getName() + typeParameter;
 		} else {
 			return contentType;
 		}
+	}
+
+	/**
+	 * The collection type of the values of the given multiple part.
+	 */
+	protected static Class<?> collectionType(TLStructuredTypePart part) {
+		if (part.isOrdered()) {
+			return List.class;
+		} else if (!part.isBag()) {
+			return Set.class;
+		} else {
+			return Collection.class;
+		}
+	}
+
+	/**
+	 * The fully qualified name of the Java type of the given part (the content type for a multiple
+	 * reference type), or the name of a primitive type.
+	 */
+	protected String getQualifiedContentType(TLStructuredTypePart part) {
+		return part.getType().visitType(_contentTypeVisitor, part);
+	}
+
+	/**
+	 * Whether the given name is the name of a primitive type.
+	 */
+	static boolean isPrimitiveName(String typeName) {
+		return PRIMITIVE_CLASS_NAME_TO_CLASS.containsKey(typeName);
+	}
+
+	/**
+	 * The fully qualified name of the wrapper class of the given primitive type name, or the given
+	 * name, if it is not the name of a primitive type.
+	 */
+	protected static String toQualifiedObjectClass(String classAsString) {
+		Class<?> primitiveClass = PRIMITIVE_CLASS_NAME_TO_CLASS.get(classAsString);
+		if (primitiveClass != null) {
+			return PRIMITIVE_TO_WRAPPER.get(primitiveClass).getName();
+		}
+		return classAsString;
 	}
 
 	/**
@@ -233,10 +267,21 @@ public abstract class BaseClassGenerator extends TLTypeGenerator {
 	}
 
 	private String getExtendsClause(TLType targetType, boolean withExtends) {
-		if (withExtends && canHaveSubtypes(targetType)) {
+		if (hasExtendsClause(targetType, withExtends)) {
 			return "? extends ";
 		}
 		return "";
+	}
+
+	/**
+	 * Whether the type parameter of a collection of the given target type is a wildcard
+	 * <code>? extends</code>.
+	 * 
+	 * @param withExtends
+	 *        Whether a wildcard is requested.
+	 */
+	protected boolean hasExtendsClause(TLType targetType, boolean withExtends) {
+		return withExtends && canHaveSubtypes(targetType);
 	}
 
 	private boolean canHaveSubtypes(TLType type) {

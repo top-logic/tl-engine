@@ -122,28 +122,29 @@ public final class ActingPerson {
 		if (!bound.equals(current)) {
 			return I18NConstants.ERROR_OTHER_ACCOUNT_ACTS;
 		}
-		// Asked here and not when binding: a run binds on its new thread before it enters a context in
-		// which the account can be read.
-		if (PersonManager.getManager().isAnonymous(bound) || !isActive(bound)) {
+		if (!isActive(bound)) {
 			return I18NConstants.ERROR_NO_ACTING_PERSON;
 		}
 		return null;
 	}
 
 	/**
-	 * Whether the newest committed version of the given account exists and is not locked.
+	 * Whether the newest committed version of the given account exists, is not locked and is not the
+	 * anonymous account.
 	 *
 	 * <p>
 	 * A long run reads the knowledge base at the revision it last committed or updated to, so the
 	 * account would not show a later lock there. A historic version newer than this revision cannot
 	 * be resolved either. The account is therefore read in the newest revision of this node, as a
-	 * cache does that follows the commits.
+	 * cache does that follows the commits. All checks of the account are in this read: after the run
+	 * caught up with a delete, any other read of the account fails.
 	 * </p>
 	 */
 	private static boolean isActive(Person person) {
 		KnowledgeBase kb = person.getKnowledgeBase();
 		long newest = kb.getHistoryManager().getLastRevision();
-		return kb.inRevision(newest, () -> person.tValid() && !person.isLocked());
+		return kb.inRevision(newest, () -> person.tValid() && !person.isLocked()
+			&& !PersonManager.getManager().isAnonymous(person));
 	}
 
 }

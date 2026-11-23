@@ -20,6 +20,7 @@ import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.basic.util.ComputationEx2;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -169,7 +170,10 @@ public abstract class AbstractPersonalCredentialProviderTest extends BasicTestCa
 		});
 	}
 
-	/** A run of a person whose account is deleted meanwhile is refused at its next call. */
+	/**
+	 * A run of a person whose account is deleted meanwhile is refused at its next call, also after
+	 * the run caught up with the delete, as a chat run does at each turn.
+	 */
 	public void testRefusedForDeletedAccount() throws Exception {
 		connect(_anna);
 
@@ -179,6 +183,9 @@ public abstract class AbstractPersonalCredentialProviderTest extends BasicTestCa
 				TestPerson.deletePersonAndUser(_anna);
 				return null;
 			}));
+			assertRefused();
+
+			HistoryUtils.updateSessionRevision();
 			assertRefused();
 			return null;
 		});

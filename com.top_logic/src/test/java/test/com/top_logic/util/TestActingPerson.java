@@ -135,7 +135,7 @@ public class TestActingPerson extends BasicTestCase {
 	}
 
 	/**
-	 * A run that a person started ends to act for the person when the account is locked, also when
+	 * A run that a person started stops acting for the person when the account is locked, also when
 	 * the run reads the knowledge base at a revision before the lock.
 	 */
 	public void testLockEndsActingPersonInPinnedRun() throws Exception {
@@ -144,22 +144,34 @@ public class TestActingPerson extends BasicTestCase {
 				_anna.setLocked(true);
 				tx.commit();
 			}
-		});
+		}, false);
 	}
 
 	/**
-	 * A run that a person started ends to act for the person when the account is deleted, also when
+	 * A run that a person started stops acting for the person when the account is deleted, also when
 	 * the run reads the knowledge base at a revision before the delete.
 	 */
 	public void testDeleteEndsActingPersonInPinnedRun() throws Exception {
-		assertEndsWhileRunning(() -> TestPerson.deletePersonAndUser(_anna));
+		assertEndsWhileRunning(() -> TestPerson.deletePersonAndUser(_anna), false);
+	}
+
+	/**
+	 * A run that a person started stops acting for the person when the account is deleted, also
+	 * after the run caught up with the delete, as a chat run does at each turn: the account is then a
+	 * deleted object for the run.
+	 */
+	public void testDeleteEndsActingPersonInRunThatCaughtUp() throws Exception {
+		assertEndsWhileRunning(() -> TestPerson.deletePersonAndUser(_anna), true);
 	}
 
 	/**
 	 * Runs a run of Anna in a sub-session derived from her window, as a chat run does. The run reads
 	 * the knowledge base at a fixed revision; meanwhile another thread changes the account.
+	 *
+	 * @param catchUp
+	 *        Whether the run moves its revision to the change before it asks for the acting person.
 	 */
-	private void assertEndsWhileRunning(Runnable change) throws Exception {
+	private void assertEndsWhileRunning(Runnable change, boolean catchUp) throws Exception {
 		TLContext window = window(_anna);
 		CountDownLatch pinned = new CountDownLatch(1);
 		CountDownLatch changed = new CountDownLatch(1);
@@ -175,6 +187,9 @@ public class TestActingPerson extends BasicTestCase {
 
 					assertTrue("The run still reads the account before the change.",
 						_anna.tValid() && !_anna.isLocked());
+					if (catchUp) {
+						HistoryUtils.updateSessionRevision();
+					}
 					assertRefused(I18NConstants.ERROR_NO_ACTING_PERSON);
 				});
 			} finally {

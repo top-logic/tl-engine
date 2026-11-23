@@ -29,7 +29,7 @@ import com.top_logic.util.error.TopLogicException;
  * <li>A present person started the run: a chat run with a message of the person, an
  * <code>aiAgentChatAsync</code> run and an <code>aiResearch</code> run started in a request of the
  * person, a detached subagent of such a run, and the turn that a finished subagent starts for its
- * lead.</li>
+ * lead if each subagent whose news it reads was started for the person.</li>
  * </ul>
  *
  * <p>

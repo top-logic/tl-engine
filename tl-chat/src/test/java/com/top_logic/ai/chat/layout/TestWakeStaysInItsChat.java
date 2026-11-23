@@ -21,20 +21,27 @@ import com.top_logic.ai.chat.api.ChatEventHandlerRegistry;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.tool.api.CancellationToken;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.ai.core.agent.StopReason;
 import com.top_logic.ai.core.agent.event.AgentEvent;
+import com.top_logic.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.ai.core.agent.subagent.SubagentJobRegistry;
+import com.top_logic.ai.core.agent.subagent.SubagentJobStatus;
+import com.top_logic.ai.core.agent.subagent.SubagentResult;
 import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.ai.core.message.TokenUsage;
 import com.top_logic.ai.core.session.ConversationLog;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
  * A lead turn started for chat A's subagents runs in chat A, also when the window switches to chat B
- * while the turn is being started.
+ * while the turn is being started. It acts for the person of the last message only if each subagent
+ * whose news it reads was started for this person.
  */
 public class TestWakeStaysInItsChat extends BasicTestCase {
 
@@ -105,6 +112,44 @@ public class TestWakeStaysInItsChat extends BasicTestCase {
 		assertNotNull(wake);
 		assertSame(logA, wake.getConversationLog());
 		assertSame(owner, wake.getActingPerson());
+	}
+
+	/**
+	 * A subagent that a turn without acting person spawned: the turn for its news acts for nobody,
+	 * although the person sent the last message in the window, also when another subagent of the
+	 * person has news.
+	 */
+	public void testTheTurnActsForNobodyForASubagentStartedWithoutAPerson() {
+		SubagentJobRegistry registry = new SubagentJobRegistry(4);
+		try {
+			finish(registry, null);
+			assertNull(ChatProcessor.wakeActingPerson(_window.getLastSend(), registry));
+
+			finish(registry, owner);
+			assertNull(ChatProcessor.wakeActingPerson(_window.getLastSend(), registry));
+		} finally {
+			registry.shutdown();
+		}
+	}
+
+	/** Subagents that turns of the person spawned: the turn for their news acts for the person. */
+	public void testTheTurnActsForThePersonWhoStartedItsSubagents() {
+		SubagentJobRegistry registry = new SubagentJobRegistry(4);
+		try {
+			finish(registry, owner);
+			finish(registry, owner);
+			assertSame(owner, ChatProcessor.wakeActingPerson(_window.getLastSend(), registry));
+		} finally {
+			registry.shutdown();
+		}
+	}
+
+	/** Registers a subagent spawned for the given acting person that has finished. */
+	private static void finish(SubagentJobRegistry registry, Person actingPerson) {
+		SubagentJob job = registry.register("worker", "task", new CancellationToken());
+		job.setActingPerson(actingPerson);
+		job.markTerminal(SubagentJobStatus.DONE,
+			new SubagentResult("done", TokenUsage.EMPTY, 1L, 1, StopReason.COMPLETE));
 	}
 
 	/** A run of chat A reads chat A's subagents, also after the window switched to chat B. */

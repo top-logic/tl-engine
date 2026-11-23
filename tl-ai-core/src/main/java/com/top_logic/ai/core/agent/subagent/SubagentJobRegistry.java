@@ -256,6 +256,23 @@ public class SubagentJobRegistry {
 	}
 
 	/**
+	 * The jobs whose result or question the next lead turn reads: the jobs that
+	 * {@link #takeUndeliveredResults()} and {@link #takeUndeliveredQuestions()} would take now, which
+	 * stay untaken.
+	 */
+	public List<SubagentJob> unread() {
+		List<SubagentJob> result = new ArrayList<>();
+		for (SubagentJob job : ordered()) {
+			LeadQuestion asked = job.leadQuestion();
+			if ((job.status().isTerminal() && !job.isDelivered())
+				|| (asked != null && !asked.answer().isDone() && !asked.isDelivered())) {
+				result.add(job);
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * The questions to the lead no lead turn has been shown yet, in registration order of the asking
 	 * jobs, each marked as shown.
 	 */

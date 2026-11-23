@@ -55,6 +55,7 @@ import com.top_logic.ai.core.agent.environment.UserMemoryBinding;
 import com.top_logic.ai.core.agent.event.AgentEvent;
 import com.top_logic.ai.core.agent.event.AgentEventListener;
 import com.top_logic.ai.core.agent.event.CompositeAgentEventListener;
+import com.top_logic.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.ai.core.agent.subagent.SubagentNews;
 import com.top_logic.ai.core.agent.subagent.SubagentRegistryBinding;
@@ -148,8 +149,8 @@ public class ChatProcessor {
 	 * @param facts
 	 *        What the page stated.
 	 * @param actingPerson
-	 *        The {@link ActingPerson} of the last message, which the turn acts for; <code>null</code>
-	 *        for none.
+	 *        The {@link ActingPerson} of the last message; <code>null</code> for none. See
+	 *        {@link ChatProcessor#wakeActingPerson(LastSend, SubagentJobRegistry)} for the turn.
 	 */
 	record LastSend(WeakReference<TLSubSessionContext> userSession, ChatRunOptions options,
 			List<EnvironmentFact> facts, Person actingPerson) {
@@ -746,7 +747,8 @@ public class ChatProcessor {
 			state = registerRun(tracker, chat, sessionId, true);
 			taskId = state.getCurrentTaskId();
 		}
-		prepareRun(tracker, state, last.options(), last.facts(), spendReading, last.actingPerson());
+		prepareRun(tracker, state, last.options(), last.facts(), spendReading,
+			wakeActingPerson(last, tracker.getSessionManager().getSubagentRegistry(sessionId)));
 
 		ConversationLog convLog = chat.log();
 		convLog.startTurn().setUserParts(List.of());
@@ -763,6 +765,32 @@ public class ChatProcessor {
 		}
 		Logger.info("Started a lead turn for subagent news in chat " + sessionId + ".", ChatProcessor.class);
 		return true;
+	}
+
+	/**
+	 * The {@link ActingPerson} of a lead turn for subagents' news.
+	 *
+	 * <p>
+	 * A subagent acts for the acting person of the turn that spawned it. The turn that reads its news
+	 * acts for the person of the last message in the window only if each subagent whose news it
+	 * reads was spawned for the same person. Otherwise it acts for nobody: the news of a subagent
+	 * that no present person started must not lead to a turn with the account of a person.
+	 * </p>
+	 *
+	 * @param registry
+	 *        The subagents of the chat, <code>null</code> if it has none.
+	 */
+	static Person wakeActingPerson(LastSend last, SubagentJobRegistry registry) {
+		Person acting = last.actingPerson();
+		if (acting == null || registry == null) {
+			return null;
+		}
+		for (SubagentJob job : registry.unread()) {
+			if (!acting.equals(job.actingPerson())) {
+				return null;
+			}
+		}
+		return acting;
 	}
 
 	/**
@@ -1715,7 +1743,7 @@ public class ChatProcessor {
 		 *
 		 * @see ActingPerson
 		 */
-		public Person getActingPerson() {
+		Person getActingPerson() {
 			return _actingPerson;
 		}
 

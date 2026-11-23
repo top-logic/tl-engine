@@ -9,12 +9,14 @@ import java.time.Instant;
 import java.util.List;
 
 import com.top_logic.ai.tool.api.CancellationToken;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.ai.core.agent.approval.InteractionAsker;
 import com.top_logic.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.ai.core.citation.ReadingList;
 import com.top_logic.ai.core.cost.Money;
 import com.top_logic.ai.core.limits.BudgetAllowance;
 import com.top_logic.ai.core.session.ConversationLog;
+import com.top_logic.util.ActingPerson;
 
 /**
  * Mutable per-job state for one asynchronous subagent run. Holds a live
@@ -61,6 +63,8 @@ public class SubagentJob {
 	private volatile Money _cost;
 
 	private volatile BudgetAllowance _budget = BudgetAllowance.UNLIMITED;
+
+	private volatile Person _actingPerson;
 
 	private volatile ReadingList _readingList = new ReadingList();
 
@@ -307,6 +311,19 @@ public class SubagentJob {
 	/** Sets the {@link #budget() budget} the subagent spends from. */
 	public void setBudget(BudgetAllowance budget) {
 		_budget = budget == null ? BudgetAllowance.UNLIMITED : budget;
+	}
+
+	/**
+	 * The {@link ActingPerson} of the turn that spawned the subagent, which the subagent acts for;
+	 * <code>null</code> for none.
+	 */
+	public Person actingPerson() {
+		return _actingPerson;
+	}
+
+	/** Sets the {@link #actingPerson() acting person} of the subagent. */
+	public void setActingPerson(Person actingPerson) {
+		_actingPerson = actingPerson;
 	}
 
 	/** Sets the {@link #childRunId() recorded child run id}. */

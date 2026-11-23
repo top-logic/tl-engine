@@ -20,7 +20,9 @@ import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.BindingSnapshot;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.basic.util.ComputationEx2;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.ai.core.agent.AgentCapabilities;
 import com.top_logic.ai.core.agent.AgentDefinition;
 import com.top_logic.ai.core.agent.AgentFactory;
@@ -52,6 +54,7 @@ import com.top_logic.ai.core.session.ConversationLog;
 import com.top_logic.ai.core.session.ConversationLogListener;
 import com.top_logic.ai.core.session.ConversationLogListenerBinding;
 import com.top_logic.ai.core.session.Part;
+import com.top_logic.util.ActingPerson;
 
 /**
  * Shared async-spawn logic extracted from {@link DelegationTool}.
@@ -164,6 +167,10 @@ public class SubagentSpawner {
 		}
 		SubagentJob job = registry.register(targetAgentName, task, childToken);
 		job.setParentToolCallId(toolContext.toolCallId());
+		// The child acts for the acting person of this turn, if any, until it ends. Taken here, where
+		// the acting person is checked against the account that acts now, not as the raw binding of
+		// the snapshot.
+		job.setActingPerson(ActingPerson.handOver());
 		// A detached child spends from the allowance of the run that started it; the chat shows how
 		// much of it the subagents took.
 		job.setBudget(toolContext.budgetAllowance());
@@ -199,7 +206,10 @@ public class SubagentSpawner {
 					// What the lead sends it, read at the start of each of its turns.
 					SubagentInboxBinding.Binding inbox = SubagentInboxBinding.bind(j.inbox());
 					// Its own job, which ask_lead parks its question on.
-					SubagentJobBinding.Binding self = SubagentJobBinding.bind(j)) {
+					SubagentJobBinding.Binding self = SubagentJobBinding.bind(j);
+					// Replaces the acting person the snapshot just carried over by the one the spawn
+					// took for the job.
+					ThreadLocalBinding<Person>.Handle acting = ActingPerson.bind(j.actingPerson())) {
 
 					Instant start = Instant.now();
 

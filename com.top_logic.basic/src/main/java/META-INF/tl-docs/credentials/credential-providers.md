@@ -207,7 +207,7 @@ The providers above send credentials of the application: all persons use the sam
 A personal provider asks `ActingPerson.require()` (package `com.top_logic.util` of `tl-core`) for the acting person. The engine names an acting person in two cases only:
 
 1. The person is present: a request from the browser window of a signed-in person. This is a command, the load of a view and the change of a field, in the React and in the classic user interface. A script that runs within such a request belongs to it, for example `aiAgentChat`.
-2. A present person started the run: a chat run with a message of the person, an `aiAgentChatAsync` run and an `aiResearch` run started in a request of the person, a detached subagent of such a run, and the turn that a finished subagent starts for its lead. This turn acts for the person of the last message in the window.
+2. A present person started the run: a chat run with a message of the person, an `aiAgentChatAsync` run and an `aiResearch` run started in a request of the person, a detached subagent of such a run, and the turn that a finished subagent starts for its lead. This turn acts for the person of the last message in the window only if each subagent whose news it reads was started for this person.
 
 A run takes over the acting person of the place that starts it. If that place has no acting person, the run has none.
 

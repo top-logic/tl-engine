@@ -221,7 +221,8 @@ public class TestTileFrameDisposal extends BasicTestCase {
 		int listeners = _path.listenerCount();
 		int vetoListeners = _path.vetoListenerCount();
 
-		_path.set(List.of(detail("first")));
+		TileFrame firstFrame = detail("first");
+		_path.set(List.of(firstFrame));
 		ReactControl first = activeFrame();
 		render();
 		assertTrue("The derived channel of a displayed frame follows the path.",
@@ -231,7 +232,8 @@ public class TestTileFrameDisposal extends BasicTestCase {
 		assertEquals("At depth 1, the frame shows the field inside its visible-if.", 2, fieldCount(first));
 
 		// A frame covered by a drill-down stays alive, and so does what it derives from the path.
-		_path.set(List.of(detail("first"), detail("second")));
+		_path.set(List.of(firstFrame, detail("second")));
+		assertFalse("The covered frame stays alive.", first.isDisposed());
 		assertEquals("The covered frame's derived channel follows the path: depth 2 hides the field.",
 			1, fieldCount(first));
 
@@ -247,7 +249,8 @@ public class TestTileFrameDisposal extends BasicTestCase {
 	 * derives its channel from the path again, and the channel of the replaced view is unsubscribed.
 	 */
 	public void testAReloadedFrameDerivesItsChannelsAnew() {
-		_path.set(List.of(detail("first")));
+		TileFrame firstFrame = detail("first");
+		_path.set(List.of(firstFrame));
 		ReloadableControl frame = (ReloadableControl) activeFrame();
 		render();
 		int listeners = _path.listenerCount();
@@ -263,7 +266,8 @@ public class TestTileFrameDisposal extends BasicTestCase {
 		assertEquals("At depth 1, the reloaded frame shows the field inside its visible-if.", 2,
 			fieldCount(frame));
 
-		_path.set(List.of(detail("first"), detail("second")));
+		_path.set(List.of(firstFrame, detail("second")));
+		assertFalse("The reloaded frame stays alive below the drill-down.", frame.isDisposed());
 		assertEquals("The reloaded frame's derived channel follows the path: depth 2 hides the field.",
 			1, fieldCount(frame));
 	}

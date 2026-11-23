@@ -22,9 +22,10 @@ import com.top_logic.layout.view.element.ContentControls;
  * stack dropping the frames a shortened path no longer names.
  *
  * <p>
- * The scenario the split between detaching and disposing answers to is a channel with two listeners:
- * one is the container exchanging its content, the other updates a control of the content just
- * replaced. The second listener runs while the notification is still in progress.
+ * The scenario is a channel the container listens to, along with a listener further down in the
+ * notification: either one of the retired content, which must not hear the new value anymore, or
+ * one holding a reference to a control of the retired content, whose state change must not reach
+ * the client.
  * </p>
  */
 public class TestContentControls extends TestCase {
@@ -48,8 +49,8 @@ public class TestContentControls extends TestCase {
 	}
 
 	/**
-	 * Retired content stops being displayed at once, while its disposal waits for the notification
-	 * that retired it - and a state change reaching it in between sends nothing.
+	 * Retired content is disposed at once, also from within a notification - and a state change
+	 * reaching it later in that notification sends nothing.
 	 */
 	public void testRetiringFromWithinANotification() {
 		DefaultViewChannel channel = new DefaultViewChannel("input");
@@ -60,7 +61,7 @@ public class TestContentControls extends TestCase {
 		// The observer that was already in the channel's listener snapshot and updates a control of
 		// the content just retired.
 		boolean[] displayed = { true };
-		boolean[] disposedAlready = { true };
+		boolean[] disposedAlready = { false };
 		int[] sent = { -1 };
 		channel.addListener((sender, oldValue, newValue) -> {
 			displayed[0] = _content.isAttached();
@@ -73,20 +74,37 @@ public class TestContentControls extends TestCase {
 		channel.set("x");
 
 		assertFalse("Retired content stops being displayed at once.", displayed[0]);
-		assertFalse("Disposal waits until the notification has unwound.", disposedAlready[0]);
+		assertTrue("Retired content is disposed at once.", disposedAlready[0]);
 		assertEquals("A state change of retired content must not reach the client.", 0, sent[0]);
-		assertTrue("The notification has unwound, so the content is disposed.", _disposed);
 	}
 
 	/**
-	 * Without a notification in progress there is nothing to wait for, so retiring disposes right
-	 * away.
+	 * A listener of the retired content that is still pending in the notification that retired it
+	 * is not called anymore: the content does not hear a value it was not built for.
+	 */
+	public void testRetiredContentMissesTheNotification() {
+		DefaultViewChannel channel = new DefaultViewChannel("input");
+
+		// The container exchanging its content.
+		channel.addListener((sender, oldValue, newValue) -> ContentControls.retire(_content));
+
+		// The retired content's own listener, ending with its disposal.
+		int[] heard = { 0 };
+		_content.addCleanupAction(channel.addListener((sender, oldValue, newValue) -> heard[0]++)::dispose);
+
+		channel.set("x");
+
+		assertEquals("The retired content must not hear the value it was retired for.", 0, heard[0]);
+	}
+
+	/**
+	 * Without a notification in progress, retiring disposes the content as well.
 	 */
 	public void testRetiringOutsideANotification() {
 		ContentControls.retire(_content);
 
 		assertFalse("Retired content stops being displayed.", _content.isAttached());
-		assertTrue("Nothing defers the disposal.", _disposed);
+		assertTrue("Retired content is disposed.", _disposed);
 	}
 
 	/** The precondition: displayed content does send its state changes. */

@@ -247,9 +247,6 @@ The view hides controls only. What an account can do is the decision of the poli
 	<view name="tl-chat/chat/tabLayout.layout.xml#TabLayout">
 		<commandGroup name="Read"/>
 	</view>
-	<view name="tl-chat/chat/agent.layout.xml#agent">
-		<commandGroup name="Read"/>
-	</view>
 </profile>
 ```
 

@@ -190,7 +190,7 @@ public class WindowRegistry<W extends WindowContext & ContentHandler> implements
 		CacheControl.setNoCache(response);
 
 		TagWriter out = new TagWriter(response.getWriter());
-		out.writeXMLHeader(LayoutConstants.UTF_8);
+		out.writeContent(HTMLConstants.DOCTYPE_HTML);
 		out.beginTag(HTML);
 		out.beginTag(HEAD);
 		HTMLUtil.writeEdgeDocumentMode(out);

@@ -72,6 +72,18 @@ test('#30383: ein bearbeitbares Feld in der Zelle hat Fläche und Rahmen wie im 
     < css.indexOf('.tl-table__cell .tl-field[data-tl-state~="warning"]'));
 });
 
+test('#30383: der Pflichtstern im Kopf und die Pflichtecke im Feld lesen status-error-text, die Ecke steht nicht an read-only', () => {
+  const stern = declarationsOf(css, '.tl-table__required') ?? '';
+  assert.match(stern, /color:\s*var\(--tl-status-error-text\)/);
+  assert.match(stern, /flex:\s*none/);
+  assert.match(declarationsOf(css, '.tl-table__header-cell[data-tl-align="end"] .tl-table__required') ?? '', /order:\s*-1/);
+  // #30391: das kompakte Feld (role=group, kein aria-required erlaubt) trägt die Pflicht als data-tl-state~="required".
+  const ecke = declarationsOf(css, '.tl-table__cell .tl-field:is([aria-required="true"], [data-tl-state~="required"]):not(:disabled, [readonly], [aria-disabled="true"])') ?? '';
+  assert.match(ecke, /var\(--tl-status-error-text\)/);
+  assert.match(ecke, /background-size:\s*var\(--tl-space-xs\) var\(--tl-space-xs\)/);
+  assert.doesNotMatch(ecke, /background:/, 'nur Longhands: das background-Shorthand der Feldfläche bleibt unberührt');
+});
+
 test('der Körper isoliert seinen Stapel, Spaltenwahl und Fixiergrenze sind so hoch wie die Kopfzeile', () => {
   // Fix-Welle 3b (7): die Wurzel isoliert ebenso — ihre Ablage-Marke (layer-sticky) bleibt in der Tabelle.
   assert.match(declarationsOf(css, '.tl-table') ?? '', /isolation:\s*isolate/);

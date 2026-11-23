@@ -13,7 +13,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelNotificationScope;
+import com.top_logic.layout.view.channel.ViewChannel;
 
 /**
  * Utilities for the content a view element displays: building it from the element's children, and
@@ -22,32 +22,29 @@ import com.top_logic.layout.view.channel.ChannelNotificationScope;
 public class ContentControls {
 
 	/**
-	 * Retires content a container no longer displays: it stops being displayed right away, and is
-	 * disposed once the channel notification in progress has unwound.
+	 * Retires content a container no longer displays: it is detached and disposed right away.
 	 *
 	 * <p>
-	 * The two halves happen at different times because they answer to different constraints.
-	 * Detaching cannot wait: a container exchanges its content from inside a channel notification,
-	 * and another listener of the same channel - still pending in the channel's listener snapshot -
-	 * may update a control of the content just replaced. Sending that update would address a control
-	 * the client has already unmounted, and the browser would go looking for data the server no
-	 * longer serves. Disposal, on the other hand, cannot happen yet: the retired controls may
-	 * themselves be listeners pending in that same snapshot, and tearing them down synchronously
-	 * would let those listeners run on a disposed control.
+	 * A container exchanges its content from inside a channel notification, and the retired content
+	 * may itself listen to the channel that caused the exchange, still pending in the
+	 * notification's listener snapshot. Disposing it ends its channel registrations, and a
+	 * notification skips a listener whose registration is disposed before it is reached (see
+	 * {@link ViewChannel#set(Object)}). The retired content therefore does not hear a value it was not
+	 * built for: a discarded form or table does not evaluate its expressions over the new value.
 	 * </p>
 	 *
 	 * <p>
-	 * Outside a notification there is nothing to wait for and the disposal runs immediately.
+	 * A control of the retired content may still be on the call stack - e.g. the selecting control
+	 * whose own channel write replaced the presentation containing it - and continue after its
+	 * disposal; a disposed control tolerates such trailing state updates (see
+	 * {@link ReactControl#cleanupTree()}).
 	 * </p>
 	 *
 	 * @param content
 	 *        The content control to retire.
-	 *
-	 * @see ChannelNotificationScope#afterNotification(Runnable)
 	 */
 	public static void retire(ReactControl content) {
-		content.detach();
-		ChannelNotificationScope.current().afterNotification(content::cleanupTree);
+		content.cleanupTree();
 	}
 
 	/**

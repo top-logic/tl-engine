@@ -51,7 +51,7 @@ write one.
 |--|--|
 | `WEB-INF/layouts/mainTabbar.layout.overlay.xml` | Prepends the Albert tab to a host's `mainTabbar`. |
 | `WEB-INF/layouts/tl-chat/chat/tabLayout.layout.xml` | The tab. The reusable piece: a host that builds its own tab bar references it. |
-| `WEB-INF/layouts/tl-chat/chat/agent.layout.xml` → `agent.xml` | The `ReactViewComponent`, `view="tl-chat-classic/chat.view.xml"`. |
+| `WEB-INF/layouts/tl-chat/chat/agent.xml` | The `ReactViewComponent`, `view="tl-chat-classic/chat.view.xml"`, the only content of the tab. The tab is the one security node of the chat. |
 | `WEB-INF/views/tl-chat-classic/chat.view.xml` | The default chat: the user's chats, the conversation, a rail with Progress and Sources, and the rail's pane, in which the agent's `present` shows a table, a chart or a form (#649). Generic on purpose - no application facts. |
 
 The layout paths stay `tl-chat/chat/…`: they are how a host's persisted layouts and its

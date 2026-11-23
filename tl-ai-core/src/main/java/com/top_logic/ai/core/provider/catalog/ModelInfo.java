@@ -33,6 +33,13 @@ public record ModelInfo(
 		String status) {
 
 	/**
+	 * This metadata for the model of the given ID.
+	 */
+	public ModelInfo withId(String newId) {
+		return new ModelInfo(newId, family, limits, capabilities, cost, dates, openWeights, status);
+	}
+
+	/**
 	 * Token limits for a model.
 	 *
 	 * @param contextWindow maximum input context in tokens

@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.ai.core.agent.AgentRuntimeService;
 import com.top_logic.ai.core.session.persist.ConversationLogSerializer;
@@ -21,6 +22,7 @@ import com.top_logic.ai.core.session.persist.InterruptedTranscript;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.ai.core.memory.CompactionStrategies;
@@ -124,6 +126,55 @@ public class ChatSessionManager {
 	 * </p>
 	 */
 	private ChatState _noChat;
+
+	/** What is told when another session becomes the active one; see {@link #addActiveSessionListener}. */
+	private final List<ActiveSessionRegistration> _activeSessionListeners = new CopyOnWriteArrayList<>();
+
+	/**
+	 * Is told when another session becomes the active one of a {@link ChatSessionManager}.
+	 *
+	 * @see ChatSessionManager#addActiveSessionListener(ActiveSessionListener)
+	 */
+	public interface ActiveSessionListener {
+
+		/**
+		 * Another session is the active one now.
+		 *
+		 * <p>
+		 * Called on the thread that switched, after the switch is complete and outside of any lock of
+		 * the manager.
+		 * </p>
+		 *
+		 * @param sessionId
+		 *        The id of the session that is active now.
+		 * @param owner
+		 *        The person the session was activated for.
+		 */
+		void activeSessionChanged(String sessionId, Person owner);
+	}
+
+	/** One registered {@link ActiveSessionListener}, inactive once disposed. */
+	private final class ActiveSessionRegistration implements Registration {
+
+		final ActiveSessionListener _listener;
+
+		private volatile boolean _active = true;
+
+		ActiveSessionRegistration(ActiveSessionListener listener) {
+			_listener = listener;
+		}
+
+		@Override
+		public void dispose() {
+			_active = false;
+			_activeSessionListeners.remove(this);
+		}
+
+		@Override
+		public boolean isActive() {
+			return _active;
+		}
+	}
 
 	/**
 	 * The state of one chat this manager holds, with what its window listens to for it.
@@ -554,6 +605,23 @@ public class ChatSessionManager {
 	}
 
 	/**
+	 * Registers a listener that is told whenever another session becomes the active one.
+	 *
+	 * <p>
+	 * Only a switch to another session is reported: activating the session that is already the
+	 * active one, and a refused switch, report nothing.
+	 * </p>
+	 *
+	 * @return The registration; disposing it ends the notification, also of a notification that is
+	 *         running and has not reached the listener yet.
+	 */
+	public Registration addActiveSessionListener(ActiveSessionListener listener) {
+		ActiveSessionRegistration registration = new ActiveSessionRegistration(listener);
+		_activeSessionListeners.add(registration);
+		return registration;
+	}
+
+	/**
 	 * Switches the active session. Persists the current session first, then loads the target session
 	 * from the database (or LRU cache) and rebuilds the AI's conversation memory.
 	 *
@@ -565,13 +633,38 @@ public class ChatSessionManager {
 	 * caller's chat quietly becoming someone else's.
 	 * </p>
 	 *
+	 * <p>
+	 * A switch to another session is announced to the {@link #addActiveSessionListener(ActiveSessionListener)
+	 * listeners}, so that the chat elements displaying this window's chat open it.
+	 * </p>
+	 *
 	 * @param sessionId
 	 *        The session ID to switch to.
 	 * @param owner
 	 *        The person acting; the session must be theirs. {@code null} owns nothing.
 	 * @return whether the session is now the active one.
+	 *
+	 * @see #switchSession(String, Person, boolean)
 	 */
 	public boolean switchSession(String sessionId, Person owner) {
+		return switchSession(sessionId, owner, true);
+	}
+
+	/**
+	 * Switches the active session, see {@link #switchSession(String, Person)}.
+	 *
+	 * @param sessionId
+	 *        The session ID to switch to.
+	 * @param owner
+	 *        The person acting; the session must be theirs. {@code null} owns nothing.
+	 * @param announce
+	 *        Whether a switch to another session is announced to the
+	 *        {@link #addActiveSessionListener(ActiveSessionListener) listeners}. <code>false</code>
+	 *        only for a switch the browser's own chat element asked for - it opens the session
+	 *        itself and reports it - see {@link TaskProgressTracker#adoptActiveSessionId(String, Person)}.
+	 * @return whether the session is now the active one.
+	 */
+	public boolean switchSession(String sessionId, Person owner, boolean announce) {
 		if (sessionId == null) {
 			return false;
 		}
@@ -624,7 +717,18 @@ public class ChatSessionManager {
 		persistOutsideLock(outgoing);
 		// The window shows the chat from now on: a subagent's result that ended before is no news.
 		ChatHistoryService.markSeen(incoming);
+		if (announce) {
+			notifyActiveSessionChanged(sessionId, owner);
+		}
 		return true;
+	}
+
+	private void notifyActiveSessionChanged(String sessionId, Person owner) {
+		for (ActiveSessionRegistration registration : _activeSessionListeners) {
+			if (registration.isActive()) {
+				registration._listener.activeSessionChanged(sessionId, owner);
+			}
+		}
 	}
 
 	/**

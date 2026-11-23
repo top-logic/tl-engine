@@ -16,14 +16,16 @@ import com.top_logic.layout.form.model.FieldMode;
  *
  * <p>
  * Receives the model name and the provider serving it (via {@code @Ref(MODEL)} and
- * {@code @Ref(PROVIDER)}), resolves the catalog provider ID via {@link LLMProviderService}, and returns
- * {@link FieldMode#ACTIVE} if the provider matches, {@link FieldMode#INVISIBLE} otherwise.
+ * {@code @Ref(PROVIDER)}), resolves the model's API family ({@link LLMProviderConfig#getApiFamily(String)})
+ * via {@link LLMProviderService}, and returns {@link FieldMode#ACTIVE} if it matches,
+ * {@link FieldMode#INVISIBLE} otherwise.
  * </p>
  */
 public abstract class ProviderFieldMode extends GenericFunction<FieldMode> {
 
 	/**
-	 * The provider IDs for which the field should be visible.
+	 * The API families ({@link LLMProviderConfig#getApiFamily(String)}) for which the field should
+	 * be visible.
 	 */
 	protected abstract Set<String> providers();
 
@@ -38,7 +40,7 @@ public abstract class ProviderFieldMode extends GenericFunction<FieldMode> {
 		if (registry == null) {
 			return FieldMode.INVISIBLE;
 		}
-		String providerId = registry.getProviderId(model, provider);
+		String providerId = registry.getApiFamily(model, provider);
 		if (providerId != null && providers().contains(providerId)) {
 			return FieldMode.ACTIVE;
 		}

@@ -48,6 +48,7 @@ liest die Tokens.
 | `tl-reveal-on-hover` | am Öffner, nur lesend |
 | `tl-field` | an der Wurzel, nur bearbeitbar |
 | `data-tl-state~="edit"` | an der Wurzel, nur bearbeitbar |
+| `data-tl-state~="required"` | an der Wurzel, bearbeitbar und Pflicht; statt `aria-required`, das die Rolle `group` nicht erlaubt. Die Tabellenzelle zeichnet daran die Pflichtecke (`table.contract.md`) |
 
 ## Konformität
 

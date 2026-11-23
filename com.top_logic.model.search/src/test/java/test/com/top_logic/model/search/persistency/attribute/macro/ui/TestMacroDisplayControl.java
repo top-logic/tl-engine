@@ -83,14 +83,36 @@ public class TestMacroDisplayControl extends TestControl {
 			}
 		});
 
+		// Model elements and their attribute values are readable for every user (ticket #30437).
 		TLContextManager.inPersonContext(_user, () -> {
 			for (TLModule module : modules) {
 				MacroDisplayControl control = createControl(module, macro);
 
 				String output = writeControl(control);
 
-				assertContains("User has no right to see name of module.", "<b>name: " + "" + "</b>", output);
+				assertContains("Every user may see the name of a module.", "<b>name: " + module.getName() + "</b>",
+					output);
 			}
+		});
+	}
+
+	/**
+	 * A macro is evaluated with the access rights of the current user: the name of another
+	 * account is visible for the administrator, but not for an ordinary user, who may read only
+	 * the own account.
+	 */
+	public void testMacroEvaluatedWithSecurity() {
+		Person root = PersonManager.getManager().getRoot();
+		SearchExpression macro = createMacro("<b>name: {$model.get(`tl.accounts:Person#name`)}</b>");
+
+		TLContextManager.inPersonContext(root, () -> {
+			String output = writeControl(createControl(root, macro));
+			assertContains("<b>name: " + root.getName() + "</b>", output);
+		});
+
+		TLContextManager.inPersonContext(_user, () -> {
+			String output = writeControl(createControl(root, macro));
+			assertContains("User has no right to see the name of another account.", "<b>name: </b>", output);
 		});
 	}
 

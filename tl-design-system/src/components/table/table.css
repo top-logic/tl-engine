@@ -267,6 +267,18 @@
   white-space: nowrap;
 }
 
+/* Pflicht (#30391): ein Stern hinter dem Titel, solange die Tabelle bearbeitet wird — wie im Formular
+   (tl-form-field__required). Er gibt nie nach: nur der Titel endet mit Ellipse. Symbol, darum 3:1 (pairs.mjs). */
+.tl-table__required {
+  flex: none;
+  color: var(--tl-status-error-text);
+}
+
+/* Der Titel einer Zahlenspalte endet bündig mit den Ziffern (Review !2206): der Stern steht dort vor dem Titel. */
+.tl-table__header-cell[data-tl-align="end"] .tl-table__required {
+  order: -1;
+}
+
 /* Sortierpfeil und Gruppierungsmarke: tl-icon-sm, aria-hidden. Die Stufe einer mehrstufigen Sortierung
    ist ein tl-badge (Part Badge). */
 .tl-table__mark {
@@ -866,6 +878,24 @@
 .tl-table__cell .tl-field:not(:disabled, [readonly], [aria-disabled="true"]) {
   background: var(--tl-surface-field);
   box-shadow: inset 0 0 0 var(--tl-border-width-sm) var(--tl-border-control);
+}
+
+/* Pflicht in der Zelle (#30391): eine Ecke in status-error-text oben rechts im Feld, an jedem Feld, das in dieser
+   Zeile Pflicht ist — auch bedingt (das Feld trägt aria-required pro Zeile; das kompakte Feld mit role=group, das
+   aria-required nicht erlaubt, data-tl-state~="required"). Ein Hintergrundbild statt ::after:
+   ein input hat kein Pseudo-Element, und die Zelle bleibt ohne position (fixierte Zellen sind sticky). Der
+   Radius des Felds rundet die Ecke mit. Symbol, darum 3:1 gegen surface-field (pairs.mjs). */
+.tl-table__cell .tl-field:is([aria-required="true"], [data-tl-state~="required"]):not(:disabled, [readonly], [aria-disabled="true"]) {
+  background-image: linear-gradient(to bottom left, var(--tl-status-error-text) 50%, transparent 50%);
+  background-size: var(--tl-space-xs) var(--tl-space-xs);
+  background-position: top right;
+  background-repeat: no-repeat;
+}
+
+/* Der Fokusring liegt nach innen über dem Hintergrund (outline-offset oben) und deckte die Ecke bis auf einen Fleck;
+   um seine Breite größer bleibt unter ihm so viel Ecke sichtbar wie ohne Fokus. */
+.tl-table__cell .tl-field:is([aria-required="true"], [data-tl-state~="required"]):focus-visible {
+  background-size: calc(var(--tl-space-xs) + var(--tl-focus-width)) calc(var(--tl-space-xs) + var(--tl-focus-width));
 }
 
 :where(.tl-table__row:hover, .tl-table__row[aria-selected="true"]) .tl-table__cell .tl-field:not(:disabled, [readonly], [aria-disabled="true"]) {

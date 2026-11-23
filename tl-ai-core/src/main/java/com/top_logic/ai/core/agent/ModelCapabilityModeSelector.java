@@ -23,6 +23,7 @@ import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.util.Pointer;
 import com.top_logic.ai.core.provider.AgentModelAssignment;
+import com.top_logic.ai.core.provider.LLMProviderConfig;
 import com.top_logic.ai.core.provider.LLMProviderService;
 import com.top_logic.ai.core.provider.catalog.ModelInfo;
 import com.top_logic.util.error.TopLogicException;
@@ -31,8 +32,8 @@ import com.top_logic.util.error.TopLogicException;
  * {@link ModeSelector} that controls field/group visibility based on the agent's selected model.
  *
  * <p>
- * Resolves the model name to a provider ID and checks model capabilities from the catalog.
- * A field or group is shown only when the provider matches AND the required capability is present.
+ * Resolves the model name to its API family and checks model capabilities from the catalog.
+ * A field or group is shown only when the family matches AND the required capability is present.
  * </p>
  */
 public class ModelCapabilityModeSelector implements ModeSelector {
@@ -50,11 +51,13 @@ public class ModelCapabilityModeSelector implements ModeSelector {
 		String CAPABILITY = "capability";
 
 		/**
-		 * Provider IDs this field/group applies to (e.g. "anthropic", "openai").
+		 * The API families of the models this field/group applies to (e.g. "anthropic", "openai").
 		 *
 		 * <p>
-		 * When empty, the field is shown for all providers (only capability is checked).
+		 * When empty, the field is shown for all models (only capability is checked).
 		 * </p>
+		 *
+		 * @see LLMProviderConfig#getApiFamily(String)
 		 */
 		@Name(PROVIDERS)
 		@Format(CommaSeparatedStrings.class)
@@ -108,10 +111,10 @@ public class ModelCapabilityModeSelector implements ModeSelector {
 		}
 		String model = assignment.model();
 
-		// Provider check
+		// API family check
 		if (!_providers.isEmpty()) {
-			String providerId = registry.getProviderId(model, assignment.provider());
-			if (providerId == null || !_providers.contains(providerId)) {
+			String family = registry.getApiFamily(model, assignment.provider());
+			if (family == null || !_providers.contains(family)) {
 				return FormVisibility.HIDDEN;
 			}
 		}

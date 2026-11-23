@@ -5,8 +5,10 @@
  */
 package com.top_logic.ai.core.provider;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.CommaSeparatedStrings;
@@ -262,4 +264,38 @@ public interface LLMProviderConfig {
 	 * Returns the catalog provider ID from configuration.
 	 */
 	String getCatalogProviderId();
+
+	/**
+	 * The API family of the given model when this provider serves it.
+	 *
+	 * <p>
+	 * Decides which vendor-specific options the model is given, see {@link ApiFamilies}. A provider
+	 * that serves the models of one vendor only answers its {@link #getCatalogProviderId() catalog
+	 * provider ID}; a provider that serves the models of several vendors (e.g. Google Vertex AI) answers
+	 * the family of the model's vendor.
+	 * </p>
+	 *
+	 * @param model
+	 *        A model of this provider.
+	 * @return The family, <code>null</code> if it is not known.
+	 */
+	default String getApiFamily(String model) {
+		return getCatalogProviderId();
+	}
+
+	/**
+	 * The tool choices this provider accepts for the given model.
+	 *
+	 * <p>
+	 * A request with another tool choice is {@link ToolChoice#restrict(ProviderRequest, Set, String)
+	 * restricted} to these before it is sent.
+	 * </p>
+	 *
+	 * @param model
+	 *        A model of this provider.
+	 * @return The accepted tool choices; by default all of them.
+	 */
+	default Set<ToolChoice> getToolChoices(String model) {
+		return EnumSet.allOf(ToolChoice.class);
+	}
 }

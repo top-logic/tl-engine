@@ -51,8 +51,6 @@ const TRACE_KEY = 'tl-chat-trace'
 
 const EFFORT_KEY = 'tl-chat-effort'
 
-const ACTIVE_SESSION_KEY = 'tl-chat-session'
-
 function isTraceMode(value: unknown): value is TraceMode {
   return value === 'none' || value === 'summary' || value === 'detailed'
 }
@@ -103,46 +101,5 @@ export function writeEffort(effort: string | null): void {
     else window.localStorage.removeItem(EFFORT_KEY)
   } catch {
     /* the choice simply does not survive a reload */
-  }
-}
-
-/**
- * Where one chat's open conversation is remembered.
- *
- * **Per `chat-id`.** It used to be one key for the whole tab, which is wrong the moment a window
- * holds two conversations - a `<chat-dock>` beside a chat page, say: each store wrote the key on
- * every session change, and on the next reload both read the last writer's id and restored the
- * *same* conversation into both places.
- */
-function activeSessionKey(chatId: string): string {
-  const id = chatId.trim()
-  return id ? `${ACTIVE_SESSION_KEY}:${id}` : ACTIVE_SESSION_KEY
-}
-
-/**
- * The conversation this browser window had open on the given chat, or `null` when it had none.
- *
- * Held in `sessionStorage` rather than `localStorage` on purpose: that is per tab and survives a
- * reload, which is exactly the distinction wanted here - pressing F5 returns to the conversation
- * you were reading, while a newly opened tab starts on the empty state instead of inheriting
- * another tab's chat.
- */
-export function readActiveSession(chatId: string): string | null {
-  try {
-    const stored = window.sessionStorage.getItem(activeSessionKey(chatId))
-    return stored && stored.trim() ? stored : null
-  } catch {
-    return null
-  }
-}
-
-/** Remembers the open conversation of one chat. Failing to store it must not break the chat. */
-export function writeActiveSession(chatId: string, sessionId: string | null): void {
-  try {
-    const key = activeSessionKey(chatId)
-    if (sessionId) window.sessionStorage.setItem(key, sessionId)
-    else window.sessionStorage.removeItem(key)
-  } catch {
-    /* the open chat simply does not survive a reload */
   }
 }

@@ -167,6 +167,13 @@ public class RunEnvironment {
 	/**
 	 * The {@code {{context}}} section: the heading and the stable facts, or nothing when the host
 	 * stated none.
+	 *
+	 * <p>
+	 * Each fact is one line. Its name and its value go through {@link TurnContext#flatten(String)},
+	 * the code of the per-turn block: a value is data that a user can write, for example the label
+	 * of an object, and a line break or a block tag in it must not add a statement to a block that
+	 * the model is told is authoritative.
+	 * </p>
 	 */
 	static String contextSection(List<EnvironmentFact> facts, String heading) {
 		if (facts == null || facts.isEmpty()) {
@@ -179,7 +186,8 @@ public class RunEnvironment {
 				// click would break the prompt cache on every turn it changes.
 				continue;
 			}
-			lines.add("- " + fact.name() + ": " + fact.value());
+			lines.add("- " + TurnContext.flatten(fact.name()) + ": "
+				+ TurnContext.flatten(fact.value()));
 		}
 		if (lines.isEmpty()) {
 			return "";

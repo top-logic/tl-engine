@@ -1134,7 +1134,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 
 	/**
 	 * Requests cancellation of a running agent run: an async run started with
-	 * {@link #agentChatAsync(String, Object)}, a chat run or a scheduled run.
+	 * {@link #agentChatAsync(String, Object)}, a chat run, a scheduled run or any other recorded
+	 * run. The background subagents of the run stop with it.
 	 *
 	 * <p>
 	 * Cluster-safe: the handle is resolved to its top-level execution and the run's persisted

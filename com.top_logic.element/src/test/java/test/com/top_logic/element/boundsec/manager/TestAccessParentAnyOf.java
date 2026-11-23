@@ -4,10 +4,12 @@
  */
 package test.com.top_logic.element.boundsec.manager;
 
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import junit.framework.Test;
@@ -18,8 +20,10 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.element.util.ElementWebTestSetup;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
+import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.tools.CollectingLogListener;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
@@ -34,6 +38,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.model.security.RefererRelation;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -301,6 +306,54 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 			assertFalse("No allowance is left in the interaction after the rollback: " + person.getName(),
 				allowed(person, contact, SimpleBoundCommandGroup.READ));
 		}
+	}
+
+	/**
+	 * A committed object referring to the object that cannot hold roles gives no verdict: following
+	 * it would open the object to every user.
+	 *
+	 * <p>
+	 * The test model has no persistent type without access control, so the relation is tested with
+	 * a stand-in for such a referring object.
+	 * </p>
+	 */
+	public void testRefererWithoutAccessControlGivesNoVerdict() {
+		TLObject plain = stub(TLObject.class, (method, args) -> switch (method) {
+			case "tTransient" -> false;
+			case "tHandle" -> _document.tHandle();
+			default -> throw new UnsupportedOperationException(method);
+		});
+		TLReference author = (TLReference) type(DOCUMENT).getPart("author");
+		TLObject contact = stub(TLObject.class, (method, args) -> switch (method) {
+			case "tReferers" -> Set.of(plain, _document);
+			case "tType" -> type(CONTACT);
+			default -> throw new UnsupportedOperationException(method);
+		});
+		RefererRelation relation = new RefererRelation(author);
+
+		CollectingLogListener listener = new CollectingLogListener(Set.of(Level.ERROR), true);
+		try {
+			List<TLObject> parents = new ArrayList<>();
+			relation.resolveAll(contact, SimpleBoundCommandGroup.READ).forEach(parents::add);
+			assertEquals("Only the document gives a verdict.", List.of(_document), parents);
+			assertSame(_document, relation.resolve(contact));
+		} finally {
+			listener.deactivate();
+		}
+		assertFalse("The object without access control is logged.", listener.getLogEntries().isEmpty());
+	}
+
+	/**
+	 * A stand-in for an object of the given interface, answering the given methods by name.
+	 */
+	private static <T> T stub(Class<T> type, BiFunction<String, Object[], Object> answers) {
+		return type.cast(Proxy.newProxyInstance(type.getClassLoader(), new Class<?>[] { type },
+			(proxy, method, args) -> switch (method.getName()) {
+				case "hashCode" -> System.identityHashCode(proxy);
+				case "equals" -> proxy == args[0];
+				case "toString" -> type.getSimpleName() + " stand-in";
+				default -> answers.apply(method.getName(), args);
+			}));
 	}
 
 	public void testDifferentlyRestrictedCandidates() {

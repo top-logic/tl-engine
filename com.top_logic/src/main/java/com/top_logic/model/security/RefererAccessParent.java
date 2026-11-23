@@ -28,8 +28,9 @@ import com.top_logic.model.util.TLModelUtil;
  *
  * <p>
  * Each referring object is an access parent of its own. Only committed referring objects count, an
- * object created in the current transaction gives no verdict. A referring object whose type is not
- * access controlled (without security, or not holding roles at all) opens the object to everybody.
+ * object created in the current transaction gives no verdict. A referring object that cannot hold
+ * roles gives no verdict either. A referring object whose type is without security opens the object
+ * to everybody.
  * </p>
  *
  * @see RefererRelation

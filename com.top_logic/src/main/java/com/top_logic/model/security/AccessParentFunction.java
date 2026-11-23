@@ -7,6 +7,7 @@ package com.top_logic.model.security;
 import java.util.List;
 import java.util.Set;
 
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -14,6 +15,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
+import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
@@ -251,6 +253,35 @@ public interface AccessParentFunction {
 	 */
 	default AccessParentFunction getRelation() {
 		return this;
+	}
+
+	/**
+	 * Whether the given object, found as access parent of the given delegating object, gives a
+	 * verdict on it.
+	 *
+	 * <p>
+	 * Only a {@link CheckedObjects#isStored(TLObject) stored} object does. An object created in the
+	 * current transaction is set up by whoever creates it, without any check on the object whose
+	 * access it would decide, and is skipped silently. An object without access control of its own
+	 * (no {@link BoundObject}, a transient object for instance) holds no roles, and following it
+	 * would open the delegating object to every user: it is skipped and logged as an error.
+	 * </p>
+	 *
+	 * @param parent
+	 *        The object a relation leading to several access parents found.
+	 * @param object
+	 *        The delegating object.
+	 * @param relation
+	 *        Description of the relation for the log.
+	 * @return Whether the parent is an access parent of the object.
+	 */
+	static boolean givesVerdict(TLObject parent, TLObject object, Object relation) {
+		if (parent instanceof BoundObject) {
+			return SecurityConfigurationService.isCommitted(parent);
+		}
+		Logger.error("Access parent " + relation + " yields an object without access control for " + object
+			+ " of type " + object.tType() + ", it is skipped: " + parent, AccessParentFunction.class);
+		return false;
 	}
 
 	/**

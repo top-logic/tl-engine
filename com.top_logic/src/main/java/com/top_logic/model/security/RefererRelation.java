@@ -11,6 +11,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 
 /**
@@ -18,9 +19,12 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
  * reference, see {@link RefererAccessParent}.
  *
  * <p>
- * Each referring object is an access parent of its own. Only committed referring objects count: an
- * object created in the current transaction is set up by whoever creates it, without any check on
- * the object it refers to, and therefore gives no verdict for that object.
+ * Each referring object is an access parent of its own. Only committed referring objects with
+ * access control of their own count, see
+ * {@link AccessParentFunction#givesVerdict(TLObject, TLObject, Object)}: an object created in the
+ * current transaction is set up by whoever creates it, without any check on the object it refers
+ * to, and therefore gives no verdict for that object; an object that cannot hold roles gives no
+ * verdict either, and is logged as an error.
  * </p>
  *
  * @param reference
@@ -30,12 +34,12 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 public record RefererRelation(TLReference reference) implements AccessParentFunction {
 
 	/**
-	 * @return The first committed object pointing to the given one.
+	 * @return The first object pointing to the given one that gives a verdict on it.
 	 */
 	@Override
 	public TLObject resolve(TLObject object) {
 		for (TLObject referer : object.tReferers(reference)) {
-			if (SecurityConfigurationService.isCommitted(referer)) {
+			if (AccessParentFunction.givesVerdict(referer, object, description())) {
 				return referer;
 			}
 		}
@@ -48,9 +52,16 @@ public record RefererRelation(TLReference reference) implements AccessParentFunc
 			return List.of();
 		}
 		return () -> object.tReferers(reference).stream()
-			.filter(SecurityConfigurationService::isCommitted)
+			.filter(referer -> AccessParentFunction.givesVerdict(referer, object, description()))
 			.map(TLObject.class::cast)
 			.iterator();
+	}
+
+	/**
+	 * The definition of this relation, for the log.
+	 */
+	private String description() {
+		return "<referer reference=\"" + TLModelUtil.qualifiedName(reference) + "\"/>";
 	}
 
 	/**

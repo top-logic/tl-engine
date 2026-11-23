@@ -26,10 +26,8 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.AccessParentDefinition;
 import com.top_logic.model.security.AccessParentFunction;
-import com.top_logic.model.security.CheckedObjects;
 import com.top_logic.model.security.OperationRestriction;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.BoundObject;
 
 /**
  * {@link AccessParentDefinition} computing the access parent of an object by a TL-Script function.
@@ -163,16 +161,10 @@ public class ScriptAccessParent extends AbstractConfiguredInstance<ScriptAccessP
 			if (value == null) {
 				continue;
 			}
-			if (value instanceof BoundObject parent) {
-				if (CheckedObjects.isStored(parent)) {
+			if (value instanceof TLObject parent) {
+				if (AccessParentFunction.givesVerdict(parent, object, "script (" + _source + ")")) {
 					parents.add(parent);
 				}
-			} else if (value instanceof TLObject) {
-				// An object without access control of its own - a transient object, for instance -
-				// would open the object to every user, since nobody decides for it.
-				Logger.error("Access parent script yields an object without access control for " + object
-					+ " of type " + object.tType() + ", it is skipped: " + value + " (" + _source + ")",
-					ScriptAccessParent.class);
 			} else {
 				Logger.error("Access parent script yields a value that is no object for " + object + " of type "
 					+ object.tType() + ", it is skipped: " + value + " (" + _source + ")", ScriptAccessParent.class);

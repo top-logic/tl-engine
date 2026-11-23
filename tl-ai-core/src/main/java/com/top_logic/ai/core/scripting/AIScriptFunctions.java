@@ -33,6 +33,7 @@ import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -89,6 +90,7 @@ import com.top_logic.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.ai.core.tools.ToolCatalog;
 import com.top_logic.ai.core.tools.ToolExecutions;
 import com.top_logic.ai.core.tools.perception.BinaryPerception;
+import com.top_logic.util.ActingPerson;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
@@ -771,8 +773,14 @@ public class AIScriptFunctions extends TLScriptFunctions {
 				"ai.agentChatAsync: " + agentName);
 
 		Object messageContent = userMessage;
-		SchedulerService.getInstance().submit(() -> ThreadContextManager.inDerivedContext(callerSession,
-			() -> runAsync(agentName, messageContent, session)));
+		// The run acts for the person of the calling request, if present, until it ends.
+		Person actingPerson = ActingPerson.handOver();
+		SchedulerService.getInstance().submit(() -> {
+			try (ThreadLocalBinding<Person>.Handle acting = ActingPerson.bind(actingPerson)) {
+				ThreadContextManager.inDerivedContext(callerSession,
+					() -> runAsync(agentName, messageContent, session));
+			}
+		});
 
 		// Return the session's persistent id as a plain String rather than the live AgentSession
 		// wrapper. The session was committed out-of-band on the store's writer thread at a revision

@@ -59,7 +59,7 @@ public class TestWakeStaysInItsChat extends BasicTestCase {
 		}
 		_window = new SwitchingWindow();
 		_window.setLastSend(new ChatProcessor.LastSend(new WeakReference<>(TLContextManager.getSubSession()),
-			ChatProcessor.ChatRunOptions.DEFAULT, List.of()));
+			ChatProcessor.ChatRunOptions.DEFAULT, List.of(), owner));
 		_handler = new Handler(_window);
 		ChatEventHandlerRegistry.register(_handler);
 	}
@@ -90,7 +90,10 @@ public class TestWakeStaysInItsChat extends BasicTestCase {
 		assertEquals("Chat B got no turn.", turnsOfB, logB.turns().size());
 	}
 
-	/** Without a switch, the turn starts in the chat it is for. */
+	/**
+	 * Without a switch, the turn starts in the chat it is for, and acts for the person of the last
+	 * message in the window.
+	 */
 	public void testTheTurnRunsInItsChat() {
 		ChatSessionManager chats = _window.getSessionManager();
 		assertTrue(chats.switchSession(chatA, owner));
@@ -101,6 +104,7 @@ public class TestWakeStaysInItsChat extends BasicTestCase {
 		ChatProcessor.AIProcessingState wake = _window.getProcessingStateForSession(chatA);
 		assertNotNull(wake);
 		assertSame(logA, wake.getConversationLog());
+		assertSame(owner, wake.getActingPerson());
 	}
 
 	/** A run of chat A reads chat A's subagents, also after the window switched to chat B. */

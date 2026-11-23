@@ -8,6 +8,8 @@ package com.top_logic.ai.eval;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -22,6 +24,7 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -57,6 +60,8 @@ import com.top_logic.ai.core.scripting.AIScriptFunctions;
 import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.ai.core.tools.web.WebSearchHit;
 import com.top_logic.ai.core.tools.web.WebToolsService;
+import com.top_logic.util.ActingPerson;
+import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -93,6 +98,9 @@ public class TestHeadlessResearch extends BasicTestCase {
 	/** How often the model was called at all. */
 	private static final AtomicInteger CALLS = new AtomicInteger();
 
+	/** The {@link ActingPerson} of each call of the model, by the lead and by its worker. */
+	private static final List<Optional<Person>> ACTING = Collections.synchronizedList(new ArrayList<>());
+
 	private static int _accounts;
 
 	private final List<String> _registryKeys = new ArrayList<>();
@@ -102,6 +110,7 @@ public class TestHeadlessResearch extends BasicTestCase {
 		super.setUp();
 		LEAD_PROMPTS.clear();
 		CALLS.set(0);
+		ACTING.clear();
 		FixtureWeb.search(QUERY, new WebSearchHit("Austria subsidy page", URL, FACT, ""));
 		FixtureWeb.page(URL, "Austria subsidy page", "# Subsidies\n\n" + FACT);
 		ScriptedProvider.install(TestHeadlessResearch::reply);
@@ -148,6 +157,9 @@ public class TestHeadlessResearch extends BasicTestCase {
 		assertTrue("The question is on record in the chat.", run.getTranscript().contains("Which heat pump"));
 		assertEquals("The report is what the handle answers.", report, AIScriptFunctions.agentRunResult(handle));
 
+		assertEquals("A scheduled research acts for nobody in other systems.", Set.of(Optional.empty()),
+			Set.copyOf(ACTING));
+
 		ResearchRun kept = keptRun(QUESTION);
 		assertEquals("The run is kept for the owner, not for the system context it was started in.", root,
 			kept.getOwner());
@@ -156,6 +168,26 @@ public class TestHeadlessResearch extends BasicTestCase {
 		assertEquals("The page the report cites comes first, with its footnote.", Integer.valueOf(1),
 			cited.getFootnote());
 		assertEquals("The fixture web archives nothing, so the page is kept with its address.", URL, cited.getUrl());
+	}
+
+	/**
+	 * Started in a request of the person in a browser window: the lead and the worker it spawns act
+	 * for the person in other systems, after the request has ended.
+	 */
+	public void testAResearchOfAPresentPersonActsForThePerson() throws Exception {
+		Person root = PersonManager.getManager().getRoot();
+
+		String handle = TLContextManager.inPersonContext(root, () -> {
+			try (ThreadLocalBinding<Person>.Handle acting = ActingPerson.bind(root)) {
+				return AIScriptFunctions.research(QUESTION, "quick", null);
+			}
+		});
+		AgentExecution run = awaitEnd(handle);
+
+		assertEquals(run.getErrorMessage(), ExecutionStatus.COMPLETE.name(), run.getStatus().getName());
+		assertTrue("The report cites the page only the worker read: " + run.getResponse(),
+			run.getResponse().contains(FACT + "[1]"));
+		assertEquals(Set.of(Optional.of(root)), Set.copyOf(ACTING));
 	}
 
 	/** The research run kept for the given question. */
@@ -245,6 +277,7 @@ public class TestHeadlessResearch extends BasicTestCase {
 	/** The lead loads the skill, spawns one worker, waits, keeps the run and writes; the worker searches and reads. */
 	private static Reply reply(ProviderRequest request, int turn) {
 		CALLS.incrementAndGet();
+		ACTING.add(Optional.ofNullable(ActingPerson.handOver()));
 		String prompt = String.valueOf(request.systemPrompt());
 		if (prompt.startsWith("You are a research worker.")) {
 			switch (turn) {

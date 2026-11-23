@@ -34,6 +34,7 @@ import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -84,6 +85,7 @@ import com.top_logic.ai.core.session.Turn;
 import com.top_logic.ai.core.tools.ToolRegistry;
 import com.top_logic.ai.core.tools.interaction.ToolRegistryReloadFlag;
 import com.top_logic.ai.core.tools.task.TaskStore;
+import com.top_logic.util.ActingPerson;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
@@ -145,9 +147,12 @@ public class ChatProcessor {
 	 *        Agent, model and MCP choices.
 	 * @param facts
 	 *        What the page stated.
+	 * @param actingPerson
+	 *        The {@link ActingPerson} of the last message, which the turn acts for; <code>null</code>
+	 *        for none.
 	 */
 	record LastSend(WeakReference<TLSubSessionContext> userSession, ChatRunOptions options,
-			List<EnvironmentFact> facts) {
+			List<EnvironmentFact> facts, Person actingPerson) {
 		// Plain data.
 	}
 
@@ -621,7 +626,8 @@ public class ChatProcessor {
 			taskId = state.getCurrentTaskId();
 		}
 
-		prepareRun(tracker, state, options != null ? options : ChatRunOptions.DEFAULT, facts, spendReading);
+		prepareRun(tracker, state, options != null ? options : ChatRunOptions.DEFAULT, facts, spendReading,
+			ActingPerson.handOver());
 
 		// Create ConversationLog Turn before submitting background task
 		String messageText = userMessage != null ? userMessage.trim() : "";
@@ -660,7 +666,8 @@ public class ChatProcessor {
 		// worker takes it and finds the token cancelled.
 		state.getCancellationToken().onCancel(() -> ChatRunExecutor.stopWatching(future));
 
-		tracker.setLastSend(new LastSend(new WeakReference<>(window), state.getRunOptions(), state.getFacts()));
+		tracker.setLastSend(new LastSend(new WeakReference<>(window), state.getRunOptions(), state.getFacts(),
+			state.getActingPerson()));
 		SubagentWaker waker = tracker.getSessionManager().getSubagentWaker(sessionId);
 		if (waker != null) {
 			waker.userSent();
@@ -739,7 +746,7 @@ public class ChatProcessor {
 			state = registerRun(tracker, chat, sessionId, true);
 			taskId = state.getCurrentTaskId();
 		}
-		prepareRun(tracker, state, last.options(), last.facts(), spendReading);
+		prepareRun(tracker, state, last.options(), last.facts(), spendReading, last.actingPerson());
 
 		ConversationLog convLog = chat.log();
 		convLog.startTurn().setUserParts(List.of());
@@ -799,9 +806,15 @@ public class ChatProcessor {
 		return state;
 	}
 
-	/** Hands a registered run what it is started with. */
+	/**
+	 * Hands a registered run what it is started with.
+	 *
+	 * @param actingPerson
+	 *        The {@link ActingPerson} the run acts for until it ends, <code>null</code> for none.
+	 */
 	private static void prepareRun(TaskProgressTracker tracker, AIProcessingState state, ChatRunOptions options,
-			List<EnvironmentFact> facts, RunLimits.SpendReading spendReading) {
+			List<EnvironmentFact> facts, RunLimits.SpendReading spendReading, Person actingPerson) {
+		state.setActingPerson(actingPerson);
 		state.setRunOptions(options);
 		state.setFacts(facts);
 		state.setSpendReading(spendReading);
@@ -1260,12 +1273,19 @@ public class ChatProcessor {
 		/**
 		 * Runs the given job in a sub-session derived from the one of the window the message was sent
 		 * in, or, without a window, in an interaction without a sub-session.
+		 *
+		 * <p>
+		 * The job acts for the {@link AIProcessingState#getActingPerson() acting person} of the run,
+		 * also when the window is closed meanwhile.
+		 * </p>
 		 */
 		private void inRunContext(ComputationEx2<Void, RuntimeException, RuntimeException> job) {
-			if (_userSession == null) {
-				ThreadContextManager.inContext(null, job);
-			} else {
-				ThreadContextManager.inDerivedContext(_userSession, job);
+			try (ThreadLocalBinding<Person>.Handle acting = ActingPerson.bind(_state.getActingPerson())) {
+				if (_userSession == null) {
+					ThreadContextManager.inContext(null, job);
+				} else {
+					ThreadContextManager.inDerivedContext(_userSession, job);
+				}
 			}
 		}
 
@@ -1450,6 +1470,9 @@ public class ChatProcessor {
 
 		/** Whether the run opens with subagents' news rather than with a message of the user. */
 		private volatile boolean _wake;
+
+		/** @see #getActingPerson() */
+		private volatile Person _actingPerson;
 
 		/** Whether the run's events delivered a provider error to the windows. */
 		private volatile boolean _errorStreamed;
@@ -1684,6 +1707,21 @@ public class ChatProcessor {
 		/** Whether the run opens with subagents' news rather than with a message of the user. */
 		public boolean isWake() {
 			return _wake;
+		}
+
+		/**
+		 * The person the run acts for in other systems, taken over from the place that started it;
+		 * <code>null</code> if no present person started it.
+		 *
+		 * @see ActingPerson
+		 */
+		public Person getActingPerson() {
+			return _actingPerson;
+		}
+
+		/** @see #getActingPerson() */
+		void setActingPerson(Person person) {
+			_actingPerson = person;
 		}
 
 		/** @see #isWake() */

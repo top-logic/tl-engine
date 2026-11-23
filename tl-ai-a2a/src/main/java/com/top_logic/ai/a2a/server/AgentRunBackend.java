@@ -224,7 +224,7 @@ public final class AgentRunBackend implements A2ARequestHandler.TaskBackend {
 			persist(task, context);
 
 			SecurityContext security = RunSecurity.contextFor(
-				new RunPrincipal(person, RunEntryPoint.A2A, false, ExecutionRecorder.conversationIdOf(session)));
+				new RunPrincipal(person, RunEntryPoint.A2A, false, ExecutionRecorder.conversationIdOf(session), null));
 			ToolContext toolContext = new ToolContext(agent.getAllowWrites() ? security : new WriteGuard(security),
 				ApprovalCallback.AUTO_APPROVE, new TransactionScope(token), token);
 			run[0] = toolContext;

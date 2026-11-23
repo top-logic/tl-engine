@@ -25,7 +25,10 @@ import com.top_logic.ai.core.message.Conversation;
 import com.top_logic.ai.core.session.ConversationLog;
 import com.top_logic.ai.core.session.Part;
 import com.top_logic.ai.core.session.Turn;
+import com.top_logic.ai.core.security.RunPrincipal;
 import com.top_logic.ai.core.tools.ToolRegistry;
+import com.top_logic.basic.Logger;
+import com.top_logic.model.TLObject;
 
 /**
  * Runs an agent through {@link AgentFactory} with persistent execution recording.
@@ -100,11 +103,17 @@ public final class AgentRunner {
 
 	/**
 	 * Runs the named agent with optional per-run model and MCP overrides.
+	 *
+	 * <p>
+	 * A top-level run about a subject also writes that subject onto its session, when the session has
+	 * none yet - see {@link #recordSubject(AgentSession, AgentExecution, ToolContext)}.
+	 * </p>
 	 */
 	public static RecordedRun run(String agentName, Conversation conversation,
 			ConversationMemory memory, ToolContext context, AgentEventListener listener,
 			ToolRegistry sessionRegistry, ConversationLog log, AgentSession session,
 			AgentExecution parentExecution, AgentFactory.RunOverrides overrides) {
+		recordSubject(session, parentExecution, context);
 		RunRecording recording = RunRecording.open(agentName, session, parentExecution,
 			context.executionHandle(), log, listener);
 
@@ -199,6 +208,40 @@ public final class AgentRunner {
 		}
 		recording.finish(null);
 		return new RecordedRun(null, null, result, recording.execution());
+	}
+
+	/**
+	 * Writes the subject of a top-level run onto the session it is recorded in, when the session has
+	 * none yet.
+	 *
+	 * <p>
+	 * So that a conversation started by a script, a scheduled task or another application over A2A
+	 * appears in the list of the conversations about its object, as a chat started on the page of the
+	 * object does. One place for all entry points, and the subject written is the one the run's
+	 * context names: {@link com.top_logic.ai.core.security.RunSecurity} has removed a subject the run
+	 * may not read, so a session never gets one through here that its owner may not see.
+	 * </p>
+	 *
+	 * <p>
+	 * A session keeps the subject it has, as {@link AgentExecutionStore#setSubject} does. The write
+	 * is not needed for the answer, so a failure is logged and the run goes on.
+	 * </p>
+	 */
+	private static void recordSubject(AgentSession session, AgentExecution parentExecution, ToolContext context) {
+		RunPrincipal principal = context.security().principal();
+		TLObject subject = principal == null ? null : principal.subject();
+		// Not asked here whether the session has a subject already: the run's thread may read an
+		// older state of the session, in which a session the store just created does not exist. The
+		// store asks on its writer thread.
+		if (subject == null || session == null || parentExecution != null) {
+			return;
+		}
+		try {
+			AgentExecutionStore.getInstance().setSubject(session, subject);
+		} catch (RuntimeException ex) {
+			Logger.warn("Could not record the subject of a run on its session: " + ex.getMessage(), ex,
+				AgentRunner.class);
+		}
 	}
 
 	/**

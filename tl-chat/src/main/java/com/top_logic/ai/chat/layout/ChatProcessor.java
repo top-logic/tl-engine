@@ -1024,7 +1024,7 @@ public class ChatProcessor {
 		boolean unattended = taskTracker.isUnattended();
 		RunEntryPoint entryPoint = unattended ? RunEntryPoint.SCHEDULED : RunEntryPoint.CHAT;
 		SecurityContext security = RunSecurity.contextFor(
-			new RunPrincipal(TLContext.currentUser(), entryPoint, unattended, chat.sessionId()));
+			new RunPrincipal(TLContext.currentUser(), entryPoint, unattended, chat.sessionId(), null));
 		ToolContext context = new ToolContext(
 			security, approvalCallback, new TransactionScope(cancellationToken),
 			chat.approvedTools(), cancellationToken);

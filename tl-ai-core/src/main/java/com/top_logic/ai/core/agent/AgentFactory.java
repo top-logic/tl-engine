@@ -19,6 +19,7 @@ import com.top_logic.ai.tool.api.AnnotatedTools;
 import com.top_logic.ai.tool.api.Tool;
 import com.top_logic.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.basic.Logger;
+import com.top_logic.model.TLObject;
 import com.top_logic.ai.core.agent.environment.AgentFact;
 import com.top_logic.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.ai.core.agent.environment.RunEnvironment;
@@ -43,8 +44,10 @@ import com.top_logic.ai.core.provider.LLMProvider;
 import com.top_logic.ai.core.provider.LLMProviderService;
 import com.top_logic.ai.core.provider.ToolChoice;
 import com.top_logic.ai.core.provider.catalog.ModelInfo;
+import com.top_logic.ai.core.security.ReadFilter;
 import com.top_logic.ai.core.security.RoleAccessPolicy.Decision;
 import com.top_logic.ai.core.security.RunAuthorization;
+import com.top_logic.ai.core.security.RunPrincipal;
 import com.top_logic.ai.core.security.ToolSecurityException;
 import com.top_logic.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.ai.core.tools.ToolCatalog;
@@ -92,6 +95,16 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * this marker. Otherwise, the catalog is appended at the end.
 	 */
 	static final String SKILLS_PLACEHOLDER = "<<AVAILABLE_SKILLS>>";
+
+	/**
+	 * The name of the fact that states the subject of a run in the environment block.
+	 *
+	 * <p>
+	 * Not translated: it is the same word as the {@code subject} of the configuration and of
+	 * {@code tl.ai.execution:AgentSession#subject}, and the model reads it in every language.
+	 * </p>
+	 */
+	static final String SUBJECT_FACT = "Subject";
 
 	/** Singleton accessor. */
 	public static AgentFactory getInstance() {
@@ -246,7 +259,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 
 		AgentCapabilities capabilities = AgentCapabilities.forRun(context.security());
 
-		AgentParams coreConfig = buildConfig(agentDef, assignment, capabilities);
+		AgentParams coreConfig = buildConfig(agentDef, assignment, capabilities, subjectOf(context.security()));
 		LLMProvider provider = buildProvider(coreConfig.model(), assignment.provider());
 
 		// Tell the run's tools which agent they are serving, as plain data. The name is resolved
@@ -686,7 +699,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		refuse(agentsOwnRefusal(security.runAuthorization(), assignment.model(), agentDef.mcpServers()));
 
 		AgentCapabilities capabilities = AgentCapabilities.forRun(security);
-		AgentParams config = buildConfig(agentDef, assignment, capabilities);
+		AgentParams config = buildConfig(agentDef, assignment, capabilities, subjectOf(security));
 		LLMProvider provider = buildProvider(config.model(), assignment.provider());
 		ToolRegistry registry = buildToolCatalog(agentDef, capabilities);
 
@@ -724,7 +737,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 			AgentRuntimeService.getInstance().resolveModelAssignment(agentDef.name());
 		refuse(agentsOwnRefusal(security.runAuthorization(), assignment.model(), agentDef.mcpServers()));
 		AgentCapabilities capabilities = AgentCapabilities.forRun(security);
-		AgentParams config = buildConfig(agentDef, assignment, capabilities);
+		AgentParams config = buildConfig(agentDef, assignment, capabilities, subjectOf(security));
 		LLMProvider provider = buildProvider(config.model(), assignment.provider());
 		// Full parity with the parent agent's toolset, minus the ability to spawn subagents.
 		ToolRegistry registry = agentDef.skills().isEmpty()
@@ -762,9 +775,13 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * {@code <untrusted_*>} content is <em>not</em> among them: it is appended by {@link AgentLoop},
 	 * which is the one point every run passes through, including the runs that never come through here.
 	 * </p>
+	 *
+	 * @param subject
+	 *        The subject of the run as {@link com.top_logic.ai.core.security.RunSecurity} checked it, or
+	 *        <code>null</code> for none.
 	 */
 	AgentParams buildConfig(AgentDefinition agent, AgentModelAssignment assignment,
-			AgentCapabilities capabilities) {
+			AgentCapabilities capabilities, TLObject subject) {
 		LLMProviderService llmRegistry = LLMProviderService.getInstance();
 		String model = assignment.model();
 
@@ -785,7 +802,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 		// The environment block is composed last, so that a placeholder written into a skill or a
 		// delegate description is filled too, and so that the block is the last thing the model reads
 		// when the prompt does not say where it goes.
-		List<EnvironmentFact> facts = runFacts(agent);
+		List<EnvironmentFact> facts = runFacts(agent, subject);
 		RunEnvironment environment =
 			RunEnvironment.compose(agent.displayName(), agent.name(), model, facts);
 		systemPrompt = environment.apply(systemPrompt);
@@ -867,17 +884,42 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	}
 
 	/**
-	 * Everything the host stated about this run: what the agent definition itself says, plus what the
-	 * entry point bound for the run - the chat's {@code <context>}, evaluated where the page was.
+	 * The subject of the run that the given context authorizes, or <code>null</code> for none.
 	 *
 	 * <p>
-	 * The agent's own facts come first because they hold for every run of that agent, whereas the
-	 * page's facts hold for this conversation only. A fact that cannot be evaluated is dropped with a
-	 * log line; see {@link AgentFact#evaluate()}.
+	 * Read from the principal of the context, because {@link com.top_logic.ai.core.security.RunSecurity}
+	 * removes a subject the run may not read there. A delegate or a subagent carries the context of
+	 * its parent, so it gets the same subject.
 	 * </p>
 	 */
-	static List<EnvironmentFact> runFacts(AgentDefinition agent) {
+	private static TLObject subjectOf(SecurityContext security) {
+		RunPrincipal principal = security.principal();
+		return principal == null ? null : principal.subject();
+	}
+
+	/**
+	 * Everything the host stated about this run: the subject of the run, what the agent definition
+	 * itself says, plus what the entry point bound for the run - the chat's {@code <context>},
+	 * evaluated where the page was.
+	 *
+	 * <p>
+	 * The subject comes first, as the fact {@value #SUBJECT_FACT} with the identity of the object as
+	 * JSON: it names the object that words such as "here" or "this" in the user's message point to,
+	 * and every agent gets it without a change to its definition. It is stable, because a run keeps
+	 * its subject for the whole conversation. The agent's own facts come next because they hold for
+	 * every run of that agent, whereas the page's facts hold for this conversation only. A fact that
+	 * cannot be evaluated is dropped with a log line; see {@link AgentFact#evaluate()}.
+	 * </p>
+	 *
+	 * @param subject
+	 *        The checked subject of the run, or <code>null</code> for none. The identity of the
+	 *        object is only written for an object the run may read.
+	 */
+	static List<EnvironmentFact> runFacts(AgentDefinition agent, TLObject subject) {
 		List<EnvironmentFact> facts = new ArrayList<>();
+		if (subject != null) {
+			facts.add(new EnvironmentFact(SUBJECT_FACT, ReadFilter.identityJson(subject), true));
+		}
 		for (AgentFact declared : agent.facts()) {
 			EnvironmentFact fact = declared.evaluate();
 			if (fact != null) {

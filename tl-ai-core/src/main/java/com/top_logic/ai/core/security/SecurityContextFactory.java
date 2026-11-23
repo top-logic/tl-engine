@@ -51,6 +51,13 @@ public interface SecurityContextFactory {
 	 * which tool call is being served.
 	 * </p>
 	 *
+	 * <p>
+	 * {@link RunPrincipal#subject()} is the subject as the entry point stated it, not yet checked.
+	 * The engine checks it after this call, against the {@link SecurityContext#modelSecurity()} of the
+	 * context returned here, and the run has no subject if that context may not read it. A factory
+	 * therefore need not check the subject, and cannot give a run a subject its context may not read.
+	 * </p>
+	 *
 	 * @param run
 	 *        Who the run acts as and how it was started. Never <code>null</code>.
 	 * @return The context of the run; never <code>null</code>.

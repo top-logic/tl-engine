@@ -802,7 +802,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		ToolContext context = new ToolContext(
 			RunSecurity.contextFor(
 				new RunPrincipal(TLContext.currentUser(), RunEntryPoint.SCRIPT, true,
-					ExecutionRecorder.conversationIdOf(session))),
+					ExecutionRecorder.conversationIdOf(session), null)),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellationToken), cancellationToken);
 
 		// Cluster-safe cancellation: this node runs the job and holds the token, so a listener on

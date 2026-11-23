@@ -19,8 +19,11 @@ import com.top_logic.ai.core.agent.environment.AgentFact;
 import com.top_logic.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.ai.core.agent.environment.RunEnvironment;
 import com.top_logic.ai.core.agent.environment.RunFactsBinding;
+import com.top_logic.ai.core.security.ReadFilter;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.util.model.ModelService;
 
@@ -96,24 +99,61 @@ public class TestRunFacts extends BasicTestCase {
 		assertTrue(block, block.endsWith("\n</environment>"));
 	}
 
+	/**
+	 * The subject of a run is the first stable fact, before the facts of the agent and of the page,
+	 * as the identity of the object in JSON.
+	 */
+	public void testTheSubjectIsTheFirstFact() throws ConfigurationException {
+		TLObject subject = PersonManager.getManager().getRoot();
+		AgentFact tenant = new AgentFact("Tenant", true, ExprFormat.INSTANCE.getValue("value", "'ACME'"));
+		EnvironmentFact project = new EnvironmentFact("Project", "Airport", true);
+
+		String block = blockAbout(subject, agent(tenant), project);
+
+		List<String> factLines =
+			Stream.of(block.split("\\R", -1)).filter(line -> line.startsWith("- ")).toList();
+		assertEquals(block, List.of(
+			"- Subject: " + ReadFilter.identityJson(subject),
+			"- Tenant: ACME",
+			"- Project: Airport"), factLines);
+		assertTrue("The identity names the object by its identifier: " + block,
+			block.contains("\"" + ReadFilter.TID + "\":\"" + ReadFilter.idOf(subject) + "\""));
+	}
+
+	/** A run without a subject gets the block it got before there was one. */
+	public void testARunWithoutSubjectHasNoSubjectLine() {
+		EnvironmentFact project = new EnvironmentFact("Project", "Airport", true);
+
+		assertEquals(block(agent(), project), blockAbout(null, agent(), project));
+		assertFalse(blockAbout(null, agent(), project).contains("Subject"));
+	}
+
 	/** The environment block of a run of the given agent, from a page that states the given facts. */
 	private static String block(AgentDefinition agent, EnvironmentFact... pageFacts) {
+		return blockAbout(null, agent, pageFacts);
+	}
+
+	/**
+	 * The environment block of a run of the given agent about the given subject, from a page that
+	 * states the given facts.
+	 */
+	private static String blockAbout(TLObject subject, AgentDefinition agent, EnvironmentFact... pageFacts) {
 		try (RunFactsBinding.Binding binding = RunFactsBinding.bind(List.of(pageFacts))) {
-			return RunEnvironment.compose(null, agent.name(), "test-model", AgentFactory.runFacts(agent))
+			return RunEnvironment.compose(null, agent.name(), "test-model", AgentFactory.runFacts(agent, subject))
 				.block();
 		}
 	}
 
 	/** A headless run of an agent that states nothing is told nothing by the page either. */
 	public void testAHeadlessRunHasNoPageFacts() {
-		assertEquals(List.of(), AgentFactory.runFacts(agent()));
+		assertEquals(List.of(), AgentFactory.runFacts(agent(), null));
 	}
 
 	/** What a chat bound for the run reaches the agent that runs in it. */
 	public void testTheBoundFactsReachTheRun() {
 		EnvironmentFact project = new EnvironmentFact("Project", "Airport expansion", true);
 		try (RunFactsBinding.Binding binding = RunFactsBinding.bind(List.of(project))) {
-			assertEquals(List.of(project), AgentFactory.runFacts(agent()));
+			assertEquals(List.of(project), AgentFactory.runFacts(agent(), null));
 			assertEquals(List.of(project), RunFactsBinding.facts());
 		}
 

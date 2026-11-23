@@ -119,7 +119,7 @@ public class TestSecurityContextFactory extends TestCase {
 	public void testFactoryDecidesPerCall() {
 		SectionApprovalFactory factory = new SectionApprovalFactory();
 		SecurityContext security = factory.createSecurityContext(
-			new RunPrincipal(null, RunEntryPoint.CHAT, false, "conv-1"));
+			new RunPrincipal(null, RunEntryPoint.CHAT, false, "conv-1", null));
 
 		Conversation conversation = new Conversation();
 		conversation.add(new UserMessage("u1", T0, List.of(new TextContent("Write both sections"))));
@@ -153,7 +153,7 @@ public class TestSecurityContextFactory extends TestCase {
 	 */
 	public void testFactoryIsToldAboutTheRun() {
 		SectionApprovalFactory factory = new SectionApprovalFactory();
-		factory.createSecurityContext(new RunPrincipal(null, RunEntryPoint.CHAT, false, "conv-7"));
+		factory.createSecurityContext(new RunPrincipal(null, RunEntryPoint.CHAT, false, "conv-7", null));
 
 		assertEquals(1, factory.runs.size());
 		RunPrincipal run = factory.runs.get(0);

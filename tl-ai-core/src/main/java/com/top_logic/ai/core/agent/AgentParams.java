@@ -150,7 +150,7 @@ public record AgentParams(
 	/**
 	 * Parameters of a run that composed neither block - every caller that builds an
 	 * {@link AgentLoop} directly rather than through
-	 * {@link AgentFactory#buildConfig(AgentDefinition, com.top_logic.ai.core.provider.AgentModelAssignment, AgentCapabilities)}.
+	 * {@link AgentFactory#buildConfig(AgentDefinition, com.top_logic.ai.core.provider.AgentModelAssignment, AgentCapabilities, com.top_logic.model.TLObject)}.
 	 */
 	public AgentParams(String model, String systemPrompt, int maxTurns,
 			int maxOutputTokens, Map<String, Object> modelOptions,

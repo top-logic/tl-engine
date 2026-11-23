@@ -212,7 +212,7 @@ public final class HeadlessResearch {
 		CancellationToken cancellation = new CancellationToken();
 		ToolContext context = new ToolContext(
 			RunSecurity.contextFor(new RunPrincipal(owner, RunEntryPoint.SCRIPT, true,
-				ExecutionRecorder.conversationIdOf(session))),
+				ExecutionRecorder.conversationIdOf(session), null)),
 			ApprovalCallback.AUTO_APPROVE, new TransactionScope(cancellation), cancellation).unattended();
 		// aiAgentRunCancel sets the persisted marker from any node; this node holds the token.
 		CancelSignalObserver cancelObserver = new CancelSignalObserver(context.executionHandle(), cancellation);

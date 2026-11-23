@@ -8,6 +8,7 @@ package com.top_logic.ai.core.security;
 import java.util.Objects;
 
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLObject;
 
 /**
  * Who a run acts as, and under what circumstances.
@@ -17,7 +18,8 @@ import com.top_logic.knowledge.wrap.person.Person;
  * {@link com.top_logic.ai.core.agent.SecurityContext} is built, which is before the run has an id
  * or an agent: those are settled afterwards, so a factory that needed them would be asked too early.
  * What a factory does get is the account, how the run was started, whether anybody can answer an
- * approval prompt, and - for the entry points that have one - which conversation the run belongs to.
+ * approval prompt, and - for the entry points that have one - which conversation the run belongs to
+ * and which object it is about.
  * </p>
  *
  * @param account
@@ -32,10 +34,15 @@ import com.top_logic.knowledge.wrap.person.Person;
  *        The chat session the run belongs to, or <code>null</code> for a run that is a conversation
  *        of its own. Lets an application remember a decision for the conversation the user made it
  *        in.
+ * @param subject
+ *        The object the run is about, or <code>null</code> for none. An entry point states it; the
+ *        factory is asked with the stated subject. The context that
+ *        {@link RunSecurity#contextFor(RunPrincipal)} hands out names it only if the run may read it,
+ *        because the model reads it in the environment block of the run.
  * @see SecurityContextFactory
  */
 public record RunPrincipal(Person account, RunEntryPoint entryPoint, boolean background,
-		String conversationId) {
+		String conversationId, TLObject subject) {
 
 	/** */
 	public RunPrincipal {
@@ -43,7 +50,7 @@ public record RunPrincipal(Person account, RunEntryPoint entryPoint, boolean bac
 	}
 
 	/**
-	 * A run that belongs to no conversation.
+	 * A run that belongs to no conversation and is about no object.
 	 *
 	 * @param account
 	 *        The account the run acts as.
@@ -53,6 +60,6 @@ public record RunPrincipal(Person account, RunEntryPoint entryPoint, boolean bac
 	 *        Whether anybody can answer an approval prompt.
 	 */
 	public RunPrincipal(Person account, RunEntryPoint entryPoint, boolean background) {
-		this(account, entryPoint, background, null);
+		this(account, entryPoint, background, null, null);
 	}
 }

@@ -63,6 +63,7 @@ import com.top_logic.layout.view.table.CellEditing;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnExistence;
+import com.top_logic.layout.view.table.ColumnFilterFieldFactory;
 import com.top_logic.layout.view.table.ColumnHeader;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
@@ -1176,6 +1177,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			}
 		});
 		_tableControl.setFilterBar(_filterBar);
+		_tableControl.setFilterFieldFactory(ColumnFilterFieldFactory.of(setups));
 		// Where all rows are edited, the row of the focused editor is the row the commands act on.
 		_tableControl.setSelectOnEditorFocus(_policy == RowEditPolicy.ALL && editMode);
 		_tableControl.setRowCount(_rowCount);
@@ -1905,6 +1907,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		@Override
 		public Optional<Sort<V>> sort() {
 			return _inner.sort();
+		}
+
+		@Override
+		public List<ColumnFilter<V>> filters() {
+			return _inner.filters();
 		}
 
 		@Override

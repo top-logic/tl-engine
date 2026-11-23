@@ -77,6 +77,7 @@ import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.ColumnExistence;
+import com.top_logic.layout.view.table.ColumnFilterFieldFactory;
 import com.top_logic.layout.view.table.ColumnHeader;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
@@ -1320,6 +1321,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		activate.bind(control);
 		control.setCssClass(_config.getCssClass());
 		control.setFilterBar(filterBar());
+		control.setFilterFieldFactory(ColumnFilterFieldFactory.of(setups));
 		control.setHiddenWhenCompact(ColumnDeclarations.hiddenWhenCompact(declarations));
 		if (_config.getDrag() != null) {
 			installDragSource(context, control);

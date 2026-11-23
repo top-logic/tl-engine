@@ -15,7 +15,7 @@ package com.top_logic.table;
  * {@link FilterState} on its own - the bound value type (and any parser/option identity) lives on
  * the column's {@link ColumnFilter}. The owning {@code TableView} therefore provides this codec,
  * delegating per state to {@link ColumnFilter#toJson(FilterState)} /
- * {@link ColumnFilter#fromJson(Object)} and applying {@link NegatedFilterState inversion}
+ * {@link ColumnFilter#fromJson(Object)} and storing the {@link ColumnFilterState kind and inversion}
  * generically.
  * </p>
  */

@@ -136,6 +136,11 @@ public class DelegatingColumn<R, V> implements Column<R, V> {
 	}
 
 	@Override
+	public boolean required() {
+		return _inner.required();
+	}
+
+	@Override
 	public ColumnAlignment alignment() {
 		return _inner.alignment();
 	}

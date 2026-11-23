@@ -1,4 +1,4 @@
-import { React, isCompositionKey } from 'tl-react-bridge'
+import { React } from 'tl-react-bridge'
 import { ForbiddenError } from './api'
 import type { InteractionAnswer, PromptImproved } from './api'
 import { ACCEPT_ATTRIBUTE, dragHasFiles } from './attachments'
@@ -837,9 +837,6 @@ export const Composer = React.memo(
                 : placeholder || (referenceCandidates ? labels.askAnythingWithAt : labels.askAnything)
             }
             onKeyDown={(event) => {
-              // The keys of a composition are the input method's: Enter ends it, Escape cancels it,
-              // the arrow keys choose in its list. None of them sends, picks or closes anything here.
-              if (isCompositionKey(event.nativeEvent)) return
               if (event.key === 'Escape' && improving) {
                 event.preventDefault()
                 cancelImprove()

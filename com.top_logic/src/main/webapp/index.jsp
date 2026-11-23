@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
 <%@page import="com.top_logic.base.accesscontrol.ApplicationPages"
 %><%@page import="com.top_logic.base.discovery.AgentDiscoveryServlet"
 %><%@taglib uri="basic" prefix="basic"
@@ -9,7 +8,7 @@ String catalogURL = request.getContextPath() + AgentDiscoveryServlet.AI_CATALOG_
 String llmsTxtURL = request.getContextPath() + AgentDiscoveryServlet.LLMS_TXT_PATH;
 response.addHeader(AgentDiscoveryServlet.LINK_HEADER,
 	"<" + catalogURL + ">; rel=\"" + AgentDiscoveryServlet.AI_CATALOG_LINK_RELATION + "\"");
-%>
+%><!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 		<meta

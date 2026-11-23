@@ -151,6 +151,22 @@
 				<!-- Delegates to the documents and tasks referring to it; grants Create itself. -->
 				<class name="Comment"/>
 
+				<!-- Delegates to every node it links and to its exit folder: a dense graph of access parents. -->
+				<class name="Mesh">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="links"
+							multiple="true"
+							type="Mesh"
+						/>
+						<reference name="exit"
+							type="Folder"
+						/>
+					</attributes>
+				</class>
+
 				<!-- Delegates to each of its folders. -->
 				<class name="Holder">
 					<attributes>

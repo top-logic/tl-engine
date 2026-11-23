@@ -8,6 +8,7 @@ import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -88,6 +89,17 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 	private static final String BOTH = MODULE + ":Both";
 
 	private static final String ANNOTATION = MODULE + ":Annotation";
+
+	private static final String MESH = MODULE + ":Mesh";
+
+	/** Number of nodes of a complete graph of access parents. */
+	private static final int MESH_SIZE = 12;
+
+	/**
+	 * Time in milliseconds the checks on a complete graph of {@link #MESH_SIZE} nodes may take.
+	 * Following every simple path through the graph would take hours.
+	 */
+	private static final long MESH_TIME_LIMIT = 2000;
 
 	private static final String COMMENT = MODULE + ":Comment";
 
@@ -527,6 +539,87 @@ public class TestAccessParentAnyOf extends BasicTestCase {
 		assertFalse(allowed(_other, n1, SimpleBoundCommandGroup.READ));
 		assertFalse(allowed(_other, n2, SimpleBoundCommandGroup.READ));
 		assertEquals(List.of(_folder), holders(n2, SimpleBoundCommandGroup.READ));
+	}
+
+	/**
+	 * In a complete graph of access parents leading nowhere else, every node is denied, in time
+	 * polynomial in the number of nodes: the decision of each node depends on the others in cycles,
+	 * which must not be followed along every simple path.
+	 */
+	public void testCompleteGraphIsDecidedQuickly() {
+		List<TLObject> mesh = inTransaction(() -> createMesh());
+		TLStructuredTypePart name = type(MESH).getPart("name");
+
+		long start = System.currentTimeMillis();
+		for (TLObject node : mesh) {
+			assertFalse(allowed(_folderOwner, node, SimpleBoundCommandGroup.READ));
+			assertFalse(allowed(_folderOwner, node, SimpleBoundCommandGroup.WRITE));
+			assertFalse(rights().isAllowed(_folderReader, node, name, SimpleBoundCommandGroup.READ));
+		}
+		assertEquals(Set.of(), rights().getRoleHolders(mesh.get(0), SimpleBoundCommandGroup.READ));
+		assertEquals(Map.of(), rights().getAdmittingRolesByHolder(mesh.get(0), SimpleBoundCommandGroup.READ));
+		assertFasterThanLimit(start);
+	}
+
+	/**
+	 * An exit at one node of a complete graph of access parents opens every node, whichever node is
+	 * checked first: a denial computed while a node closing a cycle is still under way is not kept.
+	 */
+	public void testCompleteGraphWithExit() {
+		List<TLObject> mesh = inTransaction(() -> createMesh());
+		inTransaction(() -> mesh.get(MESH_SIZE - 1).tUpdateByName("exit", _folder));
+		TLStructuredTypePart name = type(MESH).getPart("name");
+
+		long start = System.currentTimeMillis();
+		for (TLObject node : mesh) {
+			assertTrue(allowed(_folderOwner, node, SimpleBoundCommandGroup.READ));
+			assertTrue(allowed(_folderReader, node, SimpleBoundCommandGroup.READ));
+			assertFalse(allowed(_folderReader, node, SimpleBoundCommandGroup.WRITE));
+			assertFalse(allowed(_other, node, SimpleBoundCommandGroup.READ));
+			assertTrue(rights().isAllowed(_folderReader, node, name, SimpleBoundCommandGroup.READ));
+			assertFalse(rights().isAllowed(_folderOwner, node, name, SimpleBoundCommandGroup.READ));
+			assertEquals(Set.of(_folder), rights().getRoleHolders(node, SimpleBoundCommandGroup.READ));
+		}
+		assertFasterThanLimit(start);
+	}
+
+	/**
+	 * The initial values of objects not committed yet, forming a complete graph of access parents,
+	 * are decided in time polynomial in the number of nodes.
+	 */
+	public void testCompleteGraphOfNewObjectsIsDecidedQuickly() {
+		TLStructuredTypePart name = type(MESH).getPart("name");
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			List<TLObject> mesh = ThreadContext.withoutSecurityChecks(() -> createMesh());
+
+			long start = System.currentTimeMillis();
+			for (TLObject node : mesh) {
+				assertFalse(rights().isAllowedInitial(_folderReader, node, name, SimpleBoundCommandGroup.READ));
+			}
+			assertFasterThanLimit(start);
+			tx.rollback();
+		}
+	}
+
+	/**
+	 * Creates {@link #MESH_SIZE} nodes each linking all the others.
+	 */
+	private List<TLObject> createMesh() {
+		List<TLObject> result = new ArrayList<>();
+		for (int n = 0; n < MESH_SIZE; n++) {
+			result.add(create(MESH));
+		}
+		for (TLObject node : result) {
+			List<TLObject> others = new ArrayList<>(result);
+			others.remove(node);
+			node.tUpdateByName("links", others);
+		}
+		return result;
+	}
+
+	private static void assertFasterThanLimit(long start) {
+		long elapsed = System.currentTimeMillis() - start;
+		assertTrue("The checks took " + elapsed + " ms.", elapsed < MESH_TIME_LIMIT);
 	}
 
 	public void testCreatePartChecksContainerOnly() {

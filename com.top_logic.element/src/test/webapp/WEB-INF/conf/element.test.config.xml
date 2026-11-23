@@ -945,6 +945,20 @@
 							roles="TestAccessParentAnyOf.DocReader"
 						/>
 					</class>
+					<class name="TestAccessParentAnyOf:Mesh">
+						<access-parent>
+							<any-of>
+								<target reference="TestAccessParentAnyOf:Mesh#links"/>
+								<target reference="TestAccessParentAnyOf:Mesh#exit"/>
+							</any-of>
+						</access-parent>
+					</class>
+					<part name="TestAccessParentAnyOf:Mesh#name">
+						<grant
+							operation="Read"
+							roles="TestAccessParentAnyOf.FolderReader"
+						/>
+					</part>
 					<class name="TestAccessParentAnyOf:Holder">
 						<access-parent>
 							<target reference="TestAccessParentAnyOf:Holder#owners"/>

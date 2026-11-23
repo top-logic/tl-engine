@@ -4,8 +4,7 @@
  */
 package com.top_logic.model.security;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.function.Predicate;
 
 import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.col.TypedAnnotatable;
@@ -25,11 +24,9 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
  * delegating to it.
  * </p>
  * <p>
- * While a decision is being computed, its entry is marked. A delegation chain that reaches an
- * object whose decision is marked runs in a cycle and is denied instead of recursing forever. Such
- * a denial holds for that chain only: the decision marked may still be allowed through another
- * access parent. A denial computed while a marked decision was reached is therefore not stored,
- * see {@link #computingHits()}.
+ * Decisions depending on each other in cycles of access parents are handled by
+ * {@link CyclicDecisions}: a chain reaching a decision under way is denied along that path, and a
+ * denial relying on such a decision is kept only provisionally, until that decision is made.
  * </p>
  * <p>
  * The memo is discarded together with the interaction, and it is replaced as soon as the knowledge
@@ -58,14 +55,9 @@ final class AccessDecisionCache {
 	private static final Property<AccessDecisionCache> PROPERTY =
 		TypedAnnotatable.property(AccessDecisionCache.class, "accessDecisions");
 
-	/** Marker of a decision that is being computed. */
-	private static final Object COMPUTING = new Object();
-
 	private final long _revision;
 
-	private final Map<Key, Object> _decisions = new HashMap<>();
-
-	private int _computingHits;
+	private final CyclicDecisions<Key> _decisions = new CyclicDecisions<>();
 
 	private AccessDecisionCache(long revision) {
 		_revision = revision;
@@ -102,62 +94,12 @@ final class AccessDecisionCache {
 	}
 
 	/**
-	 * The stored decision for the given key.
-	 * 
-	 * @return <code>null</code> when no decision is stored and none is being computed.
-	 */
-	Boolean decision(Key key) {
-		Object stored = _decisions.get(key);
-		return stored instanceof Boolean decision ? decision : null;
-	}
-
-	/**
-	 * Whether the decision for the given key is being computed, i.e. whether asking for it again
-	 * closes a cycle.
-	 */
-	boolean isComputing(Key key) {
-		return _decisions.get(key) == COMPUTING;
-	}
-
-	/**
-	 * Marks the decision for the given key as being computed.
-	 */
-	void computing(Key key) {
-		_decisions.put(key, COMPUTING);
-	}
-
-	/**
-	 * Stores the decision for the given key.
-	 */
-	void decided(Key key, boolean decision) {
-		_decisions.put(key, Boolean.valueOf(decision));
-	}
-
-	/**
-	 * Removes the mark of the decision for the given key without storing a decision.
-	 */
-	void forget(Key key) {
-		_decisions.remove(key);
-	}
-
-	/**
-	 * Counts that a decision {@link #isComputing(Key) being computed} was asked for again.
-	 */
-	void hitComputing() {
-		_computingHits++;
-	}
-
-	/**
-	 * How often a decision {@link #isComputing(Key) being computed} was asked for again.
+	 * Decides for the given key, answering from the memo where possible.
 	 *
-	 * <p>
-	 * A decision whose computation changes this count depends on a decision not made yet: a
-	 * denial must not be stored, since it may turn out wrong once the decision is made. An
-	 * allowance is never wrong, a cycle only denies.
-	 * </p>
+	 * @see CyclicDecisions#decide(Object, Predicate, Runnable)
 	 */
-	int computingHits() {
-		return _computingHits;
+	boolean decide(Key key, Predicate<? super Key> computation, Runnable onCycle) {
+		return _decisions.decide(key, computation, onCycle);
 	}
 
 }

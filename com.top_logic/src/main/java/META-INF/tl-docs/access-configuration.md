@@ -573,9 +573,10 @@ folder may do everything with it.
   configuration error.
 - **Cycles.** Access parents referring to each other (two nodes pointing to each other with `next`)
   form a cycle. The path that reaches a check under way again is denied, while another candidate
-  may still allow the operation. A denial computed while such a cycle was hit is not stored in the
-  [memo of the interaction](#caching-of-decisions), so the object closing the cycle is decided anew
-  when it is checked on its own. The cycle is logged as info where the access parent has several
+  may still allow the operation. A denial computed while such a cycle was hit is stored in the
+  [memo of the interaction](#caching-of-decisions) only provisionally, until the check under way is
+  decided: if it is allowed, the provisional denials are discarded, so the object closing the cycle
+  is decided anew when it is checked on its own. The cycle is logged as info where the access parent has several
   candidates (a matter of the data), as an error otherwise.
 - **Role holders and explanation.** `getRoleHolders` yields the ends of all chains, each deciding
   the operation for itself. The explanation of the effective access (React admin hub) lists every
@@ -633,8 +634,13 @@ memo is replaced when the knowledge base has a newer revision than the one it wa
 a command that commits and then renders does not reuse decisions from before its change; outside
 an interaction a memo serves a single check and its delegations. The memo also detects cycles: a
 decision is marked while it is being computed, and a chain of access parents that reaches the mark
-again is denied. Such a denial depends on the path the check came along, so a denial computed while
-a mark was reached is not stored; allowed decisions are.
+again is denied. A denial computed while a mark was reached relies on the decision marked being a
+denial: it is kept provisionally, answers further checks reaching it, and becomes final when the
+decision marked is denied, or is discarded when that decision is allowed. Allowed decisions are
+always stored. So even a dense graph of access parents referring to each other (every node
+pointing to every other one) is decided with each object checked a few times, not once per path
+through the graph. The attribute checks, the initial values, the role holders and the admitting
+roles follow the chains of access parents the same way.
 
 ## Role sources: which roles a user holds on an object
 

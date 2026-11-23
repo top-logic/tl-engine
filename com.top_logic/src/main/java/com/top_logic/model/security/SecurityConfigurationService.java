@@ -1931,7 +1931,8 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// A grant without roles denies the operation in every context.
 			return false;
 		}
-		return isAllowedInitial(person, draft, commandGroup, requiredPartRoles, new HashSet<>());
+		return isAllowedInitial(person, draft, commandGroup, requiredPartRoles, new CyclicDecisions<>(),
+			new CyclicDecisions<>());
 	}
 
 	/**
@@ -1946,13 +1947,18 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * delegating its access decision. One of the parents admitting the person suffices.
 	 * </p>
 	 *
-	 * @param visiting
-	 *        The objects on the path to the given one, an object reached again closes a cycle.
+	 * @param initial
+	 *        The decisions on objects not committed yet made so far in this check; an object
+	 *        reached again while it is decided closes a cycle, see {@link CyclicDecisions}.
+	 * @param holds
+	 *        The decisions on committed objects made so far in this check, see
+	 *        {@link #holdsRole(Person, TLObject, BoundCommandGroup, Set, CyclicDecisions)}.
 	 */
 	private boolean isAllowedInitial(Person person, TLObject current, BoundCommandGroup operation,
-			Set<BoundedRole> requiredPartRoles, Set<TLObject> visiting) {
+			Set<BoundedRole> requiredPartRoles, CyclicDecisions<ObjectOperation> initial,
+			CyclicDecisions<ObjectOperation> holds) {
 		if (isCommitted(current)) {
-			return holdsRole(person, current, operation, requiredPartRoles, new HashSet<>());
+			return holdsRole(person, current, operation, requiredPartRoles, holds);
 		}
 		AccessParentFunction parent = accessParentOf(current);
 		if (parent == null || !parent.delegates(operation)) {
@@ -1960,28 +1966,21 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// computed only once it exists.
 			return true;
 		}
-		if (!visiting.add(current)) {
-			Logger.error("The access parents of " + current + " form a cycle, access is denied.",
-				SecurityConfigurationService.class);
-			return false;
-		}
-		try {
+		return initial.decide(new ObjectOperation(current, operation), key -> {
 			Iterable<TLObject> parents =
 				current.tTransient() ? parent.resolveDraft(current, operation) : parent.resolveAll(current, operation);
 			boolean leadsAnywhere = false;
 			for (TLObject next : parents) {
 				leadsAnywhere = true;
 				if (isAllowedInitial(person, TLFormObjectBase.editedObject(next), operationOnParent(operation),
-					requiredPartRoles, visiting)) {
+					requiredPartRoles, initial, holds)) {
 					return true;
 				}
 			}
 			// A free-standing object is not accessible until it is put into a container, which is a
 			// write of the container checked in its own right.
 			return !leadsAnywhere;
-		} finally {
-			visiting.remove(current);
-		}
+		}, () -> logCycle(current));
 	}
 
 	@Override
@@ -2056,10 +2055,11 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * {@link #compute(AccessDecisionCache, Person, TLObject, BoundCommandGroup)}.
 	 * </p>
 	 * <p>
-	 * An object whose access parents lead back to itself is denied along that path: the memo marks
-	 * the decision as being computed, and reaching that mark again means that the chain of access
-	 * parents has a cycle. A denial computed while reaching such a mark is not stored, since the
-	 * decision marked may still allow the operation through another access parent.
+	 * An object whose access parents lead back to itself is denied along that path: reaching a
+	 * decision under way again means that the chain of access parents has a cycle. A denial relying
+	 * on such a decision is kept provisionally until that decision is made, and discarded if it
+	 * allows the operation, since the decision may still allow the operation through another access
+	 * parent, see {@link CyclicDecisions}.
 	 * </p>
 	 */
 	private boolean decide(AccessDecisionCache cache, Person person, TLObject instance,
@@ -2068,37 +2068,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// An object of a type without security is not access controlled.
 			return true;
 		}
-		AccessDecisionCache.Key key = AccessDecisionCache.key(person, instance, commandGroup);
-		Boolean decision = cache.decision(key);
-		if (decision != null) {
-			return decision.booleanValue();
-		}
-		if (cache.isComputing(key)) {
-			// A cycle denies along this path only: another access parent may still allow the
-			// operation, see AccessDecisionCache#computingHits().
-			logCycle(instance);
-			cache.hitComputing();
-			return false;
-		}
-		int hits = cache.computingHits();
-		cache.computing(key);
-		boolean result = false;
-		boolean stored = false;
-		try {
-			result = compute(cache, person, instance, commandGroup);
-			if (result || cache.computingHits() == hits) {
-				cache.decided(key, result);
-				stored = true;
-			}
-		} finally {
-			if (!stored) {
-				// The denial depends on a decision still being computed, which may turn out to
-				// allow, or the computation failed. In a dense graph of cyclic access parents, such
-				// a denial is computed again on each path reaching it.
-				cache.forget(key);
-			}
-		}
-		return result;
+		return cache.decide(AccessDecisionCache.key(person, instance, commandGroup),
+			key -> compute(cache, person, instance, commandGroup),
+			() -> logCycle(instance));
 	}
 
 	/**
@@ -2251,16 +2223,22 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		return result;
 	}
 
+	/**
+	 * Adds the roles admitting the given operation on the given object, by the object holding them.
+	 *
+	 * @param visited
+	 *        The steps along the chains of access parents taken so far. A step taken before adds
+	 *        nothing new, on the path to itself (a cycle, which admits nobody) as well as on another
+	 *        path.
+	 */
 	private void collectAdmittingRoles(TLObject instance, BoundCommandGroup operation,
-			Set<AdmittingRolesKey> visiting, Map<TLObject, Set<BoundedRole>> result) {
+			Set<ObjectOperation> visited, Map<TLObject, Set<BoundedRole>> result) {
 		AccessParentFunction parent = accessParentOf(instance);
 		if (parent == null) {
 			addAdmittingRoles(result, instance, getRoles(instance, operation));
 			return;
 		}
-		AdmittingRolesKey key = new AdmittingRolesKey(instance, operation);
-		if (!visiting.add(key)) {
-			// The chain of access parents runs in a cycle, which admits nobody.
+		if (!visited.add(new ObjectOperation(instance, operation))) {
 			return;
 		}
 		Set<BoundCommandGroup> operations = new LinkedHashSet<>();
@@ -2268,14 +2246,13 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		operations.addAll(getObjectOperations(instance).getImplying(operation));
 		for (BoundCommandGroup delegated : operations) {
 			for (TLObject parentObject : parent.resolveAll(instance, delegated)) {
-				collectAdmittingRoles(parentObject, operationOnParent(delegated), visiting, result);
+				collectAdmittingRoles(parentObject, operationOnParent(delegated), visited, result);
 			}
 		}
 		if (!parent.delegatesAll()) {
 			// The object decides the operations not delegated by its own roles, see compute().
 			addAdmittingRoles(result, instance, getRoles(instance, operation));
 		}
-		visiting.remove(key);
 	}
 
 	private static void addAdmittingRoles(Map<TLObject, Set<BoundedRole>> result, TLObject holder,
@@ -2286,9 +2263,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	}
 
 	/**
-	 * An operation on an object, whose admitting roles are being collected.
+	 * An operation on an object: a step along the chains of access parents.
 	 */
-	private record AdmittingRolesKey(TLObject object, BoundCommandGroup operation) {
+	private record ObjectOperation(TLObject object, BoundCommandGroup operation) {
 		// Pure value.
 	}
 
@@ -2298,23 +2275,23 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * {@link #operationOnParent(BoundCommandGroup)} at every step), or the object itself when it
 	 * does not delegate the operation. A chain leading nowhere or running in a cycle adds nothing.
 	 *
-	 * @param visiting
-	 *        The objects on the path to the given one, an object reached again closes a cycle.
+	 * @param visited
+	 *        The steps along the chains of access parents taken so far. A step taken before adds
+	 *        nothing new, on the path to itself (a cycle) as well as on another path.
 	 */
-	private void collectRoleHolders(TLObject instance, BoundCommandGroup operation, Set<TLObject> visiting,
+	private void collectRoleHolders(TLObject instance, BoundCommandGroup operation, Set<ObjectOperation> visited,
 			Set<TLObject> result) {
 		AccessParentFunction parent = accessParentOf(instance);
 		if (parent == null || !parent.delegates(operation)) {
 			result.add(instance);
 			return;
 		}
-		if (!visiting.add(instance)) {
+		if (!visited.add(new ObjectOperation(instance, operation))) {
 			return;
 		}
 		for (TLObject parentObject : parent.resolveAll(instance, operation)) {
-			collectRoleHolders(parentObject, operationOnParent(operation), visiting, result);
+			collectRoleHolders(parentObject, operationOnParent(operation), visited, result);
 		}
-		visiting.remove(instance);
 	}
 
 	/**
@@ -2329,26 +2306,24 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 	 * the {@link #getRoleHolders(TLObject, BoundCommandGroup) role holders} suffices.
 	 * </p>
 	 *
-	 * @param visiting
-	 *        The objects on the path to the given one, an object reached again closes a cycle,
-	 *        which admits nobody.
+	 * @param decisions
+	 *        The decisions made so far in this check, for the given person and roles. An object
+	 *        reached again while it is decided closes a cycle, which admits nobody along that path,
+	 *        see {@link CyclicDecisions}.
 	 */
 	private boolean holdsRole(Person person, TLObject instance, BoundCommandGroup operation,
-			Set<BoundedRole> roles, Set<TLObject> visiting) {
+			Set<BoundedRole> roles, CyclicDecisions<ObjectOperation> decisions) {
 		AccessParentFunction parent = accessParentOf(instance);
 		if (parent == null || !parent.delegates(operation)) {
 			return instance instanceof BoundObject holder && accessManager().hasRole(person, holder, roles);
 		}
-		if (!visiting.add(instance)) {
-			return false;
-		}
-		try {
-			return parent.allows(instance, operation,
+		return decisions.decide(new ObjectOperation(instance, operation),
+			key -> parent.allows(instance, operation,
 				(parentObject, delegated) -> holdsRole(person, parentObject, operationOnParent(delegated), roles,
-					visiting));
-		} finally {
-			visiting.remove(instance);
-		}
+					decisions)),
+			() -> {
+				// The cycle is logged by the decision of the object itself.
+			});
 	}
 
 	@Override
@@ -2399,7 +2374,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		}
 		// An object delegating the operation to an access parent holds no roles for it: the roles
 		// the person holds on the objects deciding the operation for it are checked instead.
-		return holdsRole(person, instance, commandGroup, requiredPartRoles, new HashSet<>());
+		return holdsRole(person, instance, commandGroup, requiredPartRoles, new CyclicDecisions<>());
 	}
 
 	@Override

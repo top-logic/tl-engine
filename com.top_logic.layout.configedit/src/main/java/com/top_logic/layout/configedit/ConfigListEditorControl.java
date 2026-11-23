@@ -401,6 +401,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 					moveUp(_value.indexOf(item));
 				});
 				moveUpButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+				moveUpButton.setSize(ButtonSize.SMALL);
 				moveUpButton.setDisabled(index == 0);
 				headerActions.add(moveUpButton);
 
@@ -408,6 +409,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 					moveDown(_value.indexOf(item));
 				});
 				moveDownButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+				moveDownButton.setSize(ButtonSize.SMALL);
 				moveDownButton.setDisabled(index == listSize - 1);
 				headerActions.add(moveDownButton);
 			}
@@ -420,6 +422,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 					}
 				});
 				removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+				removeButton.setSize(ButtonSize.SMALL);
 				headerActions.add(removeButton);
 			}
 		}
@@ -477,11 +480,13 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			reportChange();
 		});
 		confirmButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+		confirmButton.setSize(ButtonSize.SMALL);
 
 		ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
 			_pending.discard(pending);
 		});
 		removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+		removeButton.setSize(ButtonSize.SMALL);
 
 		List<ReactControl> headerActions = List.of(confirmButton, removeButton);
 

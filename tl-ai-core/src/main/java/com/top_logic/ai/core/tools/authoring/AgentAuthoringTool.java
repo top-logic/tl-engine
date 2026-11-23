@@ -66,13 +66,12 @@ import com.top_logic.ai.core.tools.util.DataClassSerializer;
  * </p>
  *
  * <p>
- * Every method checks the model rights of the run ({@link ToolContext#modelSecurity()}), as a form
- * of the application would: a stored agent or skill the run may not read is unknown, and creating,
- * changing and deleting one needs Create, Write and Delete. A change of an attribute with rights of
- * its own (the MCP servers of an agent) needs Write on that attribute, and an answer holds only the
- * attributes the run may read. A name is free only when no stored record has it, also one the run
- * may not read, because names are unique in the whole application. A change without a user account
- * or in a system context is refused.
+ * Every method checks the model rights of the account the agent run acts for, as a form of the
+ * application does. An agent or skill that the account may not read does not exist for the run.
+ * Creating, changing and deleting one needs the rights Create, Write and Delete, and changing the
+ * MCP servers of an agent needs Write on that attribute. An answer holds only the attributes the
+ * account may read. Names are unique in the whole application, also against records the account
+ * may not read. A change without a user account is refused.
  * </p>
  */
 public class AgentAuthoringTool {

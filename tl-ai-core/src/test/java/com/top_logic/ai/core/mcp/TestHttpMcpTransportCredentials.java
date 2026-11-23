@@ -137,6 +137,12 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 	/** The number of the next <code>tools/list</code> requests that fail with HTTP 500. */
 	private int _failingToolLists;
 
+	/**
+	 * The server holds its answer to a <code>tools/list</code> after the change back until this
+	 * latch opens.
+	 */
+	private CountDownLatch _changedToolListAnswered = new CountDownLatch(0);
+
 	/** Opens when the server receives a <code>tools/call</code>. */
 	private final CountDownLatch _toolCallReceived = new CountDownLatch(1);
 
@@ -165,6 +171,7 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 	@Override
 	protected void tearDown() throws Exception {
 		_toolCallAnswered.countDown();
+		_changedToolListAnswered.countDown();
 		_server.stop(0);
 		System.clearProperty(VARIABLE);
 		super.tearDown();
@@ -405,15 +412,42 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 	}
 
 	/**
-	 * Refreshes of the tool list that fail in a row give one warning. A server that cannot be
-	 * reached would fail each refresh.
+	 * A call of <code>getTools</code> after a change of the tools does not wait for the server: it
+	 * gets the old list at once, and a later call gets the new list.
 	 */
-	public void testFailedRefreshesWarnOnce() throws Exception {
-		_onToolChange = () -> _failingToolLists = 2;
+	public void testGetToolsDoesNotWait() throws Exception {
+		_onToolChange = () -> {
+			// Only the change of the tools.
+		};
+		_changedToolListAnswered = new CountDownLatch(1);
 
 		McpServerRegistry registry = registry("");
 		registry.startUp();
-		CollectingLogListener log = new CollectingLogListener(EnumSet.of(Level.WARN), true);
+		try {
+			ToolResult result = tool(registry).execute(Map.of(), context(CancellationToken.UNCANCELLABLE));
+			assertFalse(result.text(), result.failed());
+
+			// The server holds its answer back: a call that waited for it would get the new list.
+			assertEquals(List.of("mcp__test__echo"), toolNames(registry));
+
+			_changedToolListAnswered.countDown();
+			assertEquals(List.of("mcp__test__echo", "mcp__test__second"), changedToolNames(registry));
+		} finally {
+			_changedToolListAnswered.countDown();
+			registry.shutDown();
+		}
+	}
+
+	/**
+	 * Refreshes of the tool list that fail in a row give one warning, and a line at the level
+	 * debug for each further failure. A server that cannot be reached would fail each refresh.
+	 */
+	public void testFailedRefreshesWarnOnce() throws Exception {
+		_onToolChange = () -> _failingToolLists = 3;
+
+		McpServerRegistry registry = registry("");
+		registry.startUp();
+		CollectingLogListener log = new CollectingLogListener(EnumSet.of(Level.WARN, Level.DEBUG), true);
 		List<LogEntry> entries;
 		List<String> names;
 		try {
@@ -427,9 +461,12 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 		}
 
 		assertEquals(List.of("mcp__test__echo", "mcp__test__second"), names);
-		assertEquals("Two failed refreshes, then one that succeeded: " + entries, 1, entries.stream()
+		List<Level> failures = entries.stream()
 			.filter(entry -> entry.getMessage() != null && entry.getMessage().contains("Failed to refresh the tools"))
-			.count());
+			.map(LogEntry::getPriority)
+			.toList();
+		assertEquals("Three failed refreshes, then one that succeeded.",
+			List.of(Level.WARN, Level.DEBUG, Level.DEBUG), failures);
 	}
 
 	/** The tool names of a later call, after the refresh that the change of the tools started. */
@@ -613,6 +650,13 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 				if (failing) {
 					reply(exchange, HttpURLConnection.HTTP_INTERNAL_ERROR, null);
 					return;
+				}
+				if (changed) {
+					try {
+						_changedToolListAnswered.await(10, TimeUnit.SECONDS);
+					} catch (InterruptedException ex) {
+						Thread.currentThread().interrupt();
+					}
 				}
 				reply(exchange, HttpURLConnection.HTTP_OK, result(id.group(1),
 					"{\"tools\":[" + tool("echo") + (changed ? "," + tool("second") : "") + "]}"));

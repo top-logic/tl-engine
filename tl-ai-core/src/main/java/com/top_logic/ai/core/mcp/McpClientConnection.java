@@ -80,7 +80,10 @@ class McpClientConnection {
 	private final AtomicReference<Ordered<List<McpSchema.Tool>>> _tools =
 		new AtomicReference<>(new Ordered<>(0, List.of()));
 
-	/** Whether the server said that its tools changed, and no refresh of {@link #_tools} runs. */
+	/**
+	 * Whether the server said that its tools changed after the start of the last refresh of
+	 * {@link #_tools}.
+	 */
 	private final AtomicBoolean _toolsStale = new AtomicBoolean();
 
 	/** Whether the server rejected the credentials of the last refresh of {@link #_tools}. */
@@ -91,6 +94,9 @@ class McpClientConnection {
 
 	/** Whether a refresh failure since the last refresh that succeeded was logged as a warning. */
 	private final AtomicBoolean _refreshWarned = new AtomicBoolean();
+
+	/** Whether {@link #close()} started: a refresh that fails then is no failure to report. */
+	private volatile boolean _closed;
 
 	/**
 	 * Creates a new connection for the given transport configuration.
@@ -116,7 +122,7 @@ class McpClientConnection {
 	 *         if the connection or initialization fails
 	 */
 	void connect() {
-		McpClientTransport transport = new ToolChangeObserver(createTransport(), _toolsStale);
+		McpClientTransport transport = new ToolChangeFilter(createTransport(), _toolsStale);
 		Duration timeout = Duration.ofSeconds(_toolTimeoutSeconds > 0 ? _toolTimeoutSeconds : 60);
 
 		_client = McpClient.async(transport)
@@ -171,34 +177,43 @@ class McpClientConnection {
 	 * </p>
 	 */
 	private void startRefresh() {
-		Ordered<CredentialHeaders> credentials;
 		try {
-			if (_refreshRejected.compareAndSet(true, false) && _credentials != null) {
-				_credentials.invalidate();
+			Ordered<CredentialHeaders> credentials;
+			try {
+				if (_refreshRejected.compareAndSet(true, false) && _credentials != null) {
+					_credentials.invalidate();
+				}
+				credentials = authenticate();
+			} catch (RuntimeException ex) {
+				refreshFailed(ex, false);
+				return;
 			}
-			credentials = authenticate();
-		} catch (RuntimeException ex) {
-			refreshFailed(ex, false);
-			return;
+			_client.listTools()
+				.contextWrite(Context.of(McpTransportContext.KEY, credentials.value().context()))
+				.subscribe(
+					result -> {
+						setTools(credentials.order(), result);
+						_lastSucceeded.accumulateAndGet(credentials, Ordered::later);
+						_refreshFailures.set(0);
+						_refreshWarned.set(false);
+						Logger.info("MCP server '" + _serverName + "' tools refreshed, now "
+							+ _tools.get().value().size() + " tools.", McpClientConnection.class);
+					},
+					error -> {
+						if (_closed) {
+							return;
+						}
+						boolean rejected = _credentials != null && isUnauthorized(error);
+						if (rejected) {
+							_refreshRejected.set(true);
+						}
+						refreshFailed(error, rejected);
+					});
+		} catch (Throwable ex) {
+			// No refresh started: the next caller tries again.
+			_toolsStale.set(true);
+			throw ex;
 		}
-		_client.listTools()
-			.contextWrite(Context.of(McpTransportContext.KEY, credentials.value().context()))
-			.subscribe(
-				result -> {
-					setTools(credentials.order(), result);
-					_lastSucceeded.accumulateAndGet(credentials, Ordered::later);
-					_refreshFailures.set(0);
-					_refreshWarned.set(false);
-					Logger.info("MCP server '" + _serverName + "' tools refreshed, now "
-						+ _tools.get().value().size() + " tools.", McpClientConnection.class);
-				},
-				error -> {
-					boolean rejected = _credentials != null && isUnauthorized(error);
-					if (rejected) {
-						_refreshRejected.set(true);
-					}
-					refreshFailed(error, rejected);
-				});
 	}
 
 	/**
@@ -344,6 +359,7 @@ class McpClientConnection {
 	 * Closes the connection gracefully.
 	 */
 	void close() {
+		_closed = true;
 		if (_client != null) {
 			try {
 				_client.closeGracefully().block(CLOSE_TIMEOUT);
@@ -399,13 +415,13 @@ class McpClientConnection {
 	 * versions of the interface instead of those of the transport.
 	 * </p>
 	 */
-	private static final class ToolChangeObserver implements McpClientTransport {
+	private static final class ToolChangeFilter implements McpClientTransport {
 
 		private final McpClientTransport _transport;
 
 		private final AtomicBoolean _toolsStale;
 
-		ToolChangeObserver(McpClientTransport transport, AtomicBoolean toolsStale) {
+		ToolChangeFilter(McpClientTransport transport, AtomicBoolean toolsStale) {
 			_transport = transport;
 			_toolsStale = toolsStale;
 		}

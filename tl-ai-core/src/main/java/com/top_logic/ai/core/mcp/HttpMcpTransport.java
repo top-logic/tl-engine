@@ -144,10 +144,9 @@ public class HttpMcpTransport implements McpTransportConfig {
 					credentials = resolved;
 				} else {
 					// A request that the library sends by itself has no caller, e.g. the new
-					// initialize after the server forgot the session, or the tools/list after a
-					// tools/list_changed notification. It gets the headers of the last call that
-					// succeeded. They belong to the one connection: a client for each person needs a
-					// connection for each person.
+					// initialize after the server forgot the session. It gets the headers of the
+					// last call that succeeded. They belong to the one connection: a client for each
+					// person needs a connection for each person.
 					credentials = lastSucceeded.get();
 				}
 				// Limit: the stream of server messages (GET), which the library opens after the

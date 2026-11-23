@@ -387,7 +387,10 @@ The object is stored as an object link `<a class="tlObject" href="…">label</a>
 decides how the editor shows it: `chip` (the default) is a unit removed as a whole, its text not
 editable, stored with the trigger in the attribute `data-mention`; `link` is an ordinary link whose
 text is edited like the text around it. A click on an object link of the displayed text leads to the
-object, Ctrl+click (Cmd+click) does so while editing. The list is the part `Listbox`, as for the
+object, Ctrl+click (Cmd+click) does so while editing. A link to an object that the reader may not
+discover is shown as the placeholder `*****`, which the editor keeps until the user deletes it, see
+[the rule for object links in a formatted text](doc:access-discover-spec#r11b---object-links-in-a-formatted-text-are-masked-elements).
+The list is the part `Listbox`, as for the
 suggestions of a text. The project demo offers the members of a ticket's project under `@`:
 
 ```xml

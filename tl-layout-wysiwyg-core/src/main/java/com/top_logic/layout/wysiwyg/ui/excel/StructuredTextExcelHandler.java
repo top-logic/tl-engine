@@ -16,9 +16,15 @@ import org.jsoup.nodes.Document;
 import com.top_logic.base.office.PoiTypeHandler;
 import com.top_logic.base.office.excel.POITypeSupporter;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
+import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
 
 /**
  * {@link PoiTypeHandler} for {@link StructuredText} values.
+ *
+ * <p>
+ * A link to an object that the current user may not discover is exported as the placeholder of a
+ * masked element, see {@link TLObjectLinkUtil#maskLinks(String, java.util.function.Function)}.
+ * </p>
  */
 public class StructuredTextExcelHandler implements PoiTypeHandler {
 
@@ -30,7 +36,7 @@ public class StructuredTextExcelHandler implements PoiTypeHandler {
 	@Override
 	public int setValue(Cell aCell, Workbook aWorkbook, Object aValue, POITypeSupporter aSupport) {
 		StructuredText text = (StructuredText) aValue;
-		Document html = Jsoup.parse(text.getSourceCode());
+		Document html = Jsoup.parse(TLObjectLinkUtil.maskLinks(text.getSourceCode(), null));
 
 		RichTextBuilder builder = new RichTextBuilder(aWorkbook).append(html);
 		RichTextString rts = builder.getText();

@@ -1,5 +1,5 @@
 ---
-description: Read before designing or implementing the Discover right of the model based security - the specification of an object-level right weaker than Read that makes an object visible (in references, enumerations, option lists, with its label) without exposing its attributes, the filtering of every object source in TL-Script and the UI, the checks on inputs, and the parent-path example Root -> A -> B -> C.
+description: Read before designing or implementing the Discover right of the model based security - the specification of an object-level right weaker than Read that makes an object visible (in references, enumerations, option lists, with its label) without exposing its attributes, the filtering of every object source in TL-Script and the UI, the checks on inputs, the masking of object links and mentions in a formatted text (TLObjectLinkUtil.maskLinks), and the parent-path example Root -> A -> B -> C.
 order: 21
 ---
 
@@ -240,6 +240,44 @@ unreadable boolean is no unchecked checkbox, an unreadable reference no empty ce
   searches the cell by the placeholder, but its own sort and filter see the cell as empty - the
   provider is given the readable values only.
 - Form fields are not affected: a field of an attribute the user may not read is hidden.
+
+### R11b - object links in a formatted text are masked elements
+
+A formatted text (`tl.model.wysiwyg:Html`, `tl.model.i18n:I18NHtml`) stores each link to an object
+as an object link `<a class="tlObject" href="...">label</a>`, also a mention of an object. The
+label is a copy, written when the link was made, and the `href` holds the identity of the object.
+An object link follows the rules for a masked element (R11):
+
+- For an object the user may not discover, the client receives the placeholder (`*****`) in the
+  place of the link: no label, no link and no identity. A link whose `href` names no existing
+  object is masked as well, for every user, so that the placeholder does not tell whether a hidden
+  object exists.
+- Following a link to such an object gives the answer of a link to an object that does not exist.
+  So a link written by hand does not tell whether the object exists or where it is displayed.
+- The stored text keeps its form. A user who edits the text keeps each masked link that the user
+  does not delete: the editor gives each placeholder a token of its own and puts the stored link
+  back when the text is saved. A deleted placeholder deletes the link, a moved one moves it, and a
+  copy in the same editor copies it. A placeholder whose token the editor did not hand out brings
+  in no link.
+- The derived outputs of the text are masked as well: the preview where the editor has no room,
+  the text of an inherited value, the label (table cells, their sort and filter, and the export by
+  label), the PDF and the Excel export.
+
+One function applies the rule: `TLObjectLinkUtil.maskLinks` (with `restoreLinks` for the editor).
+The React editor, the label provider and the PDF and Excel export of a formatted text use it; the
+label provider and the exports serve the classic layout UI too.
+
+Limits - these paths do not apply the rule:
+
+- The classic layout UI displays and edits a formatted text with `StructuredTextControl`, which
+  sends the stored links, and follows a link with `OpenTLObjectLink`.
+- The full-text index holds the text with the labels of its links, so a search for the label of a
+  hidden object finds the text that links it.
+- The sort key of a formatted text (`HTMLTextExtractor`) holds the labels of its links, so the
+  position of a row in a table sorted by the text can tell something about a hidden label.
+- The view element `<html>` shows the HTML that a script computes; a script that puts a stored
+  text there is responsible for its links.
+- Agent tools and REST services that read attribute values give the stored text.
 
 ### R12 - secured and unsecured script kinds
 

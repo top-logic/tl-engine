@@ -43,12 +43,16 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.model.search.expr.query.Args;
+import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.manager.AccessManager;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Test for the security of the change log: the function {@code changeSetRestrict()}.
+ * Test for the security of the change log: the functions {@code changeLog()},
+ * {@code changeSetRestrict()} and {@code revertChanges()}.
  *
  * <p>
  * The test uses the {@code Named} types of the model {@code TestTLScriptSecurity} (see
@@ -71,6 +75,12 @@ public class TestChangeLogSecurity extends AbstractSearchExpressionTest {
 	private static final String RELATED = "related";
 
 	private static final String RESTRICT = "cs -> changeSetRestrict($cs)";
+
+	private static final String CHANGE_LOG = "changeLog(null, 1)";
+
+	private static final String CHANGE_LOG_OF_OBJECT = "obj -> changeLog($obj, 1)";
+
+	private static final String REVERT = "cs -> revertChanges($cs)";
 
 	private KnowledgeBase _kb;
 
@@ -271,6 +281,120 @@ public class TestChangeLogSecurity extends AbstractSearchExpressionTest {
 			(ChangeSet) execute(search("cs -> user -> changeSetRestrict($cs, $user)"), commit, _reader);
 		assertTrue(restricted.getIncomplete());
 		assertEquals(Set.of(_barA), changedObjects(restricted));
+	}
+
+	/**
+	 * A user who is not an administrator must not call {@code changeLog()} with security checks,
+	 * neither for the whole application nor for a single object, even in a script that is not
+	 * entered interactively (e.g. the script of an API endpoint).
+	 */
+	public void testChangeLogDeniedForNonAdmin() throws Exception {
+		commit(ResKey.text("visible"), () -> _barA.tUpdateByName(NAME, "barA2"));
+
+		becomeUser(_reader);
+		assertChangeLogDenied(CHANGE_LOG);
+		assertChangeLogDenied(CHANGE_LOG_OF_OBJECT, _barA);
+	}
+
+	/**
+	 * An administrator calls {@code changeLog()} with security checks and gets the complete change
+	 * log.
+	 */
+	public void testChangeLogForAdministrator() throws Exception {
+		ChangeSet commit = commit(ResKey.text("mixed"), () -> {
+			_barA.tUpdateByName(NAME, "barA2");
+			_barB.tUpdateByName(NAME, "barB2");
+		});
+
+		becomeUser(PersonManager.getManager().getRoot());
+		assertLatestCommit(commit, Set.of(_barA, _barB), execute(search(CHANGE_LOG)));
+		assertLatestCommit(commit, Set.of(_barB), execute(search(CHANGE_LOG_OF_OBJECT), _barB));
+	}
+
+	/**
+	 * Without security checks (a privileged script), {@code changeLog()} returns the complete change
+	 * log to any user.
+	 */
+	public void testChangeLogWithoutSecurity() throws Exception {
+		ChangeSet commit = commit(ResKey.text("mixed"), () -> {
+			_barA.tUpdateByName(NAME, "barA2");
+			_barB.tUpdateByName(NAME, "barB2");
+		});
+
+		becomeUser(_reader);
+		assertLatestCommit(commit, Set.of(_barA, _barB), executeWithoutSecurity(CHANGE_LOG));
+		assertLatestCommit(commit, Set.of(_barB), executeWithoutSecurity(CHANGE_LOG_OF_OBJECT, _barB));
+	}
+
+	/**
+	 * {@code revertChanges()} refuses a restricted commit that lacks changes the user may not see.
+	 * Nothing is reverted.
+	 */
+	public void testRevertIncompleteCommit() throws Exception {
+		ChangeSet commit = commit(ResKey.text("mixed"), () -> {
+			_barA.tUpdateByName(NAME, "barA2");
+			_barB.tUpdateByName(NAME, "barB2");
+		});
+
+		becomeUser(_reader);
+		ChangeSet restricted = restrict(commit);
+		assertTrue("Precondition: the restriction is incomplete.", restricted.getIncomplete());
+
+		long lastRevision = _kb.getHistoryManager().getLastRevision();
+		try (Transaction tx = _kb.beginTransaction(ResKey.text("revert"))) {
+			execute(search(REVERT), restricted);
+			fail("An incomplete commit must not be reverted.");
+		} catch (TopLogicException ex) {
+			assertEquals(com.top_logic.element.changelog.I18NConstants.ERROR_REVERT_INCOMPLETE_CHANGE_SET__DATE,
+				ex.getErrorKey().plain());
+		}
+		assertEquals(lastRevision, _kb.getHistoryManager().getLastRevision());
+		assertEquals("barA2", _barA.tValueByName(NAME));
+		assertEquals("barB2", _barB.tValueByName(NAME));
+	}
+
+	/**
+	 * {@code revertChanges()} reverts a restricted commit that contains all changes.
+	 */
+	public void testRevertCompleteCommit() throws Exception {
+		becomeUser(_reader);
+		ChangeSet commit = commit(ResKey.text("visible"), () -> {
+			_barA.tUpdateByName(NAME, "barA2");
+		});
+
+		ChangeSet restricted = restrict(commit);
+		assertFalse("Precondition: the restriction is complete.", restricted.getIncomplete());
+
+		try (Transaction tx = _kb.beginTransaction(ResKey.text("revert"))) {
+			assertEquals(List.of(), execute(search(REVERT), restricted));
+			tx.commit();
+		}
+		assertEquals("barA", _barA.tValueByName(NAME));
+	}
+
+	private static void assertChangeLogDenied(String script, Object... args) throws Exception {
+		try {
+			execute(search(script), args);
+			fail("A user who is not an administrator must not read the change log: " + script);
+		} catch (TopLogicException ex) {
+			assertEquals(com.top_logic.model.search.expr.I18NConstants.ERROR_ADMIN_ONLY__NAME,
+				ex.getErrorKey().plain());
+		}
+	}
+
+	private static void assertLatestCommit(ChangeSet expected, Set<TLObject> expectedChanged, Object changeLog) {
+		Collection<?> log = (Collection<?>) changeLog;
+		assertEquals(1, log.size());
+		ChangeSet latest = (ChangeSet) log.iterator().next();
+		assertEquals(expected.getRevision(), latest.getRevision());
+		assertFalse(latest.getIncomplete());
+		assertEquals(expectedChanged, changedObjects(latest));
+	}
+
+	private static Object executeWithoutSecurity(String script, Object... args) throws Exception {
+		QueryExecutor executor = QueryExecutor.compile(kb(), model(), search(script));
+		executor.disableSecurity();
+		return executor.executeWith(Args.some(args));
 	}
 
 	/**

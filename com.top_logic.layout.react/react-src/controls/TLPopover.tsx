@@ -1,5 +1,5 @@
 import {
-  React, useTLState, useTLCommand, TLChild, FillBarrier, createPortal, rootClassName, usePart, useButtonDefaults,
+  React, useTLState, useTLCommand, TLChild, FillBarrier, createPortal, rootClassName, usePart, useButtonDefaults, ButtonDefaults,
   usePopover, useMergeRefs, useCloseOnOutsidePress, pressClosedSurface, useStandaloneKeyboardScope, useFocusTrap,
   anchoredOverlayProps, ANCHORED_OVERLAY_ATTR, firstFocusable,
 } from 'tl-react-bridge';
@@ -229,9 +229,12 @@ const TLPopover: React.FC<TLCellProps> = ({ controlId }) => {
           onBlur={hoverMode ? handleFocusOut : undefined}
           {...anchoredOverlayProps}
         >
-          <FillBarrier>
-            {state.content ? <TLChild control={state.content} /> : null}
-          </FillBarrier>
+          {/* A popover opening from a table row is no row: its buttons are normal ones. */}
+          <ButtonDefaults small={false}>
+            <FillBarrier>
+              {state.content ? <TLChild control={state.content} /> : null}
+            </FillBarrier>
+          </ButtonDefaults>
         </div>,
         document.body
       )}

@@ -92,6 +92,9 @@
 						<reference name="viewer"
 							type="tl.accounts:Person"
 						/>
+						<reference name="finisher"
+							type="tl.accounts:Person"
+						/>
 						<reference name="sponsor"
 							type="Category"
 						/>
@@ -455,6 +458,20 @@
 					<attributes>
 						<property name="name"
 							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+
+				<class name="Annex">
+					<annotations>
+						<table name="GenericObject"/>
+					</annotations>
+					<generalizations>
+						<generalization type="tl.model:TLObject"/>
+					</generalizations>
+					<attributes>
+						<reference name="project"
+							type="Project"
 						/>
 					</attributes>
 				</class>

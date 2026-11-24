@@ -15,6 +15,7 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -23,6 +24,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.security.AccessParentDefinition;
 import com.top_logic.model.security.AccessParentFunction;
+import com.top_logic.model.security.OperationRestriction;
 import com.top_logic.tool.boundsec.BoundObject;
 
 /**
@@ -53,7 +55,8 @@ public class ScriptAccessParent extends AbstractConfiguredInstance<ScriptAccessP
 	 * Configuration of {@link ScriptAccessParent}.
 	 */
 	@TagName("script")
-	public interface Config extends PolymorphicConfiguration<ScriptAccessParent> {
+	@DisplayOrder({ Config.EXPR, OperationRestriction.OPERATIONS })
+	public interface Config extends PolymorphicConfiguration<ScriptAccessParent>, OperationRestriction {
 
 		/** Configuration name for {@link #getExpr()}. */
 		String EXPR = "expr";

@@ -605,4 +605,9 @@ public class PostgreSQLHelper extends DBHelper {
 
 	}
 
+	@Override
+	public boolean supportsTransactionalDDL() {
+		return true;
+	}
+
 }

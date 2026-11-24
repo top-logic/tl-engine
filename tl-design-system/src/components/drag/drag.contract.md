@@ -9,13 +9,14 @@ garantiert Funktion und Zugänglichkeit, nicht das Aussehen; wer ins Bild passen
 
 Ein Rechner: `dropPositionAt` (Drittel: davor, darauf, danach) für Ablageziele — Tabellenzeile,
 Baumknoten; `useListReorder` (Hälften) für Reihenfolgen — Spaltenwahl, Spaltenköpfe, Select-Chips,
-`TLValueList`. Der Rechner setzt am Ziel bzw. an der Quelle einen der fünf Zustände:
+`TLValueList`. Der Rechner setzt am Ziel bzw. an der Quelle einen der sechs Zustände:
 
 | `data-tl-state~=` | Wort | Bild | Token |
 |---|---|---|---|
 | `drop-before` | landet davor | Linie innen oben (waagerecht: links) | `--tl-border-width-accent` in `--tl-border-interactive` |
 | `drop-after` | landet danach | Linie innen unten (waagerecht: rechts) | `--tl-border-width-accent` in `--tl-border-interactive` |
 | `drop-onto` | landet darauf | Fläche und innerer Rahmen | Fläche `--tl-surface-interactive-strong`, Rahmen `--tl-border-width-md` in `--tl-border-interactive` |
+| `drop-target` | Zielabschnitt | Fläche an Überschrift, Zeilen und Platzhalter eines Abschnitts (Spaltenwahl: „Ausgeblendet“ oder ein leerer) — kein Rahmen je Element | Fläche `--tl-surface-interactive-strong` |
 | `drop-refused` | hier nicht | innerer Rahmen | `--tl-border-width-md` in `--tl-status-error-border` |
 | `dragging` | wird gezogen | die Quelle wird blass | `opacity: 0.4` — ein Anteil, kein Maß; steht einmal hier statt in jedem Block |
 

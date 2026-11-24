@@ -51,7 +51,7 @@ Einträge, Kopfzeilen und Trenner werden übersprungen.
 | Eintrag, Abstände | `--tl-space-control-x` seitlich, `--tl-space-xs` zwischen Icon und Label |
 | Eintrag, Ecke | `--tl-radius-sm` |
 | Eintrag, Text | `--tl-text-primary`, deaktiviert `--tl-text-disabled` |
-| Zeiger darüber | `--tl-surface-interactive-hover` |
+| Zeiger darüber | `--tl-surface-interactive-hover`; auch am Eintrag mit Häkchen oder Schalter die ganze Zeile |
 | gedrückt | `--tl-surface-interactive-active` |
 | Eintrag destruktiv, Text | `--tl-status-error-text` |
 | destruktiv, Zeiger darüber | `--tl-status-error-surface` mit `--tl-text-on-status-error` |
@@ -73,6 +73,10 @@ scrollt. In Kraft hat kein eigenes Gewicht im Stylesheet: es trägt die Typo-Kla
 | `aria-current="true"` | am Eintrag, dessen Befehl in Kraft ist; dazu `tl-type-body-strong` statt `tl-type-body` |
 | `tl-menu__item--danger` | am Eintrag einer destruktiven Aktion; folgt dem Ton des Kommandos (`tone`), nie vom Autor gesetzt. Deaktiviert gewinnt `--tl-text-disabled`; ein Eintrag kann in Kraft und destruktiv zugleich sein |
 | `role="menuitemcheckbox"` | statt `menuitem` an einem Umschalter; dazu `aria-checked`. Auch die Listenart im Wysiwyg: zwei Umschalter, von denen höchstens einer an ist (keiner, solange der Text keine Liste ist); wer die gewählte Listenart wählt, hebt die Liste auf |
+| `tl-menu__item--check` | am Eintrag, der etwas an- und abschaltet (`role="menuitemcheckbox"` mit `aria-checked`, `true`, `false` oder `mixed`): Häkchen der Werteliste (`filter-list.contract.md`) oder Schalter der Ansicht (`tl-checkbox--switch`). Die ganze Zeile ist die Klickfläche und trägt Fläche, Zeigen und Drücken des Eintrags; es gibt kein `tl-choice` und keine Eingabe darin. Die Marke ist ein gezeichnetes `<span class="tl-checkbox" aria-hidden="true">` (Häkchen, vor dem Label) oder `<span class="tl-checkbox tl-checkbox--switch" aria-hidden="true">` (Schalter, nach dem Label); `choice.css` zeichnet sie nach `aria-checked` der Zeile wie die Eingabe nach `:checked` (`mixed` wie `:indeterminate`, nur am Kästchen). Die Marke nimmt keinen Zeiger an (`pointer-events: none`): der Zeiger trifft die Zeile |
+| `tl-menu__item--nav` | am Eintrag, der eine Seite weiter führt (eine zweite Seite im selben Popover, etwa „Ansicht“ in „Spalten“): Beschriftung, gegebenenfalls ein leiser Wert und Chevron am Zeilenende. In einem Menü ein gewöhnlicher `menuitem`; auf einer Seite, die kein Menü ist (die Seite „Spalten“ der Tabelle), ein schlichter `<button>` ohne Rolle. Fläche, Zeigen, Drücken und Fokus kommen vom Eintrag; der Modifier malt keine eigene Fläche. Mit Wert ist der zugängliche Name Beschriftung und Wert zusammen („Beschriftung Wert“), weil beide Textinhalt des Knopfs sind; ein Leerzeichen zwischen den beiden `span` trennt sie im Namen und zeichnet zwischen Flex-Elementen nichts |
+| `tl-menu__value` | am Wert im Eintrag mit Weg (`<span>`, nach `tl-menu__label`): `--tl-text-secondary`, `margin-inline-start: auto` ans Zeilenende, bricht nicht um und schrumpft nicht |
+| `tl-menu__chevron` | am Chevron-Icon im Eintrag mit Weg, letztes Kind der Zeile, zusammen mit `tl-icon-sm`; `aria-hidden="true"`. Farbe `--tl-icon-secondary` wie der Griff der Spaltenwahl; schrumpft nicht. Das Glyph kommt vom Aufrufer (im Client `ThemeIcon` mit `ICON_NEXT`), nie von einem Zeichen im Text |
 | `menuitemradio` | als `role` statt `menuitem` an einem Eintrag einer Gruppe, aus der genau einer gilt (Absatzformat im Wysiwyg); dazu `aria-checked`, `true` an genau einem Eintrag der Gruppe; ein Eintrag, der sich selbst abwählt, ist kein Radio, sondern ein Umschalter (`menuitemcheckbox`). Die Gruppe entsteht über `ButtonDefaults` mit `radio`: jeder `TLButton` darunter wird ein Eintrag mit dieser Rolle, `aria-checked` folgt seinem `checked` |
 | `disabled` | am Eintrag, der nicht gewählt werden kann |
 | `tl-menu__icon` | am Icon des Eintrags, zusammen mit `tl-icon-sm`; `aria-hidden="true"` |

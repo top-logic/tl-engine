@@ -44,6 +44,7 @@ import com.top_logic.model.search.rules.ScriptAccessParent;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.TLContextManager;
@@ -57,7 +58,8 @@ import com.top_logic.util.model.ModelService;
  * the project the assignee of the task is responsible for (see
  * {@code TestTLScriptSecurity-test.config.xml}). The account of the responsible employee holds
  * {@code ProjectResponsible} on the project; employees themselves are not readable for
- * non-administrative users.
+ * non-administrative users. Its specialization {@code RestrictedTask} has the same access parent,
+ * restricted to Read.
  * </p>
  */
 @SuppressWarnings("javadoc")
@@ -95,6 +97,9 @@ public class TestScriptAccessParent extends BasicTestCase {
 	/** A task without assignee, whose access parent is empty. */
 	private TLObject _freeTask;
 
+	/** A {@code RestrictedTask} assigned to {@link #_employee}. */
+	private TLObject _restrictedTask;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -123,6 +128,10 @@ public class TestScriptAccessParent extends BasicTestCase {
 			_freeTask = newObject("ProjectTask");
 			_freeTask.tUpdateByName("name", "freeTask");
 
+			_restrictedTask = newObject("RestrictedTask");
+			_restrictedTask.tUpdateByName("name", "restrictedTask");
+			_restrictedTask.tUpdateByName("assignee", _employee);
+
 			tx.commit();
 		}
 	}
@@ -143,6 +152,20 @@ public class TestScriptAccessParent extends BasicTestCase {
 		assertTrue("The task follows the project its assignee is responsible for.",
 			allowed(_responsible, _task));
 		assertFalse(allowed(_other, _task));
+	}
+
+	public void testRestrictedScriptDelegatesListedOperationsOnly() {
+		assertTrue("Precondition: the responsible may write the project, and so the unrestricted task.",
+			allowed(_responsible, _task, SimpleBoundCommandGroup.WRITE));
+
+		assertTrue("Read is delegated to the project.", allowed(_responsible, _restrictedTask));
+		assertFalse(allowed(_other, _restrictedTask));
+		assertFalse("Write is not delegated, and the task grants it to nobody.",
+			allowed(_responsible, _restrictedTask, SimpleBoundCommandGroup.WRITE));
+		assertFalse("Delete is not delegated, and the task grants it to nobody.",
+			allowed(_responsible, _restrictedTask, SimpleBoundCommandGroup.DELETE));
+		assertSame(_restrictedTask,
+			ModelAccessRights.getInstance().getRoleHolder(_restrictedTask, SimpleBoundCommandGroup.WRITE));
 	}
 
 	public void testScriptNavigatesThroughUnreadableObject() {
@@ -216,8 +239,16 @@ public class TestScriptAccessParent extends BasicTestCase {
 	 * context of that person.
 	 */
 	private static boolean allowed(Person person, TLObject object) {
+		return allowed(person, object, SimpleBoundCommandGroup.READ);
+	}
+
+	/**
+	 * Whether the given person may perform the given operation on the given object, decided with
+	 * checked security in the context of that person.
+	 */
+	private static boolean allowed(Person person, TLObject object, BoundCommandGroup operation) {
 		return TLContextManager.inPersonContext(person,
-			() -> ModelAccessRights.getInstance().isAllowed(person, object, SimpleBoundCommandGroup.READ));
+			() -> ModelAccessRights.getInstance().isAllowed(person, object, operation));
 	}
 
 	/**

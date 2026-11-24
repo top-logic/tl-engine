@@ -35,10 +35,47 @@
 				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation"/>
 				<executability>
 					<rule-by-expression
-						decision="invitation -> $invitation == null ? false : ($invitation.get(`tl.security.selfservice:Invitation#state`) == `tl.security.selfservice:InvitationState#ACCEPTED` ? #&quot;tl.security.selfservice.invitations.revoke.accepted&quot; : true)"
+						decision="invitation -> $invitation != null"
+						show-disabled="true"
+					/>
+					<rule-by-expression
+						decision="invitation -> $invitation == null || $invitation.get(`tl.security.selfservice:Invitation#state`) != `tl.security.selfservice:InvitationState#ACCEPTED`"
+						show-disabled="false"
+					/>
+				</executability>
+			</button>
+			<button id="ID_6d9927eb_3bf2_4290_959f_c7de0eacab2b"
+				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+				image="css:fa-solid fa-user-xmark"
+				target="selection(self())"
+				transaction="true"
+			>
+				<resourceKey key="dynamic.c96474ae-af78-4cfc-be95-2a3cb712456e">
+					<en>Revoke access</en>
+					<de>Zugang widerrufen</de>
+				</resourceKey>
+				<confirmation class="com.top_logic.tool.boundsec.confirm.ScriptedConfirmation"
+					function="message -> invitation -> command -> $invitation.get(`tl.security.selfservice:Invitation#account`) == null ? #&quot;tl.security.selfservice.invitations.revokeAccess.confirmInvitation&quot;.fill($invitation.get(`tl.security.selfservice:Invitation#email`)) : #&quot;tl.security.selfservice.invitations.revokeAccess.confirmAccount&quot;.fill($invitation.get(`tl.security.selfservice:Invitation#email`))"
+				/>
+				<executability>
+					<rule-by-expression
+						decision="invitation -> $invitation != null &amp;&amp; $invitation.get(`tl.security.selfservice:Invitation#state`) == `tl.security.selfservice:InvitationState#ACCEPTED`"
+						show-disabled="false"
+					/>
+					<rule-by-expression
+						decision="invitation -> $invitation.get(`tl.security.selfservice:Invitation#account`) == null ? true : ($invitation.get(`tl.security.selfservice:Invitation#account`) == currentUser() ? #&quot;tl.security.selfservice.invitations.revokeAccess.self&quot; : ($invitation.get(`tl.security.selfservice:Invitation#account`).get(`tl.accounts:Person#admin`) ? #&quot;tl.security.selfservice.invitations.revokeAccess.admin&quot; : true))"
 						show-disabled="true"
 					/>
 				</executability>
+				<operation><![CDATA[invitation -> {
+  account = $invitation.get(`tl.security.selfservice:Invitation#account`);
+  $account == null ?
+    $invitation.delete() :
+    {
+      $account.delete();
+      info(#"tl.security.selfservice.invitations.revokeAccess.done");
+    }
+}]]></operation>
 			</button>
 			<button id="ID_53ea139e_fe93_4a33_8ccf_f8d7c6090e5a"
 				class="com.top_logic.model.search.providers.CommandHandlerByExpression"

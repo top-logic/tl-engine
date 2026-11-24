@@ -379,8 +379,7 @@ public class ViewServlet extends TopLogicServlet {
 		ReactContext displayContext = withWindowContextMenu(reportingContext, createWindowMenuOpener(menu));
 		ViewContext viewContext = new DefaultViewContext(displayContext, viewPath);
 
-		ReloadableControl content = new ReloadableControl(viewPath, viewContext,
-			(ReactControl) view.createControl(viewContext));
+		ViewUnitControl content = ViewUnitControl.forView(viewContext, viewPath, view);
 		ReactControl rootControl =
 			new ReactStackControl(displayContext, List.of(content, snackbar, menu, dialogs));
 		sseQueue.setRootControl(rootControl);

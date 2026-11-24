@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<!-- Rights checked before reverting a change set, see TestChangeSetReverterRights. -->
+		<module name="TestRevertWriteCheck">
+			<types>
+				<!-- Root container: its readers may read it, its creators may create items in it. -->
+				<class name="Folder">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="readers"
+							multiple="true"
+							type="tl.accounts:Person"
+						/>
+						<reference name="creators"
+							multiple="true"
+							type="tl.accounts:Person"
+						/>
+						<reference name="items"
+							composite="true"
+							multiple="true"
+							type="Item"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Deciding its access by the roles held on itself, may contain parts. -->
+				<class name="Item">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<reference name="readers"
+							multiple="true"
+							type="tl.accounts:Person"
+						/>
+						<reference name="editors"
+							multiple="true"
+							type="tl.accounts:Person"
+						/>
+						<reference name="deleters"
+							multiple="true"
+							type="tl.accounts:Person"
+						/>
+						<reference name="creators"
+							multiple="true"
+							type="tl.accounts:Person"
+						/>
+						<reference name="parts"
+							composite="true"
+							multiple="true"
+							type="Item"
+						/>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

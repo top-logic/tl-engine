@@ -16,11 +16,17 @@ import java.util.Set;
 
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.changelog.model.Change;
 import com.top_logic.element.changelog.model.ChangeSet;
+import com.top_logic.element.changelog.model.Creation;
+import com.top_logic.element.changelog.model.Deletion;
+import com.top_logic.element.changelog.model.Modification;
+import com.top_logic.element.changelog.model.Update;
 import com.top_logic.element.changelog.model.trans.TransientChangeSet;
 import com.top_logic.element.model.cache.ElementModelCacheService;
 import com.top_logic.element.model.cache.ModelTables;
 import com.top_logic.knowledge.event.ChangeSetReader;
+import com.top_logic.knowledge.objects.identifier.ObjectReference;
 import com.top_logic.knowledge.service.Branch;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.knowledge.service.HistoryUtils;
@@ -28,9 +34,14 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
@@ -213,6 +224,142 @@ public final class ChangeSetReverter {
 		if (change.getIncomplete()) {
 			throw new TopLogicException(I18NConstants.ERROR_REVERT_INCOMPLETE_CHANGE_SET__DATE.fill(change.getDate()));
 		}
+	}
+
+	/**
+	 * Refuses to revert a change set whose revert the given user is not allowed to perform.
+	 *
+	 * <p>
+	 * Every change is checked as its revert executes it, on the current version of the changed
+	 * object:
+	 * </p>
+	 * <ul>
+	 * <li>The revert of an {@link Update} writes the old value of each modified attribute: the user
+	 * needs the right to {@link SimpleBoundCommandGroup#WRITE write} each modified attribute of the
+	 * object. A derived attribute is not written by the revert and not checked.</li>
+	 * <li>The revert of a {@link Creation} deletes the object: the user needs the right to
+	 * {@link SimpleBoundCommandGroup#DELETE delete} it.</li>
+	 * <li>The revert of a {@link Deletion} creates the object again: the user needs the right to
+	 * {@link ModelAccessRights#isAllowedCreate(Person, TLClass, TLObject) create} an object of its
+	 * type in the container the object had before its deletion, without container in the global
+	 * context.</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * A creation or deletion of an object whose container is created or deleted by the same change
+	 * set is not checked: it follows the change of its container, which is checked itself (or in
+	 * turn follows the change of its own container), as deleting an object deletes its parts. Which
+	 * changes the change set contains decides this, not {@link Change#getImplicit()}: a change set
+	 * restricted by a {@link ChangeFilter} may lack the change of the container, then the change of
+	 * the part is checked.
+	 * </p>
+	 *
+	 * <p>
+	 * An object that no longer exists is not checked, its revert is skipped and reported as a
+	 * problem when the revert is applied.
+	 * </p>
+	 *
+	 * <p>
+	 * The check has no effect on the data. A caller checks before reverting, so that a revert is
+	 * either applied completely or refused completely. A user bypassing the model security, e.g. an
+	 * administrator, may revert every change set.
+	 * </p>
+	 *
+	 * @param change
+	 *        The change set to revert.
+	 * @param user
+	 *        The user reverting the change set.
+	 * @throws TopLogicException
+	 *         With {@link I18NConstants#ERROR_REVERT_NO_WRITE_ACCESS__OBJECT_ATTRIBUTE},
+	 *         {@link I18NConstants#ERROR_REVERT_NO_DELETE_ACCESS__OBJECT} or
+	 *         {@link I18NConstants#ERROR_REVERT_NO_CREATE_ACCESS__OBJECT_TYPE}, if the user lacks
+	 *         a right for one of the changes.
+	 */
+	public static void checkWritable(ChangeSet change, Person user) throws TopLogicException {
+		ModelAccessRights rights = ModelAccessRights.getInstance();
+		Collection<? extends Change> changes = change.getChanges();
+		Set<ObjectReference> created = identities(changes, Creation.class);
+		Set<ObjectReference> deleted = identities(changes, Deletion.class);
+
+		for (Change entry : changes) {
+			if (entry instanceof Creation creation) {
+				TLObject object = creation.getObject();
+				if (followsContainer(object, created)) {
+					continue;
+				}
+				TLObject current = currentVersion(object);
+				if (current == null) {
+					continue;
+				}
+				if (!rights.isAllowed(user, current, SimpleBoundCommandGroup.DELETE)) {
+					throw new TopLogicException(I18NConstants.ERROR_REVERT_NO_DELETE_ACCESS__OBJECT.fill(current));
+				}
+			} else if (entry instanceof Deletion deletion) {
+				TLObject object = deletion.getObject();
+				if (object == null || !object.tValid() || followsContainer(object, deleted)) {
+					continue;
+				}
+				TLClass type = (TLClass) object.tType();
+				TLObject container = currentVersion(object.tContainer());
+				if (!rights.isAllowedCreate(user, type, container)) {
+					throw new TopLogicException(
+						I18NConstants.ERROR_REVERT_NO_CREATE_ACCESS__OBJECT_TYPE.fill(object, type));
+				}
+			} else if (entry instanceof Update update) {
+				TLObject current = currentVersion(update.getObject());
+				if (current == null) {
+					continue;
+				}
+				for (Modification modification : update.getModifications()) {
+					TLStructuredTypePart part = modification.getPart();
+					if (part.isDerived()) {
+						continue;
+					}
+					if (!rights.isAllowed(user, current, part, SimpleBoundCommandGroup.WRITE)) {
+						throw new TopLogicException(
+							I18NConstants.ERROR_REVERT_NO_WRITE_ACCESS__OBJECT_ATTRIBUTE.fill(current, part));
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * The identities of the objects of the changes of the given kind.
+	 */
+	private static Set<ObjectReference> identities(Collection<? extends Change> changes,
+			Class<? extends Change> kind) {
+		Set<ObjectReference> result = new HashSet<>();
+		for (Change entry : changes) {
+			if (kind.isInstance(entry)) {
+				TLObject object = entry.getObject();
+				if (object != null && object.tValid()) {
+					result.add(WrapperHistoryUtils.getUnversionedIdentity(object));
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Whether the container of the given object is one of the given objects.
+	 */
+	private static boolean followsContainer(TLObject object, Set<ObjectReference> changed) {
+		if (object == null || !object.tValid()) {
+			return false;
+		}
+		TLObject container = object.tContainer();
+		return container != null && changed.contains(WrapperHistoryUtils.getUnversionedIdentity(container));
+	}
+
+	/**
+	 * The current version of the given object, <code>null</code> if it does not exist (anymore).
+	 */
+	private static TLObject currentVersion(TLObject object) {
+		if (object == null || !object.tValid()) {
+			return null;
+		}
+		return WrapperHistoryUtils.getCurrent(object);
 	}
 
 	/**

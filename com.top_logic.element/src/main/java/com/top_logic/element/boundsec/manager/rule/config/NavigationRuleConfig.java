@@ -8,14 +8,17 @@ package com.top_logic.element.boundsec.manager.rule.config;
 
 import java.util.List;
 
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.ValueInitializer;
+import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.element.boundsec.manager.rule.PathElement;
 import com.top_logic.layout.form.values.edit.annotation.OptionLabels;
@@ -34,6 +37,8 @@ import com.top_logic.model.util.AllClasses;
 	NavigationRuleConfig.ID,
 	NavigationRuleConfig.XML_ATTRIBUTE_META_ELEMENT,
 	NavigationRuleConfig.XML_ATTRIBUTE_INHERIT,
+	NavigationRuleConfig.HISTORY,
+	NavigationRuleConfig.ANCHORS,
 	NavigationRuleConfig.XML_TAG_PATH_ELEMENT,
 })
 public interface NavigationRuleConfig extends ConfigurationItem {
@@ -51,6 +56,12 @@ public interface NavigationRuleConfig extends ConfigurationItem {
 	 * Name of the value of {@link #getPathElements()} in the configuration.
 	 */
 	String XML_TAG_PATH_ELEMENT = "path";
+
+	/** Name of the value of {@link #getHistory()} in the configuration. */
+	String HISTORY = "history";
+
+	/** Name of the value of {@link #getAnchors()} in the configuration. */
+	String ANCHORS = "anchors";
 
 	/**
 	 * Stable, unique identifier of this rule within the configuration declaring it.
@@ -101,5 +112,45 @@ public interface NavigationRuleConfig extends ConfigurationItem {
 	@Name(NavigationRuleConfig.XML_TAG_PATH_ELEMENT)
 	@DefaultContainer
 	List<PolymorphicConfiguration<? extends PathElement>> getPathElements();
+
+	/**
+	 * The data the rule is evaluated on, when a historic version of an object is checked.
+	 *
+	 * <p>
+	 * If not set, a role rule uses {@link HistoryMode#CURRENT} and a role parent rule
+	 * {@link HistoryMode#HISTORIC}. A rule whose path navigates a historic reference backwards
+	 * always starts at the checked version and must not set a value.
+	 * </p>
+	 */
+	@Name(HISTORY)
+	@NullDefault
+	@Label("Historic versions")
+	HistoryMode getHistory();
+
+	/**
+	 * Setter for {@link #getHistory()}.
+	 */
+	void setHistory(HistoryMode history);
+
+	/**
+	 * The historic references through which a current object makes a historic version accessible
+	 * to a rule with {@link #getHistory() history} {@link HistoryMode#ANCHORED}.
+	 *
+	 * <p>
+	 * The rule applies to a historic version, if a current object refers to exactly this version or
+	 * to the version of one of its containers in the same revision through one of the given
+	 * references. The role is only given to groups that may read that reference on the referring
+	 * object.
+	 * </p>
+	 */
+	@Name(ANCHORS)
+	@Format(CommaSeparatedStrings.class)
+	@Label("Anchor references")
+	List<String> getAnchors();
+
+	/**
+	 * Setter for {@link #getAnchors()}.
+	 */
+	void setAnchors(List<String> anchors);
 
 }

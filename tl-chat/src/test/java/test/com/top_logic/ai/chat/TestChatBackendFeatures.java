@@ -58,6 +58,8 @@ import com.top_logic.ai.core.message.TokenUsage;
 import com.top_logic.ai.core.provider.LLMProviderService;
 import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.util.Resources;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -290,6 +292,8 @@ public class TestChatBackendFeatures extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestChatBackendFeatures.class),
 				ModelService.Module.INSTANCE,
+				AccessManager.Module.INSTANCE,
+				SecurityConfigurationService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
 				AiToolAccessService.Module.INSTANCE,
 				LLMProviderService.Module.INSTANCE,

@@ -201,7 +201,7 @@ public class TestSubagentEndInEveryWindow extends BasicTestCase {
 	}
 
 	private AgentSession chat() {
-		return (AgentSession) ChatHistoryService.findOwnedSessionById(_chat, owner);
+		return (AgentSession) ChatHistoryService.findAnySessionById(_chat);
 	}
 
 	private void subagentFinished() {

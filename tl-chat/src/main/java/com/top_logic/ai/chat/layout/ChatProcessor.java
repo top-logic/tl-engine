@@ -39,6 +39,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.model.TLObject;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.ai.core.agent.AgentFactory;
 import com.top_logic.ai.core.agent.AgentLoop;
 import com.top_logic.ai.core.agent.AgentResult;
@@ -914,13 +915,13 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * Resolves the {@link AgentSession} a run is recorded against, or <code>null</code> if it
-	 * cannot be established as this person's (recording is then skipped for the run).
+	 * Resolves the {@link AgentSession} a run is recorded against, or <code>null</code> if this
+	 * person may not write it (recording is then skipped for the run).
 	 *
 	 * <p>
-	 * This is where a turn is written into a transcript, so the owner is asked again here rather
-	 * than trusted from the session id the run carries: a run must never append to a conversation
-	 * that is not the acting user's.
+	 * This is where a turn is written into a transcript, so the right to write is asked again here
+	 * rather than trusted from the session id the run carries: a run must never append to a
+	 * conversation the acting user may not write.
 	 * </p>
 	 */
 	public static AgentSession resolveAgentSession(String sessionId, Person owner) {
@@ -930,12 +931,13 @@ public class ChatProcessor {
 			return null;
 		}
 		try {
-			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, owner);
+			TLObject session =
+				ChatHistoryService.findAccessibleSession(sessionId, owner, SimpleBoundCommandGroup.WRITE);
 			if (session instanceof AgentSession agentSession) {
 				return agentSession;
 			}
 			Logger.warn("Run will not be recorded: session " + sessionId
-				+ (session == null ? " not found for this user." : " is not an AgentSession."),
+				+ (session == null ? " not found or not writable for this user." : " is not an AgentSession."),
 				ChatProcessor.class);
 			return null;
 		} catch (RuntimeException ex) {
@@ -1116,7 +1118,8 @@ public class ChatProcessor {
 		// A window shows the chat as the subagent ends: the user sees the end there, so the chat
 		// list must not report it as news.
 		if (!ChatEventHandlerRegistry.findForSession(owner, sessionId).isEmpty()) {
-			ChatHistoryService.markSeen(ChatHistoryService.findOwnedSessionById(sessionId, owner));
+			ChatHistoryService.markSeen(
+				ChatHistoryService.findAccessibleSession(sessionId, owner, SimpleBoundCommandGroup.WRITE));
 		}
 	}
 

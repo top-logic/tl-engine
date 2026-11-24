@@ -27,6 +27,7 @@ import com.top_logic.ai.chat.view.ChatViewBinding;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.Resources;
 
 /**
@@ -422,8 +423,8 @@ public class TestChatConversationConfig extends TestCase {
 		assertEquals("", ChatSessionIds.idOf(null));
 		assertNull(ChatSessionIds.sessionOf(null));
 		assertEquals("", ChatSessionIds.selectedId(null, null));
-		assertNull(ChatSessionIds.ownedSession("", null));
-		assertNull(ChatSessionIds.ownedSession(null, null));
+		assertNull(ChatSessionIds.accessibleSession("", null, SimpleBoundCommandGroup.READ));
+		assertNull(ChatSessionIds.accessibleSession(null, null, SimpleBoundCommandGroup.READ));
 	}
 
 	/** A one-item collection is the session a multi-select table writes for a single row. */

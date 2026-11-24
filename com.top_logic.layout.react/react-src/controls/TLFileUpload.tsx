@@ -1,6 +1,5 @@
-import { React, useTLState, useUpload, useI18N, rootClassName, tooltipProps, useFieldLabelProps, fieldInputId, ThemeIcon, ICON_UPLOAD } from 'tl-react-bridge';
+import { React, useTLState, useUpload, useI18N, rootClassName, useFieldLabelProps, fieldInputId, usePart, ICON_UPLOAD } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
-import { buttonClassName } from './button/buttonClassName';
 
 const I18N_KEYS = {
   'js.fileUpload.choose': 'Choose file',
@@ -15,6 +14,7 @@ const TLFileUpload: React.FC<TLCellProps> = ({ controlId }) => {
   const labelProps = useFieldLabelProps(controlId, inputId);
   const state = useTLState();
   const { uploading, error, upload } = useUpload();
+  const Button = usePart('Button');
 
   const [isDragOver, setIsDragOver] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -81,19 +81,17 @@ const TLFileUpload: React.FC<TLCellProps> = ({ controlId }) => {
         onChange={handleFileChange}
         style={{ display: 'none' }}
       />
-      <button
-        type="button"
-        className={buttonClassName({ appearance: 'secondary' })}
-        onClick={handleButtonClick}
+      <Button
+        id={inputId}
+        label={buttonLabel}
+        image={ICON_UPLOAD}
+        display="icon-only"
+        appearance="ghost"
         disabled={uploading}
         aria-busy={uploading ? true : undefined}
-        aria-label={buttonLabel}
-        {...tooltipProps(buttonLabel)}
-        id={inputId}
+        onClick={handleButtonClick}
         {...labelProps}
-      >
-        <ThemeIcon encoded={ICON_UPLOAD} className="tl-button__icon tl-icon-md" />
-      </button>
+      />
       {error && (
         <span className="tl-file-upload__status tl-type-label" role="alert">{error}</span>
       )}

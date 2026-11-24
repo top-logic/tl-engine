@@ -30,6 +30,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_CANNOT_REDO_CHAIN_BROKEN;
 
+	/**
+	 * @en The change of {0} cannot be reverted, because it contains changes you are not allowed to
+	 *     see.
+	 */
+	public static ResKey1 ERROR_REVERT_INCOMPLETE_CHANGE_SET__DATE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

@@ -1,4 +1,4 @@
-import { React, useTLState, useUpload, useTLDataUrl, useI18N, rootClassName, stateAttr, useFieldLabelProps, fieldInputId, usePart, downloadBlob, ICON_UPLOAD, ICON_DOWNLOAD } from 'tl-react-bridge';
+import { React, useTLState, useUpload, useTLDataUrl, useI18N, rootClassName, stateAttr, useFieldLabelProps, fieldInputId, usePart, useButtonDefaults, downloadBlob, ICON_UPLOAD, ICON_DOWNLOAD } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { showsValueOnly } from './form/fieldState';
 
@@ -31,6 +31,7 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
   const dataUrl = useTLDataUrl();
   const t = useI18N(I18N_KEYS);
   const Button = usePart('Button');
+  const rowSmall = useButtonDefaults().small === true;
 
   const disabled = state.disabled === true;
   const hasData = !!state.hasData;
@@ -156,7 +157,8 @@ const TLBinaryField: React.FC<TLCellProps> = ({ controlId, state: propState }) =
         label={buttonLabel}
         image={ICON_UPLOAD}
         display="icon-only"
-        appearance="secondary"
+        // In a table cell (small) a bordered button is too heavy: the upload button is a ghost there.
+        appearance={rowSmall ? 'ghost' : 'secondary'}
         disabled={isDisabled}
         aria-busy={isUploading ? true : undefined}
         onClick={handleButtonClick}

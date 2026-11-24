@@ -104,7 +104,7 @@ public class InitializedViewChannel extends DefaultViewChannel {
 		releaseBinding();
 
 		_init = init;
-		_binding = new ChannelInputBinding(this, inputs, observedTypes, this::reinitialize, this::refresh);
+		_binding = new ChannelInputBinding(getName(), this, inputs, observedTypes, this::reinitialize, this::refresh);
 		reinitialize();
 	}
 

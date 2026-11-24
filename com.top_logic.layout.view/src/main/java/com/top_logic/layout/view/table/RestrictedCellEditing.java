@@ -60,6 +60,11 @@ final class RestrictedCellEditing implements CellEditing {
 	}
 
 	@Override
+	public boolean required() {
+		return _editing.required();
+	}
+
+	@Override
 	public CellEditing restrictedTo(Predicate<Object> rows) {
 		return new RestrictedCellEditing(_editing, _rows.and(rows));
 	}

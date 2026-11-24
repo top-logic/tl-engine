@@ -28,6 +28,8 @@ import com.top_logic.model.annotate.ui.ValueColor;
  * @param pinnedEnd
  *        Whether this column {@link Column#pinnedEnd() keeps its place} at the end of the
  *        table.
+ * @param required
+ *        Whether the column {@link Column#required() requires a value} in the cells the user edits.
  * @param alignment
  *        The side of its cells this column {@link Column#alignment() puts its content on}.
  * @param cssClass
@@ -57,6 +59,7 @@ public record ColumnView(
 		boolean filterable,
 		boolean frozen,
 		boolean pinnedEnd,
+		boolean required,
 		ColumnAlignment alignment,
 		String cssClass,
 		boolean aggregates,

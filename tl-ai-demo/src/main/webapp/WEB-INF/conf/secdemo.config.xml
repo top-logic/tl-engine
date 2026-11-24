@@ -679,10 +679,6 @@
 									<view name="tl-chat/chat/tabLayout.layout.xml#TabLayout">
 										<commandGroup name="Read"/>
 									</view>
-									<!-- The chat itself, a security component of its own. -->
-									<view name="tl-chat/chat/agent.layout.xml#agent">
-										<commandGroup name="Read"/>
-									</view>
 									<!-- The three nested tabs leading to the script console. -->
 									<view name="admin/index.layout.xml#adminView">
 										<commandGroup name="Read"/>

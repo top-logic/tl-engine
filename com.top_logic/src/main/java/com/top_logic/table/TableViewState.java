@@ -31,6 +31,15 @@ public class TableViewState {
 	/** Sentinel {@link #getPageSize() page size} meaning "show all rows" / virtual scroll. */
 	public static final int SHOW_ALL = 0;
 
+	/** The {@link #getDensity() density} that follows the surrounding application. */
+	public static final String DENSITY_DEFAULT = "";
+
+	/** The {@link #getDensity() density} with the usual row height. */
+	public static final String DENSITY_NORMAL = "normal";
+
+	/** The {@link #getDensity() density} with reduced row height. */
+	public static final String DENSITY_COMPACT = "compact";
+
 	private List<String> _columnOrder = new ArrayList<>();
 
 	private Set<String> _hiddenColumns = new LinkedHashSet<>();
@@ -54,6 +63,12 @@ public class TableViewState {
 	private int _pageSize = SHOW_ALL;
 
 	private int _page;
+
+	private String _density = DENSITY_DEFAULT;
+
+	private boolean _striped;
+
+	private boolean _columnLines;
 
 	/**
 	 * The visible columns, in display order (by {@link Column#name() name}).
@@ -239,6 +254,49 @@ public class TableViewState {
 	}
 
 	/**
+	 * The row density chosen for this table: {@link #DENSITY_DEFAULT} (empty, follows the
+	 * surrounding application), {@link #DENSITY_NORMAL} or {@link #DENSITY_COMPACT}.
+	 */
+	public String getDensity() {
+		return _density;
+	}
+
+	/**
+	 * @see #getDensity()
+	 */
+	public void setDensity(String density) {
+		_density = density;
+	}
+
+	/**
+	 * Whether every other row is shaded.
+	 */
+	public boolean isStriped() {
+		return _striped;
+	}
+
+	/**
+	 * @see #isStriped()
+	 */
+	public void setStriped(boolean striped) {
+		_striped = striped;
+	}
+
+	/**
+	 * Whether the columns are separated by lines.
+	 */
+	public boolean isColumnLines() {
+		return _columnLines;
+	}
+
+	/**
+	 * @see #isColumnLines()
+	 */
+	public void setColumnLines(boolean columnLines) {
+		_columnLines = columnLines;
+	}
+
+	/**
 	 * A copy of this state that changes independently of it.
 	 *
 	 * <p>
@@ -259,6 +317,9 @@ public class TableViewState {
 		result.setSelection(_selection);
 		result.setPageSize(_pageSize);
 		result.setPage(_page);
+		result.setDensity(_density);
+		result.setStriped(_striped);
+		result.setColumnLines(_columnLines);
 		return result;
 	}
 

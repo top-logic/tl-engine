@@ -32,7 +32,7 @@ export { useUncontrolledFieldSync } from './bridge/uncontrolled-field';
 export type { UncontrolledFieldSync, UncontrolledFieldSyncOptions } from './bridge/uncontrolled-field';
 export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, anchoredOverlayOf, firstFocusable } from './bridge/focus-trap';
 export { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, TOOLTIP_WHEN_CLIPPED, tooltipProps } from './bridge/tooltip-host';
-export { BACKGROUND_COMMAND, BACKGROUND_REPORT, CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
+export { BACKGROUND_COMMAND, BACKGROUND_REPORT, CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED, registerPendingFlush, unregisterPendingFlush } from './bridge/command-channel';
 export type { CommandOptions, CommandResponse } from './bridge/command-channel';
 export { pushLocalStep } from './bridge/route-sync';
 export { isPageLeaving, leavePage, onPageLeave, reloadForStaleUi } from './bridge/page-leave';
@@ -110,6 +110,10 @@ export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-pre
 export type { InsideRef } from './bridge/outside-press';
 export { usePopover } from './bridge/popover';
 export type { PopoverAnchor, PopoverOptions, PopoverPlacement, PopoverHover } from './bridge/popover';
+export { usePopupSurface } from './bridge/popup-surface';
+export type { PopupSurface, PopupSurfaceOptions, PopupInitialFocus } from './bridge/popup-surface';
+export { usePopupTrigger } from './bridge/popup-trigger';
+export type { PopupTrigger, PopupKind } from './bridge/popup-trigger';
 export { DisplayClassProvider, useDisplayClass } from './bridge/display-class';
 export type { DisplayClass } from './bridge/display-class';
 export { SurfaceProvider, useSurface, cardSurfaceClass, insetClass, paintedLevel, panelSurface } from './bridge/surface';
@@ -125,11 +129,14 @@ export type {
   ListReorderOptions,
   ReorderAxis,
   ReorderContainerProps,
+  ReorderDirection,
   ReorderDropTarget,
   ReorderHandleProps,
   ReorderItemProps,
   ReorderItemState,
   ReorderSide,
+  ReorderStep,
+  ReorderZoneProps,
 } from './bridge/list-reorder';
 export type { TLCellProps } from './bridge/types';
 export { useImageSrc } from './bridge/image-source';

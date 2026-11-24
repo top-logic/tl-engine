@@ -28,6 +28,7 @@ import com.top_logic.knowledge.service.db2.migration.config.ReplayConfig;
 	MigrationConfig.VERSION_PROPERTY,
 	MigrationConfig.DEPENDENCIES_PROPERTY,
 	MigrationConfig.DROPPED_DEPENDENCIES_PROPERTY,
+	MigrationConfig.ADDED_DEPENDENCIES_PROPERTY,
 	MigrationConfig.PRE_PROCESSORS_PROPERTY,
 	MigrationConfig.PROCESSORS_PROPERTY,
 	MigrationConfig.MIGRATION_PROPERTY,
@@ -42,8 +43,11 @@ public interface MigrationConfig extends ConfigurationItem {
 	/** Configuration name for {@link #getDroppedDependencies()}. */
 	String DROPPED_DEPENDENCIES_PROPERTY = "dropped-dependencies";
 
-	/** Tag name of an entry in {@link #getDroppedDependencies()}. */
-	String DROPPED_DEPENDENCY_ENTRY = "module";
+	/** Configuration name for {@link #getAddedDependencies()}. */
+	String ADDED_DEPENDENCIES_PROPERTY = "added-dependencies";
+
+	/** Tag name of an entry in {@link #getDroppedDependencies()} and {@link #getAddedDependencies()}. */
+	String MODULE_ENTRY = "module";
 
 	/** Configuration name for {@link #getVersion()}. */
 	String VERSION_PROPERTY = "version";
@@ -87,15 +91,36 @@ public interface MigrationConfig extends ConfigurationItem {
 	 * </p>
 	 */
 	@Key(NamedConfiguration.NAME_ATTRIBUTE)
-	@EntryTag(DROPPED_DEPENDENCY_ENTRY)
+	@EntryTag(MODULE_ENTRY)
 	@Name(DROPPED_DEPENDENCIES_PROPERTY)
-	Map<String, DroppedDependency> getDroppedDependencies();
+	Map<String, ModuleRef> getDroppedDependencies();
 
 	/**
-	 * Entry of {@link MigrationConfig#getDroppedDependencies()}, its {@link #getName() name} is the
-	 * name of the module no longer depended on.
+	 * Modules the predecessor migration of the same module does not depend on, that become a
+	 * dependency of the module with this migration, because the application adopts them.
+	 * 
+	 * <p>
+	 * A module normally depends on all modules any of its migrations depends on, so each migration
+	 * not naming such a module gets an implicit dependency on the initial version of that module.
+	 * The migrations before this one in the same module get neither this implicit dependency nor a
+	 * transitive dependency to a module listed here: they never run in the same upgrade as the
+	 * migrations of the adopted module, since a database without a stored version of a module
+	 * skips the migrations of that module. A module listed here must be contained in the
+	 * {@link #getDependencies() dependencies} of this migration and must not be contained in the
+	 * dependencies of its predecessor.
+	 * </p>
 	 */
-	interface DroppedDependency extends NamedConfigMandatory {
+	@Key(NamedConfiguration.NAME_ATTRIBUTE)
+	@EntryTag(MODULE_ENTRY)
+	@Name(ADDED_DEPENDENCIES_PROPERTY)
+	Map<String, ModuleRef> getAddedDependencies();
+
+	/**
+	 * Entry of {@link MigrationConfig#getDroppedDependencies()} and
+	 * {@link MigrationConfig#getAddedDependencies()}, its {@link #getName() name} is the name of the
+	 * module.
+	 */
+	interface ModuleRef extends NamedConfigMandatory {
 		// The name is the only property.
 	}
 

@@ -12,6 +12,7 @@ import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.element.changelog.ChangeLogBuilder;
 import com.top_logic.element.changelog.SubtreeFilter;
 import com.top_logic.element.changelog.model.TlChangelogFactory;
@@ -25,6 +26,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
+import com.top_logic.model.search.expr.GenericMethodWithSecurity;
 import com.top_logic.model.search.expr.I18NConstants;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -75,19 +77,28 @@ import com.top_logic.util.model.ModelService;
  * {@code excludedModules} is a collection of modules whose changes must not be regarded. Each
  * element may be either a {@link TLModule} reference or a module name as a string.
  * </p>
+ *
+ * <p>
+ * The change log is not filtered by access rights. When the function is evaluated
+ * {@link #usesSecurity() with security checks}, it is therefore reserved to administrators,
+ * whatever the arguments are; other users get an error. To show changes to a user, a script
+ * without security checks restricts each change set with
+ * {@link ChangeSetFunctions#restrict(com.top_logic.element.changelog.model.ChangeSet, Person)
+ * changeSetRestrict}.
+ * </p>
  */
-public class ChangeLog extends GenericMethod {
+public class ChangeLog extends GenericMethodWithSecurity {
 
 	/**
 	 * Creates a {@link ChangeLog}.
 	 */
-	protected ChangeLog(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	protected ChangeLog(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new ChangeLog(getName(), arguments);
+		return new ChangeLog(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -107,6 +118,10 @@ public class ChangeLog extends GenericMethod {
 
 	@Override
 	protected Object eval(Object[] arguments, EvalContext definitions) {
+		if (usesSecurity() && !ThreadContext.isAdmin()) {
+			throw new TopLogicException(I18NConstants.ERROR_ADMIN_ONLY__NAME.fill(getName()));
+		}
+
 		TLObject obj = arguments[0] == null ? null : asTLObject(arguments[0]);
 
 		int maxEntries = arguments[1] != null ? asInt(arguments[1]) : 0;
@@ -228,7 +243,7 @@ public class ChangeLog extends GenericMethod {
 
 		@Override
 		public ChangeLog build(Expr expr, SearchExpression[] args) throws ConfigurationException {
-			return new ChangeLog(getConfig().getName(), args);
+			return new ChangeLog(getConfig().getName(), args, true);
 		}
 	}
 

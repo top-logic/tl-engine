@@ -1,5 +1,5 @@
 ---
-description: Read before configuring a <table> (TableViewControl) or a <tree> (ReactTreeControl) in a .view.xml - column declarations (sortable, comparator, aggregate, tooltip, hide-when-compact leaving a column out on a phone), row and node selection, the levels of a tree open when it is displayed (initial-expansion-depth), activation, grouping, color roles tinting rows and cells by their data (row-role on <table>, <tree-table> and <composition-table>, cell-role on a column, header-role on a column heading, role on a display; a classifier with a <color role> annotation as a role; the role names error / warning / success / info / neutral / brand / category-1..8, ValueColor) and the CSS classes beside them as the application's own styling hook (row-class, cell-class, header-class), the filter bar and its presets (with a row count and a CSS class of their own: count, css-class), the rows a table displays in display order (displayed-rows, the selection in display order), the label of the group of rows without a value (empty-group-label), the Excel export (<export> of a <table> or a <tree-table>, groups and tree levels as an outline, canExpandAll="false" exporting only the displayed rows, header, cell and row roles as cell fills), pinned columns, and drag and drop of rows and tree nodes (<drag>, <drop target="ordered"> with its arguments objects / target / parent / before, as / target-as / parent-as / before-as / x-as / y-as, refuse-if), the unit of a number written in its cells and their search text (the <unit> annotation), the display of a cell or a tree node (display on a column, nodeContent on a <tree>, ResourceDisplayByExpression computing label / icon / role / css-class / tooltip, LinkDisplay showing a web address, an e-mail address or a phone number as a link, an attribute annotated input-type="URL" showing as a link without a display), the name of the activated row or node (activate-as), long or multi-line values in a cell (a stack trace, a text area, code, HTML) shown by a one-line preview with a button opening a dialog (FieldSpec#isCompact, ReactCompactFieldControl), and the variables of the column, row-role / row-class and cell-role / cell-class scripts (row-as, column-as, value-as, $members, $left / $right).
+description: Read before configuring a <table> (TableViewControl) or a <tree> (ReactTreeControl) in a .view.xml - column declarations (sortable, comparator, aggregate, tooltip, hide-when-compact leaving a column out on a phone), row and node selection, the levels of a tree open when it is displayed (initial-expansion-depth), activation, grouping, color roles tinting rows and cells by their data (row-role on <table>, <tree-table> and <composition-table>, cell-role on a column, header-role on a column heading, role on a display; a classifier with a <color role> annotation as a role; the role names error / warning / success / info / neutral / brand / category-1..8, ValueColor) and the CSS classes beside them as the application's own styling hook (row-class, cell-class, header-class), the kinds of filter a column offers by the type of its values (values, text, range; ColumnFilterState, inverting, max-value-options, OptionsColumnFilter.occurring), the filter bar and its presets (with a row count and a CSS class of their own: count, css-class), the rows a table displays in display order (displayed-rows, the selection in display order), the label of the group of rows without a value (empty-group-label), the Excel export (<export> of a <table> or a <tree-table>, groups and tree levels as an outline, canExpandAll="false" exporting only the displayed rows, header, cell and row roles as cell fills), pinned columns, and drag and drop of rows and tree nodes (<drag>, <drop target="ordered"> with its arguments objects / target / parent / before, as / target-as / parent-as / before-as / x-as / y-as, refuse-if), the unit of a number written in its cells and their search text (the <unit> annotation), the display of a cell or a tree node (display on a column, nodeContent on a <tree>, ResourceDisplayByExpression computing label / icon / role / css-class / tooltip, LinkDisplay showing a web address, an e-mail address or a phone number as a link, an attribute annotated input-type="URL" showing as a link without a display), the name of the activated row or node (activate-as), long or multi-line values in a cell (a stack trace, a text area, code, HTML) shown by a one-line preview with a button opening a dialog (FieldSpec#isCompact, ReactCompactFieldControl), and the variables of the column, row-role / row-class and cell-role / cell-class scripts (row-as, column-as, value-as, $members, $left / $right).
 order: 60
 ---
 
@@ -102,6 +102,17 @@ Numeric model attributes align to the end of the cell automatically, so digits l
   </columns>
 </table>
 ```
+
+## View options
+
+Every React table shows a gear that opens the *View* menu:
+
+- **Density**: *As everywhere*, *Normal* or *Compact*. A choice other than *As everywhere* overrides the global density for this table.
+- **Stripes** and **Column lines**: both off by default.
+- **Columns**, with the value *n of m* and a chevron at the end of the row: only where the table offers a column selection. It opens a second page of the menu, under a *Back* arrow, that lists the columns in three sections, *Frozen*, *Movable* and *Hidden*: a click on a row shows or hides the column (the last shown column stays), the pin freezes it, and a toggle groups the rows by it. The handle drags a column to another place, and the section it is dropped into sets its state: dropped among the frozen columns it is frozen, among the movable ones released, in either case at the place it is dropped; dropped into *Hidden* it is hidden. An empty section stays in the list with a quiet row and takes a drop as well. *Alt* + arrow keys on the handle move a column the same way, one place at a time and across the lines between the sections. Every change applies to the table immediately; there is nothing to confirm.
+- **Reset**: restores the declared columns, widths, frozen columns, sorting, grouping and the view options. Filters stay.
+
+A setting applies immediately. It is stored per person and table with the rest of the table state.
 
 ## Selecting rows and nodes
 
@@ -385,6 +396,34 @@ A value whose control needs more room than a row offers - a multi-line text, a c
       FieldSpec.of(String.class, label).setMultilineRows(20).setPreformatted(true));
   new CellContent.Raw((CellControlFactory) ctx -> FieldControlRegistry.getInstance().createControl(ctx, spec, model, FieldControlRegistry.TEXT));
   ```
+
+## Column filters: kinds of filter per type
+
+A column's filter follows the type of its values, and a type may offer several **kinds of filter** (`Column#filters()`, each a `ColumnFilter` told apart by its `kind()`). The column is filtered by exactly one of them at a time; the `ColumnFilterState` of the column names the active kind, its state and whether it is **inverted** - an inverted filter selects exactly the rows the filter does not, empty cells included.
+
+| Type of the values | Kinds, in this order |
+|---|---|
+| Enumeration (single- or multi-valued) | values: all classifiers |
+| Object (reference, single- or multi-valued), any other label column | values, text (on the label) |
+| Number | range, values |
+| Date, date with time of day | range, values (by day) |
+| Time of day | range, values (by exact time) |
+| Text | text, values (exact, case-sensitive) |
+| Content: text of several lines, rich text, script, JSON, file | text |
+| Graphic: color, icon | values |
+| Truth value | yes / no |
+
+Whether a list of values and a text filter make sense is a question of the type of the values, not of how many there are:
+
+- **Content** is filtered by its text only: two documents are hardly ever equal, and a list of them would show whole documents. Content are the types listed in `content-types` of the `ColumnProviderService` (default: `tl.model.wysiwyg:Html`, `tl.model.i18n:I18NHtml`, `tl.model.search:Expr`, `Code`, `Template`, `Report`, `Macro`, `tl.util:JSON`), every type or attribute annotated `<multi-line/>` (e.g. `tl.core:Text`, a multi-line `I18NString`) and binary data.
+- **A graphic** is filtered by the list of its values only, drawn as the cells draw them: its text is a technical name the user never sees. Graphics are the types listed in `graphic-types` (default: `tl.util:Color`, `tl.core:Icon`).
+
+- **Values** (`OptionsColumnFilter.occurring`) are the values occurring in the rows of the table, regardless of any filter, in the order the column sorts them, with the number of rows the other criteria leave for each (`MatchCounts#values()`). A cell holding several values matches if one of them is selected. The cells without a value - empty, an empty text, no element - are offered as *No value* after the values (`Option#NO_VALUE`); an enumeration offers it after its classifiers while a cell is empty. The kind is offered only while the column holds at most `max-value-options` distinct values (`ColumnProviderService`, default 50); an enumeration offers all its classifiers whatever their number. A selection of objects is stored by the identities of the objects; one deleted in the meantime is dropped from it.
+- **Text** searches anywhere, at a word start, for whole words or by a regular expression (`TextMatchMode`), case-sensitive or not.
+- **Range** bounds are typed values of the column (`FilterField#valueCodec()` marks such a field). A new range filter starts with the operator *between*; the bound fields follow the operator (`FilterField#source()`): a comparison with a single value shows one field, the value, *between* the lower and the upper bound, *From* and *To*.
+- **The filter dialog** of a column (`ColumnFilterDialog`, composed of the standard controls in `TableViewControl`) switches between the kinds with a segmented control above the form of the active kind; each kind keeps what was entered in it while another one is shown. A kind the column does not offer for its current values (a list of values over too many distinct values) appears only while the column is filtered by it, marked as not available, with a notice above its form. Every kind but yes / no has the *invert* checkbox: a yes / no filter offers each of its values as an option of its own, so the inverse of a selection is the selection of the other options. A value of a list is a row of a checkbox, named by the label of the value and its count, the value drawn as a cell of the column draws it (color, icon, label), and the count; an option that is no value of the column - *No value*, a pattern of an application filter such as `RegexpOptionsFilter` - shows its label (`FilterField#isColumnValue()`); a bound of a range is entered as a form field of the column's type (date picker, number field). Both come from the `FilterFieldFactory` the table element sets (`ColumnFilterFieldFactory`, through `FieldControlService`); without one, the dialog shows labels and text inputs.
+- A `ColumnProvider` of an application, and a column declaring a `<filter>` of its own, keep their single filter. A column offering several kinds overrides `Column#filters()`.
+- A stored state or a saved filter without kind - written while the column had a single kind of filter - is read by the first kind of the column, in the column's order, that accepts it (`DefaultTableView`), so a text criterion of a column over objects stays a text criterion. A declared value criterion (`expr`) is expressed by the first kind of the column that can express it; the values kind expresses none, so such a criterion keeps matching the label.
 
 ## Filtering: the filter bar and its presets
 

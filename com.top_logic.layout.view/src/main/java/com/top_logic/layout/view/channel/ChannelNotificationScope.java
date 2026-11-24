@@ -15,14 +15,12 @@ import com.top_logic.basic.Logger;
  * controls defer work until the outermost notification has unwound.
  *
  * <p>
- * A control that rebuilds its presentation from inside a channel notification (e.g. a responsive
- * master-detail switching between selector and detail on a selection change) does not dispose the
- * replaced control subtree synchronously: the old subtree's controls may themselves be listeners of
- * the notifying channel that are still pending in the notification. A notification skips the
- * listeners whose registrations are disposed, but a control may hold more than a channel
- * registration (a listener on a field, a model listener of a delegate) that a pending listener
- * reaches. Such disposal is {@link #afterNotification(Runnable) deferred} and runs once the
- * outermost notification has completed — safely outside any listener iteration.
+ * Work is deferred that must not run while the listeners of a notification are still being called,
+ * typically a write to a channel from inside a listener: written from there, the new value would
+ * reach the remaining listeners before the value they are being told about, so that they end up
+ * with the outdated one (e.g. a form resetting its edit-mode channel after a refused transition).
+ * Such work is {@link #afterNotification(Runnable) deferred} and runs once the outermost
+ * notification has completed - safely outside any listener iteration.
  * </p>
  *
  * <p>
@@ -59,7 +57,7 @@ public final class ChannelNotificationScope {
 	 * when no notification is in progress.
 	 *
 	 * @param action
-	 *        The action to run (e.g. disposing a replaced control subtree).
+	 *        The action to run (e.g. writing a channel).
 	 */
 	public void afterNotification(Runnable action) {
 		if (_depth == 0) {
@@ -83,9 +81,9 @@ public final class ChannelNotificationScope {
 	 * {@link #afterNotification(Runnable) deferred} actions run.
 	 *
 	 * <p>
-	 * Every deferred action runs, even if an earlier one fails: the actions are independent (each
-	 * typically disposes one replaced control subtree), and a subtree whose disposal is skipped
-	 * stays registered with its listeners for the lifetime of the session. A failing action is
+	 * Every deferred action runs, even if an earlier one fails: the actions are independent, and a
+	 * skipped action would leave the state it was meant to settle (e.g. a channel that is to mirror
+	 * a control's state) inconsistent for the rest of the session. A failing action is
 	 * logged rather than rethrown, because this method runs in the {@code finally} block of the
 	 * notification: an exception thrown here would replace the one a listener may have raised,
 	 * which is the failure the caller has to see.

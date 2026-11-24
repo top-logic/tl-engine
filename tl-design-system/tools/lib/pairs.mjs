@@ -79,7 +79,7 @@ export function kontrastPaare(T) {
   // Zeile (Stufen seit 07.10.: hell red-41/amber-43, dunkel red-34/amber-36), Platzhalter-Ton im Text.
   for (const bg of [...AUSWAHL, 'surface-interactive-hover', 'surface-interactive-strong']) paar('focus-ring', bg, 3.0);
   // Auswahl (UI-Durchgang 1): Icons und die Kante `border-selected` auf beiden gewählten Flächen; die Kante ist nur
-  // Vordergrund. Kopfzeile und Gruppenzeile der Tabelle tragen Text auf surface-layer-muted.
+  // Vordergrund. Kopfzeile, Zebra und Gruppenzeile der Tabelle tragen Text auf surface-layer-muted.
   for (const bg of AUSWAHL) {
     paar('icon-primary', bg, 3.0); paar('icon-secondary', bg, 3.0); paar('border-selected', bg, 3.0);
     paar('border-interactive', bg, 3.0); // Fokusring des Zellfelds auf der gewählten Zeile, auch gezeigt
@@ -95,6 +95,10 @@ export function kontrastPaare(T) {
   // Die Icons der Kopfzeile (Trichter, Sortierpfeil, Zahnrad) stehen auf surface-layer-muted.
   paar('icon-primary', 'surface-layer-muted', 3.0); paar('icon-secondary', 'surface-layer-muted', 3.0);
   paar('text-link', 'surface-layer-muted', 3.0); // der Trichter einer gefilterten Spalte ist Markenblau (#29999)
+  // Pflichtstern im Kopf (#30383): Symbol, 3:1 wie der Trichter; auch beim Zeigen auf die Kopfzelle.
+  for (const bg of ['surface-layer-muted', 'surface-interactive-strong']) paar('status-error-text', bg, 3.0);
+  // Pflichtecke im Feld der Tabellenzeile (#30383): Symbol, 3:1 gegen die Feldfläche (gemessen hell 4,29, dunkel 4,89).
+  paar('status-error-text', 'surface-field', 3.0);
   // icon-secondary auf surface-interactive-strong steht seit Bernhards Knöpfen im Feld schon in der Liste (b985047).
   paar('icon-secondary', 'surface-layer', 3.0);
   paar('border-emphasis', 'surface-layer', 3.0);

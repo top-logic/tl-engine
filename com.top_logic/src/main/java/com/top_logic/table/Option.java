@@ -22,5 +22,21 @@ import com.top_logic.basic.util.ResKey;
  *        The display label for the value.
  */
 public record Option(Object value, ResKey label) {
-	// Pure value type.
+
+	/**
+	 * The {@link #value()} of the option standing for the cells holding no value: an empty cell,
+	 * or a cell holding an empty collection of values.
+	 *
+	 * <p>
+	 * It is a facet key of its own, counted as every other one, and it is never a value of a
+	 * column.
+	 * </p>
+	 */
+	public static final Object NO_VALUE = new Object() {
+		@Override
+		public String toString() {
+			return "NO_VALUE";
+		}
+	};
+
 }

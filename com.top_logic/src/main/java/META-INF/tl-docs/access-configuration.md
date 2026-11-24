@@ -1,5 +1,5 @@
 ---
-description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), operation declarations (<operations>, implied-by), the internal / without-security marks, access parents, role rules of the AccessManager, the autoconf files and the SecurityCoverageCheck.
+description: Read before configuring or checking who may read, write, create or delete objects of a model type - grants in <security-config> (SecurityConfigurationService), attributes readable with Discover (discover-attributes), operation declarations (<operations>, implied-by), the internal / without-security marks, access parents, role rules of the AccessManager, the autoconf files and the SecurityCoverageCheck.
 order: 20
 ---
 
@@ -65,11 +65,20 @@ cannot (a plain knowledge item standing for itself) grants no role, so only the 
    access parents; a grant without roles denies everyone. Without attribute-level grants the
    class-level decision stands.
 
+Model elements (types, attributes, modules, the classifiers of an enumeration, all objects of
+`tl.model`) are meta-data, not business objects: every user may discover and read them and the
+values of their attributes, without a grant on `tl.model`, so a reflective script (the target type
+of a reference, whether an attribute is multiple or composite) works for every user. This rule is applied
+before the steps above; a deleted model element stays inaccessible. Modifying, creating and deleting a model element is checked like for any other
+object, so no application needs a definition for `tl.model`.
+
 `Discover` - every right on an object or one of its attributes implies the operation `Discover`, see [the Discover specification](doc:access-discover-spec).
 How code and TL-Script ask for a decision (`ModelAccessRights`, `canRead`, ...) and which objects
 are exempt from the check is described in [checking access in Java and TL-Script](doc:access-checks).
 The classic layout UI does not check attribute rights; an application using model based security
 with `Discover`-only roles must use the React view layer for such types.
+On which object a view of the classic layout UI checks access (`securityObject`, `isSecurityMaster`)
+is described in [access checks of layouts](doc:access-layouts).
 
 ## Grants: which roles may do what on a type
 
@@ -213,6 +222,40 @@ check it on with `<access-control>` and are decided by these grants as well (art
 engine's administration views is declared on the security root (`<singleton
 name="SecurityStructure#ROOT">`) and granted there.
 
+### Discover attributes: what `Discover` makes readable
+
+An object a user may only discover shows its label, but none of its attributes (see
+[the Discover right](doc:access-discover-spec)). Where a user must tell the objects apart by more
+than their label - e.g. in an option list that shows the objects to choose from as a table - the
+class entry names the attributes that `Discover` makes readable:
+
+```xml
+<class name="my.module:Product" discover-attributes="name,number">
+	<grant inherit="true" operation="Read" roles="Editor"/>
+	<grant inherit="true" operation="Discover" roles="Buyer"/>
+</class>
+```
+
+A `Buyer` sees `name` and `number` of a `Product` it may discover, but no other attribute.
+
+- Only reading is extended. Writing a discover attribute still requires `Write`.
+- An attribute with a read grant of its own (`<part>` entry granting `Read`) is decided by that grant,
+  not by the discover attributes.
+- When a discover attribute is a reference, a target the user may not discover is still filtered
+  (TL-Script, tables) or masked (form fields).
+- The setting applies to the class and its specializations. A specialization with a setting of its own
+  replaces it; an empty setting (`discover-attributes=""`) withdraws all discover attributes. A class
+  entry without the setting keeps the setting of the generalizations.
+- If two independent generalizations pass on different settings and the type has none of its own, the
+  start fails with a configuration error.
+- An attribute name the class does not have is a configuration error. The editor of the access rights
+  offers the attributes of the class to choose from.
+- A module entry has no discover attributes: configure them on a common generalization instead.
+
+The question without an object is `ModelAccessRights.getDiscoverAttributes(TLClass)`. In the
+"Access rights…" dialog of a type, the `Read` cell of a discover attribute without a read grant of its
+own says that the attribute is readable with `Discover`.
+
 ### Operations: which operations apply to a type
 
 An operation is a command group with a global name: `Approve` on a project and `Approve` on a
@@ -279,7 +322,9 @@ the one mark when the other is set, and the access rights dialog refuses to save
 
 The engine sets these marks for its own types in `com.top_logic.element/…/ElementConf.config.xml`:
 the modules `tl.changelog` and `tl.imagegallery` are `internal` (maintained by the engine's own
-code), the class `tl.core:Revision` is `without-security` (commit metadata readable by everyone; a
+code; `tl.changelog` additionally grants `Read` to the role `PersonalProfile`, which every user holds
+on the own account, so that a table offers the columns of its transient change sets, see the
+section "Access rights" of the article `change-log` of `com.top_logic.element`), the class `tl.core:Revision` is `without-security` (commit metadata readable by everyone; a
 revision cannot hold roles).
 
 ### Access parent: delegating the whole decision

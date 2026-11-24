@@ -24,6 +24,7 @@
 					<role name="TestTLScriptSecurity.UnitReader"/>
 					<role name="TestTLScriptSecurity.NameReader"/>
 					<role name="TestTLScriptSecurity.NameKeeper"/>
+					<role name="TestTLScriptSecurity.NameWriter"/>
 				</roles>
 			</instance>
 		</config>
@@ -42,6 +43,16 @@
 		<config service-class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
 			<instance class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
 				<scripts>
+					<!-- Reads the latest commit without security and restricts it for the caller (TestChangeLogSecurity). -->
+					<privileged-script name="testRestrictedChangeLog"
+						command-group="Read"
+						security-object="$obj"
+					>
+						<parameters>
+							<parameter name="obj"/>
+						</parameters>
+						<implementation>changeLog(null, 1).map(cs -> changeSetRestrict($cs))</implementation>
+					</privileged-script>
 					<!-- Writes the name of a proposal, which an approver may not write directly. -->
 					<privileged-script name="testPrivilegedRename"
 						command-group="Approve"
@@ -376,6 +387,28 @@
 							roles="TestTLScriptSecurity.NameReader"
 						/>
 					</class>
+					<!-- The person in Bar#writer reads and writes the Bar (TestChangeLogSecurity). -->
+					<class name="TestTLScriptSecurity:Bar">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestTLScriptSecurity.NameWriter"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="TestTLScriptSecurity.NameWriter"
+						/>
+					</class>
+					<!-- NameKeeper may discover a DiscoverNamed and thereby read its name and related objects. -->
+					<class name="TestTLScriptSecurity:DiscoverNamed"
+						discover-attributes="name,related"
+					>
+						<grant
+							operation="Discover"
+							roles="TestTLScriptSecurity.NameKeeper"
+						/>
+					</class>
 					<!-- Foo overrides name: the rights apply to Foo, not to the other types sharing the definition. -->
 					<part name="TestTLScriptSecurity:Foo#name">
 						<grant
@@ -529,6 +562,16 @@
 						>
 							<path>
 								<step attribute="TestTLScriptSecurity:Named#accountA"/>
+							</path>
+						</rule>
+						<rule
+							id="7e2c41d8-5b93-4f0a-a6c1-2d8e9b3f4a03"
+							inherit="true"
+							meta-element="TestTLScriptSecurity:Bar"
+							role="TestTLScriptSecurity.NameWriter"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:Bar#writer"/>
 							</path>
 						</rule>
 						<rule

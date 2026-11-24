@@ -204,6 +204,42 @@ public class TestInvitationLifecycle extends BasicTestCase {
 		assertRefused(I18NConstants.ERROR_INVITATION_ACCEPTED, () -> module().resendInvitation(invitation));
 	}
 
+	/**
+	 * Deleting the account of an accepted invitation deletes the invitation with it; the address
+	 * can be invited again afterwards.
+	 */
+	public void testDeleteAccountDeletesAcceptedInvitation() {
+		String email = "deleted.account@example.com";
+		Invitation invitation = invite(email);
+		Person account = module().acceptInvitation(invitation, "Doe", "Jane", PASSWORD.toCharArray());
+
+		deleteAccount(account);
+
+		assertFalse(account.tValid());
+		assertFalse(invitation.tValid());
+		assertNull(InvitationModule.existingAccount(email));
+
+		Invitation again = invite(email);
+		assertTrue(InvitationModule.isOpen(again));
+	}
+
+	/** Deleting another account leaves open and accepted invitations untouched. */
+	public void testDeleteOtherAccountKeepsInvitations() {
+		Invitation open = invite("still.open@example.com");
+		Invitation accepted = invite("still.accepted@example.com");
+		Person account = module().acceptInvitation(accepted, "Doe", null, PASSWORD.toCharArray());
+		Person other = accountWithEMail("otherAccount", "other.account@example.com");
+
+		deleteAccount(other);
+
+		assertFalse(other.tValid());
+		assertTrue(open.tValid());
+		assertTrue(InvitationModule.isOpen(open));
+		assertTrue(accepted.tValid());
+		assertTrue(InvitationModule.isAccepted(accepted));
+		assertSame(account, accepted.getAccount());
+	}
+
 	/** A password violating the rules of the device creates no account. */
 	public void testAcceptWithWeakPasswordRefused() {
 		String email = "weak@example.com";
@@ -414,6 +450,13 @@ public class TestInvitationLifecycle extends BasicTestCase {
 			}
 		}
 		return account;
+	}
+
+	private static void deleteAccount(Person account) {
+		try (Transaction tx = kb().beginTransaction(ResKey.text("Delete account"))) {
+			account.tDelete();
+			tx.commit();
+		}
 	}
 
 	private void expire(Invitation invitation) {

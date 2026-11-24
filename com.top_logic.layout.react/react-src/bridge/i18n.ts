@@ -6,6 +6,9 @@ import React from 'react';
  * Lazily fetches translations from the server and caches them. Uses microtask-batched
  * fetching so that multiple components requesting keys in the same render cycle trigger
  * only a single HTTP request.
+ *
+ * Keys requested before the application's context path is known (a component rendering before
+ * the first mount()) wait until {@link setI18NApiBase} is called and are then requested together.
  */
 
 /** Resolved translations keyed by resource key. */
@@ -33,17 +36,27 @@ let _cacheVersion = 0;
 /** React re-render callbacks registered via useSyncExternalStore. */
 const _subscribers = new Set<() => void>();
 
-/** Base URL for the i18n endpoint (e.g. "/demo/react-api/i18n"). */
-let _apiBase = '';
+/**
+ * Context path of the application the i18n endpoint is resolved against (e.g. "/demo/"), or
+ * {@code null} as long as it is unknown.
+ */
+let _apiBase: string | null = null;
 
 /** Window name to include in i18n requests so the server resolves the correct locale. */
 let _windowName = '';
 
 /**
  * Sets the API base URL. Called once from tl-react-bridge.ts during mount().
+ *
+ * Keys requested before are sent in the next microtask, so that the window name set by the same
+ * mount() is part of the request.
  */
 export function setI18NApiBase(base: string): void {
   _apiBase = base;
+  if (_pending.size > 0 && !_fetchScheduled) {
+    _fetchScheduled = true;
+    queueMicrotask(flushPending);
+  }
 }
 
 /**
@@ -81,7 +94,9 @@ function scheduleFetch(key: string): void {
 
 async function flushPending(): Promise<void> {
   _fetchScheduled = false;
-  if (_pending.size === 0) {
+  const apiBase = _apiBase;
+  if (_pending.size === 0 || apiBase === null) {
+    // Without a known context path, the keys stay pending until setI18NApiBase() is called.
     return;
   }
 
@@ -94,7 +109,7 @@ async function flushPending(): Promise<void> {
 
   let data: Record<string, string>;
   try {
-    const url = _apiBase + 'react-api/i18n?keys=' + encodeURIComponent(keys.join(','))
+    const url = apiBase + 'react-api/i18n?keys=' + encodeURIComponent(keys.join(','))
       + '&windowName=' + encodeURIComponent(_windowName);
     const resp = await fetch(url);
     if (!resp.ok) {

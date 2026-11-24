@@ -101,9 +101,23 @@ public final class TurnContext {
 	/** Hours and minutes; the date is in the environment block, at day granularity. */
 	private static final DateTimeFormatter TIME_OF_DAY = DateTimeFormatter.ofPattern("HH:mm");
 
-	/** Either of this block's tags, wherever a fact tries to write one. */
+	/** Every line terminator, {@code \r\n} as one. */
+	private static final Pattern LINE_BREAK = Pattern.compile("\\R");
+
+	/**
+	 * The start of a tag of this block or of the environment block, wherever a value tries to write
+	 * one.
+	 *
+	 * <p>
+	 * The start only, in any case, with the optional slash and the inner white space, the form
+	 * {@link com.top_logic.ai.tool.api.UntrustedEnvelope} matches: a model that reads loosely also
+	 * reads {@code </ environment>}, {@code <environment source='x'>} or {@code <environment/>} as a
+	 * tag of the block. The word boundary keeps a longer name such as {@code <environmental>} as it
+	 * is.
+	 * </p>
+	 */
 	private static final Pattern BLOCK_TAG_IN_VALUE =
-		Pattern.compile("</?turn-context\\s*>", Pattern.CASE_INSENSITIVE);
+		Pattern.compile("<\\s*/?\\s*(?:turn-context|environment)\\b", Pattern.CASE_INSENSITIVE);
 
 	private TurnContext() {
 		// Static utility.
@@ -183,25 +197,38 @@ public final class TurnContext {
 	}
 
 	/**
-	 * One {@code Label: value} line.
-	 *
-	 * <p>
-	 * The block is read line by line, so a value keeps neither its line breaks - a second line would
-	 * read as a fact of its own - nor a tag of this block's own, which would end the block early and
-	 * let everything after it read as the user's words. The tag's leading {@code <} is escaped
-	 * rather than the phrase deleted, the way {@code UntrustedEnvelope} does it: the text stays
-	 * readable and structurally inert.
-	 * </p>
+	 * One {@code Label: value} line, with the label and the value {@link #flatten(String)
+	 * flattened}.
 	 */
 	private static String line(String label, String value) {
 		return flatten(label) + ": " + flatten(value) + "\n";
 	}
 
-	private static String flatten(String text) {
+	/**
+	 * The text as one line that cannot open or close a block.
+	 *
+	 * <p>
+	 * Every name and value of a fact goes through here, in this block and in the
+	 * {@code <environment>} block of {@link RunEnvironment}, and so does every memory that
+	 * {@link UserMemories} writes into the environment block. Both blocks are read line by line, and
+	 * the system prompt tells the model that the environment block is authoritative. A line break in
+	 * a value would let the next line read as a fact of its own, and a tag of either block would end
+	 * the block early and let everything after it read as something else: the user's words after
+	 * this block, the instructions of the agent after the environment block. Each line terminator
+	 * therefore becomes a space, and the leading {@code <} of a tag is escaped rather than the phrase
+	 * deleted, the way {@link com.top_logic.ai.tool.api.UntrustedEnvelope} does it: the text stays
+	 * readable and structurally inert.
+	 * </p>
+	 *
+	 * <p>
+	 * One method for both blocks, so that a rule added for one of them protects the other too.
+	 * </p>
+	 */
+	static String flatten(String text) {
 		if (text == null || text.isEmpty()) {
 			return "";
 		}
-		String oneLine = text.replace("\r\n", " ").replace('\r', ' ').replace('\n', ' ');
+		String oneLine = LINE_BREAK.matcher(text).replaceAll(" ");
 		Matcher matcher = BLOCK_TAG_IN_VALUE.matcher(oneLine);
 		if (!matcher.find()) {
 			return oneLine;

@@ -78,9 +78,12 @@ public class AnthropicProviderConfig implements LLMProviderConfig {
 		String getVersion();
 
 		@Override
-		@StringDefault("anthropic")
+		@StringDefault(DEFAULT_CATALOG_PROVIDER_ID)
 		String getCatalogProviderId();
 	}
+
+	/** Default of {@link Config#getCatalogProviderId()}: the models.dev ID of the Anthropic API. */
+	public static final String DEFAULT_CATALOG_PROVIDER_ID = "anthropic";
 
 	private final Config _config;
 
@@ -110,7 +113,8 @@ public class AnthropicProviderConfig implements LLMProviderConfig {
 		String baseUrl = ModelDiscoveryHelper.normalizeBaseUrl(_config.getBaseUrl());
 		return new AnthropicMessagesProvider(
 			_credentials, baseUrl, _config.getVersion(),
-			_config.getConnectTimeout(), _config.getRequestTimeout(), _config.getCustomHeaders());
+			_config.getConnectTimeout(), _config.getRequestTimeout(), _config.getCustomHeaders(),
+			_config.getCatalogProviderId());
 	}
 
 	@Override

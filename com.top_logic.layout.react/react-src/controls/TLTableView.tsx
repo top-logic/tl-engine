@@ -196,6 +196,11 @@ interface ColumnState {
    */
   reorderable?: boolean;
   /**
+   * Whether the column requires a value in the cells the user edits: its heading shows the
+   * required mark. Absent for a column that does not.
+   */
+  required?: boolean;
+  /**
    * CSS class put on every cell of the column, its heading included: how the column presents its
    * cells, e.g. a column holding a button instead of text.
    */
@@ -2182,7 +2187,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             // A label cut off by its ellipsis offers its full text by itself (tooltip host, master
             // #29752); only a tooltip the column declares is set here.
             const label = (
-              <span className="tl-table__label tl-type-overline" {...tooltipProps(col.tooltip)}>{col.label}</span>
+              <>
+                <span className="tl-table__label tl-type-overline" {...tooltipProps(col.tooltip)}>{col.label}</span>
+                {col.required && <span className="tl-table__required" aria-hidden="true">*</span>}
+              </>
             );
             const filterLabel = col.filterActive ? i18n['js.table.filterActive'] : i18n['js.table.filter'];
             return (
@@ -2264,7 +2272,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 })()}
                 {col.filterable && (
                   // One glyph; an active filter is the column's state (data-tl-state~="filtered",
-                  // icon-primary) and the button's name says so as well.
+                  // drawn in the link color, #29999) and the button's name says so as well.
                   <Button
                     label={filterLabel}
                     image={ICON_FILTER}

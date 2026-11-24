@@ -10,6 +10,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
+import com.top_logic.basic.util.ResKey4;
 
 /**
  * I18N constants for the provider package.
@@ -121,6 +122,28 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     verfügbar.
 	 */
 	public static ResKey1 ERROR_DISCOVERY_UNAVAILABLE__PROVIDER;
+
+	/**
+	 * Start error of a Google Vertex AI provider with a model whose publisher is neither configured
+	 * nor derivable from its name.
+	 *
+	 * @en The Google Vertex AI provider {0} cannot serve the model {1}: its publisher is unknown.
+	 *     Configure the publisher of the model in the model settings of the provider.
+	 * @de Der Google-Vertex-AI-Anbieter {0} kann das Modell {1} nicht bereitstellen: Sein Herausgeber
+	 *     ist unbekannt. Konfigurieren Sie den Herausgeber des Modells in den Modelleinstellungen des
+	 *     Anbieters.
+	 */
+	public static ResKey2 ERROR_VERTEX_NO_PUBLISHER__PROVIDER_MODEL;
+
+	/**
+	 * Start error of a Google Vertex AI provider with a model of a publisher it cannot address.
+	 *
+	 * @en The Google Vertex AI provider {0} cannot serve the model {1}: the publisher {2} is not
+	 *     supported. Supported publishers: {3}.
+	 * @de Der Google-Vertex-AI-Anbieter {0} kann das Modell {1} nicht bereitstellen: Der Herausgeber
+	 *     {2} wird nicht unterstützt. Unterstützte Herausgeber: {3}.
+	 */
+	public static ResKey4 ERROR_VERTEX_UNSUPPORTED_PUBLISHER__PROVIDER_MODEL_PUBLISHER_SUPPORTED;
 
 	static {
 		initConstants(I18NConstants.class);

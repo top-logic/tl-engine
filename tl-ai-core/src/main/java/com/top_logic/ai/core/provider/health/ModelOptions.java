@@ -37,7 +37,9 @@ public final class ModelOptions {
 	 * @param options
 	 *        What the run was using; must not be <code>null</code>.
 	 * @param catalogProviderId
-	 *        The target's catalog provider ID ({@code "anthropic"}, {@code "openai"}, ...), or
+	 *        The API family of the target model
+	 *        ({@link com.top_logic.ai.core.provider.LLMProviderConfig#getApiFamily(String)}:
+	 *        {@code "anthropic"}, {@code "openai"}, ...), or
 	 *        <code>null</code> when it could not be determined - then only the vendor-neutral keys
 	 *        survive.
 	 * @param target

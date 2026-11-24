@@ -278,9 +278,9 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 	 */
 	public void testUnreadableCellNotEditable() {
 		becomeUser(_roleless);
-		assertFalse(new AttributeCellEditing(APPROVED).canEdit(new TLObjectOverlay(_project)));
-		assertFalse(new AttributeCellEditing(SPONSOR).canEdit(new TLObjectOverlay(_project)));
-		assertFalse(new AttributeCellEditing(BUDGET).canEdit(new TLObjectOverlay(_project)));
+		assertFalse(new AttributeCellEditing(APPROVED, false).canEdit(new TLObjectOverlay(_project)));
+		assertFalse(new AttributeCellEditing(SPONSOR, false).canEdit(new TLObjectOverlay(_project)));
+		assertFalse(new AttributeCellEditing(BUDGET, false).canEdit(new TLObjectOverlay(_project)));
 	}
 
 	/**
@@ -520,9 +520,9 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 	 * edited row.
 	 */
 	public void testCellEditFollowsWriteRight() {
-		AttributeCellEditing name = new AttributeCellEditing(NAME);
-		AttributeCellEditing secret = new AttributeCellEditing(SECRET);
-		AttributeCellEditing rating = new AttributeCellEditing(RATING);
+		AttributeCellEditing name = new AttributeCellEditing(NAME, false);
+		AttributeCellEditing secret = new AttributeCellEditing(SECRET, false);
+		AttributeCellEditing rating = new AttributeCellEditing(RATING, false);
 
 		becomeUser(_responsible);
 		assertTrue(name.canEdit(_project));
@@ -543,7 +543,7 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 	 */
 	public void testCellEditNeedsReadRight() {
 		becomeUser(_roleless);
-		assertFalse(new AttributeCellEditing(BUDGET).canEdit(new TLObjectOverlay(_project)));
+		assertFalse(new AttributeCellEditing(BUDGET, false).canEdit(new TLObjectOverlay(_project)));
 	}
 
 	/**
@@ -551,9 +551,9 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 	 * the draft, its container.
 	 */
 	public void testDraftRow() {
-		AttributeCellEditing note = new AttributeCellEditing(NOTE);
-		AttributeCellEditing secret = new AttributeCellEditing(SECRET);
-		AttributeCellEditing name = new AttributeCellEditing(NAME);
+		AttributeCellEditing note = new AttributeCellEditing(NOTE, false);
+		AttributeCellEditing secret = new AttributeCellEditing(SECRET, false);
+		AttributeCellEditing name = new AttributeCellEditing(NAME, false);
 
 		becomeUser(_responsible);
 		TLObject draft = TransientObjectFactory.INSTANCE.createObject(type(STEP), _project);

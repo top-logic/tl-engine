@@ -71,7 +71,7 @@ public class TestRemoteExchange extends TestCase {
 
 		System.setProperty("a2a_test_token", TOKEN);
 		_agents = new RemoteAgents(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, List.of());
-		_agents.add(new RemoteAgent("alpha", base + "/a2a/alpha/agent-card.json",
+		_agents.add(new RemoteAgent("alpha", base + "/a2a/alpha/agent-card.json", List.of(),
 			request -> request.setHeader(CredentialProvider.AUTHORIZATION,
 				CredentialProvider.BEARER + " " + System.getProperty("a2a_test_token"))));
 		_contexts = new ContextBook();

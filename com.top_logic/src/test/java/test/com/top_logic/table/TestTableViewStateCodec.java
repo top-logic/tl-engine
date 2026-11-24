@@ -18,6 +18,7 @@ import com.top_logic.table.GroupSpec;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.TableViewState;
 import com.top_logic.table.filter.TextFilterState;
+import com.top_logic.table.filter.TextMatchMode;
 import com.top_logic.table.impl.TableViewStateCodec;
 
 /**
@@ -162,12 +163,12 @@ public class TestTableViewStateCodec extends TestCase {
 	/** The search term round-trips with all of its matching flags. */
 	public void testSearchRoundTrip() {
 		TableViewState original = new TableViewState();
-		original.setSearch(new TextFilterState("ab.*c", true, true, true));
+		original.setSearch(new TextFilterState("ab.*c", true, TextMatchMode.REGEXP, true));
 
 		TableViewState restored = new TableViewState();
 		TableViewStateCodec.readInto(restored, TableViewStateCodec.toJson(original));
 
-		assertEquals(new TextFilterState("ab.*c", true, true, true), restored.getSearch());
+		assertEquals(new TextFilterState("ab.*c", true, TextMatchMode.REGEXP, true), restored.getSearch());
 	}
 
 	public void testNoSearchWritesNoEntry() {

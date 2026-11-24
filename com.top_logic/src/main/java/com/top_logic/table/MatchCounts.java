@@ -5,6 +5,8 @@
  */
 package com.top_logic.table;
 
+import java.util.List;
+
 /**
  * Facet counts for an option-style column filter: how many rows currently match each
  * option value.
@@ -33,6 +35,20 @@ public interface MatchCounts {
 	 * The number of currently displayed rows matching the given option value.
 	 */
 	int count(Object optionValue);
+
+	/**
+	 * The distinct facet values of the column over all rows of the table, regardless of any
+	 * filter, in the order the column sorts its values (or in the order of their first occurrence
+	 * for a column that cannot be sorted).
+	 *
+	 * <p>
+	 * These are the options of a filter offering the {@link FilterInput.Options#occurring()
+	 * occurring values}. The default offers none.
+	 * </p>
+	 */
+	default List<Object> values() {
+		return List.of();
+	}
 
 	/**
 	 * Whether counts have been computed and are meaningful (counting can be disabled for

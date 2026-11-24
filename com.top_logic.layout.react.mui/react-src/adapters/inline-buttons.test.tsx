@@ -63,6 +63,12 @@ const LABEL_COLUMN_HIDE = 'js.table.columnHide';
 const LABEL_COLUMN_LOCK = 'js.table.columnLock';
 const LABEL_COLUMN_SHOW_LOCK = 'js.table.columnShowLock';
 
+/** The primary color of the MUI default theme the tests mount below, the color of a link in MUI. */
+const COLOR_PRIMARY = 'var(--mui-palette-primary-main)';
+
+/** The color of an MUI icon button of the default color. */
+const COLOR_ICON_BUTTON = 'var(--mui-palette-action-active)';
+
 /** The commands the controls send for their buttons. */
 const CMD_TOGGLE_MINIMIZE = 'toggleMinimize';
 const CMD_CLOSE = 'close';
@@ -185,6 +191,22 @@ describe('the column buttons of a table as MUI icon buttons', () => {
     await settle();
 
     expect(sent).toHaveBeenCalledWith(CMD_OPEN_FILTER, { column: 'name' });
+  });
+
+  it('draws the funnel of a column with a filter in force in the primary color of the theme', async () => {
+    mountTable(true);
+    await settle();
+
+    const funnel = screen.getByRole('button', { name: LABEL_FILTER_ACTIVE });
+    expect(getComputedStyle(funnel).color).toBe(COLOR_PRIMARY);
+  });
+
+  it('draws the funnel of a column without filter in the default color of an icon button', async () => {
+    mountTable(false);
+    await settle();
+
+    const funnel = screen.getByRole('button', { name: LABEL_FILTER });
+    expect(getComputedStyle(funnel).color).toBe(COLOR_ICON_BUTTON);
   });
 
   it('shows the funnel of a column without filter empty', async () => {

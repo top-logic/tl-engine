@@ -83,12 +83,10 @@ import { citedSources, latestAnswerSources, type CitedSource } from './sources'
 import {
   EMPTY_RUN,
   createRunStore,
-  readActiveSession,
   readEffort,
   readTraceMode,
   runStore,
   type RunStore,
-  writeActiveSession,
   writeEffort,
   writeTraceMode,
 } from './store'
@@ -784,13 +782,6 @@ export interface ChatActions {
    * reason {@link registerRail} counts.
    */
   registerConversation(insideDock: boolean): () => void
-  /**
-   * Says that a host's `input` channel decides which chat this window shows, an empty channel
-   * included: the tab's remembered chat is then not restored. It named the chat this tab had on the
-   * previous page, which the channel of this page may not want - it showed until the host refused
-   * it (#577).
-   */
-  followChannel(): void
   bindComposer(api: ComposerApi | null): void
   insertReference(token: ReferenceToken): void
   /** Replaces the composer's draft, focuses it and puts the caret at the end. */
@@ -963,17 +954,6 @@ export class ChatStore {
   private waitingNotice = false
 
   /**
-   * The chat this window had open before it was reloaded, read before anything can overwrite it.
-   *
-   * The store persists every change of the open chat, and the first of those would be the initial
-   * `null` - so the remembered id has to be taken when the store is built, not once it runs.
-   */
-  private readonly remembered: string | null
-
-  /** Whether the remembered chat has been dealt with; restoring happens once per store. */
-  private restored = false
-
-  /**
    * Counts the choices of which chat this window shows - every `selectSession` and `newChat`.
    *
    * Opening a chat waits for its transcript, and the choice may have changed by the time it
@@ -1101,7 +1081,6 @@ export class ChatStore {
 
   constructor(chatId: string, boot: ChatBootstrap) {
     this.chatId = chatId
-    this.remembered = readActiveSession(chatId)
     this.approvalChoice = boot.autoApprove
     this.layoutKey = boot.layoutKey
     this.paneWidthDefault = boot.paneWidthDefault
@@ -1384,10 +1363,6 @@ export class ChatStore {
         },
       },
       {
-        deps: (s) => [s.sessionId],
-        run: () => writeActiveSession(this.chatId, this.state.sessionId),
-      },
-      {
         deps: (s) => [s.authenticated],
         run: () => this.connect(),
       },
@@ -1420,36 +1395,7 @@ export class ChatStore {
         deps: (s) => [s.effort],
         run: () => this.setRun((snapshot) => ({ ...snapshot, effort: this.state.effort })),
       },
-      {
-        deps: (s) => [s.authenticated, s.sessionsLoading, s.sessions],
-        run: () => this.restoreRememberedSession(),
-      },
     ]
-  }
-
-  /**
-   * Re-opens the chat this window had before it was reloaded.
-   *
-   * A reload used to land on an empty "new chat" with the conversation only findable in the rail,
-   * which reads like data loss. It runs once, and only for a chat that is still in this user's
-   * list - a chat deleted meanwhile, or one remembered from another account, is forgotten instead
-   * of asked for.
-   */
-  private restoreRememberedSession(): void {
-    const { authenticated, sessionsLoading, sessions } = this.state
-    if (!authenticated || sessionsLoading || this.restored) return
-    this.restored = true
-    const id = this.remembered
-    if (!id) return
-    // A chat was already chosen for this window. The remembered one would only compete with it, and
-    // a host that takes a reported chat as its own would take this tab's stale one back from the
-    // chat the page has moved on to (#576).
-    if (this.choice > 0) return
-    if (!sessions.some((item) => item.id === id)) {
-      writeActiveSession(this.chatId, null)
-      return
-    }
-    void this.actions.selectSession(id)
   }
 
   // --- the stream --------------------------------------------------------------------------
@@ -2750,10 +2696,6 @@ export class ChatStore {
           // count, and a stale total would keep a number on a button that opens nothing.
           this.patch({ railMounted: mounted, railBadge: mounted ? this.state.railBadge : NO_RAIL_BADGE })
         }
-      },
-
-      followChannel: () => {
-        this.restored = true
       },
 
       registerConversation: (insideDock: boolean) => {

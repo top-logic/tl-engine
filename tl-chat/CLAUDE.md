@@ -1145,6 +1145,20 @@ Two existing engine actions, no new class. What to know about it:
 - **In** a write replaces the whole draft, focuses the field and puts the caret behind the text. The
   user still presses send - there is no `send` mode, deliberately: reading the sentence before it
   goes is worth one keystroke.
+- **The draft belongs to the chat it was written in** (#30552), not to the place that shows the
+  chat. The store keeps one draft per chat (`ChatStore.drafts`, keyed by the session id, the chat the
+  next send creates under `NEW_CONVERSATION`), filled from what the composer reports (`noteDraft`).
+  When the place shows another chat - a pick in the list, a selection written to `input`, "new
+  chat", the chat on screen deleted - the store puts that chat's draft into the composer with
+  `ComposerApi.restoreDraft`, which unlike `setDraft` takes no focus: a switch the user made in the
+  list or a host made by a command must not pull the caret into the field. The composer reports the
+  restored text like typed text, so `draft` always carries the draft of the chat on screen, and a
+  write to `draft` applies to that chat alone. The first send of a new chat hands its draft to the
+  chat it creates; a first send that is refused leaves it with the new chat. A composer that mounts
+  again (a dock) is given the draft of the chat on screen. The drafts are not stored - not on the
+  server, not in `sessionStorage` -: they live as long as the store, i.e. as long as the chat is on
+  the page; the text of a send the page is reloaded over is what `keepUnsent` (`unsent.ts`) keeps.
+  Attachments follow the same rule on the server, see "Attachments" above.
 - A write may be a `ResKey`, because `{"en": …, "de": …}.internationalize()` is the obvious way to
   build a sentence in TL-Script; the control resolves it in the user's language
   (`ChatQuotes.text`). `null` - what an unwritten channel holds - says nothing and leaves the
@@ -1194,7 +1208,9 @@ Two existing engine actions, no new class. What to know about it:
   `chat-conversation.tsx` and hands both to the same `insertReference`.
 
 `TestChatConversationConfig` holds the options and the `ChatQuotes` rule, `draft.test.ts` the
-debounce, and the `chat-store.test.ts` "composer seam" block the two calls a write turns into.
+debounce, the `chat-store.test.ts` "composer seam" block the two calls a write turns into, its "a
+draft per chat" block the drafts per chat, and `chat-conversation-draft.test.tsx` the switch in a
+mounted element (editor text, channel reports, focus).
 
 #### Writing a channel across a view boundary
 

@@ -296,10 +296,19 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   const badge = unseenRailBadge(rail, chat.badgeSeen, labels.sideRailBadge)
 
   /** What the composer exposes to a host: an imperative handle, because the caret lives in the DOM. */
-  const composer = useRef<ComposerApi>(null)
+  const composer = useRef<ComposerApi | null>(null)
   const insertReference = useCallback((token: ReferenceToken) => {
     composer.current?.insertReference(token)
   }, [])
+  // The store keeps the composer's text per chat and puts it back when the chat is shown again.
+  const bindComposer = useCallback(
+    (api: ComposerApi | null) => {
+      composer.current = api
+      actions.bindComposer(api)
+    },
+    [actions],
+  )
+  const onDraft = useCallback((text: string) => actions.noteDraft(text), [actions])
 
   const railCtx: RailRenderContext = useMemo(
     () => ({
@@ -448,7 +457,8 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             onAttach={actions.attach}
             onRemoveAttachment={actions.removeAttachment}
             onStop={actions.stop}
-            ref={composer}
+            onDraft={onDraft}
+            ref={bindComposer}
             placeholder={placeholder || undefined}
             extraMenuItems={extensions?.composerAddons?.extraMenuItems}
             referenceCandidates={extensions?.composerAddons?.referenceCandidates}

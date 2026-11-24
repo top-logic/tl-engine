@@ -263,6 +263,18 @@
 							<script expr="t -> $t.get(`TestTLScriptSecurity:ProjectTask#assignee`).referers(`TestTLScriptSecurity:Project#responsible`)"/>
 						</access-parent>
 					</class>
+					<class name="TestTLScriptSecurity:RestrictedTask">
+						<!--
+							The project of the assignee decides Read only. All other operations are
+							decided by the task itself, which grants none.
+						-->
+						<access-parent>
+							<script
+								expr="t -> $t.get(`TestTLScriptSecurity:ProjectTask#assignee`).referers(`TestTLScriptSecurity:Project#responsible`)"
+								operations="Read"
+							/>
+						</access-parent>
+					</class>
 					<class name="TestTLScriptSecurity:ExternalEmployee">
 						<!-- The create right inherited from Employee is withdrawn: nobody may create an
 							external employee, even where creating an employee is allowed. -->

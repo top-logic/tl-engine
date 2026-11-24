@@ -19,6 +19,9 @@ import com.top_logic.model.security.AccessParentConfig;
 import com.top_logic.model.security.ContainerAccessParent;
 import com.top_logic.model.security.HideBesideOtherDefinition;
 import com.top_logic.model.security.SelfAccessParent;
+import com.top_logic.model.security.TargetAccessParent;
+import com.top_logic.tool.boundsec.CommandGroupReference;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
  * Test for {@link HideBesideOtherDefinition}: a form offers either an access parent or grants and
@@ -66,6 +69,18 @@ public class TestHideBesideOtherDefinition extends TestCase {
 		assertEquals("Grants that are set stay, so that the conflict can be resolved.", FieldMode.ACTIVE,
 			_grantsMode.invoke(false, List.of(new Object()), container));
 		assertEquals(FieldMode.ACTIVE, _mode.invoke(true, container));
+	}
+
+	public void testGrantsVisibleBesideRestrictedParent() {
+		TargetAccessParent.Config restricted = TypedConfiguration.newConfigItem(TargetAccessParent.Config.class);
+		restricted.setOperations(List.of(new CommandGroupReference(SimpleBoundCommandGroup.READ_NAME)));
+		TargetAccessParent.Config unrestricted = TypedConfiguration.newConfigItem(TargetAccessParent.Config.class);
+
+		assertEquals("The operations not delegated are granted by the type itself.", FieldMode.ACTIVE,
+			_grantsMode.invoke(false, List.of(), restricted));
+		assertEquals(FieldMode.INVISIBLE, _grantsMode.invoke(false, List.of(), unrestricted));
+		assertEquals("A restricted access parent leaves no room for a mark.", FieldMode.INVISIBLE,
+			_mode.invoke(false, restricted));
 	}
 
 	public void testGrantsAreHiddenWithoutSecurity() {

@@ -118,6 +118,17 @@ public class H2Helper extends DBHelper {
 		}
 	}
 
+	/**
+	 * H2 commits a DDL statement implicitly, and with it all data changes executed before in the
+	 * same transaction. A rollback after a <code>CREATE TABLE</code> or
+	 * <code>ALTER TABLE</code> neither removes the created table or column, nor the rows inserted
+	 * before the DDL statement.
+	 */
+	@Override
+	public boolean supportsTransactionalDDL() {
+		return false;
+	}
+
 	@Override
 	public boolean supportsAnalyzeTable() {
 		return true;

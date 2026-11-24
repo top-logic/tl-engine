@@ -7,6 +7,7 @@
 package com.top_logic.model.security;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.thread.ThreadContext;
@@ -136,11 +137,14 @@ public interface ModelAccessRights {
 	 * The relation leading from an object of the given type to the object whose access definition
 	 * decides access to it.
 	 * <p>
-	 * An object of a type with an access parent has no grants and no roles of its own: the access
-	 * checks ({@link #isAllowed(Person, TLObject, BoundCommandGroup)} and its variants) ask its
-	 * access parent instead, which may delegate further. A composition part gets its container as
-	 * access parent by default, unless a rule delivers a role on it or the configuration names
-	 * another parent.
+	 * For an operation the access parent {@link AccessParentFunction#delegates(BoundCommandGroup)
+	 * delegates}, the access checks ({@link #isAllowed(Person, TLObject, BoundCommandGroup)} and
+	 * its variants) ask the access parent instead of the object, which may delegate further. An
+	 * access parent delegating every operation leaves the type no grants and no roles of its own.
+	 * An access parent {@link AccessParentFunction#getOperations() restricted} to some operations
+	 * leaves the other operations to the grants of the type and the roles held on the object
+	 * itself. A composition part gets its container as access parent by default, unless a rule
+	 * delivers a role on it or the configuration names another parent.
 	 * </p>
 	 * 
 	 * @param type
@@ -245,33 +249,62 @@ public interface ModelAccessRights {
 	}
 
 	/**
-	 * The object whose roles decide the access to the given object.
+	 * The object whose roles decide whether the given operation may be performed on the given
+	 * object.
 	 *
 	 * <p>
-	 * This is the end of the chain of {@link #getAccessParent(TLClass) access parents} of the
-	 * object, or the object itself when its type decides for itself.
+	 * The chain of {@link #getAccessParent(TLClass) access parents} of the object is followed as
+	 * long as the access parent delegates the operation, which is mapped to the
+	 * {@link #getOperationOnRoleHolder(TLObject, BoundCommandGroup) operation checked on the
+	 * parent} at every step. The role holder is the first object of the chain that decides the
+	 * operation for itself: the object itself when its type has no access parent, or when its
+	 * access parent is restricted to operations not including the given one.
+	 * </p>
+	 *
+	 * <p>
+	 * For an access parent delegating every operation, the role holder is the same for all
+	 * operations.
 	 * </p>
 	 *
 	 * @param object
 	 *        The object to access.
+	 * @param operation
+	 *        The operation to perform on the object.
 	 * @return The object the roles of a user are looked up on, <code>null</code> when the chain of
 	 *         access parents leads nowhere or runs in a cycle, so that nobody decides for the object.
 	 * @implSpec An implementation without a notion of access parents answers the object itself.
 	 */
-	default TLObject getRoleHolder(TLObject object) {
+	default TLObject getRoleHolder(TLObject object, BoundCommandGroup operation) {
 		return object;
 	}
 
 	/**
-	 * The operation checked on the {@link #getRoleHolder(TLObject) role holder} of the given object
-	 * in place of the given operation on the object.
+	 * The object whose roles decide whether the given object may be read.
+	 *
+	 * @param object
+	 *        The object to access.
+	 * @return The {@link #getRoleHolder(TLObject, BoundCommandGroup) role holder} of
+	 *         {@link SimpleBoundCommandGroup#READ}.
+	 * @deprecated The role holder depends on the operation, since an access parent may be
+	 *             restricted to some operations: use
+	 *             {@link #getRoleHolder(TLObject, BoundCommandGroup)}.
+	 */
+	@Deprecated
+	default TLObject getRoleHolder(TLObject object) {
+		return getRoleHolder(object, SimpleBoundCommandGroup.READ);
+	}
+
+	/**
+	 * The operation checked on the {@link #getRoleHolder(TLObject, BoundCommandGroup) role holder}
+	 * of the given object in place of the given operation on the object.
 	 *
 	 * <p>
 	 * An object delegating to an access parent is not checked for the operation itself: the
 	 * operation is checked on the parent, possibly as another operation (creating or deleting a
 	 * part, for instance, is a modification of the whole). Along a chain of access parents, this
-	 * mapping applies at every step. Operations implying the given one on the object are checked
-	 * on the parent as well; they contribute to the
+	 * mapping applies at every step, up to the first object deciding the operation for itself.
+	 * Operations implying the given one on the object are checked on the parent as well, as far as
+	 * the access parent delegates them; they contribute to the
 	 * {@link #getAdmittingRoles(TLObject, BoundCommandGroup) admitting roles}.
 	 * </p>
 	 *
@@ -288,15 +321,17 @@ public interface ModelAccessRights {
 	}
 
 	/**
-	 * The roles admitting the given operation on the given object, when held on its
-	 * {@link #getRoleHolder(TLObject) role holder}.
+	 * The roles admitting the given operation on the given object, when held on the
+	 * {@link #getRoleHolder(TLObject, BoundCommandGroup) role holder} of the operation.
 	 *
 	 * <p>
 	 * For an object deciding for itself, these are the roles granted the operation, or an operation
 	 * implying it, on the object (on its type, or on the object itself for a module singleton with
 	 * rights of its own). For an object with an access parent, these are the roles admitting the
 	 * operation checked on the parent instead (see {@link #isAllowed(Person, TLObject, BoundCommandGroup)}),
-	 * collected along the chain of access parents.
+	 * collected along the chain of access parents, as far as the access parent delegates the
+	 * operation, or an operation implying it. An object whose access parent is restricted to some
+	 * operations adds the roles granted the operation on the object itself.
 	 * </p>
 	 *
 	 * <p>
@@ -315,6 +350,37 @@ public interface ModelAccessRights {
 	 */
 	default Set<BoundedRole> getAdmittingRoles(TLObject object, BoundCommandGroup operation) {
 		return object.tType() instanceof TLClass type ? getAllowedRoles(type, operation) : Collections.emptySet();
+	}
+
+	/**
+	 * The {@link #getAdmittingRoles(TLObject, BoundCommandGroup) admitting roles} of the given
+	 * operation on the given object, grouped by the object they must be held on.
+	 *
+	 * <p>
+	 * Usually, all admitting roles must be held on the
+	 * {@link #getRoleHolder(TLObject, BoundCommandGroup) role holder} of the operation. An object
+	 * whose access parent is restricted to some operations decides a delegated operation by the
+	 * roles held on its access parent and by the roles granted the operation (or an operation
+	 * implying it) on the object itself, which must be held on the object.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object to access.
+	 * @param operation
+	 *        The operation to perform on the object.
+	 * @return The admitting roles by the object they must be held on. Objects without admitting
+	 *         roles are left out.
+	 * @implSpec The default answers the {@link #getAdmittingRoles(TLObject, BoundCommandGroup)
+	 *           admitting roles}, to be held on the {@link #getRoleHolder(TLObject, BoundCommandGroup)
+	 *           role holder}.
+	 */
+	default Map<TLObject, Set<BoundedRole>> getAdmittingRolesByHolder(TLObject object, BoundCommandGroup operation) {
+		TLObject roleHolder = getRoleHolder(object, operation);
+		Set<BoundedRole> roles = getAdmittingRoles(object, operation);
+		if (roleHolder == null || roles.isEmpty()) {
+			return Collections.emptyMap();
+		}
+		return Collections.singletonMap(roleHolder, roles);
 	}
 
 	/**
@@ -448,20 +514,21 @@ public interface ModelAccessRights {
 	 * <li>For an attribute with such a grant, a person bypassing the model security decides by the
 	 * bypass.</li>
 	 * <li>An attribute-level grant listing no role denies the command group.</li>
-	 * <li>For a type with an {@link #getAccessParent(TLClass) access parent}, the person must hold
-	 * one of the granted roles on the object deciding for the access parent, as for an attribute of
-	 * a persistent object. The access parent of the object to be created is resolved on the object:
-	 * its {@link TLObject#tContainer() container}, also for a relation navigating a composition the
-	 * object is not yet held by, or the value of its reference. An access parent that is itself to
-	 * be created continues the chain through its own access parent, up to the first committed
-	 * object. The edited object stands for a {@link TLFormObjectBase form object} editing it. An
-	 * object to be created without access parent (in no container, or with an empty reference) is
-	 * not restricted, it is not accessible until it is put into a container, which is a write of
-	 * the container checked in its own right.</li>
-	 * <li>Attribute grants of a type deciding by its own roles (without access parent) do not
-	 * restrict an object to be created, since the roles it will hold are computed only once it
-	 * exists. This also holds for an object reaching such an object to be created on its chain of
-	 * access parents.</li>
+	 * <li>For a type whose {@link #getAccessParent(TLClass) access parent} delegates the command
+	 * group, the person must hold one of the granted roles on the object deciding the command group
+	 * for the access parent, as for an attribute of a persistent object. The access parent of the
+	 * object to be created is resolved on the object: its {@link TLObject#tContainer() container},
+	 * also for a relation navigating a composition the object is not yet held by, or the value of
+	 * its reference. An access parent that is itself to be created continues the chain through its
+	 * own access parent, up to the first committed object. The edited object stands for a
+	 * {@link TLFormObjectBase form object} editing it. An object to be created without access
+	 * parent (in no container, or with an empty reference) is not restricted, it is not accessible
+	 * until it is put into a container, which is a write of the container checked in its own
+	 * right.</li>
+	 * <li>Attribute grants of a command group decided by the roles of the object itself (without
+	 * access parent, or with one restricted to other operations) do not restrict an object to be
+	 * created, since the roles it will hold are computed only once it exists. This also holds for
+	 * an object reaching such an object to be created on its chain of access parents.</li>
 	 * </ul>
 	 *
 	 * <p>
@@ -696,10 +763,13 @@ public interface ModelAccessRights {
 	 * (<code>null</code>), the check uses the global security root.
 	 * </p>
 	 * <p>
-	 * A type with an {@link #getAccessParent(TLClass) access parent} has no create grants of its
-	 * own: creating one of its objects in a context is writing that context, and creating one
-	 * without a context is not restricted, since the object is inaccessible until it is put into a
-	 * container, which is a write of the container.
+	 * A type whose {@link #getAccessParent(TLClass) access parent} delegates
+	 * {@link SimpleBoundCommandGroup#CREATE CREATE} has no create grants of its own: creating one of
+	 * its objects in a context is writing that context, and creating one without a context is not
+	 * restricted, since the object is inaccessible until it is put into a container, which is a
+	 * write of the container. A type whose access parent is restricted to operations not including
+	 * {@link SimpleBoundCommandGroup#CREATE CREATE} grants it by its own grants, as a type deciding
+	 * for itself.
 	 * </p>
 	 * <p>
 	 * Nobody may create an object in a deleted context.

@@ -95,6 +95,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 PERMISSION_DENIED__NAME;
 
 	/**
+	 * @en Only administrators may call {0}.
+	 */
+	public static ResKey1 ERROR_ADMIN_ONLY__NAME;
+
+	/**
 	 * @en The user is not allowed to modify attribute {1} of object {0}.
 	 */
 	public static ResKey2 WRITE_PERMISSION_DENIED__OBJECT_ATTRIBUTE;

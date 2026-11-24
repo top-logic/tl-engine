@@ -5,6 +5,8 @@
  */
 package test.com.top_logic.layout.view.form;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import junit.framework.Test;
@@ -17,7 +19,10 @@ import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AttributeWithFallbackStorage;
 import com.top_logic.element.meta.StorageImplementation;
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.react.state.FieldState;
+import com.top_logic.layout.react.state.FormFieldState;
 import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.FallbackPlaceholder;
 import com.top_logic.layout.view.form.FieldControlService;
@@ -37,7 +42,8 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * The ticket has a {@link #BRANCH} whose explicit value is kept in {@link #CUSTOM_BRANCH} and
  * whose fallback is the {@link #DEFAULT_BRANCH}, a derived attribute computed from the
- * {@link #STATUS}. A change of the {@link #TITLE} resets the {@link #BRANCH}.
+ * {@link #STATUS}. A change of the {@link #TITLE} resets the {@link #BRANCH}, a change of the
+ * {@link #COMPONENT} sets it to the value of its fallback.
  * </p>
  */
 @SuppressWarnings("javadoc")
@@ -51,6 +57,12 @@ public class TestFallbackPlaceholder extends AbstractTicketFormTest {
 
 	/** Name of the derived attribute providing the fallback of the {@link #BRANCH}. */
 	private static final String DEFAULT_BRANCH = "defaultBranch";
+
+	/** Name of an attribute whose change sets the {@link #BRANCH} to {@link #OPEN}. */
+	private static final String COMPONENT = "component";
+
+	/** The fallback of the {@link #BRANCH} for the status of the ticket. */
+	private static final String OPEN = "open";
 
 	private static final String CSS_EXPLICIT = "tl-info";
 
@@ -79,14 +91,15 @@ public class TestFallbackPlaceholder extends AbstractTicketFormTest {
 		// A part of a transient model does not initialize its storage, which the fallback storage
 		// needs to resolve the attributes it reads.
 		((StorageImplementation) branch.getStorageImplementation()).init(branch);
-		_ticketType.getPart(TITLE).setAnnotation(resetBranch());
+		_ticketType.getPart(TITLE).setAnnotation(assignBranch(null));
+		TLModelUtil.addProperty(_ticketType, COMPONENT, text).setAnnotation(assignBranch(OPEN));
 	}
 
-	private static TLValueListeners resetBranch() {
+	private static TLValueListeners assignBranch(String value) {
 		TestFormValueListeners.AssignValue.Config assign =
 			TypedConfiguration.newConfigItem(TestFormValueListeners.AssignValue.Config.class);
 		assign.setTarget(BRANCH);
-		assign.setValue(null);
+		assign.setValue(value);
 		TLValueListeners result = TypedConfiguration.newConfigItem(TLValueListeners.class);
 		result.getListeners().add(assign);
 		return result;
@@ -184,6 +197,79 @@ public class TestFallbackPlaceholder extends AbstractTicketFormTest {
 		assertTrue(_branch.isDirty());
 		assertEquals("Nothing is stored before the save.", "dev", _ticket.tValueByName(CUSTOM_BRANCH));
 		TestFormValueListeners.CALLS.clear();
+	}
+
+	/**
+	 * A value listener resetting an explicit value equal to the fallback removes the explicit value:
+	 * the field shows the reset, although the value in force of the attribute stays the same.
+	 */
+	public void testListenerResetOfExplicitValueEqualToFallback() {
+		_ticket.tUpdateByName(BRANCH, OPEN);
+		_form.enterEditMode();
+		assertEquals(OPEN, shown(_branch));
+		assertNotNull(resetLabel(_branch));
+
+		model(_title).setValue("Logout fails");
+
+		assertNull("The field shows the reset explicit value.", shown(_branch));
+		assertEquals(OPEN, placeholder(_branch));
+		assertEquals(CSS_FALLBACK, _branch.getChromeControl().getCssClass());
+		assertNull("Without explicit value, there is nothing to reset.", resetLabel(_branch));
+		TestFormValueListeners.CALLS.clear();
+	}
+
+	/**
+	 * A value listener setting an explicit value equal to the fallback: the field shows it as its
+	 * own value, although the value in force of the attribute stays the same.
+	 */
+	public void testListenerSetsExplicitValueEqualToFallback() {
+		AttributeFieldControl component = field(COMPONENT);
+		_form.enterEditMode();
+		assertNull(shown(_branch));
+		assertEquals(OPEN, placeholder(_branch));
+
+		model(component).setValue("Login");
+
+		assertEquals("The field shows the explicit value set.", OPEN, shown(_branch));
+		assertEquals(CSS_EXPLICIT, _branch.getChromeControl().getCssClass());
+		assertNotNull("The explicit value can be reset.", resetLabel(_branch));
+		TestFormValueListeners.CALLS.clear();
+	}
+
+	/**
+	 * Clearing a field whose explicit value equals the fallback removes the explicit value without
+	 * the field taking another value afterwards.
+	 */
+	public void testClearExplicitValueEqualToFallback() {
+		_ticket.tUpdateByName(BRANCH, OPEN);
+		_form.enterEditMode();
+		assertEquals(OPEN, shown(_branch));
+		List<Object> changes = recordValueChanges(_branch);
+
+		model(_branch).setValue(null);
+
+		assertNull(shown(_branch));
+		assertEquals(OPEN, placeholder(_branch));
+		assertEquals(CSS_FALLBACK, _branch.getChromeControl().getCssClass());
+		assertNull(resetLabel(_branch));
+		assertEquals("The cleared value is the only change of the field.", Collections.singletonList(null), changes);
+	}
+
+	/**
+	 * Entering a value equal to the fallback sets it as explicit value without the field taking
+	 * another value afterwards.
+	 */
+	public void testEnterExplicitValueEqualToFallback() {
+		_form.enterEditMode();
+		assertNull(shown(_branch));
+		List<Object> changes = recordValueChanges(_branch);
+
+		model(_branch).setValue(OPEN);
+
+		assertEquals(OPEN, shown(_branch));
+		assertEquals(CSS_EXPLICIT, _branch.getChromeControl().getCssClass());
+		assertNotNull(resetLabel(_branch));
+		assertEquals("The entered value is the only change of the field.", List.of(OPEN), changes);
 	}
 
 	/**
@@ -336,6 +422,38 @@ public class TestFallbackPlaceholder extends AbstractTicketFormTest {
 
 	private static Object placeholder(AttributeFieldControl field) {
 		return field.getInnerControl().scriptingScalarState().get(FieldState.PLACEHOLDER__PROP);
+	}
+
+	/**
+	 * The label of the reset offered by the container of the field, {@code null} if it offers
+	 * none.
+	 */
+	private static Object resetLabel(AttributeFieldControl field) {
+		return field.getChromeControl().scriptingScalarState().get(FormFieldState.RESET_LABEL__PROP);
+	}
+
+	/**
+	 * Records the new values the model of the given field announces.
+	 */
+	private static List<Object> recordValueChanges(AttributeFieldControl field) {
+		List<Object> result = new ArrayList<>();
+		model(field).addListener(new FieldModelListener() {
+			@Override
+			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
+				result.add(newValue);
+			}
+
+			@Override
+			public void onEditabilityChanged(FieldModel source, boolean editable) {
+				// Not recorded.
+			}
+
+			@Override
+			public void onValidationChanged(FieldModel source) {
+				// Not recorded.
+			}
+		});
+		return result;
 	}
 
 	static TLStorage fallbackStorage(String storageAttribute, String fallbackAttribute) {

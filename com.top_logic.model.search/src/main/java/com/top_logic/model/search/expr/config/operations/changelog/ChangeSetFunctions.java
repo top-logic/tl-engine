@@ -7,11 +7,14 @@ package com.top_logic.model.search.expr.config.operations.changelog;
 
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.element.changelog.ChangeSetRestriction;
 import com.top_logic.element.changelog.ChangeSetReverter;
 import com.top_logic.element.changelog.model.ChangeSet;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
+import com.top_logic.util.TLContext;
 
 /**
  * TL-Script functions on the commits ({@link ChangeSet}s) of the change log, as delivered by the
@@ -43,6 +46,41 @@ public class ChangeSetFunctions extends TLScriptFunctions {
 	@SideEffectFree
 	public static boolean undone(@Mandatory ChangeSet changeSet) {
 		return ChangeSetReverter.isUndone(changeSet);
+	}
+
+	/**
+	 * A copy of the given commit with exactly the changes the given user may see.
+	 *
+	 * <p>
+	 * A change is kept if the user may read the changed object, the change of an attribute only if
+	 * the user may read the attribute. Objects in the old and new values of an attribute are kept if
+	 * the user may discover them, the author only if the user may discover the author's account.
+	 * Revision, date and message of the commit are kept. A commit without a visible change becomes
+	 * an empty commit.
+	 * </p>
+	 *
+	 * <p>
+	 * If a change, the change of an attribute or an object in a value was removed, the copy is
+	 * marked as incomplete (<code>tl.changelog:ChangeSet#incomplete</code>) and cannot be reverted.
+	 * A hidden author alone does not make the copy incomplete.
+	 * </p>
+	 *
+	 * <p>
+	 * An application showing the change log to a user who is no administrator reads it with
+	 * <code>changeLog()</code> in a privileged script and restricts every commit:
+	 * <code>changeLog(...).map(cs -&gt; changeSetRestrict($cs, currentUser()))</code>.
+	 * </p>
+	 *
+	 * @param changeSet
+	 *        The commit to restrict.
+	 * @param user
+	 *        The user whose access rights decide what is kept, the current user by default.
+	 * @return The restricted copy of the commit.
+	 */
+	@Label("Restrict commit to visible changes")
+	@SideEffectFree
+	public static ChangeSet restrict(@Mandatory ChangeSet changeSet, Person user) {
+		return new ChangeSetRestriction(user == null ? TLContext.currentUser() : user).restrict(changeSet);
 	}
 
 }

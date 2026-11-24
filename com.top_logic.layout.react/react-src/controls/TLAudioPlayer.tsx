@@ -1,4 +1,5 @@
 import { React, useTLState, useTLDataUrl, useI18N, usePart, rootClassName, ICON_PLAY, ICON_PAUSE } from 'tl-react-bridge';
+import { ButtonDefaults } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -147,6 +148,8 @@ const TLAudioPlayer: React.FC<TLCellProps> = ({ controlId }) => {
   const playing = status === 'playing';
 
   return (
+    // Media buttons keep their size in a table row: they are the exception that needs a surface (skalen 23.11.).
+    <ButtonDefaults small={false}>
     <span id={controlId} className={rootClassName(state) || undefined}>
       <Button
         label={playing ? t['js.audioPlayer.pause'] : t['js.audioPlayer.play']}
@@ -159,6 +162,7 @@ const TLAudioPlayer: React.FC<TLCellProps> = ({ controlId }) => {
         onClick={handleClick}
       />
     </span>
+    </ButtonDefaults>
   );
 };
 

@@ -209,7 +209,7 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
           onKeyDown={onKeyDown}
           {...anchoredOverlayProps}
         >
-          <ButtonDefaults appearance="menu-item" iconOnly={false}>
+          <ButtonDefaults appearance="menu-item" iconOnly={false} small={false}>
             {visibleItems.map((item, i) => <TLChild key={i} control={item} />)}
             {sections.map((items, si) => (
               <React.Fragment key={`sub-${si}`}>

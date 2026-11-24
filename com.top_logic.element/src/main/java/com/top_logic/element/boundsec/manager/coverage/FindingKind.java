@@ -34,6 +34,8 @@ public enum FindingKind {
 	/**
 	 * No role is granted an operation on the type or on one of its attributes, so its objects are
 	 * inaccessible to every user. A type that the application's code alone uses is declared internal instead.
+	 * For a type whose access parent decides some operations but not Read, no role is granted Read
+	 * on the type itself.
 	 * 
 	 * @see SimpleBoundCommandGroup#READ
 	 * @see ModelAccessRights#getAllowedRoles(com.top_logic.model.TLClass, com.top_logic.tool.boundsec.BoundCommandGroup)

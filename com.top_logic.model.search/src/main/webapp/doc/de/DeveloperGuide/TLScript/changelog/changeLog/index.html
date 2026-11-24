@@ -10,6 +10,21 @@
 <p>Der optionale Parameter <code class="hljs inlineCode">author</code> beschränkt das Ergebnis auf Änderungen, die durch den angegebenen Account vorgenommen wurden. Es kann entweder eine <code class="hljs inlineCode">tl.accounts:Person</code> oder ein beliebiges Fachobjekt mit einer <code class="hljs inlineCode">account</code>-Referenz auf einen Account übergeben werden.</p>
 <p>Der optionale Schalter <code class="hljs inlineCode">includeTechnical</code> steuert, ob auch Änderungen ausgegeben werden, die ausschließlich technischer Natur sind (also keine Auswirkungen auf das Modell haben).</p>
 <p>Der optionale Parameter <code class="hljs inlineCode">excludedModules</code> ist eine Sammlung von Modulen, deren Änderungen nicht berücksichtigt werden sollen. Jedes Element kann entweder eine <code class="hljs inlineCode">TLModule</code>-Referenz oder ein Modulname als Zeichenkette sein.</p>
+<h2>Zugriffsrechte</h2>
+<p>Die Änderungshistorie ist nicht nach Zugriffsrechten gefiltert: Sie enthält die Attributwerte aller geänderten Objekte. Bei einer Auswertung mit Berechtigungsprüfung (ein Skript der Oberfläche, eines API-Endpunkts, eines Agenten-Werkzeugs oder der Konsole) dürfen nur Administratoren <code class="hljs inlineCode">changeLog</code> aufrufen, mit oder ohne Objektargument. Andere Nutzer erhalten einen Fehler. Ohne Berechtigungsprüfung (eine privilegierte Funktion, Modelllogik) ist die Funktion nicht eingeschränkt.</p>
+<p>Um einem Nutzer, der kein Administrator ist, Änderungen zu zeigen, ruft eine Anwendung <code class="hljs inlineCode">changeLog</code> in einer privilegierten Funktion der konfigurierten TL-Script-Funktionen auf und schränkt jeden Commit mit <code class="hljs inlineCode">changeSetRestrict</code> auf das ein, was der Nutzer sehen darf. Ein Commit mit Änderungen, die der Nutzer nicht sehen darf, ist als unvollständig markiert (<code class="hljs inlineCode">tl.changelog:ChangeSet#incomplete</code>) und kann nicht zurückgenommen werden. Für die Sicht "Meine letzten Änderungen" bringt die Engine eine solche Funktion mit:</p>
+<pre>	<code>&lt;privileged-script name="changeLogOfCurrentUser"
+	command-group="Read"
+	security-object="currentUser()"
+&gt;
+	&lt;parameters&gt;
+		&lt;parameter name="maxEntries"/&gt;
+	&lt;/parameters&gt;
+	&lt;implementation&gt;changeLog(null, $maxEntries, true, null, null, currentUser())
+		.map(cs -&gt; changeSetRestrict($cs, currentUser()))&lt;/implementation&gt;
+&lt;/privileged-script&gt;</code>
+</pre>
+<p>Geprüft wird das Recht, das eigene Konto zu lesen, das jeder Nutzer hat. Ein Aufruf <code class="hljs inlineCode">changeLogOfCurrentUser(30)</code> liefert die 30 letzten Commits des aktuellen Nutzers, eingeschränkt auf das, was er sehen darf.</p>
 <h2>Parameter</h2>
 <table class="tlDocTable">
  <thead>

@@ -29,13 +29,14 @@ import com.top_logic.basic.util.StopWatch;
  *
  * <p>
  * The owner identification consists of the runtime name of the JVM (<code>pid@host</code>) and
- * the start time of the JVM. The lock is not released when the node holding it crashes during the
- * migration. In that case the state of the database is unknown: The database must be restored from
- * a backup, which does not contain the lock property. A node that finds a lock with its own runtime
- * name but another start time knows that the holder was a former run of itself that has been
- * terminated (e.g. after a restart of its container, where the process ID is always the same). It
- * does not wait for the lock but fails with an error. A lock held by another node is waited for,
- * since this node cannot tell whether the holder is still alive.
+ * the start time of the JVM. The lock is not released when the node holding it is terminated
+ * during the migration. The next start resumes the interrupted migration from its
+ * {@link MigrationProgress}. A node that finds a lock with its own runtime name but another start
+ * time knows that the holder was a former run of itself that has been terminated (e.g. after a
+ * restart of its container, where the process ID is always the same). It takes the lock over and
+ * resumes the migration. A lock held by another node is waited for, since this node cannot tell
+ * whether the holder is still alive. If that node has been terminated, the property can be deleted
+ * manually after checking the holder; the next start resumes the migration as well.
  * </p>
  */
 public final class MigrationLock implements AutoCloseable {
@@ -94,10 +95,11 @@ public final class MigrationLock implements AutoCloseable {
 	 *
 	 * <p>
 	 * A lock with the runtime name of this JVM but another start time was left behind by a former
-	 * run of this node that has been terminated during a migration: Instead of waiting forever,
-	 * the acquisition fails. A lock with the {@link #getOwner() owner identification} of this JVM
-	 * is held by another acquisition in this JVM: It is waited for like the lock of another node,
-	 * it is never taken over.
+	 * run of this node that has been terminated during a migration: Instead of waiting forever, the
+	 * lock is taken over by replacing the value of the former run with the own one, which is
+	 * reported as warning. A lock with the {@link #getOwner() owner identification} of this JVM is
+	 * held by another acquisition in this JVM: It is waited for like the lock of another node, it is
+	 * never taken over.
 	 * </p>
 	 *
 	 * @param log
@@ -107,8 +109,6 @@ public final class MigrationLock implements AutoCloseable {
 	 * @return The acquired lock, must be {@link #close() closed} after the migration.
 	 * @throws InterruptedException
 	 *         If the thread is interrupted while waiting for the lock.
-	 * @throws IllegalStateException
-	 *         If the lock was left behind by a former run of this node.
 	 */
 	public static MigrationLock acquire(Log log, ConnectionPool pool) throws InterruptedException {
 		RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
@@ -128,16 +128,19 @@ public final class MigrationLock implements AutoCloseable {
 			if (holder == UNKNOWN_HOLDER) {
 				// Retry without reporting, the holder is known at the next attempt.
 			} else if (isFormerRun(holder, runtimeName, owner)) {
-				String message = "Migration lock is held by '" + holder + "': This node was terminated during a"
-					+ " migration started at " + holder.substring(runtimeName.length() + SINCE.length())
-					+ ". The state of the database is unknown. Restore the database from a backup, or delete the"
-					+ " global database property '" + LOCK_PROPERTY + "' after checking the state of the database.";
-				throw new IllegalStateException(message);
+				if (takeOver(log, pool, holder, owner)) {
+					log.info("Took over the migration lock held by '" + holder + "': This node was terminated"
+						+ " during a migration started at "
+						+ holder.substring(runtimeName.length() + SINCE.length())
+						+ ". The interrupted migration is resumed.", Log.WARN);
+					break;
+				}
+				// The lock has changed in the meantime, retry.
 			} else if (!holder.equals(reportedHolder)) {
 				log.info("Migration lock is held by '" + holder + "', waiting. If that node was terminated during"
-					+ " the migration, the database must be restored from a backup (alternatively, the global"
-					+ " database property '" + LOCK_PROPERTY + "' can be deleted after checking the state of"
-					+ " the database).");
+					+ " the migration, the global database property '" + LOCK_PROPERTY + "' can be deleted after"
+					+ " checking that the holder is no longer running; the next start resumes the interrupted"
+					+ " migration.");
 				reportedHolder = holder;
 				lastReport = now;
 			} else if (now - lastReport >= REPORT_INTERVAL) {
@@ -163,6 +166,31 @@ public final class MigrationLock implements AutoCloseable {
 	 */
 	private static boolean isFormerRun(String holder, String runtimeName, String owner) {
 		return holder.startsWith(runtimeName + SINCE) && !holder.equals(owner);
+	}
+
+	/**
+	 * Replaces the value of the lock property held by a former run of this node with the own owner
+	 * identification.
+	 *
+	 * @return Whether the lock has been taken over, <code>false</code> if its value has changed in
+	 *         the meantime.
+	 */
+	private static boolean takeOver(Log log, ConnectionPool pool, String holder, String owner) {
+		PooledConnection connection = pool.borrowWriteConnection();
+		try {
+			if (DBProperties.compareAndSet(connection, DBProperties.GLOBAL_PROPERTY, LOCK_PROPERTY, holder, owner)) {
+				connection.commit();
+				return true;
+			}
+			connection.rollback();
+			return false;
+		} catch (SQLException ex) {
+			rollback(connection);
+			log.info("Concurrent access to migration lock: " + ex.getMessage(), Log.DEBUG);
+			return false;
+		} finally {
+			pool.releaseWriteConnection(connection);
+		}
 	}
 
 	/**

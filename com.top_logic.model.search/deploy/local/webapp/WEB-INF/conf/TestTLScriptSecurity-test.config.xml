@@ -24,6 +24,7 @@
 					<role name="TestTLScriptSecurity.UnitReader"/>
 					<role name="TestTLScriptSecurity.NameReader"/>
 					<role name="TestTLScriptSecurity.NameKeeper"/>
+					<role name="TestTLScriptSecurity.NameWriter"/>
 				</roles>
 			</instance>
 		</config>
@@ -42,6 +43,16 @@
 		<config service-class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
 			<instance class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
 				<scripts>
+					<!-- Reads the latest commit without security and restricts it for the caller (TestChangeLogSecurity). -->
+					<privileged-script name="testRestrictedChangeLog"
+						command-group="Read"
+						security-object="$obj"
+					>
+						<parameters>
+							<parameter name="obj"/>
+						</parameters>
+						<implementation>changeLog(null, 1).map(cs -> changeSetRestrict($cs))</implementation>
+					</privileged-script>
 					<!-- Writes the name of a proposal, which an approver may not write directly. -->
 					<privileged-script name="testPrivilegedRename"
 						command-group="Approve"
@@ -252,6 +263,18 @@
 							<script expr="t -> $t.get(`TestTLScriptSecurity:ProjectTask#assignee`).referers(`TestTLScriptSecurity:Project#responsible`)"/>
 						</access-parent>
 					</class>
+					<class name="TestTLScriptSecurity:RestrictedTask">
+						<!--
+							The project of the assignee decides Read only. All other operations are
+							decided by the task itself, which grants none.
+						-->
+						<access-parent>
+							<script
+								expr="t -> $t.get(`TestTLScriptSecurity:ProjectTask#assignee`).referers(`TestTLScriptSecurity:Project#responsible`)"
+								operations="Read"
+							/>
+						</access-parent>
+					</class>
 					<class name="TestTLScriptSecurity:ExternalEmployee">
 						<!-- The create right inherited from Employee is withdrawn: nobody may create an
 							external employee, even where creating an employee is allowed. -->
@@ -374,6 +397,19 @@
 							inherit="true"
 							operation="Read"
 							roles="TestTLScriptSecurity.NameReader"
+						/>
+					</class>
+					<!-- The person in Bar#writer reads and writes the Bar (TestChangeLogSecurity). -->
+					<class name="TestTLScriptSecurity:Bar">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestTLScriptSecurity.NameWriter"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="TestTLScriptSecurity.NameWriter"
 						/>
 					</class>
 					<!-- NameKeeper may discover a DiscoverNamed and thereby read its name and related objects. -->
@@ -538,6 +574,16 @@
 						>
 							<path>
 								<step attribute="TestTLScriptSecurity:Named#accountA"/>
+							</path>
+						</rule>
+						<rule
+							id="7e2c41d8-5b93-4f0a-a6c1-2d8e9b3f4a03"
+							inherit="true"
+							meta-element="TestTLScriptSecurity:Bar"
+							role="TestTLScriptSecurity.NameWriter"
+						>
+							<path>
+								<step attribute="TestTLScriptSecurity:Bar#writer"/>
 							</path>
 						</rule>
 						<rule

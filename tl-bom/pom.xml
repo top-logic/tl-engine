@@ -93,7 +93,7 @@
 		<!-- Proof-of-work captcha library (ALTCHA, MIT), see tl-security-captcha. -->
 		<altcha.version>2.1.1</altcha.version>
 		<batik.version>1.20</batik.version>
-		<commonmark.version>0.32.0</commonmark.version>
+		<commonmark.version>0.33.0</commonmark.version>
 		<tl.license.version>7.8.2</tl.license.version>
 	</properties>
 
@@ -1051,7 +1051,7 @@
 			<dependency>
 			    <groupId>org.postgresql</groupId>
 			    <artifactId>postgresql</artifactId>
-			    <version>42.7.14</version>
+			    <version>42.7.15</version>
 			</dependency>
 
 			<!-- External dependencies -->
@@ -1250,7 +1250,7 @@
 			    <!-- Note: Overrides the vulnerable version requested by kafka-clients. -->
 			    <groupId>com.github.luben</groupId>
 			    <artifactId>zstd-jni</artifactId>
-			    <version>1.5.7-28</version>
+			    <version>1.5.7-29</version>
 			</dependency>
 			<dependency>
 				<groupId>org.apache.zookeeper</groupId>

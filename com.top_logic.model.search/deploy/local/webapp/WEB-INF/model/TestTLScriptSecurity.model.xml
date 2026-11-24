@@ -153,6 +153,13 @@
 					</attributes>
 				</class>
 
+				<!-- A task whose access parent decides Read only. -->
+				<class name="RestrictedTask">
+					<generalizations>
+						<generalization type="ProjectTask"/>
+					</generalizations>
+				</class>
+
 				<!--
 					The constraint on name reads the derived reference, whose value is an employee
 					the users may not read: the commit check must see the value nevertheless.
@@ -411,6 +418,11 @@
 					<generalizations>
 						<generalization type="Named"/>
 					</generalizations>
+					<attributes>
+						<reference name="writer"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
 				</class>
 
 				<class name="Sub">

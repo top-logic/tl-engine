@@ -589,12 +589,15 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 			I18NConstants.APPLICATION_STARTUP__NAME_VERSION.fill(theVersion.getName(), theVersion.getVersionString()));
 		{
 			ModuleUtil.INSTANCE.startConfiguredModules();
-
-			if (MigrationService.Module.INSTANCE.isActive()) {
-				MigrationService.Module.INSTANCE.getImplementationInstance().applicationStarted();
-			}
 		}
 		commitStartupChanges(tx, theVersion);
+
+		/* The startup actions of a migration run after the startup transaction, each in a
+		 * transaction of its own: They see all objects created during the start, and a failing
+		 * action does not roll back the start or the preceding actions. */
+		if (MigrationService.Module.INSTANCE.isActive()) {
+			MigrationService.Module.INSTANCE.getImplementationInstance().applicationStarted();
+		}
 
 		/* Startup hooks run in their own transactions after the startup transaction: A failing hook
 		 * that does not abort the startup must not roll back the startup transaction. */

@@ -513,4 +513,10 @@ public class MSSQLHelper extends DBHelper {
 		result.append(" ");
 		appendDBType(result, sqlType, columnName, size, precision, mandatory, binary);
 	}
+
+	@Override
+	public boolean supportsTransactionalDDL() {
+		return true;
+	}
+
 }

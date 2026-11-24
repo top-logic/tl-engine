@@ -42,9 +42,10 @@ import com.top_logic.util.TLContext;
  *
  * <p>
  * The command is refused with an error message if the current user is not allowed to perform one
- * of the changes of the revert, see {@link ChangeSetReverter#checkWritable(ChangeSet, Person)}.
+ * of the changes of the revert.
  * </p>
  *
+ * @see ChangeSetReverter#checkWritable(ChangeSet, Person)
  * @see ChangeSetReverter#revertTarget(ChangeSet)
  */
 public class RevertCommandHandler extends AbstractCommandHandler {

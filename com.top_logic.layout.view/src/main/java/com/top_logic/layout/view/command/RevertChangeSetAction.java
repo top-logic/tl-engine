@@ -50,8 +50,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * If the current user is not allowed to perform one of the changes of the revert, the action
- * throws a {@link TopLogicException}, which aborts the action chain; nothing is reverted, see
- * {@link ChangeSetReverter#checkWritable(ChangeSet, Person)}.
+ * throws a {@link TopLogicException}, which aborts the action chain; nothing is reverted.
  * </p>
  *
  * <p>
@@ -73,6 +72,7 @@ import com.top_logic.util.error.TopLogicException;
  *
  * @see ChangeSetReverter#revertTarget(ChangeSet)
  * @see ChangeSetReverter#revert(KnowledgeBase, ChangeSet, boolean)
+ * @see ChangeSetReverter#checkWritable(ChangeSet, Person)
  */
 @InApp
 public class RevertChangeSetAction extends InterruptibleViewAction {

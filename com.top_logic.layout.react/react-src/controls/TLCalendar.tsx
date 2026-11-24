@@ -296,21 +296,21 @@ const Toolbar: React.FC<{
         <Button
           label={i18n['js.calendar.today']}
           display="label-only"
-          appearance="secondary"
+          appearance="ghost"
           onClick={() => send('navigate', { direction: 'TODAY' })}
         />
         <Button
           label={i18n['js.calendar.previous']}
           image={ICON_PREVIOUS}
           display="icon-only"
-          appearance="secondary"
+          appearance="ghost"
           onClick={() => send('navigate', { direction: 'PREV' })}
         />
         <Button
           label={i18n['js.calendar.next']}
           image={ICON_NEXT}
           display="icon-only"
-          appearance="secondary"
+          appearance="ghost"
           onClick={() => send('navigate', { direction: 'NEXT' })}
         />
       </div>

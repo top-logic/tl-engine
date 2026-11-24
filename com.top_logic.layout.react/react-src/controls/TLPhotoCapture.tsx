@@ -2,6 +2,7 @@ import {
   React, useTLState, useUpload, useI18N, usePart, useStandaloneKeyboardScope, useFocusTrap, createPortal,
   anchoredOverlayProps, rootClassName, ICON_CAMERA, ICON_MIRROR, ICON_CLOSE,
 } from 'tl-react-bridge';
+import { ButtonDefaults } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const I18N_KEYS = {
@@ -179,6 +180,8 @@ const TLPhotoCapture: React.FC<TLCellProps> = ({ controlId }) => {
   const titleId = controlId + '-camera-title';
 
   return (
+    // Media buttons keep their size in a table row: they are the exception that needs a surface (skalen 23.11.).
+    <ButtonDefaults small={false}>
     <div id={controlId} className={rootClassName(state, 'tl-upload')}>
       <Button
         ref={cameraButtonRef}
@@ -267,6 +270,7 @@ const TLPhotoCapture: React.FC<TLCellProps> = ({ controlId }) => {
         <span className="tl-file-upload__status tl-type-label" role="alert">{error}</span>
       )}
     </div>
+    </ButtonDefaults>
   );
 };
 

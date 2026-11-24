@@ -195,6 +195,9 @@ function isMultilineEntry(el: Element | null): boolean {
 
 const NAV_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown']);
 
+/** Keys that delete text in a caret editor; there they never reach a gesture binding. */
+const TEXT_DELETE_KEYS = new Set(['Delete', 'Backspace']);
+
 // -- Dispatch -------------------------------------------------------------------
 
 function isButtonLike(el: Element | null): boolean {
@@ -228,8 +231,9 @@ function handleKeydown(e: KeyboardEvent): void {
   if (e.key === 'Enter' && isButtonLike(active)) {
     return;
   }
-  // Navigation keys / Space inside a caret editor move the caret or type; leave them alone.
-  if ((NAV_KEYS.has(e.key) || e.key === ' ') && isTextEntry(active)) {
+  // Navigation keys / Space inside a caret editor move the caret or type, Delete / Backspace
+  // delete text there; leave them alone.
+  if ((NAV_KEYS.has(e.key) || TEXT_DELETE_KEYS.has(e.key) || e.key === ' ') && isTextEntry(active)) {
     return;
   }
   // Ctrl/Meta+A inside a caret editor selects that editor's text, whatever a scope binds it to

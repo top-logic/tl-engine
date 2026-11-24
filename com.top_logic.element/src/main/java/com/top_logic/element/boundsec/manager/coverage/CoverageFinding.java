@@ -125,32 +125,24 @@ public final class CoverageFinding {
 	 * {@link SimpleBoundCommandGroup#CREATE}.
 	 *
 	 * <p>
-	 * An object is created in its container, an object of a type no composition holds on the
-	 * security root. The roles of the finding can be delivered at neither place.
+	 * An object is created in a context: on the security root or in a container. The roles of the finding can be delivered on none of them.
 	 * </p>
 	 *
 	 * @param type
 	 *        The type carrying the grant.
 	 * @param roles
 	 *        The granted roles that cannot be delivered where an object of the type is created.
-	 * @param containers
-	 *        The types an object of the type is created in, empty for a type
-	 *        created without a container.
+	 * @param contexts
+	 *        The types of the objects an object of the type may be created in.
 	 * @return The new finding.
 	 */
-	public static CoverageFinding deadCreateGrant(TLClass type, Set<BoundedRole> roles, List<TLClass> containers) {
+	public static CoverageFinding deadCreateGrant(TLClass type, Set<BoundedRole> roles, List<TLClass> contexts) {
 		String roleNames = roles.stream().map(BoundedRole::getName).sorted().collect(Collectors.joining(DETAIL_SEPARATOR));
 		BoundCommandGroup operation = SimpleBoundCommandGroup.CREATE;
-		ResKey message;
-		if (containers.isEmpty()) {
-			message = I18NConstants.DEAD_CREATE_GRANT_ROOT__TYPE_OPERATION_ROLES
-				.fill(TLModelUtil.qualifiedName(type), operationLabel(operation), roleNames);
-		} else {
-			String containerNames =
-				containers.stream().map(TLModelUtil::qualifiedName).collect(Collectors.joining(DETAIL_SEPARATOR));
-			message = I18NConstants.DEAD_CREATE_GRANT_CONTAINER__TYPE_OPERATION_ROLES_CONTAINERS
-				.fill(TLModelUtil.qualifiedName(type), operationLabel(operation), roleNames, containerNames);
-		}
+		String contextNames =
+			contexts.stream().map(TLModelUtil::qualifiedName).collect(Collectors.joining(DETAIL_SEPARATOR));
+		ResKey message = I18NConstants.DEAD_CREATE_GRANT__TYPE_OPERATION_ROLES_CONTEXTS
+			.fill(TLModelUtil.qualifiedName(type), operationLabel(operation), roleNames, contextNames);
 		return new CoverageFinding(FindingKind.DEAD_GRANT, type, message, operation,
 			Collections.unmodifiableSet(roles), Collections.emptyList());
 	}

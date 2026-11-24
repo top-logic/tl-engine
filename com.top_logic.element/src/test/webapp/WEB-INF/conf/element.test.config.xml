@@ -476,7 +476,7 @@
 							roles="TestSecurityCoverage.Reader"
 						/>
 					</part>
-					<!-- Create is checked on the container, or on the security root for a type without container. -->
+					<!-- Create is checked on the security root, or on a container. -->
 					<class name="TestSecurityCoverage:CreatedAtRoot">
 						<grant
 							operation="Read"

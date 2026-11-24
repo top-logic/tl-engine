@@ -46,6 +46,7 @@ import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLScope;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
+import com.top_logic.model.TransientObject;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -84,6 +85,13 @@ import com.top_logic.model.util.TLModelUtil;
  * <li>The methods of {@link TLScope} deliver the values of the persistent counterpart of the object,
  * and empty values for an object without one, see {@link Methods}.</li>
  * </ul>
+ *
+ * <p>
+ * The life-cycle methods of {@link Wrapper} (e.g. {@link Wrapper#getCreator()},
+ * {@link Wrapper#getCreated()}) need no rule: they call {@link TLObject#tCreator()},
+ * {@link TLObject#tCreationDate()}, ..., which a base class derived from {@link TransientObject}
+ * answers from its persistent counterpart.
+ * </p>
  *
  * <p>
  * A generated interface with an abstract method that neither the base class, nor a default method,

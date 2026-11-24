@@ -206,6 +206,28 @@ public class TestTypedTLObjectOverlay extends AbstractModelAccessTest {
 		assertNull(node.getType(LOCAL_TYPE));
 	}
 
+	/**
+	 * The {@link StructuredElement} life-cycle accessors of the buffer of a persistent object report
+	 * the creation and modification of the persistent object, those of a new object report none.
+	 */
+	public void testLifecycle() {
+		StructuredElement object = (StructuredElement) newObject(TYPED_NODE, "n1");
+		StructuredElement buffer = (StructuredElement) new EditLevel().buffer(object);
+
+		assertNotNull(object.getCreated());
+		assertEquals(object.getCreated(), buffer.getCreated());
+		assertEquals(object.getCreator(), buffer.getCreator());
+		assertEquals(object.getModified(), buffer.getModified());
+		assertEquals(object.getModifier(), buffer.getModifier());
+
+		StructuredElement newBuffer =
+			(StructuredElement) new EditLevel().create(typedType(TYPED_NODE), null);
+		assertNull(newBuffer.getCreator());
+		assertNull(newBuffer.getCreated());
+		assertNull(newBuffer.getModifier());
+		assertNull(newBuffer.getModified());
+	}
+
 	private static TLClass typedType(String qualifiedName) {
 		return (TLClass) TLModelUtil.findType(model(), qualifiedName);
 	}

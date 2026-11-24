@@ -187,6 +187,16 @@ public abstract class FormObjectOverlay extends TransientObject implements TLFor
 	@Override
 	public abstract TLObject getEditedObject();
 
+	/**
+	 * The {@link #getEditedObject() edited object}: an edited object reports the life-cycle
+	 * information of the persistent object, an object being created has none before it is
+	 * allocated.
+	 */
+	@Override
+	protected TLObject persistentCounterpart() {
+		return getEditedObject();
+	}
+
 	@Override
 	public String getFormId() {
 		return _id;

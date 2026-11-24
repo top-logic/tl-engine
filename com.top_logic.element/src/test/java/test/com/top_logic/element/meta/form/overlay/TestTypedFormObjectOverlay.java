@@ -216,6 +216,44 @@ public class TestTypedFormObjectOverlay extends AbstractTypedObjectTest {
 	}
 
 	/**
+	 * The {@link Wrapper} life-cycle accessors of the buffer of a persistent object report the
+	 * creation and modification of the persistent object.
+	 */
+	public void testLifecycleEditing() {
+		TLObject object = persistent("Node", "n1");
+		Wrapper persistent = (Wrapper) object;
+		Wrapper node = (Wrapper) _form.editObject(object);
+
+		assertNotNull(persistent.getCreated());
+		assertEquals(persistent.getCreated(), node.getCreated());
+		assertEquals(persistent.getCreator(), node.getCreator());
+		assertEquals(persistent.getModified(), node.getModified());
+		assertEquals(persistent.getModifier(), node.getModifier());
+		assertEquals(persistent.getLastModified(), node.getLastModified());
+	}
+
+	/**
+	 * The buffer of a new object that implements {@link Wrapper} has neither creator nor dates
+	 * before the object is allocated; afterwards those of the allocated object.
+	 */
+	public void testLifecycleCreation() {
+		TLFormObject overlay = create("Node");
+		Wrapper node = (Wrapper) overlay;
+
+		assertNull(node.getCreator());
+		assertNull(node.getCreated());
+		assertNull(node.getModifier());
+		assertNull(node.getModified());
+		assertEquals(Long.valueOf(0L), node.getLastModified());
+
+		Wrapper created = (Wrapper) allocate(overlay);
+		assertNotNull(created.getCreated());
+		assertEquals(created.getCreated(), node.getCreated());
+		assertEquals(created.getCreator(), node.getCreator());
+		assertEquals(created.getModified(), node.getModified());
+	}
+
+	/**
 	 * Creates a type in the scope of the given persistent object.
 	 */
 	private TLClass localType(TLObject scope) {

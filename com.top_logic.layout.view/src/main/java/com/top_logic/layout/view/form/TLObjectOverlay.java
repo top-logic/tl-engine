@@ -173,6 +173,15 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	}
 
 	/**
+	 * The {@link #getEditedObject() edited object}, whose life-cycle information this overlay
+	 * reports: a new object has none.
+	 */
+	@Override
+	protected TLObject persistentCounterpart() {
+		return _base;
+	}
+
+	/**
 	 * The identity of the {@link #getEditedObject() edited object}.
 	 *
 	 * @implNote Sharing the identity makes the overlay {@link #equals(Object) equal} to the object

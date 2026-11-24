@@ -165,6 +165,7 @@ follows:
 | `tHandle()` | The handle of the persistent counterpart (the edited object, or the object created from an `ObjectCreation`); an `UnsupportedOperationException` for an object without one, as for every transient `TLObject`. |
 | `getValue(String)`, `setValue(String, Object)` | Read and write the value of the buffer, like `tValueByName` and `tUpdateByName`. |
 | `getTypes()`, `getType(String)`, `getClasses()`, ... (`TLScope`) | The types of the persistent counterpart; empty collections and `null` for a new object. |
+| `getCreator()`, `getCreated()`, `getModifier()`, `getModified()`, `getLastModified()` (`tCreator()`, `tCreationDate()`, `tLastModifier()`, ...) | The creation and last modification of the persistent counterpart; `null` (`0` for a time stamp) for a new object, which has not been stored yet. A derived attribute computed from them (e.g. `<method-call method="com.top_logic.knowledge.wrap.Wrapper#getCreator()"/>`) is empty in a create form. |
 | `compareTo(Wrapper)` | Orders by name. Objects with the same name: two persistent objects by their object keys, a persistent object before a transient one, two transient objects by their identity hash codes (stable while the objects live). The buffer of a persistent object shares its identity and is ordered like it. |
 | `getName()`, `generateFullText(...)` | Read the buffered name. |
 

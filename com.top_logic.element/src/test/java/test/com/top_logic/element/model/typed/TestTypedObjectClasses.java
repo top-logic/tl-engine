@@ -26,6 +26,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLNamed;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.impl.TransientModelFactory;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.impl.TransientTLObjectImpl;
 import com.top_logic.model.impl.TypedObjectClasses;
@@ -91,6 +92,19 @@ public class TestTypedObjectClasses extends AbstractTypedObjectTest {
 
 		assertSame(TransientTLObjectImpl.class, TypedObjectClasses.classFor(TransientTLObjectImpl.class, plain));
 		assertSame(TransientTLObjectImpl.class, newTransient("Plain").getClass());
+	}
+
+	/**
+	 * A transient type without module (e.g. the result type of the script console) has no Java
+	 * interface: its objects use the base class itself.
+	 */
+	public void testTypeWithoutModule() {
+		TLClass resultType = TransientModelFactory.createTransientClass(getModel(), "Result");
+		assertNull(resultType.getModule());
+
+		assertSame(TransientTLObjectImpl.class,
+			TypedObjectClasses.classFor(TransientTLObjectImpl.class, resultType));
+		assertSame(TransientTLObjectImpl.class, TransientModelFactory.createTransientObject(resultType).getClass());
 	}
 
 	/**

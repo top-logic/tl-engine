@@ -345,11 +345,15 @@ public class TLModelNamingConvention {
 	 * </p>
 	 * 
 	 * @param module
-	 *        The {@link TLModule} to get interface package for.
+	 *        The {@link TLModule} to get interface package for, <code>null</code> for a type
+	 *        without module (e.g. a transient type of a script).
 	 * @return The annotated Java interface package, or <code>null</code>, if no such package is
 	 *         defined.
 	 */
 	public static String javaInterfacePackage(TLModule module) {
+		if (module == null) {
+			return null;
+		}
 		JavaPackage annotation = module.getAnnotation(JavaPackage.class);
 		if (annotation != null) {
 			return annotation.getInterfacePackage();
@@ -366,11 +370,15 @@ public class TLModelNamingConvention {
 	 * </p>
 	 * 
 	 * @param module
-	 *        The {@link TLModule} to get implementation package for.
+	 *        The {@link TLModule} to get implementation package for, <code>null</code> for a type
+	 *        without module (e.g. a transient type of a script).
 	 * @return The name of the {@link TLModule}'s implementation package, or <code>null</code> if no
 	 *         such package is annotated to the given {@link TLModule}.
 	 */
 	public static String javaImplementationPackage(TLModule module) {
+		if (module == null) {
+			return null;
+		}
 		JavaPackage annotation = module.getAnnotation(JavaPackage.class);
 		if (annotation != null) {
 			return annotation.getImplementationPackage();

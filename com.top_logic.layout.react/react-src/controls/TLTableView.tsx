@@ -1,4 +1,5 @@
 import { BACKGROUND_COMMAND, BACKGROUND_REPORT, React, useTLState, useTLCommand, registerPendingFlush, unregisterPendingFlush, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, StateBadge, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, useDisplayClass, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { ButtonDefaults } from 'tl-react-bridge';
 import { FOCUSABLE_SELECTOR, editableInRow, focusTargetInRow, focusablesIn, rowCells } from './tableRowFocus';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from 'tl-react-bridge';
@@ -2352,7 +2353,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               <Skeleton shape="text" />
             </div>
           ))}
-          {rows.map((row) => (
+          {/* Icon buttons in a body row are small; the head and foot keep the size of their own. */}
+          <ButtonDefaults small>{rows.map((row) => (
             <div
               key={row.id}
               id={rowId(row.index)}
@@ -2486,7 +2488,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 );
               })}
             </div>
-          ))}
+          ))}</ButtonDefaults>
         </div>
       </div>
       </div>

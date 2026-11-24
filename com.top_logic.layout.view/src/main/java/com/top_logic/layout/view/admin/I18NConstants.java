@@ -172,8 +172,9 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/**
 	 * @en Dead grant: the operation "{0}" is granted to the roles {1}, but no rule delivers any of
-	 *     them where an object of the type is created - on the security root, or in a container
-	 *     holding it in a composition - so the grant never takes effect.
+	 *     them where an object of the type is created - on the security root, in a container
+	 *     holding it in a composition, or in an object it references - so the grant never takes
+	 *     effect.
 	 */
 	public static ResKey2 COVERAGE_PROBLEM_DEAD_CREATE_GRANT__OPERATION_ROLES;
 

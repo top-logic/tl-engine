@@ -75,8 +75,9 @@ import com.top_logic.util.model.ModelService;
  * {@link ModelAccessRights#isAllowedCreate(com.top_logic.knowledge.wrap.person.Person, TLClass, TLObject)}:
  * on the context the caller passes, or on the security root when it passes none. The context is not
  * known statically, so the role must be deliverable on one of the plausible contexts: the security
- * root or a type holding the created type in a composition, see {@link #createContextTypes(TLClass)}.
- * Every other operation is checked on the type itself and its role parents.
+ * root, a type holding the created type in a composition, or a type the created type references,
+ * see {@link #createContextTypes(TLClass)}. Every other operation is checked on the type itself and
+ * its role parents.
  * </p>
  *
  * <p>
@@ -303,7 +304,12 @@ public class SecurityCoverageAnalysis {
 	 * <ul>
 	 * <li>the security root, the context of a creation without context,</li>
 	 * <li>the {@link #containerTypes(TLModel) containers}, the types holding the type in a
-	 * composition.</li>
+	 * composition,</li>
+	 * <li>the types the type references, as the object it hangs on is a natural context: the
+	 * targets of the references in effect on the type, inverse references included, and their
+	 * specializations. Computed references and the type's own compositions are left out: nothing
+	 * is created in the value of a computed reference, and the parts of an object are created after
+	 * it.</li>
 	 * </ul>
 	 */
 	private List<TLClass> createContextTypes(TLClass type) {
@@ -313,6 +319,15 @@ public class SecurityCoverageAnalysis {
 			result.add(rootType);
 		}
 		result.addAll(_containerTypes.getOrDefault(type, Collections.emptySet()));
+		for (TLStructuredTypePart part : type.getAllParts()) {
+			if (!(part instanceof TLReference reference) || !(reference.getType() instanceof TLClass target)) {
+				continue;
+			}
+			if (!reference.isBackwards() && (reference.isDerived() || reference.isComposite())) {
+				continue;
+			}
+			result.addAll(TLModelUtil.getReflexiveTransitiveSpecializations(target));
+		}
 		List<TLClass> sorted = new ArrayList<>(result);
 		sorted.sort(Comparator.comparing(TLModelUtil::qualifiedName));
 		return sorted;

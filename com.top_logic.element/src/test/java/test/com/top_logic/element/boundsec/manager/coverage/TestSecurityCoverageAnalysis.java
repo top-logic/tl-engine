@@ -130,6 +130,15 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 	/** Type in a composition, granting Create to {@link #ROLE_ROOT_CREATOR}. */
 	private static final String CREATED_IN_CONTAINER_AT_ROOT = MODULE + ":CreatedInContainerAtRoot";
 
+	/** Type in no composition referencing the container type, granting Create to {@link #ROLE_CONTAINER_CREATOR}. */
+	private static final String CREATED_AT_REFERENCED = MODULE + ":CreatedAtReferenced";
+
+	/**
+	 * Type in no composition referenced by the container type with an inverse reference, granting
+	 * Create to {@link #ROLE_CONTAINER_CREATOR}.
+	 */
+	private static final String CREATED_AT_INVERSE = MODULE + ":CreatedAtInverse";
+
 	/** The type of the security root of the test application. */
 	private static final String ROOT_TYPE = "SecurityStructure:Root";
 
@@ -378,6 +387,16 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 			Set.of(), findingKinds(coverage(CREATED_IN_CONTAINER_AT_ROOT)));
 	}
 
+	public void testCreateCheckedOnReferencedType() {
+		assertEquals("An object the type references may be the context of its creation.", Set.of(),
+			findingKinds(coverage(CREATED_AT_REFERENCED)));
+	}
+
+	public void testCreateCheckedOnInverseReferencedType() {
+		assertEquals("An object referencing the type through a reference with an inverse may be the context.",
+			Set.of(), findingKinds(coverage(CREATED_AT_INVERSE)));
+	}
+
 	public void testCreateInOverriddenComposition() {
 		assertEquals("The composition narrowed down by the specialization holding the type counts.", Set.of(),
 			findingKinds(coverage(ITEM_A)));
@@ -387,7 +406,7 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 		assertEquals(SimpleBoundCommandGroup.CREATE, finding.getOperation());
 		assertEquals("A container narrowing the composition down to another type does not hold the type.",
 			Set.of(ROLE_ITEM_CREATOR), roleNames(finding.getRoles()));
-		assertEquals(String.join(", ", ROOT_TYPE, CONTAINER_B),
+		assertEquals(String.join(", ", ROOT_TYPE, CONTAINER_B, "tl.accounts:Person"),
 			finding.getMessage().arguments()[3]);
 	}
 

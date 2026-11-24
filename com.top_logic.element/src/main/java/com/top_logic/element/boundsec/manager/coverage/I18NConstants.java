@@ -41,9 +41,10 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/**
 	 * @en The operation "{1}" is granted on the type "{0}" to the roles "{2}". An object of the type
-	 *     is created in a context: on the security root, or in a container holding it in a
-	 *     composition, an object of one of the types "{3}". No rule can deliver these roles on such
-	 *     a context or on one of its role parents, therefore the grant never takes effect.
+	 *     is created in a context: on the security root, in a container holding it in a
+	 *     composition, or in an object it references, an object of one of the types "{3}". No rule
+	 *     can deliver these roles on such a context or on one of its role parents, therefore the
+	 *     grant never takes effect.
 	 */
 	public static ResKey4 DEAD_CREATE_GRANT__TYPE_OPERATION_ROLES_CONTEXTS;
 

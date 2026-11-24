@@ -125,7 +125,8 @@ public final class CoverageFinding {
 	 * {@link SimpleBoundCommandGroup#CREATE}.
 	 *
 	 * <p>
-	 * An object is created in a context: on the security root or in a container. The roles of the finding can be delivered on none of them.
+	 * An object is created in a context: on the security root, in a container or in an object it
+	 * references. The roles of the finding can be delivered on none of them.
 	 * </p>
 	 *
 	 * @param type

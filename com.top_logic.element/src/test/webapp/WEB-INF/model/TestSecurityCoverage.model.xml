@@ -319,6 +319,45 @@
 							multiple="true"
 							type="CreatedGeneral"
 						/>
+						<reference name="linked"
+							inverse-reference="container"
+							kind="forwards"
+							multiple="true"
+							type="CreatedAtInverse"
+						/>
+					</attributes>
+				</class>
+
+				<!--
+					Held in no composition, references the container type: created with an object it
+					references as context. Create is granted to a role delivered on the container type only.
+				-->
+				<class name="CreatedAtReferenced">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+						<reference name="anchor"
+							type="CreateContainer"
+						/>
+					</attributes>
+				</class>
+
+				<!--
+					Held in no composition, referenced by the container type through a reference with an
+					inverse: created with the object pointing to it as context. Create is granted to a role
+					delivered on the container type only.
+				-->
+				<class name="CreatedAtInverse">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+						<reference name="container"
+							inverse-reference="linked"
+							kind="backwards"
+							type="CreateContainer"
+						/>
 					</attributes>
 				</class>
 

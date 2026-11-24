@@ -237,8 +237,8 @@ public interface Wrapper extends WrapperLifecycle, TLNamed, Comparable<Wrapper>,
     /**
      * Stable comparison along the name of the Wrappers.
      * 
-     * Will care for invalid Wrappers. In case of equal names the KO-Id
-     * will be used to discriminate them.
+     * Will care for invalid Wrappers. In case of equal names the object identity
+     * will be used to discriminate them, see {@link #compareIdentity(TLObject, TLObject)}.
      * 
      * In case you want to sort Wrappers by {@link #getName()} use the {@link WrapperNameComparator}. 
      */
@@ -274,12 +274,35 @@ public interface Wrapper extends WrapperLifecycle, TLNamed, Comparable<Wrapper>,
             } // else { // both are null
         }
         if (result == 0) { // Not the same wrapper, but the same name ?
-            // Use ObjectKey as stable order 
-			result = KBUtils.getObjectKeyString(tHandle())
-				.compareTo(KBUtils.getObjectKeyString(anOtherWrapper.tHandle()));
+			result = compareIdentity(this, anOtherWrapper);
         }
         return result;
     }
+
+	/**
+	 * Stable order of two objects with the same name.
+	 * 
+	 * <p>
+	 * Two persistent objects are ordered by their {@link #tId() object keys}. A persistent object
+	 * is ordered before a {@link #tTransient() transient} one. Two transient objects are ordered by
+	 * their {@link System#identityHashCode(Object) identity hash codes}, which is stable as long as
+	 * the objects live.
+	 * </p>
+	 */
+	private static int compareIdentity(TLObject left, TLObject right) {
+		boolean leftPersistent = !left.tTransient();
+		boolean rightPersistent = !right.tTransient();
+		if (leftPersistent) {
+			if (rightPersistent) {
+				return left.tId().toString().compareTo(right.tId().toString());
+			}
+			return -1;
+		}
+		if (rightPersistent) {
+			return 1;
+		}
+		return Integer.compare(System.identityHashCode(left), System.identityHashCode(right));
+	}
 
 	/**
 	 * Returns the String value of the given attribute.

@@ -12,7 +12,8 @@ import com.top_logic.element.structured.StructuredElement;
  * 
  * <p>
  * Extends the framework interface {@link StructuredElement} whose abstract methods (e.g.
- * {@link StructuredElement#getTypes()}) are not implemented by transient objects.
+ * {@link StructuredElement#getTypes()}) are not implemented by the base classes of transient
+ * objects.
  * </p>
  */
 public interface Node extends StructuredElement {
@@ -27,6 +28,13 @@ public interface Node extends StructuredElement {
 	 */
 	default String getLabel() {
 		return (String) tValueByName(LABEL_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #LABEL_ATTR}.
+	 */
+	default void setLabel(String newValue) {
+		tUpdateByName(LABEL_ATTR, newValue);
 	}
 
 }

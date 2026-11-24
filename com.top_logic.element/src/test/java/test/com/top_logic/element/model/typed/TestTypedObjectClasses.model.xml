@@ -60,10 +60,31 @@
 
 		<class name="Node">
 			<attributes>
+				<property name="name"
+					type="String"
+				/>
 				<property name="label"
 					type="String"
 				/>
+				<reference name="children"
+					override="true"
+					type="Node"
+				/>
+				<reference name="parent"
+					kind="backwards"
+					override="true"
+					type="Node"
+				/>
 			</attributes>
+			<generalizations>
+				<generalization type="tl.element:StructuredElementContainer"/>
+			</generalizations>
+		</class>
+
+		<class name="ModelClass">
+			<annotations>
+				<implementation-binding interface-name="com.top_logic.model.TLClass"/>
+			</annotations>
 		</class>
 	</module>
 </model>

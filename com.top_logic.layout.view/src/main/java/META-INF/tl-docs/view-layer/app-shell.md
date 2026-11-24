@@ -220,7 +220,7 @@ public class MyLinkServlet extends HttpServlet {
 </config>
 ```
 
-`my-error.view.xml` declares `<query-bindings><bind channel="id" query-param="id"/></query-bindings>` and shows a message composed from the channel. The demo `com.top_logic.demo.react` has a working example: `/servlet/ticket-link?nr=<number>` (`TicketLinkServlet`) redirects to the page of an existing ticket and answers any other link with `ticket-link-error.view.xml`, with `400` for a link without a number and `404` for a number no ticket carries.
+`my-error.view.xml` declares `<query-bindings><bind channel="id" query-param="id"/></query-bindings>` and shows a message composed from the channel. The demo `com.top_logic.demo.react` has a working example: `/servlet/ticket-link?nr=<number>` (`TicketLinkServlet`), the permalink of a ticket by its number that the ticket view of the demo shows to copy, redirects to the page of an existing ticket and answers any other link with `ticket-link-error.view.xml`, with `400` for a link without a number and `404` for a number no ticket carries.
 
 ## Transitions: the state marks an application animates
 

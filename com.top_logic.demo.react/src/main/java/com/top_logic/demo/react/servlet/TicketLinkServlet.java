@@ -14,17 +14,20 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.demo.react.model.tickets.DemoTicketsFactory;
+import com.top_logic.demo.react.model.tickets.Ticket;
+import com.top_logic.element.meta.MetaElementUtil;
 import com.top_logic.layout.view.ViewServlet;
-import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.operations.ObjectFunctions;
 
 /**
  * Permalink of a ticket of the demo: {@code /servlet/ticket-link?nr=<number>}.
  *
  * <p>
- * The number is the identifier a ticket carries in the URL of the ticket list
+ * The number is the {@link Ticket#getNumber() number} of the ticket, which the ticket is given
+ * when it is created and which the ticket view shows together with the permalink to copy
  * ({@code tickets.view.xml}). A link naming an existing ticket is redirected to the page of that
  * ticket. Any other link is answered with the page {@link #ERROR_VIEW} right away, under the URL of
  * the link and with an error status, through
@@ -68,31 +71,47 @@ public class TicketLinkServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
 		String nr = request.getParameter(NR_PARAM);
-		if (!isNumber(nr)) {
+		Long number = parseNumber(nr);
+		if (number == null) {
 			showError(request, response, HttpServletResponse.SC_BAD_REQUEST, REASON_INVALID, nr);
 			return;
 		}
-		TLObject ticket = ThreadContext.inSystemContext(TicketLinkServlet.class,
-			() -> ObjectFunctions.resolve(nr, DemoTicketsFactory.getTicketType(), false));
+		Ticket ticket = ThreadContext.inSystemContext(TicketLinkServlet.class, () -> findTicket(number));
 		if (ticket == null) {
 			showError(request, response, HttpServletResponse.SC_NOT_FOUND, REASON_UNKNOWN, nr);
 			return;
 		}
-		// The identifier in the form the ticket list writes it, whatever form the link has.
+		// The ticket list identifies the ticket in its route by its object identifier.
 		response.sendRedirect(
 			request.getContextPath() + ViewServlet.ROOT_PATH + TICKET_ROUTE + ObjectFunctions.id(ticket));
 	}
 
-	private static boolean isNumber(String value) {
+	private static Long parseNumber(String value) {
 		if (value == null || value.isEmpty()) {
-			return false;
+			return null;
 		}
 		try {
-			Long.parseLong(value);
-			return true;
+			return Long.valueOf(value);
 		} catch (NumberFormatException ex) {
-			return false;
+			return null;
 		}
+	}
+
+	/**
+	 * The ticket carrying the given {@link Ticket#getNumber() number}, or {@code null} if there is
+	 * none.
+	 */
+	private static Ticket findTicket(Long number) {
+		try (CloseableIterator<Ticket> tickets =
+			MetaElementUtil.iterateDirectInstances(DemoTicketsFactory.getTicketType(), Ticket.class)) {
+			while (tickets.hasNext()) {
+				Ticket ticket = tickets.next();
+				if (number.equals(ticket.getNumber())) {
+					return ticket;
+				}
+			}
+		}
+		return null;
 	}
 
 	private static void showError(HttpServletRequest request, HttpServletResponse response, int status,

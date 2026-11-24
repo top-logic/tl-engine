@@ -15,8 +15,8 @@
 	a generalization, which the diagram represents by a transient tl.devtools:Generalization). A type
 	of another module dragged out of the tree onto the diagram is drawn there as an external node
 	(externalTypes), linked to the module's types by their generalizations and references; selecting
-	it keeps the diagram at its module, "Hide" in its context menu removes it again, and it cannot be
-	deleted there. The diagram observes the model types it draws, so
+	it keeps the diagram at its module, "Hide" in its context menu removes it again, a change of the
+	module shown drops it, and it cannot be deleted there. The diagram observes the model types it draws, so
 	it follows every model change, also one made in another session. Beside the diagram, the Instances tab lists all instances of
 	the class selected in the diagram, edits them in place, exports them to Excel or XML and imports an
 	XML file written by that export (admin/model/import-instances.view.xml).
@@ -27,9 +27,13 @@
 		<!--
 			The types of other modules dragged out of the tree onto the diagram, together with the module
 			the diagram showed then: {'module': <module>, 'types': [<types>]}. The diagram draws them as
-			external nodes while it shows that module.
+			external nodes while it shows that module. A change of the module shown empties the channel;
+			selecting one of the external types keeps the module and therefore the external types.
 		-->
-		<channel name="externalTypes"/>
+		<channel name="externalTypes"
+			init="null"
+			inputs="selectedModule"
+		/>
 		<!--
 			The module the diagram shows: the module the external types were dropped on while one of
 			them is selected, otherwise the selected module itself, the module of a selected type, or

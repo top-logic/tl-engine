@@ -11,14 +11,15 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.equal.ArrayEqualitySpecification;
 import com.top_logic.basic.col.equal.EqualitySpecification;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.DeclarativeConfigDescriptor;
 import com.top_logic.basic.config.PropertyDescriptor;
@@ -294,19 +295,65 @@ public class ConfigEquality extends EqualitySpecification<ConfigurationItem> {
 				return true;
 			}
 			default: {
-				if (valueLeft instanceof Pattern) {
-					// Pattern have no equal. Compare by string representation.
-					if (!(valueRight instanceof Pattern)) {
-						return false;
-					} else {
-						Pattern p1 = (Pattern) valueLeft;
-						Pattern p2 = (Pattern) valueRight;
-						return p1.flags() == p2.flags() && p1.pattern().equals(p2.pattern());
-					}
-				}
-				return ArrayEqualitySpecification.INSTANCE.equals(valueLeft, valueRight);
+				return equalsSimpleValue(valueLeft, valueRight, property);
 			}
 		}
+	}
+
+	/**
+	 * Compares two values of a property that holds a simple value.
+	 *
+	 * <p>
+	 * The values are equal, if they are equal according to {@link Object#equals(Object)}, or if
+	 * the {@link PropertyDescriptor#getValueProvider() format} of the property writes the same
+	 * text for both. The latter makes values equal that are created anew each time they are read
+	 * and have no value equality of their own (e.g. a {@link java.util.regex.Pattern}).
+	 * </p>
+	 *
+	 * @see #hashCodeSimpleValue(Object, PropertyDescriptor)
+	 */
+	private static boolean equalsSimpleValue(Object valueLeft, Object valueRight, PropertyDescriptor property) {
+		if (ArrayEqualitySpecification.INSTANCE.equals(valueLeft, valueRight)) {
+			return true;
+		}
+		if (valueLeft == null || valueRight == null) {
+			return false;
+		}
+		ConfigurationValueProvider<?> format = property.getValueProvider();
+		if (format == null) {
+			return false;
+		}
+		String specLeft;
+		String specRight;
+		try {
+			specLeft = specification(format, valueLeft);
+			specRight = specification(format, valueRight);
+		} catch (RuntimeException ex) {
+			// The format cannot write one of the values, the values are not equal by text.
+			return false;
+		}
+		return Objects.equals(specLeft, specRight);
+	}
+
+	/**
+	 * The hash code of a simple property value that matches
+	 * {@link #equalsSimpleValue(Object, Object, PropertyDescriptor)}.
+	 */
+	private static int hashCodeSimpleValue(Object value, PropertyDescriptor property) {
+		ConfigurationValueProvider<?> format = property.getValueProvider();
+		if (format != null) {
+			try {
+				return Objects.hashCode(specification(format, value));
+			} catch (RuntimeException ex) {
+				// The format cannot write the value, hash the value itself.
+			}
+		}
+		return ArrayEqualitySpecification.INSTANCE.hashCode(value);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static String specification(ConfigurationValueProvider<?> format, Object value) {
+		return ((ConfigurationValueProvider<Object>) format).getSpecification(value);
 	}
 
 	private boolean equalsList(Collection<?> left, Collection<?> right, Set<Set<ConfigurationItem>> stack) {
@@ -433,12 +480,7 @@ public class ConfigEquality extends EqualitySpecification<ConfigurationItem> {
 				return result;
 			}
 			default: {
-				if (value instanceof Pattern) {
-					// Pattern have no hashCode. Hash of string representation.
-					Pattern p = (Pattern) value;
-					return (p.pattern().hashCode() * 98179 + p.flags()) * 96553;
-				}
-				return ArrayEqualitySpecification.INSTANCE.hashCode(value);
+				return hashCodeSimpleValue(value, property);
 			}
 		}
 	}

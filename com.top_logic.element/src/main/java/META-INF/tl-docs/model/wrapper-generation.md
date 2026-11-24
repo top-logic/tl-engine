@@ -141,7 +141,7 @@ object) in the classic UI. Transient drafts are created by the `TransientObjectF
 implement the generated interfaces of their type and its generalizations as well, so that
 application code - e.g. an `AttributeValueListener` or a constraint check receiving the buffer -
 uses the same typed access as on a persistent object. For a buffer of the demo class
-`DemoTypes:B`:
+`DemoPlain:B`:
 
 ```java
 B b = (B) buffer;

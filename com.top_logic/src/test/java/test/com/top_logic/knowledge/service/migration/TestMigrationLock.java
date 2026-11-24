@@ -118,27 +118,48 @@ public class TestMigrationLock extends BasicTestCase {
 	}
 
 	/**
-	 * A lock left behind by a former run of this node (same runtime name, other start time) is not
-	 * waited for: The acquisition fails immediately with a message naming the holder and the time
-	 * of the terminated migration.
+	 * A lock left behind by a former run of this node (same runtime name, earlier start time) is
+	 * taken over at once: Afterwards, the lock property holds the own owner identification.
 	 */
-	public void testLeftOverLockOfThisNodeFails() throws Exception {
-		String formerStart = "2026-01-01T00:00:00Z";
-		String formerRun = ManagementFactory.getRuntimeMXBean().getName() + " since " + formerStart;
+	public void testLeftOverLockOfThisNodeTakenOver() throws Exception {
+		String formerRun = ManagementFactory.getRuntimeMXBean().getName() + " since 2026-01-01T00:00:00Z";
 		_properties.setProperty(MigrationLock.LOCK_PROPERTY, formerRun);
 
 		long start = System.currentTimeMillis();
-		try {
-			MigrationLock.acquire(new BufferingProtocol(), _pool).close();
-			fail("Lock of a terminated run of this node acquired.");
-		} catch (IllegalStateException ex) {
-			String message = ex.getMessage();
-			assertTrue(message, message.contains(formerRun));
-			assertTrue(message, message.contains("terminated during a migration started at " + formerStart));
-			assertTrue(message, message.contains(MigrationLock.LOCK_PROPERTY));
+		BufferingProtocol log = new BufferingProtocol();
+		try (MigrationLock lock = MigrationLock.acquire(log, _pool)) {
+			assertTrue("Acquisition waited for the lock.", System.currentTimeMillis() - start < 1000);
+			assertEquals("Lock not taken over.", lock.getOwner(), lockProperty());
+			assertTrue("Take-over not reported: " + log.getInfos(),
+				log.getInfos().stream().anyMatch(message -> message.contains("Took over") && message.contains(formerRun)));
 		}
-		assertTrue("Acquisition waited for the lock.", System.currentTimeMillis() - start < 1000);
-		assertEquals("Lock of the terminated run changed.", formerRun, lockProperty());
+		assertNull(lockProperty());
+	}
+
+	/**
+	 * A lock held with a foreign runtime name is not taken over, the acquisition keeps waiting.
+	 */
+	public void testLeftOverLockOfOtherNodeNotTakenOver() throws Exception {
+		String otherNode = "1@other-host since 2026-01-01T00:00:00Z";
+		_properties.setProperty(MigrationLock.LOCK_PROPERTY, otherNode);
+
+		AtomicBoolean acquired = new AtomicBoolean();
+		TestFuture future = inParallel(new Execution() {
+			@Override
+			public void run() throws Exception {
+				try (MigrationLock lock = MigrationLock.acquire(new BufferingProtocol(), _pool)) {
+					acquired.set(true);
+				}
+			}
+		});
+
+		Thread.sleep(2500);
+		assertFalse("Lock of another node taken over.", acquired.get());
+		assertEquals(otherNode, lockProperty());
+
+		_properties.setProperty(MigrationLock.LOCK_PROPERTY, null);
+		future.check(30000);
+		assertTrue("Lock not acquired after manual deletion.", acquired.get());
 	}
 
 	/**

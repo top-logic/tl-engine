@@ -1120,8 +1120,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
-	 * Refuses a session the acting account may not write ({@link SimpleBoundCommandGroup#WRITE} on
-	 * the session, decided by the model-based security). The check is here and not only in the view
+	 * Refuses a session the acting account may not write (the write right on the session, decided
+	 * by the model-based security). The check is here and not only in the view
 	 * that calls it: a command's input is whatever a channel happens to hold, and this function is
 	 * reachable from a scheduler task and the TL-Script console as well.
 	 * </p>
@@ -1133,6 +1133,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @return The renamed session, so the call can be chained.
 	 * @throws TopLogicException
 	 *         If {@code session} is not a session, may not be written, or {@code title} is blank.
+	 * @see SimpleBoundCommandGroup#WRITE The right checked on the session.
 	 */
 	public static AgentSession sessionRename(Object session, String title) {
 		AgentSession writable = writableSession(session);
@@ -1190,8 +1191,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
-	 * Refuses a memory the acting account may not write ({@link SimpleBoundCommandGroup#WRITE} on
-	 * the memory, decided by the model-based security). The check is here and not
+	 * Refuses a memory the acting account may not write (the write right on the memory, decided by
+	 * the model-based security). The check is here and not
 	 * only in the view that calls it, for the same reason {@link #sessionDelete(Object)} has it
 	 * here: a command's input is whatever a channel happens to hold, and this function is reachable
 	 * from a scheduler task and the TL-Script console as well.
@@ -1202,6 +1203,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * @return Always {@code true}; a refusal is a {@link TopLogicException}, not a {@code false}.
 	 * @throws TopLogicException
 	 *         If {@code memory} is not a memory or may not be written.
+	 * @see SimpleBoundCommandGroup#WRITE The right checked on the memory.
 	 */
 	public static boolean memoryDelete(Object memory) {
 		AgentExecutionStore.getInstance().deleteMemory(writableMemory(memory));

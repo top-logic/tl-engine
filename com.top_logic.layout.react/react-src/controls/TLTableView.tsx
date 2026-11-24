@@ -1587,8 +1587,14 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const handleViewChange = React.useCallback((values: TableViewValues) => {
     sendCommand('setViewOptions', { density: values.density, striped: values.striped, columnLines: values.columnLines });
   }, [sendCommand]);
-  const handleOpenColumnSelect = React.useCallback(() => {
-    sendCommand('openColumnSelect', {});
+  // The page "Columns" of the view popover, its first: the server builds the column selection (`columnSelection`, a
+  // child control) when the popover opens and releases it when the popover closes. Every gesture in it changes the
+  // table at once.
+  const handleOpenColumns = React.useCallback(() => {
+    sendCommand('openColumns', {});
+  }, [sendCommand]);
+  const handleCloseColumns = React.useCallback(() => {
+    sendCommand('closeColumns', {});
   }, [sendCommand]);
   const handleResetView = React.useCallback(() => {
     sendCommand('resetView', {});
@@ -1601,8 +1607,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       columnLines={(state.columnLines as boolean) ?? false}
       viewOptions={viewOptions}
       columnSelect={columnSelect}
+      columnSelection={state.columnSelection ?? null}
       onChange={handleViewChange}
-      onColumns={handleOpenColumnSelect}
+      onColumns={handleOpenColumns}
+      onColumnsClose={handleCloseColumns}
       onReset={handleResetView}
     />
   );

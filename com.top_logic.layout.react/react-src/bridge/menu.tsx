@@ -62,12 +62,23 @@ export function useEscapeClose(open: boolean, onClose: () => void, trigger?: () 
  * has focus; arrows cycle, Home/End jump; disabled and hidden entries are skipped. Shared by
  * Menu and the toolbar overflow. Escape is not the menu's but its surface's (usePopupSurface), which
  * takes it wherever the focus is. A key an entry has handled itself (`preventDefault`) is left alone.
+ *
+ * <p>`isStop` leaves out entries that are not a stop of their own: the segments of a group that is one stop (the
+ * density of a table view, where Left and Right choose and only the chosen segment takes the focus from above and
+ * below). Read at the time of the key, so a new function each render does not reset the tab order.</p>
  */
-export function useRovingMenu(ref: React.RefObject<HTMLElement | null>, open: boolean): { onKeyDown: (e: React.KeyboardEvent) => void } {
+export function useRovingMenu(
+  ref: React.RefObject<HTMLElement | null>,
+  open: boolean,
+  isStop?: (entry: HTMLElement) => boolean,
+): { onKeyDown: (e: React.KeyboardEvent) => void } {
+  const isStopRef = useRef(isStop);
+  isStopRef.current = isStop;
   // Only rendered entries rove: an entry inside a hidden wrapper (the upload button renders
   // `<span hidden>` around its menuitem) cannot take focus, and as a target it would stall the arrows.
   const items = useCallback(
-    () => Array.from(ref.current?.querySelectorAll<HTMLElement>(ITEM) ?? []).filter(el => el.getClientRects().length > 0),
+    () => Array.from(ref.current?.querySelectorAll<HTMLElement>(ITEM) ?? [])
+      .filter(el => el.getClientRects().length > 0 && (isStopRef.current?.(el) ?? true)),
     [ref],
   );
 

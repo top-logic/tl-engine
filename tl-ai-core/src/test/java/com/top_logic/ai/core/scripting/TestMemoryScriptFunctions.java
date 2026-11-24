@@ -21,17 +21,18 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.ai.core.execution.AgentExecutionStore;
 import com.top_logic.ai.core.execution.AgentExecutionStore.MemoryKind;
 import com.top_logic.ai.core.execution.model.UserMemory;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
-import com.top_logic.util.TLContextManager;
 
 /**
- * That {@code aiMemoryDelete} acts only for the account a memory belongs to.
+ * That {@code aiMemoryDelete} acts only for an account that may write the memory.
  *
  * <p>
  * This is what the Forget command of a memory list calls, so its input is whatever a channel
  * happened to hold when the menu opened - never something the caller proved they may touch. The
- * ownership check therefore lives in the function, and this is what says so.
+ * check of the Write right therefore lives in the function, and this is what says so.
  * </p>
  */
 public class TestMemoryScriptFunctions extends BasicTestCase {
@@ -70,7 +71,21 @@ public class TestMemoryScriptFunctions extends BasicTestCase {
 		UserMemory memory = _store.createMemory(anna, MemoryKind.FACT, "Annas Erinnerung.", null);
 		advance();
 
-		as(ben, () -> assertRefused(() -> AIScriptFunctions.memoryDelete(memory)));
+		as(ben, () -> TestSessionScriptFunctions.assertRefused(I18NConstants.ERROR_MEMORY_WRITE_DENIED,
+			() -> AIScriptFunctions.memoryDelete(memory)));
+		advance();
+
+		assertEquals("It must still be there.", 1, _store.memoriesOf(anna, 0).size());
+	}
+
+	/** An account that may read the memory but not write it is refused as well. */
+	public void testReaderRefused() throws Exception {
+		UserMemory memory = _store.createMemory(anna, MemoryKind.FACT, "Nur lesbar.", null);
+		advance();
+		TestSessionScriptFunctions.grantReader(memory, ben);
+
+		as(ben, () -> TestSessionScriptFunctions.assertRefused(I18NConstants.ERROR_MEMORY_WRITE_DENIED,
+			() -> AIScriptFunctions.memoryDelete(memory)));
 		advance();
 
 		assertEquals("It must still be there.", 1, _store.memoriesOf(anna, 0).size());
@@ -100,7 +115,7 @@ public class TestMemoryScriptFunctions extends BasicTestCase {
 	 * An administrator may delete a memory that is not theirs.
 	 *
 	 * <p>
-	 * The same bypass {@code aiSessionDelete} has, so that a list over all memories works as an
+	 * The bypass of the model-based security, so that a list over all memories works as an
 	 * administration view.
 	 * </p>
 	 */
@@ -127,9 +142,9 @@ public class TestMemoryScriptFunctions extends BasicTestCase {
 		super.tearDown();
 	}
 
-	/** Every call runs with {@code person} as the acting account, which is what the guard reads. */
+	/** Every call runs with {@code person} as the acting account and the security checks on. */
 	private static void as(Person person, Runnable job) {
-		TLContextManager.inPersonContext(person, job::run);
+		TestSessionScriptFunctions.as(person, job);
 	}
 
 	/** That the given call is refused with a {@link TopLogicException}, not carried out. */
@@ -152,6 +167,8 @@ public class TestMemoryScriptFunctions extends BasicTestCase {
 		Test test = new TestSuite(TestMemoryScriptFunctions.class);
 		test = ServiceTestSetup.createSetup(test,
 			ModelService.Module.INSTANCE,
+			AccessManager.Module.INSTANCE,
+			SecurityConfigurationService.Module.INSTANCE,
 			AgentExecutionStore.Module.INSTANCE);
 		return PersonManagerSetup.createPersonManagerSetup(test);
 	}

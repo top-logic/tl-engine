@@ -176,7 +176,7 @@ public final class TypedObjectClasses {
 	 * @param base
 	 *        The base class of the object.
 	 * @param type
-	 *        The model type of the object.
+	 *        The model type of the object, <code>null</code> for an object without type.
 	 * @param parameterTypes
 	 *        The parameter types of the constructor of the base class to call. A non-public
 	 *        constructor of the base class must be accessible from this class.
@@ -215,14 +215,17 @@ public final class TypedObjectClasses {
 	 * @param base
 	 *        The class implementing the object.
 	 * @param type
-	 *        The model type of the object.
-	 * @return The given base class itself, if neither the type nor any of its generalizations has
-	 *         a generated Java interface that the base class does not implement already and that
-	 *         a subclass can implement, otherwise a subclass of the base class implementing all
-	 *         these interfaces.
+	 *        The model type of the object, <code>null</code> for an object without type.
+	 * @return The given base class itself, if there is no type, or if neither the type nor any of
+	 *         its generalizations has a generated Java interface that the base class does not
+	 *         implement already and that a subclass can implement, otherwise a subclass of the base
+	 *         class implementing all these interfaces.
 	 */
 	@SuppressWarnings("unchecked")
 	public static <B extends TLObject> Class<? extends B> classFor(Class<B> base, TLStructuredType type) {
+		if (type == null) {
+			return base;
+		}
 		Set<Class<?>> interfaces = interfaces(base, type);
 		if (interfaces.isEmpty()) {
 			return base;

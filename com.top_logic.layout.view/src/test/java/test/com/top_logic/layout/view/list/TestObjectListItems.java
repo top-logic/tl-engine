@@ -45,6 +45,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TransientObject;
+import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.util.TLModelUtil;
@@ -539,7 +540,7 @@ public class TestObjectListItems extends TestCase {
 	public static Test suite() {
 		return ModuleLicenceTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestObjectListItems.class,
-				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE));
+				ThreadContextManager.Module.INSTANCE, TypeIndex.Module.INSTANCE, AttributeSettings.Module.INSTANCE));
 	}
 
 }

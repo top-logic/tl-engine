@@ -27,6 +27,7 @@ import com.top_logic.model.TransientObject;
 import com.top_logic.model.annotate.util.ConstraintCheck;
 import com.top_logic.model.fallback.StorageWithFallback;
 import com.top_logic.model.form.TracingScope;
+import com.top_logic.model.impl.TypedObjectClasses;
 import com.top_logic.model.search.expr.Update;
 import com.top_logic.model.security.DiscoverRight;
 import com.top_logic.util.error.TopLogicException;
@@ -71,6 +72,11 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  */
 public class TLObjectOverlay extends TransientObject implements TLFormObjectBase {
+
+	/**
+	 * Parameter types of the constructor {@link #TLObjectOverlay(TLObject)}.
+	 */
+	private static final Class<?>[] CONSTRUCTOR_SIGNATURE = { TLObject.class };
 
 	private final TLObject _base;
 
@@ -132,6 +138,18 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 */
 	public TLObjectOverlay(TLObject base) {
 		_base = base;
+	}
+
+	/**
+	 * Creates a new overlay over the given base object that implements the generated Java
+	 * interfaces of the type of the base object, see {@link TypedObjectClasses}.
+	 *
+	 * @param base
+	 *        The object to overlay. Must not be {@code null}.
+	 * @return The new overlay, an instance of {@link TLObjectOverlay}.
+	 */
+	public static TLObjectOverlay newOverlay(TLObject base) {
+		return TypedObjectClasses.newInstance(TLObjectOverlay.class, base.tType(), CONSTRUCTOR_SIGNATURE, base);
 	}
 
 	@Override

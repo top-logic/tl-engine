@@ -29,7 +29,8 @@ import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
  * opens with a {@link MenuEntry#header(String) header} naming its entries. Wire item IDs are
  * {@code "<contributionIndex>:<commandName>"} so names may collide across contributions. A command
  * that is {@link CommandModel#isActive() active} yields an entry marked as the alternative in
- * force.
+ * force. An entry carries the {@link CommandModel#getTooltip() tooltip} of its command, which for a
+ * disabled command is the reason it is disabled.
  * </p>
  *
  * <p>
@@ -283,7 +284,8 @@ public class ContextMenuOpener {
 				cmd.getExecutableState(),
 				cmd.getCssClasses(),
 				cmd.isActive(),
-				cmd.getTone()));
+				cmd.getTone(),
+				cmd.getTooltip()));
 			currentClique = clique;
 			first = false;
 		}

@@ -1087,7 +1087,7 @@ public class TestConfigFormControl extends TestCase {
 		assertEquals(I18NConstants.ERROR_ENTRY_NOT_TAKEN__REASON, refusal.plain());
 		assertNotNull("The form must stay in edit mode.", findButton(form, label(I18NConstants.APPLY)));
 		assertEquals("Nothing must have been applied.", 0, config.getEntries().size());
-		assertNotNull("The refused entry must still be pending.", findButton(form, "\u2713"));
+		assertNotNull("The refused entry must still be pending.", findButton(form, label(I18NConstants.CONFIRM_ENTRY)));
 		assertNotNull("The refused entry itself must say why it was not taken.",
 			pendingKeyField(form).getError());
 	}
@@ -1110,7 +1110,7 @@ public class TestConfigFormControl extends TestCase {
 		assertEquals(I18NConstants.ERROR_ENTRY_NOT_TAKEN__REASON, refusal.plain());
 		assertNotNull("The form must stay in edit mode.", findButton(form, label(I18NConstants.APPLY)));
 		assertEquals("Nothing must have been applied.", 1, config.getEntries().size());
-		assertNotNull("The entry must still be pending.", findButton(form, "\u2713"));
+		assertNotNull("The entry must still be pending.", findButton(form, label(I18NConstants.CONFIRM_ENTRY)));
 	}
 
 	/** Confirming the entry clears the way: Apply then goes through and keeps the entry. */
@@ -1120,7 +1120,7 @@ public class TestConfigFormControl extends TestCase {
 		click(findButton(form, label(I18NConstants.EDIT)));
 		click(findAddButton(form));
 		fieldOf(form, ListEntry.TITLE).setValue("confirmed");
-		click(findButton(form, "\u2713"));
+		click(findButton(form, label(I18NConstants.CONFIRM_ENTRY)));
 
 		click(findButton(form, label(I18NConstants.APPLY)));
 
@@ -1136,20 +1136,12 @@ public class TestConfigFormControl extends TestCase {
 		click(findButton(form, label(I18NConstants.EDIT)));
 		click(findAddButton(form));
 
-		click(findButton(form, "\u2715"));
+		click(findButton(form, label(I18NConstants.REMOVE_ENTRY)));
 		click(findButton(form, label(I18NConstants.APPLY)));
 
 		assertNotNull("Applying must have returned to view mode.", findButton(form, label(I18NConstants.EDIT)));
 		assertEquals(0, config.getEntries().size());
 	}
-
-	/**
-	 * The literal label {@code ConfigListEditorControl#createElementGroup} hardcodes for an entry's
-	 * Remove button - a bare glyph, never resolved through {@link Resources}, so matching it is
-	 * locale-independent by construction, the same reason {@link #findAddButton(ReactControl)}
-	 * matches the {@code "+ "} prefix.
-	 */
-	private static final String REMOVE_BUTTON_LABEL = "\u2715";
 
 	/** Without edit mode the form is the editor, writing straight through. */
 	public void testWithoutEditModeThereAreNoButtons() {
@@ -1413,7 +1405,7 @@ public class TestConfigFormControl extends TestCase {
 		assertNotNull("Precondition: the unreadable entry refuses Apply.",
 			findButton(form, label(I18NConstants.APPLY)));
 
-		click(findButton(form, REMOVE_BUTTON_LABEL));
+		click(findButton(form, label(I18NConstants.REMOVE_ENTRY)));
 		click(findButton(form, label(I18NConstants.APPLY)));
 
 		assertNotNull("With the entry gone, nothing is left to correct and Apply must go through.",
@@ -1789,7 +1781,7 @@ public class TestConfigFormControl extends TestCase {
 		click(findButton(form, label(I18NConstants.EDIT)));
 		assertFalse(form.isDirty());
 
-		click(findButton(form, REMOVE_BUTTON_LABEL));
+		click(findButton(form, label(I18NConstants.REMOVE_ENTRY)));
 		assertTrue("Removing the only entry leaves an unsaved change.", form.isDirty());
 
 		click(findButton(form, label(I18NConstants.APPLY)));

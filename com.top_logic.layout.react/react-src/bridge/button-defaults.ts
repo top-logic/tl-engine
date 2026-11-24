@@ -18,11 +18,14 @@ export type ButtonAppearance = 'primary' | 'secondary' | 'ghost' | 'link' | 'men
  *   (paragraph format): in a menu each is a `menuitemradio` instead of a `menuitemcheckbox`.
  * - `iconOnly`: a compact toolbar says `true`; every button that shows its icon drops its label
  *   then and becomes a square icon button, its label moving to the tooltip.
+ * - `small`: a table row says `true`: every icon button inside is drawn small (24 px). A surface that
+ *   opens from the row (menu, popover) says `false` again, its buttons are normal ones.
  */
 export interface ButtonDefaultsValue {
   appearance?: ButtonAppearance;
   iconOnly?: boolean;
   radio?: boolean;
+  small?: boolean;
 }
 
 /** Outside every container: no defaults. */
@@ -35,7 +38,7 @@ const ButtonDefaultsContext = createContext<ButtonDefaultsValue>(NO_DEFAULTS);
  */
 export function ButtonDefaults({ children, ...value }: React.PropsWithChildren<ButtonDefaultsValue>) {
   const parent = useContext(ButtonDefaultsContext);
-  const merged = useMemo(() => ({ ...parent, ...value }), [parent, value.appearance, value.iconOnly, value.radio]);
+  const merged = useMemo(() => ({ ...parent, ...value }), [parent, value.appearance, value.iconOnly, value.radio, value.small]);
   return React.createElement(ButtonDefaultsContext.Provider, { value: merged }, children);
 }
 

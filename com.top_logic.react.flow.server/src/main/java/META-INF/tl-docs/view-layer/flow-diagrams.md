@@ -1,5 +1,5 @@
 ---
-description: Read before putting a <flow-diagram> into a .view.xml or adding a diagram element type - the createChart script and its inputs, the reactFlow* functions, the size of a diagram and its view (layout to the offered space, Gantt viewport, reactFlowChart fixedView), the selection channel shared with tables and forms (reactFlowSelection, selectable reactFlowGraphEdge, selection-mode for multiple selection, the ctrl+drag selection rectangle), the context menu of a diagram through <context-menu input="..."> on the selection channel, dropping table rows or tree nodes onto a diagram (<drop target="node|diagram"> with x / y / x-as / y-as, reactFlowDropRegion, FlowDiagramControl.setDropTarget, Widget.dropTarget, nodeAt), and the drawing rule for widgets (one top-level SVG element carrying the widget's id).
+description: Read before putting a <flow-diagram> into a .view.xml or adding a diagram element type - the createChart script and its inputs, the reactFlow* functions, the size of a diagram and its view (layout to the offered space, Gantt viewport, reactFlowChart fixedView), the selection channel shared with tables and forms (reactFlowSelection, selectable reactFlowGraphEdge, selection-mode for multiple selection, the ctrl+drag selection rectangle, empty-area-selection for the object a click on the empty area selects), the context menu of a diagram through <context-menu input="..."> on the selection channel, dropping table rows or tree nodes onto a diagram (<drop target="node|diagram"> with x / y / x-as / y-as, reactFlowDropRegion, FlowDiagramControl.setDropTarget, Widget.dropTarget, nodeAt), and the drawing rule for widgets (one top-level SVG element carrying the widget's id).
 order: 75
 ---
 
@@ -13,6 +13,7 @@ order: 75
 - **`createChart`** is the script, usually written as element content in a CDATA section. It uses the inputs as variables without declaring them (`$product`; a script starting with a parameter declaration such as `product -> …` is a configuration error), sees each handler of `handlers` as the variable named like the handler (`$onClick`), and returns a diagram created with `reactFlowChart(root: …)`. A box returned instead of a diagram becomes the root of a diagram; any other result is an empty diagram. Always configure it: the default expression does not name a function of this module.
 - **`selection`** names a channel the diagram shares its selection through, in both directions (see [selection](#selection) below).
 - **`selection-mode`** is `single` (the default) or `multi`, as for a table: whether the user may select one element at a time or any number of them. It applies to every diagram the script builds.
+- **`empty-area-selection`** is an optional script computing the object the empty area of the diagram stands for, which the `selection` channel receives when the user leaves no element selected (see [the empty area](#the-empty-area) below).
 
 The diagram is built when the element is displayed and built anew whenever one of the input channels takes a new value; the script runs again as a whole. A mutation that changes what the diagram shows without changing an input - an action editing the displayed module - therefore rebuilds the diagram only through an input of its own: the model editor (`com.top_logic.dev.tools`) declares a `reload` channel as a second input and writes `now()` into it after each change.
 
@@ -76,6 +77,19 @@ A diagram element is selectable when the script makes it so: `reactFlowSelection
 - A value written to the channel by another element - a row selected in a table over the same objects - marks every element carrying that user object. A value no element of the diagram carries is shown as no selection and is left on the channel.
 - An element without a user object takes no part in the shared selection.
 
+### The empty area
+
+By default, a click on the empty area of the diagram clears the selection: the channel holds no value. A diagram displaying one object - the module of a class diagram, the product of a construction plan - lets the empty area stand for that object instead, so that a click beside the nodes selects it and the commands of that object apply:
+
+```xml
+<flow-diagram inputs="selectedModule as module" selection="selectedPart"
+    empty-area-selection="$module">
+  ...
+</flow-diagram>
+```
+
+The script sees the same variables as `createChart` (the inputs, followed by the handlers) and is evaluated at the moment of the click. Its result is written whenever the user leaves no element of the diagram selected: a plain click on the empty area, a right-click on it (see [context menu](#context-menu)), and a ctrl-click giving up the last selected element. A result of `null` clears the selection as without the option. A form with unsaved input bound to the channel is asked about its changes first, and a refusal keeps the selected element, as for a click on a node. Only the user's action writes the object: a rebuilt diagram that no longer contains the selected element writes no value, as described above. The object usually has no element in the diagram, so the diagram shows no selection while the channel holds it (`DiagramSelectionBinding.noSelectionValue()`, `SelectionChannelBinding.noSelectionValue()`).
+
 Rebuilding the diagram drops its selection, so a form with unsaved input bound to the selection channel is asked about its changes before an input of the diagram is written (see [unsaved changes](doc:view-layer/forms#unsaved-changes-are-asked-before-a-channel-write-transitively)).
 
 The stylesheet of the module (`/style/tl-react-flow.css`) marks the selection by CSS classes: a selectable element carries `tlCanSelect`, a selected one `tlSelected`. Inside a selected node, an element of the class `tlSelectionStroke` gets the interactive border color as stroke, one of `tlSelectionFill` the selection background, and one of `tlSelectionMarker` is shown only while the node is selected; the visible line of a selected edge is drawn in that color. A script highlights its nodes by giving these classes to the border and fill inside `reactFlowSelection`, as the model editor does with `reactFlowBorder(cssClass: "tlSelectionStroke", content: reactFlowFill(fill: "white", cssClass: "tlSelectionFill", …))`.
@@ -97,7 +111,7 @@ Before the menu opens, the right-click adjusts the selection the menu acts on (`
 
 - On an element outside the selection, that element is selected alone - like a click without a modifier, so the selected objects the diagram does not display are given up as well.
 - On a selected element, the selection stays as it is, also a selection of several elements, and the menu acts on all of them.
-- On the empty area, the selection is cleared: commands that need an object are not executable, commands without one are.
+- On the empty area, the selection is cleared: commands that need an object are not executable, commands without one are. With `empty-area-selection`, the channel receives the object the empty area stands for instead, and the menu acts on it.
 
 A modifier key does not change this: a right-click never adds to the selection. A form with unsaved input bound to the selection channel is asked about its changes before the selection changes, as for a click. The client reports the right-click before the menu region asks for the menu, both through the command channel of the page, so the menu always opens on the adjusted selection.
 

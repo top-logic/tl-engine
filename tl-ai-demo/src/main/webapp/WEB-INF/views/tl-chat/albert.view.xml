@@ -9,8 +9,8 @@
 	- the channel "invoiceEvent", the event the agent's "createInvoice" command files a new invoice
 	under: the command writes the event the agent passed into it, and the dialog's event table shows
 	it selected;
-	- on the conversation "conversation": the composer's invitation, the demo's working indicator, the
-	facts about the situation, the first questions of a new chat, the "@" mentions of events, venues
+	- on the conversation "conversation": the composer's invitation, the read-only display of a chat
+	about a paid invoice, the demo's working indicator, the facts about the situation, the first questions of a new chat, the "@" mentions of events, venues
 	and invoices, and the commands "createInvoice" and "openEventTab" the agent may run;
 	- on the rail "rail": the section "events" after the shipped section "sources".
 -->
@@ -39,6 +39,19 @@
 				<en>Ask about the events, their programme, registrations, sponsors or invoices.</en>
 				<de>Frag nach den Veranstaltungen, ihrem Programm, Anmeldungen, Sponsoren oder Rechnungen.</de>
 			</placeholder>
+			<!--
+				A chat about a paid invoice is an archive (Ticket #30546): it is shown without an input
+				line and without the actions that change it, also to the account it belongs to. That is
+				no question of rights - the owner keeps Write on the chat -, so it is decided here and
+				not in the security configuration. A chat about anything else, or about nothing, stays
+				writable; a new chat is always writable.
+			-->
+			<writable><![CDATA[s -> {
+				subject = $s.get(`tl.ai.execution:AgentSession#subject`);
+				!(!isEmpty($subject)
+					&& $subject.instanceOf(`demo.events:Invoice`)
+					&& $subject.get(`demo.events:Invoice#status`) == `demo.events:InvoiceStatus#PAID`);
+			}]]></writable>
 			<!--
 				What this page states about the situation the user is asking in (Issue #437). The
 				server evaluates these when the page's channels change and they travel with every

@@ -115,6 +115,8 @@ public class SecurityCoverageAnalysis {
 	 */
 	private final Map<TLClass, Set<TLClass>> _containerTypes;
 
+	private final HistoryRuleCheck _historyRuleCheck;
+
 	private final Map<TLClass, Set<BoundedRole>> _directlyAssignedRoles;
 
 	private final List<OperationUse> _uses;
@@ -176,6 +178,7 @@ public class SecurityCoverageAnalysis {
 
 		_compositeReferences = compositeReferences(model);
 		_containerTypes = containerTypes(model);
+		_historyRuleCheck = new HistoryRuleCheck(accessManager, accessRights, _containerTypes);
 
 		_directlyAssignedRoles = directlyAssignedRoles();
 
@@ -423,6 +426,7 @@ public class SecurityCoverageAnalysis {
 			addDeadGrantFindings(type, findings);
 			addUngrantedOperationFindings(type, findings);
 			addUncheckedGrantFindings(type, findings);
+			_historyRuleCheck.addFindings(type, findings);
 		}
 		if (withoutSecurity == null && internal == null) {
 			findings.addAll(_useFindings.getOrDefault(type, Collections.emptyList()));

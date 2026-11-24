@@ -120,6 +120,58 @@ public enum FindingKind {
 	 * @see CoverageFinding#getOperation()
 	 * @see CoverageFinding#getRoles()
 	 */
-	UNCHECKED_GRANT;
+	UNCHECKED_GRANT,
+
+	/**
+	 * A rule granting roles on historic versions only through anchor references applies to the
+	 * type, but no object of the type can be covered by one of these references: The type shares no
+	 * instances with the target type of a reference and is no composition part of such a type. The
+	 * rule never grants a role.
+	 * @see CoverageFinding#getRuleIds()
+	 */
+	ANCHOR_NEVER_COVERS,
+
+	/**
+	 * A rule of the type uses a historic reference as anchor that is stored in a column without an
+	 * index. Each search for the anchors of a version scans the whole table.
+	 * @see CoverageFinding#getRuleIds()
+	 */
+	ANCHOR_WITHOUT_INDEX,
+
+	/**
+	 * A role on the type depends on itself through rules evaluated on historic versions. A role is
+	 * only held where it can be derived without relying on itself, so the cycle alone never grants
+	 * the role.
+	 * @see CoverageFinding#getRuleIds()
+	 */
+	ROLE_CYCLE,
+
+	/**
+	 * A rule of the type navigates a historic reference backwards from an object that is always a
+	 * current object. Such a step leads nowhere, so the rule never grants a role.
+	 * @see CoverageFinding#getRuleIds()
+	 */
+	ANCHOR_STEP_FROM_CURRENT,
+
+	/**
+	 * All rules of the type grant roles on historic versions only. The rules switch off the default
+	 * for composition parts, but nobody holds a role on a current object of the type.
+	 */
+	NO_CURRENT_ROLE_SOURCE,
+
+	/**
+	 * A rule of the type inherits a role from a rule whose result is not kept in the security
+	 * storage. The rule is therefore not stored either and evaluated at each access check.
+	 * @see CoverageFinding#getRuleIds()
+	 */
+	RULE_NOT_STORED,
+
+	/**
+	 * A rule of the type that is evaluated on historic versions navigates a reference backwards
+	 * that may hold current objects and historic versions. What such a step finds from a historic
+	 * version is not defined for the access check.
+	 * @see CoverageFinding#getRuleIds()
+	 */
+	MIXED_BACKWARDS_STEP;
 
 }

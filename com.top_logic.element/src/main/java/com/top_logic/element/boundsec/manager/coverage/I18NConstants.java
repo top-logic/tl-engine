@@ -88,6 +88,57 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey3 UNCHECKED_GRANT__TYPE_OPERATION_ROLES;
 
+	/**
+	 * @en The rules "{1}" of the type "{0}" grant roles on historic versions that are covered through
+	 *     the references "{2}". No object of the type can be covered by them: the type shares no
+	 *     instances with the target type of such a reference and is no composition part of such a
+	 *     type. The rules never grant a role.
+	 */
+	public static ResKey3 ANCHOR_NEVER_COVERS__TYPE_RULES_REFERENCES;
+
+	/**
+	 * @en The rules "{1}" of the type "{0}" use the historic reference "{2}" as anchor. The reference
+	 *     is stored in a column without an index, so each search for the anchors of a version scans
+	 *     the whole table. Store the reference in a link table.
+	 */
+	public static ResKey3 ANCHOR_WITHOUT_INDEX__TYPE_RULES_REFERENCE;
+
+	/**
+	 * @en The role "{1}" on the type "{0}" depends on itself through the rules "{2}". A role is only
+	 *     held where it can be derived without relying on itself, so the cycle alone never grants
+	 *     the role.
+	 */
+	public static ResKey3 ROLE_CYCLE__TYPE_ROLE_RULES;
+
+	/**
+	 * @en The rules "{1}" of the type "{0}" navigate a historic reference backwards from an object
+	 *     that is always a current object. Such a step leads nowhere, so the rules never grant a
+	 *     role.
+	 */
+	public static ResKey2 ANCHOR_STEP_FROM_CURRENT__TYPE_RULES;
+
+	/**
+	 * @en All rules of the type "{0}" grant roles on historic versions only. They switch off the
+	 *     default for composition parts, but nobody holds a role on a current object of the type.
+	 *     Add a rule for the current objects.
+	 */
+	public static ResKey1 NO_CURRENT_ROLE_SOURCE__TYPE;
+
+	/**
+	 * @en The rule "{1}" of the type "{0}" inherits a role from the rule "{2}", whose result is not
+	 *     kept in the security storage. The rule is therefore not stored either and evaluated at
+	 *     each access check.
+	 */
+	public static ResKey3 RULE_NOT_STORED__TYPE_RULE_SOURCE;
+
+	/**
+	 * @en The rules "{1}" of the type "{0}" are evaluated on historic versions and navigate the
+	 *     reference "{2}" backwards, which may hold current objects and historic versions. What such
+	 *     a step finds from a historic version is not defined for the access check. Use a historic
+	 *     reference instead.
+	 */
+	public static ResKey3 MIXED_BACKWARDS_STEP__TYPE_RULES_REFERENCE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

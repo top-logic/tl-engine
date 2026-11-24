@@ -1046,9 +1046,10 @@ public class ChatProcessor {
 	 * The listener that shows a run in every window showing its conversation.
 	 *
 	 * <p>
-	 * A conversation can be open in more than one window of its account, and each of them shows the
-	 * turn while it is being written - not only the window the message was sent from (issue #544).
-	 * A window showing another chat is not addressed: with concurrent runs in different sessions, a
+	 * A conversation can be open in more than one window - of its account, or of an account that may
+	 * read it - and each of them shows the turn while it is being written, not only the window the
+	 * message was sent from (issue #544). An approval the run waits for is shown only in the windows
+	 * of the run's account, which answers it. A window showing another chat is not addressed: with concurrent runs in different sessions, a
 	 * background run's events would otherwise render into the wrong chat. Its progress is recovered
 	 * from the live log when the user switches back.
 	 * </p>
@@ -1085,8 +1086,12 @@ public class ChatProcessor {
 				// The part now says RUNNING; a copy another window loaded while it was queued does not.
 				subagentPartRecorded(startedIn, owner, sessionId, log.log());
 			}
-			for (ChatEventHandler handler : ChatEventHandlerRegistry.findStreamTargets(startedIn, owner,
-				sessionId)) {
+			// What the run asks goes only to the account that answers it; everything else to whoever
+			// watches the conversation.
+			List<ChatEventHandler> targets = asksTheUser(event)
+				? ChatEventHandlerRegistry.findAnswerTargets(startedIn, owner, sessionId)
+				: ChatEventHandlerRegistry.findStreamTargets(startedIn, sessionId);
+			for (ChatEventHandler handler : targets) {
 				if (event instanceof AgentEvent.TextDelta delta) {
 					handler.onTextDelta(delta, log.streamedChars());
 				} else {
@@ -1094,6 +1099,15 @@ public class ChatProcessor {
 				}
 			}
 		};
+	}
+
+	/**
+	 * Whether the given event is about something the run asks its account - an approval it waits for,
+	 * or its answer -, also when a subagent of the run asks.
+	 */
+	private static boolean asksTheUser(AgentEvent event) {
+		AgentEvent asked = event instanceof AgentEvent.DelegatedEvent delegated ? delegated.childEvent() : event;
+		return asked instanceof AgentEvent.ApprovalRequired || asked instanceof AgentEvent.ApprovalResolved;
 	}
 
 	/**
@@ -1139,6 +1153,10 @@ public class ChatProcessor {
 				windows.add(handler.getTracker());
 			}
 		}
+		// A reader of the conversation holds a copy as well.
+		for (ChatEventHandler handler : ChatEventHandlerRegistry.findViewers(sessionId)) {
+			windows.add(handler.getTracker());
+		}
 		for (TaskProgressTracker window : windows) {
 			if (!window.hasActiveProcessingStateFor(sessionId)) {
 				window.getSessionManager().markChangedElsewhere(sessionId, recordedIn);
@@ -1153,16 +1171,17 @@ public class ChatProcessor {
 	 * <p>
 	 * The answer and the error that replaces it are addressed to the <em>conversation</em>, not to
 	 * the tab that sent the message. That tab is often gone by the time the run finishes - the user
-	 * closed it, reloaded the page, or signed in again somewhere else - while another window of the
-	 * same account has the conversation open and is showing it as still running. Sending only to the
+	 * closed it, reloaded the page, or signed in again somewhere else - while another window has the
+	 * conversation open and is showing it as still running: one of the same account, or one of an
+	 * account that may read the conversation. Sending only to the
 	 * handler captured at run start left that window spinning for ever and wrote one line into the
 	 * log: "SSE handler closed, no replacement found - dropping message_complete" (issue #512).
 	 * </p>
 	 */
 	private static List<ChatEventHandler> completionTargets(AIProcessingState state,
 			TaskProgressTracker tracker) {
-		List<ChatEventHandler> targets = ChatEventHandlerRegistry.findForSession(tracker.getSessionOwner(),
-			state.getSessionId(), state.getSseHandler());
+		List<ChatEventHandler> targets =
+			ChatEventHandlerRegistry.findViewers(state.getSessionId(), state.getSseHandler());
 		// The turn is recorded now, in the database and in the cache of the run's own window. A
 		// window that only watched the run still holds the conversation as it was when it opened
 		// it; it reads it back with the next request it makes, the one that shows the finished

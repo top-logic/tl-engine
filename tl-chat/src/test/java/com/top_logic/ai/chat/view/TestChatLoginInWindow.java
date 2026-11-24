@@ -174,7 +174,7 @@ public class TestChatLoginInWindow extends BasicTestCase {
 		assertNull(bobsTracker.getActiveSessionId());
 		assertNotSame("Alice's tracker left the window.", alicesTracker,
 			ChatSessionRegistry.tracker(TLContextManager.getSubSession(), first.binding().conversation()));
-		for (ChatEventHandler target : ChatEventHandlerRegistry.findStreamTargets(alicesTracker, alice, chatId)) {
+		for (ChatEventHandler target : ChatEventHandlerRegistry.findStreamTargets(alicesTracker, chatId)) {
 			assertNotSame("Alice's frames do not reach Bob's stream.", bobsTracker, target.getTracker());
 		}
 		assertNull("Alice's run presents nothing on Bob's page.",

@@ -132,7 +132,7 @@ public final class ChatTranscripts {
 			.setFeatures(featuresDto(backend));
 		boolean open = tracker != null && sessionId.equals(tracker.getActiveSessionId());
 
-		ChatProcessor.AIProcessingState running = RunStateFrame.runInFlight(person, sessionId);
+		ChatProcessor.AIProcessingState running = RunStateFrame.runInFlight(sessionId);
 		String messagesJson = null;
 		if (running != null) {
 			ConversationLog runLog = running.getConversationLog();

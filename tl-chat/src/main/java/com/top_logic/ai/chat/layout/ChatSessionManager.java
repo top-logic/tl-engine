@@ -119,6 +119,17 @@ public class ChatSessionManager {
 	private volatile Person _activeOwner;
 
 	/**
+	 * Whether {@link #_activeOwner} may write the active session, decided when the session was
+	 * activated.
+	 *
+	 * <p>
+	 * A window of an account that may only read the chat watches it: it is not registered to answer
+	 * what a subagent of the chat asks, and starts no lead turn for a subagent's news.
+	 * </p>
+	 */
+	private volatile boolean _activeWritable;
+
+	/**
 	 * The state of the window when it shows no chat; created on first use.
 	 *
 	 * <p>
@@ -403,7 +414,8 @@ public class ChatSessionManager {
 	/**
 	 * Listens to the given registry for the session's state: the register that lets any window of the
 	 * account find and answer what a subagent asks, and the waker that starts a lead turn when there is
-	 * news - which, for a registry that worked on while nobody listened, may already be there.
+	 * news - which, for a registry that worked on while nobody listened, may already be there. Both
+	 * only for an account that may write the chat.
 	 */
 	private void attachSubagents(SessionState state) {
 		Person owner = _activeOwner;
@@ -421,6 +433,10 @@ public class ChatSessionManager {
 		// Before the window's own listener: that one is removed with the window, while a subagent it
 		// registered works on and must still be dropped when it ends.
 		PendingInteractionRegistry.forgetEndedOf(registry);
+		if (!_activeWritable) {
+			// A window that only watches the chat answers no subagent and wakes no lead turn.
+			return;
+		}
 		state._subagentListeners.add(
 			PendingInteractionRegistry.subagentListener(owner, tracker, _activeSessionId));
 		state._subagentWaker = new SubagentWaker(registry, ChatProcessor.wakeHost(tracker, owner, _activeSessionId));
@@ -681,10 +697,12 @@ public class ChatSessionManager {
 				+ (owner == null ? "nobody" : "this user") + ".", ChatSessionManager.class);
 			return false;
 		}
+		boolean writable = ChatHistoryService.isAllowed(owner, incoming, SimpleBoundCommandGroup.WRITE);
 		PersistJob outgoing;
 		synchronized (_lock) {
 			if (sessionId.equals(_activeSessionId)) {
 				_activeOwner = owner;
+				_activeWritable = writable;
 				if (_changedElsewhere.remove(sessionId)) {
 					// What the session's metadata says is read afresh with it.
 					disposeSessionState(_sessions.remove(sessionId));
@@ -709,18 +727,20 @@ public class ChatSessionManager {
 			if (cached != null) {
 				_activeSessionId = sessionId;
 				_activeOwner = owner;
+				_activeWritable = writable;
 			} else {
 				SessionState newState = loadFromDatabase(sessionId, owner);
 				_sessions.put(sessionId, newState);
 				_activeSessionId = sessionId;
 				_activeOwner = owner;
+				_activeWritable = writable;
 				reattachSubagents(newState);
 			}
 		}
 		persistOutsideLock(outgoing);
 		// The window shows the chat from now on: a subagent's result that ended before is no news. A
 		// reader who may not write the chat leaves it as it is.
-		if (ChatHistoryService.isAllowed(owner, incoming, SimpleBoundCommandGroup.WRITE)) {
+		if (writable) {
 			ChatHistoryService.markSeen(incoming);
 		}
 		if (announce) {
@@ -854,6 +874,7 @@ public class ChatSessionManager {
 			if (wasActive) {
 				_activeSessionId = null;
 				_activeOwner = null;
+				_activeWritable = false;
 				// Nothing of the deleted chat carries over to what the window shows next.
 				_noChat = null;
 			}

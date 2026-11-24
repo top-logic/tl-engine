@@ -418,6 +418,11 @@
 					<generalizations>
 						<generalization type="Named"/>
 					</generalizations>
+					<attributes>
+						<reference name="writer"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
 				</class>
 
 				<class name="Sub">

@@ -86,6 +86,8 @@ How code and TL-Script ask for a decision (`ModelAccessRights`, `canRead`, ...) 
 are exempt from the check is described in [checking access in Java and TL-Script](doc:access-checks).
 The classic layout UI does not check attribute rights; an application using model based security
 with `Discover`-only roles must use the React view layer for such types.
+On which object a view of the classic layout UI checks access (`securityObject`, `isSecurityMaster`)
+is described in [access checks of layouts](doc:access-layouts).
 
 ## Grants: which roles may do what on a type
 
@@ -330,7 +332,9 @@ the one mark when the other is set, and the access rights dialog refuses to save
 
 The engine sets these marks for its own types in `com.top_logic.element/…/ElementConf.config.xml`:
 the modules `tl.changelog` and `tl.imagegallery` are `internal` (maintained by the engine's own
-code), the class `tl.core:Revision` is `without-security` (commit metadata readable by everyone; a
+code; `tl.changelog` additionally grants `Read` to the role `PersonalProfile`, which every user holds
+on the own account, so that a table offers the columns of its transient change sets, see the
+section "Access rights" of the article `change-log` of `com.top_logic.element`), the class `tl.core:Revision` is `without-security` (commit metadata readable by everyone; a
 revision cannot hold roles).
 
 ### Access parent: delegating the decision

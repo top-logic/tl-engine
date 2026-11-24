@@ -110,6 +110,20 @@ public class TestKnowledgeBase extends BasicTestCase {
 
 	public static class TestingComputedAttributeStorage extends AbstractComputedAttributeStorage {
 
+		/**
+		 * All instances are equal, the storage has no state. This makes a schema with this storage
+		 * equal to its copy loaded from the database.
+		 */
+		@Override
+		public boolean equals(Object obj) {
+			return obj != null && obj.getClass() == getClass();
+		}
+
+		@Override
+		public int hashCode() {
+			return getClass().hashCode();
+		}
+
 		@Override
 		public Object getCacheValue(MOAttribute attribute, DataObject item, Object[] storage) {
 			return ((KnowledgeItem) item).getWrapper().tGetDataString("name") + "-appended";

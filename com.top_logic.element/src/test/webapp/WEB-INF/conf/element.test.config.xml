@@ -319,6 +319,25 @@
 								/>
 							</path>
 						</rule>
+						<rule id="TestSecurityCoverage_abstractParent"
+							inherit="true"
+							meta-element="TestSecurityCoverage:AbstractParent"
+						>
+							<path>
+								<singleton module="SecurityStructure"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_childOfAbstract"
+							inherit="true"
+							meta-element="TestSecurityCoverage:ChildOfAbstract"
+						>
+							<path>
+								<step
+									attribute="TestSecurityCoverage:AbstractParent#children"
+									inverse="true"
+								/>
+							</path>
+						</rule>
 					</rules>
 				</security-parents>
 			</instance>
@@ -395,6 +414,19 @@
 						<grant
 							operation="Read"
 							roles="TestSecurityCoverage.Reader"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:ConcreteParent">
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.RootCreator"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:ChildOfAbstract">
+						<!-- Delivered on the security root, the role parent of the abstract end type. -->
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.RootCreator"
 						/>
 					</class>
 					<class name="TestSecurityCoverage:DeadGrant">

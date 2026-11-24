@@ -61,6 +61,12 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 	/** Type whose role source is a role parent rule pointing to {@link #COVERED}. */
 	private static final String CHILD_OF_COVERED = MODULE + ":ChildOfCovered";
 
+	/**
+	 * Type whose role source is a role parent rule ending at an abstract type, whose concrete
+	 * specialization has the security root as role parent.
+	 */
+	private static final String CHILD_OF_ABSTRACT = MODULE + ":ChildOfAbstract";
+
 	/** Type with a role rule and only an attribute grant. */
 	private static final String PART_ONLY = MODULE + ":PartOnly";
 
@@ -242,6 +248,20 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 		assertTrue("The type has no role rule of its own.", coverage.roleRules().isEmpty());
 		assertEquals(1, coverage.roleParentRules().size());
 		assertNull("A type with a role parent rule decides for itself.", coverage.accessParent());
+	}
+
+	public void testRoleParentEndingAtAbstractType() {
+		TypeCoverage coverage = coverage(CHILD_OF_ABSTRACT);
+		assertEquals("A role delivered on a concrete specialization of the abstract end type takes effect.",
+			Set.of(), findingKinds(coverage));
+		assertEquals(CoverageStatus.COVERED, coverage.status());
+
+		SecurityCoverageAnalysis analysis = SecurityCoverageAnalysis.newInstance(Set.of(EXCLUDED_MODULE));
+		assertTrue(analysis.isLiveGrant(coverage.type(), SimpleBoundCommandGroup.READ,
+			BoundedRole.getRoleByName(ROLE_ROOT_CREATOR)));
+		assertFalse("A role delivered nowhere stays undeliverable.",
+			analysis.isLiveGrant(coverage.type(), SimpleBoundCommandGroup.READ,
+				BoundedRole.getRoleByName(ROLE_GHOST)));
 	}
 
 	public void testPartGrantCoversType() {

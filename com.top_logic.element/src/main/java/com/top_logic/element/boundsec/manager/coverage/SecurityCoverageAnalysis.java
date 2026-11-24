@@ -753,6 +753,14 @@ public class SecurityCoverageAnalysis {
 	 * hand would look undeliverable.
 	 * </p>
 	 *
+	 * <p>
+	 * An abstract type, for example the owner of a reference a role parent rule navigates
+	 * backwards, has no objects of its own: the rules of the {@link ElementAccessManager} are
+	 * registered for its concrete specializations only. At runtime the concrete type of the role
+	 * parent decides, therefore the role counts as delivered on an abstract type when it is
+	 * delivered on at least one of its concrete specializations.
+	 * </p>
+	 *
 	 * @param visited
 	 *        The types already inspected along the role parent chain, guarding against cycles.
 	 * @return Also <code>true</code> when the end of a role parent path cannot be determined
@@ -760,6 +768,14 @@ public class SecurityCoverageAnalysis {
 	 */
 	private boolean canDeliver(TLClass type, BoundedRole role, Set<TLClass> visited) {
 		if (!visited.add(type)) {
+			return false;
+		}
+		if (type.isAbstract()) {
+			for (TLClass specialization : TLModelUtil.getConcreteSpecializations(type)) {
+				if (canDeliver(specialization, role, visited)) {
+					return true;
+				}
+			}
 			return false;
 		}
 		if (_accessManager.canHaveRole(type, role) || isAssignedDirectly(type, role)) {

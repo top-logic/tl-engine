@@ -80,8 +80,8 @@ public class ConfigEquality extends EqualitySpecification<ConfigurationItem> {
 					return true;
 				}
 				if (left instanceof ConfiguredInstance<?> && right instanceof ConfiguredInstance<?>) {
-					left = ((ConfiguredInstance<?>) left).getConfig();
-					right = ((ConfiguredInstance<?>) right).getConfig();
+					left = configOf(left);
+					right = configOf(right);
 				}
 				if ((left instanceof ConfigurationItem) && (right instanceof ConfigurationItem)) {
 					ConfigurationItem itemLeft = (ConfigurationItem) left;
@@ -107,6 +107,9 @@ public class ConfigEquality extends EqualitySpecification<ConfigurationItem> {
 
 			@Override
 			int hashCode(Object object, ConfigEquality equalsSpec, Set<ConfigurationItem> stack) {
+				if (object instanceof ConfiguredInstance<?>) {
+					object = configOf(object);
+				}
 				if (!(object instanceof ConfigurationItem)) {
 					return object.hashCode();
 				}
@@ -136,6 +139,17 @@ public class ConfigEquality extends EqualitySpecification<ConfigurationItem> {
 				return 0;
 			}
 		};
+
+		/**
+		 * The object that a {@link ConfiguredInstance} is compared and hashed by.
+		 *
+		 * @return The {@link ConfiguredInstance#getConfig() configuration} of the given instance,
+		 *         or the instance itself, if it has no configuration.
+		 */
+		static Object configOf(Object instance) {
+			Object config = ((ConfiguredInstance<?>) instance).getConfig();
+			return config == null ? instance : config;
+		}
 
 		abstract boolean equals(Object left, Object right, ConfigEquality equalsSpec, Set<Set<ConfigurationItem>> stack);
 

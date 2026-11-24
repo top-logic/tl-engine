@@ -287,4 +287,9 @@ public class DB2Helper extends DBHelper
 		return dateFormat("'TIMESTAMP ('''yyyy-MM-dd-HH.mm.ss.SSS000'')");
 	}
 
+	@Override
+	public boolean supportsTransactionalDDL() {
+		return true;
+	}
+
 }

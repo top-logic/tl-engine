@@ -29,6 +29,7 @@ import com.top_logic.knowledge.search.RevisionQuery;
 import com.top_logic.knowledge.search.SetExpression;
 import com.top_logic.knowledge.service.db2.MOKnowledgeItem;
 import com.top_logic.knowledge.service.db2.UpdateChainLink;
+import com.top_logic.knowledge.service.db2.UpdateChainView;
 import com.top_logic.knowledge.service.merge.MergeConflictException;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
@@ -759,6 +760,33 @@ public class HistoryUtils {
 		Order order = order(attribute(BasicTypes.REVISION_TYPE_NAME, attributeName), true);
 		RevisionQuery<Revision> query = queryResolved(filter(allOfRevisionType, inRange), order, Revision.class);
 		return kb.compileQuery(query);
+	}
+
+	/**
+	 * Lets the given sub-session read at the current revision of the default
+	 * {@link KnowledgeBase} from now on.
+	 *
+	 * <p>
+	 * The sub-session sees everything committed so far, also by threads without a sub-session or
+	 * by other sub-sessions. The model events between its former and the current revision are not
+	 * delivered to it.
+	 * </p>
+	 *
+	 * <p>
+	 * An interaction that has already fixed its revision keeps it, see
+	 * {@link #updateSessionAndInteractionRevision(HistoryManager, TLSubSessionContext, UpdateChainLink)}.
+	 * </p>
+	 *
+	 * @param subSession
+	 *        The sub-session to move to the current revision.
+	 * @return The revision the sub-session reads at now.
+	 */
+	@FrameworkInternal
+	public static UpdateChainLink moveToCurrentRevision(TLSubSessionContext subSession) {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		UpdateChainLink current = ((UpdateChainView) kb.getUpdateChain()).current();
+		subSession.updateSessionRevision(kb.getHistoryManager(), current);
+		return current;
 	}
 
 	/**

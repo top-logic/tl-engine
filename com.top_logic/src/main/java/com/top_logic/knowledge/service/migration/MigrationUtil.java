@@ -1265,7 +1265,51 @@ public class MigrationUtil {
 		return migrationModules.get(migrationModules.size() - 1);
 	}
 
-	private static Map<String, Map<Version, MigrationConfig>> readMigrationScripts(Log log, List<String> modules)
+	/**
+	 * Builds the {@link MigrationInfo} of the given versions of an interrupted migration.
+	 *
+	 * @param log
+	 *        The error reporter. A version without migration is reported as error.
+	 * @param migrationScripts
+	 *        All known migrations indexed by module and version, see
+	 *        {@link #readMigrationScripts(Log, List)}.
+	 * @param plan
+	 *        The versions of the migrations to apply in their order.
+	 * @return The migration of the given versions, {@link MigrationInfo#NO_MIGRATION} after
+	 *         reporting an error.
+	 */
+	public static MigrationInfo resumedMigrations(Log log, Map<String, Map<Version, MigrationConfig>> migrationScripts,
+			List<Version> plan) {
+		List<MigrationConfig> migrations = new ArrayList<>(plan.size());
+		for (Version version : plan) {
+			Map<Version, MigrationConfig> moduleMigrations = migrationScripts.get(version.getModule());
+			MigrationConfig migration = moduleMigrations == null ? null : moduleMigrations.get(version);
+			if (migration == null) {
+				log.error("The interrupted migration contains the migration '" + toString(version)
+					+ "' that is unknown to this application. The migration was started by another application"
+					+ " version, which must complete it.");
+				return MigrationInfo.NO_MIGRATION;
+			}
+			migrations.add(migration);
+		}
+		log.info("Resuming interrupted migration:");
+		for (MigrationConfig m : migrations) {
+			log.info("\t" + m.getVersion().getModule() + ": " + m.getVersion().getName());
+		}
+		return MigrationInfo.migrations(false, migrations);
+	}
+
+	/**
+	 * Reads all migrations of the given modules.
+	 *
+	 * @param log
+	 *        The error reporter.
+	 * @param modules
+	 *        The migration modules to read.
+	 * @return The migrations indexed by module and version. Each module contains a migration
+	 *         without processors for its {@link #initialVersion(String) initial version}.
+	 */
+	public static Map<String, Map<Version, MigrationConfig>> readMigrationScripts(Log log, List<String> modules)
 			throws DatabaseAccessException {
 		Set<String> modulesSet = new HashSet<>(modules);
 		Map<String, Map<Version, MigrationConfig>> migrationsByModule = new HashMap<>();
@@ -1624,6 +1668,29 @@ public class MigrationUtil {
 			log.error("Unable to read migration scripts for modules: " + migrationModules, ex);
 			return MigrationInfo.NO_MIGRATION;
 		}
+		return relevantMigrations(log, migrationScripts, migrationModules, allowDowngrade, dataVersion);
+	}
+
+	/**
+	 * Builds a {@link MigrationInfo} that describes the migration from the given data version to
+	 * the version of the given migrations.
+	 * 
+	 * @param log
+	 *        The error reporter. The resulting migration is only valid, if no errors have been
+	 *        reported.
+	 * @param migrationScripts
+	 *        All known migrations indexed by module and version, see
+	 *        {@link #readMigrationScripts(Log, List)}.
+	 * @param migrationModules
+	 *        All migration modules in dependency order.
+	 * @param allowDowngrade
+	 *        Whether a data version newer than the known migrations is accepted.
+	 * @param dataVersion
+	 *        The version of the data to migrate.
+	 * @return The migration.
+	 */
+	public static MigrationInfo relevantMigrations(Log log, Map<String, Map<Version, MigrationConfig>> migrationScripts,
+			List<String> migrationModules, boolean allowDowngrade, Map<String, Version> dataVersion) {
 		Map<String, List<Version>> appVersion = getVersionsByModule(log, migrationScripts);
 		boolean downGrade = isDowngrade(log, appVersion, dataVersion);
 		List<MigrationConfig> relevantMigrations;

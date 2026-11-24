@@ -527,7 +527,9 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		context.checkErrors();
 		ChannelFactory factory = context.getInstance(config);
 		context.checkErrors();
-		return factory.createChannel(_context);
+		ViewChannel channel = factory.createChannel(_context);
+		factory.bindChannel(_context, channel);
+		return channel;
 	}
 
 	/**

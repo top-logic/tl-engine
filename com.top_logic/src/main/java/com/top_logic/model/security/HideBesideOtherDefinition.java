@@ -82,8 +82,14 @@ public class HideBesideOtherDefinition extends GenericFunction<FieldMode> {
 	 * type is without security - see {@link SecurityConfigurationService.TypeBasedAccessRights#isWithoutSecurity()}.
 	 *
 	 * <p>
-	 * The first argument is whether the type is without security, the others are those of
-	 * {@link HideBesideOtherDefinition}.
+	 * The arguments are whether the type is without security, the grants and the definition of the
+	 * access parent.
+	 * </p>
+	 *
+	 * <p>
+	 * A definition {@link AccessParentConfig#isRestricted(AccessParentConfig) restricted} to some
+	 * operations leaves the other operations to the grants of the type, so the grants are not
+	 * hidden beside it.
 	 * </p>
 	 */
 	public static class ForGrants extends HideBesideOtherDefinition {
@@ -92,6 +98,10 @@ public class HideBesideOtherDefinition extends GenericFunction<FieldMode> {
 		public FieldMode invoke(Object... args) {
 			if (args.length > 0 && Boolean.TRUE.equals(args[0])) {
 				return FieldMode.INVISIBLE;
+			}
+			if (args.length > 2 && args[2] instanceof OperationRestriction restriction
+				&& !restriction.getOperations().isEmpty()) {
+				return FieldMode.ACTIVE;
 			}
 			return super.invoke(Arrays.copyOfRange(args, Math.min(1, args.length), args.length));
 		}

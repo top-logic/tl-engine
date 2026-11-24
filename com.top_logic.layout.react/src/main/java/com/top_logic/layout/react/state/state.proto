@@ -1330,6 +1330,12 @@ message MenuState extends ControlState {
 		bool disabled;
 
 		/**
+		 * The text explaining the item: for a disabled item the reason it cannot be chosen,
+		 * otherwise the description of its command. Absent where there is nothing to explain.
+		 */
+		string tooltip;
+
+		/**
 		 * Whether the effect of the item's command is currently in force, marking the item as the
 		 * chosen one among its alternatives.
 		 */

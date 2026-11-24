@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments
+		helpID="ID_b83d1e07_5c4a_4f92_9e6b_2a7c0d8f1e45"
+		isSecurityMaster="true"
+		tabLabel="test.tab"
+	>
+		<components>
+			<component class="com.top_logic.mig.html.layout.SimpleBoundComponent"
+				name="child"
+				securityObject="model"
+			/>
+		</components>
+	</arguments>
+</config:template-call>

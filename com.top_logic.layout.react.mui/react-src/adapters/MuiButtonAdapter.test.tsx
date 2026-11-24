@@ -440,3 +440,29 @@ describe('TLButton with a badge as MUI Button', () => {
   });
 });
 
+describe('buttons in a table row (ButtonDefaults small)', () => {
+  const ROW: ButtonDefaultsValue = { small: true };
+  const small = () => screen.getByRole('button').classList.contains('MuiIconButton-sizeSmall');
+
+  it('draws an icon button with an image small', () => {
+    mountInContainer({ label: 'Bearbeiten', image: IMAGE_EDIT, displayMode: 'icon-only' }, ROW);
+    expect(small()).toBe(true);
+  });
+
+  it('draws an icon button outside a row as it is', () => {
+    mountButton({ label: 'Bearbeiten', image: IMAGE_EDIT, displayMode: 'icon-only' });
+    expect(small()).toBe(false);
+  });
+
+  it('draws a button with a label as it is', () => {
+    mountInContainer({ label: 'Bearbeiten', image: IMAGE_EDIT, displayMode: 'icon-label' }, ROW);
+    expect(screen.getByRole('button').classList).not.toContain('MuiButton-sizeSmall');
+  });
+
+  it('draws an icon-only button without an image as a label button, not small', () => {
+    mountInContainer({ label: 'Bearbeiten', displayMode: 'icon-only' }, ROW);
+    expect(screen.getByRole('button').classList).not.toContain('MuiButton-sizeSmall');
+    expect(screen.getByRole('button').classList).not.toContain('MuiIconButton-sizeSmall');
+  });
+});
+

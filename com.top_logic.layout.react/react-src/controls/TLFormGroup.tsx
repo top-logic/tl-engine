@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, rootClassName, usePart } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, rootClassName, usePart, ButtonDefaults } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 const { useCallback } = React;
@@ -75,9 +75,11 @@ const TLFormGroup: React.FC<TLCellProps> = ({ controlId }) => {
           )}
           {headerActions.length > 0 && (
             <div className="tl-form-group__actions">
-              {headerActions.map((action, i) => (
-                <TLChild key={i} control={action} />
-              ))}
+              <ButtonDefaults appearance="ghost" small>
+                {headerActions.map((action, i) => (
+                  <TLChild key={i} control={action} />
+                ))}
+              </ButtonDefaults>
             </div>
           )}
         </div>

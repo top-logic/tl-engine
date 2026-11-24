@@ -29,9 +29,11 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.model.TLAssociationEnd;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLProperty;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DynamicVisibility;
@@ -46,9 +48,9 @@ import com.top_logic.util.model.ModelService;
 
 /**
  * Test of {@link ModelEditAction} creating references of a given kind with an opposite reference,
- * refusing an attribute with the name of a system column, and adding and removing generalizations
- * of a class, and of the visibility of the reference kind and opposite fields of the "new
- * attribute" dialog.
+ * refusing an attribute with the name of a system column, adding and removing generalizations
+ * of a class (also by deleting a generalization link), deleting model parts, and of the
+ * visibility of the reference kind and opposite fields of the "new attribute" dialog.
  */
 @SuppressWarnings("javadoc")
 public class TestModelEditAction extends TestCase {
@@ -56,6 +58,10 @@ public class TestModelEditAction extends TestCase {
 	private static final String NEW_ATTRIBUTE = "tl.devtools:NewAttribute";
 
 	private static final String NEW_GENERALIZATION = "tl.devtools:NewGeneralization";
+
+	private static final String GENERALIZATION_LINK = "tl.devtools:Generalization";
+
+	private static final String SPECIALIZATION = "specialization";
 
 	private static final String REFERENCE_KIND = "tl.devtools:ReferenceKind";
 
@@ -205,6 +211,33 @@ public class TestModelEditAction extends TestCase {
 		});
 	}
 
+	public void testDeleteGeneralizationLink() {
+		inTestModule((owner, target, enumeration) -> {
+			TLClass other = TLModelUtil.addClass(owner.getModule(), "Other");
+			addGeneralization(owner, target);
+			addGeneralization(owner, other);
+
+			assertSame("The specialization is what the link belonged to.", owner,
+				execute(Mode.DELETE, null, generalizationLink(owner, target)));
+			assertEquals(List.of(other), owner.getGeneralizations());
+			assertNotNull("Only the link is removed, not the generalized class.",
+				owner.getModule().getType("Target"));
+		});
+	}
+
+	public void testDeleteReturnsWhatTheDeletedPartBelongedTo() {
+		inTestModule((owner, target, enumeration) -> {
+			TLModule module = owner.getModule();
+			TLProperty property = TLModelUtil.addProperty(owner, "prop", TLModelUtil.findType("tl.core:String"));
+			TLClassifier classifier = TLModelUtil.addClassifier(enumeration, "first");
+
+			assertSame("The owner of an attribute.", owner, execute(Mode.DELETE, null, property));
+			assertSame("The enumeration of a classifier.", enumeration, execute(Mode.DELETE, null, classifier));
+			assertSame("The module of a type.", module, execute(Mode.DELETE, null, target));
+			assertNull("Nothing for a module.", execute(Mode.DELETE, null, module));
+		});
+	}
+
 	public void testCyclicGeneralizationRefused() {
 		inTestModule((owner, target, enumeration) -> {
 			addGeneralization(owner, target);
@@ -314,6 +347,14 @@ public class TestModelEditAction extends TestCase {
 			TransientObjectFactory.INSTANCE.createObject((TLClass) TLModelUtil.findType(NEW_GENERALIZATION));
 		input.tUpdateByName(GENERALIZATION, generalization);
 		return execute(Mode.ADD_GENERALIZATION, specialization, input);
+	}
+
+	private static TLObject generalizationLink(TLClass specialization, TLClass generalization) {
+		TLObject link =
+			TransientObjectFactory.INSTANCE.createObject((TLClass) TLModelUtil.findType(GENERALIZATION_LINK));
+		link.tUpdateByName(SPECIALIZATION, specialization);
+		link.tUpdateByName(GENERALIZATION, generalization);
+		return link;
 	}
 
 	private static Object execute(Mode mode, Object container, Object input) {

@@ -37,6 +37,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link CommandHandler} that undoes the newest real change in the change log window of its
@@ -46,6 +47,13 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * The target model is interpreted as a subtree root. A {@code null} model undoes the newest
  * change across the whole application.
  * </p>
+ *
+ * <p>
+ * The change set is {@link ChangeSetRestriction restricted} to what the current user may see. If
+ * the user may not see all of it, the command is refused with an error message.
+ * </p>
+ *
+ * @see ChangeSetReverter#checkComplete(ChangeSet)
  */
 @InApp
 public class UndoCommandHandler extends AbstractCommandHandler implements WithPostCreateActions {
@@ -121,7 +129,8 @@ public class UndoCommandHandler extends AbstractCommandHandler implements WithPo
 		Config cfg = config();
 
 		ChangeSet target =
-			ChangeSetReverter.findUndoCandidate(root, cfg, cfg.getWindowSize(), cfg.getIncludeSubtree());
+			ChangeSetReverter.findUndoTarget(root, cfg, cfg.getWindowSize(), cfg.getIncludeSubtree(),
+				TLContext.currentUser());
 		if (target == null) {
 			return HandlerResult.DEFAULT_RESULT;
 		}

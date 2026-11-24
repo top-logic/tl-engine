@@ -40,7 +40,7 @@ import com.top_logic.util.model.ModelService;
 /**
  * {@link ViewAction} that mutates the application model from the model editor: creates a module,
  * type (class or enumeration) or attribute, adds or removes a generalization of a class, or deletes a
- * model part.
+ * model part or generalization link.
  *
  * <p>
  * The mutating operations create their result through the {@link TLModelUtil} primitives and return
@@ -86,6 +86,15 @@ public class ModelEditAction implements ViewAction {
 	/** Transient input attribute holding the class to add as generalization. */
 	private static final String GENERALIZATION = "generalization";
 
+	/**
+	 * Qualified name of the transient type standing for a generalization link between two classes,
+	 * with the attributes {@link #SPECIALIZATION} and {@link #GENERALIZATION}.
+	 */
+	private static final String GENERALIZATION_TYPE = "tl.devtools:Generalization";
+
+	/** Attribute of a {@link #GENERALIZATION_TYPE} holding the specialized class. */
+	private static final String SPECIALIZATION = "specialization";
+
 	/** Classifier name of {@code tl.devtools:ReferenceKind} selecting a composition. */
 	private static final String KIND_COMPOSITION = "composition";
 
@@ -114,7 +123,17 @@ public class ModelEditAction implements ViewAction {
 		/** Remove the class passed as the action input from the generalizations of the container class. */
 		REMOVE_GENERALIZATION,
 
-		/** Delete the model part passed as the action input. */
+		/**
+		 * Delete the model part passed as the action input, or remove the generalization link a
+		 * {@code tl.devtools:Generalization} input stands for.
+		 *
+		 * <p>
+		 * The result is what the deleted element belonged to, so that a chain writing it to the
+		 * selection selects it in place of the deleted element: the module of a type, the owner
+		 * type of an attribute or reference, the enumeration of a classifier, the specialization
+		 * of a generalization link, and nothing for a module.
+		 * </p>
+		 */
 		DELETE;
 	}
 
@@ -391,11 +410,39 @@ public class ModelEditAction implements ViewAction {
 	}
 
 	/**
-	 * Deletes the model part passed as the action input (recursively, with its parts).
+	 * Deletes the model part passed as the action input (recursively, with its parts), or removes
+	 * the generalization link an input of the type {@link #GENERALIZATION_TYPE} stands for.
+	 *
+	 * @return What the deleted element belonged to, see {@link Mode#DELETE}.
 	 */
 	private Object delete(Object input) {
 		if (input instanceof TLModelPart part) {
+			Object container = containerOf(part);
 			TLModelUtil.deleteRecursive(part);
+			return container;
+		} else if (input instanceof TLObject link
+				&& GENERALIZATION_TYPE.equals(TLModelUtil.qualifiedName(link.tType()))) {
+			if (link.tValueByName(SPECIALIZATION) instanceof TLClass specialization) {
+				specialization.getGeneralizations().remove(link.tValueByName(GENERALIZATION));
+				return specialization;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * The model part the given one belongs to: the module of a type, the owner of an attribute or a
+	 * classifier, nothing for a module or any other part.
+	 */
+	private static Object containerOf(TLModelPart part) {
+		if (part instanceof TLType type) {
+			return type.getModule();
+		}
+		if (part instanceof TLStructuredTypePart attribute) {
+			return attribute.getOwner();
+		}
+		if (part instanceof TLClassifier classifier) {
+			return classifier.getOwner();
 		}
 		return null;
 	}

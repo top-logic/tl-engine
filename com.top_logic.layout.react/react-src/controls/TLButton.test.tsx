@@ -11,9 +11,12 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 // The bridge first, as the page loads it: the bridge entry reaches it through modules that the SSE client imports
 // as well, and these must see the mocked SSE client.
 import { MOUNT_ATTRIBUTE, findMountPoint, mount, unmount } from '../bridge/tl-react-bridge';
-import { register, registerPart } from 'tl-react-bridge';
+import { React, ButtonDefaults, register, registerPart } from 'tl-react-bridge';
+import type { TLCellProps } from 'tl-react-bridge';
 import TLButton from './TLButton';
+import TLAudioPlayer from './TLAudioPlayer';
 import ButtonPart from './button/ButtonPart';
+import MenuTriggerPart from './button/MenuTriggerPart';
 import BadgePart from './chip/BadgePart';
 
 declare global {
@@ -39,6 +42,14 @@ beforeAll(() => {
   registerPart('Button', ButtonPart);
   registerPart('Badge', BadgePart);
   register('TLButton', TLButton);
+  register('RowTrigger', ({ controlId }: TLCellProps) => (
+    <ButtonDefaults small><MenuTriggerPart id={controlId} appearance="ghost" expanded={false} label={LABEL} icon={ICON} /></ButtonDefaults>
+  ));
+  register('HoverTrigger', ({ controlId }: TLCellProps) => (
+    <MenuTriggerPart id={controlId} appearance="ghost" expanded={false} label={LABEL} icon={ICON} data-tl-trigger="hover" />
+  ));
+  register('RowButton', (props: TLCellProps) => <ButtonDefaults small><TLButton {...props} /></ButtonDefaults>);
+  register('RowPlayer', (props: TLCellProps) => <ButtonDefaults small><TLAudioPlayer {...props} /></ButtonDefaults>);
 });
 
 afterEach(async () => {
@@ -55,10 +66,14 @@ afterAll(async () => {
 });
 
 /** Mounts a button whose commands wait for their answer until the test releases it. */
-function mountButton(state: Record<string, unknown> = {}): void {
+function mountButton(state: Record<string, unknown> = {}, component = 'TLButton'): void {
   sent = [];
   answers = [];
-  vi.stubGlobal('fetch', vi.fn((_url: string, init?: RequestInit) => {
+  vi.stubGlobal('fetch', vi.fn((url: string, init?: RequestInit) => {
+    if (url.includes('react-api/i18n')) {
+      // Translations requested before the mount are sent once the mount makes the context path known.
+      return Promise.resolve(new Response('{}', { status: 200 }));
+    }
     sent.push(JSON.parse(String(init?.body ?? '{}')).command);
     return new Promise<Response>((resolve) => {
       answers.push(() => resolve(new Response('{"success":true}', { status: 200 })));
@@ -67,7 +82,7 @@ function mountButton(state: Record<string, unknown> = {}): void {
   const element = document.createElement('div');
   element.setAttribute(MOUNT_ATTRIBUTE, ROOT_ID);
   document.body.appendChild(element);
-  act(() => mount(ROOT_ID, 'TLButton', { label: LABEL, ...state }, 'w', '/ctx'));
+  act(() => mount(ROOT_ID, component, { label: LABEL, ...state }, 'w', '/ctx'));
 }
 
 /** Waits until the command channel has handed all queued commands to fetch, and their answers back. */
@@ -186,5 +201,52 @@ describe('TLButton with a badge', () => {
     expect(badge()).toBeNull();
     expect(button().querySelector('.tl-icon-badge')).toBeNull();
     expect(button().getAttribute('aria-label')).toBe(LABEL);
+  });
+});
+
+describe('TLButton in a table row (ButtonDefaults small)', () => {
+  const small = () => button().classList.contains('tl-button--sm');
+
+  it('draws an icon button with an image small', () => {
+    mountButton({ image: ICON, displayMode: 'icon-only' }, 'RowButton');
+    expect(small()).toBe(true);
+  });
+
+  it('draws a button with a label as it is', () => {
+    mountButton({ image: ICON, displayMode: 'icon-label' }, 'RowButton');
+    expect(small()).toBe(false);
+  });
+
+  it('draws an icon-only button without an image as a label button, not small', () => {
+    mountButton({ displayMode: 'icon-only' }, 'RowButton');
+    expect(small()).toBe(false);
+  });
+
+  it('draws an icon button outside a row as it is', () => {
+    mountButton({ image: ICON, displayMode: 'icon-only' });
+    expect(small()).toBe(false);
+  });
+
+  it('draws the icon trigger of a menu or popover small, too', () => {
+    mountButton({}, 'RowTrigger');
+    expect(small()).toBe(true);
+  });
+
+  it('keeps a media button at its size: it is the exception that needs a surface', () => {
+    mountButton({}, 'RowPlayer');
+    const play = document.querySelector<HTMLButtonElement>('.tl-button--icon');
+    expect(play).not.toBeNull();
+    expect(play!.classList.contains('tl-button--sm')).toBe(false);
+  });
+
+  it('names an icon trigger by its label and shows the label as tooltip, except on a trigger opening on hover', () => {
+    mountButton({}, 'RowTrigger');
+    expect(button().hasAttribute('data-tooltip')).toBe(true);
+    act(() => unmount(ROOT_ID));
+    findMountPoint(ROOT_ID)?.remove();
+
+    mountButton({}, 'HoverTrigger');
+    expect(button().getAttribute('aria-label')).toBe(LABEL);
+    expect(button().hasAttribute('data-tooltip')).toBe(false);
   });
 });

@@ -197,6 +197,16 @@
 					navigate="true"
 					type="ChangeSet"
 				/>
+				<property name="incomplete"
+					mandatory="true"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<default-value>
+							<boolean/>
+						</default-value>
+					</annotations>
+				</property>
 				<property name="isRevert"
 					type="tl.core:Boolean"
 				>

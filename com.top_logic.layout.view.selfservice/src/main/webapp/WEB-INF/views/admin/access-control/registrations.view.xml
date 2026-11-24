@@ -3,9 +3,10 @@
 <!--
 	The administration of the registrations (tl.security.selfservice:Registration): every account a
 	visitor registered without an invitation, newest first, with the state of its approval, and
-	approving a pending registration, one whose account is still locked. Approving unlocks the account and notifies the person by mail
-	(registrationApprove). A pending registration is rejected by deleting its account in "Accounts",
-	which deletes the registration with it.
+	approving or rejecting a pending registration, one whose account is still locked. Approving
+	unlocks the account and notifies the person by mail (registrationApprove). Rejecting deletes the
+	account with its personal data, and with them the registration, without a mail
+	(registrationReject).
 
 	Ids for overlays: the panel "list-panel" and the table "table".
 -->
@@ -61,6 +62,34 @@
 						</if>
 					</with-result>
 				</execute-script>
+			</generic-command>
+			<generic-command name="reject-registration"
+				image="css:bi bi-person-x"
+				inputs="selectedRegistration"
+				observed-types="tl.accounts:Person"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Reject</en>
+					<de>Zurückweisen</de>
+				</label>
+				<access>
+					<operation name="Write"
+						object="$selectedRegistration"
+						type="tl.security.selfservice:Registration"
+					/>
+				</access>
+				<executability>
+					<null-input-disabled/>
+					<disabled-if expr="if($selectedRegistration.get(`tl.security.selfservice:Registration#state`) == `tl.security.selfservice:RegistrationState#APPROVED`, #('The registration has been approved already, or its account has been unlocked.'@en, 'Die Registrierung ist bereits freigegeben, oder ihr Konto wurde entsperrt.'@de), null)"/>
+				</executability>
+				<confirm expr="#('Reject the registration of {0}? The account and its personal data are deleted.'@en, 'Die Registrierung von {0} zurückweisen? Das Konto und seine Personendaten werden gelöscht.'@de).fill($selectedRegistration.get(`tl.security.selfservice:Registration#email`))"/>
+				<with-transaction>
+					<execute-script function="registrationReject($selectedRegistration)"/>
+				</with-transaction>
+				<write-channel name="selectedRegistration"
+					clear="true"
+				/>
 			</generic-command>
 		</commands>
 		<table id="table"

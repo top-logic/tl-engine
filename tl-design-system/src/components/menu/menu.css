@@ -79,6 +79,21 @@
   pointer-events: none;
 }
 
+/* Ein Eintrag, der eine Seite weiter führt (Z9, #30102): Beschriftung links, am Zeilenende der Wert leise und das Chevron.
+   Fläche, Zeigen, Drücken und Fokus kommen vom Eintrag; der Modifier malt keine eigene. Wert und Chevron schrumpfen nicht,
+   die Beschriftung gibt nach (Ellipse). Das Chevron ist ein Icon mit tl-icon-sm in der Farbe des Griffs der Spaltenwahl. */
+.tl-menu__item--nav .tl-menu__value {
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  color: var(--tl-text-secondary);
+  white-space: nowrap;
+}
+
+.tl-menu__item--nav .tl-menu__chevron {
+  flex-shrink: 0;
+  color: var(--tl-icon-secondary);
+}
+
 .tl-menu__label {
   flex: 1 1 auto;
   min-width: 0;

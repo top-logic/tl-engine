@@ -18,8 +18,9 @@ import com.top_logic.security.selfservice.model.Registration;
  * TL-Script functions for accounts registered by visitors without an invitation.
  *
  * <p>
- * Functions changing data open a transaction of their own, so they are called from a command
- * without transaction.
+ * {@link #approve(Registration)} opens a transaction of its own, so it is called from a command
+ * without transaction. {@link #reject(Registration)} changes data in the transaction of its caller,
+ * so it is called from a command with transaction.
  * </p>
  *
  * @implNote Every public static method here is a TL-Script function named by the
@@ -65,7 +66,7 @@ public class RegistrationFunctions extends TLScriptFunctions {
 	 * Approves a pending registration: unlocks the registered account and sends the approval mail.
 	 *
 	 * <p>
-	 * An approved registration is refused.
+	 * Fails for a registration that is not pending.
 	 * </p>
 	 *
 	 * @param registration
@@ -78,6 +79,25 @@ public class RegistrationFunctions extends TLScriptFunctions {
 	@Label("Approve registration")
 	public static Object approve(@Mandatory Registration registration) {
 		return SelfRegistration.getInstance().approve(registration);
+	}
+
+	/**
+	 * Rejects a pending registration: deletes the registered account with its personal data, and
+	 * with them the registration. The person gets no mail.
+	 *
+	 * <p>
+	 * Fails for a registration that is not pending, or if the current user may not delete the
+	 * account. Must be called within a transaction.
+	 * </p>
+	 *
+	 * @param registration
+	 *        The registration to reject.
+	 *
+	 * @implNote Calls {@link SelfRegistration#reject(Registration)}.
+	 */
+	@Label("Reject registration")
+	public static void reject(@Mandatory Registration registration) {
+		SelfRegistration.getInstance().reject(registration);
 	}
 
 	/**

@@ -1,5 +1,5 @@
 import React from 'react';
-import { getApiBase, getWindowName } from './page-context';
+import { getApiBase, getWindowName, isContextKnown, onMountContext } from './page-context';
 
 /**
  * Client-side i18n service for React controls.
@@ -7,6 +7,10 @@ import { getApiBase, getWindowName } from './page-context';
  * Lazily fetches translations from the server and caches them. Uses microtask-batched
  * fetching so that multiple components requesting keys in the same render cycle trigger
  * only a single HTTP request.
+ *
+ * The first request reads the context path and the window name of the page at once (see
+ * page-context.ts), also before the first mount(). Only on a page whose body does not name its
+ * context, keys wait until the first mount() gives a context path, and are then requested together.
  */
 
 /** Resolved translations keyed by resource key. */
@@ -33,6 +37,15 @@ let _cacheVersion = 0;
 
 /** React re-render callbacks registered via useSyncExternalStore. */
 const _subscribers = new Set<() => void>();
+
+// A mount() can make the context known: the keys that wait for it go out in the next microtask,
+// together with the keys that the components of the same mount() request.
+onMountContext(() => {
+  if (_pending.size > 0 && !_fetchScheduled) {
+    _fetchScheduled = true;
+    queueMicrotask(flushPending);
+  }
+});
 
 function notifySubscribers(): void {
   for (const cb of _subscribers) {
@@ -62,7 +75,9 @@ function scheduleFetch(key: string): void {
 
 async function flushPending(): Promise<void> {
   _fetchScheduled = false;
-  if (_pending.size === 0) {
+  if (_pending.size === 0 || !isContextKnown()) {
+    // Without a known context path, the request would go to an address relative to the page. The
+    // keys stay pending until a mount() gives the context path.
     return;
   }
 

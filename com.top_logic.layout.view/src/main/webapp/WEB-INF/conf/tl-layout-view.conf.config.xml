@@ -224,6 +224,30 @@
 				<targets/>
 			</instance>
 		</config>
+
+		<!--
+			The latest commits of the logged-in user, restricted to what the user may see
+			(views/recent-changes.view.xml). The change log is not filtered by access rights, so
+			changeLog() runs without security checks, and changeSetRestrict() removes the changes the
+			user may not see, marking such a commit as incomplete. The check is the right to read the
+			own account, which every user holds (role PersonalProfile).
+		-->
+		<config service-class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
+			<instance class="com.top_logic.model.search.configured.ConfiguredTLScriptFunctions">
+				<scripts>
+					<privileged-script name="changeLogOfCurrentUser"
+						command-group="Read"
+						security-object="currentUser()"
+					>
+						<parameters>
+							<parameter name="maxEntries"/>
+						</parameters>
+						<implementation>changeLog(null, $maxEntries, true, null, null, currentUser())
+							.map(cs -> changeSetRestrict($cs, currentUser()))</implementation>
+					</privileged-script>
+				</scripts>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

@@ -33,8 +33,9 @@ import com.top_logic.layout.view.form.StateHandler;
  * <p>
  * The forwarded question is the {@link ViewChannel#dirtyHandlers()} of the target, independent of
  * the value the target receives: the value the listener computes is not known before the source is
- * written. The forwarding must not form a cycle - a target that forwards back to its source asks
- * itself endlessly.
+ * written. The forwardings may form a cycle - a channel derived from a selection channel that is
+ * an input of the element writing that selection forwards back to it: a question asks each channel
+ * once, see {@link VetoCollector}.
  * </p>
  */
 public class VetoForwarder implements VetoListener {

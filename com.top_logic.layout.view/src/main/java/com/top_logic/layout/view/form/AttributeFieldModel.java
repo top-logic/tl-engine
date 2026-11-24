@@ -15,6 +15,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.TLValueNormalizer;
 import com.top_logic.model.annotate.util.ValueNormalizer;
+import com.top_logic.model.fallback.StorageWithFallback;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.TracingScope;
 
@@ -273,19 +274,43 @@ public class AttributeFieldModel extends BoundFieldModel {
 	 * A value written through an override of the attribute or the attribute it overrides is the
 	 * value of the attribute as well.
 	 * </p>
+	 *
+	 * <p>
+	 * The field of an attribute with a {@link StorageWithFallback} also follows the changes of the
+	 * {@link StorageWithFallback#getStorageAttr() storage attribute} holding its explicit value:
+	 * the overlay announces the attribute itself only when its value in force changes, which it
+	 * does not when an explicit value equal to the fallback is set or removed. Whether the
+	 * attribute was written again while this model wrote it is decided from the explicit value
+	 * announced for the storage attribute, since that is the value this model writes.
+	 * </p>
 	 */
 	private void onOverlayValueChanged(TLObjectOverlay overlay, TLStructuredTypePart part, Object oldValue,
 			Object newValue) {
-		if (overlay != _observedOverlay || part.getDefinition() != _part.getDefinition()) {
+		if (overlay != _observedOverlay) {
+			return;
+		}
+		boolean ownPart = part.getDefinition() == _part.getDefinition();
+		boolean storagePart = !ownPart && isStorageAttribute(part);
+		if (!ownPart && !storagePart) {
 			return;
 		}
 		if (_writing) {
-			if (!Objects.equals(newValue, _writtenValue)) {
+			boolean announcesWrittenValue = storagePart || FallbackPlaceholder.storage(_part) == null;
+			if (announcesWrittenValue && !Objects.equals(newValue, _writtenValue)) {
 				_rewritten = true;
 			}
 			return;
 		}
 		refreshFromObject();
+	}
+
+	/**
+	 * Whether the given attribute holds the explicit value of the attribute of this model, see
+	 * {@link StorageWithFallback#getStorageAttr()}.
+	 */
+	private boolean isStorageAttribute(TLStructuredTypePart part) {
+		StorageWithFallback storage = FallbackPlaceholder.storage(_part);
+		return storage != null && part.getDefinition() == storage.getStorageAttr().getDefinition();
 	}
 
 	@Override

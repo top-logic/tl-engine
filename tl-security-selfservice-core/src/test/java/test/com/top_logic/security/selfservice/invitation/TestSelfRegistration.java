@@ -32,6 +32,7 @@ import com.top_logic.base.accesscontrol.LoginFailuresModule;
 import com.top_logic.base.mail.MailSenderService;
 import com.top_logic.base.mail.MailText;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
+import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.config.ApplicationConfig;
@@ -47,6 +48,7 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.security.captcha.CaptchaService;
@@ -282,7 +284,7 @@ public class TestSelfRegistration extends BasicTestCase {
 	}
 
 	/**
-	 * Deleting the account of a registration, e.g. to reject a pending registration, deletes the
+	 * Deleting the account of a registration, e.g. in the account administration, deletes the
 	 * registration.
 	 */
 	public void testDeletingAccountDeletesRegistration() throws Exception {
@@ -302,6 +304,62 @@ public class TestSelfRegistration extends BasicTestCase {
 		assertTrue(registrations(email).isEmpty());
 		assertNull(Person.byName(kb(), email));
 		assertNull(SelfRegistration.pendingRegistration(null));
+	}
+
+	/**
+	 * Rejecting a pending registration deletes the account, its user data and the registration;
+	 * the address can be registered again, and no mail is sent.
+	 */
+	public void testReject() throws Exception {
+		configure(SelfRegistrationMode.APPROVAL, false, null);
+
+		String email = "reject@example.com";
+		Person account = register(email);
+		Registration record = SelfRegistration.pendingRegistration(account);
+		assertNotNull(record);
+		UserInterface user = account.getUser();
+		RecordedMails.take();
+
+		reject(record);
+
+		assertFalse(account.tValid());
+		assertFalse(record.tValid());
+		assertTrue("Account without persistent user data: " + user, user instanceof TLObject);
+		assertFalse("User data of the account not deleted.", ((TLObject) user).tValid());
+		assertNull(Person.byName(kb(), email));
+		assertTrue(Person.allByEMail(email).isEmpty());
+		assertTrue(registrations(email).isEmpty());
+		assertTrue(RecordedMails.take().isEmpty());
+
+		Person again = register(email);
+		assertNotNull(SelfRegistration.pendingRegistration(again));
+	}
+
+	/**
+	 * An approved registration, or one whose account has been unlocked, cannot be rejected; nothing
+	 * is deleted.
+	 */
+	public void testRejectNotPendingRefused() throws Exception {
+		configure(SelfRegistrationMode.DIRECT, false, null);
+		String approvedAddress = "reject-approved@example.com";
+		Person approved = register(approvedAddress);
+		Registration approvedRecord = registrationOf(approved);
+		assertRefused(I18NConstants.ERROR_REGISTRATION_NOT_PENDING, () -> reject(approvedRecord));
+		assertTrue(approved.tValid());
+		assertTrue(approvedRecord.tValid());
+
+		configure(SelfRegistrationMode.APPROVAL, false, null);
+		String unlockedAddress = "reject-unlocked@example.com";
+		Person unlocked = register(unlockedAddress);
+		Registration unlockedRecord = SelfRegistration.pendingRegistration(unlocked);
+		try (Transaction tx = kb().beginTransaction(ResKey.text("Unlock account"))) {
+			unlocked.setLocked(false);
+			tx.commit();
+		}
+		assertRefused(I18NConstants.ERROR_REGISTRATION_NOT_PENDING, () -> reject(unlockedRecord));
+		assertTrue(unlocked.tValid());
+		assertTrue(unlockedRecord.tValid());
+		assertSame(unlocked, Person.byName(kb(), unlockedAddress));
 	}
 
 	/**
@@ -541,6 +599,17 @@ public class TestSelfRegistration extends BasicTestCase {
 		String name = "registration-approver";
 		_accounts.add(name);
 		return TestPerson.createPerson(name);
+	}
+
+	/**
+	 * Rejects the given registration in a transaction of its own; the transaction is rolled back if
+	 * the rejection fails.
+	 */
+	private static void reject(Registration registration) {
+		try (Transaction tx = kb().beginTransaction(ResKey.text("Reject registration"))) {
+			registration().reject(registration);
+			tx.commit();
+		}
 	}
 
 	private Person register(String email) {

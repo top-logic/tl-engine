@@ -31,7 +31,9 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.ButtonAppearance;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
+import com.top_logic.layout.react.control.button.ButtonSize;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.CommandTrigger;
@@ -1494,6 +1496,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		});
 		button.setImage(Icons.COMPOSITION_TABLE_DETAIL);
 		button.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+		button.setAppearance(ButtonAppearance.GHOST);
+		button.setSize(ButtonSize.SMALL);
 		return button;
 	}
 
@@ -1790,6 +1794,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		});
 		button.setImage(Icons.COMPOSITION_TABLE_DELETE);
 		button.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
+		button.setAppearance(ButtonAppearance.GHOST);
+		button.setSize(ButtonSize.SMALL);
 		return button;
 	}
 

@@ -24,6 +24,7 @@ import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.dnd.DropVerdict;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.command.DisabledIf;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActionChain;
@@ -53,7 +54,8 @@ import com.top_logic.tool.execution.ExecutableState;
  * declared drop is told about its location is fixed by its {@link DropSignature}: the objects the
  * location refers to, which the refusal function and the action chain receive as named arguments
  * besides the dragged objects (see {@link DropArguments}), and which are written to the drop's
- * channels before its action chain runs.
+ * channels before its action chain runs. A drop with an {@link Drop#input() input} adds its value
+ * to these arguments.
  * </p>
  *
  * <p>
@@ -99,10 +101,24 @@ public class DropBinding implements DropTarget {
 	 * @param names
 	 *        The names of the {@link DropArguments arguments} of the drop, see
 	 *        {@link DropArguments#names(DropConfig, DropSignature)}.
+	 * @param input
+	 *        The current value of the {@link DropConfig#getInput() input} of the drop, asked anew on
+	 *        every use; the refusal function and the action chain see it as the last of the objects
+	 *        the drop refers to, after those of the signature. {@code null} for a drop without
+	 *        input.
 	 */
 	public record Drop(AcceptedKinds accepted, DropSignature signature, Map<DropReference, ViewChannel> channels,
 			List<ViewAction> actions, Supplier<ExecutableState> executability, ViewExecutabilityRule targetRule,
-			BiFunction<List<?>, List<?>, Object> refuseIf, List<String> names) {
+			BiFunction<List<?>, List<?>, Object> refuseIf, List<String> names, Supplier<?> input) {
+
+		/**
+		 * Creates a {@link Drop} without input.
+		 */
+		public Drop(AcceptedKinds accepted, DropSignature signature, Map<DropReference, ViewChannel> channels,
+				List<ViewAction> actions, Supplier<ExecutableState> executability, ViewExecutabilityRule targetRule,
+				BiFunction<List<?>, List<?>, Object> refuseIf, List<String> names) {
+			this(accepted, signature, channels, actions, executability, targetRule, refuseIf, names, null);
+		}
 
 		/**
 		 * Creates a {@link Drop} whose arguments have their default names.
@@ -158,9 +174,33 @@ public class DropBinding implements DropTarget {
 				}
 			}
 			if (refuseIf != null) {
-				return reasonOf(DisabledIf.reasonState(refuseIf.apply(objects, signature.valuesAt(location))));
+				return reasonOf(DisabledIf.reasonState(refuseIf.apply(objects, referencesAt(location))));
 			}
 			return null;
+		}
+
+		/**
+		 * The objects the drop refers to at the given location: the values of the
+		 * {@link #signature() signature's} references, followed by the value of the
+		 * {@link #input() input}, if there is one.
+		 */
+		List<Object> referencesAt(DropLocation location) {
+			List<Object> result = signature.valuesAt(location);
+			if (input != null) {
+				result.add(input.get());
+			}
+			return result;
+		}
+
+		/**
+		 * The arguments the action chain runs with for a drop of the given objects at the given
+		 * location.
+		 */
+		ActionArguments arguments(List<?> objects, DropLocation location) {
+			List<Object> values = new ArrayList<>();
+			values.add(objects);
+			values.addAll(referencesAt(location));
+			return ActionArguments.of(names, values, names.get(0));
 		}
 
 		/**
@@ -373,8 +413,7 @@ public class DropBinding implements DropTarget {
 				return input;
 			});
 		}
-		ViewActionChain.run(_context, actions,
-			DropArguments.arguments(drop.names(), drop.signature(), objects, location), null);
+		ViewActionChain.run(_context, actions, drop.arguments(objects, location), null);
 	}
 
 }

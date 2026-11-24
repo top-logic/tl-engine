@@ -274,4 +274,43 @@ public class TestTransitiveChannelVeto extends TestCase {
 		assertEquals("Derived value must be recomputed after the continuation", "b!", derived.get());
 	}
 
+	/**
+	 * A channel derived from a selection channel, which is an input of the element writing that
+	 * selection, forms a cycle of forwardings: the question terminates and finds the unsaved changes
+	 * on both channels.
+	 */
+	public void testCycleOfForwardingsTerminates() {
+		DefaultViewChannel selection = new DefaultViewChannel("selection");
+		selection.set("part");
+		DerivedViewChannel shown = new DerivedViewChannel("shown");
+		// The derived channel forwards the question of its input to itself.
+		shown.bind(List.of(selection), args -> "module of " + args[0]);
+		// The element showing the derived channel writes the selection when its input changes.
+		VetoForwarder.forward(shown, selection);
+
+		StubHandler selectionHandler = new StubHandler("selectionForm");
+		StubHandler shownHandler = new StubHandler("shownForm");
+		vetoWhileDirty(selection, selectionHandler);
+		vetoWhileDirty(shown, shownHandler);
+
+		assertEquals("The question asked at the selection must terminate and report both handlers",
+			List.of(shownHandler, selectionHandler), selection.dirtyHandlers());
+		assertEquals("The question asked at the derived channel must terminate and report both handlers",
+			List.of(selectionHandler, shownHandler), shown.dirtyHandlers());
+
+		try {
+			selection.set("other");
+			fail("Expected ChannelVetoException");
+		} catch (ChannelVetoException ex) {
+			assertEquals("The write must be refused with both handlers",
+				List.of(shownHandler, selectionHandler), ex.getDirtyHandlers());
+		}
+		assertEquals("part", selection.get());
+
+		selectionHandler.executeDiscard();
+		shownHandler.executeDiscard();
+		assertTrue("Without unsaved changes the selection is written", selection.set("other"));
+		assertEquals("module of other", shown.get());
+	}
+
 }

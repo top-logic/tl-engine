@@ -18,3 +18,7 @@ for (const [dir, file, sel, mass] of SQUARE) {
     assert.match(d, /padding:\s*0\b/);
   });
 }
+
+test('.tl-button--icon wird in einer Flex-Zeile nicht gestaucht', () => {
+  assert.match(declarationsOf(readGenerated('button', 'button.css'), '.tl-button--icon'), /flex-shrink:\s*0\b/);
+});

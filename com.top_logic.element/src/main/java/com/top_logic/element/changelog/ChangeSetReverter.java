@@ -28,6 +28,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.util.error.TopLogicException;
@@ -132,8 +133,12 @@ public final class ChangeSetReverter {
 	 *        caller may ask the user and call again with {@code true}.
 	 * @return The problems applying the revert reported, empty for a clean revert. The revert has
 	 *         been committed if the list is empty or {@code force} is set.
+	 * @throws TopLogicException
+	 *         If the change set is {@link ChangeSet#getIncomplete() incomplete}, see
+	 *         {@link #checkComplete(ChangeSet)}.
 	 */
 	public static List<ResKey> revert(KnowledgeBase kb, ChangeSet change, boolean force) {
+		checkComplete(change);
 		TransientChangeSet undo = change.revert();
 		try (Transaction tx = kb.beginTransaction(undo.getMessage())) {
 			List<ResKey> problems = new ArrayList<>(undo.apply());
@@ -166,10 +171,16 @@ public final class ChangeSetReverter {
 	 *        The change sets to undo. May be in any order and may be empty.
 	 * @return Aggregated problems reported by the individual {@code apply()} calls. An empty list
 	 *         means the revert was clean.
+	 * @throws TopLogicException
+	 *         If one of the change sets is {@link ChangeSet#getIncomplete() incomplete}, see
+	 *         {@link #checkComplete(ChangeSet)}. Nothing has been reverted then.
 	 */
 	public static List<ResKey> revertAll(Collection<? extends ChangeSet> changeSets) {
 		if (changeSets.isEmpty()) {
 			return Collections.emptyList();
+		}
+		for (ChangeSet cs : changeSets) {
+			checkComplete(cs);
 		}
 
 		List<ChangeSet> ordered = new ArrayList<>(changeSets);
@@ -182,6 +193,26 @@ public final class ChangeSetReverter {
 			problems.addAll(cs.revert().apply());
 		}
 		return problems;
+	}
+
+	/**
+	 * Refuses to revert an {@link ChangeSet#getIncomplete() incomplete} change set.
+	 *
+	 * <p>
+	 * An incomplete change set is a {@link ChangeSetRestriction restricted} copy of a commit that
+	 * lacks the parts the user may not see. Its revert would undo only a part of the commit.
+	 * </p>
+	 *
+	 * @param change
+	 *        The change set to revert.
+	 * @throws TopLogicException
+	 *         With {@link I18NConstants#ERROR_REVERT_INCOMPLETE_CHANGE_SET__DATE}, if the change set
+	 *         is incomplete.
+	 */
+	public static void checkComplete(ChangeSet change) throws TopLogicException {
+		if (change.getIncomplete()) {
+			throw new TopLogicException(I18NConstants.ERROR_REVERT_INCOMPLETE_CHANGE_SET__DATE.fill(change.getDate()));
+		}
 	}
 
 	/**
@@ -325,6 +356,46 @@ public final class ChangeSetReverter {
 	public static ChangeSet findRedoCandidate(TLObject root, ChangeLogOptions options, int windowSize,
 			boolean includeSubtree) {
 		return findNewestPendingRevert(readLog(root, options, windowSize, includeSubtree));
+	}
+
+	/**
+	 * The change set an {@code undo} operation of the given user reverts: the
+	 * {@link #findUndoCandidate(TLObject, ChangeLogOptions, int, boolean) undo candidate},
+	 * {@link ChangeSetRestriction restricted} to what the user may see.
+	 *
+	 * <p>
+	 * If the user may not see all of the candidate, the result is
+	 * {@link ChangeSet#getIncomplete() incomplete}, and {@link #revert(KnowledgeBase, ChangeSet, boolean)}
+	 * refuses it: an undo must not change objects the user may not see.
+	 * </p>
+	 *
+	 * @param user
+	 *        The user undoing the change.
+	 * @return The restricted candidate, {@code null} if there is none.
+	 *
+	 * @see #findUndoCandidate(TLObject, ChangeLogOptions, int, boolean) for the other parameters.
+	 */
+	public static ChangeSet findUndoTarget(TLObject root, ChangeLogOptions options, int windowSize,
+			boolean includeSubtree, Person user) {
+		return restrict(findUndoCandidate(root, options, windowSize, includeSubtree), user);
+	}
+
+	/**
+	 * The change set a {@code redo} operation of the given user reverts: the
+	 * {@link #findRedoCandidate(TLObject, ChangeLogOptions, int, boolean) redo candidate},
+	 * {@link ChangeSetRestriction restricted} to what the user may see.
+	 *
+	 * @see #findUndoTarget(TLObject, ChangeLogOptions, int, boolean, Person)
+	 * @throws TopLogicException
+	 *         when a pending undo exists but a newer regular change has broken the redo stack.
+	 */
+	public static ChangeSet findRedoTarget(TLObject root, ChangeLogOptions options, int windowSize,
+			boolean includeSubtree, Person user) {
+		return restrict(findRedoCandidate(root, options, windowSize, includeSubtree), user);
+	}
+
+	private static ChangeSet restrict(ChangeSet candidate, Person user) {
+		return candidate == null ? null : new ChangeSetRestriction(user).restrict(candidate);
 	}
 
 	/**

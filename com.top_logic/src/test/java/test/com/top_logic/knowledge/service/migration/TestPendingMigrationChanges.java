@@ -260,7 +260,8 @@ public class TestPendingMigrationChanges extends AbstractDBKnowledgeBaseTest {
 	}
 
 	/**
-	 * Starts a {@link MigrationService} on {@link DatabaseTestSetup#MIGRATION_POOL_NAME}.
+	 * Starts a {@link MigrationService} on {@link DatabaseTestSetup#MIGRATION_POOL_NAME} and
+	 * completes the start of the application by {@link MigrationService#applicationStarted()}.
 	 *
 	 * <p>
 	 * The test setup disables the automatic migration with the system property
@@ -290,6 +291,7 @@ public class TestPendingMigrationChanges extends AbstractDBKnowledgeBaseTest {
 			TestingConnectionPoolRegistryAccess.restoreDefaultPool(defaultPool);
 		}
 		service.start();
+		service.applicationStarted();
 	}
 
 	private String lockProperty() {

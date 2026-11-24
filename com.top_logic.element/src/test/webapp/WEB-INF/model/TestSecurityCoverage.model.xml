@@ -66,6 +66,30 @@
 					</attributes>
 				</class>
 
+				<!--
+					Configured access parent restricted to Read: its own to-one reference, navigated
+					forwards. All other operations are decided by grants of the type itself.
+				-->
+				<class name="RestrictedLinked">
+					<attributes>
+						<reference name="target"
+							type="Covered"
+						/>
+					</attributes>
+				</class>
+
+				<!--
+					Configured access parent restricted to Write, without grants of its own: nobody may
+					read an object of the type.
+				-->
+				<class name="RestrictedWrite">
+					<attributes>
+						<reference name="target"
+							type="Covered"
+						/>
+					</attributes>
+				</class>
+
 				<!-- Decides for itself instead of inheriting the access parent of its generalization. -->
 				<class name="LinkedSub">
 					<generalizations>
@@ -122,6 +146,34 @@
 
 				<!-- Role source is a role parent rule pointing to the container. -->
 				<class name="ChildOfCovered"/>
+
+				<!--
+					Owner of the reference the role parent rule of ChildOfAbstract navigates backwards.
+					Its own role parent rule leads to the security root.
+				-->
+				<class name="AbstractParent"
+					abstract="true"
+				>
+					<attributes>
+						<reference name="children"
+							multiple="true"
+							type="ChildOfAbstract"
+						/>
+					</attributes>
+				</class>
+
+				<!-- The only concrete specialization of AbstractParent. -->
+				<class name="ConcreteParent">
+					<generalizations>
+						<generalization type="AbstractParent"/>
+					</generalizations>
+				</class>
+
+				<!--
+					Role source is a role parent rule ending at the abstract AbstractParent; the roles
+					are delivered on the security root.
+				-->
+				<class name="ChildOfAbstract"/>
 
 				<!-- Role rule, but no class grant: only an attribute grant implies Discover. -->
 				<class name="PartOnly">

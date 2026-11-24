@@ -397,28 +397,31 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		List<ReactControl> headerActions = new ArrayList<>();
 		if (_editable) {
 			if (_value.isReorderable()) {
-				ReactButtonControl moveUpButton = new ReactButtonControl(_context, "\u25B2", ctx -> {
+				ReactButtonControl moveUpButton = new ReactButtonControl(_context, Resources.getInstance().getString(I18NConstants.MOVE_ENTRY_UP), ctx -> {
 					moveUp(_value.indexOf(item));
 				});
+				moveUpButton.setImage(Icons.CONFIG_LIST_MOVE_UP);
 				moveUpButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 				moveUpButton.setDisabled(index == 0);
 				headerActions.add(moveUpButton);
 
-				ReactButtonControl moveDownButton = new ReactButtonControl(_context, "\u25BC", ctx -> {
+				ReactButtonControl moveDownButton = new ReactButtonControl(_context, Resources.getInstance().getString(I18NConstants.MOVE_ENTRY_DOWN), ctx -> {
 					moveDown(_value.indexOf(item));
 				});
+				moveDownButton.setImage(Icons.CONFIG_LIST_MOVE_DOWN);
 				moveDownButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 				moveDownButton.setDisabled(index == listSize - 1);
 				headerActions.add(moveDownButton);
 			}
 
 			if (_value.isRemovable()) {
-				ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
+				ReactButtonControl removeButton = new ReactButtonControl(_context, Resources.getInstance().getString(I18NConstants.REMOVE_ENTRY), ctx -> {
 					int currentIndex = _value.indexOf(item);
 					if (currentIndex >= 0) {
 						removeElement(currentIndex);
 					}
 				});
+				removeButton.setImage(Icons.CONFIG_LIST_REMOVE);
 				removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 				headerActions.add(removeButton);
 			}
@@ -467,7 +470,7 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 		ConfigurationItem entry = pending.entry();
 		Label label = resolveElementLabel(entry);
 
-		ReactButtonControl confirmButton = new ReactButtonControl(_context, "\u2713", ctx -> {
+		ReactButtonControl confirmButton = new ReactButtonControl(_context, Resources.getInstance().getString(I18NConstants.CONFIRM_ENTRY), ctx -> {
 			ResKey refusal = _pending.confirm(pending);
 			if (refusal != null) {
 				// Said out loud, not only at the key field: a type-keyed collection has no such
@@ -476,11 +479,13 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			}
 			reportChange();
 		});
+		confirmButton.setImage(Icons.CONFIG_LIST_CONFIRM);
 		confirmButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 
-		ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
+		ReactButtonControl removeButton = new ReactButtonControl(_context, Resources.getInstance().getString(I18NConstants.REMOVE_ENTRY), ctx -> {
 			_pending.discard(pending);
 		});
+		removeButton.setImage(Icons.CONFIG_LIST_REMOVE);
 		removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 
 		List<ReactControl> headerActions = List.of(confirmButton, removeButton);

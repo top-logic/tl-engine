@@ -14,6 +14,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundObject;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
  * Explanation of the access an account has to an object, see
@@ -37,9 +38,13 @@ import com.top_logic.tool.boundsec.BoundObject;
  *        Whether the type of the object is marked {@link ModelAccessRights#isInternal(TLClass)
  *        internal}: it is not meant to be accessed on behalf of an account.
  * @param decidingObject
- *        The object whose roles decide: the end of the chain of access parents of the object, or
- *        the object itself when its type decides for itself. <code>null</code> when the chain of
- *        access parents leads nowhere or runs in a cycle.
+ *        The object whose roles decide on reading the object: the end of the chain of access
+ *        parents of the object delegating {@link SimpleBoundCommandGroup#READ}, or the object
+ *        itself when its type decides for itself, see
+ *        {@link ModelAccessRights#getRoleHolder(TLObject, BoundCommandGroup)}. Unless the access
+ *        parent is restricted to some operations, it decides every operation. The object deciding
+ *        a single operation is its {@link OperationDecision#roleHolder() role holder}.
+ *        <code>null</code> when the chain of access parents leads nowhere or runs in a cycle.
  * @param roleParents
  *        The role parents of the {@link #decidingObject()}, collected transitively, whose roles the
  *        account holds on the deciding object as well.

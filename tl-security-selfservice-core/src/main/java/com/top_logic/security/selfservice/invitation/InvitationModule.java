@@ -581,8 +581,8 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	 * {@link Invitation#getLanguage() language} of the invitation, see
 	 * {@link #createAccount(KnowledgeBase, String, String, String, char[], MfaRequirement)}. The
 	 * {@link Invitation#getCreateCallback() callback} of the invitation may
-	 * refuse the account. The invitation records the time of the acceptance and the account.
-	 * Either all of this happens, or nothing.
+	 * refuse the account. The invitation records the time of the acceptance and the account, and
+	 * is deleted when the account is deleted. Either all of this happens, or nothing.
 	 * </p>
 	 *
 	 * @param invitation

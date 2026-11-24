@@ -5,7 +5,7 @@
 	template="com.top_logic/table.template.xml"
 >
 	<arguments
-		defaultColumns="date,author,message"
+		defaultColumns="date,author,message,incomplete"
 		model="selection(com.top_logic.demo/technical/components/undoRedo/projectsTable.layout.xml#Table)"
 		type="tl.changelog:ChangeSet"
 	>

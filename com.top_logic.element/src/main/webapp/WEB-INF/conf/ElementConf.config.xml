@@ -243,13 +243,25 @@
 			(the change log is written on commit, the gallery images are handled by the gallery
 			control) and never on behalf of a user through the access check, so they carry no
 			access definition on purpose.
+			
+			The objects of the change log are transient and therefore not checked; a user reaches
+			them only through changeLog(), which is reserved to administrators in a secured
+			evaluation, or as copies restricted by changeSetRestrict(). The grant of Read to the role
+			every user holds on the own account (PersonalProfile) lets a table offer the columns of
+			the change log attributes to every user.
 		-->
 		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
 			<instance class="com.top_logic.model.security.SecurityConfigurationService">
 				<security-config>
 					<module name="tl.changelog"
 						internal="true"
-					/>
+					>
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="PersonalProfile"
+						/>
+					</module>
 					<module name="tl.imagegallery"
 						internal="true"
 					/>

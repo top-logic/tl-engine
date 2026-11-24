@@ -194,6 +194,17 @@ public interface MigrationConfig extends ConfigurationItem {
 
 	/**
 	 * Actions to apply after the system has started all modules.
+	 *
+	 * <p>
+	 * The actions are the last steps of the migration. They run after the startup transaction of
+	 * the application has been committed and before the {@link com.top_logic.util.StartupHooks},
+	 * each in a {@link com.top_logic.knowledge.service.KnowledgeBase} transaction of its own, so
+	 * they see all objects created during the start. The actions of all migrations run in the order
+	 * of the migrations. A start interrupted before an action is committed executes it again at the
+	 * next start, an action committed is never executed twice.
+	 * </p>
+	 *
+	 * @see MigrationService#applicationStarted()
 	 */
 	@Name(STARTUP_ACTIONS)
 	List<PolymorphicConfiguration<? extends StartupAction>> getStartupActions();

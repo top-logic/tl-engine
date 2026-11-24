@@ -22,6 +22,7 @@ import com.top_logic.element.changelog.model.ChangeSet;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
@@ -51,7 +52,9 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * The change set is {@link ChangeSetRestriction restricted} to what the current user may see. If
- * the user may not see all of it, the command is refused with an error message.
+ * the user may not see all of it, the command is refused with an error message. It is refused as
+ * well if the user is not allowed to perform one of the changes of the revert, see
+ * {@link ChangeSetReverter#checkWritable(ChangeSet, Person)}.
  * </p>
  *
  * <p>
@@ -141,6 +144,8 @@ public class RedoCommandHandler extends AbstractCommandHandler implements WithPo
 		if (target == null) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
+
+		ChangeSetReverter.checkWritable(target, TLContext.currentUser());
 
 		KnowledgeBase kb = root != null ? root.tKnowledgeBase() : PersistencyLayer.getKnowledgeBase();
 		List<ResKey> problems = ChangeSetReverter.revert(kb, target, !cfg.isCheckConflicts());

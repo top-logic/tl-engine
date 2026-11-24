@@ -20,11 +20,14 @@ import com.top_logic.element.changelog.ChangeSetReverter;
 import com.top_logic.element.changelog.model.ChangeSet;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.overlay.ConfirmDialogControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Interruptible {@link ViewAction} reverting the commit ({@link ChangeSet}) it receives.
@@ -43,6 +46,12 @@ import com.top_logic.util.Resources;
  * confirm the revert is applied anyway and the chain resumes, on decline the chain aborts. A chain
  * running without a dialog aborts on conflicts. Without {@link Config#isCheckConflicts()} the revert
  * is committed and the conflicts are reported as a warning.
+ * </p>
+ *
+ * <p>
+ * If the current user is not allowed to perform one of the changes of the revert, the action
+ * throws a {@link TopLogicException}, which aborts the action chain; nothing is reverted, see
+ * {@link ChangeSetReverter#checkWritable(ChangeSet, Person)}.
  * </p>
  *
  * <p>
@@ -114,6 +123,8 @@ public class RevertChangeSetAction extends InterruptibleViewAction {
 		}
 
 		ChangeSet target = ChangeSetReverter.revertTarget(change);
+		ChangeSetReverter.checkWritable(target, TLContext.currentUser());
+
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		List<ResKey> problems = ChangeSetReverter.revert(kb, target, !_checkConflicts);
 		if (problems.isEmpty()) {

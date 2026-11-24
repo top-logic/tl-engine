@@ -260,6 +260,11 @@ public final class ChangeSetReverter {
 	 * </p>
 	 *
 	 * <p>
+	 * An {@link ChangeSet#getIncomplete() incomplete} change set is refused first, see
+	 * {@link #checkComplete(ChangeSet)}: it lacks changes its revert would have to check.
+	 * </p>
+	 *
+	 * <p>
 	 * The check has no effect on the data. A caller checks before reverting, so that a revert is
 	 * either applied completely or refused completely. A user bypassing the model security, e.g. an
 	 * administrator, may revert every change set.
@@ -270,12 +275,15 @@ public final class ChangeSetReverter {
 	 * @param user
 	 *        The user reverting the change set.
 	 * @throws TopLogicException
-	 *         With {@link I18NConstants#ERROR_REVERT_NO_WRITE_ACCESS__OBJECT_ATTRIBUTE},
+	 *         With {@link I18NConstants#ERROR_REVERT_INCOMPLETE_CHANGE_SET__DATE}, if the change set
+	 *         is incomplete. With {@link I18NConstants#ERROR_REVERT_NO_WRITE_ACCESS__OBJECT_ATTRIBUTE},
 	 *         {@link I18NConstants#ERROR_REVERT_NO_DELETE_ACCESS__OBJECT} or
 	 *         {@link I18NConstants#ERROR_REVERT_NO_CREATE_ACCESS__OBJECT_TYPE}, if the user lacks
 	 *         a right for one of the changes.
 	 */
 	public static void checkWritable(ChangeSet change, Person user) throws TopLogicException {
+		checkComplete(change);
+
 		ModelAccessRights rights = ModelAccessRights.getInstance();
 		Collection<? extends Change> changes = change.getChanges();
 		Set<ObjectReference> created = identities(changes, Creation.class);

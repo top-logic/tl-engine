@@ -17,6 +17,7 @@ import com.top_logic.element.changelog.model.ChangeSet;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.DisplayUnit;
@@ -29,6 +30,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.TLContext;
 
 /**
  * {@link CommandHandler} for reverting a {@link ChangeSet}.
@@ -36,6 +38,11 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * <p>
  * A change that has already been reverted is re-applied (its undo is reverted), a change that
  * has been redone is undone again (its redo is reverted).
+ * </p>
+ *
+ * <p>
+ * The command is refused with an error message if the current user is not allowed to perform one
+ * of the changes of the revert, see {@link ChangeSetReverter#checkWritable(ChangeSet, Person)}.
  * </p>
  *
  * @see ChangeSetReverter#revertTarget(ChangeSet)
@@ -78,6 +85,7 @@ public class RevertCommandHandler extends AbstractCommandHandler {
 			Map<String, Object> someArguments) {
 
 		ChangeSet target = ChangeSetReverter.revertTarget((ChangeSet) model);
+		ChangeSetReverter.checkWritable(target, TLContext.currentUser());
 
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		List<ResKey> problems = ChangeSetReverter.revert(kb, target, !config().isCheckConflicts());

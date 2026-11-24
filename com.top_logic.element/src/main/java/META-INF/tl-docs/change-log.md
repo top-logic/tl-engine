@@ -139,6 +139,16 @@ a user who is no administrator:
 - An incomplete change set is not reverted: `ChangeSetReverter.revert` and `revertAll`, the
   TL-Script function `revertChanges` and the revert commands of the user interfaces refuse it with
   an error message, nothing is reverted.
+- Reverting a change set needs the rights for every change the revert performs
+  (`ChangeSetReverter.checkWritable(changeSet, user)`): the right to write each modified attribute
+  of a changed object, to delete an object whose creation is reverted, and to create an object
+  whose deletion is reverted in its former container. A creation or deletion of a part whose
+  container is created or deleted by the same change set follows its container and is decided by
+  the right on the container. If a right is missing, the whole revert is refused with an error
+  message naming the object. The undo, redo and revert commands of both user interfaces check it
+  for the current user, `revertChanges` in an evaluation with security checks;
+  `ChangeSetReverter.revert` and `revertAll` do not check, their caller does. An administrator may
+  revert every change set.
 
 `ChangeLogListModelBuilder` restricts every row for the current user. A view of the React UI reads
 the change log in a privileged function and restricts each commit, like the function

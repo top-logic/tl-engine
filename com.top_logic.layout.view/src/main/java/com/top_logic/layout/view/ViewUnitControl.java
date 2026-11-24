@@ -27,6 +27,13 @@ import com.top_logic.layout.react.control.ReactControl;
  * </p>
  *
  * <p>
+ * A content built on demand - when a tab is first shown, or anew after a channel changed - is built
+ * through {@link #create(ViewContext, Content)}: a content that builds without failure is used as it
+ * is, so the boundary adds nothing to the display of a working view; only a failing one is replaced
+ * by a {@link ViewUnitControl} showing the placeholder.
+ * </p>
+ *
+ * <p>
  * A unit showing a view file (see {@link #forView(ViewContext, String, ViewElement)}) also
  * implements {@link ViewReloadListener}: it is notified by {@link ViewContext#fireViewChanged(Set)}
  * after the View Designer saves modified files, and rebuilds itself from the re-parsed file when
@@ -93,6 +100,16 @@ public class ViewUnitControl extends ReactCompositeControl implements ViewReload
 	 *        Builds the content, initially and on every {@link #rebuild()}.
 	 */
 	public ViewUnitControl(ViewContext viewContext, String viewPath, Content content) {
+		this(viewContext, viewPath, content, null);
+	}
+
+	/**
+	 * Creates a {@link ViewUnitControl} whose first build may already have failed.
+	 *
+	 * @param failure
+	 *        The failure of the first build, {@code null} to build the content now.
+	 */
+	private ViewUnitControl(ViewContext viewContext, String viewPath, Content content, Exception failure) {
 		super(viewContext, null, "TLStack");
 		_viewPath = viewPath;
 		_viewContext = viewContext;
@@ -101,7 +118,43 @@ public class ViewUnitControl extends ReactCompositeControl implements ViewReload
 			viewContext.addViewReloadListener(this);
 			addCleanupAction(() -> _viewContext.removeViewReloadListener(this));
 		}
-		addChild(build());
+		addChild(failure == null ? build() : placeholder(failure));
+	}
+
+	/**
+	 * Builds a content on demand, within a unit boundary.
+	 *
+	 * @param viewContext
+	 *        The {@link ViewContext} the content is built in.
+	 * @param content
+	 *        Builds the content.
+	 * @return The built content itself, or a {@link ViewUnitControl} showing the placeholder if
+	 *         building failed. The placeholder builds the content again on request.
+	 */
+	public static ReactControl create(ViewContext viewContext, Content content) {
+		return create(viewContext, null, content);
+	}
+
+	/**
+	 * Builds a content on demand, within a unit boundary.
+	 *
+	 * @param viewContext
+	 *        The {@link ViewContext} the content is built in.
+	 * @param viewPath
+	 *        The full path to the view file the content shows, {@code null} for a content not
+	 *        backed by a view file. A placeholder shown for the content is rebuilt when the file
+	 *        changes.
+	 * @param content
+	 *        Builds the content.
+	 * @return The built content itself, or a {@link ViewUnitControl} showing the placeholder if
+	 *         building failed. The placeholder builds the content again on request.
+	 */
+	public static ReactControl create(ViewContext viewContext, String viewPath, Content content) {
+		try {
+			return content.build(viewContext);
+		} catch (ConfigurationException | RuntimeException ex) {
+			return new ViewUnitControl(viewContext, viewPath, content, ex);
+		}
 	}
 
 	/**
@@ -148,16 +201,28 @@ public class ViewUnitControl extends ReactCompositeControl implements ViewReload
 	private ReactControl build() {
 		try {
 			return _content.build(_viewContext);
-		} catch (ConfigurationException ex) {
-			Logger.error("Rendering a placeholder for the view that could not be loaded: " + _viewPath, ex,
-				ViewUnitControl.class);
-			return ViewLoadError.createControl(_viewContext, _viewPath, ex);
-		} catch (RuntimeException ex) {
-			Logger.error("Rendering a placeholder for the view unit that could not be built"
-				+ (_viewPath == null ? "." : ": " + _viewPath), ex, ViewUnitControl.class);
-			return ViewLoadError.createBuildErrorControl(_viewContext, _viewPath, new Date(), ex,
-				context -> rebuild());
+		} catch (ConfigurationException | RuntimeException ex) {
+			return placeholder(ex);
 		}
+	}
+
+	/**
+	 * Logs the given failure of building the content and creates the placeholder reporting it.
+	 *
+	 * @param failure
+	 *        A {@link ConfigurationException} for a view that could not be loaded, a
+	 *        {@link RuntimeException} for a content that could not be built.
+	 */
+	private ReactControl placeholder(Exception failure) {
+		if (failure instanceof ConfigurationException) {
+			Logger.error("Rendering a placeholder for the view that could not be loaded: " + _viewPath, failure,
+				ViewUnitControl.class);
+			return ViewLoadError.createControl(_viewContext, _viewPath, failure);
+		}
+		Logger.error("Rendering a placeholder for the view unit that could not be built"
+			+ (_viewPath == null ? "." : ": " + _viewPath), failure, ViewUnitControl.class);
+		return ViewLoadError.createBuildErrorControl(_viewContext, _viewPath, new Date(), failure,
+			context -> rebuild());
 	}
 
 	/**

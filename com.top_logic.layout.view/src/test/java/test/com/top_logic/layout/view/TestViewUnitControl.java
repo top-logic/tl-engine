@@ -30,6 +30,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.io.FileUtilities;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResourcesModule;
@@ -43,20 +44,28 @@ import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactAlertControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl.Variant;
+import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
+import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.responsive.DisplayClass;
+import com.top_logic.layout.responsive.DisplayClassModel;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.ViewUnitControl;
+import com.top_logic.layout.view.channel.ChannelRef;
+import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.util.Resources;
 
 /**
  * Tests that a unit of the view failing while it is built replaces only itself with a placeholder,
- * and that the placeholder builds the unit again on request.
+ * and that the placeholder builds the unit again on request - for a referenced view, and for
+ * contents built on demand: a navigation item, a tab, and the detail of a master-detail element
+ * built anew after its selection changed.
  */
 public class TestViewUnitControl extends BasicTestCase {
 
@@ -71,6 +80,18 @@ public class TestViewUnitControl extends BasicTestCase {
 
 	/** The view file that does not exist. */
 	private static final String MISSING_VIEW = "unit-missing.view.xml";
+
+	/** A sidebar whose active start item fails while it is built. */
+	private static final String SIDEBAR_VIEW = "unit-sidebar.view.xml";
+
+	/** A tab bar whose active tab fails while it is built. */
+	private static final String TABS_VIEW = "unit-tabs.view.xml";
+
+	/** A master-detail element whose detail fails while it is built. */
+	private static final String ADAPTIVE_VIEW = "unit-adaptive.view.xml";
+
+	/** The selection channel of {@link #ADAPTIVE_VIEW}. */
+	private static final String SELECTED = "selected";
 
 	/** Name of the probe embedded directly in the outer views. */
 	private static final String SIBLING = "sibling";
@@ -95,6 +116,8 @@ public class TestViewUnitControl extends BasicTestCase {
 
 	private ReactControl _root;
 
+	private ViewContext _viewContext;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -113,6 +136,23 @@ public class TestViewUnitControl extends BasicTestCase {
 			+ "<test-unit-probe name='" + SIBLING + "'/>"
 			+ "<view-ref view='" + MISSING_VIEW + "'/>"
 			+ "</stack></view>");
+		write(views, SIDEBAR_VIEW, "<view><sidebar active-item='" + BROKEN + "'><items>"
+			+ "<nav-item id='" + BROKEN + "'><label><en>Broken</en></label>"
+			+ "<test-unit-probe name='" + BROKEN + "'/></nav-item>"
+			+ "<nav-item id='" + SIBLING + "'><label><en>Sibling</en></label>"
+			+ "<test-unit-probe name='" + SIBLING + "'/></nav-item>"
+			+ "</items></sidebar></view>");
+		write(views, TABS_VIEW, "<view><tab-bar active-tab='" + BROKEN + "'><tabs>"
+			+ "<tab id='" + BROKEN + "'><label><en>Broken</en></label>"
+			+ "<test-unit-probe name='" + BROKEN + "'/></tab>"
+			+ "<tab id='" + SIBLING + "'><label><en>Sibling</en></label>"
+			+ "<test-unit-probe name='" + SIBLING + "'/></tab>"
+			+ "</tabs></tab-bar></view>");
+		write(views, ADAPTIVE_VIEW, "<view><channels><channel name='" + SELECTED + "'/></channels>"
+			+ "<adaptive-detail selection='" + SELECTED + "'>"
+			+ "<selector><test-unit-probe name='" + SIBLING + "'/></selector>"
+			+ "<detail><test-unit-probe name='" + BROKEN + "'/></detail>"
+			+ "</adaptive-detail></view>");
 		_fileManagerBefore = FileManager.getInstanceOrNull();
 		FileManager.setInstance(new DefaultFileManager(_webapp));
 
@@ -125,6 +165,7 @@ public class TestViewUnitControl extends BasicTestCase {
 			_root.cleanupTree();
 			_root = null;
 		}
+		_viewContext = null;
 		_sseQueue.shutdown();
 		_sseQueue = null;
 		FileManager.setInstance(_fileManagerBefore);
@@ -224,10 +265,95 @@ public class TestViewUnitControl extends BasicTestCase {
 		assertTrue("A load error offers no retry.", alert.actions().isEmpty());
 	}
 
+	/**
+	 * Tests that a navigation item failing while it is built as the active start item leaves the
+	 * window intact: the state of the window is written completely, with the placeholder in place of
+	 * the item's content, and the other items work.
+	 */
+	public void testFailingStartItemOfSidebar() {
+		FAILING.add(BROKEN);
+		_root = build(SIDEBAR_VIEW);
+		render();
+
+		writtenState();
+		assertNotNull("The failing item shows a placeholder.", find(_root, ReactAlertControl.class));
+
+		find(_root, ReactSidebarControl.class).selectItem(SIBLING);
+		writtenState();
+		assertEquals("Another item works.", List.of(SIBLING), BUILT);
+		assertNull("The other item shows its content.", find(_root, ReactAlertControl.class));
+	}
+
+	/**
+	 * Tests that a tab failing while it is built as the active tab leaves the window intact: the
+	 * state of the window is written completely, and the other tabs work.
+	 */
+	public void testFailingActiveTab() {
+		FAILING.add(BROKEN);
+		_root = build(TABS_VIEW);
+		render();
+
+		writtenState();
+		assertNotNull("The failing tab shows a placeholder.", find(_root, ReactAlertControl.class));
+
+		find(_root, ReactTabBarControl.class).selectTab(SIBLING);
+		writtenState();
+		assertEquals("Another tab works.", List.of(SIBLING), BUILT);
+		assertNull("The other tab shows its content.", find(_root, ReactAlertControl.class));
+	}
+
+	/**
+	 * Tests that a detail of a master-detail element failing while it is built anew after the
+	 * selection changed replaces only the detail, and is built on request once the failure is gone.
+	 */
+	public void testFailingDetailAfterSelectionChange() {
+		DisplayClassModel display = DisplayClassModel.forCurrentSubSession();
+		DisplayClass displayBefore = display.getDisplayClass();
+		// On a narrow viewport, a selection change replaces the selector by the detail.
+		display.setDisplayClass(DisplayClass.COMPACT);
+		try {
+			FAILING.add(BROKEN);
+			_root = build(ADAPTIVE_VIEW);
+			render();
+			assertEquals(List.of(SIBLING), BUILT);
+
+			ViewChannel selection = _viewContext.resolveChannel(new ChannelRef(SELECTED));
+			selection.set("item");
+			writtenState();
+			ReactAlertControl alert = find(_root, ReactAlertControl.class);
+			assertNotNull("The failing detail shows a placeholder.", alert);
+			assertEquals(List.of(SIBLING), BUILT);
+
+			FAILING.clear();
+			retry(alert);
+			writtenState();
+			assertEquals("Trying again builds the detail.", List.of(SIBLING, BROKEN), BUILT);
+			assertNull(find(_root, ReactAlertControl.class));
+
+			selection.set(null);
+			writtenState();
+			assertEquals("The selector is shown again.", List.of(SIBLING, BROKEN, SIBLING), BUILT);
+		} finally {
+			display.setDisplayClass(displayBefore);
+		}
+	}
+
+	/**
+	 * The state of the window, as written to the client: it must be a complete JSON document.
+	 */
+	private Map<?, ?> writtenState() {
+		try {
+			return (Map<?, ?>) JSON.fromString(_root.stateAsJSON());
+		} catch (JSON.ParseException ex) {
+			throw new AssertionError("The state of the window is not written completely.", ex);
+		}
+	}
+
 	private ReactControl build(String view) {
 		String path = ViewLoader.fullPath(view);
 		ReactContext reactContext = new PageContext(_sseQueue);
 		ViewContext viewContext = new DefaultViewContext(reactContext, path);
+		_viewContext = viewContext;
 		try {
 			return ViewUnitControl.forView(viewContext, path, ViewLoader.getOrLoadView(path));
 		} catch (Exception ex) {

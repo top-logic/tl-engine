@@ -107,7 +107,7 @@ public class ViewLoadError {
 	 * @param title
 	 *        The title of the message.
 	 * @param viewPath
-	 *        The view that failed to load.
+	 *        The view that failed to load, {@code null} for a view not read from a file.
 	 * @param problem
 	 *        The reason loading failed.
 	 * @return The error message.
@@ -118,7 +118,11 @@ public class ViewLoadError {
 		alert.setVariant(Variant.ERROR);
 		alert.setTitle(title);
 		String detail = detail(problem);
-		alert.setMessage(detail.isEmpty() ? viewPath : viewPath + "\n" + detail);
+		if (viewPath == null) {
+			alert.setMessage(detail);
+		} else {
+			alert.setMessage(detail.isEmpty() ? viewPath : viewPath + "\n" + detail);
+		}
 		alert.show();
 		return alert;
 	}

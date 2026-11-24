@@ -283,6 +283,11 @@ it. The label masks by default, so that every display of it masks. Only a comput
 the system gets the stored text: an unsecured TL-Script evaluation, which sets this mode for its
 duration (`DiscoverRight.computeForUser`).
 
+Not yet covered: the display and the editor of a formatted text in the classic UI (#30517), an
+object link that a client writes by hand into the stored text (#30518), the full-text index and the
+tables of the classic UI (#30543), and the view element `<html>` and the REST services that give a
+formatted text that a script computes (#30544).
+
 ### R12 - secured and unsecured script kinds
 
 Whether a script is evaluated secured is decided by its kind, not by the script itself:

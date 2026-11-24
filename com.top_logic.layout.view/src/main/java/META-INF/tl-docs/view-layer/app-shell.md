@@ -1,5 +1,5 @@
 ---
-description: Read before extending app.view.xml - the application shell, sidebar items, badges and the rail chrome, login and anonymous sessions with the login view, and the state marks for transitions.
+description: Read before extending app.view.xml - the application shell, sidebar items, badges and the rail chrome, login and anonymous sessions with the login view, answering the request of another servlet with an anonymous entry point (ViewServlet.forwardToView), and the state marks for transitions.
 order: 80
 ---
 
@@ -176,6 +176,51 @@ An application that has nothing to show a visitor names a login view in its `Vie
 **A page for a visitor without an account.** An entry point marked `<entry-point view="unknown-account.view.xml" anonymous="true"/>` is the one exception to the login view: a URL naming it shows that view to an anonymous session, and because the page is the one the URL addresses, its route is adopted like any other (`ViewServlet.resolveView` decides view and login-view flag together). `tl-layout-view` ships `unknown-account.view.xml` for exactly this and points the `unknownAccountPage` of `ApplicationPages` at it: the external authentication servlet sends a visitor whose identity an SSO provider confirmed but for whom the application has no account there, with the authenticated name in the `login` query parameter, which the view's `<query-bindings>` put on a channel and its message names.
 
 Leaving works the other way round: `<logout-command>` swaps the session back and sends the browser to the root of the view application (`ViewServlet.ROOT_PATH`), because the page the departing user was on is theirs and not the landing page of whoever sits down at the browser next. `com.top_logic.demo.react` configures a login view, `com.top_logic.demo` does not — its React view is browsed anonymously and logged into through the account area.
+
+### Showing a view as the answer of another servlet
+
+A servlet of the application that has to answer a request with a page — a permalink that leads to no object, an external link with an invalid token — shows a view of its own instead of redirecting the browser to one: `ViewServlet.forwardToView(request, response, viewFile, status, parameters)` forwards the request to the view application (`RequestDispatcher.forward` to `ViewServlet.ROOT_PATH`), which renders the view into this very response.
+
+- **Only an anonymous entry point.** The view must be registered as `<entry-point view="…" anonymous="true"/>`; any other view, an entry point without the mark included, is refused with an `IllegalArgumentException`. The view is shown in the session of the request, whether it belongs to an account or not, and a visitor without a session is logged in anonymously first, as on every first visit — the anonymous session is the same as that of any other visitor, so every other URL shows the login view of an application that has one. The forwarded request needs neither the cookie check nor the bootstrap page that names the browser tab: the server assigns the window name itself.
+- **The status of the response.** `status` is set with `HttpServletResponse.setStatus`, not with `sendError`, which would make the servlet container answer with its own error page instead of the view. So a page saying that an object does not exist is delivered with `404`, one about a malformed link with `400`.
+- **The parameters are the query of the view.** `parameters` reach the view as if they were the query of its URL: its `<query-bindings>` write them into its channels (see [query parameters](doc:view-layer/navigation#url-routing-what-ends-up-in-the-address-bar)), so the view needs nothing to know that it was forwarded to.
+- **The address bar keeps the servlet's URL.** The page leaves the address bar and the history of the browser unchanged (the body attribute `data-fixed-url`, `ViewServlet.FIXED_URL_ATTR`): navigating inside it writes no URL and no history entry, and a reload asks the servlet again, which decides anew. A link from such a page into the application leads to `/view/`, where the browser tab gets a window of its own.
+
+```java
+public class MyLinkServlet extends HttpServlet {
+
+	/** Parameter of the link and of the error view: the identifier the link names. */
+	public static final String ID_PARAM = "id";
+
+	/** The page explaining that the link leads nowhere, an anonymous entry point. */
+	public static final String ERROR_VIEW = "my-error.view.xml";
+
+	@Override
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		String id = request.getParameter(ID_PARAM);
+		if (!exists(id)) {
+			ViewServlet.forwardToView(request, response, ERROR_VIEW, HttpServletResponse.SC_NOT_FOUND,
+				Map.of(ID_PARAM, id == null ? "" : id));
+			return;
+		}
+		response.sendRedirect(request.getContextPath() + ViewServlet.ROOT_PATH + "my-route/" + id);
+	}
+}
+```
+
+```xml
+<config config:interface="com.top_logic.layout.view.ViewConfig">
+	<entry-points>
+		<entry-point
+			anonymous="true"
+			view="my-error.view.xml"
+		/>
+	</entry-points>
+</config>
+```
+
+`my-error.view.xml` declares `<query-bindings><bind channel="id" query-param="id"/></query-bindings>` and shows a message composed from the channel. The demo `com.top_logic.demo.react` has a working example: `/servlet/ticket-link?nr=<number>` (`TicketLinkServlet`) redirects to the page of an existing ticket and answers any other link with `ticket-link-error.view.xml`, with `400` for a link without a number and `404` for a number no ticket carries.
 
 ## Transitions: the state marks an application animates
 

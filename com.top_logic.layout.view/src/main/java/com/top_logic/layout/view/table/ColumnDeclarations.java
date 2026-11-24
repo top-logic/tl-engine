@@ -158,8 +158,10 @@ public class ColumnDeclarations {
 	/**
 	 * The names of the declared columns the current user is not offered: those the declarations
 	 * announce (see {@link ColumnDeclaration#declaredNames()}) but did not resolve to a column,
-	 * since the user's access rights withhold them. A column resolved for the user but withheld
-	 * for the time being is told by {@link ColumnExistence#withheldColumns()}.
+	 * since the user's access rights withhold them: only security at attribute level does so, a
+	 * read grant of the attribute itself listing no role the user holds; the read right on the type
+	 * of the rows never does. A column resolved for the user but withheld for the time being is
+	 * told by {@link ColumnExistence#withheldColumns()}.
 	 *
 	 * <p>
 	 * A configuration referring to such a column (e.g. a declared filter) is no configuration

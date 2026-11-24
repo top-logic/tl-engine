@@ -281,35 +281,32 @@ public final class ModelAccessPolicy {
 	}
 
 	/**
-	 * Whether the given operation on the given attribute is refused for the current user
-	 * independent of any concrete object of the given type, e.g. to decide whether a table offers a
-	 * column for the attribute at all.
+	 * Whether a column of the given attribute is offered to the current user in a table of objects
+	 * of the given type.
 	 *
 	 * <p>
-	 * The operation is refused independent of an object when the user is restricted (see
-	 * {@link BoundChecker#isAllowedBypass(Person, BoundCommandGroup)}), or the user holds no role
-	 * granted the operation on any object: the attribute's own grant for the operation, if it has one
-	 * (see {@link ModelAccessRights#hasGrant(TLClass, TLStructuredTypePart, BoundCommandGroup)}), lists no
-	 * role the user holds, or, without one, the user holds none of the roles the type grants the
-	 * operation to and it is not {@link #isOffered(BoundCommandGroup, TLClass) offered} to the user on the
-	 * type either, also through an access parent of the type. A refusal is
-	 * {@link ExecutableState#NOT_EXEC_HIDDEN hidden}, like
-	 * {@link #onObject(BoundCommandGroup, TLObject, TLStructuredTypePart)} displays it
-	 * on a concrete object. Everything else depends on the object and is
-	 * {@link ExecutableState#EXECUTABLE executable} here; it is decided per object by
+	 * Access rights withhold such a column only through security at attribute level: the attribute
+	 * has a {@link SimpleBoundCommandGroup#READ read} grant of its own for objects of the type (see
+	 * {@link ModelAccessRights#hasGrant(TLClass, TLStructuredTypePart, BoundCommandGroup)}) listing
+	 * no role the user holds on any object, so that the column would be empty in every row. The
+	 * read right on the type never withholds a column: it decides which rows the table shows, and
+	 * the right on the attribute of a row decides whether its cell shows a value, see
 	 * {@link #onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)}.
 	 * </p>
 	 *
-	 * @param operation
-	 *        The operation on the attribute.
+	 * <p>
+	 * A type without security offers every column. A user bypassing the model security (see
+	 * {@link BoundChecker#isAllowedBypass(Person, BoundCommandGroup)}) is offered every column,
+	 * without a user there is none. A withheld column is {@link ExecutableState#NOT_EXEC_HIDDEN hidden}.
+	 * </p>
+	 *
 	 * @param type
-	 *        The type of the objects whose attribute is accessed, {@code null} when unknown: then
-	 *        the type defining the attribute stands for it.
+	 *        The type of the objects whose attribute the column shows, {@code null} when unknown:
+	 *        then the type defining the attribute stands for it.
 	 * @param attribute
-	 *        The attribute accessed.
+	 *        The attribute the column shows.
 	 */
-	public static ExecutableState onAttributeOfType(BoundCommandGroup operation, TLStructuredType type,
-			TLStructuredTypePart attribute) {
+	public static ExecutableState onAttributeColumn(TLStructuredType type, TLStructuredTypePart attribute) {
 		ModelAccessRights rights = ModelAccessRights.getInstance();
 		TLClass clazz = type instanceof TLClass typeClass ? typeClass
 			: attribute.getOwner() instanceof TLClass owner ? owner : null;
@@ -317,11 +314,11 @@ public final class ModelAccessPolicy {
 			return ExecutableState.EXECUTABLE;
 		}
 		Person user = TLContext.currentUser();
-		Boolean bypass = BoundChecker.isAllowedBypass(user, operation);
+		Boolean bypass = BoundChecker.isAllowedBypass(user, SimpleBoundCommandGroup.READ);
 		if (bypass != null) {
 			return bypass.booleanValue() ? ExecutableState.EXECUTABLE : ExecutableState.NOT_EXEC_HIDDEN;
 		}
-		if (heldByNoGrantedRole(rights, user, clazz, attribute, operation)) {
+		if (attributeHeldByNoGrantedRole(rights, user, clazz, attribute, SimpleBoundCommandGroup.READ)) {
 			return ExecutableState.NOT_EXEC_HIDDEN;
 		}
 		return ExecutableState.EXECUTABLE;

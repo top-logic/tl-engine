@@ -298,11 +298,14 @@ object by themselves; a view configures nothing for it (`ModelAccessPolicy.onAtt
 
 - **Reading.** A `<field>` whose attribute the user may not read on the displayed object is hidden,
   and its value is not sent to the client. In a table, a `<column>` over such an attribute shows an
-  empty cell in that row, and a column whose attribute the user can read on no row at all (no role is
-  granted `Read` of it, or the user is restricted) is withheld: it is neither displayed nor offered in
-  the column selection, and a preset with a criterion on it is not offered. The table asks again on
-  every update (a change of its rows, of an observed object, of an input): once the user gains a role
-  granting `Read`, the column appears without the table being built again, and the user's arrangement
+  empty cell in that row. A column is withheld only by security at attribute level: the attribute has
+  a `Read` grant of its own that lists no role the user holds (`ModelAccessPolicy.onAttributeColumn`),
+  so that the column would be empty in every row. Such a column is neither displayed nor offered in
+  the column selection, and a preset with a criterion on it is not offered. The `Read` grant of the
+  type never withholds a column: it decides which rows the table shows, so a user who holds no role
+  on any object yet sees a table with all its columns and no rows. The table asks again on every
+  update (a change of its rows, of an observed object, of an input): once the user gains a role the
+  attribute's `Read` grant lists, the column appears without the table being built again, and the user's arrangement
   of it (position, width, shown or hidden) is kept (`ColumnSetup#released()`, `ColumnExistence`).
 - **Writing.** In edit mode, a field the user may not write is read-only; when the refusal depends on
   the object (the user holds `Write` elsewhere, not here), the field is disabled and names the

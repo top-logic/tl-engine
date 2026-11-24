@@ -16,6 +16,7 @@ import {
   ARG_FROM_TURN,
   ARG_MODE,
   ARG_REQUEST_ID,
+  ARG_ATTACHMENT_ID,
   ARG_SESSION_ID,
   ARG_SUBAGENT_ID,
   ARG_TEXT,
@@ -66,6 +67,7 @@ import {
   resetTLBridge,
   setPageLeaving,
   tlUpload,
+  uploadForms,
   uploads,
   answerUploads,
   type CommandResponse,
@@ -789,8 +791,9 @@ describe('sending', () => {
     expect(turnCommands).toEqual([])
 
     store.takeAttachments(
-      readBootstrap({ [STATE_DRAFT_ATTACHMENTS]: [{ id: 'f1', fileName: 'bild.png', mimeType: 'image/png', size: 4 }] })
-        .draftAttachments,
+      readBootstrap({
+        [STATE_DRAFT_ATTACHMENTS]: { '': [{ id: 'f1', fileName: 'bild.png', mimeType: 'image/png', size: 4 }] },
+      }).draftAttachments,
     )
     expect(store.getState().draftAttachments.map((f) => f.fileName)).toEqual(['bild.png'])
     arrive()
@@ -807,12 +810,43 @@ describe('sending', () => {
   it('takes a file off the message through the command', async () => {
     const store = chatStore('alpha', BOOT)
     const release = store.subscribe(() => undefined, control(), DATA_URL, tlUpload)
-    store.takeAttachments([{ id: 'f1', fileName: 'a.pdf', mimeType: 'application/pdf', size: 4 }])
+    store.takeAttachments({ '': [{ id: 'f1', fileName: 'a.pdf', mimeType: 'application/pdf', size: 4 }] })
 
     store.actions.removeAttachment('f1')
 
     expect(store.getState().draftAttachments).toEqual([])
-    expect(commands.map((command) => command.name)).toContain(CMD_REMOVE_ATTACHMENT)
+    const removal = commands.find((command) => command.name === CMD_REMOVE_ATTACHMENT)
+    expect(removal?.args).toEqual({ [ARG_ATTACHMENT_ID]: 'f1', [ARG_SESSION_ID]: '' })
+
+    await settle()
+    release()
+  })
+
+  it('shows the files of the chat on screen, and attaches in that chat', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL, tlUpload)
+    store.takeAttachments({
+      s1: [{ id: 'f1', fileName: 'a.png', mimeType: 'image/png', size: 4 }],
+      '': [{ id: 'f2', fileName: 'neu.png', mimeType: 'image/png', size: 4 }],
+    })
+    expect(store.getState().draftAttachments.map((f) => f.fileName)).toEqual(['neu.png'])
+    await store.actions.attach([file('noch.png', 'image/png')])
+    expect(uploadForms[0].get('sessionId')).toBe('')
+
+    await store.actions.selectSession('s1')
+    expect(store.getState().draftAttachments.map((f) => f.fileName)).toEqual(['a.png'])
+    await store.actions.attach([file('b.png', 'image/png')])
+    expect(uploadForms[1].get('sessionId')).toBe('s1')
+
+    store.actions.removeAttachment('f1')
+    expect(store.getState().draftAttachments).toEqual([])
+    expect(commands.find((command) => command.name === CMD_REMOVE_ATTACHMENT)?.args).toEqual({
+      [ARG_ATTACHMENT_ID]: 'f1',
+      [ARG_SESSION_ID]: 's1',
+    })
+
+    store.actions.newChat()
+    expect(store.getState().draftAttachments.map((f) => f.fileName)).toEqual(['neu.png'])
 
     await settle()
     release()

@@ -7,6 +7,8 @@ package com.top_logic.ai.chat.view;
 
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.Proxy;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -250,9 +252,12 @@ public final class ChatCommandDriver {
 		return control.binding().tracker();
 	}
 
-	/** The files attached to the message being written in the conversation. */
-	public static ChatAttachments attachments(ChatControl control) {
-		return control.binding().attachments();
+	/**
+	 * The files attached to the message being written in the given chat session of the
+	 * conversation; <code>null</code> for the conversation the next send creates.
+	 */
+	public static ChatAttachments attachments(ChatControl control, String sessionId) {
+		return control.binding().attachments(sessionId);
 	}
 
 	/**
@@ -275,12 +280,32 @@ public final class ChatCommandDriver {
 		return inWindowUnchecked(() -> control.getDownloadData(key));
 	}
 
-	/** Uploads one file to the conversation, as the bridge's upload does, and answers with the reply. */
+	/**
+	 * Uploads one file to the conversation the next send creates, as the bridge's upload does, and
+	 * answers with the reply.
+	 */
 	public Map<String, Object> upload(ChatControl control, String fileName, String contentType, byte[] content) {
-		Part part = filePart(fileName, contentType, content);
+		return upload(control, null, fileName, contentType, content);
+	}
+
+	/**
+	 * Uploads one file to the given chat session of the conversation, as the bridge's upload does,
+	 * and answers with the reply.
+	 *
+	 * @param sessionId
+	 *        The chat the file is attached in; <code>null</code> sends no
+	 *        {@link ChatControl#UPLOAD_SESSION_PART}, which is the conversation the next send creates.
+	 */
+	public Map<String, Object> upload(ChatControl control, String sessionId, String fileName, String contentType,
+			byte[] content) {
+		List<Part> parts = new ArrayList<>();
+		if (sessionId != null) {
+			parts.add(textPart(ChatControl.UPLOAD_SESSION_PART, sessionId));
+		}
+		parts.add(filePart(fileName, contentType, content));
 		return fields(inWindowUnchecked(() -> {
 			try (Interaction interaction = _registry.beginInteraction()) {
-				return control.handleUpload(null, List.of(part));
+				return control.handleUpload(null, parts);
 			}
 		}));
 	}
@@ -301,6 +326,18 @@ public final class ChatCommandDriver {
 			}
 		}
 		return result;
+	}
+
+	/** A multipart part of a form field, as the servlet container hands it to an upload. */
+	private static Part textPart(String name, String value) {
+		byte[] content = value.getBytes(StandardCharsets.UTF_8);
+		return (Part) Proxy.newProxyInstance(Part.class.getClassLoader(), new Class<?>[] { Part.class },
+			(proxy, method, args) -> switch (method.getName()) {
+				case "getName" -> name;
+				case "getSize" -> Long.valueOf(content.length);
+				case "getInputStream" -> new ByteArrayInputStream(content);
+				default -> null;
+			});
 	}
 
 	/** A multipart part of a file, as the servlet container hands it to an upload. */

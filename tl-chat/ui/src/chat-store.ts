@@ -22,7 +22,8 @@ import {
   FRAME_RUN_WAITING,
   rateAnswer,
   readCapabilities,
-  readDraftAttachments,
+  readAttachmentLists,
+  NEW_CONVERSATION,
   readPromptImproved,
   readSessions,
   regenerate as regenerateTurn,
@@ -365,7 +366,7 @@ export interface ChatBootstrap {
   capabilities?: unknown
   /** The account's chats, as the element's control state carries them (read with `readSessions`). */
   sessions?: unknown
-  /** The files attached to the message, as the control state carries them (`readDraftAttachments`). */
+  /** The files attached per chat, as the control state carries them (`readAttachmentLists`). */
   draftAttachments?: unknown
 }
 
@@ -575,8 +576,15 @@ export interface ChatState {
   conversationsOutsideDock: number
 
   /**
-   * The files attached to the message being written, as the chat controls state them: the files
-   * wait on the server, which the send takes them from.
+   * The files attached to the messages being written, per chat session id (`NEW_CONVERSATION` for
+   * the chat the next send creates), as the chat controls state them: the files wait on the server,
+   * which the send takes them from.
+   */
+  attachmentLists: Record<string, DraftAttachment[]>
+
+  /**
+   * The files attached to the message being written in the chat on screen: the entry of
+   * {@link attachmentLists} for {@link sessionId}. Derived.
    */
   draftAttachments: DraftAttachment[]
 
@@ -619,6 +627,9 @@ export interface ChatState {
  * and the lists drifted apart - a deleted chat's notice stayed up, and no switch dropped the previous
  * run's subagent budget.
  */
+/** The files of a chat with none attached; one instance, so the derived state stays the same. */
+const NO_ATTACHMENTS: DraftAttachment[] = Object.freeze([]) as unknown as DraftAttachment[]
+
 const EMPTY_CONVERSATION: Pick<
   ChatState,
   | 'subagents'
@@ -1136,7 +1147,8 @@ export class ChatStore {
       railDrawer: false,
       railDrawerOpen: false,
       conversationsOutsideDock: 0,
-      draftAttachments: [],
+      attachmentLists: {},
+      draftAttachments: NO_ATTACHMENTS,
       railBadge: NO_RAIL_BADGE,
     })
     this.effects = this.declareEffects()
@@ -1233,12 +1245,24 @@ export class ChatStore {
     if (list) this.patch({ sessions: list, sessionsLoading: false })
   }
 
-  /** Takes the files attached to the message, when an element's control state brings new ones. */
+  /** Takes the files attached per chat, when an element's control state brings new ones. */
   takeAttachments = (raw: unknown): void => {
-    const files = readDraftAttachments(raw)
-    if (files && JSON.stringify(files) !== JSON.stringify(this.state.draftAttachments)) {
-      this.patch({ draftAttachments: files })
+    const lists = readAttachmentLists(raw)
+    if (lists && JSON.stringify(lists) !== JSON.stringify(this.state.attachmentLists)) {
+      this.patch({ attachmentLists: lists })
     }
+  }
+
+  /** Takes the given files off the list of the given chat, before the server's state says so. */
+  private dropAttachments(sessionId: string | null, gone: Set<string>): void {
+    const key = sessionId ?? NEW_CONVERSATION
+    const files = this.state.attachmentLists[key]
+    if (!files) return
+    const left = files.filter((file) => !gone.has(file.id))
+    const lists = { ...this.state.attachmentLists }
+    if (left.length > 0) lists[key] = left
+    else delete lists[key]
+    this.patch({ attachmentLists: lists })
   }
 
   /**
@@ -1268,7 +1292,8 @@ export class ChatStore {
     const sessionTitle =
       base.sessions.find((session) => session.id === base.sessionId)?.title ||
       bundle(base.language).newChat
-    return { ...base, offeredModels, effortLevels, sources, latestSources, sessionTitle }
+    const draftAttachments = base.attachmentLists[base.sessionId ?? NEW_CONVERSATION] ?? NO_ATTACHMENTS
+    return { ...base, offeredModels, effortLevels, sources, latestSources, sessionTitle, draftAttachments }
   }
 
   private patch(next: Partial<ChatState>): void {
@@ -2279,9 +2304,9 @@ export class ChatStore {
     }
     if (sent.length > 0) {
       // The server took them off with the send; until its state says so, the composer must not
-      // show them either.
-      const gone = new Set(sent.map((file) => file.id))
-      this.patch({ draftAttachments: this.state.draftAttachments.filter((file) => !gone.has(file.id)) })
+      // show them either. They were the files of the chat the send named - none for a chat it
+      // created.
+      this.dropAttachments(active, new Set(sent.map((file) => file.id)))
     }
     // Dropping the edited turn is what editing always does; saying so only helps when answers
     // the user could still see went with it. Sticky: the run start that follows used to clear the
@@ -2496,7 +2521,7 @@ export class ChatStore {
         )
         if (usable.length > 0) {
           this.attaching += usable.length
-          const upload = uploadAttachments(this.upload, usable)
+          const upload = uploadAttachments(this.upload, usable, this.state.sessionId)
             .catch(() => [labels.attachFailed])
             .finally(() => {
               this.attaching -= usable.length
@@ -2510,8 +2535,9 @@ export class ChatStore {
       },
 
       removeAttachment: (id: string) => {
-        this.patch({ draftAttachments: this.state.draftAttachments.filter((file) => file.id !== id) })
-        void removeAttachment(this.command, id)
+        const sessionId = this.state.sessionId
+        this.dropAttachments(sessionId, new Set([id]))
+        void removeAttachment(this.command, id, sessionId)
       },
 
       selectTraceMode: (mode: TraceMode) => {

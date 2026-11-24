@@ -65,7 +65,7 @@ public class TestChatDraftCommands extends BasicTestCase {
 			Map<String, Object> reply = _driver.upload(conversation, "bild.png", "image/png", PNG);
 
 			assertEquals("Nothing was refused: " + reply, List.of(), reply.get(AttachmentUploadReply.REASON__PROP));
-			List<?> shown = (List<?>) conversation.state(ChatControl.STATE_DRAFT_ATTACHMENTS);
+			List<?> shown = shown(conversation, ChatViewBinding.NEW_CONVERSATION);
 			assertEquals(1, shown.size());
 			DraftAttachmentDto file = (DraftAttachmentDto) shown.get(0);
 			assertEquals("bild.png", file.getFileName());
@@ -85,7 +85,7 @@ public class TestChatDraftCommands extends BasicTestCase {
 
 			assertEquals(List.of(Resources.getInstance().getString(
 				I18NConstants.ERROR_ATTACHMENT_TYPE__FILE.fill("notiz.txt"))), reply.get(AttachmentUploadReply.REASON__PROP));
-			assertEquals(List.of(), ChatCommandDriver.attachments(conversation).entries());
+			assertEquals(List.of(), ChatCommandDriver.attachments(conversation, null).entries());
 		} finally {
 			conversation.cleanupTree();
 		}
@@ -105,7 +105,7 @@ public class TestChatDraftCommands extends BasicTestCase {
 				I18NConstants.ERROR_TOO_MANY_ATTACHMENTS__FILE_MAX.fill("zuviel.png",
 					Integer.valueOf(ChatAttachments.MAX_ATTACHMENTS)))),
 				reply.get(AttachmentUploadReply.REASON__PROP));
-			assertEquals(ChatAttachments.MAX_ATTACHMENTS, ChatCommandDriver.attachments(conversation).entries().size());
+			assertEquals(ChatAttachments.MAX_ATTACHMENTS, ChatCommandDriver.attachments(conversation, null).entries().size());
 		} finally {
 			conversation.cleanupTree();
 		}
@@ -128,12 +128,12 @@ public class TestChatDraftCommands extends BasicTestCase {
 		try {
 			_driver.upload(conversation, "eins.png", "image/png", PNG);
 			_driver.upload(conversation, "zwei.png", "image/png", PNG);
-			String first = ChatCommandDriver.attachments(conversation).entries().get(0).id();
+			String first = ChatCommandDriver.attachments(conversation, null).entries().get(0).id();
 
 			_driver.command(conversation, ChatControl.CMD_REMOVE_ATTACHMENT,
 				Map.of(ChatControl.ARG_ATTACHMENT_ID, first));
 
-			List<?> shown = (List<?>) conversation.state(ChatControl.STATE_DRAFT_ATTACHMENTS);
+			List<?> shown = shown(conversation, ChatViewBinding.NEW_CONVERSATION);
 			assertEquals(1, shown.size());
 			assertEquals("zwei.png", ((DraftAttachmentDto) shown.get(0)).getFileName());
 		} finally {
@@ -171,6 +171,16 @@ public class TestChatDraftCommands extends BasicTestCase {
 			conversation.cleanupTree();
 		}
 		assertEquals(List.of(), binding.facts());
+	}
+
+	/**
+	 * The files the state of the given control shows for the given chat session, an empty list for
+	 * a session without files.
+	 */
+	static List<?> shown(ChatCommandDriver.Conversation conversation, String sessionId) {
+		Map<?, ?> all = (Map<?, ?>) conversation.state(ChatControl.STATE_DRAFT_ATTACHMENTS);
+		List<?> files = (List<?>) all.get(sessionId);
+		return files == null ? List.of() : files;
 	}
 
 	/** The model, a login and the services a chat control reads. */

@@ -48,6 +48,8 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.service.HistoryManager;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.UpdateEvent;
@@ -560,6 +562,13 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 * </p>
 	 *
 	 * <p>
+	 * All sub-sessions receiving the user and the current interaction are moved to the current
+	 * revision of the knowledge base before the account is checked, and read at it afterwards.
+	 * They see everything committed before or during the login, including an account created or
+	 * changed by the login itself.
+	 * </p>
+	 *
+	 * <p>
 	 * As protection against session fixation, the session ID is changed with
 	 * {@link HttpServletRequest#changeSessionId()}. The session stays registered under the new ID
 	 * with the given user, and the login is announced to the {@link UserEventListener}s under the
@@ -603,6 +612,13 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 * </p>
 	 *
 	 * <p>
+	 * The sub-session receiving the user and the current interaction are moved to the current
+	 * revision of the knowledge base before the account is checked, and read at it afterwards.
+	 * They see everything committed before or during the login, including an account created or
+	 * changed by the login itself.
+	 * </p>
+	 *
+	 * <p>
 	 * The session ID is changed and the logout and login are announced as for
 	 * {@link #loginUser(HttpServletRequest, HttpServletResponse, Person)}: the session and its other
 	 * windows continue.
@@ -640,6 +656,13 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	/**
 	 * Logs the given user in, changing the ID of an existing session.
 	 *
+	 * <p>
+	 * For a session that is registered with this service, the sub-sessions receiving the user and
+	 * the current interaction are moved to the current revision before the account is checked, so
+	 * that an account created or changed by the login itself is read at a revision that contains
+	 * it.
+	 * </p>
+	 *
 	 * @param assignment
 	 *        Sets the user in a session that is registered with this service.
 	 */
@@ -648,22 +671,24 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 		if (user == null) {
 			throw new NullPointerException("Given User is null.");
 		}
-		Login.checkNotLocked(user);
 
 		HttpSession session = request.getSession(false);
 		if (session == null) {
+			Login.checkNotLocked(user);
 			return getNewSessionForUser(request, response, user);
 		}
 
 		String oldId = session.getId();
 		Registration registration = _sessionMap.get(oldId);
 		if (registration == null) {
+			Login.checkNotLocked(user);
 			request.changeSessionId();
 			return getNewSessionForUser(request, response, user);
 		}
 
 		TLSessionContext sessionContext = registration.context();
 		Runnable setUser = assignment.prepare(sessionContext, user);
+		Login.checkNotLocked(user);
 
 		sendEvent(oldId, registration.info().getUser(), user, UserEvent.EventType.LOGGED_OUT);
 
@@ -685,10 +710,16 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	private interface UserAssignment {
 
 		/**
-		 * Checks whether the given user can be set in the given session.
+		 * Checks whether the given user can be set in the given session and moves the sub-sessions
+		 * receiving the user and the current interaction to the current revision.
 		 *
-		 * @return The operation setting the user in the sub-sessions, executed after the session ID
-		 *         has changed.
+		 * <p>
+		 * The move happens before the account of the user is read, so that an account created or
+		 * changed by the login itself is visible to the check and to the sub-sessions.
+		 * </p>
+		 *
+		 * @return The operation setting the user in the sub-sessions, executed after the account
+		 *         has been checked and the session ID has changed.
 		 */
 		Runnable prepare(TLSessionContext sessionContext, Person user);
 
@@ -696,9 +727,18 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 
 	/**
 	 * {@link UserAssignment} setting the user in all sub-sessions of the session and in the
-	 * sub-session of the current interaction.
+	 * sub-session of the current interaction, which read at the current revision afterwards.
 	 */
 	private Runnable assignToSession(TLSessionContext sessionContext, Person user) {
+		for (TLSubSessionContext subSession : sessionContext.getSubSessions().values()) {
+			HistoryUtils.moveToCurrentRevision(subSession);
+		}
+		InteractionContext currentInteraction = ThreadContextManager.getInteraction();
+		if (currentInteraction != null
+			&& currentInteraction.getSubSessionContext() instanceof TLSubSessionContext currentSubSession) {
+			moveToCurrentRevision(currentSubSession);
+		}
+
 		return () -> {
 			for (TLSubSessionContext subSession : sessionContext.getSubSessions().values()) {
 				subSession.setPerson(user);
@@ -723,7 +763,8 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	}
 
 	/**
-	 * {@link UserAssignment} setting the user in the sub-session of the current interaction only.
+	 * {@link UserAssignment} setting the user in the sub-session of the current interaction only,
+	 * which reads at the current revision afterwards.
 	 *
 	 * @throws IllegalStateException
 	 *         If the current interaction has no sub-session of the given session installed.
@@ -734,7 +775,18 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 		if (!(subSession instanceof TLSubSessionContext window) || window.getSessionContext() != sessionContext) {
 			throw new IllegalStateException("No window of the session installed in the current interaction.");
 		}
+		moveToCurrentRevision(window);
 		return () -> window.setPerson(user);
+	}
+
+	/**
+	 * Moves the sub-session of the current interaction and the interaction itself to the current
+	 * revision, also if the interaction has already read at an older revision.
+	 */
+	private static void moveToCurrentRevision(TLSubSessionContext currentSubSession) {
+		HistoryManager hm = PersistencyLayer.getKnowledgeBase().getHistoryManager();
+		HistoryUtils.updateSessionAndInteractionRevision(hm, currentSubSession,
+			HistoryUtils.moveToCurrentRevision(currentSubSession));
 	}
 
 	/**

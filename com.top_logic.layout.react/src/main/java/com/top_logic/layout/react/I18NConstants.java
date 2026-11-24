@@ -264,6 +264,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_CONNECTION_RECONNECTING;
 
 	/**
+	 * @en This part of the view could not be displayed.
+	 */
+	@CustomKey("js.child.renderError")
+	public static ResKey JS_CHILD_RENDER_ERROR;
+
+	/**
 	 * @en Record audio
 	 */
 	@CustomKey("js.audioRecorder.record")

@@ -517,6 +517,12 @@ public class MigrationUtil {
 	 * missing module is reported as error. A dropped dependency the predecessor migration does not
 	 * depend on is reported as warning.
 	 * </p>
+	 * 
+	 * <p>
+	 * A module listed in the {@link MigrationConfig#getAddedDependencies() added dependencies} of a
+	 * migration that its predecessor migration already depends on, or that the migration itself
+	 * does not depend on, is reported as warning.
+	 * </p>
 	 */
 	private static void checkNoLostDependency(Log log, List<MigrationConfig> sortedMigrations) {
 		Set<String> dependentModules = Collections.emptySet();
@@ -542,6 +548,21 @@ public class MigrationUtil {
 			if (!unknownDroppedModules.isEmpty()) {
 				log.info("Migration for " + toString(version(migration)) + " drops dependencies to modules "
 					+ unknownDroppedModules + " its predecessor migration does not depend on.", Protocol.WARN);
+			}
+
+			Set<String> addedModules = migration.getAddedDependencies().keySet();
+			Set<String> knownAddedModules = new HashSet<>(addedModules);
+			knownAddedModules.retainAll(dependentModules);
+			if (!knownAddedModules.isEmpty()) {
+				log.info("Migration for " + toString(version(migration)) + " adds dependencies to modules "
+					+ knownAddedModules + " its predecessor migration already depends on.", Protocol.WARN);
+			}
+
+			Set<String> missingAddedModules = new HashSet<>(addedModules);
+			missingAddedModules.removeAll(tmp);
+			if (!missingAddedModules.isEmpty()) {
+				log.info("Migration for " + toString(version(migration)) + " adds dependencies to modules "
+					+ missingAddedModules + " it does not depend on.", Protocol.WARN);
 			}
 			dependentModules = tmp;
 		}
@@ -642,6 +663,12 @@ public class MigrationUtil {
 	 * A2.
 	 * </p>
 	 * 
+	 * <p>
+	 * No such dependency is introduced, if predecessor(B2) predates the adoption of the module of A2
+	 * (see {@link #adoptedLaterModules(Collection, Function)}): It never runs in the same upgrade
+	 * as the migrations of that module.
+	 * </p>
+	 * 
 	 * <h2>Module inversion</h2>
 	 * 
 	 * <img src="./03-rule-module-dependencies.svg"/>
@@ -708,7 +735,9 @@ public class MigrationUtil {
 			latestRef.initLocalOrder();
 		}
 
-		makeTransitive(log, migrations);
+		Map<MigrationConfig, Set<String>> adoptedLater = adoptedLaterModules(migrations);
+
+		makeTransitive(log, migrations, adoptedLater);
 
 		logModulesWithoutDataVersion(log, versionsByModule, dbVersion, applicationModules);
 
@@ -740,6 +769,12 @@ public class MigrationUtil {
 					// The predecessor has the same dependency. This version is just an update of
 					// the predecessor version without new dependencies. Leaf the handling to the
 					// predecessor.
+					continue;
+				}
+				if (predecessorDependency == null && adoptedLater
+					.getOrDefault(predecessor.getConfig(), Collections.emptySet()).contains(dependency.getModule())) {
+					// The predecessor predates the adoption of the dependency module and never runs in
+					// the same upgrade as the migrations of that module.
 					continue;
 				}
 
@@ -833,15 +868,27 @@ public class MigrationUtil {
 	 * still correct, since the direct dependency itself runs after the migrations of the dropped
 	 * module.
 	 * </p>
+	 *
+	 * <p>
+	 * Likewise, a migration gets no transitive dependency to a module that one of its successors in
+	 * the same module lists in its {@link MigrationConfig#getAddedDependencies() added
+	 * dependencies} (see {@link #adoptedLaterModules(Collection, Function)}). Such a migration and
+	 * the migrations of the adopted module never run in the same upgrade.
+	 * </p>
+	 *
+	 * @param adoptedLater
+	 *        For each migration the modules it predates the adoption of.
 	 */
-	private static void makeTransitive(Log log, Map<VersionID, MigrationRef> migrations) {
+	private static void makeTransitive(Log log, Map<VersionID, MigrationRef> migrations,
+			Map<MigrationConfig, Set<String>> adoptedLater) {
 		boolean changed;
 		do {
 			changed = false;
 
 			for (MigrationRef migration : migrations.values()) {
 				Map<String, MigrationRef> updates = new HashMap<>();
-				Set<String> droppedModules = droppedModules(migrations, migration);
+				Set<String> droppedModules = new HashSet<>(droppedModules(migrations, migration));
+				droppedModules.addAll(adoptedLater.getOrDefault(migration.getConfig(), Collections.emptySet()));
 
 				check:
 				for (MigrationRef dependency : migration.getDependencies()) {
@@ -894,7 +941,8 @@ public class MigrationUtil {
 											+ "' is to old since it would limit dependency to module '" + module
 											+ "' to versions from '" + dependency2 + "' to '" + limit
 											+ "' (the dependency of the successor '" + dependencySuccessor
-											+ "' of the dependency).",
+											+ "' of the dependency)."
+											+ adoptionHint(migration, dependency),
 										Log.WARN);
 
 									updates.put(updated.getModule(), updated);
@@ -924,6 +972,27 @@ public class MigrationUtil {
 				}
 			}
 		} while (changed);
+	}
+
+	private static Map<MigrationConfig, Set<String>> adoptedLaterModules(Map<VersionID, MigrationRef> migrations) {
+		List<MigrationConfig> configs = migrations.values().stream()
+			.map(MigrationRef::getConfig)
+			.filter(Objects::nonNull)
+			.collect(Collectors.toList());
+		return adoptedLaterModules(configs, config -> {
+			MigrationRef predecessor = migrations.get(VersionID.of(config.getVersion())).getPredecessor();
+			return predecessor == null ? null : predecessor.getConfig();
+		});
+	}
+
+	private static String adoptionHint(MigrationRef migration, MigrationRef dependency) {
+		String module = dependency.getModule();
+		if (!VersionID.of(initialVersion(module)).equals(dependency.getId())) {
+			return "";
+		}
+		return " If module '" + module + "' was added to the application later, list it in '"
+			+ MigrationConfig.ADDED_DEPENDENCIES_PROPERTY + "' of the first migration of module '"
+			+ migration.getModule() + "' that depends on it.";
 	}
 
 	private static Set<String> droppedModules(Map<VersionID, MigrationRef> migrations, MigrationRef migration) {
@@ -1247,7 +1316,10 @@ public class MigrationUtil {
 	 * A module depends on all modules any of its migrations depends on. A migration not depending
 	 * on such a module gets a dependency to its initial version, unless the migration or one of its
 	 * predecessors lists the module in its {@link MigrationConfig#getDroppedDependencies() dropped
-	 * dependencies} (see {@link #droppedModules(MigrationConfig, Function)}).
+	 * dependencies} (see {@link #droppedModules(MigrationConfig, Function)}), or one of its
+	 * successors lists the module in its {@link MigrationConfig#getAddedDependencies() added
+	 * dependencies} (see {@link #adoptedLaterModules(Collection, Function)}). The initial version
+	 * of a module is the predecessor of the first migration of the module.
 	 * </p>
 	 *
 	 * @param migrationsByModule
@@ -1278,10 +1350,24 @@ public class MigrationUtil {
 				droppedByMigration.put(migration, droppedModules(migration, moduleMigrations::get));
 			}
 
+			Version moduleInitial = initialVersions.get(module);
+			Map<MigrationConfig, Set<String>> adoptedLater =
+				adoptedLaterModules(moduleMigrations.values(), migration -> {
+					Version predecessor = migration.getDependencies().get(module);
+					if (predecessor != null) {
+						return moduleMigrations.get(predecessor);
+					}
+					if (moduleInitial == null || moduleInitial.equals(migration.getVersion())) {
+						return null;
+					}
+					return moduleMigrations.get(moduleInitial);
+				});
+
 			for (Entry<Version, MigrationConfig> migrationEntry : moduleMigrations.entrySet()) {
 				Version version = migrationEntry.getKey();
 				MigrationConfig migration = migrationEntry.getValue();
-				Set<String> dropped = droppedByMigration.get(migration);
+				Set<String> dropped = new HashSet<>(droppedByMigration.get(migration));
+				dropped.addAll(adoptedLater.getOrDefault(migration, Collections.emptySet()));
 
 				// Add dependency to initial versions.
 				Map<String, Version> dependencies = migration.getDependencies();
@@ -1330,6 +1416,41 @@ public class MigrationUtil {
 			current = predecessor == null ? null : lookup.apply(predecessor);
 		}
 		return dropped;
+	}
+
+	/**
+	 * The modules the given migrations predate the adoption of.
+	 *
+	 * <p>
+	 * A migration predates the adoption of a module, if one of its successors in the same module
+	 * lists the module in its {@link MigrationConfig#getAddedDependencies() added dependencies}
+	 * and neither the migration nor a migration between it and that successor depends on the
+	 * module.
+	 * </p>
+	 *
+	 * @param migrations
+	 *        The migrations of a single module.
+	 * @param predecessor
+	 *        Resolves a migration to its predecessor in the same module, <code>null</code> if there
+	 *        is none or it is unknown.
+	 * @return For each migration that predates the adoption of a module, the adopted modules.
+	 *         Migrations predating no adoption are missing.
+	 */
+	public static Map<MigrationConfig, Set<String>> adoptedLaterModules(Collection<MigrationConfig> migrations,
+			Function<MigrationConfig, MigrationConfig> predecessor) {
+		Map<MigrationConfig, Set<String>> result = new HashMap<>();
+		for (MigrationConfig adopting : migrations) {
+			for (String module : adopting.getAddedDependencies().keySet()) {
+				Set<MigrationConfig> visited = new HashSet<>();
+				MigrationConfig current = predecessor.apply(adopting);
+				while (current != null && visited.add(current)
+					&& !current.getDependencies().containsKey(module)) {
+					result.computeIfAbsent(current, x -> new HashSet<>()).add(module);
+					current = predecessor.apply(current);
+				}
+			}
+		}
+		return result;
 	}
 
 	/**

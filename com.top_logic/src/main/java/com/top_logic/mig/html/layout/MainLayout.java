@@ -992,13 +992,8 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
     }
 
 	/**
-	 * Writes the start of the html-structure: e.g.
-	 * 
-	 * <pre>
-	 * &lt;?xml version="1.0" encoding="encoding" ?&gt;
-	 * &lt;!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" 
-	 *      "http://www.w3c.org/TR/xhtml1/DTD/xhtml1.1.dtd"&gt;
-	 * </pre>
+	 * Writes the start of the html-structure: the document type declaration and the start tag of
+	 * the <code>html</code> element.
 	 * 
 	 * @param out
 	 *        the <code>TagWriter</code> to write the data into.
@@ -1006,16 +1001,8 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
     public static void writeHTMLStructureStart(DisplayContext context, 
 												TagWriter out) throws IOException {
 
-		writeXmlProlog(context, out);
 		writeDoctype(context, out);
 		writeHtmlStartTag(out);
-    }
-
-	/**
-	 * Writes the XML declaration of an HTML page.
-	 */
-    public static void writeXmlProlog(DisplayContext context, TagWriter out) throws IOException {
-		out.writeXMLHeader(context.getCharacterEncoding());
     }
 
 	/**

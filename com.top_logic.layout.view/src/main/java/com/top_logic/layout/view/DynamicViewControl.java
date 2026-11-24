@@ -35,8 +35,8 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * resulting configuration differs from the shown one by value: an attribute holding a view parses
  * the stored text anew on every read, so an unchanged view comes back as another, equal
  * configuration instance, see {@link #isShown(Object)}. The previously shown view is
- * {@link ContentControls#retire(ReactControl) retired}, so that its disposal waits until the
- * channel notification that caused the switch has unwound.
+ * {@link ContentControls#retire(ReactControl) retired}: it is disposed right away, so that the
+ * channel notification that caused the switch does not reach it anymore.
  * </p>
  *
  * <p>

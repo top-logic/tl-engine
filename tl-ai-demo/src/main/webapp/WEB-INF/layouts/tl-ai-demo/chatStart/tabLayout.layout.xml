@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	A command of the page that starts a chat about the selected event and shows the Albert tab
+	(chatStart). The Albert tab opens the started chat, also when it is already loaded with another
+	one.
+-->
+<config:template-call
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+	template="com.top_logic/tab.template.xml"
+>
+	<arguments tabIcon="css:fas fa-comments">
+		<tabLabel key="dynamic.f742e2eb-adc6-4a28-8bd3-4f866b94a3a3">
+			<en>Start chat</en>
+			<de>Chat starten</de>
+		</tabLabel>
+		<components>
+			<layout-reference resource="tl-ai-demo/chatStart/eventsTable.layout.xml"/>
+		</components>
+	</arguments>
+</config:template-call>

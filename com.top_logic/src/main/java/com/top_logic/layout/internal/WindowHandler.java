@@ -158,7 +158,6 @@ public class WindowHandler extends CompositeHandlerAdapter implements WindowCont
 		CacheControl.setNoCache(response);
 
 		TagWriter out = new TagWriter(response.getWriter());
-		out.writeXMLHeader(LayoutConstants.UTF_8);
 		Icons.LOADING_SCREEN.get().write(context, out, new LoadingModel(this, newSubsessionId));
 		out.flushBuffer();
 	}

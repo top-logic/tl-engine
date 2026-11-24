@@ -14,22 +14,26 @@ import junit.framework.TestCase;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.table.ColumnFilterState;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.MatchCounts;
-import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Option;
 import com.top_logic.table.filter.BooleanColumnFilter;
 import com.top_logic.table.filter.BooleanFilterState;
 import com.top_logic.table.filter.BoundCodec;
+import com.top_logic.table.filter.ColumnFilterEditor;
 import com.top_logic.table.filter.ComparableColumnFilter;
 import com.top_logic.table.filter.ComparisonOperator;
 import com.top_logic.table.filter.FilterEditor;
 import com.top_logic.table.filter.FilterEditors;
+import com.top_logic.table.filter.FilterField;
+import com.top_logic.table.filter.I18NConstants;
 import com.top_logic.table.filter.OptionsColumnFilter;
 import com.top_logic.table.filter.OptionsFilterState;
 import com.top_logic.table.filter.RangeFilterState;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.filter.TextFilterState;
+import com.top_logic.table.filter.TextMatchMode;
 
 /**
  * Test for {@link FilterEditors}: each editor seeds from the current state and reads the
@@ -46,21 +50,23 @@ public class TestFilterEditors extends TestCase {
 		assertTrue(((TextFilterState) editor.read()).isEmpty());
 
 		field(editor, 0).setValue("abc");   // pattern
-		field(editor, 1).setValue(Boolean.TRUE);   // case sensitive
-		field(editor, 3).setValue(Boolean.TRUE);   // whole field
+		field(editor, 1).setValue(TextMatchMode.WHOLE_WORD);   // search mode
+		field(editor, 2).setValue(Boolean.TRUE);   // case sensitive
 		TextFilterState state = (TextFilterState) editor.read();
 		assertEquals("abc", state.pattern());
 		assertTrue(state.caseSensitive());
-		assertFalse(state.regexp());
-		assertTrue(state.wholeField());
+		assertEquals(TextMatchMode.WHOLE_WORD, state.mode());
+		assertFalse(state.wholeField());
 	}
 
 	public void testTextEditorSeededFromState() {
 		FilterEditor editor =
-			FilterEditors.create(TextColumnFilter.forStrings(), new TextFilterState("x", true, false, false),
-				MatchCounts.NONE);
+			FilterEditors.create(TextColumnFilter.forStrings(),
+				new TextFilterState("x", true, TextMatchMode.WORD_START, true), MatchCounts.NONE);
 		assertEquals("x", field(editor, 0).getValue());
-		assertEquals(Boolean.TRUE, field(editor, 1).getValue());
+		assertEquals(TextMatchMode.WORD_START, field(editor, 1).getValue());
+		assertEquals(Boolean.TRUE, field(editor, 2).getValue());
+		assertTrue("The whole-field flag is kept.", ((TextFilterState) editor.read()).wholeField());
 	}
 
 	public void testBooleanEditorReadBack() {
@@ -77,7 +83,7 @@ public class TestFilterEditors extends TestCase {
 		BooleanColumnFilter filter =
 			new BooleanColumnFilter(ResKey.text("Yes"), ResKey.text("No"), false);
 		FilterEditor editor = FilterEditors.create(filter, null, MatchCounts.NONE);
-		assertEquals("A column without empty cells offers just the two value options.", 2,
+		assertEquals("A column without empty cells offers just the two value options, and no invert.", 2,
 			editor.fields().size());
 
 		field(editor, 0).setValue(Boolean.TRUE);    // accept true
@@ -85,6 +91,41 @@ public class TestFilterEditors extends TestCase {
 		assertTrue(state.acceptTrue());
 		assertFalse(state.acceptFalse());
 		assertFalse(state.acceptNull());
+	}
+
+	/**
+	 * A yes / no filter offers no inversion: each of its values is an option of its own, so the
+	 * inverse of a selection is the selection of the other options. Every other kind offers it.
+	 */
+	public void testInvertNotOfferedForBoolean() {
+		ColumnFilterEditor bool =
+			FilterEditors.create(List.of(BooleanColumnFilter.INSTANCE), null, kind -> MatchCounts.NONE);
+		assertFalse(bool.invertOffered());
+		assertEquals("True, false, no value.", 3, bool.fields().size());
+		for (FilterField field : bool.fields()) {
+			assertNotSame(I18NConstants.FILTER_INVERT, field.label());
+		}
+
+		ColumnFilterEditor text =
+			FilterEditors.create(List.of(TextColumnFilter.forStrings()), null, kind -> MatchCounts.NONE);
+		assertTrue(text.invertOffered());
+		assertEquals(I18NConstants.FILTER_INVERT, text.fields().get(text.fields().size() - 1).label());
+	}
+
+	/**
+	 * An inverted yes / no state, e.g. of a declared filter, keeps the checkbox, so that it can be
+	 * undone.
+	 */
+	public void testInvertKeptForInvertedBoolean() {
+		ColumnFilterEditor bool = FilterEditors.create(List.of(BooleanColumnFilter.INSTANCE),
+			ColumnFilterState.invert(new BooleanFilterState(true, false, false)), kind -> MatchCounts.NONE);
+		assertTrue(bool.invertOffered());
+		FieldModel invert = bool.fields().get(bool.fields().size() - 1).model();
+		assertEquals(Boolean.TRUE, invert.getValue());
+
+		invert.setValue(Boolean.FALSE);
+		assertEquals(new BooleanFilterState(true, false, false), ColumnFilterState.innerOf(bool.read()));
+		assertFalse(ColumnFilterState.isInverted(bool.read()));
 	}
 
 	public void testOptionsEditorReadBack() {
@@ -105,35 +146,34 @@ public class TestFilterEditors extends TestCase {
 	public void testInvertCheckboxWrapsStateOnRead() {
 		FilterEditor editor = FilterEditors.create(TextColumnFilter.forStrings(), null, MatchCounts.NONE);
 		List<?> fields = editor.fields();
-		// Pattern + 3 text options + the invert checkbox last.
-		assertEquals(5, fields.size());
+		// Pattern, search mode, case sensitive + the invert checkbox last.
+		assertEquals(4, fields.size());
 
 		field(editor, 0).setValue("abc");        // pattern
-		field(editor, 4).setValue(Boolean.TRUE); // invert
+		field(editor, 3).setValue(Boolean.TRUE); // invert
 		FilterState state = editor.read();
-		assertTrue(state instanceof NegatedFilterState);
-		assertEquals("abc", ((TextFilterState) ((NegatedFilterState) state).inner()).pattern());
+		assertEquals(ColumnFilterState.invert(TextFilterState.contains("abc")), state);
 	}
 
 	public void testInvertEditorSeededFromNegatedState() {
 		FilterEditor editor = FilterEditors.create(TextColumnFilter.forStrings(),
-			new NegatedFilterState(TextFilterState.contains("x")), MatchCounts.NONE);
+			ColumnFilterState.invert(TextFilterState.contains("x")), MatchCounts.NONE);
 		assertEquals("x", field(editor, 0).getValue());
-		assertEquals("Invert checkbox reflects the persisted inversion.", Boolean.TRUE, field(editor, 4).getValue());
+		assertEquals("Invert checkbox reflects the persisted inversion.", Boolean.TRUE, field(editor, 3).getValue());
 	}
 
 	public void testInvertCheckboxIgnoredWhenSelectionEmpty() {
 		FilterEditor editor = FilterEditors.create(TextColumnFilter.forStrings(), null, MatchCounts.NONE);
-		field(editor, 4).setValue(Boolean.TRUE); // invert, but no pattern
+		field(editor, 3).setValue(Boolean.TRUE); // invert, but no pattern
 		FilterState state = editor.read();
-		assertFalse("Inverting an empty selection stays inactive.", state instanceof NegatedFilterState);
+		assertFalse("Inverting an empty selection stays inactive.", state instanceof ColumnFilterState);
 		assertTrue(state.isEmpty());
 	}
 
 	public void testComparableEditorReadBack() {
 		FilterEditor editor = FilterEditors.create(ComparableColumnFilter.integers(), null, MatchCounts.NONE);
 		field(editor, 0).setValue(ComparisonOperator.GE);   // operator
-		field(editor, 1).setValue("18");                    // primary
+		field(editor, 1).setValue(Integer.valueOf(18));     // primary, typed
 
 		@SuppressWarnings("unchecked")
 		RangeFilterState<Integer> state = (RangeFilterState<Integer>) editor.read();
@@ -143,9 +183,11 @@ public class TestFilterEditors extends TestCase {
 	}
 
 	/**
-	 * A bound is shown and read in the reader's language: a German user sees and types the decimal
-	 * fraction with a comma.
+	 * A bound field holds the typed bound and carries the codec a UI without a typed input writes and
+	 * reads it with, in the reader's language: a German user sees and types the decimal fraction
+	 * with a comma.
 	 */
+	@SuppressWarnings("unchecked")
 	public void testComparableEditorInTheReadersLanguage() {
 		ComparableColumnFilter<Number> filter = new ComparableColumnFilter<>(
 			Comparator.comparingDouble(Number::doubleValue),
@@ -153,14 +195,20 @@ public class TestFilterEditors extends TestCase {
 		FilterEditor editor = FilterEditors.create(filter,
 			RangeFilterState.of(ComparisonOperator.GE, Double.valueOf(37.5)), MatchCounts.NONE);
 
-		assertEquals("37,5", field(editor, 1).getValue());
+		FilterField primary = editor.fields().get(1);
+		assertEquals(Double.valueOf(37.5), primary.model().getValue());
+		BoundCodec<Number> codec = (BoundCodec<Number>) primary.valueCodec();
+		assertSame(filter.codec(), codec);
+		assertEquals("37,5", codec.format((Number) primary.model().getValue()));
 
-		field(editor, 1).setValue("12,25");
+		primary.model().setValue(codec.parse("12,25"));
 		assertEquals(Double.valueOf(12.25), ((RangeFilterState<?>) editor.read()).primary());
 
-		field(editor, 1).setValue("kein Wert");
+		primary.model().setValue(codec.parse("kein Wert"));
 		assertNull("Text that is not a number leaves the bound unset.",
 			((RangeFilterState<?>) editor.read()).primary());
+
+		assertNull("The operator holds no value of the column.", editor.fields().get(0).valueCodec());
 	}
 
 	public void testComparableEditorBetween() {
@@ -168,13 +216,46 @@ public class TestFilterEditors extends TestCase {
 			RangeFilterState.between(5, 10), MatchCounts.NONE);
 		// Seeded from state.
 		assertEquals(ComparisonOperator.BETWEEN, field(editor, 0).getValue());
-		assertEquals("5", field(editor, 1).getValue());
-		assertEquals("10", field(editor, 2).getValue());
+		assertEquals(Integer.valueOf(5), field(editor, 1).getValue());
+		assertEquals(Integer.valueOf(10), field(editor, 2).getValue());
 
 		@SuppressWarnings("unchecked")
 		RangeFilterState<Integer> state = (RangeFilterState<Integer>) editor.read();
 		assertEquals(Integer.valueOf(5), state.primary());
 		assertEquals(Integer.valueOf(10), state.secondary());
+	}
+
+	/** A new range filter starts as a range, not as a comparison with a single value. */
+	public void testComparableEditorStartsAsRange() {
+		FilterEditor editor = FilterEditors.create(ComparableColumnFilter.integers(), null, MatchCounts.NONE);
+		assertEquals(ComparisonOperator.BETWEEN, field(editor, 0).getValue());
+		assertEquals(I18NConstants.LOWER_BOUND, editor.fields().get(1).label());
+		assertEquals(I18NConstants.UPPER_BOUND, editor.fields().get(2).label());
+		assertTrue(editor.fields().get(2).isVisible());
+	}
+
+	/**
+	 * The bound fields follow the operator: a comparison with a single value has one field, the
+	 * value; a value left in the upper bound of a range is no part of it.
+	 */
+	public void testComparableEditorFieldsFollowOperator() {
+		FilterEditor editor = FilterEditors.create(ComparableColumnFilter.integers(),
+			RangeFilterState.between(5, 10), MatchCounts.NONE);
+		FilterField primary = editor.fields().get(1);
+		FilterField secondary = editor.fields().get(2);
+		assertSame(field(editor, 0), primary.source());
+		assertSame(field(editor, 0), secondary.source());
+
+		field(editor, 0).setValue(ComparisonOperator.LT);
+		assertEquals(I18NConstants.VALUE, primary.label());
+		assertTrue(primary.isVisible());
+		assertFalse("A comparison with a single value has no upper bound.", secondary.isVisible());
+		assertEquals(RangeFilterState.of(ComparisonOperator.LT, Integer.valueOf(5)), editor.read());
+
+		field(editor, 0).setValue(ComparisonOperator.BETWEEN);
+		assertEquals(I18NConstants.LOWER_BOUND, primary.label());
+		assertTrue(secondary.isVisible());
+		assertEquals(RangeFilterState.between(5, 10), editor.read());
 	}
 
 }

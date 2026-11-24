@@ -177,12 +177,10 @@ export function channelName(raw: unknown): string | undefined {
  * - `keep`: an empty channel that has always been empty; there is nothing to follow.
  */
 function followSelection(
-  hasInput: boolean,
   selected: string,
   wasSelected: string,
   corrected: boolean,
 ): 'select' | 'new' | 'keep' {
-  if (!hasInput) return 'keep'
   if (selected) return 'select'
   return wasSelected || corrected ? 'new' : 'keep'
 }
@@ -300,7 +298,6 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   )
   const selected = typeof state.selected === 'string' ? state.selected : ''
   const corrections = typeof state.selectedCorrections === 'number' ? state.selectedCorrections : 0
-  const hasInput = state.hasInput === true
   const placeholder = typeof state.placeholder === 'string' ? state.placeholder : ''
   // Keyed on the string, not on the state: a fresh form object on every state change would
   // re-render the memoised transcript for nothing.
@@ -353,12 +350,9 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   // the other one: the transcript switched between two conversations every few milliseconds, for as
   // long as the page was open (#576).
   //
-  // Where a channel is wired it is the whole of the selection, so the tab's remembered chat is not
-  // restored over it: an empty channel means a fresh conversation here, not "whatever this tab had
-  // on the page before" (#577).
-  useEffect(() => {
-    if (hasInput) actions.followChannel()
-  }, [hasInput, actions])
+  // The channel is the whole of the selection - the configured one, or the element's own on the
+  // server, which keeps the open chat over a reload of the page. A chat the window switched to on
+  // the server, one a command of the page started, arrives the same way.
 
   const prevSelected = useRef(selected)
   const prevCorrections = useRef(corrections)
@@ -367,13 +361,13 @@ export function TLChatConversation({ controlId }: TLCellProps) {
     const corrected = prevCorrections.current !== corrections
     prevSelected.current = selected
     prevCorrections.current = corrections
-    const follow = followSelection(hasInput, selected, wasSelected, corrected)
+    const follow = followSelection(selected, wasSelected, corrected)
     if (follow === 'select') void actions.selectSession(selected)
     else if (follow === 'new') actions.newChat()
-  }, [hasInput, selected, corrections, actions])
+  }, [selected, corrections, actions])
 
   // Write-back: publish the store's own session onto the channel (two-way), so a session list
-  // highlights it after the store creates one on first send or restores one on reload.
+  // highlights it after the store creates one on first send or the user opens one from the rail.
   //
   // It starts from "no chat" rather than from nothing. An element mounts with an empty store while
   // the chat its channel names is still loading, and reporting that emptiness cleared the channel
@@ -382,12 +376,11 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   // is only sent after a chat was reported.
   const published = useRef<string | null>('')
   useEffect(() => {
-    if (!hasInput) return
     const id = chat.sessionId ?? ''
     if (published.current === id) return
     published.current = id
     void command('publishSession', { id }, BACKGROUND_COMMAND)
-  }, [hasInput, chat.sessionId, command])
+  }, [chat.sessionId, command])
 
   // The reports of the store's state to the channels (the session, the busy state, the turn
   // settings, the draft) run in the background: the user does not wait for them.

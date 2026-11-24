@@ -10,6 +10,7 @@ import java.util.Collection;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import test.com.top_logic.basic.BasicTestCase;
+import test.com.top_logic.basic.ReflectionUtils.ReflectionException;
 
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.module.ModuleException;
@@ -86,6 +87,52 @@ public class TestBasicRuntimeModule extends AbstractBasicRuntimeModuleTest<Basic
 		startUp(module);
 
 		assertNotSame(implInstance, module.getImplementationInstance());
+	}
+
+	/**
+	 * An {@link Error} thrown while starting the service leaves the module inactive, so that a
+	 * later start tries again.
+	 */
+	public void testErrorOnStartUp() {
+		boolean[] fail = { true };
+		BasicRuntimeModule<?> failingModule = new BasicRuntimeModule<TestedManagedClass>() {
+
+			@Override
+			public Collection<? extends Class<? extends BasicRuntimeModule<?>>> getDependencies() {
+				return NO_DEPENDENCIES;
+			}
+
+			@Override
+			public Class<TestedManagedClass> getImplementation() {
+				return TestedManagedClass.class;
+			}
+
+			@Override
+			protected TestedManagedClass newImplementationInstance() throws ModuleException {
+				return new TestedManagedClass() {
+					@Override
+					protected void startUp() {
+						super.startUp();
+						if (fail[0]) {
+							throw new Error("Startup failure for test.");
+						}
+					}
+				};
+			}
+		};
+
+		try {
+			startUp(failingModule);
+			fail("Start-up expected to fail.");
+		} catch (ReflectionException ex) {
+			assertTrue("Unexpected failure: " + ex, ex.getCause().getCause() instanceof Error);
+		}
+		assertFalse("Module must not be active after a failed start-up.", failingModule.isActive());
+
+		fail[0] = false;
+		startUp(failingModule);
+		assertTrue("Module must be active after a successful start-up.", failingModule.isActive());
+		shutDown(failingModule);
 	}
 
 	public static Test suite() {

@@ -37,7 +37,7 @@ public class TestChannelNotificationScope extends TestCase {
 		ViewChannel channel = new DefaultViewChannel("test");
 		List<String> log = new ArrayList<>();
 
-		// First listener defers an action (like a control disposing its replaced subtree).
+		// First listener defers an action (like a control writing back to a channel).
 		channel.addListener((sender, oldVal, newVal) -> {
 			log.add("first");
 			ChannelNotificationScope.current().afterNotification(() -> log.add("deferred"));
@@ -79,25 +79,24 @@ public class TestChannelNotificationScope extends TestCase {
 	}
 
 	/**
-	 * Tests the failure scenario behind the deferral: a listener that tears down another listener's
-	 * owner must not prevent that listener (already in the notification's snapshot) from completing
-	 * before the teardown runs.
+	 * Tests that a listener of the notification's snapshot sees the state before an action deferred
+	 * by an earlier listener, and the action has taken effect once the notification is complete.
 	 */
-	public void testDisposalDeferredAcrossListenerSnapshot() {
+	public void testDeferredActionAfterListenerSnapshot() {
 		ViewChannel channel = new DefaultViewChannel("selection");
-		boolean[] disposed = {false};
-		boolean[] ranAfterDisposal = {false};
+		boolean[] changed = {false};
+		boolean[] ranAfterAction = {false};
 
-		// Listener 1: rebuilds its presentation and defers disposal of the old subtree.
+		// Listener 1: defers an action changing the state.
 		channel.addListener((sender, oldVal, newVal) ->
-			ChannelNotificationScope.current().afterNotification(() -> disposed[0] = true));
-		// Listener 2: belongs to the old subtree; still in the snapshot and must run undisposed.
-		channel.addListener((sender, oldVal, newVal) -> ranAfterDisposal[0] = disposed[0]);
+			ChannelNotificationScope.current().afterNotification(() -> changed[0] = true));
+		// Listener 2: still in the snapshot, must run before the deferred action.
+		channel.addListener((sender, oldVal, newVal) -> ranAfterAction[0] = changed[0]);
 
 		channel.set("selected");
 
-		assertTrue("Deferred disposal must run after the notification", disposed[0]);
-		assertFalse("The snapshot listener must run before the deferred disposal", ranAfterDisposal[0]);
+		assertTrue("The deferred action must run after the notification", changed[0]);
+		assertFalse("The snapshot listener must run before the deferred action", ranAfterAction[0]);
 	}
 
 	/**

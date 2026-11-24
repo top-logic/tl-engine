@@ -785,6 +785,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey COMPACT_FIELD_EDIT_BUTTON;
 
 	/**
+	 * @en Edit the value (required)
+	 */
+	public static ResKey COMPACT_FIELD_EDIT_REQUIRED_BUTTON;
+
+	/**
 	 * @en Value
 	 */
 	public static ResKey COMPACT_FIELD_TITLE;
@@ -1130,6 +1135,28 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.table.searchHint")
 	public static ResKey JS_TABLE_SEARCH_HINT;
+
+	/**
+	 * @en Filter by
+	 *
+	 * @see com.top_logic.layout.react.control.table.ColumnFilterDialog
+	 */
+	public static ResKey FILTER_KIND;
+
+	/**
+	 * @en {0} (not available)
+	 *
+	 * @see com.top_logic.layout.react.control.table.ColumnFilterDialog
+	 */
+	public static ResKey1 FILTER_KIND_NOT_AVAILABLE__KIND;
+
+	/**
+	 * @en This kind of filter is not offered for the values the column currently holds. The column
+	 *     stays filtered by it until you choose another kind or reset the filter.
+	 *
+	 * @see com.top_logic.layout.react.control.table.ColumnFilterDialog
+	 */
+	public static ResKey FILTER_KIND_NOT_AVAILABLE_NOTICE;
 
 	/**
 	 * @en Show all rows again

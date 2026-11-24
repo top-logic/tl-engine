@@ -2691,6 +2691,7 @@ public class AgentLoop {
 		}
 		String from = _failoverChain.get(_activeIndex).label();
 		String providerId = service.getProviderId(target.model(), target.provider());
+		String family = service.getApiFamily(target.model(), target.provider());
 		ModelInfo info = service.getModel(target.model());
 		int maxOutput = _config.maxOutputTokens();
 		int contextWindow = _config.contextWindowTokens();
@@ -2701,7 +2702,7 @@ public class AgentLoop {
 			contextWindow = Math.min(contextWindow, info.limits().contextWindow());
 		}
 		_config = _config.withModel(target.model(), maxOutput, contextWindow,
-			ModelOptions.forTarget(_config.modelOptions(), providerId, info));
+			ModelOptions.forTarget(_config.modelOptions(), family, info));
 		_provider = provider;
 		_activeProviderName = target.provider();
 		_activeIndex = _chainIndex;

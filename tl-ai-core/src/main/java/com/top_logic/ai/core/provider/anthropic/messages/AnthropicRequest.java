@@ -18,6 +18,9 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** @see #getModel() */
 	public static final String MODEL__PROP = "model";
 
+	/** @see #getAnthropicVersion() */
+	public static final String ANTHROPIC_VERSION__PROP = "anthropic_version";
+
 	/** @see #getMaxTokens() */
 	public static final String MAX_TOKENS__PROP = "max_tokens";
 
@@ -51,7 +54,9 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** @see #getOutputConfig() */
 	public static final String OUTPUT_CONFIG__PROP = "output_config";
 
-	private String _model = "";
+	private String _model = null;
+
+	private String _anthropicVersion = null;
 
 	private int _maxTokens = 0;
 
@@ -86,6 +91,10 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 
 	/**
 	 * The model identifier.
+	 *
+	 * <p>
+	 * Absent where the endpoint names the model in its path (Google Vertex AI).
+	 * </p>
 	 */
 	public final String getModel() {
 		return _model;
@@ -102,6 +111,41 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** Internal setter for {@link #getModel()} without chain call utility. */
 	protected final void internalSetModel(String value) {
 		_model = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getModel()} has a value.
+	 */
+	public final boolean hasModel() {
+		return _model != null;
+	}
+
+	/**
+	 * The version of the Messages API, for an endpoint that takes it in the body instead of a
+	 * header (Google Vertex AI, e.g. {@code vertex-2023-10-16}).
+	 */
+	public final String getAnthropicVersion() {
+		return _anthropicVersion;
+	}
+
+	/**
+	 * @see #getAnthropicVersion()
+	 */
+	public com.top_logic.ai.core.provider.anthropic.messages.AnthropicRequest setAnthropicVersion(String value) {
+		internalSetAnthropicVersion(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getAnthropicVersion()} without chain call utility. */
+	protected final void internalSetAnthropicVersion(String value) {
+		_anthropicVersion = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getAnthropicVersion()} has a value.
+	 */
+	public final boolean hasAnthropicVersion() {
+		return _anthropicVersion != null;
 	}
 
 	/**
@@ -396,6 +440,7 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			MODEL__PROP, 
+			ANTHROPIC_VERSION__PROP, 
 			MAX_TOKENS__PROP, 
 			STREAM__PROP, 
 			TEMPERATURE__PROP, 
@@ -432,6 +477,7 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 	public Object get(String field) {
 		switch (field) {
 			case MODEL__PROP: return getModel();
+			case ANTHROPIC_VERSION__PROP: return getAnthropicVersion();
 			case MAX_TOKENS__PROP: return getMaxTokens();
 			case STREAM__PROP: return isStream();
 			case TEMPERATURE__PROP: return getTemperature();
@@ -451,6 +497,7 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 	public void set(String field, Object value) {
 		switch (field) {
 			case MODEL__PROP: internalSetModel((String) value); break;
+			case ANTHROPIC_VERSION__PROP: internalSetAnthropicVersion((String) value); break;
 			case MAX_TOKENS__PROP: internalSetMaxTokens((int) value); break;
 			case STREAM__PROP: internalSetStream((boolean) value); break;
 			case TEMPERATURE__PROP: internalSetTemperature((Object) value); break;
@@ -480,8 +527,14 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 	@Override
 	protected void writeFields(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 		super.writeFields(out);
-		out.name(MODEL__PROP);
-		out.value(getModel());
+		if (hasModel()) {
+			out.name(MODEL__PROP);
+			out.value(getModel());
+		}
+		if (hasAnthropicVersion()) {
+			out.name(ANTHROPIC_VERSION__PROP);
+			out.value(getAnthropicVersion());
+		}
 		out.name(MAX_TOKENS__PROP);
 		out.value(getMaxTokens());
 		out.name(STREAM__PROP);
@@ -528,6 +581,7 @@ public class AnthropicRequest extends de.haumacher.msgbuf.data.AbstractDataObjec
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case MODEL__PROP: setModel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case ANTHROPIC_VERSION__PROP: setAnthropicVersion(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case MAX_TOKENS__PROP: setMaxTokens(in.nextInt()); break;
 			case STREAM__PROP: setStream(in.nextBoolean()); break;
 			case TEMPERATURE__PROP: setTemperature(de.haumacher.msgbuf.json.JsonUtil.nextJsonValue(in)); break;

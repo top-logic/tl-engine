@@ -119,6 +119,10 @@ public class TestRowSetTableAlignment extends AbstractModelAccessTest {
 
 		assertTrue(adapted.pinnedEnd());
 		assertEquals("tl-test-class", adapted.cssClass());
+
+		// Editable, but without a setup: no editing to ask, so no value is required.
+		Column<?, ?> withoutSetup = (Column<?, ?>) constructor.newInstance(table, inner, null, true, false);
+		assertFalse(withoutSetup.required());
 	}
 
 	/** The test suite, starting the theme, the resources and the services the table builds its columns and cells through. */

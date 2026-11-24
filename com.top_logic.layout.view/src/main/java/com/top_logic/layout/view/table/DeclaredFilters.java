@@ -10,17 +10,16 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import com.top_logic.basic.Log;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.ColumnFilterState;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.NamedFilter;
-import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.filter.BooleanFilterState;
 import com.top_logic.table.filter.OptionsFilterState;
 import com.top_logic.table.filter.RangeFilterState;
@@ -264,12 +263,12 @@ public class DeclaredFilters {
 					+ " the table has no such column. Its columns are: " + columnsByName.keySet() + ".");
 				return null;
 			}
-			Optional<? extends ColumnFilter<?>> optionalFilter = column.filter();
-			if (optionalFilter.isEmpty()) {
+			List<? extends ColumnFilter<?>> kinds = column.filters();
+			if (kinds.isEmpty()) {
 				log.error(problem(table, declaration, columnName) + " that column cannot be filtered.");
 				return null;
 			}
-			ColumnFilter<?> filter = optionalFilter.get();
+			ColumnFilter<?> filter = kindFor(kinds, criterion);
 
 			FilterState declared = declared(log, table, declaration, filter, criterion);
 			if (declared == null) {
@@ -280,11 +279,6 @@ public class DeclaredFilters {
 				// a criterion selecting what is displayed elsewhere selects nothing while nothing is
 				// displayed there.
 				continue;
-			}
-			if (criterion.inverted() && !filter.supportsInversion()) {
-				log.error(problem(table, declaration, columnName)
-					+ " the filter of that column cannot be inverted.");
-				return null;
 			}
 			FilterState normalized = normalize(filter, declared);
 			Set<Object> unknown = unselected(declared, normalized);
@@ -298,9 +292,27 @@ public class DeclaredFilters {
 					+ describe(criterion) + ".");
 				return null;
 			}
-			filters.put(columnName, criterion.inverted() ? new NegatedFilterState(normalized) : normalized);
+			filters.put(columnName, ColumnFilterState.of(kinds, filter.kind(), normalized, criterion.inverted()));
 		}
 		return filters;
+	}
+
+	/**
+	 * The kind of filter of a column the given criterion is expressed in: the first one a declared
+	 * state {@link #fits(FilterInput, FilterState) fits}, or that {@link ColumnFilter#stateFor(Object)
+	 * expresses} a declared value. If none does, the first kind, which then reports the mismatch.
+	 */
+	private static ColumnFilter<?> kindFor(List<? extends ColumnFilter<?>> kinds, Criterion criterion) {
+		for (ColumnFilter<?> kind : kinds) {
+			if (criterion instanceof Criterion.State state) {
+				if (fits(kind.input(), state.state())) {
+					return kind;
+				}
+			} else if (kind.stateFor(((Criterion.Value) criterion).value()) != null) {
+				return kind;
+			}
+		}
+		return kinds.get(0);
 	}
 
 	/**

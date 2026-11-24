@@ -68,6 +68,13 @@ test('#30383: der Feldrahmen der Tabellenzeile ist gegen jede Zeilenfläche gepr
     assert.ok(namen.has(`border-emphasis|${bg}`), bg);
 });
 
+test('#30383: der Pflichtstern im Kopf ist gegen Kopf und gezeigten Kopf geprüft, die Ecke im Feld gegen die Feldfläche', () => {
+  const paare = kontrastPaare(T);
+  for (const bg of ['surface-layer-muted', 'surface-interactive-strong'])
+    assert.ok(paare.some((p) => p.fg === 'status-error-text' && p.bg === bg && p.soll === 3.0), bg);
+  assert.ok(paare.some((p) => p.fg === 'status-error-text' && p.bg === 'surface-field' && p.soll >= 3.0));
+});
+
 test('UI-Durchgang 1: die Paare der Auswahl und der gedämpften Fläche stehen in der Liste', () => {
   const namen = new Set(kontrastPaare(T).map((p) => `${p.fg}|${p.bg}`));
   for (const k of ['border-interactive|surface-selected', 'border-selected|surface-selected', 'border-selected|surface-selected-hover',

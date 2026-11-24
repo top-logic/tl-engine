@@ -641,6 +641,21 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 	}
 
 	/**
+	 * A deleted new target is no question of the discover right (ticket #30480): the check lets it
+	 * pass, also for a user who could discover it before and for an administrator, although the
+	 * deleted object itself is discoverable for nobody.
+	 */
+	public void testCoreCheckIgnoresDeletedTarget() throws Exception {
+		TLObject deleted = createDeletedC("deleted");
+		for (Person person : Arrays.asList(_pathUser, PersonManager.getManager().getRoot())) {
+			becomeUser(person);
+			assertFalse(rights().isDiscoverAllowed(deleted));
+			DiscoverRight.checkNewTargets(_b1, part("PathB", "cs"), Arrays.asList(_c1, deleted));
+			DiscoverRight.checkNewTargets(_b1, part("PathB", "cs"), null, deleted);
+		}
+	}
+
+	/**
 	 * A model element is discoverable for every user, also for one holding no role at all (ticket
 	 * #30016): a classifier, whose type is an enumeration and no class, and a type.
 	 */
@@ -659,6 +674,33 @@ public class TestDiscoverRight extends AbstractSearchExpressionTest {
 		assertTrue(rights().isReadAllowed(_stranger, classifier("HIGH")));
 		assertTrue(rights().isReadAllowed(_stranger, TLModelUtil.findType("TestTLScriptSecurity:PathB")));
 		assertTrue(rights().isReadAllowed(_stranger, (TLObject) part("PathB", "priority")));
+	}
+
+	/**
+	 * The attribute values of a model element are readable for every user, also for one holding no
+	 * role at all and without any grant on <code>tl.model</code> (ticket #30437): a script reading
+	 * the target type, the owner, whether an attribute is multiple or composite, or the
+	 * generalizations of a type gets the actual values.
+	 */
+	public void testModelElementAttributesReadable() throws Exception {
+		TLObject cs = (TLObject) part("PathB", "cs");
+		TLStructuredTypePart typeAttr =
+			(TLStructuredTypePart) TLModelUtil.resolveQualifiedName("tl.model:TLStructuredTypePart#type");
+		assertTrue(rights().isReadAllowed(_stranger, cs, typeAttr));
+		assertFalse(rights().isAllowed(_stranger, cs, typeAttr, SimpleBoundCommandGroup.WRITE));
+
+		becomeUser(_stranger);
+		assertEquals(TLModelUtil.findType("TestTLScriptSecurity:PathC"),
+			eval("p -> $p.get(`tl.model:TLStructuredTypePart#type`)", cs));
+		assertEquals(TLModelUtil.findType("TestTLScriptSecurity:PathC"),
+			eval("`TestTLScriptSecurity:PathB#cs`.get(`tl.model:TLStructuredTypePart#type`)"));
+		assertEquals(TLModelUtil.findType("TestTLScriptSecurity:PathB"),
+			eval("p -> $p.get(`tl.model:TLStructuredTypePart#owner`)", cs));
+		assertEquals(Boolean.TRUE, eval("p -> $p.get(`tl.model:TLStructuredTypePart#multiple`)", cs));
+		assertEquals(Boolean.FALSE, eval("p -> $p.get(`tl.model:TLReference#composite`)", cs));
+		assertEquals(Arrays.asList(TLModelUtil.findType("TestTLScriptSecurity:PathNode")),
+			asList(eval("t -> $t.get(`tl.model:TLClass#generalizations`)",
+				TLModelUtil.findType("TestTLScriptSecurity:PathB"))));
 	}
 
 	/**

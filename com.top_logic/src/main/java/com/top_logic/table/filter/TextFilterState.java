@@ -17,13 +17,31 @@ import com.top_logic.table.FilterState;
  *        The text pattern to match.
  * @param caseSensitive
  *        Whether matching is case-sensitive.
- * @param regexp
- *        Whether the pattern is a regular expression (otherwise a substring).
+ * @param mode
+ *        How the pattern is found in a text; {@code null} is normalized to
+ *        {@link TextMatchMode#CONTAINS}.
  * @param wholeField
- *        Whether the whole cell text must match (otherwise a partial match suffices).
+ *        Whether the whole cell text must match: in {@link TextMatchMode#REGEXP} mode the regular
+ *        expression must match the whole text, in every other mode the text must equal the
+ *        pattern. Not offered in a filter editor; set by a caller asking for exactly one text.
  */
-public record TextFilterState(String pattern, boolean caseSensitive, boolean regexp, boolean wholeField)
+public record TextFilterState(String pattern, boolean caseSensitive, TextMatchMode mode, boolean wholeField)
 		implements FilterState {
+
+	/**
+	 * Creates a {@link TextFilterState}, normalizing a missing {@link #mode()}.
+	 */
+	public TextFilterState {
+		mode = mode == null ? TextMatchMode.CONTAINS : mode;
+	}
+
+	/**
+	 * Creates a {@link TextFilterState} that does not require the {@link #wholeField() whole
+	 * field} to match.
+	 */
+	public TextFilterState(String pattern, boolean caseSensitive, TextMatchMode mode) {
+		this(pattern, caseSensitive, mode, false);
+	}
 
 	@Override
 	public boolean isEmpty() {
@@ -32,7 +50,7 @@ public record TextFilterState(String pattern, boolean caseSensitive, boolean reg
 
 	/**
 	 * The predicate deciding whether a piece of text matches this state, according to
-	 * {@link #regexp()}, {@link #caseSensitive()} and {@link #wholeField()}.
+	 * {@link #mode()}, {@link #caseSensitive()} and {@link #wholeField()}.
 	 *
 	 * <p>
 	 * This is the single definition of the text-matching semantics, shared by the
@@ -45,27 +63,31 @@ public record TextFilterState(String pattern, boolean caseSensitive, boolean reg
 	 * </p>
 	 */
 	public Predicate<String> matcher() {
-		if (regexp()) {
-			int flags = caseSensitive() ? 0 : Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
-			Pattern compiled = Pattern.compile(pattern(), flags);
+		if (mode() == TextMatchMode.REGEXP) {
+			Pattern compiled = mode().compile(pattern(), caseSensitive());
 			return wholeField()
 				? string -> compiled.matcher(string).matches()
 				: string -> compiled.matcher(string).find();
 		}
-		if (caseSensitive()) {
-			return wholeField() ? string -> string.equals(pattern()) : string -> string.contains(pattern());
+		if (wholeField()) {
+			return caseSensitive() ? string -> string.equals(pattern()) : string -> string.equalsIgnoreCase(pattern());
 		}
-		String lower = pattern().toLowerCase();
-		return wholeField()
-			? string -> string.equalsIgnoreCase(pattern())
-			: string -> string.toLowerCase().contains(lower);
+		if (mode() == TextMatchMode.CONTAINS) {
+			if (caseSensitive()) {
+				return string -> string.contains(pattern());
+			}
+			String lower = pattern().toLowerCase();
+			return string -> string.toLowerCase().contains(lower);
+		}
+		Pattern compiled = mode().compile(pattern(), caseSensitive());
+		return string -> compiled.matcher(string).find();
 	}
 
 	/**
 	 * A case-insensitive substring filter.
 	 */
 	public static TextFilterState contains(String pattern) {
-		return new TextFilterState(pattern, false, false, false);
+		return new TextFilterState(pattern, false, TextMatchMode.CONTAINS);
 	}
 
 }

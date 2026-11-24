@@ -392,6 +392,7 @@ public class WrapperGenerator {
 		try (ModuleContext context = ModuleUtil.beginContext()) {
 			startModules();
 			TLModel model = createModel();
+			List<TLModule> modules = new ArrayList<>();
 			for (String moduleName : _moduleNames) {
 				TLModule module = model.getModule(moduleName);
 				if (module == null) {
@@ -400,7 +401,27 @@ public class WrapperGenerator {
 				}
 
 				checkConsistency(module);
+				modules.add(module);
+			}
+			checkAccessorClashes(modules);
+			for (TLModule module : modules) {
 				generate(module);
+			}
+		}
+		_log.checkErrors();
+	}
+
+	/**
+	 * Reports access methods that clash with inherited methods before anything is generated.
+	 */
+	private void checkAccessorClashes(List<TLModule> modules) {
+		if (_noIntf) {
+			return;
+		}
+		AccessorClashCheck check = new AccessorClashCheck(_log, Thread.currentThread().getContextClassLoader());
+		for (TLModule module : modules) {
+			for (TLClass type : module.getClasses()) {
+				check.check(createInterfaceGenerator(type), !_noWrap);
 			}
 		}
 		_log.checkErrors();
@@ -579,7 +600,11 @@ public class WrapperGenerator {
 		}
 		_log.info(
 			"Generate interface for type '" + type.getName() + "' in module '" + type.getModule().getName() + "'.");
-		BaseClassGenerator generator = new InterfaceGenerator(type);
+		generate(createInterfaceGenerator(type));
+	}
+
+	private InterfaceGenerator createInterfaceGenerator(TLClass type) {
+		InterfaceGenerator generator = new InterfaceGenerator(type);
 		generator.setNoElementClasses(_noElementClasses);
 		generator.setNoSetter(_noPropertySetter);
 		generator.setNoGetter(_noPropertyGetter);
@@ -589,7 +614,7 @@ public class WrapperGenerator {
 		if (_getterPrefix != null) {
 			generator.setGetterPrefix(_getterPrefix);
 		}
-		generate(generator);
+		return generator;
 	}
 
 	private void generateEnumeration(TLEnumeration type) throws IOException {

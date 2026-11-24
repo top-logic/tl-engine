@@ -299,7 +299,7 @@ A view can also be data: the datatype `tl.view:ViewDefinition` (module `tl.view`
 </dynamic-view>
 ```
 
-The expression is evaluated again on a new input value and on a change of an input object (an expression reaching beyond the input objects names the types it reads in `observed-types`). The embedded view is replaced only by a configuration that differs by value - an attribute parses its stored view on every read, so an edit of another attribute of the object keeps the embedded view and its state; the replaced one is disposed after the channel notification has unwound. While the expression yields `null`, the element is hidden. A configuration that cannot be instantiated renders the error placeholder of `<view-ref>`.
+The expression is evaluated again on a new input value and on a change of an input object (an expression reaching beyond the input objects names the types it reads in `observed-types`). The embedded view is replaced only by a configuration that differs by value - an attribute parses its stored view on every read, so an edit of another attribute of the object keeps the embedded view and its state; the replaced one is disposed at once, so that the channel notification in progress does not reach it anymore. While the expression yields `null`, the element is hidden. A configuration that cannot be instantiated renders the error placeholder of `<view-ref>`.
 
 A script stores a view in such an attribute with the TL-Script function `viewParse(xml)`
 (`ViewFunctions`), which reads the XML text of a view - written like a `.view.xml` file with the root

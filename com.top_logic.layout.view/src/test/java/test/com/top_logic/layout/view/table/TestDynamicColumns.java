@@ -38,6 +38,7 @@ import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Column;
+import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.filter.OptionsFilterState;
 import com.top_logic.table.filter.RegexpOptionsFilter;
@@ -273,15 +274,16 @@ public class TestDynamicColumns extends TestCase {
 	public void testTypeDerivedFilterWithoutDeclaration() {
 		for (ColumnSetup setup : resolve(declaration(), set("first", "second"))) {
 			Column<Object, ?> column = setup.buildColumn();
-			assertTrue("The label column text-filters: " + column.filter().get(),
-				column.filter().get() instanceof TextColumnFilter);
+			assertTrue("The label column text-filters: " + column.filters(),
+				column.filter(ColumnFilter.KIND_TEXT).get() instanceof TextColumnFilter);
 			assertEquals(List.of("match"), matching(column, TextFilterState.contains("match/"), "match", "other"));
 		}
 	}
 
-	/** The given rows the given column's filter lets pass in the given state. */
+	/** The given rows the given column's filter of the kind of the given state lets pass. */
 	private static <V> List<Object> matching(Column<Object, V> column, FilterState state, Object... rows) {
-		Predicate<V> predicate = column.filter().get().predicate(state);
+		String kind = state instanceof TextFilterState ? ColumnFilter.KIND_TEXT : null;
+		Predicate<V> predicate = column.filter(kind).get().predicate(state);
 		return Arrays.stream(rows).filter(row -> predicate.test(column.value(row))).toList();
 	}
 

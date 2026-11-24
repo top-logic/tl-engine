@@ -10,7 +10,10 @@ import java.util.List;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.form.model.AbstractFieldModel;
+import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactFormBuilder;
+import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.table.ColumnFilterUI;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.form.AttributeFieldModel;
@@ -21,6 +24,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.impl.TransientModelFactory;
 import com.top_logic.model.util.TLModelNamingConvention;
+import com.top_logic.table.ColumnFilterState;
 import com.top_logic.table.FilterState;
 import com.top_logic.util.Resources;
 
@@ -30,6 +34,11 @@ import com.top_logic.util.Resources;
  * form. The transient instance lives across dialog openings (so the form remembers its values); each
  * {@link #read()} snapshots it (and the configured input channel values) into a
  * {@link ScriptedFilterState}.
+ *
+ * <p>
+ * Below the parameters, the form offers to invert the filter, as the dialog of every other kind of
+ * filter does: an inverted filter selects exactly the rows the filter does not.
+ * </p>
  */
 public class ScriptedFilterUI implements ColumnFilterUI {
 
@@ -38,6 +47,8 @@ public class ScriptedFilterUI implements ColumnFilterUI {
 	private final List<ViewChannel> _inputChannels;
 
 	private final TLObject _instance;
+
+	private final AbstractFieldModel _invert = new AbstractFieldModel(Boolean.FALSE);
 
 	/**
 	 * Creates a {@link ScriptedFilterUI}.
@@ -66,6 +77,8 @@ public class ScriptedFilterUI implements ColumnFilterUI {
 			ReactControl input = controls.createFieldControl(context, part, model);
 			form.addField(resources.getString(TLModelNamingConvention.getTypePartLabelKey(part)), input);
 		}
+		form.addField(resources.getString(com.top_logic.table.filter.I18NConstants.FILTER_INVERT),
+			new ReactCheckboxControl(context, _invert)).setLabelPosition(LabelPosition.AFTER);
 		return form.build();
 	}
 
@@ -87,7 +100,8 @@ public class ScriptedFilterUI implements ColumnFilterUI {
 		for (int n = 0; n < _inputChannels.size(); n++) {
 			inputs[n] = _inputChannels.get(n).get();
 		}
-		return new ScriptedFilterState(snapshot(), inputs);
+		ScriptedFilterState state = new ScriptedFilterState(snapshot(), inputs);
+		return Boolean.TRUE.equals(_invert.getValue()) ? ColumnFilterState.invert(state) : state;
 	}
 
 	/**

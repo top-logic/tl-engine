@@ -104,6 +104,11 @@ public class DerivedViewChannel implements ObservingChannel {
 	 * listeners for automatic recomputation.
 	 *
 	 * <p>
+	 * Listeners registered before are told about the initial value if it differs from the value
+	 * held before, {@code null} for a channel bound the first time.
+	 * </p>
+	 *
+	 * <p>
 	 * The channel is read-only: calling {@link #set(Object)} throws
 	 * {@link UnsupportedOperationException}.
 	 * </p>
@@ -168,8 +173,8 @@ public class DerivedViewChannel implements ObservingChannel {
 
 		_evaluator = evaluator;
 		_reverseFunction = reverse;
-		_binding = new ChannelInputBinding(this, inputs, observedTypes, this::recompute, this::recompute);
-		_value = evaluator.apply(_binding.arguments());
+		_binding = new ChannelInputBinding(_name, this, inputs, observedTypes, this::recompute, this::recompute);
+		recompute();
 	}
 
 	/**

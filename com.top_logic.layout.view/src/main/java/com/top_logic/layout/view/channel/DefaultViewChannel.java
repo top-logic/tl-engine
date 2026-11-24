@@ -102,6 +102,13 @@ public class DefaultViewChannel implements ObservingChannel {
 		_valueType = valueType;
 	}
 
+	/**
+	 * The channel name (for error messages and debugging).
+	 */
+	public String getName() {
+		return _name;
+	}
+
 	@Override
 	public TLClass getValueType() {
 		return _valueType;

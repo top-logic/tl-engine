@@ -35,9 +35,11 @@
       <groupId>com.top-logic</groupId>
       <artifactId>tl-chat-classic</artifactId>
     </dependency>
+    <!-- React UI (tl-layout-view) with the people page for an application with contacts
+         (tl-contact): first and last name of an account live on its contact. -->
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-view</artifactId>
+      <artifactId>tl-layout-view-contact</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

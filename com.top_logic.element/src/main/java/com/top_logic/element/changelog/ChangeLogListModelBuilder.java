@@ -7,6 +7,7 @@ package com.top_logic.element.changelog;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -16,15 +17,24 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
+import com.top_logic.element.changelog.model.ChangeSet;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
 
 /**
  * {@link ListModelBuilder} for a table that displays the application's change log.
+ *
+ * <p>
+ * The change log is read without regard to access rights, and every commit is
+ * {@link ChangeSetRestriction restricted} to what the current user may see. A commit with changes
+ * the user may not see is marked {@link ChangeSet#getIncomplete() incomplete} and cannot be
+ * reverted.
+ * </p>
  */
 public class ChangeLogListModelBuilder extends AbstractConfiguredInstance<ChangeLogListModelBuilder.Config<?>>
 		implements ListModelBuilder {
@@ -111,7 +121,9 @@ public class ChangeLogListModelBuilder extends AbstractConfiguredInstance<Change
 			builder.setFilter(new SubtreeFilter(root));
 		}
 
-		return builder.build();
+		ChangeSetRestriction restriction = new ChangeSetRestriction(TLContext.currentUser());
+		List<ChangeSet> result = builder.build().stream().<ChangeSet> map(restriction::restrict).toList();
+		return result;
 	}
 
 	@Override

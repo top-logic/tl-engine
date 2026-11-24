@@ -104,7 +104,7 @@
 						</create-transient>
 					</action>
 				</button>
-				<button>
+				<button appearance="ghost">
 					<action class="com.top_logic.layout.view.command.GenericViewCommand"
 						badge="marked"
 						badge-role="success"

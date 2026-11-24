@@ -213,6 +213,7 @@ public class ViewElement implements UIElement {
 		// Phase 2a: Create and register channels via factories. The channels created here are owned
 		// by this instance of the view; the ones a parent pre-bound belong to the parent.
 		Map<String, ViewChannel> ownChannels = new LinkedHashMap<>();
+		List<Runnable> bindings = new ArrayList<>();
 		for (Map.Entry<String, ChannelFactory> entry : _channelEntries) {
 			String name = entry.getKey();
 			if (context.hasChannel(name)) {
@@ -223,6 +224,14 @@ public class ViewElement implements UIElement {
 			ViewChannel channel = factory.createChannel(context);
 			context.registerChannel(name, channel);
 			ownChannels.put(name, channel);
+			bindings.add(() -> factory.bindChannel(context, channel));
+		}
+
+		// Phase 2a, second step: Bind the channels in declaration order. All channels of the view
+		// are registered now, so that a channel may read a channel declared after it, and channels
+		// may read each other.
+		for (Runnable binding : bindings) {
+			binding.run();
 		}
 
 		// Phase 2b: Create the routing participants of the bindings (registered on attach, not here).

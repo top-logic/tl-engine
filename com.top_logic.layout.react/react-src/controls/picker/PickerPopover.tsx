@@ -1,4 +1,4 @@
-import { React, usePopupSurface, createPortal, anchoredOverlayProps } from 'tl-react-bridge';
+import { React, usePopupSurface, createPortal, anchoredOverlayProps, ButtonDefaults } from 'tl-react-bridge';
 
 export interface PickerPopoverProps {
   /** The element the popup hangs under and gets the focus back. */
@@ -57,7 +57,8 @@ export const PickerPopover: React.FC<PickerPopoverProps> = ({ anchorRef, label, 
       style={style}
       {...anchoredOverlayProps}
     >
-      {children}
+      {/* A picker opening from a table row is no row: its buttons are normal ones. */}
+      <ButtonDefaults small={false}>{children}</ButtonDefaults>
     </div>,
     document.body,
   );

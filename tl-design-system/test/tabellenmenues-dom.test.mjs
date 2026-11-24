@@ -97,18 +97,21 @@ const SPALTEN = `(() => {
   const seite = pop.querySelector('.tl-table-view-options__page'), liste = pop.querySelector('.tl-reorder-list');
   const host = pop.querySelector('.tl-reorder-list__host'), suche = pop.querySelector('.tl-reorder-list__search');
   const titel = pop.querySelector('.tl-table-view-options__title'), p = pop.getBoundingClientRect();
+  const fuss = pop.querySelector('.tl-menu__item--nav').getBoundingClientRect();
   return { popRollt: pop.scrollHeight > pop.clientHeight + 1, seiteRollt: seite.scrollHeight > seite.clientHeight + 1,
     hostRollt: host.scrollHeight > host.clientHeight + 1, listeRollt: liste.scrollHeight > liste.clientHeight + 1,
     sucheImBild: suche.getBoundingClientRect().top >= p.top && suche.getBoundingClientRect().bottom <= p.bottom,
+    fussImBild: fuss.top >= p.top && fuss.bottom <= p.bottom + 0.5,
     titelZeile: getComputedStyle(titel).display, hoehe: p.height, cap: parseFloat(getComputedStyle(pop).maxHeight) };
 })()`;
 
-test('Ansicht, Seite „Spalten“ gedeckelt: genau ein Rollbereich — die Liste; Titel mit Zurück und Suche bleiben stehen', async () => {
+test('Ansicht, Seite „Spalten“ gedeckelt: genau ein Rollbereich — die Liste; Titel, Suche und die Zeile „Ansicht“ am Fuß bleiben stehen', async () => {
   await browser.goto(origin + '/src/components/table/table.spec.html');
   const r = await browser.evaluate(SPALTEN);
   assert.equal(r.listeRollt, true);
   assert.deepEqual([r.popRollt, r.seiteRollt, r.hostRollt], [false, false, false]);
   assert.equal(r.sucheImBild, true);
+  assert.equal(r.fussImBild, true);
   assert.equal(r.titelZeile, 'flex');
   assert.ok(r.hoehe <= r.cap + 0.5, `${r.hoehe} px über Deckel ${r.cap}`);
 });

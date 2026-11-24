@@ -47,6 +47,13 @@ import com.top_logic.model.search.expr.config.dom.Expr;
  * the target under the pointer, with its reason.
  * </p>
  *
+ * <p>
+ * The value of the {@link #getInput() input} channel is also a variable of the refusal function
+ * and an argument of the {@link #getActions() actions}, under the name of the input, so they can
+ * decide over the state of the view: which objects a diagram shows, say. A drop without input has
+ * no such variable.
+ * </p>
+ *
  * @see DropBinding
  */
 @TagName(DropConfig.TAG_NAME)
@@ -276,7 +283,8 @@ public interface DropConfig extends InputExecutabilityConfig, ConfigPart {
 	 * see {@link #getParentAs()}). A drop on the element as a whole or onto a single item has in
 	 * addition the coordinates of the point it is made at ({@value DropArguments#X} and
 	 * {@value DropArguments#Y}, see {@link #getXAs()} and {@link #getYAs()}), which are {@code null}
-	 * where the element reports no point.
+	 * where the element reports no point. A drop with an {@link #getInput() input} has in addition
+	 * the value of the input channel, under the name of the input.
 	 * </p>
 	 *
 	 * <p>
@@ -294,8 +302,8 @@ public interface DropConfig extends InputExecutabilityConfig, ConfigPart {
 	 *
 	 * <p>
 	 * The actions run with the arguments of the drop: the dropped objects as main argument (see
-	 * {@link #getAs()}) and the objects the drop refers to at its place, see
-	 * {@link #getRefuseIf()}.
+	 * {@link #getAs()}) and the objects the drop refers to at its place, together with the value
+	 * of the {@link #getInput() input}, see {@link #getRefuseIf()}.
 	 * </p>
 	 */
 	@Name(ACTIONS)

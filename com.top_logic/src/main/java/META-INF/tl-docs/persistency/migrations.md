@@ -1,5 +1,5 @@
 ---
-description: Read before writing a data migration (*.migration.xml) of a module, making a module a migration module (<module> in the modules of MigrationService, WEB-INF/kbase/migration/<module>/), moving persistent types (tables, model classes) from one module to another or handing them over to an optional module, removing a module with persistent types from an application (<if-tables-undeclared> around <delete-class>, <delete-table>, <delete-module>), or switching a table between versioned and unversioned.
+description: Read before writing a data migration (*.migration.xml) of a module, making a module a migration module (<module> in the modules of MigrationService, WEB-INF/kbase/migration/<module>/), moving persistent types (tables, model classes) from one module to another or handing them over to an optional module, removing a module with persistent types from an application (<if-tables-undeclared> around <delete-class>, <delete-table>, <delete-module>), or switching a table between versioned and unversioned. Also explains the migration lock (migration.lock), the progress record (migration.progress), how an interrupted migration is resumed, and when the startup-actions of a migration run.
 order: 15
 ---
 
@@ -33,6 +33,20 @@ Two consequences follow:
 - **A migration only reaches databases of applications that contain its module.** A migration that has to change the data of an application without a certain module must be part of a module that this application still contains.
 
 An application whose database already exists when it gets its own migration folder lists its module in `minimum-modules` of the `MigrationService`, see [the upgrade guide](doc:upgrade-7.11-to-8.0#83-own-migrations).
+
+## Lock, progress and resuming
+
+A start whose database needs changes (pending migrations, automatic schema changes, missing versions) takes the *migration lock*, the global property `migration.lock` in `TL_PROPERTIES` holding the JVM name (`pid@host`) and start time of the node. Nodes of a cluster that start at the same time wait for it in `MigrationService.startUp()`, before they acquire the cluster startup token, and find the database migrated afterwards. A start without pending changes neither takes nor waits for the lock.
+
+A migration is executed as a sequence of steps: the pre-processors and processors one by one, the rebuild of the revision cross reference together with the automatic schema adaption, the replay (if the migration has one), storing the new versions with the schema baseline, the post-processors of all migrations in one knowledge base transaction, and finally each startup action. Each step is committed together with the *progress* of the migration, the global property `migration.progress`, which names the migrations being applied and the number of completed steps. The last step deletes it.
+
+A start that finds a progress resumes the interrupted migration after its last completed step. A step whose transaction was interrupted is repeated only on a database with transactional DDL; on any other database the start fails, and the database must be restored from a backup. The post-processors and the startup actions write no DDL and are always repeated if their transaction was not committed. A lock left behind by a terminated run of the same node (same JVM name, other start time, e.g. after a container restart) is taken over. A lock of another node is waited for; after checking that this node no longer runs, the property `migration.lock` can be deleted manually, and the next start resumes the migration.
+
+### When startup actions run
+
+The `startup-actions` of a migration are its last steps. They run after all modules have been started and the startup transaction of the application has been committed, and before the `StartupHooks`, each in a knowledge base transaction of its own that also records its completion in the progress. An action therefore sees all objects created during the start, for example by an initial data import. If an action fails, the start fails; the preceding actions stay committed, and the next start executes only the pending actions. An action that was committed is never executed again.
+
+The start that migrated holds the migration lock until its last startup action is committed. If the start fails after the migration, for example because a module does not start, the lock is released on shutdown and the progress is kept, so that the next start executes the pending startup actions.
 
 ## Removing a module with persistent types
 

@@ -304,9 +304,13 @@
 
 /*
  * The floor beside a side rail that is a strip - closed, or the strip of its drawer: the window less
- * the strips and gaps still beside it.
+ * the strips and gaps still beside it. The rail stands beside the conversation either directly or in
+ * a pane of the split panel the conversation has a pane in.
  */
-:has(> .tl-side-rail:is([data-tl-state~="drawer"], :not([data-tl-state~="open"]))) .tl-chat-conversation {
+:has(
+  > .tl-side-rail:is([data-tl-state~="drawer"], :not([data-tl-state~="open"])),
+  > .tl-split__pane > .tl-side-rail:is([data-tl-state~="drawer"], :not([data-tl-state~="open"]))
+) .tl-chat-conversation {
   min-width: min(var(--chat-conversation-min-width), 100vw - var(--chat-conversation-floor-reserve));
 }
 
@@ -315,7 +319,10 @@
  * a floor measured on the window overflowed the panel of a phone by those 3 rem (#565). The dock's
  * own width is the measure there, and nothing in the dock can shrink that either.
  */
-.tl-chat-dock :has(> .tl-side-rail:is([data-tl-state~="drawer"], :not([data-tl-state~="open"]))) .tl-chat-conversation {
+.tl-chat-dock :has(
+  > .tl-side-rail:is([data-tl-state~="drawer"], :not([data-tl-state~="open"])),
+  > .tl-split__pane > .tl-side-rail:is([data-tl-state~="drawer"], :not([data-tl-state~="open"]))
+) .tl-chat-conversation {
   min-width: min(
     var(--chat-conversation-min-width),
     var(--chat-dock-width) - var(--chat-conversation-floor-reserve)
@@ -446,10 +453,12 @@
  *
  * The engine's fill contract gives a control the class `tlFill` only while it or a child reports
  * filling, and the dock body ends that chain (a `FillBarrier`): it is laid out apart from the page,
- * which must not react to what fills inside. A `<chat>` (a `tl-stack`), a stack combining several
- * children or a `<panel>` placed here therefore takes the body's height by this rule rather than by
- * its own report, and the conversation scrolls inside it instead of growing with its transcript.
+ * which must not react to what fills inside. A `<split-panel>` (the content of a `<chat>`, which has no
+ * element of its own), a `<stack>`, a stack combining several children or a `<panel>` placed here
+ * therefore takes the body's height by this rule rather than by its own report, and the conversation
+ * scrolls inside it instead of growing with its transcript.
  */
+.tl-chat-dock__body > .tl-split,
 .tl-chat-dock__body > .tl-stack,
 .tl-chat-dock__body > .tl-panel {
   flex: 1;

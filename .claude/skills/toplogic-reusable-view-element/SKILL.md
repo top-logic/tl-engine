@@ -86,19 +86,19 @@ agree on one value, and a channel would be wrong because the value is wiring, no
 `ViewContext.withScope(Class, Object)` puts a value in reach of every descendant context
 (`getScope(Class)` reads it, `childContext` inherits it, a nested `withScope` of the same type
 overrides), and a container element declares it once for everything inside. `<chat chat-id="...">`
-is the chat's use of it: `ChatScopeElement` extends the engine's `StackElement`, wraps the child
-context in a `ChatScope`, and every `<chat-conversation>`, `<chat-dock>` and `<chat-sources>` inside
+is the chat's use of it: `ChatScopeElement` holds exactly one element, creates its control in a
+child context wrapped in a `ChatScope`, and every `<chat-conversation>`, `<chat-dock>` and `<chat-sources>` inside
 resolves *its own `chat-id`, else the scope, else a default*. `ReactTileStackControl` does the same
 with `TileStackScope`.
 
 Two rules that make this worth the class:
 
-- **Declare the scope where the layout already is.** `ChatScopeElement` adds a `chat-id` to
-  `<stack>`'s config and overrides `createControl` to derive the context - about fifteen lines, no
-  control, no React element, and the app writes `<chat>` in place of the `<stack>` it already had.
-  Wrapping *extra* nesting around existing elements is the version to avoid: it adds a level to
-  every layout that adopts the scope, and a container that does not take part in the fill contract
-  (`useFillHost`) would cost a `<panel fill="true">` inside it its height.
+- **Keep the scope out of the layout.** `ChatScopeElement` lays nothing out: it holds exactly one
+  element and returns that element's control, created in the scoped context - no control, no React
+  element, no DOM node. The layout stays the layout element's (a `<split-panel>`, a `<stack>`), so
+  the scope neither duplicates its options nor breaks the fill contract (`useFillHost`): a
+  `<panel fill="true">` inside keeps its height as if the `<chat>` were not there. A scope that also
+  lays out ends up copying the options of one layout element and excluding all others.
 - **Make the join say something when it is wrong.** An ambient default means an element that
   disagrees still renders - empty, forever, with no symptom. Tally the joins where they are all
   visible (for the chat, `ChatViewBinding` plus `ChatJoinLog`, keyed on the `InteractionContext`,

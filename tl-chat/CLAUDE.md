@@ -241,7 +241,7 @@ no wait was dropped ("no run of this account is waiting for it") while the run w
 - **`ChatWindowService`** – Connects agent runs to the browser windows the chat is displayed in. It installs the `RunWindow` of tl-ai-core over the engine's `ReactWindowReplay.inWindow(subSession, action)`; it offers `inWindow` / `hasWindow`, through which a tool writes into the window of its run and tells "this run is headless" from "this page allows nothing" (a write waits at most `write-timeout-millis`, 5 s, for a browser command in progress and answers `BUSY` otherwise); and on `AgentExecutionStore.ChangeListener.onSessionDeleted` it drops the deleted chat out of every live window of its owner (`ReactWindowRegistry.windowSubSessions()`, filtered by the sub-session's person). Following commits is not its job: the engine's `WindowModelEventService` delivers commits of other threads, such as an agent run's, to every browser window whose model listeners they affect.
 - **`ChatPresentTool`** – The `present` tool of a chat page (`com.top_logic.ai.chat.tools`), over the base `PresentTool` in tl-ai-core: the agent shows objects - found by a TL-Script query or named by id - as a table, a chart or a form on a channel of the page it is on. Registered from this module's own configuration, so every application that depends on `tl-chat` has the tool; **which** channel it may write is the page's decision (`<chat-conversation present="…">`, deny by default), and a run whose page displays no such channel is not offered the tool at all (#649). See "the agent writes a channel" below.
 - **`PresentationPane` / `PresentationPaneElement` / `PresentationPaneControl`** – `<presentation-pane input="…">` (client `TLPresentationPane`, `ui/src/presentation-pane.tsx`): renders what stands on that channel for any type, and keeps the history "back" walks. See "the presentation pane" below.
-- **`ChatScope` / `ChatScopeElement`** – The `<chat>` container and the ambient value it puts into the child `ViewContext`. An element's conversation is its own `chat-id`, else the enclosing `<chat>`, else `default`.
+- **`ChatScope` / `ChatScopeElement`** – The `<chat>` scope around exactly one element, and the ambient value it puts into that element's `ViewContext`. An element's conversation is its own `chat-id`, else the enclosing `<chat>`, else `default`.
 - **`ChatJoinLog`** – Per render, which element joined which chat id; logged when the interaction ends, with a WARN for an element that joined nobody while another id has several.
 
 ## Thread Safety
@@ -479,8 +479,8 @@ neighbouring row's trigger (previous, else next, else the list), not to `<body>`
 
 #### A list in a narrow host (#548)
 
-A `<data-list>` stands in a row beside columns that do not give way - in a `<chat direction="row">`
-the conversation with its 20 rem floor (#511) and the rail's strip, plus the stack's gaps. Below the
+A `<data-list>` stands in a row beside columns that do not give way - beside the conversation with
+its 20 rem floor (#511) and the rail's strip. Below the
 width they need together (688 px in the demo) the row overflowed into the engine's scrolling
 `.tlSidebar__content`: the composer started off-screen and the chat scrolled in two dimensions.
 
@@ -489,11 +489,14 @@ section (`header="false"`, the list's own title is the head; `width="264"`, `dra
 `dismiss-on="chatSession"`, so that a picked chat closes the drawer).
 The rail collapses the list to its strip, and below 44 rem of the area it stands in it keeps only the
 strip and opens the list as the rail's modal drawer over the conversation - see the side-rail section
-of `view-layer/layout`. Whether the rail is open is remembered per user.
+of `view-layer/layout`. Whether the rail is open is remembered per user. In the shipped views the
+rails stand in panes of a `<split-panel>`: a rail that is a strip - closed, or in drawer mode -
+shrinks its pane to the strip, and the conversation's pane takes the room.
 
 - The conversation's floor gives way by `--chat-conversation-floor-reserve` (two strips and two
   gaps, 10 rem) while a side rail beside it is a strip - closed, or in drawer mode - so a 320 px
-  window reflows instead of scrolling. Beside a rail that is a column the #511 floor holds unchanged.
+  window reflows instead of scrolling. "Beside it" is a sibling of the conversation's ancestor, or
+  a rail in another pane of the split panel the conversation stands in (`styles.css`). Beside a rail that is a column the #511 floor holds unchanged.
 
 The chat's 44 rem is the demo row: list 16.5 + floor 20 + rail strip 3.5 + two gaps 3 = 43 rem.
 It is an attribute rather than a constant because only the view knows what else stands in the row;
@@ -888,18 +891,34 @@ coupling on the page the least visible thing about it: a typo in one attribute o
 conversation and nothing in the product says so.
 
 ```xml
-<chat chat-id="chat" direction="row">
-    <data-list selection="chatSession" …/>          <!-- joins by channel, not by chat-id -->
-    <panel fill="true"><chat-conversation input="chatSession"/></panel>
-    <side-rail open-channel="railOpen" badge-channel="railBadge">…</side-rail>
+<chat chat-id="chat">
+    <split-panel id="chatSplit" orientation="horizontal" resizable="true">
+        <panes>
+            <pane id="chatListPane" size="264" unit="px">
+                <side-rail id="chatList" drawer-below="44" width="264">
+                    <section name="chats" header="false" dismiss-on="chatSession" …>
+                        <data-list selection="chatSession" …/>  <!-- joins by channel, not by chat-id -->
+                    </section>
+                </side-rail>
+            </pane>
+            <pane id="conversationPane" size="100" unit="%">
+                <panel fill="true"><chat-conversation input="chatSession"/></panel>
+            </pane>
+            <pane id="railPane" size="300" unit="px">
+                <side-rail id="rail" side="right" open-channel="railOpen" badge-channel="railBadge">…</side-rail>
+            </pane>
+        </panes>
+    </split-panel>
 </chat>
 ```
 
-`<chat>` is a `<stack>` that carries an id: same `direction`, `gap` and `align`, no chrome of its
-own, and any element may sit inside it. **Put it where the stack was** rather than adding a level
-that does nothing. Like every stack it takes part in the view layer's fill contract as a container
-(`useFillHost`): a `<panel fill="true">` inside makes the `<chat>` fill its own container, however
-deep it is nested.
+`<chat>` is a scope and nothing else: it holds **exactly one** element and returns that element's
+control unchanged, created in the scoped context - no control, no DOM node, no layout options. A
+`<chat>` with several children is a configuration error that names a layout element to put them in.
+The layout is the layout element's: the shipped views use a `<split-panel>`, whose widths the user
+drags and which remembers them per user; a `<stack>` does where nothing is to be dragged. Because
+the `<chat>` has no element of its own, the fill contract (`useFillHost`) passes through it: a
+`<panel fill="true">` inside fills as if the `<chat>` were not there.
 
 That panel is there for the height alone and carries no title. Its header, which the engine draws
 anyway (padding, a tinted band and a border line), is hidden by a rule in `styles.css` for as long
@@ -912,7 +931,7 @@ or a command keeps its header.
 ```xml
 <chat-dock chat-id="assistant" icon="css:bi bi-stars">
     <label><en>Assistant</en><de>Assistent</de></label>
-    <chat chat-id="assistant" direction="row">…</chat>
+    <chat chat-id="assistant"><split-panel …>…</split-panel></chat>
 </chat-dock>
 ```
 
@@ -1545,7 +1564,7 @@ a mounting point, nothing more: the dock is `position: fixed`, so it takes no ro
 
 | Surface | Kind | |
 |--|--|--|
-| *(content)* | nested elements | Normally one `<chat>`. The dock body ends the view layer's fill chain (a `FillBarrier`) and its stylesheet stretches a `<chat>`, a `<stack>` or a `<panel>` over the panel, so the conversation's `<panel fill="true">` takes the panel's height and scrolls inside it. Several children are combined into one stack (`ContentControls`), which is stretched alike; the filling ones among them share the height the others leave. |
+| *(content)* | nested elements | Normally one `<chat>`. The dock body ends the view layer's fill chain (a `FillBarrier`) and its stylesheet stretches a `<split-panel>` (the content of a `<chat>`), a `<stack>` or a `<panel>` over the panel, so the conversation's `<panel fill="true">` takes the panel's height and scrolls inside it. Several children are combined into one stack (`ContentControls`), which is stretched alike; the filling ones among them share the height the others leave. |
 | `chat-id` | String, `@Nullable` | **Repeated**, not inherited - see above. Needed so the launcher can read `busy` from the browser store and so the dock can stand down for a page that shows its conversation. |
 | `icon` | ThemeImage | The launcher's glyph, default `css:bi bi-chat-dots`. An open dock shows a close cross instead. |
 | `<label>` | ResKey | The launcher's tooltip and accessible name; empty falls back to the chat's own wording. |

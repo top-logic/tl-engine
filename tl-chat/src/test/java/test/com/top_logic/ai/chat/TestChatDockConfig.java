@@ -52,7 +52,7 @@ public class TestChatDockConfig extends TestCase {
 	public void testNestedChatParses() throws Exception {
 		Config config = parse("<chat-dock %s chat-id='assistant' icon='css:bi bi-stars' open='true'>"
 			+ "<label>Albert</label>"
-			+ "<chat chat-id='assistant' direction='row'>"
+			+ "<chat chat-id='assistant'>"
 			+ "<data-list selection='dockSession'><rows>all(`tl.ai.execution:AgentSession`)</rows></data-list>"
 			+ "</chat>"
 			+ "</chat-dock>");

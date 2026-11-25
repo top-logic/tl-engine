@@ -60,9 +60,13 @@ public class TestHiddenElementOptions extends TestCase {
 		assertVisible(ChatConversationElement.Config.class, ChatConversationElement.Config.PLACEHOLDER);
 	}
 
-	/** {@code <chat>} hides only the two engine-inherited options; the id it hands down is visible. */
+	/**
+	 * {@code <chat>} hides the two engine-inherited options and its CSS class, which has no element
+	 * of its own to go on; the id it hands down is visible.
+	 */
 	public void testChatScopeHiddenOptions() {
 		assertEngineOptionsHidden(ChatScopeElement.Config.class);
+		assertHidden(ChatScopeElement.Config.class, UIElement.Config.CSS_CLASS);
 
 		assertVisible(ChatScopeElement.Config.class, ChatScopeElement.Config.CHAT_ID);
 	}

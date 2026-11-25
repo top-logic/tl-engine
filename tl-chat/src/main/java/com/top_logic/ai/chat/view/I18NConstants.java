@@ -89,6 +89,19 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_TOO_MANY_ATTACHMENTS__FILE_MAX;
 
+	/**
+	 * A {@code <chat>} holds a number of elements other than one; it only names the conversation of
+	 * its content and lays nothing out.
+	 *
+	 * @en A &lt;chat&gt; holds exactly one element, but holds {0} (at {1}). It only names the
+	 *     conversation of its content; several elements go into a layout element as its only
+	 *     content, e.g. &lt;split-panel&gt; or &lt;stack&gt;.
+	 * @de Ein &lt;chat&gt; enthält genau ein Element, enthält aber {0} (bei {1}). Er legt nur das
+	 *     Gespräch seines Inhalts fest; mehrere Elemente kommen in ein Layout-Element als seinen
+	 *     einzigen Inhalt, z.B. &lt;split-panel&gt; oder &lt;stack&gt;.
+	 */
+	public static ResKey2 ERROR_CHAT_CONTENT__COUNT_LOCATION;
+
 	// -- Client-side i18n keys of the presentation pane --
 
 	/**

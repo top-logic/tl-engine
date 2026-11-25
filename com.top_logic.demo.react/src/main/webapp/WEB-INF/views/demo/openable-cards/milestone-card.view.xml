@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Card of a milestone in the card grid of the openable-cards demo (demo/openable-cards-demo.view.xml).
+	
+	A click on the card opens the milestone; the card itself does nothing about it, the list around it
+	does. What the card holds for itself answers a click on its own: its button opens the project of
+	the milestone instead, and its texts can be marked without opening anything.
+-->
+<view>
+	<channels>
+		<channel name="element"/>
+		<derived-channel name="project"
+			expr="$element.container()"
+			inputs="element"
+		/>
+		<derived-channel name="dueDate"
+			expr="$element.get(`tl.demo.projectManagement:Milestone#dueDate`)"
+			inputs="element"
+			observed-types="tl.demo.projectManagement:Milestone"
+		/>
+	</channels>
+	<card>
+		<text
+			input="element"
+			variant="body-strong"
+		/>
+		<text input="project"/>
+		<text input="dueDate"/>
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-folder2-open"
+				inputs="project"
+			>
+				<label>
+					<en>Project</en>
+					<de>Projekt</de>
+				</label>
+				<tooltip>
+					<en>Opens the project of the milestone.</en>
+					<de>Öffnet das Projekt des Meilensteins.</de>
+				</tooltip>
+				<show-object/>
+			</action>
+		</button>
+	</card>
+</view>

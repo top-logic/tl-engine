@@ -84,20 +84,17 @@ public class ReactDashboardControl extends ReactControl {
 	/** Descriptor key holding the control rendered inside a tile. */
 	private static final String TILE_CONTROL = "control";
 
+	/** Descriptor key holding a tile's {@link Tile#withLabel(String) name}, {@code null} without one. */
+	private static final String TILE_LABEL = "label";
+
 	/** Descriptor key telling that a tile is withheld, see {@link #setTileWithheld(String, boolean)}. */
 	private static final String TILE_HIDDEN = "hidden";
 
-	/** Descriptor key holding a tile's {@link TileAction action}, {@code null} without one. */
+	/**
+	 * Descriptor key holding the {@link ItemAction#toState() state} of a tile's {@link TileAction
+	 * action}, {@code null} without one.
+	 */
 	private static final String TILE_ACTION = "action";
-
-	/** Action descriptor key holding the name the action is offered under. */
-	private static final String ACTION_LABEL = "label";
-
-	/** Action descriptor key telling whether the action is currently refused. */
-	private static final String ACTION_DISABLED = "disabled";
-
-	/** Action descriptor key holding the text explaining the action, e.g. why it is refused. */
-	private static final String ACTION_TOOLTIP = "tooltip";
 
 	/**
 	 * What a tile runs when the user activates it.
@@ -145,6 +142,8 @@ public class ReactDashboardControl extends ReactControl {
 		private boolean _visible;
 
 		private boolean _withheld;
+
+		private String _label;
 
 		/**
 		 * Creates a {@link Tile}.
@@ -195,6 +194,20 @@ public class ReactDashboardControl extends ReactControl {
 		 */
 		public Tile withWithheld(boolean withheld) {
 			_withheld = withheld;
+			return this;
+		}
+
+		/**
+		 * Sets the name the tile is announced under while it is moved in the edit mode: the title
+		 * it displays.
+		 *
+		 * @param label
+		 *        The name of the tile, {@code null} for a tile without a title, which is then
+		 *        announced by its position.
+		 * @return This instance for fluent chaining.
+		 */
+		public Tile withLabel(String label) {
+			_label = label;
 			return this;
 		}
 	}
@@ -255,6 +268,7 @@ public class ReactDashboardControl extends ReactControl {
 			d.put(TILE_ID, t._id);
 			d.put(TILE_WIDTH, t._width.getExternalName());
 			d.put(TILE_ROW_SPAN, Integer.valueOf(t._rowSpan));
+			d.put(TILE_LABEL, t._label);
 			if (!t._withheld) {
 				// A withheld tile is not drawn, so its content is not part of the displayed tree.
 				d.put(TILE_CONTROL, content.control());
@@ -301,12 +315,9 @@ public class ReactDashboardControl extends ReactControl {
 		if (!model.isVisible()) {
 			return null;
 		}
-		Map<String, Object> d = new LinkedHashMap<>();
 		String label = model.getLabel();
-		d.put(ACTION_LABEL, label == null || label.isEmpty() ? action.label() : label);
-		d.put(ACTION_DISABLED, Boolean.valueOf(!model.isExecutable()));
-		d.put(ACTION_TOOLTIP, model.getTooltip());
-		return d;
+		return new ItemAction(label == null || label.isEmpty() ? action.label() : label, !model.isExecutable(),
+			model.getTooltip()).toState();
 	}
 
 	/**

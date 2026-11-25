@@ -7,13 +7,11 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 
 import test.com.top_logic.AppMigrationTestSetup;
-import test.com.top_logic.basic.DeactivatedTest;
 import test.com.top_logic.layout.scripting.XmlScriptedTestUtil;
 
 /**
  * Test case for the app <code>Test App 7.9.3</code>. 
  */
-@DeactivatedTest("Ticket #30419: The model changes since 7.9.3 have no explicit migrations, the app prevents auto-upgrade.")
 public class TestApp extends TestCase {
 	
 	/**

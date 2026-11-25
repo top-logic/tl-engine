@@ -34,12 +34,14 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.db2.DBKnowledgeAssociation;
+import com.top_logic.knowledge.service.db2.PersistentObject;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.layout.scripting.recorder.ref.ApplicationObjectUtil;
 
 /**
- * Base class for tests of {@link MigrationProcessor}s working on the link tables of references.
+ * Base class for tests of {@link MigrationProcessor}s working on the link tables of references and
+ * on the objects they connect.
  *
  * <p>
  * The links are written to and read from the tables with SQL, so that the tests can create states
@@ -191,6 +193,25 @@ public abstract class AbstractLinkTableMigrationTest extends BasicTestCase {
 		} finally {
 			pool().releaseWriteConnection(connection);
 		}
+	}
+
+	/**
+	 * Writes the row of an object of the given model type to the given table.
+	 *
+	 * @param type
+	 *        The identifier of the type of the object in the model.
+	 */
+	protected void insertObject(String typeName, long id, long type) throws SQLException {
+		MOReference typeRef = (MOReference) table(typeName).getAttribute(PersistentObject.TYPE_REF);
+
+		Map<String, Object> values = new LinkedHashMap<>();
+		values.put(BasicTypes.IDENTIFIER_DB_NAME, id);
+		values.put(BasicTypes.REV_MIN_DB_NAME, 1L);
+		values.put(BasicTypes.REV_MAX_DB_NAME, MAX);
+		values.put(BasicTypes.REV_CREATE_DB_NAME, 1L);
+		values.put(BasicTypes.BRANCH_DB_NAME, 1L);
+		putReference(values, typeRef, ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE, type, 0);
+		insertRow(typeName, values);
 	}
 
 	/**

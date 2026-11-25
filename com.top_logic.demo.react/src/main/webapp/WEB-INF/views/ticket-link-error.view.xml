@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	What a ticket link (/servlet/ticket-link?nr=<number>) shows when it leads to no ticket: the
+	TicketLinkServlet answers such a link with this page, under the URL of the link, and hands over
+	why in the "reason" parameter ("invalid" for a link without a number, "unknown" for a number no
+	ticket carries) and the number of the link in the "nr" parameter. The query bindings below put
+	both on channels, from which the message is composed.
+	
+	The page is an anonymous entry point, so it is shown to a visitor without an account as well. It
+	looks like the login page of the demo: a card in the middle of the backdrop. The link leads to
+	the application root, absolute below the context path, so it holds wherever the application is
+	deployed.
+-->
+<view>
+	<channels>
+		<!-- Why the link leads to no ticket, from the URL. -->
+		<channel name="reason"/>
+		<!-- The number the link names, from the URL. -->
+		<channel name="nr"/>
+		<derived-channel name="message"
+			inputs="reason, nr"
+		>
+			<expr><![CDATA[if($reason == 'unknown',
+	#"demo.ticketLink.unknown".fill($nr),
+	if($nr == null || $nr.isEmpty(),
+		#"demo.ticketLink.missing",
+		#"demo.ticketLink.invalid".fill($nr)))]]></expr>
+		</derived-channel>
+		<derived-channel name="appLink">
+			<expr><![CDATA[{{{<a href="{contextPath() + '/view/'}">{#"demo.ticketLink.toApplication"}</a>}}}]]></expr>
+		</derived-channel>
+	</channels>
+	<query-bindings>
+		<bind
+			channel="reason"
+			query-param="reason"
+		/>
+		<bind
+			channel="nr"
+			query-param="nr"
+		/>
+	</query-bindings>
+	<login-backdrop
+		logo="/images/demo-logo.svg"
+		logo-dark="/images/demo-logo-dark.svg"
+	>
+		<stack
+			align="center"
+			gap="default"
+		>
+			<panel
+				appearance="card"
+				title="demo.ticketLink.title"
+				width="420px"
+				with-inset="true"
+			>
+				<!--
+					A card is flush with its content; the message and the link are text, which brings
+					no breathing room of its own, so the card insets them from its border.
+				-->
+				<stack
+					align="stretch"
+					direction="column"
+					gap="compact"
+				>
+					<text input="message"/>
+					<html input="appLink"/>
+				</stack>
+			</panel>
+		</stack>
+	</login-backdrop>
+</view>

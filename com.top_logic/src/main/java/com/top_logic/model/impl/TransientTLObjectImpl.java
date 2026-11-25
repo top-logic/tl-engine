@@ -182,7 +182,11 @@ public class TransientTLObjectImpl extends TransientObject {
 				// Find forwards reference.
 				TLReference backwards = (TLReference) resolvedPart;
 				TLReference forwards = backwards.getOppositeEnd().getReference();
-				return tReferers(forwards);
+				Set<? extends TLObject> referers = tReferers(forwards);
+				if (backwards.isMultiple()) {
+					return referers;
+				}
+				return referers.isEmpty() ? null : referers.iterator().next();
 			} else {
 				if (resolvedPart.getName().equals(PersistentObject.T_TYPE_ATTR)) {
 					return tType();

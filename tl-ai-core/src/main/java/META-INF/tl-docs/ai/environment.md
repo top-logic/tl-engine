@@ -228,7 +228,7 @@ A memory is what the agent writes down about the user, with the user's agreement
 
 A section of `AgentPolicyService` (*Agent policy* in the service editor). `enabled="false"` keeps both tools out of every catalog, makes a call that reaches them refuse, and renders no section; the memories are kept. The words are matched against what the user typed, in the user's language.
 
-`tl-ai-demo` shows the memories in the rail of its chat page: a `<data-list>` over `tl.ai.execution:UserMemory` filtered by `owner == currentUser()`, with a Forget command calling `aiMemoryDelete`, which refuses a memory the acting account neither owns nor administers. A memory written during a conversation appears in that list at once.
+`tl-ai-demo` shows the memories in the rail of its chat page: a `<data-list>` over `tl.ai.execution:UserMemory` filtered by `owner == currentUser()`, with a Forget command calling `aiMemoryDelete`, which refuses a memory the acting account may not write (`Write` on the memory, which the shipped policy gives its owner). A memory written during a conversation appears in that list at once.
 
 ## What an administrator sees
 
@@ -248,4 +248,4 @@ The filled block is written onto the run as `tl.ai.execution:AgentExecution#envi
 | `agent/environment/UserMemories`, `UserMemoryBinding`, `UserMemoryConfig`, `UserMemorySettings` | the memory section and its configuration |
 | `agent/SystemPromptContributor`, `agent/TextPromptContributor`, `AgentFactory#appendContributions` | contributed text |
 | `tools/memory/UserMemoryTool`, `MemoryConsent`, `MemoryConsentBinding`, `ConsentWords` | `remember`, `recall` and the consent rule |
-| `scripting/AIScriptFunctions#memoryDelete` | `aiMemoryDelete` with its ownership check |
+| `scripting/AIScriptFunctions#memoryDelete` | `aiMemoryDelete` with its check of the Write right |

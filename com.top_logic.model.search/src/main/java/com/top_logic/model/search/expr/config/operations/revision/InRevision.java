@@ -16,6 +16,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.GenericMethod;
+import com.top_logic.model.search.expr.GenericMethodWithSecurity;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.WithFlatMapSemantics;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -29,18 +30,18 @@ import com.top_logic.util.error.TopLogicException;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
-public class InRevision extends GenericMethod implements WithFlatMapSemantics<Revision> {
+public class InRevision extends GenericMethodWithSecurity implements WithFlatMapSemantics<Revision> {
 
 	/**
 	 * Creates a new {@link InRevision}.
 	 */
-	protected InRevision(String name, SearchExpression[] arguments) {
-		super(name, arguments);
+	protected InRevision(String name, SearchExpression[] arguments, boolean usesSecurity) {
+		super(name, arguments, usesSecurity);
 	}
 
 	@Override
 	public GenericMethod copy(SearchExpression[] arguments) {
-		return new InRevision(getName(), arguments);
+		return new InRevision(getName(), arguments, usesSecurity());
 	}
 
 	@Override
@@ -57,10 +58,15 @@ public class InRevision extends GenericMethod implements WithFlatMapSemantics<Re
 		if (revision == Revision.INITIAL) {
 			return null;
 		}
+		TLObject version;
 		if (revision == Revision.CURRENT) {
-			return WrapperHistoryUtils.getCurrent(tlObject);
+			version = WrapperHistoryUtils.getCurrent(tlObject);
+		} else {
+			version = WrapperHistoryUtils.getWrapper(revision, tlObject);
 		}
-		return WrapperHistoryUtils.getWrapper(revision, tlObject);
+		// Each version of an object has rights of its own: being allowed to see one version does not
+		// include the others.
+		return discoverable(version, usesSecurity());
 	}
 
 	@Override
@@ -118,7 +124,7 @@ public class InRevision extends GenericMethod implements WithFlatMapSemantics<Re
 		@Override
 		public InRevision build(Expr expr, SearchExpression[] args)
 				throws ConfigurationException {
-			return new InRevision(getConfig().getName(), args);
+			return new InRevision(getConfig().getName(), args, true);
 		}
 
 		@Override

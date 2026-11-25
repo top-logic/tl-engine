@@ -17,11 +17,18 @@
 	  2. Role rules of type "reference" derive it per object from the object's own "owner". A
 	     session without an owner - one of a background job or a schedule - has no holder, so only
 	     administrators and code in a system context see it.
-	  3. The security configuration grants the role Read and Write on a session, and Read on a
-	     memory. Write is what lets the owner edit a session's title in a form. Creating and
-	     deleting sessions and memories goes through the AgentExecutionStore, which writes in a
-	     system context and checks the ownership itself (aiSessionDelete, aiMemoryDelete), so no
-	     Create or Delete grant is written here.
+	  3. The security configuration grants the role Read and Write on a session and on a memory.
+	     Read on a session is what opens it in a chat window and shows its history; Write is what
+	     lets the owner send into it, edit its title in a form, rename and delete it
+	     (aiSessionRename, aiSessionDelete). Write on a memory is what lets the owner delete it
+	     (aiMemoryDelete). Creating and deleting sessions and memories goes through the
+	     AgentExecutionStore, which writes in a system context after these functions and the chat
+	     checked Write, so no Create or Delete grant is written here.
+
+	The chat decides access to a session through these rights alone. An application that wants
+	further accounts to read or write a conversation grants Read or Write on
+	tl.ai.execution:AgentSession to a role of its own and brings that role to the session with its
+	usual means, e.g. a role rule over the session's subject.
 
 	The parts of a conversation - its runs, the questions a run asks, the plan of the conversation -
 	have no rights of their own: each delegates the whole decision to the object it belongs to, a
@@ -100,6 +107,11 @@
 						<grant
 							inherit="true"
 							operation="Read"
+							roles="AiChatOwner"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
 							roles="AiChatOwner"
 						/>
 					</class>

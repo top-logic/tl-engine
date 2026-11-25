@@ -45,6 +45,8 @@ import com.top_logic.ai.core.cost.Money;
 import com.top_logic.ai.core.execution.AgentExecutionStore;
 import com.top_logic.ai.core.limits.BudgetAllowance;
 import com.top_logic.ai.core.message.TokenUsage;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -234,6 +236,8 @@ public class TestSubagentMessageCommands extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestSubagentMessageCommands.class),
 				ModelService.Module.INSTANCE,
+				AccessManager.Module.INSTANCE,
+				SecurityConfigurationService.Module.INSTANCE,
 				SchedulerService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
 				ColumnProviderService.Module.INSTANCE,

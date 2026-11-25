@@ -160,6 +160,13 @@ public class ChatConversationElement implements UIElement {
 		String SUBJECT = "subject";
 
 		/**
+		 * Configuration property name for {@link #getWritable()}.
+		 *
+		 * @see #getWritable()
+		 */
+		String WRITABLE = "writable";
+
+		/**
 		 * Configuration property name for {@link #getBusy()}.
 		 *
 		 * @see #getBusy()
@@ -386,8 +393,8 @@ public class ChatConversationElement implements UIElement {
 		 * displayed, otherwise when it is displayed. That includes its first display: a conversation
 		 * displayed in a window that already has an open chat of its {@code chat-id} (after a reload,
 		 * or after {@code chatStart}) shows that chat; in a window without one, the channel stays
-		 * empty, a fresh conversation. Only the signed-in account's chats are written, and a channel
-		 * listener that refuses the chat and writes another one wins.
+		 * empty, a fresh conversation. Only chats the signed-in account may read are written, and a
+		 * channel listener that refuses the chat and writes another one wins.
 		 * </p>
 		 *
 		 * <p>
@@ -447,6 +454,34 @@ public class ChatConversationElement implements UIElement {
 		@Format(ChannelRefFormat.class)
 		@Nullable
 		ChannelRef getSubject();
+
+		/**
+		 * Optional TL-Script function of the open {@code tl.ai.execution:AgentSession} deciding
+		 * whether it may be written in this element at all.
+		 *
+		 * <p>
+		 * Who may read or write a conversation is decided by the model-based security: Read on the
+		 * session shows it, Write lets the account send into it and change it. This function narrows
+		 * Write for reasons that are no question of rights, e.g. a conversation about an object that
+		 * has been archived:
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;chat-conversation input="chatSession" subject="project"
+		 *     writable="s -&gt; $s.get(`tl.ai.execution:AgentSession#subject`).get(`my.module:Project#closed`) != true"/&gt;
+		 * </pre>
+		 *
+		 * <p>
+		 * The session may be written where the account has Write on it and the function answers
+		 * {@code true}. Otherwise the conversation shows it read-only: without the input line and
+		 * without the actions that change it, and the server refuses such commands. A new
+		 * conversation, which has no session yet, is always writable. Empty: Write alone decides.
+		 * </p>
+		 */
+		@Name(WRITABLE)
+		@Label("Writable")
+		@Nullable
+		Expr getWritable();
 
 		/**
 		 * Optional output channel written {@code true} while the agent is working.

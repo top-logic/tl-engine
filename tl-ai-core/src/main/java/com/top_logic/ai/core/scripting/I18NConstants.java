@@ -24,12 +24,13 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NOT_A_SESSION;
 
 	/**
-	 * The acting account neither owns the session nor administers the application.
+	 * The acting account has no right to write the session (operation Write on the session in the
+	 * model-based security).
 	 *
-	 * @en This chat belongs to someone else.
-	 * @de Dieser Chat gehört jemand anderem.
+	 * @en You may not change this chat.
+	 * @de Sie dürfen diesen Chat nicht ändern.
 	 */
-	public static ResKey ERROR_SESSION_NOT_OWNED;
+	public static ResKey ERROR_SESSION_WRITE_DENIED;
 
 	/**
 	 * A rename was asked for without a new title.
@@ -73,6 +74,22 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_RESPONSE_FORMAT_WITHOUT_SCHEMA;
 
 	/**
+	 * An {@code aiChat} call names a model other than the default model, and the model access policy
+	 * lets the acting account choose no model.
+	 *
+	 * <p>
+	 * Takes the place of the refusal of the policy for this case, which names the model of an agent:
+	 * a call of {@code aiChat} has no agent.
+	 * </p>
+	 *
+	 * @en The model {0} is not available to you. A call without an agent runs on the default model of
+	 *     the application.
+	 * @de Das Modell {0} steht Ihnen nicht zur Verfügung. Ein Aufruf ohne Agent läuft mit dem
+	 *     Standardmodell der Anwendung.
+	 */
+	public static ResKey1 ERROR_MODEL_NOT_THE_DEFAULT__MODEL;
+
+	/**
 	 * A memory function was given something that is not a memory.
 	 *
 	 * @en This is not a memory.
@@ -81,12 +98,13 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NOT_A_MEMORY;
 
 	/**
-	 * The acting account neither owns the memory nor administers the application.
+	 * The acting account has no right to write the memory (operation Write on the memory in the
+	 * model-based security).
 	 *
-	 * @en This memory belongs to someone else.
-	 * @de Diese Erinnerung gehört jemand anderem.
+	 * @en You may not change this memory.
+	 * @de Sie dürfen diese Erinnerung nicht ändern.
 	 */
-	public static ResKey ERROR_MEMORY_NOT_OWNED;
+	public static ResKey ERROR_MEMORY_WRITE_DENIED;
 
 	/**
 	 * A non-administrator asked to clear a model health mark.

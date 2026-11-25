@@ -125,6 +125,41 @@ public class TestListRowSource extends TestCase {
 		assertEquals(List.of("Bob", "Charlie", "alice", "alma"), names(source));
 	}
 
+	/**
+	 * Tests that a grouping by a column the source does not have is rejected, and that the source
+	 * keeps its previous grouping.
+	 */
+	public void testGroupingByUnknownColumnIsRejected() {
+		RowSource<Person> source = new ListRowSource<>(people(), columns());
+		source.withGrouping(new GroupSpec(List.of("age")));
+		int groupedSize = source.size();
+		try {
+			source.withGrouping(new GroupSpec(List.of("missing")));
+			fail("A grouping by an unknown column must be rejected.");
+		} catch (IllegalArgumentException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("missing"));
+		}
+		assertEquals("The previous grouping stays in effect.", groupedSize, source.size());
+	}
+
+	/**
+	 * Tests that an order by a column the source does not have is rejected, and that the source
+	 * keeps its previous order.
+	 */
+	public void testOrderByUnknownColumnIsRejected() {
+		RowSource<Person> source = new ListRowSource<>(people(), columns());
+		source.withOrder(SortSpec.ascending("name"));
+		try {
+			source.withOrder(SortSpec.ascending("missing"));
+			fail("An order by an unknown column must be rejected.");
+		} catch (IllegalArgumentException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("missing"));
+		}
+		source.withFilter(FilterSpec.NONE);
+		assertEquals("The previous order stays in effect.", List.of("Bob", "Charlie", "alice", "alma"),
+			names(source));
+	}
+
 	public void testFacetCountsUsePerOptionFacetKeys() {
 		// A predicate-based facet filter that buckets a name by its first letter: the bucket key is
 		// not the cell value itself, exercising the generalized facet counting (one value can fall

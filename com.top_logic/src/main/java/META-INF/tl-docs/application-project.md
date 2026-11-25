@@ -330,7 +330,7 @@ override the client. The client takes its settings from environment variables:
 | `tl_pac_discovery_uri` | yes | The discovery URI of the provider (`.../.well-known/openid-configuration`). |
 | `tl_pac_client_id` | yes | The ID of the client registered for the application at the provider. |
 | `tl_pac_secret` | yes | The secret of that client. |
-| `tl_pac_label` | no | The label of the login button. Default: "Log in with single sign-on". |
+| `tl_pac_label` | no | The name of the provider on the login button ("Sign in with <name>" / "Über <name> anmelden"). Default: `Single Sign-On`. |
 | `tl_pac_scope` | no | The requested scopes. Default: pac4j's `openid profile email`. |
 | `tl_pac_acr_values` | no | The requested authentication context class references. |
 | `tl_pac_client_authentication_method` | no | How the client authenticates at the token endpoint. Default: `client_secret_basic`. |

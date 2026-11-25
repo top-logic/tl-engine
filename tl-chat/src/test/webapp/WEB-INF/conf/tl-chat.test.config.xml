@@ -61,6 +61,30 @@
 				</resolvers>
 			</instance>
 		</config>
+
+		<!--
+			A role that may read a conversation but not write it, given to an account by an explicit
+			role assignment on the session. For TestChatReadAccess.
+		-->
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="TestChatReader"/>
+				</roles>
+			</instance>
+		</config>
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="tl.ai.execution:AgentSession">
+						<grant
+							operation="Read"
+							roles="TestChatReader"
+						/>
+					</class>
+				</security-config>
+			</instance>
+		</config>
 	</services>
 	<configs>
 		<config config:interface="test.com.top_logic.basic.TestComment$Config">

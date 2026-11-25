@@ -70,8 +70,11 @@ public final class QueryLanguage {
 
 	/** The functions for changing data, which only {@code changeData} runs. */
 	public static final String WRITING = "Writing (changeData only):\n"
-		+ "- $x.set(`m:T#attr`, value) - replaces the value; a list for an attribute with several values.\n"
-		+ "- $x.add(`m:T#attr`, $v) / $x.remove(`m:T#attr`, $v) - one element of such an attribute.\n"
+		+ "- $x.set(`m:T#attr`, value) - replaces the value; a list for an attribute with several values. It"
+		+ " replaces the whole value, also the elements that the user may not discover: set with a list that"
+		+ " the script read, such as $x.set(`m:T#refs`, $x.get(`m:T#refs`).concat($y)), removes them.\n"
+		+ "- $x.add(`m:T#attr`, $v) / $x.remove(`m:T#attr`, $v) - one element of such an attribute; all other"
+		+ " elements stay. Use them to change single elements.\n"
 		+ "- $x..set(`m:T#a`, 1)..set(`m:T#b`, 2) - '..' returns $x itself, for several changes of one object.\n"
 		+ "- $set.foreach(x -> $x.set(`m:T#attr`, ...)) - the same change on every element.\n"
 		+ "- new(`m:T`), or new(type: `m:T`, context: $parent) for a part of $parent, placed with"

@@ -3,7 +3,7 @@
 // part Button: one replacement of the part reaches them all.
 
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { screen, cleanup, fireEvent, createEvent, within } from '@testing-library/react';
+import { screen, cleanup, fireEvent, createEvent, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { register, replacePart } from 'tl-react-bridge';
 import TLPanel from '../../../com.top_logic.layout.react/react-src/controls/TLPanel';
@@ -526,8 +526,8 @@ describe('the row of the column selection', () => {
     third.getBoundingClientRect = () => ({ top: 0, height: 20, left: 0, width: 100 }) as DOMRect;
 
     fireEvent.dragStart(first, { dataTransfer });
-    await new Promise((resolve) => setTimeout(resolve, 5));
-    expect(first.getAttribute('data-tl-state')).toContain('dragging');
+    // The row is marked dragged from a timeout after the drag image is taken, outside of act: wait for that render.
+    await waitFor(() => expect(first.getAttribute('data-tl-state')).toContain('dragging'));
     fireEvent.dragOver(third, { dataTransfer, clientY: 15 });
     // Hovering rebuilds no row: the same elements stand in the list, and the dragged one is still the same.
     expect(row('a')).toBe(first);

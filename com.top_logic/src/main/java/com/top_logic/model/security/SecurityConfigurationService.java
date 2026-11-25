@@ -48,6 +48,7 @@ import com.top_logic.basic.module.ServiceExtensionPoint;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.AccessControlCategory;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
@@ -82,6 +83,7 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.CommandGroupReference;
+import com.top_logic.tool.boundsec.CommandGroupType;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -2021,6 +2023,14 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// An object of a type without security is not access controlled.
 			return true;
 		}
+		if (isModificationOfVersion(instance, commandGroup)) {
+			// A historic version cannot be modified: the operation is meant for the object that is
+			// actually written, and is decided as on the current object.
+			TLObject current = WrapperHistoryUtils.getCurrent(instance);
+			if (current != null) {
+				return decide(cache, person, current, commandGroup);
+			}
+		}
 		AccessDecisionCache.Key key = AccessDecisionCache.key(person, instance, commandGroup);
 		Boolean decision = cache.decision(key);
 		if (decision != null) {
@@ -2094,7 +2104,25 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return false;
 		}
 		Set<BoundedRole> roles = getRoles(instance, commandGroup);
+		if (isModificationOfVersion(instance, commandGroup)) {
+			// A version of a deleted object, see decide(): no role that is only granted on historic
+			// versions admits a modification.
+			return accessManager().hasRoleOfIdentity(person, holder, roles);
+		}
 		return accessManager().hasRole(person, holder, roles);
+	}
+
+	/**
+	 * Whether the given operation modifies data and is checked on a historic version of an object.
+	 *
+	 * <p>
+	 * Such an operation is decided on the current object, see
+	 * {@link #decide(AccessDecisionCache, Person, TLObject, BoundCommandGroup)}. Operations of type
+	 * {@link CommandGroupType#READ} are decided on the version itself.
+	 * </p>
+	 */
+	private static boolean isModificationOfVersion(TLObject instance, BoundCommandGroup commandGroup) {
+		return commandGroup.getCommandType() != CommandGroupType.READ && !WrapperHistoryUtils.isCurrent(instance);
 	}
 
 	/**
@@ -2286,6 +2314,13 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// nor on its attribute values.
 			return true;
 		}
+		boolean modificationOfVersion = isModificationOfVersion(instance, commandGroup);
+		if (modificationOfVersion) {
+			TLObject current = WrapperHistoryUtils.getCurrent(instance);
+			if (current != null) {
+				return isAllowed(person, current, attribute, commandGroup);
+			}
+		}
 		Map<BoundCommandGroup, Set<BoundedRole>> partRights = partRights(instance.tType(), attribute.getName());
 		if (!partRights.containsKey(commandGroup)) {
 			if (SimpleBoundCommandGroup.READ.equals(commandGroup) && instance.tType() instanceof TLClass type
@@ -2309,6 +2344,9 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		TLObject roleHolder = roleHolder(instance, commandGroup);
 		if (!(roleHolder instanceof BoundObject holder)) {
 			return false;
+		}
+		if (modificationOfVersion) {
+			return accessManager().hasRoleOfIdentity(person, holder, requiredPartRoles);
 		}
 		return accessManager().hasRole(person, holder, requiredPartRoles);
 	}
@@ -2350,6 +2388,14 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 		if (context != null && isDeleted(context)) {
 			// Nobody may create an object in a deleted context.
 			return false;
+		}
+		if (context != null && isPersistent(context) && !WrapperHistoryUtils.isCurrent(context)) {
+			// Nothing can be created in a historic version: the creation is meant for the current
+			// object.
+			TLObject current = WrapperHistoryUtils.getCurrent(context);
+			if (current != null) {
+				return isAllowedCreate(person, type, current);
+			}
 		}
 		Boolean allowedBypass = BoundChecker.isAllowedBypass(person, SimpleBoundCommandGroup.CREATE);
 		if (allowedBypass != null) {

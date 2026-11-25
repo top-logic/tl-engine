@@ -63,6 +63,7 @@ const EN = {
   editedMarker: 'edited',
   signInHeading: 'Sign in to use the chat',
   signInBody: 'The agent works with your data and with your permissions, so it needs to know who you are.',
+  readOnly: 'Read only',
   edited: 'edited',
   laterTurnsRemoved: (count: number) =>
     `${count} later turn${count === 1 ? '' : 's'} removed. Change the message and send it again.`,
@@ -408,6 +409,7 @@ const DE: Bundle = {
   editedMarker: 'bearbeitet',
   signInHeading: 'Melde dich an, um den Chat zu nutzen',
   signInBody: 'Der Agent arbeitet mit deinen Daten und mit deinen Rechten - dafür muss er wissen, wer du bist.',
+  readOnly: 'Nur lesen',
   edited: 'bearbeitet',
   laterTurnsRemoved: (count: number) =>
     `${count} spätere ${count === 1 ? 'Antwort wurde' : 'Antworten wurden'} entfernt. Ändere die Nachricht und sende sie erneut.`,

@@ -12,8 +12,18 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.basic.json.JSON;
 import com.top_logic.layout.DisplayUnit;
+import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.common.ReactTextControl;
+import com.top_logic.layout.react.control.layout.ReactPanelControl;
+import com.top_logic.layout.react.control.layout.ReactSplitPanelControl;
 import com.top_logic.layout.react.control.layout.ReactSplitPanelControl.ChildConstraint;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.structure.Scrolling;
 import com.top_logic.layout.view.element.SplitSizePersonalization;
 
@@ -199,5 +209,35 @@ public class TestSplitSizePersonalization extends TestCase {
 
 		assertConstraint(configured.get(0), personalization.constraint(0));
 		assertConstraint(configured.get(0), create(configured).constraint(0));
+	}
+
+	/**
+	 * A panel in a pane restored as collapsed starts minimized; expanding it gives the pane the size
+	 * the user dragged it to before.
+	 */
+	public void testRestoredCollapsedPanelExpandsToDraggedSize() throws JSON.ParseException {
+		create(configured(32)).saveSizes(dragged(40, 60));
+		create(configured(32)).saveCollapsed(0, true);
+
+		ReactContext context =
+			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
+		SplitSizePersonalization personalization = create(configured(32));
+		ReactSplitPanelControl split = personalization.createSplitPanel(context, Orientation.HORIZONTAL, true);
+		ReactPanelControl panel = new ReactPanelControl(context, "selector", new ReactTextControl(context, "s"),
+			null, null, true, false, false);
+		personalization.addPane(split, 0, panel);
+		personalization.addPane(split, 1, new ReactTextControl(context, "d"));
+
+		assertEquals("MINIMIZED", state(panel).get("expansionState"));
+
+		panel.executeCommand("toggleMinimize", Map.of());
+		Map<?, ?> pane = (Map<?, ?>) ((List<?>) state(split).get("children")).get(0);
+		assertEquals(40.0, ((Number) pane.get("size")).doubleValue(), 0.001);
+		assertEquals(Boolean.FALSE, pane.get("collapsed"));
+		assertFalse("Expanding is remembered.", create(configured(32)).isCollapsed(0));
+	}
+
+	private static Map<?, ?> state(ReactControl control) throws JSON.ParseException {
+		return (Map<?, ?>) JSON.fromString(control.stateAsJSON());
 	}
 }

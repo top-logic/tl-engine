@@ -7,6 +7,8 @@ import {
   readBootstrap,
   type ChatBootstrap,
 } from './chat-store'
+import { readComposerControls } from './chat-conversation'
+import { gateComposerControls, STATE_SUBJECT_FEATURES, type ConversationFeatures } from './features'
 import { bundle, PROVIDER_ERROR_NO_CREDENTIALS } from './i18n'
 import { seenCounts, unseenRailBadge } from './rail-model'
 import { cardsForTurn } from './subagent-card'
@@ -3725,6 +3727,99 @@ describe('the chats of the account', () => {
     expect(deleted).toEqual(['a'])
     expect(store.getState().sessions.map((session) => session.id)).toEqual(['b'])
     expect(requested.filter((url) => url.includes('/chat/sessions'))).toEqual([])
+
+    release()
+  })
+})
+
+/**
+ * What an empty chat offers is what a conversation about the element's subject offers, as the
+ * server states it (`subjectFeatures`); an opened conversation offers what it offers itself.
+ */
+describe('the features of a new conversation', () => {
+  const ATTACHMENTS_ONLY: ConversationFeatures = {
+    regenerate: false,
+    editMessages: false,
+    agentPicker: false,
+    modelPicker: false,
+    effortPicker: false,
+    mcpPicker: false,
+    attachments: true,
+    approvals: false,
+  }
+
+  /** The composer controls the store's features leave of what the element configured. */
+  function composer(features: ConversationFeatures) {
+    return gateComposerControls(readComposerControls({}), features)
+  }
+
+  function expectAttachmentsOnly(features: ConversationFeatures): void {
+    const controls = composer(features)
+    expect(controls.agentPicker).toBe(false)
+    expect(controls.modelPicker).toBe(false)
+    expect(controls.thinking).toBe(false)
+    expect(controls.mcp).toBe(false)
+    expect(controls.autoApproveSwitch).toBe(false)
+    expect(controls.attachmentsEnabled).toBe(true)
+  }
+
+  function expectEverything(features: ConversationFeatures): void {
+    expect(composer(features)).toEqual(readComposerControls({}))
+  }
+
+  it('reads the features of the subject from the control state', () => {
+    expect(readBootstrap({ [STATE_SUBJECT_FEATURES]: ATTACHMENTS_ONLY }).subjectFeatures).toEqual(ATTACHMENTS_ONLY)
+  })
+
+  it('offers what the subject offers before the first message, and after a new chat again', async () => {
+    const boot = { ...BOOT, subjectFeatures: ATTACHMENTS_ONLY }
+    const store = chatStore('alpha', boot)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+
+    expectAttachmentsOnly(store.getState().features)
+
+    // A conversation of the framework's own agent: its transcript states no restriction.
+    await store.actions.selectSession('s1')
+    expectEverything(store.getState().features)
+
+    store.actions.newChat()
+    expectAttachmentsOnly(store.getState().features)
+
+    release()
+  })
+
+  it('offers what the subject offers after the open conversation is deleted', async () => {
+    const boot = { ...BOOT, subjectFeatures: ATTACHMENTS_ONLY }
+    const store = chatStore('alpha', boot)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    await store.actions.selectSession('s1')
+    expectEverything(store.getState().features)
+
+    await store.actions.deleteSession('s1')
+    expectAttachmentsOnly(store.getState().features)
+
+    release()
+  })
+
+  it('follows a change of the subject while no conversation is open, and only then', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    expectEverything(store.getState().features)
+
+    store.takeSubjectFeatures(ATTACHMENTS_ONLY)
+    expectAttachmentsOnly(store.getState().features)
+
+    // An element that states nothing - a rail on the same chat - changes nothing.
+    store.takeSubjectFeatures(undefined)
+    expectAttachmentsOnly(store.getState().features)
+
+    await store.actions.selectSession('s1')
+    store.takeSubjectFeatures({ ...ATTACHMENTS_ONLY, agentPicker: true })
+    expectEverything(store.getState().features)
+
+    store.actions.newChat()
+    expect(composer(store.getState().features).agentPicker).toBe(true)
+    expect(composer(store.getState().features).modelPicker).toBe(false)
 
     release()
   })

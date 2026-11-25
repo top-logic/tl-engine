@@ -1,5 +1,11 @@
 import { isPageLeaving, React, useTLCommand, useTLDataUrl, useTLUpload } from 'tl-react-bridge'
-import { ALL_FEATURES, readFeatures, sameFeatures, type ConversationFeatures } from './features'
+import {
+  ALL_FEATURES,
+  readFeatures,
+  sameFeatures,
+  STATE_SUBJECT_FEATURES,
+  type ConversationFeatures,
+} from './features'
 import type { ReactNode } from 'react'
 import {
   autoTitle,
@@ -368,6 +374,11 @@ export interface ChatBootstrap {
   sessions?: unknown
   /** The files attached per chat, as the control state carries them (`readAttachmentLists`). */
   draftAttachments?: unknown
+  /**
+   * What a new conversation offers, as a conversation's control state carries it under
+   * {@link STATE_SUBJECT_FEATURES} (read with `readFeatures`); absent from every other element.
+   */
+  subjectFeatures?: unknown
 }
 
 /** Reads the bootstrap a chat element pushed into its control state. */
@@ -396,6 +407,7 @@ export function readBootstrap(state: Record<string, unknown>): ChatBootstrap {
     capabilities: state.capabilities,
     sessions: state.sessions,
     draftAttachments: state[STATE_DRAFT_ATTACHMENTS],
+    subjectFeatures: state[STATE_SUBJECT_FEATURES],
   }
 }
 
@@ -913,6 +925,12 @@ export class ChatStore {
   /** Whether the server's capabilities have arrived, which is when the first agent is chosen. */
   private capsTaken = false
 
+  /**
+   * What a conversation not yet created offers: what the element states about its subject
+   * ({@link STATE_SUBJECT_FEATURES}), everything while no element states it.
+   */
+  private newFeatures: ConversationFeatures = ALL_FEATURES
+
   /** Whether any element is watching. The effects run only while one is. */
   private live = false
 
@@ -1114,6 +1132,7 @@ export class ChatStore {
 
   constructor(chatId: string, boot: ChatBootstrap) {
     this.chatId = chatId
+    if (boot.subjectFeatures != null) this.newFeatures = readFeatures(boot.subjectFeatures)
     this.approvalChoice = boot.autoApprove
     this.layoutKey = boot.layoutKey
     this.paneWidthDefault = boot.paneWidthDefault
@@ -1151,7 +1170,7 @@ export class ChatStore {
       latestSources: [],
       busy: false,
       regenerating: false,
-      ...EMPTY_CONVERSATION,
+      ...this.emptyConversation(),
       connection: 'connecting',
       // The user's own decision, else what the element configured. The one is stored, the other is
       // not - which is the whole of the precedence rule (#423).
@@ -1265,6 +1284,26 @@ export class ChatStore {
     }
     const list = readSessions(sessions)
     if (list) this.patch({ sessions: list, sessionsLoading: false })
+  }
+
+  /**
+   * Takes what a new conversation offers, when an element's control state states it - the
+   * `<chat-conversation>`, for the subject now in its channel. A chat that shows no conversation
+   * offers it at once; an open one keeps what its own conversation offers.
+   */
+  takeSubjectFeatures = (raw: unknown): void => {
+    if (raw == null) return
+    const features = readFeatures(raw)
+    if (sameFeatures(features, this.newFeatures)) return
+    this.newFeatures = features
+    if (this.state.sessionId === null && this.opening === null && !sameFeatures(features, this.state.features)) {
+      this.patch({ features })
+    }
+  }
+
+  /** The state of a conversation with nothing in it yet, offering what a new conversation offers. */
+  private emptyConversation(): typeof EMPTY_CONVERSATION {
+    return { ...EMPTY_CONVERSATION, features: this.newFeatures }
   }
 
   /** Takes the files attached per chat, when an element's control state brings new ones. */
@@ -2382,7 +2421,7 @@ export class ChatStore {
         this.runId = null
         this.streamMark = null
         this.watching = false
-        this.patch({ busy: false, ...EMPTY_CONVERSATION })
+        this.patch({ busy: false, ...this.emptyConversation() })
         this.noticeSticky = false
         // The model does not change when the chat does, so its window survives the reset; only what
         // the previous conversation measured is dropped.
@@ -2446,7 +2485,7 @@ export class ChatStore {
           // A new chat starts with the person's last choice, never with a reset: a person who has
           // switched auto-approve on is not asked again because they started another chat.
           autoApprove: this.approvalChoice,
-          ...EMPTY_CONVERSATION,
+          ...this.emptyConversation(),
           messages: chatReducer(this.snapshot.messages, { type: 'RESET' }),
           busy: false,
         })
@@ -2462,7 +2501,7 @@ export class ChatStore {
           this.patch({
             sessionId: null,
             autoApprove: this.approvalChoice,
-            ...EMPTY_CONVERSATION,
+            ...this.emptyConversation(),
             messages: chatReducer(this.snapshot.messages, { type: 'RESET' }),
           })
           this.setRun((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
@@ -2906,5 +2945,6 @@ export function useChat(chatId: string, boot: ChatBootstrap): ChatHandle {
   // The state's own values: they change only when the server sends new ones.
   useEffect(() => store.takeLists(boot.capabilities, boot.sessions), [store, boot.capabilities, boot.sessions])
   useEffect(() => store.takeAttachments(boot.draftAttachments), [store, boot.draftAttachments])
+  useEffect(() => store.takeSubjectFeatures(boot.subjectFeatures), [store, boot.subjectFeatures])
   return { chat, actions: store.actions, runs: store.runs }
 }

@@ -660,6 +660,25 @@ public class TestControlStateSchema extends TestCase {
 	}
 
 	/**
+	 * An entry with a tooltip sends it - for a disabled entry the reason it cannot be selected -,
+	 * an entry without one sends none.
+	 */
+	public void testMenuEntryTooltip() {
+		ReactMenuControl control = new ReactMenuControl(createContext(), null, List.of(
+			MenuEntry.item("a", "Delete", null, ExecutableState.NOT_EXEC_DISABLED, null, false, ButtonTone.DANGER,
+				"Not deleted here."),
+			MenuEntry.item("b", "Edit", null, ExecutableState.EXECUTABLE, null, false)),
+			id -> {}, () -> {
+				// Never closed.
+			});
+
+		List<?> items = (List<?>) state(control).get(MenuState.ITEMS__PROP);
+		assertEachDeclared(items, MenuState.Entry.class);
+		assertEquals("Not deleted here.", ((Map<?, ?>) items.get(0)).get(MenuState.Entry.TOOLTIP__PROP));
+		assertFalse(((Map<?, ?>) items.get(1)).containsKey(MenuState.Entry.TOOLTIP__PROP));
+	}
+
+	/**
 	 * A menu entry without a tone is rejected at construction.
 	 */
 	public void testMenuEntryRequiresTone() {

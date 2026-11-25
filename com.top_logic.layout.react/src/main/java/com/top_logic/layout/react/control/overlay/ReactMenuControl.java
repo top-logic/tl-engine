@@ -86,6 +86,9 @@ public class ReactMenuControl extends ReactControl {
 				if (entry.disabled()) {
 					map.put(MenuState.Entry.DISABLED__PROP, true);
 				}
+				if (entry.tooltip() != null && !entry.tooltip().isEmpty()) {
+					map.put(MenuState.Entry.TOOLTIP__PROP, entry.tooltip());
+				}
 				if (entry.active()) {
 					map.put(MenuState.Entry.ACTIVE__PROP, true);
 				}
@@ -187,15 +190,26 @@ public class ReactMenuControl extends ReactControl {
 	 * @param tone
 	 *        The kind of action the command this entry renders stands for; a
 	 *        {@link ButtonTone#DANGER destructive} entry is drawn as such. Never {@code null}.
+	 * @param tooltip
+	 *        The text explaining the entry - for a {@link #disabled() disabled} one the reason it
+	 *        cannot be selected -, or {@code null} for nothing to explain.
 	 */
 	public record MenuEntry(EntryType type, String id, String label, String icon, ExecutableState state,
-			String cssClasses, boolean active, boolean toggle, ButtonTone tone) {
+			String cssClasses, boolean active, boolean toggle, ButtonTone tone, String tooltip) {
 
 		/**
 		 * Creates a {@link MenuEntry}.
 		 */
 		public MenuEntry {
 			Objects.requireNonNull(tone, "tone");
+		}
+
+		/**
+		 * Creates a {@link MenuEntry} without tooltip.
+		 */
+		public MenuEntry(EntryType type, String id, String label, String icon, ExecutableState state,
+				String cssClasses, boolean active, boolean toggle, ButtonTone tone) {
+			this(type, id, label, icon, state, cssClasses, active, toggle, tone, null);
 		}
 
 		/**
@@ -243,7 +257,7 @@ public class ReactMenuControl extends ReactControl {
 		 */
 		public static MenuEntry item(String id, String label, String icon, ExecutableState state,
 				String cssClasses, boolean active, ButtonTone tone) {
-			return item(id, label, icon, state, cssClasses, active, false, tone);
+			return item(id, label, icon, state, cssClasses, active, false, tone, null);
 		}
 
 		/**
@@ -252,7 +266,26 @@ public class ReactMenuControl extends ReactControl {
 		 */
 		public static MenuEntry item(String id, String label, String icon, ExecutableState state,
 				String cssClasses, boolean active, boolean toggle, ButtonTone tone) {
-			return new MenuEntry(EntryType.ITEM, id, label, icon, state, cssClasses, active, toggle, tone);
+			return item(id, label, icon, state, cssClasses, active, toggle, tone, null);
+		}
+
+		/**
+		 * Creates a menu item for a command explained by the given {@link MenuEntry#tooltip()
+		 * tooltip}, see {@link #item(String, String, String, ExecutableState, String, boolean,
+		 * ButtonTone)}.
+		 */
+		public static MenuEntry item(String id, String label, String icon, ExecutableState state,
+				String cssClasses, boolean active, ButtonTone tone, String tooltip) {
+			return item(id, label, icon, state, cssClasses, active, false, tone, tooltip);
+		}
+
+		/**
+		 * Creates a menu item for a command that may be a {@link MenuEntry#toggle() toggle} and may
+		 * be explained by a {@link MenuEntry#tooltip() tooltip}.
+		 */
+		public static MenuEntry item(String id, String label, String icon, ExecutableState state,
+				String cssClasses, boolean active, boolean toggle, ButtonTone tone, String tooltip) {
+			return new MenuEntry(EntryType.ITEM, id, label, icon, state, cssClasses, active, toggle, tone, tooltip);
 		}
 
 		/**

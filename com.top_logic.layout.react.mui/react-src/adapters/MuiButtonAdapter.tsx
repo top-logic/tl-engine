@@ -1,4 +1,4 @@
-import { React, ThemeIcon, buttonPartAttributes, buttonLinkAttributes, StateBadge } from 'tl-react-bridge';
+import { React, ThemeIcon, buttonPartAttributes, buttonLinkAttributes, StateBadge, useButtonDefaults } from 'tl-react-bridge';
 import type { ButtonPartProps, PartRef } from 'tl-react-bridge';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -70,6 +70,8 @@ const MuiButtonAdapter: React.FC<ButtonPartProps> = (props) => {
   const isLink = appearance === 'link';
   const danger = dangerTone === true && !isLink;
   const showIcon = !!image && display !== 'label-only';
+  // A table row (ButtonDefaults small) makes an icon button small, but not a button with a label.
+  const smallByRow = useButtonDefaults().small === true && showIcon && display === 'icon-only';
   const accessibility: Record<string, string | number | boolean | undefined> = { ...buttonPartAttributes(props), ...attributes };
   const common = { id, ref: ref as PartRef<HTMLButtonElement>, disabled, tabIndex, className, onClick, onMouseDown, onPointerDown, onKeyDown };
   // A link is an anchor also while disabled, when it has no address.
@@ -96,7 +98,7 @@ const MuiButtonAdapter: React.FC<ButtonPartProps> = (props) => {
     );
   }
 
-  const size = small ? 'small' : 'medium';
+  const size = small || smallByRow ? 'small' : 'medium';
 
   if (checked !== undefined) {
     // The MUI toggle button reports its pressed state itself, also while not pressed.

@@ -32,7 +32,7 @@ const TLMenu: React.FC<TLCellProps> = ({ controlId }) => {
         : item.type === 'header' ? <MenuHeader key={i} label={item.label} />
         : <MenuItem key={item.id} icon={item.icon} label={item.label} disabled={item.disabled} current={item.toggle ? undefined : item.active}
             checked={item.toggle ? item.active === true : undefined}
-            danger={item.tone === 'danger'} className={item.cssClasses} onSelect={() => selectItem(CMD_SELECT_ITEM, { [ARG_ITEM_ID]: item.id })} />)}
+            danger={item.tone === 'danger'} className={item.cssClasses} tooltip={item.tooltip} onSelect={() => selectItem(CMD_SELECT_ITEM, { [ARG_ITEM_ID]: item.id })} />)}
     </Menu>
   );
 };

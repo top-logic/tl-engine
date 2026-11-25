@@ -214,7 +214,7 @@ Körper scrollen waagerecht gemeinsam: das TSX überträgt `scrollLeft` des Kör
 
 | Teil | Token |
 |---|---|
-| Tabelle | abgesetzte Fläche (außer `tl-fill`): `--tl-surface-layer`, Rundung `--tl-radius-md`, Rand `--tl-border-width-sm` in `--tl-border-separator`, Schatten `--tl-shadow-1` (die leichteste Stufe der Skala; eine Tabelle, die eine ganze Fläche füllt, schwebt nicht und trägt weder Schatten noch Rundung noch Rand — ihre Tiefe kommt vom Kopf) |
+| Tabelle | abgesetzte Fläche (außer `tl-fill`): `--tl-surface-layer`, Rundung `--tl-radius-md`, Rand `--tl-border-width-sm` in `--tl-border-separator`, kein Schatten (sie liegt in der Oberfläche wie die Karte; eine Tabelle, die eine ganze Fläche füllt, trägt auch weder Rundung noch Rand — ihre Tiefe kommt vom Kopf) |
 | Schrift | `--tl-text-primary`; Titel im Kopf `--tl-text-secondary` in Großbuchstaben (`text-transform: uppercase`), die Sperrung trägt `tl-type-overline` am `tl-table__label`; Anzahl der Gruppenzeile `--tl-text-primary` |
 | Filterleiste | Lücke `--tl-space-xs`, Innenabstand `--tl-space-xs` `--tl-space-sm`, Fläche `--tl-surface-layer`, Linie darunter `--tl-border-width-sm` in `--tl-border-separator`; Speichern mit Lücke `--tl-space-2xs` |
 | Kopf | Linie darunter `--tl-border-width-sm` in `--tl-border-emphasis`; Kopfzeile `--tl-size-bar` hoch auf `--tl-surface-layer-muted` (dieselbe Fläche wie Zebra und Gruppenzeile; Text darauf `--tl-text-secondary`, `--tl-text-primary` mit Kontrast gegen sie geprüft) |

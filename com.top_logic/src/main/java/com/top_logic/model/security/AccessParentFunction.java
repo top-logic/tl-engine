@@ -12,14 +12,16 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelNamingConvention;
+import com.top_logic.tool.boundsec.BoundCommandGroup;
 
 /**
  * The relation leading from an object to its access parent: the object whose access definition
  * decides access to it.
  * <p>
- * An object with an access parent has no grants and no roles of its own. Whether a user may
- * perform an operation on it is whether the user may perform the corresponding operation on its
- * access parent, and that parent may delegate further.
+ * An object with an access parent has no grants and no roles of its own for the operations the
+ * relation {@link #delegates(BoundCommandGroup) delegates}. Whether a user may perform such an
+ * operation on it is whether the user may perform the corresponding operation on its access parent,
+ * and that parent may delegate further.
  * </p>
  *
  * @see ModelAccessRights#getAccessParent(TLClass)
@@ -52,6 +54,53 @@ public interface AccessParentFunction {
 	 * Short description of the relation for the coverage display.
 	 */
 	ResKey getLabel();
+
+	/**
+	 * Whether the access parent decides the given operation on the delegating object.
+	 *
+	 * @param operation
+	 *        The operation on the delegating object.
+	 * @return Whether the operation is delegated, <code>true</code> for every operation unless the
+	 *         relation is {@link RestrictedRelation restricted}.
+	 */
+	default boolean delegates(BoundCommandGroup operation) {
+		return true;
+	}
+
+	/**
+	 * Whether the given access parent decides the given operation.
+	 *
+	 * @param accessParent
+	 *        The access parent of a type, <code>null</code> when the type decides for itself.
+	 * @param operation
+	 *        The operation on an object of the type.
+	 * @return Whether the access parent {@link #delegates(BoundCommandGroup) delegates} the
+	 *         operation, <code>false</code> for no access parent.
+	 */
+	static boolean isDelegated(AccessParentFunction accessParent, BoundCommandGroup operation) {
+		return accessParent != null && accessParent.delegates(operation);
+	}
+
+	/**
+	 * The operations on the delegating object the access parent decides, besides Discover.
+	 *
+	 * @return The delegated operations, <code>null</code> when all operations are delegated.
+	 *
+	 * @see #delegates(BoundCommandGroup)
+	 */
+	default Set<BoundCommandGroup> getOperations() {
+		return null;
+	}
+
+	/**
+	 * The relation leading to the access parent, without a restriction of the delegated
+	 * operations.
+	 *
+	 * @return This relation, unless it is {@link RestrictedRelation restricted}.
+	 */
+	default AccessParentFunction getRelation() {
+		return this;
+	}
 
 	/**
 	 * The label of the type owning the given reference, its name where it has no label, for a

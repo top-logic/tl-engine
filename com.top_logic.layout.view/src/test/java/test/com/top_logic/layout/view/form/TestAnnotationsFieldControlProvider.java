@@ -38,6 +38,9 @@ import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.form.AnnotationsFieldControlProvider;
+import com.top_logic.layout.configedit.I18NConstants;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.util.Resources;
 import com.top_logic.element.layout.meta.TLEnumerationFormBuilder;
 import com.top_logic.element.layout.meta.TLModuleFormBuilder;
 import com.top_logic.element.layout.meta.TLPropertyFormBuilder;
@@ -80,6 +83,11 @@ public class TestAnnotationsFieldControlProvider extends BasicTestCase {
 
 	private ModuleConfig container() {
 		return TypedConfiguration.newConfigItem(ModuleConfig.class);
+	}
+
+	/** The text of the given key in the default locale, as a button shows it. */
+	private static String label(ResKey key) {
+		return Resources.getInstance().getString(key);
 	}
 
 	/** The first button anywhere below the given control carrying the given label. */
@@ -331,7 +339,7 @@ public class TestAnnotationsFieldControlProvider extends BasicTestCase {
 
 		// A new entry is pending until confirmed, and the container is still empty while it is - so
 		// only confirming changes the field's value, which is what could restart the editor.
-		ReactButtonControl confirm = buttonLabelled(holder, "\u2713");
+		ReactButtonControl confirm = buttonLabelled(holder, label(I18NConstants.CONFIRM_ENTRY));
 		assertNotNull("A pending entry must offer a Confirm button.", confirm);
 		confirm.executeCommand("click", Collections.emptyMap());
 
@@ -348,7 +356,7 @@ public class TestAnnotationsFieldControlProvider extends BasicTestCase {
 		AbstractFieldModel model = new AbstractFieldModel(new ArrayList<>(List.of(someAnnotation())));
 
 		ReactControl holder = AnnotationsFieldControlProvider.createControl(_context, model, this::container);
-		ReactButtonControl remove = buttonLabelled(holder, "\u2715");
+		ReactButtonControl remove = buttonLabelled(holder, label(I18NConstants.REMOVE_ENTRY));
 		assertNotNull("An annotation must offer a Remove button.", remove);
 		remove.executeCommand("click", Collections.emptyMap());
 

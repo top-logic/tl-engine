@@ -102,6 +102,9 @@ public class FlowDiagramElement implements UIElement {
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
 
+		/** Configuration name for {@link #getEmptyAreaSelection()}. */
+		String EMPTY_AREA_SELECTION = "empty-area-selection";
+
 		/** Configuration name for {@link #getSelectionMode()}. */
 		String SELECTION_MODE = "selection-mode";
 
@@ -161,6 +164,28 @@ public class FlowDiagramElement implements UIElement {
 		@Name(SELECTION)
 		@Format(ChannelRefFormat.class)
 		ChannelRef getSelection();
+
+		/**
+		 * TL-Script expression computing the object the empty area of the diagram stands for.
+		 *
+		 * <p>
+		 * When the user leaves no element of the diagram selected - a click or a context menu on
+		 * the empty area, or a click with {@code Ctrl} giving up the last selected element - the
+		 * {@link #getSelection() selection channel} receives this object instead of no value, e.g.
+		 * the object the diagram displays, so that the commands of that object apply. The
+		 * expression sees the same variables as the {@link #getCreateChart() create chart script}:
+		 * the values of the {@link #getInputs() inputs}, followed by the {@link #getHandlers()
+		 * handlers}. It is evaluated at the moment of the click.
+		 * </p>
+		 *
+		 * <p>
+		 * Without the expression, or when it evaluates to <code>null</code>, the empty area clears
+		 * the selection.
+		 * </p>
+		 */
+		@Name(EMPTY_AREA_SELECTION)
+		@ScriptContextVariables(ScriptVariables.class)
+		Expr getEmptyAreaSelection();
 
 		/**
 		 * Whether the user may select one diagram element at a time, or any number of them.
@@ -261,6 +286,9 @@ public class FlowDiagramElement implements UIElement {
 
 	private final QueryExecutor _createChart;
 
+	/** The compiled {@link Config#getEmptyAreaSelection()}, <code>null</code> if not configured. */
+	private final QueryExecutor _emptyAreaSelection;
+
 	private final Object[] _handlers;
 
 	/** The declared {@link Config#getDrops() drops} with their actions, in declaration order. */
@@ -285,6 +313,7 @@ public class FlowDiagramElement implements UIElement {
 
 		InputScript.checkInputNames(config.getInputs(), handlerNames);
 		_createChart = ViewScripts.compile(config.getCreateChart(), variables(config));
+		_emptyAreaSelection = ViewScripts.compileOptional(config.getEmptyAreaSelection(), variables(config));
 		_drops = config.getDrops().stream()
 			.map(drop -> DeclaredDrop.compile(context, drop, drop.getTarget().signature()))
 			.toList();
@@ -345,7 +374,8 @@ public class FlowDiagramElement implements UIElement {
 		ChannelRef selectionRef = _config.getSelection();
 		if (selectionRef != null) {
 			ViewChannel selectionChannel = context.resolveChannel(selectionRef);
-			DiagramSelectionBinding selectionBinding = new DiagramSelectionBinding(control, selectionChannel);
+			DiagramSelectionBinding selectionBinding =
+				new DiagramSelectionBinding(control, selectionChannel, () -> emptyAreaSelection(inputChannels));
 			control.addCleanupAction(selectionBinding::dispose);
 
 			// Rebuilding the diagram drops the selection, so the unsaved changes blocking the
@@ -356,6 +386,16 @@ public class FlowDiagramElement implements UIElement {
 		}
 
 		return control;
+	}
+
+	/**
+	 * The object the empty area of the diagram stands for, <code>null</code> if none.
+	 */
+	private Object emptyAreaSelection(List<ViewChannel> inputChannels) {
+		if (_emptyAreaSelection == null) {
+			return null;
+		}
+		return _emptyAreaSelection.execute(ChannelInputs.arguments(inputChannels, _handlers));
 	}
 
 	private Diagram buildDiagram(List<ViewChannel> inputChannels) {

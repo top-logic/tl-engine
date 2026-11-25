@@ -1360,6 +1360,12 @@ export namespace MenuStateJson {
 		disabled: boolean;
 
 		/**
+		 * The text explaining the item: for a disabled item the reason it cannot be chosen,
+		 * otherwise the description of its command. Absent where there is nothing to explain.
+		 */
+		tooltip: string;
+
+		/**
 		 * Whether the effect of the item's command is currently in force, marking the item as the
 		 * chosen one among its alternatives.
 		 */

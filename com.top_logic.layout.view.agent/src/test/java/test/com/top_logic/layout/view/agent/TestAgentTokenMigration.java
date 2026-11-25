@@ -71,8 +71,8 @@ import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Test of the migration script {@link #MIGRATION}, which deletes the module {@link #OLD_MODULE}
- * with its access tokens.
+ * Test of the migration script {@link #MIGRATION} of {@link #MIGRATION_MODULE}, which deletes the
+ * module {@link #OLD_MODULE} with its access tokens.
  *
  * <p>
  * The test configuration declares {@link #OLD_MODULE} as the application defined it before, and a
@@ -84,9 +84,9 @@ import com.top_logic.util.model.ModelService;
  */
 public class TestAgentTokenMigration extends BasicTestCase {
 
-	private static final String MIGRATION_MODULE = "tl-layout-view-agent";
+	private static final String MIGRATION_MODULE = "tl-element";
 
-	private static final String MIGRATION = "Ticket_30367_remove_agent_access_tokens";
+	private static final String MIGRATION = "Ticket_30558_remove_agent_access_tokens";
 
 	private static final String OLD_MODULE = "tl.agent";
 

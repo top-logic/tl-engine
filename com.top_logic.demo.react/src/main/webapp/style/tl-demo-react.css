@@ -156,16 +156,16 @@
 }
 
 /*
- * The list demo: the contact list stands at a fixed width beside the form, which takes the rest of
- * the row. Collapsed, the list keeps its strip width (tl-list) and the form grows into the space.
+ * The list demos: the list stands at a fixed width beside the form, which takes the rest of the
+ * row. Collapsed, the list keeps its strip width (tl-list) and the form grows into the space.
  * The list stands in its context-menu region, which has no box of its own (display: contents), so
  * it is a flex item of the row although it is no child of it.
  */
-.tlDemoMasterDetail .tlDemoContactList {
+.tlDemoMasterDetail .tlDemoMasterList {
 	flex: none;
 }
 
-.tlDemoMasterDetail .tlDemoContactList:not([data-tl-state~="collapsed"]) {
+.tlDemoMasterDetail .tlDemoMasterList:not([data-tl-state~="collapsed"]) {
 	width: 22rem;
 }
 

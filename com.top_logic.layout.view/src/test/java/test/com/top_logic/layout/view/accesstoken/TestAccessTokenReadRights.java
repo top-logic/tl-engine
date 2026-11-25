@@ -38,9 +38,9 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * with the shipped security configuration of the type; another account does not.
  *
  * <p>
- * A table shows the column of an attribute only when the user may read the attribute on the type
- * of its rows, see {@link ModelAccessPolicy#onAttributeOfType}; the cells then by the attribute
- * on each row, see {@link ModelAccessPolicy#onAttribute}.
+ * A table withholds the column of an attribute only when the attribute has a read grant of its
+ * own listing no role the user holds, see {@link ModelAccessPolicy#onAttributeColumn}; the cells
+ * are decided by the attribute on each row, see {@link ModelAccessPolicy#onAttribute}.
  * </p>
  */
 public class TestAccessTokenReadRights extends AbstractSearchExpressionTest {
@@ -90,20 +90,25 @@ public class TestAccessTokenReadRights extends AbstractSearchExpressionTest {
 		TLClass type = AccessTokens.accessTokenType();
 		for (String name : LISTED) {
 			TLStructuredTypePart part = type.getPart(name);
-			assertTrue("Column of " + name, ModelAccessPolicy
-				.onAttributeOfType(SimpleBoundCommandGroup.READ, type, part).isExecutable());
+			assertTrue("Column of " + name, ModelAccessPolicy.onAttributeColumn(type, part).isExecutable());
 			assertTrue("Cell of " + name, ModelAccessPolicy
 				.onAttribute(SimpleBoundCommandGroup.READ, _token, part).isExecutable());
 		}
 	}
 
 	/**
-	 * Another account does not read the token of the owner.
+	 * Another account does not read the token of the owner, but is offered the columns of the
+	 * listed attributes: the token is no row of its table.
 	 */
 	public void testStrangerReadsNothing() {
 		becomeUser(_stranger);
-		TLStructuredTypePart name = AccessTokens.accessTokenType().getPart(AccessToken.NAME_ATTRIBUTE);
-		assertFalse(ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.READ, _token, name).isExecutable());
+		TLClass type = AccessTokens.accessTokenType();
+		for (String name : LISTED) {
+			TLStructuredTypePart part = type.getPart(name);
+			assertTrue("Column of " + name, ModelAccessPolicy.onAttributeColumn(type, part).isExecutable());
+			assertFalse("Cell of " + name, ModelAccessPolicy
+				.onAttribute(SimpleBoundCommandGroup.READ, _token, part).isExecutable());
+		}
 	}
 
 	private Person person(String name) {

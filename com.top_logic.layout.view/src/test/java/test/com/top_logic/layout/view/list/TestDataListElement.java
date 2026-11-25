@@ -7,6 +7,7 @@ package test.com.top_logic.layout.view.list;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -20,6 +21,7 @@ import test.com.top_logic.knowledge.KBSetup;
 import test.com.top_logic.layout.view.navigation.FixtureViews;
 
 import com.top_logic.basic.Protocol;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
@@ -27,11 +29,17 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.TooltipContent;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.ReactValueColor;
+import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.state.ChildControl;
 import com.top_logic.layout.react.state.ControlState;
 import com.top_logic.layout.react.state.DataListState;
+import com.top_logic.layout.react.state.TextState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -45,7 +53,12 @@ import com.top_logic.layout.view.list.DataListElement;
 import com.top_logic.mig.html.layout.AssociationEndRelevance;
 import com.top_logic.mig.html.layout.GlobalModelEventForwarder;
 import com.top_logic.mig.html.layout.MapBasedAssociationEndRelevance;
+import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.model.TLClassifier;
+import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModule;
+import com.top_logic.model.annotate.ui.TLColor;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.util.TLModelUtil;
@@ -74,6 +87,12 @@ public class TestDataListElement extends BasicTestCase {
 
 	/** Prefix of the names of the modules the list shows; the next letter is their group. */
 	private static final String PREFIX = "test.datalist.";
+
+	/** A list over classifiers with a template after the lines of each row. */
+	private static final String TEMPLATE_FIXTURE = "data-list-template.view.xml";
+
+	/** The key the client asks a text for its tooltip with. */
+	private static final String TOOLTIP_KEY = "tooltip";
 
 	/** The channel the list writes its selection to. */
 	private static final String SELECTION = "selection";
@@ -209,6 +228,68 @@ public class TestDataListElement extends BasicTestCase {
 	}
 
 	/**
+	 * Tests that a template after the lines gives each row a control of its own: a pill in the color
+	 * of the classifier the row shows, with the tooltip the template computes; the short form given
+	 * beside the template is not shown.
+	 */
+	public void testTrailingTemplate() throws Exception {
+		TLEnumeration states = createStates();
+		DataListControl list = list(TEMPLATE_FIXTURE);
+
+		List<Map<?, ?>> rows = rows(list);
+		assertEquals(List.of("test-done", "test-open"), primaryTexts(rows));
+		Map<String, ReactTextControl> controls = trailingControls(list);
+		for (Map<?, ?> row : rows) {
+			Map<?, ?> trailing = (Map<?, ?>) row.get(DataListState.Row.TRAILING__PROP);
+			assertFalse("The template takes the place of the short form: " + trailing,
+				trailing.containsKey(DataListState.Trailing.TEXT__PROP));
+			ReactTextControl control = controls.get(trailingId(row));
+			assertNotNull("Each row has a control of the template.", control);
+
+			TLClassifier state = states.getClassifier(primaryText(row));
+			Map<?, ?> child = (Map<?, ?>) trailing.get(DataListState.Trailing.CONTROL__PROP);
+			Map<?, ?> text = (Map<?, ?>) child.get(ChildControl.STATE__PROP);
+			assertEquals(MetaLabelProvider.INSTANCE.getLabel(state), text.get(TextState.TEXT__PROP));
+			assertEquals(ReactValueColor.roleOf(state), text.get(ReactValueColor.ROLE));
+			TooltipContent tooltip = control.getTooltipContent(TOOLTIP_KEY);
+			assertEquals("State " + state.getName(), tooltip.getHtml());
+		}
+		assertEquals(ValueColor.SUCCESS.getExternalName(),
+			ReactValueColor.roleOf(states.getClassifier("test-done")));
+	}
+
+	/**
+	 * Tests that the instances of the template follow the rows: a new row gets a control, a row
+	 * that stays keeps its control, and the control of a row that left the list is disposed.
+	 */
+	public void testTrailingTemplateFollowsTheRows() throws Exception {
+		TLEnumeration states = createStates();
+		DataListControl list = list(TEMPLATE_FIXTURE);
+		Map<String, String> before = trailingIdsByText(list);
+		Map<String, ReactTextControl> controlsBefore = trailingControls(list);
+
+		addClassifier(states, "test-new", ValueColor.INFO);
+		Map<String, String> added = trailingIdsByText(list);
+		assertEquals(List.of("test-done", "test-new", "test-open"), primaryTexts(rows(list)));
+		assertEquals("A row that stays keeps its control.", before.get("test-done"), added.get("test-done"));
+		assertEquals("A row that stays keeps its control.", before.get("test-open"), added.get("test-open"));
+		assertNotNull("A new row gets a control.", added.get("test-new"));
+		assertFalse(before.containsValue(added.get("test-new")));
+
+		ReactTextControl done = controlsBefore.get(before.get("test-done"));
+		try (Transaction tx = kb().beginTransaction()) {
+			TLModelUtil.deleteRecursive(states.getClassifier("test-done"));
+			tx.commit();
+		}
+		_scope.synthesizeModelEvents();
+		Map<String, String> removed = trailingIdsByText(list);
+		assertEquals(List.of("test-new", "test-open"), primaryTexts(rows(list)));
+		assertTrue("The control of a row that left the list is disposed.", done.isDisposed());
+		assertEquals(added.get("test-open"), removed.get("test-open"));
+		assertFalse(controlsBefore.get(before.get("test-open")).isDisposed());
+	}
+
+	/**
 	 * Tests that the list follows a change of an object that is no row but of an observed type: a
 	 * class created in a module changes the count of its badge, while the list stays displayed.
 	 */
@@ -287,6 +368,61 @@ public class TestDataListElement extends BasicTestCase {
 		_scope.synthesizeModelEvents();
 		assertEquals(List.of(PREFIX + "alpha", PREFIX + "anna", PREFIX + "berta"), primaryTexts(rows(list)));
 		assertNull("The deleted object left the selection.", _selection.get());
+	}
+
+	/**
+	 * An enumeration in a module of its own, with two colored classifiers the
+	 * {@link #TEMPLATE_FIXTURE} lists.
+	 */
+	private TLEnumeration createStates() throws Exception {
+		TLModule module = createModule(PREFIX + "states");
+		_modules.add(module);
+		TLEnumeration result;
+		try (Transaction tx = kb().beginTransaction()) {
+			result = TLModelUtil.addEnumeration(module, "State");
+			tx.commit();
+		}
+		addClassifier(result, "test-open", ValueColor.WARNING);
+		addClassifier(result, "test-done", ValueColor.SUCCESS);
+		return result;
+	}
+
+	private void addClassifier(TLEnumeration enumeration, String name, ValueColor role) {
+		try (Transaction tx = kb().beginTransaction()) {
+			TLClassifier classifier = TLModelUtil.addClassifier(enumeration, name);
+			TLColor color = TypedConfiguration.newConfigItem(TLColor.class);
+			color.setRole(role);
+			classifier.setAnnotation(color);
+			tx.commit();
+		}
+		_scope.synthesizeModelEvents();
+	}
+
+	/** The controls of the template after the lines, by their control ID. */
+	private static Map<String, ReactTextControl> trailingControls(DataListControl list) {
+		Map<String, ReactTextControl> result = new HashMap<>();
+		for (ReactControl child : list.scriptingChildren()) {
+			if (child instanceof ReactTextControl text) {
+				result.put(text.getID(), text);
+			}
+		}
+		return result;
+	}
+
+	/** The control IDs of the template instances, by the first line of their row. */
+	private static Map<String, String> trailingIdsByText(DataListControl list) {
+		Map<String, String> result = new HashMap<>();
+		for (Map<?, ?> row : rows(list)) {
+			result.put(primaryText(row), trailingId(row));
+		}
+		return result;
+	}
+
+	/** The control ID of the template instance of the given row, as the client receives it. */
+	private static String trailingId(Map<?, ?> row) {
+		Map<?, ?> trailing = (Map<?, ?>) row.get(DataListState.Row.TRAILING__PROP);
+		Map<?, ?> control = (Map<?, ?>) trailing.get(DataListState.Trailing.CONTROL__PROP);
+		return (String) control.get(ChildControl.CONTROL_ID__PROP);
 	}
 
 	private DataListControl list() {

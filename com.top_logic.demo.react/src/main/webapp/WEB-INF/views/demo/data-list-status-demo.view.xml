@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	A <data-list> of the tickets whose entries show the status of the ticket after their lines: a
+	pill in the colour of the status with a tooltip explaining it. The pill is the template of the
+	<trailing> slot (ticket-status-pill.view.xml), instantiated for each entry with its ticket on the
+	channel named by element-channel.
+	
+	A click on the pill selects the entry like a click on its lines; the search filters the entries
+	by their lines (name and key), not by the status.
+	
+	Beside the list, the selected ticket: the same pill on its own, and a form to edit the ticket.
+	Changing the status there - or in the generic instance editor - recolours the pill in the list
+	and above the form and changes their tooltips. "New ticket" above the list creates a ticket, a
+	right click on an entry offers to delete it.
+-->
+<view>
+	<channels>
+		<channel name="ticket"/>
+	</channels>
+
+	<panel>
+		<title>
+			<en>Status list</en>
+			<de>Statusliste</de>
+		</title>
+		<stack
+			css-class="tlDemoMasterDetail"
+			direction="row"
+			fill="true"
+		>
+			<context-menu input="ticket">
+				<data-list
+					css-class="tlDemoMasterList"
+					observed-types="demo.tickets:Ticket"
+					search="true"
+					selection="ticket"
+				>
+					<title>
+						<en>Tickets</en>
+						<de>Tickets</de>
+					</title>
+					<rows><![CDATA[all(`demo.tickets:Ticket`)
+	.sort(comparator(t -> {
+		name = $t.get(`demo.tickets:Ticket#name`);
+		if(isEmpty($name), '', $name.toLowerCase())
+	}))]]></rows>
+					<lines>
+						<line attribute="name"/>
+						<line
+							attribute="key"
+							emphasis="secondary"
+						/>
+					</lines>
+					<trailing element-channel="entry">
+						<view-ref view="demo/ticket-status-pill.view.xml">
+							<bind
+								channel="ticket"
+								to="entry"
+							/>
+						</view-ref>
+					</trailing>
+					<empty-text>
+						<en>No tickets</en>
+						<de>Keine Tickets</de>
+					</empty-text>
+					<commands>
+						<generic-command image="css:bi bi-plus-lg">
+							<label>
+								<en>New ticket</en>
+								<de>Neues Ticket</de>
+							</label>
+							<create-transient type="demo.tickets:Ticket">
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="tickets-create.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="ticket"
+										/>
+									</open-dialog>
+								</with-result>
+							</create-transient>
+						</generic-command>
+					</commands>
+				</data-list>
+				<commands>
+					<generic-command
+						image="css:bi bi-trash"
+						inputs="ticket"
+						placement="CONTEXT_MENU"
+					>
+						<label>
+							<en>Delete</en>
+							<de>Löschen</de>
+						</label>
+						<executability>
+							<null-input-disabled/>
+						</executability>
+						<confirm>
+							<expr><![CDATA[#("Delete {0}?"@en, "{0} löschen?"@de).fill($ticket)]]></expr>
+						</confirm>
+						<delete-object/>
+						<write-channel name="ticket"
+							clear="true"
+						/>
+					</generic-command>
+				</commands>
+			</context-menu>
+			<inset>
+				<stack>
+					<view-ref view="demo/ticket-status-pill.view.xml">
+						<bind
+							channel="ticket"
+							to="ticket"
+						/>
+					</view-ref>
+					<form input="ticket">
+						<field attribute="name"/>
+						<field attribute="key"/>
+						<field attribute="status"/>
+					</form>
+				</stack>
+			</inset>
+		</stack>
+	</panel>
+</view>

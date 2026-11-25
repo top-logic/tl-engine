@@ -74,9 +74,6 @@ export const ICON_FILTER = 'css:fa-solid fa-filter';
 /** The gear of a table, opening its view and column selection. */
 export const ICON_COLUMNS = 'css:fa-solid fa-gear';
 
-/** The entry leading to the view settings of a table: density, stripes, column lines. */
-export const ICON_VIEW_SETTINGS = 'css:fa-solid fa-sliders';
-
 /** An entry resetting something to how it is defined (the view of a table). */
 export const ICON_RESET = 'css:fa-solid fa-arrow-rotate-left';
 

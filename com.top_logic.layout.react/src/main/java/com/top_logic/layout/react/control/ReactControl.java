@@ -90,6 +90,9 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 */
 	public static final String DIAGNOSTICS = "diagnostics";
 
+	/** Result of {@link #withoutControls(Object)} for a value with nothing left. */
+	private static final Object NO_VALUE = new Object();
+
 	private static final ConcurrentHashMap<Class<?>, ReactCommandMap> COMMAND_MAPS = new ConcurrentHashMap<>();
 
 	private final String _id;
@@ -589,11 +592,13 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 					// Rendering-only (e.g. padding, variant, css class).
 					return;
 				}
-				if (containsControl(value)) {
-					// Child controls are projected as separate addressable nodes.
+				// Child controls are projected as separate addressable nodes; the rest of the
+				// value stays.
+				Object scalar = withoutControls(value);
+				if (scalar == NO_VALUE) {
 					return;
 				}
-				result.put(entry.getKey(), value);
+				result.put(entry.getKey(), scalar);
 			});
 		if (_diagnostics != null && !_diagnostics.isEmpty()) {
 			result.put(DIAGNOSTICS, diagnostics());
@@ -852,6 +857,52 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 		}
 		item.setName(command);
 		return item;
+	}
+
+	/**
+	 * The given state value without the child controls it holds, for the
+	 * {@link #scriptingScalarState() headless projection}.
+	 *
+	 * <p>
+	 * A control is left out of the map or list holding it, at any depth, and the rest of that map or
+	 * list stays. A map or list that held only controls is left out as a whole, as is a control
+	 * itself.
+	 * </p>
+	 *
+	 * @return The value itself where it holds no control, a copy without the controls otherwise;
+	 *         {@link #NO_VALUE} for a value with nothing left.
+	 */
+	private static Object withoutControls(Object value) {
+		if (value instanceof ReactControl) {
+			return NO_VALUE;
+		}
+		if (value instanceof Map<?, ?> map) {
+			if (!containsControl(map)) {
+				return map;
+			}
+			Map<Object, Object> result = new LinkedHashMap<>();
+			for (Map.Entry<?, ?> entry : map.entrySet()) {
+				Object element = withoutControls(entry.getValue());
+				if (element != NO_VALUE) {
+					result.put(entry.getKey(), element);
+				}
+			}
+			return result.isEmpty() ? NO_VALUE : result;
+		}
+		if (value instanceof Iterable<?> elements) {
+			if (!containsControl(elements)) {
+				return elements;
+			}
+			List<Object> result = new ArrayList<>();
+			for (Object element : elements) {
+				Object scalar = withoutControls(element);
+				if (scalar != NO_VALUE) {
+					result.add(scalar);
+				}
+			}
+			return result.isEmpty() ? NO_VALUE : result;
+		}
+		return value;
 	}
 
 	private static boolean containsControl(Object value) {

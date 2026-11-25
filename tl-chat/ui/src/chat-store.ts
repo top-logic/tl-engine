@@ -22,7 +22,8 @@ import {
   FRAME_RUN_WAITING,
   rateAnswer,
   readCapabilities,
-  readDraftAttachments,
+  readAttachmentLists,
+  NEW_CONVERSATION,
   readPromptImproved,
   readSessions,
   regenerate as regenerateTurn,
@@ -365,7 +366,7 @@ export interface ChatBootstrap {
   capabilities?: unknown
   /** The account's chats, as the element's control state carries them (read with `readSessions`). */
   sessions?: unknown
-  /** The files attached to the message, as the control state carries them (`readDraftAttachments`). */
+  /** The files attached per chat, as the control state carries them (`readAttachmentLists`). */
   draftAttachments?: unknown
 }
 
@@ -575,8 +576,15 @@ export interface ChatState {
   conversationsOutsideDock: number
 
   /**
-   * The files attached to the message being written, as the chat controls state them: the files
-   * wait on the server, which the send takes them from.
+   * The files attached to the messages being written, per chat session id (`NEW_CONVERSATION` for
+   * the chat the next send creates), as the chat controls state them: the files wait on the server,
+   * which the send takes them from.
+   */
+  attachmentLists: Record<string, DraftAttachment[]>
+
+  /**
+   * The files attached to the message being written in the chat on screen: the entry of
+   * {@link attachmentLists} for {@link sessionId}. Derived.
    */
   draftAttachments: DraftAttachment[]
 
@@ -619,6 +627,9 @@ export interface ChatState {
  * and the lists drifted apart - a deleted chat's notice stayed up, and no switch dropped the previous
  * run's subagent budget.
  */
+/** The files of a chat with none attached; one instance, so the derived state stays the same. */
+const NO_ATTACHMENTS: DraftAttachment[] = Object.freeze([]) as unknown as DraftAttachment[]
+
 const EMPTY_CONVERSATION: Pick<
   ChatState,
   | 'subagents'
@@ -783,8 +794,13 @@ export interface ChatActions {
    */
   registerConversation(insideDock: boolean): () => void
   bindComposer(api: ComposerApi | null): void
+  /**
+   * What the composer reports of its text: kept as the draft of the chat on screen, which the
+   * composer shows again when the user comes back to that chat.
+   */
+  noteDraft(text: string): void
   insertReference(token: ReferenceToken): void
-  /** Replaces the composer's draft, focuses it and puts the caret at the end. */
+  /** Replaces the draft of the chat on screen, focuses the composer and puts the caret at the end. */
   setDraft(text: string): void
 }
 
@@ -1051,6 +1067,23 @@ export class ChatStore {
   private composerApi: ComposerApi | null = null
 
   /**
+   * The text standing unsent in each chat this store has shown, by session id
+   * ({@link NEW_CONVERSATION} for the chat the next send creates). Only non-empty drafts are kept.
+   *
+   * The draft belongs to the chat, not to the place that shows it: switching to another chat puts
+   * that chat's text into the composer, and switching back brings the first chat's text back. Not
+   * stored anywhere: the drafts live as long as this store, i.e. as long as the chat is on the page;
+   * a send the page is reloaded over is what `keepUnsent` keeps.
+   */
+  private readonly drafts = new Map<string, string>()
+
+  /** The key of {@link drafts} the composer's text belongs to: the chat on screen. */
+  private draftKey: string = NEW_CONVERSATION
+
+  /** The composer the drafts were last restored into; a composer that mounts anew gets its chat's text. */
+  private draftComposer: ComposerApi | null = null
+
+  /**
    * Whether a composer has been bound to this store yet.
    *
    * A message the page was reloaded over before it went is given back to the first composer of the reloaded
@@ -1136,7 +1169,8 @@ export class ChatStore {
       railDrawer: false,
       railDrawerOpen: false,
       conversationsOutsideDock: 0,
-      draftAttachments: [],
+      attachmentLists: {},
+      draftAttachments: NO_ATTACHMENTS,
       railBadge: NO_RAIL_BADGE,
     })
     this.effects = this.declareEffects()
@@ -1233,12 +1267,24 @@ export class ChatStore {
     if (list) this.patch({ sessions: list, sessionsLoading: false })
   }
 
-  /** Takes the files attached to the message, when an element's control state brings new ones. */
+  /** Takes the files attached per chat, when an element's control state brings new ones. */
   takeAttachments = (raw: unknown): void => {
-    const files = readDraftAttachments(raw)
-    if (files && JSON.stringify(files) !== JSON.stringify(this.state.draftAttachments)) {
-      this.patch({ draftAttachments: files })
+    const lists = readAttachmentLists(raw)
+    if (lists && JSON.stringify(lists) !== JSON.stringify(this.state.attachmentLists)) {
+      this.patch({ attachmentLists: lists })
     }
+  }
+
+  /** Takes the given files off the list of the given chat, before the server's state says so. */
+  private dropAttachments(sessionId: string | null, gone: Set<string>): void {
+    const key = sessionId ?? NEW_CONVERSATION
+    const files = this.state.attachmentLists[key]
+    if (!files) return
+    const left = files.filter((file) => !gone.has(file.id))
+    const lists = { ...this.state.attachmentLists }
+    if (left.length > 0) lists[key] = left
+    else delete lists[key]
+    this.patch({ attachmentLists: lists })
   }
 
   /**
@@ -1268,7 +1314,8 @@ export class ChatStore {
     const sessionTitle =
       base.sessions.find((session) => session.id === base.sessionId)?.title ||
       bundle(base.language).newChat
-    return { ...base, offeredModels, effortLevels, sources, latestSources, sessionTitle }
+    const draftAttachments = base.attachmentLists[base.sessionId ?? NEW_CONVERSATION] ?? NO_ATTACHMENTS
+    return { ...base, offeredModels, effortLevels, sources, latestSources, sessionTitle, draftAttachments }
   }
 
   private patch(next: Partial<ChatState>): void {
@@ -1278,7 +1325,35 @@ export class ChatStore {
     }
     this.snapshot = merged
     this.listeners.forEach((listener) => listener())
+    const draftKey = merged.sessionId ?? NEW_CONVERSATION
+    if (draftKey !== this.draftKey) this.showDraftOf(draftKey)
     this.schedule()
+  }
+
+  /**
+   * Puts the draft of the chat now on screen into the composer, without taking the focus: the text
+   * of the chat that was left is in {@link drafts} already, as the composer reported it.
+   */
+  private showDraftOf(key: string): void {
+    this.draftKey = key
+    this.composerApi?.restoreDraft(this.drafts.get(key) ?? '')
+  }
+
+  /** Records the composer's text as the draft of the chat on screen. */
+  private keepDraft(text: string): void {
+    if (text) this.drafts.set(this.draftKey, text)
+    else this.drafts.delete(this.draftKey)
+  }
+
+  /**
+   * The chat the first send of a new conversation created takes over its draft: the composer still
+   * holds the text that went, and empties it once the send is through.
+   */
+  private carryNewDraft(sessionId: string): void {
+    const text = this.drafts.get(NEW_CONVERSATION)
+    this.drafts.delete(NEW_CONVERSATION)
+    if (text) this.drafts.set(sessionId, text)
+    if (this.draftKey === NEW_CONVERSATION) this.draftKey = sessionId
   }
 
   private get state(): ChatState {
@@ -2266,7 +2341,8 @@ export class ChatStore {
     const sessionId = answer.sessionId || active
     if (!active && sessionId) {
       // The chat this send created: in the list at once, titled after what was said; the server's
-      // list follows with the command's model events.
+      // list follows with the command's model events. The draft goes with it.
+      this.carryNewDraft(sessionId)
       this.patch({
         sessionId,
         sessions: withSession(this.state.sessions, { id: sessionId, title: request.title ?? '' }),
@@ -2279,9 +2355,9 @@ export class ChatStore {
     }
     if (sent.length > 0) {
       // The server took them off with the send; until its state says so, the composer must not
-      // show them either.
-      const gone = new Set(sent.map((file) => file.id))
-      this.patch({ draftAttachments: this.state.draftAttachments.filter((file) => !gone.has(file.id)) })
+      // show them either. They were the files of the chat the send named - none for a chat it
+      // created.
+      this.dropAttachments(active, new Set(sent.map((file) => file.id)))
     }
     // Dropping the edited turn is what editing always does; saying so only helps when answers
     // the user could still see went with it. Sticky: the run start that follows used to clear the
@@ -2391,6 +2467,8 @@ export class ChatStore {
           })
           this.setRun((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
         }
+        // Nothing will be sent into a deleted chat any more.
+        this.drafts.delete(id)
       },
 
       /**
@@ -2496,7 +2574,7 @@ export class ChatStore {
         )
         if (usable.length > 0) {
           this.attaching += usable.length
-          const upload = uploadAttachments(this.upload, usable)
+          const upload = uploadAttachments(this.upload, usable, this.state.sessionId)
             .catch(() => [labels.attachFailed])
             .finally(() => {
               this.attaching -= usable.length
@@ -2510,8 +2588,9 @@ export class ChatStore {
       },
 
       removeAttachment: (id: string) => {
-        this.patch({ draftAttachments: this.state.draftAttachments.filter((file) => file.id !== id) })
-        void removeAttachment(this.command, id)
+        const sessionId = this.state.sessionId
+        this.dropAttachments(sessionId, new Set([id]))
+        void removeAttachment(this.command, id, sessionId)
       },
 
       selectTraceMode: (mode: TraceMode) => {
@@ -2713,19 +2792,33 @@ export class ChatStore {
 
       bindComposer: (api) => {
         this.composerApi = api
-        if (!api || this.composerBound) return
-        this.composerBound = true
-        // A message the last page could not send because its window was gone: the reload is what
-        // brought this composer, and the user's text goes back where they left it.
-        const unsent = takeUnsent(this.chatId)
-        if (unsent) api.setDraft(unsent)
+        // The element binds its composer on every render; only a composer that is new - one that
+        // mounted again, e.g. a dock's - is given its chat's draft.
+        if (!api || api === this.draftComposer) return
+        this.draftComposer = api
+        if (!this.composerBound) {
+          this.composerBound = true
+          // A message the last page could not send because its window was gone: the reload is what
+          // brought this composer, and the user's text goes back where they left it.
+          const unsent = takeUnsent(this.chatId)
+          if (unsent) {
+            api.setDraft(unsent)
+            return
+          }
+        }
+        const kept = this.drafts.get(this.draftKey)
+        if (kept) api.restoreDraft(kept)
       },
+
+      noteDraft: (text) => this.keepDraft(text),
 
       insertReference: (token) => {
         this.composerApi?.insertReference(token)
       },
 
       setDraft: (text) => {
+        // The draft of the chat on screen, also while no composer is mounted to show it.
+        this.keepDraft(text)
         this.composerApi?.setDraft(text)
       },
     }

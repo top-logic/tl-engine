@@ -53,8 +53,8 @@ function requestsOf(fetch: ReturnType<typeof vi.fn>, key: string): number {
 async function load() {
   vi.resetModules();
   const bridge = await import('tl-react-bridge');
-  const { setI18NApiBase } = await import('../../com.top_logic.layout.react/react-src/bridge/i18n');
-  setI18NApiBase('/');
+  const { setMountContext } = await import('../../com.top_logic.layout.react/react-src/bridge/page-context');
+  setMountContext('', '');
   return bridge;
 }
 

@@ -15,6 +15,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ObservingChannels;
 
@@ -26,7 +27,8 @@ import com.top_logic.layout.view.channel.ObservingChannels;
  * channel, under a slot path of its own. Bringing the instances in line with a changed list
  * {@link #update(ViewContext, List) reuses} the instance of an element that stays, so its controls
  * keep their state (including transient edit state); only the instances of added elements are
- * built, and those of removed ones are cleaned up.
+ * built, and those of removed ones are cleaned up - once the channel notification the update runs
+ * in, if any, has completed.
  * </p>
  *
  * <p>
@@ -91,7 +93,9 @@ public class TemplateInstances {
 			result.add(control);
 		}
 		for (ReactControl dropped : _instances.values()) {
-			dropped.cleanupTree();
+			// The update may run inside the notification of a channel the dropped instance listens
+			// to: disposed there, it would still be notified as a torn-down control.
+			ChannelNotificationScope.current().afterNotification(dropped::cleanupTree);
 		}
 		_instances.clear();
 		_instances.putAll(retained);

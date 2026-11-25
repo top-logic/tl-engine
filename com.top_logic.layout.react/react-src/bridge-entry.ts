@@ -199,7 +199,7 @@ export type {
 export { useI18N } from './bridge/i18n';
 export { useCopyToClipboard, COPIED_DISPLAY_MS } from './bridge/clipboard';
 export type { CopyToClipboard, CopyOutcome } from './bridge/clipboard';
-export { scrollToAnchor } from './bridge/scroll';
+export { scrollToAnchor, scrollingAncestor } from './bridge/scroll';
 export { resolveAddress, isScriptAddress, opensPage } from './bridge/address';
 export { lockMode, THEME_CLIENT_API, LOCK_MODE_FUNCTION } from './bridge/theme-mode';
 export type { ThemeMode } from './bridge/theme-mode';
@@ -308,3 +308,8 @@ initFocusTrap();
 // with which the open surfaces close themselves on an outside press.
 import { initOutsidePress } from './bridge/outside-press';
 initOutsidePress();
+export {
+  useTableViewPreferences,
+  resetTableViewPreferencesForTest,
+} from './bridge/table-view-preferences';
+export type { TableViewPreferences } from './bridge/table-view-preferences';

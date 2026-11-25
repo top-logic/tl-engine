@@ -10,7 +10,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
+
+import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -19,6 +23,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.annotate.util.AttributeSettings;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.listen.ModelChangeEvent;
@@ -357,6 +362,15 @@ public class TestRowSourceObserver extends TestCase {
 			return elements;
 		}
 		return elements.stream().filter(element -> element.contains(term.toString())).toList();
+	}
+
+	/**
+	 * Test suite requiring the {@link AttributeSettings} the creation of a transient object
+	 * consults for the annotations of its type.
+	 */
+	public static Test suite() {
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestRowSourceObserver.class, AttributeSettings.Module.INSTANCE));
 	}
 
 }

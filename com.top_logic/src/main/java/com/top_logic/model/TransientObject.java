@@ -6,6 +6,7 @@
 package com.top_logic.model;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.Set;
 
 import com.top_logic.dob.identifier.ObjectKey;
@@ -14,6 +15,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.PersistentObject;
+import com.top_logic.knowledge.wrap.person.Person;
 
 /**
  * {@link TLObject} without persistency.
@@ -36,6 +38,58 @@ public abstract class TransientObject extends AbstractTLObject {
 	@Override
 	public boolean tValid() {
 		return true;
+	}
+
+	/**
+	 * The persistent object this object stands for, e.g. the edited object of a form buffer.
+	 * 
+	 * <p>
+	 * The life-cycle information of this object ({@link #tCreator()}, {@link #tCreationDate()},
+	 * {@link #tLastModifier()}, {@link #tLastModificationDate()}, ...) is the one of the persistent
+	 * counterpart. An object without persistent counterpart has never been created nor modified in
+	 * the persistency layer: it has neither author nor date.
+	 * </p>
+	 * 
+	 * @return The persistent counterpart, or <code>null</code> if this object has none (yet).
+	 */
+	protected TLObject persistentCounterpart() {
+		return null;
+	}
+
+	@Override
+	public Person tCreator() {
+		TLObject counterpart = persistentCounterpart();
+		return counterpart == null ? null : counterpart.tCreator();
+	}
+
+	@Override
+	public Date tCreationDate() {
+		TLObject counterpart = persistentCounterpart();
+		return counterpart == null ? null : counterpart.tCreationDate();
+	}
+
+	@Override
+	public long tCreationTime() {
+		TLObject counterpart = persistentCounterpart();
+		return counterpart == null ? 0L : counterpart.tCreationTime();
+	}
+
+	@Override
+	public Person tLastModifier() {
+		TLObject counterpart = persistentCounterpart();
+		return counterpart == null ? null : counterpart.tLastModifier();
+	}
+
+	@Override
+	public Date tLastModificationDate() {
+		TLObject counterpart = persistentCounterpart();
+		return counterpart == null ? null : counterpart.tLastModificationDate();
+	}
+
+	@Override
+	public long tLastModificationTime() {
+		TLObject counterpart = persistentCounterpart();
+		return counterpart == null ? 0L : counterpart.tLastModificationTime();
 	}
 
 	@Override

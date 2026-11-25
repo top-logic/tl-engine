@@ -22,7 +22,7 @@ import com.top_logic.layout.react.reveal.ChildRevealer;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.I18NConstants;
-import com.top_logic.layout.view.ReloadableControl;
+import com.top_logic.layout.view.ViewUnitControl;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
@@ -71,8 +71,8 @@ import com.top_logic.layout.view.navigation.RevealRegistry;
  * </p>
  *
  * <p>
- * Each frame is wrapped in a {@link ReloadableControl} so that view-file edits in the designer
- * propagate to it. Where the stack declares {@link TileStackElement.Config#getFrames() frame
+ * Each frame is wrapped in a {@link ViewUnitControl} so that view-file edits in the designer
+ * propagate to it, and a frame failing while it is built replaces only itself. Where the stack declares {@link TileStackElement.Config#getFrames() frame
  * routes}, the stack carries a {@link TileFrameRouteParticipant} which writes the path into the URL
  * and restores it from one. Only the active frame is {@link #visibleChildren() visible}: a covered
  * frame is rendered, but what it contains neither names anything in the URL nor takes up a route.
@@ -426,8 +426,7 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 			paramChannels.add(paramChannel);
 		}
 
-		ReactControl frame = new ReloadableControl(viewPath, frameContext,
-			(ReactControl) frameView.createControl(frameContext));
+		ReactControl frame = ViewUnitControl.forView(frameContext, viewPath, frameView);
 
 		// The params are the frame's own channels and outlive a reload of its view; the path channel
 		// is the stack's.

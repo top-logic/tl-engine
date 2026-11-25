@@ -9,22 +9,25 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
-import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.view.ChatSessionIds;
+import com.top_logic.ai.chat.view.SecurityCheckedTestCase;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.ai.core.execution.AgentExecutionStore;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.model.ModelService;
 
 /**
  * The {@link TLObject} a selection channel holds round-trips to the id the chat's commands
  * use.
  */
-public class TestChatSessionIds extends BasicTestCase {
+public class TestChatSessionIds extends SecurityCheckedTestCase {
 
 	private static Person anna;
 
@@ -47,17 +50,17 @@ public class TestChatSessionIds extends BasicTestCase {
 	public void testRoundTrip() {
 		String id = ChatSessionIds.idOf(annasChat);
 		assertFalse("The servlet id is not empty.", id.isEmpty());
-		assertEquals(annasChat, ChatHistoryService.findOwnedSessionById(id, anna));
-		assertEquals(annasChat, ChatSessionIds.ownedSession(id, anna));
+		assertEquals(annasChat, ChatHistoryService.findAccessibleSession(id, anna, SimpleBoundCommandGroup.READ));
+		assertEquals(annasChat, ChatSessionIds.accessibleSession(id, anna, SimpleBoundCommandGroup.READ));
 		assertEquals(id, ChatSessionIds.selectedId(annasChat, anna));
-		assertEquals(id, ChatSessionIds.idOf(ChatSessionIds.ownedSession(id, anna)));
+		assertEquals(id, ChatSessionIds.idOf(ChatSessionIds.accessibleSession(id, anna, SimpleBoundCommandGroup.READ)));
 	}
 
 	/** Another user, or nobody, must not see the id. */
 	public void testForeignAndMissingAreEmpty() {
 		assertEquals("", ChatSessionIds.selectedId(annasChat, ben));
 		assertEquals("", ChatSessionIds.selectedId(annasChat, null));
-		assertNull(ChatSessionIds.ownedSession(ChatSessionIds.idOf(annasChat), ben));
+		assertNull(ChatSessionIds.accessibleSession(ChatSessionIds.idOf(annasChat), ben, SimpleBoundCommandGroup.READ));
 	}
 
 	public static Test suite() {
@@ -65,6 +68,8 @@ public class TestChatSessionIds extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestChatSessionIds.class),
 				ModelService.Module.INSTANCE,
+				AccessManager.Module.INSTANCE,
+				SecurityConfigurationService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE));
 	}
 }

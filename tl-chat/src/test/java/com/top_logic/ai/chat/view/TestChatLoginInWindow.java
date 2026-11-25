@@ -46,6 +46,8 @@ import com.top_logic.ai.core.agent.approval.ApprovalRequest;
 import com.top_logic.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.ai.core.execution.AgentExecutionStore;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -172,7 +174,7 @@ public class TestChatLoginInWindow extends BasicTestCase {
 		assertNull(bobsTracker.getActiveSessionId());
 		assertNotSame("Alice's tracker left the window.", alicesTracker,
 			ChatSessionRegistry.tracker(TLContextManager.getSubSession(), first.binding().conversation()));
-		for (ChatEventHandler target : ChatEventHandlerRegistry.findStreamTargets(alicesTracker, alice, chatId)) {
+		for (ChatEventHandler target : ChatEventHandlerRegistry.findStreamTargets(alicesTracker, chatId)) {
 			assertNotSame("Alice's frames do not reach Bob's stream.", bobsTracker, target.getTracker());
 		}
 		assertNull("Alice's run presents nothing on Bob's page.",
@@ -254,6 +256,8 @@ public class TestChatLoginInWindow extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestChatLoginInWindow.class),
 				ModelService.Module.INSTANCE,
+				AccessManager.Module.INSTANCE,
+				SecurityConfigurationService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
 				ColumnProviderService.Module.INSTANCE,
 				FieldControlService.Module.INSTANCE,

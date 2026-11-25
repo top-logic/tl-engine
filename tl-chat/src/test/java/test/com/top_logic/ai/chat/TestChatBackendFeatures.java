@@ -58,6 +58,8 @@ import com.top_logic.ai.core.message.TokenUsage;
 import com.top_logic.ai.core.provider.LLMProviderService;
 import com.top_logic.ai.core.security.AiToolAccessService;
 import com.top_logic.util.Resources;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -186,14 +188,14 @@ public class TestChatBackendFeatures extends BasicTestCase {
 		claim(BackendFeatures.NONE);
 
 		assertEquals(Map.of(AttachmentUploadReply.REASON__PROP, List.of()),
-			_driver.upload(_conversation, "dot.png", "image/png", new byte[] { 1, 2, 3, 4 }));
+			_driver.upload(_conversation, id(), "dot.png", "image/png", new byte[] { 1, 2, 3, 4 }));
 
 		Map<String, Object> reply = command(ChatControl.CMD_SEND,
 			Map.of(ChatControl.ARG_TEXT, "Sieh dir das an", ChatControl.ARG_SESSION_ID, id()));
 
 		assertRefused(reply, I18NConstants.ATTACHMENTS_NOT_SUPPORTED);
 		assertEquals("A refused send leaves the file with the message.", 1,
-			ChatCommandDriver.attachments(_conversation).entries().size());
+			ChatCommandDriver.attachments(_conversation, id()).entries().size());
 	}
 
 	/** Loading a backend's conversation tells the client what it supports. */
@@ -290,6 +292,8 @@ public class TestChatBackendFeatures extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestChatBackendFeatures.class),
 				ModelService.Module.INSTANCE,
+				AccessManager.Module.INSTANCE,
+				SecurityConfigurationService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
 				AiToolAccessService.Module.INSTANCE,
 				LLMProviderService.Module.INSTANCE,

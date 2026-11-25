@@ -9,6 +9,7 @@
 					<declaration file="/WEB-INF/model/TestViewObjectFields.model.xml"/>
 					<declaration file="/WEB-INF/model/TestViewFallbackStorage.model.xml"/>
 					<declaration file="/WEB-INF/model/TestViewCheckDependencies.model.xml"/>
+					<declaration file="/WEB-INF/model/TestViewTypedBuffers.model.xml"/>
 				</declarations>
 			</instance>
 		</config>
@@ -149,6 +150,21 @@
 							operation="Write"
 							roles="TestViewModelAccess.Finisher"
 						/>
+					</class>
+					<!--
+						An attachment is decided by the category holding it, and delegates Read to every
+						annex referring to it as well, see TestTypeLevelPolicy.
+					-->
+					<class name="TestViewModelAccess:Attachment">
+						<access-parent>
+							<any-of>
+								<container/>
+								<referer
+									operations="Read"
+									reference="TestViewModelAccess:Annex#attachments"
+								/>
+							</any-of>
+						</access-parent>
 					</class>
 					<!-- A remark is decided by an access parent whose type is not known statically. -->
 					<class name="TestViewModelAccess:Remark">

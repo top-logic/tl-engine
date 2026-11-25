@@ -39,6 +39,7 @@ import com.top_logic.ai.chat.backend.ConversationBackend;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.ChatState;
+import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor;
 import com.top_logic.ai.chat.layout.PromptImprovementProcessor.PromptImprovementException;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
@@ -59,6 +60,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.model.TLObject;
+import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.ai.core.limits.RunLimits;
 import com.top_logic.ai.core.memory.ConversationMemory;
@@ -143,7 +145,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 
 
 	/**
-	 * Command that opens one chat of the account in this window's conversation: the conversation's
+	 * Command that opens a chat the account may read in this window's conversation: the conversation's
 	 * agent runs, approval mode, ratings and effort are that chat's from then on.
 	 *
 	 * <p>
@@ -155,7 +157,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	public static final String CMD_SELECT_SESSION = "selectSession";
 
 	/**
-	 * Command that deletes one chat of the account, with everything recorded in it.
+	 * Command that deletes a chat the account may write, with everything recorded in it.
 	 *
 	 * <p>
 	 * Takes {@link #ARG_SESSION_ID}; answered with a {@link SessionDeleteReply}. The chat lists of
@@ -203,7 +205,8 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * Takes {@link #ARG_TEXT} and the turn settings {@link #ARG_AGENT}, {@link #ARG_MODEL},
 	 * {@link #ARG_MCP_OVERRIDE}, {@link #ARG_MCP_SERVERS}, {@link #ARG_EFFORT} and
 	 * {@link #ARG_APPROVAL_MODE}; a send that creates its chat titles it {@link #ARG_TITLE}. The
-	 * message carries the files attached to it ({@link #handleUpload(DisplayContext, Collection)})
+	 * message carries the files attached in the chat it names, or in the chat not yet created when it
+	 * names none ({@link #handleUpload(DisplayContext, Collection)})
 	 * and is told what the page states about the situation ({@link ChatViewBinding#facts()}).
 	 * </p>
 	 *
@@ -240,7 +243,9 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	public static final String CMD_REGENERATE = "regenerate";
 
 	/**
-	 * Command that takes one file off the message being written; takes {@link #ARG_ATTACHMENT_ID}.
+	 * Command that takes one file off the message being written in a chat session; takes
+	 * {@link #ARG_ATTACHMENT_ID} and {@link #ARG_SESSION_ID} (empty for the conversation the next
+	 * send creates).
 	 */
 	public static final String CMD_REMOVE_ATTACHMENT = "removeAttachment";
 
@@ -280,6 +285,12 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	/** Argument of {@link #CMD_REMOVE_ATTACHMENT}: the id of the file. */
 	public static final String ARG_ATTACHMENT_ID = "attachmentId";
 
+	/**
+	 * Form part of an upload ({@link #handleUpload(DisplayContext, Collection)}): the id of the chat
+	 * session the files are attached in, empty or absent for the conversation the next send creates.
+	 */
+	public static final String UPLOAD_SESSION_PART = "sessionId";
+
 
 
 
@@ -293,8 +304,9 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	public static final String STATUS_BUSY = "busy";
 
 	/**
-	 * {@link ChatSendReply#getStatus()}: the acting account may not make this request, or the
-	 * chat's answerer does not support it; {@link ChatSendReply#getReason()} says which.
+	 * {@link ChatSendReply#getStatus()}: the acting account may not make this request - e.g. it may
+	 * read the chat but not change it -, or the chat's answerer does not support it;
+	 * {@link ChatSendReply#getReason()} says which.
 	 */
 	public static final String STATUS_FORBIDDEN = "forbidden";
 
@@ -306,9 +318,9 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	public static final String STATUS_REJECTED = "rejected";
 
 	/**
-	 * {@link ChatSendReply#getStatus()}: the request names something there is none of - a chat of
-	 * another account answered exactly like one that does not exist, or an agent of a name no agent
-	 * has.
+	 * {@link ChatSendReply#getStatus()}: the request names something there is none of - a chat the
+	 * account may not read answered exactly like one that does not exist, or an agent of a name no
+	 * agent has.
 	 */
 	public static final String STATUS_NOT_FOUND = "notFound";
 
@@ -319,8 +331,10 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	public static final String STATUS_ERROR = "error";
 
 	/**
-	 * State key of the files attached to the message being written, a list of
-	 * {@link DraftAttachmentDto}.
+	 * State key of the files attached to the messages being written in this conversation: a map from
+	 * the id of a chat session - {@link ChatViewBinding#NEW_CONVERSATION} for the conversation the
+	 * next send creates - to the list of {@link DraftAttachmentDto} attached in it. A session with no
+	 * files has no entry. The browser shows the entry of the session it displays.
 	 */
 	public static final String STATE_DRAFT_ATTACHMENTS = "draftAttachments";
 
@@ -536,10 +550,9 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		// The browser refuses a larger file before it is transmitted.
 		putState(UploadSupport.MAX_UPLOAD_SIZE, Long.valueOf(maxUploadSize()));
 		publishAttachments();
-		ChatAttachments attachments = _binding.attachments();
-		Runnable unlisten = () -> attachments.removeListener(_publishAttachments);
+		Runnable unlisten = () -> _binding.removeAttachmentListener(_publishAttachments);
 		addAttachListener(() -> {
-			attachments.addListener(_publishAttachments);
+			_binding.addAttachmentListener(_publishAttachments);
 			publishAttachments();
 		});
 		addDetachListener(unlisten);
@@ -568,7 +581,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	}
 
 	private void publishAttachments() {
-		putState(STATE_DRAFT_ATTACHMENTS, _binding.attachments().list());
+		putState(STATE_DRAFT_ATTACHMENTS, _binding.attachmentLists());
 	}
 
 	/**
@@ -602,7 +615,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	}
 
 	/**
-	 * Opens a chat of the account in this window's conversation, see {@link #CMD_SELECT_SESSION}.
+	 * Opens a chat the account may read in this window's conversation, see {@link #CMD_SELECT_SESSION}.
 	 */
 	@ReactCommandHandler(value = CMD_SELECT_SESSION, params = {
 		@ReactParam(name = ARG_SESSION_ID, type = "string", description = "The id of the chat to open.")
@@ -611,7 +624,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		Person person = currentPerson();
 		String id = stringArg(args, ARG_SESSION_ID);
 		SessionOpenReply reply = SessionOpenReply.create();
-		if (ChatSessionIds.ownedSession(id, person) == null) {
+		if (ChatSessionIds.accessibleSession(id, person, SimpleBoundCommandGroup.READ) == null) {
 			return reply.setOpened(false);
 		}
 		TaskProgressTracker tracker = _binding.tracker();
@@ -624,13 +637,17 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	}
 
 	/**
-	 * Deletes a chat of the account, see {@link #CMD_DELETE_SESSION}.
+	 * Deletes a chat the account may write, see {@link #CMD_DELETE_SESSION}.
 	 */
 	@ReactCommandHandler(value = CMD_DELETE_SESSION, params = {
 		@ReactParam(name = ARG_SESSION_ID, type = "string", description = "The id of the chat to delete.")
 	})
 	public SessionDeleteReply deleteSession(Map<String, Object> args) {
-		TLObject session = ChatSessionIds.ownedSession(stringArg(args, ARG_SESSION_ID), currentPerson());
+		String sessionId = stringArg(args, ARG_SESSION_ID);
+		Person person = currentPerson();
+		TLObject session = writeRefusal(sessionId, person) == null
+			? ChatSessionIds.accessibleSession(sessionId, person, SimpleBoundCommandGroup.WRITE)
+			: null;
 		if (session != null) {
 			ChatHistoryService.deleteSession(session);
 		}
@@ -684,10 +701,11 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		if (sessionId == null || fromTurn == null) {
 			return status(STATUS_ERROR);
 		}
-		TLObject session = ChatSessionIds.ownedSession(sessionId, person);
-		if (session == null) {
-			return status(STATUS_NOT_FOUND);
+		String refused = writeRefusal(sessionId, person);
+		if (refused != null) {
+			return status(refused);
 		}
+		TLObject session = ChatSessionIds.accessibleSession(sessionId, person, SimpleBoundCommandGroup.WRITE);
 		// Busy means a run of that chat is writing into the turns that would go; a run of another
 		// chat does not touch them.
 		if (_binding.tracker().hasActiveProcessingStateFor(sessionId)) {
@@ -716,7 +734,9 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			return status(STATUS_FORBIDDEN);
 		}
 		boolean edit = fromTurn != null;
-		ChatAttachments draft = _binding.attachments();
+		// The files of the chat the send goes to; those of the conversation it creates when it names
+		// none. Read before the chat is created, under the key the browser attached them with.
+		ChatAttachments draft = _binding.attachments(blankToNull(stringArg(args, ARG_SESSION_ID)));
 		List<ChatAttachments.Entry> attached = edit ? List.of() : draft.entries();
 		String text = stringArg(args, ARG_TEXT);
 		String message = text == null ? "" : text.trim();
@@ -746,10 +766,13 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			// thread's view of the knowledge base.
 			HistoryUtils.updateSessionRevision();
 			sessionId = ChatSessionIds.idOf(created);
-		} else if (ChatSessionIds.ownedSession(sessionId, person) == null) {
+		} else {
 			// The id arrives from the browser, so without this it names whichever chat the caller
 			// cares to type.
-			return status(STATUS_NOT_FOUND);
+			String refused = writeRefusal(sessionId, person);
+			if (refused != null) {
+				return status(refused);
+			}
 		}
 		boolean sent = false;
 		try {
@@ -786,7 +809,8 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		}
 		String effort = blankToNull(stringArg(args, ARG_EFFORT));
 		ChatProcessor.ChatRunOptions options = runOptions(args, effort);
-		ConversationBackend backend = ChatTranscripts.backendOf(ChatSessionIds.ownedSession(sessionId, person));
+		ConversationBackend backend =
+			ChatTranscripts.backendOf(ChatSessionIds.accessibleSession(sessionId, person, SimpleBoundCommandGroup.WRITE));
 		// A conversation a backend answers runs no agent of this application, so what the agent policy
 		// says about the account's agents does not apply to it; what the backend supports does.
 		SendRefusal refusal = backend == null
@@ -848,10 +872,14 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			return status(STATUS_FORBIDDEN);
 		}
 		String sessionId = blankToNull(stringArg(args, ARG_SESSION_ID));
-		TLObject session = sessionId == null ? null : ChatSessionIds.ownedSession(sessionId, person);
-		if (session == null) {
+		if (sessionId == null) {
 			return status(STATUS_NOT_FOUND);
 		}
+		String refused = writeRefusal(sessionId, person);
+		if (refused != null) {
+			return status(refused);
+		}
+		TLObject session = ChatSessionIds.accessibleSession(sessionId, person, SimpleBoundCommandGroup.WRITE);
 		TaskProgressTracker tracker = _binding.tracker();
 		// Switches the conversation to the chat, as a send does: it starts a run, and a run is sent
 		// into the chat the conversation shows. The regenerate button sits under an answer of the chat
@@ -899,13 +927,18 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * Takes a file off the message being written, see {@link #CMD_REMOVE_ATTACHMENT}.
 	 */
 	@ReactCommandHandler(value = CMD_REMOVE_ATTACHMENT, params = {
-		@ReactParam(name = ARG_ATTACHMENT_ID, type = "string", description = "The id of the file.")
+		@ReactParam(name = ARG_ATTACHMENT_ID, type = "string", description = "The id of the file."),
+		@ReactParam(name = ARG_SESSION_ID, type = "string",
+			description = "The chat the file is attached in; empty for a chat not yet created.")
 	})
 	public void removeAttachment(Map<String, Object> args) {
 		String id = stringArg(args, ARG_ATTACHMENT_ID);
-		if (id != null) {
-			_binding.attachments().remove(id);
+		String sessionId = blankToNull(stringArg(args, ARG_SESSION_ID));
+		Person person = actingPerson();
+		if (id == null || person == null || writeRefusal(sessionId, person) != null) {
+			return;
 		}
+		_binding.attachments(sessionId).remove(id);
 	}
 
 	/**
@@ -923,14 +956,19 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	})
 	public ChatStatusReply respond(Map<String, Object> args) {
 		Person person = actingPerson();
-		boolean answered = person != null && AccountRuns.respond(person, stringArg(args, ARG_REQUEST_ID),
+		String requestId = stringArg(args, ARG_REQUEST_ID);
+		String refused = writeRefusal(chatOfRequest(person, requestId), person);
+		if (refused != null) {
+			return statusReply(refused);
+		}
+		boolean answered = person != null && AccountRuns.respond(person, requestId,
 			stringArg(args, ARG_RESPONSE), stringArg(args, ARG_TOOL_NAME), stringArg(args, ARG_COMMENT),
 			stringArg(args, ARG_OWN_WORDS));
 		return statusReply(answered ? STATUS_OK : STATUS_IGNORED);
 	}
 
 	/**
-	 * Stops the run of a chat of the account, see {@link #CMD_CANCEL}.
+	 * Stops the run of a chat the account may write, see {@link #CMD_CANCEL}.
 	 */
 	@ReactCommandHandler(value = CMD_CANCEL, params = {
 		@ReactParam(name = ARG_SESSION_ID, type = "string",
@@ -938,8 +976,10 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	})
 	public CancelReply cancel(Map<String, Object> args) {
 		Person person = actingPerson();
+		String sessionId = blankToNull(stringArg(args, ARG_SESSION_ID));
 		boolean cancelled = person != null
-			&& AccountRuns.cancel(_binding.tracker(), person, blankToNull(stringArg(args, ARG_SESSION_ID)));
+			&& writeRefusal(sessionId == null ? _binding.tracker().getActiveSessionId() : sessionId, person) == null
+			&& AccountRuns.cancel(_binding.tracker(), person, sessionId);
 		return CancelReply.create().setCancelled(cancelled);
 	}
 
@@ -968,8 +1008,9 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		}
 		String sessionId = blankToNull(stringArg(args, ARG_SESSION_ID));
 		if (sessionId != null) {
-			if (ChatSessionIds.ownedSession(sessionId, person) == null) {
-				return statusReply(STATUS_NOT_FOUND);
+			String refused = writeRefusal(sessionId, person);
+			if (refused != null) {
+				return statusReply(refused);
 			}
 			ApprovalChoice.applyToChat(_binding.tracker(), person, sessionId, mode);
 		}
@@ -1005,8 +1046,9 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		if (sessionId == null || turnIndex == null) {
 			return statusReply(STATUS_ERROR);
 		}
-		if (ChatSessionIds.ownedSession(sessionId, person) == null) {
-			return statusReply(STATUS_NOT_FOUND);
+		String refused = writeRefusal(sessionId, person);
+		if (refused != null) {
+			return statusReply(refused);
 		}
 		TaskProgressTracker tracker = _binding.tracker();
 		// The rated chat, not the one the conversation shows: a rating is no reason to switch it.
@@ -1026,8 +1068,13 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			description = "The id the result frame names.")
 	})
 	public ChatStatusReply improvePrompt(Map<String, Object> args) {
-		if (actingPerson() == null) {
+		Person person = actingPerson();
+		if (person == null) {
 			return statusReply(STATUS_FORBIDDEN);
+		}
+		String refused = writeRefusal(_binding.tracker().getActiveSessionId(), person);
+		if (refused != null) {
+			return statusReply(refused);
 		}
 		ChatViewBinding binding = _binding;
 		try {
@@ -1077,6 +1124,9 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		@ReactParam(name = ARG_TEXT, type = "string", required = true, description = "What the user writes.")
 	})
 	public SubagentMessageReply messageSubagent(Map<String, Object> args) {
+		if (!isWritable(subagentChat(args))) {
+			return SubagentMessageReply.create().setStatus(AccountRuns.SubagentMessageStatus.UNKNOWN.code());
+		}
 		AccountRuns.SubagentMessage answer = AccountRuns.messageSubagent(_binding.tracker(), actingPerson(),
 			stringArg(args, ARG_SESSION_ID), stringArg(args, ARG_SUBAGENT_ID),
 			stringArg(args, ARG_PARENT_TOOL_CALL_ID), stringArg(args, ARG_TEXT));
@@ -1094,7 +1144,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			description = "The lead's tool call that started it.")
 	})
 	public CancelReply cancelSubagent(Map<String, Object> args) {
-		boolean cancelled = AccountRuns.cancelSubagent(_binding.tracker(), actingPerson(),
+		boolean cancelled = isWritable(subagentChat(args)) && AccountRuns.cancelSubagent(_binding.tracker(), actingPerson(),
 			stringArg(args, ARG_SESSION_ID), stringArg(args, ARG_SUBAGENT_ID),
 			stringArg(args, ARG_PARENT_TOOL_CALL_ID));
 		return CancelReply.create().setCancelled(cancelled);
@@ -1131,17 +1181,21 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * <p>
 	 * A file the message cannot carry - of another type than an image or PDF, one file more than
 	 * {@link ChatAttachments#MAX_ATTACHMENTS} - is not attached; the {@link AttachmentUploadReply}
-	 * says why, one sentence per file. The files attached are in this control's state ({@link
-	 * #STATE_DRAFT_ATTACHMENTS}), and in that of every other displayed chat control of the
-	 * conversation.
+	 * says why, one sentence per file. The files are attached in the chat session the form part
+	 * {@link #UPLOAD_SESSION_PART} names - in the conversation the next send creates when it names
+	 * none - and only when the account may write that session. The files attached are in this
+	 * control's state ({@link #STATE_DRAFT_ATTACHMENTS}), and in that of every other displayed chat
+	 * control of the conversation.
 	 * </p>
 	 */
 	@Override
 	public AttachmentUploadReply handleUpload(DisplayContext context, Collection<jakarta.servlet.http.Part> parts) {
-		if (actingPerson() == null) {
+		Person person = actingPerson();
+		String sessionId = blankToNull(uploadSession(parts));
+		if (person == null || writeRefusal(sessionId, person) != null) {
 			return null;
 		}
-		ChatAttachments attachments = _binding.attachments();
+		ChatAttachments attachments = _binding.attachments(sessionId);
 		List<String> refused = new ArrayList<>();
 		for (jakarta.servlet.http.Part part : parts) {
 			if (!UploadSupport.FILE_PART.equals(part.getName())) {
@@ -1160,6 +1214,20 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			}
 		}
 		return AttachmentUploadReply.create().setReason(refused);
+	}
+
+	/** The text of the upload's {@link #UPLOAD_SESSION_PART}, <code>null</code> when it has none. */
+	private static String uploadSession(Collection<jakarta.servlet.http.Part> parts) {
+		for (jakarta.servlet.http.Part part : parts) {
+			if (UPLOAD_SESSION_PART.equals(part.getName())) {
+				try (InputStream in = part.getInputStream()) {
+					return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+				} catch (IOException ex) {
+					throw new UncheckedIOException("Failed to read the chat of an upload.", ex);
+				}
+			}
+		}
+		return null;
 	}
 
 	/**
@@ -1232,7 +1300,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 *        The chat to remove the turns from.
 	 * @return how many turns went, and the user text of the first of them
 	 */
-	private static Removed removeTurnsFrom(TaskProgressTracker tracker, ChatState chat, Person person,
+	private Removed removeTurnsFrom(TaskProgressTracker tracker, ChatState chat, Person person,
 			int fromTurn) {
 		ConversationLog log = chat.log();
 		List<Turn> turns = log.turns();
@@ -1251,9 +1319,10 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		String sessionId = chat.sessionId();
 		if (sessionId != null) {
 			// Guarded again here, not only in the handler: this is the call that deletes, and it must
-			// be impossible to reach it through a path that forgot to ask whose session it is.
-			TLObject session = ChatHistoryService.findOwnedSessionById(sessionId, person);
-			if (session != null) {
+			// be impossible to reach it through a path that forgot to ask whether it may.
+			TLObject session =
+				ChatHistoryService.findAccessibleSession(sessionId, person, SimpleBoundCommandGroup.WRITE);
+			if (session != null && isWritable(session)) {
 				ChatHistoryService.truncateConversation(session, fromTurn);
 			}
 		}
@@ -1350,6 +1419,80 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 
 	private static String decode(String part) {
 		return URLDecoder.decode(part, StandardCharsets.UTF_8);
+	}
+
+	/**
+	 * Whether the given session may be written in this control, apart from the rights of the acting
+	 * account.
+	 *
+	 * <p>
+	 * The rights are decided by the model-based security; this narrows them for reasons that are
+	 * none of the rights, e.g. a conversation about an object that has been archived. A control
+	 * that offers no such setting writes every session the account may write.
+	 * </p>
+	 *
+	 * @param session
+	 *        The session; never <code>null</code>.
+	 */
+	protected boolean isWritable(TLObject session) {
+		return true;
+	}
+
+	/**
+	 * Whether the given account may change the given session in this control: it has
+	 * {@link SimpleBoundCommandGroup#WRITE} on it and the session {@link #isWritable(TLObject) is
+	 * writable} here.
+	 */
+	protected final boolean mayWrite(Person person, TLObject session) {
+		return ChatHistoryService.isAllowed(person, session, SimpleBoundCommandGroup.WRITE) && isWritable(session);
+	}
+
+	/**
+	 * What a command that changes the given chat answers, <code>null</code> when it may go ahead.
+	 *
+	 * <p>
+	 * {@link #STATUS_NOT_FOUND} for a chat the account may not even read, exactly as for an id that
+	 * names nothing, so that the answer says nothing about which ids exist; {@link #STATUS_FORBIDDEN}
+	 * for a chat it may read but not {@link #mayWrite(Person, TLObject) write} here. A command that
+	 * names no chat - a new conversation - may go ahead.
+	 * </p>
+	 *
+	 * @param sessionId
+	 *        The chat the command changes, <code>null</code> or empty for none.
+	 * @param person
+	 *        The acting account.
+	 */
+	protected final String writeRefusal(String sessionId, Person person) {
+		if (sessionId == null || sessionId.isBlank()) {
+			return null;
+		}
+		TLObject session = ChatHistoryService.findAnySessionById(sessionId);
+		if (session != null && mayWrite(person, session)) {
+			return null;
+		}
+		if (session != null && ChatHistoryService.isAllowed(person, session, SimpleBoundCommandGroup.READ)) {
+			return STATUS_FORBIDDEN;
+		}
+		return STATUS_NOT_FOUND;
+	}
+
+	/** Whether the given session, if there is one, may be written in this control. */
+	private boolean isWritable(String sessionId) {
+		TLObject session = sessionId == null ? null : ChatHistoryService.findAnySessionById(sessionId);
+		return session == null || isWritable(session);
+	}
+
+	/** The chat a subagent command names: the named one, or the one this window shows. */
+	private String subagentChat(Map<String, Object> args) {
+		String named = blankToNull(stringArg(args, ARG_SESSION_ID));
+		return named != null ? named : _binding.tracker().getActiveSessionId();
+	}
+
+	/** The chat of the run of the given account that waits for the given request, if any. */
+	private static String chatOfRequest(Person person, String requestId) {
+		PendingInteractionRegistry.Waiting waiting = PendingInteractionRegistry.findWaiting(person, requestId);
+		ChatState chat = waiting == null ? null : waiting.chat();
+		return chat == null ? null : chat.sessionId();
 	}
 
 	/** The acting account. */

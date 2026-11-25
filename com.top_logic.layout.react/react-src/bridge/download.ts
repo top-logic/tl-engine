@@ -5,7 +5,7 @@
  * generated document - prepared a file, and the client fetches it as a download, so that the
  * browser saves it under its name instead of displaying it.
  */
-import { getApiBase } from './tl-react-bridge';
+import { getApiBase } from './page-context';
 
 /** Data shape of the msgbuf-generated DownloadEvent. */
 export interface DownloadEventData {

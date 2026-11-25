@@ -1,5 +1,5 @@
 ---
-description: Read when the precise semantics of the agent security configuration matter - the reference of AiToolAccessService / ToolAccessPolicy (<tool-groups>, <tool-access>, <baseline>, <background-allowlist>, boot errors and warnings, the three names of a tool), the defaults for a new tool, approval decided from the call (SecurityContextFactory, RunPrincipal, SecurityContextProxy, <security-context> on AgentRuntimeService), the shipped read policy for Screenshot and CookiePool (tl-ai-core.binarySecurity.config.xml, AiBinaryOwner), and the shipped access policy for chat sessions and memories under model-based security (tl-ai-core.chatSecurity.config.xml, AiChatOwner).
+description: Read when the precise semantics of the agent security configuration matter - the reference of AiToolAccessService / ToolAccessPolicy (<tool-groups>, <tool-access>, <baseline>, <background-allowlist>, boot errors and warnings, the three names of a tool), the defaults for a new tool, approval decided from the call (SecurityContextFactory, RunPrincipal, SecurityContextProxy, <security-context> on AgentRuntimeService), the shipped read policy for Screenshot and CookiePool (tl-ai-core.binarySecurity.config.xml, AiBinaryOwner), and the shipped access policy for chat sessions and memories under model-based security (tl-ai-core.chatSecurity.config.xml, AiChatOwner), which also decides who reads and stops a run through its handle (aiAgentRunStatus, aiAgentRunCancel), the Read and Write rights the chat asks for, and how an application lets further accounts read a conversation about its object (a grant on AgentSession plus a role rule over AgentSession#subject).
 order: 70
 ---
 
@@ -152,9 +152,9 @@ public class SectionApproval implements SecurityContextFactory {
 }
 ```
 
-The factory is told a `RunPrincipal`: the account the run acts as, how the run was started (`CHAT`, `SCRIPT`, `MCP`, `SCHEDULED`, `INTERNAL`), whether anybody is there to answer a prompt, and the conversation the run belongs to when the entry point has one. The run has no id and no agent yet - those are settled after the context is built. Three rules:
+The factory is told a `RunPrincipal`: the account the run acts as, how the run was started (`CHAT`, `SCRIPT`, `MCP`, `A2A`, `SCHEDULED`, `INTERNAL`), whether anybody is there to approve a tool call, and the conversation the run belongs to when the entry point has one. The run has no id and no agent yet - those are settled after the context is built. Three rules:
 
-- **Every entry point asks.** `RunSecurity.contextFor` is the one call, and the chat, the TL-Script functions, the MCP endpoint and the prompt improver all go through it. An application substitutes one implementation, not several call sites.
+- **Every entry point asks.** `RunSecurity.contextFor` is the one call, and the chat, the TL-Script functions, the MCP and A2A endpoints and the prompt improver all go through it. An application substitutes one implementation, not several call sites.
 - **Configuring nothing changes nothing.** The default is `DefaultSecurityContextFactory`.
 - **A factory may narrow and may not widen.** Everything else about a run - which tools, which agents, which objects - is decided against the account's roles, and a context written from scratch would answer all of that permissively, since `SecurityContext`'s methods have permissive defaults. Build `DefaultSecurityContextFactory.defaultContext(run)`, wrap it in `SecurityContextProxy`, and override the one answer that is to differ.
 
@@ -185,7 +185,62 @@ The chat sessions (`tl.ai.execution:AgentSession`) and the memories (`tl.ai.exec
 |---|---|
 | `InitialRolesManager` role `AiChatOwner` | a technical role meaning "this conversation, or this memory, is yours"; nobody holds it globally |
 | two `<role-rules>` of `type="reference"` | derive it, per object, from `AgentSession#owner` / `UserMemory#owner`. A session without an owner - of a background job, a schedule - has no holder |
-| `<security-config>` grants | `Read` and `Write` on a session (the owner edits its title in a form), `Read` on a memory |
+| `<security-config>` grants | `Read` and `Write` on a session and on a memory |
 | `<access-parent>` `<target>` | a run (`AgentExecution#session`) and a plan item (`AgentTask#session`) decide through their session, a question (`InteractionRequest#execution`) through its run |
 
-`Create` and `Delete` of a session or a memory are granted to nobody: sessions and memories are created and deleted by the `AgentExecutionStore`, which writes in a system context, and `aiSessionRename`, `aiSessionDelete` and `aiMemoryDelete` check the ownership themselves. A memory decides through its own owner and not through its session, since the session reference is optional and a memory outlives its conversation. Administrators and system contexts bypass the check as everywhere. `TestChatSessionAccessPolicy` pins the policy against the shipped configuration.
+`Create` and `Delete` of a session or a memory are granted to nobody: sessions and memories are created and deleted by the `AgentExecutionStore`, which writes in a system context, after the caller checked `Write`. A memory decides through its own owner and not through its session, since the session reference is optional and a memory outlives its conversation. Administrators and system contexts bypass the check as everywhere. `TestChatSessionAccessPolicy` pins the policy against the shipped configuration.
+
+**The chat decides through these rights alone.** There is no check of the owner in Java: every access to a session asks `ModelAccessRights.isAllowed` for the acting account.
+
+| Right on `tl.ai.execution:AgentSession` | What it allows |
+|---|---|
+| `Read` | open the session in a `<chat-conversation>` and see its history, the history of its subagents and its run state; take it over from the element's `input` channel; follow a running run live |
+| `Write` | send, edit and resend, regenerate, rate, answer approvals and questions, stop a run, change the approval mode, attach files, improve a prompt, rename (`aiSessionRename`), delete (`aiSessionDelete`), mark as seen, and every other change of the session's data |
+
+`Write` on a `tl.ai.execution:UserMemory` is what `aiMemoryDelete` asks for. The shipped policy gives both rights to the owner only, so without further configuration a chat is its owner's. A session somebody may read but not write shows no input line.
+
+The TL-Script functions that take a run handle (`aiAgentRunStatus`, `aiAgentRunResult`, `aiAgentRunError`, `aiAgentRunTranscript` and `aiAgentRunCancel`) obey the same policy. A script that applies the access rights of the acting account reads a value of a run with `Read` on the attribute that holds it (`status`, `response`, `errorMessage`, `transcript`, as `$run.get(...)` does) and stops a run with `Write` on its attribute `cancelRequested`. Without a `<part>` grant on the attribute, the right on the run decides, which a run takes from its session; a queued session without a run is checked as a whole. So the owner of a run and an administrator read and stop it; a restricted account, which may only read, cannot stop even its own run, since a stop needs `Write`. Every other account gets the answer of an unknown handle (`null`, `false`) and no message, since a message would tell which runs exist; the log records each stop and, at `DEBUG`, each denial ([audit](doc:ai/security/output-guard-and-audit#audit)). An administrator is an account with the administrator flag; a role with the operation `Administration` is not one. To let a role stop the runs of other accounts, grant it `Write` on `tl.ai.execution:AgentSession` (this also gives the role the other changes of these sessions that `Write` allows, see the table above, e.g. sending into them, renaming and deleting them, but not reading them), or call the function from a script without access checks (a scheduler task, a privileged function), which reads and stops every run. `TestRunHandleAccessPolicy` pins this.
+
+**Letting further accounts read a conversation.** Which roles read or write a session is the application's decision, made with its usual means: a grant of its own on `tl.ai.execution:AgentSession` for a role of its own, and a role rule that brings that role to the session. A session points at what it is about through `tl.ai.execution:AgentSession#subject`, so the rule typically starts there. Example: the members of a workspace (role `my.module.Member` on a `my.module:Workspace`) read the conversations about it, without writing into them:
+
+```xml
+<config service-class="com.top_logic.base.services.InitialRolesManager">
+	<instance>
+		<roles>
+			<role name="my.module.ChatReader"/>
+		</roles>
+	</instance>
+</config>
+
+<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+	<instance>
+		<role-rules>
+			<rules>
+				<!-- Who is a member of the workspace a conversation is about reads that conversation. -->
+				<inheritance-rule id="my.module.ChatReader.subject"
+					meta-element="tl.ai.execution:AgentSession"
+					role="my.module.ChatReader"
+					source-meta-element="my.module:Workspace"
+					source-role="my.module.Member"
+				>
+					<path>
+						<step attribute="tl.ai.execution:AgentSession#subject"/>
+					</path>
+				</inheritance-rule>
+			</rules>
+		</role-rules>
+	</instance>
+</config>
+
+<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+	<instance>
+		<security-config>
+			<class name="tl.ai.execution:AgentSession">
+				<grant operation="Read" roles="my.module.ChatReader"/>
+			</class>
+		</security-config>
+	</instance>
+</config>
+```
+
+The grant adds to the owner's grants of the shipped policy, so the owner keeps reading and writing every session, and a session about another object, or about nothing, stays its owner's. Granting `Write` to such a role as well lets its holders write into the conversation; a run they start belongs to them. Whether a conversation that may be written is offered for writing at all - e.g. not for a closed workspace - is no question of rights: the `writable` function of `<chat-conversation>` decides it, together with `Write`.

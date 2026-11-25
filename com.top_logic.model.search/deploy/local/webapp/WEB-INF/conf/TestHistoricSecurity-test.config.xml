@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/TestHistoricSecurity.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<role name="TestHistoricSecurity.PartnerReader"/>
+					<role name="TestHistoricSecurity.Editor"/>
+					<role name="TestHistoricSecurity.ReleasePartner"/>
+					<role name="TestHistoricSecurity.ReleaseRecipient"/>
+					<role name="TestHistoricSecurity.AreaReader"/>
+					<role name="TestHistoricSecurity.AreaEditor"/>
+					<role name="TestHistoricSecurity.AreaReleaseReader"/>
+				</roles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="TestHistoricSecurity:Document">
+						<grant
+							operation="Read"
+							roles="TestHistoricSecurity.Editor, TestHistoricSecurity.ReleaseRecipient"
+						/>
+						<grant
+							operation="Write"
+							roles="TestHistoricSecurity.Editor, TestHistoricSecurity.ReleaseRecipient"
+						/>
+						<grant
+							operation="Discover"
+							roles="TestHistoricSecurity.ReleasePartner"
+						/>
+					</class>
+					<class name="TestHistoricSecurity:Section">
+						<grant
+							operation="Read"
+							roles="TestHistoricSecurity.Editor, TestHistoricSecurity.PartnerReader, TestHistoricSecurity.ReleaseRecipient"
+						/>
+						<grant
+							operation="Write"
+							roles="TestHistoricSecurity.Editor, TestHistoricSecurity.PartnerReader"
+						/>
+					</class>
+					<class name="TestHistoricSecurity:Glossary">
+						<grant
+							operation="Read"
+							roles="TestHistoricSecurity.ReleaseRecipient"
+						/>
+					</class>
+					<class name="TestHistoricSecurity:Release">
+						<grant
+							operation="Read"
+							roles="TestHistoricSecurity.Editor, TestHistoricSecurity.ReleasePartner, TestHistoricSecurity.ReleaseRecipient"
+						/>
+					</class>
+					<class name="TestHistoricSecurity:Area">
+						<grant
+							operation="Read"
+							roles="TestHistoricSecurity.AreaEditor, TestHistoricSecurity.AreaReader"
+						/>
+					</class>
+					<class name="TestHistoricSecurity:Chapter">
+						<grant
+							operation="Read"
+							roles="TestHistoricSecurity.AreaEditor, TestHistoricSecurity.AreaReader"
+						/>
+					</class>
+					<class name="TestHistoricSecurity:AreaRelease">
+						<grant
+							operation="Read"
+							roles="TestHistoricSecurity.AreaReleaseReader"
+						/>
+					</class>
+					<class name="TestHistoricSecurity:Partner"
+						without-security="true"
+					/>
+					<part name="TestHistoricSecurity:Document#sections">
+						<grant
+							operation="Read"
+							roles="TestHistoricSecurity.Editor, TestHistoricSecurity.ReleaseRecipient, TestHistoricSecurity.ReleasePartner"
+						/>
+					</part>
+				</security-config>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<rules>
+						<rule
+							anchors="TestHistoricSecurity:Release#snapshot"
+							history="anchored"
+							id="histsec-A"
+							meta-element="TestHistoricSecurity:Section"
+							role="TestHistoricSecurity.PartnerReader"
+						>
+							<path>
+								<step attribute="TestHistoricSecurity:Section#partner"/>
+								<step attribute="TestHistoricSecurity:Partner#group"/>
+							</path>
+						</rule>
+						<rule
+							anchors="TestHistoricSecurity:Release#snapshot"
+							history="anchored"
+							id="histsec-A2"
+							meta-element="TestHistoricSecurity:Section"
+							role="TestHistoricSecurity.PartnerReader"
+						>
+							<path>
+								<step attribute="TestHistoricSecurity:Section#reviewers"/>
+							</path>
+						</rule>
+						<rule
+							history="current"
+							id="histsec-B"
+							meta-element="TestHistoricSecurity:Document"
+							role="TestHistoricSecurity.Editor"
+						>
+							<path>
+								<step attribute="TestHistoricSecurity:Document#editors"/>
+							</path>
+						</rule>
+						<rule
+							history="current"
+							id="histsec-B1"
+							meta-element="TestHistoricSecurity:Section"
+							role="TestHistoricSecurity.Editor"
+						>
+							<path>
+								<step
+									attribute="TestHistoricSecurity:Document#sections"
+									inverse="true"
+								/>
+								<step attribute="TestHistoricSecurity:Document#editors"/>
+							</path>
+						</rule>
+						<rule
+							id="histsec-C1"
+							meta-element="TestHistoricSecurity:Release"
+							role="TestHistoricSecurity.ReleasePartner"
+						>
+							<path>
+								<step attribute="TestHistoricSecurity:Release#partner"/>
+								<step attribute="TestHistoricSecurity:Partner#group"/>
+							</path>
+						</rule>
+						<rule
+							id="histsec-C2"
+							meta-element="TestHistoricSecurity:Release"
+							role="TestHistoricSecurity.ReleaseRecipient"
+						>
+							<path>
+								<step attribute="TestHistoricSecurity:Release#recipients"/>
+							</path>
+						</rule>
+						<inheritance-rule
+							id="histsec-E"
+							meta-element="TestHistoricSecurity:Document"
+							role="TestHistoricSecurity.ReleaseRecipient, TestHistoricSecurity.ReleasePartner"
+						>
+							<path>
+								<step
+									attribute="TestHistoricSecurity:Release#snapshot"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule
+							id="histsec-E1"
+							meta-element="TestHistoricSecurity:Section"
+							role="TestHistoricSecurity.ReleaseRecipient, TestHistoricSecurity.ReleasePartner"
+						>
+							<path>
+								<step
+									attribute="TestHistoricSecurity:Document#sections"
+									inverse="true"
+								/>
+								<step
+									attribute="TestHistoricSecurity:Release#snapshot"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule
+							id="histsec-E3"
+							meta-element="TestHistoricSecurity:Glossary"
+							role="TestHistoricSecurity.ReleaseRecipient"
+						>
+							<path>
+								<step
+									attribute="TestHistoricSecurity:Document#glossary"
+									inverse="true"
+								/>
+								<step
+									attribute="TestHistoricSecurity:Release#snapshot"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule
+							id="histsec-F"
+							meta-element="TestHistoricSecurity:Release"
+							role="TestHistoricSecurity.Editor"
+						>
+							<path>
+								<step attribute="TestHistoricSecurity:Release#snapshot"/>
+							</path>
+						</inheritance-rule>
+						<rule
+							id="histsec-K1"
+							meta-element="TestHistoricSecurity:AreaRelease"
+							role="TestHistoricSecurity.AreaReleaseReader"
+						>
+							<path>
+								<step attribute="TestHistoricSecurity:AreaRelease#recipients"/>
+							</path>
+						</rule>
+						<inheritance-rule
+							id="histsec-K2"
+							meta-element="TestHistoricSecurity:Area"
+							role="TestHistoricSecurity.AreaReader"
+							source-role="TestHistoricSecurity.AreaReleaseReader"
+						>
+							<path>
+								<step
+									attribute="TestHistoricSecurity:AreaRelease#snapshot"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule
+							id="histsec-K3"
+							meta-element="TestHistoricSecurity:Chapter"
+							role="TestHistoricSecurity.AreaReader"
+							source-role="TestHistoricSecurity.AreaReleaseReader"
+						>
+							<path>
+								<step
+									attribute="TestHistoricSecurity:AreaRelease#roots"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<inheritance-rule
+							history="historic"
+							id="histsec-K7"
+							meta-element="TestHistoricSecurity:Chapter"
+							role="TestHistoricSecurity.AreaEditor"
+						>
+							<path>
+								<step
+									attribute="TestHistoricSecurity:Chapter#children"
+									inverse="true"
+								/>
+							</path>
+						</inheritance-rule>
+						<rule
+							id="histsec-K6"
+							meta-element="TestHistoricSecurity:Area"
+							role="TestHistoricSecurity.AreaEditor"
+						>
+							<path>
+								<step attribute="TestHistoricSecurity:Area#editors"/>
+							</path>
+						</rule>
+					</rules>
+				</role-rules>
+				<security-parents>
+					<rules>
+						<rule
+							id="histsec-K4"
+							meta-element="TestHistoricSecurity:Chapter"
+						>
+							<path>
+								<step attribute="TestHistoricSecurity:Chapter#area"/>
+							</path>
+						</rule>
+						<rule
+							id="histsec-K5"
+							meta-element="TestHistoricSecurity:Chapter"
+						>
+							<path>
+								<step
+									attribute="TestHistoricSecurity:Chapter#children"
+									inverse="true"
+								/>
+							</path>
+						</rule>
+					</rules>
+				</security-parents>
+			</instance>
+		</config>
+	</services>
+</application>

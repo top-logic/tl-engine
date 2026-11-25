@@ -1,7 +1,7 @@
 import {
   React, useI18N, TLChild, usePart, ButtonDefaults, useButtonDefaults, Menu, usePopover,
   useCloseOnOutsidePress, useFocusTrap, useStandaloneKeyboardScope, pressClosedSurface, createPortal,
-  anchoredOverlayProps,
+  anchoredOverlayProps, isCompositionKey,
   ICON_BOLD, ICON_ITALIC, ICON_UNDERLINE, ICON_STRIKETHROUGH, ICON_PARAGRAPH, ICON_HEADING, ICON_BULLET_LIST,
   ICON_NUMBERED_LIST, ICON_QUOTE, ICON_CODE_BLOCK, ICON_LINK, ICON_IMAGE, ICON_TABLE, ICON_UNDO, ICON_REDO, ICON_SOURCE,
 } from 'tl-react-bridge';
@@ -404,7 +404,8 @@ const LinkPopup: React.FC<{ editor: Editor; labels: Labels; isLink: boolean }> =
   }, [editor, close]);
 
   const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    if (event.key === 'Enter') {
+    // The Enter that ends a composition is the input method's: the address is not finished yet.
+    if (event.key === 'Enter' && !isCompositionKey(event.nativeEvent)) {
       event.preventDefault();
       apply();
     }

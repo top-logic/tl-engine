@@ -15,7 +15,6 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
-import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
@@ -42,6 +41,8 @@ import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
 import com.top_logic.ai.core.execution.AgentExecutionStore;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.model.security.SecurityConfigurationService;
+import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.model.ModelService;
 
 import de.haumacher.msgbuf.data.DataObject;
@@ -58,7 +59,7 @@ import de.haumacher.msgbuf.data.DataObject;
  * nothing about which ids exist.
  * </p>
  */
-public class TestChatSessionCommands extends BasicTestCase {
+public class TestChatSessionCommands extends SecurityCheckedTestCase {
 
 	private static final String WINDOW = "sessionsWindow";
 
@@ -188,7 +189,7 @@ public class TestChatSessionCommands extends BasicTestCase {
 			SessionDeleteReply reply = (SessionDeleteReply) command(conversation, ChatControl.CMD_DELETE_SESSION, id());
 
 			assertFalse(reply.isDeleted());
-			assertNotNull("The chat must still be there.", ChatHistoryService.findOwnedSessionById(id(), anna));
+			assertNotNull("The chat must still be there.", ChatHistoryService.findAnySessionById(id()));
 			assertFalse("An id that names nothing is answered alike.",
 				((SessionDeleteReply) command(conversation, ChatControl.CMD_DELETE_SESSION, "999999999")).isDeleted());
 		} finally {
@@ -207,7 +208,7 @@ public class TestChatSessionCommands extends BasicTestCase {
 			HistoryUtils.updateSessionRevision();
 
 			assertTrue(reply.isDeleted());
-			assertNull(ChatHistoryService.findOwnedSessionById(doomedId, anna));
+			assertNull(ChatHistoryService.findAnySessionById(doomedId));
 		} finally {
 			conversation.cleanupTree();
 		}
@@ -288,6 +289,8 @@ public class TestChatSessionCommands extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestChatSessionCommands.class),
 				ModelService.Module.INSTANCE,
+				AccessManager.Module.INSTANCE,
+				SecurityConfigurationService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
 				ColumnProviderService.Module.INSTANCE,
 				FieldControlService.Module.INSTANCE,

@@ -163,7 +163,7 @@ public class TestSkillAbsenceReason extends TestCase {
 	public void testBackgroundCeilingIsNotBlamedOnTheUser() {
 		String message = loadSkill(unattendedPrincipal(), WITHHELD_SKILL);
 
-		assertTrue(message, message.contains("this run is unattended"));
+		assertTrue(message, message.contains("this is a background run"));
 		assertTrue(message, message.contains("background allowlist"));
 		assertTrue("What would change it must be named: " + message,
 			message.contains("<background-allowlist>"));

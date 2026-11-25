@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
 import { getComponent } from './registry';
+import { useI18N } from './i18n';
 import type { ChildControlJson } from '../state/control-state';
 import { adoptChildDescriptor, applyChildDescriptor, createChildContext, unmount, TLControlContext } from './tl-react-bridge';
 import type { TLControlContextValue } from './tl-react-bridge';
@@ -27,6 +28,89 @@ export function acquireChildContext(descriptor: ChildDescriptor): TLControlConte
   return context;
 }
 
+/** I18N key of the placeholder shown for a child control that fails to render. */
+export const RENDER_ERROR_KEY = 'js.child.renderError';
+
+/** Texts of the placeholder; the server translates them (I18NConstants). */
+const I18N_KEYS = {
+  [RENDER_ERROR_KEY]: 'This part of the view could not be displayed.',
+};
+
+/**
+ * Placeholder standing in place of a child control that failed to render: an error message of the
+ * design system ({@code tl-alert}). It carries the ID of the control, so that it takes the control's
+ * place for everything addressing the control's element.
+ */
+const RenderErrorPlaceholder: React.FC<{ controlId: string }> = ({ controlId }) => {
+  const text = useI18N(I18N_KEYS)[RENDER_ERROR_KEY];
+  return (
+    <div id={controlId} className="tl-alert" data-tl-role="error" role="alert">
+      <div className="tl-alert__body">
+        <div className="tl-alert__message tl-type-body">{text}</div>
+      </div>
+    </div>
+  );
+};
+
+interface ChildErrorBoundaryProps {
+  /** The ID of the child control rendered inside. */
+  controlId: string;
+
+  /**
+   * The state the child is rendered with. A child that failed is rendered again as soon as its
+   * state changes, since the new state may be one it renders without failure.
+   */
+  resetKey: unknown;
+
+  children: React.ReactNode;
+}
+
+interface ChildErrorBoundaryState {
+  /** The state the child failed to render with, {@code undefined} while it renders. */
+  failedWith: unknown;
+
+  /** Whether the child failed to render. */
+  failed: boolean;
+}
+
+/**
+ * Error boundary around a single child control: an error thrown while the child renders replaces
+ * only the child by a {@link RenderErrorPlaceholder}, its siblings and the rest of the application stay
+ * rendered. The error is reported to the console.
+ *
+ * <p>While the child renders, the boundary renders it as it is, without an element of its own.</p>
+ */
+class ChildErrorBoundary extends React.Component<ChildErrorBoundaryProps, ChildErrorBoundaryState> {
+
+  state: ChildErrorBoundaryState = { failedWith: undefined, failed: false };
+
+  static getDerivedStateFromError(): Partial<ChildErrorBoundaryState> {
+    return { failed: true };
+  }
+
+  static getDerivedStateFromProps(
+    props: ChildErrorBoundaryProps, state: ChildErrorBoundaryState): Partial<ChildErrorBoundaryState> | null {
+    if (state.failed && state.failedWith !== undefined && state.failedWith !== props.resetKey) {
+      // The child has a new state: it is rendered again.
+      return { failed: false, failedWith: undefined };
+    }
+    return null;
+  }
+
+  componentDidCatch(error: unknown, info: React.ErrorInfo): void {
+    console.error('[TLReact] Control ' + this.props.controlId + ' failed to render:', error,
+      info.componentStack);
+    this.setState({ failedWith: this.props.resetKey });
+  }
+
+  render(): React.ReactNode {
+    if (this.state.failed) {
+      return <RenderErrorPlaceholder controlId={this.props.controlId} />;
+    }
+    return this.props.children;
+  }
+}
+
 /**
  * Generic component that renders a server-described child control.
  *
@@ -36,6 +120,8 @@ export function acquireChildContext(descriptor: ChildDescriptor): TLControlConte
  *
  * <p>The {@code control} prop accepts the raw state value (typed as {@code unknown})
  * so that callers can write {@code <TLChild control={state.foo} />} without a cast.</p>
+ *
+ * <p>A child failing to render is replaced by a placeholder, see {@link ChildErrorBoundary}.</p>
  */
 const TLChild: React.FC<{ control: unknown }> = ({ control }) => {
   const descriptor = control as ChildDescriptor;
@@ -100,7 +186,9 @@ const TLChild: React.FC<{ control: unknown }> = ({ control }) => {
 
   return (
     <TLControlContext.Provider value={childCtx}>
-      <Component controlId={descriptor.controlId} state={liveState} />
+      <ChildErrorBoundary controlId={descriptor.controlId} resetKey={liveState}>
+        <Component controlId={descriptor.controlId} state={liveState} />
+      </ChildErrorBoundary>
     </TLControlContext.Provider>
   );
 };

@@ -50,6 +50,11 @@ const TrailingStub: React.FC<TLCellProps> = ({ controlId }) => (
   </span>
 );
 
+/** The stand-in for a template showing a status the server updates, e.g. a pill. */
+const StatusStub: React.FC<TLCellProps> = ({ controlId, state }) => (
+  <span id={controlId} className="test-status">{String(state.text)}</span>
+);
+
 /** The observers the list created, so that a test can say "the host was resized". */
 const observers: FakeResizeObserver[] = [];
 
@@ -87,6 +92,7 @@ beforeAll(() => {
   registerPart('Badge', BadgePart);
   register('TestCommand', CommandStub);
   register('TestTrailing', TrailingStub);
+  register('TestStatus', StatusStub);
   register('TLDataList', TLDataList);
 });
 
@@ -474,6 +480,55 @@ describe('the content of a template after the lines', () => {
     click(list().querySelector('#t1 .test-action')!);
     await settle();
     expect(sent).toEqual([]);
+  });
+});
+
+describe('the template of an entry hidden by the search', () => {
+  async function mountStatusList(): Promise<HTMLInputElement> {
+    await mountList({
+      search: true,
+      rows: [
+        { id: 'r1', lines: [{ text: 'Anna' }], trailing: { text: '', badge: false, control: { controlId: 's1', module: 'TestStatus', state: { text: 'Open' } } } },
+        { id: 'r2', lines: [{ text: 'Arne' }] },
+      ],
+    });
+    return list().querySelector<HTMLInputElement>('.tl-list__search input')!;
+  }
+
+  function status(): string | null {
+    return list().querySelector('#s1')?.textContent ?? null;
+  }
+
+  function update(controlId: string, patch: Record<string, unknown>): void {
+    act(() => updates.get(controlId)!(patch));
+  }
+
+  it('shows the state it received before it was hidden when it is shown again', async () => {
+    const search = await mountStatusList();
+    update('s1', { text: 'In progress' });
+    expect(status()).toBe('In progress');
+
+    type(search, 'arne');
+    expect(status()).toBeNull();
+    type(search, '');
+    expect(status()).toBe('In progress');
+  });
+
+  it('shows the state it received while it was hidden when it is shown again', async () => {
+    const search = await mountStatusList();
+    type(search, 'arne');
+    expect(status()).toBeNull();
+    update('s1', { text: 'Closed' });
+
+    type(search, '');
+    expect(status()).toBe('Closed');
+  });
+
+  it('is released when the list no longer describes it', async () => {
+    const search = await mountStatusList();
+    type(search, 'arne');
+    update(LIST_ID, { rows: [{ id: 'r2', lines: [{ text: 'Arne' }] }] });
+    expect(updates.has('s1')).toBe(false);
   });
 });
 

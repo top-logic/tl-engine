@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useSyncExternalStore } from 'react';
+import React, { useContext, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { getComponent } from './registry';
 import { useI18N } from './i18n';
 import type { ChildControlJson } from '../state/control-state';
@@ -126,17 +126,21 @@ class ChildErrorBoundary extends React.Component<ChildErrorBoundaryProps, ChildE
 const TLChild: React.FC<{ control: unknown }> = ({ control }) => {
   const descriptor = control as ChildDescriptor;
   const Component = getComponent(descriptor.module);
+  // The control rendering this child, whose state describes it.
+  const parentId = useContext(TLControlContext)?.controlId;
 
   const childCtx = useMemo(
     () => createChildContext(descriptor.controlId, descriptor.state),
     [descriptor.controlId]
   );
 
-  // Clean up SSE subscription when this child is replaced (controlId changes) or
-  // when the parent unmounts.  This must NOT fire when the child component merely
-  // returns null (e.g. a hidden snackbar), because TLChild itself stays mounted.
+  // Release the child when it is replaced (controlId changes) or no longer rendered here. This
+  // must NOT fire when the child component merely returns null (e.g. a hidden snackbar), because
+  // TLChild itself stays mounted. A child the parent still describes stays subscribed to its
+  // updates (see unmount), so rendering it again shows its current state.
   useEffect(() => {
-    return () => unmount(descriptor.controlId);
+    return () => unmount(descriptor.controlId, parentId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [descriptor.controlId]);
 
   // Subscribe to the child's ControlStateStore so that SSE patch events (e.g. editable

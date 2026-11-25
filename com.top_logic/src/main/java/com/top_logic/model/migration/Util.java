@@ -1315,7 +1315,7 @@ public class Util {
 			associationType.getModule().getModuleName(), associationType.getTypeName(),
 			TLStructuredTypeColumns.SELF_ASSOCIATION_END_NAME,
 			moduleName, ownerName, false, false, false,
-			false, true, false, false, false, HistoryType.CURRENT, DeletionPolicy.CLEAR_REFERENCE, null);
+			composite, !composite, false, false, false, HistoryType.CURRENT, DeletionPolicy.CLEAR_REFERENCE, null);
 
 		TypePart targetEnd = createTLAssociationEnd(log, con, branch,
 			associationType.getModule().getModuleName(), associationType.getTypeName(),
@@ -1387,6 +1387,15 @@ public class Util {
 		Reference reference =
 			internalCreateTLReference(log, con, branch, module, type, refName, selfEnd.getID(), annotations);
 
+		TypePart forwardsEnd = getTLTypePart(con, tlType, inverseRefName);
+		if (forwardsEnd != null && isComposite(con, forwardsEnd)) {
+			// The back of a composition references the single container of a part. As in a model
+			// definition, only the navigability is taken from the inverse reference.
+			updateTLStructuredTypePart(con, selfEnd, null, null, null, null, null, Boolean.FALSE, Boolean.TRUE,
+				Boolean.FALSE, Boolean.FALSE, Boolean.FALSE, Boolean.valueOf(navigate), null, null, null, null);
+			return reference;
+		}
+
 		CompiledStatement sql = query(
 			parameters(
 				branchParamDef(),
@@ -1427,6 +1436,30 @@ public class Util {
 
 		return reference;
 
+	}
+
+	/**
+	 * Whether the given {@link TLAssociationEnd} is {@link TLAssociationEnd#isComposite() composite}.
+	 */
+	public boolean isComposite(PooledConnection con, TypePart end) throws SQLException {
+		CompiledStatement sql = query(
+			parameters(
+				branchParamDef(),
+				parameterDef(DBType.ID, "endID")),
+			select(
+				columns(
+					columnDef(SQLH.mangleDBName(TLAssociationEnd.COMPOSITE_ATTR))),
+				table(SQLH.mangleDBName(ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE)),
+				and(
+					eqBranch(),
+					eqSQL(
+						column(BasicTypes.IDENTIFIER_DB_NAME),
+						parameter(DBType.ID, "endID")),
+					eqSQL(column(BasicTypes.REV_MAX_DB_NAME), literalLong(Revision.CURRENT_REV)))))
+							.toSql(con.getSQLDialect());
+		try (ResultSet dbResult = sql.executeQuery(con, end.getBranch(), end.getID())) {
+			return dbResult.next() && dbResult.getBoolean(1);
+		}
 	}
 
 	/**

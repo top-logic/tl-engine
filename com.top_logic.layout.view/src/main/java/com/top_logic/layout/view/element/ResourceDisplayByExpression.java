@@ -14,7 +14,6 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Flavor;
 import com.top_logic.layout.ResourceProvider;
@@ -28,7 +27,6 @@ import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.InputsOf;
 import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.layout.view.table.AbstractColumnDeclaration;
-import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.layout.view.table.ValueAsConfig;
 import com.top_logic.model.annotate.ui.AnnotationValueColorProvider;
 import com.top_logic.model.annotate.ui.ValueColor;
@@ -337,8 +335,7 @@ public class ResourceDisplayByExpression implements ReactControlProvider, Resour
 		if (_tooltip == null) {
 			return MetaResourceProvider.INSTANCE.getTooltip(object);
 		}
-		String text = AbstractColumnDeclaration.tooltipText(_tooltip.execute(object));
-		return text == null || text.isEmpty() ? null : HTMLUtil.encodeBRforNewLine(TagUtil.encodeXML(text));
+		return AbstractColumnDeclaration.tooltipHtml(_tooltip.execute(object));
 	}
 
 	/**

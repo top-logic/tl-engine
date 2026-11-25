@@ -252,7 +252,9 @@ unreadable boolean is no unchecked checkbox, an unreadable reference no empty ce
   only through the placeholder text, and is exported as the placeholder.
 - An embedded column whose path passes a reference the user may not read shows the placeholder as
   well.
-- A column whose attribute the user may read on no row is not offered at all.
+- A column is not offered at all only when its attribute has a `Read` grant of its own that lists
+  no role the user holds: the column would be empty in every row. The `Read` grant of the type never
+  withholds a column; it decides which rows the table shows.
 - Exception: a column built by a column provider of the application (`ColumnProvider`) shows and
   searches the cell by the placeholder, but its own sort and filter see the cell as empty - the
   provider is given the readable values only.

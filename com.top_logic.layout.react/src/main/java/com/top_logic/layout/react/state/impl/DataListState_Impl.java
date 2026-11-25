@@ -183,6 +183,8 @@ public class DataListState_Impl extends com.top_logic.layout.react.state.impl.Co
 
 		private boolean _badge = false;
 
+		private com.top_logic.layout.react.state.ChildControl _control = null;
+
 		/**
 		 * Creates a {@link Trailing_Impl} instance.
 		 *
@@ -225,6 +227,27 @@ public class DataListState_Impl extends com.top_logic.layout.react.state.impl.Co
 		}
 
 		@Override
+		public final com.top_logic.layout.react.state.ChildControl getControl() {
+			return _control;
+		}
+
+		@Override
+		public com.top_logic.layout.react.state.DataListState.Trailing setControl(com.top_logic.layout.react.state.ChildControl value) {
+			internalSetControl(value);
+			return this;
+		}
+
+		/** Internal setter for {@link #getControl()} without chain call utility. */
+		protected final void internalSetControl(com.top_logic.layout.react.state.ChildControl value) {
+			_control = value;
+		}
+
+		@Override
+		public final boolean hasControl() {
+			return _control != null;
+		}
+
+		@Override
 		public final void writeTo(de.haumacher.msgbuf.json.JsonWriter out) throws java.io.IOException {
 			writeContent(out);
 		}
@@ -236,6 +259,10 @@ public class DataListState_Impl extends com.top_logic.layout.react.state.impl.Co
 			out.value(getText());
 			out.name(BADGE__PROP);
 			out.value(isBadge());
+			if (hasControl()) {
+				out.name(CONTROL__PROP);
+				getControl().writeTo(out);
+			}
 		}
 
 		@Override
@@ -243,6 +270,7 @@ public class DataListState_Impl extends com.top_logic.layout.react.state.impl.Co
 			switch (field) {
 				case TEXT__PROP: setText(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 				case BADGE__PROP: setBadge(in.nextBoolean()); break;
+				case CONTROL__PROP: setControl(com.top_logic.layout.react.state.ChildControl.readChildControl(in)); break;
 				default: super.readField(in, field);
 			}
 		}

@@ -123,6 +123,7 @@ function createEntry(controlId: string, initialState: Record<string, unknown>, r
   const sseListener = (data: Record<string, unknown>) => {
     registerChildDescriptors(controlId, data);
     store.applyPatch(data);
+    releaseUndescribed(controlId);
   };
   subscribe(controlId, sseListener);
   return { root, store, sseListener, refs: 0, owner: null, owned: new Set() };
@@ -201,6 +202,48 @@ function registerChildDescriptor(
     _appliedDescriptors.set(entry.store, stateKey);
     registerChildDescriptors(childId, descriptor.state);
     entry.store.applyPatch(descriptor.state);
+  }
+}
+
+/**
+ * Tears down the entries the given control owns that have no holder and that its state no longer
+ * describes: the server has dropped these children, so no holder will claim them again.
+ */
+function releaseUndescribed(controlId: string): void {
+  const entry = _mounts.get(controlId);
+  if (entry === undefined || entry.owned.size === 0) {
+    return;
+  }
+  const described = new Set<string>();
+  collectDescribed(entry.store.getSnapshot(), described);
+  for (const childId of [...entry.owned]) {
+    const child = _mounts.get(childId);
+    if (child !== undefined && child.refs === 0 && child.owner === controlId && !described.has(childId)) {
+      tearDown(childId, child);
+    }
+  }
+}
+
+/**
+ * Collects the IDs of the child controls described in the given value, at any depth, also inside
+ * the state of another descriptor.
+ */
+function collectDescribed(value: unknown, out: Set<string>): void {
+  if (Array.isArray(value)) {
+    for (const element of value) {
+      collectDescribed(element, out);
+    }
+    return;
+  }
+  if (value === null || typeof value !== 'object') {
+    return;
+  }
+  const obj = value as Record<string, unknown>;
+  if (isChildDescriptor(obj)) {
+    out.add(obj.controlId as string);
+  }
+  for (const key in obj) {
+    collectDescribed(obj[key], out);
   }
 }
 
@@ -358,8 +401,18 @@ export function mountField(
 
 /**
  * Unmounts a React component by control ID, cleaning up its SSE subscription.
+ *
+ * <p>The last holder of a child control releasing it while the control describing it is still
+ * mounted hands the child over to that control instead: the parent stops rendering the child for
+ * a while - a list whose search hides the entry holding it - but the server keeps the child alive
+ * and goes on sending its updates. The entry keeps receiving them, so a holder rendering the child
+ * again shows its current state, not the one of the descriptor the parent still holds. The entry
+ * goes with the parent, or as soon as the state of the parent no longer describes it.</p>
+ *
+ * @param controlId the control to release
+ * @param parentId the control whose state describes the released child, if any
  */
-export function unmount(controlId: string): void {
+export function unmount(controlId: string, parentId?: string): void {
   const entry = _mounts.get(controlId);
   if (!entry) {
     return;
@@ -371,7 +424,21 @@ export function unmount(controlId: string): void {
     entry.refs--;
     return;
   }
+  const parent = parentId === undefined || parentId === controlId ? undefined : _mounts.get(parentId);
+  if (entry.root === null && parent !== undefined && describes(parent, controlId)) {
+    entry.refs = 0;
+    entry.owner = parentId!;
+    parent.owned.add(controlId);
+    return;
+  }
   tearDown(controlId, entry);
+}
+
+/** Whether the state of the given entry describes the given child control. */
+function describes(entry: MountEntry, childId: string): boolean {
+  const described = new Set<string>();
+  collectDescribed(entry.store.getSnapshot(), described);
+  return described.has(childId);
 }
 
 /**
@@ -380,6 +447,15 @@ export function unmount(controlId: string): void {
  */
 export function isMountedControl(id: string): boolean {
   return _mounts.has(id);
+}
+
+/**
+ * The current state of the given mounted control, {@code undefined} for a control that is not
+ * mounted. Every update of the control replaces the state object, so an unchanged object means an
+ * unchanged state.
+ */
+export function controlStateSnapshot(id: string): Record<string, unknown> | undefined {
+  return _mounts.get(id)?.store.getSnapshot();
 }
 
 // --- Hooks ---

@@ -24,9 +24,11 @@ import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.VetoForwarder;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ObservableRule;
+import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.element.GridOptions;
 import com.top_logic.layout.view.list.ObjectListElement.Layout;
+import com.top_logic.layout.view.model.CommandItemActivation;
 import com.top_logic.layout.view.model.ItemSelectionBinding;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -66,6 +68,12 @@ import com.top_logic.util.Resources;
  * A list {@link #bindSelection(SelectionMode, ViewChannel) bound to a selection channel} makes its
  * elements selectable: the container receives each element's control together with the element, and
  * the element of the object the channel holds is displayed as selected.
+ * </p>
+ *
+ * <p>
+ * A list {@link #bindActivation(ViewCommandModel, boolean) bound to an activation command} makes its
+ * elements activatable: the container receives each element's control together with the element,
+ * and the command runs with the element the user opens.
  * </p>
  *
  * <p>
@@ -199,6 +207,25 @@ public class ObjectListItems {
 	}
 
 	/**
+	 * Makes the elements activatable by the given command: the user opens an element, and the
+	 * command runs with it as its main argument. The command's executability rules decide per
+	 * element whether it can be activated.
+	 *
+	 * @param model
+	 *        The activation command.
+	 * @param button
+	 *        Whether the elements of a selectable list show an open button.
+	 * @see CommandItemActivation
+	 */
+	public void bindActivation(ViewCommandModel model, boolean button) {
+		if (!_elements.hasItems()) {
+			_shownElements = new ArrayList<>(new LinkedHashSet<>(_shownElements));
+			_elements.showItems(items(_shownElements));
+		}
+		CommandItemActivation.bind(_templateContext, _elements, model, button);
+	}
+
+	/**
 	 * The items of the given elements, each with the control of its item content.
 	 */
 	private List<Item> items(List<Object> elements) {
@@ -327,12 +354,14 @@ public class ObjectListItems {
 			}
 		}
 
-		boolean selectable = _elements.isSelectable();
-		// A selectable container displays each object once.
-		_shownElements = selectable ? new ArrayList<>(new LinkedHashSet<>(elements)) : elements;
+		boolean withObjects = _elements.hasItems();
+		// A container displaying its children with their objects displays each object once.
+		_shownElements = withObjects ? new ArrayList<>(new LinkedHashSet<>(elements)) : elements;
 		List<ReactControl> items = _items.update(_templateContext, _shownElements);
-		if (selectable) {
+		if (_elements.isSelectable()) {
 			_elements.setItems(items(_shownElements));
+		} else if (withObjects) {
+			_elements.showItems(items(_shownElements));
 		} else {
 			_elements.setChildren(items);
 		}

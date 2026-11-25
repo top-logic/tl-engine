@@ -39,6 +39,22 @@ const CommandStub: React.FC<TLCellProps> = ({ controlId }) => (
   <button type="button" id={controlId} className="tl-button">New</button>
 );
 
+/**
+ * The stand-in for the content of a template after the lines of a row: a status text and a button
+ * of its own.
+ */
+const TrailingStub: React.FC<TLCellProps> = ({ controlId }) => (
+  <span id={controlId}>
+    <span className="test-status">Open</span>
+    <button type="button" className="test-action">Act</button>
+  </span>
+);
+
+/** The stand-in for a template showing a status the server updates, e.g. a pill. */
+const StatusStub: React.FC<TLCellProps> = ({ controlId, state }) => (
+  <span id={controlId} className="test-status">{String(state.text)}</span>
+);
+
 let sent: Sent[] = [];
 
 beforeAll(() => {
@@ -55,6 +71,8 @@ beforeAll(() => {
   registerPart('Avatar', AvatarPart);
   registerPart('Badge', BadgePart);
   register('TestCommand', CommandStub);
+  register('TestTrailing', TrailingStub);
+  register('TestStatus', StatusStub);
   register('TLDataList', TLDataList);
 });
 
@@ -279,6 +297,90 @@ describe('what stands in front of and after the lines', () => {
     expect(trailing[0].textContent).toBe('yesterday');
     expect(trailing[0].querySelector('.tl-badge')).toBeNull();
     expect(trailing[1].querySelector('.tl-badge')!.textContent).toBe('3');
+  });
+});
+
+describe('the content of a template after the lines', () => {
+  async function mountTemplateList(): Promise<void> {
+    await mountList({
+      rows: [
+        { id: 'r1', lines: [{ text: 'Anna' }], trailing: { text: '', badge: false, control: { controlId: 't1', module: 'TestTrailing', state: {} } } },
+        { id: 'r2', lines: [{ text: 'Arne' }], trailing: { text: 'yesterday' } },
+      ],
+    });
+  }
+
+  it('is the child control of the row, beside the button of the entry, not in it', async () => {
+    await mountTemplateList();
+    const item = list().querySelector('.tl-list__item')!;
+    const trailing = item.querySelector(':scope > .tl-list__trailing')!;
+    expect(trailing.querySelector('#t1')).not.toBeNull();
+    expect(mains()[0].querySelector('#t1')).toBeNull();
+    expect(mains()[0].querySelector('.tl-list__trailing')).toBeNull();
+    expect(mains()[1].querySelector('.tl-list__trailing')!.textContent).toBe('yesterday');
+  });
+
+  it('selects the row on a click on its text', async () => {
+    await mountTemplateList();
+    click(list().querySelector('#t1 .test-status')!);
+    await settle();
+    expect(sent).toEqual([{ command: CMD_SELECT, args: { [ARG_ID]: 'r1' } }]);
+  });
+
+  it('leaves a click on its button to the button, without selecting the row', async () => {
+    await mountTemplateList();
+    click(list().querySelector('#t1 .test-action')!);
+    await settle();
+    expect(sent).toEqual([]);
+  });
+});
+
+describe('the template of an entry hidden by the search', () => {
+  async function mountStatusList(): Promise<HTMLInputElement> {
+    await mountList({
+      search: true,
+      rows: [
+        { id: 'r1', lines: [{ text: 'Anna' }], trailing: { text: '', badge: false, control: { controlId: 's1', module: 'TestStatus', state: { text: 'Open' } } } },
+        { id: 'r2', lines: [{ text: 'Arne' }] },
+      ],
+    });
+    return list().querySelector<HTMLInputElement>('.tl-list__search input')!;
+  }
+
+  function status(): string | null {
+    return list().querySelector('#s1')?.textContent ?? null;
+  }
+
+  function update(controlId: string, patch: Record<string, unknown>): void {
+    act(() => updates.get(controlId)!(patch));
+  }
+
+  it('shows the state it received before it was hidden when it is shown again', async () => {
+    const search = await mountStatusList();
+    update('s1', { text: 'In progress' });
+    expect(status()).toBe('In progress');
+
+    type(search, 'arne');
+    expect(status()).toBeNull();
+    type(search, '');
+    expect(status()).toBe('In progress');
+  });
+
+  it('shows the state it received while it was hidden when it is shown again', async () => {
+    const search = await mountStatusList();
+    type(search, 'arne');
+    expect(status()).toBeNull();
+    update('s1', { text: 'Closed' });
+
+    type(search, '');
+    expect(status()).toBe('Closed');
+  });
+
+  it('is released when the list no longer describes it', async () => {
+    const search = await mountStatusList();
+    type(search, 'arne');
+    update(LIST_ID, { rows: [{ id: 'r2', lines: [{ text: 'Arne' }] }] });
+    expect(updates.has('s1')).toBe(false);
   });
 });
 

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	First migration of the migration module tl-bpe-app (Ticket #30419). It removes the display group
+	of the model module tl.bpe.app, which up to now was removed from existing databases only by the
+	automatic model upgrade, which an application may prevent.
+
+	A module without a stored version counts as new and without data (MigrationUtil.getNewVersions):
+	on an existing database this migration only runs, if the application lists tl-bpe-app in the
+	minimum-modules of the MigrationService (tl-bpe-app.conf.config.xml does). Removing an annotation
+	that does not exist changes nothing.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30419_tl_bpe_app_migration_module"
+		module="tl-bpe-app"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30419_create_changelog_and_access_tokens"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_27736_Upgrade_layout"
+			module="tl-monitoring"
+		/>
+		<dependency name="Ticket_30419_changelog_storage_algorithms"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_29741_hide_anonymous_in_options"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_29410_filename_binary"
+			module="tl-model-wysiwyg"
+		/>
+		<dependency name="Ticket_30419_instance_resolvers_and_admin_visibility"
+			module="tl-layout-formeditor"
+		/>
+		<dependency name="Ticket_27442_Update_lucene_version_to_8_11_2"
+			module="tl-search-lucene"
+		/>
+		<dependency name="Ticket_30419_process_execution_label"
+			module="tl-bpe"
+		/>
+	</dependencies>
+	<processors>
+		<remove-annotations name="tl.bpe.app">
+			<annotation class="com.top_logic.model.annotate.TLModuleDisplayGroup"/>
+		</remove-annotations>
+	</processors>
+	<post-processors/>
+</migration>

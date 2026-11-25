@@ -10,6 +10,20 @@
 				</bundles>
 			</instance>
 		</config>
+		<!--
+			The database of an application that contained tl-bpe-app before it became a migration
+			module has its data, but no stored version of the module: tl-bpe-app extends the minimum
+			modules of tl-bpe, so that its migrations are applied there (Ticket #30419).
+		-->
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance
+				minimum-modules="tl, tl-element, tl-contact, tl-model-search, tl-model-wysiwyg, tl-search-lucene, tl-doc, tl-monitoring, tl-bpe, tl-bpe-app"
+			>
+				<modules>
+					<module name="tl-bpe-app" />
+				</modules>
+			</instance>
+		</config>
 		<config service-class="com.top_logic.util.model.ModelService">
 			<instance>
 				<declarations>

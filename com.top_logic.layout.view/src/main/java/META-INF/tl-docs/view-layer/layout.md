@@ -134,7 +134,7 @@ Which of the arrangement elements fits:
 | `<group>` | A section of the fields of a `<form>` or `<fields>`, under a heading and optionally folded away; it keeps the columns of that grid. |
 | `<stack direction="row">` | A row of elements that neither grow to a share of the width nor wrap. |
 | `<split-panel>` | Panes with splitters the user drags; fills its box and scrolls per pane. Side by side, it stacks its panes when its width does not hold their minimum sizes. |
-| `<dashboard>` | Tiles of definite row height whose order the user personalizes. |
+| `<dashboard>` | Tiles of definite row height - fixed ones and ones computed from a list of objects - that the user rearranges, see [dashboards](doc:view-layer/dashboard). |
 
 ```xml
 <columns
